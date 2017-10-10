@@ -45,9 +45,8 @@ print( "#define {}_FONT_WIDTH {}".format(name.upper(), width))
 print( "#define {}_FONT_HEIGHT {}".format(name.upper(), height))
 print( "#define {}_FONT_CHAR_START {}".format(name.upper(), first))
 print( "#define {}_FONT_CHAR_END {}".format(name.upper(), last))
-print( "#define {}_FONT_UNPRINTABLE {}".format(name.upper(), last-first+1))
 print("\n")
-print("static const {} g{}Font[] = {{".format(ctype, name))
+print("static const {} g{}FontGlyphs[] = {{".format(ctype, name))
 def RenderChar(ch):
     global nchars
     # use a truetype font

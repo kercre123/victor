@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
@@ -13,7 +14,30 @@
 
 
 
-static const uint8_t gSmallFont[] = {
+
+#define DISPLAY_SCREEN_WIDTH LCD_FRAME_WIDTH
+#define DISPLAY_SCREEN_HEIGHT LCD_FRAME_HEIGHT
+
+typedef struct Font_t
+{
+  int LineCount;
+  int CharsPerLine;
+  int BitHeight;
+  int BitWidth;
+
+
+  unsigned char CharStart;
+  unsigned char CharEnd;
+
+  bool CenteredByDefault;
+  bool HasVSpace;
+
+  const void* glyphs;
+
+
+} Font;
+
+static const uint8_t gSmallFontGlyph[] = {
      0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x5F,0x00,0x00, 0x00,0x07,0x00,0x07,0x00, 0x14,0x7F,0x14,0x7F,0x14,
      0x3E,0x7F,0x63,0x7F,0x3E, 0x23,0x13,0x08,0x64,0x62, 0x0C,0x3C,0x3C,0x3C,0x0C, 0x00,0x08,0x07,0x03,0x00,
 
@@ -51,22 +75,47 @@ static const uint8_t gSmallFont[] = {
 #define SMALL_FONT_CHAR_END  127
 #define SMALL_FONT_UNPRINTABLE (127-SMALL_FONT_CHAR_START)
 
-#include "medium_font.inc"
+static const Font gSmallFont = {
+  /* int LineCount; */       DISPLAY_SCREEN_HEIGHT/SMALL_FONT_HEIGHT,
+  /* int CharsPerLine; */    DISPLAY_SCREEN_WIDTH/SMALL_FONT_WIDTH,
+  /* int BitHeight; */       SMALL_FONT_HEIGHT,
+  /* int BitWidth; */        SMALL_FONT_WIDTH,
+  SMALL_FONT_CHAR_START,
+  SMALL_FONT_CHAR_END,
+  1 /* CenteredByDefault& */
+};
 
-#define MEDIUM_FONT_CHARS_PER_LINE (LCD_FRAME_WIDTH/(MEDIUM_FONT_WIDTH+1))
-#define MEDIUM_FONT_LINE_COUNT (LCD_FRAME_HEIGHT/MEDIUM_FONT_HEIGHT)
+
+#include "medium_font.inc"
 
 #include "huge_font.inc"
 
-#define HUGE_FONT_CHARS_PER_LINE (LCD_FRAME_WIDTH/(HUGE_FONT_WIDTH+1))
-#define HUGE_FONT_LINE_COUNT (LCD_FRAME_HEIGHT/HUGE_FONT_HEIGHT)
 
 
 #define HUGE_FONT_START_LINE 1
 
+typedef enum {
+  layer_NONE = 0,
+  layer_SMALL_TEXT = 1<<0,
+  layer_MEDIUM_TEXT = 1<<1,
+  layer_BIG_TEXT = 1<<2,
+  layer_HUGE_TEXT = 1<<3,
+  layer_ALL_TEXT = (1<<4)-1
+} DisplayLayer;
+
+#define DISPLAY_NUM_LAYERS 4
+
+
+static const Font* gFont[DISPLAY_NUM_LAYERS] = {
+  &gSmallFont,
+  &gMediumFont,
+  &gMediumFont, //todo gBigFont
+  &gHugeFont,
+};
+
 //each screen_line is 8 bits high.
 //All fonts must be in units of half lines
-#define SCREEN_LINE_COUNT (LCD_FRAME_HEIGHT/CHAR_BIT)
+#define SCAN_LINE_COUNT (LCD_FRAME_HEIGHT/CHAR_BIT)
 /****************/
 
 //each layer has N lines of text.
@@ -77,32 +126,6 @@ static const uint8_t gSmallFont[] = {
 // fill in the colors as you go.
 
 
-#define TERMBUFSZ 80
-#define LINEBUFSZ 256
-
-
-typedef enum {
-  layer_NONE = 0,
-  layer_SMALL_TEXT = 1<<0,
-  layer_MEDIUM_TEXT = 1<<1,
-  layer_HUGE_TEXT = 1<<2,
-  layer_ALL_TEXT = (1<<3)-1
-} DisplayLayer;
-#define DISPLAY_NUM_LAYERS 3
-
-#define isdot(ch) ('.'==(ch))
-#define isdash(ch) ('-'==(ch))
-
-
-// W  x H
-//184 x 96 pixels
-//5 x 8 font.
-// 30 chars x 12 lines
-//--or
-//15 x 24 font
-// 11 chars x 12 lines.
-
-LcdFrame textbuffer;
 
 typedef struct TextProperties_t {
   uint16_t fg;
@@ -112,113 +135,59 @@ typedef struct TextProperties_t {
 
 
 struct {
-  TextProperties small_prop[SMALL_FONT_LINE_COUNT];
-  TextProperties med_prop[MEDIUM_FONT_LINE_COUNT];
-  TextProperties huge_prop[HUGE_FONT_LINE_COUNT];
-  char smalltext[SMALL_FONT_LINE_COUNT][SMALL_FONT_CHARS_PER_LINE];
-  char medtext[MEDIUM_FONT_LINE_COUNT][MEDIUM_FONT_CHARS_PER_LINE];
-  char hugetext[HUGE_FONT_LINE_COUNT][HUGE_FONT_CHARS_PER_LINE];
+  char*text[DISPLAY_NUM_LAYERS];
   LcdFrame frame;
   uint8_t active_layers;
-  TextProperties map_prop[SCREEN_LINE_COUNT*2];
-} gDisplay;// = {{{lcd_BLUE, lcd_BLACK, 0}},0};
-
+  TextProperties prop[DISPLAY_NUM_LAYERS];
+} gDisplay;
 
 char BLANK_LINE[]={" "};
 
-/* void display_init(void) { */
-/*   gDisplay.smalltext.text = malloc(SMALL_FONT_ */
-/* } */
+void display_init(void) {
+  int i;
+  memset(&gDisplay, 0, sizeof(gDisplay));
+  for (i=0;i<DISPLAY_NUM_LAYERS;i++)
+  {
+    gDisplay.text[i]=malloc(gFont[i]->LineCount * gFont[i]->CharsPerLine * sizeof(char));
+    printf("allocated %d bytes for layer %d at %x\n", gFont[i]->LineCount * gFont[i]->CharsPerLine * sizeof(char), i, gDisplay.text[i] );
+
+  }
+}
 
 
 static inline int min(int a, int b){  return a<b?a:b;}
 
-
-
-void draw_text_small(int line, uint16_t fg, uint16_t bg, const char* text, int len)
-{
-  assert(line<SMALL_FONT_LINE_COUNT);
-  int nchars =  min(len, SMALL_FONT_CHARS_PER_LINE);
-  memset(gDisplay.smalltext[line], ' ', SMALL_FONT_CHARS_PER_LINE);
-  if (nchars == 0) {
-    *gDisplay.smalltext[line]='\0';
-  }
-  else  {
-    strncpy(gDisplay.smalltext[line], text, nchars);
-  }
-  gDisplay.small_prop[line].fg = fg;
-  gDisplay.small_prop[line].bg = bg;
-  gDisplay.small_prop[line].active = (nchars>0);
-}
-void draw_text_medium(int line, uint16_t fg, uint16_t bg, const char* text, int len)
-{
-  assert(line<MEDIUM_FONT_LINE_COUNT);
-  int nchars =  min(len, MEDIUM_FONT_CHARS_PER_LINE);
-  memset(gDisplay.medtext[line], ' ', MEDIUM_FONT_CHARS_PER_LINE);
-  if (nchars == 0) {
-    *gDisplay.medtext[line]='\0';
-  }
-  else  {
-    strncpy(gDisplay.medtext[line], text, nchars);
-  }
-  gDisplay.med_prop[line].fg = fg;
-  gDisplay.med_prop[line].bg = bg;
-  gDisplay.med_prop[line].active = (nchars>0);
+void display_set_colors(int layer, uint16_t fg, uint16_t bg) {
+  gDisplay.prop[layer].fg = fg;
+  gDisplay.prop[layer].bg = bg;
 }
 
-void draw_text_huge(int line, uint16_t fg, uint16_t bg, const char* text, int len)
-{
-  int nchars = min(len, HUGE_FONT_CHARS_PER_LINE);
-  int npad = (HUGE_FONT_CHARS_PER_LINE - nchars )/ 2;
-  printf("NPAD = %d\n", npad);
 
-  line = HUGE_FONT_START_LINE;
-  memset(gDisplay.hugetext[line], ' ', HUGE_FONT_CHARS_PER_LINE);
+void display_draw_text(int layer, int line , uint16_t fg, uint16_t bg, const char* text, int len, bool centered)
+{
+  const Font* font =  gFont[layer];
+  assert(line < font->LineCount);
+  printf("drawing %d %d into %x w/ %x\n", layer, line, gDisplay.text[layer], font );
+
+  int nchars =  min(len, font->CharsPerLine);
+  char* textline = gDisplay.text[layer]+(line*font->CharsPerLine);
+  printf("text starts with %8s\n", textline);
+  memset(textline, ' ', font->CharsPerLine);
   if (nchars == 0) {
-    *gDisplay.hugetext[line]='\0';
+    *textline = 0;
   }
   else  {
-      strncpy(gDisplay.hugetext[line]+npad, text, nchars);
+    int leftpad = centered? (font->CharsPerLine - nchars)/2 : 0;
+    strncpy(textline+leftpad, text, nchars);
   }
-  gDisplay.huge_prop[line].fg = fg;
-  gDisplay.huge_prop[line].bg = bg;
-  gDisplay.huge_prop[line].active = (nchars > 0);
-
+  display_set_colors(layer, fg, bg);
 }
+
 
 static inline unsigned char restrict_to_printable(unsigned char c, unsigned char font_start, unsigned char font_end) {
   c -= font_start;
   return min(c, (font_end-font_start)+1);
 }
-
-
-/* static inline const TextProperties* set_textprops(int y, uint8_t layermask) */
-/* { */
-/*   const TextProperties* retval = &gDisplay.small_prop[0]; */
-/*   int line = y/(CHAR_BIT/2); */
-/*   if (line/2 > SMALL_FONT_LINE_COUNT) return retval; */
-/*   printf("checking text properties for halfrow %d (%x)\n",line, layermask); */
-/*   if (layermask & layer_SMALL_TEXT) { */
-/*     if (gDisplay.small_prop[line/2].active){ */
-/*       retval = &gDisplay.small_prop[line/2]; */
-/*       printf("active at small %d -  %x/%x\n", line/2, retval->fg, retval->bg); */
-/*     } */
-/*   } */
-/*   if (layermask & layer_MEDIUM_TEXT) { */
-/*     if (gDisplay.med_prop[line/3].active){ */
-/*       retval = &gDisplay.med_prop[line/3]; */
-/*       printf("active at med %d -  %x/%x\n", line/3, retval->fg, retval->bg); */
-/*     } */
-/*   } */
-/*   if (layermask & layer_HUGE_TEXT) { */
-/*     if (gDisplay.huge_prop[line/8].active){ */
-/*       retval = &gDisplay.huge_prop[line/8]; */
-/*       printf("active at huge %d -  %x/%x\n", line/8, retval->fg, retval->bg); */
-/*     } */
-/*   } */
-
-/*   return retval; */
-/* } */
 
 static inline void set_map_properties(int scanline, int ct, TextProperties* tp) {
   if (tp->active) {
@@ -226,164 +195,174 @@ static inline void set_map_properties(int scanline, int ct, TextProperties* tp) 
   printf("setting scanlines %d..%d to %x/%x\n",scanline, scanline+ct, tp->fg, tp->bg);
 
   for (i=scanline;i<scanline+ct;i++) {
-    gDisplay.map_prop[i]=*tp;
+    gDisplay.prop[i]=*tp;
   }
   }
 }
 
-void display_render_small_text(uint8_t* bitmap)
+void display_render_8bit_text(uint8_t* bitmap, int layer, const Font* font)
 {
   //bitmap is 12 rows of uint8's, FRAME_WIDTH pixels wide.
   // small text puts 1 lines in each row
   int line,col;
 
-  for (line=0;line<SMALL_FONT_LINE_COUNT;line++)
+  int mapline = 0;
+  for (line=0;line<font->LineCount;line++)
   {
-    uint8_t* map = &bitmap[line*LCD_FRAME_WIDTH];
-    const char* text = gDisplay.smalltext[line];
+    uint8_t* map = &bitmap[mapline*LCD_FRAME_WIDTH];
+    const char* text = gDisplay.text[layer]+(line*font->CharsPerLine);
     if (*text)  {
-      TextProperties* tp = &gDisplay.small_prop[line];
-      set_map_properties( line*2, 2, tp);
+      TextProperties* tp = &gDisplay.prop[line];
+      int scanline = mapline*2;
+      set_map_properties( scanline, 2, tp);
       printf(": %s\n", text);
-      for (col=0;col<SMALL_FONT_CHARS_PER_LINE; col++)
+      for (col=0;col<font->CharsPerLine; col++)
       {
-        unsigned char c = restrict_to_printable(*text++, SMALL_FONT_CHAR_START,SMALL_FONT_CHAR_END);
+        unsigned char c = restrict_to_printable(*text++, font->CharStart, font->CharEnd);
 
-        const uint8_t* glyph = &gSmallFont[c * SMALL_FONT_WIDTH];
+        const uint8_t* glyph = ((uint8_t*)font->glyphs) + (c * font->BitWidth);
         int i;
-        for (i=0;i<SMALL_FONT_WIDTH;i++)
+        for (i=0; i<font->BitWidth; i++)
         {
           *map++ |= (*glyph++);
         }
-        *map++ = 0; //char separator
+        if (!font->HasVSpace) {
+          *map++ = 0; //char separator
+        }
       }
     }
+    mapline++;
   }
 }
 
 
-void display_render_medium_text(uint8_t* bitmap)
+void display_render_16bit_text(uint8_t* bitmap, int layer, const Font* font)
 {
   //bitmap is 12 rows of uint8's, FRAME_WIDTH pixels wide.
-  // medium text puts 2  lines in each 3 rows
+  // 12 bit text puts 1  lines in each 1.5 rows
+  // 16 bit text puts 1  lines in each 2 rows
   int line, col;
-  int shift = 0;
   int mapline = 0;
-  for (line=0;line<MEDIUM_FONT_LINE_COUNT;line++)
+  int shift = 0;
+  printf("rendeering 16bit\n");
+
+  for (line=0;line<font->LineCount;line++)
   {
     uint8_t* m1 = &bitmap[mapline*LCD_FRAME_WIDTH];
     uint8_t* m2 = &bitmap[(mapline+1)*LCD_FRAME_WIDTH];
-    const char* text = gDisplay.medtext[line];
-    if (text)  {
-      TextProperties* tp = &gDisplay.med_prop[line];
-      set_map_properties(mapline*2+(shift!=0), 3, tp);
-      /* if (!shift) { */
-      /*   gDisplay.map_prop[mapline*2]=*tp; */
-      /* } */
-      /* gDisplay.map_prop[mapline*2+1]=*tp; */
-      /* gDisplay.map_prop[(mapline+1)*2]=*tp; */
-      /* if (shift) { */
-      /*   gDisplay.map_prop[(mapline+1)*2+1]=*tp; */
-      /* } */
-
-      printf("<<%d %s \n", shift, text);
-      for (col=0;col<MEDIUM_FONT_CHARS_PER_LINE; col++)
+    const char* text = gDisplay.text[layer]+(line*font->CharsPerLine);
+    printf("text at %x is %8s\n", text, text);
+    if (*text)  {
+      TextProperties* tp = &gDisplay.prop[line];
+      int scanline = mapline*2;
+      if (shift) scanline++;
+      set_map_properties( scanline, 2, tp);
+      printf("< %s\n", text);
+      for (col=0;col<font->CharsPerLine; col++)
       {
-        unsigned char c = restrict_to_printable(*text++, MEDIUM_FONT_CHAR_START,MEDIUM_FONT_CHAR_END);
-        const uint16_t* glyph = &gMediumFont[c*MEDIUM_FONT_WIDTH];
+        unsigned char c = restrict_to_printable(*text++, font->CharStart, font->CharEnd);
+
+        const uint16_t* glyph = ((uint16_t*)font->glyphs) + (c * font->BitWidth);
+//        const uint16_t* glyph = &Font->glyphs[c * font->BitWidth];
         int i;
-        for (i=0;i<MEDIUM_FONT_WIDTH;i++)
+        for (i=0; i<font->BitWidth; i++)
+
         {
           uint16_t gg =  (*glyph++)<<shift;
-//        printf("Rendering %c (%04x) into rows %d & %d\n", c+MEDIUM_FONT_CHAR_START, gg, mapline, mapline+1);
           *m1++ |= (gg&0xFF);
           *m2++ |= (gg>>8);
-
         }
-        *m1++ = 0; //char separator
-        *m2++ = 0; //char separator
+        if (!font->HasVSpace) {
+          *m1++ = 0; //char separator
+          *m2++ = 0; //char separator
+        }
       }
     }
-    shift ^=4;
+    shift ^= ( 16 - font->BitHeight); //only works for 16 or 12
     mapline+= (shift)?1:2;
   }
 }
 
 
-void display_render_huge_text(uint8_t* bitmap)
+
+void display_render_32bit_text(uint8_t* bitmap, int layer, const Font* font)
 {
   //bitmap is 12 rows of uint8's, FRAME_WIDTH pixels wide.
-  // huge text puts 1 line over 4 rows.
+  // 32 bit text puts 1 line over 4 rows.
+  // theoretically we could do 24 bit text...
   int line, col;
   int mapline = 0;
-  for (line=0;line<HUGE_FONT_LINE_COUNT;line++)
+  for (line=0;line<font->LineCount;line++)
   {
     uint8_t* m1 = &bitmap[mapline*LCD_FRAME_WIDTH];
     uint8_t* m2 = &bitmap[(mapline+1)*LCD_FRAME_WIDTH];
     uint8_t* m3 = &bitmap[(mapline+2)*LCD_FRAME_WIDTH];
     uint8_t* m4 = &bitmap[(mapline+3)*LCD_FRAME_WIDTH];
     printf("writing first bitmap entry at  %d\n",m1-bitmap);
-    const char* text = gDisplay.hugetext[line];
-    if (*text)  {
-      TextProperties* tp = &gDisplay.huge_prop[line];
-      set_map_properties(mapline*2,8,tp);
 
+    const char* text = gDisplay.text[layer]+(line*font->CharsPerLine);
+    if (*text)  {
+      TextProperties* tp = &gDisplay.prop[line];
+      int scanline = mapline*2;
+      set_map_properties( scanline, 2, tp);
       printf("^ %s\n", text);
-      for (col=0;col<HUGE_FONT_CHARS_PER_LINE; col++)
+      for (col=0;col<font->CharsPerLine; col++)
       {
-        unsigned char c = restrict_to_printable(*text++, HUGE_FONT_CHAR_START,HUGE_FONT_CHAR_END);
-        const uint32_t* glyph = &gHugeFont[c*HUGE_FONT_WIDTH];
+        unsigned char c = restrict_to_printable(*text++, font->CharStart, font->CharEnd);
+
+        const uint32_t* glyph = ((uint32_t*)font->glyphs) + (c * font->BitWidth);
+//        const uint32_t* glyph = &Font->glyphs[c * font->BitWidth];
         int i;
-        for (i=0;i<HUGE_FONT_WIDTH;i++)
+        for (i=0; i<font->BitWidth; i++)
+
         {
           uint32_t gg =  (*glyph++);
           *m1++ |= (gg&0xFF);
           *m2++ |= ((gg>>8)&0xFF);
           *m3++ |= ((gg>>16)&0xFF);
           *m4++ |= (uint8_t)(gg>>24);
+
         }
-        /* *m1++ = 0; //char separator */
-        /* *m2++ = 0; //char separator */
-        /* *m3++ = 0; //char separator */
-        /* *m4++ = 0; //char separator */
+        if (!font->HasVSpace) {
+          *m1++ = 0; //char separator
+          *m2++ = 0; //char separator
+          *m3++ = 0; //char separator
+          *m4++ = 0; //char separator
+        }
       }
     }
     mapline+= 4;
-  printf("wrote  last bitmap entry at  %d\n",m4-bitmap-1);
+    printf("wrote  last bitmap entry at  %d\n",m4-bitmap-1);
   }
+}
 
-
+void bitmap_render_text(uint8_t* bitmap, int layer, const Font* font)
+{
+  switch(font->BitHeight) {
+    case 8:
+      display_render_8bit_text(bitmap, layer, font);
+      break;
+    case 12:
+    case 16:
+      display_render_16bit_text(bitmap, layer, font);
+      break;
+    case 32:
+      display_render_32bit_text(bitmap, layer, font);
+      break;
+    default:
+      printf("FONT HEIGHT %d NOT SUPPORTED\n", font->BitHeight);
+      break;
+  }
 }
 
 
-static inline const TextProperties* get_textprops(int y, uint8_t layermask)
-{
-  return &gDisplay.map_prop[y/(CHAR_BIT/2)];
-  /* change this to read map_prop[]; */
-  /* const TextProperties* retval = &gDisplay.small_prop[0]; */
-  /* int line = y/(CHAR_BIT/2); */
-  /* if (line/2 > SMALL_FONT_LINE_COUNT) return retval; */
-  /* printf("checking text properties for halfrow %d (%x)\n",line, layermask); */
-  /* if (layermask & layer_SMALL_TEXT) { */
-  /*   if (gDisplay.small_prop[line/2].active){ */
-  /*     retval = &gDisplay.small_prop[line/2]; */
-  /*     printf("active at small %d -  %x/%x\n", line/2, retval->fg, retval->bg); */
-  /*   } */
-  /* } */
-  /* if (layermask & layer_MEDIUM_TEXT) { */
-  /*   if (gDisplay.med_prop[line/3].active){ */
-  /*     retval = &gDisplay.med_prop[line/3]; */
-  /*     printf("active at med %d -  %x/%x\n", line/3, retval->fg, retval->bg); */
-  /*   } */
-  /* } */
-  /* if (layermask & layer_HUGE_TEXT) { */
-  /*   if (gDisplay.huge_prop[line/8].active){ */
-  /*     retval = &gDisplay.huge_prop[line/8]; */
-  /*     printf("active at huge %d -  %x/%x\n", line/8, retval->fg, retval->bg); */
-  /*   } */
-  /* } */
-
-  /* return retval; */
+void display_clear_layer(int layer, int fg, int bg) {
+  int i;
+  for (i=0; i<gFont[layer]->LineCount; i++)
+  {
+    display_draw_text(layer, i, fg, bg,
+                      BLANK_LINE, 1, 0);
+  }
 }
 
 
@@ -397,27 +376,24 @@ static void display_render_text(uint8_t layermask) {
   //first render the fonts into a bitmap.
   uint8_t bitmap[LCD_FRAME_WIDTH * LCD_FRAME_HEIGHT/8]={0};
   printf("bitmap size is %d\n", sizeof(bitmap));
-  if (layermask & layer_SMALL_TEXT) {
-    display_render_small_text(bitmap);
-  }
-  if (layermask & layer_MEDIUM_TEXT) {
-    display_render_medium_text(bitmap);
-  }
-  if (layermask & layer_HUGE_TEXT) {
-    display_render_huge_text(bitmap);
+  int i, toplayer=0;
+
+  for (i=0;i<DISPLAY_NUM_LAYERS;i++) {
+    if (layermask & (1<<i) ) {
+    printf("rendering %d\n", i);
+      bitmap_render_text(bitmap, i, gFont[i]);
+      toplayer = i;
+    }
   }
   //second, convert the bitmap to color using the textprop values.
   int x,y;
   for (y=0;y<LCD_FRAME_HEIGHT;y++) {
-//    printf("y=%d\n",y);
-    const TextProperties* tp = get_textprops(y, layermask);
+    const TextProperties* tp = &gDisplay.prop[toplayer];
     printf("%02d %04x/%04x: ",y, tp->fg, tp->bg);
     for (x=0;x<LCD_FRAME_WIDTH;x++) {
-//      printf("extract?");
       int isSet = EXTRACT_BIT(bitmap,x,y);
-//      printf("ok\n");
       uint16_t color = (isSet) ? tp->fg : tp->bg;
-     gDisplay.frame.data[y*LCD_FRAME_WIDTH+x] = color;
+      gDisplay.frame.data[y*LCD_FRAME_WIDTH+x] = color;
       printf("%c", isSet?'X':'.');
     }
     printf("\n");
@@ -479,27 +455,20 @@ static void activate_layer(int layer, bool active) {
 
 void show_props(void) {
   int i;
-  /* printf("small_prop "); */
-  /* for (i=0;i<SMALL_FONT_LINE_COUNT;i++){ */
-  /*   printf("%d ", gDisplay.small_prop[i].active); */
-  /* } */
-  /* printf("\n"); */
-  /* printf("med_prop "); */
-  /* for (i=0;i<MEDIUM_FONT_LINE_COUNT;i++){ */
-  /*   printf("%d ", gDisplay.med_prop[i].active); */
-  /* } */
-  /* printf("\n"); */
-  /* printf("huge_prop "); */
-  /* for (i=0;i<HUGE_FONT_LINE_COUNT;i++){ */
-  /*   printf("%d ", gDisplay.huge_prop[i].active); */
-  /* } */
+  for (i=0;i<DISPLAY_NUM_LAYERS;i++){
+    printf("textbuffer for layer %d is %x\n", i, gDisplay.text[i] );
+  }
+
   printf("Active_layers = %02x\n",gDisplay.active_layers);
 }
+
+
+#define isdot(ch) ('.'==(ch))
+#define isdash(ch) ('-'==(ch))
 
 //display layer line [rgbit] all the following words
 int display_parse(const char* command, int linelen)
 {
-  int i;
   int layer=0, line=0;
   bool invert = 0, exclusive = 0;
   uint16_t  fgcolor=lcd_WHITE, bgcolor = lcd_BLACK;
@@ -567,37 +536,13 @@ int display_parse(const char* command, int linelen)
   uint8_t layermask = layer_ALL_TEXT;
 
   line--; //zero based now
-  switch (layer) {
-    case 1:
-    {
-      if (exclusive) {
-        layermask = layer_MEDIUM_TEXT;
-        for (i=0; i<MEDIUM_FONT_LINE_COUNT; i++)
-        {
-          draw_text_medium(i, fgcolor, bgcolor,
-                           BLANK_LINE, 1);
-        }
-      }
-      draw_text_medium(line, fgcolor, bgcolor, cp, endp-cp);  //5x8
-      break;
-    }
-    case 2:
-      printf("HUGE %s\n", cp);
-      if (exclusive) {
-        layermask = layer_HUGE_TEXT;
-        for (i=0; i<MEDIUM_FONT_LINE_COUNT; i++)
-        {
-          draw_text_huge(i, fgcolor, bgcolor,
-                           BLANK_LINE, 1);
-        }
-      }
-      printf("huge line %d\n", line);
-      draw_text_huge(line, fgcolor, bgcolor, cp, endp-cp); //22x32?
-      break;
-    default:
-      assert(!layer); //invalid layer
-      break;
+  if (exclusive) {
+    layermask = (1<<layer);
+    display_clear_layer(layer, bgcolor, fgcolor);
   }
+  display_draw_text(layer, line, fgcolor, bgcolor,
+                    cp, endp-cp, gFont[layer]->CenteredByDefault);
+
   show_props();
   display_render_text(gDisplay.active_layers & layermask);
       printf("ok\n");
@@ -610,6 +555,10 @@ void on_exit(void) {
   lcd_shutdown();
 }
 
+#define TERMBUFSZ 80
+#define LINEBUFSZ 256
+
+
 int main(int argc, const char* argv[])
 {
   bool exit = false;
@@ -620,7 +569,9 @@ int main(int argc, const char* argv[])
 
   lcd_init();
 
-  memset(&gDisplay, 0, sizeof(gDisplay));
+
+  display_init();
+
 
 //  gDisplay.serialFd = serial_init(FIXTURE_TTY, FIXTURE_BAUD);
 
