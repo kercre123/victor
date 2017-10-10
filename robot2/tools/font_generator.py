@@ -28,7 +28,7 @@ elif name == "Huge":
     last = ord('~')
     ctype = "uint32_t"
     formatstr = "0x{:08x},"
-    font = ImageFont.truetype("Menlo.ttc", pt, 1)
+    font = ImageFont.truetype("Menlo.ttc", pt, 1) #bold
 
 else:
     print("Invalid font name;")
@@ -99,8 +99,9 @@ def RenderChar(ch):
 #image.save("sample.bmp")
 
 #for c in string.printable:
-for i in range(first,last+2):
+for i in range(first,last+1):
     c = chr(i)
     RenderChar(c)
+RenderChar(' ')
 
 print("};")
