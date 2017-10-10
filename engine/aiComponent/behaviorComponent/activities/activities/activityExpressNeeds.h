@@ -21,7 +21,7 @@ namespace Cozmo {
 class ActivityExpressNeeds : public IActivity
 {
 public:
-  ActivityExpressNeeds(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ActivityExpressNeeds(const Json::Value& config);
   virtual ~ActivityExpressNeeds() {};
 
 protected:

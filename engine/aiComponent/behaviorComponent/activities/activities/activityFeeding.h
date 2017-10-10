@@ -37,7 +37,7 @@ struct ObjectConnectionState;
 class ActivityFeeding : public IActivity, public IFeedingListener
 {
 public:
-  ActivityFeeding(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ActivityFeeding(const Json::Value& config);
   ~ActivityFeeding();
   
   virtual Result Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) override;
@@ -52,6 +52,8 @@ protected:
 
   virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
+  
+  virtual void InitActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   enum class FeedingActivityStage{

@@ -22,7 +22,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/drivingAnimationHandler.h"
@@ -111,8 +110,8 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersFinalAnim
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivitySparked::ActivitySparked(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IActivity(behaviorExternalInterface, config)
+ActivitySparked::ActivitySparked(const Json::Value& config)
+: IActivity(config)
 , _state(ChooserState::ChooserSelected)
 , _timeChooserStarted(0.f)
 , _currentObjectiveCompletedCount(0)
@@ -124,7 +123,21 @@ ActivitySparked::ActivitySparked(BehaviorExternalInterface& behaviorExternalInte
 , _idleAnimationsSet(false)
 , _subActivityDelegate(nullptr)
 {
-  ReloadFromConfig(behaviorExternalInterface, config);
+
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ActivitySparked::~ActivitySparked()
+{
+  _behaviorPlayAnimation = nullptr;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivitySparked::InitActivity(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  ReloadFromConfig(behaviorExternalInterface, _config);
   
   
   const BehaviorContainer& BC = behaviorExternalInterface.GetBehaviorContainer();
@@ -150,14 +163,7 @@ ActivitySparked::ActivitySparked(BehaviorExternalInterface& behaviorExternalInte
   behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,std::move(tags));
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivitySparked::~ActivitySparked()
-{
-  _behaviorPlayAnimation = nullptr;
-}
 
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivitySparked::OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
@@ -289,11 +295,9 @@ Result ActivitySparked::ReloadFromConfig(BehaviorExternalInterface& behaviorExte
   // Construct the simple chooser delegate if one is specified
   const Json::Value& subActivityDelegate = config[kSubActivityDelegateKey];
   if(!subActivityDelegate.isNull()){
-    ActivityType activityType = IActivity::ExtractActivityTypeFromConfig(subActivityDelegate);
-    _subActivityDelegate = std::unique_ptr<IActivity>(
-                               ActivityFactory::CreateActivity(behaviorExternalInterface,
-                                                               activityType,
-                                                               subActivityDelegate));
+    BehaviorID id = ICozmoBehavior::ExtractBehaviorIDFromConfig(subActivityDelegate);
+    ICozmoBehaviorPtr behavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(id);
+    _subActivityDelegate = std::static_pointer_cast<IActivity>(behavior);
   }
   
   

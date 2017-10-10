@@ -143,11 +143,6 @@ void RobotDataLoader::LoadNonConfigData()
   }
   
   {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadActivities");
-    LoadActivities();
-  }
-  
-  {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadReactionTriggerMap");
     LoadReactionTriggerMap();
   }
@@ -550,35 +545,6 @@ void RobotDataLoader::LoadBehaviors()
     }
   }
 }
-  
-void RobotDataLoader::LoadActivities()
-{
-  const std::string path =  "config/engine/behaviorComponent/activities/";
-  
-  const std::string activityFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
-  auto activityJsonFiles = Util::FileUtils::FilesInDirectory(activityFolder, true, ".json", true);
-  for (const auto& filename : activityJsonFiles)
-  {
-    Json::Value activityJson;
-    const bool success = _platform->readAsJson(filename, activityJson);
-    if (success && !activityJson.empty())
-    {
-      ActivityID activityID = IActivity::ExtractActivityIDFromConfig(activityJson);
-      
-      auto result = _activities.emplace(std::piecewise_construct,
-                                        std::forward_as_tuple(activityID),
-                                        std::forward_as_tuple(std::move(activityJson)));
-      DEV_ASSERT_MSG(result.second,
-                     "RobotDataLoader.LoadActivity.FailedEmplace",
-                     "Failed to insert ActivityID %s - make sure all activities have unique IDs",
-                     ActivityIDToString(activityID));
-    }
-    else if (!success)
-    {
-      PRINT_NAMED_WARNING("RobotDataLoader.Activity", "Failed to read '%s'", filename.c_str());
-    }
-  }
-}
 
 
 void RobotDataLoader::LoadVoiceCommandConfigs()
@@ -691,7 +657,7 @@ void RobotDataLoader::LoadRobotConfigs()
   
   // victor behavior systems config
   {
-    static const std::string jsonFilename = "config/engine/behaviorComponent/victor_freeplay_behavior_config.json";
+    static const std::string jsonFilename = "config/engine/behaviorComponent/behaviors/victorFreeplay.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _victorFreeplayBehaviorConfig);
     if (!success)
     {

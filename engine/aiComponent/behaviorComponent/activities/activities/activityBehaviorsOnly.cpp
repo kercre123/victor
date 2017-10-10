@@ -15,9 +15,8 @@
 namespace Anki {
 namespace Cozmo {
 
-ActivityBehaviorsOnly::ActivityBehaviorsOnly(BehaviorExternalInterface& behaviorExternalInterface,
-                                             const Json::Value& config)
-: IActivity(behaviorExternalInterface, config)
+ActivityBehaviorsOnly::ActivityBehaviorsOnly(const Json::Value& config)
+: IActivity(config)
 {
   
 }

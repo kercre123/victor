@@ -18,8 +18,8 @@ namespace Cozmo {
 namespace {
 }
 
-ActivityExpressNeeds::ActivityExpressNeeds(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IActivity(behaviorExternalInterface, config)
+ActivityExpressNeeds::ActivityExpressNeeds(const Json::Value& config)
+: IActivity(config)
 {
 }
 

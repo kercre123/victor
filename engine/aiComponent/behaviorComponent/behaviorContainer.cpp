@@ -16,6 +16,17 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 // Behaviors:
+#include "engine/aiComponent/behaviorComponent/activities/activities/activityBehaviorsOnly.h"
+#include "engine/aiComponent/behaviorComponent/activities/activities/activityBuildPyramid.h"
+#include "engine/aiComponent/behaviorComponent/activities/activities/activityExpressNeeds.h"
+#include "engine/aiComponent/behaviorComponent/activities/activities/activityFeeding.h"
+#include "engine/aiComponent/behaviorComponent/activities/activities/activityFreeplay.h"
+#include "engine/aiComponent/behaviorComponent/activities/activities/activityGatherCubes.h"
+#include "engine/aiComponent/behaviorComponent/activities/activities/activitySocialize.h"
+#include "engine/aiComponent/behaviorComponent/activities/activities/activitySparked.h"
+#include "engine/aiComponent/behaviorComponent/activities/activities/activityStrictPriority.h"
+#include "engine/aiComponent/behaviorComponent/activities/activities/activityVoiceCommand.h"
+
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimOnNeedsChange.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequenceWithFace.h"
@@ -250,6 +261,56 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, 
   
   switch (behaviorType)
   {
+    case BehaviorClass::Activity_BehaviorsOnly:
+    {
+      newBehavior = ICozmoBehaviorPtr(new ActivityBehaviorsOnly(config));
+      break;
+    }
+    case BehaviorClass::Activity_BuildPyramid:
+    {
+      newBehavior = ICozmoBehaviorPtr(new ActivityBuildPyramid(config));
+      break;
+    }
+    case BehaviorClass::Activity_Feeding:
+    {
+      newBehavior = ICozmoBehaviorPtr(new ActivityFeeding(config));
+      break;
+    }
+    case BehaviorClass::Activity_Freeplay:
+    {
+      newBehavior = ICozmoBehaviorPtr(new ActivityFreeplay(config));
+      break;
+    }
+    case BehaviorClass::Activity_GatherCubes:
+    {
+      newBehavior = ICozmoBehaviorPtr(new ActivityGatherCubes(config));
+      break;
+    }
+    case BehaviorClass::Activity_Socialize:
+    {
+      newBehavior = ICozmoBehaviorPtr(new ActivitySocialize(config));
+      break;
+    }
+    case BehaviorClass::Activity_Sparked:
+    {
+      newBehavior = ICozmoBehaviorPtr(new ActivitySparked(config));
+      break;
+    }
+    case BehaviorClass::Activity_StrictPriority:
+    {
+      newBehavior = ICozmoBehaviorPtr(new ActivityStrictPriority(config));
+      break;
+    }
+    case BehaviorClass::Activity_VoiceCommand:
+    {
+      newBehavior = ICozmoBehaviorPtr(new ActivityVoiceCommand(config));
+      break;
+    }
+    case BehaviorClass::Activity_NeedsExpression:
+    {
+      newBehavior = ICozmoBehaviorPtr(new ActivityExpressNeeds(config));
+      break;
+    }
     case BehaviorClass::Wait:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorWait(config));

@@ -13,13 +13,13 @@
 #include "engine/aiComponent/behaviorComponent/activities/activities/activityFreeplay.h"
 
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityFactory.h"
 #include "engine/aiComponent/behaviorComponent/activities/activityStrategies/iActivityStrategy.h"
 
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/ankiEventUtil.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -54,7 +54,7 @@ namespace
 {
 static const char* kDesiredActivityNamesConfigKey = "desiredActivityNames";
 static const char* kActivitiesConfigKey           = "subActivities";
-static const char* activityIDKey                  = "activityID";
+static const char* activityIDKey                  = "behaviorID";
 static const char* activityPriorityKey            = "activityPriority";
   
 // Keys to identify activities after put down dispatch
@@ -67,10 +67,10 @@ static const char* kNoFaceNoCubeConfigKey = "noFaceNoCubeActivityName";
 #if REMOTE_CONSOLE_ENABLED
 
 ActivityFreeplay* defaultFeeplayActivity = nullptr;
-void ActivityFreeplaySetDebugActivity(ActivityID activityID)
+void ActivityFreeplaySetDebugActivity(BehaviorID activityID)
 {
   if ( nullptr != defaultFeeplayActivity ) {
-    const char* activityIDString = ActivityIDToString(activityID);
+    const char* activityIDString = BehaviorIDToString(activityID);
     PRINT_CH_INFO("Behaviors", "ActivityFreeplay.DebugSetActivity", "Setting activity to '%s'",
                   activityIDString != nullptr ? activityIDString : "<INVALID>");
 
@@ -83,49 +83,50 @@ void ActivityFreeplaySetDebugActivity(ActivityID activityID)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // TODO:(bn) We could remove the other functions... but QA may be using them
 void ActivitySetDebug( ConsoleFunctionContextRef context ) {
-  const char* activityIdString = ConsoleArg_Get_String(context, "activityID");
-  ActivityFreeplaySetDebugActivity(ActivityIDFromString(activityIdString));
+  const char* activityIdString = ConsoleArg_Get_String(context, "behaviorID");
+  ActivityFreeplaySetDebugActivity(BehaviorIDFromString(activityIdString));
 }
 CONSOLE_FUNC( ActivitySetDebug, "ActivityFreeplay", const char* activityID );
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivitySetFPNothingToDo( ConsoleFunctionContextRef context ) {
-  ActivityFreeplaySetDebugActivity(ActivityID::NothingToDo);
+  ActivityFreeplaySetDebugActivity(BehaviorID::Activity_NothingToDo);
 }
 CONSOLE_FUNC( ActivitySetFPNothingToDo, "ActivityFreeplay" );
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivitySetFPHiking( ConsoleFunctionContextRef context ) {
-  ActivityFreeplaySetDebugActivity(ActivityID::Hiking);
+  ActivityFreeplaySetDebugActivity(BehaviorID::Activity_Hiking);
 }
 CONSOLE_FUNC( ActivitySetFPHiking, "ActivityFreeplay" );
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivitySetFPPlayWithHumans( ConsoleFunctionContextRef context ) {
-  ActivityFreeplaySetDebugActivity(ActivityID::PlayWithHumans);
+  ActivityFreeplaySetDebugActivity(BehaviorID::Activity_PlayWithHumans);
 }
 CONSOLE_FUNC( ActivitySetFPPlayWithHumans, "ActivityFreeplay" );
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivitySetFPPlayAlone( ConsoleFunctionContextRef context ) {
-  ActivityFreeplaySetDebugActivity(ActivityID::PlayAlone);
+  ActivityFreeplaySetDebugActivity(BehaviorID::Activity_PlayAlone);
 }
 CONSOLE_FUNC( ActivitySetFPPlayAlone, "ActivityFreeplay" );
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivitySetFPSocialize( ConsoleFunctionContextRef context ) {
-  ActivityFreeplaySetDebugActivity(ActivityID::Socialize);
+  ActivityFreeplaySetDebugActivity(BehaviorID::Activity_Socialize);
 }
 CONSOLE_FUNC( ActivitySetFPSocialize, "ActivityFreeplay" );
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivitySetFPBuildPyramid( ConsoleFunctionContextRef context ) {
-  ActivityFreeplaySetDebugActivity(ActivityID::BuildPyramid);
+  ActivityFreeplaySetDebugActivity(BehaviorID::Activity_BuildPyramid);
 }
 CONSOLE_FUNC( ActivitySetFPBuildPyramid, "ActivityFreeplay" );
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityClearSetting( ConsoleFunctionContextRef context ) {
-  ActivityFreeplaySetDebugActivity(ActivityID::Invalid);
+  // CLEAR SETTING NO LONGER WORKS
+  ActivityFreeplaySetDebugActivity(BehaviorID::Activity_Feeding);
 }
 CONSOLE_FUNC( ActivityClearSetting, "ActivityFreeplay" );
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivitySetSinging( ConsoleFunctionContextRef context ) {
-  ActivityFreeplaySetDebugActivity(ActivityID::Singing);
+  ActivityFreeplaySetDebugActivity(BehaviorID::Activity_Singing);
 }
 CONSOLE_FUNC( ActivitySetSinging, "ActivityFreeplay" );
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -134,7 +135,7 @@ void ActivitySetSingingCooldown(ConsoleFunctionContextRef context)
   if(nullptr != defaultFeeplayActivity)
   {
     const float cooldown = ConsoleArg_Get_Float(context, "cooldown_ms");
-    defaultFeeplayActivity->SetActivityStrategyCooldown(UnlockId::Count, ActivityID::Singing, cooldown);
+    defaultFeeplayActivity->SetActivityStrategyCooldown(UnlockId::Count, BehaviorID::Activity_Singing, cooldown);
   }
 }
 CONSOLE_FUNC( ActivitySetSingingCooldown, "ActivityFreeplay", float cooldown_ms);
@@ -144,29 +145,14 @@ CONSOLE_FUNC( ActivitySetSingingCooldown, "ActivityFreeplay", float cooldown_ms)
 };
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityFreeplay::ActivityFreeplay(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IActivity(behaviorExternalInterface, config)
-, _behaviorExternalInterface(behaviorExternalInterface)
+ActivityFreeplay::ActivityFreeplay(const Json::Value& config)
+: IActivity(config)
 , _currentActivityPtr(nullptr)
-, _requestedActivity(ActivityID::Invalid)
-, _debugConsoleRequestedActivity(ActivityID::Invalid)
-, _subID(ActivityID::Invalid)
+, _requestedActivity(BehaviorID::Wait)
+, _debugConsoleRequestedActivity(BehaviorID::Wait)
+, _subID(BehaviorID::Wait)
 {
-  CreateFromConfig(behaviorExternalInterface, config);
-  
-  
-  behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
-  {
-    ExternalInterface::MessageEngineToGameTag::RobotOffTreadsStateChanged
-  });
-  
-  #if ( ANKI_DEV_CHEATS )
-  {
-    if ( !defaultFeeplayActivity ) {
-      defaultFeeplayActivity = this;
-    }
-  }
-  #endif
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -183,9 +169,32 @@ ActivityFreeplay::~ActivityFreeplay()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityFreeplay::SetActivityIDFromSubActivity(ActivityID activityID){
+void ActivityFreeplay::InitActivity(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  _behaviorExternalInterface = &behaviorExternalInterface;
+  CreateFromConfig(behaviorExternalInterface, _config);
+  
+  
+  behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
+      {
+        ExternalInterface::MessageEngineToGameTag::RobotOffTreadsStateChanged
+      });
+  
+  #if ( ANKI_DEV_CHEATS )
+    {
+      if ( !defaultFeeplayActivity ) {
+        defaultFeeplayActivity = this;
+      }
+    }
+  #endif
+  
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityFreeplay::SetActivityIDFromSubActivity(BehaviorID activityID){
   _subID = activityID;
-  _freeplayIDString = std::string(IActivity::GetIDStr()) + "_" + ActivityIDToString(_subID);
+  _freeplayIDString = std::string(IActivity::GetIDStr()) + "_" + BehaviorIDToString(_subID);
 }
 
 
@@ -209,8 +218,8 @@ Result ActivityFreeplay::Update_Legacy(BehaviorExternalInterface& behaviorExtern
           const bool isRunningDebugActivity = (_currentActivityPtr->GetID() ==
                                                _debugConsoleRequestedActivity);
           const bool isSevereNeedsActivity =
-          (_currentActivityPtr->GetID() == ActivityID::NeedsSevereLowEnergy) ||
-          (_currentActivityPtr->GetID() == ActivityID::NeedsSevereLowRepair);
+          (_currentActivityPtr->GetID() == BehaviorID::Activity_NeedsSevereLowEnergy) ||
+          (_currentActivityPtr->GetID() == BehaviorID::Activity_NeedsSevereLowRepair);
           
           if ( isSparkless && !isRunningDebugActivity && !isSevereNeedsActivity)
           {
@@ -221,7 +230,7 @@ Result ActivityFreeplay::Update_Legacy(BehaviorExternalInterface& behaviorExtern
             // note: this will set the activity on cooldown, which may not be desired if it didn't run for some time
             
             // stop current activity
-            _currentActivityPtr->OnDeactivated(_behaviorExternalInterface);
+            _currentActivityPtr->OnDeactivated(*_behaviorExternalInterface);
             _currentActivityPtr = nullptr;
           }
         }
@@ -264,12 +273,12 @@ void ActivityFreeplay::CreateFromConfig(BehaviorExternalInterface& behaviorExter
     // be removed
     const Robot& robot = behaviorExternalInterface.GetRobot();
     // Get the activity jsons
-    const auto& activityData = robot.GetContext()->GetDataLoader()->GetActivityJsons();
-    DEV_ASSERT_MSG(activityPriorities.size() == activityData.size(),
+    const auto& activityData = robot.GetContext()->GetDataLoader()->GetBehaviorJsons();
+    /**DEV_ASSERT_MSG(activityPriorities.size() == activityData.size(),
                    "ActivityFreeplay.CreateFromConfig.ActivitySizeMismatch",
                    "There are %d priorities and %d activities defined",
                    static_cast<int>(activityPriorities.size()),
-                   static_cast<int>(activityData.size()));
+                   static_cast<int>(activityData.size()));**/
     
     // Iterate through the activities
     uint debugLastActivityPriority = 0;
@@ -292,14 +301,14 @@ void ActivityFreeplay::CreateFromConfig(BehaviorExternalInterface& behaviorExter
       std::string activityID_str = JsonTools::ParseString(*it, activityIDKey,
                                                          "ActivityFreeplay.CreateFromConfig.ActivityID.KeyMissing");
       
-      ActivityID activityID = ActivityIDFromString(activityID_str);
+      BehaviorID activityID = BehaviorIDFromString(activityID_str);
 
       const uint activityPriority = JsonTools::ParseUint8(*it, activityPriorityKey,
                                                           "ActivityFreeplay.CreateFromConfig.ActivityPriority");
       
       DEV_ASSERT_MSG(activityPriority >= debugLastActivityPriority,
                      "ActivityFreeplay.CreateFromConfig.ActivityPrioritiesOutOfOrder",
-                     "Activity id %s", ActivityIDToString(activityID));
+                     "Activity id %s", BehaviorIDToString(activityID));
       debugLastActivityPriority = activityPriority;
       
       
@@ -309,20 +318,22 @@ void ActivityFreeplay::CreateFromConfig(BehaviorExternalInterface& behaviorExter
       
       DEV_ASSERT_MSG(dataIter != activityData.end(),
                      "ActivityFreeplay.CreateFromConfig.ActivityDataNotFound",
-                     "No file found named %s", ActivityIDToString(activityID));
+                     "No file found named %s", BehaviorIDToString(activityID));
       
       // Gather the appropriate data from the config to generate the activity
       const Json::Value& activityConfig = dataIter->second;
     
-      ActivityType activityType =  IActivity::ExtractActivityTypeFromConfig(activityConfig);
+      BehaviorID activityType =  ICozmoBehavior::ExtractBehaviorIDFromConfig(activityConfig);
       
-      IActivity* subActivity = ActivityFactory::CreateActivity(behaviorExternalInterface,
-                                                               activityType,
-                                                               activityConfig);
+      
+      ICozmoBehaviorPtr subActivity = behaviorExternalInterface.
+                            GetBehaviorContainer().FindBehaviorByID(activityType);
+      
+      std::shared_ptr<IActivity> castActivity = std::static_pointer_cast<IActivity>(subActivity);
       
       // add the activity to the vector of activities with the same spark
-      const UnlockId subActivitySpark = subActivity->GetRequiredSpark();
-      _activities[subActivitySpark].emplace_back( subActivity );
+      const UnlockId subActivitySpark = castActivity->GetRequiredSpark();
+      _activities[subActivitySpark].emplace_back( castActivity );
 
       
     }
@@ -340,13 +351,13 @@ void ActivityFreeplay::CreateFromConfig(BehaviorExternalInterface& behaviorExter
     const std::string& debugName = "ActivityFreeplay.Constructor";
   
     // parse desired activities from objects
-    _configParams.faceAndCubeActivity  = ActivityIDFromString(
+    _configParams.faceAndCubeActivity  = BehaviorIDFromString(
                       ParseString(desiredActivities, kFaceAndCubeConfigKey,  debugName));
-    _configParams.faceOnlyActivity     = ActivityIDFromString(
+    _configParams.faceOnlyActivity     = BehaviorIDFromString(
                       ParseString(desiredActivities, kFaceOnlyConfigKey,     debugName));
-    _configParams.cubeOnlyActivity     = ActivityIDFromString(
+    _configParams.cubeOnlyActivity     = BehaviorIDFromString(
                       ParseString(desiredActivities, kCubeOnlyConfigKey,     debugName));
-    _configParams.noFaceNoCubeActivity = ActivityIDFromString(
+    _configParams.noFaceNoCubeActivity = BehaviorIDFromString(
                       ParseString(desiredActivities, kNoFaceNoCubeConfigKey, debugName));
   }
 }
@@ -372,14 +383,14 @@ bool ActivityFreeplay::PickNewActivityForSpark(BehaviorExternalInterface& behavi
       const IActivityStrategy& selectionStrategy = activity->GetStrategy();
       
       // if there's a debug console requested activity, force to pick that one
-      if ( _debugConsoleRequestedActivity != ActivityID::Invalid)
+      if ( _debugConsoleRequestedActivity != BehaviorID::Wait)
       {
         // skip if name doesn't match
         if ( activity->GetID() != _debugConsoleRequestedActivity ) {
           continue;
         }
       }
-      else if (_requestedActivity != ActivityID::Invalid)
+      else if (_requestedActivity != BehaviorID::Wait)
       {
         // skip if name doesn't match
         if ( activity->GetID() != _requestedActivity ) {
@@ -520,7 +531,7 @@ void ActivityFreeplay::CalculateDesiredActivityFromObjects(BehaviorExternalInter
   // log event to das - note robot.goal is a legacy name for Activities left
   // in place so that data is queriable - please do not change
   Util::sEventF("robot.goal_from_face_and_cube",
-                {{DDATA, ActivityIDToString(_requestedActivity)}},
+                {{DDATA, BehaviorIDToString(_requestedActivity)}},
                 "%d:%d",
                 hasNewFace ? 1 : 0,
                 hasNewCube ? 1 : 0);
@@ -540,22 +551,22 @@ ICozmoBehaviorPtr ActivityFreeplay::GetDesiredActiveBehaviorInternal(BehaviorExt
   
   auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
   // check if we have a debugConsole activity
-  if ( _debugConsoleRequestedActivity != ActivityID::Invalid)
+  if ( _debugConsoleRequestedActivity != BehaviorID::Wait)
   {
     // if we are not running the debug requested activity, ask to change. It should be picked if name is available
     if ( (!_currentActivityPtr) || _currentActivityPtr->GetID() != _debugConsoleRequestedActivity ) {
       getNewActivity = true;
       PRINT_CH_INFO("Behaviors", "ActivityFreeplay.ChooseNextBehavior.DebugForcedChange",
-        "Picking new activity because debug is forcing '%s'", ActivityIDToString(_debugConsoleRequestedActivity));
+        "Picking new activity because debug is forcing '%s'", BehaviorIDToString(_debugConsoleRequestedActivity));
     }
   }
-  else if ( _requestedActivity != ActivityID::Invalid )
+  else if ( _requestedActivity != BehaviorID::Wait )
   {
     // if we are not running the requested activity, ask to change. It should be picked if name is available
     if ( (!_currentActivityPtr) || _currentActivityPtr->GetID() != _requestedActivity ) {
       getNewActivity = true;
       PRINT_CH_INFO("Behaviors", "ActivityFreeplay.ChooseNextBehavior.RequestedActivity",
-        "Picking new activity because '%s' was requested", ActivityIDToString(_requestedActivity));
+        "Picking new activity because '%s' was requested", BehaviorIDToString(_requestedActivity));
     }
   }
   else
@@ -591,7 +602,7 @@ ICozmoBehaviorPtr ActivityFreeplay::GetDesiredActiveBehaviorInternal(BehaviorExt
         getNewActivity = true;
         PRINT_CH_INFO("Behaviors", "ActivityFreeplay.ChooseNextBehavior.BehaviorAndActivityEnded",
           "Picking new activity because '%s' wants to end, and behavior finished",
-          ActivityIDToString(_currentActivityPtr->GetID()));
+          BehaviorIDToString(_currentActivityPtr->GetID()));
       }
     }
   }
@@ -613,7 +624,7 @@ ICozmoBehaviorPtr ActivityFreeplay::GetDesiredActiveBehaviorInternal(BehaviorExt
       isCurrentAllowedToBePicked = false;
       PRINT_CH_INFO("Behaviors", "ActivityFreeplay.ChooseNextBehavior.NoBehaviorChosenWhileRunning",
         "Picking new activity because '%s' chose behavior '%s'. This activity is not allowed to be repicked.",
-        ActivityIDToString(_currentActivityPtr->GetID()),
+        BehaviorIDToString(_currentActivityPtr->GetID()),
         chosenBehavior ? BehaviorIDToString(chosenBehavior->GetID()) : "(null)" );
     }
     // The second check here is to prevent checking WantsToEnd while a sparks reward interlude behavior
@@ -634,7 +645,7 @@ ICozmoBehaviorPtr ActivityFreeplay::GetDesiredActiveBehaviorInternal(BehaviorExt
         getNewActivity = true;
         PRINT_CH_INFO("Behaviors", "ActivityFreeplay.ChooseNextBehavior.NewBehaviorChosenWhileRunning",
           "Picking new activity because '%s' wants to end, and behavior finished",
-          ActivityIDToString(_currentActivityPtr->GetID()));
+          BehaviorIDToString(_currentActivityPtr->GetID()));
       }
     }
   }
@@ -693,7 +704,7 @@ ICozmoBehaviorPtr ActivityFreeplay::GetDesiredActiveBehaviorInternal(BehaviorExt
         {
           PRINT_CH_INFO("Behaviors", "ActivityFreeplay.ChooseNextBehavior.NewActivityDidNotChooseBehavior",
             "The new activity '%s' picked no behavior. It probably didn't cover the same conditions as the behaviors.",
-            ActivityIDToString(_currentActivityPtr->GetID()));
+            BehaviorIDToString(_currentActivityPtr->GetID()));
         }
       } else {
         // selecting no activity is a valid situation. We need the lowest ordering activity to say it wants to end, so that
@@ -705,8 +716,8 @@ ICozmoBehaviorPtr ActivityFreeplay::GetDesiredActiveBehaviorInternal(BehaviorExt
     
     // clear the requested activity since we picked an activity. Even if it wasn't selected, we are only going to give it
     // once chance of running
-    if ( _requestedActivity != ActivityID::Invalid ) {
-      _requestedActivity = ActivityID::Invalid;
+    if ( _requestedActivity != BehaviorID::Wait ) {
+      _requestedActivity = BehaviorID::Wait;
     }
   }
   
@@ -740,7 +751,7 @@ void ActivityFreeplay::DebugPrintActivities() const
     // now add every activity
     const ActivityVector& activitiesInSpark = activityTablePair.second;
     for( const auto& activity : activitiesInSpark ) {
-      stringForUnlockId << " --> " << ActivityIDToString(activity->GetID());
+      stringForUnlockId << " --> " << BehaviorIDToString(activity->GetID());
     }
     
     // log
@@ -751,7 +762,7 @@ void ActivityFreeplay::DebugPrintActivities() const
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityFreeplay::SetActivityStrategyCooldown(const UnlockId& unlockID,
-                                           const ActivityID& activityId,
+                                           const BehaviorID& activityId,
                                            float cooldown_ms)
 {
   const SparkToActivitiesTable::iterator iter = _activities.find(unlockID);

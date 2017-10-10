@@ -46,7 +46,7 @@ public:
   using ChooseNextBehaviorFunc = std::function<ICozmoBehaviorPtr(const ICozmoBehaviorPtr)>;
   using ChooseNextBehaviorQueue = std::queue<ChooseNextBehaviorFunc>;
 
-  ActivityVoiceCommand(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ActivityVoiceCommand(const Json::Value& config);
   virtual ~ActivityVoiceCommand();
   
   virtual Result Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) override;
@@ -57,7 +57,7 @@ public:
 protected:  
   virtual ICozmoBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior) override;
   
-
+  virtual void InitActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   // Class for tracking the response queue and current behavior running as a result

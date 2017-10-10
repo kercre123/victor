@@ -13,9 +13,9 @@
 #include "engine/aiComponent/behaviorComponent/activities/activities/activityStrictPriority.h"
 
 #include "anki/common/basestation/jsonTools.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityFactory.h"
 #include "engine/aiComponent/behaviorComponent/activities/activityStrategies/iActivityStrategy.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
@@ -30,27 +30,34 @@ namespace Cozmo {
 
 namespace{
 static const char* kActivitiesConfigKey = "subActivities";
-static const char* activityIDKey        = "activityID";
+static const char* activityIDKey        = "behaviorID";
 static const char* activityPriorityKey  = "activityPriority";
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityStrictPriority::ActivityStrictPriority(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IActivity(behaviorExternalInterface, config)
+ActivityStrictPriority::ActivityStrictPriority(const Json::Value& config)
+: IActivity(config)
 , _currentActivityPtr(nullptr)
+, _behaviorWait(nullptr)
 {
-  
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityStrictPriority::InitActivity(BehaviorExternalInterface& behaviorExternalInterface)
+{
   // TODO: rename _activities
   _activities.clear();
   
   // read every activity and create them with their own config
-  const Json::Value& activityPriorities = config[kActivitiesConfigKey];
+  const Json::Value& activityPriorities = _config[kActivitiesConfigKey];
   if ( !activityPriorities.isNull() )
   {
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     const Robot& robot = behaviorExternalInterface.GetRobot();
-    const auto& activityData = robot.GetContext()->GetDataLoader()->GetActivityJsons();
+    const auto& activityData = robot.GetContext()->GetDataLoader()->GetBehaviorJsons();
     // Iterate through the activities
     uint debugLastActivityPriority = 0;
     
@@ -71,14 +78,14 @@ ActivityStrictPriority::ActivityStrictPriority(BehaviorExternalInterface& behavi
       std::string activityID_str = JsonTools::ParseString(*it, activityIDKey,
                                                           "ActivityStrictPriority.CreateFromConfig.ActivityID.KeyMissing");
       
-      ActivityID activityID = ActivityIDFromString(activityID_str);
+      BehaviorID activityID = BehaviorIDFromString(activityID_str);
       
       const uint activityPriority = JsonTools::ParseUint8(*it, activityPriorityKey,
                                                           "ActivityStrictPriority.CreateFromConfig.ActivityPriority");
       
       DEV_ASSERT_MSG(activityPriority >= debugLastActivityPriority,
                      "ActivityStrictPriority.CreateFromConfig.ActivityPrioritiesOutOfOrder",
-                     "Activity id %s", ActivityIDToString(activityID));
+                     "Activity id %s", BehaviorIDToString(activityID));
       debugLastActivityPriority = activityPriority;
       
       
@@ -88,17 +95,15 @@ ActivityStrictPriority::ActivityStrictPriority(BehaviorExternalInterface& behavi
       
       DEV_ASSERT_MSG(dataIter != activityData.end(),
                      "ActivityStrictPriority.CreateFromConfig.ActivityDataNotFound",
-                     "No file found named %s", ActivityIDToString(activityID));
+                     "No file found named %s", BehaviorIDToString(activityID));
       
       // Gather the appropriate data from the config to generate the activity
       const Json::Value& activityConfig = dataIter->second;
       
-      ActivityType activityType =  IActivity::ExtractActivityTypeFromConfig(activityConfig);
+      BehaviorID id = ICozmoBehavior::ExtractBehaviorIDFromConfig(activityConfig);
+      ICozmoBehaviorPtr subActivity = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(id);
       
-      IActivity* subActivity = ActivityFactory::CreateActivity(behaviorExternalInterface,
-                                                               activityType,
-                                                               activityConfig);
-      _activities.emplace_back(subActivity);
+      _activities.emplace_back(std::static_pointer_cast<IActivity>(subActivity));
     }
   }
   
@@ -106,6 +111,14 @@ ActivityStrictPriority::ActivityStrictPriority(BehaviorExternalInterface& behavi
   
   // clear current activity
   _currentActivityPtr = nullptr;
+  _behaviorWait = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BehaviorID::Wait);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityStrictPriority::OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  BehaviorUpdate(behaviorExternalInterface);
 }
 
 
@@ -158,17 +171,24 @@ void ActivityStrictPriority::GetAllDelegates(std::set<IBehavior*>& delegates) co
     (*activityIter)->GetAllDelegates(delegates);
   }
   IActivity::GetAllDelegates(delegates);
+  delegates.insert(_behaviorWait.get());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityStrictPriority::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ActivityStrictPriority::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(USE_BSM){
     auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
     if((delegationComponent != nullptr) &&
        !delegationComponent->IsControlDelegated(this)){
       ICozmoBehaviorPtr nextBehavior = GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
+      // For activity to be "sticky" for legacy reasons we always need to delegate to something
+      if(nextBehavior == nullptr){
+        nextBehavior = _behaviorWait;
+        _behaviorWait->WantsToBeActivated(behaviorExternalInterface);
+      }
+      
       auto delegationWrap = delegationComponent->GetDelegator(this).lock();
       if((delegationWrap != nullptr) &&
          (nextBehavior != nullptr)){
@@ -176,7 +196,7 @@ void ActivityStrictPriority::UpdateInternal(BehaviorExternalInterface& behaviorE
       }
     }
   }else{
-    IActivity::UpdateInternal(behaviorExternalInterface);
+    IActivity::BehaviorUpdate(behaviorExternalInterface);
   }
 }
 

@@ -13,7 +13,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityFactory.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -120,18 +119,17 @@ void BehaviorComponent::Init(Robot& robot)
     
     if(USE_BSM){
       if(!behaviorSystemConfig.empty()){
-        ActivityType type = IActivity::ExtractActivityTypeFromConfig(behaviorSystemConfig);
+        BehaviorID id = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
         
-        IBehavior* dataBasedRunnable = ActivityFactory::CreateActivity(*_behaviorExternalInterface,
-                                                                       type,
-                                                                       behaviorSystemConfig);
-        dataBasedRunnable->Init( *_behaviorExternalInterface );
+        ICozmoBehaviorPtr dataBasedRunnable = _behaviorContainer->FindBehaviorByID(id);
+        DEV_ASSERT(dataBasedRunnable != nullptr,
+                   "BehaviorComponent.Init.InvalidBaseRunnable");
         
-        IBehavior* baseRunnable = dataBasedRunnable;
+        IBehavior* baseRunnable = dataBasedRunnable.get();
         if( ANKI_DEV_CHEATS ) {
           // create a dev base layer to put on the bottom, and pass the desired base in so that DevBaseRunnable
           // will automatically delegate to it
-          baseRunnable = new DevBaseRunnable( dataBasedRunnable );
+          baseRunnable = new DevBaseRunnable( dataBasedRunnable.get() );
           baseRunnable->Init( *_behaviorExternalInterface);
         }
         

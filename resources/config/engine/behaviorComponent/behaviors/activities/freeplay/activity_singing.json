@@ -1,6 +1,6 @@
 {
-  "activityID" : "Singing",
-  "activityType" : "BehaviorsOnly",
+  "behaviorID" : "Activity_Singing",
+  "behaviorClass" : "Activity_BehaviorsOnly",
   "behaviorChooser" :
   {
     "type" : "Scoring",

@@ -1,6 +1,6 @@
 {
-  "activityID" : "SparksBuildPyramid",
-  "activityType" : "Sparked",
+  "behaviorID" : "Activity_SparksBuildPyramid",
+  "behaviorClass" : "Activity_Sparked",
   "requireSpark":"BuildPyramid",
   "activityStrategy":
   {
@@ -14,7 +14,7 @@
   "sparksSuccessTrigger": "", // don't play any animation
   "subActivityDelegate":
   {
-    "activityID" : "BuildPyramid",
+    "behaviorID" : "Activity_BuildPyramid",
     "activityType" : "BuildPyramid",
     "needsActionID": "PyramidCompleted_Sparked",
     "name" : "sparksBuildPyramid",

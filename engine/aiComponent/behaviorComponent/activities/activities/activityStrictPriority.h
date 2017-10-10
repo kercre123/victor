@@ -28,20 +28,24 @@ namespace Cozmo {
 class ActivityStrictPriority : public IActivity
 {
 public:
-  ActivityStrictPriority(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ActivityStrictPriority(const Json::Value& config);
   virtual ~ActivityStrictPriority() {};
 
 protected:
   // get next behavior by properly managing the sub-activities
   virtual ICozmoBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior) override;
-  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
   void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
+  virtual void InitActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
+
 private:
-  using ActivityVector = std::vector< std::unique_ptr<IActivity>>;
+  using ActivityVector = std::vector< std::shared_ptr<IActivity>>;
   ActivityVector _activities;
   
   IActivity* _currentActivityPtr;
+  ICozmoBehaviorPtr _behaviorWait;
 };
 
 

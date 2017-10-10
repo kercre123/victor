@@ -178,8 +178,8 @@ public:
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityBuildPyramid::ActivityBuildPyramid(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IActivity(behaviorExternalInterface, config)
+ActivityBuildPyramid::ActivityBuildPyramid(const Json::Value& config)
+: IActivity(config)
 , _activeBehaviorChooser(nullptr)
 , _chooserPhase(ChooserPhase::None)
 , _lastUprightBlockCount(-1)
@@ -194,6 +194,23 @@ ActivityBuildPyramid::ActivityBuildPyramid(BehaviorExternalInterface& behaviorEx
 , _onSideAnimIndex(0)
 , _forceLightMusicUpdate(false)
 , _timeRespondedRollStartedPreviously_s(-1.0f)
+{
+
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ActivityBuildPyramid::~ActivityBuildPyramid()
+{
+  _behaviorPyramidThankYou = nullptr;
+  _behaviorRespondPossiblyRoll = nullptr;
+  _behaviorBuildPyramidBase = nullptr;
+  _behaviorBuildPyramid = nullptr;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityBuildPyramid::InitActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
   /////////
   // Get pointers to all behaviors that must be manually called
@@ -250,8 +267,8 @@ ActivityBuildPyramid::ActivityBuildPyramid(BehaviorExternalInterface& behaviorEx
   /////////
   // Get Choosers for setup/build when simple scoring is needed
   ///////
-  const Json::Value& simpleChooserJSON = config[kSetupChooserConfigKey];
-  const Json::Value& buildChooserJSON  = config[kBuildChooserConfigKey];
+  const Json::Value& simpleChooserJSON = _config[kSetupChooserConfigKey];
+  const Json::Value& buildChooserJSON  = _config[kBuildChooserConfigKey];
   
   _setupSimpleChooser = BehaviorChooserFactory::CreateBehaviorChooser(behaviorExternalInterface, simpleChooserJSON);
   _buildSimpleChooser = BehaviorChooserFactory::CreateBehaviorChooser(behaviorExternalInterface, buildChooserJSON);
@@ -262,26 +279,16 @@ ActivityBuildPyramid::ActivityBuildPyramid(BehaviorExternalInterface& behaviorEx
   ///////
   
   behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
-  {
-    ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged,
-    ExternalInterface::MessageEngineToGameTag::BehaviorObjectiveAchieved,
-    ExternalInterface::MessageEngineToGameTag::ObjectConnectionState
-  });
+      {
+        ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged,
+        ExternalInterface::MessageEngineToGameTag::BehaviorObjectiveAchieved,
+        ExternalInterface::MessageEngineToGameTag::ObjectConnectionState
+      });
   
   behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
-  {
-    ExternalInterface::MessageGameToEngineTag::RequestPyramidPreReqState
-  });
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityBuildPyramid::~ActivityBuildPyramid()
-{
-  _behaviorPyramidThankYou = nullptr;
-  _behaviorRespondPossiblyRoll = nullptr;
-  _behaviorBuildPyramidBase = nullptr;
-  _behaviorBuildPyramid = nullptr;
+      {
+        ExternalInterface::MessageGameToEngineTag::RequestPyramidPreReqState
+      });
 }
 
 

@@ -18,7 +18,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/doATrickSelector.h"
 #include "engine/aiComponent/requestGameComponent.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityFactory.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
@@ -351,14 +350,13 @@ Result BehaviorManager::InitConfiguration(BehaviorExternalInterface& behaviorExt
       JsonTools::GetValueOptional(activityJson, kHighLevelActivityTypeConfigKey, highLevelActivityStr);
       HighLevelActivity highLevelID = HighLevelActivityFromString(highLevelActivityStr);
       
-      ActivityType activityType = IActivity::ExtractActivityTypeFromConfig(activityJson);
+      
+      ICozmoBehaviorPtr activity = behaviorExternalInterface.GetBehaviorContainer().
+               FindBehaviorByID(ICozmoBehavior::ExtractBehaviorIDFromConfig(activityJson));
       
       _highLevelActivityMap.insert(
-        std::make_pair(highLevelID,
-                       std::shared_ptr<IActivity>(
-                              ActivityFactory::CreateActivity(behaviorExternalInterface,
-                                                              activityType,
-                                                              activityJson))));
+          std::make_pair(highLevelID,
+                         std::static_pointer_cast<IActivity>(activity)));
     }
     
     if(!USE_BSM){
@@ -1012,7 +1010,7 @@ Result BehaviorManager::Update(BehaviorExternalInterface& behaviorExternalInterf
       (voiceCommandBehavior != nullptr);
     
     // We have a current behavior, update it.
-    const ICozmoBehavior::Status status = currentBehavior->Update(behaviorExternalInterface);
+    const ICozmoBehavior::Status status = currentBehavior->BehaviorUpdate_Legacy(behaviorExternalInterface);
      
     switch(status)
     {
@@ -1062,13 +1060,13 @@ void BehaviorManager::SetCurrentActivity(BehaviorExternalInterface& behaviorExte
     // PLEASE DO NOT CHANGE or you will break analytics queries
     LOG_EVENT("BehaviorManager.SetBehaviorChooser",
               "Switching behavior chooser from '%s' to '%s'",
-              ActivityIDToString(GetCurrentActivity()->GetID()),
+              BehaviorIDToString(GetCurrentActivity()->GetID()),
               EnumToString(newActivity));
     
     PRINT_CH_INFO("Behaviors",
                   "BehaviorManager.SetCurrentActivity",
                   "Switching behavior chooser from '%s' to '%s'",
-                  ActivityIDToString(GetCurrentActivity()->GetID()),
+                  BehaviorIDToString(GetCurrentActivity()->GetID()),
                   EnumToString(newActivity));
   }
   

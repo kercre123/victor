@@ -10,6 +10,17 @@ namespace Cozmo {
 // which the behavior is an instance of
 // PLEASE KEEP ALPHABETIZED
 enum uint_8 BehaviorClass {
+  Activity_BehaviorsOnly,
+  Activity_BuildPyramid,
+  Activity_Feeding,
+  Activity_Freeplay,
+  Activity_GatherCubes,
+  Activity_Socialize,
+  Activity_Sparked,
+  Activity_StrictPriority,
+  Activity_VoiceCommand,
+  Activity_NeedsExpression,
+
   // Behaviors based on scores
   Bouncer,
   BringCubeToBeacon,
@@ -100,6 +111,37 @@ enum uint_8 BehaviorClass {
 // so that they can be referenced by other parts of the behavior system
 // PLEASE KEEP ALPHABETIZED
 enum uint_8 BehaviorID {
+  Activity_BuildPyramid,
+  Activity_Feeding,
+  Activity_Freeplay,
+  Activity_GatherCubes,
+  Activity_Hiking,
+  Activity_MeetCozmo,
+  Activity_NeedsSevereLowEnergy,
+  Activity_NeedsSevereLowRepair,
+  Activity_NeedsSevereLowPlayGetIn,
+  Activity_NothingToDo,
+  Activity_PlayAlone,
+  Activity_PlayWithHumans,
+  Activity_PutDownDispatch,
+  Activity_Selection,
+  Activity_Singing,
+  Activity_Socialize,
+  Activity_SparksBuildPyramid,
+  Activity_SparksFistBump,
+  Activity_SparksGatherCubes,
+  Activity_SparksKnockOverCubes,
+  Activity_SparksPeekABoo,
+  Activity_SparksPickUpCube,
+  Activity_SparksPopAWheelie,
+  Activity_SparksPounceOnMotion,
+  Activity_SparksRollBlock,
+  Activity_SparksStackBlock,
+  Activity_SparksWorkout,
+  Activity_SparksTrackLaser,
+  Activity_VoiceCommand,
+
+
   AcknowledgeFace,
   AcknowledgeObject,
   Bouncer,
@@ -285,6 +327,8 @@ enum uint_8 BehaviorID {
   VC_RequestMemoryMatch,
   VC_RequestSpeedTap,
   VC_SearchForFace,
+
+  VictorFreeplay,
 
   Wait
 }

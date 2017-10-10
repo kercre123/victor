@@ -25,8 +25,8 @@ namespace Anki {
 namespace Cozmo {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityGatherCubes::ActivityGatherCubes(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IActivity(behaviorExternalInterface, config)
+ActivityGatherCubes::ActivityGatherCubes(const Json::Value& config)
+: IActivity(config)
 {
   
 }

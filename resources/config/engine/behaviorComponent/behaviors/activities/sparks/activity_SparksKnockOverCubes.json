@@ -1,7 +1,7 @@
 {
-  "activityID" : "SparksPopAWheelie",
-  "activityType" : "Sparked",
-  "requireSpark":"PopAWheelieAction",
+  "behaviorID" : "Activity_SparksKnockOverCubes",
+  "behaviorClass" : "Activity_Sparked",
+  "requireSpark":"KnockOverThreeCubeStack",
   "activityStrategy":
   {
     "type" : "Spark"
@@ -11,15 +11,15 @@
     "type" : "StrictPriority",
     "behaviors" : [
       "DriveOffCharger",
-      "KnockOverCubes",
+      "SparksKnockOverCubes",
+      "SparksCheckForStackAtInterval",
       "SparksPutDownBlock",
-      "SparksPopAWheelie",
       "SparksLookInPlace"
     ]
   },
   "minTimeSecs": 0,
   "maxTimeSecs": 60,
   "numberOfRepetitions": 1,
-  "behaviorObjective": "PoppedWheelie",
+  "behaviorObjective": "KnockedOverBlocks",
   "softSparkTrigger": "SoftSparkUpgradeTracks"
 }

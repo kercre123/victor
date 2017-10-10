@@ -47,7 +47,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor/destructor
-  ActivityFreeplay(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ActivityFreeplay(const Json::Value& config);
   ~ActivityFreeplay();
   
   
@@ -70,23 +70,23 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // sets the name of an activity we want to force for debugging (not to be used in production)
-  void SetConsoleRequestedActivity(ActivityID activityID) { _debugConsoleRequestedActivity = activityID; }
+  void SetConsoleRequestedActivity(BehaviorID activityID) { _debugConsoleRequestedActivity = activityID; }
   
   void SetActivityStrategyCooldown(const UnlockId& unlockID,
-                                   const ActivityID& activityId,
+                                   const BehaviorID& activityId,
                                    float cooldown_ms);
   
-  using ActivityVector = std::vector< std::unique_ptr<IActivity>>;
+  using ActivityVector = std::vector<std::shared_ptr<IActivity>>;
   using SparkToActivitiesTable = std::unordered_map<UnlockId, ActivityVector, Util::EnumHasher>;
   
   const SparkToActivitiesTable& GetFreeplayActivities() const { return _activities; }
-
-  virtual const char* GetIDStr() const override { return _freeplayIDString.c_str();}
 
 protected:
 
   // get next behavior by properly managing the sub-activities
   virtual ICozmoBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior) override;
+  
+  virtual void InitActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
 
@@ -96,10 +96,10 @@ private:
   
   struct Configuration {
     // activities we want to select for recent objects
-    ActivityID faceAndCubeActivity;
-    ActivityID faceOnlyActivity;
-    ActivityID cubeOnlyActivity;
-    ActivityID noFaceNoCubeActivity;
+    BehaviorID faceAndCubeActivity;
+    BehaviorID faceOnlyActivity;
+    BehaviorID cubeOnlyActivity;
+    BehaviorID noFaceNoCubeActivity;
   };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -118,7 +118,7 @@ private:
   void DebugPrintActivities() const;
   
   // Allows activities to pass up a display name from sub activities
-  void SetActivityIDFromSubActivity(ActivityID activityID);
+  void SetActivityIDFromSubActivity(BehaviorID activityID);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -132,7 +132,7 @@ private:
   
   // External interface for freeplay to pass in with messages - should be removed
   // when messaging is passed in syncronously 	COZMO-14461
-  BehaviorExternalInterface& _behaviorExternalInterface;
+  BehaviorExternalInterface* _behaviorExternalInterface;
   
   // raw pointer to the current activity, which is guaranteed be stored in _activities
   IActivity* _currentActivityPtr;
@@ -141,12 +141,12 @@ private:
   std::vector<Signal::SmartHandle> _signalHandles;
   
   // this activity is requested by external systems under certain circumstances
-  ActivityID _requestedActivity;
+  BehaviorID _requestedActivity;
   
   // this variable is set from debug console to cycle through activities in activity evaluators
-  ActivityID _debugConsoleRequestedActivity;
+  BehaviorID _debugConsoleRequestedActivity;
   
-  ActivityID _subID;
+  BehaviorID _subID;
   // Maintain the constructed freeplayIDString
   std::string _freeplayIDString;
 };

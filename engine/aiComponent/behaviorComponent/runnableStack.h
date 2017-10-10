@@ -69,7 +69,7 @@ private:
   void PrepareDelegatesToEnterScope(IBehavior* delegated);
   
   // calls all appropriate functions to prepare a delegate to be removed from the stack
-  void PrepareDelegateForRemovalFromStack(IBehavior* delegated);
+  void PrepareDelegatesForRemovalFromStack(IBehavior* delegated);
 };
 
 

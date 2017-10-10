@@ -110,11 +110,6 @@ public:
   // likely waiting for something to complete
   bool IsActing() const;
 
-  
-  // used to track whether control has been re-gained within the last tick
-  // this relies on update being ticked once and only once per tick
-  bool WasControlDelegatedLastTick();
-
   // returns the number of times this behavior has been started (number of times Init was called and returned
   // OK, not counting calls to Resume)
   int GetNumTimesBehaviorStarted() const { return _startCount; }
@@ -143,7 +138,7 @@ public:
   // Step through the behavior and deliver rewards to the robot along the way
   // This calls the protected virtual UpdateInternal() method, which each
   // derived class should implement.
-  Status Update(BehaviorExternalInterface& behaviorExternalInterface);
+  Status BehaviorUpdate_Legacy(BehaviorExternalInterface& behaviorExternalInterface);
     
   // This behavior was the currently running behavior, but is now stopping (to make way for a new current
   // behavior). Any behaviors from StartActing will be canceled.
@@ -218,8 +213,6 @@ public:
 protected:
   // Currently unused overrides of IBehavior since no equivalence in old BM system
   void GetAllDelegates(std::set<IBehavior*>& delegates) const override {}
-  virtual void OnEnteredActivatableScopeInternal() override {};
-  virtual void OnLeftActivatableScopeInternal() override {};
   
   using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
 
@@ -228,6 +221,11 @@ protected:
                   BehaviorIDToString(GetID()), _debugStateName.c_str(), inName.c_str());
     _debugStateName = inName;
   }
+  
+  
+  virtual void OnEnteredActivatableScopeInternal() override;
+  virtual void OnLeftActivatableScopeInternal() override;
+
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface);
@@ -245,6 +243,7 @@ protected:
   // or Failure as needed. If it returns Complete, Stop will be called. Default implementation is to
   // return Running while IsActing, and Complete otherwise
   virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) {};
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface);
   virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) { };
 
@@ -460,8 +459,6 @@ private:
 
   // only used if we aren't using the BSM
   u32 _lastActionTag = 0;
-  
-  size_t _actionFinishedRunningOnTick;
   IWantsToRunStrategyPtr _wantsToRunStrategy;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed

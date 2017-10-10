@@ -1,6 +1,6 @@
 {
-  "activityID" : "SparksFistBump",
-  "activityType" : "Sparked",
+  "behaviorID" : "Activity_SparksFistBump",
+  "behaviorClass" : "Activity_Sparked",
   "requireSpark":"FistBump",
   "activityStrategy":
   {

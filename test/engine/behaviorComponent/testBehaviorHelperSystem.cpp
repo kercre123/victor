@@ -322,7 +322,7 @@ void DoTicks_(Robot& robot, TestBehaviorWithHelpers& behavior, int num, bool exp
   std::string behaviorDebugStr;
   for(int i=0; i<num; i++) {
     robot.GetAIComponent().Update(robot, currentActivityName, behaviorDebugStr);
-    status = behavior.Update(*behaviorExternalInterface);
+    status = behavior.BehaviorUpdate_Legacy(*behaviorExternalInterface);
     robot.GetActionList().Update();
     
     updateTicks++;

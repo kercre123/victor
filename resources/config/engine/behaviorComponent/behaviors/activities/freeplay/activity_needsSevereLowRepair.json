@@ -1,24 +1,15 @@
 {
-  "activityID": "NeedsSevereLowEnergy",
-  "activityType": "NeedsExpression",
-
+  "behaviorID": "Activity_NeedsSevereLowRepair",
+  "behaviorClass": "Activity_NeedsExpression",
+  
   "activityStrategy":
   {
     "type" : "Needs",
     "wantsToRunStrategyConfig": {
       "strategyType" : "InNeedsBracket",
-      "need": "Energy",
-      "needBracket": "Critical"
-    },
-
-    // stop this activity if higherPriorityStrategy wants to run
-    "higherPriorityStrategyConfig": {
-      "strategyType" : "InNeedsBracket",
       "need": "Repair",
       "needBracket": "Critical"
     },
-    
-    
     // never wants to end based on time
     "activityShouldEndDurationSecs": -1.0
   },
@@ -30,8 +21,8 @@
     "behaviors" : [
       "DriveOffCharger",
       "PutDownBlock",
-      "Needs_SevereLowEnergyGetIn",
-      "Needs_SevereLowEnergyState",
+      "Needs_SevereLowRepairGetIn",
+      "Needs_SevereLowRepairState",
       "Needs_Wait"
     ]
   }

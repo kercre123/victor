@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_Activities_Activities_IActivity_H__
 
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
-#include "engine/aiComponent/behaviorComponent/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 
@@ -41,7 +41,7 @@ class IBehaviorChooser;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // IActivity
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class IActivity : public IBehavior
+class IActivity : public ICozmoBehavior
 {
 public:
   
@@ -53,12 +53,9 @@ public:
   // Initialization/destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  IActivity(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  IActivity(const Json::Value& config);
   virtual ~IActivity();
-
-  static ActivityID ExtractActivityIDFromConfig(const Json::Value& config,
-                                                const std::string& fileName = "");
-  static ActivityType ExtractActivityTypeFromConfig(const Json::Value& config);
+  
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -68,27 +65,27 @@ public:
   const IActivityStrategy& GetStrategy() const { assert(_strategy); return *_strategy.get(); }
   IActivityStrategy* DevGetStrategy();
   
-  // returns the activity name set from config
-  ActivityID  GetID() const { return _id; }
-  // Sub activities can override
-  virtual const char* GetIDStr() const { return ActivityIDToString(_id); }
-
+  virtual bool CarryingObjectHandledInternally() const override { return true;}
+  
 protected:
   // Functions called by IBehavior
-  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
-  virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override final;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override final;
   
   // Currently unused overrides of IBehavior since no equivalence in old BM system
   void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
   virtual void OnEnteredActivatableScopeInternal() override {};
   virtual void OnLeftActivatableScopeInternal() override {};
   
   // Override to have sub classes notified of activated/deactivated
   virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) {};
   virtual void OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) {};
+  
+  virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override final;
+  virtual void InitActivity(BehaviorExternalInterface& behaviorExternalInterface) {};
+
 
   ////////////
   //// LEGACY FUNCTIONS
@@ -137,7 +134,9 @@ protected:
                                     const std::string& lockID,
                                     const ReactionTrigger& trigger);
 #endif
-
+  
+  const Json::Value& _config;
+  
   // Needs action ID that optionally gets registered with the needs manager
   NeedsActionId _needsActionId;
 
@@ -161,8 +160,6 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-
-  
   // strategy to run this activity
   std::unique_ptr<IActivityStrategy> _strategy;
   
@@ -178,9 +175,6 @@ private:
   // The last chosen interlude behavior. When an interlude behavior is chosen, it is always allowed to run to
   // completion before another behavior gets selected
   ICozmoBehaviorPtr _lastChosenInterludeBehavior;
-  
-  // activity name - defined in config or passed up from sub-activity
-  ActivityID _id;
 
   // optional driving animations associated to this activity
   AnimationTrigger _driveStartAnimTrigger;

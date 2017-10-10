@@ -67,9 +67,16 @@ ActivitySocialize::PotentialObjectivesList
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivitySocialize::ActivitySocialize(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IActivity(behaviorExternalInterface, config)
+ActivitySocialize::ActivitySocialize(const Json::Value& config)
+: IActivity(config)
 , _potentialObjectives( ReadPotentialObjectives( config ) )
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivitySocialize::InitActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // choosers and activities are created after the behaviors are added to the factory, so grab those now
   const BehaviorContainer& BC = behaviorExternalInterface.GetBehaviorContainer();
@@ -82,16 +89,16 @@ ActivitySocialize::ActivitySocialize(BehaviorExternalInterface& behaviorExternal
   DEV_ASSERT(nullptr != _interactWithFacesBehavior, "FPSocializeBehaviorChooser.MissingBehavior.InteractWithFaces");
   
   // defaults to 0 to mean allow infinite iterations
-  _maxNumIterationsToAllowForSearch = config.get("maxNumFindFacesSearchIterations", 0).asUInt();
+  _maxNumIterationsToAllowForSearch = _config.get("maxNumFindFacesSearchIterations", 0).asUInt();
   
   
   behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
-  {
-    ExternalInterface::MessageEngineToGameTag::BehaviorObjectiveAchieved
-  });
+      {
+        ExternalInterface::MessageEngineToGameTag::BehaviorObjectiveAchieved
+      });
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivitySocialize::OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {

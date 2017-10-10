@@ -53,7 +53,7 @@ public:
   int GetRound() const { return _round; }
   
   // Change music switch state for Ai Goals in freeplay
-  void UpdateActivityMusicState(ActivityID activityID);
+  void UpdateActivityMusicState(BehaviorID activityID);
   
 protected:
   // Activate to allow behavior to update audio engine
@@ -79,16 +79,16 @@ private:
   // Track second unlockID value for instances where we receive the appropriate
   // music state from game after a spark activity has already started
   UnlockId  _activeSparkMusicID = UnlockId::Count;
-  UnlockId  _lastUnlockIDReceived = UnlockId::Count;
+  //UnlockId  _lastUnlockIDReceived = UnlockId::Count;
   
   AudioMetaData::SwitchState::Sparked _sparkedMusicState = AudioMetaData::SwitchState::Sparked::Invalid;
   bool      _isActive = false;
   int       _round    = kBehaviorRound;
   
   // World Event tracking
-  bool      _isCubeInLift     = false;
-  bool      _isRequestingGame = false;
-  bool      _stackExists      = false;
+  //bool      _isCubeInLift     = false;
+  //bool      _isRequestingGame = false;
+  //bool      _stackExists      = false;
   
   std::vector<::Signal::SmartHandle> _eventHandles;
   
@@ -96,7 +96,7 @@ private:
   
   // Keep track of the last AI goal name sent from the PublicStateBroadcaster so we
   //  can properly handle AI goal transitions.
-  ActivityID _prevActivity;
+  //BehaviorID _prevActivity;
   
   // Tracks the active behavior stage if custom music rounds are being set
   // Use setter/getter function rather than accessing directly

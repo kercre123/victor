@@ -118,8 +118,8 @@ const char* kEatingDASKey =  "eating";
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityFeeding::ActivityFeeding(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IActivity(behaviorExternalInterface, config)
+ActivityFeeding::ActivityFeeding(const Json::Value& config)
+: IActivity(config)
 , _activityStage(FeedingActivityStage::SearchForFace)
 , _lastStageChangeTime_s(0)
 , _timeFaceSearchShouldEnd_s(FLT_MAX)
@@ -129,16 +129,30 @@ ActivityFeeding::ActivityFeeding(BehaviorExternalInterface& behaviorExternalInte
 , _hasSetIdle(false)
 , _universalResponseChooser(nullptr)
 {
+  
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ActivityFeeding::~ActivityFeeding()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityFeeding::InitActivity(BehaviorExternalInterface& behaviorExternalInterface)
+{
   ////////
   /// Grab behaviors
   ////////
   
   auto& BC = behaviorExternalInterface.GetBehaviorContainer();
-
+  
   BC.FindBehaviorByIDAndDowncast(BehaviorID::FeedingSearchForCube,
                                  BehaviorClass::FeedingSearchForCube,
                                  _searchForCubeBehavior);
-
+  
   BC.FindBehaviorByIDAndDowncast(BehaviorID::FeedingEat,
                                  BehaviorClass::FeedingEat,
                                  _eatFoodBehavior);
@@ -157,29 +171,29 @@ ActivityFeeding::ActivityFeeding(BehaviorExternalInterface& behaviorExternalInte
   _turnToFaceBehavior = BC.FindBehaviorByID(BehaviorID::FeedingPlayRequestAtFace);
   DEV_ASSERT(_turnToFaceBehavior != nullptr,
              "ActivityFeeding.TurnToFaceBehavior.IncorrectBehaviorReceievedFromFactory");
-
+  
   _turnToFaceBehavior_Severe = BC.FindBehaviorByID(BehaviorID::FeedingPlayRequestAtFace_Severe);
   DEV_ASSERT(_turnToFaceBehavior != nullptr,
              "ActivityFeeding.TurnToFace_SevereBehavior.IncorrectBehaviorReceivedFromFactory");
-
+  
   _waitBehavior = BC.FindBehaviorByID(BehaviorID::Wait);
   DEV_ASSERT(_waitBehavior != nullptr, "ActivityFeeding.WaitBehavior.NotFound");
   
   _reactCubeShakeBehavior = BC.FindBehaviorByID(BehaviorID::FeedingReactCubeShake);
   DEV_ASSERT(_reactCubeShakeBehavior != nullptr, "ActivityFeeding.FeedingReactCubeShakeBehavior.NotFound");
-
+  
   _reactCubeShakeBehavior_Severe = BC.FindBehaviorByID(BehaviorID::FeedingReactCubeShake_Severe);
   DEV_ASSERT(_reactCubeShakeBehavior_Severe != nullptr, "ActivityFeeding.FeedingReactCubeShake_SevereBehavior.NotFound");
   
   _reactFullCubeBehavior = BC.FindBehaviorByID(BehaviorID::FeedingReactFullCube);
   DEV_ASSERT(_reactFullCubeBehavior != nullptr, "ActivityFeeding.FeedingReactFullCubeBehavior.NotFound");
-
+  
   _reactFullCubeBehavior_Severe = BC.FindBehaviorByID(BehaviorID::FeedingReactFullCube_Severe);
   DEV_ASSERT(_reactFullCubeBehavior_Severe != nullptr, "ActivityFeeding.FeedingReactFullCube_SevereBehavior.NotFound");
   
   _reactSeeCharged = BC.FindBehaviorByID(BehaviorID::FeedingReactSeeCharged);
   DEV_ASSERT(_reactSeeCharged != nullptr, "ActivityFeeding.FeedingReactSeeChargedBehavior.NotFound");
-
+  
   _reactSeeCharged_Severe = BC.FindBehaviorByID(BehaviorID::FeedingReactSeeCharged_Severe);
   DEV_ASSERT(_reactSeeCharged_Severe != nullptr, "ActivityFeeding.FeedingReactSeeCharged_SevereBehavior.NotFound");
   
@@ -187,10 +201,10 @@ ActivityFeeding::ActivityFeeding(BehaviorExternalInterface& behaviorExternalInte
   /// Setup UniversalChooser
   ////////
   {
-    const Json::Value& universalChooserJSON = config[kUniversalChooser];
+    const Json::Value& universalChooserJSON = _config[kUniversalChooser];
     _universalResponseChooser = BehaviorChooserFactory::CreateBehaviorChooser(
-                                    behaviorExternalInterface,
-                                    universalChooserJSON);
+                                                                              behaviorExternalInterface,
+                                                                              universalChooserJSON);
     DEV_ASSERT(_universalResponseChooser != nullptr,
                "ActivityFeeding.UniversalChooserNotSpecified");
   }
@@ -224,13 +238,6 @@ ActivityFeeding::ActivityFeeding(BehaviorExternalInterface& behaviorExternalInte
   // TODO:(bn) maybe this should be a function with a switch statement instead?
   DEV_ASSERT(_stageToBehaviorMap.size() == (static_cast<int>(FeedingActivityStage::EatFood) + 1),
              "AcitivityFeeding.Constructor.StageBehaviorSizeMismatch");
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityFeeding::~ActivityFeeding()
-{
-
 }
 
 

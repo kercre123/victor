@@ -1,6 +1,6 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 {
-  "behaviorID" : "Victor_Freeplay",
+  "behaviorID" : "VictorFreeplay",
   "behaviorClass" : "Activity_StrictPriority",
   // Activity will be kicked out by behaviorManager
   "activityStrategy":

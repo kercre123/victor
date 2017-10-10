@@ -178,12 +178,20 @@ using namespace ::Anki::Cozmo::VoiceCommand;
 #define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityVoiceCommand::ActivityVoiceCommand(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-:IActivity(behaviorExternalInterface, config)
-, _context(behaviorExternalInterface.GetRobot().GetContext())
+ActivityVoiceCommand::ActivityVoiceCommand(const Json::Value& config)
+:IActivity(config)
 , _vcResponseData(std::make_unique<VCResponseData>(_context))
 , _lookDownObjectiveAchieved(false)
 {
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityVoiceCommand::InitActivity(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  _context = behaviorExternalInterface.GetRobot().GetContext();
+  
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
@@ -199,10 +207,10 @@ ActivityVoiceCommand::ActivityVoiceCommand(BehaviorExternalInterface& behaviorEx
     ICozmoBehaviorPtr comeHereBehavior = BM.FindBehaviorByID(BehaviorID::VC_ComeHere);
     if(ANKI_DEV_CHEATS){
       _driveToFaceBehavior = std::dynamic_pointer_cast<BehaviorDriveToFace>(comeHereBehavior);
-
+      
     }else{
       _driveToFaceBehavior = std::static_pointer_cast<BehaviorDriveToFace>(comeHereBehavior);
-
+      
     }
     DEV_ASSERT(_driveToFaceBehavior != nullptr &&
                _driveToFaceBehavior->GetClass() == BehaviorClass::DriveToFace,
@@ -218,7 +226,7 @@ ActivityVoiceCommand::ActivityVoiceCommand(BehaviorExternalInterface& behaviorEx
   DEV_ASSERT(_fistBumpBehavior != nullptr &&
              _fistBumpBehavior->GetClass() == BehaviorClass::FistBump,
              "VoiceCommandBehaviorChooser.FistBump.ImproperClassRetrievedForID");
-
+  
   _peekABooBehavior = BM.FindBehaviorByID(BehaviorID::FPPeekABoo);
   DEV_ASSERT(_peekABooBehavior != nullptr &&
              _peekABooBehavior->GetClass() == BehaviorClass::PeekABoo,
@@ -258,7 +266,7 @@ ActivityVoiceCommand::ActivityVoiceCommand(BehaviorExternalInterface& behaviorEx
   ICozmoBehaviorPtr VC_Keepaway = BM.FindBehaviorByID(BehaviorID::VC_RequestKeepAway);
   ICozmoBehaviorPtr VC_QT = BM.FindBehaviorByID(BehaviorID::VC_RequestSpeedTap);
   ICozmoBehaviorPtr VC_MM = BM.FindBehaviorByID(BehaviorID::VC_RequestMemoryMatch);
-
+  
   _letsPlayMap.insert(std::make_pair(UnlockId::KeepawayGame, VC_Keepaway));
   _letsPlayMap.insert(std::make_pair(UnlockId::QuickTapGame, VC_QT));
   _letsPlayMap.insert(std::make_pair(UnlockId::MemoryMatchGame, VC_MM));

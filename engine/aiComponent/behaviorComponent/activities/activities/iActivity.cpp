@@ -49,8 +49,6 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-static const char* kActivityIDConfigKey               = "activityID";
-static const char* kActivityTypeConfigKey             = "activityType";
 static const char* kNeedsActionIDKey                  = "needsActionID";
 static const char* kBehaviorChooserConfigKey          = "behaviorChooser";
 static const char* kInterludeBehaviorChooserConfigKey = "interludeBehaviorChooser";
@@ -62,8 +60,9 @@ static const std::string kIdleLockPrefix              = "Activity_";
 } // end namespace
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IActivity::IActivity(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IBehavior(ActivityIDToString(ExtractActivityIDFromConfig(config)))
+IActivity::IActivity(const Json::Value& config)
+: ICozmoBehavior(config)
+, _config(config)
 , _driveStartAnimTrigger(AnimationTrigger::Count)
 , _driveLoopAnimTrigger(AnimationTrigger::Count)
 , _driveEndAnimTrigger(AnimationTrigger::Count)
@@ -74,7 +73,6 @@ IActivity::IActivity(BehaviorExternalInterface& behaviorExternalInterface, const
 , _lastTimeActivityStartedSecs(-1.0f)
 , _lastTimeActivityStoppedSecs(-1.0f)
 {
-  ReadConfig(behaviorExternalInterface, config);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -82,44 +80,15 @@ IActivity::~IActivity()
 {
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityID IActivity::ExtractActivityIDFromConfig(const Json::Value& config,
-                                                  const std::string& fileName)
+void IActivity::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  const std::string debugName = "ActivityID.NoActivityIdSpecified";
-  const std::string activityID_str = JsonTools::ParseString(config, kActivityIDConfigKey, debugName);
-  
-  // To make it easy to find activities, assert that the file name and activityID match
-  if(ANKI_DEV_CHEATS && !fileName.empty()){
-    std::string jsonFileName = Util::FileUtils::GetFileName(fileName);
-    // remove extension
-    auto dotIndex = jsonFileName.find_last_of(".");
-    std::string lowerFileName = dotIndex == std::string::npos ? jsonFileName : jsonFileName.substr(0, dotIndex);
-    std::transform(lowerFileName.begin(), lowerFileName.end(), lowerFileName.begin(), ::tolower);
-    
-    std::string activityIDLower = activityID_str;
-    std::transform(activityIDLower.begin(), activityIDLower.end(), activityIDLower.begin(), ::tolower);
-    DEV_ASSERT_MSG(activityIDLower == lowerFileName,
-                   "RobotDataLoader.LoadActivities.ActivityIDFileNameMismatch",
-                   "File name %s does not match BehaviorID %s",
-                   fileName.c_str(),
-                   activityID_str.c_str());
-  }
-  
-  return ActivityIDFromString(activityID_str);
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityType IActivity::ExtractActivityTypeFromConfig(const Json::Value& config)
-{
-  std::string activityTypeJSON;
-  JsonTools::GetValueOptional(config, kActivityTypeConfigKey, activityTypeJSON);
-  return ActivityTypeFromString(activityTypeJSON);
+  ReadConfig(behaviorExternalInterface, _config);
+  InitActivity(behaviorExternalInterface);
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NeedsActionId IActivity::ExtractNeedsActionIDFromConfig(const Json::Value& config)
 {
@@ -138,9 +107,6 @@ NeedsActionId IActivity::ExtractNeedsActionIDFromConfig(const Json::Value& confi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IActivity::ReadConfig(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
 {
-  // read info from config
-  _id = ExtractActivityIDFromConfig(config);
-
   _needsActionId = ExtractNeedsActionIDFromConfig(config);
   
   // - - - - - - - - - -
@@ -220,7 +186,7 @@ void IActivity::ReadConfig(BehaviorExternalInterface& behaviorExternalInterface,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IActivity::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+void IActivity::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) {
   if(USE_BSM){
     auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
     if((_behaviorChooserPtr != nullptr) &&
@@ -250,7 +216,7 @@ void IActivity::GetAllDelegates(std::set<IBehavior*>& delegates) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IActivity::WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool IActivity::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return _strategy->WantsToStart(behaviorExternalInterface,
                                  GetLastTimeStoppedSecs(),
@@ -259,18 +225,11 @@ bool IActivity::WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IActivity::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+Result IActivity::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _lastTimeActivityStartedSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(_behaviorChooserPtr.get() != nullptr){
     _behaviorChooserPtr->OnActivated(behaviorExternalInterface);
-  }
-  
-  // Update Activity state for the PublicStateBroadcaster
-  // Note: This only applies to freeplay goals, spark goals do nothing
-  auto publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
-  if(publicStateBroadcaster != nullptr){
-    publicStateBroadcaster->UpdateActivity(_id);
   }
   
   // set driving animations for this activity if specified in config
@@ -301,12 +260,13 @@ void IActivity::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalI
   
   // log event to das - note freeplay_goal is a legacy name for Activities left
   // in place so that data is queriable - please do not change
-  Util::sEventF("robot.freeplay_goal_started", {}, "%s", ActivityIDToString(_id));
+  Util::sEventF("robot.freeplay_goal_started", {}, "%s", GetIDStr().c_str());
   OnActivatedActivity(behaviorExternalInterface);
+  return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IActivity::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void IActivity::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _lastTimeActivityStoppedSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(_behaviorChooserPtr.get() != nullptr){
@@ -359,7 +319,7 @@ void IActivity::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExterna
      needsManager->IsPendingSparksRewardMsg()){
     PRINT_NAMED_INFO("IActivity.OnDeselected.CancelSparksRewardMsg",
                      "Cancelling sparks reward message because ending activity %s",
-                     ActivityIDToString(_id));
+                     GetIDStr().c_str());
     needsManager->SparksRewardCommunicatedToUser();
   }
   
@@ -377,7 +337,7 @@ void IActivity::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExterna
   // in place so that data is queriable - please do not change
   Util::sEventF("robot.freeplay_goal_ended",
                 {{DDATA, std::to_string(nSecs).c_str()}},
-                "%s", ActivityIDToString(_id));
+                "%s", GetIDStr().c_str());
   
   OnDeactivatedActivity(behaviorExternalInterface);
 }
@@ -413,7 +373,7 @@ ICozmoBehaviorPtr IActivity::GetDesiredActiveBehavior(BehaviorExternalInterface&
     if(_lastChosenInterludeBehavior != nullptr) {
       PRINT_CH_INFO("Behaviors", "IActivity.ChooseInterludeBehavior",
                     "Activity %s is inserting interlude %s between behaviors %s and %s",
-                    GetIDStr(),
+                    GetIDStr().c_str(),
                     _lastChosenInterludeBehavior->GetIDStr().c_str(),
                     currentRunningBehavior ? currentRunningBehavior->GetIDStr().c_str() : "NULL",
                     ret ? ret->GetIDStr().c_str() : "NULL");
@@ -447,7 +407,7 @@ void IActivity::SmartPushIdleAnimation(BehaviorExternalInterface& behaviorExtern
   if(ANKI_VERIFY(!_hasSetIdle,
                  "IActivity.SmartPushIdleAnimation.IdleAlreadySet",
                  "Activity %s has already set an idle animation",
-                 GetIDStr())){
+                 GetIDStr().c_str())){
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
@@ -463,7 +423,7 @@ void IActivity::SmartRemoveIdleAnimation(BehaviorExternalInterface& behaviorExte
   if(ANKI_VERIFY(_hasSetIdle,
                  "IActivity.SmartRemoveIdleAnimation.NoIdleSet",
                  "Activity %s is trying to remove an idle, but none is currently set",
-                 GetIDStr())){
+                 GetIDStr().c_str())){
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();

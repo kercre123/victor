@@ -30,7 +30,7 @@ class BehaviorExternalInterface;
 class ActivityGatherCubes : public IActivity
 {
 public:
-  ActivityGatherCubes(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ActivityGatherCubes(const Json::Value& config);
   virtual ~ActivityGatherCubes() {};
   
   virtual Result Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) override;

@@ -49,7 +49,6 @@ PublicStateBroadcaster::PublicStateBroadcaster()
                                            isRequestingGame,
                                            tallestStackHeight,
                                            needsLevels,
-                                           ActivityID::Invalid,
                                            ReactionTrigger::NoneTrigger,
                                            empty));
 }
@@ -143,16 +142,7 @@ void PublicStateBroadcaster::Update(Robot& robot)
   }
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PublicStateBroadcaster::UpdateActivity(ActivityID activityID)
-{
-  // update internal struct with new AI Goal name and send it out.
-  _currentState->currentActivity = activityID;
-  SendUpdatedState();
-}
-  
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PublicStateBroadcaster::UpdateBroadcastBehaviorStage(BehaviorStageTag stageType, uint8_t stage)
 {

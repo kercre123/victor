@@ -1,6 +1,6 @@
 {
-  "activityID" : "Socialize",
-  "activityType" : "Socialize",
+  "behaviorID" : "Activity_Socialize",
+  "behaviorClass" : "Activity_Socialize",
   "behaviorChooser" :
   {
     "type" : "Scoring",

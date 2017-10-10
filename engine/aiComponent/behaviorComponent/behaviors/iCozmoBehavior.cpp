@@ -197,7 +197,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 , _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _lastRunTime_s(0.0f)
 , _startedRunningTime_s(0.0f)
-, _actionFinishedRunningOnTick(0)
 , _wantsToRunStrategy(nullptr)
 , _id(ExtractBehaviorIDFromConfig(config))
 , _idString(BehaviorIDToString(_id))
@@ -469,7 +468,27 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
   return initResult;
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::OnEnteredActivatableScopeInternal()
+{
+  if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
+    auto& infoProcessor = _behaviorExternalInterface->GetAIComponent().GetAIInformationAnalyzer();
+    infoProcessor.AddEnableRequest(_requiredProcess, GetIDStr().c_str());
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::OnLeftActivatableScopeInternal()
+{
+  if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
+    auto& infoProcessor = _behaviorExternalInterface->GetAIComponent().GetAIInformationAnalyzer();
+    infoProcessor.RemoveEnableRequest(_requiredProcess, GetIDStr().c_str());
+  }
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ICozmoBehavior::Resume(BehaviorExternalInterface& behaviorExternalInterface, ReactionTrigger resumingFromType)
 {
@@ -521,7 +540,7 @@ Result ICozmoBehavior::Resume(BehaviorExternalInterface& behaviorExternalInterfa
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status ICozmoBehavior::Update(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status ICozmoBehavior::BehaviorUpdate_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
 {
   //// Event handling
   // Call message handling convenience functions
@@ -581,19 +600,27 @@ ICozmoBehavior::Status ICozmoBehavior::Update(BehaviorExternalInterface& behavio
   //// end Event handling
   //////
   ICozmoBehavior::Status status = Status::Complete;
+  BehaviorUpdate(behaviorExternalInterface);
   if(IsRunning()){
+    status = UpdateInternal_WhileRunning(behaviorExternalInterface);
     if(!IsControlDelegated()){
       auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
       if(delegationComponent != nullptr){
         delegationComponent->CancelSelf(this);
       }
     }
-    status = UpdateInternal_WhileRunning(behaviorExternalInterface);
+    if(!IsActing()){
+      if(_stopRequestedAfterAction) {
+        // we've been asked to stop, don't bother ticking update
+        return Status::Complete;
+      }
+    }
   }
+  
   return status;
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
@@ -786,29 +813,13 @@ void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalI
                "This function is BSM specific - please  don't call it if you're using the behavior manager");
   }
   
-  Update(behaviorExternalInterface);
+  BehaviorUpdate_Legacy(behaviorExternalInterface);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::Status ICozmoBehavior::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  if(IsActing()){
-    _actionFinishedRunningOnTick = BaseStationTimer::getInstance()->GetTickCount();
-  }else{
-    if(_stopRequestedAfterAction) {
-      // we've been asked to stop, don't bother ticking update
-      return Status::Complete;
-    }
-    
-    if(WasControlDelegatedLastTick()){
-      ScoredActingStateChanged(false);
-    }
-  }
-  
-  //DEV_ASSERT(IsRunning(), "ICozmoBehavior::UpdateNotRunning");
-  
-  
   if( IsControlDelegated() ) {  
     return Status::Running;
   }
@@ -866,13 +877,6 @@ bool ICozmoBehavior::IsActing() const
   return false;
 }
 
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::WasControlDelegatedLastTick()
-{
-  return _actionFinishedRunningOnTick == (BaseStationTimer::getInstance()->GetTickCount() - 1);
-}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1015,6 +1019,7 @@ bool ICozmoBehavior::DelegateNow(BehaviorExternalInterface& behaviorExternalInte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg)
 {
+  ScoredActingStateChanged(false);
   if( _actionCallback ) {
 
     // Note that the callback may itself call start acting and set _actionCallback. Because of that, we create

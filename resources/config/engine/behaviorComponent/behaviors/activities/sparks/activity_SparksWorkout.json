@@ -1,7 +1,7 @@
 {
-  "activityID" : "SparksPickUpCube",
-  "activityType" : "Sparked",
-  "requireSpark":"PickupCube",
+  "behaviorID" : "Activity_SparksWorkout",
+  "behaviorClass" : "Activity_Sparked",
+  "requireSpark":"Workout",
   "activityStrategy":
   {
     "type" : "Spark"
@@ -12,16 +12,13 @@
     "behaviors" : [
       "DriveOffCharger",
       "KnockOverCubes",
-      "SparksPickUpCube",
-      "SparksVisitPossibleMarker",
-      "SparksPutDownBlock",
+      "SparksCubeLiftWorkout",
       "SparksLookInPlace"
     ]
   },
-  
   "minTimeSecs": 0,
   "maxTimeSecs": 60,
   "numberOfRepetitions": 1,
-  "behaviorObjective": "PickedUpAndPutDownBlock",
+  "behaviorObjective": "PerformedWorkout",
   "softSparkTrigger": "SoftSparkUpgradeLift"
 }

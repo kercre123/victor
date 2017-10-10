@@ -42,7 +42,7 @@ template <typename Type> class AnkiEvent;
 class ActivitySparked : public IActivity
 {
 public:
-  ActivitySparked(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ActivitySparked(const Json::Value& config);
   ~ActivitySparked();
   
   virtual Result Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) override;
@@ -55,6 +55,8 @@ protected:
   
   // initialize the chooser, return result of operation
   Result ReloadFromConfig(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  
+  virtual void InitActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   
@@ -109,7 +111,7 @@ private:
   
   // A behavior chooser that can be set by a spark to delegate selection
   // to once the intro has finished as part of the sparksChooser
-  std::unique_ptr<IActivity> _subActivityDelegate;
+  std::shared_ptr<IActivity> _subActivityDelegate;
   
   BackpackLightDataLocator  _bodyLightDataLocator{};
   

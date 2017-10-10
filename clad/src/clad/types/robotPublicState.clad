@@ -45,7 +45,6 @@ no_default_constructor structure RobotPublicState{
   bool isRequestingGame,
   uint_8 tallestStackHeight,
   NeedsLevels needsLevels,
-  ActivityID currentActivity,
   ReactionTrigger currentReactionTrigger,
   BehaviorStageStruct userFacingBehaviorStageStruct
 }

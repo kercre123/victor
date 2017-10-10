@@ -1,8 +1,8 @@
 {
   // we want this play alone to be higher priority than exploring, but its activation is more
   // restrictive than PlayingAlone when there's nothing else to do
-  "activityID" : "PlayAlone",
-  "activityType" : "BehaviorsOnly",
+  "behaviorID" : "Activity_PlayAlone",
+  "behaviorClass" : "Activity_BehaviorsOnly",
     "activityStrategy":
   {
     "type" : "Simple",

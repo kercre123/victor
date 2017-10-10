@@ -1,6 +1,6 @@
 {
-  "activityID"   : "BuildPyramid",
-  "activityType" : "BuildPyramid",
+  "behaviorID"   : "Activity_BuildPyramid",
+  "behaviorClass" : "Activity_BuildPyramid",
   "needsActionID": "PyramidCompleted",
   "activityStrategy":
   {

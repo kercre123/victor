@@ -1,6 +1,6 @@
 {
-  "activityID" : "SparksGatherCubes",
-  "activityType" : "Sparked",
+  "behaviorID" : "Activity_SparksGatherCubes",
+  "behaviorClass" : "Activity_Sparked",
   "requireSpark":"SparksGatherCubes",
   "driveStartAnimTrigger" : "HikingDrivingStart",
   "driveLoopAnimTrigger" : "HikingDrivingLoop",
@@ -17,7 +17,7 @@
   // delegate out chooser logic to gather cubes chooser
   "subActivityDelegate":
   {
-    "activityID":"GatherCubes",
+    "behaviorID":"Activity_GatherCubes",
     "activityType" : "GatherCubes",
     "name" : "sparksGatherCubes",
     "activityStrategy": // not actually used, but required

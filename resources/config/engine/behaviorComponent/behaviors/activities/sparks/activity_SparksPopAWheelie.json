@@ -1,7 +1,7 @@
 {
-  "activityID" : "SparksWorkout",
-  "activityType" : "Sparked",
-  "requireSpark":"Workout",
+  "behaviorID" : "Activity_SparksPopAWheelie",
+  "behaviorClass" : "Activity_Sparked",
+  "requireSpark":"PopAWheelieAction",
   "activityStrategy":
   {
     "type" : "Spark"
@@ -12,13 +12,14 @@
     "behaviors" : [
       "DriveOffCharger",
       "KnockOverCubes",
-      "SparksCubeLiftWorkout",
+      "SparksPutDownBlock",
+      "SparksPopAWheelie",
       "SparksLookInPlace"
     ]
   },
   "minTimeSecs": 0,
   "maxTimeSecs": 60,
   "numberOfRepetitions": 1,
-  "behaviorObjective": "PerformedWorkout",
-  "softSparkTrigger": "SoftSparkUpgradeLift"
+  "behaviorObjective": "PoppedWheelie",
+  "softSparkTrigger": "SoftSparkUpgradeTracks"
 }

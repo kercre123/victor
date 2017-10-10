@@ -42,7 +42,7 @@ struct ObjectLights;
 class ActivityBuildPyramid : public IActivity
 {
 public:
-  ActivityBuildPyramid(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ActivityBuildPyramid(const Json::Value& config);
   ~ActivityBuildPyramid();
   
   virtual Result Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) override;
@@ -59,6 +59,8 @@ protected:
 
   virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
+  
+  virtual void InitActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
 
 private:
   enum class ChooserPhase{

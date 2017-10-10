@@ -46,7 +46,7 @@ struct PotentialObjectives {
 class ActivitySocialize : public IActivity
 {
 public:
-  ActivitySocialize(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ActivitySocialize(const Json::Value& config);
   ~ActivitySocialize() {};
   
   
@@ -61,6 +61,8 @@ protected:
   virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual Result Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) override;
 
+  virtual void InitActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
+  
 private:
   // use the objective requirements to populate _objectivesLeft, taking into account unlocks and random
   // probabilities.

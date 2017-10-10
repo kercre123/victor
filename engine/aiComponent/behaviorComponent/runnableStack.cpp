@@ -101,12 +101,10 @@ void RunnableStack::PushOntoStack(IBehavior* runnable)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RunnableStack::PopStack()
 {
-  for(auto& entry: _delegatesMap[_runnableStack.back()]){
-    PrepareDelegateForRemovalFromStack(entry);
-  }
+  PrepareDelegatesForRemovalFromStack(_runnableStack.back());
+
   _runnableStack.back()->OnDeactivated(*_behaviorExternalInterface);
   
-  _delegatesMap.erase(_runnableStack.back());
   _runnableToIndexMap.erase(_runnableStack.back());
   _runnableStack.pop_back();
 }
@@ -127,14 +125,16 @@ void RunnableStack::PrepareDelegatesToEnterScope(IBehavior* delegated)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RunnableStack::PrepareDelegateForRemovalFromStack(IBehavior* delegated)
+void RunnableStack::PrepareDelegatesForRemovalFromStack(IBehavior* delegated)
 {
   auto availableDelegates = _delegatesMap.find(delegated);
+  DEV_ASSERT(availableDelegates != _delegatesMap.end(),
+             "RunnableStack.PrepareDelegateForRemovalFromStack.DelegateNotFound");
   for(auto& entry: availableDelegates->second){
     entry->OnLeftActivatableScope();
   }
   
-  _delegatesMap.erase(availableDelegates);
+  _delegatesMap.erase(delegated);
 }
   
   

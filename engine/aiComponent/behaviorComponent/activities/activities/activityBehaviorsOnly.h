@@ -27,8 +27,7 @@ namespace Cozmo {
 class ActivityBehaviorsOnly : public IActivity
 {
 public:
-  ActivityBehaviorsOnly(BehaviorExternalInterface& behaviorExternalInterface,
-                        const Json::Value& config);
+  ActivityBehaviorsOnly(const Json::Value& config);
   virtual ~ActivityBehaviorsOnly() {};
 };
 

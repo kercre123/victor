@@ -1,6 +1,6 @@
 {
-  "activityID" : "SparksTrackLaser",
-  "activityType" : "Sparked",
+  "behaviorID" : "Activity_SparksTrackLaser",
+  "behaviorClass" : "Activity_Sparked",
   "requireSpark":"TrackLaser",
   "activityStrategy":
   {

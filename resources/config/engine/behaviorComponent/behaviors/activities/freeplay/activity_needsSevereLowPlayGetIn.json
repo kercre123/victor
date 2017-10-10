@@ -1,6 +1,6 @@
 {
-  "activityID": "NeedsSevereLowPlayGetIn",
-  "activityType": "NeedsExpression",
+  "behaviorID": "Activity_NeedsSevereLowPlayGetIn",
+  "behaviorClass": "Activity_NeedsExpression",
 
   "activityStrategy":
   {

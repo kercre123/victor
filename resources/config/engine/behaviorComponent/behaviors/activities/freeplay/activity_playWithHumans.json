@@ -1,6 +1,6 @@
 {
-  "activityID" : "PlayWithHumans",
-  "activityType" : "BehaviorsOnly",
+  "behaviorID" : "Activity_PlayWithHumans",
+  "behaviorClass" : "Activity_BehaviorsOnly",
   "behaviorChooser" :
   {
     "type" : "Scoring",

@@ -11,6 +11,8 @@
 **/
 #include "engine/aiComponent/behaviorComponent/behaviorChoosers/strictPriorityBehaviorChooser.h"
 
+
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/robot.h"
@@ -34,16 +36,11 @@ StrictPriorityBehaviorChooser::StrictPriorityBehaviorChooser(BehaviorExternalInt
                  "StrictPriorityBehaviorChooser.BehaviorsNotSpecified",
                  "No Behaviors key found");
   if(!behaviorArray.isNull()){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    const BehaviorManager& behaviorManager = robot.GetBehaviorManager();
-    
     for(const auto& behaviorIDStr: behaviorArray)
     {
       BehaviorID behaviorID = BehaviorIDFromString(behaviorIDStr.asString());
       
-      ICozmoBehaviorPtr behavior =  behaviorManager.FindBehaviorByID(behaviorID);
+      ICozmoBehaviorPtr behavior =  behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(behaviorID);
       DEV_ASSERT_MSG(behavior != nullptr,
                      "ScoringBehaviorChooser.ReloadFromConfig.FailedToFindBehavior",
                      "Behavior not found: %s",

@@ -13,8 +13,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviorChoosers/scoringBehaviorChooser.h"
 
 #include "anki/common/basestation/utils/timer.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/messageHelpers.h"
@@ -76,11 +77,6 @@ Result ScoringBehaviorChooser::ReloadFromConfig(BehaviorExternalInterface& behav
                  "ScoringBehaviorChooser.ReloadFromConfig.BehaviorsNotSpecified",
                  "No Behaviors key found");
   if(!behaviorsConfig.isNull()){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    const BehaviorManager& behaviorManager = robot.GetBehaviorManager();
-    
     for(const auto& behavior: behaviorsConfig)
     {
       BehaviorID behaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behavior);
@@ -91,7 +87,7 @@ Result ScoringBehaviorChooser::ReloadFromConfig(BehaviorExternalInterface& behav
                      "Scoring Information Not Provided For %s",
                      BehaviorIDToString(behaviorID));
       // Find the behavior name in the factory
-      ICozmoBehaviorPtr scoredBehavior =  behaviorManager.FindBehaviorByID(behaviorID);
+      ICozmoBehaviorPtr scoredBehavior =  behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(behaviorID);
       DEV_ASSERT_MSG(scoredBehavior != nullptr,
                      "ScoringBehaviorChooser.ReloadFromConfig.FailedToFindBehavior",
                      "Behavior not found: %s",

@@ -68,11 +68,9 @@ public:
 
   using FileJsonMap       = std::unordered_map<std::string, const Json::Value>;
   using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
-  using ActivityIDJsonMap = std::unordered_map<ActivityID,  const Json::Value>;
 
   const FileJsonMap& GetEmotionEventJsons()   const { return _emotionEvents; }
   const BehaviorIDJsonMap& GetBehaviorJsons() const { return _behaviors; }
-  const ActivityIDJsonMap& GetActivityJsons() const { return _activities; }
   
   CannedAnimationContainer* GetCannedAnimations() const { return _cannedAnimations.get(); }
   CubeLightAnimationContainer* GetCubeLightAnimations() const { return _cubeLightAnimations.get(); }
@@ -131,7 +129,6 @@ private:
 
   void LoadEmotionEvents();
   void LoadBehaviors();
-  void LoadActivities();
   void LoadReactionTriggerMap();
 
   const CozmoContext* const _context;
@@ -139,7 +136,6 @@ private:
 
   FileJsonMap _emotionEvents;
   BehaviorIDJsonMap _behaviors;
-  ActivityIDJsonMap _activities;
 
   enum FileType {
       Animation,

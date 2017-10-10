@@ -1,9 +1,9 @@
 [
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   {
-    "activityID" : "Selection",
+    "behaviorID" : "Activity_Selection",
     "highLevelID" : "Selection",
-    "activityType" : "BehaviorsOnly",
+    "behaviorClass" : "Activity_BehaviorsOnly",
     "behaviorChooser" : {
       "type": "Selection"
     },
@@ -15,9 +15,9 @@
   },
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   {
-    "activityID" : "MeetCozmo",
+    "behaviorID" : "Activity_MeetCozmo",
     "highLevelID" : "MeetCozmoFindFaces",
-    "activityType" : "BehaviorsOnly",
+    "behaviorClass" : "Activity_BehaviorsOnly",
     "behaviorChooser" : {
       "type": "Scoring",
       "behaviors" : [
@@ -81,9 +81,9 @@
   },
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   {
-    "activityID" : "VoiceCommand",
+    "behaviorID" : "Activity_VoiceCommand",
     "highLevelID" : "VoiceCommand",
-    "activityType" : "VoiceCommand",
+    "behaviorClass" : "VoiceCommand",
     // Activity will be kicked out by behaviorManager
     "activityStrategy":
     {
@@ -92,9 +92,9 @@
   },
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   {
-    "activityID" : "Feeding",
+    "behaviorID" : "Activity_Feeding",
     "highLevelID" : "Feeding",
-    "activityType" : "Feeding",
+    "behaviorClass" : "Feeding",
     "activityStrategy":
     {
       "type" : "Simple"
@@ -112,9 +112,9 @@
   },
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   {
-    "activityID" : "Freeplay",
+    "behaviorID" : "Activity_Freeplay",
     "highLevelID" : "Freeplay",
-    "activityType" : "Freeplay",
+    "behaviorClass" : "Freeplay",
     // Activity will be kicked out by behaviorManager
     "activityStrategy":
     {
@@ -135,24 +135,24 @@
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Spark activities:
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      { "activityID" : "SparksRollBlock", "activityPriority"      : 0 },
-      { "activityID" : "SparksStackBlock", "activityPriority"     : 0 },
-      { "activityID" : "SparksPeekABoo", "activityPriority"       : 0 },
-      { "activityID" : "SparksPounceOnMotion", "activityPriority" : 0 },
-      { "activityID" : "SparksPopAWheelie", "activityPriority"    : 0 },
-      { "activityID" : "SparksKnockOverCubes", "activityPriority" : 0 },
-      { "activityID" : "SparksPickUpCube", "activityPriority"     : 0 },
-      { "activityID" : "SparksWorkout", "activityPriority"        : 0 },
-      { "activityID" : "SparksBuildPyramid", "activityPriority"   : 0 },
-      { "activityID" : "SparksFistBump", "activityPriority"       : 0 },
-      { "activityID" : "SparksGatherCubes", "activityPriority"    : 0 },
-      { "activityID" : "SparksTrackLaser", "activityPriority"     : 0 },
+      { "behaviorID" : "SparksRollBlock", "activityPriority"      : 0 },
+      { "behaviorID" : "SparksStackBlock", "activityPriority"     : 0 },
+      { "behaviorID" : "SparksPeekABoo", "activityPriority"       : 0 },
+      { "behaviorID" : "SparksPounceOnMotion", "activityPriority" : 0 },
+      { "behaviorID" : "SparksPopAWheelie", "activityPriority"    : 0 },
+      { "behaviorID" : "SparksKnockOverCubes", "activityPriority" : 0 },
+      { "behaviorID" : "SparksPickUpCube", "activityPriority"     : 0 },
+      { "behaviorID" : "SparksWorkout", "activityPriority"        : 0 },
+      { "behaviorID" : "SparksBuildPyramid", "activityPriority"   : 0 },
+      { "behaviorID" : "SparksFistBump", "activityPriority"       : 0 },
+      { "behaviorID" : "SparksGatherCubes", "activityPriority"    : 0 },
+      { "behaviorID" : "SparksTrackLaser", "activityPriority"     : 0 },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Needs activities
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      { "activityID": "NeedsSevereLowRepair",    "activityPriority" : 1},
-      { "activityID": "NeedsSevereLowEnergy",    "activityPriority" : 2},
-      { "activityID": "NeedsSevereLowPlayGetIn", "activityPriority" : 3},
+      { "behaviorID": "NeedsSevereLowRepair",    "activityPriority" : 1},
+      { "behaviorID": "NeedsSevereLowEnergy",    "activityPriority" : 2},
+      { "behaviorID": "NeedsSevereLowPlayGetIn", "activityPriority" : 3},
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Freeplay activities:
       // putDownDispatch      - when Cozmo is put down and wants to figure out what activity to go into
@@ -164,16 +164,16 @@
       // nothingToDo          - fallback when Cozmo can't do anything else
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      { "activityID" : "PutDownDispatch", "activityPriority"      : 10},
-      { "activityID" : "Socialize", "activityPriority"            : 11},
-      { "activityID" : "Singing", "activityPriority"              : 12},
-      { "activityID" : "PlayWithHumans", "activityPriority"       : 13},
+      { "behaviorID" : "PutDownDispatch", "activityPriority"      : 10},
+      { "behaviorID" : "Socialize", "activityPriority"            : 11},
+      { "behaviorID" : "Singing", "activityPriority"              : 12},
+      { "behaviorID" : "PlayWithHumans", "activityPriority"       : 13},
       // pyramid is "cooler" than playing alone or hiking for the user, but it
       // has fairly restrictive runnability and a high cooldown
-      { "activityID" : "BuildPyramid", "activityPriority"         : 14},
-      { "activityID" : "PlayAlone", "activityPriority"            : 15},
-      { "activityID" : "Hiking", "activityPriority"               : 16},
-      { "activityID" : "NothingToDo", "activityPriority"          : 17}
+      { "behaviorID" : "BuildPyramid", "activityPriority"         : 14},
+      { "behaviorID" : "PlayAlone", "activityPriority"            : 15},
+      { "behaviorID" : "Hiking", "activityPriority"               : 16},
+      { "behaviorID" : "NothingToDo", "activityPriority"          : 17}
     ]
   }
 ]

@@ -1,7 +1,7 @@
 {
-  "activityID" : "SparksRollBlock",
-  "activityType" : "Sparked",
-  "requireSpark":"RollCube",
+  "behaviorID" : "Activity_SparksPickUpCube",
+  "behaviorClass" : "Activity_Sparked",
+  "requireSpark":"PickupCube",
   "activityStrategy":
   {
     "type" : "Spark"
@@ -12,14 +12,16 @@
     "behaviors" : [
       "DriveOffCharger",
       "KnockOverCubes",
-      "SparksRollBlock",
+      "SparksPickUpCube",
+      "SparksVisitPossibleMarker",
       "SparksPutDownBlock",
       "SparksLookInPlace"
     ]
   },
+  
   "minTimeSecs": 0,
-  "maxTimeSecs": 80,
+  "maxTimeSecs": 60,
   "numberOfRepetitions": 1,
-  "behaviorObjective": "BlockRolled",
+  "behaviorObjective": "PickedUpAndPutDownBlock",
   "softSparkTrigger": "SoftSparkUpgradeLift"
 }

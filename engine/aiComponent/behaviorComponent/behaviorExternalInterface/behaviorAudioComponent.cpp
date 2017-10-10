@@ -37,7 +37,7 @@ namespace Audio {
 
 using namespace AudioMetaData::SwitchState;
   
-using StageTagMultiMap = std::multimap<BehaviorStageTag, ActivityID>;
+using StageTagMultiMap = std::multimap<BehaviorStageTag, BehaviorID>;
 using Util::FullEnumToValueArrayChecker::IsSequentialArray; // import IsSequentialArray to this namespace
 
 namespace {
@@ -72,38 +72,37 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
 // 'singing'         - when Cozmo is singing (manages its own music states)
 // 'socialize'       - when Cozmo wants to interact with faces and players, but without playing games
 // 'nothingToDo'     - fallback when Cozmo can't do anything else
-const std::unordered_map<ActivityID, Freeplay_Mood> freeplayStateMap
+const std::unordered_map<BehaviorID, Freeplay_Mood> freeplayStateMap
 {
-  { ActivityID::BuildPyramid,            AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
-  { ActivityID::Feeding,                 AudioMetaData::SwitchState::Freeplay_Mood::Nurture_Feeding },
-  { ActivityID::Hiking,                  AudioMetaData::SwitchState::Freeplay_Mood::Hiking },
-  { ActivityID::NeedsSevereLowEnergy,    AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
-  { ActivityID::NeedsSevereLowRepair,    AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
-  { ActivityID::NeedsSevereLowPlayGetIn, AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
-  { ActivityID::PlayWithHumans,          AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-  { ActivityID::PlayAlone,               AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-  { ActivityID::PutDownDispatch,         AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-  { ActivityID::Singing,                 AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
-  { ActivityID::Socialize,               AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-  { ActivityID::NothingToDo,             AudioMetaData::SwitchState::Freeplay_Mood::Bored }
+  { BehaviorID::Activity_BuildPyramid,            AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { BehaviorID::Activity_Feeding,                 AudioMetaData::SwitchState::Freeplay_Mood::Nurture_Feeding },
+  { BehaviorID::Activity_Hiking,                  AudioMetaData::SwitchState::Freeplay_Mood::Hiking },
+  { BehaviorID::Activity_NeedsSevereLowEnergy,    AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { BehaviorID::Activity_NeedsSevereLowRepair,    AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { BehaviorID::Activity_NeedsSevereLowPlayGetIn, AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { BehaviorID::Activity_PlayWithHumans,          AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { BehaviorID::Activity_PlayAlone,               AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { BehaviorID::Activity_PutDownDispatch,         AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { BehaviorID::Activity_Singing,                 AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { BehaviorID::Activity_Socialize,               AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { BehaviorID::Activity_NothingToDo,             AudioMetaData::SwitchState::Freeplay_Mood::Bored }
 };
   
 const StageTagMultiMap activityAllowedStagesMap
 {
-  { BehaviorStageTag::Feeding, ActivityID::Feeding},
-  { BehaviorStageTag::GuardDog, ActivityID::PlayAlone},
-  { BehaviorStageTag::PyramidConstruction, ActivityID::BuildPyramid},
-  { BehaviorStageTag::PyramidConstruction, ActivityID::SparksBuildPyramid},
-  { BehaviorStageTag::Workout, ActivityID::PlayAlone},
-  { BehaviorStageTag::Workout, ActivityID::SparksWorkout},
+  { BehaviorStageTag::Feeding, BehaviorID::Activity_Feeding},
+  { BehaviorStageTag::GuardDog, BehaviorID::Activity_PlayAlone},
+  { BehaviorStageTag::PyramidConstruction, BehaviorID::Activity_BuildPyramid},
+  { BehaviorStageTag::PyramidConstruction, BehaviorID::Activity_SparksBuildPyramid},
+  { BehaviorStageTag::Workout, BehaviorID::Activity_PlayAlone},
+  { BehaviorStageTag::Workout, BehaviorID::Activity_SparksWorkout},
 };
   
 } // end anonymous namespace
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAudioComponent::BehaviorAudioComponent(Audio::RobotAudioClient* robotAudioClient)
-: _prevActivity(ActivityID::Invalid)
-, _activeBehaviorStage(BehaviorStageTag::Count)
+: _activeBehaviorStage(BehaviorStageTag::Count)
 , _prevGuardDogStage(GuardDogStage::Count)
 , _prevFeedingStage(FeedingStage::MildEnergy)
 , _robotAudioClient(robotAudioClient)
@@ -146,7 +145,7 @@ void BehaviorAudioComponent::Init(BehaviorExternalInterface& behaviorExternalInt
     const auto nonSparkFreeplayActivities = robot.GetBehaviorManager().GetNonSparkFreeplayActivities();
     for(const auto& activity : nonSparkFreeplayActivities)
     {
-      const ActivityID activityID = activity->GetID();
+      const BehaviorID activityID = activity->GetID();
 
       DEV_ASSERT_MSG(freeplayStateMap.find(activityID) != freeplayStateMap.end(),
                      "BehaviorAudioComponent.Init.MissingFreeplayActivity",
@@ -188,11 +187,11 @@ bool BehaviorAudioComponent::UpdateBehaviorRound(const UnlockId behaviorUnlockId
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioComponent::UpdateActivityMusicState(ActivityID activityID)
+void BehaviorAudioComponent::UpdateActivityMusicState(BehaviorID activityID)
 {
   PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
                 "RobotAudioClient.SetFreeplayMusic",
-                "ActivityName '%s'", ActivityIDToString(activityID));
+                "ActivityName '%s'", BehaviorIDToString(activityID));
   
   // Search for freeplay goal state
   const auto it = freeplayStateMap.find(activityID);
@@ -209,7 +208,7 @@ void BehaviorAudioComponent::UpdateActivityMusicState(ActivityID activityID)
   {
     PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
                   "RobotAudioClient.UpdateActivityMusicState.NoFreeplayMusic",
-                  "No freeplay music for ActivityName '%s'", ActivityIDToString(activityID));
+                  "No freeplay music for ActivityName '%s'", BehaviorIDToString(activityID));
   }
 }
   
@@ -275,7 +274,7 @@ void BehaviorAudioComponent::HandleRobotPublicStateChange(BehaviorExternalInterf
   HandleDimMusicForActivity(stateEvent);
   
   // Handle AI Activity transitions and Guard Dog behavior transitions
-  const auto& currActivity = stateEvent.currentActivity;
+  /**const auto& currActivity = stateEvent.currentActivity;
   if (currActivity != _prevActivity) {
     UpdateActivityMusicState(currActivity);
     _prevActivity = currActivity;
@@ -313,7 +312,7 @@ void BehaviorAudioComponent::HandleRobotPublicStateChange(BehaviorExternalInterf
                      BehaviorStageTagToString(GetActiveBehaviorStage()),
                      ActivityIDToString(currActivity));
     }
-  }
+  }**/
 }
 
   
@@ -323,7 +322,7 @@ void BehaviorAudioComponent::HandleWorldEventUpdates(const RobotPublicState& sta
   // COZMO-14148 - Firing world events during feeding causes improper
   // audio state transitions, so short circuit this function here
   // to avoid posting events
-  if(stateEvent.currentActivity == ActivityID::Feeding){
+  /**if(stateEvent.currentActivity == ActivityID::Feeding){
     return;
   }
   
@@ -358,7 +357,7 @@ void BehaviorAudioComponent::HandleWorldEventUpdates(const RobotPublicState& sta
     }else{
       _robotAudioClient->PostEvent(AE::Stop__Cue_World_Event__Cubes_Stacked, kMusicGameObject);
     }
-  }
+  }**/
 }
 
   
@@ -517,20 +516,20 @@ void BehaviorAudioComponent::SetActiveBehaviorStage(BehaviorStageTag stageTag)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioComponent::HandleDimMusicForActivity(const RobotPublicState& stateEvent)
 {
-  using AE = AudioMetaData::GameEvent::GenericEvent;
+  /**using AE = AudioMetaData::GameEvent::GenericEvent;
   if(_prevActivity != stateEvent.currentActivity)
   {
-    if(stateEvent.currentActivity == ActivityID::Singing)
+    if(stateEvent.currentActivity == BehaviorID::Activity_Singing)
     {
       _robotAudioClient->PostEvent(static_cast<AE>(AudioMetaData::GameEvent::App::Music_Dim_On),
                                    kMusicGameObject);
     }
-    else if(_prevActivity == ActivityID::Singing)
+    else if(_prevActivity == BehaviorID::Activity_Singing)
     {
       _robotAudioClient->PostEvent(static_cast<AE>(AudioMetaData::GameEvent::App::Music_Dim_Off),
                                    kMusicGameObject);
     }
-  }
+  }**/
 }
 
   

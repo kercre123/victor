@@ -1,7 +1,7 @@
 {
-  "activityID" : "SparksStackBlock",
-  "activityType" : "Sparked",
-  "requireSpark":"StackTwoCubes",
+  "behaviorID" : "Activity_SparksRollBlock",
+  "behaviorClass" : "Activity_Sparked",
+  "requireSpark":"RollCube",
   "activityStrategy":
   {
     "type" : "Spark"
@@ -12,14 +12,14 @@
     "behaviors" : [
       "DriveOffCharger",
       "KnockOverCubes",
-      "SparksStackBlock",
-      "SparksPickupSingleCubeToStack",
+      "SparksRollBlock",
+      "SparksPutDownBlock",
       "SparksLookInPlace"
     ]
   },
   "minTimeSecs": 0,
   "maxTimeSecs": 80,
   "numberOfRepetitions": 1,
-  "behaviorObjective": "StackedBlock",
+  "behaviorObjective": "BlockRolled",
   "softSparkTrigger": "SoftSparkUpgradeLift"
 }

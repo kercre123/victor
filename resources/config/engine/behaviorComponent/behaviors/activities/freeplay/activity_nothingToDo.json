@@ -1,6 +1,6 @@
 {
-  "activityID" : "NothingToDo",
-  "activityType" : "BehaviorsOnly",
+  "behaviorID" : "Activity_NothingToDo",
+  "behaviorClass" : "Activity_BehaviorsOnly",
   "behaviorChooser" :
   {
     "type" : "Scoring",

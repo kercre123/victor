@@ -1,8 +1,8 @@
 // this activity is triggered after being put down from a pick up, so that Cozmo can select what to do next based on
 // what is around him (a face, a cube, ...)
 {
-  "activityID" : "PutDownDispatch",
-  "activityType" : "BehaviorsOnly",
+  "behaviorID" : "Activity_PutDownDispatch",
+  "behaviorClass" : "Activity_BehaviorsOnly",
   "behaviorChooser" :
   {
     "type" : "Scoring",

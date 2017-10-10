@@ -1,6 +1,6 @@
 {
-  "activityID" : "Hiking",
-  "activityType" : "BehaviorsOnly",
+  "behaviorID" : "Activity_Hiking",
+  "behaviorClass" : "Activity_BehaviorsOnly",
   "driveStartAnimTrigger" : "HikingDrivingStart",
   "driveLoopAnimTrigger" : "HikingDrivingLoop",
   "driveEndAnimTrigger" : "HikingDrivingEnd",
