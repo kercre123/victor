@@ -744,7 +744,7 @@
     "translation": "turn [X] ° at [Y] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_turn": {
-    "translation": "Turn [X] degrees at a speed of [Y] degrees per second. A positive [X] angle turns him right, and a negative turns him left. Max [Y] speed: 200 °/s"
+    "translation": "Turn [X] degrees at a speed of [Y] degrees per second. A positive [X] angle turns him right, and a negative turns him left. Max [Y] speed: 200 °/s."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_dock_with_cube_by_id": {
@@ -760,21 +760,21 @@
     "translation": "move lift to [X] % at [Y] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_set_liftheight": {
-    "translation": "Move the lift to [X] percent of max (0% = bottom, 100% = top) at a speed to [Y] degrees per second. Note: the lift uses an angular speed because the its arm is technically rotating. Max [Y] speed: 200 °/s"
+    "translation": "Move the lift to [X] percent of max (0% = bottom, 100% = top) at a speed to [Y] degrees per second. Note: the lift uses an angular speed because the its arm is technically rotating. Max [Y] speed: 200 °/s."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_move_lift": {
     "translation": "move lift [X] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_move_lift": {
-    "translation": "Move the lift at a speed to [Y] degrees per second. It will keep moving until stopped, or until min/max height reached. Note: the lift uses an angular speed because the its arm is technically rotating. Max [Y] speed: 200 °/s"
+    "translation": "Move the lift at a speed to [Y] degrees per second. It will keep moving until stopped, or until min/max height reached. Note: the lift uses an angular speed because the its arm is technically rotating. Max [Y] speed: 200 °/s."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_set_headangle": {
     "translation": "move head to [X]° at [Y] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_set_headangle": {
-    "translation": "Move the head to [X] degrees (-25° = max down, 0° = level, 45° = max up) at a speed of [Y] degrees per second. Max [Y] speed: 150 °/s"
+    "translation": "Move the head to [X] degrees (-25° = max down, 0° = level, 45° = max up) at a speed of [Y] degrees per second. Max [Y] speed: 150 °/s."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_setbackpackcolor": {
