@@ -51,8 +51,6 @@ namespace Cozmo.Notifications {
       // Since initalizing will pop up permissions on iOS, don't allow until our preprompt has been shown.
       InitNotificationsIfAllowed();
 
-      CancelAllNotifications();
-
       RobotEngineManager.Instance.AddCallback<ClearNotificationCache>(HandleClearNotificationCache);
       RobotEngineManager.Instance.AddCallback<CacheNotificationToSchedule>(HandleCacheNotificationToSchedule);
     }
@@ -78,7 +76,19 @@ namespace Cozmo.Notifications {
         bool appHandlesRecievedNotification = false;
 #endif
         UTNotifications.Manager.Instance.Initialize(appHandlesRecievedNotification);
+
+#if UNITY_IOS && !UNITY_EDITOR
+        // On iOS we can't clear the notifications immediately and log them for DAS, so wait awhile for a startup
+        UTNotifications.Manager.Instance.StartCoroutine(DelayCancelAllNotifications());
+#else
+        CancelAllNotifications();
+#endif
       }
+    }
+
+    private System.Collections.IEnumerator DelayCancelAllNotifications(float waitTime = 1.0f) {
+      yield return new UnityEngine.WaitForSeconds(waitTime);
+      CancelAllNotifications();
     }
 
     private UInt32 DateTimeToEpochTimestamp(DateTime dateTime) {
