@@ -7,6 +7,7 @@
     "IsVertical" : "true",
     "DisplayOrder": "4",
     "FeaturedProjectDescription": "codeLabFeaturedProject_HotPotato.projectDescription",
+    "FeaturedProjectInstructions": "codeLabFeaturedProject_HotPotato.projectInstructions",
     "FeaturedProjectImageName": "HotPotato",
     "FeaturedProjectBackgroundColor": "#831fb7",
     "FeaturedProjectTitleTextColor": "#e4e4e4"
@@ -19,6 +20,7 @@
     "IsVertical" : "true",
     "DisplayOrder": "2",
     "FeaturedProjectDescription": "codeLabFeaturedProject_TinyOrchestra.projectDescription",
+    "FeaturedProjectInstructions": "codeLabFeaturedProject_TinyOrchestra.projectInstructions",
     "FeaturedProjectImageName": "TinyOrchestra",
     "FeaturedProjectBackgroundColor": "#ffe700",
     "FeaturedProjectTitleTextColor": "#696b68"
@@ -31,6 +33,7 @@
     "IsVertical" : "true",
     "DisplayOrder": "3",
     "FeaturedProjectDescription": "codeLabFeaturedProject_MagicFortuneTeller.projectDescription",
+    "FeaturedProjectInstructions": "codeLabFeaturedProject_MagicFortuneTeller.projectInstructions",
     "FeaturedProjectImageName": "MagicFortuneTeller",
     "FeaturedProjectBackgroundColor": "#ffe700",
     "FeaturedProjectTitleTextColor": "#f2f2f2"
@@ -43,6 +46,7 @@
     "IsVertical" : "true",
     "DisplayOrder": "6",
     "FeaturedProjectDescription": "codeLabFeaturedProject_CubeWhack.projectDescription",
+    "FeaturedProjectInstructions": "codeLabFeaturedProject_CubeWhack.projectInstructions",
     "FeaturedProjectImageName": "CubeWhack",
     "FeaturedProjectBackgroundColor": "#ffe700",
     "FeaturedProjectTitleTextColor": "#f2f2f2"
@@ -55,6 +59,7 @@
     "IsVertical" : "true",
     "DisplayOrder": "5",
     "FeaturedProjectDescription": "codeLabFeaturedProject_FiretruckAlarm.projectDescription",
+    "FeaturedProjectInstructions": "codeLabFeaturedProject_FiretruckAlarm.projectInstructions",
     "FeaturedProjectImageName": "FiretruckAlarm",
     "FeaturedProjectBackgroundColor": "#ffe700",
     "FeaturedProjectTitleTextColor": "#696b68"
@@ -67,6 +72,7 @@
     "IsVertical" : "true",
     "DisplayOrder": "1",
     "FeaturedProjectDescription": "codeLabFeaturedProject_LightShow.projectDescription",
+    "FeaturedProjectInstructions": "codeLabFeaturedProject_LightShow.projectInstructions",
     "FeaturedProjectImageName": "LightShow",
     "FeaturedProjectBackgroundColor": "#ffe700",
     "FeaturedProjectTitleTextColor": "#e4e4e4"

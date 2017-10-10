@@ -174,14 +174,7 @@
         var stop = document.querySelector('#stop');
 
         closeButton.addEventListener('click', function () {
-            Scratch.workspace.playAudio('click');
-            vm.stopAll();
-            clearInterval(window.saveProjectTimerId);
-
-            var promiseSaveProject = window.promiseWaitForSaveProject();
-            promiseSaveProject.then(function(result) {
-                window.Unity.call({requestId: -1, command: "cozmoLoadProjectPage"});
-            });
+            window.exitWorkspace();
         });
         closeButton.addEventListener('touchmove', function (e) {
             e.preventDefault();
@@ -349,6 +342,17 @@
             cozmoSaysText.innerHTML = $t('codeLabHorizontal.CozmoSaysBlock.DefaultText');
         }
     };
+
+    window.exitWorkspace = function() {
+        Scratch.workspace.playAudio('click');
+        Scratch.vm.stopAll();
+        clearInterval(window.saveProjectTimerId);
+
+        var promiseSaveProject = window.promiseWaitForSaveProject();
+        promiseSaveProject.then(function(result) {
+            window.Unity.call({requestId: -1, command: "cozmoLoadProjectPage"});
+        });
+    }
 
     /**
      * Binds the extension interface to `window.extensions`.

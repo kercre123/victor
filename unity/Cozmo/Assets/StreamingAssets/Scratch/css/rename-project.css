@@ -1,7 +1,4 @@
-.show-rename-project-modal #rename-project-modal {
-  display: block;
-}
-#rename-project-modal {
+.full-screen-modal {
   box-sizing: border-box;
   display: none;
   position: fixed;
@@ -15,18 +12,17 @@
 
   background-color: #5d5e5f;
 }
-#rename-project-modal *, #rename-project-modal *:before, #rename-project-modal *:after {
+.full-screen-modal *, .full-screen-modal *:before, .full-screen-modal *:after {
   box-sizing: inherit;
 }
 
-
-#rename-project-modal .hd {
+.full-screen-modal .hd {
   padding: 4vh;
   font-size: 6vh;
   height: 14vh;
 }
 
-#rename-project-modal #btn-close-rename-project {
+.full-screen-modal .btn-close-modal {
   border: 0;
   background-color: transparent;
   background-image: url('../images/ui/btn_back.svg');
@@ -38,17 +34,48 @@
   float: left;
 }
 
-#rename-project-modal #btn-close-rename-project:active {
-  background-position: 0 -8vh;
+.full-screen-modal .btn-close-modal:active {
+  background-position: 0 -6vh;
 }
 
-
-#rename-project-modal .original-project-name {
+.full-screen-modal .project-name {
   text-align: right;
   color: #22a9d8;
   font-family: 'Avenir Next Bold';
 }
 
+.full-screen-modal .btn {
+  border-radius: 7px;
+  border: 0;
+  padding: .5em 1.5em;
+  margin-left: .6em;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: #e4e4e5;
+}
+
+.full-screen-modal .btn[disabled='disabled'] {
+  color: #535E62;
+  background-image: linear-gradient(to bottom, #686868, #717171);
+}
+
+.full-screen-modal .btn.btn-blue {
+  background-image: linear-gradient(to bottom, #41c5e9, #2794d1 );
+}
+.full-screen-modal .btn.btn-red {
+  background-image: linear-gradient(to bottom, #f7632a, #de4210);
+}
+.full-screen-modal .btn.btn-grey {
+  background-image: linear-gradient(to bottom, #a4a5a6, #939495);
+}
+
+
+
+
+
+.show-rename-project-modal #rename-project-modal {
+  display: block;
+}
 
 #rename-project-modal .bd {
   text-align: left;
@@ -74,29 +101,9 @@
   font-size: 80%;
 }
 
-#rename-project-modal .buttons button {
-  background-image: linear-gradient(to bottom, #41c5e9, #2794d1 );
-  border-radius: 7px;
-  border: 0;
-  color: #e4e4e5;
-  padding: .5em 1.5em;
-  margin-left: .6em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-#rename-project-modal .buttons button[disabled='disabled'] {
-  color: #535E62;
-  background-image: linear-gradient(to bottom, #686868, #717171);
-}
-
-#rename-project-modal .buttons button#btn-cancel-rename {
-  background-image: linear-gradient(to bottom, #f7632a, #de4210);
-}
-
 
 @media screen and (min-height: 416px) {
-  #rename-project-modal .hd {
+  .full-screen-modal .hd {
     font-size: 5vh;
   }
 }

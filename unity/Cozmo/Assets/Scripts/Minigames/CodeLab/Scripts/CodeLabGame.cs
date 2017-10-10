@@ -37,6 +37,7 @@ namespace CodeLab {
     public string FeaturedProjectImageName;
     public string FeaturedProjectBackgroundColor;
     public string FeaturedProjectTitleTextColor;
+    public string FeaturedProjectInstructions;
   }
 
   public class CodeLabGame : GameBase {
@@ -978,6 +979,7 @@ namespace CodeLab {
         proj.FeaturedProjectImageName = project.FeaturedProjectImageName;
         proj.FeaturedProjectBackgroundColor = project.FeaturedProjectBackgroundColor;
         proj.FeaturedProjectTitleTextColor = project.FeaturedProjectTitleTextColor;
+        proj.FeaturedProjectInstructions = project.FeaturedProjectInstructions;
 
         copyCodeLabFeaturedProjectList.Add(proj);
       }

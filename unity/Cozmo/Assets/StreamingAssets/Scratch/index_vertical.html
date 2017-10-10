@@ -43,6 +43,7 @@
         <script src="./js/webAudioPlayer.js"></script>
         <script src="./js/glossary.js"></script>
         <script src="./js/rename-project.js"></script>
+        <script src="./js/play-now-modal.js"></script>
 
         <script src="./lib/vm/dist/web/scratch-vm.min.js"></script>
         <!-- For debugging the vm, use scratch-vm.js instead of scratch-vm.min.js -->
@@ -56,6 +57,7 @@
         <link rel="stylesheet" href="./css/common_vertical.css">
         <link rel="stylesheet" href="./css/glossary.css"/>
         <link rel="stylesheet" href="./css/rename-project.css"/>
+        <link rel="stylesheet" href="./css/play-now-modal.css"/>
 	</head>
 
 	<body>
@@ -756,22 +758,50 @@
           </div>
         </div>
 
-        <div id="rename-project-modal">
+        <div id="rename-project-modal" class="full-screen-modal">
           <div class="hd">
-            <button id="btn-close-rename-project"></button>
-            <div class="original-project-name"></div>
+            <button id="btn-close-rename-project" class="btn-close-modal"></button>
+            <div class="project-name original-project-name"></div>
           </div>
           <div class="bd">
             <form id="rename-project-form">
               <div id="rename-project-prompt"></div>
               <input id="rename-project-text-box" value="" autocomplete="off"/>
               <div class="buttons">
-                <button id="btn-cancel-rename"></button>
-                <button id="btn-save-rename"></button>
+                <button id="btn-cancel-rename" class="btn btn-red"></button>
+                <button id="btn-save-rename" class="btn btn-blue"></button>
               </div>
             </form>
           </div>
         </div>
 
+        <div id="play-now-modal" class="full-screen-modal">
+          <div class="hd">
+            <button id="btn-play-now-close" class="btn-close-modal"></button>
+            <div id="play-now-app-title" class="project-name"></div>
+          </div>
+          <div class="bd">
+            <div class="col col-left">
+              <img class="project-img project-img-active" src=""/>
+              <img class="project-img project-img-idle" src="">
+
+              <button id="btn-play-now-start" class="btn btn-play-control btn-blue">
+                <img class="button-icon" src="./images/ui/play-now-modal/play_now_start_button_bg.svg"/>
+                <span class="button-label"></span>
+              </button>
+
+              <button id="btn-play-now-stop" class="btn btn-play-control btn-blue">
+                <img class="button-icon" src="./images/ui/play-now-modal/play_now_stop_button_bg.svg"/>
+                 <span class="button-label"></span>
+              </button>
+
+            </div>
+            <div class="col col-right">
+              <h2 class="instructions-label"></h2>
+              <p class="instructions-text"></p>
+              <button id="btn-play-now-see-inside" class="btn btn-grey"></button>
+            </div>
+          </div>
+        </div>
 	</body>
 </html>

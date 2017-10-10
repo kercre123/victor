@@ -428,6 +428,19 @@
   },
 
 
+  "codeLab.playNowModal.startButtonLabel": {
+      "translation": "Start"
+  },
+  "codeLab.playNowModal.stopButtonLabel": {
+      "translation": "Stop"
+  },
+  "codeLab.playNowModal.instructionsLabel": {
+      "translation": "Instructions"
+  },
+  "codeLab.playNowModal.seeInsideButtonLabel": {
+      "translation": "See Inside"
+  },
+
 
   "codeLabSampleProject_DriveInSquare.projectName": {
       "translation": "Drive In Square"
@@ -458,13 +471,14 @@
   },
 
 
-
-
   "codeLabFeaturedProject_HotPotato.projectName": {
       "translation": "Hot Potato"
   },
   "codeLabFeaturedProject_HotPotato.projectDescription": {
       "translation": "When the music stops, don't get stuck with the hot potato!"
+  },
+  "codeLabFeaturedProject_HotPotato.projectInstructions": {
+      "translation": "1. This is a three-player game. \n\n2. Tap the START flag\n\n3. Players 1 and 2, tap your Cube when it lights up. When it’s Cozmo’s turn to tap his Cube, make sure he can see the Cube in front of him.\n\n4. In this game, the “potato” is indicated by Cube lights. When it lands on you, the lights will first turn red, and then will turn green when the potato can be passed.\n\n5. When the music stops, careful not to be stuck with the potato!"
   },
   "codeLabFeaturedProject_TinyOrchestra.projectName": {
       "translation": "Tiny Orchestra"
@@ -472,11 +486,17 @@
   "codeLabFeaturedProject_TinyOrchestra.projectDescription": {
       "translation":  "It's your own tiny orchestra, and Cubes are your instrument!"
   },
+  "codeLabFeaturedProject_TinyOrchestra.projectInstructions": {
+      "translation": "1. Before you begin, make sure your device’s sound is turned up. Place 3 Cubes in front of Cozmo.\n\n2. Tap the START flag!\n\n3. The Cubes’ lights will spin different colors. Tap a Cube to play its instrument. Tap it again to play another variation of that instrument. Each Cube has 3 variations of the same instrument.\n\n4. Experiment with the different music you can make!\n\n*    *    *\n\nBONUS CODE CHALLENGE:\nCan you change the sounds to invent your own sound machine? Tap SEE INSIDE to begin!"
+  },
   "codeLabFeaturedProject_MagicFortuneTeller.projectName": {
       "translation": "Magic Fortune Teller"
   },
   "codeLabFeaturedProject_MagicFortuneTeller.projectDescription": {
       "translation":  "Shake Cozmo and have your fortune told."
+  },
+  "codeLabFeaturedProject_MagicFortuneTeller.projectInstructions": {
+      "translation":  "1. Tap the START flag!\n\n2. When Cozmo has a “?” on his face, it’s your turn to ask him a yes-or-no question.\n\n3. Shake Cozmo so he can come up with your magic fortune.\n\n4. Listen to him tell read your fortune!\n\n5. Repeat, and ask as many questions as you’d like.\n\n*    *    *\n\nBONUS CODE CHALLENGE:\nCan you change the words in Cozmo’s magic fortunes so that they say something different? Tap SEE INSIDE to begin!"
   },
   "codeLabFeaturedProject_CubeWhack.projectName": {
       "translation": "Cube Whack"
@@ -484,17 +504,26 @@
   "codeLabFeaturedProject_CubeWhack.projectDescription": {
       "translation":  "Whack that Cube! What's your high score?"
   },
+  "codeLabFeaturedProject_CubeWhack.projectInstructions": {
+      "translation": "1. Before you begin, place 3 Cubes in front of Cozmo.\n\n2. Tap the START flag!\n\n3. When the game begins, Cozmo’s backpack light will turn a color. Quickly tap the Cube with the matching color!\n\n4. Tap as many matching Cubes as possible before the time is up! Can you beat your high score?"
+  },
   "codeLabFeaturedProject_FiretruckAlarm.projectName": {
       "translation": "Fire Truck Alarm"
   },
   "codeLabFeaturedProject_FiretruckAlarm.projectDescription": {
       "translation":  "Tick, tock! Timers are more fun when they're a Cozmo."
   },
+  "codeLabFeaturedProject_FiretruckAlarm.projectInstructions": {
+      "translation": "1. Tap the START flag!\n\n2. To set the timer, tap the blue Cube to add 5 seconds, and the red cube to subtract 5 seconds. A 30-second timer is the default.\n\n3. When you’re ready to start your timer, tap the green Cube.\n\n4. Countdown to Cozmo’s fire truck alarm!"
+  },
   "codeLabFeaturedProject_LightShow.projectName": {
       "translation": "Light Show"
   },
   "codeLabFeaturedProject_LightShow.projectDescription": {
       "translation":  "Turn off the lights and groove to the music."
+  },
+  "codeLabFeaturedProject_LightShow.projectInstructions": {
+      "translation": "1. Before you begin, turn off the lights.\n\n2. Tap the START flag!\n\n3. Watch as Cozmo’s Cubes perform a light show and he dances to the music!\n\n*    *    *\n\nBONUS CODE CHALLENGE:\nCan you make Cozmo do different dances? Try out moving his lift, driving in a circle, and changing his animations. Tap SEE INSIDE to begin!"
   },
 
 

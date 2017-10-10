@@ -223,6 +223,13 @@
         window.cozmoProjectName = projectName;
         window.previouslySavedProjectJSON = null;
 
+        // TODO Move this to a better place, maybe along with RenameProject.init().
+        // TODO only call for featured projects, not all sample projects.
+        // window.cozmoProjectUUID must be set before Play Now Modal is rendered.
+        if (window.isCozmoSampleProject && window.isVertical) {
+            PlayNowModal.init();
+        }
+
         if (window.saveProjectTimerId) {
             clearInterval(window.saveProjectTimerId);
         }
