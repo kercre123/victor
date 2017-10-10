@@ -2373,6 +2373,14 @@ namespace Cozmo {
                        (_imageSaveMode == ImageSendMode::SingleShot ? "single image" : "image stream"),
                        path.c_str());
         imgRGB.Save(path);
+
+
+        Vision::ImageRGB imgUndistorted(numRows,numCols);
+        cv::undistort(imgRGB.get_CvMat_(), imgUndistorted.get_CvMat_(),
+                      _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
+                      _camera.GetCalibration()->GetDistortionCoeffs());
+        imgUndistorted.Save("/data/misc/camera/test/" + std::to_string(imageId) + "_undistored.png");
+
         if (_imageSaveMode == ImageSendMode::SingleShot)
         {
           _imageSaveMode = ImageSendMode::Off;

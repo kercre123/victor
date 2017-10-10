@@ -1,32 +1,32 @@
 
-project(utilUnitTest LANGUAGES CXX)
+#project(utilUnitTest LANGUAGES CXX)
 
-include(anki_build_cxx_library)
-include(gtest)
+#include(anki_build_cxx_library)
+#include(gtest)
 
-get_filename_component(util ${CMAKE_CURRENT_SOURCE_DIR}/../../.. ABSOLUTE)
+#get_filename_component(util ${CMAKE_CURRENT_SOURCE_DIR}/../../.. ABSOLUTE)
 
-set(UTIL_INCLUDE_DIR ${util})
-set(UTIL_LIBRARY util)
+#set(UTIL_INCLUDE_DIR ${util})
+#set(UTIL_LIBRARY util)
 
-set(JSONCPP_INCLUDE_DIR ${util}/source/3rd/jsoncpp)
-set(JSONCPP_LIBRARY jsoncpp)
+#set(JSONCPP_INCLUDE_DIR ${util}/source/3rd/jsoncpp)
+#set(JSONCPP_LIBRARY jsoncpp)
 
-anki_build_cxx_executable(utilUnitTest ${ANKI_SRCLIST_DIR})
+#anki_build_cxx_executable(utilUnitTest ${ANKI_SRCLIST_DIR})
 
-target_compile_definitions(utilUnitTest PRIVATE
-  -DUNIT_TEST=1
-)
+#target_compile_definitions(utilUnitTest PRIVATE
+#  -DUNIT_TEST=1
+#)
 
-target_include_directories(utilUnitTest PRIVATE
-  ${UTIL_INCLUDE_DIR}
-  ${JSONCPP_INCLUDE_DIR}
-)
+#target_include_directories(utilUnitTest PRIVATE
+#  ${UTIL_INCLUDE_DIR}
+#  ${JSONCPP_INCLUDE_DIR}
+#)
 
-target_link_libraries(utilUnitTest 
-  PRIVATE
-  util
-  ${JSONCPP_LIBRARY}
-  gtest
-)
+#target_link_libraries(utilUnitTest 
+#  PRIVATE
+#  util
+#  ${JSONCPP_LIBRARY}
+#  gtest
+#)
 

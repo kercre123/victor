@@ -73,6 +73,9 @@ static u32 kMotorCalibrationTimeout_ms = 4000;
 // Head angle at which we should play the sound for both speaker and mic check
 static f32 kHeadAngleToPlaySound    = DEG_TO_RAD(2.f);
 
+// Volume to play sound
+static f32 kSoundVolume             = 0.f;
+
 // How long to check drift for
 static u32 kIMUDriftDetectPeriod_ms = 2000;
 

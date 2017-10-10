@@ -29,7 +29,6 @@ namespace Cozmo {
 
 namespace {
 
-#ifdef COZMO_V2
 #ifdef SIMULATOR
 // V2 Simulated camera calibration
 static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
@@ -48,15 +47,6 @@ static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
                                 303, 196,
                                 0.f,
                                 std::vector<f32>({-0.1, -0.1, 0.00005, -0.0001, 0.05, 0.f, 0.f, 0.f})));
-#endif
-#else
-// 1.5/1.0 Physical camera calibration
-static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
-  new Vision::CameraCalibration(240, 320,
-                                290, 290,
-                                160, 120,
-                                0.f,
-                                std::vector<f32>({0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f})));
 #endif
 }
 
