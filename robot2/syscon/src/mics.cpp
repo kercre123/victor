@@ -10,7 +10,7 @@
 extern "C" void start_mic_spi(int16_t a, int16_t b, void* tim);
 
 static const int WORDS_PER_SAMPLE = (AUDIO_DECIMATION * 2) / 8;
-static const int SAMPLES_PER_IRQ = 20;
+static const int SAMPLES_PER_IRQ = 24;  // 5 IRQS PER FRAME
 static const int SAMPLE_LOOPS = SAMPLES_PER_IRQ / 4;
 static const int IRQS_PER_FRAME = AUDIO_SAMPLES_PER_FRAME / SAMPLES_PER_IRQ;
 
@@ -130,9 +130,9 @@ void Mics::transmit(int16_t* payload) {
   *result = acc##a >> 16; \
   result = &result[4]
 
-static void decimate(const uint8_t* input, int16_t* output) {
+static void decimate(const uint8_t* input, int32_t* accumulator,  int16_t* output) {
   // Deinterlace the input streams
-  uint8_t deinter[2 * 32 * SAMPLE_LOOPS];
+  static uint8_t deinter[2 * 32 * SAMPLE_LOOPS];
   uint16_t* target = (uint16_t*)&deinter;
 
   // Eight LUTs per channel, 4 channels
@@ -144,7 +144,6 @@ static void decimate(const uint8_t* input, int16_t* output) {
   }
 
   // Run accumulators on the program
-  static int32_t accumulator[3][4];
   int32_t acc0, acc1, acc2, acc3;
 
   const int32_t* coff_set;
@@ -153,41 +152,43 @@ static void decimate(const uint8_t* input, int16_t* output) {
     const uint8_t* source = &deinter[channel];
     int16_t* result = &output[channel];
 
-    acc2 = accumulator[2][channel];
-    acc1 = accumulator[1][channel];
-    acc0 = accumulator[0][channel];
+    acc2 = accumulator[2];
+    acc1 = accumulator[1];
+    acc0 = accumulator[0];
     for (int i = 0; i < SAMPLE_LOOPS; i++) {
         STAGE(0,1,2,3);
         STAGE(1,2,3,0);
         STAGE(2,3,0,1);
         STAGE(3,0,1,2);
     }
-    accumulator[2][channel] = acc2;
-    accumulator[1][channel] = acc1;
-    accumulator[0][channel] = acc0;
+    accumulator[2] = acc2;
+    accumulator[1] = acc1;
+    accumulator[0] = acc0;
+
+    accumulator = &accumulator[4];
   }
 }
 
 extern "C" void DMA1_Channel2_3_IRQHandler(void) {
   static int16_t *index = audio_data[0];
+  uint32_t isr = DMA1->ISR;
+  DMA1->IFCR = DMA_ISR_GIF2;
 
-  if (DMA1->ISR & DMA_ISR_HTIF2) {
-    DMA1->IFCR = DMA_IFCR_CHTIF2;
+  static int32_t accumulator[4][4];
 
-    decimate(pdm_data[0][0], &index[0]);
-    decimate(pdm_data[1][0], &index[2]);
+  // Note: if this falls behind, it will drop a bunch of samples
+  if (isr & DMA_ISR_HTIF2) {
+    decimate(pdm_data[0][0], accumulator[0], &index[0]);
+    decimate(pdm_data[1][0], accumulator[2], &index[2]);
+    index += SAMPLES_PER_IRQ * 4;
+    sample_index++;
+  } else {
+    decimate(pdm_data[0][1], accumulator[0], &index[0]);
+    decimate(pdm_data[1][1], accumulator[2], &index[2]);
     index += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }
 
-  else if (DMA1->ISR & DMA_ISR_TCIF2) {
-    DMA1->IFCR = DMA_IFCR_CTCIF2;
-
-    decimate(pdm_data[0][1], &index[0]);
-    decimate(pdm_data[1][1], &index[2]);
-    index += SAMPLES_PER_IRQ * 4;
-    sample_index++;
-  }
 
   // Circular buffer increment
   if (sample_index >= IRQS_PER_FRAME * 2) {
