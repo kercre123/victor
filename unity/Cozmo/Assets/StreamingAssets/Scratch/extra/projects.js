@@ -392,6 +392,11 @@
           card = makeSampleProjectCard(sampleProjects[i]);
           projectList.appendChild(card);
         }
+      } else {
+        // no sample projects.
+        // make UI visible right away instead of waiting for sample project images to load
+        var projectsUI = document.querySelector('#projects');
+        projectsUI.style.visibility = 'visible';
       }
     }
   };
