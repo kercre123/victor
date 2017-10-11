@@ -341,6 +341,9 @@
   "codeLab.tutorial.slide_greenBlockFirst": {
       "translation": "Always place a green flag BLOCK first. That way, the green flag BUTTON starts your program!"
   },
+  "codeLab.tutorial.slide_challenges": {
+      "translation": "Check out Challenges and grow your skills!"
+  },
   "codeLab.projects.modalTitle": {
       "translation": "Cozmo Code Lab"
   },
