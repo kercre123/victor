@@ -1,10 +1,10 @@
 (function () {
 
     window.isCozmoSampleProject = false;
-    window.changeMadeToSampleProject = false;  // TODO Set flag to offer saving modified sample projects as remixes.
     window.cozmoProjectName = null;
     window.cozmoProjectUUID = null;
     window.previouslySavedProjectJSON = null;
+    window.originalSampleProjectJSON = null;
     window.saveProjectTimerId = null;
     window.resolvePromiseWaitForSaveProject = null;
 
@@ -324,6 +324,18 @@
                 window.saveCozmoUserProject(false);
             }
         }
+    }
+
+    // Check if sample or featured project blocks have been altered since the project was loaded.
+    window.hasSampleProjectChanged = function() {
+        if (window.isCozmoSampleProject) {
+            var currentSampleProjectJSON = Scratch.vm.toJSON();
+            if (currentSampleProjectJSON != window.originalSampleProjectJSON) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     window.openBlocklyXML = function(xml) {

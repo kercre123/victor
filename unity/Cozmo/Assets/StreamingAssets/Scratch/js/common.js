@@ -48,6 +48,13 @@
     }
 
     window.notifyProjectIsLoaded = function() {
+        if (window.isCozmoSampleProject) {
+            // Store the initial representation of the project so that
+            // we can detect if the user has altered it upon exiting
+            // the workspace.
+            window.originalSampleProjectJSON = Scratch.vm.toJSON();
+        }
+
         window.Unity.call({command: "cozmoWorkspaceLoaded"});
         window.isLoadingProject = false;
     }
@@ -351,7 +358,7 @@
     };
 
     window.onCloseButton = function() {
-        if (window.isCozmoSampleProject && window.changeMadeToSampleProject) {
+        if (window.isCozmoSampleProject && window.window.hasSampleProjectChanged()) {
             // a sample or featured project was changed.  Offer to save changes as a remix.
             ModalConfirm.open({
                 title: $t('codeLab.saveModifiedSampleProjectAsRemixDialog.dialogTitle'),
