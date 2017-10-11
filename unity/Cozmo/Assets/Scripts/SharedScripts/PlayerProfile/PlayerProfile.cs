@@ -66,7 +66,7 @@ namespace DataPersistence {
     // Bump if introducing breaking changes and compare in DataPersistenceManager Constructor.
     public int SaveVersion = kSaveVersionCurrent;
 
-    public bool HasTriggeredBonusBarToolTip;
+    public int NumTimesToolTipNotifTapped;
 
     public PlayerProfile() {
       FirstTimeUserFlow = true;
@@ -107,7 +107,7 @@ namespace DataPersistence {
       LastTimeAskedAboutNotifications = System.DateTime.Now;
       NotificationsToBeSent = new List<Cozmo.Notifications.Notification>();
       MostRecentNotificationClicked = null;
-      HasTriggeredBonusBarToolTip = false;
+      NumTimesToolTipNotifTapped = 0;
     }
   }
 }

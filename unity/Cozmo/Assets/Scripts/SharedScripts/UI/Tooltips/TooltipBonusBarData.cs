@@ -20,27 +20,17 @@ namespace Cozmo.UI {
     [SerializeField]
     private AnkiAnimateGlint _ToolTipNotifIconGlint;
 
-    // The tool tip glint will only disable after 2 taps in the same session
-    // Once the app restarts, if the user tapped at least once in the previous session,
-    // the glint will NOT be re-enabled
-    private float _NumToolTipTaps = 0;
-
-    private bool _ToolTipTriggered = false;
+    // To account for possible accidental taps, the notif icon won't disable after the first tap
+    private const int _kMaxNumNotifTaps = 3;
+    private int _NumNotifTaps = 0;
 
     protected override void Start() {
       base.Start();
       // Get tool tip status from DataPersistenceManager
       PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
       if (profile != null) {
-        _ToolTipTriggered = profile.HasTriggeredBonusBarToolTip;
-        // Set initial states
-        if (_ToolTipNotifIconImage != null) {
-          _ToolTipNotifIconImage.sprite = _ToolTipTriggered ? _ToolTipNotifOffSprite : _ToolTipNotifOnSprite;
-        }
-
-        if (_ToolTipNotifIconGlint != null) {
-          _ToolTipNotifIconGlint.EnableGlint(!_ToolTipTriggered);
-        }
+        _NumNotifTaps = profile.NumTimesToolTipNotifTapped;
+        UpdateToolTipIcon();
       }
     }
 
@@ -79,27 +69,21 @@ namespace Cozmo.UI {
         RobotEngineManager.Instance.SendMessage();
       }
 
-      _NumToolTipTaps++;
+      _NumNotifTaps++;
+      // Save status for future app runs
+      DataPersistenceManager.Instance.Data.DefaultProfile.NumTimesToolTipNotifTapped = _NumNotifTaps;
+      DataPersistenceManager.Instance.Save();
+
       UpdateToolTipIcon();
     }
 
     private void UpdateToolTipIcon() {
-      // Turns the tool tip icon "off" after the first use
-      if (!_ToolTipTriggered) {
-        _ToolTipTriggered = true;
-        // Save status for future app runs
-        DataPersistenceManager.Instance.Data.DefaultProfile.HasTriggeredBonusBarToolTip = _ToolTipTriggered;
-        DataPersistenceManager.Instance.Save();
-
-        if (_ToolTipNotifIconImage != null) {
-          _ToolTipNotifIconImage.sprite = _ToolTipNotifOffSprite;
-        }
+      if (_ToolTipNotifIconImage != null) {
+        _ToolTipNotifIconImage.sprite = (_NumNotifTaps >= _kMaxNumNotifTaps) ? _ToolTipNotifOffSprite : _ToolTipNotifOnSprite;
       }
 
-      if (_NumToolTipTaps >= 2) { // but only disable the glint after the second tap in the session
-        if (_ToolTipNotifIconGlint != null) {
-          _ToolTipNotifIconGlint.EnableGlint(!_ToolTipTriggered);
-        }
+      if (_ToolTipNotifIconGlint != null) {
+        _ToolTipNotifIconGlint.EnableGlint(!(_NumNotifTaps >= _kMaxNumNotifTaps));
       }
     }
   }
