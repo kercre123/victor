@@ -1787,18 +1787,18 @@ Blockly.Blocks['cozmo_vert_cozmoface_set_text_alignment'] = {
             "type": "field_dropdown",
             "name": "TEXT_ALIGNMENT_Y",
             "options": [
-              ['%{BKY_TOP}', 0],
-              ['%{BKY_CENTER}', 1],
-              ['%{BKY_BOTTOM}', 2]
+              ['%{BKY_TOP}', '0'],
+              ['%{BKY_CENTER}', '1'],
+              ['%{BKY_BOTTOM}', '2']
              ]
           },
           {
              "type": "field_dropdown",
              "name": "TEXT_ALIGNMENT_X",
              "options": [
-                ['%{BKY_LEFT}', 0],
-                ['%{BKY_CENTER}', 1],
-                ['%{BKY_RIGHT}', 2]
+                ['%{BKY_LEFT}', '0'],
+                ['%{BKY_CENTER}', '1'],
+                ['%{BKY_RIGHT}', '2']
               ]
           }
         ],
