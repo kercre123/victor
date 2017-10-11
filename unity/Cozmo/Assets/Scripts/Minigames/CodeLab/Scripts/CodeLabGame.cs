@@ -1119,6 +1119,50 @@ namespace CodeLab {
       _LastOpenedTab = scratchRequest.argString;
     }
 
+    // Given a UUID, find the existing project (from the user, sample or featured project lists) and return a new project of type CodeLabProject
+    // with a new UUID.
+    private CodeLabProject FindProjectByUUIDAndCreateCodeLabProject(string projectUUID, string projectType) {
+      CodeLabProject codeLabProject = null;
+      if (String.IsNullOrEmpty(projectUUID)) {
+        DAS.Error("Codelab.FindProjectByUUID.BadUUID", "Attempt to find project with no project UUID specified.");
+      }
+      else {
+        switch (projectType) {
+        case "user":
+          CodeLabProject codeLabUserProject = FindUserProjectWithUUID(projectUUID);
+          if (codeLabUserProject != null) {
+            codeLabProject = new CodeLabProject(codeLabUserProject.ProjectName, codeLabUserProject.ProjectJSON, codeLabUserProject.IsVertical);
+            codeLabProject.VersionNum = codeLabUserProject.VersionNum;
+            break;
+          }
+
+          break;
+        case "sample":
+          // @TODO: when we pass in "featured" as a project type, break out this behavior into two cases
+          Guid projectGuid = new Guid(projectUUID);
+
+          Predicate<CodeLabSampleProject> findSampleProject = (CodeLabSampleProject p) => { return p.ProjectUUID == projectGuid; };
+          CodeLabSampleProject sampleProject = _CodeLabSampleProjects.Find(findSampleProject);
+          if (sampleProject != null) {
+            codeLabProject = new CodeLabProject(sampleProject.ProjectName, sampleProject.ProjectJSON, sampleProject.IsVertical);
+            codeLabProject.VersionNum = sampleProject.VersionNum;
+            break;
+          }
+
+          Predicate<CodeLabFeaturedProject> findFeaturedProject = (CodeLabFeaturedProject p) => { return p.ProjectUUID == projectGuid; };
+          CodeLabFeaturedProject featuredProject = _CodeLabFeaturedProjects.Find(findFeaturedProject);
+          if (featuredProject != null) {
+            codeLabProject = new CodeLabProject(featuredProject.ProjectName, featuredProject.ProjectJSON, true);
+            codeLabProject.VersionNum = featuredProject.VersionNum;
+          }
+
+          break;
+        }
+      }
+
+      return codeLabProject;
+    }
+
     // This callback manages identifying a CodeLabProject from a user project export request from the workspace and handling it appropriately.
     private void OnCozmoExportProject(ScratchRequest scratchRequest) {
       DAS.Info("Codelab.OnCozmoExportProject.Called", "User intends to share project");
@@ -1129,34 +1173,9 @@ namespace CodeLab {
         DAS.Error("Codelab.OnCozmoExportProject.BadUUID", "Attempt to export project with no project UUID specified.");
       }
       else {
-        CodeLabProject projectToExport = null;
-
         string projectType = scratchRequest.argString;
-        switch (projectType) {
-        case "user":
-          projectToExport = FindUserProjectWithUUID(projectUUID);
-          break;
-        case "sample":
-          // @TODO: when we pass in "featured" as a project type, break out this behavior into two cases
-          Guid projectGuid = new Guid(projectUUID);
 
-          Predicate<CodeLabSampleProject> findSampleProject = (CodeLabSampleProject p) => { return p.ProjectUUID == projectGuid; };
-          CodeLabSampleProject sampleProject = _CodeLabSampleProjects.Find(findSampleProject);
-          if (sampleProject != null) {
-            projectToExport = new CodeLabProject(sampleProject.ProjectName, sampleProject.ProjectJSON, sampleProject.IsVertical);
-            projectToExport.VersionNum = sampleProject.VersionNum;
-            break;
-          }
-
-          Predicate<CodeLabFeaturedProject> findFeaturedProject = (CodeLabFeaturedProject p) => { return p.ProjectUUID == projectGuid; };
-          CodeLabFeaturedProject featuredProject = _CodeLabFeaturedProjects.Find(findFeaturedProject);
-          if (featuredProject != null) {
-            projectToExport = new CodeLabProject(featuredProject.ProjectName, featuredProject.ProjectJSON, true);
-            projectToExport.VersionNum = featuredProject.VersionNum;
-          }
-
-          break;
-        }
+        CodeLabProject projectToExport = FindProjectByUUIDAndCreateCodeLabProject(projectUUID, projectType);
 
         if (projectToExport != null) {
           string projectToExportJSON = kCodelabPrefix + WWW.EscapeURL(projectToExport.GetSerializedJson());
@@ -1213,7 +1232,7 @@ namespace CodeLab {
         return true;
       case "cozmoSaveOnQuitCompleted":
         // JavaScript is confirming project has been saved,
-        // so now we can exit Code Lab. 
+        // so now we can exit Code Lab.
         RaiseChallengeQuit();
         return true;
       case "getCozmoUserAndSampleProjectLists":
@@ -1249,7 +1268,11 @@ namespace CodeLab {
         return true;
       case "cozmoRequestToRenameProject":
         SessionState.DAS_Event("robot.code_lab.rename_project", "");
-        RenameCodeLabProject(scratchRequest);
+        OnCozmoRenameCodeLabProject(scratchRequest);
+        return true;
+      case "cozmoRequestToRemixProject":
+        SessionState.DAS_Event("robot.code_lab.remix_project", "");
+        OnCozmoRemixCodeLabProject(scratchRequest);
         return true;
       case "cozmoDeleteUserProject":
         OnCozmoDeleteUserProject(scratchRequest);
@@ -1479,7 +1502,7 @@ namespace CodeLab {
         float offsetY = ClampDistanceInput(scratchRequest.argFloat2);
         float offsetAngle = ClampAngleInput(scratchRequest.argFloat3) * Mathf.Deg2Rad;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(offsetX.ToString() + " , " + offsetY.ToString() + " , " + offsetAngle.ToString()));
-        // Offset is in current robot space, so rotate        
+        // Offset is in current robot space, so rotate
         float currentAngle = robot.PoseAngle;
         float cosAngle = Mathf.Cos(currentAngle);
         float sinAngle = Mathf.Sin(currentAngle);
@@ -2334,7 +2357,7 @@ namespace CodeLab {
       }
     }
 
-    private void RenameCodeLabProject(ScratchRequest scratchRequest) {
+    private void OnCozmoRenameCodeLabProject(ScratchRequest scratchRequest) {
       string projectUUID = scratchRequest.argUUID;
       string jsCallback = scratchRequest.argString;
       string newProjectName = scratchRequest.argString2;
@@ -2370,6 +2393,36 @@ namespace CodeLab {
       }
       catch (NullReferenceException) {
         DAS.Error("RenameCodeLabProject.NullReferenceException", "Failure during servicing user's request to rename project. projectUUID = " + projectUUID + ", new project name = " + newProjectName);
+      }
+    }
+
+    private void OnCozmoRemixCodeLabProject(ScratchRequest scratchRequest) {
+      string newProjectName = scratchRequest.argString;
+      string originalProjectType = scratchRequest.argString2;
+      string originalProjectUUID = scratchRequest.argUUID;
+
+      try {
+        CodeLabProject remixedProject = FindProjectByUUIDAndCreateCodeLabProject(originalProjectUUID, originalProjectType);
+        remixedProject.ProjectName = newProjectName;
+
+        PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
+        if (defaultProfile == null) {
+          DAS.Error("OnCozmoSaveUserProject.NullDefaultProfile", "In saving remixed Code Lab user project, defaultProfile is null");
+        } 
+        if (defaultProfile.CodeLabProjects == null) {
+          DAS.Error("OnCozmoSaveUserProject.NullCodeLabProjects", "defaultProfile.CodeLabProjects is null");
+        }
+        defaultProfile.CodeLabProjects.Add(remixedProject);
+
+        string projectNameEscaped = EscapeProjectText(remixedProject.ProjectName);
+        this.EvaluateJS("window.onRemixedProject('" + remixedProject.ProjectUUID + "','" + projectNameEscaped + "');");
+
+        _SessionState.OnCreatedProject(remixedProject);
+
+        DataPersistenceManager.Instance.Save();
+      }
+      catch (NullReferenceException) {
+        DAS.Error("RenameCodeLabProject.NullReferenceException", "Failure during servicing user's request to rename project. Project UUID to remix = " + originalProjectUUID + ", new project name = " + newProjectName);
       }
     }
 
@@ -2574,7 +2627,7 @@ namespace CodeLab {
       }
     }
 
-    // Identify an existing user CodeLabProject with a supplied uuid
+    // Returns an existing user CodeLabProject matching the supplied uuid
     CodeLabProject FindUserProjectWithUUID(string uuid) {
       Guid projectGuid = new Guid(uuid);
       CodeLabProject codeLabProject = null;

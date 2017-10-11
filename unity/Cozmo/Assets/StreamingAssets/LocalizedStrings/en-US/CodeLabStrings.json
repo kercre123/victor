@@ -441,6 +441,34 @@
   },
 
 
+  "codeLab.remixConfirmDialog.dialogTitle": {
+      "translation": "Remix"
+  },
+  "codeLab.remixConfirmDialog.saveProjectAsRemixPrompt": {
+      "translation": "Save this project as a remix?"
+  },
+  "codeLab.remixConfirmDialog.saveRemixButtonLabel": {
+      "translation": "Save As Remix"
+  },
+  "codeLab.remixConfirmDialog.cancelButtonLabel": {
+      "translation": "Cancel"
+  },
+
+
+  "codeLab.saveModifiedSampleProjectAsRemixDialog.dialogTitle": {
+      "translation": "You have made changes."
+  },
+  "codeLab.saveModifiedSampleProjectAsRemixDialog.saveAsRemixPrompt": {
+      "translation": "Do you want to save your changes as a Remix?"
+  },
+  "codeLab.saveModifiedSampleProjectAsRemixDialog.discardChangesButtonLabel": {
+      "translation": "Discard Changes"
+  },
+  "codeLab.remixNewProject.nameStartsWith": {
+      "translation": "Remix of {0}"
+  },
+
+
   "codeLabSampleProject_DriveInSquare.projectName": {
       "translation": "Drive In Square"
   },
@@ -702,6 +730,10 @@
   "codeLabGlossary.glossary_title": {
     "translation": "Glossary"
   },
+
+
+
+
 
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_drive": {

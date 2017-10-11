@@ -44,6 +44,7 @@
         <script src="./js/glossary.js"></script>
         <script src="./js/rename-project.js"></script>
         <script src="./js/play-now-modal.js"></script>
+        <script src="./extra/modal-confirm.js"></script>
 
         <script src="./lib/vm/dist/web/scratch-vm.min.js"></script>
         <!-- For debugging the vm, use scratch-vm.js instead of scratch-vm.min.js -->
@@ -58,6 +59,8 @@
         <link rel="stylesheet" href="./css/glossary.css"/>
         <link rel="stylesheet" href="./css/rename-project.css"/>
         <link rel="stylesheet" href="./css/play-now-modal.css"/>
+        <link rel="stylesheet" href="./extra/modal-confirm.css"/>
+        <link rel="stylesheet" href="./css/remix-project.css"/>
 	</head>
 
 	<body>
@@ -708,6 +711,9 @@
             <div class="primary">
                 <span id="app-title"></span><br>
                 <span id="app-title-subtext"></span>
+                <div id="app-buttons">
+                  <button id="remix-button"></button>
+                </div>
             </div>
         </div>
 
@@ -744,6 +750,7 @@
             </div>
         </div>
 
+
         <div id="glossary-modal">
           <div class="modal-background" data-type="close-glossary"></div>
           <div id="glossary">
@@ -762,6 +769,7 @@
           </div>
         </div>
 
+        <!-- Rename -->
         <div id="rename-project-modal" class="full-screen-modal">
           <div class="hd">
             <button id="btn-close-rename-project" class="btn-close-modal"></button>

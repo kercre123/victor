@@ -15,8 +15,8 @@ var ModalConfirm = (function(){
    * @param {Object} options - paramters for text labels in the dialog and callback function
    * @param {String} options.title - title to display for dialog
    * @param {String} options.prompt - prompt text the user is asked to confirm
-   * @param {String} options.confirmButtonLabel - label text for confirm button
-   * @param {String} options.cancelButtonLabel - label text for cancel button
+   * @param {String} options.confirmButtonLabel - label text for blue confirm button
+   * @param {String} options.cancelButtonLabel - label text for red cancel button
    * @param {Function} options.confirmCallback - function called with result of the confirmation
    * @returns {void}
    */
@@ -107,8 +107,8 @@ var ModalConfirm = (function(){
                '    <h2 class="hd modal-confirm-title"></h2>' +
                '    <p class="bd modal-confirm-prompt"></p>' +
                '    <div class="ft">' +
-               '      <button class="btn-confirm button-pill button-red-pill"></button>' +
-               '      <button class="btn-cancel button-pill button-blue-pill"></button>' +
+               '      <button class="btn-cancel button-pill button-red-pill"></button>' +
+               '      <button class="btn-confirm button-pill button-blue-pill"></button>' +
                '    </div>' +
                '  </div>' +
                '</div>';

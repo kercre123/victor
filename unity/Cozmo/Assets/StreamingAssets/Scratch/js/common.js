@@ -174,12 +174,11 @@
         var stop = document.querySelector('#stop');
 
         closeButton.addEventListener('click', function () {
-            window.exitWorkspace();
+            window.onCloseButton();
         });
         closeButton.addEventListener('touchmove', function (e) {
             e.preventDefault();
         });
-
 
         if (!window.isVertical) {
             var challengesButton = document.querySelector('#challengesbutton');
@@ -283,6 +282,14 @@
             });
         }
 
+        var remixButton = document.querySelector("#remix-button");
+        remixButton.addEventListener('click', function(){
+            window.onRemixButton();
+        });
+        remixButton.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+        });
+
         greenFlag.addEventListener('click', function () {
             Scratch.workspace.playAudio('click');
             vm.greenFlag();
@@ -343,6 +350,32 @@
         }
     };
 
+    window.onCloseButton = function() {
+        if (window.isCozmoSampleProject && window.changeMadeToSampleProject) {
+            // a sample or featured project was changed.  Offer to save changes as a remix.
+            ModalConfirm.open({
+                title: $t('codeLab.saveModifiedSampleProjectAsRemixDialog.dialogTitle'),
+                prompt: $t('codeLab.saveModifiedSampleProjectAsRemixDialog.saveAsRemixPrompt'),
+                confirmButtonLabel: $t('codeLab.remixConfirmDialog.saveRemixButtonLabel'),
+                cancelButtonLabel: $t('codeLab.saveModifiedSampleProjectAsRemixDialog.discardChangesButtonLabel'),
+                confirmCallback: function(result) {
+                    if (result) {
+                        // user wants a remix
+                        var newRemixName = RenameProject.createRemixProjectTitle(window.cozmoProjectName);
+                        window.remixProject(window.cozmoProjectUUID, newRemixName);
+                    } else {
+                        // user does not want to remix, so close the project as normal
+                        window.exitWorkspace();
+                    }
+                }
+            });
+        } else {
+          // This is a user project or an unmodified sample project.
+          // Changes do not need to be saved.
+          window.exitWorkspace();
+        }
+    }
+
     window.exitWorkspace = function() {
         Scratch.workspace.playAudio('click');
         Scratch.vm.stopAll();
@@ -351,6 +384,23 @@
         var promiseSaveProject = window.promiseWaitForSaveProject();
         promiseSaveProject.then(function(result) {
             window.Unity.call({requestId: -1, command: "cozmoLoadProjectPage"});
+        });
+    }
+
+    window.onRemixButton = function() {
+        Scratch.workspace.playAudio('click');
+        ModalConfirm.open({
+            title: $t('codeLab.remixConfirmDialog.dialogTitle'),
+            prompt: $t('codeLab.remixConfirmDialog.saveProjectAsRemixPrompt'),
+            confirmButtonLabel: $t('codeLab.remixConfirmDialog.saveRemixButtonLabel'),
+            cancelButtonLabel: $t('codeLab.remixConfirmDialog.cancelButtonLabel'),
+            confirmCallback: function(result) {
+                if (result) {
+                    // user wants a remix
+                    var newRemixName = RenameProject.createRemixProjectTitle(window.cozmoProjectName);
+                    window.remixProject(window.cozmoProjectUUID, newRemixName);
+                }
+            }
         });
     }
 

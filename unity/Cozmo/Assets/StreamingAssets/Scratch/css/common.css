@@ -199,10 +199,26 @@ button:focus {
     padding: 0 5px;
     pointer-events: all;
 }
-
 #projecttext .primary #app-title.long-title {
   font-size: 24px;
 }
+#projecttext .primary #app-title.editable {
+    max-width: calc(100vw - 265px);
+}
+#projecttext .primary #app-title.editable:before {
+    display: inline-block;
+    content: ' ';
+    width: 20px;
+    height: 20px;
+    transform: rotate(180deg);
+    margin-right: 5px;
+    background-image: url('../images/ui/pencil.svg');
+    background-position: left top;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+
 
 #projecttext .primary #app-title-subtext {
     display: inline-block;
@@ -210,6 +226,31 @@ button:focus {
     font-size: 20px;
     background-color: #525253;
     padding: 0 5px;
+}
+
+#projecttext #app-buttons {
+  display: none;
+  border-left: 2px solid #7b7c7d;
+  padding-left: .4em;
+}
+#projecttext.is-title-set #app-buttons {
+  display: inline-block;
+}
+#projecttext #app-buttons button {
+  width: 24px;
+  height: 24px;
+  background-color: transparent;
+  background-size: cover;
+  border: 0;
+  pointer-events: all;
+  margin-left: .3em;
+  margin: 3px 5px;
+}
+#projecttext #app-buttons button:active {
+  background-position: 0 -24px;
+}
+#projecttext #app-buttons #remix-button {
+  background-image: url('../images/ui/btn_duplicate.svg');
 }
 
 /**
@@ -468,9 +509,18 @@ button:focus {
     #projecttext .primary #app-title.long-title {
       font-size: 16px;
     }
+    #projecttext .primary #app-title.editable:before {
+        width: 16px;
+        height: 16px;
+    }
 
     #projecttext .primary #app-title-subtext {
         font-size: 15px;
+    }
+
+    #projecttext #app-buttons #remix-button {
+        height: 18px;
+        width: 18px;
     }
 
 

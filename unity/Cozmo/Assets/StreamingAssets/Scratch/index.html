@@ -36,6 +36,7 @@
         <script src="./js/cozmoUserProjectCommands.js"></script>
         <script src="./js/webAudioPlayer.js"></script>
         <script src="./js/rename-project.js"></script>
+        <script src="./extra/modal-confirm.js"></script>
 
         <script src="./lib/vm/dist/web/scratch-vm.min.js"></script>
         <!-- For debugging the vm, use scratch-vm.js instead of scratch-vm.min.js -->
@@ -50,6 +51,8 @@
         <link rel="stylesheet" href="./css/normalize.css">
         <link rel="stylesheet" href="./css/common.css">
         <link rel="stylesheet" href="./css/rename-project.css"/>
+        <link rel="stylesheet" href="./extra/modal-confirm.css"/>
+        <link rel="stylesheet" href="./css/remix-project.css"/>
 	</head>
 
 	<body>
@@ -185,6 +188,9 @@
             <div class="primary">
                 <span id="app-title"></span><br>
                 <span id="app-title-subtext"></span>
+                <div id="app-buttons">
+                  <button id="remix-button"></button>
+                </div>
             </div>
         </div>
 
@@ -199,18 +205,18 @@
         </div>
 
         <!-- Rename -->
-        <div id="rename-project-modal">
+        <div id="rename-project-modal" class="full-screen-modal">
           <div class="hd">
-            <button id="btn-close-rename-project"></button>
-            <div class="original-project-name"></div>
+            <button id="btn-close-rename-project" class="btn-close-modal"></button>
+            <div class="project-name original-project-name"></div>
           </div>
           <div class="bd">
             <form id="rename-project-form">
               <div id="rename-project-prompt"></div>
               <input id="rename-project-text-box" value="" autocomplete="off"/>
               <div class="buttons">
-                <button id="btn-cancel-rename"></button>
-                <button id="btn-save-rename"></button>
+                <button id="btn-cancel-rename" class="btn btn-red"></button>
+                <button id="btn-save-rename" class="btn btn-blue"></button>
               </div>
             </form>
           </div>

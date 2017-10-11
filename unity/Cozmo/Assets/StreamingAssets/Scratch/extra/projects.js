@@ -31,7 +31,6 @@
 
     setText('#featured-tab-hero .tab-hero-title', $t('codeLab.projects.featuredTab.featuredTabHeroTitle'));
     setText('#featured-tab-hero .tab-hero-detail', $t('codeLab.projects.featuredTab.featuredTabHeroDetail'));
-
   }
 
 
@@ -220,10 +219,11 @@
     ModalConfirm.open({
       title: $t('codeLab.projects.confirmQuit.promptText'),
       prompt: '',
-      confirmButtonLabel: $t('codeLab.projects.confirmQuit.confirmButton.labelText'),
-      cancelButtonLabel: $t('codeLab.projects.confirmQuit.cancelButton.labelText'),
+      cancelButtonLabel: $t('codeLab.projects.confirmQuit.confirmButton.labelText'),
+      confirmButtonLabel: $t('codeLab.projects.confirmQuit.cancelButton.labelText'),
       confirmCallback: function(result) {
-        if (result) {
+        // in this dialog, the user quitting is false
+        if (!result) {
           CozmoAPI.closeCodeLab();
         }
       }
@@ -565,11 +565,11 @@
     //        were confirms or cancels.
     ModalConfirm.open({
       title: $t('codeLab.projects.confirmDeleteProject.confirmPromptTitle', projectName),
-      confirmButtonLabel: $t('codeLab.projects.confirmDeleteProject.cancelButton.labelText'),
-      cancelButtonLabel: $t('codeLab.projects.confirmDeleteProject.confirmButton.labelText'),
+      cancelButtonLabel: $t('codeLab.projects.confirmDeleteProject.cancelButton.labelText'),
+      confirmButtonLabel: $t('codeLab.projects.confirmDeleteProject.confirmButton.labelText'),
       prompt: $t('codeLab.projects.confirmDeleteProject.confirmPrompt'),
       confirmCallback: function(result) {
-        if (result) {
+        if (!result) {
           window.player.play('click');
         } else {
           if (window.player) {

@@ -1,6 +1,7 @@
 (function () {
 
     window.isCozmoSampleProject = false;
+    window.changeMadeToSampleProject = false;  // TODO Set flag to offer saving modified sample projects as remixes.
     window.cozmoProjectName = null;
     window.cozmoProjectUUID = null;
     window.previouslySavedProjectJSON = null;
@@ -172,7 +173,7 @@
 
     window.exportCozmoProject = function() {
         var promiseSaveProject = window.promiseWaitForSaveProject();
-        
+
         var projectType = "user";
         if(window.isCozmoSampleProject) {
             projectType = "sample";
@@ -207,9 +208,6 @@
         var isCozmoSampleProject = (isCozmoSampleProjectStr == 'true');
         window.isCozmoSampleProject = isCozmoSampleProject;
 
-        // Must be called after window.isCozmoSampleProject is set.
-        RenameProject.init();
-
         // TODO: Special case to fix localized text for intruder sample project. Rip out and revisit post-2.0.0.
         // TODO After sample projects are converted to JSON, must revisit this.
         if (isCozmoSampleProject && projectUUID == "4bb7eb61-99c4-44a2-8295-f0f94ddeaf62" && projectXML != null) {
@@ -223,7 +221,8 @@
         window.cozmoProjectName = projectName;
         window.previouslySavedProjectJSON = null;
 
-        // TODO Move this to a better place, maybe along with RenameProject.init().
+        window.onProjectOpened();
+
         // TODO only call for featured projects, not all sample projects.
         // window.cozmoProjectUUID must be set before Play Now Modal is rendered.
         if (window.isCozmoSampleProject && window.isVertical) {
@@ -253,7 +252,7 @@
         setProjectNameAndSavedText(projectName, isCozmoSampleProject);
 
         window.startSaveProjectTimer();
-        
+
         var loadTime = (performance.now() - startTime) * 0.001;
         window.cozmoDASLog("openCozmoProject", "Took: " + loadTime.toFixed(3) + "s");
     }
@@ -283,6 +282,37 @@
         window.cozmoProjectName = projectName;
 
         window.setProjectNameAndSavedText(projectName, false);
+
+        window.onProjectOpened();
+    }
+
+    // Make rename and remix UI visible.
+    // Call after uuid and project name are set.
+    window.onProjectOpened = function() {        
+        if (window.cozmoProjectName != null && window.cozmoProjectUUID != null && window.cozmoProjectUUID != '') {
+            // set class that title is set so that remix button is shown
+            document.querySelector('#projecttext').classList.add('is-title-set');
+
+            // initialize renames of user projects
+            RenameProject.init();
+        }
+    }
+
+    window.onRemixedProject = function(projectUUID, newProjectName) {
+        window.cozmoProjectUUID = projectUUID;
+        window.cozmoProjectName = newProjectName;
+        window.isCozmoSampleProject = false;
+
+        window.previouslySavedProjectJSON = null;
+        window.changeMadeToSampleProject = false;
+
+        var workspaceProjectName = document.querySelector('#app-title');
+        if (workspaceProjectName) {
+          workspaceProjectName.textContent = newProjectName;
+        }
+
+        // Turn save timer back on
+        window.startSaveProjectTimer();
     }
 
     window.startSaveProjectTimer = function() {
