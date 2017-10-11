@@ -206,13 +206,18 @@ namespace Cozmo.Energy.UI {
     private void HandleBlockConnectivityChanged(int blocksConnected) {
       if (_WasFull == null || !_WasFull.Value) {
         if (blocksConnected == 0) {
-          _ShakeProgressBarBG.gameObject.SetActive(false);
           _CubeHelpGroup.SetActive(true);
         }
         else {
-          _ShakeProgressBarBG.gameObject.SetActive(true);
           _CubeHelpGroup.SetActive(false);
         }
+      }
+      // always hide regardless of full state.
+      if (blocksConnected == 0) {
+        _ShakeProgressBarBG.gameObject.SetActive(false);
+      }
+      else {
+        _ShakeProgressBarBG.gameObject.SetActive(true);
       }
     }
 
