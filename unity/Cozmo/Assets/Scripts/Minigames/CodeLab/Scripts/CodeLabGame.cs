@@ -2408,11 +2408,20 @@ namespace CodeLab {
         PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
         if (defaultProfile == null) {
           DAS.Error("OnCozmoSaveUserProject.NullDefaultProfile", "In saving remixed Code Lab user project, defaultProfile is null");
-        } 
+        }
         if (defaultProfile.CodeLabProjects == null) {
           DAS.Error("OnCozmoSaveUserProject.NullCodeLabProjects", "defaultProfile.CodeLabProjects is null");
         }
         defaultProfile.CodeLabProjects.Add(remixedProject);
+
+        if (originalProjectType == "sample") {
+          if (remixedProject.IsVertical) {
+            _LastOpenedTab = "vertical";
+          }
+          else {
+            _LastOpenedTab = "horizontal";
+          }
+        }
 
         string projectNameEscaped = EscapeProjectText(remixedProject.ProjectName);
         this.EvaluateJS("window.onRemixedProject('" + remixedProject.ProjectUUID + "','" + projectNameEscaped + "');");
