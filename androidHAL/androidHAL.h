@@ -108,8 +108,8 @@ namespace Anki
       // Points provided frame to a buffer of image data if available
       // Returns true if image available
       // TODO: How fast will this be in hardware? Is image ready and waiting?
-      bool CameraGetFrame(u8*& frame, u32& imageID, std::vector<ImageImuData>& imuData);
-
+      bool CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms);
+      
       ImageResolution CameraGetResolution() const {return _imageCaptureResolution;}
       
     private:

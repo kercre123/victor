@@ -373,7 +373,7 @@ namespace Anki {
     u32 HAL::GetMicroCounter(void)
     {
       auto currTime = std::chrono::steady_clock::now();
-      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::microseconds>(currTime - timeOffset_).count());
+      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::microseconds>(currTime.time_since_epoch()).count());
     }
 
     void HAL::MicroWait(u32 microseconds)
@@ -386,7 +386,7 @@ namespace Anki {
     TimeStamp_t HAL::GetTimeStamp(void)
     {
       auto currTime = std::chrono::steady_clock::now();
-      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime - timeOffset_).count());
+      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime.time_since_epoch()).count());
     }
 
     void HAL::SetTimeStamp(TimeStamp_t t)

@@ -212,8 +212,7 @@ namespace Cozmo {
     bool CheckMailbox(VisionProcessingResult& result);
     
     const RollingShutterCorrector& GetRollingShutterCorrector() { return _rollingShutterCorrector; }
-    // TODO(Al): Remove after fixing imageIMU and rolling shutter
-    void  ShouldDoRollingShutterCorrection(bool b) { /*_doRollingShutterCorrection = b;*/ }
+    void  ShouldDoRollingShutterCorrection(bool b) { _doRollingShutterCorrection = b; }
     bool  IsDoingRollingShutterCorrection() const { return _doRollingShutterCorrection; }
     
     Result CheckImageQuality(const Vision::Image& inputImage,

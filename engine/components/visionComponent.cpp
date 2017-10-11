@@ -423,13 +423,6 @@ namespace Cozmo {
     if(IsCameraCalibrationSet()) {
       DEV_ASSERT(nullptr != _visionSystem, "VisionComponent.SetNextImage.NullVisionSystem");
       DEV_ASSERT(_visionSystem->IsInitialized(), "VisionComponent.SetNextImage.VisionSystemNotInitialized");
-
-      // TODO(Al): Fix rolling shutter
-      // Populate IMU data history for this image, for rolling shutter correction
-//      GetImuDataHistory().CalculateTimestampForImageIMU(image.GetImageID(),
-//                                                        image.GetTimestamp(),
-//                                                        RollingShutterCorrector::timeBetweenFrames_ms,
-//                                                        image.GetHeight());
     
       // Fill in the pose data for the given image, by querying robot history
       HistRobotState imageHistState;
@@ -1343,9 +1336,6 @@ namespace Cozmo {
                                                const f32 headTurnSpeedLimit_radPerSec,
                                                const int numImuDataToLookBack) const
   {
-    // TODO(Al): Remove after fixing imageIMU and rolling shutter
-    return false;
-    
     // Check to see if the robot's body or head are
     // moving too fast to queue this marker
     if(!_visionWhileMovingFastEnabled)
@@ -1378,10 +1368,7 @@ namespace Cozmo {
   bool VisionComponent::WasBodyRotatingTooFast(TimeStamp_t t,
                                                const f32 bodyTurnSpeedLimit_radPerSec,
                                                const int numImuDataToLookBack) const
-  {
-    // TODO(Al): Remove after fixing imageIMU and rolling shutter
-    return false;
-  
+  {  
     // Check to see if the robot's body or head are
     // moving too fast to queue this marker
     if(!_visionWhileMovingFastEnabled)
@@ -2188,22 +2175,9 @@ namespace Cozmo {
     }
   }
   
-  void VisionComponent::FakeImageProcessed(TimeStamp_t t, const std::vector<const ImageImuData>& imuData)
+  void VisionComponent::FakeImageProcessed(TimeStamp_t t)
   {
     _lastProcessedImageTimeStamp_ms = t;
-   
-    for( const auto& entry : imuData )
-    {
-      GetImuDataHistory().AddImuData(entry.imageId,
-                                     entry.rateX,
-                                     entry.rateY,
-                                     entry.rateZ,
-                                     entry.line2Number);
-
-      GetImuDataHistory().CalculateTimestampForImageIMU(entry.imageId, t,
-                                                        RollingShutterCorrector::timeBetweenFrames_ms,
-                                                        GetCameraCalibration()->GetNrows());
-    }
   }
   
   void VisionComponent::HandleDefaultCameraParams(const DefaultCameraParams& params)
@@ -2329,20 +2303,13 @@ namespace Cozmo {
     int numRows = Vision::CameraResInfo[cameraRes].height;
     int numCols = Vision::CameraResInfo[cameraRes].width;
 
-    u8* buffer = nullptr;
-    
     // Get image buffer
-    // TODO: ImageImuData can be engine-only, non-clad, struct
-    std::vector<ImageImuData> imuData;
-    u32 imageId;
+    u8* buffer = nullptr;
+    u32 imageId = 0;
+    TimeStamp_t imageCaptureSystemTimestamp_ms = 0;
     
-    if(AndroidHAL::getInstance()->CameraGetFrame(buffer, imageId, imuData))
+    if(AndroidHAL::getInstance()->CameraGetFrame(buffer, imageId, imageCaptureSystemTimestamp_ms))
     {
-      // Add IMU data to history
-      for (const auto& data : imuData) {
-        GetImuDataHistory().AddImuData(data.imageId , data.rateX, data.rateY, data.rateZ, data.line2Number);
-      }
-      
       // Create ImageRGB object from image buffer
       Vision::ImageRGB imgRGB(numRows, numCols, buffer);
       
@@ -2369,12 +2336,9 @@ namespace Cozmo {
                       _camera.GetCalibration()->GetDistortionCoeffs());
         imgUndistorted.Display("UndistortedImage");
       }
-        
-      // Create image with proper imageID and timestamp
-      // ***** TODO: Timestamp needs to be in sync with RobotState timestamp!!! ******
-      TimeStamp_t ts = AndroidHAL::getInstance()->GetTimeStamp() - BS_TIME_STEP;
       
-      imgRGB.SetTimestamp(ts);
+      // Create image with proper imageID and timestamp
+      imgRGB.SetTimestamp(imageCaptureSystemTimestamp_ms);
       
       // Compress to jpeg and send to game and viz
       // Do this before setting next image since it swaps the image and invalidates it

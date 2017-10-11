@@ -1631,11 +1631,7 @@ TEST(BlockWorld, UnobserveCubeStack)
     ASSERT_EQ(RESULT_OK, lastResult);
     
     // fake an image
-    std::vector<const ImageImuData> imuEntries {
-      ImageImuData(i  ,0.0f,0.0f,0.0f,0),
-      ImageImuData(i+1,0.0f,0.0f,0.0f,0)
-    };
-    robot.GetVisionComponent().FakeImageProcessed(stateMsg.timestamp, imuEntries);
+    robot.GetVisionComponent().FakeImageProcessed(stateMsg.timestamp);
     
     lastResult = robot.GetBlockWorld().UpdateObservedMarkers(emptyMarkersList);
     ASSERT_EQ(lastResult, RESULT_OK);

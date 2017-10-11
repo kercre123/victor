@@ -283,7 +283,7 @@ namespace Anki {
     }
 
     // Starts camera frame synchronization
-    bool AndroidHAL::CameraGetFrame(u8*& frame, u32& imageID, std::vector<ImageImuData>& imuData )
+    bool AndroidHAL::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms)
     {
       if (nullptr == headCam_) {
         return false;
@@ -366,27 +366,7 @@ namespace Anki {
         cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
       }
       
-      // Return a few pieces of ImageImuData.
-      // Webots camera has no global shutter so sending the current IMU values
-      // for all ImageImuData messages should be sufficient.
-      IMU_DataStructure imu;
-      IMUReadData(imu);
-      
-      ImageImuData data;
-      data.imageId = _imageFrameID;
-      data.rateX = imu.rate_x;
-      data.rateY = imu.rate_y;
-      data.rateZ = imu.rate_z;
-      
-      // IMU data point for middle of this image
-      // See sim_hal::IMUGetCameraTime() for explanation of line2Number
-      data.line2Number = 125;
-      imuData.push_back(data);
-      
-      // Include IMU data for beginning of the next image (for rolling shutter correction purposes)
-      data.imageId = _imageFrameID + 1;
-      data.line2Number = 1;
-      imuData.push_back(data);
+      imageCaptureSystemTimestamp_ms = GetTimeStamp();
 
       imageID = _imageFrameID;
       _imageFrameID++;

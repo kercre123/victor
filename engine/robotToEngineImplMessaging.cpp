@@ -1002,11 +1002,10 @@ void RobotToEngineImplMessaging::HandleImageImuData(const AnkiEvent<RobotInterfa
   
   const ImageImuData& payload = message.GetData().Get_imageGyro();
   
-  robot->GetVisionComponent().GetImuDataHistory().AddImuData(payload.imageId,
+  robot->GetVisionComponent().GetImuDataHistory().AddImuData(payload.systemTimestamp_ms,
                                                              payload.rateX,
                                                              payload.rateY,
-                                                             payload.rateZ,
-                                                             payload.line2Number);
+                                                             payload.rateZ);
 }
 
 void RobotToEngineImplMessaging::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
