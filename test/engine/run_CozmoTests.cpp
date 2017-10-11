@@ -1558,7 +1558,10 @@ TEST(BlockWorld, CubeStacks)
 } // BlockWorld.CubeStacks
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST(BlockWorld, UnobserveCubeStack)
+//
+// VIC-12: Disabled because test does not pass reliably
+//
+TEST(BlockWorld, DISABLED_UnobserveCubeStack)
 {
   using namespace Anki;
   using namespace Cozmo;
