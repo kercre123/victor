@@ -64,9 +64,11 @@ void BLESystem::OnVehicleDiscovered(const UUIDBytes& vehicleId)
 
 void BLESystem::OnVehicleDisappeared(const UUIDBytes& vehicleId)
 {
+#if ALLOW_DEBUG_LOGGING
   Util::Dispatch::Async(_queue, [vehicleId] {
     PRINT_NAMED_DEBUG("BLESystem.OnVehicleDisappeared", "ID: %s", StringFromUUIDBytes(const_cast<UUIDBytes* const>(&vehicleId)));
   });
+#endif
 }
 
 void BLESystem::OnVehicleConnected(const UUIDBytes& vehicleId)
@@ -112,6 +114,7 @@ void BLESystem::OnVehicleDisconnected(const UUIDBytes& vehicleId)
 void BLESystem::OnVehicleMessageReceived(const UUIDBytes& vehicleId, std::vector<uint8_t> messageBytes)
 {
   Util::Dispatch::Async(_queue, [vehicleId, messageBytes = std::move(messageBytes), this] {
+    (void)vehicleId; // silence compiler warning
     PRINT_NAMED_DEBUG("BLESystem.OnVehicleMessageReceived", "ID: %s message chunk received", StringFromUUIDBytes(const_cast<UUIDBytes* const>(&vehicleId)));
     
     DEV_ASSERT(!_bleMessageInProgress->IsMessageComplete(), "BLESystem.OnVehicleMessageReceived.MessageAlreadyComplete");
@@ -145,9 +148,11 @@ void BLESystem::OnVehicleMessageReceived(const UUIDBytes& vehicleId, std::vector
 
 void BLESystem::OnVehicleProximityChanged(const UUIDBytes& vehicleId, int rssi, bool isClose)
 {
+#if ALLOW_DEBUG_LOGGING
   Util::Dispatch::Async(_queue, [vehicleId, rssi] {
     PRINT_NAMED_DEBUG("BLESystem.OnVehicleProximityChanged", "ID: %s RSSI: %d", StringFromUUIDBytes(const_cast<UUIDBytes* const>(&vehicleId)), rssi);
   });
+#endif
 }
 
 void BLESystem::SendMessage(const UUIDBytes& robotId, const RobotInterface::EngineToRobot& message) const

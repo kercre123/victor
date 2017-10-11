@@ -282,10 +282,12 @@ __attribute__((used)) void PrintJsonCout(const Json::Value& config, int maxDepth
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __attribute__((used)) void PrintJsonDebug(const Json::Value& config, const std::string& eventName, int maxDepth)
 {
+#if ALLOW_DEBUG_LOGGING
   auto function = [&eventName]( const std::string& str ) {
     PRINT_NAMED_DEBUG(eventName.c_str(), "\n%s", str.c_str());
   };
   PrintJsonInternal(config, maxDepth, function);
+#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

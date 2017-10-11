@@ -95,10 +95,10 @@ bool FaceLayerManager::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& 
       
       if(paramsSet) {
         if(DEBUG_FACE_LAYERING) {
-          const Point2f& facePosition = interpolatedFace.GetFacePosition();
           PRINT_NAMED_DEBUG("AnimationStreamer.GetFaceHelper.EyeShift",
                             "Applying eye shift from face layer of (%.1f,%.1f)",
-                            facePosition.x(), facePosition.y());
+                            interpolatedFace.GetFacePosition().x(),
+                            interpolatedFace.GetFacePosition().y());
         }
         
         if (shouldReplace)
