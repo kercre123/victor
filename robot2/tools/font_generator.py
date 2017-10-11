@@ -7,6 +7,8 @@ DEBUG=0
 
 name = "Huge"
 
+
+
 if name == "Medium":
     height = 12
     width = 9
@@ -14,9 +16,20 @@ if name == "Medium":
     startrow = 5
     first = ord(' ')
     last = ord('~')
-    font = ImageFont.truetype("Inconsolata-Bold.ttf", pt)
     ctype = "uint16_t"
     formatstr = "0x{:04x},"
+    font = ImageFont.truetype("Inconsolata-Bold.ttf", pt)
+
+elif name == "Big":
+    height = 16
+    width = 12
+    pt = 22
+    startrow = 5
+    first = ord(' ')
+    last = ord('~')
+    ctype = "uint16_t"
+    formatstr = "0x{:04x},"
+    font = ImageFont.truetype("Inconsolata-Bold.ttf", pt)
 
 
 elif name == "Huge":
@@ -43,6 +56,10 @@ nchars = 0
 
 print( "#define {}_FONT_WIDTH {}".format(name.upper(), width))
 print( "#define {}_FONT_HEIGHT {}".format(name.upper(), height))
+print()
+print("#define {}_FONT_LINE_COUNT     (DISPLAY_SCREEN_HEIGHT/{}_FONT_HEIGHT)".format(name.upper(), name.upper()))
+print("#define {}_FONT_CHARS_PER_LINE (DISPLAY_SCREEN_WIDTH/{}_FONT_WIDTH)".format(name.upper(), name.upper()))
+print()
 print( "#define {}_FONT_CHAR_START {}".format(name.upper(), first))
 print( "#define {}_FONT_CHAR_END {}".format(name.upper(), last))
 print("\n")
@@ -103,4 +120,16 @@ for i in range(first,last+1):
     RenderChar(c)
 RenderChar(' ')
 
+print("};")
+
+print("static const Font g{}Font = {{".format(name))
+print("\t{}_FONT_LINE_COUNT,".format(name.upper()))
+print("\t{}_FONT_CHARS_PER_LINE,".format(name.upper()))
+print("\t{}_FONT_HEIGHT,".format(name.upper()))
+print("\t{}_FONT_WIDTH,".format(name.upper()))
+print("\t{}_FONT_CHAR_START,".format(name.upper()))
+print("\t{}_FONT_CHAR_END,".format(name.upper()))
+print("\t0, /* CenteredByDefault */")
+print("\t0,")
+print("\tg{}FontGlyphs".format(name))
 print("};")

@@ -40,7 +40,7 @@ ANIMATE_SRC = animate.c
 ANIMATE_OBJ = $(ANIMATE_SRC:%.c=$(OBJDIR)/%.o)
 
 DISPLAY = display
-DISPLAY_SRC = display.c
+DISPLAY_SRC = display.c helper_text.c
 DISPLAY_OBJ = $(DISPLAY_SRC:%.c=$(OBJDIR)/%.o)
 
 
