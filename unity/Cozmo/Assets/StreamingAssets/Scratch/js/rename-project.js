@@ -155,6 +155,7 @@ var RenameProject = function(){
     var appTitle = document.querySelector('#app-title');
     if (appTitle) {
       appTitle.textContent = newProjectName;
+      window.cozmoProjectName = newProjectName;
     }
     _hide();
   }
