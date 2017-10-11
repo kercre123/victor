@@ -1371,28 +1371,28 @@
   "codeLabGlossary.block_definitions.description.operator_mathop": {
     "translation": "Standard math operators: think operators that would be found on a scientific calculator. [abs] = absolute value of [X], [floor] = floor of [X], [ceiling] = ceiling of [X], [sqrt] = square root of [X], [sin] = sine of [X], [cos] = cosine of [X], [tan] = tangent of [X], [asin] = inverse of sine of [X], [acos] = inverse of cosine of [X], [atan] = inverse of tangent of [X], [ln] = natural logarithm of [X], [log] = logarithm of [X], [e^] = e to the power of [X], [10^] = 10 to the power of [X]."
   },
-  "codeLabGlossary.block_definitions.title.Cozmo_play_animation_by_name": {
+  "codeLabGlossary.block_definitions.title.cozmo_play_animation_by_name": {
     "translation": "advanced: play [text] SDK animation"
   },
-  "codeLabGlossary.block_definitions.description.Cozmo_play_animation_by_name": {
+  "codeLabGlossary.block_definitions.description.cozmo_play_animation_by_name": {
     "translation": "ADVANCED CODE BLOCK. The Cozmo python SDK provides access to hundreds more of Cozmo's animations. The animation's id string can be played using this block. Learn more about the SDK at developer.anki.com."
   },
-  "codeLabGlossary.block_definitions.title.Cozmo_play_animation_by_triggername": {
+  "codeLabGlossary.block_definitions.title.cozmo_play_animation_by_triggername": {
     "translation": "advanced: play [text] SDK animation group"
   },
-  "codeLabGlossary.block_definitions.Cozmo_play_animation_by_triggername": {
+  "codeLabGlossary.block_definitions.description.cozmo_play_animation_by_triggername": {
     "translation": "ADVANCED CODE BLOCK. The Cozmo python SDK provides access to hundreds more of Cozmo's animations. The animation group's id string can be played using this block. Learn more about the SDK at developer.anki.com."
   },
-  "codeLabGlossary.block_definitions.title.Cozmo_sound_play": {
+  "codeLabGlossary.block_definitions.title.cozmo_sound_play": {
     "translation": "Play [sound name] sound"
   },
-  "codeLabGlossary.block_definitions.description.Cozmo_sound_play": {
+  "codeLabGlossary.block_definitions.description.cozmo_sound_play": {
     "translation": "Stop the [sound name] sound."
   },
-  "codeLabGlossary.block_definitions.title.Cozmo_sound_stop": {
+  "codeLabGlossary.block_definitions.title.cozmo_sound_stop": {
     "translation": "stop [sound name] sound"
   },
-  "codeLabGlossary.block_definitions.Cozmo_sound_stop": {
+  "codeLabGlossary.block_definitions.description.cozmo_sound_stop": {
     "translation": "Stop the [sound name] sound. Tip: To turn off Code Lab's default background music, stop \"background\" sound."
   }
 }
