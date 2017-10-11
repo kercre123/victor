@@ -1383,10 +1383,16 @@
     "translation": "ADVANCED CODE BLOCK. The Cozmo python SDK provides access to hundreds more of Cozmo's animations. The animation group's id string can be played using this block. Learn more about the SDK at developer.anki.com."
   },
   "codeLabGlossary.block_definitions.title.cozmo_sound_play": {
-    "translation": "Play [sound name] sound"
+    "translation": "play [sound name] sound"
   },
   "codeLabGlossary.block_definitions.description.cozmo_sound_play": {
-    "translation": "Stop the [sound name] sound."
+    "translation": "Play the [sound name] sound."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_play_and_wait": {
+    "translation": "play [sound name] sound and wait"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_play_and_wait": {
+    "translation": "Play the [sound name] sound and wait for it to complete."
   },
   "codeLabGlossary.block_definitions.title.cozmo_sound_stop": {
     "translation": "stop [sound name] sound"
