@@ -335,6 +335,12 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ConnectToRobot& connect
   }
 
   _context->GetNeedsManager()->InitAfterConnection();
+
+#if USE_DAS
+  // Stop trying to upload DAS files to the server,
+  // since we know we don't have an Internet connection
+  DASPauseUploadingToServer(true);
+#endif
 }
 
 template<>
