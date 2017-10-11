@@ -327,6 +327,31 @@ Blockly.Blocks['cozmo_sound_play'] = {
   }
 };
 
+Blockly.Blocks['cozmo_sound_play_and_wait'] = {
+  /**
+   * Block to play sound and wait for it to finish playing.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "%{BKY_PLAY_SOUND_AND_WAIT}", 
+      "args0": [
+        {
+          "type": "input_value",
+          "name": "SOUND_MENU"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.actions,
+      "colour": Blockly.Colours.actions.primary,
+      "colourSecondary": Blockly.Colours.actions.secondary,
+      "colourTertiary": Blockly.Colours.actions.tertiary
+    });
+  }
+};
+
 Blockly.Blocks['cozmo_sound_stop'] = {
   /**
    * Block to play sound.

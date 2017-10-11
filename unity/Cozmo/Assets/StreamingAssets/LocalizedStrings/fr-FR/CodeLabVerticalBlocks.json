@@ -33,6 +33,9 @@
   "codeLabVertical.PLAY_SOUND": {
     "translation": "play %1 sound"
   },
+  "codeLabVertical.PLAY_SOUND_AND_WAIT": {
+    "translation": "play %1 sound and wait"
+  },
   "codeLabVertical.STOP_SOUND": {
     "translation": "stop %1 sound"
   },

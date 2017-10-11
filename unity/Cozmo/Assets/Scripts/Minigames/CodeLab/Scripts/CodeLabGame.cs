@@ -440,6 +440,7 @@ namespace CodeLab {
         robot.EnableCubeSleep(false);
       }
 
+      ResetAllCodeLabAudio();
       InProgressScratchBlockPool.ReleaseAllInUse();
       StopVerticalHatBlockListeners();
 
@@ -772,6 +773,21 @@ namespace CodeLab {
       }
     }
 
+    private void ResetAllCodeLabAudio() {
+      // Stop any audio the user may have started in their Code Lab program
+      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Sfx_Global_Stop,
+                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
+                                        (callbackInfo) => { /* callback */ });
+      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Music_Global_Stop,
+                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
+                                        (callbackInfo) => { /* callback */ });
+
+      // Restore background music in case it was turned off
+      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_Off,
+                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
+                                        (callbackInfo) => { /* callback */ });
+    }
+
     private void ResetRobotToHomePos() {
       // Reset the robot to a default pose (head straight, lift down)
       // Only does anything if not already close to that pose.
@@ -803,18 +819,7 @@ namespace CodeLab {
         }
       }
 
-      // Stop any audio the user may have started in their Code Lab program
-      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Sfx_Global_Stop,
-                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
-                                        (callbackInfo) => { /* callback */ });
-      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Music_Global_Stop,
-                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
-                                        (callbackInfo) => { /* callback */ });
-
-      // Restore background music in case it was turned off
-      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_Off,
-                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
-                                        (callbackInfo) => { /* callback */ });
+      ResetAllCodeLabAudio();
 
       if (SetHeadAngleLazy(0.0f, callback: this.OnResetToHomeCompleted, queueActionPosition: queuePos) != (uint)ActionConstants.INVALID_TAG) {
         ++_PendingResetToHomeActions;
@@ -1556,20 +1561,34 @@ namespace CodeLab {
       }
       else if (scratchRequest.command == "cozVertPlaySoundEffects") {
         int soundToPlay = scratchRequest.argInt;
+        bool waitToComplete = scratchRequest.argBool;
         Anki.AudioMetaData.GameEvent.Codelab audioEvent = this.GetAudioEvent(soundToPlay, true);
+        string eventName = scratchRequest.command + (waitToComplete ? "AndWait" : "");
 
         if (audioEvent == Anki.AudioMetaData.GameEvent.Codelab.Invalid) {
           // Invalid sound - do nothing
           inProgressScratchBlock.AdvanceToNextBlock(true);
-          _SessionState.ScratchBlockEvent(scratchRequest.command + ".error", DASUtil.FormatExtraData(soundToPlay.ToString()));
+          _SessionState.ScratchBlockEvent(eventName + ".error", DASUtil.FormatExtraData(soundToPlay.ToString()));
         }
         else {
-          _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(audioEvent.ToString()));
-          GameAudioClient.PostCodeLabEvent(audioEvent,
-                                          Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
-                                          (callbackInfo) => { /* callback */ });
+          _SessionState.ScratchBlockEvent(eventName, DASUtil.FormatExtraData(audioEvent.ToString()));
+
+          Anki.AudioEngine.Multiplexer.AudioCallbackFlag callbackFlag = Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventNone;
+          CallbackHandler completeHandler = null;
+          if (waitToComplete) {
+            callbackFlag = Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete;
+            completeHandler = inProgressScratchBlock.AudioPlaySoundCompleted;
+          }
+
+          ushort playID = GameAudioClient.PostCodeLabEvent(audioEvent, callbackFlag, completeHandler);
+
+          if (waitToComplete) {
+            inProgressScratchBlock.SetAudioPlayID(playID);
+          }
+          else {
+            inProgressScratchBlock.AdvanceToNextBlock(true);
+          }
         }
-        inProgressScratchBlock.AdvanceToNextBlock(true);
       }
       else if (scratchRequest.command == "cozVertStopSoundEffects") {
         int soundToPlay = scratchRequest.argInt;
@@ -2414,6 +2433,7 @@ namespace CodeLab {
         DAS.Info("Codelab.ManualOnScriptStopped", "");
         OnScriptStopped();
       }
+      ResetAllCodeLabAudio();
 
       if (_WebViewObjectComponent == null) {
         DAS.Error("CodeLab.LoadURL.NullWebView", "Ignoring request to open '" + scratchPathToHTML + "'");
