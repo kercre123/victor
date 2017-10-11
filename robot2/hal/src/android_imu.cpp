@@ -24,6 +24,9 @@
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
 
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+
 
 namespace Anki {
   namespace Cozmo {
@@ -76,7 +79,7 @@ namespace Anki {
       data = _imuDataArr[_imuLastReadIdx];
       return true;
     }
-
+ 
     void ProcessIMUEvents()
     {
       static int64_t lastAccTime, lastGyroTime;
@@ -118,6 +121,13 @@ namespace Anki {
         imuData.temperature_degC = IMU_TEMP_RAW_TO_C(rawData.temperature);
         lastAccTime = lastGyroTime = rawData.timestamp * NS_PER_IMU_TICK;
         PushIMU(imuData);
+        
+        static ImageImuData imageImuData;
+        imageImuData.systemTimestamp_ms = HAL::GetTimeStamp();
+        imageImuData.rateX = imuData.rate_x;
+        imageImuData.rateY = imuData.rate_y;
+        imageImuData.rateZ = imuData.rate_z;
+        RobotInterface::SendMessage(imageImuData);
       }
 
 #endif

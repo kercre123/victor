@@ -8,7 +8,16 @@
             "value": 1.0
          }
       ]
+    },
+    {
+      "name": "SparkPending",
+      "emotionAffectors": [
+        {
+          "emotionType": "Confident",
+          "value": 0.5
+        }
+      ]
     }
-  ]
+   ]
 }
 

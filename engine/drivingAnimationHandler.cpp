@@ -23,6 +23,7 @@
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
 #include "engine/robot.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "util/console/consoleInterface.h"
 #include "util/helpers/boundedWhile.h"
 

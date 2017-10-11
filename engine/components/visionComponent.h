@@ -150,7 +150,7 @@ struct DockingErrorSignal;
     TimeStamp_t GetFramePeriod_ms() const;
     
     template<class PixelType>
-    Result CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality);
+    Result CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality, const std::string& identifier);
     
     // Detected markers will only be queued for BlockWorld processing if the robot
     // was turning by less than these amounts when they were observed.
@@ -180,7 +180,7 @@ struct DockingErrorSignal;
 
     // Add an occluder to the camera for the cross-bar of the lift in its position
     // at the requested time
-    void AddLiftOccluder(TimeStamp_t t_request);
+    void AddLiftOccluder(const TimeStamp_t t_request);
     
     // Camera calibration
     void StoreNextImageForCameraCalibration(const Rectangle<s32>& targetROI);
@@ -253,7 +253,7 @@ struct DockingErrorSignal;
     Result LoadFaceAlbumFromFile(const std::string& path, std::list<Vision::LoadedKnownFace>& loadedFaces); // Populates list, does not broadcast
     
     // This is for faking images being processed for unit tests
-    void FakeImageProcessed(TimeStamp_t t, const std::vector<const ImageImuData>& imuData={});
+    void FakeImageProcessed(TimeStamp_t t);
     
     // Handles receiving the default camera parameters from robot which are requested when we
     // read the camera calibration
@@ -284,8 +284,13 @@ struct DockingErrorSignal;
 
     f32 GetBodyTurnSpeedThresh_degPerSec() const;
     
+    void SetPhysicalRobot(const bool isPhysical);
+
+    // Non-rotated points representing the lift cross bar
+    std::vector<Point3f> _liftCrossBarSource;
+
   protected:
-    
+
     bool _isInitialized = false;
     
     Robot& _robot;
@@ -293,7 +298,8 @@ struct DockingErrorSignal;
     
     VisionSystem* _visionSystem = nullptr;
     VizManager*   _vizManager = nullptr;
-  
+    std::map<std::string, s32> _vizDisplayIndexMap;
+    
     // Robot stores the calibration, camera just gets a reference to it
     // This is so we can share the same calibration data across multiple
     // cameras (e.g. those stored inside the pose history)
@@ -370,6 +376,8 @@ struct DockingErrorSignal;
     
     bool _enableAutoExposure = true;
     bool _enableColorImages = false;
+    
+    ImageSendMode _imageSaveMode = ImageSendMode::Off;
     
   }; // class VisionComponent
   

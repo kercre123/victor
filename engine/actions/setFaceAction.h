@@ -15,8 +15,6 @@
 #define __Anki_Cozmo_Actions_SetFaceAction_H__
 
 #include "engine/actions/actionInterface.h"
-#include "engine/animations/animationStreamer.h"
-#include "engine/animations/proceduralFace.h"
 
 #include "anki/vision/basestation/image.h"
 #include "util/math/math.h"
@@ -24,17 +22,22 @@
 namespace Anki {
 namespace Cozmo {
 
+// TODO: SetFaceAction is broken (ProceduralFace and Animation only exist in animation process) (VIC-360)
+  
 class SetFaceAction : public IAction
 {
 public:
   
+  // Hold the specified face for the specified duration. Use u32_MAX to loop continuously.
+  // (NOTE: For continuous looping, scanlines will be auto-switched automatically every 30sec to avoid screen burn-in)
   SetFaceAction(Robot& robot, const Vision::Image& faceImage, u32 duration_ms);
-  SetFaceAction(Robot& robot, const ProceduralFace& procFace, u32 duration_ms);
+  //SetFaceAction(Robot& robot, const ProceduralFace& procFace, u32 duration_ms);
   
   virtual ~SetFaceAction();
   
-  // Base the timeout on the requested duration of the face animation, plus some slop
-  virtual f32 GetTimeoutInSeconds() const override { return Util::MilliSecToSec(_duration_ms + 1500ull); }
+  // Base the timeout on the requested duration of the face animation, plus some slop.
+  // If looping continously, timeout is effectively infinite
+  virtual f32 GetTimeoutInSeconds() const override;
   
 protected:
   
@@ -44,10 +47,11 @@ protected:
 private:
   
   Vision::Image                  _faceImage;
-  ProceduralFace                 _procFace;
-  Animation                      _animation;
+  //ProceduralFace                 _procFace;
+  //Animation                      _animation;
   std::unique_ptr<IActionRunner> _playAnimationAction  = nullptr;
   u32                            _duration_ms;
+  bool                           _loopContinuously;
   
 }; // class SetFaceAction
 

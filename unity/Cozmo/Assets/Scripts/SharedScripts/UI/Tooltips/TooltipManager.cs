@@ -2,9 +2,8 @@ using UnityEngine;
 
 namespace Cozmo.UI {
   public class TooltipManager : MonoBehaviour {
-
     [SerializeField]
-    private TooltipWidget _TooltipPrefab;
+    private TooltipWidget[] _TooltipPrefabs;
 
     [SerializeField]
     private float _TooltipShowTime_Sec = 5.0f;
@@ -67,9 +66,7 @@ namespace Cozmo.UI {
 
     public void ShowToolTip(string header, string body, Transform parentTransform, Vector2 localPos, TooltipWidget.CaretPosition preferredDir) {
       HideToolTip();
-      // Destroyed everytime to prevent one frame pops from previous layouts
-      // If it becomes a perf problem, offset for a frame.
-      GameObject go = UIManager.CreateUIElement(_TooltipPrefab, parentTransform);
+      GameObject go = UIManager.CreateUIElement(_TooltipPrefabs[(int)preferredDir], parentTransform);
       _CurrToolTip = go.GetComponent<TooltipWidget>();
       _CurrToolTip.Init(header, body, localPos, preferredDir);
       Invoke("HideToolTip", _TooltipShowTime_Sec);

@@ -243,15 +243,15 @@ namespace Anki {
         case RobotActionType::PLAY_ANIMATION:
         {
           const AnimationCompleted info = msg.completionInfo.Get_animationCompleted();
-          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot finished playing animation %s. [Tag=%d]",
-                 info.animationName.c_str(), msg.idTag);
+          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot finished playing animation %s with result %s. [Tag=%d]",
+                 info.animationName.c_str(), ActionResultToString(msg.result), msg.idTag);
         }
           break;
           
         default:
         {
-          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot completed %s action with tag=%d: %s.",
-                 EnumToString(msg.actionType), msg.idTag, ActionResultToString(msg.result));
+          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot completed %s action with result %s [Tag=%d].",
+                 EnumToString(msg.actionType), ActionResultToString(msg.result), msg.idTag);
         }
       }
       
@@ -1466,13 +1466,13 @@ namespace Anki {
 
     void UiGameController::SendMountCharger(s32 objectID,
                                             PathMotionProfile motionProf,
-                                            const bool usePreDockPose,
+                                            const bool useCliffSensorCorrection,
                                             const bool useManualSpeed)
     {
       ExternalInterface::MountCharger m;
       m.objectID = objectID;
       m.motionProf = motionProf;
-      m.usePreDockPose = usePreDockPose;
+      m.useCliffSensorCorrection = useCliffSensorCorrection;
       m.useManualSpeed = useManualSpeed;
       ExternalInterface::MessageGameToEngine message;
       message.Set_MountCharger(m);
@@ -1481,10 +1481,10 @@ namespace Anki {
 
     
     void UiGameController::SendMountSelectedCharger(PathMotionProfile motionProf,
-                                                    const bool usePreDockPose,
+                                                    const bool useCliffSensorCorrection,
                                                     const bool useManualSpeed)
     {
-      SendMountCharger(-1, motionProf, usePreDockPose, useManualSpeed);
+      SendMountCharger(-1, motionProf, useCliffSensorCorrection, useManualSpeed);
     }
 
     BehaviorClass UiGameController::GetBehaviorClass(const std::string& behaviorClass) const
@@ -2070,8 +2070,8 @@ namespace Anki {
       #ifdef COZMO_V2
         Pose3d origin;
         Pose3d enginePose = GetPose3dOfNode(_robotEngineNode);
-        Pose3d newEnginePose = newPose;
         Pose3d cpyRobotPose = _robotPoseActual;
+        Pose3d newEnginePose = newPose;
         
         enginePose.SetParent(origin);
         newEnginePose.SetParent(origin);

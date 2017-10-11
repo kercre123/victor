@@ -27,6 +27,7 @@
 #include "engine/drivingAnimationHandler.h"
 #include "engine/robot.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"

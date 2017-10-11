@@ -43,8 +43,8 @@ class ProceduralFace
 {
 public:
 
-  static const int WIDTH  = FaceDisplay::FACE_DISPLAY_WIDTH;
-  static const int HEIGHT = FaceDisplay::FACE_DISPLAY_HEIGHT;
+  static const int WIDTH  = FACE_DISPLAY_WIDTH;
+  static const int HEIGHT = FACE_DISPLAY_HEIGHT;
   
   // Nominal positions/sizes for everything (these are things that aren't
   // parameterized at dynamically, but could be if we want)

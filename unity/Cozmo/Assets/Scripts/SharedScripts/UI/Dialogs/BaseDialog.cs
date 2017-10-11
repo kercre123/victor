@@ -38,12 +38,21 @@ namespace Cozmo {
         get { return _CurrentDialogState == DialogState.IsClosing || _CurrentDialogState == DialogState.Closed; }
       }
 
+      public bool IsAnimating {
+        get { return _CurrentDialogState == DialogState.IsClosing || _CurrentDialogState == DialogState.IsOpening; }
+      }
+
       [SerializeField]
       private string _DASEventDialogName = "";
 
       public string DASEventDialogName {
         get { return _DASEventDialogName; }
         set { _DASEventDialogName = value; }
+      }
+
+      protected string _DASEventExtraData = "";
+      public string DASEventExtraData {
+        get { return _DASEventExtraData; }
       }
 
       // The UI event that should play when this dialog opens

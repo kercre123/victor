@@ -16,13 +16,12 @@
 #include "engine/actions/trackFaceAction.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/navMap/iNavMap.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/robot.h"
@@ -188,7 +187,7 @@ bool BehaviorInteractWithFaces::CanDriveIdealDistanceForward(const Robot& robot)
 {
   if( kInteractWithFaces_DoMemoryMapCheckForDriveForward ) {
 
-    const INavMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+    const INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
     DEV_ASSERT(nullptr != memoryMap, "BehaviorInteractWithFaces.CanDriveIdealDistanceForward.NeedMemoryMap");
 
     const Vec3f& fromRobot = robot.GetPose().GetTranslation();

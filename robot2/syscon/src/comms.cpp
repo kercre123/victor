@@ -205,7 +205,8 @@ void Comms::tick(void) {
     Analog::transmit(&outboundPacket.sync.payload);
     Motors::transmit(&outboundPacket.sync.payload);
     Opto::transmit(&outboundPacket.sync.payload);
-    Mics::transmit(outboundPacket.sync.payload.audio);
+    // TODO(Al/Lee): Put back once mics and camera can co-exist
+//    Mics::transmit(outboundPacket.sync.payload.audio);
     Touch::transmit(outboundPacket.sync.payload.touchLevel);
 
     outboundPacket.sync.payload.framecounter++;
@@ -277,8 +278,6 @@ static void ProcessMessage(InboundPacket& packet) {
         break ;
       case PAYLOAD_DATA_FRAME:
         missed_frames = 0;
-        // USART2->TDR = packet.headToBody.framecounter;
-        // USART2->TDR = packet.headToBody.framecounter >> 8;
         Motors::receive(&packet.headToBody);
         Lights::receive(packet.headToBody.ledColors);
         break ;

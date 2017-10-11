@@ -198,12 +198,8 @@ const bool PyramidBase::ObjectIsOnTopOfBase(const Robot& robot, const Observable
     return false;
   }
   
-  bool ableToComparePoses = true;
-  
-  Pose3d objectPoseWRTStatic;
-  ableToComparePoses = ableToComparePoses && targetObject->GetPose().GetWithRespectTo(staticBlock->GetPose(), objectPoseWRTStatic);
-  Pose3d basePoseWRTStatic;
-  ableToComparePoses = ableToComparePoses && baseBlock->GetPose().GetWithRespectTo(staticBlock->GetPose(), basePoseWRTStatic);
+  const bool ableToComparePoses = targetObject->GetPose().HasSameRootAs(staticBlock->GetPose()) &&
+                                  baseBlock->GetPose().HasSameRootAs(staticBlock->GetPose());
   
   if(!ableToComparePoses){
     return false;

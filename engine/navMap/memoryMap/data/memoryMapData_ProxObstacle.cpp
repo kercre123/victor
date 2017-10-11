@@ -1,5 +1,5 @@
 /**
- * File: memoryMapData_ProxObstacle.h
+ * File: memoryMapData_ProxObstacle.cpp
  *
  * Author: Michael Willett
  * Date:   2017-07-31
@@ -17,8 +17,9 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MemoryMapData_ProxObstacle::MemoryMapData_ProxObstacle()
-: MemoryMapData(MemoryMapTypes::EContentType::ObstacleProx)
+MemoryMapData_ProxObstacle::MemoryMapData_ProxObstacle(Vec2f dir, TimeStamp_t t)
+: MemoryMapData(MemoryMapTypes::EContentType::ObstacleProx, t)
+, directionality(dir)
 {
 
 }

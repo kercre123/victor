@@ -55,8 +55,6 @@ namespace Anki {
     static_assert(EnumToUnderlyingType(MotorID::MOTOR_LIFT) == MOTOR_LIFT, "Robot/Spine CLAD Mimatch");
     static_assert(EnumToUnderlyingType(MotorID::MOTOR_HEAD) == MOTOR_HEAD, "Robot/Spine CLAD Mimatch");
     
-
-    
     namespace { // "Private members"
 
       //map power -1.0 .. 1.0 to -32767 to 32767
@@ -77,6 +75,10 @@ namespace Anki {
       static f32 HAL_MOTOR_DIRECTION[MOTOR_COUNT] = {
         1.0,1.0,1.0,1.0
       };
+
+      static f32 HAL_HEAD_MOTOR_CALIB_POWER = -0.4f;
+
+      static f32 HAL_LIFT_MOTOR_CALIB_POWER = -0.4f;
 
       s32 robotID_ = -1;
 
@@ -104,7 +106,7 @@ namespace Anki {
         CONSOLE_DATA(f32 motorPower[MOTOR_COUNT]);
       } internalData_;
 
-      static const char* HAL_INI_PATH = "./hal.conf";
+      static const char* HAL_INI_PATH = "/data/persist/hal.conf";
       const HALConfig::Item  configitems_[]  = {
         {"LeftTread mm/count",  HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_LEFT]},
         {"RightTread mm/count", HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_RIGHT]},
@@ -114,6 +116,8 @@ namespace Anki {
         {"RightTread Motor Direction", HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_RIGHT]},
         {"Lift Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_LIFT]},
         {"Head Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_HEAD]},
+        {"Lift Motor Calib Power",     HALConfig::FLOAT, &HAL_LIFT_MOTOR_CALIB_POWER},
+        {"Head Motor Calib Power",     HALConfig::FLOAT, &HAL_HEAD_MOTOR_CALIB_POWER},
         {0} //Need zeros as end-of-list marker
       };
       
@@ -147,13 +151,18 @@ namespace Anki {
 
     Result HAL::Init()
     {
+      Result res = HALConfig::ReadConfigFile(HAL_INI_PATH, configitems_);
+      if (res != RESULT_OK) {
+        printf("Failed to read hal.conf file (result 0x%08X)\n", res);
+        return res;
+      }
+
       // Set ID
       robotID_ = 1;
 
-#if IMU_WORKING
+//#if IMU_WORKING
       InitIMU();
-#endif
-      HALConfig::ReadConfigFile(HAL_INI_PATH, configitems_);
+//#endif
 
       if (InitRadio(RADIO_IP) != RESULT_OK) {
         printf("Failed to initialize Radio.\n");
@@ -164,9 +173,9 @@ namespace Anki {
       {
         printf("Starting spine hal\n");
 
-        SpineErr_t result = hal_init(SPINE_TTY, SPINE_BAUD);
+        SpineErr_t error = hal_init(SPINE_TTY, SPINE_BAUD);
 
-        if (result != err_OK) {
+        if (error != err_OK) {
           return RESULT_FAIL;
         }
         printf("hal Init OK\nSetting RUN mode\n");
@@ -174,18 +183,22 @@ namespace Anki {
         hal_set_mode(RobotMode_RUN);
 
         printf("Waiting for Data Frame\n");
+        Result result;
         do {
-          Result result = GetSpineDataFrame();
+          result = GetSpineDataFrame();
           //spin on good frame
           if (result == RESULT_FAIL_IO_TIMEOUT) {
-            printf("Kicking the body again!");
+            printf("Kicking the body again!\n");
             hal_set_mode(RobotMode_RUN);
           }
         } while (result != RESULT_OK);
+        
       }
 #else
       bodyData_ = &dummyBodyData_;
 #endif
+      assert(bodyData_ != nullptr);
+      
 
       for (int m = MOTOR_LIFT; m < MOTOR_COUNT; m++) {
         MotorResetPosition((MotorID)m);
@@ -195,6 +208,26 @@ namespace Anki {
       return RESULT_OK;
     }  // Init()
 
+    // Returns the motor power used for calibration [-1.0, 1.0]
+    float HAL::MotorGetCalibPower(MotorID motor)
+    {
+      f32 power = 0.f;
+      switch (motor) 
+      {
+        case MotorID::MOTOR_LIFT:
+          power = HAL_LIFT_MOTOR_CALIB_POWER;
+          break;
+        case MotorID::MOTOR_HEAD:
+          power = HAL_HEAD_MOTOR_CALIB_POWER;
+          break;
+        default:
+          printf("HAL::MotorGetCalibPower.InvalidMotorType - No calib power for %s\n", EnumToString(motor));
+          assert(false);
+          break;
+      }
+      return power;
+    }
+
     // Set the motor power in the unitless range [-1.0, 1.0]
     void HAL::MotorSetPower(MotorID motor, f32 power)
     {
@@ -202,7 +235,6 @@ namespace Anki {
       assert(m < MOTOR_COUNT);
       SAVE_MOTOR_POWER(m, power);
       headData_.motorPower[m] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power * HAL_MOTOR_DIRECTION[m];
-      
     }
 
     // Reset the internal position of the specified motor to 0
@@ -297,8 +329,9 @@ namespace Anki {
     {
       // Takes advantage of the data in bodyData being ordered such that the required members of AudioInput are already
       // laid correctly.
-      const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
-      RobotInterface::SendMessage(*latestAudioInput);
+      // TODO(Al/Lee): Put back once mics and camera can co-exist
+//      const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
+//      RobotInterface::SendMessage(*latestAudioInput);
     }
 
     Result HAL::Step(void)
@@ -319,15 +352,19 @@ namespace Anki {
           headData_.framecounter++;
           hal_send_frame(PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
         }
+
+        // Process IMU while next frame is buffering in the background
+#if IMU_WORKING
+        ProcessIMUEvents();
+#endif
+        
         result =  GetSpineDataFrame();
         PrintConsoleOutput();
       }
 #endif
 
-#if IMU_WORKING
-      ProcessIMUEvents();
-#endif
       //MonitorConnectionState();
+
       ForwardAudioInput();
       return result;
     }
@@ -336,7 +373,7 @@ namespace Anki {
     u32 HAL::GetMicroCounter(void)
     {
       auto currTime = std::chrono::steady_clock::now();
-      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::microseconds>(currTime - timeOffset_).count());
+      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::microseconds>(currTime.time_since_epoch()).count());
     }
 
     void HAL::MicroWait(u32 microseconds)
@@ -349,7 +386,7 @@ namespace Anki {
     TimeStamp_t HAL::GetTimeStamp(void)
     {
       auto currTime = std::chrono::steady_clock::now();
-      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime - timeOffset_).count());
+      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime.time_since_epoch()).count());
     }
 
     void HAL::SetTimeStamp(TimeStamp_t t)
@@ -421,12 +458,36 @@ namespace Anki {
 
     bool HAL::BatteryIsCharging()
     {
-      return bodyData_->battery.flags & isCharging;
+      // TEMP!! This should be fixed once syscon reports the correct flags for isCharging, etc.
+      static bool isCharging = false;
+      static bool wasAboveThresh = false;
+      static u32 lastTransition_ms = HAL::GetTimeStamp();
+      
+      const int32_t thresh = 2000; // raw ADC value?
+      const u32 debounceTime_ms = 200U;
+      
+      const bool isAboveThresh = bodyData_->battery.charger > thresh;
+      
+      if (isAboveThresh != wasAboveThresh) {
+        lastTransition_ms = HAL::GetTimeStamp();
+      }
+      
+      const bool canTransition = HAL::GetTimeStamp() > lastTransition_ms + debounceTime_ms;
+      
+      if (canTransition) {
+        isCharging = isAboveThresh;
+      }
+      
+      wasAboveThresh = isAboveThresh;
+      return isCharging;
+      //return bodyData_->battery.flags & isCharging;
     }
 
     bool HAL::BatteryIsOnCharger()
     {
-      return bodyData_->battery.flags & isOnCharger;
+      // TEMP!! This should be fixed once syscon reports the correct flags for isCharging, etc.
+      return HAL::BatteryIsCharging();
+      //return bodyData_->battery.flags & isOnCharger;
     }
 
     bool HAL::BatteryIsChargerOOS()

@@ -36,8 +36,8 @@ namespace Cozmo {
   {
   public:
     
-    static const s32 IMAGE_WIDTH = FaceDisplay::FACE_DISPLAY_WIDTH;
-    static const s32 IMAGE_HEIGHT = FaceDisplay::FACE_DISPLAY_HEIGHT;
+    static const s32 IMAGE_WIDTH = FACE_DISPLAY_WIDTH;
+    static const s32 IMAGE_HEIGHT = FACE_DISPLAY_HEIGHT;
     static const std::string ProceduralAnimName;
     
     // Get a pointer to the singleton instance

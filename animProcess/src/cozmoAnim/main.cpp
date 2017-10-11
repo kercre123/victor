@@ -27,8 +27,24 @@
 using namespace Anki;
 using namespace Anki::Cozmo;
 
+namespace {
+CozmoAnimEngine* cozmoAnim = nullptr;
+}
+
+void Cleanup(int signum)
+{
+  if(cozmoAnim != nullptr)
+  {
+    delete cozmoAnim;
+    cozmoAnim = nullptr;
+  }
+  
+  exit(signum);
+}
+
 int main(void)
 {
+  signal(SIGTERM, Cleanup);
   
   // - create and set logger
   Util::PrintfLoggerProvider loggerProvider;
@@ -82,9 +98,9 @@ int main(void)
   Util::Data::DataPlatform* dataPlatform = new Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
   
   // Create and init CozmoAnim
-  CozmoAnimEngine cozmoAnim(dataPlatform);
+  cozmoAnim = new CozmoAnimEngine(dataPlatform);
   
-  cozmoAnim.Init();
+  cozmoAnim->Init();
   
   auto start = std::chrono::steady_clock::now();
   const auto timeOffset = start;
@@ -92,7 +108,10 @@ int main(void)
   while (1) {
 
     std::chrono::nanoseconds currTime_ns = start - timeOffset;
-    cozmoAnim.Update(currTime_ns.count());
+    if(cozmoAnim != nullptr)
+    {
+      cozmoAnim->Update(currTime_ns.count());
+    }
     
     auto end = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);

@@ -16,8 +16,10 @@
 
 using Anki::Util::Dispatch::Queue;
 
-
-TEST(QueueTest, ScheduledCallbacks)
+//
+// VIC-12: Disabled because test does not pass reliably
+//
+TEST(QueueTest, DISABLED_ScheduledCallbacks)
 {
   std::cout << "testing repeat callbacks in queues\n";
   Queue* queue = Anki::Util::Dispatch::Create();
@@ -65,7 +67,11 @@ TEST(QueueTest, TaskHandleHeartbeat)
 // test that invalidating a handle prevents it from executing again, even if it's already queued to run
 // on the main queue (like, it's already been moved from the deferred queue to the main queue because
 // its time to execute passed while a task was running that invalidates the handle)
-TEST(QueueTest, ReverseTaskHeartbeat)
+
+//
+// VIC-12: Disabled for victor because test does not pass reliably
+//
+TEST(QueueTest, DISABLED_ReverseTaskHeartbeat)
 {
   class TestClass {
   public:

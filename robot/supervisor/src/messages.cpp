@@ -25,7 +25,6 @@
 #include "wheelController.h"
 
 #include <stdio.h>
-#include "animationController.h"
 
 #include "anki/cozmo/robot/logging.h"
 
@@ -266,9 +265,6 @@ namespace Anki {
         Localization::ResetPoseFrame();
 
 #ifndef TARGET_K02
-        // Reset number of bytes/audio frames played in animation buffer
-        AnimationController::EngineDisconnect();
-
         // In sim, there's no body to put into accessory mode which in turn
         // triggers motor calibration, so we just do motor calibration here.
         LiftController::StartCalibrationRoutine();
@@ -628,40 +624,29 @@ namespace Anki {
 
       void Process_abortAnimation(const RobotInterface::AbortAnimation& msg)
       {
-        #ifndef TARGET_K02
-        AnimationController::Clear();
-        #endif
+
       }
 
       void Process_disableAnimTracks(const AnimKeyFrame::DisableAnimTracks& msg)
       {
-        #ifndef TARGET_K02
-        AnimationController::DisableTracks(msg.whichTracks);
-        #endif
+      
       }
 
       void Process_enableAnimTracks(const AnimKeyFrame::EnableAnimTracks& msg)
       {
-        #ifndef TARGET_K02
-        AnimationController::EnableTracks(msg.whichTracks);
-        #endif
+
       }
 
       void Process_initAnimController(const AnimKeyFrame::InitController& msg)
       {
-        #ifndef TARGET_K02
-        AnimationController::EngineInit(msg);
-        #endif
+      
       }
 
 #ifndef TARGET_K02
       // Group processor for all animation key frame messages
       void Process_anim(const RobotInterface::EngineToRobot& msg)
       {
-        if(AnimationController::BufferKeyFrame(msg.GetBuffer(), msg.Size()) != RESULT_OK) {
-          //PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
-          AnimationController::Clear();
-        }
+      
       }
 #endif
 

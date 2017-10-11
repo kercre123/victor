@@ -41,6 +41,7 @@ namespace Planning
 
 #define MAX_OBSTACLE_COST 1000.0f
 #define FATAL_OBSTACLE_COST (MAX_OBSTACLE_COST + 1.0f)
+#define REVERSE_OVER_OBSTACLE_COST 1000.0f
 
 typedef uint8_t StateTheta;
 typedef int16_t StateXY;

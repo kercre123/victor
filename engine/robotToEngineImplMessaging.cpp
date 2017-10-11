@@ -126,8 +126,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::defaultCameraParams,            &RobotToEngineImplMessaging::HandleDefaultCameraParams);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::objectPowerLevel,               &RobotToEngineImplMessaging::HandleObjectPowerLevel);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::audioInput,                     &RobotToEngineImplMessaging::HandleAudioInput);
-  
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::timeProfStat,                              &RobotToEngineImplMessaging::HandleTimeProfileStat);
   
   // lambda wrapper to call internal handler
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::state,
@@ -178,6 +177,15 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                        PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it completed traversing a bridge.", robot->GetID());
                                                        //SetOnBridge(false);
                                                      }));
+
+  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::chargerMountCompleted,
+                                                         [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                           ANKI_CPU_PROFILE("RobotTag::chargerMountCompleted");
+                                                           PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Charger mount %s.", message.GetData().Get_chargerMountCompleted().didSucceed ? "SUCCEEDED" : "FAILED" );
+                                                           if (message.GetData().Get_chargerMountCompleted().didSucceed) {
+                                                             robot->SetPoseOnCharger();
+                                                           }
+                                                         }));
   
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::mainCycleTimeError,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
@@ -205,7 +213,12 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuTemperature,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::imuTemperature");
-                                                       robot->SetImuTemperature(message.GetData().Get_imuTemperature().temperature_degC);
+                                                       
+                                                       const auto temp_degC = message.GetData().Get_imuTemperature().temperature_degC;
+                                                       // This prints an info every time we receive this message. This is useful for gathering data
+                                                       // in the prototype stages, and could probably be removed in production.
+                                                       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageImuTemperature", "IMU temperature: %.3f degC", temp_degC);
+                                                       robot->SetImuTemperature(temp_degC);
                                                      }));
   
   if (robot->HasExternalInterface())
@@ -989,11 +1002,10 @@ void RobotToEngineImplMessaging::HandleImageImuData(const AnkiEvent<RobotInterfa
   
   const ImageImuData& payload = message.GetData().Get_imageGyro();
   
-  robot->GetVisionComponent().GetImuDataHistory().AddImuData(payload.imageId,
+  robot->GetVisionComponent().GetImuDataHistory().AddImuData(payload.systemTimestamp_ms,
                                                              payload.rateX,
                                                              payload.rateY,
-                                                             payload.rateZ,
-                                                             payload.line2Number);
+                                                             payload.rateZ);
 }
 
 void RobotToEngineImplMessaging::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
@@ -1086,55 +1098,16 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
 
 }
 
-void RobotToEngineImplMessaging::HandleAudioInput(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+void RobotToEngineImplMessaging::HandleTimeProfileStat(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  static uint32_t sLatestSequenceID = 0;
-  static AudioUtil::AudioChunkList audioData{};
-  static uint32_t totalAudioSize = 0;
-  
-  const auto & payload = message.GetData().Get_audioInput();
-
-  constexpr int kNumChannels = 4;
-  const int channelsToSave = 4;
-  
-  if (payload.sequenceID > sLatestSequenceID ||
-      (sLatestSequenceID - payload.sequenceID) > (UINT32_MAX / 2)) // To handle rollover case
+  const auto& payload = message.GetData().Get_timeProfStat();
+  if(payload.isHeader)
   {
-    audioData.resize(audioData.size() + 1);
-    auto& newData = audioData.back();
-    constexpr int kSamplesPerChunk = 80; // 80 Samples 4 channels = 320 samples total
-    newData.resize(kSamplesPerChunk * channelsToSave);
-    
-    if (channelsToSave == 1)
-    {
-      // For testing purposes lets only save off the first channel
-      for (int j=0; j<kSamplesPerChunk; j++)
-      {
-        newData.data()[j] = payload.data.data()[j * kNumChannels];
-      }
-    }
-    else
-    {
-      std::copy(payload.data.begin(), payload.data.end(), newData.data());
-    }
-    
-    totalAudioSize += kSamplesPerChunk;
-    sLatestSequenceID = payload.sequenceID;
+    PRINT_NAMED_INFO("Profile", "%s", payload.profName.c_str());
   }
-  
-  if (totalAudioSize >= (AudioUtil::kSampleRate_hz * 20))
+  else
   {
-    ANKI_CPU_PROFILE("HandleAudioInput.WriteWavFile");
-    if (!robot->IsPhysical())
-    {
-      std::string writeLocation = robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "testoutput.wav");
-      auto saveWaveFile = [dest = std::move(writeLocation), channelsToSave, data = std::move(audioData)] () {
-        AudioUtil::WaveFile::SaveFile(dest, data, channelsToSave);
-      };
-      std::thread(saveWaveFile).detach();
-    }
-    audioData.clear();
-    totalAudioSize = 0;
+    PRINT_NAMED_INFO("Profile", "name:%s avg:%u max:%u", payload.profName.c_str(), payload.avg, payload.max);
   }
 }
 

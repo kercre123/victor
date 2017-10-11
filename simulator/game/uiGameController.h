@@ -264,11 +264,11 @@ protected:
 
   void SendMountCharger(const s32 objectID,
                         PathMotionProfile motionProf,
-                        const bool usePreDockPose,
+                        const bool useCliffSensorCorrection = true,
                         const bool useManualSpeed = false);
   
   void SendMountSelectedCharger(PathMotionProfile motionProf,
-                                const bool usePreDockPose,
+                                const bool useCliffSensorCorrection = true,
                                 const bool useManualSpeed = false);
   
   void SendRequestEnabledBehaviorList();

@@ -21,7 +21,6 @@
 #include "engine/components/animTrackHelpers.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
-#include "engine/components/trackLayerComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -40,6 +39,7 @@ namespace Cozmo {
   
 CONSOLE_VAR(bool, kDebugTrackLocking, "Robot", false);
 CONSOLE_VAR(bool, kCreateUnexpectedMovementObstacles, "Robot", true);
+CONSOLE_VAR(bool, kAllowMovementOnChargerInSdkMode, "Robot", false);
   
 using namespace ExternalInterface;
 
@@ -89,7 +89,8 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
     FaceLayerToRemove & layer = layerIter->second;
     if(_isHeadMoving && false == layer.headWasMoving) {
       // Wait for transition from stopped to moving again
-      _robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(layerIter->first, layer.duration_ms);
+      // TODO: Restore eye shifts (VIC-363)
+      //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(layerIter->first, layer.duration_ms);
       layerIter = _faceLayerTagsToRemoveOnHeadMovement.erase(layerIter);
     } else {
       layer.headWasMoving = _isHeadMoving;
@@ -121,6 +122,11 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
   }
   
   CheckForUnexpectedMovement(robotState);
+
+  if(kAllowMovementOnChargerInSdkMode) {
+    UnlockTracks(GetTracksLockedBy(kOnChargerInSdkStr), kOnChargerInSdkStr); //Unlock only if the SDK locked the tracks
+  }
+
 }
 
 void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robotState)
@@ -348,7 +354,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   }
 }
 
-void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag, TimeStamp_t duration_ms)
+void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationTag faceLayerTag, TimeStamp_t duration_ms)
 {
   PRINT_NAMED_DEBUG("MovementComponent.RemoveFaceLayersWhenHeadMoves.",
                     "Registering tag=%d for removal with duration=%dms",
@@ -529,7 +535,7 @@ void MovementComponent::DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::ChargerEvent& msg)
 {
-  if(_robot.GetContext()->IsInSdkMode())
+  if(!kAllowMovementOnChargerInSdkMode && _robot.GetContext()->IsInSdkMode())
   {
     if(msg.onCharger)
     {
@@ -550,7 +556,9 @@ void MovementComponent::HandleMessage(const ExternalInterface::ChargerEvent& msg
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::EnterSdkMode& msg)
 {
-  if(_robot.IsOnCharger() && !AreAllTracksLockedBy(kAllMotorTracks, kOnChargerInSdkStr))
+  if(!kAllowMovementOnChargerInSdkMode && 
+    _robot.IsOnCharger() &&
+    !AreAllTracksLockedBy(kAllMotorTracks, kOnChargerInSdkStr))
   {
     // If SDK mode starts _while_ we are on the charger (and not already locked), lock tracks
     LockTracks(kAllMotorTracks, kOnChargerInSdkStr, kOnChargerInSdkStr);
@@ -560,7 +568,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::EnterSdkMode& msg
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
 {
-  if(_robot.IsOnCharger())
+  if(!kAllowMovementOnChargerInSdkMode && _robot.IsOnCharger())
   {
     // If SDK ends _while_ we are on the charger, make sure to unlock tracks
     UnlockTracks(kAllMotorTracks, kOnChargerInSdkStr);
@@ -671,7 +679,22 @@ AnimTrackFlag MovementComponent::GetFlagFromIndex(int index)
 {
   return (AnimTrackFlag)((u32)1 << index);
 }
-  
+
+
+uint8_t MovementComponent::GetTracksLockedBy(const std::string& who) const
+{
+  uint8_t lockedTracks = 0;
+  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
+  {
+    auto iter = _trackLockCount[i].find({who, ""});
+    if(iter != _trackLockCount[i].end())
+    {
+      lockedTracks |= (1 << i);
+    }
+  }
+  return lockedTracks;
+}
+
 bool MovementComponent::AreAnyTracksLocked(u8 tracks) const
 {
   for(int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)

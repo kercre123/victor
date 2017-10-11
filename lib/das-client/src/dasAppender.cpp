@@ -82,12 +82,14 @@ void DasAppender::append(DASLogLevel level, const char* eventName, const char* e
   }
   uint32_t curSequence = sDasSequenceNumber++;
 
-  std::map<std::string, std::string> eventDictionary;
+  // In case of any overlap, values passed in `data` take precedence
+  // over values in `globals`, so apply those first and only `insert`
+  // global values if they don't already exist
+  std::map<std::string, std::string> eventDictionary = data;
   if (globals) {
-    eventDictionary = *globals;
+    eventDictionary.insert(globals->begin(), globals->end());
   }
-  eventDictionary.insert(data.begin(), data.end());
-  eventDictionary.emplace(eventName, eventValue);
+  eventDictionary[eventName] = eventValue;
 
   _syncQueue.Wake([this, eventDictionary = std::move(eventDictionary), curSequence]() mutable {
 

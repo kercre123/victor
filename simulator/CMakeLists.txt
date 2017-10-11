@@ -23,10 +23,7 @@ if (MACOSX)
   set(PLATFORM_LIBS
     ${FOUNDATION}
     ${OPENGL}
-    -Wno-deprecated-declarations
-    # supress warnings about old GLUT declarations used by webots
     ${GLUT}
-    -Wdeprecated-declarations    
     ${WEBOTS_LIBS}
     ${WEBOTS_SIM_LIBS}
     ${WEBOTS_PLUGINS}
@@ -43,23 +40,30 @@ include(anki_build_cxx_library)
 
 anki_build_cxx_library(cozmo_physics ${ANKI_SRCLIST_DIR})
 
+#
+# suppress warnings about old GLUT declarations used by webots
+#
+target_compile_options(cozmo_physics
+  PRIVATE
+  -Wno-deprecated-declarations
+)
+
+target_compile_definitions(cozmo_physics
+  PRIVATE
+  MACOS
+)
+
 target_link_libraries(cozmo_physics
-PRIVATE
-# anki libs
-  util
+  PRIVATE
   cozmo_engine
-  cti_common
-  cti_vision
-  cti_messaging
-# platform
   ${PLATFORM_LIBS}
 )
 
-target_compile_definitions(cozmo_physics PRIVATE                                                       
-    MACOS
-)
 
-symlink_target(TARGET cozmo_physics DST "${CMAKE_CURRENT_SOURCE_DIR}/plugins/physics/cozmo_physics/")
+symlink_target(
+  TARGET cozmo_physics
+  DST "${CMAKE_CURRENT_SOURCE_DIR}/plugins/physics/cozmo_physics/"
+)
 
 
 #
@@ -69,14 +73,14 @@ symlink_target(TARGET cozmo_physics DST "${CMAKE_CURRENT_SOURCE_DIR}/plugins/phy
 anki_build_cxx_library(webotsCtrlCommon ${ANKI_SRCLIST_DIR} STATIC)
 
 target_link_libraries(webotsCtrlCommon
-PUBLIC
+  PUBLIC
   util
   cti_common
   ${PLATFORM_LIBS}
 )
 
 target_compile_definitions(webotsCtrlCommon
-PUBLIC
+  PUBLIC
   COZMO_V2
 )
 
@@ -87,7 +91,7 @@ PUBLIC
 anki_build_cxx_executable(webotsCtrlLightCube ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlLightCube
-PRIVATE
+  PRIVATE
   util
   cti_common
   cti_common_robot
@@ -97,13 +101,19 @@ PRIVATE
   ${PLATFORM_LIBS}
 )
 
-target_compile_definitions(webotsCtrlLightCube PRIVATE                                                       
+target_compile_definitions(webotsCtrlLightCube
+  PRIVATE
   COZMO_ROBOT
   SIMULATOR
 )
 
-symlink_target(TARGET webotsCtrlLightCube DST "${CONTROLLERS_DIR}/webotsCtrlLightCube/")
-symlink_target(TARGET webotsCtrlLightCube
+symlink_target(
+  TARGET webotsCtrlLightCube
+  DST "${CONTROLLERS_DIR}/webotsCtrlLightCube/"
+)
+
+symlink_target(
+  TARGET webotsCtrlLightCube
   SRC ${BUILT_RESOURCES_DIR}
   DST ${CONTROLLERS_DIR}/webotsCtrlLightCube/resources
 )
@@ -112,21 +122,26 @@ symlink_target(TARGET webotsCtrlLightCube
 anki_build_cxx_executable(webotsCtrlViz ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlViz
-PRIVATE
+  PRIVATE
   util
-  kazmath  
+  kazmath
   cti_common
   cti_vision
   cti_messaging
   cti_common_robot
   cozmo_engine
   webotsCtrlCommon
-  ${OPENCV_LIBS}  
+  ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )
 
-symlink_target(TARGET webotsCtrlViz DST "${CONTROLLERS_DIR}/webotsCtrlViz/")
-symlink_target(TARGET webotsCtrlViz
+symlink_target(
+  TARGET webotsCtrlViz
+  DST "${CONTROLLERS_DIR}/webotsCtrlViz/"
+)
+
+symlink_target(
+  TARGET webotsCtrlViz
   SRC ${BUILT_RESOURCES_DIR}
   DST ${CONTROLLERS_DIR}/webotsCtrlViz/resources
 )
@@ -135,12 +150,12 @@ symlink_target(TARGET webotsCtrlViz
 anki_build_cxx_executable(webotsCtrlRobot2 ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlRobot2
-PRIVATE
+  PRIVATE
   util
   util_audio
-  kazmath  
+  kazmath
   cti_common
-  cti_common_robot  
+  cti_common_robot
   cti_vision
   cti_messaging
   cti_planning
@@ -148,18 +163,24 @@ PRIVATE
   robot_interface
   robot_clad_cpplite
   webotsCtrlCommon
-  ${OPENCV_LIBS}  
+  ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )
 
-target_compile_definitions(webotsCtrlRobot2 PRIVATE                                                       
+target_compile_definitions(webotsCtrlRobot2
+  PRIVATE
   COZMO_ROBOT
   SIMULATOR
   _DEBUG
 )
 
-symlink_target(TARGET webotsCtrlRobot2 DST "${CONTROLLERS_DIR}/webotsCtrlRobot2/")
-symlink_target(TARGET webotsCtrlRobot2
+symlink_target(
+  TARGET webotsCtrlRobot2
+  DST "${CONTROLLERS_DIR}/webotsCtrlRobot2/"
+)
+
+symlink_target(
+  TARGET webotsCtrlRobot2
   SRC ${BUILT_RESOURCES_DIR}
   DST ${CONTROLLERS_DIR}/webotsCtrlRobot2/resources
 )
@@ -168,7 +189,7 @@ symlink_target(TARGET webotsCtrlRobot2
 anki_build_cxx_executable(webotsCtrlAnim ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlAnim
-PRIVATE
+  PRIVATE
   util
   kazmath
   cti_common
@@ -182,40 +203,52 @@ PRIVATE
   ${PLATFORM_LIBS}
 )
 
-target_compile_definitions(webotsCtrlAnim PRIVATE
+target_compile_definitions(webotsCtrlAnim
+  PRIVATE
   SIMULATOR
 )
 
-symlink_target(TARGET webotsCtrlAnim DST "${CONTROLLERS_DIR}/webotsCtrlAnim/")
-symlink_target(TARGET webotsCtrlAnim
+symlink_target(
+  TARGET webotsCtrlAnim
+  DST "${CONTROLLERS_DIR}/webotsCtrlAnim/"
+)
+
+symlink_target(
+  TARGET webotsCtrlAnim
   SRC ${BUILT_RESOURCES_DIR}
   DST ${CONTROLLERS_DIR}/webotsCtrlAnim/resources
 )
- 
+
 anki_build_cxx_executable(webotsCtrlGameEngine2 ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlGameEngine2
-PRIVATE
+  PRIVATE
   androidHAL
   util
-  kazmath  
+  kazmath
   cti_common
-  cti_common_robot  
+  cti_common_robot
   cti_vision
   cti_messaging
   cti_planning
   cozmo_engine
   webotsCtrlCommon
-  ${OPENCV_LIBS}  
+  ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )
 
-target_compile_definitions(webotsCtrlGameEngine2 PRIVATE                                                       
+target_compile_definitions(webotsCtrlGameEngine2
+  PRIVATE
   SIMULATOR
 )
 
-symlink_target(TARGET webotsCtrlGameEngine2 DST "${CONTROLLERS_DIR}/webotsCtrlGameEngine2/")
-symlink_target(TARGET webotsCtrlGameEngine2
+symlink_target(
+  TARGET webotsCtrlGameEngine2
+  DST "${CONTROLLERS_DIR}/webotsCtrlGameEngine2/"
+)
+
+symlink_target(
+  TARGET webotsCtrlGameEngine2
   SRC ${BUILT_RESOURCES_DIR}
   DST ${CONTROLLERS_DIR}/webotsCtrlGameEngine2/resources
 )
@@ -224,9 +257,9 @@ symlink_target(TARGET webotsCtrlGameEngine2
 anki_build_cxx_executable(webotsCtrlKeyboard ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlKeyboard
-PRIVATE
+  PRIVATE
   util
-  kazmath  
+  kazmath
   cti_common
   cti_vision
   cti_messaging
@@ -234,21 +267,27 @@ PRIVATE
   webotsCtrlCommon
   cozmo_engine
   robot_interface
-  ${OPENCV_LIBS}  
+  ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )
 
 target_include_directories(webotsCtrlKeyboard
-PRIVATE
+  PRIVATE
   ${CMAKE_SOURCE_DIR}
 )
 
-target_compile_definitions(webotsCtrlKeyboard PRIVATE                                                       
+target_compile_definitions(webotsCtrlKeyboard
+  PRIVATE
   CORETECH_BASESTATION=1
 )
 
-symlink_target(TARGET webotsCtrlKeyboard DST "${CONTROLLERS_DIR}/webotsCtrlKeyboard/")
-symlink_target(TARGET webotsCtrlKeyboard
+symlink_target(
+  TARGET webotsCtrlKeyboard
+  DST "${CONTROLLERS_DIR}/webotsCtrlKeyboard/"
+)
+
+symlink_target(
+  TARGET webotsCtrlKeyboard
   SRC ${BUILT_RESOURCES_DIR}
   DST ${CONTROLLERS_DIR}/webotsCtrlKeyboard/resources
 )
@@ -257,9 +296,9 @@ symlink_target(TARGET webotsCtrlKeyboard
 anki_build_cxx_executable(webotsCtrlBuildServerTest ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlBuildServerTest
-PRIVATE
+  PRIVATE
   util
-  kazmath  
+  kazmath
   cti_common
   cti_vision
   cti_messaging
@@ -267,42 +306,51 @@ PRIVATE
   webotsCtrlCommon
   cozmo_engine
   robot_interface
-  ${OPENCV_LIBS}  
+  ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )
 
 target_include_directories(webotsCtrlBuildServerTest
-PRIVATE
+  PRIVATE
   ${CMAKE_SOURCE_DIR}
 )
 
-target_compile_definitions(webotsCtrlBuildServerTest PRIVATE                                                       
+target_compile_definitions(webotsCtrlBuildServerTest
+  PRIVATE
   CORETECH_BASESTATION=1
 )
 
-symlink_target(TARGET webotsCtrlBuildServerTest DST "${CONTROLLERS_DIR}/webotsCtrlBuildServerTest/")
+symlink_target(
+  TARGET webotsCtrlBuildServerTest
+  DST "${CONTROLLERS_DIR}/webotsCtrlBuildServerTest/"
+)
 
 # Webots Ctrl Hand Emitter
 
 anki_build_cxx_executable(webotsCtrlHandEmitter ${ANKI_SRCLIST_DIR})
 target_include_directories(webotsCtrlHandEmitter
-PRIVATE
+  PRIVATE
   ${CMAKE_SOURCE_DIR}
 )
+
 target_link_libraries(webotsCtrlHandEmitter
-PRIVATE
+  PRIVATE
   ${PLATFORM_LIBS}
 )
-symlink_target(TARGET webotsCtrlHandEmitter DST "${CONTROLLERS_DIR}/webotsCtrlHandEmitter/")
+
+symlink_target(
+  TARGET webotsCtrlHandEmitter
+  DST "${CONTROLLERS_DIR}/webotsCtrlHandEmitter/"
+)
 
 # end -- Webots Controller Hand Emitter
 
 anki_build_cxx_executable(webotsCtrlDevLog ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlDevLog
-PRIVATE
+  PRIVATE
   util
-  kazmath  
+  kazmath
   cti_common
   cti_vision
   cti_messaging
@@ -310,17 +358,22 @@ PRIVATE
   webotsCtrlCommon
   cozmo_engine
   robot_interface
-  ${OPENCV_LIBS}  
+  ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )
 
 target_include_directories(webotsCtrlDevLog
-PRIVATE
+  PRIVATE
   ${CMAKE_SOURCE_DIR}
 )
 
-target_compile_definitions(webotsCtrlDevLog PRIVATE                                                       
+target_compile_definitions(webotsCtrlDevLog
+  PRIVATE
   CORETECH_BASESTATION=1
 )
 
-symlink_target(TARGET webotsCtrlDevLog DST "${CONTROLLERS_DIR}/webotsCtrlDevLog/")
+symlink_target(
+  TARGET webotsCtrlDevLog
+  DST "${CONTROLLERS_DIR}/webotsCtrlDevLog/"
+)
+

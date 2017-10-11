@@ -329,7 +329,8 @@ void ActivityFeeding::OnDeselectedInternal(Robot& robot)
   }
 
   if( _hasSetIdle ) {
-    robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
+    // TODO: Restore idle animations (VIC-366)
+    //robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
     _currIdle = AnimationTrigger::Count;
     _hasSetIdle = false;
   }
@@ -716,8 +717,11 @@ void ActivityFeeding::StartedEating(Robot& robot, const int duration_s)
 void ActivityFeeding::EatingComplete(Robot& robot)
 {
   using CS = FeedingCubeController::ControllerState;
-  _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::Deactivated);
-  _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::Activated);
+  const auto it = _cubeControllerMap.find(_cubeIDToEat);
+  if( it != _cubeControllerMap.end()){
+    it->second->SetControllerState(robot, CS::Deactivated);
+    it->second->SetControllerState(robot, CS::Activated);
+  }
 }
 
 
@@ -725,8 +729,11 @@ void ActivityFeeding::EatingComplete(Robot& robot)
 void ActivityFeeding::EatingInterrupted(Robot& robot)
 {
   using CS = FeedingCubeController::ControllerState;
-  _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::Deactivated);
-  _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::Activated);
+  const auto it = _cubeControllerMap.find(_cubeIDToEat);
+  if( it != _cubeControllerMap.end()){
+    it->second->SetControllerState(robot, CS::Deactivated);
+    it->second->SetControllerState(robot, CS::Activated);
+  }
 }
 
 
@@ -920,7 +927,8 @@ void ActivityFeeding::SetIdleForCurrentStage(Robot& robot)
 
   if( desiredIdle != _currIdle || !_hasSetIdle ) {
     if( _hasSetIdle ) {
-      robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
+      // TODO: Restore idle animations (VIC-366)
+      //robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
     }
 
     PRINT_CH_INFO("Feeding",
@@ -929,7 +937,8 @@ void ActivityFeeding::SetIdleForCurrentStage(Robot& robot)
                   AnimationTriggerToString(_currIdle),
                   AnimationTriggerToString(desiredIdle));
     
-    robot.GetAnimationStreamer().PushIdleAnimation(desiredIdle, GetIDStr());
+    // TODO: Restore idle animations (VIC-366)
+    //robot.GetAnimationStreamer().PushIdleAnimation(desiredIdle, GetIDStr());
     _currIdle = desiredIdle;
     _hasSetIdle = true;
   }

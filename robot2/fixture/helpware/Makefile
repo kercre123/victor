@@ -30,7 +30,6 @@ SRCDIR = .
 # .o and other temp files go here
 OBJDIR = .output
 
-
 DFU = dfu
 DFU_SRC = dfu.c
 DFU_OBJ = $(DFU_SRC:%.c=$(OBJDIR)/%.o)
@@ -42,6 +41,10 @@ ANIMATE_OBJ = $(ANIMATE_SRC:%.c=$(OBJDIR)/%.o)
 DISPLAY = display
 DISPLAY_SRC = display.c helper_text.c
 DISPLAY_OBJ = $(DISPLAY_SRC:%.c=$(OBJDIR)/%.o)
+
+DFU = dfu
+DFU_SRC = dfu.c
+DFU_OBJ = $(DFU_SRC:%.c=$(OBJDIR)/%.o)
 
 
 REMOTE_DEST = /data/local/fixture/

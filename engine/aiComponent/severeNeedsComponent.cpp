@@ -15,6 +15,7 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "engine/components/animationComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/needsSystem/needsManager.h"
@@ -218,8 +219,8 @@ void SevereNeedsComponent::SetSevereNeedExpression(NeedId need) {
   
   const auto& idleIter = idleAnimation.find(need);
   if(idleIter != idleAnimation.end()){
-    _robot.GetAnimationStreamer().PushIdleAnimation(idleIter->second,
-                                                    kSevereNeedStateLock);
+    // TODO: Restore idle animations (VIC-366)
+    //_robot.GetAnimationStreamer().PushIdleAnimation(idleIter->second, kSevereNeedStateLock);
   }
   
   _robot.GetBehaviorManager().DisableReactionsWithLock(kSevereNeedStateLock, *(kReactionsDisabledPerNeedMap[need]));
@@ -239,7 +240,8 @@ void SevereNeedsComponent::ClearSevereNeedExpression() {
              "SevereNeedsComponent.ClearSevereNeedExpression.ExpressionNotSet");
   
   _robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(kSevereNeedStateLock);
-  _robot.GetAnimationStreamer().RemoveIdleAnimation(kSevereNeedStateLock);
+  // TODO: Restore idle animations (VIC-366)
+  //_robot.GetAnimationStreamer().RemoveIdleAnimation(kSevereNeedStateLock);
 
   _robot.GetBehaviorManager().RemoveDisableReactionsLock(kSevereNeedStateLock);
   

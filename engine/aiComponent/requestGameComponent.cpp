@@ -22,6 +22,7 @@
 #include "engine/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/jsonTools.h"
 
 #include "util/helpers/boundedWhile.h"
 

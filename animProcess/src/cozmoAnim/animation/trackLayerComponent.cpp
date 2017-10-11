@@ -251,7 +251,7 @@ void TrackLayerComponent::AddOrUpdateEyeShift(AnimationTag& tag,
                                       outerEyeScaleIncrease,
                                       duration_ms, eyeShift);
   
-  if(AnimationStreamer::NotAnimatingTag == tag)
+  if(AnimationStreamer::kNotAnimatingTag == tag)
   {
     AnimationStreamer::FaceTrack faceTrack;
     if(duration_ms > 0)
@@ -276,6 +276,7 @@ void TrackLayerComponent::RemoveEyeShift(AnimationTag tag, s32 duration_ms)
 
 void TrackLayerComponent::AddGlitch(f32 glitchDegree)
 {
+  PRINT_CH_DEBUG("Animations","TrackLayerComponent.AddGlitch","Degree %.2f",glitchDegree);
   Animations::Track<ProceduralFaceKeyFrame> faceTrack;
   const u32 numFrames = _faceLayerManager->GenerateFaceDistortion(glitchDegree, faceTrack);
   _faceLayerManager->AddLayer("Glitch", faceTrack);

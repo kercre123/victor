@@ -13,7 +13,6 @@
 
 #include "engine/activeObject.h"
 #include "engine/activeCube.h"
-#include "engine/charger.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -24,8 +23,6 @@ ActiveObject* CreateActiveObjectByType(ObjectType objType, ActiveID activeID, Fa
   
   if (IsValidLightCube(objType, false)) {
     retPtr = new ActiveCube(activeID, factoryID, objType);
-  } else if (IsCharger(objType, false)) {
-    retPtr = new Charger(activeID, factoryID, objType);
   } else {
     PRINT_NAMED_ERROR("CreateActiveObjectByType.UnsupportedObjectType",
                       "Cannot create active object for given '%s' object type",

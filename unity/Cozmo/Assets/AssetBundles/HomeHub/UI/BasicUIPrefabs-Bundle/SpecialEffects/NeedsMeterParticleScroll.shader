@@ -2,6 +2,9 @@
 {
 	Properties
 	{
+        // Unity yells if we don't have _MainTex even if we don't use it
+        _MainTex ("Base (RGB)", 2D) = "white" {}
+
 		// Red = Masking to use with bar full, where redder = more visible
 		// Green = Particle texture
 		// Blue = Masking to use with bar empty, where bluer = more visible

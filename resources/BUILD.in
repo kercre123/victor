@@ -6,10 +6,11 @@ asset_project(
                 ('assets', 'cubeAnimationGroupMaps/CubeAnimationTriggerMap.json'),
                 ('assets', 'RewardedActions/RewardedActions.json'),
                 ('assets', 'voiceCommand/voice-recognition-data.txt'),
+                ('assets', 'voiceCommand/exports/voiceCommand_config.json'),
                 ('assets', 'voiceCommand/exports/**/*.raw'),
-                ('external', 'animations/**/*.bin'),
-                ('external', 'animationGroups/**/*.json'),
-                ('external', 'faceAnimations/**/*.png'),
+                ('externals/animation-assets', 'animations/**/*.bin'),
+                ('externals/animation-assets', 'animationGroups/**/*.json'),
+                ('externals/animation-assets', 'faceAnimations/**/*.png'),
                 ],
                 prefix = 'assets'
             ),
@@ -21,12 +22,12 @@ asset_project(
     srcs = [],
     platform_srcs = [
         ('android', subdir_glob([
-            ('sound/android', '*.zip')
+            ('sound/android', '*')
             ],
             prefix = 'sound')
         ),
         ('mac', subdir_glob([
-            ('sound/mac', '*.zip')
+            ('sound/mac', '*')
             ],
             prefix = 'sound')
         ),
@@ -59,3 +60,19 @@ asset_project(
            ]),
 )
 
+asset_project(
+    name = 'cozmo_resources_tts',
+    srcs = [],
+    platform_srcs = [
+        ('mac', subdir_glob([
+            ('externals/anki-thirdparty/acapela/AcapelaTTS_for_Mac_V9.450','**/*'),
+            ],
+            prefix = 'tts')
+        ),
+        ('android', subdir_glob([
+            ('externals/anki-thirdparty/acapela/AcapelaTTS_for_Android_V1.612','**/*'),
+            ],
+            prefix = 'tts')
+        ),
+    ],      
+)

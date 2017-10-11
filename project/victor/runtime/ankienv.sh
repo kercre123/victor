@@ -27,8 +27,16 @@ function stop_process()
 
     if [ $PROG_RUNNING -eq 0 ]; then
         kill $PROG_PID
-        echo "stopped ${PROG_PID}"
+        echo "stopping ${PROG_PID}..."
     fi
+
+    # Wait for process to actually die
+    STOPPING_PID=$(pidof ${PROG_NAME}) 
+    while [ ! -z $STOPPING_PID ]; do
+      STOPPING_PID=$(pidof ${PROG_NAME}) 
+    done
+
+    echo "stopped ${PROG_PID}"
 }
 
 function process_status()

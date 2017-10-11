@@ -18,6 +18,7 @@
 #define ANKI_COZMO_CANNED_ANIMATION_H
 
 #include "anki/common/basestation/jsonTools.h"
+#include "anki/cozmo/shared/animationTag.h"
 #include "cozmoAnim/animation/keyframe.h"
 #include "cozmoAnim/animation/track.h"
 #include <list>
@@ -29,12 +30,6 @@ namespace CozmoAnim {
 
 namespace Anki {
 namespace Cozmo {
-  
-using AnimationTag = uint8_t;
-
-static const AnimationTag NotAnimatingTag  = 0;
-static const AnimationTag IdleAnimationTag = 255;
-
 
 class Animation
 {

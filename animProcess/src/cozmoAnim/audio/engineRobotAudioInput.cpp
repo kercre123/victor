@@ -24,10 +24,10 @@ namespace Cozmo {
 namespace Audio {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineRobotAudioInput::HandleEngineToRobotMsg(RobotInterface::EngineToRobot& msg)
+void EngineRobotAudioInput::HandleEngineToRobotMsg(const RobotInterface::EngineToRobot& msg)
 {
   PRINT_CH_DEBUG(AudioMuxInput::kAudioLogChannel,
-                 "AudioUnityInput.HandleGameEvents", "Handle game event of type %X",
+                 "EngineRobotAudioInput.HandleEngineToRobotMsg", "Handle game event of type %X",
                  msg.tag);
 
   switch ( msg.tag ) {

@@ -190,10 +190,6 @@ static inline UtilMsgError _SafeUtilMsgPackIternal(void *dst, uint32_t dstBytesL
   // Don't even try to pack any data if the supplied buffer isnt allocated.
   if ( ( dst == NULL ) || ( dstBytesLen <= 0 ) )
   {
-    #ifndef UNIT_TEST
-      assert(0);
-    #endif
-    
     return UTILMSG_ZEROBUFFER;
   }
   
@@ -212,10 +208,6 @@ static inline UtilMsgError _SafeUtilMsgPackIternal(void *dst, uint32_t dstBytesL
     void* arrPtr = NULL;
     if(packStr[idx] == 'a') {
       numVariablesToWrite = va_arg(arglist, int);
-      
-      #ifndef UNIT_TEST
-        assert( ( numVariablesToWrite >= 0 ) && ( numVariablesToWrite <= UINT8_MAX ) );
-      #endif
       
       // We can only unpack the array size as an unsigned char, so make sure we're not packing more than 255 elements.
       numVariablesToWrite = ( ( numVariablesToWrite <= 0 ) ? 0 : ( ( numVariablesToWrite >= UINT8_MAX ) ? UINT8_MAX : numVariablesToWrite ) );
@@ -347,10 +339,6 @@ static inline UtilMsgError _SafeUtilMsgPackIternal(void *dst, uint32_t dstBytesL
   
 //  va_end(arglist);
   
-  #ifndef UNIT_TEST
-    assert(error == UTILMSG_OK);
-  #endif
-  
   // If they requested the num bytes written, fill it in.
   if ( oNumBytesPacked ) {
     *oNumBytesPacked = (uint32_t)( temp - (uint8_t*)dst );
@@ -405,10 +393,6 @@ static inline UtilMsgError _SafeUtilMsgUnpackInternal(const void *src, uint32_t 
   // Don't even try to pack any data if the supplied buffer isnt allocated.
   if ( ( src == NULL ) || ( srcBytesLen <= 0 ) )
   {
-    #ifndef UNIT_TEST
-      assert(0);
-    #endif
-    
     return UTILMSG_ZEROBUFFER;
   }
   
@@ -553,10 +537,6 @@ static inline UtilMsgError _SafeUtilMsgUnpackInternal(const void *src, uint32_t 
       }
     }
   }
-  
-  #ifndef UNIT_TEST
-    assert(error == UTILMSG_OK);
-  #endif
   
   // Write out the number of bytes we unpacked if it was requested.
   if ( oNumBytesUnpacked ) {

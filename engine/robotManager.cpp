@@ -6,7 +6,6 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/cozmoContext.h"
@@ -24,6 +23,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/animationTrigger.h"
 #include "json/json.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -40,23 +40,17 @@
 namespace Anki {
 namespace Cozmo {
 
-
-const int kHighestVersion = 0;
 const std::string kBlacklistedAnimationTriggersConfigKey = "blacklisted_animation_triggers";
 
 RobotManager::RobotManager(const CozmoContext* context)
 : _context(context)
 , _robotEventHandler(context)
 , _backpackLightAnimations(context->GetDataLoader()->GetBackpackLightAnimations())
-, _cannedAnimations(context->GetDataLoader()->GetCannedAnimations())
 , _cubeLightAnimations(context->GetDataLoader()->GetCubeLightAnimations())
 , _animationGroups(context->GetDataLoader()->GetAnimationGroups())
 , _animationTriggerResponses(context->GetDataLoader()->GetAnimationTriggerResponses())
 , _cubeAnimationTriggerResponses(context->GetDataLoader()->GetCubeAnimationTriggerResponses())
-, _firmwareUpdater(new FirmwareUpdater(context))
 , _robotMessageHandler(new RobotInterface::MessageHandler())
-, _fwVersion(0)
-, _fwTime(0)
 , _dasBlacklistedAnimationTriggers()
 {
   using namespace ExternalInterface;
@@ -111,8 +105,6 @@ void RobotManager::Init(const Json::Value& config, const Json::Value& dasEventCo
   }
   
   LOG_EVENT("robot.init.time_spent_ms", "%lld", timeSpent_millis);
-
-  _firmwareUpdater->LoadHeader(FirmwareType::Current, kHighestVersion, std::bind(&RobotManager::ParseFirmwareHeader, this, std::placeholders::_1));
 }
 
 void RobotManager::LoadDasBlacklistedAnimationTriggers(const Json::Value& dasEventConfig)
@@ -133,7 +125,7 @@ void RobotManager::AddRobot(const RobotID_t withID)
     _IDs.push_back(withID);
     _initialConnections.emplace(std::piecewise_construct,
       std::forward_as_tuple(withID),
-      std::forward_as_tuple(withID, _robotMessageHandler.get(), _context->GetExternalInterface(), _fwVersion, _fwTime));
+      std::forward_as_tuple(withID, _robotMessageHandler.get(), _context->GetExternalInterface()));
   } else {
     PRINT_STREAM_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID " << withID << " already exists. Ignoring.");
   }  
@@ -225,34 +217,6 @@ bool RobotManager::DoesRobotExist(const RobotID_t withID) const
 }
 
 
-bool RobotManager::InitUpdateFirmware(FirmwareType type, int version)
-{
-  bool success = _firmwareUpdater->InitUpdate(_robots, type, version);
-  
-  if (success)
-  {
-    for (const auto& kv : _robots)
-    {
-      const auto robotID = kv.second->GetID();
-      if (!ANKI_VERIFY(MakeRobotFirmwareUntrusted(robotID),
-                       "RobotManager.InitUpdateFirmware",
-                       "Error making firmware untrusted for robotID: %d", robotID))
-      {
-        success = false;
-      }
-    }
-  }
-  
-  return success;
-}
-
-
-bool RobotManager::UpdateFirmware()
-{
-  return _firmwareUpdater->Update(_robots);
-}
-
-
 void RobotManager::UpdateAllRobots()
 {
   ANKI_CPU_PROFILE("RobotManager::UpdateAllRobots");
@@ -302,11 +266,6 @@ void RobotManager::UpdateRobotConnection()
   _robotMessageHandler->ProcessMessages();
 }
 
-void RobotManager::ReadAnimationDir()
-{
-  _context->GetDataLoader()->LoadAnimations();
-}
-
 void RobotManager::ReadFaceAnimationDir()
 {
   _context->GetDataLoader()->LoadFaceAnimations();
@@ -323,10 +282,6 @@ void RobotManager::BroadcastAvailableAnimationGroups()
   }
 }
 
-bool RobotManager::HasCannedAnimation(const std::string& animName)
-{
-  return _cannedAnimations->HasAnimation(animName);
-}
 bool RobotManager::HasAnimationGroup(const std::string& groupName)
 {
   return _animationGroups->HasGroup(groupName);
@@ -346,15 +301,6 @@ bool RobotManager::HasCubeAnimationForTrigger( CubeAnimationTrigger ev )
 std::string RobotManager::GetCubeAnimationForTrigger( CubeAnimationTrigger ev )
 {
   return _cubeAnimationTriggerResponses->GetResponse(ev);
-}
-
-void RobotManager::ParseFirmwareHeader(const Json::Value& header)
-{
-  JsonTools::GetValueOptional(header, FirmwareUpdater::kFirmwareVersionKey, _fwVersion);
-  JsonTools::GetValueOptional(header, FirmwareUpdater::kFirmwareTimeKey, _fwTime);
-  if (_fwVersion == 0 || _fwTime == 0) {
-    PRINT_NAMED_WARNING("RobotManager.ParseFirmwareHeader", "got version %d, time %d", _fwVersion, _fwTime);
-  }
 }
 
 bool RobotManager::ShouldFilterMessage(const RobotID_t robotId, const RobotInterface::RobotToEngineTag msgType) const

@@ -3,7 +3,7 @@
  * @returns {void}
  */
 window.addEventListener('DOMContentLoaded', function() {
-  setText('#tutorial-modal .modal-title', $t('codeLab.tutorial.modalTitle'));
+  setText('#tutorial-frame-modal .modal-title', $t('codeLab.tutorial.modalTitle'));
 
   setText('#tutorial-slide-1 .slide-label', $t('codeLab.tutorial.slide_letsYouProgramCozmo'));
   setText('#tutorial-slide-2 .slide-label', $t('codeLab.tutorial.slide_tapBlockToSeeFunction'));

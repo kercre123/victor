@@ -495,6 +495,8 @@ public class StartupManager : MonoBehaviour {
 
     Cozmo.RequestGame.RequestGameManager.CreateInstance();
     Cozmo.Notifications.NotificationsManager.CreateInstance();
+
+    Cozmo.UI.HasHiccupsAlertController.InitializeInstance();
   }
 
   private void LoadAssets(AssetBundleManager assetBundleManager) {
@@ -736,26 +738,35 @@ public class StartupManager : MonoBehaviour {
   }
 #endif
 
-  protected void LoadCodelabFromRawJson(string data) {
+  // Parses an incoming json stream expected to contain a codelab file.
+  // The json is converted into a codeLabProject and inserted into the my_projects collection.
+  protected void LoadCodeLabFromRawJson(string data) {
 
-    if (CodeLab.CodeLabGame.IsRawStringValidCodelab(data)) {
-      DataPersistence.CodeLabProject recievedProject = CodeLab.CodeLabGame.CreateProjectFromJsonString(data);
-      DAS.Info("Codelab.OpenCodelabFile.RecievedFromPlatform", "");
+    try {
+      if (CodeLab.CodeLabGame.IsRawStringValidCodelab(data)) {
+        DataPersistence.CodeLabProject receivedProject = CodeLab.CodeLabGame.CreateProjectFromJsonString(data);
+        DAS.Info("CodeLab.OpenCodelabFile.RecievedFromPlatform", "");
 
-      if (recievedProject != null) {
-        if (CodeLab.CodeLabGame.AddExternalProject(recievedProject)) {
-          DAS.Info("Codelab.OpenCodelabFile.LoadedSuccessfully", "size=" + data.Length);
+        if (receivedProject != null) {
+          if (CodeLab.CodeLabGame.AddExternalProject(receivedProject)) {
+            DAS.Info("CodeLab.OpenCodelabFile.LoadedSuccessfully", "size=" + data.Length);
+            return;
+          }
+          else {
+            DAS.Error("CodeLab.OpenCodelabFile.Error.AddProjectToList", "Could not add generated project from platform; size=" + data.Length);
+          }
         }
         else {
-          DAS.Error("Codelab.OpenCodelabFile.Error.AddProjectToList", "Could not add generated project from platform; size=" + data.Length);
+          DAS.Error("CodeLab.OpenCodelabFile.Error.ProjectCreationError", "Could not generate a project from platform; size=" + data.Length);
         }
       }
       else {
-        DAS.Error("Codelab.OpenCodelabFile.Error.ProjectCreationError", "Could not generate a project from platform; size=" + data.Length);
+        DAS.Error("CodeLab.OpenCodelabFile.Error.RecievedBadJson", "Recieved improperly formatted raw json; size=" + data.Length);
       }
     }
-    else {
-      DAS.Error("Codelab.OpenCodelabFile.Error.RecievedBadJson", "Recieved improperly formatted raw json; size=" + data.Length);
+    catch (Exception e) {
+      DAS.Error("CodeLab.OpenCodelabFile.Error.UnhandleException", "Error parsing json " + e.Message + "; size=" + data.Length);
     }
+    CodeLab.CodeLabGame.PushImportError("CodeLab.Import.Error.Description.Generic");
   }
 }

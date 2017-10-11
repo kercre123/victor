@@ -19,7 +19,7 @@
 #include <string>
 
 const static std::string kRootDirectory = "../../../";
-const static std::string kBuildPath = "build/mac/Debug/playbackLogs/";
+const static std::string kBuildPath = "_build/mac/Debug/playbackLogs/";
 
 
 namespace Anki {

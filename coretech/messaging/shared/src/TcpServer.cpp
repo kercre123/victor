@@ -39,93 +39,97 @@ void TcpServer::set_nonblock(int socket) {
     fcntl(socket, F_SETFL, flags | O_NONBLOCK);
 }
 
-int SetSockOptHelper(int socketfd, int level, int option, const void* optionValue, socklen_t optionLen)
-{
-  int status = setsockopt(socketfd, level, option, optionValue, optionLen);
-  if (status == -1)
-  {
-    DEBUG_TCP_SERVER("TcpServer: Failed to set socket options (status=" << status << ")");
-  }
-  
-  return status;
-}
-
 bool TcpServer::StartListening(const unsigned short port)
 {
-    if (socketfd >= 0) {
+  if (socketfd >= 0) {
+    DEBUG_TCP_SERVER("WARNING (TcpServer): Already listening");
+    return false;
+  }
 
-      DEBUG_TCP_SERVER("WARNING (TcpServer): Already listening");
+  int status;
+  struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
+  struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
 
-      return false;
-    }
+  // The MAN page of getaddrinfo() states "All  the other fields in the structure pointed
+  // to by hints must contain either 0 or a null pointer, as appropriate." When a struct
+  // is created in c++, it will be given a block of memory. This memory is not necessarily
+  // empty. Therefore we use the memset function to make sure all fields are NULL.
+  memset(&host_info, 0, sizeof host_info);
 
-    int status;
-    struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
-    struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
+  host_info.ai_family = AF_UNSPEC;     // IP version not specified. Can be both.
+  host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
+  host_info.ai_flags = AI_PASSIVE;     // IP Wildcard
 
-    // The MAN page of getaddrinfo() states "All  the other fields in the structure pointed
-    // to by hints must contain either 0 or a null pointer, as appropriate." When a struct
-    // is created in c++, it will be given a block of memory. This memory is not nessesary
-    // empty. Therefor we use the memset function to make sure all fields are NULL.
-    memset(&host_info, 0, sizeof host_info);
+  // Now fill up the linked list of host_info structs with google's address information.
+  char portStr[8];
+  sprintf(portStr, "%d", port);
+  status = getaddrinfo(NULL, portStr, &host_info, &host_info_list);
+  // getaddrinfo returns 0 on success, or some other value when an error occurred.
+  // (translated into human readable text by the gai_strerror function).
+  if (status != 0) {
+    std::cerr << "getaddrinfo error" << gai_strerror(status) ;
+    return false;
+  }
 
-    host_info.ai_family = AF_UNSPEC;     // IP version not specified. Can be both.
-    host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
-    host_info.ai_flags = AI_PASSIVE;     // IP Wildcard
+  DEBUG_TCP_SERVER("TcpServer: Creating a socket on port " << portStr);
 
-    // Now fill up the linked list of host_info structs with google's address information.
-    char portStr[8];
-    sprintf(portStr, "%d", port);
-    status = getaddrinfo(NULL, portStr, &host_info, &host_info_list);
-    // getaddrinfo returns 0 on succes, or some other value when an error occured.
-    // (translated into human readable text by the gai_gai_strerror function).
-    if (status != 0)  std::cerr << "getaddrinfo error" << gai_strerror(status) ;
+  socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype,
+                    host_info_list->ai_protocol);
+  if (socketfd == -1) {
+    std::cerr << "socket error\n" ;
+    return false;
+  }
 
-    DEBUG_TCP_SERVER("TcpServer: Creating a socket on port " << portStr);
+  DEBUG_TCP_SERVER("TcpServer: Binding socket...");
 
-    socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype,
-                      host_info_list->ai_protocol);
-    if (socketfd == -1) {
-      std::cerr << "socket error\n" ;
-      return false;
-    }
+  // we use to make the setsockopt() function to make sure the port is not in use
+  // by a previous execution of our code. (see man page for more information)
+  int yes = 1;
 
-    DEBUG_TCP_SERVER("TcpServer: Binding socket...");
-
-    // we use to make the setsockopt() function to make sure the port is not in use
-    // by a previous execution of our code. (see man page for more information)
-    int yes = 1;
-    status = SetSockOptHelper(socketfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+  status = setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+  if (status != 0) {
+    DEBUG_TCP_SERVER("TcpServer: Unable to set SO_REUSEADDR, errno=" << strerror(errno));
+  }
   
-    #if defined(LINUX) || defined(ANDROID)
-    // No SO_NOSIGPIPE available on these platforms - handled with MSG_NOSIGNAL flag on send instead
-    #else
-    // don't generate a SIGPIPE exception for writing to a closed socket
-    status = SetSockOptHelper(socketfd, SOL_SOCKET, SO_NOSIGPIPE, &yes, sizeof(yes));
-    #endif // defined(LINUX) || defined(ANDROID)
+  #if defined(LINUX) || defined(ANDROID)
+  // No SO_NOSIGPIPE available on these platforms - handled with MSG_NOSIGNAL flag on send instead
+  #else
+  // don't generate a SIGPIPE exception for writing to a closed socket
+  status = setsockopt(socketfd, SOL_SOCKET, SO_NOSIGPIPE, &yes, sizeof(yes));
+  if (status != 0) {
+    DEBUG_TCP_SERVER("TcpServer: Unable to set SO_NOSIGPIPE, errno=" << strerror(errno));
+  }
+  #endif // defined(LINUX) || defined(ANDROID)
   
-    status = SetSockOptHelper(socketfd, IPPROTO_TCP, TCP_NODELAY, &yes, sizeof(yes));
-    //status = SetSockOptHelper(socketfd, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int));  // For auto-detecting disconnected clients.
-  
-    set_nonblock(socketfd);
-  
-    status = bind(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
-    if (status == -1) {
-      std::cerr << "**** ERROR: bind error (You might have orphaned processes running) ****\n";
-      return false;
-    }
-  
-    freeaddrinfo(host_info_list);
+  status = setsockopt(socketfd, IPPROTO_TCP, TCP_NODELAY, &yes, sizeof(yes));
+  if (status != 0) {
+    DEBUG_TCP_SERVER("TcpServer: Unable to set TCP_NODELAY, errno=" << strerror(errno));
+  }
 
-    DEBUG_TCP_SERVER("TcpServer: Listening for connections...");
+  //status = setsockopt(socketfd, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int));  // For auto-detecting disconnected clients.
+  //if (status != 0) {
+  //  DEBUG_TCP_SERVER("TcpServer: Unable to set SO_KEEPALIVE, errno=" << strerror(errno));
+  //}
+  
+  set_nonblock(socketfd);
+  
+  status = bind(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
+  if (status == -1) {
+    std::cerr << "**** ERROR: bind error (You might have orphaned processes running) ****\n";
+    return false;
+  }
+  
+  freeaddrinfo(host_info_list);
 
-    status =  listen(socketfd, 5);
-    if (status == -1) {
-      std::cerr << "listen error\n";
-      return false;
-    }
+  DEBUG_TCP_SERVER("TcpServer: Listening for connections...");
 
-    return true;
+  status =  listen(socketfd, 5);
+  if (status == -1) {
+    std::cerr << "listen error\n";
+    return false;
+  }
+
+  return true;
 }
 
 void TcpServer::StopListening() 

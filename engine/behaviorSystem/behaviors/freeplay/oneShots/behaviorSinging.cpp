@@ -28,6 +28,7 @@
 #include "engine/needsSystem/needsState.h"
 #include "engine/robot.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/audio/audioEventTypes.h"

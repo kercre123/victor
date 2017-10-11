@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -287,6 +287,11 @@ namespace UTNotifications
                 UnityEngine.Debug.LogError("Please call UTNotifications.Manager.Instance.Initialize(...) first!");
             }
 
+            return m_initialized;
+        }
+        
+        public bool IsInitialized()
+        {
             return m_initialized;
         }
 

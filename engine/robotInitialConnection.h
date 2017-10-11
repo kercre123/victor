@@ -36,7 +36,7 @@ class RobotInitialConnection : private Util::SignalHolder
 {
 public:
   RobotInitialConnection(RobotID_t id, RobotInterface::MessageHandler* messageHandler,
-    IExternalInterface* externalInterface, uint32_t fwVersion, uint32_t fwTime);
+    IExternalInterface* externalInterface);
 
   // called when getting a disconnect message from robot
   // returns true if robot was in the process of connecting and we broadcasted a connection failed message
@@ -60,8 +60,6 @@ private:
   bool _notified;
   IExternalInterface* _externalInterface;
   RobotInterface::MessageHandler* _robotMessageHandler;
-  uint32_t _fwVersion;
-  uint32_t _fwTime;
   uint32_t _serialNumber = 0;
   int32_t  _bodyHWVersion = -1;
   BodyColor _bodyColor = BodyColor::UNKNOWN;

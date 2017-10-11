@@ -269,7 +269,7 @@ namespace Anki {
               break;
 
             case LCS_LOWER_LIFT:
-              power_ = -0.3f;
+              power_ = HAL::MotorGetCalibPower(MotorID::MOTOR_LIFT);
               HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
               lastLiftMovedTime_ms = HAL::GetTimeStamp();
               calState_ = LCS_WAIT_FOR_STOP;

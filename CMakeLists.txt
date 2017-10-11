@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.6)
 
 list(APPEND CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/util/cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/tools/build/cmake
 )
 
 project(cozmo)
@@ -105,6 +107,9 @@ if (ANDROID)
 endif()
 
 if (MACOSX)
-    add_subdirectory("test")
-    add_subdirectory("simulator") # webots
+  add_subdirectory("test")
+  add_subdirectory("simulator") # webots
+
+  enable_testing()
+
 endif()

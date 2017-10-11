@@ -24,10 +24,16 @@ namespace Onboarding {
               1, Cozmo.ItemDataConfig.GetCubeData().GetAmountName(1));
     }
 
+    public override void OnEnable() {
+      base.OnEnable();
+      Cozmo.PauseManager.Instance.OnPauseStateChanged += HandlePauseStateChanged;
+    }
 
     public override void OnDisable() {
       base.OnDisable();
       StopCoroutine("AttemptSparkRestart");
+
+      Cozmo.PauseManager.Instance.OnPauseStateChanged -= HandlePauseStateChanged;
 
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
     }
@@ -72,8 +78,7 @@ namespace Onboarding {
       }
     }
 
-    protected override void HandlePauseStateChanged(bool isPaused) {
-      base.HandlePauseStateChanged(isPaused);
+    protected void HandlePauseStateChanged(bool isPaused) {
       if (!isPaused && _WasSparked) {
         StartCoroutine("AttemptSparkRestart");
       }

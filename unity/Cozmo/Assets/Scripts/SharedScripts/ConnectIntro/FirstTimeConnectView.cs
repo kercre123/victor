@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using Cozmo.UI;
+using System;
+using System.Net;
+using System.Net.Sockets;
 
 public class FirstTimeConnectView : BaseView {
 
@@ -41,6 +44,12 @@ public class FirstTimeConnectView : BaseView {
   [SerializeField]
   private CozmoButton _BuyCozmoButton;
 
+  private IAsyncResult _GetACosmoServerLookup;
+  private bool _HasInternetConnection;
+  private float _LastConnectionCheck = 0;
+  private const float _kConnectionCheckTimeSeconds = 1;
+  private string _HostName;
+
   private void Awake() {
 
     DasTracker.Instance.TrackFirstTimeConnectStarted();
@@ -54,6 +63,11 @@ public class FirstTimeConnectView : BaseView {
 
     InitializePrivacyPolicyButton();
     InitializeTermsOfUseButton();
+
+    // starts a ping to anki.com to make sure the web page can be loaded if the "Buy a Cozmo" button is tapped
+    _HasInternetConnection = true; // err on the side of accidentally opening a URL
+    _HostName = new Uri(Cozmo.Settings.DefaultSettingsValuesConfig.Instance.GetACozmoURL).Host;
+    StartConnectionCheck();
 
     _BuyCozmoButton.Initialize(HandleBuyCozmoButton, "buy_cozmo_button", "first_time_connect_dialog");
   }
@@ -215,6 +229,42 @@ public class FirstTimeConnectView : BaseView {
   }
 
   private void HandleBuyCozmoButton() {
-    Application.OpenURL(Cozmo.Settings.DefaultSettingsValuesConfig.Instance.GetACozmoURL);
+    if (!_HasInternetConnection) {
+      // Open modal
+      AlertModalData noInternetModalData = new AlertModalData("first_time_connect_no_internet",
+                                                    LocalizationKeys.kLabelNoInternetTitle,
+                                                    LocalizationKeys.kLabelNoInternetBody,
+                                                    new AlertModalButtonData("text_close_button",
+                                                                             LocalizationKeys.kButtonClose));
+
+      UIManager.OpenAlert(noInternetModalData, ModalPriorityData.CreateSlightlyHigherData(new ModalPriorityData()));
+    }
+    else {
+      Application.OpenURL(Cozmo.Settings.DefaultSettingsValuesConfig.Instance.GetACozmoURL);
+    }
+  }
+
+  private void Update() {
+    // only start a new check if there isn't a check in progress
+    if (Time.time - _LastConnectionCheck >= _kConnectionCheckTimeSeconds
+        && (_GetACosmoServerLookup != null && _GetACosmoServerLookup.IsCompleted)) {
+      StartConnectionCheck();
+    }
+
+  }
+
+  private void StartConnectionCheck() {
+    _GetACosmoServerLookup = Dns.BeginGetHostAddresses(_HostName, new AsyncCallback(HandleGetHostAddresses), null);
+    _LastConnectionCheck = Time.time;
+  }
+
+  void HandleGetHostAddresses(IAsyncResult ar) {
+    try {
+      IPAddress[] addresses = Dns.EndGetHostAddresses(ar);
+      _HasInternetConnection = (addresses != null && addresses.Length > 0);
+    }
+    catch (SocketException) {
+      _HasInternetConnection = false;
+    }
   }
 }

@@ -72,8 +72,16 @@ public class DasTracker {
     _RunningRobotTime = 0.0;
     _CurrentRobotStartUtcTime = DateTime.UtcNow;
 
-    // app.connected_session.start - no extra data
-    DAS.Event("app.connected_session.start", "");
+    // app.connected_session.start - notification order id of clicked notif, if any - message key of clicked notif, if any
+    Cozmo.Notifications.Notification clickedNotif = Cozmo.Notifications.NotificationsManager.Instance.GetNotificationClickedForSession();
+    if (clickedNotif != null) {
+      var dataDict = GetDataDictionary("$data", clickedNotif.TextKey);
+      DAS.Event("app.connected_session.start", clickedNotif.OrderId, dataDict);
+    }
+    else {
+      DAS.Event("app.connected_session.start", "");
+    }
+    Cozmo.Notifications.NotificationsManager.Instance.CreditNotificationForConnect();
   }
 
   public void TrackRobotDisconnected(byte robotId) {

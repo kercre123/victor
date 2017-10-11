@@ -1,4 +1,5 @@
-rootPath = '~/Code/cozmo-game/lib/anki/products-cozmo-large-files/VisionMarkers/matGears/withFiducials';
+rootPath = fullfile(VisionMarkerTrained.RootImageDir, VisionMarkerTrained.VictorImageDir, 'charger', 'withFiducials');
+% '~/Code/cozmo-game/lib/anki/products-cozmo-large-files/VisionMarkers/matGears/withFiducials';
 fnames = getfnames(rootPath, '*.png');
 if ~isdir(fullfile(rootPath, 'rotated'))
     mkdir(fullfile(rootPath, 'rotated'))

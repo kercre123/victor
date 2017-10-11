@@ -15,12 +15,7 @@
 #ifndef __Anki_Cozmo_AnimationAudioClient_H__
 #define __Anki_Cozmo_AnimationAudioClient_H__
 
-
-#include "clad/audio/audioEventTypes.h"
-#include "clad/audio/audioGameObjectTypes.h"
-#include "clad/audio/audioParameterTypes.h"
-#include "clad/audio/audioStateTypes.h"
-#include "clad/audio/audioSwitchTypes.h"
+#include "audioEngine/audioTypeTranslator.h"
 #include <set>
 #include <mutex>
 
@@ -60,29 +55,35 @@ public:
   
   // Check if there is an event being performed
   bool HasActiveEvents() const;
+  
+  // Control Robot's master volume
+  // Volume is [0.0 - 1.0]
+  void SetRobotMasterVolume( AudioEngine::AudioRTPCValue volume,
+                             AudioEngine::AudioTimeMs timeInMilliSeconds = 0,
+                             AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear );
 
 
 private:
   
-  using AnimPlayId = uint32_t;
-  
   CozmoAudioController*  _audioController = nullptr;
   Util::RandomGenerator*  _randomGenerator = nullptr;
-  std::set<AnimPlayId>    _activeEvents;
+  std::set<AudioEngine::AudioPlayingId> _activeEvents;
   mutable std::mutex      _lock;
   
   // Perform an event
-  AnimPlayId PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event );
+  AudioEngine::AudioPlayingId PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event );
 
   // Update parameters for a event play id
-  bool SetCozmoEventParameter( AnimPlayId playId, AudioMetaData::GameParameter::ParameterType parameter, float value ) const;
+  bool SetCozmoEventParameter( AudioEngine::AudioPlayingId playId,
+                               AudioMetaData::GameParameter::ParameterType parameter,
+                               AudioEngine::AudioRTPCValue value ) const;
   
   // Perform Event callback, used by "PostCozmoEvent()"
   void CozmoEventCallback( const AudioEngine::AudioCallbackInfo& callbackInfo );
   
   // Track current playing events
-  void AddActiveEvent( AnimPlayId playId );
-  void RemoveActiveEvent( AnimPlayId playId );
+  void AddActiveEvent( AudioEngine::AudioPlayingId playId );
+  void RemoveActiveEvent( AudioEngine::AudioPlayingId playId );
 
 };
 

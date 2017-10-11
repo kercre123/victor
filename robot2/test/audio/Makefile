@@ -1,9 +1,14 @@
-ANDROID_NDK_ROOT:=~/.anki/android/ndk-repository/android-ndk-r15b
+#
+# Use android.py to locate Android NDK
+#
+TOPLEVEL := ../../..
+ANDROID_PY := $(TOPLEVEL)/tools/build/tools/ankibuild/android.py
+ANDROID_NDK_ROOT := $(shell $(ANDROID_PY))
 
-ANDROID_ARM_TOOLS_ROOT:=../../../generated/android/tools/arm
-ANDROID_ARM_TOOLS_BIN:=$(ANDROID_ARM_TOOLS_ROOT)/bin
+ANDROID_ARM_TOOLS_ROOT := $(TOPLEVEL)/generated/android/tools/arm
+ANDROID_ARM_TOOLS_BIN := $(ANDROID_ARM_TOOLS_ROOT)/bin
+
 # Compilation Tools
-
 
 CFLAGS = -c -fPIC -Wall -pie
 INC = include

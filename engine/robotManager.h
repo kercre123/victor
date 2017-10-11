@@ -46,7 +46,6 @@ enum class RobotToEngineTag : uint8_t;
 class Robot;
 class IExternalInterface;
 class BackpackLightAnimationContainer;
-class CannedAnimationContainer;
 class CubeLightAnimationContainer;
 class CozmoContext;
 class AnimationGroupContainer;
@@ -98,7 +97,6 @@ public:
   // Return the number of availale robots
   size_t GetNumRobots() const;
 
-  CannedAnimationContainer&        GetCannedAnimations()        { return *_cannedAnimations; }
   CubeLightAnimationContainer&     GetCubeLightAnimations()     { return *_cubeLightAnimations; }
   BackpackLightAnimationContainer& GetBackpackLightAnimations() { return *_backpackLightAnimations; }
   AnimationGroupContainer&         GetAnimationGroups()         { return *_animationGroups; }
@@ -112,9 +110,6 @@ public:
   bool HasCubeAnimationForTrigger( CubeAnimationTrigger ev );
   std::string GetCubeAnimationForTrigger( CubeAnimationTrigger ev );
   
-  // Read the animations in a dir
-  void ReadAnimationDir();
-
   // Read the face animations in a dir
   void ReadFaceAnimationDir();
   
@@ -140,20 +135,15 @@ protected:
   const CozmoContext* _context;
   RobotEventHandler _robotEventHandler;
   BackpackLightAnimationContainer* const _backpackLightAnimations;
-  CannedAnimationContainer* const _cannedAnimations;
   CubeLightAnimationContainer* const _cubeLightAnimations;
   AnimationGroupContainer* const _animationGroups;
   AnimationTriggerResponsesContainer* const _animationTriggerResponses;
   AnimationTriggerResponsesContainer* const _cubeAnimationTriggerResponses;
-  std::unique_ptr<FirmwareUpdater> _firmwareUpdater;
   std::unique_ptr<RobotInterface::MessageHandler> _robotMessageHandler;
   std::vector<Signal::SmartHandle> _signalHandles;
   std::unordered_map<RobotID_t, RobotInitialConnection> _initialConnections;
-  uint32_t _fwVersion;
-  uint32_t _fwTime;
 
 private:
-  void ParseFirmwareHeader(const Json::Value& header);
   bool MakeRobotFirmwareUntrusted(RobotID_t robotId);
   void LoadDasBlacklistedAnimationTriggers(const Json::Value& dasEventConfig);
   

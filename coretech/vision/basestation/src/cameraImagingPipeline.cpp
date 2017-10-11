@@ -172,7 +172,7 @@ Result ImagingPipeline::ComputeExposureAdjustment(const Vision::Image& image, co
   // Initialize in case of early return
   adjustmentFraction = 1.f;
   
-   ImageBrightnessHistogram::TransformFcn linearizeFcn = {};
+  ImageBrightnessHistogram::TransformFcn linearizeFcn = {};
   
   if(kLinearizeForAutoExposure)
   {

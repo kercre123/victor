@@ -4,57 +4,63 @@ using Cozmo.UI;
 namespace Cozmo.Needs.Sparks.UI {
   public class SparkCell : MonoBehaviour {
 
-    private const float kComingSoonAlpha = 0.5f;
+    private const float kComingSoonAlpha = 1f;
 
     [SerializeField]
-    private CozmoImage _TrickIcon;
+    protected CozmoImage _TrickIcon;
 
     [SerializeField]
-    private CozmoText _TrickTitleText;
+    protected CozmoText _TrickTitleText;
 
     [SerializeField]
-    private CozmoButton _SparksButton;
+    protected CozmoButton _SparksButton;
 
     [SerializeField]
-    private CozmoText _SparkCountText;
+    protected CozmoText _SparkCountText;
 
     [SerializeField]
     private GameObject _SparkCostContainer;
 
     [SerializeField]
-    private SparksDetailModal _SparksDetailModalPrefab;
+    protected SparksDetailModal _SparksDetailModalPrefab;
 
     [SerializeField]
     private Sprite _UnlockableAlertIcon;
 
-    private UnlockableInfo _UnlockInfo;
-    private CostLabel _CostLabelHelper;
+    protected UnlockableInfo _UnlockInfo;
+    protected CostLabel _CostLabelHelper;
 
-    public void Initialize(UnlockableInfo unlockInfo, string dasEventDialogName) {
-      _SparksButton.Initialize(null, "spark_cell_" + unlockInfo.DASName, dasEventDialogName);
-      if (unlockInfo.ComingSoon) {
-        _SparksButton.onClick.AddListener(HandleTappedComingSoon);
-        _TrickIcon.color = new Color(_TrickIcon.color.r, _TrickIcon.color.g, _TrickIcon.color.b, kComingSoonAlpha);
-      }
-      else {
-        _SparksButton.onClick.AddListener(HandleTappedUnlocked);
-      }
-
-      _SparkCostContainer.gameObject.SetActive(!(unlockInfo.ComingSoon || !unlockInfo.IsSparkable));
-
-      _TrickIcon.sprite = unlockInfo.CoreUpgradeIcon;
-      _TrickTitleText.text = Localization.Get(unlockInfo.TitleKey);
-
+    public virtual void Initialize(UnlockableInfo unlockInfo, string dasEventDialogName) {
       _UnlockInfo = unlockInfo;
 
-      _CostLabelHelper = new CostLabel(unlockInfo.RequestTrickCostItemId,
-                                       unlockInfo.RequestTrickCostAmount,
-                                       _SparkCountText,
-                                       UIColorPalette.GeneralSparkTintColor);
+      if (UnlockablesManager.Instance.IsUnlocked(unlockInfo.Id.Value)) {
+        _SparksButton.Initialize(HandleTappedUnlocked, "spark_cell_" + unlockInfo.DASName, dasEventDialogName);
+        _TrickIcon.sprite = unlockInfo.CoreUpgradeIcon;
+        _TrickTitleText.text = Localization.Get(unlockInfo.TitleKey);
+
+        if (unlockInfo.RequestTrickCostAmount > 0 && unlockInfo.IsSparkable) {
+          _CostLabelHelper = new CostLabel(unlockInfo.RequestTrickCostItemId,
+                         unlockInfo.RequestTrickCostAmount,
+                                           _SparkCountText,
+                                           UIColorPalette.GeneralSparkTintColor);
+        }
+        else {
+          _SparkCostContainer.gameObject.SetActive(false);
+        }
+      }
+      else {
+        _SparksButton.Initialize(HandleTappedComingSoon, "spark_cell_coming_soon_" + unlockInfo.DASName, dasEventDialogName);
+        _TrickIcon.color = new Color(_TrickIcon.color.r, _TrickIcon.color.g, _TrickIcon.color.b, kComingSoonAlpha);
+        _SparkCostContainer.gameObject.SetActive(false);
+        _TrickIcon.sprite = _UnlockableAlertIcon;
+        _TrickTitleText.text = Localization.Get(LocalizationKeys.kUnlockableComingSoonTitle);
+      }
     }
 
     private void OnDestroy() {
-      _CostLabelHelper.DeregisterEvents();
+      if (_CostLabelHelper != null) {
+        _CostLabelHelper.DeregisterEvents();
+      }
     }
 
     private void HandleTappedComingSoon() {
@@ -72,7 +78,7 @@ namespace Cozmo.Needs.Sparks.UI {
       UIManager.OpenAlert(cozmoNotReadyData, comingSoonPriority);
     }
 
-    private void HandleTappedUnlocked() {
+    protected virtual void HandleTappedUnlocked() {
       // pop up sparks modal
       UIManager.OpenModal(_SparksDetailModalPrefab, new ModalPriorityData(), (obj) => {
         SparksDetailModal sparksDetailModal = (SparksDetailModal)obj;

@@ -23,6 +23,7 @@ enum int_8 ImageResolution
   QUXGA,     // 3200 x 2400
   HD,        // 1280 x 720
   NHD,       // 640 x 360
+  Custom,    // Width in 12 MSBs of chunkDebug, Height in next 12 MSBs 
   ImageResolutionCount,
   ImageResolutionNone
 }
@@ -65,11 +66,10 @@ message ImageChunk {
 }
 
 message ImageImuData {
-  uint_32  imageId,
+  uint_32  systemTimestamp_ms,
   float_32 rateX,
   float_32 rateY,
-  float_32 rateZ,
-  uint_8   line2Number
+  float_32 rateZ
 }
 
 message CameraCalibration

@@ -14,6 +14,7 @@
 
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
+#include "engine/charger.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/robot.h"
 
@@ -134,7 +135,7 @@ ActionResult MountChargerAction::ConfigureAlignWithChargerAction()
   _alignWithChargerAction->ShouldSuppressTrackLocking(true);
   
   // Dock action to align with the charger marker
-  const float distanceFromMarker_mm = 120.f;
+  const float distanceFromMarker_mm = 130.f;
   const float alignSpeed_mmps = 30.f;
   auto alignAction = new AlignWithObjectAction(_robot,
                                                _chargerID,
@@ -193,12 +194,12 @@ ActionResult MountChargerAction::ConfigureTurnAndMountAction()
   }
   
   // Finally, actually back up into the charger
-  const float backupDistance_mm = -120.f;
-  const float backupSpeed_mmps = 30.f;
   _turnAndMountAction->AddAction(new BackupOntoChargerAction(_robot,
-                                                             backupDistance_mm,
-                                                             backupSpeed_mmps,
+                                                             _chargerID,
                                                              _useCliffSensorCorrection));
+  
+  // Lower the lift back to the ground
+  _turnAndMountAction->AddAction(new MoveLiftToHeightAction(_robot, LIFT_HEIGHT_LOWDOCK));
   
   return ActionResult::SUCCESS;
 }
@@ -220,45 +221,59 @@ ActionResult MountChargerAction::ConfigureDriveForRetryAction()
 #pragma mark ---- BackupOntoChargerAction ----
 
 BackupOntoChargerAction::BackupOntoChargerAction(Robot& robot,
-                                                 f32 dist_mm,
-                                                 f32 speed_mmps,
+                                                 ObjectID chargerID,
                                                  bool useCliffSensorCorrection)
-  : DriveStraightAction (robot,
-             dist_mm,
-             speed_mmps,
-             false)
+  : IDockAction(robot,
+                chargerID,
+                "BackupOntoCharger",
+                RobotActionType::BACKUP_ONTO_CHARGER,
+                false)
   , _useCliffSensorCorrection(useCliffSensorCorrection)
 {
+  // We don't expect to be near the pre-action pose of the charger when we
+  // begin backing up onto it, so don't check for it. We aren't even seeing
+  // the marker at this point anyway.
+  SetDoNearPredockPoseCheck(false);
+  
+  // Don't turn toward the object since we're expected to be facing away from it
+  SetShouldFirstTurnTowardsObject(false);
+  SetShouldCheckForObjectOnTopOf(false);
+}
 
+  
+ActionResult BackupOntoChargerAction::SelectDockAction(ActionableObject* object)
+{
+  auto objType = object->GetType();
+  if (objType != ObjectType::Charger_Basic) {
+    PRINT_NAMED_ERROR("BackupOntoChargerAction.SelectDockAction.NotChargerObject",
+                      "Object is not a charger! It's a %s.", EnumToString(objType));
+    return ActionResult::BAD_OBJECT;
+  }
+  
+  _dockAction = _useCliffSensorCorrection ?
+                  DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF :
+                  DockAction::DA_BACKUP_ONTO_CHARGER;
+  
+  
+  // Tell robot which charger it will be using
+  _robot.SetCharger(_dockObjectID);
+  
+  return ActionResult::SUCCESS;
 }
   
-ActionResult BackupOntoChargerAction::CheckIfDone()
-{
-  // TODO: Implement cliff sensor correction
-  if (_useCliffSensorCorrection){}
   
+ActionResult BackupOntoChargerAction::Verify()
+{
+  // Verify that robot is on charger
   if (_robot.IsOnCharger()) {
-    _robot.SetPoseOnCharger();
+    PRINT_CH_INFO("Actions", "BackupOntoChargerAction.Verify.MountingChargerComplete",
+                "Robot has mounted charger.");
     return ActionResult::SUCCESS;
   }
   
-  // Check our pitch angle to make sure we're not driving up
-  // the back/sides of the charger unintentionally
-  const float minPitchAngle_rad = DEG_TO_RAD(-15.f);
-  if (_robot.GetPitchAngle().ToFloat() < minPitchAngle_rad) {
-    return ActionResult::UNEXPECTED_PITCH_ANGLE;
-  }
-  
-  // The base action should never complete successfully (since it
-  // should be interrupted by the above IsOnCharger() before it can
-  // complete). If it completes or times out, return a failure.
-  const auto result = super::CheckIfDone();
-  if (result == ActionResult::SUCCESS) {
-    return ActionResult::NOT_ON_CHARGER;
-  }
-  
-  return result;
+  return ActionResult::ABORT;
 }
+  
   
 #pragma mark ---- DriveToAndMountChargerAction ----
   

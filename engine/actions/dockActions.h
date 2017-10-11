@@ -13,6 +13,7 @@
 #ifndef ANKI_COZMO_DOCKACTIONS_H
 #define ANKI_COZMO_DOCKACTIONS_H
 
+#include "anki/cozmo/shared/animationTag.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/actionableObject.h"
 #include "engine/actions/basicActions.h"
@@ -276,7 +277,7 @@ namespace Anki {
       // Name of animation to play when moving lift post-dock
       AnimationTrigger           _liftMovingAnimation = AnimationTrigger::Count;
       
-      AnimationStreamer::Tag     _squintLayerTag = AnimationStreamer::NotAnimatingTag;
+      AnimationTag               _squintLayerTag = kNotAnimatingTag;
       
       bool _shouldSetCubeLights      = false;
       bool _lightsSet                = false;

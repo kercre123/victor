@@ -95,18 +95,18 @@ namespace Cozmo {
     {
       _imgID = chunk.imageId;
       
-      if(chunk.resolution != DEFAULT_IMAGE_RESOLUTION)
+      if(ImageResolution::Custom == chunk.resolution)
       {
-        PRINT_NAMED_WARNING("EncodedImage.AddChunk.BadResolution",
-                            "Expecting %s resolution, got %s",
-                            EnumToString(DEFAULT_IMAGE_RESOLUTION),
-                            EnumToString(chunk.resolution));
-        return false;
+        _imgWidth      = (0xFFF00000 & chunk.chunkDebug) >> 20; // 12 MSBs
+        _imgHeight     = (0xFFF00    & chunk.chunkDebug) >> 8;  // Next 12 MSBs
+      }
+      else
+      {
+        const Vision::ImageDims& imageDims = Vision::CameraResInfo[(int)chunk.resolution];
+        _imgWidth      = imageDims.width;
+        _imgHeight     = imageDims.height;
       }
       
-      const Vision::ImageDims& imageDims = Vision::CameraResInfo[(int)chunk.resolution];
-      _imgWidth        = imageDims.width;
-      _imgHeight       = imageDims.height;
       _isImgValid      = (chunk.chunkId == 0);
       _expectedChunkId = 0;
       _encoding        = chunk.imageEncoding;
@@ -121,7 +121,15 @@ namespace Cozmo {
       }
 
       _buffer.clear();
-      _buffer.reserve(_imgWidth*_imgHeight*sizeof(Vision::PixelRGB));
+      
+      if(chunk.imageEncoding == ImageEncoding::JPEGGray)
+      {
+        _buffer.reserve(_imgWidth*_imgHeight);
+      }
+      else
+      {
+        _buffer.reserve(_imgWidth*_imgHeight*sizeof(Vision::PixelRGB));
+      }
       
       _numChunksReceived = 0;
     }

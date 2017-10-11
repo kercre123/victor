@@ -26,7 +26,7 @@ struct AudioPlayerData;
 class AudioPlayer
 {
 public:
-  AudioPlayer();
+  AudioPlayer(uint32_t samplesPerChunk = kSamplesPerChunk);
   virtual ~AudioPlayer();
   AudioPlayer& operator=(AudioPlayer&&);
   AudioPlayer(AudioPlayer&&);

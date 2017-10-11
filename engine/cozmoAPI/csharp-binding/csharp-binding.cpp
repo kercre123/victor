@@ -188,12 +188,12 @@ static std::string das_unarchive_function(const std::string& inputFilePath)
               "csharp-binding.das_unarchive_function.CreateFilesFromArchive.Fail",
               "Unable to create files at path %s from archive %s",
               baseDirectory.c_str(), inputFilePath.c_str());
+  Anki::Util::FileUtils::DeleteFile(inputFilePath);
   if(!success)
   {
     return "";
   }
   
-  Anki::Util::FileUtils::DeleteFile(inputFilePath);
   return outputFilename;
 }
 #endif
