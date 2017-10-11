@@ -86,9 +86,9 @@ private:
   int       _round    = kBehaviorRound;
   
   // World Event tracking
-  bool      _isCubeInLift     = false;
-  bool      _isRequestingGame = false;
-  bool      _stackExists      = false;
+//  bool      _isCubeInLift     = false;
+//  bool      _isRequestingGame = false;
+//  bool      _stackExists      = false;
   
   std::vector<::Signal::SmartHandle> _eventHandles;
   
@@ -104,13 +104,13 @@ private:
   
   // Keep track of the last GuardDog behavior stage so we can set the
   //  proper audio round when transitioning between stages.
-  GuardDogStage _prevGuardDogStage;
+//  GuardDogStage _prevGuardDogStage;
   
   // Keep track of the last feeding stage so we can identify music changes
-  FeedingStage _prevFeedingStage;
+//  FeedingStage _prevFeedingStage;
   
   // Keep track of the last needs levels so we can broadcast when they change
-  NeedsLevels _needsLevel;
+//  NeedsLevels _needsLevel;
   
   
   BehaviorStageTag GetActiveBehaviorStage();

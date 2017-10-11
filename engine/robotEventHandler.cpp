@@ -61,10 +61,6 @@
 namespace Anki {
 namespace Cozmo {
   
-namespace{
-const int kBoundedWhileIdlePopLimit = 1000;
-}
-  
 u32 RobotEventHandler::_gameActionTagCounter = ActionConstants::FIRST_GAME_INTERNAL_TAG;
   
 // =====================================================================================================================

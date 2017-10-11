@@ -78,7 +78,6 @@ RobotDataLoader::~RobotDataLoader()
 // We report some loading data info so the UI can inform the user. Ratio of time taken per section is approximate,
 // based on recent profiling. Some sections below are called out specifically, the rest makes up the remainder.
 // These should add up to be less than or equal to 1.0!
-static constexpr float _kAnimationsLoadingRatio = 0.7f;
 static constexpr float _kFaceAnimationsLoadingRatio = 0.2f;
 
 void RobotDataLoader::LoadNonConfigData()

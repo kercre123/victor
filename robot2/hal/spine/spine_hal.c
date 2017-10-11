@@ -123,7 +123,6 @@ int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
       result = 0; //not an error
     }
   }
-  int i;
   return result;
 }
 

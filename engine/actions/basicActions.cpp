@@ -248,10 +248,10 @@ namespace Anki {
           // Clip angleDiff to 89 degrees to prevent unintended behavior due to tangent
           angleDiff_rad = Anki::Util::Clamp(angleDiff_rad, DEG_TO_RAD(-89.f), DEG_TO_RAD(89.f));
 
-          const f32 x_mm = std::tan(angleDiff_rad) * HEAD_CAM_POSITION[0];
-          const f32 xPixShift = x_mm * (static_cast<f32>(_robot.GetDisplayWidthInPixels()) / (4*SCREEN_SIZE[0]));
           // TODO: Restore eye shifts (VIC-363)
           /*
+          const f32 x_mm = std::tan(angleDiff_rad) * HEAD_CAM_POSITION[0];
+          const f32 xPixShift = x_mm * (static_cast<f32>(_robot.GetDisplayWidthInPixels()) / (4*SCREEN_SIZE[0]));
           _robot.GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
                                                                                       "TurnInPlaceEyeDart",
                                                                                       xPixShift, 0,
@@ -882,11 +882,11 @@ namespace Anki {
           
           // Lead with the eyes, if not in position
           // Note: assuming screen is about the same x distance from the neck joint as the head cam
+          // TODO: Restore eye shifts (VIC-363)
+          /*
           Radians angleDiff =  _robot.GetHeadAngle() - _headAngle;
           const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
           const f32 yPixShift = y_mm * (static_cast<f32>(_robot.GetDisplayHeightInPixels()/4) / SCREEN_SIZE[1]);
-          // TODO: Restore eye shifts (VIC-363)
-          /*
           _robot.GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
                                                                                       "MoveHeadToAngleEyeShift",
                                                                                       0,

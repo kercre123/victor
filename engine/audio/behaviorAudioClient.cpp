@@ -38,7 +38,7 @@ using Util::FullEnumToValueArrayChecker::IsSequentialArray; // import IsSequenti
 
 namespace {
   
-const AudioMetaData::GameObjectType kMusicGameObject = AudioMetaData::GameObjectType::Default;
+//const AudioMetaData::GameObjectType kMusicGameObject = AudioMetaData::GameObjectType::Default;
  
 // Mapping from integral index to 'Gameplay_Round'
 const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundMap = {{
@@ -101,8 +101,8 @@ BehaviorAudioClient::BehaviorAudioClient(Robot& robot)
 : _robot(robot)
 , _prevActivity(ActivityID::Invalid)
 , _activeBehaviorStage(BehaviorStageTag::Count)
-, _prevGuardDogStage(GuardDogStage::Count)
-, _prevFeedingStage(FeedingStage::MildEnergy)
+//, _prevGuardDogStage(GuardDogStage::Count)
+//, _prevFeedingStage(FeedingStage::MildEnergy)
 {
   // Get the appropriate spark music state from unity
   if(robot.HasExternalInterface()){

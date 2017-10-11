@@ -184,8 +184,6 @@ private:
   std::thread           _dataLoadingThread;
   std::atomic<bool>     _abortLoad{false};
   
-  // This gets set when we start loading animations and know the total number
-  float _perAnimationLoadingRatio = 0.0f;
 };
 
 }

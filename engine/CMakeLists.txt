@@ -87,7 +87,6 @@ android_strip(TARGET cozmo_engine)
 
 target_compile_definitions(cozmo_engine
   PRIVATE
-  COZMO_BASESTATION
   COZMO_V2
   CORETECH_BASESTATION
   USE_DAS=${USE_DAS}

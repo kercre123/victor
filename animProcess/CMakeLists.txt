@@ -56,7 +56,6 @@ android_strip(TARGET victor_anim)
 
 target_compile_definitions(victor_anim
   PRIVATE
-  COZMO_BASESTATION
   COZMO_V2
   USE_DAS=${USE_DAS}
   ${PLATFORM_COMPILE_DEFS}
