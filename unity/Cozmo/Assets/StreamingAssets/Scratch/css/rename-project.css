@@ -54,7 +54,7 @@
   color: #e4e4e5;
 }
 
-.full-screen-modal .btn[disabled='disabled'] {
+.full-screen-modal .btn.btn-blue[disabled='disabled'] {
   color: #535E62;
   background-image: linear-gradient(to bottom, #686868, #717171);
 }
