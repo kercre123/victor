@@ -445,7 +445,7 @@ Blockly.Flyout.prototype.hide = function() {
  *     Variables and procedures have a custom set of blocks.
  */
 Blockly.Flyout.prototype.show = function(xmlList) {
-  this.workspace_.setResizesEnabled(false);
+  this.workspace_.setBulkUpdate(true);
   this.hide();
   this.clearOldBlocks_();
 
@@ -520,7 +520,7 @@ Blockly.Flyout.prototype.show = function(xmlList) {
   this.listeners_.push(Blockly.bindEvent_(this.svgBackground_, 'mouseover',
       this, deselectAll));
 
-  this.workspace_.setResizesEnabled(true);
+  this.workspace_.setBulkUpdate(false);
   this.reflow();
 
   // Correctly position the flyout's scrollbar when it opens.
