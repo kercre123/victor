@@ -97,8 +97,9 @@ static void HandleCallbackEntry(void * __nullable               inUserData,
   if (data) { data->HandleCallback(inAQ, inBuffer, inStartTime, inNumberPackets, inPacketDescs); }
 }
 
-AudioCaptureSystem::AudioCaptureSystem(uint32_t samplesPerChunk)
+AudioCaptureSystem::AudioCaptureSystem(uint32_t samplesPerChunk, uint32_t sampleRate)
 : _samplesPerChunk(samplesPerChunk)
+, _sampleRate_hz(sampleRate)
 { }
 
 // Note this should be done AFTER permission has been granted
@@ -111,6 +112,7 @@ void AudioCaptureSystem::Init()
     
     AudioStreamBasicDescription standardAudioFormat;
     GetStandardAudioDescriptionFormat(standardAudioFormat);
+    standardAudioFormat.mSampleRate = _sampleRate_hz;
     OSStatus status = AudioQueueNewInput(&standardAudioFormat, HandleCallbackEntry, _impl.get(), nullptr, nullptr, 0, &_impl->_queue);
     if (kAudioServicesNoError != status)
     {
