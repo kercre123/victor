@@ -27,50 +27,52 @@
 
 static const char * const kLogChannelName = "VisionSystem";
 
-// Set to 0 to disable
-// Set to 1 to draw laser point(s) in the camera image
-// Set to 2 to also draw separate debug images showing laser saliency (in image and on ground)
-#define DEBUG_LASER_DETECTION 0
-
 namespace Anki {
 namespace Cozmo {
   
 namespace Params
 {
-#if REMOTE_CONSOLE_ENABLED
-  static const char * const kConsoleGroupName = "Vision.LaserPointDetector";
-#endif
+# define CONSOLE_GROUP_NAME "Vision.LaserPointDetector"
   
   // Set > 1 to process at lower resolution for speed
-  CONSOLE_VAR_RANGED(s32, kLaser_scaleMultiplier, kConsoleGroupName, 2, 1, 8);
+  CONSOLE_VAR_RANGED(s32, kLaser_scaleMultiplier, CONSOLE_GROUP_NAME, 2, 1, 8);
   
   // NOTE: these are tuned for 320x240 resolution:
   static const Point2f kRadiusAtResolution{320.f, 240.f};
-  CONSOLE_VAR(f32, kLaser_minRadius_pix, kConsoleGroupName, 2.f);
-  CONSOLE_VAR(f32, kLaser_maxRadius_pix, kConsoleGroupName, 25.f);
+  CONSOLE_VAR(f32, kLaser_minRadius_pix, CONSOLE_GROUP_NAME, 2.f);
+  CONSOLE_VAR(f32, kLaser_maxRadius_pix, CONSOLE_GROUP_NAME, 25.f);
   
-  CONSOLE_VAR_RANGED(f32, kLaser_darkThresholdFraction_darkExposure, kConsoleGroupName,  0.7f, 0.f, 1.f);
-  CONSOLE_VAR_RANGED(f32, kLaser_darkThresholdFraction_normalExposure, kConsoleGroupName,  0.9f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(f32, kLaser_darkThresholdFraction_darkExposure, CONSOLE_GROUP_NAME,  0.7f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(f32, kLaser_darkThresholdFraction_normalExposure, CONSOLE_GROUP_NAME,  0.9f, 0.f, 1.f);
   
-  CONSOLE_VAR(f32, kLaser_darkSurroundRadiusFraction, kConsoleGroupName, 2.5f);
+  CONSOLE_VAR(f32, kLaser_darkSurroundRadiusFraction, CONSOLE_GROUP_NAME, 2.5f);
   
-  CONSOLE_VAR(s32, kLaser_MaxSurroundStdDev, kConsoleGroupName, 25);
+  CONSOLE_VAR(s32, kLaser_MaxSurroundStdDev, CONSOLE_GROUP_NAME, 25);
   
-  CONSOLE_VAR(u8, kLaser_lowThreshold_normalExposure,  kConsoleGroupName, 235);
-  CONSOLE_VAR(u8, kLaser_highThreshold_normalExposure, kConsoleGroupName, 240);
+  CONSOLE_VAR(u8, kLaser_lowThreshold_normalExposure,  CONSOLE_GROUP_NAME, 235);
+  CONSOLE_VAR(u8, kLaser_highThreshold_normalExposure, CONSOLE_GROUP_NAME, 240);
   
-  CONSOLE_VAR(u8, kLaser_lowThreshold_darkExposure,    kConsoleGroupName, 128);
-  CONSOLE_VAR(u8, kLaser_highThreshold_darkExposure,   kConsoleGroupName, 160);
+  CONSOLE_VAR(u8, kLaser_lowThreshold_darkExposure,    CONSOLE_GROUP_NAME, 128);
+  CONSOLE_VAR(u8, kLaser_highThreshold_darkExposure,   CONSOLE_GROUP_NAME, 160);
   
   // For determining when a laser point is saturated enough in either red or green, when color
   // data is available. Bounding box fraction should be >= 1.0
-  CONSOLE_VAR(f32, kLaser_saturationThreshold_red,       kConsoleGroupName, 30.f);
-  CONSOLE_VAR(f32, kLaser_saturationThreshold_green,     kConsoleGroupName, 15.f);
-  CONSOLE_VAR(f32, kLaser_saturationBoundingBoxFraction, kConsoleGroupName, 1.25f);
+  CONSOLE_VAR(f32, kLaser_saturationThreshold_red,       CONSOLE_GROUP_NAME, 30.f);
+  CONSOLE_VAR(f32, kLaser_saturationThreshold_green,     CONSOLE_GROUP_NAME, 15.f);
+  CONSOLE_VAR(f32, kLaser_saturationBoundingBoxFraction, CONSOLE_GROUP_NAME, 1.25f);
   
-  CONSOLE_VAR(bool, kLaser_DrawDetectionsInCameraView, kConsoleGroupName, false);
+  CONSOLE_VAR(bool, kLaser_DrawDetectionsInCameraView, CONSOLE_GROUP_NAME, false);
+  
+  // Set to 0 to disable
+  // Set to 1 to draw laser point(s) in the camera image
+  // Set to 2 to also draw separate debug images showing laser saliency (in image and on ground)
+  CONSOLE_VAR(s32, kLaserDetectionDebug, CONSOLE_GROUP_NAME, 0 )
+  
+# undef CONSOLE_GROUP_NAME
 }
 
+static_assert(ANKI_DEV_CHEATS || Params::kLaserDetectionDebug==0,
+              "kLaserDetectionDebug should be disabled if ANKI_DEV_CHEATS are disabled");
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LaserPointDetector::LaserPointDetector(VizManager* vizManager)
@@ -216,7 +218,7 @@ Result LaserPointDetector::FindConnectedComponents(const Vision::ImageRGB& imgCo
     }
   }
 
-  if(DEBUG_LASER_DETECTION > 1)
+  if(Params::kLaserDetectionDebug > 1)
   {
     _debugImage.Allocate(aboveLowThreshImg.GetNumRows(), aboveLowThreshImg.GetNumCols());
 
@@ -339,7 +341,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
     }
   }
 
-  if(DEBUG_LASER_DETECTION)
+  if(Params::kLaserDetectionDebug)
   {
     PRINT_CH_INFO(kLogChannelName, "LaserPointDetector.Detect.FoundCentroid",
                   "Found %.1f-pixel laser point centered at (%.1f,%.1f)",
@@ -362,7 +364,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
     _vizManager->DrawCameraOval(groundCentroidInImage, groundOvalSize, groundOvalSize, NamedColors::GREEN);
   }
 
-  if(DEBUG_LASER_DETECTION > 1)
+  if(Params::kLaserDetectionDebug > 1)
   {
     Vision::ImageRGB saliencyImageFullSize;
     if(Params::kLaser_scaleMultiplier > 1)
@@ -452,7 +454,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
   centroidInImage *= (f32)Params::kLaser_scaleMultiplier;
 
 
-  if(DEBUG_LASER_DETECTION)
+  if(Params::kLaserDetectionDebug)
   {
     PRINT_CH_INFO(kLogChannelName, "LaserPointDetector.Detect.FoundCentroid",
                   "Found %.1f-pixel laser point centered at (%.1f,%.1f)",
@@ -475,7 +477,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
     _vizManager->DrawCameraOval(centroidInImage, groundOvalSize, groundOvalSize, NamedColors::GREEN);
   }
 
-  if(DEBUG_LASER_DETECTION > 1)
+  if(Params::kLaserDetectionDebug > 1)
   {
     Vision::ImageRGB saliencyImageFullSize;
     if(Params::kLaser_scaleMultiplier > 1)
@@ -568,7 +570,7 @@ bool LaserPointDetector::IsSurroundedByDark(const Vision::Image& image,
       const u8 pixVal = image(y,x);
       if( pixVal > centerPixel )
       {
-        if(DEBUG_LASER_DETECTION > 1)
+        if(Params::kLaserDetectionDebug > 1)
         {
           PRINT_NAMED_WARNING("LaserPointDetector.IsSurroundedByDark", "Not surrounded by dark ring: %d > %d",
                               pixVal, centerPixel);
@@ -586,7 +588,7 @@ bool LaserPointDetector::IsSurroundedByDark(const Vision::Image& image,
   const s32 surroundVar = (surroundSumSq / kNumSurroundPoints) - (surroundMean*surroundMean);
   if(surroundVar > (Params::kLaser_MaxSurroundStdDev*Params::kLaser_MaxSurroundStdDev))
   {
-    if(DEBUG_LASER_DETECTION > 1)
+    if(Params::kLaserDetectionDebug > 1)
     {
       PRINT_NAMED_WARNING("LaserPointDetector.IsSurroundedByDark.VarianceTooHigh",
                           "Variance=%d", surroundVar);
@@ -628,7 +630,7 @@ bool LaserPointDetector::IsSaturated(const Vision::ImageRGB& image,
   const f32 avgSaturation_green = (f32)sumSaturation_green / (f32)roi.GetNumElements();
   
   // Debug display
-  if(DEBUG_LASER_DETECTION && _vizManager)
+  if(Params::kLaserDetectionDebug && _vizManager)
   {
     _vizManager->DrawCameraText(stat.centroid * Params::kLaser_scaleMultiplier,
                                 std::to_string((s32)std::round(avgSaturation_red)) + ":" +
@@ -642,7 +644,7 @@ bool LaserPointDetector::IsSaturated(const Vision::ImageRGB& image,
   else
   {
     // Not saturated enough
-    if(DEBUG_LASER_DETECTION > 1)
+    if(Params::kLaserDetectionDebug > 1)
     {
       PRINT_NAMED_WARNING("LaserPointDetector.IsSaturated", "Not saturated: R=%1.f G=%.1f",
                           avgSaturation_red, avgSaturation_green);

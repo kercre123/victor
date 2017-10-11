@@ -68,6 +68,7 @@ namespace Cozmo {
   
   CONSOLE_VAR(bool, kDisplayProcessedImagesOnly, "Vision.General", true);
   CONSOLE_VAR(bool, kEnableColorImages,          "Vision.General", false);
+  CONSOLE_VAR(s32,  kDebugImageCompressQuality,  "Vision.General", 50); // Set to 0 to display "locally" with img.Display()
   
   // Whether or not to do rolling shutter correction for physical robots
   CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);
@@ -141,6 +142,9 @@ namespace Cozmo {
       // Separate list for engine messages to listen to:
       helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
     }
+    
+    // "Special" viz identifier for the main camera feed
+    _vizDisplayIndexMap["camera"] = 0;
     
   } // VisionSystem()
 
@@ -848,11 +852,27 @@ namespace Cozmo {
         // Display any debug images left by the vision system
         if(ANKI_DEV_CHEATS)
         {
-          for(auto & debugGray : result.debugImages) {
-            debugGray.second.Display(debugGray.first.c_str());
+          if(kDebugImageCompressQuality > 0)
+          {
+            // Send any images in the debug image lists to Viz for display
+            for(auto & debugGray : result.debugImages) {
+              debugGray.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
+              CompressAndSendImage(debugGray.second, kDebugImageCompressQuality, debugGray.first);
+            }
+            for(auto & debugRGB : result.debugImageRGBs) {
+              debugRGB.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
+              CompressAndSendImage(debugRGB.second, kDebugImageCompressQuality, debugRGB.first);
+            }
           }
-          for(auto & debugRGB : result.debugImageRGBs) {
-            debugRGB.second.Display(debugRGB.first.c_str());
+          else
+          {
+            // Display debug images locally
+            for(auto & debugGray : result.debugImages) {
+              debugGray.second.Display(debugGray.first.c_str());
+            }
+            for(auto & debugRGB : result.debugImageRGBs) {
+              debugRGB.second.Display(debugRGB.first.c_str());
+            }
           }
         }
         else if(!result.debugImages.empty() || !result.debugImageRGBs.empty())
@@ -1441,7 +1461,7 @@ namespace Cozmo {
   }
   
   template<class PixelType>
-  Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality)
+  Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality, const std::string& identifier)
   {
     if(!_robot.HasExternalInterface()) {
       PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage.NoExternalInterface", "");
@@ -1452,12 +1472,16 @@ namespace Cozmo {
     
     ImageChunk m;
     
-    const s32 captureHeight = img.GetNumRows();
-    const s32 captureWidth  = img.GetNumCols();
+    // We'll hijack the existing "chunkDebug" member, which used to be a firmware field.
+    // We could rename it to "userData" or something more meaningful if desired...
+    // Here, we'll use its to store [ imageWidth (12 bits) | imageHeigh (12 bits) | identifierValue (8 bits)]
+    // The imageHeight and Width are only set if the given image is a custom size (not enumerated in ImageResolution).
+    m.chunkDebug = 0;
+    static_assert(sizeof(m.chunkDebug)==4, "ImageChunk.chunkDebug expected to be 4 bytes");
     
-    switch(captureHeight) {
+    switch(img.GetNumRows()) {
       case 240:
-        if (captureWidth!=320) {
+        if (img.GetNumCols()!=320) {
           result = RESULT_FAIL;
         } else {
           m.resolution = ImageResolution::QVGA;
@@ -1465,7 +1489,7 @@ namespace Cozmo {
         break;
         
       case 296:
-        if (captureWidth!=400) {
+        if (img.GetNumCols()!=400) {
           result = RESULT_FAIL;
         } else {
           m.resolution = ImageResolution::CVGA;
@@ -1473,7 +1497,7 @@ namespace Cozmo {
         break;
         
       case 480:
-        if (captureWidth!=640) {
+        if (img.GetNumCols()!=640) {
           result = RESULT_FAIL;
         } else {
           m.resolution = ImageResolution::VGA;
@@ -1481,7 +1505,7 @@ namespace Cozmo {
         break;
         
       case 720:
-        if (captureWidth!=1280) {
+        if (img.GetNumCols()!=1280) {
           result = RESULT_FAIL;
         } else {
           m.resolution = ImageResolution::HD;
@@ -1489,7 +1513,7 @@ namespace Cozmo {
         break;
 
       case 360:
-        if (captureWidth!=640) {
+        if (img.GetNumCols()!=640) {
           result = RESULT_FAIL;
         } else {
           m.resolution = ImageResolution::NHD;
@@ -1497,12 +1521,17 @@ namespace Cozmo {
         break;
         
       default:
-        result = RESULT_FAIL;
+        // Store custom width and heigh in the 24 MSBs of chunkDebug (see above)
+        m.resolution = ImageResolution::Custom;
+        m.chunkDebug |= ((0xFFF & img.GetNumCols()) << 20);
+        m.chunkDebug |= ((0xFFF & img.GetNumRows()) << 8);
+        break;
     }
     
     if(RESULT_OK != result) {
       PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage",
-                        "Unrecognized resolution: %dx%d.", captureWidth, captureHeight);
+                        "Unrecognized resolution: %dx%d for identifier '%s'.",
+                        img.GetNumCols(), img.GetNumRows(), identifier.c_str());
       return result;
     }
     
@@ -1520,6 +1549,21 @@ namespace Cozmo {
     
     const u32 kMaxChunkSize = static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE);
     u32 bytesRemainingToSend = static_cast<u32>(compressedBuffer.size());
+    
+    // Put the identifier value in the 8 LSBs of chunkDebug
+    s32 identifierValue = 0;
+    auto displayIndexIter = _vizDisplayIndexMap.find(identifier);
+    if(displayIndexIter == _vizDisplayIndexMap.end())
+    {
+      // New identifier
+      identifierValue = Util::numeric_cast<s32>(_vizDisplayIndexMap.size());
+      _vizDisplayIndexMap.emplace(identifier, identifierValue); // NOTE: this will increase size() for next time
+    }
+    else
+    {
+      identifierValue = displayIndexIter->second;
+    }
+    m.chunkDebug |= (0xFF & identifierValue);
     
     m.frameTimeStamp = img.GetTimestamp();
     m.imageId = ++imgID;
@@ -1549,17 +1593,17 @@ namespace Cozmo {
       bytesRemainingToSend -= chunkSize;
       ++m.chunkId;
     }
-
+    
     return RESULT_OK;
     
   } // CompressAndSendImage()
   
   // Explicit instantiation for grayscale and RGB
   template Result VisionComponent::CompressAndSendImage<u8>(const Vision::ImageBase<u8>& img,
-                                                            s32 quality);
+                                                            s32 quality, const std::string& identifier);
   
   template Result VisionComponent::CompressAndSendImage<Vision::PixelRGB>(const Vision::ImageBase<Vision::PixelRGB>& img,
-                                                                          s32 quality);
+                                                                          s32 quality, const std::string& identifier);
   
   Result VisionComponent::ClearCalibrationImages()
   {
@@ -2315,13 +2359,16 @@ namespace Cozmo {
       
       if (_imageSaveMode != ImageSendMode::Off)
       {
-        const std::string path = "/data/misc/camera/test/" + std::to_string(imageId) + ".png";
+        const std::string path = _robot.GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
+        const std::string fullFilename = Util::FileUtils::FullFilePath({path, "images", std::to_string(imageId) + ".png"});
+
         PRINT_CH_DEBUG("VisionComponent",
                        "VisionComponent.CaptureAndSendImage.SavingImage",
                        "Saving %s to %s",
                        (_imageSaveMode == ImageSendMode::SingleShot ? "single image" : "image stream"),
-                       path.c_str());
-        imgRGB.Save(path);
+                       fullFilename.c_str());
+         
+        imgRGB.Save(fullFilename);
         if (_imageSaveMode == ImageSendMode::SingleShot)
         {
           _imageSaveMode = ImageSendMode::Off;
@@ -2342,7 +2389,7 @@ namespace Cozmo {
       
       // Compress to jpeg and send to game and viz
       // Do this before setting next image since it swaps the image and invalidates it
-      Result lastResult = CompressAndSendImage(imgRGB, 50);
+      Result lastResult = CompressAndSendImage(imgRGB, 50, "camera");
       
       // Set next image for VisionComponent
       lastResult = SetNextImage(imgRGB);

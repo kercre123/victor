@@ -23,6 +23,7 @@ enum int_8 ImageResolution
   QUXGA,     // 3200 x 2400
   HD,        // 1280 x 720
   NHD,       // 640 x 360
+  Custom,    // Width in 12 MSBs of chunkDebug, Height in next 12 MSBs 
   ImageResolutionCount,
   ImageResolutionNone
 }

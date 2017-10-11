@@ -150,7 +150,7 @@ struct DockingErrorSignal;
     TimeStamp_t GetFramePeriod_ms() const;
     
     template<class PixelType>
-    Result CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality);
+    Result CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality, const std::string& identifier);
     
     // Detected markers will only be queued for BlockWorld processing if the robot
     // was turning by less than these amounts when they were observed.
@@ -298,7 +298,8 @@ struct DockingErrorSignal;
     
     VisionSystem* _visionSystem = nullptr;
     VizManager*   _vizManager = nullptr;
-  
+    std::map<std::string, s32> _vizDisplayIndexMap;
+    
     // Robot stores the calibration, camera just gets a reference to it
     // This is so we can share the same calibration data across multiple
     // cameras (e.g. those stored inside the pose history)
