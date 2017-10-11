@@ -247,6 +247,7 @@ namespace Anki {
       // Loads an asset asynchronously from the given asset bundle. The asset bundle must have been loaded previously.
       // When the operation  is completed, the callback will be called with the asset or a null refrence if it wasn't found.
       public void LoadAssetAsync<AssetType>(string assetBundleName, string assetName, Action<AssetType> callback) where AssetType : UnityEngine.Object {
+        assetBundleName = RemapVariantName(assetBundleName);
         Log(LogType.Log, "AssetBundleManager.LoadAssetAsync",
             "Loading asset " + assetName + " from asset bundle " + assetBundleName);
 
@@ -683,7 +684,8 @@ namespace Anki {
       needs_hub_connection,
       needs_hub_view,
       activities_view,
-      sparks_view
+      sparks_view,
+      wifi_instructions_prefabs
     }
 
     [Serializable]
@@ -697,15 +699,25 @@ namespace Anki {
       private SerializableAssetBundleNames _AssetBundle;
 
       public string AssetBundle {
-        get { return _AssetBundle.Value.ToString(); }
+        get {
+          string assetBundleName = _AssetBundle.Value.ToString();
+          string assetBundleVariant = "";
+          if (!string.IsNullOrEmpty(_DefaultAssetBundleVariant)) {
+            assetBundleVariant = "." + _DefaultAssetBundleVariant;
+          }
+          return assetBundleName + assetBundleVariant;
+        }
       }
+
+      [SerializeField]
+      private string _DefaultAssetBundleVariant = "";
 
       [SerializeField]
       private string _AssetDataName;
 
       public void LoadAssetData(Action<T> dataLoadedCallback) {
         AssetBundleManager.Instance.LoadAssetAsync<T>(
-          _AssetBundle.Value.ToString(), _AssetDataName,
+          AssetBundle, _AssetDataName,
           (T dataInstance) => {
             dataLoadedCallback(dataInstance);
           });
