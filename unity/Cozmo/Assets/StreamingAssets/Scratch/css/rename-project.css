@@ -62,15 +62,18 @@
 .full-screen-modal .btn.btn-blue {
   background-image: linear-gradient(to bottom, #41c5e9, #2794d1 );
 }
+.full-screen-modal .btn.btn-blue:active {
+  background-image: linear-gradient(to bottom, #1d84ca, #1d9ec7);
+}
 .full-screen-modal .btn.btn-red {
   background-image: linear-gradient(to bottom, #f7632a, #de4210);
+}
+.full-screen-modal .btn.btn-red:active {
+  background-image: linear-gradient(to bottom, #c93507, #eb4c0f);
 }
 .full-screen-modal .btn.btn-grey {
   background-image: linear-gradient(to bottom, #a4a5a6, #939495);
 }
-
-
-
 
 
 .show-rename-project-modal #rename-project-modal {
@@ -91,6 +94,7 @@
   padding: .4em .5em;
   border-radius: 14px;
   background-color: #d3d4d5;
+  outline: none;
 }
 #rename-project-modal .bd #rename-project-text-box:focus{
   border-radius: 14px;
