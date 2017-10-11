@@ -40,7 +40,7 @@ namespace Cozmo.Repair.UI {
       PLAY_REPAIR_SEQUENCE,   //tell robot to animate the pattern and wait with screen dulled
       RESPOND_REPAIR_SUCCESS, // play the animation to indicate that the repair was successful
       REPAIR_SEQUENCE_INTERRUPTED, // the robot's response was interrupted by being picked up - 
-                                  // wait for the robot to be put back down and then re-play the response
+                                   // wait for the robot to be put back down and then re-play the response
       TUNE_UP_COMPLETE  //show any activity complete effects and robot anims
     }
 
@@ -813,7 +813,7 @@ namespace Cozmo.Repair.UI {
         _IsNeedsTransitionAnimationLocked = true;
         NeedsStateManager.Instance.RegisterNeedActionCompleted(_PartRepairAction);
         _IsNeedsTransitionAnimationLocked = false;
-        if (!PlaySeverityTransitionIfNecessary ()) {
+        if (!PlaySeverityTransitionIfNecessary()) {
           AnimationTrigger animationTrigger = AnimationTrigger.Count;
           switch (_PartToRepair) {
           case RepairablePartId.Head:
@@ -828,7 +828,7 @@ namespace Cozmo.Repair.UI {
           default:
             break;
           }
-          if(animationTrigger != AnimationTrigger.Count){
+          if (animationTrigger != AnimationTrigger.Count) {
             var currRobot = RobotEngineManager.Instance.CurrentRobot;
             currRobot.SendAnimationTrigger(animationTrigger,
               HandleRepairSuccessDone,
@@ -1011,7 +1011,7 @@ namespace Cozmo.Repair.UI {
       }
     }
 
-    private void HandleRepairSuccessDone(bool success){
+    private void HandleRepairSuccessDone(bool success) {
       ChangeTuneUpState(TuneUpState.TUNE_UP_COMPLETE);
     }
 
@@ -1296,7 +1296,7 @@ namespace Cozmo.Repair.UI {
     // returns true if a severity transition is necessary and queued
     // false otherwise
     private bool PlaySeverityTransitionIfNecessary() {
-      if(_IsNeedsTransitionAnimationLocked){
+      if (_IsNeedsTransitionAnimationLocked) {
         return false;
       }
 
@@ -1405,8 +1405,8 @@ namespace Cozmo.Repair.UI {
       if (_CozmoMovedReactionsInterrupt) {
         DAS.Event("NeedsRepairModal.ShowReactionAlert.OffTreads", DASEventDialogName, DASUtil.FormatExtraData(offTreadsState.ToString()));
         if (_InterruptedAlert == null) {
-          ShowInterruptionAlert("cozmo_off_treads_by_user_alert", LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsTitle,
-                                LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsDescription);
+          ShowInterruptionAlert("cozmo_off_treads_by_user_alert", LocalizationKeys.kNeedsNeedsRepairModalCozmoNotOnTreadsTitle,
+                                LocalizationKeys.kNeedsNeedsRepairModalCozmoNotOnTreadsBody);
         }
         return true;
       }
