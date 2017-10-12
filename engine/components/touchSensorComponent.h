@@ -60,6 +60,8 @@ private:
   std::unique_ptr<Util::RollingFileLogger> _rawDataLogger;
   bool _loggingRawData = false;
   float _logRawDataUntil_s = 0.f;
+
+  bool _wasTouched = false;
   
 };
 

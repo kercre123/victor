@@ -35,7 +35,7 @@ namespace {
   
   const float kRobotTouchedMsgInterval_s = 0.75f;
   
-  const float kTouchIntensityThreshold = 30000; // arbitrary
+  float kTouchIntensityThreshold = 625; // arbitrary
 } // end anonymous namespace
 
   
@@ -53,6 +53,12 @@ TouchSensorComponent::~TouchSensorComponent() = default;
   
 void TouchSensorComponent::Update(const RobotState& msg)
 {
+  if(msg.backpackTouchSensorRaw > 1000)
+  {
+    PRINT_NAMED_WARNING("TOUCH TOO LARGE", "");
+    return;
+  }
+
   // a circular buffer maintains the last touch intensity values in some constant time window
   _touchIntensitySamples.push_back(msg.backpackTouchSensorRaw);
   
@@ -67,16 +73,43 @@ void TouchSensorComponent::Update(const RobotState& msg)
     meanTouchIntensity += _touchIntensitySamples[i];
   }
   meanTouchIntensity /= kNumTouchSamples;
+
+  static int c = 0;
+  static f32 baseline = 0;
+  if(c >= 0 && c < 100)
+  {
+    ++c;
+    return;
+  }
+  else if(c != -1)
+  {
+    c = -1;
+    baseline = meanTouchIntensity;
+    kTouchIntensityThreshold = baseline + 30;
+  }
   
+  // PRINT_NAMED_WARNING("TOUCH INTENSITY", "%f", meanTouchIntensity);
+
   bool isBeingTouched     = meanTouchIntensity > kTouchIntensityThreshold;
-  const auto now          = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const bool msgRateValid = (now-_lastTimeSentRobotTouchMsg_s)>kRobotTouchedMsgInterval_s;
-  if(isBeingTouched && msgRateValid) {
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotTouched()));
-    _lastTimeSentRobotTouchMsg_s = now;
+  // const auto now          = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  // const bool msgRateValid = (now-_lastTimeSentRobotTouchMsg_s)>kRobotTouchedMsgInterval_s;
+  // if(isBeingTouched && msgRateValid) {
+  //   _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotTouched()));
+  //   _lastTimeSentRobotTouchMsg_s = now;
+  // }
+
+  if(isBeingTouched && !_wasTouched)
+  {
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotTouched(true)));
+  }
+  else if(!isBeingTouched && _wasTouched)
+  {
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotTouched(false)));
   }
   
   Log();
+  
+  _wasTouched = isBeingTouched;
 }
 
 

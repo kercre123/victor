@@ -63,6 +63,7 @@ enum uint_8 BehaviorClass {
   PlaypenMotorCalibration,
   PlaypenPickupCube,
   PlaypenReadToolCode,
+  PlaypenWaitToStart,
 
   PopAWheelie,
   PounceOnMotion,
@@ -191,6 +192,7 @@ enum uint_8 BehaviorID {
   PlaypenMotorCalibration,
   PlaypenPickupCube,
   PlaypenReadToolCode,
+  PlaypenWaitToStart,
 
   PopAWheelie,
   PounceOnMotion_Socialize,

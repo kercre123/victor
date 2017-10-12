@@ -568,86 +568,92 @@ bool IBehavior::IsRunnableBase(const Robot& robot) const
   }
   
   // check if required processes are running
-  if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid )
-  {
-    const bool isProcessOn = robot.GetAIComponent().GetAIInformationAnalyzer().IsProcessRunning(_requiredProcess);
-    if ( !isProcessOn ) {
-      PRINT_NAMED_ERROR("IBehavior.IsRunnable.RequiredProcessNotFound",
-        "Required process '%s' is not enabled for '%s'",
-        AIInformationAnalysis::StringFromEProcess(_requiredProcess),
-        GetIDStr().c_str());
-      return false;
-    }
-  }
+  // if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid )
+  // {
+  //   const bool isProcessOn = robot.GetAIComponent().GetAIInformationAnalyzer().IsProcessRunning(_requiredProcess);
+  //   if ( !isProcessOn ) {
+  //     PRINT_NAMED_ERROR("IBehavior.IsRunnable.RequiredProcessNotFound",
+  //       "Required process '%s' is not enabled for '%s'",
+  //       AIInformationAnalysis::StringFromEProcess(_requiredProcess),
+  //       GetIDStr().c_str());
+  //     return false;
+  //   }
+  // }
 
   // check if a severe needs state is required
-  if( _requiredSevereNeed != NeedId::Count &&
-      _requiredSevereNeed != robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() ) {
-    // not in the correct state
-    return false;
-  }
+  // if( _requiredSevereNeed != NeedId::Count &&
+  //     _requiredSevereNeed != robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() ) {
+  //   // not in the correct state
+  //   PRINT_NAMED_INFO("NOT RUNNING BECAUSE NOT IN RIGHT NEED STATE", "");
+  //   return false;
+  // }
 
-  const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  // const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   // first check the unlock
-  if ( _requiredUnlockId != UnlockId::Count )
-  {
-    // ask progression component if the unlockId is currently unlocked
-    const ProgressionUnlockComponent& progressionComp = robot.GetProgressionUnlockComponent();
-    const bool forFreeplay = true;
-    const bool isUnlocked = progressionComp.IsUnlocked( _requiredUnlockId, forFreeplay );
-    if ( !isUnlocked ) {
-      return false;
-    }
-  }
+  // if ( _requiredUnlockId != UnlockId::Count )
+  // {
+  //   // ask progression component if the unlockId is currently unlocked
+  //   const ProgressionUnlockComponent& progressionComp = robot.GetProgressionUnlockComponent();
+  //   const bool forFreeplay = true;
+  //   const bool isUnlocked = progressionComp.IsUnlocked( _requiredUnlockId, forFreeplay );
+  //   if ( !isUnlocked ) {
+  //     return false;
+  //   }
+  // }
   
   // if there's a timer requiring a recent drive off the charger, check with whiteboard
-  const bool requiresRecentDriveOff = FLT_GE(_requiredRecentDriveOffCharger_sec, 0.0f);
-  if ( requiresRecentDriveOff )
-  {
-    const float lastDriveOff = robot.GetAIComponent().GetWhiteboard().GetTimeAtWhichRobotGotOffCharger();
-    const bool hasDrivenOff = FLT_GE(lastDriveOff, 0.0f);
-    if ( !hasDrivenOff ) {
-      // never driven off the charger, can't run
-      return false;
-    }
+  // const bool requiresRecentDriveOff = FLT_GE(_requiredRecentDriveOffCharger_sec, 0.0f);
+  // if ( requiresRecentDriveOff )
+  // {
+  //   const float lastDriveOff = robot.GetAIComponent().GetWhiteboard().GetTimeAtWhichRobotGotOffCharger();
+  //   const bool hasDrivenOff = FLT_GE(lastDriveOff, 0.0f);
+  //   if ( !hasDrivenOff ) {
+  //     // never driven off the charger, can't run
+  //     return false;
+  //   }
     
-    const bool isRecent = FLT_LE(curTime, (lastDriveOff + _requiredRecentDriveOffCharger_sec));
-    if ( !isRecent ) {
-      // driven off, but not recently enough
-      return false;
-    }
-  }
+  //   const bool isRecent = FLT_LE(curTime, (lastDriveOff + _requiredRecentDriveOffCharger_sec));
+  //   if ( !isRecent ) {
+  //     // driven off, but not recently enough
+  //     return false;
+  //   }
+  // }
   
   // if there's a timer requiring a recent parent switch
-  const bool requiresRecentParentSwitch = FLT_GE(_requiredRecentSwitchToParent_sec, 0.0);
-  if ( requiresRecentParentSwitch ) {
-    const float lastTime = robot.GetBehaviorManager().GetLastBehaviorChooserSwitchTime();
-    const float changedAgoSecs = curTime - lastTime;
-    const bool isSwitchRecent = FLT_LE(changedAgoSecs, _requiredRecentSwitchToParent_sec);
-    if ( !isSwitchRecent ) {
-      return false;
-    }
-  }
+  // const bool requiresRecentParentSwitch = FLT_GE(_requiredRecentSwitchToParent_sec, 0.0);
+  // if ( requiresRecentParentSwitch ) {
+  //   const float lastTime = robot.GetBehaviorManager().GetLastBehaviorChooserSwitchTime();
+  //   const float changedAgoSecs = curTime - lastTime;
+  //   const bool isSwitchRecent = FLT_LE(changedAgoSecs, _requiredRecentSwitchToParent_sec);
+  //   if ( !isSwitchRecent ) {
+  //     PRINT_NAMED_INFO("NOT RUNNING BECAUSE NEED PARENT SWITCH", "");
+  //     return false;
+  //   }
+  // }
   
   //check if the behavior runs while in the air
-  if(robot.GetOffTreadsState() != OffTreadsState::OnTreads
-     && !ShouldRunWhileOffTreads()){
-    return false;
-  }
+  // if(robot.GetOffTreadsState() != OffTreadsState::OnTreads
+  //    && !ShouldRunWhileOffTreads()){
+  //   PRINT_NAMED_INFO("NOT RUNNING BECAUSE OFFTREADS", "");
+  //   return false;
+  // }
 
   //check if the behavior can run from the charger platform (don't want most to run because they could damage
   //the robot by moving too much, and also will generally look dumb if they try to turn)
-  if(robot.IsOnChargerPlatform() && !ShouldRunWhileOnCharger()) {
-    return false;
-  }
+  // if(robot.IsOnChargerPlatform() && !ShouldRunWhileOnCharger()) {
+  //   PRINT_NAMED_INFO("NOT RUNNING BECAUSE ON CHARGER", "");
+  //   return false;
+  // }
   
   //check if the behavior can handle holding a block
-  if(robot.GetCarryingComponent().IsCarryingObject() && !CarryingObjectHandledInternally()){
-    return false;
-  }
+  // if(robot.GetCarryingComponent().IsCarryingObject() && !CarryingObjectHandledInternally()){
+  //   PRINT_NAMED_INFO("NOT RUNNING BECAUSE CARRYING OBJECT", "");
+  //   return false;
+  // }
   
   if((_wantsToRunStrategy != nullptr) &&
      !_wantsToRunStrategy->WantsToRun(robot)){
+    PRINT_NAMED_INFO("NOT RUNNING BECAUSE STRATEGY", "");
     return false;
   }
      

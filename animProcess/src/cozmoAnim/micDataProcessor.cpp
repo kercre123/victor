@@ -38,7 +38,7 @@ namespace {
   
   constexpr bool kSaveAudio = true;
   constexpr bool kSaveRawAudio = true && kSaveAudio; // only possible when saving audio at all
-  constexpr bool kSaveResampledAudio = true && kSaveAudio; // only possible when saving audio at all
+  constexpr bool kSaveResampledAudio = false && kSaveAudio; // only possible when saving audio at all
 }
 
 MicDataProcessor::MicDataProcessor(const std::string& writeLocation)
@@ -106,14 +106,14 @@ void MicDataProcessor::ProcessRawAudio(const ResampledAudioChunk& audioChunk)
   if (!_inProcessAudioBlockFirstHalf)
   {
     // Process the current audio block with SE software
-    static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
-    AudioUtil::AudioChunk processedBlock;
-    processedBlock.resize(kSamplesPerBlock);
-    MMIfProcessMicrophones(dummySpeakerOut.data(), _inProcessAudioBlock.data(), processedBlock.data());
+    // static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
+    // AudioUtil::AudioChunk processedBlock;
+    // processedBlock.resize(kSamplesPerBlock);
+    // MMIfProcessMicrophones(dummySpeakerOut.data(), _inProcessAudioBlock.data(), processedBlock.data());
     
     if (kSaveAudio)
     {
-      _processedAudioData.push_back(std::move(processedBlock));
+      // _processedAudioData.push_back(std::move(processedBlock));
       _collectedAudioSamples += kSamplesPerBlock;
     }
   }
@@ -293,12 +293,14 @@ std::string MicDataProcessor::ChooseAndClearNextFileNameBase(std::string& out_de
   }
   
   // If number of files is less than max, name the file miccapture_0000_(filecount())
-  if (fileNames.size() < _filesToStore)
-  {
+  // if (fileNames.size() < _filesToStore)
+  // {
+    static int i = 0;
     std::ostringstream newNameStream;
-    newNameStream << kMicCapturePrefix << "0000_" << std::setfill('0') << std::setw(4) << fileNames.size();
+    newNameStream << kMicCapturePrefix << "0000_" << std::setfill('0') << std::setw(4) << i;
+    i++;
     return newNameStream.str();
-  }
+  // }
   
   // Otherwise:
   // Sort list of files
@@ -319,9 +321,11 @@ std::string MicDataProcessor::ChooseAndClearNextFileNameBase(std::string& out_de
   const auto seqStr = fileToReplace.substr(seqStrBegin, 4);
   
   // use increased iteration number and old seq number to make the new filename
-  std::ostringstream newNameStream;
-  newNameStream << kMicCapturePrefix << std::setfill('0') << std::setw(4) << (iterationNum + 1) << "_" << seqStr;
-  return newNameStream.str();
+  {
+    std::ostringstream newNameStream;
+    newNameStream << kMicCapturePrefix << std::setfill('0') << std::setw(4) << (iterationNum + 1) << "_" << seqStr;
+    return newNameStream.str();
+  }
 }
 
 std::string MicDataProcessor::GetProcessedFileNameFromRaw(const std::string& rawFileName)

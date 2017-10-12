@@ -74,7 +74,7 @@ static u32 kMotorCalibrationTimeout_ms = 4000;
 static f32 kHeadAngleToPlaySound    = DEG_TO_RAD(2.f);
 
 // Volume to play sound
-static f32 kSoundVolume             = 0.f;
+static f32 kSoundVolume             = 1.0f;
 
 // How long to check drift for
 static u32 kIMUDriftDetectPeriod_ms = 2000;

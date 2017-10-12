@@ -556,7 +556,7 @@ void NVStorageComponent::WriteEntryToFile(u32 tag)
   // TODO(Al): This probably needs to write somewhere else for actual factory nvStorage
   if(IsFactoryEntryTag(static_cast<NVEntryTag>(tag)))
   {
-    path += "factory/";
+    path = "/data/persist/factory/";
   }
 
   // If tag doesn't exist in map, then delete the associated file if it exists
@@ -614,7 +614,7 @@ void NVStorageComponent::LoadDataFromFiles()
   
   // TODO: For now load factory related nvstorage files from the "factory" subdirectory. Will probably
   // be moved to some read only place
-  fileList = Util::FileUtils::FilesInDirectory(_kStoragePath + "factory/", false, _kNVDataFileExtension);
+  fileList = Util::FileUtils::FilesInDirectory("/data/persist/factory/", false, _kNVDataFileExtension);
   
   for (auto& fileName : fileList) {
     

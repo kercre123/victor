@@ -186,6 +186,8 @@ message RobotStopped {
 }
 
 message RobotTouched {
+  // True if the touch just started, false if it just ended
+  bool touchStarted
 }
 
 message RobotOffTreadsStateChanged {

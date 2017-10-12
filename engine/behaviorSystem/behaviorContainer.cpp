@@ -48,6 +48,7 @@
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenMotorCalibration.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenPickupCube.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenReadToolCode.h"
+#include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenWaitToStart.h"
 #include "engine/behaviorSystem/behaviors/feeding/behaviorFeedingEat.h"
 #include "engine/behaviorSystem/behaviors/feeding/behaviorFeedingSearchForCube.h"
 #include "engine/behaviorSystem/behaviors/freeplay/behaviorCheckForStackAtInterval.h"
@@ -576,6 +577,11 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     case BehaviorClass::PlaypenEndChecks:
     {
       newBehavior = IBehaviorPtr(new BehaviorPlaypenEndChecks(robot, config));
+      break;
+    }
+    case BehaviorClass::PlaypenWaitToStart:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorPlaypenWaitToStart(robot, config));
       break;
     }
     

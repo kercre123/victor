@@ -804,25 +804,32 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
   // find snapshot frame
   if (user_frame_callback) {
     for (i = 0; i < bufs->num_bufs; i++) {
-      if (bufs->bufs[i]->stream_id == m_stream->s_id) {
-        
+      if (bufs->bufs[i]->stream_id == m_stream->s_id) {        
+
         uint8_t* outbuf = (uint8_t*) raw_buffer[next_idx];
         m_frame = bufs->bufs[i];
-        
-        downsample_frame((uint64_t (*)[X6])m_frame->buffer,
-                         (uint8_t (*)[X][3])outbuf);
-        
-        // image has been taken from the buffer and downsampled, it is now safe for
-        // it to be potentially processed by engine
-        potential_processing_idx = next_idx;
-        next_idx = (next_idx + 1) % BUFFER_SIZE;
-        if(next_idx == processing_idx)
+          
+        static uint8_t c = 0;
+        static const uint8_t processEveryNumFrames = 4;
+        if(++c >= processEveryNumFrames)
         {
+          c = 0;
+
+          downsample_frame((uint64_t (*)[X6])m_frame->buffer,
+                           (uint8_t (*)[X][3])outbuf);
+          
+          // image has been taken from the buffer and downsampled, it is now safe for
+          // it to be potentially processed by engine
+          potential_processing_idx = next_idx;
           next_idx = (next_idx + 1) % BUFFER_SIZE;
+          if(next_idx == processing_idx)
+          {
+            next_idx = (next_idx + 1) % BUFFER_SIZE;
+          }
+          
+          user_frame_callback(outbuf, X, Y);
+          frameid++;
         }
-        
-        user_frame_callback(outbuf, X, Y);
-        frameid++;
       }
     }
   }

@@ -330,8 +330,13 @@ namespace Anki {
       // Takes advantage of the data in bodyData being ordered such that the required members of AudioInput are already
       // laid correctly.
       // TODO(Al/Lee): Put back once mics and camera can co-exist
-     const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
-     RobotInterface::SendMessage(*latestAudioInput);
+      // static bool b = false;
+      // if(!b)
+      // {
+        const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
+        RobotInterface::SendMessage(*latestAudioInput);
+      // }
+      // b = !b;
     }
 
     Result HAL::Step(void)

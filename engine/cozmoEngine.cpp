@@ -244,7 +244,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
   _isInitialized = true;
   
   #ifndef SIMULATOR
-//  SetEngineState(EngineState::LoadingData);
+ SetEngineState(EngineState::LoadingData);
   #endif
 
   return RESULT_OK;
@@ -396,30 +396,30 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       float currentLoadingDone = 0.0f;
       if (_context->GetDataLoader()->DoNonConfigDataLoading(currentLoadingDone))
       {
-//        #ifndef SIMULATOR
-//        const RobotID_t kDefaultRobotID = 1;
-//        if(CozmoEngine::HasRobotWithID(kDefaultRobotID)) {
-//          PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobot.AlreadyConnected", "Robot already connected");
-//          //    return;
-//        }
-//
-//        ExternalInterface::ConnectToRobot msg;
-//        std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
-//        std::string ipStr = "192.168.1.119";
-//        std::copy(ipStr.begin(), ipStr.end(), msg.ipAddress.data());
-//        msg.isSimulated = false;
-//
-//        _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(msg);
-//
-//        // Another exception for hosts: have to tell the basestation to add the robot as well
-//        if(AddRobot(kDefaultRobotID) == RESULT_OK) {
-//          PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobot.Success", "Connected to robot!");
-//        } else {
-//          PRINT_NAMED_ERROR("CozmoEngine.HandleMessage.ConnectToRobot.Fail", "Failed to connect to robot!");
-//        }
-//
-//        _context->GetNeedsManager()->InitAfterConnection();
-//        #endif
+       #ifndef SIMULATOR
+       const RobotID_t kDefaultRobotID = 1;
+       if(CozmoEngine::HasRobotWithID(kDefaultRobotID)) {
+         PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobot.AlreadyConnected", "Robot already connected");
+         //    return;
+       }
+
+       ExternalInterface::ConnectToRobot msg;
+       std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
+       std::string ipStr = "127.0.0.1";
+       std::copy(ipStr.begin(), ipStr.end(), msg.ipAddress.data());
+       msg.isSimulated = false;
+
+       _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(msg);
+
+       // Another exception for hosts: have to tell the basestation to add the robot as well
+       if(AddRobot(kDefaultRobotID) == RESULT_OK) {
+         PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobot.Success", "Connected to robot!");
+       } else {
+         PRINT_NAMED_ERROR("CozmoEngine.HandleMessage.ConnectToRobot.Fail", "Failed to connect to robot!");
+       }
+
+       _context->GetNeedsManager()->InitAfterConnection();
+       #endif
       
         SetEngineState(EngineState::Running);
       }

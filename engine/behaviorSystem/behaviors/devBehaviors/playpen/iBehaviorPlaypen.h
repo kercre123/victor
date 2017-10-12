@@ -135,6 +135,11 @@ protected:
   
 private:
 
+  // Let WaitToStart be able to clear its timers on init so it can remove
+  // the default timeout timer
+  friend class BehaviorPlaypenWaitToStart;
+  void ClearTimers() { _timers.clear(); }
+
   // Simple class that will call a callback when some amount of time has passed
   class Timer
   {
