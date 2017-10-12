@@ -151,12 +151,7 @@ var RenameProject = function(){
    * @returns {void}
    */
   function callbackAfterProjectRename(newProjectName) {
-    // update the display of the main project name
-    var appTitle = document.querySelector('#app-title');
-    if (appTitle) {
-      appTitle.textContent = newProjectName;
-      window.cozmoProjectName = newProjectName;
-    }
+    window.setProjectNameAndSavedText(newProjectName, false);
     _hide();
   }
 

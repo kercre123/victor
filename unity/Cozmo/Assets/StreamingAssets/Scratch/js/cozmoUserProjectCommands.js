@@ -218,10 +218,9 @@
         Scratch.workspace.clear();
 
         window.cozmoProjectUUID = projectUUID;
-        window.cozmoProjectName = projectName;
         window.previouslySavedProjectJSON = null;
 
-        window.onProjectOpened();
+        window.setProjectNameAndSavedText(projectName, isCozmoSampleProject);
 
         // TODO only call for featured projects, not all sample projects.
         // window.cozmoProjectUUID must be set before Play Now Modal is rendered.
@@ -249,7 +248,6 @@
             openBlocklyXML(projectXML);
             window.notifyProjectIsLoaded();
         }
-        setProjectNameAndSavedText(projectName, isCozmoSampleProject);
 
         window.startSaveProjectTimer();
 
@@ -257,7 +255,17 @@
         window.cozmoDASLog("openCozmoProject", "Took: " + loadTime.toFixed(3) + "s");
     }
 
+    window.newProjectCreated = function(projectUUID, projectName) {
+        window.cozmoProjectUUID = projectUUID;
+
+        window.setProjectNameAndSavedText(projectName, false);
+    }
+
+    // Sets window.cozmoProjectName and sets name on workspace.
+    // Makes rename and remix UI visible and tappable, if appropriate.
     window.setProjectNameAndSavedText = function(projectName, isSampleProject) {
+        window.cozmoProjectName = projectName;
+
         setText('#app-title', $t(projectName));
 
         // if the title overflows the container, reduce the font size to make it fit
@@ -275,20 +283,7 @@
             autosavedText = '';
         }
         setText('#app-title-subtext', $t(autosavedText));
-    }
 
-    window.newProjectCreated = function(projectUUID, projectName) {
-        window.cozmoProjectUUID = projectUUID;
-        window.cozmoProjectName = projectName;
-
-        window.setProjectNameAndSavedText(projectName, false);
-
-        window.onProjectOpened();
-    }
-
-    // Make rename and remix UI visible.
-    // Call after uuid and project name are set.
-    window.onProjectOpened = function() {        
         if (window.cozmoProjectName != null && window.cozmoProjectUUID != null && window.cozmoProjectUUID != '') {
             // set class that title is set so that remix button is shown
             document.querySelector('#projecttext').classList.add('is-title-set');
@@ -300,16 +295,12 @@
 
     window.onRemixedProject = function(projectUUID, newProjectName) {
         window.cozmoProjectUUID = projectUUID;
-        window.cozmoProjectName = newProjectName;
         window.isCozmoSampleProject = false;
 
         window.previouslySavedProjectJSON = null;
         window.changeMadeToSampleProject = false;
 
-        var workspaceProjectName = document.querySelector('#app-title');
-        if (workspaceProjectName) {
-          workspaceProjectName.textContent = newProjectName;
-        }
+        window.setProjectNameAndSavedText(newProjectName, false);
 
         // Turn save timer back on
         window.startSaveProjectTimer();

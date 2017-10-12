@@ -358,7 +358,7 @@
     };
 
     window.onCloseButton = function() {
-        if (window.isCozmoSampleProject && window.window.hasSampleProjectChanged()) {
+        if (window.isCozmoSampleProject && window.hasSampleProjectChanged()) {
             // a sample or featured project was changed.  Offer to save changes as a remix.
             ModalConfirm.open({
                 title: $t('codeLab.saveModifiedSampleProjectAsRemixDialog.dialogTitle'),
