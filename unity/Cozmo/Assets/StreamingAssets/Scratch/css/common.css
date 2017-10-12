@@ -178,7 +178,7 @@ button:focus {
 #projecttext .primary {
     display: block;
     position: absolute;
-    top: 25px;
+    top: 0;
     width: 98%;
     text-align: right;
     height: 200px;
@@ -188,29 +188,23 @@ button:focus {
     display: inline-block;
     font-weight: bold;
     font-size: 32px;
-    min-height: 20px;
     background-color: #525253;
     color: #1fadda;
-    max-width: calc(100vw - 290px);
-    min-width: 200px;
+    max-width: calc(100vw - 310px);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: hidden;
-    padding: 0 5px;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    padding: .5em 0 .1em 0;
     pointer-events: all;
 }
 #projecttext .primary #app-title.long-title {
   font-size: 24px;
-}
-#projecttext .primary #app-title.editable {
-    max-width: calc(100vw - 265px);
 }
 #projecttext .primary #app-title.editable:before {
     display: inline-block;
     content: ' ';
     width: 20px;
     height: 20px;
-    transform: rotate(180deg);
     margin-right: 5px;
     background-image: url('../images/ui/pencil.svg');
     background-position: left top;
@@ -219,11 +213,15 @@ button:focus {
 }
 
 
+#projecttext .primary #app-title-subtext-line {
+  position: relative;
+  top: -6px;
+}
 
 #projecttext .primary #app-title-subtext {
     display: inline-block;
     color: #c0bfbf;
-    font-size: 20px;
+    font-size: 22px;
     background-color: #525253;
     padding: 0 5px;
 }
@@ -237,19 +235,21 @@ button:focus {
   display: inline-block;
 }
 #projecttext #app-buttons button {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
+  background-size: 30px 60px;
   background-color: transparent;
-  background-size: cover;
   border: 0;
   pointer-events: all;
   margin-left: .3em;
-  margin: 3px 5px;
+  margin: 0 5px;
 }
 #projecttext #app-buttons button:active {
-  background-position: 0 -24px;
+  background-position: 0 -30px;
 }
 #projecttext #app-buttons #remix-button {
+  position: relative;
+  top: 1px;
   background-image: url('../images/ui/btn_duplicate.svg');
 }
 
@@ -495,16 +495,14 @@ button:focus {
     }
 
     #projecttext .primary {
-        top: 10px;
         width: 98%;
         height: 60px;
     }
 
 
     #projecttext .primary #app-title {
-        margin-top: 3px;
         font-size: 20px;
-        max-width: calc(100vw - 120px);
+        max-width: calc(100vw - 200px);
     }
     #projecttext .primary #app-title.long-title {
       font-size: 16px;
@@ -519,11 +517,13 @@ button:focus {
     }
 
     #projecttext #app-buttons #remix-button {
-        height: 18px;
-        width: 18px;
+        height: 22px;
+        width: 22px;
+        background-size: 22px 44px;
     }
-
-
+    #projecttext #app-buttons #remix-button:active {
+      background-position: 0 -22px;
+    }
 
     #navigation .greenflag {
         left: calc(100% - 55px);
