@@ -20,7 +20,6 @@
 #include "engine/actions/compoundActions.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/vision/MarkerCodeDefinitions.h"
-#include "clad/types/animationKeyFrames.h"
 #include "clad/types/dockingSignals.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/behaviorSystem/reactionTriggers.h"

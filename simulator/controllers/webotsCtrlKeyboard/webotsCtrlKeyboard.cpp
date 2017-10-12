@@ -378,7 +378,7 @@ namespace Anki {
         printf("             Toggle color images:  Alt+Shift+c\n");
         printf("       Realign with block action:  _\n");
         printf("Toggle accel from streamObjectID:  |\n");
-        printf("               Toggle headlights:  ,\n");
+        printf("               UNUSED           :  ,\n");
         printf("             Pronounce sayString:  \" <double-quote>\n");
         printf("       Pronounce sayString (raw):  \' <single-quote>\n");
         printf("                 Set console var:  ]\n");
@@ -1115,10 +1115,7 @@ namespace Anki {
                 
               case (s32)',':
               {
-                static bool toggle = true;
-                printf("Turning headlight %s\n", toggle ? "ON" : "OFF");
-                SendSetHeadlight(toggle);
-                toggle = !toggle;
+                // FREE KEY COMBO!!!
                 break;
               }
                 

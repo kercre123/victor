@@ -199,7 +199,6 @@ void BehaviorTrackLaser::InitHelper(Robot& robot)
   _haveEverConfirmedLaser = false;
   _shouldSendTrackingObjectiveAchieved = false;
   
-  _originalCameraSettings.colorEnabled = robot.GetVisionComponent().AreColorImagesEnabled();
   _originalCameraSettings.exposureTime_ms = robot.GetVisionComponent().GetCurrentCameraExposureTime_ms();
   _originalCameraSettings.gain = robot.GetVisionComponent().GetCurrentCameraGain();
   
@@ -211,7 +210,6 @@ void BehaviorTrackLaser::InitHelper(Robot& robot)
   }, kUseDefaultsForUnspecified);
   robot.GetVisionComponent().PushNextModeSchedule(std::move(schedule));
   robot.GetVisionComponent().SetAndDisableAutoExposure(_params.darkenedExposure_ms, _params.darkenedGain);
-  robot.GetVisionComponent().EnableColorImages(true);
   
   _exposureChangedTime_ms = 0;
   _imageMean = -1;
@@ -785,7 +783,6 @@ void BehaviorTrackLaser::Cleanup(Robot& robot)
   robot.GetVisionComponent().SetAndDisableAutoExposure(_originalCameraSettings.exposureTime_ms,
                                                        _originalCameraSettings.gain);
   robot.GetVisionComponent().EnableAutoExposure(true);
-  robot.GetVisionComponent().EnableColorImages(_originalCameraSettings.colorEnabled);
   
   // Only pop animations if set within this behavior
   if(_haveAdjustedAnimations)

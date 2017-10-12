@@ -386,13 +386,6 @@ static const char* kBehaviorTestName = "Behavior factory test";
       PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.CopyEngineLogFailed", "");
     }
     _factoryTestLogger.CloseLog();
-    
-    // Immediately disconnect wifi
-    if (kBFT_DisconnectAtEnd) {
-      RobotInterface::EnterFactoryTestMode m;
-      m.mode = RobotInterface::FactoryTestMode::FTM_Off;
-      robot.SendMessage(RobotInterface::EngineToRobot(std::move(m)));
-    }
   }
   
   

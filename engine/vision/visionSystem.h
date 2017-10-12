@@ -52,7 +52,6 @@
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/visionModes.h"
 #include "clad/types/toolCodes.h"
-#include "clad/types/cameraParams.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 #include "util/bitFlags/bitFlags.h"
@@ -188,7 +187,8 @@ namespace Cozmo {
                       Vision::RobotRenamedEnrolledFace& renamedFace);
     
     // Parameters for camera hardware exposure values
-    using GammaCurve = std::array<u8, (size_t)CameraConstants::GAMMA_CURVE_SIZE>;
+    static constexpr size_t GAMMA_CURVE_SIZE = 17;
+    using GammaCurve = std::array<u8, GAMMA_CURVE_SIZE>;
     Result SetCameraExposureParams(const s32 currentExposureTime_ms,
                                    const s32 minExposureTime_ms,
                                    const s32 maxExposureTime_ms,

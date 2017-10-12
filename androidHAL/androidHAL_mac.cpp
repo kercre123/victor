@@ -248,24 +248,6 @@ namespace Anki {
       return &headCamInfo_;
     }
 
-    
-    void AndroidHAL::CameraGetParameters(DefaultCameraParams& params)
-    {
-      params.minExposure_ms = 0;
-      params.maxExposure_ms = 67;
-      params.gain = 2.f;
-      params.maxGain = 4.f;
-      
-      u8 count = 0;
-      for(u8 i = 0; i < static_cast<u8>(CameraConstants::GAMMA_CURVE_SIZE); ++i)
-      {
-        params.gammaCurve[i] = count;
-        count += 255/static_cast<u8>(CameraConstants::GAMMA_CURVE_SIZE);
-      }
-      
-      return;
-    }
-
     void AndroidHAL::CameraSetParameters(u16 exposure_ms, f32 gain)
     {
       // Can't control simulated camera's exposure.

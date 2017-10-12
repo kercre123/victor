@@ -34,18 +34,6 @@ namespace Cozmo {
     LightState lights[4],
   }
 
-  message FlashObjectIDs
-  {
-    uint_32 objectID, // Place holder
-  }
-
-  message ObjectBeingCarried
-  {
-    uint_32 objectID,
-    bool    isBeingCarried,
-  }
-
-
   // Enable/Disable streaming of ObjectAccel messages for the specified object
   message StreamObjectAccel
   {

@@ -20,7 +20,6 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "cozmoAnim/animation/proceduralFace.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/types/animationKeyFrames.h"
 #include "clad/types/ledTypes.h"
 #include "clad/audio/audioEventTypes.h"
 #include "util/random/randomGenerator.h"
@@ -344,8 +343,7 @@ namespace Cozmo {
   private:
     ProceduralFace  _procFace;
     bool            _isDone = false;
-  
-    //AnimKeyFrame::FaceImage _faceImageMsg;
+
     
     // This is what actually populates the message to stream, and is used
     // by GetStreamMessage() and GetInterpolatedStreamMessage().
@@ -382,16 +380,15 @@ namespace Cozmo {
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
-    Anki::Cozmo::AnimEvent GetAnimEvent() const { return _streamMsg.event_id; }
+    Anki::Cozmo::AnimEvent GetAnimEvent() const { return _event_id; }
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     virtual Result SetMembersFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug = "");
     
   private:
-    
-    // TODO: Don't actually need this message. Just need the AnimEvent it stores
-    AnimKeyFrame::Event _streamMsg;
+
+    Anki::Cozmo::AnimEvent _event_id;
     
   }; // class EventKeyFrame
   

@@ -16,7 +16,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/vision/basestation/image.h"
 #include "clad/vizInterface/messageViz.h"
-#include "clad/types/animationKeyFrames.h"
+#include "clad/types/animationTypes.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include <webots/Supervisor.hpp>
@@ -783,9 +783,6 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.videoFrameRateHz, payload.imageProcFrameRateHz);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
 
-  sprintf(txt, "AnimBytesFree[AF]: %d[%d]", payload.numAnimBytesFree, payload.numAnimAudioFramesFree);
-  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ANIM_BUFFER, Anki::NamedColors::GREEN, txt);
-
   sprintf(txt, "Status: %5s %5s %7s %7s",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK ? "CARRY" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING ? "PAP" : "",
@@ -807,12 +804,11 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
   
-  sprintf(txt, "   %4s %7s %7s %6s %6s",
+  sprintf(txt, "   %4s %7s %7s %6s",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PATHING ? "PATH" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::LIFT_IN_POS ? "" : "LIFTING",
     payload.state.status & (uint32_t)RobotStatusFlag::HEAD_IN_POS ? "" : "HEADING",
-    payload.state.status & (uint32_t)RobotStatusFlag::IS_MOVING ? "MOVING" : "",
-    payload.state.status & (uint32_t)RobotStatusFlag::IS_BODY_ACC_MODE ? "" : "(BODY)");
+    payload.state.status & (uint32_t)RobotStatusFlag::IS_MOVING ? "MOVING" : "");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG_3, Anki::NamedColors::GREEN, txt);
     
   // Save state to file

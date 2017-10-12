@@ -51,7 +51,6 @@ BodyLightComponent::BodyLightComponent(Robot& robot, const CozmoContext* context
   if( _robot.HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _eventHandles);
     using namespace ExternalInterface;
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetHeadlight>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBackpackLEDs>();
   }
   
@@ -136,12 +135,6 @@ void BodyLightComponent::SetBackpackLights(const BackpackLights& lights)
   StartLoopingBackpackLightsInternal(lights, Util::EnumToUnderlying(BackpackLightSourcePrivate::Shared), _sharedLightConfig);
 }
 
-void BodyLightComponent::SetHeadlight(bool on)
-{
-  _robot.GetVisionComponent().EnableMode(VisionMode::LimitedExposure, on);
-  _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetHeadlight(on)));
-}
-
 template<>
 void BodyLightComponent::HandleMessage(const ExternalInterface::SetBackpackLEDs& msg)
 {
@@ -156,12 +149,6 @@ void BodyLightComponent::HandleMessage(const ExternalInterface::SetBackpackLEDs&
   };
   
   SetBackpackLights(lights);
-}
-
-template<>
-void BodyLightComponent::HandleMessage(const ExternalInterface::SetHeadlight& msg)
-{
-  SetHeadlight(msg.enable);
 }
 
 Result BodyLightComponent::SetBackpackLightsInternal(const BackpackLights& lights)

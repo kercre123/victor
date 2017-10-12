@@ -30,6 +30,7 @@
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robot.h"
 #include "engine/speedChooser.h"
+#include "clad/types/animationTypes.h"
 #include "util/console/consoleInterface.h"
 #include "util/math/math.h"
 

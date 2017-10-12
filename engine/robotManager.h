@@ -50,7 +50,6 @@ class CubeLightAnimationContainer;
 class CozmoContext;
 class AnimationGroupContainer;
 enum class FirmwareType : uint8_t;
-class FirmwareUpdater;
 class AnimationTriggerResponsesContainer;
 class RobotInitialConnection;
 
@@ -87,12 +86,6 @@ public:
   // Update robot connection state
   void UpdateRobotConnection();
   
-  // Attempt to begin updating firmware to specified version (return false if it cannot begin)
-  bool InitUpdateFirmware(FirmwareType type, int version);
-  
-  // Update firmware (if appropriate) on every connected robot
-  bool UpdateFirmware();
-  
   // Return a
   // Return the number of availale robots
   size_t GetNumRobots() const;
@@ -109,9 +102,6 @@ public:
   std::string GetAnimationForTrigger( AnimationTrigger ev );
   bool HasCubeAnimationForTrigger( CubeAnimationTrigger ev );
   std::string GetCubeAnimationForTrigger( CubeAnimationTrigger ev );
-  
-  // Read the face animations in a dir
-  void ReadFaceAnimationDir();
   
   // Iterate through the loaded animation groups and broadcast their names
   void BroadcastAvailableAnimationGroups();

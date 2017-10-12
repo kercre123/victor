@@ -880,18 +880,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   SetOnCharger(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
   SetIsCharging(IS_STATUS_FLAG_SET(IS_CHARGING));
   _chargerOOS = IS_STATUS_FLAG_SET(IS_CHARGER_OOS);
-  _isBodyInAccessoryMode = IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE);
 
   // Save the entire flag for sending to game
   _lastStatusFlags = msg.status;
-  
-  // If robot is not in accessary mode for some reason, send message to force it.
-  // This shouldn't ever happen!
-  if (!_isBodyInAccessoryMode && ++_setBodyModeTicDelay >= 16) {  // Triggers ~960ms (16 x 60ms engine tic) after syncTimeAck.
-    PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BodyNotInAccessoryMode", "");
-    SendMessage(RobotInterface::EngineToRobot(SetBodyRadioMode(BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE, 0)));
-    _setBodyModeTicDelay = 0;
-  }
 
   GetMoveComponent().Update(msg);
       
@@ -1131,8 +1122,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Send state to visualizer for displaying
   GetContext()->GetVizManager()->SendRobotState(
     stateMsg,
-    static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
-    -1, // AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
     (u8)MIN(((u8)imageFrameRate), std::numeric_limits<u8>::max()),
     (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
     _enabledAnimTracks,
@@ -2395,13 +2384,8 @@ Result Robot::SendSyncTime() const
                                                          BaseStationTimer::getInstance()->GetCurrentTimeStamp(),
                                                          #endif
                                                          DRIVE_CENTER_OFFSET)));
-  if (result == RESULT_OK) {
-    result = SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::InitController()));
-  }
-  if(result == RESULT_OK) {
-    result = SendMessage(RobotInterface::EngineToRobot(
-                           RobotInterface::ImageRequest(ImageSendMode::Stream, DEFAULT_IMAGE_RESOLUTION)));
-        
+
+  if(result == RESULT_OK) {    
     // Reset pose on connect
     PRINT_NAMED_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
     Pose3d zeroPose(0, Z_AXIS_3D(), {0,0,0}, GetWorldOrigin());
@@ -3047,11 +3031,6 @@ Result Robot::AbortAnimation()
 Result Robot::SendAbortAnimation()
 {
   return SendMessage(RobotInterface::EngineToRobot(RobotInterface::AbortAnimation()));
-}
-      
-Result Robot::SendFlashObjectIDs()
-{
-  return SendMessage(RobotInterface::EngineToRobot(FlashObjectIDs()));
 }
      
 Result Robot::SendDebugString(const char* format, ...)

@@ -72,6 +72,15 @@ public:
   bool IsPlayingAnimation() const { return _callbackMap.size() > 0; }
   
   Result StopAnimByName(const std::string& animName);
+
+  // Enables only the specified tracks. 
+  // Status of other tracks remain unchanged.
+  void EnableTracks(u8 tracks);
+  void EnableAllTracks();
+
+  // Disables only the specified tracks. 
+  // Status of other tracks remain unchanged.
+  void DisableTracks(u8 tracks);
   
   // Event/Message handling
   template<typename T>
@@ -115,7 +124,9 @@ private:
   std::string _nextAnimToDole;
   
   std::string _currPlayingAnim;
-  
+
+  u8 _disabledTracks;
+
   struct AnimCallbackInfo {
     AnimCallbackInfo(const u32 animID,
                      const AnimationCompleteCallback& callback,

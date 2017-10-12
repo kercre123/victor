@@ -60,7 +60,6 @@ public:
   bool DoNonConfigDataLoading(float& loadingCompleteRatio_out);
 
   // refresh individual data pieces after initial load
-  void LoadFaceAnimations();
   void LoadRobotConfigs();
   void LoadVoiceCommandConfigs();
 

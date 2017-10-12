@@ -67,7 +67,6 @@ namespace Cozmo {
   CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasRotatingTooFast.Face.NumToLookBack", 5);
   
   CONSOLE_VAR(bool, kDisplayProcessedImagesOnly, "Vision.General", true);
-  CONSOLE_VAR(bool, kEnableColorImages,          "Vision.General", false);
   CONSOLE_VAR(s32,  kDebugImageCompressQuality,  "Vision.General", 50); // Set to 0 to display "locally" with img.Display()
   
   // Whether or not to do rolling shutter correction for physical robots
@@ -927,17 +926,6 @@ namespace Cozmo {
                                                                    imageMean)));
         }
       }
-    }
-    
-    // Switch color mode if console var has changed
-    if(ANKI_DEV_CHEATS && (_enableColorImages != kEnableColorImages))
-    {
-      PRINT_CH_DEBUG("VisionComponent", "VisionComponent.UpdateAllResults.ConsoleVarColorModeSwitch",
-                     "Switching color mode from %s to %s based on console var change",
-                     _enableColorImages ? "ON" : "OFF",
-                     kEnableColorImages ? "ON" : "OFF");
-      
-      EnableColorImages(kEnableColorImages);
     }
     
     if(anyFailures) {
@@ -2224,48 +2212,6 @@ namespace Cozmo {
     _lastProcessedImageTimeStamp_ms = t;
   }
   
-  void VisionComponent::HandleDefaultCameraParams(const DefaultCameraParams& params)
-  {
-    if(!_visionSystem->IsInitialized())
-    {
-      PRINT_NAMED_ERROR("VisionComponent.HandleDefaultCameraParams.NotInitialized", "");
-      return;
-    }
-  
-    if(kInitialExposureTime_ms < params.minExposure_ms ||
-       kInitialExposureTime_ms > params.maxExposure_ms)
-    {
-      PRINT_NAMED_ERROR("VisionComponent.HandleDefaultCameraParams.BadInitialExposureTime",
-                        "Initial exp time %ums outside range [%u,%u]",
-                        kInitialExposureTime_ms,
-                        params.minExposure_ms, params.maxExposure_ms);
-      return;
-    }
-    
-    SetCameraSettings(kInitialExposureTime_ms, params.gain);
-      
-    Lock();
-    Result result = _visionSystem->SetCameraExposureParams(kInitialExposureTime_ms,
-                                                           Util::numeric_cast<s32>(params.minExposure_ms),
-                                                           Util::numeric_cast<s32>(params.maxExposure_ms),
-                                                           params.gain,
-                                                           kMinCameraGain,
-                                                           params.maxGain,
-                                                           params.gammaCurve);
-    Unlock();
-    
-    if(RESULT_OK != result)
-    {
-      PRINT_NAMED_ERROR("VisionComponent.HandleDefaultCameraParams.SetFailed",
-                        "Current:%ums Min:%ums Max:%ums",
-                        kInitialExposureTime_ms,
-                        params.minExposure_ms,
-                        params.maxExposure_ms);
-      return;
-    }
-    
-  }
-  
   s32 VisionComponent::GetCurrentCameraExposureTime_ms() const
   {
     return _visionSystem->GetCurrentCameraExposureTime_ms();
@@ -2302,12 +2248,13 @@ namespace Cozmo {
                   "Exp:%ums Gain:%f",
                   exposure_ms,
                   gain);
-    
-    SetCameraParams params(gain,
-                           exposure_ms_u16,
-                           false);
-    
-    _robot.SendMessage(RobotInterface::EngineToRobot(std::move(params)));
+                     
+    // SetCameraParams params(gain,
+    //                        exposure_ms_u16,
+    //                        false);
+    // _robot.SendMessage(RobotInterface::EngineToRobot(std::move(params)));
+    PRINT_NAMED_WARNING("VisionComponent.SetCameraSettings.NotYetImplemented", "");
+
     _vizManager->SendCameraInfo(exposure_ms_u16, gain);
     
     _visionSystem->SetNextCameraParams(exposure_ms, gain);
@@ -2491,16 +2438,13 @@ namespace Cozmo {
     RenameFace(msg.faceID, msg.oldName, msg.newName);
   }
   
-  void VisionComponent::EnableColorImages(bool enable)
-  {
-    _enableColorImages = enable;
-    _robot.SendRobotMessage<RobotInterface::EnableColorImages>(enable);
-  }
-  
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::EnableColorImages& msg)
   {
-    EnableColorImages(msg.enable);
+    // TODO: EnableColorImages probably shouldn't affect what kind of image 
+    //       VisionComponent deals with, but it could be repurposed to determine
+    //       what gets sent up to game.
+    PRINT_NAMED_WARNING("VisionComponent.HandleEnableColorImages.NotImplemented", "");
   }
   
   template<>
@@ -2634,10 +2578,6 @@ namespace Cozmo {
       
       _robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalib, readCamCalibCallback);
       
-      // Request the default camera parameters
-      SetCameraParams msg;
-      msg.requestDefaultParams = true;
-      _robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
     }
   }
   

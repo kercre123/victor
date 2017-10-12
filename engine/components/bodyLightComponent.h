@@ -82,8 +82,6 @@ public:
   
   void Update();
   
-  void SetHeadlight(bool on);
-  
   template<typename T>
   void HandleMessage(const T& msg);
   

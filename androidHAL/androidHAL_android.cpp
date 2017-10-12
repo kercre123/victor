@@ -198,12 +198,6 @@ namespace Anki {
       // STUB
       return false;
     }
-    
-    void AndroidHAL::CameraGetParameters(DefaultCameraParams& params)
-    {
-      // STUB
-      return;
-    }
 
     void AndroidHAL::CameraSetParameters(u16 exposure_ms, f32 gain)
     {

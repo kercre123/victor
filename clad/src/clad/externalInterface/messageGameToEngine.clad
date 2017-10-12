@@ -775,11 +775,6 @@ message RemoveDrivingAnimations {
 // Robot / Cube LED Controls
 ///////////////////////////////////////////////////////////////////////////////
 
-message SetHeadlight
-{
-  bool enable
-}
-
 message SetActiveObjectLEDs {
     uint_32  objectID,
     uint_32  onColor,

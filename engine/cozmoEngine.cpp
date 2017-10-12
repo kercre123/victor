@@ -327,11 +327,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ConnectToRobot& connect
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::ResetFirmware& msg)
 {
-  for (RobotID_t robotId : GetRobotIDList())
-  {
-    PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ResetFirmware", "Sending KillBodyCode to Robot %d", robotId);
-    _context->GetRobotManager()->GetMsgHandler()->SendMessage(robotId, RobotInterface::EngineToRobot(KillBodyCode()));
-  }
+  PRINT_NAMED_WARNING("CozmoEngine.HandleMessage.ResetFirmwareUndefined", "What does this mean for Victor?"); 
 }
 
 Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
@@ -643,19 +639,21 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ReadAnimationFile& msg)
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::ReadFaceAnimationDir& msg)
 {
-  _context->GetRobotManager()->ReadFaceAnimationDir();
+  // TODO: Tell animation process to read the anim dir?
+  PRINT_NAMED_WARNING("CozmoEngine.HandleMessage.ReadFaceAnimationDir.NotHookedUp", "");
+  //_context->GetRobotManager()->ReadFaceAnimationDir();
 }
 
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::SetRobotImageSendMode& msg)
 {
   const ImageSendMode newMode = msg.mode;
-  const ImageResolution resolution = msg.resolution;
   Robot* robot = GetFirstRobot();
   
   if(robot != nullptr) {
     robot->SetImageSendMode(newMode);
-    robot->SendRobotMessage<RobotInterface::ImageRequest>(newMode, resolution);
+    // TODO: Can get rid of one of ExternalInterface::SetRobotImageSendMode or 
+    // ExternalInterfaceImageRequest since they seem to do the same thing now.
   }
 }
 

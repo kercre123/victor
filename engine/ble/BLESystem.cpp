@@ -86,12 +86,12 @@ void BLESystem::OnVehicleConnected(const UUIDBytes& vehicleId)
     redLight.onColor = (uint32_t)Anki::Cozmo::LEDColor::LED_RED;
     redLight.onFrames = redLight.offFrames = 0x02;
 
-    Anki::Cozmo::RobotInterface::BackpackLightsMiddle lightsData{};
+    Anki::Cozmo::RobotInterface::SetBackpackLights lightsData{};
     lightsData.lights[0] = lightsData.lights[2] = bluLight;
     lightsData.lights[1] = redLight;
 
     Anki::Cozmo::RobotInterface::EngineToRobot robotMsg{};
-    robotMsg.Set_setBackpackLightsMiddle(std::move(lightsData));
+    robotMsg.Set_setBackpackLights(std::move(lightsData));
     
     SendMessage(vehicleId, robotMsg);
   });

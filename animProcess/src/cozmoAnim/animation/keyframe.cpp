@@ -616,7 +616,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     RobotInterface::EngineToRobot* EventKeyFrame::GetStreamMessage()
     {
-      return new RobotInterface::EngineToRobot(AnimKeyFrame::Event(_streamMsg));
+      // This function isn't actually used. Instead GetAnimEvent() is used by animationStreamer.
+      DEV_ASSERT(false, "EventKeyFrame.GetStreamMessage.ShouldntCallThis");
+      return nullptr;
     }
 
     Result EventKeyFrame::DefineFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug)
@@ -636,7 +638,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         PRINT_NAMED_WARNING("EventKeyFrame.UnrecognizedEventName", "%s", eventStr.c_str());
         return RESULT_FAIL;
       }
-      _streamMsg.event_id = e;
+      _event_id = e;
       return RESULT_OK;
     }
 
@@ -654,7 +656,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
             PRINT_NAMED_WARNING("EventKeyFrame.UnrecognizedEventName", "%s", eventStr.c_str());
             return RESULT_FAIL;
           }
-          _streamMsg.event_id = e;
+          _event_id = e;
         } else {
           PRINT_NAMED_WARNING("EventKeyFrame.EventIDNotString", "");
           return RESULT_FAIL;

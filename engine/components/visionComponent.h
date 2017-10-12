@@ -27,7 +27,6 @@
 #include "engine/vision/visionPoseData.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/types/cameraParams.h"
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/visionModes.h"
@@ -255,24 +254,18 @@ struct DockingErrorSignal;
     // This is for faking images being processed for unit tests
     void FakeImageProcessed(TimeStamp_t t);
     
-    // Handles receiving the default camera parameters from robot which are requested when we
-    // read the camera calibration
-    void HandleDefaultCameraParams(const DefaultCameraParams& params);
-    
     // Templated message handler used internally by AnkiEventUtil
     template<typename T>
     void HandleMessage(const T& msg);
     
     void SetAndDisableAutoExposure(u16 exposure_ms, f32 gain);
     void EnableAutoExposure(bool enable);
-    void EnableColorImages(bool enable);
     
     s32 GetMinCameraExposureTime_ms() const;
     s32 GetMaxCameraExposureTime_ms() const;
     f32 GetMinCameraGain() const;
     f32 GetMaxCameraGain() const;
     
-    bool AreColorImagesEnabled() const { return _enableColorImages; }
     s32  GetCurrentCameraExposureTime_ms() const;
     f32  GetCurrentCameraGain() const;
     
@@ -375,7 +368,6 @@ struct DockingErrorSignal;
     bool _doFactoryDotTest = false;
     
     bool _enableAutoExposure = true;
-    bool _enableColorImages = false;
     
     ImageSendMode _imageSaveMode = ImageSendMode::Off;
     
