@@ -98,6 +98,13 @@ namespace CodeLab {
                                      new CubeColors(),
                                      new CubeColors() };
 
+    private static readonly List<string> BlocksWithPIIRisks = new List<string>() {
+      "cozmo_says", "cozmo_play_animation_from_dropdown", "cozmo_play_animation_by_name", "cozmo_play_animation_by_triggername",
+      "event_broadcast", "event_broadcastandwait", // NOTE: Currently messages cannot be named and are not PII risks, but I wanted to future proof against that change
+      "cozmo_vert_cozmoface_draw_text",
+      "cozmoSays", "cozmoPlayAnimation", "cozVertPlayNamedAnim", "cozVertPlayNamedTriggerAnim",
+      "cozVertCozmoFaceDrawText" };
+
     private class CubeColors {
       public Color[] Colors { get; set; }
 
@@ -389,7 +396,7 @@ namespace CodeLab {
 
             _SessionState.SetGrammarMode(isVertical ? GrammarMode.Vertical : GrammarMode.Horizontal);
 
-            DAS.Info("CodeLab.EnsureProjectExists.Adding", "uuid='" + projectUUID + "' projectName='" + projectName + "' isVertical=" + isVertical);
+            DAS.Info("CodeLab.EnsureProjectExists.Adding", "uuid='" + projectUUID + "' isVertical=" + isVertical);
 
             CodeLabProject project = FindUserProjectWithUUID(projectUUID);
             if (project == null) {
@@ -957,6 +964,7 @@ namespace CodeLab {
         proj.IsVertical = project.IsVertical;
         proj.VersionNum = project.VersionNum;
         if (proj.VersionNum > CodeLabProject.kCurrentVersionNum) {
+          // NOTE: While sending ProjectName's is generally a PII risk, Sample projects will never have user configurable names
           DAS.Warn("Codelab.OnAppLoadedFromData.BadVersionNumber", "sample project " + proj.ProjectName + "'s version number " + project.VersionNum.ToString() + " is greater than the app's codelab version " + CodeLabProject.kCurrentVersionNum.ToString());
         }
         else {
@@ -994,6 +1002,7 @@ namespace CodeLab {
         proj.FeaturedProjectInstructions = project.FeaturedProjectInstructions;
 
         if (proj.VersionNum > CodeLabProject.kCurrentVersionNum) {
+          // NOTE: While sending ProjectName's is generally a PII risk, Sample projects will never have user configurable names
           DAS.Warn("Codelab.OnAppLoadedFromData.BadVersionNumber", "featured project " + proj.ProjectName + "'s version number " + project.VersionNum.ToString() + " is greater than the app's codelab version " + CodeLabProject.kCurrentVersionNum.ToString());
         }
         else {
@@ -1067,7 +1076,8 @@ namespace CodeLab {
           _SessionState.OnCreatedProject(newProject);
         }
         catch (NullReferenceException) {
-          DAS.Error("OnCozmoSaveUserProject.NullReferenceExceptionSaveNewProject", "Save new Code Lab user project. CodeLabUserProjectNum = " + defaultProfile.CodeLabUserProjectNum + ", newProject = " + newProject);
+          string sanitizedNewProject = PrivacyGuard.HidePersonallyIdentifiableInfo(newProject.ProjectJSON);
+          DAS.Error("OnCozmoSaveUserProject.NullReferenceExceptionSaveNewProject", "Save new Code Lab user project. CodeLabUserProjectNum = " + defaultProfile.CodeLabUserProjectNum + ", newProject = " + sanitizedNewProject);
         }
       }
       else {
@@ -1083,7 +1093,8 @@ namespace CodeLab {
           _SessionState.OnUpdatedProject(projectToUpdate);
         }
         catch (NullReferenceException) {
-          DAS.Error("OnCozmoSaveUserProject.NullReferenceExceptionUpdateProject", "Save existing CodeLab user project. projectUUID = " + projectUUID + ", projectToUpdate = " + projectToUpdate);
+          string sanitizedUpdatedProject = PrivacyGuard.HidePersonallyIdentifiableInfo(projectToUpdate.ProjectJSON);
+          DAS.Error("OnCozmoSaveUserProject.NullReferenceExceptionUpdateProject", "Save existing CodeLab user project. projectUUID = " + projectUUID + ", projectToUpdate = " + sanitizedUpdatedProject);
         }
       }
 
@@ -1308,11 +1319,16 @@ namespace CodeLab {
         return true;
       case "cozmoDASLog":
         // Use for debugging from JavaScript
-        DAS.Warn(scratchRequest.argString, scratchRequest.argString2);
+        string sanitizedLogString = PrivacyGuard.HidePersonallyIdentifiableInfo(scratchRequest.argString2);
+        DAS.Info(scratchRequest.argString, sanitizedLogString);
         return true;
       case "cozmoDASError":
         // Use for recording error in DAS from JavaScript
-        DAS.Error(scratchRequest.argString, scratchRequest.argString2);
+        string sanitizedErrorString = scratchRequest.argString2;
+        if (DoesStringContainPIIRisk(sanitizedErrorString)) {
+          sanitizedErrorString = PrivacyGuard.HidePersonallyIdentifiableInfo(sanitizedErrorString);
+        }
+        DAS.Error(scratchRequest.argString, sanitizedErrorString);
         return true;
       default:
         return false;
@@ -1339,25 +1355,36 @@ namespace CodeLab {
       return _IsDrivingOffCharger;
     }
 
-    private void WebViewCallback(string jsonStringFromJS) {
-      // Note that prior to WebViewCallback being called, WebViewObject.CallFromJS() calls WWW.UnEscapeURL(), unencoding the jsonStringFromJS.
-      string logJSONStringFromJS = jsonStringFromJS;
-      if (logJSONStringFromJS.Contains("cozmo_says") || logJSONStringFromJS.Contains("cozmoSays")) {
-        // TODO Temporary solution for removing PII from logs.
-        // For vertical will need to check more than just CozmoSays,
-        // potentially. Also, ideally only strip out CozmoSays
-        // payload, not entire JSON string.
-        logJSONStringFromJS = PrivacyGuard.HidePersonallyIdentifiableInfo(logJSONStringFromJS);
+    private bool DoesStringContainPIIRisk(string input) {
+      for (int i = 0; i < BlocksWithPIIRisks.Count; ++i) {
+        if (input.Contains(BlocksWithPIIRisks[i])) {
+          return true;
+        }
       }
+      return false;
+    }
+
+    private void WebViewCallback(string jsonStringFromJS) {
 
       ScratchRequest scratchRequest = null;
       try {
-        //DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
+        //DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + jsonStringFromJS);
 
         scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
       }
       catch (Exception exception) {
         if (exception is JsonReaderException || exception is JsonSerializationException) {
+          // Note that prior to WebViewCallback being called, WebViewObject.CallFromJS() calls WWW.UnEscapeURL(), unencoding the jsonStringFromJS.
+          string logJSONStringFromJS = jsonStringFromJS;
+
+          if (DoesStringContainPIIRisk(logJSONStringFromJS)) {
+            // TODO Temporary solution for removing PII from logs.
+            // For vertical will need to check more than just CozmoSays,
+            // potentially. Also, ideally only strip out CozmoSays
+            // payload, not entire JSON string.
+            logJSONStringFromJS = PrivacyGuard.HidePersonallyIdentifiableInfo(logJSONStringFromJS);
+          }
+
           DAS.Error("CodeLabGame.WebViewCallback.Fail", "JSON exception with text: " + logJSONStringFromJS);
           return;
         }
@@ -1372,7 +1399,8 @@ namespace CodeLab {
 
       if (IsResettingToHomePose() || UpdateIsGettingOffCharger()) {
         // Any requests from Scratch that occur whilst Cozmo is resetting to home pose are queued
-        DAS.Info("CodeLab.QueueScratchReq", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId + ", argString = " + scratchRequest.argString);
+        string safeArgString = PrivacyGuard.HidePersonallyIdentifiableInfo(scratchRequest.argString);
+        DAS.Info("CodeLab.QueueScratchReq", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId + ", argString = " + safeArgString);
         _queuedScratchRequests.Enqueue(scratchRequest);
       }
       else {
@@ -1707,7 +1735,8 @@ namespace CodeLab {
           _SessionState.SetIsAnimTrackEnabled(animTrack, enable);
         }
         catch (ArgumentException) {
-          DAS.Error("CodeLab.EnableAnimTrack.BadAnimTrack", "Unknown track name '" + scratchRequest.argString + "'");
+          string trackName = PrivacyGuard.HidePersonallyIdentifiableInfo(scratchRequest.argString);
+          DAS.Error("CodeLab.EnableAnimTrack.BadAnimTrack", "Unknown track name '" + trackName + "'");
         }
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
@@ -1722,7 +1751,8 @@ namespace CodeLab {
           actionType = (ActionType)Enum.Parse(typeof(ActionType), scratchRequest.argString, ignoreCase: true);
         }
         catch (ArgumentException) {
-          DAS.Error("CodeLab.WaitForActions.BadActionType", "Unknown Action Type '" + scratchRequest.argString + "'");
+          string trackName = PrivacyGuard.HidePersonallyIdentifiableInfo(scratchRequest.argString);
+          DAS.Error("CodeLab.WaitForActions.BadActionType", "Unknown Action Type '" + trackName + "'");
         }
         if (actionType != ActionType.Count) {
           if (scratchRequest.command == "cozVertWaitForActions") {
@@ -1789,7 +1819,8 @@ namespace CodeLab {
             startedAnim = true;
           }
           catch (ArgumentException) {
-            DAS.Warn("CodeLab.InvalidTrigger", "Failed to convert '" + scratchRequest.argString + "' to AnimationTrigger");
+            string trackName = PrivacyGuard.HidePersonallyIdentifiableInfo(scratchRequest.argString);
+            DAS.Warn("CodeLab.InvalidTrigger", "Failed to convert '" + trackName + "' to AnimationTrigger");
           }
         }
         else {
@@ -2392,7 +2423,7 @@ namespace CodeLab {
         }
       }
       catch (NullReferenceException) {
-        DAS.Error("RenameCodeLabProject.NullReferenceException", "Failure during servicing user's request to rename project. projectUUID = " + projectUUID + ", new project name = " + newProjectName);
+        DAS.Error("RenameCodeLabProject.NullReferenceException", "Failure during servicing user's request to rename project. projectUUID = " + projectUUID);
       }
     }
 
@@ -2779,7 +2810,7 @@ namespace CodeLab {
 
     // Open requested project in webview
     private void OpenCozmoProjectJSON(String projectName, String projectJSON, Guid projectUUID, string isSampleStr) {
-      DAS.Info("CodeLabTest", "OpenCozmoProjectJSONUnity: projectName = " + projectName + ", isSampleStr = " + isSampleStr);
+      DAS.Info("CodeLabTest", "OpenCozmoProjectJSONUnity: projectUUID = " + projectUUID.ToString() + ", isSampleStr = " + isSampleStr);
 
       CozmoProjectOpenInWorkspaceRequest cozmoProjectRequest = new CozmoProjectOpenInWorkspaceRequest();
       cozmoProjectRequest.projectName = projectName;
