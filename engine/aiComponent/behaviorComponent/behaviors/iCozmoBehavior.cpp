@@ -611,7 +611,7 @@ ICozmoBehavior::Status ICozmoBehavior::BehaviorUpdate_Legacy(BehaviorExternalInt
   BehaviorUpdate(behaviorExternalInterface);
   if(IsRunning()){
     status = UpdateInternal_WhileRunning(behaviorExternalInterface);
-    if(!IsControlDelegated()){
+      if(!IsControlDelegated() && status != ICozmoBehavior::Status::Running){
       if(behaviorExternalInterface.HasDelegationComponent()){
         auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
         delegationComponent.CancelSelf(this);
@@ -818,8 +818,9 @@ Util::RandomGenerator& ICozmoBehavior::GetRNG() const {
 void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(!USE_BSM){
-    DEV_ASSERT("ICozmoBehavior.UpdateInternal.NotUsingBSM",
-               "This function is BSM specific - please  don't call it if you're using the behavior manager");
+    DEV_ASSERT_MSG(true,
+                   "ICozmoBehavior.UpdateInternal.NotUsingBSM",
+                   "This function is BSM specific - please  don't call it if you're using the behavior manager");
   }
   
   BehaviorUpdate_Legacy(behaviorExternalInterface);
@@ -1299,7 +1300,7 @@ bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorEx
                       GetIDStr().c_str());
     return false;
   }
-  auto delegateWrapper = delegationComponent.GetDelegator(this);
+  auto& delegateWrapper = delegationComponent.GetDelegator(this);
 
   
   // A bit of a hack while BSM is still under construction - essentially IsControlDelegated

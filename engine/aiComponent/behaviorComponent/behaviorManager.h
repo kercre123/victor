@@ -184,7 +184,6 @@ public:
   // Allows other parts of the system to determine whether a reaction is enabled
   bool IsReactionTriggerEnabled(ReactionTrigger reaction) const;
   
-  ICozmoBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
   ICozmoBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
 
   // TODO:(bn) automatically infer requiredClass from T
@@ -307,6 +306,8 @@ private:
   BehaviorExternalInterface* _behaviorExternalInterface = nullptr;
   IExternalInterface* _robotExternalInterface = nullptr;
   
+  std::vector<ExternalInterface::RobotCompletedAction> _actionsCompletedThisTick;
+
   bool _isInitialized = false;
       
   // Set by unity to preserve the head and lift angle after reactionary behaviors

@@ -48,6 +48,7 @@ public:
   const std::vector<ExternalInterface::RobotCompletedAction>& GetActionsCompletedThisTick() const { return _actionsCompletedThisTick;}
   
 protected:
+  friend class BehaviorManager;
   friend class BehaviorSystemManager;
   friend class RunnableStack;
   std::vector<const GameToEngineEvent>  _gameToEngineEvents;

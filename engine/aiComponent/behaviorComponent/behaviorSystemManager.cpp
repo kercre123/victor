@@ -17,6 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
@@ -110,6 +111,10 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
     
     _runnableStack->InitRunnableStack(behaviorExternalInterface, baseRunnable);
     _baseRunnableTmp = nullptr;
+  }
+
+  for( const auto& completionMsg : _actionsCompletedThisTick ) {
+    behaviorExternalInterface.GetDelegationComponent().HandleActionComplete( completionMsg.idTag );
   }
   
   _asyncMessageComponent->PrepareCache();

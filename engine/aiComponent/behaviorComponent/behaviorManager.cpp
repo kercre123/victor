@@ -29,6 +29,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerStrategyFactory.h"
@@ -475,6 +477,13 @@ void BehaviorManager::InitializeEventHandlers(BehaviorExternalInterface& behavio
                               {
                                 HandleMessage(behaviorExternalInterface,
                                               event.GetData().Get_BehaviorManagerMessage().BehaviorManagerMessageUnion);
+                              }));
+    
+    _eventHandlers.push_back(_robotExternalInterface->Subscribe(EngineToGameTag::RobotCompletedAction,
+                              [this](const EngineToGameEvent& event) {
+                                DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction,
+                                           "ICozmoBehavior.RobotCompletedAction.WrongEventTypeFromCallback");
+                                _actionsCompletedThisTick.push_back(event.GetData().Get_RobotCompletedAction());
                               }));
     }
 }
@@ -930,9 +939,10 @@ Result BehaviorManager::Update(BehaviorExternalInterface& behaviorExternalInterf
     return RESULT_FAIL;
   }
   
+  
   if(_currentHighLevelActivity != HighLevelActivity::Count){
     // Update the currently running activity
-    GetCurrentActivity()->Update(behaviorExternalInterface);
+    GetCurrentActivity()->Update_Legacy(behaviorExternalInterface);
   }else{
     PRINT_NAMED_WARNING("BehaviorManager.Update.NoHighLevelActivity",
                         "Update tick skipped because no high level activity specified");
@@ -948,7 +958,7 @@ Result BehaviorManager::Update(BehaviorExternalInterface& behaviorExternalInterf
   }
   
   // check for voice commands
-  _highLevelActivityMap[HighLevelActivity::VoiceCommand]->Update(behaviorExternalInterface);
+  _highLevelActivityMap[HighLevelActivity::VoiceCommand]->Update_Legacy(behaviorExternalInterface);
   // Identify whether there is a voice command-response behavior we want to be running
   ICozmoBehaviorPtr voiceCommandBehavior = _highLevelActivityMap[HighLevelActivity::VoiceCommand]->
                  GetDesiredActiveBehavior(behaviorExternalInterface, GetRunningAndResumeInfo().GetCurrentBehavior());
@@ -1010,8 +1020,20 @@ Result BehaviorManager::Update(BehaviorExternalInterface& behaviorExternalInterf
       (voiceCommandBehavior != nullptr);
     
     // We have a current behavior, update it.
-    const ICozmoBehavior::Status status = currentBehavior->BehaviorUpdate_Legacy(behaviorExternalInterface);
-     
+    ICozmoBehavior::Status status = BehaviorStatus::Complete;
+    {
+      // Code back ported from BehaviorSystemManager to handle action completed messages
+      // properly
+      for( const auto& completionMsg : _actionsCompletedThisTick ) {
+        behaviorExternalInterface.GetDelegationComponent().HandleActionComplete( completionMsg.idTag );
+      }
+      
+      
+      behaviorExternalInterface.GetStateChangeComponent()._actionsCompletedThisTick = _actionsCompletedThisTick;
+      status = currentBehavior->BehaviorUpdate_Legacy(behaviorExternalInterface);
+      behaviorExternalInterface.GetStateChangeComponent()._actionsCompletedThisTick.clear();
+      _actionsCompletedThisTick.clear();
+    }
     switch(status)
     {
       case ICozmoBehavior::Status::Running:
@@ -1444,19 +1466,7 @@ bool BehaviorManager::IsReactionTriggerEnabled(ReactionTrigger reaction) const
   return false;
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorManager::FindBehaviorByID(BehaviorID behaviorID) const
-{
-  if(_behaviorExternalInterface != nullptr){
-    return _behaviorExternalInterface->GetBehaviorContainer().FindBehaviorByID(behaviorID);
-  }else{
-    ICozmoBehaviorPtr empty;
-    return empty;
-  }
-}
 
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr BehaviorManager::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
 {

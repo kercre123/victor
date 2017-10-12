@@ -2,178 +2,26 @@
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   {
     "behaviorID" : "Activity_Selection",
-    "highLevelID" : "Selection",
-    "behaviorClass" : "Activity_BehaviorsOnly",
-    "behaviorChooser" : {
-      "type": "Selection"
-    },
-    // Activity will be kicked out by behaviorManager
-    "activityStrategy":
-    {
-      "type" : "Simple"
-    }
+    "highLevelID" : "Selection"
   },
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   {
     "behaviorID" : "Activity_MeetCozmo",
-    "highLevelID" : "MeetCozmoFindFaces",
-    "behaviorClass" : "Activity_BehaviorsOnly",
-    "behaviorChooser" : {
-      "type": "Scoring",
-      "behaviors" : [
-        { "behaviorID" : "DriveOffCharger",
-          "scoring"      :
-          {
-            "flatScore": 1000
-          }
-        },
-        { "behaviorID" : "RespondToRenameFace",
-          "scoring"      :
-          {
-            "flatScore": 3.0
-          }
-        },
-        { "behaviorID" : "EnrollFace",
-          "scoring"      :
-          {
-            "flatScore": 2.0
-          }
-        },
-        { "behaviorID" : "MeetCozmo_InteractWithFaces",
-          "scoring"      :
-          {
-            "flatScore": 1.0,
-            "repetitionPenalty" :
-            {
-              "nodes" :
-              [
-                {
-                  "x" : 8.0,
-                  "y" : 0.0
-                },
-                {
-                  "x" : 8.0,
-                  "y" : 1.0
-                }
-              ]
-            }
-          }
-        },
-        { "behaviorID" : "MeetCozmo_FindFaces_Socialize",
-          "scoring"      :
-          {
-            "flatScore": 0.5
-          }
-        },
-        { "behaviorID" : "PutDownBlock",
-          "scoring"      :
-          {
-            "flatScore": 0.1
-          }
-        }
-      ]
-    },
-    // Activity will be kicked out by behaviorManager
-    "activityStrategy":
-    {
-      "type" : "Simple"
-    }
+    "highLevelID" : "MeetCozmoFindFaces"
   },
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   {
     "behaviorID" : "Activity_VoiceCommand",
-    "highLevelID" : "VoiceCommand",
-    "behaviorClass" : "VoiceCommand",
-    // Activity will be kicked out by behaviorManager
-    "activityStrategy":
-    {
-      "type" : "Simple"
-    }
+    "highLevelID" : "VoiceCommand"
   },
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   {
     "behaviorID" : "Activity_Feeding",
-    "highLevelID" : "Feeding",
-    "behaviorClass" : "Feeding",
-    "activityStrategy":
-    {
-      "type" : "Simple"
-    },
-    "universalChooser" :
-    {
-      "type" : "StrictPriority",
-      "behaviors" : [
-                      "DriveOffCharger",
-                      "KnockOverCubes",
-                      "PyramidPutDownBlock",
-                      "Needs_SevereLowEnergyGetIn"
-                    ]
-    }
+    "highLevelID" : "Feeding"
   },
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   {
     "behaviorID" : "Activity_Freeplay",
-    "highLevelID" : "Freeplay",
-    "behaviorClass" : "Freeplay",
-    // Activity will be kicked out by behaviorManager
-    "activityStrategy":
-    {
-      "type" : "Simple"
-    },
-
-    // parameters to decide between activities on put down
-    "desiredActivityNames" :
-    {
-      "faceAndCubeActivityName"          : "Socialize",
-      "faceOnlyActivityName"             : "Socialize",
-      "cubeOnlyActivityName"             : "PlayAlone",
-      "noFaceNoCubeActivityName"         : "Hiking"
-    },
-    // sub-activities to create - ensure they're in priority order
-    "subActivities" :
-    [
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      // Spark activities:
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      { "behaviorID" : "SparksRollBlock", "activityPriority"      : 0 },
-      { "behaviorID" : "SparksStackBlock", "activityPriority"     : 0 },
-      { "behaviorID" : "SparksPeekABoo", "activityPriority"       : 0 },
-      { "behaviorID" : "SparksPounceOnMotion", "activityPriority" : 0 },
-      { "behaviorID" : "SparksPopAWheelie", "activityPriority"    : 0 },
-      { "behaviorID" : "SparksKnockOverCubes", "activityPriority" : 0 },
-      { "behaviorID" : "SparksPickUpCube", "activityPriority"     : 0 },
-      { "behaviorID" : "SparksWorkout", "activityPriority"        : 0 },
-      { "behaviorID" : "SparksBuildPyramid", "activityPriority"   : 0 },
-      { "behaviorID" : "SparksFistBump", "activityPriority"       : 0 },
-      { "behaviorID" : "SparksGatherCubes", "activityPriority"    : 0 },
-      { "behaviorID" : "SparksTrackLaser", "activityPriority"     : 0 },
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      // Needs activities
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      { "behaviorID": "NeedsSevereLowRepair",    "activityPriority" : 1},
-      { "behaviorID": "NeedsSevereLowEnergy",    "activityPriority" : 2},
-      { "behaviorID": "NeedsSevereLowPlayGetIn", "activityPriority" : 3},
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      // Freeplay activities:
-      // putDownDispatch      - when Cozmo is put down and wants to figure out what activity to go into
-      // socialize            - when Cozmo wants to interact with faces and players, but without playing games
-      // playWithHumans       - when Cozmo requests games to play with the player
-      // buildPyramid         - when Cozmo knows where his cubes are and decides to build a pyramid
-      // playAlone            - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
-      // hiking               - when Cozmo is exploring its surroundings on his own
-      // nothingToDo          - fallback when Cozmo can't do anything else
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      { "behaviorID" : "PutDownDispatch", "activityPriority"      : 10},
-      { "behaviorID" : "Socialize", "activityPriority"            : 11},
-      { "behaviorID" : "Singing", "activityPriority"              : 12},
-      { "behaviorID" : "PlayWithHumans", "activityPriority"       : 13},
-      // pyramid is "cooler" than playing alone or hiking for the user, but it
-      // has fairly restrictive runnability and a high cooldown
-      { "behaviorID" : "BuildPyramid", "activityPriority"         : 14},
-      { "behaviorID" : "PlayAlone", "activityPriority"            : 15},
-      { "behaviorID" : "Hiking", "activityPriority"               : 16},
-      { "behaviorID" : "NothingToDo", "activityPriority"          : 17}
-    ]
+    "highLevelID" : "Freeplay"
   }
 ]

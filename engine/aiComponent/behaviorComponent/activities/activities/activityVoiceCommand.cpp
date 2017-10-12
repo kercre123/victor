@@ -196,15 +196,15 @@ void ActivityVoiceCommand::InitActivity(BehaviorExternalInterface& behaviorExter
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   
-  const auto& BM = robot.GetBehaviorManager();
+  const auto& BC = behaviorExternalInterface.GetBehaviorContainer();
   // TODO: Will need to change how this works should we add more dance behaviors
-  _danceBehavior = BM.FindBehaviorByID(BehaviorID::Dance_Mambo);
+  _danceBehavior = BC.FindBehaviorByID(BehaviorID::Dance_Mambo);
   DEV_ASSERT(_danceBehavior != nullptr &&
              _danceBehavior->GetClass() == BehaviorClass::Dance,
              "VoiceCommandBehaviorChooser.Dance.ImproperClassRetrievedForID");
   
   {
-    ICozmoBehaviorPtr comeHereBehavior = BM.FindBehaviorByID(BehaviorID::VC_ComeHere);
+    ICozmoBehaviorPtr comeHereBehavior = BC.FindBehaviorByID(BehaviorID::VC_ComeHere);
     if(ANKI_DEV_CHEATS){
       _driveToFaceBehavior = std::dynamic_pointer_cast<BehaviorDriveToFace>(comeHereBehavior);
       
@@ -217,45 +217,45 @@ void ActivityVoiceCommand::InitActivity(BehaviorExternalInterface& behaviorExter
                "VoiceCommandBehaviorChooser.ComeHereBehavior.ImproperClassRetrievedForName");
   }
   
-  _searchForFaceBehavior = BM.FindBehaviorByID(BehaviorID::VC_SearchForFace);
+  _searchForFaceBehavior = BC.FindBehaviorByID(BehaviorID::VC_SearchForFace);
   DEV_ASSERT(_searchForFaceBehavior != nullptr &&
              _searchForFaceBehavior->GetClass() == BehaviorClass::SearchForFace,
              "VoiceCommandBehaviorChooser.SearchForFaceBehavior.ImproperClassRetrievedForName");
   
-  _fistBumpBehavior = BM.FindBehaviorByID(BehaviorID::FistBump);
+  _fistBumpBehavior = BC.FindBehaviorByID(BehaviorID::FistBump);
   DEV_ASSERT(_fistBumpBehavior != nullptr &&
              _fistBumpBehavior->GetClass() == BehaviorClass::FistBump,
              "VoiceCommandBehaviorChooser.FistBump.ImproperClassRetrievedForID");
   
-  _peekABooBehavior = BM.FindBehaviorByID(BehaviorID::FPPeekABoo);
+  _peekABooBehavior = BC.FindBehaviorByID(BehaviorID::FPPeekABoo);
   DEV_ASSERT(_peekABooBehavior != nullptr &&
              _peekABooBehavior->GetClass() == BehaviorClass::PeekABoo,
              "VoiceCommandBehaviorChooser.PeekABoo.ImproperClassRetrievedForID");
   
-  _laserBehavior = BM.FindBehaviorByID(BehaviorID::SparksTrackLaser);
+  _laserBehavior = BC.FindBehaviorByID(BehaviorID::SparksTrackLaser);
   DEV_ASSERT(_laserBehavior != nullptr &&
              _laserBehavior->GetClass() == BehaviorClass::TrackLaser,
              "VoiceCommandBehaviorChooser.Laser.ImproperClassRetrievedForID");
   
-  _pounceBehavior = BM.FindBehaviorByID(BehaviorID::VC_PounceOnMotion);
+  _pounceBehavior = BC.FindBehaviorByID(BehaviorID::VC_PounceOnMotion);
   DEV_ASSERT(_pounceBehavior != nullptr &&
              _pounceBehavior->GetClass() == BehaviorClass::PounceOnMotion,
              "VoiceCommandBehaviorChooser.PounceOnMotion.ImproperClassRetrievedForID");
   
   //Create an arbitrary animation behavior
-  ICozmoBehaviorPtr playAnimPtr = BM.FindBehaviorByID(BehaviorID::PlayArbitraryAnim);
+  ICozmoBehaviorPtr playAnimPtr = BC.FindBehaviorByID(BehaviorID::PlayArbitraryAnim);
   _playAnimBehavior = std::static_pointer_cast<BehaviorPlayArbitraryAnim>(playAnimPtr);
   
   DEV_ASSERT(_playAnimBehavior != nullptr &&
              _playAnimBehavior->GetClass() == BehaviorClass::PlayArbitraryAnim,
              "VoiceCommandBehaviorChooser.BehaviorPlayAnimPointerNotSet");
   
-  _goToSleepBehavior = BM.FindBehaviorByID(BehaviorID::VC_GoToSleep);
+  _goToSleepBehavior = BC.FindBehaviorByID(BehaviorID::VC_GoToSleep);
   DEV_ASSERT(_goToSleepBehavior != nullptr &&
              _goToSleepBehavior->GetClass() == BehaviorClass::ReactToOnCharger,
              "VoiceCommandBehaviorChooser.Laser.ImproperClassRetrievedForID");
   
-  _alrightyBehavior = BM.FindBehaviorByID(BehaviorID::VC_AlrightyResponse);
+  _alrightyBehavior = BC.FindBehaviorByID(BehaviorID::VC_AlrightyResponse);
   DEV_ASSERT(_alrightyBehavior != nullptr &&
              _alrightyBehavior->GetClass() == BehaviorClass::PlayAnimWithFace,
              "VoiceCommandBehaviorChooser.AlrightyBehavior.ImproperClassRetrievedForID");
@@ -263,9 +263,9 @@ void ActivityVoiceCommand::InitActivity(BehaviorExternalInterface& behaviorExter
   DEV_ASSERT(nullptr != _context, "ActivityVoiceCommand.Constructor.NullContext");
   
   // setup the let's play map
-  ICozmoBehaviorPtr VC_Keepaway = BM.FindBehaviorByID(BehaviorID::VC_RequestKeepAway);
-  ICozmoBehaviorPtr VC_QT = BM.FindBehaviorByID(BehaviorID::VC_RequestSpeedTap);
-  ICozmoBehaviorPtr VC_MM = BM.FindBehaviorByID(BehaviorID::VC_RequestMemoryMatch);
+  ICozmoBehaviorPtr VC_Keepaway = BC.FindBehaviorByID(BehaviorID::VC_RequestKeepAway);
+  ICozmoBehaviorPtr VC_QT = BC.FindBehaviorByID(BehaviorID::VC_RequestSpeedTap);
+  ICozmoBehaviorPtr VC_MM = BC.FindBehaviorByID(BehaviorID::VC_RequestMemoryMatch);
   
   _letsPlayMap.insert(std::make_pair(UnlockId::KeepawayGame, VC_Keepaway));
   _letsPlayMap.insert(std::make_pair(UnlockId::QuickTapGame, VC_QT));

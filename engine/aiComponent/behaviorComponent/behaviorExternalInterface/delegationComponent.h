@@ -34,7 +34,7 @@ class IActionRunner;
 class IBehavior;
 class Robot;
 
-class Delegator{
+class Delegator : private Util::noncopyable{
 public:
   Delegator(Robot& robot, BehaviorSystemManager& bsm);
   virtual ~Delegator(){};
@@ -49,6 +49,8 @@ public:
   
 protected:
   friend class DelegationComponent;
+
+  void HandleActionComplete(u32 actionTag);
   
 private:
   Robot& _robot;
@@ -79,6 +81,9 @@ public:
 
   bool HasDelegator(IBehavior* delegatingRunnable);
   Delegator& GetDelegator(IBehavior* delegatingRunnable);
+
+  // called when an action completes (with any status). Argument is the action id
+  void HandleActionComplete(u32 actionTag);
   
 private:
   // For supporting legacy code

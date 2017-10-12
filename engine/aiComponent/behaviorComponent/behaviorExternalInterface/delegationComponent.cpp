@@ -120,6 +120,15 @@ void Delegator::EnsureHandleIsUpdated()
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Delegator::HandleActionComplete(u32 actionTag)
+{
+  if( actionTag == _lastActionTag ) {
+    _lastActionTag = ActionConstants::INVALID_TAG;
+    _runnableThatDelegatedAction = nullptr;
+  }
+}
+
   
 ///////////////////////
 ///////////////////////
@@ -215,16 +224,28 @@ void DelegationComponent::CancelSelf(IBehavior* delegatingRunnable)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool DelegationComponent::HasDelegator(IBehavior* delegatingRunnable)
 {
-  return _bsm->CanDelegate(delegatingRunnable);
+  if(USE_BSM){
+    return _bsm->CanDelegate(delegatingRunnable);
+  }else{
+    return true;
+  }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Delegator& DelegationComponent::GetDelegator(IBehavior* delegatingRunnable)
 {
-  DEV_ASSERT(_bsm->CanDelegate(delegatingRunnable),
-             "DelegationComponent.GetDelegator.DelegatingRunnableNotValid");
+  if(USE_BSM){
+    DEV_ASSERT(_bsm->CanDelegate(delegatingRunnable),
+               "DelegationComponent.GetDelegator.DelegatingRunnableNotValid");
+  }
   return *_delegator;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DelegationComponent::HandleActionComplete(u32 actionTag)
+{
+  _delegator->HandleActionComplete(actionTag);
 }
 
 

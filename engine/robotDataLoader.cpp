@@ -657,7 +657,7 @@ void RobotDataLoader::LoadRobotConfigs()
   
   // victor behavior systems config
   {
-    static const std::string jsonFilename = "config/engine/behaviorComponent/behaviors/victorFreeplay.json";
+    static const std::string jsonFilename = "config/engine/behaviorComponent/victor_behavior_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _victorFreeplayBehaviorConfig);
     if (!success)
     {

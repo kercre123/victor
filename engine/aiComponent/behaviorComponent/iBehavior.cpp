@@ -172,7 +172,8 @@ void IBehavior::SetActivationState_DevOnly(ActivationState state)
 {
   PRINT_CH_INFO("Behaviors",
                 "IBehavior.SetActivationState",
-                "Activation state set to %s",
+                "%s: Activation state set to %s",
+                _idString.c_str(),
                 ActivationStateToString(state).c_str());
   
   #if ANKI_DEV_CHEATS

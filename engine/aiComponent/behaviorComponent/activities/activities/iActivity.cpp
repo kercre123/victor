@@ -73,6 +73,14 @@ IActivity::IActivity(const Json::Value& config)
 , _lastTimeActivityStartedSecs(-1.0f)
 , _lastTimeActivityStoppedSecs(-1.0f)
 {
+  // Needs to be pulled from the config on construction in case the value
+  // is accessed by other activity/behavior inits
+  std::string sparkString;
+  if( JsonTools::GetValueOptional(config,kRequiresSparkKey,sparkString) )
+  {
+    _requiredSpark = UnlockIdFromString(sparkString.c_str());
+  }
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -113,11 +121,7 @@ void IActivity::ReadConfig(BehaviorExternalInterface& behaviorExternalInterface,
   // Needs Sparks
   // - - - - - - - - - -
   
-  std::string sparkString;
-  if( JsonTools::GetValueOptional(config,kRequiresSparkKey,sparkString) )
-  {
-    _requiredSpark = UnlockIdFromString(sparkString.c_str());
-  }
+
   
   // driving animation triggers
   std::string animTriggerStr;
