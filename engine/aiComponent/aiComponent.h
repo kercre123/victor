@@ -38,12 +38,20 @@ class SevereNeedsComponent;
 class WorkoutComponent;
   
 
+namespace ComponentWrappers{
+struct AIComponentComponents{
+  AIComponentComponents(Robot& robot)
+  :_robot(robot){}
+  Robot& _robot;
+};
+}
+
   
 class AIComponent : private Util::noncopyable
 {
 public:
   
-  explicit AIComponent(Robot& robot);
+  explicit AIComponent();
   ~AIComponent();
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -98,7 +106,7 @@ public:
   // Update and init
   ////////////////////////////////////////////////////////////////////////////////
 
-  Result Init();
+  Result Init(Robot& robot);
   Result Update(Robot& robot, std::string& currentActivityName,
                               std::string& behaviorDebugStr);
 
@@ -116,7 +124,7 @@ public:
   inline bool IsSuddenObstacleDetected() const { return _suddenObstacleDetected; }
 
 private:
-  Robot& _robot;
+  std::unique_ptr<ComponentWrappers::AIComponentComponents> _aiComponents;
   bool   _suddenObstacleDetected;
   
   // module to analyze information for the AI in processes common to more than one behavior, for example

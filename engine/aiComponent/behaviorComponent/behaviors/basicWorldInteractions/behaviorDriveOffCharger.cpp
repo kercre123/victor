@@ -190,9 +190,10 @@ void BehaviorDriveOffCharger::TransitionToDrivingForward(BehaviorExternalInterfa
       if(res == ActionResult::SUCCESS){
         BehaviorObjectiveAchieved(BehaviorObjective::DroveAsIntended);
         
-        auto moodManager = behaviorExternalInterface.GetMoodManager().lock();
-        if(moodManager != nullptr){
-          moodManager->TriggerEmotionEvent("DriveOffCharger", MoodManager::GetCurrentTimeInSeconds());
+        if(behaviorExternalInterface.HasMoodManager()){
+          auto& moodManager = behaviorExternalInterface.GetMoodManager();
+          moodManager.TriggerEmotionEvent("DriveOffCharger",
+                                          MoodManager::GetCurrentTimeInSeconds());
         }
       }
     });

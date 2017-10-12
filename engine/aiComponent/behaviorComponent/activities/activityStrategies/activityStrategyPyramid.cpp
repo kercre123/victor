@@ -53,11 +53,9 @@ ActivityStrategyPyramid::ActivityStrategyPyramid(BehaviorExternalInterface& beha
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityStrategyPyramid::WantsToStartInternal(BehaviorExternalInterface& behaviorExternalInterface, float lastTimeActivityRanSec) const
-{
-  auto progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent().lock();
-  
-  if((progressionUnlockComp != nullptr) &&
-     !progressionUnlockComp->IsUnlocked(UnlockId::BuildPyramid)){
+{  
+  if((behaviorExternalInterface.HasProgressionUnlockComponent()) &&
+     !behaviorExternalInterface.GetProgressionUnlockComponent().IsUnlocked(UnlockId::BuildPyramid)){
     return false;
   }
   

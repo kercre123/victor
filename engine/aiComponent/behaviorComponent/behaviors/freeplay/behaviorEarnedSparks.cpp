@@ -40,9 +40,9 @@ BehaviorEarnedSparks::~BehaviorEarnedSparks()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorEarnedSparks::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-  if(needsManager != nullptr){
-    return needsManager->IsPendingSparksRewardMsg();
+  if(behaviorExternalInterface.HasNeedsManager()){
+    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+    return needsManager.IsPendingSparksRewardMsg();
   }
   return false;
 }
@@ -71,10 +71,11 @@ Result BehaviorEarnedSparks::ResumeInternal(BehaviorExternalInterface& behaviorE
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEarnedSparks::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-  if(needsManager != nullptr &&
-     needsManager->IsPendingSparksRewardMsg()){
-    needsManager->SparksRewardCommunicatedToUser();
+  if(behaviorExternalInterface.HasNeedsManager()){
+    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+    if(needsManager.IsPendingSparksRewardMsg()){
+      needsManager.SparksRewardCommunicatedToUser();
+    }
   }
 }
 

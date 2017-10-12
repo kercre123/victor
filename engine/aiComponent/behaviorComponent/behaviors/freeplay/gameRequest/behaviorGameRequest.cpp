@@ -356,9 +356,9 @@ void ICozmoBehaviorRequestGame::HandleWhileRunning(const GameToEngineEvent& even
 {
   if( event.GetData().GetTag() == GameToEngineTag::DenyGameStart ) {
     HandleGameDeniedRequest(behaviorExternalInterface);
-    auto publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
-    if(publicStateBroadcaster != nullptr){
-      publicStateBroadcaster->UpdateRequestingGame(false);
+    if(behaviorExternalInterface.HasPublicStateBroadcaster()){
+      auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+      publicStateBroadcaster.UpdateRequestingGame(false);
     }
   }
   else if(event.GetData().GetTag() == GameToEngineTag::CanCozmoRequestGame){

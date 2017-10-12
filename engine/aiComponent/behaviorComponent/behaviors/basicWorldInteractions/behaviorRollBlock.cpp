@@ -202,9 +202,10 @@ void BehaviorRollBlock::TransitionToRollSuccess(BehaviorExternalInterface& behav
   SET_STATE(CelebratingRoll);
   // The mood manager listens for actions to succeed to modify mood, but we may have just canceled the
   // action, so manually send the mood event here
-  auto moodManager = behaviorExternalInterface.GetMoodManager().lock();
-  if(moodManager != nullptr){
-    moodManager->TriggerEmotionEvent("RollSucceeded", MoodManager::GetCurrentTimeInSeconds());
+  if(behaviorExternalInterface.HasMoodManager()){
+    auto& moodManager = behaviorExternalInterface.GetMoodManager();
+    moodManager.TriggerEmotionEvent("RollSucceeded",
+                                    MoodManager::GetCurrentTimeInSeconds());
   }
   UpdateTargetsUpAxis(behaviorExternalInterface);
 

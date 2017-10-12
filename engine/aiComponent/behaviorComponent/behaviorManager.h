@@ -96,7 +96,7 @@ private:
 };
   
   
-class BehaviorManager
+class BehaviorManager : private Util::noncopyable
 {
 public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

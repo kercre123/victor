@@ -341,9 +341,9 @@ void ActivityBuildPyramid::OnDeactivatedActivity(BehaviorExternalInterface& beha
   SetCubeLights(behaviorExternalInterface);
   _pyramidCubePropertiesTrackers.clear();
   
-  auto publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
-  if(publicStateBroadcaster != nullptr){
-    publicStateBroadcaster->UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
+  if(behaviorExternalInterface.HasPublicStateBroadcaster()){
+    auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+    publicStateBroadcaster.UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
   }
   
   {
@@ -1058,16 +1058,16 @@ PyramidConstructionStage ActivityBuildPyramid::CheckLightAndPyramidConstructionS
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityBuildPyramid::UpdateMusic(BehaviorExternalInterface& behaviorExternalInterface, const PyramidConstructionStage& desiredState)
 {
-  auto publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
-  if(publicStateBroadcaster != nullptr){
+  if(behaviorExternalInterface.HasPublicStateBroadcaster()){
+    auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
     if(desiredState > _highestAudioStageReached){
       _highestAudioStageReached = desiredState;
       if(desiredState == PyramidConstructionStage::NoneStage){
-        publicStateBroadcaster->UpdateBroadcastBehaviorStage(BehaviorStageTag::PyramidConstruction,
-                                                             static_cast<int>(PyramidConstructionStage::SearchingForCube));
+        publicStateBroadcaster.UpdateBroadcastBehaviorStage(BehaviorStageTag::PyramidConstruction,
+                                                            static_cast<int>(PyramidConstructionStage::SearchingForCube));
       }else{
-        publicStateBroadcaster->UpdateBroadcastBehaviorStage(BehaviorStageTag::PyramidConstruction,
-                                                             static_cast<int>(desiredState));
+        publicStateBroadcaster.UpdateBroadcastBehaviorStage(BehaviorStageTag::PyramidConstruction,
+                                                            static_cast<int>(desiredState));
       }
     }
   }

@@ -50,9 +50,16 @@ BehaviorSystemManager::BehaviorSystemManager()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorSystemManager::InitConfiguration(BehaviorExternalInterface& behaviorExternalInterface,
-                                                AsyncMessageGateComponent* asyncMessageComponent,
-                                                IBehavior* baseRunnable)
+BehaviorSystemManager::~BehaviorSystemManager()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result BehaviorSystemManager::InitConfiguration(IBehavior* baseRunnable,
+                                                BehaviorExternalInterface& behaviorExternalInterface,
+                                                AsyncMessageGateComponent* asyncMessageComponent)
 {
   // do not support multiple initialization. A) we don't need it, B) it's easy to forget to clean up everything properly
   // when adding new stuff. During my refactoring I found several variables that were not properly reset, so
@@ -61,14 +68,13 @@ Result BehaviorSystemManager::InitConfiguration(BehaviorExternalInterface& behav
              baseRunnable != nullptr,
              "BehaviorSystemManager.InitConfiguration.AlreadyInitialized");
   _initializationStage = InitializationStage::StackNotInitialized;
-
+  _baseRunnableTmp = baseRunnable;
 
   _asyncMessageComponent = asyncMessageComponent;
   // Assumes there's only one instance of the behavior external Intarfec
   _behaviorExternalInterface = &behaviorExternalInterface;
   _runnableStack.reset(new RunnableStack(_behaviorExternalInterface));
   
-  _baseRunnableTmp = baseRunnable;
   
   Robot& robot = behaviorExternalInterface.GetRobot();
   if(robot.HasExternalInterface()){

@@ -66,26 +66,25 @@ private:
 };
 
   
-class DelegationComponent {
+class DelegationComponent : private Util::noncopyable {
 public:
-  DelegationComponent() {}; // Constructor for tests
-  DelegationComponent(Robot& robot, BehaviorSystemManager& bsm);
+  DelegationComponent();
   virtual ~DelegationComponent(){};
+  
+  void Init(Robot& robot, BehaviorSystemManager& bsm);
   
   bool IsControlDelegated(const IBehavior* delegatingRunnable);
   void CancelDelegates(IBehavior* delegatingRunnable);
   void CancelSelf(IBehavior* delegatingRunnable);
 
-  // TODO:(bn) // TEMP: try to avoid the needing to pass in 'this'. Should be easy to just make "delegator"
-  // optional like we did for components in the external interface
-  std::weak_ptr<Delegator> GetDelegator(IBehavior* delegatingRunnable);
+  bool HasDelegator(IBehavior* delegatingRunnable);
+  Delegator& GetDelegator(IBehavior* delegatingRunnable);
   
 private:
   // For supporting legacy code
   friend class ICozmoBehavior;
   bool IsActing(const IBehavior* delegatingRunnable);
-  std::shared_ptr<Delegator>   _delegator;
-  std::weak_ptr<Delegator>     _invalidDelegator; // TODO:(bn) change to not weak? Keep consistent with components
+  std::unique_ptr<Delegator>   _delegator;
   std::vector<::Signal::SmartHandle> _eventHandles;
     
   BehaviorSystemManager* _bsm;

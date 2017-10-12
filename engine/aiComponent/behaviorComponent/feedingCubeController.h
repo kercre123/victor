@@ -15,6 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_FeedingComponents_FeedingCubeController_H__
 
 #include "engine/aiComponent/feedingSoundEffectManager.h"
+#include "util/helpers/noncopyable.h"
 
 #include <memory>
 
@@ -30,7 +31,7 @@ namespace CubeAccelListeners {
 class ShakeListener;
 }
   
-class FeedingCubeController{
+class FeedingCubeController : private Util::noncopyable{
 public:
   enum class ControllerState{
     Activated,

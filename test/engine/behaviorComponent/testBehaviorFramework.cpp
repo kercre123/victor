@@ -48,26 +48,6 @@ std::unique_ptr<BehaviorContainer> CreateBehaviors(){
   return std::make_unique<BehaviorContainer>(cozmoContext->GetDataLoader()->GetBehaviorJsons());
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Behavior external interface relies on both robot and behavior container - you
-// must maintain the unique ptr references to all 3 in order to run tests using
-// a functional BEI
-void GenerateCoreBehaviorTestingComponents(std::unique_ptr<Robot>& robot,
-                                           std::unique_ptr<BehaviorContainer>& bc,
-                                           std::unique_ptr<BehaviorExternalInterface>& bei){
-  StateChangeComponent stateChangeComp;
-
-  robot = CreateRobot(1);
-  bc = CreateBehaviors();
-  bei.reset(new BehaviorExternalInterface(*robot,
-                                          robot->GetAIComponent(),
-                                          *bc,
-                                          robot->GetBlockWorld(),
-                                          robot->GetFaceWorld(),
-                                          stateChangeComp));
-}
-
 }
 
 

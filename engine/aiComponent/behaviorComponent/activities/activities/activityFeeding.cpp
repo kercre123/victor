@@ -300,9 +300,9 @@ void ActivityFeeding::OnActivatedActivity(BehaviorExternalInterface& behaviorExt
                      std::to_string(_DASFeedingSessionsPerConnectedSession).c_str());
   
   
-  auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-  if(needsManager != nullptr){
-    NeedsState& currNeedState = needsManager->GetCurNeedsStateMutable();
+  if(behaviorExternalInterface.HasNeedsManager()){
+    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+    NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
     const float needLevel = currNeedState.GetNeedLevel(NeedId::Energy);
     const NeedBracketId needBracket = currNeedState.GetNeedBracket(NeedId::Energy);
     Anki::Util::sEvent("meta.feeding_energy_at_start",
@@ -358,17 +358,17 @@ void ActivityFeeding::OnDeactivatedActivity(BehaviorExternalInterface& behaviorE
   //_eventHandlers.clear();
   
   
-  auto publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
-  if(publicStateBroadcaster != nullptr){
+  if(behaviorExternalInterface.HasPublicStateBroadcaster()){
     // Clear the public state broadcaster
-    publicStateBroadcaster->UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
+    auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+    publicStateBroadcaster.UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
   }
   
   
-  auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-  if(needsManager != nullptr){
+  if(behaviorExternalInterface.HasNeedsManager()){
     // DAS Events
-    NeedsState& currNeedState = needsManager->GetCurNeedsStateMutable();
+    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+    NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
     const float needLevel = currNeedState.GetNeedLevel(NeedId::Energy);
     const NeedBracketId needBracket = currNeedState.GetNeedBracket(NeedId::Energy);
     Anki::Util::sEvent("meta.feeding_energy_at_end",
@@ -467,9 +467,9 @@ void ActivityFeeding::UpdateCurrentStage(BehaviorExternalInterface& behaviorExte
   
   bool isNeedSevere = false;
   
-  auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-  if(needsManager != nullptr){
-    NeedsState& currNeedState = needsManager->GetCurNeedsStateMutable();
+  if(behaviorExternalInterface.HasNeedsManager()){
+    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+    NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
     isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
   }
   
@@ -620,9 +620,9 @@ void ActivityFeeding::UpdateCubeToEat(BehaviorExternalInterface& behaviorExterna
                       _cubeIDToEat.GetValue());
 
         // set the stage now so we go right to eating
-        auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-        if(needsManager != nullptr){
-          NeedsState& currNeedState = needsManager->GetCurNeedsStateMutable();
+        if(behaviorExternalInterface.HasNeedsManager()){
+          auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+          NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
           const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
           if( isNeedSevere )  {
             SET_STAGE(behaviorExternalInterface, ReactingToSeeCharged_Severe);
@@ -651,9 +651,9 @@ void ActivityFeeding::TransitionToBestActivityStage(BehaviorExternalInterface& b
       currentTime_s < _timeFaceSearchShouldEnd_s ) {
 
     if( HasFaceToTurnTo(behaviorExternalInterface) ) {
-      auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-      if(needsManager != nullptr){
-        NeedsState& currNeedState = needsManager->GetCurNeedsStateMutable();
+      if(behaviorExternalInterface.HasNeedsManager()){
+        auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+        NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
         const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
 
         if(isNeedSevere){
@@ -1026,9 +1026,9 @@ bool ActivityFeeding::HasFaceToTurnTo(BehaviorExternalInterface& behaviorExterna
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityFeeding::SetupSevereAnims(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  auto publicStateBroadcestr = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
-  if(publicStateBroadcestr != nullptr){
-    publicStateBroadcestr->UpdateBroadcastBehaviorStage(
+  if(behaviorExternalInterface.HasPublicStateBroadcaster()){
+    auto& publicStateBroadcestr = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+    publicStateBroadcestr.UpdateBroadcastBehaviorStage(
          BehaviorStageTag::Feeding, static_cast<int>(FeedingStage::SevereEnergy));
   }
   SmartDisableReactionsWithLock(behaviorExternalInterface, kSevereFeedingDisableLock, kSevereFeedingDisables);
@@ -1040,9 +1040,9 @@ void ActivityFeeding::SetupSevereAnims(BehaviorExternalInterface& behaviorExtern
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityFeeding::ClearSevereAnims(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  auto publicStateBroadcestr = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
-  if(publicStateBroadcestr != nullptr){
-    publicStateBroadcestr->UpdateBroadcastBehaviorStage(
+  if(behaviorExternalInterface.HasPublicStateBroadcaster()){
+    auto& publicStateBroadcestr = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+    publicStateBroadcestr.UpdateBroadcastBehaviorStage(
          BehaviorStageTag::Feeding, static_cast<int>(FeedingStage::MildEnergy));
   }
   SmartRemoveDisableReactionsLock(behaviorExternalInterface, kSevereFeedingDisableLock);

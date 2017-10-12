@@ -56,13 +56,14 @@ void DoATrickSelector::RequestATrick(BehaviorExternalInterface& behaviorExternal
 {
   int cumulativeWeight = 0;
   std::vector<std::pair<int, UnlockId>> unlockedTricks;
-  auto progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent().lock();
 
-  for(const auto& entry: _weightToUnlockMap){
-    if(progressionUnlockComp != nullptr &&
-       progressionUnlockComp->IsUnlocked(entry.second)){
-      cumulativeWeight += entry.first;
-      unlockedTricks.emplace_back(std::make_pair(cumulativeWeight, entry.second));
+  if(behaviorExternalInterface.HasProgressionUnlockComponent()){
+    auto& progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent();
+    for(const auto& entry: _weightToUnlockMap){
+      if(progressionUnlockComp.IsUnlocked(entry.second)){
+        cumulativeWeight += entry.first;
+        unlockedTricks.emplace_back(std::make_pair(cumulativeWeight, entry.second));
+      }
     }
   }
   

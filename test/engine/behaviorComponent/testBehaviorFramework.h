@@ -16,11 +16,19 @@
 
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 
+namespace Anki{
+namespace Cozmo{
+class StateChangeComponent;
+}
+}
+
 namespace TestBehaviorFramework{
 std::unique_ptr<Anki::Cozmo::Robot> CreateRobot(int robotID);
 std::unique_ptr<Anki::Cozmo::BehaviorContainer> CreateBehaviors();
 void GenerateCoreBehaviorTestingComponents(std::unique_ptr<Anki::Cozmo::Robot>& robot,
+                                           std::unique_ptr<Anki::Cozmo::BehaviorComponent>& behaviorComp,
                                            std::unique_ptr<Anki::Cozmo::BehaviorContainer>& bc,
+                                           std::unique_ptr<Anki::Cozmo::StateChangeComponent>& stateChangeComp,
                                            std::unique_ptr<Anki::Cozmo::BehaviorExternalInterface>& bei);
 }
 

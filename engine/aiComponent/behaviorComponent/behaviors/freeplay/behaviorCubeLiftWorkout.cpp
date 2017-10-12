@@ -129,9 +129,9 @@ Result BehaviorCubeLiftWorkout::OnBehaviorActivated(BehaviorExternalInterface& b
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  auto publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
-  if(publicStateBroadcaster != nullptr){
-    publicStateBroadcaster->UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
+  if(behaviorExternalInterface.HasPublicStateBroadcaster()){
+    auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+    publicStateBroadcaster.UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
   }
 
   {
@@ -223,11 +223,11 @@ void BehaviorCubeLiftWorkout::TransitionToPostLiftAnim(BehaviorExternalInterface
               &BehaviorCubeLiftWorkout::TransitionToStrongLifts);
   
   // Update the music round if we're playing 80's music for this workout
-  auto publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
   if (behaviorExternalInterface.GetAIComponent().GetWorkoutComponent().ShouldPlayEightiesMusic() &&
-      publicStateBroadcaster != nullptr) {
-    publicStateBroadcaster->UpdateBroadcastBehaviorStage(BehaviorStageTag::Workout,
-                                                                   static_cast<uint8_t>(WorkoutStage::EightiesWorkoutLift));
+      behaviorExternalInterface.HasPublicStateBroadcaster()) {
+    auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+    publicStateBroadcaster.UpdateBroadcastBehaviorStage(BehaviorStageTag::Workout,
+                                                        static_cast<uint8_t>(WorkoutStage::EightiesWorkoutLift));
   }
 }
 

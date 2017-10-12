@@ -115,10 +115,10 @@ bool BehaviorExpressNeeds::WantsToBeActivatedBehavior(BehaviorExternalInterface&
       return false;
     }
   }else{
-    auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-    if(needsManager != nullptr){
+    if(behaviorExternalInterface.HasNeedsManager()){
+      auto& needsManager = behaviorExternalInterface.GetNeedsManager();
       // first check if we are in the right needs bracket
-      NeedsState& currNeedState = needsManager->GetCurNeedsStateMutable();
+      NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
       if( !currNeedState.IsNeedAtBracket(_need, _requiredBracket) ) {
         return false;
       }
@@ -185,9 +185,9 @@ void BehaviorExpressNeeds::OnBehaviorDeactivated(BehaviorExternalInterface& beha
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float BehaviorExpressNeeds::GetCooldownSec(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-  if(needsManager != nullptr){
-    const NeedsState& currNeedState = needsManager->GetCurNeedsState();
+  if(behaviorExternalInterface.HasNeedsManager()){
+    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+    const NeedsState& currNeedState = needsManager.GetCurNeedsState();
     const float level = currNeedState.GetNeedLevel(_need);
 
     if( ANKI_VERIFY( _cooldownEvaluator != nullptr,

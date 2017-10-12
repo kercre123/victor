@@ -58,9 +58,9 @@ bool StrategyExpressNeedsTransition::WantsToRunInternal(BehaviorExternalInterfac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool StrategyExpressNeedsTransition::InRequiredNeedBracket(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-  if(needsManager != nullptr){
-    NeedsState& currNeedState = needsManager->GetCurNeedsStateMutable();
+  if(behaviorExternalInterface.HasNeedsManager()){
+    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+    NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
     const bool inBracket = currNeedState.IsNeedAtBracket(_need, NeedBracketId::Critical);
     return inBracket;
   }

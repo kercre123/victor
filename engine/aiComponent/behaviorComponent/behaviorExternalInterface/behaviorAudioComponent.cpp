@@ -131,9 +131,9 @@ void BehaviorAudioComponent::Init(BehaviorExternalInterface& behaviorExternalInt
     HandleRobotPublicStateChange(behaviorExternalInterface,stateEvent.GetData());
   };
   
-  auto publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
-  if(publicStateBroadcaster != nullptr){
-    _eventHandles.push_back(publicStateBroadcaster->Subscribe(handleStateChangeWrapper));
+  if(behaviorExternalInterface.HasPublicStateBroadcaster()){
+    auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+    _eventHandles.push_back(publicStateBroadcaster.Subscribe(handleStateChangeWrapper));
   }
   
   if(ANKI_DEV_CHEATS)
@@ -382,10 +382,10 @@ void BehaviorAudioComponent::HandleSparkUpdates(BehaviorExternalInterface& behav
         startingRound = Util::EnumToUnderlying(playEightiesMusic ?
                                                WorkoutStage::EightiesWorkoutPrep :
                                                WorkoutStage::NormalWorkout);
-        auto publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
-        if(publicStateBroadcaster != nullptr){
+        if(behaviorExternalInterface.HasPublicStateBroadcaster()){
           // Need to tell the PublicStateBroadcaster so that it stays in sync with the proper music round
-          publicStateBroadcaster->UpdateBroadcastBehaviorStage(BehaviorStageTag::Workout, startingRound);
+          auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+          publicStateBroadcaster.UpdateBroadcastBehaviorStage(BehaviorStageTag::Workout, startingRound);
         }
       }
       

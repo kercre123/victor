@@ -31,7 +31,7 @@ namespace Cozmo {
 class IBehavior;
 class IExternalInterface;
   
-class AsyncMessageGateComponent 
+class AsyncMessageGateComponent : private Util::noncopyable
 {
 public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

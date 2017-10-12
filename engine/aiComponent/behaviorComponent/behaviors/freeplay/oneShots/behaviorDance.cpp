@@ -135,10 +135,10 @@ Result BehaviorDance::OnBehaviorActivated(BehaviorExternalInterface& behaviorExt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDance::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  auto publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
-  if(publicStateBroadcaster != nullptr){
+  if(behaviorExternalInterface.HasPublicStateBroadcaster()){
     // Stop dancing audio and go back to previous
-    publicStateBroadcaster->UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
+    auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+    publicStateBroadcaster.UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
   }
 
   BlockWorldFilter filter;

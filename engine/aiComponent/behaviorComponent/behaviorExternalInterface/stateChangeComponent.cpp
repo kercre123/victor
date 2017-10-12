@@ -13,6 +13,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 
+#include "util/logging/logging.h"
+
 namespace Anki {
 namespace Cozmo {
   
@@ -22,18 +24,28 @@ namespace{
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StateChangeComponent::StateChangeComponent(BehaviorComponent& behaviorComponent)
-: _behaviorComponent(&behaviorComponent)
+StateChangeComponent::StateChangeComponent()
 {
 
-};
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void StateChangeComponent::Init(IBehaviorMessageSubscriber& messageSubscriber)
+{
+  _messageSubscriber = &messageSubscriber;
+}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateChangeComponent::SubscribeToTags(IBehavior* subscriber,
                                            std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const
 {
-  _behaviorComponent->SubscribeToTags(subscriber, std::move(tags));
+  if(ANKI_VERIFY(_messageSubscriber != nullptr,
+                 "StateChangeComponent.SubscribeToTags.NoMessageSubscriber",
+                 "")){
+    _messageSubscriber->SubscribeToTags(subscriber, std::move(tags));
+  }
 }
 
 
@@ -41,7 +53,11 @@ void StateChangeComponent::SubscribeToTags(IBehavior* subscriber,
 void StateChangeComponent::SubscribeToTags(IBehavior* subscriber,
                                            std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const
 {
-  _behaviorComponent->SubscribeToTags(subscriber, std::move(tags));
+  if(ANKI_VERIFY(_messageSubscriber != nullptr,
+                 "StateChangeComponent.SubscribeToTags.NoMessageSubscriber",
+                 "")){
+    _messageSubscriber->SubscribeToTags(subscriber, std::move(tags));
+  }
 }
 
 
@@ -49,7 +65,11 @@ void StateChangeComponent::SubscribeToTags(IBehavior* subscriber,
 void StateChangeComponent::SubscribeToTags(IBehavior* subscriber,
                                            std::set<RobotInterface::RobotToEngineTag>&& tags) const
 {
-  _behaviorComponent->SubscribeToTags(subscriber, std::move(tags));
+  if(ANKI_VERIFY(_messageSubscriber != nullptr,
+                 "StateChangeComponent.SubscribeToTags.NoMessageSubscriber",
+                 "")){
+    _messageSubscriber->SubscribeToTags(subscriber, std::move(tags));
+  }
 }
 
 

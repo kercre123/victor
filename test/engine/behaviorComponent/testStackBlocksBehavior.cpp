@@ -58,12 +58,13 @@ void CreateStackBehavior(Robot& robot, ICozmoBehaviorPtr& stackBehavior)
 
   DelegationComponent delegationComp;
   StateChangeComponent stateChangeComp;
-  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
-                                                                                       robot.GetAIComponent(),
-                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
-                                                                                       robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       stateChangeComp);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface();
+  behaviorExternalInterface->Init(robot,
+                                  robot.GetAIComponent(),
+                                  robot.GetBehaviorManager().GetBehaviorContainer(),
+                                  robot.GetBlockWorld(),
+                                  robot.GetFaceWorld(),
+                                  stateChangeComp);
 
   stackBehavior = behaviorContainer.CreateBehavior(BehaviorClass::StackBlocks,
                                                    config);
@@ -126,7 +127,7 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior, BehaviorExte
 {
   auto& aiComponent = robot.GetAIComponent();
   
-  aiComponent.Init();
+  aiComponent.Init(robot);
 
   CreateStackBehavior(robot, stackBehavior);
 
@@ -184,12 +185,14 @@ TEST(StackBlocksBehavior, InitBehavior)
 
   DelegationComponent delegationComp;
   StateChangeComponent stateChangeComp;
-  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
-                                                                                       robot.GetAIComponent(),
-                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
-                                                                                       robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       stateChangeComp);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface();
+  behaviorExternalInterface->Init(robot,
+                                  robot.GetAIComponent(),
+                                  robot.GetBehaviorManager().GetBehaviorContainer(),
+                                  robot.GetBlockWorld(),
+                                  robot.GetFaceWorld(),
+                                  stateChangeComp);
+  
   ICozmoBehaviorPtr stackBehavior = nullptr;
   ObjectID objID1, objID2;
   SetupStackTest(robot, stackBehavior, *behaviorExternalInterface, objID1, objID2);
@@ -208,12 +211,13 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   
   DelegationComponent delegationComp;
   StateChangeComponent stateChangeComp;
-  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
-                                                                                       robot.GetAIComponent(),
-                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
-                                                                                       robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       stateChangeComp);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface();
+  behaviorExternalInterface->Init(robot,
+                                  robot.GetAIComponent(),
+                                  robot.GetBehaviorManager().GetBehaviorContainer(),
+                                  robot.GetBlockWorld(),
+                                  robot.GetFaceWorld(),
+                                  stateChangeComp);
   
   auto& blockWorld = robot.GetBlockWorld();
   auto& aiComponent = robot.GetAIComponent();

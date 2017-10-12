@@ -13,6 +13,8 @@
 #ifndef AI_COMPONENT_BEHAVIOR_COMPONENT_RUNNABLE_STACK
 #define AI_COMPONENT_BEHAVIOR_COMPONENT_RUNNABLE_STACK
 
+#include "util/helpers/noncopyable.h"
+
 #include <map>
 #include <memory>
 #include <set>
@@ -32,7 +34,7 @@ struct RobotCompletedAction;
 }
   
 // Defined within .h file so tests can access runnable stack functions
-class RunnableStack{
+class RunnableStack : private Util::noncopyable {
 public:
   RunnableStack(BehaviorExternalInterface* behaviorExternalInterface)
   :_behaviorExternalInterface(behaviorExternalInterface){};

@@ -93,10 +93,11 @@ bool BehaviorReactToCliff::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  auto moodManager = behaviorExternalInterface.GetMoodManager().lock();
-  if(moodManager != nullptr){
-    moodManager->TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
+  if(behaviorExternalInterface.HasMoodManager()){
+    auto& moodManager = behaviorExternalInterface.GetMoodManager();
+    moodManager.TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
   }
+  
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersReactToCliffArray);
   
   switch( _state ) {

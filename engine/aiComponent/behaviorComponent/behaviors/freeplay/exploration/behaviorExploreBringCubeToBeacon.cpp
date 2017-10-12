@@ -576,18 +576,18 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(BehaviorExternalInterface& b
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreBringCubeToBeacon::FireEmotionEvents(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  auto moodManager = behaviorExternalInterface.GetMoodManager().lock();
-  if(moodManager != nullptr){
+  if(behaviorExternalInterface.HasMoodManager()){
+    auto& moodManager = behaviorExternalInterface.GetMoodManager();
     const bool allCubesInBeacons = behaviorExternalInterface.GetAIComponent().GetWhiteboard().AreAllCubesInBeacons();
     if ( allCubesInBeacons )
     {
       // fire emotion event, Cozmo is happy he brought the last cube to the beacon
-      moodManager->TriggerEmotionEvent("HikingBroughtLastCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
+      moodManager.TriggerEmotionEvent("HikingBroughtLastCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
     }
     else
     {
       // fire emotion event, Cozmo is happy he brought a cube to the beacon
-      moodManager->TriggerEmotionEvent("HikingBroughtCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
+      moodManager.TriggerEmotionEvent("HikingBroughtCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
     }
   }
 }
@@ -692,9 +692,9 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
 {
   // here we would check if stacking is (un)locked
   const bool forFreeplay = true;
-  auto progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent().lock();
-  if(progressionUnlockComp != nullptr){
-    const bool canStackCubes = progressionUnlockComp->IsUnlocked(UnlockId::StackTwoCubes, forFreeplay);
+  if(behaviorExternalInterface.HasProgressionUnlockComponent()){
+    auto& progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent();
+    const bool canStackCubes = progressionUnlockComp.IsUnlocked(UnlockId::StackTwoCubes, forFreeplay);
     if ( !canStackCubes ) {
       return nullptr;
     }

@@ -72,9 +72,9 @@ bool BehaviorPlayAnimOnNeedsChange::ShouldGetInBePlayed(BehaviorExternalInterfac
   const bool isSevereExpressed = (_params._need == severeNeedsComponent.GetSevereNeedExpression());
   
   bool shouldSevereNeedBeExpressed = false;
-  auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-  if(needsManager != nullptr){
-    NeedsState& currNeedState = needsManager->GetCurNeedsStateMutable();
+  if(behaviorExternalInterface.HasNeedsManager()){
+    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+    NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
     shouldSevereNeedBeExpressed =
             currNeedState.IsNeedAtBracket(_params._need, NeedBracketId::Critical);
   }

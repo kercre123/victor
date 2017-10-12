@@ -112,40 +112,36 @@ void DevBaseRunnable::UpdateInternal(BehaviorExternalInterface& behaviorExternal
 
   
   
-  auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
-  if( !delegationComponent ) {
+  if(!behaviorExternalInterface.HasDelegationComponent()){
     return;
   }
+  auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
   
   if( _shouldCancelDelegates ) {
-    delegationComponent->CancelDelegates(this);
+    delegationComponent.CancelDelegates(this);
     _shouldCancelDelegates = false;
   }
   
   if( _pendingDelegate != nullptr &&
-      !delegationComponent->IsControlDelegated(this) ) {
+      !delegationComponent.IsControlDelegated(this) ) {
     // TEMP: // TODO:(bn) kevink: I don't think we should pass in the same interface to WantstoBeActivated. Or
     // rather, maybe we can, but then it modifies it for WantsToBeActivatedInternal? Otherwise
     // WantsToBeActivated could do the same things Update can
 
     if( _pendingDelegate->WantsToBeActivated( behaviorExternalInterface ) ) {
-      auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
-      if((delegationComponent != nullptr) &&
-         !delegationComponent->IsControlDelegated(this)) {
+      if(!delegationComponent.IsControlDelegated(this) &&
+         delegationComponent.HasDelegator(this)) {
         
-        auto delegator = delegationComponent->GetDelegator(this).lock();
-        if( delegator != nullptr ) {
-          const bool res = delegator->Delegate(this, _pendingDelegate);
-          if( res ) {
-            // we successfully delegated, so decrement repeat count (if it's negative, that means loop forever)
-            if( _pendingDelegateRepeatCount > 0 ) {
-              _pendingDelegateRepeatCount--;
-            }
-            if( _pendingDelegateRepeatCount == 0 ){
-              _pendingDelegate = nullptr;
-            }
+        auto& delegator = delegationComponent.GetDelegator(this);
+        const bool res = delegator.Delegate(this, _pendingDelegate);
+        if( res ) {
+          // we successfully delegated, so decrement repeat count (if it's negative, that means loop forever)
+          if( _pendingDelegateRepeatCount > 0 ) {
+            _pendingDelegateRepeatCount--;
           }
-          
+          if( _pendingDelegateRepeatCount == 0 ){
+            _pendingDelegate = nullptr;
+          }
         }
       }
     }

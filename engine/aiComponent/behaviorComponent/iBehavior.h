@@ -29,7 +29,7 @@ class BehaviorExternalInterface;
 class BehaviorManager;
 class BehaviorSystemManager;
   
-class IBehavior {
+class IBehavior : private Util::noncopyable {
 public:
   IBehavior(const std::string& idString);
   virtual ~IBehavior(){};

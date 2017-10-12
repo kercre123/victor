@@ -87,13 +87,15 @@ UnlockId RequestGameComponent::IdentifyNextGameTypeToRequest(BehaviorExternalInt
   // Map weight to behavior for unlocked
   std::vector<std::pair<int, UnlockId>> unlockedBehaviors;
   int totalWeight = 0;
-  auto progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent().lock();
-  for(const auto& entry: _gameRequests){
-    if(progressionUnlockComp != nullptr &&
-       progressionUnlockComp->IsUnlocked(entry.second._unlockID)){
-      totalWeight += entry.second._weight;
-      unlockedBehaviors.emplace_back(std::make_pair(totalWeight,
-                                                    entry.first));
+  
+  if(behaviorExternalInterface.HasProgressionUnlockComponent()){
+    auto& progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent();
+    for(const auto& entry: _gameRequests){
+      if(progressionUnlockComp.IsUnlocked(entry.second._unlockID)){
+        totalWeight += entry.second._weight;
+        unlockedBehaviors.emplace_back(std::make_pair(totalWeight,
+                                                      entry.first));
+      }
     }
   }
   

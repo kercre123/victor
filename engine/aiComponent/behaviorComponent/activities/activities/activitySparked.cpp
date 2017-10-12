@@ -453,10 +453,11 @@ ICozmoBehaviorPtr ActivitySparked::GetDesiredActiveBehaviorInternal(BehaviorExte
               getOutAnims.push_back(_sparksSuccessTrigger);
             }
             
-            auto moodManager = behaviorExternalInterface.GetMoodManager().lock();
-            if(moodManager != nullptr){
+            if(behaviorExternalInterface.HasMoodManager()){
               // make sure we don't immediately play frustration upon ending a spark successfully
-              moodManager->TriggerEmotionEvent("SuccessfulSpark", MoodManager::GetCurrentTimeInSeconds());
+              auto& moodManager = behaviorExternalInterface.GetMoodManager();
+              moodManager.TriggerEmotionEvent("SuccessfulSpark",
+                                              MoodManager::GetCurrentTimeInSeconds());
             }
             
           }else if(_sparksFailTrigger != AnimationTrigger::Count){

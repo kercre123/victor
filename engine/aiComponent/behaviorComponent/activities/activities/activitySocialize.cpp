@@ -333,12 +333,12 @@ void ActivitySocialize::PopulatePotentialObjectives(BehaviorExternalInterface& b
 {
   _objectivesLeft.clear();
   
-  auto progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent().lock();
   for( const auto& reqPtr : _potentialObjectives ) {
     // first, check if the requirement is valid (based on unlock)
     if((reqPtr->requiredUnlock != UnlockId::Count) &&
-       (progressionUnlockComp != nullptr) &&
-       !progressionUnlockComp->IsUnlocked( reqPtr->requiredUnlock, true ) ) {
+       behaviorExternalInterface.HasProgressionUnlockComponent() &&
+       !behaviorExternalInterface.GetProgressionUnlockComponent().IsUnlocked(
+                                              reqPtr->requiredUnlock, true ) ) {
       
       PRINT_CH_INFO("Behaviors", "FPSocialize.Start.RequiredObjectiveLocked",
                     "objective %s requires %s, ignoring",

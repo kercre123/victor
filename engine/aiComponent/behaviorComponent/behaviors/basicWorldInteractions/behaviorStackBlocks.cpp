@@ -119,9 +119,9 @@ bool BehaviorStackBlocks::CanUseNonUprightBlocks(BehaviorExternalInterface& beha
   const bool forFreeplay = true;
   bool isRollingUnlocked = true;
   
-  auto progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent().lock();
-  if(progressionUnlockComp != nullptr){
-    isRollingUnlocked = progressionUnlockComp->IsUnlocked(UnlockId::RollCube, forFreeplay);
+  if(behaviorExternalInterface.HasProgressionUnlockComponent()){
+    auto& progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent();
+    isRollingUnlocked = progressionUnlockComp.IsUnlocked(UnlockId::RollCube, forFreeplay);
   }
   
   return isRollingUnlocked || _stackInAnyOrientation;

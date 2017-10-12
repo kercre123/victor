@@ -38,18 +38,11 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AIComponent::AIComponent(Robot& robot)
-: _robot(robot)
-, _suddenObstacleDetected(false)
+AIComponent::AIComponent()
+: _suddenObstacleDetected(false)
 , _aiInformationAnalyzer(new AIInformationAnalyzer() )
-, _behaviorComponent(new BehaviorComponent(robot))
-, _objectInteractionInfoCache(new ObjectInteractionInfoCache(robot))
-, _whiteboard(new AIWhiteboard(robot) )
-, _workoutComponent(new WorkoutComponent(robot) )
-, _doATrickSelector(new DoATrickSelector(robot.GetContext()->GetDataLoader()->GetDoATrickWeightsConfig()))
-, _feedingSoundEffectManager(new FeedingSoundEffectManager())
-, _freeplayDataTracker( new FreeplayDataTracker() )
-, _severeNeedsComponent( new SevereNeedsComponent(robot))
+, _behaviorComponent(new BehaviorComponent())
+, _freeplayDataTracker(new FreeplayDataTracker() )
 {
 }
 
@@ -60,15 +53,28 @@ AIComponent::~AIComponent()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result AIComponent::Init()
+Result AIComponent::Init(Robot& robot)
 {
-  const CozmoContext* context = _robot.GetContext();
+  {
+    _aiComponents.reset(new ComponentWrappers::AIComponentComponents(robot));
+    _objectInteractionInfoCache.reset(new ObjectInteractionInfoCache(robot));
+    _whiteboard.reset(new AIWhiteboard(robot) );
+    _workoutComponent.reset(new WorkoutComponent(robot) );
+    _doATrickSelector.reset(new DoATrickSelector(robot.GetContext()->GetDataLoader()->GetDoATrickWeightsConfig()));
+    _severeNeedsComponent.reset(new SevereNeedsComponent(robot));
+  }
+  
+  
+  const CozmoContext* context = robot.GetContext();
 
   if(context == nullptr ) {
     PRINT_NAMED_WARNING("AIComponent.Init.NoContext", "wont be able to load some componenets. May be OK in unit tests");
   }
   
-  _behaviorComponent->Init(_robot);
+  {
+    _behaviorComponent->Init(BehaviorComponent::GenerateComponents(robot));
+  }
+  
   if(USE_BSM){
     // Toggle flag to "start" the tracking process - legacy assumption that freeeplay is not
     // active on app start
@@ -76,8 +82,8 @@ Result AIComponent::Init()
     _freeplayDataTracker->SetFreeplayPauseFlag(false, FreeplayPauseFlag::OffTreads);
   }
   
-  _requestGameComponent = std::make_unique<RequestGameComponent>(_robot.HasExternalInterface() ? _robot.GetExternalInterface() : nullptr,
-                                                                 _robot.GetContext()->GetDataLoader()->GetGameRequestWeightsConfig());
+  _requestGameComponent = std::make_unique<RequestGameComponent>(robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr,
+                                                                 robot.GetContext()->GetDataLoader()->GetGameRequestWeightsConfig());
   
   // initialize whiteboard
   assert( _whiteboard );
@@ -88,7 +94,7 @@ Result AIComponent::Init()
   
   RobotDataLoader* dataLoader = nullptr;
   if(context){
-    dataLoader = _robot.GetContext()->GetDataLoader();
+    dataLoader = robot.GetContext()->GetDataLoader();
   }
   
 
@@ -114,7 +120,7 @@ Result AIComponent::Update(Robot& robot, std::string& currentActivityName,
                                          std::string& behaviorDebugStr)
 {
   // information analyzer should run before behaviors so that they can feed off its findings
-  _aiInformationAnalyzer->Update(_robot);
+  _aiInformationAnalyzer->Update(robot);
 
   _whiteboard->Update();
   _severeNeedsComponent->Update();

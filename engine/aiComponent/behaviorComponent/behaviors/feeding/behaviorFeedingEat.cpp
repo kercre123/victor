@@ -171,9 +171,9 @@ ICozmoBehavior::Status BehaviorFeedingEat::UpdateInternal_WhileRunning(BehaviorE
   if(!_hasRegisteredActionComplete &&
      (currentTime_s > _timeCubeIsSuccessfullyDrained_sec)){
     _hasRegisteredActionComplete = true;
-    auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-    if(needsManager != nullptr){
-      needsManager->RegisterNeedsActionCompleted(NeedsActionId::Feed);
+    if(behaviorExternalInterface.HasNeedsManager()){
+      auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+      needsManager.RegisterNeedsActionCompleted(NeedsActionId::Feed);
     }
     for(auto& listener: _feedingListeners){
       listener->EatingComplete(behaviorExternalInterface);
@@ -294,9 +294,10 @@ void BehaviorFeedingEat::TransitionToPlacingLiftOnCube(BehaviorExternalInterface
   SET_STATE(PlacingLiftOnCube);
   
   bool isNeedSevere = false;
-  auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-  if(needsManager != nullptr){
-    NeedsState& currNeedState = needsManager->GetCurNeedsStateMutable();
+  if(behaviorExternalInterface.HasNeedsManager()){
+    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+    
+    NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
     isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy,
                                                  NeedBracketId::Critical);
   }
@@ -405,15 +406,15 @@ AnimationTrigger BehaviorFeedingEat::CheckNeedsStateAndCalculateAnimation(Behavi
   bool isFullPostFeeding = false;
   // Eating animation is dependent on both the current and post feeding energy level
   // Use PredictNeedsActionResult to estimate the ending needs bracket
-  auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-  if(needsManager != nullptr){
-    NeedsState& currNeedState = needsManager->GetCurNeedsStateMutable();
+  if(behaviorExternalInterface.HasNeedsManager()){
+    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+    NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
     
     isSeverePreFeeding = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
     isWarningPreFeeding = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Warning);
     
     NeedsState predPostFeedNeed;
-    needsManager->PredictNeedsActionResult(NeedsActionId::Feed, predPostFeedNeed);
+    needsManager.PredictNeedsActionResult(NeedsActionId::Feed, predPostFeedNeed);
     
     isSeverePostFeeding = predPostFeedNeed.IsNeedAtBracket(NeedId::Energy,
                                                            NeedBracketId::Critical);

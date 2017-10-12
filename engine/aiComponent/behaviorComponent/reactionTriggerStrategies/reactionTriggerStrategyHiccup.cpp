@@ -144,10 +144,9 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(BehaviorExtern
     return false;
   }
   
-  auto progressionUnlockComponent = behaviorExternalInterface.GetProgressionUnlockComponent().lock();
   // If the unlock specified in the config is not unlocked then don't hiccup
-  if(progressionUnlockComponent != nullptr &&
-     !progressionUnlockComponent->IsUnlocked(_hiccupsUnlockId))
+  if(behaviorExternalInterface.HasProgressionUnlockComponent() &&
+     !behaviorExternalInterface.GetProgressionUnlockComponent().IsUnlocked(_hiccupsUnlockId))
   {
     ResetHiccups();
     return false;

@@ -31,7 +31,7 @@ namespace Anki {
 namespace Cozmo {
   
   
-class BehaviorHelperComponent{
+class BehaviorHelperComponent : private Util::noncopyable{
 public:
   BehaviorHelperComponent();
   

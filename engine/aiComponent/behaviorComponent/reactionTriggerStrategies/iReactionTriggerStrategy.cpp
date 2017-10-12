@@ -149,9 +149,8 @@ bool IReactionTriggerStrategy::ShouldTriggerBehavior(BehaviorExternalInterface& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IReactionTriggerStrategy::NeedActionCompleted(NeedsActionId needsActionId)
 {
-  auto needsManager = _behaviorExternalInterface.GetNeedsManager().lock();
-  if(needsManager != nullptr){
-    needsManager->RegisterNeedsActionCompleted(needsActionId);
+  if(_behaviorExternalInterface.HasNeedsManager()){
+    _behaviorExternalInterface.GetNeedsManager().RegisterNeedsActionCompleted(needsActionId);
   }
 }
   

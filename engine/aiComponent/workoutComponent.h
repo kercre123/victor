@@ -19,6 +19,9 @@
 #include "clad/types/animationTrigger.h"
 #include "clad/types/behaviorSystem/behaviorObjectives.h"
 #include "json/json.h"
+
+#include "util/helpers/noncopyable.h"
+
 #include <string>
 #include <vector>
 
@@ -29,7 +32,7 @@ class WorkoutComponent;
 class Robot;
 
 // defines a given "workout" including which animations to use and how many lifts to do
-class WorkoutConfig {
+class WorkoutConfig : private Util::noncopyable {
   friend class WorkoutComponent;
 public:
   
@@ -70,7 +73,7 @@ private:
 };
 
 
-class WorkoutComponent
+class WorkoutComponent : private Util::noncopyable
 {
 public:
 
@@ -92,7 +95,7 @@ public:
   
 private:
 
-  using WorkoutList = std::vector< WorkoutConfig >;
+  using WorkoutList = std::vector<std::unique_ptr<WorkoutConfig>>;
   WorkoutList _workouts;
 
   // which workout we are doing, must be set after the constructor is complete

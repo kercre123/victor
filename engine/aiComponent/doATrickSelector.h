@@ -16,6 +16,8 @@
 
 #include "clad/types/unlockTypes.h"
 
+#include "util/helpers/noncopyable.h"
+
 namespace Json {
 class Value;
 }
@@ -27,7 +29,7 @@ namespace Cozmo {
 class ICozmoBehavior;
 class BehaviorExternalInterface;
   
-class DoATrickSelector{
+class DoATrickSelector : private Util::noncopyable{
 public:
   DoATrickSelector(const Json::Value& trickWeightsConfig);
 

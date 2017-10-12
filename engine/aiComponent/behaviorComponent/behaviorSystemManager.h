@@ -36,7 +36,7 @@ class IBehavior;
 
 struct BehaviorRunningInfo;
 
-class BehaviorSystemManager : public IBehaviorRunner
+class BehaviorSystemManager : public IBehaviorRunner, private Util::noncopyable
 {
 public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -44,12 +44,12 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   BehaviorSystemManager();
-  virtual ~BehaviorSystemManager() {};
+  virtual ~BehaviorSystemManager();
   
   // initialize this behavior manager from the given Json config
-  Result InitConfiguration(BehaviorExternalInterface& behaviorExternalInterface,
-                           AsyncMessageGateComponent* asyncMessageComponent,
-                           IBehavior* baseRunnable);
+  Result InitConfiguration(IBehavior* baseRunnable,
+                           BehaviorExternalInterface& behaviorExternalInterface,
+                           AsyncMessageGateComponent* asyncMessageComponent);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //

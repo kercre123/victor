@@ -315,9 +315,10 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(BehaviorExternalInterf
 
   SET_STATE(State::ExaminingFoundObject);
   
-  auto moodManager = behaviorExternalInterface.GetMoodManager().lock();
-  if(moodManager != nullptr){
-    moodManager->TriggerEmotionEvent("FoundObservedObject", MoodManager::GetCurrentTimeInSeconds());
+  if(behaviorExternalInterface.HasMoodManager()){
+    auto& moodManager = behaviorExternalInterface.GetMoodManager();
+    moodManager.TriggerEmotionEvent("FoundObservedObject",
+                                    MoodManager::GetCurrentTimeInSeconds());
   }
   
   ObjectID recentObjectID = *_recentObjects.begin();

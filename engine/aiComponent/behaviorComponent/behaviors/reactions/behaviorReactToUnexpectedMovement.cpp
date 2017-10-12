@@ -44,10 +44,11 @@ bool BehaviorReactToUnexpectedMovement::WantsToBeActivatedBehavior(BehaviorExter
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  auto moodManager = behaviorExternalInterface.GetMoodManager().lock();
-  if(moodManager != nullptr){
+  if(behaviorExternalInterface.HasMoodManager()){
+    auto& moodManager = behaviorExternalInterface.GetMoodManager();
     // Make Cozmo more frustrated if he keeps running into things/being turned
-    moodManager->TriggerEmotionEvent("ReactToUnexpectedMovement", MoodManager::GetCurrentTimeInSeconds());
+    moodManager.TriggerEmotionEvent("ReactToUnexpectedMovement",
+                                    MoodManager::GetCurrentTimeInSeconds());
   }
   
   // Lock the wheels if the unexpected movement is behind us so we don't drive backward and delete the created obstacle

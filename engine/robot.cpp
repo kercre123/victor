@@ -174,7 +174,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _visionComponent( new VisionComponent(*this, _context))
   , _mapComponent(new MapComponent(this))
   , _nvStorageComponent(new NVStorageComponent(*this, _context))
-  , _aiComponent(new AIComponent(*this))
+  , _aiComponent(new AIComponent())
   , _textToSpeechComponent(new TextToSpeechComponent(_context))
   , _objectPoseConfirmerPtr(new ObjectPoseConfirmer(*this))
   , _cubeLightComponent(new CubeLightComponent(*this, _context))
@@ -208,7 +208,10 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
       
   _pose.SetName("Robot_" + std::to_string(_ID));
   _driveCenterPose.SetName("RobotDriveCenter_" + std::to_string(_ID));
-      
+  
+  // initialize AI
+  _aiComponent->Init(*this);
+  
   // Initializes _pose, _poseOrigins, and _worldOrigin:
   Delocalize(false);
   
@@ -251,9 +254,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   // Potentially duplicates some reads like FaceAlbumData
   _nvStorageComponent->GetRobotDataBackupManager().ReadAllBackupDataFromRobot();
 # endif
-
-  // initialize AI
-  _aiComponent->Init();
   
   // Used for CONSOLE_FUNCTION "PlayAnimationByName" above
 #if REMOTE_CONSOLE_ENABLED

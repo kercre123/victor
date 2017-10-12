@@ -17,6 +17,7 @@
 #define protected public
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
@@ -29,28 +30,6 @@
 
 using namespace Anki::Cozmo;
 
-void SetupBSM(BehaviorSystemManager& bsm,
-              std::unique_ptr<Robot>& robot,
-              std::unique_ptr<BehaviorContainer>& bc,
-              std::unique_ptr<BehaviorExternalInterface>& bei,
-              std::unique_ptr<IBehavior>& baseRunnable){
-  TestBehaviorFramework::GenerateCoreBehaviorTestingComponents(robot, bc, bei);
-  
-  bc->Init(*bei, !static_cast<bool>(USE_BSM));
-  
-  baseRunnable = std::make_unique<TestSuperPoweredRunnable>(*bc);
-
-  std::unique_ptr<AsyncMessageGateComponent> gate =
-       std::make_unique<AsyncMessageGateComponent>(
-           robot->HasExternalInterface() ? robot->GetExternalInterface(): nullptr,
-           robot->GetRobotMessageHandler(),
-           robot->GetID());
-
-  
-  bsm.InitConfiguration(*bei, gate.get(), baseRunnable.get());
-  bsm.Update(*bei);
-}
-
 void InjectValidDelegateIntoBSM(BehaviorSystemManager& bsm,
                                 IBehavior* delegator,
                                 IBehavior* delegated){
@@ -62,14 +41,25 @@ void InjectValidDelegateIntoBSM(BehaviorSystemManager& bsm,
 
 TEST(BehaviorSystemManager, TestDelegationVariants)
 {
-  //
-  std::unique_ptr<Robot> robot;
-  std::unique_ptr<BehaviorContainer> bc;
-  std::unique_ptr<BehaviorExternalInterface> bei;
-  std::unique_ptr<IBehavior> baseRunnable;
-  BehaviorSystemManager bsm;
-  SetupBSM(bsm, robot, bc, bei, baseRunnable);
   
+  std::unique_ptr<Robot> robot = TestBehaviorFramework::CreateRobot(1);
+  BehaviorComponent bc;
+  std::unique_ptr<TestSuperPoweredRunnable> baseRunnable;
+  {
+    BehaviorComponent::ComponentsPtr subComponents = BehaviorComponent::GenerateComponents(*robot);
+    baseRunnable = std::make_unique<TestSuperPoweredRunnable>(subComponents->_behaviorContainer);
+    baseRunnable->Init(subComponents->_behaviorExternalInterface);
+    bc.Init(std::move(subComponents),
+            baseRunnable.get());
+    std::string empty;
+    bc.Update(*robot, empty, empty);
+  }
+  
+  
+  BehaviorSystemManager& bsm = bc._components->_behaviorSysMgr;
+  BehaviorExternalInterface& bei = bc._components->_behaviorExternalInterface;
+  BehaviorContainer& behaviorContainer = bc._components->_behaviorContainer;
+
   // Check to make sure that the stack exists and control is appropriately delegated
   ASSERT_TRUE(bsm._runnableStack->IsInStack(baseRunnable.get()));
   IBehavior* runnableDelegating = bsm._runnableStack->GetTopOfStack();
@@ -81,10 +71,10 @@ TEST(BehaviorSystemManager, TestDelegationVariants)
   const int arbitraryDelegationNumber = 100;
   std::vector<std::unique_ptr<TestSuperPoweredRunnable>> bunchOfDelegates;
   for(int i = 0; i < arbitraryDelegationNumber; i++){
-    bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredRunnable>(*bc));
-    bunchOfDelegates.back()->Init(*bei);
+    bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredRunnable>(behaviorContainer));
+    bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
-    bunchOfDelegates.back()->WantsToBeActivatedInternal(*bei);
+    bunchOfDelegates.back()->WantsToBeActivatedInternal(bei);
     InjectValidDelegateIntoBSM(bsm, runnableDelegating, bunchOfDelegates.back().get());
     
     bsm.Delegate(bsm._runnableStack->GetTopOfStack(),

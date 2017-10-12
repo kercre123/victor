@@ -171,9 +171,9 @@ bool IActivityStrategy::WantsToStart(BehaviorExternalInterface& behaviorExternal
   const bool hasMinScoreToStart = (nullptr != _startMoodScorer.get());
   if ( hasMinScoreToStart ) {
     // if we did, get the value, and if the value is not good enough, do not start
-    auto moodManager = behaviorExternalInterface.GetMoodManager().lock();
-    if(moodManager != nullptr){
-      const float curValue = _startMoodScorer->EvaluateEmotionScore( *moodManager );
+    if(behaviorExternalInterface.HasMoodManager()){
+      auto& moodManager = behaviorExternalInterface.GetMoodManager();
+      const float curValue = _startMoodScorer->EvaluateEmotionScore( moodManager );
       const bool isAboveThreshold = FLT_GE(curValue, _requiredMinStartMoodScore);
       if ( !isAboveThreshold ) {
         return false;

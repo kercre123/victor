@@ -145,13 +145,14 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
   
   DelegationComponent delegationComp;
   StateChangeComponent stateChangeComp;
-  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(testRobot,
-                                                                                       testRobot.GetAIComponent(),
-                                                                                       behaviorContainer,
-                                                                                       testRobot.GetBlockWorld(),
-                                                                                       testRobot.GetFaceWorld(),
-                                                                                       stateChangeComp);
-
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface();
+  behaviorExternalInterface->Init(testRobot,
+                                  testRobot.GetAIComponent(),
+                                  behaviorContainer,
+                                  testRobot.GetBlockWorld(),
+                                  testRobot.GetFaceWorld(),
+                                  stateChangeComp);
+  
   ICozmoBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
   newBehavior->Init(*behaviorExternalInterface);
   ASSERT_NE(newBehavior, nullptr);

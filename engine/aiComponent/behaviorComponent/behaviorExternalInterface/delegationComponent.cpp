@@ -125,13 +125,16 @@ void Delegator::EnsureHandleIsUpdated()
 ///////////////////////
 ///////////////////////
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-DelegationComponent::DelegationComponent(Robot& robot,
-                                         BehaviorSystemManager& bsm)
-: _delegator( new Delegator(robot, bsm))
-, _bsm(&bsm)
+DelegationComponent::DelegationComponent()
 {
-  // Create a weak ptr with no strong references to return when delegation is locked
-  _invalidDelegator = std::weak_ptr<Delegator>();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DelegationComponent::Init(Robot& robot, BehaviorSystemManager& bsm)
+{
+  _delegator = std::make_unique<Delegator>(robot, bsm);
+  _bsm = &bsm;
 }
 
 
@@ -210,18 +213,20 @@ void DelegationComponent::CancelSelf(IBehavior* delegatingRunnable)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::weak_ptr<Delegator> DelegationComponent::GetDelegator(IBehavior* delegatingRunnable)
+bool DelegationComponent::HasDelegator(IBehavior* delegatingRunnable)
 {
-  if(USE_BSM){
-    if(_bsm->CanDelegate(delegatingRunnable)){
-      return _delegator;
-    }else{
-      return _invalidDelegator;
-    }
-  }else{
-    return _delegator;
-  }
+  return _bsm->CanDelegate(delegatingRunnable);
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Delegator& DelegationComponent::GetDelegator(IBehavior* delegatingRunnable)
+{
+  DEV_ASSERT(_bsm->CanDelegate(delegatingRunnable),
+             "DelegationComponent.GetDelegator.DelegatingRunnableNotValid");
+  return *_delegator;
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

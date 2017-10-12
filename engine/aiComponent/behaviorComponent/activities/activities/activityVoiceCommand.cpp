@@ -664,10 +664,10 @@ bool ActivityVoiceCommand::HasAppropriateUnlocksForCommand(BehaviorExternalInter
     }
   }
   
-  auto progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent().lock();
   if(requiredID != UnlockId::Count &&
-     progressionUnlockComp != nullptr){
-    return progressionUnlockComp->IsUnlocked(requiredID);
+     behaviorExternalInterface.HasProgressionUnlockComponent() ){
+    auto& progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent();
+    return progressionUnlockComp.IsUnlocked(requiredID);
   }
   
   return true;
@@ -760,9 +760,9 @@ void ActivityVoiceCommand::RemoveSparksForCommand(BehaviorExternalInterface& beh
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityVoiceCommand::CheckRefusalDueToNeeds(BehaviorExternalInterface& behaviorExternalInterface, ChooseNextBehaviorQueue& responseQueue) const
 {
-  auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-  if(needsManager != nullptr){
-    Anki::Cozmo::NeedsState& curNeedsState = needsManager->GetCurNeedsStateMutable();
+  if(behaviorExternalInterface.HasNeedsManager()){
+    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+    Anki::Cozmo::NeedsState& curNeedsState = needsManager.GetCurNeedsStateMutable();
     if(curNeedsState.IsNeedAtBracket(NeedId::Repair, NeedBracketId::Critical))
     {
       BehaviorID whichRefuse = BehaviorID::VC_Refuse_Repair;

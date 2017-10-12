@@ -476,10 +476,10 @@ void BehaviorGuardDog::OnBehaviorDeactivated(BehaviorExternalInterface& behavior
   // Stop light cube animations:
   robot.GetCubeLightComponent().StopAllAnims();
   
-  auto publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
-  if(publicStateBroadcaster != nullptr){
+  if(behaviorExternalInterface.HasPublicStateBroadcaster()){
+    auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
     // Update the public state broadcaster to indicate that Guard Dog is no longer active
-    publicStateBroadcaster->UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
+    publicStateBroadcaster.UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
   }
   _currPublicBehaviorStage = GuardDogStage::Count;
   
@@ -881,10 +881,10 @@ bool BehaviorGuardDog::StartLightCubeAnims(BehaviorExternalInterface& behaviorEx
 void BehaviorGuardDog::UpdatePublicBehaviorStage(BehaviorExternalInterface& behaviorExternalInterface, const GuardDogStage& stage)
 {
   PRINT_NAMED_INFO("GuardDog.UpdatePublicBehaviorStage", "Updating public behavior stage to %s", EnumToString(stage));
-  auto publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
-  if(publicStateBroadcaster != nullptr){
-    publicStateBroadcaster->UpdateBroadcastBehaviorStage(BehaviorStageTag::GuardDog,
-                                                         static_cast<uint8_t>(stage));
+  if(behaviorExternalInterface.HasPublicStateBroadcaster()){
+    auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+    publicStateBroadcaster.UpdateBroadcastBehaviorStage(BehaviorStageTag::GuardDog,
+                                                        static_cast<uint8_t>(stage));
   }
   _currPublicBehaviorStage = stage;
 }

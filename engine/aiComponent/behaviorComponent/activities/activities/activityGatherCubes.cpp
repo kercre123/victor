@@ -59,9 +59,9 @@ Result ActivityGatherCubes::Update_Legacy(BehaviorExternalInterface& behaviorExt
       robotExternalInterface->BroadcastToGame<
          ExternalInterface::BehaviorObjectiveAchieved>(BehaviorObjective::GatheredCubes);
     }**/
-    auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-    if(needsManager != nullptr){
-      needsManager->RegisterNeedsActionCompleted(NeedsActionId::GatherCubes);
+    if(behaviorExternalInterface.HasNeedsManager()){
+      auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+      needsManager.RegisterNeedsActionCompleted(NeedsActionId::GatherCubes);
     }
     _gatherCubesFinished = true;
   }

@@ -178,10 +178,10 @@ void ActivityStrictPriority::GetAllDelegates(std::set<IBehavior*>& delegates) co
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityStrictPriority::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  if(USE_BSM){
-    auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
-    if((delegationComponent != nullptr) &&
-       !delegationComponent->IsControlDelegated(this)){
+  if(USE_BSM &&
+     behaviorExternalInterface.HasDelegationComponent()){
+    auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
+    if(delegationComponent.IsControlDelegated(this)){
       ICozmoBehaviorPtr nextBehavior = GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
       // For activity to be "sticky" for legacy reasons we always need to delegate to something
       if(nextBehavior == nullptr){
@@ -189,10 +189,9 @@ void ActivityStrictPriority::BehaviorUpdate(BehaviorExternalInterface& behaviorE
         _behaviorWait->WantsToBeActivated(behaviorExternalInterface);
       }
       
-      auto delegationWrap = delegationComponent->GetDelegator(this).lock();
-      if((delegationWrap != nullptr) &&
-         (nextBehavior != nullptr)){
-        delegationWrap->Delegate(this, nextBehavior.get());
+      if((nextBehavior != nullptr) &&
+         delegationComponent.HasDelegator(this)){
+        delegationComponent.GetDelegator(this).Delegate(this, nextBehavior.get());
       }
     }
   }else{

@@ -156,9 +156,10 @@ bool BehaviorSinging::WantsToBeActivatedBehavior(BehaviorExternalInterface& beha
   // for deciding when Cozmo should sing
   // Except if the needs system has unlocked a song, we want that to be the
   // next song played
-  auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-  if(needsManager != nullptr){
-    const NeedsState& currNeedState = needsManager->GetCurNeedsState();
+  if(behaviorExternalInterface.HasNeedsManager()){
+    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+    
+    const NeedsState& currNeedState = needsManager.GetCurNeedsState();
     const auto& forcedSong = currNeedState._forceNextSong;
     if (forcedSong == UnlockId::Invalid)
     {

@@ -188,14 +188,13 @@ void IActivity::ReadConfig(BehaviorExternalInterface& behaviorExternalInterface,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IActivity::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) {
   if(USE_BSM){
-    auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
     if((_behaviorChooserPtr != nullptr) &&
-       (delegationComponent != nullptr) &&
-       !delegationComponent->IsControlDelegated(this)){
+       behaviorExternalInterface.HasDelegationComponent() &&
+       !behaviorExternalInterface.GetDelegationComponent().IsControlDelegated(this)){
       ICozmoBehaviorPtr nextBehavior = _behaviorChooserPtr->GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
-      auto delegationWrap = delegationComponent->GetDelegator(this).lock();
-      if(delegationWrap != nullptr){
-        delegationWrap->Delegate(this, nextBehavior.get());
+      auto& delegationComp = behaviorExternalInterface.GetDelegationComponent();
+      if(delegationComp.HasDelegator(this)){
+        delegationComp.GetDelegator(this).Delegate(this, nextBehavior.get());
       }
     }
   }
@@ -312,15 +311,14 @@ void IActivity::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExterna
   _lastChosenInterludeBehavior = nullptr;
   
   
-  auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
   // We're changing what cozmo's doing at a high level, so we don't want to
   // communicate the sparks reward to the user, just pretend we have
-  if(needsManager != nullptr &&
-     needsManager->IsPendingSparksRewardMsg()){
+  if(behaviorExternalInterface.HasNeedsManager() &&
+     behaviorExternalInterface.GetNeedsManager().IsPendingSparksRewardMsg()){
     PRINT_NAMED_INFO("IActivity.OnDeselected.CancelSparksRewardMsg",
                      "Cancelling sparks reward message because ending activity %s",
                      GetIDStr().c_str());
-    needsManager->SparksRewardCommunicatedToUser();
+    behaviorExternalInterface.GetNeedsManager().SparksRewardCommunicatedToUser();
   }
   
   

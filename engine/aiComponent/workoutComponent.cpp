@@ -113,16 +113,16 @@ unsigned int WorkoutConfig::MoodScoreHelper(const Robot& robot, const MoodScorer
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 WorkoutComponent::WorkoutComponent(Robot& robot)
-  : _robot(robot)
+: _robot(robot)
 {
   _currWorkout = _workouts.end();
 }
 
 Result WorkoutComponent::InitConfiguration(const Json::Value& config)
-{  
+{
   for( const auto& workoutJson : config["workouts"] ) {
-    WorkoutConfig workout;
-    Result res = workout.InitConfiguration( workoutJson );
+    std::unique_ptr<WorkoutConfig> workout = std::make_unique<WorkoutConfig>();
+    Result res = workout->InitConfiguration( workoutJson );
     if( res != RESULT_OK ) {
       return res;
     }
@@ -145,15 +145,15 @@ const WorkoutConfig& WorkoutComponent::GetCurrentWorkout() const
 {
   // there should always be a workout
   DEV_ASSERT(_currWorkout != _workouts.end(), "WorkoutComponent.GetCurrentWorkout.NoWorkout");
-  return *_currWorkout;
+  return (*(*_currWorkout).get());
 }
 
 void WorkoutComponent::CompleteCurrentWorkout()
 {
   if( _currWorkout != _workouts.end() ) {
-    const bool hasEmotionEvent = !_currWorkout->_emotionEventOnComplete.empty();
+    const bool hasEmotionEvent = !(*_currWorkout)->_emotionEventOnComplete.empty();
     if( hasEmotionEvent ) {
-      _robot.GetMoodManager().TriggerEmotionEvent(_currWorkout->_emotionEventOnComplete,
+      _robot.GetMoodManager().TriggerEmotionEvent((*_currWorkout)->_emotionEventOnComplete,
                                                   MoodManager::GetCurrentTimeInSeconds());
     }
 
@@ -169,7 +169,7 @@ bool WorkoutComponent::ShouldPlayEightiesMusic()
   if (!_hasComputedIfEightiesMusicShouldPlay) {
     // 80's music should only be played if this is a strong workout, and it should be
     //   pseudo-random with the configured probability.
-    _shouldPlayEightiesMusic = (_currWorkout->GetNumStrongLifts(_robot) > 0) &&
+    _shouldPlayEightiesMusic = ((*_currWorkout)->GetNumStrongLifts(_robot) > 0) &&
                                (_robot.GetRNG().RandDbl() < kEightiesWorkoutMusicProbability);
     
     _hasComputedIfEightiesMusicShouldPlay = true;

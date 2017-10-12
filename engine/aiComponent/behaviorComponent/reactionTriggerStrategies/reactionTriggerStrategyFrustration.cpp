@@ -66,9 +66,9 @@ void ReactionTriggerStrategyFrustration::SetupForceTriggerBehavior(BehaviorExter
 bool ReactionTriggerStrategyFrustration::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   float confidentVal = 0;
-  auto moodManager = behaviorExternalInterface.GetMoodManager().lock();
-  if(moodManager != nullptr){
-    confidentVal = moodManager->GetEmotionValue(EmotionType::Confident);
+  if(behaviorExternalInterface.HasMoodManager()){
+    auto& moodManager = behaviorExternalInterface.GetMoodManager();
+    confidentVal = moodManager.GetEmotionValue(EmotionType::Confident);
   }
   
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

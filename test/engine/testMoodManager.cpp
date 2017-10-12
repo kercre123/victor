@@ -463,12 +463,13 @@ TEST(MoodManager, BehaviorScoring)
   DelegationComponent delegationComp;
   StateChangeComponent stateChangeComp;
 
-  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(testRobot,
-                                                                                       testRobot.GetAIComponent(),
-                                                                                       behaviorContainer,
-                                                                                       testRobot.GetBlockWorld(),
-                                                                                       testRobot.GetFaceWorld(),
-                                                                                       stateChangeComp);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface();
+  behaviorExternalInterface->Init(testRobot,
+                                  testRobot.GetAIComponent(),
+                                  behaviorContainer,
+                                  testRobot.GetBlockWorld(),
+                                  testRobot.GetFaceWorld(),
+                                  stateChangeComp);
   
   // have to alloc the behaviors - they're freed by the chooser
   ICozmoBehaviorPtr testBehaviorReqHappy = behaviorContainer.CreateBehavior(testBehavior1Json);

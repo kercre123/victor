@@ -14,6 +14,9 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorExternalInterface_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorExternalInterface_H__
 
+
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+
 #include "clad/types/behaviorSystem/activityTypes.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "clad/types/offTreadsStates.h"
@@ -44,15 +47,41 @@ class StateChangeComponent;
 namespace Audio {
 class BehaviorAudioComponent;
 }
+
+namespace ComponentWrappers{
+struct BehaviorExternalInterfaceComponents{
+  BehaviorExternalInterfaceComponents(Robot& robot,
+                                      AIComponent& aiComponent,
+                                      const BehaviorContainer& behaviorContainer,
+                                      BlockWorld& blockWorld,
+                                      FaceWorld& faceWorld,
+                                      StateChangeComponent& stateChangeComponent)
+  :_robot(robot)
+  ,_aiComponent(aiComponent)
+  ,_behaviorContainer(behaviorContainer)
+  ,_blockWorld(blockWorld)
+  ,_faceWorld(faceWorld)
+  ,_stateChangeComponent(stateChangeComponent){}
+  
+  Robot&                   _robot;
+  AIComponent&             _aiComponent;
+  const BehaviorContainer& _behaviorContainer;
+  const BlockWorld&        _blockWorld;
+  const FaceWorld&         _faceWorld;
+  StateChangeComponent&    _stateChangeComponent;
+};
+}
   
 class BehaviorExternalInterface {
 public:
-  BehaviorExternalInterface(Robot& robot,
-                            AIComponent& aiComponent,
-                            const BehaviorContainer& behaviorContainer,
-                            BlockWorld& blockWorld,
-                            FaceWorld& faceWorld,
-                            StateChangeComponent& stateChangeComponent);
+  BehaviorExternalInterface();
+  
+  void Init(Robot& robot,
+            AIComponent& aiComponent,
+            const BehaviorContainer& behaviorContainer,
+            BlockWorld& blockWorld,
+            FaceWorld& faceWorld,
+            StateChangeComponent& stateChangeComponent);
   
   void SetOptionalInterfaces(DelegationComponent* delegationComponent,
                              MoodManager* moodManager,
@@ -64,44 +93,48 @@ public:
   
   // Access components which the BehaviorSystem can count on will always exist
   // when making decisions
-  AIComponent&             GetAIComponent()             const { return _aiComponent;}
-  const FaceWorld&         GetFaceWorld()               const { return _faceWorld;}
-  const BlockWorld&        GetBlockWorld()              const { return _blockWorld;}
-  const BehaviorContainer& GetBehaviorContainer()       const { return _behaviorContainer;}
-  StateChangeComponent& GetStateChangeComponent()       const { return _stateChangeComponent;}
+  AIComponent&             GetAIComponent()             const { assert(_beiComponents); return _beiComponents->_aiComponent;}
+  const FaceWorld&         GetFaceWorld()               const { assert(_beiComponents); return _beiComponents->_faceWorld;}
+  const BlockWorld&        GetBlockWorld()              const { assert(_beiComponents); return _beiComponents->_blockWorld;}
+  const BehaviorContainer& GetBehaviorContainer()       const { assert(_beiComponents); return _beiComponents->_behaviorContainer;}
+  StateChangeComponent& GetStateChangeComponent()       const { assert(_beiComponents); return _beiComponents->_stateChangeComponent;}
 
   // Give behaviors/activities access to robot
   // THIS IS DEPRECATED
   // THIS FUNCTION IS SOLEY TO FACILITATE THE TRANISITON BETWEEN COZMO BEHAVIORS
   // AND VICTOR BEHAVIORS
-  Robot& GetRobot() { return _robot;}
-  const Robot& GetRobot() const { return _robot;}
+  Robot& GetRobot() { assert(_beiComponents); return _beiComponents->_robot;}
+  const Robot& GetRobot() const { assert(_beiComponents); return _beiComponents->_robot;}
 
-  // Access components which may or may not exist - the BehaviorSystem should
-  // premise no critical decisions on the existance of these components
-  std::weak_ptr<DelegationComponent>        GetDelegationComponent() const { return _delegationComponent;}
-  std::weak_ptr<PublicStateBroadcaster>     GetRobotPublicStateBroadcaster() const { return _publicStateBroadcaster; }
-  std::weak_ptr<ProgressionUnlockComponent> GetProgressionUnlockComponent() const { return _progressionUnlockComponent; }
-  std::weak_ptr<MoodManager>                GetMoodManager()  const { return _moodManager;}
-  std::weak_ptr<NeedsManager>               GetNeedsManager() const { return _needsManager;}
+  // Access components which may or may not exist - you must call
+  // has before get or you may hit a nullptr assert
+  inline bool HasDelegationComponent() const { return _delegationComponent != nullptr;}
+  inline DelegationComponent& GetDelegationComponent() const {assert(_delegationComponent); return *_delegationComponent;}
+  
+  inline bool HasPublicStateBroadcaster() const { return _publicStateBroadcaster != nullptr;}
+  PublicStateBroadcaster& GetRobotPublicStateBroadcaster() const {assert(_publicStateBroadcaster); return *_publicStateBroadcaster;}
+  
+  inline bool HasProgressionUnlockComponent() const { return _progressionUnlockComponent != nullptr;}
+  ProgressionUnlockComponent& GetProgressionUnlockComponent() const {assert(_progressionUnlockComponent); return *_progressionUnlockComponent;}
+  
+  inline bool HasMoodManager() const { return _moodManager != nullptr;}
+  MoodManager& GetMoodManager()  const {assert(_moodManager); return *_moodManager;}
+  
+  inline bool HasNeedsManager() const { return _needsManager != nullptr;}
+  NeedsManager& GetNeedsManager() const {assert(_needsManager); return *_needsManager;}
 
   // Util functions
   OffTreadsState GetOffTreadsState() const;
   Util::RandomGenerator& GetRNG();
 
 private:
-  Robot&                                      _robot;
-  AIComponent&                                _aiComponent;
-  const BehaviorContainer&                    _behaviorContainer;
-  const FaceWorld&                            _faceWorld;
-  const BlockWorld&                           _blockWorld;
-  StateChangeComponent&                       _stateChangeComponent;
+  std::unique_ptr<ComponentWrappers::BehaviorExternalInterfaceComponents> _beiComponents;
   
-  std::shared_ptr<DelegationComponent>        _delegationComponent;
-  std::shared_ptr<MoodManager>                _moodManager;
-  std::shared_ptr<NeedsManager>               _needsManager;
-  std::shared_ptr<ProgressionUnlockComponent> _progressionUnlockComponent;
-  std::shared_ptr<PublicStateBroadcaster>     _publicStateBroadcaster;
+  DelegationComponent*        _delegationComponent;
+  MoodManager*                _moodManager;
+  NeedsManager*               _needsManager;
+  ProgressionUnlockComponent* _progressionUnlockComponent;
+  PublicStateBroadcaster*     _publicStateBroadcaster;
 
 };
 

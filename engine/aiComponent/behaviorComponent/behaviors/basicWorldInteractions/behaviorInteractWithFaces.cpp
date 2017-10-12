@@ -161,9 +161,9 @@ ICozmoBehavior::Status BehaviorInteractWithFaces::UpdateInternal_WhileRunning(Be
       BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
       StopActing();
       
-      auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
-      if(needsManager != nullptr){
-        needsManager->RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
+      if(behaviorExternalInterface.HasNeedsManager()){
+        auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+        needsManager.RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
       }
     }
   }
@@ -260,10 +260,11 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction(BehaviorExternalInte
         // was). So, see if there is a new "best face", and if so, track that one. This will only run if a new
         // face is observed.
 
-        auto moodManager = behaviorExternalInterface.GetMoodManager().lock();
-        if(moodManager != nullptr){
+        if(behaviorExternalInterface.HasMoodManager()){
           // increase frustration to avoid loops
-          moodManager->TriggerEmotionEvent("InteractWithFaceRetry", MoodManager::GetCurrentTimeInSeconds());
+          auto& moodManager = behaviorExternalInterface.GetMoodManager();
+          moodManager.TriggerEmotionEvent("InteractWithFaceRetry",
+                                          MoodManager::GetCurrentTimeInSeconds());
         }
         
         {
@@ -397,15 +398,15 @@ void BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent(BehaviorExternal
 {
   DEBUG_SET_STATE(TriggerEmotionEvent);
 
-  auto moodManager = behaviorExternalInterface.GetMoodManager().lock();
-  if(moodManager != nullptr){
+  if(behaviorExternalInterface.HasMoodManager()){
+    auto& moodManager = behaviorExternalInterface.GetMoodManager();
     const Vision::TrackedFace* face = behaviorExternalInterface.GetFaceWorld().GetFace( _targetFace );
     
     if( nullptr != face && face->HasName() ) {
-      moodManager->TriggerEmotionEvent("InteractWithNamedFace", MoodManager::GetCurrentTimeInSeconds());
+      moodManager.TriggerEmotionEvent("InteractWithNamedFace", MoodManager::GetCurrentTimeInSeconds());
     }
     else {
-      moodManager->TriggerEmotionEvent("InteractWithUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
+      moodManager.TriggerEmotionEvent("InteractWithUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
     }
   }
 }

@@ -63,9 +63,9 @@ BehaviorCantHandleTallStack::BehaviorCantHandleTallStack(const Json::Value& conf
 bool BehaviorCantHandleTallStack::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   const bool forFreeplay = true;
-  auto progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent().lock();
-  if(progressionUnlockComp!= nullptr){
-    if(!progressionUnlockComp->IsUnlocked(UnlockId::KnockOverThreeCubeStack, forFreeplay)){
+  if(behaviorExternalInterface.HasProgressionUnlockComponent()){
+    auto& progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent();
+    if(!progressionUnlockComp.IsUnlocked(UnlockId::KnockOverThreeCubeStack, forFreeplay)){
       UpdateTargetStack(behaviorExternalInterface);
       if(auto tallestStack = _currentTallestStack.lock()){
         const bool tallEnoughStack = tallestStack->GetStackHeight() >= _minStackHeight;

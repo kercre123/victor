@@ -39,7 +39,7 @@ struct GameRequestData{
   int _weight;
 };
   
-class RequestGameComponent{
+class RequestGameComponent : private Util::noncopyable{
 public:
   RequestGameComponent(IExternalInterface* robotExternalInterface,
                        const Json::Value& requestGameWeights);

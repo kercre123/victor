@@ -31,7 +31,7 @@ namespace Cozmo {
 class Robot;
 
 // Interface for the container and logic associated with holding and choosing behaviors
-class IBehaviorChooser : public IBehavior, private Util::noncopyable
+class IBehaviorChooser : public IBehavior
 {
 public:
 

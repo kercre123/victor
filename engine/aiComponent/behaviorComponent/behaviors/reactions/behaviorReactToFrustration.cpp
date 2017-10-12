@@ -109,9 +109,9 @@ void BehaviorReactToFrustration::AnimationComplete(BehaviorExternalInterface& be
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   if( !_finalEmotionEvent.empty() ) {
-    auto moodManager = behaviorExternalInterface.GetMoodManager().lock();
-    if(moodManager != nullptr){
-      moodManager->TriggerEmotionEvent(_finalEmotionEvent, currTime_s);
+    if(behaviorExternalInterface.HasMoodManager()){
+      auto& moodManager = behaviorExternalInterface.GetMoodManager();
+      moodManager.TriggerEmotionEvent(_finalEmotionEvent, currTime_s);
     }
   }
 

@@ -29,15 +29,17 @@ namespace Cozmo {
 class BehaviorSystemManager;
 class IBehavior;
 
-class StateChangeComponent {
+class StateChangeComponent : public IBehaviorMessageSubscriber, private Util::noncopyable {
 public:
-  StateChangeComponent(){}; // for tests
-  StateChangeComponent(BehaviorComponent& behaviorComponent);
+  StateChangeComponent();
   virtual ~StateChangeComponent(){};
   
-  void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const;
-  void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const;
-  void SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const;
+  void Init(IBehaviorMessageSubscriber& messageSubscriber);
+
+  
+  virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const override;
+  virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const override;
+  virtual void SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const override;
 
   const std::vector<const GameToEngineEvent>& GetGameToEngineEvents() const   { return _gameToEngineEvents;}
   const std::vector<const EngineToGameEvent>& GetEngineToGameEvents() const   { return _engineToGameEvents;}
@@ -55,7 +57,7 @@ protected:
   std::vector<ExternalInterface::RobotCompletedAction> _actionsCompletedThisTick;
   
 private:
-  std::unique_ptr<BehaviorComponent> _behaviorComponent;
+  IBehaviorMessageSubscriber* _messageSubscriber;
   
 };
   
