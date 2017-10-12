@@ -7,6 +7,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.IO.IsolatedStorage;
 
 /// <summary>
 /// Add managers to this object by calling
@@ -590,8 +591,9 @@ public class StartupManager : MonoBehaviour {
         if (File.Exists(toPath + assetPath)) {
           diskBytes = File.ReadAllBytes(toPath + assetPath);
         }
-      } catch (Exception e) {
-        _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles,0);
+      }
+      catch (Exception e) {
+        _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles, 0);
         Debug.Log("Exception checking asset hash: " + e.ToString());
         yield break;
       }
@@ -605,8 +607,9 @@ public class StartupManager : MonoBehaviour {
             // data on disk is equal to data in this app bundle
             hashMatches = true;
           }
-        } catch (Exception e) {
-          _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles,1);
+        }
+        catch (Exception e) {
+          _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles, 1);
           Debug.Log("Exception checking asset hash: " + e.ToString());
           yield break;
         }
@@ -630,7 +633,7 @@ public class StartupManager : MonoBehaviour {
       Directory.CreateDirectory(toPath);
     }
     catch (Exception e) {
-      _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles,2);
+      _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles, 2);
       Debug.Log("There was an exception extracting the resource files: " + e.ToString());
       yield break;
     }
@@ -640,7 +643,7 @@ public class StartupManager : MonoBehaviour {
     yield return resourcesWWW;
 
     if (!string.IsNullOrEmpty(resourcesWWW.error)) {
-      _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles,3);
+      _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles, 3);
       Debug.Log("Error loading resources.txt: " + resourcesWWW.error);
       yield break;
     }
@@ -651,14 +654,15 @@ public class StartupManager : MonoBehaviour {
     foreach (string fileName in files) {
       if (fileName.Contains(".")) {
         filesToLoad.Add(fileName);
-      } else {
+      }
+      else {
         // Assume this is a directory
         try {
           Directory.CreateDirectory(toPath + fileName);
         }
         catch (Exception e) {
           _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorDiskFull);
-          Debug.Log("Error extracting file: " + e.ToString());
+          Debug.Log("Error creating directory - " + fileName + " : " + e.ToString());
           yield break;
         }
       }
@@ -720,17 +724,38 @@ public class StartupManager : MonoBehaviour {
   private bool ExtractOneFile(WWW www, string toPath) {
     if (!string.IsNullOrEmpty(www.error)) {
       _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorDiskFull);
-      Debug.Log("Error extracting file: " + www.error);
+      Debug.Log("Error extracting file - streaming asset error: " + www.error);
       return false;
     }
 
+    bool retryOnce = false;
     try {
       File.WriteAllBytes(toPath, www.bytes);
     }
+    catch (IsolatedStorageException ise) {
+      // This exception sometimes gets thrown during the first run on an Android 8.0 device, and supposedly indicates that
+      // the intended file cannot be found. The file does in fact exist at the correct location, and on second run the app
+      // extracts everything fine. To avoid showing an error to the user and making them restart the app, we'll retry the
+      // write one time.
+      retryOnce = true;
+      Debug.Log("First attempt to extract file failed\n " + ise.ToString());
+    }
     catch (Exception e) {
       _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorDiskFull);
-      Debug.Log("Error extracting file: " + e.ToString());
+      Debug.Log("Extracting file - unknown error: " + e.ToString());
       return false;
+    }
+
+    if (retryOnce) {
+      try {
+        Debug.Log("Retrying file extract " + toPath);
+        File.WriteAllBytes(toPath, www.bytes);
+      }
+      catch (Exception e) {
+        _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorDiskFull);
+        Debug.Log("File extract retry failed!\n" + e.ToString());
+        return false;
+      }
     }
 
     www.Dispose();

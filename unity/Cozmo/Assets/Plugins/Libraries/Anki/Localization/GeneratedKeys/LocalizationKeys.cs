@@ -339,6 +339,14 @@ public static class LocalizationKeys {
   public const string kCodeLabPlayNowModalStopButtonLabel = "codeLab.playNowModal.stopButtonLabel";
   public const string kCodeLabPlayNowModalInstructionsLabel = "codeLab.playNowModal.instructionsLabel";
   public const string kCodeLabPlayNowModalSeeInsideButtonLabel = "codeLab.playNowModal.seeInsideButtonLabel";
+  public const string kCodeLabRemixConfirmDialogDialogTitle = "codeLab.remixConfirmDialog.dialogTitle";
+  public const string kCodeLabRemixConfirmDialogSaveProjectAsRemixPrompt = "codeLab.remixConfirmDialog.saveProjectAsRemixPrompt";
+  public const string kCodeLabRemixConfirmDialogSaveRemixButtonLabel = "codeLab.remixConfirmDialog.saveRemixButtonLabel";
+  public const string kCodeLabRemixConfirmDialogCancelButtonLabel = "codeLab.remixConfirmDialog.cancelButtonLabel";
+  public const string kCodeLabSaveModifiedSampleProjectAsRemixDialogDialogTitle = "codeLab.saveModifiedSampleProjectAsRemixDialog.dialogTitle";
+  public const string kCodeLabSaveModifiedSampleProjectAsRemixDialogSaveAsRemixPrompt = "codeLab.saveModifiedSampleProjectAsRemixDialog.saveAsRemixPrompt";
+  public const string kCodeLabSaveModifiedSampleProjectAsRemixDialogDiscardChangesButtonLabel = "codeLab.saveModifiedSampleProjectAsRemixDialog.discardChangesButtonLabel";
+  public const string kCodeLabRemixNewProjectNameStartsWith = "codeLab.remixNewProject.nameStartsWith";
   public const string kCodeLabSampleProject_DriveInSquareProjectName = "codeLabSampleProject_DriveInSquare.projectName";
   public const string kCodeLabSampleProject_RainbowBackpackProjectName = "codeLabSampleProject_RainbowBackpack.projectName";
   public const string kCodeLabSampleProject_DrivingAndSneezingProjectName = "codeLabSampleProject_DrivingAndSneezing.projectName";
@@ -609,14 +617,16 @@ public static class LocalizationKeys {
   public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_round = "codeLabGlossary.block_definitions.description.operator_round";
   public const string kCodeLabGlossaryBlock_definitionsTitleOperator_mathop = "codeLabGlossary.block_definitions.title.operator_mathop";
   public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_mathop = "codeLabGlossary.block_definitions.description.operator_mathop";
-  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_play_animation_by_name = "codeLabGlossary.block_definitions.title.Cozmo_play_animation_by_name";
-  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_play_animation_by_name = "codeLabGlossary.block_definitions.description.Cozmo_play_animation_by_name";
-  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_play_animation_by_triggername = "codeLabGlossary.block_definitions.title.Cozmo_play_animation_by_triggername";
-  public const string kCodeLabGlossaryBlock_definitionsCozmo_play_animation_by_triggername = "codeLabGlossary.block_definitions.Cozmo_play_animation_by_triggername";
-  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_sound_play = "codeLabGlossary.block_definitions.title.Cozmo_sound_play";
-  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_sound_play = "codeLabGlossary.block_definitions.description.Cozmo_sound_play";
-  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_sound_stop = "codeLabGlossary.block_definitions.title.Cozmo_sound_stop";
-  public const string kCodeLabGlossaryBlock_definitionsCozmo_sound_stop = "codeLabGlossary.block_definitions.Cozmo_sound_stop";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_play_animation_by_name = "codeLabGlossary.block_definitions.title.cozmo_play_animation_by_name";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_play_animation_by_name = "codeLabGlossary.block_definitions.description.cozmo_play_animation_by_name";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_play_animation_by_triggername = "codeLabGlossary.block_definitions.title.cozmo_play_animation_by_triggername";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_play_animation_by_triggername = "codeLabGlossary.block_definitions.description.cozmo_play_animation_by_triggername";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_sound_play = "codeLabGlossary.block_definitions.title.cozmo_sound_play";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_sound_play = "codeLabGlossary.block_definitions.description.cozmo_sound_play";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_sound_play_and_wait = "codeLabGlossary.block_definitions.title.cozmo_sound_play_and_wait";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_sound_play_and_wait = "codeLabGlossary.block_definitions.description.cozmo_sound_play_and_wait";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_sound_stop = "codeLabGlossary.block_definitions.title.cozmo_sound_stop";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_sound_stop = "codeLabGlossary.block_definitions.description.cozmo_sound_stop";
 
   #endregion
 
@@ -631,6 +641,7 @@ public static class LocalizationKeys {
   public const string kCodeLabVerticalANIMATION_SDK_BLOCK = "codeLabVertical.ANIMATION_SDK_BLOCK";
   public const string kCodeLabVerticalANIMATION_TRIGGER_SDK_BLOCK = "codeLabVertical.ANIMATION_TRIGGER_SDK_BLOCK";
   public const string kCodeLabVerticalPLAY_SOUND = "codeLabVertical.PLAY_SOUND";
+  public const string kCodeLabVerticalPLAY_SOUND_AND_WAIT = "codeLabVertical.PLAY_SOUND_AND_WAIT";
   public const string kCodeLabVerticalSTOP_SOUND = "codeLabVertical.STOP_SOUND";
   public const string kCodeLabVerticalDOCK_WITH_CUBE = "codeLabVertical.DOCK_WITH_CUBE";
   public const string kCodeLabVerticalDOCK_WITH_CUBE_X = "codeLabVertical.DOCK_WITH_CUBE_X";
