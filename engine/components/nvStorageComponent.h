@@ -51,7 +51,7 @@ class NVStorageComponent : private Util::noncopyable
 public: 
 
   NVStorageComponent(Robot& inRobot, const CozmoContext* context);
-  virtual ~NVStorageComponent() {};
+  virtual ~NVStorageComponent();
   
   // Get the maximum number of bytes that can be saved for the given tag
   u32 GetMaxSizeForEntryTag(NVStorage::NVEntryTag tag);

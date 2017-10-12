@@ -190,6 +190,11 @@ NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* conte
 
 }
 
+NVStorageComponent::~NVStorageComponent()
+{
+  _signalHandles.clear();
+}
+
 void NVStorageComponent::InitSizeTable() {
   
   // Compute sizes for non-factory entries
