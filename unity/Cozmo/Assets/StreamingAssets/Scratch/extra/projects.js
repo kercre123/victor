@@ -13,28 +13,40 @@
     setText('#app-title', $t('codeLab.projects.modalTitle'));
 
     setText('#tutorial-label', $t('codeLab.projects.tutorialLabel'));
-    setText('#new-project-label', $t('codeLab.projects.newProjectButtonLabel'));
+    setText('#new-project-label-horizontal', $t('codeLab.projects.newHorizontalProjectButtonLabel'));
+    setText('#new-project-label-vertical', $t('codeLab.projects.newVerticalProjectButtonLabel'));
 
     setText('#prototype-sample-project .project-type', $t('codeLab.projects.projectType.sampleProject'));
-    setText('#prototype-user-project .project-type', $t('codeLab.projects.projectType.personalProject'));
+    setText('#prototype-user-project .project-type', $t('codeLab.projects.projectType.myProject'));
 
-    setText('#featured-tab', $t('codeLab.projects.featuredTab.title'));
-    setText('#sandbox-tab', $t('codeLab.projects.sandboxTab.title'));
-    setText('#constructor-tab', $t('codeLab.projects.constructorTab.title'));
+    setText('#featured-projects-tab', $t('codeLab.projects.featuredTab.title'));
+    setText('#horizontal-projects-tab', $t('codeLab.projects.horizontalTab.title'));
+    setText('#vertical-projects-tab', $t('codeLab.projects.verticalTab.title'));
+
+    setText('#horizontal-tab-hero .tab-hero-title', $t('codeLab.projects.horizontalTab.horizontalTabHeroTitle'));
+    setText('#horizontal-tab-hero .tab-hero-detail', $t('codeLab.projects.horizontalTab.horizontalTabHeroDetail'));
+
+    setText('#vertical-tab-hero .tab-hero-title', $t('codeLab.projects.verticalTab.verticalTabHeroTitle'));
+    setText('#vertical-tab-hero .tab-hero-detail', $t('codeLab.projects.verticalTab.verticalTabHeroDetail'));
+
+    setText('#featured-tab-hero .tab-hero-title', $t('codeLab.projects.featuredTab.featuredTabHeroTitle'));
+    setText('#featured-tab-hero .tab-hero-detail', $t('codeLab.projects.featuredTab.featuredTabHeroDetail'));
+
   }
 
 
+  /**
+   * Registers page event handlers
+   * @returns {void}
+   */
   function registerEvents(){
 
     window.addEventListener('DOMContentLoaded', function() {
       // set localization strings after document body has been parsed
       setLocalizedText();
 
-      // start rendering projects
-      CozmoAPI.getProjects('window.renderProjects');
-
-      // FOR DEV ONLY - DO NOT TURN ON IN COMMIT
-      // _devLoadProjects();
+      // decide which projects tab to display first and load it
+      setDefaultTab();
     });
 
     // register main click handler for the document
@@ -79,6 +91,11 @@
         playClickSound = false;
         handleSampleProjectClick(typeElem.dataset.uuid);
         break;
+      case 'load-featured-project':
+        // we play the click sound before calling unity to make sure sound plays on android
+        playClickSound = false;
+        handleFeaturedProjectClick(typeElem.dataset.uuid);
+        break;
       case 'load-user-project':
         // we play click the sound before calling unity to make sure sound plays on android
         playClickSound = false;
@@ -94,6 +111,9 @@
         playClickSound = false;
         handleTutorialLinkClick(typeElem);
         break;
+      case 'project-tab':
+        switchProjectTab(typeElem);
+        break;
 
       default:
         playClickSound = false;
@@ -104,7 +124,97 @@
     }
   }
 
+  /**
+   * Chooses first projects tab to display based on value of "projects" URL parameter
+   * @returns {void}
+   */
+  function setDefaultTab() {
+    var param = window.getUrlVar('projects');
+    var tabElem = null;
 
+    if (param) {
+      var tabId = param + '-projects-tab';
+      tabElem = document.querySelector('#' + tabId);
+    }
+
+    // default to vertical for now
+    // TODO Change default to featured
+    if (!tabElem) {
+      tabElem = document.querySelector('#vertical-projects-tab');
+    }
+
+    switchProjectTab(tabElem);
+  }
+
+
+  /**
+   * Switches between views of featured, horizontal, and vertical projects
+   * @param {HTMLElement} tabElem - the element representing the tab to be selected
+   * @returns {void}
+   */
+  function switchProjectTab(tabElem) {
+    var projectsElem = document.querySelector('#projects');
+
+    var tabId = tabElem.getAttribute('id').replace("#", "").replace("-projects-tab", "");
+    window.Unity.call({command: "cozmoSwitchProjectTab", argString: tabId});
+
+    if (tabElem.classList.contains('tab-selected')) {
+      return;
+    } else {
+      // update selected state of tabs
+      var oldSelected = tabElem.parentNode.querySelector('.tab-selected');
+      if (oldSelected) {
+        oldSelected.classList.remove('tab-selected');
+      }
+      tabElem.classList.add('tab-selected');
+
+      projectsElem.className = tabElem.getAttribute('id');
+
+      // load projects for new tab
+      loadProjects();
+    }
+  }
+
+
+  /**
+   * Loads project data from unity app or as simulated unity webview in a normal browser
+   * @returns {void}
+   */
+  function loadProjects() {
+
+    if (window.isDev()){
+      // dev: simulate this page as a webview in Unity
+      _devLoadProjects();
+    } else {
+      // request project list from Unity
+      CozmoAPI.getProjects('window.renderProjects');
+    }
+  }
+
+  function resetProjectsScroll() {
+    var bdElem = document.querySelector('#projects .bd');
+    bdElem.scrollLeft = 0;
+  }
+
+
+  /**
+   * Fetches the name of the selected projects tab
+   * @returns {String|null} 'featured', 'horizontal', 'vertical'
+   */
+  function getSelectedProjectTabName() {
+    var selectedProjectTab = document.querySelector('#project-tabs .tab-selected');
+    if (selectedProjectTab) {
+      return selectedProjectTab.getAttribute('id').split('-')[0];
+    } else {
+      return null;
+    }
+  }
+
+
+  /**
+   * Opens confirmation modal when user signals to close the projects page
+   * @returns {void}
+   */
   function handleClosePage() {
     // open a dialog confirming that they want to exit the Code Lab
     ModalConfirm.open({
@@ -142,6 +252,18 @@
       window.player.play('click');
     }
     CozmoAPI.openSampleProject(uuid);
+  }
+
+  /**
+   * Handles notifying Unity that the user wants to load a featured project
+   * @returns {void}
+   */
+  function handleFeaturedProjectClick(uuid) {
+    // Play the click sound before calling unity to insure it is played on Android
+    if (window.player) {
+      window.player.play('click');
+    }
+    CozmoAPI.openFeaturedProject(uuid);
   }
 
   /**
@@ -204,33 +326,76 @@
   // **********************
 
   /**
+   * Removes user and sample project cards from display
+   * @returns {void}
+   */
+  function clearProjects() {
+    var projectList = document.querySelector('#projects-list');
+    var projects = projectList.children;
+
+    resetProjectsScroll();
+
+    // skip the "create new project" and divider elements
+    var nextProject = projects[0];
+    while (nextProject) {
+      var curProject = nextProject;
+      nextProject = curProject.nextSibling;
+
+      // do not remove th new project button
+      if (curProject.nodeType === Node.TEXT_NODE || !curProject.classList.contains('project-new')) {
+        curProject.parentNode.removeChild(curProject);
+      }
+    }
+  }
+
+
+  /**
    * Renders cards for user and sample projects
    * @param {Array} userProjects - array of user projects to render
    * @param {Array} sampleProjects - array of sample projects to render
    */
   window.renderProjects = function(userProjectsStr, sampleProjectsStr) {
+    // clear any already rendered projects
+    clearProjects();
+
+    var projectTabName = getSelectedProjectTabName();
     var projectList = document.querySelector('#projects-list');
     var i, card;
 
     // render user projects and add them to the UI
-    var userProjects = JSON.parse(userProjectsStr);
-    var sampleProjects = JSON.parse(sampleProjectsStr);
 
-    if (Array.isArray(userProjects)) {
-      for(i = 0; i < userProjects.length; i++) {
-        card = makeUserProjectCard(userProjects[i], i);
-        projectList.appendChild(card);
+    if (projectTabName === 'featured') {
+      // featured projects
+      var featuredProjects = JSON.parse(userProjectsStr);
+      if (Array.isArray(featuredProjects)) {
+        for(i = 0; i < featuredProjects.length; i++) {
+          card = makeFeaturedProjectCard(featuredProjects[i]);
+          projectList.appendChild(card);
+        }
       }
-    }
+    } else {
+      // horizontal or vertical projects
+      var userProjects = JSON.parse(userProjectsStr);
+      var sampleProjects = JSON.parse(sampleProjectsStr);
 
-    // render sample projects and add them to the UI
-    if (Array.isArray(sampleProjects)) {
-      for(i = 0; i < sampleProjects.length; i++) {
-        card = makeSampleProjectCard(sampleProjects[i]);
-        projectList.appendChild(card);
+      // render user projects and add them to UI
+      if (Array.isArray(userProjects)) {
+        for(i = 0; i < userProjects.length; i++) {
+          card = makeUserProjectCard(userProjects[i], i);
+          projectList.appendChild(card);
+        }
+      }
+
+      // render sample projects and add them to the UI
+      if (Array.isArray(sampleProjects)) {
+        for(i = 0; i < sampleProjects.length; i++) {
+          card = makeSampleProjectCard(sampleProjects[i]);
+          projectList.appendChild(card);
+        }
       }
     }
   };
+
 
 
   /**
@@ -293,7 +458,8 @@
     title.textContent = projectData.ProjectName;
 
     // set color of puzzle pieces on background card based on order position
-    var cardUrl = 'images/framing_widgetBackground_player' + ((order % 3) + 1) + '.svg';
+    var tabName = getSelectedProjectTabName();
+    var cardUrl = 'images/framing_cardMyProject0' + ((order % 3) + 1) + '_'+tabName+'.svg';
     var card = project.querySelector('.project-card');
     card.setAttribute('src', cardUrl);
     card.addEventListener('load', function(){
@@ -302,6 +468,45 @@
 
       // if title is unusually large, add a class to reduce the font
       _shrinkLongProjectTitle(title, project);
+    });
+
+    return project;
+  }
+
+
+  /**
+   * Creates DOM element for a featured project card
+   * @param {Object} projectData - fields about the project
+   * @returns {HTMLElement} returns unattached DOM element for featured project card
+   */
+  function makeFeaturedProjectCard(projectData) {
+    var project = document.querySelector('#prototype-featured-project').cloneNode(true);
+    project.removeAttribute('id');
+
+    // add the project data to the element
+    setProjectData(project, projectData);
+
+    // set the project title to the localized name
+    var title = project.querySelector('.project-title');
+    title.textContent = $t(projectData.ProjectName);
+    title.style.color = projectData.FeaturedProjectTitleTextColor;
+
+    // set the project description to the localized name
+    var description = project.querySelector('.project-description');
+    description.textContent = $t(projectData.FeaturedProjectDescription);
+
+    var projectsUI = document.querySelector('#projects');
+
+    // set color of puzzle pieces on background card based on order position
+    var cardUrl = 'images/framing_card' + projectData.FeaturedProjectImageName + '_feat.svg';
+    var card = project.querySelector('.project-card');
+    card.setAttribute('src', cardUrl);
+    card.addEventListener('load', function(){
+      // show the card once the background has loaded
+      project.style.display = 'inline-block';
+
+      // show the entire Projects UI when the first featured project is ready to be shown
+      projectsUI.style.visibility = 'visible';
     });
 
     return project;
@@ -384,20 +589,40 @@
    */
   var CozmoAPI = function(){
 
+    function _getIsVertical() {
+      var projectTabName = getSelectedProjectTabName();
+      var isVertical = (projectTabName === 'vertical');
+      return isVertical;
+    }
+
     function getProjects(callbackName) {
-      window.getCozmoUserAndSampleProjectLists(callbackName, false);
+      var projectTabName = getSelectedProjectTabName();
+      if (projectTabName == 'featured') {
+        // render nothing until there are featured projects
+        window.getCozmoFeaturedProjectList(callbackName);
+      } else {
+        var isVertical = _getIsVertical();
+        window.getCozmoUserAndSampleProjectLists(callbackName, isVertical);
+      }
     }
 
     function createNewProject() {
-      window.requestToCreateCozmoProject(false);
+      var isVertical = _getIsVertical();
+      window.requestToCreateCozmoProject(isVertical);
     }
 
     function openUserProject(uuid) {
-      window.requestToOpenCozmoUserProject(uuid, false);
+      var isVertical = _getIsVertical();
+      window.requestToOpenCozmoUserProject(uuid, isVertical);
     }
 
     function openSampleProject(uuid) {
-      window.requestToOpenCozmoSampleProject(uuid, false);
+      var isVertical = _getIsVertical();
+      window.requestToOpenCozmoSampleProject(uuid, isVertical);
+    }
+
+    function openFeaturedProject(uuid) {
+      window.requestToOpenCozmoFeaturedProject(uuid);
     }
 
     function deleteProject(uuid) {
@@ -418,6 +643,7 @@
       createNewProject: createNewProject,
       openUserProject: openUserProject,
       openSampleProject: openSampleProject,
+      openFeaturedProject: openFeaturedProject,
       deleteProject: deleteProject,
       closeCodeLab: closeCodeLab
     };
@@ -434,20 +660,39 @@
    */
   function _devLoadProjects() {
 
-    getJSON('../sample-projects.json', function(sampleProjects) {
-      // copy 3 of the sample projects and render them as user projects
-      var userProjects = sampleProjects.slice(0,3);
+    var tabName = getSelectedProjectTabName();
+    if (tabName === 'featured') {
+      // renderFeaturedProjects();
 
-      // deep copy the fake user projects so that translations of sample projects are not effected
-      userProjects = JSON.parse(JSON.stringify(userProjects));
+      getJSON('../featured-projects.json', function(featuredProjects) {
 
-      // translate the sample project names
-      for (var i=0; i < userProjects.length; i++) {
-        userProjects[i].ProjectName = $t(userProjects[i].ProjectName);
-      }
+        var projects = JSON.parse(JSON.stringify(featuredProjects));
 
-      window.renderProjects(JSON.stringify(userProjects), JSON.stringify(sampleProjects));
-    });
+        for (var i=0; i < projects.length; i++) {
+          var project = projects[i];
+          project.ProjectName = $t(project.ProjectName);
+          project.FeaturedProjectDescription = $t(project.FeaturedProjectDescription);
+        }
+
+        window.renderProjects(JSON.stringify(projects));
+      });
+
+    } else {
+      getJSON('../sample-projects.json', function(sampleProjects) {
+        // copy 3 of the sample projects and render them as user projects
+        var userProjects = sampleProjects.slice(0,3);
+
+        // deep copy the fake user projects so that translations of sample projects are not effected
+        userProjects = JSON.parse(JSON.stringify(userProjects));
+
+        // translate the sample project names
+        for (var i=0; i < userProjects.length; i++) {
+          userProjects[i].ProjectName = $t(userProjects[i].ProjectName);
+        }
+
+        window.renderProjects(JSON.stringify(userProjects), JSON.stringify(sampleProjects));
+      });
+    }
   }
 
 })();

@@ -306,7 +306,6 @@ protected:
   void SendNVStorageReadEntry(NVStorage::NVEntryTag tag);
   void SendNVStorageEraseEntry(NVStorage::NVEntryTag tag);
   void SendNVClearPartialPendingWriteData();
-  void SendSetHeadlight(bool enable);
   void SendEnableBlockTapFilter(bool enable);
   void SendEnableBlockPool(double maxDiscoveryTime, bool enabled);
   void SendStreamObjectAccel(const u32 objectID, bool enable = true);

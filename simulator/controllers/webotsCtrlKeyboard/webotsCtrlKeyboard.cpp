@@ -378,7 +378,7 @@ namespace Anki {
         printf("             Toggle color images:  Alt+Shift+c\n");
         printf("       Realign with block action:  _\n");
         printf("Toggle accel from streamObjectID:  |\n");
-        printf("               Toggle headlights:  ,\n");
+        printf("               UNUSED           :  ,\n");
         printf("             Pronounce sayString:  \" <double-quote>\n");
         printf("       Pronounce sayString (raw):  \' <single-quote>\n");
         printf("                 Set console var:  ]\n");
@@ -945,8 +945,24 @@ namespace Anki {
                            poseMarkerPose_.GetTranslation().y(),
                            poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(),
                            useManualSpeed);
-
-                    SendExecutePathToPose(poseMarkerPose_, pathMotionProfile_, useManualSpeed);
+                    
+                    // get believed vs actual robot pose transformation in case they are significantly different
+                    // Pose3d origin = GetRobotPose().FindOrigin();
+                    Pose3d robotPose(GetRobotPose().GetWithRespectToRoot());
+                    Pose3d robotPoseActual(GetRobotPoseActual().GetWithRespectToRoot());
+                    Pose3d targetCpy(poseMarkerPose_.GetWithRespectToRoot());
+                    Pose3d ref;
+                    Pose3d beliefErr;
+                    Pose3d corrected;
+                    
+                    robotPose.SetParent(ref);
+                    robotPoseActual.SetParent(ref);
+                    targetCpy.SetParent(ref);
+                    
+                    robotPoseActual.GetWithRespectTo(robotPose, beliefErr);  // calculate belief state error
+                    targetCpy.GetWithRespectTo(beliefErr, corrected);        // account for error
+                    
+                    SendExecutePathToPose(corrected, pathMotionProfile_, useManualSpeed);
                     //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                   } else {
                   
@@ -1099,10 +1115,7 @@ namespace Anki {
                 
               case (s32)',':
               {
-                static bool toggle = true;
-                printf("Turning headlight %s\n", toggle ? "ON" : "OFF");
-                SendSetHeadlight(toggle);
-                toggle = !toggle;
+                // FREE KEY COMBO!!!
                 break;
               }
                 

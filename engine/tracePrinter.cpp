@@ -31,13 +31,9 @@ using KVV = std::vector<std::pair<const char*, const char*>>;
 const std::string TracePrinter::_kUnknownTraceName   = "UnknownTraceName";
 const std::string TracePrinter::_kUnknownTraceFormat = "Unknown trace format [%d] with %d parameters";
 const std::string TracePrinter::_kRobotNamePrefix    = "RobotFirmware.";
-  
-// constant calculated from ram size in robot/espressif/app/include/driver/crash.h, which is not in app search path.
-static const int kMaxCrashLogs = 4;
 
 TracePrinter::TracePrinter(Robot* robot)
   : _printThreshold(RobotInterface::LogLevel::ANKI_LOG_LEVEL_DEBUG)
-  , _lastLogRequested(kMaxCrashLogs)
   , _robot(robot)
 {
   // Listen to some messages from the robot
@@ -53,18 +49,6 @@ TracePrinter::TracePrinter(Robot* robot)
     };
     
     doRobotSubscribe(RobotInterface::RobotToEngineTag::trace,         &TracePrinter::HandleTrace);
-    doRobotSubscribe(RobotInterface::RobotToEngineTag::crashReport,   &TracePrinter::HandleCrashReport);
-    doRobotSubscribe(RobotInterface::RobotToEngineTag::wifiFlashID,   &TracePrinter::HandleWiFiFlashID);
-  }
-  
-  // Listen to some messages from the engine
-  IExternalInterface* externalInterface = _robot->GetContext()->GetExternalInterface();
-  if (externalInterface)
-  {
-    using namespace ExternalInterface;
-    
-    auto helper = MakeAnkiEventUtil(*externalInterface, *this, GetSignalHandles());
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
   }
   
   Util::Data::DataPlatform* dp = _robot->GetContextDataPlatform();
@@ -139,75 +123,6 @@ void TracePrinter::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& m
       }
     }
   }
-}
-
-void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message) {
-  ANKI_CPU_PROFILE("TracePrinter::HandleCrashReport");
-  const RobotInterface::CrashReport& report = message.GetData().Get_crashReport();
-  if (report.errorCode || report.dump.size()) {
-    LOG_EVENT("RobotFirmware.CrashReport", "Firmware crash report received: %s, %x", CrashSourceToString(report.which), report.errorCode);
-    if (DevLoggingSystem::GetInstance() != NULL) {
-      
-      const std::string fileExt = ".log"; // Only .log files are archived and transmitted
-      const std::string dumpFileNameDir = DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory() + "/robotFirmware/";
-      
-      std::ostringstream dumpFilepathStream;
-      dumpFilepathStream << "crash_";
-      dumpFilepathStream << std::to_string(Util::EnumToUnderlying(report.which)) << "_";
-      dumpFilepathStream << std::hex << report.errorCode << "_";
-      dumpFilepathStream << std::dec << std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-      const std::string dumpFileNameBase = dumpFilepathStream.str();
-      
-      // Find a filepath for the crash dump that doesn't already exist and set up directories if needed
-      std::string dumpFileName = dumpFileNameBase + fileExt;
-      std::string dumpFilepath = dumpFileNameDir + dumpFileName;
-      uint32_t crashCounter = 0;
-      while (Util::FileUtils::FileExists(dumpFilepath)) {
-        dumpFileName = dumpFileNameBase + "-" + std::to_string(++crashCounter) + fileExt;
-        dumpFilepath = dumpFileNameDir + dumpFileName;
-      }
-      Util::FileUtils::CreateDirectory(dumpFilepath, true, true);
-      
-      // Copy the crash data to a local vector and convert from 4-byte words to chars
-      const size_t dumpSize = report.dump.size() * sizeof(report.dump[0]);
-      std::vector<uint8_t> crashData = std::vector<uint8_t>(dumpSize);
-      const uint8_t* reportDataBegin = reinterpret_cast<const uint8_t*>(report.dump.data());
-      std::copy(reportDataBegin, reportDataBegin + dumpSize, crashData.data());
-      
-      if(Util::FileUtils::WriteFile(dumpFilepath, crashData)) {
-        LOG_EVENT("RobotFirmware.CrashReport.Written", "Firmware crash report written to \"%s\"", dumpFileName.c_str());
-      }
-      else {
-        PRINT_NAMED_ERROR("RobotFirmware.CrashReport.FailedToWrite", "Couldn't write report to file \"%s\"", dumpFileName.c_str());
-      }
-    }
-    if (report.errorCode == 0 && report.dump.size() > 0) {
-      const unsigned char* const dump_bytes = reinterpret_cast<const unsigned char* const>(report.dump.data());
-      const size_t dumpSize = report.dump.size() * sizeof(report.dump[0]);
-      std::string base64Crash = Util::base64_encode(dump_bytes, dumpSize);
-      Util::sErrorF("RobotFirmware.CrashReport.Data", {{DDATA, base64Crash.c_str()}},
-                    "Crash Dump Type %s", CrashSourceToString(report.which));
-    }
-    else
-    {
-      Util::sErrorF("RobotFirmware.CrashReport.code",
-                    {{DDATA, std::to_string(report.errorCode).c_str()}},
-                    "errorCode = %d", report.errorCode);
-    }
-  }
-  if (_lastLogRequested < kMaxCrashLogs)
-  {
-      _robot->SendRobotMessage<RobotInterface::RequestCrashReports>(_lastLogRequested++);
-  }
-}
-
-void TracePrinter::HandleWiFiFlashID(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-{
-  ANKI_CPU_PROFILE("TracePrinter::HandleWiFiFlashID");
-  const RobotInterface::WiFiFlashID& fidMsg = message.GetData().Get_wifiFlashID();
-  const std::string idAsString = std::to_string(fidMsg.chip_id);
-  Util::sEventF("hardware.wifi.flash_id", {{DDATA, idAsString.c_str()}},
-                "%x%x", (fidMsg.chip_id>>8)&0xff, (fidMsg.chip_id>>16)&0xff);
 }
 
 const std::string& TracePrinter::GetName(const int nameId) const {
@@ -316,30 +231,6 @@ std::string TracePrinter::GetFormatted(const RobotInterface::PrintTrace& trace) 
   }
 }
 
-template<>
-void TracePrinter::HandleMessage(const ExternalInterface::RobotConnectionResponse& msg)
-{
-  if (msg.result == RobotConnectionResult::Success) {
-    UUIDBytes appRunBytes;
-    memset(&appRunBytes, 0xff, sizeof(UUIDBytes));
-    #if USE_DAS
-    {
-      const DAS::IDASPlatform* platform = DASGetPlatform();
-      if (nullptr != platform)
-      {
-        UUIDBytesFromString(&appRunBytes, platform->GetAppRunId());
-      }
-    }
-    #endif
-    _robot->SendRobotMessage<RobotInterface::SetAppRunID>(appRunBytes.bytes, 16);
-    
-    // Request the first crash report
-    if (_lastLogRequested >= kMaxCrashLogs) {
-      _lastLogRequested = 0;
-      _robot->SendRobotMessage<RobotInterface::RequestCrashReports>(_lastLogRequested++);
-    }
-  }
-}
 
 } // Namespace Cozmo
 } // Namespace Anki

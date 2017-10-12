@@ -17,7 +17,6 @@
 #define ANKI_COZMO_ROBOT_SIM_HARDWAREINTERFACE_H
 #include "anki/types.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "clad/types/animationKeyFrames.h"
 #include "clad/robotInterface/messageToActiveObject.h"
 
 
@@ -51,22 +50,6 @@ namespace Anki
       // NOTE: Does not guarantee physical connection.
       void EngageGripper();
       void DisengageGripper();
-      
-
-// #pragma mark --- Audio ---
-      /////////////////////////////////////////////////////////////////////
-      // AUDIO
-      // TODO: To be removed when animation streaming migrates to engine
-
-      void AudioFill(void);
-
-      // @return true if the audio clock says it is time for the next frame
-      bool AudioReady();
-
-      // Play one frame of audio or silence
-      // @param frame - a pointer to an audio frame or NULL to play one frame of silence
-      void AudioPlayFrame(AnimKeyFrame::AudioSample *msg);
-      void AudioPlaySilence();
 
       
     } // namespace HAL

@@ -101,18 +101,8 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
     // Disable reactionary behaviors
     robot.GetBehaviorManager().DisableReactionsWithLock(
                                    kBehaviorTestName,
-                                   ReactionTriggerHelpers::kAffectAllArray);
-    
-    
-    
-#if IS_FACTORY_BRANCH
-    // Set robot body to accessory mode
-    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetBodyRadioMode(RobotInterface::BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE)));
-    
-    // Set head device lock so that video will stream down
-    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetHeadDeviceLock(true)));
-#endif
-    
+                                   ReactionTriggerHelpers::GetAffectAllArray());
+        
     // Start motor calibration
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
     

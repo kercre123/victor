@@ -11,7 +11,7 @@
  **/
 
 #include "engine/components/animTrackHelpers.h"
-#include "clad/types/animationKeyFrames.h"
+#include "clad/types/animationTypes.h"
 #include "util/math/numericCast.h"
 
 #include <sstream>

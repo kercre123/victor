@@ -44,7 +44,8 @@ namespace Cozmo {
 const char* NeedsManager::kLogChannelName = "NeedsSystem";
 
 
-static const std::string kNeedsStateFile = "needsState.json";
+static const std::string kNeedsStateFileBase = "needsState";
+static const std::string kNeedsStateFile = kNeedsStateFileBase + ".json";
 
 static const std::string kStateFileVersionKey = "_StateFileVersion";
 static const std::string kDateTimeKey = "_DateTime";
@@ -73,6 +74,11 @@ static const int kMinimumTimeBetweenDeviceSaves_sec = 60;
 static const int kMinimumTimeBetweenRobotSaves_sec = (60 * 10);  // Less frequently than device saves
 
 static const std::string kUnconnectedDecayRatesExperimentKey = "unconnected_decay_rates";
+
+// Note:  We don't use zero for 'uninitialized serial number' because
+// running in webots gives us zero as the robot serial number
+static const u32 kUninitializedSerialNumber = UINT_MAX;
+
 
 using namespace std::chrono;
 using Time = time_point<system_clock>;
@@ -197,7 +203,9 @@ namespace {
     Util::AnkiLab::AddABTestingForcedAssignment(experimentKey, variationKey);
     context->channel->WriteLog("ForceAssignExperiment %s => %s", experimentKey, variationKey);
 
-    g_DebugNeedsManager->GetNeedsConfigMutable().SetUnconnectedDecayTestVariation(g_DebugNeedsManager->GetDecayConfigBaseFilename(), variationKey);
+    g_DebugNeedsManager->GetNeedsConfigMutable().SetUnconnectedDecayTestVariation(g_DebugNeedsManager->GetDecayConfigBaseFilename(),
+                                                                                  variationKey,
+                                                                                  Util::AnkiLab::AssignmentStatus::ForceAssigned);
   }
   CONSOLE_FUNC( DebugFillNeedMeters, "Needs" );
   CONSOLE_FUNC( DebugGiveStar, "Needs" );
@@ -320,6 +328,7 @@ void NeedsManager::Init(const float currentTime_s,      const Json::Value& inJso
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseStates>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsState>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::GetSongsList>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetWantsNeedsOnboarding>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterNeedsActionCompleted>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterOnboardingComplete>();
@@ -363,35 +372,19 @@ void NeedsManager::InitReset(const float currentTime_s, const u32 serialNumber)
 
 void NeedsManager::InitInternal(const float currentTime_s)
 {
-  const u32 uninitializedSerialNumber = 0;
-  InitReset(currentTime_s, uninitializedSerialNumber);
+  InitReset(currentTime_s, kUninitializedSerialNumber);
 
   // Read needs data from device storage, if it exists
   _deviceHadValidNeedsData = false;
   _deviceNeedsVersionUpdate = false;
-  bool appliedDecay = false;
 
-  if (DeviceHasNeedsState())
+  _deviceHadValidNeedsData = AttemptReadFromDevice(kNeedsStateFile, _deviceNeedsVersionUpdate);
+
+  if (!_deviceHadValidNeedsData)
   {
-    _deviceHadValidNeedsData = ReadFromDevice(_deviceNeedsVersionUpdate);
-
-    if (_deviceHadValidNeedsData)
-    {
-      // Save the time this save was made, for later comparison in InitAfterReadFromRobotAttempt
-      _savedTimeLastWrittenToDevice = _needsState._timeLastWritten;
-
-      static const bool connected = false;
-      ApplyDecayForTimeSinceLastDeviceWrite(connected);
-
-      appliedDecay = true;
-
-      _needsState._timesOpenedSinceLastDisconnect++;
-
-      SendTimeSinceBackgroundedDasEvent();
-    }
+    // If there was no device save, we still want to send needs state to show the initial state
+    SendNeedsStateToGame(NeedsActionId::NoAction);
   }
-
-  SendNeedsStateToGame(appliedDecay ? NeedsActionId::Decay : NeedsActionId::NoAction);
 
   // Save to device, because we've either applied a bunch of unconnected decay,
   // or we never had valid needs data on this device yet
@@ -486,10 +479,30 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
   }
   else if (!_robotHadValidNeedsData && _deviceHadValidNeedsData)
   {
+    // Robot does NOT have needs data, but device does
     PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt",
                   "Robot does NOT have needs data, but device does");
-    // Robot does NOT have needs data, but device does
-    // So just go with device data, and write that to robot
+
+    // Compare the device save's robot serial number with the actual robot
+    // serial number; if different, we look for another device save that has
+    // the actual serial number in the file name (a file we created when
+    // backgrounding the app).
+    if (_previousRobotSerialNumber != _needsState._robotSerialNumber)
+    {
+      const std::string filename = NeedsFilenameFromSerialNumber(_needsState._robotSerialNumber);
+
+      if (AttemptReadFromDevice(filename, _deviceNeedsVersionUpdate))
+      {
+        needToWriteToDevice = true;
+      }
+      else
+      {
+        PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt",
+                      "Attempted to read alternate save file %s; file missing or read failed; could be because of brand new robot", filename.c_str());
+      }
+    }
+
+    // Either way, we definitely want to write to robot
     needToWriteToRobot = true;
   }
   else
@@ -544,12 +557,6 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
       _needsState._timeLastDisconnect = Time();
       // Similar for time since last app backgrounded; let's not confuse things
       _needsState._timeLastAppBackgrounded = Time();
-
-      // Notify the game, so it can put up a dialog to notify the user
-      // (We actually never implemented that UI as of 9/1/2017)
-      ExternalInterface::ConnectedToDifferentRobot message;
-      const auto& extInt = _cozmoContext->GetExternalInterface();
-      extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
     }
   }
 
@@ -608,6 +615,11 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     // so that we can use the exact same timestamp in StartWriteToRobot below
     _needsState._timeLastWritten = now;
     WriteToDevice(false);
+
+    // Set this flag to true because we now have valid needs data on the device,
+    // and we're done using the flag.  If we later disconnect and then reconnect
+    // (in the same app run), we want this flag to be accurate
+    _deviceHadValidNeedsData = true;
   }
 
   if (needToWriteToRobot)
@@ -634,6 +646,13 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 
 void NeedsManager::AttemptActivateDecayExperiment(u32 robotSerialNumber)
 {
+  // If we don't yet have a valid robot serial number, don't try to make
+  // an experiment assignment, since it's based on robot serial number
+  if (robotSerialNumber == kUninitializedSerialNumber)
+  {
+    return;
+  }
+
   // Call this first to set the audience tags based on current data.
   // Note that in ActivateExperiment, if there was already an assigned
   // variation, we'll use that assignment and ignore the audience tags
@@ -644,8 +663,8 @@ void NeedsManager::AttemptActivateDecayExperiment(u32 robotSerialNumber)
   std::string outVariationKey;
   const auto assignmentStatus = _cozmoContext->GetExperiments()->ActivateExperiment(request, outVariationKey);
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitInternal",
-                "Unconnected decay experiment activation assignment status is: %s",
-                EnumToString(assignmentStatus));
+                "Unconnected decay experiment activation assignment status is: %s; based on serial number %d",
+                EnumToString(assignmentStatus), robotSerialNumber);
   if (assignmentStatus == Util::AnkiLab::AssignmentStatus::Assigned ||
       assignmentStatus == Util::AnkiLab::AssignmentStatus::OverrideAssigned ||
       assignmentStatus == Util::AnkiLab::AssignmentStatus::ForceAssigned)
@@ -655,11 +674,15 @@ void NeedsManager::AttemptActivateDecayExperiment(u32 robotSerialNumber)
                   kUnconnectedDecayRatesExperimentKey.c_str(),
                   outVariationKey.c_str());
 
-    _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(), outVariationKey);
+    _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(),
+                                                  outVariationKey,
+                                                  assignmentStatus);
   }
   else
   {
-    _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(), _needsConfig.kABTestDecayConfigControlKey);
+    _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(),
+                                                  _needsConfig.kABTestDecayConfigControlKey,
+                                                  assignmentStatus);
   }
 }
 
@@ -1203,6 +1226,52 @@ void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsState& msg)
   SendNeedsStateToGame();
 }
 
+
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::GetSongsList& msg)
+{
+  std::vector<ExternalInterface::SongUnlockStatus> songUnlockStatuses;
+
+  // Begin the list with all of the default-unlocked songs
+  const auto& defaultUnlocks = ProgressionUnlockComponent::GetDefaultUnlocks(_cozmoContext);
+  for (const auto& defaultUnlock : defaultUnlocks)
+  {
+    std::string defaultUnlockStr = UnlockIdToString(defaultUnlock);
+    static const std::string prefix = "Singing_";
+    if (defaultUnlockStr.compare(0, prefix.length(), prefix) == 0)
+    {
+      ExternalInterface::SongUnlockStatus songUnlockStatus(true, defaultUnlockStr.c_str());
+      songUnlockStatuses.emplace_back(songUnlockStatus);
+    }
+  }
+
+  // Add songs from the level rewards list, in order, checking unlock status for each.
+  // By going through the level rewards list, we ensure we are not including songs that
+  // are in the app but not yet 'released' (and therefore can never be unlocked)
+  auto& puc = _robot->GetProgressionUnlockComponent();
+  const int numLevels = _starRewardsConfig->GetNumLevels();
+  std::vector<NeedsReward> rewards;
+  for (int level = 0; level < numLevels; level++)
+  {
+    _starRewardsConfig->GetRewardsForLevel(level, rewards);
+    for (const auto& reward : rewards)
+    {
+      if (reward.rewardType == NeedsRewardType::Song)
+      {
+        const UnlockId unlockId = UnlockIdFromString(reward.data);
+        const bool isUnlocked = puc.IsUnlocked(unlockId);
+        ExternalInterface::SongUnlockStatus songUnlockStatus(isUnlocked, reward.data.c_str());
+        songUnlockStatuses.emplace_back(songUnlockStatus);
+      }
+    }
+  }
+
+  ExternalInterface::SongsList message(std::move(songUnlockStatuses));
+  const auto& extInt = _cozmoContext->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+}
+
+
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::ForceSetNeedsLevels& msg)
 {
@@ -1276,17 +1345,19 @@ void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComp
 {
   if( msg.onboardingStage < _robotOnboardingStageCompleted )
   {
-    // only complete resets are allowed...
-    PRINT_NAMED_WARNING("NeedsManager.HandleMessage.RegisterOnboardingComplete",
-                        "Negative onboarding progress %d -> %d is not allowed",
+    // only complete resets are allowed, however if connecting to a new robot from an old
+    // app we do allow people to restart onboarding.
+    PRINT_NAMED_INFO("NeedsManager.HandleMessage.RegisterOnboardingComplete",
+                        "Negative onboarding progress %d -> %d is ignored",
                         _robotOnboardingStageCompleted, msg.onboardingStage);
-    return;
+  }
+  else
+  {
+    _robotOnboardingStageCompleted = msg.onboardingStage;
   }
   PRINT_CH_INFO(kLogChannelName, "RegisterOnboardingComplete",
                 "OnboardingStageCompleted: %d, finalStage: %d",
                 _robotOnboardingStageCompleted, msg.finalStage);
-
-  _robotOnboardingStageCompleted = msg.onboardingStage;
 
   // phase 1 is just the first part showing the needs hub.
   if( msg.finalStage )
@@ -1464,6 +1535,8 @@ void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotGameData& msg
   // the needs system
 
   Util::FileUtils::DeleteFile(kPathToSavedStateFile + kNeedsStateFile);
+  // ensures onboarding starts from the beginning & w/o option to skip
+  _robotOnboardingStageCompleted = 0;
 
   InitInternal(_currentTime_s);
 }
@@ -1471,6 +1544,11 @@ void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotGameData& msg
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotNeedsData& msg)
 {
+  if (nullptr == _robot) {
+    PRINT_NAMED_WARNING("NeedsManager.WipeRobotNeedsData.NoRobot", "No active robot");
+    return;
+  }
+
   if (!_robot->GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_NurtureGameData,
                                              [this](NVStorage::NVResult res)
                                              {
@@ -1491,6 +1569,8 @@ void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotNeedsData& ms
                                                const auto& extInt = _cozmoContext->GetExternalInterface();
                                                extInt->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RestoreRobotStatus(true, success)));
 
+                                               // ensures onboarding starts from the beginning & w/o option to skip
+                                               _robotOnboardingStageCompleted = 0;
                                                InitInternal(_currentTime_s);
                                              }))
   {
@@ -1531,6 +1611,42 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
     }
 
     SendNeedsLevelsDasEvent("app_background");
+
+    if (_needsState._robotSerialNumber != kUninitializedSerialNumber)
+    {
+      // If we have a valid robot serial number, make a copy of the save file
+      // we just wrote out (in the call to SetPaused above), with the serial
+      // number as part of the filename.
+      // We do this to fix the case of multiple robots on one device, and the
+      // user corrupts the robot's needs save by killing the app right after
+      // backgrounding, before the robot save completes.
+
+#if ENABLE_NEEDS_READ_WRITE_PROFILING
+      const auto startTime = system_clock::now();
+#endif
+
+      const std::string destFile = kPathToSavedStateFile +
+                                   NeedsFilenameFromSerialNumber(_needsState._robotSerialNumber);
+
+      const std::string srcFile = kPathToSavedStateFile + kNeedsStateFile;
+#if ENABLE_NEEDS_READ_WRITE_PROFILING
+      const auto midTime = system_clock::now();
+#endif
+      if (!Util::FileUtils::CopyFile(destFile, srcFile))
+      {
+        PRINT_NAMED_ERROR("NeedsManager.SetGameBeingPaused",
+                          "Error copying %s to %s",
+                          srcFile.c_str(), destFile.c_str());
+      }
+#if ENABLE_NEEDS_READ_WRITE_PROFILING
+      const auto endTime = system_clock::now();
+      const auto microsecsMid = duration_cast<microseconds>(endTime - midTime);
+      const auto microsecs = duration_cast<microseconds>(endTime - startTime);
+      PRINT_CH_INFO(kLogChannelName, "NeedsManager.CopyFile",
+                    "Copying needs state file took %lld microseconds total; %lld microseconds for the copy",
+                    microsecs.count(), microsecsMid.count());
+#endif
+    }
 
     // It's too late to generate local notifications, which is why we
     // generate them peridically and on certain events
@@ -1994,9 +2110,9 @@ void NeedsManager::DetectBracketChangeForDas(const bool forceSend)
 }
 
 
-bool NeedsManager::DeviceHasNeedsState()
+bool NeedsManager::DeviceHasNeedsState(const std::string& filename)
 {
-  return Util::FileUtils::FileExists(kPathToSavedStateFile + kNeedsStateFile);
+  return Util::FileUtils::FileExists(kPathToSavedStateFile + filename);
 }
 
 void NeedsManager::PossiblyWriteToDevice()
@@ -2059,26 +2175,59 @@ void NeedsManager::WriteToDevice(bool stampWithNowTime /* = true */)
 
   state[kForceNextSongKey] = EnumToString(_needsState._forceNextSong);
 
+#if ENABLE_NEEDS_READ_WRITE_PROFILING
   const auto midTime = system_clock::now();
+#endif
   if (!_cozmoContext->GetDataPlatform()->writeAsJson(Util::Data::Scope::Persistent, GetNurtureFolder() + kNeedsStateFile, state))
   {
     PRINT_NAMED_ERROR("NeedsManager.WriteToDevice.WriteStateFailed", "Failed to write needs state file");
   }
 
+#if ENABLE_NEEDS_READ_WRITE_PROFILING
   const auto endTime = system_clock::now();
   const auto microsecsMid = duration_cast<microseconds>(endTime - midTime);
   const auto microsecs = duration_cast<microseconds>(endTime - startTime);
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.WriteToDevice",
                 "Write to device took %lld microseconds total; %lld microseconds for the actual write",
                 microsecs.count(), microsecsMid.count());
+#endif
 }
 
-bool NeedsManager::ReadFromDevice(bool& versionUpdated)
+
+bool NeedsManager::AttemptReadFromDevice(const std::string& filename, bool& versionUpdated)
+{
+  bool valid = false;
+
+  if (DeviceHasNeedsState(filename))
+  {
+    if (ReadFromDevice(filename, versionUpdated))
+    {
+      valid = true;
+
+      // Save the time this save was made, for later comparison in InitAfterReadFromRobotAttempt
+      _savedTimeLastWrittenToDevice = _needsState._timeLastWritten;
+
+      static const bool connected = false;
+      ApplyDecayForTimeSinceLastDeviceWrite(connected);
+
+      SendNeedsStateToGame(NeedsActionId::Decay);
+
+      _needsState._timesOpenedSinceLastDisconnect++;
+
+      SendTimeSinceBackgroundedDasEvent();
+    }
+  }
+
+  return valid;
+}
+
+
+bool NeedsManager::ReadFromDevice(const std::string& filename, bool& versionUpdated)
 {
   versionUpdated = false;
 
   Json::Value state;
-  if (!_cozmoContext->GetDataPlatform()->readAsJson(kPathToSavedStateFile + kNeedsStateFile, state))
+  if (!_cozmoContext->GetDataPlatform()->readAsJson(kPathToSavedStateFile + filename, state))
   {
     PRINT_NAMED_ERROR("NeedsManager.ReadFromDevice.ReadStateFailed", "Failed to read %s", kNeedsStateFile.c_str());
     return false;
@@ -2172,6 +2321,16 @@ bool NeedsManager::ReadFromDevice(bool& versionUpdated)
 }
 
 
+std::string NeedsManager::NeedsFilenameFromSerialNumber(const u32 serialNumber)
+{
+  const std::string filename = kNeedsStateFileBase + "_" +
+                               std::to_string(_needsState._robotSerialNumber) +
+                               ".json";
+
+  return filename;
+}
+
+
 void NeedsManager::PossiblyStartWriteToRobot(bool ignoreCooldown /* = false */)
 {
   if (_robot == nullptr)
@@ -2251,9 +2410,11 @@ void NeedsManager::StartWriteToRobot(const Time time)
 
 void NeedsManager::FinishWriteToRobot(const NVStorage::NVResult res, const Time startTime)
 {
+#if ENABLE_NEEDS_READ_WRITE_PROFILING
   const auto endTime = system_clock::now();
   const auto microsecs = duration_cast<microseconds>(endTime - startTime);
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.FinishWriteToRobot", "Write to robot AFTER CALLBACK took %lld microseconds", microsecs.count());
+#endif
 
   if (res < NVStorage::NVResult::NV_OKAY)
   {

@@ -30,14 +30,6 @@
 #include "blockLightController.h"
 #endif
 
-#ifdef SIMULATOR
-#ifndef COZMO_V2
-#include "anki/vision/CameraSettings.h"
-#include "nvStorage.h"
-#include <math.h>
-#endif // COZMO_V2
-#endif // SIMULATOR
-
 
 namespace Anki {
   namespace Cozmo {
@@ -220,23 +212,6 @@ namespace Anki {
           PickAndPlaceController::SetCarryState(CarryState::CARRY_NONE);
           ProxSensors::EnableStopOnCliff(true);
           ProxSensors::SetCliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL);
-          #ifndef COZMO_V2
-          LiftController::Disable();
-          LiftController::ClearCalibration();
-          HeadController::Disable();
-          HeadController::ClearCalibration();
-          WheelController::Disable();
-          HAL::CameraSetColorEnabled(false);
-          #ifndef SIMULATOR
-          HAL::SetImageSendMode(Off, DEFAULT_IMAGE_RESOLUTION);
-          Messages::ResetMissedLogCount();
-          // Put body into bluetooth mode when the engine is connected
-          SetBodyRadioMode bMsg;
-          bMsg.wifiChannel = 0;
-          bMsg.radioMode = BODY_BLUETOOTH_OPERATING_MODE;
-          while (RobotInterface::SendMessage(bMsg) == false) {}
-          #endif
-          #endif
           waitForFirstMotorCalibAfterConnect_ = true;
           mode_ = INIT_MOTOR_CALIBRATION;
 
@@ -278,14 +253,6 @@ namespace Anki {
         PathFollower::Update();
         PickAndPlaceController::Update();
         DockingController::Update();
-
-#ifdef SIMULATOR
-        //////////////////////////////////////////////////////////////
-        // Audio Subsystem
-        //////////////////////////////////////////////////////////////
-        MARK_NEXT_TIME_PROFILE(CozmoBot, AUDIO);
-        Anki::Cozmo::HAL::AudioFill();
-#endif
 
         //////////////////////////////////////////////////////////////
         // State Machine

@@ -129,7 +129,7 @@ namespace Anki
     // Required ??? bytes of scratch
     Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 minLaplacianPeakRatio, const s32 imageHeight, const s32 imageWidth, const CornerMethod cornerMethod, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch)
     {
-      const s32 MAX_BOUNDARY_LENTH = 10000; // Probably significantly longer than would ever be needed
+      static const s32 MAX_BOUNDARY_LENTH = 10000; // Probably significantly longer than would ever be needed
 
       Result lastResult;
 
@@ -151,7 +151,7 @@ namespace Anki
       matlab.EvalStringEcho("boundaries = {};");
 #endif // #ifdef SEND_BOUNDARIES_TO_MATLAB
 
-      // Go throught the list of components, and for each id, extract a quadrilateral. If the
+      // Go through the list of components, and for each id, extract a quadrilateral. If the
       // quadrilateral looks reasonable, add it to the list extractedQuads.
       for(s32 iComponent=0; iComponent<components.get_maximumId(); iComponent++) {
         s32 endComponentIndex = -1;

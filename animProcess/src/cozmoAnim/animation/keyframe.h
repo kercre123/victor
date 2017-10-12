@@ -20,11 +20,12 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "cozmoAnim/animation/proceduralFace.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/types/animationKeyFrames.h"
 #include "clad/types/ledTypes.h"
 #include "clad/audio/audioEventTypes.h"
 #include "util/random/randomGenerator.h"
 #include "json/json-forwards.h"
+
+#define kNoAudioRefIndex -1
 
 namespace CozmoAnim {
   struct HeadAngle;
@@ -200,7 +201,7 @@ namespace Cozmo {
       AudioMetaData::GameEvent::GenericEvent audioEvent;
       float volume;
       float probability;   // random play weight
-      bool audioAlts; // The audio event has altrnate or random audio track playback, avoid replaying event
+      bool audioAlts; // The audio event has alternate or random audio track playback, avoid replaying event
       
       AudioRef( AudioMetaData::GameEvent::GenericEvent audioEvent = AudioMetaData::GameEvent::GenericEvent::Invalid,
                 float volume      = 1.0f,
@@ -224,7 +225,23 @@ namespace Cozmo {
       static const std::string ClassName("RobotAudioKeyFrame");
       return ClassName;
     }
-    
+
+    // The GetAudioRefIndex() method will return the index that should be used to return the audio
+    // reference from '_audioReferences'. By default, this method will take the probability of each
+    // audio reference into account, but that can be overridden by passing in 'false'. This method
+    // will return 'kNoAudioRefIndex' if '_audioReferences' is empty, if the total probability of
+    // all audio events combined exceeds 1.0 or if probabilities were taken into account and no
+    // audio event should be used.
+    const int8_t GetAudioRefIndex(bool useProbability = true) const;
+
+    // The GetNumAudioRefs() method will return the number of audio references for
+    // this RobotAudioKeyFrame (which is the size of the '_audioReferences' vector)
+    const int8_t GetNumAudioRefs() const;
+
+    // The GetAudioRef() method will return an AudioRef. Callers can optionally specify which one to
+    // return as an '_audioReferences' index. If that index is not provided, then GetAudioRefIndex()
+    // is used to lookup the index.
+    const AudioRef& GetAudioRef(const int8_t selectedAudioIndex) const;
     const AudioRef& GetAudioRef() const;
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
@@ -326,8 +343,7 @@ namespace Cozmo {
   private:
     ProceduralFace  _procFace;
     bool            _isDone = false;
-  
-    //AnimKeyFrame::FaceImage _faceImageMsg;
+
     
     // This is what actually populates the message to stream, and is used
     // by GetStreamMessage() and GetInterpolatedStreamMessage().
@@ -364,16 +380,15 @@ namespace Cozmo {
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
-    Anki::Cozmo::AnimEvent GetAnimEvent() const { return _streamMsg.event_id; }
+    Anki::Cozmo::AnimEvent GetAnimEvent() const { return _event_id; }
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     virtual Result SetMembersFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug = "");
     
   private:
-    
-    // TODO: Don't actually need this message. Just need the AnimEvent it stores
-    AnimKeyFrame::Event _streamMsg;
+
+    Anki::Cozmo::AnimEvent _event_id;
     
   }; // class EventKeyFrame
   

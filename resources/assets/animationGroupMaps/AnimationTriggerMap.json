@@ -1621,6 +1621,18 @@
       "AnimName": "ag_repair_fix_idle_fullyfull_01"
     },
     {
+      "CladEvent": "RepairPartRepaired_Head_Mild",
+      "AnimName": "ag_repair_mild_fix_head"
+    },
+    {
+      "CladEvent": "RepairPartRepaired_Lift_Mild",
+      "AnimName": "ag_repair_mild_fix_lift"
+    },
+    {
+      "CladEvent": "RepairPartRepaired_Tread_Mild",
+      "AnimName": "ag_repair_mild_fix_tread"
+    },
+    {
       "CladEvent": "RequestGameInterrupt",
       "AnimName": "ag_requesttoplay_huh_01"
     },

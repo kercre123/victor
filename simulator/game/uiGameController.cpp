@@ -1788,13 +1788,6 @@ namespace Anki {
       message.Set_NVStorageClearPartialPendingWriteEntry(msg);
       SendMessage(message);
     }
-
-    void UiGameController::SendSetHeadlight(bool enable)
-    {
-      ExternalInterface::SetHeadlight m;
-      m.enable = enable;
-      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
-    }
     
     void UiGameController::SendEnableVisionMode(VisionMode mode, bool enable)
     {

@@ -29,7 +29,7 @@
 
 #define DEBUG_SAYTEXT_ACTION 0
 // Max duration of generated animation
-const float kMaxAnimationDuration_ms = 60000;  // 1 min
+//const float kMaxAnimationDuration_ms = 60000;  // 1 min
 
 
 namespace Anki {
@@ -230,10 +230,10 @@ ActionResult SayTextAction::Init()
         }
         // Get appropriate audio event for style and insert key frame
         // TODO: Deprecate this, we are going to change the processing
-        const GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
-        
         // TODO: SayTextAction is broken (VIC-360)
         /*
+        const GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
+        
         _animation.AddKeyFrameToBack(RobotAudioKeyFrame(RobotAudioKeyFrame::AudioRef(audioEvent), 0));
         _animation.SetIsLive(true);
         _playAnimationAction.reset(new PlayAnimationAction(_robot, &_animation));
@@ -249,7 +249,7 @@ ActionResult SayTextAction::Init()
         if (_fitToDuration) {
           // Get appropriate audio event for style and insert key frame
           // TODO: Deprecate this, we are going to change the processing
-          const GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
+          //const GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
           
           // TODO: SayTextAction is broken (VIC-360)
           //_animation.AddKeyFrameToBack(RobotAudioKeyFrame(RobotAudioKeyFrame::AudioRef(audioEvent), 0));

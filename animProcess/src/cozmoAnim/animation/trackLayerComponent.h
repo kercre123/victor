@@ -41,9 +41,8 @@ public:
   // Output struct that contains the final keyframes to
   // stream to the robot
   struct LayeredKeyFrames {
-    // We always stream audio, either silence or whatever is in audioKeyframe
     bool haveAudioKeyFrame = false;
-    AnimKeyFrame::AudioSample audioKeyFrame;
+    RobotAudioKeyFrame audioKeyFrame;
     
     bool haveBackpackKeyFrame = false;
     BackpackLightsKeyFrame backpackKeyFrame;
@@ -67,8 +66,7 @@ public:
                          TimeStamp_t startTime_ms,
                          TimeStamp_t streamTime_ms,
                          LayeredKeyFrames& layeredKeyFrames,
-                         bool storeFace,
-                         const AnimKeyFrame::AudioSample* const rawAudioSample);
+                         bool storeFace);
   
   // Keep Cozmo's face alive using the params specified
   // (call each tick while the face should be kept alive)
@@ -120,8 +118,7 @@ private:
   void ApplyAudioLayersToAnim(Animation* anim,
                               TimeStamp_t startTime_ms,
                               TimeStamp_t streamTime_ms,
-                              LayeredKeyFrames& layeredKeyFrames,
-                              const AnimKeyFrame::AudioSample* const rawAudioSample);
+                              LayeredKeyFrames& layeredKeyFrames);
   
   void ApplyBackpackLayersToAnim(Animation* anim,
                                  TimeStamp_t startTime_ms,

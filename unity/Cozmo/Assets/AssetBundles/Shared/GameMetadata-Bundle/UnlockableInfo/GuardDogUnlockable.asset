@@ -15,7 +15,6 @@ MonoBehaviour:
     _EnumValueAsString: GuardDog
     _EnumValue: 63
   UnlockableType: 1
-  _ComingSoon: 0
   DescriptionKey: unlockable.GuardDog.Description
   TitleKey: unlockable.GuardDog.Title
   SparkButtonDescription: 
@@ -29,7 +28,6 @@ MonoBehaviour:
     _EnumValue: 0
   CoreUpgradeIcon: {fileID: 21300000, guid: 92e1a6518fd5747e8b71ffefdc3bc146, type: 3}
   CubesRequired: 3
-  SortOrder: 850
+  SortOrder: 120
   AndroidReleaseVersion: 
   AndroidSDKVersion: 0
-  _CanVoiceActivate: 0

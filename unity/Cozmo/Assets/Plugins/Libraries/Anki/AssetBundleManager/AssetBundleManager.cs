@@ -152,6 +152,7 @@ namespace Anki {
 
       // Loads an asset bundle asynchronously. This function loads the bundle and all its dependencies. Variants are resolved so
       // the right bundle is loaded according to the current active variants.
+      // NOTE: This means that assetBundleName NEEDS a variant if one should be supplied, or the bundle won't be found.
       // Once the operation is completed, the callback will be called with a boolean indicating if the load was successful or not.
       // Asset bundles are reference counted so they are only loaded once.
       public void LoadAssetBundleAsync(string assetBundleName, Action<bool> callback) {
@@ -362,7 +363,7 @@ namespace Anki {
       }
 
       // Remaps the asset bundle name to the best fitting asset bundle variant.
-      private string RemapVariantName(string assetBundleName) {
+      public string RemapVariantName(string assetBundleName) {
 
         // Check if the bundle is supposed to have variants
         string[] split = assetBundleName.Split('.');

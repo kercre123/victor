@@ -16,7 +16,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/blockWorld/blockWorld.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/groundPlaneROI.h"
 #include "engine/navMap/iNavMap.h"
@@ -84,7 +84,7 @@ BehaviorLookInPlaceMemoryMap::~BehaviorLookInPlaceMemoryMap()
 bool BehaviorLookInPlaceMemoryMap::IsRunnableInternal(const Robot& robot) const
 {
   // obviously this behavior needs memory map
-  const INavMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+  const INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
   if ( nullptr == memoryMap ) {
     return false;
   }
@@ -338,7 +338,7 @@ void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(const Robot& robot, i
   const Point3f& to3D   = robotLocation + sectorNormal * maxDist;
   
   // grab mem map
-  const INavMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+  const INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
   DEV_ASSERT(memoryMap, "BehaviorLookInPlaceMemoryMap.NeedMemoryMap"); // checked before
   
   // ask the memory map by tracing the ray cast whether we want to visit the sector

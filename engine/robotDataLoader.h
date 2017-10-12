@@ -60,7 +60,6 @@ public:
   bool DoNonConfigDataLoading(float& loadingCompleteRatio_out);
 
   // refresh individual data pieces after initial load
-  void LoadFaceAnimations();
   void LoadRobotConfigs();
   void LoadVoiceCommandConfigs();
 
@@ -184,8 +183,6 @@ private:
   std::thread           _dataLoadingThread;
   std::atomic<bool>     _abortLoad{false};
   
-  // This gets set when we start loading animations and know the total number
-  float _perAnimationLoadingRatio = 0.0f;
 };
 
 }

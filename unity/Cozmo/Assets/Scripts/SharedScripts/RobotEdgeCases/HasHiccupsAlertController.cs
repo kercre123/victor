@@ -3,32 +3,41 @@
 namespace Cozmo {
   namespace UI {
     public class HasHiccupsAlertController {
+      private static HasHiccupsAlertController _sInstance;
+      public static HasHiccupsAlertController Instance {
+        get {
+          InitializeInstance();
+          return _sInstance;
+        }
+      }
+      public static void InitializeInstance() {
+        if (_sInstance == null) {
+          _sInstance = new HasHiccupsAlertController();
+        }
+      }
+
       private AlertModal _HiccupAlertModal = null;
+      private ModalPriorityData _CurrentPriorityData = null;
 
       // Use this for initialization
-      public HasHiccupsAlertController() {
+      private HasHiccupsAlertController() {
         RobotEngineManager.Instance.AddCallback<RobotHiccupsChanged>(HandleRobotHiccupsChanged);
       }
 
-      public void Cleanup() {
-        CloseCozmoHasHiccupsAlert();
-        RobotEngineManager.Instance.RemoveCallback<RobotHiccupsChanged>(HandleRobotHiccupsChanged);
-      }
-
-      public void OpenCozmoHasHiccupsAlert(ModalPriorityData priorityData,
-                                           BaseDialog.SimpleBaseDialogHandler dialogCloseAnimationFinishedCallback = null) {
+      public void OpenCozmoHasHiccupsAlert(ModalPriorityData basePriority, AlertModalData overrideAlertModalData = null) {
         if (_HiccupAlertModal != null) {
           return;
         }
 
-        var cozmoHasHiccupsData = new AlertModalData("cozmo_has_hiccups_alert",
-                                                     LocalizationKeys.kChallengeDetailsCozmoHasHiccupsTitle,
-                                                     LocalizationKeys.kChallengeDetailsCozmoHasHiccupsDescription,
-                                                     new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose),
-                                                     dialogCloseAnimationFinishedCallback: dialogCloseAnimationFinishedCallback);
+        var cozmoHasHiccupsData = overrideAlertModalData ??
+          new AlertModalData("cozmo_has_hiccups_alert",
+                             LocalizationKeys.kChallengeDetailsCozmoHasHiccupsTitle,
+                             LocalizationKeys.kChallengeDetailsCozmoHasHiccupsDescription,
+                             new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
 
+        _CurrentPriorityData = ModalPriorityData.CreateSlightlyHigherData(basePriority);
         UIManager.OpenAlert(cozmoHasHiccupsData,
-                            ModalPriorityData.CreateSlightlyHigherData(priorityData),
+                            _CurrentPriorityData,
                             HandleHiccupsAlertCreated);
       }
 
@@ -36,15 +45,19 @@ namespace Cozmo {
         _HiccupAlertModal = modal;
       }
 
-      private void CloseCozmoHasHiccupsAlert() {
+      public void CloseCozmoHasHiccupsAlert() {
         if (_HiccupAlertModal != null) {
           UIManager.CloseModal(_HiccupAlertModal);
           _HiccupAlertModal = null;
+          _CurrentPriorityData = null;
         }
       }
 
       private void HandleRobotHiccupsChanged(RobotHiccupsChanged message) {
-        if (!message.hasHiccups) {
+        if (message.hasHiccups) {
+          OpenCozmoHasHiccupsAlert(_CurrentPriorityData ?? new ModalPriorityData());
+        }
+        else {
           CloseCozmoHasHiccupsAlert();
         }
       }

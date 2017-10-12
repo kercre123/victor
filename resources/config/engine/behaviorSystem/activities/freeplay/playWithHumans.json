@@ -17,12 +17,6 @@
           "flatScore": 20
         }
       },
-      { "behaviorID" : "TrackLaser",
-        "scoring"      :
-        {
-          "flatScore": 10
-        }
-      },
       { "behaviorID" : "RollBlockOnSideLowScore",
         "scoring"      :
         {

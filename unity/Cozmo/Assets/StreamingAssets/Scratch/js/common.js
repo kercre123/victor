@@ -20,10 +20,10 @@
 
         var minutes = Math.floor(seconds / 60);
         seconds -= (minutes * 60)
-        
+
         var hours = Math.floor(minutes / 60);
         minutes -= (hours * 60);
-        
+
         var days = Math.floor(hours / 24);
         hours -= (days * 24)
 
@@ -33,9 +33,25 @@
 
     window.cozmoDASLog = function(eventName, messageContents) {
         messageContents = "[" + getTimeStamp() + "] " + messageContents;
+        console.log(messageContents);
         window.Unity.call({command: "cozmoDASLog", argString: eventName, argString2: messageContents});
-    }    
-    
+    }
+
+    window.cozmoDASError = function(eventName, messageContents) {
+        messageContents = "[" + getTimeStamp() + "] " + messageContents;
+        console.log(messageContents);
+        window.Unity.call({command: "cozmoDASError", argString: eventName, argString2: messageContents});
+    }
+
+    window.startLoadingProject = function() {
+        window.isLoadingProject = true;
+    }
+
+    window.notifyProjectIsLoaded = function() {
+        window.Unity.call({command: "cozmoWorkspaceLoaded"});
+        window.isLoadingProject = false;
+    }
+
     /**
      * Window "onload" handler.
      * @return {void}
@@ -83,6 +99,9 @@
             toolboxPosition = 'start';
             controls = true;
             startScale = 0.85;
+            if (window.innerWidth < window.TABLET_WIDTH) {
+                startScale = 0.7;
+            }
         }
 
         // Instantiate scratch-blocks and attach it to the DOM.
@@ -113,6 +132,8 @@
 
         // Attach scratch-blocks events to VM.
         workspace.addChangeListener(vm.blockListener);
+        workspace.addChangeListener(vm.variableListener); // Handle a Blockly event for the variable map.
+
         const flyoutWorkspace = workspace.getFlyout().getWorkspace();
         flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
         flyoutWorkspace.addChangeListener(vm.monitorBlockListener);
@@ -132,6 +153,16 @@
         });
         vm.on('VISUAL_REPORT', function(data) {
             Scratch.workspace.reportValue(data.id, data.value);
+        });
+
+        // Receipt of new block XML for the selected target.
+        vm.on('workspaceUpdate', function(data) {
+            var dom = window.Blockly.Xml.textToDom(data.xml);
+            window.Blockly.Xml.domToWorkspace(dom, workspace);
+            Scratch.workspace.clearUndo();
+            if (window.isLoadingProject) {
+                window.notifyProjectIsLoaded();
+            }
         });
 
         // Run threads
@@ -159,6 +190,7 @@
 
         if (!window.isVertical) {
             var challengesButton = document.querySelector('#challengesbutton');
+            var tutorialButton = document.querySelector('#tutorialbutton');
 
             challengesButton.addEventListener('click', function () {
               // show challenges dialog
@@ -168,11 +200,23 @@
             challengesButton.addEventListener('touchmove', function (e) {
                 e.preventDefault();
             });
+
+            tutorialButton.addEventListener('click', function () {
+              // show tutorials dialog
+              Scratch.workspace.playAudio('click');
+              window.Tutorial.show();
+            });
+            tutorialButton.addEventListener('touchmove', function (e) {
+                e.preventDefault();
+            });
         }
         else {
-            var exportbutton = document.querySelector('#exportbutton');
             var undo = document.querySelector('#undo');
             var redo = document.querySelector('#redo');
+            var zoomIn = document.querySelector('#zoomIn');
+            var zoomOut = document.querySelector('#zoomOut');
+            var zoomReset = document.querySelector('#zoomReset');
+            var exportbutton = document.querySelector('#exportbutton');
 
             undo.addEventListener('click', function () {
                 Scratch.workspace.playAudio('click');
@@ -181,12 +225,48 @@
             undo.addEventListener('touchmove', function (e) {
                 e.preventDefault();
             });
+
             redo.addEventListener('click', function () {
                 Scratch.workspace.playAudio('click');
                 Scratch.workspace.undo(true);
             });
             redo.addEventListener('touchmove', function (e) {
                 e.preventDefault();
+            });
+
+            // All zoom button implementation code below taken from zoom_controls.js
+            zoomIn.addEventListener('click', function () {
+                Scratch.workspace.playAudio('click');
+                Scratch.workspace.markFocused();
+                Scratch.workspace.zoomCenter(1);
+                Blockly.Touch.clearTouchIdentifier();  // Don't block future drags.
+            });
+            zoomIn.addEventListener('touchmove', function (e) {
+                e.stopPropagation();  // Don't start a workspace scroll.
+                e.preventDefault();  // Stop double-clicking from selecting text.
+            });
+
+            zoomOut.addEventListener('click', function () {
+                Scratch.workspace.playAudio('click');
+                Scratch.workspace.markFocused();
+                Scratch.workspace.zoomCenter(-1);
+                Blockly.Touch.clearTouchIdentifier();  // Don't block future drags.
+              });
+            zoomOut.addEventListener('touchmove', function (e) {
+                e.stopPropagation();  // Don't start a workspace scroll.
+                e.preventDefault();  // Stop double-clicking from selecting text.
+            });
+
+            zoomReset.addEventListener('click', function () {
+                Scratch.workspace.playAudio('click');
+                Scratch.workspace.markFocused();
+                Scratch.workspace.setScale(workspace.options.zoomOptions.startScale);
+                Scratch.workspace.scrollCenter();
+                Blockly.Touch.clearTouchIdentifier();  // Don't block future drags.
+            });
+            zoomReset.addEventListener('touchmove', function (e) {
+                e.stopPropagation();  // Don't start a workspace scroll.
+                e.preventDefault();  // Stop double-clicking from selecting text.
             });
 
             exportbutton.addEventListener('click', function () {
@@ -231,6 +311,12 @@
 
         window.setLocalizedValues();
         window.onresize();
+
+        var urlTutorialVar = window.getUrlVars()['showTutorial'];
+
+        if( urlTutorialVar && urlTutorialVar == "true" ) {
+            window.Tutorial.show();
+        }
     }
 
     window.onresize = function(event) {

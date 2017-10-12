@@ -85,13 +85,6 @@ namespace Anki {
       // TimeStamp offset
       std::chrono::steady_clock::time_point timeOffset_ = std::chrono::steady_clock::now();
 
-      // Audio
-      // (Can't actually play sound in simulator, but proper handling of audio frames is still
-      // necessary for proper animation timing)
-      TimeStamp_t audioEndTime_ = 0;    // Expected end of audio
-      u32 AUDIO_FRAME_TIME_MS = 33;     // Duration of single audio frame
-      bool audioReadyForFrame_ = true;  // Whether or not ready to receive another audio frame
-
       BodyToHead* bodyData_; //buffers are owned by the code that fills them. Spine owns this one
       HeadToBody headData_;  //-we own this one.
 
@@ -344,11 +337,6 @@ namespace Anki {
       Result result = RESULT_OK;
       TimeStamp_t now = HAL::GetTimeStamp();
 
-      // Check if audio frame is done
-      if (now >= audioEndTime_) {
-        audioReadyForFrame_ = true;
-      }
-
 #ifndef USING_ANDROID_PHONE
       {
         static int repeater = FRAMES_PER_RESPONSE;
@@ -389,7 +377,7 @@ namespace Anki {
     u32 HAL::GetMicroCounter(void)
     {
       auto currTime = std::chrono::steady_clock::now();
-      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::microseconds>(currTime - timeOffset_).count());
+      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::microseconds>(currTime.time_since_epoch()).count());
     }
 
     void HAL::MicroWait(u32 microseconds)
@@ -402,18 +390,13 @@ namespace Anki {
     TimeStamp_t HAL::GetTimeStamp(void)
     {
       auto currTime = std::chrono::steady_clock::now();
-      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime - timeOffset_).count());
+      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime.time_since_epoch()).count());
     }
 
     void HAL::SetTimeStamp(TimeStamp_t t)
     {
       printf("HAL.SetTimeStamp %d\n", t);
       timeOffset_ = std::chrono::steady_clock::now() - std::chrono::milliseconds(t);
-
-      //      using namespace Anki::Cozmo::RobotInterface;
-      //      AdjustTimestamp msg;
-      //      msg.timestamp = t;
-      //      RobotInterface::SendMessage(msg);
     };
 
 
@@ -534,32 +517,6 @@ namespace Anki {
       // not (yet) implemented in HAL in V2
       return 0;//bodyData_->status.watchdogCount;
     }
-
-    // @return true if the audio clock says it is time for the next frame
-    bool HAL::AudioReady()
-    {
-      // Not implemented in HAL in V2
-      return audioReadyForFrame_;
-    }
-
-    void HAL::AudioPlaySilence()
-    {
-      // Not implemented in HAL in V2
-      AudioPlayFrame(nullptr);
-    }
-
-    // Play one frame of audio or silence
-    // @param frame - a pointer to an audio frame or NULL to play one frame of silence
-    void HAL::AudioPlayFrame(AnimKeyFrame::AudioSample *msg)
-    {
-      // Not implemented in HAL in V2
-      if (audioEndTime_ == 0) {
-        audioEndTime_ = HAL::GetTimeStamp();
-      }
-      audioEndTime_ += AUDIO_FRAME_TIME_MS;
-      audioReadyForFrame_ = false;
-    }
-
 
   } // namespace Cozmo
 } // namespace Anki

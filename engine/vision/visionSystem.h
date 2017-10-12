@@ -52,7 +52,6 @@
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/visionModes.h"
 #include "clad/types/toolCodes.h"
-#include "clad/types/cameraParams.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 #include "util/bitFlags/bitFlags.h"
@@ -97,7 +96,6 @@ namespace Cozmo {
     std::list<Vision::ObservedMarker>                           observedMarkers;
     std::list<Vision::TrackedFace>                              faces;
     std::list<Vision::TrackedPet>                               pets;
-    std::list<Pose3d>                                           dockingPoses;
     std::list<OverheadEdgeFrame>                                overheadEdges;
     std::list<Vision::UpdatedFaceID>                            updatedFaceIDs;
     std::list<ToolCodeInfo>                                     toolCodes;
@@ -189,7 +187,8 @@ namespace Cozmo {
                       Vision::RobotRenamedEnrolledFace& renamedFace);
     
     // Parameters for camera hardware exposure values
-    using GammaCurve = std::array<u8, (size_t)CameraConstants::GAMMA_CURVE_SIZE>;
+    static constexpr size_t GAMMA_CURVE_SIZE = 17;
+    using GammaCurve = std::array<u8, GAMMA_CURVE_SIZE>;
     Result SetCameraExposureParams(const s32 currentExposureTime_ms,
                                    const s32 minExposureTime_ms,
                                    const s32 maxExposureTime_ms,
@@ -213,8 +212,7 @@ namespace Cozmo {
     bool CheckMailbox(VisionProcessingResult& result);
     
     const RollingShutterCorrector& GetRollingShutterCorrector() { return _rollingShutterCorrector; }
-    // TODO(Al): Remove after fixing imageIMU and rolling shutter
-    void  ShouldDoRollingShutterCorrection(bool b) { /*_doRollingShutterCorrection = b;*/ }
+    void  ShouldDoRollingShutterCorrection(bool b) { _doRollingShutterCorrection = b; }
     bool  IsDoingRollingShutterCorrection() const { return _doRollingShutterCorrection; }
     
     Result CheckImageQuality(const Vision::Image& inputImage,
@@ -281,6 +279,7 @@ namespace Cozmo {
     // Snapshots of robot state
     bool _wasCalledOnce    = false;
     bool _havePrevPoseData = false;
+    const Pose3d _poseOrigin;
     VisionPoseData _poseData, _prevPoseData;
   
     // For sending images to basestation
@@ -306,7 +305,6 @@ namespace Cozmo {
     bool                          _isReadingToolCode;
     
     Result UpdatePoseData(const VisionPoseData& newPoseData);
-    void GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange);
     Radians GetCurrentHeadAngle();
     Radians GetPreviousHeadAngle();
     

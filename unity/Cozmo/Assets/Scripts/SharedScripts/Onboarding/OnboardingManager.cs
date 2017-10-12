@@ -28,6 +28,7 @@ public class OnboardingManager : MonoBehaviour {
     RewardBox,
     DiscoverIntro,
     GameRequests,
+    NotificationsPermission,
     // Start OLD
     Home,
     Loot,
@@ -39,7 +40,8 @@ public class OnboardingManager : MonoBehaviour {
 
   public static readonly OnboardingPhases[] kRequiredPhases = { OnboardingPhases.InitialSetup,
                                     OnboardingPhases.MeetCozmo, OnboardingPhases.NurtureIntro,OnboardingPhases.FeedIntro,
-                                    OnboardingPhases.PlayIntro, OnboardingPhases.RewardBox,OnboardingPhases.DiscoverIntro };
+                                    OnboardingPhases.PlayIntro, OnboardingPhases.RewardBox,OnboardingPhases.DiscoverIntro,
+                                    OnboardingPhases.NotificationsPermission };
 
   public Action<OnboardingPhases, int> OnOnboardingStageStarted;
   public Action<OnboardingPhases> OnOnboardingPhaseStarted;
@@ -63,6 +65,12 @@ public class OnboardingManager : MonoBehaviour {
 
   [SerializeField]
   private List<int> _NumOnboardingStages;
+
+  [SerializeField]
+  private int _NotificationOnboardingReminder_Days = 7;
+
+  [SerializeField]
+  private int _NotificationOnboardingRepeatTimesMax = 3;
 
   private const string kOnboardingManagerIdleLock = "onboarding_manager_idle";
 
@@ -202,6 +210,21 @@ public class OnboardingManager : MonoBehaviour {
     else if (IsOnboardingRequired(OnboardingPhases.NurtureIntro)) {
       StartPhase(OnboardingPhases.NurtureIntro);
     }
+    else if (!DataPersistenceManager.Instance.Data.DefaultProfile.OSNotificationsPermissionsPromptShown) {
+      PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
+      // we've shown you notifications onboarding once, but you never got to the OS prompt, reset onboarding 
+      // every week for 3 times to remind you.
+      if (!IsOnboardingRequired(OnboardingPhases.NotificationsPermission) &&
+          profile.NumTimesNotificationPermissionReminded < _NotificationOnboardingRepeatTimesMax) {
+        TimeSpan lastSpammed = DateTime.Now - profile.LastTimeAskedAboutNotifications;
+        // it's been a week, you might have changed your mind, and start when opening animation is done.
+        if (lastSpammed.TotalDays > _NotificationOnboardingReminder_Days) {
+          DAS.Event("notifications.weeklyreminder", "");
+          profile.NumTimesNotificationPermissionReminded++;
+          profile.OnboardingStages.Remove(OnboardingPhases.NotificationsPermission);
+        }
+      }
+    }
     _NeedsHubView.DialogOpenAnimationFinished += HandleNeedsViewOpenAnimationCompleted;
   }
 
@@ -340,6 +363,10 @@ public class OnboardingManager : MonoBehaviour {
 
     if (!IsOnboardingRequired(OnboardingPhases.FeedIntro) && IsOnboardingRequired(OnboardingPhases.PlayIntro)) {
       StartPhase(OnboardingPhases.PlayIntro);
+    }
+
+    if (!IsOnboardingRequired(OnboardingPhases.RewardBox) && IsOnboardingRequired(OnboardingPhases.NotificationsPermission)) {
+      StartPhase(OnboardingPhases.NotificationsPermission);
     }
   }
 

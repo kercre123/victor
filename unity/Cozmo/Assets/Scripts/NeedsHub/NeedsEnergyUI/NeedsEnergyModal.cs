@@ -44,6 +44,12 @@ namespace Cozmo.Energy.UI {
     [SerializeField]
     private float _AlreadyFullTriggerHiccupOdds = 0.2f;
 
+    [SerializeField]
+    private CozmoImage _ShakeProgressBarFill;
+
+    [SerializeField]
+    private CozmoImage _ShakeProgressBarBG;
+
     #endregion
 
     #region NON-SERIALIZED FIELDS
@@ -63,6 +69,8 @@ namespace Cozmo.Energy.UI {
     private BaseModal _CubeHelpModal;
 
     private bool _WasCozmoOverfed = false;
+
+    private Tween _FillBarLerpTween = null;
 
     #endregion
 
@@ -198,9 +206,11 @@ namespace Cozmo.Energy.UI {
     private void HandleBlockConnectivityChanged(int blocksConnected) {
       if (_WasFull == null || !_WasFull.Value) {
         if (blocksConnected == 0) {
+          _ShakeProgressBarBG.gameObject.SetActive(false);
           _CubeHelpGroup.SetActive(true);
         }
         else {
+          _ShakeProgressBarBG.gameObject.SetActive(true);
           _CubeHelpGroup.SetActive(false);
         }
       }
@@ -216,6 +226,9 @@ namespace Cozmo.Energy.UI {
 
       if (actionId == NeedsActionId.Feed) {
         _InactivityTimer = _InactivityTimeOut;
+
+        // ready for the next feeding.
+        SetProgressBarFillAmount(0.0f);
 
         // If Cozmo was full and the user fed him again, there's a chance he gets the hiccups
         if (triggeredFromMessage &&
@@ -244,6 +257,9 @@ namespace Cozmo.Energy.UI {
           CozmoOverfed();
         }
       }
+      if (_FillBarLerpTween != null) {
+        _FillBarLerpTween.Kill();
+      }
     }
 
     private void HandleRobotReactionaryBehavior(object messageObject) {
@@ -256,26 +272,40 @@ namespace Cozmo.Energy.UI {
       }
     }
 
+    private void SetProgressBarFillAmount(float amount) {
+      if (_FillBarLerpTween != null) {
+        _FillBarLerpTween.Kill();
+      }
+      // Because the stages are quite large, just fake some fill time.
+      const float kFillTime = 0.4f;
+      _FillBarLerpTween = _ShakeProgressBarFill.DOFillAmount(amount, kFillTime);
+    }
+
     private void HandleFeedingSFXStageUpdate(FeedingSFXStageUpdate message) {
       uint stageNum = message.stage;
       switch (stageNum) {
       case 0: {
+          SetProgressBarFillAmount(0.0f);
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Play);
           break;
         }
       case 1: {
+          SetProgressBarFillAmount(message.chargePercentage);
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Up);
           break;
         }
       case 2: {
+          SetProgressBarFillAmount(message.chargePercentage);
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Down);
           break;
         }
       case 3: {
+          SetProgressBarFillAmount(1.0f);
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Success);
           break;
         }
       case 4: {
+          SetProgressBarFillAmount(0.0f);
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Stop);
           break;
         }

@@ -20,11 +20,13 @@
 namespace Anki {
   namespace Cozmo {
   
-    void ImuDataHistory::AddImuData(u32 imageId, float rateX, float rateY, float rateZ, u8 line2Number)
+    void ImuDataHistory::AddImuData(TimeStamp_t systemTimestamp_ms,
+                                    float rateX,
+                                    float rateY,
+                                    float rateZ)
     {
       ImuData data;
-      data.imageId = imageId;
-      data.line2Number = line2Number;
+      data.timestamp = systemTimestamp_ms;
       data.rateX = rateX;
       data.rateY = rateY;
       data.rateZ = rateZ;
@@ -34,37 +36,6 @@ namespace Anki {
         _history.pop_front();
       }
       _history.push_back(data);
-    }
-    
-    // Calculate timestamps for ImageIMU messages since they only have frameIDs and lineNumbers
-    void ImuDataHistory::CalculateTimestampForImageIMU(u32 imageId, TimeStamp_t t, f32 period, int height)
-    {
-      const f32 timePerLine = period/height;
-      for(auto iter = _history.begin(); iter != _history.end(); ++iter)
-      {
-        if(iter->imageId == imageId)
-        {
-          // The timestamp when this data was captured is
-          // timestamp of the image - the time it took from the line it was captured to the end of the image
-          iter->timestamp = t - (period/height * (height - iter->line2Number));
-        }
-        // Otherwise if the imageIMU is from the previous image and it still has a timestamp of 0
-        // better calculate it now. This means we got the imageIMU data after the corresponding image was processed
-        else if(iter->imageId == imageId - 1 &&
-                iter->timestamp == 0)
-        {
-          if(iter != _history.begin())
-          {
-            const auto prevIter = iter - 1;
-            // Both the last imageIMU data for the previous image and the one before both cant have timestamps of zero
-            // the only time that they both might have zero timestamps is on start up before we have processed the first image
-            if(prevIter->timestamp != 0)
-            {
-              iter->timestamp = prevIter->timestamp + ((iter->line2Number - prevIter->line2Number) * timePerLine);
-            }
-          }
-        }
-      }
     }
     
     bool ImuDataHistory::GetImuDataBeforeAndAfter(TimeStamp_t t,
@@ -99,7 +70,7 @@ namespace Anki {
                                                         const int numToLookBack,
                                                         const f32 rateX, const f32 rateY, const f32 rateZ) const
     {
-      if(_history.size() == 0)
+      if(_history.empty())
       {
         return false;
       }
@@ -155,8 +126,6 @@ namespace Anki {
       _pixelShifts.clear();
       _pixelShifts.reserve(_rsNumDivisions);
 
-      Pose3d pose = poseData.cameraPose.GetWithRespectToRoot();
-      
       // Time difference between subdivided rows in the image
       const f32 timeDif = timeBetweenFrames_ms/_rsNumDivisions;
       
@@ -169,19 +138,16 @@ namespace Anki {
       
       // The fraction each subdivided row in the image will contribute to the total shifts for this image
       const f32 frac = 1.f / _rsNumDivisions;
-      const f32 numRowsPerDivision = numRows/_rsNumDivisions;
       
       for(int i=1;i<=_rsNumDivisions;i++)
       {
         Vec2f pixelShifts;
-        const int curLine = (_rsNumDivisions - i) * numRowsPerDivision;
-        didComputePixelShiftsFail |= !ComputePixelShiftsWithImageIMU((TimeStamp_t)(poseData.timeStamp - std::round(i*timeDif)),
+        const TimeStamp_t time = poseData.timeStamp - std::round(i*timeDif);
+        didComputePixelShiftsFail |= !ComputePixelShiftsWithImageIMU(time,
                                                                      pixelShifts,
                                                                      poseData,
                                                                      prevPoseData,
-                                                                     frac,
-                                                                     curLine,
-                                                                     numRows);
+                                                                     frac);
         
         _pixelShifts.insert(_pixelShifts.end(),
                             Vec2f(pixelShifts.x() + shiftOffset.x(), pixelShifts.y() + shiftOffset.y()));
@@ -250,22 +216,20 @@ namespace Anki {
                                                                  Vec2f& shift,
                                                                  const VisionPoseData& poseData,
                                                                  const VisionPoseData& prevPoseData,
-                                                                 const f32 frac,
-                                                                 const int line,
-                                                                 const u32 numRows)
+                                                                 const f32 frac)
     {
-      std::deque<ImuDataHistory::ImuData>::const_iterator ImuBeforeT;
-      std::deque<ImuDataHistory::ImuData>::const_iterator ImuAfterT;
-      
-      float rateY = 0;
-      float rateZ = 0;
-      
-      if(poseData.imuDataHistory.size() == 0)
+      if(poseData.imuDataHistory.empty())
       {
         shift = Vec2f(0,0);
         return false;
       }
       
+      std::deque<ImuDataHistory::ImuData>::const_iterator ImuBeforeT;
+      std::deque<ImuDataHistory::ImuData>::const_iterator ImuAfterT;
+
+      float rateY = 0;
+      float rateZ = 0;
+
       bool beforeAfterSet = false;
       // Find the ImuData before and after the timestamp if it exists
       for(auto iter = poseData.imuDataHistory.begin(); iter != poseData.imuDataHistory.end(); ++iter)
@@ -285,26 +249,12 @@ namespace Anki {
             beforeAfterSet = true;
           }
           
-          int beforeLine = ImuBeforeT->line2Number;
-          int afterLine = ImuAfterT->line2Number;
+          const int tMinusBeforeTime     = t - ImuBeforeT->timestamp;
+          const int afterMinusBeforeTime = ImuAfterT->timestamp - ImuBeforeT->timestamp;
           
-          // If the timestamp of the after imu data is zero then it is from the next image that has yet to be processed
-          // which means we need to increase the line number to work with the current image
-          // The current line we are calculating is towards the end of the image so the after imu data falls in the next image
-          if(ImuAfterT->timestamp == 0)
-          {
-            afterLine += numRows;
-          }
-          // Otherwise if the after imu data has a valid timestamp but a different frame id than the current line must cause
-          // the before imu data to fall in the previous image so we need to decrease the before line number
-          else if(ImuBeforeT->imageId < ImuAfterT->imageId)
-          {
-            beforeLine -= numRows;
-          }
-          
-          // Linearly interpolate the imu data using the line numbers before and after imu data was captured
-          rateY = (((line - beforeLine)*(ImuAfterT->rateY - ImuBeforeT->rateY)) / (afterLine - beforeLine)) + ImuBeforeT->rateY;
-          rateZ = (((line - beforeLine)*(ImuAfterT->rateZ - ImuBeforeT->rateZ)) / (afterLine - beforeLine)) + ImuBeforeT->rateZ;
+          // Linearly interpolate the imu data using the timestamps before and after imu data was captured
+          rateY = (((tMinusBeforeTime)*(ImuAfterT->rateY - ImuBeforeT->rateY)) / (afterMinusBeforeTime)) + ImuBeforeT->rateY;
+          rateZ = (((tMinusBeforeTime)*(ImuAfterT->rateZ - ImuBeforeT->rateZ)) / (afterMinusBeforeTime)) + ImuBeforeT->rateZ;
           
           break;
         }

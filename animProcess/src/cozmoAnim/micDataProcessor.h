@@ -51,7 +51,7 @@ private:
   uint32_t _collectedAudioSamples = 0;
   uint32_t _audioSamplesToCollect = kDefaultAudioSamplesPerFile;
   
-  uint32_t _filesToStore = kDefaultFilesToCapture;
+  // uint32_t _filesToStore = kDefaultFilesToCapture;
   std::string _writeLocationDir = "";
 
   AudioUtil::AudioChunkList _rawAudioData{};

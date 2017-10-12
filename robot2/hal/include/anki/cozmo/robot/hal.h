@@ -195,17 +195,6 @@ namespace Anki
        * @param[out] A buffer with space for AUDIO_DATA_PER_TICK to receive audio data.
        */ 
       void GetMicrophoneData(u8* buffer);
-
-/************************************************************************
- * \section Audio 
- *          TODO: Only here because animationController calls them, but eventually shouldn't need to be
- */
-      bool AudioReady();
-      
-      // Play one frame of audio or silence
-      // @param frame - a pointer to an audio frame or NULL to play one frame of silence
-      void AudioPlayFrame(AnimKeyFrame::AudioSample *msg);
-      void AudioPlaySilence();
       
 /************************************************************************
  * \section Buttons

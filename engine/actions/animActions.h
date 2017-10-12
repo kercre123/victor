@@ -21,7 +21,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "clad/externalInterface/messageActions.h"
 #include "clad/types/actionTypes.h"
-#include "clad/types/animationKeyFrames.h"
+#include "clad/types/animationTypes.h"
 #include "clad/types/animationTrigger.h"
 
 

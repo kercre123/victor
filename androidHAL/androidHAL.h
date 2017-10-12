@@ -16,7 +16,6 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/imageTypes.h"
-#include "clad/types/cameraParams.h"
 
 // Forward declaration
 namespace webots {
@@ -100,16 +99,14 @@ namespace Anki
       
       void InitCamera();
       
-      void CameraGetParameters(DefaultCameraParams& params);
-
       // Sets the camera parameters (non-blocking call)
       void CameraSetParameters(u16 exposure_ms, f32 gain);
 
       // Points provided frame to a buffer of image data if available
       // Returns true if image available
       // TODO: How fast will this be in hardware? Is image ready and waiting?
-      bool CameraGetFrame(u8*& frame, u32& imageID, std::vector<ImageImuData>& imuData);
-
+      bool CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms);
+      
       ImageResolution CameraGetResolution() const {return _imageCaptureResolution;}
       
     private:

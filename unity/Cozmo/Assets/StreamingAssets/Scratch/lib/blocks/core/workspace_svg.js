@@ -419,9 +419,14 @@ Blockly.WorkspaceSvg.prototype.createDom = function(opt_backgroundClass) {
   if (this.options.hasTrashcan) {
     bottom = this.addTrashcan_(bottom);
   }
+
+  // *** ANKI CHANGE ***
+  // We add the zoom controls the same way as our other workspace buttons so we can control the up/down state, etc.
+  /*
   if (this.options.zoomOptions && this.options.zoomOptions.controls) {
     bottom = this.addZoomControls_(bottom);
   }
+  */
 
   if (!this.isFlyout) {
     // *** ANKI CHANGE ***

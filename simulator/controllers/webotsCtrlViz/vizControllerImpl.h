@@ -50,7 +50,6 @@ enum class VizTextLabelType : unsigned int
   TEXT_LABEL_SPEEDS,
   TEXT_LABEL_BATTERY,
   TEXT_LABEL_VID_RATE,
-  TEXT_LABEL_ANIM_BUFFER,
   TEXT_LABEL_STATUS_FLAG,
   TEXT_LABEL_STATUS_FLAG_2,
   TEXT_LABEL_STATUS_FLAG_3,
@@ -113,7 +112,7 @@ private:
   void ProcessSaveImages(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessSaveState(const AnkiEvent<VizInterface::MessageViz>& msg);
   
-  void DisplayCameraInfo();
+  void DisplayCameraInfo(const TimeStamp_t timestamp);
   
   using EmotionBuffer = Util::CircularBuffer<float>;
   using EmotionEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
@@ -184,6 +183,16 @@ private:
   std::string   _savedImagesFolder = "";
   u32           _saveCtr = 0;
   bool          _saveVizImage = false;
+  
+  // For managing "debug" image displays
+  struct DebugImage {
+    EncodedImage      encodedImage;
+    webots::Display*  imageDisplay;
+    webots::ImageRef* imageRef;
+    
+    DebugImage(webots::Display* display) : imageDisplay(display), imageRef(nullptr) { }
+  };
+  std::vector<DebugImage> _debugImages;
   
   // Camera info
   u16           _exposure = 0;

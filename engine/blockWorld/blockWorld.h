@@ -43,6 +43,8 @@ namespace Anki
     class ActiveObject;
     class IExternalInterface;
     class INavMap;
+    class MapComponent;
+    
     namespace BlockConfigurations{
     class BlockConfigurationManager;
     }
@@ -59,7 +61,7 @@ namespace Anki
       
       // Update the BlockWorld's state by processing all queued ObservedMarkers
       // and updating robot's and objects' poses from them.
-      Result Update(const std::list<Vision::ObservedMarker>& observedMarkers);
+      Result UpdateObservedMarkers(const std::list<Vision::ObservedMarker>& observedMarkers);
       
       // Adds a proximity obstacle (like random objects detected in front of the robot with the IR sensor) at the given pose.
       Result AddProxObstacle(const Pose3d& p);
@@ -74,9 +76,7 @@ namespace Anki
       Result AddCollisionObstacle(const Pose3d& p);
       
       ObjectID CreateFixedCustomObject(const Pose3d& p, const f32 xSize_mm, const f32 ySize_mm, const f32 zSize_mm);
-      
-      // Processes the edges found in the given frame
-      Result ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
+
 
       // Defines an object that could be observed later.
       // Does not add an instance of this object to the existing objects in the world.
@@ -349,36 +349,6 @@ namespace Anki
         return 0;
       }
       
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      // Navigation memory
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-      // return pointer to current INavMap (it may be null if not enabled)
-      const INavMap* GetNavMemoryMap() const;
-      INavMap* GetNavMemoryMap();
-      
-      // update memory map with the current robot pose if needed (objects use other notification methods)
-      void UpdateRobotPoseInMemoryMap();
-      
-      // flag all interesting edges in front of the robot (using ground plane ROI) as uncertain, meaning we want
-      // the robot to grab new edges since we don't trust the ones we currently have in front of us
-      void FlagGroundPlaneROIInterestingEdgesAsUncertain();
-      
-      // flags any interesting edges in the given quad as not interesting anymore. Quad should be passed wrt current origin
-      void FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin);
-      
-      // flags all current interesting edges as too small to give useful information
-      void FlagInterestingEdgesAsUseless();
-
-      // create a new memory map from current robot frame of reference.
-      void CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID);
-      
-      // Visualize the navigation memory information
-      void DrawNavMemoryMap() const;
-      
-      // Send navigation memory map (e.g. so SDK can get the data)
-      void BroadcastNavMemoryMap();
-      
       //
       // Visualization
       //
@@ -520,39 +490,7 @@ namespace Anki
       
       void SetupEventHandlers(IExternalInterface& externalInterface);
       
-      Result SanityCheckBookkeeping() const;
-      
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      // Nav memory map
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      
-      // remove current renders for all maps if any
-      void ClearNavMemoryMapRender() const;
-      
-      // enable/disable rendering of the memory maps
-      void SetMemoryMapRenderEnabled(bool enabled);
-      
-      // updates the objects reported in curOrigin that are moving to the relocalizedOrigin by virtue of rejiggering
-      void UpdateOriginsOfObjectsReportedInMemMap(PoseOriginID_t curOriginID, PoseOriginID_t relocalizedOriginID);
-      
-      // clear the space in the memory map between the robot and observed markers for the given object,
-      // because if we saw the marker, it means there's nothing between us and the marker.
-      // The observed markers are obtained querying the current marker observation time
-      void ClearRobotToMarkersInMemMap(const ObservableObject* object);
-      
-      // add/remove the given object to/from the memory map
-      void AddObjectReportToMemMap(const ObservableObject& object, const Pose3d& newPose);
-      void RemoveObjectReportFromMemMap(const ObservableObject& object, PoseOriginID_t originID);
-      
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      // Vision border detection
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      
-      // adds edges from the given frame to the world info
-      Result AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
-      
-      // review interesting edges within the given quad and decide whether they are still interesting
-      void ReviewInterestingEdges(const Quad2f& withinQuad);
+      Result SanityCheckBookkeeping() const;    
       
       //
       // Member Variables
@@ -593,24 +531,6 @@ namespace Anki
 
       // For tracking, keep track of the id of the actions we are doing
       u32 _lastTrackingActionTag = static_cast<u32>(ActionConstants::INVALID_TAG);
-      
-      // Map the world knows the robot has traveled
-      using NavMemoryMapTable = std::map<PoseOriginID_t, std::unique_ptr<INavMap>>;
-      NavMemoryMapTable _navMemoryMaps;
-      PoseOriginID_t _currentNavMemoryMapOriginID;
-      bool _isNavMemoryMapRenderEnabled;
-      
-      // poses we have sent to the memory map for objects we know, in each origin
-      struct PoseInMapInfo {
-        PoseInMapInfo(const Pose3d& p, bool inMap) : pose(p), isInMap(inMap) {}
-        PoseInMapInfo() : pose(), isInMap(false) {}
-        Pose3d pose;
-        bool isInMap; // if true the pose was sent to the map, if false the pose was removed from the map
-      };
-      using OriginToPoseInMapInfo = std::map<PoseOriginID_t, PoseInMapInfo>;
-      using ObjectIdToPosesPerOrigin = std::map<int, OriginToPoseInMapInfo>;
-      ObjectIdToPosesPerOrigin _navMapReportedPoses;
-      Pose3d _navMapReportedRobotPose;
 
       // changes in poses in the current frame to keep stacks aligned
       struct PoseChange {
@@ -626,14 +546,9 @@ namespace Anki
       std::set<ObjectID> _unidentifiedActiveObjects;
       
       std::vector<Signal::SmartHandle> _eventHandles;
-      
-      float _memoryMapBroadcastRate_sec = -1.0f;      // (Negative means don't send)
-      float _nextMemoryMapBroadcastTimeStamp = 0.0f;  // The next time we should broadcast
-      
+            
       TimeStamp_t _currentObservedMarkerTimestamp = 0;
-      std::unique_ptr<BlockConfigurations::BlockConfigurationManager> _blockConfigurationManager;
-
-      
+      std::unique_ptr<BlockConfigurations::BlockConfigurationManager> _blockConfigurationManager;    
     }; // class BlockWorld
 
 

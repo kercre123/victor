@@ -14,7 +14,6 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/data/dataScope.h"
 #include "anki/common/basestation/array2d_impl.h"
-#include "clad/types/animationKeyFrames.h"
 #include "util/console/consoleInterface.h"
 #include "util/dispatchWorker/dispatchWorker.h"
 #include "util/logging/logging.h"

@@ -252,6 +252,11 @@ Blockly.Flyout.prototype.createDom = function(tagName) {
 
   this.svgBackground_ = Blockly.utils.createSvgElement('path',
       {'class': 'blocklyFlyoutBackground'}, this.svgGroup_);
+
+  if (window.isVertical) {
+    this.svgBackground_.style.fill = "#7d7d7d";
+  }
+
   this.svgGroup_.appendChild(this.workspace_.createDom());
   return this.svgGroup_;
 };
@@ -585,7 +590,9 @@ Blockly.Flyout.prototype.blockMouseDown_ = function(block) {
     if (gesture) {
       // *** ANKI CHANGE ***
       // Play sound when block in toolbox is tapped.
-      flyout.workspace_.playAudio("click");
+      if (!window.isVertical) {
+        flyout.workspace_.playAudio("click");
+      }
 
       gesture.setStartBlock(block);
       gesture.handleFlyoutStart(e, flyout);
@@ -719,13 +726,6 @@ Blockly.Flyout.prototype.placeNewBlock_ = function(oldBlock) {
 
   // The position of the old block in main workspace coordinates.
   var finalOffsetMainWs = finalOffsetPixels.scale(1 / targetWorkspace.scale);
-
-  // *** ANKI CHANGE ***
-  // Have new block position take into account the fact that the flyout is shifted down from the top
-  if (window.isVertical) {
-    finalOffsetPixels.y += 60;
-    finalOffsetMainWs.y += 60;
-  }
 
   block.moveBy(finalOffsetMainWs.x, finalOffsetMainWs.y);
   return block;

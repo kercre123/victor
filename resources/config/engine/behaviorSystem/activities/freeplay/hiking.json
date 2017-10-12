@@ -33,12 +33,6 @@
           "flatScore": 10.0
         }
       },
-      { "behaviorID" : "TrackLaser",
-        "scoring"      :
-        {
-          "flatScore": 10
-        }
-      },
       { "behaviorID" : "Hiking_FirstLookIntro",
         "scoring"      :
         {

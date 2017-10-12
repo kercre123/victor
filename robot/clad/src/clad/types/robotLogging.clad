@@ -42,18 +42,6 @@ message TimeProfileStat
   string  profName,
 }
 
-message DataDump
-{
-  uint_32 id,
-  uint_8  data[uint_8],
-}
-
-message PrintText
-{
-  LogLevel level,
-  string   text
-}
-
 } // namespace RobotInterface
 } // namespace Cozmo
 } // namespace Anki

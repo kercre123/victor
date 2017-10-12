@@ -37,6 +37,7 @@
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "clad/types/animationTypes.h"
 #include "util/console/consoleInterface.h"
 #include "util/helpers/templateHelpers.h"
 

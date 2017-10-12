@@ -11,8 +11,11 @@
  **/
 
 #include "engine/behaviorSystem/behaviors/reactions/behaviorReactToSparked.h"
-#include "engine/robot.h"
+
+#include "anki/common/basestation/utils/timer.h"
 #include "engine/behaviorSystem/behaviorManager.h"
+#include "engine/moodSystem/moodManager.h"
+#include "engine/robot.h"
 
 
 namespace Anki {
@@ -27,6 +30,9 @@ BehaviorReactToSparked::BehaviorReactToSparked(Robot& robot, const Json::Value& 
 
 Result BehaviorReactToSparked::InitInternal(Robot& robot)
 {
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  robot.GetMoodManager().TriggerEmotionEvent("SparkPending", currTime_s);
   return Result::RESULT_OK;
 }
 

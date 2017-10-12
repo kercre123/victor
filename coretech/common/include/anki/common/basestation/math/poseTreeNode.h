@@ -295,6 +295,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::SetParent(const std::shared_ptr
   DEV_ASSERT(newParent.get() != this, "PoseBase.PoseTreeNode.SetParent.ParentCannotBeSelf");
   Dev_SwitchParent(_parentPtr.get(), newParent.get(), this);
   _parentPtr = newParent;
+  Dev_AssertIsValidParentPointer(_parentPtr.get(), this);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -34,7 +34,6 @@ struct RobotState;
 class TouchSensorComponent : private Util::noncopyable
 {
 public:
-
   // constructor/destructor
   TouchSensorComponent(Robot& robot);
   ~TouchSensorComponent();
@@ -54,7 +53,7 @@ private:
   
   Util::CircularBuffer<uint16_t> _touchIntensitySamples;
   
-  float _lastTimeSentRobotTouchMsg_s;
+  // float _lastTimeSentRobotTouchMsg_s;
   
   // Logging stuff:
   std::unique_ptr<Util::RollingFileLogger> _rawDataLogger;
@@ -62,7 +61,6 @@ private:
   float _logRawDataUntil_s = 0.f;
 
   bool _wasTouched = false;
-  
 };
 
 

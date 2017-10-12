@@ -54,9 +54,7 @@ public:
   void HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandlePotentialCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  // For processing image chunks arriving from robot.
-  // Sends complete images to VizManager for visualization (and possible saving).
-  void HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
+  
   // For processing imu data chunks arriving from robot.
   // Writes the entire log of 3-axis accelerometer and 3-axis
   // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
@@ -68,7 +66,6 @@ public:
   void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorAutoEnabled(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleDefaultCameraParams(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleObjectPowerLevel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleObjectAccel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleTimeProfileStat(const AnkiEvent<RobotInterface::RobotToEngine>& message);

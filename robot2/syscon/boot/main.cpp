@@ -32,15 +32,21 @@ bool validate(void) {
 }
 
 static bool boot_test(void) {
+  BODY_TX::mode(MODE_OUTPUT);
+
   // Failure count reached max
   if (APP->faultCounter[MAX_FAULT_COUNT - 1] != FAULT_NONE) {
+    BODY_TX::reset();
     return false;
   }
 
   // Evil flag not set
   if (APP->fingerPrint != COZMO_APPLICATION_FINGERPRINT) {
+    BODY_TX::reset();
     return false;
   }
+
+  BODY_TX::set();
 
   return validate();
 }

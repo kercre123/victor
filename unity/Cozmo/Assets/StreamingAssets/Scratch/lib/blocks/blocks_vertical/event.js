@@ -36,7 +36,7 @@ Blockly.Blocks['event_whenflagclicked'] = {
   init: function() {
     this.jsonInit({
       "id": "event_whenflagclicked",
-      "message0": "when %1 clicked",
+      "message0": "%{BKY_EVENTS_GREEN_FLAG_SCRATCH_2}",
       "args0": [
         {
           "type": "field_image",
@@ -74,22 +74,38 @@ Blockly.Blocks['event_whenbroadcastreceived'] = {
   init: function() {
     this.jsonInit({
       "id": "event_whenbroadcastreceived",
-      "message0": "when I receive %1",
+      "message0": "%{BKY_EVENTS_BROADCAST_HAT_SCRATCH_2}",
       "args0": [
         {
           "type": "field_dropdown",
           "name": "BROADCAST_OPTION",
           "options": [
-            ['message1', 'message1'],
-            ['message2', 'message2'],
-            ['message3', 'message3'],
-            ['message4', 'message4'],
-            ['message5', 'message5'],
-            ['message6', 'message6'],
-            ['message7', 'message7'],
-            ['message8', 'message8'],
-            ['message9', 'message9'],
-            ['new message', 'new message']
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_1_SCRATCH_2}', 'message1'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_2_SCRATCH_2}', 'message2'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_3_SCRATCH_2}', 'message3'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_4_SCRATCH_2}', 'message4'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_5_SCRATCH_2}', 'message5'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_6_SCRATCH_2}', 'message6'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_7_SCRATCH_2}', 'message7'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_8_SCRATCH_2}', 'message8'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_9_SCRATCH_2}', 'message9'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_10_SCRATCH_2}', 'message10'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_11_SCRATCH_2}', 'message11'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_12_SCRATCH_2}', 'message12'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_13_SCRATCH_2}', 'message13'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_14_SCRATCH_2}', 'message14'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_15_SCRATCH_2}', 'message15'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_16_SCRATCH_2}', 'message16'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_17_SCRATCH_2}', 'message17'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_18_SCRATCH_2}', 'message18'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_19_SCRATCH_2}', 'message19'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_20_SCRATCH_2}', 'message20'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_21_SCRATCH_2}', 'message21'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_22_SCRATCH_2}', 'message22'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_23_SCRATCH_2}', 'message23'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_24_SCRATCH_2}', 'message24'],
+            ['%{BKY_EVENTS_BROADCAST_MESSAGE_25_SCRATCH_2}', 'message25']
+            /*['%{BKY_EVENTS_BROADCAST_NEW_MESSAGE_SCRATCH_2}', 'new message']*/
           ]
         }
       ],
@@ -163,16 +179,32 @@ Blockly.Blocks['event_broadcast_menu'] = {
             "type": "field_dropdown",
             "name": "BROADCAST_OPTION",
             "options": [
-              ['message1', 'message1'],
-              ['message2', 'message2'],
-              ['message3', 'message3'],
-              ['message4', 'message4'],
-              ['message5', 'message5'],
-              ['message6', 'message6'],
-              ['message7', 'message7'],
-              ['message8', 'message8'],
-              ['message9', 'message9'],
-              ['new message', 'new message']
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_1_SCRATCH_2}', 'message1'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_2_SCRATCH_2}', 'message2'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_3_SCRATCH_2}', 'message3'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_4_SCRATCH_2}', 'message4'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_5_SCRATCH_2}', 'message5'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_6_SCRATCH_2}', 'message6'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_7_SCRATCH_2}', 'message7'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_8_SCRATCH_2}', 'message8'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_9_SCRATCH_2}', 'message9'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_10_SCRATCH_2}', 'message10'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_11_SCRATCH_2}', 'message11'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_12_SCRATCH_2}', 'message12'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_13_SCRATCH_2}', 'message13'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_14_SCRATCH_2}', 'message14'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_15_SCRATCH_2}', 'message15'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_16_SCRATCH_2}', 'message16'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_17_SCRATCH_2}', 'message17'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_18_SCRATCH_2}', 'message18'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_19_SCRATCH_2}', 'message19'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_20_SCRATCH_2}', 'message20'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_21_SCRATCH_2}', 'message21'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_22_SCRATCH_2}', 'message22'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_23_SCRATCH_2}', 'message23'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_24_SCRATCH_2}', 'message24'],
+              ['%{BKY_EVENTS_BROADCAST_MESSAGE_25_SCRATCH_2}', 'message25']
+              /*['%{BKY_EVENTS_BROADCAST_NEW_MESSAGE_SCRATCH_2}', 'new message']*/
             ]
           }
         ],
@@ -192,7 +224,7 @@ Blockly.Blocks['event_broadcast'] = {
   init: function() {
     this.jsonInit({
       "id": "event_broadcast",
-      "message0": "broadcast %1",
+      "message0": "%{BKY_EVENTS_BROADCAST_SCRATCH_2}",
       "args0": [
         {
           "type": "input_value",
@@ -212,7 +244,7 @@ Blockly.Blocks['event_broadcastandwait'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "broadcast %1 and wait",
+      "message0": "%{BKY_EVENTS_BROADCAST_AND_WAIT_SCRATCH_2}",
       "args0": [
         {
           "type": "input_value",

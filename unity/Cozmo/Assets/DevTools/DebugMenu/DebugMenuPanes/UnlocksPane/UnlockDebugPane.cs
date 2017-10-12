@@ -15,19 +15,34 @@ public class UnlockDebugPane : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Button _UnlockDifficultiesButton;
 
+  [SerializeField]
+  private UnityEngine.UI.Button _UnlockAllSongsButton;
+
+  [SerializeField]
+  private UnityEngine.UI.Button _LockAllSongsButton;
+
+  private const string _kSongUnlockPrefix = "Singing_";
+
   private void Start() {
     _LockButton.onClick.AddListener(OnHandleLockButtonClicked);
     _UnlockButton.onClick.AddListener(OnHandleUnlockButtonClicked);
     PopulateOptions();
 
     _UnlockDifficultiesButton.onClick.AddListener(OnHandleUnlockDifficultiesButtonClicked);
+    _UnlockAllSongsButton.onClick.AddListener(OnHandleUnlockAllSongsButtonClicked);
+    _LockAllSongsButton.onClick.AddListener(OnHandleLockAllSongsButtonClicked);
   }
 
   private void PopulateOptions() {
     List<UnityEngine.UI.Dropdown.OptionData> options = new List<UnityEngine.UI.Dropdown.OptionData>();
+    List<string> enumNames = new List<string>();
     for (int i = 0; i < System.Enum.GetValues(typeof(Anki.Cozmo.UnlockId)).Length; ++i) {
+      enumNames.Add(System.Enum.GetValues(typeof(Anki.Cozmo.UnlockId)).GetValue(i).ToString());
+    }
+    enumNames.Sort();
+    for (int i = 0; i < enumNames.Count; i++) {
       UnityEngine.UI.Dropdown.OptionData option = new UnityEngine.UI.Dropdown.OptionData();
-      option.text = System.Enum.GetValues(typeof(Anki.Cozmo.UnlockId)).GetValue(i).ToString();
+      option.text = enumNames[i];
       options.Add(option);
     }
     _UnlockSelection.AddOptions(options);
@@ -45,6 +60,24 @@ public class UnlockDebugPane : MonoBehaviour {
     UnlockablesManager.Instance.TrySetUnlocked(GetSelectedUnlockId(), true);
   }
 
+  private void OnHandleUnlockAllSongsButtonClicked() {
+    for (int i = 0; i < (int)Anki.Cozmo.UnlockId.Count; i++) {
+      Anki.Cozmo.UnlockId id = (Anki.Cozmo.UnlockId)i;
+      if (id.ToString().Contains(_kSongUnlockPrefix)) {
+        UnlockablesManager.Instance.TrySetUnlocked(id, true);
+      }
+    }
+  }
+
+  private void OnHandleLockAllSongsButtonClicked() {
+    for (int i = 0; i < (int)Anki.Cozmo.UnlockId.Count; i++) {
+      Anki.Cozmo.UnlockId id = (Anki.Cozmo.UnlockId)i;
+      if (id.ToString().Contains(_kSongUnlockPrefix)) {
+        UnlockablesManager.Instance.TrySetUnlocked(id, false);
+      }
+    }
+  }
+
   // Difficulties are unlocked in the app not the robot, so not related to real unlock manager
   // but most people logically look for the unlock of any feature here.
   private void OnHandleUnlockDifficultiesButtonClicked() {
@@ -59,5 +92,4 @@ public class UnlockDebugPane : MonoBehaviour {
       }
     }
   }
-
 }

@@ -16,7 +16,6 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "audioEngine/audioScene.h"
 #include "audioEngine/soundbankLoader.h"
-#include "clad/types/animationKeyFrames.h"
 #include "clad/audio/audioGameObjectTypes.h"
 #include "cozmoAnim/cozmoAnimContext.h"
 #include "util/environment/locale.h"

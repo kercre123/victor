@@ -69,7 +69,6 @@ bool RobotInitialConnection::ShouldFilterMessage(RobotToEngineTag messageTag) co
 
   switch (messageTag) {
     // these messages are ok on outdated firmware
-    case RobotToEngineTag::otaAck:
     case RobotToEngineTag::robotAvailable:
     case RobotToEngineTag::factoryFirmwareVersion:
     case RobotToEngineTag::firmwareVersion:
@@ -86,15 +85,7 @@ bool RobotInitialConnection::ShouldFilterMessage(EngineToRobotTag messageTag) co
     return false;
   }
 
-  switch (messageTag) {
-      // these messages are ok on outdated firmware
-    case EngineToRobotTag::otaWrite:
-    case EngineToRobotTag::shutdownRobot:
-      return false;
-
-    default:
-      return true;
-  }
+  return true;
 }
 
 bool RobotInitialConnection::HandleDisconnect(RobotConnectionResult connectionResult)

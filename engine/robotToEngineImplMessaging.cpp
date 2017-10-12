@@ -100,7 +100,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   };
   
   // bind to specific handlers in the robotImplMessaging class
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::printText,                      &RobotToEngineImplMessaging::HandlePrint);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::factoryFirmwareVersion,         &RobotToEngineImplMessaging::HandleFWVersionInfo);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::pickAndPlaceResult,             &RobotToEngineImplMessaging::HandlePickAndPlaceResult);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectAvailable,          &RobotToEngineImplMessaging::HandleActiveObjectAvailable);
@@ -124,7 +123,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::motorAutoEnabled,               &RobotToEngineImplMessaging::HandleMotorAutoEnabled);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,                             &RobotToEngineImplMessaging::HandleDockingStatus);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::defaultCameraParams,            &RobotToEngineImplMessaging::HandleDefaultCameraParams);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::objectPowerLevel,               &RobotToEngineImplMessaging::HandleObjectPowerLevel);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::timeProfStat,                              &RobotToEngineImplMessaging::HandleTimeProfileStat);
   
@@ -143,8 +141,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::animState");
                                                        if (robot->GetTimeSynced()) {
-                                                         robot->SetNumAnimationBytesPlayed(message.GetData().Get_animState().numAnimBytesPlayed);
-                                                         robot->SetNumAnimationAudioFramesPlayed(message.GetData().Get_animState().numAudioFramesPlayed);
                                                          robot->SetEnabledAnimTracks(message.GetData().Get_animState().enabledAnimTracks);
                                                          robot->SetAnimationTag(message.GetData().Get_animState().tag);
                                                        }
@@ -198,16 +194,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                        if (payload.numMainTooLateErrors > 0) {
                                                          PRINT_NAMED_WARNING("Robot.MainCycleTooLate", "%d Num errors: %d, Avg time: %d us", robot->GetID(), payload.numMainTooLateErrors, payload.avgMainTooLateTime);
                                                        }
-                                                     }));
-  
-  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::dataDump,
-                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
-                                                       ANKI_CPU_PROFILE("RobotTag::dataDump");
-                                                       
-                                                       const RobotInterface::DataDump& payload = message.GetData().Get_dataDump();
-                                                       char buf[payload.data.size() * 2 + 1];
-                                                       FormatBytesAsHex((char *)payload.data.data(), (int)payload.data.size(), buf, (int)sizeof(buf));
-                                                       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageDataDump", "ID: %d, size: %zd, data: %s", robot->GetID(), payload.data.size(), buf);
                                                      }));
   
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuTemperature,
@@ -357,14 +343,6 @@ void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInte
 
   PRINT_NAMED_INFO("RobotIsPhysical", "%d", robotIsPhysical);
   robot->SetPhysicalRobot(robotIsPhysical);
-}
-  
-
-void RobotToEngineImplMessaging::HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
-{
-  ANKI_CPU_PROFILE("Robot::HandlePrint");
-  const RobotInterface::PrintText& payload = message.GetData().Get_printText();
-  printf("ROBOT-PRINT (%d): %s", robot->GetID(), payload.text.c_str());
 }
 
 void RobotToEngineImplMessaging::HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
@@ -1002,11 +980,10 @@ void RobotToEngineImplMessaging::HandleImageImuData(const AnkiEvent<RobotInterfa
   
   const ImageImuData& payload = message.GetData().Get_imageGyro();
   
-  robot->GetVisionComponent().GetImuDataHistory().AddImuData(payload.imageId,
+  robot->GetVisionComponent().GetImuDataHistory().AddImuData(payload.systemTimestamp_ms,
                                                              payload.rateX,
                                                              payload.rateY,
-                                                             payload.rateZ,
-                                                             payload.line2Number);
+                                                             payload.rateZ);
 }
 
 void RobotToEngineImplMessaging::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
@@ -1023,14 +1000,6 @@ void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface
   // Forward on with EngineToGame event
   PRINT_NAMED_INFO("Robot.HandleRobotPoked","");
   robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked()));
-}
-
-void RobotToEngineImplMessaging::HandleDefaultCameraParams(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
-{
-  ANKI_CPU_PROFILE("Robot::HandleDefaultCameraParams");
-  
-  const DefaultCameraParams& payload = message.GetData().Get_defaultCameraParams();
-  robot->GetVisionComponent().HandleDefaultCameraParams(payload);
 }
 
 //

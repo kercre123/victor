@@ -187,13 +187,12 @@ IBehavior::Status BehaviorFeedingEat::UpdateInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::CubeMovementHandler(Robot& robot, const float movementScore)
 {
-  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
   // Logic for determining whether the player has "stolen" cozmo's cube while he's
   // eating.  We only want to respond if the player pulls the cube away while
   // Cozmo is actively in the "eating" stage and has not drained the cube yet
   if(robot.IsPhysical()){
     if(movementScore > kCubeMovedTooFastInterrupt){
+      const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       const bool currentlyEating = (_currentState == State::Eating) &&
                        (_timeCubeIsSuccessfullyDrained_sec > currentTime_s);
       
@@ -213,6 +212,15 @@ void BehaviorFeedingEat::CubeMovementHandler(Robot& robot, const float movementS
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::StopInternal(Robot& robot)
 {
+  // If the behavior is being stopped while feeding is still ongoing notify
+  // listeners that feeding is being interrupted
+  if(!_hasRegisteredActionComplete &&
+     (_currentState >= State::PlacingLiftOnCube)){
+    for(auto& listener: _feedingListeners){
+      listener->EatingInterrupted(robot);
+    }
+  }
+  
   robot.GetRobotMessageHandler()->SendMessage(robot.GetID(),
     RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(true)));
   

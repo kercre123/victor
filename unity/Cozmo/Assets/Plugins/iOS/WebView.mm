@@ -265,6 +265,40 @@ extern "C" void UnitySendMessage(const char *, const char *, const char *);
   [UnityGetGLViewController() presentViewController:alert animated:YES completion:nil];
 }
 
+// *** ANKI CHANGE ***
+// When JavaScript requests a alert dialog via window.alert, display UIAlertController.
+// Used by Code Lab vertical workspace's "Create Variable..." button when there is a name collision.
+- (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)prompt initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:prompt preferredStyle:UIAlertControllerStyleAlert];
+
+    [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"OK", nil) style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        completionHandler();
+    }]];
+    
+    [UnityGetGLViewController() presentViewController:alert animated:YES completion:^{}];
+}
+
+// *** ANKI CHANGE ***
+// When JavaScript requests a confirmation dialog via window.confirm, display UIAlertController.
+// Used by Code Lab vertical workspace's "Delete Variable..." button.
+-(void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSString *)prompt initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(BOOL))completionHandler
+{
+    UIAlertController* alert = [UIAlertController alertControllerWithTitle:nil message:prompt preferredStyle:UIAlertControllerStyleAlert];
+
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", nil) style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        completionHandler(NO);
+    }];
+
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        completionHandler(YES);
+    }];
+    
+    [alert addAction:cancelAction];
+    [alert addAction:okAction];
+    [UnityGetGLViewController() presentViewController:alert animated:YES completion:nil];
+}
+
 - (void)setFrame:(NSInteger)x positionY:(NSInteger)y width:(NSInteger)width height:(NSInteger)height
 {
     if (webView == nil)

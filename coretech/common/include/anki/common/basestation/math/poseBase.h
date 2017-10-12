@@ -136,15 +136,16 @@ namespace Anki {
     PoseBase(const PoseBase& other);
     PoseBase& operator=(const PoseBase& other);
     
-    // Rvalue construction/assignment. NOTE: IDS *are* moved and name is preserved.
-    PoseBase(PoseBase&& other);
-    PoseBase& operator=(PoseBase&& other);
+    // COZMO-10891: Removing RValue construction/assignment for trying to debug this ticket
+    // // Rvalue construction/assignment. NOTE: IDS *are* moved and name is preserved.
+    PoseBase(PoseBase&& other) = delete;
+    PoseBase& operator=(PoseBase&& other) = delete;
 
     static bool GetWithRespectTo(const PoseNd& from, const PoseNd& to, PoseNd& newPose);
     
     // Create a new Pose object which "wraps" an existing node
     class PoseTreeNode;
-    void WrapExistingNode(std::shared_ptr<PoseTreeNode> node) { _node = node; _node->AddOwner(); }
+    void WrapExistingNode(const std::shared_ptr<PoseTreeNode>& node) { _node = node; _node->AddOwner(); }
         
   private:
     

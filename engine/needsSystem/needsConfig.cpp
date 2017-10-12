@@ -72,7 +72,7 @@ NeedsConfig::NeedsConfig(const CozmoContext* cozmoContext)
 , _decayUnconnected()
 , _localNotificationMaxFutureMinutes(60 * 24 * 365 * 10)
 , _cozmoContext(cozmoContext)
-, _unconnectedDecayTestVariationKey("Unknown")
+, _unconnectedDecayTestVariationKey("Unknown (unknown)")
 {
 }
 
@@ -315,9 +315,11 @@ float NeedsConfig::NeedLevelForNeedBracket(const NeedId needId, const NeedBracke
 }
 
 
-void NeedsConfig::SetUnconnectedDecayTestVariation(const std::string& baseFilename, const std::string& variationKey)
+void NeedsConfig::SetUnconnectedDecayTestVariation(const std::string& baseFilename, const std::string& variationKey,
+                                                   const Util::AnkiLab::AssignmentStatus assignmentStatus)
 {
-  _unconnectedDecayTestVariationKey = variationKey;
+  _unconnectedDecayTestVariationKey = variationKey + " (" +
+                                      AssignmentStatusToString(assignmentStatus) + ")";
 
   // We copy one of the experiment's variation files over the file that is read at app start-up
   const std::string srcFile  = baseFilename + "_" + variationKey + ".json";

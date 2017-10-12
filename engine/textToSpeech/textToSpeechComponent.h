@@ -106,7 +106,7 @@ private:
     ~TtsBundle() { Util::SafeDelete(waveData); }
   };
   
-  AudioEngine::AudioEngineController* _audioController  = nullptr;
+//  AudioEngine::AudioEngineController* _audioController  = nullptr;
   Util::Dispatch::Queue* _dispatchQueue                 = nullptr;
   
   std::unordered_map<OperationId, TtsBundle> _ttsWaveDataMap;

@@ -15,20 +15,19 @@ MonoBehaviour:
     _EnumValueAsString: FistBump
     _EnumValue: 35
   UnlockableType: 1
-  _ComingSoon: 0
   DescriptionKey: unlockable.FistBump.Description
   TitleKey: unlockable.FistBump.Title
   SparkButtonDescription: unlockable.FistBump.SparkButtonDescription
   SparkedStateDescription: unlockable.FistBump.SparkedStateDescription
   SparkedMusicState:
     _Sparked: 982472036
+  IsSparkable: 1
   RequestTrickCostItemId: spark
   _SparkableThingID:
     _EnumValueAsString: FistBump
     _EnumValue: 10
   CoreUpgradeIcon: {fileID: 21300000, guid: 7847a2c83e5ff426fb6bc77953051f07, type: 3}
   CubesRequired: 0
-  SortOrder: 750
+  SortOrder: 70
   AndroidReleaseVersion: 
   AndroidSDKVersion: 0
-  _CanVoiceActivate: 1

@@ -35,18 +35,13 @@ namespace Anki {
       public:
         ImuDataHistory() {};
       
-        void AddImuData(u32 imageId, float rateX, float rateY, float rateZ, u8 line2Number);
-      
-        // Calculate timestamps for ImageIMU messages since they only have frameIDs and lineNumbers
-        void CalculateTimestampForImageIMU(u32 imageId, TimeStamp_t t, f32 period, int height);
+        void AddImuData(TimeStamp_t systemTimestamp_ms, float rateX, float rateY, float rateZ);
       
         struct ImuData
         {
-          u32 imageId = 0;
           float rateX = 0;
           float rateY = 0;
           float rateZ = 0;
-          u8 line2Number = 0;
           TimeStamp_t timestamp = 0;
         };
       
@@ -68,7 +63,7 @@ namespace Anki {
       
       private:
         std::deque<ImuData> _history;
-        static const int maxSizeOfHistory = 20;
+        static const int maxSizeOfHistory = 40;
     };
     
     class RollingShutterCorrector
@@ -96,9 +91,7 @@ namespace Anki {
                                           Vec2f& shift,
                                           const VisionPoseData& poseData,
                                           const VisionPoseData& prevPoseData,
-                                          const f32 frac,
-                                          const int line,
-                                          const u32 numRows);
+                                          const f32 frac);
     
       // Vector of vectors of varying pixel shift amounts based on gyro rates and vertical position in the image
       std::vector<Vec2f> _pixelShifts;
@@ -108,7 +101,7 @@ namespace Anki {
       bool doVerticalCorrection = false;
       
       // The number of rows to divide the image into and calculate warps for
-      static const int _rsNumDivisions = 120;
+      static constexpr f32 _rsNumDivisions = 180.f;
       
       // Proportionality constant that relates gyro rates to pixel shift
       static constexpr f32 rateToPixelProportionalityConst = 22.0;

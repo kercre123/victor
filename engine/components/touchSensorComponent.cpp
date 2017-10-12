@@ -33,7 +33,7 @@ namespace {
                                     // sampled at 30ms update rate
                                     // 1/0.030 ~ 30 samples
   
-  const float kRobotTouchedMsgInterval_s = 0.75f;
+  // const float kRobotTouchedMsgInterval_s = 0.75f;
   
   float kTouchIntensityThreshold = 625; // arbitrary
 } // end anonymous namespace
@@ -42,7 +42,7 @@ namespace {
 TouchSensorComponent::TouchSensorComponent(Robot& robot)
   : _robot(robot)
   , _touchIntensitySamples(kNumTouchSamples)
-  , _lastTimeSentRobotTouchMsg_s(0.0f)
+  // , _lastTimeSentRobotTouchMsg_s(0.0f)
   , _rawDataLogger(nullptr)
 {
 }

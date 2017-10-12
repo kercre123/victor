@@ -24,7 +24,7 @@
 #include "anki/vision/basestation/visionMarker.h"
 #include "clad/externalInterface/messageActions.h"
 #include "clad/types/actionTypes.h"
-#include "clad/types/animationKeyFrames.h"
+#include "clad/types/animationTypes.h"
 #include "clad/types/toolCodes.h"
 #include "clad/types/visionModes.h"
 #include "util/bitFlags/bitFlags.h"

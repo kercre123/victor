@@ -25,7 +25,7 @@
 #include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "clad/types/animationKeyFrames.h"
+#include "clad/types/animationTypes.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
@@ -440,8 +440,7 @@ namespace Cozmo {
                                               _startTime_ms,
                                               _streamingTime_ms,
                                               layeredKeyFrames,
-                                              false,
-                                              nullptr);
+                                              false);
       
 //      // If we have audio to send
 //      if(layeredKeyFrames.haveAudioKeyFrame)
@@ -546,9 +545,7 @@ namespace Cozmo {
                                               _startTime_ms,
                                               _streamingTime_ms,
                                               layeredKeyFrames,
-                                              storeFace,
-//                                              (haveAnimAudio ? &rawAudio : nullptr));
-                                              nullptr);
+                                              storeFace);
       
 //      // Audio keyframe always goes first
 //      if(layeredKeyFrames.haveAudioKeyFrame)

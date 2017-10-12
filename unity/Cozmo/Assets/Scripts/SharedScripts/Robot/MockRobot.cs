@@ -222,12 +222,12 @@ public class MockRobot : IRobot {
     _Callbacks.Add(new CallbackWrapper() { CallbackTime = Time.time + delay, Callback = callback });
   }
 
-  public void PlaceObjectOnGroundHere(RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public uint PlaceObjectOnGroundHere(RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     if (CarryingObject == null) {
       // Can't place object if carrying object is null
       if (callback != null) {
         callback(false);
-        return;
+        return (uint)ActionConstants.INVALID_TAG;
       }
     }
 
@@ -238,14 +238,16 @@ public class MockRobot : IRobot {
     LiftHeight = 0f;
 
     QueueCallback(0.5f, callback);
+
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
-  public void PlaceObjectRel(ObservableObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public uint PlaceObjectRel(ObservableObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     if (CarryingObject == null) {
       // Can't place object if carrying object is null
       if (callback != null) {
         callback(false);
-        return;
+        return (uint)ActionConstants.INVALID_TAG;
       }
     }
 
@@ -259,14 +261,16 @@ public class MockRobot : IRobot {
     LiftHeight = 0f;
 
     QueueCallback(1f, callback);
+
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
-  public void PlaceOnObject(ObservableObject target, bool checkForObjectOnTop = true, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public uint PlaceOnObject(ObservableObject target, bool checkForObjectOnTop = true, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     if (CarryingObject == null) {
       // Can't place object if carrying object is null
       if (callback != null) {
         callback(false);
-        return;
+        return (uint)ActionConstants.INVALID_TAG;
       }
     }
 
@@ -278,9 +282,15 @@ public class MockRobot : IRobot {
     LiftHeight = 0f;
 
     QueueCallback(1f, callback);
+
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
   public void CancelAction(Anki.Cozmo.RobotActionType actionType = Anki.Cozmo.RobotActionType.UNKNOWN) {
+    // TODO: Something?
+  }
+
+  public void CancelActionByIdTag(uint idTag) {
     // TODO: Something?
   }
 
@@ -321,8 +331,9 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false, uint loops = 1) {
+  public uint SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false, uint loops = 1) {
     QueueCallback(0.5f, callback);
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
   public void SetIdleAnimation(AnimationTrigger default_anim) {
@@ -341,8 +352,9 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void PlayNeedsGetOutAnimIfNeeded(RobotCallback callback = null) {
+  public uint PlayNeedsGetOutAnimIfNeeded(RobotCallback callback = null) {
     QueueCallback(0.1f, callback);
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
   public void RemoveDrivingAnimations(string lockName) {
@@ -366,7 +378,7 @@ public class MockRobot : IRobot {
     return angle;
   }
 
-  public void SetHeadAngle(float angleFactor = -0.8f, RobotCallback callback = null,
+  public uint SetHeadAngle(float angleFactor = -0.8f, RobotCallback callback = null,
                            Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW, bool useExactAngle = false, float speed_radPerSec = -1, float accel_radPerSec2 = -1) {
     float radians = angleFactor;
 
@@ -383,11 +395,13 @@ public class MockRobot : IRobot {
       if (callback != null) {
         callback(true);
       }
-      return;
+      return (uint)ActionConstants.INVALID_TAG;
     }
     HeadAngle = radians;
 
     QueueCallback(0.1f, callback);
+
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
 
@@ -417,8 +431,8 @@ public class MockRobot : IRobot {
     return null;
   }
 
-  public void MountCharger(ActiveObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-
+  public uint MountCharger(ActiveObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
   public void StopTrackToObject() {
@@ -437,7 +451,7 @@ public class MockRobot : IRobot {
     Rotation = rotation;
   }
 
-  public void TurnTowardsObject(ObservableObject observableObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW,
+  public uint TurnTowardsObject(ObservableObject observableObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW,
                                 float setTiltTolerance_rad = 0f, float maxTurnAngle_rad = float.MaxValue) {
 
     LookAtPosition(observableObject.WorldPosition);
@@ -446,9 +460,11 @@ public class MockRobot : IRobot {
       TrackToObject(observableObject);
     }
     QueueCallback(1f, callback);
+
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
-  public void TurnTowardsFace(Face face, float maxTurnAngle_rad = Mathf.PI, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
+  public uint TurnTowardsFace(Face face, float maxTurnAngle_rad = Mathf.PI, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
                               bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count,
                               AnimationTrigger unnamedTrigger = AnimationTrigger.Count,
                               RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
@@ -456,10 +472,12 @@ public class MockRobot : IRobot {
     LookAtPosition(face.WorldPosition);
 
     QueueCallback(1f, callback);
+
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
   // Turns towards the last seen face, but not any more than the specified maxTurnAngle
-  public void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count,
+  public uint TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count,
                                       AnimationTrigger unnamedTrigger = AnimationTrigger.Count, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "TurnTowardsLastFacePose with maxTurnAngle : " + maxTurnAngle);
@@ -467,6 +485,8 @@ public class MockRobot : IRobot {
     TurnInPlace(maxTurnAngle, 4.3f, 10f);
 
     QueueCallback(1f, callback);
+
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
   public uint PickupObject(ObservableObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0f, bool checkForObjectOnTop = true, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
@@ -481,10 +501,10 @@ public class MockRobot : IRobot {
     }
 
     QueueCallback(5f, callback);
-    return 0;
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
-  public void RollObject(ObservableObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool checkForObjectOnTop = true, bool rollWithoutDocking = false, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public uint RollObject(ObservableObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool checkForObjectOnTop = true, bool rollWithoutDocking = false, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     // Rather than figure out what side the cube was on, assume it just goes upright
     Rotation = selectedObject.Rotation.zRotation();
@@ -492,14 +512,16 @@ public class MockRobot : IRobot {
     WorldPosition = (selectedObject.WorldPosition + Rotation * (Vector3.left * CozmoUtil.kOriginToLowLiftDDistMM)).xy0();
 
     QueueCallback(3f, callback);
+
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
-  public void PlaceObjectOnGround(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public uint PlaceObjectOnGround(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     if (CarryingObject == null) {
       // Can't place object if carrying object is null
       if (callback != null) {
         callback(false);
-        return;
+        return (uint)ActionConstants.INVALID_TAG;
       }
     }
 
@@ -514,9 +536,11 @@ public class MockRobot : IRobot {
     LiftHeight = 0f;
 
     QueueCallback(0.5f, callback);
+
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
-  public void GotoPose(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public uint GotoPose(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     WorldPosition = position.xy0();
     Rotation = rotation;
 
@@ -527,52 +551,63 @@ public class MockRobot : IRobot {
     }
 
     QueueCallback(2f, callback);
+
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
-  public void GotoPose(float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
-    GotoPose(new Vector3(x_mm, y_mm, 0f), Quaternion.Euler(0, 0, Mathf.Rad2Deg * rad), level, useManualSpeed, callback, queueActionPosition);
+  public uint GotoPose(float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+    return GotoPose(new Vector3(x_mm, y_mm, 0f), Quaternion.Euler(0, 0, Mathf.Rad2Deg * rad), level, useManualSpeed, callback, queueActionPosition);
   }
 
-  public void DriveStraightAction(float speed_mmps, float dist_mm, bool shouldPlayAnimation = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint DriveStraightAction(float speed_mmps, float dist_mm, bool shouldPlayAnimation = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     QueueCallback(2f, callback);
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
-  public void GotoObject(ObservableObject obj, float distance_mm, bool goToPreDockPose, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public uint GotoObject(ObservableObject obj, float distance_mm, bool goToPreDockPose, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     var delta = (WorldPosition - obj.WorldPosition).normalized * distance_mm;
 
     WorldPosition = (obj.WorldPosition + delta).xy0();
 
     QueueCallback(2f, callback);
+
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
-  public void AlignWithObject(ObservableObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0f, Anki.Cozmo.AlignmentType alignmentType = Anki.Cozmo.AlignmentType.CUSTOM, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW, byte numRetries = 0) {
+  public uint AlignWithObject(ObservableObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0f, Anki.Cozmo.AlignmentType alignmentType = Anki.Cozmo.AlignmentType.CUSTOM, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW, byte numRetries = 0) {
 
     Rotation = obj.Rotation.zRotation();
     WorldPosition = (obj.WorldPosition + Rotation * (Vector3.left * CozmoUtil.kOriginToLowLiftDDistMM)).xy0();
 
     QueueCallback(3f, callback);
+
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
   public LightCube GetClosestLightCube() {
     return null;
   }
 
-  public void SearchForCube(int cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint SearchForCube(int cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     QueueCallback(3f, callback);
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
-  public void SearchForNearbyObject(int objectId = -1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
+  public uint SearchForNearbyObject(int objectId = -1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
                                     float backupDistance_mm = (float)SearchForNearbyObjectDefaults.BackupDistance_mm,
                                     float backupSpeed_mm = (float)SearchForNearbyObjectDefaults.BackupSpeed_mms,
                                     float headAngle_rad = Mathf.Deg2Rad * (float)SearchForNearbyObjectDefaults.HeadAngle_deg) {
     QueueCallback(3f, callback);
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
-  public void SetLiftHeight(float heightFactor, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW, float speed_radPerSec = -1, float accel_radPerSec2 = -1) {
+  public uint SetLiftHeight(float heightFactor, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW, float speed_radPerSec = -1, float accel_radPerSec2 = -1) {
     LiftHeight = heightFactor;
 
     QueueCallback(0.5f, callback);
+
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
   public void SetRobotCarryingObject(int objectID = -1) {
@@ -591,10 +626,11 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, float tolerance_rad = 0.0f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public uint TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, float tolerance_rad = 0.0f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     Rotation *= Quaternion.Euler(0, 0, angle_rad);
 
     QueueCallback(1f, callback);
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
   public void TraverseObject(int objectID, bool usePreDockPose = false, bool useManualSpeed = false) {
@@ -1021,8 +1057,8 @@ public class MockRobot : IRobot {
 
   #endregion
 
-  public void SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, bool fitToDuration = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-
+  public uint SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, bool fitToDuration = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
   public void EraseAllEnrolledFaces() {
@@ -1162,15 +1198,19 @@ public class MockRobot : IRobot {
   public void SetNightVision(bool enable) {
   }
 
-  public void PlayCubeAnimationTrigger(ObservableObject obj, CubeAnimationTrigger trigger, RobotCallback callback = null) {
+  public uint PlayCubeAnimationTrigger(ObservableObject obj, CubeAnimationTrigger trigger, RobotCallback callback = null) {
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
-  public void WaitAction(float waitTime_s, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint WaitAction(float waitTime_s, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
-  public void DisplayFaceImage(uint duration_ms, byte[] faceData, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint DisplayFaceImage(uint duration_ms, byte[] faceData, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    return (uint)ActionConstants.INVALID_TAG;
   }
 
-  public void DriveOffChargerContacts(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint DriveOffChargerContacts(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    return (uint)ActionConstants.INVALID_TAG;
   }
 }

@@ -67,10 +67,16 @@ namespace Cozmo.Hub {
       RobotEngineManager.Instance.AddCallback<HardSparkStartedByEngine>(HandleRandomTrickStarted);
 
       _Instance = this;
-      StartLoadNeedsHubView();
-
       _ConnectedTimeStartedTimestamp = Time.time;
       _ConnectedTimeIntervalLastTimestamp = _ConnectedTimeStartedTimestamp;
+
+      if (WhatsNew.WhatsNewModalManager.ShouldAutoOpenProject) {
+        _ChallengeManager.SetCurrentChallenge("CodeLabGame", wasRequest: false);
+        StartLoadChallenge();
+      }
+      else {
+        StartLoadNeedsHubView();
+      }
     }
 
     public override void DestroyHubWorld() {

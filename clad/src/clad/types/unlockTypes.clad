@@ -85,6 +85,25 @@ enum int_32 UnlockId
 
   GuardDog                       = 63,
   TrackLaser                     = 64,
+  CozmoSings                     = 65,
+
+  Singing_AbaDaba                = 66,
+  Singing_Bingo                  = 67,
+  Singing_BuffaloGals            = 68,
+  Singing_CanCan1                = 69,
+  Singing_CanCan2                = 70,
+  Singing_DannyBoy               = 71,
+  Singing_FarmerInTheDell        = 72,
+  Singing_LaPaloma               = 73,
+  Singing_MuffinMan              = 74,
+  Singing_MulberryBush           = 75,
+  Singing_SilveryMoon            = 76,
+  Singing_TisketTasket           = 77,
+  Singing_Toccata                = 78,
+  Singing_VivaldiSpring          = 79,
+  Singing_WaterMusic             = 80,
+  Singing_WildAboutHarry         = 81,
+  Singing_YellowRose             = 82,
 
   // ADD NEW UNLOCKS HERE
 

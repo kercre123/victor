@@ -30,7 +30,7 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/types/animationKeyFrames.h"
+#include "clad/types/animationTypes.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/robotStatusAndActions.h"
@@ -93,7 +93,6 @@ class RobotToEngineImplMessaging;
 class TextToSpeechComponent;
 class PublicStateBroadcaster;
 class VisionComponent;
-struct RobotState;
 class PathComponent;
 class DockingComponent;
 class CarryingComponent;
@@ -101,6 +100,7 @@ class CliffSensorComponent;
 class ProxSensorComponent;
 class TouchSensorComponent;
 class AnimationComponent;
+class MapComponent;
 
 namespace Audio {
   class EngineRobotAudioClient;
@@ -113,11 +113,6 @@ class RobotToEngine;
 enum class EngineToRobotTag : uint8_t;
 enum class RobotToEngineTag : uint8_t;
 } // end namespace RobotInterface
-
-//
-// Compile-time switch for Animation Streamer 2.0
-//
-#define BUILD_NEW_ANIMATION_CODE 0
 
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot : private Util::noncopyable
@@ -173,6 +168,9 @@ public:
 
   inline VisionComponent&       GetVisionComponent()       { assert(_visionComponent); return *_visionComponent; }
   inline const VisionComponent& GetVisionComponent() const { assert(_visionComponent); return *_visionComponent; }
+  
+  inline MapComponent&       GetMapComponent()       {assert(_mapComponent); return *_mapComponent;}
+  inline const MapComponent& GetMapComponent() const {assert(_mapComponent); return *_mapComponent;}
   
   inline BlockTapFilterComponent& GetBlockTapFilter() {
     assert(_tapFilterComponent);
@@ -242,7 +240,7 @@ public:
     assert(_progressionUnlockComponent);
     return *_progressionUnlockComponent;
   }
-  //InventoryComponent
+
   inline const InventoryComponent& GetInventoryComponent() const {
     assert(_inventoryComponent);
     return *_inventoryComponent;
@@ -417,8 +415,8 @@ public:
   const Pose3d&       GetWorldOrigin()  const;
   PoseOriginID_t      GetWorldOriginID()const;
   
-  Pose3d              GetCameraPose(f32 atAngle) const;
-  Transform3d         GetLiftTransformWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
+  Pose3d              GetCameraPose(const f32 atAngle) const;
+  Transform3d         GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 atHeadAngle) const;
 
   OffTreadsState GetOffTreadsState() const {return _offTreadsState;}
   
@@ -538,27 +536,7 @@ public:
   bool HasActionList() const { return _actionList != nullptr; }
     
   // =========== Animation Commands =============
-  
-  // Returns the number of animation bytes or audio frames played on the robot since
-  // it was initialized with SyncTime.
-  s32 GetNumAnimationBytesPlayed() const;
-  s32 GetNumAnimationAudioFramesPlayed() const;
 
-  // Returns a count of the total number of bytes or audio frames streamed to the robot.
-  s32 GetNumAnimationBytesStreamed() const;
-  s32 GetNumAnimationAudioFramesStreamed() const;
-  
-  void IncrementNumAnimationBytesStreamed(s32 num);
-  void IncrementNumAnimationAudioFramesStreamed(s32 num);
-  
-  void SetNumAnimationBytesPlayed(s32 numAnimationsBytesPlayed) {
-    _numAnimationBytesPlayed = numAnimationsBytesPlayed;
-  }
-  
-  void SetNumAnimationAudioFramesPlayed(s32 numAnimationAudioFramesPlayed) {
-    _numAnimationAudioFramesPlayed = numAnimationAudioFramesPlayed;
-  }
-  
   void SetEnabledAnimTracks(u8 enabledAnimTracks) {
     _enabledAnimTracks = enabledAnimTracks;
   }
@@ -765,18 +743,14 @@ protected:
   std::unique_ptr<PathComponent> _pathComponent;
   
   ///////// Animation /////////
-  s32               _numAnimationBytesPlayed         = 0;
-  s32               _numAnimationBytesStreamed       = 0;
-  s32               _numAnimationAudioFramesPlayed   = 0;
-  s32               _numAnimationAudioFramesStreamed = 0;
   AnimationTag      _animationTag                    = kNotAnimatingTag;
   
   std::unique_ptr<DrivingAnimationHandler> _drivingAnimationHandler;
-  
-  
+    
   std::unique_ptr<ActionList>             _actionList;
   std::unique_ptr<MovementComponent>      _movementComponent;
   std::unique_ptr<VisionComponent>        _visionComponent;
+  std::unique_ptr<MapComponent>           _mapComponent;  
   std::unique_ptr<NVStorageComponent>     _nvStorageComponent;
   std::unique_ptr<AIComponent>            _aiComponent;
   std::unique_ptr<TextToSpeechComponent>  _textToSpeechComponent;
@@ -856,8 +830,6 @@ protected:
   bool             _isPickedUp               = false;
   bool             _isOnChargerPlatform      = false;
   bool             _isCliffReactionDisabled  = false;
-  bool             _isBodyInAccessoryMode    = true;
-  u8               _setBodyModeTicDelay      = 0;
   bool             _gotStateMsgAfterTimeSync = false;
   u32              _lastStatusFlags          = 0;
   bool             _isTouched                = false;
@@ -1003,7 +975,6 @@ protected:
 
     
   // =========  Active Object messages  ============
-  Result SendFlashObjectIDs();
   void ActiveObjectLightTest(const ObjectID& objectID);  // For testing
   
 }; // class Robot
@@ -1030,6 +1001,12 @@ inline const RobotID_t Robot::GetID(void) const
 
 inline const Pose3d& Robot::GetPose(void) const
 {
+  ANKI_VERIFY(_pose.GetRootID() == GetWorldOriginID(),
+              "Robot.GetPose.BadPoseRootOrWorldOriginID",
+              "WorldOriginID:%d(%s), RootID:%d",
+              GetWorldOriginID(), GetWorldOrigin().GetName().c_str(),
+              _pose.GetRootID());
+  
   // TODO: COZMO-1637: Once we figure this out, switch this back to dev_assert for efficiency
   ANKI_VERIFY(_pose.HasSameRootAs(GetWorldOrigin()), 
               "Robot.GetPose.PoseOriginNotWorldOrigin",
@@ -1073,30 +1050,6 @@ inline bool Robot::IsAnimating() const {
 
 inline bool Robot::IsIdleAnimating() const {
   return _animationTag == 255;
-}
-
-inline s32 Robot::GetNumAnimationBytesPlayed() const {
-  return _numAnimationBytesPlayed;
-}
-
-inline s32 Robot::GetNumAnimationBytesStreamed() const {
-  return _numAnimationBytesStreamed;
-}
-
-inline s32 Robot::GetNumAnimationAudioFramesPlayed() const {
-  return _numAnimationAudioFramesPlayed;
-}
-  
-inline s32 Robot::GetNumAnimationAudioFramesStreamed() const {
-  return _numAnimationAudioFramesStreamed;
-}
-  
-inline void Robot::IncrementNumAnimationBytesStreamed(s32 num) {
-  _numAnimationBytesStreamed += num;
-}
-  
-inline void Robot::IncrementNumAnimationAudioFramesStreamed(s32 num) {
-  _numAnimationAudioFramesStreamed += num;
 }
 
 inline f32 Robot::GetLocalizedToDistanceSq() const {

@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/doATrickSelector.h"
+#include "engine/aiComponent/feedingSoundEffectManager.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/requestGameComponent.h"
@@ -52,6 +53,7 @@ AIComponent::AIComponent(Robot& robot)
 , _workoutComponent( new WorkoutComponent(robot) )
 , _requestGameComponent(new RequestGameComponent(robot))
 , _doATrickSelector(new DoATrickSelector(robot))
+, _feedingSoundEffectManager(new FeedingSoundEffectManager())
 , _freeplayDataTracker( new FreeplayDataTracker() )
 , _severeNeedsComponent( new SevereNeedsComponent(robot))
 {

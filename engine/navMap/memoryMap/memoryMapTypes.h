@@ -47,6 +47,9 @@ enum class EContentType : uint8_t {
 // this function returns true if the given content type expects additional data (MemoryMapData), false otherwise
 bool ExpectsAdditionalData(EContentType type);
 
+// String representing ENodeContentType for debugging purposes
+const char* EContentTypeToString(EContentType contentType);
+
 // each segment in a border region
 struct BorderSegment
 {
@@ -85,6 +88,7 @@ struct BorderRegion {
 };
 
 using BorderRegionVector = std::vector<BorderRegion>;
+using NodeTransformFunction = std::function<MemoryMapData (std::shared_ptr<MemoryMapData>)>;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Array of content that provides an API with compilation checks for algorithms that require combinations
@@ -93,6 +97,18 @@ using BorderRegionVector = std::vector<BorderRegion>;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 using FullContentArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<EContentType, bool>;
 using Util::FullEnumToValueArrayChecker::IsSequentialArray; // import IsSequentialArray to this namespace
+
+// variable type in which we can pack EContentType as flags. Check ENodeContentTypeToFlag
+using EContentTypePackedType = uint32_t;
+
+// Converts EContentType values into flag bits. This is handy because I want to store EContentType in
+// the smallest type possible since we have a lot of quad nodes, but I want to pass groups as bit flags in one
+// packed variable
+EContentTypePackedType EContentTypeToFlag(EContentType nodeContentType);
+
+// returns true if type is a removal type, false otherwise. Removal types are not expected to be stored in the memory
+// map, but rather reset other types to defaults.
+bool IsRemovalType(EContentType type);
 
 } // namespace MemoryMapTypes
 } // namespace Cozmo
