@@ -699,7 +699,7 @@ bool MovementComponent::AreAnyTracksLocked(u8 tracks) const
 {
   for(int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
-    if((tracks & 1) && (_trackLockCount[i].size() > 0))
+    if((tracks & 1) && (!_trackLockCount[i].empty()))
     {
       return true;
     }
@@ -749,7 +749,7 @@ void MovementComponent::CompletelyUnlockAllTracks()
 {
   for(int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
-    if(_trackLockCount.size() > 0)
+    if(!_trackLockCount[i].empty())
     {
       PRINT_NAMED_INFO("MovementComponent.UnlockAllTracks",
                        "Unlocking track %s",
@@ -807,7 +807,7 @@ bool MovementComponent::UnlockTracks(uint8_t tracks, const std::string& who)
       if(iter != _trackLockCount[i].end())
       {
         _trackLockCount[i].erase(iter);
-        locksLeft |= (_trackLockCount[i].size() > 0);
+        locksLeft |= !_trackLockCount[i].empty();
       }
       else
       {
@@ -845,7 +845,7 @@ void MovementComponent::PrintLockState() const
 {
   std::stringstream ss;
   for( int trackNum = 0; trackNum < (int)AnimConstants::NUM_TRACKS; ++trackNum ) {
-    if( _trackLockCount[trackNum].size() > 0 ) {
+    if( !_trackLockCount[trackNum].empty() ) {
       uint8_t trackEnumVal = 1 << trackNum;
       ss << AnimTrackHelpers::AnimTrackFlagsToString(trackEnumVal) << ":" << _trackLockCount[trackNum].size() << ' ';
       for(auto iter : _trackLockCount[trackNum])
@@ -864,7 +864,7 @@ std::string MovementComponent::WhoIsLocking(u8 trackFlags) const
   std::stringstream ss;
   for(int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
-    if((trackFlags & 1) && (_trackLockCount[i].size() > 0))
+    if((trackFlags & 1) && (!_trackLockCount[i].empty()))
     {
       const u8 trackFlag = (1 << i);
       ss << AnimTrackHelpers::AnimTrackFlagsToString(trackFlag);
