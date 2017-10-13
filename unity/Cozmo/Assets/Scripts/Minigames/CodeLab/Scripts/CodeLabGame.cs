@@ -2368,7 +2368,8 @@ namespace CodeLab {
 
         Dictionary<string, string> parameters = new Dictionary<string, string>();
 
-        if (DataPersistenceManager.Instance.Data.DefaultProfile.CodeLabHorizontalPlayed == 0) {
+        if (DataPersistenceManager.Instance.Data.DefaultProfile.CodeLabHorizontalPlayed == 0
+            && !DebugMenuManager.Instance.DemoMode) {
           parameters.Add("showTutorial", "true");
           DataPersistenceManager.Instance.Data.DefaultProfile.CodeLabHorizontalPlayed = 1;
         }
