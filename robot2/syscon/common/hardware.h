@@ -61,8 +61,9 @@ namespace LTENC GPIO_DEFINE(C, 15);
 // Power
 namespace POWER_EN GPIO_DEFINE(A, 6);
 namespace POWER_B GPIO_DEFINE(A, 6);
-namespace nCHG_EN GPIO_DEFINE(A, 12);
-namespace nCHG_HC GPIO_DEFINE(B, 12);
+namespace BAT_EN GPIO(A, 3);
+namespace VEXT_EN GPIO_DEFINE(B, 9);
+namespace nCHG_EN GPIO_DEFINE(A, 15);
 namespace nVDDs_EN GPIO_DEFINE(C, 13);
 namespace VEXT_SENSE GPIO_DEFINE(A, 2);
 namespace VBAT_SENSE GPIO_DEFINE(A, 4);
@@ -79,7 +80,7 @@ namespace MIC1_SCK    GPIO_DEFINE(B, 13);
 
 // Cap Sense
 namespace CAP1I GPIO_DEFINE(B, 8);
-namespace CAPO GPIO_DEFINE(B, 9);
+namespace CAPO GPIO_DEFINE(A, 14);
 
 // Communication
 namespace VEXT_TX GPIO_DEFINE(A, 2);
@@ -92,6 +93,6 @@ namespace SDA2 GPIO_DEFINE(F, 7);
 
 // Lights
 namespace LED_DAT GPIO_DEFINE(A, 13);
-namespace LED_CLK GPIO_DEFINE(A, 14);
+namespace LED_CLK GPIO_DEFINE(A, 12);
 
 #endif
