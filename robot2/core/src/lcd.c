@@ -20,7 +20,7 @@ static const int MAX_TRANSFER = 0x1000;
 
 
 #define GPIO_LCD_WRX   110
-#define GPIO_LCD_RESET 55
+#define GPIO_LCD_RESET 96
 static GPIO RESET_PIN;
 static GPIO DnC_PIN;
 
@@ -154,7 +154,11 @@ void lcd_shutdown(void) {
     lcd_spi_transfer(TRUE, 1, &SLEEP);
     close(spi_fd);
   }
-  gpio_close(DnC_PIN);
-  gpio_close(RESET_PIN);
+  if (DnC_PIN) {
+    gpio_close(DnC_PIN);
+  }
+  if (RESET_PIN) {
+    gpio_close(RESET_PIN);
+  }
 
 }

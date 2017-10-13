@@ -53,7 +53,7 @@ static struct HalGlobals {
 #define spine_debug(fmt, args...)  (LOGD( fmt, ##args))
 #endif
 
-#define EXTENDED_SPINE_DEBUG 0
+#define EXTENDED_SPINE_DEBUG 1
 #if EXTENDED_SPINE_DEBUG
 #define spine_debug_x spine_debug
 #else
@@ -245,6 +245,44 @@ SpineErr hal_init(const char* devicename, long baudrate)
 }
 
 
+
+// Scan the whole payload for sync, to recover after dropped bytes,
+int hal_resync_partial(int start_offset, int len) {
+   /*  ::: Preconditions :::
+       gHal.inbuffer contains len recieved bytes.
+       the first start_offset bytes do not need to be scanned
+       ::: Postconditions :::
+       the first valid sync header and any following bytes up to `len`
+       -  or a partial sync header ending at the `len`th byte -
+       have been copied to the beginning of gHal.inbuffer.
+       returns the number of copied bytes
+   */
+    unsigned int i;
+    unsigned int index = 0;
+    for (i = start_offset; i+index < len; ) {
+       spine_debug_x(" %02x", gHal.inbuffer[i+index]);
+       unsigned int i2 = spine_sync(gHal.inbuffer+i, index);
+       if (i2 <= index) { //no match, or restarted match at `i2` chars before last scanned char
+          i+=index-i2+1;
+       }
+       else if (i2 == SPINE_HEADER_LEN) { //whole sync!
+          index = len-i; //consider rest of buffer valid.
+          break;
+       }
+       index = i2;
+    }
+    //at this point we have scanned `i`+`index` chars. the last `index` of them are valid.
+    if (index) {
+       memmove(gHal.inbuffer, gHal.inbuffer+i, index);
+    }
+
+    spine_debug("\n%u dropped bytes\n", start_offset+i-index);
+
+    return index;
+}
+
+
+
 //gathers most recently queued frame,
 //Spins until valid frame header is recieved.
 const struct SpineMessageHeader* hal_read_frame()
@@ -348,7 +386,7 @@ void hal_send_frame(PayloadId type, const void* data, int len)
   const uint8_t* hdr = spine_construct_header(type, len);
   crc_t crc = calc_crc(data, len);
   if (hdr) {
-    spine_debug_x("sending %x packet (%d bytes)\n", type, len);
+    spine_debug_x("sending %x packet (%d bytes) CRC=%08x\n", type, len, crc);
     hal_serial_send(hdr, SPINE_HEADER_LEN);
     hal_serial_send(data, len);
     hal_serial_send((uint8_t*)&crc, sizeof(crc));
@@ -360,3 +398,16 @@ void hal_set_mode(int new_mode)
   printf("Sending Mode Change %x\n", PAYLOAD_MODE_CHANGE);
   hal_send_frame(PAYLOAD_MODE_CHANGE, NULL, 0);
 }
+
+#ifdef STANDALONE_TEST
+
+//gcc -g -DSTANDALONE_TEST -I ../../syscon spine_hal.c spine_crc.c -o spine_test
+
+int main(int argc, const char* argv[])
+{
+   gHal.fd = open("unittest.dat", O_RDONLY);
+   const struct SpineMessageHeader* hdr = hal_get_frame(PAYLOAD_ACK, 1000);
+   assert(hdr && hdr->payload_type == PAYLOAD_ACK);
+
+}
+#endif
