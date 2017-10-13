@@ -12,6 +12,7 @@ alias victor_build='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/build-victor.s
 alias victor_deploy='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/deploy.sh'
 alias victor_deploy_run='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/deploy.sh; victor_restart'
 alias victor_assets='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/deploy-assets.sh ${GIT_PROJ_ROOT}/_build/android/Debug/assets'
+alias victor_assets_force='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/deploy-assets.sh -f ${GIT_PROJ_ROOT}/_build/android/Debug/assets'
 alias victor_log='adb logcat mm-camera:S mm-camera-intf:S mm-camera-eztune:S mm-camera-sensor:S mm-camera-img:S cnss-daemon:S cozmoengined:S ServiceManager:S chatty:S'
 
 # If you have lnav...
