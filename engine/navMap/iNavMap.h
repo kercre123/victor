@@ -22,7 +22,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "util/logging/logging.h"
 
-#include <set>
+#include <unordered_set>
 
 namespace Anki {
 namespace Cozmo {
@@ -44,6 +44,7 @@ public:
   using EContentType          = MemoryMapTypes::EContentType;
   using FullContentArray      = MemoryMapTypes::FullContentArray;
   using NodeTransformFunction = MemoryMapTypes::NodeTransformFunction;
+  using NodePredicate         = MemoryMapTypes::NodePredicate;
     
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -55,49 +56,18 @@ public:
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // add a quad with the specified content type and empty additional content
-  inline void AddQuad(const Quad2f& quad, EContentType type, TimeStamp_t timeMeasured) {
-    DEV_ASSERT(!ExpectsAdditionalData(type), "INavMap.AddQuad.ExpectedAdditionalData");
-    AddQuadInternal(quad, type, timeMeasured);
-  }
+
   // add a quad with the specified additional content. Such content specifies the associated EContentType
-  inline void AddQuad(const Quad2f& quad, const MemoryMapData& content) {
-    DEV_ASSERT(ExpectsAdditionalData(content.type), "INavMap.AddQuad.NotExpectedAdditionalData");
-    AddQuadInternal(quad, content);
-  }
+  virtual void AddQuad(const Quad2f& quad, const MemoryMapData& content) = 0;
   
-  // add a line with the specified content type and empty additional content
-  inline void AddLine(const Point2f& from, const Point2f& to, EContentType type, TimeStamp_t timeMeasured) {
-    DEV_ASSERT(!ExpectsAdditionalData(type), "INavMap.AddLine.ExpectedAdditionalData");
-    AddLineInternal(from, to, type, timeMeasured);
-  }
   // add a line with the specified additional content. Such content specifies the associated EContentType
-  inline void AddLine(const Point2f& from, const Point2f& to, const MemoryMapData& content) {
-    DEV_ASSERT(ExpectsAdditionalData(content.type), "INavMap.AddLine.NotExpectedAdditionalData");
-    AddLineInternal(from, to, content);
-  }
+  virtual void AddLine(const Point2f& from, const Point2f& to, const MemoryMapData& content) = 0;
 
-  // add a triangle with the specified content type and empty additional content
-  inline void AddTriangle(const Triangle2f& tri, EContentType type, TimeStamp_t timeMeasured) {
-    DEV_ASSERT(!ExpectsAdditionalData(type), "INavMap.AddTriangle.ExpectedAdditionalData");
-    AddTriangleInternal(tri, type, timeMeasured);
-  }
   // add a triangle with the specified additional content. Such content specifies the associated EContentType
-  inline void AddTriangle(const Triangle2f& tri, const MemoryMapData& content) {
-    DEV_ASSERT(ExpectsAdditionalData(content.type), "INavMap.AddTriangle.NotExpectedAdditionalData");
-    AddTriangleInternal(tri, content);
-  }
-
-  // add a point with the specified content type and empty additional content
-  inline void AddPoint(const Point2f& point, EContentType type, TimeStamp_t timeMeasured) {
-    DEV_ASSERT(!ExpectsAdditionalData(type), "INavMap.AddPoint.ExpectedAdditionalData");
-    AddPointInternal(point, type, timeMeasured);
-  }
+  virtual void AddTriangle(const Triangle2f& tri, const MemoryMapData& content) = 0;
+  
   // add a point with the specified additional content. Such content specifies the associated EContentType
-  inline void AddPoint(const Point2f& point, const MemoryMapData& content) {
-    DEV_ASSERT(ExpectsAdditionalData(content.type), "INavMap.AddPoint.NotExpectedAdditionalData");
-    AddPointInternal(point, content);
-  }
+  virtual void AddPoint(const Point2f& point, const MemoryMapData& content) = 0;
   
   // merge the given map into this map by applying to the other's information the given transform
   // although this methods allows merging any INavMap into any INavMap, subclasses are not
@@ -128,6 +98,9 @@ public:
   
   // attempt to apply a transformation function to all nodes in the tree
   virtual void TransformContent(NodeTransformFunction transform) = 0;
+  
+  // populate a list of all data that matches the predicate
+  virtual void FindContentIf(NodePredicate pred, std::unordered_set<std::shared_ptr<MemoryMapData>>& output) = 0;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
@@ -173,28 +146,7 @@ public:
   virtual void Broadcast(uint32_t originID) const = 0;
   virtual void BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) const = 0;
   
-protected:
-
-  // add a quad with the specified content type and empty additional content
-  virtual void AddQuadInternal(const Quad2f& quad, EContentType type, TimeStamp_t timeMeasured) = 0;
-  // add a quad with the specified additional content. Such content specifies the associated EContentType
-  virtual void AddQuadInternal(const Quad2f& quad, const MemoryMapData& content) = 0;
-
-  // add a line with the specified content type and empty additional content
-  virtual void AddLineInternal(const Point2f& from, const Point2f& to, EContentType type, TimeStamp_t timeMeasured) = 0;
-  // add a line with the specified additional content. Such content specifies the associated EContentType
-  virtual void AddLineInternal(const Point2f& from, const Point2f& to, const MemoryMapData& content) = 0;
-
-  // add a triangle with the specified content type and empty additional content
-  virtual void AddTriangleInternal(const Triangle2f& tri, EContentType type, TimeStamp_t timeMeasured) = 0;
-  // add a triangle with the specified additional content. Such content specifies the associated EContentType
-  virtual void AddTriangleInternal(const Triangle2f& tri, const MemoryMapData& content) = 0;
-
-  // add a point with the specified content type and empty additional content
-  virtual void AddPointInternal(const Point2f& point, EContentType type, TimeStamp_t timeMeasured) = 0;
-  // add a point with the specified additional content. Such content specifies the associated EContentType
-  virtual void AddPointInternal(const Point2f& point, const MemoryMapData& content) = 0;
-  
+protected:  
   // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
   virtual void FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured) = 0;
 
