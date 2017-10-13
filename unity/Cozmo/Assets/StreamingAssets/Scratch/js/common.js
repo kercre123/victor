@@ -356,11 +356,9 @@
     };
 
     window.setLocalizedValues = function() {
-        if (!window.isVertical) {
-            // Set localized value of Cozmo Says horizontal default "Hi" text
-            var cozmoSaysText = document.getElementById("cozmo_says_text");
-            cozmoSaysText.innerHTML = $t('codeLabHorizontal.CozmoSaysBlock.DefaultText');
-        }
+        // Set localized value of Cozmo Says horizontal and vertical default "Hi" text
+        var cozmoSaysText = document.getElementById("cozmo_says_text");
+        cozmoSaysText.innerHTML = $t('codeLabHorizontal.CozmoSaysBlock.DefaultText');
     };
 
     window.onCloseButton = function() {
