@@ -538,7 +538,7 @@ message NeedsState {
   int_32        numStarsAwarded,
   int_32        numStarsForNextUnlock,
   NeedsActionId actionCausingTheUpdate,
-  string        unconnectedDecayTestVariation,
+  string        testVariation,
 }
 
 message NeedsPauseState {

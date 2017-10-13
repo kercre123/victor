@@ -2,7 +2,7 @@
     "meta": {
         "project_id": "cozmo",
         "version": 2,
-        "revision": 0
+        "revision": 1
     },
     "experiments": [
         {
@@ -53,6 +53,41 @@
             "audience_tags": [
                 "app_user_d0"
             ],
+            "forced_variations": []
+        },
+        {
+            "key": "preholiday_tuning",
+            "version": 0,
+            "activation_mode": "manual",
+            "start_time_utc_iso8601": "2017-10-09T00:00:00Z",
+            //"start_time_utc_iso8601": "2017-12-07T00:00:00Z",
+            "stop_time_utc_iso8601": "2018-07-15T00:00:00Z",
+            "pause_time_utc_iso8601": "",
+            "resume_time_utc_iso8601": "",
+            "pop_frac_pct": 100,
+            "variations": [
+                {
+                    "key": "control",
+                    "pop_frac_pct": 5
+                },
+                {
+                    "key": "variationA",
+                    "pop_frac_pct": 5
+                },
+                {
+                    "key": "variationB",
+                    "pop_frac_pct": 5
+                },
+                {
+                    "key": "variationC",
+                    "pop_frac_pct": 5
+                },
+                {
+                    "key": "variationD",
+                    "pop_frac_pct": 80
+                }
+            ],
+            "audience_tags": [],
             "forced_variations": []
         }
     ]

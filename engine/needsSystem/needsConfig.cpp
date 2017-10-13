@@ -73,6 +73,7 @@ NeedsConfig::NeedsConfig(const CozmoContext* cozmoContext)
 , _localNotificationMaxFutureMinutes(60 * 24 * 365 * 10)
 , _cozmoContext(cozmoContext)
 , _unconnectedDecayTestVariationKey("Unknown (unknown)")
+, _tuningTestVariationKey("Unknown (unknown)")
 {
 }
 
@@ -346,6 +347,18 @@ void NeedsConfig::SetUnconnectedDecayTestVariation(const std::string& baseFilena
   }
 
   InitDecay(decayJson);
+}
+
+
+void NeedsConfig::SetTuningTestVariation(const std::string& variationKey,
+                                         const Util::AnkiLab::AssignmentStatus assignmentStatus)
+{
+  _tuningTestVariationKey = variationKey + " (" +
+                            AssignmentStatusToString(assignmentStatus) + ")";
+
+  // TODO:  Switch on variation key, with the 5 cases.
+  // Essentially we're setting binary switches on 3 different things, based on the 5 cases.
+  // Then, implement those as a read of a particular json file, and re-init of main config and levels config.
 }
 
 
