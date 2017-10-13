@@ -378,6 +378,12 @@ Blockly.Workspace.prototype.deleteVariable = function(name) {
         function(ok) {
           if (ok) {
             workspace.deleteVariableInternal_(variable);
+            // *** ANKI change ***
+            // When using window.confirm, the resolution of a click is delayed until
+            // a selection is made. Then the functions that call this refresh their
+            // toolbox selection. We need to explicitly refresh after we receive an
+            // answer.
+            workspace.refreshToolboxSelection_();
           }
         });
   } else {

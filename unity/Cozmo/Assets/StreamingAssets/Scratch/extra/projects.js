@@ -219,11 +219,11 @@
     ModalConfirm.open({
       title: $t('codeLab.projects.confirmQuit.promptText'),
       prompt: '',
-      cancelButtonLabel: $t('codeLab.projects.confirmQuit.confirmButton.labelText'),
-      confirmButtonLabel: $t('codeLab.projects.confirmQuit.cancelButton.labelText'),
+      cancelButtonLabel: $t('codeLab.projects.confirmQuit.cancelButton.labelText'),
+      confirmButtonLabel: $t('codeLab.projects.confirmQuit.confirmButton.labelText'),
+      reverseButtons: true,
       confirmCallback: function(result) {
-        // in this dialog, the user quitting is false
-        if (!result) {
+        if (result) {
           CozmoAPI.closeCodeLab();
         }
       }
