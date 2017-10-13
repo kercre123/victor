@@ -108,6 +108,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToStackOfCubes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoFeeding.h"
 
 #include "engine/robot.h"
 
@@ -726,6 +727,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, 
     case BehaviorClass::DispatchStrictPriority:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDispatchStrictPriority(config));
+      break;
+    }
+    case BehaviorClass::VictorDemoFeeding:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorVictorDemoFeeding(config));
       break;
     }
   }

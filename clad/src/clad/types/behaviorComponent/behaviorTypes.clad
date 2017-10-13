@@ -109,7 +109,10 @@ enum uint_8 BehaviorClass {
   ReactToVoiceCommand,
 
   // Dispatch behaviors which exist only to delegate to other behaviors
-  DispatchStrictPriority
+  DispatchStrictPriority,
+
+  // Victor / demo behavior
+  VictorDemoFeeding
 }
 
 
@@ -337,6 +340,9 @@ enum uint_8 BehaviorID {
   VC_SearchForFace,
 
   VictorFreeplay,
+
+  VictorDemoFeedingState,
+  VictorDemoFeeding,
 
   Wait,
   Wait_TestInjectable // BehaviorID used by tests to create fake behaviors

@@ -1,0 +1,9 @@
+{
+  "behaviorID" : "VictorDemoFeedingState",
+  "behaviorClass" : "DispatchStrictPriority",
+  "behaviors" : [
+    "DriveOffCharger",
+    "VictorDemoFeeding",
+    "Wait"
+  ]
+}
