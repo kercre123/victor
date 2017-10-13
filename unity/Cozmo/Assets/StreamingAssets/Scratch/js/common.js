@@ -52,7 +52,13 @@
             // Store the initial representation of the project so that
             // we can detect if the user has altered it upon exiting
             // the workspace.
-            window.originalSampleProjectJSON = Scratch.vm.toJSON();
+            //
+            // Not sure why the setTimeout is necessary but it is
+            // currently, otherwise the original JSON is not set
+            // correctly. - msintov, 10/12/2017
+            setTimeout(function(){
+                window.originalSampleProjectJSON = Scratch.vm.toJSON();
+            }, 100);
         }
 
         window.Unity.call({command: "cozmoWorkspaceLoaded"});
