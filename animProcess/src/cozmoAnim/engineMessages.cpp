@@ -198,6 +198,18 @@ namespace Messages {
         _audioInput->HandleEngineToRobotMsg(msg);
         break;
       }
+
+      case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_startRecordingAudio:
+      {
+        auto* micDataProcessor = _context->GetMicDataProcessor();
+        if (micDataProcessor == nullptr)
+        {
+          return;
+        }
+
+        micDataProcessor->RecordAudio(msg.startRecordingAudio.duration_ms);
+        return;
+      }
         
       default:
         break;

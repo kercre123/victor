@@ -737,6 +737,7 @@ namespace Anki {
       void Process_stopAllAudioEvents(const Anki::AudioEngine::Multiplexer::StopAllAudioEvents&) { /*Nothing to do*/ }
       void Process_postAudioSwitchState(const Anki::AudioEngine::Multiplexer::PostAudioSwitchState&) { /*Nothing to do*/ }
 
+      void Process_startRecordingAudio(const RobotInterface::StartRecordingAudio& msg) { /*Nothing to do*/ }
 #endif // simulator
 
 

@@ -45,6 +45,8 @@ Result BehaviorPlaypenDriftCheck::InternalInitInternal(Robot& robot)
 
 void BehaviorPlaypenDriftCheck::TransitionToPlayingSound(Robot& robot)
 {
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingAudio(PlaypenConfig::kDurationOfAudioToRecord_ms)));
+
   // Record intial starting orientation and after kIMUDriftDetectPeriod_ms check for drift
   _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
   _imuTemp.tempStart_c = robot.GetImuTemperature();

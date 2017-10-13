@@ -26,6 +26,8 @@
 #include <sstream>
 #include <thread>
 
+#include "cozmoAnim/fft.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -103,7 +105,7 @@ void MicDataProcessor::ProcessRawAudio(const ResampledAudioChunk& audioChunk)
   }
   
   // If we aren't starting a block, we're finishing it - time to convert to a single channel
-  if (!_inProcessAudioBlockFirstHalf)
+  if (!_inProcessAudioBlockFirstHalf && _audioSamplesToCollect != 0)
   {
     // Process the current audio block with SE software
     // static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
@@ -111,7 +113,7 @@ void MicDataProcessor::ProcessRawAudio(const ResampledAudioChunk& audioChunk)
     // processedBlock.resize(kSamplesPerBlock);
     // MMIfProcessMicrophones(dummySpeakerOut.data(), _inProcessAudioBlock.data(), processedBlock.data());
     
-    if (kSaveAudio)
+    if (kSaveAudio && _audioSamplesToCollect != 0)
     {
       // _processedAudioData.push_back(std::move(processedBlock));
       _collectedAudioSamples += kSamplesPerBlock;
@@ -139,23 +141,24 @@ void MicDataProcessor::ResampleAudioChunk(const RawAudioChunk& audioChunk, Resam
 
 void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
 {
-  if (kSaveRawAudio)
+  if (kSaveRawAudio && _audioSamplesToCollect != 0)
   {
     CollectRawAudio(audioChunk);
   }
   ResampledAudioChunk resampledAudioChunk;
   ResampleAudioChunk(audioChunk, resampledAudioChunk);
-  if (kSaveResampledAudio)
+  if (kSaveResampledAudio && _audioSamplesToCollect != 0)
   {
     CollectResampledAudio(resampledAudioChunk);
   }
 
   ProcessRawAudio(resampledAudioChunk);
 
-  if (_collectedAudioSamples >= _audioSamplesToCollect)
+  if (_audioSamplesToCollect != 0 && _collectedAudioSamples >= _audioSamplesToCollect)
   {
     std::string deletedFile = "";
     std::string nextFileNameBase = ChooseAndClearNextFileNameBase(deletedFile);
+    PRINT_NAMED_WARNING("SAVING AUDIO TO", "%s", nextFileNameBase.c_str());
     if (!deletedFile.empty())
     {
       Util::FileUtils::DeleteFile(GetRawFileNameFromProcessed(deletedFile));
@@ -171,6 +174,7 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
         PRINT_NAMED_INFO("MicDataProcessor.WriteRawWaveFile", "%s", dest.c_str());
       };
       std::thread(saveRawWave).detach();
+
       _rawAudioData.clear();
     }
 
@@ -186,6 +190,39 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
 
     if (!_processedAudioData.empty())
     {
+      auto runFft = [data = _processedAudioData]() {
+        CArray a;
+        uint32 size = 0;
+        for(auto e : data)
+        {
+          size += e.size();
+        }
+        a.resize(size);
+
+        auto iter = std::begin(a);
+        for(auto e : data)
+        {
+          iter = std::copy(e.begin(), e.end(), iter);
+        }
+
+        fft(a);
+
+        static FILE* fp;
+        if(fp == nullptr)
+        {
+          fp = fopen("/data/fft.txt", "w");
+        }
+        
+        for(auto e : a)
+        {
+          fprintf(fp, "%f\n", sqrt(e.real()*e.real() + e.imag()*e.imag()));
+        }
+      };
+      std::thread(runFft).detach();
+
+
+
+
       auto saveProcessedWave = [dest = (writeLocationBase + kWavFileExtension), data = std::move(_processedAudioData)] () {
         AudioUtil::WaveFile::SaveFile(dest, data);
         PRINT_NAMED_INFO("ProcessNextAudioChunk.WriteProcessedWaveFile", "%s", dest.c_str());
@@ -195,6 +232,7 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
     }
 
     _collectedAudioSamples = 0;
+    _audioSamplesToCollect = kDefaultAudioSamplesPerFile;
   }
 }
 
@@ -341,6 +379,29 @@ std::string MicDataProcessor::GetRawFileNameFromProcessed(const std::string& pro
 std::string MicDataProcessor::GetResampleFileNameFromProcessed(const std::string& processedName)
 {
   return processedName.substr(0, processedName.length() - kWavFileExtension.length()) + kResampledFileExtension;
+}
+
+void MicDataProcessor::RecordAudio(uint32_t duration_ms)
+{ 
+  PRINT_NAMED_INFO("MicDataProcessor.RecordAudio",
+                   "Recording the next %u ms of audio",
+                   duration_ms);
+
+  _audioSamplesToCollect = AudioUtil::kSampleRate_hz * (duration_ms / 1000);
+  
+  _rawAudioData.clear();
+
+  if(kSaveResampledAudio)
+  {
+    _resampledAudioData.clear();
+  }
+
+  if(kSaveAudio)
+  {
+    _processedAudioData.clear();
+  }
+
+  _collectedAudioSamples = 0;
 }
 
 } // namespace Cozmo

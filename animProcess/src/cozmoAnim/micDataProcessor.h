@@ -46,6 +46,8 @@ public:
 
   using RawAudioChunk = decltype(RobotInterface::AudioInput::data);
   void ProcessNextAudioChunk(const RawAudioChunk& audioChunk);
+
+  void RecordAudio(uint32_t duration_ms = kDefaultAudioSamplesPerFile);
   
 private:
   uint32_t _collectedAudioSamples = 0;
