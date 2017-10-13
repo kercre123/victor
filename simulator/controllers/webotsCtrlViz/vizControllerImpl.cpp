@@ -517,9 +517,6 @@ static void DisplayImageHelper(const EncodedImage& encodedImage, webots::ImageRe
   
   imageRef = display->imageNew(img.GetNumCols(), img.GetNumRows(), img.GetDataPointer(), webots::Display::RGB);
   display->imagePaste(imageRef, 0, 0);
-  SetColorHelper(display, NamedColors::RED);
-  display->drawText(std::to_string(encodedImage.GetTimeStamp()), 1, display->getHeight()-9); // display timestamp at lower left
-
 }
 
 void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface::MessageViz>& msg)

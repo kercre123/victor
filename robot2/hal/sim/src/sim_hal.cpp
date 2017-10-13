@@ -557,6 +557,13 @@ namespace Anki {
         IMUData.rate_z += DEG_TO_RAD(initialBias_dps[2] + biasDueToTemperature_dps);
       }
       
+      static ImageImuData imageImuData;
+      imageImuData.systemTimestamp_ms = HAL::GetTimeStamp();
+      imageImuData.rateX = IMUData.rate_x;
+      imageImuData.rateY = IMUData.rate_y;
+      imageImuData.rateZ = IMUData.rate_z;
+      RobotInterface::SendMessage(imageImuData);
+      
       // Return true if IMU was already read this timestamp
       static TimeStamp_t lastReadTimestamp = 0;
       bool newReading = lastReadTimestamp != HAL::GetTimeStamp();

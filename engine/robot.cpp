@@ -1311,16 +1311,12 @@ Result Robot::Update()
   */
 
   //////////// Android HAL Update ////////////
-  #ifdef COZMO_V2
   AndroidHAL::getInstance()->Update();
-  #endif
 
   //////////// VisionComponent //////////  
   if(_visionComponent->GetCamera().IsCalibrated())
   {
-    #ifdef COZMO_V2
-    _visionComponent->CaptureAndSendImage();
-    #endif
+    _visionComponent->Update();
   
     // NOTE: Also updates BlockWorld and FaceWorld using markers/faces that were detected
     Result visionResult = _visionComponent->UpdateAllResults();

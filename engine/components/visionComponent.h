@@ -83,6 +83,8 @@ struct DockingErrorSignal;
     
     bool IsDisplayingProcessedImagesOnly() const;
     
+    Result Update();
+    
     // Provide next image for processing, with corresponding robot state.
     // In synchronous mode, the image is processed immediately. In asynchronous
     // mode, it will be processed as soon as the current image is completed.
@@ -269,11 +271,9 @@ struct DockingErrorSignal;
     s32  GetCurrentCameraExposureTime_ms() const;
     f32  GetCurrentCameraGain() const;
     
-#   ifdef COZMO_V2
-    // COZMO 2.0 ONLY
-    // Captures image to be queued for processing and sent to game and viz
-    void CaptureAndSendImage();
-#   endif
+    // Captures image data from HAL, if available, and puts it in image_out
+    // Returns true if image was captured, false if not
+    bool CaptureImage(Vision::ImageRGB& image_out);
 
     f32 GetBodyTurnSpeedThresh_degPerSec() const;
     
@@ -304,8 +304,12 @@ struct DockingErrorSignal;
     bool   _paused  = false;
     std::mutex _lock;
     
+    // Current image is the one the vision system (thread) is actively working on.
+    // Next image is the one queued up for the visin system to start processing when it is done with current.
+    // Buffered image will become "next" once we've got a corresponding RobotState available in history.
     Vision::ImageRGB _currentImg;
     Vision::ImageRGB _nextImg;
+    Vision::ImageRGB _bufferedImg;
     
     Vision::DroppedFrameStats _dropStats;
     
