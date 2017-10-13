@@ -11,7 +11,7 @@ var RenameProject = function(){
   var saveButton;
 
   var PROJECT_TITLE_MAX_LENGTH_ARABIC_LANG = 32;
-  var PROJECT_TITLE_MAX_LENGTH_NON_ARABIC_LANG = 28;
+  var PROJECT_TITLE_MAX_LENGTH_NON_ARABIC_LANG = 25;
 
 
 
@@ -170,7 +170,7 @@ var RenameProject = function(){
       // Latin alphabets get 32 characters
       return newTitle.substring(0, PROJECT_TITLE_MAX_LENGTH_ARABIC_LANG);
     } else {
-      // Japanese alphabets get 28 characters
+      // Japanese alphabets get 25 characters
       return newTitle.substring(0, PROJECT_TITLE_MAX_LENGTH_NON_ARABIC_LANG);
     }
   }
