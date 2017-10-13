@@ -132,8 +132,9 @@ var RenameProject = function(){
    * @returns {void}
    */
   function _handleCancelButton(e) {
+    e.stopPropagation();
+    e.preventDefault();
     _hide();
-    return false;
   }
 
   /**
