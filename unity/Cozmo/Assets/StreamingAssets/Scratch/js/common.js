@@ -176,6 +176,10 @@
             if (window.isLoadingProject) {
                 window.notifyProjectIsLoaded();
             }
+
+            if (window.isVertical) {
+                workspace.toolbox_.flyout_.hide();
+            }
         });
 
         // Run threads
