@@ -24,48 +24,6 @@
   "whatsNew.button.openInCodeLab": {
     "translation": "PLAY NOW IN CODE LAB!"
   },
-  "whatsNew.content1.title": {
-    "translation": "Gray to Black"
-  },
-  "whatsNew.content1.description": {
-    "translation": "Start Date: 8/1/2017\nEnd Date: 8/8/2017\nQuick Tap"
-  },
-  "whatsNew.content2.title": {
-    "translation": "Red to Green"
-  },
-  "whatsNew.content2.description": {
-    "translation": "Start Date: 11/1/2017\nEnd Date: 11/8/2017\nCube Pounce"
-  },
-  "whatsNew.content3.title": {
-    "translation": "Blue to Yellow"
-  },
-  "whatsNew.content3.description": {
-    "translation": "Start Date: 11/9/2017\nEnd Date: None\nMemory Match"
-  },
-  "whatsNew.content4.title": {
-    "translation": "Magenta to Cyan"
-  },
-  "whatsNew.content4.description": {
-    "translation": "Start Date: 11/12/2017\nEnd Date: None\nGuard Dog"
-  },
-  "whatsNew.content5.title": {
-    "translation": "Red to Yellow"
-  },
-  "whatsNew.content5.description": {
-    "translation": "Start Date: 11/16/2017\nEnd Date: 11/20/2017\nCozmo Sings"
-  },
-  "whatsNew.content6.title": {
-    "translation": "Green to Magenta"
-  },
-  "whatsNew.content6.description": {
-    "translation": "Start Date: 12/15/2017\nEnd Date: None\nLaser Pointer"
-  },
-  "whatsNew.content7.title": {
-    "translation": "Blue to Cyan"
-  },
-  "whatsNew.content7.description": {
-    "translation": "Start Date: 2/1/2018\nEnd Date: 2/8/2018\nPyramid"
-  },
   "whatsNew.CodeLab_VerticalLaunch.title": {
     "translation": "Code Lab 2.0!"
   },
