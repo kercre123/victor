@@ -1,7 +1,8 @@
 
 project(utilUnitTest LANGUAGES CXX)
 
-include(anki_build_cxx_library)
+include(anki_build_cxx)
+
 include(gtest)
 
 get_filename_component(util ${CMAKE_CURRENT_SOURCE_DIR}/../../.. ABSOLUTE)
@@ -15,7 +16,7 @@ set(JSONCPP_LIBRARY jsoncpp)
 anki_build_cxx_executable(utilUnitTest ${ANKI_SRCLIST_DIR})
 
 target_compile_definitions(utilUnitTest PRIVATE
-  -DUNIT_TEST=1
+  UNIT_TEST=1
 )
 
 target_include_directories(utilUnitTest PRIVATE

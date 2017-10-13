@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.6)
+
 project(cozmo_anim)
 
-include(anki_build_cxx_library)
+include(anki_build_cxx)
+
 anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 
 include(flatbuffers)

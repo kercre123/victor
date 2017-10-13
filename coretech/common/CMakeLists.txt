@@ -6,7 +6,7 @@ if (NOT DEFINED CORETECH)
   set(CORETECH ${CMAKE_CURRENT_SOURCE_DIR}/..)
 endif()
 
-include(anki_build_cxx_library)
+include(anki_build_cxx)
 
 anki_build_cxx_library(cti_common ${ANKI_SRCLIST_DIR} STATIC)
 

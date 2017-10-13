@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
+
 project(webots_controllers)
 
 if (NOT MACOSX)
@@ -31,8 +32,7 @@ if (MACOSX)
   set(PLATFORM_FLAGS -fobjc-arc)
 endif()
 
-include(anki_build_cxx_library)
-
+include(anki_build_cxx)
 
 #
 # webots plugins

@@ -6,7 +6,7 @@ set(CORETECH_VISION_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/anki/vision)
 
 include(okao)
 
-include(anki_build_cxx_library)
+include(anki_build_cxx)
 
 # add_library()
 anki_build_cxx_library(cti_vision ${ANKI_SRCLIST_DIR} STATIC)

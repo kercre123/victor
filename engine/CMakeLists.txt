@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
+
 project(engine)
 
 include(opencv)
@@ -10,7 +11,8 @@ include(voice-recognition)
 include(routing_http_server)
 include(android_strip)
 
-include(anki_build_cxx_library)
+include(anki_build_cxx)
+
 anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR})
 
 if (NOT DEFINED USE_DAS)

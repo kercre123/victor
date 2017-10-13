@@ -1,6 +1,7 @@
 project(libankiutil LANGUAGES CXX)
 
-include(anki_build_cxx_library)
+include(anki_build_cxx)
+
 anki_build_cxx_library(util ${ANKI_SRCLIST_DIR})
 
 target_include_directories(util PUBLIC

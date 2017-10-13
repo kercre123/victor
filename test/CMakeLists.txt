@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
+
 project(test_engine)
 
 set(BUILT_RESOURCES_DIR "${CMAKE_BINARY_DIR}/assets/cozmo_resources")
@@ -19,7 +20,7 @@ elseif (MACOSX)
   set(PLATFORM_FLAGS -fobjc-arc)
 endif()
 
-include(anki_build_cxx_library)
+include(anki_build_cxx)
 include(symlink_target)
 
 anki_build_cxx_executable(test_engine ${ANKI_SRCLIST_DIR})
