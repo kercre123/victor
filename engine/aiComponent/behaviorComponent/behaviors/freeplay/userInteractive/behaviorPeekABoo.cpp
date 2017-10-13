@@ -192,12 +192,12 @@ ICozmoBehavior::Status BehaviorPeekABoo::UpdateInternal_WhileRunning(BehaviorExt
   // to run means that we have a holding loop with face tracking
   if(_currentState == State::WaitingToHideFace){
     if( !seeingEyes ) {
-      StopActing(false);
+      CancelDelegates(false);
       TransitionWaitToSeeFace(behaviorExternalInterface);
     }
   }else if(_currentState == State::WaitingToSeeFace){
     if(seeingEyes){
-      StopActing(false);
+      CancelDelegates(false);
       TransitionSeeFaceAfterHiding(behaviorExternalInterface);
     }
   }

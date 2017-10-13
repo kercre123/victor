@@ -142,7 +142,7 @@ Result ActivitySocialize::Update_Legacy(BehaviorExternalInterface& behaviorExter
                       "Got enough objectives to be done with pouncing, will transition out");
         if( _playingBehavior != nullptr && _playingBehavior->IsRunning() )
         {
-          // tell the behavior to end nicely (when it's not acting)
+          // tell the behavior to end nicely (when it's in control again)
           _playingBehavior->StopOnNextActionComplete();
         }
         

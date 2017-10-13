@@ -98,7 +98,7 @@ ICozmoBehavior::Status BehaviorRollBlock::UpdateInternal_WhileRunning(BehaviorEx
          (distBetween > (kMaxDistCozmoIsRollingCube_mm * kMaxDistCozmoIsRollingCube_mm))){
         
         UpdateTargetsUpAxis(behaviorExternalInterface);
-        StopActing(false, false);
+        CancelDelegates(false, false);
         
         if(_didCozmoAttemptDock){
           TransitionToRollSuccess(behaviorExternalInterface);
@@ -184,7 +184,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(BehaviorExternalInterface& 
                                                           params);
   
   SmartDelegateToHelper(behaviorExternalInterface, rollHandle, delegateSuccess, delegateFailure);
-  IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
+  IncreaseScoreWhileControlDelegated( kBRB_ScoreIncreaseForAction );
   
   // Set the cube lights to interacting for full behavior run time
   std::vector<BehaviorStateLightInfo> basePersistantLight;
@@ -215,7 +215,7 @@ void BehaviorRollBlock::TransitionToRollSuccess(BehaviorExternalInterface& behav
     Robot& robot = behaviorExternalInterface.GetRobot();
     DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
   }
-  IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
+  IncreaseScoreWhileControlDelegated( kBRB_ScoreIncreaseForAction );
   BehaviorObjectiveAchieved(BehaviorObjective::BlockRolled);
   NeedActionCompleted();
 }

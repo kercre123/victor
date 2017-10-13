@@ -110,7 +110,7 @@ ICozmoBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(
   const auto& targetAxisChanged = _upAxisChangedIDs.find(_metadata.GetObjectID());
   
   if(targetAxisChanged != _upAxisChangedIDs.end()){
-    StopActing(false, false);
+    CancelDelegates(false, false);
     if(targetAxisChanged->second != UpAxis::ZPositive){
       TurnAndRespondNegatively(behaviorExternalInterface);
     }

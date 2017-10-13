@@ -162,20 +162,20 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::Status BehaviorReactToPickup::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  const bool isActing = IsControlDelegated();
-  if( !isActing && behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::InAir ) {
+  const bool isControlDelegated = IsControlDelegated();
+  if( !isControlDelegated && behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::InAir ) {
     return Status::Complete;
   }
   
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  if( robot.IsOnCharger() && !isActing ) {
+  if( robot.IsOnCharger() && !isControlDelegated ) {
     PRINT_NAMED_INFO("BehaviorReactToPickup.OnCharger", "Stopping behavior because we are on the charger");
     return Status::Complete;
   }
-  // If we aren't acting, it might be time to play another reaction
-  if (!isActing)
+  // If we are in control, it might be time to play another reaction
+  if (!isControlDelegated)
   {
     const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (currentTime > _nextRepeatAnimationTime)

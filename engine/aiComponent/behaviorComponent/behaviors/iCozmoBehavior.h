@@ -84,7 +84,7 @@ class ICozmoBehavior : public IBehavior
 {
 protected:  
   friend class BehaviorContainer;
-  // Allows helpers to run StartActing calls directly on the behavior that
+  // Allows helpers to run DelegateIfInControl calls directly on the behavior that
   // delegated to them
   friend class IHelper;
 
@@ -141,7 +141,7 @@ public:
   Status BehaviorUpdate_Legacy(BehaviorExternalInterface& behaviorExternalInterface);
     
   // This behavior was the currently running behavior, but is now stopping (to make way for a new current
-  // behavior). Any behaviors from StartActing will be canceled.
+  // behavior). Any behaviors from DelegateIfInControl will be canceled.
   void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   
@@ -241,7 +241,7 @@ protected:
 
   // This function can be implemented by behaviors. It should return Running while it is running, and Complete
   // or Failure as needed. If it returns Complete, Stop will be called. Default implementation is to
-  // return Running while IsActing, and Complete otherwise
+  // return Running while ControlIsDelegated, and Complete otherwise
   virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) {};
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface);
@@ -290,19 +290,19 @@ protected:
   
   // Many behaviors use a pattern of executing an action, then waiting for it to finish before selecting the
   // next action. Instead of directly starting actions and handling ActionCompleted callbacks, derived
-  // classes can use the functions below. Note: none of the StartActing functions can be called when the
+  // classes can use the functions below. Note: none of the DelegateIfInControl functions can be called when the
   // behavior is not running (will result in an error and no action). Also, if the behavior was running when
-  // you called StartActing, but is no longer running when the action completed, the callback will NOT be
+  // you called DelegateIfInControl, but is no longer running when the action completed, the callback will NOT be
   // called (this is necessary to prevent non-running behaviors from doing things with the robot). If the
   // behavior is stopped, within the Stop function, any actions which are still running will be canceled
   // (and you will not get any callback for it).
   //
-  // Each StartActing function returns true if the action was started, false otherwise. Reasons actions
+  // Each DelegateIfInControl function returns true if the action was started, false otherwise. Reasons actions
   // might not be started include:
-  // 1. Another action (from StartActing) is currently running or queued
+  // 1. Another action (from DelegateIfInControl) is currently running or queued
   // 2. You are not running ( IsRunning() returns false )
   //
-  // StartActing takes ownership of the action.  If the action is not
+  // DelegateIfInControl takes ownership of the action.  If the action is not
   // successfully queued, the action is immediately destroyed.
   //
   // Start an action now, and optionally provide a callback which will be called with the
@@ -351,11 +351,11 @@ protected:
   // component)
   bool DelegateNow(BehaviorExternalInterface& behaviorExternalInterface, IBehavior* delegate);
   
-  // This function cancels the action started by StartActing (if there is one). Returns true if an action was
+  // This function cancels the action started by DelegateIfInControl (if there is one). Returns true if an action was
   // canceled, false otherwise. Note that if you are running, this will trigger a callback for the
   // cancellation unless you set allowCallback to false. If the action was created by a helper, the helper
   // will be canceled as well, unless allowHelperToContinue is true
-  bool StopActing(bool allowCallback = true, bool allowHelperToContinue = false);
+  bool CancelDelegates(bool allowCallback = true, bool allowHelperToContinue = false);
   
   // Behaviors should call this function when they reach their completion state
   // in order to log das events and notify activity strategies if they listen for the message
@@ -498,12 +498,12 @@ private:
   
   int _startCount = 0;
 
-  // for Start/StopActing if invalid, no action
+  // for when delegation finishes - if invalid, no action
   RobotCompletedActionCallback _actionCallback;
   bool _stopRequestedAfterAction = false;
   
   bool _isRunning;
-  // should only be used to allow StartActing to start while a behavior is resuming
+  // should only be used to allow DelegateIfInControl to start while a behavior is resuming
   bool _isResuming;
   
   // A set of the locks that a behavior has used to disable reactions
@@ -582,20 +582,20 @@ protected:
   virtual float EvaluateRunningScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const;
   virtual float EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const;
   
-  // Additional start acting definitions relating to score
+  // Additional DelegateIfInControl definitions relating to score
   
-  // Called after StartActing, will add extraScore to the result of EvaluateRunningScoreInternal. This makes
-  // it easy to encourage the system to keep a behavior running while it is acting. NOTE: multiple calls to
+  // Called after DelegateIfInControl, will add extraScore to the result of EvaluateRunningScoreInternal. This makes
+  // it easy to encourage the system to keep a behavior running while control is delegated. NOTE: multiple calls to
   // this function (for the same action) will be cumulative. The bonus will be reset as soon as the action is
   // complete, or the behavior is no longer running
-  void IncreaseScoreWhileActing(float extraScore);
+  void IncreaseScoreWhileControlDelegated(float extraScore);
   
-  // Convenience wrappers that combine IncreaseScoreWhileActing with StartActing,
+  // Convenience wrappers that combine IncreaseScoreWhileControlDelegated with DelegateIfInControl,
   // including any of the callback types above
-  virtual bool StartActingExtraScore(IActionRunner* action, float extraScoreWhileActing) final;
+  virtual bool DelegateIfInControlExtraScore(IActionRunner* action, float extraScoreWhileControlDelegated) final;
   
   template<typename CallbackType>
-  bool StartActingExtraScore(IActionRunner* action, float extraScoreWhileActing, CallbackType callback);
+  bool DelegateIfInControlExtraScore(IActionRunner* action, float extraScoreWhileControlDelegated, CallbackType callback);
   
   bool IsRunnableScored() const;
   
@@ -680,14 +680,14 @@ bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorEx
 //// Scored Behavior functions
 ///////
   
-inline bool ICozmoBehavior::StartActingExtraScore(IActionRunner* action, float extraScoreWhileActing) {
-  IncreaseScoreWhileActing(extraScoreWhileActing);
+inline bool ICozmoBehavior::DelegateIfInControlExtraScore(IActionRunner* action, float extraScoreWhileControlDelegated) {
+  IncreaseScoreWhileControlDelegated(extraScoreWhileControlDelegated);
   return DelegateIfInControl(action);
 }
 
 template<typename CallbackType>
-inline bool ICozmoBehavior::StartActingExtraScore(IActionRunner* action, float extraScoreWhileActing, CallbackType callback) {
-  IncreaseScoreWhileActing(extraScoreWhileActing);
+inline bool ICozmoBehavior::DelegateIfInControlExtraScore(IActionRunner* action, float extraScoreWhileControlDelegated, CallbackType callback) {
+  IncreaseScoreWhileControlDelegated(extraScoreWhileControlDelegated);
   return DelegateIfInControl(action, callback);
 }
 

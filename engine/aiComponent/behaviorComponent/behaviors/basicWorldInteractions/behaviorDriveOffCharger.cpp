@@ -149,7 +149,7 @@ ICozmoBehavior::Status BehaviorDriveOffCharger::UpdateInternal_WhileRunning(Beha
     if( !onTreads ) {
       // if we aren't on the treads anymore, but we are on the charger, then the user must be holding us
       // inside the charger.... so just sit in this behavior doing nothing until we get put back down
-      StopActing(false);
+      CancelDelegates(false);
       DEBUG_SET_STATE(WaitForOnTreads);
       // TODO:(bn) play an idle here?
     }

@@ -208,10 +208,10 @@ void BehaviorFeedingEat::CubeMovementHandler(BehaviorExternalInterface& behavior
       
       if(currentlyEating ||
          (_currentState == State::PlacingLiftOnCube)){
-        StopActing(false);
+        CancelDelegates(false);
         TransitionToReactingToInterruption(behaviorExternalInterface);
       }else if(_currentState == State::DrivingToFood){
-        StopActing(false);
+        CancelDelegates(false);
       }
       
     }
@@ -381,7 +381,7 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption(BehaviorExternalInte
   SET_STATE(ReactingToInterruption);
   _timeCubeIsSuccessfullyDrained_sec = FLT_MAX;
   
-  StopActing(false);
+  CancelDelegates(false);
   AnimationTrigger trigger = AnimationTrigger::FeedingInterrupted;
   
   if(NeedId::Energy == behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){

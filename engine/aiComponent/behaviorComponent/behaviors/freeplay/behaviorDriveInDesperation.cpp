@@ -150,7 +150,7 @@ ICozmoBehavior::Status BehaviorDriveInDesperation::UpdateInternal_WhileRunning(B
     if( !_wasPickedUp ) {
       // this behavior can run while in the air, in which case it just does nothing. This is because the severe
       // low needs activities don't react to pickup. Cancel any actions first
-      StopActing(false);
+      CancelDelegates(false);
       _wasPickedUp = true;
     }
     return Status::Running;

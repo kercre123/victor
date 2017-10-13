@@ -61,7 +61,7 @@ ICozmoBehavior::Status BehaviorSearchForFace::UpdateInternal_WhileRunning(Behavi
 {
   if((_behaviorState == State::SearchingForFace) &&
      (behaviorExternalInterface.GetFaceWorld().HasAnyFaces())){
-    StopActing(false);
+    CancelDelegates(false);
     TransitionToFoundFace(behaviorExternalInterface);
   }
   

@@ -109,7 +109,7 @@ private:
   // set if we think a human has interacted, to decide whether to register needs action completed
   bool  _humanInteracted;
   
-  // modeled off of startActing callbacks
+  // modeled off of DelegateIfInControl callbacks
   template<typename T>
   void PounceOnMotionWithCallback(BehaviorExternalInterface& behaviorExternalInterface, void(T::*callback)(BehaviorExternalInterface&), IActionRunner* intermittentAction = nullptr);
 

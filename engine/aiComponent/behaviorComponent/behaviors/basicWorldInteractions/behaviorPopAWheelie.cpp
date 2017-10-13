@@ -240,7 +240,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface
 
               });
   
-  IncreaseScoreWhileActing( kBPW_ScoreIncreaseForAction );
+  IncreaseScoreWhileControlDelegated( kBPW_ScoreIncreaseForAction );
 }
 
   

@@ -603,7 +603,7 @@ void BehaviorEnrollFace::TransitionToLookingForFace(BehaviorExternalInterface& b
   
   // Make sure we stop tracking/scanning if necessary (CreateTurnTowardsFaceAction can create
   // a tracking action)
-  StopActing(false);
+  CancelDelegates(false);
   
   DelegateIfInControl(action, [this](BehaviorExternalInterface& behaviorExternalInterface)
               {
@@ -713,7 +713,7 @@ void BehaviorEnrollFace::TransitionToScanningInterrupted(BehaviorExternalInterfa
   SET_STATE(ScanningInterrupted);
   
   // Make sure we stop tracking necessary (in case we timed out while tracking)
-  StopActing(false);
+  CancelDelegates(false);
   
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
@@ -731,7 +731,7 @@ void BehaviorEnrollFace::TransitionToSayingName(BehaviorExternalInterface& behav
   SET_STATE(SayingName);
   
   // Stop tracking/scanning the face
-  StopActing(false);
+  CancelDelegates(false);
   
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
@@ -1344,7 +1344,7 @@ void BehaviorEnrollFace::HandleWhileRunning(const EngineToGameEvent& event, Beha
           PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HandleWhileRunning.EnrollmentInterrupted",
                         "Restarting enrollment due to %s event",
                         MessageEngineToGameTagToString(event.GetData().GetTag()));
-          StopActing(false);
+          CancelDelegates(false);
           TransitionToEnrolling(behaviorExternalInterface);
         }
       }

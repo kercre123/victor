@@ -136,7 +136,7 @@ protected:
   
   void DelegateAfterUpdate(const DelegateProperties& properties){ _delegateAfterUpdate = properties;}
   
-  // Use the set behavior's start acting to perform an action
+  // Use the set behavior's DelegateIfInControl to delegate to another ICozmoBehavior
   template <typename T>
   bool DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult,BehaviorExternalInterface&));
   
@@ -148,20 +148,20 @@ protected:
   // BehaviorEventAnimationResponseDirector knows how to respond to the failure with the
   // appropriate animation
   template<typename T>
-  bool StartActingWithResponseAnim(IActionRunner* action,
+  bool DelegateWithResponseAnim(IActionRunner* action,
                                    void(T::*callback)(ActionResult, BehaviorExternalInterface&),
                                    UserFacingActionResultMapFunc mapFunc = nullptr);
   
   template<typename T>
-  bool StartActingWithResponseAnim(IActionRunner* action,
+  bool DelegateWithResponseAnim(IActionRunner* action,
                                    void(T::*callback)(const ExternalInterface::RobotCompletedAction&, BehaviorExternalInterface&),
                                    UserFacingActionResultMapFunc mapFunc = nullptr);
 
   bool DelegateIfInControl(IActionRunner* action, BehaviorActionResultWithExternalInterfaceCallback callback);
   bool DelegateIfInControl(IActionRunner* action, BehaviorRobotCompletedActionWithExternalInterfaceCallback callback);
 
-  // Stop the behavior acting so that the delegate can issue a new action
-  bool StopActing(bool allowCallback);
+  // Stop all delegates so that a new delegate can be set
+  bool CancelDelegates(bool allowCallback);
   
   // Helpers to access the HelperFactory without needing access to the underlying behavior
   HelperHandle CreatePickupBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& targetID,
@@ -198,7 +198,7 @@ private:
   ICozmoBehavior& _behaviorToCallActionsOn;
   BehaviorHelperFactory& _helperFactory;
   
-  // Functions for responding to action results with StartActingWithResponseAnim
+  // Functions for responding to action results with DelegateIfInControlWithResponseAnim
   UserFacingActionResultMapFunc _actionResultMapFunc = nullptr;
   BehaviorActionResultWithExternalInterfaceCallback _callbackAfterResponseAnim = nullptr;
   BehaviorRobotCompletedActionWithExternalInterfaceCallback _callbackAfterResponseAnimUsingRCA = nullptr;
@@ -237,7 +237,7 @@ bool IHelper::DelegateIfInControl(IActionRunner* action,
 }
   
 template<typename T>
-bool IHelper::StartActingWithResponseAnim(IActionRunner* action,
+bool IHelper::DelegateWithResponseAnim(IActionRunner* action,
                                           void(T::*callback)(ActionResult,BehaviorExternalInterface&),
                                           UserFacingActionResultMapFunc mapFunc)
 {
@@ -248,13 +248,13 @@ bool IHelper::StartActingWithResponseAnim(IActionRunner* action,
   _actionResultMapFunc = mapFunc;
   
   DEV_ASSERT(_callbackAfterResponseAnim != nullptr,
-             "IHelper.StartActingWithResponseAnim.NullActionResultCallback");
+             "IHelper.DelegateWithResponseAnim.NullActionResultCallback");
   
   return DelegateIfInControl(action, &IHelper::RespondToResultWithAnim);
 }
 
 template<typename T>
-bool IHelper::StartActingWithResponseAnim(IActionRunner* action,
+bool IHelper::DelegateWithResponseAnim(IActionRunner* action,
                                           void(T::*callback)(const ExternalInterface::RobotCompletedAction&,BehaviorExternalInterface&),
                                           UserFacingActionResultMapFunc mapFunc)
 {
@@ -265,7 +265,7 @@ bool IHelper::StartActingWithResponseAnim(IActionRunner* action,
   _actionResultMapFunc = mapFunc;
   
   DEV_ASSERT(_callbackAfterResponseAnimUsingRCA != nullptr,
-             "IHelper.StartActingWithResponseAnim.NullRCACallback");
+             "IHelper.DelegateWithResponseAnim.NullRCACallback");
   
   return DelegateIfInControl(action, &IHelper::RespondToRCAWithAnim);
 }

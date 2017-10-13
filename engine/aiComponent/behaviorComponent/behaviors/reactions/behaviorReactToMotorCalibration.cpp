@@ -105,7 +105,7 @@ void BehaviorReactToMotorCalibration::HandleWhileRunning(const EngineToGameEvent
 
       if (robot.IsHeadCalibrated() && robot.IsLiftCalibrated()) {
         PRINT_CH_INFO("Behaviors", "BehaviorReactToMotorCalibration.HandleWhileRunning.Stop", "");
-        StopActing();
+        CancelDelegates();
       }
       break;
     }

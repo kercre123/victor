@@ -70,7 +70,7 @@ ICozmoBehavior::Status BehaviorFeedingSearchForCube::UpdateInternal_WhileRunning
      (_currentState == State::SecondSearchForCube)){
     const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if(currentTime_s > _timeEndSearch_s){
-      StopActing(false);
+      CancelDelegates(false);
       if(_currentState == State::FirstSearchForCube){
         TransitionToMakeFoodRequest(behaviorExternalInterface);
       }else{

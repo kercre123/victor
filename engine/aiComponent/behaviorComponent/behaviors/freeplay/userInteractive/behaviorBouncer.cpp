@@ -251,7 +251,7 @@ void BehaviorBouncer::StartAnimation(BehaviorExternalInterface& behaviorExternal
             AnimationTriggerToString(animationTrigger), EnumToString(nextState));
   
   // This should never be called when action is already in progress
-  DEV_ASSERT(!IsControlDelegated(), "BehaviorBouncer.StartAnimation.ShouldNotBeActing");
+  DEV_ASSERT(!IsControlDelegated(), "BehaviorBouncer.StartAnimation.ShouldBeInControl");
     
   auto callback = [this, nextState] {
     LOG_TRACE("BehaviorBouncer.StartAnimation.Callback", "Finish animation %s, nextState %s",
@@ -265,8 +265,8 @@ void BehaviorBouncer::StartAnimation(BehaviorExternalInterface& behaviorExternal
   IActionRunner* action = new TriggerAnimationAction(robot, animationTrigger);
   DelegateIfInControl(action, callback);
   
-  // StartActing shouldn't fail
-  DEV_ASSERT(IsControlDelegated(), "BehaviorBouncer.StartAnimation.ShouldBeActing");
+  // DelegateIfInControl shouldn't fail
+  DEV_ASSERT(IsControlDelegated(), "BehaviorBouncer.StartAnimation.ShouldNotBeInControl");
 }
 
 

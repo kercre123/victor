@@ -240,7 +240,7 @@ void BehaviorHelperComponent::PushHelperOntoStackAndUpdate(BehaviorExternalInter
   handle->OnActivatedInternal(behaviorExternalInterface);
   _helperStack.push_back(handle);
 
-  // Run the first update immediately so the helper can start acting
+  // Run the first update immediately so the helper can delegate control
   UpdateActiveHelper(behaviorExternalInterface);
 }
 

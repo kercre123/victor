@@ -209,7 +209,7 @@ TEST(BehaviorInterface, ScoreWhileRunning)
   }
 
   // this should have no effect, since we aren't acting
-  b.CallIncreaseScoreWhileActing(0.1f);
+  b.CallIncreaseScoreWhileControlDelegated(0.1f);
 
   {
     SCOPED_TRACE("");
@@ -225,13 +225,13 @@ TEST(BehaviorInterface, ScoreWhileRunning)
 
   {
     SCOPED_TRACE("");
-    b.CallIncreaseScoreWhileActing(0.1f);
+    b.CallIncreaseScoreWhileControlDelegated(0.1f);
     TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, TestBehavior::kRunningScore + 0.1f);
   }
 
   {
     SCOPED_TRACE("");
-    b.CallIncreaseScoreWhileActing(1.0f);
+    b.CallIncreaseScoreWhileControlDelegated(1.0f);
     TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, TestBehavior::kRunningScore + 0.1f + 1.0f);
   }
 
@@ -244,7 +244,7 @@ TEST(BehaviorInterface, ScoreWhileRunning)
 
   {
     SCOPED_TRACE("");
-    b.CallIncreaseScoreWhileActing(0.999f);
+    b.CallIncreaseScoreWhileControlDelegated(0.999f);
     TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, TestBehavior::kRunningScore);
   }
 
@@ -373,7 +373,7 @@ bool TestBehavior::CallDelegateIfInControl(Robot& robot, bool& actionCompleteRef
   return DelegateIfInControl(action);
 }
 
-bool TestBehavior::CallStartActingExternalCallback1(Robot& robot,
+bool TestBehavior::CallDelegateIfInControlExternalCallback1(Robot& robot,
                                                     bool& actionCompleteRef,
                                                     ICozmoBehavior::RobotCompletedActionCallback callback)
 {
@@ -383,7 +383,7 @@ bool TestBehavior::CallStartActingExternalCallback1(Robot& robot,
   return DelegateIfInControl(action, callback);
 }
 
-bool TestBehavior::CallStartActingExternalCallback2(Robot& robot,
+bool TestBehavior::CallDelegateIfInControlExternalCallback2(Robot& robot,
                                                     bool& actionCompleteRef,
                                                     ICozmoBehavior::ActionResultCallback callback)
 {
@@ -393,7 +393,7 @@ bool TestBehavior::CallStartActingExternalCallback2(Robot& robot,
   return DelegateIfInControl(action, callback);
 }
 
-bool TestBehavior::CallStartActingInternalCallbackVoid(Robot& robot,
+bool TestBehavior::CallDelegateIfInControlInternalCallbackVoid(Robot& robot,
                                                        bool& actionCompleteRef)
 {
   WaitForLambdaAction* action =
@@ -402,7 +402,7 @@ bool TestBehavior::CallStartActingInternalCallbackVoid(Robot& robot,
   return DelegateIfInControl(action, &TestBehavior::Foo);
 }
 
-bool TestBehavior::CallStartActingInternalCallbackRobot(Robot& robot,
+bool TestBehavior::CallDelegateIfInControlInternalCallbackRobot(Robot& robot,
                                                         bool& actionCompleteRef)
 {
   WaitForLambdaAction* action =
@@ -411,7 +411,7 @@ bool TestBehavior::CallStartActingInternalCallbackRobot(Robot& robot,
   return DelegateIfInControl(action, &TestBehavior::Bar);
 }
 
-TEST(BehaviorInterface, StartActingSimple)
+TEST(BehaviorInterface, DelegateIfInControlSimple)
 {
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
@@ -457,7 +457,7 @@ TEST(BehaviorInterface, StartActingSimple)
   EXPECT_EQ(b._handleWhileNotRunningCalls,  0);
 }
 
-TEST(BehaviorInterface, StartActingFailures)
+TEST(BehaviorInterface, DelegateIfInControlFailures)
 {
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
@@ -487,7 +487,7 @@ TEST(BehaviorInterface, StartActingFailures)
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
 
-  EXPECT_FALSE( b.CallStopActing() );
+  EXPECT_FALSE( b.CallCancelDelegates() );
   
   bool done = false;
   EXPECT_TRUE( b.CallDelegateIfInControl(robot, done) );
@@ -514,7 +514,7 @@ TEST(BehaviorInterface, StartActingFailures)
   DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
-  EXPECT_TRUE( b.CallStopActing() );
+  EXPECT_TRUE( b.CallCancelDelegates() );
   // same tick, should be able to start a new one
   bool done2 = false;
   EXPECT_TRUE( b.CallDelegateIfInControl(robot, done2) );
@@ -534,7 +534,7 @@ TEST(BehaviorInterface, StartActingFailures)
   EXPECT_EQ(b._handleWhileNotRunningCalls,  0);
 }
 
-TEST(BehaviorInterface, StartActingCallbacks)
+TEST(BehaviorInterface, DelegateIfInControlCallbacks)
 {
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
@@ -562,7 +562,7 @@ TEST(BehaviorInterface, StartActingCallbacks)
 
   bool done = false;
   bool callbackCalled = false;
-  bool ret = b.CallStartActingExternalCallback1(robot, done,
+  bool ret = b.CallDelegateIfInControlExternalCallback1(robot, done,
                                                 [&callbackCalled](const ExternalInterface::RobotCompletedAction& res) {
                                                   callbackCalled = true;
                                                 });
@@ -576,7 +576,7 @@ TEST(BehaviorInterface, StartActingCallbacks)
 
   done = false;
   callbackCalled = false;
-  ret = b.CallStartActingExternalCallback2(robot, done,
+  ret = b.CallDelegateIfInControlExternalCallback2(robot, done,
                                            [&callbackCalled](ActionResult res) {
                                              callbackCalled = true;
                                            });
@@ -589,7 +589,7 @@ TEST(BehaviorInterface, StartActingCallbacks)
   EXPECT_TRUE(callbackCalled);
 
   done = false;
-  ret = b.CallStartActingInternalCallbackVoid(robot, done);
+  ret = b.CallDelegateIfInControlInternalCallbackVoid(robot, done);
   EXPECT_TRUE(ret);
 
   DoTicks(robot, b, *behaviorExternalInterface, 3);
@@ -601,7 +601,7 @@ TEST(BehaviorInterface, StartActingCallbacks)
   EXPECT_EQ(b._calledRobotFunc, 0);
 
   done = false;
-  ret = b.CallStartActingInternalCallbackRobot(robot, done);
+  ret = b.CallDelegateIfInControlInternalCallbackRobot(robot, done);
   EXPECT_TRUE(ret);
 
   DoTicks(robot, b, *behaviorExternalInterface, 3);
@@ -613,7 +613,7 @@ TEST(BehaviorInterface, StartActingCallbacks)
   EXPECT_EQ(b._calledRobotFunc, 1);
 }
 
-TEST(BehaviorInterface, StartActingWhenNotRunning)
+TEST(BehaviorInterface, DelegateIfInControlWhenNotRunning)
 {
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
@@ -647,7 +647,7 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
 
   bool done1 = false;
   bool callbackCalled1 = false;
-  bool ret = b.CallStartActingExternalCallback2(robot, done1,
+  bool ret = b.CallDelegateIfInControlExternalCallback2(robot, done1,
                                                 [&callbackCalled1](ActionResult res) {
                                                   callbackCalled1 = true;
                                                 });
@@ -663,7 +663,7 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
 
   bool done2 = false;
   bool callbackCalled2 = false;
-  ret = b.CallStartActingExternalCallback2(robot, done2,
+  ret = b.CallDelegateIfInControlExternalCallback2(robot, done2,
                                            [&callbackCalled2](ActionResult res) {
                                              callbackCalled2 = true;
                                            });
@@ -721,7 +721,7 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
 
   bool done1 = false;
   bool callbackCalled1 = false;
-  bool ret = b.CallStartActingExternalCallback2(robot, done1,
+  bool ret = b.CallDelegateIfInControlExternalCallback2(robot, done1,
                                                 [&callbackCalled1](ActionResult res) {
                                                   callbackCalled1 = true;
                                                 });
@@ -732,18 +732,18 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
 
   // stop acting but don't allow the callback
-  b.CallStopActing(false);
+  b.CallCancelDelegates(false);
 
   DoTicks(robot, b, *behaviorExternalInterface, 3);
   EXPECT_TRUE(robot.GetActionList().IsEmpty()) << "action should be canceled";
-  EXPECT_FALSE(callbackCalled1) << "StartActing callback should not have run";
+  EXPECT_FALSE(callbackCalled1) << "DelegateIfInControl callback should not have run";
 
   ///////////////////////////////////////////////////////////////////////////////
   // now do it with true
 
   callbackCalled1 = false;
   
-  ret = b.CallStartActingExternalCallback2(robot, done1,
+  ret = b.CallDelegateIfInControlExternalCallback2(robot, done1,
                                                 [&callbackCalled1](ActionResult res) {
                                                   callbackCalled1 = true;
                                                 });
@@ -754,7 +754,7 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
 
   // stop acting but don't allow the callback
-  b.CallStopActing(true);
+  b.CallCancelDelegates(true);
 
   DoTicks(robot, b, *behaviorExternalInterface, 3);
   EXPECT_TRUE(robot.GetActionList().IsEmpty()) << "action should be canceled";
@@ -804,7 +804,7 @@ public:
 
 };
 
-TEST(BehaviorInterface, StartActingInsideInit)
+TEST(BehaviorInterface, DelegateIfInControlInsideInit)
 {
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);

@@ -128,7 +128,7 @@ bool IHelper::IsControlDelegated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IHelper::Stop(bool isActive)
 {
-  PRINT_CH_INFO("BehaviorHelpers", "IHelper.Stop", "%s isActive=%d, IsActing=%d",
+  PRINT_CH_INFO("BehaviorHelpers", "IHelper.Stop", "%s isActive=%d, IsControlDelegated=%d",
                 GetName().c_str(),
                 isActive,
                 IsControlDelegated());
@@ -140,7 +140,7 @@ void IHelper::Stop(bool isActive)
   if( isActive && _behaviorToCallActionsOn.IsActing() ) {
     const bool allowCallback = false;
     const bool keepHelpers = true; // to avoid infinite loops of Stop
-    _behaviorToCallActionsOn.StopActing(allowCallback, keepHelpers);
+    _behaviorToCallActionsOn.CancelDelegates(allowCallback, keepHelpers);
   }
 
   StopInternal(isActive);
@@ -238,10 +238,10 @@ bool IHelper::DelegateIfInControl(IActionRunner* action, BehaviorRobotCompletedA
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IHelper::StopActing(bool allowCallback)
+bool IHelper::CancelDelegates(bool allowCallback)
 {
   const bool allowHelperToContinue = true;
-  return _behaviorToCallActionsOn.StopActing(allowCallback, allowHelperToContinue);
+  return _behaviorToCallActionsOn.CancelDelegates(allowCallback, allowHelperToContinue);
 }
   
 

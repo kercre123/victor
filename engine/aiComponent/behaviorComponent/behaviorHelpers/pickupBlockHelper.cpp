@@ -151,7 +151,7 @@ void PickupBlockHelper::StartPickupAction(BehaviorExternalInterface& behaviorExt
       action->SetProxyTag(pickupAction->GetTag());
     }
     
-    StartActingWithResponseAnim(action, &PickupBlockHelper::RespondToPickupResult,  [] (ActionResult result){
+    DelegateWithResponseAnim(action, &PickupBlockHelper::RespondToPickupResult,  [] (ActionResult result){
       switch(result){
         case ActionResult::SUCCESS:
         {

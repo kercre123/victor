@@ -642,7 +642,7 @@ void ICozmoBehavior::OnDeactivatedInternal(BehaviorExternalInterface& behaviorEx
   _isRunning = false;
   OnBehaviorDeactivated(behaviorExternalInterface);
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  StopActing(false);
+  CancelDelegates(false);
   
   // Re-enable any reactionary behaviors which the behavior disabled and didn't have a chance to
   // re-enable before stopping
@@ -893,7 +893,7 @@ bool ICozmoBehavior::IsActing() const
 bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedActionCallback callback)
 {
   if(!_behaviorExternalInterface->HasDelegationComponent()) {
-    PRINT_NAMED_ERROR("ICozmoBehavior.StartActing.NoDelegationComponent",
+    PRINT_NAMED_ERROR("ICozmoBehavior.DelegateIfInControl.NoDelegationComponent",
                       "Behavior %s attempted to start action while it did not have control of delegation",
                       GetIDStr().c_str());
     delete action;
@@ -902,7 +902,7 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
   
   auto& delegationComponent = _behaviorExternalInterface->GetDelegationComponent();
   if(!delegationComponent.HasDelegator(this)){
-    PRINT_NAMED_ERROR("ICozmoBehavior.StartActing.NoDelegator",
+    PRINT_NAMED_ERROR("ICozmoBehavior.DelegateIfInControl.NoDelegator",
                       "Behavior %s attempted to start action while it did not have control of delegation",
                       GetIDStr().c_str());
     delete action;
@@ -920,7 +920,7 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
   }
   
   if( !IsResuming() && !IsRunning() ) {
-    PRINT_NAMED_WARNING("ICozmoBehavior.StartActing.Failure.NotRunning",
+    PRINT_NAMED_WARNING("ICozmoBehavior.DelegateIfInControl.Failure.NotRunning",
                         "Behavior '%s' can't start %s action because it is not running",
                         GetIDStr().c_str(), action->GetName().c_str());
     delete action;
@@ -928,7 +928,7 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
   }
 
   if( IsActing() ) {
-    PRINT_NAMED_WARNING("ICozmoBehavior.StartActing.Failure.AlreadyActing",
+    PRINT_NAMED_WARNING("ICozmoBehavior.DelegateIfInControl.Failure.AlreadyActing",
                         "Behavior '%s' can't start %s action because it is already running an action in state %s",
                         GetIDStr().c_str(), action->GetName().c_str(),
                         GetDebugStateName().c_str());
@@ -1032,7 +1032,7 @@ void ICozmoBehavior::HandleActionComplete(const ExternalInterface::RobotComplete
   ScoredActingStateChanged(false);
   if( _actionCallback ) {
 
-    // Note that the callback may itself call start acting and set _actionCallback. Because of that, we create
+    // Note that the callback may itself call DelegateIfInControl and set _actionCallback. Because of that, we create
     // a copy here so we can null out the member variable such that it can be re-set by callback (if desired)
     auto callback = _actionCallback;
     _actionCallback = nullptr;
@@ -1043,7 +1043,7 @@ void ICozmoBehavior::HandleActionComplete(const ExternalInterface::RobotComplete
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::StopActing(bool allowCallback, bool allowHelperToContinue)
+bool ICozmoBehavior::CancelDelegates(bool allowCallback, bool allowHelperToContinue)
 {
   ScoredActingStateChanged(false);
 
@@ -1304,7 +1304,7 @@ bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorEx
 
   
   // A bit of a hack while BSM is still under construction - essentially IsControlDelegated
-  // is now overloaded for both helpers and actions, but StartActing needs to be able
+  // is now overloaded for both helpers and actions, but DelegateIfInControl needs to be able
   // to distinguish the same IsActing used to indicate only actions - assigning
   // this tmp handle indicates to behaviors that they've "delegated" and should allow
   // helpers to queue actions - but if the delegation fails this tmp handle will fall
@@ -1526,7 +1526,7 @@ void ICozmoBehavior::HandleBehaviorObjective(const ExternalInterface::BehaviorOb
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::IncreaseScoreWhileActing(float extraScore)
+void ICozmoBehavior::IncreaseScoreWhileControlDelegated(float extraScore)
 {
   if( IsControlDelegated() ) {
     _extraRunningScore += extraScore;

@@ -110,23 +110,23 @@ public:
   
   bool CallDelegateIfInControl(Robot& robot, bool& actionCompleteRef);
   
-  void CallIncreaseScoreWhileActing(float extraScore) { IncreaseScoreWhileActing(extraScore); }
+  void CallIncreaseScoreWhileControlDelegated(float extraScore) { IncreaseScoreWhileControlDelegated(extraScore); }
   
-  bool CallStartActingExternalCallback1(Robot& robot,
+  bool CallDelegateIfInControlExternalCallback1(Robot& robot,
                                         bool& actionCompleteRef,
                                         ICozmoBehavior::RobotCompletedActionCallback callback);
   
-  bool CallStartActingExternalCallback2(Robot& robot,
+  bool CallDelegateIfInControlExternalCallback2(Robot& robot,
                                         bool& actionCompleteRef,
                                         ICozmoBehavior::ActionResultCallback callback);
   
-  bool CallStartActingInternalCallbackVoid(Robot& robot,
+  bool CallDelegateIfInControlInternalCallbackVoid(Robot& robot,
                                            bool& actionCompleteRef);
-  bool CallStartActingInternalCallbackRobot(Robot& robot,
+  bool CallDelegateIfInControlInternalCallbackRobot(Robot& robot,
                                             bool& actionCompleteRef);
   
-  bool CallStopActing() { return StopActing(); }
-  bool CallStopActing(bool val) { return StopActing(val); }
+  bool CallCancelDelegates() { return CancelDelegates(); }
+  bool CallCancelDelegates(bool val) { return CancelDelegates(val); }
   
 protected:
   virtual float EvaluateRunningScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

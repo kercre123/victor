@@ -125,7 +125,7 @@ ICozmoBehavior::Status BehaviorReactToRobotShaken::UpdateInternal_WhileRunning(B
     }
     case EState::DoneShaking:
     {
-      StopActing(false);
+      CancelDelegates(false);
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
@@ -153,7 +153,7 @@ ICozmoBehavior::Status BehaviorReactToRobotShaken::UpdateInternal_WhileRunning(B
     }
     case EState::ActDizzy:
     {
-      StopActing(false);
+      CancelDelegates(false);
       // Play appropriate reaction based on duration of shaking:
       if (_shakenDuration_s > kShakenDurationThresholdHard) {
         // DEPRECATED - Grabbing robot to support current cozmo code, but this should

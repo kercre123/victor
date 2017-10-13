@@ -92,7 +92,7 @@ ICozmoBehavior::Status BehaviorDriveToFace::UpdateInternal_WhileRunning(Behavior
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(_currentState == State::TrackFace &&
      _timeCancelTracking_s < currentTime_s){
-    StopActing(false);
+    CancelDelegates(false);
     return Status::Complete;
   }
   

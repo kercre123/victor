@@ -273,17 +273,17 @@ Result BehaviorExploreBringCubeToBeacon::OnBehaviorActivated(BehaviorExternalInt
   
   // this is now a valid situation. We started the behavior but did not find valid poses. It should have flagged
   // the beacon as not valid anymore
-  bool shouldBeActing = true;
+  bool shouldControlBeDelegated = true;
   if ( !IsControlDelegated() ) {
     const AIBeacon* activeBeacon = robot.GetAIComponent().GetWhiteboard().GetActiveBeacon();
     const float lastBeaconFailure = activeBeacon->GetLastTimeFailedToFindLocation();
     const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     const bool beaconFlaggedFail = FLT_NEAR(curTime, lastBeaconFailure);
-    shouldBeActing = !beaconFlaggedFail; // should be acting if the beacon is valid
+    shouldControlBeDelegated = !beaconFlaggedFail; // should have delegated if the beacon is valid
   }
 
   // we consider an init to be ok if we realize that we don't want to act
-  const bool initOk = (shouldBeActing == IsControlDelegated());
+  const bool initOk = (shouldControlBeDelegated == IsControlDelegated());
   const Result ret = initOk ? RESULT_OK : RESULT_FAIL;
   return ret;
 }

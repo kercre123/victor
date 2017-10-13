@@ -203,7 +203,7 @@ ICozmoBehavior::Status BehaviorStackBlocks::UpdateInternal_WhileRunning(Behavior
     
     auto bestBottom = GetClosestValidBottom(behaviorExternalInterface, bottomBlockIntention);
     if(bestBottom != _targetBlockBottom){
-      StopActing(false);
+      CancelDelegates(false);
       _targetBlockBottom = bestBottom;
       _hasBottomTargetSwitched = true;
       TransitionToStackingBlock(behaviorExternalInterface);
@@ -230,7 +230,7 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(BehaviorExternalInterface& 
                                                               _targetBlockTop, params);
   
   SmartDelegateToHelper(behaviorExternalInterface, pickupHelper, &BehaviorStackBlocks::TransitionToStackingBlock);
-  IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
+  IncreaseScoreWhileControlDelegated( kBSB_ScoreIncreaseForAction );
 }
 
 
@@ -266,7 +266,7 @@ void BehaviorStackBlocks::TransitionToStackingBlock(BehaviorExternalInterface& b
   SmartDelegateToHelper(behaviorExternalInterface, placeHelper,
                         &BehaviorStackBlocks::TransitionToPlayingFinalAnim,
                         &BehaviorStackBlocks::TransitionToFailedToStack);
-  IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
+  IncreaseScoreWhileControlDelegated( kBSB_ScoreIncreaseForAction );
 }
 
 
@@ -281,7 +281,7 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(BehaviorExternalInterface
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
     DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
-    IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
+    IncreaseScoreWhileControlDelegated( kBSB_ScoreIncreaseForAction );
   }
   NeedActionCompleted();
 }

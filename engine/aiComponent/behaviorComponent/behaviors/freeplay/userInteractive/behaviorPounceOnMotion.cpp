@@ -673,7 +673,7 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
             _observedX = motionObserved.img_x;
             _observedY = motionObserved.img_y;
             _motionObserved = true;
-            StopActing();
+            CancelDelegates();
           }
           else
           {

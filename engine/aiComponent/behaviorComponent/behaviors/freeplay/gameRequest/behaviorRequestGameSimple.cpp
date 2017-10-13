@@ -240,14 +240,14 @@ ICozmoBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Beh
     if( GetNumBlocks(behaviorExternalInterface) > 0 ) {
       PRINT_NAMED_INFO("BehaviorRequestGameSimple.FoundBlock",
                        "found block during search");
-      StopActing(false);
+      CancelDelegates(false);
       TransitionToFacingBlock(behaviorExternalInterface);
     }
   }
   
   if(CheckRequestTimeout()) {
     // timeout acts as a deny
-    StopActing(false);
+    CancelDelegates(false);
     SendDeny(behaviorExternalInterface);
     TransitionToPlayingDenyAnim(behaviorExternalInterface);
   }
@@ -290,7 +290,7 @@ void BehaviorRequestGameSimple::RequestGame_OnBehaviorDeactivated(BehaviorExtern
   // don't use transition to because we don't want to do anything.
   _state = State::PlayingInitialAnimation;
   _wasTriggeredAsInterrupt = false;
-  StopActing(false);
+  CancelDelegates(false);
 }
 
   
@@ -744,7 +744,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::HandleGameDeniedRequest(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  StopActing(false);
+  CancelDelegates(false);
 
   TransitionToPlayingDenyAnim(behaviorExternalInterface);
 }

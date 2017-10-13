@@ -245,7 +245,7 @@ ICozmoBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorE
       // We observed the mean change in a RobotProcessedImage message, so go ahead and
       // transition to WaitingForLaser. Immediately fall through to the case below
       // to avoid waiting a tick to check if we also saw a confirmed laser in the same image.
-      StopActing(false); // Stop the WaitForImages action
+      CancelDelegates(false); // Stop the WaitForImages action
       TransitionToWaitForLaser(behaviorExternalInterface);
       
       // NOTE: Deliberate fallthrough!!
@@ -693,7 +693,7 @@ void BehaviorTrackLaser::TransitionToGetOutBored(BehaviorExternalInterface& beha
 {
   SET_STATE(GetOutBored);
   
-  StopActing(false);
+  CancelDelegates(false);
   
   auto callback = [this](){ SET_STATE(WaitForStop); };
   

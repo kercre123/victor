@@ -136,7 +136,7 @@ void PlaceRelObjectHelper::StartPlaceRelObject(BehaviorExternalInterface& behavi
                                      _params.placementOffsetY_mm,
                                      false, _params.relativeCurrentMarker);
     
-    StartActingWithResponseAnim(placeObj, &PlaceRelObjectHelper::RespondToPlaceRelResult);
+    DelegateWithResponseAnim(placeObj, &PlaceRelObjectHelper::RespondToPlaceRelResult);
   }
 }
 

@@ -787,7 +787,7 @@ void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose(BehaviorExter
   }
   
   // stop the squint loop and the movement, and start the new actions, which includes squint out
-  StopActing();
+  CancelDelegates();
   StopSquintLoop(behaviorExternalInterface);
   DelegateIfInControl(observationActions);
 }
@@ -922,8 +922,8 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
       PRINT_CH_INFO("Behaviors", (GetIDStr() + ".GatheringAccurateEdge.Far").c_str(), "Got a far edge, continuing forward fetch");
       
       // not close enough, keep moving forward
-      const bool isActing = IsControlDelegated();
-      if ( !isActing )
+      const bool isControlDelegated = IsControlDelegated();
+      if ( !isControlDelegated )
       {
         // DEPRECATED - Grabbing robot to support current cozmo code, but this should
         // be removed
@@ -946,7 +946,7 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
     PRINT_CH_INFO("Behaviors", (GetIDStr() + ".GatheringAccurateEdge.Done").c_str(), "Processed edges and did not find any.");
     
     // stop moving
-    StopActing();
+    CancelDelegates();
     
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed

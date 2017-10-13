@@ -64,7 +64,7 @@ bool Delegator::Delegate(IBehavior* delegatingRunnable,
   
   Result result = _robot.GetActionList().QueueAction(QueueActionPosition::NOW, action);
   if (RESULT_OK != result) {
-    PRINT_NAMED_WARNING("ICozmoBehavior.StartActing.Failure.NotQueued",
+    PRINT_NAMED_WARNING("ICozmoBehavior.Delegate.Failure.NotQueued",
                         "Behavior '%s' can't queue action '%s' (error %d)",
                         delegatingRunnable->GetPrintableID().c_str(),
                         action->GetName().c_str(), result);
@@ -193,7 +193,7 @@ void DelegationComponent::CancelDelegates(IBehavior* delegatingRunnable)
     // note that the callback, if there was one (and it was allowed to run), should have already been called
     // at this point, so it's safe to clear the tag. Also, if the cancel itself failed, that is probably a
     // bug, but somehow the action is gone, so no sense keeping the tag around (and it clearly isn't
-    // running). If the callback called StartActing, we may have a new action tag, so only clear this if the
+    // running). If the callback called DelegateIfInControl, we may have a new action tag, so only clear this if the
     // cancel didn't change it
     if( _delegator->_lastActionTag == tagToCancel ) {
       _delegator->_lastActionTag = ActionConstants::INVALID_TAG;

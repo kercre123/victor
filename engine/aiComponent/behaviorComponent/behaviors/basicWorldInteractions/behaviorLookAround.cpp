@@ -488,7 +488,7 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
                                          robot.GetWorldOrigin()};
         PRINT_NAMED_DEBUG("BehaviorLookAround.HandleObjectObserved.LookingAtPossibleObject",
                           "stopping to look at possible object");
-        StopActing(false);
+        CancelDelegates(false);
         TransitionToLookingAtPossibleObject(behaviorExternalInterface);
       }
     }
@@ -500,7 +500,7 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
 
       _recentObjects.insert(msg.objectID);
 
-      StopActing(false);
+      CancelDelegates(false);
       TransitionToExaminingFoundObject(behaviorExternalInterface);
     }
 

@@ -209,10 +209,10 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
   // Check to see if all cubes were flipped or moved:
   if (_monitoringCubeMotion) {
     if (_nCubesFlipped == 3) {
-      StopActing();
+      CancelDelegates();
       SET_STATE(PlayerSuccess);
     } else if (_nCubesMoved == 3) {
-      StopActing();
+      CancelDelegates();
       SET_STATE(Busted);
     }
   }
@@ -227,7 +227,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
     // Trigger the timeout if appropriate
     if (pastMaxDuration ||
        (pastMinDuration && pastCubeMotionTimeout)) {
-      StopActing();
+      CancelDelegates();
       SET_STATE(Timeout);
     }
   }
@@ -247,7 +247,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
     }
   }
   
-  // Only run the state machine if we're not acting:
+  // Only run the state machine if we're in control:
   if (IsControlDelegated()) {
     return Status::Running;
   }
@@ -519,7 +519,7 @@ void BehaviorGuardDog::HandleObjectConnectionState(BehaviorExternalInterface& be
                         "Object with ID %d and type %s has disconnected",
                         msg.objectID,
                         EnumToString(msg.object_type));
-    StopActing();
+    CancelDelegates();
     SET_STATE(BlockDisconnected);
   }
 }
@@ -535,7 +535,7 @@ void BehaviorGuardDog::HandleObjectMoved(BehaviorExternalInterface& behaviorExte
     PRINT_NAMED_INFO("BehaviorGuardDog.HandleObjectMoved.UnexpectedBlockMovement",
                      "Received ObjectMoved message for Object with ID %d even though we're not currently monitoring for movement and not yet sleeping!",
                      msg.objectID);
-    StopActing();
+    CancelDelegates();
     SET_STATE(SetupInterrupted);
   }
 }
@@ -551,7 +551,7 @@ void BehaviorGuardDog::HandleObjectUpAxisChanged(BehaviorExternalInterface& beha
       PRINT_NAMED_INFO("BehaviorGuardDog.HandleObjectUpAxisChanged.UnexpectedBlockMovement",
                        "Received ObjectUpAxisChanged message for Object with ID %d even though we're not currently monitoring for movement and not yet sleeping!",
                        msg.objectID);
-      StopActing();
+      CancelDelegates();
       SET_STATE(SetupInterrupted);
     }
     return;
@@ -623,14 +623,14 @@ void BehaviorGuardDog::CubeMovementHandler(BehaviorExternalInterface& behaviorEx
   //   sleeping (if we're past the "grace period")
   if (block.movementScore >= kMovementScoreMax &&
       pastMaxMovementGracePeriod) {
-    StopActing();
+    CancelDelegates();
     SET_STATE(Busted);
   } else if (block.movementScore > kMovementScoreDetectionThreshold) {
     if (!block.hasBeenMoved) {
       block.hasBeenMoved = true;
       block.firstMovedTime_s = now;
       ++_nCubesMoved;
-      StopActing();
+      CancelDelegates();
       SET_STATE(Fakeout);
     }
     // Play the "being moved" light cube anim:

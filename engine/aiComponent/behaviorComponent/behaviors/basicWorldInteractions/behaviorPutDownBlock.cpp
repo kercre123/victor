@@ -93,7 +93,7 @@ Result BehaviorPutDownBlock::OnBehaviorActivated(BehaviorExternalInterface& beha
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  StartActingExtraScore(new CompoundActionSequential(robot, {
+  DelegateIfInControlExtraScore(new CompoundActionSequential(robot, {
                 new DriveStraightAction(robot, backupDistance, kBPDB_putDownBackupSpeed_mm),
                 new TriggerAnimationAction(robot, AnimationTrigger::PutDownBlockPutDown),
               }),
@@ -107,7 +107,7 @@ Result BehaviorPutDownBlock::OnBehaviorActivated(BehaviorExternalInterface& beha
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPutDownBlock::LookDownAtBlock(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  StartActingExtraScore(CreateLookAfterPlaceAction(behaviorExternalInterface, true), kBPDB_scoreIncreasePostPutDown,
+  DelegateIfInControlExtraScore(CreateLookAfterPlaceAction(behaviorExternalInterface, true), kBPDB_scoreIncreasePostPutDown,
               [&behaviorExternalInterface]() {
                 // DEPRECATED - Grabbing robot to support current cozmo code, but this should
                 // be removed

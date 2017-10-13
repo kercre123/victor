@@ -263,7 +263,7 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(BehaviorExternalInte
                     observedID);
         
       const bool allowCallbacks = false;
-      StopActing(allowCallbacks);
+      CancelDelegates(allowCallbacks);
       TransitionToS6_Done(behaviorExternalInterface);
     }
     else if ( _configParams.stopBehaviorOnNamedFace )
@@ -282,7 +282,7 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(BehaviorExternalInte
                         observedID);
         
           const bool allowCallbacks = false;
-          StopActing(allowCallbacks);
+          CancelDelegates(allowCallbacks);
           TransitionToS6_Done(behaviorExternalInterface);
         }
       }
@@ -298,7 +298,7 @@ void BehaviorLookForFaceAndCube::CancelActionAndVerifyFace(BehaviorExternalInter
                 observedFace);
 
   const bool allowCallbacks = false;
-  StopActing(allowCallbacks);
+  CancelDelegates(allowCallbacks);
   
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

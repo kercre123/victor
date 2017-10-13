@@ -133,7 +133,7 @@ BehaviorStatus SearchForBlockHelper::UpdateWhileActiveInternal(BehaviorExternalI
   
   
   if(_status != BehaviorStatus::Running){
-    StopActing(false);
+    CancelDelegates(false);
   }
   
   return _status;

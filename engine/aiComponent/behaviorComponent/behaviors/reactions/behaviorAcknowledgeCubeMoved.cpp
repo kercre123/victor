@@ -115,7 +115,7 @@ ICozmoBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal_WhileRunning
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
 
-    StopActing(false);
+    CancelDelegates(false);
     DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::AcknowledgeObject));
     SET_STATE(ReactingToBlockPresence);
   }

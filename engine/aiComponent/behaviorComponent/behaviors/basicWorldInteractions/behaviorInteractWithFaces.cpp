@@ -159,7 +159,7 @@ ICozmoBehavior::Status BehaviorInteractWithFaces::UpdateInternal_WhileRunning(Be
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if( currTime_s >= _trackFaceUntilTime_s ) {
       BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
-      StopActing();
+      CancelDelegates();
       
       if(behaviorExternalInterface.HasNeedsManager()){
         auto& needsManager = behaviorExternalInterface.GetNeedsManager();

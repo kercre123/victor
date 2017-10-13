@@ -418,7 +418,7 @@ void BehaviorKnockOverCubes::AlwaysHandle(const EngineToGameEvent& event, Behavi
 void BehaviorKnockOverCubes::PrepareForKnockOverAttempt()
 {
   _objectsFlipped.clear();
-  IncreaseScoreWhileActing(kScoreIncreaseSoNoRoll);
+  IncreaseScoreWhileControlDelegated(kScoreIncreaseSoNoRoll);
   
   // Unlock the reactions b/c we're about to re-lock them
   // It's possible they might not have been locked - it's safe to remove an invalid lock

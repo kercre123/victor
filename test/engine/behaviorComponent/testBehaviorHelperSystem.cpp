@@ -71,7 +71,7 @@ public:
 
   void SetActionToRunOnNextUpdate(IActionRunner* action) {
     _nextActionToRun = action;
-    _lastStartActingResult = false;
+    _lastDelegateIfInControlResult = false;
   }
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
@@ -104,17 +104,17 @@ public:
     if( _nextActionToRun ) {
       if( IsControlDelegated() ) {
         printf("TestBehaviorWithHelpers: canceling previous action to start new one\n");
-        StopActing();
+        CancelDelegates();
       }
 
       printf("TestBehaviorWithHelpers: starting action\n");
-      _lastStartActingResult = DelegateIfInControl(_nextActionToRun);
+      _lastDelegateIfInControlResult = DelegateIfInControl(_nextActionToRun);
       _nextActionToRun = nullptr;
     }
     
     switch(_updateResult) {
       case UpdateResult::UseBaseClass: {
-        printf("TestBehaviorWithHelpers.Update UseBaseClass: IsActing:%d\n", IsControlDelegated());
+        printf("TestBehaviorWithHelpers.Update UseBaseClass: IsControlDelegated:%d\n", IsControlDelegated());
         return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
       }
       case UpdateResult::Running: {
@@ -132,7 +132,7 @@ public:
   }
 
   bool _lastDelegateSuccess = false;
-  bool _lastStartActingResult = false;
+  bool _lastDelegateIfInControlResult = false;
   int _updateCount = 0;
   
 private:
@@ -222,7 +222,7 @@ public:
   virtual ICozmoBehavior::Status UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
     _updateCount++;
 
-    printf("%s: Update. IsActing:%d, _delegateAfter:%d\n",
+    printf("%s: Update. IsControlDelegated:%d, _delegateAfter:%d\n",
            _name.c_str(),
            IsControlDelegated(),
            _delegateAfterAction);
@@ -414,7 +414,7 @@ TEST(BehaviorHelperSystem, BehaviorWithActions)
   b.SetActionToRunOnNextUpdate(action1);
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
   DoTicks(robot, b, 1);
-  ASSERT_EQ(b._lastStartActingResult, true);
+  ASSERT_EQ(b._lastDelegateIfInControlResult, true);
   DoTicks(robot, b, 2);
 
   bool done2 = false;
@@ -424,7 +424,7 @@ TEST(BehaviorHelperSystem, BehaviorWithActions)
     });
   b.SetActionToRunOnNextUpdate(action2);
   DoTicks(robot, b, 1);
-  ASSERT_EQ(b._lastStartActingResult, true);
+  ASSERT_EQ(b._lastDelegateIfInControlResult, true);
   DoTicks(robot, b, 5);
 
   done1 = true;
@@ -879,7 +879,7 @@ void CheckPtrsRunning_(std::vector<HelperPointers>& ptrs) {
   EXPECT_GT(ptrs.back().raw->_updateCount, 0);
 }
 
-// Make a bunch of helpers which always StartActing right away. Add more helpers to the stack by causing the
+// Make a bunch of helpers which always DelegateIfInControl right away. Add more helpers to the stack by causing the
 // current top one to stop acting and then immediately delegate to another helper. Eventually, the top helper
 // succeeds, causing everything to succeed
 TEST(BehaviorHelperSystem, MultiLayerSuccess)

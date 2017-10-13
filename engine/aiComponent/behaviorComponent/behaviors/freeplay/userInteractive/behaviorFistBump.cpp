@@ -276,7 +276,7 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
       if (CheckForBump(robot)) {
-        StopActing();  // Stop the idle anim
+        CancelDelegates();  // Stop the idle anim
         robot.GetMoveComponent().EnableLiftPower(true);
         robot.GetMoveComponent().EnableHeadPower(true);
         DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpSuccess));

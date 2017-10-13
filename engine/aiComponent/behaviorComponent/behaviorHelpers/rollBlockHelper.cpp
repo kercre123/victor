@@ -262,7 +262,7 @@ void RollBlockHelper::StartRollingAction(BehaviorExternalInterface& behaviorExte
   rollAction->SetMaxTurnTowardsFaceAngle(_params.maxTurnToFaceAngle);
   
 
-  StartActingWithResponseAnim(rollAction, &RollBlockHelper::RespondToRollingResult, [] (ActionResult result){
+  DelegateWithResponseAnim(rollAction, &RollBlockHelper::RespondToRollingResult, [] (ActionResult result){
     switch(result){
       case ActionResult::SUCCESS:
       {

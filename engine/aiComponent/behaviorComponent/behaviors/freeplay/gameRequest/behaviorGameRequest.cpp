@@ -364,7 +364,7 @@ void ICozmoBehaviorRequestGame::HandleWhileRunning(const GameToEngineEvent& even
   else if(event.GetData().GetTag() == GameToEngineTag::CanCozmoRequestGame){
     // Behavior game requests can no longer run - if we're running stop the behavior
     if(!event.GetData().Get_CanCozmoRequestGame().canRequest){
-      StopActing(false);
+      CancelDelegates(false);
     }
   }
   else {
