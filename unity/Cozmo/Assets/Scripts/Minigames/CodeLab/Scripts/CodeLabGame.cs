@@ -667,12 +667,11 @@ namespace CodeLab {
         _WebViewObjectComponent.Init(WebViewCallback, false, err: WebViewError, ld: WebViewLoaded, enableWKWebView: true);
 
         if (Cozmo.WhatsNew.WhatsNewModalManager.ShouldAutoOpenProject) {
-          OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject,
+          OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplayFeaturedProject,
                              Cozmo.WhatsNew.WhatsNewModalManager.AutoOpenCodeLabProjectGuid.ToString(),
                              isVertical: true);
         }
         else {
-
           Dictionary<string, string> urlParameters = new Dictionary<string, string>();
           urlParameters["projects"] = _LastOpenedTab;
           LoadURL("extra/projects.html", urlParameters);
