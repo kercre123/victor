@@ -93,6 +93,9 @@ namespace CodeLab {
     private static readonly long kMaximumDescriptionLength = 1000; // assuming any file title over 1000 characters is suspect
     private static readonly long kMaximumCodelabDataLength = 10000000; // assuming any file over 10 Mb is suspect
 
+#if ANKI_DEV_CHEATS
+    PerformanceStats _PerformanceStats = new PerformanceStats();
+#endif // ANKI_DEV_CHEATS
 
     private CubeColors[] _CubeLightColors = { new CubeColors(),
                                      new CubeColors(),
@@ -505,6 +508,9 @@ namespace CodeLab {
     }
 
     public void EvaluateJS(string text) {
+#if ANKI_DEV_CHEATS
+      _PerformanceStats.AddEvaluateJSCall();
+#endif // ANKI_DEV_CHEATS
       if (_WebViewObjectComponent != null) {
         _WebViewObjectComponent.EvaluateJS(text);
       }
@@ -647,6 +653,10 @@ namespace CodeLab {
         // like "WaitForActions(ActionType)" to work, as they need to be polled each update.
         InProgressScratchBlockPool.UpdateBlocks();
       }
+
+#if ANKI_DEV_CHEATS
+      _PerformanceStats.Update(this, _SessionState.IsProgramRunning());
+#endif
     }
 
     private void LoadWebView() {
@@ -1364,6 +1374,9 @@ namespace CodeLab {
     }
 
     private void WebViewCallback(string jsonStringFromJS) {
+#if ANKI_DEV_CHEATS
+      _PerformanceStats.AddWebViewCall();
+#endif // ANKI_DEV_CHEATS
 
       ScratchRequest scratchRequest = null;
       try {

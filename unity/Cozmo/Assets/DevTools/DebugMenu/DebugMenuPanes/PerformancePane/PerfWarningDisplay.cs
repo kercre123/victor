@@ -65,6 +65,27 @@ public class PerfWarningDisplay : MonoBehaviour {
     }
   }
 
+  private string GetSectionData(string sectionName) {
+    var section = _Sections[sectionName];
+    return section.Average.ToString("F2") + "ms";
+  }
+
+  public string GetLatencySectionData() {
+    return GetSectionData(_kLatencySectionName);
+  }
+
+  public string GetUnitySectionData() {
+    return GetSectionData(_kUnitySectionName);
+  }
+
+  public string GetVisionSectionData() {
+    return GetSectionData(_kVisionSectionName);
+  }
+
+  public string GetEngineSectionData() {
+    return GetSectionData(_kEngineSectionName);
+  }
+
   private PerfWarningSection CreateSection(string sectionName, float warnAboveThreshold) {
     PerfWarningSection section = GameObject.Instantiate(_SectionPrefab, _SectionContainer).GetComponent<PerfWarningSection>();
     section.Init(sectionName, warnAboveThreshold);

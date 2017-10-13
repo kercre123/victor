@@ -195,3 +195,33 @@ window.getBlockIconColor = function(icon) {
     // no default to make mistakes more obvious
   }
 }
+
+// Performance display hook for Development (is never called from SHIPPING app builds)
+window.setPerformanceData = function(perfStateJSON) {
+  var perfElement = document.getElementById("perfDisplay");
+  if (perfElement == null) {
+      // Create the element programmatically
+      perfElement = document.createElement("div");
+      perfElement.id = "perfDisplay";
+      perfElement.style.cssText = 'display:block;position:absolute;bottom:1px;right:70px;width:100%%;height:100%%;background-color:black;z-index:999999;pointer-events:visible;';
+      perfElement.onclick = function () {
+        var perfElement = document.getElementById("perfDisplay");
+        if (perfElement != null) {
+          perfElement.style.visibility='hidden';
+        }
+      };
+      // Add it to the HTML page 
+      document.body.appendChild(perfElement);
+  }
+
+  if (perfElement != null) {
+      var perfHTML = "";
+      for (x in perfStateJSON) {
+        perfHTML += x + ": " + perfStateJSON[x] + "<br>";
+      }
+      perfElement.innerHTML = "<font color='white' bgcolor='black'>" + perfHTML + "</font>";            
+  }
+  else {
+      console.log("Error: perfElement is still null!");
+  }
+}
