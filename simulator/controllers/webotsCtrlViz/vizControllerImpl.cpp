@@ -116,27 +116,42 @@ void VizControllerImpl::Init()
   _cubeAccelDisp = _vizSupervisor.getDisplay("cozmo_cube_accel_display");
 
   // Find all the debug image displays in the proto. Use the first as the camera feed and the rest for debug images.
-  _camDisp = nullptr;
-  s32 displayCtr = 0;
-  webots::Display* display = nullptr;
-  while( (display = _vizSupervisor.getDisplay("cozmo_debug_image_display" + std::to_string(displayCtr))) != nullptr)
   {
-    if(displayCtr==0)
+    webots::Node* vizNode = _vizSupervisor.getSelf();
+    webots::Field* numDisplaysField = vizNode->getField("numDebugImageDisplays");
+    s32 numDisplays = 1;
+    if(numDisplaysField == nullptr)
     {
-      _camDisp = display;
+      PRINT_NAMED_WARNING("VizControllerImpl.Init.MissingNumDebugDisplaysField", "Assuming single display (camera)");
     }
-    else
+    else 
     {
-      _debugImages.emplace_back(display);
+      numDisplays = numDisplaysField->getSFInt32();
     }
-    ++displayCtr;
+    
+    _camDisp = nullptr;
+
+    for(s32 displayCtr = 0; displayCtr < numDisplays; ++displayCtr)
+    {
+      webots::Display* display = _vizSupervisor.getDisplay("cozmo_debug_image_display" + std::to_string(displayCtr));
+      DEV_ASSERT_MSG(display != nullptr, "VizControllerImpl.Init.NullDebugDisplay", "displayCtr=%d", displayCtr);
+    
+      if(displayCtr==0)
+      {
+        _camDisp = display;
+      }
+      else
+      {
+        _debugImages.emplace_back(display);
+      }
+    }
+    
+    DEV_ASSERT(_camDisp != nullptr, "VizControllerImpl.Init.NoCameraDisplay");
+    PRINT_NAMED_DEBUG("VizControllerImpl.Init.ImageDisplaysCreated",
+                      "Found camera display and %zu debug displays",
+                      _debugImages.size()-1);
   }
-  
-  DEV_ASSERT(_camDisp != nullptr, "VizControllerImpl.Init.NoCameraDisplay");
-  PRINT_NAMED_DEBUG("VizControllerImpl.Init.ImageDisplaysCreated",
-                    "Found camera display and %zu debug displays",
-                    _debugImages.size()-1);
-  
+
   _disp->setFont("Lucida Console", 8, true);
   _moodDisp->setFont("Lucida Console", 8, true);
   _activeObjectDisp->setFont("Lucida Console", 8, true);

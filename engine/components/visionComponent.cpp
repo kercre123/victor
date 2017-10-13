@@ -1456,74 +1456,26 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     
-    Result result = RESULT_OK;
-    
     ImageChunk m;
     
-    // We'll hijack the existing "chunkDebug" member, which used to be a firmware field.
+    // We're hijacking the existing "chunkDebug" member, which used to be a firmware field.
     // We could rename it to "userData" or something more meaningful if desired...
-    // Here, we'll use its to store [ imageWidth (12 bits) | imageHeigh (12 bits) | identifierValue (8 bits)]
-    // The imageHeight and Width are only set if the given image is a custom size (not enumerated in ImageResolution).
+    // Here, we'll use it to store [ imageWidth (12 bits) | imageHeight (12 bits) | identifierValue (8 bits)]
+    // Better fix to be provided by VIC-470 when we remove ImageResolution altogether
     m.chunkDebug = 0;
     static_assert(sizeof(m.chunkDebug)==4, "ImageChunk.chunkDebug expected to be 4 bytes");
     
-    switch(img.GetNumRows()) {
-      case 240:
-        if (img.GetNumCols()!=320) {
-          result = RESULT_FAIL;
-        } else {
-          m.resolution = ImageResolution::QVGA;
-        }
-        break;
-        
-      case 296:
-        if (img.GetNumCols()!=400) {
-          result = RESULT_FAIL;
-        } else {
-          m.resolution = ImageResolution::CVGA;
-        }
-        break;
-        
-      case 480:
-        if (img.GetNumCols()!=640) {
-          result = RESULT_FAIL;
-        } else {
-          m.resolution = ImageResolution::VGA;
-        }
-        break;
-        
-      case 720:
-        if (img.GetNumCols()!=1280) {
-          result = RESULT_FAIL;
-        } else {
-          m.resolution = ImageResolution::HD;
-        }
-        break;
-
-      case 360:
-        if (img.GetNumCols()!=640) {
-          result = RESULT_FAIL;
-        } else {
-          m.resolution = ImageResolution::NHD;
-        }
-        break;
-        
-      default:
-        // Store custom width and heigh in the 24 MSBs of chunkDebug (see above)
-        m.resolution = ImageResolution::Custom;
-        m.chunkDebug |= ((0xFFF & img.GetNumCols()) << 20);
-        m.chunkDebug |= ((0xFFF & img.GetNumRows()) << 8);
-        break;
+    m.resolution = ImageResolution::Custom;
+    if(img.GetNumCols() >= 4096 || img.GetNumRows() >= 4096)
+    {
+      PRINT_NAMED_WARNING("VisionComponent.CompressAndSend.ImageTooLarge",
+                          "%dx%d image larger than 4095x4095 max", 
+                          img.GetNumCols(), img.GetNumRows());
+      return RESULT_FAIL;
     }
+    m.chunkDebug |= ((0xFFF & img.GetNumCols()) << 20);
+    m.chunkDebug |= ((0xFFF & img.GetNumRows()) << 8);
     
-    if(RESULT_OK != result) {
-      PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage",
-                        "Unrecognized resolution: %dx%d for identifier '%s'.",
-                        img.GetNumCols(), img.GetNumRows(), identifier.c_str());
-      return result;
-    }
-    
-    static u32 imgID = 0;
     const std::vector<int> compressionParams = {
       CV_IMWRITE_JPEG_QUALITY, quality
     };
@@ -1553,8 +1505,10 @@ namespace Cozmo {
     }
     m.chunkDebug |= (0xFF & identifierValue);
     
-    m.frameTimeStamp = img.GetTimestamp();
+    static u32 imgID = 0;
     m.imageId = ++imgID;
+    
+    m.frameTimeStamp = img.GetTimestamp();
     m.chunkId = 0;
     m.imageChunkCount = ceilf((f32)bytesRemainingToSend / kMaxChunkSize);
     if(img.GetNumChannels() == 1) {
