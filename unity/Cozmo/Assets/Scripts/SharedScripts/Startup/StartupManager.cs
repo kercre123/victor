@@ -2,6 +2,7 @@ using Anki.Assets;
 using System;
 using System.Collections;
 using UnityEngine;
+using DG.Tweening;
 
 // Used by Android flow
 using System.Collections.Generic;
@@ -46,14 +47,6 @@ public class StartupManager : MonoBehaviour {
   private static StartupManager _Instance;
 
   [SerializeField]
-  private Cozmo.UI.ProgressBar _LoadingBar;
-
-  [SerializeField]
-  private Anki.UI.AnkiTextLegacy _LoadingBarLabel;
-
-  private float _CurrentProgress;
-
-  [SerializeField]
   private MainSceneData _NeedsHubData;
 
   [SerializeField]
@@ -81,10 +74,19 @@ public class StartupManager : MonoBehaviour {
   private TMPro.TMP_Settings _TMPSettingsDirectReference;
 
   [SerializeField]
+  private Cozmo.UI.ProgressBar _LoadingBar;
+
+  [SerializeField]
+  private Anki.UI.AnkiTextLegacy _LoadingBarLabel;
+
+  [SerializeField]
   private Anki.UI.AnkiTextLegacy _LoadingVersionLabel;
 
   [SerializeField]
   private Anki.UI.AnkiTextLegacy _LoadingDeviceIdLabel;
+
+  [SerializeField]
+  private CanvasGroup _LoadingAnkiLogoIcon;
 
   private string _ExtractionErrorMessage;
 
@@ -94,7 +96,40 @@ public class StartupManager : MonoBehaviour {
 
   private MainSceneData _MainSceneData;
 
+  private bool _LogoAnimationFinished = false;
+  private bool LogoAnimationFinished {
+    get { return _LogoAnimationFinished; }
+    set {
+      if (value && value != _LogoAnimationFinished) {
+        _LoadingBar.SetTargetAndAnimate(_LoadingProgress);
+      }
+      _LogoAnimationFinished = value;
+      TryLoadMainScene();
+    }
+  }
+
+  private float _LoadingProgress = 1f;
+  private float LoadingProgress {
+    get { return _LoadingProgress; }
+    set {
+      _LoadingProgress = value;
+      if (_LogoAnimationFinished) {
+        _LoadingBar.SetTargetAndAnimate(_LoadingProgress);
+      }
+      TryLoadMainScene();
+    }
+  }
+
   public void StartLoadAsync() {
+    // Animate the Anki logo and start loading
+    LogoAnimationFinished = false;
+    const float fadeDuration = 0.6f;
+    const float holdDuration = 0.8f;
+    _LoadingAnkiLogoIcon.DOFade(0f, fadeDuration).SetEase(Ease.OutSine).SetDelay(holdDuration)
+                        .OnComplete(() => {
+                          LogoAnimationFinished = true;
+                        });
+
     StartCoroutine(LoadCoroutine());
   }
 
@@ -157,17 +192,16 @@ public class StartupManager : MonoBehaviour {
 #endif
 
     // Start loading bar at close to 0
-    _CurrentProgress = 0.05f;
-    _LoadingBar.SetTargetAndAnimate(_CurrentProgress);
+    LoadingProgress = 0.05f;
     _LoadingVersionLabel.text = null;
     _LoadingDeviceIdLabel.text = null;
 
     // set up progress bar updater for resource extraction
-    float startingProgress = _CurrentProgress;
+    float startingProgress = LoadingProgress;
     const float totalResourceExtractionProgress = 0.5f;
     Action<float> progressUpdater = prog => {
       float totalProgress = startingProgress + totalResourceExtractionProgress * Mathf.Clamp(prog, 0.0f, 1.0f);
-      AddLoadingBarProgress(totalProgress - _CurrentProgress);
+      AddLoadingBarProgress(totalProgress - LoadingProgress);
     };
 
     // Extract resource files in platforms that need it
@@ -267,25 +301,31 @@ public class StartupManager : MonoBehaviour {
     RobotEngineManager.Instance.SendRequestDeviceData();
 
     if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
-      float progressBeforeEngineLoading = _CurrentProgress;
+      float progressBeforeEngineLoading = LoadingProgress;
       while (_EngineLoadingProgress < 1.0f) {
         float progressToAdd = _EngineLoadingProgress * (1.0f - progressBeforeEngineLoading);
-        _LoadingBar.SetTargetAndAnimate(progressBeforeEngineLoading + progressToAdd);
+        LoadingProgress = (progressBeforeEngineLoading + progressToAdd);
         yield return 0;
       }
     }
 
-    _LoadingBar.SetTargetAndAnimate(1.0f);
+    LoadingProgress = 1.0f;
 
     if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.EngineLoadingDataStatus>(HandleDataLoaded);
+    }
+  }
+
+  private void TryLoadMainScene() {
+    if (!LogoAnimationFinished || LoadingProgress < 1f) {
+      return;
     }
 
     // Stop loading dots coroutine
     StopAllCoroutines();
 
     // Load main scene
-    LoadMainScene(assetBundleManager);
+    LoadMainScene(AssetBundleManager.Instance);
 
     int startSeed = System.Environment.TickCount;
     UnityEngine.Random.InitState(startSeed);
@@ -558,12 +598,11 @@ public class StartupManager : MonoBehaviour {
   }
 
   private void AddLoadingBarProgress(float amount) {
-    if (_CurrentProgress + amount > 0.95f) {
-      _LoadingBar.SetTargetAndAnimate(0.95f);
+    if (LoadingProgress + amount > 0.95f) {
+      LoadingProgress = 0.95f;
     }
     else {
-      _CurrentProgress += amount;
-      _LoadingBar.SetTargetAndAnimate(_CurrentProgress);
+      LoadingProgress = LoadingProgress + amount;
     }
   }
 
