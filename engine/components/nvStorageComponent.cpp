@@ -65,7 +65,13 @@
 #include "util/fileUtils/fileUtils.h"
 #endif // ifdef COZMO_V2
 
+// Immediately returns on write/erase commands as if they succeeded.
 CONSOLE_VAR(bool, kNoWriteToRobot, "NVStorageComponent", false);
+
+// When enabled this does what kNoWriteToRobot does
+// as well as make all read commands fail with NV_NOT_FOUND.
+// No nvStorage request is ever sent to robot.
+CONSOLE_VAR(bool, kDisableNVStorage, "NVStorageComponent", false);
 
 // For some inexplicable reason this needs to be here in the cpp instead of in the header
 // because we are including consoleInterface.h
@@ -402,7 +408,7 @@ bool NVStorageComponent::Write(NVEntryTag tag,
   }
   
   // If we aren't writing to the robot then call the callback immediately
-  if(kNoWriteToRobot)
+  if(kDisableNVStorage || kNoWriteToRobot)
   {
     if(broadcastResultToGame)
     {
@@ -517,7 +523,7 @@ bool NVStorageComponent::Erase(NVEntryTag tag,
   #else
   {
     // If we aren't writing to the robot then call the callback immediately
-    if(kNoWriteToRobot)
+    if(kDisableNVStorage || kNoWriteToRobot)
     {
       if(broadcastResultToGame)
       {
@@ -562,7 +568,7 @@ bool NVStorageComponent::WipeAll(NVStorageWriteEraseCallback callback,
   #else
   {
     // If we aren't writing to the robot then call the callback immediately
-    if(kNoWriteToRobot)
+    if(kDisableNVStorage || kNoWriteToRobot)
     {
       if(broadcastResultToGame)
       {
@@ -657,6 +663,55 @@ bool NVStorageComponent::Read(NVEntryTag tag,
   }
   #else
   {
+    // If nvStorage is disabled then call the callback immediately
+    if(kDisableNVStorage)
+    {
+      NVResult result = NVResult::NV_NOT_FOUND;
+      bool deleteData = false;
+
+      // Clear data buffer
+      // Allocate buffer if necessary
+      if (data != nullptr) {
+        data->resize(0);
+      } else {
+        data = new std::vector<u8>;
+        deleteData = true;
+      }
+      
+      // CameraCalibration needs to be faked, otherwise Cozmo doesn't do much
+      if (tag == NVEntryTag::NVEntry_CameraCalib) {
+      
+        CameraCalibration calib;
+        calib.focalLength_x = 280;
+        calib.focalLength_y = 280;
+        calib.center_x = 160;
+        calib.center_y = 120;
+        calib.skew = 0;
+        calib.nrows = 240;
+        calib.ncols = 320;
+        
+        // Pack calibration data into buffer
+        data->resize(calib.Size());
+        calib.Pack(data->data(), calib.Size());
+        
+        result = NVResult::NV_OKAY;
+      }
+      
+      if(broadcastResultToGame)
+      {
+        BroadcastNVStorageOpResult(tag, result, NVOperation::NVOP_READ);
+      }
+      if(callback)
+      {
+        callback(data->data(), data->size(), result);
+      }
+      if (deleteData)
+      {
+        delete data;
+      }
+      return true;
+    }
+    
     PRINT_CH_INFO("NVStorage", "NVStorageComponent.Read.QueueingReadRequest", "%s", EnumToString(tag));
     _requestQueue.emplace(tag, callback, data, broadcastResultToGame);
   }
