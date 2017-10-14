@@ -52,6 +52,10 @@ public:
   inline IBehavior* GetTopOfStack(){ return _behaviorStack.empty() ? nullptr : _behaviorStack.back();}
   inline bool IsInStack(const IBehavior* behavior) { return _behaviorToIndexMap.find(behavior) != _behaviorToIndexMap.end();}
   
+  // if the passed in behavior is in the stack, return a pointer to the behavior which is above it in the
+  // stack, or null if it is at the top or not in the stack
+  const IBehavior* GetBehaviorInStackAbove(const IBehavior* behavior) const;
+
   void PushOntoStack(IBehavior* behavior);
   void PopStack();
   

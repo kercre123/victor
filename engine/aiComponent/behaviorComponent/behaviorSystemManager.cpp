@@ -180,6 +180,12 @@ bool BehaviorSystemManager::IsControlDelegated(const IBehavior* delegator)
          (_behaviorStack->GetTopOfStack() != delegator);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const IBehavior* BehaviorSystemManager::GetBehaviorDelegatedTo(const IBehavior* delegatingBehavior) const
+{
+  return _behaviorStack->GetBehaviorInStackAbove(delegatingBehavior);
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorSystemManager::CanDelegate(IBehavior* delegator)

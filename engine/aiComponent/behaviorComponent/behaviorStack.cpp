@@ -105,6 +105,20 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const IBehavior* BehaviorStack::GetBehaviorInStackAbove(const IBehavior* behavior) const
+{
+  const auto it = _behaviorToIndexMap.find(behavior);
+  if( it != _behaviorToIndexMap.end() ) {
+    const int idxAbove = it->second + 1;
+    if( _behaviorStack.size() > idxAbove ) {
+      return _behaviorStack[idxAbove];
+    }
+  }
+
+  return nullptr;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::PushOntoStack(IBehavior* behavior)

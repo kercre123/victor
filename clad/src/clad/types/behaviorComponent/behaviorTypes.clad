@@ -106,8 +106,10 @@ enum uint_8 BehaviorClass {
   ReactToSparked,
   ReactToStackOfCubes,
   ReactToUnexpectedMovement,
-  ReactToVoiceCommand
+  ReactToVoiceCommand,
 
+  // Dispatch behaviors which exist only to delegate to other behaviors
+  DispatchStrictPriority
 }
 
 

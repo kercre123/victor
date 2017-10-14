@@ -68,6 +68,11 @@ public:
   void CancelDelegates(IBehavior* delegator) override;
   void CancelSelf(IBehavior* delegator) override;
 
+  // If control of the passed in behavior is delegated (to another behavior), return the pointer of the
+  // behavior that it was delegated to. Otherwise, return nullptr (including if control was delegated to an
+  // action or helper)
+  const IBehavior* GetBehaviorDelegatedTo(const IBehavior* delegatingBehavior) const;
+
 private:
   enum class InitializationStage{
     SystemNotInitialized,

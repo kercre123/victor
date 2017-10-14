@@ -52,6 +52,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatchers/behaviorDispatcherRerun.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatchStrictPriority.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingSearchForCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/behaviorCheckForStackAtInterval.h"
@@ -722,7 +723,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, 
       newBehavior = ICozmoBehaviorPtr(new BehaviorDriveInDesperation(config));
       break;
     }
-       
+    case BehaviorClass::DispatchStrictPriority:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDispatchStrictPriority(config));
+      break;
+    }
   }
   
   if(newBehavior != nullptr){
