@@ -734,7 +734,7 @@ void RobotDataLoader::LoadRobotConfigs()
   
   // needs system config
   {
-    static const std::string jsonFilename = "config/engine/needs_config.json";
+    static const std::string jsonFilename = NeedsManager::GetConfigBaseFilename() + ".json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsSystemConfig);
     if (!success)
     {

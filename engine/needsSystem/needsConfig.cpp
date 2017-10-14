@@ -350,15 +350,32 @@ void NeedsConfig::SetUnconnectedDecayTestVariation(const std::string& baseFilena
 }
 
 
-void NeedsConfig::SetTuningTestVariation(const std::string& variationKey,
+void NeedsConfig::SetTuningTestVariation(const std::string& configBaseFilename,
+                                         const std::string& variationKey,
                                          const Util::AnkiLab::AssignmentStatus assignmentStatus)
 {
   _tuningTestVariationKey = variationKey + " (" +
                             AssignmentStatusToString(assignmentStatus) + ")";
 
-  // TODO:  Switch on variation key, with the 5 cases.
-  // Essentially we're setting binary switches on 3 different things, based on the 5 cases.
-  // Then, implement those as a read of a particular json file, and re-init of main config and levels config.
+  // Read the main tuning config file variation based on variation, and use that tuning
+  std::string configFilename = configBaseFilename;
+  if (variationKey != kABTestControlKey)
+  {
+    configFilename += "_" + variationKey;
+  }
+  configFilename += ".json";
+  Json::Value json;
+  const bool parseSuccess = _cozmoContext->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
+                                                                         configFilename, json);
+  if (!ANKI_VERIFY(parseSuccess, "NeedsConfig.SetTuningTestVariation",
+                   "Failed to parse file %s", configFilename.c_str()))
+  {
+    return;
+  }
+
+  Init(json);
+
+  // TODO:  Do same for level config
 }
 
 

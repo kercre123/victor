@@ -215,7 +215,8 @@ namespace {
     Util::AnkiLab::AddABTestingForcedAssignment(experimentKey, variationKey);
     context->channel->WriteLog("ForceAssignExperiment %s => %s", experimentKey, variationKey);
 
-    g_DebugNeedsManager->GetNeedsConfigMutable().SetTuningTestVariation(variationKey,
+    g_DebugNeedsManager->GetNeedsConfigMutable().SetTuningTestVariation(g_DebugNeedsManager->GetConfigBaseFilename(),
+                                                                        variationKey,
                                                                         Util::AnkiLab::AssignmentStatus::ForceAssigned);
   }
   CONSOLE_FUNC( DebugFillNeedMeters, "Needs" );
@@ -450,6 +451,7 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
   // By this time we've finished reading the stored lab assignments from the
   // robot, and immediately after that, the needs state.  So now we can
   // attempt to activate the experiment
+
   AttemptActivateDecayExperiment(_needsState._robotSerialNumber);
 
   AttemptActivateTuningExperiment(_needsState._robotSerialNumber);
@@ -731,12 +733,14 @@ void NeedsManager::AttemptActivateTuningExperiment(u32 robotSerialNumber)
                   kTuningExperimentKey.c_str(),
                   outVariationKey.c_str());
 
-    _needsConfig.SetTuningTestVariation(outVariationKey,
+    _needsConfig.SetTuningTestVariation(GetConfigBaseFilename(),
+                                        outVariationKey,
                                         assignmentStatus);
   }
   else
   {
-    _needsConfig.SetTuningTestVariation(_needsConfig.kABTestControlKey,
+    _needsConfig.SetTuningTestVariation(GetConfigBaseFilename(),
+                                        _needsConfig.kABTestControlKey,
                                         assignmentStatus);
   }
 }

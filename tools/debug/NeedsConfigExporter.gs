@@ -38,6 +38,10 @@ function onOpen() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var menuEntries = [
     {name: "Export JSON for MainConfig sheet", functionName: "exportMainConfigSheet"},
+    {name: "Export JSON for MainConfigA sheet", functionName: "exportMainConfigASheet"},
+    {name: "Export JSON for MainConfigB sheet", functionName: "exportMainConfigBSheet"},
+    {name: "Export JSON for MainConfigC sheet", functionName: "exportMainConfigCSheet"},
+    {name: "Export JSON for MainConfigD sheet", functionName: "exportMainConfigDSheet"},
     {name: "Export JSON for ActionConfig sheet", functionName: "exportActionConfigSheet"},
     {name: "Export JSON for DecayConfig sheet", functionName: "exportDecayConfigSheet"},
     {name: "Export JSON for DecayA sheet", functionName: "exportDecayASheet"},
@@ -71,10 +75,50 @@ function exportAllSheets(e) {
 */
 
 function exportMainConfigSheet(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheetName = "MainConfig";
+  var rowsData = GetRowsFromMainConfig(sheetName);
+  var json = makeJSON_(rowsData, getExportOptions(e));
+  json = comment(sheetName) + json + '\n';
+  return displayText_(json);
+}
+
+function GetRowsFromMainConfig(sheetName) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(sheetName);
   var rowsData = getRowsOfKVPs_(sheet);
+  return rowsData;
+}
+
+function exportMainConfigASheet(e) {
+  return exportMainConfigDeltaSheet(e, "MainConfigA");
+}
+
+function exportMainConfigBSheet(e) {
+  return exportMainConfigDeltaSheet(e, "MainConfigB");
+}
+
+function exportMainConfigCSheet(e) {
+  return exportMainConfigDeltaSheet(e, "MainConfigC");
+}
+
+function exportMainConfigDSheet(e) {
+  return exportMainConfigDeltaSheet(e, "MainConfigD");
+}
+
+function exportMainConfigDeltaSheet(e, sheetName) {
+  // First, read the default sheet rows
+  var rowsData = GetRowsFromMainConfig("MainConfig");
+
+  // Now, read the rows from the 'delta' sheet
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(sheetName);
+  var deltaRowsData = getRowsOfKVPs_(sheet);
+
+  // Overlay the delta data onto the default data
+  for (var key in deltaRowsData) {
+    rowsData[key] = deltaRowsData[key];
+  }
+
   var json = makeJSON_(rowsData, getExportOptions(e));
   json = comment(sheetName) + json + '\n';
   return displayText_(json);

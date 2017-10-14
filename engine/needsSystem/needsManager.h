@@ -96,6 +96,7 @@ public:
   void SparksRewardCommunicatedToUser();
 
   static inline const std::string GetDecayConfigBaseFilename() { return "config/engine/needs_decay_config"; }
+  static inline const std::string GetConfigBaseFilename() { return "config/engine/needs_config"; }
 
   static const char* kLogChannelName;
 

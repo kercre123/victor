@@ -81,7 +81,8 @@ public:
                                         const Util::AnkiLab::AssignmentStatus assignmentStatus);
   const std::string& GetUnconnectedDecayTestVariation() const { return _unconnectedDecayTestVariationKey; };
 
-  void SetTuningTestVariation(const std::string& variationKey,
+  void SetTuningTestVariation(const std::string& configBaseFilename,
+                              const std::string& variationKey,
                               const Util::AnkiLab::AssignmentStatus assignmentStatus);
   const std::string& GetTuningTestVariation() const { return _tuningTestVariationKey; };
 
