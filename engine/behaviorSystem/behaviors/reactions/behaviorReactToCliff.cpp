@@ -160,11 +160,7 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction(Robot& robot)
 
   
   auto action = new CompoundActionParallel(robot);
-#ifndef COZMO_V2
-  // For pre-V2 robots, play the ReactToCliffDetectorStop animations right away. Can't do this for
-  // V2 robots, since the animation drives backwards, which could fling us over the cliff.
-  action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
-#endif
+
   // Wait for the cliff event before jumping to cliff reaction
   auto waitForCliffLambda = [this](Robot& robot) {
     return _gotCliff;
@@ -196,12 +192,8 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(Robot& robot)
       reactionAnim = AnimationTrigger::NeedsSevereLowRepairCliffReact;
     }
     
-#ifdef COZMO_V2
     auto action = GetCliffPreReactAction(robot, _detectedFlags);
     action->AddAction(new TriggerLiftSafeAnimationAction(robot, reactionAnim));
-#else
-    auto action = new TriggerLiftSafeAnimationAction(robot, reactionAnim);
-#endif
     
     StartActing(action, &BehaviorReactToCliff::TransitionToBackingUp);
   }
@@ -317,7 +309,6 @@ void BehaviorReactToCliff::HandleWhileRunning(const EngineToGameEvent& event, Ro
   }
 }
   
-#ifdef COZMO_V2
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(Robot& robot, uint8_t cliffDetectedFlags)
 {
@@ -409,7 +400,6 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(Robot& ro
   
   return action;
 }
-#endif // COZMO_V2
 
 } // namespace Cozmo
 } // namespace Anki

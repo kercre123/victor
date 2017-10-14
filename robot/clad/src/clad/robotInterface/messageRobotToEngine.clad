@@ -18,7 +18,6 @@
 #include "clad/types/animationEvents.clad"
 #include "clad/types/pathEventTypes.clad"
 #include "clad/types/robotErrors.clad"
-#include "clad/types/fwTestMessages.clad"
 #include "clad/types/factoryFWOnly.clad"
 
 
@@ -111,8 +110,6 @@ message AudioInput
  */
 union RobotToEngine {
   // 0xB0 to 0xEF: Reliable messages to the Engine
-  PrintTrace                 trace                  = 0xB0,
-  
   MainCycleTimeError         mainCycleTimeError     = 0xB2,
   GoalPose                   goalPose               = 0xB3,
   ObjectMoved                activeObjectMoved      = 0xB4,
@@ -147,7 +144,6 @@ union RobotToEngine {
   DockingStatus              dockingStatus          = 0xD3,
   RobotStopped               robotStopped           = 0xD4,
   AnimationEvent             animEvent              = 0xD5,
-  FactoryTestParameter       factoryTestParam       = 0xD6,
   ObjectUpAxisChanged        activeObjectUpAxisChanged = 0xD7,
   MotorAutoEnabled           motorAutoEnabled       = 0xD8,
   RobotErrorReport           robotError             = 0xD9,

@@ -76,7 +76,6 @@ using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 RobotToEngineImplMessaging::RobotToEngineImplMessaging(Robot* robot) :
     _hasMismatchedEngineToRobotCLAD(false)
   , _hasMismatchedRobotToEngineCLAD(false)
-  , _traceHandler(robot)
 {
 }
 

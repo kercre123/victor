@@ -43,7 +43,7 @@ namespace BackpackLightController {
   void SetParams(const RobotInterface::SetBackpackLights& params)
   {
     if (params.layer >= (int)BackpackLightLayer::BPL_NUM_LAYERS) {
-      AnkiWarn( 1250, "BackpackLightController.SetParams.InvalidLayer", 498, "Layer %d is invalid", 1, (int)params.layer);
+      AnkiWarn( "BackpackLightController.SetParams.InvalidLayer", "Layer %d is invalid", (int)params.layer);
       return;
     }
     
@@ -57,7 +57,7 @@ namespace BackpackLightController {
   void EnableLayer(const BackpackLightLayer layer, bool forceUpdate)
   {
     if (layer >= BackpackLightLayer::BPL_NUM_LAYERS) {
-      AnkiWarn( 194, "BackpackLightController.EnableLayer.InvalidLayer", 498, "Layer %d is invalid", 1, (int)layer);
+      AnkiWarn( "BackpackLightController.EnableLayer.InvalidLayer", "Layer %d is invalid", (int)layer);
       return;
     }
 

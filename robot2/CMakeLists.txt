@@ -10,10 +10,16 @@ set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
 if (ANDROID)
   set(PLATFORM_LIBS android log)
+  set(PLATFORM_COMPILE_DEFS 
+    DEVELOPMENT
+  )
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
   set(PLATFORM_LIBS
     ${FOUNDATION}
+  )
+  set(PLATFORM_COMPILE_DEFS 
+    SIMULATOR
   )
   set(PLATFORM_FLAGS -fobjc-arc)
 endif()
@@ -65,8 +71,8 @@ target_compile_definitions(robot_supervisor
   PRIVATE
   COZMO_ROBOT
   CORETECH_ROBOT
-  COZMO_V2
   _DEBUG
+  ${PLATFORM_COMPILE_DEFS}
   #USING_ANDROID_PHONE # Uncomment if deploying on non-Cozmo android device
 )
 
@@ -74,7 +80,6 @@ target_include_directories(robot_supervisor
   PRIVATE
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/hal/include>
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal/include>
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/robot>
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot>
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/hal>
 )

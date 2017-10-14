@@ -77,7 +77,7 @@ namespace Anki {
 
     //sets the wheel PID controller constants
     void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError) {
-      AnkiInfo( 326, "WheelController.SetGains", 580, "New gains: kp=%f, ki=%f, maxSum=%f", 3, kp, ki, maxIntegralError);
+      AnkiInfo( "WheelController.SetGains", "New gains: kp=%f, ki=%f, maxSum=%f", kp, ki, maxIntegralError);
       Kp_ = kp;
       Ki_ = ki;
       MAX_ERROR_SUM_LEFT = maxIntegralError;
@@ -135,10 +135,10 @@ namespace Anki {
 //      if(!coastMode_ && !coastUntilStop_) {
 
 #if(DEBUG_WHEEL_CONTROLLER)
-        AnkiDebug( 13, "WheelController", 115, "speeds: %f (L), %f (R)   (Curr: %d, %d)", 4,
+        AnkiDebug( "WheelController", "speeds: %f (L), %f (R)   (Curr: %d, %d)",
                 filterWheelSpeedL_, filterWheelSpeedR_,
                 measuredWheelSpeedL_, measuredWheelSpeedR_);
-        AnkiDebug( 13, "WheelController", 116, "desired speeds: %f (L), %f (R)", 2,
+        AnkiDebug( "WheelController", "desired speeds: %f (L), %f (R)",
                 desiredWheelSpeedL_, desiredWheelSpeedR_);
 #endif
 
@@ -152,7 +152,7 @@ namespace Anki {
 
 
 #if(DEBUG_WHEEL_CONTROLLER)
-        AnkiDebug( 13, "WheelController", 117, "error: %f (L), %f (R)   error_sum: %f (L), %f (R)", 4, errorL, errorR, error_sumL_, error_sumR_);
+        AnkiDebug( "WheelController", "error: %f (L), %f (R)   error_sum: %f (L), %f (R)", errorL, errorR, error_sumL_, error_sumR_);
 #endif
 
         /*
@@ -209,7 +209,7 @@ namespace Anki {
       }
 
 #if(DEBUG_WHEEL_CONTROLLER)
-      AnkiDebug( 13, "WheelController", 118, "power: %f (L), %f (R)\n", 2, power_l_, power_r_);
+      AnkiDebug( "WheelController", "power: %f (L), %f (R)\n", power_l_, power_r_);
 #endif
 
       //Command the computed motor power values

@@ -203,7 +203,7 @@ namespace HeadController {
                 HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
 
 #ifdef          CALIB_WHILE_APPLYING_POWER
-                AnkiInfo( 282, "HeadController.CalibratedWhileApplyingPower", 305, "", 0);
+                AnkiInfo( "HeadController.CalibratedWhileApplyingPower", "");
                 ResetLowAnglePosition();
                 calState_ = HCS_IDLE;
                 Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, false);
@@ -223,7 +223,7 @@ namespace HeadController {
           case HCS_SET_CURR_ANGLE:
             // Wait for motor to relax and then set angle
             if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
-              AnkiInfo( 283, "HeadController.Calibrated", 305, "", 0);
+              AnkiInfo( "HeadController.Calibrated", "");
               ResetLowAnglePosition();
               calState_ = HCS_IDLE;
               Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, false);
@@ -273,7 +273,7 @@ namespace HeadController {
       currentAngle_ += (HAL::MotorGetPosition(MotorID::MOTOR_HEAD) - prevHalPos_);
 
 #if(DEBUG_HEAD_CONTROLLER)
-      AnkiDebug( 7, "HeadController", 92, "HEAD FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f", 6,
+      AnkiDebug( "HeadController", "HEAD FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f",
             measuredSpeed, radSpeed_, currentAngle_.ToFloat(), HAL::MotorGetPosition(MOTOR_HEAD), prevHalPos_, power_);
 #endif
       prevHalPos_ = HAL::MotorGetPosition(MotorID::MOTOR_HEAD);
@@ -336,7 +336,7 @@ namespace HeadController {
           (angle == desiredAngle_) &&
           (fabsf((desiredAngle_ - currentAngle_).ToFloat()) < HEAD_ANGLE_TOL) ) {
         #if(DEBUG_HEAD_CONTROLLER)
-        AnkiDebug( 7, "HeadController", 93, "Already at desired angle %f degrees", 1, RAD_TO_DEG_F32(angle));
+        AnkiDebug( "HeadController", "Already at desired angle %f degrees", RAD_TO_DEG_F32(angle));
         #endif
         HAL::MotorSetPower(MotorID::MOTOR_HEAD,0);
         return;
@@ -348,7 +348,7 @@ namespace HeadController {
 
 
 #if(DEBUG_HEAD_CONTROLLER)
-      AnkiDebug( 7, "HeadController", 94, "(fixedDuration): SetDesiredAngle %f rads (duration %f)", 2, desiredAngle_.ToFloat(), duration_seconds);
+      AnkiDebug( "HeadController", "(fixedDuration): SetDesiredAngle %f rads (duration %f)", desiredAngle_.ToFloat(), duration_seconds);
 #endif
 
       f32 startRadSpeed = radSpeed_;
@@ -359,7 +359,7 @@ namespace HeadController {
 
         if (FLT_NEAR(angleError_,0.f)) {
           #if(DEBUG_HEAD_CONTROLLER)
-          AnkiDebug( 7, "HeadController", 95, "(fixedDuration): Already at desired position", 0);
+          AnkiDebug( "HeadController", "(fixedDuration): Already at desired position");
           #endif
           HAL::MotorSetPower(MotorID::MOTOR_HEAD,0);
           return;
@@ -384,7 +384,7 @@ namespace HeadController {
                                               CONTROL_DT);
         
         if (!res) {
-          AnkiEvent( 399, "HeadController.SetDesiredAngle.VPGFixedDurationFailed", 616, "startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.", 6,
+          AnkiEvent( "HeadController.SetDesiredAngle.VPGFixedDurationFailed", "startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.",
                     startRadSpeed,
                     startRad,
                     acc_start_frac,
@@ -410,7 +410,7 @@ namespace HeadController {
       }
 
 #if(DEBUG_HEAD_CONTROLLER)
-      AnkiDebug( 7, "HeadController", 97, "VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f", 6,
+      AnkiDebug( "HeadController", "VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f",
             startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
 #endif
 
@@ -455,7 +455,7 @@ namespace HeadController {
           Disable(true);
         } else {
           // Burnout protection triggered. Recalibrating.
-          AnkiWarn( 54, "HeadController.MotorBurnoutProtection", 299, "Recalibrating (power = %f)", 1, power_);
+          AnkiWarn( "HeadController.MotorBurnoutProtection", "Recalibrating (power = %f)", power_);
           StartCalibrationRoutine(true);
         }
         return true;
@@ -539,7 +539,7 @@ namespace HeadController {
             inPosition_ = true;
 
 #         if(DEBUG_HEAD_CONTROLLER)
-            AnkiDebug( 7, "HeadController", 98, " HEAD ANGLE REACHED (%f rad)\n", 1, GetAngleRad() );
+            AnkiDebug( "HeadController", " HEAD ANGLE REACHED (%f rad)\n", GetAngleRad() );
 #         endif
           }
         } else {
@@ -576,7 +576,7 @@ namespace HeadController {
       Ki_ = ki;
       Kd_ = kd;
       MAX_ERROR_SUM = maxIntegralError;
-      AnkiInfo( 284, "HeadController.SetGains", 564, "New head gains: kp = %f, ki = %f, kd = %f, maxSum = %f", 4,
+      AnkiInfo( "HeadController.SetGains", "New head gains: kp = %f, ki = %f, kd = %f, maxSum = %f",
             Kp_, Ki_, Kd_, MAX_ERROR_SUM);
     }
 

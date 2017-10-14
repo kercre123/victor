@@ -17,7 +17,6 @@
 #include "clad/robotInterface/messageToActiveObject.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
-#include "clad/types/fwTestMessages.clad"
 #include "clad/types/cameraFOVInfo.clad"
 #include "clad/types/motorTypes.clad"
 

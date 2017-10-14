@@ -25,9 +25,6 @@
 namespace Anki {
   namespace Cozmo {
     namespace TestModeController {
-
-// Only enable TestModeController for V2 because the resulting binary is too big for V1
-#ifdef COZMO_V2
       
       // "Private Member Variables"
       namespace {
@@ -275,7 +272,7 @@ namespace Anki {
       // Bring robot to normal state and stops all motors
       Result Reset()
       {
-        AnkiInfo( 63, "TestModeController.Reset", 305, "", 0);
+        AnkiInfo( "TestModeController.Reset", "");
 
         // Reset state and updateFunc
         testMode_ = TestMode::TM_NONE;
@@ -303,7 +300,7 @@ namespace Anki {
 
       Result PlaceOnGroundTestInit(s32 x_offset_mm, s32 y_offset_mm, s32 angle_offset_degrees)
       {
-        AnkiInfo( 64, "TestModeController.PlaceOnGroundTestInit", 309, "xOffset %d mm, yOffset %d mm, angleOffset %d degrees", 3,
+        AnkiInfo( "TestModeController.PlaceOnGroundTestInit", "xOffset %d mm, yOffset %d mm, angleOffset %d degrees",
                  x_offset_mm, y_offset_mm, angle_offset_degrees);
         ticCnt_ = 0;
         PickAndPlaceController::PlaceOnGround(50,
@@ -319,7 +316,7 @@ namespace Anki {
       Result PlaceOnGroundTestUpdate()
       {
         if (!PickAndPlaceController::IsBusy()) {
-          AnkiInfo( 408, "TestModeController.PlaceOnGroundTestUpdate.Complete", 305, "", 0);
+          AnkiInfo( "TestModeController.PlaceOnGroundTestUpdate.Complete", "");
           Reset();
         }
         return RESULT_OK;
@@ -329,7 +326,7 @@ namespace Anki {
       // Commands a path and executes it
       Result DockPathTestInit()
       {
-        AnkiInfo( 66, "TestModeController.DockPathTestInit", 305, "", 0);
+        AnkiInfo( "TestModeController.DockPathTestInit", "");
         ticCnt_ = 0;
         dockPathState_ = DT_STOP;
         return RESULT_OK;
@@ -345,7 +342,7 @@ namespace Anki {
           } else {
             dockPathState_++;
           }
-          AnkiInfo( 67, "TestModeController.DockPathTestUpdate", 311, "Test state: %d", 1, dockPathState_);
+          AnkiInfo( "TestModeController.DockPathTestUpdate", "Test state: %d", dockPathState_);
           ticCnt_ = 0;
         }
 
@@ -379,7 +376,7 @@ namespace Anki {
       // Commands a path and executes it
       Result PathFollowTestInit()
       {
-        AnkiInfo( 68, "TestModeController.PathFollowTestInit", 305, "", 0);
+        AnkiInfo( "TestModeController.PathFollowTestInit", "");
         pathStarted_ = false;
         Localization::SetDriveCenterPose(0, 0, Radians(-M_PI_2_F));
         ProxSensors::EnableCliffDetector(false);
@@ -454,7 +451,7 @@ namespace Anki {
           PathFollower::StartPathTraversal();
           pathStarted_ = true;
         } else if (pathStarted_ && !PathFollower::IsTraversingPath()) {
-          AnkiInfo( 69, "TestModeController.PathFollowTestUpdate.Complete", 305, "", 0);
+          AnkiInfo( "TestModeController.PathFollowTestUpdate.Complete", "");
           Reset();
         }
 
@@ -466,7 +463,7 @@ namespace Anki {
 
       Result PathFollowConvenienceFuncTestInit()
       {
-        AnkiInfo( 70, "TestModeController.PathFollowConvenienceFuncTestInit", 305, "", 0);
+        AnkiInfo( "TestModeController.PathFollowConvenienceFuncTestInit", "");
         PathFollower::ClearPath();
         pfcfState_ = PFCF_DRIVE_STRAIGHT;
         return RESULT_OK;
@@ -481,26 +478,26 @@ namespace Anki {
 
           switch(pfcfState_) {
             case PFCF_DRIVE_STRAIGHT:
-              AnkiInfo( 71, "TestModeController.PathFollowConvenienceFuncTestUpdate.DriveStraight", 312, "Started", 0);
+              AnkiInfo( "TestModeController.PathFollowConvenienceFuncTestUpdate.DriveStraight", "Started");
               if (!PathFollower::DriveStraight(100, 0.25, 0.25, 2)) {
-                 AnkiInfo( 71, "TestModeController.PathFollowConvenienceFuncTestUpdate.DriveStraight", 313, "FAILED", 0);
+                 AnkiInfo( "TestModeController.PathFollowConvenienceFuncTestUpdate.DriveStraight", "FAILED");
                 return RESULT_FAIL;
               }
               break;
 
             case PFCF_DRIVE_ARC:
-              AnkiInfo( 72, "TestModeController.PathFollowConvenienceFuncTestUpdate.DriveArc", 312, "Started", 0);
+              AnkiInfo( "TestModeController.PathFollowConvenienceFuncTestUpdate.DriveArc", "Started");
               if (!PathFollower::DriveArc(-M_PI_2_F, 40, 0.25, 0.25, 1)) {
-                AnkiInfo( 72, "TestModeController.PathFollowConvenienceFuncTestUpdate.DriveArc", 313, "FAILED", 0);
+                AnkiInfo( "TestModeController.PathFollowConvenienceFuncTestUpdate.DriveArc", "FAILED");
                 return RESULT_FAIL;
               }
 
 
               break;
             case PFCF_DRIVE_POINT_TURN:
-              AnkiInfo( 73, "TestModeController.PathFollowConvenienceFuncTestUpdate.DrivePointTurn", 312, "Started", 0);
+              AnkiInfo( "TestModeController.PathFollowConvenienceFuncTestUpdate.DrivePointTurn", "Started");
               if (!PathFollower::DrivePointTurn(-M_PI_2_F, 0.25, 0.25, DEG_TO_RAD_F32(1.f), 1)) {
-              AnkiInfo( 73, "TestModeController.PathFollowConvenienceFuncTestUpdate.DrivePointTurn", 313, "FAILED", 0);
+              AnkiInfo( "TestModeController.PathFollowConvenienceFuncTestUpdate.DrivePointTurn", "FAILED");
                 return RESULT_FAIL;
               }
               break;
@@ -524,7 +521,7 @@ namespace Anki {
       //                    or power to command as a percent (when DTF_ENABLE_DIRECT_HAL_TEST is set)
       Result DriveTestInit(s32 flags, s32 powerStepPercent, s32 wheelSpeedOrPower)
       {
-        AnkiInfo( 74, "TestModeController.DriveTestInit", 314, "%x, %d, %d", 3, flags, powerStepPercent, wheelSpeedOrPower);
+        AnkiInfo( "TestModeController.DriveTestInit", "%x, %d, %d", flags, powerStepPercent, wheelSpeedOrPower);
         enableDirectHALTest_ = flags & EnumToUnderlyingType(DriveTestFlags::DTF_ENABLE_DIRECT_HAL_TEST);
         enableCycleSpeedsTest_ = flags & EnumToUnderlyingType(DriveTestFlags::DTF_ENABLE_CYCLE_SPEEDS_TEST);
         enableToggleDir_ = flags & EnumToUnderlyingType(DriveTestFlags::DTF_ENABLE_TOGGLE_DIR);
@@ -573,11 +570,11 @@ namespace Anki {
           f32 lSpeed = HAL::MotorGetSpeed(MotorID::MOTOR_LEFT_WHEEL);
           f32 rSpeed = HAL::MotorGetSpeed(MotorID::MOTOR_RIGHT_WHEEL);
           if (enableDirectHALTest_) {
-            AnkiInfo( 75, "TestModeController.DriveTestUpdate", 315, "Applying %.3f power (currSpeed %.2f %.2f, filtSpeed %.2f %.2f)", 5,
+            AnkiInfo( "TestModeController.DriveTestUpdate", "Applying %.3f power (currSpeed %.2f %.2f, filtSpeed %.2f %.2f)",
                   wheelTargetPower_*0.01f,
                   lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
           } else {
-            AnkiInfo( 75, "TestModeController.DriveTestUpdate", 316, "Going %.3f mm/s (currSpeed %.2f %.2f, filtSpeed %.2f %.2f)", 5,
+            AnkiInfo( "TestModeController.DriveTestUpdate", "Going %.3f mm/s (currSpeed %.2f %.2f, filtSpeed %.2f %.2f)",
                   wheelSpeed_mmps_,
                   lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
           }
@@ -624,7 +621,7 @@ namespace Anki {
 
       Result LiftTestInit(s32 mode, s32 noddingCycleTime_ms, s32 powerPercent)
       {
-        AnkiInfo( 76, "TestModeController.LiftTestInit", 317, "flags = %d, powerPercent = %d", 2, mode, powerPercent);
+        AnkiInfo( "TestModeController.LiftTestInit", "flags = %d, powerPercent = %d", mode, powerPercent);
         ticCnt_ = 0;
         ticCnt2_ = 0;
         printCyclePeriod_ = 250 / TIME_STEP;
@@ -689,20 +686,20 @@ namespace Anki {
               if (liftTestMode_ == LiftTestFlags::LiftTF_TEST_HEIGHTS) {
                 up = !up;
                 if (up) {
-                  AnkiInfo( 77, "TestModeController.LiftTestUpdate", 403, "Lift HIGH %f mm (maxSpeed %f rad/s)", 2, LIFT_DES_HIGH_HEIGHT, maxLiftSpeed_radPerSec_);
+                  AnkiInfo( "TestModeController.LiftTestUpdate", "Lift HIGH %f mm (maxSpeed %f rad/s)", LIFT_DES_HIGH_HEIGHT, maxLiftSpeed_radPerSec_);
                   LiftController::SetDesiredHeight(LIFT_DES_HIGH_HEIGHT);
                 } else {
-                  AnkiInfo( 77, "TestModeController.LiftTestUpdate", 404, "Lift LOW %f mm (maxSpeed %f rad/s)", 2, LIFT_DES_LOW_HEIGHT, maxLiftSpeed_radPerSec_);
+                  AnkiInfo( "TestModeController.LiftTestUpdate", "Lift LOW %f mm (maxSpeed %f rad/s)", LIFT_DES_LOW_HEIGHT, maxLiftSpeed_radPerSec_);
                   LiftController::SetDesiredHeight(LIFT_DES_LOW_HEIGHT);
                 }
 
               } else {
                 up = !up;
                 if (up) {
-                  AnkiInfo( 77, "TestModeController.LiftTestUpdate", 405, "Lift UP %f power (maxSpeed %f rad/s)", 2, liftPower_, maxLiftSpeed_radPerSec_);
+                  AnkiInfo( "TestModeController.LiftTestUpdate", "Lift UP %f power (maxSpeed %f rad/s)", liftPower_, maxLiftSpeed_radPerSec_);
                   HAL::MotorSetPower(MotorID::MOTOR_LIFT, liftPower_);
                 } else {
-                  AnkiInfo( 77, "TestModeController.LiftTestUpdate", 434, "Lift DOWN %f power (maxSpeed %f rad/s)", 2, -liftPower_, maxLiftSpeed_radPerSec_);
+                  AnkiInfo( "TestModeController.LiftTestUpdate", "Lift DOWN %f power (maxSpeed %f rad/s)", -liftPower_, maxLiftSpeed_radPerSec_);
                   HAL::MotorSetPower(MotorID::MOTOR_LIFT, -liftPower_);
                 }
 
@@ -726,7 +723,7 @@ namespace Anki {
             break;
           default:
           {
-            AnkiWarn( 77, "TestModeController.LiftTestUpdate", 653, "WARN: Unknown lift test mode %hhu", 1, liftTestMode_);
+            AnkiWarn( "TestModeController.LiftTestUpdate", "WARN: Unknown lift test mode %hhu", liftTestMode_);
             Reset();
           }
         }
@@ -744,7 +741,7 @@ namespace Anki {
           ++ticCnt2_;
         } else if (avgLiftSpeed_ != 0) {
           avgLiftSpeed_ /= ticCnt2_;
-          AnkiInfo( 77, "TestModeController.LiftTestUpdate", 323, "Avg lift speed %f rad/s, height change %f mm", 2, avgLiftSpeed_, LiftController::GetHeightMM() - startLiftHeightMM_);
+          AnkiInfo( "TestModeController.LiftTestUpdate", "Avg lift speed %f rad/s, height change %f mm", avgLiftSpeed_, LiftController::GetHeightMM() - startLiftHeightMM_);
           avgLiftSpeed_ = 0;
           ticCnt2_ = 0;
         }
@@ -755,7 +752,7 @@ namespace Anki {
 
       Result LiftToggleTestInit()
       {
-        AnkiInfo( 78, "TestModeController.LiftToggleTestInit", 305, "", 0);
+        AnkiInfo( "TestModeController.LiftToggleTestInit", "");
         printCyclePeriod_ = 200 / TIME_STEP;
         return RESULT_OK;
       }
@@ -777,7 +774,7 @@ namespace Anki {
             } else if (liftHeight == LIFT_HEIGHT_HIGHDOCK) {
               liftHeight = LIFT_HEIGHT_LOWDOCK;
             }
-            AnkiInfo( 79, "TestModeController.LiftToggleTestUpdate", 324, "SET LIFT TO %f mm", 1, liftHeight);
+            AnkiInfo( "TestModeController.LiftToggleTestUpdate", "SET LIFT TO %f mm", liftHeight);
             LiftController::SetDesiredHeight(liftHeight);
             inPositionCycles = 0;
           }
@@ -788,7 +785,7 @@ namespace Anki {
           f32 lSpeed = HAL::MotorGetSpeed(MotorID::MOTOR_LIFT);
           f32 lPos = LiftController::GetHeightMM();
 
-          AnkiInfo( 79, "TestModeController.LiftToggleTestUpdate", 325, "Lift speed %f rad/s, height %f mm", 2, lSpeed, lPos);
+          AnkiInfo( "TestModeController.LiftToggleTestUpdate", "Lift speed %f rad/s, height %f mm", lSpeed, lPos);
           ticCnt2_ = 0;
 
           // To prevent compiler error if AnkiInfo compiled out
@@ -802,7 +799,7 @@ namespace Anki {
 
       Result HeadTestInit(s32 mode, s32 noddingCycleTime_ms, s32 powerPercent)
       {
-        AnkiInfo( 80, "TestModeController.HeadTestInit", 317, "flags = %d, powerPercent = %d", 2, mode, powerPercent);
+        AnkiInfo( "TestModeController.HeadTestInit", "flags = %d, powerPercent = %d", mode, powerPercent);
         ticCnt_ = 0;
         ticCnt2_ = 0;
         printCyclePeriod_ = 250 / TIME_STEP;
@@ -845,19 +842,19 @@ namespace Anki {
               if (headTestMode_ == HeadTestFlags::HTF_TEST_ANGLES) {
                 up = !up;
                 if (up) {
-                  AnkiInfo( 81, "TestModeController.HeadTestUpdate", 407, "Head HIGH %f rad (maxSpeed %f rad/s)", 2, HEAD_DES_HIGH_ANGLE, maxHeadSpeed_radPerSec_);
+                  AnkiInfo( "TestModeController.HeadTestUpdate", "Head HIGH %f rad (maxSpeed %f rad/s)", HEAD_DES_HIGH_ANGLE, maxHeadSpeed_radPerSec_);
                   HeadController::SetDesiredAngle(HEAD_DES_HIGH_ANGLE);
                 } else {
-                  AnkiInfo( 81, "TestModeController.HeadTestUpdate", 408, "Head LOW %f rad (maxSpeed %f rad/s)", 2, HEAD_DES_LOW_ANGLE, maxHeadSpeed_radPerSec_);
+                  AnkiInfo( "TestModeController.HeadTestUpdate", "Head LOW %f rad (maxSpeed %f rad/s)", HEAD_DES_LOW_ANGLE, maxHeadSpeed_radPerSec_);
                   HeadController::SetDesiredAngle(HEAD_DES_LOW_ANGLE);
                 }
               } else {
                 up = !up;
                 if (up) {
-                  AnkiInfo( 81, "TestModeController.HeadTestUpdate", 409, "Head UP %f power (maxSpeed %f rad/s)", 2, headPower_, maxHeadSpeed_radPerSec_);
+                  AnkiInfo( "TestModeController.HeadTestUpdate", "Head UP %f power (maxSpeed %f rad/s)", headPower_, maxHeadSpeed_radPerSec_);
                   HAL::MotorSetPower(MotorID::MOTOR_HEAD, headPower_);
                 } else {
-                  AnkiInfo( 81, "TestModeController.HeadTestUpdate", 410, "Head DOWN %f power (maxSpeed %f rad/s)", 2, -headPower_, maxHeadSpeed_radPerSec_);
+                  AnkiInfo( "TestModeController.HeadTestUpdate", "Head DOWN %f power (maxSpeed %f rad/s)", -headPower_, maxHeadSpeed_radPerSec_);
                   HAL::MotorSetPower(MotorID::MOTOR_HEAD, -headPower_);
                 }
 
@@ -894,7 +891,7 @@ namespace Anki {
             break;
           }
           default:
-            AnkiWarn( 81, "TestModeController.HeadTestUpdate", 654, "Unknown head test mode %hhu", 1, headTestMode_);
+            AnkiWarn( "TestModeController.HeadTestUpdate", "Unknown head test mode %hhu", headTestMode_);
             break;
         }
 
@@ -906,7 +903,7 @@ namespace Anki {
           f32 hPos = HeadController::GetAngleRad();
 
           if (ABS(hSpeed) > 0 || ABS(hSpeed_filt) > 0) {
-            AnkiInfo( 81, "TestModeController.HeadTestUpdate", 331, "Head speed %f rad/s (filt %f rad/s), angle %f rad", 3, hSpeed, hSpeed_filt, hPos);
+            AnkiInfo( "TestModeController.HeadTestUpdate", "Head speed %f rad/s (filt %f rad/s), angle %f rad", hSpeed, hSpeed_filt, hPos);
           }
           ticCnt2_ = 0;
 
@@ -920,7 +917,7 @@ namespace Anki {
 
       Result IMUTestInit(s32 flags)
       {
-        AnkiInfo( 82, "TestModeController.IMUTestInit", 305, "", 0);
+        AnkiInfo( "TestModeController.IMUTestInit", "");
         imuTestDoTurns_ = flags & EnumToUnderlyingType(IMUTestFlags::ITF_DO_TURNS);
         ticCnt_ = 0;
         IT_turnLeft = false;
@@ -933,11 +930,11 @@ namespace Anki {
           if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
             if (IT_turnLeft) {
               // Turn left 180 degrees
-              AnkiInfo( 83, "TestModeController.IMUTestUpdate", 332, "Turning to 180", 0);
+              AnkiInfo( "TestModeController.IMUTestUpdate", "Turning to 180");
               SteeringController::ExecutePointTurn(IT_TARGET_ANGLE, IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL, IT_ROT_TOL, false);
             } else {
               // Turn right 180 degrees
-              AnkiInfo( 83, "TestModeController.IMUTestUpdate", 333, "Turning to 0", 0);
+              AnkiInfo( "TestModeController.IMUTestUpdate", "Turning to 0");
               SteeringController::ExecutePointTurn(0.f, -IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL, IT_ROT_TOL, false);
             }
             IT_turnLeft = !IT_turnLeft;
@@ -950,14 +947,14 @@ namespace Anki {
           // Raw HAL readings
           HAL::IMU_DataStructure data = IMUFilter::GetLatestRawData();
 
-          AnkiInfo( 83, "TestModeController.IMUTestUpdate", 334, "Gyro (%f,%f,%f) rad/s, (%f,%f,%f) mm/s^2", 6,
+          AnkiInfo( "TestModeController.IMUTestUpdate", "Gyro (%f,%f,%f) rad/s, (%f,%f,%f) mm/s^2",
                 data.rate_x, data.rate_y, data.rate_z,
                 data.acc_x, data.acc_y, data.acc_z);
 
 
           // IMUFilter readings
           f32 rot_imu = IMUFilter::GetRotation();
-          AnkiInfo( 83, "TestModeController.IMUTestUpdate", 335, "Rot(IMU): %f deg", 1,
+          AnkiInfo( "TestModeController.IMUTestUpdate", "Rot(IMU): %f deg",
                 RAD_TO_DEG_F32(rot_imu)
                 );
 
@@ -977,7 +974,7 @@ namespace Anki {
       // color: The color to set it to (applies if LTF_CYCLE_ALL not enabled)
       Result LightTestInit(s32 flags, s32 ledID, s32 color)
       {
-        AnkiInfo( 84, "TestModeController.LightTestInit", 336, "flags = %x, ledID = %d, color = %x", 3, flags, ledID, color);
+        AnkiInfo( "TestModeController.LightTestInit", "flags = %x, ledID = %d, color = %x", flags, ledID, color);
 
         ledCycleTest_ = flags & EnumToUnderlyingType(LightTestFlags::LTF_CYCLE_ALL);
 
@@ -1002,7 +999,7 @@ namespace Anki {
 
         // Cycle through all channels
         if (ticCnt_++ > 2000 / TIME_STEP) {
-          AnkiInfo( 1238, "TestModeController.LightTestUpdate", 655, "LED channel %hhu, color 0x%x", 2, ledID_, LEDColorList_[ledColorIdx_]);
+          AnkiInfo( "TestModeController.LightTestUpdate", "LED channel %hhu, color 0x%x", ledID_, LEDColorList_[ledColorIdx_]);
           //HAL::SetLED(ledID_, LEDColorList_[ledColorIdx_]);
           (void)LEDColorList_; // Prevent compiler error. Don't need this when SetLED call restored.
 
@@ -1026,7 +1023,7 @@ namespace Anki {
 
       Result StopTestInit(s32 slowSpeed_mmps, s32 fastSpeed_mmps, s32 period_ms)
       {
-        AnkiInfo( 88, "TestModeController.StopTestInit", 305, "", 0);
+        AnkiInfo( "TestModeController.StopTestInit", "");
         ticCnt_ = 0;
         ST_go = false;
         ST_speed = 0.f;
@@ -1051,7 +1048,7 @@ namespace Anki {
             else
               ST_speed = ST_fastSpeed_mmps;
             
-            AnkiInfo( 89, "TestModeController.StopTestUpdate", 340, "GO: %f mm/s", 1, ST_speed);
+            AnkiInfo( "TestModeController.StopTestUpdate", "GO: %f mm/s", ST_speed);
             SteeringController::ExecuteDirectDrive(ST_speed, ST_speed);
           } else {
             // Stopping
@@ -1070,7 +1067,7 @@ namespace Anki {
         if(ST_slowingDown) {
           if (HAL::MotorGetPosition(MotorID::MOTOR_LEFT_WHEEL) == ST_prevLeftPos &&
               HAL::MotorGetPosition(MotorID::MOTOR_RIGHT_WHEEL) == ST_prevRightPos) {
-            AnkiInfo( 89, "TestModeController.StopTestUpdate", 341, "STOPPED: (%f, %f) mm in %d tics", 3, ST_prevLeftPos, ST_prevRightPos, ST_slowDownTics);
+            AnkiInfo( "TestModeController.StopTestUpdate", "STOPPED: (%f, %f) mm in %d tics", ST_prevLeftPos, ST_prevRightPos, ST_slowDownTics);
             ST_slowingDown = false;
           }
           ST_prevLeftPos = HAL::MotorGetPosition(MotorID::MOTOR_LEFT_WHEEL);
@@ -1083,7 +1080,7 @@ namespace Anki {
 
       Result MaxPowerTestInit()
       {
-        AnkiInfo( 90, "TestModeController.MaxPowerTestInit", 305, "", 0);
+        AnkiInfo( "TestModeController.MaxPowerTestInit", "");
         ticCnt_ = 0;
 
         // Disable all controllers so that they can be overridden with HAL power commands
@@ -1098,7 +1095,7 @@ namespace Anki {
       {
         static f32 pwr = 1.0;
         if (ticCnt_++ > 5000 / TIME_STEP) {
-          AnkiInfo( 91, "TestModeController.MaxPowerTestUpdate", 342, "SWITCHING POWER: %f", 1, pwr);
+          AnkiInfo( "TestModeController.MaxPowerTestUpdate", "SWITCHING POWER: %f", pwr);
           HAL::MotorSetPower(MotorID::MOTOR_LEFT_WHEEL, 1.0);
           HAL::MotorSetPower(MotorID::MOTOR_RIGHT_WHEEL, 1.0);
           //HAL::MotorSetPower(MotorID::MOTOR_LIFT, pwr);
@@ -1169,7 +1166,7 @@ namespace Anki {
             updateFunc = MaxPowerTestUpdate;
             break;
           default:
-            AnkiWarn( 1239, "TestModeController.Start", 656, "Undefined test mode %hhu\n", 1, testMode_);
+            AnkiWarn( "TestModeController.Start", "Undefined test mode %hhu\n", testMode_);
             Reset();
             ret = RESULT_FAIL;
             break;
@@ -1188,28 +1185,7 @@ namespace Anki {
           }
         }
         return RESULT_OK;
-      }
-
-#else // #ifdef COZMO_V2
-      
-      TestMode GetMode() {
-        return TestMode::TM_NONE;
-      }
-      
-      Result Reset() {
-        return RESULT_OK;
-      }
-      
-      Result Start(const TestMode mode, s32 p1, s32 p2, s32 p3) {
-        return RESULT_FAIL;
-      }
-      
-      Result Update() {
-        return RESULT_OK;
-      }
-      
-#endif // #ifdef COZMO_V2
-      
+      }      
 
     } // namespace TestModeController
   } // namespace Cozmo

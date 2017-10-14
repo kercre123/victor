@@ -858,7 +858,7 @@ namespace Anki {
         case BUTTON_POWER: { return 0; }
         default: 
         {
-          AnkiError( 1252, "sim_hal.GetButtonState.UnexpectedButtonType", 658, "Button ID=%d does not have a sensible return value", 1, button_id);
+          AnkiError( "sim_hal.GetButtonState.UnexpectedButtonType", "Button ID=%d does not have a sensible return value", button_id);
           return 0; 
         }
       }
@@ -1070,7 +1070,7 @@ namespace Anki {
             break;
           }
           default:
-            AnkiWarn( 193, "sim_hal.ReadingDiscoveryChannel.UnexpectedMsg", 497, "Expected discovery tag but got %d", 1, lcm.tag);
+            AnkiWarn( "sim_hal.ReadingDiscoveryChannel.UnexpectedMsg", "Expected discovery tag but got %d", lcm.tag);
             break;
         }
         
