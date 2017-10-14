@@ -226,6 +226,7 @@ namespace Cozmo.Repair.UI {
 
     public void InitializeRepairModal() {
       RobotEngineManager.Instance.AddCallback<RobotOffTreadsStateChanged>(HandleRobotOffTreadsStateChanged);
+      RobotEngineManager.Instance.AddCallback<GoingToSleep>(HandleGoingToSleep);
 
       HubWorldBase.Instance.StopFreeplay();
       UpdateSeverityBracket();
@@ -403,6 +404,7 @@ namespace Cozmo.Repair.UI {
 
     protected override void CleanUp() {
       RobotEngineManager.Instance.RemoveCallback<RobotOffTreadsStateChanged>(HandleRobotOffTreadsStateChanged);
+      RobotEngineManager.Instance.RemoveCallback<GoingToSleep>(HandleGoingToSleep);
 
       if (_InterruptedAlert != null) {
         _InterruptedAlert.CloseDialog();
@@ -1046,6 +1048,11 @@ namespace Cozmo.Repair.UI {
     private void HandleRobotOffTreadsStateChanged(object messageObject) {
       RobotOffTreadsStateChanged offTreadsState = messageObject as RobotOffTreadsStateChanged;
       _RobotOffTreadsState = offTreadsState.treadsState;
+    }
+
+    // PauseManager has put us in behavior wait and likely we aren't going to continue, just shutdown.
+    private void HandleGoingToSleep(Anki.Cozmo.ExternalInterface.GoingToSleep msg) {
+      CloseDialog();
     }
 
     #endregion //Robot Callback Handlers

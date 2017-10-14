@@ -93,6 +93,7 @@ namespace Cozmo.Energy.UI {
       RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
       RobotEngineManager.Instance.AddCallback<FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
       RobotEngineManager.Instance.AddCallback<BehaviorTransition>(HandleBehaviorTransition);
+      RobotEngineManager.Instance.AddCallback<GoingToSleep>(HandleGoingToSleep);
 
       NeedsStateManager nsm = NeedsStateManager.Instance;
       nsm.PauseExceptForNeed(NeedId.Energy);
@@ -166,6 +167,7 @@ namespace Cozmo.Energy.UI {
       RobotEngineManager.Instance.RemoveCallback<FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
       RobotEngineManager.Instance.RemoveCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
       RobotEngineManager.Instance.RemoveCallback<BehaviorTransition>(HandleBehaviorTransition);
+      RobotEngineManager.Instance.RemoveCallback<GoingToSleep>(HandleGoingToSleep);
 
 
       //RETURN TO FREEPLAY
@@ -324,6 +326,11 @@ namespace Cozmo.Energy.UI {
         // Exit feeding so that hiccups can take over
         CloseDialog();
       }
+    }
+
+    // PauseManager has put us in behavior wait and likely we aren't going to continue, just shutdown.
+    private void HandleGoingToSleep(Anki.Cozmo.ExternalInterface.GoingToSleep msg) {
+      CloseDialog();
     }
 
 
