@@ -73,7 +73,6 @@ NeedsConfig::NeedsConfig(const CozmoContext* cozmoContext)
 , _localNotificationMaxFutureMinutes(60 * 24 * 365 * 10)
 , _cozmoContext(cozmoContext)
 , _unconnectedDecayTestVariationKey("Unknown (unknown)")
-, _tuningTestVariationKey("Unknown (unknown)")
 {
 }
 
@@ -347,35 +346,6 @@ void NeedsConfig::SetUnconnectedDecayTestVariation(const std::string& baseFilena
   }
 
   InitDecay(decayJson);
-}
-
-
-void NeedsConfig::SetTuningTestVariation(const std::string& configBaseFilename,
-                                         const std::string& variationKey,
-                                         const Util::AnkiLab::AssignmentStatus assignmentStatus)
-{
-  _tuningTestVariationKey = variationKey + " (" +
-                            AssignmentStatusToString(assignmentStatus) + ")";
-
-  // Read the main tuning config file variation based on variation, and use that tuning
-  std::string configFilename = configBaseFilename;
-  if (variationKey != kABTestControlKey)
-  {
-    configFilename += "_" + variationKey;
-  }
-  configFilename += ".json";
-  Json::Value json;
-  const bool parseSuccess = _cozmoContext->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
-                                                                         configFilename, json);
-  if (!ANKI_VERIFY(parseSuccess, "NeedsConfig.SetTuningTestVariation",
-                   "Failed to parse file %s", configFilename.c_str()))
-  {
-    return;
-  }
-
-  Init(json);
-
-  // TODO:  Do same for level config
 }
 
 

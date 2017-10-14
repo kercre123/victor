@@ -215,9 +215,8 @@ namespace {
     Util::AnkiLab::AddABTestingForcedAssignment(experimentKey, variationKey);
     context->channel->WriteLog("ForceAssignExperiment %s => %s", experimentKey, variationKey);
 
-    g_DebugNeedsManager->GetNeedsConfigMutable().SetTuningTestVariation(g_DebugNeedsManager->GetConfigBaseFilename(),
-                                                                        variationKey,
-                                                                        Util::AnkiLab::AssignmentStatus::ForceAssigned);
+    g_DebugNeedsManager->SetTuningTestVariation(variationKey,
+                                                Util::AnkiLab::AssignmentStatus::ForceAssigned);
   }
   CONSOLE_FUNC( DebugFillNeedMeters, "Needs" );
   CONSOLE_FUNC( DebugGiveStar, "Needs" );
@@ -277,6 +276,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _faceDistortionComponent(new DesiredFaceDistortionComponent(*this))
 , _pendingSparksRewardMsg(false)
 , _sparksRewardMsg()
+, _tuningTestVariationKey("Unknown (unknown)")
 {
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
@@ -697,7 +697,7 @@ void NeedsManager::AttemptActivateDecayExperiment(u32 robotSerialNumber)
   else
   {
     _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(),
-                                                  _needsConfig.kABTestControlKey,
+                                                  kABTestControlKey,
                                                   assignmentStatus);
   }
 }
@@ -733,15 +733,11 @@ void NeedsManager::AttemptActivateTuningExperiment(u32 robotSerialNumber)
                   kTuningExperimentKey.c_str(),
                   outVariationKey.c_str());
 
-    _needsConfig.SetTuningTestVariation(GetConfigBaseFilename(),
-                                        outVariationKey,
-                                        assignmentStatus);
+    SetTuningTestVariation(outVariationKey, assignmentStatus);
   }
   else
   {
-    _needsConfig.SetTuningTestVariation(GetConfigBaseFilename(),
-                                        _needsConfig.kABTestControlKey,
-                                        assignmentStatus);
+    SetTuningTestVariation(kABTestControlKey, assignmentStatus);
   }
 }
 
@@ -1164,6 +1160,48 @@ void NeedsManager::SparksRewardCommunicatedToUser()
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame
                     (std::move(_sparksRewardMsg)));
+}
+
+
+void NeedsManager::SetTuningTestVariation(const std::string& variationKey,
+                                          const Util::AnkiLab::AssignmentStatus assignmentStatus)
+{
+  _tuningTestVariationKey = variationKey + " (" +
+                            AssignmentStatusToString(assignmentStatus) + ")";
+
+  // Read the main tuning config file variation based on variation, and use that tuning
+  std::string configFilename = GetConfigBaseFilename();
+  if (variationKey != kABTestControlKey)
+  {
+    configFilename += "_" + variationKey;
+  }
+  configFilename += ".json";
+  Json::Value json;
+  bool parseSuccess = _cozmoContext->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
+                                                                   configFilename, json);
+  if (!ANKI_VERIFY(parseSuccess, "NeedsConfig.SetTuningTestVariation",
+                   "Failed to parse file %s", configFilename.c_str()))
+  {
+    return;
+  }
+  _needsConfig.Init(json);
+
+  // Read the level config file variation based on variation, and use that data
+  std::string levelConfigFilename = GetLevelConfigBaseFilename();
+  if (variationKey != kABTestControlKey)
+  {
+    levelConfigFilename += "_" + variationKey;
+  }
+  levelConfigFilename += ".json";
+  Json::Value levelJson;
+  parseSuccess = _cozmoContext->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
+                                                              levelConfigFilename, levelJson);
+  if (!ANKI_VERIFY(parseSuccess, "NeedsConfig.SetTuningTestVariation",
+                   "Failed to parse file %s", levelConfigFilename.c_str()))
+  {
+    return;
+  }
+  _starRewardsConfig->Init(levelJson);
 }
 
 
@@ -1767,7 +1805,7 @@ void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpda
   }
 
   const std::string ABTestString = kTuningExperimentKey + ": " +
-                                   _needsConfig.GetTuningTestVariation();
+                                   _tuningTestVariationKey;
 
   ExternalInterface::NeedsState message(std::move(needLevels), std::move(needBrackets),
                                         std::move(partIsDamaged), _needsState._curNeedsUnlockLevel,

@@ -47,6 +47,7 @@ function onOpen() {
     {name: "Export JSON for DecayA sheet", functionName: "exportDecayASheet"},
     {name: "Export JSON for DecayB sheet", functionName: "exportDecayBSheet"},
     {name: "Export JSON for RewardsConfig sheet", functionName: "exportRewardsConfigSheet"},
+    {name: "Export JSON for RewardsConfigFaster sheet", functionName: "exportRewardsConfigFasterSheet"},
     {name: "Export JSON for LocalNotificationConfig sheet", functionName: "exportLocalNotificationConfigSheet"},
 //  {name: "Configure export", functionName: "exportOptions"},
   ];
@@ -172,8 +173,15 @@ function exportGivenDecayConfigSheet(e, sheetName) {
 }
 
 function exportRewardsConfigSheet(e) {
+  return exportRewardsConfigSheetInternal(e, "RewardsConfig");
+}
+
+function exportRewardsConfigFasterSheet(e) {
+  return exportRewardsConfigSheetInternal(e, "RewardsConfigFaster");
+}
+
+function exportRewardsConfigSheetInternal(e, sheetName) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheetName = "RewardsConfig";
   var sheet = ss.getSheetByName(sheetName);
   var data = getRewardsData_(sheet);
   var json = makeJSON_(data, getExportOptions(e));

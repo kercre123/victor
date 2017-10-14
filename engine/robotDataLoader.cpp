@@ -746,7 +746,7 @@ void RobotDataLoader::LoadRobotConfigs()
   
   // needs level (star rewards) config
   {
-    static const std::string jsonFilename = "config/engine/needs_level_config.json";
+    static const std::string jsonFilename = NeedsManager::GetLevelConfigBaseFilename() + ".json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _starRewardsConfig);
     if (!success)
     {

@@ -81,11 +81,6 @@ public:
                                         const Util::AnkiLab::AssignmentStatus assignmentStatus);
   const std::string& GetUnconnectedDecayTestVariation() const { return _unconnectedDecayTestVariationKey; };
 
-  void SetTuningTestVariation(const std::string& configBaseFilename,
-                              const std::string& variationKey,
-                              const Util::AnkiLab::AssignmentStatus assignmentStatus);
-  const std::string& GetTuningTestVariation() const { return _tuningTestVariationKey; };
-
   float _minNeedLevel;
   float _maxNeedLevel;
   float _decayPeriod;
@@ -107,8 +102,6 @@ public:
 
   float _localNotificationMaxFutureMinutes;
 
-  const std::string kABTestControlKey = "control";
-
 private:
   void InitDecayRates(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo);
   void InitDecayModifiers(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo);
@@ -116,7 +109,6 @@ private:
   const CozmoContext* _cozmoContext;
 
   std::string _unconnectedDecayTestVariationKey = "Unknown (unknown)";
-  std::string _tuningTestVariationKey = "Unknown (unknown)";
 };
 
 
