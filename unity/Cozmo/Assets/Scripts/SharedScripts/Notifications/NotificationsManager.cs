@@ -86,7 +86,7 @@ namespace Cozmo.Notifications {
       }
     }
 
-    private System.Collections.IEnumerator DelayCancelAllNotifications(float waitTime = 1.0f) {
+    private System.Collections.IEnumerator DelayCancelAllNotifications(float waitTime = 0.1f) {
       yield return new UnityEngine.WaitForSeconds(waitTime);
       CancelAllNotifications();
     }
@@ -122,6 +122,7 @@ namespace Cozmo.Notifications {
 
     private void CancelAllNotifications() {
       if (UTNotifications.Manager.Instance.IsInitialized()) {
+        DAS.Info("NotificationsManager.CancelAllNotifications", "");
         UTNotifications.Manager.Instance.CancelAllNotifications();
       }
     }
@@ -206,6 +207,7 @@ namespace Cozmo.Notifications {
       clickedNotif.OrderId = orderId;
       clickedNotif.TimeClicked = timeClicked;
       DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.MostRecentNotificationClicked = clickedNotif;
+      CancelAllNotifications();
     }
 
     public Notification GetNotificationClickedForSession() {
