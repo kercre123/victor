@@ -62,7 +62,7 @@ void IBehavior::OnEnteredActivatableScope()
   if(_currentInScopeCount != 1){
     PRINT_CH_INFO("Behaviors",
                   "IBehavior.OnEnteredActivatableScope.AlreadyInScope",
-                  "BehaviorAlreadySet %s is already in scope, ignoring request to enter scope",
+                  "Behavior '%s' is already in scope, ignoring request to enter scope",
                   _idString.c_str());
     return;
   }
@@ -87,7 +87,7 @@ void IBehavior::Update(BehaviorExternalInterface& behaviorExternalInterface)
     const size_t tickCount = BaseStationTimer::getInstance()->GetTickCount();
     DEV_ASSERT_MSG(_lastTickOfUpdate == (tickCount - kBSTickInterval),
                    "IBehavior.Update.TickCountMismatch",
-                   "Behavior %s is receiving tick on %zu, but hasn't been ticked since %zu",
+                   "Behavior '%s' is receiving tick on %zu, but hasn't been ticked since %zu",
                    _idString.c_str(),
                    _lastTickOfUpdate,
                    tickCount);
@@ -188,9 +188,10 @@ void IBehavior::AssertActivationState_DevOnly(ActivationState state) const
   #if ANKI_DEV_CHEATS
   DEV_ASSERT_MSG(_currentActivationState == state,
                  "IBehavior.AssertActivationState_DevOnly.WrongActivationState",
-                 "Behavior %s is not in state %s which it should be",
+                 "Behavior '%s' is state %s, but should be in %s",
                  _idString.c_str(),
-                 ActivationStateToString(_currentActivationState).c_str());
+                 ActivationStateToString(_currentActivationState).c_str(),
+                 ActivationStateToString(state).c_str());
   #endif
 }
 
@@ -201,7 +202,7 @@ void IBehavior::AssertNotActivationState_DevOnly(ActivationState state) const
   #if ANKI_DEV_CHEATS
   DEV_ASSERT_MSG(_currentActivationState != state,
                  "IBehavior.AssertNotActivationState_DevOnly.WrongActivationState",
-                 "Behavior %s is in state %s when it shouldn't be",
+                 "Behavior '%s' is state %s, but should not be",
                  _idString.c_str(),
                  ActivationStateToString(_currentActivationState).c_str());
   #endif
