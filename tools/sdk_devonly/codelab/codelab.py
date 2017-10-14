@@ -28,6 +28,7 @@ from io import BytesIO
 import json
 import os
 import queue
+import re
 import sys
 from threading import Thread
 import time
@@ -112,6 +113,12 @@ def parse_command_args():
                         default=None,
                         action='store',
                         help='The UUID of the project to clone into')
+    arg_parser.add_argument('-csp', '--clone-sample-projects',
+                        dest='clone_samples',
+                        default=False,
+                        action='store_const',
+                        const=True,
+                        help='Clone samples to user projects on startup')
     arg_parser.add_argument('-loc', '--locale',
                         dest='locale_to_use',
                         default="en-US",
@@ -141,6 +148,18 @@ def parse_command_args():
                             action='store_const',
                             const=False,
                             help='Dont use a unique URL - files may be cached by browser')
+    arg_parser.add_argument('-upp', '--use_python_projects',
+                            dest='use_python_projects',
+                            default=False,
+                            action='store_const',
+                            const=True,
+                            help="Use CodeLab.py's project store for listing and serving projects (instead of Unity's")
+    arg_parser.add_argument('-ltp', '--load_test_projects',
+                            dest='load_test_projects',
+                            default=False,
+                            action='store_const',
+                            const=True,
+                            help="Load test projects (they add to the list of sample projects)")
     arg_parser.add_argument('-vert', '--show_vertical',
                         dest='show_vertical',
                         default=False,
@@ -246,9 +265,25 @@ VALID_SCRATCH_EXTENSIONS = [".css", ".cur", ".gif", ".html", ".js", ".jpg", ".jp
 CODELAB_FILE_HEADER = "CODELAB:"
 
 
+kCurrentVersionNum = 3
+
+
+def is_unity_timestamp(in_date_time):
+    return str(in_date_time).startswith("/Date(")
+
+
 def datetime_to_unity_timestamp(in_datetime):
-    timestamp = calendar.timegm(in_datetime.timetuple()) * 1000 + in_datetime.microsecond
+    if isinstance(in_datetime, str):
+        in_datetime = datetime.datetime.strptime(in_datetime, "%Y-%m-%d %H:%M:%S.%f")
+    timestamp = calendar.timegm(in_datetime.timetuple()) * 1000 + (in_datetime.microsecond / 1000)
     return "/Date(%s)/" % timestamp
+
+
+def extract_timestamp_number(in_timestamp):
+    if not is_unity_timestamp(in_timestamp):
+        in_timestamp = datetime_to_unity_timestamp(in_timestamp)
+    numbers = re.findall(r'\d+', str(in_timestamp))
+    return int(numbers[0])
 
 
 def python_bool_to_js_bool_str(python_bool):
@@ -358,6 +393,22 @@ def make_json_vector2(x, y):
     return {'x': x, 'y': y}
 
 
+def load_and_verify_json(json_string, debug_name):
+    # deserialize string to json object, log more helpful error message on failure
+    try:
+        loaded_json = json.loads(json_string)
+        return loaded_json
+    except json.decoder.JSONDecodeError as e:
+        error_str = str(e)
+        log_text("Error: Failed to decode %s: %s" % (debug_name, error_str))
+        if error_str.startswith("Invalid control character at"):
+            numbers = re.findall(r'\d+', error_str)
+            bad_char_index = int(numbers[len(numbers) - 1])
+            log_text("Invalid control char at %s ='%s' ord=%s" %
+                     (bad_char_index, json_string[bad_char_index], ord(json_string[bad_char_index])))
+        return None
+
+
 # As close to C# version as possible for ease of conversion
 class InProgressScratchBlock:
     def __init__(self, requestId = -1):
@@ -446,6 +497,7 @@ class CodeLabInterface():
         # Database of projects stored in a dictionary, UUID as key
         self._user_projects = {}
         self._sample_projects = {}
+        self._featured_projects = {}
 
         self._game_to_game_conn = GameToGameConn()
 
@@ -455,7 +507,7 @@ class CodeLabInterface():
 
         self._sent_dummy_state = False
 
-        self.load_sample_projects()
+        self.load_anki_projects()
         self.load_user_projects()
 
     def on_connect_to_unity(self):
@@ -477,14 +529,18 @@ class CodeLabInterface():
             if project_data is not None:
                 payload = {"requestId":-1,
                            "command":"cozmoSaveUserProject",
-                           "argString": project_data["ProjectXML"],
+                           "argString": project_data["ProjectJSON"],
                            "argUUID": project_data["ProjectUUID"]}
                 self.send_game_to_game("WebViewCallback", json.dumps(payload))
 
     def send_to_webpage(self, message, wait_for_page_load=False):
         if command_args.verbose:
             command = "LoadThenSendToWeb" if wait_for_page_load else "SendToWeb"
-            log_text("%s: %s" % (command, message))
+            if message.startswith("window.Scratch.vm.runtime.startHats"):
+                # very spammy/verbose
+                pass
+            else:
+                log_text("%s: %s" % (command, message))
         if wait_for_page_load:
             self._delayed_commands_for_web.put(message)
         else:
@@ -542,7 +598,7 @@ class CodeLabInterface():
                             'poseYaw_d': 0.0,
                             'posePitch_d': 0.0,
                             'poseRoll_d': 0.0,
-                            'liftHeightFactor': 0.0,
+                            'liftHeightPercentage': 0.0,
                             'headAngle_d': 0.0,
                             'cube1': self.make_json_cube_state(1),
                             'cube2': self.make_json_cube_state(2),
@@ -555,19 +611,41 @@ class CodeLabInterface():
 
         return "window.setCozmoState('" + json.dumps(cozmo_state_dict) + "');"
 
-    def load_sample_projects(self):
-        path_name = os.path.join(BASE_SRC_SCRATCH_PATH, "sample-projects.json")
+    def load_project_dict(self, dest_dict, path_name):
+        if command_args.verbose:
+            log_text("load_project_dict: path_name = %s" % path_name)
         with open(path_name) as data_file:
             data = json.load(data_file)
             for project_json in data:
                 project_uuid = project_json["ProjectUUID"]
                 if command_args.verbose:
-                    log_text("load_sample_projects Adding %s" % project_uuid)
-                self._sample_projects[project_uuid] = project_json
+                    log_text("load_project_dict Adding %s '%s'" % (project_uuid, project_json["ProjectName"]))
+                dest_dict[project_uuid] = project_json
+
+                if command_args.clone_samples:
+                    # Clone the sample to a new user project on load
+                    user_project_json = dict(project_json)
+                    user_project_uuid = str(uuid.uuid4())  # Create a new UUID
+                    user_project_name = "Clone" + str(len(dest_dict)) + "_of_" + project_json["ProjectName"]
+                    user_project_json["ProjectUUID"] = user_project_uuid
+                    user_project_json["ProjectName"] = user_project_name
+                    log_text("Cloning sample %s '%s' to %s '%s'" % (project_uuid, project_json["ProjectName"],
+                                                                    user_project_uuid, user_project_name))
+                    self._user_projects[user_project_uuid] = user_project_json
+
+    def load_anki_projects(self):
+        self.load_project_dict(self._sample_projects,
+                               os.path.join(BASE_SRC_SCRATCH_PATH, "sample-projects.json"))
+        if command_args.load_test_projects:
+            self.load_project_dict(self._sample_projects,
+                                   os.path.join(BASE_SRC_SCRATCH_PATH, "test-projects.json"))
+        self.load_project_dict(self._featured_projects,
+                               os.path.join(BASE_SRC_SCRATCH_PATH, "featured-projects.json"))
+
 
     def load_user_projects(self):
         try:
-            list_of_directories = [dir for dir in os.listdir(PROJECTS_DIR) if not os.path.isfile(dir)]
+            list_of_directories = [dir for dir in os.listdir(PROJECTS_DIR) if os.path.isdir(os.path.join(PROJECTS_DIR, dir))]
         except FileNotFoundError:
             log_text("load_user_projects - no projects directory")
             return
@@ -578,7 +656,7 @@ class CodeLabInterface():
                     project_json = json.load(data_file)
                     project_uuid = project_json["ProjectUUID"]
                     if command_args.verbose:
-                        log_text("load_user_projects Adding %s" % project_uuid)
+                        log_text("load_user_projects Adding %s '%s'" % (project_uuid, project_json["ProjectName"]))
                     self._user_projects[project_uuid] = project_json
             except FileNotFoundError:
                 log_text("load_user_projects - no contents (just history) for deleted file %s" % path_name)
@@ -588,10 +666,15 @@ class CodeLabInterface():
         # If we're not connected to Unity then also send additional create / complete
         # messages to keep Javascript side working correctly.
         project_uuid = msg_payload_js["argUUID"]
-        project_xml = urllib.parse.unquote(msg_payload_js["argString"])
+        project_xml = None  # urllib.parse.unquote(msg_payload_js["argString"])
+
+        project_json = msg_payload_js["argString"]
+        if command_args.verbose:
+            # verify that this data can be reloaded
+            load_and_verify_json(project_json, "verify-on-save")
 
         utcnow = datetime.datetime.utcnow()
-        version_num = 2
+        version_num = kCurrentVersionNum
         is_vertical_str = python_bool_to_js_bool_str(self._is_vertical_grammar)
         project_name = "Unknown"
 
@@ -613,6 +696,8 @@ class CodeLabInterface():
             if command_args.verbose:
                 log_text("save_user_project() - updating project: '%s'" % project_data)
             project_data['ProjectXML'] = project_xml
+            project_data['ProjectJSON'] = project_json
+            project_data['DateTimeLastModifiedUTC'] = str(utcnow)
             project_data['VersionNum'] = version_num
             project_data['IsNew'] = False
         except KeyError:
@@ -621,6 +706,7 @@ class CodeLabInterface():
                             'IsVertical': is_vertical_str,
                             'IsNew': False,
                             'ProjectXML': project_xml,
+                            'ProjectJSON': project_json,
                             'ProjectName': project_name,
                             'DateTimeCreatedUTC': str(utcnow),
                             'DateTimeLastModifiedUTC': str(utcnow)
@@ -682,42 +768,81 @@ class CodeLabInterface():
             if command_args.verbose:
                 log_text("%s - load projects" % command)
             self.request_page_load("extra/projects.html")
-        elif (command == "cozmoRequestToOpenSampleProject") or (command == "cozmoRequestToOpenUserProject"):
+        elif ((command == "cozmoRequestToOpenSampleProject") or
+              (command == "cozmoRequestToOpenUserProject") or
+              (command == "cozmoRequestToOpenFeaturedProject")):
             is_sample = command == "cozmoRequestToOpenSampleProject"
+            is_featured = command == "cozmoRequestToOpenFeaturedProject"
             project_uuid = msg_payload_js["argString"]
             try:
                 if is_sample:
                     project = self._sample_projects[project_uuid]
+                elif is_featured:
+                    project = self._featured_projects[project_uuid]
                 else:
                     project = self._user_projects[project_uuid]
             except KeyError:
                 log_text("ERROR: Ignoring command %s - no project %s" % (command, project_uuid))
                 project = None
 
-            if is_connected_to_unity:
+            if is_connected_to_unity and not command_args.use_python_projects:
                 # just trigger the correct workspace load for the external browser
                 if command_args.verbose:
                     log_text("%s - load workspace" % command)
                 url = get_workspace_url(self._is_vertical_grammar)
                 self.request_page_load(url)
             elif project is not None:
-                project_xml = project["ProjectXML"]
-                if project_xml is None:
-                    log_text("Error: Ignoring command %s for project %s - ProjectXML is None" % (command, project_uuid))
+                try:
+                    project_xml = project["ProjectXML"]
+                except KeyError:
+                    project_xml = None
+                try:
+                    project_json = project["ProjectJSON"]
+                except KeyError:
+                    project_json = None
+
+                if project_xml is None and project_json is None:
+                    log_text("Error: Ignoring command %s for project %s - ProjectXML + ProjectJSON are None" % (command, project_uuid))
                 else:
                     is_vertical = js_bool_to_python_bool(project["IsVertical"])
                     url = get_workspace_url(is_vertical)
                     self.request_page_load(url)
 
                     project_name = project["ProjectName"]
+                    # TODO - sample/featured project names are localization keys
                     project_name_escaped = self.escape_project_name(project_name)
-                    project_xml_escaped = self.escape_project_xml(project["ProjectXML"])
+
+                    is_sample_str = python_bool_to_js_bool_str(is_sample or is_featured)
+
+                    # If loading python's project versions, but connected to Unity, then ensure that Unity
+                    # has an entry for this project (at least for the UUID so that it will see saves)
+                    if command_args.use_python_projects and is_connected_to_unity:
+                        self.send_game_to_game("EnsureProjectExists", project_uuid + "," + project_name + "," + str(is_vertical))
+
+                    load_json = project_json is not None
                     if command_args.verbose:
-                        log_text("%s - load and open workspace UUID %s '%s'" % (command, project_uuid, project_name))
-                    is_sample_str = python_bool_to_js_bool_str(is_sample)
-                    self.send_to_webpage(
-                        "window.openCozmoProject('" + project_uuid + "','" + project_name_escaped + "',\"" + project_xml_escaped + "\",'" + is_sample_str + "');",
-                        wait_for_page_load=True)
+                        log_text("%s - load and open %s workspace UUID %s '%s'" % (command, ("JSON" if load_json else "XML"),
+                                                                                   project_uuid, project_name))
+
+                    if load_json:
+                        project_json_loaded = load_and_verify_json(project_json, "open_project")
+
+                        project_data = {'projectName': project_name_escaped,
+                                        'projectJSON': project_json_loaded,
+                                        'projectUUID': project_uuid,
+                                        'isSampleStr': is_sample_str
+                                        }
+                        project_data_str = json.dumps(project_data)
+
+                        self.send_to_webpage(
+                            "window.openCozmoProjectJSON(" + project_data_str + ");", wait_for_page_load=True)
+                    else:
+                        # XML
+                        project_xml_escaped = self.escape_project_xml(project_xml)
+
+                        self.send_to_webpage(
+                            "window.openCozmoProjectXML('" + project_uuid + "','" + project_name_escaped + "',\"" + project_xml_escaped + "\",'" + is_sample_str + "');",
+                            wait_for_page_load=True)
         elif command == "cozmoRequestToCreateProject":
             if command_args.verbose:
                 log_text("%s - load workspace" % command)
@@ -752,8 +877,14 @@ class CodeLabInterface():
                     self._commands_for_web.put(delayed_command)
             except queue.Empty:
                 pass
+        elif command == "cozmoDASLog":
+            log_text("Das.Log: %s %s" % (msg_payload_js["argString"], msg_payload_js["argString2"]))
+        elif command == "cozmoDASError":
+            log_text("Das.Error: %s %s" % (msg_payload_js["argString"], msg_payload_js["argString2"]))
 
-        if is_connected_to_unity:
+        redirect_to_python = (command_args.use_python_projects and
+                              ((command == "getCozmoUserAndSampleProjectLists") or (command == "getCozmoFeaturedProjectList")))
+        if is_connected_to_unity and not redirect_to_python:
             # Send straight on to C# / Unity
             MAX_PAYLOAD_SIZE = 2024 - len(
                 message_type)  # 2048 is an engine-side limit for clad messages, reserve an extra 24 for rest of the tags and members
@@ -775,7 +906,24 @@ class CodeLabInterface():
             # No connection - for testing without having to connect to an engine or robot
             # Handle subset of messages ourselves to allow testing without Unity / Engine / Robot connection
 
-            if command == "getCozmoUserAndSampleProjectLists":
+            if command == "getCozmoFeaturedProjectList":
+                jsCallback = msg_payload_js["argString"]
+
+                featuredProjectsAsJSON = []
+                for key, value in self._featured_projects.items():
+                    is_vertical = js_bool_to_python_bool(value["IsVertical"])
+                    if is_vertical == self._is_vertical_grammar:
+                        project_copy = dict(value)
+                        project_copy["ProjectXML"] = None
+                        project_copy["ProjectJSON"] = None
+                        featuredProjectsAsJSON.append(project_copy)
+
+                featuredProjectsAsJSON = sorted(featuredProjectsAsJSON, key=lambda project: project["DisplayOrder"])
+                featuredProjectsAsEncodedJSON = json.dumps(featuredProjectsAsJSON, ensure_ascii=False)
+
+                self.send_to_webpage(
+                    jsCallback + "('" + featuredProjectsAsEncodedJSON + "');")
+            elif command == "getCozmoUserAndSampleProjectLists":
                 if command_args.verbose:
                     log_text("%s - sending from Python" % command)
                 # return list of projects to the requested method
@@ -789,15 +937,32 @@ class CodeLabInterface():
                     if is_vertical == self._is_vertical_grammar:
                         project_copy = dict(value)
                         project_copy["ProjectXML"] = None
+                        project_copy["ProjectJSON"] = None
                         userProjectsAsJSON.append(project_copy)
 
+                def get_last_modified_time(project_data):
+                    try:
+                        last_modified_time = project_data['DateTimeLastModifiedUTC']
+                        if last_modified_time is not None:
+                            timestamp_number = extract_timestamp_number(last_modified_time)
+                        else:
+                            timestamp_number = 0
+                    except KeyError:
+                        last_modified_time = None
+                        timestamp_number = 0
+                    return timestamp_number
+
+                userProjectsAsJSON = sorted(userProjectsAsJSON, key=lambda project: -get_last_modified_time(project))
                 sampleProjectsAsJSON = []
                 for key, value in self._sample_projects.items():
                     is_vertical = js_bool_to_python_bool(value["IsVertical"])
                     if is_vertical == self._is_vertical_grammar:
                         project_copy = dict(value)
                         project_copy["ProjectXML"] = None
+                        project_copy["ProjectJSON"] = None
                         sampleProjectsAsJSON.append(project_copy)
+
+                sampleProjectsAsJSON = sorted(sampleProjectsAsJSON, key=lambda project: project["DisplayOrder"])
 
                 userProjectsAsEncodedJSON = json.dumps(userProjectsAsJSON, ensure_ascii=False)
                 sampleProjectsAsEncodedJSON = json.dumps(sampleProjectsAsJSON, ensure_ascii=False)
@@ -887,12 +1052,18 @@ class CodeLabInterface():
                 if value is not None:
                     # Some fields From C# needs unescaping before we store them, otherwise
                     # they'll end up double-escaped when we send them on to JS
+                    # Note ProjectJSON doesn't currently need unescaping
                     if key == "ProjectXML":
                         value = self.unescape_project_xml(value)
                     elif key == "ProjectName":
                         value = self.unescape_project_name(value)
 
-                    if project_data[key] != value:
+                    try:
+                        field_matches = project_data[key] == value
+                    except KeyError:
+                        project_data[key] = None
+                        field_matches = False
+                    if not field_matches:
                         if command_args.verbose:
                             log_text("_update_project() - updating field %s from %s to %s" % (key, project_data[key], value))
                         project_data[key] = value
@@ -913,7 +1084,7 @@ class CodeLabInterface():
                 log_text("_update_project() - Adding project %s" % project_uuid)
             self._save_project(project_uuid, user_project)
 
-    def on_recv_window_openCozmoProject(self, project_uuid, project_name, project_xml, is_sample):
+    def on_openCozmoProject_helper(self, project_uuid, project_name, project_xml, project_json, is_sample):
         is_sample = js_bool_to_python_bool(is_sample)
         if not is_sample:
             is_vertical_str = python_bool_to_js_bool_str(self._is_vertical_grammar)
@@ -922,13 +1093,26 @@ class CodeLabInterface():
                             'IsVertical': is_vertical_str,
                             'IsNew': None,
                             'ProjectXML': project_xml,
+                            'ProjectJSON': project_json,
                             'ProjectName': project_name,
                             'DateTimeCreatedUTC': None,
                             'DateTimeLastModifiedUTC': None
                             }
             if command_args.verbose:
-                log_text("on_recv_window_openCozmoProject() - project_data = %s" % str(project_data))
+                log_text("on_openCozmoProject_helper() - project_data = %s" % str(project_data))
             self._update_project(project_data)
+
+    def on_recv_window_openCozmoProjectJSON(self, loaded_json):
+        project_xml = None
+        project_name = loaded_json["projectName"]
+        project_json = json.dumps(loaded_json["projectJSON"])
+        project_uuid = loaded_json["projectUUID"]
+        is_sample = loaded_json["isSampleStr"]
+        self.on_openCozmoProject_helper(project_uuid, project_name, project_xml, project_json, is_sample)
+
+    def on_recv_window_openCozmoProjectXML(self, project_uuid, project_name, project_xml, is_sample):
+        project_json = None
+        self.on_openCozmoProject_helper(project_uuid, project_name, project_xml, project_json, is_sample)
 
     def on_recv_window_renderProjects(self, user_projects, sample_projects):
         # Update our data on user projects
@@ -940,6 +1124,22 @@ class CodeLabInterface():
 
         for user_project in user_projects_json:
             self._update_project(user_project)
+
+    def on_recv_window_newProjectCreated(self, project_uuid, project_name):
+        is_vertical_str = python_bool_to_js_bool_str(self._is_vertical_grammar)
+        project_data = {'VersionNum': None,
+                        'ProjectUUID': project_uuid,
+                        'IsVertical': is_vertical_str,
+                        'IsNew': None,
+                        'ProjectXML': None,
+                        'ProjectJSON': None,
+                        'ProjectName': project_name,
+                        'DateTimeCreatedUTC': None,
+                        'DateTimeLastModifiedUTC': None
+                        }
+        if command_args.verbose:
+            log_text("on_recv_window_newProjectCreated() - project_data = %s" % str(project_data))
+        self._update_project(project_data)
 
     def handle_method_from_unity(self, message_payload_str):
         # parse the method call from unity to Javascript so we can intercept it
@@ -960,6 +1160,8 @@ class CodeLabInterface():
             payload_str = message_payload_str[len(method_name)+1:-2]  # assumes "method_name(payload);"
             args = split_method_args(payload_str)
 
+            handler_name = "on_recv_" + method_name.replace(".", "_")
+
             if (len(args) > 1) or ((len(args) > 0) and (len(args[0]) > 0)):
                 if command_args.verbose:
                     log_text("handle_method_from_unity() - %s(...):" % method_name)
@@ -973,11 +1175,15 @@ class CodeLabInterface():
                 if command_args.verbose:
                     log_text("Warning: handle_method_from_unity() - no args for '%s'" % method_name)
 
-            handler_name = "on_recv_" + method_name.replace(".", "_")
             handler = getattr(self, handler_name, None)
 
             if handler is not None:
-                handler(*args)
+                if handler_name == "on_recv_window_openCozmoProjectJSON":
+                    # special case - we need to convert the string into a json object
+                    loaded_json = load_and_verify_json(payload_str, handler_name)
+                    handler(loaded_json)
+                else:
+                    handler(*args)
             else:
                 log_text("Warning: handle_method_from_unity() - no handler for '%s'" % handler_name)
         else:
@@ -1313,7 +1519,9 @@ def handle_log_line(evt, *, msg):
                           "VisionComponent.SetCameraSettings",
                           "[@VisionComponent] DroppedFrameStats",
                           "[@VisionComponent] VisionComponent.VisionComponent",
+                          "[@VisionSystem] MotionDetector.DetectMotion.FoundCentroid",
                           "VisionSystem.Profiler"]
+
 
     msg_line = msg.line.strip()
 

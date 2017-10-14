@@ -32,7 +32,7 @@ table RobotAudio {
   audioName:[string];
   audioEventId:[long];
   volume:float = 1.0;
-  probability:float = 1.0;
+  probability:[float];
   hasAlts:bool = true;
 }
 

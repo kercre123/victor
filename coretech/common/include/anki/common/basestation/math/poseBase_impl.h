@@ -120,26 +120,26 @@ namespace Anki {
     return *this;
   }
   
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // rvalue constructor
-  template<class PoseNd, class TransformNd>
-  PoseBase<PoseNd,TransformNd>::PoseBase(PoseBase&& other)
-  : _node(std::move(other._node))
-  {
-    
-  }
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // rvalue assignment
-  template<class PoseNd, class TransformNd>
-  PoseBase<PoseNd,TransformNd>& PoseBase<PoseNd,TransformNd>::operator=(PoseBase&& other)
-  {
-    if(this != &other)
-    {
-      std::swap(_node, other._node);
-    }
-    return *this;
-  }
+//  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//  // rvalue constructor
+//  template<class PoseNd, class TransformNd>
+//  PoseBase<PoseNd,TransformNd>::PoseBase(PoseBase&& other)
+//  : _node(std::move(other._node))
+//  {
+//    
+//  }
+//  
+//  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//  // rvalue assignment
+//  template<class PoseNd, class TransformNd>
+//  PoseBase<PoseNd,TransformNd>& PoseBase<PoseNd,TransformNd>::operator=(PoseBase&& other)
+//  {
+//    if(this != &other)
+//    {
+//      std::swap(_node, other._node);
+//    }
+//    return *this;
+//  }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   template<class PoseNd, class TransformNd>

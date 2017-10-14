@@ -61,10 +61,6 @@
 namespace Anki {
 namespace Cozmo {
   
-namespace{
-const int kBoundedWhileIdlePopLimit = 1000;
-}
-  
 u32 RobotEventHandler::_gameActionTagCounter = ActionConstants::FIRST_GAME_INTERNAL_TAG;
   
 // =====================================================================================================================
@@ -560,25 +556,16 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::MountCharg
     selectedObjectID = msg.objectID;
   }
   
-  if(static_cast<bool>(msg.usePreDockPose)) {
-    DriveToAndMountChargerAction* action =  new DriveToAndMountChargerAction(robot,
-                                                                             selectedObjectID,
-                                                                             true,
-                                                                             msg.useManualSpeed);
-    
-    if(msg.motionProf.isCustom)
-    {
-      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
-    }
-    return action;
-  } else {
-    MountChargerAction* chargerAction = new MountChargerAction(robot, selectedObjectID, true, msg.useManualSpeed);
-    if(msg.motionProf.isCustom)
-    {
-      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, chargerAction);
-    }
-    return chargerAction;
+  auto action =  new DriveToAndMountChargerAction(robot,
+                                                  selectedObjectID,
+                                                  msg.useCliffSensorCorrection,
+                                                  msg.useManualSpeed);
+  if(msg.motionProf.isCustom)
+  {
+    robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
   }
+  return action;
+
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1769,10 +1756,10 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
     
     // Clear out all idle animations set by the sdk
     // TODO: Restore Idle Animation API (VIC-366)
-    //IAnimationStreamer& animStreamer = robot->GetAnimationStreamer();
-    //BOUNDED_WHILE(kBoundedWhileIdlePopLimit,
-    //              RESULT_OK == animStreamer.RemoveIdleAnimation("sdk")){
-    //}
+    // AnimationStreamer& animStreamer = robot->GetAnimationStreamer();
+    // BOUNDED_WHILE(kBoundedWhileIdlePopLimit,
+    //               RESULT_OK == animStreamer.RemoveIdleAnimation("sdk")){
+    // }
   }
 }
 

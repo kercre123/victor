@@ -25,7 +25,7 @@
 #include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "clad/types/animationKeyFrames.h"
+#include "clad/types/animationTypes.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
@@ -227,7 +227,9 @@ namespace Cozmo {
                        _startOfAnimationSent,
                        _endOfAnimationSent);
       
-      SendEndOfAnimation();
+      if (_startOfAnimationSent) {
+        SendEndOfAnimation();
+      }
 
       EnableBackpackAnimationLayer(false);
 
@@ -438,8 +440,7 @@ namespace Cozmo {
                                               _startTime_ms,
                                               _streamingTime_ms,
                                               layeredKeyFrames,
-                                              false,
-                                              nullptr);
+                                              false);
       
 //      // If we have audio to send
 //      if(layeredKeyFrames.haveAudioKeyFrame)
@@ -514,6 +515,11 @@ namespace Cozmo {
     auto & eventTrack       = anim->GetTrack<EventKeyFrame>();
     auto & faceAnimTrack    = anim->GetTrack<FaceAnimationKeyFrame>();
     
+
+    if(!_startOfAnimationSent) {
+      SendStartOfAnimation();
+    }
+    
     // Is it time to play robot audio?
     // TODO: Do it this way or with GetCurrentStreamingMessage() like all the other tracks?
     if (robotAudioTrack.HasFramesLeft() &&
@@ -539,9 +545,7 @@ namespace Cozmo {
                                               _startTime_ms,
                                               _streamingTime_ms,
                                               layeredKeyFrames,
-                                              storeFace,
-//                                              (haveAnimAudio ? &rawAudio : nullptr));
-                                              nullptr);
+                                              storeFace);
       
 //      // Audio keyframe always goes first
 //      if(layeredKeyFrames.haveAudioKeyFrame)
@@ -567,13 +571,6 @@ namespace Cozmo {
 #     else
 #       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__)
 #     endif
-        
-      // Note that start of animation message is also sent _after_ audio keyframe,
-      // to keep things consistent in how the robot's AnimationController expects
-      // to receive things
-      if(!_startOfAnimationSent) {
-        SendStartOfAnimation();
-      }
       
       if(SendIfTrackUnlocked(headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::HEAD_TRACK)) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("HeadAngle");
@@ -654,7 +651,7 @@ namespace Cozmo {
     
     // Send an end-of-animation keyframe when done
     if( !anim->HasFramesLeft() &&
-//        _audioClient.AnimationIsComplete() &&
+        !_audioClient->HasActiveEvents() &&
         _startOfAnimationSent &&
         !_endOfAnimationSent)
     {      

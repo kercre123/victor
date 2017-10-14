@@ -1,7 +1,5 @@
 #include <mex.h>
 
-#define COZMO_BASESTATION
-
 #include "anki/cozmo/basestation/visionSystem.h"
 #include "anki/common/matlab/mexWrappers.h"
 

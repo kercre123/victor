@@ -11,7 +11,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerResponsesContainer.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/firmwareUpdater/firmwareUpdater.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -40,8 +39,6 @@
 namespace Anki {
 namespace Cozmo {
 
-
-const int kHighestVersion = 0;
 const std::string kBlacklistedAnimationTriggersConfigKey = "blacklisted_animation_triggers";
 
 RobotManager::RobotManager(const CozmoContext* context)
@@ -266,11 +263,6 @@ void RobotManager::UpdateRobotConnection()
 {
   ANKI_CPU_PROFILE("RobotManager::UpdateRobotConnection");
   _robotMessageHandler->ProcessMessages();
-}
-
-void RobotManager::ReadFaceAnimationDir()
-{
-  _context->GetDataLoader()->LoadFaceAnimations();
 }
 
 void RobotManager::BroadcastAvailableAnimationGroups()

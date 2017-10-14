@@ -1,8 +1,8 @@
 //Generated File made by GenerateThemeKeyConstFile, do not edit
 public static class ThemeKeys {
-
+  
   public static class Cozmo {
-
+    
     public static class Button {
       public const string kCozmoButtonBack = "CozmoButton_Back";
       public const string kCozmoButtonCalibrate = "CozmoButton_Calibrate";
@@ -22,7 +22,7 @@ public static class ThemeKeys {
       public const string kLEGACYCozmoButtonSecondary = "LEGACY_CozmoButton_Secondary";
       public const string kLEGACYCozmoButtonTertiary = "LEGACY_CozmoButton_Tertiary";
     }
-
+    
     public static class Image {
       public const string kAnnouncementBanner = "Announcement_Banner";
       public const string kAppBackground = "App_Background";
@@ -37,8 +37,10 @@ public static class ThemeKeys {
       public const string kCozmoButtonArrowPrevious = "CozmoButton_Arrow_Previous";
       public const string kCozmoButtonBackBackground = "CozmoButton_Back_Background";
       public const string kCozmoButtonCalibrateBackground = "CozmoButton_Calibrate_Background";
+      public const string kCozmoButtonCalibrateGlow = "CozmoButton_Calibrate_Glow";
       public const string kCozmoButtonCloseBackground = "CozmoButton_Close_Background";
       public const string kCozmoButtonCloseLiteBackground = "CozmoButton_Close_LiteBackground";
+      public const string kCozmoButtonHitRegion = "CozmoButton_HitRegion";
       public const string kCozmoButtonInvisibleHitZone = "CozmoButton_InvisibleHitZone";
       public const string kCozmoButtonPrimaryBlueBackground = "CozmoButton_Primary_BlueBackground";
       public const string kCozmoButtonPrimaryGoldBackground = "CozmoButton_Primary_GoldBackground";
@@ -48,6 +50,8 @@ public static class ThemeKeys {
       public const string kCozmoButtonRepairArrowBackground = "CozmoButton_RepairArrow_Background";
       public const string kCozmoButtonRepairPartBackground = "CozmoButton_RepairPart_Background";
       public const string kCozmoButtonReplayBackground = "CozmoButton_Replay_Background";
+      public const string kCozmoSingsSongIconLocked = "CozmoSings_SongIcon_Locked";
+      public const string kCozmoSingsSongIconUnlocked = "CozmoSings_SongIcon_Unlocked";
       public const string kEmptySlot = "Empty_Slot";
       public const string kFrameCardBackground = "Frame_Card_Background";
       public const string kFrameCardEdging = "Frame_Card_Edging";
@@ -77,7 +81,7 @@ public static class ThemeKeys {
       public const string kSpinnerMiddle = "Spinner_Middle";
       public const string kSpinnerOuter = "Spinner_Outer";
     }
-
+    
     public static class TextMeshPro {
       public const string kCardDescriptionText = "Card_Description_Text";
       public const string kCardDescriptionTextLarge = "Card_Description_Text_Large";
@@ -89,6 +93,8 @@ public static class ThemeKeys {
       public const string kCozmoButtonSecondaryText = "CozmoButton_Secondary_Text";
       public const string kCozmoButtonSmallText = "CozmoButton_Small_Text";
       public const string kCozmoButtonTertiaryText = "CozmoButton_Tertiary_Text";
+      public const string kCozmoSingsSongTitleLocked = "CozmoSings_SongTitle_Locked";
+      public const string kCozmoSingsSongTitleUnlocked = "CozmoSings_SongTitle_Unlocked";
       public const string kCozmoTextSettingsTitle = "CozmoText_Settings_Title";
       public const string kGeneralDescriptionText = "General_Description_Text";
       public const string kGeneralDescriptionTextLarge = "General_Description_Text_Large";

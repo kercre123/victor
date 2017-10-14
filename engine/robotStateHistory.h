@@ -39,6 +39,9 @@ namespace Anki {
       // Only update pose-related information: includes pose frame ID, body pose in the world, and head/lift angles
       void SetPose(const PoseFrameID_t frameID, const Pose3d& pose, const f32 headAngle_rad, const f32 liftAngle_rad);
       
+      void SetPoseParent(const Pose3d& newParent);
+      void ClearPoseParent();
+      
       const Pose3d&       GetPose()                        const {return _pose;               }
       const f32           GetHeadAngle_rad()               const {return _state.headAngle;    }
       const f32           GetLiftAngle_rad()               const {return _state.liftAngle;    }

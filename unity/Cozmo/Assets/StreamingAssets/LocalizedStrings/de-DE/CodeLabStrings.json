@@ -519,19 +519,31 @@
   "codeLabHorizontal.Tooltip.StartProgramHere" : {
     "translation" : "Programm hier starten"
   },
-  "codeLabHorizontal.Category.Drive" : {
+  "codeLab.Category.Drive" : {
     "translation" : "Fahren"
   },
-  "codeLabHorizontal.Category.Actions" : {
+  "codeLab.Category.Actions" : {
     "translation" : "Aktionen"
   },
-  "codeLabHorizontal.Category.Animations" : {
+  "codeLab.Category.Animations" : {
     "translation" : "Animationen"
   },
-  "codeLabHorizontal.Category.Events" : {
+  "codeLab.Category.Events" : {
     "translation" : "Ereignisse"
   },
-  "codeLabHorizontal.Category.Control" : {
+  "codeLab.Category.Control" : {
     "translation" : "Steuerung"
+  },
+  "codeLab.Category.Sensors": {
+    "translation": "Sensors"
+  },
+  "codeLab.Category.Display": {
+    "translation": "Display"
+  },
+  "codeLab.Category.Operators": {
+    "translation": "Operatoren"
+  },
+  "codeLab.Category.Data": {
+    "translation": "Daten"
   }
 }

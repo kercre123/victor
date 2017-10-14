@@ -188,21 +188,6 @@ void ITrackLayerManager<FRAME_TYPE>::AddToPersistentLayer(AnimationTag tag, FRAM
   }
 }
 
-// Specialization for AudioSample keyframes since they don't have trigger times (always sent)
-template<>
-void ITrackLayerManager<AnimKeyFrame::AudioSample>::AddToPersistentLayer(AnimationTag tag, AnimKeyFrame::AudioSample& keyframe)
-{
-  auto layerIter = _layers.find(tag);
-  if(layerIter != _layers.end())
-  {
-    auto& track = layerIter->second.track;
-    assert(nullptr != track.GetLastKeyFrame());
-    
-    track.AddKeyFrameToBack(keyframe);
-    layerIter->second.sentOnce = false;
-  }
-}
-
 template<class FRAME_TYPE>
 void ITrackLayerManager<FRAME_TYPE>::RemovePersistentLayer(AnimationTag tag, s32 duration_ms)
 {
@@ -226,36 +211,6 @@ void ITrackLayerManager<FRAME_TYPE>::RemovePersistentLayer(AnimationTag tag, s32
     }
     FRAME_TYPE lastFrame;
     lastFrame.SetTriggerTime(duration_ms);
-    track.AddKeyFrameToBack(std::move(lastFrame));
-    
-    AddLayer("Remove" + layerIter->second.name, track);
-    
-    _layers.erase(layerIter);
-  }
-}
-
-// Specialization for AudioSample keyframes since they don't have trigger times
-template<>
-void ITrackLayerManager<AnimKeyFrame::AudioSample>::RemovePersistentLayer(AnimationTag tag, s32 duration_ms)
-{
-  auto layerIter = _layers.find(tag);
-  if(layerIter != _layers.end())
-  {
-    PRINT_NAMED_INFO("ITrackLayerManager.RemovePersistentLayer",
-                     "%s, Tag = %d (Layers remaining=%lu)",
-                     layerIter->second.name.c_str(), layerIter->first, (unsigned long)_layers.size()-1);
-    
-    
-    // Add a layer that takes us back from where this persistent frame leaves
-    // off to no adjustment at all.
-    Animations::Track<AnimKeyFrame::AudioSample> track;
-    track.SetIsLive(true);
-    if(duration_ms > 0)
-    {
-      AnimKeyFrame::AudioSample firstFrame(layerIter->second.track.GetCurrentKeyFrame());
-      track.AddKeyFrameToBack(std::move(firstFrame));
-    }
-    AnimKeyFrame::AudioSample lastFrame;
     track.AddKeyFrameToBack(std::move(lastFrame));
     
     AddLayer("Remove" + layerIter->second.name, track);
@@ -313,7 +268,7 @@ bool ITrackLayerManager<FRAME_TYPE>::HasLayerWithTag(AnimationTag tag) const
 }
 
 // Explicit instantiation of allowed templated classes
-template class ITrackLayerManager<AnimKeyFrame::AudioSample>; // AudioLayerManager
+template class ITrackLayerManager<RobotAudioKeyFrame>;        // AudioLayerManager
 template class ITrackLayerManager<BackpackLightsKeyFrame>;    // BackpackLayerManager
 template class ITrackLayerManager<ProceduralFaceKeyFrame>;    // FaceLayerManager
 

@@ -68,7 +68,7 @@ Result BehaviorDevTurnInPlaceTest::InitInternal(Robot& robot)
   DEV_ASSERT(_nRunsPerTest > 0, "BehaviorDevTurnInPlaceTest.InvalidNRunsPerTest");
   
   // Disable reactions
-  SmartDisableReactionsWithLock(GetIDStr(), ReactionTriggerHelpers::kAffectAllArray);
+  SmartDisableReactionsWithLock(GetIDStr(), ReactionTriggerHelpers::GetAffectAllArray());
   
   // Start the tests rolling
   const auto action = GenerateTestAction(robot, _testInd);

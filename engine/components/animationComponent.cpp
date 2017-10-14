@@ -37,6 +37,7 @@ AnimationComponent::AnimationComponent(Robot& robot, const CozmoContext* context
 , _isDolingAnims(false)
 , _nextAnimToDole("")
 , _currPlayingAnim("")
+, _disabledTracks(0)
 {
   if (context) {
     // Setup game message handlers
@@ -250,6 +251,32 @@ Result AnimationComponent::StopAnimByName(const std::string& animName)
 }
 
   
+// Enables only the specified tracks. 
+// Status of other tracks remain unchanged.
+void AnimationComponent::EnableTracks(u8 tracks)
+{
+  _disabledTracks &= ~tracks;
+  _robot.SendRobotMessage<RobotInterface::LockAnimTracks>(_disabledTracks);
+}
+
+void AnimationComponent::EnableAllTracks()
+{
+  if (_disabledTracks != 0) {
+    _disabledTracks = 0;
+    _robot.SendRobotMessage<RobotInterface::LockAnimTracks>(_disabledTracks);
+  }
+}
+
+// Disables only the specified tracks. 
+// Status of other tracks remain unchanged.
+void AnimationComponent::DisableTracks(u8 tracks)
+{
+  _disabledTracks |= tracks;
+  _robot.SendRobotMessage<RobotInterface::LockAnimTracks>(_disabledTracks);
+}
+
+
+
 // ================ Game messsage handlers ======================
 template<>
 void AnimationComponent::HandleMessage(const ExternalInterface::RequestAvailableAnimations& msg)

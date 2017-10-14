@@ -123,7 +123,6 @@ int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
       result = 0; //not an error
     }
   }
-  int i;
   return result;
 }
 
@@ -181,10 +180,12 @@ static int get_payload_len(PayloadId payload_type, enum MsgDir dir)
 //Creates header for frame
 static const uint8_t* spine_construct_header(PayloadId payload_type,  uint16_t payload_len)
 {
+#ifndef NDEBUG
   int expected_len = get_payload_len(payload_type, dir_SEND);
   assert(expected_len >= 0); //valid type
   assert(expected_len == payload_len);
   assert(payload_len <= (SPINE_MAX_BYTES - SPINE_HEADER_LEN - SPINE_CRC_LEN));
+#endif
 
   struct SpineMessageHeader* hdr = &gHal.outheader;
   hdr->sync_bytes = SYNC_HEAD_TO_BODY;
@@ -384,7 +385,7 @@ void hal_send_frame(PayloadId type, const void* data, int len)
   const uint8_t* hdr = spine_construct_header(type, len);
   crc_t crc = calc_crc(data, len);
   if (hdr) {
-     spine_debug_x("sending %x packet (%d bytes)\n", type, len);
+    spine_debug_x("sending %x packet (%d bytes)\n", type, len);
     hal_serial_send(hdr, SPINE_HEADER_LEN);
     hal_serial_send(data, len);
     hal_serial_send((uint8_t*)&crc, sizeof(crc));

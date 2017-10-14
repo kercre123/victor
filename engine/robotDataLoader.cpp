@@ -19,12 +19,10 @@
 #include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/animations/animationTransfer.h"
-#include "engine/animations/cozmo_anim_generated.h"
-#include "engine/animations/faceAnimationManager.h"
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/behaviorSystem/activities/activities/iActivity.h"
-#include "engine/components/cubeLightComponent.h"
+#include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/components/bodyLightComponent.h"
+#include "engine/components/cubeLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerResponsesContainer.h"
 #include "engine/needsSystem/needsManager.h"
@@ -75,12 +73,6 @@ RobotDataLoader::~RobotDataLoader()
     _dataLoadingThread.join();
   }
 }
-  
-// We report some loading data info so the UI can inform the user. Ratio of time taken per section is approximate,
-// based on recent profiling. Some sections below are called out specifically, the rest makes up the remainder.
-// These should add up to be less than or equal to 1.0!
-static constexpr float _kAnimationsLoadingRatio = 0.7f;
-static constexpr float _kFaceAnimationsLoadingRatio = 0.2f;
 
 void RobotDataLoader::LoadNonConfigData()
 {
@@ -115,12 +107,6 @@ void RobotDataLoader::LoadNonConfigData()
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
     LoadBackpackLightAnimations();
-  }
-
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadFaceAnimations");
-    LoadFaceAnimations();
-    AddToLoadingRatio(_kFaceAnimationsLoadingRatio);
   }
 
   {
@@ -355,8 +341,8 @@ void RobotDataLoader::LoadAnimationGroupFile(const std::string& path)
     auto dotIndex = jsonName.find_last_of(".");
     std::string animationGroupName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
 
-    PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationGroupFile.LoadingSpecificAnimGroupFromJson",
-                  "Loading '%s' from %s", animationGroupName.c_str(), path.c_str());
+    //PRINT_CH_DEBUG("Animations", "RobotDataLoader.LoadAnimationGroupFile.LoadingSpecificAnimGroupFromJson",
+    //               "Loading '%s' from %s", animationGroupName.c_str(), path.c_str());
 
     std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
     _animationGroups->DefineFromJson(animGroupDef, animationGroupName);
@@ -496,15 +482,6 @@ void RobotDataLoader::LoadReactionTriggerMap()
   if (!success)
   {
     PRINT_NAMED_ERROR("RobotDataLoader.ReactionTriggerMap", "Failed to read '%s'", filename.c_str());
-  }
-}
-
-void RobotDataLoader::LoadFaceAnimations()
-{
-  FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform);
-  if (IsCustomAnimLoadEnabled())
-  {
-    FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform, true);
   }
 }
 

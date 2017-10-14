@@ -1,12 +1,22 @@
 
 cxx_project(
-    name = 'cti_planning',
-    srcs = cxx_src_glob(['basestation/src', 'shared/src']),
-    platform_srcs = [
-        ('android', glob(['basestation/src/**/*_android.cpp', 'shared/src/**/*_android.cpp']))
-    ],
-    headers = cxx_header_glob(['include/anki/planning']),
-    platform_headers = [
-        ('android', glob(['include/anki/planning/**/*_android.h']))
-    ]
+  name = 'cti_planning',
+  srcs = cxx_src_glob(['basestation/src', 'shared/src']),
+  platform_srcs = [
+    ('android', glob(['basestation/src/**/*_android.cpp', 'shared/src/**/*_android.cpp']))
+  ],
+  headers = cxx_header_glob(['include/anki/planning']),
+  platform_headers = [
+    ('android', glob(['include/anki/planning/**/*_android.h']))
+  ]
+)
+
+cxx_project(
+  name = 'cti_planning_test',
+  srcs = cxx_src_glob(['basestation/test'],
+    excludes=['*Standalone*']
+  ),
+  platform_srcs = [],
+  headers = cxx_header_glob(['basestation/test']),
+  platform_headers = []
 )

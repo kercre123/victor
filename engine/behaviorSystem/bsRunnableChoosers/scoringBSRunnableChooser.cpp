@@ -139,7 +139,7 @@ float ScoringBSRunnableChooser::ScoreBonusForCurrentBehavior(float runningDurati
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehaviorPtr ScoringBSRunnableChooser::GetDesiredActiveBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
-  const float kRandomFactor = 0.1f;
+  static const float kRandomFactor = 0.1f;
   
   VIZ_BEHAVIOR_SELECTION_ONLY( VizInterface::RobotBehaviorSelectData robotBehaviorSelectData );
 
@@ -265,8 +265,8 @@ Result ScoringBSRunnableChooser::TryAddBehavior(IBehaviorPtr behavior)
   else
   {
     // added to the map as expected
-    PRINT_NAMED_DEBUG("ScoringBSRunnableChooser.TryAddBehavior.Addition",
-      "Added behavior '%s' from factory", BehaviorIDToString(behaviorID));
+    // PRINT_NAMED_DEBUG("ScoringBSRunnableChooser.TryAddBehavior.Addition",
+    //  "Added behavior '%s' from factory", BehaviorIDToString(behaviorID));
   }
   
   // return code

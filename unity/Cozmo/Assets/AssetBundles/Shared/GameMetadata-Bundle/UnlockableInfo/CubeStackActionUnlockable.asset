@@ -15,23 +15,19 @@ MonoBehaviour:
     _EnumValueAsString: StackTwoCubes
     _EnumValue: 10
   UnlockableType: 1
-  Prerequisites:
-  - _EnumValueAsString: PickupCube
-    _EnumValue: 6
-  AnyPrereqUnlock: 0
-  _ComingSoon: 0
   DescriptionKey: unlockable.CubeStackAction.Description
   TitleKey: unlockable.CubeStackAction.Title
   SparkButtonDescription: unlockable.CubeStackAction.SparkButtonDescription
   SparkedStateDescription: unlockable.CubeStackAction.SparkedStateDescription
   SparkedMusicState:
     _Sparked: 0
+  IsSparkable: 1
   RequestTrickCostItemId: spark
   _SparkableThingID:
     _EnumValueAsString: StackCubes
     _EnumValue: 14
   CoreUpgradeIcon: {fileID: 21300000, guid: e1530e756ef384f82a0e0a2a8b2c3e59, type: 3}
   CubesRequired: 2
-  SortOrder: 200
+  SortOrder: 30
   AndroidReleaseVersion: 
   AndroidSDKVersion: 0

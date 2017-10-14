@@ -24,6 +24,44 @@ https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools
 ext install cpptools
 ```
 
+You will need to configure cpptools as described here:
+https://code.visualstudio.com/docs/languages/cpp
+
+You will need to create a c_cpp_properties.json file to locate C/C++ header files.
+Bootstrap your include path by pasting something like this:
+```json
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
+                "/usr/local/include",
+                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/8.1.0/include",
+                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
+                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include",
+                "${workspaceRoot}",
+                "${workspaceRoot}/lib/util",
+                "${workspaceRoot}/lib/util/source/anki",
+                "${workspaceRoot}/lib/util/source/3rd/jsoncpp",
+                "${workspaceRoot}/coretech/common/include",
+                "${workspaceRoot}/coretech/vision/include",
+                "${workspaceRoot}/coretech/planning/include",
+                "${workspaceRoot}/coretech/messaging/include",
+                "${workspaceRoot}/coretech/generated/clad/common",               
+                "${workspaceRoot}/coretech/generated/clad/vision",
+                "${workspaceRoot}/generated/clad/engine",
+                "${workspaceRoot}/generated/clad/util",
+                "${workspaceRoot}/tools/message-buffers/support/cpp/include",
+                "${workspaceRoot}/robot/include",
+                "${workspaceRoot}/EXTERNALS/coretech_external/opencv-3.1.0/modules/core/include",
+            ],
+        }
+    ]
+}
+```
+
+
 ### LLDB
 
 https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb

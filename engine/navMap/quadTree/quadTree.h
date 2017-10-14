@@ -34,7 +34,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor/destructor
-  QuadTree(VizManager* vizManager, Robot* robot);
+  QuadTree(VizManager* vizManager, Robot* robot, MemoryMapData rootData);
   ~QuadTree();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -70,6 +70,7 @@ public:
   // return the Processor associated to this QuadTree for queries
   QuadTreeProcessor& GetProcessor() { return _processor; }
   const QuadTreeProcessor& GetProcessor() const { return _processor; }
+  const NodeContent& GetRootNodeContent() const { return _root.GetContent(); }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Operations

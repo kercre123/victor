@@ -33,73 +33,68 @@ namespace
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // convert between our internal node content type and an external content type
-ExternalInterface::ENodeContentTypeEnum ConvertContentType(ENodeContentType contentType )
+using namespace MemoryMapTypes;
+using namespace ExternalInterface;
+
+ENodeContentTypeEnum ConvertContentType(EContentType contentType)
 {
-  using namespace ExternalInterface;
   
-  ExternalInterface::ENodeContentTypeEnum externalContentType = ExternalInterface::ENodeContentTypeEnum::Unknown;
+  ENodeContentTypeEnum externalContentType = ENodeContentTypeEnum::Unknown;
   switch (contentType) {
-    case ENodeContentType::Invalid:               { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
-    case ENodeContentType::Subdivided:            { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this (we only send leaves)
-    case ENodeContentType::Unknown:               { externalContentType = ENodeContentTypeEnum::Unknown;         break; }
-    case ENodeContentType::ClearOfObstacle:       { externalContentType = ENodeContentTypeEnum::ClearOfObstacle; break; }
-    case ENodeContentType::ClearOfCliff:          { externalContentType = ENodeContentTypeEnum::ClearOfCliff;    break; }
-    case ENodeContentType::ObstacleCube:          { externalContentType = ENodeContentTypeEnum::ObstacleCube;    break; }
-    case ENodeContentType::ObstacleCubeRemoved:   { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
-    case ENodeContentType::ObstacleCharger:       { externalContentType = ENodeContentTypeEnum::ObstacleCharger; break; }
-    case ENodeContentType::ObstacleChargerRemoved:{ DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
-    case ENodeContentType::ObstacleProx:          { externalContentType = ENodeContentTypeEnum::ObstacleProx;    break; } 
-    case ENodeContentType::ObstacleUnrecognized:  { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this (unsupported)
-    case ENodeContentType::Cliff:                 { externalContentType = ENodeContentTypeEnum::Cliff;           break; }
-    case ENodeContentType::InterestingEdge:       { externalContentType = ENodeContentTypeEnum::VisionBorder;    break; }
-    case ENodeContentType::NotInterestingEdge:    { externalContentType = ENodeContentTypeEnum::VisionBorder;    break; }
-    case ENodeContentType::_Count:                { DEV_ASSERT(false, "NavMeshQuadTreeNode._Count"); break; }
+    case EContentType::Unknown:               { externalContentType = ENodeContentTypeEnum::Unknown;         break; }
+    case EContentType::ClearOfObstacle:       { externalContentType = ENodeContentTypeEnum::ClearOfObstacle; break; }
+    case EContentType::ClearOfCliff:          { externalContentType = ENodeContentTypeEnum::ClearOfCliff;    break; }
+    case EContentType::ObstacleCube:          { externalContentType = ENodeContentTypeEnum::ObstacleCube;    break; }
+    case EContentType::ObstacleCubeRemoved:   { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
+    case EContentType::ObstacleCharger:       { externalContentType = ENodeContentTypeEnum::ObstacleCharger; break; }
+    case EContentType::ObstacleChargerRemoved:{ DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
+    case EContentType::ObstacleProx:          { externalContentType = ENodeContentTypeEnum::ObstacleProx;    break; } 
+    case EContentType::ObstacleUnrecognized:  { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this (unsupported)
+    case EContentType::Cliff:                 { externalContentType = ENodeContentTypeEnum::Cliff;           break; }
+    case EContentType::InterestingEdge:       { externalContentType = ENodeContentTypeEnum::VisionBorder;    break; }
+    case EContentType::NotInterestingEdge:    { externalContentType = ENodeContentTypeEnum::VisionBorder;    break; }
+    case EContentType::_Count:                { DEV_ASSERT(false, "NavMeshQuadTreeNode._Count"); break; }
   }
   return externalContentType;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // convert between our internal node content type and an internal content type
-ExternalInterface::ENodeContentTypeDebugVizEnum ConvertContentTypeDebugViz(ENodeContentType contentType )
-{
-  using namespace ExternalInterface;
-  
-  ExternalInterface::ENodeContentTypeDebugVizEnum internalContentType = ExternalInterface::ENodeContentTypeDebugVizEnum::Unknown;
+ENodeContentTypeDebugVizEnum ConvertContentTypeDebugViz(EContentType contentType )
+{  
+  ENodeContentTypeDebugVizEnum internalContentType = ENodeContentTypeDebugVizEnum::Unknown;
   switch (contentType) {
-    case ENodeContentType::Invalid:               { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentTypeDebugViz");        break; } // Should never get this
-    case ENodeContentType::Subdivided:            { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentTypeDebugViz");        break; } // Should never get this (we only send leaves)
-    case ENodeContentType::Unknown:               { internalContentType = ENodeContentTypeDebugVizEnum::Unknown;                break; }
-    case ENodeContentType::ClearOfObstacle:       { internalContentType = ENodeContentTypeDebugVizEnum::ClearOfObstacle;        break; }
-    case ENodeContentType::ClearOfCliff:          { internalContentType = ENodeContentTypeDebugVizEnum::ClearOfCliff;           break; }
-    case ENodeContentType::ObstacleCube:          { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCube;           break; }
-    case ENodeContentType::ObstacleCubeRemoved:   { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCubeRemoved;    break; }
-    case ENodeContentType::ObstacleCharger:       { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCharger;        break; }
-    case ENodeContentType::ObstacleChargerRemoved:{ internalContentType = ENodeContentTypeDebugVizEnum::ObstacleChargerRemoved; break; }
-    case ENodeContentType::ObstacleProx:          { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleProx;           break; }
-    case ENodeContentType::ObstacleUnrecognized:  { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleUnrecognized;   break; }
-    case ENodeContentType::Cliff:                 { internalContentType = ENodeContentTypeDebugVizEnum::Cliff;                  break; }
-    case ENodeContentType::InterestingEdge:       { internalContentType = ENodeContentTypeDebugVizEnum::InterestingEdge;        break; }
-    case ENodeContentType::NotInterestingEdge:    { internalContentType = ENodeContentTypeDebugVizEnum::NotInterestingEdge;     break; }
-    case ENodeContentType::_Count:                { DEV_ASSERT(false, "NavMeshQuadTreeNode._Count"); break; }
+    case EContentType::Unknown:               { internalContentType = ENodeContentTypeDebugVizEnum::Unknown;                break; }
+    case EContentType::ClearOfObstacle:       { internalContentType = ENodeContentTypeDebugVizEnum::ClearOfObstacle;        break; }
+    case EContentType::ClearOfCliff:          { internalContentType = ENodeContentTypeDebugVizEnum::ClearOfCliff;           break; }
+    case EContentType::ObstacleCube:          { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCube;           break; }
+    case EContentType::ObstacleCubeRemoved:   { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCubeRemoved;    break; }
+    case EContentType::ObstacleCharger:       { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCharger;        break; }
+    case EContentType::ObstacleChargerRemoved:{ internalContentType = ENodeContentTypeDebugVizEnum::ObstacleChargerRemoved; break; }
+    case EContentType::ObstacleProx:          { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleProx;           break; }
+    case EContentType::ObstacleUnrecognized:  { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleUnrecognized;   break; }
+    case EContentType::Cliff:                 { internalContentType = ENodeContentTypeDebugVizEnum::Cliff;                  break; }
+    case EContentType::InterestingEdge:       { internalContentType = ENodeContentTypeDebugVizEnum::InterestingEdge;        break; }
+    case EContentType::NotInterestingEdge:    { internalContentType = ENodeContentTypeDebugVizEnum::NotInterestingEdge;     break; }
+    case EContentType::_Count:                { DEV_ASSERT(false, "QuadTreeNode._Count"); break; }
   }
   return internalContentType;
-}
-  
+}  
 } // namespace
 
-static_assert( !std::is_copy_assignable<QuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-copyable" );
-static_assert( !std::is_copy_constructible<QuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-copyable" );
-static_assert( !std::is_move_assignable<QuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-movable" );
-static_assert( !std::is_move_constructible<QuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-movable" );
+static_assert( !std::is_copy_assignable<QuadTreeNode>::value, "QuadTreeNode was designed non-copyable" );
+static_assert( !std::is_copy_constructible<QuadTreeNode>::value, "QuadTreeNode was designed non-copyable" );
+static_assert( !std::is_move_assignable<QuadTreeNode>::value, "QuadTreeNode was designed non-movable" );
+static_assert( !std::is_move_constructible<QuadTreeNode>::value, "QuadTreeNode was designed non-movable" );
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent)
+QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent, MemoryMapData& data)
 : _center(center)
 , _sideLen(sideLength)
 , _parent(parent)
 , _level(level)
 , _quadrant(quadrant)
-, _content(ENodeContentType::Invalid)
+, _content(ENodeType::Invalid, data)
 {
   DEV_ASSERT(_quadrant <= EQuadrant::Root, "QuadTreeNode.Constructor.InvalidQuadrant");
 }
@@ -248,7 +243,7 @@ bool QuadTreeNode::AddQuad_OldRecursive(const Quad2f& quad, const NodeContent& d
       if ( IsSubdivided() )
       {
         // we are subdivided, see if we can merge children or we should tell them to add the new quad
-        if ( CanOverrideSelfAndChildrenWithContent(detectedContent.type, overlap) )
+        if ( CanOverrideSelfAndChildrenWithContent(detectedContent.data->type, overlap) )
         {
           // merge to the new content, we already made sure we can override the type
           Merge(detectedContent, processor);
@@ -356,10 +351,13 @@ bool QuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, QuadTre
     
     // create new children
     const float chHalfLen = rootHalfLen*0.5f;
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopLeft , this) ); // up L
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopRight, this) ); // up R
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotLeft , this) ); // lo L
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotRight, this) ); // lo R
+    const TimeStamp_t timeCreated = _content.data->GetLastObservedTime();
+    MemoryMapData newData(EContentType::Unknown, timeCreated);
+      
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopLeft , this, newData) ); // up L
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopRight, this, newData) ); // up R
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotLeft , this, newData) ); // lo L
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotRight, this, newData) ); // lo R
 
     // typedef to cast quadrant enum to the underlaying type (that can be assigned to size_t)
     using Q2N = std::underlying_type<EQuadrant>::type; // Q2N stands for "Quadrant To Number", it makes code below easier to read
@@ -387,7 +385,8 @@ bool QuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, QuadTre
     */
     
     // this content is set to the children that don't inherit old children
-    NodeContent emptyUnknownContent(ENodeContentType::Unknown);
+    MemoryMapData data(EContentType::Unknown, timeCreated);
+    NodeContent emptyUnknownContent(ENodeType::Leaf, data);
     
     // calculate which children are brought over from the old ones
     if ( xShift && yShift )
@@ -494,6 +493,8 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
 
   const bool xPlus = FLT_GE_ZERO(direction.x());
   const bool yPlus = FLT_GE_ZERO(direction.y());
+  const TimeStamp_t timeCreated = _content.data->GetLastObservedTime();
+  MemoryMapData newDaata(EContentType::Unknown, timeCreated);
   
   // move to its new center
   const float oldHalfLen = _sideLen * 0.50f;
@@ -501,10 +502,10 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
   _center.y() = _center.y() + (yPlus ? oldHalfLen : -oldHalfLen);
 
   // create new children
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this) ); // lo R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this, newDaata) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this, newDaata) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this, newDaata) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this, newDaata) ); // lo R
 
   // calculate the child that takes my place by using the opposite direction to expansion
   size_t childIdx = 0;
@@ -515,7 +516,8 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
   
   // we have to set the new first level children as Unknown, since they are initialized as Invalid
   // except the child that takes my place, since that one is going to inherit my content
-  NodeContent emptyUnknownContent(ENodeContentType::Unknown);
+  MemoryMapData unknownData(EContentType::Unknown, timeCreated);
+  NodeContent emptyUnknownContent(ENodeType::Leaf, unknownData);
   for(size_t idx=0; idx<_childrenPtr.size(); ++idx) {
     if ( idx != childIdx ) {
       _childrenPtr[idx]->ForceSetDetectedContentType(emptyUnknownContent, processor);
@@ -533,7 +535,7 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
   // set the content type I had in the child that takes my place
   childTakingMyPlace.ForceSetDetectedContentType( _content, processor );
   
-  NodeContent emptySubdividedContent(ENodeContentType::Subdivided);
+  NodeContent emptySubdividedContent(ENodeType::Subdivided, unknownData);
   ForceSetDetectedContentType(emptySubdividedContent, processor);
   
   // upgrade my remaining stats
@@ -552,7 +554,7 @@ void QuadTreeNode::AddQuadsToSend(QuadInfoVector& quadInfoVector) const
   // if we have children, delegate on them, otherwise add data about ourselves
   if ( _childrenPtr.empty() )
   {
-    const auto contentTypeExternal = ConvertContentType(_content.type);
+    const auto contentTypeExternal = ConvertContentType(_content.data->type);
     quadInfoVector.emplace_back(ExternalInterface::MemoryMapQuadInfo(contentTypeExternal, _level));
   }
   else
@@ -570,7 +572,7 @@ void QuadTreeNode::AddQuadsToSendDebugViz(QuadInfoDebugVizVector& quadInfoVector
   // if we have children, delegate on them, otherwise add data about ourselves
   if ( _childrenPtr.empty() )
   {
-    const auto contentTypeDebugViz = ConvertContentTypeDebugViz(_content.type);
+    const auto contentTypeDebugViz = ConvertContentTypeDebugViz(_content.data->type);
     quadInfoVector.emplace_back(ExternalInterface::MemoryMapQuadInfoDebugViz(contentTypeDebugViz, _level));
   }
   else
@@ -591,10 +593,12 @@ void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
   const float halfLen    = _sideLen * 0.50f;
   const float quarterLen = halfLen * 0.50f;
   const uint8_t cLevel = _level-1;
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopLeft , this) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopRight, this) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotLeft , this) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotRight, this) ); // lo E
+  const TimeStamp_t timeCreated = _content.data->GetLastObservedTime();
+  MemoryMapData newData(EContentType::Unknown, timeCreated);
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopLeft , this, newData) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopRight, this, newData) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotLeft , this, newData) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotRight, this, newData) ); // lo E
 
   // our children may change later on, but until they do, assume they have our old content
   for ( auto& childPtr : _childrenPtr )
@@ -603,7 +607,7 @@ void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
   }
   
   // set our content type to subdivided
-  NodeContent emptySubdividedContent(ENodeContentType::Subdivided);
+  NodeContent emptySubdividedContent(ENodeType::Subdivided, newData);
   ForceSetDetectedContentType(emptySubdividedContent, processor);
 }
 
@@ -633,26 +637,27 @@ void QuadTreeNode::ClearDescendants(QuadTreeProcessor& processor)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::CanOverrideSelfWithContent(ENodeContentType newContentType, EContentOverlap overlap) const
+bool QuadTreeNode::CanOverrideSelfWithContent(EContentType newContentType, EContentOverlap overlap) const
 {
   // TODO To guarantee that the future doesn't break this, we should require a matrix of old vs new to be fully
   // specified here. Some values however depend on overlap, so we could not cache / make const
-
-  if ( newContentType == ENodeContentType::Cliff )
+  
+  EContentType dataType = _content.data->type;
+  if ( newContentType == EContentType::Cliff )
   {
     // Cliff can override any other
     return true;
   }
-  else if ( _content.type == ENodeContentType::Cliff )
+  else if ( dataType == EContentType::Cliff )
   {
     // Cliff can only be overridden by a full ClearOfCliff (the cliff is gone)
-    const bool isTotalClear = (newContentType == ENodeContentType::ClearOfCliff) && (overlap == EContentOverlap::Total);
+    const bool isTotalClear = (newContentType == EContentType::ClearOfCliff) && (overlap == EContentOverlap::Total);
     return isTotalClear;
   }
-  else if ( newContentType == ENodeContentType::ClearOfObstacle )
+  else if ( newContentType == EContentType::ClearOfObstacle )
   {
     // ClearOfObstacle can't override ClearOfCliff, since it's less restrictive
-    if ( _content.type == ENodeContentType::ClearOfCliff ) {
+    if ( dataType == EContentType::ClearOfCliff ) {
       return false;
     }
 
@@ -660,47 +665,47 @@ bool QuadTreeNode::CanOverrideSelfWithContent(ENodeContentType newContentType, E
     // not clear basic types unless it has covered them fully. For example, this fixes obstacles or borders
     // being cleared just because we clear from the robot to the marker. We do not want to clear below the marker
     // unless the quad is fully contained (this will prevent lines from destroying content)
-    if ( ( _content.type == ENodeContentType::ObstacleCube         ) ||
-         ( _content.type == ENodeContentType::ObstacleCharger      ) ||
-         ( _content.type == ENodeContentType::ObstacleUnrecognized ) ||
-         ( _content.type == ENodeContentType::InterestingEdge      ) ||
-         ( _content.type == ENodeContentType::NotInterestingEdge   ) )
+    if ( ( dataType == EContentType::ObstacleCube         ) ||
+         ( dataType == EContentType::ObstacleCharger      ) ||
+         ( dataType == EContentType::ObstacleUnrecognized ) ||
+         ( dataType == EContentType::InterestingEdge      ) ||
+         ( dataType == EContentType::NotInterestingEdge   ) )
     {
       const bool isTotalClear = (overlap == EContentOverlap::Total);
       return isTotalClear;
     }
   }
-  else if ( newContentType == ENodeContentType::InterestingEdge )
+  else if ( newContentType == EContentType::InterestingEdge )
   {
     // InterestingEdge can only override basic node types, because it would cause data loss otherwise. For example,
     // we don't want to override a recognized marked cube or a cliff with their own border
-    if ( ( _content.type == ENodeContentType::ObstacleCube         ) ||
-         ( _content.type == ENodeContentType::ObstacleCharger      ) ||
-         ( _content.type == ENodeContentType::ObstacleUnrecognized ) ||
-         ( _content.type == ENodeContentType::Cliff                ) ||
-         ( _content.type == ENodeContentType::NotInterestingEdge   ) )
+    if ( ( dataType == EContentType::ObstacleCube         ) ||
+         ( dataType == EContentType::ObstacleCharger      ) ||
+         ( dataType == EContentType::ObstacleUnrecognized ) ||
+         ( dataType == EContentType::Cliff                ) ||
+         ( dataType == EContentType::NotInterestingEdge   ) )
     {
       return false;
     }
   }
-  else if ( newContentType == ENodeContentType::NotInterestingEdge )
+  else if ( newContentType == EContentType::NotInterestingEdge )
   {
     // NotInterestingEdge can only override interesting edges
-    if ( _content.type != ENodeContentType::InterestingEdge ) {
+    if ( dataType != EContentType::InterestingEdge ) {
       return false;
     }
   }
-  else if ( newContentType == ENodeContentType::ObstacleCubeRemoved )
+  else if ( newContentType == EContentType::ObstacleCubeRemoved )
   {
     // ObstacleCubeRemoved can only remove ObstacleCube
-    if ( _content.type != ENodeContentType::ObstacleCube ) {
+    if ( dataType != EContentType::ObstacleCube ) {
       return false;
     }
   }
-  else if ( newContentType == ENodeContentType::ObstacleChargerRemoved )
+  else if ( newContentType == EContentType::ObstacleChargerRemoved )
   {
     // ObstacleChargerRemoved can only remove ObstacleCharger
-    if ( _content.type != ENodeContentType::ObstacleCharger ) {
+    if ( dataType != EContentType::ObstacleCharger ) {
       return false;
     }
   }
@@ -709,7 +714,7 @@ bool QuadTreeNode::CanOverrideSelfWithContent(ENodeContentType newContentType, E
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::CanOverrideSelfAndChildrenWithContent(ENodeContentType newContentType, EContentOverlap overlap) const
+bool QuadTreeNode::CanOverrideSelfAndChildrenWithContent(EContentType newContentType, EContentOverlap overlap) const
 {
   // ask us
   if ( !CanOverrideSelfWithContent(newContentType, overlap) ) {
@@ -734,15 +739,19 @@ void QuadTreeNode::TryAutoMerge(QuadTreeProcessor& processor)
   DEV_ASSERT(IsSubdivided(), "QuadTreeNode.TryAutoMerge.NotSubdivided");
 
   // check if all children classified the same content
-  ENodeContentType childType = _childrenPtr[0]->GetContentType();
-  if ( childType == ENodeContentType::Subdivided ) {
+  ENodeType childType = _childrenPtr[0]->GetNodeType();
+  if ( childType == ENodeType::Subdivided ) {
     // any subdivided quad prevents the parent from merging
     return;
   }
   
   bool allChildrenEqual = true;
+  TimeStamp_t firstObservedTime = _childrenPtr[0]->GetData()->GetFirstObservedTime();
+  TimeStamp_t lastObservedTime  = _childrenPtr[0]->GetData()->GetLastObservedTime();
   for(size_t idx1=0; idx1<_childrenPtr.size()-1; ++idx1)
   {
+    firstObservedTime = fmin(firstObservedTime, _childrenPtr[idx1]->GetData()->GetFirstObservedTime());
+    lastObservedTime  = fmax(lastObservedTime,  _childrenPtr[idx1]->GetData()->GetLastObservedTime());
     for(size_t idx2=idx1+1; idx2<_childrenPtr.size(); ++idx2)
     {
       if ( _childrenPtr[idx1]->GetContent() != _childrenPtr[idx2]->GetContent() )
@@ -757,6 +766,9 @@ void QuadTreeNode::TryAutoMerge(QuadTreeProcessor& processor)
   if ( allChildrenEqual )
   {
     NodeContent childContent = _childrenPtr[0]->GetContent(); // do a copy since merging will destroy children
+    childContent.data->SetFirstObservedTime(firstObservedTime);
+    childContent.data->SetLastObservedTime(lastObservedTime);
+    
     Merge( childContent, processor );
   }
 }
@@ -766,7 +778,7 @@ void QuadTreeNode::TrySetDetectedContentType(const NodeContent& detectedContent,
   QuadTreeProcessor& processor)
 {
   // if we don't want to override with the new content, do not call ForceSet
-  if ( !CanOverrideSelfWithContent(detectedContent.type, overlap) ) {
+  if ( !CanOverrideSelfWithContent(detectedContent.data->type, overlap) ) {
     return;
   }
 
@@ -777,17 +789,19 @@ void QuadTreeNode::TrySetDetectedContentType(const NodeContent& detectedContent,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::ForceSetDetectedContentType(const NodeContent& detectedContent, QuadTreeProcessor& processor)
 {
-  const ENodeContentType oldcontent = _content.type;
+  const NodeContent oldContent(_content);
+  const EContentType oldContentType = _content.data->type;
 
   // if we are trying to set a removed type, convert to the type we want to actually set
   NodeContent finalContent = detectedContent;
   {
-    const ENodeContentType newContent = detectedContent.type;
-    const bool isObstacleRemoved = (newContent == ENodeContentType::ObstacleChargerRemoved) ||
-                                   (newContent == ENodeContentType::ObstacleCubeRemoved);
+    const EContentType newContent = detectedContent.data->type;
+    const bool isObstacleRemoved = (newContent == EContentType::ObstacleChargerRemoved) ||
+                                   (newContent == EContentType::ObstacleCubeRemoved);
     if ( isObstacleRemoved )
     {
-      finalContent.type = ENodeContentType::ClearOfObstacle;
+      MemoryMapData newData(EContentType::ClearOfObstacle, detectedContent.data->GetLastObservedTime());
+      finalContent = NodeContent(ENodeType::Leaf, newData);
     }
   }
   
@@ -795,9 +809,11 @@ void QuadTreeNode::ForceSetDetectedContentType(const NodeContent& detectedConten
   _content = finalContent;
   
   // notify processor only when content type changes, not if the underlaying info changes
-  const bool typeChanged = oldcontent != _content.type;
+  const bool typeChanged = oldContentType != _content.data->type;
   if ( typeChanged ) {
-    processor.OnNodeContentTypeChanged(this, oldcontent, _content.type);
+    // we no longer check if if the type changes from Invalid or Subdivided in the processor, 
+    // so we should move the check here.
+    processor.OnNodeContentTypeChanged(this, oldContent, _content);
   }
 }
 
@@ -1388,6 +1404,7 @@ bool QuadTreeNode::AddQuad_NewRecursive(const Quad2f& quad,
   if ( quadsOverlap )
   {
     const EContentOverlap overlap = isMyQuadContained ? EContentOverlap::Total : EContentOverlap::Partial;
+    _content.data->SetLastObservedTime(detectedContent.data->GetLastObservedTime());
   
     // am I fully contained within the quad?
     if ( isMyQuadContained )
@@ -1396,7 +1413,7 @@ bool QuadTreeNode::AddQuad_NewRecursive(const Quad2f& quad,
       if ( IsSubdivided() )
       {
         // we are subdivided, see if we can merge children or we should tell them to add the new quad
-        if ( CanOverrideSelfAndChildrenWithContent(detectedContent.type, overlap) )
+        if ( CanOverrideSelfAndChildrenWithContent(detectedContent.data->type, overlap) )
         {
           // merge to the new content, we already made sure we can override the type
           Merge(detectedContent, processor);
@@ -1493,11 +1510,13 @@ bool QuadTreeNode::AddTriangle_Recursive(const Triangle2f& triangle,
     // am I fully contained within the quad?
     if ( isMyQuadContained )
     {
+      _content.data->SetLastObservedTime(detectedContent.data->GetLastObservedTime());
+      
       // if subdivided
       if ( IsSubdivided() )
       {
         // we are subdivided, see if we can merge children or we should tell them to add the new quad
-        if ( CanOverrideSelfAndChildrenWithContent(detectedContent.type, overlap) )
+        if ( CanOverrideSelfAndChildrenWithContent(detectedContent.data->type, overlap) )
         {
           // merge to the new content, we already made sure we can override the type
           Merge(detectedContent, processor);
@@ -1589,6 +1608,7 @@ bool QuadTreeNode::AddLine_Recursive(const SegmentLineEquation& segmentLine,
     // with curves). For that reason and until I find a better way to represent this (or to trust timestamps, distance
     // to detected content, etc, as a measurement of trust), I am going to revert lines to being partial
     const EContentOverlap overlap = EContentOverlap::Partial;
+    _content.data->SetLastObservedTime(detectedContent.data->GetLastObservedTime());
   
     // see if we can subdivide
     const bool wasSubdivided = IsSubdivided();
@@ -1620,6 +1640,37 @@ bool QuadTreeNode::AddLine_Recursive(const SegmentLineEquation& segmentLine,
   
   const bool ret = (_content != previousContent) || childChanged;
   return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTreeNode::TransformContent_Recursive(NodeTransformFunction transform, 
+                                              QuadTreeNode* insertFrom, 
+                                              QuadTreeProcessor& processor)
+{  
+  bool contentChanged = false;
+  if (_content.data)
+  {
+    MemoryMapData newData = transform(_content.data);
+    NodeContent newContent(_content.type, newData);
+    
+    // AddContentPoint checks if content has changed for us
+    contentChanged = _content != newContent;
+    if (contentChanged) 
+    {
+      TrySetDetectedContentType(newContent, EContentOverlap::Partial, processor);
+      if (_content.type == ENodeType::Subdivided)
+      {
+        TryAutoMerge(processor);
+      }
+    }
+  }
+  
+  for ( const auto& cPtr : _childrenPtr )
+  {
+      cPtr->TransformContent_Recursive(transform, insertFrom, processor);
+  }
+  
+  return contentChanged;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1655,6 +1706,7 @@ bool QuadTreeNode::AddPoint_Recursive(const Point2f& point,
   const bool quadContainsPoint = IsPointInAAQuad(myQuad, point);
   if ( quadContainsPoint )
   {
+    _content.data->SetLastObservedTime(detectedContent.data->GetLastObservedTime());
     const EContentOverlap overlap = EContentOverlap::Partial; // makes sense
   
     // for any given node, a point can only be in one of their children, so we should always subdivide, since potentially

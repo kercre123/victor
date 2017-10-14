@@ -16,7 +16,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/vision/basestation/image.h"
 #include "clad/vizInterface/messageViz.h"
-#include "clad/types/animationKeyFrames.h"
+#include "clad/types/animationTypes.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include <webots/Supervisor.hpp>
@@ -112,10 +112,45 @@ void VizControllerImpl::Init()
   _dockDisp = _vizSupervisor.getDisplay("cozmo_docking_display");
   _moodDisp = _vizSupervisor.getDisplay("cozmo_mood_display");
   _behaviorDisp = _vizSupervisor.getDisplay("cozmo_behavior_display");
-  _camDisp = _vizSupervisor.getDisplay("cozmo_cam_viz_display");
   _activeObjectDisp = _vizSupervisor.getDisplay("cozmo_active_object_display");
   _cubeAccelDisp = _vizSupervisor.getDisplay("cozmo_cube_accel_display");
 
+  // Find all the debug image displays in the proto. Use the first as the camera feed and the rest for debug images.
+  {
+    webots::Node* vizNode = _vizSupervisor.getSelf();
+    webots::Field* numDisplaysField = vizNode->getField("numDebugImageDisplays");
+    s32 numDisplays = 1;
+    if(numDisplaysField == nullptr)
+    {
+      PRINT_NAMED_WARNING("VizControllerImpl.Init.MissingNumDebugDisplaysField", "Assuming single display (camera)");
+    }
+    else 
+    {
+      numDisplays = numDisplaysField->getSFInt32();
+    }
+    
+    _camDisp = nullptr;
+
+    for(s32 displayCtr = 0; displayCtr < numDisplays; ++displayCtr)
+    {
+      webots::Display* display = _vizSupervisor.getDisplay("cozmo_debug_image_display" + std::to_string(displayCtr));
+      DEV_ASSERT_MSG(display != nullptr, "VizControllerImpl.Init.NullDebugDisplay", "displayCtr=%d", displayCtr);
+    
+      if(displayCtr==0)
+      {
+        _camDisp = display;
+      }
+      else
+      {
+        _debugImages.emplace_back(display);
+      }
+    }
+    
+    DEV_ASSERT(_camDisp != nullptr, "VizControllerImpl.Init.NoCameraDisplay");
+    PRINT_NAMED_DEBUG("VizControllerImpl.Init.ImageDisplaysCreated",
+                      "Found camera display and %zu debug displays",
+                      _debugImages.size()-1);
+  }
 
   _disp->setFont("Lucida Console", 8, true);
   _moodDisp->setFont("Lucida Console", 8, true);
@@ -195,7 +230,15 @@ void VizControllerImpl::ProcessSaveImages(const AnkiEvent<VizInterface::MessageV
     } else {
       _savedImagesFolder = payload.path;
     }
-    printf("ProcessSaveImages: will save to %s\n", _savedImagesFolder.c_str());
+    
+    if (!_savedImagesFolder.empty() && !Util::FileUtils::CreateDirectory(_savedImagesFolder, false, true)) {
+      PRINT_NAMED_WARNING("VizControllerImpl.ProcessSaveImages.CreateDirectoryFailed",
+                          "Could not create: %s", _savedImagesFolder.c_str());
+    }
+    else {
+      PRINT_NAMED_INFO("VizControllerImpl.ProcessSaveImages.DirectorySet",
+                       "Will save to %s", _savedImagesFolder.c_str());
+    }
   }
   else
   {
@@ -452,71 +495,129 @@ void VizControllerImpl::ProcessVizCameraTextMessage(const AnkiEvent<VizInterface
     _camDisp->drawText(payload.text, (int)payload.x, (int)payload.y);
   }
 }
+  
+static void DisplayImageHelper(const EncodedImage& encodedImage, webots::ImageRef* imageRef, webots::Display* display)
+{
+  // Delete existing image if there is one
+  if (imageRef != nullptr) {
+    display->imageDelete(imageRef);
+  }
+  
+  Vision::ImageRGB img;
+  Result result = encodedImage.DecodeImageRGB(img);
+  if(RESULT_OK != result) {
+    PRINT_NAMED_WARNING("VizControllerImpl.DisplayImageHelper.DecodeFailed", "t=%d", encodedImage.GetTimeStamp());
+    return;
+  }
+  
+  if(img.IsEmpty()) {
+    PRINT_NAMED_WARNING("VizControllerImpl.DisplayImageHelper.EmptyImageDecoded", "t=%d", encodedImage.GetTimeStamp());
+    return;
+  }
+  
+  imageRef = display->imageNew(img.GetNumCols(), img.GetNumRows(), img.GetDataPointer(), webots::Display::RGB);
+  display->imagePaste(imageRef, 0, 0);
+}
 
 void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_ImageChunk();
-
-  EncodedImage& encodedImage = _bufferedImages[_imageBufferIndex];
-  const bool isImageReady = encodedImage.AddChunk(payload);
-
-  if(isImageReady)
+  
+  const s32 displayIndex = (payload.chunkDebug & 0xFF);
+  
+  if(displayIndex == 0)
   {
-    DEV_ASSERT_MSG(payload.frameTimeStamp == encodedImage.GetTimeStamp(),
-                   "VizControllerImpl.ProcessVizImageChunkMessage.TimestampMismath",
-                   "Payload:%u Image:%u", payload.frameTimeStamp, encodedImage.GetTimeStamp());
-
-    // Add an entry in EncodedImages map for this new image, now that it's complete
-    auto result = _encodedImages.emplace(payload.frameTimeStamp, _imageBufferIndex);
-    DEV_ASSERT_MSG(result.second, "VizControllerImpl.ProcessVizImageChunkMessage.DuplicateTimestamp",
-                   "t=%u", payload.frameTimeStamp);
-    DEV_ASSERT_MSG(result.first->second == _imageBufferIndex,
-                   "VizControllerImpl.ProcessVizImageChunkMessage.BadInsertion",
-                   "Expected index:%zu Got:%zu", _imageBufferIndex, result.first->second);
-#   pragma unused(result) // Avoid unused variable error in Release (only used in DEV_ASSERTs)
+    // Display index 0 (camera feed) is special:
+    // - If saving is enabled, we go ahead and save as soon as it is complete
+    // - We don't display until we receive a DisplayImage message (see ProcessVizDisplayImageMessage())
+    // - We do extra bookkeeping around the save counter so that we can also save the
+    //   the visualized image (with any extra viz elements overlaid) when it is complete, and with
+    //   a matching filename.
+    EncodedImage& encodedImage = _bufferedImages[_imageBufferIndex];
+    const bool isImageReady = encodedImage.AddChunk(payload);
     
-    // Move to next buffered index circularly
-    ++_imageBufferIndex;
-    if(_imageBufferIndex == _bufferedImages.size())
+    if(isImageReady)
     {
-      _imageBufferIndex = 0;
-    }
-    
-    // Invalidate anything in encodedImages using the index we are about to start adding chunks to (not the one we
-    // just completed; i.e. encodedImage != _bufferedImages[_imageBufferIndex] now because we incremented the index!)
-    _encodedImages.erase(_bufferedImages[_imageBufferIndex].GetTimeStamp());
-    
-    const bool saveImage = (_saveImageMode != ImageSendMode::Off);
-    
-    // Store the mapping for its timestamp to save counter so we can keep saved "viz" images' counters and filenames
-    // in sync with these raw images files.
-    // Have to do this anytime saveVizImage is enabled (which it could be even while _saveImageMode is Off, thanks
-    // to the vision system potentially processing images more slowly than full frame rate) or when it is about to
-    // be enabled (when saveImage is true)
-    if(saveImage || _saveVizImage)
-    {
-      _bufferedSaveCtrs[encodedImage.GetTimeStamp()] = _saveCtr;
-    }
-    
-    if(saveImage)
-    {
-      if (!_savedImagesFolder.empty() && !Util::FileUtils::CreateDirectory(_savedImagesFolder, false, true)) {
-        PRINT_NAMED_WARNING("VizControllerImpl.CreateDirectory", "Could not create images directory");
-      }
-
-      // Save original image
-      std::stringstream origFilename;
-      origFilename << "images_" << encodedImage.GetTimeStamp() << "_" << _saveCtr << ".jpg";
-      encodedImage.Save(Util::FileUtils::FullFilePath({_savedImagesFolder, origFilename.str()}));
-      _saveVizImage = true;
-      ++_saveCtr;
+      DEV_ASSERT_MSG(payload.frameTimeStamp == encodedImage.GetTimeStamp(),
+                     "VizControllerImpl.ProcessVizImageChunkMessage.TimestampMismath",
+                     "Payload:%u Image:%u", payload.frameTimeStamp, encodedImage.GetTimeStamp());
       
-      if(_saveImageMode == ImageSendMode::SingleShot) {
-        _saveImageMode = ImageSendMode::Off;
+      // Add an entry in EncodedImages map for this new image, now that it's complete
+      auto result = _encodedImages.emplace(payload.frameTimeStamp, _imageBufferIndex);
+      DEV_ASSERT_MSG(result.second, "VizControllerImpl.ProcessVizImageChunkMessage.DuplicateTimestamp",
+                     "t=%u", payload.frameTimeStamp);
+      DEV_ASSERT_MSG(result.first->second == _imageBufferIndex,
+                     "VizControllerImpl.ProcessVizImageChunkMessage.BadInsertion",
+                     "Expected index:%zu Got:%zu", _imageBufferIndex, result.first->second);
+#     pragma unused(result) // Avoid unused variable error in Release (only used in DEV_ASSERTs)
+      
+      // Move to next buffered index circularly
+      ++_imageBufferIndex;
+      if(_imageBufferIndex == _bufferedImages.size())
+      {
+        _imageBufferIndex = 0;
+      }
+      
+      // Invalidate anything in encodedImages using the index we are about to start adding chunks to (not the one we
+      // just completed; i.e. encodedImage != _bufferedImages[_imageBufferIndex] now because we incremented the index!)
+      _encodedImages.erase(_bufferedImages[_imageBufferIndex].GetTimeStamp());
+      
+      const bool saveImage = (_saveImageMode != ImageSendMode::Off);
+      
+      // Store the mapping for its timestamp to save counter so we can keep saved "viz" images' counters and filenames
+      // in sync with these raw images files.
+      // Have to do this anytime saveVizImage is enabled (which it could be even while _saveImageMode is Off, thanks
+      // to the vision system potentially processing images more slowly than full frame rate) or when it is about to
+      // be enabled (when saveImage is true)
+      if(saveImage || _saveVizImage)
+      {
+        _bufferedSaveCtrs[encodedImage.GetTimeStamp()] = _saveCtr;
+      }
+      
+      if(saveImage)
+      {
+        // Save original image
+        std::stringstream origFilename;
+        origFilename << "images_" << encodedImage.GetTimeStamp() << "_" << _saveCtr << ".jpg";
+        encodedImage.Save(Util::FileUtils::FullFilePath({_savedImagesFolder, origFilename.str()}));
+        _saveVizImage = true;
+        ++_saveCtr;
+        
+        if(_saveImageMode == ImageSendMode::SingleShot) {
+          _saveImageMode = ImageSendMode::Off;
+        }
+      }
+      
+    }
+  }
+  else
+  {
+    // For non-camera (debug) images, just display (and save) immediately. No need to wait for any additional
+    // "viz" overlay to be added. Note: debug images are only saved in "Stream" mode (not "SingleShot")
+    if(displayIndex < 1 || displayIndex > _debugImages.size())
+    {
+      PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizImageChunkMessage.InvalidDisplayIndex",
+                          "No debug display for index=%d", displayIndex);
+    }
+    else
+    {
+      DebugImage& debugImage = _debugImages.at(displayIndex-1);
+      const bool isImageReady = debugImage.encodedImage.AddChunk(payload);
+      
+      if(isImageReady)
+      {
+        if(ImageSendMode::Stream == _saveImageMode)
+        {
+          std::stringstream debugFilename;
+          debugFilename << "debug" << displayIndex << "_" << debugImage.encodedImage.GetTimeStamp() << ".jpg";
+          debugImage.encodedImage.Save(Util::FileUtils::FullFilePath({_savedImagesFolder, debugFilename.str()}));
+        }
+        
+        DisplayImageHelper(debugImage.encodedImage, debugImage.imageRef, debugImage.imageDisplay);
       }
     }
-
   }
+  
 }
   
 void VizControllerImpl::ProcessVizDisplayImageMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
@@ -561,38 +662,13 @@ void VizControllerImpl::ProcessVizDisplayImageMessage(const AnkiEvent<VizInterfa
     }
   }
 
-  // Delete existing image if there is one
-  if (_camImg != nullptr) {
-    _camDisp->imageDelete(_camImg);
-  }
-  
-  // This apparently has to happen _after_ we do the _camDisp->imageSave() call above. I HAVE NO IDEA WHY. (?!?!)
-  // (Otherwise, the channels seem to cycle and we get rainbow effects in Webots while saving is on, even though
-  // the saved images are fine.)
-  Vision::ImageRGB img;
-  Result result = encodedImage.DecodeImageRGB(img);
-  if(RESULT_OK != result) {
-    PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizDisplayImage.DecodeFailed", "t=%d", timestamp);
-    return;
-  }
-  
-  if(img.IsEmpty()) {
-    PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizDisplayImage.EmptyImageDecoded", "t=%d", timestamp);
-    return;
-  }
-  
-  //printf("Displaying image %d x %d\n", imgWidth, imgHeight);
-
-  _camImg = _camDisp->imageNew(img.GetNumCols(), img.GetNumRows(), img.GetDataPointer(), webots::Display::RGB);
-  _camDisp->imagePaste(_camImg, 0, 0);
-  SetColorHelper(_camDisp, NamedColors::RED);
-  _camDisp->drawText(std::to_string(timestamp), 1, _camDisp->getHeight()-9); // display timestamp at lower left
-  
+  DisplayImageHelper(encodedImage, _camImg, _camDisp);
+ 
   // Store the timestamp for the currently displayed image so we can use it to save
   // that image with the right filename next call
   _curImageTimestamp = timestamp;
   
-  DisplayCameraInfo();
+  DisplayCameraInfo(timestamp);
   
   // Remove all encoded images up to and including the specified timestamp (the assumption is we never
   // go backward, so once we've displayed this one, we don't need it or anything that came before it)
@@ -607,12 +683,13 @@ void VizControllerImpl::ProcessCameraInfo(const AnkiEvent<VizInterface::MessageV
   _gain     = payload.gain;
 }
 
-void VizControllerImpl::DisplayCameraInfo()
+void VizControllerImpl::DisplayCameraInfo(const TimeStamp_t timestamp)
 {
   // Print values
   char text[24];
   snprintf(text, sizeof(text), "Exp:%u Gain:%.3f\n", _exposure, _gain);
-  _camDisp->setColor(0xff0000);
+  SetColorHelper(_camDisp, NamedColors::RED);
+  _camDisp->drawText(std::to_string(timestamp), 1, _camDisp->getHeight()-9); // display timestamp at lower left
   _camDisp->drawText(text, _camDisp->getWidth()-144, _camDisp->getHeight()-9); //display exposure in bottom right
 }
 
@@ -718,9 +795,6 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.videoFrameRateHz, payload.imageProcFrameRateHz);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
 
-  sprintf(txt, "AnimBytesFree[AF]: %d[%d]", payload.numAnimBytesFree, payload.numAnimAudioFramesFree);
-  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ANIM_BUFFER, Anki::NamedColors::GREEN, txt);
-
   sprintf(txt, "Status: %5s %5s %7s %7s",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK ? "CARRY" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING ? "PAP" : "",
@@ -742,12 +816,11 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
   
-  sprintf(txt, "   %4s %7s %7s %6s %6s",
+  sprintf(txt, "   %4s %7s %7s %6s",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PATHING ? "PATH" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::LIFT_IN_POS ? "" : "LIFTING",
     payload.state.status & (uint32_t)RobotStatusFlag::HEAD_IN_POS ? "" : "HEADING",
-    payload.state.status & (uint32_t)RobotStatusFlag::IS_MOVING ? "MOVING" : "",
-    payload.state.status & (uint32_t)RobotStatusFlag::IS_BODY_ACC_MODE ? "" : "(BODY)");
+    payload.state.status & (uint32_t)RobotStatusFlag::IS_MOVING ? "MOVING" : "");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG_3, Anki::NamedColors::GREEN, txt);
     
   // Save state to file

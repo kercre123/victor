@@ -34,14 +34,6 @@ namespace Anki {
       /// Handler for incoming trace messages
       void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);
       
-      /// Handler for robot firmware crash dumps
-      // @TODO this should be moved to a different module
-      void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-      
-      /// Handle wifi flash ID reports
-      // @TODO this should be moved to a different module
-      void HandleWiFiFlashID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-      
       template<typename T>
       void HandleMessage(const T& msg);
       
@@ -58,7 +50,6 @@ namespace Anki {
       static const std::string _kUnknownTraceFormat;
       static const std::string _kRobotNamePrefix;
       RobotInterface::LogLevel _printThreshold;
-      int _lastLogRequested;
       Robot* _robot;
     };
     

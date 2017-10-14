@@ -60,10 +60,10 @@ protected:
   
 private:
   enum class State{
+    ReactingToInterruption,
     DrivingToFood,
     PlacingLiftOnCube,
-    Eating,
-    ReactingToInterruption
+    Eating
   };
   
   mutable ObjectID _targetID;

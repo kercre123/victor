@@ -710,11 +710,7 @@ namespace Anki {
     
     void VizManager::EraseAllPlannerObstacles(const bool isReplan)
     {
-      if(isReplan) {
-        EraseAllQuadsWithType((uint32_t)VizQuadType::VIZ_QUAD_PLANNER_OBSTACLE_REPLAN);
-      } else {
-        EraseAllQuadsWithType((uint32_t)VizQuadType::VIZ_QUAD_PLANNER_OBSTACLE);
-      }
+      EraseAllPaths();
     }
     
     void VizManager::EraseAllMatMarkers()
@@ -838,8 +834,6 @@ namespace Anki {
     }
 
     void VizManager::SendRobotState(const RobotState &msg,
-                                    const s32 numAnimBytesFree,
-                                    const s32 numAnimAudioFramesFree,
                                     const u8 videoFrameRateHz,
                                     const u8 imageProcFrameRateHz,
                                     const u8 enabledAnimTracks,
@@ -847,7 +841,7 @@ namespace Anki {
                                     const f32 imuTemperature_degC)
     {
       ANKI_CPU_PROFILE("VizManager::SendRobotState");
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, numAnimAudioFramesFree, videoFrameRateHz, imageProcFrameRateHz, enabledAnimTracks, animTag, imuTemperature_degC)));
+      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, videoFrameRateHz, imageProcFrameRateHz, enabledAnimTracks, animTag, imuTemperature_degC)));
     }
     
     void VizManager::SendRobotMood(VizInterface::RobotMood&& robotMood)

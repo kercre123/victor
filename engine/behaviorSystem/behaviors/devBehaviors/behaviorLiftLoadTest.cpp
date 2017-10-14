@@ -84,7 +84,7 @@ namespace Anki {
     {
       robot.GetBehaviorManager().DisableReactionsWithLock(
                                      kBehaviorTestName,
-                                     ReactionTriggerHelpers::kAffectAllArray);
+                                     ReactionTriggerHelpers::GetAffectAllArray());
       
 
       _abortTest = false;

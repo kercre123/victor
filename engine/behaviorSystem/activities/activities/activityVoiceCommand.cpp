@@ -220,7 +220,7 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
              _peekABooBehavior->GetClass() == BehaviorClass::PeekABoo,
              "VoiceCommandBehaviorChooser.PeekABoo.ImproperClassRetrievedForID");
   
-  _laserBehavior = BM.FindBehaviorByID(BehaviorID::VC_TrackLaser);
+  _laserBehavior = BM.FindBehaviorByID(BehaviorID::SparksTrackLaser);
   DEV_ASSERT(_laserBehavior != nullptr &&
              _laserBehavior->GetClass() == BehaviorClass::TrackLaser,
              "VoiceCommandBehaviorChooser.Laser.ImproperClassRetrievedForID");

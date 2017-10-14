@@ -66,7 +66,9 @@ public:
   // Convenience methods for checking head OR wheels, since either moves the camera
   bool   IsCameraMoving() const { return _isHeadMoving || _areWheelsMoving; }
   bool   WasCameraMoving(TimeStamp_t atTime); // Slightly more efficient than calling WasHeadMoving _and_ WereWheelsMoving
-  
+
+  uint8_t GetTracksLockedBy(const std::string& who) const;
+
   // Returns true if any of the tracks are locked
   bool AreAnyTracksLocked(u8 tracks) const;
   // Returns true if all of the specified tracks are locked

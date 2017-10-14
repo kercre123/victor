@@ -1,0 +1,151 @@
+[
+  {
+    "DASEventFeatureID": "black_white_feature",
+    "StartDate": {
+        "Month": "8",
+        "Day": "1",
+        "Year": "2017"
+    },
+    "EndDate": {
+        "Month": "8",
+        "Day": "8",
+        "Year": "2017"
+    },
+    "TitleKey": "whatsNew.content1.title",
+    "DescriptionKey": "whatsNew.content1.description",
+    "IconAssetBundleName": "game_icon_sprites",
+    "IconAssetName": "icon_speedTap",
+    "LeftTintColor": [128,128,128],
+    "RightTintColor": [0,0,0],
+    "CodeLabData": {
+        "ShowButton": true,
+        "ProjectGuid": "00000000-0000-0000-0000-000000000000"
+    }
+  },
+    {
+    "DASEventFeatureID": "red_green_feature",
+    "StartDate": {
+        "Month": "11",
+        "Day": "1",
+        "Year": "2017"
+    },
+    "EndDate": {
+        "Month": "11",
+        "Day": "8",
+        "Year": "2017"
+    },
+    "TitleKey": "whatsNew.content2.title",
+    "DescriptionKey": "whatsNew.content2.description",
+    "IconAssetBundleName": "game_icon_sprites",
+    "IconAssetName": "icon_cubePounce",
+    "LeftTintColor": [255,0,0],
+    "RightTintColor": [0,255,0],
+    "CodeLabData": {
+        "ShowButton": false,
+        "ProjectGuid": "00000000-0000-0000-0000-000000000000"
+    }
+  },
+    {
+    "DASEventFeatureID": "blue_yellow_feature",
+    "StartDate": {
+        "Month": "11",
+        "Day": "9",
+        "Year": "2017"
+    },
+    "EndDate": null,
+    "TitleKey": "whatsNew.content3.title",
+    "DescriptionKey": "whatsNew.content3.description",
+    "IconAssetBundleName": "game_icon_sprites",
+    "IconAssetName": "icon_memorymatch",
+    "LeftTintColor": [0,0,255],
+    "RightTintColor": [255,255,0],
+    "CodeLabData": {
+        "ShowButton": false,
+        "ProjectGuid": "00000000-0000-0000-0000-000000000000"
+    }
+  },
+    {
+    "DASEventFeatureID": "magenta_cyan_feature",
+    "StartDate": {
+        "Month": "11",
+        "Day": "12",
+        "Year": "2017"
+    },
+    "EndDate": null,
+    "TitleKey": "whatsNew.content4.title",
+    "DescriptionKey": "whatsNew.content4.description",
+    "IconAssetBundleName": "game_icon_sprites",
+    "IconAssetName": "icon_guardDog",
+    "LeftTintColor": [255,0,255],
+    "RightTintColor": [0,255,255],
+    "CodeLabData": {
+        "ShowButton": true,
+        "ProjectGuid": "c99f3fe9-0494-4c41-979d-42ed796bc884"
+    }
+  },
+    {
+    "DASEventFeatureID": "red_yellow_feature",
+    "StartDate": {
+        "Month": "11",
+        "Day": "16",
+        "Year": "2017"
+    },
+    "EndDate": {
+        "Month": "11",
+        "Day": "20",
+        "Year": "2017"
+    },
+    "TitleKey": "whatsNew.content5.title",
+    "DescriptionKey": "whatsNew.content5.description",
+    "IconAssetBundleName": "trick_icon_sprites",
+    "IconAssetName": "icon_cozmosings_804x804",
+    "LeftTintColor": [255,0,0],
+    "RightTintColor": [255,255,0],
+    "CodeLabData": {
+        "ShowButton": false,
+        "ProjectGuid": "00000000-0000-0000-0000-000000000000"
+    }
+  },
+    {
+    "DASEventFeatureID": "green_magenta_feature",
+    "StartDate": {
+        "Month": "12",
+        "Day": "15",
+        "Year": "2017"
+    },
+    "EndDate": null,
+    "TitleKey": "whatsNew.content6.title",
+    "DescriptionKey": "whatsNew.content6.description",
+    "IconAssetBundleName": "trick_icon_sprites",
+    "IconAssetName": "icon_laserPointer_804x804",
+    "LeftTintColor": [0,255,0],
+    "RightTintColor": [255,0,255],
+    "CodeLabData": {
+        "ShowButton": false,
+        "ProjectGuid": "00000000-0000-0000-0000-000000000000"
+    }
+  },
+    {
+    "DASEventFeatureID": "blue_cyan_feature",
+    "StartDate": {
+        "Month": "2",
+        "Day": "1",
+        "Year": "2018"
+    },
+    "EndDate": {
+        "Month": "2",
+        "Day": "8",
+        "Year": "2018"
+    },
+    "TitleKey": "whatsNew.content7.title",
+    "DescriptionKey": "whatsNew.content7.description",
+    "IconAssetBundleName": "trick_icon_sprites",
+    "IconAssetName": "overlay_pyramid_804x804",
+    "LeftTintColor": [0,0,255],
+    "RightTintColor": [0,255,255],
+    "CodeLabData": {
+        "ShowButton": false,
+        "ProjectGuid": "00000000-0000-0000-0000-000000000000"
+    }
+  }
+]

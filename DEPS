@@ -4,8 +4,8 @@
         "pwd": "FoDmKuxMUjsmNhA49BnWysEfVLWaLdGY",
         "repo_names": {
             "anki-thirdparty": {
-                "branch": "branches/cozmo",
-                "version": "23"
+                "branch": "branches/victor",
+                "version": "125"
             },
             "cozmo-assets": {
                 "allow_extra_files": "True",

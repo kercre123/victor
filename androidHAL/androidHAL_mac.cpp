@@ -36,12 +36,16 @@
 
 namespace Anki {
   namespace Cozmo {
-    
-    webots::Supervisor* _engineSupervisor = nullptr;
-    
+
     namespace { // "Private members"
 
-      // Const paramters / settings
+      // Has SetSupervisor() been called yet?
+      bool _engineSupervisorSet = false;
+
+      // Current supervisor (if any)
+      webots::Supervisor* _engineSupervisor = nullptr;
+
+      // Const parameters / settings
       const u32 VISION_TIME_STEP = 65; // This should be a multiple of the world's basic time step!
 
       // Cameras / Vision Processing
@@ -60,7 +64,10 @@ namespace Anki {
       const f32 kTangentialDistCoeff2 = 0.001523473592445885f;
       const f32 kDistCoeffNoiseFrac   = 0.0f; // fraction of the true value to use for uniformly distributed noise (0 to disable)
       
-      u8* imageBuffer_ = nullptr;
+      std::vector<u8> imageBuffer_;
+      TimeStamp_t cameraStartTime_ms_;
+      TimeStamp_t lastImageCapturedTime_ms_;
+      
       
     } // "private" namespace
 
@@ -72,82 +79,97 @@ namespace Anki {
     
     
     // Definition of static field
-    AndroidHAL* AndroidHAL::_instance = 0;
-    
+    AndroidHAL* AndroidHAL::_instance = nullptr;
+
     /**
      * Returns the single instance of the object.
      */
     AndroidHAL* AndroidHAL::getInstance() {
+      // Did you remember to call SetSupervisor()?
+      DEV_ASSERT(_engineSupervisorSet, "sim_androidHAL.NoSupervisorSet");
       // check if the instance has been created yet
-      if(0 == _instance) {
+      if (nullptr == _instance) {
         // if not, then create it
-        _instance = new AndroidHAL;
+        _instance = new AndroidHAL();
       }
       // return the single instance
       return _instance;
     }
-    
+
     /**
      * Removes instance
      */
     void AndroidHAL::removeInstance() {
       // check if the instance has been created yet
-      if(0 != _instance) {
+      if (nullptr != _instance) {
         delete _instance;
-        _instance = 0;
+        _instance = nullptr;
       }
     };
-    
+
     void AndroidHAL::SetSupervisor(webots::Supervisor *sup)
     {
       _engineSupervisor = sup;
+      _engineSupervisorSet = true;
     }
     
     AndroidHAL::AndroidHAL()
     {
-      // Did you remember to call SetSupervisor()?
-      DEV_ASSERT(_engineSupervisor != nullptr, "sim_androidHAL.NullWebotsSupervisor");
-      
-      // Is the step time defined in the world file >= than the robot time? It should be!
-      DEV_ASSERT(TIME_STEP >= _engineSupervisor->getBasicTimeStep(), "sim_androidHAL.UnexpectedTimeStep");
+      if (nullptr != _engineSupervisor) {
 
-      headCam_ = _engineSupervisor->getCamera("HeadCamera");
+        // Is the step time defined in the world file >= than the robot time? It should be!
+        DEV_ASSERT(TIME_STEP >= _engineSupervisor->getBasicTimeStep(), "sim_androidHAL.UnexpectedTimeStep");
 
-      if(VISION_TIME_STEP % static_cast<u32>(_engineSupervisor->getBasicTimeStep()) != 0) {
-        PRINT_NAMED_WARNING("sim_androidHAL.InvalidVisionTimeStep",
-                            "VISION_TIME_STEP (%d) must be a multiple of the world's basic timestep (%.0f).",
-                            VISION_TIME_STEP, _engineSupervisor->getBasicTimeStep());
-        return;
+        if (VISION_TIME_STEP % static_cast<u32>(_engineSupervisor->getBasicTimeStep()) != 0) {
+          PRINT_NAMED_WARNING("sim_androidHAL.InvalidVisionTimeStep",
+                              "VISION_TIME_STEP (%d) must be a multiple of the world's basic timestep (%.0f).",
+                              VISION_TIME_STEP, _engineSupervisor->getBasicTimeStep());
+          return;
+        }
+
+        // Head Camera
+        headCam_ = _engineSupervisor->getCamera("HeadCamera");
+        if (nullptr != headCam_) {
+          headCam_->enable(VISION_TIME_STEP);
+          FillCameraInfo(headCam_, headCamInfo_);
+          
+          // HACK: Figure out when first camera image will actually be taken (next
+          // timestep from now), so we can reference to it when computing frame
+          // capture time from now on.
+          // TODO: Not sure from Cyberbotics support message whether this should include "+ VISION_TIME_STEP" or not...
+          cameraStartTime_ms_ = GetTimeStamp(); // + VISION_TIME_STEP;
+          lastImageCapturedTime_ms_ = 0;
+        }
+
+        // Gyro
+        gyro_ = _engineSupervisor->getGyro("gyro");
+        if (nullptr != gyro_) {
+          gyro_->enable(TIME_STEP);
+        }
+
+        // Accelerometer
+        accel_ = _engineSupervisor->getAccelerometer("accel");
+        if (nullptr != accel_) {
+          accel_->enable(TIME_STEP);
+        }
       }
-      headCam_->enable(VISION_TIME_STEP);
-      FillCameraInfo(headCam_, headCamInfo_);
-
-      // Gyro
-      gyro_ = _engineSupervisor->getGyro("gyro");
-      gyro_->enable(TIME_STEP);
-
-      // Accelerometer
-      accel_ = _engineSupervisor->getAccelerometer("accel");
-      accel_->enable(TIME_STEP);
     }
 
     AndroidHAL::~AndroidHAL()
     {
-      if(imageBuffer_ != nullptr)
-      {
-        free(imageBuffer_);
-        imageBuffer_ = nullptr;
-      }
+
     }
-    
 
     TimeStamp_t AndroidHAL::GetTimeStamp(void)
     {
-      return static_cast<TimeStamp_t>(_engineSupervisor->getTime() * 1000.0);
+      if (nullptr != _engineSupervisor) {
+        return static_cast<TimeStamp_t>(_engineSupervisor->getTime() * 1000.0);
+      }
+      return 0;
     }
 
     // TODO: If we want higher resolution IMU data than this we need to change this
-    //       function and tic the supervisor at a faster rate than engine.
+    //       function and tick the supervisor at a faster rate than engine.
     bool AndroidHAL::IMUReadData(IMU_DataStructure &IMUData)
     {
       const double* vals = gyro_->getValues();  // rad/s
@@ -170,20 +192,18 @@ namespace Anki {
 
     Result AndroidHAL::Update()
     {
-
-      if(_engineSupervisor->step(Cozmo::TIME_STEP) == -1) {
-        return RESULT_FAIL;
-      } else {
-        //AudioUpdate();
-        return RESULT_OK;
+      if (nullptr != _engineSupervisor) {
+        if (_engineSupervisor->step(Cozmo::TIME_STEP) == -1) {
+          return RESULT_FAIL;
+        }
+        // AudioUpdate();
       }
-
-    } // step()
+      return RESULT_OK;
+    }
 
 
     // Helper function to create a CameraInfo struct from Webots camera properties:
-    void FillCameraInfo(const webots::Camera *camera,
-                        CameraCalibration &info)
+    void FillCameraInfo(const webots::Camera *camera, CameraCalibration &info)
     {
 
       const u16 nrows  = static_cast<u16>(camera->getHeight());
@@ -234,24 +254,6 @@ namespace Anki {
       return &headCamInfo_;
     }
 
-    
-    void AndroidHAL::CameraGetParameters(DefaultCameraParams& params)
-    {
-      params.minExposure_ms = 0;
-      params.maxExposure_ms = 67;
-      params.gain = 2.f;
-      params.maxGain = 4.f;
-      
-      u8 count = 0;
-      for(u8 i = 0; i < static_cast<u8>(CameraConstants::GAMMA_CURVE_SIZE); ++i)
-      {
-        params.gammaCurve[i] = count;
-        count += 255/static_cast<u8>(CameraConstants::GAMMA_CURVE_SIZE);
-      }
-      
-      return;
-    }
-
     void AndroidHAL::CameraSetParameters(u16 exposure_ms, f32 gain)
     {
       // Can't control simulated camera's exposure.
@@ -269,32 +271,49 @@ namespace Anki {
     }
 
     // Starts camera frame synchronization
-    bool AndroidHAL::CameraGetFrame(u8*& frame, u32& imageID, std::vector<ImageImuData>& imuData )
+    bool AndroidHAL::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms)
     {
-      // Malloc to get around being unable to create a static array with unknown size
-      // Also assumes that image size does not change at runtime
-      if(imageBuffer_ == nullptr)
-      {
-        imageBuffer_ = (u8*)(malloc(headCamInfo_.nrows * headCamInfo_.ncols * 3));
+      if (nullptr == headCam_) {
+        return false;
       }
-
-      frame = imageBuffer_;
-
+      
+      const TimeStamp_t currentTime_ms = GetTimeStamp();
+      
+      // This computation is based on Cyberbotics support's explaination for how to compute
+      // the actual capture time of the current available image from the simulated camera
+      // *except* I seem to need the extra "- VISION_TIME_STEP" for some reason.
+      // (The available frame is still one frame behind? I.e. we are just *about* to capture
+      //  the next one?)
+      const TimeStamp_t currentImageTime_ms = (std::floor((currentTime_ms-cameraStartTime_ms_)/VISION_TIME_STEP) * VISION_TIME_STEP
+                                               + cameraStartTime_ms_ - VISION_TIME_STEP);
+      
+      // Have we already sent the currently-available image?
+      if(lastImageCapturedTime_ms_ == currentImageTime_ms)
+      {
+        return false;
+      }
+      
+      imageBuffer_.resize(headCamInfo_.nrows * headCamInfo_.ncols * 3);
+      frame = imageBuffer_.data();
+      
       const u8* image = headCam_->getImage();
+      
       DEV_ASSERT(image != NULL, "sim_androidHAL.CameraGetFrame.NullImagePointer");
-
-      s32 pixel = 0;
-      s32 imgWidth = headCam_->getWidth();
+      DEV_ASSERT_MSG(headCam_->getWidth() == headCamInfo_.ncols,
+                     "SimAndroidHAL.CameraGetFrame.MismatchedImageWidths",
+                     "HeadCamInfo:%d HeadCamWidth:%d", headCamInfo_.ncols, headCam_->getWidth());
+      
+      u8* pixel = frame;
       for (s32 y=0; y < headCamInfo_.nrows; y++) {
         for (s32 x=0; x < headCamInfo_.ncols; x++) {
-          *(imageBuffer_ + pixel*3 + 0) = webots::Camera::imageGetRed(image, imgWidth, x, y);
-          *(imageBuffer_ + pixel*3 + 1) = webots::Camera::imageGetGreen(image, imgWidth, x, y);
-          *(imageBuffer_ + pixel*3 + 2) = webots::Camera::imageGetBlue(image,  imgWidth, x, y);
-          ++pixel;
+          pixel[0] = webots::Camera::imageGetRed(image,   headCamInfo_.ncols, x, y);
+          pixel[1] = webots::Camera::imageGetGreen(image, headCamInfo_.ncols, x, y);
+          pixel[2] = webots::Camera::imageGetBlue(image,  headCamInfo_.ncols, x, y);
+          pixel+=3;
         }
       }
 
-      if(kUseLensDistortion)
+      if (kUseLensDistortion)
       {
         // Apply radial/lens distortion. Note that cv::remap uses in inverse lookup to find where the pixels in
         // the output (distorted) image came from in the source. So we have to compute the inverse distortion here.
@@ -341,40 +360,23 @@ namespace Anki {
         cv::remap(cvFrame, cvFrame, x_undistorted, y_undistorted, CV_INTER_LINEAR);
       }
       
-      if(BLUR_CAPTURED_IMAGES)
+      if (BLUR_CAPTURED_IMAGES)
       {
         // Add some blur to simulated images
         cv::Mat cvImg(headCamInfo_.nrows, headCamInfo_.ncols, CV_8UC3, frame);
         cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
       }
       
-      // Return a few pieces of ImageImuData.
-      // Webots camera has no global shutter so sending the current IMU values
-      // for all ImageImuData messages should be sufficient.
-      IMU_DataStructure imu;
-      IMUReadData(imu);
+      imageCaptureSystemTimestamp_ms = currentImageTime_ms;
       
-      ImageImuData data;
-      data.imageId = _imageFrameID;
-      data.rateX = imu.rate_x;
-      data.rateY = imu.rate_y;
-      data.rateZ = imu.rate_z;
-      
-      // IMU data point for middle of this image
-      // See sim_hal::IMUGetCameraTime() for explanation of line2Number
-      data.line2Number = 125;
-      imuData.push_back(data);
-      
-      // Include IMU data for beginning of the next image (for rolling shutter correction purposes)
-      data.imageId = _imageFrameID + 1;
-      data.line2Number = 1;
-      imuData.push_back(data);
-
       imageID = _imageFrameID;
       _imageFrameID++;
       
+      // Mark that we've already sent the image for the current time
+      lastImageCapturedTime_ms_ = currentImageTime_ms;
+      
       return true;
-
+      
     } // CameraGetFrame()
     
   } // namespace Cozmo

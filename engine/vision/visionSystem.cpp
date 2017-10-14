@@ -109,6 +109,7 @@ namespace Cozmo {
   , _imageCache(new Vision::ImageCache())
   , _context(context)
   , _imagingPipeline(new Vision::ImagingPipeline())
+  , _poseOrigin("VisionSystemOrigin")
   , _vizManager(context == nullptr ? nullptr : context->GetVizManager())
   , _petTracker(new Vision::PetTracker())
   , _markerDetector(new Vision::MarkerDetector(_camera))
@@ -199,7 +200,7 @@ namespace Cozmo {
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.DoneInstantiatingFaceTracker", "");
 
     _motionDetector.reset(new MotionDetector(_camera, _vizManager, config));
-    
+
     const Result petTrackerInitResult = _petTracker->Init(config);
     if(RESULT_OK != petTrackerInitResult) {
       PRINT_NAMED_ERROR("VisionSystem.Init.PetTrackerInitFailed", "");
@@ -471,6 +472,17 @@ namespace Cozmo {
     std::swap(_prevPoseData, _poseData);
     _poseData = poseData;
     
+    // Update cameraPose and historical state's pose to use the vision system's pose origin
+    {
+      // We expect the passed-in historical pose to be w.r.t. to an origin and have its parent removed
+      // so that we can set its parent to be our poseOrigin on this thread. The cameraPose
+      // should use the histState's pose as its parent.
+      DEV_ASSERT(!poseData.histState.GetPose().HasParent(), "VisionSystem.UpdatePoseData.HistStatePoseHasParent");
+      DEV_ASSERT(poseData.cameraPose.IsChildOf(poseData.histState.GetPose()),
+                 "VisionSystem.UpdatePoseData.BadPoseDataCameraPose");
+      _poseData.histState.SetPoseParent(_poseOrigin);
+    }
+    
     if(_wasCalledOnce) {
       _havePrevPoseData = true;
     } else {
@@ -480,32 +492,6 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateRobotState()
   
-  
-  void VisionSystem::GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange)
-  {
-    DEV_ASSERT(_havePrevPoseData, "VisionSystem.GetPoseChange.NoPreviousPoseData");
-    
-    const Pose3d& crntPose = _poseData.histState.GetPose();
-    const Pose3d& prevPose = _prevPoseData.histState.GetPose();
-    const Radians crntAngle = crntPose.GetRotation().GetAngleAroundZaxis();
-    const Radians prevAngle = prevPose.GetRotation().GetAngleAroundZaxis();
-    const Vec3f& crntT = crntPose.GetTranslation();
-    const Vec3f& prevT = prevPose.GetTranslation();
-    
-    angleChange = crntAngle - prevAngle;
-    
-    //PRINT_STREAM_INFO("angleChange = %.1f", angleChange.getDegrees());
-    
-    // Position change in world (mat) coordinates
-    const f32 dx = crntT.x() - prevT.x();
-    const f32 dy = crntT.y() - prevT.y();
-    
-    // Get change in robot coordinates
-    const f32 cosAngle = cosf(-prevAngle.ToFloat());
-    const f32 sinAngle = sinf(-prevAngle.ToFloat());
-    xChange = dx*cosAngle - dy*sinAngle;
-    yChange = dx*sinAngle + dy*cosAngle;
-  } // GetPoseChange()
   
   Radians VisionSystem::GetCurrentHeadAngle()
   {
@@ -544,17 +530,20 @@ namespace Cozmo {
     DEV_ASSERT(sampleInc >= 1, "VisionSystem.ComputeMean.BadIncrement");
     
     s32 sum=0;
-    s32 count=0;
-    for(s32 i=0; i<inputImageGray.GetNumRows(); i+=sampleInc)
+    const s32 numRows = inputImageGray.GetNumRows();
+    const s32 numCols = inputImageGray.GetNumCols();
+    for(s32 i=0; i<numRows; i+=sampleInc)
     {
       const u8* image_i = inputImageGray.GetRow(i);
-      for(s32 j=0; j<inputImageGray.GetNumCols(); j+=sampleInc)
+      for(s32 j=0; j<numCols; j+=sampleInc)
       {
         sum += image_i[j];
-        ++count;
       }
     }
-    
+    // Consider that in the loop above, we always start at row 0, and we always start at column 0
+    const s32 count = ((numRows + sampleInc - 1) / sampleInc) *
+                      ((numCols + sampleInc - 1) / sampleInc);
+
     const u8 mean = Util::numeric_cast_clamped<u8>(sum/count);
     return mean;
   }
@@ -852,6 +841,11 @@ namespace Cozmo {
       headPose.SetParent(_poseData.cameraPose);
       headPose = headPose.GetWithRespectToRoot();
 
+      DEV_ASSERT(headPose.IsChildOf(_poseOrigin), "VisionSystem.DetectFaces.BadHeadPoseParent");
+      
+      // Leave faces in the output result with no parent pose (b/c we will assume they are w.r.t. the origin)
+      headPose.ClearParent();
+      
       currentFace.SetHeadPose(headPose);
     }
     
@@ -1002,21 +996,31 @@ namespace Cozmo {
         
       case MarkerDetectionCLAHE::WhenDark:
       {
-        const s32 subSample = 3;
+        // Use CLAHE on the current image if it is dark enough
+        static const s32 subSample = 3;
+        const s32 numRows = inputImageGray.GetNumRows();
+        const s32 numCols = inputImageGray.GetNumCols();
+        // Consider that in the loop below, we always start at row 0, and we always start at column 0
+        const s32 count = ((numRows + subSample - 1) / subSample) *
+                          ((numCols + subSample - 1) / subSample);
+        const s32 threshold = kClaheWhenDarkThreshold * count;
+
+        _currentUseCLAHE = true;
         s32 meanValue = 0;
-        s32 count = 0;
-        for(s32 i=0; i<inputImageGray.GetNumRows(); i+=subSample)
+        for(s32 i=0; i<numRows; i+=subSample)
         {
           const u8* img_i = inputImageGray.GetRow(i);
-          for(s32 j=0; j<inputImageGray.GetNumCols(); j+=subSample)
+          for(s32 j=0; j<numCols; j+=subSample)
           {
             meanValue += img_i[j];
-            ++count;
+          }
+          if (meanValue >= threshold)
+          {
+            // Image is not dark enough; early out
+            _currentUseCLAHE = false;
+            break;
           }
         }
-        
-        // Use CLAHE on the current image if it is dark enough
-        _currentUseCLAHE = (meanValue < kClaheWhenDarkThreshold * count);
         break;
       }
         

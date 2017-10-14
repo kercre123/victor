@@ -38,6 +38,12 @@ namespace RobotInterface {
   class MessageHandler;
 }
 
+#if ANKI_PROFILING_ENABLED
+  #define ENABLE_NEEDS_READ_WRITE_PROFILING 1
+#else
+  #define ENABLE_NEEDS_READ_WRITE_PROFILING 0
+#endif
+
 class Robot;
 class CozmoContext;
 class DesiredFaceDistortionComponent;
@@ -118,10 +124,12 @@ private:
   void InitReset(const float currentTime_s, const u32 serialNumber);
   void InitInternal(const float currentTime_s);
 
-  bool DeviceHasNeedsState();
+  bool DeviceHasNeedsState(const std::string& filename);
   void PossiblyWriteToDevice();
   void WriteToDevice(bool stampWithNowTime = true);
-  bool ReadFromDevice(bool& versionUpdated);
+  bool AttemptReadFromDevice(const std::string& filename, bool& versionUpdated);
+  bool ReadFromDevice(const std::string& filename, bool& versionUpdated);
+  std::string NeedsFilenameFromSerialNumber(const u32 serialNumber);
 
   static inline const std::string GetNurtureFolder() { return "nurture/"; }
 

@@ -431,21 +431,25 @@ public static class LocalizationEditorUtility {
     string[] assetFilePaths = Directory.GetFiles("Assets/", "*.asset", SearchOption.AllDirectories);
     EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 3, totalDirectories), (float)3 / totalDirectories);
 
+    string[] unityJsonFilePaths = Directory.GetFiles("Assets/AssetBundles/", "*.json", SearchOption.AllDirectories);
+    EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 4, totalDirectories), (float)4 / totalDirectories);
+
     string[] productConfigFilePaths = Directory.GetFiles(Application.dataPath + "/../../../resources/assets/",
                                                          "*.json", SearchOption.AllDirectories);
-    EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 4, totalDirectories), (float)4 / totalDirectories);
+    EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 5, totalDirectories), (float)5 / totalDirectories);
 
     string[] basestationConfigFilePaths = Directory.GetFiles(Application.dataPath + "/../../../resources/config/engine",
                                                              "*.json", SearchOption.AllDirectories);
-    EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 5, totalDirectories), (float)5 / totalDirectories);
+    EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 6, totalDirectories), (float)6 / totalDirectories);
 
     string[] jsFilePaths = Directory.GetFiles("Assets/StreamingAssets/Scratch", "*.js", SearchOption.AllDirectories);
-    EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 6, totalDirectories), (float)6 / totalDirectories);
+    EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 7, totalDirectories), (float)7 / totalDirectories);
 
     // Prep caches for file contents 
     string[] csFileContents = new string[csFilePaths.Length];
     string[] prefabFileContents = new string[prefabFilePaths.Length];
     string[] assetFileContents = new string[assetFilePaths.Length];
+    string[] jsonFileContents = new string[unityJsonFilePaths.Length];
     string[] productConfigFileContents = new string[productConfigFilePaths.Length];
     string[] basestationConfigFileContents = new string[basestationConfigFilePaths.Length];
     string[] jsFileContents = new string[jsFilePaths.Length];
@@ -479,6 +483,7 @@ public static class LocalizationEditorUtility {
           return (StringContainedInFiles(VariableNameFromLocalizationKey(x), ref csFilePaths, ref csFileContents, csFileToExclude)
                   || StringContainedInFiles(x, ref prefabFilePaths, ref prefabFileContents)
                   || StringContainedInFiles(x, ref assetFilePaths, ref assetFileContents)
+                  || StringContainedInFiles(x, ref unityJsonFilePaths, ref jsonFileContents)
                   || StringContainedInFiles(x, ref productConfigFilePaths, ref productConfigFileContents)
                   || StringContainedInFiles(x, ref basestationConfigFilePaths, ref basestationConfigFileContents));
         };

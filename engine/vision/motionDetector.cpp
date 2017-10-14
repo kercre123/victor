@@ -24,8 +24,6 @@
 #include <iomanip>
 
 
-#define DEBUG_MOTION_DETECTION 0
-
 namespace Anki {
 namespace Cozmo {
 
@@ -72,8 +70,13 @@ namespace {
   // How much blurring to apply to the camera image before doing motion detection.
   CONSOLE_VAR(u32,  kMotionDetection_BlurFilterSize_pix, CONSOLE_GROUP_NAME, 21);
   
+  CONSOLE_VAR(bool, kMotionDetectionDebug, CONSOLE_GROUP_NAME, false);
+  
 # undef CONSOLE_GROUP_NAME
 }
+  
+static_assert(ANKI_DEV_CHEATS || kMotionDetectionDebug==false,
+              "kMotionDetectionDebug should be disabled if ANKI_DEV_CHEATS are disabled");
 
 // This class is used to accumulate data for peripheral motion detection. The image area is divided in three sections:
 // top, right and left. If the centroid of a motion patch falls inside one these areas, it's increased, otherwise it's
@@ -491,7 +494,7 @@ Result MotionDetector::DetectHelper(const ImageType &image,
                                                                  debugImageRGBs, msg);
 
     if (peripheralMotionDetected || groundMotionDetected) {
-      if (DEBUG_MOTION_DETECTION) {
+      if (kMotionDetectionDebug) {
         PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.DetectHelper",
                       "Motion found, sending message");
       }
@@ -540,7 +543,7 @@ bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion,
   if(imgRegionArea > 0 || groundRegionArea > 0.f)
   {
     motionFound = true;
-    if(DEBUG_MOTION_DETECTION)
+    if(kMotionDetectionDebug)
     {
       PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectGroundAndImageHelper.FoundCentroid",
                     "Found motion centroid for %.1f-pixel area region at (%.1f,%.1f) "
@@ -562,11 +565,6 @@ bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion,
                  centroid.y() >= 0.f && centroid.y() <= foregroundMotion.GetNumRows(),
                  "MotionDetector.DetectGroundAndImageHelper.CentroidOOB");
 
-      // make relative to image center *at processing resolution*
-      DEV_ASSERT(_camera.IsCalibrated(), "MotionDetector.DetectGroundAndImageHelper.CameraNotCalibrated");
-      centroid -= _camera.GetCalibration()->GetCenter() * (1.f / scaleMultiplier);
-
-      // Convert area to fraction of image area (to be resolution-independent)
       // Using scale multiplier to return the coordinates in original image coordinates
       msg.img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
       msg.img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
@@ -579,6 +577,7 @@ bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion,
 
     if(groundRegionArea > 0.f)
     {
+      // groundPlaneCentroid had already been scaled by scaleMultiplier before
       msg.ground_x = int16_t(std::round(groundPlaneCentroid.x()));
       msg.ground_y = int16_t(std::round(groundPlaneCentroid.y()));
       msg.ground_area = groundRegionArea;
@@ -590,7 +589,7 @@ bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion,
 
     observedMotions.emplace_back(std::move(msg));
 
-    if(DEBUG_MOTION_DETECTION)
+    if(kMotionDetectionDebug)
     {
       char tempText[128];
       Vision::ImageRGB ratioImgDisp(foregroundMotion);
@@ -854,7 +853,7 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
     }
   }
 
-  if (DEBUG_MOTION_DETECTION) {
+  if (kMotionDetectionDebug) {
     Vision::ImageRGB imageToDisplay(ratioImage);
     // Draw the text
     {

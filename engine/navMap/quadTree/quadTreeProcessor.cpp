@@ -67,28 +67,31 @@ void QuadTreeProcessor::SetRoot(QuadTreeNode* node)
   if ( nullptr != _root )
   {
     // we expect to set the root before anyone else (and only then)
-    DEV_ASSERT(node->GetContentType() == ENodeContentType::Invalid, "QuadTreeProcessor.SetRoot.RootIsInitialized");
+    DEV_ASSERT(node->GetNodeType() == ENodeType::Invalid, "QuadTreeProcessor.SetRoot.RootIsInitialized");
     // change from invalid to unknown; this is required when Unknown is cached, so that we cache the root as soon as we get it
-    QuadTreeTypes::NodeContent rootContent(ENodeContentType::Unknown);
+    MemoryMapData data(EContentType::Unknown, node->_content.data->GetLastObservedTime());
+    QuadTreeTypes::NodeContent rootContent(ENodeType::Leaf, data);
     _root->ForceSetDetectedContentType(rootContent, *this);
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, ENodeContentType oldContent, ENodeContentType newContent)
+void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, const NodeContent& oldContent, const NodeContent& newContent)
 {
-  DEV_ASSERT(node->GetContentType() == newContent,
-             "QuadTreeProcessor.OnNodeContentTypeChanged.MismatchedNewContent");
   DEV_ASSERT(oldContent != newContent, "QuadTreeProcessor.OnNodeContentTypeChanged.ContentNotChanged");
   
+  using namespace MemoryMapTypes;
+  EContentType oldType = oldContent.data->type;
+  EContentType newType = newContent.data->type;
+
   // update exploration area based on the content type
   {
-    const bool wasOutOld = (oldContent == ENodeContentType::Invalid   ) ||
-                           (oldContent == ENodeContentType::Unknown   ) ||
-                           (oldContent == ENodeContentType::Subdivided);
-    const bool isOutNew  = (newContent == ENodeContentType::Invalid   ) ||
-                           (newContent == ENodeContentType::Unknown   ) ||
-                           (newContent == ENodeContentType::Subdivided);
+    const bool wasOutOld = (oldContent.type == ENodeType::Invalid   ) ||
+                           (oldType == EContentType::Unknown   ) ||
+                           (oldContent.type == ENodeType::Subdivided);
+    const bool isOutNew  = (newContent.type == ENodeType::Invalid   ) ||
+                           (newType == EContentType::Unknown   ) ||
+                           (newContent.type == ENodeType::Subdivided);
     const bool needsToRemove = !wasOutOld &&  isOutNew;
     const bool needsToAdd    =  wasOutOld && !isOutNew;
     if ( needsToRemove )
@@ -107,8 +110,8 @@ void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, ENode
 
   // update interesting edge
   {
-    const bool shouldBeCountedOld = (oldContent == ENodeContentType::InterestingEdge);
-    const bool shouldBeCountedNew = (newContent == ENodeContentType::InterestingEdge);
+    const bool shouldBeCountedOld = (oldType == EContentType::InterestingEdge);
+    const bool shouldBeCountedNew = (newType == EContentType::InterestingEdge);
     const bool needsToRemove =  shouldBeCountedOld && !shouldBeCountedNew;
     const bool needsToAdd    = !shouldBeCountedOld &&  shouldBeCountedNew;
     if ( needsToRemove )
@@ -126,23 +129,23 @@ void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, ENode
   }
 
   // if old content type is cached
-  if ( IsCached(oldContent) )
+  if ( IsCached(oldType) )
   {
     // remove the node from that cache
-    DEV_ASSERT(_nodeSets[oldContent].find(node) != _nodeSets[oldContent].end(),
+    DEV_ASSERT(_nodeSets[oldType].find(node) != _nodeSets[oldType].end(),
                "QuadTreeProcessor.OnNodeContentTypeChanged.InvalidRemove");
-    _nodeSets[oldContent].erase( node );
+    _nodeSets[oldType].erase( node );
     
     // flag as dirty
     _contentGfxDirty = true;
   }
 
-  if ( IsCached(newContent) )
+  if ( IsCached(newType) )
   {
     // add node to that cache
-    DEV_ASSERT(_nodeSets[newContent].find(node) == _nodeSets[newContent].end(),
+    DEV_ASSERT(_nodeSets[newType].find(node) == _nodeSets[newType].end(),
                "QuadTreeProcessor.OnNodeContentTypeChanged.InvalidInsert");
-    _nodeSets[newContent].insert(node);
+    _nodeSets[newType].insert(node);
     
     // flag as dirty
     _contentGfxDirty = true;
@@ -157,7 +160,7 @@ void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, ENode
 void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
 {
   // if old content type is cached
-  const ENodeContentType oldContent = node->GetContentType();
+  const EContentType oldContent = node->GetData()->type;
   if ( IsCached(oldContent) )
   {
     // remove the node from that cache
@@ -171,9 +174,9 @@ void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
 
   // remove the area for this node if it was counted before
   {
-    const bool wasOutOld = (oldContent == ENodeContentType::Invalid   ) ||
-                           (oldContent == ENodeContentType::Unknown   ) ||
-                           (oldContent == ENodeContentType::Subdivided);
+    const bool wasOutOld = (node->GetNodeType() == ENodeType::Invalid   ) ||
+                           (node->GetData()->type == EContentType::Unknown   ) ||
+                           (node->GetNodeType() == ENodeType::Subdivided);
     const bool needsToRemove = !wasOutOld;
     if ( needsToRemove )
     {
@@ -185,7 +188,7 @@ void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
   
   // remove interesting edge area if it was counted before
   {
-    const bool shouldBeCountedOld = (oldContent == ENodeContentType::InterestingEdge);
+    const bool shouldBeCountedOld = (node->GetData()->type == EContentType::InterestingEdge);
     const bool needsToRemove =  shouldBeCountedOld;
     if ( needsToRemove )
     {
@@ -201,7 +204,7 @@ void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::HasBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes) const
+bool QuadTreeProcessor::HasBorders(EContentType innerType, EContentTypePackedType outerTypes) const
 {
   // check cached version if available and current
   const BorderKeyType borderComboKey = GetBorderTypeKey(innerType, outerTypes);
@@ -220,7 +223,7 @@ bool QuadTreeProcessor::HasBorders(ENodeContentType innerType, ENodeContentTypeP
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes, MemoryMapTypes::BorderRegionVector& outBorders)
+void QuadTreeProcessor::GetBorders(EContentType innerType, EContentTypePackedType outerTypes, BorderRegionVector& outBorders)
 {
   #if ANKI_DEV_CHEATS
   // container for debug quads
@@ -408,7 +411,7 @@ void QuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeContentTypeP
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, ENodeContentTypePackedType types) const
+bool QuadTreeProcessor::HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, EContentTypePackedType types) const
 {
   ANKI_CPU_PROFILE("QuadTreeProcessor::HasCollisionRayWithTypesNonRecursive");
 
@@ -418,15 +421,15 @@ bool QuadTreeProcessor::HasCollisionRayWithTypes(const Point2f& rayFrom, const P
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::HasCollisionRayWithTypes(const QuadTreeNode* node, const Point2f& rayFrom, const Point2f& rayTo, ENodeContentTypePackedType types) const
+bool QuadTreeProcessor::HasCollisionRayWithTypes(const QuadTreeNode* node, const Point2f& rayFrom, const Point2f& rayTo, EContentTypePackedType types) const
 {
   // this function could be easily optimized by using axis-aligned math available in QuadTreeNode. Adding profile
   // here to prove that we need to
   // ANKI_CPU_PROFILE("QuadTreeProcessor::HasCollisionRayWithTypesRecursive"); // recursive functions are not properly tracked. Moving to caller
 
   // does this node match the types we are looking for?
-  const ENodeContentType curNodeType = node->GetContentType();
-  const bool matchesType = IsInENodeContentTypePackedType(curNodeType, types);
+  const EContentType curNodeType = node->GetData()->type;
+  const bool matchesType = IsInEContentTypePackedType(curNodeType, types);
   if ( !node->IsSubdivided() && !matchesType ) {
     // if it's a leaf quad and the type is not interesting, do not care if the quad collides
     return false;
@@ -464,14 +467,14 @@ bool QuadTreeProcessor::HasCollisionRayWithTypes(const QuadTreeNode* node, const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::FillBorder(ENodeContentType filledType, ENodeContentTypePackedType fillingTypeFlags, const NodeContent& newContent)
+void QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const NodeContent& newContent)
 {
   ANKI_CPU_PROFILE("QuadTreeProcessor.FillBorder");
 
   DEV_ASSERT_MSG(IsCached(filledType),
                  "QuadTreeProcessor.FillBorder.FilledTypeNotCached",
                  "%s is not cached, which is needed for fast processing operations",
-                 ENodeContentTypeToString(filledType));
+                 EContentTypeToString(filledType));
 
   // should this timer be a member variable? It's normally desired to time all processors
   // together, but beware when merging stats from different maps (always current is the only one processing)
@@ -511,10 +514,10 @@ void QuadTreeProcessor::FillBorder(ENodeContentType filledType, ENodeContentType
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::ReplaceContent(const Quad2f& inQuad, ENodeContentType typeToReplace, const NodeContent& newContent)
+void QuadTreeProcessor::ReplaceContent(const Quad2f& inQuad, EContentType typeToReplace, const NodeContent& newContent)
 {
   DEV_ASSERT_MSG(IsCached(typeToReplace), "QuadTreeProcessor.ReplaceContent",
-                 "%s is not cached", ENodeContentTypeToString(typeToReplace));
+                 "%s is not cached", EContentTypeToString(typeToReplace));
   
   auto nodeSetMatch = _nodeSets.find(typeToReplace);
   if (nodeSetMatch != _nodeSets.end())
@@ -547,10 +550,10 @@ void QuadTreeProcessor::ReplaceContent(const Quad2f& inQuad, ENodeContentType ty
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::ReplaceContent(ENodeContentType typeToReplace, const NodeContent& newContent)
+void QuadTreeProcessor::ReplaceContent(EContentType typeToReplace, const NodeContent& newContent)
 {
   DEV_ASSERT_MSG(IsCached(typeToReplace), "QuadTreeProcessor.ReplaceContent",
-                 "%s is not cached", ENodeContentTypeToString(typeToReplace));
+                 "%s is not cached", EContentTypeToString(typeToReplace));
   
   // note: QuadTreeProcessor.FillBorder uses quads instead of nodes, and re-adds those quads as detected
   // content in order to change the memory map. That approach is a good way of having the processor not modify
@@ -591,10 +594,18 @@ void QuadTreeProcessor::ReplaceContent(ENodeContentType typeToReplace, const Nod
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::HasContentType(ENodeContentType nodeType) const
+void QuadTreeProcessor::TransformContent(NodeTransformFunction transform)
+{
+  if (_root) {
+    _root->TransformContent_Recursive(transform, _root, *this);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTreeProcessor::HasContentType(EContentType nodeType) const
 {
   DEV_ASSERT_MSG(IsCached(nodeType), "QuadTreeProcessor.HasContentType", "%s is not cached",
-                 ENodeContentTypeToString(nodeType));
+                 EContentTypeToString(nodeType));
   
   // check if any nodes for that type are cached currently
   auto nodeSetMatch = _nodeSets.find(nodeType);
@@ -613,7 +624,7 @@ void QuadTreeProcessor::Draw() const
     // add registered types
     for ( const auto& it : _nodeSets )
     {
-      ENodeContentType type = it.first;
+      EContentType type = it.first;
       AddQuadsToDraw(type, quadVector, GetDebugColor(type), kRenderZOffset);
     }
     
@@ -642,7 +653,7 @@ void QuadTreeProcessor::Draw() const
         // from quad
         if ( kRenderBordersFrom || (kRenderSeeds && it.isSeed) )
         {
-          Anki::ColorRGBA fromColor = GetDebugColor( it.from->GetContentType() );
+          Anki::ColorRGBA fromColor = GetDebugColor( it.from->GetData()->type );
           fromColor.SetAlpha(0.6f);
           const float fromSideLen = it.from->GetSideLen();
           Point3f from3D = it.from->GetCenter();
@@ -653,7 +664,7 @@ void QuadTreeProcessor::Draw() const
         // to quad
         if ( kRenderBordersToQuad )
         {
-          Anki::ColorRGBA toColor = GetDebugColor( it.to->GetContentType() );
+          Anki::ColorRGBA toColor = GetDebugColor( it.to->GetData()->type );
           if ( kRenderSeeds && it.isSeed ) { toColor = Anki::NamedColors::YELLOW; }
           const float alpha = comboIt.second.dirty ? 0.2f : 0.8f;
           toColor.SetAlpha(alpha);
@@ -668,7 +679,7 @@ void QuadTreeProcessor::Draw() const
         // to dot
         if ( kRenderBordersToDot )
         {
-          Anki::ColorRGBA toColor = GetDebugColor( it.to->GetContentType() );
+          Anki::ColorRGBA toColor = GetDebugColor( it.to->GetData()->type );
           if ( kRenderBordersToQuad ) { toColor = Anki::NamedColors::WHITE; }
           if ( kRenderSeeds && it.isSeed ) { toColor = Anki::NamedColors::YELLOW; }
           if ( it.isEnd ) { toColor = Anki::NamedColors::MAGENTA; }
@@ -705,53 +716,63 @@ void QuadTreeProcessor::ClearDraw() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::IsCached(ENodeContentType contentType)
+bool QuadTreeProcessor::IsCached(EContentType contentType)
 {
-  const bool isCached = (contentType == ENodeContentType::ObstacleCube         ) ||
-                        (contentType == ENodeContentType::ObstacleProx         ) ||
-                        (contentType == ENodeContentType::ObstacleUnrecognized ) ||
-                        (contentType == ENodeContentType::InterestingEdge      ) ||
-                        (contentType == ENodeContentType::NotInterestingEdge   ) ||
-                        (contentType == ENodeContentType::Cliff );
+  const bool isCached = (contentType == EContentType::ObstacleCube         ) ||
+                        (contentType == EContentType::ObstacleProx         ) ||
+                        (contentType == EContentType::ObstacleUnrecognized ) ||
+                        (contentType == EContentType::InterestingEdge      ) ||
+                        (contentType == EContentType::NotInterestingEdge   ) ||
+                        (contentType == EContentType::Cliff );
   return isCached;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ColorRGBA QuadTreeProcessor::GetDebugColor(ENodeContentType contentType)
+ColorRGBA QuadTreeProcessor::GetDebugColor(ENodeType contentType)
 {
   ColorRGBA ret = Anki::NamedColors::BLACK;
   switch (contentType) {
-    case ENodeContentType::Invalid:               { DEV_ASSERT(false, "QuadTreeProcessor.Invalid.NotSupported"); break; };
-    case ENodeContentType::Subdivided:            { ret = ColorRGBA(0.2f, 0.2f, 0.2f, 0.3f); break; };
-    case ENodeContentType::ClearOfObstacle:       { ret = ColorRGBA(0.0f, 1.0f, 0.0f, 0.3f); break; };
-    case ENodeContentType::ClearOfCliff:          { ret = ColorRGBA(0.0f, 0.5f, 0.0f, 0.3f); break; };
-    case ENodeContentType::Unknown:               { ret = ColorRGBA(0.2f, 0.2f, 0.6f, 0.3f); break; };
-    case ENodeContentType::ObstacleCube:          { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 0.3f); break; };
-    case ENodeContentType::ObstacleCubeRemoved:   { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 1.0f); break; };
-    case ENodeContentType::ObstacleCharger:       { ret = ColorRGBA(1.0f, 1.0f, 0.0f, 0.3f); break; };
-    case ENodeContentType::ObstacleChargerRemoved:{ ret = ColorRGBA(1.0f, 1.0f, 0.0f, 1.0f); break; };
-    case ENodeContentType::ObstacleProx:          { ret = ColorRGBA(0.0f, 0.5f, 0.5f, 0.3f); break; };
-    case ENodeContentType::ObstacleUnrecognized:  { ret = ColorRGBA(0.5f, 0.0f, 0.0f, 0.3f); break; };
-    case ENodeContentType::Cliff:                 { ret = ColorRGBA(0.0f, 0.0f, 0.0f, 0.3f); break; };
-    case ENodeContentType::InterestingEdge:       { ret = ColorRGBA(0.0f, 0.0f, 0.5f, 0.3f); break; };
-    case ENodeContentType::NotInterestingEdge:    { ret = ColorRGBA(0.0f, 0.5f, 0.5f, 0.3f); break; };
-    case ENodeContentType::_Count:                { DEV_ASSERT(false, "QuadTreeProcessor._Count.NotSupported"); break; };
+    case ENodeType::Invalid:               { DEV_ASSERT(false, "QuadTreeProcessor.Invalid.NotSupported"); break; };
+    case ENodeType::Subdivided:            { ret = ColorRGBA(0.2f, 0.2f, 0.2f, 0.3f); break; };
+    case ENodeType::Leaf:                  { ret = ColorRGBA(0.2f, 0.2f, 0.2f, 0.3f); break; };
+    case ENodeType::_Count:                { DEV_ASSERT(false, "QuadTreeProcessor._Count.NotSupported"); break; };
+  }
+  return ret;
+}
+
+ColorRGBA QuadTreeProcessor::GetDebugColor(MemoryMapTypes::EContentType contentType)
+{
+  ColorRGBA ret = Anki::NamedColors::BLACK;
+  switch (contentType) {
+    case EContentType::ClearOfObstacle:       { ret = ColorRGBA(0.0f, 1.0f, 0.0f, 0.3f); break; };
+    case EContentType::ClearOfCliff:          { ret = ColorRGBA(0.0f, 0.5f, 0.0f, 0.3f); break; };
+    case EContentType::Unknown:               { ret = ColorRGBA(0.2f, 0.2f, 0.6f, 0.3f); break; };
+    case EContentType::ObstacleCube:          { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 0.3f); break; };
+    case EContentType::ObstacleCubeRemoved:   { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 1.0f); break; };
+    case EContentType::ObstacleCharger:       { ret = ColorRGBA(1.0f, 1.0f, 0.0f, 0.3f); break; };
+    case EContentType::ObstacleChargerRemoved:{ ret = ColorRGBA(1.0f, 1.0f, 0.0f, 1.0f); break; };
+    case EContentType::ObstacleProx:          { ret = ColorRGBA(0.0f, 0.5f, 0.5f, 0.3f); break; };
+    case EContentType::ObstacleUnrecognized:  { ret = ColorRGBA(0.5f, 0.0f, 0.0f, 0.3f); break; };
+    case EContentType::Cliff:                 { ret = ColorRGBA(0.0f, 0.0f, 0.0f, 0.3f); break; };
+    case EContentType::InterestingEdge:       { ret = ColorRGBA(0.0f, 0.0f, 0.5f, 0.3f); break; };
+    case EContentType::NotInterestingEdge:    { ret = ColorRGBA(0.0f, 0.5f, 0.5f, 0.3f); break; };
+    case EContentType::_Count:                { DEV_ASSERT(false, "QuadTreeProcessor._Count.NotSupported"); break; };
   }
   return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeProcessor::BorderKeyType QuadTreeProcessor::GetBorderTypeKey(ENodeContentType innerType, ENodeContentTypePackedType outerTypes)
+QuadTreeProcessor::BorderKeyType QuadTreeProcessor::GetBorderTypeKey(EContentType innerType, EContentTypePackedType outerTypes)
 {
-  using UnderlyingContentType = std::underlying_type<ENodeContentType>::type;
+  using UnderlyingContentType = std::underlying_type<ENodeType>::type;
 
-  static_assert( (sizeof(ENodeContentTypePackedType)+sizeof(UnderlyingContentType)) <= (sizeof(BorderKeyType)),
-  "BorderKeyType should hold 2 ENodeContentTypePackedType" );
+  static_assert( (sizeof(EContentTypePackedType)+sizeof(UnderlyingContentType)) <= (sizeof(BorderKeyType)),
+  "BorderKeyType should hold 2 EContentTypePackedType" );
   
-  // key = innerTypes << X | outerType, where X is sizeof(ENodeContentTypePackedType)
+  // key = innerTypes << X | outerType, where X is sizeof(EContentTypePackedType)
   BorderKeyType key = 0;
   key |= static_cast<UnderlyingContentType>(innerType);
-  key <<= (8*(sizeof(ENodeContentTypePackedType)));
+  key <<= (8*(sizeof(EContentTypePackedType)));
   key |= (outerTypes);
 
   return key;
@@ -774,8 +795,8 @@ Vec3f QuadTreeProcessor::CalculateBorderWaypointCenter(const BorderWaypoint& way
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MemoryMapTypes::BorderSegment QuadTreeProcessor::MakeBorderSegment(const Point3f& origin, const Point3f& dest,
-  const MemoryMapTypes::BorderSegment::DataType& data,
+BorderSegment QuadTreeProcessor::MakeBorderSegment(const Point3f& origin, const Point3f& dest,
+  const BorderSegment::DataType& data,
   EDirection firstEDirection,
   EDirection lastEDirection)
 {
@@ -814,9 +835,9 @@ MemoryMapTypes::BorderSegment QuadTreeProcessor::MakeBorderSegment(const Point3f
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::IsInENodeContentTypePackedType(ENodeContentType contentType, ENodeContentTypePackedType contentPackedTypes)
+bool QuadTreeProcessor::IsInEContentTypePackedType(EContentType contentType, EContentTypePackedType contentPackedTypes)
 {
-  const ENodeContentTypePackedType packedType = ENodeContentTypeToFlag(contentType);
+  const EContentTypePackedType packedType = EContentTypeToFlag(contentType);
   const bool isIn = (packedType & contentPackedTypes) != 0;
   return isIn;
 }
@@ -980,7 +1001,7 @@ bool CheckedInfo::AreAllDirectionsComplete() const
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes)
+void QuadTreeProcessor::FindBorders(EContentType innerType, EContentTypePackedType outerTypes)
 {
   ANKI_CPU_PROFILE("QuadTreeProcessor.FindBorders");
   using namespace FindBordersHelpers;
@@ -992,7 +1013,7 @@ void QuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeContentType
   _currentBorderCombination = &_bordersPerContentCombination[borderComboKey];
 
   DEV_ASSERT(IsCached(innerType), "QuadTreeProcessor.FindBorders.InvalidType");
-  DEV_ASSERT(!IsInENodeContentTypePackedType(innerType, outerTypes), "QuadTreeProcessor.FindBorders.InnerTypeAlsoInOuter");
+  DEV_ASSERT(!IsInEContentTypePackedType(innerType, outerTypes), "QuadTreeProcessor.FindBorders.InnerTypeAlsoInOuter");
   
   const NodeSet& innerSet = _nodeSets[innerType];
 
@@ -1059,7 +1080,7 @@ void QuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeContentType
               candidateCheckedInfo.MarkChecked(candidateDir, candidateOuterIdx);
               
               // if it's an outer, we have found a seed
-              const bool isOuter = IsInENodeContentTypePackedType( neighbors[candidateOuterIdx]->GetContentType(), outerTypes);
+              const bool isOuter = IsInEContentTypePackedType( neighbors[candidateOuterIdx]->GetData()->type, outerTypes);
               if ( isOuter ) {
                 foundOuter = true;
                 break;
@@ -1116,7 +1137,7 @@ void QuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeContentType
               // - - - - - - - - - - - -
               // InnerType
               // - - - - - - - - - - - -
-              if ( nextNode->GetContentType() == innerType )
+              if ( nextNode->GetData()->type == innerType )
               {
                 DEBUG_FIND_BORDER("[%p] It's 'InnerType', iterating through it", nextNode);
                 
@@ -1163,7 +1184,7 @@ void QuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeContentType
               // - - - - - - - - - - - -
               // OuterType
               // - - - - - - - - - - - -
-              else if ( IsInENodeContentTypePackedType( nextNode->GetContentType(), outerTypes) )
+              else if ( IsInEContentTypePackedType( nextNode->GetData()->type, outerTypes) )
               {
                 // if we have already visisted this node, we have looped back to a previous border or the seed
                 if ( checkedNodes[curInnerNode].IsChecked(curDir, nextNeighborIdx) )
@@ -1261,13 +1282,13 @@ void QuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeContentType
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::HasBorderSeed(ENodeContentType innerType, ENodeContentTypePackedType outerTypes) const
+bool QuadTreeProcessor::HasBorderSeed(EContentType innerType, EContentTypePackedType outerTypes) const
 {
   DEBUG_FIND_BORDER("------------------------------------------------------");
   DEBUG_FIND_BORDER("Starting HasBorderSeed...");
 
   DEV_ASSERT_MSG(IsCached(innerType), "QuadTreeProcessor.HasBorderSeed", "%s is not cached",
-                 ENodeContentTypeToString(innerType));
+                 EContentTypeToString(innerType));
   
   const auto innerSetMatchIt = _nodeSets.find(innerType);
   if ( innerSetMatchIt == _nodeSets.end() ) {
@@ -1306,7 +1327,7 @@ bool QuadTreeProcessor::HasBorderSeed(ENodeContentType innerType, ENodeContentTy
       while ( candidateOuterIdx < neighborCount )
       {
           // if it's an outer, we have found a seed
-          const bool isOuter = IsInENodeContentTypePackedType( neighbors[candidateOuterIdx]->GetContentType(), outerTypes);
+          const bool isOuter = IsInEContentTypePackedType( neighbors[candidateOuterIdx]->GetData()->type, outerTypes);
           if (  isOuter ) {
             break;
           }
@@ -1331,7 +1352,7 @@ bool QuadTreeProcessor::HasBorderSeed(ENodeContentType innerType, ENodeContentTy
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeProcessor::BorderCombination& QuadTreeProcessor::RefreshBorderCombination(ENodeContentType innerType, ENodeContentTypePackedType outerTypes)
+QuadTreeProcessor::BorderCombination& QuadTreeProcessor::RefreshBorderCombination(EContentType innerType, EContentTypePackedType outerTypes)
 {
   const BorderKeyType borderComboKey = GetBorderTypeKey(innerType, outerTypes);
   BorderCombination& borderCombination = _bordersPerContentCombination[borderComboKey];
@@ -1347,7 +1368,7 @@ QuadTreeProcessor::BorderCombination& QuadTreeProcessor::RefreshBorderCombinatio
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::AddQuadsToDraw(ENodeContentType contentType,
+void QuadTreeProcessor::AddQuadsToDraw(EContentType contentType,
   VizManager::SimpleQuadVector& quadVector, const ColorRGBA& color, float zOffset) const
 {
   // find the set of quads for that content type

@@ -9,63 +9,31 @@
 #include "clad/types/imageTypes.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/ledTypes.clad"
-#include "clad/types/animationKeyFrames.clad"
+#include "clad/types/animationTypes.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/controllerChannels.clad"
 #include "clad/robotInterface/messageToActiveObject.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
-#include "clad/robotInterface/bleMessages.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/fwTestMessages.clad"
-#include "clad/robotInterface/appConnectMessage.clad"
-#include "clad/types/nvStorage.clad"
-#include "clad/types/cameraParams.clad"
 #include "clad/types/cameraFOVInfo.clad"
 #include "clad/types/motorTypes.clad"
 
 
 namespace Anki {
 namespace Cozmo {
-  message EnterSleepMode
-  {
-    // This doesn't do much
-  }
-
+  
   structure SetPropSlot
   {
     uint_32 factory_id,
     uint_8  slot
   }
 
-  message SetAudioVolume
-  {
-    uint_16 volume
-  }
-
   message SetCubeGamma
   {
     uint_8  gamma
-  }
-
-  message ReadBodyStorage
-  {
-    uint_8  key,
-    uint_8  offset
-  }
-
-  message WriteBodyStorage
-  {
-    uint_8  key,
-    uint_8  data[uint_8:26]
-  }
-
-  message BodyStorageContents
-  {
-    uint_8  key,
-    uint_8  offset,
-    uint_8  data[uint_8:26]
   }
 
 namespace RobotInterface {
@@ -74,24 +42,6 @@ namespace RobotInterface {
  * This cannot be an auto union because we need explicit tag values to partition the RTIP and WiFi code
  * and to make debugging from message dumps more sane.
  */
-
-message GenerateTestTone
-{
-
-}
-
-message SendDTMCommand
-{
-  int_32 command,
-  int_32 freq,
-  int_32 length,
-  int_32 payload
-}
-
-message SetHeadlight
-{
-  bool enable
-}
 
 message StartMotorCalibration
 {
@@ -255,19 +205,6 @@ message SyncTime
   float_32 driveCenterOffset
 }
 
-message ImageRequest
-{
-  ImageSendMode  sendMode,
-  ImageResolution resolution,
-}
-
-// Enable/disable the streaming of colored images
-// TODO (Al): Could probably be merged into the SetCameraParams message if needed
-message EnableColorImages
-{
-  bool enable
-}
-
 message ControllerGains
 {
   float_32 kp,
@@ -291,18 +228,6 @@ message SetMotionModelParams
   float_32 slipFactor,
 }
 
-message BackpackLightsMiddle
-{
-  LightState lights[3],
-  uint_8 layer = 0 // This is BPL_USER
-}
-
-message BackpackLightsTurnSignals
-{
-  LightState lights[2],
-  uint_8 layer = 0 // This is BPL_USER
-}
-
 message BackpackSetLayer
 {
   uint_8 layer
@@ -317,24 +242,8 @@ message AbortAnimation
   uint_8 tag
 }
 
-// For internal robot use only
-message AnimEventToRTIP
-{
-  uint_8    tag,
-  AnimEvent event_id
-}
-
 message CheckLiftLoad
 {
-}
-
-message GetBodySerialNumber
-{
-}
-
-message BodySerialNumber
-{ 
-  uint_32 sn,
 }
 
 // Enable/Disable power to lift completely.
@@ -346,31 +255,11 @@ message EnableMotorPower
   bool    enable
 }
 
-message SetHeadDeviceLock
-{
-  bool enable
-}
-
 message EnableReadToolCodeMode
 {
   float_32 headPower,
   float_32 liftPower,
   bool enable
-}
-
-// Set ReliableTransport timeout time
-message DebugSetRTTO
-{
-  uint_16 timeoutMilliseconds
-}
-
-// Display a large font number
-message DisplayNumber
-{
-  uint_32 value,
-  uint_8  digits,
-  uint_8  x,
-  uint_8  y
 }
 
 message EnableStopOnCliff
@@ -386,16 +275,6 @@ message SetCliffDetectThreshold
 message EnableBraceWhenFalling
 {
   bool enable
-}
-
-message RequestCrashReports
-{
-  int_32 index
-}
-
-message ShutdownRobot
-{
-  uint_32 reserved[8]
 }
 
 // ========== V2 Animation process messages ===========
@@ -458,16 +337,6 @@ enum uint_32 ToRobotAddressSpace
   TO_ENG_END    = 0xFE
 }
 
-message AdjustTimestamp {
-  uint_32 timestamp
-}
-
-/// Used to set the app run ID in the robot so robot crash logs can reference the app run ID
-message SetAppRunID
-{
-  uint_32 uuid[4]
-}
-
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from engine to robot and within the robot
@@ -480,32 +349,24 @@ union EngineToRobot
   // 0x00 Is invalid message
 
   // 0x01 to 0x2f: Messages to the body / test fixture
-  AdjustTimestamp               adjustTimestamp             = 0x01,
   BackpackSetLayer              setBackpackLayer            = 0x02,
-  BackpackLightsMiddle          setBackpackLightsMiddle     = 0x03,
+
+
+  // TODO: These cube messages will need to be modified and moved 
+  //       to a separate file once we update block connection logic
+  //       for BLE
   CubeLights                    setCubeLights               = 0x04,
   SetPropSlot                   setPropSlot                 = 0x05,
-  KillBodyCode                  killBodyCode                = 0x06,
-  SetBodyRadioMode              setBodyRadioMode            = 0x07,
-  StreamObjectAccel             streamObjectAccel           = 0x08,
-  //          FREE SLOT!!!                                  = 0x09,
-  SetAccessoryDiscovery         setAccessoryDiscovery       = 0x0A,
-  SetHeadlight                  setHeadlight                = 0x0B,
-  SetCubeGamma                  setCubeGamma                = 0x0C,
-  OTA::BodyEnterOTA             bodyEnterOTA                = 0x0D,
-  ReadBodyStorage               readBodyStorage             = 0x0E,
-  WriteBodyStorage              writeBodyStorage            = 0x0F,
-  CubeID                        setCubeID                   = 0x10,
-  BackpackLightsTurnSignals    setBackpackLightsTurnSignals = 0x11,
-  SendDTMCommand                sendDTMCommand              = 0x12,
 
-  GetBodySerialNumber           getBodySerialNumber         = 0x24,
+  StreamObjectAccel             streamObjectAccel           = 0x08,
+
+  SetCubeGamma                  setCubeGamma                = 0x0C,
+  CubeID                        setCubeID                   = 0x10,
+  
   GetManufacturingInfo          getMfgInfo                  = 0x25,
-  BLE::SendData                 bleSendData                 = 0x26,
-  BLE::Disconnect               bleDisconnect               = 0x27,
 
   // 0x30 to 0x7f: To RTIP
-  OTA::EnterRecoveryMode        enterRecoveryMode           = 0x30,
+  //          FREE SLOT!!!                                  = 0x30,
   //          FREE SLOT!!!                                  = 0x31,
   DriveWheels                   drive                       = 0x32,
   DriveWheelsCurvature          driveCurvature              = 0x33,
@@ -533,18 +394,14 @@ union EngineToRobot
   CarryStateUpdate              setCarryState               = 0x49,
   IMURequest                    imuRequest                  = 0x4A,
   SyncTime                      syncTime                    = 0x4B,
-  ImageRequest                  imageRequest                = 0x4C,
-  FlashObjectIDs                flashObjectIDs              = 0x4D,
-  ObjectBeingCarried            setObjectBeingCarried       = 0x4E,
+  
   CheckLiftLoad                 checkLiftLoad               = 0x4F,
   EnableMotorPower              enableMotorPower            = 0x50,
   SetMotionModelParams          setMotionModelParams        = 0x51,
-  EnterSleepMode                enterSleepMode              = 0x52,
-  PowerState                    powerState                  = 0x53,
+  
   SetCliffDetectThreshold       setCliffDetectThreshold     = 0x54,
   EnableReadToolCodeMode        enableReadToolCodeMode      = 0x55,
-  //          FREE SLOT!!!                                  = 0x56,
-  SetCameraParams               setCameraParams             = 0x57,
+  
   StartMotorCalibration         startMotorCalibration       = 0x58,
   RollActionParams              rollActionParams            = 0x59,
   CameraFOVInfo                 cameraFOVInfo               = 0x5A,
@@ -555,11 +412,8 @@ union EngineToRobot
   //          FREE SLOT!!!                                  = 0x5F,
   EnableStopOnCliff             enableStopOnCliff           = 0x60,
   ForceDelocalizeSimulatedRobot forceDelocalizeSimulatedRobot = 0x61, // Used for simulation only, no-op for physical
-  ObjectConnectionStateToRobot  objectConnectionStateToRobot = 0x62,
   EnableBraceWhenFalling        enableBraceWhenFalling      = 0x63,
-  SetAudioVolume                setAudioVolume              = 0x64,
-  GenerateTestTone              generateTestTone            = 0x65,
-  EnableColorImages             enableColorImages           = 0x66,
+  
 
   // V2 Audio
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
@@ -569,51 +423,19 @@ union EngineToRobot
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
 
   // 0x80 to 0xAF: To WiFi in V1. To Anim Process in V2
-  RequestCrashReports           requestCrashReports         = 0x80,
-  NVStorage::NVCommand          commandNV                   = 0x81,
+  //       FREE SLOT!!!                                     = 0x80,
+  //       FREE SLOT!!!                                     = 0x81,
   PlayAnim                      playAnim                    = 0x82,   // V2
   LockAnimTracks                lockAnimTracks              = 0x83,   // V2
   RecordHeading                 recordHeading               = 0x84,   // V2
   TurnToRecordedHeading         turnToRecordedHeading       = 0x85,   // V2
-  BLE::ConnectionState          bleConnectionState          = 0x86,
-  BLE::DataReceived             bleDataReceived             = 0x87,
-  DebugSetRTTO                  setRTTO                     = 0x89,
+  //       FREE SLOT!!!                                     = 0x86,
+  //       FREE SLOT!!!                                     = 0x87,
+  //       FREE SLOT!!!                                     = 0x89,
   SetBackpackLights             setBackpackLights           = 0x8A,   // V2
   //       FREE SLOT                                        = 0x8B,
   RequestAvailableAnimations    requestAvailableAnimations  = 0x8C,   // V2
   AbortAnimation                abortAnimation              = 0x8D,
-  AnimKeyFrame::AudioSample     animAudioSample             = 0x8E,
-  AnimKeyFrame::AudioSilence    animAudioSilence            = 0x8F,
-  //       FREE ANIM KEYFRAME SLOT!!!                       = 0x90,
-  AnimKeyFrame::RecordHeading   animRecordHeading           = 0x91,
-  AnimKeyFrame::TurnToRecordedHeading animTurnToRecordedHeading = 0x92,
-  AnimKeyFrame::HeadAngle       animHeadAngle               = 0x93,
-  AnimKeyFrame::LiftHeight      animLiftHeight              = 0x94,
-  AnimKeyFrame::Event           animEvent                   = 0x95,
-  AnimEventToRTIP               animEventToRTIP             = 0x96,
-  AnimKeyFrame::FaceImage       animFaceImage               = 0x97,
-  AnimKeyFrame::BackpackLights  animBackpackLights          = 0x98,
-  AnimKeyFrame::BodyMotion      animBodyMotion              = 0x99,
-  AnimKeyFrame::EndOfAnimation  animEndOfAnimation          = 0x9A,
-  AnimKeyFrame::StartOfAnimation animStartOfAnimation       = 0x9B,
-  // Anim future expansion                                  = 0x9C,
-  AnimKeyFrame::DisableAnimTracks disableAnimTracks         = 0x9D,
-  AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
-  AnimKeyFrame::InitController  initAnimController          = 0x9F,
-  SetAppRunID                   appRunID                    = 0xA0,
-  TestState                     testState                   = 0xA1,
-  EnterFactoryTestMode          enterTestMode               = 0xA2,
-  DisplayNumber                 oledDisplayNumber           = 0xA3,
-  BodyStorageContents           bodyStorageContents         = 0xA4,
-  BodySerialNumber              bodySerialNum               = 0xA5,
-
-  ShutdownRobot                 shutdownRobot               = 0xA9,
-  AppConnectConfigString        appConCfgString             = 0xAA,
-  AppConnectConfigFlags         appConCfgFlags              = 0xAB,
-  AppConnectConfigIPInfo        appConCfgIPInfo             = 0xAC,
-  AppConnectGetRobotIP          appConGetRobotIP            = 0xAD,
-  WiFiOff                       wifiOff                     = 0xAE,
-  OTA::Write                    otaWrite                    = 0xAF,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

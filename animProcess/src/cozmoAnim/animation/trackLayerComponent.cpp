@@ -64,11 +64,10 @@ void TrackLayerComponent::ApplyLayersToAnim(Animation* anim,
                                             TimeStamp_t startTime_ms,
                                             TimeStamp_t streamTime_ms,
                                             LayeredKeyFrames& layeredKeyframes,
-                                            bool storeFace,
-                                            const AnimKeyFrame::AudioSample* const rawAudioSample)
+                                            bool storeFace)
 {
   // Apply layers of individual tracks to anim
-  ApplyAudioLayersToAnim(anim, startTime_ms, streamTime_ms, layeredKeyframes, rawAudioSample);
+  ApplyAudioLayersToAnim(anim, startTime_ms, streamTime_ms, layeredKeyframes);
 
   ApplyBackpackLayersToAnim(anim, startTime_ms, streamTime_ms, layeredKeyframes);
   
@@ -78,9 +77,10 @@ void TrackLayerComponent::ApplyLayersToAnim(Animation* anim,
 void TrackLayerComponent::ApplyAudioLayersToAnim(Animation* anim,
                                                  TimeStamp_t startTime_ms,
                                                  TimeStamp_t streamTime_ms,
-                                                 LayeredKeyFrames& layeredKeyFrames,
-                                                 const AnimKeyFrame::AudioSample* const rawAudioSample)
+                                                 LayeredKeyFrames& layeredKeyFrames)
 {
+  // TODO: VIC-447: Restore glitching
+  /*
   layeredKeyFrames.haveAudioKeyFrame = (rawAudioSample != nullptr);
   
   if(layeredKeyFrames.haveAudioKeyFrame)
@@ -110,6 +110,7 @@ void TrackLayerComponent::ApplyAudioLayersToAnim(Animation* anim,
     _audioLayerManager->ApplyLayersToFrame(layeredKeyFrames.audioKeyFrame, applyFunc);
     layeredKeyFrames.haveAudioKeyFrame = true;
   }
+  */
 }
 
 void TrackLayerComponent::ApplyBackpackLayersToAnim(Animation* anim,
@@ -276,6 +277,7 @@ void TrackLayerComponent::RemoveEyeShift(AnimationTag tag, s32 duration_ms)
 
 void TrackLayerComponent::AddGlitch(f32 glitchDegree)
 {
+  PRINT_CH_DEBUG("Animations","TrackLayerComponent.AddGlitch","Degree %.2f",glitchDegree);
   Animations::Track<ProceduralFaceKeyFrame> faceTrack;
   const u32 numFrames = _faceLayerManager->GenerateFaceDistortion(glitchDegree, faceTrack);
   _faceLayerManager->AddLayer("Glitch", faceTrack);
@@ -286,7 +288,7 @@ void TrackLayerComponent::AddGlitch(f32 glitchDegree)
 
   if(kGenerateGlitchAudio)
   {
-    Animations::Track<AnimKeyFrame::AudioSample> audioTrack;
+    Animations::Track<RobotAudioKeyFrame> audioTrack;
     _audioLayerManager->GenerateGlitchAudio(numFrames, audioTrack);
     _audioLayerManager->AddLayer("Glitch", audioTrack);
   }

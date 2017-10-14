@@ -14,6 +14,8 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_FeedingComponents_FeedingCubeController_H__
 #define __Cozmo_Basestation_BehaviorSystem_FeedingComponents_FeedingCubeController_H__
 
+#include "engine/aiComponent/feedingSoundEffectManager.h"
+
 #include <memory>
 
 namespace Anki {
@@ -50,14 +52,7 @@ public:
   bool IsCubeCharged() const;
 
 private:
-  // As defined in messageEngineToGame.clad
-  enum class ChargeStateChange{
-    Charge_Start = 0,
-    Charge_Up = 1,
-    Charge_Down = 2,
-    Charge_Complete = 3,
-    Charge_Stop = 4
-  };
+  using ChargeStateChange = FeedingSoundEffectManager::ChargeStateChange;
   
   ControllerState  _currentState;
   std::unique_ptr<CubeStateTracker> _cubeStateTracker;

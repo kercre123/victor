@@ -41,6 +41,7 @@ namespace Anki {
       // Pointer to the current (latest) frame the camera has given us
       uint8_t* _currentFrame = nullptr;
       bool     _frameReady = false;
+      TimeStamp_t _currentFrameSystemTimestamp_ms = 0;
     } // "private" namespace
 
 
@@ -149,6 +150,9 @@ namespace Anki {
     {
       DEV_ASSERT(image != nullptr, "AndroidHAL.CameraCallback.NullImage");
       _currentFrame = image;
+
+      _currentFrameSystemTimestamp_ms = AndroidHAL::getInstance()->GetTimeStamp();
+
       _frameReady = true;
       return 0;
     }
@@ -186,19 +190,13 @@ namespace Anki {
     TimeStamp_t AndroidHAL::GetTimeStamp(void)
     {
       auto currTime = std::chrono::steady_clock::now();
-      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime - _timeOffset).count());
+      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime.time_since_epoch()).count());
     }
 
     bool AndroidHAL::IMUReadData(IMU_DataStructure &IMUData)
     {
       // STUB
       return false;
-    }
-    
-    void AndroidHAL::CameraGetParameters(DefaultCameraParams& params)
-    {
-      // STUB
-      return;
     }
 
     void AndroidHAL::CameraSetParameters(u16 exposure_ms, f32 gain)
@@ -207,31 +205,20 @@ namespace Anki {
       return;
     }
 
-    bool AndroidHAL::CameraGetFrame(u8*& frame, u32& imageID, std::vector<ImageImuData>& imuData )
+    bool AndroidHAL::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms)
     {
-      DEV_ASSERT(frame != NULL, "androidHAL.CameraGetFrame.NullFramePointer");
-
       if(_currentFrame != nullptr && _frameReady)
       {
         _frameReady = false;
-        
+
         // Tell the camera we will be processing this frame
         camera_set_processing_frame();
         
         frame = _currentFrame;
+
+        imageCaptureSystemTimestamp_ms = _currentFrameSystemTimestamp_ms;
         
         imageID = ++_imageFrameID;
-
-        ImageImuData imu_meas(imageID,
-                              0.f, 0.f, 0.f,
-                              125);          // IMU data point for middle of this image
-
-        imuData.push_back(imu_meas);
-
-        // Include IMU data for beginning of the next image (for rolling shutter correction purposes)
-        imu_meas.imageId = imageID + 1;
-        imu_meas.line2Number = 1;
-        imuData.push_back(imu_meas);
         
         return true;
       }

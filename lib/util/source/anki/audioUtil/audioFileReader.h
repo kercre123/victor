@@ -25,6 +25,7 @@ namespace AudioUtil {
 
 class AudioFileReader : public IAudioInputSource {
 public:
+  void SetSamplesPerChunk(uint32_t samplesPerChunk) { _samplesPerChunk = samplesPerChunk; }
   bool ReadFile(const std::string& audioFilePath);
   const AudioChunkList& GetAudioSamples() const { return _audioSamples; }
   void ClearAudio() { _audioSamples.clear(); }
@@ -33,6 +34,7 @@ public:
   
 private:
   AudioChunkList  _audioSamples;
+  uint32_t        _samplesPerChunk = kSamplesPerChunk;
   
   struct NativeAudioFileData;
   bool GetNativeFileData(NativeAudioFileData& fileData, const std::string& audioFilePath);

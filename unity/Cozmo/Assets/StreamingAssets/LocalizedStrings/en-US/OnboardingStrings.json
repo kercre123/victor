@@ -40,7 +40,7 @@
     "translation": "Once he's done charging, let Cozmo come to life and learn about his new home."
   },
   "onboarding.CozmoNeedsCharge.message3": {
-    "translation": "Cozmo needs a caring owner. Care for his Needs each day, and he'll unlock new Games and Tricks."
+    "translation": "Cozmo needs a caring owner. Care for his Needs each day, and he'll unlock new Tricks."
   },
   "onboarding.CozmoNeedsCharge.message4": {
     "translation": "You can pick up Cozmo if you need to, but he's happiest when he can drive on his own."
@@ -112,10 +112,10 @@
     "translation": "<b>Cozmo has Needs.</b>\n\nCare for him each day to keep him happy."
   },
   "onboarding.NeedsIntroReturning": {
-    "translation": "<b>Cozmo has Needs.</b>\n\nCare for him each day to keep him happy.\n\nCozmo's App may look a little different but you'll keep any unlocks you've earned."
+    "translation": "<b>Cozmo has Needs.</b>\n\nCare for him each day to keep him happy.\n\nCozmo's App may look a little different, but you'll keep any unlocks you've earned."
   },
   "onboarding.PlayIntro": {
-    "translation": "<b>Cozmo needs to play.</b>\n\nTap the <b><color=#f5ea12>PLAY</color></b> button to request Games or Tricks. Each day you fill his yellow bar you'll earn a Play Token."
+    "translation": "<b>Cozmo needs to play.</b>\n\nTap the <b><color=#f5ea12>PLAY</color></b> button to request Games or Tricks. Each day you fill his yellow bar, you'll earn a Play Token."
   },
   "onboarding.ActivitiesIntro": {
     "translation": "Discover Activities are special and don't affect Cozmo’s Needs or cost Sparks."
@@ -151,12 +151,15 @@
     "translation": "Each day you fill his \n<color=#f5ea12>Play Need</color> you’ll earn a \n<color=#f5ea12>Play Token.</color>"
   },
   "onboarding.TokensIntro.Part1": {
-    "translation": "Fill Cozmo’s <color=#f5ea12>Play Need</color> on three days to unlock a <color=#f5ea12>Bonus Box.</color>"
+    "translation": "Fill Cozmo’s <color=#f5ea12>Play Need</color> daily. Three days unlocks a <color=#f5ea12>Bonus Box.</color>"
   },
   "onboarding.TokensIntro.Part2": {
     "translation": "Cozmo is lucky to have you as an owner! Time to explore together!"
   },
   "onboarding.button.end": {
     "translation": "COMPLETE"
+  },
+  "onboarding.notificationpreprompt.body": {
+    "translation": "Would you like Cozmo to send you messages when he needs you?"
   }
 }

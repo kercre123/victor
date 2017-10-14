@@ -170,7 +170,7 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
   ObjectTapped payload = message.GetData().Get_activeObjectTapped();
   
   // Taps below threshold should be filtered and ignored.
-  int16_t intensity = payload.tapPos - payload.tapNeg;
+  const int16_t intensity = payload.tapPos - payload.tapNeg;
   if (intensity <= kTapIntensityMin)
   {
     PRINT_CH_INFO("BlockPool", "BlockTapFilterComponent.HandleEnableTapFilter.Ignored",
@@ -179,7 +179,7 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
   }
 
   // find connected object by activeID
-  ActiveID tappedActiveID = payload.objectID;
+  const ActiveID tappedActiveID = payload.objectID;
   const ActiveObject* tappedObject = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID( tappedActiveID );
 
   if(nullptr == tappedObject)

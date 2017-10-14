@@ -10,7 +10,7 @@
 *
 */
 
-#include "audioFileReader.h"
+#include "audioUtil/audioFileReader.h"
 
 #import <Foundation/Foundation.h>
 #import <AudioToolbox/AudioToolbox.h>
@@ -182,12 +182,12 @@ bool AudioFileReader::ConvertAndStoreSamples(const NativeAudioFileData& fileData
   
   // Lambda for resetting the state of the buffer data. Note that by calling clear() and resize(), a new chunk of data memory
   // gets allocated if the buffer had just been moved() into the _audioSamples list for storage.
-  auto resetBufferData = [&bufferList, &bufferData]()
+  auto resetBufferData = [samplesPerChunk = _samplesPerChunk, &bufferList, &bufferData]()
   {
     bufferData.clear();
-    bufferData.resize(kSamplesPerChunk);
+    bufferData.resize(samplesPerChunk);
     bufferList.mBuffers[0].mData = bufferData.data();
-    bufferList.mBuffers[0].mDataByteSize = kSamplesPerChunk * sizeof(bufferData[0]);
+    bufferList.mBuffers[0].mDataByteSize = samplesPerChunk * sizeof(bufferData[0]);
     bufferList.mBuffers[0].mNumberChannels = 1;
     bufferList.mNumberBuffers = 1;
   };
@@ -197,10 +197,10 @@ bool AudioFileReader::ConvertAndStoreSamples(const NativeAudioFileData& fileData
   
   ConvertStruct convertData{ fileData.audioFileID };
   
-  UInt32 numPacketsToConvert = kSamplesPerChunk; // 1:1 ratio here since uncompressed audio is 1 frame per packet, and each frame is just a single channel audio sample
+  UInt32 numPacketsToConvert = _samplesPerChunk; // 1:1 ratio here since uncompressed audio is 1 frame per packet, and each frame is just a single channel audio sample
   while (true)
   {
-    numPacketsToConvert = kSamplesPerChunk;
+    numPacketsToConvert = _samplesPerChunk;
     errorCode = AudioConverterFillComplexBuffer(audioConverter, &ConvertAudioDataCallback, (void*)&convertData, &numPacketsToConvert, &bufferList, NULL);
     if (numPacketsToConvert > 0)
     {
@@ -303,8 +303,8 @@ void AudioFileReader::DeliverAudio(bool doRealTime, bool addBeginSilence, bool a
   };
   
   // Static AudioChunk to be used for adding silence
-  static const AudioChunk silenceChunk = AudioChunk(std::size_t(AudioUtil::kSamplesPerChunk), 0);
-  constexpr int chunksPerSecond = AudioUtil::kSampleRate_hz / AudioUtil::kSamplesPerChunk;
+  static const AudioChunk silenceChunk = AudioChunk(std::size_t(_samplesPerChunk), 0);
+  const int chunksPerSecond = AudioUtil::kSampleRate_hz / _samplesPerChunk;
   
   // Deliver beginning silence if desired
   if (addBeginSilence)

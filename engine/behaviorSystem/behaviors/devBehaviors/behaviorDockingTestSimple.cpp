@@ -146,7 +146,7 @@ namespace Anki {
       _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, robot.GetWorldOrigin());
       
       robot.GetBehaviorManager().DisableReactionsWithLock(kBehaviorTestName,
-                                                         ReactionTriggerHelpers::kAffectAllArray);
+                                                          ReactionTriggerHelpers::GetAffectAllArray());
 
       // force the default speeds
       PathMotionProfile motionProfile;

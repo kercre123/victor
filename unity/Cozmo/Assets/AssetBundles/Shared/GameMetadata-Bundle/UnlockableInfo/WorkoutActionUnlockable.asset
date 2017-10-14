@@ -15,23 +15,19 @@ MonoBehaviour:
     _EnumValueAsString: Workout
     _EnumValue: 29
   UnlockableType: 1
-  Prerequisites:
-  - _EnumValueAsString: PopAWheelieAction
-    _EnumValue: 13
-  AnyPrereqUnlock: 0
-  _ComingSoon: 0
   DescriptionKey: unlockable.Workout.Description
   TitleKey: unlockable.Workout.Title
   SparkButtonDescription: unlockable.Workout.SparkButtonDescription
   SparkedStateDescription: unlockable.Workout.SparkedStateDescription
   SparkedMusicState:
     _Sparked: 1875882538
+  IsSparkable: 1
   RequestTrickCostItemId: spark
   _SparkableThingID:
     _EnumValueAsString: WorkoutWithCubes
     _EnumValue: 18
   CoreUpgradeIcon: {fileID: 21300000, guid: a0c43fab4ccad47618022bc1f4e9715e, type: 3}
   CubesRequired: 1
-  SortOrder: 700
+  SortOrder: 90
   AndroidReleaseVersion: 
   AndroidSDKVersion: 0

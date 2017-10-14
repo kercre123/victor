@@ -60,7 +60,7 @@ message DisplayProceduralFace {
     float_32 leftEye[uint_8],      // TODO: make this fixed length = ProceduralEyeParameter::NumParameters
     float_32 rightEye[uint_8],     //
 
-    uint_32  duration_ms
+    uint_32  duration_ms           // Use uint_32 max value to keep the image on the screen (still subject to scanline switching)
 }
 
 // DriveOffChargerContacts
@@ -107,7 +107,7 @@ message GotoPose {
 message MountCharger {
   int_32 objectID,
   PathMotionProfile motionProf,
-  bool usePreDockPose,
+  bool useCliffSensorCorrection,
   bool useManualSpeed
 }
 

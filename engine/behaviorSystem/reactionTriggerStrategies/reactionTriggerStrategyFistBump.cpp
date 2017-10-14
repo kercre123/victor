@@ -96,9 +96,9 @@ void ReactionTriggerStrategyFistBump::LoadJson(const Json::Value& config)
       }
       
       // Add to trigger map
-      PRINT_NAMED_INFO("ReactionTriggerStrategyFistBump.LoadJson.AddingTrigger",
-                       "%s: cooldownTime_s %f, triggerProb %f, triggerExpiration_s %f",
-                       objectiveStr.c_str(), cooldownTime_s, triggerProbability, triggerExpiration_s);
+      // PRINT_NAMED_DEBUG("ReactionTriggerStrategyFistBump.LoadJson.AddingTrigger",
+      //                   "%s: cooldownTime_s %f, triggerProb %f, triggerExpiration_s %f",
+      //                   objectiveStr.c_str(), cooldownTime_s, triggerProbability, triggerExpiration_s);
       _triggerParamsMap[objective] = {
         .cooldownTime_s = cooldownTime_s,
         .triggerProbability = triggerProbability,

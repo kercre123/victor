@@ -5,7 +5,7 @@
 ANKI_LOG_PP=tools/ankiLogPP.py
 ANKI_LOG_TABLE_DIR=../resources/config/engine
 ANKI_LOG_TABLE_JSON=$(ANKI_LOG_TABLE_DIR)/AnkiLogStringTables.json
-ANKI_LOG_SRC_DIRS=supervisor/src hal ../robot2/hal/src espressif/app sim_hal/ syscon/hal ../robot2/hal/sim/src/
+ANKI_LOG_SRC_DIRS=supervisor/src ../robot2/hal/src ../robot2/hal/sim/src/
 ANKI_LOG_ST_ERR_MSG='Anki log pre-preprocessing incomplete. Run `make dev` to process macros. If you see this on the build server, you need to merge locally, run `make dev` and push again.'
 
 UV4=C:/Keil_v5/UV4/UV4.exe

@@ -16,7 +16,7 @@ enum uint_32 RobotStatusFlag {
     IS_CARRYING_BLOCK       = 0x00000002,
     IS_PICKING_OR_PLACING   = 0x00000004,
     IS_PICKED_UP            = 0x00000008,
-    IS_BODY_ACC_MODE        = 0x00000010,  // Whether or not motors are enabled in body
+
     IS_FALLING              = 0x00000020,
     IS_ANIMATING            = 0x00000040,
     IS_PATHING              = 0x00000080,
@@ -95,36 +95,6 @@ structure RobotState
   ProxSensorData proxData,
   uint_16 backpackTouchSensorRaw,
   int_8   currPathSegment, // -1 if not traversing a path
-}
-
-enum int_8 BodyRadioMode
-{
-  BODY_BLUETOOTH_OPERATING_MODE = 0x0,
-  BODY_ACCESSORY_OPERATING_MODE = 0x1,
-  BODY_LOW_POWER_OPERATING_MODE = 0x2,
-  BODY_FORCE_RECOVERY           = 0x3,
-  BODY_STARTUP                  = 0x4,
-  BODY_DTM_OPERATING_MODE       = 0x20,
-  BODY_OTA_MODE                 = 0x40,
-  BODY_BATTERY_CHARGE_TEST_MODE = 0x78
-}
-
-message SetBodyRadioMode
-{
-  BodyRadioMode radioMode,
-  uint_8        wifiChannel = 0
-}
-
-structure PowerState
-{
-  int_32        VBatFixed,
-  int_32        VExtFixed,
-  int_32        _unused,
-  uint_8        batteryLevel,
-  bool          onCharger,
-  bool          isCharging,
-  BodyRadioMode operatingMode,
-  bool          chargerOOS
 }
 
 // These enum values should match the body color

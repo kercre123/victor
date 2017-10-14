@@ -54,6 +54,7 @@
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -151,20 +152,19 @@ static const float kPitchAngleOnFacePlantMin_sim_rads = DEG_TO_RAD(110.f); //Thi
 static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-80.f); //This has not been tested
 
 // For tool code reading
-// 4-degree look down: (Make sure to update cozmoBot.proto to match!)
-#ifdef COZMO_V2
-  const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
-     0,     0,   1.f,
-    -1.f,   0,   0,
-     0,    -1.f, 0,
-  });
-#else
-  const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
-    0,      -0.0698f,  0.9976f,
-  -1.0000f,  0,        0,
-    0,      -0.9976f, -0.0698f,
-  });
-#endif
+// Camera looking straight:
+//const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
+//   0,     0,   1.f,
+//  -1.f,   0,   0,
+//   0,    -1.f, 0,
+//});
+// 4-degree look down:
+const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
+  0,      -0.0698f,  0.9976f,
+-1.0000f,  0,        0,
+  0,      -0.9976f, -0.0698f,
+});
+
 
 
 Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
@@ -184,6 +184,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _actionList(new ActionList())
   , _movementComponent(new MovementComponent(*this))
   , _visionComponent( new VisionComponent(*this, _context))
+  , _mapComponent(new MapComponent(this))
   , _nvStorageComponent(new NVStorageComponent(*this, _context))
   , _aiComponent(new AIComponent(*this))
   , _textToSpeechComponent(new TextToSpeechComponent(_context))
@@ -293,6 +294,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     
 Robot::~Robot()
 {
+  LOG_EVENT("robot.destructor", "%d", GetID());
+  
   // force an update to the freeplay data manager, so we'll send a DAS event before the tracker is destroyed
   GetAIComponent().GetFreeplayDataTracker().ForceUpdate();
   
@@ -319,6 +322,15 @@ Robot::~Robot()
   Util::SafeDelete(_progressionUnlockComponent);
   Util::SafeDelete(_tapFilterComponent);
   Util::SafeDelete(_blockFilter);
+  
+  // Destroy these components (which may hold poses parented to _pose) *before* _pose is destroyed (despite
+  // order of declaration)
+  _objectPoseConfirmerPtr.reset();
+  _aiComponent.reset();
+  _pathComponent.reset();
+  _petWorld.reset();
+  _faceWorld.reset();
+  _blockWorld.reset();
 }
     
 void Robot::SetOnCharger(bool onCharger)
@@ -337,18 +349,8 @@ void Robot::SetOnCharger(bool onCharger)
     if ( nullptr == chargerInstance )
     {
       // there's currently no located instance, we need to create one.
-      ActiveID unconnectedActiveID = ObservableObject::InvalidActiveID;
-      FactoryID unconnectedFactoryID = ObservableObject::InvalidFactoryID;
-      chargerInstance = CreateActiveObjectByType(ObjectType::Charger_Basic, unconnectedActiveID, unconnectedFactoryID);
-
-      // check if there is a connected instance, because we can inherit its ID (objectID)
-      // note that setting ActiveID and FactoryID is responsibility of whenever we Add the object to the BlockWorld
-      ActiveObject* connectedInstance = GetBlockWorld().FindConnectedActiveMatchingObject(filter);
-      if ( nullptr != connectedInstance ) {
-        chargerInstance->CopyID(connectedInstance);
-      } else {
-        chargerInstance->SetID();
-      }
+      chargerInstance = new Charger();
+      chargerInstance->SetID();
     }
 
     // pretend the instance we created was an observation. Note that lastObservedTime will be 0 in this case, since
@@ -711,6 +713,7 @@ void Robot::Delocalize(bool isCarryingObject)
         PRINT_NAMED_WARNING("Robot.Delocalize.UpdateObjectOriginFailed",
                             "Object %d", objectID.GetValue());
       }
+      
     }
   }
 
@@ -877,18 +880,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   SetOnCharger(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
   SetIsCharging(IS_STATUS_FLAG_SET(IS_CHARGING));
   _chargerOOS = IS_STATUS_FLAG_SET(IS_CHARGER_OOS);
-  _isBodyInAccessoryMode = IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE);
 
   // Save the entire flag for sending to game
   _lastStatusFlags = msg.status;
-  
-  // If robot is not in accessary mode for some reason, send message to force it.
-  // This shouldn't ever happen!
-  if (!_isBodyInAccessoryMode && ++_setBodyModeTicDelay >= 16) {  // Triggers ~960ms (16 x 60ms engine tic) after syncTimeAck.
-    PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BodyNotInAccessoryMode", "");
-    SendMessage(RobotInterface::EngineToRobot(SetBodyRadioMode(BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE, 0)));
-    _setBodyModeTicDelay = 0;
-  }
 
   GetMoveComponent().Update(msg);
       
@@ -1128,8 +1122,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Send state to visualizer for displaying
   GetContext()->GetVizManager()->SendRobotState(
     stateMsg,
-    static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
-    -1, // AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
     (u8)MIN(((u8)imageFrameRate), std::numeric_limits<u8>::max()),
     (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
     _enabledAnimTracks,
@@ -1186,6 +1178,8 @@ void Robot::SetPhysicalRobot(bool isPhysical)
     Anki::Util::ReliableConnection::SetConnectionTimeoutInMS(netConnectionTimeoutInMS);
   }
   #endif // !(ANKI_PLATFORM_IOS || ANKI_PLATFORM_ANDROID)
+
+  _visionComponent->SetPhysicalRobot(_isPhysical);
 }
 
 Result Robot::GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera) const
@@ -1317,16 +1311,12 @@ Result Robot::Update()
   */
 
   //////////// Android HAL Update ////////////
-  #ifdef COZMO_V2
   AndroidHAL::getInstance()->Update();
-  #endif
 
   //////////// VisionComponent //////////  
   if(_visionComponent->GetCamera().IsCalibrated())
   {
-    #ifdef COZMO_V2
-    _visionComponent->CaptureAndSendImage();
-    #endif
+    _visionComponent->Update();
   
     // NOTE: Also updates BlockWorld and FaceWorld using markers/faces that were detected
     Result visionResult = _visionComponent->UpdateAllResults();
@@ -1346,7 +1336,7 @@ Result Robot::Update()
   ///////// MemoryMap ///////////
       
   // update the memory map based on the current's robot pose
-  _blockWorld->UpdateRobotPoseInMemoryMap();
+  _mapComponent->UpdateRobotPose();
   
   // Check if we have driven off the charger platform - this has to happen before the behaviors which might
   // need this information. This state is useful for knowing not to play a cliff react when just driving off
@@ -1489,7 +1479,7 @@ Result Robot::Update()
   ConnectToRequestedObjects();
   
   // Send nav memory map data
-  _blockWorld->BroadcastNavMemoryMap();
+  _mapComponent->BroadcastMap();
   
   /////////// Update AnimationComponent /////////
   _animationComponent->Update();
@@ -1500,7 +1490,7 @@ Result Robot::Update()
   _blockWorld->DrawAllObjects();
       
   // Nav memory map
-  _blockWorld->DrawNavMemoryMap();
+  _mapComponent->DrawMap();
       
   // Always draw robot w.r.t. the origin, not in its current frame
   Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToRoot();
@@ -1570,7 +1560,11 @@ Result Robot::Update()
     SendDebugString(buffer);
     _lastDebugStringHash = curr_hash;
   }
-
+  
+#if ANKI_DEV_CHEATS
+  Broadcast( ExternalInterface::MessageEngineToGame(ExternalInterface::DebugPerformanceTick(
+                                                    "Vision",_visionComponent->GetProcessingPeriod_ms())));
+#endif
   _cubeLightComponent->Update();
   _bodyLightComponent->Update();
   
@@ -1683,7 +1677,7 @@ void Robot::SetPose(const Pose3d &newPose)
       
 } // SetPose()
     
-Pose3d Robot::GetCameraPose(f32 atAngle) const
+Pose3d Robot::GetCameraPose(const f32 atAngle) const
 {
   // Start with canonical (untilted) headPose
   Pose3d newHeadPose(_headCamPose);
@@ -1694,7 +1688,7 @@ Pose3d Robot::GetCameraPose(f32 atAngle) const
   newHeadPose.SetName("Camera");
 
   return newHeadPose;
-} // GetCameraHeadPose()
+} // GetCameraPose()
     
 void Robot::SetHeadAngle(const f32& angle)
 {
@@ -1771,7 +1765,7 @@ void Robot::LoadEmotionEvents()
     const auto& eventJson = fileJsonPair.second;
     if (!eventJson.empty() && _moodManager->LoadEmotionEvents(eventJson))
     {
-      PRINT_NAMED_DEBUG("Robot.LoadEmotionEvents", "Loaded '%s'", filename.c_str());
+      //PRINT_NAMED_DEBUG("Robot.LoadEmotionEvents", "Loaded '%s'", filename.c_str());
     }
     else
     {
@@ -1961,6 +1955,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
       // Now we need to go through all objects and faces whose poses have been adjusted
       // by this origin switch and notify the outside world of the change.
       _blockWorld->UpdateObjectOrigins(origOriginID, newOriginID);
+      _mapComponent->UpdateMapOrigins(origOriginID, newOriginID);
       _faceWorld->UpdateFaceOrigins(origOriginID, newOriginID); 
       
       // after updating all block world objects, flatten out origins to remove grandparents
@@ -2325,7 +2320,7 @@ Result Robot::SetOnRamp(bool t)
       
   return RESULT_OK;
       
-} // SetOnPose()
+} // SetOnRamp()
     
     
 Result Robot::SetPoseOnCharger()
@@ -2360,7 +2355,7 @@ Result Robot::SetPoseOnCharger()
       
   return RESULT_OK;
       
-} // SetOnPose()
+} // SetPoseOnCharger()
   
 // ============ Messaging ================
     
@@ -2385,13 +2380,8 @@ Result Robot::SendSyncTime() const
                                                          BaseStationTimer::getInstance()->GetCurrentTimeStamp(),
                                                          #endif
                                                          DRIVE_CENTER_OFFSET)));
-  if (result == RESULT_OK) {
-    result = SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::InitController()));
-  }
-  if(result == RESULT_OK) {
-    result = SendMessage(RobotInterface::EngineToRobot(
-                           RobotInterface::ImageRequest(ImageSendMode::Stream, DEFAULT_IMAGE_RESOLUTION)));
-        
+
+  if(result == RESULT_OK) {    
     // Reset pose on connect
     PRINT_NAMED_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
     Pose3d zeroPose(0, Z_AXIS_3D(), {0,0,0}, GetWorldOrigin());
@@ -2571,7 +2561,7 @@ Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) cons
       
   return boundingQuad;
       
-} // GetBoundingBoxXY()
+} // GetBoundingQuadXY()
     
 f32 Robot::GetHeight() const
 {
@@ -2583,19 +2573,19 @@ f32 Robot::GetLiftHeight() const
   return ConvertLiftAngleToLiftHeightMM(GetLiftAngle());
 }
     
-Transform3d Robot::GetLiftTransformWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const
+Transform3d Robot::GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 atHeadAngle) const
 {
   Pose3d liftPose(_liftPose);
   ComputeLiftPose(atLiftAngle, liftPose);
-      
+
   Pose3d camPose = GetCameraPose(atHeadAngle);
-      
+
   Pose3d liftPoseWrtCam;
   const bool result = liftPose.GetWithRespectTo(camPose, liftPoseWrtCam);
-  
+
   DEV_ASSERT(result, "Robot.GetLiftTransformWrtCamera.LiftWrtCamPoseFailed");
 # pragma unused(result)
-  
+
   return liftPoseWrtCam.GetTransform();
 }
     
@@ -3037,11 +3027,6 @@ Result Robot::AbortAnimation()
 Result Robot::SendAbortAnimation()
 {
   return SendMessage(RobotInterface::EngineToRobot(RobotInterface::AbortAnimation()));
-}
-      
-Result Robot::SendFlashObjectIDs()
-{
-  return SendMessage(RobotInterface::EngineToRobot(FlashObjectIDs()));
 }
      
 Result Robot::SendDebugString(const char* format, ...)

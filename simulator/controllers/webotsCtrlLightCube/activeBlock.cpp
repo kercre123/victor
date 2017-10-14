@@ -82,8 +82,6 @@ namespace {
   
   typedef enum {
     NORMAL = 0,
-    FLASHING_ID,
-    BEING_CARRIED
   } BlockState;
   
   s32 blockID_ = -1;
@@ -137,17 +135,7 @@ namespace {
   // Mapping from block ID to ObjectType
   const ObjectType blockIDToObjectType_[MAX_NUM_CUBES] = { ObjectType::Block_LIGHTCUBE1, ObjectType::Block_LIGHTCUBE2, ObjectType::Block_LIGHTCUBE3, ObjectType::Charger_Basic };
   u32 factoryID_ = 0;
-  ObjectType objectType_ = ObjectType::UnknownObject;
-  
-  // Flash ID params
-  double flashIDStartTime_ = 0;
-  
-  // For now, flashing ID means turning the LED off for a bit, then red for a bit,
-  // then off for a bit, then resuming the regular pattern
-  const double flashID_t1_off = 0.025;
-  const double flashID_t2_on = 0.1;
-  const double flashID_t3_off = 0.025;
-  
+  ObjectType objectType_ = ObjectType::UnknownObject;  
   
 } // private namespace
 
@@ -169,12 +157,6 @@ inline void SetLED_helper(u32 index, u32 rgbaColor) {
 }
 
 // ========== Callbacks for messages from robot =========
-void Process_flashID(const FlashObjectIDs& msg)
-{
-  state_ = FLASHING_ID;
-  flashIDStartTime_ = active_object_controller.getTime();
-  //printf("Starting ID flash\n");
-}
 
 void Process_setCubeID(const CubeID& msg)
 {
@@ -197,12 +179,6 @@ void Process_setCubeLights(const CubeLights& msg)
     SetLED_helper(i, msg.lights[i].onColor);
   }
   
-}
-
-void Process_setObjectBeingCarried(const ObjectBeingCarried& msg)
-{
-  const bool isBeingCarried = static_cast<bool>(msg.isBeingCarried);
-  state_ = (isBeingCarried ? BEING_CARRIED : NORMAL);
 }
 
 void Process_streamObjectAccel(const StreamObjectAccel& msg)
@@ -333,11 +309,6 @@ Result Init()
   
   wasMoving_ = false;
   wasLastMovingTime_sec_ = 0.0;
-  
-  // Register callbacks
-  // I don't think these are relivant anymore. ~Daniel
-  //RegisterCallbackForMessageFlashID(ProcessFlashIDMessage);
-  //RegisterCallbackForMessageSetBlockLights(ProcessSetBlockLightsMessage);
   
   return RESULT_OK;
 }
@@ -689,25 +660,7 @@ Result Update() {
         
         break;
       }
-        
-      case BEING_CARRIED:
-      {
-        // Don't check for movement since we're being carried
-        break;
-      }
-
-        
-      case FLASHING_ID:
-        if (currTime_sec >= flashIDStartTime_ + flashID_t1_off + flashID_t2_on + flashID_t3_off) {
-          state_ = NORMAL;
-        } else if (currTime_sec >= flashIDStartTime_ + flashID_t1_off + flashID_t2_on) {
-          SetAllLEDs(0);
-        } else if (currTime_sec >= flashIDStartTime_ + flashID_t1_off) {
-          SetAllLEDs(0xff0000);
-        } else if (currTime_sec >= flashIDStartTime_) {
-          SetAllLEDs(0);
-        }
-        break;
+      
       default:
         printf("WARNING (ActiveBlock): Unknown state %d\n", state_);
         break;

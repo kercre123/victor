@@ -5,65 +5,7 @@
 namespace Anki {
 namespace Cozmo {
 namespace RobotInterface {
-namespace OTA {
 
-  message Write
-  {
-    int_16 packetNumber, ///< Write packet number to ensure ordering, counts up from 0, set to -1 for EOF
-    uint_8 data[1024],   ///< Data to write, must be 4 byte aligned for Flash API alignment but must be uint8 for Python interface to be sane
-  }
-  
-  enum int_8 Result
-  {
-    ERR_READ_ERROR    = -25,
-    ERR_READ_TIMEOUT  = -24,
-    ERR_WRITE_ERROR   = -23,
-    ERR_WRITE_TIMEOUT = -22,
-    ERR_ERASE_ERROR   = -21,
-    ERR_ERASE_TIMEOUT = -20,
-    ERR_FACT_RESET   = -10,
-    ERR_INCOMPATIBLE = -8,
-    ERR_RTIP_TIMEOUT = -7,
-    ERR_RTIP_NAK     = -6,
-    ERR_I2SPI        = -5,
-    ERR_BAD_ENC      = -4,
-    ERR_BAD_DATA     = -3,
-    ERR_BAD_ADDRESS  = -2,
-    ERR_NO_MEM       = -1,
-    OKAY             =  0,
-    BUSY             =  1,
-    NOTHING_TO_DO    =  2,
-    OUT_OF_ORDER     =  3,
-    NOT_ENABLED      =  4,
-    NOT_ON_CHARGER   =  5,
-    SUCCESS          =  10,
-  }
-
-  message Ack
-  {
-    int_32 bytesProcessed, ///< Number of payload bytes that have been processed
-    int_16 packetNumber,   ///< Highest packet number we have accpeted
-    Result result,         ///< Result being reported
-  }
-
-  enum int_8 RecoveryMode
-  {
-    System_Reset,
-    System_Shutdown,
-    Recovery_Mode,
-    OTA_Mode,
-  }
-
-  message BodyEnterOTA
-  {
-  }
-
-  message EnterRecoveryMode
-  {
-    RecoveryMode mode
-  }
-
-} // OTA
 
 message RobotAvailable
 {

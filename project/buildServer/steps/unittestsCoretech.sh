@@ -1,91 +1,91 @@
 #!/usr/bin/env bash
-set -e
+#
+set -eu
 
-# change dir to the project dir, no matter where script is executed from
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd $DIR
-CUT=`which cut`
-GREP=`which grep`
+# change dir to the script dir, no matter where we are executed from
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPTNAME=="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 GIT=`which git`
 if [ -z $GIT ];then
   echo git not found
   exit 1
 fi
-TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
-# prepare
-TESTNAME=cti
-PROJECT=$TOPLEVEL/generated/mac
-BUILD_TYPE="Debug"
-GTEST=$TOPLEVEL/lib/util/libs/framework/
-BUILDTOOLS=$TOPLEVEL/tools/build
+# configure
 
-# build
-xcodebuild \
--workspace $PROJECT/CozmoWorkspace_mac.xcworkspace \
--scheme BUILD_WORKSPACE \
--sdk macosx \
--configuration $BUILD_TYPE \
-build
+function usage() {
+    echo "$SCRIPTNAME [OPTIONS]"
+    echo "  -h                      print this message"
+    echo "  -v                      verbose output"
+    echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
+    echo "  -p [PLATFORM]           build target platform {android,mac}"
+}
 
-BUILD_DIR=`xcodebuild \
--workspace $PROJECT/CozmoWorkspace_mac.xcworkspace \
--scheme BUILD_WORKSPACE \
--sdk macosx \
--configuration $BUILD_TYPE \
--showBuildSettings | $GREP TARGET_BUILD_DIR | $CUT -d " " -f 7`
+: ${PLATFORM:=mac}
+: ${CONFIGURATION:=Debug}
+: ${VERBOSE:=0}
 
-set -o pipefail
-set +e
-
-# clean output
-rm -rf $BUILD_DIR/${TESTNAME}GoogleTest*
-rm -rf $BUILD_DIR/case*
-rm -f $BUILD_DIR/*.txt
-
-DUMP_OUTPUT=0
-ARGS=""
-while (( "$#" )); do
-
-    if [[ "$1" == "-x" ]]; then
-        DUMP_OUTPUT=1
-    else
-        if [[ "$ARGS" == "" ]]; then
-            ARGS="--gtest_filter=$1"
-        else
-            ARGS="$ARGS $1"
-        fi
-    fi
-    shift
+while getopts "hvc:p" opt; do
+  case $opt in
+    h)
+      usage
+      exit 1
+      ;;
+    v)
+      VERBOSE=1
+      ;;
+    c)
+      CONFIGURATION="${OPTARG}"
+      ;;
+    p)
+      PLATFORM="${OPTARG}"
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
 done
 
-if (( \! $DUMP_OUTPUT )); then
-    ARGS="$ARGS --silent"
+echo "Entering directory \`${SCRIPTDIR}'"
+cd $SCRIPTDIR
+
+: ${TOPLEVEL:=`$GIT rev-parse --show-toplevel`}
+BUILDPATH=${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}/coretech
+
+XML=ctiGoogleTest.xml
+LOG=ctiGoogleTest.log
+LOGZIP=ctiGoogleTest.tar.gz
+
+GTEST_OUTPUT="xml:${XML}"
+CTEST="ctest --output-on-failure -O ${LOG}"
+
+if (( ${VERBOSE} )); then
+  CTEST="${CTEST} -V"
 fi
+
+echo "Entering directory \`${BUILDPATH}'"
+cd ${BUILDPATH}
+
+# clean
+rm -rf ${LOGZIP} ${LOG} */${XML}
+
+# prepare
+mkdir -p testdata
 
 # execute
-$BUILDTOOLS/tools/ankibuild/multiTest.py \
---path $BUILD_DIR \
---gtest_path "$GTEST" \
---work_path "$BUILD_DIR/" \
---config_path "$BUILD_DIR/" \
---gtest_output "xml:$BUILD_DIR/${TESTNAME}GoogleTest_.xml" \
---executable ${TESTNAME}UnitTest \
---stdout_file \
---xml_dir "$BUILD_DIR" \
---xml_basename ${TESTNAME}GoogleTest_ \
-$ARGS
+set +e
+set -o pipefail
+
+GTEST_OUTPUT=${GTEST_OUTPUT} ${CTEST}
 
 EXIT_STATUS=$?
+
 set -e
 
-if (( $DUMP_OUTPUT )); then
-    cat $BUILD_DIR/*.txt
-fi
+#  publish results
+tar czf ${LOGZIP} ${LOG} */${XML}
 
-#tarball files together
-cd $BUILD_DIR
-tar czf ${TESTNAME}GoogleTest.tar.gz ${TESTNAME}GoogleTest_*
-mv ${TESTNAME}GoogleTest.tar.gz $TOPLEVEL/build/${TESTNAME}GoogleTest.tar.gz
 # exit
 exit $EXIT_STATUS

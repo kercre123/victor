@@ -12,6 +12,12 @@ namespace Cozmo.Songs {
 
     private static SongLocMap _sInstance;
 
+    public static SongLocMap Instance {
+      get {
+        return _sInstance;
+      }
+    }
+
     public static void SetInstance(SongLocMap instance) {
       _sInstance = instance;
     }
@@ -22,6 +28,12 @@ namespace Cozmo.Songs {
 
     [SerializeField]
     private SongEntry[] _SongEntries;
+
+    public SongEntry[] SongEntries {
+      get {
+        return _SongEntries;
+      }
+    }
 
     // Opt to search through with every query because it doesn't happen very often.
     public static string GetTitleForSong(UnlockId unlockId) {

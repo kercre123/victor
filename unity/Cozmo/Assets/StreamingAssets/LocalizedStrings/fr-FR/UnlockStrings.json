@@ -198,6 +198,30 @@
   "unlockable.GuardDog.Description" : {
     "translation" : "Lorsque ses cubes sont proches les uns des autres, Cozmo fait parfois une petite sieste tout en les surveillant. Essaie de les retourner sans le réveiller !"
   },
+  "unlockable.CozmoSings.Title": {
+    "translation": "Cozmo Chante"
+  },
+  "unlockable.CozmoSings.DescriptionFirstLine": {
+    "translation": "Quand Cozmo est heureux, il chantera des chantes et explorer le monde."
+  },
+  "unlockable.CozmoSings.DescriptionSecondLine": {
+    "translation": "Si on secoue un cube quand il est en train de chanter, on peut modifier sa voix."
+  },
+  "unlockable.CozmoSings.ButtonPromptTitle": {
+    "translation": "Appuie le touche"
+  },
+  "unlockable.CozmoSings.ButtonPromptDescription": {
+    "translation": "de voir les chantes de Cozmo"
+  },
+  "unlockable.CozmoSings.ButtonText": {
+    "translation": "Playlist de Cozmo"
+  },
+  "unlockable.CozmoSings.ModalTitle": {
+    "translation": "Chantes de Cozmo"
+  },
+  "unlockable.CozmoSings.LockedSongTitle": {
+    "translation": "????"
+  },
   "sparks.Sparked" : {
     "translation" : "Cozmo est chargé d'éclats :"
   },

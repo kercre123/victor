@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using DataPersistence;
+using Anki.Cozmo.Audio;
 using Anki.Cozmo.ExternalInterface;
 
 namespace Cozmo {
@@ -147,6 +148,7 @@ namespace Cozmo {
         if (BlockInventoryRefresh) {
           SetCountText(DataPersistenceManager.Instance.DisplayedSparks + msg.sparksAwarded);
         }
+        GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Spark_Gain);
       }
     }
   }

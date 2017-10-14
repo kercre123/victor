@@ -77,7 +77,8 @@ public:
 
   float NeedLevelForNeedBracket(const NeedId needId, const NeedBracketId bracketId) const;
 
-  void SetUnconnectedDecayTestVariation(const std::string& baseFilename, const std::string& variationKey);
+  void SetUnconnectedDecayTestVariation(const std::string& baseFilename, const std::string& variationKey,
+                                        const Util::AnkiLab::AssignmentStatus assignmentStatus);
   const std::string& GetUnconnectedDecayTestVariation() const { return _unconnectedDecayTestVariationKey; };
 
   float _minNeedLevel;
@@ -109,7 +110,7 @@ private:
 
   const CozmoContext* _cozmoContext;
 
-  std::string _unconnectedDecayTestVariationKey = "unknown";
+  std::string _unconnectedDecayTestVariationKey = "Unknown (unknown)";
 };
 
 
@@ -134,6 +135,8 @@ public:
   float GetFreeplayMaxSparksPctForLevel(int level)       const { return GetLevelOrLastLevel(level).freeplayMaxSparksPct; }
   int GetFreeplayMinSparksForLevel(int level)            const { return GetLevelOrLastLevel(level).freeplayMinSparks; }
   int GetFreeplayMinMaxSparksForLevel(int level)         const { return GetLevelOrLastLevel(level).freeplayMinMaxSparks; }
+
+  int GetNumLevels() const { return static_cast<int>(_UnlockLevels.size()); }
 
 private:
   const UnlockLevel& GetLevelOrLastLevel(int level) const;
