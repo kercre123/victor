@@ -74,6 +74,10 @@
 .full-screen-modal .btn.btn-grey {
   background-image: linear-gradient(to bottom, #a4a5a6, #939495);
 }
+.full-screen-modal .btn.btn-grey:active {
+  background-image: linear-gradient(to bottom, #939495, #a4a5a6);
+}
+
 
 
 .show-rename-project-modal #rename-project-modal {
