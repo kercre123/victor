@@ -62,7 +62,7 @@
 .full-screen-modal .btn.btn-blue {
   background-image: linear-gradient(to bottom, #41c5e9, #2794d1 );
 }
-.full-screen-modal .btn.btn-blue:active {
+.full-screen-modal .btn.btn-blue:active:not([disabled="disabled"]) {
   background-image: linear-gradient(to bottom, #1d84ca, #1d9ec7);
 }
 .full-screen-modal .btn.btn-red {
