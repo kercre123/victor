@@ -1,17 +1,12 @@
 set(TENSORFLOW_DIR ${CORETECH_EXTERNAL_DIR}/../../../coretech-external-local/tensorflow)
 
-set(TENSORFLOW_INCLUDE_DIR ${TENSORFLOW_DIR}/include)
-
 # For enabling Ahead-of-Time (AOT) compilation 
 add_definitions(
   -DTENSORFLOW_USE_AOT=0
 )
 
-set(include_paths
-    ${TENSORFLOW_INCLUDE_DIR}/protobuf
-    ${TENSORFLOW_INCLUDE_DIR}/tensorflow)
-
 if (ANDROID)
+  set(TENSORFLOW_INCLUDE_PATH ${TENSORFLOW_DIR}/include/android)
   set(TENSORFLOW_LIB_PATH ${TENSORFLOW_DIR}/lib/android)
   
   # TensorFlow uses a factory pattern that requires we forcibly include 
@@ -25,8 +20,9 @@ if (ANDROID)
   set(STATIC_FLAG "-Wl,-Bstatic")
   set(NO_STATIC_FLAG "-Wl,-Bdynamic")
 else()
+  set(TENSORFLOW_INCLUDE_PATH ${TENSORFLOW_DIR}/include/mac) 
   set(TENSORFLOW_LIB_PATH ${TENSORFLOW_DIR}/lib/mac)
-
+  
   # TensorFlow uses a factory pattern that requires we forcibly include 
   # everything from the the library
   set(WHOLE_ARCHIVE_FLAG "-Wl,-force_load,")
@@ -35,6 +31,10 @@ else()
   set(STATIC_FLAG "")
   set(NO_STATIC_FLAG "")
 endif()
+
+set(include_paths
+    ${TENSORFLOW_INCLUDE_PATH}/protobuf
+    ${TENSORFLOW_INCLUDE_PATH}/tensorflow)
 
 set(TENSORFLOW_LIBS
     ${WHOLE_ARCHIVE_FLAG}

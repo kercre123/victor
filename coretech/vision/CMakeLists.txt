@@ -25,7 +25,6 @@ target_link_libraries(cti_vision
 
 target_compile_options(cti_vision
   PRIVATE
-  -Os
   ${SYMBOL_VISIBILITY_FLAGS}
 )
 
@@ -37,9 +36,9 @@ target_include_directories(cti_vision
   PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/basestation/src>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>  # For access to engine/vision/nearestNeighborLibraryData.h 
-  ${TENSORFLOW_INCLUDE_DIR}/protobuf
-  ${TENSORFLOW_INCLUDE_DIR}/tensorflow
-  )
+  ${TENSORFLOW_INCLUDE_PATH}/protobuf
+  ${TENSORFLOW_INCLUDE_PATH}/tensorflow
+)
 
 target_compile_definitions(cti_vision
   PRIVATE
@@ -49,6 +48,7 @@ target_compile_definitions(cti_vision
   FACE_TRACKER_OPENCV=2
   FACE_TRACKER_OKAO=3
   FACE_TRACKER_PROVIDER=FACE_TRACKER_OKAO
+  PROTOBUF_INLINE_NOT_IN_HEADERS=1 # To make Tensorflow happy
 )
 
 if(MATLAB)
@@ -76,6 +76,11 @@ if (MACOSX)
     PRIVATE
     cti_vision
     gtest
+    ${TENSORFLOW_LIBS}
+  )
+
+  target_compile_definitions(cti_vision_basestation_test PRIVATE                                                       
+    TEST_DATA_PATH=${CMAKE_CURRENT_SOURCE_DIR}
   )
 
   add_test(NAME cti_vision_basestation_test COMMAND cti_vision_basestation_test)

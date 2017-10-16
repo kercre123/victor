@@ -452,8 +452,8 @@ GTEST_TEST(ObjectDetector, SimpleImage)
   
   Vision::ObjectDetector detector;
   
-  const std::string modelPath = std::string(QUOTE(TEST_DATA_PATH)) + "/vision/resources/tensorflow_models";
-  const std::string testImagePath = std::string(QUOTE(TEST_DATA_PATH)) + "/vision/resources/test/images";
+  const std::string modelPath = std::string(QUOTE(TEST_DATA_PATH)) + "/resources/tensorflow_models";
+  const std::string testImagePath = std::string(QUOTE(TEST_DATA_PATH)) + "/resources/test/images";
   std::string testImageFile = Util::FileUtils::FullFilePath({testImagePath, "grace_hopper.jpg"});
   
   Json::Value config;

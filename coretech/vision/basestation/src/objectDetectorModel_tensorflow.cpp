@@ -152,7 +152,7 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
   }
   
   tensorflow::GraphDef graph_def;
-  Status load_graph_status = ReadBinaryProto(tensorflow::Env::Default(), graph_file_name, &graph_def);
+  Status load_graph_status = tensorflow::ReadBinaryProto(tensorflow::Env::Default(), graph_file_name, &graph_def);
   if (!load_graph_status.ok())
   {
     PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.ReadBinaryProtoFailed",
