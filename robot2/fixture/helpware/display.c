@@ -370,13 +370,14 @@ void display_draw_text(int layer, int line , uint16_t fg, uint16_t bg, const cha
   const Font* font =  gFont[layer];
   assert(line < font->LineCount);
   int nchars =  min(len, font->CharsPerLine);
+  printf("Truncating %d chars to %d |%d\n", len, nchars, font->HasVSpace);
   char* textline = gDisplay.text[layer]+(line*font->CharsPerLine);
   memset(textline, ' ', font->CharsPerLine);
   if (nchars == 0) {
     *textline = 0;
   }
   else  {
-    int leftpad = centered? (font->CharsPerLine - nchars)/2 : 0;
+    int leftpad = centered? (font->CharsPerLine + 1 - nchars)/2 : 0;
     strncpy(textline+leftpad, text, nchars);
   }
   dprintf("Drawing text %8s\n", textline);

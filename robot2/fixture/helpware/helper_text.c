@@ -29,9 +29,7 @@ void helper_text_small(int line, const char *text, int len) {
 }
 
 void helper_text_large(uint16_t fg, uint16_t bg, const char *text, int len, bool solo) {
-  if (solo || len==0) {
-    display_clear_layer(LAYER_LARGE, fg, bg);
-  }
+  display_clear_layer(LAYER_LARGE, fg, bg);
   display_draw_text(LAYER_LARGE, 1, fg, bg, text, len, 1);
 }
 
@@ -62,7 +60,9 @@ int helper_lcdset_command_parse(const char* command, int linelen)
   while (cp<endp && !isspace(*cp)){ cp++;}
   if (cp<endp && isspace(*cp)) { cp++;}
 
-  if (line > SMALL_LINE_COUNT) {line = 1;}
+  if (line > SMALL_LINE_COUNT) {
+    return -1;
+  }
   if (line == 0) {
     for (line=0;line<SMALL_LINE_COUNT;line++)
       helper_text_small(line, " ", 1);
@@ -111,6 +111,9 @@ int helper_lcdshow_command_parse(const char* command, int linelen)
   //eat one space.
   if (cp<endp && isspace(*cp)) { cp++;}
 
+  //eat trailing space
+  while (cp<endp && isspace(endp[-1])) { endp--;}
+
   helper_text_large(fgcolor, bgcolor, cp, endp-cp, solo);
   helper_text_show(solo);
   return 0;
@@ -155,6 +158,13 @@ const char* fixture_command_parse(const char*  command, int len) {
   {
     int status = helper_lcdshow_command_parse(command+7, len-7);
     snprintf(responseBuffer, LINEBUFSZ, "lcdshow %d\n", status);
+    return responseBuffer;
+  }
+  if (strncmp(command, "lcdclr", min(6,len))==0)
+  {
+    //"clr" is same as "set 0"
+    int status = helper_lcdshow_command_parse("0 \n", 3);
+    snprintf(responseBuffer, LINEBUFSZ, "lcdclr %d\n", status);
     return responseBuffer;
   }
 

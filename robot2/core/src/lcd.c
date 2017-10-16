@@ -112,11 +112,19 @@ static void lcd_device_init() {
 	}
 }
 
-void lcd_draw_frame(LcdFrame* frame) {
+void lcd_clear_screen(void) {
+  const LcdFrame frame={{0}};
+  lcd_draw_frame(&frame);
+}
+
+
+void lcd_draw_frame(const LcdFrame* frame) {
    static const uint8_t WRITE_RAM = 0x2C;
    lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
    lcd_spi_transfer(FALSE, sizeof(frame->data), frame->data);
 }
+
+
 
 int lcd_init(void) {
 
@@ -148,6 +156,8 @@ int lcd_init(void) {
 	microwait(50);
 
   lcd_device_init();
+
+  lcd_clear_screen();
 
   return 0;
 }
