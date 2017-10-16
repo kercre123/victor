@@ -305,6 +305,8 @@ namespace Messages {
     MonitorConnectionState();
 
     DoleAvailableAnimations();
+
+    _context->GetMicDataProcessor()->Update();
     
     // Process incoming messages from engine
     u32 dataLen;

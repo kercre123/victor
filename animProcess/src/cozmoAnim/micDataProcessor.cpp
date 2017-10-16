@@ -16,6 +16,9 @@
 #include "speex/speex_resampler.h"
 
 #include "cozmoAnim/micDataProcessor.h"
+#include "cozmoAnim/engineMessages.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_sendToEngine_helper.h"
 #include "audioUtil/waveFile.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -26,7 +29,7 @@
 #include <sstream>
 #include <thread>
 
-#include "cozmoAnim/fft.h"
+#include "cozmoAnim/FftComplex.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -169,29 +172,9 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
     
     if (!_rawAudioData.empty())
     {
-      auto saveRawWave = [dest = (writeLocationBase + kRawFileExtension), data = std::move(_rawAudioData)] () {
-        AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels, kSampleRateIncoming_hz);
-        PRINT_NAMED_INFO("MicDataProcessor.WriteRawWaveFile", "%s", dest.c_str());
-      };
-      std::thread(saveRawWave).detach();
 
-      _rawAudioData.clear();
-    }
-
-    if (!_resampledAudioData.empty())
-    {
-      auto saveResampledWave = [dest = (writeLocationBase + kResampledFileExtension), data = std::move(_resampledAudioData)] () {
-        AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels);
-        PRINT_NAMED_INFO("MicDataProcessor.WriteResampledWaveFile", "%s", dest.c_str());
-      };
-      std::thread(saveResampledWave).detach();
-      _resampledAudioData.clear();
-    }
-
-    if (!_processedAudioData.empty())
-    {
-      auto runFft = [data = _processedAudioData]() {
-        CArray a;
+      std::packaged_task<uint32_t()> task([data = _rawAudioData]() {
+        std::vector<std::complex<double> > a;
         uint32 size = 0;
         for(auto e : data)
         {
@@ -205,20 +188,90 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
           iter = std::copy(e.begin(), e.end(), iter);
         }
 
-        fft(a);
+        Fft::transform(a);
 
-        static FILE* fp;
-        if(fp == nullptr)
-        {
-          fp = fopen("/data/fft.txt", "w");
-        }
+        // static FILE* fp;
+        // if(fp == nullptr)
+        // {
+        //   fp = fopen("/data/fft.txt", "w");
+        // }
         
-        for(auto e : a)
+        // Skip the first one since it is garbage and often really large
+        // Only look at the first half since the second half is just the inverse of the first
+        // Use every other to effectively scale the data to the appropriate range. 2 because we recorded 2
+        // seconds of data
+        float largestValue = 0;
+        uint32_t largestValueIdx = 0;
+        for(int i = 1; i < a.size()/2; i += 2)
         {
-          fprintf(fp, "%f\n", sqrt(e.real()*e.real() + e.imag()*e.imag()));
+          const auto& e = a[i];
+          float magSq = e.real()*e.real() + e.imag()*e.imag();
+          if(magSq > largestValue)
+          {
+            largestValue = magSq;
+            largestValueIdx = i;
+          }
+          // fprintf(fp, "%f\n", magSq);
         }
+        PRINT_NAMED_WARNING("FFT SAVED","%u", largestValueIdx/2);
+        return largestValueIdx/2;
+      });
+
+      _fftFuture = task.get_future();
+      std::thread(std::move(task)).detach();
+
+
+      auto saveRawWave = [dest = (writeLocationBase + kRawFileExtension), data = std::move(_rawAudioData)] () {
+        AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels, kSampleRateIncoming_hz);
+        PRINT_NAMED_INFO("MicDataProcessor.WriteRawWaveFile", "%s", dest.c_str());
       };
-      std::thread(runFft).detach();
+      std::thread(saveRawWave).detach();
+
+      _rawAudioData.clear();
+    }
+
+    // if (!_resampledAudioData.empty())
+    // {
+    //   auto saveResampledWave = [dest = (writeLocationBase + kResampledFileExtension), data = std::move(_resampledAudioData)] () {
+    //     AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels);
+    //     PRINT_NAMED_INFO("MicDataProcessor.WriteResampledWaveFile", "%s", dest.c_str());
+    //   };
+    //   std::thread(saveResampledWave).detach();
+    //   _resampledAudioData.clear();
+    // }
+
+    if (!_processedAudioData.empty())
+    {
+      // auto runFft = [data = _processedAudioData]() {
+      //   std::vector<std::complex<double> > a;
+      //   uint32 size = 0;
+      //   for(auto e : data)
+      //   {
+      //     size += e.size();
+      //   }
+      //   a.resize(size);
+
+      //   auto iter = std::begin(a);
+      //   for(auto e : data)
+      //   {
+      //     iter = std::copy(e.begin(), e.end(), iter);
+      //   }
+
+      //   Fft::transform(a);
+
+      //   static FILE* fp;
+      //   if(fp == nullptr)
+      //   {
+      //     fp = fopen("/data/fft.txt", "w");
+      //   }
+        
+      //   for(int i = 0; i < a.size(); i += 2)
+      //   {
+      //     const auto& e = a[i];
+      //     fprintf(fp, "%f\n", sqrt(e.real()*e.real() + e.imag()*e.imag()));
+      //   }
+      // };
+      // std::thread(runFft).detach();
 
 
 
@@ -232,7 +285,7 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
     }
 
     _collectedAudioSamples = 0;
-    _audioSamplesToCollect = kDefaultAudioSamplesPerFile;
+    _audioSamplesToCollect = 0;
   }
 }
 
@@ -402,6 +455,19 @@ void MicDataProcessor::RecordAudio(uint32_t duration_ms)
   }
 
   _collectedAudioSamples = 0;
+}
+
+void MicDataProcessor::Update()
+{
+  if(_fftFuture.valid() && 
+     _fftFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+  {
+    uint32_t res = _fftFuture.get();
+    PRINT_NAMED_WARNING("THE FUTURE IS HERE","%u", res);
+    auto msg = RobotInterface::AudioFFTResult();
+    msg.result = res;
+    RobotInterface::SendMessageToEngine(std::move(msg));
+  }
 }
 
 } // namespace Cozmo

@@ -20,6 +20,7 @@
 #include <array>
 #include <cstdint>
 #include <string>
+#include <future>
 
 struct SpeexResamplerState_;
 typedef struct SpeexResamplerState_ SpeexResamplerState;
@@ -48,10 +49,12 @@ public:
   void ProcessNextAudioChunk(const RawAudioChunk& audioChunk);
 
   void RecordAudio(uint32_t duration_ms = kDefaultAudioSamplesPerFile);
+
+  void Update();
   
 private:
   uint32_t _collectedAudioSamples = 0;
-  uint32_t _audioSamplesToCollect = kDefaultAudioSamplesPerFile;
+  uint32_t _audioSamplesToCollect = 0;
   
   // uint32_t _filesToStore = kDefaultFilesToCapture;
   std::string _writeLocationDir = "";
@@ -75,6 +78,9 @@ private:
   std::string GetProcessedFileNameFromRaw(const std::string& rawFileName);
   std::string GetRawFileNameFromProcessed(const std::string& rawFileName);
   std::string GetResampleFileNameFromProcessed(const std::string& processedName);
+
+  // Future for the result of fft
+  std::future<uint32_t> _fftFuture;
 };
 
 } // namespace Cozmo
