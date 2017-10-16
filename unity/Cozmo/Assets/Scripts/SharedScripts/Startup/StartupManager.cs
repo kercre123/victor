@@ -108,7 +108,7 @@ public class StartupManager : MonoBehaviour {
     }
   }
 
-  private float _LoadingProgress = 1f;
+  private float _LoadingProgress = 0f;
   private float LoadingProgress {
     get { return _LoadingProgress; }
     set {
@@ -128,9 +128,8 @@ public class StartupManager : MonoBehaviour {
     _LoadingAnkiLogoIcon.DOFade(0f, fadeDuration).SetEase(Ease.OutSine).SetDelay(holdDuration)
                         .OnComplete(() => {
                           LogoAnimationFinished = true;
+                          StartCoroutine(LoadCoroutine());
                         });
-
-    StartCoroutine(LoadCoroutine());
   }
 
   public static StartupManager Instance {
