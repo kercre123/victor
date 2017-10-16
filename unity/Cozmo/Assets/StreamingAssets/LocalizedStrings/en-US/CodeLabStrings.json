@@ -1197,7 +1197,7 @@
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_was_tapped": {
     "translation": "was Cube [#] tapped"
   },
-  "codeLabGlossary.block_definitions.description.cozmo_vert_get_cube_was_tapped": {
+  "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_was_tapped": {
     "translation": "Returns \"true\" or \"false\" depending on if a specified Cube was tapped. Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
   },
 
