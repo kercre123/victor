@@ -1,6 +1,6 @@
 .modal-confirm {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  display: flex; 
+  display: flex;
   justify-content: center;
   visibility: hidden;
   z-index: 100;
@@ -31,6 +31,7 @@
   max-width: 90%;
   height: auto;
   word-wrap: break-word;
+  box-sizing: border-box;
 }
 
 .modal-confirm .modal-confirm-title {

@@ -293,12 +293,20 @@
         }
     }
 
-    window.onRemixedProject = function(projectUUID, newProjectName) {
+    window.onRemixedProject = function(projectUUID, newProjectName, isFirstRemix) {
         window.cozmoProjectUUID = projectUUID;
         window.isCozmoSampleProject = false;
 
         window.previouslySavedProjectJSON = null;
         window.changeMadeToSampleProject = false;
+
+        if (isFirstRemix == "True") {
+            ModalAlert.open({
+              title: window.$t('codeLab.firstRemixSavedConfirmation.saved_first_remix_title'),
+              prompt: window.$t('codeLab.firstRemixSavedConfirmation.remixing_blocks_jumpstart_prompt'),
+              confirmButtonLabel: window.$t('codeLab.firstRemixSavedConfirmation.continue_button_label')
+            });
+        }
 
         window.setProjectNameAndSavedText(newProjectName, false);
 

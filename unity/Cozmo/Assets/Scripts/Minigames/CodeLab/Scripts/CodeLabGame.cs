@@ -2358,6 +2358,8 @@ namespace CodeLab {
     }
 
     private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID, bool isVertical) {
+      PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
+
       DAS.Info("Codelab.OpenCodeLabProject", "request=" + request + ", UUID=" + projectUUID);
       // Cache the request to open project. These vars will be used after the webview is loaded but before it is visible.
       SetRequestToOpenProject(request, projectUUID);
@@ -2368,10 +2370,10 @@ namespace CodeLab {
 
         Dictionary<string, string> parameters = new Dictionary<string, string>();
 
-        if (DataPersistenceManager.Instance.Data.DefaultProfile.CodeLabHorizontalPlayed == 0
+        if (defaultProfile.CodeLabHorizontalPlayed == 0
             && !DebugMenuManager.Instance.DemoMode) {
           parameters.Add("showTutorial", "true");
-          DataPersistenceManager.Instance.Data.DefaultProfile.CodeLabHorizontalPlayed = 1;
+          defaultProfile.CodeLabHorizontalPlayed = 1;
         }
         else {
           parameters.Add("showTutorial", "false");
@@ -2467,8 +2469,15 @@ namespace CodeLab {
           }
         }
 
+        // Was this the user's first remix? Show dialog if so.
+        bool isFirstRemix = false;
+        if (!defaultProfile.CodeLabRemixCreated) {
+        isFirstRemix = true;
+        defaultProfile.CodeLabRemixCreated = true;
+        }
+
         string projectNameEscaped = EscapeProjectText(remixedProject.ProjectName);
-        this.EvaluateJS("window.onRemixedProject('" + remixedProject.ProjectUUID + "','" + projectNameEscaped + "');");
+        this.EvaluateJS("window.onRemixedProject('" + remixedProject.ProjectUUID + "','" + projectNameEscaped + "','" + isFirstRemix.ToString() + "');");
 
         _SessionState.OnCreatedProject(remixedProject);
 

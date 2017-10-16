@@ -458,6 +458,17 @@
   },
 
 
+  "codeLab.firstRemixSavedConfirmation.saved_first_remix_title": {
+      "translation": "You have saved your first Remix!"
+  },
+  "codeLab.firstRemixSavedConfirmation.remixing_blocks_jumpstart_prompt": {
+      "translation": "Remixing the code blocks of another project is a great way to jumpstart your own ideas."
+  },
+  "codeLab.firstRemixSavedConfirmation.continue_button_label": {
+      "translation": "Continue"
+  },
+
+
   "codeLab.saveModifiedSampleProjectAsRemixDialog.dialogTitle": {
       "translation": "You have made changes."
   },
@@ -563,7 +574,7 @@
       "translation": "Autosaved"
   },
   "codeLab.SaveProject.NotSaved": {
-      "translation": "Sample projects not saved."
+      "translation": "Changes not saved. Remix to save a copy!"
   },
  "codeLabHorizontal.UserProject.MyProject": {
     "translation": "My Project {0}"
