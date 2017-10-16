@@ -50,3 +50,11 @@ void Power::enableClocking(void) {
                | RCC_APB2ENR_ADC1EN
                ;
 }
+
+void Power::stop(void) {
+  POWER_EN::pull(PULL_DOWN);
+}
+
+void Power::softReset(bool ignore) {
+  NVIC_SystemReset();
+}
