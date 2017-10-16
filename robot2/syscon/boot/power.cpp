@@ -8,23 +8,23 @@ static const uint16_t MINIMUM_BATTERY = 890; // ~3.6v
 
 void Power::init(void) {
   nCHG_EN::reset();
-  nCHG_EN::mode(MODE_OUTPUT); 
+  nCHG_EN::mode(MODE_OUTPUT);
 
   POWER_EN::pull(PULL_UP);
   POWER_EN::mode(MODE_INPUT);
 
   // Make sure battery is partially charged, and that the robot is on a charger
-  // NOTE: Only one interrupt is enabled here, and it's the 200hz main timing loop  
+  // NOTE: Only one interrupt is enabled here, and it's the 200hz main timing loop
   // this lowers power consumption and interrupts fire regularly
 
   do {
     // Wait for a bit with the power on
     POWER_EN::pull(PULL_UP);
     for (int i = 0; i < 10; i++) __asm("wfi");
-    
+
     // Break out once we have hit a decent charge level
-    if (Analog::values[ADC_VBAT] >= MINIMUM_BATTERY) break ; 
-    
+    if (Analog::values[ADC_VBAT] >= MINIMUM_BATTERY) break ;
+
     // Charge for ~15s bursts
     POWER_EN::pull(PULL_DOWN);
     for (int i = 0; i < 5000; i++) __asm("wfi");
