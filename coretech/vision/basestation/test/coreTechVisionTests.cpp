@@ -1,4 +1,5 @@
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
@@ -477,6 +478,25 @@ GTEST_TEST(ObjectDetector, SimpleImage)
   Vision::ImageCache imageCache;
   std::list<Vision::ObjectDetector::DetectedObject> objects;
   
+  auto DetectionHelper = [&detector](Vision::ImageCache& imageCache, std::list<Vision::ObjectDetector::DetectedObject>& objects) -> Result
+  {
+    Vision::ObjectDetector::Status status = Vision::ObjectDetector::Status::Error;
+    BOUNDED_WHILE(10, (status = detector.Detect(imageCache, objects)) == Vision::ObjectDetector::Status::Processing)
+    { 
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
+
+    if(Vision::ObjectDetector::Status::ResultReady == status)
+    {
+      return RESULT_OK;
+    }
+    else 
+    {
+      PRINT_NAMED_WARNING("DetectionHelper.ResultNotReady", "");
+      return RESULT_FAIL;
+    }
+  };
+
   const bool DO_CLASSIFICATION_TEST = false;
   if(DO_CLASSIFICATION_TEST)
   {
@@ -487,7 +507,7 @@ GTEST_TEST(ObjectDetector, SimpleImage)
     ASSERT_EQ(RESULT_OK, result);
     imageCache.Reset(testImg);
     
-    result = detector.Detect(imageCache, objects);
+    result = DetectionHelper(imageCache, objects);
     ASSERT_EQ(RESULT_OK, result);
     
     ASSERT_EQ(1, objects.size());
@@ -498,7 +518,7 @@ GTEST_TEST(ObjectDetector, SimpleImage)
     ASSERT_EQ(RESULT_OK, result);
     imageCache.Reset(testImg);
     
-    result = detector.Detect(imageCache, objects);
+    result = DetectionHelper(imageCache, objects);
     ASSERT_EQ(RESULT_OK, result);
     ASSERT_EQ(1, objects.size());
     ASSERT_NE(std::string::npos, objects.front().name.find("cat"));
@@ -552,15 +572,10 @@ GTEST_TEST(ObjectDetector, SimpleImage)
   result = testImg.Load(testImageFile);
   ASSERT_EQ(RESULT_OK, result);
   imageCache.Reset(testImg);
-  
-  Vision::ObjectDetector::Status status;
-  BOUNDED_WHILE(10, (Vision::ObjectDetector::Status::Processing == (status = detector.Detect(imageCache, objects)))) 
-  { 
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
-  }
-  
-  ASSERT_EQ(Vision::ObjectDetector::Status::Ready, status);
-  
+    
+  result = DetectionHelper(imageCache, objects);
+  ASSERT_EQ(RESULT_OK, result);
+
   bool catFound = false;
   std::for_each(objects.begin(), objects.end(),
                 [&catFound](const Vision::ObjectDetector::DetectedObject& object)

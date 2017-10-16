@@ -914,17 +914,31 @@ namespace Cozmo {
   Result VisionSystem::DetectGeneralObjects(Vision::ImageCache& imageCache)
   {
     std::list<Vision::ObjectDetector::DetectedObject> objects;
-    Result result = _generalObjectDetector->Detect(imageCache, objects);
+    const Vision::ObjectDetector::Status status = _generalObjectDetector->Detect(imageCache, objects);
     
-    // Convert returned Vision::DetectedObject list to our (Cozmo) ExternalInterface message
-    for(const auto& object : objects)
+    switch(status)
     {
-      _currentResult.generalObjects.emplace_back(CladRect(object.rect.GetX(), object.rect.GetY(),
-                                                          object.rect.GetWidth(), object.rect.GetHeight()),
-                                                 object.name, object.timestamp, object.score);
+      case Vision::ObjectDetector::Status::Error:
+        PRINT_NAMED_WARNING("VisionSystem.DetectGeneralObjects.ObjectDetectorError", "");
+        return RESULT_FAIL;
+
+      case Vision::ObjectDetector::Status::ResultReady:
+      {
+        // Convert returned Vision::DetectedObject list to our (Cozmo) ExternalInterface message
+        for(const auto& object : objects)
+        {
+          _currentResult.generalObjects.emplace_back(CladRect(object.rect.GetX(), object.rect.GetY(),
+                                                              object.rect.GetWidth(), object.rect.GetHeight()),
+                                                    object.name, object.timestamp, object.score);
+        }
+        
+        return RESULT_OK;
+      }
+
+      case Vision::ObjectDetector::Status::Idle:
+      case Vision::ObjectDetector::Status::Processing:
+        return RESULT_OK;
     }
-    
-    return result;
   }
 
 #if 0

@@ -75,16 +75,19 @@ ObjectDetector::Status ObjectDetector::Detect(ImageCache& imageCache, std::list<
     return Status::Error;
   }
     
-  if(_future == nullptr)
+  const ImageCache::Size kImageSize = ImageCache::Size::Full;
+
+  if(!_future.valid())
   {
     // Require color data
     if(imageCache.HasColor())
     {
-      const ImageRGB& img = imageCache.GetRGB(ImageCache::Size::Full);
+      const ImageRGB& img = imageCache.GetRGB(kImageSize);
       
       // We're going to copy the data into a separate image to be 
       // processed asynchronously
-      // TODO: avoid copying data
+      // TODO: resize here instead of the Model, to copy less data
+      // TODO: avoid copying data entirely somehow?
       static ImageRGB imgToProcess;
       
       const bool kCropCenterSquare = true;
@@ -103,11 +106,15 @@ ObjectDetector::Status ObjectDetector::Detect(ImageCache& imageCache, std::list<
         img.CopyTo(imgToProcess);
       }
 
-      _future = new std::async(std::launch_async, [](const std::unique_ptr<Model>& model) {
+      _future = std::async(std::launch::async, [this](const ImageRGB& img) {
         std::list<DetectedObject> objects;
-        result = model->Run(img, objects);
+        Result result = _model->Run(img, objects);
+        if(RESULT_OK != result)
+        {
+          PRINT_NAMED_WARNING("ObjectDetector.Detect.AsyncLambda.ModelRunFailed", "");
+        }
         return objects;
-      }, _model);
+      }, imgToProcess);
     }
     else
     {
@@ -117,17 +124,18 @@ ObjectDetector::Status ObjectDetector::Detect(ImageCache& imageCache, std::list<
   }
 
   const auto kWaitForTime = std::chrono::microseconds(500);
-  const std::future_status futureStatus = _future->wait_for(kWaitForTime);
+  const std::future_status futureStatus = _future.wait_for(kWaitForTime);
   switch(futureStatus)
   {
     case std::future_status::deferred:
     case std::future_status::timeout:
-      return Status::Processin;
-    break;
+      return Status::Processing;
 
     case std::future_status::ready:
     {
-      std::list<DetectedObject> objects = _future->get();
+      const ImageRGB& img = imageCache.GetRGB(kImageSize);
+
+      std::list<DetectedObject> objects = _future.get();
       
       const f32 widthScale = (f32)imageCache.GetOrigNumRows() / (f32)img.GetNumRows();
       const f32 heightScale = (f32)imageCache.GetOrigNumCols() / (f32)img.GetNumCols();
@@ -158,12 +166,8 @@ ObjectDetector::Status ObjectDetector::Detect(ImageCache& imageCache, std::list<
 
       std::swap(objects, objects_out);
       return Status::ResultReady;
-
-      break;
     }
   }
-    
-  return result;
 }
   
 } // namespace Vision

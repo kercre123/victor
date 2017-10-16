@@ -875,7 +875,7 @@ namespace Cozmo {
         using localHandlerType = Result(VisionComponent::*)(const VisionProcessingResult& procResult);
         auto tryAndReport = [this, &result, &anyFailures]( localHandlerType handler, VisionMode mode )
         {
-          if (!result.modesProcessed.IsBitFlagSet(mode))
+          if (!result.modesProcessed.IsBitFlagSet(mode) && (mode != VisionMode::Count))
           {
             return;
           }
@@ -907,24 +907,8 @@ namespace Cozmo {
         tryAndReport(&VisionComponent::UpdateComputedCalibration, VisionMode::ComputingCalibration);
         tryAndReport(&VisionComponent::UpdateImageQuality,        VisionMode::CheckingQuality);
         tryAndReport(&VisionComponent::UpdateLaserPoints,         VisionMode::DetectingLaserPoints);
-        
-        // TODO: Move to separate Update method
-        {
-          if(result.modesProcessed.IsBitFlagSet(VisionMode::DetectingGeneralObjects))
-          {
-            s32 colorIndex = 0;
-            for(auto const& object : result.generalObjects)
-            {
-              const Rectangle<s32> rect(object.img_rect.x_topLeft, object.img_rect.y_topLeft,
-                                        object.img_rect.width, object.img_rect.height);
-              ColorRGBA color = ColorRGBA::CreateFromColorIndex(colorIndex++);
-              _vizManager->DrawCameraRect(rect, color);
-              const std::string caption(object.name + " - " + std::to_string((s32)std::round(100.f*object.score)));
-              _vizManager->DrawCameraText(rect.GetTopLeft().CastTo<float>(), caption, color);
-            }
-          }
-        }
-        
+        tryAndReport(&VisionComponent::UpdateDetectedObjects,     VisionMode::Count); // Use Count here to always call UpdateDetectedObjects
+
         // Display any debug images left by the vision system
         if(ANKI_DEV_CHEATS)
         {
@@ -1204,6 +1188,41 @@ namespace Cozmo {
     
     return RESULT_OK;
   } // UpdateMotionCentroid()
+  
+  Result VisionComponent::UpdateDetectedObjects(const VisionProcessingResult& procResult)
+  {
+    // Hack to continue drawing detected objects for a bit after they are detected
+    // since object detection is slow
+    static const TimeStamp_t kKeepDrawingDetectionsFor_ms = 2000;
+    static TimeStamp_t lastNewObjectsTime_ms = 0;
+    static std::list<ExternalInterface::RobotObservedGenericObject> lastDetectedObjects;
+
+    if(procResult.modesProcessed.IsBitFlagSet(VisionMode::DetectingGeneralObjects))
+    {
+      lastDetectedObjects.clear();
+      std::copy(procResult.generalObjects.begin(), procResult.generalObjects.end(), 
+                std::back_inserter(lastDetectedObjects));
+      lastNewObjectsTime_ms = procResult.timestamp;
+    }
+    else if(procResult.timestamp > lastNewObjectsTime_ms + kKeepDrawingDetectionsFor_ms)
+    {
+      lastDetectedObjects.clear();
+    }
+
+    s32 colorIndex = 0;
+    for(auto const& object : lastDetectedObjects)
+    {
+      const Rectangle<s32> rect(object.img_rect.x_topLeft, object.img_rect.y_topLeft,
+                                object.img_rect.width, object.img_rect.height);
+      ColorRGBA color = ColorRGBA::CreateFromColorIndex(colorIndex++);
+      _vizManager->DrawCameraRect(rect, color);
+      const std::string caption(object.name + "[" + std::to_string((s32)std::round(100.f*object.score))
+                                + "] t:" + std::to_string(lastNewObjectsTime_ms));
+      _vizManager->DrawCameraText(rect.GetTopLeft().CastTo<float>(), caption, color);
+    }
+    
+    return RESULT_OK;
+  }
   
   Result VisionComponent::UpdateOverheadEdges(const VisionProcessingResult& procResult)
   {

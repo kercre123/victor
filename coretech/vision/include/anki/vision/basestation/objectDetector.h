@@ -16,6 +16,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/rect.h"
 
+#include <future>
 #include <list>
 
 // Forward declaration:
@@ -63,7 +64,7 @@ private:
   // Hide the library/implementation we actually use for detecting objects
   class Model;
   std::unique_ptr<Model> _model;
-  std::unique_ptr<std::future<std::list<DetectedObject>>> _future;
+  std::future<std::list<DetectedObject>> _future;
 
   bool _isInitialized = false;
   
