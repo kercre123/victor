@@ -553,8 +553,13 @@ GTEST_TEST(ObjectDetector, SimpleImage)
   ASSERT_EQ(RESULT_OK, result);
   imageCache.Reset(testImg);
   
-  result = detector.Detect(imageCache, objects);
-  ASSERT_EQ(RESULT_OK, result);
+  Vision::ObjectDetector::Status status;
+  BOUNDED_WHILE(10, (Vision::ObjectDetector::Status::Processing == (status = detector.Detect(imageCache, objects)))) 
+  { 
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+  }
+  
+  ASSERT_EQ(Vision::ObjectDetector::Status::Ready, status);
   
   bool catFound = false;
   std::for_each(objects.begin(), objects.end(),

@@ -45,7 +45,14 @@ public:
     Rectangle<s32>  rect;
   };
   
-  Result Detect(ImageCache& imageCache, std::list<DetectedObject>& objects);
+  enum class Status {
+    Idle,
+    Processing,
+    ResultReady,
+    Error,
+  };
+
+  Status Detect(ImageCache& imageCache, std::list<DetectedObject>& objects);
   
   //void EnableDisplay(bool enabled);
   
@@ -56,7 +63,8 @@ private:
   // Hide the library/implementation we actually use for detecting objects
   class Model;
   std::unique_ptr<Model> _model;
-  
+  std::unique_ptr<std::future<std::list<DetectedObject>>> _future;
+
   bool _isInitialized = false;
   
 }; // class ObjectDetector

@@ -67,71 +67,102 @@ Result ObjectDetector::Init(const std::string& modelPath, const Json::Value& con
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Detect(ImageCache& imageCache, std::list<DetectedObject>& objects)
+ObjectDetector::Status ObjectDetector::Detect(ImageCache& imageCache, std::list<DetectedObject>& objects_out)
 {
   if(!_isInitialized)
   {
     PRINT_NAMED_ERROR("ObjectDetector.Detect.NotInitialized", "");
-    return RESULT_FAIL;
+    return Status::Error;
   }
     
-  Result result = RESULT_OK;
-  
-  objects.clear();
-  
-  // Require color data
-  if(imageCache.HasColor())
+  if(_future == nullptr)
   {
-    const ImageRGB& img = imageCache.GetRGB(ImageCache::Size::Full);
-    
-    const bool kCropCenterSquare = true;
-    if(kCropCenterSquare)
+    // Require color data
+    if(imageCache.HasColor())
     {
-      const s32 squareDim = std::min(img.GetNumRows(), img.GetNumCols());
-      Rectangle<s32> centerCrop(img.GetNumCols()/2 - squareDim/2,
-                                img.GetNumRows()/2 - squareDim/2,
-                                squareDim, squareDim);
+      const ImageRGB& img = imageCache.GetRGB(ImageCache::Size::Full);
       
-      const ImageRGB& imgCenterCrop = img.GetROI(centerCrop);
-      result = _model->Run(imgCenterCrop, objects);
+      // We're going to copy the data into a separate image to be 
+      // processed asynchronously
+      // TODO: avoid copying data
+      static ImageRGB imgToProcess;
+      
+      const bool kCropCenterSquare = true;
+      if(kCropCenterSquare)
+      {
+        const s32 squareDim = std::min(img.GetNumRows(), img.GetNumCols());
+        Rectangle<s32> centerCrop(img.GetNumCols()/2 - squareDim/2,
+                                  img.GetNumRows()/2 - squareDim/2,
+                                  squareDim, squareDim);
+        
+        const ImageRGB& imgCenterCrop = img.GetROI(centerCrop);
+        imgCenterCrop.CopyTo(imgToProcess);
+      }
+      else
+      {
+        img.CopyTo(imgToProcess);
+      }
+
+      _future = new std::async(std::launch_async, [](const std::unique_ptr<Model>& model) {
+        std::list<DetectedObject> objects;
+        result = model->Run(img, objects);
+        return objects;
+      }, _model);
     }
     else
     {
-      result = _model->Run(img, objects);
-    }
-    
-    const f32 widthScale = (f32)imageCache.GetOrigNumRows() / (f32)img.GetNumRows();
-    const f32 heightScale = (f32)imageCache.GetOrigNumCols() / (f32)img.GetNumCols();
-    
-    if(!Util::IsNear(widthScale, 1.f) || !Util::IsNear(heightScale,1.f))
-    {
-      std::for_each(objects.begin(), objects.end(), [widthScale,heightScale](DetectedObject& object)
-                    {
-                      object.rect = Rectangle<s32>(std::round((f32)object.rect.GetX() * widthScale),
-                                                   std::round((f32)object.rect.GetY() * heightScale),
-                                                   std::round((f32)object.rect.GetWidth() * widthScale),
-                                                   std::round((f32)object.rect.GetHeight() * heightScale));
-                    });
-    }
-    
-    if(ANKI_DEV_CHEATS)
-    {
-      if(objects.empty())
-      {
-        PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Detect.NoObjects", "t=%ums", imageCache.GetRGB().GetTimestamp());
-      }
-      for(auto const& object : objects)
-      {
-        PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Detect.FoundObject", "t=%ums Name:%s Score:%.3f",
-                      imageCache.GetRGB().GetTimestamp(), object.name.c_str(), object.score);
-      }
-    }
+      PRINT_PERIODIC_CH_DEBUG(30, kLogChannelName, "ObjectDetector.Detect.NeedColorData", "");
+      return Status::Idle;
+    } 
   }
-  else
+
+  const auto kWaitForTime = std::chrono::microseconds(500);
+  const std::future_status futureStatus = _future->wait_for(kWaitForTime);
+  switch(futureStatus)
   {
-    PRINT_PERIODIC_CH_DEBUG(30, kLogChannelName, "ObjectDetector.Detect.NeedColorData", "");
+    case std::future_status::deferred:
+    case std::future_status::timeout:
+      return Status::Processin;
+    break;
+
+    case std::future_status::ready:
+    {
+      std::list<DetectedObject> objects = _future->get();
+      
+      const f32 widthScale = (f32)imageCache.GetOrigNumRows() / (f32)img.GetNumRows();
+      const f32 heightScale = (f32)imageCache.GetOrigNumCols() / (f32)img.GetNumCols();
+      
+      if(!Util::IsNear(widthScale, 1.f) || !Util::IsNear(heightScale,1.f))
+      {
+        std::for_each(objects.begin(), objects.end(), [widthScale,heightScale](DetectedObject& object)
+                      {
+                        object.rect = Rectangle<s32>(std::round((f32)object.rect.GetX() * widthScale),
+                                                    std::round((f32)object.rect.GetY() * heightScale),
+                                                    std::round((f32)object.rect.GetWidth() * widthScale),
+                                                    std::round((f32)object.rect.GetHeight() * heightScale));
+                      });
+      }
+      
+      if(ANKI_DEV_CHEATS)
+      {
+        if(objects.empty())
+        {
+          PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Detect.NoObjects", "t=%ums", imageCache.GetRGB().GetTimestamp());
+        }
+        for(auto const& object : objects)
+        {
+          PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Detect.FoundObject", "t=%ums Name:%s Score:%.3f",
+                        imageCache.GetRGB().GetTimestamp(), object.name.c_str(), object.score);
+        }
+      }
+
+      std::swap(objects, objects_out);
+      return Status::ResultReady;
+
+      break;
+    }
   }
-  
+    
   return result;
 }
   
