@@ -238,6 +238,7 @@ Scratch3CozmoBlocks.prototype.setBackpackColor = function(args, util) {
 Scratch3CozmoBlocks.prototype.verticalSetBackpackColor = function(args, util) {
     var colorHex = this._getColorIntFromColorObject(Cast.toRgbColorObject(args.COLOR));
     window.Unity.call({requestId: -1, command: "cozmoVerticalSetBackpackColor", argUInt: colorHex});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.driveForward = function(args, util) {
@@ -569,19 +570,23 @@ Scratch3CozmoBlocks.prototype._getColorIntFromColorObject = function(rgbColor) {
 Scratch3CozmoBlocks.prototype.verticalEnableAnimationTrack = function(args, util) {    
     var trackName = Cast.toString(args.ANIMATION_TRACK);
     window.Unity.call({requestId: -1, command: "cozVertEnableAnimationTrack", argString: trackName, argBool: true});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalDisableAnimationTrack = function(args, util) {    
     var trackName = Cast.toString(args.ANIMATION_TRACK);
     window.Unity.call({requestId: -1, command: "cozVertEnableAnimationTrack", argString: trackName, argBool: false});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalEnableWaitForActions = function(args, util) {    
     window.Unity.call({requestId: -1, command: "cozVertEnableWaitForActions", argBool: true});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalDisableWaitForActions = function(args, util) {    
     window.Unity.call({requestId: -1, command: "cozVertEnableWaitForActions", argBool: false});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalWaitForActions = function(args, util) {
@@ -595,6 +600,7 @@ Scratch3CozmoBlocks.prototype.verticalWaitForActions = function(args, util) {
 Scratch3CozmoBlocks.prototype.verticalCancelActions = function(args, util) {    
     var actionType = Cast.toString(args.ACTION_SELECT);
     window.Unity.call({requestId: -1, command: "cozVertCancelActions", argString: actionType});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalTurn = function(args, util) {
@@ -618,22 +624,18 @@ Scratch3CozmoBlocks.prototype.verticalDrive = function(args, util) {
 };
 
 Scratch3CozmoBlocks.prototype.verticalDriveWheels = function(args, util) {
-    var requestId = this._getRequestId();
     var leftSpeed = Cast.toNumber(args.LEFT_SPEED);
     var rightSpeed = Cast.toNumber(args.RIGHT_SPEED);
     
-    var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call({requestId: requestId, command: "cozVertDriveWheels", argFloat: leftSpeed, argFloat2: rightSpeed});
-    return commandPromise;
+    window.Unity.call({requestId: -1, command: "cozVertDriveWheels", argFloat: leftSpeed, argFloat2: rightSpeed});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalStopMotor = function(args, util) {
-    var requestId = this._getRequestId();
     var motorToStop = Cast.toString(args.MOTOR_SELECT);
     
-    var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call({requestId: requestId, command: "cozVertStopMotor", argString: motorToStop});
-    return commandPromise;
+    window.Unity.call({requestId: -1, command: "cozVertStopMotor", argString: motorToStop});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalPathOffset = function(args, util) {
@@ -687,12 +689,10 @@ Scratch3CozmoBlocks.prototype.verticalDockWithCubeById = function(args, util) {
 };
 
 Scratch3CozmoBlocks.prototype.verticalMoveLift = function(args, util) {
-    var requestId = this._getRequestId();
     var speed = Cast.toNumber(args.LIFT_SPEED);
 
-    var commandPromise = this._promiseForCommand(requestId);    
-    window.Unity.call({requestId: requestId, command: "cozVertMoveLift", argFloat: speed});
-    return commandPromise;
+    window.Unity.call({requestId: -1, command: "cozVertMoveLift", argFloat: speed});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalSetCubeLightCorner = function(args, util) {
@@ -700,6 +700,7 @@ Scratch3CozmoBlocks.prototype.verticalSetCubeLightCorner = function(args, util) 
     var lightIndex = Cast.toNumber(args.LIGHT_SELECT);
     var colorHex = this._getColorIntFromColorObject(Cast.toRgbColorObject(args.COLOR));
     window.Unity.call({requestId: -1, command: "cozVertSetCubeLightCorner", argUInt: colorHex, argUInt2: cubeIndex, argUInt3: lightIndex});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCubeAnim = function(args, util) {
@@ -707,11 +708,13 @@ Scratch3CozmoBlocks.prototype.verticalCubeAnim = function(args, util) {
     var cubeAnim = Cast.toString(args.ANIM_SELECT);
     var colorHex = this._getColorIntFromColorObject(Cast.toRgbColorObject(args.COLOR));
     window.Unity.call({requestId: -1, command: "cozVertCubeAnimation", argUInt: colorHex, argUInt2: cubeIndex, argString: cubeAnim});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalPlaySound = function(args, util) {
     var soundSelection = Cast.toNumber(args.SOUND_MENU);
     window.Unity.call({requestId: -1, command: "cozVertPlaySoundEffects", argInt: soundSelection, argBool: false});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalPlaySoundAndWait = function(args, util) {
@@ -725,32 +728,38 @@ Scratch3CozmoBlocks.prototype.verticalPlaySoundAndWait = function(args, util) {
 Scratch3CozmoBlocks.prototype.verticalStopSound = function(args, util) {
     var soundSelection = Cast.toNumber(args.SOUND_MENU);
     window.Unity.call({requestId: -1, command: "cozVertStopSoundEffects", argInt: soundSelection});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 // Drawing on Cozmo's Face
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceClear = function(args, util) {
     window.Unity.call({requestId: -1, command: "cozVertCozmoFaceClear"});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceDisplay = function(args, util) {
     window.Unity.call({requestId: -1, command: "cozVertCozmoFaceDisplay"});
+    return window.Unity.sleepPromiseIfNecessary();
 };   
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceSetDrawColor = function(args, util) {
     var drawColor = Cast.toBoolean(args.DRAW_COLOR);
     window.Unity.call({requestId: -1, command: "cozVertCozmoFaceSetDrawColor", argBool: drawColor});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceSetTextScale = function(args, util) {
     var textScale = Cast.toNumber(args.SCALE);
     window.Unity.call({requestId: -1, command: "cozVertCozmoFaceSetTextScale", argFloat: textScale});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceSetTextAlignment = function(args, util) {
     var xAlignment = Cast.toNumber(args.TEXT_ALIGNMENT_X); // 0,1,2 = left,center,right
     var yAlignment = Cast.toNumber(args.TEXT_ALIGNMENT_Y); // 0,1,2 = top,center,bottom
     window.Unity.call({requestId: -1, command: "cozVertCozmoFaceSetTextAlignment", argUInt: xAlignment, argUInt2: yAlignment});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawLine = function(args, util) {
@@ -759,6 +768,7 @@ Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawLine = function(args, util) {
     var x2 = Cast.toNumber(args.X2);
     var y2 = Cast.toNumber(args.Y2);
     window.Unity.call({requestId: -1, command: "cozVertCozmoFaceDrawLine", argFloat: x1, argFloat2: y1, argFloat3: x2, argFloat4: y2});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceFillRect = function(args, util) {
@@ -767,6 +777,7 @@ Scratch3CozmoBlocks.prototype.verticalCozmoFaceFillRect = function(args, util) {
     var x2 = Cast.toNumber(args.X2);
     var y2 = Cast.toNumber(args.Y2);
     window.Unity.call({requestId: -1, command: "cozVertCozmoFaceFillRect", argFloat: x1, argFloat2: y1, argFloat3: x2, argFloat4: y2});
+    return window.Unity.sleepPromiseIfNecessary();
 };
         
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawRect = function(args, util) {
@@ -775,6 +786,7 @@ Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawRect = function(args, util) {
     var x2 = Cast.toNumber(args.X2);
     var y2 = Cast.toNumber(args.Y2);
     window.Unity.call({requestId: -1, command: "cozVertCozmoFaceDrawRect", argFloat: x1, argFloat2: y1, argFloat3: x2, argFloat4: y2});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceFillCircle = function(args, util) {
@@ -782,6 +794,7 @@ Scratch3CozmoBlocks.prototype.verticalCozmoFaceFillCircle = function(args, util)
     var y1 = Cast.toNumber(args.Y1);
     var radius = Cast.toNumber(args.RADIUS);
     window.Unity.call({requestId: -1, command: "cozVertCozmoFaceFillCircle", argFloat: x1, argFloat2: y1, argFloat3: radius});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawCircle = function(args, util) {
@@ -789,6 +802,7 @@ Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawCircle = function(args, util)
     var y1 = Cast.toNumber(args.Y1);
     var radius = Cast.toNumber(args.RADIUS);
     window.Unity.call({requestId: -1, command: "cozVertCozmoFaceDrawCircle", argFloat: x1, argFloat2: y1, argFloat3: radius});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawText = function(args, util) {
@@ -796,6 +810,7 @@ Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawText = function(args, util) {
     var y1 = Cast.toNumber(args.Y1);
     var text = Cast.toString(args.TEXT);
     window.Unity.call({requestId: -1, command: "cozVertCozmoFaceDrawText", argFloat: x1, argFloat2: y1, argString: text});
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 // =================
