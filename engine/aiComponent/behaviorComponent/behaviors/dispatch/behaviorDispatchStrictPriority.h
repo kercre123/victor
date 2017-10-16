@@ -45,6 +45,8 @@ private:
 
   std::vector<BehaviorID> _behaviorIds;
   std::vector<ICozmoBehaviorPtr> _behaviors;
+
+  bool _shouldInterruptActiveBehavior;
 };
 
 }

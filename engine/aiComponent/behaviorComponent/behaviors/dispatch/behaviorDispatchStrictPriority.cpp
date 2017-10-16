@@ -14,6 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatchStrictPriority.h"
 
 #include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "coretech/common/include/anki/common/basestation/jsonTools.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
@@ -35,7 +36,11 @@ BehaviorDispatchStrictPriority::BehaviorDispatchStrictPriority(const Json::Value
       const BehaviorID behaviorID = BehaviorIDFromString(behaviorIDStr.asString());
       _behaviorIds.push_back( behaviorID );
     }
-  }  
+  }
+
+  _shouldInterruptActiveBehavior = JsonTools::ParseBool(config,
+                                                        "interruptActiveBehavior",
+                                                        "BehaviorDispatchStrictPriority.ShouldInterrupt.ConfigError");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -126,28 +131,33 @@ ICozmoBehavior::Status BehaviorDispatchStrictPriority::UpdateInternal_WhileRunni
     return Status::Failure;
   }
 
-  auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
+  // only choose a new behavior if we should interrupt the active behavior, or if no behavior is active
+  if( ! IsControlDelegated() ||
+      _shouldInterruptActiveBehavior ) {
   
-  const IBehavior* currBehavior = delegationComponent.GetBehaviorDelegatedTo(this);
+    auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
+  
+    const IBehavior* currBehavior = delegationComponent.GetBehaviorDelegatedTo(this);
     
-  ICozmoBehaviorPtr desiredBehavior = nullptr;
+    ICozmoBehaviorPtr desiredBehavior = nullptr;
   
-  // Iterate through available behaviors, and use the first one that is activated or wants to be activated
-  // since this is the highest priority behavior
-  for(const auto& entry: _behaviors) {
-    if(entry->IsActivated() || entry->WantsToBeActivated(behaviorExternalInterface)) {
-      desiredBehavior = entry;
-      break;
+    // Iterate through available behaviors, and use the first one that is activated or wants to be activated
+    // since this is the highest priority behavior
+    for(const auto& entry: _behaviors) {
+      if(entry->IsActivated() || entry->WantsToBeActivated(behaviorExternalInterface)) {
+        desiredBehavior = entry;
+        break;
+      }
+
+      if( desiredBehavior != nullptr &&
+          static_cast<IBehavior*>( desiredBehavior.get() ) != currBehavior ) {
+
+        const bool delegated = DelegateNow(behaviorExternalInterface, desiredBehavior.get());
+        DEV_ASSERT_MSG(delegated, "BehaviorDispatchStrictPriority.BehaviorUpdate.DelegateFailed",
+                       "Failed to delegate to behavior '%s'",
+                       desiredBehavior->GetIDStr().c_str());
+      }
     }
-  }
-
-  if( desiredBehavior != nullptr &&
-      static_cast<IBehavior*>( desiredBehavior.get() ) != currBehavior ) {
-
-    const bool delegated = DelegateNow(behaviorExternalInterface, desiredBehavior.get());
-    DEV_ASSERT_MSG(delegated, "BehaviorDispatchStrictPriority.BehaviorUpdate.DelegateFailed",
-                   "Failed to delegate to behavior '%s'",
-                   desiredBehavior->GetIDStr().c_str());
   }
 
   return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
