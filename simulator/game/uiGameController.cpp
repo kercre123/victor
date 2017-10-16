@@ -2060,7 +2060,6 @@ namespace Anki {
     
     void UiGameController::SetActualRobotPose(const Pose3d& newPose)
     {
-      #ifdef COZMO_V2
         Pose3d origin;
         Pose3d enginePose = GetPose3dOfNode(_robotEngineNode);
         Pose3d cpyRobotPose = _robotPoseActual;
@@ -2074,8 +2073,7 @@ namespace Anki {
           SetNodePose(_robotEngineNode, newPose*newEnginePose);
         } else {
           PRINT_NAMED_WARNING("UiGameController.SetActualRobotPose.SetEnginePose", "Could not set engine pose");
-        }        
-      #endif
+        }
       
       SetNodePose(_robotNode, newPose);
     }

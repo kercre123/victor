@@ -89,11 +89,7 @@ private:
   
   void LogRawData();
   
-#ifdef COZMO_V2
   static unsigned int GetNumCliffSensors() { return Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT); }
-#else
-  static unsigned int GetNumCliffSensors() { return 1U; }
-#endif
   
 // members:
   

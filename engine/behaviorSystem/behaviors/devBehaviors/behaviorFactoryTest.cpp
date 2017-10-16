@@ -48,8 +48,6 @@
 
 #include "anki/common/basestation/utils/timer.h"
 
-#include "clad/types/fwTestMessages.h"
-
 #include "util/console/consoleInterface.h"
 
 #include <iomanip>
@@ -222,7 +220,6 @@ static const char* kBehaviorTestName = "Behavior factory test";
     
     
     // bind to specific handlers in the robot class
-    doRobotSubscribe(RobotInterface::RobotToEngineTag::factoryTestParam, &BehaviorFactoryTest::HandleFactoryTestParameter);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectAvailable, &BehaviorFactoryTest::HandleActiveObjectAvailable);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::pickAndPlaceResult, &BehaviorFactoryTest::HandlePickAndPlaceResult);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::firmwareVersion, &BehaviorFactoryTest::HandleFirmwareVersion);
@@ -1873,16 +1870,6 @@ static const char* kBehaviorTestName = "Behavior factory test";
     // ...
     
     return RESULT_OK;
-  }
-  
-  
-  void BehaviorFactoryTest::HandleFactoryTestParameter(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-  {
-    const RobotInterface::FactoryTestParameter& payload = message.GetData().Get_factoryTestParam();
-    
-    PRINT_NAMED_INFO("BehaviorFactoryTest.HandleFactoryTestParameter.Recvd", "StationID: %d", payload.param);
-    
-    _stationID = payload.param;
   }
   
   Result BehaviorFactoryTest::HandleCameraCalibration(Robot &robot, const CameraCalibration &calibMsg)

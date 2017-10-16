@@ -95,40 +95,37 @@ namespace Anki {
         waitForFirstMotorCalibAfterConnect_ = true;
 
         // HAL and supervisor init
-#ifndef TARGET_K02
         lastResult = HAL::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 219, "CozmoBot.InitFail.HAL", 305, "", 0);
-#endif
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.HAL", "");
+
         lastResult = BackpackLightController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 1249, "CozmoBot.InitFail.BackpackLightController", 305, "", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.BackpackLightController", "");
         
         lastResult = Messages::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 220, "CozmoBot.InitFail.Messages", 305, "", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.Messages", "");
 
         lastResult = Localization::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 221, "CozmoBot.InitFail.Localization", 305, "", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.Localization", "");
 
         lastResult = PathFollower::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 222, "CozmoBot.InitFail.PathFollower", 305, "", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.PathFollower", "");
         
         lastResult = IMUFilter::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 366, "CozmoBot.InitFail.IMUFilter", 305, "", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.IMUFilter", "");
         
         lastResult = DockingController::Init();;
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 224, "CozmoBot.InitFail.DockingController", 305, "", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.DockingController", "");
 
         // Before liftController?!
         lastResult = PickAndPlaceController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 225, "CozmoBot.InitFail.PickAndPlaceController", 305, "", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.PickAndPlaceController", "");
 
         lastResult = LiftController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 226, "CozmoBot.InitFail.LiftController", 305, "", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.LiftController", "");
 
-#ifdef COZMO_V2
         // Calibrate motors
         LiftController::StartCalibrationRoutine(1);
         HeadController::StartCalibrationRoutine(1);
-#endif
         
         robotStateMessageCounter_ = 0;
 
@@ -161,20 +158,11 @@ namespace Anki {
 
         if (++cnt == (200 * interval_seconds)) {
           u32 numTicsPerSec = (cnt * 1000000) / (cycleStartTime - startTime);
-          AnkiInfo( 94, "CozmoBot.TicsPerSec", 347, "%d", 1, numTicsPerSec);
+          AnkiInfo( "CozmoBot.TicsPerSec", "%d", numTicsPerSec);
           startTime = cycleStartTime;
           cnt = 0;
         }
 */
-
-        //////////////////////////////////////////////////////////////
-        // Simulated NVStorage
-        //////////////////////////////////////////////////////////////
-#ifdef SIMULATOR
-#ifndef COZMO_V2
-        NVStorage::Update();
-#endif
-#endif
 
         //////////////////////////////////////////////////////////////
         // Test Mode
@@ -195,7 +183,7 @@ namespace Anki {
 
         // Check if there is a new or dropped connection to a basestation
         if (HAL::RadioIsConnected() && !wasConnected_) {
-          AnkiEvent( 228, "CozmoBot.Radio.Connected", 305, "", 0);
+          AnkiEvent( "CozmoBot.Radio.Connected", "");
           wasConnected_ = true;
           
 #ifdef SIMULATOR
@@ -204,7 +192,7 @@ namespace Anki {
           WheelController::Enable();
 #endif
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
-          AnkiInfo( 229, "CozmoBot.Radio.Disconnected", 305, "", 0);
+          AnkiInfo( "CozmoBot.Radio.Disconnected", "");
           Messages::ResetInit();
           PathFollower::Init();
           SteeringController::ExecuteDirectDrive(0,0);
@@ -215,9 +203,7 @@ namespace Anki {
           waitForFirstMotorCalibAfterConnect_ = true;
           mode_ = INIT_MOTOR_CALIBRATION;
 
-#ifndef TARGET_K02
           TestModeController::Start(TestMode::TM_NONE);
-#endif
 
           wasConnected_ = false;
         }
@@ -265,16 +251,7 @@ namespace Anki {
             if (LiftController::IsCalibrated() && HeadController::IsCalibrated()) {
               // Once initialization is done, broadcast a message that this robot
               // is ready to go
-              waitForFirstMotorCalibAfterConnect_ = false;
-              
-#ifdef SIMULATOR
-#ifndef COZMO_V2
-              RobotInterface::RobotAvailable msg;
-              AnkiInfo( 179, "CozmoBot.BroadcastingAvailability", 479, "", 0);
-              RobotInterface::SendMessage(msg);
-#endif
-#endif
-              
+              waitForFirstMotorCalibAfterConnect_ = false;              
               mode_ = WAITING;
             }
 
@@ -288,7 +265,7 @@ namespace Anki {
           }
 
           default:
-            AnkiWarn( 231, "CozmoBot.InvalidMode", 347, "%d", 1, mode_);
+            AnkiWarn( "CozmoBot.InvalidMode", "%d", mode_);
 
         } // switch(mode_)
 
@@ -305,8 +282,9 @@ namespace Anki {
         Messages::UpdateRobotStateMsg();
         ++robotStateMessageCounter_;
         if(robotStateMessageCounter_ >= STATE_MESSAGE_FREQUENCY) {
-          if (!waitForFirstMotorCalibAfterConnect_) Messages::SendRobotStateMsg();
-          else Messages::SendTestStateMsg();
+          if (!waitForFirstMotorCalibAfterConnect_) {
+            Messages::SendRobotStateMsg();
+          }
           robotStateMessageCounter_ = 0;
         }
 
@@ -330,7 +308,7 @@ namespace Anki {
             (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC)) {
           
           // TODO: Can this just be a log in V2? Why send to engine first?
-          AnkiWarn( 1240, "CozmoBot.MainCycleTimeError", 657, "TooLateCount: %d, avgTooLateTime: %d us, tooLongCount: %d, avgTooLongTime: %d us", 4,
+          AnkiWarn( "CozmoBot.MainCycleTimeError", "TooLateCount: %d, avgTooLateTime: %d us, tooLongCount: %d, avgTooLongTime: %d us",
                    mainTooLateCnt_, avgMainTooLateTime_, mainTooLongCnt_, avgMainTooLongTime_);
           
           RobotInterface::MainCycleTimeError m;
@@ -352,72 +330,6 @@ namespace Anki {
         return RESULT_OK;
 
       } // Robot::step_MainExecution()
-
-
-
-
-      // Long Execution now just captures image
-      Result step_LongExecution()
-      {
-        Result retVal = RESULT_OK;
-
-#       ifdef SIMULATOR
-#       ifndef COZMO_V2
-
-        if (!HAL::IsVideoEnabled()) {
-          return retVal;
-        }
-
-        if (HAL::imageSendMode_ != Off) {
-
-          TimeStamp_t currentTime = HAL::GetTimeStamp();
-
-          // This computation is based on Cyberbotics support's explaination for how to compute
-          // the actual capture time of the current available image from the simulated
-          // camera, *except* I seem to need the extra "- VISION_TIME_STEP" for some reason.
-          // (The available frame is still one frame behind? I.e. we are just *about* to capture
-          //  the next one?)
-          TimeStamp_t currentImageTime = floor((currentTime-HAL::GetCameraStartTime())/HAL::GetVisionTimeStep()) * HAL::GetVisionTimeStep() + HAL::GetCameraStartTime() - HAL::GetVisionTimeStep();
-
-          // Keep up with the capture time of the last image we sent
-          static TimeStamp_t lastImageSentTime = 0;
-
-          // Have we already sent the currently-available image?
-          if(lastImageSentTime != currentImageTime)
-          {
-            // Nope, so get the (new) available frame from the camera:
-            const s32 captureHeight = Vision::CameraResInfo[HAL::captureResolution_].height;
-            const s32 captureWidth  = Vision::CameraResInfo[HAL::captureResolution_].width * 3; // The "*3" is a hack to get enough room for color
-
-            static const int bufferSize = 5000000;
-            static u8 buffer[bufferSize];
-
-            HAL::CameraGetFrame(buffer,
-                                HAL::captureResolution_, false);
-            // Send the image, with its actual capture time (not the current system time)
-            Messages::CompressAndSendImage(buffer, captureHeight, captureWidth, currentImageTime);
-
-            //PRINT("Sending state message from time = %d to correspond to image at time = %d\n",
-            //      robotState.timestamp, currentImageTime);
-
-            // Mark that we've already sent the image for the current time
-            lastImageSentTime = currentImageTime;
-          } // if(lastImageSentTime != currentImageTime)
-
-
-          if (HAL::imageSendMode_ == SingleShot) {
-            HAL::imageSendMode_ = Off;
-          }
-
-        } // if (HAL::imageSendMode_ != ISM_OFF)
-
-#       endif // ifndef COZMO_V2
-#       endif // ifdef SIMULATOR
-
-        return retVal;
-
-      } // Robot::step_longExecution()
-
 
     } // namespace Robot
   } // namespace Cozmo

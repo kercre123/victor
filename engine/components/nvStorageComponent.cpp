@@ -149,7 +149,7 @@ NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* conte
       helper.SubscribeGameToEngine<MessageGameToEngineTag::NVStorageWipeAll>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::NVStorageClearPartialPendingWriteEntry>();
     }
-    
+
     InitSizeTable();
     
   } else {
@@ -371,7 +371,7 @@ bool NVStorageComponent::Write(NVEntryTag tag,
     }
     return true;
   }
-
+  
   PRINT_CH_INFO("NVStorage", "NVStorageComponent.Write.WritingData", "%s", EnumToString(tag));
   u32 entryTag = static_cast<u32>(tag);
   
@@ -444,7 +444,7 @@ bool NVStorageComponent::Erase(NVEntryTag tag,
   }
   
   WriteEntryToFile(entryTag);
-  
+    
   return true;
 }
   
@@ -464,7 +464,7 @@ bool NVStorageComponent::WipeAll(NVStorageWriteEraseCallback callback,
   }
   
   Util::FileUtils::RemoveDirectory(_kStoragePath);
-  
+   
   return true;
 }
 
@@ -506,7 +506,7 @@ bool NVStorageComponent::Read(NVEntryTag tag,
     }
     return false;
   }
-  
+
   PRINT_CH_INFO("NVStorage", "NVStorageComponent.Read.ReadingData", "%s", EnumToString(tag));
   u32 entryTag = static_cast<u32>(tag);
   NVResult result = NVResult::NV_OKAY;
@@ -539,7 +539,7 @@ bool NVStorageComponent::Read(NVEntryTag tag,
   
   return true;
 }
-  
+
 void NVStorageComponent::WriteEntryToFile(u32 tag)
 {
   // Not writing data to disk on Mac OS so as make sure Webots robots load "clean"

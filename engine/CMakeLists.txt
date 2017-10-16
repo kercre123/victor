@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
+
 project(engine)
 
 include(opencv)
@@ -10,7 +11,8 @@ include(voice-recognition)
 include(routing_http_server)
 include(android_strip)
 
-include(anki_build_cxx_library)
+include(anki_build_cxx)
+
 anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR})
 
 if (NOT DEFINED USE_DAS)
@@ -87,7 +89,6 @@ android_strip(TARGET cozmo_engine)
 
 target_compile_definitions(cozmo_engine
   PRIVATE
-  COZMO_V2
   CORETECH_BASESTATION
   USE_DAS=${USE_DAS}
   VOICE_RECOG_NONE=0

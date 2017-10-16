@@ -85,7 +85,6 @@ namespace Anki {
       
       // Model dimensions in mm (perhaps these should come from a configuration
       // file instead?)
-#ifdef COZMO_V2
       constexpr static const f32 WallWidth      = 12.f;
       constexpr static const f32 PlatformWidth  = 64.f;
       constexpr static const f32 Width          = 2*WallWidth + PlatformWidth;
@@ -98,20 +97,6 @@ namespace Anki {
       constexpr static const f32 MarkerZPosition   = 48.5f;  // Middle of marker above ground
       constexpr static const f32 PreAscentDistance  = 100.f; // for ascending from bottom
       constexpr static const f32 RobotToChargerDistWhenDocked = 30.f;  // Distance from front of charger to robot origin when docked
-#else
-      constexpr static const f32 WallWidth      = 10.f;
-      constexpr static const f32 PlatformWidth  = 60.f;
-      constexpr static const f32 Width          = 2*WallWidth + PlatformWidth;
-      constexpr static const f32 Height         = 31.f;
-      constexpr static const f32 SlopeLength    = 44.f;
-      constexpr static const f32 PlatformLength = 42.f;
-      constexpr static const f32 Length         = SlopeLength + PlatformLength + WallWidth;
-      constexpr static const f32 MarkerHeight   = 20.f;
-      constexpr static const f32 MarkerWidth    = 27.f;
-      constexpr static const f32 MarkerZPosition   = 22.f;  // Middle of marker above ground
-      constexpr static const f32 PreAscentDistance  = 100.f; // for ascending from bottom
-      constexpr static const f32 RobotToChargerDistWhenDocked = 30.f;  // Distance from front of charger to robot origin when docked
-#endif // COZMO_V2
       
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       

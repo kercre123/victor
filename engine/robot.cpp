@@ -8,10 +8,8 @@
 //
 
 #include "engine/robot.h"
-
-#ifdef COZMO_V2
 #include "androidHAL/androidHAL.h"
-#endif
+
 #define USE_BSM 0
 
 #include "anki/common/basestation/math/point_impl.h"
@@ -270,12 +268,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _visionComponent->Init(_context->GetDataLoader()->GetRobotVisionConfig());
   }
   
-# ifndef COZMO_V2   // TODO: RobotDataBackupManager needs to reside on the Unity-side for Cozmo 2.0
-  // Read all necessary data off the robot and back it up
-  // Potentially duplicates some reads like FaceAlbumData
-  _nvStorageComponent->GetRobotDataBackupManager().ReadAllBackupDataFromRobot();
-# endif
-
   // initialize AI
   _aiComponent->Init();
   
@@ -284,10 +276,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   _thisRobot = this;
 #endif
 
-#ifdef COZMO_V2
   // This will create the AndroidHAL instance if it doesn't yet exist
   AndroidHAL::getInstance();
-#endif
   
 } // Constructor: Robot
     
@@ -1372,16 +1362,12 @@ Result Robot::Update()
   */
 
   //////////// Android HAL Update ////////////
-  #ifdef COZMO_V2
   AndroidHAL::getInstance()->Update();
-  #endif
 
   //////////// VisionComponent //////////  
   if(_visionComponent->GetCamera().IsCalibrated())
   {
-    #ifdef COZMO_V2
-    _visionComponent->CaptureAndSendImage();
-    #endif
+    _visionComponent->Update();
   
     // NOTE: Also updates BlockWorld and FaceWorld using markers/faces that were detected
     Result visionResult = _visionComponent->UpdateAllResults();
@@ -2438,12 +2424,7 @@ Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliabl
 Result Robot::SendSyncTime() const
 {
   Result result = SendMessage(RobotInterface::EngineToRobot(
-                                RobotInterface::SyncTime(
-                                                         #ifdef COZMO_V2
-                                                         AndroidHAL::getInstance()->GetTimeStamp(),
-                                                         #else
-                                                         BaseStationTimer::getInstance()->GetCurrentTimeStamp(),
-                                                         #endif
+                                RobotInterface::SyncTime(AndroidHAL::getInstance()->GetTimeStamp(),
                                                          DRIVE_CENTER_OFFSET)));
 
   if(result == RESULT_OK) {    

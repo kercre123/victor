@@ -2,7 +2,8 @@
 
 project(cti_messaging)
 
-include(anki_build_cxx_library)
+include(anki_build_cxx)
+
 anki_build_cxx_library(cti_messaging ${ANKI_SRCLIST_DIR} STATIC)
  
 set_target_properties(cti_messaging PROPERTIES
@@ -18,7 +19,6 @@ target_include_directories(cti_messaging PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-include(anki_build_cxx_library)
 anki_build_cxx_library(cti_messaging_robot ${ANKI_SRCLIST_DIR} STATIC)
  
 target_include_directories(cti_messaging_robot PUBLIC

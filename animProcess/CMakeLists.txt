@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.6)
+
 project(cozmo_anim)
 
-include(anki_build_cxx_library)
+include(anki_build_cxx)
+
 anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 
 include(flatbuffers)
@@ -58,7 +60,6 @@ android_strip(TARGET victor_anim)
 
 target_compile_definitions(victor_anim
   PRIVATE
-  COZMO_V2
   USE_DAS=${USE_DAS}
   ${PLATFORM_COMPILE_DEFS}
 )

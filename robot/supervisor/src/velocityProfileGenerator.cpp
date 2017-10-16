@@ -76,9 +76,9 @@ namespace Anki {
     endPos_ = endPos;
     timeStep_ = fabsf(timeStep);
 
-    AnkiAssert(maxVel_ >= endVel_, 283);
-    AnkiAssert(accel_ > 0, 284);
-    AnkiAssert(timeStep_ > 0, 285);
+    AnkiAssert(maxVel_ >= endVel_, "");
+    AnkiAssert(accel_ > 0, "");
+    AnkiAssert(timeStep_ > 0, "");
 
     // Compute direction based on startPos and endPos
     // and use it to determine sign of maxVel and endVel.
@@ -118,7 +118,7 @@ namespace Anki {
       maxReachableVel_ = sqrtf( ((2*accel*fabsf(totalDistToTarget_)) + (endVel_*endVel_) + (startVel_*startVel_)) * 0.5f );
       maxReachableVel_ *= direction;
 #if(DEBUG_VPG)
-      AnkiDebug( 31, "VPG", 200, "new V_max: %f (d = %f)", 2, maxReachableVel_, d);
+      AnkiDebug( "VPG", "new V_max: %f (d = %f)", maxReachableVel_, d);
 #endif
     }
 
@@ -161,9 +161,9 @@ namespace Anki {
     endAccelDist_ = fabsf(0.5f * (endVel_ - maxReachableVel_) / deltaVelPerTimeStepEnd_ * timeStep_) * (maxReachableVel_ >= 0 ? 1 : -1);
 
 #if(DEBUG_VPG)
-    AnkiDebug( 31, "VPG", 201, "startVel %f, startPos %f, maxSpeed %f, accel %f", 4, startVel_, startPos_, maxVel_, accel_);
-    AnkiDebug( 31, "VPG", 202, "endVel %f, endPos %f, timestep %f", 3, endVel_, endPos_, timeStep_);
-    AnkiDebug( 31, "VPG", 203, "deltaVel %f, maxReachableVel %f, totalDist %f, decelDistToTarget %f, dir %f", 5, deltaVelPerTimeStepStart_, maxReachableVel_, totalDistToTarget_, decelDistToTarget_, direction);
+    AnkiDebug( "VPG", "startVel %f, startPos %f, maxSpeed %f, accel %f", startVel_, startPos_, maxVel_, accel_);
+    AnkiDebug( "VPG", "endVel %f, endPos %f, timestep %f", endVel_, endPos_, timeStep_);
+    AnkiDebug( "VPG", "deltaVel %f, maxReachableVel %f, totalDist %f, decelDistToTarget %f, dir %f", deltaVelPerTimeStepStart_, maxReachableVel_, totalDistToTarget_, decelDistToTarget_, direction);
 #endif
   }
 
@@ -268,7 +268,7 @@ namespace Anki {
 
     // Check that the acceleration durations are valid given the total duration
     AnkiConditionalWarnAndReturnValue((acc_start_duration + acc_end_duration <= duration),
-                                      false, 232, "VPG.StartProfile_fixedDuration.AccDurationsExceedTotal", 522, "acc_start_duration + acc_end_duration exceeds total duration (%f + %f > %f)", 3,
+                                      false, "VPG.StartProfile_fixedDuration.AccDurationsExceedTotal", "acc_start_duration + acc_end_duration exceeds total duration (%f + %f > %f)",
                                       acc_start_duration, acc_end_duration, duration);
 
     float ts = acc_start_duration;
@@ -289,7 +289,7 @@ namespace Anki {
 
       // TODO: Consider shorter acceleration/deceleration periods that could make this profile work?
       
-      AnkiEvent( 233, "VPG.StartProfile_fixedDuration.EndPosReachedDuringStartingAcc", 305, "", 0);
+      AnkiEvent( "VPG.StartProfile_fixedDuration.EndPosReachedDuringStartingAcc", "");
       return false;
     }
     
@@ -318,12 +318,12 @@ namespace Anki {
       float C = 0.5f*vs*vs*ts - vs*dist;
       float discr = B*B - 4*A*C;
 
-      AnkiConditionalWarnAndReturnValue((discr >=  0), false, 234, "VPG.StartProfile_fixedDuration.NegativeDiscriminant", 524, "A = %f, B = %f, C = %f", 3, A, B, C);
+      AnkiConditionalWarnAndReturnValue((discr >=  0), false, "VPG.StartProfile_fixedDuration.NegativeDiscriminant", "A = %f, B = %f, C = %f", A, B, C);
 
       float sqrtDiscr = sqrtf(discr);
       vm = (-B + sqrtDiscr) / (2*A);
     
-      AnkiConditionalWarnAndReturnValue(vm <= 0, false, 235, "VPG.StartProfile_fixedDuration.NegativeVm", 525, "vm > 0  (A = %f, B = %f, C = %f)", 3, A, B, C);
+      AnkiConditionalWarnAndReturnValue(vm <= 0, false, "VPG.StartProfile_fixedDuration.NegativeVm", "vm > 0  (A = %f, B = %f, C = %f)", A, B, C);
 
     } else {
       // Cases 1 and 2
@@ -332,14 +332,14 @@ namespace Anki {
 
 
     // Check if any velocity exceeds the max
-    AnkiConditionalWarnAndReturnValue(!((fabsf(vs) > vel_max) || (fabsf(vm) > vel_max)), false, 236, "VPG.StartProfile_fixedDuration.VelExceedsMax", 526, "vs = %f, vm = %f, vel_max = %f", 3, vs, vm, vel_max);
+    AnkiConditionalWarnAndReturnValue(!((fabsf(vs) > vel_max) || (fabsf(vm) > vel_max)), false, "VPG.StartProfile_fixedDuration.VelExceedsMax", "vs = %f, vm = %f, vel_max = %f", vs, vm, vel_max);
 
     // Check if any acceleration exceeds the max allowed
     float acc_start = fabsf(vm-vs)/ts;
     float acc_end = fabsf(vm/te);
     if ((acc_start > acc_max) || (acc_end > acc_max))
     {
-      AnkiWarn( 237, "VPG.StartProfile_fixedDuration.AccelMaxExceeded", 527, "acc_start = %f, acc_end = %f, acc_max = %f", 3,
+      AnkiWarn( "VPG.StartProfile_fixedDuration.AccelMaxExceeded", "acc_start = %f, acc_end = %f, acc_max = %f",
                acc_start, acc_end, acc_max);
       return false;
     }
@@ -370,10 +370,10 @@ namespace Anki {
 
 
 #if(DEBUG_VPG)
-    AnkiDebug( 31, "VPG", 210, "startVel %f, startPos %f, endVel %f, endPos %f", 4, startVel_, startPos_, endVel_, endPos_);
-    AnkiDebug( 31, "VPG", 211, "ts %f, tm %f, te %f, total duration %f", 4, ts, tm, te, duration);
-    AnkiDebug( 31, "VPG", 212, "deltaVelStart %f, deltaVelEnd %f, maxReachableVel %f", 3, deltaVelPerTimeStepStart_, deltaVelPerTimeStepEnd_, maxReachableVel_);
-    AnkiDebug( 31, "VPG", 213, "totalDist %f, decelDistToTarget %f", 2, totalDistToTarget_, decelDistToTarget_);
+    AnkiDebug( "VPG", "startVel %f, startPos %f, endVel %f, endPos %f", startVel_, startPos_, endVel_, endPos_);
+    AnkiDebug( "VPG", "ts %f, tm %f, te %f, total duration %f", ts, tm, te, duration);
+    AnkiDebug( "VPG", "deltaVelStart %f, deltaVelEnd %f, maxReachableVel %f", deltaVelPerTimeStepStart_, deltaVelPerTimeStepEnd_, maxReachableVel_);
+    AnkiDebug( "VPG", "totalDist %f, decelDistToTarget %f", totalDistToTarget_, decelDistToTarget_);
 #endif
 
     return true;
@@ -385,7 +385,7 @@ namespace Anki {
 
     // If in noTargetMode, the logic is much simpler
     if (noTargetMode_) {
-      AnkiAssert(maxReachableVel_ == endVel_, 378);
+      AnkiAssert(maxReachableVel_ == endVel_, "");
       currPos_ += currVel_ * timeStep_;
 
       // If endVel not yet reached then update velocity
@@ -456,7 +456,7 @@ namespace Anki {
 
 
 #if(DEBUG_VPG)
-    AnkiDebug( 238, "VPG.Step", 528, "currVel %f, currPos %f, currDistToTarget %f, isDecel %d", 4, currVel_, currPos_, currDistToTarget, isDecel_);
+    AnkiDebug( "VPG.Step", "currVel %f, currPos %f, currDistToTarget %f, isDecel %d", currVel_, currPos_, currDistToTarget, isDecel_);
 #endif
 
 

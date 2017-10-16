@@ -56,7 +56,7 @@ namespace Cozmo {
   }
 
   void TimeProfiler::MarkNextProfile_Internal() {
-    AnkiAssert(timeProfIdx_ < MAX_NUM_PROFILES, 280);
+    AnkiAssert(timeProfIdx_ < MAX_NUM_PROFILES, "");
     timeProfiles_[timeProfIdx_] = HAL::GetMicroCounter();
 
     // Update total time
@@ -72,7 +72,7 @@ namespace Cozmo {
   }
 
   void TimeProfiler::MarkNextProfile(const char* profName) {
-    AnkiAssert(timeProfIdx_ < MAX_NUM_PROFILES, 280);
+    AnkiAssert(timeProfIdx_ < MAX_NUM_PROFILES, "");
 
     if (numCyclesInProfile_ == 0) {
       strncpy(timeProfName_[timeProfIdx_], profName, MAX_PROF_NAME_LENGTH);
@@ -91,7 +91,7 @@ namespace Cozmo {
 
   const char* TimeProfiler::GetProfName(u32 index)
   {
-    AnkiConditionalWarnAndReturnValue((!isProfiling_), NULL, 396, "timeprofiler.getprofname_while_busy", 27, "GetProfName called in middle of profile. Ignoring.", 0);
+    AnkiConditionalWarnAndReturnValue((!isProfiling_), NULL, "timeprofiler.getprofname_while_busy", "GetProfName called in middle of profile. Ignoring.");
 
     if (index < timeProfIdx_) {
       return (const char*)&timeProfName_[index];
@@ -101,7 +101,7 @@ namespace Cozmo {
   }
 
   u32 TimeProfiler::ComputeStats(u32 *avgTimes[], u32 *maxTimes[]) {
-    AnkiConditionalWarnAndReturnValue((!isProfiling_), 0, 397, "timeprofiler.computestats_while_busy", 28, "ComputeStats called in middle of profile. Ignoring.", 0);
+    AnkiConditionalWarnAndReturnValue((!isProfiling_), 0, "timeprofiler.computestats_while_busy", "ComputeStats called in middle of profile. Ignoring.");
 
     // Compute average time
     for(u8 i=0; i<timeProfIdx_; ++i) {

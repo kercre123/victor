@@ -48,11 +48,7 @@
 #include "util/helpers/ankiDefines.h"
 #include "util/time/universalTime.h"
 
-#if (defined(ANKI_PLATFORM_ANDROID) || defined(ANKI_PLATFORM_IOS)) && !defined(COZMO_V2)
-#define USE_DIRECT_COMMS 1
-#else
 #define USE_DIRECT_COMMS 0
-#endif
 
 namespace Anki {
   namespace Cozmo {

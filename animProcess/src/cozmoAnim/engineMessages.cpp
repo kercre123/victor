@@ -147,7 +147,7 @@ namespace Messages {
         
       case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_lockAnimTracks:
       {
-        PRINT_NAMED_INFO("EngineMessages.ProcessMessageToRobot.LockTracks", "0x%x", msg.lockAnimTracks.whichTracks);
+        //PRINT_NAMED_DEBUG("EngineMessages.ProcessMessageToRobot.LockTracks", "0x%x", msg.lockAnimTracks.whichTracks);
         _animStreamer->SetLockedTracks(msg.lockAnimTracks.whichTracks);
         return;
       }

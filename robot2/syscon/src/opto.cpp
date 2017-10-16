@@ -11,6 +11,8 @@
 
 //#define DISABLE_TOF
 
+extern "C" void SystemIdle();
+
 enum I2C_Op {
   I2C_DONE,
   I2C_HOLD,
@@ -177,14 +179,12 @@ extern "C" void I2C2_IRQHandler(void) {
   }
 }
 
-static void multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, int size, void* data) {
+static bool multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, int size, void* data) {
   int max_retries = 15;
   do {
     // Welp, something went wrong, we should just give up
     if (max_retries-- == 0) {
-      Flash::writeFaultReason(FAULT_I2C_FAILED);
-      Power::softReset();
-      Power::eject();
+      //return true;
     }
 
     I2C_Operation opTable[] = {
@@ -193,35 +193,29 @@ static void multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, in
     };
     i2c_op = opTable;
     kickOff();
-    while (i2c_op != i2c_hold) __asm ("WFI");
+    while (i2c_op != i2c_hold) SystemIdle();
   } while (total_bytes < size);
+
+  return false;
 }
 
-static void writeReg(uint8_t channel, uint8_t slave, uint8_t reg, uint8_t data) {
-  multiOp(I2C_REG_WRITE, channel, slave, reg, sizeof(data), &data);
+static bool writeReg(uint8_t channel, uint8_t slave, uint8_t reg, uint8_t data) {
+  return multiOp(I2C_REG_WRITE, channel, slave, reg, sizeof(data), &data);
 }
 
-/*
-static void bulkWrite(uint8_t channel, uint8_t slave, int count, I2C_BulkWrite* data) {
-  while (count-- > 0) {
-    writeReg(channel, slave, data->reg, data->data);
-  }
-}
-*/
-
-static void writeReg16(uint8_t channel, uint8_t slave, uint8_t reg, uint16_t data) {
-  multiOp(I2C_REG_WRITE, channel, slave, reg, sizeof(data), &data);
+static bool writeReg16(uint8_t channel, uint8_t slave, uint8_t reg, uint16_t data) {
+  return multiOp(I2C_REG_WRITE, channel, slave, reg, sizeof(data), &data);
 }
 
-static uint8_t readReg(uint8_t channel, uint8_t slave, uint8_t reg) {
+static int readReg(uint8_t channel, uint8_t slave, uint8_t reg) {
   uint8_t data;
-  multiOp(I2C_REG_READ, channel, slave, reg, sizeof(data), &data);
+  if (multiOp(I2C_REG_READ, channel, slave, reg, sizeof(data), &data)) return -1;
   return data;
 }
 
-static uint8_t readReg16(uint8_t channel, uint8_t slave, uint8_t reg) {
+static int readReg16(uint8_t channel, uint8_t slave, uint8_t reg) {
   uint16_t data;
-  multiOp(I2C_REG_READ, channel, slave, reg, sizeof(data), &data);
+  if (multiOp(I2C_REG_READ, channel, slave, reg, sizeof(data), &data)) return -1;
   return data;
 }
 

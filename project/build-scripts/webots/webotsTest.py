@@ -292,7 +292,6 @@ def build(build_type):
   victor_build_script_path = get_subpath(os.path.join("project","victor","build-victor.sh"))
   build_command = [
           victor_build_script_path,
-          '-f',                     # force building the source lists every time
           '-p', 'mac',              # build the mac project (with webots sim controllers)
           '-c', build_type.name 
           ]

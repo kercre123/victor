@@ -36,7 +36,7 @@
 namespace Anki {
   namespace Cozmo {
     namespace Messages {
-#ifndef TARGET_ESPRESSIF
+
       // Return a const reference to the current robot state message
       RobotState const& GetRobotStateMsg();
 
@@ -45,15 +45,13 @@ namespace Anki {
       #include "clad/robotInterface/messageEngineToRobot_declarations.def"
 
       void ProcessBadTag_EngineToRobot(const RobotInterface::EngineToRobot::Tag tag);
-#endif
+
       Result Init();
       extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
 
       void Update();
 
       void ProcessMessage(RobotInterface::EngineToRobot& msg);
-
-      void Process_anim(const RobotInterface::EngineToRobot& msg);
 
       void SniffMessage(RobotInterface::RobotToEngine& msg);
 
@@ -69,14 +67,10 @@ namespace Anki {
       // Sends robot state message, either the one passed in or the one
       // stored internally that is updated by UpdateRobotStateMsg().
       Result SendRobotStateMsg(const RobotState* msg = NULL);
-      
-      void SendTestStateMsg();
 
       Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted, bool autoStarted = false);
       
       Result SendMotorAutoEnabledMsg(MotorID motor, bool calibStarted);
-      
-      void ResetMissedLogCount();
 
       // Returns whether or not init message was received from basestation
       bool ReceivedInit();

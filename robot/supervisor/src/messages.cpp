@@ -5,7 +5,6 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
-#include "clad/types/fwTestMessages.h"
 
 #include <string.h>
 
@@ -58,8 +57,6 @@ namespace Anki {
         RobotInterface::EngineToRobot::Tag lookForID_ = RobotInterface::EngineToRobot::INVALID;
         u32 lookingStartTime_ = 0;
 
-        static u16 missedLogs_ = 0;
-
         static RobotState robotState_;
 
         // History of the last 2 RobotState messages that were sent to the basestation.
@@ -84,7 +81,6 @@ namespace Anki {
 
       Result Init()
       {
-        ResetMissedLogCount();
         return RESULT_OK;
       }
 
@@ -92,33 +88,10 @@ namespace Anki {
       {
         switch(msg.tag)
         {
-#ifdef TARGET_K02
-          #include "clad/robotInterface/messageEngineToRobot_switch_from_0x30_to_0x7f.def"
-          // Need to add additional messages for special cases handled both on the Espressif and K02
-          case RobotInterface::EngineToRobot::Tag_animHeadAngle:
-            Process_animHeadAngle(msg.animHeadAngle);
-            break;
-          case RobotInterface::EngineToRobot::Tag_animBodyMotion:
-            Process_animBodyMotion(msg.animBodyMotion);
-            break;
-          case RobotInterface::EngineToRobot::Tag_animLiftHeight:
-            Process_animLiftHeight(msg.animLiftHeight);
-            break;
-          case RobotInterface::EngineToRobot::Tag_animRecordHeading:
-            Process_animRecordHeading(msg.animRecordHeading);
-            break;
-          case RobotInterface::EngineToRobot::Tag_animTurnToRecordedHeading:
-            Process_animTurnToRecordedHeading(msg.animTurnToRecordedHeading);
-            break;
-          case RobotInterface::EngineToRobot::Tag_animEventToRTIP:
-            Process_animEventToRTIP(msg.animEventToRTIP);
-            break;
-#else
-            #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
-#endif
+          #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
 
           default:
-            AnkiWarn( 106, "Messages.ProcessBadTag_EngineToRobot.Recvd", 355, "Received message with bad tag %x", 1, msg.tag);
+            AnkiWarn( "Messages.ProcessBadTag_EngineToRobot.Recvd", "Received message with bad tag %x", msg.tag);
         }
         if (lookForID_ != RobotInterface::EngineToRobot::INVALID)
         {
@@ -139,7 +112,7 @@ namespace Anki {
           return false;
         }
         else if(HAL::GetMicroCounter() - lookingStartTime_ > LOOK_FOR_MESSAGE_TIMEOUT) {
-            AnkiWarn( 107, "Messages.StillLookingForID.Timeout", 356, "Timed out waiting for message ID %d.", 1, lookForID_);
+            AnkiWarn( "Messages.StillLookingForID.Timeout", "Timed out waiting for message ID %d.", lookForID_);
             lookForID_ = RobotInterface::EngineToRobot::INVALID;
           return false;
         }
@@ -218,7 +191,7 @@ namespace Anki {
 
       void Process_syncTime(const RobotInterface::SyncTime& msg)
       {
-        AnkiInfo( 100, "Messages.Process_syncTime.Recvd", 305, "", 0);
+        AnkiInfo( "Messages.Process_syncTime.Recvd", "");
 
         // Set SyncTime received flag
         // Acknowledge in Update()
@@ -240,7 +213,7 @@ namespace Anki {
         LiftController::StartCalibrationRoutine();
         HeadController::StartCalibrationRoutine();
 
-        AnkiEvent( 414, "watchdog_reset_count", 347, "%d", 1, HAL::GetWatchdogResetCounter());
+        AnkiEvent( "watchdog_reset_count", "%d", HAL::GetWatchdogResetCounter());
       } // ProcessRobotInit()
 
 
@@ -263,7 +236,7 @@ namespace Anki {
         /*Result res =*/ Localization::UpdatePoseWithKeyframe(msg.origin_id, msg.pose_frame_id, msg.timestamp, currentMatX, currentMatY, currentMatHeading.ToFloat());
 
         /*
-        AnkiInfo( 115, "Messages.Process_absLocalizationUpdate.Recvd", 363, "Result %d, currTime=%d, updated frame time=%d: (%.3f,%.3f) at %.1f degrees (frame = %d)\n", 7,
+        AnkiInfo( "Messages.Process_absLocalizationUpdate.Recvd", "Result %d, currTime=%d, updated frame time=%d: (%.3f,%.3f) at %.1f degrees (frame = %d)\n",
               res,
               HAL::GetTimeStamp(),
               msg.timestamp,
@@ -299,7 +272,7 @@ namespace Anki {
             // Send up gyro calibration
             // Since the bias is typically calibrate before the robot is even connected,
             // this is the time when the data can actually be sent up to engine.
-            AnkiEvent( 394, "Messages.Update.GyroCalibrated", 579, "%f %f %f", 3,
+            AnkiEvent( "Messages.Update.GyroCalibrated", "%f %f %f",
                       RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[0]),
                       RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[1]),
                       RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[2]));
@@ -319,11 +292,11 @@ namespace Anki {
           memcpy(msgBuf.GetBuffer(), pktBuffer_, dataLen);
           if (!msgBuf.IsValid())
           {
-            AnkiWarn( 119, "Receiver.ReceiveData.Invalid", 367, "Receiver got %02x[%d] invalid", 2, pktBuffer_[0], dataLen);
+            AnkiWarn( "Receiver.ReceiveData.Invalid", "Receiver got %02x[%d] invalid", pktBuffer_[0], dataLen);
           }
           else if (msgBuf.Size() != dataLen)
           {
-            AnkiWarn( 120, "Receiver.ReceiveData.SizeError", 368, "Parsed message size error %d != %d", 2, dataLen, msgBuf.Size());
+            AnkiWarn( "Receiver.ReceiveData.SizeError", "Parsed message size error %d != %d", dataLen, msgBuf.Size());
           }
           else
           {
@@ -362,13 +335,13 @@ namespace Anki {
       }
 
       void Process_executePath(const RobotInterface::ExecutePath& msg) {
-        AnkiInfo( 103, "Messages.Process_executePath.StartingPath", 347, "%d", 1, msg.pathID);
+        AnkiInfo( "Messages.Process_executePath.StartingPath", "%d", msg.pathID);
         PathFollower::StartPathTraversal(msg.pathID, msg.useManualSpeed);
       }
 
       void Process_dockWithObject(const DockWithObject& msg)
       {
-        AnkiInfo( 1237, "Messages.Process_dockWithObject.Recvd", 652, "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, speed %f, acccel %f, decel %f, manualSpeed %d", 7, 
+        AnkiInfo( "Messages.Process_dockWithObject.Recvd", "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, speed %f, acccel %f, decel %f, manualSpeed %d", 
                  msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2, msg.useManualSpeed);
 
         DockingController::SetDockingMethod(msg.dockingMethod);
@@ -386,7 +359,7 @@ namespace Anki {
 
       void Process_placeObjectOnGround(const PlaceObjectOnGround& msg)
       {
-        //AnkiInfo( 108, "Messages.Process_placeObjectOnGround.Recvd", 305, "", 0);
+        //AnkiInfo( "Messages.Process_placeObjectOnGround.Recvd", "");
         PickAndPlaceController::PlaceOnGround(msg.speed_mmps,
                                               msg.accel_mmps2,
                                               msg.decel_mmps2,
@@ -416,12 +389,12 @@ namespace Anki {
             f32 manualSpeed = 0.5f * (msg.lwheel_speed_mmps + msg.rwheel_speed_mmps);
             PathFollower::SetManualPathSpeed(manualSpeed, 1000, 1000);
           } else {
-            AnkiInfo( 338, "Messages.Process_drive.IgnoringBecauseAlreadyOnPath", 305, "", 0);
+            AnkiInfo( "Messages.Process_drive.IgnoringBecauseAlreadyOnPath", "");
           }
           return;
         }
 
-        //AnkiInfo( 116, "Messages.Process_drive.Executing", 364, "left=%f mm/s, right=%f mm/s", 2, msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+        //AnkiInfo( "Messages.Process_drive.Executing", "left=%f mm/s, right=%f mm/s", msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
 
         //PathFollower::ClearPath();
         SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
@@ -443,7 +416,7 @@ namespace Anki {
       }
 
       void Process_liftHeight(const RobotInterface::SetLiftHeight& msg) {
-        //AnkiInfo( 109, "Messages.Process_liftHeight.Recvd", 357, "height %f, maxSpeed %f, duration %f", 3, msg.height_mm, msg.max_speed_rad_per_sec, msg.duration_sec);
+        //AnkiInfo( "Messages.Process_liftHeight.Recvd", "height %f, maxSpeed %f, duration %f", msg.height_mm, msg.max_speed_rad_per_sec, msg.duration_sec);
         if (msg.duration_sec > 0) {
           LiftController::SetDesiredHeightByDuration(msg.height_mm, 0.1f, 0.1f, msg.duration_sec);
         } else {
@@ -452,7 +425,7 @@ namespace Anki {
       }
 
       void Process_headAngle(const RobotInterface::SetHeadAngle& msg) {
-        //AnkiInfo( 117, "Messages.Process_headAngle.Recvd", 365, "angle %f, maxSpeed %f, duration %f", 3, msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
+        //AnkiInfo( "Messages.Process_headAngle.Recvd", "angle %f, maxSpeed %f, duration %f", msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
         if (msg.duration_sec > 0) {
           HeadController::SetDesiredAngleByDuration(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
         } else {
@@ -485,7 +458,7 @@ namespace Anki {
       }
 
       void Process_turnInPlaceAtSpeed(const RobotInterface::TurnInPlaceAtSpeed& msg) {
-        //AnkiInfo( 118, "Messages.Process_turnInPlaceAtSpeed.Recvd", 366, "speed %f rad/s, accel %f rad/s2", 2, msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
+        //AnkiInfo( "Messages.Process_turnInPlaceAtSpeed.Recvd", "speed %f rad/s, accel %f rad/s2", msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
         SteeringController::ExecutePointTurn(msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
       }
 
@@ -543,7 +516,7 @@ namespace Anki {
           }
           default:
           {
-            AnkiWarn( 1236, "Messages.Process_setControllerGains.InvalidController", 651, "controller: %hhu", 1,  msg.controller);
+            AnkiWarn( "Messages.Process_setControllerGains.InvalidController", "controller: %hhu",  msg.controller);
           }
         }
       }
@@ -562,14 +535,6 @@ namespace Anki {
       {
 
       }
-
-#ifndef TARGET_K02
-      // Group processor for all animation key frame messages
-      void Process_anim(const RobotInterface::EngineToRobot& msg)
-      {
-      
-      }
-#endif
 
       void Process_checkLiftLoad(const RobotInterface::CheckLiftLoad& msg)
       {
@@ -599,7 +564,7 @@ namespace Anki {
           }
           default:
           {
-            AnkiWarn( 1195, "Messages.enableMotorPower.UnhandledMotorID", 648, "%hhu", 1, msg.motorID);
+            AnkiWarn( "Messages.enableMotorPower.UnhandledMotorID", "%hhu", msg.motorID);
             break;
           }
         }
@@ -607,7 +572,7 @@ namespace Anki {
 
       void Process_enableReadToolCodeMode(const RobotInterface::EnableReadToolCodeMode& msg)
       {
-        //AnkiDebug( 162, "ReadToolCodeMode", 449, "enabled: %d, liftPower: %f, headPower: %f", 3, msg.enable, msg.liftPower, msg.headPower);
+        //AnkiDebug( "ReadToolCodeMode", "enabled: %d, liftPower: %f, headPower: %f", msg.enable, msg.liftPower, msg.headPower);
         if (msg.enable) {
           HeadController::Disable();
           f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
@@ -643,8 +608,6 @@ namespace Anki {
       }
 
       // ---------- Animation Key frame messages -----------
-
-#ifndef TARGET_K02
       
       // ==== V2 Animation ======
       // TODO: If these messages are specified by a specific range in the clad file,
@@ -717,10 +680,6 @@ namespace Anki {
         #endif
       }
 
-      void Process_testState(const RobotInterface::TestState&)
-      {
-        // Nothing to do here
-      }
       void Process_getMfgInfo(const RobotInterface::GetManufacturingInfo& msg)
       {
         RobotInterface::SendMessage(RobotInterface::ManufacturingID());
@@ -736,28 +695,10 @@ namespace Anki {
       void Process_postAudioParameter(const Anki::AudioEngine::Multiplexer::PostAudioParameter&) { /*Nothing to do*/ }
       void Process_stopAllAudioEvents(const Anki::AudioEngine::Multiplexer::StopAllAudioEvents&) { /*Nothing to do*/ }
       void Process_postAudioSwitchState(const Anki::AudioEngine::Multiplexer::PostAudioSwitchState&) { /*Nothing to do*/ }
-
+      
       void Process_startRecordingAudio(const RobotInterface::StartRecordingAudio& msg) { /*Nothing to do*/ }
-#endif // simulator
-
 
 // ----------- Send messages -----------------
-
-      void SendTestStateMsg()
-      {
-#ifdef TARGET_K02
-          RobotInterface::TestState tsm;
-          memcpy((void*)tsm.speedsFixed,    (void*)g_dataToHead.speeds,    sizeof(tsm.speedsFixed));
-          memcpy((void*)tsm.positionsFixed, (void*)g_dataToHead.positions, sizeof(tsm.positionsFixed));
-          memcpy((void*)tsm.gyro, (void*)HAL::IMU::IMUState.gyro, sizeof(tsm.gyro));
-          memcpy((void*)tsm.acc,  (void*)HAL::IMU::IMUState.acc,  sizeof(tsm.acc));
-          tsm.cliffLevel = g_dataToHead.cliffLevel,
-          tsm.battVolt10x = (uint8_t)(robotState_.batteryVoltage * 10.0f);
-          tsm.extVolt10x  = (uint8_t)(vExt_ * 10.0f);
-          tsm.chargeStat  = (onCharger_ * RobotInterface::CS_ON_CHARGER) | (isCharging_ * RobotInterface::CS_IS_CHARGING) | (chargerOOS_ * RobotInterface::CS_BAD_CHARGER);
-          RobotInterface::SendMessage(tsm);
-#endif
-      }
 
       Result SendRobotStateMsg(const RobotState* msg)
       {
@@ -813,11 +754,6 @@ namespace Anki {
         return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
       }
 
-      void ResetMissedLogCount()
-      {
-        missedLogs_ = 0;
-      }
-
       bool ReceivedInit()
       {
         return initReceived_;
@@ -830,44 +766,6 @@ namespace Anki {
       }
 
     } // namespace Messages
-
-
-    namespace RobotInterface {
-      int SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const int32_t numArgs, ...)
-      {
-        PrintTrace m;
-        if (Messages::missedLogs_ > 0)
-        {
-          m.level = LogLevel::ANKI_LOG_LEVEL_EVENT;
-          m.name  = 2;
-          m.stringId = 1;
-          m.value_length = 1;
-          m.value[0] = Messages::missedLogs_ + 1; // +1 for the message we are dropping in thie call to SendLog
-        }
-        else
-        {
-          m.level = level;
-          m.name  = name;
-          m.stringId = formatId;
-          va_list argptr;
-          va_start(argptr, numArgs);
-          for (m.value_length=0; m.value_length < numArgs; m.value_length++)
-          {
-            m.value[m.value_length] = va_arg(argptr, int);
-          }
-          va_end(argptr);
-        }
-        if (SendMessage(m))
-        {
-          Messages::ResetMissedLogCount();
-        }
-        else
-        {
-          Messages::missedLogs_++;
-        }
-        return 0;
-      }
-    } // namespace RobotInterface
 
     namespace HAL {
       bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)

@@ -8,7 +8,7 @@ if (NOT DEFINED CORETECH)
   set(CORETECH ${CMAKE_CURRENT_SOURCE_DIR}/..)
 endif()
 
-include(anki_build_cxx_library)
+include(anki_build_cxx)
 
 #
 # cti_planning

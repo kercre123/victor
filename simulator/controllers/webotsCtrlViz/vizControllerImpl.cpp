@@ -116,27 +116,42 @@ void VizControllerImpl::Init()
   _cubeAccelDisp = _vizSupervisor.getDisplay("cozmo_cube_accel_display");
 
   // Find all the debug image displays in the proto. Use the first as the camera feed and the rest for debug images.
-  _camDisp = nullptr;
-  s32 displayCtr = 0;
-  webots::Display* display = nullptr;
-  while( (display = _vizSupervisor.getDisplay("cozmo_debug_image_display" + std::to_string(displayCtr))) != nullptr)
   {
-    if(displayCtr==0)
+    webots::Node* vizNode = _vizSupervisor.getSelf();
+    webots::Field* numDisplaysField = vizNode->getField("numDebugImageDisplays");
+    s32 numDisplays = 1;
+    if(numDisplaysField == nullptr)
     {
-      _camDisp = display;
+      PRINT_NAMED_WARNING("VizControllerImpl.Init.MissingNumDebugDisplaysField", "Assuming single display (camera)");
     }
-    else
+    else 
     {
-      _debugImages.emplace_back(display);
+      numDisplays = numDisplaysField->getSFInt32();
     }
-    ++displayCtr;
+    
+    _camDisp = nullptr;
+
+    for(s32 displayCtr = 0; displayCtr < numDisplays; ++displayCtr)
+    {
+      webots::Display* display = _vizSupervisor.getDisplay("cozmo_debug_image_display" + std::to_string(displayCtr));
+      DEV_ASSERT_MSG(display != nullptr, "VizControllerImpl.Init.NullDebugDisplay", "displayCtr=%d", displayCtr);
+    
+      if(displayCtr==0)
+      {
+        _camDisp = display;
+      }
+      else
+      {
+        _debugImages.emplace_back(display);
+      }
+    }
+    
+    DEV_ASSERT(_camDisp != nullptr, "VizControllerImpl.Init.NoCameraDisplay");
+    PRINT_NAMED_DEBUG("VizControllerImpl.Init.ImageDisplaysCreated",
+                      "Found camera display and %zu debug displays",
+                      _debugImages.size()-1);
   }
-  
-  DEV_ASSERT(_camDisp != nullptr, "VizControllerImpl.Init.NoCameraDisplay");
-  PRINT_NAMED_DEBUG("VizControllerImpl.Init.ImageDisplaysCreated",
-                    "Found camera display and %zu debug displays",
-                    _debugImages.size()-1);
-  
+
   _disp->setFont("Lucida Console", 8, true);
   _moodDisp->setFont("Lucida Console", 8, true);
   _activeObjectDisp->setFont("Lucida Console", 8, true);
@@ -502,9 +517,6 @@ static void DisplayImageHelper(const EncodedImage& encodedImage, webots::ImageRe
   
   imageRef = display->imageNew(img.GetNumCols(), img.GetNumRows(), img.GetDataPointer(), webots::Display::RGB);
   display->imagePaste(imageRef, 0, 0);
-  SetColorHelper(display, NamedColors::RED);
-  display->drawText(std::to_string(encodedImage.GetTimeStamp()), 1, display->getHeight()-9); // display timestamp at lower left
-
 }
 
 void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
@@ -720,20 +732,12 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     RAD_TO_DEG(payload.state.pose.pitch_angle + payload.state.headAngle));
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_PITCH, Anki::NamedColors::GREEN, txt);
   
-#ifdef COZMO_V2
   sprintf(txt, "Acc:  %6.0f %6.0f %6.0f mm/s2  ImuTemp %+6.2f degC",
           payload.state.accel.x,
           payload.state.accel.y,
           payload.state.accel.z,
           payload.imuTemperature_degC);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ACCEL, Anki::NamedColors::GREEN, txt);
-#else
-  sprintf(txt, "Acc:  %6.0f %6.0f %6.0f mm/s2",
-          payload.state.accel.x,
-          payload.state.accel.y,
-          payload.state.accel.z);
-  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ACCEL, Anki::NamedColors::GREEN, txt);
-#endif
   
   sprintf(txt, "Gyro: %6.1f %6.1f %6.1f deg/s",
     RAD_TO_DEG(payload.state.gyro.x),
@@ -742,7 +746,6 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_GYRO, Anki::NamedColors::GREEN, txt);
 
   bool cliffDetected = payload.state.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED;
-#ifdef COZMO_V2
   sprintf(txt, "Cliff: {%4u, %4u, %4u, %4u} %s",
           payload.state.cliffDataRaw[0],
           payload.state.cliffDataRaw[1],
@@ -758,14 +761,6 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
           proxData.rangeStatus,
           proxData.distance_mm < kProxSensorMaxDistance_mm ? "OBJ DETECTED" : "CLEAR");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_DIST, Anki::NamedColors::GREEN, txt);
-
-#else
-  sprintf(txt, "Cliff: %4u %s",
-          payload.state.cliffDataRaw[0],
-          cliffDetected ? "CLIFF DETECTED" : "");
-          DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_CLIFF, cliffDetected ? Anki::NamedColors::RED : Anki::NamedColors::GREEN, txt);
-#endif // COZMO_V2
-
   
   sprintf(txt, "Speed L: %4d  R: %4d mm/s",
     (int)payload.state.lwheel_speed_mmps,

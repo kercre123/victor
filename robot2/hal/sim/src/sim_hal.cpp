@@ -466,7 +466,8 @@ namespace Anki {
       // Audio Input
       audioCaptureSystem_.SetCallback(std::bind(&AudioInputCallback, std::placeholders::_1, std::placeholders::_2));
       audioCaptureSystem_.Init();
-      audioCaptureSystem_.StartRecording();
+      // VIC-473 Commenting this out since it sometimes causes sim to fail.
+      //audioCaptureSystem_.StartRecording();
 
       isInitialized = true;
       return RESULT_OK;
@@ -557,6 +558,13 @@ namespace Anki {
         IMUData.rate_y += DEG_TO_RAD(initialBias_dps[1] + biasDueToTemperature_dps);
         IMUData.rate_z += DEG_TO_RAD(initialBias_dps[2] + biasDueToTemperature_dps);
       }
+      
+      static ImageImuData imageImuData;
+      imageImuData.systemTimestamp_ms = HAL::GetTimeStamp();
+      imageImuData.rateX = IMUData.rate_x;
+      imageImuData.rateY = IMUData.rate_y;
+      imageImuData.rateZ = IMUData.rate_z;
+      RobotInterface::SendMessage(imageImuData);
       
       // Return true if IMU was already read this timestamp
       static TimeStamp_t lastReadTimestamp = 0;
@@ -853,7 +861,7 @@ namespace Anki {
         case BUTTON_POWER: { return 0; }
         default: 
         {
-          AnkiError( 1252, "sim_hal.GetButtonState.UnexpectedButtonType", 658, "Button ID=%d does not have a sensible return value", 1, button_id);
+          AnkiError( "sim_hal.GetButtonState.UnexpectedButtonType", "Button ID=%d does not have a sensible return value", button_id);
           return 0; 
         }
       }
@@ -1065,7 +1073,7 @@ namespace Anki {
             break;
           }
           default:
-            AnkiWarn( 193, "sim_hal.ReadingDiscoveryChannel.UnexpectedMsg", 497, "Expected discovery tag but got %d", 1, lcm.tag);
+            AnkiWarn( "sim_hal.ReadingDiscoveryChannel.UnexpectedMsg", "Expected discovery tag but got %d", lcm.tag);
             break;
         }
         

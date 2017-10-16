@@ -16,8 +16,32 @@ TOPLEVEL=`$GIT rev-parse --show-toplevel`
 function usage()
 {
     SCRIPT_NAME=`basename $0`
-    echo "${SCRIPT_NAME} <ASSETS_BUILD_DIR>"
+    echo "${SCRIPT_NAME} [OPTIONS] <ASSETS_BUILD_DIR>"
+    echo "  -h          print this message"
+    echo "  -f          force-push assets to device"
+    echo "${SCRIPT_NAME} with no arguments lists the available local assets"
 }
+
+#
+# defaults
+#
+FORCE_PUSH_ASSETS=0
+
+while getopts ":hf" opt; do
+  case ${opt} in
+    h )
+      usage
+      exit 1
+      ;;
+    f )
+      FORCE_PUSH_ASSETS=1
+      ;;
+    \? )
+      usage
+      exit 1
+      ;;
+  esac
+done
                                                                                                     
 cd "${SCRIPT_PATH}"
 
@@ -25,9 +49,8 @@ cd "${SCRIPT_PATH}"
 #
 # Find asset directories
 #
-
-if [ $# -eq 1 ]; then
-    ASSETSDIR="$1"
+if [ $# -ne 0 ]; then
+    ASSETSDIR="${@: -1}" # last argument
 else
     ASSETDIRS=($(find ${TOPLEVEL}/_build -path '**/assets/cozmo_assets.ref'))
     if [ "${#ASSETDIRS[@]}" -eq 1 ]; then
@@ -72,9 +95,15 @@ SOURCE_HASH=$(cat ${SOURCE_ASSET_HASH_FILE})
 
 DEVICE_ASSET_ROOT_DIR="/data/data/com.anki.cozmoengine/files/assets"
 DEVICE_ASSET_DIR="$DEVICE_ASSET_ROOT_DIR/$SOURCE_HASH"
+DEVICE_ASSET_TMP_DIR="$DEVICE_ASSET_ROOT_DIR/_tmp"
 
 # source adb env & helper functions
 source android_env.sh
+
+# blow away current assets folder to force re-push if FORCE_PUSH_ASSETS=1
+if [ $FORCE_PUSH_ASSETS -eq 1 ]; then
+  $ADB shell rm -rf ${DEVICE_ASSET_DIR}
+fi
 
 set +e
 $ADB shell [ -f "$DEVICE_ASSET_DIR/cozmo_assets.ref" ]
@@ -86,13 +115,13 @@ if [ $HAS_ASSETS -eq 0 ]; then
     exit 0
 fi
 
-# create target assets fir on device
-$ADB shell mkdir -p $DEVICE_ASSET_DIR
-
-# install new assets
+# Install new assets. Deploy to a tmp directory first
+# in case transfer is stopped midway through.
 echo "deploying assets"
 pushd ${ASSETSDIR} > /dev/null 2>&1
-$ADB push . ${DEVICE_ASSET_DIR}/
+$ADB shell rm -rf ${DEVICE_ASSET_DIR} ${DEVICE_ASSET_TMP_DIR} # make sure there is no existing assets directory or tmp directory
+$ADB push . ${DEVICE_ASSET_TMP_DIR}/
+$ADB shell mv ${DEVICE_ASSET_TMP_DIR} ${DEVICE_ASSET_DIR}
 $ADB push ${ASSETSDIR}/cozmo_assets.ref ${DEVICE_ASSET_ROOT_DIR}/current
 popd > /dev/null 2>&1
 echo "assets installed to $DEVICE_ASSET_DIR"

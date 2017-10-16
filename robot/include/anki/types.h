@@ -28,9 +28,6 @@
 #ifndef __COZMO_ROBOT_COMMON_TYPES_H__
 #define __COZMO_ROBOT_COMMON_TYPES_H__
 
-#ifdef TARGET_ESPRESSIF
-#include "c_types.h"
-#else
 #include <stdint.h>
 typedef uint8_t  u8;
 typedef int8_t   s8;
@@ -42,7 +39,6 @@ typedef uint64_t u64;
 typedef int64_t  s64;
 typedef float    f32;
 typedef double   f64;
-#endif
 
 
 //////////////////////////////////////////////////////////////////////////////

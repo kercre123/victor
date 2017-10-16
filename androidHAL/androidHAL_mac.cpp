@@ -64,7 +64,9 @@ namespace Anki {
       const f32 kTangentialDistCoeff2 = 0.001523473592445885f;
       const f32 kDistCoeffNoiseFrac   = 0.0f; // fraction of the true value to use for uniformly distributed noise (0 to disable)
       
-      u8* imageBuffer_ = nullptr;
+      std::vector<u8> imageBuffer_;
+      TimeStamp_t cameraStartTime_ms_;
+      TimeStamp_t lastImageCapturedTime_ms_;
     } // "private" namespace
 
 
@@ -128,6 +130,13 @@ namespace Anki {
         if (nullptr != headCam_) {
           headCam_->enable(VISION_TIME_STEP);
           FillCameraInfo(headCam_, headCamInfo_);
+          
+          // HACK: Figure out when first camera image will actually be taken (next
+          // timestep from now), so we can reference to it when computing frame
+          // capture time from now on.
+          // TODO: Not sure from Cyberbotics support message whether this should include "+ VISION_TIME_STEP" or not...
+          cameraStartTime_ms_ = GetTimeStamp(); // + VISION_TIME_STEP;
+          lastImageCapturedTime_ms_ = 0;
         }
 
         // Gyro
@@ -146,11 +155,7 @@ namespace Anki {
 
     AndroidHAL::~AndroidHAL()
     {
-      if (imageBuffer_ != nullptr)
-      {
-        free(imageBuffer_);
-        imageBuffer_ = nullptr;
-      }
+
     }
 
     TimeStamp_t AndroidHAL::GetTimeStamp(void)
@@ -269,27 +274,40 @@ namespace Anki {
       if (nullptr == headCam_) {
         return false;
       }
-
-      // Malloc to get around being unable to create a static array with unknown size
-      // Also assumes that image size does not change at runtime
-      if (imageBuffer_ == nullptr)
+      
+      const TimeStamp_t currentTime_ms = GetTimeStamp();
+      
+      // This computation is based on Cyberbotics support's explaination for how to compute
+      // the actual capture time of the current available image from the simulated camera
+      // *except* I seem to need the extra "- VISION_TIME_STEP" for some reason.
+      // (The available frame is still one frame behind? I.e. we are just *about* to capture
+      //  the next one?)
+      const TimeStamp_t currentImageTime_ms = (std::floor((currentTime_ms-cameraStartTime_ms_)/VISION_TIME_STEP) * VISION_TIME_STEP
+                                               + cameraStartTime_ms_ - VISION_TIME_STEP);
+      
+      // Have we already sent the currently-available image?
+      if(lastImageCapturedTime_ms_ == currentImageTime_ms)
       {
-        imageBuffer_ = (u8*)(malloc(headCamInfo_.nrows * headCamInfo_.ncols * 3));
+        return false;
       }
-
-      frame = imageBuffer_;
-
+      
+      imageBuffer_.resize(headCamInfo_.nrows * headCamInfo_.ncols * 3);
+      frame = imageBuffer_.data();
+      
       const u8* image = headCam_->getImage();
+      
       DEV_ASSERT(image != NULL, "sim_androidHAL.CameraGetFrame.NullImagePointer");
-
-      s32 pixel = 0;
-      s32 imgWidth = headCam_->getWidth();
+      DEV_ASSERT_MSG(headCam_->getWidth() == headCamInfo_.ncols,
+                     "SimAndroidHAL.CameraGetFrame.MismatchedImageWidths",
+                     "HeadCamInfo:%d HeadCamWidth:%d", headCamInfo_.ncols, headCam_->getWidth());
+      
+      u8* pixel = frame;
       for (s32 y=0; y < headCamInfo_.nrows; y++) {
         for (s32 x=0; x < headCamInfo_.ncols; x++) {
-          *(imageBuffer_ + pixel*3 + 0) = webots::Camera::imageGetRed(image, imgWidth, x, y);
-          *(imageBuffer_ + pixel*3 + 1) = webots::Camera::imageGetGreen(image, imgWidth, x, y);
-          *(imageBuffer_ + pixel*3 + 2) = webots::Camera::imageGetBlue(image,  imgWidth, x, y);
-          ++pixel;
+          pixel[0] = webots::Camera::imageGetRed(image,   headCamInfo_.ncols, x, y);
+          pixel[1] = webots::Camera::imageGetGreen(image, headCamInfo_.ncols, x, y);
+          pixel[2] = webots::Camera::imageGetBlue(image,  headCamInfo_.ncols, x, y);
+          pixel+=3;
         }
       }
 
@@ -347,13 +365,16 @@ namespace Anki {
         cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
       }
       
-      imageCaptureSystemTimestamp_ms = GetTimeStamp();
-
+      imageCaptureSystemTimestamp_ms = currentImageTime_ms;
+      
       imageID = _imageFrameID;
       _imageFrameID++;
       
+      // Mark that we've already sent the image for the current time
+      lastImageCapturedTime_ms_ = currentImageTime_ms;
+      
       return true;
-
+      
     } // CameraGetFrame()
     
   } // namespace Cozmo

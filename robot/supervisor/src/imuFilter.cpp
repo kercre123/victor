@@ -67,9 +67,9 @@ namespace Anki {
         f32 gyro_bias_filt[3]           = {0};     // Filtered gyro bias
         const f32 GYRO_BIAS_FILT_COEFF_NORMAL  = 0.0005f; // IIR low-pass filter coefficient (1 == disable filter).
                                                           // Relatively slow once we're sure calibration is reasonably good since it shouldn't be changing that fast.
-#ifdef COZMO_V2
+
         const f32 GYRO_BIAS_FILT_COEFF_TEMP_CHANGING = 0.0025f; // Gyro bias filter coefficient used while the IMU temperature is changing (due to initial warming up)
-#endif
+
         const f32 GYRO_BIAS_FILT_COEFF_PRECALIB = 0.2f;   // Gyro bias filter coefficient. Relatively fast before calibration.
         f32 gyroBiasCoeff_              = GYRO_BIAS_FILT_COEFF_PRECALIB;
         u16 biasFiltCnt_                = 0;
@@ -88,11 +88,9 @@ namespace Anki {
         const f32 HP_ACCEL_FILT_COEFF   = 0.5f;     // IIR high-pass filter coefficient (0 == no-pass)
         f32 accel_robot_frame_high_pass[3] = {0};
         
-#ifdef COZMO_V2
         // These values used to check if IMU temperature is changing (see usage in IMUFilter::Update())
         u32 timeOfLastImuTempSample_ms_ = 0;
         f32 lastImuTempSample_degC_ = 0.f;
-#endif
         
         // ==== Pickup detection ===
         bool pickupDetectEnabled_       = true;
@@ -109,11 +107,8 @@ namespace Anki {
         const u8  PUTDOWN_COUNT      = 40;
         u8 putdownCnt_               = 0;
         
-#ifdef COZMO_V2
         u16 cliffValsWhileNotMoving_[HAL::CLIFF_COUNT] = {0};
-#else
-        u16 cliffValWhileNotMoving_ = 0;
-#endif
+
         const u16 CLIFF_DELTA_FOR_PICKUP = 50;
         
         const f32 ACCEL_DISTURBANCE_MOTION_THRESH = 40.f;
@@ -302,13 +297,11 @@ namespace Anki {
 
       void ResetPickupVars() {
         pickedUp_ = 0;
-#ifdef COZMO_V2
+
         for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
           cliffValsWhileNotMoving_[i] = 0;
         }
-#else
-        cliffValWhileNotMoving_ = 0;
-#endif
+
         potentialPickupCnt_ = 0;
         putdownCnt_ = 0;
         external_accel_disturbance_cnt[0] = external_accel_disturbance_cnt[1] = external_accel_disturbance_cnt[2] = 0;
@@ -330,7 +323,7 @@ namespace Anki {
 
       void EnableBraceWhenFalling(bool enable)
       {
-        AnkiInfo( 187, "IMUFilter.EnableBraceWhenFalling", 347, "%d", 1, enable);
+        AnkiInfo( "IMUFilter.EnableBraceWhenFalling", "%d", enable);
         bracingEnabled_ = enable;
       }
       
@@ -351,9 +344,7 @@ namespace Anki {
         
         ResetPickupVars();
 
-#ifdef COZMO_V2
         timeOfLastImuTempSample_ms_ = 0;
-#endif
       }
       
       // Applies low-pass filtering to 3-element input, storing result to 3-element output assuming
@@ -408,7 +399,7 @@ namespace Anki {
             peakGyroMaxTime = currTime;
           } else if (fabsf(gyro_robot_frame_filt[2]) < peakGyroThresh) {
             if ((peakGyroMaxTime > peakGyroStartTime) && (peakGyroMaxTime - peakGyroStartTime < maxGyroPeakDuration_ms)) {
-              AnkiEvent( 329, "IMUFilter.PokeDetected.Gyro", 305, "", 0);
+              AnkiEvent( "IMUFilter.PokeDetected.Gyro", "");
               peakGyroStartTime = currTime;
               lastPokeDetectTime = currTime;
 
@@ -427,7 +418,7 @@ namespace Anki {
               peakAccelMaxTime = currTime;
             } else if (fabsf(accel_robot_frame_filt[0]) < peakAccelThresh) {
               if ((peakAccelMaxTime > peakAccelStartTime) && (peakAccelMaxTime - peakAccelStartTime < maxAccelPeakDuration_ms)) {
-                AnkiEvent( 330, "IMUFilter.PokeDetected.Accel", 305, "", 0);
+                AnkiEvent( "IMUFilter.PokeDetected.Accel", "");
                 peakAccelStartTime = currTime;
                 lastPokeDetectTime = currTime;
 
@@ -572,7 +563,6 @@ namespace Anki {
           if (!WheelController::AreWheelsMoving() && !WheelController::AreWheelsPowered()) {
             s16 maxCliffDelta = 0;
             
-#ifdef COZMO_V2
             for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
               if (cliffValsWhileNotMoving_[i] == 0) {
                 cliffValsWhileNotMoving_[i] = ProxSensors::GetRawCliffValue(i);
@@ -581,28 +571,17 @@ namespace Anki {
                 maxCliffDelta = MAX(maxCliffDelta, absCliffDelta);
               }
             }
-#else
-            if (cliffValWhileNotMoving_ == 0) {
-              cliffValWhileNotMoving_ = ProxSensors::GetRawCliffValue();
-            } else {
-              const s16 absCliffDelta = ABS(cliffValWhileNotMoving_ - ProxSensors::GetRawCliffValue());
-              maxCliffDelta = MAX(maxCliffDelta, absCliffDelta);
-            }
-#endif
-            
+
             cliffBasedPickupDetect = maxCliffDelta > CLIFF_DELTA_FOR_PICKUP;
 
             // As long as wheels aren't moving, we can also check for Z-axis gyro motion
             gyroZBasedMotionDetect = ABS(gyro_robot_frame_filt[2]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[2];
             
           } else {
-#ifdef COZMO_V2
+
             for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
               cliffValsWhileNotMoving_[i] = 0;
             }
-#else
-            cliffValWhileNotMoving_ = 0;
-#endif
             
             // Is the robot turning at a radically different speed than what it should be experiencing given current wheel speeds?
             // UNEXPECTED_ROTATION_SPEED_THRESH is being used as a multipurpose margin here. Because GetCurrNoSlipBodyRotSpeed() is based
@@ -669,7 +648,7 @@ namespace Anki {
                                             (ABS(external_accel_disturbance_cnt[1]) > PICKUP_COUNT_WHILE_MOTIONLESS);
             
             if (potentialPickupCnt_ > PICKUP_COUNT_WHILE_MOTIONLESS || accelBasedMotionDetected) {
-              AnkiInfo( 368, "IMUFilter.PDWhileStationary", 604, "acc (%f, %f, %f), gyro (%f, %f, %f), cliff %d", 7,
+              AnkiInfo( "IMUFilter.PDWhileStationary", "acc (%f, %f, %f), gyro (%f, %f, %f), cliff %d",
                     accel_robot_frame_filt[0], accel_robot_frame_filt[1], accel_robot_frame_filt[2],
                     gyro_robot_frame_filt[0], gyro_robot_frame_filt[1], gyro_robot_frame_filt[2],
                     cliffBasedPickupDetect);
@@ -684,7 +663,7 @@ namespace Anki {
             if (CheckPickupWhileMoving() || cliffBasedPickupDetect || gyroZBasedMotionDetect) {
               if (++potentialPickupCnt_ > PICKUP_COUNT_WHILE_MOVING) {
                 SetPickupDetect(true);
-                AnkiInfo( 421, "IMUFilter.PickupDetected", 629, "accX %f, accY %f, accZ %f, cliff %d, gyroZ %d", 5,
+                AnkiInfo( "IMUFilter.PickupDetected", "accX %f, accY %f, accZ %f, cliff %d, gyroZ %d",
                          accel_robot_frame_filt[0], accel_robot_frame_filt[1], accel_robot_frame_filt[2], cliffBasedPickupDetect, gyroZBasedMotionDetect);
               }
             } else {
@@ -737,7 +716,7 @@ namespace Anki {
         
         static u32 measurement_cycles = 0;
         if (measurement_cycles++ == 400) {
-          AnkiDebug( 25, "IMUFilter", 166, "Max gyro: %f %f %f", 3,
+          AnkiDebug( "IMUFilter", "Max gyro: %f %f %f",
                     max_gyro[0],
                     max_gyro[1],
                     max_gyro[2]);
@@ -775,24 +754,7 @@ namespace Anki {
         
         prevHeadAngle_ = headAngle;
 
-        //AnkiDebugPeriodic(50, 182, "RobotPitch", 483, "%f deg (motion %d, gyro %f)", 3, RAD_TO_DEG_F32(pitch_), MotionDetected(), gyro_robot_frame_filt[1]);
-      }
-      
-      void UpdateCameraMotion()
-      {
-        #ifndef COZMO_V2
-        static u8 cameraMotionDecimationCounter = 0;
-        if (cameraMotionDecimationCounter++ > 3 && HAL::IsVideoEnabled())
-        {
-          ImageImuData msg;
-          HAL::IMUGetCameraTime(&msg.imageId, &msg.line2Number);
-          msg.rateX = gyro_robot_frame_filt[0];
-          msg.rateY = gyro_robot_frame_filt[1];
-          msg.rateZ = gyro_robot_frame_filt[2];
-          RobotInterface::SendMessage(msg);
-          cameraMotionDecimationCounter = 0;
-        }
-        #endif // ifdef COZMO_V2
+        //AnkiDebugPeriodic(50, "RobotPitch", "%f deg (motion %d, gyro %f)", RAD_TO_DEG_F32(pitch_), MotionDetected(), gyro_robot_frame_filt[1]);
       }
 
       Result Update()
@@ -803,7 +765,6 @@ namespace Anki {
         // NB: Only call IMUReadData once per mainExecution tic!
         while (HAL::IMUReadData(imu_data_)) {
 
-#ifdef COZMO_V2
         // IMU temperature-induced bias correction
         //
         // Gyro zero-rate bias changes with IMU temperature, so a more aggressive gyro bias filter coefficient
@@ -826,20 +787,21 @@ namespace Anki {
           m.temperature_degC = imu_data_.temperature_degC;
           RobotInterface::SendMessage(m);
         }
-#endif
-        ////// Gyro Update //////
-        
+
+        ////// Gyro Update //////        
 
         // Bias corrected gyro readings
         gyro_[0] = imu_data_.rate_x - gyro_bias_filt[0];
         gyro_[1] = imu_data_.rate_y - gyro_bias_filt[1];
         gyro_[2] = imu_data_.rate_z - gyro_bias_filt[2];
           
-#if !defined(SIMULATOR) && !defined(COZMO_V2)
-        // Correct for observed sensitivity error on z axis of gyro (COZMO-14182)
+#ifndef SIMULATOR
+        // COZMO V1: Correct for observed sensitivity error on z axis of gyro (COZMO-14182)
         // It has been observed that the z axis gyro usually reports about a 1.8% higher
         // rate than it is actually experiencing, so simply scale it here.
-        gyro_[2] *= 0.982f;
+
+        // Similar correction needed for Victor?
+        // gyro_[2] *= 0.982f;
 #endif
 
           
@@ -851,7 +813,7 @@ namespace Anki {
             gyro_bias_filt[0] = imu_data_.rate_x;
             gyro_bias_filt[1] = imu_data_.rate_y;
             gyro_bias_filt[2] = imu_data_.rate_z;
-            AnkiInfo( 392, "IMUFilter.Update.GyroBiasInit", 579, "%f %f %f", 3,
+            AnkiInfo( "IMUFilter.Update.GyroBiasInit", "%f %f %f",
                      RAD_TO_DEG_F32(gyro_bias_filt[0]),
                      RAD_TO_DEG_F32(gyro_bias_filt[1]),
                      RAD_TO_DEG_F32(gyro_bias_filt[2]));
@@ -862,7 +824,7 @@ namespace Anki {
             gyro_bias_filt[2] = LowPassFilter_single(gyro_bias_filt[2], imu_data_.rate_z, gyroBiasCoeff_);
           }
           
-          AnkiDebugPeriodic(12000, 391, "IMUFilter.Bias", 579, "%f %f %f", 3,
+          AnkiDebugPeriodic(12000, "IMUFilter.Bias", "%f %f %f",
                             RAD_TO_DEG_F32(gyro_bias_filt[0]),
                             RAD_TO_DEG_F32(gyro_bias_filt[1]),
                             RAD_TO_DEG_F32(gyro_bias_filt[2]));
@@ -873,7 +835,7 @@ namespace Anki {
             if (biasFiltCnt_ == BIAS_FILT_COMPLETE_COUNT) {
               // Bias filter has accumulated enough measurements while not moving.
               // Switch to slow filtering.
-              AnkiEvent( 393, "IMUFilter.Update.GyroCalibrated", 579, "%f %f %f", 3,
+              AnkiEvent( "IMUFilter.Update.GyroCalibrated", "%f %f %f",
                        RAD_TO_DEG_F32(gyro_bias_filt[0]),
                        RAD_TO_DEG_F32(gyro_bias_filt[1]),
                        RAD_TO_DEG_F32(gyro_bias_filt[2]));
@@ -1000,8 +962,6 @@ namespace Anki {
         
         DetectPoke();
         DetectFalling();
-        
-        UpdateCameraMotion();
 
         // Recording IMU data for sending to basestation
         if (isRecording_) {
@@ -1023,27 +983,14 @@ namespace Anki {
             ++imuChunkMsg_.chunkId;
 
             if (imuChunkMsg_.chunkId == imuChunkMsg_.totalNumChunks) {
-              AnkiDebug( 335, "IMUFilter.IMURecording.Complete", 584, "time %dms", 1, HAL::GetTimeStamp());
+              AnkiDebug( "IMUFilter.IMURecording.Complete", "time %dms", HAL::GetTimeStamp());
               isRecording_ = false;
             }
           }
-#else
-      
-          #ifndef COZMO_V2
-          // Raw IMU chunks
-          HAL::IMUReadRawData(imuRawDataMsg_.a, imuRawDataMsg_.g, &imuRawDataMsg_.timestamp);
-          #endif
-          
-//          imuRawDataMsg_.a[0] = accel_robot_frame_filt[0];
-//          imuRawDataMsg_.a[1] = accel_robot_frame_filt[1];
-//          imuRawDataMsg_.a[2] = accel_robot_frame_filt[2];
-//          imuRawDataMsg_.g[0] = gyro_robot_frame_filt[0];
-//          imuRawDataMsg_.g[1] = gyro_robot_frame_filt[1];
-//          imuRawDataMsg_.g[2] = gyro_robot_frame_filt[2];
-          
+#else         
           ++sentIMUDataMsgs_;
           if (sentIMUDataMsgs_ == totalIMUDataMsgsToSend_) {
-            AnkiDebug( 336, "IMUFilter.IMURecording.CompleteRaw", 584, "time %dms", 1, HAL::GetTimeStamp());
+            AnkiDebug( "IMUFilter.IMURecording.CompleteRaw", "time %dms", HAL::GetTimeStamp());
             isRecording_ = false;
             imuRawDataMsg_.order = 2;  // 2 == last msg of sequence
           }
@@ -1115,7 +1062,7 @@ namespace Anki {
       
       void RecordAndSend(const u32 length_ms)
       {
-        AnkiDebug( 337, "IMUFilter.IMURecording.Start", 585, "time = %dms", 1, HAL::GetTimeStamp());
+        AnkiDebug( "IMUFilter.IMURecording.Start", "time = %dms", HAL::GetTimeStamp());
         isRecording_ = true;
 #if(RECORD_AND_SEND_MODE == RECORD_AND_SEND_FILT_DATA)
         recordDataIdx_ = 0;
