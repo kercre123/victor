@@ -316,12 +316,6 @@ void DevLoggingSystem::LogMessage(const RobotInterface::EngineToRobot& message)
 template<>
 void DevLoggingSystem::LogMessage(const RobotInterface::RobotToEngine& message)
 {
-  // CLAD messages from the robot with image payloads are large, and in chunks, so throw them out for now
-  if (RobotInterface::RobotToEngineTag::image == message.GetTag())
-  {
-    return;
-  }
-  
   // Mic data comes nonstop from the robot so we can't record it all
   if (RobotInterface::RobotToEngineTag::audioInput == message.GetTag())
   {

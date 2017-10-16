@@ -15,13 +15,11 @@
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/robotInterface/messageFromAnimProcess.clad"
-#include "clad/types/nvStorage.clad"
 #include "clad/types/animationEvents.clad"
 #include "clad/types/pathEventTypes.clad"
 #include "clad/types/robotErrors.clad"
 #include "clad/types/fwTestMessages.clad"
 #include "clad/types/factoryFWOnly.clad"
-#include "clad/types/cameraParams.clad"
 
 
 namespace Anki {
@@ -62,7 +60,7 @@ message PathFollowingEvent
 
 message AnimationAvailable {
   uint_32 id,
-  string name
+  string  name
 }
 
 // These two messages bookend animations as they are played on the robot
@@ -75,7 +73,8 @@ message AnimationStarted
 message AnimationEnded
 {
   uint_32 id,
-  uint_8 tag
+  uint_8  tag,
+  bool    wasAborted
 }
 
 message AnimationEvent
@@ -97,11 +96,6 @@ message LiftLoad
   bool hasLoad
 }
 
-message WiFiFlashID
-{
-  uint_32 chip_id
-}
-
 message AudioInput
 {
   int_16  data[320], // 80 samples of audio 4 channels
@@ -118,13 +112,12 @@ message AudioInput
 union RobotToEngine {
   // 0xB0 to 0xEF: Reliable messages to the Engine
   PrintTrace                 trace                  = 0xB0,
-  PrintText                  printText              = 0xB1,
+  
   MainCycleTimeError         mainCycleTimeError     = 0xB2,
   GoalPose                   goalPose               = 0xB3,
   ObjectMoved                activeObjectMoved      = 0xB4,
   ObjectStoppedMoving        activeObjectStopped    = 0xB5,
   ObjectTapped               activeObjectTapped     = 0xB6,
-  DataDump                   dataDump               = 0xB7,
   PickAndPlaceResult         pickAndPlaceResult     = 0xB8,
   ObjectTappedFiltered       objectTappedFiltered   = 0xB9,
   RampTraverseStart          rampTraverseStarted    = 0xBA,
@@ -141,14 +134,13 @@ union RobotToEngine {
   MovingLiftPostDock         movingLiftPostDock     = 0xC5,
   PathFollowingEvent         pathFollowingEvent     = 0xC6,
   IMURawDataChunk            imuRawDataChunk        = 0xC7,
-  DefaultCameraParams        defaultCameraParams    = 0xC8,
   RobotAvailable             robotAvailable         = 0xC9,
   AnimationStarted           animStarted            = 0xCA,   // V2: sent from anim process
   AnimationEnded             animEnded              = 0xCB,   // V2: sent from anim process
-  //        FREE SLOT!!!                            = 0xCC,
-  NVStorage::NVOpResult      nvOpResult             = 0xCD,
+  ChargerMountComplete       chargerMountCompleted  = 0xCC,
+  //    FREE SLOT !!!                               = 0xCD,
   ObjectPowerLevel           objectPowerLevel       = 0xCE,
-  CrashReport                crashReport            = 0xCF,
+  //    FREE SLOT !!!                               = 0xCF,
   ObjectConnectionState activeObjectConnectionState = 0xD0,
   MotorCalibration           motorCalibration       = 0xD1,
   FWVersionInfo              factoryFirmwareVersion = 0xD2, ///< Depricated, only used by factory firmware
@@ -170,15 +162,12 @@ union RobotToEngine {
   AudioEngine::Multiplexer::AudioCallbackComplete audioCallbackComplete = 0xE2,
   AudioEngine::Multiplexer::AudioCallbackError    audioCallbackError    = 0xE3,
 
-  WiFiFlashID                wifiFlashID            = 0xEC,
   ManufacturingID            mfgId                  = 0xED,
   FirmwareVersion            firmwareVersion        = 0xEE,
-  OTA::Ack                   otaAck                 = 0xEF,
 
   //0xF0 to 0x FE: Unreliable message to the Engine
   RobotState                 state                  = 0xF0,
   AnimationState             animState              = 0xF1,
-  ImageChunk                 image                  = 0xF2,
   ObjectAvailable            activeObjectAvailable  = 0xF3,
   ImageImuData               imageGyro              = 0xF4,
   ObjectAccel                objectAccel            = 0xF5,

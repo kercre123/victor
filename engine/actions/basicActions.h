@@ -16,18 +16,20 @@
 #include "anki/common/basestation/math/pose.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/compoundActions.h"
-#include "engine/animations/animationStreamer.h"
 #include "engine/smartFaceId.h"
+#include "anki/cozmo/shared/animationTag.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 #include "anki/vision/basestation/visionMarker.h"
+#include "clad/externalInterface/messageActions.h"
 #include "clad/types/actionTypes.h"
-#include "clad/types/animationKeyFrames.h"
+#include "clad/types/animationTypes.h"
 #include "clad/types/toolCodes.h"
 #include "clad/types/visionModes.h"
 #include "util/bitFlags/bitFlags.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 #include <vector>
 
@@ -102,7 +104,7 @@ namespace Cozmo {
       u32 _relocalizedCnt = 0;
       
       bool    _moveEyes = true;
-      AnimationTag _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+      AnimationTag _eyeShiftTag = kNotAnimatingTag;
       
     }; // class TurnInPlaceAction
 
@@ -324,7 +326,7 @@ namespace Cozmo {
       bool        _holdEyes = false;
       Radians     _halfAngle;
       
-      AnimationStreamer::Tag _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+      AnimationTag _eyeShiftTag = kNotAnimatingTag;
       
       bool        _motionStarted = false;
       

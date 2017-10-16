@@ -15,7 +15,6 @@
 
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "engine/actions/sayTextAction.h"
-#include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroup.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/audio/engineRobotAudioClient.h"
@@ -30,7 +29,7 @@
 
 #define DEBUG_SAYTEXT_ACTION 0
 // Max duration of generated animation
-const float kMaxAnimationDuration_ms = 60000;  // 1 min
+//const float kMaxAnimationDuration_ms = 60000;  // 1 min
 
 
 namespace Anki {
@@ -112,7 +111,7 @@ SayTextAction::SayTextAction(Robot& robot,
 , _durationScalar(durationScalar)
 , _voicePitch(voicePitch)
 , _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
-, _animation("SayTextAnimation")
+//, _animation("SayTextAnimation") // TODO: SayTextAction is broken (VIC-360)
 {
   PRINT_CH_INFO(kLocalLogChannel,
                 "SayTextAction.InitWithStyle",
@@ -133,7 +132,7 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
           (u8)AnimTrackFlag::NO_TRACKS)
 , _text(text)
 , _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
-, _animation("SayTextAnimation")
+// , _animation("SayTextAnimation") // TODO: SayTextAction is broken (VIC-360)
 {
   // Get metadata
   const auto it = _intentConfigs.find( intent );
@@ -231,10 +230,14 @@ ActionResult SayTextAction::Init()
         }
         // Get appropriate audio event for style and insert key frame
         // TODO: Deprecate this, we are going to change the processing
+        // TODO: SayTextAction is broken (VIC-360)
+        /*
         const GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
+        
         _animation.AddKeyFrameToBack(RobotAudioKeyFrame(RobotAudioKeyFrame::AudioRef(audioEvent), 0));
         _animation.SetIsLive(true);
         _playAnimationAction.reset(new PlayAnimationAction(_robot, &_animation));
+         */
       }
       else {
         if (DEBUG_SAYTEXT_ACTION) {
@@ -246,12 +249,16 @@ ActionResult SayTextAction::Init()
         if (_fitToDuration) {
           // Get appropriate audio event for style and insert key frame
           // TODO: Deprecate this, we are going to change the processing
-          const GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
-          _animation.AddKeyFrameToBack(RobotAudioKeyFrame(RobotAudioKeyFrame::AudioRef(audioEvent), 0));
+          //const GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
+          
+          // TODO: SayTextAction is broken (VIC-360)
+          //_animation.AddKeyFrameToBack(RobotAudioKeyFrame(RobotAudioKeyFrame::AudioRef(audioEvent), 0));
           
           // Generate animation
           UpdateAnimationToFitDuration(duration_ms);
-          _playAnimationAction.reset(new PlayAnimationAction(_robot, &_animation, 1, true, _ignoreAnimTracks));
+          
+          // TODO: SayTextAction is broken (VIC-360)
+          //_playAnimationAction.reset(new PlayAnimationAction(_robot, &_animation, 1, true, _ignoreAnimTracks));
         }
         else {
           // Use current animation trigger
@@ -335,6 +342,8 @@ void SayTextAction::GenerateTtsAudio()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper method
 // TODO: Is there a better way to do this?
+  // TODO: SayTextAction is broken (VIC-360)
+  /*
 const Animation* GetAnimation(const AnimationTrigger& animTrigger, Robot& robot)
 {
   RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
@@ -361,11 +370,14 @@ const Animation* GetAnimation(const AnimationTrigger& animTrigger, Robot& robot)
   }
   return anim;
 }
+   */
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SayTextAction::UpdateAnimationToFitDuration(const float duration_ms)
 {
   if (AnimationTrigger::Count != _animationTrigger) {
+    // TODO: SayTextAction is broken (VIC-360)
+    /*
     while (_animation.GetLastKeyFrameTime_ms() < duration_ms && duration_ms <= kMaxAnimationDuration_ms ) {
       const Animation* nextAnim = GetAnimation(_animationTrigger, _robot);
       if (nullptr != nextAnim) {
@@ -377,6 +389,7 @@ void SayTextAction::UpdateAnimationToFitDuration(const float duration_ms)
         break;
       }
     }
+     */
   }
   else {
     PRINT_NAMED_WARNING("SayTextAction.UpdateAnimationToFitDuration.InvalidAnimationTrigger", "AnimationTrigger::Count");

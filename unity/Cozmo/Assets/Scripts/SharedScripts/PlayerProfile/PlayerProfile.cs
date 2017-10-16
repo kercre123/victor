@@ -35,10 +35,12 @@ namespace DataPersistence {
     // Mainly just for logging, but different from sessions in that you need to connect.
     public int DaysWithCozmo;
     public int CodeLabUserProjectNum;
+    public int CodeLabUserProjectNumVertical;
     public bool HideFreeplayCard;
     public bool DroneModeInstructionsSeen;
 
     public List<DataPersistence.CodeLabProject> CodeLabProjects;
+    public int CodeLabHorizontalPlayed;
 
     public List<Anki.Cozmo.UnlockId> NewUnlocks;
 
@@ -50,6 +52,12 @@ namespace DataPersistence {
     public List<string> PreviousTags;
 
     public Dictionary<OnboardingManager.OnboardingPhases, int> OnboardingStages;
+
+    public bool OSNotificationsPermissionsPromptShown;
+    public System.DateTime LastTimeAskedAboutNotifications;
+    public int NumTimesNotificationPermissionReminded;
+    public List<Cozmo.Notifications.Notification> NotificationsToBeSent;
+    public Cozmo.Notifications.Notification MostRecentNotificationClicked;
 
     public Anki.Util.AnkiLab.AssignmentDef[] LabAssignments;
 
@@ -76,16 +84,27 @@ namespace DataPersistence {
       TotalSessions = 0;
       DaysWithCozmo = 0;
       CodeLabUserProjectNum = 1;
+      CodeLabUserProjectNumVertical = 1;
       HideFreeplayCard = false;
       DroneModeInstructionsSeen = false;
       OnboardingStages = new Dictionary<OnboardingManager.OnboardingPhases, int>();
       CodeLabProjects = new List<DataPersistence.CodeLabProject>();
+      CodeLabHorizontalPlayed = 0;
       NewUnlocks = new List<Anki.Cozmo.UnlockId>();
       DisplayedStars = 0;
       DisplayedSparks = 0;
       NewStarLevels = new List<Anki.Cozmo.ExternalInterface.StarLevelCompleted>();
       PreviousTags = new List<string>();
       LabAssignments = new Anki.Util.AnkiLab.AssignmentDef[0];
+#if UNITY_ANDROID && !UNITY_EDITOR
+      OSNotificationsPermissionsPromptShown = true;
+#else
+      OSNotificationsPermissionsPromptShown = false;
+#endif
+      NumTimesNotificationPermissionReminded = 0;
+      LastTimeAskedAboutNotifications = System.DateTime.Now;
+      NotificationsToBeSent = new List<Cozmo.Notifications.Notification>();
+      MostRecentNotificationClicked = null;
     }
   }
 }

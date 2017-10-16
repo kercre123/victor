@@ -34,7 +34,6 @@ struct RobotState;
 class TouchSensorComponent : private Util::noncopyable
 {
 public:
-
   // constructor/destructor
   TouchSensorComponent(Robot& robot);
   ~TouchSensorComponent();
@@ -60,7 +59,6 @@ private:
   std::unique_ptr<Util::RollingFileLogger> _rawDataLogger;
   bool _loggingRawData = false;
   float _logRawDataUntil_s = 0.f;
-  
 };
 
 

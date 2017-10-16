@@ -392,11 +392,15 @@ Blockly.defineBlocksWithJsonArray = function(jsonArray) {
  * @param {boolean} opt_noCaptureIdentifier True if triggering on this event
  *     should not block execution of other event handlers on this touch or other
  *     simultaneous touches.
+ * @param {boolean} opt_noPreventDefault True if triggering on this event
+ *     should prevent the default handler.  False by default.  If
+ *     opt_noPreventDefault is provided, opt_noCaptureIdentifier must also be
+ *     provided.
  * @return {!Array.<!Array>} Opaque data that can be passed to unbindEvent_.
  * @private
  */
 Blockly.bindEventWithChecks_ = function(node, name, thisObject, func,
-    opt_noCaptureIdentifier) {
+    opt_noCaptureIdentifier, opt_noPreventDefault) {
   var handled = false;
   var wrapFunc = function(e) {
     var captureIdentifier = !opt_noCaptureIdentifier;
@@ -424,8 +428,10 @@ Blockly.bindEventWithChecks_ = function(node, name, thisObject, func,
   if (name in Blockly.Touch.TOUCH_MAP) {
     var touchWrapFunc = function(e) {
       wrapFunc(e);
-      // Stop the browser from scrolling/zooming the page.
-      if (handled) {
+      // Calling preventDefault stops the browser from scrolling/zooming the
+      // page.
+      var preventDef = !opt_noPreventDefault;
+      if (handled && preventDef) {
         e.preventDefault();
       }
     };
@@ -449,16 +455,36 @@ Blockly.bindEventWithChecks_ = function(node, name, thisObject, func,
  * @param {string} name Event name to listen to (e.g. 'mousedown').
  * @param {Object} thisObject The value of 'this' in the function.
  * @param {!Function} func Function to call when event is triggered.
+ *
+ * // *** ANKI CHANGE ***
+ * Added argument opt_noPreventDefault to mirror same arg in Blockly.bindEventWithChecks_
+ * so that toolbox will scroll.
+ * @param {boolean} opt_noPreventDefault True if triggering on this event
+ *     should prevent the default handler.  False by default.  If
+ *     opt_noPreventDefault is provided, opt_noCaptureIdentifier must also be
+ *     provided.
+ *
  * @return {!Array.<!Array>} Opaque data that can be passed to unbindEvent_.
  * @private
  */
-Blockly.bindEvent_ = function(node, name, thisObject, func) {
+Blockly.bindEvent_ = function(node, name, thisObject, func, opt_noPreventDefault) {
+//Blockly.bindEvent_ = function(node, name, thisObject, func) {
+  // *** ANKI CHANGE ***
+  // Added handled var to mirror same var in Blockly.bindEventWithChecks_
+  // so that toolbox will scroll.
+  var handled = false;
+
   var wrapFunc = function(e) {
     if (thisObject) {
       func.call(thisObject, e);
     } else {
       func(e);
     }
+
+    // *** ANKI CHANGE ***
+    // Added handled var to mirror same var in Blockly.bindEventWithChecks_
+    // so that toolbox will scroll.
+    handled = true;
   };
 
   node.addEventListener(name, wrapFunc, false);
@@ -476,8 +502,18 @@ Blockly.bindEvent_ = function(node, name, thisObject, func) {
       }
       wrapFunc(e);
 
+      // *** ANKI CHANGE ***
+      // Copy same block of code from Blockly.bindEventWithChecks_ to here
+      // so that toolbox will scroll.
+      //
+      // Calling preventDefault stops the browser from scrolling/zooming the
+      // page.
+      var preventDef = !opt_noPreventDefault;
+      if (handled && preventDef) {
+        e.preventDefault();
+      }
       // Stop the browser from scrolling/zooming the page.
-      e.preventDefault();
+      // e.preventDefault();
     };
     for (var i = 0, eventName;
          eventName = Blockly.Touch.TOUCH_MAP[name][i]; i++) {

@@ -12,10 +12,8 @@ namespace BlockMessages
 
   union LightCubeMessage
   {
-    FlashObjectIDs      flashID,
     CubeID              setCubeID,
     CubeLights          setCubeLights,
-    ObjectBeingCarried  setObjectBeingCarried,
     StreamObjectAccel   streamObjectAccel,
 
     ObjectAvailable     available,

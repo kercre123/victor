@@ -120,7 +120,7 @@ bool EmotionEvent::ReadFromJson(const Json::Value& inJson)
     _repetitionPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
   }
   
-  PRINT_NAMED_INFO("EmotionEvent.ReadFromJson", "Loaded event '%s'", _name.c_str());
+  // PRINT_NAMED_DEBUG("EmotionEvent.ReadFromJson", "Loaded event '%s'", _name.c_str());
   
   return true;
 }

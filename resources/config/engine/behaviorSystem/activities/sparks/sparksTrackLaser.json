@@ -11,11 +11,12 @@
     "type" : "StrictPriority",
     "behaviors" : [
       "DriveOffCharger",
-      "VC_TrackLaser"
+      "SparksTrackLaser"
     ]
   },
   "minTimeSecs": 0,
-  "maxTimeSecs": 80,
+  "maxTimeSecs": 30,
+  "maxTimeoutForActionComplete": false,
   "numberOfRepetitions": 1,
   "behaviorObjective": "LaserTracked",
   "softSparkTrigger": "SoftSparkUpgradeTracks"

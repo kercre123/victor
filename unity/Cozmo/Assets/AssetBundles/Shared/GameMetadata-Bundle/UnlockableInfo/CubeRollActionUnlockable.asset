@@ -15,23 +15,19 @@ MonoBehaviour:
     _EnumValueAsString: RollCube
     _EnumValue: 9
   UnlockableType: 1
-  Prerequisites:
-  - _EnumValueAsString: PounceOnMotionAction
-    _EnumValue: 12
-  AnyPrereqUnlock: 0
-  _ComingSoon: 0
   DescriptionKey: unlockable.CubeRollAction.Description
   TitleKey: unlockable.CubeRollAction.Title
   SparkButtonDescription: unlockable.CubeRollAction.SparkButtonDescription
   SparkedStateDescription: unlockable.CubeRollAction.SparkedStateDescription
   SparkedMusicState:
     _Sparked: 0
+  IsSparkable: 1
   RequestTrickCostItemId: spark
   _SparkableThingID:
     _EnumValueAsString: RollCube
     _EnumValue: 19
   CoreUpgradeIcon: {fileID: 21300000, guid: 81cf534c428d445d9bcd1c5adfdd64c0, type: 3}
   CubesRequired: 1
-  SortOrder: 400
+  SortOrder: 20
   AndroidReleaseVersion: 
   AndroidSDKVersion: 0

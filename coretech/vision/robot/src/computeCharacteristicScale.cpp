@@ -86,7 +86,7 @@ namespace Anki
     {
       AnkiAssert(filteredRows.get_size() == 3);
       
-      const s32 thresholdMultiplier_numFractionalBits = 16;
+      static const s32 thresholdMultiplier_numFractionalBits = 16;
       
       const u8 * restrict pImage = image[imageY];
       

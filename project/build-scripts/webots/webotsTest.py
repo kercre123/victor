@@ -246,7 +246,7 @@ def sign_webot_executables(build_type, password):
 
   UtilLog.info("Your password may be needed in order to add the webots executables to the firewall exception list.")
 
-  executables_folder = get_subpath(os.path.join("generated","mac","DerivedData"), build_type)
+  executables_folder = get_subpath(os.path.join("_build","mac"), build_type.name, "bin")
 
   executables = [
     'webotsCtrlBuildServerTest',
@@ -288,25 +288,14 @@ def sign_webot_executables(build_type, password):
 
 
 # build unittest executable
-def build(build_type, cozmo_version_num):
-  derived_data_path = get_subpath(os.path.join("generated","mac","DerivedData"))
-
-  workspace_prefix = 'Cozmo'
-  if cozmo_version_num == 2:
-    workspace_prefix = 'Cozmov2'
-
-  workspace_filename = "{}Workspace_mac.xcworkspace".format(workspace_prefix)
-
+def build(build_type):
+  victor_build_script_path = get_subpath(os.path.join("project","victor","build-victor.sh"))
   build_command = [
-    'xcodebuild',
-    '-workspace', get_subpath(os.path.join("generated","mac"), workspace_filename),
-    '-scheme', 'BUILD_WORKSPACE',
-    '-sdk', 'macosx',
-    '-configuration', build_type.name,
-    # 'SYMROOT=' + derived_data_path,
-    # 'OBJROOT=' + derived_data_path,
-    'build'
-    ]
+          victor_build_script_path,
+          '-f',                     # force building the source lists every time
+          '-p', 'mac',              # build the mac project (with webots sim controllers)
+          '-c', build_type.name 
+          ]
 
   UtilLog.debug('build command {command}'.format(command=' '.join(build_command)))
 
@@ -476,7 +465,7 @@ def get_tests(config_file_path):
   return tests
 
 
-def run_tests(tests, log_folder, show_graphics, cozmo_version, default_timeout, forward_webots_log_level, num_retries = 0,
+def run_tests(tests, log_folder, show_graphics, default_timeout, forward_webots_log_level, num_retries = 0,
               fail_on_error=False):
   """Run webots tests and store the logs.
 
@@ -488,10 +477,6 @@ def run_tests(tests, log_folder, show_graphics, cozmo_version, default_timeout, 
 
     log_folder (string) --
       Path of directory to keep the webots logs
-
-    cozmo_version (int) --
-      1: Cozmo 1.x
-      2: Cozmo 2.0
 
     show_graphics (boolean) --
       Shows the webots gui and runs simulation at regular speed if true; hides gui and runs in fast
@@ -542,21 +527,11 @@ def run_tests(tests, log_folder, show_graphics, cozmo_version, default_timeout, 
       generate_file_with_replace(GENERATED_FILE_PATH, source_file_path,
                                  WORLD_FILE_TEST_NAME_PLACEHOLDER, test_controller)
 
-      if cozmo_version == 1:
-        generate_file_with_replace(GENERATED_FILE_PATH, GENERATED_FILE_PATH,
-                                   COZMOBOT_PLACEHOLDER, "BlockWorldComms{\n}\nDEF cozmoBot CozmoBot")
-      elif cozmo_version == 2:
-        generate_file_with_replace(GENERATED_FILE_PATH, GENERATED_FILE_PATH,
-                                   COZMOBOT_PLACEHOLDER, "DEF cozmoBot CozmoBot2")
-      else:
-        UtilLog.error("Unsupported Cozmo version #{version}".format(version=cozmo_version))
-        for test_controller, worlds in tests.items():
-          for world_file in worlds:
-            test_statuses[test_controller][world_file] = ResultCode.failed
-            total_error_count += 1
-        return (test_statuses, total_error_count, total_warning_count)
-
-                                 
+      # cozmo proto for Victor is CozmoBot2
+      generate_file_with_replace(GENERATED_FILE_PATH, 
+                                 GENERATED_FILE_PATH,
+                                 COZMOBOT_PLACEHOLDER, 
+                                 "DEF cozmoBot CozmoBot2")
 
       num_retries_counting_up = -1 # only needed for teamcity variable logging
 
@@ -580,7 +555,7 @@ def run_tests(tests, log_folder, show_graphics, cozmo_version, default_timeout, 
         log_file_paths.append(log_file_name)
 
         # Clear out files that shouldn't persist between test runs
-        clear_out_unwanted_persistent_files(cozmo_version)
+        clear_out_unwanted_persistent_files()
 
         # Setup the webots thread to run the test - thread should exit before the join timeout
         output = ThreadOutput()
@@ -596,7 +571,7 @@ def run_tests(tests, log_folder, show_graphics, cozmo_version, default_timeout, 
         didFail = any([(fail_on_error and (error_count > 0)), (crash_count > 0), 
                           run_webots_thread.isAlive(), (output.test_return_code is None), (output.test_return_code != 0)])
 
-        generate_combined_webots_devLog(cozmo_version, log_folder, log_file_name, 
+        generate_combined_webots_devLog(log_folder, log_file_name, 
                                         didFail, test_controller, world_file, 
                                         cur_time)
 
@@ -643,7 +618,7 @@ def run_tests(tests, log_folder, show_graphics, cozmo_version, default_timeout, 
   return (test_statuses, total_error_count, total_warning_count)
 
 
-def generate_combined_webots_devLog(cozmo_version, log_folder, log_file_name, didFail, test_controller, world_file, cur_time):
+def generate_combined_webots_devLog(log_folder, log_file_name, didFail, test_controller, world_file, cur_time):
   """ Combines the webots test output and the devLog into a single human readable foldername
 
       This function relies on the fact that we zip up previous devLogs so only the devLog
@@ -652,7 +627,7 @@ def generate_combined_webots_devLog(cozmo_version, log_folder, log_file_name, di
       The two asserts in this function ensure that those assumptions are true.
   """
 
-  dev_log_folder = os.path.join(log_folder, "playbackLogs", get_engine_output_folder_name(cozmo_version), "gameLogs","devLogger")
+  dev_log_folder = os.path.join(log_folder, "playbackLogs", "webotsCtrlGameEngine2", "gameLogs","devLogger")
   print("Path to DevLogger folder: " + dev_log_folder)
   assert os.path.isdir(dev_log_folder)
   dirs = [entry.path for entry in os.scandir(dev_log_folder) if entry.is_dir()]
@@ -667,9 +642,9 @@ def generate_combined_webots_devLog(cozmo_version, log_folder, log_file_name, di
   shutil.move(dirs[0], human_readable_output)
 
 
-def clear_out_unwanted_persistent_files(cozmo_version):
+def clear_out_unwanted_persistent_files():
   # clear out the persistant needsState file
-  fullPath = get_subpath(os.path.join("simulator","controllers"), get_engine_output_folder_name(cozmo_version), "files", "output", "nurture", "needsState.json")
+  fullPath = get_subpath(os.path.join("simulator","controllers"), "webotsCtrlGameEngine2", "files", "output", "nurture", "needsState.json")
   if os.path.exists(fullPath):
     os.remove(fullPath)
 
@@ -727,12 +702,6 @@ def parse_output(log_level, log_file):
 
   return (crash_count, error_count, warning_count)
 
-def get_engine_output_folder_name(engine_version):
-  engineSuffix = ""
-  if engine_version == 2:
-    engineSuffix = "2"
-  return "webotsCtrlGameEngine" + engineSuffix
-
 def get_build_folder(build_type):
   """Build the build folder path (where the logs are exported)
 
@@ -740,7 +709,7 @@ def get_build_folder(build_type):
     The targetted build type. Must be a member of the BuildType enum.
   """
   assert build_type in BuildType
-  return get_subpath(os.path.join("build","mac"), build_type.name)
+  return get_subpath(os.path.join("_build","mac"), build_type.name)
 
 def get_log_file_path(log_folder, test_name, world_file_name, timestamp="", retry_number=0):
   """Returns what the log file names should be.
@@ -852,13 +821,6 @@ def main(args):
                       help="""Default time limit for each webots test before marking it as failure and killing the webots instance.
                       This can be overridden in the configuration file for each individual test.""")
 
-  parser.add_argument('--cozmoVersion',
-                      dest='cozmo_version',
-                      action='store',
-                      default=1,
-                      type=int,
-                      help="""The Cozmo version number to use. 1 or 2.""")
-
   parser.add_argument('--numRetries',
                       dest='num_retries',
                       action='store',
@@ -894,7 +856,7 @@ def main(args):
   UtilLog.debug(options)
 
   # build the project first
-  if not build(options.build_type, options.cozmo_version):
+  if not build(options.build_type):
     UtilLog.error("build failed")
     return 1
 
@@ -915,7 +877,6 @@ def main(args):
 
     test_results, total_error_count, total_warning_count = run_tests(tests, build_folder,
                                                                      options.show_graphics,
-                                                                     options.cozmo_version,
                                                                      options.default_timeout,
                                                                      options.log_level,
                                                                      options.num_retries,

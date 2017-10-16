@@ -95,10 +95,10 @@ bool FaceLayerManager::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& 
       
       if(paramsSet) {
         if(DEBUG_FACE_LAYERING) {
-          const Point2f& facePosition = interpolatedFace.GetFacePosition();
           PRINT_NAMED_DEBUG("AnimationStreamer.GetFaceHelper.EyeShift",
                             "Applying eye shift from face layer of (%.1f,%.1f)",
-                            facePosition.x(), facePosition.y());
+                            interpolatedFace.GetFacePosition().x(),
+                            interpolatedFace.GetFacePosition().y());
         }
         
         if (shouldReplace)
@@ -119,9 +119,9 @@ bool FaceLayerManager::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void FaceLayerManager::RemoveKeepFaceAlive(s32 duration_ms)
 {
-  if(NotAnimatingTag != _eyeDartTag) {
+  if(kNotAnimatingTag != _eyeDartTag) {
     RemovePersistentLayer(_eyeDartTag, duration_ms);
-    _eyeDartTag = NotAnimatingTag;
+    _eyeDartTag = kNotAnimatingTag;
   }
 }
 
@@ -194,8 +194,8 @@ void FaceLayerManager::KeepFaceAlive(const std::map<LiveIdleAnimationParameter,f
 {
   using Param = LiveIdleAnimationParameter;
   
-  _nextBlink_ms   -= ANIM_TIME_STEP;
-  _nextEyeDart_ms -= ANIM_TIME_STEP;
+  _nextBlink_ms   -= ANIM_TIME_STEP_MS;
+  _nextEyeDart_ms -= ANIM_TIME_STEP_MS;
   
   // Eye darts
   const f32 MaxDist = GetParam<f32>(params, Param::EyeDartMaxDistance_pix);
@@ -212,7 +212,7 @@ void FaceLayerManager::KeepFaceAlive(const std::map<LiveIdleAnimationParameter,f
       ProceduralFaceKeyFrame frame;
       GenerateEyeShift(params, frame);
       
-      if(_eyeDartTag == NotAnimatingTag)
+      if(_eyeDartTag == kNotAnimatingTag)
       {
         FaceTrack faceTrack;
         faceTrack.AddKeyFrameToBack(frame);

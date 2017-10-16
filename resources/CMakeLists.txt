@@ -24,6 +24,12 @@ anki_build_copy_assets(
     OUTPUT_DIR "${CMAKE_BINARY_DIR}/assets"
 )
 
+anki_build_copy_assets(
+  TARGET        cozmo_resources_tts
+  SRCLIST_DIR   ${ANKI_SRCLIST_DIR}
+  OUTPUT_DIR   "${CMAKE_BINARY_DIR}/assets/cozmo_resources"
+)
+
 set(ASSET_TARGETS
     cozmo_resources_assets
     cozmo_resources_config

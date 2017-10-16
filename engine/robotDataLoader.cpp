@@ -16,17 +16,13 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/sayTextAction.h"
 #include "engine/animations/animationContainers/backpackLightAnimationContainer.h"
-#include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/animations/animationTransfer.h"
-#include "engine/animations/cozmo_anim_generated.h"
-#include "engine/animations/faceAnimationManager.h"
-#include "engine/animations/proceduralFace.h"
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/behaviorSystem/activities/activities/iActivity.h"
-#include "engine/components/cubeLightComponent.h"
+#include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/components/bodyLightComponent.h"
+#include "engine/components/cubeLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerResponsesContainer.h"
 #include "engine/needsSystem/needsManager.h"
@@ -62,7 +58,6 @@ namespace Cozmo {
 RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 : _context(context)
 , _platform(_context->GetDataPlatform())
-, _cannedAnimations(new CannedAnimationContainer())
 , _cubeLightAnimations(new CubeLightAnimationContainer())
 , _animationGroups(new AnimationGroupContainer(*context->GetRandom()))
 , _animationTriggerResponses(new AnimationTriggerResponsesContainer())
@@ -78,12 +73,6 @@ RobotDataLoader::~RobotDataLoader()
     _dataLoadingThread.join();
   }
 }
-  
-// We report some loading data info so the UI can inform the user. Ratio of time taken per section is approximate,
-// based on recent profiling. Some sections below are called out specifically, the rest makes up the remainder.
-// These should add up to be less than or equal to 1.0!
-static constexpr float _kAnimationsLoadingRatio = 0.7f;
-static constexpr float _kFaceAnimationsLoadingRatio = 0.2f;
 
 void RobotDataLoader::LoadNonConfigData()
 {
@@ -106,12 +95,6 @@ void RobotDataLoader::LoadNonConfigData()
   }
 
   {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimations");
-    LoadAnimationsInternal();
-    // The threaded animation loading workers each add to the loading ratio
-  }
-
-  {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
     LoadAnimationGroups();
   }
@@ -124,12 +107,6 @@ void RobotDataLoader::LoadNonConfigData()
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
     LoadBackpackLightAnimations();
-  }
-
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadFaceAnimations");
-    LoadFaceAnimations();
-    AddToLoadingRatio(_kFaceAnimationsLoadingRatio);
   }
 
   {
@@ -227,60 +204,10 @@ void RobotDataLoader::CollectAnimFiles()
     }
   }
 }
-
-void RobotDataLoader::LoadAnimations()
-{
-  CollectAnimFiles();
-  LoadAnimationsInternal();
-  _jsonFiles.clear();
-}
   
 bool RobotDataLoader::IsCustomAnimLoadEnabled() const
 {
   return (_context->IsInSdkMode() || (ANKI_DEV_CHEATS != 0));
-}
-
-void RobotDataLoader::LoadAnimationsInternal()
-{
-  const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-
-  // Disable super-verbose warnings about clipping face parameters in json files
-  // To help find bad/deprecated animations, try removing this.
-  ProceduralFace::EnableClippingWarning(false);
-  
-  using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
-  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadAnimationFile, this, std::placeholders::_1);
-  MyDispatchWorker myWorker(loadFileFunc);
-
-  const auto& fileList = _jsonFiles[FileType::Animation];
-  unsigned long size = fileList.size();
-  for (int i = 0; i < size; i++) {
-    myWorker.PushJob(fileList[i]);
-    //PRINT_NAMED_DEBUG("RobotDataLoader.LoadAnimations", "loaded regular anim %d of %zu", i, size);
-  }
-  
-  if (IsCustomAnimLoadEnabled())
-  {
-    _test_anim = _platform->pathToResource(Util::Data::Scope::Cache, AnimationTransfer::kCacheAnimFileName);
-    if (Util::FileUtils::FileExists(_test_anim)) {
-      myWorker.PushJob(_test_anim);
-      size += 1;
-    }
-  }
-
-  _perAnimationLoadingRatio = _kAnimationsLoadingRatio * 1.0f / Util::numeric_cast<float>(size);
-  myWorker.Process();
-
-  ProceduralFace::EnableClippingWarning(true);
-
-  const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-  double loadTime = endTime - startTime;
-  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationsInternal.LoadTime",
-                "Time to load animations = %.2f ms", loadTime);
-
-  auto animNames = _cannedAnimations->GetAnimationNames();
-  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimations.CannedAnimationsCount",
-                "Total number of canned animations available = %lu", (unsigned long) animNames.size());
 }
 
 void RobotDataLoader::LoadCubeLightAnimations()
@@ -396,85 +323,6 @@ void RobotDataLoader::WalkAnimationDir(const std::string& animationDir, Timestam
   }
 }
 
-void RobotDataLoader::LoadAnimationFile(const std::string& path)
-{
-  if (_abortLoad.load(std::memory_order_relaxed)) {
-    return;
-  }
-
-  ANKI_VERIFY( !_context->IsMainThread(), "RobotDataLoader.AnimFileOnMainThread", "" );
-
-  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationFile.LoadingAnimationsFromBinaryOrJson",
-                "Loading animations from %s", path.c_str());
-
-  const bool binFile = Util::FileUtils::FilenameHasSuffix(path.c_str(), "bin");
-
-  if (binFile) {
-
-    // Read the binary file
-    auto binFileContents = Util::FileUtils::ReadFileAsBinary(path);
-    if (binFileContents.size() == 0) {
-      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.BinaryDataEmpty", "Found no data in %s", path.c_str());
-      return;
-    }
-    unsigned char *binData = binFileContents.data();
-    if (nullptr == binData) {
-      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.BinaryDataNull", "Found no data in %s", path.c_str());
-      return;
-    }
-    auto animClips = CozmoAnim::GetAnimClips(binData);
-    if (nullptr == animClips) {
-      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AnimClipsNull", "Found no animations in %s", path.c_str());
-      return;
-    }
-    auto allClips = animClips->clips();
-    if (nullptr == allClips) {
-      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AllClipsNull", "Found no animations in %s", path.c_str());
-      return;
-    }
-    if (allClips->size() == 0) {
-      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AnimClipsEmpty", "Found no animations in %s", path.c_str());
-      return;
-    }
-
-    for (int clipIdx=0; clipIdx < allClips->size(); clipIdx++) {
-      auto animClip = allClips->Get(clipIdx);
-      auto animName = animClip->Name()->c_str();
-      PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationFile.LoadingSpecificAnimFromBinary",
-                    "Loading '%s' from %s", animName, path.c_str());
-      std::string strName = animName;
-
-      // TODO: Should this mutex lock happen here or immediately before this for loop (COZMO-8766)?
-      std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
-
-      _cannedAnimations->DefineFromFlatBuf(animClip, strName);
-    }
-
-  } else {
-    Json::Value animDefs;
-    // add json filename and callback (to perform load) here?
-    const bool success = _platform->readAsJson(path.c_str(), animDefs);
-    std::string animationId;
-    if (success && !animDefs.empty()) {
-      std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
-      _cannedAnimations->DefineFromJson(animDefs, animationId);
-
-      // TODO: This warning is useful, but it causes a crash when we use the current mechanism for
-      //       animators to preview their work in Maya on the robot. We plan on changing that
-      //       preview-on-robot to use the SDK, so this warning should be tested and potentially
-      //       enabled after that. See COZMO-9251 for some related info (nishkar, 2/2/2017).
-      //
-      //if(path.find(animationId) == std::string::npos) {
-      //  PRINT_NAMED_WARNING("RobotDataLoader.LoadAnimationFile.AnimationNameMismatch",
-      //                      "Animation name '%s' does not seem to match filename '%s'",
-      //                      animationId.c_str(), path.c_str());
-      //}
-
-    }
-  }
-  AddToLoadingRatio(_perAnimationLoadingRatio);
-}
-
 void RobotDataLoader::LoadAnimationGroupFile(const std::string& path)
 {
   if (_abortLoad.load(std::memory_order_relaxed)) {
@@ -493,12 +341,11 @@ void RobotDataLoader::LoadAnimationGroupFile(const std::string& path)
     auto dotIndex = jsonName.find_last_of(".");
     std::string animationGroupName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
 
-    PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationGroupFile.LoadingSpecificAnimGroupFromJson",
-                  "Loading '%s' from %s", animationGroupName.c_str(), path.c_str());
+    //PRINT_CH_DEBUG("Animations", "RobotDataLoader.LoadAnimationGroupFile.LoadingSpecificAnimGroupFromJson",
+    //               "Loading '%s' from %s", animationGroupName.c_str(), path.c_str());
 
     std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
-    DEV_ASSERT(nullptr != _cannedAnimations, "RobotDataLoader.LoadAnimationGroupFile.NullCannedAnimations");
-    _animationGroups->DefineFromJson(animGroupDef, animationGroupName, _cannedAnimations.get());
+    _animationGroups->DefineFromJson(animGroupDef, animationGroupName);
   }
 }
 
@@ -586,7 +433,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
 #if THF_FUNCTIONALITY
   // Configuration for voice command component 
   {
-    std::string jsonFilename = "assets/voiceCommand/voiceCommand_config.json";
+    std::string jsonFilename = "assets/voiceCommand/exports/voiceCommand_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _voiceCommandConfig);
     if (!success)
     {
@@ -635,15 +482,6 @@ void RobotDataLoader::LoadReactionTriggerMap()
   if (!success)
   {
     PRINT_NAMED_ERROR("RobotDataLoader.ReactionTriggerMap", "Failed to read '%s'", filename.c_str());
-  }
-}
-
-void RobotDataLoader::LoadFaceAnimations()
-{
-  FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform);
-  if (IsCustomAnimLoadEnabled())
-  {
-    FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform, true);
   }
 }
 

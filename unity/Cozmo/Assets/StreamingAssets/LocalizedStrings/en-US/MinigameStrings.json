@@ -184,7 +184,7 @@
     "translation": "Cube ready!"
   },
   "memoryMatchGame.label.tooCloseError": {
-    "translation": "Move cubes further apart."
+    "translation": "Move Cubes further apart."
   },
   "memoryMatchGame.label.waitingForCubes.scanning": {
     "translation": "Cozmo is checking the Cubes..."

@@ -169,7 +169,7 @@ def main(args):
   GENERATED_FILE_PATH = get_subpath("simulator/worlds", WORLD_FILE_NAME)
   show_graphics = True
   log_file_name = os.path.join(WEBOTS_UNITY_ROOT, 'webotsunitytest.txt')
-  smoke_test_path = os.path.join(COZMO_ENGINE_ROOT, 'project', 'build-server', 'steps', 'smoke_test.sh')
+  smoke_test_path = os.path.join(COZMO_ENGINE_ROOT, 'project', 'build-server', 'steps', '59_smoke_test.sh')
   output = ThreadOutput()
   for language in LANGUAGES:
     run_webots_thread = threading.Thread(target=run_webots, args=[output, GENERATED_FILE_PATH, 

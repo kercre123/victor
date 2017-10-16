@@ -4,8 +4,7 @@
  * Authors: Al Chaussee
  * Created: 06/28/2017
  *
- * Description: Specific track layer manager for AnimKeyFrame::AudioSample
- *              Handles generating audio for procedural
+ * Description: Specific track layer manager for RobotAudioKeyFrame
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -22,7 +21,7 @@
 namespace Anki {
 namespace Cozmo {
 
-class AudioLayerManager : public ITrackLayerManager<AnimKeyFrame::AudioSample>
+class AudioLayerManager : public ITrackLayerManager<RobotAudioKeyFrame>
 {
 public:
   
@@ -32,7 +31,7 @@ public:
   // Needs to know how many keyframes to generate so that the audio matches with other
   // animation tracks
   void GenerateGlitchAudio(u32 numFramesToGen,
-                           Animations::Track<AnimKeyFrame::AudioSample>& outTrack) const;
+                           Animations::Track<RobotAudioKeyFrame>& outTrack) const;
 
 };
 

@@ -390,25 +390,77 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       _audioReferences.emplace_back( std::move( audioRef ) );
       return RESULT_OK;
     }
-    
-    const RobotAudioKeyFrame::AudioRef& RobotAudioKeyFrame::GetAudioRef() const
+
+    const int8_t RobotAudioKeyFrame::GetNumAudioRefs() const
+    {
+      return Util::numeric_cast<int8_t>(_audioReferences.size());
+    }
+
+    const int8_t RobotAudioKeyFrame::GetAudioRefIndex(bool useProbability) const
     {
       if(_audioReferences.empty()) {
-        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetAudioRefIndex.EmptyAudioReferences",
                           "Check to make sure animation loaded successfully - sound file(s) probably not found.");
-        //static const AudioRef InvalidRef( AudioMetaData::GameEvent::GenericEvent::Invalid );
-        static const AudioRef InvalidRef;
+        return kNoAudioRefIndex;
+      }
+      
+      int8_t selectedAudioIndex = kNoAudioRefIndex;
+
+      if (_audioReferences.size() > 0) {
+
+        // If we are NOT using the probabilities for each audio event, then randomly select one.
+        if (!useProbability) {
+          if (_audioReferences.size() == 1) {
+            selectedAudioIndex = 0;
+          } else {
+            // Randomly select if there are more than one audio references
+            selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
+          }
+          PRINT_CH_DEBUG("Audio", "RobotAudioKeyFrame.GetAudioRef.RandomAudioSelection",
+                         "Randomly selected audio index = %i", selectedAudioIndex);
+          return selectedAudioIndex;
+        }
+
+        // Taking probabilities into account, select which audio event should be used.
+        // TODO: See https://github.com/anki/cozmo-one/pull/5688#discussion_r139861577 for a
+        // suggested improvement to this probability-driven selection (tracked in COZMO-14810)
+        const f32 randDbl = GetRNG().RandDbl(1.0);
+        f32 randRangeMin = 0.0;
+        for (int idx=0; idx<_audioReferences.size(); idx++) {
+          if (Util::IsFltNear(_audioReferences[idx].probability, 0.0f)) {
+            continue;
+          }
+          f32 randRangeMax = randRangeMin + _audioReferences[idx].probability;
+          PRINT_CH_DEBUG("Audio", "RobotAudioKeyFrame.GetAudioRefIndex.ShowInfo",
+                         "random value = %f, idx = %i and range = %f to %f",
+                         randDbl, idx, randRangeMin, randRangeMax);
+          if (Util::InRange(randDbl, randRangeMin, randRangeMax)) {
+            // ^ that if statement is equivalent to: if ((randRangeMin <= randDbl) && (randDbl <= randRangeMax))
+            selectedAudioIndex = idx;
+            break;
+          }
+          randRangeMin = randRangeMax;
+        }
+        PRINT_CH_DEBUG("Audio", "RobotAudioKeyFrame.GetAudioRef.RandomAudioSelection",
+                       "Probability selected audio index = %i", selectedAudioIndex);
+      }
+      return selectedAudioIndex;
+    }
+
+    const RobotAudioKeyFrame::AudioRef& RobotAudioKeyFrame::GetAudioRef(const int8_t selectedAudioIndex) const
+    {
+      if (selectedAudioIndex < 0) {
+        static const AudioRef InvalidRef( AudioMetaData::GameEvent::GenericEvent::Invalid );
         return InvalidRef;
       }
-      
-      // Select one of the audio names to play
-      size_t selectedAudioIndex = 0;
-      if(_audioReferences.size()>1) {
-        // If there are more than one audio references
-        selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
-      }
-      
       return _audioReferences[selectedAudioIndex];
+    }
+
+    const RobotAudioKeyFrame::AudioRef& RobotAudioKeyFrame::GetAudioRef() const
+    {
+      const int8_t selectedAudioIndex = GetAudioRefIndex();
+      const AudioRef& audioRef = GetAudioRef(selectedAudioIndex);
+      return audioRef;
     }
 
     Result RobotAudioKeyFrame::DefineFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug)
@@ -423,7 +475,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
 
       f32 volume = audioKeyframe->volume();
-      f32 probability = audioKeyframe->probability();
       bool hasAlts = audioKeyframe->hasAlts();;
 
       if(audioKeyframe->audioName()->size() < 1) {
@@ -434,7 +485,38 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       }
 
       auto audioEventData = audioKeyframe->audioEventId();
+      auto probabilities = audioKeyframe->probability();
+
+      if(nullptr != probabilities) {
+        // Confirm that we have the same number of probability values as audio events
+        if(probabilities->size() != audioEventData->size()) {
+          PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.UnknownProbabilities",
+                            "%s: The number of audio event IDs (%i) does not match number of probabilities (%i)",
+                            animNameDebug.c_str(), audioEventData->size(), probabilities->size());
+          return RESULT_FAIL;
+        }
+
+        // Check sum of all probabilities to ensure it is <= 1.0
+        f32 totalProb = 0.0;
+        for (int probIdx=0; probIdx < probabilities->size(); probIdx++) {
+          totalProb += probabilities->Get(probIdx);
+          if(totalProb > 1.0) {
+            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.TotalProbabilitiesTooHigh",
+                              "%s: The total probability of all audio events combined exceeds 1.0",
+                              animNameDebug.c_str());
+            return RESULT_FAIL;
+          }
+        }
+      }
+
       for (int aeIdx=0; aeIdx < audioEventData->size(); aeIdx++) {
+        f32 probability;
+        if(nullptr == probabilities) {
+          // If no probability is set, use equal probability for all audio events
+          probability = 1.0f / audioEventData->size();
+        } else {
+          probability = probabilities->Get(aeIdx);
+        }
         auto audioEventVal = audioEventData->Get(aeIdx);
 
         // The casting to 64-bit was borrowed from RobotAudioKeyFrame::SetMembersFromJson(), where the corresponding
@@ -452,14 +534,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
-
-      // Get volume
+      // Get volume and has-alternate-audio settings
       f32 volume = 1.0f;
       JsonTools::GetValueOptional(jsonRoot, "volume", volume);
-      // Get Random probability
-      f32 probability = 1.0f;
-      JsonTools::GetValueOptional(jsonRoot, "probability", probability);
-      // Get Has Alternate audio flag
       bool hasAlts = false;
       JsonTools::GetValueOptional(jsonRoot, "hasAlts", hasAlts);
       
@@ -469,10 +546,48 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                           animNameDebug.c_str());
         return RESULT_FAIL;
       }
-      
+
+      f32 probability = 1.0f;
+
       const Json::Value& jsonAudioNames = jsonRoot["audioEventId"];
       if(jsonAudioNames.isArray()) {
+        std::vector<f32> probabilities;
+        const bool probabilitiesSet = JsonTools::GetVectorOptional(jsonRoot, "probability", probabilities);
+        if(!probabilitiesSet) {
+          const bool probabilitySet = JsonTools::GetValueOptional(jsonRoot, "probability", probability);
+          if(probabilitySet) {
+            probabilities.push_back(probability);
+          } else {
+            // If no probability is set, use equal probability for all audio events
+            const f32 eachProbability = 1.0f / jsonAudioNames.size();
+            for (int idx=0; idx<jsonAudioNames.size(); idx++) {
+              probabilities.push_back(eachProbability);
+            }
+          }
+        }
+
+        // Confirm that we have the same number of probability values as audio events
+        if(probabilities.size() != jsonAudioNames.size()) {
+          PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.UnknownProbabilities",
+                            "%s: The number of audio event IDs (%u) does not match number of probabilities (%zu)",
+                            animNameDebug.c_str(), jsonAudioNames.size(), probabilities.size());
+          return RESULT_FAIL;
+        }
+
+        // Check sum of all probabilities to ensure it is <= 1.0
+        f32 totalProb = 0.0;
+        for (int probIdx=0; probIdx < probabilities.size(); probIdx++) {
+          totalProb += probabilities[probIdx];
+          if(totalProb > 1.0) {
+            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.TotalProbabilitiesTooHigh",
+                              "%s: The total probability of all audio events combined exceeds 1.0",
+                              animNameDebug.c_str());
+            return RESULT_FAIL;
+          }
+        }
+
         for(s32 i=0; i<jsonAudioNames.size(); ++i) {
+          probability = probabilities[i];
           // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
           const auto eventId = static_cast<AudioMetaData::GameEvent::GenericEvent>( jsonAudioNames[i].asUInt64() );
           Result addResult = AddAudioRef( AudioRef( eventId, volume, probability, hasAlts ) );
@@ -481,6 +596,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           }
         }
       } else {
+        JsonTools::GetValueOptional(jsonRoot, "probability", probability);
         // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
         const auto eventId = static_cast<AudioMetaData::GameEvent::GenericEvent>( jsonAudioNames.asUInt64() );
         Result addResult = AddAudioRef( AudioRef( eventId, volume, probability, hasAlts ) );
@@ -500,7 +616,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     RobotInterface::EngineToRobot* EventKeyFrame::GetStreamMessage()
     {
-      return new RobotInterface::EngineToRobot(AnimKeyFrame::Event(_streamMsg));
+      // This function isn't actually used. Instead GetAnimEvent() is used by animationStreamer.
+      DEV_ASSERT(false, "EventKeyFrame.GetStreamMessage.ShouldntCallThis");
+      return nullptr;
     }
 
     Result EventKeyFrame::DefineFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug)
@@ -520,7 +638,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         PRINT_NAMED_WARNING("EventKeyFrame.UnrecognizedEventName", "%s", eventStr.c_str());
         return RESULT_FAIL;
       }
-      _streamMsg.event_id = e;
+      _event_id = e;
       return RESULT_OK;
     }
 
@@ -538,7 +656,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
             PRINT_NAMED_WARNING("EventKeyFrame.UnrecognizedEventName", "%s", eventStr.c_str());
             return RESULT_FAIL;
           }
-          _streamMsg.event_id = e;
+          _event_id = e;
         } else {
           PRINT_NAMED_WARNING("EventKeyFrame.EventIDNotString", "");
           return RESULT_FAIL;
@@ -925,7 +1043,6 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
 
       return RESULT_OK;
     }
-    
     
     RobotInterface::EngineToRobot* TurnToRecordedHeadingKeyFrame::GetStreamMessage()
     {

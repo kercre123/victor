@@ -14,11 +14,12 @@
 #include "engine/behaviorSystem/feedingCubeController.h"
 
 #include "engine/activeObject.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/feedingSoundEffectManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/components/cubeLightComponent.h"
-#include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 
 #include "anki/common/basestation/colorRGBA.h"
@@ -512,9 +513,8 @@ void FeedingCubeController::UpdateChargeAudioRound(Robot& robot, ChargeStateChan
                  _cubeStateTracker->_id.GetValue(),
                  ChargeStateChangeToString(changeEnumVal));
   
-  ExternalInterface::FeedingSFXStageUpdate message;
-  message.stage = Util::EnumToUnderlying(changeEnumVal);
-  robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::FeedingSFXStageUpdate>(message);
+  robot.GetAIComponent().GetFeedingSoundEffectManager().NotifyChargeStateChange(
+    robot, _cubeStateTracker->_id, _cubeStateTracker->_currentChargeLevel, changeEnumVal);
 }
 
   

@@ -121,9 +121,9 @@ bool ProgressionUnlockComponent::InitConfig(const CozmoContext* context, Json::V
         UnlockId uid = UnlockIdFromString(unlockIdJson.asString());
         _defaultUnlocks.insert(uid);
         
-        PRINT_CH_INFO("ProgressionUnlockComponent.InitDefaults", "ProgressionUnlockComponent.DefaultValue",
-                      "%s defaults to true",
-                      UnlockIdToString(uid));
+        //PRINT_CH_DEBUG("ProgressionUnlockComponent.InitDefaults", "ProgressionUnlockComponent.DefaultValue",
+        //               "%s defaults to true",
+        //               UnlockIdToString(uid));
       }
     }
     else {
@@ -152,8 +152,10 @@ bool ProgressionUnlockComponent::IsUnlockIdValid(UnlockId id)
 void ProgressionUnlockComponent::NotifyGameDefaultUnlocksSet()
 {
   // Let unity know what the default unlocks were.
-  _robot.GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame(
-                                               ExternalInterface::UnlockedDefaults(std::vector<UnlockId>(_defaultUnlocks.begin(), _defaultUnlocks.end()))));
+  if (_robot.HasExternalInterface()) {
+    using namespace ExternalInterface;
+    _robot.GetExternalInterface()->Broadcast(MessageEngineToGame(UnlockedDefaults(std::vector<UnlockId>(_defaultUnlocks.begin(), _defaultUnlocks.end()))));
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -49,3 +49,15 @@ endif()
 if (NOT TARGET util)
   add_subdirectory("source/anki/util")
 endif()
+
+if (MACOSX)
+  if (NOT TARGET utilUnitTest)
+    add_subdirectory("source/anki/utilUnitTest")
+  endif()
+
+  enable_testing()
+
+  add_test(NAME utilUnitTest COMMAND utilUnitTest)
+
+endif()
+

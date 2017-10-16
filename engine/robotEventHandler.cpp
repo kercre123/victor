@@ -61,10 +61,6 @@
 namespace Anki {
 namespace Cozmo {
   
-namespace{
-const int kBoundedWhileIdlePopLimit = 1000;
-}
-  
 u32 RobotEventHandler::_gameActionTagCounter = ActionConstants::FIRST_GAME_INTERNAL_TAG;
   
 // =====================================================================================================================
@@ -560,24 +556,16 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::MountCharg
     selectedObjectID = msg.objectID;
   }
   
-  if(static_cast<bool>(msg.usePreDockPose)) {
-    DriveToAndMountChargerAction* action =  new DriveToAndMountChargerAction(robot,
-                                                                             selectedObjectID,
-                                                                             msg.useManualSpeed);
-    
-    if(msg.motionProf.isCustom)
-    {
-      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
-    }
-    return action;
-  } else {
-    MountChargerAction* chargerAction = new MountChargerAction(robot, selectedObjectID, msg.useManualSpeed);
-    if(msg.motionProf.isCustom)
-    {
-      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, chargerAction);
-    }
-    return chargerAction;
+  auto action =  new DriveToAndMountChargerAction(robot,
+                                                  selectedObjectID,
+                                                  msg.useCliffSensorCorrection,
+                                                  msg.useManualSpeed);
+  if(msg.motionProf.isCustom)
+  {
+    robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
   }
+  return action;
+
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -912,11 +900,15 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::WaitForIma
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DisplayProceduralFace& msg)
 {
+  // TODO: SetFaceAction is broken. Probably pass the ExternalInterface::DisplayProceduralFace all the way through (VIC-360)
+  /*
   ProceduralFace procFace;
   procFace.SetFromMessage(msg);
       
   SetFaceAction* action = new SetFaceAction(robot, procFace, msg.duration_ms);
   return action;
+   */
+  return nullptr;
 }
       
 // Version for face image
@@ -924,8 +916,8 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DisplayFaceImage& msg)
 {
   // Expand the bit-packed msg.faceData (every bit == 1 pixel) to byte array (every byte == 1 pixel)
-  Vision::Image image(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
-  static_assert(std::tuple_size<decltype(msg.faceData)>::value * 8 == (ProceduralFace::HEIGHT*ProceduralFace::WIDTH),
+  Vision::Image image(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+  static_assert(std::tuple_size<decltype(msg.faceData)>::value * 8 == (FACE_DISPLAY_HEIGHT*FACE_DISPLAY_WIDTH),
                 "Mismatched face image and bit image sizes");
       
   assert(image.IsContinuous());
@@ -944,7 +936,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DisplayFac
       currentByte = (uint8_t)(currentByte << 1);
     }
   }
-  assert(destI == (ProceduralFace::WIDTH * ProceduralFace::HEIGHT));
+  assert(destI == (FACE_DISPLAY_HEIGHT*FACE_DISPLAY_WIDTH));
       
   SetFaceAction* action = new SetFaceAction(robot, image, msg.duration_ms);
       
@@ -1763,10 +1755,11 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
     robot->GetBodyLightComponent().ClearAllBackpackLightConfigs();
     
     // Clear out all idle animations set by the sdk
-    IAnimationStreamer& animStreamer = robot->GetAnimationStreamer();
-    BOUNDED_WHILE(kBoundedWhileIdlePopLimit,
-                  RESULT_OK == animStreamer.RemoveIdleAnimation("sdk")){
-    }
+    // TODO: Restore Idle Animation API (VIC-366)
+    // AnimationStreamer& animStreamer = robot->GetAnimationStreamer();
+    // BOUNDED_WHILE(kBoundedWhileIdlePopLimit,
+    //               RESULT_OK == animStreamer.RemoveIdleAnimation("sdk")){
+    // }
   }
 }
 

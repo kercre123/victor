@@ -18,9 +18,9 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
-#include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/behaviorSystem/behaviorListenerInterfaces/iFeedingListener.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/animationComponent.h"
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/components/cubeAccelComponentListeners.h"
 #include "engine/cozmoContext.h"
@@ -34,7 +34,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
-
+#include "util/math/math.h"
 
 
 namespace Anki {
@@ -187,13 +187,12 @@ IBehavior::Status BehaviorFeedingEat::UpdateInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::CubeMovementHandler(Robot& robot, const float movementScore)
 {
-  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
   // Logic for determining whether the player has "stolen" cozmo's cube while he's
   // eating.  We only want to respond if the player pulls the cube away while
   // Cozmo is actively in the "eating" stage and has not drained the cube yet
   if(robot.IsPhysical()){
     if(movementScore > kCubeMovedTooFastInterrupt){
+      const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       const bool currentlyEating = (_currentState == State::Eating) &&
                        (_timeCubeIsSuccessfullyDrained_sec > currentTime_s);
       
@@ -213,6 +212,15 @@ void BehaviorFeedingEat::CubeMovementHandler(Robot& robot, const float movementS
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::StopInternal(Robot& robot)
 {
+  // If the behavior is being stopped while feeding is still ongoing notify
+  // listeners that feeding is being interrupted
+  if(!_hasRegisteredActionComplete &&
+     (_currentState >= State::PlacingLiftOnCube)){
+    for(auto& listener: _feedingListeners){
+      listener->EatingInterrupted(robot);
+    }
+  }
+  
   robot.GetRobotMessageHandler()->SendMessage(robot.GetID(),
     RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(true)));
   
@@ -297,19 +305,23 @@ void BehaviorFeedingEat::TransitionToEating(Robot& robot)
   RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
   if( robot_mgr->HasAnimationForTrigger(eatingAnim) )
   {
+    // TODO: We do not have direct access to the CannedAnimationContainer and the raw animation data in this process (VIC-368)
+    /*
     // Extract the length of time that the animation will be playing for so that
     // it can be passed through to listeners
-    const auto& animStreamer = robot.GetAnimationStreamer();
+    const auto& animComponent = robot.GetAnimationComponent();
     const auto& cannedAnims = robot.GetContext()->GetRobotManager()->GetCannedAnimations();
     
     const auto& animGroupName = robot_mgr->GetAnimationForTrigger(eatingAnim);
-    const auto& animName = animStreamer.GetAnimationNameFromGroup(animGroupName, robot);
+    const auto& animName = animComponent.GetAnimationNameFromGroup(animGroupName, robot);
     const Animation* eatingAnimRawPointer = cannedAnims.GetAnimation(animName);
     const auto& track = eatingAnimRawPointer->GetTrack<EventKeyFrame>();
     if(!track.IsEmpty()){
       // assumes only one keyframe per eating anim
-      timeDrainCube_s = track.GetLastKeyFrame()->GetTriggerTime()/1000;
+      timeDrainCube_s = Util::MilliSecToSec((f32)track.GetLastKeyFrame()->GetTriggerTime());
     }
+    */
+    timeDrainCube_s = 2.f; // HACK until VIC-368 is done
   }
   
   

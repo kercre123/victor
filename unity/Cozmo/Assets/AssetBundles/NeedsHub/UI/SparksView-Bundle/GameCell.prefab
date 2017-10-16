@@ -389,7 +389,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 67cca358d1bcd40f7b11b02c180768b9, type: 3}
+  m_Sprite: {fileID: 21300000, guid: c47feeac40477497093778cb9807d588, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -397,7 +397,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: Spark_Icon_Dim
+  _LinkedComponentId: Spark_Icon_Grid
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114741678804509318

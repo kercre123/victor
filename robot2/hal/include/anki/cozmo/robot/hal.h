@@ -131,6 +131,12 @@ namespace Anki
  * \section Motors
  */
 
+      /** Returns the calibration power to be used for the specified motor
+       * @param[in] Motor for which to retrieve calibration power
+       * @return Calibration power in unitless range [-1.0, 1.0]
+       */
+      float MotorGetCalibPower(MotorID motor);
+
       /** Set motor drive voltage and direction
        * Positive numbers move the motor forward or up, negative is back or down
        * @param[in] motor The motor to Update
@@ -189,17 +195,6 @@ namespace Anki
        * @param[out] A buffer with space for AUDIO_DATA_PER_TICK to receive audio data.
        */ 
       void GetMicrophoneData(u8* buffer);
-
-/************************************************************************
- * \section Audio 
- *          TODO: Only here because animationController calls them, but eventually shouldn't need to be
- */
-      bool AudioReady();
-      
-      // Play one frame of audio or silence
-      // @param frame - a pointer to an audio frame or NULL to play one frame of silence
-      void AudioPlayFrame(AnimKeyFrame::AudioSample *msg);
-      void AudioPlaySilence();
       
 /************************************************************************
  * \section Buttons

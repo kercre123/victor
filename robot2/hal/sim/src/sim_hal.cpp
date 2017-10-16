@@ -39,7 +39,6 @@
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "audioUtil/audioCaptureSystem.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
@@ -68,10 +67,6 @@
 #include <webots/LED.hpp>
 
 #define DEBUG_GRIPPER 0
-
-// Enable this to light up the backpack whenever a sound is being played
-// When this is on, HAL::SetLED() doesn't work.
-#define LIGHT_BACKPACK_DURING_SOUND 0
 
 // Whether or not to simulate gyro bias and drift due to temperature
 static const bool kSimulateGyroBias = false;
@@ -177,17 +172,6 @@ namespace Anki {
 
       // Lights
       webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
-
-      #if(LIGHT_BACKPACK_DURING_SOUND)
-      bool playingSound_ = false;
-      #endif
-
-      // Audio
-      // (Can't actually play sound in simulator, but proper handling of audio frames is still
-      // necessary for proper animation timing)
-      TimeStamp_t audioEndTime_ = 0;    // Expected end of audio
-      u32 AUDIO_FRAME_TIME_MS = 33;     // Duration of single audio frame
-      bool audioReadyForFrame_ = true;  // Whether or not ready to receive another audio frame
       
       // AudioInput
       // Use the mac mic as input with AudioCaptureSystem
@@ -250,28 +234,6 @@ namespace Anki {
 
             motorPrevPositions_[i] = pos;
           }
-        }
-      }
-      
-      void AudioUpdate()
-      {
-        if (audioEndTime_ != 0) {
-          if (HAL::GetTimeStamp() > audioEndTime_) {
-            audioEndTime_ = 0;
-            audioReadyForFrame_ = true;
-          } else if (HAL::GetTimeStamp() > audioEndTime_ - (0.5*AUDIO_FRAME_TIME_MS)) {
-            // Audio ready flag is raised ~16ms before the end of the current frame.
-            // This means audio lags other tracks but the amount should be imperceptible.
-            audioReadyForFrame_ = true;
-          }
-          
-          #if(LIGHT_BACKPACK_DURING_SOUND)
-          if (playingSound_ && audioEndTime_ != 0) {
-            leds_[LED_BACKPACK_BACK]->set(0x00ff0000);
-          } else {
-            leds_[LED_BACKPACK_BACK]->set(0x0);
-          }
-          #endif
         }
       }
       
@@ -595,6 +557,13 @@ namespace Anki {
         IMUData.rate_z += DEG_TO_RAD(initialBias_dps[2] + biasDueToTemperature_dps);
       }
       
+      static ImageImuData imageImuData;
+      imageImuData.systemTimestamp_ms = HAL::GetTimeStamp();
+      imageImuData.rateX = IMUData.rate_x;
+      imageImuData.rateY = IMUData.rate_y;
+      imageImuData.rateZ = IMUData.rate_z;
+      RobotInterface::SendMessage(imageImuData);
+      
       // Return true if IMU was already read this timestamp
       static TimeStamp_t lastReadTimestamp = 0;
       bool newReading = lastReadTimestamp != HAL::GetTimeStamp();
@@ -602,6 +571,21 @@ namespace Anki {
       return newReading;
     }
 
+    // Returns the motor power used for calibration [-1.0, 1.0]
+    float HAL::MotorGetCalibPower(MotorID motor)
+    {
+      float power = 0.f;
+      switch (motor) {
+        case MotorID::MOTOR_LIFT:
+        case MotorID::MOTOR_HEAD:
+          power = -0.4f;
+          break;
+        default:
+          PRINT_NAMED_ERROR("simHAL.MotorGetCalibPower.UndefinedType", "%d", EnumToUnderlyingType(motor));
+          break;
+      }
+      return power;
+    }
 
     // Set the motor power in the unitless range [-1.0, 1.0]
     void HAL::MotorSetPower(MotorID motor, f32 power)
@@ -731,7 +715,6 @@ namespace Anki {
       } else {
         MotorUpdate();
         RadioUpdate();
-        AudioUpdate();
         AudioInputUpdate();
         ActiveObjectsUpdate();
 
@@ -829,40 +812,11 @@ namespace Anki {
     };
 
     void HAL::SetLED(LEDId led_id, u32 color) {
-      #if(!LIGHT_BACKPACK_DURING_SOUND)
       if (leds_[led_id]) {
         leds_[led_id]->set( color >> 8 ); // RGBA -> 0RGB
       } else {
         PRINT_NAMED_ERROR("simHAL.SetLED.UnhandledLED", "%d", led_id);
       }
-      #endif
-    }
-
-    void HAL::AudioFill(void) {}
-
-    // @return true if the audio clock says it is time for the next frame
-    bool HAL::AudioReady()
-    {
-      return audioReadyForFrame_;
-    }
-
-    void HAL::AudioPlaySilence() {
-      AudioPlayFrame(nullptr);
-    }
-
-    // Play one frame of audio or silence
-    // @param frame - a pointer to an audio frame or NULL to play one frame of silence
-    void HAL::AudioPlayFrame(AnimKeyFrame::AudioSample *msg)
-    {
-      if (audioEndTime_ == 0) {
-        audioEndTime_ = HAL::GetTimeStamp();
-      }
-      audioEndTime_ += AUDIO_FRAME_TIME_MS;
-      audioReadyForFrame_ = false;
-      
-      #if(LIGHT_BACKPACK_DURING_SOUND)
-      playingSound_ = msg == nullptr ? false : true;
-      #endif
     }
 
     u32 HAL::GetID()

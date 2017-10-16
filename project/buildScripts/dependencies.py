@@ -299,8 +299,9 @@ def svn_package(svn_dict):
         r_rev = repos[repo].get("version", "head")
         pk_name = repos[repo].get("package_name", "STUB")
         branch = repos[repo].get("branch", "trunk")
+        export_dirname = repos[repo].get("export_dirname",repo)
+        loc = os.path.join(DEPENDENCY_LOCATION, export_dirname)
         url = os.path.join(root_url, repo, branch)
-        loc = os.path.join(DEPENDENCY_LOCATION, repo)
         subdirs = repos[repo].get("subdirs", [])
         subdirs = map(lambda x: os.path.join(loc,x), subdirs)
         allow_extra_files = bool(repos[repo].get("allow_extra_files", False))
@@ -481,7 +482,11 @@ def extract_dependencies(version_file, location=RELATIVE_EXTERNALS_DIR, validate
         os.makedirs(location)
     json_parser(version_file)
     if validate_assets:
-        validate_anim_data.check_audio_events_all_anims(location)
+        try:
+            validate_anim_data.check_audio_events_all_anims(location)
+        except ValueError, e:
+            print(str(e))
+            print("WARNING: This build may contain animations that reference missing audio events")
 
 
 def json_parser(version_file):

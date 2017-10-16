@@ -15,17 +15,17 @@
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
-#include "engine/animations/animationContainers/cannedAnimationContainer.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
-#include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
+
 
 namespace Anki {
   
@@ -56,140 +56,38 @@ namespace Anki {
       }
       
     }
-    
-    PlayAnimationAction::PlayAnimationAction(Robot& robot,
-                                             Animation* animation,
-                                             u32 numLoops,
-                                             bool interruptRunning,
-                                             u8 tracksToLock,
-                                             float timeout_sec)
-    : IAction(robot,
-              "PlayAnimation" + animation->GetName(),
-              RobotActionType::PLAY_ANIMATION,
-              tracksToLock)
-    , _animName(animation->GetName())
-    , _numLoopsRemaining(numLoops)
-    , _interruptRunning(interruptRunning)
-    , _animPointer(animation)
-    , _timeout_sec(timeout_sec)
-    {
-     
-    }
-    
+        
     PlayAnimationAction::~PlayAnimationAction()
     {
-      // If we're cleaning up but we didn't hit the end of this animation and we haven't been cleanly aborted
-      // by animationStreamer (the source of the event that marks _wasAborted), then explicitly tell animationStreamer
-      // to clean up
-      if (_robot.GetAnimationStreamer().GetStreamingAnimation() == _animPointer) {
+      if (HasStarted() && !_stoppedPlaying) {
         PRINT_NAMED_INFO("PlayAnimationAction.Destructor.StillStreaming",
-                         "Action destructing, but AnimationStreamer is still streaming this animation(%s). Telling"
-                         "AnimationStreamer to stream null.", _animName.c_str());
-        _robot.GetAnimationStreamer().SetStreamingAnimation(nullptr);
+                         "Action destructing, but AnimationComponent is still playing: %s. Telling it to stop.",
+                         _animName.c_str());
+        _robot.GetAnimationComponent().StopAnimByName(_animName);
       }
     }
 
     ActionResult PlayAnimationAction::Init()
     {
-      _startedPlaying = false;
       _stoppedPlaying = false;
-      _wasAborted     = false;
-      
-      if (nullptr == _animPointer)
-      {
-        _animPointer = _robot.GetContext()->GetRobotManager()->GetCannedAnimations().GetAnimation(_animName);
-      }
-      
-      _animTag = _robot.GetAnimationStreamer().SetStreamingAnimation(_animPointer, _numLoopsRemaining, _interruptRunning);
-      
-      if(_animTag == AnimationStreamer::NotAnimatingTag) {
-        _wasAborted = true;
-        return ActionResult::ANIM_ABORTED;
-      }
-      
-      using namespace RobotInterface;
-      using namespace ExternalInterface;
-      
-      auto startLambda = [this](const AnkiEvent<RobotToEngine>& event)
-      {
-        if(this->_animTag == event.GetData().Get_animStarted().tag) {
-          PRINT_NAMED_INFO("PlayAnimation.StartAnimationHandler", "Animation tag %d started", this->_animTag);
-          _startedPlaying = true;
-        }
-      };
-      
-      auto endLambda = [this](const AnkiEvent<RobotToEngine>& event)
-      {
-        if(_startedPlaying && this->_animTag == event.GetData().Get_animEnded().tag) {
-          if( _numLoopsRemaining == 0 ) {
-            // If numLoopsRemaining == 0 before decrementing, it means it _started_
-            // equal to zero, which means we were asked to loop this animation forever,
-            // presumably to be cancelled by some other action at some point, or
-            // until we timeout. This is valid, according to the constructor, but
-            // log this situation, to help catch accidental infinite loop usage.
-            PRINT_NAMED_INFO("PlayAnimation.EndAnimationHandler.LoopingForever",
-                             "Animation tag %d finished a loop, continuing until timeout or cancel",
-                             this->_animTag);
-          }
-          else {
-            _numLoopsRemaining--;
-            if( _numLoopsRemaining == 0 ) {
-              PRINT_NAMED_INFO("PlayAnimation.EndAnimationHandler", "Animation tag %d ended", this->_animTag);
-              _stoppedPlaying = true;
-            }
-            else {
-              PRINT_NAMED_DEBUG("PlayAnimation.FinishedLoop", "Animation tag %d finished a loop, %d left",
-                                this->_animTag, _numLoopsRemaining);
-            }
-          }
-        }
-      };
-      
-      auto eventLambda = [this](const AnkiEvent<RobotToEngine>& event)
-      {
-        RobotInterface::AnimationEvent payload = event.GetData().Get_animEvent();
-        if(_startedPlaying && this->_animTag == payload.tag) {
-            PRINT_NAMED_INFO("PlayAnimation.AnimationEventHandler",
-                             "Event %s received at time %d while playing animation tag %d",
-                             EnumToString(payload.event_id), payload.timestamp, this->_animTag);
-            
-          ExternalInterface::AnimationEvent msg;
-          msg.timestamp = payload.timestamp;
-          msg.event_id = payload.event_id;
-          _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationEvent>(std::move(msg));
-        }
-      };
-      
-      auto cancelLambda = [this](const AnkiEvent<MessageEngineToGame>& event)
-      {
-        if(this->_animTag == event.GetData().Get_AnimationAborted().tag) {
-          PRINT_NAMED_INFO("PlayAnimation.AbortAnimationHandler",
-                           "Animation tag %d was aborted from running",
-                           this->_animTag);
+      _wasAborted = false;
+
+      auto callback = [this](const AnimationComponent::AnimResult res) {
+        _stoppedPlaying = true;
+        if (res != AnimationComponent::AnimResult::Completed) {
           _wasAborted = true;
         }
       };
       
-      _startSignalHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(),
-                                                                      RobotToEngineTag::animStarted,
-                                                                      startLambda);
+      Result res = _robot.GetAnimationComponent().PlayAnimByName(_animName, _numLoopsRemaining, _interruptRunning, callback, GetTag(), _timeout_sec);
       
-      _endSignalHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(),
-                                                                    RobotToEngineTag::animEnded,
-                                                                    endLambda);
-
-      _eventSignalHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(),
-                                                                      RobotToEngineTag::animEvent,
-                                                                      eventLambda);
-      
-      _abortSignalHandle = _robot.GetExternalInterface()->Subscribe(MessageEngineToGameTag::AnimationAborted,
-                                                                    cancelLambda);
-      
-      if(_animTag != 0) {
-        return ActionResult::SUCCESS;
-      } else {
+      if(res != RESULT_OK) {
+        _stoppedPlaying = true;
+        _wasAborted = true;
         return ActionResult::ANIM_ABORTED;
       }
+      
+      return ActionResult::SUCCESS;
     }
 
     ActionResult PlayAnimationAction::CheckIfDone()
@@ -253,7 +151,7 @@ namespace Anki {
         return ActionResult::NO_ANIM_NAME;
       }
       
-      _animName = _robot.GetAnimationStreamer().GetAnimationNameFromGroup(_animGroupName, _robot);
+      _animName = _robot.GetAnimationComponent().GetAnimationNameFromGroup(_animGroupName, _robot);
       if( _animName.empty() ) {
         return ActionResult::NO_ANIM_NAME;
       }
@@ -425,21 +323,15 @@ namespace Anki {
         return ActionResult::SUCCESS;
       }
       else {
-        // This action also needs to clear the severe needs expression. In doing so, it will clear the idle
-        // animation. Because of some quirks in the animation streamer, this can cause an eye pop if it's done
-        // while we _aren't_ streaming another animation. So make sure to do it right after our own animation
-        // starts playing. More specifically, when the idle is canceled, if another animation is not playing,
-        // the streamer may set neutral eyes and/or play the last frame of the idle, but it won't do either if
-        // another (non-idle) animation is currently streaming
-        if( !_hasClearedExpression && PlayAnimationAction::HasAnimStartedPlaying() ) {
-          // even in the case of an interruption, we will jump to the last anim keyframe, so clear the
-          // expression now
+          
+        const ActionResult result = Base::CheckIfDone();
+        if (result == ActionResult::SUCCESS) {
+          // No eye popping of momentary severe needs should happen since there is
+          // wait timer before idle anims play from AnimationComponent.
           auto& severeNeedsComponent = _robot.GetAIComponent().GetSevereNeedsComponent();
           severeNeedsComponent.ClearSevereNeedExpression();
           _hasClearedExpression = true;
         }
-          
-        const ActionResult result = Base::CheckIfDone();
         return result;
       }
     }

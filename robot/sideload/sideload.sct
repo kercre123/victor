@@ -1,8 +1,0 @@
-LR_m_text 0x20000000 0x00002000 {   ; load region size_region
-  ER_IROM1 0x20000000 0x00002000 { ; load address = execution address
-    * (HEADER,+FIRST)
-    .ANY (+RO)
-    .ANY (+RW +ZI)
-    * (InRoot$$Sections)
-  }
-}

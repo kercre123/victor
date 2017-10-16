@@ -31,7 +31,7 @@ namespace Cozmo {
   const f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2.f);
   const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5f);
   
-  const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-20.f);  // V2 range: -20 to +45 according to McVicar
+  const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-23.f);  // V2 range: -23 to +44.5 according to McVicar
   const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 44.5f);
   
   const f32 kIdealViewBlockHeadAngle = DEG_TO_RAD(-17.5f);
@@ -122,6 +122,10 @@ namespace Cozmo {
   
   // Face LCD Screen size
   const f32 SCREEN_SIZE[2] = {26.f, 13.f};
+  
+  // Face display resolution, in pixels
+  const s32 FACE_DISPLAY_WIDTH = 184;
+  const s32 FACE_DISPLAY_HEIGHT = 96;
   
   /***************************************************************************
    *
@@ -240,20 +244,7 @@ namespace Cozmo {
   const u32 CLIFF_EVENT_DELAY_MS = 500;
   
   
-  // TODO: Move to a config file for animation process
-  const s32 ANIM_TIME_STEP = 33; //ms
-  
-  /***************************************************************************
-   *
-   *                          Streaming Animation
-   *
-   **************************************************************************/
-  
-  // Now in clad
-  // Streaming KeyFrame buffer size, in bytes
-  //const s32 KEYFRAME_BUFFER_SIZE = 16384;
-  //const s32 MAX_FACE_FRAME_SIZE = 1024;
-  //const u32 AUDIO_SAMPLE_SIZE = 800;
+  const s32 ANIM_TIME_STEP_MS = 33; //ms
   
   /***************************************************************************
    *

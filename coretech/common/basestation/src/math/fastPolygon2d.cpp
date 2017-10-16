@@ -190,7 +190,7 @@ void FastPolygon::ComputeCircles()
   }
 
   assert(_circumscribedRadiusSquared > 0.0f);
-  assert(_inscribedRadiusSquared > 0.0f);
+  assert(_inscribedRadiusSquared >= 0.0f);
 
   if( _inscribedRadiusSquared >= _circumscribedRadiusSquared ) {
     CoreTechPrint("ERROR: inscribed radius of %f is >= circumscribed radius of %f\n",

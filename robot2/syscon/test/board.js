@@ -33,6 +33,8 @@ class Body extends EventEmitter {
 		buffer.writeInt16LE(payload.length, 6);
 		buffer.writeInt32LE(crc(payload), payload.length + 8);
 
+		console.log("-->", id, payload);
+
 		this.port.write(buffer);
 	}
 
@@ -45,7 +47,7 @@ class Body extends EventEmitter {
 			// Find sync header
 			do {
 				if (this.payload.length - offset < 8) return ;
-				if (this.payload.readUInt32LE(offset) == 0x423248AA) break ;
+				if (this.payload.readUInt32LE(offset) == 0x483242AA) break ;
 				offset++;
 			} while (true);
 

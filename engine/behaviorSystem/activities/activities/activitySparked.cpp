@@ -13,6 +13,7 @@
 #include "engine/behaviorSystem/activities/activities/activitySparked.h"
 
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/behaviorSystem/behaviorManager.h"
@@ -40,6 +41,7 @@ static const char* kSubActivityDelegateKey        = "subActivityDelegate";
 // Spark start/end params
 static const char* kMinTimeConfigKey                 = "minTimeSecs";
 static const char* kMaxTimeConfigKey                 = "maxTimeSecs";
+static const char* kMaxTimeoutForActionComplete      = "maxTimeoutForActionComplete";
 static const char* kNumberOfRepetitionsConfigKey     = "numberOfRepetitions";
 static const char* kBehaviorObjectiveConfigKey       = "behaviorObjective";
 static const char* ksoftSparkUpgradeTriggerConfigKey = "softSparkTrigger";
@@ -113,6 +115,7 @@ ActivitySparked::ActivitySparked(Robot& robot, const Json::Value& config)
 , _currentObjectiveCompletedCount(0)
 , _minTimeSecs(-1.f)
 , _maxTimeSecs(-1.f)
+, _maxTimeoutForActionComplete(true)
 , _numberOfRepetitions(-1)
 , _switchingToHardSpark(false)
 , _idleAnimationsSet(false)
@@ -261,6 +264,7 @@ Result ActivitySparked::ReloadFromConfig(Robot& robot, const Json::Value& config
   _maxTimeSecs = JsonTools::ParseFloat(config, kMaxTimeConfigKey, "Failed to parse max time");
   _numberOfRepetitions =  JsonTools::ParseUint8(config, kNumberOfRepetitionsConfigKey,
                                                 "Failed to parse number of repetitions");
+  JsonTools::GetValueOptional(config, kMaxTimeoutForActionComplete, _maxTimeoutForActionComplete);
   
   _objectiveToListenFor = BehaviorObjectiveFromString(
                               config.get(kBehaviorObjectiveConfigKey,
@@ -402,6 +406,7 @@ IBehaviorPtr ActivitySparked::GetDesiredActiveBehaviorInternal(Robot& robot, con
     case ChooserState::WaitingForCurrentBehaviorToStop:
     {
       if(currentRunningBehavior != nullptr
+         && (currentRunningBehavior->GetClass() != BehaviorClass::Wait)
          && currentRunningBehavior->IsRunning()){
         // wait for the current behavior to end
         bestBehavior = SelectNextSparkInternalBehavior(robot, currentRunningBehavior);
@@ -471,6 +476,16 @@ IBehaviorPtr ActivitySparked::SelectNextSparkInternalBehavior(Robot& robot, cons
   }else{
     bestBehavior = _subActivityDelegate->
                       GetDesiredActiveBehavior(robot,currentRunningBehavior);
+  }
+  
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  // Hit timeout and behavior is changing
+  const bool reachedBehaviorMaxTimeout = !_maxTimeoutForActionComplete &&
+                                         FLT_GE(currentTime_s, _timeChooserStarted + _maxTimeSecs) &&
+                                         (bestBehavior != currentRunningBehavior);
+  if(reachedBehaviorMaxTimeout){
+    bestBehavior = _behaviorWait;
+    _state = ChooserState::WaitingForCurrentBehaviorToStop;
   }
   
   return bestBehavior;
@@ -556,10 +571,13 @@ void ActivitySparked::CheckIfSparkShouldEnd(Robot& robot)
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // Behaviors with _numberOfRepetitions == 0 will always wait until max time and then play success outro
-  const bool minTimeAndRepetitions = FLT_GE(currentTime_s, _timeChooserStarted + _minTimeSecs)
-  && (_numberOfRepetitions != 0 && _currentObjectiveCompletedCount >= _numberOfRepetitions);
-  const bool maxTimeout = FLT_GE(currentTime_s, _timeChooserStarted + _maxTimeSecs)
-  && currentRunningBehavior != nullptr && currentRunningBehavior->GetRequiredUnlockID() != mngr.GetActiveSpark() ;
+  const bool minTimeAndRepetitions = FLT_GE(currentTime_s, _timeChooserStarted + _minTimeSecs) &&
+                                     (_numberOfRepetitions != 0) &&
+                                     (_currentObjectiveCompletedCount >= _numberOfRepetitions);
+  const bool maxTimeout = _maxTimeoutForActionComplete &&
+                          FLT_GE(currentTime_s, _timeChooserStarted + _maxTimeSecs) &&
+                          (currentRunningBehavior != nullptr) &&
+                          (currentRunningBehavior->GetRequiredUnlockID() != mngr.GetActiveSpark());
   const bool gameRequestedSparkEnd = mngr.DidGameRequestSparkEnd();
   
   // Transitioning out of spark to freeplay  - end current spark elegantly

@@ -6,6 +6,8 @@
 
 #include "opto.h"
 #include "messages.h"
+#include "lights.h"
+#include "flash.h"
 
 //#define DISABLE_TOF
 
@@ -179,7 +181,11 @@ static void multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, in
   int max_retries = 15;
   do {
     // Welp, something went wrong, we should just give up
-    if (max_retries-- == 0) Power::softReset();
+    if (max_retries-- == 0) {
+      Flash::writeFaultReason(FAULT_I2C_FAILED);
+      Power::softReset();
+      Power::eject();
+    }
 
     I2C_Operation opTable[] = {
       { func, channel, slave, reg, size, data },
@@ -452,6 +458,7 @@ static uint32_t getMeasurementTimingBudget(void)
 static void initHardware() {
   // Turn on and configure the drop sensors
   for (int i = 0; i < 4; i++) {
+    Lights::boot(i+1);
     writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x01);
     writeReg(i, DROP_SENSOR_ADDRESS, PS_LED, 6 | (5 << 4));
     writeReg(i, DROP_SENSOR_ADDRESS, PS_PULSES, 8);
@@ -459,6 +466,8 @@ static void initHardware() {
     writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_0, 0);
     writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_1, 0);
   }
+
+  Lights::boot(5);
 
   #ifndef DISABLE_TOF
   // Turn on TOF sensor
@@ -680,6 +689,8 @@ static void initHardware() {
 
   // Return the i2c bus to the main execution loop
   i2c_op = NULL;
+
+  Lights::boot(6);
 }
 
 void Opto::init(void) {

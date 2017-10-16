@@ -73,13 +73,17 @@ Result CozmoAnimEngine::Init() {
 
   _context->GetDataLoader()->LoadNonConfigData();
   
+  // animation streamer must be initialized after loading non config data (otherwise there are no animations loaded)
+  _animationStreamer->Init();
+  
   // Create and seetup EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
   auto* audioMux = _context->GetAudioMultiplexer();
   auto regId = audioMux->RegisterInput( new Audio::EngineRobotAudioInput() );
   
   // Setup Engine Message
   Messages::Init( *_animationStreamer,
-                  *static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput( regId )) );
+                  *static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput( regId )),
+                  *(_context.get()) );
   
   
   
@@ -130,11 +134,11 @@ Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
   {
     const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
-    const double maxUpdateDuration = ANIM_TIME_STEP;
+    const double maxUpdateDuration = ANIM_TIME_STEP_MS;
     if (updateLengthMs > maxUpdateDuration)
     {
       Anki::Util::sEventF("cozmo_anim.update.run.slow",
-                          {{DDATA,std::to_string(ANIM_TIME_STEP).c_str()}},
+                          {{DDATA,std::to_string(ANIM_TIME_STEP_MS).c_str()}},
                           "%.2f", updateLengthMs);
     }
   }

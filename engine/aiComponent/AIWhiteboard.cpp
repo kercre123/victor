@@ -17,7 +17,6 @@
 #include "engine/activeObject.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
-#include "engine/animations/animationStreamer.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
@@ -970,7 +969,7 @@ void AIWhiteboard::UpdateBeaconRender()
   // re-draw all beacons since they all use the same id
   if ( kBW_DebugRenderBeacons )
   {
-    const std::string renderId("AIWhiteboard.UpdateBeaconRender");
+    static const std::string renderId("AIWhiteboard.UpdateBeaconRender");
     _robot.GetContext()->GetVizManager()->EraseSegments(renderId);
   
     // iterate all beacons and render
@@ -981,7 +980,7 @@ void AIWhiteboard::UpdateBeaconRender()
                  "AIWhiteboard.UpdateBeaconRender.BeaconFromOldOrigin");
       
       // note that since we don't know what timeout behaviors use, we can only say that it ever failed
-      ColorRGBA color = NEAR_ZERO(beacon.GetLastTimeFailedToFindLocation()) ? NamedColors::DARKGREEN : NamedColors::ORANGE;
+      const ColorRGBA& color = NEAR_ZERO(beacon.GetLastTimeFailedToFindLocation()) ? NamedColors::DARKGREEN : NamedColors::ORANGE;
       
       Vec3f center = beacon.GetPose().GetWithRespectToRoot().GetTranslation();
       center.z() += kBW_DebugRenderBeaconZ;

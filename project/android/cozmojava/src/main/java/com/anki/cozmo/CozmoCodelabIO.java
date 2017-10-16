@@ -57,7 +57,7 @@ public final class CozmoCodelabIO
       else
       {
         String codelabJsonString = stringFromInputStream(is);
-        UnityPlayer.UnitySendMessage("StartupManager", "LoadCodelabFromRawJson", codelabJsonString );
+        UnityPlayer.UnitySendMessage("StartupManager", "LoadCodeLabFromRawJson", codelabJsonString );
       }
     } catch (Exception ex) {
       DAS.Error("Codelab.Android.openCodelabFileFromURI.Open.Exception", "General exception: " + ex.toString());

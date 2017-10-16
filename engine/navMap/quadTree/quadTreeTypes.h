@@ -13,6 +13,7 @@
 #define ANKI_COZMO_NAV_MESH_QUAD_TREE_TYPES_H
 
 #include "anki/common/basestation/math/point.h"
+#include "engine/navMap/memoryMap/memoryMapTypes.h"
 
 #include <cstdint>
 #include <type_traits>
@@ -29,37 +30,23 @@ namespace QuadTreeTypes {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // content detected in nodes
-enum class ENodeContentType : uint8_t {
+enum class ENodeType : uint8_t {
   Invalid,               // invalid type (not set)
   Subdivided,            // we are subdivided, children hold more detailed info
-  Unknown,               // no idea
-  ClearOfObstacle,       // what we know about the node is clear (could be partial info)
-  ClearOfCliff,          // what we know about the node is clear (could be partial info)
-  ObstacleCube,          // we have seen an obstacle in part of the node and we know the obstacle was a cube
-  ObstacleCubeRemoved,   // there used to be a cube in this area, but it has moved somewhere else
-  ObstacleCharger,       // we have seen a charger in part of the node
-  ObstacleChargerRemoved,// there used to be a charger in this area, but it has moved somewhere else
-  ObstacleProx,          // an area with an obstacle found with the prox sensor
-  ObstacleUnrecognized,  // we have seen an obstacle in part of the node but we don't know what it is
-  Cliff,                 // we have seen a cliff in part of the node
-  InterestingEdge,       // we have seen a vision edge and it's interesting
-  NotInterestingEdge,    // we have visited an interesting edge, so it's not interesting anymore
+  Leaf,                  // container
   _Count // added for FullContentArray checker
 };
 
-// variable type in which we can pack ENodeContentType as flags. Check ENodeContentTypeToFlag
-using ENodeContentTypePackedType = uint32_t;
-
 // content for each node. INavMemoryMapQuadData is polymorphic depending on the content type
 struct NodeContent {
-  explicit NodeContent(ENodeContentType t) : type(t), data(nullptr) {}
+  explicit NodeContent(ENodeType t, const MemoryMapData& m);
   
   // comparison operators
   bool operator==(const NodeContent& other) const;
   bool operator!=(const NodeContent& other) const;
   
-  ENodeContentType type;
-  std::shared_ptr<const MemoryMapData> data;
+  ENodeType type;
+  std::shared_ptr<MemoryMapData> data;
 };
 
 // position with respect to the parent
@@ -82,17 +69,8 @@ enum EClockDirection { CW, CCW };
 // Helper functions
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// converts ENodeContentType values into flag bits. This is handy because I want to store ENodeContentType in
-// the smallest type possible since we have a lot of quad nodes, but I want to pass groups as bit flags in one
-// packed variable
-ENodeContentTypePackedType ENodeContentTypeToFlag(ENodeContentType nodeContentType);
-
 // String representing ENodeContentType for debugging purposes
-const char* ENodeContentTypeToString(ENodeContentType nodeContentType);
-
-// returns true if type is a removal type, false otherwise. Removal types are not expected to be store in the memory
-// map, but rather remove reset other types to defaults.
-bool IsRemovalType(ENodeContentType type);
+const char* ENodeTypeToString(ENodeType nodeType);
 
 // return the opposite direction to the one given (eg: North vs South, West vs East)
 inline QuadTreeTypes::EDirection GetOppositeDirection(EDirection dir);

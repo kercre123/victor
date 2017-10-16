@@ -112,7 +112,7 @@ namespace Anki
                                  MemoryStack scratchOffChip)
     {
       AnkiAssert(params.fiducialThicknessFraction.x > 0 && params.fiducialThicknessFraction.y > 0);
-      const f32 maxProjectiveTermValue = 8.0f;
+      static const f32 maxProjectiveTermValue = 8.0f;
 
       Result lastResult;
 

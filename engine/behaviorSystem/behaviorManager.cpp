@@ -72,7 +72,41 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+namespace ReactionTriggerHelpers {
+// This is declared in reactionTriggerHelpers.h
+const ReactionTriggerHelpers::FullReactionArray &GetAffectAllArray() {
+
+  static constexpr const ReactionTriggerHelpers::FullReactionArray kAffectAllArray = {
+      {ReactionTrigger::CliffDetected,         true},
+      {ReactionTrigger::CubeMoved,             true},
+      {ReactionTrigger::FacePositionUpdated,   true},
+      {ReactionTrigger::FistBump,              true},
+      {ReactionTrigger::Frustration,           true},
+      {ReactionTrigger::Hiccup,                true},
+      {ReactionTrigger::MotorCalibration,      true},
+      {ReactionTrigger::NoPreDockPoses,        true},
+      {ReactionTrigger::ObjectPositionUpdated, true},
+      {ReactionTrigger::PlacedOnCharger,       true},
+      {ReactionTrigger::PetInitialDetection,   true},
+      {ReactionTrigger::RobotPickedUp,         true},
+      {ReactionTrigger::RobotPlacedOnSlope,    true},
+      {ReactionTrigger::ReturnedToTreads,      true},
+      {ReactionTrigger::RobotOnBack,           true},
+      {ReactionTrigger::RobotOnFace,           true},
+      {ReactionTrigger::RobotOnSide,           true},
+      {ReactionTrigger::RobotShaken,           true},
+      {ReactionTrigger::Sparked,               true},
+      {ReactionTrigger::UnexpectedMovement,    true},
+      {ReactionTrigger::VC,                    true},
+  };
+
+  static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectAllArray),
+                "Reaction triggers duplicate or non-sequential");
+
+  return kAffectAllArray;
+}
+} // namespace ReactionTriggerHelpers
+    
 namespace{
 // For creating activities and accessing them
 static const char* kHighLevelActivityTypeConfigKey    = "highLevelID";
@@ -114,6 +148,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersUIRequestGame
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersUIRequestGame),
               "Reaction triggers duplicate or non-sequential");
+
 const char* kDisableReactionsUIRequestGameLock = "bm_ui_request_game_lock";
   
 } // namespace
@@ -391,7 +426,7 @@ void BehaviorManager::InitializeEventHandlers()
                                 const auto& msg = event.GetData().Get_DisableAllReactionsWithLock();
                                 DisableReactionsWithLock(
                                                          msg.lockID,
-                                                         ReactionTriggerHelpers::kAffectAllArray,
+                                                         ReactionTriggerHelpers::GetAffectAllArray(),
                                                          true);
                               }));
   
@@ -467,10 +502,10 @@ Result BehaviorManager::InitReactionTriggerMap(const Json::Value& config)
       }
         
       if(strategy != nullptr && behavior != nullptr){
-        PRINT_CH_INFO("ReactionTriggers","BehaviorManager.InitReactionTriggerMap.AddingReactionTrigger",
-                      "Strategy %s maps to behavior %s",
-                      strategy->GetName().c_str(),
-                      BehaviorIDToString(behavior->GetID()));
+        //PRINT_CH_DEBUG("ReactionTriggers","BehaviorManager.InitReactionTriggerMap.AddingReactionTrigger",
+        //              "Strategy %s maps to behavior %s",
+        //              strategy->GetName().c_str(),
+        //              BehaviorIDToString(behavior->GetID()));
         
         // Add the strategy to the trigger
         _reactionTriggerMap[trigger].AddStrategyMapping(strategy, behavior);
@@ -1251,27 +1286,17 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
     // User asked for a random trick via UI
     case ExternalInterface::BehaviorManagerMessageUnionTag::DoATrickRequest:
     {
-      // It's possible to mash the Play a Game button and then the Do A Trick button
-      // and get multiple messages in a row; this avoids disabling buttons in the UI
-      // and getting into a weird state where the app may be locked out from listening
-      // for a game request pop-up to open that will not happen because of a reactionary behavior
-      if (_uiRequestGameBehavior == nullptr){
-        _robot.GetAIComponent().GetDoATrickSelector().RequestATrick(_robot);
+      _robot.GetAIComponent().GetDoATrickSelector().RequestATrick(_robot);
       
-        // We already check that the player can afford the cost Game side
-        const u32 sparkCost = GetSparkCosts(SparkableThings::DoATrick, 0);
-        _robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks, -sparkCost);
-      }
+      // We already check that the player can afford the cost Game side
+      const u32 sparkCost = GetSparkCosts(SparkableThings::DoATrick, 0);
+      _robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks, -sparkCost);
       break;
     }
     
     // User asked for a random game via UI
     case ExternalInterface::BehaviorManagerMessageUnionTag::PlayAGameRequest:
     {
-      // It's possible to mash the button and get multiple messages in a row;
-      // this avoids disabling buttons in the UI and getting into a weird state where
-      // the app may be locked out from listening for a game request pop-up to open
-      // that will not happen because of a reactionary behavior
       if (_uiRequestGameBehavior == nullptr ||
           _uiRequestGameBehavior->IsRunning()) {
         _shouldRequestGame = true;

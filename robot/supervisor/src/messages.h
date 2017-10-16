@@ -77,17 +77,6 @@ namespace Anki {
       Result SendMotorAutoEnabledMsg(MotorID motor, bool calibStarted);
       
       void ResetMissedLogCount();
-      
-#ifdef SIMULATOR
-      // For sending text message to basestation
-      int SendText(const char *format, ...);
-
-      // va_list version
-      int SendText(const char *format, va_list vaList);
-
-      // va_list version with level
-      int SendText(const RobotInterface::LogLevel level, const char *format, va_list vaList);
-#endif
 
       // Returns whether or not init message was received from basestation
       bool ReceivedInit();

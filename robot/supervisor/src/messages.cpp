@@ -25,12 +25,10 @@
 #include "wheelController.h"
 
 #include <stdio.h>
-#include "animationController.h"
 
 #include "anki/cozmo/robot/logging.h"
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
-extern void GenerateTestTone(void);
 
 namespace Anki {
   namespace Cozmo {
@@ -43,7 +41,6 @@ namespace Anki {
         constexpr auto IS_CARRYING_BLOCK = EnumToUnderlyingType(RobotStatusFlag::IS_CARRYING_BLOCK);
         constexpr auto IS_PICKING_OR_PLACING = EnumToUnderlyingType(RobotStatusFlag::IS_PICKING_OR_PLACING);
         constexpr auto IS_PICKED_UP = EnumToUnderlyingType(RobotStatusFlag::IS_PICKED_UP);
-        constexpr auto IS_BODY_ACC_MODE = EnumToUnderlyingType(RobotStatusFlag::IS_BODY_ACC_MODE);
         constexpr auto IS_FALLING = EnumToUnderlyingType(RobotStatusFlag::IS_FALLING);
         constexpr auto IS_PATHING = EnumToUnderlyingType(RobotStatusFlag::IS_PATHING);
         constexpr auto LIFT_IN_POS = EnumToUnderlyingType(RobotStatusFlag::LIFT_IN_POS);
@@ -75,13 +72,6 @@ namespace Anki {
         u8 ticsSinceInitReceived_ = 0;
         bool syncTimeAckSent_ = false;
 
-        // Cache for power state information
-        float vExt_;
-        bool onCharger_;
-        bool isCharging_;
-        bool chargerOOS_;
-        BodyRadioMode bodyRadioMode_ = BodyRadioMode::BODY_LOW_POWER_OPERATING_MODE;
-
 #ifdef SIMULATOR
         bool isForcedDelocalizing_ = false;
         uint32_t cubeID_;
@@ -94,10 +84,6 @@ namespace Anki {
 
       Result Init()
       {
-#ifndef TARGET_K02
-        // In sim we don't expect to get the PowerState message which normally sets this
-        bodyRadioMode_ = BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE;
-#endif
         ResetMissedLogCount();
         return RESULT_OK;
       }
@@ -213,7 +199,6 @@ namespace Anki {
         robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
         robotState_.status |= ProxSensors::IsAnyCliffDetected() ? CLIFF_DETECTED : 0;
         robotState_.status |= IMUFilter::IsFalling() ? IS_FALLING : 0;
-        robotState_.status |= bodyRadioMode_ == BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE ? IS_BODY_ACC_MODE : 0;
         robotState_.status |= HAL::BatteryIsChargerOOS() ? IS_CHARGER_OOS : 0;
 #ifdef  SIMULATOR
         robotState_.batteryVoltage = HAL::BatteryGetVoltage();
@@ -230,20 +215,6 @@ namespace Anki {
 
 
 // #pragma --- Message Dispatch Functions ---
-
-      void Process_setAudioVolume(const SetAudioVolume& msg) {
-        #ifdef TARGET_K02
-        HAL::DAC::SetVolume(msg.volume);
-        #endif
-      }
-
-      void Process_adjustTimestamp(const RobotInterface::AdjustTimestamp& msg)
-      {
-        #ifdef SIMULATOR
-        HAL::SetTimeStamp(msg.timestamp);
-        #endif
-      }
-
 
       void Process_syncTime(const RobotInterface::SyncTime& msg)
       {
@@ -265,21 +236,9 @@ namespace Anki {
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
 
-#ifndef TARGET_K02
-        // Reset number of bytes/audio frames played in animation buffer
-        AnimationController::EngineDisconnect();
-
-        // In sim, there's no body to put into accessory mode which in turn
-        // triggers motor calibration, so we just do motor calibration here.
+        // Start motor calibration
         LiftController::StartCalibrationRoutine();
         HeadController::StartCalibrationRoutine();
-#else
-        // Put body into accessory mode when the engine is connected
-        SetBodyRadioMode bMsg;
-        bMsg.wifiChannel = 0;
-        bMsg.radioMode = BODY_ACCESSORY_OPERATING_MODE;
-        while (RobotInterface::SendMessage(bMsg) == false);
-#endif
 
         AnkiEvent( 414, "watchdog_reset_count", 347, "%d", 1, HAL::GetWatchdogResetCounter());
       } // ProcessRobotInit()
@@ -541,21 +500,6 @@ namespace Anki {
         TestModeController::Start((TestMode)(msg.mode), msg.p1, msg.p2, msg.p3);
       }
 
-      void Process_imageRequest(const RobotInterface::ImageRequest& msg)
-      {
-        AnkiWarn( 1206, "Messages.Process_imageRequest.Unsupported", 305, "", 0);
-      }
-
-      void Process_enableColorImages(const RobotInterface::EnableColorImages& msg)
-      {
-        AnkiWarn( 1197, "Messages.Process_enableColorImages.Unsupported", 305, "", 0);
-      }
-
-      void Process_setCameraParams(const SetCameraParams& msg)
-      {
-        AnkiWarn( 1198, "Messages.Process_setCameraParams.Unsupported", 305, "", 0);
-      }
-
       void Process_cameraFOVInfo(const CameraFOVInfo& msg)
       {
         DockingController::SetCameraFieldOfView(msg.horizontalFOV, msg.verticalFOV);
@@ -567,12 +511,6 @@ namespace Anki {
                                                     msg.driveAccel_mmps2,
                                                     msg.driveDuration_ms,
                                                     msg.backupDist_mm);
-      }
-
-      void Process_generateTestTone(const RobotInterface::GenerateTestTone& msg) {
-        #ifdef TARGET_K02
-        GenerateTestTone();
-        #endif
       }
 
       void Process_setControllerGains(const RobotInterface::ControllerGains& msg) {
@@ -610,12 +548,6 @@ namespace Anki {
         }
       }
 
-      void Process_enterSleepMode(const EnterSleepMode& msg) {
-        #ifdef TARGET_K02
-        Anki::Cozmo::HAL::Power::enterSleepMode();
-        #endif
-      }
-
       void Process_setMotionModelParams(const RobotInterface::SetMotionModelParams& msg)
       {
         Localization::SetMotionModelParams(msg.slipFactor);
@@ -628,40 +560,14 @@ namespace Anki {
 
       void Process_abortAnimation(const RobotInterface::AbortAnimation& msg)
       {
-        #ifndef TARGET_K02
-        AnimationController::Clear();
-        #endif
-      }
 
-      void Process_disableAnimTracks(const AnimKeyFrame::DisableAnimTracks& msg)
-      {
-        #ifndef TARGET_K02
-        AnimationController::DisableTracks(msg.whichTracks);
-        #endif
-      }
-
-      void Process_enableAnimTracks(const AnimKeyFrame::EnableAnimTracks& msg)
-      {
-        #ifndef TARGET_K02
-        AnimationController::EnableTracks(msg.whichTracks);
-        #endif
-      }
-
-      void Process_initAnimController(const AnimKeyFrame::InitController& msg)
-      {
-        #ifndef TARGET_K02
-        AnimationController::EngineInit(msg);
-        #endif
       }
 
 #ifndef TARGET_K02
       // Group processor for all animation key frame messages
       void Process_anim(const RobotInterface::EngineToRobot& msg)
       {
-        if(AnimationController::BufferKeyFrame(msg.GetBuffer(), msg.Size()) != RESULT_OK) {
-          //PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
-          AnimationController::Clear();
-        }
+      
       }
 #endif
 
@@ -736,171 +642,9 @@ namespace Anki {
         IMUFilter::EnableBraceWhenFalling(msg.enable);
       }
 
-      // --------- Block control messages ----------
-
-      void Process_flashObjectIDs(const  FlashObjectIDs& msg)
-      {
-        AnkiWarn( 1207, "Messages.Process_flashObjectIDs.Unsupported", 305, "", 0);
-      }
-
-      void Process_setObjectBeingCarried(const ObjectBeingCarried& msg)
-      {
-        // TODO: need to add this hal.h and implement
-        // HAL::SetBlockBeingCarried(msg.blockID, msg.isBeingCarried);
-      }
-
       // ---------- Animation Key frame messages -----------
-      void Process_animFaceImage(const Anki::Cozmo::AnimKeyFrame::FaceImage& msg)
-      {
-        // Handled by the Espressif
-      }
-      void Process_animHeadAngle(const Anki::Cozmo::AnimKeyFrame::HeadAngle& msg)
-      {
-        HeadController::SetDesiredAngleByDuration(DEG_TO_RAD_F32(msg.angle_deg), 0.1f, 0.1f,
-                                                  (f32)(msg.time_ms)*.001f);
-      }
-      void Process_animBodyMotion(const Anki::Cozmo::AnimKeyFrame::BodyMotion& msg)
-      {
-        bool isPointTurn = msg.curvatureRadius_mm == 0;
-        SteeringController::ExecuteDriveCurvature(isPointTurn ? DEG_TO_RAD(msg.speed) : msg.speed,
-                                                  msg.curvatureRadius_mm,
-                                                  isPointTurn ? 50.f : 0.f);  // 50 is what animation point turns have all been tuned with so don't change this!
-      }
-      void Process_animLiftHeight(const Anki::Cozmo::AnimKeyFrame::LiftHeight& msg)
-      {
-        LiftController::SetDesiredHeightByDuration((f32)(msg.height_mm), 0.1f, 0.1f,
-                                                   (f32)(msg.time_ms)*.001f);
-      }
-      void Process_animRecordHeading(const Anki::Cozmo::AnimKeyFrame::RecordHeading& msg)
-      {
-        SteeringController::RecordHeading();
-      }
-      void Process_animTurnToRecordedHeading(const Anki::Cozmo::AnimKeyFrame::TurnToRecordedHeading& msg)
-      {
-        SteeringController::ExecutePointTurnToRecordedHeading(DEG_TO_RAD_F32(msg.offset_deg),
-                                                              DEG_TO_RAD_F32(msg.speed_degPerSec),
-                                                              DEG_TO_RAD_F32(msg.accel_degPerSec2),
-                                                              DEG_TO_RAD_F32(msg.decel_degPerSec2),
-                                                              DEG_TO_RAD_F32(msg.tolerance_deg),
-                                                              msg.numHalfRevs,
-                                                              msg.useShortestDir);
-      }
-      void Process_animAudioSample(const Anki::Cozmo::AnimKeyFrame::AudioSample&)
-      {
-        // Handled on the Espressif
-      }
-      void Process_animAudioSilence(const Anki::Cozmo::AnimKeyFrame::AudioSilence&)
-      {
-        // Handled on the Espressif
-      }
-      void Process_animEvent(const Anki::Cozmo::AnimKeyFrame::Event& msg)
-      {
-        // Handled on the Espressif
-      }
-      void Process_readBodyStorage(Anki::Cozmo::ReadBodyStorage const&) {
-        // Handled on the NRF
-      }
-
-      void Process_writeBodyStorage(Anki::Cozmo::WriteBodyStorage const&) {
-        // Handled on the NRF
-      }
-
-      void Process_bodyStorageContents(Anki::Cozmo::BodyStorageContents const&) {
-        // Handled on the Espressif
-      }
-      void Process_bodySerialNum(Anki::Cozmo::RobotInterface::BodySerialNumber const&) {
-        // For espressif only
-      }
-
-      void Process_animEventToRTIP(const RobotInterface::AnimEventToRTIP& msg)
-      {
-        RobotInterface::AnimationEvent emsg;
-        emsg.timestamp = HAL::GetTimeStamp();
-        emsg.event_id = msg.event_id;
-        emsg.tag = msg.tag;
-        SendMessage(emsg);
-      }
-
-
-      void Process_bleDisconnect(const BLE::Disconnect& msg) {
-        // Handled in the NRF
-      }
-
-      void Process_bleConnectionState(const BLE::ConnectionState& msg) {
-        // Handled in the NRF
-      }
-
-      void Process_bleSendData(const BLE::SendData& msg) {
-        // Handled in the NRF
-      }
-
-      void Process_bleDataReceived(const BLE::DataReceived& msg) {
-        // Handled in the NRF
-      }
-
-      void Process_animBackpackLights(const Anki::Cozmo::AnimKeyFrame::BackpackLights& msg)
-      {
-        // Handled by the Espressif
-      }
-
-      void Process_animEndOfAnimation(const AnimKeyFrame::EndOfAnimation& msg)
-      {
-        // Handled by the Espressif
-      }
-
-      void Process_powerState(const PowerState& msg)
-      {
-        robotState_.batteryVoltage = (float)(msg.VBatFixed)/65536.0f;
-        vExt_ = (float)(msg.VExtFixed)/65536.0f;
-        onCharger_  = msg.onCharger;
-        isCharging_ = msg.isCharging;
-        chargerOOS_ = msg.chargerOOS;
-
-        if (bodyRadioMode_ != msg.operatingMode) {
-          bodyRadioMode_ = msg.operatingMode;
-          if (bodyRadioMode_ == BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE ) {
-            LiftController::Enable();
-            LiftController::StartCalibrationRoutine();
-            HeadController::Enable();
-            HeadController::StartCalibrationRoutine();
-            WheelController::Enable();
-          } else {
-            LiftController::Disable();
-            LiftController::ClearCalibration();
-            HeadController::Disable();
-            HeadController::ClearCalibration();
-            WheelController::Disable();
-          }
-        }
-      }
-
-      void Process_objectConnectionStateToRobot(const ObjectConnectionStateToRobot& msg)
-      {
-        // Forward on the 'to-engine' version of this message
-        ObjectConnectionState newMsg;
-        newMsg.objectID = msg.objectID;
-        newMsg.object_type = msg.object_type;
-        newMsg.factoryID = msg.factoryID;
-        newMsg.connected = msg.connected;
-        RobotInterface::SendMessage(newMsg);
-      }
-
-      void Process_enterRecoveryMode(const RobotInterface::OTA::EnterRecoveryMode& msg)
-      {
-        // Handled directly in spi to bypass main execution.
-      }
 
 #ifndef TARGET_K02
-      void Process_otaWrite(const Anki::Cozmo::RobotInterface::OTA::Write& msg)
-      {
-
-      }
-      /// Stub message handlers to satisfy simulator build
-      void Process_commandNV(NVStorage::NVCommand const& msg)
-      {
-        AnkiWarn( 1196, "Messages.Process_commandNV.Unsupported", 631, "Cozmo 2.0 NVStorage is in engine only", 0);
-      }
-      
       
       // ==== V2 Animation ======
       // TODO: If these messages are specified by a specific range in the clad file,
@@ -938,31 +682,7 @@ namespace Anki {
         // Nothing to do here
       }
       // =========== end V2 animation ==============
-      
-      
-      void Process_setHeadlight(RobotInterface::SetHeadlight const&)
-      {
-        // Nothing to do here
-      }
-      void Process_bodyEnterOTA(RobotInterface::OTA::BodyEnterOTA const&)
-      {
-        // Nothing to do here
-      }
-      void Process_oledDisplayNumber(Anki::Cozmo::RobotInterface::DisplayNumber const&)
-      {
-        // Nothing to do here
-      }
-      void Process_killBodyCode(Anki::Cozmo::KillBodyCode const&)
-      {
-        // Nothing to do here
-      }
-      void Process_setRTTO(Anki::Cozmo::RobotInterface::DebugSetRTTO const&)
-      {
-        // TODO honor this in simulator
-      }
-      void Process_setAccessoryDiscovery(const SetAccessoryDiscovery& msg) {
-        // Nothing to do here
-      }
+
       void Process_setPropSlot(const SetPropSlot& msg)
       {
         HAL::AssignSlot(msg.slot, msg.factory_id);
@@ -996,28 +716,7 @@ namespace Anki {
         cubIDSet_ = false;
         #endif
       }
-      void Process_enterTestMode(const RobotInterface::EnterFactoryTestMode&)
-      {
-        // nothing to do here//
-      }
-      /*
-      void Process_configureBluetooth(const RobotInterface::ConfigureBluetooth&)
-      {
-        // nothing to do here
-      }
-       */
-      void Process_sendDTMCommand(const RobotInterface::SendDTMCommand&)
-      {
-        // nothing to do here
-      }
-      void Process_setBodyRadioMode(const SetBodyRadioMode&)
-      {
-        // nothing to do here
-      }
-      void Process_appRunID(const RobotInterface::SetAppRunID&)
-      {
-        // Nothing to do here
-      }
+
       void Process_testState(const RobotInterface::TestState&)
       {
         // Nothing to do here
@@ -1026,29 +725,9 @@ namespace Anki {
       {
         RobotInterface::SendMessage(RobotInterface::ManufacturingID());
       }
-      void Process_getBodySerialNumber(const RobotInterface::GetBodySerialNumber& msg)
-      {
-        RobotInterface::SendMessage(RobotInterface::BodySerialNumber());
-      }
-
-      // These are stubbed out just to get things compiling
-       // These are stubbed out just to get things compiling
-      void Process_appConCfgString(const Anki::Cozmo::RobotInterface::AppConnectConfigString& msg) {}
-      void Process_appConCfgFlags(const Anki::Cozmo::RobotInterface::AppConnectConfigFlags& msg) {}
-      void Process_appConCfgIPInfo(const Anki::Cozmo::RobotInterface::AppConnectConfigIPInfo& msg) {}
-      void Process_appConGetRobotIP(const Anki::Cozmo::RobotInterface::AppConnectGetRobotIP& msg) {}
-      void Process_wifiOff(const Anki::Cozmo::RobotInterface::WiFiOff& msg) {}
 
       void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer& msg) {
         BackpackLightController::EnableLayer((BackpackLightLayer)msg.layer);
-      }
-
-      void Process_setBackpackLightsMiddle(const RobotInterface::BackpackLightsMiddle&) {
-        // Handled on the NRF
-      }
-
-      void Process_setBackpackLightsTurnSignals(const RobotInterface::BackpackLightsTurnSignals&) {
-        // Handled on the NRF
       }
             
       // V2 Audio message stubbed
@@ -1060,9 +739,6 @@ namespace Anki {
 
 #endif // simulator
 
-      // Stubbed for both simulator and K02
-      void Process_requestCrashReports(const Anki::Cozmo::RobotInterface::RequestCrashReports& msg) {}
-      void Process_shutdownRobot(const Anki::Cozmo::RobotInterface::ShutdownRobot& msg) {}
 
 // ----------- Send messages -----------------
 
@@ -1141,57 +817,10 @@ namespace Anki {
         missedLogs_ = 0;
       }
 
-#ifndef COZMO_V2
-#ifdef SIMULATOR
-      int SendText(const char *format, ...)
-      {
-        va_list argptr;
-        va_start(argptr, format);
-#if SEND_TEXT_REDIRECT_TO_STDOUT
-        // print to console - works in webots environment.
-        vprintf(format, argptr);
-#else
-        SendText(format, argptr);
-#endif
-        va_end(argptr);
-
-        return 0;
-      }
-
-      int SendText(const RobotInterface::LogLevel level, const char *format, va_list vaList)
-      {
-        RobotInterface::PrintText m;
-        int len;
-
-        #define MAX_SEND_TEXT_LENGTH 255 // uint_8 definition in messageRobotToEngine.clad
-        memset(m.text, 0, MAX_SEND_TEXT_LENGTH);
-
-        // Create formatted text
-        len = vsnprintf(m.text, MAX_SEND_TEXT_LENGTH, format, vaList);
-
-        if (len > 0)
-        {
-          m.text_length = len;
-          m.level = level;
-          RobotInterface::SendMessage(m);
-        }
-
-        return 0;
-      }
-
-      int SendText(const char *format, va_list vaList)
-      {
-        return SendText(RobotInterface::LogLevel::ANKI_LOG_LEVEL_PRINT, format, vaList);
-      }
-#endif // SIMULATOR
-#endif // COZMO_V2
-
       bool ReceivedInit()
       {
-
         return initReceived_;
       }
-
 
       void ResetInit()
       {

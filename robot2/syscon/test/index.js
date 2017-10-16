@@ -49,7 +49,7 @@ body.on('data', (info) => {
 		}
 		break ;
 	default:
-		console.log(info.id, info.data);
+		console.log("<--", info.id, info.data);
 		break ;
 	}
 	flow.next();

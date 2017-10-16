@@ -1,16 +1,12 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-#ifndef TARGET_K02
-#include "animationController.h"
-#endif
 #include "backpackLightController.h"
 #include "dockingController.h"
 #include "liftController.h"
@@ -33,14 +29,6 @@
 #include "clad/types/imageTypes.h"
 #include "blockLightController.h"
 #endif
-
-#ifdef SIMULATOR
-#ifndef COZMO_V2
-#include "anki/vision/CameraSettings.h"
-#include "nvStorage.h"
-#include <math.h>
-#endif // COZMO_V2
-#endif // SIMULATOR
 
 
 namespace Anki {
@@ -110,9 +98,6 @@ namespace Anki {
 #ifndef TARGET_K02
         lastResult = HAL::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 219, "CozmoBot.InitFail.HAL", 305, "", 0);
-        
-        lastResult = AnimationController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 227, "CozmoBot.InitFail.AnimationController", 305, "", 0);
 #endif
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 1249, "CozmoBot.InitFail.BackpackLightController", 305, "", 0);
@@ -227,29 +212,11 @@ namespace Anki {
           PickAndPlaceController::SetCarryState(CarryState::CARRY_NONE);
           ProxSensors::EnableStopOnCliff(true);
           ProxSensors::SetCliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL);
-          #ifndef COZMO_V2
-          LiftController::Disable();
-          LiftController::ClearCalibration();
-          HeadController::Disable();
-          HeadController::ClearCalibration();
-          WheelController::Disable();
-          HAL::CameraSetColorEnabled(false);
-          #ifndef SIMULATOR
-          HAL::SetImageSendMode(Off, DEFAULT_IMAGE_RESOLUTION);
-          Messages::ResetMissedLogCount();
-          // Put body into bluetooth mode when the engine is connected
-          SetBodyRadioMode bMsg;
-          bMsg.wifiChannel = 0;
-          bMsg.radioMode = BODY_BLUETOOTH_OPERATING_MODE;
-          while (RobotInterface::SendMessage(bMsg) == false) {}
-          #endif
-          #endif
           waitForFirstMotorCalibAfterConnect_ = true;
           mode_ = INIT_MOTOR_CALIBRATION;
 
 #ifndef TARGET_K02
           TestModeController::Start(TestMode::TM_NONE);
-          AnimationController::EnableTracks( EnumToUnderlyingType(AnimTrackFlag::ALL_TRACKS));
 #endif
 
           wasConnected_ = false;
@@ -269,15 +236,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
-        MARK_NEXT_TIME_PROFILE(CozmoBot, ANIM);
-#ifndef TARGET_K02
-        if (Messages::ReceivedInit()) {
-          if(AnimationController::Update() != RESULT_OK) {
-            AnkiWarn( 230, "CozmoBot.Main.AnimationControllerUpdateFailed", 305, "", 0);
-            AnimationController::Clear();
-          }
-        }
-#endif
+
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
         LiftController::Update();
@@ -294,14 +253,6 @@ namespace Anki {
         PathFollower::Update();
         PickAndPlaceController::Update();
         DockingController::Update();
-
-#ifdef SIMULATOR
-        //////////////////////////////////////////////////////////////
-        // Audio Subsystem
-        //////////////////////////////////////////////////////////////
-        MARK_NEXT_TIME_PROFILE(CozmoBot, AUDIO);
-        Anki::Cozmo::HAL::AudioFill();
-#endif
 
         //////////////////////////////////////////////////////////////
         // State Machine
@@ -397,8 +348,7 @@ namespace Anki {
 
           lastMainCycleTimeErrorReportTime_ = cycleEndTime;
         }
-
-
+        
         return RESULT_OK;
 
       } // Robot::step_MainExecution()

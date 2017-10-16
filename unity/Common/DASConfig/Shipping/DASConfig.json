@@ -7,7 +7,7 @@
     "gameMinLogLevel": "event",
     "url": "https://sqs.us-west-2.amazonaws.com/792379844846/DasProd-dasprodSqs-1845FTIME3RHN",
     "flushInterval": 15,
-    "maxLogLength": 204800,
+    "maxLogLength": 150000,
     "maxLogFiles": 5000
   }
 }

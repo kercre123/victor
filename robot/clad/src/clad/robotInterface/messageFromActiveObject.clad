@@ -25,16 +25,6 @@ message ObjectConnectionState
   bool connected
 }
 
-// Identical to ObjectConnectionState except instead of going to the engine
-// it goes to the K02 from the body
-message ObjectConnectionStateToRobot
-{
-  uint_32 objectID,   // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
-  uint_32 factoryID,
-  ObjectType  object_type,
-  bool connected
-}
-
 message ObjectMoved
 {
   uint_32     timestamp,

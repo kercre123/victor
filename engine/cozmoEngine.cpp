@@ -240,6 +240,18 @@ Result CozmoEngine::Init(const Json::Value& config) {
 #else
   PRINT_NAMED_INFO("CozmoEngine.Init.Version", "1");
 #endif
+
+#if defined(DEBUG)
+  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "DEBUG");
+#elif defined(RELEASE)
+  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "RELEASE");
+#elif defined(PROFILE)
+  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "PROFILE");
+#elif defined(SHIPPING)
+  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "SHIPPING");
+#else
+  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "UNKNOWN build configuration");
+#endif
   
   _isInitialized = true;
 
@@ -269,10 +281,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::UpdateFirmware& msg)
     return;
   }
   
-  if (_context->GetRobotManager()->InitUpdateFirmware(msg.fwType, msg.version))
-  {
-    SetEngineState(EngineState::UpdatingFirmware);
-  }
+  // TODO: figure out how to update firmware for Victor
 }
 
 template<>
@@ -318,11 +327,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ConnectToRobot& connect
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::ResetFirmware& msg)
 {
-  for (RobotID_t robotId : GetRobotIDList())
-  {
-    PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ResetFirmware", "Sending KillBodyCode to Robot %d", robotId);
-    _context->GetRobotManager()->GetMsgHandler()->SendMessage(robotId, RobotInterface::EngineToRobot(KillBodyCode()));
-  }
+  PRINT_NAMED_WARNING("CozmoEngine.HandleMessage.ResetFirmwareUndefined", "What does this mean for Victor?"); 
 }
 
 Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
@@ -400,6 +405,15 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(currentLoadingDone);
       break;
     }
+    case EngineState::UpdatingFirmware:
+    {
+      // TODO: VictorFirmwareUpdate
+      SetEngineState(EngineState::Running);
+      
+      // deliberate fallthrough because we
+      // do not handle updating firmware in
+      // victor yet
+    }
     case EngineState::Running:
     {
       // Update time
@@ -417,18 +431,6 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       UpdateLatencyInfo();
       break;
     }
-    case EngineState::UpdatingFirmware:
-    {
-      // Update comms and messages from robot
-      _context->GetRobotManager()->UpdateRobotConnection();
-      
-      // Update the firmware updating, returns true when complete (error or success)
-      if (_context->GetRobotManager()->UpdateFirmware())
-      {
-        SetEngineState(EngineState::Running);
-      }
-      break;
-    }
     default:
       PRINT_NAMED_ERROR("CozmoEngine.Update.UnexpectedState","Running Update in an unexpected state!");
   }
@@ -444,6 +446,9 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
                           {{DDATA,std::to_string(BS_TIME_STEP).c_str()}},
                           "%.2f", updateLengthMs);
     }
+    ExternalInterface::MessageEngineToGame debugPerfMessage(
+                                          ExternalInterface::DebugPerformanceTick("Engine",updateLengthMs));
+    _context->GetExternalInterface()->Broadcast( std::move(debugPerfMessage) );
   }
 #endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
 
@@ -626,25 +631,29 @@ std::vector<RobotID_t> const& CozmoEngine::GetRobotIDList() const {
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::ReadAnimationFile& msg)
 {
-  _context->GetRobotManager()->ReadAnimationDir();
+  // TODO: Tell animation process to read the anim dir?
+  PRINT_NAMED_WARNING("CozmoEngine.HandleMessage.ReadAnimationFile.NotHookedUp", "");
+  //_context->GetRobotManager()->ReadAnimationDir();
 }
 
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::ReadFaceAnimationDir& msg)
 {
-  _context->GetRobotManager()->ReadFaceAnimationDir();
+  // TODO: Tell animation process to read the anim dir?
+  PRINT_NAMED_WARNING("CozmoEngine.HandleMessage.ReadFaceAnimationDir.NotHookedUp", "");
+  //_context->GetRobotManager()->ReadFaceAnimationDir();
 }
 
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::SetRobotImageSendMode& msg)
 {
   const ImageSendMode newMode = msg.mode;
-  const ImageResolution resolution = msg.resolution;
   Robot* robot = GetFirstRobot();
   
   if(robot != nullptr) {
     robot->SetImageSendMode(newMode);
-    robot->SendRobotMessage<RobotInterface::ImageRequest>(newMode, resolution);
+    // TODO: Can get rid of one of ExternalInterface::SetRobotImageSendMode or 
+    // ExternalInterfaceImageRequest since they seem to do the same thing now.
   }
 }
 

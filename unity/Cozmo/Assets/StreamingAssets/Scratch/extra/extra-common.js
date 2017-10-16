@@ -35,7 +35,6 @@ window.$t = function $t(str) {
   return str;
 };
 
-
 /**
  * Sets text inside an element described by a CSS selector
  * @param {String} selector - CSS selector of element to set text for
@@ -62,6 +61,19 @@ window.getUrlVars = function() {
   });
   return vars;
 };
+
+window.getUrlVar = function(varName){
+  var params = window.getUrlVars();
+  return params[varName] || undefined;
+}
+
+
+/**
+ * looks for URL parameter to signify page is running in a web browser and not a unity app
+ */
+window.isDev = function() {
+  return window.getUrlVar('isDev') === 'true';
+}
 
 
 /**

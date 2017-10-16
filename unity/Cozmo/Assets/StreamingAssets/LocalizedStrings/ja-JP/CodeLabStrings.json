@@ -519,19 +519,31 @@
   "codeLabHorizontal.Tooltip.StartProgramHere" : {
     "translation" : "ここからプログラムを開始"
   },
-  "codeLabHorizontal.Category.Drive" : {
+  "codeLab.Category.Drive" : {
     "translation" : "進む"
   },
-  "codeLabHorizontal.Category.Actions" : {
+  "codeLab.Category.Actions" : {
     "translation" : "アクション"
   },
-  "codeLabHorizontal.Category.Animations" : {
+  "codeLab.Category.Animations" : {
     "translation" : "アニメーション"
   },
-  "codeLabHorizontal.Category.Events" : {
+  "codeLab.Category.Events" : {
     "translation" : "イベント"
   },
-  "codeLabHorizontal.Category.Control" : {
+  "codeLab.Category.Control" : {
     "translation" : "コントロール"
+  },
+  "codeLab.Category.Sensors": {
+    "translation": "Sensors"
+  },
+  "codeLab.Category.Display": {
+    "translation": "Display"
+  },
+  "codeLab.Category.Operators": {
+    "translation": "演算"
+  },
+  "codeLab.Category.Data": {
+    "translation": "データ"
   }
 }

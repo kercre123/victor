@@ -6,7 +6,7 @@ set(CORETECH_VISION_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/anki/vision)
 
 include(okao)
 
-include(anki_build_cxx_library)
+include(anki_build_cxx)
 
 # add_library()
 anki_build_cxx_library(cti_vision ${ANKI_SRCLIST_DIR} STATIC)
@@ -24,7 +24,7 @@ target_link_libraries(cti_vision
 )
 
 target_compile_options(cti_vision
-PRIVATE
+  PRIVATE
   -Os
   ${SYMBOL_VISIBILITY_FLAGS}
 )
@@ -36,20 +36,18 @@ target_include_directories(cti_vision
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/basestation/src>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>  # For access to engine/vision/nearestNeighborLibraryData.h 
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>  # For access to engine/vision/nearestNeighborLibraryData.h
   )
 
-target_compile_definitions(cti_vision PRIVATE
-  -DCORETECH_BASESTATION
-  -DANKICORETECH_USE_OPENCV=1
-  -DFACE_TRACKER_OKAO=3
-  -DFACE_TRACKER_PROVIDER=3
-  -DANKICORETECH_EMBEDDED_USE_OPENCV=1
-) 
-
-if(UNIT_TEST)
-  add_subdirectory(basestation/test)
-endif()
+target_compile_definitions(cti_vision
+  PRIVATE
+  CORETECH_BASESTATION
+  FACE_TRACKER_FACIOMETRIC=0
+  FACE_TRACKER_FACESDK=1
+  FACE_TRACKER_OPENCV=2
+  FACE_TRACKER_OKAO=3
+  FACE_TRACKER_PROVIDER=FACE_TRACKER_OKAO
+)
 
 if(MATLAB)
   add_subdirectory(robot/mex)
@@ -63,3 +61,22 @@ if(MATLAB)
     add_subdirectory(tools/decisionTree)
   endif()
 endif()
+
+if (MACOSX)
+
+  enable_testing()
+
+  include(gtest)
+
+  anki_build_cxx_executable(cti_vision_basestation_test ${ANKI_SRCLIST_DIR})
+
+  target_link_libraries(cti_vision_basestation_test
+    PRIVATE
+    cti_vision
+    gtest
+  )
+
+  add_test(NAME cti_vision_basestation_test COMMAND cti_vision_basestation_test)
+
+endif()
+

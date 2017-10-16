@@ -6,6 +6,7 @@ DEFINES += -DCOZMO_ROBOT
 CPPFLAGS += -I$(CPPUTEST_HOME)
 CPPFLAGS += -I"../../robot/include"
 CPPFLAGS += -I"../hal/include"
+# CPPFLAGS += -I"../../robot/generated/clad/robot"
 CPPFLAGS += $(DEFINES)
 
 CXXFLAGS += -include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorNewMacros.h
@@ -13,6 +14,8 @@ CFLAGS += -include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorMallocMac
 
 LD_LIBRARIES = -L$(CPPUTEST_HOME)/lib -lCppUTest -lCppUTestExt
 LDFLAGS += -L$(CPPUTEST_HOME)/lib -lCppUTest -lCppUTestExt -lc++
+
+CODE_UNDER_TEST = ../hal/src/halStubs.cpp
 
 ifeq ($(PLATFORM),OSX)
 	DEFINES += -DPLATFORM_OSX
@@ -23,11 +26,18 @@ else
 	LOCAL_LDLIBS += -llog 
 endif
 
-#android arm build toolchain
-ANDROID_NDK_ROOT:=~/.anki/android/ndk-repository/android-ndk-r15b
 
-ANDROID_ARM_TOOLS_ROOT:=../../generated/android/tools/arm
-ANDROID_ARM_TOOLS_BIN:=$(ANDROID_ARM_TOOLS_ROOT)/bin
+#
+# Use android.py to locate Android NDK
+#
+TOPLEVEL := ../..
+ANDROID_PY := $(TOPLEVEL)/tools/build/tools/ankibuild/android.py
+ANDROID_NDK_ROOT := $(shell $(ANDROID_PY))
+
+# Android arm build toolchain
+ANDROID_ARM_TOOLS_ROOT := $(TOPLEVEL)/generated/android/tools/arm
+ANDROID_ARM_TOOLS_BIN := $(ANDROID_ARM_TOOLS_ROOT)/bin
+
 # Compilation Tools
 ARMCC := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-gcc -pie
 ARMCPP := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-g++
@@ -44,7 +54,7 @@ lcd_test:  $(ANDROID_ARM_TOOLS_ROOT) lcd_test.c
 
 
 app: 
-	gcc $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) *.cpp
+	gcc $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $(CODE_UNDER_TEST)
 
 test: app
 	./a.out -c

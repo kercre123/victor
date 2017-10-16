@@ -51,6 +51,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 373e27a7cba4b4fd9a633e1621a13a34, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _PerfWarningHUDPrefab: {fileID: 114338121799995902, guid: 5d7b7b051945247f48638ab6a1db929a,
+    type: 2}
   _LowThresholdPercents:
   - 0.67
   - 0.7
@@ -59,3 +61,5 @@ MonoBehaviour:
   - 0.95
   - 1
   _AvgFPSSampleSize: 10
+  _LowEndSystemMemoryThresholdMB: 2048
+  _LowEndVideoMemoryThresholdMB: 512

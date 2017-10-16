@@ -1293,17 +1293,17 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void PlaceObjectOnGroundHere(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint PlaceObjectOnGroundHere(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "Place Object " + CarryingObject + " On Ground Here");
 
-    SendQueueSingleAction(Singleton<PlaceObjectOnGroundHere>.Instance, callback, queueActionPosition);
+    return SendQueueSingleAction(Singleton<PlaceObjectOnGroundHere>.Instance, callback, queueActionPosition);
 
   }
 
-  public void PlaceObjectRel(ObservableObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint PlaceObjectRel(ObservableObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "PlaceObjectRel " + target.ID);
 
-    SendQueueSingleAction(Singleton<PlaceRelObject>.Instance.Initialize(
+    return SendQueueSingleAction(Singleton<PlaceRelObject>.Instance.Initialize(
       approachAngle_rad: approachAngle,
       placementOffsetX_mm: offsetFromMarker,
       objectID: target.ID,
@@ -1315,10 +1315,10 @@ public class Robot : IRobot {
       queueActionPosition);
   }
 
-  public void PlaceOnObject(ObservableObject target, bool checkForObjectOnTop = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint PlaceOnObject(ObservableObject target, bool checkForObjectOnTop = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "PlaceOnObject " + target.ID);
 
-    SendQueueSingleAction(Singleton<PlaceOnObject>.Instance.Initialize(
+    return SendQueueSingleAction(Singleton<PlaceOnObject>.Instance.Initialize(
       objectID: target.ID,
       usePreDockPose: true,
       useApproachAngle: false,
@@ -1335,6 +1335,13 @@ public class Robot : IRobot {
     DAS.Debug(this, "CancelAction actionType(" + actionType + ")");
 
     RobotEngineManager.Instance.Message.CancelAction = Singleton<CancelAction>.Instance.Initialize(actionType);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void CancelActionByIdTag(uint idTag) {
+    DAS.Debug(this, "CancelActionByIdTag (" + idTag + ")");
+
+    RobotEngineManager.Instance.Message.CancelActionByIdTag = Singleton<CancelActionByIdTag>.Instance.Initialize(idTag);
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -1364,10 +1371,10 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false, uint loops = 1) {
+  public uint SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false, uint loops = 1) {
 
     DAS.Debug(this, "Sending Trigger " + animTriggerEvent + " with " + loops + " loop " + useSafeLiftMotion);
-    SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(loops, animTriggerEvent, useSafeLiftMotion, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack), callback, queueActionPosition);
+    return SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(loops, animTriggerEvent, useSafeLiftMotion, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack), callback, queueActionPosition);
   }
 
   public void PushIdleAnimation(AnimationTrigger default_anim, string lockName) {
@@ -1389,8 +1396,8 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void PlayNeedsGetOutAnimIfNeeded(RobotCallback callback = null) {
-    SendQueueSingleAction(Singleton<PlayNeedsGetOutAnimIfNeeded>.Instance, callback);
+  public uint PlayNeedsGetOutAnimIfNeeded(RobotCallback callback = null) {
+    return SendQueueSingleAction(Singleton<PlayNeedsGetOutAnimIfNeeded>.Instance, callback);
   }
 
   public void PushDrivingAnimations(AnimationTrigger drivingStartAnim, AnimationTrigger drivingLoopAnim, AnimationTrigger drivingEndAnim, string lockName) {
@@ -1423,7 +1430,7 @@ public class Robot : IRobot {
   /// </summary>
   /// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (kMaxHeadAngle)
   /// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
-  public void SetHeadAngle(float angleFactor = -0.8f,
+  public uint SetHeadAngle(float angleFactor = -0.8f,
                            RobotCallback callback = null,
                            QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
                            bool useExactAngle = false, float speed_radPerSec = -1, float accel_radPerSec2 = -1) {
@@ -1434,7 +1441,7 @@ public class Robot : IRobot {
       if (callback != null) {
         callback(true);
       }
-      return;
+      return (uint)ActionConstants.INVALID_TAG;
     }
 
     if (speed_radPerSec <= 0f) {
@@ -1445,7 +1452,7 @@ public class Robot : IRobot {
       accel_radPerSec2 = CozmoUtil.kMoveLiftAccel_radPerSec2;
     }
 
-    SendQueueSingleAction(
+    return SendQueueSingleAction(
       Singleton<SetHeadAngle>.Instance.Initialize(
         radians,
         max_speed_rad_per_sec: speed_radPerSec,
@@ -1517,8 +1524,8 @@ public class Robot : IRobot {
     return Charger;
   }
 
-  public void MountCharger(ActiveObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    SendQueueSingleAction(
+  public uint MountCharger(ActiveObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    return SendQueueSingleAction(
       Singleton<MountCharger>.Instance.Initialize(
         charger.ID, PathMotionProfileDefault, false, false),
       callback, queueActionPosition
@@ -1532,14 +1539,14 @@ public class Robot : IRobot {
   /// <summary>
   /// Turns towards the object and then adjusts the head. Set maxTurnAngle_rad to 0 to only tilt the head.
   /// </summary>
-  public void TurnTowardsObject(ObservableObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2,
+  public uint TurnTowardsObject(ObservableObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2,
                                 RobotCallback callback = null,
                                 QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
                                 float setTiltTolerance_rad = 0f, float maxTurnAngle_rad = float.MaxValue) {
 
     DAS.Debug(this, "Face Object " + observedObject);
 
-    SendQueueSingleAction(Singleton<TurnTowardsObject>.Instance.Initialize(
+    return SendQueueSingleAction(Singleton<TurnTowardsObject>.Instance.Initialize(
       objectID: observedObject,
       maxTurnAngle_rad: maxTurnAngle_rad,
       panTolerance_rad: kPanTolerance_rad, // 1.7 degrees is the minimum in the engine
@@ -1556,13 +1563,13 @@ public class Robot : IRobot {
 
   }
 
-  public void TurnTowardsFace(Face face, float maxTurnAngle_rad = Mathf.PI, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2,
+  public uint TurnTowardsFace(Face face, float maxTurnAngle_rad = Mathf.PI, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2,
                               bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count,
                               AnimationTrigger unnamedTrigger = AnimationTrigger.Count,
                               RobotCallback callback = null,
                               QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
-    SendQueueSingleAction(
+    return SendQueueSingleAction(
       Singleton<Anki.Cozmo.ExternalInterface.TurnTowardsFace>.Instance.Initialize(
         faceID: face.ID,
         maxTurnAngle_rad: maxTurnAngle_rad,
@@ -1581,14 +1588,14 @@ public class Robot : IRobot {
   }
 
   // Turns towards the last seen face, but not any more than the specified maxTurnAngle
-  public void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false,
+  public uint TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false,
                                       AnimationTrigger namedTrigger = AnimationTrigger.Count,
                                       AnimationTrigger unnamedTrigger = AnimationTrigger.Count,
                                       RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "TurnTowardsLastFacePose with maxTurnAngle : " + maxTurnAngle);
 
-    SendQueueSingleAction(Singleton<TurnTowardsLastFacePose>.Instance.Initialize(
+    return SendQueueSingleAction(Singleton<TurnTowardsLastFacePose>.Instance.Initialize(
       maxTurnAngle_rad: maxTurnAngle,
       maxPanSpeed_radPerSec: kDefaultRadPerSec,
       panAccel_radPerSec2: kPanAccel_radPerSec2,
@@ -1622,11 +1629,11 @@ public class Robot : IRobot {
       queueActionPosition);
   }
 
-  public void RollObject(ObservableObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool checkForObjectOnTop = true, bool rollWithoutDocking = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint RollObject(ObservableObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool checkForObjectOnTop = true, bool rollWithoutDocking = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Roll Object " + selectedObject + " usePreDockPose " + usePreDockPose + " useManualSpeed " + usePreDockPose);
 
-    SendQueueSingleAction(Singleton<RollObject>.Instance.Initialize(
+    return SendQueueSingleAction(Singleton<RollObject>.Instance.Initialize(
       selectedObject,
       PathMotionProfileDefault,
       doDeepRoll: false,
@@ -1641,12 +1648,12 @@ public class Robot : IRobot {
       queueActionPosition);
   }
 
-  public void PlaceObjectOnGround(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint PlaceObjectOnGround(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Drop Object At Pose " + position + " useManualSpeed " + useManualSpeed);
 
 
-    SendQueueSingleAction(Singleton<PlaceObjectOnGround>.Instance.Initialize(
+    return SendQueueSingleAction(Singleton<PlaceObjectOnGround>.Instance.Initialize(
       x_mm: position.x,
       y_mm: position.y,
       qw: rotation.w,
@@ -1663,15 +1670,15 @@ public class Robot : IRobot {
       queueActionPosition);
   }
 
-  public void GotoPose(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint GotoPose(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     float rotationAngle = rotation.eulerAngles.z * Mathf.Deg2Rad;
-    GotoPose(position.x, position.y, rotationAngle, level, useManualSpeed, callback, queueActionPosition);
+    return GotoPose(position.x, position.y, rotationAngle, level, useManualSpeed, callback, queueActionPosition);
   }
 
-  public void GotoPose(float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint GotoPose(float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "Go to Pose: x: " + x_mm + " y: " + y_mm + " rad: " + rad);
 
-    SendQueueSingleAction(Singleton<GotoPose>.Instance.Initialize(
+    return SendQueueSingleAction(Singleton<GotoPose>.Instance.Initialize(
       level: System.Convert.ToByte(level),
       useManualSpeed: useManualSpeed,
       x_mm: x_mm,
@@ -1683,8 +1690,8 @@ public class Robot : IRobot {
       queueActionPosition);
   }
 
-  public void DriveStraightAction(float speed_mmps, float dist_mm, bool shouldPlayAnimation = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    SendQueueSingleAction(Singleton<DriveStraight>.Instance.Initialize(
+  public uint DriveStraightAction(float speed_mmps, float dist_mm, bool shouldPlayAnimation = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    return SendQueueSingleAction(Singleton<DriveStraight>.Instance.Initialize(
       speed_mmps,
       dist_mm,
       shouldPlayAnimation
@@ -1693,8 +1700,8 @@ public class Robot : IRobot {
       queueActionPosition);
   }
 
-  public void GotoObject(ObservableObject obj, float distance_mm, bool goToPreDockPose = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    SendQueueSingleAction(Singleton<GotoObject>.Instance.Initialize(
+  public uint GotoObject(ObservableObject obj, float distance_mm, bool goToPreDockPose = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    return SendQueueSingleAction(Singleton<GotoObject>.Instance.Initialize(
       objectID: obj,
       distanceFromObjectOrigin_mm: distance_mm,
       useManualSpeed: false,
@@ -1705,8 +1712,8 @@ public class Robot : IRobot {
       queueActionPosition);
   }
 
-  public void AlignWithObject(ObservableObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, AlignmentType alignmentType = AlignmentType.CUSTOM, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, byte numRetries = 0) {
-    SendQueueSingleAction(
+  public uint AlignWithObject(ObservableObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, AlignmentType alignmentType = AlignmentType.CUSTOM, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, byte numRetries = 0) {
+    return SendQueueSingleAction(
       Singleton<AlignWithObject>.Instance.Initialize(
         objectID: obj,
         motionProf: PathMotionProfileDefault,
@@ -1737,17 +1744,17 @@ public class Robot : IRobot {
     return closest as LightCube;
   }
 
-  public void SearchForCube(int cubeID, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    SearchForNearbyObject(cubeID, callback, queueActionPosition);
+  public uint SearchForCube(int cubeID, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    return SearchForNearbyObject(cubeID, callback, queueActionPosition);
   }
 
   // If an objectID is passed in, the action will complete successfully as soon as the object is seen
   // otherwise, cozmo will complete a full look around nearby before completing
-  public void SearchForNearbyObject(int objectId = -1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
+  public uint SearchForNearbyObject(int objectId = -1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
                                     float backupDistance_mm = (float)SearchForNearbyObjectDefaults.BackupDistance_mm,
                                     float backupSpeed_mm = (float)SearchForNearbyObjectDefaults.BackupSpeed_mms,
                                     float headAngle_rad = Mathf.Deg2Rad * (float)SearchForNearbyObjectDefaults.HeadAngle_deg) {
-    SendQueueSingleAction(
+    return SendQueueSingleAction(
       Singleton<SearchForNearbyObject>.Instance.Initialize(
         desiredObjectID: objectId,
         backupDistance_mm: backupDistance_mm,
@@ -1777,7 +1784,7 @@ public class Robot : IRobot {
 
   // Height factor should be between 0.0f and 1.0f
   // 0.0f being lowest and 1.0f being highest.
-  public void SetLiftHeight(float heightFactor, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, float speed_radPerSec = -1, float accel_radPerSec2 = -1) {
+  public uint SetLiftHeight(float heightFactor, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, float speed_radPerSec = -1, float accel_radPerSec2 = -1) {
     DAS.Debug(this, "SetLiftHeight: " + heightFactor);
 
     if (speed_radPerSec <= 0f) {
@@ -1788,7 +1795,7 @@ public class Robot : IRobot {
       accel_radPerSec2 = CozmoUtil.kMoveLiftAccel_radPerSec2;
     }
 
-    SendQueueSingleAction(Singleton<SetLiftHeight>.Instance.Initialize(
+    return SendQueueSingleAction(Singleton<SetLiftHeight>.Instance.Initialize(
       height_mm: (heightFactor * (CozmoUtil.kMaxLiftHeightMM - CozmoUtil.kMinLiftHeightMM)) + CozmoUtil.kMinLiftHeightMM,
       max_speed_rad_per_sec: speed_radPerSec,
       accel_rad_per_sec2: accel_radPerSec2,
@@ -1881,9 +1888,9 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, float tolerance_rad = 0.0f, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, float tolerance_rad = 0.0f, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
-    SendQueueSingleAction(Singleton<TurnInPlace>.Instance.Initialize(
+    return SendQueueSingleAction(Singleton<TurnInPlace>.Instance.Initialize(
       angle_rad,
       speed_rad_per_sec,
       accel_rad_per_sec2,
@@ -2131,9 +2138,9 @@ public class Robot : IRobot {
 
   #endregion
 
-  public void SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, bool fitToDuration = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, bool fitToDuration = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "Saying text: " + PrivacyGuard.HidePersonallyIdentifiableInfo(text));
-    SendQueueSingleAction(Singleton<SayTextWithIntent>.Instance.Initialize(text, playEvent, intent, fitToDuration), callback, queueActionPosition);
+    return SendQueueSingleAction(Singleton<SayTextWithIntent>.Instance.Initialize(text, playEvent, intent, fitToDuration), callback, queueActionPosition);
   }
 
   public void EraseAllEnrolledFaces() {
@@ -2259,20 +2266,20 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void PlayCubeAnimationTrigger(ObservableObject obj, CubeAnimationTrigger trigger, RobotCallback callback = null) {
-    SendQueueSingleAction(Singleton<PlayCubeAnimationTrigger>.Instance.Initialize(obj, trigger), callback, QueueActionPosition.IN_PARALLEL);
+  public uint PlayCubeAnimationTrigger(ObservableObject obj, CubeAnimationTrigger trigger, RobotCallback callback = null) {
+    return SendQueueSingleAction(Singleton<PlayCubeAnimationTrigger>.Instance.Initialize(obj, trigger), callback, QueueActionPosition.IN_PARALLEL);
   }
 
-  public void WaitAction(float waitTime_s, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    SendQueueSingleAction(Singleton<Wait>.Instance.Initialize(waitTime_s), callback, queueActionPosition);
+  public uint WaitAction(float waitTime_s, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    return SendQueueSingleAction(Singleton<Wait>.Instance.Initialize(waitTime_s), callback, queueActionPosition);
   }
 
-  public void DisplayFaceImage(uint duration_ms, byte[] faceData, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    SendQueueSingleAction(Singleton<DisplayFaceImage>.Instance.Initialize(duration_ms, faceData), callback, queueActionPosition);
+  public uint DisplayFaceImage(uint duration_ms, byte[] faceData, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    return SendQueueSingleAction(Singleton<DisplayFaceImage>.Instance.Initialize(duration_ms, faceData), callback, queueActionPosition);
   }
 
-  public void DriveOffChargerContacts(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    SendQueueSingleAction(Singleton<DriveOffChargerContacts>.Instance, callback, queueActionPosition);
+  public uint DriveOffChargerContacts(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    return SendQueueSingleAction(Singleton<DriveOffChargerContacts>.Instance, callback, queueActionPosition);
   }
 
 }

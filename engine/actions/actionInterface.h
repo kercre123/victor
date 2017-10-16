@@ -25,7 +25,7 @@
 
 #include "clad/types/actionTypes.h"
 #include "clad/types/actionResults.h"
-#include "clad/types/animationKeyFrames.h"
+#include "clad/types/animationTypes.h"
 
 #include "util/random/randomGenerator.h"
 

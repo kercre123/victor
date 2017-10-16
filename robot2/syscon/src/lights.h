@@ -6,6 +6,7 @@ namespace Lights {
   void tick(void);
   void disable(void);
   void receive(const uint8_t* values);
+  void boot(int index);
 }
 
 #endif

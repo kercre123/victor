@@ -313,7 +313,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
     // Disable reactionary behaviors
     robot.GetBehaviorManager().DisableReactionsWithLock(
                                  kBehaviorTestName,
-                                 ReactionTriggerHelpers::kAffectAllArray);
+                                 ReactionTriggerHelpers::GetAffectAllArray());
     
     // Only enable vision modes we actually need
     // NOTE: we do not (yet) restore vision modes afterwards!
@@ -386,13 +386,6 @@ static const char* kBehaviorTestName = "Behavior factory test";
       PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.CopyEngineLogFailed", "");
     }
     _factoryTestLogger.CloseLog();
-    
-    // Immediately disconnect wifi
-    if (kBFT_DisconnectAtEnd) {
-      RobotInterface::EnterFactoryTestMode m;
-      m.mode = RobotInterface::FactoryTestMode::FTM_Off;
-      robot.SendMessage(RobotInterface::EngineToRobot(std::move(m)));
-    }
   }
   
   

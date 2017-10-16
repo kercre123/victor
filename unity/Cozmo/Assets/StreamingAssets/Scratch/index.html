@@ -32,14 +32,16 @@
         <script src="./js/anki_comms_settings.js"></script>
         <script src="./js/anki_comms.js"></script>
         <script src="./js/common.js"></script>
-        <script src="./js/CozmoSaveLoadAPI.js"></script>
+        <script src="./js/cozmoSaveLoadAPI.js"></script>
         <script src="./js/cozmoUserProjectCommands.js"></script>
         <script src="./js/webAudioPlayer.js"></script>
+        <script src="./js/rename-project.js"></script>
 
         <script src="./lib/vm/dist/web/scratch-vm.min.js"></script>
         <!-- For debugging the vm, use scratch-vm.js instead of scratch-vm.min.js -->
         <!-- <script src="./lib/vm/dist/web/scratch-vm.js"></script> -->
 
+        <script src="./extra/tutorial-frame.js"></script>
         <script src="./extra/challenges-frame.js"></script>
         <script src="./extra/extra-common.js"></script>
         <script src="./extra/localize.js"></script>
@@ -47,13 +49,14 @@
         <!-- CSS Styles -->
         <link rel="stylesheet" href="./css/normalize.css">
         <link rel="stylesheet" href="./css/common.css">
+        <link rel="stylesheet" href="./css/rename-project.css"/>
 	</head>
 
 	<body>
 
         <!-- Toolbox -->
         <xml id="toolbox">
-            <category name="codeLabHorizontal.Category.Drive" colour="#0898c4" secondaryColour="0">
+            <category name="codeLab.Category.Drive" colour="#0898c4" secondaryColour="0">//
             <block type="cozmo_drive_forward">
                 <value name="DISTANCE">
                     <shadow type="math_whole_number_with_validator">
@@ -86,7 +89,7 @@
             <block type="cozmo_turn_right"></block>
             <block type="cozmo_dock_with_cube"></block>
             </category>
-            <category name="codeLabHorizontal.Category.Actions" colour="#5e3dfc" secondaryColour="0">
+            <category name="codeLab.Category.Actions" colour="#5e3dfc" secondaryColour="0">
             <block type="cozmo_liftheight">
                 <value name="CHOICE">
                     <shadow type="dropdown_cozmo_liftheight">
@@ -116,7 +119,7 @@
                 </value>
             </block>
             </category>
-            <category name="codeLabHorizontal.Category.Animations" colour="#a03c87" secondaryColour="0" id="AnimationsCategory">
+            <category name="codeLab.Category.Animations" colour="#a03c87" secondaryColour="0" id="AnimationsCategory">
             <block type="cozmo_happy_animation"></block>
             <block type="cozmo_victory_animation"></block>
             <block type="cozmo_unhappy_animation"></block>
@@ -133,7 +136,7 @@
             <block type="cozmo_sleep_animation"></block>
             <block type="cozmo_mystery_animation"></block>
             </category>
-            <category name="codeLabHorizontal.Category.Events" colour="#f4b606" secondaryColour="0">
+            <category name="codeLab.Category.Events" colour="#f4b606" secondaryColour="0">
             <block type="event_whenflagclicked"></block>
             <block type="cozmo_wait_for_face"></block>
             <block type="cozmo_wait_for_happy_face"></block>
@@ -141,7 +144,7 @@
             <block type="cozmo_wait_until_see_cube"></block>
             <block type="cozmo_wait_for_cube_tap"></block>
             </category>
-            <category name="codeLabHorizontal.Category.Control" colour="#e5580a" secondaryColour="0">
+            <category name="codeLab.Category.Control" colour="#e5580a" secondaryColour="0">
             <block type="control_repeat">
                 <value name="TIMES">
                     <shadow type="math_whole_number_with_validator">
@@ -170,6 +173,13 @@
             </div>
         </div>
 
+        <!-- Tutorials button -->
+        <div id="tutorial">
+            <div class="primary">
+                <button id="tutorialbutton" />
+            </div>
+        </div>
+
         <!-- projecttext -->
         <div id="projecttext">
             <div class="primary">
@@ -187,5 +197,24 @@
                 <button id="stop" />
             </div>
         </div>
+
+        <!-- Rename -->
+        <div id="rename-project-modal">
+          <div class="hd">
+            <button id="btn-close-rename-project"></button>
+            <div class="original-project-name"></div>
+          </div>
+          <div class="bd">
+            <form id="rename-project-form">
+              <div id="rename-project-prompt"></div>
+              <input id="rename-project-text-box" value="" autocomplete="off"/>
+              <div class="buttons">
+                <button id="btn-cancel-rename"></button>
+                <button id="btn-save-rename"></button>
+              </div>
+            </form>
+          </div>
+        </div>
+
 	</body>
 </html>

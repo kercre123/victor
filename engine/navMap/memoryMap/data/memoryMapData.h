@@ -27,6 +27,7 @@ public:
   const MemoryMapTypes::EContentType type;
 
   // base_of_five_defaults - destructor
+  MemoryMapData(MemoryMapTypes::EContentType type, TimeStamp_t time);
   MemoryMapData(const MemoryMapData&) = default;
   MemoryMapData(MemoryMapData&&) = default;
   MemoryMapData& operator=(const MemoryMapData&) = default;
@@ -34,15 +35,26 @@ public:
   ~MemoryMapData() {}
   
   // create a copy of self (of appropriate subclass) and return it
-  MemoryMapData* Clone() const { return new MemoryMapData(*this); };
+  virtual MemoryMapData* Clone() const { return new MemoryMapData(*this); };
   
   // compare to MemoryMapData and return bool if the data stored is the same
-  bool Equals(const MemoryMapData* other) const { return type == other->type; }
+  virtual bool Equals(const MemoryMapData* other) const { return (type == other->type); }
   
-protected:
-  MemoryMapData(MemoryMapTypes::EContentType t) : type(t) {}
+  void SetLastObservedTime(TimeStamp_t t) {lastObserved_ms = t;}
+  void SetFirstObservedTime(TimeStamp_t t) {firstObserved_ms = t;}
+  TimeStamp_t GetLastObservedTime()  const {return lastObserved_ms;}
+  TimeStamp_t GetFirstObservedTime() const {return firstObserved_ms;}
+  
+private:
+  TimeStamp_t firstObserved_ms;
+  TimeStamp_t lastObserved_ms;
 };
 
+inline MemoryMapData::MemoryMapData(MemoryMapTypes::EContentType type, TimeStamp_t time)
+  : type(type)
+  , firstObserved_ms(time)
+  , lastObserved_ms(time) {}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper functions
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

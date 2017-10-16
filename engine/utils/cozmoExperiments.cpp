@@ -79,16 +79,16 @@ void CozmoExperiments::AutoActivateExperiments(const std::string& userId)
 
 void CozmoExperiments::WriteLabAssignmentsToRobot(const std::vector<Util::AnkiLab::AssignmentDef>& assignments)
 {
-  LabAssignments labAssignments;
-  for (const auto& assignment : assignments)
-  {
-    LabAssignment labAssignment(assignment.GetExperiment_key(), assignment.GetVariation_key());
-    labAssignments.labAssignments.push_back(std::move(labAssignment));
-  }
-
   Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   if (robot != nullptr)
   {
+    LabAssignments labAssignments;
+    for (const auto& assignment : assignments)
+    {
+      LabAssignment labAssignment(assignment.GetExperiment_key(), assignment.GetVariation_key());
+      labAssignments.labAssignments.push_back(std::move(labAssignment));
+    }
+
     std::vector<u8> assignmentsVec(labAssignments.Size());
     labAssignments.Pack(assignmentsVec.data(), labAssignments.Size());
     if (!robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_LabAssignments,

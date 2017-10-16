@@ -14,7 +14,7 @@ function usage() {
     echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
     echo "  -p [PLATFORM]           build target platform {android,mac}"
     echo "  -g [CMAKE_GENERATOR]    CMake generator {Ninja,Xcode}"
-    echo "  -f                      force-run filelist updates and cmake configure before building"
+    echo "  -f                      force-run filelist updates and cmake configure before building, and force-copy assets"
     echo "  -d                      DEBUG: generate file lists and exit"
     echo "  -x [CMAKE_EXE]          path to cmake executable"
     echo "  -C                      generate build config and exit without building"
@@ -26,6 +26,7 @@ function usage() {
 VERBOSE=0
 CONFIGURE=0
 GEN_SRC_ONLY=0
+RM_BUILD_ASSETS=0
 RUN_BUILD=1
 CMAKE_EXE="${HOME}/.anki/cmake/dist/3.8.1/CMake.app/Contents/bin/cmake"
 
@@ -45,6 +46,7 @@ while getopts ":x:c:p:g:hvfdC" opt; do
             ;;
         f)
             CONFIGURE=1
+            RM_BUILD_ASSETS=1
             ;;
         C)
             CONFIGURE=1
@@ -93,7 +95,23 @@ fi
 
 PLATFORM=`echo $PLATFORM | tr "[:upper:]" "[:lower:]"`
 
-# For non-ninja builds, add generator type fo build dir
+#
+# Validate configuration
+#
+case "${CONFIGURATION}" in
+  [Dd][Ee][Bb][Uu][Gg])
+    CONFIGURATION="Debug"
+    ;;
+  [Rr][Ee][Ll][Ee][Aa][Ss][Ee])
+    CONFIGURATION="Release"
+    ;;
+  *)
+    echo "Unknown configuration '${CONFIGURATION}'. Configuration should be Debug or Release."
+    exit 1
+    ;;
+esac
+
+# For non-ninja builds, add generator type to build dir
 BUILD_SYSTEM_TAG=""
 if [ ${CMAKE_GENERATOR} != "Ninja" ]; then
     BUILD_SYSTEM_TAG="-${CMAKE_GENERATOR}"
@@ -126,8 +144,25 @@ fi
 : ${CMAKE_MODULE_DIR:="${TOPLEVEL}/cmake"}
 
 if [ ! -f ${CMAKE_EXE} ]; then
-  echo "CMake executable not found. For use with Android, install CMake with Android SDK"
+  echo "Missing CMake executable: ${CMAKE_EXE}"
+  echo "Fetch the required CMake version by running ${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py"
+  echo "Alternatively, specify a CMake executable using the -x flag."
   exit 1
+fi
+
+#
+# Remove assets in build directory if requested. This will force the
+# build to re-copy them from the source tree into the build directory. 
+#
+
+if [ $RM_BUILD_ASSETS -eq 1 ]; then
+    if [ $VERBOSE -eq 1 ]; then
+        RM_VERBOSE_ARG="v"
+        echo "Removing assets in ${BUILD_DIR}/assets"
+    else
+        RM_VERBOSE_ARG=""
+    fi
+    rm -rf${RM_VERBOSE_ARG} ${BUILD_DIR}/assets
 fi
 
 #
@@ -149,7 +184,6 @@ if [ $CONFIGURE -eq 1 ]; then
         androidHAL/BUILD.in \
         animProcess/BUILD.in \
         clad/BUILD.in \
-        engine/BUILD.in \
         coretech/common/BUILD.in \
         coretech/common/clad/BUILD.in \
         coretech/vision/BUILD.in \
@@ -158,6 +192,7 @@ if [ $CONFIGURE -eq 1 ]; then
         coretech/messaging/BUILD.in \
         engine/BUILD.in \
         lib/util/source/anki/util/BUILD.in \
+        lib/util/source/anki/utilUnitTest/BUILD.in \
         resources/BUILD.in \
         robot/BUILD.in \
         robot/clad/BUILD.in \
@@ -187,10 +222,17 @@ if [ $CONFIGURE -eq 1 ]; then
             -DANDROID=0
         )
     elif [ "$PLATFORM" == "android" ]; then
+        #
+        # If ANDROID_NDK is set, use it, else provide default location
+        #
+        if [ -z "${ANDROID_NDK+x}" ]; then
+          ANDROID_NDK=`${TOPLEVEL}/tools/build/tools/ankibuild/android.py`
+        fi
+
         PLATFORM_ARGS=(
             -DMACOSX=0
             -DANDROID=1
-            -DANDROID_NDK=${HOME}/.anki/android/ndk-repository/android-ndk-r15b
+            -DANDROID_NDK="${ANDROID_NDK}"
             -DCMAKE_TOOLCHAIN_FILE="${CMAKE_MODULE_DIR}/android.toolchain.patched.cmake"
             -DANDROID_TOOLCHAIN_NAME=clang
             -DANDROID_ABI='armeabi-v7a with NEON'

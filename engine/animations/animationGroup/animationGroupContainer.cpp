@@ -11,7 +11,6 @@
  *
  **/
 
-#include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 
 #include "util/logging/logging.h"
@@ -80,8 +79,7 @@ std::vector<std::string> AnimationGroupContainer::GetAnimationGroupNames()
     
     
 Result AnimationGroupContainer::DefineFromJson(const Json::Value& jsonRoot,
-                                               const std::string& animationGroupName,
-                                               const CannedAnimationContainer* cannedAnimations)
+                                               const std::string& animationGroupName)
 {
       
   if(RESULT_OK != AddAnimationGroup(animationGroupName)) {
@@ -98,9 +96,7 @@ Result AnimationGroupContainer::DefineFromJson(const Json::Value& jsonRoot,
     return RESULT_FAIL;
   }
       
-  Result result = animationGroup->DefineFromJson(animationGroupName,
-                                                 jsonRoot,
-                                                 cannedAnimations);
+  Result result = animationGroup->DefineFromJson(animationGroupName, jsonRoot);
       
       
   if(result != RESULT_OK) {

@@ -18,7 +18,7 @@
 
 #include "anki/common/types.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/types/animationKeyFrames.h"
+#include "clad/types/animationTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "clad/types/animationTrigger.h"
 #include <vector>

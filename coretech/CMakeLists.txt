@@ -54,3 +54,7 @@ import(cti_messaging messaging)
 #target_include_directories(cti_messaging INTERFACE
 #  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/generated/clad/types>
 #)
+
+if (MACOSX)
+  enable_testing()
+endif(MACOSX)
