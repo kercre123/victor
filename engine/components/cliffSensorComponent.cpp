@@ -267,7 +267,6 @@ bool CliffSensorComponent::ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d
   
   const auto& robotPoseAtCliff = histState.GetPose();
   
-#ifdef COZMO_V2
   // The cliff pose depends on which cliff sensors were tripped
   // Bit flags for each of the cliff sensors:
   const uint8_t FL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FL));
@@ -325,11 +324,6 @@ bool CliffSensorComponent::ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d
                       "cliffWrtRobot and robot.GetWorldOrigin() do not share the same origin!");
     return false;
   }
-  
-#else
-  // For pre-V2 robots, the cliff pose is just considered to be the robot's pose at the time of the cliff event
-  cliffPose = robotPoseAtCliff;
-#endif // COZMO_V2
   
   return true;
 }

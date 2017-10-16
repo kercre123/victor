@@ -49,6 +49,7 @@ namespace Anki {
         case TestState::Init:
         {
           MakeSynchronous();
+          SetActualRobotPose(Pose3d(0, Z_AXIS_3D(), {0, 0, 0}));
           StartMovieConditional("VariableHeightMedium");
           //TakeScreenshotsAtInterval("VariableHeightMedium", 1.f);
           

@@ -96,7 +96,6 @@ namespace Cozmo {
     // Handlers for signals coming from robot
     void HandleActiveObjectAvailable(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
     void HandlePickAndPlaceResult(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
-    void HandleFactoryTestParameter(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleMfgID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleFactoryFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message);

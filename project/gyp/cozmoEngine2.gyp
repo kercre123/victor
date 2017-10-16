@@ -683,7 +683,6 @@
               ],
             'defines': [
               'COZMO_ROBOT',
-              'COZMO_V2',
               'SIMULATOR',
               '_DEBUG'
             ],
@@ -731,7 +730,6 @@
               '<!@(cat <(ctrlShared_source))'
               ],
             'defines': [
-              'COZMO_V2',
               'SIMULATOR'
             ],
             'libraries': [
@@ -829,7 +827,6 @@
               '<!@(cat <(ctrlShared_source))'
               ],
             'defines': [
-              'COZMO_V2',
               'SIMULATOR'
             ],
             'libraries': [
@@ -1429,12 +1426,10 @@
               ],
               'defines': [
                 'COZMO_BASESTATION',
-                'COZMO_V2',
               ],
             },
             'defines': [
               'COZMO_BASESTATION',
-              'COZMO_V2',
             ],
             'dependencies': [
               '<(ce-util_gyp_path):util',
@@ -1523,7 +1518,6 @@
             ],
             'defines': [
               'COZMO_BASESTATION',
-              'COZMO_V2',
             ],
             'conditions': [
               [
@@ -1617,12 +1611,10 @@
         ],
         'defines': [
           'COZMO_BASESTATION',
-          'COZMO_V2',
         ],
       },
       'defines': [
         'COZMO_BASESTATION',
-        'COZMO_V2',
       ],
       'dependencies': [
       '<(ce-util_gyp_path):util',

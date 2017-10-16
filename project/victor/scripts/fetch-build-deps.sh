@@ -49,11 +49,6 @@ mkdir -p _build
 vlog "Fetch & extract external dependencies. This may take 1-5 min."
 ./project/buildScripts/dependencies.py -v --deps-file DEPS --externals-dir EXTERNALS
 
-vlog "Generate AnkiLogStringTables.json"
-pushd robot
-make dev2
-popd
-
 vlog "Configure audio library"
 ./lib/audio/configure.py
 

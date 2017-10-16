@@ -13,9 +13,7 @@
 
 
 #include "engine/actions/basicActions.h"
-#ifdef COZMO_V2
 #include "androidHAL/androidHAL.h"
-#endif
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/dockingComponent.h"
@@ -82,10 +80,7 @@ namespace Cozmo {
   
   CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
   CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
-  
-# ifdef COZMO_V2
   CONSOLE_VAR(bool, kDisplayUndistortedImages,     "Vision.General", false);
-# endif
   
   namespace JsonKey
   {
@@ -2508,20 +2503,6 @@ namespace Cozmo {
                              payload.center_x, payload.center_y,
                              ss.str().c_str());
             
-            
-            
-            // See hardware.h for the body hardware versions
-            // 6 == BODY_VER_1v5c and anything less is an older version
-            // We never verified the computed distortion coefficients of 1.0 or 1.5 robots at the factory
-            // so as far as we know they are garbage so ignore them.
-            #ifndef COZMO_V2
-            if(_robot.GetBodyHWVersion() <= 6)
-            {
-              PRINT_NAMED_INFO("VisionComponent.ReadCameraCalibration.IgnoringDistCoeffs", "");
-              payload.distCoeffs.fill(0);
-            }
-            #endif
-            
             // Convert calibration data in payload to a shared CameraCalibration object
             auto calib = std::make_shared<Vision::CameraCalibration>(payload.nrows,
                                                                      payload.ncols,
@@ -2532,24 +2513,18 @@ namespace Cozmo {
                                                                      payload.skew,
                                                                      payload.distCoeffs);
             
-            SetCameraCalibration(calib);
-            
-            #ifdef COZMO_V2
-            {
-              // Compute FOV from focal length and send
-              CameraFOVInfo msg(calib->ComputeHorizontalFOV().ToFloat(), calib->ComputeVerticalFOV().ToFloat());
-              if (_robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
-                PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
-              }
+            SetCameraCalibration(calib);            
+
+            // Compute FOV from focal length and send
+            CameraFOVInfo msg(calib->ComputeHorizontalFOV().ToFloat(), calib->ComputeVerticalFOV().ToFloat());
+            if (_robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
+              PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
             }
-            #endif // ifdef COZMO_V2
-            
             
           }
         } else {
           PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.Failed", "");
           
-#ifdef COZMO_V2
           // TEMP HACK: Use dummy calibration for now since final camera not available yet
           PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.UsingDummyV2Calibration", "");
 
@@ -2574,8 +2549,7 @@ namespace Cozmo {
           if (_robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
             PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
           }
-#endif
-          
+
         }
         
         Enable(true);
