@@ -415,6 +415,7 @@ Blockly.WorkspaceSvg.prototype.createDom = function(opt_backgroundClass) {
     if (opt_backgroundClass == 'blocklyMainBackground') {
       // *** ANKI CHANGE ***
       this.svgBackground_.style.fill = "#535252";
+      this.svgBackground_.style.stroke = "#535252";
     }
   }
   /** @type {SVGElement} */
