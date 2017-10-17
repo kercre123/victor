@@ -419,6 +419,19 @@
         });
     }
 
+    // Turn on animated play button on workspace.
+    window.onScriptsStarted = function() {
+        document.body.classList.add('is-program-running');
+    }
+
+    // Turn off animated play button on workspace.
+    window.onScriptsStopped = function() {
+        // Turn off animated play button on workspace
+        document.body.classList.remove('is-program-running');
+
+        // TODO Also switch play now modal to switch from stop sign to green flag on button?
+    }
+
     /**
      * Binds the extension interface to `window.extensions`.
      * @return {void}

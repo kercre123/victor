@@ -298,11 +298,11 @@ button:focus {
     background-position:0px -72px;
 }
 
-#navigation .greenflag button img {
-    width: 100%;
-    height: 100%;
-    margin: 0px 0 0 1px;
+.is-program-running #navigation .greenflag button {
+    background-image: url('../images/ui/greenflag_playing_animation.gif');
+    background-size: cover;
 }
+
 
 #navigation .stop {
     display: block;
