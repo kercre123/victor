@@ -25,12 +25,6 @@ protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorPlaypenDriftCheck(Robot& robot, const Json::Value& config);
-
-public:
-  // This behavior is special and can fail after it has finished running
-  // The mic FFT check runs asynchronously on the animProcess and I don't 
-  // want to hold the test up waiting for it since FFT is complicated
-  virtual bool CanFailWhileNotRunning() const override { return true; }
   
 protected:
   
