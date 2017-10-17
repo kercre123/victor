@@ -152,6 +152,7 @@ protected:
   // Support legacy cozmo code
   friend class Robot;
   friend class AIComponent;
+  friend class TestBehaviorFramework; // for testing access to internals
   inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
   inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
   

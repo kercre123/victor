@@ -25,6 +25,7 @@ namespace{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 StateChangeComponent::StateChangeComponent()
+:_messageSubscriber(nullptr)
 {
 
 }

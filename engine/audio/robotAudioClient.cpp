@@ -51,7 +51,8 @@ RobotAudioClient::RobotAudioClient( Robot* robot )
   }
   const CozmoContext* context = _robot->GetContext();
   // For Unit Test bail out if there is no Audio Mux
-  if ( context->GetAudioMultiplexer() == nullptr ) {
+  if ((context == nullptr) ||
+      (context->GetAudioMultiplexer() == nullptr) ) {
     return;
   }
 

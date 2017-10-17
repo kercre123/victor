@@ -86,13 +86,19 @@ public:
   void HandleActionComplete(u32 actionTag);
   
 private:
-  // For supporting legacy code
-  friend class ICozmoBehavior;
-  bool IsActing(const IBehavior* delegatingRunnable);
   std::unique_ptr<Delegator>   _delegator;
   std::vector<::Signal::SmartHandle> _eventHandles;
     
   BehaviorSystemManager* _bsm;
+  
+  // For supporting legacy code
+  friend class ICozmoBehavior;
+  bool IsActing(const IBehavior* delegatingRunnable);
+  
+  // TMP for helpers only
+  friend class IHelper;
+  void CancelActionIfRunning(IBehavior* delegatingRunnable = nullptr);
+  
 };
   
   

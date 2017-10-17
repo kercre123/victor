@@ -41,24 +41,16 @@ void InjectValidDelegateIntoBSM(BehaviorSystemManager& bsm,
 
 TEST(BehaviorSystemManager, TestDelegationVariants)
 {
+  std::unique_ptr<TestSuperPoweredRunnable> baseRunnable = std::make_unique<TestSuperPoweredRunnable>();
+  TestBehaviorFramework testFramework;
+  auto initializeRunnable = [&baseRunnable](const BehaviorComponent::ComponentsPtr& comps){
+    baseRunnable->SetBehaviorContainer(comps->_behaviorContainer);
+  };
+  testFramework.InitializeStandardBehaviorComponent(baseRunnable.get(),initializeRunnable);
   
-  std::unique_ptr<Robot> robot = TestBehaviorFramework::CreateRobot(1);
-  BehaviorComponent bc;
-  std::unique_ptr<TestSuperPoweredRunnable> baseRunnable;
-  {
-    BehaviorComponent::ComponentsPtr subComponents = BehaviorComponent::GenerateComponents(*robot);
-    baseRunnable = std::make_unique<TestSuperPoweredRunnable>(subComponents->_behaviorContainer);
-    baseRunnable->Init(subComponents->_behaviorExternalInterface);
-    bc.Init(std::move(subComponents),
-            baseRunnable.get());
-    std::string empty;
-    bc.Update(*robot, empty, empty);
-  }
-  
-  
-  BehaviorSystemManager& bsm = bc._components->_behaviorSysMgr;
-  BehaviorExternalInterface& bei = bc._components->_behaviorExternalInterface;
-  BehaviorContainer& behaviorContainer = bc._components->_behaviorContainer;
+  BehaviorSystemManager& bsm = testFramework.GetBehaviorSystemManager();
+  BehaviorExternalInterface& bei = testFramework.GetBehaviorExternalInterface();
+  BehaviorContainer& behaviorContainer = testFramework.GetBehaviorContainer();
 
   // Check to make sure that the stack exists and control is appropriately delegated
   ASSERT_TRUE(bsm._runnableStack->IsInStack(baseRunnable.get()));
@@ -71,10 +63,11 @@ TEST(BehaviorSystemManager, TestDelegationVariants)
   const int arbitraryDelegationNumber = 100;
   std::vector<std::unique_ptr<TestSuperPoweredRunnable>> bunchOfDelegates;
   for(int i = 0; i < arbitraryDelegationNumber; i++){
-    bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredRunnable>(behaviorContainer));
+    bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredRunnable>());
+    bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
-    bunchOfDelegates.back()->WantsToBeActivatedInternal(bei);
+    bunchOfDelegates.back()->WantsToBeActivated(bei);
     InjectValidDelegateIntoBSM(bsm, runnableDelegating, bunchOfDelegates.back().get());
     
     bsm.Delegate(bsm._runnableStack->GetTopOfStack(),

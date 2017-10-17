@@ -64,6 +64,10 @@ void RunnableStack::UpdateRunnableStack(BehaviorExternalInterface& behaviorExter
   // in the future
   for(int idx = 0; idx < _runnableStack.size(); idx++){
     tickedInStack.insert(_runnableStack.at(idx));
+    behaviorExternalInterface.GetStateChangeComponent()._gameToEngineEvents.clear();
+    behaviorExternalInterface.GetStateChangeComponent()._engineToGameEvents.clear();
+    behaviorExternalInterface.GetStateChangeComponent()._robotToEngineEvents.clear();
+    behaviorExternalInterface.GetStateChangeComponent()._actionsCompletedThisTick.clear();
     
     asyncMessageGateComp.GetEventsForBehavior(
        _runnableStack.at(idx),

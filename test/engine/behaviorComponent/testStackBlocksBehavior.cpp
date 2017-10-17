@@ -32,12 +32,13 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/aiComponent/aiComponent.h"
 
+#include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
 using namespace Anki;
 using namespace Anki::Cozmo;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CreateStackBehavior(Robot& robot, ICozmoBehaviorPtr& stackBehavior)
+void CreateStackBehavior(Robot& robot, ICozmoBehaviorPtr& stackBehavior, BehaviorExternalInterface& behaviorExternalInterface)
 {
   ASSERT_TRUE(stackBehavior == nullptr) << "test bug: should not have behavior yet";
 
@@ -56,19 +57,9 @@ void CreateStackBehavior(Robot& robot, ICozmoBehaviorPtr& stackBehavior)
   bool parseOK = reader.parse( configStr.c_str(), config);
   ASSERT_TRUE(parseOK) << "failed to parse JSON, bug in the test";
 
-  DelegationComponent delegationComp;
-  StateChangeComponent stateChangeComp;
-  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface();
-  behaviorExternalInterface->Init(robot,
-                                  robot.GetAIComponent(),
-                                  robot.GetBehaviorManager().GetBehaviorContainer(),
-                                  robot.GetBlockWorld(),
-                                  robot.GetFaceWorld(),
-                                  stateChangeComp);
-
   stackBehavior = behaviorContainer.CreateBehavior(BehaviorClass::StackBlocks,
                                                    config);
-  stackBehavior->Init(*behaviorExternalInterface);
+  stackBehavior->Init(behaviorExternalInterface);
   stackBehavior->OnEnteredActivatableScope();
   ASSERT_TRUE(stackBehavior != nullptr);
 }
@@ -122,22 +113,25 @@ ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectTyp
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior, BehaviorExternalInterface& behaviorExternalInterface,
+void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
+                    TestBehaviorFramework& testBehaviorFramework,
                     ObjectID& objID1, ObjectID& objID2)
 {
-  auto& aiComponent = robot.GetAIComponent();
-  
-  aiComponent.Init(robot);
+  auto& aiComponent = testBehaviorFramework.GetAIComponent();
+  auto& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
 
-  CreateStackBehavior(robot, stackBehavior);
+  CreateStackBehavior(robot, stackBehavior, behaviorExternalInterface);
 
   ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be runnable without cubes";
   
   std::string currentActivityName;
   std::string behaviorDebugStr;
   
+  IncrementBaseStationTimerTicks();
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
+  IncrementBaseStationTimerTicks();
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
+  IncrementBaseStationTimerTicks();
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
   ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be runnable without cubes after update";
 
@@ -145,6 +139,7 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior, BehaviorExte
   blockWorld.AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
   blockWorld.AddConnectedActiveObject(1, 1, ObjectType::Block_LIGHTCUBE2);
 
+  IncrementBaseStationTimerTicks();
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
   ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be runnable with unknown cubes";
 
@@ -181,23 +176,19 @@ TEST(StackBlocksBehavior, InitBehavior)
 {
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
-  Robot robot(0, &context);
-
-  DelegationComponent delegationComp;
-  StateChangeComponent stateChangeComp;
-  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface();
-  behaviorExternalInterface->Init(robot,
-                                  robot.GetAIComponent(),
-                                  robot.GetBehaviorManager().GetBehaviorContainer(),
-                                  robot.GetBlockWorld(),
-                                  robot.GetFaceWorld(),
-                                  stateChangeComp);
+  
+  TestBehaviorFramework testBehaviorFramework(1, &context);
+  RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
+  testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, emptyBehaviorMap);
+  
+  Robot& robot = testBehaviorFramework.GetRobot();
+  BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
   ICozmoBehaviorPtr stackBehavior = nullptr;
   ObjectID objID1, objID2;
-  SetupStackTest(robot, stackBehavior, *behaviorExternalInterface, objID1, objID2);
+  SetupStackTest(robot, stackBehavior, testBehaviorFramework, objID1, objID2);
   
-  auto result = stackBehavior->OnBehaviorActivated(*behaviorExternalInterface);
+  auto result = stackBehavior->OnBehaviorActivated(behaviorExternalInterface);
 
   EXPECT_EQ(RESULT_OK, result);
 }
@@ -207,24 +198,19 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
 {
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
-  Robot robot(0, &context);
+  TestBehaviorFramework testBehaviorFramework(1, &context);
+  RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
+  testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, emptyBehaviorMap);
   
-  DelegationComponent delegationComp;
-  StateChangeComponent stateChangeComp;
-  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface();
-  behaviorExternalInterface->Init(robot,
-                                  robot.GetAIComponent(),
-                                  robot.GetBehaviorManager().GetBehaviorContainer(),
-                                  robot.GetBlockWorld(),
-                                  robot.GetFaceWorld(),
-                                  stateChangeComp);
+  Robot& robot = testBehaviorFramework.GetRobot();
+  BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
   auto& blockWorld = robot.GetBlockWorld();
   auto& aiComponent = robot.GetAIComponent();
 
   ICozmoBehaviorPtr stackBehavior = nullptr;
   ObjectID objID1, objID2;
-  SetupStackTest(robot, stackBehavior, *behaviorExternalInterface,
+  SetupStackTest(robot, stackBehavior, testBehaviorFramework,
                  objID1, objID2);
 
   {
@@ -257,14 +243,14 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
   //auto result =
-  stackBehavior->WantsToBeActivated(*behaviorExternalInterface);
-  stackBehavior->OnActivated(*behaviorExternalInterface);
+  stackBehavior->WantsToBeActivated(behaviorExternalInterface);
+  stackBehavior->OnActivated(behaviorExternalInterface);
   //EXPECT_EQ(RESULT_OK, result);
 
   static float incrementEngineTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   incrementEngineTime_ns += 100000000.0f;
   BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
   
-  auto status = stackBehavior->BehaviorUpdate_Legacy(*behaviorExternalInterface);
+  auto status = stackBehavior->BehaviorUpdate_Legacy(behaviorExternalInterface);
   EXPECT_NE(BehaviorStatus::Running, status) << "should have stopped running";
 }

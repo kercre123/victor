@@ -97,7 +97,8 @@ protected:
   BehaviorStatus OnDelegateFailure(BehaviorExternalInterface& behaviorExternalInterface);
   
   bool IsControlDelegated();
-  
+  bool IsActing() const;
+
   // Helper is being stopped externally
   void Stop(bool isActive);
 

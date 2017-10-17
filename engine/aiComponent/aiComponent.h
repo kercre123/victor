@@ -106,7 +106,10 @@ public:
   // Update and init
   ////////////////////////////////////////////////////////////////////////////////
 
-  Result Init(Robot& robot);
+  // Pass in behavior component if you have a custom component already set up
+  // If nullptr is passed in AIComponent will generate a default behavior component
+  // AIComponent takes over contrrol of the customBehaviorComponent's memory
+  Result Init(Robot& robot, BehaviorComponent*& customBehaviorComponent);
   Result Update(Robot& robot, std::string& currentActivityName,
                               std::string& behaviorDebugStr);
 

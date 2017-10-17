@@ -41,7 +41,6 @@ namespace Cozmo {
 AIComponent::AIComponent()
 : _suddenObstacleDetected(false)
 , _aiInformationAnalyzer(new AIInformationAnalyzer() )
-, _behaviorComponent(new BehaviorComponent())
 , _freeplayDataTracker(new FreeplayDataTracker() )
 {
 }
@@ -53,7 +52,7 @@ AIComponent::~AIComponent()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result AIComponent::Init(Robot& robot)
+Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorComponent)
 {
   {
     _aiComponents.reset(new ComponentWrappers::AIComponentComponents(robot));
@@ -71,7 +70,11 @@ Result AIComponent::Init(Robot& robot)
     PRINT_NAMED_WARNING("AIComponent.Init.NoContext", "wont be able to load some componenets. May be OK in unit tests");
   }
   
-  {
+  if(customBehaviorComponent != nullptr) {
+    _behaviorComponent.reset(customBehaviorComponent);
+    customBehaviorComponent = nullptr;
+  }else{
+    _behaviorComponent = std::make_unique<BehaviorComponent>();
     _behaviorComponent->Init(BehaviorComponent::GenerateComponents(robot));
   }
   

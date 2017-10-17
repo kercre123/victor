@@ -146,12 +146,12 @@ void IBehavior::OnLeftActivatableScope()
 {
   AssertActivationState_DevOnly(ActivationState::InScope);
   
-  if(ANKI_VERIFY(_currentInScopeCount != 0,
-                 "", "")){
+  if(!ANKI_VERIFY(_currentInScopeCount != 0,
+                  "", "")){
     return;
   }
-  
   _currentInScopeCount--;
+
   if(_currentInScopeCount != 0){
     PRINT_CH_INFO("Behaviors",
                   "IBehavior.OnLeftActivatableScope.StillInScope",

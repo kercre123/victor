@@ -25,7 +25,7 @@
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/cozmoContext.h"
-
+#include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
 using namespace Anki::Cozmo;
 
@@ -131,8 +131,11 @@ void VerifyBehavior(const ICozmoBehaviorPtr inBehavior, const BehaviorContainer&
 TEST(BehaviorFactory, CreateAndDestroyBehaviors)
 {
   CozmoContext context{};
-  Robot testRobot(0, &context);
-  BehaviorContainer& behaviorContainer = testRobot.GetAIComponent().GetBehaviorContainer();
+  TestBehaviorFramework testBehaviorFramework(1, &context);
+  RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
+  testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, emptyBehaviorMap);
+  
+  BehaviorContainer& behaviorContainer = testBehaviorFramework.GetBehaviorContainer();
   
   const size_t kBaseBehaviorCount = behaviorContainer.GetBehaviorMap().size(); // some behaviors are added by default so likely >0
   
@@ -143,18 +146,11 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
   
   EXPECT_EQ(behaviorContainer.FindBehaviorByID(expectedID), nullptr); // this behavior shouldn't exist by default
   
-  DelegationComponent delegationComp;
-  StateChangeComponent stateChangeComp;
-  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface();
-  behaviorExternalInterface->Init(testRobot,
-                                  testRobot.GetAIComponent(),
-                                  behaviorContainer,
-                                  testRobot.GetBlockWorld(),
-                                  testRobot.GetFaceWorld(),
-                                  stateChangeComp);
+  BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
+  
   
   ICozmoBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
-  newBehavior->Init(*behaviorExternalInterface);
+  newBehavior->Init(behaviorExternalInterface);
   ASSERT_NE(newBehavior, nullptr);
   
   VerifyBehavior(newBehavior, behaviorContainer, kBaseBehaviorCount + 1);

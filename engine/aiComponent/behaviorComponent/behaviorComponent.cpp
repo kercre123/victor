@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 
+#include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -196,6 +197,8 @@ void BehaviorComponent::InitializeSubComponents(Robot& robot,
   behaviorSysMgr.InitConfiguration(baseRunnable,
                                    behaviorExternalInterface,
                                    &asyncMessageComponent);
+  
+  //aiComponent.Init(robot, this);
 }
 
 

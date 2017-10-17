@@ -41,7 +41,7 @@ class Robot;
 class BehaviorContainer : private Util::noncopyable
 {
 public:
-  ~BehaviorContainer();
+  virtual ~BehaviorContainer();
   
   ICozmoBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
   ICozmoBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;

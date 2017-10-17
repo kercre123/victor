@@ -204,13 +204,17 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _robotToEngineImplMessaging(new RobotToEngineImplMessaging(this))
   , _robotIdleTimeoutComponent(new RobotIdleTimeoutComponent(*this))
 {
+  DEV_ASSERT(context != nullptr,
+             "Robot.Constructor.ContextIsNull");
+  
   PRINT_NAMED_INFO("Robot.Robot", "Created");
       
   _pose.SetName("Robot_" + std::to_string(_ID));
   _driveCenterPose.SetName("RobotDriveCenter_" + std::to_string(_ID));
   
-  // initialize AI
-  _aiComponent->Init(*this);
+  // initialize AI - pass in null behavior component to use default
+  BehaviorComponent* useDefault = nullptr;
+  _aiComponent->Init(*this, useDefault);
   
   // Initializes _pose, _poseOrigins, and _worldOrigin:
   Delocalize(false);
@@ -2417,7 +2421,11 @@ Result Robot::SendIMURequest(const u32 length_ms) const
 
 bool Robot::HasExternalInterface() const
 {
-  return _context->GetExternalInterface() != nullptr;
+  if(_context != nullptr){
+    return _context->GetExternalInterface() != nullptr;
+  }else{
+    return false;
+  }
 }
 
 IExternalInterface* Robot::GetExternalInterface()
@@ -3154,7 +3162,8 @@ RobotState Robot::GetDefaultRobotState()
 
 RobotInterface::MessageHandler* Robot::GetRobotMessageHandler()
 {
-  if (!_context->GetRobotManager())
+  if ((_context == nullptr) ||
+      (_context->GetRobotManager() == nullptr))
   {
     DEV_ASSERT(false, "Robot.GetRobotMessageHandler.nullptr");
     return nullptr;

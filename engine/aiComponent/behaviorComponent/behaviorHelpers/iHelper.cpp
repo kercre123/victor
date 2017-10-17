@@ -21,11 +21,14 @@
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/robot.h"
 #include "anki/common/basestation/utils/timer.h"
+
+#include "util/logging/logging.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -125,6 +128,14 @@ bool IHelper::IsControlDelegated()
   return _behaviorToCallActionsOn.IsControlDelegated();
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IHelper::IsActing() const
+{
+  return _behaviorToCallActionsOn.IsActing();
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IHelper::Stop(bool isActive)
 {
@@ -137,10 +148,13 @@ void IHelper::Stop(bool isActive)
   
   // assumption: if the behavior is acting, and we are active, then we must have started the action, so we
   // should stop it
-  if( isActive && _behaviorToCallActionsOn.IsActing() ) {
-    const bool allowCallback = false;
-    const bool keepHelpers = true; // to avoid infinite loops of Stop
-    _behaviorToCallActionsOn.CancelDelegates(allowCallback, keepHelpers);
+  if( isActive && _behaviorToCallActionsOn.IsActing() ) {    
+    if(ANKI_VERIFY(_behaviorToCallActionsOn._behaviorExternalInterface->HasDelegationComponent(),
+                   "IHelper.Stop.NoDelegationComponent",
+                   "")){
+      auto& delegationComp = _behaviorToCallActionsOn._behaviorExternalInterface->GetDelegationComponent();
+      delegationComp.CancelActionIfRunning();
+    }
   }
 
   StopInternal(isActive);

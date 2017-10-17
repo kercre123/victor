@@ -818,7 +818,7 @@ Util::RandomGenerator& ICozmoBehavior::GetRNG() const {
 void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(!USE_BSM){
-    DEV_ASSERT_MSG(true,
+    DEV_ASSERT_MSG(false,
                    "ICozmoBehavior.UpdateInternal.NotUsingBSM",
                    "This function is BSM specific - please  don't call it if you're using the behavior manager");
   }

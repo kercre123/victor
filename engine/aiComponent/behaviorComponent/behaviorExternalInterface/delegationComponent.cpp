@@ -182,11 +182,30 @@ bool DelegationComponent::IsActing(const IBehavior* delegatingRunnable)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DelegationComponent::CancelDelegates(IBehavior* delegatingRunnable)
 {
+  CancelActionIfRunning(delegatingRunnable);
+  
+  if(_delegator->_runnableThatDelegatedHelper != nullptr &&
+           _delegator->_runnableThatDelegatedHelper == delegatingRunnable){
+    _delegator->_runnableThatDelegatedHelper = nullptr;
+    _delegator->_robot.GetAIComponent().GetBehaviorHelperComponent().StopHelperWithoutCallback(_delegator->_delegateHelperHandle.lock());
+    _delegator->_delegateHelperHandle.reset();
+  }
+  
+  if(USE_BSM){
+    _bsm->CancelDelegates(delegatingRunnable);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DelegationComponent::CancelActionIfRunning(IBehavior* delegatingRunnable)
+{
   if(_delegator->_runnableThatDelegatedAction != nullptr &&
-     _delegator->_runnableThatDelegatedAction == delegatingRunnable ){
+     (delegatingRunnable == nullptr ||
+     _delegator->_runnableThatDelegatedAction == delegatingRunnable) ){
     bool ret = false;
     u32 tagToCancel = _delegator->_lastActionTag;
-    if(_delegator->_runnableThatDelegatedAction == delegatingRunnable){
+    if(_delegator->_runnableThatDelegatedAction == delegatingRunnable ||
+       delegatingRunnable == nullptr){
       _delegator->_runnableThatDelegatedAction = nullptr; // TEMP:  // TODO:(bn) redundant checks now
       ret = _delegator->_robot.GetActionList().Cancel(tagToCancel);
     }
@@ -198,16 +217,6 @@ void DelegationComponent::CancelDelegates(IBehavior* delegatingRunnable)
     if( _delegator->_lastActionTag == tagToCancel ) {
       _delegator->_lastActionTag = ActionConstants::INVALID_TAG;
     }
-    
-  }else if(_delegator->_runnableThatDelegatedHelper != nullptr &&
-           _delegator->_runnableThatDelegatedHelper == delegatingRunnable){
-    _delegator->_runnableThatDelegatedHelper = nullptr;
-    _delegator->_robot.GetAIComponent().GetBehaviorHelperComponent().StopHelperWithoutCallback(_delegator->_delegateHelperHandle.lock());
-    _delegator->_delegateHelperHandle.reset();
-  }
-  
-  if(USE_BSM){
-    _bsm->CancelDelegates(delegatingRunnable);
   }
 }
 
