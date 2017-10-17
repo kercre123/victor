@@ -103,7 +103,7 @@ message AudioInput
 
 message AudioFFTResult
 {
-  uint_32 result
+  uint_32 result[4]
 }
 
 /// *************** Overall message pipe ******************************* ///

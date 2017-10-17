@@ -467,7 +467,7 @@ namespace Anki {
       audioCaptureSystem_.SetCallback(std::bind(&AudioInputCallback, std::placeholders::_1, std::placeholders::_2));
       audioCaptureSystem_.Init();
       // VIC-473 Commenting this out since it sometimes causes sim to fail.
-      //audioCaptureSystem_.StartRecording();
+      audioCaptureSystem_.StartRecording();
 
       isInitialized = true;
       return RESULT_OK;

@@ -173,48 +173,51 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
     if (!_rawAudioData.empty())
     {
 
-      std::packaged_task<uint32_t()> task([data = _rawAudioData]() {
-        std::vector<std::complex<double> > a;
-        uint32 size = 0;
-        for(auto e : data)
-        {
-          size += e.size();
-        }
-        a.resize(size);
+      std::packaged_task<std::vector<uint32_t>()> task([data = _rawAudioData]() {
+        std::vector<uint32_t> perChannelFFT;
 
-        auto iter = std::begin(a);
-        for(auto e : data)
+        for(u8 i = 0; i < kNumInputChannels; ++i)
         {
-          iter = std::copy(e.begin(), e.end(), iter);
-        }
-
-        Fft::transform(a);
-
-        // static FILE* fp;
-        // if(fp == nullptr)
-        // {
-        //   fp = fopen("/data/fft.txt", "w");
-        // }
-        
-        // Skip the first one since it is garbage and often really large
-        // Only look at the first half since the second half is just the inverse of the first
-        // Use every other to effectively scale the data to the appropriate range. 2 because we recorded 2
-        // seconds of data
-        float largestValue = 0;
-        uint32_t largestValueIdx = 0;
-        for(int i = 1; i < a.size()/2; i += 2)
-        {
-          const auto& e = a[i];
-          float magSq = e.real()*e.real() + e.imag()*e.imag();
-          if(magSq > largestValue)
+          std::vector<std::complex<double> > fftArray;
+          for(auto chunk : data)
           {
-            largestValue = magSq;
-            largestValueIdx = i;
+            for(uint32_t j = i; j < chunk.size(); j += kNumInputChannels)
+            fftArray.push_back(chunk[j]);
           }
-          // fprintf(fp, "%f\n", magSq);
+
+          Fft::transform(fftArray);
+
+          FILE* fp = nullptr;
+          if(fp == nullptr)
+          {
+            std::string file = "/data/fft_" + std::to_string(i) + ".txt";
+            fp = fopen(file.c_str(), "w");
+          }
+          
+          // Skip the first one since it is garbage and often really large
+          // Only look at the first half since the second half is just the inverse of the first
+          // Use every other to effectively scale the data to the appropriate range. 2 because we recorded 2
+          // seconds of data
+          float largestValue = 0;
+          uint32_t largestValueIdx = 0;
+          for(int i = 1; i < fftArray.size()/2; i += 2)
+          {
+            const auto& e = fftArray[i];
+            float magSq = e.real()*e.real() + e.imag()*e.imag();
+            if(magSq > largestValue)
+            {
+              largestValue = magSq;
+              largestValueIdx = i;
+            }
+            if(fp != nullptr)
+            {
+              fprintf(fp, "%f\n", magSq);
+            }
+          }
+          PRINT_NAMED_WARNING("FFT","Channel %u, FFT %u", i, largestValueIdx/2);
+          perChannelFFT.push_back(largestValueIdx/2);
         }
-        PRINT_NAMED_WARNING("FFT SAVED","%u", largestValueIdx/2);
-        return largestValueIdx/2;
+        return perChannelFFT;
       });
 
       _fftFuture = task.get_future();
@@ -462,10 +465,14 @@ void MicDataProcessor::Update()
   if(_fftFuture.valid() && 
      _fftFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
   {
-    uint32_t res = _fftFuture.get();
-    PRINT_NAMED_WARNING("THE FUTURE IS HERE","%u", res);
     auto msg = RobotInterface::AudioFFTResult();
-    msg.result = res;
+    std::vector<uint32_t> res = _fftFuture.get();
+
+    for(u8 i = 0; i < res.size(); ++i)
+    {
+      PRINT_NAMED_WARNING("THE FUTURE IS HERE","Channel %u %u", i, res[i]);
+      msg.result[i] = res[i];
+    }
     RobotInterface::SendMessageToEngine(std::move(msg));
   }
 }

@@ -80,7 +80,7 @@ private:
   std::string GetResampleFileNameFromProcessed(const std::string& processedName);
 
   // Future for the result of fft
-  std::future<uint32_t> _fftFuture;
+  std::future<std::vector<uint32_t>> _fftFuture;
 };
 
 } // namespace Cozmo

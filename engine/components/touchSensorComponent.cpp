@@ -75,7 +75,6 @@ void TouchSensorComponent::Update(const RobotState& msg)
   meanTouchIntensity /= kNumTouchSamples;
 
   static int c = 0;
-  static f32 baseline = 0;
   if(c >= 0 && c < 100)
   {
     ++c;
@@ -84,8 +83,7 @@ void TouchSensorComponent::Update(const RobotState& msg)
   else if(c != -1)
   {
     c = -1;
-    baseline = meanTouchIntensity;
-    kTouchIntensityThreshold = baseline + 30;
+    kTouchIntensityThreshold = meanTouchIntensity + 30;
   }
   
   // PRINT_NAMED_WARNING("TOUCH INTENSITY", "%f", meanTouchIntensity);

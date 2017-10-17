@@ -175,7 +175,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
   }
   
   // Disable Viz entirely on shipping builds
-  if(ANKI_DEV_CHEATS && false)
+  if(ANKI_DEV_CHEATS)
   {
     if(!_config.isMember(AnkiUtil::kP_VIZ_HOST_IP))
     {
@@ -252,7 +252,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
   _isInitialized = true;
   
   #ifndef SIMULATOR
- SetEngineState(EngineState::LoadingData);
+  SetEngineState(EngineState::LoadingData);
   #endif
 
   return RESULT_OK;

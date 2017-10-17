@@ -2,8 +2,11 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.96631031 0.16475944 0.19773393 4.9256008
-  position -0.26188831 -0.90726572 0.32005336
+  orientation -0.98637133 0.11229413 0.12025649 4.864837
+  position -0.16908988 -0.92271909 0.25245053
+}
+VictorCharger {
+  translation -0.235 0 0
 }
 Background {
   skyColor [
@@ -80,9 +83,6 @@ Transform {
 }
 LightCube {
   translation 0.15 0 0.022
-}
-CozmoChargerSimple {
-  translation -0.23 0 0
 }
 Block1x1_NotActive {
   translation 0.030000005 0.34 0.022

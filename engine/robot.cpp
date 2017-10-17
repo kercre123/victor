@@ -252,8 +252,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   
   _inventoryComponent->Init(_context->GetDataLoader()->GetInventoryConfig());
 
-  _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotActivitiesConfig());
   _behaviorMgr->InitReactionTriggerMap(_context->GetDataLoader()->GetReactionTriggerMap());
+  _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotActivitiesConfig());
   
   if(USE_BSM){
     _behaviorSysMgr->InitConfiguration(*this, _context->GetDataLoader()->GetBehaviorSystemConfig());
