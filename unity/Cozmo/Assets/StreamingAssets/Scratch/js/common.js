@@ -428,8 +428,6 @@
     window.onScriptsStopped = function() {
         // Turn off animated play button on workspace
         document.body.classList.remove('is-program-running');
-
-        // TODO Also switch play now modal to switch from stop sign to green flag on button?
     }
 
     /**

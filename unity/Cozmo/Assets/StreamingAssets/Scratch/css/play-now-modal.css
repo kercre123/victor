@@ -84,12 +84,12 @@
 
 #play-now-modal .project-img-active { display: none; }
 #play-now-modal #btn-play-now-stop { display: none; }
-#play-now-modal.is-playing .project-img-idle {display: block;}
-#play-now-modal.is-playing  #btn-play-now-stop { display: flex; }
+.is-program-running #play-now-modal .project-img-idle {display: block;}
+.is-program-running #play-now-modal  #btn-play-now-stop { display: flex; }
 
-#play-now-modal.is-playing .project-img-active {display: block;}
-#play-now-modal.is-playing .project-img-idle {display: none;}
-#play-now-modal.is-playing #btn-play-now-start {display: none;}
+.is-program-running #play-now-modal .project-img-active {display: block;}
+.is-program-running #play-now-modal .project-img-idle {display: none;}
+.is-program-running #play-now-modal #btn-play-now-start {display: none;}
 
 
 @media screen and (min-height: 375px) {
