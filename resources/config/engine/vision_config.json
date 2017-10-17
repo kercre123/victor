@@ -109,7 +109,7 @@
     // "top_K": 1, 
     // "min_score": 0.5
 
-    "graph"                       : "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb",
+    "graph"                       : "ssd_mobilenet_v1_coco_11_06_2017_quantized.pb",
     //config["graph"] = "ssd_inception_v2_coco_11_06_2017_frozen.pb";
     //config["graph"] = "rfcn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
     //config["graph"] = "faster_rcnn_inception_resnet_v2_atrous_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "FloorMod"

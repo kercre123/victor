@@ -85,7 +85,7 @@ ObjectDetector::Status ObjectDetector::Detect(ImageCache& imageCache, std::list<
     return Status::Error;
   }
     
-  const ImageCache::Size kImageSize = ImageCache::Size::Half_NN;
+  const ImageCache::Size kImageSize = ImageCache::Size::Quarter_AverageArea;
   const bool kCropCenterSquare = false;
   
   if(!_future.valid())
@@ -94,7 +94,7 @@ ObjectDetector::Status ObjectDetector::Detect(ImageCache& imageCache, std::list<
     if(imageCache.HasColor())
     {
       const ImageRGB& img = imageCache.GetRGB(kImageSize);
-      
+     
       // We're going to copy the data into a separate image to be 
       // processed asynchronously
       // TODO: resize here instead of the Model, to copy less data
@@ -118,6 +118,9 @@ ObjectDetector::Status ObjectDetector::Detect(ImageCache& imageCache, std::list<
         _upperLeft.y() = 0;
         img.CopyTo(imgToProcess);
       }
+
+      PRINT_NAMED_INFO("ObjectDetector.Detect.ProcessingImage", "Detecting objects in %dx%d image t=%u", 
+                       imgToProcess.GetNumCols(), imgToProcess.GetNumRows(), imgToProcess.GetTimestamp());
 
       _future = std::async(std::launch::async, [this](const ImageRGB& img) {
         std::list<DetectedObject> objects;
