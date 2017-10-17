@@ -27,7 +27,7 @@
     "CheckingQuality"        : 15,
     "DetectingLaserPoints"   : 2,
     "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
-    "DetectingGeneralObjects": 45
+    "DetectingGeneralObjects": 1
   },
   
   "ColorImages" : true,        // Whether color images are enabled on startup (can still be toggled later)
@@ -93,6 +93,10 @@
   
   "ObjectDetector" :
   {
+    // How frequently to print or log events about timing
+    "ProfilingPrintFrequency_ms"     : 10000,
+    "ProfilingEventLogFrequency_ms"  : 30000,
+    
     // OpenCV DNN w/ Caffe SSD Model
     // "graph": "MobileNetSSD_deploy", 
     // "labels": "coco-labels-20.txt", 

@@ -44,7 +44,8 @@ namespace Vision {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectDetector::ObjectDetector()
-: _model(new Model())
+: Profiler("ObjectDetector")
+, _model(new Model())
 {
   
 }
@@ -58,11 +59,20 @@ ObjectDetector::~ObjectDetector()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ObjectDetector::Init(const std::string& modelPath, const Json::Value& config)
 {
+  Tic("LoadModel");
   const Result result = _model->LoadModel(modelPath, config);
   if(RESULT_OK == result)
   {
     _isInitialized = true;
   }
+  Toc("LoadModel");
+
+  PRINT_NAMED_INFO("ObjectDetector.Init.LoadModelTime", "Loading model '%s' took %.1fsec", 
+                   modelPath.c_str(), Util::MilliSecToSec(AverageToc("LoadModel")));
+
+  SetPrintFrequency(config.get("ProfilingPrintFrequency_ms", 10000).asUInt());
+  SetDasLogFrequency(config.get("ProfilingEventLogFrequency_ms", 10000).asUInt());
+
   return result;
 }
   
@@ -75,8 +85,9 @@ ObjectDetector::Status ObjectDetector::Detect(ImageCache& imageCache, std::list<
     return Status::Error;
   }
     
-  const ImageCache::Size kImageSize = ImageCache::Size::Full;
-
+  const ImageCache::Size kImageSize = ImageCache::Size::Half_NN;
+  const bool kCropCenterSquare = false;
+  
   if(!_future.valid())
   {
     // Require color data
@@ -90,12 +101,12 @@ ObjectDetector::Status ObjectDetector::Detect(ImageCache& imageCache, std::list<
       // TODO: avoid copying data entirely somehow?
       static ImageRGB imgToProcess;
       
-      const bool kCropCenterSquare = true;
       if(kCropCenterSquare)
       {
         const s32 squareDim = std::min(img.GetNumRows(), img.GetNumCols());
-        Rectangle<s32> centerCrop(img.GetNumCols()/2 - squareDim/2,
-                                  img.GetNumRows()/2 - squareDim/2,
+        _upperLeft.x() = img.GetNumCols()/2 - squareDim/2;
+        _upperLeft.y() = img.GetNumRows()/2 - squareDim/2;
+        Rectangle<s32> centerCrop(_upperLeft.x(), _upperLeft.y(),
                                   squareDim, squareDim);
         
         const ImageRGB& imgCenterCrop = img.GetROI(centerCrop);
@@ -103,12 +114,16 @@ ObjectDetector::Status ObjectDetector::Detect(ImageCache& imageCache, std::list<
       }
       else
       {
+        _upperLeft.x() = 0;
+        _upperLeft.y() = 0;
         img.CopyTo(imgToProcess);
       }
 
       _future = std::async(std::launch::async, [this](const ImageRGB& img) {
         std::list<DetectedObject> objects;
+        Tic("Inference");
         Result result = _model->Run(img, objects);
+        Toc("Inference");
         if(RESULT_OK != result)
         {
           PRINT_NAMED_WARNING("ObjectDetector.Detect.AsyncLambda.ModelRunFailed", "");
@@ -140,14 +155,14 @@ ObjectDetector::Status ObjectDetector::Detect(ImageCache& imageCache, std::list<
       const f32 widthScale = (f32)imageCache.GetOrigNumRows() / (f32)img.GetNumRows();
       const f32 heightScale = (f32)imageCache.GetOrigNumCols() / (f32)img.GetNumCols();
       
-      if(!Util::IsNear(widthScale, 1.f) || !Util::IsNear(heightScale,1.f))
+      if( kCropCenterSquare || !Util::IsNear(widthScale, 1.f) || !Util::IsNear(heightScale,1.f))
       {
-        std::for_each(objects.begin(), objects.end(), [widthScale,heightScale](DetectedObject& object)
+        std::for_each(objects.begin(), objects.end(), [this,widthScale,heightScale](DetectedObject& object)
                       {
-                        object.rect = Rectangle<s32>(std::round((f32)object.rect.GetX() * widthScale),
-                                                    std::round((f32)object.rect.GetY() * heightScale),
-                                                    std::round((f32)object.rect.GetWidth() * widthScale),
-                                                    std::round((f32)object.rect.GetHeight() * heightScale));
+                        object.rect = Rectangle<s32>(std::round((f32)(object.rect.GetX() + _upperLeft.x()) * widthScale),
+                                                     std::round((f32)(object.rect.GetY() + _upperLeft.y()) * heightScale),
+                                                     std::round((f32)object.rect.GetWidth() * widthScale),
+                                                     std::round((f32)object.rect.GetHeight() * heightScale));
                       });
       }
       

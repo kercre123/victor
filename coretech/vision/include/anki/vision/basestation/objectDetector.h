@@ -16,6 +16,8 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/rect.h"
 
+#include "anki/vision/basestation/profiler.h"
+
 #include <future>
 #include <list>
 
@@ -29,7 +31,7 @@ namespace Vision {
 
 class ImageCache;
 
-class ObjectDetector
+class ObjectDetector : Profiler
 {
 public:
   
@@ -66,8 +68,9 @@ private:
   std::unique_ptr<Model> _model;
   std::future<std::list<DetectedObject>> _future;
 
-  bool _isInitialized = false;
-  
+  bool    _isInitialized = false;
+  Point2i _upperLeft;
+
 }; // class ObjectDetector
   
 } // namespace Vision

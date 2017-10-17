@@ -1188,7 +1188,7 @@ namespace Cozmo {
   {
     // Hack to continue drawing detected objects for a bit after they are detected
     // since object detection is slow
-    static const TimeStamp_t kKeepDrawingDetectionsFor_ms = 2000;
+    static const TimeStamp_t kKeepDrawingDetectionsFor_ms = 3000;
     static TimeStamp_t lastNewObjectsTime_ms = 0;
     static std::list<ExternalInterface::RobotObservedGenericObject> lastDetectedObjects;
 
