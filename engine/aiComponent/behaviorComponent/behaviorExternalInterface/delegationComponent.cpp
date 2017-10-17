@@ -82,6 +82,8 @@ bool Delegator::Delegate(IBehavior* delegatingRunnable,
 bool Delegator::Delegate(IBehavior* delegatingRunnable, IBehavior* delegated)
 {
   if(USE_BSM){
+    DEV_ASSERT(dynamic_cast<IHelper*>(delegated) == nullptr,
+               "Delegator.Delegate.WrongDelegationFunction.UseIHelperFunction");
     return _bsm->Delegate(delegatingRunnable, delegated);
   }
   return false;
@@ -90,10 +92,10 @@ bool Delegator::Delegate(IBehavior* delegatingRunnable, IBehavior* delegated)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool Delegator::Delegate(IBehavior* delegatingRunnable,
-                               BehaviorExternalInterface& behaviorExternalInterface,
-                               HelperHandle helper,
-                               BehaviorSimpleCallbackWithExternalInterface successCallback,
-                               BehaviorSimpleCallbackWithExternalInterface failureCallback)
+                         BehaviorExternalInterface& behaviorExternalInterface,
+                         HelperHandle helper,
+                         BehaviorSimpleCallbackWithExternalInterface successCallback,
+                         BehaviorSimpleCallbackWithExternalInterface failureCallback)
 {
   EnsureHandleIsUpdated();
   

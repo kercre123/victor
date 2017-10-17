@@ -54,7 +54,7 @@ protected:
   friend class BehaviorHelperFactory;
   friend class IHelper;
   void Update(BehaviorExternalInterface& behaviorExternalInterface);
-  HelperHandle AddHelperToComponent(IHelper*& helper);
+  HelperHandle AddHelperToComponent(IHelper*& helper,BehaviorExternalInterface& behaviorExternalInterface);
   
 private:
   std::unique_ptr<BehaviorHelperFactory> _helperFactory;

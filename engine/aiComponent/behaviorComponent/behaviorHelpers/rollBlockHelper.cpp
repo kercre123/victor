@@ -66,7 +66,7 @@ bool RollBlockHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus RollBlockHelper::Init(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus RollBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // do first update immediately
   _shouldRoll = true;

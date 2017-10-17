@@ -179,7 +179,10 @@ TEST(StackBlocksBehavior, InitBehavior)
   
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, emptyBehaviorMap);
+  {
+    BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, bc);
+  }
   
   Robot& robot = testBehaviorFramework.GetRobot();
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
@@ -200,7 +203,10 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   CozmoContext context(nullptr, &handler);
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, emptyBehaviorMap);
+  {
+    BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, bc);
+  }
   
   Robot& robot = testBehaviorFramework.GetRobot();
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();

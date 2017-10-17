@@ -85,7 +85,7 @@ bool SearchForBlockHelper::ShouldCancelDelegates(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus SearchForBlockHelper::Init(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus SearchForBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _nextSearchIntensity = SearchIntensity::QuickSearch;
   {

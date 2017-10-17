@@ -88,7 +88,7 @@ ICozmoBehavior::Status IHelper::UpdateWhileActive(BehaviorExternalInterface& beh
 
     _hasStarted = true;
     _timeStarted_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    _status = Init(behaviorExternalInterface);
+    _status = InitBehaviorHelper(behaviorExternalInterface);
     // If a delegate has been set, don't tick update while active
     if(_status != ICozmoBehavior::Status::Running ||
        _delegateAfterUpdate.GetDelegateToSet() != nullptr){
@@ -109,6 +109,14 @@ ICozmoBehavior::Status IHelper::UpdateWhileActive(BehaviorExternalInterface& beh
   
   return _status;
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IHelper::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  // purposefully blank - only called to maintain iBehavior state info
+}
+
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

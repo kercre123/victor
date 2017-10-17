@@ -189,6 +189,12 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
     return false;
   }
   
+  if(!ANKI_VERIFY(delegated != nullptr,
+                  "BehaviorSystemManager.Delegate.DelegatingToNullptr", "")){
+    return false;
+  }
+  
+  
   {
     // Ensure that the delegated runnable is in the delegates map
     const RunnableStack::DelegatesMap& delegatesMap =  _runnableStack->GetDelegatesMap();

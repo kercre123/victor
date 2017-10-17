@@ -68,7 +68,7 @@ bool DriveToHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorExt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus DriveToHelper::Init(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus DriveToHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

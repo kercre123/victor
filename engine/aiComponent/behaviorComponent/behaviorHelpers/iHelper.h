@@ -48,7 +48,7 @@ protected:
   // other BSRunnables are delegated to - so don't tie this UpdateInternal in just yet
   
   // Currently unused overrides of IBehavior since no equivalence in old BM system
-  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
+  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
   virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const override { return false;};
   virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
   void GetAllDelegates(std::set<IBehavior*>& delegates) const override {}
@@ -116,7 +116,7 @@ protected:
   // Called on the first time a helper is ticked while active
   // UpdateWhileActive will be called immediately after on the same tick if no
   // delegate is set
-  virtual BehaviorStatus Init(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual BehaviorStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   
   // Allows sub classes to pass back a delegate, success and failure function for IHelper to manage. If a
   // delegate is set in the delegate properties, then it will be pushed onto the stack, and the callbacks from

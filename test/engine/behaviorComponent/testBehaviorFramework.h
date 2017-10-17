@@ -45,6 +45,14 @@ void DoBehaviorComponentTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorCo
 void InjectBehaviorIntoStack(ICozmoBehavior& behavior, TestBehaviorFramework& testFramework);
 
 void IncrementBaseStationTimerTicks(int numTicks = 1);
+void InjectValidDelegateIntoBSM(BehaviorSystemManager& bsm,
+                                IBehavior* delegator,
+                                IBehavior* delegated,
+                                bool shouldMarkAsEnterdScope = true);
+  
+void InjectAndDelegate(BehaviorSystemManager& bsm,
+                       IBehavior* delegator,
+                       IBehavior* delegated);
   
 class TestBehaviorFramework{
 public:
@@ -54,11 +62,15 @@ public:
   Robot& GetRobot(){ assert(_robot); return *_robot;}
 
   
-  // Call in order to set up and initialize a standard behavior component
   void InitializeStandardBehaviorComponent(IBehavior* baseRunnable = nullptr,
                                            std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeRunnable = {},
-                                           bool useCustomBehaviorMap = false,
-                                           RobotDataLoader::BehaviorIDJsonMap customMap = {});
+                                           bool shouldCallInitOnBase = true);
+  
+  // Call in order to set up and initialize a standard behavior component
+  void InitializeStandardBehaviorComponent(IBehavior* baseRunnable,
+                                           std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeRunnable,
+                                           bool shouldCallInitOnBase,
+                                           BehaviorContainer*& customContainer);
   
   // After calling the initializer above, the following accessors will work appropriately
   AIComponent& GetAIComponent(){ assert(_aiComponent); return *_aiComponent;}
@@ -246,7 +258,7 @@ public:
   
   virtual void StopInternal(bool isActive) override;
   virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual ICozmoBehavior::Status Init(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual ICozmoBehavior::Status InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual ICozmoBehavior::Status UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   void CheckActions();
   

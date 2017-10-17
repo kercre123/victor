@@ -133,7 +133,10 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
   CozmoContext context{};
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, emptyBehaviorMap);
+  {
+    BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, container);
+  }
   
   BehaviorContainer& behaviorContainer = testBehaviorFramework.GetBehaviorContainer();
   

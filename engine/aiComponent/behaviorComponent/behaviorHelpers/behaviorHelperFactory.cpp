@@ -44,7 +44,7 @@ HelperHandle BehaviorHelperFactory::CreateDriveToHelper(BehaviorExternalInterfac
                                                         const DriveToParameters& parameters)
 {
   IHelper* helper = new DriveToHelper(behaviorExternalInterface, behavior, *this, targetID, parameters);
-  return _helperComponent.AddHelperToComponent(helper);
+  return _helperComponent.AddHelperToComponent(helper, behaviorExternalInterface);
 }
   
   
@@ -55,7 +55,7 @@ HelperHandle BehaviorHelperFactory::CreatePickupBlockHelper(BehaviorExternalInte
                                                             const PickupBlockParamaters& parameters)
 {
   IHelper* helper = new PickupBlockHelper(behaviorExternalInterface, behavior, *this, targetID, parameters);
-  return _helperComponent.AddHelperToComponent(helper);
+  return _helperComponent.AddHelperToComponent(helper, behaviorExternalInterface);
 }
 
 
@@ -64,7 +64,7 @@ HelperHandle BehaviorHelperFactory::CreatePlaceBlockHelper(BehaviorExternalInter
                                                            ICozmoBehavior& behavior)
 {
   IHelper* helper = new PlaceBlockHelper(behaviorExternalInterface, behavior, *this);
-  return _helperComponent.AddHelperToComponent(helper);
+  return _helperComponent.AddHelperToComponent(helper, behaviorExternalInterface);
 }
 
   
@@ -79,7 +79,7 @@ HelperHandle BehaviorHelperFactory::CreatePlaceRelObjectHelper(BehaviorExternalI
                                              targetID,
                                              placingOnGround,
                                              parameters);
-  return _helperComponent.AddHelperToComponent(helper);
+  return _helperComponent.AddHelperToComponent(helper, behaviorExternalInterface);
 }
 
 
@@ -91,7 +91,7 @@ HelperHandle BehaviorHelperFactory::CreateRollBlockHelper(BehaviorExternalInterf
                                                           const RollBlockParameters& parameters)
 {
   IHelper* helper = new RollBlockHelper(behaviorExternalInterface, behavior, *this, targetID, rollToUpright, parameters);
-  return _helperComponent.AddHelperToComponent(helper);
+  return _helperComponent.AddHelperToComponent(helper, behaviorExternalInterface);
 }
 
   
@@ -101,7 +101,7 @@ HelperHandle BehaviorHelperFactory::CreateSearchForBlockHelper(BehaviorExternalI
                                                                const SearchParameters& params)
 {
   IHelper* helper = new SearchForBlockHelper(behaviorExternalInterface, behavior, *this, params);
-  return _helperComponent.AddHelperToComponent(helper);
+  return _helperComponent.AddHelperToComponent(helper, behaviorExternalInterface);
 }
   
 } // namespace Cozmo

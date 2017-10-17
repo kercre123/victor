@@ -46,6 +46,7 @@ class BehaviorManager;
 class BehaviorSystemManager;
 class BlockWorld;
 class DelegationComponent;
+class DevBaseRunnable;
 class FaceWorld;
 class IBehavior;
 class Robot;
@@ -177,6 +178,8 @@ private:
   
   // Behavior audio client is used to update the audio engine with the current sparked state (a.k.a. "round")
   std::unique_ptr<Audio::BehaviorAudioComponent> _audioClient;
+  
+  DevBaseRunnable* _devBaseRunnable = nullptr;
   
 };
 

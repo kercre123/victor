@@ -28,12 +28,18 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DevBaseRunnable::DevBaseRunnable( IBehavior* initialDelegate )
-  : IBehavior("DevBase")
-  , _initialDelegate(initialDelegate)
+: IBehavior("DevBase")
+, _initialDelegate(initialDelegate)
 {
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+DevBaseRunnable::~DevBaseRunnable()
+{
+  
+}
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DevBaseRunnable::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {

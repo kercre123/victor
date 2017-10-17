@@ -97,8 +97,6 @@ void RunnableStack::PushOntoStack(IBehavior* runnable)
   
   PrepareDelegatesToEnterScope(runnable);
   runnable->OnActivated(*_behaviorExternalInterface);
-  
-
 }
 
 

@@ -43,11 +43,14 @@ BehaviorHelperComponent::BehaviorHelperComponent()
 //////
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-HelperHandle BehaviorHelperComponent::AddHelperToComponent(IHelper*& helper)
+HelperHandle BehaviorHelperComponent::AddHelperToComponent(IHelper*& helper,
+                                                           BehaviorExternalInterface& behaviorExternalInterface)
 {
   // We actually don't want to track for right now
   auto helperHandle = std::shared_ptr<IHelper>(helper);
   helper = nullptr;
+  helperHandle->Init(behaviorExternalInterface);
+  helperHandle->OnEnteredActivatableScope();
   return helperHandle;
 }
   

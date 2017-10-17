@@ -34,7 +34,10 @@ TEST(BehaviorInterface, Create)
   CozmoContext context{};
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, emptyBehaviorMap);
+  {
+    BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, container);
+  }
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
@@ -58,7 +61,10 @@ TEST(BehaviorInterface, Init)
   CozmoContext context{};
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, emptyBehaviorMap);
+  {
+    BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, bc);
+  }
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
@@ -85,7 +91,10 @@ TEST(BehaviorInterface, InitWithInterface)
   CozmoContext context(nullptr, &handler);
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, emptyBehaviorMap);
+  {
+    BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, container);
+  }
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
@@ -109,7 +118,10 @@ TEST(BehaviorInterface, Run)
   CozmoContext context{};
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, emptyBehaviorMap);
+  {
+    BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, bc);
+  }
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
@@ -164,7 +176,10 @@ TEST(BehaviorInterface, ScoreWhileRunning_NotRunning)
   CozmoContext context(nullptr, &handler);
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, emptyBehaviorMap);
+  {
+    BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, container);
+  }
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
@@ -208,7 +223,11 @@ TEST(BehaviorInterface, ScoreWhileRunning_Running)
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehavior b(empty);
 
-  testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr, true, emptyBehaviorMap);
+  {
+    BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr, true, bc);
+  }
+  
   b.ReadFromScoredJson(empty);
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
@@ -268,7 +287,11 @@ TEST(BehaviorInterface, HandleMessages)
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehavior b(empty);
   
-  testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr, true, emptyBehaviorMap);
+  {
+    BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr, true, bc);
+  }
+  
   b.ReadFromScoredJson(empty);
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
@@ -318,7 +341,10 @@ TEST(BehaviorInterface, OutsideAction)
   CozmoContext context(nullptr, &handler);
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, emptyBehaviorMap);
+  {
+    BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, container);
+  }
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
@@ -374,8 +400,10 @@ TEST(BehaviorInterface, DelegateIfInControlSimple)
   
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr,
-                                                            true, emptyBehaviorMap);
+  {
+    BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr, true, bc);
+  }
   
   Robot& robot = testBehaviorFramework.GetRobot();
   auto& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
@@ -414,8 +442,10 @@ TEST(BehaviorInterface, DelegateIfInControlFailures)
   
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr,
-                                                            true, emptyBehaviorMap);
+  {
+    BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr, true, container);
+  }
   
   Robot& robot = testBehaviorFramework.GetRobot();
   
@@ -482,8 +512,10 @@ TEST(BehaviorInterface, DelegateIfInControlCallbacks)
   
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr,
-                                                            true, emptyBehaviorMap);
+  {
+    BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr, true, container);
+  }
   
   Robot& robot = testBehaviorFramework.GetRobot();
   
@@ -553,8 +585,10 @@ TEST(BehaviorInterface, DelegateIfInControlWhenNotRunning)
   
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr,
-                                                            true, emptyBehaviorMap);
+  {
+    BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr, true, container);
+  }
   
   Robot& robot = testBehaviorFramework.GetRobot();
   auto& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
@@ -623,8 +657,10 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
   
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr,
-                                                            true, emptyBehaviorMap);
+  {
+    BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr, true, container);
+  }
   
   Robot& robot = testBehaviorFramework.GetRobot();
   
@@ -727,8 +763,10 @@ TEST(BehaviorInterface, DelegateIfInControlInsideInit)
   
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr,
-                                                            true, emptyBehaviorMap);
+  {
+    BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr, true, bc);
+  }
   
   Robot& robot = testBehaviorFramework.GetRobot();
   auto& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();

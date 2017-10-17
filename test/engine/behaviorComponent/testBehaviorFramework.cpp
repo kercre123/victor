@@ -62,12 +62,24 @@ TestBehaviorFramework::TestBehaviorFramework(int robotID,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseRunnable,
-                                                                std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeRunnable,
-                                                                bool useCustomBehaviorMap,
-                                                                RobotDataLoader::BehaviorIDJsonMap customMap)
+                                         std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeRunnable,
+                                         bool shouldCallInitOnBase)
 {
-  if(useCustomBehaviorMap){
-    _behaviorContainer = std::make_unique<BehaviorContainer>(customMap);
+  BehaviorContainer* empty = nullptr;
+  InitializeStandardBehaviorComponent(baseRunnable, initializeRunnable,
+                                      shouldCallInitOnBase, empty);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseRunnable,
+                                         std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeRunnable,
+                                         bool shouldCallInitOnBase,
+                                         BehaviorContainer*& customContainer)
+{
+  if(customContainer != nullptr){
+    _behaviorContainer.reset(customContainer);
+    customContainer = nullptr;
   }else{
     _behaviorContainer = std::make_unique<BehaviorContainer>(
                              cozmoContext->GetDataLoader()->GetBehaviorJsons());
@@ -79,7 +91,6 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseR
                                                                                          _behaviorContainer.get());
   
   // stack is unused - put an arbitrary behavior on it
-  bool shouldCallInitOnBase = true;
   if(baseRunnable == nullptr){
     baseRunnable = subComponents->_behaviorContainer.FindBehaviorByID(BehaviorID::Wait).get();
     shouldCallInitOnBase = false;
@@ -179,6 +190,32 @@ void InjectBehaviorIntoStack(ICozmoBehavior& injectBehavior, TestBehaviorFramewo
 void IncrementBaseStationTimerTicks(int numTicks)
 {
   BaseStationTimer::getInstance()->UpdateTime(BaseStationTimer::getInstance()->GetTickCount() + numTicks);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void InjectValidDelegateIntoBSM(BehaviorSystemManager& bsm,
+                                IBehavior* delegator,
+                                IBehavior* delegated,
+                                bool shouldMarkAsEnterdScope){
+  auto iter = bsm._runnableStack->_delegatesMap.find(delegator);
+  if(iter != bsm._runnableStack->_delegatesMap.end()){
+    iter->second.insert(delegated);
+    if(shouldMarkAsEnterdScope){
+      delegated->OnEnteredActivatableScope();
+    }
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void InjectAndDelegate(BehaviorSystemManager& bsm,
+                       IBehavior* delegator,
+                       IBehavior* delegated){
+  InjectValidDelegateIntoBSM(bsm,
+                             delegator,
+                             delegated);
+  EXPECT_TRUE(bsm.Delegate(delegator, delegated));
 }
 
   
@@ -543,7 +580,7 @@ bool TestHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorExtern
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status TestHelper::Init(BehaviorExternalInterface& behaviorExternalInterface) {
+ICozmoBehavior::Status TestHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) {
   _initCount++;
   
   printf("%s: Init. Action=%p\n", _name.c_str(), _nextActionToRun);

@@ -62,7 +62,7 @@ bool PlaceRelObjectHelper::ShouldCancelDelegates(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus PlaceRelObjectHelper::Init(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus PlaceRelObjectHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _tmpRetryCounter = 0;
   

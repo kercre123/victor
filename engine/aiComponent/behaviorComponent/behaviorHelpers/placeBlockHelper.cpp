@@ -47,7 +47,7 @@ bool PlaceBlockHelper::ShouldCancelDelegates(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus PlaceBlockHelper::Init(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus PlaceBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   double turn_rad = behaviorExternalInterface.GetRNG().RandDblInRange(M_PI_4 ,M_PI_2);
   if( behaviorExternalInterface.GetRNG().RandDbl() < 0.5 )

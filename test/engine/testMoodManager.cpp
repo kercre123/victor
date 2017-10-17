@@ -448,7 +448,10 @@ TEST(MoodManager, BehaviorScoring)
   CozmoContext context{};
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, emptyBehaviorMap);
+  {
+    BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, bc);
+  }
   
   Robot& testRobot = testBehaviorFramework.GetRobot();
   BehaviorContainer& behaviorContainer = testBehaviorFramework.GetBehaviorContainer();

@@ -32,7 +32,7 @@ public:
 protected:
   // IHelper functions
   virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual BehaviorStatus Init(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual BehaviorStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual BehaviorStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
 private:
   ObjectID _targetID;

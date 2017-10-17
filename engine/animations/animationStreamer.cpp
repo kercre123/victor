@@ -289,7 +289,8 @@ namespace Cozmo {
   
   void AnimationStreamer::Abort()
   {
-    if (_tag != NotAnimatingTag) {
+    if (_tag != NotAnimatingTag &&
+        _context->GetExternalInterface() != nullptr) {
       using namespace ExternalInterface;
       _context->GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
     }

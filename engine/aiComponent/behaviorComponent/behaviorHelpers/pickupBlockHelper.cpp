@@ -63,7 +63,7 @@ bool PickupBlockHelper::ShouldCancelDelegates(BehaviorExternalInterface& behavio
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus PickupBlockHelper::Init(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus PickupBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _dockAttemptCount = 0;
   _hasTriedOtherPose = false;

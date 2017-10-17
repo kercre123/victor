@@ -29,7 +29,9 @@ public:
 
   // pass in the delegate that this runnable should default to (or nullptr for it to not delegate at all)
   explicit DevBaseRunnable( IBehavior* initialDelegate );
+  virtual ~DevBaseRunnable();
 
+  
 protected:
 
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;

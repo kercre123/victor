@@ -86,6 +86,7 @@ BehaviorComponent::~BehaviorComponent()
   // to actions shutting down
   _behaviorMgr.reset();
   _components.reset();
+  Util::SafeDelete(_devBaseRunnable);
 }
 
 
@@ -251,7 +252,12 @@ void BehaviorComponent::InitHelper(IBehavior* baseRunnable)
   if( ANKI_DEV_CHEATS ) {
     // create a dev base layer to put on the bottom, and pass the desired base in so that DevBaseRunnable
     // will automatically delegate to it
-    baseRunnable = new DevBaseRunnable( baseRunnable );
+    if(_devBaseRunnable != nullptr){
+      Util::SafeDelete(_devBaseRunnable);
+    }
+    
+    _devBaseRunnable = new DevBaseRunnable(baseRunnable);
+    baseRunnable = _devBaseRunnable;
   }
   
   
