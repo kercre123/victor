@@ -165,7 +165,7 @@ static void decimate(const uint8_t* input, int32_t* accumulator,  int16_t* outpu
     accumulator[1] = acc1;
     accumulator[0] = acc0;
 
-    accumulator = &accumulator[4];
+    accumulator = &accumulator[3];
   }
 }
 
@@ -174,7 +174,7 @@ extern "C" void DMA1_Channel2_3_IRQHandler(void) {
   uint32_t isr = DMA1->ISR;
   DMA1->IFCR = DMA_ISR_GIF2;
 
-  static int32_t accumulator[4][4];
+  static int32_t accumulator[4][3];
 
   // Note: if this falls behind, it will drop a bunch of samples
   if (isr & DMA_ISR_HTIF2) {

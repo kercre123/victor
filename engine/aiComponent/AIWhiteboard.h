@@ -40,7 +40,6 @@ class BlockWorldFilter;
 namespace DefaultFailToUseParams {
 constexpr static const float kTimeObjectInvalidAfterFailure_sec = 30.f;
 constexpr static const float kObjectInvalidAfterFailureRadius_mm = 60.f;
-static const Radians kAngleToleranceAfterFailure_radians = M_PI;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
