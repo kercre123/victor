@@ -195,7 +195,7 @@ Blockly.Blocks['cozmo_play_animation_by_name'] = {
 init: function() {
   this.jsonInit({
     "id": "cozmo_play_animation_by_name",
-    "message0": "play anim: %1",
+    "message0": "advanced: play %1 SDK animation",
     "args0": [
         {
           "type": "input_value",
@@ -224,7 +224,7 @@ Blockly.Blocks['cozmo_play_animation_by_triggername'] = {
 init: function() {
   this.jsonInit({
     "id": "cozmo_play_animation_by_triggername",
-    "message0": "play animtrigger: %1",
+    "message0": "advanced: play %1 SDK animation group",
     "args0": [
         {
           "type": "input_value",
@@ -551,10 +551,10 @@ Blockly.Blocks['cozmo_cube_event_select_menu'] = {
             "type": "field_dropdown",
             "name": "CUBE_SELECT",
             "options": [
+              ['%{BKY_ANY}', '4'],
               ['1', '1'],
               ['2', '2'],
-              ['3', '3'],
-              ['%{BKY_ANY}', '4']
+              ['3', '3']
             ]
           }
         ],
@@ -582,10 +582,10 @@ Blockly.Blocks['cozmo_event_on_see_cube'] = {
           "type": "field_dropdown",
           "name": "CUBE_SELECT",
           "options": [
+            ['%{BKY_ANY}', '4'],
             ['1', '1'],
             ['2', '2'],
-            ['3', '3'],
-            ['%{BKY_ANY}', '4']
+            ['3', '3']
           ]
         }
       ],
@@ -613,10 +613,10 @@ Blockly.Blocks['cozmo_event_on_cube_tap'] = {
           "type": "field_dropdown",
           "name": "CUBE_SELECT",
           "options": [
+            ['%{BKY_ANY}', '4'],
             ['1', '1'],
             ['2', '2'],
-            ['3', '3'],
-            ['%{BKY_ANY}', '4']
+            ['3', '3']
           ]
         }
       ],
@@ -644,10 +644,10 @@ Blockly.Blocks['cozmo_event_on_cube_moved'] = {
           "type": "field_dropdown",
           "name": "CUBE_SELECT",
           "options": [
+            ['%{BKY_ANY}', '4'],
             ['1', '1'],
             ['2', '2'],
-            ['3', '3'],
-            ['%{BKY_ANY}', '4']
+            ['3', '3']
           ]
         }
       ],
