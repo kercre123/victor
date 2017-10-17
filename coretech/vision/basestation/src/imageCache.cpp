@@ -107,10 +107,12 @@ static inline f32 GetScaleFactor(ImageCache::Size size)
       
     case ImageCache::Size::Half_NN:
     case ImageCache::Size::Half_Linear:
+    case ImageCache::Size::Half_AverageArea:
       return 0.5f;
       
     case ImageCache::Size::Quarter_NN:
     case ImageCache::Size::Quarter_Linear:
+    case ImageCache::Size::Quarter_AverageArea:
       return 0.25f;
   }
 }
@@ -133,6 +135,11 @@ static inline ResizeMethod GetMethod(ImageCache::Size size)
     case ImageCache::Size::Half_Linear:
     case ImageCache::Size::Quarter_Linear:
       return ResizeMethod::Linear;
+
+    case ImageCache::Size::Half_AverageArea:
+    case ImageCache::Size::Quarter_AverageArea:  
+      return ResizeMethod::AverageArea;
+
   }
 }
   
@@ -237,6 +244,19 @@ ImageCache::Size ImageCache::GetSize(s32 scale, Vision::ResizeMethod method)
         }
       }
         
+      case Vision::ResizeMethod::AverageArea:
+      {
+        switch(scale)
+        {
+          case 2: size = Size::Half_AverageArea;    break;
+          case 4: size = Size::Quarter_AverageArea; break;
+            
+          default:
+            DEV_ASSERT(false, "ImageCache.GetSize.UnsupportedScaleLinear");
+            break;
+        }
+      }
+
       default:
         DEV_ASSERT(false, "ImageCache.GetSize.UnsupportedMethod");
         break;

@@ -57,7 +57,11 @@ public:
     Half_Linear,
     Quarter_Linear,
     Double_Linear,
-    
+
+    // Average-Area Downsampling
+    Half_AverageArea,
+    Quarter_AverageArea,
+
     // TODO: add other sizes/methods (e.g. cubic interpolation)
   };
   
