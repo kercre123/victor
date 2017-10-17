@@ -25,6 +25,7 @@
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
+#include "util/md5/md5.h"
 
 #include <algorithm>
 #include <string>
@@ -327,6 +328,11 @@ int cozmo_startup(const char *configuration_data)
   DevLoggingSystem::GetInstance()->UpdateDeviceId(DASGetPlatform()->GetDeviceId());
 #endif
 
+#if USE_DAS
+  MD5 playerIDHash(DASGetPlatform()->GetDeviceId());
+  Anki::Util::sSetGlobal("$player_id", playerIDHash.hexdigest().c_str());
+#endif
+  
   #if USE_DAS
   // try to post to server just in case we have internet at app startup
   auto callback = [] (bool success) {
