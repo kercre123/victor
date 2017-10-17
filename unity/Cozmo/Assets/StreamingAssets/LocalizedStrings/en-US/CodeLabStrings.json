@@ -987,7 +987,7 @@
     "translation": "when sad face seen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_sad_face": {
-    "translation": "Triggers this code block and runs the code blocks underneath it every time Cozmo sees a happy face. Note that the green flag (start) button must be active for this block to trigger. Tip: Make a particularly upset frown."
+    "translation": "Triggers this code block and runs the code blocks underneath it every time Cozmo sees a sad face. Note that the green flag (start) button must be active for this block to trigger. Tip: Make a particularly upset frown."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_see_cube": {
@@ -1001,14 +1001,14 @@
     "translation": "when Cube [#] tapped"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_cube_tap": {
-    "translation": "Triggers this code block and runs the code blocks underneath it every time Cozmo sees the specified Cube [#]."
+    "translation": "Triggers this code block and runs the code blocks underneath it every time the specified Cube [#] is tapped."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_cube_moved": {
     "translation": "when Cube [#] moved"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_cube_moved": {
-    "translation": "Triggers this code block, and runs the code blocks underneath it, every time Cozmo the specified Cube [#] is moved. Tip: Moving a Cube means to placing it in a slightly different position or location. Tapping a Cube means to give it deliberate, quick tap."
+    "translation": "Triggers this code block and runs the code blocks underneath it every time the specified Cube [#] is moved. Tip: Moving a Cube means placing it in a slightly different position or location. Tapping a Cube means giving it a deliberate, quick tap."
   },
 
   "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived": {
