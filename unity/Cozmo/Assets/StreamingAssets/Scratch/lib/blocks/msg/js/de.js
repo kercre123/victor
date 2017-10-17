@@ -11,7 +11,6 @@ goog.require('Blockly.Msg');
 
 // Events category
 Blockly.Msg["EVENTS_GREEN_FLAG_SCRATCH_2"] = "Wenn %1 angeklickt";
-Blockly.Msg["EVENTS_BROADCAST_HAT_SCRATCH_2"] = "Wenn ich %1 empfange";
 Blockly.Msg["EVENTS_BROADCAST_MESSAGE_1_SCRATCH_2"] = "Nachricht1";
 Blockly.Msg["EVENTS_BROADCAST_MESSAGE_2_SCRATCH_2"] = "Nachricht2";
 Blockly.Msg["EVENTS_BROADCAST_MESSAGE_3_SCRATCH_2"] = "Nachricht3";
@@ -39,7 +38,6 @@ Blockly.Msg["EVENTS_BROADCAST_MESSAGE_24_SCRATCH_2"] = "Nachricht24";
 Blockly.Msg["EVENTS_BROADCAST_MESSAGE_25_SCRATCH_2"] = "Nachricht25";
 Blockly.Msg["EVENTS_BROADCAST_NEW_MESSAGE_SCRATCH_2"] = "neue Nachricht";
 Blockly.Msg["EVENTS_BROADCAST_SCRATCH_2"] = "sende %1 an alle";
-Blockly.Msg["EVENTS_BROADCAST_AND_WAIT_SCRATCH_2"] = "sende %1 an alle und warte";
 
 // Control category
 Blockly.Msg["CONTROLS_FOREVER_SCRATCH_2"] = "wiederhole fortlaufend";

@@ -486,13 +486,19 @@
   "codeLabVertical.RECEIVE_MESSAGE_BLOCK": {
     "translation": "when %1 received"
   },
-  "codeLabVertical.codeLabVertical.BROADCAST_MESSAGE_AND_WAIT_BLOCK": {
+  "codeLabVertical.BROADCAST_MESSAGE_AND_WAIT_BLOCK": {
     "translation": "broadcast %1 and wait to complete"
   },
-  "codeLabVertical.codeLabVertical.PLAY_ANIMATION_BY_NAME_BLOCK": {
+  "codeLabVertical.PLAY_ANIMATION_BY_NAME_BLOCK": {
     "translation": "advanced: play %1 SDK animation"
   },
-  "codeLabVertical.codeLabVertical.PLAY_ANIMATION_BY_TRIGGER_NAME_BLOCK": {
+  "codeLabVertical.PLAY_ANIMATION_BY_TRIGGER_NAME_BLOCK": {
     "translation": "advanced: play %1 SDK animation group"
+  },
+  "codeLabVertical.EVENTS_BROADCAST_HAT": {
+    "translation": "when %1 received"
+  },
+  "codeLabVertical.EVENTS_BROADCAST_AND_WAIT": {
+    "translation": "broadcast %1 and wait to complete"
   }
 }

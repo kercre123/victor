@@ -185,17 +185,15 @@ init: function() {
   }
 };
 
-// FOR DEVELOPER PROTOTYPING ONLY
-// This block isn't intended to ship
 Blockly.Blocks['cozmo_play_animation_by_name'] = {
   /**
-    * Dev-only Block to make Cozmo play a specific animation by name
+    * Block to make Cozmo play a specific animation by name
     * @this Blockly.Block
   */
 init: function() {
   this.jsonInit({
     "id": "cozmo_play_animation_by_name",
-    "message0": "advanced: play %1 SDK animation",
+    "message0": "%{BKY_PLAY_ANIMATION_BY_NAME_BLOCK}",
     "args0": [
         {
           "type": "input_value",
@@ -214,17 +212,15 @@ init: function() {
   }
 };
 
-// FOR DEVELOPER PROTOTYPING ONLY
-// This block isn't intended to ship
 Blockly.Blocks['cozmo_play_animation_by_triggername'] = {
   /**
-    * Dev-only Block to make Cozmo play a specific animation by name
+    * Block to make Cozmo play a specific animation by name
     * @this Blockly.Block
   */
 init: function() {
   this.jsonInit({
     "id": "cozmo_play_animation_by_triggername",
-    "message0": "advanced: play %1 SDK animation group",
+    "message0": "%{BKY_PLAY_ANIMATION_BY_TRIGGER_NAME_BLOCK}",
     "args0": [
         {
           "type": "input_value",
@@ -1316,11 +1312,11 @@ Blockly.Blocks['cozmo_vert_wait_for_actions'] = {
           "name": "ACTION_SELECT",
           "options": [
             ['%{BKY_DRIVE}', 'drive'],
-            ['%{BKY_HEAD}', 'head'],
-            ['%{BKY_LIFT}', 'lift'],
+            ['%{BKY_MOVING_HEAD}', 'head'],
+            ['%{BKY_MOVING_LIFT}', 'lift'],
             ['%{BKY_SAY}', 'say'],
             ['%{BKY_ANIMATION}', 'anim'],
-            ['%{BKY_ALL}', 'all']
+            ['%{BKY_EVERYTHING}', 'all']
           ]
         }
         ],
@@ -1350,11 +1346,11 @@ Blockly.Blocks['cozmo_vert_cancel_actions'] = {
           "name": "ACTION_SELECT",
           "options": [
             ['%{BKY_DRIVE}', 'drive'],
-            ['%{BKY_HEAD}', 'head'],
-            ['%{BKY_LIFT}', 'lift'],
+            ['%{BKY_MOVING_HEAD}', 'head'],
+            ['%{BKY_MOVING_LIFT}', 'lift'],
             ['%{BKY_SAY}', 'say'],
             ['%{BKY_ANIMATION}', 'anim'],
-            ['%{BKY_ALL}', 'all']
+            ['%{BKY_EVERYTHING}', 'all']
           ]
         }
         ],

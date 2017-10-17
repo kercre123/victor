@@ -11,7 +11,6 @@ goog.require('Blockly.Msg');
 
 // Events category
 Blockly.Msg["EVENTS_GREEN_FLAG_SCRATCH_2"] = "when %1 clicked";
-Blockly.Msg["EVENTS_BROADCAST_HAT_SCRATCH_2"] = "when %1 received";
 Blockly.Msg["EVENTS_BROADCAST_MESSAGE_1_SCRATCH_2"] = "message1";
 Blockly.Msg["EVENTS_BROADCAST_MESSAGE_2_SCRATCH_2"] = "message2";
 Blockly.Msg["EVENTS_BROADCAST_MESSAGE_3_SCRATCH_2"] = "message3";
@@ -39,7 +38,6 @@ Blockly.Msg["EVENTS_BROADCAST_MESSAGE_24_SCRATCH_2"] = "message24";
 Blockly.Msg["EVENTS_BROADCAST_MESSAGE_25_SCRATCH_2"] = "message25";
 Blockly.Msg["EVENTS_BROADCAST_NEW_MESSAGE_SCRATCH_2"] = "new message";
 Blockly.Msg["EVENTS_BROADCAST_SCRATCH_2"] = "broadcast %1";
-Blockly.Msg["EVENTS_BROADCAST_AND_WAIT_SCRATCH_2"] = "broadcast %1 and wait to complete";
 
 // Control category
 Blockly.Msg["CONTROLS_FOREVER_SCRATCH_2"] = "forever";
