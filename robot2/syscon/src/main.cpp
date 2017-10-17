@@ -13,8 +13,12 @@
 #include "mics.h"
 #include "touch.h"
 
-//#define DISABLE_WDOG
+extern "C" void SystemIdle() {
+  __asm("WFI");
+  Power::eject();
+}
 
+//#define DISABLE_WDOG
 void Main_Execution(void) {
   #ifndef DISABLE_WDOG
   // Kick watch dog when we enter our service routine
@@ -60,8 +64,5 @@ int main (void) {
   Lights::boot(0);
 
   // Low priority interrupts are now our main execution
-  for (;;) {
-    __asm("WFI");
-    Power::eject();
-  }
+  for (;;) SystemIdle();
 }

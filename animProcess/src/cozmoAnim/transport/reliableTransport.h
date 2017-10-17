@@ -8,11 +8,7 @@
 #ifndef __EmbeddedReliableTransport_H__
 #define __EmbeddedReliableTransport_H__
 
-#ifdef TARGET_ESPRESSIF
-#include "c_types.h"
-#else
 #include <stdint.h>
-#endif
 
 #include "anki/cozmo/transport/reliableMessageTypes.h"
 #include "anki/cozmo/transport/reliableSequenceId.h"
@@ -23,9 +19,7 @@
 #define ReliableSequenceId   Anki::Util::ReliableSequenceId
 extern "C" {
 #else
-#ifndef TARGET_ESPRESSIF
 #include "anki/cozmo/transport/cBool.h"
-#endif
 #endif
 
 /** 9 byte prefix for reliable packet header

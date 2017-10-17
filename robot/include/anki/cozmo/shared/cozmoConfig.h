@@ -162,12 +162,8 @@ namespace Cozmo {
    **************************************************************************/
   
   const u8 NUM_RADIAL_DISTORTION_COEFFS = 8;
-  
-#ifdef COZMO_V2
+
   const ImageResolution DEFAULT_IMAGE_RESOLUTION = ImageResolution::NHD;
-#else
-  const ImageResolution DEFAULT_IMAGE_RESOLUTION = ImageResolution::QVGA;
-#endif
   
   /***************************************************************************
    *
@@ -175,21 +171,12 @@ namespace Cozmo {
    *
    **************************************************************************/
 
-#ifdef COZMO_V2
   // Default cliff detection threshold
   const u32 CLIFF_SENSOR_DROP_LEVEL = 180;
   
   // Cliff un-detection threshold (hysteresis)
   const u32 CLIFF_SENSOR_UNDROP_LEVEL = 210;
   const u32 CLIFF_SENSOR_UNDROP_LEVEL_MIN = 100;
-#else
-  // Default cliff detection threshold
-  const u32 CLIFF_SENSOR_DROP_LEVEL = 400;
-  
-  // Cliff un-detection threshold (hysteresis)
-  const u32 CLIFF_SENSOR_UNDROP_LEVEL = 600;
-  const u32 CLIFF_SENSOR_UNDROP_LEVEL_MIN = 50;
-#endif
   
   // V2 cliff sensors (assumes 4 cliff sensors are arranged in a rectangle symmetric about the robot x axis)
   // NOTE: These values are approximate and should be verified for final V2 design.

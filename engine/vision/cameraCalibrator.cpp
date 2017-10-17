@@ -363,7 +363,6 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   }
   
   // Depending on what type of robot we are running, provide a different initial guess for calibration
-#ifdef COZMO_V2
 #ifdef SIMULATOR
   cv::Mat_<f64> cameraMatrix = (cv::Mat_<f64>(3,3) <<
                                 507, 0, 639,
@@ -380,14 +379,6 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   
   cv::Mat_<f64> distCoeffs = (cv::Mat_<double>(1, NUM_RADIAL_DISTORTION_COEFFS) <<
                               -0.1, -0.1, 0.00005, -0.0001, 0.05, 0, 0, 0);
-#endif
-#else
-  cv::Mat_<f64> cameraMatrix = (cv::Mat_<f64>(3,3) <<
-                                290, 0, 160,
-                                0, 290, 120,
-                                0, 0, 1);
-  
-  cv::Mat_<f64> distCoeffs = cv::Mat_<f64>::zeros(1, NUM_RADIAL_DISTORTION_COEFFS);
 #endif
   
   std::vector<cv::Vec3d> rvecs, tvecs;

@@ -21,6 +21,7 @@
  * Copyright: Anki, Inc. 2016
  **/
 
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"

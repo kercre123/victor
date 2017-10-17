@@ -90,7 +90,7 @@ static void enable_charger() {
   LTP1::mode(MODE_INPUT);
   LTN1::mode(MODE_INPUT);
   LTN2::mode(MODE_INPUT);
-  
+
   Power::setCharge(true);
 }
 
@@ -110,6 +110,11 @@ static void enable_motors() {
   LTP1::reset();
   LTN1::reset();
   LTN2::reset();
+
+  LP1::type(TYPE_OPENDRAIN);
+  HP1::type(TYPE_OPENDRAIN);
+  RTP1::type(TYPE_OPENDRAIN);
+  LTP1::type(TYPE_OPENDRAIN);
 
   LP1::mode(MODE_OUTPUT);
   LN1::mode(MODE_OUTPUT);
@@ -154,7 +159,7 @@ static void Motors::transmit(BodyToHead *payload) {
   } else {
     moterServiced--;
   }
-  
+
   for (int i = 0; i < MOTOR_COUNT; i++) {
     MotorStatus* state = &motorStatus[i];
 
@@ -254,9 +259,9 @@ static const int DISABLE_ON_TIME = 200;
 void Motors::tick() {
   // Charge circuit enable logic
   static bool motorEnabled = false;
-  static int idleTimer = 0;  
+  static int idleTimer = 0;
   bool enableMotors = (++idleTimer) < DISABLE_ON_TIME;
-  
+
   if (enableMotors != motorEnabled) {
     if (enableMotors) {
       enable_motors();

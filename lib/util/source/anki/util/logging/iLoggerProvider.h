@@ -23,7 +23,7 @@ namespace Util {
 class ILoggerProvider {
 public:
 
-  // todo: this is duplicated all over anki code (DASLogLevel, errorHandling, ...). We should standarize
+  // todo: this is duplicated all over anki code (DASLogLevel, errorHandling, ...). We should standardize.
   enum LogLevel {
     LOG_LEVEL_DEBUG = 0,
     LOG_LEVEL_INFO,
@@ -85,7 +85,7 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Internal API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Required in subclasses to pring messages that pass their filter
+  // Required in subclasses to print messages that pass their filter
 
   virtual void PrintLogI(const char* channel,
     const char* eventName,

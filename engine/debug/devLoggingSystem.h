@@ -13,6 +13,7 @@
 #define __Basestation_Debug_DevLoggingSystem_H_
 
 #include "json/json.h"
+#include "util/export/export.h"
 #include "util/helpers/noncopyable.h"
 #include "util/logging/rollingFileLogger.h"
 
@@ -21,6 +22,13 @@
 #include <chrono>
 #include <vector>
 
+// Forward declarations
+namespace Anki {
+  namespace Util {
+    class ILoggerProvider;
+  }
+}
+
 namespace Anki {
 namespace Cozmo {
   
@@ -28,9 +36,13 @@ using DevLoggingClock = Util::RollingFileLogger::ClockType;
 
 class DevLoggingSystem : Util::noncopyable {
 public:
-  static void CreateInstance(const std::string& loggingBaseDirectory, const std::string& appRunId);
-  static void DestroyInstance();
-  static DevLoggingSystem* GetInstance() { return sInstance; }
+  // Visible methods are accessible outside of cozmo_engine library.
+  // These methods provide a minimal interface for configuration and use of the engine's internal log system.
+  ANKI_VISIBLE static void CreateInstance(const std::string& loggingBaseDirectory, const std::string& appRunId);
+  ANKI_VISIBLE static DevLoggingSystem* GetInstance();
+  ANKI_VISIBLE static Anki::Util::ILoggerProvider* GetInstancePrintProvider();
+  ANKI_VISIBLE static void DestroyInstance();
+
   static const DevLoggingClock::time_point& GetAppRunStartTime() { return kAppRunStartTime; }
   static uint32_t GetAppRunMilliseconds();
   
@@ -65,7 +77,6 @@ public:
   static const std::string kHasBeenUploadedKey;
 
 private:
-  static DevLoggingSystem* sInstance;
   static const DevLoggingClock::time_point kAppRunStartTime;
   static const std::string kArchiveExtensionString;
   static const std::string kAppRunExtension;

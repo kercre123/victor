@@ -138,7 +138,7 @@ namespace Anki {
   Radians operator/(const Radians& a, float b)
   {
     // Check for divide by 0
-    AnkiAssert(!NEAR_ZERO(b), 282);  // Check for divide by 0
+    AnkiAssert(!NEAR_ZERO(b), "");  // Check for divide by 0
 
     Radians newRadians;
     newRadians.radians_ = a.radians_ / b;

@@ -79,7 +79,13 @@ namespace Vision {
     
     // Resize into the new image (which is already the desired size)
     void Resize(ImageBase<T>& resizedImage, ResizeMethod method = ResizeMethod::Linear) const;
-    
+
+    // Resize in place to a specific size, keeps the aspect ratio
+    void ResizeKeepAspectRatio(s32 desiredRows, s32 desiredCols, ResizeMethod method = ResizeMethod::Linear);
+
+    // Resize into the new image (which is already the desired size), keeps the aspect ratio
+    void ResizeKeepAspectRatio(ImageBase<T>& resizedImage, ResizeMethod method = ResizeMethod::Linear) const;
+
     //
     // Draw operations expect image coordinates in pixels as <X,Y> NOT <row,col>.
     // Note <0,0> is top left corner, NOT bottom left corner.
