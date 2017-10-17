@@ -21,8 +21,8 @@ GPIO gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initi
 
    //create io
    int fd = open("/sys/class/gpio/export", O_WRONLY);
-   snprintf(ioname, 32, "%d", gpio_number+911);
-   if (!fd || write(fd, ioname, strlen(ioname)<0) ) {
+   snprintf(ioname, 32, "%d\n", gpio_number+911);
+   if (!fd || write(fd, ioname, strlen(ioname))<0 ) {
      free(gp);
      error_exit(app_DEVICE_OPEN_ERROR, "Can't create gpio %d\n", gpio_number);
    }
