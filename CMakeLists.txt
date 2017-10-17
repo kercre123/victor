@@ -36,6 +36,17 @@ add_compile_options(
     $<$<CONFIG:Release>:-Os>
 )
 
+#
+# Factory build options
+#
+if (FACTORY_TEST)
+  add_definitions(-DFACTORY_TEST)
+endif()
+
+if (FACTORY_TEST_DEV)
+  add_definitions(-DFACTORY_TEST_DEV)
+endif()
+
 if (ANDROID)
   # Build for Android system without ART (*NO* JNI available)
   add_definitions(

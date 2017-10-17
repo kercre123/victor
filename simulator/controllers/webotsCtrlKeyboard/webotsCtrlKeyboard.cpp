@@ -177,9 +177,8 @@ namespace Anki {
     
     void WebotsKeyboardController::HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg)
     {
-      if(cozmoCam_ == nullptr) {
-        printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
-      } else {
+      if(cozmoCam_ != nullptr) 
+      {  
         // Draw a rectangle in red with the object ID as text in the center
         cozmoCam_->setColor(0x000000);
         
@@ -298,8 +297,12 @@ namespace Anki {
     { 
       poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
         
-      cozmoCam_ = GetSupervisor()->getDisplay("uiCamDisplay");
-      
+      const int displayWidth  = root_->getField("streamResolutionWidth")->getSFInt32();
+      const int displayHeight = root_->getField("streamResolutionHeight")->getSFInt32();
+      if(displayWidth > 0 && displayHeight > 0)
+      {
+        cozmoCam_ = GetSupervisor()->getDisplay("uiCamDisplay");
+      }
       auto doAutoBlockpoolField = root_->getField("doAutoBlockpool");
       if (doAutoBlockpoolField) {
         LOG_INFO("WebotsCtrlKeyboard.Init.DoAutoBlockpool", "%d", doAutoBlockpoolField->getSFBool());
@@ -817,27 +820,7 @@ namespace Anki {
                   printf("Requesting single robot image.\n");
                 }
                 
-
-                // Determine resolution from "streamResolution" setting in the keyboard controller
-                // node
-                ImageResolution resolution = (ImageResolution)IMG_STREAM_RES;
-               
-                if (root_) {
-                  const std::string resString = root_->getField("streamResolution")->getSFString();
-                  printf("Attempting to switch robot to %s resolution.\n", resString.c_str());
-                  if(resString == "VGA") {
-                    resolution = ImageResolution::VGA;
-                  } else if(resString == "QVGA") {
-                    resolution = ImageResolution::QVGA;
-                  } else if(resString == "CVGA") {
-                    resolution = ImageResolution::CVGA;
-                  } else {
-                    printf("Unsupported streamResolution = %s\n", resString.c_str());
-                  }
-                }
-                
-                SendSetRobotImageSendMode(mode, resolution);
-
+                SendSetRobotImageSendMode(mode);
                 break;
               }
                 

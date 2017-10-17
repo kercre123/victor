@@ -37,11 +37,10 @@ namespace Anki {
 #ifdef SIMULATOR
     namespace HAL {
       ImageSendMode imageSendMode_;
-      ImageResolution captureResolution_ = DEFAULT_IMAGE_RESOLUTION;
-      void SetImageSendMode(const ImageSendMode mode, const ImageResolution res)
+  
+      void SetImageSendMode(const ImageSendMode mode)
       {
         imageSendMode_ = mode;
-        captureResolution_ = res;
       }
     }
 #endif

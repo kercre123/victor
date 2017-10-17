@@ -479,7 +479,7 @@ namespace Cozmo {
       else
       {
         PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
-                       "CapturedImageTime:%d OldestStateInHistory:%d",
+                       "CapturedImageTime:%d NewestStateInHistory:%d",
                        _bufferedImg.GetTimestamp(), _robot.GetStateHistory()->GetNewestTimeStamp());
       }
     }
@@ -1520,24 +1520,8 @@ namespace Cozmo {
     }
     
     ImageChunk m;
-    
-    // We're hijacking the existing "chunkDebug" member, which used to be a firmware field.
-    // We could rename it to "userData" or something more meaningful if desired...
-    // Here, we'll use it to store [ imageWidth (12 bits) | imageHeight (12 bits) | identifierValue (8 bits)]
-    // Better fix to be provided by VIC-470 when we remove ImageResolution altogether
-    m.chunkDebug = 0;
-    static_assert(sizeof(m.chunkDebug)==4, "ImageChunk.chunkDebug expected to be 4 bytes");
-    
-    m.resolution = ImageResolution::Custom;
-    if(img.GetNumCols() >= 4096 || img.GetNumRows() >= 4096)
-    {
-      PRINT_NAMED_WARNING("VisionComponent.CompressAndSend.ImageTooLarge",
-                          "%dx%d image larger than 4095x4095 max", 
-                          img.GetNumCols(), img.GetNumRows());
-      return RESULT_FAIL;
-    }
-    m.chunkDebug |= ((0xFFF & img.GetNumCols()) << 20);
-    m.chunkDebug |= ((0xFFF & img.GetNumRows()) << 8);
+    m.height = img.GetNumRows();
+    m.width  = img.GetNumCols();
     
     const std::vector<int> compressionParams = {
       CV_IMWRITE_JPEG_QUALITY, quality
@@ -1553,21 +1537,20 @@ namespace Cozmo {
     const u32 kMaxChunkSize = static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE);
     u32 bytesRemainingToSend = static_cast<u32>(compressedBuffer.size());
     
-    // Put the identifier value in the 8 LSBs of chunkDebug
-    s32 identifierValue = 0;
+    // Use the identifier value as the display index
+    m.displayIndex = 0;
     auto displayIndexIter = _vizDisplayIndexMap.find(identifier);
     if(displayIndexIter == _vizDisplayIndexMap.end())
     {
       // New identifier
-      identifierValue = Util::numeric_cast<s32>(_vizDisplayIndexMap.size());
-      _vizDisplayIndexMap.emplace(identifier, identifierValue); // NOTE: this will increase size() for next time
+      m.displayIndex = Util::numeric_cast<s32>(_vizDisplayIndexMap.size());
+      _vizDisplayIndexMap.emplace(identifier, m.displayIndex); // NOTE: this will increase size() for next time
     }
     else
     {
-      identifierValue = displayIndexIter->second;
+      m.displayIndex = displayIndexIter->second;
     }
-    m.chunkDebug |= (0xFF & identifierValue);
-    
+     
     static u32 imgID = 0;
     m.imageId = ++imgID;
     
@@ -2302,20 +2285,29 @@ namespace Cozmo {
   
   bool VisionComponent::CaptureImage(Vision::ImageRGB& image_out)
   {
-    // This resolution should match AndroidHAL::_imageCaptureResolution!
-    const ImageResolution expectedResolution = DEFAULT_IMAGE_RESOLUTION;
-    DEV_ASSERT(expectedResolution == AndroidHAL::getInstance()->CameraGetResolution(),
-               "VisionComponent.CaptureImage.ResolutionMismatch");
-    const int cameraRes = static_cast<const int>(expectedResolution);
-    const int numRows = Vision::CameraResInfo[cameraRes].height;
-    const int numCols = Vision::CameraResInfo[cameraRes].width;
+    auto androidHAL = AndroidHAL::getInstance();
+
+    const int numRows = androidHAL->CameraGetHeight();
+    const int numCols = androidHAL->CameraGetWidth();
+
+    if(IsCameraCalibrationSet())
+    {
+      // This resolution should match the resolution at which we calibrated
+      DEV_ASSERT_MSG(numRows == GetCameraCalibration()->GetNrows() &&
+                     numCols == GetCameraCalibration()->GetNcols(), 
+                     "VisionComponent.CaptureAndSendImage.ResolutionMismatch",
+                     "Calibration:%dx%d AndroidHAL:%dx%d",
+                     GetCameraCalibration()->GetNrows(),
+                     GetCameraCalibration()->GetNcols(),
+                     numCols,numRows);
+    }
 
     // Get image buffer
     u8* buffer = nullptr;
     u32 imageId = 0;
     TimeStamp_t imageCaptureSystemTimestamp_ms = 0;
     
-    const bool gotImage = AndroidHAL::getInstance()->CameraGetFrame(buffer, imageId, imageCaptureSystemTimestamp_ms);
+    const bool gotImage = androidHAL->CameraGetFrame(buffer, imageId, imageCaptureSystemTimestamp_ms);
     if(gotImage)
     {
       // Create ImageRGB object from image buffer

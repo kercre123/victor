@@ -94,19 +94,9 @@ namespace Cozmo {
     if (chunk.imageId != _imgID)
     {
       _imgID = chunk.imageId;
-      
-      if(ImageResolution::Custom == chunk.resolution)
-      {
-        _imgWidth      = (0xFFF00000 & chunk.chunkDebug) >> 20; // 12 MSBs
-        _imgHeight     = (0xFFF00    & chunk.chunkDebug) >> 8;  // Next 12 MSBs
-      }
-      else
-      {
-        const Vision::ImageDims& imageDims = Vision::CameraResInfo[(int)chunk.resolution];
-        _imgWidth      = imageDims.width;
-        _imgHeight     = imageDims.height;
-      }
-      
+
+      _imgWidth        = chunk.width;
+      _imgHeight       = chunk.height;
       _isImgValid      = (chunk.chunkId == 0);
       _expectedChunkId = 0;
       _encoding        = chunk.imageEncoding;

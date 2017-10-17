@@ -7,6 +7,7 @@
 #include "engine/utils/parsingConstants/parsingConstants.h"
 
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/androidLogPrintLogger_android.h"
 #include "util/logging/logging.h"
 #include "util/logging/iFormattedLoggerProvider.h"
 #include "util/string/stringUtils.h"
@@ -15,12 +16,17 @@
 #include "util/logging/channelFilter.h"
 #include "util/helpers/templateHelpers.h"
 
-#define DEV_LOGGER_ENABLED 0
+#if !defined(DEV_LOGGER_ENABLED)
+  #if defined(FACTORY_TEST)
+    #define DEV_LOGGER_ENABLED 1
+  #else
+    #define DEV_LOGGER_ENABLED 0
+  #endif
+#endif
 
 #if DEV_LOGGER_ENABLED
 #include "engine/debug/devLoggerProvider.h"
 #include "engine/debug/devLoggingSystem.h"
-#include "util/logging/rollingFileLogger.h"
 #endif
 
 #include <string>
@@ -32,41 +38,10 @@
 
 const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
 const char* VIZ_HOST_IP = "127.0.0.1";
+const char* LOGNAME = "CozmoEngine";
                                                                                                     
 Anki::Cozmo::CozmoAPI* gEngineAPI = nullptr;
 Anki::Util::Data::DataPlatform* gDataPlatform = nullptr;
-
-class LogcatProvider : public Anki::Util::IFormattedLoggerProvider {
-public:
-  const char* kLogTag = "CozmoEngine";
-  LogcatProvider() {}
-
-  void Log(ILoggerProvider::LogLevel level, const std::string& message)
-  {
-    android_LogPriority priority = ANDROID_LOG_DEFAULT;
-
-    switch (level) {
-    case LogLevel::LOG_LEVEL_DEBUG:
-      priority = ANDROID_LOG_DEBUG;
-      break;
-    case LogLevel::LOG_LEVEL_INFO:
-    case LogLevel::LOG_LEVEL_EVENT:
-      priority = ANDROID_LOG_INFO;
-      break;
-    case LogLevel::LOG_LEVEL_WARN:
-      priority = ANDROID_LOG_WARN;
-      break;
-    case LogLevel::LOG_LEVEL_ERROR:
-      priority = ANDROID_LOG_ERROR;
-      break;
-    default:
-      // should never be here
-      break;
-    }
-
-    __android_log_print(priority, kLogTag, "%s", message.c_str());
-  }
-}; // class LogcatProvider
 
 void configure_engine(Json::Value& config)
 {
@@ -98,9 +73,7 @@ Anki::Util::Data::DataPlatform* createPlatform(const std::string& filesPath,
     Anki::Util::FileUtils::CreateDirectory(externalPath);
     Anki::Util::FileUtils::CreateDirectory(resourcesPath);
 
-    Anki::Util::Data::DataPlatform* p =
-        new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
-    return p;
+    return new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
 }
 
 std::string createResourcesPath(const std::string& resourcesBasePath)
@@ -130,14 +103,18 @@ void getAndroidPlatformPaths(std::string& filesPath,
 
 int cozmo_start(const Json::Value& configuration)
 {
-  int result = (int)0;
+  int result = 0;
   
   if (gEngineAPI != nullptr) {
       PRINT_STREAM_ERROR("cozmo_startup", "Game already initialized.");
-      return (int)1;
+      return 1;
   }
 
-  LogcatProvider* logcatProvider = new LogcatProvider();
+  // Build up a list of enabled log providers
+  std::vector<Anki::Util::ILoggerProvider*> loggers;
+
+  Anki::Util::AndroidLogPrintLogger * logPrintLogger = new Anki::Util::AndroidLogPrintLogger(LOGNAME);
+  loggers.push_back(logPrintLogger);
 
   std::string filesPath;
   std::string cachePath;
@@ -184,24 +161,19 @@ int cozmo_start(const Json::Value& configuration)
 
   gDataPlatform = createPlatform(filesPath, cachePath, externalPath, resourcesPath);
 
-  logcatProvider->Log(LogcatProvider::LogLevel::LOG_LEVEL_DEBUG, "resourcesPath: " + resourcesPath);
+  logPrintLogger->Log(Anki::Util::AndroidLogPrintLogger::LogLevel::LOG_LEVEL_DEBUG, "resourcesPath: " + resourcesPath);
 
   // Initialize logging
   #if DEV_LOGGER_ENABLED
-    std::string appRunId = Anki::Util::GetUUIDString();
-    Anki::Cozmo::DevLoggingSystem::CreateInstance(gDataPlatform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, "devLogger"), appRunId);
+    using DevLoggingSystem = Anki::Cozmo::DevLoggingSystem;
+    const std::string& appRunId = Anki::Util::GetUUIDString();
+    const std::string& devlogPath = gDataPlatform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, LOGNAME);
+    DevLoggingSystem::CreateInstance(devlogPath, appRunId);
+    loggers.push_back(DevLoggingSystem::GetInstancePrintProvider());
   #endif
 
-  
   Anki::Util::IEventProvider* eventProvider = nullptr;
-  Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({
-    logcatProvider
-#if DEV_LOGGER_ENABLED
-    ,new Anki::Cozmo::DevLoggerProvider(Anki::Cozmo::DevLoggingSystem::GetInstance()->GetQueue(),
-                          Anki::Util::FileUtils::FullFilePath( {Anki::Cozmo::DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(),
-                                                                Anki::Cozmo::DevLoggingSystem::kPrintName} ))
-#endif
-  });
+  Anki::Util::MultiLoggerProvider* loggerProvider = new Anki::Util::MultiLoggerProvider(loggers);
 
   Anki::Util::gLoggerProvider = loggerProvider;
   Anki::Util::gEventProvider = eventProvider;

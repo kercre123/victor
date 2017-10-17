@@ -23,7 +23,6 @@
 #include "androidHAL/android/camera/image_reader.h"
 #include "androidHAL/android/camera/utils/native_debug.h"
 #include "androidHAL/android/proto_camera/victor_camera.h"
-#include "anki/vision/CameraSettings.h"
 
 #include "androidHAL/android/proto_camera/victor_camera.h"
 
@@ -79,7 +78,6 @@ namespace Anki {
     , _looper(nullptr)
     , _androidCamera(nullptr)
     , _reader(nullptr)
-    , _imageCaptureResolution(DEFAULT_IMAGE_RESOLUTION)
     , _imageFrameID(1)
     {
       //InitIMU();

@@ -523,7 +523,7 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
 {
   const auto& payload = msg.GetData().Get_ImageChunk();
   
-  const s32 displayIndex = (payload.chunkDebug & 0xFF);
+  const s32 displayIndex = payload.displayIndex;
   
   if(displayIndex == 0)
   {

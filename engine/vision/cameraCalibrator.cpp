@@ -406,9 +406,8 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   vecOfImgPts.push_back(imgPts);
   vecOfWorldPts.push_back(worldPts);
   
-  const size_t captureRes = static_cast<size_t>(DEFAULT_IMAGE_RESOLUTION);
-  const s32 numRows = Vision::CameraResInfo[captureRes].height;
-  const s32 numCols  = Vision::CameraResInfo[captureRes].width;
+  const s32 numRows = DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+  const s32 numCols = DEFAULT_CAMERA_RESOLUTION_WIDTH;
   
   f64 rms = 0;
   try

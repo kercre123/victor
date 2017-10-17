@@ -13,7 +13,6 @@
 
 #include "anki/vision/basestation/markerDetector.h"
 #include "anki/vision/basestation/image.h"
-#include "anki/vision/CameraSettings.h"
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/fiducialMarkers.h"
 

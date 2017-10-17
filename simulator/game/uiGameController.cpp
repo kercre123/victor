@@ -1099,11 +1099,9 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution)
+    void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode)
     {
-      ExternalInterface::SetRobotImageSendMode m;
-      m.mode = mode;
-      m.resolution = resolution;
+      ExternalInterface::SetRobotImageSendMode m(mode);
       ExternalInterface::MessageGameToEngine message;
       message.Set_SetRobotImageSendMode(m);
       SendMessage(message);
