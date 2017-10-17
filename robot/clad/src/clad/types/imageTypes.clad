@@ -6,28 +6,6 @@
 namespace Anki {
 namespace Cozmo {
 
-enum int_8 ImageResolution
-{
-  VerificationSnapshot, // 16 x 16
-  QQQQVGA,   // 40 x 30
-  QQQVGA,    // 80 x 60
-  QQVGA,     // 160 x 120
-  QVGA,      // 320 x 240
-  CVGA,      // 400 x 296
-  VGA,       // 640 x 480
-  SVGA,      // 800 x 600
-  XGA,       // 1024 x 768
-  SXGA,      // 1280 x 960, technically SXGA-
-  UXGA,      // 1600 x 1200
-  QXGA,      // 2048 x 1536
-  QUXGA,     // 3200 x 2400
-  HD,        // 1280 x 720
-  NHD,       // 640 x 360
-  Custom,    // Width in 12 MSBs of chunkDebug, Height in next 12 MSBs 
-  ImageResolutionCount,
-  ImageResolutionNone
-}
-
 enum uint_8 ImageEncoding
 {
   NoneImageEncoding,
@@ -54,15 +32,15 @@ enum uint_32 ImageConstants
 }
 
 message ImageChunk {
-  uint_32 frameTimeStamp,
-  uint_32 imageId,
-  int_32 chunkDebug,
-  ImageEncoding imageEncoding,
-  ImageResolution resolution,
-  uint_8 imageChunkCount,
-  uint_8 chunkId,
-  int_16 status, // Used for book keeping in firmware
-  uint_8 data[uint_16:1200], // ^ IMAGE_CHUNK_SIZE above. Also need chunk to be u32 aligned
+  uint_32         frameTimeStamp,
+  uint_32         imageId,
+  uint_16         width,
+  uint_16         height,
+  ImageEncoding   imageEncoding,
+  uint_8          displayIndex,
+  uint_8          imageChunkCount,
+  uint_8          chunkId,
+  uint_8          data[uint_16:1200], // ^ IMAGE_CHUNK_SIZE above. Also need chunk to be u32 aligned
 }
 
 message ImageImuData {

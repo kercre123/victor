@@ -284,7 +284,6 @@ namespace Cozmo {
   
     // For sending images to basestation
     ImageSendMode                 _imageSendMode = ImageSendMode::Off;
-    ImageResolution               _nextSendImageResolution = ImageResolution::ImageResolutionNone;
     
     // We hold a pointer to the VizManager since we often want to draw to it
     VizManager*                   _vizManager = nullptr;
