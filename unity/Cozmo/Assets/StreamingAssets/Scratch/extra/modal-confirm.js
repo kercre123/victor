@@ -24,7 +24,7 @@ var ModalType = function(type){
               '  <form action="javascript:void(0);">' +
               '    <div class="modal-inner modal-inner-small">' +
               '      <h2 class="hd modal-confirm-title"></h2>' +
-              '      <input class="modal-confirm-input" autofocus autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></input>' +
+              '      <input class="modal-confirm-input" onkeydown="return ModalPrompt.isValidKey(event);" autofocus autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></input>' +
               '      <div class="ft">' +
               '        <button type=button class="btn-cancel button-pill button-red-pill"></button>' +
               '        <button type=submit class="btn-confirm button-pill button-blue-pill"></button>' +
@@ -46,6 +46,7 @@ var ModalType = function(type){
 
   var _dialog = null;   // cached reference to modal dialog container element
   var _options = null;  // options the dialog was opened with, including callback function
+  var _illegalCharacters = '&<>"\''; // characters to explicitly disallow from prompts
 
   /**
    * Opens the confirmation dialog
@@ -59,7 +60,7 @@ var ModalType = function(type){
    * @returns {void}
    */
   function open(options) {
-    
+
     // add the dialog elements to the page if not already done
     if (!_dialog) {
       _dialog = _render(_html[type]);
@@ -206,8 +207,17 @@ var ModalType = function(type){
     return template.content.firstChild;
   }
 
+  var isValidKey = function(e) {
+    if (goog.string.contains(_illegalCharacters, e.key)) {
+      window.player.play('click');
+      return false;
+    }
+    return true;
+  };
+
   return {
-    open : open
+    open : open,
+    isValidKey : isValidKey
   };
 
 };
