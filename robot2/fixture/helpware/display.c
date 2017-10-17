@@ -12,7 +12,7 @@
 #include "core/common.h"
 #include "core/lcd.h"
 
-
+#include "helpware/display.h"
 
 
 #define DISPLAY_SCREEN_WIDTH LCD_FRAME_WIDTH

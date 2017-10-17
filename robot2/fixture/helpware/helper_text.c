@@ -7,7 +7,7 @@
 
 #include "core/common.h"
 #include "core/lcd.h"
-#include "display.h"
+#include "helpware/display.h"
 
 #define LINEBUFSZ 255
 

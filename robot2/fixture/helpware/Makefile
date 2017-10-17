@@ -21,7 +21,7 @@ CROSS_COMPILE = $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-
 # link with core lib
 LIBS    += -lcore
 LIBPATH += -L../../core
-CFLAGS  += -I.
+CFLAGS  += -I../
 CFLAGS  += -I../../core/inc
 
 
