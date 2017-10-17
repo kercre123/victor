@@ -81,6 +81,7 @@ extern "C" void TIM14_IRQHandler(void) {
   IWDG->KR = 0xAAAA;
   #endif
   TIM14->SR = 0;
+  Analog::tick();
 }
 
 int main(void) {

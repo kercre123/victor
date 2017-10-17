@@ -115,7 +115,6 @@ __EIN           DCD     0xFFFFFFFF                     ; EIN(0)
                 DCD     SPI1_IRQHandler                ; SPI1
                 DCD     SPI2_IRQHandler                ; SPI2
                 DCD     USART1_IRQHandler              ; USART1
-                DCD     USART2_IRQHandler              ; USART2
 
 __Vectors_End
 
@@ -217,7 +216,6 @@ Default_Handler PROC
                 EXPORT  SPI1_IRQHandler                [WEAK]
                 EXPORT  SPI2_IRQHandler                [WEAK]
                 EXPORT  USART1_IRQHandler              [WEAK]
-                EXPORT  USART2_IRQHandler              [WEAK]
 
 
 WWDG_IRQHandler
@@ -243,7 +241,6 @@ I2C2_IRQHandler
 SPI1_IRQHandler
 SPI2_IRQHandler
 USART1_IRQHandler
-USART2_IRQHandler
 
                 B       .
 
