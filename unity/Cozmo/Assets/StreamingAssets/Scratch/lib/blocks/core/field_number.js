@@ -234,6 +234,7 @@ Blockly.FieldNumber.prototype.position_ = function() {
   // It's possible the height may be changed by calling show.
   // We want to make sure that's not the case for this dropdown.
   goog.style.setHeight(Blockly.DropDownDiv.getContentDiv(), 'auto');
+  goog.style.setHeight(Blockly.DropDownDiv.DIV_, 'auto');
 };
 
 /**
