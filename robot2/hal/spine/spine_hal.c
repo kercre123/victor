@@ -60,6 +60,41 @@ static struct HalGlobals {
 #define spine_debug_x(fmt, args...)
 #endif
 
+#define FULL_SPINE_DEBUG 1
+#if FULL_SPINE_DEBUG
+#define log_spine_data spine_log_data
+#else
+#define log_spine_data(d, b, l)
+#endif
+
+  typedef enum {
+    log_IN,
+    log_OUT,
+    log_CLOSE,
+  } LogAction;
+
+
+#if FULL_SPINE_DEBUG
+static inline void spine_log_data(LogAction action, const uint8_t* buffer, int len)
+{
+  static int lfd = NULL;
+  if (!lfd) { lfd = open("spine_data.log", O_WRONLY | O_CREAT); }
+  if (len>0) {
+    write(lfd, (action == log_IN) ? "< " : "> ", 2);
+    int i;
+    for (i=0;i<len;i++) {
+      char hexbuf[4];
+      snprintf(hexbuf, 4, "%02x ", buffer[i]);
+      write(lfd, hexbuf, 3);
+    }
+    write(lfd, "\n", 1);
+  }
+  else if (action==log_CLOSE) {
+    close(lfd);
+  }
+}
+#endif
+
 /************* SERIAL INTERFACE ***************/
 
 static void hal_serial_close()
@@ -67,6 +102,7 @@ static void hal_serial_close()
   LOGD("close(fd = %d)", gHal.fd);
   //TODO: restore?:  tcsetattr(gHal.fd, TCSANOW, &gHal.oldcfg))
   close(gHal.fd);
+  spine_log_data(log_CLOSE, NULL, 0);
   gHal.fd = 0;
 }
 
@@ -123,6 +159,7 @@ int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
       result = 0; //not an error
     }
   }
+  log_spine_data(log_IN, buffer, result);
   return result;
 }
 
@@ -130,6 +167,7 @@ int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
 int hal_serial_send(const uint8_t* buffer, int len)
 {
   if (len) {
+    log_spine_data(log_OUT, buffer, len);
     return write(gHal.fd, buffer, len);
   }
   return 0;
@@ -266,7 +304,7 @@ int hal_resync_partial(int start_offset, int len) {
        if (i2 <= index) { //no match, or restarted match at `i2` chars before last scanned char
           i+=index-i2+1;
        }
-       else if (i2 == SPINE_HEADER_LEN) { //whole sync!  
+       else if (i2 == SPINE_HEADER_LEN) { //whole sync!
           index = len-i; //consider rest of buffer valid.
           break;
        }
@@ -276,7 +314,7 @@ int hal_resync_partial(int start_offset, int len) {
     if (index) {
        memmove(gHal.inbuffer, gHal.inbuffer+i, index);
     }
-    
+
     spine_debug("\n%u dropped bytes\n", start_offset+i-index);
 
     return index;
@@ -345,7 +383,7 @@ const struct SpineMessageHeader* hal_read_frame()
     index = hal_resync_partial(SPINE_HEADER_LEN, total_message_length);
     return NULL;
   }
-  
+
   spine_debug_x("found frame %04x!\r", ((struct SpineMessageHeader*)gHal.inbuffer)->payload_type);
   spine_debug_x("payload start: %08x!\r", *(uint32_t*)(((struct SpineMessageHeader*)gHal.inbuffer)+1));
   index = 0; //get ready for next one
@@ -407,6 +445,6 @@ int main(int argc, const char* argv[])
    gHal.fd = open("unittest.dat", O_RDONLY);
    const struct SpineMessageHeader* hdr = hal_get_frame(PAYLOAD_ACK, 1000);
    assert(hdr && hdr->payload_type == PAYLOAD_ACK);
-   
+
 }
 #endif
