@@ -138,6 +138,8 @@ WRAP_EXTERN_CONSOLE_VAR(u32, kMotorCalibrationTimeout_ms, "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kHeadAngleToPlaySound,       "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kSoundVolume,                "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kDurationOfAudioToRecord_ms, "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(u32, kFFTExpectedFreq_hz,         "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(u32, kFFTFreqTolerance_hz,        "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kIMUDriftDetectPeriod_ms,    "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kIMUDriftAngleThreshDeg,     "Playpen");
 

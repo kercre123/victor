@@ -75,6 +75,11 @@ public:
   static const std::map<std::string, std::vector<FactoryTestResultCode>>& GetAllPlaypenResults();
   static void ResetAllPlaypenResults();
 
+  // Returns whether or not the behavior can fail while it isn't running
+  // Used for things that run asynchronous checks that might take a while to complete
+  // such as the mic FFT checks
+  virtual bool CanFailWhileNotRunning() const { return false; }
+
 protected:
   
   // Override of IBehavior functions

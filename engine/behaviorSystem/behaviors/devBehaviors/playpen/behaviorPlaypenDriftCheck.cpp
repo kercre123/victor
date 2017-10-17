@@ -17,6 +17,7 @@
 #include "engine/actions/compoundActions.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -24,7 +25,8 @@ namespace Cozmo {
 BehaviorPlaypenDriftCheck::BehaviorPlaypenDriftCheck(Robot& robot, const Json::Value& config)
 : IBehaviorPlaypen(robot, config)
 {
-  
+  IBehavior::SubscribeToTags(robot.GetID(),
+                             {RobotInterface::RobotToEngineTag::audioFFTResult});
 }
 
 Result BehaviorPlaypenDriftCheck::InternalInitInternal(Robot& robot)
@@ -105,6 +107,50 @@ void BehaviorPlaypenDriftCheck::StopInternal(Robot& robot)
   _driftCheckComplete = false;
   _startingRobotOrientation = 0;
   _imuTemp = IMUTempDuration();
+}
+
+void BehaviorPlaypenDriftCheck::AlwaysHandle(const RobotToEngineEvent& event, const Robot& robot)
+{
+  const auto& tag = event.GetData().GetTag();
+  if(tag == RobotInterface::RobotToEngineTag::audioFFTResult)
+  {
+    // TODO(Al): Figure out channel to mic mapping
+    static const std::vector<FactoryTestResultCode> channelToMic = {
+      FactoryTestResultCode::MIC_FR_NOT_WORKING,
+      FactoryTestResultCode::MIC_FL_NOT_WORKING,
+      FactoryTestResultCode::MIC_BR_NOT_WORKING,
+      FactoryTestResultCode::MIC_BL_NOT_WORKING,
+    };
+
+    const auto& payload = event.GetData().Get_audioFFTResult();
+    u8 count = 0;
+    FactoryTestResultCode res = FactoryTestResultCode::UNKNOWN;
+    for(u8 i = 0; i < payload.result.size(); ++i)
+    {
+      const auto& fftResult = payload.result[i];
+      if(!Util::IsNear((float)fftResult, (float)PlaypenConfig::kFFTExpectedFreq_hz, (float)PlaypenConfig::kFFTFreqTolerance_hz))
+      {
+        ++count;
+        res = channelToMic[i];
+        PRINT_NAMED_WARNING("BehaviorPlaypenDriftCheck.HandleAudioFFTResult.FFTFailed",
+                            "%s picked up freq %u which is outside %u +/- %u",
+                            EnumToString(res),
+                            fftResult,
+                            PlaypenConfig::kFFTExpectedFreq_hz, 
+                            PlaypenConfig::kFFTFreqTolerance_hz);
+      }
+    }
+
+    if(count == payload.result.size())
+    {
+      res = FactoryTestResultCode::SPEAKER_NOT_WORKING;
+      PRINT_NAMED_WARNING("BehaviorPlaypenDriftCheck.HandleAudioFFTResult.Speaker", 
+                          "No mics picked up expected frequency %u, assuming speaker is not working",
+                          PlaypenConfig::kFFTExpectedFreq_hz);
+    }
+
+    const_cast<Robot&>(robot).Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaypenBehaviorFailed(res)));
+  }
 }
 
 }

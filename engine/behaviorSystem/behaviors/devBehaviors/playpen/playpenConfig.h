@@ -76,7 +76,14 @@ static f32 kHeadAngleToPlaySound       = DEG_TO_RAD(2.f);
 // Volume to play sound
 static f32 kSoundVolume                = 0.f;
 
+// How long to record audio for when we start playing the sound
 static u32 kDurationOfAudioToRecord_ms = 2000;
+
+// The expected frequency the mics should pickup when the sound is played
+static u32 kFFTExpectedFreq_hz         = 1024;
+
+// The allowed +/- deviation of the FFT frequency from the expected value
+static u32 kFFTFreqTolerance_hz        = 10;
 
 // How long to check drift for
 static u32 kIMUDriftDetectPeriod_ms    = 2000;
