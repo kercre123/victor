@@ -4,6 +4,29 @@ namespace Anki {
 namespace AudioMetaData {
 namespace SwitchState {
 
+enum uint_32 Codelab__Music_Tiny_Orchestra
+{
+  Invalid = 0,
+  Tiny_Orchestra_Bass_Mode_1_Off = 2773389205,
+  Tiny_Orchestra_Bass_Mode_1_On = 4225872937,
+  Tiny_Orchestra_Bass_Mode_2_Off = 3114422790,
+  Tiny_Orchestra_Bass_Mode_2_On = 2510905384,
+  Tiny_Orchestra_Bass_Mode_3_Off = 1797181875,
+  Tiny_Orchestra_Bass_Mode_3_On = 36806655,
+  Tiny_Orchestra_Glock_Pluck_Mode_1_Off = 1674194378,
+  Tiny_Orchestra_Glock_Pluck_Mode_1_On = 2421905196,
+  Tiny_Orchestra_Glock_Pluck_Mode_2_Off = 4210083577,
+  Tiny_Orchestra_Glock_Pluck_Mode_2_On = 3631119949,
+  Tiny_Orchestra_Glock_Pluck_Mode_3_Off = 2569343836,
+  Tiny_Orchestra_Glock_Pluck_Mode_3_On = 1273367574,
+  Tiny_Orchestra_Strings_Mode_1_Off = 1597550140,
+  Tiny_Orchestra_Strings_Mode_1_On = 2524543094,
+  Tiny_Orchestra_Strings_Mode_2_Off = 104978871,
+  Tiny_Orchestra_Strings_Mode_2_On = 1209427331,
+  Tiny_Orchestra_Strings_Mode_3_Off = 702297514,
+  Tiny_Orchestra_Strings_Mode_3_On = 3673080460,
+}
+
 enum uint_32 Codelab__Music_Tiny_Orchestra_Bass
 {
   Invalid = 0,
@@ -11,6 +34,27 @@ enum uint_32 Codelab__Music_Tiny_Orchestra_Bass
   Tiny_Orchestra_Bass_Mode_2 = 4077279360,
   Tiny_Orchestra_Bass_Mode_3 = 4077279361,
   Tiny_Orchestra_Bass_Mode_Off = 3450676341,
+}
+
+enum uint_32 Codelab__Music_Tiny_Orchestra_Bass_Mode_1
+{
+  Invalid = 0,
+  Tiny_Orchestra_Bass_Mode_1_Off = 2773389205,
+  Tiny_Orchestra_Bass_Mode_1_On = 4225872937,
+}
+
+enum uint_32 Codelab__Music_Tiny_Orchestra_Bass_Mode_2
+{
+  Invalid = 0,
+  Tiny_Orchestra_Bass_Mode_2_Off = 3114422790,
+  Tiny_Orchestra_Bass_Mode_2_On = 2510905384,
+}
+
+enum uint_32 Codelab__Music_Tiny_Orchestra_Bass_Mode_3
+{
+  Invalid = 0,
+  Tiny_Orchestra_Bass_Mode_3_Off = 1797181875,
+  Tiny_Orchestra_Bass_Mode_3_On = 36806655,
 }
 
 enum uint_32 Codelab__Music_Tiny_Orchestra_Glock_Pluck
@@ -22,6 +66,27 @@ enum uint_32 Codelab__Music_Tiny_Orchestra_Glock_Pluck
   Tiny_Orchestra_Glock_Pluck_Mode_Off = 2017008174,
 }
 
+enum uint_32 Codelab__Music_Tiny_Orchestra_Glock_Pluck_Mode_1
+{
+  Invalid = 0,
+  Tiny_Orchestra_Glock_Pluck_Mode_1_Off = 1674194378,
+  Tiny_Orchestra_Glock_Pluck_Mode_1_On = 2421905196,
+}
+
+enum uint_32 Codelab__Music_Tiny_Orchestra_Glock_Pluck_Mode_2
+{
+  Invalid = 0,
+  Tiny_Orchestra_Glock_Pluck_Mode_2_Off = 4210083577,
+  Tiny_Orchestra_Glock_Pluck_Mode_2_On = 3631119949,
+}
+
+enum uint_32 Codelab__Music_Tiny_Orchestra_Glock_Pluck_Mode_3
+{
+  Invalid = 0,
+  Tiny_Orchestra_Glock_Pluck_Mode_3_Off = 2569343836,
+  Tiny_Orchestra_Glock_Pluck_Mode_3_On = 1273367574,
+}
+
 enum uint_32 Codelab__Music_Tiny_Orchestra_Strings
 {
   Invalid = 0,
@@ -29,6 +94,27 @@ enum uint_32 Codelab__Music_Tiny_Orchestra_Strings
   Tiny_Orchestra_Strings_Mode_2 = 1790990773,
   Tiny_Orchestra_Strings_Mode_3 = 1790990772,
   Tiny_Orchestra_Strings_Mode_Off = 3180178332,
+}
+
+enum uint_32 Codelab__Music_Tiny_Orchestra_Strings_Mode_1
+{
+  Invalid = 0,
+  Tiny_Orchestra_Strings_Mode_1_Off = 1597550140,
+  Tiny_Orchestra_Strings_Mode_1_On = 2524543094,
+}
+
+enum uint_32 Codelab__Music_Tiny_Orchestra_Strings_Mode_2
+{
+  Invalid = 0,
+  Tiny_Orchestra_Strings_Mode_2_Off = 104978871,
+  Tiny_Orchestra_Strings_Mode_2_On = 1209427331,
+}
+
+enum uint_32 Codelab__Music_Tiny_Orchestra_Strings_Mode_3
+{
+  Invalid = 0,
+  Tiny_Orchestra_Strings_Mode_3_Off = 702297514,
+  Tiny_Orchestra_Strings_Mode_3_On = 3673080460,
 }
 
 enum uint_32 Cozmo_Sings_100Bpm
@@ -177,9 +263,19 @@ enum uint_32 Sparked
 
 enum uint_32 SwitchGroupType
 {
+  Codelab__Music_Tiny_Orchestra = 981129199,
   Codelab__Music_Tiny_Orchestra_Bass = 57798143,
+  Codelab__Music_Tiny_Orchestra_Bass_Mode_1 = 3356335735,
+  Codelab__Music_Tiny_Orchestra_Bass_Mode_2 = 3356335732,
+  Codelab__Music_Tiny_Orchestra_Bass_Mode_3 = 3356335733,
   Codelab__Music_Tiny_Orchestra_Glock_Pluck = 294713538,
+  Codelab__Music_Tiny_Orchestra_Glock_Pluck_Mode_1 = 1120265808,
+  Codelab__Music_Tiny_Orchestra_Glock_Pluck_Mode_2 = 1120265811,
+  Codelab__Music_Tiny_Orchestra_Glock_Pluck_Mode_3 = 1120265810,
   Codelab__Music_Tiny_Orchestra_Strings = 802212004,
+  Codelab__Music_Tiny_Orchestra_Strings_Mode_1 = 1004765386,
+  Codelab__Music_Tiny_Orchestra_Strings_Mode_2 = 1004765385,
+  Codelab__Music_Tiny_Orchestra_Strings_Mode_3 = 1004765384,
   Cozmo_Sings_100Bpm = 3759662965,
   Cozmo_Sings_120Bpm = 2987768599,
   Cozmo_Sings_80Bpm = 3366294904,
