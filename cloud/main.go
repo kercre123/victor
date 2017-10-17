@@ -7,31 +7,36 @@ import (
 	"os"
 )
 
-func messageSender(ch chan<- []byte) {
+func messageSender(sock Socket) {
 	for {
 		reader := bufio.NewReader(os.Stdin)
 		text, _ := reader.ReadString('\n')
 		fmt.Println("Sending:", text)
-		ch <- []byte(text)
+		_, err := sock.Write([]byte(text))
+		if err != nil {
+			fmt.Println("Error sending:", err)
+		}
 	}
 }
 
 func runServer() {
 	fmt.Println("Starting server")
 	sock := NewServerSocket(12345)
-	go messageSender(sock.write)
+	go messageSender(sock)
 	for {
-		fmt.Println("Got message:", string(<-sock.read))
+		_, msg := sock.ReadBlock()
+		fmt.Println("Got message:", string(msg))
 	}
 }
 
 func runClient() {
 	fmt.Println("Starting client")
-	sock := NewClientSocket("127.0.0.1", 12345)
-	sock.write <- []byte("Hello, server!")
-	go messageSender(sock.write)
+	sock, _ := NewClientSocket("127.0.0.1", 12345)
+	sock.Write([]byte("Hello, server!"))
+	go messageSender(sock)
 	for {
-		fmt.Println("Got message:", string(<-sock.read))
+		_, msg := sock.ReadBlock()
+		fmt.Println("Got message:", string(msg))
 	}
 }
 
