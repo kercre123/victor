@@ -36,7 +36,7 @@ namespace DataPersistence {
       FakeGermanLocale = false;
       EnableAutoBlockPoolOnStart = true;
       LoadTestCodeLabProjects = false;
-      DisplayPerfDataInCodeLab = true;
+      DisplayPerfDataInCodeLab = false;
 
       DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
       DebugConsoleData.Instance.AddConsoleVar("EnableAutoBlockPoolOnStart", "Animator", this);

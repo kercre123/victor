@@ -25,7 +25,7 @@ window.Unity = {
         }
 
         if (this._firstMsgSentTime == null) {
-            this._firstMsgSentTime = Date.now();
+            this._firstMsgSentTime = new Date().getTime();
             this._numMsgSentThisPeriod = 0;
         }
         else {
@@ -39,7 +39,7 @@ window.Unity = {
     },
     calculateSleepRequiredToThrottle: function() {
         if (this._numMsgSentThisPeriod > 30) {
-            var duration = Date.now() - this._firstMsgSentTime;
+            var duration = new Date().getTime() - this._firstMsgSentTime;
             // Cap calls to 30 per 100ms, e.g ~10 calls per 33ms (0.033s) Unity tick
             // Note: Clock was doing ~9 calls in 0.2s = 200ms
             var minDuration = 100;

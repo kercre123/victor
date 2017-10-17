@@ -203,7 +203,7 @@ window.setPerformanceData = function(perfStateJSON) {
       // Create the element programmatically
       perfElement = document.createElement("div");
       perfElement.id = "perfDisplay";
-      perfElement.style.cssText = 'display:block;position:absolute;bottom:1px;right:70px;width:100%%;height:100%%;background-color:black;z-index:999999;pointer-events:visible;';
+      perfElement.style.cssText = 'display:block;position:absolute;bottom:1px;right:70px;background-color:black;z-index:999999;pointer-events:visible;';
       perfElement.onclick = function () {
         var perfElement = document.getElementById("perfDisplay");
         if (perfElement != null) {
