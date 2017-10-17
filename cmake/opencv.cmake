@@ -129,4 +129,41 @@ if (MACOSX)
   list(APPEND OPENCV_LIBS ${ACCELERATE} ${APPKIT} ${OPENCL})
 endif()
 
+# On Android, with opencv-3.1, we need to copy shared libs to our library output folder
+macro(copy_opencv_android_libs)
+if (ANDROID AND OPENCV_VERSION EQUAL "3.1.0")
+    if (TARGET copy_opencv_libs)
+        return()
+    endif()
+    add_library(tbb SHARED IMPORTED)
+    set(include_paths
+        ${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/jni/include/opencv2/${OPENCV_MODULE}
+        ${OPENCV_INCLUDE_PREFIX}
+        ${OPENCV2_INCLUDE_PATH})
+    set_target_properties(tbb PROPERTIES
+        IMPORTED_LOCATION
+        ${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libtbb.so)
+    set(INSTALL_LIBS
+        "${OPENCV_LIBS}"
+        tbb
+        libturbojpeg)
+    message(STATUS "opencv libs: ${INSTALL_LIBS}")
+    set(OUTPUT_FILES "")
+    foreach(lib ${INSTALL_LIBS})
+        get_target_property(LIB_PATH ${lib} IMPORTED_LOCATION)
+        get_filename_component(LIB_FILENAME ${LIB_PATH} NAME)
+        set(DST_PATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${LIB_FILENAME}") 
+        # message(STATUS "copy opencv lib: ${lib} ${LIB_PATH} -> ${DST_PATH}")
+        add_custom_command(
+            OUTPUT "${DST_PATH}"
+            COMMAND ${CMAKE_COMMAND}
+            ARGS -E copy_if_different "${LIB_PATH}" "${DST_PATH}"
+            COMMENT "copy ${LIB_PATH}"
+            VERBATIM
+        )
+        list(APPEND OUTPUT_FILES ${DST_PATH})
+    endforeach() 
+    add_custom_target(copy_opencv_libs ALL DEPENDS ${OUTPUT_FILES})
+endif()
+endmacro()
 
