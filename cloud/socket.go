@@ -24,6 +24,10 @@ func NewClientSocket(ip string, port int) *Socket {
 	sock := Socket{write, read}
 	done := make(chan struct{})
 
+	// Send one byte to server so it marks us as connected
+	// (behavior defined by UdpClient.cpp)
+	conn.Write(make([]byte, 1))
+
 	// reader thread
 	go func() {
 		for {
@@ -89,9 +93,12 @@ func NewServerSocket(port int) *ServerSocket {
 				fmt.Println("Couldn't read:", err)
 				break
 			}
+			isHandshake := addr != sock.addr && n == 1
 			sock.addr = addr
 			sock.ready = true
-			read <- buf[:n]
+			if !isHandshake {
+				read <- buf[:n]
+			}
 		}
 		done <- struct{}{}
 	}()

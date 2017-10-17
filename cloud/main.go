@@ -16,7 +16,7 @@ func messageSender(ch chan<- []byte) {
 	}
 }
 
-func server() {
+func runServer() {
 	fmt.Println("Starting server")
 	sock := NewServerSocket(12345)
 	go messageSender(sock.write)
@@ -25,7 +25,7 @@ func server() {
 	}
 }
 
-func client() {
+func runClient() {
 	fmt.Println("Starting client")
 	sock := NewClientSocket("127.0.0.1", 12345)
 	sock.write <- []byte("Hello, server!")
@@ -41,8 +41,9 @@ func main() {
 
 	switch *mode {
 	case "server":
-		server()
+		runServer()
 	default:
-		client()
+		runClient()
 	}
+	fmt.Println("Hello, world!")
 }
