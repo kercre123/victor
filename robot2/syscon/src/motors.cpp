@@ -73,6 +73,7 @@ static const MotorConfig MOTOR_DEF[MOTOR_COUNT] = {
 static MotorStatus motorStatus[MOTOR_COUNT];
 static int16_t motorPower[MOTOR_COUNT];
 static int moterServiced;
+static bool motorEnabled;
 
 static void enable_charger() {
   LP1::mode(MODE_INPUT);
@@ -230,6 +231,7 @@ void Motors::init() {
   configure_timer(TIM1);
   configure_timer(TIM3);
   enable_charger();
+  motorEnabled = false;
 }
 
 void Motors::stop() {
@@ -258,7 +260,6 @@ static const int DISABLE_ON_TIME = 200;
 
 void Motors::tick() {
   // Charge circuit enable logic
-  static bool motorEnabled = false;
   static int idleTimer = 0;
   bool enableMotors = (++idleTimer) < DISABLE_ON_TIME;
 
@@ -291,7 +292,13 @@ void Motors::tick() {
     }
 
     // This is set when the bus is idle
-    if (!state->configured) {
+    if (transition) {
+      // Power down the motor for a cycle
+      *config->N1CC = 0;
+      *config->N2CC = 0;
+
+      state->configured = false;
+    } else if (!state->configured) {
       // Configure our pins
       if (direction) {
         *config->P_BSRR = config->P_Set;
@@ -305,13 +312,6 @@ void Motors::tick() {
 
       state->direction = direction;
       state->configured = true;
-      return ;
-    } else if (transition) {
-      // Power down the motor for a cycle
-      *config->N1CC = 0;
-      *config->N2CC = 0;
-
-      state->configured = false;
     } else {
       // Drive our power forward
       if (direction) {
