@@ -32,6 +32,7 @@ static const std::string kBracketLevelKey = "BracketLevel";
 static const std::string kFullnessDecayCooldownKey = "FullnessDecayCooldown";
 static const std::string kBrokenPartThresholdKey = "BrokenPartThreshold";
 static const std::string kLocalNotificationMaxFutureMinutesKey = "LocalNotificationMaxFutureMinutes";
+static const std::string kRepairRoundsKey = "RepairRounds";
 
 static const std::string kDecayRatesKey = "DecayRates";
 static const std::string kConnectedDecayRatesKey = "ConnectedDecayRates";
@@ -71,6 +72,7 @@ NeedsConfig::NeedsConfig(const CozmoContext* cozmoContext)
 , _decayConnected()
 , _decayUnconnected()
 , _localNotificationMaxFutureMinutes(60 * 24 * 365 * 10)
+, _repairRounds(1)
 , _cozmoContext(cozmoContext)
 , _unconnectedDecayTestVariationKey("Unknown (unknown)")
 {
@@ -208,6 +210,8 @@ void NeedsConfig::Init(const Json::Value& json)
 
   _localNotificationMaxFutureMinutes = JsonTools::ParseFloat(json, kLocalNotificationMaxFutureMinutesKey.c_str(),
                                                              "Failed to parse min need level");
+
+  _repairRounds = JsonTools::ParseUint8(json, kRepairRoundsKey.c_str(), "Failed to parse repair rounds");
 }
 
 

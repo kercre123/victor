@@ -165,6 +165,10 @@ namespace Cozmo.Needs {
       RobotEngineManager.Instance.SendMessage();
     }
 
+    public int GetLatestRepairRounds() {
+      return _LatestStateFromEngine.repairRounds;
+    }
+
 #if UNITY_EDITOR
     public void MockHandleNeedsStateFromEngine(NeedsState newNeedsState) {
       if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {

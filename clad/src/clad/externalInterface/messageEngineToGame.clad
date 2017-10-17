@@ -539,6 +539,7 @@ message NeedsState {
   int_32        numStarsForNextUnlock,
   NeedsActionId actionCausingTheUpdate,
   string        testVariation,
+  int_32        repairRounds,
 }
 
 message NeedsPauseState {

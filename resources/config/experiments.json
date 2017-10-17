@@ -70,19 +70,19 @@
                     "pop_frac_pct": 5
                 },
                 {
-                    "key": "variationA",
+                    "key": "testAoff",
                     "pop_frac_pct": 5
                 },
                 {
-                    "key": "variationB",
+                    "key": "testBoff",
                     "pop_frac_pct": 5
                 },
                 {
-                    "key": "variationC",
+                    "key": "testCoff",
                     "pop_frac_pct": 5
                 },
                 {
-                    "key": "variationD",
+                    "key": "alloff",
                     "pop_frac_pct": 80
                 }
             ],

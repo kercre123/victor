@@ -42,7 +42,7 @@ namespace Cozmo.Repair.UI {
       RESPOND_PART_REPAIRED,  // play an animation to indicate the part was successfully repaired
       WAIT_FOR_NEXT_ROUND,
       REPAIR_SEQUENCE_INTERRUPTED, // the robot's response was interrupted by being picked up - 
-                                  // wait for the robot to be put back down and then re-play the response
+                                   // wait for the robot to be put back down and then re-play the response
     }
 
     [System.Serializable]
@@ -220,6 +220,8 @@ namespace Cozmo.Repair.UI {
     private int _NumberOfBrokenParts = 0;
     private int _NumberOfBrokenPartsDisplayed = 0;
 
+    private int _NumberOfRepairRounds = 1;
+
     #endregion //Non-serialized Fields
 
     #region Life Span
@@ -292,13 +294,18 @@ namespace Cozmo.Repair.UI {
       _CalibrateButton.Initialize(HandleCalibrateButtonPressed, "repair_callibrate_button", DASEventDialogName);
       _CalibrateButton.gameObject.SetActive(false);
 
+      _NumberOfRepairRounds = nsm.GetLatestRepairRounds();
+      if (_NumberOfRepairRounds > _RoundData.Length) {
+        DAS.Error("activity.repair.too_many_repair_rounds", "Configured number of repair rounds is more than the prefab holds");
+      }
+
       // If there's more than one round, display round indicators
-      if (_RoundData.Length > 1) {
-        while (_RoundProgressPips.Count < _RoundData.Length) {
-          GameObject obj = GameObject.Instantiate (_RoundPipPrefab, _RoundPipAnchor);
-          RoundProgressPip toggler = obj.GetComponent<RoundProgressPip> ();
-          _RoundProgressPips.Add (toggler);
-          toggler.SetComplete (false);
+      if (_NumberOfRepairRounds > 1) {
+        while (_RoundProgressPips.Count < _NumberOfRepairRounds) {
+          GameObject obj = GameObject.Instantiate(_RoundPipPrefab, _RoundPipAnchor);
+          RoundProgressPip toggler = obj.GetComponent<RoundProgressPip>();
+          _RoundProgressPips.Add(toggler);
+          toggler.SetComplete(false);
         }
       }
 
@@ -688,7 +695,7 @@ namespace Cozmo.Repair.UI {
         break;
       case TuneUpState.PLAY_REPAIR_SEQUENCE:
         if (_RobotResponseDone || _TimeInTuneUpState_sec >= _RobotResponseMaxTime_sec) {
-          if (_RoundIndex < _RoundData.Length - 1) {
+          if (_RoundIndex < _NumberOfRepairRounds - 1) {
             return ChangeTuneUpState(TuneUpState.START_ROUND);
           }
           return ChangeTuneUpState(TuneUpState.RESPOND_PART_REPAIRED);
@@ -839,8 +846,8 @@ namespace Cozmo.Repair.UI {
       }
     }
 
-    private void PlayPartRepairedAnimation(){
-      if (!PlaySeverityTransitionIfNecessary (HandlePartRepairedAnimationFinished)) {
+    private void PlayPartRepairedAnimation() {
+      if (!PlaySeverityTransitionIfNecessary(HandlePartRepairedAnimationFinished)) {
         AnimationTrigger animationTrigger = AnimationTrigger.Count;
         switch (_PartToRepair) {
         case RepairablePartId.Head:
@@ -864,7 +871,7 @@ namespace Cozmo.Repair.UI {
       }
     }
 
-    private void HandlePartRepairedAnimationFinished(bool success){
+    private void HandlePartRepairedAnimationFinished(bool success) {
       ChangeTuneUpState(TuneUpState.WAIT_FOR_NEXT_ROUND);
     }
 
@@ -943,7 +950,7 @@ namespace Cozmo.Repair.UI {
         }
         break;
       case TuneUpState.RESPOND_PART_REPAIRED:
-        ReactivateUIAfterRepairSequence ();
+        ReactivateUIAfterRepairSequence();
         break;
       case TuneUpState.WAIT_FOR_NEXT_ROUND:
         break;
@@ -1015,7 +1022,8 @@ namespace Cozmo.Repair.UI {
       if (_ShouldPlayPartRepairAnimation) {
         PlayPartRepairedAnimation();
         _ShouldPlayPartRepairAnimation = false;
-      } else {
+      }
+      else {
         UpdateRobotRepairIdleAnim();
       }
 
@@ -1252,15 +1260,16 @@ namespace Cozmo.Repair.UI {
         }
 
         // Play a round reaction if it's not the last round
-        if (_RoundIndex < (_RoundData.Length - 1)) {
+        if (_RoundIndex < (_NumberOfRepairRounds - 1)) {
           robot.SendAnimationTrigger(GetRobotArrowAnimation(_TuneUpPatternToMatch[finalAnimIdx], severe),
             HandleCalibrateAnimPlayed,
             QueueActionPosition.AT_END);
 
-          robot.SendAnimationTrigger ((severe) ? AnimationTrigger.RepairFixSevereRoundReact : AnimationTrigger.RepairFixMildRoundReact,
+          robot.SendAnimationTrigger((severe) ? AnimationTrigger.RepairFixSevereRoundReact : AnimationTrigger.RepairFixMildRoundReact,
             HandleRobotResponseDone,
             QueueActionPosition.AT_END);
-        }else{
+        }
+        else {
           robot.SendAnimationTrigger(GetRobotArrowAnimation(_TuneUpPatternToMatch[finalAnimIdx], severe),
             HandleRobotResponseDone,
             QueueActionPosition.AT_END);
@@ -1360,7 +1369,7 @@ namespace Cozmo.Repair.UI {
 
 
     // Return strue if severity has changed since the last time this function was called
-    private bool UpdateSeverityBracket(){
+    private bool UpdateSeverityBracket() {
       NeedsStateManager nsm = NeedsStateManager.Instance;
       NeedBracketId bracket = nsm.PopLatestEngineValue(NeedId.Repair).Bracket;
 

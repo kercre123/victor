@@ -1810,7 +1810,8 @@ void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpda
   ExternalInterface::NeedsState message(std::move(needLevels), std::move(needBrackets),
                                         std::move(partIsDamaged), _needsState._curNeedsUnlockLevel,
                                         _needsState._numStarsAwarded, _needsState._numStarsForNextUnlock,
-                                        actionCausingTheUpdate, std::move(ABTestString));
+                                        actionCausingTheUpdate, std::move(ABTestString),
+                                        _needsConfig._repairRounds);
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 

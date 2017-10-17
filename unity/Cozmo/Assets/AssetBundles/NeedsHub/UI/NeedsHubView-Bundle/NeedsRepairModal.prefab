@@ -4369,6 +4369,10 @@ MonoBehaviour:
   _RoundData:
   - NumSymbols: 4
     SymbolRevealDelay: 0.5
+  - NumSymbols: 4
+    SymbolRevealDelay: 0.5
+  - NumSymbols: 4
+    SymbolRevealDelay: 0.5
   _RoundPipPrefab: {fileID: 1254753114430310, guid: 2d8d0ba715c324efdab29206288ae98d,
     type: 2}
   _RoundPipAnchor: {fileID: 224747954335516772}

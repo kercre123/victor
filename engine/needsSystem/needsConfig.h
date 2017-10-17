@@ -102,6 +102,8 @@ public:
 
   float _localNotificationMaxFutureMinutes;
 
+  int _repairRounds;
+
 private:
   void InitDecayRates(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo);
   void InitDecayModifiers(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo);
