@@ -62,9 +62,9 @@ window.Unity = {
         var sleepRequired_ms = this.calculateSleepRequiredToThrottle();
         if (sleepRequired_ms > 0) {
             // Don't reset the tracking - that's done as soon as it's slept for long enough
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    resolve();
+            return new Promise(function (resolve) {
+                setTimeout(function(){
+                    resolve();                    
                 }, sleepRequired_ms);
             });
         }
