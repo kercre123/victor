@@ -22,6 +22,26 @@
 #include "opencv2/highgui.hpp"
 #endif
 
+namespace {
+template <typename T>
+void ResizeKeepAspectRatioHelper(const cv::Mat_<T>& src, cv::Mat_<T>& dest, s32 desiredCols, s32 desiredRows,
+                                 int method)
+{
+
+  const double ratio = src.rows / src.cols;
+  const double newNumberCols = desiredCols * ratio;
+  const double newNumberRows =  desiredRows * (1.0 / ratio);
+  if (newNumberCols <= desiredRows) {
+    const cv::Size desiredSize(desiredCols, newNumberCols);
+    cv::resize(src, dest, desiredSize, 0, 0, method);
+  }
+  else {
+    const cv::Size desiredSize(newNumberRows, desiredRows);
+    cv::resize(src, dest, desiredSize, 0, 0, method);
+  }
+}
+}
+
 namespace Anki {
 namespace Vision {
   
@@ -283,15 +303,41 @@ namespace Vision {
   void ImageBase<T>::Resize(ImageBase<T>& resizedImage, ResizeMethod method) const
   {
     if(resizedImage.IsEmpty()) {
-      printf("Image::Resize - Output image should already be the desired size.\n");
-    } else {
+      PRINT_NAMED_ERROR("Image.Resize.EmptyImage", "Output image should already have the desired size");
+    }
+    else {
       const cv::Size desiredSize(resizedImage.GetNumCols(), resizedImage.GetNumRows());
       cv::resize(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredSize, 0, 0,
                  GetOpenCvInterpMethod(method));
       resizedImage.SetTimestamp(this->GetTimestamp());
     }
   }
-  
+
+  template <typename T>
+  void ImageBase<T>::ResizeKeepAspectRatio(s32 desiredRows, s32 desiredCols, ResizeMethod method)
+  {
+
+    if(desiredRows != GetNumRows() || desiredCols != GetNumCols()) {
+      ResizeKeepAspectRatioHelper(this->get_CvMat_(), this->get_CvMat_(), desiredCols, desiredRows,
+                                  GetOpenCvInterpMethod(method));
+    }
+  }
+
+  template<typename T>
+  void ImageBase<T>::ResizeKeepAspectRatio(ImageBase<T>& resizedImage, ResizeMethod method) const
+  {
+
+    if(resizedImage.IsEmpty()) {
+      PRINT_NAMED_ERROR("Image.ResizeKeepAspectRatio.EmptyImage", "Output image should already have the desired size");
+      return;
+    }
+
+    const s32 desiredCols = resizedImage.GetNumCols();
+    const s32 desiredRows = resizedImage.GetNumRows();
+    ResizeKeepAspectRatioHelper(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredCols, desiredRows, GetOpenCvInterpMethod(method));
+    resizedImage.SetTimestamp(this->GetTimestamp());
+  }
+
   template<typename T>
   void ImageBase<T>::CopyTo(ImageBase<T>& otherImage) const
   {

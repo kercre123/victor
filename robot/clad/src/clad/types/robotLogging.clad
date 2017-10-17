@@ -16,16 +16,6 @@ enum int_8 LogLevel
   ANKI_LOG_LEVEL_ERROR
 }
 
-
-/// These traces replace printing text with a much lower level of overhead
-message PrintTrace
-{
-  uint_32   stringId, // Before name for alignment, uint32 for alignment and room for growth
-  uint_16   name,
-  LogLevel  level,
-  int_32    value[uint_8:12], // We can use type casts to pack other things in here, need to keep size of this message plus tag plus RTIP -> WiFi overhead under 64 bytes
-}
-
 message MainCycleTimeError
 {
   uint_32 numMainTooLongErrors,

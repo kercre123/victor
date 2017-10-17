@@ -1,0 +1,5 @@
+cxx_project(
+  name = 'cozmoengined',
+  srcs = cxx_src_glob(['engined']),
+  headers = cxx_header_glob(['engined'])
+)

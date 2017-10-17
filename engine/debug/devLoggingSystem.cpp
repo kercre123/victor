@@ -10,6 +10,7 @@
 *
 */
 #include "engine/debug/devLoggingSystem.h"
+#include "engine/debug/devLoggerProvider.h"
 #include "engine/util/file/archiveUtil.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -28,14 +29,18 @@
 #include <sstream>
 #include <cstdio>
 
+namespace {
+  static Anki::Cozmo::DevLoggingSystem* sInstance = nullptr;
+  static Anki::Util::ILoggerProvider* sInstancePrintProvider = nullptr;
+}
+
 namespace Anki {
 namespace Cozmo {
 
 // Save every Nth image (in chunks) to the log. Camera is 15fps.
 // So 0 disables saving, 15 saves one image per second, 75 saves an image every 5 seconds.
 CONSOLE_VAR_RANGED(uint8_t, kSaveImageFrequency, "DevLogging", 0, 0, 75);
-  
-DevLoggingSystem* DevLoggingSystem::sInstance                                   = nullptr;
+ 
 const DevLoggingClock::time_point DevLoggingSystem::kAppRunStartTime            = DevLoggingClock::now();
 const std::string DevLoggingSystem::kArchiveExtensionString                     = ".tar.gz";
   
@@ -56,13 +61,33 @@ const std::string DevLoggingSystem::kHasBeenUploadedKey = "hasBeenUploaded";
 
 void DevLoggingSystem::CreateInstance(const std::string& loggingBaseDirectory, const std::string& appRunId)
 {
+  // Destroy any existing instance
+  Util::SafeDelete(sInstancePrintProvider);
   Util::SafeDelete(sInstance);
 
+  // Initialize new instance
   sInstance = new DevLoggingSystem(loggingBaseDirectory, appRunId);
+  
+  // Initialize new print provider
+  auto * devlogQueue = sInstance->GetQueue();
+  const auto & devlogBase = sInstance->GetDevLoggingBaseDirectory();
+  const auto & devlogPath = Anki::Util::FileUtils::FullFilePath({devlogBase, kPrintName});
+  sInstancePrintProvider = new Anki::Cozmo::DevLoggerProvider(devlogQueue, devlogPath);
+}
+
+DevLoggingSystem* DevLoggingSystem::GetInstance()
+{
+  return sInstance;
+}
+
+Anki::Util::ILoggerProvider* DevLoggingSystem::GetInstancePrintProvider()
+{
+  return sInstancePrintProvider;
 }
 
 void DevLoggingSystem::DestroyInstance()
 {
+  Util::SafeDelete(sInstancePrintProvider);
   Util::SafeDelete(sInstance);
 }
 

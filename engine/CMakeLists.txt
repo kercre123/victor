@@ -94,7 +94,6 @@ android_strip(TARGET cozmo_engine)
 
 target_compile_definitions(cozmo_engine
   PRIVATE
-  COZMO_V2
   CORETECH_BASESTATION
   USE_DAS=${USE_DAS}
   VOICE_RECOG_NONE=0

@@ -235,11 +235,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   _context->GetRobotManager()->Init(_config, _context->GetDataLoader()->GetDasEventConfig());
 
-#ifdef COZMO_V2
   PRINT_NAMED_INFO("CozmoEngine.Init.Version", "2");
-#else
-  PRINT_NAMED_INFO("CozmoEngine.Init.Version", "1");
-#endif
 
 #if defined(DEBUG)
   PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "DEBUG");

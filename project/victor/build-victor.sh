@@ -3,12 +3,12 @@
 set -e
 
 SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
-_SCRIPT_NAME=`basename ${0}`
+SCRIPT_NAME=`basename ${0}`
 TOPLEVEL=$(cd "${SCRIPT_PATH}/../.." && pwd)
 BUILD_TOOLS="${TOPLEVEL}/tools/build/tools"
 
 function usage() {
-    echo "$_SCRIPT_NAME [OPTIONS]"
+    echo "$SCRIPT_NAME [OPTIONS]"
     echo "  -h                      print this message"
     echo "  -v                      print verbose output"
     echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
@@ -18,6 +18,7 @@ function usage() {
     echo "  -d                      DEBUG: generate file lists and exit"
     echo "  -x [CMAKE_EXE]          path to cmake executable"
     echo "  -C                      generate build config and exit without building"
+    echo "  -F [FEATURE]            enable feature {factoryTest,factoryTestDev}"
 }
 
 #
@@ -33,11 +34,12 @@ CMAKE_EXE="${HOME}/.anki/cmake/dist/3.8.1/CMake.app/Contents/bin/cmake"
 CONFIGURATION=Debug
 PLATFORM=android
 CMAKE_GENERATOR=Ninja
+FEATURES=""
 
 # TODO: provide command line option?
 USE_TENSORFLOW=1
 
-while getopts ":x:c:p:g:hvfdC" opt; do
+while getopts ":x:c:p:g:hvfdCF:" opt; do
     case $opt in
         h)
             usage
@@ -72,6 +74,9 @@ while getopts ":x:c:p:g:hvfdC" opt; do
             ;;
         g)
             CMAKE_GENERATOR="${OPTARG}"
+            ;;
+        F)
+            FEATURES="${FEATURES} ${OPTARG}"
             ;;
         :)
             echo "Option -${OPTARG} required an argument." >&2
@@ -108,10 +113,32 @@ case "${CONFIGURATION}" in
     CONFIGURATION="Release"
     ;;
   *)
-    echo "Unknown configuration '${CONFIGURATION}'. Configuration should be Debug or Release."
+    echo "${SCRIPT_NAME}: Unknown configuration '${CONFIGURATION}'"
+    usage
     exit 1
     ;;
 esac
+
+#
+# Enable feature flags
+#
+FEATURE_FLAGS=""
+
+for feature in ${FEATURES} ; do
+  case $feature in
+    factoryTest)
+      FEATURE_FLAGS="${FEATURE_FLAGS} -DFACTORY_TEST=1"
+      ;;
+    factoryTestDev)
+      FEATURE_FLAGS="${FEATURE_FLAGS} -DFACTORY_TEST=1 -DFACTORY_TEST_DEV=1"
+      ;;
+    *)
+      echo "${SCRIPT_NAME}: Unknown feature '${feature}'"
+      usage
+      exit 1
+      ;;
+  esac
+done
 
 # For non-ninja builds, add generator type to build dir
 BUILD_SYSTEM_TAG=""
@@ -193,6 +220,7 @@ if [ $CONFIGURE -eq 1 ]; then
         coretech/planning/BUILD.in \
         coretech/messaging/BUILD.in \
         engine/BUILD.in \
+        engine/tools/BUILD.in \
         lib/util/source/anki/util/BUILD.in \
         lib/util/source/anki/utilUnitTest/BUILD.in \
         resources/BUILD.in \
@@ -253,6 +281,7 @@ if [ $CONFIGURE -eq 1 ]; then
         -G${CMAKE_GENERATOR} \
         -DCMAKE_BUILD_TYPE=${CONFIGURATION} \
         -DBUILD_SHARED_LIBS=1 \
+        ${FEATURE_FLAGS} \
         -DUSE_TENSORFLOW=${USE_TENSORFLOW} \
         "${PLATFORM_ARGS[@]}"
         

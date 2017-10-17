@@ -298,7 +298,7 @@ namespace Anki {
             case LCS_SET_CURR_ANGLE:
               // Wait for motor to relax and then set angle
               if (HAL::GetTimeStamp() - lastLiftMovedTime_ms > LIFT_RELAX_TIME_MS) {
-                AnkiInfo( 1251, "LiftController.Calibrated", 305, "", 0);
+                AnkiInfo( "LiftController.Calibrated", "");
                 ResetAnglePosition(LIFT_ANGLE_LOW_LIMIT_RAD);
                 calState_ = LCS_IDLE;
                 Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, false);
@@ -376,7 +376,7 @@ namespace Anki {
         currentAngle_ += (HAL::MotorGetPosition(MotorID::MOTOR_LIFT) - prevHalPos_);
 
 #if(DEBUG_LIFT_CONTROLLER)
-        AnkiDebug( 16, "LiftController", 308, "LIFT FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f\n", 6,
+        AnkiDebug( "LiftController", "LIFT FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f\n",
               measuredSpeed, radSpeed_, currentAngle_.ToFloat(), HAL::MotorGetPosition(MotorID::MOTOR_LIFT), prevHalPos_, power_);
 #endif
         prevHalPos_ = HAL::MotorGetPosition(MotorID::MOTOR_LIFT);
@@ -425,7 +425,7 @@ namespace Anki {
             (Height2Rad(newDesiredHeight) == desiredAngle_) &&
             (fabsf((desiredAngle_ - currentAngle_).ToFloat()) < LIFT_ANGLE_TOL) ) {
           #if(DEBUG_LIFT_CONTROLLER)
-          AnkiDebug( 16, "LiftController", 145, "Already at desired height %f", 1, newDesiredHeight);
+          AnkiDebug( "LiftController", "Already at desired height %f", newDesiredHeight);
           #endif
           return;
         }
@@ -435,7 +435,7 @@ namespace Anki {
 
         // Convert desired height into the necessary angle:
 #if(DEBUG_LIFT_CONTROLLER)
-        AnkiDebug( 16, "LiftController", 146, "LIFT DESIRED HEIGHT: %f mm (curr height %f mm), duration = %f s", 3, desiredHeight_, GetHeightMM(), duration_seconds);
+        AnkiDebug( "LiftController", "LIFT DESIRED HEIGHT: %f mm (curr height %f mm), duration = %f s", desiredHeight_, GetHeightMM(), duration_seconds);
 #endif
 
 
@@ -459,7 +459,7 @@ namespace Anki {
                                                    CONTROL_DT);
 
           if (!res) {
-            AnkiEvent( 400, "LiftController.SetDesiredHeight.VPGFixedDurationFailed", 616, "startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.", 6,
+            AnkiEvent( "LiftController.SetDesiredHeight.VPGFixedDurationFailed", "startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.",
                       startRadSpeed,
                       startRad,
                       acc_start_frac,
@@ -484,7 +484,7 @@ namespace Anki {
         }
 
 #if DEBUG_LIFT_CONTROLLER
-        AnkiDebug( 16, "LiftController", 148, "VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n", 6,
+        AnkiDebug( "LiftController", "VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
               startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
 #endif
       } // SetDesiredHeight_internal
@@ -602,14 +602,14 @@ namespace Anki {
         
         if (checkingForLoadStartTime_ > 0) {
           if (currTime > checkingForLoadStartTime_ + CHECKING_FOR_LOAD_TIMEOUT_MS) {
-            AnkiInfo( 418, "LiftController.Update.NoLoadDetected", 305, "", 0);
+            AnkiInfo( "LiftController.Update.NoLoadDetected", "");
             checkForLoadWhenInPosition_ = false;
             checkingForLoadStartTime_ = 0;
             if (checkForLoadCallback_) {
               checkForLoadCallback_(false);
             }
           } else if (currentAngle_ < checkingForLoadStartAngle_ - CHECKING_FOR_LOAD_ANGLE_DIFF_THRESH) {
-            AnkiInfo( 419, "LiftController.Update.LoadDetected", 628, "in %d ms", 1, currTime - checkingForLoadStartTime_);
+            AnkiInfo( "LiftController.Update.LoadDetected", "in %d ms", currTime - checkingForLoadStartTime_);
             checkForLoadWhenInPosition_ = false;
             checkingForLoadStartTime_ = 0;
             if (checkForLoadCallback_) {
@@ -670,7 +670,7 @@ namespace Anki {
           } else if (checkForLoadWhenInPosition_ && !IsMoving()) {
             checkingForLoadStartTime_ = currTime;
             checkingForLoadStartAngle_ = currentAngle_.ToFloat();
-            AnkiInfo( 420, "LiftController.Update.CheckingForLoad", 347, "%d", 1, checkingForLoadStartTime_);
+            AnkiInfo( "LiftController.Update.CheckingForLoad", "%d", checkingForLoadStartTime_);
             power_ = 0;
           }
           
@@ -680,7 +680,7 @@ namespace Anki {
 
             inPosition_ = true;
 #if(DEBUG_LIFT_CONTROLLER)
-            AnkiDebug( 16, "LiftController", 152, " LIFT HEIGHT REACHED (%f mm)", 1, GetHeightMM());
+            AnkiDebug( "LiftController", " LIFT HEIGHT REACHED (%f mm)", GetHeightMM());
 #endif
           }
         } else {
@@ -689,7 +689,7 @@ namespace Anki {
 
 
 #if(DEBUG_LIFT_CONTROLLER)
-        AnkiDebugPeriodic(50, 389, "LiftController.Update.Values", 613, "LIFT: currA %f, curDesA %f, currVel %f, desA %f, err %f, errSum %f, inPos %d", 7,
+        AnkiDebugPeriodic(50, "LiftController.Update.Values", "LIFT: currA %f, curDesA %f, currVel %f, desA %f, err %f, errSum %f, inPos %d",
                           currentAngle_.ToFloat(),
                           currDesiredAngle_,
                           radSpeed_,
@@ -697,7 +697,7 @@ namespace Anki {
                           angleError,
                           angleErrorSum_,
                           inPosition_ ? 1 : 0);
-        AnkiDebugPeriodic(50, 390, "LiftController.Update.Power", 614, "P: %f, I: %f, D: %f, total: %f", 4,
+        AnkiDebugPeriodic(50, "LiftController.Update.Power", "P: %f, I: %f, D: %f, total: %f",
                           (Kp_ * angleError),
                           (Ki_ * angleErrorSum_),
                           (Kd_ * (angleError - prevAngleError_) * CONTROL_DT),
@@ -716,7 +716,7 @@ namespace Anki {
         Ki_ = ki;
         Kd_ = kd;
         MAX_ERROR_SUM = maxIntegralError;
-        AnkiInfo( 280, "LiftController.SetGains", 563, "New lift gains: kp = %f, ki = %f, kd = %f, maxSum = %f", 4,
+        AnkiInfo( "LiftController.SetGains", "New lift gains: kp = %f, ki = %f, kd = %f, maxSum = %f",
                  Kp_, Ki_, Kd_, MAX_ERROR_SUM);
       }
 

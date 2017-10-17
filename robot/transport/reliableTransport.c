@@ -5,16 +5,6 @@
 #include "anki/cozmo/transport/reliableTransport.h"
 #include "anki/cozmo/transport/IReceiver.h"
 
-#if defined(TARGET_ESPRESSIF)
-#include "osapi.h"
-#include "ets_sys.h"
-#include "user_interface.h"
-#define printf os_printf
-#define memcpy os_memcpy
-#define strncmp os_strncmp
-#define GetMicroCounter system_get_time
-#define TxStalled() (xPortGetFreeHeapSize() < RELIABLE_TRANSPORT_PACKET_ALLOWANCE)   // Return true if transmission is not possible at this time
-#else
 #include <string.h>
 #include <stdio.h>
 #define IRAM_ATTR
@@ -22,12 +12,10 @@
 #define likely
 #define unlikely
 #define TxStalled() (0)       // Return true if transmission is not possible at this time (never on PC)
-#endif
-#if defined(SIMULATOR) || defined(COZMO_V2)
+
 // Forward declaration. We are counting on this function being implemented somewhere.
 uint32_t GetTimeStamp(void);
 uint32_t GetMicroCounter(void) { return GetTimeStamp() * 1000; }
-#endif
 
 #define PRINT_FQ 0
 

@@ -13,9 +13,6 @@
 #ifndef __Cozmo_Basestation_NVStorageComponent_H__
 #define __Cozmo_Basestation_NVStorageComponent_H__
 
-#ifndef COZMO_V2
-#include "engine/robotDataBackupManager.h"
-#endif
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/helpers/noncopyable.h"
 #include "util/helpers/templateHelpers.h"
@@ -127,16 +124,9 @@ public:
   // For dev only!
   void Test();
   
-# ifndef COZMO_V2
-  RobotDataBackupManager& GetRobotDataBackupManager() { return _backupManager; }
-# endif
- 
 private:
   
   Robot&       _robot;
-  
-# pragma mark --- Start of Cozmo 2.0 only members ---  
-# ifdef COZMO_V2
   
   // Map of all stored data
   using TagDataMap = std::unordered_map<u32, std::vector<u8> >;
@@ -152,208 +142,6 @@ private:
 # ifdef SIMULATOR
   void LoadSimData();
 # endif
-  
-# pragma mark --- End of Cozmo 2.0 only members ---
-# else
-# pragma mark --- Start of Cozmo 1.x only members ---
-  
-  static constexpr u32 _kHeaderMagic = 0x435a4d4f; // "CZMO" in hex
-  struct NVStorageHeader {
-    u32 magic = _kHeaderMagic;
-    u32 version = 0;
-    u32 dataSize = 0;
-    u16 dataVersion = 0;
-  };
-  
-  // Info about a single write request
-  struct WriteDataObject {
-    WriteDataObject()
-    : baseTag(NVStorage::NVEntryTag::NVEntry_NEXT_SLOT)
-    , nextTag(0)
-    , sendIndex(0)
-    , data(nullptr)
-    , sending(false)
-    { }
-    
-    WriteDataObject(NVStorage::NVEntryTag tag, std::vector<u8>* dataVec)
-    : baseTag(tag)
-    , nextTag(static_cast<u32>(tag))
-    , sendIndex(0)
-    , data(dataVec)
-    , sending(false)
-    { }
-    
-    void ClearData() {
-      Util::SafeDelete(data);
-    }
-    
-    ~WriteDataObject() {
-      ClearData();
-    }
-    
-    NVStorage::NVEntryTag baseTag;
-    u32 nextTag;
-    u32 sendIndex;
-    std::vector<u8> *data;
-    bool sending;
-  };
-  
-  // Info on how to handle ACK'd writes/erases
-  struct WriteDataAckInfo {
-    WriteDataAckInfo()
-    : tag(NVStorage::NVEntryTag::NVEntry_NEXT_SLOT)
-    , callback({})
-    , broadcastResultToGame(false)
-    , timeoutTimeStamp(0)
-    , pending(false)
-    { }
-
-    NVStorage::NVEntryTag tag;
-    NVStorageWriteEraseCallback callback;
-    bool broadcastResultToGame;
-    TimeStamp_t timeoutTimeStamp;
-    bool pending;
-  };
-  
-  // Info on how to handle read-requested data
-  struct RecvDataObject {
-    RecvDataObject()
-    : tag(NVStorage::NVEntryTag::NVEntry_NEXT_SLOT)
-    , data(nullptr)
-    , callback({})
-    , deleteVectorWhenDone(true)
-    , broadcastResultToGame(false)
-    , timeoutTimeStamp(0)
-    , pending(false)
-    , dataSizeKnown(false)
-    { }
-    
-    void ClearData() {
-      if (deleteVectorWhenDone) {
-        Util::SafeDelete(data);
-      }
-    }
-    
-    ~RecvDataObject() {
-      ClearData();
-    }
-    
-    NVStorage::NVEntryTag tag;
-    std::vector<u8> *data;
-    NVStorageReadCallback callback;
-    bool deleteVectorWhenDone;
-    bool broadcastResultToGame;
-    TimeStamp_t timeoutTimeStamp;
-    bool pending;
-    bool dataSizeKnown;
-  };
-  
-  enum class NVSCState {
-    IDLE,
-    SENDING_WRITE_DATA,
-    RECEIVING_DATA,
-  };
-  
-  NVSCState _state;
-  void SetState(NVSCState s);
-
-  
-  // Data currently being sent to robot for writing
-  WriteDataObject _writeDataObject;
-  
-  // ACK handling struct for write and erase requests
-  WriteDataAckInfo _writeDataAckInfo;
-  
-  // Received data handling struct
-  RecvDataObject _recvDataInfo;
-  
-  // Manages the robot data backups
-  // The backup manager lives here as it needs to update the backup everytime we write new things to the robot
-  RobotDataBackupManager _backupManager;
-  
-  
-  // ======= Robot event handlers ======
-  void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-
-  
-  // ====== Message retry ========
-  NVStorage::NVCommand _lastCommandSent;
-  
-  void SendErase(u32 tag);
-  
-  // Number of attempted sends of the last write or read message
-  u8 _numSendAttempts;
-  
-  // Max num of attempts allowed for sending a write or read message
-  const u8 _kMaxNumSendAttempts = 8;
-  
-  // Returns false if number of allowable retries exceeded
-  bool ResendLastCommand();
-  
-  // Size of header that should be at the start of all entries, except factory entries
-  static constexpr u32 _kEntryHeaderSize      = sizeof(NVStorageHeader);
-  static_assert(_kEntryHeaderSize % 4 == 0, "NVStorageHeader must have a 4-byte aligned size");  // Using sizeof should ensure this is true, but checking just in case.
-  
-  // Ack timeout
-  // If an operation is not acked within this timeout then give up waiting for it.
-  // (Average write/read rate is ~10KB/s)
-  static constexpr u32 _kAckTimeout_ms        = 5000;
-  
-
-  // Struct for holding any type of request to the robot's non-volatile storage
-  struct NVStorageRequest {
-    
-    // Write request
-    NVStorageRequest(NVStorage::NVEntryTag tag, NVStorageWriteEraseCallback callback, std::vector<u8>* data, bool broadcastResultToGame)
-    : op(NVStorage::NVOperation::NVOP_WRITE)
-    , tag(tag)
-    , writeCallback(callback)
-    , data(data)
-    , broadcastResultToGame(broadcastResultToGame)
-    {}
-    
-    // Erase request
-    NVStorageRequest(NVStorage::NVEntryTag tag, NVStorageWriteEraseCallback callback, bool broadcastResultToGame, u32 eraseSize = 0)
-    : op(NVStorage::NVOperation::NVOP_ERASE)
-    , tag(tag)
-    , writeCallback(callback)
-    , broadcastResultToGame(broadcastResultToGame)
-    , eraseSize(eraseSize)
-    {}
-    
-    // WipeAll request
-    NVStorageRequest(NVStorageWriteEraseCallback callback, bool broadcastResultToGame)
-    : op(NVStorage::NVOperation::NVOP_WIPEALL)
-    , writeCallback(callback)
-    , broadcastResultToGame(broadcastResultToGame)
-    {}
-    
-    // Read request
-    NVStorageRequest(NVStorage::NVEntryTag tag, NVStorageReadCallback callback, std::vector<u8>* data, bool broadcastResultToGame)
-    : op(NVStorage::NVOperation::NVOP_READ)
-    , tag(tag)
-    , readCallback(callback)
-    , data(data)
-    , broadcastResultToGame(broadcastResultToGame)
-    {}
-    
-    NVStorage::NVOperation op;
-    NVStorage::NVEntryTag tag;
-    NVStorageWriteEraseCallback writeCallback;
-    NVStorageReadCallback readCallback;
-    std::vector<u8>* data;
-    bool broadcastResultToGame;
-    u32 eraseSize;
-  };
-  
-  // Queue of write/erase/read requests to be sent to robot
-  std::queue<NVStorageRequest> _requestQueue;
-  
-  void ProcessRequest();
-  
-# endif // #ifdef COZMO_V2
-# pragma mark --- End of Cozmo 1.x only members ---
   
   // Stores blobs of a multi-blob messgage.
   // When the first blob of a new tag is received, remainingIndices is populated with

@@ -12,19 +12,7 @@ namespace Anki {
       Result Init();
       void Destroy();
 
-      //
-      // Stepping Functions
-      //
-      // We will have (at least?) two threads to step along:
-      //
-      // 1. The low-level functions which happen at a strict, determinstic rate
-      //    (like motor control and sensor updates)
-      //
-      // 2. The slower functions which take longer and will be run "as quickly
-      //    as possible" (like the vision system for finding block markers)
-      //
       Result step_MainExecution();
-      Result step_LongExecution();
 
       //
       // State Machine Operation Modes

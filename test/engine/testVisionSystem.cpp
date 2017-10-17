@@ -41,8 +41,7 @@
 
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 
-#ifdef COZMO_V2
-TEST(VisionSystem, CameraCalibrationTarget_InvertedBox)
+TEST(VisionSystem, DISABLED_CameraCalibrationTarget_InvertedBox)
 {
   NativeAnkiUtilConsoleSetValueWithString("CalibTargetType",
                                           std::to_string(Anki::Cozmo::CameraCalibrator::INVERTED_BOX).c_str());
@@ -150,7 +149,7 @@ TEST(VisionSystem, CameraCalibrationTarget_InvertedBox)
   visionSystem = nullptr;
 }
 
-TEST(VisionSystem, CameraCalibrationTarget_Qbert)
+TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
 {
   NativeAnkiUtilConsoleSetValueWithString("CalibTargetType",
                                           std::to_string(Anki::Cozmo::CameraCalibrator::QBERT).c_str());
@@ -256,7 +255,6 @@ TEST(VisionSystem, CameraCalibrationTarget_Qbert)
   Anki::Util::SafeDelete(visionSystem);
   visionSystem = nullptr;
 }
-#endif
 
 TEST(VisionSystem, MarkerDetectionTests)
 {

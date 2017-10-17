@@ -9,7 +9,7 @@
 #ifndef __Anki_Cozmo_Basestation_RobotToEngineImplMessaging_H__
 #define __Anki_Cozmo_Basestation_RobotToEngineImplMessaging_H__
 
-#include "engine/tracePrinter.h"
+#include "engine/robotInterface/messageHandler.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
@@ -86,7 +86,6 @@ private:
 
   uint8_t _imuSeqID = 0;
   std::ofstream _imuLogFileStream;
-  TracePrinter _traceHandler;
   
   // For handling multiple images coming in on the same tick
   u32          _repeatedImageCount = 0;
