@@ -943,9 +943,8 @@ namespace CodeLab {
 
         CodeLabProject proj = new CodeLabProject();
         proj.ProjectUUID = project.ProjectUUID;
-        proj.ProjectName = EscapeProjectText(project.ProjectName);
+        proj.ProjectName = project.ProjectName;
         proj.IsVertical = project.IsVertical;
-
         copyCodeLabProjectList.Add(proj);
       }
       string userProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabProjectList);
@@ -984,7 +983,7 @@ namespace CodeLab {
       string sampleProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabSampleProjectList);
 
       // Call jsCallback with list of serialized Code Lab user projects and sample projects
-      this.EvaluateJS(jsCallback + "('" + userProjectsAsJSON + "','" + sampleProjectsAsJSON + "');");
+      this.EvaluateJS(jsCallback + "('" + EscapeProjectText(userProjectsAsJSON) + "','" + EscapeProjectText(sampleProjectsAsJSON) + "');");
     }
 
     // Called by js to retrieve list of featured projects to display in lobby.
@@ -1022,7 +1021,7 @@ namespace CodeLab {
       string featuredProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabFeaturedProjectList);
 
       // Call jsCallback with list of serialized Code Lab featured projects
-      this.EvaluateJS(jsCallback + "('" + featuredProjectsAsJSON + "');");
+      this.EvaluateJS(jsCallback + "('" + EscapeProjectText(featuredProjectsAsJSON) + "');");
     }
 
     private void OnSetChallengeBookmark(ScratchRequest scratchRequest) {
@@ -2430,7 +2429,8 @@ namespace CodeLab {
             projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
           }
 
-          this.EvaluateJS(jsCallback + "('" + projectToUpdate.ProjectName + "');");
+          string escapedName = EscapeProjectText(projectToUpdate.ProjectName);
+          this.EvaluateJS(jsCallback + "('" + escapedName + "');");
 
           _SessionState.OnUpdatedProject(projectToUpdate);
 
