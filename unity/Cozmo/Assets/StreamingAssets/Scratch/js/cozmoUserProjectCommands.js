@@ -1,4 +1,8 @@
 (function () {
+    function unescapedText(str) {
+        var str2 = goog.string.replaceAll(str, '\\\'', '\'');
+        return goog.string.replaceAll(str2, '\\\"', '\"');
+    }
 
     window.isCozmoSampleProject = false;
     window.cozmoProjectName = null;
@@ -264,9 +268,12 @@
     // Sets window.cozmoProjectName and sets name on workspace.
     // Makes rename and remix UI visible and tappable, if appropriate.
     window.setProjectNameAndSavedText = function(projectName, isSampleProject) {
-        window.cozmoProjectName = projectName;
 
-        setText('#app-title', $t(projectName));
+        var unencodedProjectName = unescapedText( projectName );
+
+        window.cozmoProjectName = unencodedProjectName;
+
+        setText('#app-title', $t(unencodedProjectName));
 
         // if the title overflows the container, reduce the font size to make it fit
         var title = document.querySelector('#app-title');
@@ -278,7 +285,7 @@
         if (isSampleProject) {
             autosavedText = window.$t('codeLab.SaveProject.NotSaved');
         }
-        else if (projectName == '' || projectName == null) {
+        else if (unencodedProjectName == '' || unencodedProjectName == null) {
             // When user selects 'Create New Project' from save/load UI, at first project has no name and is not yet autosaved.
             autosavedText = '';
         }

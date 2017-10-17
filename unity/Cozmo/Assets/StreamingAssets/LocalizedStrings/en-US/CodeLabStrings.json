@@ -555,7 +555,7 @@
       "translation":  "Tick, tock! Timers are more fun when they're a Cozmo."
   },
   "codeLabFeaturedProject_FiretruckAlarm.projectInstructions": {
-      "translation": "1. After you tap the start flag, Cozmo will display a 30-second timer on his face. When the timer runs out, his fire truck alarm will go off.\n\n2. To add 5 seconds to the timer, tap the blue Cube. To subtract 5 seconds from the timer, tap the red Cube.\n\n3. When you're ready to start your timer, tap the green Cube.\n\n4. Then count down to Cozmo's fire truck alarm!"
+      "translation": "1. After you tap the start flag, Cozmo will display a 30-second timer on his face.\n\n2. If you want to change the 30-second timer, tap the blue Cube to add 5 seconds, or tap the red Cube to subtract 5 seconds.\n\n3. When you're ready to start your timer, tap the green Cube.\n\n4. Then count down to Cozmo's fire truck alarm!"
   },
   "codeLabFeaturedProject_LightShow.projectName": {
       "translation": "Light Show"
@@ -812,7 +812,7 @@
     "translation": "move lift [X] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_move_lift": {
-    "translation": "Move the lift at a speed to [Y] degrees per second. It will keep moving until stopped, or until min/max height reached. Note: the lift uses an angular speed because the its arm is technically rotating. Max [Y] speed: 200 °/s."
+    "translation": "Move the lift at a speed to [X] degrees per second. It will keep moving until stopped, or until min/max height reached. Note: the lift uses an angular speed because the its arm is technically rotating. Max [X] speed: 200 °/s."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_set_headangle": {
@@ -837,7 +837,7 @@
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_set_cube_light_corner": {
-    "translation": "Set light [#/all] on Cube [#] to [color]"
+    "translation": "on Cube [#] set [all lights/light #] to [color]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_set_cube_light_corner": {
     "translation": "Set the specified edge [1, 2, 3, 4 or all 4 at once] of the specified Cube [#] to [color]. Use black to turn off the lights. Tip: Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
@@ -921,7 +921,7 @@
     "translation": "draw [text] at [X],[Y]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_text": {
-    "translation": "Draw the specified [text] at the given pixel position, using [X],[Y] coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation": "Draw the specified [text] at the given pixel position, using [X],[Y] coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Coordinate 0,0 starts at the top left corner of Cozmo's face screen. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_line": {
@@ -1057,31 +1057,31 @@
   },
 
   "codeLabGlossary.block_definitions.title.control_if": {
-    "translation": "if <condition> then [A]"
+    "translation": "if (condition) then [A]"
   },
   "codeLabGlossary.block_definitions.description.control_if": {
-    "translation": "If the <condition> is true, then do the blocks in [A]."
+    "translation": "If the (condition) is true, then do the blocks in [A]."
   },
 
   "codeLabGlossary.block_definitions.title.control_if_else": {
-    "translation": "If <condition> then [A] else [B]"
+    "translation": "If (condition) then [A] else [B]"
   },
   "codeLabGlossary.block_definitions.description.control_if_else": {
-    "translation": "If the <condition> is true, then do the blocks in [A], otherwise do the blocks in [B]."
+    "translation": "If the (condition) is true, then do the blocks in [A], otherwise do the blocks in [B]."
   },
 
   "codeLabGlossary.block_definitions.title.control_wait_until": {
-    "translation": "wait until <condition>"
+    "translation": "wait until (condition)"
   },
   "codeLabGlossary.block_definitions.description.control_wait_until": {
-    "translation": "Wait until the <condition> evaluates to true."
+    "translation": "Wait until the (condition) evaluates to true."
   },
 
   "codeLabGlossary.block_definitions.title.control_repeat_until": {
-    "translation": "Repeat until <condition>"
+    "translation": "Repeat until (condition)"
   },
   "codeLabGlossary.block_definitions.description.control_repeat_until": {
-    "translation": "Repeat forever until the <condition> evaluates to true. Troubleshooting: Seeing your code behaving slowly? Try adding a short \"wait\" block to your forever loop. Sometimes the code can use a moment to catch its breath."
+    "translation": "Repeat forever until the (condition) evaluates to true. Troubleshooting: Seeing your code behaving slowly? Try adding a short \"wait\" block to your forever loop. Sometimes the code can use a moment to catch its breath."
   },
 
   "codeLabGlossary.block_definitions.title.control_stop": {
@@ -1327,45 +1327,45 @@
   },
 
   "codeLabGlossary.block_definitions.title.operator_lt": {
-    "translation": "< [X] < [Y] >"
+    "translation": "( [X] < [Y] )"
   },
   "codeLabGlossary.block_definitions.description.operator_lt": {
     "translation": "True if [X] is less than [Y]."
   },
 
   "codeLabGlossary.block_definitions.title.operator_equals": {
-    "translation": "< [X] = [Y] > "
+    "translation": "( [X] = [Y] )"
   },
   "codeLabGlossary.block_definitions.description.operator_equals": {
     "translation": "True if [X] is equal to [Y]."
   },
 
   "codeLabGlossary.block_definitions.title.operator_gt": {
-    "translation": "< [X] > [Y] >"
+    "translation": "( [X] > [Y] )"
   },
   "codeLabGlossary.block_definitions.description.operator_gt": {
     "translation": "True if [X] is greater than [Y]."
   },
 
   "codeLabGlossary.block_definitions.title.operator_and": {
-    "translation": "< <X> and <Y> >"
+    "translation": "( (X) and (Y) )"
   },
   "codeLabGlossary.block_definitions.description.operator_and": {
-    "translation": "True if both <X> and <Y> sub-conditions are true."
+    "translation": "True if both (X) and (Y) sub-conditions are true."
   },
 
   "codeLabGlossary.block_definitions.title.operator_or": {
-    "translation": "< <X> or <Y> >"
+    "translation": "( (X) or (Y) )"
   },
   "codeLabGlossary.block_definitions.description.operator_or": {
-    "translation": "True if either the <X> or <Y> sub-conditions are true."
+    "translation": "True if either the (X) or (Y) sub-conditions are true."
   },
 
   "codeLabGlossary.block_definitions.title.operator_not": {
-    "translation": "< not <Y> >"
+    "translation": "( not (Y) )"
   },
   "codeLabGlossary.block_definitions.description.operator_not": {
-    "translation": "True if <Y> is false, false if <Y> is true."
+    "translation": "True if (Y) is false, false if (Y) is true."
   },
 
   "codeLabGlossary.block_definitions.title.operator_join": {
@@ -1393,7 +1393,7 @@
     "translation": "[text1] contains [text2]"
   },
   "codeLabGlossary.block_definitions.description.operator_contains": {
-    "translation": "True if the second string of text is contained within the first string of text. For example, it is true \"Coz\" is contained inside of \"Cozmo\"."
+    "translation": "True if the second string of text is contained within the first string of text. For example, it is true \"coz\" is contained inside of \"cozmo\"."
   },
 
   "codeLabGlossary.block_definitions.title.operator_mod": {

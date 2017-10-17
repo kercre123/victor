@@ -48,7 +48,7 @@
 
     // Less forgiving than char.IsPunctuation() by design
     private static bool IsPunctuation(char c) {
-      return c == '.' || c == ';' || c == '\'' || c == ',' || c == '?' || c == '!' || c == ':';
+      return c == '.' || c == ';' || c == '\'' || c == '\"' || c == ',' || c == '?' || c == '!' || c == ':';
     }
 
     // Dash is for French support

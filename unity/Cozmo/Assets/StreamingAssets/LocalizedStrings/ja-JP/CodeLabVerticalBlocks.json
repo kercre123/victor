@@ -488,5 +488,11 @@
   },
   "codeLabVertical.codeLabVertical.BROADCAST_MESSAGE_AND_WAIT_BLOCK": {
     "translation": "broadcast %1 and wait to complete"
+  },
+  "codeLabVertical.codeLabVertical.PLAY_ANIMATION_BY_NAME_BLOCK": {
+    "translation": "advanced: play %1 SDK animation"
+  },
+  "codeLabVertical.codeLabVertical.PLAY_ANIMATION_BY_TRIGGER_NAME_BLOCK": {
+    "translation": "advanced: play %1 SDK animation group"
   }
 }

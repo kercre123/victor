@@ -47,9 +47,7 @@ namespace Anki {
     const f32 ROBOT_BOUNDING_Y       = 54.2f;
     const f32 ROBOT_BOUNDING_X_FRONT = 32.1f - ROBOT_BOUNDING_X_LIFT; // distance from robot origin to front of bounding box
     const f32 ROBOT_BOUNDING_Z       = 67.7f; // from ground to top of head
-    const f32 ROBOT_BOUNDING_RADIUS  = sqrtf((0.25f*ROBOT_BOUNDING_X*ROBOT_BOUNDING_X) +
-                                             (0.25f*ROBOT_BOUNDING_Y*ROBOT_BOUNDING_Y));
-  
+
     // Apply a conservative negative padding when checking for collisions with known objects to
     // see if their pose should be marked as "dirty".
     // (A negative value means it _really_ has to intersect in order for the object to be dirtied.)

@@ -30,10 +30,11 @@
 namespace Anki {
 namespace Cozmo {
 
-namespace{
+namespace {
 static const int kMaxStackHeightReach = 2;
 static const float kInvalidObjectCacheUpdateTime_s = -1.0f;
 static const float kTimeObjectInvalidAfterStackFailure_sec = 3.0f;
+static const Radians kAngleToleranceAfterFailure_radians = M_PI;
 }
   
 using ObjectActionFailure = AIWhiteboard::ObjectActionFailure;
@@ -353,7 +354,7 @@ bool ObjectInteractionInfoCache::CanPickupNoAxisCheck(const ObservableObject* ob
                                            DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
                                            object->GetPose().GetWithRespectToRoot(),
                                            DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-                                           DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
+                                           kAngleToleranceAfterFailure_radians);
   
   const bool canPickUp = _robot.GetDockingComponent().CanPickUpObject(*object);
   return !recentlyFailed && canPickUp;
@@ -414,7 +415,7 @@ bool ObjectInteractionInfoCache::CanUseAsStackBottomHelper(const ObservableObjec
                kTimeObjectInvalidAfterStackFailure_sec,
                object->GetPose(),
                DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-               DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
+               kAngleToleranceAfterFailure_radians);
   
   
   bool ret = (!hasFailedRecently &&
@@ -452,7 +453,7 @@ bool ObjectInteractionInfoCache::CanUseForPopAWheelie(const ObservableObject* ob
                                                    DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
                                                    object->GetPose(),
                                                    DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-                                                   DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
+                                                   kAngleToleranceAfterFailure_radians);
   
   return (!hasFailedToPopAWheelie && _robot.GetDockingComponent().CanPickUpObjectFromGround(*object));
 }
@@ -468,7 +469,7 @@ bool ObjectInteractionInfoCache::CanRollObjectDelegateNoAxisCheck(const Observab
                                             DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
                                             object->GetPose(),
                                             DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-                                            DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
+                                            kAngleToleranceAfterFailure_radians);
   
   if(!hasFailedToRoll){
     // Logic from can interact with - unfortunately those helpers check for on top of

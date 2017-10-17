@@ -376,7 +376,7 @@
     "translation": "2 - mambo music"
   },
   "codeLabVertical.BACKGROUND_MUSIC": {
-    "translation": "3 - background music"
+    "translation": "3 - background music loop"
   },
   "codeLabVertical.SPARKLE": {
     "translation": "14 - sparkle"
@@ -409,31 +409,31 @@
     "translation": "23 - magnet repel"
   },
   "codeLabVertical.INSTRUMENT_1_MODE_1": {
-    "translation": "24 - instrument 1 mode 1"
+    "translation": "24 - instrument 1 mode 1 loop"
   },
   "codeLabVertical.INSTRUMENT_1_MODE_2": {
-    "translation": "25 - instrument 1 mode 2"
+    "translation": "25 - instrument 1 mode 2 loop"
   },
   "codeLabVertical.INSTRUMENT_1_MODE_3": {
-    "translation": "26 - instrument 1 mode 3"
+    "translation": "26 - instrument 1 mode 3 loop"
   },
   "codeLabVertical.INSTRUMENT_2_MODE_1": {
-    "translation": "27 - instrument 2 mode 1"
+    "translation": "27 - instrument 2 mode 1 loop"
   },
   "codeLabVertical.INSTRUMENT_2_MODE_2": {
-    "translation": "28 - instrument 2 mode 2"
+    "translation": "28 - instrument 2 mode 2 loop"
   },
   "codeLabVertical.INSTRUMENT_2_MODE_3": {
-    "translation": "29 - instrument 2 mode 3"
+    "translation": "29 - instrument 2 mode 3 loop"
   },
   "codeLabVertical.INSTRUMENT_3_MODE_1": {
-    "translation": "30 - instrument 3 mode 1"
+    "translation": "30 - instrument 3 mode 1 loop"
   },
   "codeLabVertical.INSTRUMENT_3_MODE_2": {
-    "translation": "31 - instrument 3 mode 2"
+    "translation": "31 - instrument 3 mode 2 loop"
   },
   "codeLabVertical.INSTRUMENT_3_MODE_3": {
-    "translation": "32 - instrument 3 mode 3"
+    "translation": "32 - instrument 3 mode 3 loop"
   },
   "codeLabVertical.ANY": {
     "translation": "any"
@@ -494,5 +494,11 @@
   },
   "codeLabVertical.codeLabVertical.BROADCAST_MESSAGE_AND_WAIT_BLOCK": {
     "translation": "broadcast %1 and wait to complete"
+  },
+  "codeLabVertical.codeLabVertical.PLAY_ANIMATION_BY_NAME_BLOCK": {
+    "translation": "advanced: play %1 SDK animation"
+  },
+  "codeLabVertical.codeLabVertical.PLAY_ANIMATION_BY_TRIGGER_NAME_BLOCK": {
+    "translation": "advanced: play %1 SDK animation group"
   }
 }
