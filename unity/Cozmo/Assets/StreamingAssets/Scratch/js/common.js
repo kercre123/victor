@@ -316,7 +316,6 @@
         });
         stop.addEventListener('click', function () {
             Scratch.workspace.playAudio('click');
-            window.Unity.call({command: "cozmoStopSign"});
             vm.stopAll();
         });
         stop.addEventListener('touchmove', function (e) {

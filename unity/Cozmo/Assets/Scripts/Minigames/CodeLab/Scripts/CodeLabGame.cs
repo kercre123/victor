@@ -86,6 +86,7 @@ namespace CodeLab {
     private bool _HasQueuedResetToHomePose = false;
     private bool _RequiresResetToNeutralFace = false;
     private bool _IsDrivingOffCharger = false;
+    private bool _VerticalHatBlocksStarted = false;
     private string _LastOpenedTab = "featured";
 
     private const string kCodeLabGameDrivingAnimLock = "code_lab_game";
@@ -860,6 +861,8 @@ namespace CodeLab {
       robot.TurnOffAllBackpackBarLED();
 
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+        StopVerticalHatBlockListeners();
+
         robot.TurnOffAllLights(true);
         robot.StopAllMotors();
 
@@ -910,6 +913,10 @@ namespace CodeLab {
       _SessionState.StartProgram();
       _queuedScratchRequests.Clear();
       ResetRobotToHomePos();
+
+      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+        StartVerticalHatBlockListeners();
+      }
     }
 
     private void OnScriptStopped() {
@@ -917,6 +924,7 @@ namespace CodeLab {
         // We enable the facial expressions when first needed, and disable when scripts end (rather than ref-counting need)
         RobotEngineManager.Instance.CurrentRobot.SetVisionMode(VisionMode.EstimatingFacialExpression, false);
       }
+
       _SessionState.EndProgram();
       // Release any remaining in-progress scratch blocks (otherwise any waiting on observation will stay alive)
       InProgressScratchBlockPool.ReleaseAllInUse();
@@ -1276,14 +1284,6 @@ namespace CodeLab {
         return true;
       case "cozmoGreenFlag":
         OnGreenFlagClicked();
-        if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
-          StartVerticalHatBlockListeners();
-        }
-        return true;
-      case "cozmoStopSign":
-        if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
-          StopVerticalHatBlockListeners();
-        }
         return true;
       case "cozmoStopAll":
         OnStopAll();
@@ -2538,8 +2538,8 @@ namespace CodeLab {
         // Was this the user's first remix? Show dialog if so.
         bool isFirstRemix = false;
         if (!defaultProfile.CodeLabRemixCreated) {
-        isFirstRemix = true;
-        defaultProfile.CodeLabRemixCreated = true;
+          isFirstRemix = true;
+          defaultProfile.CodeLabRemixCreated = true;
         }
 
         string projectNameEscaped = EscapeProjectText(remixedProject.ProjectName);
@@ -2912,26 +2912,33 @@ namespace CodeLab {
     }
 
     private void StartVerticalHatBlockListeners() {
-      // Listen for face events so that we can kick off vertical face hat blocks
-      // (including wait for happy, frown and any face)
-      RobotEngineManager.Instance.CurrentRobot.SetVisionMode(VisionMode.EstimatingFacialExpression, true);
-      RobotEngineManager.Instance.AddCallback<RobotObservedFace>(RobotObservedFaceVerticalHatBlock);
+      if (!_VerticalHatBlocksStarted) {
+        // Listen for face events so that we can kick off vertical face hat blocks
+        // (including wait for happy, frown and any face)
+        RobotEngineManager.Instance.CurrentRobot.SetVisionMode(VisionMode.EstimatingFacialExpression, true);
+        RobotEngineManager.Instance.AddCallback<RobotObservedFace>(RobotObservedFaceVerticalHatBlock);
 
-      // Listen for "robot saw a cube" events so we can kick off vertical "wait until see cube" hat block
-      RobotEngineManager.Instance.AddCallback<RobotObservedObject>(RobotObservedObjectVerticalHatBlock);
+        // Listen for "robot saw a cube" events so we can kick off vertical "wait until see cube" hat block
+        RobotEngineManager.Instance.AddCallback<RobotObservedObject>(RobotObservedObjectVerticalHatBlock);
 
-      // Listen for cube tapped events so we can kick off vertical "wait for cube tap" hat block
-      LightCube.TappedAction += CubeTappedVerticalHatBlock;
+        // Listen for cube tapped events so we can kick off vertical "wait for cube tap" hat block
+        LightCube.TappedAction += CubeTappedVerticalHatBlock;
 
-      // Listen for cube moved events so we can kick off vertical "wait for cube moved" hat block
-      LightCube.OnMovedAction += CubeMovedVerticalHatBlock;
+        // Listen for cube moved events so we can kick off vertical "wait for cube moved" hat block
+        LightCube.OnMovedAction += CubeMovedVerticalHatBlock;
+
+        _VerticalHatBlocksStarted = true;
+      }
     }
 
     private void StopVerticalHatBlockListeners() {
-      RobotEngineManager.Instance.RemoveCallback<RobotObservedFace>(RobotObservedFaceVerticalHatBlock);
-      RobotEngineManager.Instance.RemoveCallback<RobotObservedObject>(RobotObservedObjectVerticalHatBlock);
-      LightCube.TappedAction -= CubeTappedVerticalHatBlock;
-      LightCube.OnMovedAction -= CubeMovedVerticalHatBlock;
+      if (_VerticalHatBlocksStarted) {
+        RobotEngineManager.Instance.RemoveCallback<RobotObservedFace>(RobotObservedFaceVerticalHatBlock);
+        RobotEngineManager.Instance.RemoveCallback<RobotObservedObject>(RobotObservedObjectVerticalHatBlock);
+        LightCube.TappedAction -= CubeTappedVerticalHatBlock;
+        LightCube.OnMovedAction -= CubeMovedVerticalHatBlock;
+        _VerticalHatBlocksStarted = false;
+      }
     }
 
     public void RobotObservedFaceVerticalHatBlock(RobotObservedFace message) {
