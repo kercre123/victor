@@ -381,7 +381,7 @@
       // render user projects and add them to UI
       if (Array.isArray(userProjects)) {
         for(i = 0; i < userProjects.length; i++) {
-          card = makeUserProjectCard(userProjects[i], i);
+          card = makeUserProjectCard(userProjects[i], i, projectTabName);
           projectList.appendChild(card);
         }
       }
@@ -389,7 +389,7 @@
       // render sample projects and add them to the UI
       if (Array.isArray(sampleProjects)) {
         for(i = 0; i < sampleProjects.length; i++) {
-          card = makeSampleProjectCard(sampleProjects[i]);
+          card = makeSampleProjectCard(sampleProjects[i], projectTabName);
           projectList.appendChild(card);
         }
       } else {
@@ -406,12 +406,14 @@
   /**
    * Creates DOM elements for a card representing a sample project
    * @param {Object} projectData - fields about the project
+   * @param {String} tabName - name of the tab the sample proejct is for ('horizontal' or 'vertical')
    * @returns {HTMLElement} returns unattached DOM element for sample project card
    */
-  function makeSampleProjectCard(projectData) {
+  function makeSampleProjectCard(projectData, tabName) {
     // clone the sample project card prototype
     var project = document.querySelector('#prototype-sample-project').cloneNode(true);
     project.removeAttribute('id');
+    project.classList.add(tabName);
 
     // add the project data to the element
     setProjectData(project, projectData);
@@ -430,7 +432,12 @@
     // add a style to color the puzzle piece SVG after it loads
     var block = project.querySelector('.block');
     var type = getBlockIconColor(icon);
-    block.setAttribute('src', 'images/icon_block_' + type + '.svg');
+    if (tabName === 'vertical') {
+      block.setAttribute('src', 'images/icon_bars_' + type + '.svg');
+    } else {
+      block.setAttribute('src', 'images/icon_block_' + type + '.svg');
+    }
+
     block.addEventListener('load', function(elem) {
       project.style.visibility = 'visible';
 
@@ -448,12 +455,14 @@
    * Creates DOM elements for a card representing a user project
    * @param {Object} projectData - fields about the project
    * @param {Number} order - the position in personal cards this card appears (used for coloring)
+   * @param {String} tabName - name of the tab the sample proejct is for ('horizontal' or 'vertical')
    * @returns {HTMLElement} returns unattached DOM element for peronal project card
    */
-  function makeUserProjectCard(projectData, order) {
+  function makeUserProjectCard(projectData, order, tabName) {
     // clone the user project prototype
     var project = document.querySelector('#prototype-user-project').cloneNode(true);
     project.removeAttribute('id');
+    project.classList.add(tabName);
 
     // add the project data to the element
     setProjectData(project, projectData);
@@ -525,7 +534,9 @@
    * @returns {void}
    */
   function _shrinkLongProjectTitle(titleElem, projectElem) {
-    var approxTitleAreaHeight = (parseInt(projectElem.clientHeight, 10) / 3);
+    // title is approximately 30% of the entire project container
+    var approxTitleAreaHeight = parseInt(projectElem.clientHeight, 10) * 0.3;
+
     if (titleElem.clientHeight > approxTitleAreaHeight) {
       // title exceedes the size given so apply class to reduce the font size
       titleElem.classList.add('long-title');
