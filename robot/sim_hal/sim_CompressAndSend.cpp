@@ -97,18 +97,17 @@ namespace Anki {
           ++chunkByteCnt;
           ++totalByteCnt;
 
-          if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
-            //PRINT("Sending image chunk %d\n", m.chunkId);
-            RobotInterface::SendMessage(m);
-            ++m.chunkId;
-            chunkByteCnt = 0;
-          } else if (totalByteCnt == numTotalBytes) {
-            // This should be the last message!
-            //PRINT("Sending LAST image chunk %d\n", m.chunkId);
+          if (totalByteCnt == numTotalBytes) {
+            // This will be the final chunk sent for this image
             m.frameTimeStamp = captureTime;
             m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
             m.data_length = chunkByteCnt;
             RobotInterface::SendMessage(m);
+          } else if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
+            // Time to send a chunk
+            RobotInterface::SendMessage(m);
+            ++m.chunkId;
+            chunkByteCnt = 0;
           }
         } // for each byte in the compressed buffer
 

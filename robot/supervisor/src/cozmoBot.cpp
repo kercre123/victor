@@ -426,7 +426,10 @@ namespace Anki {
             HAL::CameraGetFrame(buffer,
                                 HAL::captureResolution_, false);
             // Send the image, with its actual capture time (not the current system time)
-            Messages::CompressAndSendImage(buffer, captureHeight, captureWidth, currentImageTime);
+            const auto res = Messages::CompressAndSendImage(buffer, captureHeight, captureWidth, currentImageTime);
+            if (res != RESULT_OK) {
+              AnkiWarn( 1236, "CozmoBot.step_LongExecution.CompressAndSendFailed", 650, "CompressAndSendImage returned failure (%d)", 1, res);
+            }
 
             //PRINT("Sending state message from time = %d to correspond to image at time = %d\n",
             //      robotState.timestamp, currentImageTime);
