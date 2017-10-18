@@ -191,6 +191,12 @@ namespace Cozmo.Hub {
               });
             });
           }
+          else if (robot != null &&
+                  !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.InitialSetup)) {
+            // Special music is only required for the first part of onboarding, after that we want freeplay music
+            // But not Freeplay behaviors or cube activites
+            Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
+          }
         }
       });
     }
