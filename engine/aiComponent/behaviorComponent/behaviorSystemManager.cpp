@@ -218,13 +218,13 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
     }
   }
   
+  PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.Delegate.ToBehavior",
+                "'%s' will delegate to '%s'",
+                delegator->GetPrintableID().c_str(),
+                delegated->GetPrintableID().c_str());
+
   // Activate the new behavior and add it to the top of the stack
   _behaviorStack->PushOntoStack(delegated);
-
-  PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.Delegate.ToBehavior",
-                "'%s' delegated to '%s'",
-                delegator != nullptr ? delegator->GetPrintableID().c_str() : "Empty Stack",
-                delegated->GetPrintableID().c_str());
   
   _behaviorStack->DebugPrintStack("AfterDelegation");
   

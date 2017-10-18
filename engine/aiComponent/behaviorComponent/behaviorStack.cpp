@@ -161,10 +161,10 @@ void BehaviorStack::PrepareDelegatesForRemovalFromStack(IBehavior* delegated)
 void BehaviorStack::DebugPrintStack(const std::string& debugStr) const
 {
   for( size_t i=0; i<_behaviorStack.size(); ++i) {
-    PRINT_CH_INFO("BehaviorSystem", ("BehaviorSystemManager.Stack." + debugStr).c_str(),
-                  "%zu: %s",
-                  i,
-                  _behaviorStack[i]->GetPrintableID().c_str());
+    PRINT_CH_DEBUG("BehaviorSystem", ("BehaviorSystemManager.Stack." + debugStr).c_str(),
+                   "%zu: %s",
+                   i,
+                   _behaviorStack[i]->GetPrintableID().c_str());
   }
 }
 
