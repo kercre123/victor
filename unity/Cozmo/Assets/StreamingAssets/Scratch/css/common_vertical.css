@@ -727,6 +727,48 @@ button:focus {
     }
 }
 
+/* Used by Kindle Fire HD 8, 962 x 601 */
+@media only screen and (min-height: 590px) and (max-height: 605px) {
+    #navigation {
+        top: calc(100% - 490px);
+        height: 150px;
+   }
+
+    #navigation .stop {
+        top: calc(100% - 75px);
+    }
+
+    #undoRedo {
+        top: calc(100% - 345px);
+        height: 140px;
+    }
+
+    #undoRedo .redo {
+        top: calc(100% - 125px);
+    }
+
+    #undoRedo .undo {
+        top: calc(100% - 65px);
+    }
+
+    #zoomControls {
+        height: 200px;
+        top: calc(100% - 200px);
+    }
+
+    #zoomControls .zoomIn {
+        top: calc(100% - 190px);
+    }
+
+    #zoomControls .zoomOut {
+        top: calc(100% - 130px);
+    }
+
+    #zoomControls .zoomReset {
+        top: calc(100% - 70px);
+    }
+}
+
 @media only screen and (max-height: 330px) {
   #projecttext .primary #app-title-subtext-line {
     top: -4px;

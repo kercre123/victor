@@ -122,6 +122,8 @@ Blockly.Toolbox.prototype.init = function() {
       goog.dom.createDom(goog.dom.TagName.DIV, toolboxDiv); // *** ANKI CHANGE ***
 
   // *** ANKI CHANGE ***
+  // Set default value
+  this.HtmlDiv.style.top = "100px";
   // Move toolbox down different amount for phones.
   if (window.isVertical && window.innerWidth < window.TABLET_WIDTH) {
     this.HtmlDiv.style.top = "60px";
