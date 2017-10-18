@@ -442,6 +442,20 @@
         window.extensions = webkit.messageHandlers.extensions;
     }
 
+
+    /**
+     * Immedately show Play Now modal for featured projects in vertical workspace
+     */
+    function prepareForFeaturedProjectPlayNowModal() {
+      if (window.isVertical && window.getUrlVar('isFeaturedProject') === 'true') {
+        document.body.classList.add('show-play-now-modal');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function(e){
+      prepareForFeaturedProjectPlayNowModal();
+    });
+
     /**
      * Bind event handlers.
      */
