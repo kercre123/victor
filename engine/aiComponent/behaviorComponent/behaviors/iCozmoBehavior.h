@@ -172,6 +172,11 @@ public:
   // Equivalent to !robot.IsCarryingObject() in WantsToBeActivated()
   virtual bool CarryingObjectHandledInternally() const = 0;
 
+  // Return true if this is a good time to interrupt this behavior. This allows more gentle interruptions for
+  // things which aren't immediately urgent. Eventually this may become a mandatory override, but for now, the
+  // default is that we can never interrupt gently
+  virtual bool CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const { return false; }
+
   // Helper function for having DriveToObjectActions use the second closest preAction pose useful when the action
   // is being retried or the action failed due to visualVerification
   ActionResult UseSecondClosestPreActionPose(DriveToObjectAction* action,

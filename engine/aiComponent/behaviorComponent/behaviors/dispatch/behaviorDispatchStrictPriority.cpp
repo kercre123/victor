@@ -163,5 +163,31 @@ ICozmoBehavior::Status BehaviorDispatchStrictPriority::UpdateInternal_WhileRunni
   return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorDispatchStrictPriority::CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const
+{
+  // it's a good time to interrupt if we aren't running a behavior, or if the behavior we're running says it's OK
+  if( !IsControlDelegated() ) {
+    return true;
+  }
+  else if( behaviorExternalInterface.HasDelegationComponent() ) {
+    auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
+
+    const IBehavior* behaviorDelegatedTo = delegationComponent.GetBehaviorDelegatedTo(this);
+
+    // TODO:(bn) work around this ugly cast by caching a version in ICozmoBehavior during the Delegate calls?
+    DEV_ASSERT(dynamic_cast<const ICozmoBehavior*>(behaviorDelegatedTo),
+               "BehaviorDispatchStrictPriority.DelegatedBehaviorNotACozmoBehavior");
+    
+    const ICozmoBehavior* delegate = static_cast<const ICozmoBehavior*>(behaviorDelegatedTo);
+
+    return delegate != nullptr && delegate->CanBeGentlyInterruptedNow(behaviorExternalInterface);
+  }
+  else {
+    // no delegation component, so I guess it's an OK time?
+    return true;
+  }
+}
+
 }
 }
