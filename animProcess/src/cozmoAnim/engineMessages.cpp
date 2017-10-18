@@ -207,7 +207,10 @@ namespace Messages {
           return;
         }
 
-        micDataProcessor->RecordAudio(msg.startRecordingAudio.duration_ms);
+        micDataProcessor->RecordAudio(msg.startRecordingAudio.duration_ms,
+                                      std::string(msg.startRecordingAudio.path, 
+                                                  msg.startRecordingAudio.path_length),
+                                      msg.startRecordingAudio.runFFT);
         return;
       }
         

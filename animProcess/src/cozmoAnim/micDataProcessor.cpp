@@ -17,6 +17,7 @@
 
 #include "cozmoAnim/micDataProcessor.h"
 #include "cozmoAnim/engineMessages.h"
+#include "cozmoAnim/FftComplex.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_sendToEngine_helper.h"
 #include "audioUtil/waveFile.h"
@@ -28,8 +29,6 @@
 #include <iomanip>
 #include <sstream>
 #include <thread>
-
-#include "cozmoAnim/FftComplex.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -172,60 +171,64 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
     
     if (!_rawAudioData.empty())
     {
+      if(_runFFTOnRecordedData)
+      {
+        // Create a packaged task to run fft asynchronously on a copy of the raw mic data
+        // The result of the fft will be in availible in a future at some point
+        std::packaged_task<std::vector<uint32_t>()> fftTask([data = _rawAudioData]() {
+          std::vector<uint32_t> perChannelFFT;
 
-      std::packaged_task<std::vector<uint32_t>()> task([data = _rawAudioData]() {
-        std::vector<uint32_t> perChannelFFT;
-
-        for(u8 i = 0; i < kNumInputChannels; ++i)
-        {
-          std::vector<std::complex<double> > fftArray;
-          for(auto chunk : data)
+          // Run a seperate fft for each of the channels/mics
+          for(u8 i = 0; i < kNumInputChannels; ++i)
           {
-            for(uint32_t j = i; j < chunk.size(); j += kNumInputChannels)
+            // Deinterlace the current channel from the raw audio chunks
+            // Order in each raw audio chunk is channel 0,1,2,3,0,1,2,3,...
+            std::vector<std::complex<double> > fftArray;
+            for(const auto& chunk : data)
             {
-              fftArray.push_back(chunk[j]);
+              for(uint32_t j = i; j < chunk.size(); j += kNumInputChannels)
+              {
+                fftArray.push_back(chunk[j]);
+              }
             }
+
+            // Run fft in place
+            Fft::transform(fftArray);
+            
+            // Keep track of the largest/most prominent value and index 
+            // from the fft
+            // The index of the largest value will correspond to the most prominent
+            // frequency in the audio data
+            float    largestValue    = 0;
+            uint32_t largestValueIdx = 0;
+
+            // Skip the first one since it is garbage and often really large
+            // Only look at the first half since the second half is just the inverse of the first
+            // Use every other to effectively scale the data to the appropriate range. 2 because we recorded 2
+            // seconds of data
+            for(int i = 1; i < fftArray.size()/2; i += 2)
+            {
+              const auto& e = fftArray[i];
+              float magSq = e.real()*e.real() + e.imag()*e.imag();
+              if(magSq > largestValue)
+              {
+                largestValue = magSq;
+                largestValueIdx = i;
+              }
+            }
+            perChannelFFT.push_back(largestValueIdx/2);
           }
 
-          Fft::transform(fftArray);
+          return perChannelFFT;
+        });
 
-          // FILE* fp = nullptr;
-          // if(fp == nullptr)
-          // {
-          //   std::string file = "/data/fft_" + std::to_string(i) + ".txt";
-          //   fp = fopen(file.c_str(), "w");
-          // }
-          
-          // Skip the first one since it is garbage and often really large
-          // Only look at the first half since the second half is just the inverse of the first
-          // Use every other to effectively scale the data to the appropriate range. 2 because we recorded 2
-          // seconds of data
-          float largestValue = 0;
-          uint32_t largestValueIdx = 0;
-          for(int i = 1; i < fftArray.size()/2; i += 2)
-          {
-            const auto& e = fftArray[i];
-            float magSq = e.real()*e.real() + e.imag()*e.imag();
-            if(magSq > largestValue)
-            {
-              largestValue = magSq;
-              largestValueIdx = i;
-            }
-            // if(fp != nullptr)
-            // {
-            //   fprintf(fp, "%f\n", magSq);
-            // }
-          }
-          perChannelFFT.push_back(largestValueIdx/2);
-        }
-        return perChannelFFT;
-      });
+        // Get the future that will contain the result of the fft task
+        _fftFuture = fftTask.get_future();
+        std::thread(std::move(fftTask)).detach();
+      }
+      _runFFTOnRecordedData = false;
 
-      _fftFuture = task.get_future();
-      std::thread(std::move(task)).detach();
-
-
-      auto saveRawWave = [dest = (writeLocationBase + kRawFileExtension), data = std::move(_rawAudioData)] () {
+      auto saveRawWave = [dest = (_saveFilesPath + kRawFileExtension), data = std::move(_rawAudioData)] () {
         AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels, kSampleRateIncoming_hz);
         PRINT_NAMED_INFO("MicDataProcessor.WriteRawWaveFile", "%s", dest.c_str());
       };
@@ -246,40 +249,6 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
 
     if (!_processedAudioData.empty())
     {
-      // auto runFft = [data = _processedAudioData]() {
-      //   std::vector<std::complex<double> > a;
-      //   uint32 size = 0;
-      //   for(auto e : data)
-      //   {
-      //     size += e.size();
-      //   }
-      //   a.resize(size);
-
-      //   auto iter = std::begin(a);
-      //   for(auto e : data)
-      //   {
-      //     iter = std::copy(e.begin(), e.end(), iter);
-      //   }
-
-      //   Fft::transform(a);
-
-      //   static FILE* fp;
-      //   if(fp == nullptr)
-      //   {
-      //     fp = fopen("/data/fft.txt", "w");
-      //   }
-        
-      //   for(int i = 0; i < a.size(); i += 2)
-      //   {
-      //     const auto& e = a[i];
-      //     fprintf(fp, "%f\n", sqrt(e.real()*e.real() + e.imag()*e.imag()));
-      //   }
-      // };
-      // std::thread(runFft).detach();
-
-
-
-
       auto saveProcessedWave = [dest = (writeLocationBase + kWavFileExtension), data = std::move(_processedAudioData)] () {
         AudioUtil::WaveFile::SaveFile(dest, data);
         PRINT_NAMED_INFO("ProcessNextAudioChunk.WriteProcessedWaveFile", "%s", dest.c_str());
@@ -438,8 +407,14 @@ std::string MicDataProcessor::GetResampleFileNameFromProcessed(const std::string
   return processedName.substr(0, processedName.length() - kWavFileExtension.length()) + kResampledFileExtension;
 }
 
-void MicDataProcessor::RecordAudio(uint32_t duration_ms)
+void MicDataProcessor::RecordAudio(uint32_t duration_ms, std::string path, bool runFFT)
 { 
+  if(_audioSamplesToCollect != 0)
+  {
+    PRINT_NAMED_WARNING("MicDataProcessor.RecordAudio.AlreadyRecording", "");
+    return;
+  }
+
   PRINT_NAMED_INFO("MicDataProcessor.RecordAudio",
                    "Recording the next %u ms of audio",
                    duration_ms);
@@ -459,13 +434,22 @@ void MicDataProcessor::RecordAudio(uint32_t duration_ms)
   }
 
   _collectedAudioSamples = 0;
+
+  if(!path.empty())
+  {
+    _saveFilesPath = path;
+  }
+
+  _runFFTOnRecordedData = runFFT;
 }
 
 void MicDataProcessor::Update()
 {
+  // Wait until the future is valid and ready
   if(_fftFuture.valid() && 
      _fftFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
   {
+    // Get the result from the future and populate the fft result message
     auto msg = RobotInterface::AudioFFTResult();
     std::vector<uint32_t> res = _fftFuture.get();
 

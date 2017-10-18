@@ -48,7 +48,9 @@ public:
   using RawAudioChunk = decltype(RobotInterface::AudioInput::data);
   void ProcessNextAudioChunk(const RawAudioChunk& audioChunk);
 
-  void RecordAudio(uint32_t duration_ms = kDefaultAudioSamplesPerFile);
+  void RecordAudio(uint32_t duration_ms = kDefaultAudioSamplesPerFile,
+                   std::string path = "",
+                   bool runFFT = false);
 
   void Update();
   
@@ -58,6 +60,7 @@ private:
   
   // uint32_t _filesToStore = kDefaultFilesToCapture;
   std::string _writeLocationDir = "";
+  std::string _saveFilesPath = "";
 
   AudioUtil::AudioChunkList _rawAudioData{};
   AudioUtil::AudioChunkList _resampledAudioData{};
@@ -81,6 +84,7 @@ private:
 
   // Future for the result of fft
   std::future<std::vector<uint32_t>> _fftFuture;
+  bool _runFFTOnRecordedData = false;
 };
 
 } // namespace Cozmo

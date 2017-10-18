@@ -318,7 +318,9 @@ message SetBackpackLights
 
 message StartRecordingAudio 
 {
-  uint_32 duration_ms
+  uint_32 duration_ms,
+  bool    runFFT = 0,
+  string  path
 }
 
 // ====================================================

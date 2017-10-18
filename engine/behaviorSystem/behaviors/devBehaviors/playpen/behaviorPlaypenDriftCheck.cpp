@@ -19,6 +19,7 @@
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "audioUtil/waveFile.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -32,6 +33,10 @@ BehaviorPlaypenDriftCheck::BehaviorPlaypenDriftCheck(Robot& robot, const Json::V
 
 Result BehaviorPlaypenDriftCheck::InternalInitInternal(Robot& robot)
 {
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingAudio(PlaypenConfig::kDurationOfAudioToRecord_ms,
+                                                                                      false,
+                                                                                      GetLogger().GetLogName()+"movement")));
+
   // Move head and lift to extremes then move to sound playing angle
   MoveHeadToAngleAction* moveHeadUp = new MoveHeadToAngleAction(robot, MAX_HEAD_ANGLE);
   MoveHeadToAngleAction* moveHeadToSoundAngle = new MoveHeadToAngleAction(robot,
@@ -49,7 +54,9 @@ Result BehaviorPlaypenDriftCheck::InternalInitInternal(Robot& robot)
 void BehaviorPlaypenDriftCheck::TransitionToPlayingSound(Robot& robot)
 {
   robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1, PlaypenConfig::kSoundVolume);
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingAudio(PlaypenConfig::kDurationOfAudioToRecord_ms)));
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingAudio(PlaypenConfig::kDurationOfAudioToRecord_ms,
+                                                                                      true,
+                                                                                      GetLogger().GetLogName()+"beep")));
 
   // Record intial starting orientation and after kIMUDriftDetectPeriod_ms check for drift
   _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
@@ -99,7 +106,6 @@ BehaviorStatus BehaviorPlaypenDriftCheck::InternalUpdateInternal(Robot& robot)
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, BehaviorStatus::Complete);
   }
   
-  // TODO: Checking microphones here while playing sound
   return BehaviorStatus::Running;
 }
 
@@ -116,7 +122,7 @@ void BehaviorPlaypenDriftCheck::AlwaysHandle(const RobotToEngineEvent& event, co
   const auto& tag = event.GetData().GetTag();
   if(tag == RobotInterface::RobotToEngineTag::audioFFTResult)
   {
-    // TODO(Al): Figure out channel to mic mapping
+    // Vector that maps channel (index) to mic/mic result code
     static const std::vector<FactoryTestResultCode> channelToMic = {
       FactoryTestResultCode::MIC_BL_NOT_WORKING,
       FactoryTestResultCode::MIC_FL_NOT_WORKING,
@@ -127,6 +133,8 @@ void BehaviorPlaypenDriftCheck::AlwaysHandle(const RobotToEngineEvent& event, co
     const auto& payload = event.GetData().Get_audioFFTResult();
     u8 count = 0;
     FactoryTestResultCode res = FactoryTestResultCode::UNKNOWN;
+
+    // For each fft result
     for(u8 i = 0; i < payload.result.size(); ++i)
     {
       const auto& fftResult = payload.result[i];
@@ -134,7 +142,11 @@ void BehaviorPlaypenDriftCheck::AlwaysHandle(const RobotToEngineEvent& event, co
                        "FFT result for channel %u : %u",
                        i, fftResult);
 
-      if(!Util::IsNear((float)fftResult, (float)PlaypenConfig::kFFTExpectedFreq_hz, (float)PlaypenConfig::kFFTFreqTolerance_hz))
+      // Check that the most prominent frequency heard by this mic is 
+      // near the expected frequency
+      if(!Util::IsNear((float)fftResult, 
+                       PlaypenConfig::kFFTExpectedFreq_hz, 
+                       PlaypenConfig::kFFTFreqTolerance_hz))
       {
         ++count;
         res = channelToMic[i];
@@ -147,6 +159,9 @@ void BehaviorPlaypenDriftCheck::AlwaysHandle(const RobotToEngineEvent& event, co
       }
     }
 
+    // If none of the mics heard the expected frequency, either they are all
+    // not working or the speaker isn't working
+    // Currently assuming it is the latter in this case
     if(count == payload.result.size())
     {
       res = FactoryTestResultCode::SPEAKER_NOT_WORKING;
@@ -155,9 +170,11 @@ void BehaviorPlaypenDriftCheck::AlwaysHandle(const RobotToEngineEvent& event, co
                           PlaypenConfig::kFFTExpectedFreq_hz);
     }
 
+    // Broadcast a failure message containing the result code
     if(res != FactoryTestResultCode::UNKNOWN)
     {
-      const_cast<Robot&>(robot).Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaypenBehaviorFailed(res)));
+      using namespace ExternalInterface;
+      const_cast<Robot&>(robot).Broadcast(MessageEngineToGame(PlaypenBehaviorFailed(res)));
     }
   }
 }

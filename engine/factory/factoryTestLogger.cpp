@@ -552,7 +552,7 @@ namespace Cozmo {
     }
     
     // Get directories inside CurrentGameLog. There should only ever be one.
-    std::string srcDir = dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, "devLogger");
+    std::string srcDir = dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, "CozmoEngine");
     std::vector<std::string> dirs;
     Util::FileUtils::ListAllDirectories(srcDir, dirs);
 
