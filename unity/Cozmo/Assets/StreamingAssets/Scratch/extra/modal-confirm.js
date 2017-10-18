@@ -24,7 +24,7 @@ var ModalType = function(type){
               '  <form action="javascript:void(0);">' +
               '    <div class="modal-inner modal-inner-small">' +
               '      <h2 class="hd modal-confirm-title"></h2>' +
-              '      <input class="modal-confirm-input" onkeydown="return ModalPrompt.isValidKey(event);" autofocus autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></input>' +
+              '      <input class="modal-confirm-input" onkeydown="return ModalPrompt.isValidKey(event);" onkeyup="ModalPrompt.sanitizeInput(this);" autofocus autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></input>' +
               '      <div class="ft">' +
               '        <button type=button class="btn-cancel button-pill button-red-pill"></button>' +
               '        <button type=submit class="btn-confirm button-pill button-blue-pill"></button>' +
@@ -159,7 +159,9 @@ var ModalType = function(type){
     if (_options.confirmCallback) {
       switch(type){
         case 'prompt':
-          _options.confirmCallback(_dialog.querySelector('.modal-confirm-input').value);
+          var input = _dialog.querySelector('.modal-confirm-input');
+          sanitizeInput(input);
+          _options.confirmCallback(input.value);
           break;
         case 'alert':
           _options.confirmCallback();
@@ -215,9 +217,15 @@ var ModalType = function(type){
     return true;
   };
 
+  // Android returns the same keycode for every key (brilliant), so this filters input after the fact
+  var sanitizeInput = function(input) {
+    input.value = input.value.replace(new RegExp('[' + _illegalCharacters + ']', 'g'), '');
+  };
+
   return {
     open : open,
-    isValidKey : isValidKey
+    isValidKey : isValidKey,
+    sanitizeInput : sanitizeInput
   };
 
 };
