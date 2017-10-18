@@ -26,7 +26,7 @@ type clientSocket struct {
 	conn net.Conn
 }
 
-func (s socketBase) Read() (n int, b []byte) {
+func (s *socketBase) Read() (n int, b []byte) {
 	select {
 	case b = <-s.read:
 	default:
@@ -36,13 +36,13 @@ func (s socketBase) Read() (n int, b []byte) {
 	return
 }
 
-func (s socketBase) ReadBlock() (n int, b []byte) {
+func (s *socketBase) ReadBlock() (n int, b []byte) {
 	b = <-s.read
 	n = len(b)
 	return
 }
 
-func (s clientSocket) Write(b []byte) (n int, err error) {
+func (s *clientSocket) Write(b []byte) (n int, err error) {
 	return s.conn.Write(b)
 }
 
@@ -86,7 +86,7 @@ type serverSocket struct {
 	ready bool
 }
 
-func (s serverSocket) Write(b []byte) (n int, err error) {
+func (s *serverSocket) Write(b []byte) (n int, err error) {
 	if !s.ready {
 		return 0, errors.New("Can't write to unconnected server socket")
 	}
