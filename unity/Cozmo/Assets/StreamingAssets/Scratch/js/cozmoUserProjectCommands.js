@@ -210,8 +210,6 @@
     // Don't call this method directly. Please call openCozmoProjectJSON instead.
     // This method takes a projectXML parameter to support pre-2.1 builds.
     window.openCozmoProject = function(projectUUID, projectName, projectJSON, projectXML, isCozmoSampleProjectStr) {
-        var startTime = performance.now()
-
         var isCozmoSampleProject = (isCozmoSampleProjectStr == 'true');
         window.isCozmoSampleProject = isCozmoSampleProject;
 
@@ -257,9 +255,6 @@
         }
 
         window.startSaveProjectTimer();
-
-        var loadTime = (performance.now() - startTime) * 0.001;
-        window.cozmoDASLog("openCozmoProject", "Took: " + loadTime.toFixed(3) + "s");
     }
 
     window.newProjectCreated = function(projectUUID, projectName) {
