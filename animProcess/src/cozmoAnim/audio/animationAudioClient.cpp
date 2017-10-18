@@ -40,8 +40,10 @@ using namespace AudioMetaData;
 static const AudioGameObject kAnimGameObj = ToAudioGameObject(GameObjectType::Cozmo_OnDevice);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AnimationAudioClient::AnimationAudioClient( CozmoAudioController* audioController )
+AnimationAudioClient::AnimationAudioClient( CozmoAudioController* audioController,
+                                            Util::RandomGenerator* randomGenerator )
 : _audioController( audioController )
+, _randomGenerator( randomGenerator )
 {
 }
 
@@ -60,7 +62,7 @@ void AnimationAudioClient::Update() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationAudioClient::PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame )
 {
-  const int8_t audioRefIdx = keyFrame.GetAudioRefIndex(kEnableAudioEventProbability);
+  const int8_t audioRefIdx = keyFrame.GetAudioRefIndex(_randomGenerator, kEnableAudioEventProbability);
 
   // Check if the probability driven selection has chosen to not play any event
   if ( audioRefIdx < 0 ) {

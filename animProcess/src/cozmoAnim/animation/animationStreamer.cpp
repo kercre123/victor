@@ -62,7 +62,7 @@ namespace Cozmo {
   , _trackLayerComponent(new TrackLayerComponent(context))
   , _lockedTracks(0)
   , _tracksInUse(0)
-  , _audioClient( new Audio::AnimationAudioClient(context->GetAudioController()) )
+  , _audioClient( new Audio::AnimationAudioClient(context->GetAudioController(), context->GetRandom()) )
   , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
   {    
   }

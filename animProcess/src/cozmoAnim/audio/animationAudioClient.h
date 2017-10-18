@@ -24,6 +24,9 @@ namespace Anki {
 namespace AudioEngine {
 struct AudioCallbackInfo;
 }
+namespace Util {
+class RandomGenerator;
+}
 namespace Cozmo {
 class RobotAudioKeyFrame;
 
@@ -37,7 +40,7 @@ public:
 
   static const char* kAudioLogChannelName;
 
-  AnimationAudioClient( CozmoAudioController* audioController );
+  AnimationAudioClient( CozmoAudioController* audioController, Util::RandomGenerator* randomGenerator );
 
   ~AnimationAudioClient();
   
@@ -63,6 +66,7 @@ public:
 private:
   
   CozmoAudioController*  _audioController = nullptr;
+  Util::RandomGenerator*  _randomGenerator = nullptr;
   std::set<AudioEngine::AudioPlayingId> _activeEvents;
   mutable std::mutex      _lock;
   
