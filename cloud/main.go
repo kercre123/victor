@@ -21,7 +21,7 @@ func messageSender(sock Socket) {
 
 func runServer() {
 	fmt.Println("Starting server")
-	sock := NewServerSocket(12345)
+	sock, _ := NewServerSocket(12345)
 	go messageSender(sock)
 	for {
 		_, msg := sock.ReadBlock()
@@ -32,7 +32,6 @@ func runServer() {
 func runClient() {
 	fmt.Println("Starting client")
 	sock, _ := NewClientSocket("127.0.0.1", 12345)
-	sock.Write([]byte("Hello, server!"))
 	go messageSender(sock)
 	for {
 		_, msg := sock.ReadBlock()

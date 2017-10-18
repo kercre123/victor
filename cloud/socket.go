@@ -27,16 +27,19 @@ type clientSocket struct {
 }
 
 func (s socketBase) Read() (n int, b []byte) {
-	v, ok := <-s.read
-	if !ok {
-		return 0, nil
+	select {
+	case b = <-s.read:
+	default:
+		b = make([]byte, 0)
 	}
-	return len(v), v
+	n = len(b)
+	return
 }
 
 func (s socketBase) ReadBlock() (n int, b []byte) {
-	v := <-s.read
-	return len(v), v
+	b = <-s.read
+	n = len(b)
+	return
 }
 
 func (s clientSocket) Write(b []byte) (n int, err error) {
@@ -50,6 +53,8 @@ func NewClientSocket(ip string, port int) (Socket, error) {
 	if err != nil {
 		return nil, errors.New(fmt.Sprint("Couldn't connect:", err))
 	}
+	fmt.Println("Client opened:", conn.LocalAddr())
+	fmt.Println("Client remote:", conn.RemoteAddr())
 	conn.SetDeadline(time.Time{})
 	read := make(chan []byte)
 	sock := clientSocket{socketBase{read}, conn}
@@ -64,14 +69,14 @@ func NewClientSocket(ip string, port int) (Socket, error) {
 			buf := make([]byte, 2048)
 			n, err := conn.Read(buf)
 			if err != nil {
-				fmt.Println("Couldn't read:", err)
+				fmt.Println("Client couldn't read:", err)
 				break
 			}
 			read <- buf[:n]
 		}
 	}()
 
-	return sock, nil
+	return &sock, nil
 }
 
 type serverSocket struct {
@@ -90,12 +95,12 @@ func (s serverSocket) Write(b []byte) (n int, err error) {
 
 // NewServerSocket returns a new server socket on the given port. Writing to it will return an error
 // until a client connects.
-func NewServerSocket(port int) Socket {
-	conn, err := net.ListenPacket("udp", fmt.Sprintf("127.0.0.1:%v", port))
+func NewServerSocket(port int) (Socket, error) {
+	conn, err := net.ListenPacket("udp", fmt.Sprintf("localhost:%v", port))
 	if err != nil {
-		fmt.Println("Couldn't create server on port:", port)
-		return nil
+		return nil, err
 	}
+	fmt.Println("Server opened:", conn.LocalAddr())
 	conn.SetDeadline(time.Time{})
 	read := make(chan []byte)
 	sock := serverSocket{socketBase: socketBase{read}, conn: conn}
@@ -106,7 +111,7 @@ func NewServerSocket(port int) Socket {
 			buf := make([]byte, 2048)
 			n, addr, err := conn.ReadFrom(buf)
 			if err != nil {
-				fmt.Println("Couldn't read:", err)
+				fmt.Println("Server couldn't read:", err)
 				break
 			}
 			// catch handshake message for new clients
@@ -120,5 +125,5 @@ func NewServerSocket(port int) Socket {
 		}
 	}()
 
-	return &sock
+	return &sock, nil
 }
