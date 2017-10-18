@@ -63,6 +63,8 @@ namespace Cozmo.Needs {
       RobotEngineManager.Instance.AddCallback<NeedsState>(HandleNeedsStateFromEngine);
       RobotEngineManager.Instance.AddCallback<StarLevelCompleted>(HandleStarLevelCompleted);
       RobotEngineManager.Instance.AddCallback<StarUnlocked>(HandleStarUnlocked);
+      DataPersistence.DataPersistenceManager.Instance.OnSaveDataReset += HandleOnSaveDataReset;
+
       _LatestStateFromEngine = CreateNewNeedsState();
       _CurrentDisplayState = CreateNewNeedsState();
 
@@ -76,6 +78,7 @@ namespace Cozmo.Needs {
         RobotEngineManager.Instance.RemoveCallback<StarLevelCompleted>(HandleStarLevelCompleted);
         RobotEngineManager.Instance.RemoveCallback<StarUnlocked>(HandleStarUnlocked);
       }
+      DataPersistence.DataPersistenceManager.Instance.OnSaveDataReset -= HandleOnSaveDataReset;
     }
 
     private void RequestNeedsState() {
@@ -248,6 +251,11 @@ namespace Cozmo.Needs {
       needsState.numStarsForNextUnlock = 0;
 
       return needsState;
+    }
+
+    private void HandleOnSaveDataReset() {
+      _LatestStateFromEngine = CreateNewNeedsState();
+      _CurrentDisplayState = CreateNewNeedsState();
     }
   }
 
