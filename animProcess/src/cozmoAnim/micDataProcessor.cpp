@@ -161,7 +161,7 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
   {
     std::string deletedFile = "";
     std::string nextFileNameBase = ChooseAndClearNextFileNameBase(deletedFile);
-    PRINT_NAMED_WARNING("SAVING AUDIO TO", "%s", nextFileNameBase.c_str());
+    
     if (!deletedFile.empty())
     {
       Util::FileUtils::DeleteFile(GetRawFileNameFromProcessed(deletedFile));
@@ -182,17 +182,19 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
           for(auto chunk : data)
           {
             for(uint32_t j = i; j < chunk.size(); j += kNumInputChannels)
-            fftArray.push_back(chunk[j]);
+            {
+              fftArray.push_back(chunk[j]);
+            }
           }
 
           Fft::transform(fftArray);
 
-          FILE* fp = nullptr;
-          if(fp == nullptr)
-          {
-            std::string file = "/data/fft_" + std::to_string(i) + ".txt";
-            fp = fopen(file.c_str(), "w");
-          }
+          // FILE* fp = nullptr;
+          // if(fp == nullptr)
+          // {
+          //   std::string file = "/data/fft_" + std::to_string(i) + ".txt";
+          //   fp = fopen(file.c_str(), "w");
+          // }
           
           // Skip the first one since it is garbage and often really large
           // Only look at the first half since the second half is just the inverse of the first
@@ -209,12 +211,11 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
               largestValue = magSq;
               largestValueIdx = i;
             }
-            if(fp != nullptr)
-            {
-              fprintf(fp, "%f\n", magSq);
-            }
+            // if(fp != nullptr)
+            // {
+            //   fprintf(fp, "%f\n", magSq);
+            // }
           }
-          PRINT_NAMED_WARNING("FFT","Channel %u, FFT %u", i, largestValueIdx/2);
           perChannelFFT.push_back(largestValueIdx/2);
         }
         return perChannelFFT;
@@ -470,7 +471,6 @@ void MicDataProcessor::Update()
 
     for(u8 i = 0; i < res.size(); ++i)
     {
-      PRINT_NAMED_WARNING("THE FUTURE IS HERE","Channel %u %u", i, res[i]);
       msg.result[i] = res[i];
     }
     RobotInterface::SendMessageToEngine(std::move(msg));

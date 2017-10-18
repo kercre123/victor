@@ -15,6 +15,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
+#include "engine/externalInterface/externalInterface.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -47,6 +48,7 @@ Result BehaviorPlaypenDriftCheck::InternalInitInternal(Robot& robot)
 
 void BehaviorPlaypenDriftCheck::TransitionToPlayingSound(Robot& robot)
 {
+  robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1, PlaypenConfig::kSoundVolume);
   robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingAudio(PlaypenConfig::kDurationOfAudioToRecord_ms)));
 
   // Record intial starting orientation and after kIMUDriftDetectPeriod_ms check for drift
@@ -116,10 +118,10 @@ void BehaviorPlaypenDriftCheck::AlwaysHandle(const RobotToEngineEvent& event, co
   {
     // TODO(Al): Figure out channel to mic mapping
     static const std::vector<FactoryTestResultCode> channelToMic = {
-      FactoryTestResultCode::MIC_FR_NOT_WORKING,
+      FactoryTestResultCode::MIC_BL_NOT_WORKING,
       FactoryTestResultCode::MIC_FL_NOT_WORKING,
       FactoryTestResultCode::MIC_BR_NOT_WORKING,
-      FactoryTestResultCode::MIC_BL_NOT_WORKING,
+      FactoryTestResultCode::MIC_FR_NOT_WORKING,
     };
 
     const auto& payload = event.GetData().Get_audioFFTResult();
@@ -128,6 +130,10 @@ void BehaviorPlaypenDriftCheck::AlwaysHandle(const RobotToEngineEvent& event, co
     for(u8 i = 0; i < payload.result.size(); ++i)
     {
       const auto& fftResult = payload.result[i];
+      PRINT_NAMED_INFO("BehaviorPlaypenDriftCheck.HandleAudioFFTResult.Result", 
+                       "FFT result for channel %u : %u",
+                       i, fftResult);
+
       if(!Util::IsNear((float)fftResult, (float)PlaypenConfig::kFFTExpectedFreq_hz, (float)PlaypenConfig::kFFTFreqTolerance_hz))
       {
         ++count;
@@ -149,7 +155,10 @@ void BehaviorPlaypenDriftCheck::AlwaysHandle(const RobotToEngineEvent& event, co
                           PlaypenConfig::kFFTExpectedFreq_hz);
     }
 
-    const_cast<Robot&>(robot).Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaypenBehaviorFailed(res)));
+    if(res != FactoryTestResultCode::UNKNOWN)
+    {
+      const_cast<Robot&>(robot).Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaypenBehaviorFailed(res)));
+    }
   }
 }
 
