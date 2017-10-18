@@ -42,9 +42,17 @@ int main(int argc, char **argv)
   // create platform
   const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlRobot2");
   // initialize logger
-  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog);
-
+  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog);  
   
+  if(Robot::Init() != Anki::RESULT_OK) {
+    fprintf(stdout, "Failed to initialize Cozmo::Robot!\n");
+    return -1;
+  }
+
+  Sim::OverlayDisplay::Init();
+
+  HAL::Step();
+
   // Get current translation of robot node
   const double* robotPosition = Sim::CozmoBot->getSelf()->getField("translation")->getSFVec3f();
   const double* robotRotation = Sim::CozmoBot->getSelf()->getField("rotation")->getSFRotation();
@@ -64,16 +72,8 @@ int main(int argc, char **argv)
   webots::Node* root = Sim::CozmoBot->getRoot();
   webots::Field* root_children_field = root->getField("children");
   root_children_field->importMFNodeFromString(0, ss.str() );
-  
-  
-  if(Robot::Init() != Anki::RESULT_OK) {
-    fprintf(stdout, "Failed to initialize Cozmo::Robot!\n");
-    return -1;
-  }
 
-  Sim::OverlayDisplay::Init();
 
-  HAL::Step();
   while(Robot::step_MainExecution() == Anki::RESULT_OK)
   {
     HAL::UpdateDisplay();

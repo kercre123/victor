@@ -121,7 +121,7 @@ int lcd_init(void) {
   // Echo to device to activate backlight
   system("echo 10 > /sys/class/leds/face-backlight/brightness");
   system("echo 1 > /sys/kernel/debug/regulator/8916_l17/enable");
-
+  system("echo 1 > /sys/kernel/debug/regulator/8916_l4/enable");
 
   // IO Setup
   DnC_PIN = gpio_create(GPIO_LCD_WRX, gpio_DIR_OUTPUT, gpio_HIGH);

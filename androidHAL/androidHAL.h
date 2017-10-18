@@ -107,7 +107,8 @@ namespace Anki
       // TODO: How fast will this be in hardware? Is image ready and waiting?
       bool CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms);
       
-      ImageResolution CameraGetResolution() const {return _imageCaptureResolution;}
+      u16 CameraGetHeight() const {return _imageCaptureHeight;}
+      u16 CameraGetWidth()  const {return _imageCaptureWidth; }
       
     private:
 
@@ -144,7 +145,8 @@ namespace Anki
 #endif
       
       // Camera
-      ImageResolution _imageCaptureResolution = DEFAULT_IMAGE_RESOLUTION;
+      u16             _imageCaptureHeight = DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+      u16             _imageCaptureWidth  = DEFAULT_CAMERA_RESOLUTION_WIDTH;
       u32             _imageFrameID;
       
       

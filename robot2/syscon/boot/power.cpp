@@ -7,16 +7,34 @@
 static const uint16_t MINIMUM_BATTERY = 890; // ~3.6v
 
 void Power::init(void) {
+  // Set N pins on motors low for power up
+  LN1::reset();
+  LN2::reset();
+  HN1::reset();
+  HN2::reset();
+  RTN1::reset();
+  RTN2::reset();
+  LTN1::reset();
+  LTN2::reset();
+
+  LN1::mode(MODE_OUTPUT);
+  LN2::mode(MODE_OUTPUT);
+  HN1::mode(MODE_OUTPUT);
+  HN2::mode(MODE_OUTPUT);
+  RTN1::mode(MODE_OUTPUT);
+  RTN2::mode(MODE_OUTPUT);
+  LTN1::mode(MODE_OUTPUT);
+  LTN2::mode(MODE_OUTPUT);
+
+  // Enable charging and power
   nCHG_EN::reset();
   nCHG_EN::mode(MODE_OUTPUT);
 
-  POWER_EN::pull(PULL_UP);
   POWER_EN::mode(MODE_INPUT);
 
   // Make sure battery is partially charged, and that the robot is on a charger
   // NOTE: Only one interrupt is enabled here, and it's the 200hz main timing loop
   // this lowers power consumption and interrupts fire regularly
-
   do {
     // Wait for a bit with the power on
     POWER_EN::pull(PULL_UP);
@@ -28,7 +46,7 @@ void Power::init(void) {
     // Charge for ~15s bursts
     POWER_EN::pull(PULL_DOWN);
     for (int i = 0; i < 5000; i++) __asm("wfi");
-  } while(true);
+  } while(1);
 }
 
 void Power::enableClocking(void) {

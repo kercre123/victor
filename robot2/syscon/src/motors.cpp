@@ -77,20 +77,9 @@ static bool motorEnabled;
 
 static void enable_charger() {
   LP1::mode(MODE_INPUT);
-  LN1::mode(MODE_INPUT);
-  LN2::mode(MODE_INPUT);
-
   HP1::mode(MODE_INPUT);
-  HN1::mode(MODE_INPUT);
-  HN2::mode(MODE_INPUT);
-
   RTP1::mode(MODE_INPUT);
-  RTN1::mode(MODE_INPUT);
-  RTN2::mode(MODE_INPUT);
-
   LTP1::mode(MODE_INPUT);
-  LTN1::mode(MODE_INPUT);
-  LTN2::mode(MODE_INPUT);
 
   Power::setCharge(true);
 }
@@ -100,38 +89,14 @@ static void enable_motors() {
 
   // Reset our ports (This is portable, but ugly, can easily collapse this into 6 writes)
   LP1::reset();
-  LN1::reset();
-  LN2::reset();
   HP1::reset();
-  HN1::reset();
-  HN2::reset();
   RTP1::reset();
-  RTN1::reset();
-  RTN2::reset();
   LTP1::reset();
-  LTN1::reset();
-  LTN2::reset();
-
-  LP1::type(TYPE_OPENDRAIN);
-  HP1::type(TYPE_OPENDRAIN);
-  RTP1::type(TYPE_OPENDRAIN);
-  LTP1::type(TYPE_OPENDRAIN);
 
   LP1::mode(MODE_OUTPUT);
-  LN1::mode(MODE_OUTPUT);
-  LN2::mode(MODE_OUTPUT);
-
   HP1::mode(MODE_OUTPUT);
-  HN1::mode(MODE_OUTPUT);
-  HN2::mode(MODE_OUTPUT);
-
   RTP1::mode(MODE_OUTPUT);
-  RTN1::mode(MODE_OUTPUT);
-  RTN2::mode(MODE_OUTPUT);
-
   LTP1::mode(MODE_OUTPUT);
-  LTN1::mode(MODE_OUTPUT);
-  LTN2::mode(MODE_OUTPUT);
 
   LN1::alternate(2);
   LN2::alternate(2);
@@ -228,6 +193,22 @@ void Motors::init() {
   // Setup motor power
   memset(&motorStatus, 0, sizeof(motorStatus));
 
+  // Make sure N pins are outputs driven low
+  LN1::mode(MODE_OUTPUT);
+  LN2::mode(MODE_OUTPUT);
+  HN1::mode(MODE_OUTPUT);
+  HN2::mode(MODE_OUTPUT);
+  RTN1::mode(MODE_OUTPUT);
+  RTN2::mode(MODE_OUTPUT);
+  LTN1::mode(MODE_OUTPUT);
+  LTN2::mode(MODE_OUTPUT);
+
+  // Configure P pins
+  LP1::type(TYPE_OPENDRAIN);
+  HP1::type(TYPE_OPENDRAIN);
+  RTP1::type(TYPE_OPENDRAIN);
+  LTP1::type(TYPE_OPENDRAIN);
+
   configure_timer(TIM1);
   configure_timer(TIM3);
   enable_charger();
@@ -236,20 +217,9 @@ void Motors::init() {
 
 void Motors::stop() {
   LP1::mode(MODE_INPUT);
-  LN1::mode(MODE_INPUT);
-  LN2::mode(MODE_INPUT);
-
   HP1::mode(MODE_INPUT);
-  HN1::mode(MODE_INPUT);
-  HN2::mode(MODE_INPUT);
-
   RTP1::mode(MODE_INPUT);
-  RTN1::mode(MODE_INPUT);
-  RTN2::mode(MODE_INPUT);
-
   LTP1::mode(MODE_INPUT);
-  LTN1::mode(MODE_INPUT);
-  LTN2::mode(MODE_INPUT);
 }
 
 // This treats 0 power as a 'transitional' state

@@ -15,7 +15,7 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 
 #include "util/logging/logging.h"
-#include "util/logging/printfLoggerProvider.h"
+#include "util/logging/androidLogPrintLogger_android.h"
 
 #include <stdio.h>
 #include <chrono>
@@ -47,12 +47,9 @@ int main(void)
   signal(SIGTERM, Cleanup);
   
   // - create and set logger
-  Util::PrintfLoggerProvider loggerProvider;
-  loggerProvider.SetMinLogLevel(Util::ILoggerProvider::LOG_LEVEL_DEBUG);
-  loggerProvider.SetMinToStderrLevel(Util::ILoggerProvider::LOG_LEVEL_WARN);
-  Util::gLoggerProvider = &loggerProvider;
+  Util::AndroidLogPrintLogger logPrintLogger("CozmoAnim");
+  Util::gLoggerProvider = &logPrintLogger;
 
-  
   // TODO: Load DataPlatform paths from json or however engine does it
   /*
   const char* configuration_data = "{}";
