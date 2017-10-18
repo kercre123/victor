@@ -200,6 +200,8 @@ namespace CodeLab {
 
     private uint _ChallengeBookmark = 1;
 
+    private bool _IsOrchestraPlaying = false;
+
     private const float kNormalDriveSpeed_mmps = 70.0f;
     private const float kFastDriveSpeed_mmps = 200.0f;
     private const float kDriveDist_mm = 44.0f; // length of one light cube
@@ -821,6 +823,8 @@ namespace CodeLab {
     }
 
     private void ResetAllCodeLabAudio() {
+      DAS.Info("CodeLab.ResetAllCodeLabAudio", "Stopping All Audio - _IsOrchestraPlaying = " + _IsOrchestraPlaying.ToString());
+
       // Stop any audio the user may have started in their Code Lab program
       GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Sfx_Global_Stop,
                                         Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
@@ -828,6 +832,7 @@ namespace CodeLab {
       GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Music_Global_Stop,
                                         Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
                                         (callbackInfo) => { /* callback */ });
+      _IsOrchestraPlaying = false;
 
       // Restore background music in case it was turned off
       GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_Off,
@@ -926,6 +931,9 @@ namespace CodeLab {
 
       // Release any remaining in-progress scratch blocks (otherwise any waiting on observation will stay alive)
       InProgressScratchBlockPool.ReleaseAllInUse();
+
+      // Force all audio to stop immediaetly
+      ResetAllCodeLabAudio();
 
       _queuedScratchRequests.Clear();
 
@@ -1673,7 +1681,16 @@ namespace CodeLab {
             completeHandler = inProgressScratchBlock.AudioPlaySoundCompleted;
           }
 
+          // Special case for all orchestra loops - when we start any of them, we start a special event so that all
+          // tracks play in parallel together.
+          if (IsOrchestraPlayEvent(audioEvent) && !_IsOrchestraPlaying) {
+            DAS.Info("CodeLab.Orchestra.Start", "Playing Init event");
+            GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Init);
+            _IsOrchestraPlaying = true;
+          }
+
           ushort playID = GameAudioClient.PostCodeLabEvent(audioEvent, callbackFlag, completeHandler);
+          DAS.Info("CodeLab.Audio.PlayAudioEvent", "Posting Audio event=" + audioEvent.ToString() + " playID=" + playID);
 
           if (waitToComplete) {
             inProgressScratchBlock.SetAudioPlayID(playID);
@@ -1697,6 +1714,7 @@ namespace CodeLab {
           GameAudioClient.PostCodeLabEvent(audioEvent,
                                             Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
                                             (callbackInfo) => { /* callback */ });
+          DAS.Info("CodeLab.Audio.StopSoundEffect", "Posting Audio event=" + audioEvent.ToString());
         }
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
@@ -2076,6 +2094,23 @@ namespace CodeLab {
       return;
     }
 
+    private bool IsOrchestraPlayEvent(Anki.AudioMetaData.GameEvent.Codelab audioEvent) {
+      switch (audioEvent) {
+      case Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_Mode_1:
+      case Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_Mode_2:
+      case Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_Mode_3:
+      case Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_Mode_1:
+      case Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_Mode_2:
+      case Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_Mode_3:
+      case Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_Mode_1:
+      case Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_Mode_2:
+      case Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_Mode_3:
+        return true;
+      default:
+        return false;
+      }
+    }
+
     private Anki.AudioMetaData.GameEvent.Codelab GetAudioEvent(int soundToPlay, bool isStartSound) {
       Anki.AudioMetaData.GameEvent.Codelab audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Invalid;
       switch (soundToPlay) {
@@ -2265,74 +2300,74 @@ namespace CodeLab {
         break;
       case 24: // BKY_INSTRUMENT_1_MODE_1
         if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_01_Loop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_Mode_1;
         }
         else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_01_Loop_Stop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_Mode_1_Stop;
         }
         break;
       case 25: // BKY_INSTRUMENT_1_MODE_2
         if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_02_Loop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_Mode_2;
         }
         else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_02_Loop_Stop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_Mode_2_Stop;
         }
         break;
       case 26: // BKY_INSTRUMENT_1_MODE_3
         if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_03_Loop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_Mode_3;
         }
         else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_03_Loop_Stop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_Mode_3_Stop;
         }
         break;
       case 27: // BKY_INSTRUMENT_2_MODE_1
         if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_01_Loop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_Mode_1;
         }
         else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_01_Loop_Stop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_Mode_1_Stop;
         }
         break;
       case 28: // BKY_INSTRUMENT_2_MODE_2
         if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_02_Loop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_Mode_2;
         }
         else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_02_Loop_Stop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_Mode_2_Stop;
         }
         break;
       case 29: // BKY_INSTRUMENT_2_MODE_3
         if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_03_Loop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_Mode_3;
         }
         else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_03_Loop_Stop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_Mode_3_Stop;
         }
         break;
       case 30: // BKY_INSTRUMENT_3_MODE_1
         if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_01_Loop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_Mode_1;
         }
         else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_01_Loop_Stop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_Mode_1_Stop;
         }
         break;
       case 31: // BKY_INSTRUMENT_3_MODE_2
         if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_02_Loop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_Mode_2;
         }
         else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_02_Loop_Stop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_Mode_2_Stop;
         }
         break;
       case 32: // BKY_INSTRUMENT_3_MODE_3
         if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_03_Loop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_Mode_3;
         }
         else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_03_Loop_Stop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_Mode_3_Stop;
         }
         break;
       default:
