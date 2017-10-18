@@ -119,7 +119,8 @@ namespace Cozmo.Needs.UI {
 
       if (DebugMenuManager.Instance.DemoMode) {
         _DemoSetNeedsLevelButton.onClick.AddListener(HandleDemoSetNeedsLevelButton);
-        NeedsStateManager.Instance.OnNeedsLevelChanged += HandleOnFirstNeedsUpdate;
+        // Reset needs to full whenever the user returns to the HubView
+        DemoSetNeedsLevels(1.0f, 1.0f, 1.0f);
       }
       else {
         _DemoSetNeedsLevelButton.gameObject.SetActive(false);
@@ -299,13 +300,6 @@ namespace Cozmo.Needs.UI {
                           Singleton<ForceSetNeedsLevels>.Instance.Initialize(new float[3] { repairLevel, energyLevel, playLevel });
       RobotEngineManager.Instance.SendMessage();
       PopLatestBracketAndUpdateButtons();
-    }
-
-    // Catch and "override" the first needs update
-    private void HandleOnFirstNeedsUpdate(NeedsActionId actionId) {
-      NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleOnFirstNeedsUpdate;
-      // Set levels to defaults for demo mode
-      DemoSetNeedsLevels(1.0f, 1.0f, 1.0f);
     }
 
     #region Onboarding
