@@ -233,9 +233,7 @@
             PlayNowModal.init();
         }
 
-        if (window.saveProjectTimerId) {
-            clearInterval(window.saveProjectTimerId);
-        }
+        window.clearSaveProjectTimer();
 
         if (isCozmoSampleProject && projectXML != null) {
             // Set the coordinate setting in the sample project xml to our desired location on-screen.
@@ -252,9 +250,8 @@
             // User project was build pre-Cozmo app 2.1 release. Open projectXML.
             openBlocklyXML(projectXML);
             window.notifyProjectIsLoaded();
+            window.startSaveProjectTimer();
         }
-
-        window.startSaveProjectTimer();
     }
 
     window.newProjectCreated = function(projectUUID, projectName) {
@@ -319,9 +316,17 @@
         window.startSaveProjectTimer();
     }
 
+    window.clearSaveProjectTimer = function() {
+        if (window.saveProjectTimerId != null) {
+            clearInterval(window.saveProjectTimerId);
+            window.saveProjectTimerId = null;
+        }
+    }
+
     window.startSaveProjectTimer = function() {
         // Start timer for intervals at which we'll check if the user project should be saved.
         if (!window.isCozmoSampleProject) {
+            window.clearSaveProjectTimer();  
             var timeInterval_ms = 3000;
             window.saveProjectTimerId = setInterval(saveProjectTimer, timeInterval_ms);
             function saveProjectTimer() {

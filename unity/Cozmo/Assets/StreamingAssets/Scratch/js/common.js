@@ -177,6 +177,8 @@
                 window.notifyProjectIsLoaded();
             }
 
+            window.startSaveProjectTimer();
+
             if (window.isVertical) {
                 workspace.toolbox_.flyout_.hide();
             }
@@ -281,7 +283,6 @@
             exportbutton.addEventListener('click', function () {
                 Scratch.workspace.playAudio('click');
                 vm.stopAll();
-                clearInterval(window.saveProjectTimerId);
 
                 window.exportCozmoProject();
             });
@@ -393,7 +394,7 @@
     window.exitWorkspace = function() {
         Scratch.workspace.playAudio('click');
         Scratch.vm.stopAll();
-        clearInterval(window.saveProjectTimerId);
+        window.clearSaveProjectTimer();
 
         var promiseSaveProject = window.promiseWaitForSaveProject();
         promiseSaveProject.then(function(result) {
