@@ -40,10 +40,8 @@ using namespace AudioMetaData;
 static const AudioGameObject kAnimGameObj = ToAudioGameObject(GameObjectType::Cozmo_OnDevice);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AnimationAudioClient::AnimationAudioClient( CozmoAudioController* audioController,
-                                            Util::RandomGenerator* randomGenerator )
+AnimationAudioClient::AnimationAudioClient( CozmoAudioController* audioController )
 : _audioController( audioController )
-, _randomGenerator( randomGenerator )
 {
 }
 
@@ -62,41 +60,30 @@ void AnimationAudioClient::Update() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationAudioClient::PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame )
 {
-  const auto& audioRef = keyFrame.GetAudioRef();
-  
-  // Post Audio Event
-  // First, check if the audio event is valid
-  if ( AudioMetaData::GameEvent::GenericEvent::Invalid == audioRef.audioEvent ) {
-    PRINT_NAMED_ERROR("AnimationAudioClient.PlayAudioKeyFrame", "Invalid Audio event in RobotAudioKeyFrame");
+  const int8_t audioRefIdx = keyFrame.GetAudioRefIndex(kEnableAudioEventProbability);
+
+  // Check if the probability driven selection has chosen to not play any event
+  if ( audioRefIdx < 0 ) {
+    AUDIO_DEBUG_LOG("AnimationAudioClient.PlayAudioKeyFrame", "Probability failed to Post Event");
     return;
   }
-  
-  // Check event probability
-  static bool allowEventProbability = ( kEnableAudioEventProbability && ( nullptr != _randomGenerator ) );
-  auto audioEvent = audioRef.audioEvent;
-  if ( allowEventProbability &&
-       !Util::IsFltNear( audioRef.probability, 1.0f ) &&
-       audioRef.probability < _randomGenerator->RandDbl( 1.0 ) ) {
-    // Chance has chosen not to play event
-    audioEvent = AudioMetaData::GameEvent::GenericEvent::Invalid;
+
+  const RobotAudioKeyFrame::AudioRef& audioRef = keyFrame.GetAudioRef(audioRefIdx);
+
+  // Abort if audio event is not valid
+  if ( AudioMetaData::GameEvent::GenericEvent::Invalid == audioRef.audioEvent ) {
+    PRINT_NAMED_ERROR("AnimationAudioClient.PlayAudioKeyFrame", "Invalid audio event in RobotAudioKeyFrame");
+    return;
   }
-  
+
   // Play valid event
-  if ( AudioMetaData::GameEvent::GenericEvent::Invalid != audioEvent ) {
-    const auto playId = PostCozmoEvent( audioEvent );
-    
+  const auto playId = PostCozmoEvent( audioRef.audioEvent );
+  if ( playId != kInvalidAudioPlayingId ) {
     // Apply volume to event
-    if ( playId != kInvalidAudioPlayingId ) {
-      SetCozmoEventParameter(playId, GameParameter::ParameterType::Event_Volume, audioRef.volume);
-    }
-    AUDIO_DEBUG_LOG("AnimationAudioClient.PlayAudioKeyFrame", "Post Event '%s' volume %f probability %f",
-                    EnumToString(audioEvent), audioRef.volume, audioRef.probability);
+    SetCozmoEventParameter(playId, GameParameter::ParameterType::Event_Volume, audioRef.volume);
   }
-  else {
-    AUDIO_DEBUG_LOG("AnimationAudioClient.PlayAudioKeyFrame",
-                    "Probability failed to Post Event '%s' volume %f probability %f",
-                    EnumToString(audioRef.audioEvent), audioRef.volume, audioRef.probability);
-  }
+  AUDIO_DEBUG_LOG("AnimationAudioClient.PlayAudioKeyFrame", "Post Event '%s' volume %f probability %f",
+                  EnumToString(audioRef.audioEvent), audioRef.volume, audioRef.probability);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
