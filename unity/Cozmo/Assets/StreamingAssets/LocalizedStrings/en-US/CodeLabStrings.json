@@ -519,7 +519,7 @@
       "translation": "When the music stops, don't get stuck with the hot potato!"
   },
   "codeLabFeaturedProject_HotPotato.projectInstructions": {
-      "translation": "1. This is a game for two players, plus Cozmo. \n\n2. Players 1 and 2, tap your Cube when it lights up. When it's Cozmo's turn to tap his Cube, make sure he can see the Cube in front of him.\n\n3. In this game, the \"potato\" is indicated by Cube lights. When it lands on you, the lights will first turn red, and then will turn green when the potato can be passed by tapping it.\n\n4. When the music stops, careful not to be stuck with the potato!"
+      "translation": "1. This is a game for two players, plus Cozmo. \n\n2. Cozmo will ask you to place a Cube under his lift so he can tap it. Players 1 and 2, tap your Cube when it lights up. \n\n3. In this game, the \"potato\" is indicated by Cube lights. When it lands on you, the lights will first turn red, and then green when the potato can be passed by tapping the Cube.\n\n4. When the music stops, careful not to be stuck with the potato!"
   },
   "codeLabFeaturedProject_TinyOrchestra.projectName": {
       "translation": "Tiny Orchestra"
@@ -537,7 +537,7 @@
       "translation":  "Shake Cozmo and have your fortune told."
   },
   "codeLabFeaturedProject_MagicFortuneTeller.projectInstructions": {
-      "translation":  "1. After you tap start, when Cozmo has a \"?\" on his face, this means means it's your turn to ask him a yes-or-no question.\n\n2. Then shake Cozmo and listen to your magic fortune!"
+      "translation":  "1. After you tap start, when Cozmo has a \"?\" on his face, this means it's your turn to ask him a yes-or-no question.\n\n2. Then shake Cozmo and listen to your magic fortune!"
   },
   "codeLabFeaturedProject_CubeWhack.projectName": {
       "translation": "Cube Whack"
