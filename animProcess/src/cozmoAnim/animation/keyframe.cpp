@@ -396,7 +396,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       return Util::numeric_cast<int8_t>(_audioReferences.size());
     }
 
-    const int8_t RobotAudioKeyFrame::GetAudioRefIndex(Util::RandomGenerator* rng, bool useProbability) const
+    const int8_t RobotAudioKeyFrame::GetAudioRefIndex(bool useProbability) const
     {
       if(_audioReferences.empty()) {
         PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetAudioRefIndex.EmptyAudioReferences",
@@ -408,17 +408,13 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 
       if (_audioReferences.size() > 0) {
 
-        if (nullptr == rng) {
-          rng = &GetRNG();
-        }
-
         // If we are NOT using the probabilities for each audio event, then randomly select one.
         if (!useProbability) {
           if (_audioReferences.size() == 1) {
             selectedAudioIndex = 0;
           } else {
             // Randomly select if there are more than one audio references
-            selectedAudioIndex = rng->RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
+            selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
           }
           PRINT_CH_DEBUG("Audio", "RobotAudioKeyFrame.GetAudioRef.RandomAudioSelection",
                          "Randomly selected audio index = %i", selectedAudioIndex);
@@ -428,7 +424,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         // Taking probabilities into account, select which audio event should be used.
         // TODO: See https://github.com/anki/cozmo-one/pull/5688#discussion_r139861577 for a
         // suggested improvement to this probability-driven selection (tracked in VIC-432)
-        const f32 randDbl = rng->RandDbl(1.0);
+        const f32 randDbl = GetRNG().RandDbl(1.0);
         f32 randRangeMin = 0.0;
         for (int idx=0; idx<_audioReferences.size(); idx++) {
           if (Util::IsFltNear(_audioReferences[idx].probability, 0.0f)) {

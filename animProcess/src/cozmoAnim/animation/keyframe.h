@@ -94,6 +94,8 @@ namespace Cozmo {
     // multiple returned messages.
     virtual bool IsDone() { return true; }
     
+    void SetRNG(Util::RandomGenerator* rng);
+
   protected:
     
     // Populate members from Json
@@ -123,6 +125,10 @@ namespace Cozmo {
   
   inline Util::RandomGenerator& IKeyFrame::GetRNG() const {
     return sRNG;
+  }
+
+  inline void IKeyFrame::SetRNG(Util::RandomGenerator* rng) {
+    sRNG = *rng;
   }
   
   
@@ -232,7 +238,7 @@ namespace Cozmo {
     // will return 'kNoAudioRefIndex' if '_audioReferences' is empty, if the total probability of
     // all audio events combined exceeds 1.0 or if probabilities were taken into account and no
     // audio event should be used.
-    const int8_t GetAudioRefIndex(Util::RandomGenerator* rng, bool useProbability = true) const;
+    const int8_t GetAudioRefIndex(bool useProbability = true) const;
 
     // The GetNumAudioRefs() method will return the number of audio references for
     // this RobotAudioKeyFrame (which is the size of the '_audioReferences' vector)

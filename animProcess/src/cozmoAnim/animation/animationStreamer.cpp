@@ -62,7 +62,7 @@ namespace Cozmo {
   , _trackLayerComponent(new TrackLayerComponent(context))
   , _lockedTracks(0)
   , _tracksInUse(0)
-  , _audioClient( new Audio::AnimationAudioClient(context->GetAudioController(), context->GetRandom()) )
+  , _audioClient( new Audio::AnimationAudioClient(context->GetAudioController()) )
   , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
   {    
   }
@@ -525,7 +525,7 @@ namespace Cozmo {
     if (robotAudioTrack.HasFramesLeft() &&
         robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, currTime_ms))
     {
-      _audioClient->PlayAudioKeyFrame( robotAudioTrack.GetCurrentKeyFrame() );
+      _audioClient->PlayAudioKeyFrame( robotAudioTrack.GetCurrentKeyFrame(_context->GetRandom()) );
       robotAudioTrack.MoveToNextKeyFrame();
     }
 

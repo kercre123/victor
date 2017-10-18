@@ -40,10 +40,8 @@ using namespace AudioMetaData;
 static const AudioGameObject kAnimGameObj = ToAudioGameObject(GameObjectType::Cozmo_OnDevice);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AnimationAudioClient::AnimationAudioClient( CozmoAudioController* audioController,
-                                            Util::RandomGenerator* randomGenerator )
+AnimationAudioClient::AnimationAudioClient( CozmoAudioController* audioController )
 : _audioController( audioController )
-, _randomGenerator( randomGenerator )
 {
 }
 
@@ -62,11 +60,12 @@ void AnimationAudioClient::Update() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationAudioClient::PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame )
 {
-  const int8_t audioRefIdx = keyFrame.GetAudioRefIndex(_randomGenerator, kEnableAudioEventProbability);
+  const int8_t audioRefIdx = keyFrame.GetAudioRefIndex(kEnableAudioEventProbability);
 
   // Check if the probability driven selection has chosen to not play any event
   if ( audioRefIdx < 0 ) {
-    AUDIO_DEBUG_LOG("AnimationAudioClient.PlayAudioKeyFrame", "Probability failed to Post Event");
+    AUDIO_DEBUG_LOG("AnimationAudioClient.PlayAudioKeyFrame",
+                    "No audio event chosen to post due to probability selection");
     return;
   }
 
@@ -84,7 +83,8 @@ void AnimationAudioClient::PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame
     // Apply volume to event
     SetCozmoEventParameter(playId, GameParameter::ParameterType::Event_Volume, audioRef.volume);
   }
-  AUDIO_DEBUG_LOG("AnimationAudioClient.PlayAudioKeyFrame", "Post Event '%s' volume %f probability %f",
+  AUDIO_DEBUG_LOG("AnimationAudioClient.PlayAudioKeyFrame",
+                  "Posted audio event '%s' (volume %f, probability %f)",
                   EnumToString(audioRef.audioEvent), audioRef.volume, audioRef.probability);
 }
 

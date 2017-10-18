@@ -124,6 +124,8 @@ public:
   
   // Get a reference to the current KeyFrame in the track.
   FRAME_TYPE& GetCurrentKeyFrame() { return *_frameIter; }
+
+  FRAME_TYPE& GetCurrentKeyFrame(Util::RandomGenerator* rng);
   
   // Get pointer to next keyframe. Returns nullptr if the track is on the last frame.
   const FRAME_TYPE* GetNextKeyFrame() const;
@@ -377,6 +379,13 @@ Result Track<BodyMotionKeyFrame>::AddKeyFrameByTime(const BodyMotionKeyFrame& ke
 template<>
 Result Track<BackpackLightsKeyFrame>::AddKeyFrameByTime(const BackpackLightsKeyFrame &keyFrame);
 
+template<typename FRAME_TYPE>
+FRAME_TYPE& Track<FRAME_TYPE>::GetCurrentKeyFrame(Util::RandomGenerator* rng)
+{
+  FRAME_TYPE& currentKeyFrame = *_frameIter;
+  currentKeyFrame.SetRNG(rng);
+  return currentKeyFrame;
+}
 
 template<typename FRAME_TYPE>
 FRAME_TYPE* Track<FRAME_TYPE>::GetCurrentKeyFrame(TimeStamp_t animationTime_ms)

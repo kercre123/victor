@@ -40,7 +40,7 @@ public:
 
   static const char* kAudioLogChannelName;
 
-  AnimationAudioClient( CozmoAudioController* audioController, Util::RandomGenerator* randomGenerator );
+  AnimationAudioClient( CozmoAudioController* audioController );
 
   ~AnimationAudioClient();
   
@@ -66,7 +66,6 @@ public:
 private:
   
   CozmoAudioController*  _audioController = nullptr;
-  Util::RandomGenerator*  _randomGenerator = nullptr;
   std::set<AudioEngine::AudioPlayingId> _activeEvents;
   mutable std::mutex      _lock;
   
