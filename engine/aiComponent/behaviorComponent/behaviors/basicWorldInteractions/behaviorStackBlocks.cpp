@@ -379,15 +379,12 @@ void BehaviorStackBlocks::PrintCubeDebug(BehaviorExternalInterface& behaviorExte
     case PoseState::Invalid: poseStateStr = "invalid"; break;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
   PRINT_NAMED_DEBUG(event,
                     "block %d: blockUpright?%d CanPickUpObject%d CanStackOnTopOfObject?%d poseState=%s moving?%d restingFlat?%d",
                     obj->GetID().GetValue(),
                     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS,
-                    robot.GetDockingComponent().CanPickUpObject(*obj),
-                    robot.GetDockingComponent().CanStackOnTopOfObject(*obj),
+                    behaviorExternalInterface.GetRobot().GetDockingComponent().CanPickUpObject(*obj),
+                    behaviorExternalInterface.GetRobot().GetDockingComponent().CanStackOnTopOfObject(*obj),
                     poseStateStr,
                     obj->IsMoving(),
                     obj->IsRestingFlat());
