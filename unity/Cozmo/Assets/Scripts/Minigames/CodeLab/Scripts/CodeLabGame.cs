@@ -477,36 +477,6 @@ namespace CodeLab {
       _CozmoFaceDisplay.ClearScreen();
     }
 
-    private float ConvertEngineYawToCodeLabYaw(float inYaw) {
-      // We invert yaw so that that it increases with clockwise rotation of Cozmo
-      // (this matches how we invert turn angles so they're clockwise).
-      return -inYaw;
-    }
-
-    private void SetCubeStateForCodeLab(CubeStateForCodeLab cubeDest, LightCube cubeSrc) {
-      if (cubeSrc == null) {
-        cubeDest.pos = new Vector3(0.0f, 0.0f, 0.0f);
-        cubeDest.camPos = new Vector2(0.0f, 0.0f);
-        cubeDest.isValid = false;
-        cubeDest.isVisible = false;
-        cubeDest.pitch_d = 0.0f;
-        cubeDest.roll_d = 0.0f;
-        cubeDest.yaw_d = 0.0f;
-      }
-      else {
-        cubeDest.pos = cubeSrc.WorldPosition;
-        cubeDest.camPos = cubeSrc.VizRect.center;
-        cubeDest.isValid = true;
-        const int kMaxVisionFramesSinceSeeingCube = 30;
-        cubeDest.isVisible = (cubeSrc.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingCube);
-        cubeDest.pitch_d = cubeSrc.PitchDegrees;
-        cubeDest.roll_d = cubeSrc.RollDegrees;
-        cubeDest.yaw_d = ConvertEngineYawToCodeLabYaw(cubeSrc.YawDegrees);
-      }
-
-      cubeDest.wasJustTapped = (cubeDest.framesSinceTapped < kMaxFramesToReportCubeTap);
-    }
-
     public void EvaluateJS(string text) {
 #if ANKI_DEV_CHEATS
       _PerformanceStats.AddEvaluateJSCall();
@@ -545,6 +515,53 @@ namespace CodeLab {
       return mostRecentTap;
     }
 
+    private float Convert360AngleToMinus180To180(float inAngle) {
+      if (inAngle < 180.0f) {
+        if (inAngle < 0.0f) {
+          DAS.Error("CodeLab.Convert360AngleToMinus180To180.TooSmall", "inAngle: " + inAngle);
+          return 0.0f;
+        }
+        return inAngle; // 1st half maps 0 to 180
+      }
+      else {
+        if (inAngle > 360.0f) {
+          DAS.Error("CodeLab.Convert360AngleToMinus180To180.TooBig", "inAngle: " + inAngle);
+          return 0.0f;
+        }
+        return inAngle - 360.0f; // 2nd half maps to -180 to -0
+      }
+    }
+
+    private Vector3 EnginePosToCodeLabPos(Vector3 worldPos) {
+      // We invert Y so it's to Cozmo's right instead of left (to match how turn right with positive rotations)
+      return new Vector3(worldPos.x, -worldPos.y, worldPos.z);
+    }
+
+    private void SetCubeStateForCodeLab(CubeStateForCodeLab cubeDest, LightCube cubeSrc) {
+      if (cubeSrc == null) {
+        cubeDest.pos = new Vector3(0.0f, 0.0f, 0.0f);
+        cubeDest.camPos = new Vector2(0.0f, 0.0f);
+        cubeDest.isValid = false;
+        cubeDest.isVisible = false;
+        cubeDest.pitch_d = 0.0f;
+        cubeDest.roll_d = 0.0f;
+        cubeDest.yaw_d = 0.0f;
+      }
+      else {
+        cubeDest.pos = EnginePosToCodeLabPos(cubeSrc.WorldPosition);
+        cubeDest.camPos = cubeSrc.VizRect.center;
+        cubeDest.isValid = true;
+        const int kMaxVisionFramesSinceSeeingCube = 30;
+        cubeDest.isVisible = (cubeSrc.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingCube);
+        // All cube angles are in 0..360 range so must be re-mapped to match robot angle range
+        cubeDest.pitch_d = Convert360AngleToMinus180To180(cubeSrc.PitchDegrees);
+        cubeDest.roll_d = Convert360AngleToMinus180To180(cubeSrc.RollDegrees);
+        cubeDest.yaw_d = -Convert360AngleToMinus180To180(cubeSrc.YawDegrees); // Yaw is inverted as we switched to clockwise rotations for Code Lab
+      }
+
+      cubeDest.wasJustTapped = (cubeDest.framesSinceTapped < kMaxFramesToReportCubeTap);
+    }
+
     private void SendWorldStateToWebView() {
       // Send entire current world state over to JS in Web View
 
@@ -553,8 +570,8 @@ namespace CodeLab {
       if ((robot != null) && (_WebViewObjectComponent != null)) {
         // Set Cozmo data
 
-        _LatestCozmoState.pos = robot.WorldPosition;
-        _LatestCozmoState.poseYaw_d = ConvertEngineYawToCodeLabYaw(robot.PoseAngle * Mathf.Rad2Deg);
+        _LatestCozmoState.pos = EnginePosToCodeLabPos(robot.WorldPosition);
+        _LatestCozmoState.poseYaw_d = -robot.PoseAngle * Mathf.Rad2Deg; // Yaw is inverted as we switched to clockwise rotations for Code Lab
         _LatestCozmoState.posePitch_d = robot.PitchAngle * Mathf.Rad2Deg;
         _LatestCozmoState.poseRoll_d = robot.RollAngle * Mathf.Rad2Deg;
         _LatestCozmoState.liftHeightPercentage = robot.LiftHeightFactor * 100.0f;
@@ -581,7 +598,7 @@ namespace CodeLab {
         Face face = InProgressScratchBlock.GetMostRecentlySeenFace();
         const int kMaxVisionFramesSinceSeeingFace = 30;
         if (face != null) {
-          _LatestCozmoState.face.pos = face.WorldPosition;
+          _LatestCozmoState.face.pos = EnginePosToCodeLabPos(face.WorldPosition);
           _LatestCozmoState.face.camPos = face.VizRect.center;
           _LatestCozmoState.face.name = face.Name;
           _LatestCozmoState.face.isVisible = (face.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingFace);
@@ -595,10 +612,24 @@ namespace CodeLab {
           _LatestCozmoState.face.expression = "";
         }
 
-        // Set Device data
-        _LatestCozmoState.device.pitch_d = Input.gyro.attitude.eulerAngles.y;
-        _LatestCozmoState.device.roll_d = Input.gyro.attitude.eulerAngles.x;
-        _LatestCozmoState.device.yaw_d = Input.gyro.attitude.eulerAngles.z;
+        // Set Device data - instead of using the Euler angles, calculate the rotation around each axis only
+        // Code is based on answer at http://answers.unity3d.com/questions/434096/lock-rotation-of-gyroscope-controlled-camera-to-fo.html
+
+        // Transform gyro quaternion to desired space
+        Quaternion deviceRotation = new Quaternion(0.5f, 0.5f, -0.5f, 0.5f) * Input.gyro.attitude * new Quaternion(0, 0, 1, 0);
+
+        // Extract just the components that are rotations around each axis
+        Quaternion upOnly = Quaternion.Inverse(Quaternion.FromToRotation(Vector3.up, deviceRotation * Vector3.up));
+        Quaternion rightOnly = Quaternion.Inverse(Quaternion.FromToRotation(Vector3.right, deviceRotation * Vector3.right));
+        Quaternion forwardOnly = Quaternion.Inverse(Quaternion.FromToRotation(Vector3.forward, deviceRotation * Vector3.forward));
+        Vector3 upOnlyEuler = (upOnly * deviceRotation).eulerAngles;
+        Vector3 rightOnlyEuler = (rightOnly * deviceRotation).eulerAngles;
+        Vector3 forwardOnlyEuler = (forwardOnly * deviceRotation).eulerAngles;
+
+        // Then remap the relevant component from each Euler angle to the range we use for other rotations
+        _LatestCozmoState.device.pitch_d = Convert360AngleToMinus180To180(rightOnlyEuler.x);
+        _LatestCozmoState.device.roll_d = Convert360AngleToMinus180To180(360.0f - forwardOnlyEuler.z); // invert to match the Robot's roll direction
+        _LatestCozmoState.device.yaw_d = Convert360AngleToMinus180To180(upOnlyEuler.y);
 
         // Serialize _LatestCozmoState to JSON and send to Web / Javascript side
         string cozmoStateAsJSON = JsonConvert.SerializeObject(_LatestCozmoState);
@@ -1538,7 +1569,7 @@ namespace CodeLab {
       }
       else if (scratchRequest.command == "cozVertPathOffset") {
         float offsetX = ClampDistanceInput(scratchRequest.argFloat);
-        float offsetY = ClampDistanceInput(scratchRequest.argFloat2);
+        float offsetY = -ClampDistanceInput(scratchRequest.argFloat2); // inverted as we flip the y axis
         float offsetAngle = ClampAngleInput(scratchRequest.argFloat3) * Mathf.Deg2Rad;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(offsetX.ToString() + " , " + offsetY.ToString() + " , " + offsetAngle.ToString()));
         // Offset is in current robot space, so rotate
@@ -1558,7 +1589,7 @@ namespace CodeLab {
       }
       else if (scratchRequest.command == "cozVertPathTo") {
         float newX = ClampDistanceInput(scratchRequest.argFloat);
-        float newY = ClampDistanceInput(scratchRequest.argFloat2);
+        float newY = -ClampDistanceInput(scratchRequest.argFloat2); // inverted as we flip the y axis
         float newAngle = -ClampAngleInput(scratchRequest.argFloat3) * Mathf.Deg2Rad; // Angle / Yaw is inverted for CodeLab (so that positive angle turns right)
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(newX.ToString() + " , " + newY.ToString() + " , " + newAngle.ToString()));
         bool level = false;
