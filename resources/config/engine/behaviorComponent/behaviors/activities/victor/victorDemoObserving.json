@@ -1,0 +1,12 @@
+{
+  "behaviorID" : "VictorDemoObserving",
+  "behaviorClass" : "DispatchStrictPriority",
+
+  "interruptActiveBehavior": false,
+
+  "behaviors": [
+    "Needs_SevereLowEnergyRequest",
+    "Needs_MildLowEnergyRequest",
+    "NothingToDo_Idle"
+  ]
+}

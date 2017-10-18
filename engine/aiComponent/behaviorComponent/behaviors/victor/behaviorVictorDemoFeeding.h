@@ -40,7 +40,6 @@ protected:
 
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  virtual void UpdateInternal_WhileActivatable(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
 
@@ -49,7 +48,6 @@ private:
   void TransitionToVerifyFood(BehaviorExternalInterface& behaviorExternalInterface);
   void TransitionToEating(BehaviorExternalInterface& behaviorExternalInterface);
 
-  ObjectID _foodCubeID;
   std::shared_ptr<BehaviorFeedingEat> _eatFoodBehavior;
 };
 

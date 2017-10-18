@@ -112,6 +112,7 @@ enum uint_8 BehaviorClass {
   DispatchStrictPriority,
 
   // Victor / demo behavior
+  VictorObservingDemo,
   VictorDemoFeeding
 }
 
@@ -341,8 +342,14 @@ enum uint_8 BehaviorID {
 
   VictorFreeplay,
 
+  VictorObservingDemo,
   VictorDemoFeedingState,
   VictorDemoFeeding,
+  VictorDemoObservingState,
+  VictorDemoObserving,
+  VictorDemoObservingOnChargerState,
+  VictorDemoObservingOnCharger,
+  Needs_SevereLowEnergyRequest,
 
   Wait,
   Wait_TestInjectable // BehaviorID used by tests to create fake behaviors

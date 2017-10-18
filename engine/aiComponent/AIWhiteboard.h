@@ -233,6 +233,15 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void SetCurrentGameRequestUIRequest(bool isUIRequest){_isGameRequestUIRequest = isUIRequest;}
   bool IsCurrentGameRequestUIRequest(){ return _isGameRequestUIRequest;}
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Victor observing demo state (may eventually become part of victor freeplay)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // feeding state
+  bool Victor_HasCubeToEat() const { return _victor_cubeToEat.IsSet(); }
+  const ObjectID& Victor_GetCubeToEat() const { return _victor_cubeToEat; }
+
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -272,6 +281,9 @@ private:
   void UpdatePossibleObjectRender();
   // update render of beacons
   void UpdateBeaconRender();
+
+  // update things for the victor observing demo
+  void Victor_Update();
 
 
   
@@ -332,6 +344,8 @@ private:
   bool _hasHiccups;
 
   bool _isGameRequestUIRequest;
+
+  ObjectID _victor_cubeToEat;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

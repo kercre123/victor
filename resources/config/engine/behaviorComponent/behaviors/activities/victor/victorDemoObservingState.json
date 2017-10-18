@@ -1,10 +1,12 @@
 {
-  "behaviorID" : "VictorDemoFeedingState",
+  "behaviorID" : "VictorDemoObservingState",
   "behaviorClass" : "DispatchStrictPriority",
+
   "interruptActiveBehavior": true,
-  "behaviors" : [
+
+  "behaviors": [
     "DriveOffCharger",
-    "VictorDemoFeeding",
-    "NothingToDo_Idle"
+    "VictorDemoObserving"
   ]
 }
+
