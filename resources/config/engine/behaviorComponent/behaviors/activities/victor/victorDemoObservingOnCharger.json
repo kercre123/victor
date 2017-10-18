@@ -5,6 +5,6 @@
   "interruptActiveBehavior": false,
 
   "behaviors": [
-    "NothingToDo_Idle"
+    "ObservingOnChargerIdle"
   ]
 }

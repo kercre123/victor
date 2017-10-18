@@ -89,6 +89,13 @@ private:
   std::shared_ptr<BehaviorFeedingEat> _behavior = nullptr;
 };
 
+class TrueCondition : public ICondition
+{
+public:
+  virtual bool Evaluate(BehaviorExternalInterface& behaviorExternalInterface) override { return true; }
+};
+  
+
 ////////////////////////////////////////////////////////////////////////////////
 
 BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& config)
@@ -111,7 +118,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
         auto& needsManager = behaviorExternalInterface.GetNeedsManager();
         NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
 
-        if( currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Warning) ||
+        if( // currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Warning) ||
             currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical) ) {
           return true;
         }
@@ -150,6 +157,8 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
       _feedingCompleteCondition.reset( new FeedingListenerCondition( eatingBehavior ) );
     }
   }
+
+  auto CondTrue = std::make_shared<TrueCondition>();
   
   ////////////////////////////////////////////////////////////////////////////////
   // Define states
@@ -162,10 +171,19 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingOnChargerState");
 
     State observingOnCharger(StateID::ObservingOnCharger, behavior);
-    observingOnCharger.AddNonInterruptingTransition(StateID::Observing, CondIsHungry);
+    observingOnCharger.AddNonInterruptingTransition(StateID::DriveOffChargerIntoObserving, CondIsHungry);
     observingOnCharger.AddInterruptingTransition(StateID::Observing, CondOffCharger);
     observingOnCharger.AddInterruptingTransition(StateID::Feeding, CondCanEat);
     AddState(std::move(observingOnCharger));
+  }
+
+  {
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::DriveOffCharger);
+    DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingDriveOffCharger");
+
+    State driveOffCharger(StateID::DriveOffChargerIntoObserving, behavior);
+    driveOffCharger.AddExitTransition(StateID::Observing, CondTrue);
+    AddState(std::move(driveOffCharger));
   }
 
   {
@@ -173,9 +191,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingState");
 
     State observing(StateID::Observing, behavior);
-    // observing.AddInterruptingTransition(StateID::ObservingOnCharger, CondOnCharger);
-    //  // TODO:(bn) need to differentiate between "placed on charger" and "on charger" coming from the other state
-    // OR: add a transition state that takes us off the charger
+    observing.AddInterruptingTransition(StateID::ObservingOnCharger, CondOnCharger);
     observing.AddInterruptingTransition(StateID::Feeding, CondCanEat);
     AddState(std::move(observing));
   }
@@ -246,9 +262,9 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
   // first check the interrupting conditions
   for( const auto& transitionPair : state._interruptingTransitions ) {
     const auto stateID = transitionPair.first;
-    const auto& IConditionPtr = transitionPair.second;
+    const auto& iConditionPtr = transitionPair.second;
 
-    if( IConditionPtr->Evaluate(behaviorExternalInterface) ) {
+    if( iConditionPtr->Evaluate(behaviorExternalInterface) ) {
       TransitionToState(behaviorExternalInterface, stateID);
       return Status::Running;
     }
@@ -276,11 +292,24 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
   if( okToDispatch ) {
     for( const auto& transitionPair : state._nonInterruptingTransitions ) {
       const auto stateID = transitionPair.first;
-      const auto& IConditionPtr = transitionPair.second;
+      const auto& iConditionPtr = transitionPair.second;
       
-      if( IConditionPtr->Evaluate(behaviorExternalInterface) ) {
+      if( iConditionPtr->Evaluate(behaviorExternalInterface) ) {
         TransitionToState(behaviorExternalInterface, stateID);
         return Status::Running;
+      }
+    }
+
+    if( ! IsControlDelegated() ) {
+      // Now there have been no interrupting or non-interrupting transitions, so check the exit conditions
+      for( const auto& transitionPair : state._exitTransitions ) {
+        const auto stateID = transitionPair.first;
+        const auto& iConditionPtr = transitionPair.second;
+      
+        if( iConditionPtr->Evaluate(behaviorExternalInterface) ) {
+          TransitionToState(behaviorExternalInterface, stateID);
+          return Status::Running;
+        }
       }
     }
 
@@ -351,27 +380,40 @@ void BehaviorVictorObservingDemo::State::AddNonInterruptingTransition(StateID to
   _nonInterruptingTransitions.emplace_back(toState, condition);
 }
 
+void BehaviorVictorObservingDemo::State::AddExitTransition(StateID toState, std::shared_ptr<ICondition> condition)
+{
+  _exitTransitions.emplace_back(toState, condition);
+}
+
 void BehaviorVictorObservingDemo::State::OnActivated()
 {
   for( const auto& transitionPair : _interruptingTransitions ) {
-    const auto& IConditionPtr = transitionPair.second;
-    IConditionPtr->EnteredScope();
+    const auto& iConditionPtr = transitionPair.second;
+    iConditionPtr->EnteredScope();
   }
   for( const auto& transitionPair : _nonInterruptingTransitions ) {
-    const auto& IConditionPtr = transitionPair.second;
-    IConditionPtr->EnteredScope();
+    const auto& iConditionPtr = transitionPair.second;
+    iConditionPtr->EnteredScope();
+  }
+  for( const auto& transitionPair : _exitTransitions ) {
+    const auto& iConditionPtr = transitionPair.second;
+    iConditionPtr->EnteredScope();
   }
 }
 
 void BehaviorVictorObservingDemo::State::OnDeactivated()
 {
   for( const auto& transitionPair : _interruptingTransitions ) {
-    const auto& IConditionPtr = transitionPair.second;
-    IConditionPtr->LeftScope();
+    const auto& iConditionPtr = transitionPair.second;
+    iConditionPtr->LeftScope();
   }
   for( const auto& transitionPair : _nonInterruptingTransitions ) {
-    const auto& IConditionPtr = transitionPair.second;
-    IConditionPtr->LeftScope();
+    const auto& iConditionPtr = transitionPair.second;
+    iConditionPtr->LeftScope();
+  }
+  for( const auto& transitionPair : _exitTransitions ) {
+    const auto& iConditionPtr = transitionPair.second;
+    iConditionPtr->LeftScope();
   }
 }
 

@@ -62,6 +62,8 @@ public:
     return true; }
   
   virtual bool CarryingObjectHandledInternally() const override {return false;}
+  virtual bool ShouldRunWhileOnCharger() const override { return true; }
+  virtual bool ShouldRunWhileOffTreads() const override { return true;}
 
 protected:
 
@@ -77,6 +79,7 @@ private:
 
   enum class StateID {
     ObservingOnCharger,
+    DriveOffChargerIntoObserving,
     Observing,
     Feeding,
 
@@ -86,8 +89,10 @@ private:
   class State {
   public:
     State(StateID id, ICozmoBehaviorPtr behavior);
+
     void AddInterruptingTransition(StateID toState, std::shared_ptr<ICondition> condition );
     void AddNonInterruptingTransition(StateID toState, std::shared_ptr<ICondition> condition );
+    void AddExitTransition(StateID toState, std::shared_ptr<ICondition> condition);
 
     void OnActivated();
     void OnDeactivated();
@@ -103,9 +108,13 @@ private:
     // transitions that can happen while the state is active (and in the middle of doing something)
     Transitions _interruptingTransitions;
 
-    // transitions that can happen after the state is complete (cancels itself). If none of these validate,
-    // the state will start it's behavior again
+    // transitions that can happen when the currently delegated-to behavior thinks it's a decent time for a
+    // gentle interruption (or if there is no currently delegated behavior)
     Transitions _nonInterruptingTransitions;
+
+    // exit transitions only run if the currently-delegated-to behavior stop itself. Note that these are
+    // checked _after_ all of the other transitions
+    Transitions _exitTransitions;
   };
 
   void AddState( State&& state );

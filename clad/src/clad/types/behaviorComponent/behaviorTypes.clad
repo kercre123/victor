@@ -350,6 +350,7 @@ enum uint_8 BehaviorID {
   VictorDemoObservingOnChargerState,
   VictorDemoObservingOnCharger,
   Needs_SevereLowEnergyRequest,
+  ObservingOnChargerIdle,
 
   Wait,
   Wait_TestInjectable // BehaviorID used by tests to create fake behaviors
