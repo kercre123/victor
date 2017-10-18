@@ -35,6 +35,8 @@ public:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   virtual void AddListener(ISubtaskListener* listener) override;
+
+  virtual bool ShouldRunWhileOnCharger() const override { return _supportCharger; }
   
   // Begin playing the animations
   void StartPlayingAnimations(BehaviorExternalInterface& behaviorExternalInterface);
@@ -62,6 +64,13 @@ private:
   
   // We call our listeners whenever an animation completes
   void CallToListeners(BehaviorExternalInterface& behaviorExternalInterface);
+
+  // internal helper to properly handle locking extra tracks if needed
+  u8 GetTracksToLock(BehaviorExternalInterface& behaviorExternalInterface) const; 
+
+  // defaults to false, but if set true, this will allow the behavior to work while the robot is sitting on
+  // the charger. It will lock out the body track to avoid coming off the charger (if we're on one)
+  bool _supportCharger = false;
   
   std::set<ISubtaskListener*> _listeners;
 };
