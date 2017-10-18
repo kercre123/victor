@@ -512,6 +512,7 @@ public class OnboardingManager : MonoBehaviour {
   private void HandleRobotDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
     // The UI is getting torn down and we're resetting, clear whatever happened.
     if (_CurrPhase != OnboardingPhases.None && _CurrStageInst != null) {
+      _CurrStageInst.GetComponent<OnboardingBaseStage>().StageForceClosed = true;
       GameObject.Destroy(_CurrStageInst);
     }
     if (_CurrPhase != OnboardingPhases.None) {
