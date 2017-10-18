@@ -408,6 +408,10 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 
       if (_audioReferences.size() > 0) {
 
+        if (nullptr == rng) {
+          rng = &GetRNG();
+        }
+
         // If we are NOT using the probabilities for each audio event, then randomly select one.
         if (!useProbability) {
           if (_audioReferences.size() == 1) {
