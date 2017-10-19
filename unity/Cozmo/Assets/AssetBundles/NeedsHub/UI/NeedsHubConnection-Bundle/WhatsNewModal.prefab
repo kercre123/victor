@@ -531,6 +531,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _MaskImage: {fileID: 114056626251451068}
+  _GlintRateModifier: 8
+  _GlintSpeedModifier: 5
 --- !u!114 &114159073958832402
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -803,8 +805,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4286151033
+  m_fontColor: {r: 0.4745098, g: 0.4745098, b: 0.4745098, a: 1}
   m_enableVertexGradient: 0
   m_fontColorGradient:
     topLeft: {r: 1, g: 1, b: 1, a: 1}
@@ -1213,6 +1215,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _MaskImage: {fileID: 114669662285492282}
+  _GlintRateModifier: 8
+  _GlintSpeedModifier: 5
 --- !u!114 &114434624917431742
 MonoBehaviour:
   m_ObjectHideFlags: 1
