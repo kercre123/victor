@@ -178,7 +178,7 @@
         window.Unity.call({requestId: -1, command: "cozmoSaveUserProject", argString: json, argUUID: window.cozmoProjectUUID});
     }
 
-    window.exportCozmoProject = function() {
+    window.onCozmoProjectExportConfirmation = function() {
         var promiseSaveProject = window.promiseWaitForSaveProject();
 
         var projectType = "user";
@@ -190,6 +190,39 @@
         promiseSaveProject.then(function(result) {
             window.Unity.call({requestId: -1, command: "cozmoExportProject", argUUID: window.cozmoProjectUUID, argString: projectType});
         });
+    }
+
+    window.exportCozmoProject = function() {
+
+        var title = window.$t('codeLab.export_modal.title');
+        var body = window.$t('codeLab.export_modal.body');
+        var cancelText = window.$t('codeLab.export_modal.button.get_drive');
+        var confirmText = window.$t('codeLab.export_modal.button.copy_to_drive');
+
+        if (goog.labs.userAgent.platform.isIos()) {
+            ModalConfirm.open({
+                title: title,
+                prompt: body,
+                cancelButtonLabel: cancelText,
+                confirmButtonLabel: confirmText,
+                confirmCallback: function(ok) {
+                  if (ok) {
+                    window.onCozmoProjectExportConfirmation();
+                  } else {
+                    window.Unity.call({requestId: -1, command: "cozmoDownloadGoogleDrive", argUUID: window.cozmoProjectUUID});
+                  }
+                }
+            });
+        } else {
+            ModalAlert.open({
+                title: title,
+                prompt: body,
+                confirmButtonLabel: confirmText,
+                confirmCallback: function() {
+                    window.onCozmoProjectExportConfirmation();
+                }
+            });
+        }
     }
 
     window.openCozmoProjectJSON = function (cozmoProjectJSON) {

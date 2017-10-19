@@ -1445,5 +1445,18 @@
   },
   "codeLabGlossary.block_definitions.description.cozmo_sound_stop": {
     "translation": "Stop the [sound name] sound. Tip: To turn off Code Lab's default background music, stop \"background\" sound."
+  },
+
+  "codeLab.export_modal.title": {
+    "translation": "Export Project"
+  },
+  "codeLab.export_modal.body": {
+    "translation": "Submit your project to be Featured!\n\nCopy it to Google Drive, then visit go.anki.com/submission to submit!"
+  },
+  "codeLab.export_modal.button.get_drive": {
+    "translation": "Get Google Drive"
+  },
+  "codeLab.export_modal.button.copy_to_drive": {
+    "translation": "Copy to Google Drive"
   }
 }

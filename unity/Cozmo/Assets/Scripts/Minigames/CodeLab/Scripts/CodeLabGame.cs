@@ -1273,6 +1273,10 @@ namespace CodeLab {
       }
     }
 
+    private void OnCozmoDownloadGoogleDrive() {
+      Application.OpenURL("itms://itunes.apple.com/us/app/google-drive/id507874739?mt=8");
+    }
+
     private bool HandleNonBlockScratchRequest(ScratchRequest scratchRequest) {
       // Handle any Scratch requests that don't need an InProgressScratchBlock initializing
       switch (scratchRequest.command) {
@@ -1359,6 +1363,9 @@ namespace CodeLab {
         return true;
       case "cozmoSwitchProjectTab":
         OnCozmoSwitchProjectTab(scratchRequest);
+        return true;
+      case "cozmoDownloadGoogleDrive":
+        OnCozmoDownloadGoogleDrive();
         return true;
       case "cozmoWorkspaceLoaded":
         DAS.Info("CodeLab.WorkspaceLoaded", "");
