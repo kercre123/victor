@@ -71,7 +71,7 @@ static const uint16_t BYTE_TIMER_PERIOD = 14; // 8 bits, 1 start / stop + 3 bits
 static const int MAX_MISSED_FRAMES = 200; // 1 second of missed frames
 static const int MAX_FIFO_SLOTS = 4;
 static const int MAX_INBOUND_SIZE = 0x100;  // Must be a power of two, and at least twice as big as InboundPacket
-static const int EXTRA_MESSAGE_DATA = sizeof(SpineMessageHeader) + sizeof(SpineMessageFooter);
+static const int BASE_MESSAGE_DATA = sizeof(SpineMessageHeader) + sizeof(SpineMessageFooter);
 
 static TransmitFifo txFifo[MAX_FIFO_SLOTS];
 static int txFifo_read = 0;
@@ -295,53 +295,69 @@ static void ProcessMessage(InboundPacket& packet) {
   }
 }
 
-extern "C" void DMA1_Channel4_5_IRQHandler(void) {
-  // Find number of words transfered
-  static int previousIndex = 0;
-  static int receivedWords = 0;
-  static CommsState state = COMM_STATE_SYNC;
+/**
+ ** Circular buffer handler
+ **/
 
+static InboundPacket inboundPacket;
+static int receivedWords = 0;
+
+static bool drawData(int length) {
   int currentIndex = MAX_INBOUND_SIZE - DMA1_Channel5->CNDTR;
+  static int previousIndex = 0;
 
-  static InboundPacket packet;
-  static int packetLength;
+  // We will disregard existing buffered bytes
+  length -= receivedWords;
 
-  while (currentIndex != previousIndex) {
-    int copy;
+  // Wrap around copy
+  if (currentIndex < previousIndex) {
+    int copy = MAX_INBOUND_SIZE - previousIndex;
+    if (copy > length) copy = length;
 
-    if (currentIndex < previousIndex) {
-      // Copy wrap around
-      copy = MAX_INBOUND_SIZE - previousIndex;
-    } else {
-      // Up to cursor copy
-      copy = currentIndex - previousIndex;
-    }
-
-    // Clamp to buffer length
-    if (copy > sizeof(InboundPacket) - receivedWords) {
-      copy = sizeof(InboundPacket) - receivedWords;
-    }
-
-    // Shift in the data from the circular buffer
     if (copy > 0) {
-      memcpy(&packet.raw[receivedWords], &inbound_raw[previousIndex], copy);
+      memcpy(&inboundPacket.raw[receivedWords], &inbound_raw[previousIndex], copy);
       receivedWords += copy;
       previousIndex = (previousIndex + copy) & (MAX_INBOUND_SIZE - 1);
+      length -= copy;
     }
+  }
 
+  // Forward copy
+  if (length > 0) {
+    int copy = currentIndex - previousIndex;
+
+    if (copy > length) copy = length;
+
+    if (copy > 0) {
+      memcpy(&inboundPacket.raw[receivedWords], &inbound_raw[previousIndex], copy);
+      receivedWords += copy;
+      previousIndex = (previousIndex + copy) & (MAX_INBOUND_SIZE - 1);
+      length -= copy;
+    }
+  }
+
+  return length > 0;
+}
+
+extern "C" void DMA1_Channel4_5_IRQHandler(void) {
+  static CommsState state = COMM_STATE_SYNC;
+
+  DMA1->IFCR = DMA_IFCR_CGIF5;
+
+  while (true) {
     // Sync to packet header
     switch (state) {
       case COMM_STATE_SYNC:
         int offset;
 
         // We don't have enough data to test the header
-        if (receivedWords < sizeof(uint32_t)) {
-          continue ;
+        if (drawData(BASE_MESSAGE_DATA)) {
+          return ;
         }
 
         // Locate our sync header
         for (offset = 0; offset <= receivedWords - sizeof(uint32_t); offset++) {
-          __packed uint32_t* sync_word = (__packed uint32_t*) &packet.raw[offset];
+          __packed uint32_t* sync_word = (__packed uint32_t*) &inboundPacket.raw[offset];
 
           if (*sync_word == SYNC_HEAD_TO_BODY) {
             state = COMM_STATE_VALIDATE;
@@ -351,45 +367,40 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
 
         // Trim off the erranious words
         if (offset) {
-          memcpy(&packet.raw[0], &packet.raw[offset], receivedWords - offset);
+          memcpy(&inboundPacket.raw[0], &inboundPacket.raw[offset], receivedWords - offset);
           receivedWords -= offset;
+          continue ;
         }
 
       case COMM_STATE_VALIDATE:
         // We don't have enough data to test the header
-        if (receivedWords < sizeof(SpineMessageHeader)) {
-          continue ;
+        if (drawData(BASE_MESSAGE_DATA)) {
+          return ;
         }
 
         // Verify that the message is of the expected type
         // Discard everything if the data is bunk (can cause additional packet loss)
-        if (packet.header.bytes_to_follow != sizeOfInboundPayload(packet.header.payload_type)) {
+        if (inboundPacket.header.bytes_to_follow != sizeOfInboundPayload(inboundPacket.header.payload_type)) {
           state = COMM_STATE_SYNC;
           receivedWords = 0;
-          continue ;
+          return ;
         }
 
         // Header was valid, start receiving the payload
         state = COMM_STATE_PAYLOAD;
-        packetLength = packet.header.bytes_to_follow + EXTRA_MESSAGE_DATA;
 
       case COMM_STATE_PAYLOAD:
         // Have not received data
-        if (receivedWords < packetLength) {
-          continue ;
+        if (drawData(inboundPacket.header.bytes_to_follow + BASE_MESSAGE_DATA)) {
+          return ;
         }
 
         // Process the message
-        ProcessMessage(packet);
+        ProcessMessage(inboundPacket);
 
         // Clear out our payload
-        memcpy(&packet.raw[0], &packet.raw[packetLength], receivedWords - packetLength);
-        receivedWords -= packetLength;
+        receivedWords = 0;
         state = COMM_STATE_SYNC;
-        continue ;
     }
   }
-
-  // Clear any pending interrupts
-  DMA1->IFCR = DMA_IFCR_CGIF5;
 }
