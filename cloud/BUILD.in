@@ -1,0 +1,8 @@
+cxx_project(
+    name = 'voicetest',
+    srcs = cxx_src_glob(['voicetest'],
+                        excludes = []),
+    platform_srcs = [],
+    headers = cxx_header_glob(['voicetest']),
+    platform_headers = []
+)

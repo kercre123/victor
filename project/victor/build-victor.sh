@@ -224,6 +224,7 @@ if [ $CONFIGURE -eq 1 ]; then
         androidHAL/BUILD.in \
         animProcess/BUILD.in \
         clad/BUILD.in \
+        cloud/BUILD.in \
         coretech/common/BUILD.in \
         coretech/common/clad/BUILD.in \
         coretech/vision/BUILD.in \

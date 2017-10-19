@@ -94,6 +94,7 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 import(coretech "coretech")
 add_subdirectory("clad")
+add_subdirectory("cloud")
 add_subdirectory("androidHAL")
 add_subdirectory("animProcess")
 target_include_directories(victor_anim PRIVATE
