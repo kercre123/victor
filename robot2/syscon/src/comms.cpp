@@ -19,7 +19,6 @@
 
 enum CommsState {
   COMM_STATE_SYNC,
-  COMM_STATE_VALIDATE,
   COMM_STATE_PAYLOAD
 };
 
@@ -231,21 +230,6 @@ void Comms::tick(void) {
   NVIC_SetPendingIRQ(DMA1_Channel4_5_IRQn);
 }
 
-static int sizeOfInboundPayload(PayloadId id) {
-  switch (id) {
-    case PAYLOAD_MODE_CHANGE:
-    case PAYLOAD_ERASE:
-    case PAYLOAD_VERSION:
-      return 0;
-    case PAYLOAD_DATA_FRAME:
-      return sizeof(HeadToBody);
-    case PAYLOAD_CONT_DATA:
-      return sizeof(ContactData);
-    default:
-      return -1;
-  }
-}
-
 void Comms::sendVersion(void) {
   VersionInfo ver;
 
@@ -292,6 +276,21 @@ static void ProcessMessage(InboundPacket& packet) {
   } else {
     static const AckMessage ack = { NACK_CRC_FAILED };
     enqueue(PAYLOAD_ACK, &ack, sizeof(ack));
+  }
+}
+
+static int sizeOfInboundPayload(PayloadId id) {
+  switch (id) {
+    case PAYLOAD_MODE_CHANGE:
+    case PAYLOAD_ERASE:
+    case PAYLOAD_VERSION:
+      return 0;
+    case PAYLOAD_DATA_FRAME:
+      return sizeof(HeadToBody);
+    case PAYLOAD_CONT_DATA:
+      return sizeof(ContactData);
+    default:
+      return -1;
   }
 }
 
@@ -348,19 +347,17 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
     // Sync to packet header
     switch (state) {
       case COMM_STATE_SYNC:
-        int offset;
-
         // We don't have enough data to test the header
         if (drawData(BASE_MESSAGE_DATA)) {
           return ;
         }
 
         // Locate our sync header
+        int offset;
         for (offset = 0; offset <= receivedWords - sizeof(uint32_t); offset++) {
           __packed uint32_t* sync_word = (__packed uint32_t*) &inboundPacket.raw[offset];
 
           if (*sync_word == SYNC_HEAD_TO_BODY) {
-            state = COMM_STATE_VALIDATE;
             break ;
           }
         }
@@ -372,18 +369,11 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
           continue ;
         }
 
-      case COMM_STATE_VALIDATE:
-        // We don't have enough data to test the header
-        if (drawData(BASE_MESSAGE_DATA)) {
-          return ;
-        }
-
         // Verify that the message is of the expected type
         // Discard everything if the data is bunk (can cause additional packet loss)
         if (inboundPacket.header.bytes_to_follow != sizeOfInboundPayload(inboundPacket.header.payload_type)) {
-          state = COMM_STATE_SYNC;
           receivedWords = 0;
-          return ;
+          continue ;
         }
 
         // Header was valid, start receiving the payload
