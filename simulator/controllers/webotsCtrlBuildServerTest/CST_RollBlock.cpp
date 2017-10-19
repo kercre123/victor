@@ -47,12 +47,11 @@ namespace Anki {
       switch (_testState) {
         case TestState::Init:
         {
-          MakeSynchronous();
           StartMovieConditional("RollBlock");
           // TakeScreenshotsAtInterval("RollBlock", 1.f);
           
           SendMoveHeadToAngle(0, 100, 100);
-          _testState = TestState::RollObject;
+          SET_TEST_STATE(RollObject);
           break;
         }
         case TestState::RollObject:
@@ -75,7 +74,7 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            _testState = TestState::TestDone;
+            SET_TEST_STATE(TestDone);
           }
           break;
         }

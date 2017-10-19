@@ -48,14 +48,13 @@ namespace Anki {
       switch (_testState) {
         case TestState::Init:
         {
-          MakeSynchronous();
           SetActualRobotPose(Pose3d(0, Z_AXIS_3D(), {0, -100, 0}));
           StartMovieConditional("VariableHeightHigh");
           //TakeScreenshotsAtInterval("VariableHeightHigh", 1.f);
           
           
           SendMoveHeadToAngle(DEG_TO_RAD(10.f), 100, 100);
-          _testState = TestState::PickupHigh;
+          SET_TEST_STATE(PickupHigh);
           break;
         }
         case TestState::PickupHigh:
@@ -77,7 +76,7 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            _testState = TestState::TestDone;
+            SET_TEST_STATE(TestDone);
           }
           break;
         }

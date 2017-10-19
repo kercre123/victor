@@ -63,12 +63,11 @@ namespace Anki {
       switch (_testState) {
         case TestState::Init:
         {
-          MakeSynchronous();
           StartMovieConditional("StackBlocks");
           //TakeScreenshotsAtInterval("StackBlocks", 1.f);
           
           SendMoveHeadToAngle(0, 100, 100);
-          _testState = TestState::PickupObject;
+          SET_TEST_STATE(PickupObject);
           break;
         }
         case TestState::PickupObject:
@@ -90,7 +89,7 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            _testState = TestState::Stack;
+            SET_TEST_STATE(Stack);
           }
           break;
         }
@@ -122,7 +121,7 @@ namespace Anki {
             message.Set_QueueCompoundAction(m);
             SendMessage(message);
             
-            _testState = TestState::TestDone;
+            SET_TEST_STATE(TestDone);
           }
           break;
         }

@@ -122,7 +122,6 @@ s32 CST_CustomObjects::UpdateSimInternal()
   switch (_testState) {
     case TestState::Init:
     {
-      MakeSynchronous();
       StartMovieConditional("CustomObjects");
       //TakeScreenshotsAtInterval("CustomObjects", 1.f);
       
@@ -175,7 +174,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
       DefineObjects();
       
       SendMoveHeadToAngle(0, 100.f, 100.f);
-      _testState = TestState::LookAtObjects;
+      SET_TEST_STATE(LookAtObjects);
       break;
     }
       
@@ -211,7 +210,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
                                                             kPosition,
                                                             kActions)));
         
-        _testState = TestState::TurnAndLookDown;
+        SET_TEST_STATE(TurnAndLookDown);
       }
       break;
     }
@@ -227,7 +226,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
       {
         SetNodePose(_wall, _wallPose2);
         SendMoveHeadToAngle(0, 100.f, 100.f);
-        _testState = TestState::LookBackUp;
+        SET_TEST_STATE(LookBackUp);
       }
       break;
     }
@@ -247,7 +246,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
         // is anymore)
         SetActualRobotPose(kKidnappedRobotPose);
         
-        _testState = TestState::NotifyKidnap;
+        SET_TEST_STATE(NotifyKidnap);
       }
       break;
     }
@@ -258,7 +257,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
       // Sending the delocalize message one tic after actually moving the robot to be sure that no images
       // from the previous pose are processed after the delocalization.
       SendForceDeloc();
-      _testState = TestState::Kidnap;
+      SET_TEST_STATE(Kidnap);
       break;
     }
       
@@ -272,7 +271,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
         // Turn to look at side-by-side custom cubes
         SendTurnInPlace(-1.26f);
         
-        _testState = TestState::SeeCubeInNewOrigin;
+        SET_TEST_STATE(SeeCubeInNewOrigin);
       }
       break;
     }
@@ -286,7 +285,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
         // Turn to see light cube to relocalize
         SendTurnInPlace(DEG_TO_RAD(kReLocRotAngle_deg));
         
-        _testState = TestState::Rejigger;
+        SET_TEST_STATE(Rejigger);
       }
       break;
     }
@@ -318,7 +317,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
         // redefine the marker). We may still see a few while the head goes down, but at least they won't spam.
         SendMoveHeadToAngle(MIN_HEAD_ANGLE, 100.f, 100.f);
         
-        _testState = TestState::Redefine;
+        SET_TEST_STATE(Redefine);
       }
       break;
     }
@@ -333,7 +332,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
         using namespace ExternalInterface;
         SendMessage(MessageGameToEngine(UndefineAllCustomMarkerObjects()));
         
-        _testState = TestState::Undefine;
+        SET_TEST_STATE(Undefine);
       }
       break;
     }

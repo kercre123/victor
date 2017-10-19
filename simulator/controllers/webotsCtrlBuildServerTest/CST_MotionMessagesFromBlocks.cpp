@@ -54,10 +54,9 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
   switch(_testState) {
     case TestState::Init:
     {
-      CozmoSimTestController::MakeSynchronous();
       SendEnableBlockTapFilter(false);
 
-      _testState = TestState::TapCube;
+      SET_TEST_STATE(TapCube);
       break;
     }
 
@@ -68,7 +67,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
         _wasStopped = false;
         _wasMoved = false;
         UiGameController::SendApplyForce("cube", 0, 0, 6);
-        _testState = TestState::CheckForTappedMessage;
+        SET_TEST_STATE(CheckForTappedMessage);
       }
       break;
     }
@@ -76,7 +75,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
     case TestState::CheckForTappedMessage:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_wasTapped, 5) {
-        _testState = TestState::CheckForStoppedMessage;
+        SET_TEST_STATE(CheckForStoppedMessage);
       }
       break;
     }
@@ -84,7 +83,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
     case TestState::CheckForStoppedMessage:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_wasStopped, 5) {
-        _testState = TestState::Wait1Sec;
+        SET_TEST_STATE(Wait1Sec);
       }
       break;
     }
@@ -93,7 +92,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
     {
       // To prevent double tap detect (and therefore move suppression) with the next lifting of the cube
       if (HasXSecondsPassedYet(1.0)) {
-        _testState = TestState::MoveCube;
+        SET_TEST_STATE(MoveCube);
       }
       break;
     }
@@ -104,14 +103,14 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
       _wasStopped = false;
       _wasMoved = false;
       UiGameController::SendApplyForce("cube", 6, 0, 0);
-      _testState = TestState::CheckForMovedMessage;
+      SET_TEST_STATE(CheckForMovedMessage);
       break;
     }
 
     case TestState::CheckForMovedMessage:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_wasMoved, 5) {
-        _testState = TestState::CheckForStoppedMessage1;
+        SET_TEST_STATE(CheckForStoppedMessage1);
       }
       break;
     }
@@ -125,7 +124,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
         Pose3d p = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
         p.SetRotation(Radians(DEG_TO_RAD(90.f)), Y_AXIS_3D());
         SetLightCubePose(ObjectType::Block_LIGHTCUBE1, p);
-        _testState = TestState::CheckForUpAxisChangedMessage;
+        SET_TEST_STATE(CheckForUpAxisChangedMessage);
       }
       break;
     }
@@ -137,7 +136,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
         CST_ASSERT(_numObjectAccelMsgs == 0, "We've received ObjectAccel messages, but we shouldn't have yet!");
         
         SendStreamObjectAccel(_objId, true);
-        _testState = TestState::CheckForObjectAccelMessage;
+        SET_TEST_STATE(CheckForObjectAccelMessage);
       }
       break;
     }
@@ -146,7 +145,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
     {
       // Should receive a stream of ObjectAccel messages (~30 per second)
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectAccelMsgs > 100, 10) {
-        _testState = TestState::Exit;
+        SET_TEST_STATE(Exit);
       }
       break;
     }

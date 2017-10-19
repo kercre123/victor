@@ -93,8 +93,6 @@ s32 CST_LEDColor::UpdateSimInternal()
   switch (_testState) {
     case TestState::Init:
     {
-      CozmoSimTestController::MakeSynchronous();
-
       ExternalInterface::EnableLightStates m;
       m.enable = false;
       ExternalInterface::MessageGameToEngine message;
@@ -103,7 +101,7 @@ s32 CST_LEDColor::UpdateSimInternal()
       
       SendMoveHeadToAngle(kHeadLookupAngle_rad, 100, 100);
 
-      _testState = TestState::WaitForHeadUp;
+      SET_TEST_STATE(WaitForHeadUp);
       break;
     }
 
@@ -112,7 +110,7 @@ s32 CST_LEDColor::UpdateSimInternal()
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(5, _id >=0,
                                             NEAR(GetRobotHeadAngle_rad(), kHeadLookupAngle_rad,
                                                  kHeadAngleTolerance_rad)) {
-        _testState = TestState::SetRGB;
+        SET_TEST_STATE(SetRGB);
       }
       break;
     }
@@ -139,7 +137,7 @@ s32 CST_LEDColor::UpdateSimInternal()
                                  kRelativeToY,
                                  kMakeRelative);
 
-      _testState = TestState::VerifyLEDColors;
+      SET_TEST_STATE(VerifyLEDColors);
       break;
     }
 
@@ -177,7 +175,7 @@ s32 CST_LEDColor::UpdateSimInternal()
           kLed3Color[1] == 0,  // green
           kLed3Color[2] == 0)  // blue
       {
-        _testState = TestState::SetLEDAnimation;
+        SET_TEST_STATE(SetLEDAnimation);
       }
       break;
     }
@@ -199,14 +197,14 @@ s32 CST_LEDColor::UpdateSimInternal()
                               kMakeRelative,
                               true);
 
-      _testState = TestState::WaitForMessageToTransmit;
+      SET_TEST_STATE(WaitForMessageToTransmit);
       break;
     }
 
     case TestState::WaitForMessageToTransmit:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(1), 2) {
-        _testState = TestState::VerifyLEDAnimation;
+        SET_TEST_STATE(VerifyLEDAnimation);
       }
       break;
     }
@@ -262,7 +260,7 @@ s32 CST_LEDColor::UpdateSimInternal()
       }
 
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(5, _onFramesMatched, _offFramesMatched) {
-        _testState = TestState::Exit;
+        SET_TEST_STATE(Exit);
       }
     }
       break;
