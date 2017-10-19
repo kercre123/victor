@@ -48,10 +48,16 @@ Shader "UI/Cozmo/AnimatedGlintShader"
 				o.uv = v.uv;	
                 o.color = v.color;        
 
-                // modify the angle of the glint
-                float2 glintParams = o.vertex.xy * float2(1, 0.3);
+                // Modify the angle of the glint
+                float2 glintAngle = o.vertex.xy * float2(1, 0.3);
 
-				o.glintParams = float4(glintParams, (_Time.x * _GlintPeriod - floor(_Time.x * _GlintPeriod)) * _GlintSpeed, 0);
+                // Set up animation time
+                fixed animTime = _Time.x * _GlintPeriod;
+                fixed modAnimTime = animTime - floor(animTime);
+
+				o.glintParams = float4(glintAngle, 				   // xy
+				                       modAnimTime * _GlintSpeed, 	// z
+				                       0);							// not used
 
 				return o;
 			}
@@ -60,15 +66,16 @@ Shader "UI/Cozmo/AnimatedGlintShader"
 
 			fixed4 frag (v2f i) : SV_Target
 			{
-                // sample masking image
-		        fixed4 col = tex2D(_MainTex, i.uv) * i.color;
-        
-                fixed4 glintCol = fixed4(1,1,1,1);
-        
-                glintCol.a = 0.5 - 2 * abs(i.glintParams.x - i.glintParams.z - i.glintParams.y + 1);
+                // Sample masking image
+		        fixed4 maskCol = tex2D(_MainTex, i.uv) * i.color;
 
-				// set alpha to 0 if mask or glint color says so. 
-				glintCol.a = min(col.a, glintCol.a);
+		        // Animate glint color along x-axis
+                fixed4 glintCol = fixed4(1,1,1,1);
+                fixed animTime = i.glintParams.z;
+                glintCol.a = 0.5 - 2 * abs(i.glintParams.x - animTime - i.glintParams.y + 1);
+
+				// Set alpha to the lower of mask or glint
+				glintCol.a = min(maskCol.a, glintCol.a);
 
                 return glintCol;
 			}

@@ -1,5 +1,7 @@
 ﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
+// Grayscales the input texture.
+// Formula from http://answers.unity3d.com/questions/343243/unlit-greyscale-shader.html
 Shader "UI/Cozmo/GrayscaleShader"
 {
 	SubShader
@@ -43,8 +45,10 @@ Shader "UI/Cozmo/GrayscaleShader"
 			fixed4 frag (v2f i) : SV_Target
 			{
 				fixed4 col = tex2D(_MainTex, i.uv);
-				// grayscale, with more weight to green / blue for the way eyes work
+
+				// Grayscale, with more weight to green / blue for the way eyes work
 				col.xyz = dot(col.xyz, float3(0.3, 0.59, 0.11));
+
 				return col;
 			}
 			ENDCG
