@@ -720,7 +720,7 @@ namespace Cozmo {
         _wasAnimationInterruptedWithNothing = false;
       }
       
-      _trackLayerComponent->KeepFaceAlive(_liveAnimParams);
+      // _trackLayerComponent->KeepFaceAlive(_liveAnimParams);
     }
     
     if(_streamingAnimation != nullptr) {

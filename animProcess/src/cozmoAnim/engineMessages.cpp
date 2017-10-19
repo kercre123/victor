@@ -21,6 +21,7 @@
 #include "cozmoAnim/micDataProcessor.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
+#include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -40,6 +41,9 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "util/logging/logging.h"
+
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
 
 #include <string.h>
 #include <stdio.h>
@@ -211,6 +215,51 @@ namespace Messages {
                                       std::string(msg.startRecordingAudio.path, 
                                                   msg.startRecordingAudio.path_length),
                                       msg.startRecordingAudio.runFFT);
+        return;
+      }
+
+      case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_drawTextOnScreen:
+      {
+        Vision::ImageRGB resultImg(96, 184);
+        Anki::Rectangle<f32> rect(0, 0, 184, 96);
+        resultImg.DrawFilledRect(rect, ColorRGBA(msg.drawTextOnScreen.bgColor.r,
+                                                 msg.drawTextOnScreen.bgColor.g,
+                                                 msg.drawTextOnScreen.bgColor.b));
+        resultImg.DrawText({0, 86.f},
+                           std::string(msg.drawTextOnScreen.text,
+                                       msg.drawTextOnScreen.text_length).c_str(),
+                           ColorRGBA(msg.drawTextOnScreen.textColor.r,
+                                     msg.drawTextOnScreen.textColor.g,
+                                     msg.drawTextOnScreen.textColor.b),
+                           3.f,
+                           8);
+
+        resultImg.DrawText({1, 87.f},
+                           std::string(msg.drawTextOnScreen.text,
+                                       msg.drawTextOnScreen.text_length).c_str(),
+                           ColorRGBA(msg.drawTextOnScreen.textColor.r,
+                                     msg.drawTextOnScreen.textColor.g,
+                                     msg.drawTextOnScreen.textColor.b),
+                           3.f,
+                           8);
+
+        cv::Mat img565(96, 184, CV_16U);
+        u16* p;
+        const Vision::PixelRGB* p1;
+        for(int i = 0; i < img565.rows; ++i)
+        {
+          p = img565.ptr<u16>(i);
+          p1 = resultImg.get_CvMat_().ptr<Vision::PixelRGB>(i);
+          for(int j = 0; j < img565.cols; ++j)
+          {
+            p[j] = (((int)(p1[j].r() >> 3) << 11) | 
+                    ((int)(p1[j].g() >> 2) << 5) | 
+                    ((int)(p1[j].b() >> 3) << 0));
+            p[j] = ((p[j]>>8)&0xFF) | ((p[j]&0xFF)<<8);
+          }
+        }
+
+        FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
         return;
       }
         

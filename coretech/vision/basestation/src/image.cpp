@@ -258,15 +258,16 @@ namespace Vision {
   
   template<typename T>
   void ImageBase<T>::DrawText(const Point2f& position, const std::string& str,
-                              const ColorRGBA& color, f32 scale, bool dropShadow)
+                              const ColorRGBA& color, f32 scale, bool dropShadow,
+                              int thickness)
   {
     if(dropShadow) {
       cv::Point shadowPos(position.get_CvPoint_());
       shadowPos.x += 1;
       shadowPos.y += 1;
-      cv::putText(this->get_CvMat_(), str, shadowPos, CV_FONT_NORMAL, scale, GetCvColor(NamedColors::BLACK));
+      cv::putText(this->get_CvMat_(), str, shadowPos, CV_FONT_NORMAL, scale, GetCvColor(NamedColors::BLACK), thickness);
     }
-    cv::putText(this->get_CvMat_(), str, position.get_CvPoint_(), CV_FONT_NORMAL, scale, GetCvColor(color));
+    cv::putText(this->get_CvMat_(), str, position.get_CvPoint_(), CV_FONT_NORMAL, scale, GetCvColor(color), thickness);
   }
   
   template<typename T>

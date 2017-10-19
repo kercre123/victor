@@ -323,6 +323,20 @@ message StartRecordingAudio
   string  path
 }
 
+structure ColorRGB
+{
+  uint_8 r,
+  uint_8 g,
+  uint_8 b
+}
+
+message DrawTextOnScreen
+{
+  ColorRGB textColor,
+  ColorRGB bgColor,
+  string text
+}
+
 // ====================================================
 
 enum uint_32 ToRobotAddressSpace
@@ -412,7 +426,7 @@ union EngineToRobot
   RollActionParams              rollActionParams            = 0x59,
   CameraFOVInfo                 cameraFOVInfo               = 0x5A,
   StartRecordingAudio           startRecordingAudio         = 0x5B,
-  //          FREE SLOT!!!                                  = 0x5C,
+  DrawTextOnScreen              drawTextOnScreen            = 0x5C,
   //          FREE SLOT!!!                                  = 0x5D,
   //          FREE SLOT!!!                                  = 0x5E,
   //          FREE SLOT!!!                                  = 0x5F,

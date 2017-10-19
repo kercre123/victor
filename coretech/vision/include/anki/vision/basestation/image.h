@@ -109,7 +109,12 @@ namespace Vision {
     void DrawQuad(const Quad2f& quad, const ColorRGBA& color, const s32 thickness = 1);
     
     // TODO: Expose font?
-    void DrawText(const Point2f& position, const std::string& str, const ColorRGBA& color, f32 scale = 1.f, bool dropShadow = false);
+    void DrawText(const Point2f& position, 
+                  const std::string& str, 
+                  const ColorRGBA& color, 
+                  f32 scale = 1.f, 
+                  bool dropShadow = false, 
+                  int thickness = 1);
     
     using Array2d<T>::GetDataPointer;
     using Array2d<T>::IsEmpty;

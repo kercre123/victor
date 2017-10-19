@@ -698,6 +698,8 @@ namespace Anki {
       
       void Process_startRecordingAudio(const RobotInterface::StartRecordingAudio& msg) { /*Nothing to do*/ }
 
+      void Process_drawTextOnScreen(const RobotInterface::DrawTextOnScreen& msg) { /*Nothing to do*/ }
+
 // ----------- Send messages -----------------
 
       Result SendRobotStateMsg(const RobotState* msg)

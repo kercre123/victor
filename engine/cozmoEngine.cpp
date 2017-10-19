@@ -66,6 +66,8 @@
 
 #define MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING 100
 
+#define AUTOSTART 1
+
 namespace Anki {
 namespace Cozmo {
 
@@ -251,8 +253,10 @@ Result CozmoEngine::Init(const Json::Value& config) {
   
   _isInitialized = true;
   
+  #if AUTOSTART
   #ifndef SIMULATOR
   SetEngineState(EngineState::LoadingData);
+  #endif
   #endif
 
   return RESULT_OK;
@@ -400,6 +404,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       float currentLoadingDone = 0.0f;
       if (_context->GetDataLoader()->DoNonConfigDataLoading(currentLoadingDone))
       {
+       #if AUTOSTART
        #ifndef SIMULATOR
        const RobotID_t kDefaultRobotID = 1;
        if(CozmoEngine::HasRobotWithID(kDefaultRobotID)) {
@@ -423,6 +428,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
        }
 
        _context->GetNeedsManager()->InitAfterConnection();
+       #endif
        #endif
       
         SetEngineState(EngineState::Running);

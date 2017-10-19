@@ -16,6 +16,8 @@
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
+#include <iomanip>
+
 namespace Anki {
 namespace Cozmo {
 
@@ -48,9 +50,14 @@ Result BehaviorPlaypenWaitToStart::InternalInitInternal(Robot& robot)
 BehaviorStatus BehaviorPlaypenWaitToStart::InternalUpdateInternal(Robot& robot)
 {
   const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  if((touchStartTime_ms != 0 && curTime - touchStartTime_ms > 1000) &&
-      robot.IsOnCharger())
+  if((touchStartTime_ms != 0 && curTime - touchStartTime_ms > 1000)/* &&
+      robot.IsOnCharger()*/)
   {
+    // Draw nothing on the screen to clear it
+    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DrawTextOnScreen(RobotInterface::ColorRGB(0,0,0),
+                                                                                     RobotInterface::ColorRGB(0,0,0),
+                                                                                     "")));
+
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, BehaviorStatus::Complete);
   }
 
