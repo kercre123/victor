@@ -299,7 +299,6 @@
             'OTHER_LDFLAGS': ['<@(linker_flags)'],
           },
           'defines': [
-            '_LIBCPP_DEBUG=0',
             'DEBUG=1',
           ],
       },
