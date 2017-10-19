@@ -37,7 +37,7 @@ CMAKE_GENERATOR=Ninja
 FEATURES=""
 
 # TODO: provide command line option?
-USE_TENSORFLOW=1
+USE_TENSORFLOW=0
 
 while getopts ":x:c:p:g:hvfdCF:" opt; do
     case $opt in

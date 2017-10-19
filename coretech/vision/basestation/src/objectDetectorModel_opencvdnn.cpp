@@ -71,12 +71,13 @@ public:
     GetFromConfig(input_std);
     
     // Caffe models:
-    const std::string protoFileName = Util::FileUtils::FullFilePath({modelPath,_params.graph + ".prototxt"});
-    const std::string modelFileName = Util::FileUtils::FullFilePath({modelPath,_params.graph + ".caffemodel"});
-    _network = cv::dnn::readNetFromCaffe(protoFileName, modelFileName);
+    //const std::string protoFileName = Util::FileUtils::FullFilePath({modelPath,_params.graph + ".prototxt"});
+    //const std::string modelFileName = Util::FileUtils::FullFilePath({modelPath,_params.graph + ".caffemodel"});
+    //_network = cv::dnn::readNetFromCaffe(protoFileName, modelFileName);
     
     // Tensorflow models:
-    //_network = cv::dnn::readNetFromTensorflow(graph);
+    const std::string graphFileName = Util::FileUtils::FullFilePath({modelPath,_params.graph});
+    _network = cv::dnn::readNetFromTensorflow(graphFileName);
    
     if(_network.empty())
     {
@@ -105,6 +106,23 @@ public:
                     (f32)numFLOPS / flopsDivisor, flopsPrefix);
     }
     
+    GetFromConfig(mode);
+    if(_params.mode == "detection")
+    {
+      _isDetectionMode = true;
+    }
+    else
+    {
+      if(_params.mode != "classification")
+      {
+        PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.UnknownMode",
+                          "Expecting 'classification' or 'detection'. Got '%s'.",
+                          _params.mode.c_str());
+        return RESULT_FAIL;
+      }
+      _isDetectionMode = false;
+    }
+
     const std::string labelsFileName = Util::FileUtils::FullFilePath({modelPath, _params.labels});
     Result readLabelsResult = ReadLabelsFile(labelsFileName);
     if(RESULT_OK == readLabelsResult)
@@ -141,45 +159,81 @@ public:
       }
     }
     
-    const cv::Scalar kColor(0,0,255);
-    const int numDetections = detections.size[2];
-    for(int iDetection=0; iDetection<numDetections; ++iDetection)
+    DetectedObject object;
+    bool wasObjectDetected = false;
+
+    if(_isDetectionMode)
     {
-      const float* detection = detections.ptr<float>(iDetection);
-      const float confidence = detection[2];
-      
-      if(confidence >= _params.min_score)
+      const cv::Scalar kColor(0,0,255);
+      const int numDetections = detections.size[2];
+      for(int iDetection=0; iDetection<numDetections; ++iDetection)
       {
-        const int labelIndex = detection[1];
-        const int xmin = std::round(detection[3] * (float)img.GetNumCols());
-        const int ymin = std::round(detection[4] * (float)img.GetNumRows());
-        const int xmax = std::round(detection[5] * (float)img.GetNumCols());
-        const int ymax = std::round(detection[6] * (float)img.GetNumRows());
+        const float* detection = detections.ptr<float>(iDetection);
+        const float confidence = detection[2];
         
-        DEV_ASSERT_MSG(xmax > xmin, "ObjectDetector.Model.Run.InvalidDetectionBoxWidth",
-                       "xmin=%d xmax=%d", xmin, xmax);
-        DEV_ASSERT_MSG(ymax > ymin, "ObjectDetector.Model.Run.InvalidDetectionBoxHeight",
-                       "ymin=%d ymax=%d", ymin, ymax);
-        
-        const bool labelIndexOOB = (labelIndex < 0 || labelIndex > _labels.size());
-        
-        DetectedObject object{
-          .timestamp = img.GetTimestamp(),
-          .score     = confidence,
-          .name      = (labelIndexOOB ? "UNKNOWN" :  _labels.at((size_t)labelIndex)),
-          .rect      = Rectangle<s32>(xmin, ymin, xmax-xmin, ymax-ymin),
-        };
-        
-        PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.Run.ObjectDetected",
-                       "Name:%s Score:%.3f Box:[%d %d %d %d] t:%ums",
-                       object.name.c_str(), object.score,
-                       object.rect.GetX(), object.rect.GetY(), object.rect.GetWidth(), object.rect.GetHeight(),
-                       object.timestamp);
-        
-        objects.push_back(std::move(object));
+        if(confidence >= _params.min_score)
+        {
+          const int labelIndex = detection[1];
+          const int xmin = std::round(detection[3] * (float)img.GetNumCols());
+          const int ymin = std::round(detection[4] * (float)img.GetNumRows());
+          const int xmax = std::round(detection[5] * (float)img.GetNumCols());
+          const int ymax = std::round(detection[6] * (float)img.GetNumRows());
+          
+          DEV_ASSERT_MSG(xmax > xmin, "ObjectDetector.Model.Run.InvalidDetectionBoxWidth",
+                        "xmin=%d xmax=%d", xmin, xmax);
+          DEV_ASSERT_MSG(ymax > ymin, "ObjectDetector.Model.Run.InvalidDetectionBoxHeight",
+                        "ymin=%d ymax=%d", ymin, ymax);
+          
+          const bool labelIndexOOB = (labelIndex < 0 || labelIndex > _labels.size());
+          
+          object.timestamp = img.GetTimestamp();
+          object.score     = confidence;
+          object.name      = (labelIndexOOB ? "UNKNOWN" :  _labels.at((size_t)labelIndex));
+          object.rect      = Rectangle<s32>(xmin, ymin, xmax-xmin, ymax-ymin);
+
+          wasObjectDetected = true;
+        }
       }
     }
-    
+    else // classification mode
+    {
+      int maxLabelIndex = -1;
+      float maxScore = _params.min_score;
+      const float* scores = detections.ptr<float>(0);
+      DEV_ASSERT_MSG(detections.cols == _labels.size(), "ObjectDetector.Model.Run.UnexpectedResultSize",
+                     "NumLabels:%zu, DNN returned %d values", _labels.size(), detections.cols);
+      for(int i=0; i<detections.cols; ++i)
+      {
+        if(scores[i] > maxScore)
+        {
+          maxLabelIndex = i;
+          maxScore = scores[i];
+        }
+      }
+
+      if(maxLabelIndex >= 0)
+      {
+        object.timestamp = img.GetTimestamp();
+        object.score     = maxScore;
+        object.name      = _labels.at((size_t)maxLabelIndex);
+        object.rect      = Rectangle<s32>(0,0,img.GetNumCols(),img.GetNumRows());
+        
+        wasObjectDetected = true;
+      }
+    }
+
+    if(wasObjectDetected)
+    {
+      PRINT_CH_DEBUG(kLogChannelName, 
+                     (_isDetectionMode ? "ObjectDetector.Model.Run.ObjectDetected" : "ObjectDetector.Model.Run.ObjectClassified"),
+                     "Name:%s Score:%.3f Box:[%d %d %d %d] t:%ums",
+                     object.name.c_str(), object.score,
+                     object.rect.GetX(), object.rect.GetY(), object.rect.GetWidth(), object.rect.GetHeight(),
+                     object.timestamp);
+
+      objects.emplace_back(std::move(object));
+    }
+
     return RESULT_OK;
   }
   
@@ -217,6 +271,7 @@ private:
     
     std::string graph; // = "tensorflow/examples/label_image/data/inception_v3_2016_08_28_frozen.pb";
     std::string labels; // = "tensorflow/examples/label_image/data/imagenet_slim_labels.txt";
+    std::string mode;
     s32    input_width; // = 299;
     s32    input_height; // = 299;
     f32    input_mean_R; // = 0;
@@ -231,6 +286,7 @@ private:
   
   cv::dnn::Net              _network;
   std::vector<std::string>  _labels;
+  bool                      _isDetectionMode;
   
 };
   

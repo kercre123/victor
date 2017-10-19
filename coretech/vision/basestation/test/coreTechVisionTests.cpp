@@ -455,21 +455,21 @@ GTEST_TEST(ObjectDetector, SimpleImage)
   
   const std::string modelPath = std::string(QUOTE(TEST_DATA_PATH)) + "/resources/tensorflow_models";
   const std::string testImagePath = std::string(QUOTE(TEST_DATA_PATH)) + "/resources/test/images";
-  std::string testImageFile = Util::FileUtils::FullFilePath({testImagePath, "grace_hopper.jpg"});
+  std::string testImageFile = Util::FileUtils::FullFilePath({testImagePath, "daisy.jpg"});
   
   Json::Value config;
-  config["graph"] = "inception_v3_2016_08_28_frozen.pb";
-  config["labels"] = "imagenet_slim_labels.txt";
+  config["graph"] = "mobilenet_0.50_224_flower_photos_quantized.pb";
+  config["labels"] = "flower_data_labels.txt";
   config["mode"] = "classification";
-  config["input_width"] = 299;
-  config["input_height"] = 299;
+  config["input_width"] = 224;
+  config["input_height"] = 224;
   config["do_crop"] = false;
   config["input_mean_R"] = 0;
   config["input_mean_G"] = 0;
   config["input_mean_B"] = 0;
   config["input_std"] = 255;
   config["input_layer"] = "input";
-  config["output_scores_layer"] = "InceptionV3/Predictions/Reshape_1";
+  config["output_scores_layer"] = "final_result";
   config["top_K"] = 1;
   config["min_score"] = 0.1f;
   
@@ -497,7 +497,7 @@ GTEST_TEST(ObjectDetector, SimpleImage)
     }
   };
 
-  const bool DO_CLASSIFICATION_TEST = false;
+  const bool DO_CLASSIFICATION_TEST = true;
   if(DO_CLASSIFICATION_TEST)
   {
     result = detector.Init(modelPath, config);
