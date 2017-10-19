@@ -67,6 +67,7 @@ void Power::enableClocking(void) {
                | RCC_APB2ENR_ADC1EN
                ;
 }
+
 void Power::stop(void) {
   NVIC_SystemReset();
 }

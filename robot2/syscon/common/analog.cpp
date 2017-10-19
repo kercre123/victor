@@ -41,7 +41,6 @@ void Analog::init(void) {
               | ADC_CFGR2_CKMODE_1
               ;
   ADC1->SMPR  = 0
-              | ADC_SMPR_SMP  // Long polling time
               ;
 
   // Enable VRef

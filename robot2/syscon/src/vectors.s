@@ -88,9 +88,7 @@ __VectorTable   DCD     0                              ; Top of Stack
 
 
                 EXPORT SoftReset
-SoftReset
-                CPSID I
-                BX  R0
+SoftReset       BX  R0
 
 ;*******************************************************************************
 ; User Stack and Heap initialization
