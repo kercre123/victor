@@ -1,13 +1,14 @@
 package main
 
 import (
+	"anki/ipc"
 	"bufio"
 	"flag"
 	"fmt"
 	"os"
 )
 
-func messageSender(sock Socket) {
+func messageSender(sock ipc.Socket) {
 	for {
 		reader := bufio.NewReader(os.Stdin)
 		text, _ := reader.ReadString('\n')
@@ -21,7 +22,7 @@ func messageSender(sock Socket) {
 
 func runServer() {
 	fmt.Println("Starting server")
-	sock, _ := NewServerSocket(12345)
+	sock, _ := ipc.NewServerSocket(12345)
 	go messageSender(sock)
 	for {
 		_, msg := sock.ReadBlock()
@@ -31,7 +32,7 @@ func runServer() {
 
 func runClient() {
 	fmt.Println("Starting client")
-	sock, _ := NewClientSocket("127.0.0.1", 12345)
+	sock, _ := ipc.NewClientSocket("127.0.0.1", 12345)
 	go messageSender(sock)
 	for {
 		_, msg := sock.ReadBlock()

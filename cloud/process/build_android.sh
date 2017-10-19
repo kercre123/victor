@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-export GOPATH="$PWD"
+export GOPATH=$PWD/../go
 GIT=`which git`
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 : ${ANDROID_API:=24}
