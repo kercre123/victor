@@ -94,8 +94,6 @@ namespace Cozmo {
     // multiple returned messages.
     virtual bool IsDone() { return true; }
     
-    void SetRNG(Util::RandomGenerator* rng);
-
   protected:
     
     // Populate members from Json
@@ -125,10 +123,6 @@ namespace Cozmo {
   
   inline Util::RandomGenerator& IKeyFrame::GetRNG() const {
     return sRNG;
-  }
-
-  inline void IKeyFrame::SetRNG(Util::RandomGenerator* rng) {
-    sRNG = *rng;
   }
   
   

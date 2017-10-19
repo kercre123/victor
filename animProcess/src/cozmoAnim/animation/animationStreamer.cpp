@@ -525,7 +525,7 @@ namespace Cozmo {
     if (robotAudioTrack.HasFramesLeft() &&
         robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, currTime_ms))
     {
-      _audioClient->PlayAudioKeyFrame( robotAudioTrack.GetCurrentKeyFrame(_context->GetRandom()) );
+      _audioClient->PlayAudioKeyFrame( robotAudioTrack.GetCurrentKeyFrame() );
       robotAudioTrack.MoveToNextKeyFrame();
     }
 
