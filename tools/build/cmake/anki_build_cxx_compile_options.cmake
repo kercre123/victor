@@ -11,6 +11,7 @@
 set(ANKI_BUILD_CXX_COMPILE_OPTIONS
   $<$<CONFIG:Debug>:-O0>
   $<$<CONFIG:Release>:-Os>
+  -fsigned-char
   -g
   -Wall
   -Wconditional-uninitialized
