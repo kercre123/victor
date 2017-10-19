@@ -21,6 +21,8 @@ namespace Anki {
 namespace Das {
 class DasGameLogAppender;
 using ThreadId_t = std::uint32_t;
+static const size_t kDefaultMaxLogLength = 100 * 1024;
+static const size_t kDasDefaultMaxLogFiles = 400;
 } // namespace DAS
 } // namespace Anki
 
