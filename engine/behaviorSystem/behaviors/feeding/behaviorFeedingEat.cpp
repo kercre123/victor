@@ -299,25 +299,30 @@ void BehaviorFeedingEat::TransitionToEating(Robot& robot)
   robot.GetRobotMessageHandler()->SendMessage(robot.GetID(),
     RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(false)));
   
-  AnimationTrigger eatingAnim = CheckNeedsStateAndCalculateAnimation(robot);
+  AnimationTrigger eatingAnimTrigger = CheckNeedsStateAndCalculateAnimation(robot);
+  std::string eatingAnimName;
   
   uint32_t timeDrainCube_s = 0;
   RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
-  if( robot_mgr->HasAnimationForTrigger(eatingAnim) )
+  if( robot_mgr->HasAnimationForTrigger(eatingAnimTrigger) )
   {
     // Extract the length of time that the animation will be playing for so that
     // it can be passed through to listeners
     const auto& animStreamer = robot.GetAnimationStreamer();
     const auto& cannedAnims = robot.GetContext()->GetRobotManager()->GetCannedAnimations();
     
-    const auto& animGroupName = robot_mgr->GetAnimationForTrigger(eatingAnim);
-    const auto& animName = animStreamer.GetAnimationNameFromGroup(animGroupName, robot);
-    const Animation* eatingAnimRawPointer = cannedAnims.GetAnimation(animName);
+    const auto& animGroupName = robot_mgr->GetAnimationForTrigger(eatingAnimTrigger);
+    eatingAnimName = animStreamer.GetAnimationNameFromGroup(animGroupName, robot);
+    const Animation* eatingAnimRawPointer = cannedAnims.GetAnimation(eatingAnimName);
     const auto& track = eatingAnimRawPointer->GetTrack<EventKeyFrame>();
     if(!track.IsEmpty()){
       // assumes only one keyframe per eating anim
       timeDrainCube_s = track.GetLastKeyFrame()->GetTriggerTime()/1000;
     }
+  }else{
+    DEV_ASSERT(false,
+               "BehaviorFeedingEat.TransitionToEating.NoAnimForTrigger");
+    return;
   }
   
   
@@ -332,7 +337,7 @@ void BehaviorFeedingEat::TransitionToEating(Robot& robot)
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _timeCubeIsSuccessfullyDrained_sec = currentTime_s + timeDrainCube_s;
   
-  StartActing(new TriggerAnimationAction(robot, eatingAnim));
+  StartActing(new PlayAnimationAction(robot, eatingAnimName));
 }
 
 
