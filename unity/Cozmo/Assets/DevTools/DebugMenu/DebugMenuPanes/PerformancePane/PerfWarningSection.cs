@@ -61,7 +61,12 @@ public class PerfWarningSection : MonoBehaviour {
     // if we've ever been in a bad state, then show red
     bool isWarning = IsWarning();
     if (isWarning != _WasWarning) {
-      DAS.Info("PerfWarning.AboveThreshold." + _SectionName, Average.ToString());
+      if (isWarning) {
+        DAS.Info("PerfWarning.AboveThreshold." + _SectionName, Average.ToString());
+      }
+      else {
+        DAS.Info("PerfWarning.BelowThreshold." + _SectionName, Average.ToString());
+      }
     }
     if (isWarning && !_WasWarning) {
       _AvgLabel.color = Color.red;
