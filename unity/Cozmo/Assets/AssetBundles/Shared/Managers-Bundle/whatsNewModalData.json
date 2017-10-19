@@ -11,7 +11,7 @@
     "DescriptionKey": "whatsNew.CodeLab_VerticalLaunch.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_lightShow",
-    "LeftTintColor": [193,60,71],
+    "LeftTintColor": [195,50,50],
     "RightTintColor": [253,78,93],
     "CodeLabData": {
         "ShowButton": true,
@@ -30,8 +30,8 @@
     "DescriptionKey": "whatsNew.CodeLab_TinyOrchestra.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "Icon_tinyOrchestra",
-    "LeftTintColor": [255,231,0],
-    "RightTintColor": [189,158,1],
+    "LeftTintColor": [212,172,3],
+    "RightTintColor": [255,220,26],
     "CodeLabData": {
         "ShowButton": true,
         "ProjectGuid": "29e14062-8cc5-480d-964f-37c62cf4a3a9"
@@ -49,7 +49,7 @@
     "DescriptionKey": "whatsNew.CodeLab_MagicFortuneTeller.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_magicFortuneTeller",
-    "LeftTintColor": [128,200,21],
+    "LeftTintColor": [93,197,21],
     "RightTintColor": [157,227,53],
     "CodeLabData": {
         "ShowButton": true,
@@ -61,7 +61,7 @@
     "StartDate": {
         "Month": "1",
         "Day": "2",
-        "Year": "2017"
+        "Year": "2018"
     },
     "EndDate": null,
     "TitleKey": "whatsNew.CodeLab_HotPotato.title",
@@ -69,7 +69,7 @@
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_hotPotato",
     "LeftTintColor": [130,31,183],
-    "RightTintColor": [137,34,190],
+    "RightTintColor": [150,73,190],
     "CodeLabData": {
         "ShowButton": true,
         "ProjectGuid": "91a410f2-669e-447f-8681-e5dd06dce233"
@@ -87,8 +87,8 @@
     "DescriptionKey": "whatsNew.CodeLab_FireTruckAlarm.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_firetruckAlarm",
-    "LeftTintColor": [255,231,0],
-    "RightTintColor": [189,158,1],
+    "LeftTintColor": [212,172,3],
+    "RightTintColor": [255,220,26],
     "CodeLabData": {
         "ShowButton": true,
         "ProjectGuid": "43b2136b-759b-432c-b17b-938a4c3db9e1"
@@ -106,7 +106,7 @@
     "DescriptionKey": "whatsNew.CodeLab_CubeWhack.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_cubeWhack",
-    "LeftTintColor": [128,200,21],
+    "LeftTintColor": [93,197,21],
     "RightTintColor": [157,227,53],
     "CodeLabData": {
         "ShowButton": true,
