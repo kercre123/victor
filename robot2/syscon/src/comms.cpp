@@ -364,8 +364,8 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
 
         // Trim off the erranious words
         if (offset) {
-          memcpy(&inboundPacket.raw[0], &inboundPacket.raw[offset], receivedWords - offset);
           receivedWords -= offset;
+          memcpy(&inboundPacket.raw[0], &inboundPacket.raw[offset], receivedWords);
           continue ;
         }
 
