@@ -456,6 +456,10 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 
   AttemptActivateTuningExperiment(_needsState._robotSerialNumber);
 
+  // Now that experiment(s) have been set, we write the lab assignments
+  // out to robot, if they are different from before in any way
+  _cozmoContext->GetExperiments()->PossiblyWriteLabAssignmentsToRobot();
+
   bool needToWriteToDevice = false;
   bool needToWriteToRobot = _robotNeedsVersionUpdate;
 
@@ -1759,6 +1763,10 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
     AttemptActivateDecayExperiment(_needsState._robotSerialNumber);
 
     AttemptActivateTuningExperiment(_needsState._robotSerialNumber);
+
+    // Now that experiment(s) have been set, we write the lab assignments
+    // out to robot, IF they are different from before in any way
+    _cozmoContext->GetExperiments()->PossiblyWriteLabAssignmentsToRobot();
 
     const bool connected = (_robot == nullptr ? false : true);
     ApplyDecayForTimeSinceLastDeviceWrite(connected);

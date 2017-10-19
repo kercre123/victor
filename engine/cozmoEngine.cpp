@@ -124,7 +124,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestLocale>();
 
   auto handler = [this] (const std::vector<Util::AnkiLab::AssignmentDef>& assignments) {
-    _context->GetExperiments()->WriteLabAssignmentsToRobot(assignments);
+    _context->GetExperiments()->UpdateLabAssignments(assignments);
   };
   _signalHandles.emplace_back(_context->GetExperiments()->GetAnkiLab()
                               .ActiveAssignmentsUpdatedSignal().ScopedSubscribe(handler));

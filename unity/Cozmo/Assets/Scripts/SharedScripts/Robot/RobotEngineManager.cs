@@ -400,7 +400,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void ProcessRobotDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
     DasTracker.Instance.TrackRobotDisconnected(1);
-    DAS.Event("RobotEngineManager.RobotDisconnected", "Robot 1 disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
+    DAS.Event("RobotEngineManager.RobotDisconnected", "Robot 1 disconnected after " + message.timeSinceLastMsg_sec.ToString("F3") + " seconds.");
     RemoveRobot(1);
   }
 
