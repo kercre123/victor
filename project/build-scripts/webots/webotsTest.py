@@ -661,9 +661,9 @@ def generate_combined_webots_devLog(cozmo_version, log_folder, log_file_name, di
   shutil.copy(log_file_name, dirs[0])
   didFailPrefix = ""
   if(didFail):
-    didFailPrefix = "FAILURE_"
+    didFailPrefix = "_FAILURE_"
 
-  human_readable_output = os.path.join(dev_log_folder, didFailPrefix, test_controller + "_" + world_file + "_webotsTestTime_" + str(cur_time))
+  human_readable_output = os.path.join(dev_log_folder, didFailPrefix + test_controller + "_" + world_file + "_webotsTestTime_" + str(cur_time))
   shutil.move(dirs[0], human_readable_output)
 
 
