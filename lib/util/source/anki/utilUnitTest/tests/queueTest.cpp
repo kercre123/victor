@@ -37,8 +37,11 @@ TEST(QueueTest, DISABLED_ScheduledCallbacks)
   Anki::Util::Dispatch::Release(queue);
   ASSERT_EQ(a, 4);
 }
+//
+// VIC-492: Disabled because test does not pass reliably
+//
 
-TEST(QueueTest, RemoveCallback)
+TEST(QueueTest, DISABLED_RemoveCallback)
 {
   std::cout << "test removing scheduled callbacks\n";
   Queue* queue = Anki::Util::Dispatch::Create();
