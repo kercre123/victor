@@ -20,6 +20,7 @@ namespace DataPersistence {
       }
     }
 
+    // Called in StartupManager before engine is inited. DAS will print in editor but not log.
     private DataPersistenceManager() {
 
       if (File.Exists(sSaveFilePath)) {
@@ -27,6 +28,11 @@ namespace DataPersistence {
           string fileData = File.ReadAllText(sSaveFilePath);
 
           Data = JsonConvert.DeserializeObject<SaveData>(fileData, GlobalSerializerSettings.JsonSettings);
+          if (Data == null) {
+            // log message through hockeyapp.
+            Debug.LogError("DataPersistenceManager.Constructor.SaveDataNull");
+            Data = new SaveData();
+          }
         }
         catch (Exception ex) {
           DAS.Error("DataPersistenceManager.Load", "Error Loading Saved Data: " + ex.Message);
@@ -47,7 +53,7 @@ namespace DataPersistence {
         }
       }
       else {
-        DAS.Info(this, "Creating New Save Data");
+        DAS.Info("DataPersistenceManager.Constructor", "Creating New Save Data");
         Data = new SaveData();
       }
     }
@@ -304,7 +310,12 @@ namespace DataPersistence {
         }
 
         string jsonValue = JsonConvert.SerializeObject(Data, Formatting.None, GlobalSerializerSettings.JsonSettings);
-        File.WriteAllText(sSaveFilePath, jsonValue);
+        if (string.IsNullOrEmpty(jsonValue)) {
+          DAS.Error("DataPersistenceManager.Save.AttemptedToWriteEmptyFile", "");
+        }
+        else {
+          File.WriteAllText(sSaveFilePath, jsonValue);
+        }
       }
       catch (Exception ex) {
         DAS.Error("DataPersistenceManager.Save", "Exception backing up save file: " + ex.Message);
