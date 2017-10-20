@@ -199,30 +199,15 @@
         var cancelText = window.$t('codeLab.export_modal.button.get_drive');
         var confirmText = window.$t('codeLab.export_modal.button.copy_to_drive');
 
-        if (goog.labs.userAgent.platform.isIos()) {
-            ModalConfirm.open({
-                title: title,
-                prompt: body,
-                cancelButtonLabel: cancelText,
-                confirmButtonLabel: confirmText,
-                confirmCallback: function(ok) {
-                  if (ok) {
-                    window.onCozmoProjectExportConfirmation();
-                  } else {
-                    window.Unity.call({requestId: -1, command: "cozmoDownloadGoogleDrive", argUUID: window.cozmoProjectUUID});
-                  }
-                }
-            });
-        } else {
-            ModalAlert.open({
-                title: title,
-                prompt: body,
-                confirmButtonLabel: confirmText,
-                confirmCallback: function() {
-                    window.onCozmoProjectExportConfirmation();
-                }
-            });
-        }
+        ModalAlert.open({
+            title: title,
+            prompt: body,
+            confirmButtonLabel: confirmText,
+            confirmCallback: function() {
+                window.player.play('click');
+                window.onCozmoProjectExportConfirmation();
+            }
+        });
     }
 
     window.openCozmoProjectJSON = function (cozmoProjectJSON) {

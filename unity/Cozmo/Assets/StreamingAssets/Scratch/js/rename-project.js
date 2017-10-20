@@ -132,6 +132,7 @@ var RenameProject = function(){
    * @returns {void}
    */
   function _handleCancelButton(e) {
+    window.player.play('click');
     e.stopPropagation();
     e.preventDefault();
     _hide();
@@ -143,6 +144,7 @@ var RenameProject = function(){
    * @returns {void}
    */
   function _handleSaveButton(e) {
+    window.player.play('click');
     var newProjectName = projectNameTextbox.value.substring(0, _getMaxLength());
     // The editable text element will sometimes auto convert into smart-quotes, often not bothering to match them.
     // Replacing all smart quotes with standard quotes means only those 2 characters have to be processed internally

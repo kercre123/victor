@@ -221,7 +221,6 @@
       prompt: '',
       cancelButtonLabel: $t('codeLab.projects.confirmQuit.cancelButton.labelText'),
       confirmButtonLabel: $t('codeLab.projects.confirmQuit.confirmButton.labelText'),
-      reverseButtons: true,
       confirmCallback: function(result) {
         if (result) {
           CozmoAPI.closeCodeLab();

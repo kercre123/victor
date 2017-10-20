@@ -8,37 +8,32 @@
 
 var ModalType = function(type){
   var _html = {
-    confirm : '<div class="modal-confirm modal-confirm-center">' +
-              '  <div class="modal-bg" data-type="modal-background"></div>' +
+    confirm : '<div class="modal-confirm modal-center">' +
               '  <div class="modal-inner">' +
-              '    <h2 class="hd modal-confirm-title"></h2>' +
-              '    <p class="bd modal-confirm-prompt"></p>' +
+              '    <h2 class="hd modal-confirm-title modal-large-font"></h2>' +
+              '    <p class="bd modal-confirm-prompt modal-small-font"></p>' +
               '    <div class="ft">' +
-              '      <button class="btn-cancel button-pill button-red-pill"></button>' +
-              '      <button class="btn-confirm button-pill button-blue-pill"></button>' +
+              '      <button class="btn-cancel button-pill button-red-pill modal-small-font"></button>' +
+              '      <button class="btn-confirm button-pill button-blue-pill modal-small-font"></button>' +
               '    </div>' +
               '  </div>' +
               '</div>',
     prompt :  '<div class="modal-confirm">' +
-              '  <div class="modal-bg" data-type="modal-background"></div>' +
-              '  <form action="javascript:void(0);">' +
-              '    <div class="modal-inner modal-inner-small">' +
-              '      <h2 class="hd modal-confirm-title"></h2>' +
-              '      <input class="modal-confirm-input" onkeydown="return ModalPrompt.isValidKey(event);" onkeyup="ModalPrompt.sanitizeInput(this);" autofocus autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></input>' +
+              '  <form class="modal-inner modal-inner-small"action="javascript:void(0);">' +
+              '      <h2 class="hd modal-confirm-title modal-large-font"></h2>' +
+              '      <input class="modal-confirm-input modal-small-font" onkeydown="return ModalPrompt.isValidKey(event);" onkeyup="ModalPrompt.sanitizeInput(this);" autofocus autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></input>' +
               '      <div class="ft">' +
-              '        <button type=button class="btn-cancel button-pill button-red-pill"></button>' +
-              '        <button type=submit class="btn-confirm button-pill button-blue-pill"></button>' +
+              '        <button type=button class="btn-cancel button-pill button-red-pill modal-small-font"></button>' +
+              '        <button type=submit class="btn-confirm button-pill button-blue-pill modal-small-font"></button>' +
               '      </div>' +
-              '    </div>' +
               '  </form>' +
               '</div>',
-    alert :   '<div class="modal-confirm modal-confirm-center">' +
-              '  <div class="modal-bg" data-type="modal-background"></div>' +
+    alert :   '<div class="modal-confirm modal-center">' +
               '  <div class="modal-inner">' +
-              '    <h2 class="hd modal-confirm-title"></h2>' +
-              '    <p class="bd modal-confirm-prompt"></p>' +
+              '    <h2 class="hd modal-confirm-title modal-large-font"></h2>' +
+              '    <p class="bd modal-confirm-prompt modal-small-font"></p>' +
               '    <div class="ft">' +
-              '      <button class="btn-confirm button-pill button-blue-pill"></button>' +
+              '      <button class="btn-confirm button-pill button-blue-pill modal-small-font"></button>' +
               '    </div>' +
               '  </div>' +
               '</div>',
@@ -143,7 +138,7 @@ var ModalType = function(type){
     var target = event.target;
     var classes = target.classList;
 
-    if (classes.contains('modal-bg')) {
+    if (classes.contains('modal-confirm')) {
       window.player.play('click');
       _close();
     } else if (classes.contains('btn-confirm') && !_options.reverseButtons || classes.contains('btn-cancel') && _options.reverseButtons) {
@@ -173,6 +168,8 @@ var ModalType = function(type){
           _options.confirmCallback(true);
           break;
       }
+    } else {
+      window.player.play('click');
     }
     _close();
   }
@@ -193,6 +190,8 @@ var ModalType = function(type){
           _options.confirmCallback(false);
           break;
       }
+    } else {
+      window.player.play('click');
     }
     _close();
   }

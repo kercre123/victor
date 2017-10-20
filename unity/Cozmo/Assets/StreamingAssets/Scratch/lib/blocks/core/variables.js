@@ -254,11 +254,13 @@ Blockly.Variables.createVariable = function(workspace, opt_callback, opt_type) {
   var promptAndCheckWithAlert = function(defaultName) {
     Blockly.Variables.promptName(Blockly.Msg.NEW_VARIABLE_TITLE, defaultName,
       function(text) {
+        window.player.play('click');
         if (text) {
           if (workspace.getVariable(text)) {
             Blockly.alert(Blockly.Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
                 text.toLowerCase()),
                 function() {
+                  window.player.play('click');
                   promptAndCheckWithAlert(text);  // Recurse
                 });
           }
@@ -266,6 +268,7 @@ Blockly.Variables.createVariable = function(workspace, opt_callback, opt_type) {
             Blockly.alert(Blockly.Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
                 text.toLowerCase()),
                 function() {
+                  window.player.play('click');
                   promptAndCheckWithAlert(text);  // Recurse
                 });
           }
@@ -309,12 +312,14 @@ Blockly.Variables.renameVariable = function(workspace, variable,
     Blockly.Variables.promptName(
       Blockly.Msg.RENAME_VARIABLE_TITLE.replace('%1', variable.name), defaultName,
       function(newName) {
+        window.player.play('click');
         if (newName) {
           var newVariable = workspace.getVariable(newName);
           if (newVariable && newVariable.type != variable.type) {
             Blockly.alert(Blockly.Msg.VARIABLE_ALREADY_EXISTS_FOR_ANOTHER_TYPE.replace('%1',
                 newName.toLowerCase()).replace('%2', newVariable.type),
                 function() {
+                  window.player.play('click');
                   promptAndCheckWithAlert(newName);  // Recurse
                 });
           }
@@ -322,6 +327,7 @@ Blockly.Variables.renameVariable = function(workspace, variable,
             Blockly.alert(Blockly.Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
                 newName.toLowerCase()),
                 function() {
+                  window.player.play('click');
                   promptAndCheckWithAlert(newName);  // Recurse
                 });
           }
