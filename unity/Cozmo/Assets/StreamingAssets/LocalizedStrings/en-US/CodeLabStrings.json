@@ -519,7 +519,7 @@
       "translation": "When the music stops, don't get stuck with the hot potato!"
   },
   "codeLabFeaturedProject_HotPotato.projectInstructions": {
-      "translation": "1. This is a game for two players, plus Cozmo. \n\n2. Cozmo will ask you to place a Cube under his lift so he can tap it. Players 1 and 2, tap your Cube when it lights up. \n\n3. In this game, the \"potato\" is indicated by Cube lights. When it lands on you, the lights will first turn red, and then green when the potato can be passed by tapping the Cube.\n\n4. When the music stops, careful not to be stuck with the potato!"
+      "translation": "1. This is a game for two players, plus Cozmo. \n\n2. Cozmo will ask you to place a Cube under his lift so he can tap it.\n\n3. In this game, the \"potato\" is indicated by Cube lights. When it lands on you, the lights will first turn red, and then green when the potato can be passed by tapping the Cube.\n\n4. When the music stops, careful not to be stuck with the potato!"
   },
   "codeLabFeaturedProject_TinyOrchestra.projectName": {
       "translation": "Tiny Orchestra"
@@ -555,7 +555,7 @@
       "translation":  "Tick, tock! Timers are more fun when they're a Cozmo."
   },
   "codeLabFeaturedProject_FiretruckAlarm.projectInstructions": {
-      "translation": "1. After you tap the start flag, Cozmo will display a 30-second timer on his face.\n\n2. If you want to change the 30-second timer, tap the blue Cube to add 5 seconds, or tap the red Cube to subtract 5 seconds.\n\n3. When you're ready to start your timer, tap the green Cube.\n\n4. Then count down to Cozmo's fire truck alarm!"
+      "translation": "1. After you tap the start flag, a ten-second timer will begin.\n\n2. Then count down to Cozmo's fire truck alarm!"
   },
   "codeLabFeaturedProject_LightShow.projectName": {
       "translation": "Light Show"
@@ -991,7 +991,7 @@
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_see_cube": {
-    "translation": "when Cube seen"
+    "translation": "when Cube [#] seen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_see_cube": {
     "translation": "Triggers this code block and runs the code blocks underneath it every time Cozmo sees a Cube."
@@ -1255,7 +1255,7 @@
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_yaw": {
-    "translation": "Cube [#] yaw °"
+    "translation": "Cube [#] yaw ° in camera"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_yaw": {
     "translation": "Returns the angle, in degrees, of the Cube facing right/left (as if flat on a surface) as seen in Cozmo's camera. Note that this requires Cozmo to see the Cube. Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."

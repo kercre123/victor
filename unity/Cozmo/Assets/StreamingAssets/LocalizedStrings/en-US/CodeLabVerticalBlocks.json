@@ -73,7 +73,7 @@
     "translation": "when Cube %1 moved"
   },
   "codeLabVertical.COZMO_POSITION": {
-    "translation": "Cozmo position %1 in world"
+    "translation": "Cozmo position in world %1"
   },
   "codeLabVertical.COZMO_PITCH": {
     "translation": "Cozmo pitch °"
