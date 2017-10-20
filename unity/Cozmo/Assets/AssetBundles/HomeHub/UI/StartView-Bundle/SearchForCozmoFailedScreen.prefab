@@ -203,8 +203,12 @@ MonoBehaviour:
       _EnumValue: 19
     _DefaultAssetBundleVariant: ios
     _AssetDataName: WifiInstructionsModal
-  _WifiAnimationsPrefab: {fileID: 173596, guid: 612167f23913141adb46a0934b398698,
-    type: 2}
+  _WifiAnimationsPrefabData:
+    _AssetBundle:
+      _EnumValueAsString: wifi_instructions_prefabs
+      _EnumValue: 19
+    _DefaultAssetBundleVariant: ios
+    _AssetDataName: WifiAnimations
 --- !u!114 &11495364
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -980,6 +984,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _MaskImage: {fileID: 114922186339630288}
+  _GlintRateModifier: 8
+  _GlintSpeedModifier: 5
 --- !u!114 &114728027232284168
 MonoBehaviour:
   m_ObjectHideFlags: 1
