@@ -408,6 +408,14 @@ class Blocks {
         // Get block
         const block = this._blocks[e.id];
 
+        // *** ANKI CHANGE ***
+        // We shouldn't have an undefined block, but if we do, return
+        // so that the work to delete can complete.
+        if (block == undefined) {
+          window.cozmoDASLog("Codelab.ScratchVM.DeleteBlock.BlockUndefined", "In blocks.js deleteBlock, block is undefined so returning early.");
+          return;
+        } 
+
         // Delete children
         if (block.next !== null) {
             this.deleteBlock({id: block.next});
