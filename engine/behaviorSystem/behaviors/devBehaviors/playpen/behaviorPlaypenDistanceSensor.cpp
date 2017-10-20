@@ -72,10 +72,14 @@ Result BehaviorPlaypenDistanceSensor::InternalInitInternal(Robot& robot)
 
   _startingAngle = robot.GetPose().GetRotation().GetAngleAroundZaxis();
 
+  MoveHeadToAngleAction* head = new MoveHeadToAngleAction(robot, DEG_TO_RAD(0));
+  MoveLiftToHeightAction* lift = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
+  CompoundActionParallel* liftAndHead = new CompoundActionParallel(robot, {lift, head});
+  
   TurnInPlaceAction* turn = new TurnInPlaceAction(robot, _angleToTurn.ToFloat(), false);
   WaitForImagesAction* wait = new WaitForImagesAction(robot, 5);
   
-  CompoundActionSequential* action = new CompoundActionSequential(robot, {turn, wait});
+  CompoundActionSequential* action = new CompoundActionSequential(robot, {liftAndHead, turn, wait});
   StartActing(action, [this, &robot]() { TransitionToRefineTurn(robot); });
   
   return RESULT_OK;

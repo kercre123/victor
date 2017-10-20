@@ -372,6 +372,7 @@ Result BehaviorManager::InitConfiguration(const Json::Value &activitiesConfig)
     
     // start with selection that defaults to Wait
     SetCurrentActivity(HighLevelActivity::PlaypenTest, true);
+    // SetCurrentActivity(HighLevelActivity::Selection, true);
   }
   else {
     // no activities config (e.g. unit test), so we aren't in freeplay

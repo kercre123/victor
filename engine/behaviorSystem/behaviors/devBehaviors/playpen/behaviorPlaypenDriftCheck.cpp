@@ -35,7 +35,7 @@ Result BehaviorPlaypenDriftCheck::InternalInitInternal(Robot& robot)
 {
   robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingAudio(PlaypenConfig::kDurationOfAudioToRecord_ms,
                                                                                       false,
-                                                                                      GetLogger().GetLogName()+"movement")));
+                                                                                      GetLogger().GetLogName()+"head_lift")));
 
   // Move head and lift to extremes then move to sound playing angle
   MoveHeadToAngleAction* moveHeadUp = new MoveHeadToAngleAction(robot, MAX_HEAD_ANGLE);
@@ -45,8 +45,14 @@ Result BehaviorPlaypenDriftCheck::InternalInitInternal(Robot& robot)
   
   CompoundActionSequential* headUpDown = new CompoundActionSequential(robot, {moveHeadUp, moveHeadToSoundAngle});
   CompoundActionParallel* liftAndHead = new CompoundActionParallel(robot, {headUpDown, moveLiftUp});
+
+  // After moving head and lift, wait to ensure that audio recording has stopped before transitioning to playing 
+  // the sound and starting more recording
+  CompoundActionSequential* action = new CompoundActionSequential(robot, {liftAndHead, 
+                                                                          new WaitAction(robot, 
+                                                                                         PlaypenConfig::kDurationOfAudioToRecord_ms/1000)});
   
-  StartActing(liftAndHead, [this, &robot](){ TransitionToPlayingSound(robot); });
+  StartActing(action, [this, &robot](){ TransitionToPlayingSound(robot); });
   
   return RESULT_OK;
 }
@@ -119,6 +125,8 @@ void BehaviorPlaypenDriftCheck::StopInternal(Robot& robot)
 
 void BehaviorPlaypenDriftCheck::AlwaysHandle(const RobotToEngineEvent& event, const Robot& robot)
 {
+  // TODO(Al): This message is asynchronous and could be handled after this behavior has completed
+  // need some way of having playpen fail if we never get this message
   const auto& tag = event.GetData().GetTag();
   if(tag == RobotInterface::RobotToEngineTag::audioFFTResult)
   {

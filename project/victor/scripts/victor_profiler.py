@@ -205,7 +205,7 @@ class AppProfiler(object):
         output = output.split('\n')
         for line in output:
             strs = line.split()
-            if len(strs) > 2 and strs[-1].find(self.config['app_package_name']) != -1:
+            if len(strs) > 2 and strs[-1].find(self.config['app_process_name']) != -1:
                 return int(strs[1])
         return None
 

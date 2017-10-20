@@ -34,7 +34,16 @@ Result BehaviorPlaypenDriveForwards::InternalInitInternal(Robot& robot)
   robot.GetCliffSensorComponent().ClearCliffRunningStats();
   robot.GetCliffSensorComponent().SetPause(true);
 
-  // Drive fowards some amount until front cliffs trigger, while cause the action to fail with
+  // Record mics while driving forwards for at least how long it should take to complete the 3 drives
+  const u32 recordTime_s = ((PlaypenConfig::kDistanceToTriggerFrontCliffs_mm / PlaypenConfig::kCliffSpeed_mmps) +
+                            (PlaypenConfig::kDistanceToTriggerBackCliffs_mm / PlaypenConfig::kCliffSpeed_mmps) + 
+                            (PlaypenConfig::kDistanceToDriveOverCliff_mm / DEFAULT_PATH_MOTION_PROFILE.speed_mmps));
+
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingAudio(recordTime_s * 1000,
+                                                                                      false,
+                                                                                      GetLogger().GetLogName()+"wheels")));
+
+  // Drive fowards some amount until front cliffs trigger, which will cause the action to fail with
   // CANCELLED_WHILE_RUNNING
   MoveHeadToAngleAction* headToZero = new MoveHeadToAngleAction(robot, 0);
   MoveLiftToHeightAction* liftDown = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK + 10);

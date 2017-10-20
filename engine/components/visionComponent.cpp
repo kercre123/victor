@@ -420,8 +420,8 @@ namespace Cozmo {
         
         // Compress to jpeg and send to game and viz
         // Do this before setting next image since it swaps the image and invalidates it
-        Result lastResult = CompressAndSendImage(_bufferedImg, 50, "camera");
-        DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
+        // Result lastResult = CompressAndSendImage(_bufferedImg, 50, "camera");
+        // DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
         
         // Track how fast we are receiving frames
         if(_lastReceivedImageTimeStamp_ms > 0) {
@@ -478,15 +478,15 @@ namespace Cozmo {
       }
       else
       {
-        PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
-                       "CapturedImageTime:%d NewestStateInHistory:%d",
-                       _bufferedImg.GetTimestamp(), _robot.GetStateHistory()->GetNewestTimeStamp());
+        // PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
+        //                "CapturedImageTime:%d NewestStateInHistory:%d",
+        //                _bufferedImg.GetTimestamp(), _robot.GetStateHistory()->GetNewestTimeStamp());
       }
     }
     else
     {
-      PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForBufferedImage", "Tick:%zu",
-                     BaseStationTimer::getInstance()->GetTickCount());
+      // PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForBufferedImage", "Tick:%zu",
+      //                BaseStationTimer::getInstance()->GetTickCount());
     }
     
     return RESULT_OK;

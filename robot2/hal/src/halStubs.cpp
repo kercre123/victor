@@ -34,7 +34,7 @@
 #define FRAMES_PER_RESPONSE  1  //send response every N input frames
 
 #define REALTIME_CONSOLE_OUTPUT 0 //Print status to console
-#define MOTOR_OF_INTEREST MOTOR_LIFT  //print status of this motor
+#define MOTOR_OF_INTEREST MOTOR_RIGHT  //print status of this motor
 #define STR(s)  #s
 #define DEFNAME(s) STR(s)
 
@@ -273,12 +273,12 @@ namespace Anki {
         printf("FC = %d ", bodyData_->framecounter);
         printf("%s: ", DEFNAME(MOTOR_OF_INTEREST));
         printf("raw = %d ", bodyData_->motor[MOTOR_OF_INTEREST].position);
-        printf("pos = %f ", HAL::MotorGetPosition(MOTOR_OF_INTEREST));
-        printf("spd = %f ", HAL::MotorGetSpeed(MOTOR_OF_INTEREST));
+        printf("pos = %f ", HAL::MotorGetPosition((MotorID)MOTOR_OF_INTEREST));
+        printf("spd = %f ", HAL::MotorGetSpeed((MotorID)MOTOR_OF_INTEREST));
         printf("pow = %f ", internalData_.motorPower[MOTOR_OF_INTEREST]);
         printf("cliff = %d %d% d% d ",bodyData_->cliffSense[0],bodyData_->cliffSense[1],bodyData_->cliffSense[2],bodyData_->cliffSense[3]);
         printf("prox = %d %d ",bodyData_->proximity.rangeStatus, bodyData_->proximity.rangeMM);
-        printf("\r");
+        printf("\n");
       }
 #endif
     }
@@ -353,15 +353,6 @@ namespace Anki {
 #endif
         
         result =  GetSpineDataFrame();
-        
-        #if 0
-        static FILE* fp = nullptr;
-        if(fp == nullptr)
-        {
-          fp = fopen("/data/misc/test/touch.txt", "w+");
-        }
-        fprintf(fp, "%d\n", bodyData_->touchLevel[0]);
-        #endif
         
         PrintConsoleOutput();
       }
