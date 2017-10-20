@@ -1,13 +1,13 @@
 set(OPENCV_VERSION 3.1.0)
 if(NOT USE_TENSORFLOW)
-  set(OPENCV_VERSION dev) # the dnn module exists in OpenCV 3.3.0
+  set(OPENCV_VERSION dev) # the dnn module exists in OpenCV 3.3.0 
 endif()
 
 set(OPENCV_DIR opencv-${OPENCV_VERSION})                                                                        
 
 if (ANDROID)
   #set(OPENCV_DIR opencv-android)
-  set(OPENCV_3RDPARTY_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a)
+  set(OPENCV_3RDPARTY_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/opencv-android-${OPENCV_VERSION}/o4a/3rdparty/lib/armeabi-v7a)
   set(OPENCV_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/opencv-android-${OPENCV_VERSION}/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a)
   set(OPENCV2_INCLUDE_PATH ${CORETECH_EXTERNAL_DIR}/build/opencv-android) 
 else()
@@ -139,12 +139,12 @@ if (ANDROID)
     if(OPENCV_VERSION EQUAL "3.1.0")
       add_library(tbb SHARED IMPORTED)
       set(include_paths
-          ${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/jni/include/opencv2/${OPENCV_MODULE}
+          ${CORETECH_EXTERNAL_DIR}/build/opencv-android-${OPENCV_VERSION}/OpenCV-android-sdk/sdk/native/jni/include/opencv2/${OPENCV_MODULE}
           ${OPENCV_INCLUDE_PREFIX}
           ${OPENCV2_INCLUDE_PATH})
       set_target_properties(tbb PROPERTIES
           IMPORTED_LOCATION
-          ${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libtbb.so)
+          ${CORETECH_EXTERNAL_DIR}/build/opencv-android-${OPENCV_VERSION}/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libtbb.so)
       set(INSTALL_LIBS
           "${OPENCV_LIBS}"
           tbb

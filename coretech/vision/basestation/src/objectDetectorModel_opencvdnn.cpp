@@ -84,6 +84,9 @@ public:
       return RESULT_FAIL;
     }
 
+    PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Model.OpenCvDNN.LoadedGraph",
+                  "%s", _params.graph.c_str());
+
     // Report network complexity in FLOPS
     {
       const cv::dnn::MatShape shape = {1, 3, _params.input_height, _params.input_width};
@@ -102,7 +105,8 @@ public:
         flopsDivisor = 1e9f;
       }
       
-      PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Model.LoadModel.NetworkFLOPS", "%.3f %sFLOPS",
+      PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Model.LoadModel.NetworkFLOPS", "Input %dx%d: %.3f %sFLOPS",
+                    _params.input_width, _params.input_height,
                     (f32)numFLOPS / flopsDivisor, flopsPrefix);
     }
     

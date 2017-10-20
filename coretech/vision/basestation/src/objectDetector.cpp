@@ -85,8 +85,8 @@ ObjectDetector::Status ObjectDetector::Detect(ImageCache& imageCache, std::list<
     return Status::Error;
   }
     
-  const ImageCache::Size kImageSize = ImageCache::Size::Quarter_AverageArea;
-  const bool kCropCenterSquare = false;
+  const ImageCache::Size kImageSize = ImageCache::Size::Full;
+  const bool kCropCenterSquare = true;
   
   if(!_future.valid())
   {

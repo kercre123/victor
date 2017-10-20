@@ -109,23 +109,39 @@
     // "top_K": 1, 
     // "min_score": 0.5
 
-    "graph"                       : "ssd_mobilenet_v1_coco_11_06_2017_quantized.pb",
-    //config["graph"] = "ssd_inception_v2_coco_11_06_2017_frozen.pb";
-    //config["graph"] = "rfcn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
-    //config["graph"] = "faster_rcnn_inception_resnet_v2_atrous_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "FloorMod"
-    //config["graph"] = "faster_rcnn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
-    "labels"                      : "cocostuff-labels-no-numbers.txt",
-    "mode"                        : "detection",
-    "input_layer"                 :  "image_tensor",
-    "input_width"                 : 0,
-    "input_height"                : 0,
-    "do_crop"                     : true,
-    "output_scores_layer"         : "detection_scores",
-    "output_classes_layer"        : "detection_classes",
-    "output_boxes_layer"          : "detection_boxes",
-    "output_num_detections_layer" :  "num_detections",
-    "top_K"                       : 5,
-    "min_score"                   : 0.5
+    // OpencCV DNN w/ MobileNets classification model
+    "graph"  : "mobilenet_0.25_128_flower_photos_opencvdnn.pb",
+    "labels" : "flower_photos_labels.txt",
+    "mode"   : "classification",
+    "input_width"  : 128,
+    "input_height" : 128,
+    "do_crop" : false,
+    "input_mean_R" : 0,
+    "input_mean_G" : 0,
+    "input_mean_B" : 0,
+    "input_std"    : 255,
+    "input_layer"  : "input",
+    "output_scores_layer" : "final_result",
+    "top_K" : 1,
+    "min_score" : 0.1
+
+    // "graph"                       : "ssd_mobilenet_v1_coco_11_06_2017_quantized.pb",
+    // //config["graph"] = "ssd_inception_v2_coco_11_06_2017_frozen.pb";
+    // //config["graph"] = "rfcn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
+    // //config["graph"] = "faster_rcnn_inception_resnet_v2_atrous_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "FloorMod"
+    // //config["graph"] = "faster_rcnn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
+    // "labels"                      : "cocostuff-labels-no-numbers.txt",
+    // "mode"                        : "detection",
+    // "input_layer"                 :  "image_tensor",
+    // "input_width"                 : 0,
+    // "input_height"                : 0,
+    // "do_crop"                     : true,
+    // "output_scores_layer"         : "detection_scores",
+    // "output_classes_layer"        : "detection_classes",
+    // "output_boxes_layer"          : "detection_boxes",
+    // "output_num_detections_layer" :  "num_detections",
+    // "top_K"                       : 5,
+    // "min_score"                   : 0.5
     
     //"graph"         : "inception_v3_2016_08_28_frozen.pb",
     //"labels"        : "imagenet_slim_labels.txt",
