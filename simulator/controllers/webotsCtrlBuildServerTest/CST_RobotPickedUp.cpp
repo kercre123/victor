@@ -34,9 +34,7 @@ s32 CST_RobotPickedUp::UpdateSimInternal()
   switch (_testState) {
     case TestState::Init:
     {
-      CozmoSimTestController::MakeSynchronous();
-
-      _testState = TestState::PickupRobot;
+      SET_TEST_STATE(PickupRobot);
       break;
     }
 
@@ -44,7 +42,7 @@ s32 CST_RobotPickedUp::UpdateSimInternal()
     {
       // Apply a arbitrary z force of to trigger the RobotPickedUp event.
       SendApplyForce("cozmo", 0, 0, 100);
-      _testState = TestState::VerifyRobotPickedUp;
+      SET_TEST_STATE(VerifyRobotPickedUp);
       break;
     }
 
@@ -52,7 +50,7 @@ s32 CST_RobotPickedUp::UpdateSimInternal()
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_robotWasPickedUp, 5)
       {
-        _testState = TestState::Exit;
+        SET_TEST_STATE(Exit);
       }
       break;
     }

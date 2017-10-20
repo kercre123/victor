@@ -123,7 +123,7 @@ namespace Anki {
           message.Set_NVStorageWriteEntry(msg);
           SendMessage(message);
           
-          _testState = TestState::ReadSingleBlob;
+          SET_TEST_STATE(ReadSingleBlob);
           break;
         }
         case TestState::ReadSingleBlob:
@@ -141,7 +141,7 @@ namespace Anki {
             message.Set_NVStorageReadEntry(msg);
             SendMessage(message);
           
-            _testState = TestState::VerifySingleBlob;
+            SET_TEST_STATE(VerifySingleBlob);
           }
           break;
         }
@@ -159,7 +159,7 @@ namespace Anki {
                        "Data written to and read from single blob is not the same");
             CST_ASSERT(data->size() == 8, "Data read from single blob is not expected word-aligned size");
             
-            _testState = TestState::WriteMultiBlob;
+            SET_TEST_STATE(WriteMultiBlob);
           }
           break;
         }
@@ -179,7 +179,7 @@ namespace Anki {
             SendMessage(message);
           }
           
-          _testState = TestState::ReadMultiBlob;
+          SET_TEST_STATE(ReadMultiBlob);
           break;
         }
         case TestState::ReadMultiBlob:
@@ -197,7 +197,7 @@ namespace Anki {
             message.Set_NVStorageReadEntry(msg);
             SendMessage(message);
             
-            _testState = TestState::VerifyMultiBlob;
+            SET_TEST_STATE(VerifyMultiBlob);
           }
           break;
         }
@@ -221,7 +221,7 @@ namespace Anki {
             CST_ASSERT(data->size() == numMultiBlobs*1024,
                        "Data read from multi blob is not expected word-aligned size");
             
-            _testState = TestState::EraseSingleBlob;
+            SET_TEST_STATE(EraseSingleBlob);
           }
           break;
         }
@@ -243,7 +243,7 @@ namespace Anki {
           message1.Set_NVStorageReadEntry(msg1);
           SendMessage(message1);
         
-          _testState = TestState::VerifySingleErase;
+          SET_TEST_STATE(VerifySingleErase);
           break;
         }
         case TestState::VerifySingleErase:
@@ -254,7 +254,7 @@ namespace Anki {
             
             CST_ASSERT(_lastResult == NVStorage::NVResult::NV_NOT_FOUND, "Read data after erasing");
            
-            _testState = TestState::EraseMultiBlob;
+            SET_TEST_STATE(EraseMultiBlob);
           }
           break;
         }
@@ -276,7 +276,7 @@ namespace Anki {
           message1.Set_NVStorageReadEntry(msg1);
           SendMessage(message1);
           
-          _testState = TestState::VerifyMultiErase;
+          SET_TEST_STATE(VerifyMultiErase);
         
           break;
         }
@@ -288,7 +288,7 @@ namespace Anki {
             
             CST_ASSERT(_lastResult == NVStorage::NVResult::NV_NOT_FOUND, "Read data after erasing");
             
-            _testState = TestState::WritingToInvalidMultiTag;
+            SET_TEST_STATE(WritingToInvalidMultiTag);
           }
           break;
         }
@@ -304,7 +304,7 @@ namespace Anki {
           message.Set_NVStorageWriteEntry(msg);
           SendMessage(message);
           
-          _testState = TestState::WriteData;
+          SET_TEST_STATE(WriteData);
           break;
         }
         case TestState::WriteData:
@@ -339,7 +339,7 @@ namespace Anki {
               SendMessage(message);
             }
             
-            _testState = TestState::WipeAll;
+            SET_TEST_STATE(WipeAll);
           }
           break;
         }
@@ -365,7 +365,7 @@ namespace Anki {
             message.Set_NVStorageReadEntry(msg);
             SendMessage(message);
             
-            _testState = TestState::Final;
+            SET_TEST_STATE(Final);
           }
           break;
         }

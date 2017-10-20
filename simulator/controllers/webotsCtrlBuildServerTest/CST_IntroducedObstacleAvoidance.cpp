@@ -50,10 +50,9 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
   switch (_testState) {
     case TestState::Init:
     {
-      CozmoSimTestController::MakeSynchronous();
       SendMoveHeadToAngle(kHeadLookupAngle_rad, 100, 100);
 
-      _testState = TestState::MoveCubeOutOfWay;
+      SET_TEST_STATE(MoveCubeOutOfWay);
       break;
     }
 
@@ -65,7 +64,7 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
                                             _observedLightCube,
                                             _lightCubeType != ObjectType::InvalidObject) {
         // Move cube out of the way before path planning.
-        _testState = TestState::WaitOneSecond;
+        SET_TEST_STATE(WaitOneSecond);
         // Additional Z height to drop the cube and force a cube delocalization.
         SetLightCubePose(_lightCubeType, {0, {0, 0, 1}, {0, 500, kCubeHeight_mm + 10}});
       }
@@ -75,7 +74,7 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
     case TestState::WaitOneSecond:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(1), 2){
-        _testState = TestState::ExecuteStraightPath;
+        SET_TEST_STATE(ExecuteStraightPath);
       }
       break;
     }
@@ -87,7 +86,7 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
       // translation in the pose is x=+500mm, he will travel to a ground truth position of +300mm
       // (500-200), and his robot estimated pose will be +500mm.
       SendExecutePathToPose(kRobotDestination, _defaultTestMotionProfile, false);
-      _testState = TestState::IntroduceObstacle;
+      SET_TEST_STATE(IntroduceObstacle);
       break;
     }
 
@@ -99,7 +98,7 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
         // Put the cube in the way of the robot path.
         SetLightCubePose(_lightCubeType, kCubeObstructingPose);
         _driveToPoseSucceeded = false;  // reset var just before we check for it in the next stage just in case
-        _testState = TestState::VerifyDriveToPoseCompleted;
+        SET_TEST_STATE(VerifyDriveToPoseCompleted);
       }
       break;
     }
@@ -108,7 +107,7 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
     {
       // Takes about 12 seconds for robot to complete the path, set timeout at 15 for some leeway.
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_driveToPoseSucceeded, 15){
-        _testState = TestState::VerifyObstacleAvoidance;
+        SET_TEST_STATE(VerifyObstacleAvoidance);
       }
       break;
     }
@@ -131,7 +130,7 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
                  kRobotDestination.GetTranslation().ToString().c_str() <<
                  ", got " << robotPoseActual.GetTranslation().ToString());
 
-      _testState = TestState::Exit;
+      SET_TEST_STATE(Exit);
       break;
     }
 

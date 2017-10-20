@@ -18,12 +18,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/robot.h"
 
-#define SET_STATE(s) {                                          \
-PRINT_NAMED_INFO("CST_DockActionInterrupts.TransitionTestState",      \
-"%s", #s);                                   \
-_testState = TestState::s;                                    \
-}
-
 namespace Anki {
 namespace Cozmo {
     
@@ -64,13 +58,11 @@ s32 CST_DockActionInterrupts::UpdateSimInternal()
   {
     case TestState::Init:
     {
-      MakeSynchronous();
-      
       // We need to have waits before and after the VisuallyVerifyAction in TurnTowardsObject so we have
       // enough time to move the dock object and have it be unobserved
       SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("InsertWaitsInTurnTowardsObjectVerify", "true")));
       SendMoveHeadToAngle(0, 100, 100);
-      SET_STATE(StartPickup);
+      SET_TEST_STATE(StartPickup);
       break;
     }
     case TestState::StartPickup:
@@ -93,7 +85,7 @@ s32 CST_DockActionInterrupts::UpdateSimInternal()
         message.Set_QueueSingleAction(m);
         SendMessage(message);
 
-        SET_STATE(MoveAndObscureObject);
+        SET_TEST_STATE(MoveAndObscureObject);
       }
       break;
     }
@@ -133,7 +125,7 @@ s32 CST_DockActionInterrupts::UpdateSimInternal()
           }
         }
         
-        SET_STATE(SeeObject);
+        SET_TEST_STATE(SeeObject);
       }
       break;
     }
@@ -160,7 +152,7 @@ s32 CST_DockActionInterrupts::UpdateSimInternal()
         p.SetRotation(Radians(DEG_TO_RAD(90)), Y_AXIS_3D());
         SetLightCubePose(ObjectType::Block_LIGHTCUBE1, p);
         
-        SET_STATE(TestDone);
+        SET_TEST_STATE(TestDone);
       }
       break;
     }
