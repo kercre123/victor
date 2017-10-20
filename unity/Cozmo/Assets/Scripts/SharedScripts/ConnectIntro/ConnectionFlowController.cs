@@ -251,7 +251,12 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void CreateConnectionFlowBackgroundWithCallback(Action onComplete) {
-    UIManager.OpenModal(_ConnectionFlowBackgroundModalPrefab, new ModalPriorityData(), (arg) => HandleConnectionFlowBackgroundCreationFinished(arg, onComplete));
+    Action<BaseModal> creationSuccessCallback = (arg) => {
+      if (this != null) {
+        HandleConnectionFlowBackgroundCreationFinished(arg, onComplete);
+      }
+    };
+    UIManager.OpenModal(_ConnectionFlowBackgroundModalPrefab, new ModalPriorityData(), creationSuccessCallback);
   }
 
   private void HandleConnectionFlowBackgroundCreationFinished(BaseModal newConnectionFlowBackground, Action launchAction) {
