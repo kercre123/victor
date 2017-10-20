@@ -43,6 +43,7 @@ function onOpen() {
     {name: "Export JSON for MainConfigC sheet", functionName: "exportMainConfigCSheet"},
     {name: "Export JSON for MainConfigD sheet", functionName: "exportMainConfigDSheet"},
     {name: "Export JSON for ActionConfig sheet", functionName: "exportActionConfigSheet"},
+    {name: "Export JSON for ActionConfigOrig sheet", functionName: "exportActionConfigOrigSheet"},
     {name: "Export JSON for DecayConfig sheet", functionName: "exportDecayConfigSheet"},
     {name: "Export JSON for DecayA sheet", functionName: "exportDecayASheet"},
     {name: "Export JSON for DecayB sheet", functionName: "exportDecayBSheet"},
@@ -126,8 +127,15 @@ function exportMainConfigDeltaSheet(e, sheetName) {
 }
 
 function exportActionConfigSheet(e) {
+  return exportActionConfigSheetInternal(e, "ActionConfig");
+}
+
+function exportActionConfigOrigSheet(e) {
+  return exportActionConfigSheetInternal(e, "ActionConfigOrig");
+}
+
+function exportActionConfigSheetInternal(e, sheetName) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheetName = "ActionConfig";
   var sheet = ss.getSheetByName(sheetName);
   var rowsData = getRowsData_(sheet);
   // Error-checking:  Ensure 'range' columns are non-negative:

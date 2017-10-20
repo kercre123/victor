@@ -37,6 +37,8 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
+// Adding a comment here for good luck so we can try rebuilding the PR without some
+// completely random webots tests failing.  Good grief.
 
 namespace Anki {
 namespace Cozmo {
@@ -1206,6 +1208,23 @@ void NeedsManager::SetTuningTestVariation(const std::string& variationKey,
     return;
   }
   _starRewardsConfig->Init(levelJson);
+
+  // Read the action config file variation based on variation, and use that data
+  std::string actionConfigFilename = GetActionConfigBaseFilename();
+  if (variationKey != kABTestControlKey)
+  {
+    actionConfigFilename += "_" + variationKey;
+  }
+  actionConfigFilename += ".json";
+  Json::Value actionJson;
+  parseSuccess = _cozmoContext->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
+                                                              actionConfigFilename, actionJson);
+  if (!ANKI_VERIFY(parseSuccess, "NeedsConfig.SetTuningTestVariation",
+                   "Failed to parse file %s", actionConfigFilename.c_str()))
+  {
+    return;
+  }
+  _actionsConfig.Init(actionJson);
 }
 
 

@@ -98,9 +98,10 @@ public:
   void SetTuningTestVariation(const std::string& variationKey,
                               const Util::AnkiLab::AssignmentStatus assignmentStatus);
 
-  static inline const std::string GetDecayConfigBaseFilename() { return "config/engine/needs_decay_config"; }
-  static inline const std::string GetConfigBaseFilename()      { return "config/engine/needs_config"; }
-  static inline const std::string GetLevelConfigBaseFilename() { return "config/engine/needs_level_config"; }
+  static inline const std::string GetDecayConfigBaseFilename()  { return "config/engine/needs_decay_config"; }
+  static inline const std::string GetConfigBaseFilename()       { return "config/engine/needs_config"; }
+  static inline const std::string GetLevelConfigBaseFilename()  { return "config/engine/needs_level_config"; }
+  static inline const std::string GetActionConfigBaseFilename() { return "config/engine/needs_action_config"; }
 
   static const char* kLogChannelName;
 

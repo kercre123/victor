@@ -758,7 +758,7 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // needs system actions config
   {
-    static const std::string jsonFilename = "config/engine/needs_action_config.json";
+    static const std::string jsonFilename = NeedsManager::GetActionConfigBaseFilename() + ".json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsActionConfig);
     if (!success)
     {
