@@ -64,6 +64,9 @@ public:
   
   // for debug only, prints stack info
   void DebugPrintStack(const std::string& debugStr) const;
+
+  // in debug builds, send viz messages to webots
+  void SendDebugVizMessages(BehaviorExternalInterface& behaviorExternalInterface) const;
   
 private:
   BehaviorExternalInterface* _behaviorExternalInterface;

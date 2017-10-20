@@ -16,7 +16,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
+#include "engine/viz/vizManager.h"
 #include "util/logging/logging.h"
+
+// TODO:(bn) put viz manager in BehaviorExternalInterface, then remove these includes
+#include "engine/robot.h"
+#include "engine/cozmoContext.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -103,6 +108,11 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
     
     _behaviorStack.at(idx)->Update(behaviorExternalInterface);
   }
+
+  if( ANKI_DEV_CHEATS ) {
+    SendDebugVizMessages(behaviorExternalInterface);
+  }
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -181,6 +191,19 @@ void BehaviorStack::DebugPrintStack(const std::string& debugStr) const
                    _behaviorStack[i]->GetPrintableID().c_str());
   }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RunnableStack::SendDebugVizMessages(BehaviorExternalInterface& behaviorExternalInterface) const
+{
+  VizInterface::BehaviorStackDebug data;
+
+  for( const auto& behavior : _runnableStack ) {
+    data.debugStrings.push_back( behavior->GetPrintableID() );
+  }  
+  
+  behaviorExternalInterface.GetRobot().GetContext()->GetVizManager()->SendBehaviorStackDebug(std::move(data));
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

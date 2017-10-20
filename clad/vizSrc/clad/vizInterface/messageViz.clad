@@ -357,6 +357,11 @@ message NewReactionTriggered
   string  reactionStrategyTriggered
 }
 
+message BehaviorStackDebug
+{
+  string debugStrings[uint_8]
+}
+
 message StartRobotUpdate
 {
 }

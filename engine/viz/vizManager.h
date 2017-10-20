@@ -421,6 +421,7 @@ namespace Anki {
       void SendEndRobotUpdate();
       void SendSaveImages(ImageSendMode mode, std::string path = "");
       void SendSaveState(bool enabled, std::string path = "");
+      void SendBehaviorStackDebug(VizInterface::BehaviorStackDebug&& behaviorStackDebug);
       void SendVizMessage(VizInterface::MessageViz&& event);
 
       
