@@ -379,6 +379,13 @@ void BehaviorEnrollFace::StopInternal(Robot& robot)
   // Leave general-purpose / session-only enrollment enabled (i.e. not for a specific face)
   robot.GetFaceWorld().Enroll(Vision::UnknownFaceID);
   
+  // if on the charger, we're exiting to the on charger reaction, unity is going to try to cancel but too late.
+  if( robot.IsOnCharger() )
+  {
+    PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.CancelBecauseOnCharger","");
+    SET_STATE(Cancelled);
+  }
+  
   ExternalInterface::FaceEnrollmentCompleted info;
   
   const bool wasSeeingMultipleFaces = _startedSeeingMultipleFaces_sec > 0.f;
