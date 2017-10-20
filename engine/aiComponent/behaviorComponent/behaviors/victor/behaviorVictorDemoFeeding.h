@@ -36,7 +36,7 @@ public:
 
 protected:
 
-  virtual void GetAllDelegatesInternal(std::set<IBehavior*>& delegates) const override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
 

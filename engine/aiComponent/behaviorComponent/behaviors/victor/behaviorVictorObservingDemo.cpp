@@ -206,7 +206,7 @@ void BehaviorVictorObservingDemo::AddState( State&& state )
   }
 }
 
-void BehaviorVictorObservingDemo::GetAllDelegatesInternal(std::set<IBehavior*>& delegates) const
+void BehaviorVictorObservingDemo::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   for( const auto& statePair : _states ) {
     if( statePair.second._behavior != nullptr ) {

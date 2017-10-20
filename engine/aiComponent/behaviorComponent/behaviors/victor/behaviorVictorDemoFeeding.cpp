@@ -43,7 +43,7 @@ void BehaviorVictorDemoFeeding::InitBehavior(BehaviorExternalInterface& behavior
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVictorDemoFeeding::GetAllDelegatesInternal(std::set<IBehavior*>& delegates) const
+void BehaviorVictorDemoFeeding::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert(_eatFoodBehavior.get());
 }

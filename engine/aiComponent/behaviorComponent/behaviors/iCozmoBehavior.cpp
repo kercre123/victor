@@ -476,13 +476,6 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
   return initResult;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::GetAllDelegates(std::set<IBehavior*>& delegates) const
-{
-  GetAllDelegatesInternal(delegates);
-}
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::OnEnteredActivatableScopeInternal()
 {
@@ -616,8 +609,6 @@ ICozmoBehavior::Status ICozmoBehavior::BehaviorUpdate_Legacy(BehaviorExternalInt
   ICozmoBehavior::Status status = Status::Complete;
   BehaviorUpdate(behaviorExternalInterface);
 
-  UpdateInternal_WhileActivatable( behaviorExternalInterface );
-  
   if(IsActivated()){
     status = UpdateInternal_WhileRunning(behaviorExternalInterface);
       if(!IsControlDelegated() && status != ICozmoBehavior::Status::Running){

@@ -216,9 +216,9 @@ public:
                 { DEV_ASSERT(false, "AddListener.FeedingListener.Unimplemented"); }
   
 protected:
-  void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
-  virtual void GetAllDelegatesInternal(std::set<IBehavior*>& delegates) const {}
+  // default is no delegates, but behaviors which delegate can overload this
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override { }
   
   using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
 
@@ -252,11 +252,6 @@ protected:
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) {};
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface);
   virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) { };
-
-  // This is a pass-through of the new IBehavior::Update which always gets called, whenever this behavior is
-  // active or in activateable scope. This will be called before UpdateInternal_WhileRunning if both are to be
-  // called
-  virtual void UpdateInternal_WhileActivatable(BehaviorExternalInterface& behaviorExternalInterface) {}
 
   Util::RandomGenerator& GetRNG() const;
     
