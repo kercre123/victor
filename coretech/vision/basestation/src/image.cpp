@@ -28,16 +28,30 @@ void ResizeKeepAspectRatioHelper(const cv::Mat_<T>& src, cv::Mat_<T>& dest, s32 
                                  int method)
 {
 
-  const double ratio = src.rows / src.cols;
+  const double ratio = double(src.rows) / double(src.cols); //without the double it's the nastiest bug!!
   const double newNumberCols = desiredCols * ratio;
   const double newNumberRows =  desiredRows * (1.0 / ratio);
   if (newNumberCols <= desiredRows) {
     const cv::Size desiredSize(desiredCols, newNumberCols);
-    cv::resize(src, dest, desiredSize, 0, 0, method);
+    try {
+      cv::resize(src, dest, desiredSize, 0, 0, method);
+    }
+    catch (cv::Exception& e) {
+      PRINT_NAMED_ERROR("ResizeKeepAspectRatioHelper.CvResizeException1", "Error while resizing image: %s,"
+                        "ratio %f, rows: %d, cols: %d, desiredSize: (%d, %d)",
+                        e.what(), ratio, src.rows, src.cols, desiredSize.width, desiredSize.height);
+    }
   }
   else {
     const cv::Size desiredSize(newNumberRows, desiredRows);
-    cv::resize(src, dest, desiredSize, 0, 0, method);
+    try {
+      cv::resize(src, dest, desiredSize, 0, 0, method);
+    }
+    catch (cv::Exception& e) {
+      PRINT_NAMED_ERROR("ResizeKeepAspectRatioHelper.CvResizeException2", "Error while resizing image: %s,"
+                        "ratio %f, rows: %d, cols: %d, desiredSize: (%d, %d)",
+                        e.what(), ratio, src.rows, src.cols, desiredSize.width, desiredSize.height);
+    }
   }
 }
 }
