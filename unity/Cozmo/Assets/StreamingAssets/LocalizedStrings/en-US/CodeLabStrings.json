@@ -512,6 +512,23 @@
   },
 
 
+  "codeLabSampleProject_SayCozmo.projectName": {
+    "translation": "Say Cozmo"
+  },
+  "codeLabSampleProject_DrawCozmo.projectName": {
+    "translation": "Draw Cozmo"
+  },
+  "codeLabSampleProject_PlayRandomAnims.projectName": {
+    "translation": "Play Random Animations"
+  },
+  "codeLabSampleProject_PlayAllAnims.projectName": {
+    "translation": "Play All Animations"
+  },
+  "codeLabSampleProject_DigitalClock.projectName": {
+    "translation": "Clock"
+  },
+  
+
   "codeLabFeaturedProject_HotPotato.projectName": {
       "translation": "Hot Potato"
   },

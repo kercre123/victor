@@ -402,6 +402,21 @@
   "codeLabSampleProject_IntruderAlarm.projectName" : {
     "translation" : "しんにゅうしゃ警報！"
   },
+  "codeLabSampleProject_SayCozmo.projectName": {
+    "translation": "Say Cozmo"
+  },
+  "codeLabSampleProject_DrawCozmo.projectName": {
+    "translation": "Draw Cozmo"
+  },
+  "codeLabSampleProject_PlayRandomAnims.projectName": {
+    "translation": "Play Random Animations"
+  },
+  "codeLabSampleProject_PlayAllAnims.projectName": {
+    "translation": "Play All Animations"
+  },
+  "codeLabSampleProject_DigitalClock.projectName": {
+    "translation": "Clock"
+  },
   "codeLab.SaveProject.Autosaved" : {
     "translation" : "自動保存されました"
   },

@@ -333,101 +333,113 @@
   "codeLabVertical.EVERYTHING": {
     "translation": "everything"
   },
-  "codeLabVertical.SELECT": {
-    "translation": "select"
+  "codeLabVertical.SOUND_EIGHTIES_MUSIC": {
+    "translation": "1 - eighties music"
   },
-  "codeLabVertical.WIN": {
-    "translation": "win"
+  "codeLabVertical.SOUND_MAMBO_MUSIC": {
+    "translation": "2 - mambo music"
   },
-  "codeLabVertical.LOSE": {
-    "translation": "lose"
+  "codeLabVertical.SOUND_DISCO_MUSIC": {
+    "translation": "3 - disco music"
   },
-  "codeLabVertical.GAME_START": {
-    "translation": "game start"
+  "codeLabVertical.SOUND_MAGIC": {
+    "translation": "4 - magic"
   },
-  "codeLabVertical.CLOCK_TICK": {
-    "translation": "clock tick"
+  "codeLabVertical.SOUND_WIN": {
+    "translation": "5 - win"
   },
-  "codeLabVertical.BLING": {
-    "translation": "bling"
+  "codeLabVertical.SOUND_LOSE": {
+    "translation": "6 - lose"
   },
-  "codeLabVertical.SUCCESS": {
-    "translation": "success"
-                },
-  "codeLabVertical.FAIL": {
-    "translation": "fail"
+  "codeLabVertical.SOUND_GAME_START": {
+    "translation": "7 - game start"
   },
-  "codeLabVertical.TIMER_WARNING": {
-    "translation": "timer warning"
+  "codeLabVertical.SOUND_CLOCK_TICK": {
+    "translation": "8 - clock tick"
   },
-  "codeLabVertical.TIMER_END": {
-    "translation": "timer end"
+  "codeLabVertical.SOUND_BLING": {
+    "translation": "9 - bling"
   },
-  "codeLabVertical.EIGHTIES_MUSIC": {
-    "translation": "eighties music"
+  "codeLabVertical.SOUND_SUCCESS": {
+    "translation": "10 - success"
   },
-  "codeLabVertical.MAMBO_MUSIC": {
-    "translation": "mambo music"
+  "codeLabVertical.SOUND_FAIL": {
+    "translation": "11 - fail"
   },
-  "codeLabVertical.BACKGROUND_MUSIC": {
-    "translation": "background music"
+  "codeLabVertical.SOUND_TIMER_WARNING": {
+    "translation": "12 - timer warning"
   },
-  "codeLabVertical.SPARKLE": {
-    "translation": "sparkle"
-                },
-  "codeLabVertical.SWOOSH": {
-    "translation": "swoosh"
+  "codeLabVertical.SOUND_TIMER_END": {
+    "translation": "13 - timer end"
+  },  
+  "codeLabVertical.SOUND_SPARKLE": {
+    "translation": "14 - sparkle"
   },
-  "codeLabVertical.PING": {
-    "translation": "ping"
+  "codeLabVertical.SOUND_SWOOSH": {
+    "translation": "15 - swoosh"
   },
-  "codeLabVertical.HOT_POTATO_END": {
-    "translation": "hot potato end"
+  "codeLabVertical.SOUND_PING": {
+    "translation": "16 - ping"
   },
-  "codeLabVertical.HOT_POTATO_MUSIC_SLOW": {
-    "translation": "hot potato music slow"
+  "codeLabVertical.SOUND_HOT_POTATO_END": {
+    "translation": "17 - hot potato end"
   },
-  "codeLabVertical.HOT_POTATO_MUSIC_MEDIUM": {
-    "translation": "hot potato music medium"
+  "codeLabVertical.SOUND_HOT_POTATO_MUSIC_SLOW": {
+    "translation": "18 - hot potato music slow"
   },
-  "codeLabVertical.HOT_POTATO_MUSIC_FAST": {
-    "translation": "hot potato music fast"
+  "codeLabVertical.SOUND_HOT_POTATO_MUSIC_MEDIUM": {
+    "translation": "19 - hot potato music medium"
   },
-  "codeLabVertical.HOT_POTATO_MUSIC_SUPERFAST": {
-    "translation": "hot potato music superfast"
+  "codeLabVertical.SOUND_HOT_POTATO_MUSIC_FAST": {
+    "translation": "20 - hot potato music fast"
   },
-  "codeLabVertical.MAGNET_PULL": {
-    "translation": "magnet pull"
+  "codeLabVertical.SOUND_HOT_POTATO_MUSIC_SUPERFAST": {
+    "translation": "21 - hot potato music superfast"
   },
-  "codeLabVertical.MAGNET_REPEL": {
-    "translation": "magnet repel"
+  "codeLabVertical.SOUND_MAGNET_PULL": {
+    "translation": "22 - magnet pull"
   },
-  "codeLabVertical.INSTRUMENT_1_MODE_1": {
-    "translation": "instrument 1 mode 1"
+  "codeLabVertical.SOUND_MAGNET_REPEL": {
+    "translation": "23 - magnet repel"
   },
-  "codeLabVertical.INSTRUMENT_1_MODE_2": {
-    "translation": "instrument 1 mode 2"
+  "codeLabVertical.SOUND_INSTRUMENT_1_MODE_1": {
+    "translation": "24 - instrument 1 mode 1 loop"
   },
-  "codeLabVertical.INSTRUMENT_1_MODE_3": {
-    "translation": "instrument 1 mode 3"
+  "codeLabVertical.SOUND_INSTRUMENT_1_MODE_2": {
+    "translation": "25 - instrument 1 mode 2 loop"
   },
-  "codeLabVertical.INSTRUMENT_2_MODE_1": {
-    "translation": "instrument 2 mode 1"
+  "codeLabVertical.SOUND_INSTRUMENT_1_MODE_3": {
+    "translation": "26 - instrument 1 mode 3 loop"
   },
-  "codeLabVertical.INSTRUMENT_2_MODE_2": {
-    "translation": "instrument 2 mode 2"
+  "codeLabVertical.SOUND_INSTRUMENT_2_MODE_1": {
+    "translation": "27 - instrument 2 mode 1 loop"
   },
-  "codeLabVertical.INSTRUMENT_2_MODE_3": {
-    "translation": "instrument 2 mode 3"
+  "codeLabVertical.SOUND_INSTRUMENT_2_MODE_2": {
+    "translation": "28 - instrument 2 mode 2 loop"
   },
-  "codeLabVertical.INSTRUMENT_3_MODE_1": {
-    "translation": "instrument 3 mode 1"
+  "codeLabVertical.SOUND_INSTRUMENT_2_MODE_3": {
+    "translation": "29 - instrument 2 mode 3 loop"
   },
-  "codeLabVertical.INSTRUMENT_3_MODE_2": {
-    "translation": "instrument 3 mode 2"
+  "codeLabVertical.SOUND_INSTRUMENT_3_MODE_1": {
+    "translation": "30 - instrument 3 mode 1 loop"
   },
-  "codeLabVertical.INSTRUMENT_3_MODE_3": {
-    "translation": "instrument 3 mode 3"
+  "codeLabVertical.SOUND_INSTRUMENT_3_MODE_2": {
+    "translation": "31 - instrument 3 mode 2 loop"
+  },
+  "codeLabVertical.SOUND_INSTRUMENT_3_MODE_3": {
+    "translation": "32 - instrument 3 mode 3 loop"
+  },
+  "codeLabVertical.SOUND_TIMER_START": {
+    "translation": "33 - timer start"
+  },
+  "codeLabVertical.SOUND_FIRE_TRUCK_ALARM": {
+    "translation": "34 - fire truck alarm"
+  },
+  "codeLabVertical.SOUND_CUBE_CHARGE": {
+    "translation": "35 - cube charge"
+  },
+  "codeLabVertical.SOUND_BACKGROUND_MUSIC": {
+    "translation": "36 - background music loop"
   },
   "codeLabVertical.ANY": {
     "translation": "any"

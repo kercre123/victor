@@ -172,6 +172,12 @@ def parse_command_args():
                             action='store_const',
                             const=True,
                             help='Verbose logging of everything (very spammy)')
+    arg_parser.add_argument('-dpjc', '--debug_project_json_contents',
+                            dest='debug_project_json_contents',
+                            default=False,
+                            action='store_const',
+                            const=True,
+                            help='Print out the unescaped ProjectJson contents on every save')
 
 
     options = arg_parser.parse_args()
@@ -1026,9 +1032,14 @@ class CodeLabInterface():
 
         if save_to_contents:
             # Overwrite contents file (this is always the latest save)
-            path_name = os.path.join(project_directory, "contents.json")
+            path_name = os.path.join(project_directory, CONTENTS_FILENAME)
             with open(path_name, 'w') as out_file:
                 json.dump(project_data, out_file)
+
+            if command_args.debug_project_json_contents:
+                log_text("Escaped ProjectJSON contents:\n" + json.dumps(project_data["ProjectJSON"]) + "\n")
+                loaded_proj_json = load_and_verify_json(project_data["ProjectJSON"], "save_contents")
+                log_text("Unescaped ProjectJSON contents:\n" + json.dumps(loaded_proj_json) + "\n")
 
         if save_to_history:
             # Save a new file to history (so we have a full history of every edit)
@@ -1524,8 +1535,8 @@ def handle_log_line(evt, *, msg):
                           "[@VisionComponent] DroppedFrameStats",
                           "[@VisionComponent] VisionComponent.VisionComponent",
                           "[@VisionSystem] MotionDetector.DetectMotion.FoundCentroid",
-                          "VisionSystem.Profiler"]
-
+                          "VisionSystem.Profiler",
+                          "Animation.Init.SendBufferNotEmpty"]
 
     msg_line = msg.line.strip()
 
@@ -1653,7 +1664,8 @@ if __name__ == '__main__':
 
             if command_args.log_from_engine:
                 sdk_conn.add_event_handler(cozmo._clad._MsgDebugAppendConsoleLogLine, handle_log_line)
-                enable_all_log_channels(sdk_conn)
+                enable_all_log_channels(sdk_conn, False)
+                enable_log_channel(sdk_conn, "unity", True)
                 set_console_var(sdk_conn, "EnableCladLogger", "1")
 
             _code_lab.on_connect_to_unity()

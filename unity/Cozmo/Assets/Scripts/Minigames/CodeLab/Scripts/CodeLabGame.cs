@@ -24,6 +24,7 @@ namespace CodeLab {
     public string ProjectXML;
     public string ProjectJSON;
     public string ProjectName; // Stored in sample-projects.js as string key.
+    public string DASProjectName; // DAS-friendly name for analytics (same in all languages, and never changes)
   }
 
   // CodeLabFeaturedProject are only used in vertical grammar.
@@ -33,6 +34,7 @@ namespace CodeLab {
     public uint VersionNum;
     public string ProjectJSON;
     public string ProjectName; // Stored in featured-projects.js as string key.
+    public string DASProjectName; // DAS-friendly name for analytics (same in all languages, and never changes)
     public string FeaturedProjectDescription; // Stored in featured-projects.js as string key.
     public string FeaturedProjectImageName;
     public string FeaturedProjectBackgroundColor;
@@ -521,14 +523,18 @@ namespace CodeLab {
     private float Convert360AngleToMinus180To180(float inAngle) {
       if (inAngle < 180.0f) {
         if (inAngle < 0.0f) {
-          DAS.Error("CodeLab.Convert360AngleToMinus180To180.TooSmall", "inAngle: " + inAngle);
+          if (inAngle < -0.1f) {
+            DAS.Error("CodeLab.Convert360AngleToMinus180To180.TooSmall", "inAngle: " + inAngle);
+          }
           return 0.0f;
         }
         return inAngle; // 1st half maps 0 to 180
       }
       else {
         if (inAngle > 360.0f) {
-          DAS.Error("CodeLab.Convert360AngleToMinus180To180.TooBig", "inAngle: " + inAngle);
+          if (inAngle > 360.1f) {
+            DAS.Error("CodeLab.Convert360AngleToMinus180To180.TooBig", "inAngle: " + inAngle);
+          }
           return 0.0f;
         }
         return inAngle - 360.0f; // 2nd half maps to -180 to -0
@@ -2141,20 +2147,20 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Style_Mambo_1_183Bpm_Loop_Stop;
         }
         break;
-      case 3: // BKY_BACKGROUND_MUSIC
+      case 3: // BKY_SOUND_DISCO_MUSIC
         if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_Off;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Style_Disco_1_135Bpm_Loop;
         }
         else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_On;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Style_Disco_1_135Bpm_Loop; // TODO: change to _Stop event when that's added
         }
         break;
-      case 4: // BKY_SELECT
+      case 4: // BKY_SOUND_MAGIC
         if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Cube_Light;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Magic8_Reveal_Stinger;
         }
         else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Cube_Light_Stop;
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Magic8_Reveal_Stinger_Stop;
         }
         break;
       case 5: // BKY_WIN
@@ -2379,6 +2385,38 @@ namespace CodeLab {
         }
         else {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_Mode_3_Stop;
+        }
+        break;
+      case 33: // BKY_SOUND_TIMER_START
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Firetruck_Timer_Start;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Firetruck_Timer_Start_Stop;
+        }
+        break;
+      case 34: // BKY_SOUND_FIRE_TRUCK_ALARM
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Firetruck_Timer_End;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Firetruck_Timer_End_Stop;
+        }
+        break;
+      case 35: // BKY_SOUND_CUBE_CHARGE
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Hot_Potato_Cube_Charge;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Hot_Potato_Cube_Charge_Stop;
+        }
+        break;
+      case 36: // BKY_SOUND_BACKGROUND_MUSIC
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_Off;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_On;
         }
         break;
       default:
