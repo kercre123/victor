@@ -921,42 +921,42 @@
     "translation": "draw [text] at [X],[Y]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_text": {
-    "translation": "Draw the specified [text] at the given pixel position, using [X],[Y] coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Coordinate 0,0 starts at the top left corner of Cozmo's face screen. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation": "Draw the specified [text] at the given pixel position, using [X],[Y] coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Coordinate 0,0 starts at the top left corner of Cozmo's face screen. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_line": {
     "translation": "draw line from [X],[Y] to [X2],[Y2]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_line": {
-    "translation": "Draw a line between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation": "Draw a line between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_rect": {
     "translation": "fill rectangle from [X],[Y] to [X2],[Y2]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_rect": {
-    "translation": "Draw a filled rectangle between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation": "Draw a filled rectangle between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_rect": {
     "translation": "draw rectangle from [X],[Y] to [X2],[Y2]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_rect": {
-    "translation": "Draw a rectangle between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation": "Draw a rectangle between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_circle": {
     "translation": "draw circle at [X],[Y] with radius [Z]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_circle": {
-    "translation": "Draw a circle at the given [X],[Y] pixel coordinate with the given [Z] radius in pixels. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation": "Draw a circle at the given [X],[Y] pixel coordinate with the given [Z] radius in pixels. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_circle": {
     "translation": "fill circle at [X],[Y] with radius [Z]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_circle": {
-    "translation": "Draw a filled circle at the given [X],[Y] pixel coordinate with the given [Z] radius in pixels. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation": "Draw a filled circle at the given [X],[Y] pixel coordinate with the given [Z] radius in pixels. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
 
