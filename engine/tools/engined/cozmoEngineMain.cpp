@@ -7,6 +7,7 @@
 #include "engine/utils/parsingConstants/parsingConstants.h"
 
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/androidLogPrintLogger_android.h"
 #include "util/logging/logging.h"
 #include "util/logging/iFormattedLoggerProvider.h"
 #include "util/string/stringUtils.h"
@@ -41,38 +42,6 @@ const char* LOGNAME = "CozmoEngine";
                                                                                                     
 Anki::Cozmo::CozmoAPI* gEngineAPI = nullptr;
 Anki::Util::Data::DataPlatform* gDataPlatform = nullptr;
-
-class LogcatProvider : public Anki::Util::IFormattedLoggerProvider {
-public:
-
-  LogcatProvider() {}
-
-  void Log(ILoggerProvider::LogLevel level, const std::string& message)
-  {
-    android_LogPriority priority = ANDROID_LOG_DEFAULT;
-
-    switch (level) {
-    case LogLevel::LOG_LEVEL_DEBUG:
-      priority = ANDROID_LOG_DEBUG;
-      break;
-    case LogLevel::LOG_LEVEL_INFO:
-    case LogLevel::LOG_LEVEL_EVENT:
-      priority = ANDROID_LOG_INFO;
-      break;
-    case LogLevel::LOG_LEVEL_WARN:
-      priority = ANDROID_LOG_WARN;
-      break;
-    case LogLevel::LOG_LEVEL_ERROR:
-      priority = ANDROID_LOG_ERROR;
-      break;
-    default:
-      // should never be here
-      break;
-    }
-
-    __android_log_print(priority, LOGNAME, "%s", message.c_str());
-  }
-}; // class LogcatProvider
 
 void configure_engine(Json::Value& config)
 {
@@ -144,8 +113,8 @@ int cozmo_start(const Json::Value& configuration)
   // Build up a list of enabled log providers
   std::vector<Anki::Util::ILoggerProvider*> loggers;
 
-  LogcatProvider* logcatProvider = new LogcatProvider();
-  loggers.push_back(logcatProvider);
+  Anki::Util::AndroidLogPrintLogger * logPrintLogger = new Anki::Util::AndroidLogPrintLogger(LOGNAME);
+  loggers.push_back(logPrintLogger);
 
   std::string filesPath;
   std::string cachePath;
@@ -192,7 +161,7 @@ int cozmo_start(const Json::Value& configuration)
 
   gDataPlatform = createPlatform(filesPath, cachePath, externalPath, resourcesPath);
 
-  logcatProvider->Log(LogcatProvider::LogLevel::LOG_LEVEL_DEBUG, "resourcesPath: " + resourcesPath);
+  logPrintLogger->Log(Anki::Util::AndroidLogPrintLogger::LogLevel::LOG_LEVEL_DEBUG, "resourcesPath: " + resourcesPath);
 
   // Initialize logging
   #if DEV_LOGGER_ENABLED

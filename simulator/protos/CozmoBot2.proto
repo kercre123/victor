@@ -280,6 +280,8 @@ Supervisor {
                   axisTolerance 3.14
                   rotationTolerance 3.14
                   numberOfRotations 1
+
+                  rotation 0 1 0 1.5707963
                 }
 
                 # Connects CozmoAnim to CozmoBot2
@@ -293,7 +295,9 @@ Supervisor {
                   axisTolerance 3.14
                   rotationTolerance 3.14
                   numberOfRotations 1
+
                   translation 0.0001 0.0001 0
+                  rotation 0 1 0 1.5707963
                 }
 
                 # This IMU is positioned in the same place as the one in CozmoEngine2.proto

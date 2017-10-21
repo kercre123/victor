@@ -60,11 +60,10 @@ s32 CST_FaceTracking::UpdateSimInternal()
   switch (_testState) {
     case TestState::Init:
     {
-      CozmoSimTestController::MakeSynchronous();
       SendMoveHeadToAngle(headLookupAngle_rad, 100, 100);
       _face = GetNodeByDefName("Face_1");
 
-      _testState = TestState::WaitToObserveFace;
+      SET_TEST_STATE(WaitToObserveFace);
       break;
     }
 
@@ -76,7 +75,7 @@ s32 CST_FaceTracking::UpdateSimInternal()
                                             NEAR(GetRobotHeadAngle_rad(), headLookupAngle_rad, headAngleTolerance_rad)) {
         // Move in the y direction
         _face->setVelocity((double[]){0, 1, 0, 0, 0, 0});
-        _testState = TestState::StopFace1;
+        SET_TEST_STATE(StopFace1);
       }
       break;
     }
@@ -101,7 +100,7 @@ s32 CST_FaceTracking::UpdateSimInternal()
                                             NEAR(_facePose.GetTranslation().z(), expectedFaceTranslation.z(), margin)) {
         // Moving at an faster but arbitrary speed
         _face->setVelocity((double[]){-1.5, -1.5, -1.1, 0, 0, 0});
-        _testState = TestState::StopFace2;
+        SET_TEST_STATE(StopFace2);
       }
       break;
     }

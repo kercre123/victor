@@ -191,6 +191,12 @@ namespace Anki {
       
       return UpdateSimInternal();
     }
+    
+    
+    void CozmoSimTestController::InitInternal()
+    {
+      MakeSynchronous();
+    }
 
     
     //Only runs if #define RECORD_TEST 1, use for local testing

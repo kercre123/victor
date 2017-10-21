@@ -14,6 +14,7 @@
     "DetectingBlinkAmount"       : false,
     "DetectingLaserPoints"       : false,
     "ComputingStatistics"        : false,
+    "BuildingOverheadMap"        : false,
     "DetectingGeneralObjects"    : true
   },
   
@@ -88,6 +89,13 @@
   	"IncreaseFactor"    : 100.0,  // The higher this number, the more sensitive is motion detection to motion
   	"DecreaseFactor"    : 1.0,    // The higher this number, the more quickly motion detection forgets about motion
   	"MaxValue"          : 3.0,    // The higher this value, the sooner peripheral motion detection wilkl be triggered
+    "CentroidStability" : 0.6     // Hop quickly should peripheral motion detection track the source of motion.
+  },
+
+  "OverheadMap" :
+  {
+    "NumRows"          : 1000,    // Size of the overhead map. Bigger sizes do not impact computation, only memory
+    "NumCols"          : 1000
     "CentroidStability" : 0.6     // Hop quickly should peripheral motion detection track the source of motion. 
   },
   

@@ -15,8 +15,8 @@ static const int AUDIO_SHIFT      = 3; // 3 = 3000000hz
 static const int AUDIO_PRESCALE   = 2 << AUDIO_SHIFT;
 static const int AUDIO_DATA_CLOCK = SYSTEM_CLOCK / (2 << AUDIO_SHIFT);
 
-static const int AUDIO_DECIMATION = 96;
-static const int AUDIO_SAMPLES_PER_FRAME  = 80;
+static const int AUDIO_DECIMATION = 64;
+static const int AUDIO_SAMPLES_PER_FRAME  = 120;
 
 // This calculates the main execution timing to fit audio into even chunks
 static const uint16_t MAIN_EXEC_PRESCALE = 4; // Timer prescale

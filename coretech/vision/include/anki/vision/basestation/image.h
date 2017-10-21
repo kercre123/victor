@@ -20,7 +20,6 @@
 #include "anki/common/basestation/math/quad.h"
 #include "anki/common/basestation/math/rect.h"
 
-#include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/colorPixelTypes.h"
 
 #include <string>

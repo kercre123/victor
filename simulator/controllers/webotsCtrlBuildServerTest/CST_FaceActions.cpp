@@ -56,7 +56,6 @@ namespace Anki {
       switch (_testState) {
         case TestState::TurnToFace:
         {
-          MakeSynchronous();
           SendMoveHeadToAngle(MAX_HEAD_ANGLE, 100, 100);
           
           ExternalInterface::QueueSingleAction m;
@@ -66,7 +65,7 @@ namespace Anki {
           ExternalInterface::MessageGameToEngine message;
           message.Set_QueueSingleAction(m);
           SendMessage(message);
-          _testState = TestState::TurnAwayFromFace;
+          SET_TEST_STATE(TurnAwayFromFace);
           break;
         }
         case TestState::TurnAwayFromFace:
@@ -87,7 +86,7 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            _testState = TestState::TurnBackToFace;
+            SET_TEST_STATE(TurnBackToFace);
           }
           break;
         }
@@ -108,7 +107,7 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            _testState = TestState::TestDone;
+            SET_TEST_STATE(TestDone);
           }
           break;
         }

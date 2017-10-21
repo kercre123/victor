@@ -13,12 +13,6 @@
 #include "engine/robot.h"
 #include "simulator/game/cozmoSimTestController.h"
 
-#define SET_STATE(s) {                                                  \
-    PRINT_NAMED_INFO("CST_StackBlockBehavior.TransitionTestState",      \
-                     "%s", #s);                                         \
-    _testState = TestState::s;                                          \
-  }
-
 
 namespace Anki {
 namespace Cozmo {
@@ -93,7 +87,6 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
   switch (_testState) {
     case TestState::Init:
     {
-      MakeSynchronous();
       DisableRandomPathSpeeds();
       StartMovieConditional("StackBlockBehavior");
       // TakeScreenshotsAtInterval("StackBlockBehavior", 1.f);
@@ -111,7 +104,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
                     ExternalInterface::ExecuteBehaviorByID(kBehaviorID, -1)));
           
       SendMoveHeadToAngle(0, 100, 100);
-      SET_STATE(WaitForCubeConnections);
+      SET_TEST_STATE(WaitForCubeConnections);
       break;
     }
 
@@ -120,7 +113,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected == 2, 5)
       {
-        SET_STATE(VerifyObject1);
+        SET_TEST_STATE(VerifyObject1);
       }
       break;
     }
@@ -138,7 +131,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       {
         _turnInPlaceResult = ActionResult::RUNNING;
         SendTurnInPlace(DEG_TO_RAD(45.f), M_PI_F, 500.f);
-        SET_STATE(TurnAway);
+        SET_TEST_STATE(TurnAway);
       }
       break;
     }
@@ -153,7 +146,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         CST_ASSERT( IsLocalizedToObject(), "Should be localized to object before we deloc");
         // deloc the robot so it doesn't see both cubes in the same frame
         SendForceDeloc();
-        SET_STATE(WaitForDeloc);
+        SET_TEST_STATE(WaitForDeloc);
       }
       break;
     }
@@ -166,7 +159,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         _turnInPlaceResult = ActionResult::RUNNING;
         SendTurnInPlace(DEG_TO_RAD(30.f), M_PI_F, 500.0f);
 
-        SET_STATE(VerifyObject2);
+        SET_TEST_STATE(VerifyObject2);
       }
       break;
     }
@@ -184,7 +177,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
                                             GetNumObjects() == 1)
       {
         _behaviorCheckTime = GetSupervisor()->getTime();
-        SET_STATE(DontStartBehavior);        
+        SET_TEST_STATE(DontStartBehavior);        
       }
       break;
     }
@@ -199,7 +192,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       if( currTime - _behaviorCheckTime > timeToWait_s ) {
         _turnInPlaceResult = ActionResult::RUNNING;
         SendTurnInPlace( DEG_TO_RAD(-90.f), M_PI_F, 500.f );
-        SET_STATE(TurnBack);
+        SET_TEST_STATE(TurnBack);
       }
       break;
     }
@@ -211,7 +204,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_startedBehavior == 1, 10) {
         // behavior is running, wait for it to finish
         _pickupObjectResult = ActionResult::RUNNING;
-        SET_STATE(PickingUp)
+        SET_TEST_STATE(PickingUp)
       }
       
       break;
@@ -240,7 +233,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
 
         // raise it off the ground so we trigger a moved event, and send it somewhere we know the robot won't see it
         SetLightCubePose(_baseCube, hideCubePose);
-        SET_STATE(BehaviorShouldFail);
+        SET_TEST_STATE(BehaviorShouldFail);
         // at this point, robot should be trying to do stacking action. It picked up the first cube, then will
         // go try to stack it, but should fail because the bottom cube isn't there
         _behaviorCheckTime = -1.0;
@@ -283,7 +276,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
           _turnInPlaceResult = ActionResult::RUNNING;
           SendTurnInPlace(targetAngle, M_PI_F, 500.0f, POINT_TURN_ANGLE_TOL, true, QueueActionPosition::AT_END); // Absolute turn, put at end of action queue.
           
-          SET_STATE(TurnToObject2);
+          SET_TEST_STATE(TurnToObject2);
         }        
       }
       break;
@@ -296,7 +289,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(10,
                                             (_turnInPlaceResult == ActionResult::SUCCESS || _turnInPlaceResult == ActionResult::CANCELLED_WHILE_RUNNING),
                                             _startedBehavior == 2) {
-        SET_STATE(Stacking);
+        SET_TEST_STATE(Stacking);
       }
       break;
     }
@@ -308,7 +301,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       
       IF_CONDITION_WITH_TIMEOUT_ASSERT( _stoppedBehavior == 2, 40 ) {
         // behavior should eventually stop
-        SET_STATE(VerifyStack)
+        SET_TEST_STATE(VerifyStack)
       }
       break;
     }
@@ -334,7 +327,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         // Cancel the stack behavior:
         SendMessage(ExternalInterface::MessageGameToEngine(
                        ExternalInterface::ExecuteBehaviorByID(BehaviorID::Wait, -1)));
-        SET_STATE(TestDone)
+        SET_TEST_STATE(TestDone)
       }
       break;
     }

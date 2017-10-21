@@ -66,12 +66,10 @@ void Comms::run(void) {
   // Configure our GPIO to be wired into USART1
   BODY_TX::alternate(0);  // USART1_TX
   BODY_TX::speed(SPEED_HIGH);
-  BODY_TX::pull(PULL_NONE);
   BODY_TX::mode(MODE_ALTERNATE);
 
   BODY_RX::alternate(0);  // USART1_RX
   BODY_RX::speed(SPEED_HIGH);
-  BODY_RX::pull(PULL_NONE);
   BODY_RX::mode(MODE_ALTERNATE);
 
   // Configure our USART1 (Start interrupt)
@@ -93,7 +91,6 @@ void Comms::run(void) {
   NVIC_SetPriority(USART1_IRQn, 2);
   NVIC_EnableIRQ(USART1_IRQn);
 
-  USART1->TDR = 0xFF;
   sendAck(ACK_BOOTED);
 
   while (!g_exitRuntime) __asm("WFI");

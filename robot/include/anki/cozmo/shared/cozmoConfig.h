@@ -163,7 +163,8 @@ namespace Cozmo {
   
   const u8 NUM_RADIAL_DISTORTION_COEFFS = 8;
 
-  const ImageResolution DEFAULT_IMAGE_RESOLUTION = ImageResolution::NHD;
+  const u16 DEFAULT_CAMERA_RESOLUTION_WIDTH  = 640;
+  const u16 DEFAULT_CAMERA_RESOLUTION_HEIGHT = 360;
   
   /***************************************************************************
    *

@@ -206,7 +206,7 @@ void Comms::tick(void) {
     Motors::transmit(&outboundPacket.sync.payload);
     Opto::transmit(&outboundPacket.sync.payload);
     // TODO(Al/Lee): Put back once mics and camera can co-exist
-//    Mics::transmit(outboundPacket.sync.payload.audio);
+//  Mics::transmit(outboundPacket.sync.payload.audio);
     Touch::transmit(outboundPacket.sync.payload.touchLevel);
 
     outboundPacket.sync.payload.framecounter++;
@@ -323,9 +323,11 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
     }
 
     // Shift in the data from the circular buffer
-    memcpy(&packet.raw[receivedWords], &inbound_raw[previousIndex], copy);
-    receivedWords += copy;
-    previousIndex = (previousIndex + copy) & (MAX_INBOUND_SIZE - 1);
+    if (copy > 0) {
+      memcpy(&packet.raw[receivedWords], &inbound_raw[previousIndex], copy);
+      receivedWords += copy;
+      previousIndex = (previousIndex + copy) & (MAX_INBOUND_SIZE - 1);
+    }
 
     // Sync to packet header
     switch (state) {
@@ -352,9 +354,6 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
           memcpy(&packet.raw[0], &packet.raw[offset], receivedWords - offset);
           receivedWords -= offset;
         }
-
-        // Restart packing stage
-        continue ;
 
       case COMM_STATE_VALIDATE:
         // We don't have enough data to test the header

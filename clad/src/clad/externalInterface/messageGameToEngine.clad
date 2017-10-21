@@ -319,8 +319,7 @@ message ImageRequest {
 //       It is intended for dev use since the robot will likely always stream
 //       its image in the product.
 message SetRobotImageSendMode {
-    ImageSendMode mode,
-    ImageResolution resolution
+    ImageSendMode mode
 }
 
 // SaveImages (via VizController)

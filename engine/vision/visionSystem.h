@@ -78,9 +78,9 @@ namespace Cozmo {
   class LaserPointDetector;
   class MotionDetector;
   class OverheadEdgesDetector;
+  class OverheadMap;
   class Robot;
   class VizManager;
-  
   
   // Everything that can be generated from one image in one big package:
   struct VisionProcessingResult
@@ -288,7 +288,6 @@ namespace Cozmo {
   
     // For sending images to basestation
     ImageSendMode                 _imageSendMode = ImageSendMode::Off;
-    ImageResolution               _nextSendImageResolution = ImageResolution::ImageResolutionNone;
     
     // We hold a pointer to the VizManager since we often want to draw to it
     VizManager*                   _vizManager = nullptr;
@@ -301,6 +300,7 @@ namespace Cozmo {
     std::unique_ptr<MotionDetector>         _motionDetector;
     std::unique_ptr<OverheadEdgesDetector>  _overheadEdgeDetector;
     std::unique_ptr<CameraCalibrator>       _cameraCalibrator;
+    std::unique_ptr<OverheadMap>            _overheadMap;
     std::unique_ptr<Vision::ObjectDetector> _generalObjectDetector;
     
     // Tool code stuff
@@ -339,6 +339,8 @@ namespace Cozmo {
     
     // Will use color if not empty, or gray otherwise
     Result DetectMotion(Vision::ImageCache& imageCache);
+
+    Result UpdateOverheadMap(const Vision::ImageRGB& image);
     
     Result ReadToolCode(const Vision::Image& image);
     

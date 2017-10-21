@@ -88,7 +88,7 @@ s32 CST_Animations::UpdateSimInternal()
         time(&currentTime);
         if(difftime(currentTime, _startedWaitingForAnimations_s) > kTimeToWaitForAnimations_s){
           // we've waited longe enough to have buildup the animation list - start the test
-          _testState = TestState::SendingNextAnimation;
+          SET_TEST_STATE(SendingNextAnimation);
         }
       }
     }
@@ -101,7 +101,7 @@ s32 CST_Animations::UpdateSimInternal()
       
       PRINT_NAMED_INFO("CST_Animations.PlayingAnimation", "%s", _lastAnimPlayed.c_str());
       SendAnimation(_lastAnimPlayed.c_str(), kNumLoops);
-      _testState = TestState::ExecutingAnimation;
+      SET_TEST_STATE(ExecutingAnimation);
       break;
     }
       
@@ -111,9 +111,9 @@ s32 CST_Animations::UpdateSimInternal()
       // If no action complete message, this will timeout with assert.
       if (CONDITION_WITH_TIMEOUT_ASSERT(_lastAnimPlayed.empty(), _lastAnimPlayedTime, timeoutInSeconds)) {
         if(_animationIndex < _allAnimations.size()){
-          _testState = TestState::SendingNextAnimation;
+          SET_TEST_STATE(SendingNextAnimation);
         }else{
-          _testState = TestState::TestDone;
+          SET_TEST_STATE(TestDone);
         }
       }
       break;

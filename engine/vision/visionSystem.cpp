@@ -24,6 +24,7 @@
 #include "engine/vision/laserPointDetector.h"
 #include "engine/vision/motionDetector.h"
 #include "engine/vision/overheadEdgesDetector.h"
+#include "engine/vision/overheadMap.h"
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
@@ -200,6 +201,12 @@ namespace Cozmo {
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.DoneInstantiatingFaceTracker", "");
 
     _motionDetector.reset(new MotionDetector(_camera, _vizManager, config));
+
+    if (!config.isMember("OverheadMap")) {
+      PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "OverheadMap");
+      return RESULT_FAIL;
+    }
+    _overheadMap.reset(new OverheadMap(config["OverheadMap"]));
 
     const Result petTrackerInitResult = _petTracker->Init(config);
     if(RESULT_OK != petTrackerInitResult) {
@@ -896,7 +903,13 @@ namespace Cozmo {
     return result;
     
   } // DetectMotion()
-  
+
+  Result VisionSystem::UpdateOverheadMap(const Vision::ImageRGB& image)
+  {
+    Result result = _overheadMap->Update(image, _poseData, _currentResult.debugImageRGBs);
+    return result;
+  }
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result VisionSystem::DetectLaserPoints(Vision::ImageCache& imageCache)
   {
@@ -1382,7 +1395,23 @@ namespace Cozmo {
       visionModesProcessed.SetBitFlag(VisionMode::DetectingMotion, true);
       Toc("TotalDetectingMotion");
     }
-    
+
+    if (ShouldProcessVisionMode(VisionMode::BuildingOverheadMap))
+    {
+      if (imageCache.HasColor()) {
+        Tic("UpdateOverheadMap");
+        lastResult = UpdateOverheadMap(imageCache.GetRGB());
+        Toc("UpdateOverheadMap");
+        if (lastResult != RESULT_OK) {
+          return lastResult;
+        }
+        visionModesProcessed.SetBitFlag(VisionMode::BuildingOverheadMap, true);
+      }
+      else {
+        PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "No color image!");
+      }
+    }
+
     if(ShouldProcessVisionMode(VisionMode::DetectingOverheadEdges))
     {
       Tic("TotalDetectingOverheadEdges");

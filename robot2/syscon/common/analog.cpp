@@ -41,7 +41,6 @@ void Analog::init(void) {
               | ADC_CFGR2_CKMODE_1
               ;
   ADC1->SMPR  = 0
-              | ADC_SMPR_SMP  // Long polling time
               ;
 
   // Enable VRef
@@ -89,6 +88,7 @@ void Analog::transmit(BodyToHead* data) {
 
 #ifndef BOOTLOADER
 #include "lights.h"
+#endif
 
 static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
 static const int POWER_WIPE_TIME = 200 * 10;  // Erase flash
@@ -114,7 +114,9 @@ void Analog::tick(void) {
     if (hold_count < POWER_DOWN_TIME) {
       hold_count++;
     } else if (hold_count < POWER_WIPE_TIME) {
+      #ifndef BOOTLOADER
       Lights::disable();
+      #endif
     } else {
       Power::softReset(true);
     }
@@ -126,4 +128,3 @@ void Analog::tick(void) {
     }
   }
 }
-#endif

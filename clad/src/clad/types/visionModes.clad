@@ -23,6 +23,7 @@ namespace Cozmo {
     DetectingBlinkAmount,        //  "
     LimitedExposure,
     DetectingLaserPoints,
+    BuildingOverheadMap,
     DetectingGeneralObjects, // I.e. via Deep CNN / TensorFlow
     Count
   }

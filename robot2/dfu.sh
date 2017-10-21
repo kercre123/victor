@@ -48,7 +48,6 @@ if [[ ${#ISROOT} -lt 31 ]]; then
     $ADB shell -x "./data/local/tmp/userinit.sh"
 fi
 
-
 cd hal/dfu
 make
 #make the remote schtuff?

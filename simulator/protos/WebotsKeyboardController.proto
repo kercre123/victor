@@ -172,7 +172,9 @@ PROTO WebotsKeyboardController [
   field SFFloat imageCenter_y 120
 
   # Vision system params
-  field SFString streamResolution "QVGA"
+  field SFInt32 streamResolutionWidth  0
+  field SFInt32 streamResolutionHeight 0
+
   field SFInt32 camera_autoexposureOn 1
   field SFFloat camera_exposureTime 0.2
   field SFInt32 camera_integerCountsIncrement 3
@@ -263,6 +265,7 @@ Supervisor {
       ]
     }
       
+    %{ if fields.streamResolutionWidth.value > 0 and fields.streamResolutionHeight.value > 0 then }%
     DEF CAM_DISPLAY_PLANE Display {
       children [
         DEF SHAPE Shape {
@@ -274,30 +277,17 @@ Supervisor {
             }
           }
           geometry Plane {
-		 # Make display plane have no dims in 3D view so as to be invisible
-	         size 0 0
+	    # Make display plane have no dims in 3D view so as to be invisible
+	    size 0 0
           }
         }
       ]
       name "uiCamDisplay"
 
-      %{ if fields.streamResolution.value == "VGA" then }%
-      width 640
-      height 480
-      %{ elseif fields.streamResolution.value == "CVGA" then }%
-      width 400
-      height 296
-      %{ elseif fields.streamResolution.value == "QVGA" then }%
-      width 320
-      height 240
-      %{ elseif fields.streamResolution.value == "QQVGA" then }%
-      width 160
-      height 120
-      %{ elseif fields.streamResolution.value == "QQQVGA" then }%
-      width 80
-      height 60
-      %{ end }%
+      width  IS streamResolutionWidth
+      height IS streamResolutionHeight
     }
+    %{ end }%
   ]
   name IS name
   controller "webotsCtrlKeyboard"
