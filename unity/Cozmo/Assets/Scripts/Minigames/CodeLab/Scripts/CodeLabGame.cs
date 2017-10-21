@@ -40,6 +40,7 @@ namespace CodeLab {
     public string FeaturedProjectBackgroundColor;
     public string FeaturedProjectTitleTextColor;
     public string FeaturedProjectInstructions;
+    public string Language;
   }
 
   public class CodeLabGame : GameBase {
@@ -1055,23 +1056,24 @@ namespace CodeLab {
       List<CodeLabFeaturedProject> copyCodeLabFeaturedProjectList = new List<CodeLabFeaturedProject>();
       for (int i = 0; i < _CodeLabFeaturedProjects.Count; i++) {
         var project = _CodeLabFeaturedProjects[i];
+        if (string.IsNullOrEmpty(project.Language) || project.Language == Localization.GetStringsLocale()) {
+          CodeLabFeaturedProject proj = new CodeLabFeaturedProject();
+          proj.ProjectUUID = project.ProjectUUID;
+          proj.ProjectName = project.ProjectName; // value is string key
+          proj.VersionNum = project.VersionNum;
+          proj.FeaturedProjectDescription = project.FeaturedProjectDescription; // value is string key
+          proj.FeaturedProjectImageName = project.FeaturedProjectImageName;
+          proj.FeaturedProjectBackgroundColor = project.FeaturedProjectBackgroundColor;
+          proj.FeaturedProjectTitleTextColor = project.FeaturedProjectTitleTextColor;
+          proj.FeaturedProjectInstructions = project.FeaturedProjectInstructions;
 
-        CodeLabFeaturedProject proj = new CodeLabFeaturedProject();
-        proj.ProjectUUID = project.ProjectUUID;
-        proj.ProjectName = project.ProjectName; // value is string key
-        proj.VersionNum = project.VersionNum;
-        proj.FeaturedProjectDescription = project.FeaturedProjectDescription; // value is string key
-        proj.FeaturedProjectImageName = project.FeaturedProjectImageName;
-        proj.FeaturedProjectBackgroundColor = project.FeaturedProjectBackgroundColor;
-        proj.FeaturedProjectTitleTextColor = project.FeaturedProjectTitleTextColor;
-        proj.FeaturedProjectInstructions = project.FeaturedProjectInstructions;
-
-        if (proj.VersionNum > CodeLabProject.kCurrentVersionNum) {
-          // NOTE: While sending ProjectName's is generally a PII risk, Sample projects will never have user configurable names
-          DAS.Warn("Codelab.OnAppLoadedFromData.BadVersionNumber", "featured project " + proj.ProjectName + "'s version number " + project.VersionNum.ToString() + " is greater than the app's codelab version " + CodeLabProject.kCurrentVersionNum.ToString());
-        }
-        else {
-          copyCodeLabFeaturedProjectList.Add(proj);
+          if (proj.VersionNum > CodeLabProject.kCurrentVersionNum) {
+            // NOTE: While sending ProjectName's is generally a PII risk, Sample projects will never have user configurable names
+            DAS.Warn("Codelab.OnAppLoadedFromData.BadVersionNumber", "featured project " + proj.ProjectName + "'s version number " + project.VersionNum.ToString() + " is greater than the app's codelab version " + CodeLabProject.kCurrentVersionNum.ToString());
+          }
+          else {
+            copyCodeLabFeaturedProjectList.Add(proj);
+          }
         }
       }
 
