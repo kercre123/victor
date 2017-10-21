@@ -7,10 +7,14 @@ include(anki_build_cxx)
 if (MACOSX)
 
   # find go sources and assign to VOICETEST_GO_SRC
+  set(VOICETEST_GOSRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/voicetest/go")
+  file(RELATIVE_PATH VOICETEST_GOSRC_DIR_REL ${CMAKE_CURRENT_BINARY_DIR} ${VOICETEST_GOSRC_DIR})
   execute_process(
-    COMMAND find "${CMAKE_CURRENT_SOURCE_DIR}/voicetest/go" -iname *.go
+    COMMAND find ${VOICETEST_GOSRC_DIR} -iname *.go
     OUTPUT_VARIABLE VOICETEST_GO_SRC
   )
+  # change newlines in stdout to cmake style list
+  string (REPLACE "\n" ";" VOICETEST_GO_SRC "${VOICETEST_GO_SRC}")
 
   # build C library from go code
   set(VOICEGO_OUT "${CMAKE_CURRENT_BINARY_DIR}/voicetest/go/voicego.a")
@@ -20,6 +24,7 @@ if (MACOSX)
 
   add_custom_command(
     OUTPUT ${VOICEGO_OUT} ${VOICEGO_HEADER}
+    COMMAND go get -d ${VOICETEST_GOSRC_DIR_REL}
     COMMAND go build -buildmode=c-archive -o ${VOICEGO_OUT} ${VOICETEST_GO_SRC}
     DEPENDS ${VOICETEST_GO_SRC}
   )

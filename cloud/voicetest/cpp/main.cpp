@@ -3,10 +3,27 @@
 #include "util/logging/printfLoggerProvider.h"
 #include "voicego.h"
 
+#include <functional>
 #include <memory>
 
 using AudioSample = Anki::AudioUtil::AudioSample;
 static void AudioInputCallback(const AudioSample* samples, uint32_t numSamples);
+
+std::function<void()> startRecordingFunc;
+std::function<void()> stopRecordingFunc;
+
+// C exports
+extern "C" {
+
+  void StartRecording() {
+    startRecordingFunc();
+  }
+
+  void StopRecording() {
+    stopRecordingFunc();
+  }
+
+}
 
 int main()
 {
@@ -15,11 +32,19 @@ int main()
   Anki::Util::gLoggerProvider = logger.get();
 
   // create audio capture system
-  Anki::AudioUtil::AudioCaptureSystem audioCapture{1600};
+  Anki::AudioUtil::AudioCaptureSystem audioCapture{100};
   audioCapture.SetCallback(std::bind(&AudioInputCallback, std::placeholders::_1, std::placeholders::_2));
   audioCapture.Init();
 
-  GoMain();
+  // bind C callbacks
+  startRecordingFunc = [&audioCapture] {
+    audioCapture.StartRecording();
+  };
+  stopRecordingFunc = [&audioCapture] {
+    audioCapture.StopRecording();
+  };
+
+  GoMain(StartRecording, StopRecording);
   return 0;
 }
 
