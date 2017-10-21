@@ -81,12 +81,15 @@
 
 #play-now-modal #btn-play-now-see-inside {
   float: right;
+  display: inline-flex;
+  align-items: center;
 }
 
 #play-now-modal .btn.btn-play-control {
   display: flex;
   flex-direction: row;
   align-content: center;
+  align-items: center;
   justify-content: space-around;
   padding-left: .5em;
   margin: 0 auto;
@@ -99,7 +102,8 @@
 }
 #play-now-modal .btn .button-label {
   display: inline-block;
-  line-height: 2em;
+  align-self: center;
+  height: 1em;
 }
 
 #play-now-modal .project-img-active { display: none; }
