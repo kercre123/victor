@@ -935,6 +935,10 @@ namespace CodeLab {
     private void OnStopAll() {
       DAS.Info("Codelab.OnStopAll", "");
 
+      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+        StopVerticalHatBlockListeners();
+      }
+
       _SessionState.OnStopAll();
 
       // Release any remaining in-progress scratch blocks (otherwise any waiting on observation will stay alive)
