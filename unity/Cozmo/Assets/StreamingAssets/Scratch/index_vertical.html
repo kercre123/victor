@@ -81,6 +81,19 @@
                   </value>
               </block>
 
+              <block type="cozmo_vert_turn">
+                  <value name="ANGLE">
+                      <shadow type="math_angle">
+                          <field name="NUM">90</field>
+                      </shadow>
+                  </value>
+                  <value name="SPEED">
+                      <shadow type="math_number">
+                          <field name="NUM">45</field>
+                      </shadow>
+                  </value>
+              </block>
+              
               <block type="cozmo_vert_wheels_speed">
                   <value name="LEFT_SPEED">
                       <shadow type="math_number">
@@ -95,6 +108,14 @@
               </block>
 
               <block type="cozmo_vert_stop_motor"></block>
+              <sep gap="50"></sep>
+
+              <block type="cozmo_vert_dock_with_cube_by_id">
+                <value name="CUBE_SELECT">
+                    <shadow type="cozmo_cube_motion_select_menu"></shadow>
+                </value>
+              </block>
+              <sep gap="50"></sep>
 
               <block type="cozmo_vert_path_offset">
                   <value name="OFFSET_X">
@@ -131,26 +152,24 @@
                       </shadow>
                   </value>
               </block>
-
-              <block type="cozmo_vert_turn">
-                  <value name="ANGLE">
-                      <shadow type="math_angle">
-                          <field name="NUM">90</field>
-                      </shadow>
-                  </value>
-                  <value name="SPEED">
-                      <shadow type="math_number">
-                          <field name="NUM">45</field>
-                      </shadow>
-                  </value>
-              </block>
-              <block type="cozmo_vert_dock_with_cube_by_id">
-                <value name="CUBE_SELECT">
-                    <shadow type="cozmo_cube_motion_select_menu"></shadow>
-                </value>
-              </block>
             </category>
             <category name="codeLab.Category.Actions" colour="#5e3dfc" secondaryColour="0">
+
+              <block type="cozmo_says">
+                  <value name="STRING">
+                      <shadow type="text">
+                          <field name="TEXT" id="cozmo_says_text">Hi</field>
+                      </shadow>
+                  </value>
+              </block>
+              <sep gap="50"></sep>
+              <block type="cozmo_vert_move_lift">
+                  <value name="LIFT_SPEED">
+                      <shadow type="math_number">
+                          <field name="NUM">15</field>
+                      </shadow>
+                  </value>
+              </block>
 
               <block type="cozmo_vert_set_liftheight">
                   <value name="HEIGHT_RATIO">
@@ -161,14 +180,6 @@
                   <value name="SPEED">
                       <shadow type="math_number">
                           <field name="NUM">45</field>
-                      </shadow>
-                  </value>
-              </block>
-
-              <block type="cozmo_vert_move_lift">
-                  <value name="LIFT_SPEED">
-                      <shadow type="math_number">
-                          <field name="NUM">15</field>
                       </shadow>
                   </value>
               </block>
@@ -185,17 +196,11 @@
                       </shadow>
                   </value>
               </block>
+              <sep gap="50"></sep>
 
               <block type="cozmo_vert_setbackpackcolor">
                   <value name="COLOR">
                       <shadow type="colour_picker"></shadow>
-                  </value>
-              </block>
-              <block type="cozmo_says">
-                  <value name="STRING">
-                      <shadow type="text">
-                          <field name="TEXT" id="cozmo_says_text">Hi</field>
-                      </shadow>
                   </value>
               </block>
               <block type="cozmo_vert_set_cube_light_corner">
@@ -224,20 +229,7 @@
               </block>
               <block type="cozmo_vert_enable_animation_track"></block>
               <block type="cozmo_vert_disable_animation_track"></block>
-              <block type="cozmo_play_animation_by_name">
-                <value name="ANIM_NAME">
-                    <shadow type="text">
-                        <field name="TEXT">anim_greeting_happy_01</field>
-                    </shadow>
-                </value>
-              </block>
-              <block type="cozmo_play_animation_by_triggername">
-                <value name="TRIGGER_NAME">
-                    <shadow type="text">
-                        <field name="TEXT">EarnedSparks</field>
-                    </shadow>
-                </value>
-              </block>
+              <sep gap="50"></sep>
               <block type="cozmo_sound_play">
                 <value name="SOUND_MENU">
                   <shadow type="cozmo_sound_sounds_menu"></shadow>
@@ -253,16 +245,34 @@
                   <shadow type="cozmo_sound_sounds_menu"></shadow>
                 </value>
               </block>
+              <sep gap="50"></sep>
+              <block type="cozmo_play_animation_by_name">
+                <value name="ANIM_NAME">
+                    <shadow type="text">
+                        <field name="TEXT">anim_greeting_happy_01</field>
+                    </shadow>
+                </value>
+              </block>
+              <block type="cozmo_play_animation_by_triggername">
+                <value name="TRIGGER_NAME">
+                    <shadow type="text">
+                        <field name="TEXT">EarnedSparks</field>
+                    </shadow>
+                </value>
+              </block>
             </category>
 
             <category name="codeLab.Category.Events" colour="#f4b606" secondaryColour="0">
               <block type="event_whenflagclicked"></block>
+              <sep gap="50"></sep>
+              <block type="cozmo_event_on_cube_tap"></block>
+              <block type="cozmo_event_on_cube_moved"></block>
+              <block type="cozmo_event_on_see_cube"></block>
+              <sep gap="50"></sep>
               <block type="cozmo_event_on_face"></block>
               <block type="cozmo_event_on_happy_face"></block>
               <block type="cozmo_event_on_sad_face"></block>
-              <block type="cozmo_event_on_see_cube"></block>
-              <block type="cozmo_event_on_cube_tap"></block>
-              <block type="cozmo_event_on_cube_moved"></block>
+              <sep gap="50"></sep>
 
               <block type="event_whenbroadcastreceived">
               </block>
@@ -279,9 +289,6 @@
             </category>
 
             <category name="codeLab.Category.Control" colour="#e5580a" secondaryColour="0">
-              <block type="control_forever"></block>
-              <block type="control_if"></block>
-              <block type="control_if_else"></block>
               <block type="control_wait" id="control_wait">
                   <value name="DURATION">
                       <shadow type="math_positive_number">
@@ -289,7 +296,6 @@
                       </shadow>
                   </value>
               </block>
-              <block type="control_wait_until"></block>
               <block type="control_repeat">
                   <value name="TIMES">
                       <shadow type="math_whole_number_with_validator">
@@ -297,51 +303,49 @@
                       </shadow>
                   </value>
               </block>
+              <block type="control_forever"></block>
+              <sep gap="50"></sep>
+              <block type="control_if"></block>
+              <block type="control_if_else"></block>
+              <block type="control_wait_until"></block>
               <block type="control_repeat_until"></block>
+              <sep gap="50"></sep>
               <block type="control_stop">
+              <block type="cozmo_vert_cancel_actions"></block>
                 <value name="STOP_OPTION">
                   <shadow type="stop_option_menu"></shadow>
                 </value>
               </block>
+              <block type="cozmo_vert_wait_for_actions"></block>
 
               <block type="cozmo_vert_enable_wait_for_actions"></block>
               <block type="cozmo_vert_disable_wait_for_actions"></block>
-              <block type="cozmo_vert_wait_for_actions"></block>
-              <block type="cozmo_vert_cancel_actions"></block>
             </category>
 
             <category name="codeLab.Category.Sensors" colour="#5CB1D6" secondaryColour="0">
               <!-- Cozmo -->
-              <block type="cozmo_vert_get_position_3d"></block>
+              <block type="cozmo_vert_get_lift_height"></block>
+              <block type="cozmo_vert_get_head_angle"></block>
               <block type="cozmo_vert_get_pitch"></block>
               <block type="cozmo_vert_get_roll"></block>
               <block type="cozmo_vert_get_yaw"></block>
-              <block type="cozmo_vert_get_lift_height"></block>
-              <block type="cozmo_vert_get_head_angle"></block>
+              <block type="cozmo_vert_get_position_3d"></block>
+              <sep gap="50"></sep>
               <!-- Faces -->
               <block type="cozmo_vert_face_get_is_visible"></block>
+              <block type="cozmo_vert_face_get_expression"></block>
               <block type="cozmo_vert_face_get_name"></block>
               <block type="cozmo_vert_face_get_position_2d"></block>
               <block type="cozmo_vert_face_get_position_3d"></block>
-              <block type="cozmo_vert_face_get_expression"></block>
+              <sep gap="50"></sep>
               <!-- Cubes -->
-              <block type="cozmo_vert_cube_get_last_tapped"></block>
               <block type="cozmo_vert_cube_get_was_tapped">
                 <value name="CUBE_SELECT">
                     <shadow type="cozmo_cube_sensor_select_menu"></shadow>
                 </value>
               </block>
+              <block type="cozmo_vert_cube_get_last_tapped"></block>
               <block type="cozmo_vert_cube_get_is_visible">
-                <value name="CUBE_SELECT">
-                    <shadow type="cozmo_cube_sensor_select_menu"></shadow>
-                </value>
-              </block>
-              <block type="cozmo_vert_cube_get_position_2d">
-                <value name="CUBE_SELECT">
-                    <shadow type="cozmo_cube_sensor_select_menu"></shadow>
-                </value>
-              </block>
-              <block type="cozmo_vert_cube_get_position_3d">
                 <value name="CUBE_SELECT">
                     <shadow type="cozmo_cube_sensor_select_menu"></shadow>
                 </value>
@@ -361,12 +365,23 @@
                   <shadow type="cozmo_cube_sensor_select_menu"></shadow>
                 </value>
               </block>
+              <block type="cozmo_vert_cube_get_position_2d">
+                <value name="CUBE_SELECT">
+                    <shadow type="cozmo_cube_sensor_select_menu"></shadow>
+                </value>
               </block>
+              <block type="cozmo_vert_cube_get_position_3d">
+                <value name="CUBE_SELECT">
+                    <shadow type="cozmo_cube_sensor_select_menu"></shadow>
+                </value>
+              </block>
+              <sep gap="50"></sep>
               <!-- Device -->
               <block type="cozmo_vert_device_get_pitch"></block>
               <block type="cozmo_vert_device_get_roll"></block>
               <block type="cozmo_vert_device_get_yaw"></block>
               <!--Other-->
+              <sep gap="50"></sep>
               <block type="sensing_current" id="sensing_current">
                 <value name="CURRENTMENU">
                   <shadow type="sensing_currentmenu"></shadow>
@@ -374,17 +389,9 @@
               </block>
             </category>
             <category name="codeLab.Category.Display" colour="#0fBD8C" secondaryColour="0">
-                <block type="cozmo_vert_cozmoface_clear"></block>
                 <block type="cozmo_vert_cozmoface_display"></block>
-                <block type="cozmo_vert_cozmoface_set_draw_color"></block>
-                <block type="cozmo_vert_cozmoface_set_text_scale">
-                    <value name="SCALE">
-                        <shadow type="math_number">
-                            <field name="NUM">100</field>
-                        </shadow>
-                    </value>
-                </block>
-                <block type="cozmo_vert_cozmoface_set_text_alignment"></block>
+                <block type="cozmo_vert_cozmoface_clear"></block>
+                <sep gap="50"></sep>
                 <block type="cozmo_vert_cozmoface_draw_text">
                   <value name="TEXT">
                       <shadow type="text">
@@ -402,6 +409,15 @@
                       </shadow>
                   </value>
                 </block>
+                <block type="cozmo_vert_cozmoface_set_text_scale">
+                    <value name="SCALE">
+                        <shadow type="math_number">
+                            <field name="NUM">100</field>
+                        </shadow>
+                    </value>
+                </block>
+                <block type="cozmo_vert_cozmoface_set_text_alignment"></block>
+                <sep gap="50"></sep>
                 <block type="cozmo_vert_cozmoface_draw_line">
                   <value name="X1">
                       <shadow type="math_number">
@@ -503,6 +519,8 @@
                       </shadow>
                   </value>
                 </block>
+                <sep gap="50"></sep>
+                <block type="cozmo_vert_cozmoface_set_draw_color"></block>
             </category>
 
             <category name="codeLab.Category.Operators" colour="#40BF4A" secondaryColour="0">
@@ -554,18 +572,7 @@
                   </shadow>
                   </value>
               </block>
-              <block type="operator_random">
-                  <value name="FROM">
-                  <shadow type="math_number">
-                      <field name="NUM">1</field>
-                  </shadow>
-                  </value>
-                  <value name="TO">
-                  <shadow type="math_number">
-                      <field name="NUM">10</field>
-                  </shadow>
-                  </value>
-              </block>
+              <sep gap="50"></sep>
               <block type="operator_lt">
                   <value name="OPERAND1">
                   <shadow type="text">
@@ -605,6 +612,46 @@
               <block type="operator_and"></block>
               <block type="operator_or"></block>
               <block type="operator_not"></block>
+              <sep gap="50"></sep>
+              <block type="operator_random">
+                  <value name="FROM">
+                  <shadow type="math_number">
+                      <field name="NUM">1</field>
+                  </shadow>
+                  </value>
+                  <value name="TO">
+                  <shadow type="math_number">
+                      <field name="NUM">10</field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_mod">
+                  <value name="NUM1">
+                  <shadow type="math_number">
+                      <field name="NUM"></field>
+                  </shadow>
+                  </value>
+                  <value name="NUM2">
+                  <shadow type="math_number">
+                      <field name="NUM"></field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_round">
+                  <value name="NUM">
+                  <shadow type="math_number">
+                      <field name="NUM"></field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_mathop">
+                  <value name="NUM">
+                    <shadow type="math_number">
+                      <field name="NUM"></field>
+                    </shadow>
+                  </value>
+              </block>
+              <sep gap="50"></sep>
               <block type="operator_join">
                   <value name="STRING1">
                   <shadow type="text">
@@ -636,6 +683,7 @@
                   </shadow>
                   </value>
               </block>
+
               <block type="operator_contains">
                 <value name="STRING1">
                   <shadow type="text">
@@ -647,32 +695,6 @@
                     <field name="TEXT">coz</field>
                   </shadow>
                 </value>
-              </block>
-              <block type="operator_mod">
-                  <value name="NUM1">
-                  <shadow type="math_number">
-                      <field name="NUM"></field>
-                  </shadow>
-                  </value>
-                  <value name="NUM2">
-                  <shadow type="math_number">
-                      <field name="NUM"></field>
-                  </shadow>
-                  </value>
-              </block>
-              <block type="operator_round">
-                  <value name="NUM">
-                  <shadow type="math_number">
-                      <field name="NUM"></field>
-                  </shadow>
-                  </value>
-              </block>
-              <block type="operator_mathop">
-                  <value name="NUM">
-                    <shadow type="math_number">
-                      <field name="NUM"></field>
-                    </shadow>
-                  </value>
               </block>
             </category>
 
