@@ -1,0 +1,1 @@
+/Users/andrew/Code/coretech-external-local/tensorflow/all_models/ssd_mobilenet_v1_coco_11_06_2017_quantized.pb

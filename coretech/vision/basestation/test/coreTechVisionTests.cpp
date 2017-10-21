@@ -458,8 +458,8 @@ GTEST_TEST(ObjectDetector, SimpleImage)
   std::string testImageFile = Util::FileUtils::FullFilePath({testImagePath, "daisy.jpg"});
   
   Json::Value config;
-  config["graph"] = "mobilenet_0.50_224_flower_photos_quantized.pb";
-  config["labels"] = "flower_data_labels.txt";
+  config["graph"] = "mobilenet_0.50_224_flower_photos_opencvdnn.pb";
+  config["labels"] = "flower_photos_labels.txt";
   config["mode"] = "classification";
   config["input_width"] = 224;
   config["input_height"] = 224;
