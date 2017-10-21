@@ -160,6 +160,9 @@
     if (tabElem.classList.contains('tab-selected')) {
       return;
     } else {
+      // clear out old projects to prevent flashes of old and new cards together
+      clearProjects();
+
       // update selected state of tabs
       var oldSelected = tabElem.parentNode.querySelector('.tab-selected');
       if (oldSelected) {
