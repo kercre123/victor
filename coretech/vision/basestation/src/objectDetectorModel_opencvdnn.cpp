@@ -35,7 +35,9 @@ namespace Vision {
 static const char * const kLogChannelName = "VisionSystem";
   
 CONSOLE_VAR(s32, kPrintTimingFrequency, "Vision.ObjectDetector", 1);
-  
+
+#define GET_GRAPH_FROM_JSON_CONFIG 1
+
 class ObjectDetector::Model : Vision::Profiler
 {
 public:
@@ -62,9 +64,20 @@ public:
       return RESULT_FAIL;
     }
     
-    GetFromConfig(graph);
-    GetFromConfig(input_height);
-    GetFromConfig(input_width);
+    if(GET_GRAPH_FROM_JSON_CONFIG)
+    {
+      GetFromConfig(graph);
+      GetFromConfig(input_height);
+      GetFromConfig(input_width);
+    }
+    else 
+    {
+      const s32 mobileNetSize = 192;
+      const std::string mobileNetComplexity = "1.0";
+      _params.graph = "mobilenet_" + mobileNetComplexity + "_" + std::to_string(mobileNetSize) + "_flower_photos_opencvdnn.pb";
+      _params.input_height = mobileNetSize;
+      _params.input_width  = mobileNetSize;
+    }
     GetFromConfig(input_mean_R);
     GetFromConfig(input_mean_G);
     GetFromConfig(input_mean_B);

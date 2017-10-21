@@ -1,6 +1,6 @@
 set(OPENCV_VERSION 3.1.0)
 if(NOT USE_TENSORFLOW)
-  set(OPENCV_VERSION dev) # the dnn module exists in OpenCV 3.3.0 
+  set(OPENCV_VERSION dev) # the dnn module exists in OpenCV 3.3.0, mobile net arch supported in latest master (dev) 
 endif()
 
 set(OPENCV_DIR opencv-${OPENCV_VERSION})                                                                        
@@ -84,7 +84,7 @@ endif()
 # 3.3.0 and "dev" versions have additional external libs
 if(NOT OPENCV_VERSION EQUAL "3.1.0")
   if (ANDROID)
-   list(APPEND OPENCV_EXTERNAL_LIBS cpufeatures libjpeg libprotobuf)
+    list(APPEND OPENCV_EXTERNAL_LIBS cpufeatures libjpeg libprotobuf)
   else()
     list(APPEND OPENCV_EXTERNAL_LIBS libjpeg ippicv ipp_iw ittnotify libwebp libprotobuf)
   endif()
