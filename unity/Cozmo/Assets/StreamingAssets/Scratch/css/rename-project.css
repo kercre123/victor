@@ -41,7 +41,8 @@
 .full-screen-modal .project-name {
   text-align: right;
   color: #22a9d8;
-  font-family: 'Avenir Next Bold';
+  font-family: 'Avenir Next';
+  font-weight: bold;
 }
 
 .full-screen-modal .btn {
