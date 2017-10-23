@@ -2,39 +2,14 @@ cmake_minimum_required(VERSION 3.6)
 project(cloud)
 
 include(anki_build_cxx)
+include(anki_build_go)
 
 # voicetest project (mac only)
 if (MACOSX)
 
-  # find go sources and assign to VOICETEST_GO_SRC
-  set(VOICETEST_GOSRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/voicetest/go")
-  file(RELATIVE_PATH VOICETEST_GOSRC_DIR_REL ${CMAKE_CURRENT_BINARY_DIR} ${VOICETEST_GOSRC_DIR})
-  execute_process(
-    COMMAND find ${VOICETEST_GOSRC_DIR} -iname *.go
-    OUTPUT_VARIABLE VOICETEST_GO_SRC
-  )
-  # change newlines in stdout to cmake style list
-  string (REPLACE "\n" ";" VOICETEST_GO_SRC "${VOICETEST_GO_SRC}")
-
-  # build C library from go code
-  set(VOICEGO_OUT "${CMAKE_CURRENT_BINARY_DIR}/voicetest/go/voicego.a")
-  # C code needs to include the generated voicego.h
-  get_filename_component(VOICEGO_OUT_DIR ${VOICEGO_OUT} DIRECTORY)
-  set(VOICEGO_HEADER "${VOICEGO_OUT_DIR}/voicego.h")
-
-  add_custom_command(
-    OUTPUT ${VOICEGO_OUT} ${VOICEGO_HEADER}
-    COMMAND go get -d ${VOICETEST_GOSRC_DIR_REL}
-    COMMAND go build -buildmode=c-archive -o ${VOICEGO_OUT} ${VOICETEST_GO_SRC}
-    DEPENDS ${VOICETEST_GO_SRC}
-  )
-  add_custom_target(voicego_target DEPENDS ${VOICEGO_OUT})
-
-  # cmake mumbo jumbo I don't totally understand so that voicetest
-  # gets the right dependencies for voicego.a
-  add_library(voicego STATIC IMPORTED GLOBAL)
-  add_dependencies(voicego voicego_target)
-  set_property(TARGET voicego PROPERTY IMPORTED_LOCATION ${VOICEGO_OUT})
+  # create Go target
+  anki_build_go_c_library(voicego VOICEGO_HEADER ${ANKI_SRCLIST_DIR})
+  get_filename_component(VOICEGO_HEADER_DIR ${VOICEGO_HEADER} DIRECTORY)
 
   # create C target
   anki_build_cxx_executable(voicetest ${ANKI_SRCLIST_DIR} ${VOICEGO_HEADER})
@@ -42,7 +17,7 @@ if (MACOSX)
   # tell voicetest where to find voicego.h
   target_include_directories(voicetest
     PUBLIC
-    ${VOICEGO_OUT_DIR}
+    ${VOICEGO_HEADER_DIR}
   )
 
   # link audio and go libraries

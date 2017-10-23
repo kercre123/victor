@@ -41,13 +41,19 @@ func GoMain(startRecording, stopRecording C.voidFunc) {
 	fmt.Println("Stopped recording")
 	fmt.Println("Insert filename to save to: ")
 	filename, _ := r.ReadString('\n')
-	f, _ := os.Create(strings.TrimSpace(filename))
+	filename = strings.TrimSpace(filename)
+	if filename == "" {
+		return
+	}
+
+	f, _ := os.Create(filename)
+	defer f.Close()
+
 	bufWriter := bufio.NewWriter(f)
 	writer := wav.NewWriter(bufWriter, uint32(len(app.samples)), 1, 16000, 16)
 	writer.WriteSamples(convertSamples(app.samples))
 	bufWriter.Flush()
 	f.Sync()
-	f.Close()
 }
 
 func convertSamples(inSamples []int16) (samples []wav.Sample) {

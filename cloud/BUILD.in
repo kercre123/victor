@@ -1,8 +1,10 @@
 cxx_project(
     name = 'voicetest',
-    srcs = cxx_src_glob(['voicetest'],
-                        excludes = []),
-    platform_srcs = [],
-    headers = cxx_header_glob(['voicetest']),
-    platform_headers = []
+    srcs = cxx_src_glob(['voicetest']),
+    headers = cxx_header_glob(['voicetest'])
+)
+
+cxx_project(
+    name = 'voicego',
+    srcs = glob(['voicetest/go/**/*.go'])
 )
