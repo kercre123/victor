@@ -20,7 +20,7 @@
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -46,11 +46,11 @@ class BehaviorManager;
 class BehaviorSystemManager;
 class BlockWorld;
 class DelegationComponent;
-class DevBaseRunnable;
+class DevBaseBehavior;
 class FaceWorld;
 class IBehavior;
 class Robot;
-class StateChangeComponent;
+class BehaviorEventComponent;
   
 namespace Audio {
 class BehaviorAudioComponent;
@@ -66,7 +66,7 @@ public:
                               BehaviorSystemManager& behaviorSysMgr,
                               BehaviorExternalInterface& behaviorExternalInterface,
                               BehaviorContainer& behaviorContainer,
-                              StateChangeComponent& stateChangeComponent,
+                              BehaviorEventComponent& behaviorEventComponent,
                               AsyncMessageGateComponent& asyncMessageComponent,
                               DelegationComponent& delegationComponent);
   virtual ~BehaviorComponentComponents();
@@ -78,7 +78,7 @@ public:
   BehaviorSystemManager&     _behaviorSysMgr;
   BehaviorExternalInterface& _behaviorExternalInterface;
   BehaviorContainer&         _behaviorContainer;
-  StateChangeComponent&      _stateChangeComponent;
+  BehaviorEventComponent&      _behaviorEventComponent;
   AsyncMessageGateComponent& _asyncMessageComponent;
   DelegationComponent&       _delegationComponent;
   
@@ -91,7 +91,7 @@ protected:
   std::unique_ptr<BehaviorSystemManager>     _behaviorSysMgrPtr;
   std::unique_ptr<BehaviorExternalInterface> _behaviorExternalInterfacePtr;
   std::unique_ptr<BehaviorContainer>         _behaviorContainerPtr;
-  std::unique_ptr<StateChangeComponent>      _stateChangeComponentPtr;
+  std::unique_ptr<BehaviorEventComponent>      _behaviorEventComponentPtr;
   std::unique_ptr<AsyncMessageGateComponent> _asyncMessageComponentPtr;
   std::unique_ptr<DelegationComponent>       _delegationComponentPtr;
 };
@@ -111,14 +111,14 @@ public:
                                           BehaviorSystemManager*     behaviorSysMgrPtr = nullptr,
                                           BehaviorExternalInterface* behaviorExternalInterfacePtr = nullptr,
                                           BehaviorContainer*         behaviorContainerPtr = nullptr,
-                                          StateChangeComponent*      stateChangeComponentPtr = nullptr,
+                                          BehaviorEventComponent*      behaviorEventComponentPtr = nullptr,
                                           AsyncMessageGateComponent* asyncMessageComponentPtr = nullptr,
                                           DelegationComponent*       delegationComponentPtr = nullptr);
   
   // Function which encapsalates the initialization dependency graph
   // for the behavior components - does not initialize behavior component
   static void InitializeSubComponents(Robot& robot,
-                                      IBehavior* baseRunnable,
+                                      IBehavior* baseBehavior,
                                       BehaviorSystemManager& behaviorSysMgr,
                                       IBehaviorMessageSubscriber& messageSubscriber,
                                       BehaviorExternalInterface& behaviorExternalInterface,
@@ -126,15 +126,15 @@ public:
                                       BehaviorContainer& behaviorContainer,
                                       BlockWorld& blockWorld,
                                       FaceWorld& faceWorld,
-                                      StateChangeComponent& stateChangeComponent,
+                                      BehaviorEventComponent& behaviorEventComponent,
                                       AsyncMessageGateComponent& asyncMessageComponent,
                                       DelegationComponent& delegationComponent);
   
   // Pass in unitialized components - behavior component will properly
   // initialize and composit the components
-  void Init(ComponentsPtr&& components, IBehavior* baseRunnable = nullptr);
+  void Init(ComponentsPtr&& components, IBehavior* baseBehavior = nullptr);
   
-  void InitHelper(IBehavior* baseRunnable);
+  void InitHelper(IBehavior* baseBehavior);
   
   void Update(Robot& robot,
               std::string& currentActivityName,
@@ -179,7 +179,7 @@ private:
   // Behavior audio client is used to update the audio engine with the current sparked state (a.k.a. "round")
   std::unique_ptr<Audio::BehaviorAudioComponent> _audioClient;
   
-  DevBaseRunnable* _devBaseRunnable = nullptr;
+  DevBaseBehavior* _devBaseBehavior = nullptr;
   
 };
 

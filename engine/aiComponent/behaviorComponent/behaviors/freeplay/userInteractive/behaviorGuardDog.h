@@ -43,7 +43,7 @@ protected:
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override { return RESULT_FAIL; } // behavior can't be resumed
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   

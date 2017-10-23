@@ -9,8 +9,8 @@
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/messageToBehaviorManager.clad"
 #include "clad/types/actionTypes.clad"
-#include "clad/types/behaviorSystem/activityTypes.clad"
-#include "clad/types/behaviorSystem/behaviorTypes.clad"
+#include "clad/types/behaviorComponent/activityTypes.clad"
+#include "clad/types/behaviorComponent/behaviorTypes.clad"
 #include "clad/types/controllerChannels.clad"
 #include "clad/types/customObjectMarkers.clad"
 #include "clad/types/debugConsoleTypes.clad"
@@ -29,7 +29,7 @@
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/poseStructs.clad"
 #include "clad/types/proceduralEyeParameters.clad"
-#include "clad/types/behaviorSystem/reactionTriggers.clad"
+#include "clad/types/behaviorComponent/reactionTriggers.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/sayTextStyles.clad"
 #include "clad/types/uiConnectionTypes.clad"
@@ -467,7 +467,7 @@ message VisionWhileMoving {
 
 // SetFaceToEnroll - Send face enrollments settings. Actual face enrollment only happens
 //                   when the BehaviorEnrollFace runs. That behavior requires these settings
-//                   be sent in order to be runnable.
+//                   be sent in order to be activatable.
 message SetFaceToEnroll {
     string name,
 
@@ -481,7 +481,7 @@ message SetFaceToEnroll {
 }
 
 // CancelFaceEnrollment - Unsets face enrollment settings, meaning BehaviorEnrollFace will no
-//                        longer be runnable
+//                        longer be activatable
 message CancelFaceEnrollment {
 
 }
@@ -554,9 +554,9 @@ message ExecuteBehaviorByID {
   int_32 numRuns = -1 // Number of times to run the behavior (-1 is infinite)
 }
 
-// Special message to make BehaviorLiftLoadTest runnable.
+// Special message to make BehaviorLiftLoadTest activatable.
 // Send this message before sending ExecuteBehaviorByName("LiftLoadTest")
-message SetLiftLoadTestAsRunnable {
+message SetLiftLoadTestAsActivatable {
 }
 
 // Any message intended for a specific robot's behaviorManager

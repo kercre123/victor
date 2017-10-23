@@ -77,7 +77,7 @@ bool BehaviorLookAround::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float BehaviorLookAround::EvaluateRunningScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+float BehaviorLookAround::EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   float minScore = 0.0f;
   // if we are going to examine (or searching for) a possible block, increase the minimum score
@@ -85,12 +85,12 @@ float BehaviorLookAround::EvaluateRunningScoreInternal(BehaviorExternalInterface
     minScore = 0.8f;
   }
 
-  return std::max( minScore, ICozmoBehavior::EvaluateRunningScoreInternal(behaviorExternalInterface) );
+  return std::max( minScore, ICozmoBehavior::EvaluateActivatedScoreInternal(behaviorExternalInterface) );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag())
   {
@@ -465,7 +465,7 @@ void BehaviorLookAround::ResetBehavior(BehaviorExternalInterface& behaviorExtern
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bool confirmed, BehaviorExternalInterface& behaviorExternalInterface)
 {
-  assert(IsRunning());
+  assert(IsActivated());
 
   if( ! _shouldHandleConfirmedObjectOverved && confirmed ) {
     return;

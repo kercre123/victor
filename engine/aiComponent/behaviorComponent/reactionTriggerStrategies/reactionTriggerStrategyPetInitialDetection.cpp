@@ -84,7 +84,7 @@ void ReactionTriggerStrategyPetInitialDetection::SetupForceTriggerBehavior(Behav
 }
   
 //
-// Called at the start of each tick when behavior is runnable but not active.
+// Called at the start of each tick when behavior is activatable but not active.
 // Return true if behavior should become active.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -128,12 +128,12 @@ bool ReactionTriggerStrategyPetInitialDetection::ShouldTriggerBehaviorInternal(B
   }
 
   if (!kReactToPetEnable) {
-    LOG_DEBUG("ReactStratPetInitialDetect.IsRunnable.ReactionDisabled", "Reaction is disabled");
+    LOG_DEBUG("ReactStratPetInitialDetect.IsActivatable.ReactionDisabled", "Reaction is disabled");
     return false;
   }
   
   if (robot.IsOnChargerPlatform()) {
-    LOG_DEBUG("ReactStratPetInitialDetect.IsRunnable.RobotOnCharger", "Robot is on charger");
+    LOG_DEBUG("ReactStratPetInitialDetect.IsActivatable.RobotOnCharger", "Robot is on charger");
     return false;
   }
   

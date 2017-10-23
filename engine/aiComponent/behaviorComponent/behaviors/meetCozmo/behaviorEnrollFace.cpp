@@ -145,14 +145,14 @@ BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorEnrollFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // This behavior is runnable iff a face enrollment has been requested
+  // This behavior is activatable iff a face enrollment has been requested
   return IsEnrollmentRequested();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorEnrollFace::InitEnrollmentSettings(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // Behavior should not even be runnable if face enrollment not requested,
+  // Behavior should not even be activatable if face enrollment not requested,
   // so should not be attempting initialize
   DEV_ASSERT(IsEnrollmentRequested(),
              "BehaviorEnrollFace.InitEnrollmentSettings.FaceEnrollmentNotRequested");
@@ -1311,7 +1311,7 @@ void BehaviorEnrollFace::AlwaysHandle(const EngineToGameEvent& event, BehaviorEx
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch (event.GetData().GetTag())
   {
@@ -1358,7 +1358,7 @@ void BehaviorEnrollFace::HandleWhileRunning(const EngineToGameEvent& event, Beha
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::HandleWhileNotRunning(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::HandleWhileInScopeButNotActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag())
   {
@@ -1396,7 +1396,7 @@ void BehaviorEnrollFace::HandleWhileNotRunning(const GameToEngineEvent& event, B
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::HandleWhileRunning(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag())
   {

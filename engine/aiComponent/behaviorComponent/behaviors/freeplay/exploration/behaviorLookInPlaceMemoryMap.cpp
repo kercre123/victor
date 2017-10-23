@@ -95,7 +95,7 @@ bool BehaviorLookInPlaceMemoryMap::WantsToBeActivatedBehavior(BehaviorExternalIn
   }
   
   // Unfortunately we need to calculate borders in the memory map in order to check whether they are
-  // inside our radius of action. Since I don't wanna break the const correctness of the Robot during IsRunnable,
+  // inside our radius of action. Since I don't wanna break the const correctness of the Robot during WantsToBeActivated,
   // I'm going to validate as long as we have not failed previously at this location, and always as long
   // as we have borders to process
   float distanceSQ;
@@ -203,9 +203,9 @@ void BehaviorLookInPlaceMemoryMap::OnBehaviorDeactivated(BehaviorExternalInterfa
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float BehaviorLookInPlaceMemoryMap::EvaluateRunningScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+float BehaviorLookInPlaceMemoryMap::EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  float baseScore = BaseClass::EvaluateRunningScoreInternal(behaviorExternalInterface);
+  float baseScore = BaseClass::EvaluateActivatedScoreInternal(behaviorExternalInterface);
   
   // if we have visited the priority count, apply the score reduction now
   if ( _visitedSectorCount >= _configParams.prioritySectorCount ) {

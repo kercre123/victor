@@ -21,7 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/activities/activityStrategies/activityStrategySpark.h"
 
 #include "anki/common/basestation/jsonTools.h"
-#include "clad/types/behaviorSystem/activityTypes.h"
+#include "clad/types/behaviorComponent/activityTypes.h"
 #include "json/json.h"
 
 #include "util/logging/logging.h"

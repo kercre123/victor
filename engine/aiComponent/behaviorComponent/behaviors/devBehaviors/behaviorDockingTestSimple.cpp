@@ -872,7 +872,7 @@ namespace Anki {
       SetDebugStateName(name);
     }
     
-    void BehaviorDockingTestSimple::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorDockingTestSimple::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
     {
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
@@ -926,7 +926,7 @@ namespace Anki {
     void BehaviorDockingTestSimple::HandleActionCompleted(Robot& robot,
                                                           const ExternalInterface::RobotCompletedAction &msg)
     {
-      if(!IsRunning()) {
+      if(!IsActivated()) {
         // Ignore action completion messages while not running
         return;
       }

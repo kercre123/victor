@@ -13,7 +13,7 @@
 **/
 
 
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/strategyRobotPlacedOnSlope.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyRobotPlacedOnSlope.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -29,14 +29,14 @@ namespace Cozmo {
 StrategyRobotPlacedOnSlope::StrategyRobotPlacedOnSlope(BehaviorExternalInterface& behaviorExternalInterface,
                                                        IExternalInterface* robotExternalInterface,
                                                        const Json::Value& config)
-: IWantsToRunStrategy(behaviorExternalInterface, robotExternalInterface, config)
+: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
 {
   
 }
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool StrategyRobotPlacedOnSlope::WantsToRunInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool StrategyRobotPlacedOnSlope::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

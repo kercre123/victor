@@ -49,7 +49,7 @@ private:
   std::vector<AnimationTrigger> _animTriggers;
   
   int _animTriggerIndex;
-  mutable float _lastRunnableCheck_s;
+  mutable float _lastWantsToBeActivatedCheck_s;
   mutable float _lastTimeNewConfigSeen_s;
   
   

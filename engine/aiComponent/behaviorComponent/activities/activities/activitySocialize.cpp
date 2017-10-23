@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreLookAroundInPlace.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/robot.h"
 #include "util/math/math.h"
@@ -140,7 +140,7 @@ Result ActivitySocialize::Update_Legacy(BehaviorExternalInterface& behaviorExter
       if( numObjectivesRemaining == 0 && _state == State::Playing ) {
         PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.FinishedPlaying",
                       "Got enough objectives to be done with pouncing, will transition out");
-        if( _playingBehavior != nullptr && _playingBehavior->IsRunning() )
+        if( _playingBehavior != nullptr && _playingBehavior->IsActivated() )
         {
           // tell the behavior to end nicely (when it's in control again)
           _playingBehavior->StopOnNextActionComplete();
@@ -212,7 +212,7 @@ ICozmoBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorEx
         bestBehavior = nullptr;
         _state = State::None;
       }
-      else if( _findFacesBehavior->IsRunning() || _findFacesBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
+      else if( _findFacesBehavior->IsActivated() || _findFacesBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
         bestBehavior = _findFacesBehavior;
       }
       break;
@@ -221,12 +221,12 @@ ICozmoBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorEx
     case State::Interacting: {
       // keep interacting until the behavior ends. If we can't interact (e.g. we lost the face) then go back
       // to searching
-      if( _interactWithFacesBehavior->IsRunning() || _interactWithFacesBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
+      if( _interactWithFacesBehavior->IsActivated() || _interactWithFacesBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
         bestBehavior = _interactWithFacesBehavior;
       }
       else {
         // go back to find, but don't reset search count
-        if( _findFacesBehavior->IsRunning() || _findFacesBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
+        if( _findFacesBehavior->IsActivated() || _findFacesBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
           bestBehavior = _findFacesBehavior;
         }        
         _state = State::FindingFaces;
@@ -239,7 +239,7 @@ ICozmoBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorEx
       // Has objectives we might want to do
       if( !_objectivesLeft.empty() )
       {
-        std::vector<ICozmoBehaviorPtr> wantsRunnableBehaviors;
+        std::vector<ICozmoBehaviorPtr> wantsActivatedBehaviors;
         // fill in _playingBehavior with one of the valid objectives
         for( const auto& reqPtr : _potentialObjectives )
         {
@@ -250,33 +250,33 @@ ICozmoBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorEx
             ICozmoBehaviorPtr beh = BC.FindBehaviorByID(reqPtr->behaviorID);
             if( beh != nullptr )
             {
-              // Check if runnable and valid.
+              // Check if activatable and valid.
               if( beh->WantsToBeActivated(behaviorExternalInterface) )
               {
-                wantsRunnableBehaviors.push_back(beh);
+                wantsActivatedBehaviors.push_back(beh);
                 PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.FinishedInteraction",
-                              "%s is runnable", beh->GetIDStr().c_str());
+                              "%s is activatable", beh->GetIDStr().c_str());
               }
               else
               {
                 PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.FinishedInteraction",
-                              "%s is NOT runnable", beh->GetIDStr().c_str());
+                              "%s is NOT activatable", beh->GetIDStr().c_str());
               }
             }
           }
         }
         
-        if(!wantsRunnableBehaviors.empty())
+        if(!wantsActivatedBehaviors.empty())
         {
-          int index = behaviorExternalInterface.GetRNG().RandIntInRange( 0, Util::numeric_cast<int>(wantsRunnableBehaviors.size()) - 1);
-          _playingBehavior = wantsRunnableBehaviors[index];
+          int index = behaviorExternalInterface.GetRNG().RandIntInRange( 0, Util::numeric_cast<int>(wantsActivatedBehaviors.size()) - 1);
+          _playingBehavior = wantsActivatedBehaviors[index];
           needsToPlay = true;
         }
       }
       
       if( nullptr != _playingBehavior && needsToPlay ) {
-        // should be runnable since it was just selected in the code above
-        DEV_ASSERT( _playingBehavior->WantsToBeActivated(behaviorExternalInterface), "ActivitySocialize.PlayingBehavior.NotRunnable");
+        // should be activatable since it was just selected in the code above
+        DEV_ASSERT( _playingBehavior->WantsToBeActivated(behaviorExternalInterface), "ActivitySocialize.PlayingBehavior.NotActivatable");
         bestBehavior = _playingBehavior; 
         _lastNumTimesPlayStarted = _playingBehavior->GetNumTimesBehaviorStarted();
         _state = State::Playing;
@@ -304,7 +304,7 @@ ICozmoBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorEx
         }
       }
       
-      if( _playingBehavior->IsRunning() || _playingBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
+      if( _playingBehavior->IsActivated() || _playingBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
         bestBehavior = _playingBehavior;
       }
       break;
@@ -313,7 +313,7 @@ ICozmoBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorEx
     case State::FinishedPlaying: {
       // At this point, we've told the pouncing behavior to stop after it's current action, so let it run
       // until that happens to avoid a harsh cut
-      if( currentRunningBehavior == _playingBehavior && _playingBehavior->IsRunning() ) {
+      if( currentRunningBehavior == _playingBehavior && _playingBehavior->IsActivated() ) {
         // keep it going while it's running, let it stop itself
         bestBehavior = _playingBehavior;
       }

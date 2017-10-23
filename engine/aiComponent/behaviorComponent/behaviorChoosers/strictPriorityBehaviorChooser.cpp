@@ -61,10 +61,10 @@ StrictPriorityBehaviorChooser::~StrictPriorityBehaviorChooser()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr StrictPriorityBehaviorChooser::GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior)
 {
-  // Iterate through available behaviors, and return the first one that is runnable
+  // Iterate through available behaviors, and return the first one that is activatable
   // since this is the highest priority behavior
   for(const auto& entry: _behaviors){
-    if(entry->IsRunning() || entry->WantsToBeActivated(behaviorExternalInterface)){
+    if(entry->IsActivated() || entry->WantsToBeActivated(behaviorExternalInterface)){
       return entry;
     }
   }

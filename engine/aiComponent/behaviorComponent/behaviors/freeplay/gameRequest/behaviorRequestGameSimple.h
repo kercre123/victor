@@ -40,7 +40,7 @@ protected:
   virtual Status RequestGame_UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void   RequestGame_OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual float EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual float EvaluateRunningScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual float EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
   virtual void HandleGameDeniedRequest(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual f32 GetRequestMinDelayComplete_s() const override;

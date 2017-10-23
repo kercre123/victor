@@ -1,5 +1,5 @@
 /**
-* File: iWantsToRunStrategy.cpp
+* File: iStateConceptStrategy.cpp
 *
 * Author: Kevin M. Karol
 * Created: 7/3/17
@@ -13,7 +13,7 @@
 **/
 
 
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/iWantsToRunStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -29,17 +29,17 @@ const char* kStrategyTypeKey = "strategyType";
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-WantsToRunStrategyType IWantsToRunStrategy::ExtractStrategyType(const Json::Value& config)
+StateConceptStrategyType IStateConceptStrategy::ExtractStrategyType(const Json::Value& config)
 {
   std::string strategyType = JsonTools::ParseString(config,
                                                     kStrategyTypeKey,
-                                                    "IWantsToRunStrategy.ExtractStrategyType.NoTypeSpecified");
-  return WantsToRunStrategyTypeFromString(strategyType);
+                                                    "IStateConceptStrategy.ExtractStrategyType.NoTypeSpecified");
+  return StateConceptStrategyTypeFromString(strategyType);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IWantsToRunStrategy::IWantsToRunStrategy(BehaviorExternalInterface& behaviorExternalInterface,
+IStateConceptStrategy::IStateConceptStrategy(BehaviorExternalInterface& behaviorExternalInterface,
                                          IExternalInterface* robotExternalInterface,
                                          const Json::Value& config)
 : _behaviorExternalInterface(behaviorExternalInterface)
@@ -50,7 +50,7 @@ IWantsToRunStrategy::IWantsToRunStrategy(BehaviorExternalInterface& behaviorExte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IWantsToRunStrategy::SubscribeToTags(std::set<GameToEngineTag> &&tags)
+void IStateConceptStrategy::SubscribeToTags(std::set<GameToEngineTag> &&tags)
 {
   if(_robotExternalInterface != nullptr) {
     auto handlerCallback = [this](const GameToEngineEvent& event) {
@@ -65,7 +65,7 @@ void IWantsToRunStrategy::SubscribeToTags(std::set<GameToEngineTag> &&tags)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IWantsToRunStrategy::SubscribeToTags(std::set<EngineToGameTag> &&tags)
+void IStateConceptStrategy::SubscribeToTags(std::set<EngineToGameTag> &&tags)
 {
   if(_robotExternalInterface != nullptr) {
     auto handlerCallback = [this](const EngineToGameEvent& event) {
@@ -80,29 +80,29 @@ void IWantsToRunStrategy::SubscribeToTags(std::set<EngineToGameTag> &&tags)
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IWantsToRunStrategy::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void IStateConceptStrategy::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   AlwaysHandleInternal(event, behaviorExternalInterface);
 }
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IWantsToRunStrategy::AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void IStateConceptStrategy::AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   AlwaysHandleInternal(event, behaviorExternalInterface);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IWantsToRunStrategy::WantsToRun(BehaviorExternalInterface& behaviorExternalInterface) const
+bool IStateConceptStrategy::AreStateConditionsMet(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  return WantsToRunInternal(behaviorExternalInterface);
+  return AreStateConditionsMetInternal(behaviorExternalInterface);
 }
 
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Util::RandomGenerator& IWantsToRunStrategy::GetRNG() const
+Util::RandomGenerator& IStateConceptStrategy::GetRNG() const
 {
   return _behaviorExternalInterface.GetRNG();
 }

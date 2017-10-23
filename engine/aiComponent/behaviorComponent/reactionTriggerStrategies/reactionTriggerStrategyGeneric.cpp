@@ -106,19 +106,19 @@ void ReactionTriggerStrategyGeneric::SetupForceTriggerBehavior(BehaviorExternalI
   
 // Overrides interface to allow for instances with different configurations to decide how they should trigger.
 // If the ShouldTriggerCallback isn't set, there are no relevant events being watched, and other values are
-// default, this boils down to only checking behavior->IsRunnable with no prereqs.
+// default, this boils down to only checking behavior->IsActivatable
 bool ReactionTriggerStrategyGeneric::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
-  if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
+  if(ANKI_VERIFY(_stateConceptStrategy != nullptr,
                  "ReactionTriggerStrategyNoPreDockPoses.ShouldTriggerBehaviorInternal",
                  "WantsToRunStrategyNotSpecified")){
     
-    const bool isRunnable = (behavior->IsRunning() ||
-                             (_needsRobotPreReq ?
-                              behavior->WantsToBeActivated(behaviorExternalInterface) :
-                              behavior->WantsToBeActivated(behaviorExternalInterface)));
+    const bool isActivatable = (behavior->IsActivated() ||
+                                (_needsRobotPreReq ?
+                                 behavior->WantsToBeActivated(behaviorExternalInterface) :
+                                 behavior->WantsToBeActivated(behaviorExternalInterface)));
     
-    return isRunnable && _wantsToRunStrategy->WantsToRun(behaviorExternalInterface);
+    return isActivatable && _stateConceptStrategy->AreStateConditionsMet(behaviorExternalInterface);
   }
   
   return false;
@@ -149,12 +149,12 @@ StrategyGeneric* ReactionTriggerStrategyGeneric::GetGenericWantsToRunStrategy() 
   StrategyGeneric* strategy;
   if(ANKI_DEV_CHEATS)
   {
-    strategy = dynamic_cast<StrategyGeneric*>(_wantsToRunStrategy.get());
+    strategy = dynamic_cast<StrategyGeneric*>(_stateConceptStrategy.get());
     DEV_ASSERT(strategy != nullptr, "ReactionTriggerStrategyGeneric.GetGenericWantsToRunStrategy.Null");
   }
   else
   {
-    strategy = static_cast<StrategyGeneric*>(_wantsToRunStrategy.get());
+    strategy = static_cast<StrategyGeneric*>(_stateConceptStrategy.get());
   }
   return strategy;
 }

@@ -37,7 +37,7 @@ protected:
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual void HandleWhileRunning(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:

@@ -165,7 +165,7 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
                 });
   }
   
-  void BehaviorFactoryCentroidExtractor::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+  void BehaviorFactoryCentroidExtractor::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
   {
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed

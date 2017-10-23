@@ -17,7 +17,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"

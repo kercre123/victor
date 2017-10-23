@@ -29,7 +29,7 @@ namespace{
 using namespace ExternalInterface;
 const constexpr char* const kConfigTriggersKey = "configTriggers";
 const constexpr char* const kAnimTriggersKey = "animTriggers";
-const constexpr float kMaxIntervalBetweenRunnableCheck_s = 5.f;
+const constexpr float kMaxIntervalBetweenWantsToBeActivatedCheck_s = 5.f;
   
 }
 
@@ -37,7 +37,7 @@ const constexpr float kMaxIntervalBetweenRunnableCheck_s = 5.f;
 BehaviorOnConfigSeen::BehaviorOnConfigSeen(const Json::Value& config)
 : ICozmoBehavior(config)
 , _animTriggerIndex(0)
-, _lastRunnableCheck_s(0)
+, _lastWantsToBeActivatedCheck_s(0)
 , _lastTimeNewConfigSeen_s(0)
 {
   ReadJson(config);
@@ -69,8 +69,8 @@ bool BehaviorOnConfigSeen::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 {
   // if this is the first update in a long time consider that the config was already known
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const bool initialUpdateCheck = FLT_GE(currentTime - _lastRunnableCheck_s, kMaxIntervalBetweenRunnableCheck_s);
-  _lastRunnableCheck_s = currentTime;
+  const bool initialUpdateCheck = FLT_GE(currentTime - _lastWantsToBeActivatedCheck_s, kMaxIntervalBetweenWantsToBeActivatedCheck_s);
+  _lastWantsToBeActivatedCheck_s = currentTime;
   
   for(auto& mapEntry: _configurationCountMap){
     const auto& blockWorld = behaviorExternalInterface.GetBlockWorld();

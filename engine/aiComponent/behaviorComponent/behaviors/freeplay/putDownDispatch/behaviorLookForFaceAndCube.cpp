@@ -212,7 +212,7 @@ void BehaviorLookForFaceAndCube::OnBehaviorDeactivated(BehaviorExternalInterface
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookForFaceAndCube::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookForFaceAndCube::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( event.GetData().GetTag() == EngineToGameTag::RobotObservedFace) {
 

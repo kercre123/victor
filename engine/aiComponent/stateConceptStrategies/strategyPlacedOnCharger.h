@@ -15,12 +15,12 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_StrategyPlacedOnCharger_H__
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_StrategyPlacedOnCharger_H__
 
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/iWantsToRunStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class StrategyPlacedOnCharger : public IWantsToRunStrategy{
+class StrategyPlacedOnCharger : public IStateConceptStrategy{
 public:
   StrategyPlacedOnCharger(BehaviorExternalInterface& behaviorExternalInterface,
                           IExternalInterface* robotExternalInterface,
@@ -28,7 +28,7 @@ public:
 
 protected:
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool WantsToRunInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
 private:
   mutable bool _shouldTrigger = false;

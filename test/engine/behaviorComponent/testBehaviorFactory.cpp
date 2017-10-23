@@ -19,7 +19,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/robot.h"
@@ -117,11 +117,11 @@ void VerifyBehavior(const ICozmoBehaviorPtr inBehavior, const BehaviorContainer&
   EXPECT_FLOAT_EQ(inBehavior->GetRepetitionPenalty().EvaluateY(0.0f), 0.0f);
   EXPECT_FLOAT_EQ(inBehavior->GetRepetitionPenalty().EvaluateY(4.5f), 0.5f);
 
-  EXPECT_EQ(inBehavior->GetRunningPenalty().GetNumNodes(), 3);
-  EXPECT_FLOAT_EQ(inBehavior->GetRunningPenalty().EvaluateY(0.0f), 1.0f);
-  EXPECT_FLOAT_EQ(inBehavior->GetRunningPenalty().EvaluateY(5.0f), 1.0f);
-  EXPECT_FLOAT_EQ(inBehavior->GetRunningPenalty().EvaluateY(35.0f), 0.75f);
-  EXPECT_FLOAT_EQ(inBehavior->GetRunningPenalty().EvaluateY(200.0f), 0.5f);
+  EXPECT_EQ(inBehavior->GetActivatedPenalty().GetNumNodes(), 3);
+  EXPECT_FLOAT_EQ(inBehavior->GetActivatedPenalty().EvaluateY(0.0f), 1.0f);
+  EXPECT_FLOAT_EQ(inBehavior->GetActivatedPenalty().EvaluateY(5.0f), 1.0f);
+  EXPECT_FLOAT_EQ(inBehavior->GetActivatedPenalty().EvaluateY(35.0f), 0.75f);
+  EXPECT_FLOAT_EQ(inBehavior->GetActivatedPenalty().EvaluateY(200.0f), 0.5f);
   
   EXPECT_EQ(behaviorContainer.FindBehaviorByID(expectedID), inBehavior);
   EXPECT_EQ(behaviorContainer.GetBehaviorMap().size(), expectedBehaviorCount);

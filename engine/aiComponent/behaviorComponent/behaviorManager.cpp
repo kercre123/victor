@@ -30,7 +30,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerStrategyFactory.h"
@@ -52,7 +52,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
-#include "clad/types/behaviorSystem/reactionTriggers.h"
+#include "clad/types/behaviorComponent/reactionTriggers.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
@@ -794,7 +794,7 @@ void BehaviorManager::ChooseNextScoredBehaviorAndSwitch(BehaviorExternalInterfac
 
   // the current behavior has to be running. Otherwise current should be nullptr
   DEV_ASSERT(GetRunningAndResumeInfo().GetCurrentBehavior() == nullptr ||
-             GetRunningAndResumeInfo().GetCurrentBehavior()->IsRunning(),
+             GetRunningAndResumeInfo().GetCurrentBehavior()->IsActivated(),
     "BehaviorManager.ChooseNextBehaviorAndSwitch.CurrentBehaviorIsNotRunning");
  
   // ask the current activity for the next behavior
@@ -1152,7 +1152,7 @@ void BehaviorManager::StopAndNullifyCurrentBehavior(BehaviorExternalInterface& b
 {
   ICozmoBehaviorPtr currentBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
   
-  if ( nullptr != currentBehavior && currentBehavior->IsRunning() ) {
+  if ( nullptr != currentBehavior && currentBehavior->IsActivated() ) {
     currentBehavior->OnDeactivated(behaviorExternalInterface);
   }
   
@@ -1400,7 +1400,7 @@ void BehaviorManager::HandleMessage(BehaviorExternalInterface& behaviorExternalI
     case ExternalInterface::BehaviorManagerMessageUnionTag::PlayAGameRequest:
     {
       if (_uiRequestGameBehavior == nullptr ||
-          _uiRequestGameBehavior->IsRunning()) {
+          _uiRequestGameBehavior->IsActivated()) {
         _shouldRequestGame = true;
       }
       break;
@@ -1591,7 +1591,7 @@ void BehaviorManager::DisableReactionWithLock(const std::string& lockID,
        _runningAndResumeInfo->GetCurrentReactionTrigger() == triggerEnum)
     {
       ICozmoBehaviorPtr currentBehavior = _runningAndResumeInfo->GetCurrentBehavior();
-      if(currentBehavior!= nullptr && currentBehavior->IsRunning())
+      if(currentBehavior!= nullptr && currentBehavior->IsActivated())
       {
         currentBehavior->OnDeactivated(*_behaviorExternalInterface);
       }

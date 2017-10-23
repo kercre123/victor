@@ -24,7 +24,7 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/image_impl.h"
 #include "clad/types/actionTypes.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/proceduralEyeParameters.h"
 #include "util/math/math.h"
@@ -1188,7 +1188,7 @@ namespace Anki {
 
                   printf("Selecting behavior by NAME: %s\n", behaviorName.c_str());
                   if (behaviorName == "LiftLoadTest") {
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsRunnable()));
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsActivatable()));
                   }
                   const int numRuns = root_->getField("numBehaviorRuns")->getSFInt32();
                   BehaviorID behaviorID = BehaviorIDFromString(behaviorName);

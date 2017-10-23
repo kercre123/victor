@@ -11,7 +11,7 @@
 *
 **/
 
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/strategyExpressNeedsTransition.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyExpressNeedsTransition.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -34,7 +34,7 @@ const char* kNeedIDKey = "need";
 StrategyExpressNeedsTransition::StrategyExpressNeedsTransition(BehaviorExternalInterface& behaviorExternalInterface,
                                                                IExternalInterface* robotExternalInterface,
                                                                const Json::Value& config)
-: IWantsToRunStrategy(behaviorExternalInterface, robotExternalInterface, config)
+: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
 {
   const auto& needStr = JsonTools::ParseString(config,
                                                kNeedIDKey,
@@ -44,7 +44,7 @@ StrategyExpressNeedsTransition::StrategyExpressNeedsTransition(BehaviorExternalI
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool StrategyExpressNeedsTransition::WantsToRunInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool StrategyExpressNeedsTransition::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   const auto& severeNeedsComponent = behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent();
 

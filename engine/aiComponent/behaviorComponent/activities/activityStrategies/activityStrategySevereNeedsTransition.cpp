@@ -16,7 +16,7 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/iWantsToRunStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
@@ -39,10 +39,10 @@ ActivityStrategySevereNeedsTransition::ActivityStrategySevereNeedsTransition(Beh
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityStrategySevereNeedsTransition::WantsToStartInternal(BehaviorExternalInterface& behaviorExternalInterface, float lastTimeActivityRanSec) const
 {
-  if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
+  if(ANKI_VERIFY(_stateConceptStrategy != nullptr,
                  "ActivityStrategySevereNeedsTransition.WantsToStartInternal",
                  "WantsToRunStrategyNotSpecified")){
-    return _wantsToRunStrategy->WantsToRun(behaviorExternalInterface);
+    return _stateConceptStrategy->AreStateConditionsMet(behaviorExternalInterface);
   }
   return false;
 }
@@ -51,10 +51,10 @@ bool ActivityStrategySevereNeedsTransition::WantsToStartInternal(BehaviorExterna
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityStrategySevereNeedsTransition::WantsToEndInternal(BehaviorExternalInterface& behaviorExternalInterface, float lastTimeActivityStartedSec) const
 {
-  if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
+  if(ANKI_VERIFY(_stateConceptStrategy != nullptr,
                  "ActivityStrategySevereNeedsTransition.WantsToEndInternal",
                  "WantsToRunStrategyNotSpecified")){
-    return !_wantsToRunStrategy->WantsToRun(behaviorExternalInterface);
+    return !_stateConceptStrategy->AreStateConditionsMet(behaviorExternalInterface);
   }
   return true;
 }

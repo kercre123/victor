@@ -179,7 +179,7 @@
 //  // we completed our action, clear the tag so that the main loop knows
 //  if ( _currentActionTag == msg.idTag )
 //  {
-//    if ( !IsRunning() ) {
+//    if ( !IsActivated() ) {
 //      PRINT_NAMED_INFO("BehaviorExploreCliff", "Our action completed while not running.");
 //    }
 //  

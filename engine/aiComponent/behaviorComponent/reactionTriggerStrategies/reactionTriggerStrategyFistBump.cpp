@@ -128,7 +128,7 @@ bool ReactionTriggerStrategyFistBump::ShouldTriggerBehaviorInternal(BehaviorExte
   if (_shouldTrigger) {
     
     // If behavior is running then reset
-    if (behavior->IsRunning()) {
+    if (behavior->IsActivated()) {
       _shouldTrigger = false;
     }
     

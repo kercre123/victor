@@ -14,7 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/activities/activityStrategies/activityStrategyNeedBasedCooldown.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/needsManager.h"

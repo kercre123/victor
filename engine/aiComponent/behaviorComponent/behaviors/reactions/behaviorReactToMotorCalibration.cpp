@@ -94,7 +94,7 @@ Result BehaviorReactToMotorCalibration::OnBehaviorActivated(BehaviorExternalInte
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToMotorCalibration::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToMotorCalibration::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag()) {
     case EngineToGameTag::MotorCalibration:

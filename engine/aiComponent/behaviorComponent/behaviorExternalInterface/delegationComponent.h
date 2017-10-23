@@ -39,9 +39,9 @@ public:
   Delegator(Robot& robot, BehaviorSystemManager& bsm);
   virtual ~Delegator(){};
   
-  bool Delegate(IBehavior* delegatingRunnable, IActionRunner* action);
-  bool Delegate(IBehavior* delegatingRunnable, IBehavior* delegated);
-  bool Delegate(IBehavior* delegatingRunnable,
+  bool Delegate(IBehavior* delegatingBehavior, IActionRunner* action);
+  bool Delegate(IBehavior* delegatingBehavior, IBehavior* delegated);
+  bool Delegate(IBehavior* delegatingBehavior,
                 BehaviorExternalInterface& behaviorExternalInterface,
                 HelperHandle helper,
                 BehaviorSimpleCallbackWithExternalInterface successCallback,
@@ -56,11 +56,11 @@ private:
   Robot& _robot;
   
   // Naive tracking for action delegation
-  IBehavior* _runnableThatDelegatedAction;
+  IBehavior* _behaviorThatDelegatedAction;
   u32 _lastActionTag;
 
   // Naive tracking for helper delegation
-  IBehavior* _runnableThatDelegatedHelper;
+  IBehavior* _behaviorThatDelegatedHelper;
   WeakHelperHandle _delegateHelperHandle;
   BehaviorSystemManager* _bsm;
 
@@ -75,12 +75,12 @@ public:
   
   void Init(Robot& robot, BehaviorSystemManager& bsm);
   
-  bool IsControlDelegated(const IBehavior* delegatingRunnable);
-  void CancelDelegates(IBehavior* delegatingRunnable);
-  void CancelSelf(IBehavior* delegatingRunnable);
+  bool IsControlDelegated(const IBehavior* delegatingBehavior);
+  void CancelDelegates(IBehavior* delegatingBehavior);
+  void CancelSelf(IBehavior* delegatingBehavior);
 
-  bool HasDelegator(IBehavior* delegatingRunnable);
-  Delegator& GetDelegator(IBehavior* delegatingRunnable);
+  bool HasDelegator(IBehavior* delegatingBehavior);
+  Delegator& GetDelegator(IBehavior* delegatingBehavior);
 
   // called when an action completes (with any status). Argument is the action id
   void HandleActionComplete(u32 actionTag);
@@ -93,11 +93,11 @@ private:
   
   // For supporting legacy code
   friend class ICozmoBehavior;
-  bool IsActing(const IBehavior* delegatingRunnable);
+  bool IsActing(const IBehavior* delegatingBehavior);
   
   // TMP for helpers only
   friend class IHelper;
-  void CancelActionIfRunning(IBehavior* delegatingRunnable = nullptr);
+  void CancelActionIfRunning(IBehavior* delegatingBehavior = nullptr);
   
 };
   

@@ -15,10 +15,10 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorExternalInterface_H__
 
 
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 
-#include "clad/types/behaviorSystem/activityTypes.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/activityTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/offTreadsStates.h"
 
 #include "util/random/randomGenerator.h"
@@ -42,7 +42,7 @@ class MoodManager;
 class ProgressionUnlockComponent;
 class PublicStateBroadcaster;
 class Robot;
-class StateChangeComponent;
+class BehaviorEventComponent;
   
 namespace Audio {
 class BehaviorAudioComponent;
@@ -55,20 +55,20 @@ struct BehaviorExternalInterfaceComponents{
                                       const BehaviorContainer& behaviorContainer,
                                       BlockWorld& blockWorld,
                                       FaceWorld& faceWorld,
-                                      StateChangeComponent& stateChangeComponent)
+                                      BehaviorEventComponent& behaviorEventComponent)
   :_robot(robot)
   ,_aiComponent(aiComponent)
   ,_behaviorContainer(behaviorContainer)
   ,_blockWorld(blockWorld)
   ,_faceWorld(faceWorld)
-  ,_stateChangeComponent(stateChangeComponent){}
+  ,_behaviorEventComponent(behaviorEventComponent){}
   
   Robot&                   _robot;
   AIComponent&             _aiComponent;
   const BehaviorContainer& _behaviorContainer;
   const BlockWorld&        _blockWorld;
   const FaceWorld&         _faceWorld;
-  StateChangeComponent&    _stateChangeComponent;
+  BehaviorEventComponent&    _behaviorEventComponent;
 };
 }
   
@@ -81,7 +81,7 @@ public:
             const BehaviorContainer& behaviorContainer,
             BlockWorld& blockWorld,
             FaceWorld& faceWorld,
-            StateChangeComponent& stateChangeComponent);
+            BehaviorEventComponent& behaviorEventComponent);
   
   void SetOptionalInterfaces(DelegationComponent* delegationComponent,
                              MoodManager* moodManager,
@@ -97,7 +97,7 @@ public:
   const FaceWorld&         GetFaceWorld()               const { assert(_beiComponents); return _beiComponents->_faceWorld;}
   const BlockWorld&        GetBlockWorld()              const { assert(_beiComponents); return _beiComponents->_blockWorld;}
   const BehaviorContainer& GetBehaviorContainer()       const { assert(_beiComponents); return _beiComponents->_behaviorContainer;}
-  StateChangeComponent& GetStateChangeComponent()       const { assert(_beiComponents); return _beiComponents->_stateChangeComponent;}
+  BehaviorEventComponent& GetStateChangeComponent()       const { assert(_beiComponents); return _beiComponents->_behaviorEventComponent;}
 
   // Give behaviors/activities access to robot
   // THIS IS DEPRECATED

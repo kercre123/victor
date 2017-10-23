@@ -14,7 +14,7 @@
 
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerStrategyRobotPlacedOnSlope.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/iWantsToRunStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 
@@ -52,10 +52,10 @@ void ReactionTriggerStrategyRobotPlacedOnSlope::SetupForceTriggerBehavior(Behavi
 bool ReactionTriggerStrategyRobotPlacedOnSlope::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   
-  if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
+  if(ANKI_VERIFY(_stateConceptStrategy != nullptr,
                  "ReactionTriggerStrategyPlacedOnCharger.ShouldTriggerBehaviorInternal",
                  "WantsToRunStrategyNotSpecified")){
-    return _wantsToRunStrategy->WantsToRun(behaviorExternalInterface) && behavior->WantsToBeActivated(behaviorExternalInterface);
+    return _stateConceptStrategy->AreStateConditionsMet(behaviorExternalInterface) && behavior->WantsToBeActivated(behaviorExternalInterface);
   }
   return false;
 }

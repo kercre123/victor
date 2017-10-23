@@ -34,8 +34,8 @@ public:
 
 protected:
   virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override;

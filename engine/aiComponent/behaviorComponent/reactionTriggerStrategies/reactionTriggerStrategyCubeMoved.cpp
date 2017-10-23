@@ -144,9 +144,9 @@ bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehaviorInternal(BehaviorExt
         objIter->ResetObject();
         directPtr->SetObjectToAcknowledge(objIter->GetObjectID());
         
-        // To avoid the assert that IsRunnable can't be checked while the behavior
-        // is running, grab direct access to IsRunnable internal instead
-        if(behavior->IsRunning()){
+        // To avoid the assert that IsActivatable can't be checked while the behavior
+        // is running, grab direct access to WantsToBeActivatedInternal instead
+        if(behavior->IsActivated()){
           return true;
         }else{
           return behavior->WantsToBeActivated(behaviorExternalInterface);

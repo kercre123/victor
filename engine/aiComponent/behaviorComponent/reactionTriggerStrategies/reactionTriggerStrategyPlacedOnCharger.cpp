@@ -13,7 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerStrategyPlacedOnCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/iWantsToRunStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 #include "anki/common/basestation/utils/timer.h"
 
 namespace Anki {
@@ -44,10 +44,10 @@ void ReactionTriggerStrategyPlacedOnCharger::SetupForceTriggerBehavior(BehaviorE
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyPlacedOnCharger::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
-  if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
+  if(ANKI_VERIFY(_stateConceptStrategy != nullptr,
                  "ReactionTriggerStrategyPlacedOnCharger.ShouldTriggerBehaviorInternal",
                  "WantsToRunStrategyNotSpecified")){
-    return _wantsToRunStrategy->WantsToRun(behaviorExternalInterface);
+    return _stateConceptStrategy->AreStateConditionsMet(behaviorExternalInterface);
   }
   return false;
 }

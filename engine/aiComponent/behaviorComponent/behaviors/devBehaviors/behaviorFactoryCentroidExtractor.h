@@ -50,7 +50,7 @@ namespace Cozmo {
     
     void TransitionToMovingHead(Robot& robot);
     
-    virtual void HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+    virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
     
     bool _waitingForDots = false;
     bool _headCalibrated = false;

@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_ReactionTriggerStrategyGeneric_H__
 
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/iReactionTriggerStrategy.h"
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/strategyGeneric.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyGeneric.h"
 
 #include <set>
 #include <string>

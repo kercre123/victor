@@ -17,7 +17,7 @@
 #include "anki/common/types.h"
 #include "engine/moodSystem/moodScorer.h"
 #include "clad/types/animationTrigger.h"
-#include "clad/types/behaviorSystem/behaviorObjectives.h"
+#include "clad/types/behaviorComponent/behaviorObjectives.h"
 #include "json/json.h"
 
 #include "util/helpers/noncopyable.h"

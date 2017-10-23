@@ -17,7 +17,7 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeObject.h"
@@ -30,7 +30,7 @@
 
 #include "engine/robot.h"
 
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 
 namespace Anki {
@@ -418,7 +418,7 @@ ICozmoBehaviorPtr ActivitySparked::GetDesiredActiveBehaviorInternal(BehaviorExte
     case ChooserState::PlayingSparksIntro:
     {
       if(currentRunningBehavior != nullptr
-         && currentRunningBehavior->IsRunning()){
+         && currentRunningBehavior->IsActivated()){
         bestBehavior = _behaviorPlayAnimation;
       }else{
         _state = ChooserState::UsingSimpleBehaviorChooser;
@@ -436,7 +436,7 @@ ICozmoBehaviorPtr ActivitySparked::GetDesiredActiveBehaviorInternal(BehaviorExte
     {
       if(currentRunningBehavior != nullptr
          && (currentRunningBehavior->GetClass() != BehaviorClass::Wait)
-         && currentRunningBehavior->IsRunning()){
+         && currentRunningBehavior->IsActivated()){
         // wait for the current behavior to end
         bestBehavior = SelectNextSparkInternalBehavior(behaviorExternalInterface, currentRunningBehavior);
         break;
@@ -481,7 +481,7 @@ ICozmoBehaviorPtr ActivitySparked::GetDesiredActiveBehaviorInternal(BehaviorExte
     }
     case ChooserState::PlayingSparksOutro:
     {
-      if(currentRunningBehavior == nullptr || !currentRunningBehavior->IsRunning()){
+      if(currentRunningBehavior == nullptr || !currentRunningBehavior->IsActivated()){
         CompleteSparkLogic(behaviorExternalInterface);
       }else{
         bestBehavior = _behaviorPlayAnimation;

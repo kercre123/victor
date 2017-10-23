@@ -10,7 +10,7 @@
  *
  **/
 
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/strategyGeneric.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyGeneric.h"
 
 #include "anki/common/basestation/jsonTools.h"
 
@@ -20,7 +20,7 @@ namespace Cozmo {
 StrategyGeneric::StrategyGeneric(BehaviorExternalInterface& behaviorExternalInterface,
                                  IExternalInterface* robotExternalInterface,
                                  const Json::Value& config)
-: IWantsToRunStrategy(behaviorExternalInterface, robotExternalInterface, config)
+: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
 {
   
 }
@@ -65,7 +65,7 @@ void StrategyGeneric::ConfigureRelevantEvents(std::set<GameToEngineTag> relevant
   _gameToEngineHandleCallback = callback;
 }
 
-bool StrategyGeneric::WantsToRunInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool StrategyGeneric::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   const bool wantsToRun = _wantsToRun;
   const bool shouldTrigger = ShouldTrigger(behaviorExternalInterface);

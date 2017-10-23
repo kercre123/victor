@@ -1,5 +1,5 @@
 /**
-* File: iWantsToRunStrategy.h
+* File: iStateConceptStrategy.h
 *
 * Author: Kevin M. Karol
 * Created: 7/3/17
@@ -12,15 +12,15 @@
 *
 **/
 
-#ifndef __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_IWantsToRunStrategy_H__
-#define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_IWantsToRunStrategy_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_StateConceptStrategies_IStateConceptStrategy_H__
+#define __Cozmo_Basestation_BehaviorSystem_StateConceptStrategies_IStateConceptStrategy_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 
 #include "engine/events/ankiEvent.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/types/behaviorSystem/strategyTypes.h"
+#include "clad/types/behaviorComponent/strategyTypes.h"
 #include "json/json-forwards.h"
 #include "util/random/randomGenerator.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -34,21 +34,21 @@ class BehaviorExternalInterface;
 class IExternalInterface;
 class Robot;
   
-class IWantsToRunStrategy{
+class IStateConceptStrategy{
 public:
-  IWantsToRunStrategy(BehaviorExternalInterface& behaviorExternalInterface,
+  IStateConceptStrategy(BehaviorExternalInterface& behaviorExternalInterface,
                       IExternalInterface* robotExternalInterface,
                       const Json::Value& config);
-  virtual ~IWantsToRunStrategy() {};
+  virtual ~IStateConceptStrategy() {};
 
-  bool WantsToRun(BehaviorExternalInterface& behaviorExternalInterface) const;
+  bool AreStateConditionsMet(BehaviorExternalInterface& behaviorExternalInterface) const;
 
   // A random number generator all subclasses can share
   Util::RandomGenerator& GetRNG() const;
   
-  WantsToRunStrategyType GetStrategyType(){return _strategyType;}
+  StateConceptStrategyType GetStrategyType(){return _strategyType;}
   
-  static WantsToRunStrategyType ExtractStrategyType(const Json::Value& config);
+  static StateConceptStrategyType ExtractStrategyType(const Json::Value& config);
   
 protected:
   using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
@@ -64,13 +64,13 @@ protected:
   virtual void AlwaysHandleInternal(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) {}
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) {}
   
-  virtual bool WantsToRunInternal(BehaviorExternalInterface& behaviorExternalInterface) const = 0;
+  virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const = 0;
 
 private:
   BehaviorExternalInterface& _behaviorExternalInterface;
   IExternalInterface* _robotExternalInterface;
   std::vector<::Signal::SmartHandle> _eventHandles;
-  WantsToRunStrategyType _strategyType;
+  StateConceptStrategyType _strategyType;
 
   void AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface);
   void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface);
@@ -80,10 +80,10 @@ private:
   
 };
 
-using IWantsToRunStrategyPtr = std::unique_ptr<IWantsToRunStrategy>;
+using IStateConceptStrategyPtr = std::unique_ptr<IStateConceptStrategy>;
 
 template<class EventType>
-void IWantsToRunStrategy::HandleEvent(const EventType& event)
+void IStateConceptStrategy::HandleEvent(const EventType& event)
 {
   AlwaysHandle(event, _behaviorExternalInterface);
 }
@@ -91,4 +91,4 @@ void IWantsToRunStrategy::HandleEvent(const EventType& event)
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_IWantsToRunStrategy_H__
+#endif // __Cozmo_Basestation_BehaviorSystem_StateConceptStrategies_IStateConceptStrategy_H__

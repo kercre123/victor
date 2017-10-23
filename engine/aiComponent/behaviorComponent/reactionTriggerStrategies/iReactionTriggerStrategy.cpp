@@ -15,13 +15,13 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/wantsToRunStrategyFactory.h"
+#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/robot.h"
 
-#include "clad/types/behaviorSystem/strategyTypes.h"
+#include "clad/types/behaviorComponent/strategyTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -36,7 +36,7 @@ static const char* kWantsToRunStrategyConfigKey = "wantsToRunStrategyConfig";
 IReactionTriggerStrategy::IReactionTriggerStrategy(BehaviorExternalInterface& behaviorExternalInterface,
                                                    IExternalInterface* robotExternalInterface,
                                                    const Json::Value& config, const std::string& strategyName)
-: _wantsToRunStrategy(nullptr)
+: _stateConceptStrategy(nullptr)
 , _behaviorExternalInterface(behaviorExternalInterface)
 , _robotExternalInterface(robotExternalInterface)
 , _strategyName(strategyName)
@@ -47,7 +47,7 @@ IReactionTriggerStrategy::IReactionTriggerStrategy(BehaviorExternalInterface& be
   
   if(config.isMember(kWantsToRunStrategyConfigKey)){
     const Json::Value& wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
-    _wantsToRunStrategy.reset(WantsToRunStrategyFactory::CreateWantsToRunStrategy(behaviorExternalInterface,
+    _stateConceptStrategy.reset(StateConceptStrategyFactory::CreateStateConceptStrategy(behaviorExternalInterface,
                                                                                   robotExternalInterface,
                                                                                   wantsToRunConfig));
   }

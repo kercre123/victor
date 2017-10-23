@@ -36,12 +36,12 @@ using namespace Anki::Cozmo;
 
 TEST(DelegationComponent, TestDelegationVariants)
 {
-  std::unique_ptr<TestSuperPoweredRunnable> baseRunnable = std::make_unique<TestSuperPoweredRunnable>();
+  std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
   TestBehaviorFramework testFramework;
-  auto initializeRunnable = [&baseRunnable](const BehaviorComponent::ComponentsPtr& comps){
-    baseRunnable->SetBehaviorContainer(comps->_behaviorContainer);
+  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::ComponentsPtr& comps){
+    baseBehavior->SetBehaviorContainer(comps->_behaviorContainer);
   };
-  testFramework.InitializeStandardBehaviorComponent(baseRunnable.get(),initializeRunnable);
+  testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),initializeBehavior);
   
   BehaviorSystemManager& bsm = testFramework.GetBehaviorSystemManager();
   BehaviorExternalInterface& bei = testFramework.GetBehaviorExternalInterface();
@@ -50,31 +50,31 @@ TEST(DelegationComponent, TestDelegationVariants)
   DelegationComponent& delegationComp = bei.GetDelegationComponent();
   
   // Check to make sure that the stack exists and control is appropriately delegated
-  IBehavior* runnableDelegating = bsm._runnableStack->GetTopOfStack();
-  ASSERT_NE(runnableDelegating, nullptr);
-  EXPECT_FALSE(delegationComp.IsControlDelegated(runnableDelegating));
+  IBehavior* behaviorDelegating = bsm._behaviorStack->GetTopOfStack();
+  ASSERT_NE(behaviorDelegating, nullptr);
+  EXPECT_FALSE(delegationComp.IsControlDelegated(behaviorDelegating));
   
   
   // Build up an arbitrarily large stack of delegates
   const int arbitraryDelegationNumber = 50;
-  std::vector<std::unique_ptr<TestSuperPoweredRunnable>> bunchOfBehaviors;
+  std::vector<std::unique_ptr<TestSuperPoweredBehavior>> bunchOfBehaviors;
   std::vector<std::unique_ptr<ICozmoBehavior>> bunchOfCozmoBehaviors;
   std::vector<HelperHandle> bunchOfHelpers;
 
   {
     for(int i = 0; i < arbitraryDelegationNumber; i++){
-      bunchOfBehaviors.push_back(std::make_unique<TestSuperPoweredRunnable>());
+      bunchOfBehaviors.push_back(std::make_unique<TestSuperPoweredBehavior>());
       auto& toDelegate = bunchOfBehaviors.back();
       toDelegate->SetBehaviorContainer(behaviorContainer);
       toDelegate->Init(bei);
       toDelegate->OnEnteredActivatableScope();
       toDelegate->WantsToBeActivated(bei);
-      InjectValidDelegateIntoBSM(bsm, runnableDelegating, toDelegate.get());
+      InjectValidDelegateIntoBSM(bsm, behaviorDelegating, toDelegate.get());
       
-      ASSERT_TRUE(delegationComp.HasDelegator(runnableDelegating));
-      auto& delegatorComp = delegationComp.GetDelegator(runnableDelegating);
+      ASSERT_TRUE(delegationComp.HasDelegator(behaviorDelegating));
+      auto& delegatorComp = delegationComp.GetDelegator(behaviorDelegating);
       
-      EXPECT_TRUE(delegatorComp.Delegate(runnableDelegating,
+      EXPECT_TRUE(delegatorComp.Delegate(behaviorDelegating,
                                          toDelegate.get()));
       
       // Assert control is delegated properly
@@ -86,7 +86,7 @@ TEST(DelegationComponent, TestDelegationVariants)
         }
       }
       
-      runnableDelegating = bunchOfBehaviors.back().get();
+      behaviorDelegating = bunchOfBehaviors.back().get();
     }
   }
   
@@ -99,12 +99,12 @@ TEST(DelegationComponent, TestDelegationVariants)
       toDelegate->Init(bei);
       toDelegate->OnEnteredActivatableScope();
       toDelegate->WantsToBeActivated(bei);
-      InjectValidDelegateIntoBSM(bsm, runnableDelegating, toDelegate.get());
+      InjectValidDelegateIntoBSM(bsm, behaviorDelegating, toDelegate.get());
       
-      ASSERT_TRUE(delegationComp.HasDelegator(runnableDelegating));
-      auto& delegatorComp = delegationComp.GetDelegator(runnableDelegating);
+      ASSERT_TRUE(delegationComp.HasDelegator(behaviorDelegating));
+      auto& delegatorComp = delegationComp.GetDelegator(behaviorDelegating);
       
-      EXPECT_TRUE(delegatorComp.Delegate(runnableDelegating,
+      EXPECT_TRUE(delegatorComp.Delegate(behaviorDelegating,
                                          toDelegate.get()));
       
       // Assert control is delegated properly
@@ -116,7 +116,7 @@ TEST(DelegationComponent, TestDelegationVariants)
         }
       }
       
-      runnableDelegating = bunchOfCozmoBehaviors.back().get();
+      behaviorDelegating = bunchOfCozmoBehaviors.back().get();
     }
   }
 
@@ -126,27 +126,27 @@ TEST(DelegationComponent, TestDelegationVariants)
     bunchOfHelpers.push_back(factory.CreatePlaceBlockHelper(testFramework.GetBehaviorExternalInterface(),
                                                             *bunchOfCozmoBehaviors.back().get()));
     HelperHandle toDelegate = bunchOfHelpers.back();
-    InjectValidDelegateIntoBSM(bsm, runnableDelegating, toDelegate.get(), false);
+    InjectValidDelegateIntoBSM(bsm, behaviorDelegating, toDelegate.get(), false);
     
-    ASSERT_TRUE(delegationComp.HasDelegator(runnableDelegating));
-    auto& delegatorComp = delegationComp.GetDelegator(runnableDelegating);
+    ASSERT_TRUE(delegationComp.HasDelegator(behaviorDelegating));
+    auto& delegatorComp = delegationComp.GetDelegator(behaviorDelegating);
     
-    EXPECT_TRUE(delegatorComp.Delegate(runnableDelegating,
+    EXPECT_TRUE(delegatorComp.Delegate(behaviorDelegating,
                                        testFramework.GetBehaviorExternalInterface(),
                                        toDelegate,
                                        nullptr,
                                        nullptr));
     
     // Cancel the action that the helper just delegated to in its init
-    delegationComp.CancelDelegates(runnableDelegating);
+    delegationComp.CancelDelegates(behaviorDelegating);
   }
   
   // Delegate to an action
   {
     DriveStraightAction* action = new DriveStraightAction(testFramework.GetRobot(), 0);
-    ASSERT_TRUE(delegationComp.HasDelegator(runnableDelegating));
-    auto& delegatorComp = delegationComp.GetDelegator(runnableDelegating);
-    EXPECT_TRUE(delegatorComp.Delegate(runnableDelegating,
+    ASSERT_TRUE(delegationComp.HasDelegator(behaviorDelegating));
+    auto& delegatorComp = delegationComp.GetDelegator(behaviorDelegating);
+    EXPECT_TRUE(delegatorComp.Delegate(behaviorDelegating,
                                        action));
     // Make sure that nothing thinks it has control
     for(auto& entry: bunchOfBehaviors){
@@ -164,7 +164,7 @@ TEST(DelegationComponent, TestDelegationVariants)
   // Cancel a behavior in the middle of the stack
   delegationComp.CancelSelf(bunchOfBehaviors.back().get());
   ASSERT_FALSE(delegationComp.IsControlDelegated(bunchOfBehaviors.back().get()));
-  ASSERT_FALSE(testFramework.GetBehaviorSystemManager()._runnableStack->IsInStack(bunchOfBehaviors.back().get()));
+  ASSERT_FALSE(testFramework.GetBehaviorSystemManager()._behaviorStack->IsInStack(bunchOfBehaviors.back().get()));
   std::unique_ptr<IBehavior> keepBehaviorValid = std::move(bunchOfBehaviors.back());
   bunchOfBehaviors.pop_back();
   // Delegate to an action and cancel it
@@ -180,8 +180,8 @@ TEST(DelegationComponent, TestDelegationVariants)
   }
   
   // Cancel the bottom of the stack
-  std::vector<IBehavior*>& runnableStack = testFramework.GetBehaviorSystemManager()._runnableStack->_runnableStack;
-  IBehavior* bottomElement = runnableStack.front();
+  std::vector<IBehavior*>& behaviorStack = testFramework.GetBehaviorSystemManager()._behaviorStack->_behaviorStack;
+  IBehavior* bottomElement = behaviorStack.front();
   delegationComp.CancelSelf(bottomElement);
-  ASSERT_TRUE(runnableStack.empty());
+  ASSERT_TRUE(behaviorStack.empty());
 }

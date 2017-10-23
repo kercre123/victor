@@ -16,7 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "anki/vision/basestation/trackedFace.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include <memory>
 #include <set>
 #include <string>
@@ -96,8 +96,8 @@ protected:
 
   virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) final override;
   virtual void AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) final override;
-  virtual void HandleWhileRunning(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) final override;
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) final override;
+  virtual void HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) final override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) final override;
   
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) final override;
 

@@ -18,7 +18,7 @@
 
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorChoosers/scoringBehaviorChooser.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
@@ -68,7 +68,7 @@ bool LoadTestBehaviors(Robot& testRobot, ScoringBehaviorChooser& behaviorChooser
     if (parsedOK)
     {
       DelegationComponent delegationComp;
-      StateChangeComponent stateChangeComp;
+      BehaviorEventComponent stateChangeComp;
       // Factory will automatically delete the behaviors later when robot is destroyed
       BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface();
       behaviorExternalInterface->Init(testRobot,

@@ -24,8 +24,8 @@
 #include "engine/components/cubeLightComponent.h"
 #include "engine/robotDataLoader.h"
 
-#include "clad/types/behaviorSystem/activityTypes.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/activityTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
 
 #include "util/helpers/templateHelpers.h"

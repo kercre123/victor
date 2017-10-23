@@ -112,7 +112,7 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // list of objects selected in IsRunnable. Cached as a performance optimization
+  // list of objects selected in WantsToBeActivated. Cached as a performance optimization
   mutable AIWhiteboard::ObjectInfoList _candidateObjects;
   
   // store ID in case something happen to the object while we move there

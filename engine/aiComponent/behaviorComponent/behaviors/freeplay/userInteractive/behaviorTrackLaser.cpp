@@ -389,11 +389,11 @@ bool BehaviorTrackLaser::CheckForTimeout(BehaviorExternalInterface& behaviorExte
   else
   {
     const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if ( (GetTimeStartedRunning_s() + _params.maxTimeBehaviorTimeout_sec) < currentTime_sec)
+    if ( (GetTimeActivated_s() + _params.maxTimeBehaviorTimeout_sec) < currentTime_sec)
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorTrackLaser.CheckForTimeout.BehaviorTimeout",
                     "Started:%.1f, Now:%.1f, Timeout:%.1f",
-                    GetTimeStartedRunning_s(), currentTime_sec, _params.maxTimeBehaviorTimeout_sec);
+                    GetTimeActivated_s(), currentTime_sec, _params.maxTimeBehaviorTimeout_sec);
       
       LOG_EVENT("robot.laser_behavior.ran_until_max_timeout", "%f", _params.maxTimeBehaviorTimeout_sec);
       
@@ -651,7 +651,7 @@ void BehaviorTrackLaser::TransitionToTrackLaser(BehaviorExternalInterface& behav
                 const bool doPounce = (ActionResult::SUCCESS == result);
                 const f32  actionTrackingTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - startedActionTime_sec;
 
-                const float behaviorRunningElapsed = (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeStartedRunning_s());
+                const float behaviorRunningElapsed = (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeActivated_s());
                 _currentLostLaserTimeout_s = _params.maxLostLaserTimeoutGraph_sec.EvaluateY(behaviorRunningElapsed);
                 
                 PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.TransitionToTrackLaser.TrackingFinished",
@@ -791,7 +791,7 @@ void BehaviorTrackLaser::SetLastLaserObservation(const BehaviorExternalInterface
 {
   const auto & laserObserved = event.GetData().Get_RobotObservedLaserPoint();
   const bool inGroundPlane   = (laserObserved.ground_area_fraction > 0.f);
-  const bool closeEnough     = (IsRunning() || laserObserved.ground_x_mm < _params.maxDistToGetAttention_mm);
+  const bool closeEnough     = (IsActivated() || laserObserved.ground_x_mm < _params.maxDistToGetAttention_mm);
   
   if ( inGroundPlane && closeEnough )
   {

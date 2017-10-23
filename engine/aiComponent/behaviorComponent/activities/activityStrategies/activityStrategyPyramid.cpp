@@ -13,14 +13,14 @@
 
 #include "engine/aiComponent/behaviorComponent/activities/activityStrategies/activityStrategyPyramid.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/robot.h"
 
-#include "clad/types/behaviorSystem/behaviorObjectives.h"
+#include "clad/types/behaviorComponent/behaviorObjectives.h"
 #include "util/random/randomGenerator.h"
 
 namespace Anki {
@@ -28,7 +28,7 @@ namespace Cozmo {
 
 namespace{
 static const int    kMinimumBlocksForPyramid     = 3;
-static const double kOddsPyramidIsRunnable       = 0.4;
+static const double kOddsPyramidIsActivatable    = 0.4;
 static const float  kUpdateRunnabilityInterval_s = 300;
 }
 
@@ -71,7 +71,7 @@ bool ActivityStrategyPyramid::WantsToStartInternal(BehaviorExternalInterface& be
   
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(currentTime_s > _nextTimeUpdateRunability_s){
-    _wantsToRunRandomized = behaviorExternalInterface.GetRNG().RandDbl() < kOddsPyramidIsRunnable;
+    _wantsToRunRandomized = behaviorExternalInterface.GetRNG().RandDbl() < kOddsPyramidIsActivatable;
     _nextTimeUpdateRunability_s = currentTime_s + kUpdateRunnabilityInterval_s;
   }
   

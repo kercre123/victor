@@ -121,7 +121,7 @@ ICozmoBehaviorPtr ActivityVoiceCommand::VCResponseData::GetDesiredActiveBehavior
     if(_currentResponseBehavior != nullptr)
     {
       // If we already have a behavior that VC started we should keep using it while it's running
-      if(_currentResponseBehavior->IsRunning())
+      if(_currentResponseBehavior->IsActivated())
       {
         return _currentResponseBehavior;
       }
@@ -494,7 +494,7 @@ Result ActivityVoiceCommand::Update_Legacy(BehaviorExternalInterface& behaviorEx
         
         if(shouldSearchForFaces){
           if(ANKI_VERIFY(_searchForFaceBehavior->WantsToBeActivated(behaviorExternalInterface),
-                         "ActivityVoiceCommand.ChooseNextBehaviorInternal.SearchForFaceNotRunnable",
+                         "ActivityVoiceCommand.ChooseNextBehaviorInternal.SearchForFaceNotActivatable",
                          "No way to respond to the voice command")){
             responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _searchForFaceBehavior;});
             // If we find a face while searching, drive towards it
@@ -516,7 +516,7 @@ Result ActivityVoiceCommand::Update_Legacy(BehaviorExternalInterface& behaviorEx
       }
       case VoiceCommandType::FistBump:
       {
-        //Ensure fist bump is runnable
+        //Ensure fist bump is activatable
         if(_fistBumpBehavior->WantsToBeActivated(behaviorExternalInterface))
         {
           responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _alrightyBehavior;});
@@ -538,7 +538,7 @@ Result ActivityVoiceCommand::Update_Legacy(BehaviorExternalInterface& behaviorEx
       }
       case VoiceCommandType::PeekABoo:
       {
-        //Ensure PeekABoo is runnable
+        //Ensure PeekABoo is activatable
         if(_peekABooBehavior->WantsToBeActivated(behaviorExternalInterface))
         {
           responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _alrightyBehavior;});
@@ -567,7 +567,7 @@ Result ActivityVoiceCommand::Update_Legacy(BehaviorExternalInterface& behaviorEx
         }
         else
         {
-          PRINT_NAMED_ERROR("ActivityVoiceCommand.ChooseNextBehaviorInternal.GoToSleepBehaviorNotRunnable", "");
+          PRINT_NAMED_ERROR("ActivityVoiceCommand.ChooseNextBehaviorInternal.GoToSleepBehaviorNotActivatable", "");
         }
         break;
       }
@@ -883,7 +883,7 @@ void ActivityVoiceCommand::HandleHowAreYouDoingCommand(BehaviorExternalInterface
   }
   else
   {
-    PRINT_NAMED_ERROR("ActivityVoiceCommand.HandleHowAreYouDoingCommand.BehaviorNotRunnable", "");
+    PRINT_NAMED_ERROR("ActivityVoiceCommand.HandleHowAreYouDoingCommand.BehaviorNotActivatable", "");
   }
 }
 

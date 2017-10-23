@@ -20,10 +20,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
-#include "engine/aiComponent/behaviorComponent/devBaseRunnable.h"
+#include "engine/aiComponent/behaviorComponent/devBaseBehavior.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 
@@ -43,7 +43,7 @@ BehaviorComponentComponents::BehaviorComponentComponents(Robot& robot,
                                                          BehaviorSystemManager& behaviorSysMgr,
                                                          BehaviorExternalInterface& behaviorExternalInterface,
                                                          BehaviorContainer& behaviorContainer,
-                                                         StateChangeComponent& stateChangeComponent,
+                                                         BehaviorEventComponent& behaviorEventComponent,
                                                          AsyncMessageGateComponent& asyncMessageComponent,
                                                          DelegationComponent& delegationComponent)
 : _robot(robot)
@@ -53,7 +53,7 @@ BehaviorComponentComponents::BehaviorComponentComponents(Robot& robot,
 , _behaviorSysMgr(behaviorSysMgr)
 , _behaviorExternalInterface(behaviorExternalInterface)
 , _behaviorContainer(behaviorContainer)
-, _stateChangeComponent(stateChangeComponent)
+, _behaviorEventComponent(behaviorEventComponent)
 , _asyncMessageComponent(asyncMessageComponent)
 , _delegationComponent(delegationComponent)
 {
@@ -86,7 +86,7 @@ BehaviorComponent::~BehaviorComponent()
   // to actions shutting down
   _behaviorMgr.reset();
   _components.reset();
-  Util::SafeDelete(_devBaseRunnable);
+  Util::SafeDelete(_devBaseBehavior);
 }
 
 
@@ -96,7 +96,7 @@ BehaviorComponent::ComponentsPtr BehaviorComponent::GenerateComponents(
                                       BehaviorSystemManager*     behaviorSysMgrPtr,
                                       BehaviorExternalInterface* behaviorExternalInterfacePtr,
                                       BehaviorContainer*         behaviorContainerPtr,
-                                      StateChangeComponent*      stateChangeComponentPtr,
+                                      BehaviorEventComponent*      behaviorEventComponentPtr,
                                       AsyncMessageGateComponent* asyncMessageComponentPtr,
                                       DelegationComponent*       delegationComponentPtr)
 {
@@ -125,10 +125,10 @@ BehaviorComponent::ComponentsPtr BehaviorComponent::GenerateComponents(
     behaviorContainerPtr = behaviorContainer.get();
   }
   
-  std::unique_ptr<StateChangeComponent> stateChangeComponent;
-  if(stateChangeComponentPtr == nullptr){
-    stateChangeComponent = std::make_unique<StateChangeComponent>();
-    stateChangeComponentPtr = stateChangeComponent.get();
+  std::unique_ptr<BehaviorEventComponent> behaviorEventComponent;
+  if(behaviorEventComponentPtr == nullptr){
+    behaviorEventComponent = std::make_unique<BehaviorEventComponent>();
+    behaviorEventComponentPtr = behaviorEventComponent.get();
   }
   
   std::unique_ptr<AsyncMessageGateComponent> asyncMessageComponent;
@@ -154,14 +154,14 @@ BehaviorComponent::ComponentsPtr BehaviorComponent::GenerateComponents(
       *behaviorSysMgrPtr,
       *behaviorExternalInterfacePtr,
       *behaviorContainerPtr,
-      *stateChangeComponentPtr,
+      *behaviorEventComponentPtr,
       *asyncMessageComponentPtr,
       *delegationComponentPtr);
 
   components->_behaviorSysMgrPtr            = std::move(behaviorSysMgr);
   components->_behaviorExternalInterfacePtr = std::move(behaviorExternalInterface);
   components->_behaviorContainerPtr         = std::move(behaviorContainer);
-  components->_stateChangeComponentPtr      = std::move(stateChangeComponent);
+  components->_behaviorEventComponentPtr      = std::move(behaviorEventComponent);
   components->_asyncMessageComponentPtr     = std::move(asyncMessageComponent);
   components->_delegationComponentPtr       = std::move(delegationComponent);
   
@@ -171,7 +171,7 @@ BehaviorComponent::ComponentsPtr BehaviorComponent::GenerateComponents(
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponent::InitializeSubComponents(Robot& robot,
-                                                IBehavior* baseRunnable,
+                                                IBehavior* baseBehavior,
                                                 BehaviorSystemManager& behaviorSysMgr,
                                                 IBehaviorMessageSubscriber& messageSubscriber,
                                                 BehaviorExternalInterface& behaviorExternalInterface,
@@ -179,23 +179,23 @@ void BehaviorComponent::InitializeSubComponents(Robot& robot,
                                                 BehaviorContainer& behaviorContainer,
                                                 BlockWorld& blockWorld,
                                                 FaceWorld& faceWorld,
-                                                StateChangeComponent& stateChangeComponent,
+                                                BehaviorEventComponent& behaviorEventComponent,
                                                 AsyncMessageGateComponent& asyncMessageComponent,
                                                 DelegationComponent& delegationComponent)
 {  
   delegationComponent.Init(robot, behaviorSysMgr);
-  stateChangeComponent.Init(messageSubscriber);
+  behaviorEventComponent.Init(messageSubscriber);
   behaviorExternalInterface.Init(robot,
                                  aiComponent,
                                  behaviorContainer,
                                  blockWorld,
                                  faceWorld,
-                                 stateChangeComponent);
+                                 behaviorEventComponent);
   
   behaviorContainer.Init(behaviorExternalInterface,
                          !static_cast<bool>(USE_BSM));
 
-  behaviorSysMgr.InitConfiguration(baseRunnable,
+  behaviorSysMgr.InitConfiguration(baseBehavior,
                                    behaviorExternalInterface,
                                    &asyncMessageComponent);
   
@@ -204,23 +204,23 @@ void BehaviorComponent::InitializeSubComponents(Robot& robot,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorComponent::Init(ComponentsPtr&& components, IBehavior* baseRunnable)
+void BehaviorComponent::Init(ComponentsPtr&& components, IBehavior* baseBehavior)
 {
   _components = std::move(components);
-  InitHelper(baseRunnable);
+  InitHelper(baseBehavior);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorComponent::InitHelper(IBehavior* baseRunnable)
+void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
 {
   _audioClient.reset(new Audio::BehaviorAudioComponent(_components->_robot.GetRobotAudioClient()));
   
   _behaviorMgr = std::make_unique<BehaviorManager>();
   
   
-  // Extract base runnable from config if not passed in through init
-  if(baseRunnable == nullptr){
+  // Extract base behavior from config if not passed in through init
+  if(baseBehavior == nullptr){
     Json::Value blankActivitiesConfig;
     
     const CozmoContext* context = _components->_robot.GetContext();
@@ -240,29 +240,29 @@ void BehaviorComponent::InitHelper(IBehavior* baseRunnable)
     
     if(USE_BSM){
       if(!behaviorSystemConfig.empty()){
-        BehaviorID baseRunnableID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
-        baseRunnable = _components->_behaviorContainer.FindBehaviorByID(baseRunnableID).get();
-        DEV_ASSERT(baseRunnable != nullptr,
-                   "BehaviorComponent.Init.InvalidBaseRunnable");
+        BehaviorID baseBehaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
+        baseBehavior = _components->_behaviorContainer.FindBehaviorByID(baseBehaviorID).get();
+        DEV_ASSERT(baseBehavior != nullptr,
+                   "BehaviorComponent.Init.InvalidbaseBehavior");
       }
     }
   }
   
   
   if( ANKI_DEV_CHEATS ) {
-    // create a dev base layer to put on the bottom, and pass the desired base in so that DevBaseRunnable
+    // create a dev base layer to put on the bottom, and pass the desired base in so that DevBaseBehavior
     // will automatically delegate to it
-    if(_devBaseRunnable != nullptr){
-      Util::SafeDelete(_devBaseRunnable);
+    if(_devBaseBehavior != nullptr){
+      Util::SafeDelete(_devBaseBehavior);
     }
     
-    _devBaseRunnable = new DevBaseRunnable(baseRunnable);
-    baseRunnable = _devBaseRunnable;
+    _devBaseBehavior = new DevBaseBehavior(baseBehavior);
+    baseBehavior = _devBaseBehavior;
   }
   
   
   InitializeSubComponents(_components->_robot,
-                          baseRunnable,
+                          baseBehavior,
                           _components->_behaviorSysMgr,
                           *this,
                           _components->_behaviorExternalInterface,
@@ -270,15 +270,15 @@ void BehaviorComponent::InitHelper(IBehavior* baseRunnable)
                           _components->_behaviorContainer,
                           _components->_blockWorld,
                           _components->_faceWorld,
-                          _components->_stateChangeComponent,
+                          _components->_behaviorEventComponent,
                           _components->_asyncMessageComponent,
                           _components->_delegationComponent
   );
   
   if( ANKI_DEV_CHEATS ) {
-    // Initialize dev base runnable since it's not created as part of the behavior
+    // Initialize dev base behavior since it's not created as part of the behavior
     // factory
-    baseRunnable->Init(_components->_behaviorExternalInterface);
+    baseBehavior->Init(_components->_behaviorExternalInterface);
   }
 
   _components->_behaviorExternalInterface.SetOptionalInterfaces(

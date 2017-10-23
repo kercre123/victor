@@ -255,7 +255,7 @@ Result BehaviorExploreBringCubeToBeacon::OnBehaviorActivated(BehaviorExternalInt
   if ( robot.GetCarryingComponent().IsCarryingObject() )
   {
     // we are carrying an object
-    // assert what we expect from IsRunnable cache
+    // assert what we expect from WantsToBeActivated cache
     DEV_ASSERT(_candidateObjects.size() == 1 &&
                _candidateObjects[0].id == robot.GetCarryingComponent().GetCarryingObject(),
                "BehaviorExploreBringCubeToBeacon.InitInternal.CarryingObjectNotCached" );

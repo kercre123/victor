@@ -230,25 +230,25 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(BehaviorExtern
       }
       
       directPtr->SetAnimSequence(GetHiccupAnim());
-      const bool isRunnable = behavior->WantsToBeActivated(behaviorExternalInterface);
+      const bool isActivated = behavior->WantsToBeActivated(behaviorExternalInterface);
 
-      if(!isRunnable)
+      if(!isActivated)
       {
-        PRINT_NAMED_INFO("ReactionTriggerStrategyHiccup.BehaviorNotRunnable",
-                         "Trying to hiccup but behavior is not runnable");
+        PRINT_NAMED_INFO("ReactionTriggerStrategyHiccup.BehaviorNotActivatable",
+                         "Trying to hiccup but behavior is not activateable");
       }
-      // Hiccup behavior is runnable and this is the first hiccup
+      // Hiccup behavior is activatable and this is the first hiccup
       else if(_firstHiccupStartTime == 0)
       {
         _firstHiccupStartTime = curTime;
       }
       
-      if (isRunnable)
+      if (isActivated)
       {
         NeedActionCompleted(NeedsActionId::IndividualHiccup);
       }
       
-      return isRunnable;
+      return isActivated;
     }
   }
   return false;

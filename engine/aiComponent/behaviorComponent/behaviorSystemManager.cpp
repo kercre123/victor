@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -26,7 +26,7 @@
 #include "engine/robotDataLoader.h"
 #include "engine/viz/vizManager.h"
 
-#include "clad/types/behaviorSystem/reactionTriggers.h"
+#include "clad/types/behaviorComponent/reactionTriggers.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/boundedWhile.h"
@@ -46,7 +46,7 @@ const int kArbitrarilyLargeCancelBound = 1000000;
 BehaviorSystemManager::BehaviorSystemManager()
 : _initializationStage(InitializationStage::SystemNotInitialized)
 {
-  _runnableStack.reset();
+  _behaviorStack.reset();
 }
 
 
@@ -58,7 +58,7 @@ BehaviorSystemManager::~BehaviorSystemManager()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorSystemManager::InitConfiguration(IBehavior* baseRunnable,
+Result BehaviorSystemManager::InitConfiguration(IBehavior* baseBehavior,
                                                 BehaviorExternalInterface& behaviorExternalInterface,
                                                 AsyncMessageGateComponent* asyncMessageComponent)
 {
@@ -66,15 +66,15 @@ Result BehaviorSystemManager::InitConfiguration(IBehavior* baseRunnable,
   // when adding new stuff. During my refactoring I found several variables that were not properly reset, so
   // potentially double Init was never supported
   DEV_ASSERT(_initializationStage == InitializationStage::SystemNotInitialized &&
-             baseRunnable != nullptr,
+             baseBehavior != nullptr,
              "BehaviorSystemManager.InitConfiguration.AlreadyInitialized");
   _initializationStage = InitializationStage::StackNotInitialized;
-  _baseRunnableTmp = baseRunnable;
+  _baseBehaviorTmp = baseBehavior;
 
   _asyncMessageComponent = asyncMessageComponent;
   // Assumes there's only one instance of the behavior external Intarfec
   _behaviorExternalInterface = &behaviorExternalInterface;
-  _runnableStack.reset(new RunnableStack(_behaviorExternalInterface));
+  _behaviorStack.reset(new BehaviorStack(_behaviorExternalInterface));
   
   
   Robot& robot = behaviorExternalInterface.GetRobot();
@@ -107,10 +107,10 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
     _initializationStage = InitializationStage::Initialized;
 
 
-    IBehavior* baseRunnable = _baseRunnableTmp;
+    IBehavior* baseBehavior = _baseBehaviorTmp;
     
-    _runnableStack->InitRunnableStack(behaviorExternalInterface, baseRunnable);
-    _baseRunnableTmp = nullptr;
+    _behaviorStack->InitBehaviorStack(behaviorExternalInterface, baseBehavior);
+    _baseBehaviorTmp = nullptr;
   }
 
   for( const auto& completionMsg : _actionsCompletedThisTick ) {
@@ -119,17 +119,17 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
   
   _asyncMessageComponent->PrepareCache();
   
-  std::set<IBehavior*> runnableUpdatesTickedInStack;
-  // First update the runnable stack and allow it to make any delegation/canceling
+  std::set<IBehavior*> behaviorsUpdatesTickedInStack;
+  // First update the behavior stack and allow it to make any delegation/canceling
   // decisions that it needs to make
-  _runnableStack->UpdateRunnableStack(behaviorExternalInterface,
+  _behaviorStack->UpdateBehaviorStack(behaviorExternalInterface,
                                       _actionsCompletedThisTick,
                                       *_asyncMessageComponent,
-                                      runnableUpdatesTickedInStack);
+                                      behaviorsUpdatesTickedInStack);
   _actionsCompletedThisTick.clear();
   // Then once all of that's done, update anything that's in activatable scope
-  // but isn't currently on the runnable stack
-  UpdateInActivatableScope(behaviorExternalInterface, runnableUpdatesTickedInStack);
+  // but isn't currently on the behavior stack
+  UpdateInActivatableScope(behaviorExternalInterface, behaviorsUpdatesTickedInStack);
   
   _asyncMessageComponent->ClearCache();
 } // Update()
@@ -140,11 +140,11 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
 {
   // This is innefficient and should be replaced, but not overengineering right now
   std::set<IBehavior*> allInActivatableScope;
-  const RunnableStack::DelegatesMap& delegatesMap = _runnableStack->GetDelegatesMap();
+  const BehaviorStack::DelegatesMap& delegatesMap = _behaviorStack->GetDelegatesMap();
   for(auto& entry: delegatesMap){
-    for(auto& runnable : entry.second){
-      if(tickedInStack.find(runnable)  == tickedInStack.end()){
-          allInActivatableScope.insert(runnable);
+    for(auto& behavior : entry.second){
+      if(tickedInStack.find(behavior)  == tickedInStack.end()){
+          allInActivatableScope.insert(behavior);
       }
     }
   }
@@ -167,15 +167,15 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorSystemManager::IsControlDelegated(const IBehavior* delegator)
 {
-  return (_runnableStack->IsInStack(delegator)) &&
-         (_runnableStack->GetTopOfStack() != delegator);
+  return (_behaviorStack->IsInStack(delegator)) &&
+         (_behaviorStack->GetTopOfStack() != delegator);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorSystemManager::CanDelegate(IBehavior* delegator)
 {
-  return _runnableStack->GetTopOfStack() == delegator;
+  return _behaviorStack->GetTopOfStack() == delegator;
 }
 
 
@@ -183,7 +183,7 @@ bool BehaviorSystemManager::CanDelegate(IBehavior* delegator)
 bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
 {
   // Ensure that the delegator is on top of the stack
-  if(!ANKI_VERIFY(delegator == _runnableStack->GetTopOfStack(),
+  if(!ANKI_VERIFY(delegator == _behaviorStack->GetTopOfStack(),
                   "BehaviorSystemManager.Delegate.DelegatorNotOnTopOfStack",
                   "")){
     return false;
@@ -196,8 +196,8 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
   
   
   {
-    // Ensure that the delegated runnable is in the delegates map
-    const RunnableStack::DelegatesMap& delegatesMap =  _runnableStack->GetDelegatesMap();
+    // Ensure that the delegated behavior is in the delegates map
+    const BehaviorStack::DelegatesMap& delegatesMap =  _behaviorStack->GetDelegatesMap();
     auto iter = delegatesMap.find(delegator);
     if(!ANKI_VERIFY((iter != delegatesMap.end()) &&
                     (iter->second.find(delegated) != iter->second.end()),
@@ -209,15 +209,15 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
     }
   }
   
-  // Activate the new runnable and add it to the top of the stack
-  _runnableStack->PushOntoStack(delegated);
+  // Activate the new behavior and add it to the top of the stack
+  _behaviorStack->PushOntoStack(delegated);
 
-  PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.Delegate.ToBSRunnable",
+  PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.Delegate.ToBehavior",
                 "'%s' delegated to '%s'",
                 delegator->GetPrintableID().c_str(),
                 delegated->GetPrintableID().c_str());
   
-  _runnableStack->DebugPrintStack("AfterDelegation");
+  _behaviorStack->DebugPrintStack("AfterDelegation");
   
   return true;
 }
@@ -226,10 +226,10 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
 {
-  if(_runnableStack->IsInStack(delegator)){
+  if(_behaviorStack->IsInStack(delegator)){
     BOUNDED_WHILE(kArbitrarilyLargeCancelBound,
-                  _runnableStack->GetTopOfStack() != delegator){
-      _runnableStack->PopStack();
+                  _behaviorStack->GetTopOfStack() != delegator){
+      _behaviorStack->PopStack();
     }
   }
 
@@ -237,7 +237,7 @@ void BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
                 "'%s' canceled it's delegates",
                 delegator->GetPrintableID().c_str());
 
-  _runnableStack->DebugPrintStack("AfterCancelDelgates");
+  _behaviorStack->DebugPrintStack("AfterCancelDelgates");
 }
 
 
@@ -250,14 +250,14 @@ void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
   if(ANKI_VERIFY(!IsControlDelegated(delegator),
                  "BehaviorSystemManager.CancelSelf.ControlStillDelegated",
                  "CancelDelegates was called, but the delegator is not on the top of the stack")){
-    _runnableStack->PopStack();
+    _behaviorStack->PopStack();
   }
 
   PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.CancelSelf",
                 "'%s' canceled itself",
                 delegator->GetPrintableID().c_str());
 
-  _runnableStack->DebugPrintStack("AfterCancelSelf");
+  _behaviorStack->DebugPrintStack("AfterCancelSelf");
 }
 
 } // namespace Cozmo

@@ -275,7 +275,7 @@ ICozmoBehavior::Status BehaviorReactToCliff::UpdateInternal_WhileRunning(Behavio
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCliff::HandleWhileNotRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::HandleWhileInScopeButNotActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {  
   switch( event.GetData().GetTag() ) {
     case EngineToGameTag::CliffEvent: {
@@ -312,7 +312,7 @@ void BehaviorReactToCliff::HandleWhileNotRunning(const EngineToGameEvent& event,
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCliff::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch( event.GetData().GetTag() ) {
     case EngineToGameTag::CliffEvent: {

@@ -67,7 +67,7 @@ namespace Anki {
       });
       
       SubscribeToTags({
-        GameToEngineTag::SetLiftLoadTestAsRunnable
+        GameToEngineTag::SetLiftLoadTestAsActivatable
       });
       
       SubscribeToTags({
@@ -265,7 +265,7 @@ namespace Anki {
       SetDebugStateName(name);
     }
     
-    void BehaviorLiftLoadTest::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorLiftLoadTest::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
     {
       switch(event.GetData().GetTag())
       {
@@ -288,7 +288,7 @@ namespace Anki {
     {
       switch(event.GetData().GetTag())
       {
-        case GameToEngineTag::SetLiftLoadTestAsRunnable:
+        case GameToEngineTag::SetLiftLoadTestAsActivatable:
         {
           _canRun = true;
           break;
@@ -302,7 +302,7 @@ namespace Anki {
       }
     }
     
-    void BehaviorLiftLoadTest::HandleWhileRunning(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorLiftLoadTest::HandleWhileActivated(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
     {
       switch(event.GetData().GetTag()) {
         case RobotInterface::RobotToEngineTag::liftLoad:

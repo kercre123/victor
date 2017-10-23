@@ -21,7 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorChoosers/behaviorChooserFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
@@ -405,7 +405,7 @@ ICozmoBehaviorPtr ActivityFeeding::GetDesiredActiveBehaviorInternal(BehaviorExte
   // check whether the desired behavior has started running - when it's run
   // at least one tick and stops running re-evaluate the best stage to be at
   if(HasSingleBehaviorStageStarted(bestBehavior) &&
-     !bestBehavior->IsRunning()){
+     !bestBehavior->IsActivated()){
     TransitionToBestActivityStage(behaviorExternalInterface);
     bestBehavior = GetBestBehaviorFromMap();   
   }
@@ -527,7 +527,7 @@ void ActivityFeeding::UpdateCurrentStage(BehaviorExternalInterface& behaviorExte
         TransitionToBestActivityStage(behaviorExternalInterface);
       }
       else if( HasSingleBehaviorStageStarted(_searchForCubeBehavior) &&
-               !_searchForCubeBehavior->IsRunning()) {
+               !_searchForCubeBehavior->IsActivated()) {
 
         PRINT_CH_INFO("Feeding",
                       "FeedingActivity.Update.SearchingForCube.SearchFailed",
@@ -545,7 +545,7 @@ void ActivityFeeding::UpdateCurrentStage(BehaviorExternalInterface& behaviorExte
       if(_cubeIDToEat.IsSet()) {
         
         if( HasSingleBehaviorStageStarted(_eatFoodBehavior) &&
-            !_eatFoodBehavior->IsRunning() ){
+            !_eatFoodBehavior->IsActivated() ){
           // we ate the target cube, so remove it from the ones we couldn't find, so that we will be allowed
           // to do a full search for it again in the future if it gets shaken again
           _cubesSearchCouldntFind.erase(_cubeIDToEat);
@@ -577,7 +577,7 @@ void ActivityFeeding::UpdateCubeToEat(BehaviorExternalInterface& behaviorExterna
   if( _activityStage == FeedingActivityStage::EatFood ||
       _activityStage == FeedingActivityStage::ReactingToSeeCharged ||
       _activityStage == FeedingActivityStage::ReactingToSeeCharged_Severe ||
-      _eatFoodBehavior->IsRunning() ) {
+      _eatFoodBehavior->IsActivated() ) {
     // nothing to do, we're already eating or about to eat
     return;
   }
@@ -673,7 +673,7 @@ void ActivityFeeding::TransitionToBestActivityStage(BehaviorExternalInterface& b
 
   // if we have a located cube to eat, go to eating
   if( _cubeIDToEat.IsSet() ) {
-    if( _eatFoodBehavior->IsRunning() ) {
+    if( _eatFoodBehavior->IsActivated() ) {
       // behavior already running, keep it going
       SET_STAGE(behaviorExternalInterface, EatFood);
       return;
@@ -686,7 +686,7 @@ void ActivityFeeding::TransitionToBestActivityStage(BehaviorExternalInterface& b
       }
       else {
         PRINT_NAMED_WARNING("ActivityFeeding.TransitionToBestActivityStage.HaveTargetButCantEat",
-                            "We have a target cube id %d, but the eating behavior isn't runnable",
+                            "We have a target cube id %d, but the eating behavior isn't activatable",
                             _cubeIDToEat.GetValue());
         // clear cube to eat, in case it's no longer valid (it'll get reset automatically if it is)
         _cubeIDToEat.UnSet();
@@ -998,7 +998,7 @@ void ActivityFeeding::SetIdleForCurrentStage(BehaviorExternalInterface& behavior
 bool ActivityFeeding::HasSingleBehaviorStageStarted(ICozmoBehaviorPtr behavior)
 {
   if(behavior != nullptr){
-    return behavior->GetTimeStartedRunning_s() >= _lastStageChangeTime_s;
+    return behavior->GetTimeActivated_s() >= _lastStageChangeTime_s;
   }
   return false;
 }

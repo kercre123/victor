@@ -45,7 +45,7 @@ public:
 protected:
   // VIC-322: For the time being the behavior helper component ticks helpers instead of
   // the BSM. While this is true it will be impossible to delegate to helpers in the way
-  // other BSRunnables are delegated to - so don't tie this UpdateInternal in just yet
+  // other Behaviors are delegated to - so don't tie this UpdateInternal in just yet
   
   // Currently unused overrides of IBehavior since no equivalence in old BM system
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;

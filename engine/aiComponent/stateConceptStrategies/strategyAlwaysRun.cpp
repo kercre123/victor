@@ -11,7 +11,7 @@
 **/
 
 
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/strategyAlwaysRun.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyAlwaysRun.h"
 
 #include "engine/robot.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -23,7 +23,7 @@ namespace Cozmo {
 StrategyAlwaysRun::StrategyAlwaysRun(BehaviorExternalInterface& behaviorExternalInterface,
                                      IExternalInterface* robotExternalInterface,
                                      const Json::Value& config)
-: IWantsToRunStrategy(behaviorExternalInterface, robotExternalInterface, config)
+: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
 {
 }
 

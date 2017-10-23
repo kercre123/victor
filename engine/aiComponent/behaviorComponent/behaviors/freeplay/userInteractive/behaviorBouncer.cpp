@@ -312,7 +312,7 @@ bool BehaviorBouncer::WantsToBeActivatedBehavior(BehaviorExternalInterface& beha
     return false;
   }
   
-  LOG_TRACE("BehaviorBouncer.WantsToBeActivatedBehavior", "Behavior is runnable with target %s", _target.GetDebugStr().c_str());
+  LOG_TRACE("BehaviorBouncer.WantsToBeActivatedBehavior", "Behavior is activatable with target %s", _target.GetDebugStr().c_str());
   return true;
   
 }
@@ -518,7 +518,7 @@ BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInte
   LOG_TRACE("BehaviorBouncer.UpdateIntern_Legacy", "Update behavior with state=%s", EnumToString(_state));
 
   // Check elapsed time
-  if (GetRunningDuration() > kBouncerTimeout_sec) {
+  if (GetActivatedDuration() > kBouncerTimeout_sec) {
     LOG_WARNING("BehaviorBouncer.UpdateIntern_Legacy", "Behavior has timed out");
     return BehaviorStatus::Complete;
   }

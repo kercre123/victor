@@ -66,7 +66,7 @@ private:
   // NOTE: All are stored as floats to make it easy to set them from Json via one simple macro
   struct {
     
-    // Behavior is runnable if a possible laser was seen within this long
+    // Behavior is activatable if a possible laser was seen within this long
     float    startIfLaserSeenWithin_sec; // E.g. 1.0sec
     
     // Must see possible laser within this distance to start to try to confirm.

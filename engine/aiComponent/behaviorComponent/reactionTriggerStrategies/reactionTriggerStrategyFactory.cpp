@@ -32,7 +32,7 @@
 
 #include "anki/common/basestation/jsonTools.h"
 
-#include "clad/types/behaviorSystem/strategyTypes.h"
+#include "clad/types/behaviorComponent/strategyTypes.h"
 
 #include "util/logging/logging.h"
 
@@ -52,12 +52,12 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
                                                            const Json::Value& config,
                                                            ReactionTrigger trigger)
 {
-  WantsToRunStrategyType strategyToCreate = WantsToRunStrategyType::Invalid;
+  StateConceptStrategyType strategyToCreate = StateConceptStrategyType::Invalid;
   std::string strategyToCreateString = "";
   JsonTools::GetValueOptional(config, kStrategyToCreateKey, strategyToCreateString);
   if(!strategyToCreateString.empty())
   {
-    strategyToCreate = WantsToRunStrategyTypeFromString(strategyToCreateString);
+    strategyToCreate = StateConceptStrategyTypeFromString(strategyToCreateString);
   }
 
   IReactionTriggerStrategy* strategy = nullptr;
@@ -232,7 +232,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::VC:
     {
-      const WantsToRunStrategyType kGenericStrategyType = WantsToRunStrategyType::Generic;
+      const StateConceptStrategyType kGenericStrategyType = StateConceptStrategyType::Generic;
       if(strategyToCreate == kGenericStrategyType)
       {
         // Generic strategy wants to run when IdleTimeout is cancelled (cancelled by game when waking up while

@@ -82,7 +82,7 @@ BehaviorPeekABoo::BehaviorPeekABoo(const Json::Value& config)
 , _cachedFace(Vision::UnknownFaceID)
 , _numPeeksRemaining(0)
 , _numPeeksTotal(1)
-, _nextTimeIsRunnable_Sec(0.0f)
+, _nextTimeWantsToBeActivated_Sec(0.0f)
 , _lastRequestTime_Sec(0.0f)
 , _hasMadeFollowUpRequest(false)
 , _turnToFaceRetryCount(0)
@@ -136,7 +136,7 @@ bool BehaviorPeekABoo::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
   // The sparked version of this behavior is grouped with look for faces behavior in case no faces were seen recently.
   _cachedFace = Vision::UnknownFaceID;
 
-  return (_nextTimeIsRunnable_Sec < currentTime_Sec) &&
+  return (_nextTimeWantsToBeActivated_Sec < currentTime_Sec) &&
          (GetInteractionFace(behaviorExternalInterface) != Vision::UnknownFaceID) &&
          robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::PeekABoo);
 }
@@ -209,7 +209,7 @@ ICozmoBehavior::Status BehaviorPeekABoo::UpdateInternal_WhileRunning(BehaviorExt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPeekABoo::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  _nextTimeIsRunnable_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _params.minCoolDown_Sec;
+  _nextTimeWantsToBeActivated_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _params.minCoolDown_Sec;
 }
 
   

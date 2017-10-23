@@ -15,7 +15,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -48,7 +48,7 @@ TEST(BehaviorInterface, Create)
   b.OnEnteredActivatableScope();
   b.ReadFromScoredJson(empty);
 
-  EXPECT_FALSE( b.IsRunning() );
+  EXPECT_FALSE( b.IsActivated() );
   EXPECT_FLOAT_EQ( b.EvaluateScore(behaviorExternalInterface), TestBehavior::kNotRunningScore);
   EXPECT_TRUE( b.WantsToBeActivated(behaviorExternalInterface));
   EXPECT_FALSE( b._inited );

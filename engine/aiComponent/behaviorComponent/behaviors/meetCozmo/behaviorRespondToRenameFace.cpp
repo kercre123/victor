@@ -42,7 +42,7 @@ BehaviorRespondToRenameFace::BehaviorRespondToRenameFace(const Json::Value& conf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondToRenameFace::HandleWhileNotRunning(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondToRenameFace::HandleWhileInScopeButNotActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   auto & msg = event.GetData().Get_UpdateEnrolledFaceByID();
   

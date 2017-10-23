@@ -12,7 +12,7 @@
 *
 **/
 
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/strategyPlacedOnCharger.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyPlacedOnCharger.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -29,7 +29,7 @@ const float kDisableReactionForInitialTime_sec = 20.f;
 StrategyPlacedOnCharger::StrategyPlacedOnCharger(BehaviorExternalInterface& behaviorExternalInterface,
                                                  IExternalInterface* robotExternalInterface,
                                                  const Json::Value& config)
-: IWantsToRunStrategy(behaviorExternalInterface, robotExternalInterface, config)
+: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
 , _dontRunUntilTime_sec(-1.f)
 {
   
@@ -40,7 +40,7 @@ StrategyPlacedOnCharger::StrategyPlacedOnCharger(BehaviorExternalInterface& beha
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool StrategyPlacedOnCharger::WantsToRunInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool StrategyPlacedOnCharger::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // This is a hack - if cozmo doesn't start on the charging points but is on the platform
   // he frequently reacts to the cliff, and we don't want to pop a modal asking the user

@@ -16,7 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/buildPyramid/behaviorRespondPossiblyRoll.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/buildPyramid/behaviorBuildPyramid.h"
@@ -35,7 +35,7 @@
 #include "engine/robot.h"
 
 #include "clad/externalInterface/messageEngineToGameTag.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 
 namespace Anki {
@@ -303,7 +303,7 @@ void ActivityBuildPyramid::OnActivatedActivity(BehaviorExternalInterface& behavi
   _chooserPhase = ChooserPhase::None;
   _nextTimeCheckBlockOrientations_s = -1.0f;
   _nextTimeForceUpdateLightMusic_s = -1.0f;
-  _timeRespondedRollStartedPreviously_s = _behaviorRespondPossiblyRoll->GetTimeStartedRunning_s();
+  _timeRespondedRollStartedPreviously_s = _behaviorRespondPossiblyRoll->GetTimeActivated_s();
   
   _pyramidObjectiveAchieved = false;
   
@@ -647,24 +647,24 @@ ICozmoBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorBuilding(BehaviorExte
   
   ICozmoBehaviorPtr bestBehavior = nullptr;
   
-  if(_behaviorBuildPyramid->IsRunning() ||
+  if(_behaviorBuildPyramid->IsActivated() ||
      _behaviorBuildPyramid->WantsToBeActivated(behaviorExternalInterface)){
     
     bestBehavior = _behaviorBuildPyramid;
     // If the behavior has not been running, update pyramid assignments
     // and then re-set base lights to reflect any changes of base assignment
-    if(!_behaviorBuildPyramid->IsRunning()){
+    if(!_behaviorBuildPyramid->IsActivated()){
       UpdatePyramidAssignments(_behaviorBuildPyramid);
       SetPyramidBaseLights(behaviorExternalInterface);
     }
     
-  }else if(_behaviorBuildPyramidBase->IsRunning() ||
+  }else if(_behaviorBuildPyramidBase->IsActivated() ||
            _behaviorBuildPyramidBase->WantsToBeActivated(behaviorExternalInterface)){
     
     bestBehavior = _behaviorBuildPyramidBase;
     // If the behavior has not been running, update pyramid assignments
     // and then re-set base lights to reflect any changes of base assignment
-    if(!_behaviorBuildPyramidBase->IsRunning()){
+    if(!_behaviorBuildPyramidBase->IsActivated()){
       UpdatePyramidAssignments(_behaviorBuildPyramidBase);
       SetPyramidBaseLights(behaviorExternalInterface);
     }
@@ -706,7 +706,7 @@ ICozmoBehaviorPtr ActivityBuildPyramid::CheckForShouldThankUser(BehaviorExternal
       
       if(!rolledCubeHimself){
         _behaviorPyramidThankYou->SetTargetID(objectID);
-        if(_behaviorPyramidThankYou->IsRunning() ||
+        if(_behaviorPyramidThankYou->IsActivated() ||
            _behaviorPyramidThankYou->WantsToBeActivated(behaviorExternalInterface)){
           bestBehavior = _behaviorPyramidThankYou;
         }
@@ -736,7 +736,7 @@ ICozmoBehaviorPtr ActivityBuildPyramid::CheckForResponsePossiblyRoll(BehaviorExt
 {
   // If any of the manually set behaviors are running, keep them running
   if(currentRunningBehavior != nullptr &&
-     currentRunningBehavior->IsRunning()){
+     currentRunningBehavior->IsActivated()){
     if(currentRunningBehavior->GetClass() ==
        _behaviorRespondPossiblyRoll->GetClass()){
       return _behaviorRespondPossiblyRoll;
@@ -807,11 +807,11 @@ void ActivityBuildPyramid::UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(Beh
   // roll behavior before it stopped itself - if it has run since last updated
   // pull the properties just to check
   const bool runSinceLastTimeCheck = _timeRespondedRollStartedPreviously_s !=
-  _behaviorRespondPossiblyRoll->GetTimeStartedRunning_s();
+  _behaviorRespondPossiblyRoll->GetTimeActivated_s();
   
   // If respond possibly roll isn't running, update the tracked last time it ran
   if(!respondCurrentlyRunning && runSinceLastTimeCheck){
-    _timeRespondedRollStartedPreviously_s = _behaviorRespondPossiblyRoll->GetTimeStartedRunning_s();
+    _timeRespondedRollStartedPreviously_s = _behaviorRespondPossiblyRoll->GetTimeActivated_s();
   }
   
   // Update respondPossiblyRoll tracker info
@@ -1022,7 +1022,7 @@ PyramidConstructionStage ActivityBuildPyramid::CheckLightAndPyramidConstructionS
     // there is a range in which we don't want to cancel lights while placing blocks
     const bool possiblyPlacingBase =
     _currentPyramidConstructionStage == PyramidConstructionStage::InitialCubeCarry &&
-    (_behaviorBuildPyramid->IsRunning() || _behaviorBuildPyramidBase->IsRunning()) &&
+    (_behaviorBuildPyramid->IsActivated() || _behaviorBuildPyramidBase->IsActivated()) &&
     (_lastTimeConstructionStageChanged_s + kDelayAccountForPlacing_s > currentTime_s ||
      _lastTimeConstructionStageChanged_s + kDelayAccountForBaseCreation_s < currentTime_s);
     
@@ -1039,7 +1039,7 @@ PyramidConstructionStage ActivityBuildPyramid::CheckLightAndPyramidConstructionS
     // There's a gap between when the top block is "placed" and the final
     // pyramid is recognized - if the behavior is still running and we've
     // just been in a carrying state, don't cut the music/lights suddenly
-    const bool behaviorStillPlacingBlock = _behaviorBuildPyramid->IsRunning() &&
+    const bool behaviorStillPlacingBlock = _behaviorBuildPyramid->IsActivated() &&
     (_currentPyramidConstructionStage == PyramidConstructionStage::TopBlockCarry);
     
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should

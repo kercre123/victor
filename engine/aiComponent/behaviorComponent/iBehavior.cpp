@@ -4,7 +4,7 @@
 * Author: Kevin M. Karol
 * Created: 08/251/17
 *
-* Description: Interface for "Runnable" elements of the behavior system
+* Description: Interface for "Behavior" elements of the behavior system
 * such as activities and behaviors
 *
 * Copyright: Anki, Inc. 2017
@@ -62,7 +62,7 @@ void IBehavior::OnEnteredActivatableScope()
   if(_currentInScopeCount != 1){
     PRINT_CH_INFO("Behaviors",
                   "IBehavior.OnEnteredActivatableScope.AlreadyInScope",
-                  "Runnable %s is already in scope, ignoring request to enter scope",
+                  "BehaviorAlreadySet %s is already in scope, ignoring request to enter scope",
                   _idString.c_str());
     return;
   }
@@ -87,7 +87,7 @@ void IBehavior::Update(BehaviorExternalInterface& behaviorExternalInterface)
     const size_t tickCount = BaseStationTimer::getInstance()->GetTickCount();
     DEV_ASSERT_MSG(_lastTickOfUpdate == (tickCount - kBSTickInterval),
                    "IBehavior.Update.TickCountMismatch",
-                   "BSRunnable %s is receiving tick on %zu, but hasn't been ticked since %zu",
+                   "Behavior %s is receiving tick on %zu, but hasn't been ticked since %zu",
                    _idString.c_str(),
                    _lastTickOfUpdate,
                    tickCount);
@@ -188,7 +188,7 @@ void IBehavior::AssertActivationState_DevOnly(ActivationState state) const
   #if ANKI_DEV_CHEATS
   DEV_ASSERT_MSG(_currentActivationState == state,
                  "IBehavior.AssertActivationState_DevOnly.WrongActivationState",
-                 "Runnable %s is not in state %s which it should be",
+                 "Behavior %s is not in state %s which it should be",
                  _idString.c_str(),
                  ActivationStateToString(_currentActivationState).c_str());
   #endif
@@ -201,7 +201,7 @@ void IBehavior::AssertNotActivationState_DevOnly(ActivationState state) const
   #if ANKI_DEV_CHEATS
   DEV_ASSERT_MSG(_currentActivationState != state,
                  "IBehavior.AssertNotActivationState_DevOnly.WrongActivationState",
-                 "Runnable %s is in state %s when it shouldn't be",
+                 "Behavior %s is in state %s when it shouldn't be",
                  _idString.c_str(),
                  ActivationStateToString(_currentActivationState).c_str());
   #endif

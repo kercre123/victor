@@ -52,11 +52,11 @@ void BehaviorExternalInterface::Init(Robot& robot,
         const BehaviorContainer& behaviorContainer,
         BlockWorld& blockWorld,
         FaceWorld& faceWorld,
-        StateChangeComponent& stateChangeComponent)
+        BehaviorEventComponent& behaviorEventComponent)
 {
   _beiComponents = std::make_unique<ComponentWrappers::BehaviorExternalInterfaceComponents>(
                                     robot, aiComponent, behaviorContainer,
-                                    blockWorld, faceWorld, stateChangeComponent);
+                                    blockWorld, faceWorld, behaviorEventComponent);
   
   SetOptionalInterfaces(nullptr,
                         &robot.GetMoodManager(),

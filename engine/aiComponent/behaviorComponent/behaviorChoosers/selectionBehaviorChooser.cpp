@@ -17,7 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -53,15 +53,15 @@ SelectionBehaviorChooser::SelectionBehaviorChooser(BehaviorExternalInterface& be
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr SelectionBehaviorChooser::GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior)
 {
-  auto runnable = [this, &behaviorExternalInterface](const ICozmoBehaviorPtr behavior)
+  auto behavior = [this, &behaviorExternalInterface](const ICozmoBehaviorPtr behavior)
   {
-    const bool behaviorIsRunning = nullptr != behavior && behavior->IsRunning();
+    const bool behaviorIsRunning = nullptr != behavior && behavior->IsActivated();
     bool ret = (nullptr != behavior && (behaviorIsRunning || behavior->WantsToBeActivated(behaviorExternalInterface)));
     
     // If this is the selected behavior
     if(behavior == _selectedBehavior)
     {
-      // If there are no more runs to do then the selected behavior is not runnable
+      // If there are no more runs to do then the selected behavior is not activatable
       if(_numRuns == 0)
       {
         return false;
@@ -82,11 +82,11 @@ ICozmoBehaviorPtr SelectionBehaviorChooser::GetDesiredActiveBehavior(BehaviorExt
     return ret;
   };
   
-  if (runnable(_selectedBehavior))
+  if (behavior(_selectedBehavior))
   {
     return _selectedBehavior;
   }
-  else if (runnable(_behaviorWait))
+  else if (behavior(_behaviorWait))
   {
     return _behaviorWait;
   }

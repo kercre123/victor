@@ -1,5 +1,5 @@
 /**
-* File: stateChangeComponent.h
+* File: behaviorEventComponent.h
 *
 * Author: Kevin M. Karol
 * Created: 10/6/17
@@ -11,8 +11,8 @@
 *
 **/
 
-#ifndef __Cozmo_Basestation_BehaviorComponent_StateChangeComponent_H__
-#define __Cozmo_Basestation_BehaviorComponent_StateChangeComponent_H__
+#ifndef __Cozmo_Basestation_BehaviorComponent_BehaviorEventComponent_H__
+#define __Cozmo_Basestation_BehaviorComponent_BehaviorEventComponent_H__
 
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
@@ -29,10 +29,10 @@ namespace Cozmo {
 class BehaviorSystemManager;
 class IBehavior;
 
-class StateChangeComponent : public IBehaviorMessageSubscriber, private Util::noncopyable {
+class BehaviorEventComponent : public IBehaviorMessageSubscriber, private Util::noncopyable {
 public:
-  StateChangeComponent();
-  virtual ~StateChangeComponent(){};
+  BehaviorEventComponent();
+  virtual ~BehaviorEventComponent(){};
   
   void Init(IBehaviorMessageSubscriber& messageSubscriber);
 
@@ -50,7 +50,7 @@ public:
 protected:
   friend class BehaviorManager;
   friend class BehaviorSystemManager;
-  friend class RunnableStack;
+  friend class BehaviorStack;
   std::vector<const GameToEngineEvent>  _gameToEngineEvents;
   std::vector<const EngineToGameEvent>  _engineToGameEvents;
   std::vector<const RobotToEngineEvent> _robotToEngineEvents;
@@ -68,4 +68,4 @@ private:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_BehaviorComponent_StateChangeComponent_H__
+#endif // __Cozmo_Basestation_BehaviorComponent_BehaviorEventComponent_H__

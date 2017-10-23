@@ -1,10 +1,10 @@
 /**
- * File: devBaseRunnable.h
+ * File: devBaseBehavior.h
  *
  * Author: Brad Neuman
  * Created: 2017-10-02
  *
- * Description: An "init"-like base runnable that sits at the bottom of the behavior stack and handles
+ * Description: An "init"-like base behavior that sits at the bottom of the behavior stack and handles
  *              developer tools, such as messages coming in from webots. It is completely optional, and by
  *              default just delegates to the passed in delegate
  *
@@ -12,8 +12,8 @@
  *
  **/
 
-#ifndef __Engine_AiComponent_BehaviorComponent_DevBaseRunnable_H__
-#define __Engine_AiComponent_BehaviorComponent_DevBaseRunnable_H__
+#ifndef __Engine_AiComponent_BehaviorComponent_DevBaseBehavior_H__
+#define __Engine_AiComponent_BehaviorComponent_DevBaseBehavior_H__
 
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -23,13 +23,13 @@
 namespace Anki {
 namespace Cozmo {
 
-class DevBaseRunnable : public IBehavior
+class DevBaseBehavior : public IBehavior
 {
 public:
 
-  // pass in the delegate that this runnable should default to (or nullptr for it to not delegate at all)
-  explicit DevBaseRunnable( IBehavior* initialDelegate );
-  virtual ~DevBaseRunnable();
+  // pass in the delegate that this behavior should default to (or nullptr for it to not delegate at all)
+  explicit DevBaseBehavior( IBehavior* initialDelegate );
+  virtual ~DevBaseBehavior();
 
   
 protected:

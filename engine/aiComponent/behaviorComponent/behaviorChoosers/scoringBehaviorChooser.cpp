@@ -159,9 +159,9 @@ ICozmoBehaviorPtr ScoringBehaviorChooser::GetDesiredActiveBehavior(BehaviorExter
     
     if (scoreData.totalScore > 0.0f)
     {
-      if (behavior->IsRunning())
+      if (behavior->IsActivated())
       {
-        const float runningDuration = behavior->GetRunningDuration();
+        const float runningDuration = behavior->GetActivatedDuration();
         const float runningBonus = ScoreBonusForCurrentBehavior(runningDuration);
         
         scoreData.totalScore += runningBonus;
@@ -205,10 +205,10 @@ ICozmoBehaviorPtr ScoringBehaviorChooser::GetDesiredActiveBehavior(BehaviorExter
         bestScore    = scoreData.totalScore;
       }
 
-      if( behavior->IsRunning() ) {
+      if( behavior->IsActivated() ) {
         if( nullptr != runningBehavior ) {
           PRINT_NAMED_WARNING("BehaviorChooser.MultipleRunningBehaviors",
-                              "Looks like more than one behavior returned IsRunning(). One of them is '%s'",
+                              "Looks like more than one behavior returned IsActivated(). One of them is '%s'",
                               behavior->GetIDStr().c_str());
         }
         runningBehavior = behavior;
@@ -269,8 +269,8 @@ Result ScoringBehaviorChooser::TryAddBehavior(ICozmoBehaviorPtr behavior)
   else
   {
     // added to the map as expected
-    PRINT_NAMED_DEBUG("ScoringBehaviorChooser.TryAddBehavior.Addition",
-      "Added behavior '%s' from factory", BehaviorIDToString(behaviorID));
+    // PRINT_NAMED_DEBUG("ScoringBehaviorChooser.TryAddBehavior.Addition",
+    //  "Added behavior '%s' from factory", BehaviorIDToString(behaviorID));
   }
   
   // return code

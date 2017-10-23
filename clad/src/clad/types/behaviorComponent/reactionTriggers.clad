@@ -3,7 +3,7 @@
 // Created: 3/1/2017
 // Copyright: Anki, inc. 2017
 
-#include "clad/types/behaviorSystem/behaviorTypes.clad"
+#include "clad/types/behaviorComponent/behaviorTypes.clad"
 
 namespace Anki {
 namespace Cozmo {

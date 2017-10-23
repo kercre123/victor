@@ -23,7 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
@@ -628,7 +628,7 @@ ICozmoBehaviorPtr ActivityFreeplay::GetDesiredActiveBehaviorInternal(BehaviorExt
     }
     // The second check here is to prevent checking WantsToEnd while a sparks reward interlude behavior
     // is pending, because we don't want to end if it is pending
-    else if (!chosenBehavior->IsRunning() &&
+    else if (!chosenBehavior->IsActivated() &&
              behaviorExternalInterface.HasNeedsManager() &&
              behaviorExternalInterface.GetNeedsManager().IsPendingSparksRewardMsg())
     {

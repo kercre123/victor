@@ -5,7 +5,7 @@
 * Created: 6/6/17
 *
 * Description: Simple behavior to turn toward a face - face can either be passed
-* in as part of IsRunnable, or selected using internal criteria using IsRunnable
+* in as part of WantsToBeActivated, or selected using internal criteria using WantsToBeActivated
 * with a robot
 *
 * Copyright: Anki, Inc. 2017

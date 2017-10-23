@@ -152,7 +152,7 @@ BehaviorSinging::~BehaviorSinging()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorSinging::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // Always runnable, the higher level Singing goal/activity is responsible
+  // Always activatable, the higher level Singing goal/activity is responsible
   // for deciding when Cozmo should sing
   // Except if the needs system has unlocked a song, we want that to be the
   // next song played

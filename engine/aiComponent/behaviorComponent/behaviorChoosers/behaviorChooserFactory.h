@@ -4,7 +4,7 @@
  * Author: Raul
  * Created: 05/02/16
  *
- * Description: Exactly what it sounds like, a factory for bsRunnable choosers.
+ * Description: Exactly what it sounds like, a factory for behavior choosers.
  *
  * Copyright: Anki, Inc. 2016
  *
@@ -21,7 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorChoosers/strictPriorityBehaviorChooser.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 
-#include "clad/types/behaviorSystem/behaviorChooserTypes.h"
+#include "clad/types/behaviorComponent/behaviorChooserTypes.h"
 
 #include <type_traits>
 

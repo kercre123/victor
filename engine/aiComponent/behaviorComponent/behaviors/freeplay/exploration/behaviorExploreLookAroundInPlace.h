@@ -58,7 +58,7 @@ public:
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // todo: document. Is this behavior alway runnable, or we won't look around in an area we already know everything?
+  // todo: document. Is this behavior alway activatable, or we won't look around in an area we already know everything?
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override { return _configParams.behavior_CanCarryCube;}
 

@@ -13,12 +13,12 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_StrategyGeneric_H__
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_StrategyGeneric_H__
 
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/iWantsToRunStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class StrategyGeneric : public IWantsToRunStrategy
+class StrategyGeneric : public IStateConceptStrategy
 {
 public:
 
@@ -42,7 +42,7 @@ public:
   
 protected:
 
-  virtual bool WantsToRunInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   

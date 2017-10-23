@@ -152,7 +152,7 @@ ICozmoBehaviorPtr ActivityStrictPriority::GetDesiredActiveBehaviorInternal(Behav
       }
     }
     DEV_ASSERT(activityIter != _activities.end(),
-               "ActivityStrictPriority.GetDesiredActiveBehaviorInternal.NoRunnableActivities");
+               "ActivityStrictPriority.GetDesiredActiveBehaviorInternal.NoActivatableActivities");
     
     // if this is the last activity, break without checking WantsToENd
     if(_currentActivityPtr == _activities.back().get()){

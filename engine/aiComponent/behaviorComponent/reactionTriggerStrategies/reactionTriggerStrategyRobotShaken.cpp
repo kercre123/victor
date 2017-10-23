@@ -13,7 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerStrategyRobotShaken.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/iWantsToRunStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 
@@ -45,12 +45,12 @@ void ReactionTriggerStrategyRobotShaken::SetupForceTriggerBehavior(BehaviorExter
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyRobotShaken::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
-  if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
+  if(ANKI_VERIFY(_stateConceptStrategy != nullptr,
                  "ReactionTriggerStrategyNoPreDockPoses.ShouldTriggerBehaviorInternal",
                  "WantsToRunStrategyNotSpecified")){
-    const bool isRunnable = behavior->IsRunning() || behavior->WantsToBeActivated(behaviorExternalInterface);
+    const bool isActivatable = behavior->IsActivated() || behavior->WantsToBeActivated(behaviorExternalInterface);
 
-    return _wantsToRunStrategy->WantsToRun(behaviorExternalInterface) && isRunnable;
+    return _stateConceptStrategy->AreStateConditionsMet(behaviorExternalInterface) && isActivatable;
   }
   
   return false;

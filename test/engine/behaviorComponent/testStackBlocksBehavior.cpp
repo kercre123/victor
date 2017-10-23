@@ -20,7 +20,7 @@
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
@@ -28,7 +28,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/aiComponent/aiComponent.h"
 
@@ -122,7 +122,7 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
 
   CreateStackBehavior(robot, stackBehavior, behaviorExternalInterface);
 
-  ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be runnable without cubes";
+  ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be activatable without cubes";
   
   std::string currentActivityName;
   std::string behaviorDebugStr;
@@ -133,7 +133,7 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
   IncrementBaseStationTimerTicks();
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
-  ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be runnable without cubes after update";
+  ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be activatable without cubes after update";
 
   auto& blockWorld = robot.GetBlockWorld();
   blockWorld.AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
@@ -141,7 +141,7 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
 
   IncrementBaseStationTimerTicks();
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
-  ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be runnable with unknown cubes";
+  ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be activatable with unknown cubes";
 
   // Add two objects
   ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
@@ -167,7 +167,7 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
   static float incrementEngineTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   incrementEngineTime_ns += 100000000.0f;
   BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
-  ASSERT_TRUE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "now behavior should be runnable";
+  ASSERT_TRUE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "now behavior should be activatable";
 
 }
 

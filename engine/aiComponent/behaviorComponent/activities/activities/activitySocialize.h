@@ -15,8 +15,8 @@
 
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
 
-#include "clad/types/behaviorSystem/behaviorTypes.h"
-#include "clad/types/behaviorSystem/behaviorObjectives.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorObjectives.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <map>
 #include <vector>

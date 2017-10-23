@@ -1,10 +1,10 @@
 /**
- * File: devBaseRunnable.cpp
+ * File: devBaseBehavior.cpp
  *
  * Author: Brad Neuman
  * Created: 2017-10-02
  *
- * Description: An "init"-like base runnable that sits at the bottom of the behavior stack and handles
+ * Description: An "init"-like base behavior that sits at the bottom of the behavior stack and handles
  *              developer tools, such as messages coming in from webots. It is completely optional, and by
  *              default just delegates to the passed in delegate
  *
@@ -12,13 +12,13 @@
  *
  **/
 
-#include "engine/aiComponent/behaviorComponent/devBaseRunnable.h"
+#include "engine/aiComponent/behaviorComponent/devBaseBehavior.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -27,21 +27,21 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-DevBaseRunnable::DevBaseRunnable( IBehavior* initialDelegate )
+DevBaseBehavior::DevBaseBehavior( IBehavior* initialDelegate )
 : IBehavior("DevBase")
 , _initialDelegate(initialDelegate)
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-DevBaseRunnable::~DevBaseRunnable()
+DevBaseBehavior::~DevBaseBehavior()
 {
   
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DevBaseRunnable::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void DevBaseBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Because of dev messages, this behavior could delegate to any activity or behavior. Add all behavior IDs
   // as possible delegates
@@ -55,7 +55,7 @@ void DevBaseRunnable::InitInternal(BehaviorExternalInterface& behaviorExternalIn
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DevBaseRunnable::GetAllDelegates(std::set<IBehavior*>& delegates) const
+void DevBaseBehavior::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   // add all behaviors (stored during init)
   delegates.insert(_possibleDelegates.begin(), _possibleDelegates.end());
@@ -67,7 +67,7 @@ void DevBaseRunnable::GetAllDelegates(std::set<IBehavior*>& delegates) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DevBaseRunnable::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void DevBaseBehavior::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
     {
@@ -82,12 +82,12 @@ void DevBaseRunnable::OnActivatedInternal(BehaviorExternalInterface& behaviorExt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DevBaseRunnable::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void DevBaseBehavior::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DevBaseRunnable::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void DevBaseBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const auto& events = behaviorExternalInterface.GetStateChangeComponent().GetGameToEngineEvents();
   if(events.size() > 0){
@@ -98,7 +98,7 @@ void DevBaseRunnable::UpdateInternal(BehaviorExternalInterface& behaviorExternal
       if( behaviorPtr ) {
         
         if( _pendingDelegate != nullptr ) {
-          PRINT_NAMED_WARNING("DevBaseRunnable.HandleMessage.ExecuteBehaviorByID.AlreadyPending",
+          PRINT_NAMED_WARNING("DevBaseBehavior.HandleMessage.ExecuteBehaviorByID.AlreadyPending",
                               "Setting pending behavior to '%s', but '%s' is already pending",
                               behaviorPtr->GetIDStr().c_str(),
                               _pendingDelegate->GetPrintableID().c_str());
@@ -109,7 +109,7 @@ void DevBaseRunnable::UpdateInternal(BehaviorExternalInterface& behaviorExternal
         _shouldCancelDelegates = true;
       }
       else {
-        PRINT_NAMED_WARNING("DevBaseRunnable.HandleMessage.ExecuteBehaviorByID.NoBehavior",
+        PRINT_NAMED_WARNING("DevBaseBehavior.HandleMessage.ExecuteBehaviorByID.NoBehavior",
                             "Couldn't find behavior for id '%s'",
                             BehaviorIDToString(msg.behaviorID));
       }

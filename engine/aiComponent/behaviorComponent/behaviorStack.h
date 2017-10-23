@@ -10,8 +10,8 @@
 * Copyright: Anki, Inc. 2017
 **/
 
-#ifndef AI_COMPONENT_BEHAVIOR_COMPONENT_RUNNABLE_STACK
-#define AI_COMPONENT_BEHAVIOR_COMPONENT_RUNNABLE_STACK
+#ifndef AI_COMPONENT_BEHAVIOR_COMPONENT_BEHAVIOR_STACK
+#define AI_COMPONENT_BEHAVIOR_COMPONENT_BEHAVIOR_STACK
 
 #include "util/helpers/noncopyable.h"
 
@@ -33,24 +33,23 @@ namespace ExternalInterface{
 struct RobotCompletedAction;
 }
   
-// Defined within .h file so tests can access runnable stack functions
-class RunnableStack : private Util::noncopyable {
+class BehaviorStack : private Util::noncopyable {
 public:
-  RunnableStack(BehaviorExternalInterface* behaviorExternalInterface)
+  BehaviorStack(BehaviorExternalInterface* behaviorExternalInterface)
   :_behaviorExternalInterface(behaviorExternalInterface){};
-  virtual ~RunnableStack(){}
+  virtual ~BehaviorStack(){}
   
-  void InitRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
+  void InitBehaviorStack(BehaviorExternalInterface& behaviorExternalInterface,
                          IBehavior* baseOfStack);
-  void UpdateRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
+  void UpdateBehaviorStack(BehaviorExternalInterface& behaviorExternalInterface,
                           std::vector<ExternalInterface::RobotCompletedAction>& actionsCompletedThisTick,
                            AsyncMessageGateComponent& asyncMessageGateComp,
                            std::set<IBehavior*>& tickedInStack);
   
-  inline IBehavior* GetTopOfStack(){ return _runnableStack.empty() ? nullptr : _runnableStack.back();}
-  inline bool IsInStack(const IBehavior* runnable) { return _runnableToIndexMap.find(runnable) != _runnableToIndexMap.end();}
+  inline IBehavior* GetTopOfStack(){ return _behaviorStack.empty() ? nullptr : _behaviorStack.back();}
+  inline bool IsInStack(const IBehavior* behavior) { return _behaviorToIndexMap.find(behavior) != _behaviorToIndexMap.end();}
   
-  void PushOntoStack(IBehavior* runnable);
+  void PushOntoStack(IBehavior* behavior);
   void PopStack();
   
   using DelegatesMap = std::map<IBehavior*,std::set<IBehavior*>>;
@@ -61,8 +60,8 @@ public:
   
 private:
   BehaviorExternalInterface* _behaviorExternalInterface;
-  std::vector<IBehavior*> _runnableStack;
-  std::unordered_map<const IBehavior*, int> _runnableToIndexMap;
+  std::vector<IBehavior*> _behaviorStack;
+  std::unordered_map<const IBehavior*, int> _behaviorToIndexMap;
   std::map<IBehavior*,std::set<IBehavior*>> _delegatesMap;
   
   
@@ -79,4 +78,4 @@ private:
 } // namespace Anki
 
 
-#endif // AI_COMPONENT_BEHAVIOR_COMPONENT_RUNNABLE_STACK
+#endif // AI_COMPONENT_BEHAVIOR_COMPONENT_BEHAVIOR_STACK

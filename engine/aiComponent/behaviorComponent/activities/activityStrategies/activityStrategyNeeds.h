@@ -33,7 +33,7 @@ public:
   virtual bool WantsToEndInternal(BehaviorExternalInterface& behaviorExternalInterface, float lastTimeActivityStartedSec) const override;
 
 private:
-  IWantsToRunStrategyPtr _higherPriorityWantsToRunStrategy;
+  IStateConceptStrategyPtr _higherPriorityWantsToRunStrategy;
   
 };
 

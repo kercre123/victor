@@ -194,7 +194,7 @@ void BehaviorAcknowledgeCubeMoved::SetState_internal(State state, const std::str
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeCubeMoved::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeCubeMoved::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
     switch(event.GetData().GetTag()){
       case EngineToGameTag::RobotObservedObject:

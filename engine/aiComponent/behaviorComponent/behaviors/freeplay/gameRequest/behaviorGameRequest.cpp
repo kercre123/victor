@@ -31,7 +31,7 @@
 namespace Anki {
 namespace Cozmo {
 
-#define DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE 0
+#define DEBUG_BEHAVIOR_GAME_REQUEST_ACTIVATABLE 0
 
 static const char* kMaxFaceAgeKey = "maxFaceAge_ms";
 
@@ -98,8 +98,8 @@ bool ICozmoBehaviorRequestGame::WantsToBeActivatedBehavior(BehaviorExternalInter
   
   const bool hasFace = HasFace(behaviorExternalInterface);
 
-  if( DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE ) {
-    PRINT_NAMED_DEBUG("ICozmoBehaviorRequestGame.IsRunnable",
+  if( DEBUG_BEHAVIOR_GAME_REQUEST_ACTIVATABLE ) {
+    PRINT_NAMED_DEBUG("ICozmoBehaviorRequestGame.WantsToBeActivated",
                       "'%s': hasFace?%d (numBlocks=%d)",
                       GetIDStr().c_str(),
                       hasFace,
@@ -343,7 +343,7 @@ void ICozmoBehaviorRequestGame::AlwaysHandle(const GameToEngineEvent& event, Beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( event.GetData().GetTag() == EngineToGameTag::CliffEvent ) {
     HandleCliffEvent(behaviorExternalInterface, event);
@@ -352,7 +352,7 @@ void ICozmoBehaviorRequestGame::HandleWhileRunning(const EngineToGameEvent& even
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::HandleWhileRunning(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( event.GetData().GetTag() == GameToEngineTag::DenyGameStart ) {
     HandleGameDeniedRequest(behaviorExternalInterface);

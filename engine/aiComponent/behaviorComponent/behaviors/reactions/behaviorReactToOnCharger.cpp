@@ -140,7 +140,7 @@ ICozmoBehavior::Status BehaviorReactToOnCharger::UpdateInternal_WhileRunning(Beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToOnCharger::HandleWhileRunning(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch (event.GetData().GetTag())
   {

@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_StrategyObstacleDetected_H__
 #define __Cozmo_Basestation_BehaviorSystem_StrategyObstacleDetected_H__
 
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/strategyGeneric.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyGeneric.h"
 
 namespace Anki {
 namespace Cozmo {

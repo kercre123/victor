@@ -14,12 +14,12 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_StrategyRobotShaken_H__
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_StrategyRobotShaken_H__
 
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/iWantsToRunStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class StrategyRobotShaken : public IWantsToRunStrategy
+class StrategyRobotShaken : public IStateConceptStrategy
 {
 public:
   StrategyRobotShaken(BehaviorExternalInterface& behaviorExternalInterface,
@@ -27,7 +27,7 @@ public:
                       const Json::Value& config);
 
 protected:
-  virtual bool WantsToRunInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
 };
 

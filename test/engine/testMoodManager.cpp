@@ -21,7 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorChoosers/scoringBehaviorChooser.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoContext.h"
@@ -468,7 +468,7 @@ TEST(MoodManager, BehaviorScoring)
   ASSERT_TRUE(parsedOK);
   
   DelegationComponent delegationComp;
-  StateChangeComponent stateChangeComp;
+  BehaviorEventComponent stateChangeComp;
 
   
   // have to alloc the behaviors - they're freed by the chooser

@@ -40,58 +40,58 @@ namespace{
 Delegator::Delegator(Robot& robot,
                                  BehaviorSystemManager& bsm)
 : _robot(robot)
-, _runnableThatDelegatedAction(nullptr)
+, _behaviorThatDelegatedAction(nullptr)
 , _lastActionTag(ActionConstants::INVALID_TAG)
-, _runnableThatDelegatedHelper(nullptr)
+, _behaviorThatDelegatedHelper(nullptr)
 , _bsm(&bsm)
 {
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool Delegator::Delegate(IBehavior* delegatingRunnable,
+bool Delegator::Delegate(IBehavior* delegatingBehavior,
                          IActionRunner* action)
 {
   EnsureHandleIsUpdated();
 
-  DEV_ASSERT_MSG(((_runnableThatDelegatedHelper == nullptr) ||
-                        (_runnableThatDelegatedHelper == delegatingRunnable)) &&
-                 (_runnableThatDelegatedAction == nullptr),
-                 "Delegator.DelegateAction.RunnableAlreadySet",
+  DEV_ASSERT_MSG(((_behaviorThatDelegatedHelper == nullptr) ||
+                        (_behaviorThatDelegatedHelper == delegatingBehavior)) &&
+                 (_behaviorThatDelegatedAction == nullptr),
+                 "Delegator.DelegateAction.BehaviorAlreadySet",
                  "Queued Helper address %p, Queued Action address: %p",
-                 _runnableThatDelegatedHelper, _runnableThatDelegatedAction);
+                 _behaviorThatDelegatedHelper, _behaviorThatDelegatedAction);
   
   
   Result result = _robot.GetActionList().QueueAction(QueueActionPosition::NOW, action);
   if (RESULT_OK != result) {
     PRINT_NAMED_WARNING("ICozmoBehavior.Delegate.Failure.NotQueued",
                         "Behavior '%s' can't queue action '%s' (error %d)",
-                        delegatingRunnable->GetPrintableID().c_str(),
+                        delegatingBehavior->GetPrintableID().c_str(),
                         action->GetName().c_str(), result);
     delete action;
     return false;
   }
   
-  _runnableThatDelegatedAction = delegatingRunnable;
+  _behaviorThatDelegatedAction = delegatingBehavior;
   _lastActionTag = action->GetTag();
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool Delegator::Delegate(IBehavior* delegatingRunnable, IBehavior* delegated)
+bool Delegator::Delegate(IBehavior* delegatingBehavior, IBehavior* delegated)
 {
   if(USE_BSM){
     DEV_ASSERT(dynamic_cast<IHelper*>(delegated) == nullptr,
                "Delegator.Delegate.WrongDelegationFunction.UseIHelperFunction");
-    return _bsm->Delegate(delegatingRunnable, delegated);
+    return _bsm->Delegate(delegatingBehavior, delegated);
   }
   return false;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool Delegator::Delegate(IBehavior* delegatingRunnable,
+bool Delegator::Delegate(IBehavior* delegatingBehavior,
                          BehaviorExternalInterface& behaviorExternalInterface,
                          HelperHandle helper,
                          BehaviorSimpleCallbackWithExternalInterface successCallback,
@@ -99,12 +99,12 @@ bool Delegator::Delegate(IBehavior* delegatingRunnable,
 {
   EnsureHandleIsUpdated();
   
-  DEV_ASSERT_MSG((_runnableThatDelegatedHelper == nullptr) &&
-                 (_runnableThatDelegatedAction == nullptr),
-                 "Delegator.DelegateHelper.RunnableAlreadySet",
+  DEV_ASSERT_MSG((_behaviorThatDelegatedHelper == nullptr) &&
+                 (_behaviorThatDelegatedAction == nullptr),
+                 "Delegator.DelegateHelper.BehaviorAlreadySet",
                  "Queued Helper address %p, Queued Action address: %p",
-                 _runnableThatDelegatedHelper, _runnableThatDelegatedAction);
-  _runnableThatDelegatedHelper = delegatingRunnable;
+                 _behaviorThatDelegatedHelper, _behaviorThatDelegatedAction);
+  _behaviorThatDelegatedHelper = delegatingBehavior;
   _delegateHelperHandle = helper;
   return _robot.GetAIComponent().GetBehaviorHelperComponent().
                      DelegateToHelper(behaviorExternalInterface,
@@ -116,9 +116,9 @@ bool Delegator::Delegate(IBehavior* delegatingRunnable,
 void Delegator::EnsureHandleIsUpdated()
 {
   // If the helper completes successfully we don't get notified
-  // so clear the _runnable to avoid the DEV_ASSERTS
+  // so clear the _behavior to avoid the DEV_ASSERTS
   if(_delegateHelperHandle.expired()){
-    _runnableThatDelegatedHelper = nullptr;
+    _behaviorThatDelegatedHelper = nullptr;
   }
 }
 
@@ -127,7 +127,7 @@ void Delegator::HandleActionComplete(u32 actionTag)
 {
   if( actionTag == _lastActionTag ) {
     _lastActionTag = ActionConstants::INVALID_TAG;
-    _runnableThatDelegatedAction = nullptr;
+    _behaviorThatDelegatedAction = nullptr;
   }
 }
 
@@ -150,21 +150,21 @@ void DelegationComponent::Init(Robot& robot, BehaviorSystemManager& bsm)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool DelegationComponent::IsControlDelegated(const IBehavior* delegatingRunnable)
+bool DelegationComponent::IsControlDelegated(const IBehavior* delegatingBehavior)
 {
-  if( delegatingRunnable == nullptr ) {
+  if( delegatingBehavior == nullptr ) {
     return false;
   }
   
   if(USE_BSM){
-    if(_bsm->IsControlDelegated(delegatingRunnable)){
+    if(_bsm->IsControlDelegated(delegatingBehavior)){
       return true;
     }
   }
   
-  if(_delegator->_runnableThatDelegatedAction == delegatingRunnable){
-    return IsActing(delegatingRunnable);
-  }else if(_delegator->_runnableThatDelegatedHelper == delegatingRunnable){
+  if(_delegator->_behaviorThatDelegatedAction == delegatingBehavior){
+    return IsActing(delegatingBehavior);
+  }else if(_delegator->_behaviorThatDelegatedHelper == delegatingBehavior){
     return !_delegator->_delegateHelperHandle.expired();
   }
   return false;
@@ -172,9 +172,9 @@ bool DelegationComponent::IsControlDelegated(const IBehavior* delegatingRunnable
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool DelegationComponent::IsActing(const IBehavior* delegatingRunnable)
+bool DelegationComponent::IsActing(const IBehavior* delegatingBehavior)
 {
-  if(_delegator->_runnableThatDelegatedAction == delegatingRunnable){
+  if(_delegator->_behaviorThatDelegatedAction == delegatingBehavior){
     return _delegator->_lastActionTag != ActionConstants::INVALID_TAG;
   }
   return false;
@@ -182,33 +182,33 @@ bool DelegationComponent::IsActing(const IBehavior* delegatingRunnable)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DelegationComponent::CancelDelegates(IBehavior* delegatingRunnable)
+void DelegationComponent::CancelDelegates(IBehavior* delegatingBehavior)
 {
-  CancelActionIfRunning(delegatingRunnable);
+  CancelActionIfRunning(delegatingBehavior);
   
-  if(_delegator->_runnableThatDelegatedHelper != nullptr &&
-           _delegator->_runnableThatDelegatedHelper == delegatingRunnable){
-    _delegator->_runnableThatDelegatedHelper = nullptr;
+  if(_delegator->_behaviorThatDelegatedHelper != nullptr &&
+           _delegator->_behaviorThatDelegatedHelper == delegatingBehavior){
+    _delegator->_behaviorThatDelegatedHelper = nullptr;
     _delegator->_robot.GetAIComponent().GetBehaviorHelperComponent().StopHelperWithoutCallback(_delegator->_delegateHelperHandle.lock());
     _delegator->_delegateHelperHandle.reset();
   }
   
   if(USE_BSM){
-    _bsm->CancelDelegates(delegatingRunnable);
+    _bsm->CancelDelegates(delegatingBehavior);
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DelegationComponent::CancelActionIfRunning(IBehavior* delegatingRunnable)
+void DelegationComponent::CancelActionIfRunning(IBehavior* delegatingBehavior)
 {
-  if(_delegator->_runnableThatDelegatedAction != nullptr &&
-     (delegatingRunnable == nullptr ||
-     _delegator->_runnableThatDelegatedAction == delegatingRunnable) ){
+  if(_delegator->_behaviorThatDelegatedAction != nullptr &&
+     (delegatingBehavior == nullptr ||
+     _delegator->_behaviorThatDelegatedAction == delegatingBehavior) ){
     bool ret = false;
     u32 tagToCancel = _delegator->_lastActionTag;
-    if(_delegator->_runnableThatDelegatedAction == delegatingRunnable ||
-       delegatingRunnable == nullptr){
-      _delegator->_runnableThatDelegatedAction = nullptr; // TEMP:  // TODO:(bn) redundant checks now
+    if(_delegator->_behaviorThatDelegatedAction == delegatingBehavior ||
+       delegatingBehavior == nullptr){
+      _delegator->_behaviorThatDelegatedAction = nullptr; // TEMP:  // TODO:(bn) redundant checks now
       ret = _delegator->_robot.GetActionList().Cancel(tagToCancel);
     }
     // note that the callback, if there was one (and it was allowed to run), should have already been called
@@ -224,19 +224,19 @@ void DelegationComponent::CancelActionIfRunning(IBehavior* delegatingRunnable)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DelegationComponent::CancelSelf(IBehavior* delegatingRunnable)
+void DelegationComponent::CancelSelf(IBehavior* delegatingBehavior)
 {
   if(USE_BSM){
-    _bsm->CancelSelf(delegatingRunnable);
+    _bsm->CancelSelf(delegatingBehavior);
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool DelegationComponent::HasDelegator(IBehavior* delegatingRunnable)
+bool DelegationComponent::HasDelegator(IBehavior* delegatingBehavior)
 {
   if(USE_BSM){
-    return _bsm->CanDelegate(delegatingRunnable);
+    return _bsm->CanDelegate(delegatingBehavior);
   }else{
     return true;
   }
@@ -244,11 +244,11 @@ bool DelegationComponent::HasDelegator(IBehavior* delegatingRunnable)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Delegator& DelegationComponent::GetDelegator(IBehavior* delegatingRunnable)
+Delegator& DelegationComponent::GetDelegator(IBehavior* delegatingBehavior)
 {
   if(USE_BSM){
-    DEV_ASSERT(_bsm->CanDelegate(delegatingRunnable),
-               "DelegationComponent.GetDelegator.DelegatingRunnableNotValid");
+    DEV_ASSERT(_bsm->CanDelegate(delegatingBehavior),
+               "DelegationComponent.GetDelegator.delegatingBehaviorNotValid");
   }
   return *_delegator;
 }

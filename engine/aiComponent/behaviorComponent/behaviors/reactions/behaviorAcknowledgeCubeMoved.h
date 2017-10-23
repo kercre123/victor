@@ -45,7 +45,7 @@ protected:
   // allows the reaction to interrupt itself
   virtual ICozmoBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:  
   ObjectID _activeObjectID; //Most recent move - object to turn towards

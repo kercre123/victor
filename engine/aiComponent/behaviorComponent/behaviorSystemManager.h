@@ -14,13 +14,13 @@
 #define COZMO_BEHAVIOR_SYSTEM_MANAGER_H
 
 #include "anki/common/types.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/iBehaviorRunner.h"
-#include "engine/aiComponent/behaviorComponent/runnableStack.h"
+#include "engine/aiComponent/behaviorComponent/behaviorStack.h"
 #include "json/json-forwards.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -47,7 +47,7 @@ public:
   virtual ~BehaviorSystemManager();
   
   // initialize this behavior manager from the given Json config
-  Result InitConfiguration(IBehavior* baseRunnable,
+  Result InitConfiguration(IBehavior* baseBehavior,
                            BehaviorExternalInterface& behaviorExternalInterface,
                            AsyncMessageGateComponent* asyncMessageComponent);
   
@@ -75,8 +75,8 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   InitializationStage _initializationStage;
-  // Store the base runnable until the stack is initialized
-  IBehavior* _baseRunnableTmp;
+  // Store the base behavior until the stack is initialized
+  IBehavior* _baseBehaviorTmp;
   
   // - - - - - - - - - - - - - - -
   // others/shared
@@ -87,7 +87,7 @@ private:
   std::vector<ExternalInterface::RobotCompletedAction> _actionsCompletedThisTick;
   std::vector<Signal::SmartHandle> _eventHandles;
 
-  std::unique_ptr<RunnableStack> _runnableStack;
+  std::unique_ptr<BehaviorStack> _behaviorStack;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods

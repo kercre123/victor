@@ -50,7 +50,7 @@ BehaviorPlayAnimOnNeedsChange::~BehaviorPlayAnimOnNeedsChange()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPlayAnimOnNeedsChange::IsRunnableAnimSeqInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPlayAnimOnNeedsChange::WantsToBeActivatedAnimSeqInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return ShouldGetInBePlayed(behaviorExternalInterface);
 }

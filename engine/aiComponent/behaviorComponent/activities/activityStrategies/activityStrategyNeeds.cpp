@@ -17,8 +17,8 @@
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/iWantsToRunStrategy.h"
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/wantsToRunStrategyFactory.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
@@ -43,13 +43,13 @@ ActivityStrategyNeeds::ActivityStrategyNeeds(BehaviorExternalInterface& behavior
     const Json::Value& higherPriorityWantsToRunConfig = config[kHigherPriorityStrategyConfigKey];
 
     _higherPriorityWantsToRunStrategy.reset(
-        WantsToRunStrategyFactory::CreateWantsToRunStrategy(behaviorExternalInterface,
+        StateConceptStrategyFactory::CreateStateConceptStrategy(behaviorExternalInterface,
                                                             robotExternalInterface,
                                                             higherPriorityWantsToRunConfig));
-    ANKI_VERIFY(_higherPriorityWantsToRunStrategy->GetStrategyType() == WantsToRunStrategyType::InNeedsBracket,
+    ANKI_VERIFY(_higherPriorityWantsToRunStrategy->GetStrategyType() == StateConceptStrategyType::InNeedsBracket,
                 "ActivityStrategyNeeds.Constructor.IncorrectStrategyType",
                 "Created HigherPrioritiy strategy with type %s",
-                WantsToRunStrategyTypeToString(_higherPriorityWantsToRunStrategy->GetStrategyType()));
+                StateConceptStrategyTypeToString(_higherPriorityWantsToRunStrategy->GetStrategyType()));
   }
 }
 
@@ -57,10 +57,10 @@ ActivityStrategyNeeds::ActivityStrategyNeeds(BehaviorExternalInterface& behavior
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityStrategyNeeds::WantsToStartInternal(BehaviorExternalInterface& behaviorExternalInterface, float lastTimeActivityRanSec) const
 {
-  if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
+  if(ANKI_VERIFY(_stateConceptStrategy != nullptr,
                  "ActivityStrategyNeeds.WantsToStartInternal",
                  "WantsToRunStrategyNotSpecified")){
-    return _wantsToRunStrategy->WantsToRun(behaviorExternalInterface);
+    return _stateConceptStrategy->AreStateConditionsMet(behaviorExternalInterface);
   }
   return false;
 }
@@ -69,20 +69,20 @@ bool ActivityStrategyNeeds::WantsToStartInternal(BehaviorExternalInterface& beha
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityStrategyNeeds::WantsToEndInternal(BehaviorExternalInterface& behaviorExternalInterface, float lastTimeActivityStartedSec) const
 {
-  if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
+  if(ANKI_VERIFY(_stateConceptStrategy != nullptr,
                  "ActivityStrategyNeeds.WantsToEndInternal",
                  "WantsToRunStrategyNotSpecified")){
     // Special case - if repair falls into severe state while severe energy is active
     // energy should want to end so that severe repair can take over
     if(_higherPriorityWantsToRunStrategy != nullptr){
-      if(_higherPriorityWantsToRunStrategy->WantsToRun(behaviorExternalInterface)){
+      if(_higherPriorityWantsToRunStrategy->AreStateConditionsMet(behaviorExternalInterface)){
         behaviorExternalInterface.GetAIComponent().GetNonConstSevereNeedsComponent().ClearSevereNeedExpression();
         return true;
       }
     }
     
     
-    return !_wantsToRunStrategy->WantsToRun(behaviorExternalInterface);
+    return !_stateConceptStrategy->AreStateConditionsMet(behaviorExternalInterface);
   }
   return true;
 }

@@ -17,7 +17,7 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/noncopyable.h"
 #include "util/logging/logging.h"

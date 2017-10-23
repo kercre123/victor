@@ -4,7 +4,7 @@
 * Author: Kevin M. Karol
 * Created: 08/251/17
 *
-* Description: Interface for "Runnable" elements of the behavior system
+* Description: Interface for "Behavior" elements of the behavior system
 * such as activities and behaviors
 *
 * Copyright: Anki, Inc. 2017
@@ -40,44 +40,44 @@ public:
   // through the behaviorExternalInterface
   void Init(BehaviorExternalInterface& behaviorExternalInterface);
   
-  // Function which informs the Runnable that it may be activated - opportunity
-  // to start any processes which need to be running for the Runnable to be runnable
+  // Function which informs the Behavior that it may be activated - opportunity
+  // to start any processes which need to be running for the Behavior to be activated
   void OnEnteredActivatableScope();
   
-  // Guaranteed to be ticked every tick that the runnable is within activatable scope
+  // Guaranteed to be ticked every tick that the behavior is within activatable scope
   void Update(BehaviorExternalInterface& behaviorExternalInterface);
   
-  // Check to see if the runnable wants to run right now
+  // Check to see if the behavior wants to run right now
   bool WantsToBeActivated(BehaviorExternalInterface& behaviorExternalInterface) const;
   
-  // Informs the runnable that it has been activated
+  // Informs the behavior that it has been activated
   void OnActivated(BehaviorExternalInterface& behaviorExternalInterface);
   
-  // Informs the runnable that it has been deactivated
+  // Informs the behavior that it has been deactivated
   void OnDeactivated(BehaviorExternalInterface& behaviorExternalInterface);
   
-  // Function which informs the Runnable that it has fallen out of scope to be activated
-  // the runnable should stop any processes it started on entering selectable scope
+  // Function which informs the Behavior that it has fallen out of scope to be activated
+  // the behavior should stop any processes it started on entering selectable scope
   void OnLeftActivatableScope();
   
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const = 0;
 
 protected:
 
-  // Called once after this runnable is constructed
+  // Called once after this behavior is constructed
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) { }
 
-  // Returns true if this runnable wants to be active, false otherwise
+  // Returns true if this behavior wants to be active, false otherwise
   // TODO:(bn) default to true??
   virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const = 0;
 
-  // Called when this runnable has entered activatable scope (it could be delegated to)
+  // Called when this behavior has entered activatable scope (it could be delegated to)
   virtual void OnEnteredActivatableScopeInternal() { }
 
-  // Called when this runnable is no longer in activatable scope (no longer valid to be delegated to)
+  // Called when this behavior is no longer in activatable scope (no longer valid to be delegated to)
   virtual void OnLeftActivatableScopeInternal() { }
 
-  // Called once per tick with the runnable is in activatable scope
+  // Called once per tick with the behavior is in activatable scope
   virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) { }
 
   // Called when this behavior becomes active and has control
@@ -87,7 +87,7 @@ protected:
   virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) { }
   
 private:
-  // tmp string for identifying BSRunnables until IDs are combined
+  // tmp string for identifying Behaviors until IDs are combined
   std::string _idString;
   // Track the number of EnteredScope requests
   uint32_t _currentInScopeCount;

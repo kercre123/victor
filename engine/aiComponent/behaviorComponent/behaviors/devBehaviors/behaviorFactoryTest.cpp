@@ -1706,7 +1706,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
   }
 
   
-  void BehaviorFactoryTest::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+  void BehaviorFactoryTest::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
   {
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed

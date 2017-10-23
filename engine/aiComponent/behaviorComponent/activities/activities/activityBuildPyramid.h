@@ -15,7 +15,7 @@
 
 #include "anki/common/basestation/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/objectTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -34,7 +34,7 @@ class BehaviorExternalInterface;
 class BehaviorPlayArbitraryAnim;
 class BehaviorPyramidThankYou;
 class BehaviorRespondPossiblyRoll;
-class StateChangeComponent;
+class BehaviorEventComponent;
 struct PyramidCubePropertiesTracker;
 struct ObjectConnectionState;
 struct ObjectLights;

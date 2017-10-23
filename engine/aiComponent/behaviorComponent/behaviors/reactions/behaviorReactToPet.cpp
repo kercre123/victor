@@ -63,13 +63,13 @@ BehaviorReactToPet::BehaviorReactToPet(const Json::Value& config)
 bool BehaviorReactToPet::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   if (AlreadyReacting()) {
-    PRINT_TRACE("ReactToPet.IsRunnable.AlreadyReacting", "Already reacting to a pet");
+    PRINT_TRACE("ReactToPet.WantsToBeActivatedBehavior.AlreadyReacting", "Already reacting to a pet");
     return true;
   }
   
   
-  PRINT_TRACE("ReactToPet.IsRunnable.Runnable",
-              "Behavior is runnable with %z targets",
+  PRINT_TRACE("ReactToPet.WantsToBeActivatedBehavior.Activatable",
+              "Behavior is activatable with %z targets",
               _targets.size());
   
   return (_targets.size() > 0);

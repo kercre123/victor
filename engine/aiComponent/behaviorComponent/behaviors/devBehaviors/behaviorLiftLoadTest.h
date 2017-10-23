@@ -55,8 +55,8 @@ namespace Anki {
       
         virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
         
-        virtual void HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-        virtual void HandleWhileRunning(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void HandleWhileActivated(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
       
         virtual void AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
       

@@ -11,7 +11,7 @@
 *
 **/
 
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/strategyRobotShaken.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyRobotShaken.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoContext.h"
@@ -29,13 +29,13 @@ const float kAccelMagnitudeShakingStartedThreshold = 16000.f;
 StrategyRobotShaken::StrategyRobotShaken(BehaviorExternalInterface& behaviorExternalInterface,
                                          IExternalInterface* robotExternalInterface,
                                          const Json::Value& config)
-: IWantsToRunStrategy(behaviorExternalInterface, robotExternalInterface, config)
+: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
 {
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool StrategyRobotShaken::WantsToRunInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool StrategyRobotShaken::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

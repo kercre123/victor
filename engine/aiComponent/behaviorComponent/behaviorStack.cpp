@@ -10,11 +10,11 @@
 * Copyright: Anki, Inc. 2017
 **/
 
-#include "engine/aiComponent/behaviorComponent/runnableStack.h"
+#include "engine/aiComponent/behaviorComponent/behaviorStack.h"
 
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "util/logging/logging.h"
 
@@ -26,29 +26,29 @@ namespace{
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RunnableStack::InitRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
+void BehaviorStack::InitBehaviorStack(BehaviorExternalInterface& behaviorExternalInterface,
                                                              IBehavior* baseOfStack)
 {
-  ANKI_VERIFY(_runnableStack.empty(),
-              "BehaviorSystemManager.RunnableStack.InitRunnableStack.StackNotEmptyOnInit",
+  ANKI_VERIFY(_behaviorStack.empty(),
+              "BehaviorSystemManager.BehaviorStack.InitBehaviorStack.StackNotEmptyOnInit",
               "");
   
   baseOfStack->OnEnteredActivatableScope();
   ANKI_VERIFY(baseOfStack->WantsToBeActivated(behaviorExternalInterface),
-              "BehaviorSystemManager.RunnableStack.InitConfig.BaseRunnableDoesn'tWantToRun",
+              "BehaviorSystemManager.BehaviorStack.InitConfig.BasebehaviorDoesn'tWantToRun",
               "");
   PushOntoStack(baseOfStack);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RunnableStack::UpdateRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
+void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExternalInterface,
                                         std::vector<ExternalInterface::RobotCompletedAction>& actionsCompletedThisTick,
                                         AsyncMessageGateComponent& asyncMessageGateComp,
                                         std::set<IBehavior*>& tickedInStack)
 {
-  if(_runnableStack.size() == 0){
-    PRINT_NAMED_WARNING("BehaviorSystemManager.RunnableStack.UpdateRunnableStack.NoStackInitialized",
+  if(_behaviorStack.size() == 0){
+    PRINT_NAMED_WARNING("BehaviorSystemManager.BehaviorStack.UpdateBehaviorStack.NoStackInitialized",
                         "");
     return;
   }
@@ -57,63 +57,63 @@ void RunnableStack::UpdateRunnableStack(BehaviorExternalInterface& behaviorExter
   
   // The stack can be altered during update ticks through the cancel delegation
   // functions - so track the index in the stack rather than the iterator directly
-  // One side effect of this is that if a BSrunnable ends this tick without queueing
-  // an action we potentially lose a tick before the next time a BSRunnable queues
+  // One side effect of this is that if a Behavior ends this tick without queueing
+  // an action we potentially lose a tick before the next time a BSbehavior queues
   // an action - to save on complexity we're accepting this tradeoff for the time being
-  // but may decide to address it directly here or within the BSRunnable/one of its subclasses
+  // but may decide to address it directly here or within the BSbehavior/one of its subclasses
   // in the future
-  for(int idx = 0; idx < _runnableStack.size(); idx++){
-    tickedInStack.insert(_runnableStack.at(idx));
+  for(int idx = 0; idx < _behaviorStack.size(); idx++){
+    tickedInStack.insert(_behaviorStack.at(idx));
     behaviorExternalInterface.GetStateChangeComponent()._gameToEngineEvents.clear();
     behaviorExternalInterface.GetStateChangeComponent()._engineToGameEvents.clear();
     behaviorExternalInterface.GetStateChangeComponent()._robotToEngineEvents.clear();
     behaviorExternalInterface.GetStateChangeComponent()._actionsCompletedThisTick.clear();
     
     asyncMessageGateComp.GetEventsForBehavior(
-       _runnableStack.at(idx),
+       _behaviorStack.at(idx),
        behaviorExternalInterface.GetStateChangeComponent()._gameToEngineEvents);
     asyncMessageGateComp.GetEventsForBehavior(
-       _runnableStack.at(idx),
+       _behaviorStack.at(idx),
        behaviorExternalInterface.GetStateChangeComponent()._engineToGameEvents);
     asyncMessageGateComp.GetEventsForBehavior(
-       _runnableStack.at(idx),
+       _behaviorStack.at(idx),
        behaviorExternalInterface.GetStateChangeComponent()._robotToEngineEvents);
     
     // Set the actions completed this tick for the top of the stack
-    if(idx == (_runnableStack.size() - 1)){
+    if(idx == (_behaviorStack.size() - 1)){
       behaviorExternalInterface.GetStateChangeComponent()._actionsCompletedThisTick = actionsCompletedThisTick;
     }
     
-    _runnableStack.at(idx)->Update(behaviorExternalInterface);
+    _behaviorStack.at(idx)->Update(behaviorExternalInterface);
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RunnableStack::PushOntoStack(IBehavior* runnable)
+void BehaviorStack::PushOntoStack(IBehavior* behavior)
 {
-  _runnableToIndexMap.insert(std::make_pair(runnable, _runnableStack.size()));
-  _runnableStack.push_back(runnable);
+  _behaviorToIndexMap.insert(std::make_pair(behavior, _behaviorStack.size()));
+  _behaviorStack.push_back(behavior);
   
-  PrepareDelegatesToEnterScope(runnable);
-  runnable->OnActivated(*_behaviorExternalInterface);
+  PrepareDelegatesToEnterScope(behavior);
+  behavior->OnActivated(*_behaviorExternalInterface);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RunnableStack::PopStack()
+void BehaviorStack::PopStack()
 {
-  PrepareDelegatesForRemovalFromStack(_runnableStack.back());
+  PrepareDelegatesForRemovalFromStack(_behaviorStack.back());
 
-  _runnableStack.back()->OnDeactivated(*_behaviorExternalInterface);
+  _behaviorStack.back()->OnDeactivated(*_behaviorExternalInterface);
   
-  _runnableToIndexMap.erase(_runnableStack.back());
-  _runnableStack.pop_back();
+  _behaviorToIndexMap.erase(_behaviorStack.back());
+  _behaviorStack.pop_back();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RunnableStack::PrepareDelegatesToEnterScope(IBehavior* delegated)
+void BehaviorStack::PrepareDelegatesToEnterScope(IBehavior* delegated)
 {
   // Add the new available delegates to the map
   std::set<IBehavior*> newAvailableDelegates;
@@ -127,11 +127,11 @@ void RunnableStack::PrepareDelegatesToEnterScope(IBehavior* delegated)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RunnableStack::PrepareDelegatesForRemovalFromStack(IBehavior* delegated)
+void BehaviorStack::PrepareDelegatesForRemovalFromStack(IBehavior* delegated)
 {
   auto availableDelegates = _delegatesMap.find(delegated);
   DEV_ASSERT(availableDelegates != _delegatesMap.end(),
-             "RunnableStack.PrepareDelegateForRemovalFromStack.DelegateNotFound");
+             "BehaviorStack.PrepareDelegateForRemovalFromStack.DelegateNotFound");
   for(auto& entry: availableDelegates->second){
     entry->OnLeftActivatableScope();
   }
@@ -141,13 +141,13 @@ void RunnableStack::PrepareDelegatesForRemovalFromStack(IBehavior* delegated)
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RunnableStack::DebugPrintStack(const std::string& debugStr) const
+void BehaviorStack::DebugPrintStack(const std::string& debugStr) const
 {
-  for( size_t i=0; i<_runnableStack.size(); ++i) {
+  for( size_t i=0; i<_behaviorStack.size(); ++i) {
     PRINT_CH_INFO("BehaviorSystem", ("BehaviorSystemManager.Stack." + debugStr).c_str(),
                   "%zu: %s",
                   i,
-                  _runnableStack[i]->GetPrintableID().c_str());
+                  _behaviorStack[i]->GetPrintableID().c_str());
   }
 }
 

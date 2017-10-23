@@ -37,7 +37,7 @@ void RecursiveDelegation(Robot& robot,
   if(delegateMap.empty()){
     return;
   }else{
-    IBehavior* topOfStack = bsm._runnableStack->GetTopOfStack();
+    IBehavior* topOfStack = bsm._behaviorStack->GetTopOfStack();
     auto iter = delegateMap.find(topOfStack);
     if(iter != delegateMap.end()){
       for(auto& delegate: iter->second){
@@ -63,8 +63,8 @@ TEST(DelegationTree, FullTreeWalkthrough)
   // and deactivating all delegates to ensure the tree is valid
   TestBehaviorFramework testFramework;
   testFramework.InitializeStandardBehaviorComponent();
-  IBehavior* baseRunnable = nullptr;
-  // Load base runnable in from data
+  IBehavior* baseBehavior = nullptr;
+  // Load base behavior in from data
   {
     auto dataLoader = testFramework.GetRobot().GetContext()->GetDataLoader();
     
@@ -73,20 +73,20 @@ TEST(DelegationTree, FullTreeWalkthrough)
     const Json::Value& behaviorSystemConfig = (dataLoader != nullptr) ?
            dataLoader->GetVictorFreeplayBehaviorConfig() : blankActivitiesConfig;
 
-    BehaviorID baseRunnableID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
+    BehaviorID baseBehaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
     
     auto& bc = testFramework.GetBehaviorContainer();
-    baseRunnable = bc.FindBehaviorByID(baseRunnableID).get();
-    DEV_ASSERT(baseRunnable != nullptr,
-               "BehaviorComponent.Init.InvalidBaseRunnable");
+    baseBehavior = bc.FindBehaviorByID(baseBehaviorID).get();
+    DEV_ASSERT(baseBehavior != nullptr,
+               "BehaviorComponent.Init.InvalidbaseBehavior");
   }
   
-  // Clear out the default stack and put the base runnable on the stack
+  // Clear out the default stack and put the base behavior on the stack
   BehaviorSystemManager& bsm = testFramework.GetBehaviorSystemManager();
-  IBehavior* bottomOfStack = bsm._runnableStack->_runnableStack.front();
+  IBehavior* bottomOfStack = bsm._behaviorStack->_behaviorStack.front();
   bsm.CancelDelegates(bottomOfStack);
-  ASSERT_TRUE(bsm.Delegate(bottomOfStack, baseRunnable));
-  bottomOfStack = bsm._runnableStack->GetTopOfStack();
+  ASSERT_TRUE(bsm.Delegate(bottomOfStack, baseBehavior));
+  bottomOfStack = bsm._behaviorStack->GetTopOfStack();
   
   std::map<IBehavior*,std::set<IBehavior*>> delegateMap;
   std::set<IBehavior*> tmpDelegates;

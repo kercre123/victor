@@ -110,7 +110,7 @@ Result BehaviorExploreVisitPossibleMarker::OnBehaviorActivated(BehaviorExternalI
   }
   else
   {
-    // this should not happen, otherwise we should have been not runnable
+    // this should not happen, otherwise we should have been not activatable
     PRINT_NAMED_ERROR("BehaviorExploreVisitPossibleMarker.InitInternal", "Could not pick closest marker on init");
     return Result::RESULT_FAIL;
   }

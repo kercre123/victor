@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 
 #include "anki/common/types.h"
-#include "clad/types/behaviorSystem/activityTypes.h"
+#include "clad/types/behaviorComponent/activityTypes.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/unlockTypes.h"

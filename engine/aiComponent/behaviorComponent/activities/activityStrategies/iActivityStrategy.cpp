@@ -14,7 +14,7 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/wantsToRunStrategyFactory.h"
+#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
 #include "engine/cozmoContext.h"
 #include "engine/moodSystem/moodScorer.h"
 #include "engine/robot.h"
@@ -48,7 +48,7 @@ static const char* kActivityFeatureGate           = "featureGate";
 IActivityStrategy::IActivityStrategy(BehaviorExternalInterface& behaviorExternalInterface,
                                      IExternalInterface* robotExternalInterface,
                                      const Json::Value& config)
-: _wantsToRunStrategy(nullptr)
+: _stateConceptStrategy(nullptr)
 , _activityCanEndSecs(-1.0f)
 , _activityShouldEndSecs(-1.0f)
 , _baseCooldownSecs(-1.0f)
@@ -109,7 +109,7 @@ IActivityStrategy::IActivityStrategy(BehaviorExternalInterface& behaviorExternal
   
   if(config.isMember(kWantsToRunStrategyConfigKey)){
     const Json::Value& wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
-    _wantsToRunStrategy.reset(WantsToRunStrategyFactory::CreateWantsToRunStrategy(behaviorExternalInterface,
+    _stateConceptStrategy.reset(StateConceptStrategyFactory::CreateStateConceptStrategy(behaviorExternalInterface,
                                                                                   robotExternalInterface,
                                                                                   wantsToRunConfig));
   }

@@ -379,7 +379,7 @@ void BehaviorKnockOverCubes::HandleObjectUpAxisChanged(const ObjectUpAxisChanged
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnockOverCubes::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch (event.GetData().GetTag()) {
     case ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged:

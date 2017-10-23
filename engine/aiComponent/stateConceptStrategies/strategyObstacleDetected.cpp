@@ -11,7 +11,7 @@
  *
  **/
 
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/strategyObstacleDetected.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyObstacleDetected.h"
 
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"

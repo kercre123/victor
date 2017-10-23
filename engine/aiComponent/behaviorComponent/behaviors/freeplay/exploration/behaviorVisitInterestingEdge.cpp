@@ -148,7 +148,7 @@ bool BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior(BehaviorExternalIn
   // clear debug render from previous runs
   robot.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
   
-  // reset the computed info, since we use this to check whether we are runnable
+  // reset the computed info, since we use this to check whether we are activatable
   _cache.Reset();
 
   // pick a goal now
@@ -206,7 +206,7 @@ bool BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior(BehaviorExternalIn
   // if we find a goal, we will set it in the cache, use that as return
   const bool foundGoal = _cache.IsSet();
   
-  // clear debug render we may generate during IsRunnable (comment out when debugging)
+  // clear debug render we may generate during WantsToBeActivated (comment out when debugging)
   if ( !foundGoal )
     robot.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
   
@@ -423,7 +423,7 @@ void BehaviorVisitInterestingEdge::PickGoals(BehaviorExternalInterface& behavior
   const Robot& robot = behaviorExternalInterface.GetRobot();
   
   // can't be running while picking the best goal, since we are not analyzing regions anymore
-  DEV_ASSERT(!IsRunning(), "BehaviorVisitInterestingEdge.PickBestGoal.CantTrustAnalysisWhileRunning");
+  DEV_ASSERT(!IsActivated(), "BehaviorVisitInterestingEdge.PickBestGoal.CantTrustAnalysisWhileRunning");
   
   validGoals.clear();
 
@@ -602,7 +602,7 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(BehaviorExternalInterfa
         const Vec3f& toPoint   = vantagePointPos - (normalFromLookAtTowardsVantage * clearDistanceInFront);
         const Vec3f& fromPoint = vantagePointPos + (normalFromLookAtTowardsVantage * clearDistanceBehind );
         const INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
-        assert(memoryMap); // otherwise we are not even runnable
+        assert(memoryMap); // otherwise we are not even activatable
         
         // the vantage point is valid if there's no collision with the invalid types (would block the view or the pose)
         const bool hasCollision = memoryMap->HasCollisionRayWithTypes(fromPoint, toPoint, typesThatInvalidateVantagePoints);

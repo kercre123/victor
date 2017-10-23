@@ -156,7 +156,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       
     case TestState::TurnBack:
     {
-      // At some point (possibly before we stop moving) the behavior should become runnable and start on it's own.
+      // At some point (possibly before we stop moving) the behavior should become activatable and start on it's own.
       //  The behavior kicking in may cause the TurnInPlace to be CANCELLED.
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(10,
                                             (_turnInPlaceResult == ActionResult::SUCCESS || _turnInPlaceResult == ActionResult::CANCELLED_WHILE_RUNNING),

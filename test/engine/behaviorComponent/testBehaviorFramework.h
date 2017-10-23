@@ -33,7 +33,7 @@ class BehaviorExternalInterface;
 class BehaviorSystemManager;
 class CozmoContext;
 class Robot;
-class StateChangeComponent;
+class BehaviorEventComponent;
 class TestBehaviorWithHelpers;
 class TestBehaviorFramework;
 
@@ -62,13 +62,13 @@ public:
   Robot& GetRobot(){ assert(_robot); return *_robot;}
 
   
-  void InitializeStandardBehaviorComponent(IBehavior* baseRunnable = nullptr,
-                                           std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeRunnable = {},
+  void InitializeStandardBehaviorComponent(IBehavior* baseBehavior = nullptr,
+                                           std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeBehavior = {},
                                            bool shouldCallInitOnBase = true);
   
   // Call in order to set up and initialize a standard behavior component
-  void InitializeStandardBehaviorComponent(IBehavior* baseRunnable,
-                                           std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeRunnable,
+  void InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
+                                           std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeBehavior,
                                            bool shouldCallInitOnBase,
                                            BehaviorContainer*& customContainer);
   
@@ -91,12 +91,12 @@ private:
   
 };
 
-// An implementation of BSRunnable that has tons of power vested to it
+// An implementation of BSBehavior that has tons of power vested to it
 // so that reasonably arbitrary tests can be written easily
-class TestSuperPoweredRunnable : public IBehavior
+class TestSuperPoweredBehavior : public IBehavior
 {
 public:
-  TestSuperPoweredRunnable(): IBehavior("TestSuperPoweredRunnable"){};
+  TestSuperPoweredBehavior(): IBehavior("TestSuperPoweredBehavior"){};
   
   void SetBehaviorContainer(BehaviorContainer& bc){ _bc = &bc;}
 
@@ -154,9 +154,9 @@ public:
   
   virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
   void Foo();
   void Bar(BehaviorExternalInterface& behaviorExternalInterface);
@@ -182,7 +182,7 @@ public:
   bool CallCancelDelegates(bool val) { return CancelDelegates(val); }
   
 protected:
-  virtual float EvaluateRunningScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual float EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual float EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
 };

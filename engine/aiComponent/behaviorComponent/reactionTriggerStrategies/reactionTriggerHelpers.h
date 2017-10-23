@@ -39,7 +39,7 @@
 }
 
 
-#include "clad/types/behaviorSystem/reactionTriggers.h"
+#include "clad/types/behaviorComponent/reactionTriggers.h"
 
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/logging/logging.h"

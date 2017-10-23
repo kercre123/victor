@@ -183,7 +183,7 @@ void BehaviorOnboardingShowCube::AlwaysHandle(const EngineToGameEvent& event, Be
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch (event.GetData().GetTag())
   {
@@ -205,7 +205,7 @@ void BehaviorOnboardingShowCube::HandleWhileRunning(const EngineToGameEvent& eve
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::HandleWhileRunning(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch (event.GetData().GetTag())
   {
@@ -229,7 +229,7 @@ ICozmoBehavior::Status BehaviorOnboardingShowCube::UpdateInternal_WhileRunning(B
 {
   if( !IsControlDelegated() && !IsSequenceComplete() )
   {
-    float timeRunning = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeStartedRunning_s();
+    float timeRunning = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeActivated_s();
     if( timeRunning > _maxTimeBeforeTimeout_Sec )
     {
       SET_STATE(ErrorFinal,behaviorExternalInterface);

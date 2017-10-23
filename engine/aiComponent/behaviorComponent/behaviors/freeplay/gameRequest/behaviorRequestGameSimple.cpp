@@ -310,7 +310,7 @@ float BehaviorRequestGameSimple::EvaluateScoreInternal(BehaviorExternalInterface
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float BehaviorRequestGameSimple::EvaluateRunningScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+float BehaviorRequestGameSimple::EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // if we have requested, and are past the timeout, then we don't want to keep running
   if( IsControlDelegated() ) {

@@ -11,7 +11,7 @@
 *
 **/
 
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/strategyInNeedsBracket.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyInNeedsBracket.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -33,7 +33,7 @@ const char* kNeedBracketKey = "needBracket";
 StrategyInNeedsBracket::StrategyInNeedsBracket(BehaviorExternalInterface& behaviorExternalInterface,
                                                IExternalInterface* robotExternalInterface,
                                                const Json::Value& config)
-: IWantsToRunStrategy(behaviorExternalInterface, robotExternalInterface, config)
+: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
 {
   {
     const auto& needStr = JsonTools::ParseString(config,
@@ -52,7 +52,7 @@ StrategyInNeedsBracket::StrategyInNeedsBracket(BehaviorExternalInterface& behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool StrategyInNeedsBracket::WantsToRunInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool StrategyInNeedsBracket::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   const bool inBracket = InRequiredNeedBracket(behaviorExternalInterface);
   return inBracket;

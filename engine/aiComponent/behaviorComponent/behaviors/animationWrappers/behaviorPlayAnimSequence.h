@@ -42,7 +42,7 @@ public:
 
 protected:
   
-  virtual bool IsRunnableAnimSeqInternal(BehaviorExternalInterface& behaviorExternalInterface) const { return true;}
+  virtual bool WantsToBeActivatedAnimSeqInternal(BehaviorExternalInterface& behaviorExternalInterface) const { return true;}
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 

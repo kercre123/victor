@@ -150,8 +150,8 @@ private:
   using BorderRegionScoreVector = std::vector<BorderRegionScore>;
   using VantagePointVector = std::vector<Pose3d>;
 
-  // information that we cache during IsRunnable, which is const but actually computes important information
-  struct CacheForIsRunnable {
+  // information that we cache during WantsToBeActivated, which is const but actually computes important information
+  struct CacheForWantsToBeActivated {
     inline void Set(VantagePointVector&& points);
     inline void Reset() { _vantagePoints.clear(); }
     inline bool IsSet() const { return !_vantagePoints.empty(); }
@@ -223,8 +223,8 @@ private:
   // parsed configurations params from json
   Configuration _configParams;
 
-  // we calculate this info during IsRunnable, there's no reason to recompute, store in this mutable cache (eek)
-  mutable CacheForIsRunnable _cache;
+  // we calculate this info during WanstToBeActivated, there's no reason to recompute, store in this mutable cache (eek)
+  mutable CacheForWantsToBeActivated _cache;
   
   // tag of the wait for images action when we are focused on edges
   u32                 _waitForImagesActionTag;
@@ -243,7 +243,7 @@ private:
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Inline functions/methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::CacheForIsRunnable::Set(VantagePointVector&& points)
+void BehaviorVisitInterestingEdge::CacheForWantsToBeActivated::Set(VantagePointVector&& points)
 {
   _vantagePoints = points;
 }

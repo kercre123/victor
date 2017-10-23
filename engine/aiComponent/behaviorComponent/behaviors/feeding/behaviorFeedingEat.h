@@ -51,7 +51,7 @@ protected:
   using base = ICozmoBehavior;
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  // This behavior can't be resumed (cube might not be valid and the None/Robot version of IsRunnable isn't
+  // This behavior can't be resumed (cube might not be valid and the None/Robot version of WantsToBeActivated isn't
   // implemented)
   virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override { return Result::RESULT_FAIL; }
 

@@ -14,8 +14,8 @@
 #define ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 
 
-#include "clad/types/behaviorSystem/activityTypes.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/activityTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 #include "util/helpers/noncopyable.h"
 #include <json/json.h>

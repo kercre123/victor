@@ -21,7 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/iWantsToRunStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/moodSystem/moodScorer.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -29,11 +29,11 @@
 
 
 #include "clad/types/actionResults.h"
-#include "clad/types/behaviorSystem/behaviorObjectives.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorObjectives.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/needsSystemTypes.h"
-#include "clad/types/behaviorSystem/reactionTriggers.h"
+#include "clad/types/behaviorComponent/reactionTriggers.h"
 #include "clad/types/unlockTypes.h"
 #include "util/logging/logging.h"
 
@@ -101,9 +101,9 @@ public:
   static BehaviorID ExtractBehaviorIDFromConfig(const Json::Value& config, const std::string& fileName = "");
   static BehaviorClass ExtractBehaviorClassFromConfig(const Json::Value& config);
 
-  bool IsRunning() const { return _isRunning; }
+  bool IsActivated() const { return _isActivated; }
 
-  // returns true if the behavior has delegated control to a helper/action/bsRunnable
+  // returns true if the behavior has delegated control to a helper/action/behavior
   bool IsControlDelegated() const;
   
   // returns true if any action from StartAction is currently running, indicating that the behavior is
@@ -115,11 +115,11 @@ public:
   int GetNumTimesBehaviorStarted() const { return _startCount; }
   void ResetStartCount() { _startCount = 0; }
   
-  // Time this behavior started running, in seconds, as measured by basestation time
-  float GetTimeStartedRunning_s() const { return _startedRunningTime_s; }
+  // Time this behavior was activated, in seconds, as measured by basestation time
+  float GetTimeActivated_s() const { return _activatedTime_s; }
   
   // Time elapsed since start, in seconds, as measured by basestation time
-  float GetRunningDuration() const;
+  float GetActivatedDuration() const;
     
   // Will be called upon first switching to a behavior before calling update.
   // Calls protected virtual OnBehaviorActivated() method, which each derived class
@@ -140,7 +140,7 @@ public:
   // derived class should implement.
   Status BehaviorUpdate_Legacy(BehaviorExternalInterface& behaviorExternalInterface);
     
-  // This behavior was the currently running behavior, but is now stopping (to make way for a new current
+  // This behavior was active, but is now stopping (to make way for a new current
   // behavior). Any behaviors from DelegateIfInControl will be canceled.
   void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
 
@@ -169,7 +169,7 @@ public:
   virtual bool ShouldRunWhileOnCharger() const { return false;}
 
   // Return true if the behavior explicitly handles the case where the robot starts holding the block
-  // Equivalent to !robot.IsCarryingObject() in IsRunnable()
+  // Equivalent to !robot.IsCarryingObject() in WantsToBeActivated()
   virtual bool CarryingObjectHandledInternally() const = 0;
 
   // Helper function for having DriveToObjectActions use the second closest preAction pose useful when the action
@@ -274,9 +274,9 @@ protected:
   // If the behavior is subscribed to multiple tags, the presumption is that it
   // will handle switching based on tag internally.
   // NOTE: AlwaysHandle is called first!
-  virtual void HandleWhileRunning(const GameToEngineEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
-  virtual void HandleWhileRunning(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
-  virtual void HandleWhileRunning(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void HandleWhileActivated(const GameToEngineEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void HandleWhileActivated(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void HandleWhileActivated(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
   
   // Derived classes must override this method to handle events that come in
   // only while the behavior is NOT running. If it doesn't matter whether the
@@ -284,9 +284,9 @@ protected:
   // If the behavior is subscribed to multiple tags, the presumption is that it
   // will handle switching based on tag internally.
   // NOTE: AlwaysHandle is called first!
-  virtual void HandleWhileNotRunning(const GameToEngineEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
-  virtual void HandleWhileNotRunning(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
-  virtual void HandleWhileNotRunning(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void HandleWhileInScopeButNotActivated(const GameToEngineEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void HandleWhileInScopeButNotActivated(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
   
   // Many behaviors use a pattern of executing an action, then waiting for it to finish before selecting the
   // next action. Instead of directly starting actions and handling ActionCompleted callbacks, derived
@@ -300,7 +300,7 @@ protected:
   // Each DelegateIfInControl function returns true if the action was started, false otherwise. Reasons actions
   // might not be started include:
   // 1. Another action (from DelegateIfInControl) is currently running or queued
-  // 2. You are not running ( IsRunning() returns false )
+  // 2. You are not running ( IsActivated() returns false )
   //
   // DelegateIfInControl takes ownership of the action.  If the action is not
   // successfully queued, the action is immediately destroyed.
@@ -342,17 +342,17 @@ protected:
   bool DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult, BehaviorExternalInterface& behaviorExternalInterface));
   
   
-  // If possible (without canceling anything), delegate to the given runnable and return true. Otherwise,
+  // If possible (without canceling anything), delegate to the given behavior and return true. Otherwise,
   // return false
   bool DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface, IBehavior* delegate);
   
-  // If possible (even if it means canceling delegated, delegate to the given runnable and return
+  // If possible (even if it means canceling delegated, delegate to the given behavior and return
   // true. Otherwise, return false (e.g. if the passed in interface doesn't have access to the delegation
   // component)
   bool DelegateNow(BehaviorExternalInterface& behaviorExternalInterface, IBehavior* delegate);
   
   // This function cancels the action started by DelegateIfInControl (if there is one). Returns true if an action was
-  // canceled, false otherwise. Note that if you are running, this will trigger a callback for the
+  // canceled, false otherwise. Note that if you are activated, this will trigger a callback for the
   // cancellation unless you set allowCallback to false. If the action was created by a helper, the helper
   // will be canceled as well, unless allowHelperToContinue is true
   bool CancelDelegates(bool allowCallback = true, bool allowHelperToContinue = false);
@@ -455,11 +455,11 @@ private:
   Robot* _robot;
   BehaviorExternalInterface* _behaviorExternalInterface;
   float _lastRunTime_s;
-  float _startedRunningTime_s;
+  float _activatedTime_s;
 
   // only used if we aren't using the BSM
   u32 _lastActionTag = 0;
-  IWantsToRunStrategyPtr _wantsToRunStrategy;
+  IStateConceptStrategyPtr _stateConceptStrategy;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const;
@@ -480,17 +480,17 @@ private:
   NeedsActionId _needsActionID;
   ExecutableBehaviorType _executableType;
   
-  // if an unlockId is set, the behavior won't be runnable unless the unlockId is unlocked in the progression component
+  // if an unlockId is set, the behavior won't be activatable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;
 
   // required severe needs expression to run this activity
   NeedId _requiredSevereNeed;
   
-  // if _requiredRecentDriveOffCharger_sec is greater than 0, this behavior is only runnable if last time the robot got off the charger by
+  // if _requiredRecentDriveOffCharger_sec is greater than 0, this behavior is only activatable if last time the robot got off the charger by
   // itself was less than this time ago. Eg, a value of 1 means if we got off the charger less than 1 second ago
   float _requiredRecentDriveOffCharger_sec;
   
-  // if _requiredRecentSwitchToParent_sec is greater than 0, this behavior is only runnable if last time its parent behavior
+  // if _requiredRecentSwitchToParent_sec is greater than 0, this behavior is only activatable if last time its parent behavior
   // chooser was activated happened less than this time ago. Eg: a value of 1 means 'if the parent got activated less
   // than 1 second ago'. This allows some behaviors to run only first time that their parent is activated (specially for activities)
   // TODO rsam: differentiate between (de)activation and interruption
@@ -502,7 +502,7 @@ private:
   RobotCompletedActionCallback _actionCallback;
   bool _stopRequestedAfterAction = false;
   
-  bool _isRunning;
+  bool _isActivated;
   // should only be used to allow DelegateIfInControl to start while a behavior is resuming
   bool _isResuming;
   
@@ -553,7 +553,7 @@ public:
   bool ReadFromScoredJson(const Json::Value& config, const bool fromScoredChooser = true);
   
   // Stops the behavior immediately but gives it a couple of tick window during which score
-  // evaluation will not include its running penalty.  This allows behaviors to
+  // evaluation will not include its activated penalty.  This allows behaviors to
   // stop themselves in hopes of being re-selected with new fast-forwarding and
   // block settings without knocking its score down so something else is selected
   void StopWithoutImmediateRepetitionPenalty(BehaviorExternalInterface& behaviorExternalInterface);
@@ -569,25 +569,25 @@ public:
   float EvaluateRepetitionPenalty() const;
   const Util::GraphEvaluator2d& GetRepetitionPenalty() const { return _repetitionPenalty; }
   
-  float EvaluateRunningPenalty() const;
-  const Util::GraphEvaluator2d& GetRunningPenalty() const { return _runningPenalty; }
+  float EvaluateActivatedPenalty() const;
+  const Util::GraphEvaluator2d& GetActivatedPenalty() const { return _activatedPenalty; }
 
 protected:
   
   virtual void ScoredActingStateChanged(bool isActing);
   
   // EvaluateScoreInternal is used to score each behavior for behavior selection - it uses mood scorer or
-  // flat score depending on configuration. If the behavior is running, it uses the Running score to decide if it should
-  // keep running
-  virtual float EvaluateRunningScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const;
+  // flat score depending on configuration. If the behavior is activated, it
+  // uses the activated score to decide if it should stay active
+  virtual float EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const;
   virtual float EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const;
   
   // Additional DelegateIfInControl definitions relating to score
   
-  // Called after DelegateIfInControl, will add extraScore to the result of EvaluateRunningScoreInternal. This makes
-  // it easy to encourage the system to keep a behavior running while control is delegated. NOTE: multiple calls to
+  // Called after DelegateIfInControl, will add extraScore to the result of EvaluateActivatedScoreInternal. This makes
+  // it easy to encourage the system to keep a behavior activated while control is delegated. NOTE: multiple calls to
   // this function (for the same action) will be cumulative. The bonus will be reset as soon as the action is
-  // complete, or the behavior is no longer running
+  // complete, or the behavior is no longer active
   void IncreaseScoreWhileControlDelegated(float extraScore);
   
   // Convenience wrappers that combine IncreaseScoreWhileControlDelegated with DelegateIfInControl,
@@ -597,7 +597,7 @@ protected:
   template<typename CallbackType>
   bool DelegateIfInControlExtraScore(IActionRunner* action, float extraScoreWhileControlDelegated, CallbackType callback);
   
-  bool IsRunnableScored() const;
+  bool WantsToBeActivatedScored() const;
   
 private:
   void ScoredInit(BehaviorExternalInterface& behaviorExternalInterface);
@@ -608,9 +608,9 @@ private:
   // ==================== Member Vars ====================
   MoodScorer              _moodScorer;
   Util::GraphEvaluator2d  _repetitionPenalty;
-  Util::GraphEvaluator2d  _runningPenalty;
+  Util::GraphEvaluator2d  _activatedPenalty;
   float                   _flatScore = 0;
-  float                   _extraRunningScore = 0;
+  float                   _extraActivatedScore = 0;
   #if ANKI_DEV_CHEATS
     // Used to verify that all scoring configs loaded in are equal
     Json::Value             _scoringValuesCached;
@@ -618,13 +618,13 @@ private:
   // used to allow short times during which repetitionPenalties don't apply
   float                   _nextTimeRepetitionPenaltyApplies_s = 0;
   
-  // if this behavior objective gets sent (by any behavior), then consider this behavior to have been running
+  // if this behavior objective gets sent (by any behavior), then consider this behavior to have been activated
   // (for purposes of repetition penalty, aka cooldown)
   BehaviorObjective _cooldownOnObjective = BehaviorObjective::Count;
   
   
   bool _enableRepetitionPenalty = true;
-  bool _enableRunningPenalty = true;
+  bool _enableActivatedPenalty = true;
   
   // Keep track of the number of times resumed from
   int _timesResumedFromPossibleInfiniteLoop = 0;

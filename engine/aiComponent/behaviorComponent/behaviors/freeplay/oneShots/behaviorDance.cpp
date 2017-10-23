@@ -173,7 +173,7 @@ void BehaviorDance::CubeAnimComplete(BehaviorExternalInterface& behaviorExternal
 {
   // When the light anims are stopped due to the behavior stopping, this callback
   // is called so don't do anything
-  if(!IsRunning())
+  if(!IsActivated())
   {
     return;
   }

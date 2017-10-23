@@ -363,7 +363,7 @@ ICozmoBehaviorPtr IActivity::GetDesiredActiveBehavior(BehaviorExternalInterface&
   const bool hasInterludeChooser = _interludeBehaviorChooserPtr != nullptr;
   const bool switchingBehaviors = ret != currentRunningBehavior;
   if (!switchingBehaviors) {
-    DEV_ASSERT_MSG(ret == nullptr || ret->IsRunning(),
+    DEV_ASSERT_MSG(ret == nullptr || ret->IsActivated(),
                    "IActivity.ChooseNextBehavior.NextBehaviorNotRunning",
                    "Next chosen behavior is not running (and not switching behaviors); should not happen");
   }

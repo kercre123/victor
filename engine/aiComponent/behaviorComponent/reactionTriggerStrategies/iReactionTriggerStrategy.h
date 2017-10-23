@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_iReactionTriggerStrategy_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/iWantsToRunStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 
 #include "engine/events/ankiEvent.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -79,7 +79,7 @@ protected:
   using GameToEngineTag   = ExternalInterface::MessageGameToEngineTag;
   
   
-  IWantsToRunStrategyPtr _wantsToRunStrategy;
+  IStateConceptStrategyPtr _stateConceptStrategy;
   
   // Derived classes should use these methods to subscribe to any tags they
   // are interested in handling.

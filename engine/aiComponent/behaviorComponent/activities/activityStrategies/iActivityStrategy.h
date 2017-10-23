@@ -12,7 +12,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_Activities_ActivityStrategies_IActivityStrategy_H__
 #define __Cozmo_Basestation_BehaviorSystem_Activities_ActivityStrategies_IActivityStrategy_H__
 
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/iWantsToRunStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 
 #include "clad/types/featureGateTypes.h"
 
@@ -67,7 +67,7 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  IWantsToRunStrategyPtr _wantsToRunStrategy;
+  IStateConceptStrategyPtr _stateConceptStrategy;
   
   // signal handles for events strategies register to
   std::vector<Signal::SmartHandle> _eventHandles;

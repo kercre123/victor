@@ -30,7 +30,7 @@
 #include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -120,7 +120,7 @@ bool BehaviorGuardDog::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
     return false;
   }
   
-  // This behavior is runnable only if the following are all true:
+  // This behavior is activatable only if the following are all true:
   //   1. We know the locations 3 blocks
   //   2. We are connected to those 3 blocks
   //   3. The blocks are all upright
@@ -178,7 +178,7 @@ Result BehaviorGuardDog::OnBehaviorActivated(BehaviorExternalInterface& behavior
   _currPublicBehaviorStage = GuardDogStage::Count;
   _result = "None";
 
-  // Grab cube starting locations (ideally would have done this in IsRunnable(), but IsRunnable() is const)
+  // Grab cube starting locations (ideally would have done this in WantsToBeActivated(), but WantsToBeActivated() is const)
   std::vector<const ObservableObject*> locatedBlocks;
   behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(*_connectedCubesOnlyFilter, locatedBlocks);
   
@@ -489,7 +489,7 @@ void BehaviorGuardDog::OnBehaviorDeactivated(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGuardDog::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorGuardDog::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Handle messages:
   switch( event.GetData().GetTag() ) {

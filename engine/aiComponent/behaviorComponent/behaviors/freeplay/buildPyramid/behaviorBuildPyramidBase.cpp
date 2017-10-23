@@ -359,7 +359,7 @@ bool BehaviorBuildPyramidBase::UpdatePyramidTargets(BehaviorExternalInterface& b
   _staticBlockID = std::move(bestStatic);
   _topBlockID = std::move(bestTop);
   
-  DEV_ASSERT(AreAllBlockIDsUnique(), "BehaviorBuildPyramidBase.IsRunnable.AllBlocksNotUnique");
+  DEV_ASSERT(AreAllBlockIDsUnique(), "BehaviorBuildPyramidBase.IsActivatable.AllBlocksNotUnique");
   return blockAssignmentChanged;
 }
 

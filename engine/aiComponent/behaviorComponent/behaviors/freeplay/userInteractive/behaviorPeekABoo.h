@@ -90,7 +90,7 @@ private:
   mutable Vision::FaceID_t _cachedFace = Vision::UnknownFaceID;
   unsigned int   _numPeeksRemaining;
   unsigned int   _numPeeksTotal;
-  float          _nextTimeIsRunnable_Sec;
+  float          _nextTimeWantsToBeActivated_Sec;
   float          _lastRequestTime_Sec;
   bool           _hasMadeFollowUpRequest;
   int            _turnToFaceRetryCount;

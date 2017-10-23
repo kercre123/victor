@@ -24,9 +24,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
-#include "engine/aiComponent/behaviorComponent/devBaseRunnable.h"
+#include "engine/aiComponent/behaviorComponent/devBaseBehavior.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
@@ -61,19 +61,19 @@ TestBehaviorFramework::TestBehaviorFramework(int robotID,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseRunnable,
-                                         std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeRunnable,
+void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
+                                         std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeBehavior,
                                          bool shouldCallInitOnBase)
 {
   BehaviorContainer* empty = nullptr;
-  InitializeStandardBehaviorComponent(baseRunnable, initializeRunnable,
+  InitializeStandardBehaviorComponent(baseBehavior, initializeBehavior,
                                       shouldCallInitOnBase, empty);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseRunnable,
-                                         std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeRunnable,
+void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
+                                         std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeBehavior,
                                          bool shouldCallInitOnBase,
                                          BehaviorContainer*& customContainer)
 {
@@ -91,8 +91,8 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseR
                                                                                          _behaviorContainer.get());
   
   // stack is unused - put an arbitrary behavior on it
-  if(baseRunnable == nullptr){
-    baseRunnable = subComponents->_behaviorContainer.FindBehaviorByID(BehaviorID::Wait).get();
+  if(baseBehavior == nullptr){
+    baseBehavior = subComponents->_behaviorContainer.FindBehaviorByID(BehaviorID::Wait).get();
     shouldCallInitOnBase = false;
   }
   
@@ -100,13 +100,13 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseR
   subComponents->_aiComponent.Init(subComponents->_robot, bc);
   _behaviorComponent = &subComponents->_aiComponent.GetBehaviorComponent();
   _behaviorComponent->Init(std::move(subComponents),
-                           baseRunnable);
+                           baseBehavior);
   
   if(shouldCallInitOnBase){
-    baseRunnable->Init(_behaviorComponent->_components->_behaviorExternalInterface);
+    baseBehavior->Init(_behaviorComponent->_components->_behaviorExternalInterface);
   }
-  if(initializeRunnable != nullptr){
-    initializeRunnable(_behaviorComponent->_components);
+  if(initializeBehavior != nullptr){
+    initializeBehavior(_behaviorComponent->_components);
   }
   
   std::string empty;
@@ -177,8 +177,8 @@ void DoBehaviorInterfaceTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorEx
 
 void InjectBehaviorIntoStack(ICozmoBehavior& injectBehavior, TestBehaviorFramework& testFramework)
 {
-  auto& backOfRunnableStack = testFramework.GetBehaviorComponent()._components->_behaviorSysMgr._runnableStack->_runnableStack.back();
-  DevBaseRunnable* cozmoBehavior = dynamic_cast<DevBaseRunnable*>(backOfRunnableStack);
+  auto& backOfBehaviorStack = testFramework.GetBehaviorComponent()._components->_behaviorSysMgr._behaviorStack->_behaviorStack.back();
+  DevBaseBehavior* cozmoBehavior = dynamic_cast<DevBaseBehavior*>(backOfBehaviorStack);
   if(ANKI_VERIFY(cozmoBehavior != nullptr, "InjectBehaviorIntoStack.NullptrCast", "")){
     cozmoBehavior->_possibleDelegates.insert(&injectBehavior);
     testFramework.GetBehaviorComponent()._components->_behaviorSysMgr.Delegate(cozmoBehavior, &injectBehavior);
@@ -198,8 +198,8 @@ void InjectValidDelegateIntoBSM(BehaviorSystemManager& bsm,
                                 IBehavior* delegator,
                                 IBehavior* delegated,
                                 bool shouldMarkAsEnterdScope){
-  auto iter = bsm._runnableStack->_delegatesMap.find(delegator);
-  if(iter != bsm._runnableStack->_delegatesMap.end()){
+  auto iter = bsm._behaviorStack->_delegatesMap.find(delegator);
+  if(iter != bsm._behaviorStack->_delegatesMap.end()){
     iter->second.insert(delegated);
     if(shouldMarkAsEnterdScope){
       delegated->OnEnteredActivatableScope();
@@ -220,11 +220,11 @@ void InjectAndDelegate(BehaviorSystemManager& bsm,
 
   
 //////////
-/// Setup a test runnable class that tracks data for testing
+/// Setup a test behavior class that tracks data for testing
 //////////
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestSuperPoweredRunnable::GetAllDelegates(std::set<IBehavior*>& delegates) const {
+void TestSuperPoweredBehavior::GetAllDelegates(std::set<IBehavior*>& delegates) const {
   for(auto& entry: _bc->_idToBehaviorMap){
     delegates.insert(entry.second.get());
   }
@@ -232,43 +232,43 @@ void TestSuperPoweredRunnable::GetAllDelegates(std::set<IBehavior*>& delegates) 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestSuperPoweredRunnable::InitInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+void TestSuperPoweredBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInterface) {
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestSuperPoweredRunnable::OnEnteredActivatableScopeInternal() {
+void TestSuperPoweredBehavior::OnEnteredActivatableScopeInternal() {
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestSuperPoweredRunnable::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+void TestSuperPoweredBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) {
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TestSuperPoweredRunnable::WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const {
+bool TestSuperPoweredBehavior::WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestSuperPoweredRunnable::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+void TestSuperPoweredBehavior::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) {
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestSuperPoweredRunnable::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+void TestSuperPoweredBehavior::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) {
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestSuperPoweredRunnable::OnLeftActivatableScopeInternal() {
+void TestSuperPoweredBehavior::OnLeftActivatableScopeInternal() {
   
 }
 
@@ -314,13 +314,13 @@ void TestBehavior::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternal
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehavior::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)  {
+void TestBehavior::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)  {
   _handleWhileRunningCalls++;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehavior::HandleWhileNotRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)  {
+void TestBehavior::HandleWhileInScopeButNotActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)  {
   _handleWhileNotRunningCalls++;
 }
 
@@ -338,7 +338,7 @@ void TestBehavior::Bar(BehaviorExternalInterface& behaviorExternalInterface) {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float TestBehavior::EvaluateRunningScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const  {
+float TestBehavior::EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const  {
   return kRunningScore;
 }
 

@@ -22,9 +22,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/wantsToRunStrategyFactory.h"
+#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
@@ -196,8 +196,8 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 : IBehavior(BehaviorIDToString(ExtractBehaviorIDFromConfig(config)))
 , _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _lastRunTime_s(0.0f)
-, _startedRunningTime_s(0.0f)
-, _wantsToRunStrategy(nullptr)
+, _activatedTime_s(0.0f)
+, _stateConceptStrategy(nullptr)
 , _id(ExtractBehaviorIDFromConfig(config))
 , _idString(BehaviorIDToString(_id))
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
@@ -207,7 +207,7 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 , _requiredSevereNeed( NeedId::Count )
 , _requiredRecentDriveOffCharger_sec(-1.0f)
 , _requiredRecentSwitchToParent_sec(-1.0f)
-, _isRunning(false)
+, _isActivated(false)
 , _isResuming(false)
 , _hasSetIdle(false)
 {
@@ -314,7 +314,7 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
   assert(_robot);
   
   if(_wantsToRunConfig.size() > 0){
-    _wantsToRunStrategy.reset(WantsToRunStrategyFactory::CreateWantsToRunStrategy(behaviorExternalInterface,
+    _stateConceptStrategy.reset(StateConceptStrategyFactory::CreateStateConceptStrategy(behaviorExternalInterface,
                                                                                   _robot->HasExternalInterface() ? _robot->GetExternalInterface() : nullptr,
                                                                                   _wantsToRunConfig));
     _wantsToRunConfig.clear();
@@ -451,14 +451,14 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
     _sparksStreamline = false;
   }
   
-  _isRunning = true;
+  _isActivated = true;
   _stopRequestedAfterAction = false;
   _actionCallback = nullptr;
-  _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _activatedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _hasSetIdle = false;
   Result initResult = OnBehaviorActivated(behaviorExternalInterface);
   if ( initResult != RESULT_OK ) {
-    _isRunning = false;
+    _isActivated = false;
   }
   else {
     _startCount++;
@@ -501,7 +501,7 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
 Result ICozmoBehavior::Resume(BehaviorExternalInterface& behaviorExternalInterface, ReactionTrigger resumingFromType)
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Resume").c_str(), "Resuming...");
-  DEV_ASSERT(!_isRunning, "ICozmoBehavior.Resume.ShouldNotBeRunningIfWeTryToResume");
+  DEV_ASSERT(!_isActivated, "ICozmoBehavior.Resume.ShouldNotBeRunningIfWeTryToResume");
   
   // Check and update the number of times we've resumed from cliff or unexpected movement
   if(resumingFromType == ReactionTrigger::CliffDetected
@@ -520,14 +520,14 @@ Result ICozmoBehavior::Resume(BehaviorExternalInterface& behaviorExternalInterfa
   }
   
   _isResuming = true;
-  _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _activatedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   Result initResult = ResumeInternal(behaviorExternalInterface);
   _isResuming = false;
   
   if ( initResult == RESULT_OK ) {
     // default implementation of ResumeInternal also sets it to true, but behaviors that override it
     // might not set it
-    _isRunning = true;
+    _isActivated = true;
     
     
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
@@ -540,7 +540,7 @@ Result ICozmoBehavior::Resume(BehaviorExternalInterface& behaviorExternalInterfa
     }
     
   } else {
-    _isRunning = false;
+    _isActivated = false;
   }
   
   return initResult;
@@ -570,10 +570,10 @@ ICozmoBehavior::Status ICozmoBehavior::BehaviorUpdate_Legacy(BehaviorExternalInt
         pairIter->second(event);
       }
       AlwaysHandle(event, behaviorExternalInterface);
-      if(IsRunning()){
-        HandleWhileRunning(event, behaviorExternalInterface);
+      if(IsActivated()){
+        HandleWhileActivated(event, behaviorExternalInterface);
       }else{
-        HandleWhileNotRunning(event, behaviorExternalInterface);
+        HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
       }
     }
   }
@@ -587,20 +587,20 @@ ICozmoBehavior::Status ICozmoBehavior::BehaviorUpdate_Legacy(BehaviorExternalInt
       }
       
       AlwaysHandle(event, behaviorExternalInterface);
-      if(IsRunning()){
-        HandleWhileRunning(event, behaviorExternalInterface);
+      if(IsActivated()){
+        HandleWhileActivated(event, behaviorExternalInterface);
       }else{
-        HandleWhileNotRunning(event, behaviorExternalInterface);
+        HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
       }
     }
   }
   
   for(const auto& event: stateChangeComp.GetRobotToEngineEvents()){
     AlwaysHandle(event, behaviorExternalInterface);
-    if(IsRunning()){
-      HandleWhileRunning(event, behaviorExternalInterface);
+    if(IsActivated()){
+      HandleWhileActivated(event, behaviorExternalInterface);
     }else{
-      HandleWhileNotRunning(event, behaviorExternalInterface);
+      HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
     }
   }
   
@@ -609,7 +609,7 @@ ICozmoBehavior::Status ICozmoBehavior::BehaviorUpdate_Legacy(BehaviorExternalInt
   //////
   ICozmoBehavior::Status status = Status::Complete;
   BehaviorUpdate(behaviorExternalInterface);
-  if(IsRunning()){
+  if(IsActivated()){
     status = UpdateInternal_WhileRunning(behaviorExternalInterface);
       if(!IsControlDelegated() && status != ICozmoBehavior::Status::Running){
       if(behaviorExternalInterface.HasDelegationComponent()){
@@ -639,7 +639,7 @@ void ICozmoBehavior::OnDeactivatedInternal(BehaviorExternalInterface& behaviorEx
     StopHelperWithoutCallback();
   }
   
-  _isRunning = false;
+  _isActivated = false;
   OnBehaviorDeactivated(behaviorExternalInterface);
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   CancelDelegates(false);
@@ -704,8 +704,8 @@ bool ICozmoBehavior::WantsToBeActivatedInternal(BehaviorExternalInterface& behav
 bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // Some reaction trigger strategies allow behaviors to interrupt themselves.
-  DEV_ASSERT(!IsRunning(), "ICozmoBehavior.IsRunnableCalledOnRunningBehavior");
-  if (IsRunning()) {
+  DEV_ASSERT(!IsActivated(), "ICozmoBehavior.WantsToBeActivatedCalledOnRunningBehavior");
+  if (IsActivated()) {
     PRINT_CH_DEBUG("Behaviors", "ICozmoBehavior.WantsToBeActivatedBase", "Behavior %s is already running", GetIDStr().c_str());
     return true;
   }
@@ -715,7 +715,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
   {
     const bool isProcessOn = behaviorExternalInterface.GetAIComponent().GetAIInformationAnalyzer().IsProcessRunning(_requiredProcess);
     if ( !isProcessOn ) {
-      PRINT_NAMED_ERROR("ICozmoBehavior.IsRunnable.RequiredProcessNotFound",
+      PRINT_NAMED_ERROR("ICozmoBehavior.WantsToBeActivated.RequiredProcessNotFound",
         "Required process '%s' is not enabled for '%s'",
         AIInformationAnalysis::StringFromEProcess(_requiredProcess),
         GetIDStr().c_str());
@@ -799,12 +799,12 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
     return false;
   }
   
-  if((_wantsToRunStrategy != nullptr) &&
-     !_wantsToRunStrategy->WantsToRun(behaviorExternalInterface)){
+  if((_stateConceptStrategy != nullptr) &&
+     !_stateConceptStrategy->AreStateConditionsMet(behaviorExternalInterface)){
     return false;
   }
      
-  return IsRunnableScored();
+  return WantsToBeActivatedScored();
 }
 
 
@@ -839,12 +839,12 @@ ICozmoBehavior::Status ICozmoBehavior::UpdateInternal_WhileRunning(BehaviorExter
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float ICozmoBehavior::GetRunningDuration() const
+float ICozmoBehavior::GetActivatedDuration() const
 {  
-  if (_isRunning)
+  if (_isActivated)
   {
     const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const float timeSinceStarted = currentTime_sec - _startedRunningTime_s;
+    const float timeSinceStarted = currentTime_sec - _activatedTime_s;
     return timeSinceStarted;
   }
   return 0.0f;
@@ -854,11 +854,11 @@ float ICozmoBehavior::GetRunningDuration() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ICozmoBehavior::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // by default, if we are runnable again, initialize and start over
+  // by default, if we are activatable again, initialize and start over
   Result resumeResult = RESULT_FAIL;
   
   if ( WantsToBeActivated(behaviorExternalInterface) ) {
-    _isRunning = true;
+    _isActivated = true;
     resumeResult = OnActivatedInternal_Legacy(behaviorExternalInterface);
   }
   return resumeResult;
@@ -919,7 +919,7 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
     return false;
   }
   
-  if( !IsResuming() && !IsRunning() ) {
+  if( !IsResuming() && !IsActivated() ) {
     PRINT_NAMED_WARNING("ICozmoBehavior.DelegateIfInControl.Failure.NotRunning",
                         "Behavior '%s' can't start %s action because it is not running",
                         GetIDStr().c_str(), action->GetName().c_str());
@@ -1426,8 +1426,8 @@ float ICozmoBehavior::EvaluateScoreInternal(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// EvaluateRunningScoreInternal is virtual and can optionally be overridden by subclasses
-float ICozmoBehavior::EvaluateRunningScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+// EvaluateActivatedScoreInternal is virtual and can optionally be overridden by subclasses
+float ICozmoBehavior::EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // unless specifically overridden it should mimic the non-running score
   const float nonRunningScore = EvaluateScoreInternal(behaviorExternalInterface);
@@ -1451,13 +1451,13 @@ float ICozmoBehavior::EvaluateRepetitionPenalty() const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float ICozmoBehavior::EvaluateRunningPenalty() const
+float ICozmoBehavior::EvaluateActivatedPenalty() const
 {
-  if (_startedRunningTime_s > 0.0f)
+  if (_activatedTime_s > 0.0f)
   {
     const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const float timeSinceStarted = currentTime_sec - _startedRunningTime_s;
-    const float runningPenalty = _runningPenalty.EvaluateY(timeSinceStarted);
+    const float timeSinceStarted = currentTime_sec - _activatedTime_s;
+    const float runningPenalty = _activatedPenalty.EvaluateY(timeSinceStarted);
     return runningPenalty;
   }
   
@@ -1474,15 +1474,15 @@ float ICozmoBehavior::EvaluateScore(BehaviorExternalInterface& behaviorExternalI
                  "No score was loaded in for behavior name %s",
                  GetIDStr().c_str());
 #endif
-  if (IsRunning() || WantsToBeActivated(behaviorExternalInterface))
+  if (IsActivated() || WantsToBeActivated(behaviorExternalInterface))
   {
-    const bool isRunning = IsRunning();
+    const bool isRunning = IsActivated();
     
     float score = 0.0f;
     
     if (isRunning)
     {
-      score = EvaluateRunningScoreInternal(behaviorExternalInterface) + _extraRunningScore;
+      score = EvaluateActivatedScoreInternal(behaviorExternalInterface) + _extraActivatedScore;
     }
     else
     {
@@ -1490,9 +1490,9 @@ float ICozmoBehavior::EvaluateScore(BehaviorExternalInterface& behaviorExternalI
     }
     
     // use running penalty while running, repetition penalty otherwise
-    if (_enableRunningPenalty && isRunning)
+    if (_enableActivatedPenalty && isRunning)
     {
-      const float runningPenalty = EvaluateRunningPenalty();
+      const float runningPenalty = EvaluateActivatedPenalty();
       score *= runningPenalty;
     }
 
@@ -1529,7 +1529,7 @@ void ICozmoBehavior::HandleBehaviorObjective(const ExternalInterface::BehaviorOb
 void ICozmoBehavior::IncreaseScoreWhileControlDelegated(float extraScore)
 {
   if( IsControlDelegated() ) {
-    _extraRunningScore += extraScore;
+    _extraActivatedScore += extraScore;
   }
 }
 
@@ -1619,12 +1619,12 @@ bool ICozmoBehavior::ReadFromScoredJson(const Json::Value& config, const bool fr
   // Running penalty
   // - - - - - - - - - -
   
-  _runningPenalty.Clear();
+  _activatedPenalty.Clear();
   
   const Json::Value& runningPenaltyJson = config[kRunningPenaltyKey];
   if (!runningPenaltyJson.isNull())
   {
-    if (!_runningPenalty.ReadFromJson(runningPenaltyJson))
+    if (!_activatedPenalty.ReadFromJson(runningPenaltyJson))
     {
       PRINT_NAMED_WARNING("ICozmoBehavior.BadRunningPenalty",
                           "Behavior '%s': %s failed to read",
@@ -1634,9 +1634,9 @@ bool ICozmoBehavior::ReadFromScoredJson(const Json::Value& config, const bool fr
   }
   
   // Ensure there is a valid graph
-  if (_runningPenalty.GetNumNodes() == 0)
+  if (_activatedPenalty.GetNumNodes() == 0)
   {
-    _runningPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
+    _activatedPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
   }
   return true;
 }
@@ -1645,7 +1645,7 @@ bool ICozmoBehavior::ReadFromScoredJson(const Json::Value& config, const bool fr
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::ScoredActingStateChanged(bool isActing)
 {
-  _extraRunningScore = 0.0f;
+  _extraActivatedScore = 0.0f;
 }
 
 
@@ -1669,7 +1669,7 @@ void ICozmoBehavior::ActivatedScored()
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::IsRunnableScored() const
+bool ICozmoBehavior::WantsToBeActivatedScored() const
 {
   // Currently we only resume from scored behaviors, which is why we have this
   // logic separated out

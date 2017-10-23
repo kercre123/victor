@@ -38,36 +38,36 @@ using namespace Anki::Cozmo;
 
 TEST(BehaviorSystemManager, TestDelegationVariants)
 {
-  std::unique_ptr<TestSuperPoweredRunnable> baseRunnable = std::make_unique<TestSuperPoweredRunnable>();
+  std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
   TestBehaviorFramework testFramework;
-  auto initializeRunnable = [&baseRunnable](const BehaviorComponent::ComponentsPtr& comps){
-    baseRunnable->SetBehaviorContainer(comps->_behaviorContainer);
+  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::ComponentsPtr& comps){
+    baseBehavior->SetBehaviorContainer(comps->_behaviorContainer);
   };
-  testFramework.InitializeStandardBehaviorComponent(baseRunnable.get(),initializeRunnable);
+  testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),initializeBehavior);
   
   BehaviorSystemManager& bsm = testFramework.GetBehaviorSystemManager();
   BehaviorExternalInterface& bei = testFramework.GetBehaviorExternalInterface();
   BehaviorContainer& behaviorContainer = testFramework.GetBehaviorContainer();
 
   // Check to make sure that the stack exists and control is appropriately delegated
-  ASSERT_TRUE(bsm._runnableStack->IsInStack(baseRunnable.get()));
-  IBehavior* runnableDelegating = bsm._runnableStack->GetTopOfStack();
-  ASSERT_NE(runnableDelegating, nullptr);
-  EXPECT_FALSE(bsm.IsControlDelegated(runnableDelegating));
+  ASSERT_TRUE(bsm._behaviorStack->IsInStack(baseBehavior.get()));
+  IBehavior* behaviorDelegating = bsm._behaviorStack->GetTopOfStack();
+  ASSERT_NE(behaviorDelegating, nullptr);
+  EXPECT_FALSE(bsm.IsControlDelegated(behaviorDelegating));
   
 
   // Build up an arbitrarily large stack of delegates
   const int arbitraryDelegationNumber = 50;
-  std::vector<std::unique_ptr<TestSuperPoweredRunnable>> bunchOfDelegates;
+  std::vector<std::unique_ptr<TestSuperPoweredBehavior>> bunchOfDelegates;
   for(int i = 0; i < arbitraryDelegationNumber; i++){
-    bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredRunnable>());
+    bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredBehavior>());
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
     bunchOfDelegates.back()->WantsToBeActivated(bei);
-    InjectValidDelegateIntoBSM(bsm, runnableDelegating, bunchOfDelegates.back().get());
+    InjectValidDelegateIntoBSM(bsm, behaviorDelegating, bunchOfDelegates.back().get());
     
-    EXPECT_TRUE(bsm.Delegate(bsm._runnableStack->GetTopOfStack(),
+    EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
                              bunchOfDelegates.back().get()));
     
     // Assert control is delegated properly
@@ -79,19 +79,19 @@ TEST(BehaviorSystemManager, TestDelegationVariants)
       }
     }
     
-    runnableDelegating = bunchOfDelegates.back().get();
+    behaviorDelegating = bunchOfDelegates.back().get();
   }
 
   // clear the stack
-  bsm.CancelSelf(baseRunnable.get());
-  ASSERT_EQ(bsm._runnableStack->_runnableStack.size(), 1);
+  bsm.CancelSelf(baseBehavior.get());
+  ASSERT_EQ(bsm._behaviorStack->_behaviorStack.size(), 1);
   
   // Ensure that injecting a behavior into the stack works properly
   ICozmoBehavior* waitBehavior = behaviorContainer.FindBehaviorByID(BehaviorID::Wait).get();
   waitBehavior->OnEnteredActivatableScope();
 
   InjectAndDelegate(testFramework.GetBehaviorSystemManager(),
-                    bsm._runnableStack->GetTopOfStack(),
+                    bsm._behaviorStack->GetTopOfStack(),
                     waitBehavior);
 }
 
@@ -100,36 +100,36 @@ TEST(BehaviorSystemManager, TestDelegationVariants)
 TEST(BehaviorSystemManager, TestCancelingDelegation)
 {
   // TODO: Ensure that canceling delegates operates as expected
-  std::unique_ptr<TestSuperPoweredRunnable> baseRunnable = std::make_unique<TestSuperPoweredRunnable>();
+  std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
   TestBehaviorFramework testFramework;
-  auto initializeRunnable = [&baseRunnable](const BehaviorComponent::ComponentsPtr& comps){
-    baseRunnable->SetBehaviorContainer(comps->_behaviorContainer);
+  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::ComponentsPtr& comps){
+    baseBehavior->SetBehaviorContainer(comps->_behaviorContainer);
   };
-  testFramework.InitializeStandardBehaviorComponent(baseRunnable.get(),initializeRunnable);
+  testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),initializeBehavior);
   
   BehaviorSystemManager& bsm = testFramework.GetBehaviorSystemManager();
   BehaviorExternalInterface& bei = testFramework.GetBehaviorExternalInterface();
   BehaviorContainer& behaviorContainer = testFramework.GetBehaviorContainer();
   
   // Check to make sure that the stack exists and control is appropriately delegated
-  ASSERT_TRUE(bsm._runnableStack->IsInStack(baseRunnable.get()));
-  IBehavior* runnableDelegating = bsm._runnableStack->GetTopOfStack();
-  ASSERT_NE(runnableDelegating, nullptr);
-  EXPECT_FALSE(bsm.IsControlDelegated(runnableDelegating));
+  ASSERT_TRUE(bsm._behaviorStack->IsInStack(baseBehavior.get()));
+  IBehavior* behaviorDelegating = bsm._behaviorStack->GetTopOfStack();
+  ASSERT_NE(behaviorDelegating, nullptr);
+  EXPECT_FALSE(bsm.IsControlDelegated(behaviorDelegating));
   
   
   // Build up an arbitrarily large stack of delegates
   const int arbitraryDelegationNumber = 50;
-  std::vector<std::unique_ptr<TestSuperPoweredRunnable>> bunchOfDelegates;
+  std::vector<std::unique_ptr<TestSuperPoweredBehavior>> bunchOfDelegates;
   for(int i = 0; i < arbitraryDelegationNumber; i++){
-    bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredRunnable>());
+    bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredBehavior>());
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
     bunchOfDelegates.back()->WantsToBeActivated(bei);
-    InjectValidDelegateIntoBSM(bsm, runnableDelegating, bunchOfDelegates.back().get());
+    InjectValidDelegateIntoBSM(bsm, behaviorDelegating, bunchOfDelegates.back().get());
     
-    EXPECT_TRUE(bsm.Delegate(bsm._runnableStack->GetTopOfStack(),
+    EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
                              bunchOfDelegates.back().get()));
     
     // Assert control is delegated properly
@@ -141,7 +141,7 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
       }
     }
     
-    runnableDelegating = bunchOfDelegates.back().get();
+    behaviorDelegating = bunchOfDelegates.back().get();
   }
   
   // Cancel delegates from the middle of the stack and re-delegate
@@ -150,25 +150,25 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
   {
     IBehavior* canceler = bunchOfDelegates[arbitraryCancelNumber].get();
     bsm.CancelDelegates(canceler);
-    ASSERT_TRUE(bsm._runnableStack->GetTopOfStack() == canceler);
-    // Size is cancel + 3 for base runnable, dev runnable and the one still on top
+    ASSERT_TRUE(bsm._behaviorStack->GetTopOfStack() == canceler);
+    // Size is cancel + 3 for base behavior, dev behavior and the one still on top
     const int idxOnTop = arbitraryCancelNumber + 3;
-    EXPECT_EQ(bsm._runnableStack->_runnableStack.size(), idxOnTop);
+    EXPECT_EQ(bsm._behaviorStack->_behaviorStack.size(), idxOnTop);
   }
   
-  runnableDelegating = bsm._runnableStack->GetTopOfStack();
+  behaviorDelegating = bsm._behaviorStack->GetTopOfStack();
   for(int i = 0; i < arbitraryDelegationNumber; i++){
-    bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredRunnable>());
+    bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredBehavior>());
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
     bunchOfDelegates.back()->WantsToBeActivated(bei);
-    InjectValidDelegateIntoBSM(bsm, runnableDelegating, bunchOfDelegates.back().get());
+    InjectValidDelegateIntoBSM(bsm, behaviorDelegating, bunchOfDelegates.back().get());
     
-    EXPECT_TRUE(bsm.Delegate(bsm._runnableStack->GetTopOfStack(),
+    EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
                              bunchOfDelegates.back().get()));
     
-    runnableDelegating = bunchOfDelegates.back().get();
+    behaviorDelegating = bunchOfDelegates.back().get();
   }
   
   // Cancel self from the middle of the stack and re-delegate
@@ -177,28 +177,28 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
   {
     IBehavior* canceler = bunchOfDelegates[arbitraryCancelNumber2].get();
     bsm.CancelSelf(canceler);
-    ASSERT_FALSE(bsm._runnableStack->IsInStack(canceler));
-    // Size is cancel + 2 for base runnable and dev runnable
+    ASSERT_FALSE(bsm._behaviorStack->IsInStack(canceler));
+    // Size is cancel + 2 for base behavior and dev behavior
     const int idxOnTop = arbitraryCancelNumber2 + 2;
-    EXPECT_EQ(bsm._runnableStack->_runnableStack.size(), idxOnTop);
+    EXPECT_EQ(bsm._behaviorStack->_behaviorStack.size(), idxOnTop);
   }
   
-  runnableDelegating = bsm._runnableStack->GetTopOfStack();
+  behaviorDelegating = bsm._behaviorStack->GetTopOfStack();
   for(int i = 0; i < arbitraryDelegationNumber; i++){
-    bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredRunnable>());
+    bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredBehavior>());
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
     bunchOfDelegates.back()->WantsToBeActivated(bei);
-    InjectValidDelegateIntoBSM(bsm, runnableDelegating, bunchOfDelegates.back().get());
+    InjectValidDelegateIntoBSM(bsm, behaviorDelegating, bunchOfDelegates.back().get());
     
-    EXPECT_TRUE(bsm.Delegate(bsm._runnableStack->GetTopOfStack(),
+    EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
                              bunchOfDelegates.back().get()));
     
-    runnableDelegating = bunchOfDelegates.back().get();
+    behaviorDelegating = bunchOfDelegates.back().get();
   }
   
   // Clear the stack
-  bsm.CancelSelf(baseRunnable.get());
-  ASSERT_EQ(bsm._runnableStack->_runnableStack.size(), 1);
+  bsm.CancelSelf(baseBehavior.get());
+  ASSERT_EQ(bsm._behaviorStack->_behaviorStack.size(), 1);
 }

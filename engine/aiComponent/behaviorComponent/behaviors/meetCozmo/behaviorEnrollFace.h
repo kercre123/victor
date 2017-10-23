@@ -52,7 +52,7 @@ public:
 
   virtual bool CarryingObjectHandledInternally() const override { return false;}
   
-  // Is runnable when FaceWorld has enrollment settings set
+  // Is activatable when FaceWorld has enrollment settings set
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
 protected:
@@ -66,9 +66,9 @@ protected:
   virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
 
   virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileRunning(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileNotRunning(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileInScopeButNotActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   

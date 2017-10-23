@@ -8,7 +8,7 @@ namespace Cozmo {
 
 // Identifies the WantsToRunStrategy type
 // PLEASE KEEP ALPHABETIZED
-enum uint_8 WantsToRunStrategyType {
+enum uint_8 StateConceptStrategyType {
   Invalid,
 
   AlwaysRun,
