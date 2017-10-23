@@ -253,7 +253,14 @@ namespace Cozmo.Repair.UI {
           });
         }
         else {
-          UpdateRobotRepairIdleAnim();
+          // We want to play a get in IFF we're entering repair for the first time and
+          // aren't in severe state - this is really hacky but we're about to branch and
+          // this is the safest fix to this spaghetti code
+          if (NeedBracketId.Critical != nsm.PopLatestEngineValue(NeedId.Repair).Bracket) {
+            PlayGetInAnim(NeedBracketId.Normal,(success)=>{ UpdateRobotRepairIdleAnim();});
+          } else {
+            UpdateRobotRepairIdleAnim();
+          }
         }
       }
 
@@ -1356,8 +1363,7 @@ namespace Cozmo.Repair.UI {
 
       //if our severity has changed, play get out and get in anims
       if (severityChanged) {
-        PlayGetOutAnim(lastBracket);
-        PlayGetInAnim(newBracket, callback);
+        PlayGetOutAnim(lastBracket, callback);
 
         var robot = RobotEngineManager.Instance.CurrentRobot;
         robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kMinigameId);
@@ -1408,16 +1414,20 @@ namespace Cozmo.Repair.UI {
       }
     }
 
-    private void PlayGetOutAnim(NeedBracketId bracket) {
+    private void PlayGetOutAnim(NeedBracketId bracket, RobotCallback callback = null) {
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         switch (bracket) {
         case NeedBracketId.Critical:
-          robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereGetOut, null, QueueActionPosition.AT_END);
+          robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereGetOut, callback, QueueActionPosition.AT_END);
           break;
         case NeedBracketId.Normal:
         case NeedBracketId.Warning:
-          robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildGetOut, null, QueueActionPosition.AT_END);
+          robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildGetOut, callback, QueueActionPosition.AT_END);
+          break;
+        case NeedBracketId.Full:
+          // We need the callback even though we don't have a get in
+          robot.SendAnimationTrigger(AnimationTrigger.Count, callback, QueueActionPosition.AT_END);
           break;
         }
       }
