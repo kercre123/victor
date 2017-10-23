@@ -318,6 +318,15 @@ void BehaviorFeedingEat::TransitionToEating(Robot& robot)
     if(!track.IsEmpty()){
       // assumes only one keyframe per eating anim
       timeDrainCube_s = track.GetLastKeyFrame()->GetTriggerTime()/1000;
+      PRINT_CH_INFO("Behaviors",
+                    "BehaviorFeedingEat.TransitionToEating.TimeDrainCube",
+                    "For animation named %s time to drain cube is %d seconds",
+                    eatingAnimName.c_str(),
+                    timeDrainCube_s);
+    }else{
+      PRINT_NAMED_ERROR("BehaviorFeedingEat.TransitionToEating.NoEventKeyframeTrak",
+                        "Track not found for event keyframes on anim %s",
+                        eatingAnimName.c_str());
     }
   }else{
     DEV_ASSERT(false,
