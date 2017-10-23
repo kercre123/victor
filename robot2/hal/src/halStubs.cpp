@@ -120,6 +120,7 @@ namespace Anki {
     Result InitRadio(const char* advertisementIP);
     void InitIMU();
     void ProcessIMUEvents();
+    void ProcessButtonEvent();
 
     
     inline u16 FlipBytes(u16 v) {
@@ -323,13 +324,9 @@ namespace Anki {
       // Takes advantage of the data in bodyData being ordered such that the required members of AudioInput are already
       // laid correctly.
       // TODO(Al/Lee): Put back once mics and camera can co-exist
-      // static bool b = false;
-      // if(!b)
-      // {
-        const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
-        RobotInterface::SendMessage(*latestAudioInput);
-      // }
-      // b = !b;
+      // printf("%d\n",bodyData_->audio[15]);
+      const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
+      RobotInterface::SendMessage(*latestAudioInput);
     }
 
     Result HAL::Step(void)
@@ -360,8 +357,23 @@ namespace Anki {
 
       //MonitorConnectionState();
 
+      ProcessButtonEvent();
+
       ForwardAudioInput();
       return result;
+    }
+
+    void ProcessButtonEvent()
+    {
+      static bool wasPressed = false;
+      const bool isPressed = bodyData_->touchLevel[HAL::ButtonID::BUTTON_POWER];
+      if(wasPressed != isPressed)
+      {
+        wasPressed = isPressed;
+        RobotInterface::BackpackButton msg;
+        msg.depressed = isPressed;
+        RobotInterface::SendMessage(msg);
+      }
     }
 
     // Get the number of microseconds since boot

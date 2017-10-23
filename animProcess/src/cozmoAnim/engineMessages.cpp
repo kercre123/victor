@@ -41,6 +41,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "util/logging/logging.h"
+#include "util/transport/udpTransport.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
@@ -49,6 +50,13 @@
 #include <stdio.h>
 #include <math.h>
 
+// For getting our ip address
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <netinet/in.h>
 
 namespace Anki {
 namespace Cozmo {
@@ -74,6 +82,9 @@ namespace Messages {
     // If negative, it means we're not currently doling.
     bool _isDolingAnims = false;
     u32 _nextAnimIDToDole;
+
+    // Whether or not we are currently showing debug info on the screen
+    bool _showingDebugInfo = false;
     
   } // private namespace
 
@@ -84,6 +95,9 @@ namespace Messages {
   void ProcessMessageToRobot(const RobotInterface::EngineToRobot& msg);
   void ProcessMessageToEngine(const RobotInterface::RobotToEngine& msg);
   extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
+  void DrawTextOnScreen(const std::string& text, 
+                        const ColorRGBA& textColor,
+                        const ColorRGBA& bgColor);
 
   
 // #pragma mark --- Messages Method Implementations ---
@@ -220,46 +234,14 @@ namespace Messages {
 
       case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_drawTextOnScreen:
       {
-        Vision::ImageRGB resultImg(96, 184);
-        Anki::Rectangle<f32> rect(0, 0, 184, 96);
-        resultImg.DrawFilledRect(rect, ColorRGBA(msg.drawTextOnScreen.bgColor.r,
-                                                 msg.drawTextOnScreen.bgColor.g,
-                                                 msg.drawTextOnScreen.bgColor.b));
-        resultImg.DrawText({0, 86.f},
-                           std::string(msg.drawTextOnScreen.text,
-                                       msg.drawTextOnScreen.text_length).c_str(),
-                           ColorRGBA(msg.drawTextOnScreen.textColor.r,
-                                     msg.drawTextOnScreen.textColor.g,
-                                     msg.drawTextOnScreen.textColor.b),
-                           3.f,
-                           8);
-
-        resultImg.DrawText({1, 87.f},
-                           std::string(msg.drawTextOnScreen.text,
-                                       msg.drawTextOnScreen.text_length).c_str(),
-                           ColorRGBA(msg.drawTextOnScreen.textColor.r,
-                                     msg.drawTextOnScreen.textColor.g,
-                                     msg.drawTextOnScreen.textColor.b),
-                           3.f,
-                           8);
-
-        cv::Mat img565(96, 184, CV_16U);
-        u16* p;
-        const Vision::PixelRGB* p1;
-        for(int i = 0; i < img565.rows; ++i)
-        {
-          p = img565.ptr<u16>(i);
-          p1 = resultImg.get_CvMat_().ptr<Vision::PixelRGB>(i);
-          for(int j = 0; j < img565.cols; ++j)
-          {
-            p[j] = (((int)(p1[j].r() >> 3) << 11) | 
-                    ((int)(p1[j].g() >> 2) << 5) | 
-                    ((int)(p1[j].b() >> 3) << 0));
-            p[j] = ((p[j]>>8)&0xFF) | ((p[j]&0xFF)<<8);
-          }
-        }
-
-        FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
+        DrawTextOnScreen(std::string(msg.drawTextOnScreen.text,
+                                     msg.drawTextOnScreen.text_length),
+                         ColorRGBA(msg.drawTextOnScreen.textColor.r,
+                                   msg.drawTextOnScreen.textColor.g,
+                                   msg.drawTextOnScreen.textColor.b),
+                         ColorRGBA(msg.drawTextOnScreen.bgColor.r,
+                                   msg.drawTextOnScreen.bgColor.g,
+                                   msg.drawTextOnScreen.bgColor.b));
         return;
       }
         
@@ -300,13 +282,58 @@ namespace Messages {
       {
         const auto& payload = msg.audioInput;
         ProcessAudioInputMessage(payload);
+        return;
       }
-      break;
+      case RobotInterface::RobotToEngine::Tag_backpackButton:
+      {
+        if(msg.backpackButton.depressed)
+        {
+          if(!_showingDebugInfo)
+          {
+            _animStreamer->LockTrack(AnimTrackFlag::FACE_IMAGE_TRACK);
+
+            // Open a socket to figure out the ip adress of the wlan0 (wifi) interface
+            const char* const if_name = "wlan0";
+            struct ifreq ifr;
+            size_t if_name_len=strlen(if_name);
+            if (if_name_len<sizeof(ifr.ifr_name)) {
+              memcpy(ifr.ifr_name,if_name,if_name_len);
+              ifr.ifr_name[if_name_len]=0;
+            } else {
+              ASSERT_NAMED_EVENT(false, "ProcessMessageToEngine.BackpackButton.InvalidInterfaceName", "");
+            }
+
+            int fd=socket(AF_INET,SOCK_DGRAM,0);
+            if (fd==-1) {
+              ASSERT_NAMED_EVENT(false, "ProcessMessageToEngine.BackpackButton.OpenSocketFail", "");
+            }
+
+            if (ioctl(fd,SIOCGIFADDR,&ifr)==-1) {
+              int temp_errno=errno;
+              close(fd);
+              ASSERT_NAMED_EVENT(false, "ProcessMessageToEngine.BackpackButton.IoctlError", "%s", strerror(temp_errno));
+            }
+            close(fd);
+
+            struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
+            const std::string ip = std::string(inet_ntoa(ipaddr->sin_addr));
+
+            // Draw the last three digits of the ip on the screen
+            DrawTextOnScreen(ip.substr(10,3), NamedColors::WHITE, NamedColors::BLACK);
+          }
+          else
+          {
+            _animStreamer->UnlockTrack(AnimTrackFlag::FACE_IMAGE_TRACK);
+            FaceDisplay::getInstance()->FaceClear();
+          }
+          _showingDebugInfo = !_showingDebugInfo;
+        }
+        break;
+      } 
       default:
       {
-
+        break;
       }
-      break;
     }
 
     // Send up to engine
@@ -447,6 +474,55 @@ namespace Messages {
     }
   }
 
+  void DrawTextOnScreen(const std::string& text, 
+                      const ColorRGBA& textColor,
+                      const ColorRGBA& bgColor)
+  {
+    Vision::ImageRGB resultImg(96, 184);
+    
+    Anki::Rectangle<f32> rect(0, 0, 184, 96);
+    resultImg.DrawFilledRect(rect, bgColor);
+
+    resultImg.DrawText({0, 86.f},
+                       text.c_str(),
+                       textColor,
+                       3.f,
+                       8);
+
+    // Opencv doesn't support drawing filled text so draw the text a second time
+    // slightly offset from the first to attempt to fill it in
+    resultImg.DrawText({1, 87.f},
+                       text.c_str(),
+                       textColor,
+                       3.f,
+                       8);
+
+    #ifdef FACTORY_TEST
+      resultImg.DrawText({0, 10.f},
+                         "Factory",
+                         NamedColors::WHITE,
+                         0.5f);
+    #endif
+
+    cv::Mat img565(96, 184, CV_16U);
+    u16* p;
+    const Vision::PixelRGB* p1;
+    for(int i = 0; i < img565.rows; ++i)
+    {
+      p = img565.ptr<u16>(i);
+      p1 = resultImg.get_CvMat_().ptr<Vision::PixelRGB>(i);
+      for(int j = 0; j < img565.cols; ++j)
+      {
+        p[j] = (((int)(p1[j].r() >> 3) << 11) | 
+                ((int)(p1[j].g() >> 2) << 5) | 
+                ((int)(p1[j].b() >> 3) << 0));
+        p[j] = ((p[j]>>8)&0xFF) | ((p[j]&0xFF)<<8);
+      }
+    }
+
+    FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
+  }
+
 } // namespace Messages
 } // namespace Cozmo
 } // namespace Anki
@@ -498,4 +574,47 @@ void Receiver_OnDisconnect(ReliableConnection* connection)
   ReliableConnection_Init(connection, NULL); // Reset the connection
   Anki::Cozmo::CozmoAnimComms::UpdateEngineCommsState(0);
 }
+
+// const char* const GetLocalIP()
+// {
+//   // Get robot's IPv4 address.
+//   // Looking for (and assuming there is only one) address that starts with 192.
+//   struct ifaddrs *ifaddr, *ifa;
+//   if (getifaddrs(&ifaddr) != 0) {
+//     PRINT_NAMED_ERROR("simHAL.GetLocalIP.getifaddrs_failed", "");
+//     assert(false);
+//   }
+
+//   int family, s, n;
+//   static char host[NI_MAXHOST];
+//   for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
+//     if (ifa->ifa_addr == NULL)
+//       continue;
+
+//     family = ifa->ifa_addr->sa_family;
+
+//     // Display IPv4 addresses only
+//     if (family == AF_INET) {
+//       s = getnameinfo(ifa->ifa_addr,
+//                       (family == AF_INET) ? sizeof(struct sockaddr_in) :
+//                       sizeof(struct sockaddr_in6),
+//                       host, NI_MAXHOST,
+//                       NULL, 0, NI_NUMERICHOST);
+//       if (s != 0) {
+//         PRINT_NAMED_ERROR("simHAL.GetLocalIP.getnameinfo_failed", "");
+//         assert(false);
+//       }
+
+//       // Does address start with 192?
+//       if (strncmp(host, "192.", 4) == 0)
+//       {
+//         PRINT_NAMED_INFO("simHAL.GetLocalIP.IP", "%s", host);
+//         break;
+//       }
+//     }
+//   }
+//   freeifaddrs(ifaddr);
+
+//   return host;
+// }
 

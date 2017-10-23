@@ -72,7 +72,11 @@ int main(void)
   
   
   // Check /data/data/com.anki.cozmoengine/files/assets/current for the hash of the assets directory to use
+  #if FACTORY_TEST
+  std::string rootDir = "/data/persist/com.anki.cozmoengine";
+  #else
   std::string rootDir = "/data/data/com.anki.cozmoengine";
+  #endif
   std::string assetHash;
   std::string assetHashFileName = rootDir + "/files/assets/current";
   std::ifstream assetHashFile(assetHashFileName.c_str());

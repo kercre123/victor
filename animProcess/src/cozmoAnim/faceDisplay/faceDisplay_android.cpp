@@ -290,7 +290,7 @@ namespace Cozmo {
   
   void FaceDisplay::FaceClear()
   {
-    u16 frame[FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*sizeof(u16)];
+    u16 frame[FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*sizeof(u16)] = {0};
     FaceDraw(frame);
   }
   

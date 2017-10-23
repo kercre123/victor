@@ -334,17 +334,20 @@ namespace Cozmo {
   
   void AnimationStreamer::BufferFaceToSend(const Vision::ImageRGB& faceImg)
   {
-    ANKI_VERIFY(faceImg.GetNumCols() == FACE_DISPLAY_WIDTH &&
-                faceImg.GetNumRows() == FACE_DISPLAY_HEIGHT,
-                "AnimationStreamer.BufferFaceToSend.InvalidImageSize",
-                "Got %d x %d. Expected %d x %d",
-                faceImg.GetNumCols(), faceImg.GetNumRows(),
-                FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
-    
-    // Draws frame to face display
-    cv::Mat img565;
-    cv::cvtColor(faceImg.get_CvMat_(), img565, cv::COLOR_RGB2BGR565);
-    FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
+    if(!IsTrackLocked((u8)AnimTrackFlag::FACE_IMAGE_TRACK))
+    {
+      ANKI_VERIFY(faceImg.GetNumCols() == FACE_DISPLAY_WIDTH &&
+                  faceImg.GetNumRows() == FACE_DISPLAY_HEIGHT,
+                  "AnimationStreamer.BufferFaceToSend.InvalidImageSize",
+                  "Got %d x %d. Expected %d x %d",
+                  faceImg.GetNumCols(), faceImg.GetNumRows(),
+                  FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
+      
+      // Draws frame to face display
+      cv::Mat img565;
+      cv::cvtColor(faceImg.get_CvMat_(), img565, cv::COLOR_RGB2BGR565);
+      FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
+    }
   }
 
   
