@@ -225,6 +225,7 @@
       cancelButtonLabel: $t('codeLab.projects.confirmQuit.cancelButton.labelText'),
       confirmButtonLabel: $t('codeLab.projects.confirmQuit.confirmButton.labelText'),
       confirmCallback: function(result) {
+        window.player.play('click');
         if (result) {
           CozmoAPI.closeCodeLab();
         }

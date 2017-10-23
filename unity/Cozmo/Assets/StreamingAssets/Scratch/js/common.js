@@ -374,6 +374,7 @@
                 confirmButtonLabel: $t('codeLab.remixConfirmDialog.saveRemixButtonLabel'),
                 cancelButtonLabel: $t('codeLab.remixConfirmDialog.cancelButtonLabel'),
                 confirmCallback: function(result) {
+                    window.player.play('click');
                     if (result) {
                         // user wants a remix
                         var newRemixName = RenameProject.createRemixProjectTitle(window.cozmoProjectName);
@@ -410,6 +411,7 @@
             confirmButtonLabel: $t('codeLab.remixConfirmDialog.saveRemixButtonLabel'),
             cancelButtonLabel: $t('codeLab.remixConfirmDialog.cancelButtonLabel'),
             confirmCallback: function(result) {
+                window.player.play('click');
                 if (result) {
                     // user wants a remix
                     var newRemixName = RenameProject.createRemixProjectTitle(window.cozmoProjectName);
