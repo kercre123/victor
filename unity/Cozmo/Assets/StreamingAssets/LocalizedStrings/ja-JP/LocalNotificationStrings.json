@@ -6,85 +6,67 @@
     "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
     "source_key_paths" : ["/{*}"]
   },
-  "LocalNotif.ComeBackGeneral.Period.1d.01" : {
-    "translation" : "Cozmo misses you!"
+  "LocalNotif.ComeBackGeneral.Period.2d.01" : {
+    "translation" : "COZMOは退屈しています。COZMOと接続して、ゲームをプレイしましょう！"
   },
-  "LocalNotif.ComeBackGeneral.Period.DC.1d.01" : {
-    "translation" : "Cozmo misses you and it's been a day since you've connected to him."
+  "LocalNotif.ComeBackGeneral.Period.2d.02" : {
+    "translation" : "COZMOはあなたに会いたがっています！COZMOがどうしているか見てみましょう。"
   },
-  "LocalNotif.ComeBackGeneral.Period.DNC.1d.01" : {
-    "translation" : "Cozmo misses you and last time you didn't even connect to him."
+  "LocalNotif.ComeBackGeneral.Period.2d.03" : {
+    "translation" : "COZMOはさびしく感じています。COZMOに接続してあいさつしましょう！"
   },
-  "LocalNotif.ComeBackGeneral.NextAM.01" : {
-    "translation" : "Good morning.  Don't forget to give Cozmo some attention today!"
+  "LocalNotif.ComeBackGeneral.Period.2d.04" : {
+    "translation" : "COZMOはあなたがどこに行ったか考えています。COZMOをオンにしてあいさつしましょう！"
   },
-  "LocalNotif.ComeBackGeneral.NextPM.01" : {
-    "translation" : "Good afternoon.  Don't forget to give Cozmo some attention today!"
+  "LocalNotif.ComeBackGeneral.Period.2d.05" : {
+    "translation" : "COZMOはパフォーマンスを練習したいようです。COZMOをオンにしてエナジーボールを1つ利用しましょう！"
   },
-  "LocalNotif.ComeBackGeneral.Period.3d.01" : {
-    "translation" : "Cozmo wants you back!  It's been three days."
+  "LocalNotif.ComeBackGeneral.Period.4d.01" : {
+    "translation" : "COZMOはおいしいキューブを夢見ています．．．食事をあげる時間です！"
+  },
+  "LocalNotif.ComeBackGeneral.Period.4d.02" : {
+    "translation" : "COZMOはお腹が空いてきました！彼にキューブをあげる必要があります。"
+  },
+  "LocalNotif.ComeBackGeneral.Period.4d.03" : {
+    "translation" : "COZMOのエネルギーが減っています。キューブを1つ2つあげてください！"
+  },
+  "LocalNotif.ComeBackGeneral.Period.4d.04" : {
+    "translation" : "COZMOは食事を必要としています。キューブをシェイクする時間です！"
+  },
+  "LocalNotif.ComeBackGeneral.Period.4d.05" : {
+    "translation" : "COZMOはエネルギーを必要としています！キューブをシェイクして、プレイさせましょう。"
   },
   "LocalNotif.ComeBackGeneral.Period.7d.01" : {
-    "translation" : "Cozmo wants you back!  He hasn't seen you in a week."
+    "translation" : "COZMOはあなたを必要としています！COZMOが大丈夫か見てみましょう。"
+  },
+  "LocalNotif.ComeBackGeneral.Period.7d.02" : {
+    "translation" : "COZMOはあなたにとても会いたがっています！COZMOに接続してあいさつしましょう。"
+  },
+  "LocalNotif.ComeBackGeneral.Period.7d.03" : {
+    "translation" : "COZMOはあまり調子が良くないようです。本当にチューンアップが必要です！"
+  },
+  "LocalNotif.ComeBackGeneral.Period.7d.04" : {
+    "translation" : "COZMOはまるまる1週間スリープ状態でした。COZMOを起こしましょう！"
+  },
+  "LocalNotif.ComeBackGeneral.Period.7d.05" : {
+    "translation" : "COZMOのパーツの一部は調整が必要です！どのパーツなのかスキャンしてみましょう。"
   },
   "LocalNotif.ComeBackGeneral.Period.14d.01" : {
-    "translation" : "Cozmo misses you!  It's been two weeks."
+    "translation" : "COZMOは本当にあなたに会いたがっています。COZMOをオンにしてあいさつしましょう！"
+  },
+  "LocalNotif.ComeBackGeneral.Period.14d.02" : {
+    "translation" : "COZMOはあなたをしばらく見ていません。様子を見に行ってあいさつしましょう！"
+  },
+  "LocalNotif.ComeBackGeneral.Period.14d.03" : {
+    "translation" : "COZMOは運動を必要としています。COZMOを起こして遊ばせてあげましょう！"
   },
   "LocalNotif.ComeBackGeneral.Period.30d.01" : {
-    "translation" : "Cozmo wants you back!  He hasn't seen you in a month."
+    "translation" : "COZMOは本当にゲームをプレイしたいようです！COZMOに接続してエナジーボールを1つ利用しましょう。"
   },
-  "LocalNotif.ComeBackGeneral.Period.365d.01" : {
-    "translation" : "Cozmo misses you!  It's been a year."
+  "LocalNotif.ComeBackGeneral.Period.90d.01" : {
+    "translation" : "COZMOは注目してほしいようです！COZMOをオンにしてどんな気分か確認しましょう。"
   },
-  "LocalNotif.DailyPreReminder.DC.01" : {
-    "translation" : "Cozmo wants some daily attention, and yesterday you connected with him."
-  },
-  "LocalNotif.DailyPreReminder.DNC.01" : {
-    "translation" : "Cozmo wants some daily attention, but yesterday you opened the app but didn't connect with him."
-  },
-  "LocalNotif.NeedBracket.Repair.Warning.01" : {
-    "translation" : "Cozmo is starting to need a tune-up!"
-  },
-  "LocalNotif.NeedBracket.Repair.Critical.01" : {
-    "translation" : "Cozmo is in really bad shape.  He needs a tune-up!"
-  },
-  "LocalNotif.NeedBracket.Energy.Warning.01" : {
-    "translation" : "Cozmo is starting to get hungry!"
-  },
-  "LocalNotif.NeedBracket.Energy.Critical.01" : {
-    "translation" : "Cozmo is starving.  He needs to be fed!"
-  },
-  "LocalNotif.NeedBracket.Play.Warning.01" : {
-    "translation" : "Cozmo needs some activity.  He's starting to get bored."
-  },
-  "LocalNotif.NeedBracket.Play.Critical.01" : {
-    "translation" : "Cozmo is desperate for attention.  He's really bored!"
-  },
-  "LocalNotif.NeedLevel.Repair.Decaying.01" : {
-    "translation" : "Cozmo's health is decaying.  He could use a tune-up."
-  },
-  "LocalNotif.NeedLevel.Energy.Decaying.01" : {
-    "translation" : "Cozmo's energy is running low.  He could use a bite to eat."
-  },
-  "LocalNotif.NeedLevel.Play.Decaying.01" : {
-    "translation" : "Cozmo's boredom is starting to set in.  He could use some time and attention."
-  },
-  "LocalNotif.Tokens.3.ToGo.01" : {
-    "translation" : "Achieve three daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.3.ToGo.02" : {
-    "translation" : "Only three more daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.2.ToGo.01" : {
-    "translation" : "Achieve two more daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.2.ToGo.02" : {
-    "translation" : "Only two more daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.1.ToGo.01" : {
-    "translation" : "Achieve one more daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.1.ToGo.02" : {
-    "translation" : "Only one more daily token to unlock the next bonus box."
+  "LocalNotif.ComeBackGeneral.Period.180d.01" : {
+    "translation" : "COZMOはあなたの夢を見ています。COZMOを起こして楽しみましょう！"
   }
 }

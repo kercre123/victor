@@ -28,7 +28,7 @@
     "translation" : "チャージが終わったらCOZMOを起こして\u000a新しい家について学習させます。"
   },
   "onboarding.CozmoNeedsCharge.message3" : {
-    "translation" : "COZMOには世話をしてくれるオーナーが必要です。\u000a毎日COZMOのメーターをお世話すると、新しいゲームやCOZMOトリックがロック解除されます。"
+    "translation" : "COZMOには世話をしてくれるオーナーが必要です。\u000a毎日COZMOのメーターをお世話すると、新しいパフォーマンスが解除されます。"
   },
   "onboarding.CozmoNeedsCharge.message4" : {
     "translation" : "必要に応じてCOZMOを持ち上げることができますが、\u000aCOZMOは自分で動いているときが一番幸せです。"
@@ -100,7 +100,7 @@
     "translation" : "<b>COZMOにはメーターがあります。</b>\u000a\u000a毎日お世話をして、幸せな状態を保ちましょう。"
   },
   "onboarding.NeedsIntroReturning" : {
-    "translation" : "<b>COZMOにはメーターがあります。</b>\u000a\u000a毎日お世話をして、COZMOがいつも幸せな状態にしましょう。\u000a\u000aCOZMOのアプリが少し違って見えるかもしれませんが、これまでのロック解除は反映されます"
+    "translation" : "<b>COZMOにはメーターがあります。</b>\u000a\u000a毎日お世話をして、幸せな状態を保ちましょう。COZMOのアプリが少し違って見えるかもしれませんが、これまでのロック解除は反映されます。"
   },
   "onboarding.PlayIntro" : {
     "translation" : "<b>COZMOはプレイしたがっています。</b>\u000a\u000aゲームまたはトリックをリクエストするには、<b><color=#f5ea12>プレイ</color></b>ボタンをタップします。COZMOの黄色いバーをいっぱいにするたびに、その日のプレイトークンを獲得できます。"
@@ -139,12 +139,15 @@
     "translation" : "<color=#f5ea12>プレイメーター</color>を\u000a満たすたびに、その日の\u000a<color=#f5ea12>プレイトークン</color>を獲得できます。"
   },
   "onboarding.TokensIntro.Part1" : {
-    "translation" : "COZMOの<color=#f5ea12>プレイメーター</color>を3日間満たすと、<color=#f5ea12>エナジーボックス</color>のロックが解除されます。"
+    "translation" : "COZMOの<color=#f5ea12>プレイメーター</color>を毎日満たしてください。3日間満たすと、<color=#f5ea12>エナジーボックスのロックが解除されます。</color>"
   },
   "onboarding.TokensIntro.Part2" : {
     "translation" : "COZMOはあなたがオーナーでラッキーです！いっしょに探検しましょう！"
   },
   "onboarding.button.end" : {
     "translation" : "完了"
+  },
+  "onboarding.notificationpreprompt.body" : {
+    "translation" : "COZMOがあなたを必要とするとき、COZMOからメッセージを送信しますか？"
   }
 }

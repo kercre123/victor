@@ -1,0 +1,129 @@
+{
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "[$]\\{[^\\}\\{]+?\\}", "__[^_]+?__", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
+  },
+  "codeLabFeature.fortune_teller.display.probably_response" : {
+    "translation" : "Wahnsinnig wahrscheinlich"
+  },
+  "codeLabFeature.fortune_teller.speech.probably_response" : {
+    "translation" : "JA! Wahnsinnig wahrscheinlich."
+  },
+  "codeLabFeature.fortune_teller.display.certainly_response" : {
+    "translation" : "Sowas von sicherlich"
+  },
+  "codeLabFeature.fortune_teller.speech.certainly_response" : {
+    "translation" : "JA! Sowas von sicherlich."
+  },
+  "codeLabFeature.fortune_teller.display.affirmative_response" : {
+    "translation" : "Bestens bestätigt"
+  },
+  "codeLabFeature.fortune_teller.speech.affirmative_response" : {
+    "translation" : "JA! Bestens bestätigt."
+  },
+  "codeLabFeature.fortune_teller.display.correct_response" : {
+    "translation" : "Klarerweise korrekt"
+  },
+  "codeLabFeature.fortune_teller.speech.correct_response" : {
+    "translation" : "JA! Klarerweise korrekt."
+  },
+  "codeLabFeature.fortune_teller.display.definitely_response" : {
+    "translation" : "Deftig definitiv"
+  },
+  "codeLabFeature.fortune_teller.speech.definitely_response" : {
+    "translation" : "JA! Deftig definitiv."
+  },
+  "codeLabFeature.fortune_teller.display.precisely_response" : {
+    "translation" : "Gänzlicherweise genau"
+  },
+  "codeLabFeature.fortune_teller.speech.precisely_response" : {
+    "translation" : "JA! Gänzlicherweise genau."
+  },
+  "codeLabFeature.fortune_teller.display.true_response" : {
+    "translation" : "Wunderbarerweise wahr"
+  },
+  "codeLabFeature.fortune_teller.speech.true_response" : {
+    "translation" : "JA! Wunderbarerweise wahr."
+  },
+  "codeLabFeature.fortune_teller.display.accurate_response" : {
+    "translation" : "Absolut akkurat"
+  },
+  "codeLabFeature.fortune_teller.speech.accurate_response" : {
+    "translation" : "JA! Absolut akkurat."
+  },
+  "codeLabFeature.fortune_teller.display.likely_response" : {
+    "translation" : "Weitgehend wahrscheinlich"
+  },
+  "codeLabFeature.fortune_teller.speech.likely_response" : {
+    "translation" : "JA! Weitgehend wahrscheinlich."
+  },
+  "codeLabFeature.fortune_teller.display.valid_response" : {
+    "translation" : "Rundum richtig"
+  },
+  "codeLabFeature.fortune_teller.speech.valid_response" : {
+    "translation" : "JA! Rundum richtig."
+  },
+  "codeLabFeature.fortune_teller.display.perhaps_response" : {
+    "translation" : "Monstermäßig möglich"
+  },
+  "codeLabFeature.fortune_teller.speech.perhaps_response" : {
+    "translation" : "JA! Monstermäßig möglich."
+  },
+  "codeLabFeature.fortune_teller.display.maybe_so_response" : {
+    "translation" : "Einigermaßen eventuell"
+  },
+  "codeLabFeature.fortune_teller.speech.maybe_so_response" : {
+    "translation" : "VIELLEICHT! Einigermaßen eventuell."
+  },
+  "codeLabFeature.fortune_teller.display.inconclusive_response" : {
+    "translation" : "Ungemein uneindeutig"
+  },
+  "codeLabFeature.fortune_teller.speech.inconclusive_response" : {
+    "translation" : "VIELLEICHT! Ungemein uneindeutig."
+  },
+  "codeLabFeature.fortune_teller.display.potentially_response" : {
+    "translation" : "Perplex potenziell"
+  },
+  "codeLabFeature.fortune_teller.speech.potentially_response" : {
+    "translation" : "VIELLEICHT! Perplex potenziell."
+  },
+  "codeLabFeature.fortune_teller.display.zero_response" : {
+    "translation" : "Informell inkorrekt"
+  },
+  "codeLabFeature.fortune_teller.speech.zero_response" : {
+    "translation" : "NEIN! Informell inkorrekt"
+  },
+  "codeLabFeature.fortune_teller.display.sorry_response" : {
+    "translation" : "Schrecklich schade"
+  },
+  "codeLabFeature.fortune_teller.speech.sorry_response" : {
+    "translation" : "NEIN! Schrecklich schade."
+  },
+  "codeLabFeature.fortune_teller.display.doubtful_response" : {
+    "translation" : "Ziemlich zweifelhaft"
+  },
+  "codeLabFeature.fortune_teller.speech.doubtful_response" : {
+    "translation" : "NEIN! Ziemlich zweifelhaft."
+  },
+  "codeLabFeature.fortune_teller.display.invalid_response" : {
+    "translation" : "Unglaublich unzutreffend"
+  },
+  "codeLabFeature.fortune_teller.speech.invalid_response" : {
+    "translation" : "NEIN! Unglaublich unzutreffend."
+  },
+  "codeLabFeature.fortune_teller.display.false_response" : {
+    "translation" : "Fürchterlich falsch"
+  },
+  "codeLabFeature.fortune_teller.speech.false_response" : {
+    "translation" : "NEIN! Fürchterlich falsch."
+  },
+  "codeLabFeature.fortune_teller.display.negative_response" : {
+    "translation" : "Niederschmetternd negativ"
+  },
+  "codeLabFeature.fortune_teller.speech.negative_response" : {
+    "translation" : "NEIN! Niederschmetternd negativ."
+  }
+}

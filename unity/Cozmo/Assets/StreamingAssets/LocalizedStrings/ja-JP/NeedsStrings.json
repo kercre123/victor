@@ -25,7 +25,7 @@
     "translation" : "COZMOを元気いっぱいの状態に保つには、チャージが必要です。"
   },
   "needs.NeedsEnergyModal.Instruction1" : {
-    "translation" : "青く点滅しているキューブをつかんでください。"
+    "translation" : "ライトが青く回転しているキューブをつかんでください。"
   },
   "needs.NeedsEnergyModal.Instruction2" : {
     "translation" : "すべてのライトが明るく輝くまでそのキューブを振ります。"
@@ -89,6 +89,12 @@
   },
   "needs.NeedsRepairModal.AligningTreads" : {
     "translation" : "タイヤを合わせています..."
+  },
+  "needs.NeedsRepairModal.CozmoNotOnTreadsTitle" : {
+    "translation" : "COZMOは準備ができていません"
+  },
+  "needs.NeedsRepairModal.CozmoNotOnTreadsBody" : {
+    "translation" : "COZMOをまっすぐ立たせてください。"
   },
   "needs.ContinueButtonText" : {
     "translation" : "続ける"
@@ -163,7 +169,7 @@
     "translation" : "COZMOはしゃっくりをしました"
   },
   "needs.FeedingOverfedHiccups.Description" : {
-    "translation" : "COZMOはお腹がいっぱいになり、しゃっくりが出ます！"
+    "translation" : "COZMOはお腹がいっぱいになり、しゃっくりが出ます！COZMOを逆さまにして助けてください。"
   },
   "needs.severeAlert.energy.title" : {
     "translation" : "COZMOはチャージを必要としています"

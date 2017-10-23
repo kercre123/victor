@@ -12,12 +12,6 @@
   "unlockable.OSNotSupported.Description" : {
     "translation" : "コードラボはAndroid{0}以降が必要です。"
   },
-  "unlockable.Mystery.Title" : {
-    "translation" : "ロックされたしぐさ"
-  },
-  "unlockable.Mystery.Description" : {
-    "translation" : "COZMOのプレイメーターを満たすと、その日のプレイトークンを獲得できます。トークンを獲得すると、エナジーボールやトリックなどのご褒美が詰まったボーナスボックスのロックが解除されます！"
-  },
   "unlockable.FistBump.Title" : {
     "translation" : "グータッチ"
   },
@@ -197,6 +191,42 @@
   },
   "unlockable.GuardDog.Description" : {
     "translation" : "COZMOの3つのキューブが近くにあると、COZMOはキューブを守りながら寝てしまうことがあります。COZMOを起こさないように注意して、キューブを裏返しましょう。"
+  },
+  "unlockable.TrackLaser.Title" : {
+    "translation" : "レーザーチェイサー"
+  },
+  "unlockable.TrackLaser.Description" : {
+    "translation" : "あのレーザーを追いかけろ！COZMOの前にレーザーポインターを照射して、COZMOを導くことができます。"
+  },
+  "unlockable.TrackLaser.SparkButtonDescription" : {
+    "translation" : "タップしてCOZMOにレーザーを追いかけさせましょう。"
+  },
+  "unlockable.TrackLaser.SparkedStateDescription" : {
+    "translation" : "COZMOは飽きるまでレーザーを追いかけます。"
+  },
+  "unlockable.CozmoSings.Title" : {
+    "translation" : "COZMOが歌う"
+  },
+  "unlockable.CozmoSings.DescriptionFirstLine" : {
+    "translation" : "COZMOが幸せなとき、世界を探検しながら歌を歌います。"
+  },
+  "unlockable.CozmoSings.DescriptionSecondLine" : {
+    "translation" : "COZMOが歌っている最中にキューブをゆさぶるとCOZMOの声を変えることができます。"
+  },
+  "unlockable.CozmoSings.ButtonPromptTitle" : {
+    "translation" : "ボタンをタップし"
+  },
+  "unlockable.CozmoSings.ButtonPromptDescription" : {
+    "translation" : "COZMOの歌を見てみます"
+  },
+  "unlockable.CozmoSings.ButtonText" : {
+    "translation" : "COZMOのプレイリスト"
+  },
+  "unlockable.CozmoSings.ModalTitle" : {
+    "translation" : "COZMOの歌"
+  },
+  "unlockable.CozmoSings.LockedSongTitle" : {
+    "translation" : "？？？？"
   },
   "sparks.Sparked" : {
     "translation" : "COZMOはエナジースパーク状態になりました："

@@ -194,5 +194,8 @@
   },
   "settings.acknowledgementsPanel.dataCollectionTitle" : {
     "translation" : "Datensammlung"
+  },
+  "settings.notificationpanel.title" : {
+    "translation" : "Nachrichten von Cozmo"
   }
 }

@@ -1,0 +1,129 @@
+{
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "[$]\\{[^\\}\\{]+?\\}", "__[^_]+?__", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
+  },
+  "codeLabFeature.fortune_teller.display.probably_response" : {
+    "translation" : "programmation de points comme probables"
+  },
+  "codeLabFeature.fortune_teller.speech.probably_response" : {
+    "translation" : "OUI ! Programmation de points comme probable."
+  },
+  "codeLabFeature.fortune_teller.display.certainly_response" : {
+    "translation" : "circuits cités avec certitude"
+  },
+  "codeLabFeature.fortune_teller.speech.certainly_response" : {
+    "translation" : "OUI ! Circuits cités avec certitude."
+  },
+  "codeLabFeature.fortune_teller.display.affirmative_response" : {
+    "translation" : "suppositions du déclencheur affirmatives"
+  },
+  "codeLabFeature.fortune_teller.speech.affirmative_response" : {
+    "translation" : "OUI ! Suppositions du déclencheur affirmatives."
+  },
+  "codeLabFeature.fortune_teller.display.correct_response" : {
+    "translation" : "les conclusions de la cinématique sont correctes"
+  },
+  "codeLabFeature.fortune_teller.speech.correct_response" : {
+    "translation" : "OUI ! Les conclusions de la cinématique sont correctes."
+  },
+  "codeLabFeature.fortune_teller.display.definitely_response" : {
+    "translation" : "les détecteurs détectent vraiment"
+  },
+  "codeLabFeature.fortune_teller.speech.definitely_response" : {
+    "translation" : "OUI ! Les détecteurs détectent vraiment."
+  },
+  "codeLabFeature.fortune_teller.display.precisely_response" : {
+    "translation" : "les programmes perçoivent précisément"
+  },
+  "codeLabFeature.fortune_teller.speech.precisely_response" : {
+    "translation" : "OUI §Les programmes perçoivent précisément."
+  },
+  "codeLabFeature.fortune_teller.display.true_response" : {
+    "translation" : "le transducteur transmet vraiment"
+  },
+  "codeLabFeature.fortune_teller.speech.true_response" : {
+    "translation" : "OUI ! Le transducteur transmet vraiment."
+  },
+  "codeLabFeature.fortune_teller.display.accurate_response" : {
+    "translation" : "assertion d'algorithme exacte"
+  },
+  "codeLabFeature.fortune_teller.speech.accurate_response" : {
+    "translation" : "OUI ! Assertion d'algorithme exacte."
+  },
+  "codeLabFeature.fortune_teller.display.likely_response" : {
+    "translation" : "les journaux entraînent une probabilité"
+  },
+  "codeLabFeature.fortune_teller.speech.likely_response" : {
+    "translation" : "OUI ! Les journaux entraînent une probabilité."
+  },
+  "codeLabFeature.fortune_teller.display.valid_response" : {
+    "translation" : "les variables s'avèrent valides"
+  },
+  "codeLabFeature.fortune_teller.speech.valid_response" : {
+    "translation" : "OUI ! Les variables s'avèrent valides."
+  },
+  "codeLabFeature.fortune_teller.display.perhaps_response" : {
+    "translation" : "les processeurs proposent peut-être"
+  },
+  "codeLabFeature.fortune_teller.speech.perhaps_response" : {
+    "translation" : "OUI ! Les processeurs proposent peut-être."
+  },
+  "codeLabFeature.fortune_teller.display.maybe_so_response" : {
+    "translation" : "la mesure des modules peut être exacte"
+  },
+  "codeLabFeature.fortune_teller.speech.maybe_so_response" : {
+    "translation" : "PEUT-ÊTRE ! La mesure des modules peut être exacte."
+  },
+  "codeLabFeature.fortune_teller.display.inconclusive_response" : {
+    "translation" : "la compilation par le compilateur n'est pas concluante"
+  },
+  "codeLabFeature.fortune_teller.speech.inconclusive_response" : {
+    "translation" : "PEUT-ÊTRE ! La compilation par le compilateur n'est pas concluante."
+  },
+  "codeLabFeature.fortune_teller.display.potentially_response" : {
+    "translation" : "les paramètres prédisent que c'est potentiel"
+  },
+  "codeLabFeature.fortune_teller.speech.potentially_response" : {
+    "translation" : "PEUT-ÊTRE ! Les paramètres prédisent que c'est potentiel."
+  },
+  "codeLabFeature.fortune_teller.display.zero_response" : {
+    "translation" : "le nombre binaire est égal à zéro"
+  },
+  "codeLabFeature.fortune_teller.speech.zero_response" : {
+    "translation" : "NON ! Le nombre binaire est égal à zéro."
+  },
+  "codeLabFeature.fortune_teller.display.sorry_response" : {
+    "translation" : "les capteurs suggèrent désolé"
+  },
+  "codeLabFeature.fortune_teller.speech.sorry_response" : {
+    "translation" : "NON ! Les capteurs suggèrent désolé."
+  },
+  "codeLabFeature.fortune_teller.display.doubtful_response" : {
+    "translation" : "les pilotages s'avèrent douteux"
+  },
+  "codeLabFeature.fortune_teller.speech.doubtful_response" : {
+    "translation" : "NON ! Les pilotages s'avèrent douteux."
+  },
+  "codeLabFeature.fortune_teller.display.invalid_response" : {
+    "translation" : "l'encodeur indique non valide"
+  },
+  "codeLabFeature.fortune_teller.speech.invalid_response" : {
+    "translation" : "NON ! L'encodeur indique non valide."
+  },
+  "codeLabFeature.fortune_teller.display.false_response" : {
+    "translation" : "les fonctions renvoient un résultat faux"
+  },
+  "codeLabFeature.fortune_teller.speech.false_response" : {
+    "translation" : "NON ! Les fonctions renvoient un résultat faux"
+  },
+  "codeLabFeature.fortune_teller.display.negative_response" : {
+    "translation" : "la notification du réseau est négative"
+  },
+  "codeLabFeature.fortune_teller.speech.negative_response" : {
+    "translation" : "NON ! La notification du réseau est négative."
+  }
+}

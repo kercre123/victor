@@ -7,72 +7,78 @@
     "source_key_paths" : ["/{*}"]
   },
   "tooltip.needstate.energy.header" : {
-    "translation" : "Feed Need"
+    "translation" : "Besoin en énergie"
   },
   "tooltip.needstate.energy.0" : {
-    "translation" : "Cozmo is fully fed."
+    "translation" : "Cozmo est totalement nourri."
   },
   "tooltip.needstate.energy.1" : {
-    "translation" : "Cozmo needs to be fed a little."
+    "translation" : "Cozmo doit être un peu nourri."
   },
   "tooltip.needstate.energy.2" : {
-    "translation" : "Cozmo needs to be fed."
+    "translation" : "Cozmo doit être nourri."
   },
   "tooltip.needstate.energy.3" : {
-    "translation" : "Cozmo really needs to be fed!"
+    "translation" : "Cozmo a vraiment besoin d'être nourri !"
   },
   "tooltip.needstate.repair.header" : {
-    "translation" : "Tune Up Need"
+    "translation" : "Besoin en réglage"
   },
   "tooltip.needstate.repair.0" : {
-    "translation" : "Cozmo is fully tuned up."
+    "translation" : "Cozmo est totalement réglé."
   },
   "tooltip.needstate.repair.1" : {
-    "translation" : "Cozmo needs a little tune-up."
+    "translation" : "Cozmo a besoin d'un\u000a petit réglage"
   },
   "tooltip.needstate.repair.2" : {
-    "translation" : "Cozmo needs a tune-up."
+    "translation" : "Cozmo a besoin d'un réglage."
   },
   "tooltip.needstate.repair.3" : {
-    "translation" : "Cozmo really needs a tune-up!"
+    "translation" : "Cozmo a vraiment besoin\u000ad'un réglage !"
   },
   "tooltip.needstate.play.header" : {
-    "translation" : "Play Need"
+    "translation" : "Envie de jouer"
   },
   "tooltip.needstate.play.0" : {
-    "translation" : "Cozmo is at full play."
+    "translation" : "Cozmo est prêt à donner toute sa mesure."
   },
   "tooltip.needstate.play.1" : {
-    "translation" : "Cozmo needs to play a little."
+    "translation" : "Cozmo a besoin de jouer à un petit peu."
   },
   "tooltip.needstate.play.2" : {
-    "translation" : "Cozmo needs to play."
+    "translation" : "Cozmo a besoin de jouer."
   },
   "tooltip.needstate.play.3" : {
-    "translation" : "Cozmo really needs to play!"
+    "translation" : "Cozmo a vraiment besoin de jouer !"
   },
   "tooltip.needsbutton.energy.header" : {
-    "translation" : "Feed Unavailable"
+    "translation" : "Nourriture indisponible"
   },
   "tooltip.needsbutton.energy.repaircritical" : {
-    "translation" : "Cozmo needs to be tuned up before he can eat!"
+    "translation" : "Avant d'être nourri, Cozmo a besoin d'être réglé !"
   },
   "tooltip.needsbutton.play.header" : {
-    "translation" : "Play Unavailable"
+    "translation" : "Jeu indisponible"
   },
   "tooltip.needsbutton.play.repaircritical" : {
-    "translation" : "Cozmo needs to be tuned up before he can play!"
+    "translation" : "Cozmo doit être réglé avant de pouvoir jouer !"
   },
   "tooltip.needsbutton.play.feedcritical" : {
-    "translation" : "Cozmo needs to be fed before he can play!"
+    "translation" : "Cozmo doit être nourri avant de pouvoir jouer !"
   },
   "tooltip.bonusbar.header" : {
-    "translation" : "Bonus Box Progress"
+    "translation" : "Progression des boîtes à bonus"
   },
   "tooltip.bonusbar.body.daycomplete" : {
-    "translation" : "Bonus Token already earned today. New Day in {0}h {1}m."
+    "translation" : "Jetons déjà gagnés aujourd'hui. Nouvelle journée dans {0} h {1} m."
   },
   "tooltip.bonusbar.body.dayincomplete" : {
-    "translation" : "Fill Cozmo’s Play Need to earn a Bonus Token. Day ends in {0}h {1}m."
+    "translation" : "Satisfais l'envie de jouer de Cozmo pour gagner un jeton. Le jour se termine dans {0} h {1} m."
+  },
+  "tooltip.sparks.header" : {
+    "translation" : "ÉCLATS"
+  },
+  "tooltip.sparks.body.main" : {
+    "translation" : "Cozmo will do Tricks and play games for Sparks."
   }
 }

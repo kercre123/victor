@@ -24,6 +24,9 @@
   "button.no" : {
     "translation" : "いいえ"
   },
+  "button.maybeLater" : {
+    "translation" : "後で"
+  },
   "button.continue" : {
     "translation" : "続ける"
   },
@@ -80,6 +83,9 @@
   },
   "coreUpgradeDetailsDialog.cubesNeeded" : {
     "translation" : "{0} {1}が必要です"
+  },
+  "coreUpgradeDetailsDialog.cubesOptional" : {
+    "translation" : "{0}{1}自由選択"
   },
   "label.emptyWithArg" : {
     "translation" : "{0}"
@@ -149,5 +155,11 @@
   },
   "button.buyACozmo" : {
     "translation" : "COZMOを購入する"
+  },
+  "label.noInternetTitle" : {
+    "translation" : "インターネットに接続されていません"
+  },
+  "label.noInternetBody" : {
+    "translation" : "インターネットに接続してAnki.comであなただけのCOZMOを購入しましょう！"
   }
 }

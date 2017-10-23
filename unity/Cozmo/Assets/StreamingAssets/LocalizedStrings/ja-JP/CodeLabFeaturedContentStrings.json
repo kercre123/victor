@@ -1,0 +1,129 @@
+{
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "[$]\\{[^\\}\\{]+?\\}", "__[^_]+?__", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
+  },
+  "codeLabFeature.fortune_teller.display.probably_response" : {
+    "translation" : "プログラミングは高い確実性を示す"
+  },
+  "codeLabFeature.fortune_teller.speech.probably_response" : {
+    "translation" : "そうです！プログラミングは高い確実性を示す。"
+  },
+  "codeLabFeature.fortune_teller.display.certainly_response" : {
+    "translation" : "回路は確実に引用する"
+  },
+  "codeLabFeature.fortune_teller.speech.certainly_response" : {
+    "translation" : "そうです！回路は確実に引用します。"
+  },
+  "codeLabFeature.fortune_teller.display.affirmative_response" : {
+    "translation" : "アクチュエーターは肯定を主張する"
+  },
+  "codeLabFeature.fortune_teller.speech.affirmative_response" : {
+    "translation" : "そうです！アクチュエーターは肯定を主張します。"
+  },
+  "codeLabFeature.fortune_teller.display.correct_response" : {
+    "translation" : "運動学が正しいと結論を出す"
+  },
+  "codeLabFeature.fortune_teller.speech.correct_response" : {
+    "translation" : "そうです！運動学が正しいと結論を出します。"
+  },
+  "codeLabFeature.fortune_teller.display.definitely_response" : {
+    "translation" : "探知機は間違いなく探知する"
+  },
+  "codeLabFeature.fortune_teller.speech.definitely_response" : {
+    "translation" : "そうです！探知機は間違いなく探知します。"
+  },
+  "codeLabFeature.fortune_teller.display.precisely_response" : {
+    "translation" : "プログラムは正確に認識する"
+  },
+  "codeLabFeature.fortune_teller.speech.precisely_response" : {
+    "translation" : "そうです！プログラムは正確に認識します。"
+  },
+  "codeLabFeature.fortune_teller.display.true_response" : {
+    "translation" : "トランスデューサーが正と発信する"
+  },
+  "codeLabFeature.fortune_teller.speech.true_response" : {
+    "translation" : "そうです！トランスデューサーが正と発信します。"
+  },
+  "codeLabFeature.fortune_teller.display.accurate_response" : {
+    "translation" : "アルゴリズムは正確に主張する"
+  },
+  "codeLabFeature.fortune_teller.speech.accurate_response" : {
+    "translation" : "そうです！アルゴリズムは正確に主張します。"
+  },
+  "codeLabFeature.fortune_teller.display.likely_response" : {
+    "translation" : "ログは高い可能性につながる"
+  },
+  "codeLabFeature.fortune_teller.speech.likely_response" : {
+    "translation" : "そうです！ログは高い可能性につながります。"
+  },
+  "codeLabFeature.fortune_teller.display.valid_response" : {
+    "translation" : "変数は有効であることを確認する"
+  },
+  "codeLabFeature.fortune_teller.speech.valid_response" : {
+    "translation" : "そうです！変数は有効であることを確認します。"
+  },
+  "codeLabFeature.fortune_teller.display.perhaps_response" : {
+    "translation" : "プロセッサーは可能性を示唆する"
+  },
+  "codeLabFeature.fortune_teller.speech.perhaps_response" : {
+    "translation" : "そうです！プロセッサーは可能性を示唆する。"
+  },
+  "codeLabFeature.fortune_teller.display.maybe_so_response" : {
+    "translation" : "モジュールは不確実性を測定する"
+  },
+  "codeLabFeature.fortune_teller.speech.maybe_so_response" : {
+    "translation" : "おそらく！モジュールは不確実性を測定します。"
+  },
+  "codeLabFeature.fortune_teller.display.inconclusive_response" : {
+    "translation" : "コンパイラは不確実性をコンパイルする"
+  },
+  "codeLabFeature.fortune_teller.speech.inconclusive_response" : {
+    "translation" : "おそらく！！コンパイラは不確実性をコンパイルします。"
+  },
+  "codeLabFeature.fortune_teller.display.potentially_response" : {
+    "translation" : "パラメーターは潜在的に予測する"
+  },
+  "codeLabFeature.fortune_teller.speech.potentially_response" : {
+    "translation" : "おそらく！パラメーターは潜在的に予測します。"
+  },
+  "codeLabFeature.fortune_teller.display.zero_response" : {
+    "translation" : "バイナリが0に等しい"
+  },
+  "codeLabFeature.fortune_teller.speech.zero_response" : {
+    "translation" : "いいえ！バイナリが0に等しい。"
+  },
+  "codeLabFeature.fortune_teller.display.sorry_response" : {
+    "translation" : "センサーが申し訳ないと示唆する"
+  },
+  "codeLabFeature.fortune_teller.speech.sorry_response" : {
+    "translation" : "いいえ！センサーが申し訳ないと示唆します。"
+  },
+  "codeLabFeature.fortune_teller.display.doubtful_response" : {
+    "translation" : "ドライブは疑わしいと判断する"
+  },
+  "codeLabFeature.fortune_teller.speech.doubtful_response" : {
+    "translation" : "いいえ！ドライブは疑わしいと判断します。"
+  },
+  "codeLabFeature.fortune_teller.display.invalid_response" : {
+    "translation" : "エンコーダーは無効を示す"
+  },
+  "codeLabFeature.fortune_teller.speech.invalid_response" : {
+    "translation" : "いいえ！エンコーダーは無効を示します。"
+  },
+  "codeLabFeature.fortune_teller.display.false_response" : {
+    "translation" : "関数は偽を見つける"
+  },
+  "codeLabFeature.fortune_teller.speech.false_response" : {
+    "translation" : "いいえ！関数は偽を見つけます。"
+  },
+  "codeLabFeature.fortune_teller.display.negative_response" : {
+    "translation" : "ネットワークが否定を通知する。"
+  },
+  "codeLabFeature.fortune_teller.speech.negative_response" : {
+    "translation" : "いいえ！ネットワークが否定を通知します。"
+  }
+}
