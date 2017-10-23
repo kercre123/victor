@@ -447,13 +447,15 @@
      * Immedately show Play Now modal for featured projects in vertical workspace
      */
     function prepareForFeaturedProjectPlayNowModal() {
-      if (window.isVertical && window.getUrlVar('isFeaturedProject') === 'true') {
-        document.body.classList.add('show-play-now-modal');
+        if (window.isVertical && window.getUrlVar('isFeaturedProject') === 'true') {
+            // Prevent the modal from looking broken before the project loads
+            document.getElementById('play-now-modal').getElementsByClassName('bd')[0].style.visibility = 'hidden';
+            document.body.classList.add('show-play-now-modal');
+        }
       }
-    }
 
     document.addEventListener('DOMContentLoaded', function(e){
-      prepareForFeaturedProjectPlayNowModal();
+        prepareForFeaturedProjectPlayNowModal();
     });
 
     /**

@@ -163,7 +163,8 @@ var PlayNowModal = function(){
     setText('#play-now-app-title', $t(project.ProjectName));
     setText('#play-now-modal .instructions-text', $t(project.FeaturedProjectInstructions));
 
-    // show the mdoal
+    // show the modal
+    document.getElementById('play-now-modal').getElementsByClassName('bd')[0].style.visibility = 'visible';
     document.body.classList.add('show-play-now-modal');
   }
 

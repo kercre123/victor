@@ -2481,10 +2481,10 @@ namespace CodeLab {
       SetRequestToOpenProject(request, projectUUID);
       ShowGettingReadyScreen();
 
+      Dictionary<string, string> parameters = new Dictionary<string, string>();
+
       if (!isVertical) {
         _SessionState.StartSession(GrammarMode.Horizontal);
-
-        Dictionary<string, string> parameters = new Dictionary<string, string>();
 
         if (defaultProfile.CodeLabHorizontalPlayed == 0
             && !DebugMenuManager.Instance.DemoMode) {
@@ -2498,7 +2498,14 @@ namespace CodeLab {
       }
       else {
         _SessionState.StartSession(GrammarMode.Vertical);
-        LoadURL(kVerticalIndexFilename);
+
+        if (request == RequestToOpenProjectOnWorkspace.DisplayFeaturedProject) {
+          parameters.Add("isFeaturedProject", "true");
+        } else {
+          parameters.Add("isFeaturedProject", "false");
+        }
+
+        LoadURL(kVerticalIndexFilename, parameters);
       }
 
       SetupCubeLights();
