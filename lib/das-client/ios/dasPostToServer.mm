@@ -19,11 +19,41 @@
 #import "NSData+Base64.h"
 #import "NSString+URLEncoding.h"
 
+
+// Stubbed out delegate to handle looking at the xml formatted response from aws
+@interface DasResponseDelegate : NSObject<NSXMLParserDelegate>
+@property bool errorFound;
+- (void)parser:(NSXMLParser *)parser didStartElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI
+        qualifiedName:(NSString *)qName attributes:(NSDictionary *)attributeDict;
+@end
+
+
+@implementation DasResponseDelegate
+
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _errorFound = false;
+  }
+  return self;
+}
+
+- (void)parser:(NSXMLParser *)parser didStartElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI
+        qualifiedName:(NSString *)qName attributes:(NSDictionary *)attributeDict {
+  if ( [elementName isEqualToString:@"ErrorResponse"]) {
+    _errorFound = true;
+    return;
+  }
+}
+
+@end
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-bool dasPostToServer(const std::string& url, const std::string& postBody)
+bool dasPostToServer(const std::string& url, const std::string& postBody, std::string& out_response)
 {
   // Needs an autoreleasepool because the NSData_Base64 base64EncodedStringWithData method does a NSString alloc.
   @autoreleasepool {
@@ -63,6 +93,18 @@ bool dasPostToServer(const std::string& url, const std::string& postBody)
         NSLog(@"Error! Unable to upload DAS events: %@", error);
         return false;
     }
+    
+    out_response = std::string([[[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding] UTF8String]);
+    DasResponseDelegate* responseDelegate = [[DasResponseDelegate alloc] init];
+    NSXMLParser* responseParser = [[NSXMLParser alloc] initWithData:responseData];
+    [responseParser setDelegate:responseDelegate];
+    bool success = [responseParser parse];
+    if (!success || responseDelegate.errorFound)
+    {
+      NSLog(@"Error! Unable to upload DAS events: %@", [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding]);
+      return false;
+    }
+    
     // TODO: what happens when we get a non-2xx response?
     return true;
   } // @autoreleasepool

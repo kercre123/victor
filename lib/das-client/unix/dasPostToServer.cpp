@@ -20,8 +20,9 @@
 extern "C" {
 #endif
 
-bool dasPostToServer(const std::string& url, const std::string& postBody)
+bool dasPostToServer(const std::string& url, const std::string& postBody, std::string& out_response)
 {
+  (void) out_response;
   fprintf(stdout, "Posting a body of size %zd to '%s'\n", postBody.size(), url.c_str());
   return true;
 }

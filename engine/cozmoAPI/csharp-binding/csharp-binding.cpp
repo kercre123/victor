@@ -324,6 +324,10 @@ int cozmo_startup(const char *configuration_data)
   }
   DASNativeInit(std::move(dasPlatform), "cozmo");
 #endif
+  // DAS is started up with uploading paused, so now that it is initialized we can unpause. This prevents DAS from
+  // potentially logging events related to uploading before all initialization data has been set (which can cause
+  // malformed DAS events to be created which will be thrown out by the server).
+  DASPauseUploadingToServer(false);
   
 #if USE_DAS && ANKI_DEV_CHEATS
   // Now that das has been initialized, update the devlog data with the deviceID

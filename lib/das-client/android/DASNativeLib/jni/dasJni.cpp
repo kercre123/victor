@@ -16,6 +16,7 @@
 #include "DASPrivate.h"
 #include "dasPlatform_android.h"
 
+#include <cstring>
 #include <string>
 #ifdef __cplusplus
 extern "C" {
@@ -198,12 +199,13 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved)
   JNIEnv* env = getJniEnv();
   jclass localClass = env->FindClass("com/anki/daslib/DAS");
   sDASClass = reinterpret_cast<jclass>(env->NewGlobalRef(localClass));
-  sPostToServerMethodID = env->GetStaticMethodID(sDASClass, "postToServer", "(Ljava/lang/String;Ljava/lang/String;)Z");
+  sPostToServerMethodID = env->GetStaticMethodID(sDASClass, "postToServer",
+                                                 "(Ljava/lang/String;Ljava/lang/String;Ljava/nio/ByteBuffer;)Z");
   (void) pthread_key_create(&sCleanupKey, dasThreadDestructor);
   return JNI_VERSION_1_6;
 }
 
-bool dasPostToServer(const std::string& url, const std::string& postBody)
+bool dasPostToServer(const std::string& url, const std::string& postBody, std::string& out_response)
 {
   JNIEnv* env = getJniEnv();
 
@@ -214,7 +216,17 @@ bool dasPostToServer(const std::string& url, const std::string& postBody)
   jstring jUrl = env->NewStringUTF(url.c_str());
   jstring jPostBody = env->NewStringUTF(postBody.c_str());
 
-  jboolean ret = env->CallStaticBooleanMethod(sDASClass, sPostToServerMethodID, jUrl, jPostBody);
+  const int buff_size = 1024 * 5;
+  char buff[buff_size];
+  buff[0] = '\0';
+
+  jboolean ret = env->CallStaticBooleanMethod(sDASClass, sPostToServerMethodID, jUrl, jPostBody,
+                                              env->NewDirectByteBuffer(buff, buff_size));
+
+  const size_t strLen = std::strlen(buff);
+  if (strLen > 0) {
+    out_response = std::string(buff);
+  }
 
   env->DeleteLocalRef(jUrl);
   env->DeleteLocalRef(jPostBody);

@@ -55,6 +55,10 @@ DasLogFileAppender::DasLogFileAppender(const std::string& logDirPath,
 , _unarchiveCallback(unarchiveCallback)
 , _archiveFileExtension(archiveFileExtension)
 {
+  if (_maxLogLength > kDasMaxAllowableLogLength)
+  {
+    _maxLogLength = kDasMaxAllowableLogLength;
+  }
   _currentLogFileNumber = NextAvailableLogFileNumber(_currentLogFileNumber + 1);
   UpdateLogFileHandle();
 }
@@ -323,7 +327,14 @@ std::vector<std::string> DasLogFileAppender::InProgressLogFiles() const
 
 void DasLogFileAppender::SetMaxLogLength(size_t maxLogLength)
 {
-  _maxLogLength = (uint32_t) maxLogLength;
+  if (maxLogLength > kDasMaxAllowableLogLength)
+  {
+    _maxLogLength = kDasMaxAllowableLogLength;
+  }
+  else
+  {
+    _maxLogLength = (uint32_t) maxLogLength;
+  }
 }
 
 
@@ -338,28 +349,36 @@ void DasLogFileAppender::ConsumeLogFiles(DASLogFileConsumptionBlock ConsumptionB
         struct dirent* dirent;
         bool shouldStop = false;
         bool success = true;
-        while (!shouldStop && ((dirent = readdir(logDir)) != nullptr)) {
+        std::vector<std::string> fileList;
+        while ((dirent = readdir(logDir)) != nullptr) {
           if (DT_REG == dirent->d_type) {
-            std::string filename(dirent->d_name);
-            // If we have a callback set for unarchiving and this file matches, unarchive it
-            if (_unarchiveCallback && stringEndsWith(filename, _archiveFileExtension))
-            {
-              filename = _unarchiveCallback(_logDirPath + "/" + filename);
+            fileList.push_back(dirent->d_name);
+          }
+        }
+        std::sort(fileList.begin(), fileList.end());
+        auto fileIter = fileList.begin();
+        while (!shouldStop && fileIter != fileList.end())
+        {
+          std::string filename = *fileIter;
+          ++fileIter;
+          // If we have a callback set for unarchiving and this file matches, unarchive it
+          if (_unarchiveCallback && stringEndsWith(filename, _archiveFileExtension))
+          {
+            filename = _unarchiveCallback(_logDirPath + "/" + filename);
+          }
+          
+          if (stringEndsWith(filename, kDasLogFileExtension)) {
+            std::string fullPath = _logDirPath + "/" + filename;
+            bool shouldDelete = ConsumptionBlock(fullPath, &shouldStop);
+            if (shouldDelete) {
+              success = (0 == unlink(fullPath.c_str()));
+              if (!success) {
+                LOGD("Error removing file '%s': %s", fullPath.c_str(), strerror(errno));
+              }
             }
-            
-            if (stringEndsWith(filename, kDasLogFileExtension)) {
-              std::string fullPath = _logDirPath + "/" + filename;
-              bool shouldDelete = ConsumptionBlock(fullPath, &shouldStop);
-              if (shouldDelete) {
-                success = (0 == unlink(fullPath.c_str()));
-                if (!success) {
-                  LOGD("Error removing file '%s': %s", fullPath.c_str(), strerror(errno));
-                }
-              }
-              // If we didn't successfully consume the file, archive it again
-              else if (_archiveCallback) {
-                (void) _archiveCallback(fullPath);
-              }
+            // If we didn't successfully consume the file, archive it again
+            else if (_archiveCallback) {
+              (void) _archiveCallback(fullPath);
             }
           }
         }
