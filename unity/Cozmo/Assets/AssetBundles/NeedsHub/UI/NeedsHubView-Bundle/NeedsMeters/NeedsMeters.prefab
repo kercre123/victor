@@ -1483,6 +1483,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e44ba42a7a3a44733be271945a4e1f93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _NeedsIconData:
+    _NeedsIcon: {fileID: 114217197841935264}
+    _NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    _DimColor: {r: 0, g: 0, b: 0, a: 0.36078432}
+    _DimMeterThreshold: 0.1
   _ImageFillGlow: {fileID: 114526731694940632}
   _ImageFillMask: {fileID: 114538512440808424}
   _ImageEndCaps:
@@ -2284,6 +2289,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e44ba42a7a3a44733be271945a4e1f93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _NeedsIconData:
+    _NeedsIcon: {fileID: 114833207910872378}
+    _NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    _DimColor: {r: 0, g: 0, b: 0, a: 0.36078432}
+    _DimMeterThreshold: 0.1
   _ImageFillGlow: {fileID: 114423079656146928}
   _ImageFillMask: {fileID: 114815589342380944}
   _ImageEndCaps:
@@ -2586,6 +2596,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e44ba42a7a3a44733be271945a4e1f93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _NeedsIconData:
+    _NeedsIcon: {fileID: 114798335210584982}
+    _NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    _DimColor: {r: 0, g: 0, b: 0, a: 0.36078432}
+    _DimMeterThreshold: 0.1
   _ImageFillGlow: {fileID: 114892304105973512}
   _ImageFillMask: {fileID: 114053057569827888}
   _ImageEndCaps:
