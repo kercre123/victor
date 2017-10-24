@@ -375,6 +375,7 @@
 
     window.onCloseButton = function() {
         if (window.isCozmoSampleProject && window.hasSampleProjectChanged()) {
+            window.player.play('click');
             // a sample or featured project was changed.  Offer to save changes as a remix.
             ModalConfirm.open({
                 title: $t('codeLab.saveModifiedSampleProjectAsRemixDialog.dialogTitle'),
@@ -382,8 +383,8 @@
                 confirmButtonLabel: $t('codeLab.remixConfirmDialog.saveRemixButtonLabel'),
                 cancelButtonLabel: $t('codeLab.remixConfirmDialog.cancelButtonLabel'),
                 confirmCallback: function(result) {
-                    window.player.play('click');
                     if (result) {
+                        window.player.play('click');
                         // user wants a remix
                         var newRemixName = RenameProject.createRemixProjectTitle(window.cozmoProjectName);
                         window.remixProject(window.cozmoProjectUUID, newRemixName);
