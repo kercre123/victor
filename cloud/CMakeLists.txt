@@ -8,7 +8,7 @@ include(anki_build_go)
 if (MACOSX)
 
   # create Go target
-  anki_build_go_c_library(voicego VOICEGO_HEADER ${ANKI_SRCLIST_DIR})
+  anki_build_go_c_library(voicego VOICEGO_HEADER "voicetest/go" "go" ${ANKI_SRCLIST_DIR})
   get_filename_component(VOICEGO_HEADER_DIR ${VOICEGO_HEADER} DIRECTORY)
 
   # create C target

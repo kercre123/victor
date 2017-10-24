@@ -82,7 +82,7 @@ if (ANDROID)
     COMMAND "${ANDROID_NDK}/build/tools/make_standalone_toolchain.py" --install-dir=${ANDROID_TOOLCHAIN_DIR}
             --arch=arm --api=24 --stl libc++ --force --unified-headers
   )
-  add_custom_target(android_toolchain DEPENDS "${ANKI_TOOLCHAIN_CXX}" "${ANKI_TOOLCHAIN_CC}")
+  add_custom_target(android_toolchain DEPENDS "${ANDROID_TOOLCHAIN_CXX}" "${ANDROID_TOOLCHAIN_CC}")
 
 endif()
 
