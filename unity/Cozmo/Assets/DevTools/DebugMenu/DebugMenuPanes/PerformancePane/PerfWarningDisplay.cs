@@ -88,7 +88,8 @@ public class PerfWarningDisplay : MonoBehaviour {
 
   private PerfWarningSection CreateSection(string sectionName, float warnAboveThreshold) {
     PerfWarningSection section = GameObject.Instantiate(_SectionPrefab, _SectionContainer).GetComponent<PerfWarningSection>();
-    section.Init(sectionName, warnAboveThreshold);
+    bool sendDasOnlyWhenCrossing = (sectionName != _kLatencySectionName);
+    section.Init(sectionName, warnAboveThreshold, sendDasOnlyWhenCrossing);
     return section;
   }
 
@@ -127,6 +128,7 @@ public class PerfWarningDisplay : MonoBehaviour {
       UpdateUI(_Sections[_kEngineSectionName], msg.lastTickTime);
     }
     else if (msg.systemName == _kVisionSectionName) {
+      // Note that the data in here is actually bonus.  pterry 2017/10/23
       UpdateUI(_Sections[_kVisionSectionName], msg.lastTickTime);
     }
   }
