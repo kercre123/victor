@@ -14,6 +14,19 @@ static const int MAX_POWER = 0x8000;
 static const uint16_t MOTOR_PERIOD = 20000; // 20khz
 static const int16_t MOTOR_MAX_POWER = SYSTEM_CLOCK / MOTOR_PERIOD;
 
+enum TargetEnable {
+  TARGET_DISABLE,
+  TARGET_ENABLE_MOTORS,
+  TARGET_ENABLE_CHARGER
+};
+
+enum MotorDirection {
+  DIRECTION_UNINIT = 0,
+  DIRECTION_FORWARD,
+  DIRECTION_BACKWARD,
+  DIRECTION_IDLE
+};
+
 struct MotorConfig {
   // Pin BRSS
   volatile uint32_t* P_BSRR;
@@ -36,12 +49,11 @@ struct MotorConfig {
 
 // Current status of the motors
 struct MotorStatus {
-  uint32_t  position;
-  uint32_t  last_time;
-  int       power;
-  bool      direction;
-  bool      configured;
-  uint8_t   serviceCountdown;
+  uint32_t        position;
+  uint32_t        last_time;
+  int             power;
+  MotorDirection  direction;
+  uint8_t         serviceCountdown;
 };
 
 #define CONFIG_N(PIN) \
@@ -73,40 +85,11 @@ static const MotorConfig MOTOR_DEF[MOTOR_COUNT] = {
 static MotorStatus motorStatus[MOTOR_COUNT];
 static int16_t motorPower[MOTOR_COUNT];
 static int moterServiced;
-static bool motorEnabled;
 
-static void enable_charger() {
-  LP1::mode(MODE_INPUT);
-  HP1::mode(MODE_INPUT);
-  RTP1::mode(MODE_INPUT);
-  LTP1::mode(MODE_INPUT);
-
-  Power::setCharge(true);
-}
-
-static void enable_motors() {
-  Power::setCharge(false);
-
-  // Reset our ports (This is portable, but ugly, can easily collapse this into 6 writes)
-  LP1::reset();
-  HP1::reset();
-  RTP1::reset();
-  LTP1::reset();
-
-  LP1::mode(MODE_OUTPUT);
-  HP1::mode(MODE_OUTPUT);
-  RTP1::mode(MODE_OUTPUT);
-  LTP1::mode(MODE_OUTPUT);
-
-  LN1::alternate(2);
-  LN2::alternate(2);
-  HN1::alternate(1);
-  HN2::alternate(1);
-  LTN1::alternate(2);
-  LTN2::alternate(2);
-  RTN1::alternate(2);
-  RTN2::alternate(2);
-}
+// How many main execution ticks before we reenable our charger
+static const int DISABLE_ON_TIME = 200;
+static TargetEnable targetEnable = TARGET_DISABLE;
+static int idleTimer = 0;
 
 static void Motors::receive(HeadToBody *payload) {
   moterServiced = MOTOR_SERVICE_COUNTDOWN;
@@ -143,7 +126,7 @@ static void Motors::transmit(BodyToHead *payload) {
       switch (i) {
         case MOTOR_LEFT:
         case MOTOR_RIGHT:
-          state->position += state->direction ? delta_last[i] : -delta_last[i];
+          state->position += (state->direction == DIRECTION_FORWARD) ? delta_last[i] : -delta_last[i];
           break ;
         default:
           state->position += delta_last[i];
@@ -153,7 +136,7 @@ static void Motors::transmit(BodyToHead *payload) {
       payload->motor[i].position = state->position;
 
       // Copy over tick values
-      payload->motor[i].delta = state->direction ? delta_last[i] : -delta_last[i];
+      payload->motor[i].delta = (state->direction == DIRECTION_FORWARD) ? delta_last[i] : -delta_last[i];
       payload->motor[i].time = state->last_time - time_last[i];
 
       // We will survives
@@ -211,8 +194,6 @@ void Motors::init() {
 
   configure_timer(TIM1);
   configure_timer(TIM3);
-  enable_charger();
-  motorEnabled = false;
 }
 
 void Motors::stop() {
@@ -222,25 +203,73 @@ void Motors::stop() {
   LTP1::mode(MODE_INPUT);
 }
 
+static MotorDirection motorDirection(int power) {
+  if (power > 0) {
+    return DIRECTION_FORWARD;
+  } else if (power < 0) {
+    return DIRECTION_BACKWARD;
+  } else {
+    return DIRECTION_IDLE;
+  }
+}
+
 // This treats 0 power as a 'transitional' state
 // This can be optimized so that if in configured and direction has not changed, to reconfigure the pins, otherwise set power
-
-// How many main execution ticks before we reenable our charger
-static const int DISABLE_ON_TIME = 200;
-
 void Motors::tick() {
   // Charge circuit enable logic
-  static int idleTimer = 0;
-  bool enableMotors = (++idleTimer) < DISABLE_ON_TIME;
+  TargetEnable desiredEnable = (++idleTimer) < DISABLE_ON_TIME ? TARGET_ENABLE_MOTORS : TARGET_ENABLE_CHARGER;
 
-  if (enableMotors != motorEnabled) {
-    if (enableMotors) {
-      enable_motors();
-    } else {
-      enable_charger();
+  if (targetEnable != desiredEnable) {
+    // Disable phase
+    switch (targetEnable) {
+    case TARGET_ENABLE_MOTORS:
+      LP1::mode(MODE_INPUT);
+      HP1::mode(MODE_INPUT);
+      RTP1::mode(MODE_INPUT);
+      LTP1::mode(MODE_INPUT);
+    
+      targetEnable = TARGET_DISABLE;
+      break ;
+    case TARGET_ENABLE_CHARGER:
+      Power::setCharge(false);
+    
+      targetEnable = TARGET_DISABLE;
+      break ;
+    case TARGET_DISABLE:
+      // Enable phase
+      switch (desiredEnable)  {
+        case TARGET_ENABLE_CHARGER:
+          Power::setCharge(true);
+          break ;
+        case TARGET_ENABLE_MOTORS:
+          // Reset our ports (This is portable, but ugly, can easily collapse this into 6 writes)
+          LP1::reset();
+          HP1::reset();
+          RTP1::reset();
+          LTP1::reset();
+
+          LP1::mode(MODE_OUTPUT);
+          HP1::mode(MODE_OUTPUT);
+          RTP1::mode(MODE_OUTPUT);
+          LTP1::mode(MODE_OUTPUT);
+
+          LN1::alternate(2);
+          LN2::alternate(2);
+          HN1::alternate(1);
+          HN2::alternate(1);
+          LTN1::alternate(2);
+          LTN2::alternate(2);
+          RTN1::alternate(2);
+          RTN2::alternate(2);
+          break ;
+        default:
+          break ;
+      }
+
+      targetEnable = desiredEnable;
+      break ;
     }
 
-    motorEnabled = enableMotors;
     return ;
   }
 
@@ -249,46 +278,60 @@ void Motors::tick() {
     MotorConfig* config =  (MotorConfig*) &MOTOR_DEF[i];
     MotorStatus* state = &motorStatus[i];
 
-    bool direction = state->power >= 0;
-    bool transition = state->power == 0 || state->direction != direction;
-
     // Make sure motors are enabled by next phase
     // We will need to table this power change for one transition
     if (state->power != 0) {
       idleTimer = 0;
-      if (!motorEnabled) {
+
+      if (targetEnable != TARGET_ENABLE_MOTORS) {
         break ;
       }
     }
 
-    // This is set when the bus is idle
-    if (transition) {
-      // Power down the motor for a cycle
-      *config->N1CC = 0;
-      *config->N2CC = 0;
+    MotorDirection direction = motorDirection(state->power);
 
-      state->configured = false;
-    } else if (!state->configured) {
-      // Configure our pins
-      if (direction) {
-        *config->P_BSRR = config->P_Set;
-        config->N1_Bank->MODER = (config->N1_Bank->MODER & config->N1_ModeMask) | config->N1_ModeAlt;
-        config->N2_Bank->MODER = (config->N2_Bank->MODER & config->N2_ModeMask) | config->N2_ModeOutput;
-      } else {
-        *config->P_BSRR = config->P_Set << 16;
-        config->N2_Bank->MODER = (config->N2_Bank->MODER & config->N2_ModeMask) | config->N2_ModeAlt;
-        config->N1_Bank->MODER = (config->N1_Bank->MODER & config->N1_ModeMask) | config->N1_ModeOutput;
-      }
-
-      state->direction = direction;
-      state->configured = true;
-    } else {
-      // Drive our power forward
-      if (direction) {
+    // Motor is configured and running
+    if (state->direction == direction) {
+      if (direction == DIRECTION_FORWARD) {
         *config->N1CC = state->power;
       } else {
         *config->N2CC = -state->power;
       }
+
+      continue ;
+    }
+
+    // We need to change to a new direction on our motor
+    switch (state->direction) {
+      // Disable this motor channel if we are moving from anything other than idle
+      default:
+        *config->N1CC = 0;
+        *config->N2CC = 0;
+
+        // Set our Ns to 0 (should happen anyway)
+        config->N2_Bank->MODER = (config->N2_Bank->MODER & config->N2_ModeMask) | config->N2_ModeOutput;
+        config->N1_Bank->MODER = (config->N1_Bank->MODER & config->N1_ModeMask) | config->N1_ModeOutput;
+      
+        state->direction = DIRECTION_IDLE;
+        break ;
+      
+      // We are transitioning out of 'idle' state
+      case DIRECTION_IDLE:
+        switch (direction) {
+          case DIRECTION_FORWARD:
+            *config->P_BSRR = config->P_Set;
+            config->N1_Bank->MODER = (config->N1_Bank->MODER & config->N1_ModeMask) | config->N1_ModeAlt;
+            break ;
+          case DIRECTION_BACKWARD:
+            *config->P_BSRR = config->P_Set << 16;
+            config->N2_Bank->MODER = (config->N2_Bank->MODER & config->N2_ModeMask) | config->N2_ModeAlt;
+            break ;
+          default:
+            break ;
+        }
+
+        state->direction = direction;
+        break ;
     }
   }
 }

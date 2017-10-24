@@ -74,18 +74,17 @@ namespace Cozmo {
     switch (_testState) {
       case TestState::MoveHead:
       {
-        MakeSynchronous();
         // TakeScreenshotsAtInterval("Robot Kidnapping", 1.f);
 
         SendMoveHeadToAngle(DEG_TO_RAD(-5), DEG_TO_RAD(360), DEG_TO_RAD(1000));
-        _testState = TestState::WaitForCubeConnections;
+        SET_TEST_STATE(WaitForCubeConnections);
         break;
       }
         
       case TestState::WaitForCubeConnections:
       {
         IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected == 2, 5) {
-          _testState = TestState::InitialLocalization;
+          SET_TEST_STATE(InitialLocalization);
         }
         break;
       }
@@ -102,7 +101,7 @@ namespace Cozmo {
           // is anymore)
           SetActualRobotPose(_kidnappedPose);
         
-          _testState = TestState::NotifyKidnap;
+          SET_TEST_STATE(NotifyKidnap);
         }
         break;
       }
@@ -113,7 +112,7 @@ namespace Cozmo {
         // from the previous pose are processed after the delocalization.
         SendForceDeloc();
         
-        _testState = TestState::Kidnap;
+        SET_TEST_STATE(Kidnap);
         break;
       }
         
@@ -125,7 +124,7 @@ namespace Cozmo {
           // Once kidnapping occurs, tell robot to turn to see the other object
           SendTurnInPlace(DEG_TO_RAD(90));
           
-          _testState = TestState::LocalizeToObjectB;
+          SET_TEST_STATE(LocalizeToObjectB);
         }
         break;
       }
@@ -141,7 +140,7 @@ namespace Cozmo {
           // Turn back to see object A
           SendTurnInPlace(DEG_TO_RAD(90));
           
-          _testState = TestState::ReSeeObjectA;
+          SET_TEST_STATE(ReSeeObjectA);
         }
         break;
       }
@@ -167,7 +166,7 @@ namespace Cozmo {
           CST_ASSERT(poseB.IsSameAs(poseB_actual, _poseDistThresh_mm, _poseAngleThresh),
                      "Second object's pose incorrect after re-localization.");
           
-          _testState = TestState::TestDone;
+          SET_TEST_STATE(TestDone);
         }
         break;
       }

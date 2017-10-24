@@ -15,12 +15,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/robot.h"
 
-#define SET_STATE(s) {                                          \
-  PRINT_NAMED_INFO("CST_BasicActions.TransitionTestState",      \
-                   "%s", #s);                                   \
-  _testState = TestState::s;                                    \
-}
-
 namespace Anki {
   namespace Cozmo {
     
@@ -82,13 +76,12 @@ namespace Anki {
       switch (_testState) {
         case TestState::MoveLiftUp:
         {
-          MakeSynchronous();
           StartMovieConditional("BasicActions");
           // TakeScreenshotsAtInterval("BasicActions", 1.f);
           
           StartingAction(RobotActionType::MOVE_LIFT_TO_HEIGHT);
           SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, 100, 100);
-          SET_STATE(MoveLiftDown);
+          SET_TEST_STATE(MoveLiftDown);
           break;
         }
         case TestState::MoveLiftDown:
@@ -101,7 +94,7 @@ namespace Anki {
           {
             StartingAction(RobotActionType::MOVE_LIFT_TO_HEIGHT);
             SendMoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, 100, 100);
-            SET_STATE(MoveHeadUp);
+            SET_TEST_STATE(MoveHeadUp);
           }
           break;
         }
@@ -115,7 +108,7 @@ namespace Anki {
           {
             StartingAction(RobotActionType::MOVE_HEAD_TO_ANGLE);
             SendMoveHeadToAngle(MAX_HEAD_ANGLE, 100, 100);
-            SET_STATE(MoveHeadDown);
+            SET_TEST_STATE(MoveHeadDown);
           }
           break;
         }
@@ -129,7 +122,7 @@ namespace Anki {
           {
             StartingAction(RobotActionType::MOVE_HEAD_TO_ANGLE);
             SendMoveHeadToAngle(0, 100, 100);
-            SET_STATE(DriveForwards);
+            SET_TEST_STATE(DriveForwards);
           }
           break;
         }
@@ -151,7 +144,7 @@ namespace Anki {
             message.Set_QueueSingleAction(m);
             SendMessage(message);
           
-            SET_STATE(DriveBackwards);
+            SET_TEST_STATE(DriveBackwards);
           }
           break;
         }
@@ -173,7 +166,7 @@ namespace Anki {
             message.Set_QueueSingleAction(m);
             SendMessage(message);
             
-            SET_STATE(TurnLeft);
+            SET_TEST_STATE(TurnLeft);
           }
           break;
         }
@@ -188,7 +181,7 @@ namespace Anki {
           {
             StartingAction(RobotActionType::TURN_IN_PLACE);
             SendTurnInPlace(M_PI_F/2, DEG_TO_RAD(100), 0);
-            SET_STATE(TurnRight);
+            SET_TEST_STATE(TurnRight);
           }
           break;
         }
@@ -202,7 +195,7 @@ namespace Anki {
           {
             StartingAction(RobotActionType::TURN_IN_PLACE);
             SendTurnInPlace(-M_PI_F/2, DEG_TO_RAD(100), 0);
-            SET_STATE(PanAndTilt);
+            SET_TEST_STATE(PanAndTilt);
           }
           break;
         }
@@ -224,7 +217,7 @@ namespace Anki {
             message.Set_QueueSingleAction(m);
             SendMessage(message);
             
-            SET_STATE(FacePose);
+            SET_TEST_STATE(FacePose);
           }
           break;
         }
@@ -249,7 +242,7 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            SET_STATE(FaceObject);
+            SET_TEST_STATE(FaceObject);
           }
           break;
         }
@@ -275,7 +268,7 @@ namespace Anki {
               ExternalInterface::MessageGameToEngine message;
               message.Set_QueueSingleAction(m);
               SendMessage(message);
-              SET_STATE(VisuallyVerifyNoObjectAtPose);
+              SET_TEST_STATE(VisuallyVerifyNoObjectAtPose);
             }
           }
           break;
@@ -298,7 +291,7 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            SET_STATE(VisuallyVerifyObjectAtPose);
+            SET_TEST_STATE(VisuallyVerifyObjectAtPose);
           }
           break;
         }
@@ -320,7 +313,7 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            SET_STATE(TurnLeftRelative_540);
+            SET_TEST_STATE(TurnLeftRelative_540);
           }
           break;
         }
@@ -338,7 +331,7 @@ namespace Anki {
             _angularDistTraversed_deg = 0.f;
             StartingAction(RobotActionType::TURN_IN_PLACE);
             SendTurnInPlace(DEG_TO_RAD(540.f), DEG_TO_RAD(150), 0);
-            SET_STATE(TurnRightRelative_540);
+            SET_TEST_STATE(TurnRightRelative_540);
           }
           break;
         }
@@ -358,7 +351,7 @@ namespace Anki {
             _angularDistTraversed_deg = 0.f;
             StartingAction(RobotActionType::TURN_IN_PLACE);
             SendTurnInPlace(DEG_TO_RAD(-540.f), DEG_TO_RAD(150), 0);
-            SET_STATE(TurnAbsolute_180);
+            SET_TEST_STATE(TurnAbsolute_180);
           }
           break;
         }
@@ -376,7 +369,7 @@ namespace Anki {
           {
             StartingAction(RobotActionType::TURN_IN_PLACE);
             SendTurnInPlace(DEG_TO_RAD(180.f), DEG_TO_RAD(150), 0, POINT_TURN_ANGLE_TOL, true);
-            SET_STATE(TurnAbsolute_0);
+            SET_TEST_STATE(TurnAbsolute_0);
           }
           break;
         }
@@ -390,7 +383,7 @@ namespace Anki {
           {
             StartingAction(RobotActionType::TURN_IN_PLACE);
             SendTurnInPlace(0.f, DEG_TO_RAD(150), 0, POINT_TURN_ANGLE_TOL, true);
-            SET_STATE(TestDone);
+            SET_TEST_STATE(TestDone);
           }
           break;
         }

@@ -81,12 +81,11 @@ namespace Anki {
       switch (_testState) {
         case TestState::Init:
         {
-          MakeSynchronous();
           StartMovieConditional("DockingSpeed");
           //TakeScreenshotsAtInterval("DockingSpeed", 1.f);
           
           SendMoveHeadToAngle(0, 100, 100);
-          _testState = TestState::DockingSpeed1;
+          SET_TEST_STATE(DockingSpeed1);
           break;
         }
         case TestState::DockingSpeed1:
@@ -108,7 +107,7 @@ namespace Anki {
             message.Set_QueueSingleAction(m);
             SendMessage(message);
             _nextState = TestState::DockingSpeed2;
-            _testState = TestState::PlaceBlock;
+            SET_TEST_STATE(PlaceBlock);
           }
           break;
         }
@@ -136,7 +135,7 @@ namespace Anki {
             message.Set_QueueSingleAction(m);
             SendMessage(message);
             _nextState = TestState::DockingSpeed3;
-            _testState = TestState::PlaceBlock;
+            SET_TEST_STATE(PlaceBlock);
           }
           break;
         }
@@ -162,7 +161,7 @@ namespace Anki {
             message.Set_QueueSingleAction(m);
             SendMessage(message);
             _nextState = TestState::DockingSpeed4;
-            _testState = TestState::PlaceBlock;
+            SET_TEST_STATE(PlaceBlock);
           }
           break;
         }
@@ -189,7 +188,7 @@ namespace Anki {
             message.Set_QueueSingleAction(m);
             SendMessage(message);
             _nextState = TestState::DockingSpeed5;
-            _testState = TestState::PlaceBlock;
+            SET_TEST_STATE(PlaceBlock);
           }
           break;
         }
@@ -215,7 +214,7 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            _testState = TestState::TestDone;
+            SET_TEST_STATE(TestDone);
           }
           break;
         }
@@ -245,7 +244,7 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            _testState = TestState::VerifyPlaced;
+            SET_TEST_STATE(VerifyPlaced);
             
             _placeActionCompleted = false;
           }
@@ -288,7 +287,7 @@ namespace Anki {
             message2.Set_QueueSingleAction(m2);
             SendMessage(message2);
             
-            _testState = TestState::ResetTest;
+            SET_TEST_STATE(ResetTest);
           }
           break;
         }

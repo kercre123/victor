@@ -32,7 +32,7 @@ public:
   MemoryMapData(MemoryMapData&&) = default;
   MemoryMapData& operator=(const MemoryMapData&) = default;
   MemoryMapData& operator=(MemoryMapData&&) = default;
-  ~MemoryMapData() {}
+  virtual ~MemoryMapData() = default;
   
   // create a copy of self (of appropriate subclass) and return it
   virtual MemoryMapData* Clone() const { return new MemoryMapData(*this); };

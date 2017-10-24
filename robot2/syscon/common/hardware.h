@@ -20,8 +20,7 @@ static const uint32_t CONTACT_BAUDRATE = 57600;
 static const uint32_t COMMS_BAUDRATE = 3000000;
 
 static const uint32_t WATCHDOG_CLOCK  = 10000;
-static const uint32_t WATCHDOG_LIMIT  = WATCHDOG_CLOCK / 200 * 2; // 2 main execution frames
-static const uint32_t WATCHDOG_WINDOW = WATCHDOG_LIMIT - (WATCHDOG_CLOCK / 75);
+static const uint32_t WATCHDOG_LIMIT  = WATCHDOG_CLOCK / 200 * 10; // 10 main execution frames
 
 enum IRQ_Priority {
   PRIORITY_ENCODERS = 0,

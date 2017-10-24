@@ -459,7 +459,7 @@ public:
 
   // Get the bounding quad of the robot at its current or a given pose
   Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const; // at current pose
-  Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 0.f) const; // at specific pose
+  static Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 0.f); // at specific pose
     
   // Return current height of lift's gripper
   f32 GetLiftHeight() const;

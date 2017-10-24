@@ -133,7 +133,6 @@ namespace Cozmo {
     {
       case TestState::MoveHead:
       {
-        MakeSynchronous();
         SendMoveHeadToAngle(DEG_TO_RAD(-5), DEG_TO_RAD(360), DEG_TO_RAD(1000));
         
         ExternalInterface::EnableLightStates m;
@@ -142,14 +141,14 @@ namespace Cozmo {
         message.Set_EnableLightStates(m);
         SendMessage(message);
         
-        _testState = TestState::WaitForCubeConnections;
+        SET_TEST_STATE(WaitForCubeConnections);
         break;
       }
         
       case TestState::WaitForCubeConnections:
       {
         IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected == 3, 3) {
-          _testState = TestState::InitialLocalization;
+          SET_TEST_STATE(InitialLocalization);
         }
         break;
       }
@@ -168,7 +167,7 @@ namespace Cozmo {
         
           _turnAngle_deg = -90;
           _nextState = TestState::LocalizeToObjectB;
-          _testState = TestState::NotifyKidnap;
+          SET_TEST_STATE(NotifyKidnap);
         }
         break;
       }
@@ -180,7 +179,7 @@ namespace Cozmo {
         SendForceDeloc();
         
         _kidnapStartTime = GetSupervisor()->getTime();
-        _testState = TestState::Kidnap;
+        SET_TEST_STATE(Kidnap);
         break;
       }
         
@@ -195,7 +194,7 @@ namespace Cozmo {
           SendTurnInPlace(DEG_TO_RAD(_turnAngle_deg));
           
           _kidnapStartTime = GetSupervisor()->getTime();
-          _testState = TestState::FinishTurn;
+          SET_TEST_STATE(FinishTurn);
         }
         break;
       }
@@ -225,7 +224,7 @@ namespace Cozmo {
           _turnInPlaceDone = false;
           SendTurnInPlace(DEG_TO_RAD(225));
           
-          _testState = TestState::ReSeeObjectA;
+          SET_TEST_STATE(ReSeeObjectA);
         }
         break;
       }
@@ -248,7 +247,7 @@ namespace Cozmo {
           
           _nextState = TestState::LocalizeToObjectC;
           _turnAngle_deg = 90;
-          _testState = TestState::NotifyKidnap;
+          SET_TEST_STATE(NotifyKidnap);
         }
         break;
       }
@@ -270,7 +269,7 @@ namespace Cozmo {
           
           _nextState = TestState::SeeObjectAWithoutLocalizing;
           _turnAngle_deg = -90;
-          _testState = TestState::NotifyKidnap;
+          SET_TEST_STATE(NotifyKidnap);
         }
         break;
       }
@@ -290,7 +289,7 @@ namespace Cozmo {
           _turnInPlaceDone = false;
           SendTurnInPlace(DEG_TO_RAD(179.5f));
           
-          _testState = TestState::ReLocalizeToObjectC;
+          SET_TEST_STATE(ReLocalizeToObjectC);
         }
         break;
       }
@@ -308,7 +307,7 @@ namespace Cozmo {
           _turnInPlaceDone = false;
           SendTurnInPlace(DEG_TO_RAD(90));
           
-          _testState = TestState::ReLocalizeToObjectB;
+          SET_TEST_STATE(ReLocalizeToObjectB);
         }
         break;
       }
@@ -321,7 +320,7 @@ namespace Cozmo {
           CST_ASSERT(CheckObjectPoses({_objectID_A,_objectID_B,_objectID_C}, "RelocalizeToObjectB"),
                      "RelocalizeToObjectC: Object pose checks failed");
           
-          _testState = TestState::TestDone;
+          SET_TEST_STATE(TestDone);
         }
         break;
       }

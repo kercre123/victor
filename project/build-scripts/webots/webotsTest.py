@@ -635,9 +635,9 @@ def generate_combined_webots_devLog(log_folder, log_file_name, didFail, test_con
   shutil.copy(log_file_name, dirs[0])
   didFailPrefix = ""
   if(didFail):
-    didFailPrefix = "FAILURE_"
+    didFailPrefix = "_FAILURE_"
 
-  human_readable_output = os.path.join(dev_log_folder, didFailPrefix, test_controller + "_" + world_file + "_webotsTestTime_" + str(cur_time))
+  human_readable_output = os.path.join(dev_log_folder, didFailPrefix + test_controller + "_" + world_file + "_webotsTestTime_" + str(cur_time))
   shutil.move(dirs[0], human_readable_output)
 
 
@@ -755,7 +755,7 @@ def any_test_succeeded(test_results):
   return False
 
 # executes main script logic
-def main(args):
+def main():
   parser = argparse.ArgumentParser(
     # formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -837,7 +837,7 @@ def main(args):
                       help="""If set, a test will not automatically fail just because an error
                       appears in its webots log.""")
 
-  (options, _) = parser.parse_known_args(args)
+  options = parser.parse_args()
 
   options.build_type = BuildType[options.build_type]
   options.log_level = ForwardWebotsLogLevel[options.log_level]
@@ -979,5 +979,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-  ARGS = sys.argv
-  sys.exit(main(ARGS))
+  sys.exit(main())

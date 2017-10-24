@@ -23,6 +23,7 @@ namespace Cozmo {
     DetectingBlinkAmount,        //  "
     LimitedExposure,
     DetectingLaserPoints,
+    BuildingOverheadMap,
     Count
   }
       

@@ -63,12 +63,11 @@ namespace Anki {
       switch (_testState) {
         case TestState::Init:
         {
-          MakeSynchronous();
           StartMovieConditional("StackBlocks");
           //TakeScreenshotsAtInterval("StackBlocks", 1.f);
           
           SendMoveHeadToAngle(0, 100, 100);
-          _testState = TestState::PickupObject;
+          SET_TEST_STATE(PickupObject);
           break;
         }
         case TestState::PickupObject:
@@ -78,51 +77,31 @@ namespace Anki {
                                                 NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
                                                 GetNumObjectsInFamily(ObjectFamily::LightCube) == 1)
           {
-            ExternalInterface::QueueSingleAction m;
-            m.position = QueueActionPosition::NOW;
-            m.idTag = 1;
-            
             // Pickup first LightCube
             std::vector<s32> objIds = GetAllObjectIDsByFamily(ObjectFamily::LightCube);
             _topCube = objIds[0];
             
-            m.action.Set_pickupObject(ExternalInterface::PickupObject(_topCube, _defaultTestMotionProfile, 0, false, true, false, true));
-            ExternalInterface::MessageGameToEngine message;
-            message.Set_QueueSingleAction(m);
-            SendMessage(message);
-            _testState = TestState::Stack;
+            SendPickupObject(_topCube, _defaultTestMotionProfile, true);
+            SET_TEST_STATE(Stack);
           }
           break;
         }
         case TestState::Stack:
         {
+          const auto objIds = GetAllObjectIDsByFamilyAndType(ObjectFamily::LightCube, ObjectType::Block_LIGHTCUBE2);
+          const bool sawBottomCube = !objIds.empty();
           IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(20,
                                                 !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                                 NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, ROBOT_ANGLE_TOL_DEG),
                                                 NEAR(GetRobotPose().GetTranslation().x(), 36, ROBOT_POSITION_TOL_MM),
                                                 NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM),
+                                                sawBottomCube,
                                                 GetCarryingObjectID() == _topCube)
           {
-            ExternalInterface::QueueCompoundAction m;
-            m.position = QueueActionPosition::NOW;
-            m.idTag = 2;
-            m.parallel = false;
-            m.numRetries = 3;
-            // Wait a few seconds to see the block behind the one we just picked up
-            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::Wait(1));
-            
             // Place carrying object on second cube
-            std::vector<s32> objIds = GetAllObjectIDsByFamilyAndType(ObjectFamily::LightCube, ObjectType::Block_LIGHTCUBE2);
-            CST_ASSERT(objIds.size() == 1, "Did not see second cube!");
             _bottomCube = objIds[0];
-            
-            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(_bottomCube, _defaultTestMotionProfile, 0, false, true, false, true));
-            ExternalInterface::MessageGameToEngine message;
-            
-            message.Set_QueueCompoundAction(m);
-            SendMessage(message);
-            
-            _testState = TestState::TestDone;
+            SendPlaceOnObject(_bottomCube, _defaultTestMotionProfile, true);
+            SET_TEST_STATE(TestDone);
           }
           break;
         }
