@@ -4,6 +4,7 @@
 #include "power.h"
 #include "vectors.h"
 #include "flash.h"
+#include "motors.h"
 
 #include "contacts.h"
 
@@ -44,9 +45,15 @@ void Power::init(void) {
 
 void Power::setCharge(bool enable) {
   if (enable) {
+    // Enable High-current charging
+    nCHG_HC::pull(PULL_DOWN);
+    nCHG_HC::mode(MODE_INPUT);
     nCHG_EN::reset();
+    nCHG_EN::mode(MODE_OUTPUT);
   } else {
-    nCHG_EN::set();
+    nCHG_EN::mode(MODE_INPUT);
+    nCHG_HC::pull(PULL_NONE);
+    nCHG_HC::mode(MODE_INPUT);
   }
 }
 
@@ -79,6 +86,9 @@ void Power::eject(void) {
   __disable_irq();
   NVIC->ICER[0]  = ~0;  // Disable all interrupts
 
+  // Shut down the motors
+  Motors::stop();
+  
   // Power down accessessories
   nVDDs_EN::set();
 

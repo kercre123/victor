@@ -7,6 +7,7 @@
 #include "motors.h"
 #include "power.h"
 #include "messages.h"
+#include "timer.h"
 
 static const int MOTOR_SERVICE_COUNTDOWN = 4;
 static const int MAX_ENCODER_FRAMES = 25; // 0.1250s
@@ -197,6 +198,16 @@ void Motors::init() {
 }
 
 void Motors::stop() {
+  LN1::mode(MODE_OUTPUT);
+  LN2::mode(MODE_OUTPUT);
+  HN1::mode(MODE_OUTPUT);
+  HN2::mode(MODE_OUTPUT);
+  RTN1::mode(MODE_OUTPUT);
+  RTN2::mode(MODE_OUTPUT);
+  LTN1::mode(MODE_OUTPUT);
+  LTN2::mode(MODE_OUTPUT);
+
+  MicroWait(5000);
   LP1::mode(MODE_INPUT);
   HP1::mode(MODE_INPUT);
   RTP1::mode(MODE_INPUT);
@@ -227,12 +238,12 @@ void Motors::tick() {
       HP1::mode(MODE_INPUT);
       RTP1::mode(MODE_INPUT);
       LTP1::mode(MODE_INPUT);
-    
+
       targetEnable = TARGET_DISABLE;
       break ;
     case TARGET_ENABLE_CHARGER:
       Power::setCharge(false);
-    
+
       targetEnable = TARGET_DISABLE;
       break ;
     case TARGET_DISABLE:
