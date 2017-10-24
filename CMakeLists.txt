@@ -73,6 +73,19 @@ set(CORETECH_EXTERNAL_DIR "${ANKI_EXTERNAL_DIR}/coretech_external")
 
 set(ANKI_SRCLIST_DIR "${CMAKE_SOURCE_DIR}/generated/cmake")
 
+if (ANDROID)
+  set(ANDROID_TOOLCHAIN_DIR "${CMAKE_BINARY_DIR}/toolchain")
+  set(ANDROID_TOOLCHAIN_CC "${ANDROID_TOOLCHAIN_DIR}/bin/arm-linux-androideabi-gcc")
+  set(ANDROID_TOOLCHAIN_CXX "${ANDROID_TOOLCHAIN_DIR}/bin/arm-linux-androideabi-g++")
+  add_custom_command(
+    OUTPUT "${ANDROID_TOOLCHAIN_CC}" "${ANDROID_TOOLCHAIN_CXX}"
+    COMMAND "${ANDROID_NDK}/build/tools/make_standalone_toolchain.py" --install-dir=${ANDROID_TOOLCHAIN_DIR}
+            --arch=arm --api=24 --stl libc++ --force --unified-headers
+  )
+  add_custom_target(android_toolchain DEPENDS "${ANKI_TOOLCHAIN_CXX}" "${ANKI_TOOLCHAIN_CC}")
+
+endif()
+
 #if (ANDROID)
 #  add_subdirectory("lib/crash-reporting-android/Breakpad")
 #endif()

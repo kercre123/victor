@@ -8,3 +8,8 @@ cxx_project(
     name = 'voicego',
     srcs = glob(['voicetest/go/**/*.go'])
 )
+
+cxx_project(
+    name = 'cloud_process',
+    srcs = glob(['process/**/*.go'])
+)

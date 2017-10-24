@@ -27,3 +27,6 @@ if (MACOSX)
     voicego
   )
 endif()
+
+# cloud process
+anki_build_go_executable(cloud_process "process" "go" ${ANKI_SRCLIST_DIR})
