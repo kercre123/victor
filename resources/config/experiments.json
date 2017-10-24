@@ -67,7 +67,7 @@
             "variations": [
                 {
                     "key": "control",
-                    "pop_frac_pct": 5
+                    "pop_frac_pct": 80
                 },
                 {
                     "key": "testAoff",
@@ -83,7 +83,7 @@
                 },
                 {
                     "key": "alloff",
-                    "pop_frac_pct": 80
+                    "pop_frac_pct": 5
                 }
             ],
             "audience_tags": [],
