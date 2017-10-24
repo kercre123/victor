@@ -9,18 +9,6 @@ namespace Cozmo.WhatsNew {
     public delegate void CodeLabConnectPressedHandler();
     public static event CodeLabConnectPressedHandler OnCodeLabConnectPressed;
 
-    [SerializeField]
-    private GameObjectDataLink _WhatsNewModalPrefabData;
-    private WhatsNewModal _WhatsNewModalInstance;
-
-    [SerializeField]
-    private TextAsset _WhatsNewDataFile;
-    private List<WhatsNewData> _WhatsNewDataList;
-    private WhatsNewData _CurrentWhatsNewData;
-
-    private bool _OpenWhatsNewModalAllowed = false;
-    private bool _OptedOutWhatsNewThisAppRun;
-
     private static System.Guid _sAutoOpenCodeLabProjectGuid;
     public static System.Guid AutoOpenCodeLabProjectGuid {
       get { return _sAutoOpenCodeLabProjectGuid; }
@@ -30,12 +18,32 @@ namespace Cozmo.WhatsNew {
       get { return _sAutoOpenCodeLabProjectGuid != System.Guid.Empty; }
     }
 
+    private static WhatsNewDataCheck _sCurrentWhatsNewDataCheck = null;
+    public static DataPersistence.Date CurrentWhatsNewDataCheckDate {
+      get { return (_sCurrentWhatsNewDataCheck != null) ? _sCurrentWhatsNewDataCheck.DateChecked : new Date(); }
+    }
+    public static string CurrentWhatsNewDataID {
+      get { return (_sCurrentWhatsNewDataCheck != null) ? _sCurrentWhatsNewDataCheck.DataFound.FeatureID : null; }
+    }
+
+    [SerializeField]
+    private GameObjectDataLink _WhatsNewModalPrefabData;
+    private WhatsNewModal _WhatsNewModalInstance;
+
+    [SerializeField]
+    private TextAsset _WhatsNewDataFile;
+    private List<WhatsNewData> _WhatsNewDataList;
+
+    private DataPersistence.Date? _OptedOutWhatsNewDate = null;
+
+    private bool _IsOpeningWhatsNewModal = false;
+    private bool _OpenWhatsNewModalAllowed = false;
+
     private void Start() {
       _OpenWhatsNewModalAllowed = false;
-      _OptedOutWhatsNewThisAppRun = false;
       _WhatsNewModalInstance = null;
-      _CurrentWhatsNewData = null;
       _sAutoOpenCodeLabProjectGuid = System.Guid.Empty;
+      _sCurrentWhatsNewDataCheck = null;
 
       LoadWhatsNewData();
 
@@ -87,11 +95,14 @@ namespace Cozmo.WhatsNew {
       }
 #endif
 
+      // Get date for today
+      DataPersistence.Date today = DataPersistenceManager.Today;
+
       if (_WhatsNewDataList == null
-          || _OptedOutWhatsNewThisAppRun
+          || OnboardingManager.Instance.IsAnyOnboardingRequired()
+          || _OptedOutWhatsNewDate.HasValue && (_OptedOutWhatsNewDate.Value == today)
           || _WhatsNewModalInstance != null
-          || _CurrentWhatsNewData != null
-          || OnboardingManager.Instance.IsAnyOnboardingRequired()) {
+          || _IsOpeningWhatsNewModal) {
         return;
       }
 
@@ -100,17 +111,19 @@ namespace Cozmo.WhatsNew {
         return;
       }
 
-      TimelineEntryData lastSession = totalSessions[totalSessions.Count - 1];
-      DataPersistence.Date lastConnectedDate = lastSession.Date;
+      if (_sCurrentWhatsNewDataCheck == null || _sCurrentWhatsNewDataCheck.DateChecked != today) {
+        _sCurrentWhatsNewDataCheck = CheckCurrentWhatsNewData(today);
+      }
 
-      // Get date for today
-      DataPersistence.Date today = DataPersistenceManager.Today;
+      if (_sCurrentWhatsNewDataCheck != null) {
+        ShowWhatsNewModal();
+      }
+    }
 
-      // COZMO-14671 9/21/2017 - Uncomment for easy debugging with current json data
-      // today = new Date(2017, 12, 1);
-
+    private WhatsNewDataCheck CheckCurrentWhatsNewData(Date today) {
       // Walk backwards through list, from latest to earliest
       for (int i = _WhatsNewDataList.Count - 1; i >= 0; i--) {
+
         // If end date exists and today is after the end date, continue
         if (_WhatsNewDataList[i].EndDate != null) {
           DataPersistence.Date endDate = SimpleDate.DateFromSimpleDate(_WhatsNewDataList[i].EndDate);
@@ -125,20 +138,18 @@ namespace Cozmo.WhatsNew {
           continue;
         }
 
-        // If lastConnectedDate is after the start date, we've already seen this modal;
-        // Assumed we have seen the rest of the list and break
-        if (lastConnectedDate > startDate || lastConnectedDate == startDate) {
-          break;
+        // If we haven't seen this feature before, then show it; otherwise continue falling back
+        // to older features.
+        List<string> seenWhatsNewFeatures = DataPersistenceManager.Instance.Data.DefaultProfile.WhatsNewFeaturesSeen;
+        if (!seenWhatsNewFeatures.Contains(_WhatsNewDataList[i].FeatureID)) {
+          return new WhatsNewDataCheck(today, _WhatsNewDataList[i]);
         }
-
-        // Show the WhatsNewModal
-        _CurrentWhatsNewData = _WhatsNewDataList[i];
-        ShowWhatsNewModal();
-        break;
       }
+      return null;
     }
 
     private void ShowWhatsNewModal() {
+      _IsOpeningWhatsNewModal = true;
       AssetBundleManager.Instance.LoadAssetBundleAsync(_WhatsNewModalPrefabData.AssetBundle, LoadWhatsNewModal);
     }
 
@@ -160,14 +171,17 @@ namespace Cozmo.WhatsNew {
 
     private void HandleWhatsNewModalCreated(BaseModal whatsNewModal) {
       _WhatsNewModalInstance = (WhatsNewModal)whatsNewModal;
-      _WhatsNewModalInstance.InitializeWhatsNewModal(_CurrentWhatsNewData);
+      _WhatsNewModalInstance.InitializeWhatsNewModal(_sCurrentWhatsNewDataCheck.DataFound);
       _WhatsNewModalInstance.OnOptOutButtonPressed += HandleOptOutButtonPressed;
       _WhatsNewModalInstance.OnCodeLabButtonPressed += HandleCodeLabButtonPressed;
-      _CurrentWhatsNewData = null;
+      _IsOpeningWhatsNewModal = false;
     }
 
     private void HandleOptOutButtonPressed() {
-      _OptedOutWhatsNewThisAppRun = true;
+      // We're opting out of a particular whats new notification for a day.
+      // Don't use DataPersistenceManager.Today because the date might have changed between showing
+      // the dialog and pressing opt out
+      _OptedOutWhatsNewDate = _sCurrentWhatsNewDataCheck.DateChecked;
     }
 
     private void HandleCodeLabButtonPressed(System.Guid projectGuid) {
@@ -180,7 +194,18 @@ namespace Cozmo.WhatsNew {
     }
   }
 
+  public class WhatsNewDataCheck {
+    public DataPersistence.Date DateChecked { get; private set; }
+    public WhatsNewData DataFound { get; private set; }
+
+    public WhatsNewDataCheck(Date dateChecked, WhatsNewData dataFound) {
+      DateChecked = dateChecked;
+      DataFound = dataFound;
+    }
+  }
+
   public class WhatsNewData {
+    public string FeatureID;
     public string DASEventFeatureID;
 
     public SimpleDate StartDate;

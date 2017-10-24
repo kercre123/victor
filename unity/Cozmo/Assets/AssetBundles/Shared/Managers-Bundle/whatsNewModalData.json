@@ -1,12 +1,17 @@
 [
   {
+    "FeatureID": "code_lab_lightshow",
     "DASEventFeatureID": "code_lab_lightshow",
     "StartDate": {
         "Month": "12",
         "Day": "1",
         "Year": "2017"
     },
-    "EndDate": null,
+    "EndDate": {
+        "Month": "12",
+        "Day": "18",
+        "Year": "2017"
+    },
     "TitleKey": "whatsNew.CodeLab_VerticalLaunch.title",
     "DescriptionKey": "whatsNew.CodeLab_VerticalLaunch.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
@@ -19,13 +24,18 @@
     }
   },
     {
+    "FeatureID": "code_lab_tiny_orchestra",
     "DASEventFeatureID": "code_lab_tiny_orchestra",
     "StartDate": {
         "Month": "12",
         "Day": "19",
         "Year": "2017"
     },
-    "EndDate": null,
+    "EndDate": {
+        "Month": "12",
+        "Day": "25",
+        "Year": "2017"
+    },
     "TitleKey": "whatsNew.CodeLab_TinyOrchestra.title",
     "DescriptionKey": "whatsNew.CodeLab_TinyOrchestra.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
@@ -38,13 +48,18 @@
     }
   },
     {
+    "FeatureID": "code_lab_magic_fortune_teller",
     "DASEventFeatureID": "code_lab_magic_fortune_teller",
     "StartDate": {
         "Month": "12",
         "Day": "26",
         "Year": "2017"
     },
-    "EndDate": null,
+    "EndDate": {
+        "Month": "1",
+        "Day": "1",
+        "Year": "2018"
+    },
     "TitleKey": "whatsNew.CodeLab_MagicFortuneTeller.title",
     "DescriptionKey": "whatsNew.CodeLab_MagicFortuneTeller.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
@@ -57,13 +72,18 @@
     }
   },
     {
+    "FeatureID": "code_lab_hot_potato",
     "DASEventFeatureID": "code_lab_hot_potato",
     "StartDate": {
         "Month": "1",
         "Day": "2",
         "Year": "2018"
     },
-    "EndDate": null,
+    "EndDate": {
+        "Month": "1",
+        "Day": "8",
+        "Year": "2018"
+    },
     "TitleKey": "whatsNew.CodeLab_HotPotato.title",
     "DescriptionKey": "whatsNew.CodeLab_HotPotato.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
@@ -76,13 +96,18 @@
     }
   },
     {
+    "FeatureID": "code_lab_fire_truck_alarm",
     "DASEventFeatureID": "code_lab_fire_truck_alarm",
     "StartDate": {
         "Month": "1",
         "Day": "9",
         "Year": "2018"
     },
-    "EndDate": null,
+    "EndDate": {
+        "Month": "1",
+        "Day": "15",
+        "Year": "2018"
+    },
     "TitleKey": "whatsNew.CodeLab_FireTruckAlarm.title",
     "DescriptionKey": "whatsNew.CodeLab_FireTruckAlarm.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
@@ -95,13 +120,18 @@
     }
   },
     {
+    "FeatureID": "code_lab_cube_whack",
     "DASEventFeatureID": "code_lab_cube_whack",
     "StartDate": {
         "Month": "1",
         "Day": "16",
         "Year": "2018"
     },
-    "EndDate": null,
+    "EndDate": {
+        "Month": "1",
+        "Day": "23",
+        "Year": "2018"
+    },
     "TitleKey": "whatsNew.CodeLab_CubeWhack.title",
     "DescriptionKey": "whatsNew.CodeLab_CubeWhack.description",
     "IconAssetBundleName": "whats_new_icon_sprites",

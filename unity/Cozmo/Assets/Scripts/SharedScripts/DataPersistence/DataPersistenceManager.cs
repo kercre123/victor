@@ -267,6 +267,14 @@ namespace DataPersistence {
       profile.Sessions.Add(newSession);
       profile.TotalSessions++;
 
+      // Only track that the user saw the whats new feature if there was one to see, and if they 
+      // connected on the same day that they saw it. 
+      string currentWhatsNewFeatureId = Cozmo.WhatsNew.WhatsNewModalManager.CurrentWhatsNewDataID;
+      if (!string.IsNullOrEmpty(currentWhatsNewFeatureId)
+          && DataPersistenceManager.Today == Cozmo.WhatsNew.WhatsNewModalManager.CurrentWhatsNewDataCheckDate) {
+        profile.WhatsNewFeaturesSeen.Add(currentWhatsNewFeatureId);
+      }
+
       // update streaks...
       if (lastSession != null) {
         Date currentDate = newSession.Date;
