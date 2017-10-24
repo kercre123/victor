@@ -58,10 +58,10 @@ Orientation ComputeOrientation(const Point2f& p0, const Point2f& p1, const Point
 // Note the vector passed is not const, and in fact will be changed by the algorithm (will be sorted). Doing this now
 // because the API is internal to this file, but if we need a const parameter, we need to copy internally. In that
 // case, consider a list if necessary
-void ComputeConvexHull_GrahamScan(std::vector<Point2f>& points, Poly2f& outConvexPoly)
+ConvexPolygon ComputeConvexHull_GrahamScan(std::vector<Point2f>& points)
 {
-  DEV_ASSERT(outConvexPoly.size() == 0, "ComputeConvexHull_GrahamScan.PolyNotEmpty"); // there's no clear in Poly
-  outConvexPoly.reserve(points.size());
+  Poly2f outPoly;
+  outPoly.reserve(points.size());
   
   // check if there are not enough points for Graham scan
   const size_t numPoints = points.size();
@@ -72,13 +72,13 @@ void ComputeConvexHull_GrahamScan(std::vector<Point2f>& points, Poly2f& outConve
     if ( numPoints > 0 )
     {
       // add one point
-      outConvexPoly.push_back(points[0]);
+      outPoly.push_back(points[0]);
       
       // and the next one if available and not overlapping with the first
       if ( numPoints > 1 ) {
         const bool overlapping = NEAR_ZERO((points[0] - points[1]).LengthSq());
         if ( !overlapping ) {
-          outConvexPoly.push_back(points[1]);
+          outPoly.push_back(points[1]);
         }
       }
     }
@@ -132,19 +132,19 @@ void ComputeConvexHull_GrahamScan(std::vector<Point2f>& points, Poly2f& outConve
     std::sort(points.begin()+1, points.end(), compareCounterClockwise);
     
     // add first 2 points
-    outConvexPoly.push_back( points[0] );
-    outConvexPoly.push_back( points[1] );
+    outPoly.push_back( points[0] );
+    outPoly.push_back( points[1] );
     
     // find the first point that is not collinear to 0-1
     size_t curIndex = 2;
     for(; curIndex<numPoints; ++curIndex)
     {
-      const Orientation orientation = ComputeOrientation(outConvexPoly[0], outConvexPoly[1], points[curIndex]);
+      const Orientation orientation = ComputeOrientation(outPoly[0], outPoly[1], points[curIndex]);
       if ( orientation == Orientation::COLLINEAR ) {
-        outConvexPoly.pop_back();
-        outConvexPoly.push_back(points[curIndex]);
+        outPoly.pop_back();
+        outPoly.push_back(points[curIndex]);
       } else {
-        outConvexPoly.push_back( points[curIndex] );
+        outPoly.push_back( points[curIndex] );
         break;
       }
     }
@@ -155,21 +155,23 @@ void ComputeConvexHull_GrahamScan(std::vector<Point2f>& points, Poly2f& outConve
       // calculate orientation we would obtain adding the point to the current convex hull
       Orientation newOrientation = Orientation::COLLINEAR; // default doesn't matter
       do {
-        size_t curPolyTop = outConvexPoly.size()-1; // -1 to point at last
+        size_t curPolyTop = outPoly.size()-1; // -1 to point at last
         DEV_ASSERT(curPolyTop>=1, "AlgorithmFailure.CantPopLast2Elements");
-        newOrientation = ComputeOrientation(outConvexPoly[curPolyTop-1], outConvexPoly[curPolyTop], points[i]);
+        newOrientation = ComputeOrientation(outPoly[curPolyTop-1], outPoly[curPolyTop], points[i]);
       
         // if adding it would cause a right turn or to be collinear, we would pop the top of the current hull, since
         // adding point[i] would make it concave otherwise
         if ( newOrientation != Orientation::LEFT_TURN ) {
-          outConvexPoly.pop_back();
+          outPoly.pop_back();
         }
       } while( newOrientation != Orientation::LEFT_TURN );
       
       // now this point becomes part of the convex hull
-      outConvexPoly.push_back(points[i]);
+      outPoly.push_back(points[i]);
     }
   }
+  
+  return ConvexPolygon(outPoly);
 }
 
 using NavMapGrid = std::vector<std::vector<Point2f>>;
@@ -290,7 +292,7 @@ void GroupPointsByMaxSize(const std::vector<MemoryMapTypes::BorderSegment>& segm
 }; // end namespace (annonymous for local access / helpers)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TranslateMapRegionToPolys(const INavMap::BorderRegionVector& regions, std::vector<Poly2f>& convexHulls, const float minRegionArea_m2)
+void TranslateMapRegionToPolys(const INavMap::BorderRegionVector& regions, std::vector<ConvexPolygon>& convexHulls, const float minRegionArea_m2)
 {
   ANKI_CPU_PROFILE("TranslateMapRegionToPolys");
 
@@ -327,8 +329,7 @@ void TranslateMapRegionToPolys(const INavMap::BorderRegionVector& regions, std::
       // compute convex hull
       for (auto subPoints : splits) {
         if (subPoints.size() > 2) {
-          Poly2f convexHullAsPoly;
-          ComputeConvexHull_GrahamScan(subPoints, convexHullAsPoly);
+          ConvexPolygon convexHullAsPoly = ComputeConvexHull_GrahamScan(subPoints);
           convexHulls.emplace_back( std::move(convexHullAsPoly) );
         } else {
           PRINT_NAMED_WARNING("NavMemoryMapToPlanner.TranslateMapRegionToPolys", 
@@ -343,7 +344,7 @@ void TranslateMapRegionToPolys(const INavMap::BorderRegionVector& regions, std::
 void GetConvexHullsByType(INavMap* memoryMap,
                     const MemoryMapTypes::FullContentArray& outerTypes,
                     const MemoryMapTypes::EContentType innerType,
-                    std::vector<Poly2f>& convexHulls)
+                    std::vector<ConvexPolygon>& convexHulls)
 {
   if (nullptr == memoryMap) {
     PRINT_NAMED_WARNING("NavMemoryMapToPlanner.GetPolysByType", "null pointer to memory map");
@@ -469,8 +470,8 @@ void TestNavMemoryMapToPlanner(Robot& robot)
   static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithNotInterestingEdges),
     "This array does not define all types once and only once.");
       
-  std::vector<Poly2f> cHullsInteresting;
-  std::vector<Poly2f> cHullsNotInteresting;
+  std::vector<ConvexPolygon> cHullsInteresting;
+  std::vector<ConvexPolygon> cHullsNotInteresting;
   INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
   GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, cHullsInteresting);
   GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, cHullsNotInteresting);
@@ -482,11 +483,11 @@ void TestNavMemoryMapToPlanner(Robot& robot)
     static u32 prevPolyIDLimit = 0;   // this is to clear a previous call
     u32 polyID = 666;                 // initial number because of how IDs work in Viz (should port to string identifiers)
     for( const auto& p : cHullsInteresting ) {
-      vizMgr->DrawPoly(polyID, p, NamedColors::CYAN);
+      vizMgr->DrawPoly(polyID, p.GetSimplePolygon(), NamedColors::CYAN);
       ++polyID;
     }
     for( const auto& p : cHullsNotInteresting ) {
-      vizMgr->DrawPoly(polyID, p, NamedColors::RED);
+      vizMgr->DrawPoly(polyID, p.GetSimplePolygon(), NamedColors::RED);
       ++polyID;
     }
     

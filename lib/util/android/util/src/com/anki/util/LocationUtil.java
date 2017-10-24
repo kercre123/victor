@@ -116,8 +116,11 @@ public class LocationUtil {
             sendLocationResult(false);
             break;
         }
-        mApiClient.disconnect();
-        mApiClient = null;
+        // COZMO-9588: If we have already disconnected, don't disconnect again
+        if (mApiClient != null) {
+          mApiClient.disconnect();
+          mApiClient = null;
+        }
       }
     });
   }

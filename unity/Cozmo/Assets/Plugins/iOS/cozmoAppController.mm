@@ -20,11 +20,24 @@
 #import <UIKit/UIKit.h>
 #import <UserNotifications/UserNotifications.h>
 
+#include "UTNotificationsTools.h"
+
 namespace Anki {
   namespace Util {
     CONSOLE_VAR(bool, kDemoMode, "Demo", false);
   }
 }
+
+// Objective-C "protected" functions unity is trying to hide but we need.
+@interface UnityAppController ()
+#if !UNITY_TVOS
+- (void)application:(UIApplication*)application didReceiveLocalNotification:(UILocalNotification*)notification;
+#endif
+
+#if UNITY_USES_REMOTE_NOTIFICATIONS
+- (void)application:(UIApplication*)application didReceiveRemoteNotification:(NSDictionary*)userInfo;
+#endif
+@end
 
 // This App Controller is a subclass of the Unity generated AppController, registered with the #define at the bottom of this file
 @interface CozmoAppController : UnityAppController
@@ -44,6 +57,16 @@ performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionH
 - (void)applicationWillEnterForeground:(UIApplication *)application;
 
 - (void)applicationDidBecomeActive:(UIApplication * )application;
+
+#if !UNITY_TVOS
+- (void)application:(UIApplication*)application didReceiveLocalNotification:(UILocalNotification*)notification;
+#endif
+
+#if UNITY_USES_REMOTE_NOTIFICATIONS
+- (void)application:(UIApplication*)application didReceiveRemoteNotification:(NSDictionary*)userInfo;
+#endif
+
+
 @end
 
 bool unityLogHandler(LogType logType, const char* log, va_list list)
@@ -110,6 +133,20 @@ void tryExecuteBackgroundTransfers()
 - (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)launchOptions
 {
   [super application:application didFinishLaunchingWithOptions:launchOptions];
+  
+#if !UNITY_TVOS
+  // UTNotifications: handle clicks on local notifications
+  if (UILocalNotification* notification = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey])
+  {
+    _UT_SetLocalNotificationWasClicked(notification.userInfo);
+  }
+  
+  // UTNotifications: handle clicks on push notifications
+  if (NSDictionary* notification = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey])
+  {
+    _UT_SetPushNotificationWasClicked(notification);
+  }
+#endif
   
   [application setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
   
@@ -266,6 +303,7 @@ void tryExecuteBackgroundTransfers()
 
   UIViewController *vc = self.window.rootViewController;
   activityController.popoverPresentationController.sourceView = vc.view;
+  activityController.popoverPresentationController.permittedArrowDirections = 0;
 
   [activityController setCompletionWithItemsHandler:^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
     _currentActivityController = nil;
@@ -359,6 +397,33 @@ void tryExecuteBackgroundTransfers()
   Unity_DAS_Event("ios.memory_warning", "", nullptr, nullptr, 0);
   [super applicationDidReceiveMemoryWarning:application];
 }
+
+
+#if !UNITY_TVOS
+- (void)application:(UIApplication*)application didReceiveLocalNotification:(UILocalNotification*)notification
+{
+  // UTNotifications: handle clicks on local notifications
+  if ([UIApplication sharedApplication].applicationState != UIApplicationStateActive)
+  {
+    _UT_SetLocalNotificationWasClicked(notification.userInfo);
+  }
+  [super application:application didReceiveLocalNotification:notification];
+}
+
+#endif
+
+#if UNITY_USES_REMOTE_NOTIFICATIONS
+- (void)application:(UIApplication*)application didReceiveRemoteNotification:(NSDictionary*)userInfo
+{
+  // UTNotifications: handle clicks on push notifications
+  if ([UIApplication sharedApplication].applicationState != UIApplicationStateActive)
+  {
+    _UT_SetPushNotificationWasClicked(userInfo);
+  }
+   [super application:application didReceiveRemoteNotification:userInfo];
+}
+
+#endif
 
 @end
 

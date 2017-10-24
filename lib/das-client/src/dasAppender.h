@@ -51,7 +51,9 @@ public:
 
   void ForceFlush();
   void ForceFlushWithCallback(const DASFlushCallback& completionBlock);
-  
+
+  void SetIsUploadingPaused(const bool isPaused);
+
 private:
   void SetTimedFlush();
   bool ConsumeALogFile(const std::string &logFilePath, bool *stop);
@@ -61,6 +63,7 @@ private:
   size_t _maxLogLength;
   bool _isWaitingForFlush;
   bool _lastFlushFailed;
+  bool _isUploadingPaused;
   uint32_t _flushIntervalSeconds;
   TaskExecutor _syncQueue;
 };

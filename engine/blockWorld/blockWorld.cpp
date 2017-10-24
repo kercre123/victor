@@ -1906,9 +1906,8 @@ namespace {
       // add clear info to map
       INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
       if ( currentNavMemoryMap ) {
-        currentNavMemoryMap->AddLine(p1.GetTranslation(), p2.GetTranslation(), 
-                                     INavMap::EContentType::ClearOfObstacle,
-                                     _robot->GetLastMsgTimestamp());
+        MemoryMapData clearObstacleData(INavMap::EContentType::ClearOfObstacle, _robot->GetLastMsgTimestamp());        
+        currentNavMemoryMap->AddLine(p1.GetTranslation(), p2.GetTranslation(), clearObstacleData);
       }
       
       Quad2f ray(p1.GetTranslation(), p1.GetTranslation(), 

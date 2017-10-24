@@ -13,6 +13,7 @@
  #define _ANKI_COZMO_MEMORY_MAP_TO_PLANNER_H__
 
 #include "engine/navMap/iNavMap.h"
+#include "anki/common/basestation/math/convexPolygon2d.h"
 #include "anki/common/basestation/math/polygon.h"
 
 namespace Anki {
@@ -25,7 +26,7 @@ class Robot;
 // those regions.
 // minRegionArea_m2: regions with smaller area than this parameter will be discarded, an no convex hull will
 // be generated for them.
-void TranslateMapRegionToPolys(const INavMap::BorderRegionVector& regions, std::vector<Poly2f>& convexHulls, const float minRegionArea_m2);
+void TranslateMapRegionToPolys(const INavMap::BorderRegionVector& regions, std::vector<ConvexPolygon>& convexHulls, const float minRegionArea_m2);
 
 // rsam: this is for Brad, since I implemented this code, but Brad will incorporate to the planner. This function, when
 // called, calculates borders in the memory map, computes convex hulls for them, and renders them (without storing them.)
@@ -36,7 +37,7 @@ void TestNavMemoryMapToPlanner(Robot& robot);
 void GetConvexHullsByType(INavMap* memoryMap,
                     const MemoryMapTypes::FullContentArray& outerTypes,
                     const MemoryMapTypes::EContentType innerType,
-                    std::vector<Poly2f>& convexHulls);
+                    std::vector<ConvexPolygon>& convexHulls);
                                         
 // get strict poly without CH calculation
 void GetBorderPoly(INavMap* memoryMap,

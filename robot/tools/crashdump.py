@@ -9,6 +9,7 @@ import struct
 import base64
 import sys
 import os
+import os.path
 import uuid
 
 def output_is_redirected():
@@ -74,9 +75,18 @@ def print_NRF(data):
 def print_K2(data):
     print_registers(data, K2_registers)
 
-def print_ESP(data):
-    ESP_S_filename = "espressif/bin/upgrade/user1.2048.new.3.S"
+ImageDir = None
+ESP_S_filename = "espressif/bin/upgrade/user1.2048.new.3.S"
+
+def GetSFile(version):
+    if ImageDir:
+        filename = os.path.join(ImageDir, str(version), "build", "esp.S")
+        if os.path.exists(filename):
+            print(filename)
+            return filename
+    return ESP_S_filename
     
+def print_ESP(data):
     regset = print_registers(data, ESP_registers)
     variable_data_start = len(ESP_registers)*4
     logFormat, logFormatMagic = struct.unpack("<HH", data[variable_data_start:variable_data_start+4])
@@ -91,6 +101,7 @@ def print_ESP(data):
             meta_length = 24
             version, appRunID, stack_depth = struct.unpack("<i16si", data[variable_data_start:variable_data_start+meta_length])
             regset["stack_depth"] = stack_depth
+            regset["version"] = version
             stack_data_start = variable_data_start + meta_length
             print("{:>16}: {:d}\n{:>16}: {}\n{:>16}: 0x{:x}".format("Version", version, "apprun", str(uuid.UUID(bytes=appRunID)), "stack depth", stack_depth))
         else:
@@ -101,6 +112,7 @@ def print_ESP(data):
         print_registers(data[stack_data_start:], stack_addrs)
     print("cause = ",EspCauses[regset["exccause"]])
 
+    s_file = GetSFile(regset["version"])
     colorarg = "never" if output_is_redirected() else "always"
     searchcmd = "grep -C5 --color={} {:08x} {}".format(colorarg, regset["epc1"], ESP_S_filename)
     try:
@@ -134,6 +146,7 @@ if __name__ == "__main__":
     parser.add_argument('-devlog', help='file is devlog', action='store_true')
     parser.add_argument('-b64', help='file is b64 string', action='store_true')
     parser.add_argument('-t', help='numeric crash type')
+    parser.add_argument('-id', help='image directory')
     args = parser.parse_args()
 
     START = 0x02000
@@ -146,6 +159,9 @@ if __name__ == "__main__":
     if args.b64:
         START = 0
         SegSize = None  #read whole file
+    if args.id:
+        ImageDir = args.id
+    
     
 
     with open(args.filename, 'rb') as infile:

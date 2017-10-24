@@ -40,6 +40,7 @@ DasAppender::DasAppender(const std::string& dasLogDir,
 , _maxLogLength(maxLogLength)
 , _isWaitingForFlush(false)
 , _lastFlushFailed(false)
+, _isUploadingPaused(false)
 , _flushIntervalSeconds(flush_interval)
 {
   LOGV("Storing DAS logs in '%s'", dasLogDir.c_str());
@@ -154,14 +155,16 @@ void DasAppender::Flush()
   }
 
   if (_logFileAppender != nullptr) {
-    auto func = std::bind(&DasAppender::ConsumeALogFile, this, std::placeholders::_1, std::placeholders::_2);
-    _logFileAppender->ConsumeLogFiles(func);
+    if (!_isUploadingPaused) {
+      auto func = std::bind(&DasAppender::ConsumeALogFile, this, std::placeholders::_1, std::placeholders::_2);
+      _logFileAppender->ConsumeLogFiles(func);
+    }
   }
 }
 
 bool DasAppender::ConsumeALogFile(const std::string& logFilePath, bool *stop)
 {
-  if (DASNetworkingDisabled) {
+  if (DASNetworkingDisabled || _isUploadingPaused) {
     *stop = true;
     return false;
   }
@@ -186,6 +189,16 @@ bool DasAppender::ConsumeALogFile(const std::string& logFilePath, bool *stop)
     _lastFlushFailed = true;
   }
   return success;
+}
+
+void DasAppender::SetIsUploadingPaused(const bool isPaused)
+{
+  const bool prevPaused = _isUploadingPaused;
+  _isUploadingPaused = isPaused;
+  // If resuming, attempt uploading again immediately
+  if (!_isUploadingPaused && prevPaused) {
+    ForceFlush();
+  }
 }
 
 

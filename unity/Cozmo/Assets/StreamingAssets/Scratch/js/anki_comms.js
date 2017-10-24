@@ -1,4 +1,6 @@
 window.Unity = {
+    _firstMsgSentTime: null,
+    _numMsgSentThisPeriod: 0,
     call: function(msg) {
         var jsonMsg = JSON.stringify(msg);
 
@@ -20,6 +22,56 @@ window.Unity = {
             document.documentElement.appendChild(iframe);
             iframe.parentNode.removeChild(iframe);
             iframe = null;    
+        }
+
+        if (this._firstMsgSentTime == null) {
+            this._firstMsgSentTime = new Date().getTime();
+            this._numMsgSentThisPeriod = 0;
+        }
+        else {
+            ++this._numMsgSentThisPeriod;
+        }
+    },
+    resetMsgTracking: function() {
+        // Reset - start a new period with the next message
+        this._firstMsgSentTime = null;
+        this._numMsgSentThisPeriod = 0;
+    },
+    calculateSleepRequiredToThrottle: function() {
+        if (this._numMsgSentThisPeriod > 30) {
+            var duration = new Date().getTime() - this._firstMsgSentTime;
+            // Cap calls to 30 per 100ms, e.g ~10 calls per 33ms (0.033s) Unity tick
+            // Note: Clock was doing ~9 calls in 0.2s = 200ms
+            var minDuration = 100;
+            if (duration < minDuration) {
+                return (minDuration - duration);
+            }
+            else {
+                // Return negative value to indicate evaluated period was
+                // fine and it should reset.
+                return -1;
+            }     
+        }
+
+        return 0;
+    },
+    sleepPromiseIfNecessary: function() {
+        // For blocks that don't create a promise (or other means of sleeping), this automatically
+        // creaets one if necessary to throttle the message rate
+        // (and prevent Scratch locking up in busy-loops that call into Unity a lot)
+        var sleepRequired_ms = this.calculateSleepRequiredToThrottle();
+        if (sleepRequired_ms > 0) {
+            // Don't reset the tracking - that's done as soon as it's slept for long enough
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    resolve();
+                }, sleepRequired_ms);
+            });
+        }
+        else if (sleepRequired_ms < 0) {
+            // Reset it so that we can respond to future spikes
+            // without previous pauses making the average look OK
+            this.resetMsgTracking();
         }
     }
 }
