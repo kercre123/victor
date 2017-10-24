@@ -44,6 +44,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRobotShakenAr
   {ReactionTrigger::ObjectPositionUpdated,        true},
   {ReactionTrigger::PlacedOnCharger,              false},
   {ReactionTrigger::PetInitialDetection,          true},
+  {ReactionTrigger::RobotFalling,                 true},
   {ReactionTrigger::RobotPickedUp,                true},
   {ReactionTrigger::RobotPlacedOnSlope,           true},
   {ReactionTrigger::ReturnedToTreads,             true},

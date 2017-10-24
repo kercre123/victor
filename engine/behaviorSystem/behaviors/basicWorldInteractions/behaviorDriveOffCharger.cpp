@@ -43,6 +43,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersDriveOffCharg
   {ReactionTrigger::ObjectPositionUpdated,        true},
   {ReactionTrigger::PlacedOnCharger,              true},
   {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::RobotFalling,                 false},
   {ReactionTrigger::RobotPickedUp,                false},
   {ReactionTrigger::RobotPlacedOnSlope,           false},
   {ReactionTrigger::ReturnedToTreads,             false},

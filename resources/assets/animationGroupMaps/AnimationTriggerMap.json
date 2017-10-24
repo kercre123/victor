@@ -1529,6 +1529,14 @@
       "AnimName": "ag_reacttocliff_edge"
     },
     {
+      "CladEvent": "ReactToFalling",
+      "AnimName": "ag_repair_react_fall"
+    },
+    {
+      "CladEvent": "ReactToImpact",
+      "AnimName": "ag_repair_react_hit_01"
+    },
+    {
       "CladEvent": "ReactToObstacle",
       "AnimName": "ag_reacttocliff_huh_01"
     },

@@ -110,7 +110,8 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectMoved,              &RobotToEngineImplMessaging::HandleActiveObjectMoved);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectStopped,            &RobotToEngineImplMessaging::HandleActiveObjectStopped);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectUpAxisChanged,      &RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::fallingEvent,                   &RobotToEngineImplMessaging::HandleFallingEvent);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::fallingStarted,                 &RobotToEngineImplMessaging::HandleFallingStarted);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::fallingStopped,                 &RobotToEngineImplMessaging::HandleFallingStopped);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::goalPose,                       &RobotToEngineImplMessaging::HandleGoalPose);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotStopped,                   &RobotToEngineImplMessaging::HandleRobotStopped);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::cliffEvent,                     &RobotToEngineImplMessaging::HandleCliffEvent);
@@ -778,11 +779,23 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
   robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(payload)));
 }
 
-void RobotToEngineImplMessaging::HandleFallingEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+void RobotToEngineImplMessaging::HandleFallingStarted(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
-  const auto& msg = message.GetData().Get_fallingEvent();
+  const auto& msg = message.GetData().Get_fallingStarted();
   
-  PRINT_NAMED_INFO("Robot.HandleFallingEvent.FallingEvent",
+  PRINT_NAMED_INFO("Robot.HandleFallingStarted.FallingStarted",
+                   "timestamp: %u",
+                   msg.timestamp);
+  
+  // Beam this up to game
+  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::FallingStarted()));
+}
+  
+void RobotToEngineImplMessaging::HandleFallingStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  const auto& msg = message.GetData().Get_fallingStopped();
+  
+  PRINT_NAMED_INFO("Robot.HandleFallingStopped.FallingStopped",
                    "timestamp: %u, duration (ms): %u, intensity %.1f",
                    msg.timestamp,
                    msg.duration_ms,
@@ -802,8 +815,9 @@ void RobotToEngineImplMessaging::HandleFallingEvent(const AnkiEvent<RobotInterfa
                {{DDATA, std::to_string(msg.duration_ms).c_str()}}, // 'data'
                std::to_string(impactIntensity_int).c_str());       // 's_val'
   
-  // TODO: Beam this up to game?
-  // robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(payload)));
+  // Beam this up to game
+  ExternalInterface::FallingStopped fallingStopped(msg.duration_ms, msg.impactIntensity);
+  robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(fallingStopped)));
 }
   
 void RobotToEngineImplMessaging::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

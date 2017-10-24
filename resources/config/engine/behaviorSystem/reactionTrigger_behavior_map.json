@@ -133,6 +133,14 @@
       "behaviorID": "ReactToPet"
     },
     {
+      "reactionTrigger": "RobotFalling",
+      "behaviorID": "ReactToImpact",
+      "genericStrategyParams": {
+        "shouldResumeLast": false,
+        "debugStrategyName": "Trigger Strategy Falling"
+      }
+    },
+    {
       "reactionTrigger": "RobotPickedUp",
       "behaviorID": "ReactToPickup",
       "genericStrategyParams": {

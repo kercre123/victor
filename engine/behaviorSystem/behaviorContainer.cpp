@@ -78,6 +78,7 @@
 #include "engine/behaviorSystem/behaviors/reactions/behaviorRamIntoBlock.h"
 #include "engine/behaviorSystem/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/behaviorSystem/behaviors/reactions/behaviorReactToFrustration.h"
+#include "engine/behaviorSystem/behaviors/reactions/behaviorReactToImpact.h"
 #include "engine/behaviorSystem/behaviors/reactions/behaviorReactToMotorCalibration.h"
 #include "engine/behaviorSystem/behaviors/reactions/behaviorReactToOnCharger.h"
 #include "engine/behaviorSystem/behaviors/reactions/behaviorReactToPet.h"
@@ -536,6 +537,11 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     case BehaviorClass::ReactToCliff:
     {
       newBehavior = IBehaviorPtr(new BehaviorReactToCliff(robot, config));
+      break;
+    }
+    case BehaviorClass::ReactToImpact:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorReactToImpact(robot, config));
       break;
     }
     case BehaviorClass::ReactToReturnedToTreads:

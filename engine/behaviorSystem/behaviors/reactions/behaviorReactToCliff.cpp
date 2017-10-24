@@ -52,6 +52,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersReactToCliffA
   {ReactionTrigger::ObjectPositionUpdated,        true},
   {ReactionTrigger::PlacedOnCharger,              false},
   {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::RobotFalling,                 false},
   {ReactionTrigger::RobotPickedUp,                false},
   {ReactionTrigger::RobotPlacedOnSlope,           false},
   {ReactionTrigger::ReturnedToTreads,             false},

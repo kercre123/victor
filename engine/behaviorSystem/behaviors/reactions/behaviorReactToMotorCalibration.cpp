@@ -35,6 +35,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersMotorCalibrat
   {ReactionTrigger::ObjectPositionUpdated,        false},
   {ReactionTrigger::PlacedOnCharger,              false},
   {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::RobotFalling,                 false},
   {ReactionTrigger::RobotPickedUp,                true},
   {ReactionTrigger::RobotPlacedOnSlope,           false},
   {ReactionTrigger::ReturnedToTreads,             true},

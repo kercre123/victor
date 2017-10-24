@@ -206,6 +206,16 @@ message ChargerEvent {
   bool   onCharger
 }
 
+// The robot has detected that it is in freefall
+message FallingStarted {
+}
+
+// This message indicates that the robot freefall event has ended
+message FallingStopped {
+  uint_32 duration_ms,
+  float_32 impactIntensity
+}
+
 // Unexpected movement was detected so robot was stopped and all actions were cancelled
 message UnexpectedMovement {
   uint_32 timestamp,

@@ -40,6 +40,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kDisableReactionTriggersArra
   {ReactionTrigger::ObjectPositionUpdated,        false},
   {ReactionTrigger::PlacedOnCharger,              false},
   {ReactionTrigger::PetInitialDetection,          true},
+  {ReactionTrigger::RobotFalling,                 false},
   {ReactionTrigger::RobotPickedUp,                false},
   {ReactionTrigger::RobotPlacedOnSlope,           false},
   {ReactionTrigger::ReturnedToTreads,             true},
