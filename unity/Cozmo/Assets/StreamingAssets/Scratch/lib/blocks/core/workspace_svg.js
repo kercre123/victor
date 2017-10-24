@@ -931,7 +931,7 @@ Blockly.WorkspaceSvg.prototype.glowBlock = function(id, isGlowingBlock) {
     block = this.getBlockById(id);
     if (!block) {
       // *** ANKI CHANGE ***
-      // This throw can happen if the user taps a block in the toolbar then switches categories. Seems save to ignore.
+      // This throw can happen if the user taps a block in the toolbar then switches categories. Seems safe to ignore.
       //throw 'Tried to glow block that does not exist.';
     }
   }
@@ -952,10 +952,15 @@ Blockly.WorkspaceSvg.prototype.glowStack = function(id, isGlowingStack) {
   if (id) {
     block = this.getBlockById(id);
     if (!block) {
-      throw 'Tried to glow stack on block that does not exist.';
+      // *** ANKI CHANGE ***
+      // This throw can happen if we're trying to leave the workspace while running. Seems safe to ignore.
+      // throw 'Tried to glow stack on block that does not exist.';
     }
   }
-  block.setGlowStack(isGlowingStack);
+  // *** ANKI CHANGE ***
+  if (block) {
+    block.setGlowStack(isGlowingStack);
+  }
 };
 
 /**
