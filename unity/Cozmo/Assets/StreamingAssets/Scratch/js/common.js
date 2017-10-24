@@ -61,6 +61,11 @@
             }, 100);
         }
 
+        if (window.isVertical) {
+            // Move the workspace to its home position after the project loads
+            Scratch.workspace.scrollHome();
+        }
+
         window.Unity.call({command: "cozmoWorkspaceLoaded"});
         window.isLoadingProject = false;
     }
@@ -298,6 +303,9 @@
             glossaryButton.addEventListener('touchmove', function (e) {
               e.preventDefault();
             });
+
+            // Move the workspace to its home position
+            Scratch.workspace.scrollHome();
         }
 
         var remixButton = document.querySelector("#remix-button");

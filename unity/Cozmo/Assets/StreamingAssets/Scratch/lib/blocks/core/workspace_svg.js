@@ -1773,6 +1773,37 @@ Blockly.WorkspaceSvg.prototype.scrollCenter = function() {
   this.scrollbar.set(x, y);
 };
 
+// *** Anki change ***
+/**
+ * Focus on the top-left of the workspace.
+ */
+Blockly.WorkspaceSvg.prototype.scrollHome = function() {
+  if (!this.scrollbar) {
+    // Can't scroll a non-scrolling workspace.
+    return;
+  }
+  // Hide the WidgetDiv without animation (zoom makes field out of place with div)
+  Blockly.WidgetDiv.hide(true);
+  Blockly.DropDownDiv.hideWithoutAnimation();
+  Blockly.hideChaff(false);
+  var metrics = this.getMetrics();
+  var bounds = this.getBlocksBoundingBox();
+
+  // Either top-left corner, or center if smaller than window
+  if (bounds.width > metrics.viewWidth) {
+    var x = (metrics.viewWidth) / 2 * this.scale;
+  } else {
+    var x = (metrics.contentWidth - metrics.viewWidth) / 2;
+  }
+  if (bounds.height > metrics.viewHeight) {
+    var y = (metrics.viewHeight - 100) / 2  * this.scale;
+  } else {
+    var y = (metrics.contentHeight - metrics.viewHeight) / 2;
+  }
+
+  this.scrollbar.set(x, y);
+};
+
 /**
  * Set the workspace's zoom factor.
  * @param {number} newScale Zoom factor.
