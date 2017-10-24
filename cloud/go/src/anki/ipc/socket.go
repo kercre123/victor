@@ -53,8 +53,6 @@ func NewClientSocket(ip string, port int) (Socket, error) {
 	if err != nil {
 		return nil, errors.New(fmt.Sprint("Couldn't connect:", err))
 	}
-	fmt.Println("Client opened:", conn.LocalAddr())
-	fmt.Println("Client remote:", conn.RemoteAddr())
 	conn.SetDeadline(time.Time{})
 	read := make(chan []byte)
 	sock := clientSocket{socketBase{read}, conn}
@@ -100,7 +98,6 @@ func NewServerSocket(port int) (Socket, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Server opened:", conn.LocalAddr())
 	conn.SetDeadline(time.Time{})
 	read := make(chan []byte)
 	sock := serverSocket{socketBase: socketBase{read}, conn: conn}
