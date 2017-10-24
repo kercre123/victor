@@ -149,10 +149,10 @@ var RenameProject = function(){
     // The editable text element will sometimes auto convert into smart-quotes, often not bothering to match them.
     // Replacing all smart quotes with standard quotes means only those 2 characters have to be processed internally
 
-    newProjectName = goog.string.replaceAll(newProjectName, '‘', '\'');
-    newProjectName = goog.string.replaceAll(newProjectName, '’', '\'');
-    newProjectName = goog.string.replaceAll(newProjectName, '“', '\"');
-    newProjectName = goog.string.replaceAll(newProjectName, '”', '\"');
+    newProjectName = newProjectName.replaceAll('‘', '\'');
+    newProjectName = newProjectName.replaceAll('’', '\'');
+    newProjectName = newProjectName.replaceAll('“', '\"');
+    newProjectName = newProjectName.replaceAll('”', '\"');
 
     window.renameProject("RenameProject.callbackAfterProjectRename", window.cozmoProjectUUID, newProjectName);
   }

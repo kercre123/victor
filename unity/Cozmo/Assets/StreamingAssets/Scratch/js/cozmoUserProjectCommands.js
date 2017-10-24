@@ -3,8 +3,9 @@
         if (str === null || str === undefined) {
             return str;
         }
-        var str2 = goog.string.replaceAll(str, '\\\'', '\'');
-        return goog.string.replaceAll(str2, '\\\"', '\"');
+        var resultStr = str.replaceAll('\\\'', '\'');
+        resultStr = resultStr.replaceAll('\\\"', '\"');
+        return resultStr;
     }
 
     window.isCozmoSampleProject = false;
