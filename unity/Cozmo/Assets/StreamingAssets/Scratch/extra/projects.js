@@ -515,7 +515,7 @@
     var projectsUI = document.querySelector('#projects');
 
     // set color of puzzle pieces on background card based on order position
-    var cardUrl = 'images/featured/framing_card' + projectData.FeaturedProjectImageName + '_feat.svg';
+    var cardUrl = 'images/featured/framing_card' + projectData.FeaturedProjectImageName + '_feat.png';
     var card = project.querySelector('.project-card');
     card.setAttribute('src', cardUrl);
     card.addEventListener('load', function(){
