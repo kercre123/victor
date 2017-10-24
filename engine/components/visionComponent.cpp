@@ -541,7 +541,7 @@ namespace Cozmo {
                         _imuHistory);
       Unlock();
     }
-    
+
     // Experimental:
     //UpdateOverheadMap(image, _nextPoseData);
     
@@ -919,10 +919,14 @@ namespace Cozmo {
             // Send any images in the debug image lists to Viz for display
             for(auto & debugGray : result.debugImages) {
               debugGray.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
+              // This is the size currently used by Webots
+              debugGray.second.ResizeKeepAspectRatio(360, 640);
               CompressAndSendImage(debugGray.second, kDebugImageCompressQuality, debugGray.first);
             }
             for(auto & debugRGB : result.debugImageRGBs) {
               debugRGB.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
+              // This is the size currently used by Webots
+              debugRGB.second.ResizeKeepAspectRatio(360, 640);
               CompressAndSendImage(debugRGB.second, kDebugImageCompressQuality, debugRGB.first);
             }
           }
@@ -1201,92 +1205,6 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  Result VisionComponent::UpdateOverheadMap(const Vision::ImageRGB& image,
-                                            const VisionPoseData& poseData)
-  {
-    if(poseData.groundPlaneVisible)
-    {
-      const Matrix_3x3f& H = poseData.groundPlaneHomography;
-      
-      const GroundPlaneROI& roi = poseData.groundPlaneROI;
-      
-      Quad2f imgGroundQuad;
-      roi.GetImageQuad(H, image.GetNumCols(), image.GetNumRows(), imgGroundQuad);
-      
-      static Vision::ImageRGB overheadMap(1000.f, 1000.f);
-      
-      // Need to apply a shift after the homography to put things in image
-      // coordinates with (0,0) at the upper left (since groundQuad's origin
-      // is not upper left). Also mirror Y coordinates since we are looking
-      // from above, not below
-      Matrix_3x3f InvShift{
-        1.f, 0.f, roi.GetDist(), // Negated b/c we're using inv(Shift)
-        0.f,-1.f, roi.GetWidthFar()*0.5f,
-        0.f, 0.f, 1.f};
-
-      Pose3d worldPoseWrtRobot = poseData.histState.GetPose().GetInverse();
-      for(s32 i=0; i<roi.GetWidthFar(); ++i) {
-        const u8* mask_i = roi.GetOverheadMask().GetRow(i);
-        const f32 y = static_cast<f32>(i) - 0.5f*roi.GetWidthFar();
-        for(s32 j=0; j<roi.GetLength(); ++j) {
-          if(mask_i[j] > 0) {
-            // Project ground plane point in robot frame to image
-            const f32 x = static_cast<f32>(j) + roi.GetDist();
-            Point3f imgPoint = H * Point3f(x,y,1.f);
-            assert(imgPoint.z() > 0.f);
-            const f32 divisor = 1.f / imgPoint.z();
-            imgPoint.x() *= divisor;
-            imgPoint.y() *= divisor;
-            const s32 x_img = std::round(imgPoint.x());
-            const s32 y_img = std::round(imgPoint.y());
-            if(x_img >= 0 && y_img >= 0 &&
-               x_img < image.GetNumCols() && y_img < image.GetNumRows())
-            {
-              const Vision::PixelRGB value = image(y_img, x_img);
-              
-              // Get corresponding map point in world coords
-              Point3f mapPoint = poseData.histState.GetPose() * Point3f(x,y,0.f);
-              const s32 x_map = std::round( mapPoint.x() + static_cast<f32>(overheadMap.GetNumCols())*0.5f);
-              const s32 y_map = std::round(-mapPoint.y() + static_cast<f32>(overheadMap.GetNumRows())*0.5f);
-              if(x_map >= 0 && y_map >= 0 &&
-                 x_map < overheadMap.GetNumCols() && y_map < overheadMap.GetNumRows())
-              {
-                overheadMap(y_map, x_map).AlphaBlendWith(value, 0.5f);
-              }
-            }
-          }
-        }
-      }
-      
-      Vision::ImageRGB overheadImg = roi.GetOverheadImage(image, H);
-      
-      static s32 updateFreq = 0;
-      if(updateFreq++ == 8){ // DEBUG
-        updateFreq = 0;
-        Vision::ImageRGB dispImg;
-        image.CopyTo(dispImg);
-        dispImg.DrawQuad(imgGroundQuad, NamedColors::RED, 1);
-        dispImg.Display("GroundQuad");
-        overheadImg.Display("OverheadView");
-        
-        // Display current map with the last updated region highlighted with
-        // a red border
-        overheadMap.CopyTo(dispImg);
-        Quad3f lastUpdate;
-        poseData.histState.GetPose().ApplyTo(roi.GetGroundQuad(), lastUpdate);
-        for(auto & point : lastUpdate) {
-          point.x() += static_cast<f32>(overheadMap.GetNumCols()*0.5f);
-          point.y() *= -1.f;
-          point.y() += static_cast<f32>(overheadMap.GetNumRows()*0.5f);
-        }
-        dispImg.DrawQuad(lastUpdate, NamedColors::RED, 2);
-        dispImg.Display("OverheadMap");
-      }
-    } // if ground plane is visible
-    
-    return RESULT_OK;
-  } // UpdateOverheadMap()
-  
   Result VisionComponent::UpdateToolCode(const VisionProcessingResult& procResult)
   {
     for(auto & info : procResult.toolCodes)
@@ -1522,7 +1440,7 @@ namespace Cozmo {
     ImageChunk m;
     m.height = img.GetNumRows();
     m.width  = img.GetNumCols();
-    
+
     const std::vector<int> compressionParams = {
       CV_IMWRITE_JPEG_QUALITY, quality
     };
@@ -1550,7 +1468,7 @@ namespace Cozmo {
     {
       m.displayIndex = displayIndexIter->second;
     }
-     
+
     static u32 imgID = 0;
     m.imageId = ++imgID;
     

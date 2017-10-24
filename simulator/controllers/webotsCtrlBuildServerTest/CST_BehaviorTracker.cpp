@@ -72,7 +72,6 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
   switch (_testState) {
     case TestState::StartUpFreeplayMode:
     {
-      MakeSynchronous();
       StartMovieConditional("BehaviorTracker", 8);
       TakeScreenshotsAtInterval("BehaviorTracker", 1.f);
 
@@ -85,7 +84,7 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
 
       SendMessage(message);
 
-      _testState = TestState::FreePlay;
+      SET_TEST_STATE(FreePlay);
       break;
     }
     case TestState::FreePlay:
@@ -103,7 +102,7 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
         change.elapsedTime = totalElapsed;
         _stateChangeList.push_back(change);
         
-        _testState = TestState::TestDone;
+        SET_TEST_STATE(TestDone);
       }
       break;
     }

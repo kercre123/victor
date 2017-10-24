@@ -126,7 +126,7 @@ static void Motors::transmit(BodyToHead *payload) {
       switch (i) {
         case MOTOR_LEFT:
         case MOTOR_RIGHT:
-          state->position += (state->direction == DIRECTION_FORWARD)? delta_last[i] : -delta_last[i];
+          state->position += (state->direction == DIRECTION_FORWARD) ? delta_last[i] : -delta_last[i];
           break ;
         default:
           state->position += delta_last[i];

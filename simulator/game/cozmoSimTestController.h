@@ -60,6 +60,9 @@ if (!(x)) { \
   
 #define IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(timeout, ...) static double COMBINE(startTime,__LINE__) = GetSupervisor()->getTime(); if(AllTrueBeforeTimeout({__VA_ARGS__}, #__VA_ARGS__, COMBINE(startTime,__LINE__), timeout, __FILE__, __FUNCTION__, __LINE__))
   
+// Derived classes should create an enum class called TestState, and a variable called _testState.
+// They should follow the pattern of modifying test state via this macro instead of directly.
+#define SET_TEST_STATE(s) { PRINT_NAMED_INFO("CozmoSimTestController.TransitionTestState", "%s", #s); _testState = TestState::s; }
 
   
 /////////////// CozmoSimTestController /////////////////
@@ -75,6 +78,7 @@ protected:
   
   virtual s32 UpdateInternal() override final;
   virtual s32 UpdateSimInternal() = 0;
+  virtual void InitInternal() override final;
   
   u8 _result = RESULT_OK;
   bool _isRecording;

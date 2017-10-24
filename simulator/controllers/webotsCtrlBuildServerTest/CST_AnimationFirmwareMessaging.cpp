@@ -48,7 +48,6 @@ namespace Anki {
       switch (_testState) {
         case TestState::PlayAnimation:
         {
-          MakeSynchronous();
           StartMovieConditional("AnimationFirmwareMessaging");
 
           ExternalInterface::PlayAnimation playAnimation;
@@ -57,7 +56,7 @@ namespace Anki {
           SendMessage(ExternalInterface::MessageGameToEngine(
                           ExternalInterface::PlayAnimation(playAnimation)));
           
-          _testState = TestState::CheckWorldState;
+          SET_TEST_STATE(CheckWorldState);
           break;
         }
         case TestState::CheckWorldState:

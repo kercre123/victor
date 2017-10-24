@@ -2513,7 +2513,7 @@ Quad2f Robot::GetBoundingQuadXY(const f32 padding_mm) const
   return GetBoundingQuadXY(_pose, padding_mm);
 }
     
-Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
+Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm)
 {
   const RotationMatrix2d R(atPose.GetRotation().GetAngleAroundZaxis());
 
