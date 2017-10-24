@@ -28,5 +28,10 @@ if (MACOSX)
   )
 endif()
 
+# ipctest - for testing interop capability of C++ and Go socket code
+anki_build_go_executable(ipctest_go "ipctest/go" "go" ${ANKI_SRCLIST_DIR})
+anki_build_cxx_executable(ipctest_cpp ${ANKI_SRCLIST_DIR})
+target_link_libraries(ipctest_cpp PRIVATE cti_messaging)
+
 # cloud process
 anki_build_go_executable(cloud_process "process" "go" ${ANKI_SRCLIST_DIR})

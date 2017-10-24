@@ -13,3 +13,13 @@ cxx_project(
     name = 'cloud_process',
     srcs = glob(['process/**/*.go'])
 )
+
+cxx_project(
+    name = 'ipctest_cpp',
+    srcs = glob(['ipctest/cpp/*.cpp'])
+)
+
+cxx_project(
+    name = 'ipctest_go',
+    srcs = glob(['ipctest/go/*.go'])
+)
