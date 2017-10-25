@@ -713,7 +713,7 @@ IBehaviorPtr ActivityFeeding::GetBestBehaviorFromMap() const
 
 // Implementation of IFeedingListener
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityFeeding::StartedEating(Robot& robot, const int duration_s)
+void ActivityFeeding::StartedEating(Robot& robot, const float duration_s)
 {
   using CS = FeedingCubeController::ControllerState;
   _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::DrainCube, duration_s);
