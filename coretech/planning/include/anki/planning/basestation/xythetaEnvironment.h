@@ -2,6 +2,7 @@
 #define _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 
 #include "anki/common/basestation/math/fastPolygon2d.h"
+#include "anki/common/basestation/math/convexPolygon2d.h"
 #include "anki/common/basestation/math/quad.h"
 #include "anki/common/basestation/math/polygon.h"
 #include "anki/planning/basestation/robotActionParams.h"
@@ -255,26 +256,25 @@ class xythetaPlan
 {
 public:
   State start_;
-  std::vector<ActionID> actions_;
-  
-  // same size as actions, stores the penalty expected for each
-  // action. This allows replanning if any of these penalties
-  // increase. The sum of this should be the penalty of the entire
-  // plan
-  std::vector<Cost> penalties_;
+  ActionID GetAction(size_t idx)  const { return _actionCostPairs[idx].first; }
+  Cost     GetPenalty(size_t idx) const { return _actionCostPairs[idx].second; }  
 
   // add the given plan to the end of this plan
   void Append(const xythetaPlan& other);
 
-  size_t Size() const {return actions_.size();}
+  size_t Size() const  { return _actionCostPairs.size(); }
+  bool   Empty() const { return _actionCostPairs.empty(); }
+  void   Reverse()     { std::reverse(_actionCostPairs.begin(), _actionCostPairs.end()); }
+  
   void Push(ActionID action, Cost penalty = 0.0) {
-    actions_.push_back(action);
-    penalties_.push_back(penalty);
+    _actionCostPairs.emplace_back(action, penalty);
   }
   void Clear() {
-    actions_.clear();
-    penalties_.clear();
+    _actionCostPairs.clear();
   }
+  
+private:
+  std::vector<std::pair<ActionID, Cost>> _actionCostPairs;
 };
 
 // This class contains generic information for a type of action
@@ -337,14 +337,14 @@ public:
  
   // returns a polygon which represents the obstacle expanded to the
   // c-space of robot, where the origin of tobot is (0,0)
-  static FastPolygon ExpandCSpace(const Poly2f& obstacle,
-                                  const Poly2f& robot);
+  static FastPolygon ExpandCSpace(const ConvexPolygon& obstacle,
+                                  const ConvexPolygon& robot);
 
   // adds an obstacle into the c-space map for the given angle with
   // the given robot footprint, centered at (0,0). Returns reference
   // to the polygon it inserted
-  const FastPolygon& AddObstacleWithExpansion(const Poly2f& obstacle,
-                                              const Poly2f& robot,
+  const FastPolygon& AddObstacleWithExpansion(const ConvexPolygon& obstacle,
+                                              const ConvexPolygon& robot,
                                               StateTheta theta,
                                               Cost cost = FATAL_OBSTACLE_COST);
 

@@ -82,10 +82,6 @@ namespace Cozmo.Challenge.DroneMode {
     private Slider _LiftSlider;
 
     [SerializeField]
-    private Color _BackgroundColor;
-    public Color BackgroundColor { get { return _BackgroundColor; } }
-
-    [SerializeField]
     private Cozmo.MinigameWidgets.QuitMinigameButton _QuitDroneModeButton;
     [SerializeField]
     private Cozmo.MinigameWidgets.QuitMinigameButton _QuitDroneModeButtonNight;
@@ -594,17 +590,11 @@ namespace Cozmo.Challenge.DroneMode {
 
   [System.Serializable]
   public class DroneModeColorSet {
+    // Actually used for the slider backgrounds, not the button color - there are no buttons
+    // in night vision mode
     [SerializeField]
     private Color _ButtonColor;
     public Color ButtonColor { get { return _ButtonColor; } }
-
-    [SerializeField]
-    private Color _FocusTextColor;
-    public Color FocusTextColor { get { return _FocusTextColor; } }
-
-    [SerializeField]
-    private Color _FocusFrameColor;
-    public Color FocusFrameColor { get { return _FocusFrameColor; } }
 
     [SerializeField]
     private Color _UnfocusedReticleFillColor;

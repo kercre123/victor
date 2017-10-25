@@ -22,8 +22,9 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // MemoryMapData_ProxObstacle
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-struct MemoryMapData_ProxObstacle : public MemoryMapData
+class MemoryMapData_ProxObstacle : public MemoryMapData
 {
+public:
   // constructor
   MemoryMapData_ProxObstacle(Vec2f dir, TimeStamp_t t);
   
@@ -38,6 +39,9 @@ struct MemoryMapData_ProxObstacle : public MemoryMapData
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // If you add attributes, make sure you add them to ::Equals and ::Clone (if required)
   Vec2f directionality; // direction we presume for the collision (based off robot pose when detected)
+  
+protected: 
+  MemoryMapData_ProxObstacle() : MemoryMapData(MemoryMapTypes::EContentType::ObstacleProx, 0, true), directionality() {}
 };
  
 } // namespace

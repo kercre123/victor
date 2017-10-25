@@ -196,7 +196,12 @@ Blockly.Toolbox.prototype.createFlyout_ = function() {
  */
 Blockly.Toolbox.prototype.populate_ = function(newTree) {
   this.categoryMenu_.populate(newTree);
-  this.setSelectedItem(this.categoryMenu_.categories_[0]);
+
+  // *** ANKI CHANGE ***
+  // In vertical, don't initially set a category as selected, since we want the flyout to start closed.
+  if (!window.isVertical) {
+    this.setSelectedItem(this.categoryMenu_.categories_[0]);
+  }
 };
 
 /**

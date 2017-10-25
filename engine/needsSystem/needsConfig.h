@@ -102,8 +102,6 @@ public:
 
   float _localNotificationMaxFutureMinutes;
 
-  const std::string kABTestDecayConfigControlKey = "control";
-
 private:
   void InitDecayRates(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo);
   void InitDecayModifiers(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo);

@@ -2,11 +2,13 @@ using Anki.Assets;
 using System;
 using System.Collections;
 using UnityEngine;
+using DG.Tweening;
 
 // Used by Android flow
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.IO.IsolatedStorage;
 
 /// <summary>
 /// Add managers to this object by calling
@@ -45,14 +47,6 @@ public class StartupManager : MonoBehaviour {
   private static StartupManager _Instance;
 
   [SerializeField]
-  private Cozmo.UI.ProgressBar _LoadingBar;
-
-  [SerializeField]
-  private Anki.UI.AnkiTextLegacy _LoadingBarLabel;
-
-  private float _CurrentProgress;
-
-  [SerializeField]
   private MainSceneData _NeedsHubData;
 
   [SerializeField]
@@ -80,10 +74,19 @@ public class StartupManager : MonoBehaviour {
   private TMPro.TMP_Settings _TMPSettingsDirectReference;
 
   [SerializeField]
+  private Cozmo.UI.ProgressBar _LoadingBar;
+
+  [SerializeField]
+  private Anki.UI.AnkiTextLegacy _LoadingBarLabel;
+
+  [SerializeField]
   private Anki.UI.AnkiTextLegacy _LoadingVersionLabel;
 
   [SerializeField]
   private Anki.UI.AnkiTextLegacy _LoadingDeviceIdLabel;
+
+  [SerializeField]
+  private CanvasGroup _LoadingAnkiLogoIcon;
 
   private string _ExtractionErrorMessage;
 
@@ -93,8 +96,40 @@ public class StartupManager : MonoBehaviour {
 
   private MainSceneData _MainSceneData;
 
+  private bool _LogoAnimationFinished = false;
+  private bool LogoAnimationFinished {
+    get { return _LogoAnimationFinished; }
+    set {
+      if (value && value != _LogoAnimationFinished) {
+        _LoadingBar.SetTargetAndAnimate(_LoadingProgress);
+      }
+      _LogoAnimationFinished = value;
+      TryLoadMainScene();
+    }
+  }
+
+  private float _LoadingProgress = 0f;
+  private float LoadingProgress {
+    get { return _LoadingProgress; }
+    set {
+      _LoadingProgress = value;
+      if (_LogoAnimationFinished) {
+        _LoadingBar.SetTargetAndAnimate(_LoadingProgress);
+      }
+      TryLoadMainScene();
+    }
+  }
+
   public void StartLoadAsync() {
-    StartCoroutine(LoadCoroutine());
+    // Animate the Anki logo and start loading
+    LogoAnimationFinished = false;
+    const float fadeDuration = 0.6f;
+    const float holdDuration = 0.8f;
+    _LoadingAnkiLogoIcon.DOFade(0f, fadeDuration).SetEase(Ease.OutSine).SetDelay(holdDuration)
+                        .OnComplete(() => {
+                          LogoAnimationFinished = true;
+                          StartCoroutine(LoadCoroutine());
+                        });
   }
 
   public static StartupManager Instance {
@@ -156,17 +191,16 @@ public class StartupManager : MonoBehaviour {
 #endif
 
     // Start loading bar at close to 0
-    _CurrentProgress = 0.05f;
-    _LoadingBar.SetTargetAndAnimate(_CurrentProgress);
+    LoadingProgress = 0.05f;
     _LoadingVersionLabel.text = null;
     _LoadingDeviceIdLabel.text = null;
 
     // set up progress bar updater for resource extraction
-    float startingProgress = _CurrentProgress;
+    float startingProgress = LoadingProgress;
     const float totalResourceExtractionProgress = 0.5f;
     Action<float> progressUpdater = prog => {
       float totalProgress = startingProgress + totalResourceExtractionProgress * Mathf.Clamp(prog, 0.0f, 1.0f);
-      AddLoadingBarProgress(totalProgress - _CurrentProgress);
+      AddLoadingBarProgress(totalProgress - LoadingProgress);
     };
 
     // Extract resource files in platforms that need it
@@ -266,25 +300,31 @@ public class StartupManager : MonoBehaviour {
     RobotEngineManager.Instance.SendRequestDeviceData();
 
     if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
-      float progressBeforeEngineLoading = _CurrentProgress;
+      float progressBeforeEngineLoading = LoadingProgress;
       while (_EngineLoadingProgress < 1.0f) {
         float progressToAdd = _EngineLoadingProgress * (1.0f - progressBeforeEngineLoading);
-        _LoadingBar.SetTargetAndAnimate(progressBeforeEngineLoading + progressToAdd);
+        LoadingProgress = (progressBeforeEngineLoading + progressToAdd);
         yield return 0;
       }
     }
 
-    _LoadingBar.SetTargetAndAnimate(1.0f);
+    LoadingProgress = 1.0f;
 
     if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.EngineLoadingDataStatus>(HandleDataLoaded);
+    }
+  }
+
+  private void TryLoadMainScene() {
+    if (!LogoAnimationFinished || LoadingProgress < 1f) {
+      return;
     }
 
     // Stop loading dots coroutine
     StopAllCoroutines();
 
     // Load main scene
-    LoadMainScene(assetBundleManager);
+    LoadMainScene(AssetBundleManager.Instance);
 
     int startSeed = System.Environment.TickCount;
     UnityEngine.Random.InitState(startSeed);
@@ -557,12 +597,11 @@ public class StartupManager : MonoBehaviour {
   }
 
   private void AddLoadingBarProgress(float amount) {
-    if (_CurrentProgress + amount > 0.95f) {
-      _LoadingBar.SetTargetAndAnimate(0.95f);
+    if (LoadingProgress + amount > 0.95f) {
+      LoadingProgress = 0.95f;
     }
     else {
-      _CurrentProgress += amount;
-      _LoadingBar.SetTargetAndAnimate(_CurrentProgress);
+      LoadingProgress = LoadingProgress + amount;
     }
   }
 
@@ -590,8 +629,9 @@ public class StartupManager : MonoBehaviour {
         if (File.Exists(toPath + assetPath)) {
           diskBytes = File.ReadAllBytes(toPath + assetPath);
         }
-      } catch (Exception e) {
-        _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles,0);
+      }
+      catch (Exception e) {
+        _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles, 0);
         Debug.Log("Exception checking asset hash: " + e.ToString());
         yield break;
       }
@@ -605,8 +645,9 @@ public class StartupManager : MonoBehaviour {
             // data on disk is equal to data in this app bundle
             hashMatches = true;
           }
-        } catch (Exception e) {
-          _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles,1);
+        }
+        catch (Exception e) {
+          _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles, 1);
           Debug.Log("Exception checking asset hash: " + e.ToString());
           yield break;
         }
@@ -630,7 +671,7 @@ public class StartupManager : MonoBehaviour {
       Directory.CreateDirectory(toPath);
     }
     catch (Exception e) {
-      _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles,2);
+      _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles, 2);
       Debug.Log("There was an exception extracting the resource files: " + e.ToString());
       yield break;
     }
@@ -640,7 +681,7 @@ public class StartupManager : MonoBehaviour {
     yield return resourcesWWW;
 
     if (!string.IsNullOrEmpty(resourcesWWW.error)) {
-      _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles,3);
+      _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles, 3);
       Debug.Log("Error loading resources.txt: " + resourcesWWW.error);
       yield break;
     }
@@ -651,14 +692,15 @@ public class StartupManager : MonoBehaviour {
     foreach (string fileName in files) {
       if (fileName.Contains(".")) {
         filesToLoad.Add(fileName);
-      } else {
+      }
+      else {
         // Assume this is a directory
         try {
           Directory.CreateDirectory(toPath + fileName);
         }
         catch (Exception e) {
           _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorDiskFull);
-          Debug.Log("Error extracting file: " + e.ToString());
+          Debug.Log("Error creating directory - " + fileName + " : " + e.ToString());
           yield break;
         }
       }
@@ -720,17 +762,38 @@ public class StartupManager : MonoBehaviour {
   private bool ExtractOneFile(WWW www, string toPath) {
     if (!string.IsNullOrEmpty(www.error)) {
       _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorDiskFull);
-      Debug.Log("Error extracting file: " + www.error);
+      Debug.Log("Error extracting file - streaming asset error: " + www.error);
       return false;
     }
 
+    bool retryOnce = false;
     try {
       File.WriteAllBytes(toPath, www.bytes);
     }
+    catch (IsolatedStorageException ise) {
+      // This exception sometimes gets thrown during the first run on an Android 8.0 device, and supposedly indicates that
+      // the intended file cannot be found. The file does in fact exist at the correct location, and on second run the app
+      // extracts everything fine. To avoid showing an error to the user and making them restart the app, we'll retry the
+      // write one time.
+      retryOnce = true;
+      Debug.Log("First attempt to extract file failed\n " + ise.ToString());
+    }
     catch (Exception e) {
       _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorDiskFull);
-      Debug.Log("Error extracting file: " + e.ToString());
+      Debug.Log("Extracting file - unknown error: " + e.ToString());
       return false;
+    }
+
+    if (retryOnce) {
+      try {
+        Debug.Log("Retrying file extract " + toPath);
+        File.WriteAllBytes(toPath, www.bytes);
+      }
+      catch (Exception e) {
+        _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorDiskFull);
+        Debug.Log("File extract retry failed!\n" + e.ToString());
+        return false;
+      }
     }
 
     www.Dispose();

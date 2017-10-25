@@ -16,6 +16,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/quad.h"
+#include "anki/common/basestation/math/polygon_impl.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -115,9 +116,16 @@ void MemoryMap::ReplaceContentInternal(EContentType typeToReplace, EContentType 
   _quadTree.ForceRedraw();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MemoryMap::TransformContent(NodeTransformFunction transform)
 {
   _quadTree.GetProcessor().TransformContent(transform);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MemoryMap::FindContentIf(NodePredicate pred, std::unordered_set<std::shared_ptr<MemoryMapData>>& output)
+{
+  _quadTree.GetProcessor().FindContentIf(pred, output);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -206,62 +214,30 @@ void MemoryMap::BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) con
 {
   _quadTree.BroadcastMemoryMapDraw(originID, mapIdxHint);
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddQuadInternal(const Quad2f& quad, EContentType type, TimeStamp_t timeMeasured)
-{
-  MemoryMapData data(type, timeMeasured);
-  NodeContent nodeContent(ENodeType::Leaf, data);
-  _quadTree.AddQuad(quad, nodeContent, numberOfAllowedShiftsToIncludeContent);
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddQuadInternal(const Quad2f& quad, const MemoryMapData& content)
+void MemoryMap::AddQuad(const Quad2f& quad, const MemoryMapData& content)
 {
   NodeContent nodeContent(ENodeType::Leaf, content);
   _quadTree.AddQuad(quad, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddLineInternal(const Point2f& from, const Point2f& to, EContentType type, TimeStamp_t timeMeasured)
-{
-  MemoryMapData data(type, timeMeasured);
-  NodeContent nodeContent(ENodeType::Leaf, data);
-  _quadTree.AddLine(from, to, nodeContent, numberOfAllowedShiftsToIncludeContent);
-}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddLineInternal(const Point2f& from, const Point2f& to, const MemoryMapData& content)
+void MemoryMap::AddLine(const Point2f& from, const Point2f& to, const MemoryMapData& content)
 {
   NodeContent nodeContent(ENodeType::Leaf, content);
   _quadTree.AddLine(from, to, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddTriangleInternal(const Triangle2f& tri, EContentType type, TimeStamp_t timeMeasured)
-{
-  MemoryMapData data(type, timeMeasured);
-  NodeContent nodeContent(ENodeType::Leaf, data);
-  _quadTree.AddTriangle(tri, nodeContent, numberOfAllowedShiftsToIncludeContent);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddTriangleInternal(const Triangle2f& tri, const MemoryMapData& content)
+void MemoryMap::AddTriangle(const Triangle2f& tri, const MemoryMapData& content)
 {
   NodeContent nodeContent(ENodeType::Leaf, content);
   _quadTree.AddTriangle(tri, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddPointInternal(const Point2f& point, EContentType type, TimeStamp_t timeMeasured)
-{
-  MemoryMapData data(type, timeMeasured);
-  NodeContent nodeContent(ENodeType::Leaf, data);
-  _quadTree.AddPoint(point, nodeContent, numberOfAllowedShiftsToIncludeContent);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddPointInternal(const Point2f& point, const MemoryMapData& content)
+void MemoryMap::AddPoint(const Point2f& point, const MemoryMapData& content)
 {
   NodeContent nodeContent(ENodeType::Leaf, content);
   _quadTree.AddPoint(point, nodeContent, numberOfAllowedShiftsToIncludeContent);

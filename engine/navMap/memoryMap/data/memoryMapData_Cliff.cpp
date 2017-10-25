@@ -17,7 +17,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MemoryMapData_Cliff::MemoryMapData_Cliff(Vec2f dir, TimeStamp_t t)
-: MemoryMapData(MemoryMapTypes::EContentType::Cliff, t)
+: MemoryMapData(MemoryMapTypes::EContentType::Cliff, t, true)
 , directionality(dir)
 {
 

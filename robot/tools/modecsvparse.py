@@ -60,11 +60,15 @@ def parse_dump(typestr, b64str):
     description = "{}_{:08X}_{}".format(typestr,pc,cause)
     return (description, registers)
 
-def store_dump(dirname, registers, apprun):
+def store_dump(dirname, registers, apprun, raw=None):
     dumpfilename = os.path.join(dirname, str(apprun))
     with open(dumpfilename, "w+") as dumpfile:
         for r in registers:
             dumpfile.write("\t{}\t: {:08x}\n".format(r,registers[r]))
+    if raw:
+        dumpfilename = dumpfilename+".raw"
+        with open(dumpfilename, "w+") as dumpfile:
+            dumpfile.write(raw)
 
            
 if __name__ == "__main__":
@@ -90,7 +94,7 @@ if __name__ == "__main__":
             what, why = parse_dump(typestr, row['data'])
             dirname = os.path.join(datapath, what)
             os.makedirs(dirname, exist_ok = True);
-            store_dump(dirname, why, row['apprun'])
+            store_dump(dirname, why, row['apprun'], row['data'])
 
         
 

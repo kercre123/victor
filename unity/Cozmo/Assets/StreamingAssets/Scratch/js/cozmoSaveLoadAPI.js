@@ -53,6 +53,20 @@
         window.Unity.call({requestId: -1, command: "cozmoRequestToRenameProject", argString: callback, argUUID: projectUUID, argString2: newProjectName});
     }
 
+    // Remix existing project.
+    window.remixProject = function(projectUUID, newProjectName) {
+        // Stop save project timer while we do the remix. We'll turn it back on once Unity calls js back with the project UUID.
+        clearInterval(window.saveProjectTimerId);
+
+        var projectType = "user";
+        if(window.isCozmoSampleProject) {
+            projectType = "sample";
+        }
+        // @todo: inject a new check for featured projects
+
+        window.Unity.call({requestId: -1, command: "cozmoRequestToRemixProject", argUUID: projectUUID, argString: newProjectName, argString2: projectType});
+    }
+
     // Close minigame.
     window.closeCodeLab = function() {
         window.Unity.call({requestId: -1, command: "cozmoCloseCodeLab"});

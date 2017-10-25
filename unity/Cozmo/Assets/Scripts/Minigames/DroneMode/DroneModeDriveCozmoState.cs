@@ -150,7 +150,8 @@ namespace Cozmo {
           _DroneModeControlsSlide.OnQuitConfirmed += _DroneModeGame.SharedMinigameView.HandleQuitConfirmed;
 
           // Show how to play when the player plays drone mode for the first time
-          if (!DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DroneModeInstructionsSeen) {
+          if (!DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DroneModeInstructionsSeen
+              && !DebugMenuManager.Instance.DemoMode) {
             _DroneModeControlsSlide.OpenHowToPlayModal(showCloseButton: false, playAnimations: true);
           }
 

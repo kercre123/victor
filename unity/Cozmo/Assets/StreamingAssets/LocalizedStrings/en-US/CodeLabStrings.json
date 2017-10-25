@@ -7,7 +7,6 @@
     "translate_mode" : "custom",
     "placeholder_format_custom": [
       "%%[^%]+?%%",
-      "%[^%]+?%",
       "##[^#]+?##",
       "[$]\\{[^\\}\\{]+?\\}",
       "__[^_]+?__",
@@ -342,6 +341,9 @@
   "codeLab.tutorial.slide_greenBlockFirst": {
       "translation": "Always place a green flag BLOCK first. That way, the green flag BUTTON starts your program!"
   },
+  "codeLab.tutorial.slide_challenges": {
+      "translation": "Check out Challenges and grow your skills!"
+  },
   "codeLab.projects.modalTitle": {
       "translation": "Cozmo Code Lab"
   },
@@ -428,6 +430,58 @@
   },
 
 
+  "codeLab.playNowModal.startButtonLabel": {
+      "translation": "Start"
+  },
+  "codeLab.playNowModal.stopButtonLabel": {
+      "translation": "Stop"
+  },
+  "codeLab.playNowModal.instructionsLabel": {
+      "translation": "Instructions"
+  },
+  "codeLab.playNowModal.seeInsideButtonLabel": {
+      "translation": "See Inside"
+  },
+
+
+  "codeLab.remixConfirmDialog.dialogTitle": {
+      "translation": "Remix"
+  },
+  "codeLab.remixConfirmDialog.saveProjectAsRemixPrompt": {
+      "translation": "Save this project as a remix?"
+  },
+  "codeLab.remixConfirmDialog.saveRemixButtonLabel": {
+      "translation": "Save As Remix"
+  },
+  "codeLab.remixConfirmDialog.cancelButtonLabel": {
+      "translation": "Cancel"
+  },
+
+
+  "codeLab.firstRemixSavedConfirmation.saved_first_remix_title": {
+      "translation": "You have saved your first Remix!"
+  },
+  "codeLab.firstRemixSavedConfirmation.remixing_blocks_jumpstart_prompt": {
+      "translation": "Remixing the code blocks of another project is a great way to jumpstart your own ideas."
+  },
+  "codeLab.firstRemixSavedConfirmation.continue_button_label": {
+      "translation": "Continue"
+  },
+
+
+  "codeLab.saveModifiedSampleProjectAsRemixDialog.dialogTitle": {
+      "translation": "You have made changes."
+  },
+  "codeLab.saveModifiedSampleProjectAsRemixDialog.saveAsRemixPrompt": {
+      "translation": "Do you want to save your changes as a Remix?"
+  },
+  "codeLab.saveModifiedSampleProjectAsRemixDialog.discardChangesButtonLabel": {
+      "translation": "Discard Changes"
+  },
+  "codeLab.remixNewProject.nameStartsWith": {
+      "translation": "Remix of {0}"
+  },
+
 
   "codeLabSampleProject_DriveInSquare.projectName": {
       "translation": "Drive In Square"
@@ -458,13 +512,14 @@
   },
 
 
-
-
   "codeLabFeaturedProject_HotPotato.projectName": {
       "translation": "Hot Potato"
   },
   "codeLabFeaturedProject_HotPotato.projectDescription": {
       "translation": "When the music stops, don't get stuck with the hot potato!"
+  },
+  "codeLabFeaturedProject_HotPotato.projectInstructions": {
+      "translation": "1. This is a game for two players, plus Cozmo. \n\n2. Players 1 and 2, tap your Cube when it lights up. When it's Cozmo's turn to tap his Cube, make sure he can see the Cube in front of him.\n\n3. In this game, the \"potato\" is indicated by Cube lights. When it lands on you, the lights will first turn red, and then will turn green when the potato can be passed by tapping it.\n\n4. When the music stops, careful not to be stuck with the potato!"
   },
   "codeLabFeaturedProject_TinyOrchestra.projectName": {
       "translation": "Tiny Orchestra"
@@ -472,11 +527,17 @@
   "codeLabFeaturedProject_TinyOrchestra.projectDescription": {
       "translation":  "It's your own tiny orchestra, and Cubes are your instrument!"
   },
+  "codeLabFeaturedProject_TinyOrchestra.projectInstructions": {
+      "translation": "1. Before you begin, make sure your device's sound is turned up.\n\n2. Place 3 Cubes in front of Cozmo.\n\n3. After you start, the Cubes' lights will spin different colors. Tap a Cube to play its instrument. Tap again to change it.\n\n4. Experiment with the different music you can make!"
+  },
   "codeLabFeaturedProject_MagicFortuneTeller.projectName": {
       "translation": "Magic Fortune Teller"
   },
   "codeLabFeaturedProject_MagicFortuneTeller.projectDescription": {
       "translation":  "Shake Cozmo and have your fortune told."
+  },
+  "codeLabFeaturedProject_MagicFortuneTeller.projectInstructions": {
+      "translation":  "1. After you tap start, when Cozmo has a \"?\" on his face, this means means it's your turn to ask him a yes-or-no question.\n\n2. Then shake Cozmo and listen to your magic fortune!"
   },
   "codeLabFeaturedProject_CubeWhack.projectName": {
       "translation": "Cube Whack"
@@ -484,17 +545,26 @@
   "codeLabFeaturedProject_CubeWhack.projectDescription": {
       "translation":  "Whack that Cube! What's your high score?"
   },
+  "codeLabFeaturedProject_CubeWhack.projectInstructions": {
+      "translation": "1. Before you begin, place 3 Cubes in front of Cozmo.\n\n2. Cozmo's backpack light will turn a color. Quickly tap the Cube with the matching color.\n\n3. Tap as many matching Cubes as possible before the time is up!\n\n4. Can you beat your high score?"
+  },
   "codeLabFeaturedProject_FiretruckAlarm.projectName": {
       "translation": "Fire Truck Alarm"
   },
   "codeLabFeaturedProject_FiretruckAlarm.projectDescription": {
       "translation":  "Tick, tock! Timers are more fun when they're a Cozmo."
   },
+  "codeLabFeaturedProject_FiretruckAlarm.projectInstructions": {
+      "translation": "1. After you tap the start flag, Cozmo will display a 30-second timer on his face. When the timer runs out, his fire truck alarm will go off.\n\n2. To add 5 seconds to the timer, tap the blue Cube. To subtract 5 seconds from the timer, tap the red Cube.\n\n3. When you're ready to start your timer, tap the green Cube.\n\n4. Then count down to Cozmo's fire truck alarm!"
+  },
   "codeLabFeaturedProject_LightShow.projectName": {
       "translation": "Light Show"
   },
   "codeLabFeaturedProject_LightShow.projectDescription": {
       "translation":  "Turn off the lights and groove to the music."
+  },
+  "codeLabFeaturedProject_LightShow.projectInstructions": {
+      "translation": "1. Before you begin, turn off the lights.\n\n2. Watch as Cozmo's Cubes perform a light show while he dances to the music!"
   },
 
 
@@ -504,7 +574,7 @@
       "translation": "Autosaved"
   },
   "codeLab.SaveProject.NotSaved": {
-      "translation": "Sample projects not saved."
+      "translation": "Changes not saved. Remix to save a copy!"
   },
  "codeLabHorizontal.UserProject.MyProject": {
     "translation": "My Project {0}"
@@ -676,6 +746,10 @@
   },
 
 
+
+
+
+
   "codeLabGlossary.block_definitions.title.cozmo_vert_drive": {
     "translation": "drive [X] mm at [Y] mm/s"
   },
@@ -715,7 +789,7 @@
     "translation": "turn [X] ° at [Y] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_turn": {
-    "translation": "Turn [X] degrees at a speed of [Y] degrees per second. A positive [X] angle turns him right, and a negative turns him left. Max [Y] speed: 200 °/s"
+    "translation": "Turn [X] degrees at a speed of [Y] degrees per second. A positive [X] angle turns him right, and a negative turns him left. Max [Y] speed: 200 °/s."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_dock_with_cube_by_id": {
@@ -731,21 +805,21 @@
     "translation": "move lift to [X] % at [Y] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_set_liftheight": {
-    "translation": "Move the lift to [X] percent of max (0% = bottom, 100% = top) at a speed to [Y] degrees per second. Note: the lift uses an angular speed because the its arm is technically rotating. Max [Y] speed: 200 °/s"
+    "translation": "Move the lift to [X] percent of max (0% = bottom, 100% = top) at a speed to [Y] degrees per second. Note: the lift uses an angular speed because the its arm is technically rotating. Max [Y] speed: 200 °/s."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_move_lift": {
     "translation": "move lift [X] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_move_lift": {
-    "translation": "Move the lift at a speed to [Y] degrees per second. It will keep moving until stopped, or until min/max height reached. Note: the lift uses an angular speed because the its arm is technically rotating. Max [Y] speed: 200 °/s"
+    "translation": "Move the lift at a speed to [Y] degrees per second. It will keep moving until stopped, or until min/max height reached. Note: the lift uses an angular speed because the its arm is technically rotating. Max [Y] speed: 200 °/s."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_set_headangle": {
     "translation": "move head to [X]° at [Y] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_set_headangle": {
-    "translation": "Move the head to [X] degrees (-25° = max down, 0° = level, 45° = max up) at a speed of [Y] degrees per second. Max [Y] speed: 150 °/s"
+    "translation": "Move the head to [X] degrees (-25° = max down, 0° = level, 45° = max up) at a speed of [Y] degrees per second. Max [Y] speed: 150 °/s."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_setbackpackcolor": {
@@ -913,7 +987,7 @@
     "translation": "when sad face seen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_sad_face": {
-    "translation": "Triggers this code block and runs the code blocks underneath it every time Cozmo sees a happy face. Note that the green flag (start) button must be active for this block to trigger. Tip: Make a particularly upset frown."
+    "translation": "Triggers this code block and runs the code blocks underneath it every time Cozmo sees a sad face. Note that the green flag (start) button must be active for this block to trigger. Tip: Make a particularly upset frown."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_see_cube": {
@@ -927,14 +1001,14 @@
     "translation": "when Cube [#] tapped"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_cube_tap": {
-    "translation": "Triggers this code block and runs the code blocks underneath it every time Cozmo sees the specified Cube [#]."
+    "translation": "Triggers this code block and runs the code blocks underneath it every time the specified Cube [#] is tapped."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_cube_moved": {
     "translation": "when Cube [#] moved"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_cube_moved": {
-    "translation": "Triggers this code block, and runs the code blocks underneath it, every time Cozmo the specified Cube [#] is moved. Tip: Moving a Cube means to placing it in a slightly different position or location. Tapping a Cube means to give it deliberate, quick tap."
+    "translation": "Triggers this code block and runs the code blocks underneath it every time the specified Cube [#] is moved. Tip: Moving a Cube means placing it in a slightly different position or location. Tapping a Cube means giving it a deliberate, quick tap."
   },
 
   "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived": {
@@ -1131,10 +1205,10 @@
     "translation": "Returns [1/2/3] corresponding to the last Cube tapped. Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
   },
 
-  "codeLabGlossary.block_definitions.title.cozmo_vert_cube_was_tapped": {
+  "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_was_tapped": {
     "translation": "was Cube [#] tapped"
   },
-  "codeLabGlossary.block_definitions.description.cozmo_vert_cube_was_tapped": {
+  "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_was_tapped": {
     "translation": "Returns \"true\" or \"false\" depending on if a specified Cube was tapped. Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
   },
 
@@ -1342,28 +1416,34 @@
   "codeLabGlossary.block_definitions.description.operator_mathop": {
     "translation": "Standard math operators: think operators that would be found on a scientific calculator. [abs] = absolute value of [X], [floor] = floor of [X], [ceiling] = ceiling of [X], [sqrt] = square root of [X], [sin] = sine of [X], [cos] = cosine of [X], [tan] = tangent of [X], [asin] = inverse of sine of [X], [acos] = inverse of cosine of [X], [atan] = inverse of tangent of [X], [ln] = natural logarithm of [X], [log] = logarithm of [X], [e^] = e to the power of [X], [10^] = 10 to the power of [X]."
   },
-  "codeLabGlossary.block_definitions.title.Cozmo_play_animation_by_name": {
+  "codeLabGlossary.block_definitions.title.cozmo_play_animation_by_name": {
     "translation": "advanced: play [text] SDK animation"
   },
-  "codeLabGlossary.block_definitions.description.Cozmo_play_animation_by_name": {
+  "codeLabGlossary.block_definitions.description.cozmo_play_animation_by_name": {
     "translation": "ADVANCED CODE BLOCK. The Cozmo python SDK provides access to hundreds more of Cozmo's animations. The animation's id string can be played using this block. Learn more about the SDK at developer.anki.com."
   },
-  "codeLabGlossary.block_definitions.title.Cozmo_play_animation_by_triggername": {
+  "codeLabGlossary.block_definitions.title.cozmo_play_animation_by_triggername": {
     "translation": "advanced: play [text] SDK animation group"
   },
-  "codeLabGlossary.block_definitions.Cozmo_play_animation_by_triggername": {
+  "codeLabGlossary.block_definitions.description.cozmo_play_animation_by_triggername": {
     "translation": "ADVANCED CODE BLOCK. The Cozmo python SDK provides access to hundreds more of Cozmo's animations. The animation group's id string can be played using this block. Learn more about the SDK at developer.anki.com."
   },
-  "codeLabGlossary.block_definitions.title.Cozmo_sound_play": {
-    "translation": "Play [sound name] sound"
+  "codeLabGlossary.block_definitions.title.cozmo_sound_play": {
+    "translation": "play [sound name] sound"
   },
-  "codeLabGlossary.block_definitions.description.Cozmo_sound_play": {
-    "translation": "Stop the [sound name] sound."
+  "codeLabGlossary.block_definitions.description.cozmo_sound_play": {
+    "translation": "Play the [sound name] sound."
   },
-  "codeLabGlossary.block_definitions.title.Cozmo_sound_stop": {
+  "codeLabGlossary.block_definitions.title.cozmo_sound_play_and_wait": {
+    "translation": "play [sound name] sound and wait"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_play_and_wait": {
+    "translation": "Play the [sound name] sound and wait for it to complete."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_stop": {
     "translation": "stop [sound name] sound"
   },
-  "codeLabGlossary.block_definitions.Cozmo_sound_stop": {
+  "codeLabGlossary.block_definitions.description.cozmo_sound_stop": {
     "translation": "Stop the [sound name] sound. Tip: To turn off Code Lab's default background music, stop \"background\" sound."
   }
 }

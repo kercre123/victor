@@ -38,5 +38,12 @@ namespace Cozmo.Needs.Sparks.UI.CozmoSings {
       _ButtonPromptTitle.text = Localization.Get(LocalizationKeys.kUnlockableCozmoSingsButtonPromptTitle);
       _ButtonPromptDescription.text = Localization.Get(LocalizationKeys.kUnlockableCozmoSingsButtonPromptDescription);
     }
+
+    // Overrides SparksDetailModal::OnApplicationPause to stop the Sparks Button text from being reset
+    private void OnApplicationPause(bool pauseStatus) {
+      if (pauseStatus) {
+        StopSparkTrick(isDialogCleanup: true, doEngineCleanup: true);
+      }
+    }
   }
 }

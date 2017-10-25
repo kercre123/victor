@@ -66,6 +66,7 @@ namespace FaceEnrollment {
     public void Awake() {
       OnSharedMinigameViewInitialized += HandleSharedMinigameViewInitialized;
       OnboardingManager.Instance.OnOnboardingPhaseCompleted += HandleOnboardingPhaseComplete;
+      Cozmo.PauseManager.Instance.OnCozmoSleepCancelled += HandleCozmoSleepCancelled;
     }
 
     protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
@@ -95,10 +96,18 @@ namespace FaceEnrollment {
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
       base.SetupViewAfterCozmoReady(newView, data);
 
-      RobotEngineManager.Instance.CurrentRobot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.MeetCozmoFindFaces);
+      StartFaceEnrollmentBehavior();
       if (SharedMinigameView.gameObject.activeInHierarchy) {
         LaunchInitialGameState();
       }
+    }
+
+    private void StartFaceEnrollmentBehavior() {
+      RobotEngineManager.Instance.CurrentRobot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.MeetCozmoFindFaces);
+    }
+
+    private void HandleCozmoSleepCancelled() {
+      StartFaceEnrollmentBehavior();
     }
 
     // Since this has some co-routines state can't be run until minigame view is active
@@ -204,8 +213,14 @@ namespace FaceEnrollment {
       EnterNameForNewFace(string.Empty);
     }
 
-    protected override void CleanUpOnDestroy() {
+    public override void RaiseChallengeQuit() {
+      base.RaiseChallengeQuit();
+      // Onboarding should only be completed if we quit a normal way, not a backgrounding or app killing.
       CompleteMeetCozmoOnboarding();
+    }
+
+    protected override void CleanUpOnDestroy() {
+      Cozmo.PauseManager.Instance.OnCozmoSleepCancelled -= HandleCozmoSleepCancelled;
     }
 
   }
