@@ -98,23 +98,32 @@ namespace Cozmo.WhatsNew {
       // Get date for today
       DataPersistence.Date today = DataPersistenceManager.Today;
 
-      if (_WhatsNewDataList == null
-          || OnboardingManager.Instance.IsAnyOnboardingRequired()
-          || _OptedOutWhatsNewDate.HasValue && (_OptedOutWhatsNewDate.Value == today)
-          || _WhatsNewModalInstance != null
-          || _IsOpeningWhatsNewModal) {
+      // Skip showing the whats new modal...
+      if (_WhatsNewDataList == null                                                     // ... if we have no data
+          || OnboardingManager.Instance.IsAnyOnboardingRequired()                       // ... if we are in onboarding
+          || _OptedOutWhatsNewDate.HasValue && (_OptedOutWhatsNewDate.Value == today)   // ... if we have opted out today
+          || _WhatsNewModalInstance != null                                             // ... if the modal is open
+          || _IsOpeningWhatsNewModal) {                                                 // ... if the modal is loading
         return;
       }
 
+      // ... if we don't have any sessions whatsoever
       List<TimelineEntryData> totalSessions = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions;
       if (totalSessions.Count <= 0) {
         return;
       }
 
+      // ... if we have already connected today
+      if (totalSessions[totalSessions.Count - 1].Date == today) {
+        return;
+      }
+
+      // Update current whats new data to show if we haven't done it before or the date has changed.
       if (_sCurrentWhatsNewDataCheck == null || _sCurrentWhatsNewDataCheck.DateChecked != today) {
         _sCurrentWhatsNewDataCheck = CheckCurrentWhatsNewData(today);
       }
 
+      // Show whats new modal if there is anything to show
       if (_sCurrentWhatsNewDataCheck != null) {
         ShowWhatsNewModal();
       }
