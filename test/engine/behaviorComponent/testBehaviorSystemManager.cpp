@@ -84,7 +84,7 @@ TEST(BehaviorSystemManager, TestDelegationVariants)
 
   // clear the stack
   bsm.CancelSelf(baseBehavior.get());
-  ASSERT_EQ(bsm._behaviorStack->_behaviorStack.size(), 1);
+  ASSERT_EQ(bsm._behaviorStack->_behaviorStack.size(), 0);
   
   // Ensure that injecting a behavior into the stack works properly
   ICozmoBehavior* waitBehavior = behaviorContainer.FindBehaviorByID(BehaviorID::Wait).get();
@@ -151,8 +151,8 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
     IBehavior* canceler = bunchOfDelegates[arbitraryCancelNumber].get();
     bsm.CancelDelegates(canceler);
     ASSERT_TRUE(bsm._behaviorStack->GetTopOfStack() == canceler);
-    // Size is cancel + 3 for base behavior, dev behavior and the one still on top
-    const int idxOnTop = arbitraryCancelNumber + 3;
+    // Size is cancel + 2 for base behavior and the one still on top
+    const int idxOnTop = arbitraryCancelNumber + 2;
     EXPECT_EQ(bsm._behaviorStack->_behaviorStack.size(), idxOnTop);
   }
   
@@ -178,8 +178,8 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
     IBehavior* canceler = bunchOfDelegates[arbitraryCancelNumber2].get();
     bsm.CancelSelf(canceler);
     ASSERT_FALSE(bsm._behaviorStack->IsInStack(canceler));
-    // Size is cancel + 2 for base behavior and dev behavior
-    const int idxOnTop = arbitraryCancelNumber2 + 2;
+    // Size is cancel + 1 for base behavior
+    const int idxOnTop = arbitraryCancelNumber2 + 1;
     EXPECT_EQ(bsm._behaviorStack->_behaviorStack.size(), idxOnTop);
   }
   
@@ -200,5 +200,5 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
   
   // Clear the stack
   bsm.CancelSelf(baseBehavior.get());
-  ASSERT_EQ(bsm._behaviorStack->_behaviorStack.size(), 1);
+  ASSERT_EQ(bsm._behaviorStack->_behaviorStack.size(), 0);
 }

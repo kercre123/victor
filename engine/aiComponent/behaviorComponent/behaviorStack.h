@@ -37,10 +37,13 @@ class BehaviorStack : private Util::noncopyable {
 public:
   BehaviorStack(BehaviorExternalInterface* behaviorExternalInterface)
   :_behaviorExternalInterface(behaviorExternalInterface){};
-  virtual ~BehaviorStack(){}
+  virtual ~BehaviorStack();
   
   void InitBehaviorStack(BehaviorExternalInterface& behaviorExternalInterface,
                          IBehavior* baseOfStack);
+  // Clear the stack if it needs to be re-initialized
+  void ClearStack();
+  
   void UpdateBehaviorStack(BehaviorExternalInterface& behaviorExternalInterface,
                           std::vector<ExternalInterface::RobotCompletedAction>& actionsCompletedThisTick,
                            AsyncMessageGateComponent& asyncMessageGateComp,

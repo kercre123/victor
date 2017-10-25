@@ -30,6 +30,7 @@ enum uint_8 BehaviorClass {
   CheckForStackAtInterval,
   CubeLiftWorkout,
   Dance,
+  DevPettingTestSimple,
   DevTurnInPlaceTest,
   DockingTestSimple,
   DriveInDesperation,
@@ -79,6 +80,9 @@ enum uint_8 BehaviorClass {
   TurnToFace,
   VisitInterestingEdge,
   Wait,
+
+  // Dispatcher Behaviors
+  BehaviorDispatcherRerun,
 
 
   // Behaviors mapped to reaction triggers
@@ -150,6 +154,8 @@ enum uint_8 BehaviorID {
   CantHandleTallStack,
   CubeLiftWorkout,
   Dance_Mambo,
+  DevExecuteBehaviorRerun,
+  DevPettingTestSimple,
   DevTurnInPlaceTest,
   DockingTestSimple,
   DriveOffCharger,
@@ -330,7 +336,8 @@ enum uint_8 BehaviorID {
 
   VictorFreeplay,
 
-  Wait
+  Wait,
+  Wait_TestInjectable // BehaviorID used by tests to create fake behaviors
 }
 
 // Each of these should map to exactly 1 instance of a behavior at runtime

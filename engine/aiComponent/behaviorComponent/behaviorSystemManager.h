@@ -51,6 +51,10 @@ public:
                            BehaviorExternalInterface& behaviorExternalInterface,
                            AsyncMessageGateComponent* asyncMessageComponent);
   
+  // destroy the current behavior stack and setup a new one - provides
+  // no gaurentees that other aspects of behavior system or component state are reset
+  void ResetBehaviorStack(IBehavior* baseBehavior);
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

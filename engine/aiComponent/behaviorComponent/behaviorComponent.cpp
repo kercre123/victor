@@ -23,7 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
-#include "engine/aiComponent/behaviorComponent/devBaseBehavior.h"
+#include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 
@@ -86,7 +86,6 @@ BehaviorComponent::~BehaviorComponent()
   // to actions shutting down
   _behaviorMgr.reset();
   _components.reset();
-  Util::SafeDelete(_devBaseBehavior);
 }
 
 
@@ -244,22 +243,15 @@ void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
         baseBehavior = _components->_behaviorContainer.FindBehaviorByID(baseBehaviorID).get();
         DEV_ASSERT(baseBehavior != nullptr,
                    "BehaviorComponent.Init.InvalidbaseBehavior");
+      }else{
+        // Need a base behavior, so make it base behavior wait
+        Json::Value config = ICozmoBehavior::CreateDefaultBehaviorConfig(
+                                    BehaviorClass::Wait, BehaviorID::Wait);
+        _components->_behaviorContainer.CreateBehavior(config);
+        baseBehavior = _components->_behaviorContainer.FindBehaviorByID(BehaviorID::Wait).get();
       }
     }
   }
-  
-  
-  if( ANKI_DEV_CHEATS ) {
-    // create a dev base layer to put on the bottom, and pass the desired base in so that DevBaseBehavior
-    // will automatically delegate to it
-    if(_devBaseBehavior != nullptr){
-      Util::SafeDelete(_devBaseBehavior);
-    }
-    
-    _devBaseBehavior = new DevBaseBehavior(baseBehavior);
-    baseBehavior = _devBaseBehavior;
-  }
-  
   
   InitializeSubComponents(_components->_robot,
                           baseBehavior,
@@ -274,12 +266,6 @@ void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
                           _components->_asyncMessageComponent,
                           _components->_delegationComponent
   );
-  
-  if( ANKI_DEV_CHEATS ) {
-    // Initialize dev base behavior since it's not created as part of the behavior
-    // factory
-    baseBehavior->Init(_components->_behaviorExternalInterface);
-  }
 
   _components->_behaviorExternalInterface.SetOptionalInterfaces(
                     &_components->_delegationComponent,
@@ -289,8 +275,6 @@ void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
                     &_components->_robot.GetPublicStateBroadcaster());
 
   _audioClient->Init(_components->_behaviorExternalInterface);
-
-  
 
   // LEGACY Configure behavior manager
   {
@@ -330,6 +314,10 @@ void BehaviorComponent::Update(Robot& robot,
                                std::string& currentActivityName,
                                std::string& behaviorDebugStr)
 {
+  if(_messageHandler == nullptr){
+    _messageHandler.reset(new DevBehaviorComponentMessageHandler(robot, *this, _components->_behaviorContainer));
+  }
+
   _behaviorHelperComponent->Update(_components->_behaviorExternalInterface);
 
   if(USE_BSM){

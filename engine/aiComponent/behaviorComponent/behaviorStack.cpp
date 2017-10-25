@@ -24,6 +24,12 @@ namespace Cozmo {
 namespace{
 
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorStack::~BehaviorStack()
+{
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::InitBehaviorStack(BehaviorExternalInterface& behaviorExternalInterface,
@@ -40,6 +46,17 @@ void BehaviorStack::InitBehaviorStack(BehaviorExternalInterface& behaviorExterna
   PushOntoStack(baseOfStack);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorStack::ClearStack()
+{
+  const size_t stackSize = _behaviorStack.size();
+  for(int i = 0; i < stackSize; i++){
+    PopStack();
+  }
+  DEV_ASSERT(_behaviorStack.empty(), "BehaviorStack.Destructor.NotAllBehaviorsPoppedFromStack");
+
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExternalInterface,

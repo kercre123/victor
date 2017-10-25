@@ -48,7 +48,7 @@ void CreateStackBehavior(Robot& robot, ICozmoBehaviorPtr& stackBehavior, Behavio
   const std::string& configStr =
     R"({
          "behaviorClass": "StackBlocks",
-         "behaviorID": "Wait",
+         "behaviorID": "Wait_TestInjectable",
          "flatScore": 0.8
        })";
 

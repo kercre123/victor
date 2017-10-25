@@ -26,7 +26,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
-#include "engine/aiComponent/behaviorComponent/devBaseBehavior.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
@@ -175,13 +174,15 @@ void DoBehaviorInterfaceTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorEx
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void InjectBehaviorIntoStack(ICozmoBehavior& injectBehavior, TestBehaviorFramework& testFramework)
 {
-  auto& backOfBehaviorStack = testFramework.GetBehaviorComponent()._components->_behaviorSysMgr._behaviorStack->_behaviorStack.back();
-  DevBaseBehavior* cozmoBehavior = dynamic_cast<DevBaseBehavior*>(backOfBehaviorStack);
-  if(ANKI_VERIFY(cozmoBehavior != nullptr, "InjectBehaviorIntoStack.NullptrCast", "")){
-    cozmoBehavior->_possibleDelegates.insert(&injectBehavior);
-    testFramework.GetBehaviorComponent()._components->_behaviorSysMgr.Delegate(cozmoBehavior, &injectBehavior);
+  auto& behaviorStack = testFramework.GetBehaviorComponent()._components->_behaviorSysMgr._behaviorStack->_behaviorStack;
+  if(ANKI_VERIFY(!behaviorStack.empty(),"InjectBehaviorIntoStack.NoBaseBehavior","")){
+    IBehavior* lastEntry = behaviorStack.back();
+    auto& delegatesMap = testFramework.GetBehaviorComponent()._components->_behaviorSysMgr._behaviorStack->_delegatesMap;
+    delegatesMap[lastEntry].insert(&injectBehavior);    
+    testFramework.GetBehaviorComponent()._components->_behaviorSysMgr.Delegate(lastEntry, &injectBehavior);
   }
 }
 
@@ -199,11 +200,17 @@ void InjectValidDelegateIntoBSM(BehaviorSystemManager& bsm,
                                 IBehavior* delegated,
                                 bool shouldMarkAsEnterdScope){
   auto iter = bsm._behaviorStack->_delegatesMap.find(delegator);
-  if(iter != bsm._behaviorStack->_delegatesMap.end()){
+  if(iter == bsm._behaviorStack->_delegatesMap.end()){
+    // Stack must be empty - inject anyways
+    DEV_ASSERT(bsm._behaviorStack->_behaviorStack.empty(),
+               "TestBehaviorFramework.InjectValidDelegate.StackNotEmptyButDelegatMapMiss");
+    bsm._behaviorStack->_delegatesMap[delegator].insert(delegated);
+  }else{
     iter->second.insert(delegated);
-    if(shouldMarkAsEnterdScope){
-      delegated->OnEnteredActivatableScope();
-    }
+  }
+  
+  if(shouldMarkAsEnterdScope){
+    delegated->OnEnteredActivatableScope();
   }
 }
 
@@ -498,7 +505,7 @@ ICozmoBehavior::Status TestBehaviorWithHelpers::UpdateInternal_WhileRunning(Beha
       if(behaviorExternalInterface.HasDelegationComponent()){
         behaviorExternalInterface.GetDelegationComponent().CancelSelf(this);
       }
-      return Status::Complete;
+      return Status::Running;
     }
   }
 }

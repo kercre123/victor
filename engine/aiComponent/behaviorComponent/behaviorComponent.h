@@ -47,6 +47,7 @@ class BehaviorSystemManager;
 class BlockWorld;
 class DelegationComponent;
 class DevBaseBehavior;
+class DevBehaviorComponentMessageHandler;
 class FaceWorld;
 class IBehavior;
 class Robot;
@@ -78,7 +79,7 @@ public:
   BehaviorSystemManager&     _behaviorSysMgr;
   BehaviorExternalInterface& _behaviorExternalInterface;
   BehaviorContainer&         _behaviorContainer;
-  BehaviorEventComponent&      _behaviorEventComponent;
+  BehaviorEventComponent&    _behaviorEventComponent;
   AsyncMessageGateComponent& _asyncMessageComponent;
   DelegationComponent&       _delegationComponent;
   
@@ -88,10 +89,10 @@ protected:
   // scope so that if in other cases the references are passed in directly
   // these ptrs will go uninitialized/unused
   friend class Anki::Cozmo::BehaviorComponent;
-  std::unique_ptr<BehaviorSystemManager>     _behaviorSysMgrPtr;
   std::unique_ptr<BehaviorExternalInterface> _behaviorExternalInterfacePtr;
   std::unique_ptr<BehaviorContainer>         _behaviorContainerPtr;
-  std::unique_ptr<BehaviorEventComponent>      _behaviorEventComponentPtr;
+  std::unique_ptr<BehaviorSystemManager>     _behaviorSysMgrPtr;
+  std::unique_ptr<BehaviorEventComponent>    _behaviorEventComponentPtr;
   std::unique_ptr<AsyncMessageGateComponent> _asyncMessageComponentPtr;
   std::unique_ptr<DelegationComponent>       _delegationComponentPtr;
 };
@@ -153,6 +154,7 @@ protected:
   // Support legacy cozmo code
   friend class Robot;
   friend class AIComponent;
+  friend class DevBehaviorComponentMessageHandler;
   friend class TestBehaviorFramework; // for testing access to internals
   inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
   inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
@@ -173,14 +175,14 @@ private:
   // component which behaviors can delegate to for automatic action error handling
   std::unique_ptr<BehaviorHelperComponent> _behaviorHelperComponent;
 
+  // component that receives dev messages and then sets properties in the behavior component as a result
+  std::unique_ptr<DevBehaviorComponentMessageHandler> _messageHandler;
+
   // components which manage the behavior system
   std::unique_ptr<BehaviorManager>       _behaviorMgr;
   
   // Behavior audio client is used to update the audio engine with the current sparked state (a.k.a. "round")
-  std::unique_ptr<Audio::BehaviorAudioComponent> _audioClient;
-  
-  DevBaseBehavior* _devBaseBehavior = nullptr;
-  
+  std::unique_ptr<Audio::BehaviorAudioComponent> _audioClient;  
 };
 
 } // namespace Cozmo

@@ -400,7 +400,7 @@ TEST(MoodManager, DecayResetFromAwards)
 static const char* kTestBehavior1Json =
 "{"
 "   \"behaviorClass\" : \"Wait\","
-"   \"behaviorID\" : \"Wait\","
+"   \"behaviorID\" : \"Wait_TestInjectable\","
 "   \"repetitionPenalty\" :"
 "   {"
 "     \"nodes\" :"

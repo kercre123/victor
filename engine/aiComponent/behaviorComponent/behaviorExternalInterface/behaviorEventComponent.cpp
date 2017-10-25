@@ -25,7 +25,7 @@ namespace{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorEventComponent::BehaviorEventComponent()
-:_messageSubscriber(nullptr)
+: _messageSubscriber(nullptr)
 {
 
 }

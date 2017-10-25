@@ -83,10 +83,10 @@ TEST(DelegationTree, FullTreeWalkthrough)
   
   // Clear out the default stack and put the base behavior on the stack
   BehaviorSystemManager& bsm = testFramework.GetBehaviorSystemManager();
-  IBehavior* bottomOfStack = bsm._behaviorStack->_behaviorStack.front();
-  bsm.CancelDelegates(bottomOfStack);
-  ASSERT_TRUE(bsm.Delegate(bottomOfStack, baseBehavior));
-  bottomOfStack = bsm._behaviorStack->GetTopOfStack();
+  bsm._behaviorStack->ClearStack();
+  bsm._behaviorStack->InitBehaviorStack(testFramework.GetBehaviorExternalInterface(),
+                                        baseBehavior);
+  IBehavior* bottomOfStack = bsm._behaviorStack->GetTopOfStack();
   
   std::map<IBehavior*,std::set<IBehavior*>> delegateMap;
   std::set<IBehavior*> tmpDelegates;

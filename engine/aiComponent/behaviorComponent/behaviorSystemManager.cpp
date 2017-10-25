@@ -68,14 +68,11 @@ Result BehaviorSystemManager::InitConfiguration(IBehavior* baseBehavior,
   DEV_ASSERT(_initializationStage == InitializationStage::SystemNotInitialized &&
              baseBehavior != nullptr,
              "BehaviorSystemManager.InitConfiguration.AlreadyInitialized");
-  _initializationStage = InitializationStage::StackNotInitialized;
-  _baseBehaviorTmp = baseBehavior;
 
-  _asyncMessageComponent = asyncMessageComponent;
   // Assumes there's only one instance of the behavior external Intarfec
   _behaviorExternalInterface = &behaviorExternalInterface;
-  _behaviorStack.reset(new BehaviorStack(_behaviorExternalInterface));
-  
+  _asyncMessageComponent = asyncMessageComponent;
+  ResetBehaviorStack(baseBehavior);
   
   Robot& robot = behaviorExternalInterface.GetRobot();
   if(robot.HasExternalInterface()){
@@ -88,6 +85,18 @@ Result BehaviorSystemManager::InitConfiguration(IBehavior* baseBehavior,
   }
   
   return RESULT_OK;
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior)
+{
+  _initializationStage = InitializationStage::StackNotInitialized;
+  _baseBehaviorTmp = baseBehavior;
+  if(_behaviorStack != nullptr){
+    _behaviorStack->ClearStack();
+  }
+  _behaviorStack.reset(new BehaviorStack(_behaviorExternalInterface));
 }
 
 
@@ -214,7 +223,7 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
 
   PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.Delegate.ToBehavior",
                 "'%s' delegated to '%s'",
-                delegator->GetPrintableID().c_str(),
+                delegator != nullptr ? delegator->GetPrintableID().c_str() : "Empty Stack",
                 delegated->GetPrintableID().c_str());
   
   _behaviorStack->DebugPrintStack("AfterDelegation");

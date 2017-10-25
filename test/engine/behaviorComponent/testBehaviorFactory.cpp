@@ -33,7 +33,7 @@ using namespace Anki::Cozmo;
 static const char* kTestBehaviorJson =
 "{"
 "   \"behaviorClass\" : \"PlayAnim\","
-"   \"behaviorID\" : \"Wait\","
+"   \"behaviorID\" : \"Wait_TestInjectable\","
 "   \"animTriggers\" : [ \"UnitTestAnim\" ],"
 "   \"minTimeBetweenRuns\" : 5.0,"
 "   \"emotionScorers\" : ["
@@ -100,7 +100,7 @@ static const char* kTestBehaviorJson =
 "  }"
 "}";
 
-static const BehaviorID expectedID = BehaviorID::Wait;
+static const BehaviorID expectedID = BehaviorID::Wait_TestInjectable;
 
 // verifies that behavior matches expected data based on the Json above and factory contains it correctly
 void VerifyBehavior(const ICozmoBehaviorPtr inBehavior, const BehaviorContainer& behaviorContainer, size_t expectedBehaviorCount)

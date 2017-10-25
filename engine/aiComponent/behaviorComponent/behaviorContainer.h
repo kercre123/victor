@@ -70,6 +70,8 @@ public:
   void Init(BehaviorExternalInterface& behaviorExternalInterface,
             const bool shouldAddToActivatableScope);
 protected:
+  friend class BehaviorComponent;
+  friend class DevBehaviorComponentMessageHandler;
   // Check to ensure that the factory only includes one behavior per executable
   // type
   void VerifyExecutableBehaviors() const;

@@ -80,14 +80,14 @@ public:
   BehaviorContainer& GetBehaviorContainer(){ assert(_behaviorContainer); return *_behaviorContainer;}
   
 private:
-  std::unique_ptr<Robot> _robot;
   std::unique_ptr<BehaviorContainer> _behaviorContainer;
+  std::unique_ptr<Robot> _robot;
   
   // Not gaurenteed to be initialized
+  AIComponent*               _aiComponent;
   BehaviorComponent*         _behaviorComponent;
   BehaviorExternalInterface* _behaviorExternalInterface;
   BehaviorSystemManager*     _behaviorSystemManager;
-  AIComponent*               _aiComponent;
   
 };
 
