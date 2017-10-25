@@ -787,14 +787,34 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     };
     static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithNotInterestingEdges),
       "This array does not define all types once and only once.");
+
+    constexpr MemoryMapTypes::FullContentArray typesToCalculateBordersWithProx =
+    {
+      {MemoryMapTypes::EContentType::Unknown               , true},
+      {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
+      {MemoryMapTypes::EContentType::ClearOfCliff          , true},
+      {MemoryMapTypes::EContentType::ObstacleCube          , true},
+      {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
+      {MemoryMapTypes::EContentType::ObstacleCharger       , true},
+      {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
+      {MemoryMapTypes::EContentType::ObstacleProx          , false},
+      {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
+      {MemoryMapTypes::EContentType::Cliff                 , true},
+      {MemoryMapTypes::EContentType::InterestingEdge       , true},
+      {MemoryMapTypes::EContentType::NotInterestingEdge    , true}
+    };
+    static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithProx),
+      "This array does not define all types once and only once.");
     
     // GetNavMap Polys
     std::vector<Poly2f> convexHulls;
-    if (kUseNavMapObstacles) {
+    // if (kUseNavMapObstacles) {
       INavMap* memoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
       GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);    
       GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);    
-    }
+      GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);    
+    // }
+      // PRINT_NAMED_WARNING("LatticePlanner.GetObstacles", "Found %lu obstacle regions", convexHulls.size());
 
     // add Blockworld polys
     for(const auto& boundingQuad : boundingBoxes) {

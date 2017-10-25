@@ -58,6 +58,8 @@ public:
   
 private:
 
+  void UpdateNavMap();
+  
   void Log();
   
   Robot& _robot;

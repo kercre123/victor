@@ -1081,7 +1081,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   }
   
   // check for new obstacles from prox sensor
-  _blockWorld->UpdateProxObstaclePoses();
+  // _blockWorld->UpdateProxObstaclePoses();
   
 # pragma clang diagnostic push
 # pragma clang diagnostic ignored "-Wdeprecated-declarations" 
