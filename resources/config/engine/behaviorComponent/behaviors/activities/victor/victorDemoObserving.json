@@ -1,12 +1,28 @@
 {
   "behaviorID" : "VictorDemoObserving",
-  "behaviorClass" : "DispatcherStrictPriority",
+  "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
 
   "interruptActiveBehavior": false,
 
   "behaviors": [
-    "Needs_SevereLowEnergyRequest",
-    "Needs_MildLowEnergyRequest",
-    "NothingToDo_Idle"
+    {
+      "behavior": "Needs_SevereLowEnergyRequest",
+      "cooldown_s": 5.0,
+      "cooldown_random_factor": 0.5
+    },
+    {
+      "behavior": "Needs_MildLowEnergyRequest",
+      "cooldown_s": 30.0,
+      "cooldown_random_factor": 0.3
+    },
+    {
+      "behavior": "VictorDemoObservingFaceInteraction",
+      "cooldown_s": 30.0,
+      "cooldown_random_factor": 0.5
+    },
+    {
+      "behavior": "NothingToDo_Idle",
+      "cooldown_s": 0.0
+    }
   ]
 }

@@ -110,6 +110,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoFeeding.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoObservingFaceInteraction.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorObservingDemo.h"
 
 #include "engine/robot.h"
@@ -746,6 +747,12 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, 
       newBehavior = ICozmoBehaviorPtr(new BehaviorDispatcherStrictPriorityWithCooldown(config));
       break;
     }
+    case BehaviorClass::VictorDemoObservingFaceInteraction:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorVictorDemoObservingFaceInteraction(config));
+      break;
+    }
+       
   }
   
   if(newBehavior != nullptr){
