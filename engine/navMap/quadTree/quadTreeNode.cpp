@@ -1659,7 +1659,7 @@ bool QuadTreeNode::TransformContent_Recursive(NodeTransformFunction transform,
   bool contentChanged = false;
   if (_content.data)
   {
-    MemoryMapData newData = transform(_content.data);
+    MemoryMapDataPtr newData = transform(_content.data);
     NodeContent newContent(_content.type, newData);
     
     // AddContentPoint checks if content has changed for us
@@ -1676,10 +1676,28 @@ bool QuadTreeNode::TransformContent_Recursive(NodeTransformFunction transform,
   
   for ( const auto& cPtr : _childrenPtr )
   {
-      cPtr->TransformContent_Recursive(transform, insertFrom, processor);
+      contentChanged |= cPtr->TransformContent_Recursive(transform, insertFrom, processor);
   }
   
   return contentChanged;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeNode::FindContentIf_Recursive(MemoryMapTypes::NodePredicate pred, 
+                                           std::unordered_set<std::shared_ptr<MemoryMapData>>& output, 
+                                           QuadTreeProcessor& processor)
+{  
+  if (_content.data)
+  {
+    if (pred(_content.data)) {
+      output.insert(_content.data);
+    }
+  }
+  
+  for ( const auto& cPtr : _childrenPtr )
+  {
+      cPtr->FindContentIf_Recursive(pred, output, processor);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

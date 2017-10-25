@@ -29,6 +29,7 @@
 
 #include <memory>
 #include <vector>
+#include <unordered_set>
 
 namespace Anki {
 namespace Cozmo {
@@ -231,7 +232,12 @@ private:
   bool TransformContent_Recursive(MemoryMapTypes::NodeTransformFunction transform,
                                   QuadTreeNode* insertFrom, 
                                   QuadTreeProcessor& processor);
-
+                                  
+  // populate a list of all data that matches the predicate
+  void FindContentIf_Recursive(MemoryMapTypes::NodePredicate pred, 
+                               std::unordered_set<std::shared_ptr<MemoryMapData>>& output, 
+                               QuadTreeProcessor& processor);
+  
   // checks if the given point is contained in the quad, and properly acts, delegating on children if needed
   bool AddPoint_Recursive(const Point2f& point, const NodeContent& detectedContent, QuadTreeProcessor& processor);
 

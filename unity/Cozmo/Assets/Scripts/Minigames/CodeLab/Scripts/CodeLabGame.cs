@@ -37,6 +37,7 @@ namespace CodeLab {
     public string FeaturedProjectImageName;
     public string FeaturedProjectBackgroundColor;
     public string FeaturedProjectTitleTextColor;
+    public string FeaturedProjectInstructions;
   }
 
   public class CodeLabGame : GameBase {
@@ -92,10 +93,20 @@ namespace CodeLab {
     private static readonly long kMaximumDescriptionLength = 1000; // assuming any file title over 1000 characters is suspect
     private static readonly long kMaximumCodelabDataLength = 10000000; // assuming any file over 10 Mb is suspect
 
+#if ANKI_DEV_CHEATS
+    PerformanceStats _PerformanceStats = new PerformanceStats();
+#endif // ANKI_DEV_CHEATS
 
     private CubeColors[] _CubeLightColors = { new CubeColors(),
                                      new CubeColors(),
                                      new CubeColors() };
+
+    private static readonly List<string> BlocksWithPIIRisks = new List<string>() {
+      "cozmo_says", "cozmo_play_animation_from_dropdown", "cozmo_play_animation_by_name", "cozmo_play_animation_by_triggername",
+      "event_broadcast", "event_broadcastandwait", // NOTE: Currently messages cannot be named and are not PII risks, but I wanted to future proof against that change
+      "cozmo_vert_cozmoface_draw_text",
+      "cozmoSays", "cozmoPlayAnimation", "cozVertPlayNamedAnim", "cozVertPlayNamedTriggerAnim",
+      "cozVertCozmoFaceDrawText" };
 
     private class CubeColors {
       public Color[] Colors { get; set; }
@@ -388,7 +399,7 @@ namespace CodeLab {
 
             _SessionState.SetGrammarMode(isVertical ? GrammarMode.Vertical : GrammarMode.Horizontal);
 
-            DAS.Info("CodeLab.EnsureProjectExists.Adding", "uuid='" + projectUUID + "' projectName='" + projectName + "' isVertical=" + isVertical);
+            DAS.Info("CodeLab.EnsureProjectExists.Adding", "uuid='" + projectUUID + "' isVertical=" + isVertical);
 
             CodeLabProject project = FindUserProjectWithUUID(projectUUID);
             if (project == null) {
@@ -439,6 +450,7 @@ namespace CodeLab {
         robot.EnableCubeSleep(false);
       }
 
+      ResetAllCodeLabAudio();
       InProgressScratchBlockPool.ReleaseAllInUse();
       StopVerticalHatBlockListeners();
 
@@ -496,6 +508,9 @@ namespace CodeLab {
     }
 
     public void EvaluateJS(string text) {
+#if ANKI_DEV_CHEATS
+      _PerformanceStats.AddEvaluateJSCall();
+#endif // ANKI_DEV_CHEATS
       if (_WebViewObjectComponent != null) {
         _WebViewObjectComponent.EvaluateJS(text);
       }
@@ -638,6 +653,10 @@ namespace CodeLab {
         // like "WaitForActions(ActionType)" to work, as they need to be polled each update.
         InProgressScratchBlockPool.UpdateBlocks();
       }
+
+#if ANKI_DEV_CHEATS
+      _PerformanceStats.Update(this, _SessionState.IsProgramRunning());
+#endif
     }
 
     private void LoadWebView() {
@@ -658,12 +677,11 @@ namespace CodeLab {
         _WebViewObjectComponent.Init(WebViewCallback, false, err: WebViewError, ld: WebViewLoaded, enableWKWebView: true);
 
         if (Cozmo.WhatsNew.WhatsNewModalManager.ShouldAutoOpenProject) {
-          OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject,
+          OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplayFeaturedProject,
                              Cozmo.WhatsNew.WhatsNewModalManager.AutoOpenCodeLabProjectGuid.ToString(),
                              isVertical: true);
         }
         else {
-
           Dictionary<string, string> urlParameters = new Dictionary<string, string>();
           urlParameters["projects"] = _LastOpenedTab;
           LoadURL("extra/projects.html", urlParameters);
@@ -771,6 +789,21 @@ namespace CodeLab {
       }
     }
 
+    private void ResetAllCodeLabAudio() {
+      // Stop any audio the user may have started in their Code Lab program
+      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Sfx_Global_Stop,
+                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
+                                        (callbackInfo) => { /* callback */ });
+      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Music_Global_Stop,
+                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
+                                        (callbackInfo) => { /* callback */ });
+
+      // Restore background music in case it was turned off
+      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_Off,
+                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
+                                        (callbackInfo) => { /* callback */ });
+    }
+
     private void ResetRobotToHomePos() {
       // Reset the robot to a default pose (head straight, lift down)
       // Only does anything if not already close to that pose.
@@ -802,18 +835,7 @@ namespace CodeLab {
         }
       }
 
-      // Stop any audio the user may have started in their Code Lab program
-      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Sfx_Global_Stop,
-                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
-                                        (callbackInfo) => { /* callback */ });
-      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Music_Global_Stop,
-                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
-                                        (callbackInfo) => { /* callback */ });
-
-      // Restore background music in case it was turned off
-      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_Off,
-                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
-                                        (callbackInfo) => { /* callback */ });
+      ResetAllCodeLabAudio();
 
       if (SetHeadAngleLazy(0.0f, callback: this.OnResetToHomeCompleted, queueActionPosition: queuePos) != (uint)ActionConstants.INVALID_TAG) {
         ++_PendingResetToHomeActions;
@@ -949,7 +971,14 @@ namespace CodeLab {
         proj.ProjectIconName = project.ProjectIconName;
         proj.ProjectName = project.ProjectName; // value is string key
         proj.IsVertical = project.IsVertical;
-        copyCodeLabSampleProjectList.Add(proj);
+        proj.VersionNum = project.VersionNum;
+        if (proj.VersionNum > CodeLabProject.kCurrentVersionNum) {
+          // NOTE: While sending ProjectName's is generally a PII risk, Sample projects will never have user configurable names
+          DAS.Warn("Codelab.OnAppLoadedFromData.BadVersionNumber", "sample project " + proj.ProjectName + "'s version number " + project.VersionNum.ToString() + " is greater than the app's codelab version " + CodeLabProject.kCurrentVersionNum.ToString());
+        }
+        else {
+          copyCodeLabSampleProjectList.Add(proj);
+        }
       }
 
       string sampleProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabSampleProjectList);
@@ -974,12 +1003,20 @@ namespace CodeLab {
         CodeLabFeaturedProject proj = new CodeLabFeaturedProject();
         proj.ProjectUUID = project.ProjectUUID;
         proj.ProjectName = project.ProjectName; // value is string key
+        proj.VersionNum = project.VersionNum;
         proj.FeaturedProjectDescription = project.FeaturedProjectDescription; // value is string key
         proj.FeaturedProjectImageName = project.FeaturedProjectImageName;
         proj.FeaturedProjectBackgroundColor = project.FeaturedProjectBackgroundColor;
         proj.FeaturedProjectTitleTextColor = project.FeaturedProjectTitleTextColor;
+        proj.FeaturedProjectInstructions = project.FeaturedProjectInstructions;
 
-        copyCodeLabFeaturedProjectList.Add(proj);
+        if (proj.VersionNum > CodeLabProject.kCurrentVersionNum) {
+          // NOTE: While sending ProjectName's is generally a PII risk, Sample projects will never have user configurable names
+          DAS.Warn("Codelab.OnAppLoadedFromData.BadVersionNumber", "featured project " + proj.ProjectName + "'s version number " + project.VersionNum.ToString() + " is greater than the app's codelab version " + CodeLabProject.kCurrentVersionNum.ToString());
+        }
+        else {
+          copyCodeLabFeaturedProjectList.Add(proj);
+        }
       }
 
       string featuredProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabFeaturedProjectList);
@@ -1048,7 +1085,8 @@ namespace CodeLab {
           _SessionState.OnCreatedProject(newProject);
         }
         catch (NullReferenceException) {
-          DAS.Error("OnCozmoSaveUserProject.NullReferenceExceptionSaveNewProject", "Save new Code Lab user project. CodeLabUserProjectNum = " + defaultProfile.CodeLabUserProjectNum + ", newProject = " + newProject);
+          string sanitizedNewProject = PrivacyGuard.HidePersonallyIdentifiableInfo(newProject.ProjectJSON);
+          DAS.Error("OnCozmoSaveUserProject.NullReferenceExceptionSaveNewProject", "Save new Code Lab user project. CodeLabUserProjectNum = " + defaultProfile.CodeLabUserProjectNum + ", newProject = " + sanitizedNewProject);
         }
       }
       else {
@@ -1064,7 +1102,8 @@ namespace CodeLab {
           _SessionState.OnUpdatedProject(projectToUpdate);
         }
         catch (NullReferenceException) {
-          DAS.Error("OnCozmoSaveUserProject.NullReferenceExceptionUpdateProject", "Save existing CodeLab user project. projectUUID = " + projectUUID + ", projectToUpdate = " + projectToUpdate);
+          string sanitizedUpdatedProject = PrivacyGuard.HidePersonallyIdentifiableInfo(projectToUpdate.ProjectJSON);
+          DAS.Error("OnCozmoSaveUserProject.NullReferenceExceptionUpdateProject", "Save existing CodeLab user project. projectUUID = " + projectUUID + ", projectToUpdate = " + sanitizedUpdatedProject);
         }
       }
 
@@ -1100,6 +1139,50 @@ namespace CodeLab {
       _LastOpenedTab = scratchRequest.argString;
     }
 
+    // Given a UUID, find the existing project (from the user, sample or featured project lists) and return a new project of type CodeLabProject
+    // with a new UUID.
+    private CodeLabProject FindProjectByUUIDAndCreateCodeLabProject(string projectUUID, string projectType) {
+      CodeLabProject codeLabProject = null;
+      if (String.IsNullOrEmpty(projectUUID)) {
+        DAS.Error("Codelab.FindProjectByUUID.BadUUID", "Attempt to find project with no project UUID specified.");
+      }
+      else {
+        switch (projectType) {
+        case "user":
+          CodeLabProject codeLabUserProject = FindUserProjectWithUUID(projectUUID);
+          if (codeLabUserProject != null) {
+            codeLabProject = new CodeLabProject(codeLabUserProject.ProjectName, codeLabUserProject.ProjectJSON, codeLabUserProject.IsVertical);
+            codeLabProject.VersionNum = codeLabUserProject.VersionNum;
+            break;
+          }
+
+          break;
+        case "sample":
+          // @TODO: when we pass in "featured" as a project type, break out this behavior into two cases
+          Guid projectGuid = new Guid(projectUUID);
+
+          Predicate<CodeLabSampleProject> findSampleProject = (CodeLabSampleProject p) => { return p.ProjectUUID == projectGuid; };
+          CodeLabSampleProject sampleProject = _CodeLabSampleProjects.Find(findSampleProject);
+          if (sampleProject != null) {
+            codeLabProject = new CodeLabProject(sampleProject.ProjectName, sampleProject.ProjectJSON, sampleProject.IsVertical);
+            codeLabProject.VersionNum = sampleProject.VersionNum;
+            break;
+          }
+
+          Predicate<CodeLabFeaturedProject> findFeaturedProject = (CodeLabFeaturedProject p) => { return p.ProjectUUID == projectGuid; };
+          CodeLabFeaturedProject featuredProject = _CodeLabFeaturedProjects.Find(findFeaturedProject);
+          if (featuredProject != null) {
+            codeLabProject = new CodeLabProject(featuredProject.ProjectName, featuredProject.ProjectJSON, true);
+            codeLabProject.VersionNum = featuredProject.VersionNum;
+          }
+
+          break;
+        }
+      }
+
+      return codeLabProject;
+    }
+
     // This callback manages identifying a CodeLabProject from a user project export request from the workspace and handling it appropriately.
     private void OnCozmoExportProject(ScratchRequest scratchRequest) {
       DAS.Info("Codelab.OnCozmoExportProject.Called", "User intends to share project");
@@ -1110,39 +1193,9 @@ namespace CodeLab {
         DAS.Error("Codelab.OnCozmoExportProject.BadUUID", "Attempt to export project with no project UUID specified.");
       }
       else {
-        CodeLabProject projectToExport = null;
-
         string projectType = scratchRequest.argString;
-        switch (projectType) {
-        case "user":
-          projectToExport = FindUserProjectWithUUID(projectUUID);
-          break;
-        case "sample":
-          // @TODO: when we pass in "featured" as a project type, break out this behavior into two cases
-          Guid projectGuid = new Guid(projectUUID);
 
-          Predicate<CodeLabSampleProject> findSampleProject = (CodeLabSampleProject p) => { return p.ProjectUUID == projectGuid; };
-          CodeLabSampleProject sampleProject = _CodeLabSampleProjects.Find(findSampleProject);
-          if (sampleProject != null) {
-            projectToExport = new CodeLabProject(sampleProject.ProjectName, sampleProject.ProjectJSON, sampleProject.IsVertical);
-            projectToExport.VersionNum = sampleProject.VersionNum;
-
-            // @TODO: The MinAppVersionNum will need to be set when that is added
-            break;
-          }
-
-          Predicate<CodeLabFeaturedProject> findFeaturedProject = (CodeLabFeaturedProject p) => { return p.ProjectUUID == projectGuid; };
-          CodeLabFeaturedProject featuredProject = _CodeLabFeaturedProjects.Find(findFeaturedProject);
-          if (featuredProject != null) {
-            projectToExport = new CodeLabProject(featuredProject.ProjectName, featuredProject.ProjectJSON, true);
-            projectToExport.VersionNum = featuredProject.VersionNum;
-
-            // @TODO: The MinAppVersionNum will need to be set when that is added
-          }
-
-
-          break;
-        }
+        CodeLabProject projectToExport = FindProjectByUUIDAndCreateCodeLabProject(projectUUID, projectType);
 
         if (projectToExport != null) {
           string projectToExportJSON = kCodelabPrefix + WWW.EscapeURL(projectToExport.GetSerializedJson());
@@ -1199,7 +1252,7 @@ namespace CodeLab {
         return true;
       case "cozmoSaveOnQuitCompleted":
         // JavaScript is confirming project has been saved,
-        // so now we can exit Code Lab. 
+        // so now we can exit Code Lab.
         RaiseChallengeQuit();
         return true;
       case "getCozmoUserAndSampleProjectLists":
@@ -1235,7 +1288,11 @@ namespace CodeLab {
         return true;
       case "cozmoRequestToRenameProject":
         SessionState.DAS_Event("robot.code_lab.rename_project", "");
-        RenameCodeLabProject(scratchRequest);
+        OnCozmoRenameCodeLabProject(scratchRequest);
+        return true;
+      case "cozmoRequestToRemixProject":
+        SessionState.DAS_Event("robot.code_lab.remix_project", "");
+        OnCozmoRemixCodeLabProject(scratchRequest);
         return true;
       case "cozmoDeleteUserProject":
         OnCozmoDeleteUserProject(scratchRequest);
@@ -1271,11 +1328,16 @@ namespace CodeLab {
         return true;
       case "cozmoDASLog":
         // Use for debugging from JavaScript
-        DAS.Warn(scratchRequest.argString, scratchRequest.argString2);
+        string sanitizedLogString = PrivacyGuard.HidePersonallyIdentifiableInfo(scratchRequest.argString2);
+        DAS.Info(scratchRequest.argString, sanitizedLogString);
         return true;
       case "cozmoDASError":
         // Use for recording error in DAS from JavaScript
-        DAS.Error(scratchRequest.argString, scratchRequest.argString2);
+        string sanitizedErrorString = scratchRequest.argString2;
+        if (DoesStringContainPIIRisk(sanitizedErrorString)) {
+          sanitizedErrorString = PrivacyGuard.HidePersonallyIdentifiableInfo(sanitizedErrorString);
+        }
+        DAS.Error(scratchRequest.argString, sanitizedErrorString);
         return true;
       default:
         return false;
@@ -1302,25 +1364,39 @@ namespace CodeLab {
       return _IsDrivingOffCharger;
     }
 
-    private void WebViewCallback(string jsonStringFromJS) {
-      // Note that prior to WebViewCallback being called, WebViewObject.CallFromJS() calls WWW.UnEscapeURL(), unencoding the jsonStringFromJS.
-      string logJSONStringFromJS = jsonStringFromJS;
-      if (logJSONStringFromJS.Contains("cozmo_says") || logJSONStringFromJS.Contains("cozmoSays")) {
-        // TODO Temporary solution for removing PII from logs.
-        // For vertical will need to check more than just CozmoSays,
-        // potentially. Also, ideally only strip out CozmoSays
-        // payload, not entire JSON string.
-        logJSONStringFromJS = PrivacyGuard.HidePersonallyIdentifiableInfo(logJSONStringFromJS);
+    private bool DoesStringContainPIIRisk(string input) {
+      for (int i = 0; i < BlocksWithPIIRisks.Count; ++i) {
+        if (input.Contains(BlocksWithPIIRisks[i])) {
+          return true;
+        }
       }
+      return false;
+    }
+
+    private void WebViewCallback(string jsonStringFromJS) {
+#if ANKI_DEV_CHEATS
+      _PerformanceStats.AddWebViewCall();
+#endif // ANKI_DEV_CHEATS
 
       ScratchRequest scratchRequest = null;
       try {
-        //DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
+        //DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + jsonStringFromJS);
 
         scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
       }
       catch (Exception exception) {
         if (exception is JsonReaderException || exception is JsonSerializationException) {
+          // Note that prior to WebViewCallback being called, WebViewObject.CallFromJS() calls WWW.UnEscapeURL(), unencoding the jsonStringFromJS.
+          string logJSONStringFromJS = jsonStringFromJS;
+
+          if (DoesStringContainPIIRisk(logJSONStringFromJS)) {
+            // TODO Temporary solution for removing PII from logs.
+            // For vertical will need to check more than just CozmoSays,
+            // potentially. Also, ideally only strip out CozmoSays
+            // payload, not entire JSON string.
+            logJSONStringFromJS = PrivacyGuard.HidePersonallyIdentifiableInfo(logJSONStringFromJS);
+          }
+
           DAS.Error("CodeLabGame.WebViewCallback.Fail", "JSON exception with text: " + logJSONStringFromJS);
           return;
         }
@@ -1335,7 +1411,8 @@ namespace CodeLab {
 
       if (IsResettingToHomePose() || UpdateIsGettingOffCharger()) {
         // Any requests from Scratch that occur whilst Cozmo is resetting to home pose are queued
-        DAS.Info("CodeLab.QueueScratchReq", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId + ", argString = " + scratchRequest.argString);
+        string safeArgString = PrivacyGuard.HidePersonallyIdentifiableInfo(scratchRequest.argString);
+        DAS.Info("CodeLab.QueueScratchReq", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId + ", argString = " + safeArgString);
         _queuedScratchRequests.Enqueue(scratchRequest);
       }
       else {
@@ -1465,7 +1542,7 @@ namespace CodeLab {
         float offsetY = ClampDistanceInput(scratchRequest.argFloat2);
         float offsetAngle = ClampAngleInput(scratchRequest.argFloat3) * Mathf.Deg2Rad;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(offsetX.ToString() + " , " + offsetY.ToString() + " , " + offsetAngle.ToString()));
-        // Offset is in current robot space, so rotate        
+        // Offset is in current robot space, so rotate
         float currentAngle = robot.PoseAngle;
         float cosAngle = Mathf.Cos(currentAngle);
         float sinAngle = Mathf.Sin(currentAngle);
@@ -1546,23 +1623,51 @@ namespace CodeLab {
         inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozVertPlaySoundEffects") {
-        string soundToPlay = scratchRequest.argString;
+        int soundToPlay = scratchRequest.argInt;
+        bool waitToComplete = scratchRequest.argBool;
         Anki.AudioMetaData.GameEvent.Codelab audioEvent = this.GetAudioEvent(soundToPlay, true);
+        string eventName = scratchRequest.command + (waitToComplete ? "AndWait" : "");
 
-        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(scratchRequest.argString));
-        GameAudioClient.PostCodeLabEvent(audioEvent,
-                                          Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
-                                          (callbackInfo) => { /* callback */ });
-        inProgressScratchBlock.AdvanceToNextBlock(true);
+        if (audioEvent == Anki.AudioMetaData.GameEvent.Codelab.Invalid) {
+          // Invalid sound - do nothing
+          inProgressScratchBlock.AdvanceToNextBlock(true);
+          _SessionState.ScratchBlockEvent(eventName + ".error", DASUtil.FormatExtraData(soundToPlay.ToString()));
+        }
+        else {
+          _SessionState.ScratchBlockEvent(eventName, DASUtil.FormatExtraData(audioEvent.ToString()));
+
+          Anki.AudioEngine.Multiplexer.AudioCallbackFlag callbackFlag = Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventNone;
+          CallbackHandler completeHandler = null;
+          if (waitToComplete) {
+            callbackFlag = Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete;
+            completeHandler = inProgressScratchBlock.AudioPlaySoundCompleted;
+          }
+
+          ushort playID = GameAudioClient.PostCodeLabEvent(audioEvent, callbackFlag, completeHandler);
+
+          if (waitToComplete) {
+            inProgressScratchBlock.SetAudioPlayID(playID);
+          }
+          else {
+            inProgressScratchBlock.AdvanceToNextBlock(true);
+          }
+        }
       }
       else if (scratchRequest.command == "cozVertStopSoundEffects") {
-        string soundToPlay = scratchRequest.argString;
+        int soundToPlay = scratchRequest.argInt;
         Anki.AudioMetaData.GameEvent.Codelab audioEvent = this.GetAudioEvent(soundToPlay, false);
 
-        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(scratchRequest.argString));
-        GameAudioClient.PostCodeLabEvent(audioEvent,
-                                          Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
-                                          (callbackInfo) => { /* callback */ });
+        if (audioEvent == Anki.AudioMetaData.GameEvent.Codelab.Invalid) {
+          // Invalid sound - do nothing
+          inProgressScratchBlock.AdvanceToNextBlock(true);
+          _SessionState.ScratchBlockEvent(scratchRequest.command + ".error", DASUtil.FormatExtraData(soundToPlay.ToString()));
+        }
+        else {
+          _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(audioEvent.ToString()));
+          GameAudioClient.PostCodeLabEvent(audioEvent,
+                                            Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
+                                            (callbackInfo) => { /* callback */ });
+        }
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
       else if (scratchRequest.command == "cozVertDrive") {
@@ -1642,7 +1747,8 @@ namespace CodeLab {
           _SessionState.SetIsAnimTrackEnabled(animTrack, enable);
         }
         catch (ArgumentException) {
-          DAS.Error("CodeLab.EnableAnimTrack.BadAnimTrack", "Unknown track name '" + scratchRequest.argString + "'");
+          string trackName = PrivacyGuard.HidePersonallyIdentifiableInfo(scratchRequest.argString);
+          DAS.Error("CodeLab.EnableAnimTrack.BadAnimTrack", "Unknown track name '" + trackName + "'");
         }
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
@@ -1657,7 +1763,8 @@ namespace CodeLab {
           actionType = (ActionType)Enum.Parse(typeof(ActionType), scratchRequest.argString, ignoreCase: true);
         }
         catch (ArgumentException) {
-          DAS.Error("CodeLab.WaitForActions.BadActionType", "Unknown Action Type '" + scratchRequest.argString + "'");
+          string trackName = PrivacyGuard.HidePersonallyIdentifiableInfo(scratchRequest.argString);
+          DAS.Error("CodeLab.WaitForActions.BadActionType", "Unknown Action Type '" + trackName + "'");
         }
         if (actionType != ActionType.Count) {
           if (scratchRequest.command == "cozVertWaitForActions") {
@@ -1675,8 +1782,9 @@ namespace CodeLab {
       else if (scratchRequest.command == "cozmoPlayAnimation") {
         // NOTE: This block is called from Horizontal and Vertical!
         bool isVertical = (_SessionState.GetGrammarMode() == GrammarMode.Vertical);
-        Anki.Cozmo.AnimationTrigger animationTrigger = GetAnimationTriggerForScratchName(scratchRequest.argString);
-        bool wasMystery = (scratchRequest.argUInt != 0);
+        var animationIndex = scratchRequest.argInt;
+        bool wasMystery = (animationIndex == 0);
+        AnimationTrigger animationTrigger = GetAnimationTriggerForScratchIndex(animationIndex, isVertical);
         bool shouldIgnoreBodyTrack = !_SessionState.IsAnimTrackEnabled(AnimTrack.Wheels); ;
         bool shouldIgnoreHead = !_SessionState.IsAnimTrackEnabled(AnimTrack.Head);
         bool shouldIgnoreLift = !_SessionState.IsAnimTrackEnabled(AnimTrack.Lift);
@@ -1689,11 +1797,20 @@ namespace CodeLab {
           InProgressScratchBlockPool.CancelActionsOfType(ActionType.Anim);
           InProgressScratchBlockPool.CancelActionsOfType(ActionType.Say);
         }
-        _SessionState.ScratchBlockEvent(scratchRequest.command + (wasMystery ? "Mystery" : ""), DASUtil.FormatExtraData(scratchRequest.argString));
-        uint idTag = robot.SendAnimationTrigger(animationTrigger, onCompleteCallback, queueActionPosition,
-                                   ignoreBodyTrack: shouldIgnoreBodyTrack, ignoreHeadTrack: shouldIgnoreHead, ignoreLiftTrack: shouldIgnoreLift);
-        inProgressScratchBlock.SetActionData(ActionType.Anim, idTag);
-        _RequiresResetToNeutralFace = true;
+
+        if (animationTrigger == AnimationTrigger.Count) {
+          // Invalid animation - do nothing
+          inProgressScratchBlock.AdvanceToNextBlock(true);
+          _SessionState.ScratchBlockEvent(scratchRequest.command + ".error", DASUtil.FormatExtraData(animationIndex.ToString()));
+        }
+        else {
+          string animationName = animationTrigger.ToString();
+          _SessionState.ScratchBlockEvent(scratchRequest.command + (wasMystery ? "Mystery" : ""), DASUtil.FormatExtraData(animationName));
+          uint idTag = robot.SendAnimationTrigger(animationTrigger, onCompleteCallback, queueActionPosition,
+                                     ignoreBodyTrack: shouldIgnoreBodyTrack, ignoreHeadTrack: shouldIgnoreHead, ignoreLiftTrack: shouldIgnoreLift);
+          inProgressScratchBlock.SetActionData(ActionType.Anim, idTag);
+          _RequiresResetToNeutralFace = true;
+        }
       }
       else if ((scratchRequest.command == "cozVertPlayNamedAnim") || (scratchRequest.command == "cozVertPlayNamedTriggerAnim")) {
         // These are dev/prototyping only blocks while we figure out the list of animations to expose
@@ -1714,7 +1831,8 @@ namespace CodeLab {
             startedAnim = true;
           }
           catch (ArgumentException) {
-            DAS.Warn("CodeLab.InvalidTrigger", "Failed to convert '" + scratchRequest.argString + "' to AnimationTrigger");
+            string trackName = PrivacyGuard.HidePersonallyIdentifiableInfo(scratchRequest.argString);
+            DAS.Warn("CodeLab.InvalidTrigger", "Failed to convert '" + trackName + "' to AnimationTrigger");
           }
         }
         else {
@@ -1928,90 +2046,10 @@ namespace CodeLab {
       return;
     }
 
-    private Anki.AudioMetaData.GameEvent.Codelab GetAudioEvent(string soundToPlay, bool isStartSound) {
+    private Anki.AudioMetaData.GameEvent.Codelab GetAudioEvent(int soundToPlay, bool isStartSound) {
       Anki.AudioMetaData.GameEvent.Codelab audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Invalid;
       switch (soundToPlay) {
-      case "select":
-        if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Cube_Light;
-        }
-        else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Cube_Light_Stop;
-        }
-        break;
-      case "win":
-        if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Game_Win;
-        }
-        else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Game_Win_Stop;
-        }
-        break;
-      case "lose":
-        if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Game_Lose;
-        }
-        else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Game_Lose_Stop;
-        }
-        break;
-      case "game start":
-        if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Countdown;
-        }
-        else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Countdown_Stop;
-        }
-        break;
-      case "clock tick":
-        if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Timer_Click;
-        }
-        else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Timer_Click_Stop;
-        }
-        break;
-      case "bling":
-        if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Cube_Light_On;
-        }
-        else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Cube_Light_On_Stop;
-        }
-        break;
-      case "success":
-        if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Success;
-        }
-        else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Success_Stop;
-        }
-        break;
-      case "fail":
-        if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Error;
-        }
-        else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Error_Stop;
-        }
-        break;
-      case "timer warning":
-        if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Timer_Warning;
-        }
-        else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Timer_Warning_Stop;
-        }
-        break;
-      case "timer end":
-        if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Timer_End;
-        }
-        else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Timer_End_Stop;
-        }
-        break;
-      case "eighties music":
+      case 1: // BKY_EIGHTIES_MUSIC
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Style_80S_1_159Bpm_Loop;
         }
@@ -2019,7 +2057,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Style_80S_1_159Bpm_Loop_Stop;
         }
         break;
-      case "mambo music":
+      case 2: // BKY_MAMBO_MUSIC
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Style_Mambo_1_183Bpm_Loop;
         }
@@ -2027,7 +2065,95 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Style_Mambo_1_183Bpm_Loop_Stop;
         }
         break;
-      case "sparkle":
+      case 3: // BKY_BACKGROUND_MUSIC
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_Off;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_On;
+        }
+        break;
+      case 4: // BKY_SELECT
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Cube_Light;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Cube_Light_Stop;
+        }
+        break;
+      case 5: // BKY_WIN
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Game_Win;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Game_Win_Stop;
+        }
+        break;
+      case 6: // BKY_LOSE
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Game_Lose;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Game_Lose_Stop;
+        }
+        break;
+      case 7: // BKY_GAME_START
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Countdown;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Countdown_Stop;
+        }
+        break;
+      case 8: // BKY_CLOCK_TICK
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Timer_Click;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Timer_Click_Stop;
+        }
+        break;
+      case 9: // BKY_BLING
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Cube_Light_On;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Cube_Light_On_Stop;
+        }
+        break;
+      case 10: // BKY_SUCCESS
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Success;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Success_Stop;
+        }
+        break;
+      case 11: // BKY_FAIL
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Error;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Error_Stop;
+        }
+        break;
+      case 12: // BKY_TIMER_WARNING
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Timer_Warning;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Timer_Warning_Stop;
+        }
+        break;
+      case 13: // BKY_TIMER_END
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Timer_End;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Shared_Timer_End_Stop;
+        }
+        break;
+      case 14: // BKY_SPARKLE
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Magic8_Message_Reveal;
         }
@@ -2035,7 +2161,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Magic8_Message_Reveal_Stop;
         }
         break;
-      case "swoosh":
+      case 15: // BKY_SWOOSH
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Hot_Potato_Pass;
         }
@@ -2043,7 +2169,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Hot_Potato_Pass_Stop;
         }
         break;
-      case "ping":
+      case 16: // BKY_PING
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Hot_Potato_Cube_Ready;
         }
@@ -2051,7 +2177,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Hot_Potato_Cube_Ready_Stop;
         }
         break;
-      case "hot potato end":
+      case 17: // BKY_HOT_POTATO_END
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Hot_Potato_Timer_End;
         }
@@ -2059,7 +2185,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Hot_Potato_Timer_End_Stop;
         }
         break;
-      case "hot potato music slow":
+      case 18: // BKY_HOT_POTATO_MUSIC_SLOW
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Hot_Potato_Level_1_Loop;
         }
@@ -2067,7 +2193,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Hot_Potato_Level_1_Loop_Stop;
         }
         break;
-      case "hot potato music medium":
+      case 19: // BKY_HOT_POTATO_MUSIC_MEDIUM
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Hot_Potato_Level_2_Loop;
         }
@@ -2075,7 +2201,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Hot_Potato_Level_2_Loop_Stop;
         }
         break;
-      case "hot potato music fast":
+      case 20: // BKY_HOT_POTATO_MUSIC_FAST
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Hot_Potato_Level_3_Loop;
         }
@@ -2083,7 +2209,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Hot_Potato_Level_3_Loop_Stop;
         }
         break;
-      case "hot potato music superfast":
+      case 21: // BKY_HOT_POTATO_MUSIC_SUPERFAST
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Hot_Potato_Level_4_Loop;
         }
@@ -2091,7 +2217,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Hot_Potato_Level_4_Loop_Stop;
         }
         break;
-      case "magnet pull":
+      case 22: // BKY_MAGNET_PULL
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Magnet_Attract;
         }
@@ -2099,7 +2225,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Magnet_Attract_Stop;
         }
         break;
-      case "magnet repel":
+      case 23: // BKY_MAGNET_REPEL
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Magnet_Repel;
         }
@@ -2107,7 +2233,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Magnet_Repel_Stop;
         }
         break;
-      case "instrument 1 mode 1":
+      case 24: // BKY_INSTRUMENT_1_MODE_1
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_01_Loop;
         }
@@ -2115,7 +2241,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_01_Loop_Stop;
         }
         break;
-      case "instrument 1 mode 2":
+      case 25: // BKY_INSTRUMENT_1_MODE_2
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_02_Loop;
         }
@@ -2123,7 +2249,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_02_Loop_Stop;
         }
         break;
-      case "instrument 1 mode 3":
+      case 26: // BKY_INSTRUMENT_1_MODE_3
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_03_Loop;
         }
@@ -2131,7 +2257,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Bass_03_Loop_Stop;
         }
         break;
-      case "instrument 2 mode 1":
+      case 27: // BKY_INSTRUMENT_2_MODE_1
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_01_Loop;
         }
@@ -2139,7 +2265,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_01_Loop_Stop;
         }
         break;
-      case "instrument 2 mode 2":
+      case 28: // BKY_INSTRUMENT_2_MODE_2
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_02_Loop;
         }
@@ -2147,7 +2273,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_02_Loop_Stop;
         }
         break;
-      case "instrument 2 mode 3":
+      case 29: // BKY_INSTRUMENT_2_MODE_3
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_03_Loop;
         }
@@ -2155,7 +2281,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Glock_Pluck_03_Loop_Stop;
         }
         break;
-      case "instrument 3 mode 1":
+      case 30: // BKY_INSTRUMENT_3_MODE_1
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_01_Loop;
         }
@@ -2163,7 +2289,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_01_Loop_Stop;
         }
         break;
-      case "instrument 3 mode 2":
+      case 31: // BKY_INSTRUMENT_3_MODE_2
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_02_Loop;
         }
@@ -2171,7 +2297,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_02_Loop_Stop;
         }
         break;
-      case "instrument 3 mode 3":
+      case 32: // BKY_INSTRUMENT_3_MODE_3
         if (isStartSound) {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_03_Loop;
         }
@@ -2179,13 +2305,9 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_03_Loop_Stop;
         }
         break;
-      case "background music":
-        if (isStartSound) {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_Off;
-        }
-        else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_On;
-        }
+      default:
+        // Will happen a lot in vertical now that users can pass in any value
+        DAS.Info("CodeLab.BadSoundIndex", "index = " + soundToPlay.ToString());
         break;
       }
 
@@ -2236,6 +2358,8 @@ namespace CodeLab {
     }
 
     private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID, bool isVertical) {
+      PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
+
       DAS.Info("Codelab.OpenCodeLabProject", "request=" + request + ", UUID=" + projectUUID);
       // Cache the request to open project. These vars will be used after the webview is loaded but before it is visible.
       SetRequestToOpenProject(request, projectUUID);
@@ -2246,9 +2370,10 @@ namespace CodeLab {
 
         Dictionary<string, string> parameters = new Dictionary<string, string>();
 
-        if (DataPersistenceManager.Instance.Data.DefaultProfile.CodeLabHorizontalPlayed == 0) {
+        if (defaultProfile.CodeLabHorizontalPlayed == 0
+            && !DebugMenuManager.Instance.DemoMode) {
           parameters.Add("showTutorial", "true");
-          DataPersistenceManager.Instance.Data.DefaultProfile.CodeLabHorizontalPlayed = 1;
+          defaultProfile.CodeLabHorizontalPlayed = 1;
         }
         else {
           parameters.Add("showTutorial", "false");
@@ -2278,7 +2403,7 @@ namespace CodeLab {
       }
     }
 
-    private void RenameCodeLabProject(ScratchRequest scratchRequest) {
+    private void OnCozmoRenameCodeLabProject(ScratchRequest scratchRequest) {
       string projectUUID = scratchRequest.argUUID;
       string jsCallback = scratchRequest.argString;
       string newProjectName = scratchRequest.argString2;
@@ -2289,7 +2414,18 @@ namespace CodeLab {
         if (projectToUpdate != null) {
           // Don't let the project name get set to empty string.
           string cleansedName = RemoveUnsupportedChars(newProjectName);
-          if (cleansedName != "") {
+
+          // Check that the entire name is not just spaces.
+          bool allCharsAreSpaces = true;
+          for (int i = 0; i < cleansedName.Length; i++) {
+            char currentChar = cleansedName[i];
+            if (currentChar != ' ') {
+              allCharsAreSpaces = false;
+              break;
+            }
+          }
+
+          if (cleansedName != "" && !allCharsAreSpaces) {
             projectToUpdate.ProjectName = RemoveUnsupportedChars(newProjectName);
             projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
           }
@@ -2302,7 +2438,53 @@ namespace CodeLab {
         }
       }
       catch (NullReferenceException) {
-        DAS.Error("RenameCodeLabProject.NullReferenceException", "Failure during servicing user's request to rename project. projectUUID = " + projectUUID + ", new project name = " + newProjectName);
+        DAS.Error("RenameCodeLabProject.NullReferenceException", "Failure during servicing user's request to rename project. projectUUID = " + projectUUID);
+      }
+    }
+
+    private void OnCozmoRemixCodeLabProject(ScratchRequest scratchRequest) {
+      string newProjectName = scratchRequest.argString;
+      string originalProjectType = scratchRequest.argString2;
+      string originalProjectUUID = scratchRequest.argUUID;
+
+      try {
+        CodeLabProject remixedProject = FindProjectByUUIDAndCreateCodeLabProject(originalProjectUUID, originalProjectType);
+        remixedProject.ProjectName = newProjectName;
+
+        PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
+        if (defaultProfile == null) {
+          DAS.Error("OnCozmoSaveUserProject.NullDefaultProfile", "In saving remixed Code Lab user project, defaultProfile is null");
+        }
+        if (defaultProfile.CodeLabProjects == null) {
+          DAS.Error("OnCozmoSaveUserProject.NullCodeLabProjects", "defaultProfile.CodeLabProjects is null");
+        }
+        defaultProfile.CodeLabProjects.Add(remixedProject);
+
+        if (originalProjectType == "sample") {
+          if (remixedProject.IsVertical) {
+            _LastOpenedTab = "vertical";
+          }
+          else {
+            _LastOpenedTab = "horizontal";
+          }
+        }
+
+        // Was this the user's first remix? Show dialog if so.
+        bool isFirstRemix = false;
+        if (!defaultProfile.CodeLabRemixCreated) {
+        isFirstRemix = true;
+        defaultProfile.CodeLabRemixCreated = true;
+        }
+
+        string projectNameEscaped = EscapeProjectText(remixedProject.ProjectName);
+        this.EvaluateJS("window.onRemixedProject('" + remixedProject.ProjectUUID + "','" + projectNameEscaped + "','" + isFirstRemix.ToString() + "');");
+
+        _SessionState.OnCreatedProject(remixedProject);
+
+        DataPersistenceManager.Instance.Save();
+      }
+      catch (NullReferenceException) {
+        DAS.Error("RenameCodeLabProject.NullReferenceException", "Failure during servicing user's request to rename project. Project UUID to remix = " + originalProjectUUID + ", new project name = " + newProjectName);
       }
     }
 
@@ -2366,6 +2548,7 @@ namespace CodeLab {
         DAS.Info("Codelab.ManualOnScriptStopped", "");
         OnScriptStopped();
       }
+      ResetAllCodeLabAudio();
 
       if (_WebViewObjectComponent == null) {
         DAS.Error("CodeLab.LoadURL.NullWebView", "Ignoring request to open '" + scratchPathToHTML + "'");
@@ -2417,45 +2600,96 @@ namespace CodeLab {
       _ProjectUUIDToOpen = projectUUID;
     }
 
-    private Anki.Cozmo.AnimationTrigger GetAnimationTriggerForScratchName(string scratchAnimationName) {
-
-      switch (scratchAnimationName) {
-      case "bored":
-        return Anki.Cozmo.AnimationTrigger.CodeLabBored;
-      case "cat":
-        return Anki.Cozmo.AnimationTrigger.CodeLabCat;
-      case "chatty":
-        return Anki.Cozmo.AnimationTrigger.CodeLabChatty;
-      case "dejected":
-        return Anki.Cozmo.AnimationTrigger.CodeLabDejected;
-      case "dog":
-        return Anki.Cozmo.AnimationTrigger.CodeLabDog;
-      case "excited":
-        return Anki.Cozmo.AnimationTrigger.CodeLabExcited;
-      case "frustrated":
-        return Anki.Cozmo.AnimationTrigger.CodeLabFrustrated;
-      case "happy":
-        return Anki.Cozmo.AnimationTrigger.CodeLabHappy;
-      case "sleep":
-        return Anki.Cozmo.AnimationTrigger.CodeLabSleep;
-      case "sneeze":
-        return Anki.Cozmo.AnimationTrigger.CodeLabSneeze;
-      case "surprise":
-        return Anki.Cozmo.AnimationTrigger.CodeLabSurprise;
-      case "thinking":
-        return Anki.Cozmo.AnimationTrigger.CodeLabThinking;
-      case "unhappy":
-        return Anki.Cozmo.AnimationTrigger.CodeLabUnhappy;
-      case "victory":
-        return Anki.Cozmo.AnimationTrigger.CodeLabVictory;
-      default:
-        DAS.Error("CodeLab.BadTriggerName", "Unexpected name '" + scratchAnimationName + "'");
-        break;
+    private Anki.Cozmo.AnimationTrigger GetAnimationTriggerForScratchIndex(int scratchAnimationIndex, bool isVertical) {
+      if (scratchAnimationIndex == 0) {
+        // Special case - pick a random animation
+        if (isVertical) {
+          int kLastValidVerticalAnimation = 34;
+          scratchAnimationIndex = UnityEngine.Random.Range(1, kLastValidVerticalAnimation);
+        }
+        else {
+          int kLastValidHorizontalAnimation = 14;
+          scratchAnimationIndex = UnityEngine.Random.Range(1, kLastValidHorizontalAnimation);
+        }
       }
-      return Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration;
+
+      switch (scratchAnimationIndex) {
+      case 1: // happy
+        return AnimationTrigger.CodeLabHappy;
+      case 2: // winner/"victory"
+        return AnimationTrigger.CodeLabVictory;
+      case 3: // sad/"unhappy":
+        return AnimationTrigger.CodeLabUnhappy;
+      case 4: // "surprise":
+        return AnimationTrigger.CodeLabSurprise;
+      case 5: // "dog":
+        return AnimationTrigger.CodeLabDog;
+      case 6: // "cat":
+        return AnimationTrigger.CodeLabCat;
+      case 7: // "sneeze":
+        return AnimationTrigger.CodeLabSneeze;
+      case 8: // "excited":
+        return AnimationTrigger.CodeLabExcited;
+      case 9: // "thinking":
+        return AnimationTrigger.CodeLabThinking;
+      case 10: // "bored":
+        return AnimationTrigger.CodeLabBored;
+      case 11: // "frustrated":
+        return AnimationTrigger.CodeLabFrustrated;
+      case 12: // "chatty":
+        return AnimationTrigger.CodeLabChatty;
+      case 13: // disappointed / "dejected":
+        return AnimationTrigger.CodeLabDejected;
+      case 14: // snore/"sleep":
+        return AnimationTrigger.CodeLabSleep;
+      case 15:
+        return AnimationTrigger.CodeLabReactHappy;
+      case 16:
+        return AnimationTrigger.CodeLabCelebrate;
+      case 17:
+        return AnimationTrigger.CodeLabTakaTaka;
+      case 18:
+        return AnimationTrigger.CodeLabAmazed;
+      case 19:
+        return AnimationTrigger.CodeLabCurious;
+      case 20: // Agree/Yes
+        return AnimationTrigger.CodeLabYes;
+      case 21: // Disagree/No
+        return AnimationTrigger.CodeLabNo;
+      case 22: // Unsure/IDK
+        return AnimationTrigger.CodeLabIDK;
+      case 23:
+        return AnimationTrigger.CodeLabConducting;
+      case 24:
+        return AnimationTrigger.CodeLabDancingMambo;
+      case 25:
+        return AnimationTrigger.CodeLabFireTruck;
+      case 26:
+        return AnimationTrigger.CodeLabPartyTime;
+      case 27:
+        return AnimationTrigger.CodeLabDizzy;
+      case 28:
+        return AnimationTrigger.CodeLabDizzyEnd;
+      case 29:
+        return AnimationTrigger.CodeLab123Go;
+      case 30:
+        return AnimationTrigger.CodeLabWin;
+      case 31:
+        return AnimationTrigger.CodeLabLose;
+      case 32:
+        return AnimationTrigger.CodeLabTapCube;
+      case 33:
+        return AnimationTrigger.CodeLabGetInPos;
+      case 34:
+        return AnimationTrigger.CodeLabIdle;
+      default:
+        // Will happen a lot in vertical now that users can pass in any value
+        DAS.Info("CodeLab.BadAnimIndex", "Index = " + scratchAnimationIndex.ToString());
+        return AnimationTrigger.Count;
+      }
     }
 
-    // Identify an existing user CodeLabProject with a supplied uuid
+    // Returns an existing user CodeLabProject matching the supplied uuid
     CodeLabProject FindUserProjectWithUUID(string uuid) {
       Guid projectGuid = new Guid(uuid);
       CodeLabProject codeLabProject = null;
@@ -2598,7 +2832,7 @@ namespace CodeLab {
 
     // Open requested project in webview
     private void OpenCozmoProjectJSON(String projectName, String projectJSON, Guid projectUUID, string isSampleStr) {
-      DAS.Info("CodeLabTest", "OpenCozmoProjectJSONUnity: projectName = " + projectName + ", isSampleStr = " + isSampleStr);
+      DAS.Info("CodeLabTest", "OpenCozmoProjectJSONUnity: projectUUID = " + projectUUID.ToString() + ", isSampleStr = " + isSampleStr);
 
       CozmoProjectOpenInWorkspaceRequest cozmoProjectRequest = new CozmoProjectOpenInWorkspaceRequest();
       cozmoProjectRequest.projectName = projectName;
@@ -2730,8 +2964,6 @@ namespace CodeLab {
           DataPersistence.CodeLabProject project = JsonConvert.DeserializeObject<DataPersistence.CodeLabProject>(unescapedString);
           DataPersistence.PlayerProfile defaultProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
 
-          // @TODO: Deal with changes in versionNum, check minimum version number
-
           if (defaultProfile == null) {
             DAS.Error("Codelab.OnAppLoadedFromData.NullDefaultProfile", "In creating new Code Lab project from external data, defaultProfile is null");
           }
@@ -2743,6 +2975,9 @@ namespace CodeLab {
           }
           else if (project.ProjectJSON.Length > kMaximumCodelabDataLength) {
             DAS.Error("Codelab.OnAppLoadedFromData.BadFileData.Length", "new project's internal data is unreasonably long " + project.ProjectJSON.Length.ToString());
+          }
+          else if (project.VersionNum > CodeLabProject.kCurrentVersionNum) {
+            DAS.Warn("Codelab.OnAppLoadedFromData.BadVersionNumber", "new project's version number " + project.VersionNum.ToString() + " is greater than the app's codelab version " + CodeLabProject.kCurrentVersionNum.ToString());
           }
           else {
             while (defaultProfile.CodeLabProjects.Find(p => p.ProjectUUID == project.ProjectUUID) != null) {

@@ -392,12 +392,12 @@ bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
                                     State_c& lastSafeState,
                                     xythetaPlan& validPlan) const
 {
-  if(plan.actions_.empty())
+  if(plan.Empty())
     return false;
 
-  validPlan.actions_.clear();
+  validPlan.Clear();
 
-  size_t numActions = plan.actions_.size();
+  size_t numActions = plan.Size();
 
   StateID curr(plan.start_.GetStateID());
   validPlan.start_ = curr;
@@ -407,7 +407,7 @@ bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
   // first go through all the actions that we are "skipping"
   for(size_t i=0; i<currentPathIndex; ++i) {
     // advance without checking collisions
-    ApplyAction(plan.actions_[i], curr, false);
+    ApplyAction(plan.GetAction(i), curr, false);
   }
 
   State currentRobotState(curr);
@@ -420,14 +420,14 @@ bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
   for(size_t i = currentPathIndex; i < numActions; ++i) {
 
     // check for collisions and possibly update curr
-    Cost actionPenalty = ApplyAction(plan.actions_[i], curr, true);
-    assert(i < plan.penalties_.size());
+    Cost actionPenalty = ApplyAction(plan.GetAction(i), curr, true);
+    assert(i < plan.Size());
 
-    if(actionPenalty > plan.penalties_[i] + REPLAN_PENALTY_BUFFER) {
+    if(actionPenalty > plan.GetPenalty(i) + REPLAN_PENALTY_BUFFER) {
       printf("Collision along plan action %lu (starting from %d) Penalty increased from %f to %f\n",
              (unsigned long)i,
              currentPathIndex,
-             plan.penalties_[i],
+             plan.GetPenalty(i),
              actionPenalty);
       // there was a collision trying to follow action i, so we are done
       return false;
@@ -439,7 +439,7 @@ bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
     // maxDistancetoFollowOldPlan_mm, update the valid old plan
     if(useOldPlan) {
 
-      validPlan.Push(plan.actions_[i], plan.penalties_[i]);
+      validPlan.Push(plan.GetAction(i), plan.GetPenalty(i));
       lastSafeState = State2State_c(State(curr));
 
       // TODO:(bn) this is kind of wrong. It's using euclidean
@@ -744,13 +744,10 @@ Cost xythetaEnvironment::GetCollisionPenalty(State s) const
 
 void xythetaPlan::Append(const xythetaPlan& other)
 {
-  if(actions_.empty()) {
+  if(_actionCostPairs.empty()) {
     start_ = other.start_;
   }
-
-  actions_.insert(actions_.end(), other.actions_.begin(), other.actions_.end());
-  penalties_.insert(penalties_.end(), other.penalties_.begin(), other.penalties_.end());
-  assert(actions_.size() == penalties_.size());
+  _actionCostPairs.insert(_actionCostPairs.end(), other._actionCostPairs.begin(), other._actionCostPairs.end() );
 }
 
 ActionType::ActionType()
@@ -1170,13 +1167,15 @@ void xythetaEnvironment::ClearObstacles()
   }
 }
 
-FastPolygon xythetaEnvironment::ExpandCSpace(const Poly2f& obstacle,
-                                             const Poly2f& robot)
+FastPolygon xythetaEnvironment::ExpandCSpace(const ConvexPolygon& obstacle,
+                                             const ConvexPolygon& robot)
 {
   // TODO:(bn) don't copy polygon into vector
 
   assert(obstacle.size() > 0);
   assert(robot.size() > 0);
+  assert(obstacle.GetClockDirection() == ConvexPolygon::CW);
+  assert(robot.GetClockDirection() == ConvexPolygon::CW);
 
   // CoreTechPrint("obstacle: ");
   // obstacle.Print();
@@ -1190,7 +1189,7 @@ FastPolygon xythetaEnvironment::ExpandCSpace(const Poly2f& obstacle,
   // such in coretech/planning/matlab/minkowski.py
 
 
-  float startingAngle = obstacle.GetEdgeAngle(0);
+  Radians startingAngle = obstacle.GetEdgeAngle(0);
 
   // compute the starting point for each polygon
   //size_t obstacleStart = 0;
@@ -1275,8 +1274,8 @@ FastPolygon xythetaEnvironment::ExpandCSpace(const Poly2f& obstacle,
 }
 
 
-const FastPolygon& xythetaEnvironment::AddObstacleWithExpansion(const Poly2f& obstacle,
-                                                                const Poly2f& robot,
+const FastPolygon& xythetaEnvironment::AddObstacleWithExpansion(const ConvexPolygon& obstacle,
+                                                                const ConvexPolygon& robot,
                                                                 StateTheta theta,
                                                                 Cost cost)
 {
@@ -1724,7 +1723,9 @@ void xythetaEnvironment::AppendToPath(xythetaPlan& plan, Path& path, int numActi
 
   int actionsLeftToSkip = numActionsToSkip;
 
-  for(const auto& actionID : plan.actions_) {
+  for (size_t i = 0; i < plan.Size(); ++i) {
+    const ActionID& actionID = plan.GetAction(i);
+    
     if(curr.theta >= allMotionPrimitives_.size() || actionID >= allMotionPrimitives_[curr.theta].size()) {
       printf("ERROR: can't look up prim for angle %d and action id %d\n", curr.theta, actionID);
       break;
@@ -1764,13 +1765,13 @@ void xythetaEnvironment::PrintPlan(const xythetaPlan& plan) const
 
   PRINT_STREAM_DEBUG("xythetaEnvironment.PrintPlan", "plan start: " << plan.start_);
 
-  for(size_t i=0; i<plan.actions_.size(); ++i) {
+  for(size_t i=0; i<plan.Size(); ++i) {
     PRINT_NAMED_DEBUG("xythetaEnvironment.PrintPlan", "%2lu: (%f, %f, %f [%d]) --> %s (penalty = %f)",
            (unsigned long)i,
            curr_c.x_mm, curr_c.y_mm, curr_c.theta, currID.s.theta, 
-           actionTypes_[plan.actions_[i]].GetName().c_str(),
-           plan.penalties_[i]);
-    ApplyAction(plan.actions_[i], currID, false);
+           actionTypes_[plan.GetAction(i)].GetName().c_str(),
+           plan.GetPenalty(i));
+    ApplyAction(plan.GetAction(i), currID, false);
     curr_c = State2State_c(State(currID));
   }
 }
@@ -1780,7 +1781,8 @@ State xythetaEnvironment::GetPlanFinalState(const xythetaPlan& plan) const
 {
   StateID currID = plan.start_.GetStateID();
 
-  for(const auto& action : plan.actions_) {
+  for(size_t i = 0; i < plan.Size(); i++) {
+    const ActionID& action = plan.GetAction(i);
     ApplyAction(action, currID, false);
   }
 
@@ -1845,7 +1847,7 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
     }
 
     StateID currID(currPlanState);
-    ApplyAction(plan.actions_[planIdx], currID, false);
+    ApplyAction(plan.GetAction(planIdx), currID, false);
     currPlanState = State(currID);
   }
   
@@ -1861,7 +1863,7 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
                                     state.y_mm - GetY_mm(currPlanState.y),
                                     state.theta);
     
-    const MotionPrimitive& prim(GetRawMotionPrimitive(currPlanState.theta, plan.actions_[planIdx]));
+    const MotionPrimitive& prim(GetRawMotionPrimitive(currPlanState.theta, plan.GetAction(planIdx)));
 
     // skip the last intermediate position, since it overlaps with the next start
     size_t intermediatePositionsSize = prim.intermediatePositions.size();
@@ -1900,7 +1902,7 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
     }
 
     StateID currID(currPlanState);
-    ApplyAction(plan.actions_[planIdx], currID, false);
+    ApplyAction(plan.GetAction(planIdx), currID, false);
     currPlanState = State(currID);
   }
 
@@ -1916,17 +1918,17 @@ void xythetaEnvironment::ConvertToXYPlan(const xythetaPlan& plan, std::vector<St
   StateTheta currTheta = plan.start_.theta;
   // TODO:(bn) replace theta with radians? maybe just cast it here
 
-  for(size_t i=0; i<plan.actions_.size(); ++i) {
+  for(size_t i=0; i<plan.Size(); ++i) {
     printf("curr = (%f, %f, %f [%d]) : %s\n", curr_c.x_mm, curr_c.y_mm, curr_c.theta, currTheta, 
-               actionTypes_[plan.actions_[i]].GetName().c_str());
+               actionTypes_[plan.GetAction(i)].GetName().c_str());
 
-    if(currTheta >= allMotionPrimitives_.size() || plan.actions_[i] >= allMotionPrimitives_[currTheta].size()) {
-      printf("ERROR: can't look up prim for angle %d and action id %d\n", currTheta, plan.actions_[i]);
+    if(currTheta >= allMotionPrimitives_.size() || plan.GetAction(i) >= allMotionPrimitives_[currTheta].size()) {
+      printf("ERROR: can't look up prim for angle %d and action id %d\n", currTheta, plan.GetAction(i));
       break;
     }
     else {
 
-      const MotionPrimitive* prim = &allMotionPrimitives_[currTheta][plan.actions_[i]];
+      const MotionPrimitive* prim = &allMotionPrimitives_[currTheta][plan.GetAction(i)];
       for(size_t j=0; j<prim->intermediatePositions.size(); ++j) {
         float x = curr_c.x_mm + prim->intermediatePositions[j].position.x_mm;
         float y = curr_c.y_mm + prim->intermediatePositions[j].position.y_mm;

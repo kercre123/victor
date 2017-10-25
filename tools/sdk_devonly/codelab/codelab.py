@@ -1102,6 +1102,9 @@ class CodeLabInterface():
                 log_text("on_openCozmoProject_helper() - project_data = %s" % str(project_data))
             self._update_project(project_data)
 
+    def on_recv_window_setPerformanceData(self, loaded_json):
+        pass
+
     def on_recv_window_openCozmoProjectJSON(self, loaded_json):
         project_xml = None
         project_name = loaded_json["projectName"]
@@ -1178,7 +1181,8 @@ class CodeLabInterface():
             handler = getattr(self, handler_name, None)
 
             if handler is not None:
-                if handler_name == "on_recv_window_openCozmoProjectJSON":
+                if ((handler_name == "on_recv_window_openCozmoProjectJSON") or
+                        (handler_name == "on_recv_window_setPerformanceData")):
                     # special case - we need to convert the string into a json object
                     loaded_json = load_and_verify_json(payload_str, handler_name)
                     handler(loaded_json)

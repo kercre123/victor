@@ -4,6 +4,7 @@
     window.cozmoProjectName = null;
     window.cozmoProjectUUID = null;
     window.previouslySavedProjectJSON = null;
+    window.originalSampleProjectJSON = null;
     window.saveProjectTimerId = null;
     window.resolvePromiseWaitForSaveProject = null;
 
@@ -172,7 +173,7 @@
 
     window.exportCozmoProject = function() {
         var promiseSaveProject = window.promiseWaitForSaveProject();
-        
+
         var projectType = "user";
         if(window.isCozmoSampleProject) {
             projectType = "sample";
@@ -207,9 +208,6 @@
         var isCozmoSampleProject = (isCozmoSampleProjectStr == 'true');
         window.isCozmoSampleProject = isCozmoSampleProject;
 
-        // Must be called after window.isCozmoSampleProject is set.
-        RenameProject.init();
-
         // TODO: Special case to fix localized text for intruder sample project. Rip out and revisit post-2.0.0.
         // TODO After sample projects are converted to JSON, must revisit this.
         if (isCozmoSampleProject && projectUUID == "4bb7eb61-99c4-44a2-8295-f0f94ddeaf62" && projectXML != null) {
@@ -220,8 +218,15 @@
         Scratch.workspace.clear();
 
         window.cozmoProjectUUID = projectUUID;
-        window.cozmoProjectName = projectName;
         window.previouslySavedProjectJSON = null;
+
+        window.setProjectNameAndSavedText(projectName, isCozmoSampleProject);
+
+        // TODO only call for featured projects, not all sample projects.
+        // window.cozmoProjectUUID must be set before Play Now Modal is rendered.
+        if (window.isCozmoSampleProject && window.isVertical) {
+            PlayNowModal.init();
+        }
 
         if (window.saveProjectTimerId) {
             clearInterval(window.saveProjectTimerId);
@@ -243,15 +248,24 @@
             openBlocklyXML(projectXML);
             window.notifyProjectIsLoaded();
         }
-        setProjectNameAndSavedText(projectName, isCozmoSampleProject);
 
         window.startSaveProjectTimer();
-        
+
         var loadTime = (performance.now() - startTime) * 0.001;
         window.cozmoDASLog("openCozmoProject", "Took: " + loadTime.toFixed(3) + "s");
     }
 
+    window.newProjectCreated = function(projectUUID, projectName) {
+        window.cozmoProjectUUID = projectUUID;
+
+        window.setProjectNameAndSavedText(projectName, false);
+    }
+
+    // Sets window.cozmoProjectName and sets name on workspace.
+    // Makes rename and remix UI visible and tappable, if appropriate.
     window.setProjectNameAndSavedText = function(projectName, isSampleProject) {
+        window.cozmoProjectName = projectName;
+
         setText('#app-title', $t(projectName));
 
         // if the title overflows the container, reduce the font size to make it fit
@@ -269,13 +283,35 @@
             autosavedText = '';
         }
         setText('#app-title-subtext', $t(autosavedText));
+
+        if (window.cozmoProjectName != null && window.cozmoProjectUUID != null && window.cozmoProjectUUID != '') {
+            // set class that title is set so that remix button is shown
+            document.querySelector('#projecttext').classList.add('is-title-set');
+
+            // initialize renames of user projects
+            RenameProject.init();
+        }
     }
 
-    window.newProjectCreated = function(projectUUID, projectName) {
+    window.onRemixedProject = function(projectUUID, newProjectName, isFirstRemix) {
         window.cozmoProjectUUID = projectUUID;
-        window.cozmoProjectName = projectName;
+        window.isCozmoSampleProject = false;
 
-        window.setProjectNameAndSavedText(projectName, false);
+        window.previouslySavedProjectJSON = null;
+        window.changeMadeToSampleProject = false;
+
+        if (isFirstRemix == "True") {
+            ModalAlert.open({
+              title: window.$t('codeLab.firstRemixSavedConfirmation.saved_first_remix_title'),
+              prompt: window.$t('codeLab.firstRemixSavedConfirmation.remixing_blocks_jumpstart_prompt'),
+              confirmButtonLabel: window.$t('codeLab.firstRemixSavedConfirmation.continue_button_label')
+            });
+        }
+
+        window.setProjectNameAndSavedText(newProjectName, false);
+
+        // Turn save timer back on
+        window.startSaveProjectTimer();
     }
 
     window.startSaveProjectTimer = function() {
@@ -287,6 +323,18 @@
                 window.saveCozmoUserProject(false);
             }
         }
+    }
+
+    // Check if sample or featured project blocks have been altered since the project was loaded.
+    window.hasSampleProjectChanged = function() {
+        if (window.isCozmoSampleProject) {
+            var currentSampleProjectJSON = Scratch.vm.toJSON();
+            if (currentSampleProjectJSON != window.originalSampleProjectJSON) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     window.openBlocklyXML = function(xml) {

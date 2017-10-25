@@ -1138,6 +1138,14 @@ void BehaviorManager::SelectUIRequestGameBehavior()
       const u32 sparkCost = GetSparkCosts(SparkableThings::PlayAGame, 0);
       _robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks, -sparkCost);
       _robot.GetAIComponent().GetWhiteboard().SetCurrentGameRequestUIRequest(true);
+      
+      // Send DAS event with cost of the random game
+      // s_val = name of the game requested
+      // data = cost to request game
+      Anki::Util::sEvent("meta.spark_random_game",
+                         {{DDATA, std::to_string(sparkCost).c_str()}},
+                         _uiRequestGameBehavior->GetIDStr().c_str());
+      
     }
   }
   else {
@@ -1291,6 +1299,16 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
       // We already check that the player can afford the cost Game side
       const u32 sparkCost = GetSparkCosts(SparkableThings::DoATrick, 0);
       _robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks, -sparkCost);
+      
+      // Send DAS event with cost of the random trick
+      if(GetRequestedSpark() != UnlockId::Invalid){
+        // s_val = name of the trick selected
+        // data = cost to perform trick
+        Anki::Util::sEvent("meta.spark_random_trick",
+                           {{DDATA, std::to_string(sparkCost).c_str()}},
+                           UnlockIdToString(GetRequestedSpark()));
+      }
+      
       break;
     }
     

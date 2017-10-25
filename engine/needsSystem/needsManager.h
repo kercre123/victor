@@ -95,7 +95,12 @@ public:
   bool IsPendingSparksRewardMsg() const { return _pendingSparksRewardMsg; }
   void SparksRewardCommunicatedToUser();
 
+  void SetTuningTestVariation(const std::string& variationKey,
+                              const Util::AnkiLab::AssignmentStatus assignmentStatus);
+
   static inline const std::string GetDecayConfigBaseFilename() { return "config/engine/needs_decay_config"; }
+  static inline const std::string GetConfigBaseFilename()      { return "config/engine/needs_config"; }
+  static inline const std::string GetLevelConfigBaseFilename() { return "config/engine/needs_level_config"; }
 
   static const char* kLogChannelName;
 
@@ -142,6 +147,7 @@ private:
   void InitAfterReadFromRobotAttempt();
 
   void AttemptActivateDecayExperiment(u32 robotSerialNumber);
+  void AttemptActivateTuningExperiment(u32 robotSerialNumber);
 
   void ApplyDecayAllNeeds(const bool connected);
   void ApplyDecayForTimeSinceLastDeviceWrite(const bool connected);
@@ -236,6 +242,10 @@ private:
 
   bool          _pendingSparksRewardMsg;
   ExternalInterface::FreeplaySparksAwarded _sparksRewardMsg;
+
+  std::string _tuningTestVariationKey = "Unknown (unknown)";
+
+  const std::string kABTestControlKey = "control";
 };
 
 

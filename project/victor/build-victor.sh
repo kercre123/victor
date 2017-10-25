@@ -19,6 +19,8 @@ function usage() {
     echo "  -x [CMAKE_EXE]          path to cmake executable"
     echo "  -C                      generate build config and exit without building"
     echo "  -F [FEATURE]            enable feature {factoryTest,factoryTestDev}"
+    echo "  -T                      list all cmake targets"
+    echo "  -t [target]             build specified cmake target"
 }
 
 #
@@ -29,6 +31,7 @@ CONFIGURE=0
 GEN_SRC_ONLY=0
 RM_BUILD_ASSETS=0
 RUN_BUILD=1
+CMAKE_TARGET=""
 CMAKE_EXE="${HOME}/.anki/cmake/dist/3.8.1/CMake.app/Contents/bin/cmake"
 
 CONFIGURATION=Debug
@@ -36,7 +39,7 @@ PLATFORM=android
 CMAKE_GENERATOR=Ninja
 FEATURES=""
 
-while getopts ":x:c:p:g:hvfdCF:" opt; do
+while getopts ":x:c:p:t:g:F:hvfdCT" opt; do
     case $opt in
         h)
             usage
@@ -57,6 +60,9 @@ while getopts ":x:c:p:g:hvfdCF:" opt; do
             CONFIGURE=1
             GEN_SRC_ONLY=1
             ;;
+        T)
+            CMAKE_TARGET="help"
+            ;;
         x)
             CMAKE_EXE="${OPTARG}"
             ;;
@@ -74,6 +80,9 @@ while getopts ":x:c:p:g:hvfdCF:" opt; do
             ;;
         F)
             FEATURES="${FEATURES} ${OPTARG}"
+            ;;
+        t)
+            CMAKE_TARGET="${OPTARG}"
             ;;
         :)
             echo "Option -${OPTARG} required an argument." >&2
@@ -302,7 +311,11 @@ if [ $USE_SHAKE -eq 0 ]; then
   fi
   shake --digest-and-input --report -j $VERBOSE_ARG $*
 else
-  $CMAKE_EXE --build . $*
+  TARGET_ARG=""
+  if [ -n "$CMAKE_TARGET" ]; then
+    TARGET_ARG="--target $CMAKE_TARGET"
+  fi
+  $CMAKE_EXE --build . $TARGET_ARG $*
 fi
 
 popd > /dev/null 2>&1

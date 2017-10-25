@@ -4,6 +4,8 @@ Shader "UI/Cozmo/AnimatedGlintShader"
 {
 	Properties
 	{
+		_GlintPeriod ("Glint Rate Modifier", Float) = 8 // how often the glint starts
+		_GlintSpeed ("Glint Speed Modifier", Float) = 5 // how fast the glint moves across the object
 	}
 	SubShader
 	{
@@ -20,6 +22,9 @@ Shader "UI/Cozmo/AnimatedGlintShader"
 			#pragma fragment frag
 			
 			#include "UnityCG.cginc"
+
+			float _GlintPeriod;
+			float _GlintSpeed;
 
 			struct appdata
 			{
@@ -46,7 +51,7 @@ Shader "UI/Cozmo/AnimatedGlintShader"
                 // modify the angle of the glint
                 float2 glintParams = o.vertex.xy * float2(1, 0.3);
 
-				o.glintParams = float4(glintParams, (_Time.x * 8 - floor(_Time.x * 8)) * 5, 0);
+				o.glintParams = float4(glintParams, (_Time.x * _GlintPeriod - floor(_Time.x * _GlintPeriod)) * _GlintSpeed, 0);
 
 				return o;
 			}

@@ -22,6 +22,7 @@ namespace DataPersistence {
     public bool FakeGermanLocale;
     public bool EnableAutoBlockPoolOnStart;
     public bool LoadTestCodeLabProjects;
+    public bool DisplayPerfDataInCodeLab;
 
     public DebugProfile() {
       PerfInfoDisplayMode = PerfWarningDisplay.PerfWarningDisplayMode.TurnsOnWhenWarning;
@@ -35,6 +36,7 @@ namespace DataPersistence {
       FakeGermanLocale = false;
       EnableAutoBlockPoolOnStart = true;
       LoadTestCodeLabProjects = false;
+      DisplayPerfDataInCodeLab = false;
 
       DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
       DebugConsoleData.Instance.AddConsoleVar("EnableAutoBlockPoolOnStart", "Animator", this);
@@ -48,6 +50,7 @@ namespace DataPersistence {
       DebugConsoleData.Instance.AddConsoleVar("FakeGermanLocale", "UIMockFlow", this);
 #endif
       DebugConsoleData.Instance.AddConsoleVar("LoadTestCodeLabProjects", "CodeLab", this);
+      DebugConsoleData.Instance.AddConsoleVar("DisplayPerfDataInCodeLab", "CodeLab", this);
 
       DebugConsoleData.Instance.AddConsoleFunction("UseSystemSettings", "Language", (str) => {
         OverrideLanguage = false;
@@ -97,6 +100,7 @@ namespace DataPersistence {
       case "UseFastConnectivityFlow":
       case "EnableAutoBlockPoolOnStart":
       case "LoadTestCodeLabProjects":
+      case "DisplayPerfDataInCodeLab":
         DataPersistence.DataPersistenceManager.Instance.Save();
         break;
       }

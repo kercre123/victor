@@ -18924,6 +18924,7 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_vert_set_cube_light_corner: this.verticalSetCubeLightCorner,
         cozmo_vert_cube_anim: this.verticalCubeAnim,
         cozmo_sound_play: this.verticalPlaySound,
+        cozmo_sound_play_and_wait: this.verticalPlaySoundAndWait,
         cozmo_sound_stop: this.verticalStopSound,
         // Draw (on Cozmo's face)
         cozmo_vert_cozmoface_clear: this.verticalCozmoFaceClear,
@@ -19084,6 +19085,7 @@ Scratch3CozmoBlocks.prototype.setBackpackColor = function (args, util) {
 Scratch3CozmoBlocks.prototype.verticalSetBackpackColor = function (args, util) {
     var colorHex = this._getColorIntFromColorObject(Cast.toRgbColorObject(args.COLOR));
     window.Unity.call({ requestId: -1, command: "cozmoVerticalSetBackpackColor", argUInt: colorHex });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.driveForward = function (args, util) {
@@ -19117,32 +19119,25 @@ Scratch3CozmoBlocks.prototype.driveBlocksHelper = function (args, util, command)
     return commandPromise;
 };
 
-Scratch3CozmoBlocks.prototype.playAnimationHelper = function (args, util, animName, isMystery) {
-    isMystery = isMystery || 0; // if undefined force to 0 as a default value
+Scratch3CozmoBlocks.prototype.playAnimationHelper = function (args, util, animIndex) {
     var requestId = this._getRequestId();
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call({ requestId: requestId, command: "cozmoPlayAnimation", argString: animName, argUInt: isMystery });
+    window.Unity.call({ requestId: requestId, command: "cozmoPlayAnimation", argInt: animIndex });
 
     return commandPromise;
 };
 
-Scratch3CozmoBlocks.prototype.playAnimationHelperVertical = function (args, util, animName, isMystery) {
-    isMystery = isMystery || 0; // if undefined force to 0 as a default value
+Scratch3CozmoBlocks.prototype.playAnimationHelperVertical = function (args, util, animIndex) {
     var requestId = this._getRequestId();
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call({ requestId: requestId, command: "cozmoPlayAnimation", argString: animName, argUInt: isMystery });
+    window.Unity.call({ requestId: requestId, command: "cozmoPlayAnimation", argInt: animIndex });
 
     return commandPromise;
 };
 
 Scratch3CozmoBlocks.prototype.playAnimationFromDropdown = function (args, util) {
-    var animName = Cast.toString(args.ANIMATION);
-    if (animName == 'mystery') {
-        var randomAnim = this._getAnimation(animName);
-        return this.playAnimationHelperVertical(args, util, randomAnim, 1);
-    } else {
-        return this.playAnimationHelperVertical(args, util, animName);
-    }
+    var animIndex = Cast.toNumber(args.ANIMATION);
+    return this.playAnimationHelperVertical(args, util, animIndex);
 };
 
 // ============================================================
@@ -19167,65 +19162,67 @@ Scratch3CozmoBlocks.prototype.playAnimationByTriggerName = function (args, util)
 // End temporary dev-only blocks prototyping
 // ============================================================
 
+// See https://docs.google.com/spreadsheets/d/1wF0AjExf9p-yjOkt4LKdKsxIiO1KPxu5Knjv_q0EBQc/edit#gid=461013084
+// for the animation mapping
+
 Scratch3CozmoBlocks.prototype.playHappyAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "happy");
+    return this.playAnimationHelper(args, util, 1); // "happy"
 };
 
 Scratch3CozmoBlocks.prototype.playVictoryAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "victory");
+    return this.playAnimationHelper(args, util, 2); // "victory"
 };
 
 Scratch3CozmoBlocks.prototype.playUnhappyAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "unhappy");
+    return this.playAnimationHelper(args, util, 3); // "unhappy"
 };
 
 Scratch3CozmoBlocks.prototype.playSurpriseAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "surprise");
+    return this.playAnimationHelper(args, util, 4); // "surprise"
 };
 
 Scratch3CozmoBlocks.prototype.playDogAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "dog");
+    return this.playAnimationHelper(args, util, 5); // "dog"
 };
 
 Scratch3CozmoBlocks.prototype.playCatAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "cat");
+    return this.playAnimationHelper(args, util, 6); // "cat"
 };
 
 Scratch3CozmoBlocks.prototype.playSneezeAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "sneeze");
+    return this.playAnimationHelper(args, util, 7); // "sneeze"
 };
 
 Scratch3CozmoBlocks.prototype.playExcitedAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "excited");
+    return this.playAnimationHelper(args, util, 8); // "excited"
 };
 
 Scratch3CozmoBlocks.prototype.playThinkingAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "thinking");
+    return this.playAnimationHelper(args, util, 9); // "thinking"
 };
 
 Scratch3CozmoBlocks.prototype.playBoredAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "bored");
+    return this.playAnimationHelper(args, util, 10); // "bored"
 };
 
 Scratch3CozmoBlocks.prototype.playFrustratedAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "frustrated");
+    return this.playAnimationHelper(args, util, 11); // "frustrated"
 };
 
 Scratch3CozmoBlocks.prototype.playChattyAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "chatty");
+    return this.playAnimationHelper(args, util, 12); // "chatty"
 };
 
 Scratch3CozmoBlocks.prototype.playDejectedAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "dejected");
+    return this.playAnimationHelper(args, util, 13); // "dejected"
 };
 
 Scratch3CozmoBlocks.prototype.playSleepAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "sleep");
+    return this.playAnimationHelper(args, util, 14); // "sleep"
 };
 
 Scratch3CozmoBlocks.prototype.playMysteryAnimation = function (args, util) {
-    var animationName = this._getAnimation("mystery");
-    return this.playAnimationHelper(args, util, animationName, 1);
+    return this.playAnimationHelper(args, util, 0);
 };
 
 Scratch3CozmoBlocks.prototype.setLiftHeight = function (args, util) {
@@ -19381,24 +19378,6 @@ Scratch3CozmoBlocks.prototype._getColor = function (colorName) {
     return colorHexToReturn;
 };
 
-/**
- * Convert a string to a Cozmo animation trigger index.
- * Supports 'mystery' for a random animation.
- * @param animationName The animation to retrieve.
- * @returns {number} The Cozmo animation trigger index.
- * @private
- */
-Scratch3CozmoBlocks.prototype._getAnimation = function (animationName) {
-    var animationTable = ['happy', 'victory', 'unhappy', 'surprise', 'dog', 'cat', 'sneeze', 'excited', 'thinking', 'bored', 'frustrated', 'chatty', 'dejected', 'sleep'];
-
-    if (animationName == 'mystery') {
-        var randomValue = Math.floor(Math.random() * animationTable.length);
-        return animationTable[randomValue];
-    }
-
-    return animationName;
-};
-
 Scratch3CozmoBlocks.prototype._getColorIntFromColorObject = function (rgbColor) {
     // Color from rgb to hex value (like 0xffffffff).
     var colorHexValue = Color.rgbToHex(rgbColor);
@@ -19427,19 +19406,23 @@ Scratch3CozmoBlocks.prototype._getColorIntFromColorObject = function (rgbColor) 
 Scratch3CozmoBlocks.prototype.verticalEnableAnimationTrack = function (args, util) {
     var trackName = Cast.toString(args.ANIMATION_TRACK);
     window.Unity.call({ requestId: -1, command: "cozVertEnableAnimationTrack", argString: trackName, argBool: true });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalDisableAnimationTrack = function (args, util) {
     var trackName = Cast.toString(args.ANIMATION_TRACK);
     window.Unity.call({ requestId: -1, command: "cozVertEnableAnimationTrack", argString: trackName, argBool: false });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalEnableWaitForActions = function (args, util) {
     window.Unity.call({ requestId: -1, command: "cozVertEnableWaitForActions", argBool: true });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalDisableWaitForActions = function (args, util) {
     window.Unity.call({ requestId: -1, command: "cozVertEnableWaitForActions", argBool: false });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalWaitForActions = function (args, util) {
@@ -19453,6 +19436,7 @@ Scratch3CozmoBlocks.prototype.verticalWaitForActions = function (args, util) {
 Scratch3CozmoBlocks.prototype.verticalCancelActions = function (args, util) {
     var actionType = Cast.toString(args.ACTION_SELECT);
     window.Unity.call({ requestId: -1, command: "cozVertCancelActions", argString: actionType });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalTurn = function (args, util) {
@@ -19476,22 +19460,18 @@ Scratch3CozmoBlocks.prototype.verticalDrive = function (args, util) {
 };
 
 Scratch3CozmoBlocks.prototype.verticalDriveWheels = function (args, util) {
-    var requestId = this._getRequestId();
     var leftSpeed = Cast.toNumber(args.LEFT_SPEED);
     var rightSpeed = Cast.toNumber(args.RIGHT_SPEED);
 
-    var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call({ requestId: requestId, command: "cozVertDriveWheels", argFloat: leftSpeed, argFloat2: rightSpeed });
-    return commandPromise;
+    window.Unity.call({ requestId: -1, command: "cozVertDriveWheels", argFloat: leftSpeed, argFloat2: rightSpeed });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalStopMotor = function (args, util) {
-    var requestId = this._getRequestId();
     var motorToStop = Cast.toString(args.MOTOR_SELECT);
 
-    var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call({ requestId: requestId, command: "cozVertStopMotor", argString: motorToStop });
-    return commandPromise;
+    window.Unity.call({ requestId: -1, command: "cozVertStopMotor", argString: motorToStop });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalPathOffset = function (args, util) {
@@ -19545,12 +19525,10 @@ Scratch3CozmoBlocks.prototype.verticalDockWithCubeById = function (args, util) {
 };
 
 Scratch3CozmoBlocks.prototype.verticalMoveLift = function (args, util) {
-    var requestId = this._getRequestId();
     var speed = Cast.toNumber(args.LIFT_SPEED);
 
-    var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call({ requestId: requestId, command: "cozVertMoveLift", argFloat: speed });
-    return commandPromise;
+    window.Unity.call({ requestId: -1, command: "cozVertMoveLift", argFloat: speed });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalSetCubeLightCorner = function (args, util) {
@@ -19558,6 +19536,7 @@ Scratch3CozmoBlocks.prototype.verticalSetCubeLightCorner = function (args, util)
     var lightIndex = Cast.toNumber(args.LIGHT_SELECT);
     var colorHex = this._getColorIntFromColorObject(Cast.toRgbColorObject(args.COLOR));
     window.Unity.call({ requestId: -1, command: "cozVertSetCubeLightCorner", argUInt: colorHex, argUInt2: cubeIndex, argUInt3: lightIndex });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCubeAnim = function (args, util) {
@@ -19565,42 +19544,58 @@ Scratch3CozmoBlocks.prototype.verticalCubeAnim = function (args, util) {
     var cubeAnim = Cast.toString(args.ANIM_SELECT);
     var colorHex = this._getColorIntFromColorObject(Cast.toRgbColorObject(args.COLOR));
     window.Unity.call({ requestId: -1, command: "cozVertCubeAnimation", argUInt: colorHex, argUInt2: cubeIndex, argString: cubeAnim });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalPlaySound = function (args, util) {
-    var soundSelection = Cast.toString(args.SOUND_MENU);
-    window.Unity.call({ requestId: -1, command: "cozVertPlaySoundEffects", argString: soundSelection });
+    var soundSelection = Cast.toNumber(args.SOUND_MENU);
+    window.Unity.call({ requestId: -1, command: "cozVertPlaySoundEffects", argInt: soundSelection, argBool: false });
+    return window.Unity.sleepPromiseIfNecessary();
+};
+
+Scratch3CozmoBlocks.prototype.verticalPlaySoundAndWait = function (args, util) {
+    var soundSelection = Cast.toNumber(args.SOUND_MENU);
+    var requestId = this._getRequestId();
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({ requestId: requestId, command: "cozVertPlaySoundEffects", argInt: soundSelection, argBool: true });
+    return commandPromise;
 };
 
 Scratch3CozmoBlocks.prototype.verticalStopSound = function (args, util) {
-    var soundSelection = Cast.toString(args.SOUND_MENU);
-    window.Unity.call({ requestId: -1, command: "cozVertStopSoundEffects", argString: soundSelection });
+    var soundSelection = Cast.toNumber(args.SOUND_MENU);
+    window.Unity.call({ requestId: -1, command: "cozVertStopSoundEffects", argInt: soundSelection });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 // Drawing on Cozmo's Face
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceClear = function (args, util) {
     window.Unity.call({ requestId: -1, command: "cozVertCozmoFaceClear" });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceDisplay = function (args, util) {
     window.Unity.call({ requestId: -1, command: "cozVertCozmoFaceDisplay" });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceSetDrawColor = function (args, util) {
     var drawColor = Cast.toBoolean(args.DRAW_COLOR);
     window.Unity.call({ requestId: -1, command: "cozVertCozmoFaceSetDrawColor", argBool: drawColor });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceSetTextScale = function (args, util) {
     var textScale = Cast.toNumber(args.SCALE);
     window.Unity.call({ requestId: -1, command: "cozVertCozmoFaceSetTextScale", argFloat: textScale });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceSetTextAlignment = function (args, util) {
     var xAlignment = Cast.toNumber(args.TEXT_ALIGNMENT_X); // 0,1,2 = left,center,right
     var yAlignment = Cast.toNumber(args.TEXT_ALIGNMENT_Y); // 0,1,2 = top,center,bottom
     window.Unity.call({ requestId: -1, command: "cozVertCozmoFaceSetTextAlignment", argUInt: xAlignment, argUInt2: yAlignment });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawLine = function (args, util) {
@@ -19609,6 +19604,7 @@ Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawLine = function (args, util) 
     var x2 = Cast.toNumber(args.X2);
     var y2 = Cast.toNumber(args.Y2);
     window.Unity.call({ requestId: -1, command: "cozVertCozmoFaceDrawLine", argFloat: x1, argFloat2: y1, argFloat3: x2, argFloat4: y2 });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceFillRect = function (args, util) {
@@ -19617,6 +19613,7 @@ Scratch3CozmoBlocks.prototype.verticalCozmoFaceFillRect = function (args, util) 
     var x2 = Cast.toNumber(args.X2);
     var y2 = Cast.toNumber(args.Y2);
     window.Unity.call({ requestId: -1, command: "cozVertCozmoFaceFillRect", argFloat: x1, argFloat2: y1, argFloat3: x2, argFloat4: y2 });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawRect = function (args, util) {
@@ -19625,6 +19622,7 @@ Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawRect = function (args, util) 
     var x2 = Cast.toNumber(args.X2);
     var y2 = Cast.toNumber(args.Y2);
     window.Unity.call({ requestId: -1, command: "cozVertCozmoFaceDrawRect", argFloat: x1, argFloat2: y1, argFloat3: x2, argFloat4: y2 });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceFillCircle = function (args, util) {
@@ -19632,6 +19630,7 @@ Scratch3CozmoBlocks.prototype.verticalCozmoFaceFillCircle = function (args, util
     var y1 = Cast.toNumber(args.Y1);
     var radius = Cast.toNumber(args.RADIUS);
     window.Unity.call({ requestId: -1, command: "cozVertCozmoFaceFillCircle", argFloat: x1, argFloat2: y1, argFloat3: radius });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawCircle = function (args, util) {
@@ -19639,6 +19638,7 @@ Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawCircle = function (args, util
     var y1 = Cast.toNumber(args.Y1);
     var radius = Cast.toNumber(args.RADIUS);
     window.Unity.call({ requestId: -1, command: "cozVertCozmoFaceDrawCircle", argFloat: x1, argFloat2: y1, argFloat3: radius });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawText = function (args, util) {
@@ -19646,6 +19646,7 @@ Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawText = function (args, util) 
     var y1 = Cast.toNumber(args.Y1);
     var text = Cast.toString(args.TEXT);
     window.Unity.call({ requestId: -1, command: "cozVertCozmoFaceDrawText", argFloat: x1, argFloat2: y1, argString: text });
+    return window.Unity.sleepPromiseIfNecessary();
 };
 
 // =================
@@ -20682,12 +20683,14 @@ var Runtime = function (_EventEmitter) {
                     // Script has just stopped
                     this._ankiAreThreadsRunning = false;
                     window.Unity.call({ command: "cozmoScriptStopped" });
+                    window.onScriptsStopped();
                 }
             } else {
                 if (this.threads.length != 0) {
                     // Script has just started
                     this._ankiAreThreadsRunning = true;
                     window.Unity.call({ command: "cozmoScriptStarted" });
+                    window.onScriptsStarted();
                 }
             }
         }
@@ -21013,6 +21016,8 @@ var Runtime = function (_EventEmitter) {
             // Code to handle start/end script events. - mwesley, 05/01/17
             window.Unity.call({ command: "cozmoGreenFlag" });
 
+            window.onScriptsStarted();
+
             this.stopAll();
             this.ioDevices.clock.resetProjectTimer();
             this.clearEdgeActivatedValues();
@@ -21033,6 +21038,8 @@ var Runtime = function (_EventEmitter) {
             // *** ANKI CHANGE ***
             // Code to handle start/end script events. - mwesley, 05/01/17
             window.Unity.call({ command: "cozmoStopAll" });
+
+            window.onScriptsStopped();
 
             // Dispose all clones.
             var newTargets = [];
@@ -27754,7 +27761,7 @@ module.exports = got;
 /* 104 */
 /***/ (function(module, exports) {
 
-module.exports = {"_from":"got@5.7.1","_id":"got@5.7.1","_inBundle":false,"_integrity":"sha1-X4FjWmHkplifGAVp6k44FoClHzU=","_location":"/got","_phantomChildren":{},"_requested":{"type":"version","registry":true,"raw":"got@5.7.1","name":"got","escapedName":"got","rawSpec":"5.7.1","saveSpec":null,"fetchSpec":"5.7.1"},"_requiredBy":["#DEV:/"],"_resolved":"https://registry.npmjs.org/got/-/got-5.7.1.tgz","_shasum":"5f81635a61e4a6589f180569ea4e381680a51f35","_spec":"got@5.7.1","_where":"/Users/markw/GitRepos/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm","browser":{"unzip-response":false},"bugs":{"url":"https://github.com/sindresorhus/got/issues"},"bundleDependencies":false,"dependencies":{"create-error-class":"^3.0.1","duplexer2":"^0.1.4","is-redirect":"^1.0.0","is-retry-allowed":"^1.0.0","is-stream":"^1.0.0","lowercase-keys":"^1.0.0","node-status-codes":"^1.0.0","object-assign":"^4.0.1","parse-json":"^2.1.0","pinkie-promise":"^2.0.0","read-all-stream":"^3.0.0","readable-stream":"^2.0.5","timed-out":"^3.0.0","unzip-response":"^1.0.2","url-parse-lax":"^1.0.0"},"deprecated":false,"description":"Simplified HTTP/HTTPS requests","devDependencies":{"ava":"^0.16.0","coveralls":"^2.11.4","form-data":"^2.1.1","get-port":"^2.0.0","get-stream":"^2.3.0","into-stream":"^2.0.0","nyc":"^8.1.0","pem":"^1.4.4","pify":"^2.3.0","tempfile":"^1.1.1","xo":"0.16.x"},"engines":{"node":">=0.10.0 <7"},"files":["index.js"],"homepage":"https://github.com/sindresorhus/got#readme","keywords":["http","https","get","got","url","uri","request","util","utility","simple","curl","wget","fetch"],"license":"MIT","maintainers":[{"name":"Sindre Sorhus","email":"sindresorhus@gmail.com","url":"sindresorhus.com"},{"name":"Vsevolod Strukchinsky","email":"floatdrop@gmail.com","url":"github.com/floatdrop"}],"name":"got","repository":{"type":"git","url":"git+https://github.com/sindresorhus/got.git"},"scripts":{"coveralls":"nyc report --reporter=text-lcov | coveralls","test":"xo && nyc ava"},"version":"5.7.1","warnings":[{"code":"ENOTSUP","required":{"node":">=0.10.0 <7"},"pkgid":"got@5.7.1"}],"xo":{"ignores":["test/**"]}}
+module.exports = {"_args":[[{"raw":"got@5.7.1","scope":null,"escapedName":"got","name":"got","rawSpec":"5.7.1","spec":"5.7.1","type":"version"},"/Users/michelle/src/scratch-vm"]],"_from":"got@5.7.1","_id":"got@5.7.1","_inCache":true,"_location":"/got","_nodeVersion":"0.10.48","_npmOperationalInternal":{"host":"packages-18-east.internal.npmjs.com","tmp":"tmp/got-5.7.1.tgz_1478113400687_0.6078383799176663"},"_npmUser":{"name":"floatdrop","email":"floatdrop@gmail.com"},"_npmVersion":"2.15.1","_phantomChildren":{},"_requested":{"raw":"got@5.7.1","scope":null,"escapedName":"got","name":"got","rawSpec":"5.7.1","spec":"5.7.1","type":"version"},"_requiredBy":["#DEV:/"],"_resolved":"https://registry.npmjs.org/got/-/got-5.7.1.tgz","_shasum":"5f81635a61e4a6589f180569ea4e381680a51f35","_shrinkwrap":null,"_spec":"got@5.7.1","_where":"/Users/michelle/src/scratch-vm","browser":{"unzip-response":false},"bugs":{"url":"https://github.com/sindresorhus/got/issues"},"dependencies":{"create-error-class":"^3.0.1","duplexer2":"^0.1.4","is-redirect":"^1.0.0","is-retry-allowed":"^1.0.0","is-stream":"^1.0.0","lowercase-keys":"^1.0.0","node-status-codes":"^1.0.0","object-assign":"^4.0.1","parse-json":"^2.1.0","pinkie-promise":"^2.0.0","read-all-stream":"^3.0.0","readable-stream":"^2.0.5","timed-out":"^3.0.0","unzip-response":"^1.0.2","url-parse-lax":"^1.0.0"},"description":"Simplified HTTP/HTTPS requests","devDependencies":{"ava":"^0.16.0","coveralls":"^2.11.4","form-data":"^2.1.1","get-port":"^2.0.0","get-stream":"^2.3.0","into-stream":"^2.0.0","nyc":"^8.1.0","pem":"^1.4.4","pify":"^2.3.0","tempfile":"^1.1.1","xo":"0.16.x"},"directories":{},"dist":{"shasum":"5f81635a61e4a6589f180569ea4e381680a51f35","tarball":"https://registry.npmjs.org/got/-/got-5.7.1.tgz"},"engines":{"node":">=0.10.0 <7"},"files":["index.js"],"gitHead":"856b4caf16b02ce28ef0d92e83cf434a50b71e84","homepage":"https://github.com/sindresorhus/got#readme","keywords":["http","https","get","got","url","uri","request","util","utility","simple","curl","wget","fetch"],"license":"MIT","maintainers":[{"name":"sindresorhus","email":"sindresorhus@gmail.com"},{"name":"floatdrop","email":"floatdrop@gmail.com"},{"name":"kevva","email":"kevinmartensson@gmail.com"}],"name":"got","optionalDependencies":{},"readme":"ERROR: No README data found!","repository":{"type":"git","url":"git+https://github.com/sindresorhus/got.git"},"scripts":{"coveralls":"nyc report --reporter=text-lcov | coveralls","test":"xo && nyc ava"},"version":"5.7.1","xo":{"ignores":["test/**"]}}
 
 /***/ }),
 /* 105 */
@@ -40353,7 +40360,7 @@ function extend() {
 /* 157 */
 /***/ (function(module, exports) {
 
-module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"./node_modules/.bin/webpack --progress --colors --bail","coverage":"./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"./node_modules/.bin/eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"./node_modules/.bin/webpack-dev-server","tap":"./node_modules/.bin/tap ./test/{unit,integration}/*.js","tap:unit":"./node_modules/.bin/tap ./test/unit/*.js","tap:integration":"./node_modules/.bin/tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"./node_modules/.bin/webpack --progress --colors --watch","version":"./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","eslint":"^4.8.0","eslint-config-scratch":"^4.0.1","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"0.1.0-prerelease.1505757278","scratch-render":"0.1.0-prerelease.1505763609","scratch-storage":"^0.2.0","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.9.1"}}
+module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"./node_modules/.bin/webpack --progress --colors --bail","coverage":"./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"./node_modules/.bin/eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"./node_modules/.bin/webpack-dev-server","tap":"./node_modules/.bin/tap ./test/{unit,integration}/*.js","tap:unit":"./node_modules/.bin/tap ./test/unit/*.js","tap:integration":"./node_modules/.bin/tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"./node_modules/.bin/webpack --progress --colors --watch","version":"./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","eslint":"^4.9.0","eslint-config-scratch":"^4.0.1","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"0.1.0-prerelease.1505757278","scratch-render":"0.1.0-prerelease.1505763609","scratch-storage":"^0.2.1","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.9.2"}}
 
 /***/ }),
 /* 158 */

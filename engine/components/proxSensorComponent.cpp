@@ -182,9 +182,8 @@ void ProxSensorComponent::UpdateNavMap()
     // clear out known free space
     INavMap* currentNavMemoryMap = _robot.GetMapComponent().GetCurrentMemoryMap();
     if ( currentNavMemoryMap ) {
-      currentNavMemoryMap->AddLine(robotPos.GetTranslation(), objectPos.GetTranslation(),  
-                                   INavMap::EContentType::ClearOfObstacle,
-                                   lastTimestamp);
+      MemoryMapData clearRegion(INavMap::EContentType::ClearOfObstacle, lastTimestamp);
+      currentNavMemoryMap->AddLine(robotPos.GetTranslation(), objectPos.GetTranslation(), clearRegion);
 
       // Add prox obstacle if detected and close to robot 
       if (_latestData.distance_mm <= kMaxObsThreshold_mm) { 

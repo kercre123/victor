@@ -93,6 +93,7 @@ namespace Cozmo.Energy.UI {
       RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
       RobotEngineManager.Instance.AddCallback<FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
       RobotEngineManager.Instance.AddCallback<BehaviorTransition>(HandleBehaviorTransition);
+      RobotEngineManager.Instance.AddCallback<GoingToSleep>(HandleGoingToSleep);
 
       NeedsStateManager nsm = NeedsStateManager.Instance;
       nsm.PauseExceptForNeed(NeedId.Energy);
@@ -166,6 +167,7 @@ namespace Cozmo.Energy.UI {
       RobotEngineManager.Instance.RemoveCallback<FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
       RobotEngineManager.Instance.RemoveCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
       RobotEngineManager.Instance.RemoveCallback<BehaviorTransition>(HandleBehaviorTransition);
+      RobotEngineManager.Instance.RemoveCallback<GoingToSleep>(HandleGoingToSleep);
 
 
       //RETURN TO FREEPLAY
@@ -206,13 +208,18 @@ namespace Cozmo.Energy.UI {
     private void HandleBlockConnectivityChanged(int blocksConnected) {
       if (_WasFull == null || !_WasFull.Value) {
         if (blocksConnected == 0) {
-          _ShakeProgressBarBG.gameObject.SetActive(false);
           _CubeHelpGroup.SetActive(true);
         }
         else {
-          _ShakeProgressBarBG.gameObject.SetActive(true);
           _CubeHelpGroup.SetActive(false);
         }
+      }
+      // always hide regardless of full state.
+      if (blocksConnected == 0) {
+        _ShakeProgressBarBG.gameObject.SetActive(false);
+      }
+      else {
+        _ShakeProgressBarBG.gameObject.SetActive(true);
       }
     }
 
@@ -277,8 +284,10 @@ namespace Cozmo.Energy.UI {
         _FillBarLerpTween.Kill();
       }
       // Because the stages are quite large, just fake some fill time.
-      const float kFillTime = 0.4f;
-      _FillBarLerpTween = _ShakeProgressBarFill.DOFillAmount(amount, kFillTime);
+      if (_ShakeProgressBarFill != null) {
+        const float kFillTime = 0.4f;
+        _FillBarLerpTween = _ShakeProgressBarFill.DOFillAmount(amount, kFillTime);
+      }
     }
 
     private void HandleFeedingSFXStageUpdate(FeedingSFXStageUpdate message) {
@@ -317,6 +326,11 @@ namespace Cozmo.Energy.UI {
         // Exit feeding so that hiccups can take over
         CloseDialog();
       }
+    }
+
+    // PauseManager has put us in behavior wait and likely we aren't going to continue, just shutdown.
+    private void HandleGoingToSleep(Anki.Cozmo.ExternalInterface.GoingToSleep msg) {
+      CloseDialog();
     }
 
 

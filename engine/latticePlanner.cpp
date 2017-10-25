@@ -17,10 +17,11 @@
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "engine/blockWorld/blockWorld.h"
+#include "engine/namedColors/namedColors.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "engine/navMap/memoryMap/memoryMapToPlanner.h"
+#include "engine/navMap/memoryMap/data/memoryMapData_ObservableObject.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/viz/vizManager.h"
@@ -41,6 +42,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <thread>
+#include <unordered_set>
 
 
 // TODO:(bn) ANKI_DEVELOPER_CODE?
@@ -86,9 +88,6 @@ namespace Anki {
 namespace Cozmo {
 
 using namespace Planning;
-
-// Enable NavMemoryMap borders to be imported into planner
-CONSOLE_VAR(bool, kUseNavMapObstacles, "LatticePlanner.ImportBlockworldObstaclesIfNeeded", false);
 
 class LatticePlannerImpl : private Util::noncopyable
 {
@@ -738,17 +737,13 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     robotPadding -= LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT;
   }
 
-  const TimeStamp_t timeOfLastChange = _blockWorld->GetTimeOfLastChange();
+  const TimeStamp_t timeOfLastChange = _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp();
   const bool didObjectsChange = (_timeOfLastObjectsImport < timeOfLastChange);
   
   if(!isReplanning ||  // get obstacles if theyve changed or we're not replanning
      didObjectsChange)
   {
     _timeOfLastObjectsImport = timeOfLastChange;
-    std::vector<std::pair<Quad2f,ObjectID> > boundingBoxes;
-    std::vector<Poly2f> navMapConvexHulls;
-
-    _blockWorld->GetObstacles(boundingBoxes, obstaclePadding);
     
     // Configuration of memory map to check for obstacles
     constexpr MemoryMapTypes::FullContentArray typesToCalculateBordersWithInterestingEdges =
@@ -807,21 +802,32 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       "This array does not define all types once and only once.");
     
     // GetNavMap Polys
-    std::vector<Poly2f> convexHulls;
-    // if (kUseNavMapObstacles) {
-      INavMap* memoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
-      GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);    
-      GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);    
-      GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);    
-    // }
-      // PRINT_NAMED_WARNING("LatticePlanner.GetObstacles", "Found %lu obstacle regions", convexHulls.size());
-
-    // add Blockworld polys
-    for(const auto& boundingQuad : boundingBoxes) {
-      Poly2f boundingPoly;
-      boundingPoly.ImportQuad2d(boundingQuad.first);
-      convexHulls.push_back(boundingPoly);
+    std::vector<ConvexPolygon> convexHulls;
+    INavMap* memoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
+    
+    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);    
+    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);
+    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);    
+   
+    std::unordered_set<std::shared_ptr<MemoryMapData>> observableObjectData;
+    MemoryMapTypes::NodePredicate pred = 
+      [](MemoryMapTypes::MemoryMapDataPtr d) -> bool
+      {
+          return (d->type == MemoryMapTypes::EContentType::ObstacleCube);
+      };
+      
+    memoryMap->FindContentIf(pred, observableObjectData);
+    for (const auto& nodeData : observableObjectData) 
+    {
+      auto castPtr = MemoryMapData::MemoryMapDataCast<MemoryMapData_ObservableObject>( nodeData );
+      convexHulls.emplace_back( castPtr->boundingPoly );
     }
+
+    // expand and force CHs to be clockwise for C-space expansion
+    for(auto& hull : convexHulls) {
+      hull.RadialExpand(obstaclePadding);
+      hull.SetClockDirection(ConvexPolygon::CW);
+    }  
     
     _context.env.ClearObstacles();
     
@@ -864,7 +870,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
           // multi-angle stuff. For now just draw the poly with
           // padding
           _robot->GetContext()->GetVizManager()->DrawPoly (
-            vizID++, boundingPoly, *vizColor );
+            vizID++, boundingPoly.GetSimplePolygon(), *vizColor );
         }
         numAdded++;
       }

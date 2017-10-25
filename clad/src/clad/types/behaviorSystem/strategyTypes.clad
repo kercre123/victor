@@ -18,7 +18,8 @@ enum uint_8 WantsToRunStrategyType {
   ObstacleDetected,
   PlacedOnCharger,
   RobotPlacedOnSlope,
-  RobotShaken
+  RobotShaken,
+  RobotTouchGesture
 }
 
 } // namespace Cozmo

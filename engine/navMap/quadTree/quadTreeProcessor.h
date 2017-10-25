@@ -87,6 +87,9 @@ public:
   // attempt to apply a transformation function to all nodes in the tree
   void TransformContent(NodeTransformFunction transform);
   
+  // populate a list of all data that matches the predicate
+  void FindContentIf(NodePredicate pred, std::unordered_set<std::shared_ptr<MemoryMapData>>& output);
+  
   // returns true if there are any nodes of the given type, false otherwise
   bool HasContentType(EContentType type) const;
   

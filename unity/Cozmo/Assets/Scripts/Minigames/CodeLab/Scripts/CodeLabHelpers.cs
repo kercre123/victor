@@ -103,6 +103,8 @@ namespace CodeLab {
     private ActionType _WaitingOnActionType;
     private uint _ActionIdTag;
     private ScratchBlockUpdate _UpdateMethod;
+    private const ushort kInvalidAudioPlayID = 0;
+    private ushort _AudioPlayID = kInvalidAudioPlayID;
 
     public void Init(int requestId = -1, CodeLabGame codeLabGame = null, ActionType actionType = ActionType.Count, uint actionIdTag = (uint)Anki.Cozmo.ActionConstants.INVALID_TAG) {
       _RequestId = requestId;
@@ -111,12 +113,17 @@ namespace CodeLab {
       _WaitingOnActionType = ActionType.Count;
       _ActionIdTag = actionIdTag;
       _UpdateMethod = null;
+      _AudioPlayID = kInvalidAudioPlayID;
     }
 
     public void DoUpdate() {
       if (_UpdateMethod != null) {
         _UpdateMethod();
       }
+    }
+
+    public void SetAudioPlayID(ushort audioPlayID) {
+      _AudioPlayID = audioPlayID;
     }
 
     public void SetActionData(ActionType actionType, uint actionIdTag) {
@@ -145,6 +152,10 @@ namespace CodeLab {
       var robot = RobotEngineManager.Instance.CurrentRobot;
       robot.CancelActionByIdTag(_ActionIdTag);
       ReleaseFromPool();
+    }
+
+    public void AudioPlaySoundCompleted(Anki.Cozmo.Audio.CallbackInfo callbackInfo) {
+      AdvanceToNextBlock(true);
     }
 
     public void VerticalOnAnimationComplete(bool success) {
@@ -215,6 +226,12 @@ namespace CodeLab {
       rEM.RemoveCallback<RobotObservedFace>(RobotObservedHappyFace);
       rEM.RemoveCallback<RobotObservedFace>(RobotObservedSadFace);
       rEM.RemoveCallback<RobotObservedObject>(RobotObservedObject);
+
+      if (_AudioPlayID != kInvalidAudioPlayID) {
+        Anki.Cozmo.Audio.GameAudioClient.UnregisterCallbackHandler(_AudioPlayID);
+        _AudioPlayID = kInvalidAudioPlayID;
+      }
+
       var robot = rEM.CurrentRobot;
       if (robot != null) {
         robot.CancelCallback(VerticalOnAnimationComplete);

@@ -16,6 +16,8 @@ namespace UTNotifications
         [UnityEditor.Callbacks.PostProcessBuildAttribute(0)]
         public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
         {
+// COZMO MODIFICATION. THIS CODE HAS BEEN MANUALLY ADDED TO CozmoAppController.mm
+/*
 #if UNITY_4_3 || UNITY_4_4 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7 || UNITY_4_8 || UNITY_4_9
             if (target == BuildTarget.iPhone)
 #else
@@ -25,6 +27,7 @@ namespace UTNotifications
                 PatchAppController(pathToBuiltProject);
                 CopyRaw(pathToBuiltProject);
             }
+*/
         }
 
         private static void PatchAppController(string pathToBuiltProject)

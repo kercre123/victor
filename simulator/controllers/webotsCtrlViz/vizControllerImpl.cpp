@@ -496,7 +496,7 @@ void VizControllerImpl::ProcessVizCameraTextMessage(const AnkiEvent<VizInterface
   }
 }
   
-static void DisplayImageHelper(const EncodedImage& encodedImage, webots::ImageRef* imageRef, webots::Display* display)
+static void DisplayImageHelper(const EncodedImage& encodedImage, webots::ImageRef* &imageRef, webots::Display* display)
 {
   // Delete existing image if there is one
   if (imageRef != nullptr) {
