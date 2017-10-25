@@ -214,6 +214,9 @@ body.show-glossary-modal #glossary-modal {
     width: 30px;
     height: 30px;
   }
+  #glossary .close-button:active {
+    background-position: 0 -30px;
+  }
   #glossary #definitions-outer {
     padding: 15px 5px 15px 15px;
   }
