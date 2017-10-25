@@ -24,7 +24,7 @@ class IBehaviorDispatcher : public ICozmoBehavior
 protected:
   IBehaviorDispatcher(const Json::Value& config);
 
-  // called during (child) constructors to add a behavior id that this behavior may dispatch to
+  // called during (child) constructors to add a behavior id that this behavior may dispatch to.
   void AddPossibleDispatch(BehaviorID id) { _behaviorIds.push_back(id); }
 
 public:

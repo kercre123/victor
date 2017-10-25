@@ -110,6 +110,7 @@ enum uint_8 BehaviorClass {
 
   // Dispatch behaviors which exist only to delegate to other behaviors
   DispatcherStrictPriority,
+  DispatcherStrictPriorityWithCooldown,
 
   // Victor / demo behavior
   VictorObservingDemo,
