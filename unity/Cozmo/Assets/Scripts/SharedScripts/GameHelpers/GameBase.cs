@@ -936,12 +936,20 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void RaiseChallengeWin() {
-    _StateMachine.Stop();
-    if (DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins.ContainsKey(_ChallengeData.ChallengeID)) {
-      DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins[_ChallengeData.ChallengeID]++;
+    if (_StateMachine != null) {
+      _StateMachine.Stop();
     }
-    else {
-      DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins.Add(_ChallengeData.ChallengeID, 1);
+
+    if (_ChallengeData != null
+        && DataPersistence.DataPersistenceManager.Instance != null
+        && DataPersistence.DataPersistenceManager.Instance.CurrentSession != null
+        && DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins != null) {
+      if (DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins.ContainsKey(_ChallengeData.ChallengeID)) {
+        DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins[_ChallengeData.ChallengeID]++;
+      }
+      else {
+        DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins.Add(_ChallengeData.ChallengeID, 1);
+      }
     }
 
     UpdatePlayNeed();
