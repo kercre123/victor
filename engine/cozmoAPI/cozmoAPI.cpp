@@ -225,16 +225,16 @@ CozmoAPI::CozmoInstanceRunner::~CozmoInstanceRunner()
 void CozmoAPI::CozmoInstanceRunner::Run()
 {
   using TimeClock = std::chrono::steady_clock;
-  auto runStart = TimeClock::now();
+  const auto runStart = TimeClock::now();
 
   while(_isRunning)
   {
     ANKI_CPU_TICK("CozmoEngine", kMaxDesiredEngineDuration, Util::CpuThreadProfiler::kLogFrequencyNever);
     
-    auto tickStart = TimeClock::now();
+    const auto tickStart = TimeClock::now();
 
-    std::chrono::duration<double> timeSeconds = tickStart - runStart;
-    double timeNanoseconds = Util::SecToNanoSec(timeSeconds.count());
+    const std::chrono::duration<double> timeSeconds = tickStart - runStart;
+    const double timeNanoseconds = Util::SecToNanoSec(timeSeconds.count());
 
     // If we fail to update properly stop running
     if (!Update(Util::numeric_cast<BaseStationTime_t>(timeNanoseconds)))
@@ -242,9 +242,9 @@ void CozmoAPI::CozmoInstanceRunner::Run()
       Stop();
     }
     
-    const auto minimumSleepTimeMs = std::chrono::milliseconds( (long)(BS_TIME_STEP * 0.2) ); // 60 * 0.2 = 12 milliseconds!?
+    static const auto minimumSleepTimeMs = std::chrono::milliseconds( (long)(BS_TIME_STEP * 0.2) ); // 60 * 0.2 = 12 milliseconds!?
     
-    auto tickNow = TimeClock::now();
+    const auto tickNow = TimeClock::now();
     auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - tickStart);
     if (ms_left < std::chrono::milliseconds(0))
     {

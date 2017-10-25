@@ -263,6 +263,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
                      "UNKNOWN");
 #endif
 
+  _prevEndUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+
   _isInitialized = true;
 
   return RESULT_OK;
@@ -475,13 +477,20 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     const double maxUpdateDuration = BS_TIME_STEP;
     if (updateLengthMs > maxUpdateDuration)
     {
+      static const std::string targetMs = std::to_string(BS_TIME_STEP);
       Anki::Util::sEventF("cozmo_engine.update.run.slow",
-                          {{DDATA,std::to_string(BS_TIME_STEP).c_str()}},
+                          {{DDATA, targetMs.c_str()}},
                           "%.2f", updateLengthMs);
     }
-    ExternalInterface::MessageEngineToGame debugPerfMessage(
-                                          ExternalInterface::DebugPerformanceTick("Engine",updateLengthMs));
-    _context->GetExternalInterface()->Broadcast( std::move(debugPerfMessage) );
+    ExternalInterface::MessageEngineToGame perfEngMsg(
+                                          ExternalInterface::DebugPerformanceTick("Engine", updateLengthMs));
+    _context->GetExternalInterface()->Broadcast(std::move(perfEngMsg));
+
+    const double timeSinceLastTickMs = endUpdateTimeMs - _prevEndUpdateTimeMs;
+    _prevEndUpdateTimeMs = endUpdateTimeMs;
+    ExternalInterface::MessageEngineToGame perfEngFreqMsg(
+                                          ExternalInterface::DebugPerformanceTick("EngineFreq", timeSinceLastTickMs));
+    _context->GetExternalInterface()->Broadcast(std::move(perfEngFreqMsg));
   }
 #endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
 

@@ -977,7 +977,10 @@ protected:
   
   float _syncTimeSentTime_sec = 0.0f;
   constexpr static float kMaxSyncTimeAckDelay_sec = 5.0f;
-  
+
+  // Used to calculate tick rate
+  float _prevCurrentTime_sec = 0.0f;
+
   // Send robot's current pose
   Result SendAbsLocalizationUpdate() const;
     
@@ -1000,7 +1003,7 @@ protected:
   // =========  Active Object messages  ============
   Result SendFlashObjectIDs();
   void ActiveObjectLightTest(const ObjectID& objectID);  // For testing
-  
+
 }; // class Robot
 
 //

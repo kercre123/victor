@@ -17,14 +17,14 @@ public class PerfWarningDisplay : MonoBehaviour {
 
   private const string _kLatencySectionName = "Latency";
   private const string _kUnitySectionName = "Unity";
-  private const string _kVisionSectionName = "Vision";
+  private const string _kEngineFreqSectionName = "EngineFreq";
   private const string _kEngineSectionName = "Engine";
 
   // if the last 30 samples average at higher than these numbers, the section is displayed.
   private const float _kMaxWifiThresholdBeforeWarning_ms = 60.0f;
   private const float _kMaxUnityThresholdBeforeWarning_ms = 50.0f;  // 20 FPS
   private const float _kMaxEngineThresholdBeforeWarning_ms = 83.0f; // 12 FPS 
-  private const float _kMaxVisionThresholdBeforeWarning_ms = 166.0f;// 6 FPS
+  private const float _kMaxEngineFreqThresholdBeforeWarning_ms = 83.0f;// 12 FPS
 
   public enum PerfWarningDisplayMode {
     TurnsOnWhenWarning,
@@ -41,7 +41,7 @@ public class PerfWarningDisplay : MonoBehaviour {
     _Sections.Add(_kLatencySectionName, CreateSection(_kLatencySectionName, _kMaxWifiThresholdBeforeWarning_ms));
     _Sections.Add(_kUnitySectionName, CreateSection(_kUnitySectionName, _kMaxUnityThresholdBeforeWarning_ms));
     _Sections.Add(_kEngineSectionName, CreateSection(_kEngineSectionName, _kMaxEngineThresholdBeforeWarning_ms));
-    _Sections.Add(_kVisionSectionName, CreateSection(_kVisionSectionName, _kMaxVisionThresholdBeforeWarning_ms));
+    _Sections.Add(_kEngineFreqSectionName, CreateSection(_kEngineFreqSectionName, _kMaxEngineFreqThresholdBeforeWarning_ms));
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.LatencyMessage>(HandleDebugLatencyMsg);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DebugPerformanceTick>(HandleDebugPerfTickMsg);
@@ -78,8 +78,8 @@ public class PerfWarningDisplay : MonoBehaviour {
     return GetSectionData(_kUnitySectionName);
   }
 
-  public string GetVisionSectionData() {
-    return GetSectionData(_kVisionSectionName);
+  public string GetEngineFreqSectionData() {
+    return GetSectionData(_kEngineFreqSectionName);
   }
 
   public string GetEngineSectionData() {
@@ -127,9 +127,8 @@ public class PerfWarningDisplay : MonoBehaviour {
     if (msg.systemName == _kEngineSectionName) {
       UpdateUI(_Sections[_kEngineSectionName], msg.lastTickTime);
     }
-    else if (msg.systemName == _kVisionSectionName) {
-      // Note that the data in here is actually bonus.  pterry 2017/10/23
-      UpdateUI(_Sections[_kVisionSectionName], msg.lastTickTime);
+    else if (msg.systemName == _kEngineFreqSectionName) {
+      UpdateUI(_Sections[_kEngineFreqSectionName], msg.lastTickTime);
     }
   }
 

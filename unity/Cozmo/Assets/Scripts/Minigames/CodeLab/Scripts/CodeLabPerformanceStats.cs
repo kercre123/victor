@@ -8,7 +8,7 @@ namespace CodeLab {
     private class PerformanceStatsOutput {
       public string latency;
       public string unity;
-      public string vision;
+      public string engineFreq;
       public string engine;
       public string jsToCS;
       public string csToJS;
@@ -51,7 +51,7 @@ namespace CodeLab {
         var perfHUD = Cozmo.PerformanceManager.Instance.PerfHUD;
         _Output.latency = perfHUD.GetLatencySectionData();
         _Output.unity = perfHUD.GetUnitySectionData();
-        _Output.vision = perfHUD.GetVisionSectionData();
+        _Output.engineFreq = perfHUD.GetEngineFreqSectionData();
         _Output.engine = perfHUD.GetEngineSectionData();
         _Output.jsToCS = _AvgWebViewCallsThisTick.ToString("F2");
         _Output.csToJS = _AvgEvaluateJSCallsPerTick.ToString("F2");

@@ -130,6 +130,7 @@ protected:
   Anki::Cozmo::DasToSdkHandler                              _dasToSdkHandler;
   bool                                                      _isGamePaused = false;
   bool                                                      _hasRunFirstUpdate = false;
+  float                                                     _prevEndUpdateTimeMs;
 
   virtual Result InitInternal();
   

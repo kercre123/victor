@@ -1551,22 +1551,24 @@ Result Robot::Update()
   // Sending debug string to game and viz
   char buffer [128];
 
-  const float imageProcRate = 1000.0f / _visionComponent->GetProcessingPeriod_ms();
-      
+  const float updateRatePerSec = 1.0f / (currentTime - _prevCurrentTime_sec);
+  _prevCurrentTime_sec = currentTime;
+
   // So we can have an arbitrary number of data here that is likely to change want just hash it all
   // together if anything changes without spamming
   snprintf(buffer, sizeof(buffer),
-           "%c%c%c%c%c %2dHz %s %s ",
+           "%c%c%c%c%c%c %2dHz %s %s ",
            GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
            GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
            GetMoveComponent().IsMoving() ? 'B' : ' ',
            GetCarryingComponent().IsCarryingObject() ? 'C' : ' ',
            IsOnChargerPlatform() ? 'P' : ' ',
+           _nvStorageComponent->HasPendingRequests() ? 'R' : ' ',
            // SimpleMoodTypeToString(GetMoodManager().GetSimpleMood()),
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
-           (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
+           (u8)MIN(((u8)updateRatePerSec), std::numeric_limits<u8>::max()),
            currentActivityName,
            behaviorDebugStr.c_str());
       
@@ -1578,10 +1580,6 @@ Result Robot::Update()
     _lastDebugStringHash = curr_hash;
   }
   
-#if ANKI_DEV_CHEATS
-  Broadcast( ExternalInterface::MessageEngineToGame(ExternalInterface::DebugPerformanceTick(
-                                                    "Vision",_visionComponent->GetProcessingPeriod_ms())));
-#endif
   _cubeLightComponent->Update();
   _bodyLightComponent->Update();
   
