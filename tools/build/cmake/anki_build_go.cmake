@@ -1,5 +1,5 @@
 
-include(anki_build_util)
+include(anki_build_source_list)
 
 # internal use - set up build environment for go, based on platform
 # vars that should already be set up: __gobuild_out
@@ -56,7 +56,7 @@ endmacro()
 # usage: anki_build_go_c_library(mytarget generated_header_variable "path/to/source/directory"
 #                                "path/to/GOPATH/directory" ${ANKI_SRCLIST_DIR})
 macro(anki_build_go_c_library target_name gensrc_var target_basedir gopath srclist_dir)
-  __anki_build_absolute_source_list(${target_name} ${srclist_dir})
+  anki_build_absolute_source_list(${target_name} ${srclist_dir})
 
   # set the locations of the .a and .h files that will be generated
   set(__gobuild_out "${CMAKE_CURRENT_BINARY_DIR}/${target_name}/${target_name}.a")
@@ -90,7 +90,7 @@ endmacro()
 # build a go executable
 # usage: anki_build_go_executable(mytarget "path/to/source/directory" "path/to/GOPATH/directory" ${ANKI_SRCLIST_DIR})
 macro(anki_build_go_executable target_name target_basedir gopath srclist_dir)
-  __anki_build_absolute_source_list(${target_name} ${srclist_dir})
+  anki_build_absolute_source_list(${target_name} ${srclist_dir})
 
   set(__gobuild_out "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${target_name}")
 
