@@ -27,26 +27,19 @@ void Power::init(void) {
   LTN2::mode(MODE_OUTPUT);
 
   // Enable charging and power
-  nCHG_EN::reset();
-  nCHG_EN::mode(MODE_OUTPUT);
-
-  POWER_EN::mode(MODE_INPUT);
+  CHG_EN::set();
+  CHG_EN::mode(MODE_OUTPUT);
 
   // Make sure battery is partially charged, and that the robot is on a charger
   // NOTE: Only one interrupt is enabled here, and it's the 200hz main timing loop
   // this lowers power consumption and interrupts fire regularly
   do {
-    // Wait for a bit with the power on
-    POWER_EN::pull(PULL_UP);
-    for (int i = 0; i < 10; i++) __asm("wfi");
+    for( int i = 0; i < 100; i++)  __asm("wfi") ;
+  } while (Analog::values[ADC_VBAT] <= MINIMUM_BATTERY);
 
-    // Break out once we have hit a decent charge level
-    if (Analog::values[ADC_VBAT] >= MINIMUM_BATTERY) break ;
-
-    // Charge for ~15s bursts
-    POWER_EN::pull(PULL_DOWN);
-    for (int i = 0; i < 5000; i++) __asm("wfi");
-  } while(1);
+  // Power the head now that we are adiquately charged
+  POWER_EN::mode(MODE_INPUT);
+  POWER_EN::pull(PULL_UP);
 }
 
 void Power::enableClocking(void) {

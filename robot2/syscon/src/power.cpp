@@ -36,8 +36,8 @@ static volatile bool ejectSystem = false;
 void Power::init(void) {
   POWER_EN::pull(PULL_UP);
 
-  nCHG_EN::set();
-  nCHG_EN::mode(MODE_OUTPUT);
+  CHG_EN::reset();
+  CHG_EN::mode(MODE_OUTPUT);
 
   nVDDs_EN::reset();
   nVDDs_EN::mode(MODE_OUTPUT);
@@ -48,10 +48,10 @@ void Power::setCharge(bool enable) {
     // Enable High-current charging
     nCHG_HC::pull(PULL_DOWN);
     nCHG_HC::mode(MODE_INPUT);
-    nCHG_EN::reset();
-    nCHG_EN::mode(MODE_OUTPUT);
+    CHG_EN::set();
+    CHG_EN::mode(MODE_OUTPUT);
   } else {
-    nCHG_EN::mode(MODE_INPUT);
+    CHG_EN::mode(MODE_INPUT);
     nCHG_HC::pull(PULL_NONE);
     nCHG_HC::mode(MODE_INPUT);
   }
@@ -59,7 +59,7 @@ void Power::setCharge(bool enable) {
 
 void Power::stop(void) {
   nVDDs_EN::set();
-  nCHG_EN::set();
+  CHG_EN::reset();
   POWER_EN::pull(PULL_DOWN);
 }
 

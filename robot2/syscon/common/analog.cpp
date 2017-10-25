@@ -17,7 +17,6 @@ static const int SELECTED_CHANNELS = 0
 
 // Since the analog portion is shared with the bootloader, this has to be in the shared ram space
 uint16_t volatile Analog::values[ADC_CHANNELS];
-static uint16_t calibration_value;
 
 void Analog::init(void) {
   // Calibrate ADC1
@@ -28,7 +27,6 @@ void Analog::init(void) {
   ADC1->CFGR1 &= ~ADC_CFGR1_DMAEN;
   ADC1->CR |= ADC_CR_ADCAL;
   while ((ADC1->CR & ADC_CR_ADCAL) != 0) ;
-  calibration_value = ADC1->DR;
 
   // Setup the ADC for continuous mode
   ADC1->CHSELR = SELECTED_CHANNELS;
