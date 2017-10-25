@@ -205,6 +205,7 @@ namespace CodeLab {
     private uint _ChallengeBookmark = 1;
 
     private bool _IsOrchestraPlaying = false;
+    private bool _IsPerformingIntroActions = false;
 
     private const float kNormalDriveSpeed_mmps = 70.0f;
     private const float kFastDriveSpeed_mmps = 200.0f;
@@ -711,13 +712,53 @@ namespace CodeLab {
       LoadURL("extra/projects.html", urlParameters);
     }
 
+    private void OnLoadedOnChargerStep1Complete(bool success) {
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        DAS.Info("CodeLab.OnLoadedOnChargerStep1", "Step2: Drive further");
+        _IsPerformingIntroActions = true;
+        robot.DriveStraightAction(kNormalDriveSpeed_mmps, 80, false, OnLoadedOnChargerStep2Complete);
+      }
+      else {
+        DAS.Error("CodeLab.OnLoadedOnChargerStep1Complete.NullRobot", "");
+        _IsPerformingIntroActions = false;
+      }
+    }
+
+    private void OnLoadedOnChargerStep2Complete(bool success) {
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        DAS.Info("CodeLab.OnLoadedOnChargerStep2Complete", "Step2 Complete: success = " + success + " Start Step3: Anim");
+        _IsPerformingIntroActions = true;
+        robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabEnter, OnLoadedOnChargerStep3Complete);
+      }
+      else {
+        DAS.Error("CodeLab.OnLoadedOnChargerStep2Complete.NullRobot", "");
+        _IsPerformingIntroActions = false;
+      }
+    }
+
+    private void OnLoadedOnChargerStep3Complete(bool success) {
+      DAS.Info("CodeLab.OnLoadedOnChargerStep3Complete", "Step3 Complete: success = " + success);
+      _IsPerformingIntroActions = false;
+    }
+
     private void LoadWebView() {
       // Send EnterSDKMode to engine as we enter this view
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         robot.PushDrivingAnimations(AnimationTrigger.Count, AnimationTrigger.Count, AnimationTrigger.Count, kCodeLabGameDrivingAnimLock);
         robot.EnterSDKMode(false);
-        robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabEnter);
+        bool isOnCharger = ((robot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0);
+        if (isOnCharger) {
+          DAS.Info("CodeLab.LoadWebView.OnCharger", "Step1: Drive off contacts");
+          _IsPerformingIntroActions = true;
+          robot.DriveOffChargerContacts(callback: OnLoadedOnChargerStep1Complete);
+        }
+        else {
+          DAS.Info("CodeLab.LoadWebView.OffCharger", "Last Step");
+          OnLoadedOnChargerStep2Complete(true);
+        }
       }
       else {
         DAS.Error("Codelab.LoadWebView.NullRobot", "");
@@ -967,18 +1008,23 @@ namespace CodeLab {
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-        if (_PendingResetToHomeActions == 0) {
-          // If not already actively moving to reset, then stop all motors immediately
-          // The motors are stopped eventually in ResetRobotToHomePos, but we want to
-          // stop them even earlier if user actively presses the stop button.
-          robot.StopAllMotors();
+        if (_IsPerformingIntroActions) {
+          DAS.Info("CodeLab.OnStopAll.StillPerformingIntro", "Not stopping motors or cancelling actions");
         }
+        else {
+          if (_PendingResetToHomeActions == 0) {
+            // If not already actively moving to reset, then stop all motors immediately
+            // The motors are stopped eventually in ResetRobotToHomePos, but we want to
+            // stop them even earlier if user actively presses the stop button.
+            robot.StopAllMotors();
+          }
 
-        // Cancel any in-progress actions (unless we're resetting to position)
-        // (if we're resetting to position then we will have already canceled other actions,
-        // and we don't want to cancel the in-progress reset animations).
-        if (!IsResettingToHomePose()) {
-          robot.CancelAction(RobotActionType.UNKNOWN);
+          // Cancel any in-progress actions (unless we're resetting to position)
+          // (if we're resetting to position then we will have already canceled other actions,
+          // and we don't want to cancel the in-progress reset animations).
+          if (!IsResettingToHomePose()) {
+            robot.CancelAction(RobotActionType.UNKNOWN);
+          }
         }
       }
     }

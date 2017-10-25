@@ -888,6 +888,9 @@ class CodeLabInterface():
             log_text("Das.Log: %s %s" % (msg_payload_js["argString"], msg_payload_js["argString2"]))
         elif command == "cozmoDASError":
             log_text("Das.Error: %s %s" % (msg_payload_js["argString"], msg_payload_js["argString2"]))
+        elif command == "cozmoSwitchProjectTab":
+            grammar_type = msg_payload_js["argString"]
+            self._is_vertical_grammar = grammar_type != "horizontal"
 
         redirect_to_python = (command_args.use_python_projects and
                               ((command == "getCozmoUserAndSampleProjectLists") or (command == "getCozmoFeaturedProjectList")))
@@ -1031,29 +1034,39 @@ class CodeLabInterface():
         except FileExistsError:
             pass  # directory already exists - this is fine
 
+        project_json_data = project_data["ProjectJSON"]
+
+        if project_json_data is not None:
+            project_json_data = load_and_verify_json(project_json_data, "save_contents")
+
         if save_to_contents:
             # Overwrite contents file (this is always the latest save)
             path_name = os.path.join(project_directory, CONTENTS_FILENAME)
             with open(path_name, 'w') as out_file:
                 json.dump(project_data, out_file, indent=4)
 
-            loaded_proj_json = load_and_verify_json(project_data["ProjectJSON"], "save_contents")
+            if project_json_data is not None:
+                path_name = os.path.join(project_directory, PROJECTJSON_CONTENTS_FILENAME)
+                with open(path_name, 'w') as out_file:
+                    json.dump(project_json_data, out_file, indent=4)
 
-            path_name = os.path.join(project_directory, PROJECTJSON_CONTENTS_FILENAME)
-            with open(path_name, 'w') as out_file:
-                json.dump(loaded_proj_json, out_file, indent=4)
-
-            if command_args.debug_project_json_contents:
-                log_text("ProjectJSON =\n" + json.dumps(loaded_proj_json, indent=4) + "\n")
+                if command_args.debug_project_json_contents:
+                    log_text("ProjectJSON =\n" + json.dumps(project_json_data, indent=4) + "\n")
 
         if save_to_history:
             # Save a new file to history (so we have a full history of every edit)
             if utcnow is None:
                 utcnow = datetime.datetime.utcnow()
-            file_name = "_".join(str(utcnow).split()) + '.json'
+            base_filename = "_".join(str(utcnow).split())
+            file_name = base_filename + '.json'
             path_name = os.path.join(history_directory, file_name)
             with open(path_name, 'w') as out_file:
                 json.dump(project_data, out_file, indent=4)
+
+            if project_json_data is not None:
+                path_name = os.path.join(history_directory, base_filename + "_" + PROJECTJSON_CONTENTS_FILENAME)
+                with open(path_name, 'w') as out_file:
+                    json.dump(project_json_data, out_file, indent=4)
 
     def _update_project(self, user_project):
         project_uuid = user_project["ProjectUUID"]
