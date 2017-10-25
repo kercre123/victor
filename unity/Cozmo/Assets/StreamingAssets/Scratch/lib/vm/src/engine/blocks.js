@@ -218,6 +218,7 @@ class Blocks {
                 id: e.blockId,
                 element: e.element,
                 name: e.name,
+                oldValue: e.oldValue,
                 value: e.newValue
             }, optRuntime);
             break;
@@ -302,7 +303,15 @@ class Blocks {
                 if (variable) {
                     block.fields[args.name].value = variable.name;
                     block.fields[args.name].id = args.value;
-                }
+                } else {
+                    // If args.value isn't an ID, this is a change resulting from a rename
+                    // and args.value is the new name and args.oldValue is the id.
+                    const newName = args.value;
+                    const variableId = args.oldValue;
+                    const renamingVariable = optRuntime.getEditingTarget().lookupVariableById(variableId);
+                    block.fields[args.name].value = newName;
+                    block.fields[args.name].id = variableId;
+                 }
             } else {
                 block.fields[args.name].value = args.value;
             }
@@ -536,6 +545,14 @@ class Blocks {
      */
     _getBlockParams (block) {
         const params = {};
+
+        // *** ANKI CHANGE ***
+        // Log error and return if block is undefined.
+        if (typeof block === 'undefined') {
+          window.cozmoDASLog("Codelab.ScratchVM.GetBlockParam.BlockUndefined", "_getBlockParams receives undefined block.");
+          return params;
+        }
+
         for (const key in block.fields) {
             params[key] = block.fields[key].value;
         }
