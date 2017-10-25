@@ -266,9 +266,10 @@ namespace CodeLab {
     private static List<string> _importErrors = new List<string>();
 
     protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
-      SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
 
-      _SessionState.SetGrammarMode(GrammarMode.None);
+      _SessionState.StartSession();
+
+      SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
 
       DAS.Debug("Loading Webview", "");
       UIManager.Instance.ShowTouchCatcher();
@@ -448,13 +449,14 @@ namespace CodeLab {
       if (robot != null) {
         robot.CancelAction(RobotActionType.UNKNOWN);  // Cancel all current actions
         robot.RemoveDrivingAnimations(kCodeLabGameDrivingAnimLock);
-        _SessionState.EndSession();
         robot.ExitSDKMode(false);
         robot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, false);
         // Put cubes back to normal Freeplay behavior
         robot.SetEnableFreeplayLightStates(true);
         robot.EnableCubeSleep(false);
       }
+
+      _SessionState.EndSession();
 
       ResetAllCodeLabAudio();
       InProgressScratchBlockPool.ReleaseAllInUse();
@@ -700,6 +702,15 @@ namespace CodeLab {
 #endif
     }
 
+    private void LoadProjectsURL() {
+      SessionState.DAS_Event("robot.code_lab.load_project_page", _LastOpenedTab);
+
+      Dictionary<string, string> urlParameters = new Dictionary<string, string>();
+      urlParameters["projects"] = _LastOpenedTab;
+
+      LoadURL("extra/projects.html", urlParameters);
+    }
+
     private void LoadWebView() {
       // Send EnterSDKMode to engine as we enter this view
       var robot = RobotEngineManager.Instance.CurrentRobot;
@@ -723,9 +734,7 @@ namespace CodeLab {
                              isVertical: true);
         }
         else {
-          Dictionary<string, string> urlParameters = new Dictionary<string, string>();
-          urlParameters["projects"] = _LastOpenedTab;
-          LoadURL("extra/projects.html", urlParameters);
+          LoadProjectsURL();
         }
       }
     }
@@ -1140,7 +1149,7 @@ namespace CodeLab {
           // Inform workspace that the current work on workspace has been saved to a project.
           this.EvaluateJS("window.newProjectCreated('" + newProject.ProjectUUID + "','" + newProject.ProjectName + "'); ");
 
-          _SessionState.OnCreatedProject(newProject);
+          _SessionState.OnCreatedProject(newProject, false);
         }
         catch (NullReferenceException) {
           string sanitizedNewProject = PrivacyGuard.HidePersonallyIdentifiableInfo(newProject.ProjectJSON);
@@ -1178,22 +1187,21 @@ namespace CodeLab {
         PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
         defaultProfile.CodeLabProjects.Remove(projectToDelete);
 
-        SessionState.DAS_Event("robot.code_lab.deleted_user_project", defaultProfile.CodeLabProjects.Count.ToString());
+        SessionState.DAS_Event("robot.code_lab.deleted_user_project", defaultProfile.CodeLabProjects.Count.ToString(),
+                               SessionState.DAS_Format_IsVertical(projectToDelete.IsVertical));
       }
     }
 
     private void OnCozmoLoadProjectPage() {
       DAS.Info("Codelab.OnCozmoLoadProjectPage", "");
-      SessionState.DAS_Event("robot.code_lab.load_project_page", "");
 
       OnExitWorkspace();
 
-      Dictionary<string, string> urlParameters = new Dictionary<string, string>();
-      urlParameters["projects"] = _LastOpenedTab;
-      LoadURL("extra/projects.html", urlParameters);
+      LoadProjectsURL();
     }
 
     private void OnCozmoSwitchProjectTab(ScratchRequest scratchRequest) {
+      SessionState.DAS_Event("robot.code_lab.switch_project_tab", scratchRequest.argString);
       _LastOpenedTab = scratchRequest.argString;
     }
 
@@ -1210,6 +1218,7 @@ namespace CodeLab {
           CodeLabProject codeLabUserProject = FindUserProjectWithUUID(projectUUID);
           if (codeLabUserProject != null) {
             codeLabProject = new CodeLabProject(codeLabUserProject.ProjectName, codeLabUserProject.ProjectJSON, codeLabUserProject.IsVertical);
+            codeLabProject.BaseDASProjectName = codeLabUserProject.BaseDASProjectName ?? "";
             codeLabProject.VersionNum = codeLabUserProject.VersionNum;
             break;
           }
@@ -1223,6 +1232,7 @@ namespace CodeLab {
           CodeLabSampleProject sampleProject = _CodeLabSampleProjects.Find(findSampleProject);
           if (sampleProject != null) {
             codeLabProject = new CodeLabProject(sampleProject.ProjectName, sampleProject.ProjectJSON, sampleProject.IsVertical);
+            codeLabProject.BaseDASProjectName = sampleProject.DASProjectName;
             codeLabProject.VersionNum = sampleProject.VersionNum;
             break;
           }
@@ -1231,6 +1241,7 @@ namespace CodeLab {
           CodeLabFeaturedProject featuredProject = _CodeLabFeaturedProjects.Find(findFeaturedProject);
           if (featuredProject != null) {
             codeLabProject = new CodeLabProject(featuredProject.ProjectName, featuredProject.ProjectJSON, true);
+            codeLabProject.BaseDASProjectName = featuredProject.DASProjectName;
             codeLabProject.VersionNum = featuredProject.VersionNum;
           }
 
@@ -1258,6 +1269,9 @@ namespace CodeLab {
         if (projectToExport != null) {
           string projectToExportJSON = kCodelabPrefix + WWW.EscapeURL(projectToExport.GetSerializedJson());
 
+          SessionState.DAS_Event("robot.code_lab.export_project", projectType,
+                                 DASUtil.FormatExtraData(projectToExportJSON.Length.ToString()));
+
           System.Action<string, string> sendFileCall = null;
 
 #if !UNITY_EDITOR
@@ -1273,7 +1287,7 @@ namespace CodeLab {
 #endif
 
           if (string.IsNullOrEmpty(projectToExportJSON)) {
-            DAS.Error("Codelab.OnCozmoShareProject.ProjectNotFound", "Could not find a project to export with the specified UUID.");
+            DAS.Error("Codelab.OnCozmoShareProject.ProjectJsonNullOrEmpty", "Error creating Json string");
           }
           else if (sendFileCall == null) {
             DAS.Error("Codelab.OnCozmoShareProject.PlatformNotFound", "Could not create an export call for the current platform.");
@@ -1282,11 +1296,10 @@ namespace CodeLab {
             sendFileCall(projectToExport.ProjectName, projectToExportJSON);
           }
         }
+        else {
+          DAS.Error("Codelab.OnCozmoExportProject.NullProject", "Could not find the project of type=" + projectType);
+        }
       }
-    }
-
-    private void OnCozmoDownloadGoogleDrive() {
-      Application.OpenURL("itms://itunes.apple.com/us/app/google-drive/id507874739?mt=8");
     }
 
     private bool HandleNonBlockScratchRequest(ScratchRequest scratchRequest) {
@@ -1325,27 +1338,23 @@ namespace CodeLab {
         OnCozmoSaveUserProject(scratchRequest);
         return true;
       case "cozmoRequestToOpenUserProject":
-        SessionState.DAS_Event("robot.code_lab.open_user_project", "");
+        SessionState.DAS_Event("robot.code_lab.open_user_project", "", SessionState.DAS_Format_IsVertical(scratchRequest.argBool));
         OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplayUserProject, scratchRequest.argString, scratchRequest.argBool);
         return true;
       case "cozmoRequestToOpenSampleProject":
-        SessionState.DAS_Event("robot.code_lab.open_sample_project", scratchRequest.argString);
         OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject, scratchRequest.argString, scratchRequest.argBool);
         return true;
       case "cozmoRequestToOpenFeaturedProject":
-        SessionState.DAS_Event("robot.code_lab.open_featured_project", scratchRequest.argString);
         OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplayFeaturedProject, scratchRequest.argString, true);
         return true;
       case "cozmoRequestToCreateProject":
-        SessionState.DAS_Event("robot.code_lab.create_project", "");
+        SessionState.DAS_Event("robot.code_lab.create_project", "", SessionState.DAS_Format_IsVertical(scratchRequest.argBool));
         OpenCodeLabProject(RequestToOpenProjectOnWorkspace.CreateNewProject, null, scratchRequest.argBool);
         return true;
       case "cozmoRequestToRenameProject":
-        SessionState.DAS_Event("robot.code_lab.rename_project", "");
         OnCozmoRenameCodeLabProject(scratchRequest);
         return true;
       case "cozmoRequestToRemixProject":
-        SessionState.DAS_Event("robot.code_lab.remix_project", "");
         OnCozmoRemixCodeLabProject(scratchRequest);
         return true;
       case "cozmoDeleteUserProject":
@@ -1375,9 +1384,6 @@ namespace CodeLab {
         return true;
       case "cozmoSwitchProjectTab":
         OnCozmoSwitchProjectTab(scratchRequest);
-        return true;
-      case "cozmoDownloadGoogleDrive":
-        OnCozmoDownloadGoogleDrive();
         return true;
       case "cozmoWorkspaceLoaded":
         DAS.Info("CodeLab.WorkspaceLoaded", "");
@@ -1592,6 +1598,7 @@ namespace CodeLab {
       }
 
       if (HandleDrawOnFaceRequest(scratchRequest)) {
+        _SessionState.InstantScratchBlockEvent();
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
       else if (scratchRequest.command == "cozVertPathOffset") {
@@ -1661,7 +1668,7 @@ namespace CodeLab {
       }
       else if (scratchRequest.command == "cozVertMoveLift") {
         float speed = ClampAngularSpeedInput(scratchRequest.argFloat) * Mathf.Deg2Rad;
-        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(speed.ToString()));
+        _SessionState.InstantScratchBlockEvent();
         // Cancel any current lift actions, so that the motors can be driven directly
         InProgressScratchBlockPool.CancelActionsOfType(ActionType.Lift);
         robot.MoveLift(speed);
@@ -1723,13 +1730,13 @@ namespace CodeLab {
         int soundToPlay = scratchRequest.argInt;
         Anki.AudioMetaData.GameEvent.Codelab audioEvent = this.GetAudioEvent(soundToPlay, false);
 
+        _SessionState.InstantScratchBlockEvent();
+
         if (audioEvent == Anki.AudioMetaData.GameEvent.Codelab.Invalid) {
           // Invalid sound - do nothing
           inProgressScratchBlock.AdvanceToNextBlock(true);
-          _SessionState.ScratchBlockEvent(scratchRequest.command + ".error", DASUtil.FormatExtraData(soundToPlay.ToString()));
         }
         else {
-          _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(audioEvent.ToString()));
           GameAudioClient.PostCodeLabEvent(audioEvent,
                                             Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
                                             (callbackInfo) => { /* callback */ });
@@ -1750,7 +1757,7 @@ namespace CodeLab {
       else if (scratchRequest.command == "cozVertDriveWheels") {
         float leftSpeed = ClampSpeedInput(scratchRequest.argFloat);
         float rightSpeed = ClampSpeedInput(scratchRequest.argFloat2);
-        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(leftSpeed.ToString() + " , " + rightSpeed.ToString()));
+        _SessionState.InstantScratchBlockEvent();
         // Cancel any current driving actions, so the motors can drive directly
         InProgressScratchBlockPool.CancelActionsOfType(ActionType.Drive);
         robot.DriveWheels(leftSpeed, rightSpeed);
@@ -1758,7 +1765,7 @@ namespace CodeLab {
       }
       else if (scratchRequest.command == "cozVertStopMotor") {
         string motorToStop = scratchRequest.argString;
-        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(motorToStop));
+        _SessionState.InstantScratchBlockEvent();
         switch (motorToStop) {
         case "wheels":
           InProgressScratchBlockPool.CancelActionsOfType(ActionType.Drive);
@@ -1808,6 +1815,7 @@ namespace CodeLab {
         inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozVertEnableAnimationTrack") {
+        _SessionState.InstantScratchBlockEvent();
         bool enable = scratchRequest.argBool;
         try {
           AnimTrack animTrack = (AnimTrack)Enum.Parse(typeof(AnimTrack), scratchRequest.argString, ignoreCase: true);
@@ -1820,11 +1828,13 @@ namespace CodeLab {
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
       else if (scratchRequest.command == "cozVertEnableWaitForActions") {
+        _SessionState.InstantScratchBlockEvent();
         bool enable = scratchRequest.argBool;
         _SessionState.SetShouldWaitForActions(enable);
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
       else if ((scratchRequest.command == "cozVertWaitForActions") || (scratchRequest.command == "cozVertCancelActions")) {
+        _SessionState.InstantScratchBlockEvent();
         ActionType actionType = ActionType.Count;
         try {
           actionType = (ActionType)Enum.Parse(typeof(ActionType), scratchRequest.argString, ignoreCase: true);
@@ -1868,7 +1878,7 @@ namespace CodeLab {
         if (animationTrigger == AnimationTrigger.Count) {
           // Invalid animation - do nothing
           inProgressScratchBlock.AdvanceToNextBlock(true);
-          _SessionState.ScratchBlockEvent(scratchRequest.command + ".error", DASUtil.FormatExtraData(animationIndex.ToString()));
+          _SessionState.InstantScratchBlockEvent();
         }
         else {
           string animationName = animationTrigger.ToString();
@@ -1892,6 +1902,8 @@ namespace CodeLab {
           try {
             AnimationTrigger animationTrigger = (AnimationTrigger)Enum.Parse(typeof(AnimationTrigger), scratchRequest.argString);
 
+            _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(animationTrigger.ToString()));
+
             uint idTag = robot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.VerticalOnAnimationComplete, QueueActionPosition.IN_PARALLEL,
                                                    ignoreBodyTrack: ignoreBodyTrack, ignoreHeadTrack: ignoreHeadTrack, ignoreLiftTrack: ignoreLiftTrack);
             inProgressScratchBlock.SetActionData(ActionType.Anim, idTag);
@@ -1906,6 +1918,9 @@ namespace CodeLab {
           // Unity doesn't currently maintain a list of possible animations, so we just blindly request it
           // if animation doesn't exist, then nothing will play, and block should complete next frame.
           string animationName = scratchRequest.argString;
+
+          _SessionState.ScratchBlockEvent(scratchRequest.command); // deliberately don't pass animationName in as we don't know if it's a valid animation or e.g. PII
+
           uint idTag = robot.SendQueueSingleAction(Singleton<PlayAnimation>.Instance.Initialize(1, animationName, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack),
                                                 inProgressScratchBlock.VerticalOnAnimationComplete, QueueActionPosition.IN_PARALLEL);
           inProgressScratchBlock.SetActionData(ActionType.Anim, idTag);
@@ -1913,7 +1928,6 @@ namespace CodeLab {
         }
 
         if (startedAnim) {
-          _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(scratchRequest.argString));
           _RequiresResetToNeutralFace = true;
         }
         else {
@@ -2029,11 +2043,12 @@ namespace CodeLab {
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
       else if (scratchRequest.command == "cozmoVerticalSetBackpackColor") {
-        _SessionState.ScratchBlockEvent(scratchRequest.command);
+        _SessionState.InstantScratchBlockEvent();
         robot.SetAllBackpackBarLED(scratchRequest.argUInt);
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
       else if (scratchRequest.command == "cozVertSetCubeLightCorner") {
+        _SessionState.InstantScratchBlockEvent();
         uint color = scratchRequest.argUInt;
         uint cubeIndex = scratchRequest.argUInt2;
         uint lightIndex = scratchRequest.argUInt3;
@@ -2062,6 +2077,7 @@ namespace CodeLab {
         var cubeToAnimate = robot.GetLightCubeWithObjectType(GetLightCubeIdFromIndex(cubeIndex));
         if (cubeToAnimate != null) {
           string cubeAnim = scratchRequest.argString;
+          string dasCubeAnimName = cubeAnim;
           cubeToAnimate.SetLEDsOff();
           switch (cubeAnim) {
           case "spin":
@@ -2071,10 +2087,15 @@ namespace CodeLab {
           case "blink":
             cubeToAnimate.SetFlashingLEDs(color.ToColor());
             break;
+          default:
+            dasCubeAnimName = "invalid";
+            break;
           }
+
+          _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dasCubeAnimName));
         }
         else {
-          DAS.Error("CodeLab.NullCube", "No connected cube with index " + cubeIndex.ToString());
+          DAS.Info("CodeLab.NullCube", "No connected cube with index " + cubeIndex.ToString());
         }
         inProgressScratchBlock.ReleaseFromPool();
       }
@@ -2154,7 +2175,7 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Style_Disco_1_135Bpm_Loop;
         }
         else {
-          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Style_Disco_1_135Bpm_Loop; // TODO: change to _Stop event when that's added
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Style_Disco_1_135Bpm_Loop_Stop;
         }
         break;
       case 4: // BKY_SOUND_MAGIC
@@ -2484,7 +2505,7 @@ namespace CodeLab {
       Dictionary<string, string> parameters = new Dictionary<string, string>();
 
       if (!isVertical) {
-        _SessionState.StartSession(GrammarMode.Horizontal);
+        _SessionState.SetGrammarMode(GrammarMode.Horizontal);
 
         if (defaultProfile.CodeLabHorizontalPlayed == 0
             && !DebugMenuManager.Instance.DemoMode) {
@@ -2497,11 +2518,12 @@ namespace CodeLab {
         LoadURL(kHorizontalIndexFilename, parameters);
       }
       else {
-        _SessionState.StartSession(GrammarMode.Vertical);
+        _SessionState.SetGrammarMode(GrammarMode.Vertical);
 
         if (request == RequestToOpenProjectOnWorkspace.DisplayFeaturedProject) {
           parameters.Add("isFeaturedProject", "true");
-        } else {
+        }
+        else {
           parameters.Add("isFeaturedProject", "false");
         }
 
@@ -2549,7 +2571,8 @@ namespace CodeLab {
           }
 
           if (cleansedName != "" && !allCharsAreSpaces) {
-            projectToUpdate.ProjectName = RemoveUnsupportedChars(newProjectName);
+            SessionState.DAS_Event("robot.code_lab.rename_project", cleansedName.Length.ToString(), SessionState.DAS_Format_IsVertical(projectToUpdate.IsVertical));
+            projectToUpdate.ProjectName = cleansedName;
             projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
           }
 
@@ -2568,12 +2591,22 @@ namespace CodeLab {
 
     private void OnCozmoRemixCodeLabProject(ScratchRequest scratchRequest) {
       string newProjectName = scratchRequest.argString;
-      string originalProjectType = scratchRequest.argString2;
+      string originalProjectType = scratchRequest.argString2; // "user" or "sample"
       string originalProjectUUID = scratchRequest.argUUID;
 
       try {
         CodeLabProject remixedProject = FindProjectByUUIDAndCreateCodeLabProject(originalProjectUUID, originalProjectType);
+
+        string baseDASProjectName = remixedProject.BaseDASProjectName ?? "";
+        if (remixedProject.IsVertical) {
+          SessionState.DAS_Event("robot.code_lab.remix_vertical_project", originalProjectType, DASUtil.FormatExtraData(baseDASProjectName));
+        }
+        else {
+          SessionState.DAS_Event("robot.code_lab.remix_horizontal_project", originalProjectType, DASUtil.FormatExtraData(baseDASProjectName));
+        }
+
         remixedProject.ProjectName = newProjectName;
+        _SessionState.SetCurrentProjectData(ProjectType.User, baseDASProjectName);
 
         PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
         if (defaultProfile == null) {
@@ -2603,7 +2636,7 @@ namespace CodeLab {
         string projectNameEscaped = EscapeProjectText(remixedProject.ProjectName);
         this.EvaluateJS("window.onRemixedProject('" + remixedProject.ProjectUUID + "','" + projectNameEscaped + "','" + isFirstRemix.ToString() + "');");
 
-        _SessionState.OnCreatedProject(remixedProject);
+        _SessionState.OnCreatedProject(remixedProject, true);
 
         DataPersistenceManager.Instance.Save();
       }
@@ -2833,6 +2866,8 @@ namespace CodeLab {
       RequestToOpenProjectOnWorkspace cachedRequestToOpenProject = _RequestToOpenProjectOnWorkspace;
       bool isOpeningProject = false;
 
+      _SessionState.SetCurrentProjectData(ProjectType.User, "");
+
       switch (_RequestToOpenProjectOnWorkspace) {
       case RequestToOpenProjectOnWorkspace.CreateNewProject:
         // Open workspace and display only a green flag on the workspace.
@@ -2843,12 +2878,16 @@ namespace CodeLab {
         if (_ProjectUUIDToOpen != null) {
           CodeLabProject projectToOpen = FindUserProjectWithUUID(_ProjectUUIDToOpen);
           if (projectToOpen != null) {
+            _SessionState.SetCurrentProjectData(ProjectType.User, projectToOpen.BaseDASProjectName);
             String projectNameEscaped = EscapeProjectText(projectToOpen.ProjectName);
             if (projectToOpen.ProjectJSON != null) {
+              SessionState.DAS_Event("robot.code_lab.open_json_user_project", projectToOpen.ProjectJSON.Length.ToString(), SessionState.DAS_Format_IsVertical(projectToOpen.IsVertical));
               OpenCozmoProjectJSON(projectNameEscaped, projectToOpen.ProjectJSON, projectToOpen.ProjectUUID, "false");
             }
             else {
               // User project is in XML. It must have been created before the Cozmo app 2.1 release and is CodeLabProject VersionNum 2 or less.
+              SessionState.DAS_Event("robot.code_lab.open_xml_user_project", projectToOpen.ProjectXML.Length.ToString(), SessionState.DAS_Format_IsVertical(projectToOpen.IsVertical));
+
               String projectXMLEscaped = EscapeXML(projectToOpen.ProjectXML);
 
               // Open requested project in webview
@@ -2870,23 +2909,31 @@ namespace CodeLab {
           Predicate<CodeLabSampleProject> findProject = (CodeLabSampleProject p) => { return p.ProjectUUID == projectGuid; };
           codeLabSampleProject = _CodeLabSampleProjects.Find(findProject);
 
-          String sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
-          String sampleProjectNameEscaped = EscapeProjectText(sampleProjectName);
+          if (codeLabSampleProject != null) {
+            SessionState.DAS_Event("robot.code_lab.open_sample_project", codeLabSampleProject.DASProjectName, SessionState.DAS_Format_IsVertical(codeLabSampleProject.IsVertical));
+            _SessionState.SetCurrentProjectData(ProjectType.Sample, codeLabSampleProject.DASProjectName);
 
-          if (codeLabSampleProject.ProjectJSON != null) {
-            // Sample project is in JSON.
-            // Open requested project in webview.
+            String sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
+            String sampleProjectNameEscaped = EscapeProjectText(sampleProjectName);
 
-            OpenCozmoProjectJSON(sampleProjectNameEscaped, codeLabSampleProject.ProjectJSON, codeLabSampleProject.ProjectUUID, "true");
+            if (codeLabSampleProject.ProjectJSON != null) {
+              // Sample project is in JSON.
+              // Open requested project in webview.
+
+              OpenCozmoProjectJSON(sampleProjectNameEscaped, codeLabSampleProject.ProjectJSON, codeLabSampleProject.ProjectUUID, "true");
+            }
+            else {
+              // Sample project is still in XML. This will be true for some until we convert them all over.
+              String projectXMLEscaped = EscapeXML(codeLabSampleProject.ProjectXML);
+
+              // Open requested project in webview
+              this.EvaluateJS("window.openCozmoProjectXML('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "',\"" + projectXMLEscaped + "\",'true');");
+            }
+            isOpeningProject = true;
+
           }
           else {
-            // Sample project is still in XML. This will be true for some until we convert them all over.
-            String projectXMLEscaped = EscapeXML(codeLabSampleProject.ProjectXML);
-
-            // Open requested project in webview
-            this.EvaluateJS("window.openCozmoProjectXML('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "',\"" + projectXMLEscaped + "\",'true');");
           }
-          isOpeningProject = true;
         }
         else {
           DAS.Error("CodeLab.NullSampleProject", "Sample project empty for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
@@ -2901,17 +2948,28 @@ namespace CodeLab {
           Predicate<CodeLabFeaturedProject> findProject = (CodeLabFeaturedProject p) => { return p.ProjectUUID == projectGuid; };
           codeLabFeaturedProject = _CodeLabFeaturedProjects.Find(findProject);
 
-          if (codeLabFeaturedProject.ProjectJSON != null) {
-            String featuredProjectName = Localization.Get(codeLabFeaturedProject.ProjectName);
-            String featuredProjectNameEscaped = EscapeProjectText(featuredProjectName);
+          if (codeLabFeaturedProject != null) {
+            bool wasLoadedFromWhatsNew = Cozmo.WhatsNew.WhatsNewModalManager.ShouldAutoOpenProject;
 
-            // Open requested project in webview
-            OpenCozmoProjectJSON(featuredProjectNameEscaped, codeLabFeaturedProject.ProjectJSON, codeLabFeaturedProject.ProjectUUID, "true");
-            isOpeningProject = true;
+            // featured projects are hardcoded to be vertical currently
+            SessionState.DAS_Event("robot.code_lab.open_featured_project", codeLabFeaturedProject.DASProjectName, DASUtil.FormatExtraData(wasLoadedFromWhatsNew ? "1" : "0"));
+            _SessionState.SetCurrentProjectData(ProjectType.Featured, codeLabFeaturedProject.DASProjectName);
+
+            if (codeLabFeaturedProject.ProjectJSON != null) {
+              String featuredProjectName = Localization.Get(codeLabFeaturedProject.ProjectName);
+              String featuredProjectNameEscaped = EscapeProjectText(featuredProjectName);
+
+              // Open requested project in webview
+              OpenCozmoProjectJSON(featuredProjectNameEscaped, codeLabFeaturedProject.ProjectJSON, codeLabFeaturedProject.ProjectUUID, "true");
+              isOpeningProject = true;
+            }
+          }
+          else {
+            DAS.Error("CodeLab.OpenSampleProject.NullUUID", "Null project for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
           }
         }
         else {
-          DAS.Error("CodeLab.NullSampleProject", "Sample project empty for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
+          DAS.Error("CodeLab.OpenSampleProject.NullProject", "Null UUID");
         }
         break;
 

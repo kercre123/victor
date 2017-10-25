@@ -263,6 +263,7 @@ BASE_SRC_SCRATCH_PATH = "../../../unity/Cozmo/Assets/StreamingAssets/Scratch"
 CACHE_WRITE_TIME_PATH = "./.codelab_cache_write"
 PROJECTS_DIR= "projects/"
 CONTENTS_FILENAME = "contents.json"
+PROJECTJSON_CONTENTS_FILENAME = "ProjectJSON.json"
 CODELAB_BASE_URL = UNIQUE_RUN_ID + "/codelab/"
 DEVCONN_BASE_URL = UNIQUE_RUN_ID + "/devconn/"
 
@@ -1034,12 +1035,16 @@ class CodeLabInterface():
             # Overwrite contents file (this is always the latest save)
             path_name = os.path.join(project_directory, CONTENTS_FILENAME)
             with open(path_name, 'w') as out_file:
-                json.dump(project_data, out_file)
+                json.dump(project_data, out_file, indent=4)
+
+            loaded_proj_json = load_and_verify_json(project_data["ProjectJSON"], "save_contents")
+
+            path_name = os.path.join(project_directory, PROJECTJSON_CONTENTS_FILENAME)
+            with open(path_name, 'w') as out_file:
+                json.dump(loaded_proj_json, out_file, indent=4)
 
             if command_args.debug_project_json_contents:
-                log_text("Escaped ProjectJSON contents:\n" + json.dumps(project_data["ProjectJSON"]) + "\n")
-                loaded_proj_json = load_and_verify_json(project_data["ProjectJSON"], "save_contents")
-                log_text("Unescaped ProjectJSON contents:\n" + json.dumps(loaded_proj_json) + "\n")
+                log_text("ProjectJSON =\n" + json.dumps(loaded_proj_json, indent=4) + "\n")
 
         if save_to_history:
             # Save a new file to history (so we have a full history of every edit)
@@ -1048,7 +1053,7 @@ class CodeLabInterface():
             file_name = "_".join(str(utcnow).split()) + '.json'
             path_name = os.path.join(history_directory, file_name)
             with open(path_name, 'w') as out_file:
-                json.dump(project_data, out_file)
+                json.dump(project_data, out_file, indent=4)
 
     def _update_project(self, user_project):
         project_uuid = user_project["ProjectUUID"]
