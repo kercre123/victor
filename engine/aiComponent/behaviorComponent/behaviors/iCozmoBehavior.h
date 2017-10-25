@@ -356,6 +356,18 @@ protected:
   // true. Otherwise, return false (e.g. if the passed in interface doesn't have access to the delegation
   // component)
   bool DelegateNow(BehaviorExternalInterface& behaviorExternalInterface, IBehavior* delegate);
+
+  // same as above but with a callback that will get called as soon as the delegate stops itself (regardless
+  // of why)
+  bool DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface,
+                           IBehavior* delegate,
+                           BehaviorSimpleCallbackWithExternalInterface callback);
+
+  template<typename T>
+  bool DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface,
+                           IBehavior* delegate,
+                           void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface));
+
   
   // This function cancels the action started by DelegateIfInControl (if there is one). Returns true if an action was
   // canceled, false otherwise. Note that if you are activated, this will trigger a callback for the
@@ -507,6 +519,9 @@ private:
   // for when delegation finishes - if invalid, no action
   RobotCompletedActionCallback _actionCallback;
   bool _stopRequestedAfterAction = false;
+
+  // for when delegation to a _behavior_ finishes. If invalid, no callback
+  BehaviorSimpleCallbackWithExternalInterface _behaviorDelegateCallback;
   
   bool _isActivated;
   // should only be used to allow DelegateIfInControl to start while a behavior is resuming
@@ -681,6 +696,16 @@ bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorEx
                                std::bind(failureCallback, static_cast<T*>(this), std::placeholders::_1));
 }
 
+
+template<typename T>
+bool ICozmoBehavior::DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface,
+                                         IBehavior* delegate,
+                                         void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface))
+{
+  return DelegateIfInControl(behaviorExternalInterface,
+                             delegate,
+                             std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+}
 
 ////////
 //// Scored Behavior functions
