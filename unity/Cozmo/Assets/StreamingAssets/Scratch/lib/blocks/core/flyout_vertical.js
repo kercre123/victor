@@ -78,8 +78,11 @@ Blockly.VerticalFlyout.prototype.autoClose = true;
  * The width of the flyout, if not otherwise specified.
  * @type {number}
  */
- // NOTE: this constant works in conjunction with Blockly.Toolbox.prototype.width.
-Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = 340;
+Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = 250;
+
+// *** ANKI CHANGE ***
+Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_TABLET = 400;
+Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_PHONE = 330;
 
 /**
  * Size of a checkbox next to a variable reporter.
@@ -131,6 +134,14 @@ Blockly.VerticalFlyout.prototype.CHECKBOX_SPACE_X =
  */
 Blockly.VerticalFlyout.prototype.init = function(targetWorkspace) {
   Blockly.VerticalFlyout.superClass_.init.call(this, targetWorkspace);
+
+  // *** ANKI CHANGE ***
+  if (window.innerWidth < window.TABLET_WIDTH) {
+    Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_PHONE;
+  } else{
+    Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_TABLET;
+  }
+
   this.workspace_.scale = targetWorkspace.scale;
 };
 
