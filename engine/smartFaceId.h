@@ -25,7 +25,8 @@ class FaceWorld;
 
 class SmartFaceID
 {
-  friend class FaceWorld;  
+  friend class FaceWorld;
+  friend class TrackFaceAction;
 public:
 
   // construct empty face id (invalid face). Anyone can construct and invalid ID, but only friends can make it
