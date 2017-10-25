@@ -158,10 +158,18 @@
 
         // Handle VM events
         vm.on('SCRIPT_GLOW_ON', function(data) {
-            Scratch.workspace.glowStack(data.id, true);
+            // TODO The Gaussian blur filter applied with glowStack sometimes
+            // (especially on vertical) makes the entire program disappear
+            // when applied on both iOS and Android. Need to find alternative.
+            // Drop shadow also has the same problem per Adam's testing.
+            if (!window.isVertical) {
+                Scratch.workspace.glowStack(data.id, true);
+            }
         });
         vm.on('SCRIPT_GLOW_OFF', function(data) {
-            Scratch.workspace.glowStack(data.id, false);
+            if (!window.isVertical) {
+                Scratch.workspace.glowStack(data.id, false);
+            }
         });
         vm.on('BLOCK_GLOW_ON', function(data) {
             Scratch.workspace.glowBlock(data.id, true);
