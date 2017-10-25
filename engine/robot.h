@@ -146,6 +146,9 @@ public:
 
   Result SyncTime();  // TODO:(bn) only for robot event handler, move out of this header...
 
+  const bool GetReadyToStreamAnimations() const { return _readyToStreamAnims; }
+  void       SetReadyToStreamAnimations()       { _readyToStreamAnims = true; }
+  
   TimeStamp_t GetLastMsgTimestamp() const { return _lastMsgTimestamp; }
 
   // This is just for unit tests to fake a syncTimeAck message from the robot
@@ -730,6 +733,8 @@ protected:
   
   // Whether or not sync time was acknowledged by physical robot
   bool _timeSynced = false;
+  
+  bool _readyToStreamAnims = false;
 
   // Flag indicating whether a robotStateMessage was ever received
   TimeStamp_t _lastMsgTimestamp;

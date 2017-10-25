@@ -112,6 +112,13 @@ public:
 
   void Update();
 
+
+  // Add a callback to be executed once when the NVStorageComponent becomes idle
+  // and has no more pending requests
+  using NVStorageOnIdleCallback = std::function<void()>;
+  void AddOneShotOnIdleCallback(NVStorageOnIdleCallback callback);
+  
+  
   // Returns true if this component is about to send a request or is currently waiting on a request
   bool HasPendingRequests();
   
@@ -351,6 +358,12 @@ private:
   std::queue<NVStorageRequest> _requestQueue;
   
   void ProcessRequest();
+  
+  
+  // Callbacks for when nvStorage has no more requests pending and is idle
+  std::queue<NVStorageOnIdleCallback> _onIdleCallbackQueue;
+  
+  void ProcessOnIdleCallbacks();
   
 # endif // #ifdef COZMO_V2
 # pragma mark --- End of Cozmo 1.x only members ---

@@ -1543,6 +1543,15 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionRe
     {
       robot->SyncTime();
       PRINT_NAMED_INFO("RobotEventHandler.HandleRobotConnectionResponse.SendingSyncTime", "");
+      
+      NVStorageComponent::NVStorageOnIdleCallback callback = [robot]() {
+        robot->SetReadyToStreamAnimations();
+        PRINT_NAMED_INFO("RobotEventHandler.HandleRobotConnectionResponse.SettingReadyToStreamAnims", "");
+      };
+      
+      PRINT_NAMED_INFO("RobotEventHandler.HandleRobotConnectionResponse.QueueingSetReadyToStreamAnims", "");
+      robot->GetNVStorageComponent().AddOneShotOnIdleCallback(callback);
+      
     }
   }
 }
