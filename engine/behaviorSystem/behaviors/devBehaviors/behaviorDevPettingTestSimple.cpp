@@ -13,59 +13,50 @@
 
 #include "engine/behaviorSystem/behaviors/devBehaviors/behaviorDevPettingTestSimple.h"
 
+#include "engine/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
+#include "engine/behaviorSystem/wantsToRunStrategies/wantsToRunStrategyFactory.h"
+
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/components/touchSensorComponent.h"
 #include "engine/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/jsonTools.h"
+
+#include <vector>
+#include <memory>
 
 namespace Anki {
 namespace Cozmo {
 
 namespace{
-  const float kPettingReactRecoveryTime = 1.0f; // rate limit reactions to touch
+  const std::string kGestureToAnimationKey = "gestureTriggerToAnimations";
+  const char*       kAnimationNameKey      = "animationName";
+  const char*       kAnimationRateKey      = "animRate_s";
 }
 
   
 BehaviorDevPettingTestSimple::BehaviorDevPettingTestSimple(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-, _lastTouchTime_s(-1.0f)
-, _lastReactTime_s(-1.0f)
 {
-  SubscribeToTags({
-    EngineToGameTag::RobotTouched,
-  });
-}
+  const Json::Value& jsonArray = config[kGestureToAnimationKey];
+  assert(jsonArray.isArray());
   
-void BehaviorDevPettingTestSimple::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
-{
-  switch(event.GetData().GetTag())
-  {
-    case EngineToGameTag::RobotTouched:
-    {
-      HandleRobotTouched(robot, event);
-      break;
-    }
-      
-    default:
-    {
-      PRINT_NAMED_WARNING("BehaviorDevPettingTestSimple.InvalidTag",
-                          "Received unexpected event with tag %hhu.", event.GetData().GetTag());
-      break;
-    }
+  Json::Value::const_iterator it = jsonArray.begin();
+  for(;it!=jsonArray.end();++it) {
+    auto anim = JsonTools::ParseString(*it, kAnimationNameKey, "Failed to parse animation name");
+    auto rate = JsonTools::ParseFloat(*it, kAnimationRateKey, "Failed to parse animation rate");
+    
+    _tgAnimConfigs.emplace_back(WantsToRunStrategyFactory::CreateWantsToRunStrategy(robot, *it),
+                                anim,
+                                rate,
+                                0.0f);
   }
 }
-  
-void BehaviorDevPettingTestSimple::HandleRobotTouched(const Robot& robot, const EngineToGameEvent& msg)
-{
-  _lastTouchTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-}
-  
 
 bool BehaviorDevPettingTestSimple::IsRunnableInternal(const Robot& robot) const
 {
-  return (ANKI_DEV_CHEATS != 0);
+  return true;
 }
   
 
@@ -73,29 +64,33 @@ Result BehaviorDevPettingTestSimple::InitInternal(Robot& robot)
 {
   // Disable all reactions
   SmartDisableReactionsWithLock(GetIDStr(), ReactionTriggerHelpers::GetAffectAllArray());
-  
   return RESULT_OK;
 }
   
 BehaviorStatus BehaviorDevPettingTestSimple::UpdateInternal(Robot& robot)
 {
-  const AnimationTrigger devReactAnimation = AnimationTrigger::RequestGameMemoryMatchAccept0;
+  // placeholder animations for a variety of reactions to touch
+  const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
-  // throttle touch reactions (animations) over time
-  // note: if you pet the robot during the "recovery" time, it'll
-  //       react as soon as that duration times out.
-  auto now =  BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if(!IsActing() &&
-     _lastTouchTime_s > 0.0 &&
-     (now-_lastReactTime_s)>kPettingReactRecoveryTime ) {
-    
-    _lastReactTime_s = now;
-    
-    TriggerAnimationAction* action = new TriggerAnimationAction(robot, devReactAnimation);
-    StartActing(action,
-                [this](ActionResult result) {
-                  _lastTouchTime_s = -1.0f;
-                });
+  // find the touch gesture being received
+  // note: a touch gesture strategy is True when the touch is recognized as that particular gesture
+  decltype(_tgAnimConfigs)::iterator gotAnim;
+  for(gotAnim = _tgAnimConfigs.begin(); gotAnim != _tgAnimConfigs.end(); ++gotAnim) {
+    ANKI_VERIFY(gotAnim->strategy.get()!=nullptr, "BehaviorDevPettingTestSimple.NullTouchStrategy", "");
+    if(gotAnim->strategy->WantsToRun(robot)) {
+      break;
+    }
+  }
+  
+  if(gotAnim!=_tgAnimConfigs.end() && !IsActing()) {
+    std::string animToPlay = gotAnim->animationName;
+    float rate             = gotAnim->animationRate_s;
+    float timeLastPlayed_s = gotAnim->timeLastPlayed_s;
+    if((now-timeLastPlayed_s) > rate) {
+      PlayAnimationAction* action = new PlayAnimationAction(robot, animToPlay, 1, true, (u8)AnimTrackFlag::BODY_TRACK);
+      StartActing(action);
+      gotAnim->timeLastPlayed_s = now;
+    }
   }
   
   return BehaviorStatus::Running;

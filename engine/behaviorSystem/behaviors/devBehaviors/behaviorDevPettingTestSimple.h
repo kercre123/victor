@@ -15,9 +15,13 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorDevPettingTestSimple_H__
 
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "clad/types/touchGestureTypes.h"
+#include <vector>
 
 namespace Anki {
 namespace Cozmo {
+  
+class IWantsToRunStrategy;
   
 class BehaviorDevPettingTestSimple : public IBehavior
 {
@@ -32,8 +36,6 @@ protected:
   friend class BehaviorContainer;
   BehaviorDevPettingTestSimple(Robot& robot, const Json::Value& config);
   
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
-
   virtual Result InitInternal(Robot& robot) override;
 
   virtual void StopInternal(Robot& robot) override;
@@ -42,13 +44,29 @@ protected:
   
 private:
   
-  void HandleRobotTouched(const Robot& robot, const EngineToGameEvent& msg);
+  // helper struct to organize the mapping between
+  // touch-gesture and the animation metadata
+  struct TouchGestureAnimationConfig
+  {
+    IWantsToRunStrategyPtr strategy;
+    std::string animationName;
+    float animationRate_s;
+    float timeLastPlayed_s;
+    
+    TouchGestureAnimationConfig(IWantsToRunStrategy* sp,
+                                std::string animationName,
+                                float animationRate_s,
+                                float timeLastPlayed_s)
+    : strategy(sp)
+    , animationName(animationName)
+    , animationRate_s(animationRate_s)
+    , timeLastPlayed_s(timeLastPlayed_s)
+    {
+    }
+    
+  };
   
-  // last received touch event time
-  double _lastTouchTime_s;
-  
-  // last time reacting to touch (used to rate limit reactions)
-  double _lastReactTime_s;
+  std::vector<TouchGestureAnimationConfig> _tgAnimConfigs;
 };
 
 }

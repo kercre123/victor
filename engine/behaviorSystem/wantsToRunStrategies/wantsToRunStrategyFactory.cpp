@@ -20,6 +20,7 @@
 #include "engine/behaviorSystem/wantsToRunStrategies/strategyRobotPlacedOnSlope.h"
 #include "engine/behaviorSystem/wantsToRunStrategies/strategyRobotShaken.h"
 #include "engine/behaviorSystem/wantsToRunStrategies/strategyObstacleDetected.h"
+#include "engine/behaviorSystem/wantsToRunStrategies/strategyRobotTouchGesture.h"
 
 
 #include "engine/robot.h"
@@ -84,6 +85,11 @@ IWantsToRunStrategy* WantsToRunStrategyFactory::CreateWantsToRunStrategy(Robot& 
     case WantsToRunStrategyType::RobotShaken:
     {
       strategy = new StrategyRobotShaken(robot, config);
+      break;
+    }
+    case WantsToRunStrategyType::RobotTouchGesture:
+    {
+      strategy = new StrategyRobotTouchGesture(robot, config);
       break;
     }
     case WantsToRunStrategyType::Invalid:
