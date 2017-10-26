@@ -115,7 +115,6 @@ void VizControllerImpl::Init()
   _moodDisp = _vizSupervisor.getDisplay("cozmo_mood_display");
   _behaviorDisp = _vizSupervisor.getDisplay("cozmo_behavior_display");
   _bsmStackDisp = _vizSupervisor.getDisplay("victor_behavior_stack_display");
-  _camDisp = _vizSupervisor.getDisplay("cozmo_cam_viz_display");
   _activeObjectDisp = _vizSupervisor.getDisplay("cozmo_active_object_display");
   _cubeAccelDisp = _vizSupervisor.getDisplay("cozmo_cube_accel_display");
 
