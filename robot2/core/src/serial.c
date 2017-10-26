@@ -7,7 +7,7 @@
 #include "core/serial.h"
 
 #define SERIAL_STREAM_DEBUG_IN 1
-#define SERIAL_STREAM_DEBUG_OUT 0
+#define SERIAL_STREAM_DEBUG_OUT 1
 
 /// Opens serial port at `devicename` with given `baud` enum.
 /// Returns file descriptor.
@@ -75,11 +75,13 @@ int serial_read(int serial_fd, uint8_t* buffer, int len) //->bytes_rcvd
   }
 #if SERIAL_STREAM_DEBUG_IN
   if (result > 0) {
+    dprintf("rcvd %d chars: ",result);
 
     int i;
     for (i = 0; i < result; i++) {
       dprintf("%c", buffer[i]);
     }
+    dprintf("\n");
   }
 #endif
   return result;

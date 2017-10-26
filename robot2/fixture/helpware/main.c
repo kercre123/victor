@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -93,39 +94,57 @@ const char* fixture_command_parse(const char*  command, int len) {
 
 }
 
-
+const char* find_line(const char* buf, int buflen, const char** last)
+{
+  if (!buflen) {return NULL;}
+//  printf("looking for newline in \"%.*s\" (%d)\n",
+//         buflen, *last, buflen);
+//  printf("%x + %x <=? %x\n", buf, buflen, *last);
+  assert(buf <= *last && *last <= buf+buflen);
+  int remaining = buflen - (*last - buf);
+  const char* token = memchr(*last, '\n', remaining);
+  if (token) {
+//     printf("found at %d\n", token-*last);
+    *last = token+1;
+    return buf;
+  }
+//  printf("not found\n");
+  return NULL;
+}
 
 int fixture_serial(int serialFd) {
   static char linebuf[LINEBUFSZ+1];
   const char* response = NULL;
-  int linelen = 0;
+  static int linelen = 0;
   int nread = serial_read(serialFd, (uint8_t*)linebuf+linelen, LINEBUFSZ-linelen);
   if (nread<0) { return 0; }
-  char* endl = memchr(linebuf+linelen, '\n', nread);
-  if (!endl) {
-    linelen+=nread;
-    if (linelen >= LINEBUFSZ)
-    {
-      printf("TOO MANY CHARACTERS, truncating to %d\n", LINEBUFSZ);
-      endl = linebuf+LINEBUFSZ;
-      *endl = '\n';
-    }
+  const char* endl = linebuf+linelen;
+  linelen+=nread;
+  if (linelen >= LINEBUFSZ)
+  {
+    printf("TOO MANY CHARACTERS, truncating to %d\n", LINEBUFSZ);
+    linelen = LINEBUFSZ;
+    linebuf[linelen] = '\n';
   }
-  if (endl) {
-    endl[1]='\0';
-    printf("%s", linebuf);
-    fixture_log_write(linebuf);
-    if (linebuf[0]=='>' && linebuf[1]=='>') {
-      if (strncmp(linebuf+2, "exit", 4)==0)  {
+  const char* line = find_line(linebuf, linelen, &endl);
+  while (line) {
+    printf("%.*s", endl-line, line);
+    fixture_log_write(line, endl-line);
+    if (line[0]=='>' && line[1]=='>') {
+      if (strncmp(line+2, "exit", 4)==0)  {
         return 1;
       }
-      response = fixture_command_parse(linebuf+2, endl-linebuf-2);
+      response = fixture_command_parse(line+2, endl-line-2);
       if (response) {
-        fixture_log_write(response);
+        fixture_log_writestring(response);
         serial_write(serialFd, (uint8_t*)response, strlen(response));
       }
     }
-    linelen = 0;
+    linelen-=(endl-line);
+    line = find_line(endl, linelen, &endl);
+  }
+  if (linelen) {
+    memmove(linebuf, endl, linelen);
   }
   return 0;
 }

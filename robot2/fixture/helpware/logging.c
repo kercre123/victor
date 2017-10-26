@@ -17,16 +17,20 @@ int fixture_log_start(const char* params, int len)
   if (!gLogging.fd) {
     gLogging.fd = open(HELPER_LOGFILE, O_WRONLY|O_CREAT);
     gLogging.enabled = true;
-    fixture_log_write("LOGSTART: ");
-    fixture_log_write(params);
+    fixture_log_writestring(">>logstart ");
+    fixture_log_write(params, len);
   }
   return 0; //no errors.
 }
 
-void fixture_log_write(const char* textstring)
+void fixture_log_writestring(const char* textstring)
+{
+  fixture_log_write(textstring, strlen(textstring));
+}
+
+void fixture_log_write(const char* textstring, int len)
 {
   if (gLogging.enabled) {
-    int len = strlen(textstring);
     write(gLogging.fd, textstring, len);
   }
 }
