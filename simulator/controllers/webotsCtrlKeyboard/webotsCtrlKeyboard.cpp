@@ -1174,7 +1174,7 @@ namespace Anki {
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_ConnectToRobotOnly", "false")));
                     
                     Anki::Cozmo::ExternalInterface::DisableReactionsWithLock disableAll(
-                                        "sdk", ReactionTriggerHelpers::kAffectAllReactions);
+                                        "sdk", ReactionTriggerHelpers::GetAffectAllReactions());
                     
                     Anki::Cozmo::ExternalInterface::MessageGameToEngine disable_reactions_msg;
                     disable_reactions_msg.Set_DisableReactionsWithLock(std::move(disableAll));
@@ -2380,7 +2380,7 @@ namespace Anki {
                 
                 if(disable){
                   Anki::Cozmo::ExternalInterface::DisableReactionsWithLock disableAll(
-                                  lockName, ReactionTriggerHelpers::kAffectAllReactions);
+                                  lockName, ReactionTriggerHelpers::GetAffectAllReactions());
                   
                   Anki::Cozmo::ExternalInterface::MessageGameToEngine disable_reactions_msg;
                   disable_reactions_msg.Set_DisableReactionsWithLock(std::move(disableAll));
