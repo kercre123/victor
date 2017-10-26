@@ -1048,7 +1048,6 @@ namespace Cozmo.Repair.UI {
       }
       else if (!_WaitingForAnimationsToBeRunnable) {
         var robot = RobotEngineManager.Instance.CurrentRobot;
-        robot.WaitAction(1, PlayRobotCalibrationResponseAnim);
         _WaitingForAnimationsToBeRunnable = true;
       }
     }
@@ -1244,7 +1243,6 @@ namespace Cozmo.Repair.UI {
       if (robot != null) {
         // Ensure that Cozmo is upright before playing calibration response animations
         if (_RobotOffTreadsState != OffTreadsState.OnTreads) {
-          robot.WaitAction(1, PlayRobotCalibrationResponseAnim);
           _WaitingForAnimationsToBeRunnable = true;
           return;
         }
