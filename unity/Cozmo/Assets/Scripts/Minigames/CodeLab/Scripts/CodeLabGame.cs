@@ -2964,7 +2964,7 @@ namespace CodeLab {
               SessionState.DAS_Event("robot.code_lab.open_json_user_project", projectToOpen.ProjectJSON.Length.ToString(), SessionState.DAS_Format_IsVertical(projectToOpen.IsVertical));
               OpenCozmoProjectJSON(projectNameEscaped, projectToOpen.ProjectJSON, projectToOpen.ProjectUUID, "false");
             }
-            else {
+            else if (projectToOpen.ProjectXML != null) {
               // User project is in XML. It must have been created before the Cozmo app 2.1 release and is CodeLabProject VersionNum 2 or less.
               SessionState.DAS_Event("robot.code_lab.open_xml_user_project", projectToOpen.ProjectXML.Length.ToString(), SessionState.DAS_Format_IsVertical(projectToOpen.IsVertical));
 
@@ -2972,6 +2972,9 @@ namespace CodeLab {
 
               // Open requested project in webview
               this.EvaluateJS("window.openCozmoProjectXML('" + projectToOpen.ProjectUUID + "','" + projectNameEscaped + "',\"" + projectXMLEscaped + "\",'false');");
+            }
+            else {
+              DAS.Error("CodeLab.NoUserProjectSerialized", "No ProjectJSON or ProjectXML found for user project with _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
             }
             isOpeningProject = true;
           }
@@ -2993,7 +2996,10 @@ namespace CodeLab {
             SessionState.DAS_Event("robot.code_lab.open_sample_project", codeLabSampleProject.DASProjectName, SessionState.DAS_Format_IsVertical(codeLabSampleProject.IsVertical));
             _SessionState.SetCurrentProjectData(ProjectType.Sample, codeLabSampleProject.DASProjectName);
 
-            String sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
+            String sampleProjectName = null;
+            if (codeLabSampleProject.ProjectName != null) {
+              sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
+            }
             String sampleProjectNameEscaped = EscapeProjectText(sampleProjectName);
 
             if (codeLabSampleProject.ProjectJSON != null) {
@@ -3002,21 +3008,21 @@ namespace CodeLab {
 
               OpenCozmoProjectJSON(sampleProjectNameEscaped, codeLabSampleProject.ProjectJSON, codeLabSampleProject.ProjectUUID, "true");
             }
-            else {
+            else if (codeLabSampleProject.ProjectXML != null) {
               // Sample project is still in XML. This will be true for some until we convert them all over.
               String projectXMLEscaped = EscapeXML(codeLabSampleProject.ProjectXML);
 
               // Open requested project in webview
               this.EvaluateJS("window.openCozmoProjectXML('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "',\"" + projectXMLEscaped + "\",'true');");
             }
+            else {
+              DAS.Error("CodeLab.NoSampleProjectSerialized", "No ProjectJSON or ProjectXML found for sample project with _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
+            }
             isOpeningProject = true;
-
-          }
-          else {
           }
         }
         else {
-          DAS.Error("CodeLab.NullSampleProject", "Sample project empty for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
+          DAS.Error("CodeLab.SampleProjectUUIDNull", "Sample project with null _ProjectUUIDToOpen");
         }
         break;
 
@@ -3037,7 +3043,10 @@ namespace CodeLab {
             _SessionState.SetCurrentProjectData(ProjectType.Featured, codeLabFeaturedProject.DASProjectName);
 
             if (codeLabFeaturedProject.ProjectJSON != null) {
-              String featuredProjectName = Localization.Get(codeLabFeaturedProject.ProjectName);
+              String featuredProjectName = null;
+              if (codeLabFeaturedProject.ProjectName != null) {
+                featuredProjectName = Localization.Get(codeLabFeaturedProject.ProjectName);
+              }
               String featuredProjectNameEscaped = EscapeProjectText(featuredProjectName);
 
               // Open requested project in webview
@@ -3045,12 +3054,9 @@ namespace CodeLab {
               isOpeningProject = true;
             }
           }
-          else {
-            DAS.Error("CodeLab.OpenSampleProject.NullUUID", "Null project for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
-          }
         }
         else {
-          DAS.Error("CodeLab.OpenSampleProject.NullProject", "Null UUID");
+          DAS.Error("CodeLab.OpenFeaturedProject.NullProject", "Null UUID");
         }
         break;
 
@@ -3080,6 +3086,10 @@ namespace CodeLab {
     }
 
     private String EscapeProjectText(String projectText) {
+      if (projectText == null) {
+        return projectText;
+      }
+
       String tempProjectText = projectText.Replace("\"", "\\\"");
       return tempProjectText.Replace("'", "\\'");
     }
