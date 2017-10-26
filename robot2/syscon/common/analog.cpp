@@ -105,7 +105,7 @@ void Analog::init(void) {
     
     // Enable (low-current) charging and power
     CHG_HC::reset();
-    CHG_EN::reset();
+    CHG_EN::set();
     CHG_HC::mode(MODE_OUTPUT);
     CHG_EN::mode(MODE_OUTPUT);
 
