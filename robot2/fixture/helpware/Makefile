@@ -42,9 +42,9 @@ DISPLAY = display
 DISPLAY_SRC = display.c helper_text.c
 DISPLAY_OBJ = $(DISPLAY_SRC:%.c=$(OBJDIR)/%.o)
 
-DFU = dfu
-DFU_SRC = dfu.c
-DFU_OBJ = $(DFU_SRC:%.c=$(OBJDIR)/%.o)
+HELPER = helper
+HELPER_SRC = main.c display.c helper_text.c logging.c
+HELPER_OBJ = $(HELPER_SRC:%.c=$(OBJDIR)/%.o)
 
 
 REMOTE_DEST = /data/local/fixture/
@@ -67,6 +67,9 @@ $(ANIMATE): $(ANIMATE_OBJ)
 
 $(DISPLAY): $(DISPLAY_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(DISPLAY_OBJ) $(LIBPATH) $(LIBS)  -o $(DISPLAY)
+
+$(HELPER): $(HELPER_OBJ)
+	$(CROSS_COMPILE)gcc -pie $(HELPER_OBJ) $(LIBPATH) $(LIBS)  -o $(HELPER)
 
 
 app=$(DFU)

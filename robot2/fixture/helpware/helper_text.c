@@ -9,7 +9,6 @@
 #include "core/lcd.h"
 #include "helpware/display.h"
 
-#define LINEBUFSZ 255
 
 
 
@@ -73,7 +72,7 @@ int helper_lcdset_command_parse(const char* command, int linelen)
   helper_text_show(0);
   return 0;
 }
-/// >>>lcdshow solo color all the text
+/// >>lcdshow solo color all the text
 int helper_lcdshow_command_parse(const char* command, int linelen)
 {
   const char* cp = command;
@@ -144,6 +143,7 @@ int helper_lcd_command_parse(const char* command, int linelen)
   return -1; //invalid
 }
 
+/*
 const char* fixture_command_parse(const char*  command, int len) {
   static char responseBuffer[LINEBUFSZ];
 
@@ -180,33 +180,9 @@ const char* fixture_command_parse(const char*  command, int len) {
   return responseBuffer;
 
 }
+*/
 
-void fixture_serial(int serialFd) {
-  static char linebuf[LINEBUFSZ+1];
-  const char* response;
-  int linelen = 0;
-  int nread = read(serialFd, linebuf+linelen, LINEBUFSZ-linelen);
-  dprintf("%s",linebuf);
-  if (nread<0) { return; }
-  char* endl = memchr(linebuf+linelen, '\n', nread);
-  if (!endl) {
-    linelen+=nread;
-    if (linelen >= LINEBUFSZ)
-    {
-      printf("TOO MANY CHARACTERS, truncating to %d\n", LINEBUFSZ);
-      endl = linebuf+LINEBUFSZ;
-      *endl = '\n';
-    }
-  }
-  if (endl) {
-    endl[1]='\0';
-    response = fixture_command_parse(linebuf, endl-linebuf);
-    write(serialFd, response, strlen(response));
-    linelen = 0;
-  }
-}
-
-#define SELF_TEST
+//#define SELF_TEST
 #ifdef SELF_TEST
 
 

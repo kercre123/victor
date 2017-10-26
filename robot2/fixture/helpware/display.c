@@ -261,7 +261,6 @@ void display_render_16bit_text(uint8_t* bitmap, int layer, const Font* font)
     }
     shift ^= ( 16 - font->BitHeight); //only works for 16 or 12
     mapline+= (shift)?1:2;
-    printf("mapline = %d\n", mapline);
   }
 }
 
@@ -370,7 +369,6 @@ void display_draw_text(int layer, int line , uint16_t fg, uint16_t bg, const cha
   const Font* font =  gFont[layer];
   assert(line < font->LineCount);
   int nchars =  min(len, font->CharsPerLine);
-  printf("Truncating %d chars to %d |%d\n", len, nchars, font->HasVSpace);
   char* textline = gDisplay.text[layer]+(line*font->CharsPerLine);
   memset(textline, ' ', font->CharsPerLine);
   if (nchars == 0) {
