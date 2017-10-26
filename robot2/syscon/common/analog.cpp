@@ -99,9 +99,8 @@ void Analog::init(void) {
   // This is a fresh boot (no head)
   if (~USART1->CR1 & USART_CR1_UE) {
     // Set to VEXT power
-    nVEXT_EN::set();
+    nVEXT_EN::mode(MODE_INPUT);
     BAT_EN::reset();
-    nVEXT_EN::mode(MODE_OUTPUT);
     BAT_EN::mode(MODE_OUTPUT);
     
     // Enable (low-current) charging and power
