@@ -1,6 +1,6 @@
 {
   "behaviorID" : "VictorDemoObserving",
-  "behaviorClass" : "DispatchStrictPriority",
+  "behaviorClass" : "DispatcherStrictPriority",
 
   "interruptActiveBehavior": false,
 

@@ -1,6 +1,6 @@
 {
   "behaviorID" : "VictorDemoObservingOnChargerState",
-  "behaviorClass" : "DispatchStrictPriority",
+  "behaviorClass" : "DispatcherStrictPriority",
 
   "interruptActiveBehavior": true,
 

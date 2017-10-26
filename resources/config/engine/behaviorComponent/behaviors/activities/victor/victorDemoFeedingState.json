@@ -1,6 +1,6 @@
 {
   "behaviorID" : "VictorDemoFeedingState",
-  "behaviorClass" : "DispatchStrictPriority",
+  "behaviorClass" : "DispatcherStrictPriority",
   "interruptActiveBehavior": true,
   "behaviors" : [
     "DriveOffCharger",

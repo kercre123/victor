@@ -109,7 +109,7 @@ enum uint_8 BehaviorClass {
   ReactToVoiceCommand,
 
   // Dispatch behaviors which exist only to delegate to other behaviors
-  DispatchStrictPriority,
+  DispatcherStrictPriority,
 
   // Victor / demo behavior
   VictorObservingDemo,

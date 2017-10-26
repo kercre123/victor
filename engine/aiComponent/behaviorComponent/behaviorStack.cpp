@@ -193,11 +193,11 @@ void BehaviorStack::DebugPrintStack(const std::string& debugStr) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RunnableStack::SendDebugVizMessages(BehaviorExternalInterface& behaviorExternalInterface) const
+void BehaviorStack::SendDebugVizMessages(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   VizInterface::BehaviorStackDebug data;
 
-  for( const auto& behavior : _runnableStack ) {
+  for( const auto& behavior : _behaviorStack ) {
     data.debugStrings.push_back( behavior->GetPrintableID() );
   }  
   

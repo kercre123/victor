@@ -12,7 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorObservingDemo.h"
 
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/needsSystemTypes.h"
 #include "coretech/common/include/anki/common/basestation/utils/timer.h"
 #include "engine/aiComponent/AIWhiteboard.h"
