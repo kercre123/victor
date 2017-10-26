@@ -37,13 +37,11 @@ namespace {
   const u16 kMaxObsThreshold_mm  = 300; // Maximum distance for registering an object detected as an obstacle  
   const f32 kMinQualityThreshold = .15; // Minimum sensor reading strength before trying to use sensor data
 
-  const f32 kAperture_rad        = DEG_TO_RAD(25); // aperture angle of the sensor
-
   // conversion factor for adding dimensionality to an obstacle. We don't want to use the full sensor beam
   // width since it makes needlessly large objects, but if we assume half width of the aperture, we still
   // get a decently scaled objects in the navMap. If the obstacle really does extend to the sides of the 
   // sensor beam, then we will rescan it along a colliding path anyway.
-  const f32 kdistToHalfWidth     = tan(kAperture_rad/4.f); 
+  const f32 kdistToHalfWidth     = tan(kProxSensorFullFOV_rad/4.f); 
 } // end anonymous namespace
 
   
