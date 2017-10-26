@@ -204,7 +204,7 @@ void Analog::tick(void) {
     button_pressed = bouncy_button;
   }
 
-  if (chargeAllowed) {
+  if (chargeAllowed && !onBatPower) {
     if (chargeEnableDelay > CHARGE_DELAY) {
       CHG_EN::mode(MODE_INPUT);
     } else {
