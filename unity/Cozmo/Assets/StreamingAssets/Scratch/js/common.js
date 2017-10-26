@@ -37,6 +37,12 @@
         window.Unity.call({command: "cozmoDASLog", argString: eventName, argString2: messageContents});
     }
 
+    window.cozmoDASWarn = function(eventName, messageContents) {
+        messageContents = "[" + getTimeStamp() + "] " + messageContents;
+        console.log(messageContents);
+        window.Unity.call({command: "cozmoDASWarn", argString: eventName, argString2: messageContents});
+    }
+
     window.cozmoDASError = function(eventName, messageContents) {
         messageContents = "[" + getTimeStamp() + "] " + messageContents;
         console.log(messageContents);
@@ -76,6 +82,8 @@
      */
     function onLoad () {
         window.TABLET_WIDTH = 800;
+
+        checkForObjectAssignSupport();
 
         // Instantiate the VM and create an empty project
         const vm = new window.VirtualMachine();
@@ -459,6 +467,46 @@
         if (typeof webkit.messageHandlers === 'undefined') return;
         if (typeof webkit.messageHandlers.extensions === 'undefined') return;
         window.extensions = webkit.messageHandlers.extensions;
+    }
+
+    // Check for ECMAScript Object.assign() support and if not supported,
+    // add polyfill implementation.
+    //
+    // Issue discussed here: https://forums.anki.com/t/code-lab-stopped-working-after-upated-to-v2/9456/5
+    function checkForObjectAssignSupport () {
+        if (typeof Object.assign != 'function') {
+            window.cozmoDASWarn("Codelab.Android.OlderWebview.ObjectAssign", "ECMAScript 6 method Object.assign() does not exist. Using polyfill to support older Android webview");
+
+            // Polyfill from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+
+            // Must be writable: true, enumerable: false, configurable: true
+            Object.defineProperty(Object, "assign", {
+                value: function assign(target, varArgs) { // .length of function is 2
+                    'use strict';
+                    if (target == null) { // TypeError if undefined or null
+                        throw new TypeError('Cannot convert undefined or null to object');
+                    }
+
+                    var to = Object(target);
+
+                    for (var index = 1; index < arguments.length; index++) {
+                        var nextSource = arguments[index];
+
+                        if (nextSource != null) { // Skip over if undefined or null
+                            for (var nextKey in nextSource) {
+                                // Avoid bugs when hasOwnProperty is shadowed
+                                if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                                    to[nextKey] = nextSource[nextKey];
+                                }
+                            }
+                        }
+                    }
+                    return to;
+                },
+                writable: true,
+                configurable: true
+            });
+        }
     }
 
 

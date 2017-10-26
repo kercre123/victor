@@ -1440,13 +1440,19 @@ namespace CodeLab {
         string sanitizedLogString = PrivacyGuard.HidePersonallyIdentifiableInfo(scratchRequest.argString2);
         DAS.Info(scratchRequest.argString, sanitizedLogString);
         return true;
+      case "cozmoDASWarn":
       case "cozmoDASError":
         // Use for recording error in DAS from JavaScript
-        string sanitizedErrorString = scratchRequest.argString2;
-        if (DoesStringContainPIIRisk(sanitizedErrorString)) {
-          sanitizedErrorString = PrivacyGuard.HidePersonallyIdentifiableInfo(sanitizedErrorString);
+        string sanitizedString = scratchRequest.argString2;
+        if (DoesStringContainPIIRisk(sanitizedString)) {
+          sanitizedString = PrivacyGuard.HidePersonallyIdentifiableInfo(sanitizedString);
         }
-        DAS.Error(scratchRequest.argString, sanitizedErrorString);
+        if (scratchRequest.command == "cozmoDASError") {
+          DAS.Error(scratchRequest.argString, sanitizedString);
+        }
+        else {
+          DAS.Warn(scratchRequest.argString, sanitizedString);
+        }
         return true;
       default:
         return false;
