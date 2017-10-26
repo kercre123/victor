@@ -2532,29 +2532,42 @@ namespace CodeLab {
         return ObjectType.UnknownObject;
       }
     }
-    private ObjectType GetLightCubeIndexFromId(int cubeId, bool warnIfCharger = true) {
+
+    private int _LastBadCubeId = -999; // Keep track of this to avoid spamming on every vision frame
+
+    private ObjectType GetLightCubeIndexFromId(int objectID, bool warnIfCharger = true) {
       var robot = RobotEngineManager.Instance.CurrentRobot;
       var cube1 = robot.GetLightCubeWithObjectType(ObjectType.Block_LIGHTCUBE1);
       var cube2 = robot.GetLightCubeWithObjectType(ObjectType.Block_LIGHTCUBE2);
       var cube3 = robot.GetLightCubeWithObjectType(ObjectType.Block_LIGHTCUBE3);
-      if (cube1 != null && cubeId == cube1.ID) {
+      if (cube1 != null && objectID == cube1.ID) {
         return ObjectType.Block_LIGHTCUBE1;
       }
-      else if (cube2 != null && cubeId == cube2.ID) {
+      else if (cube2 != null && objectID == cube2.ID) {
         return ObjectType.Block_LIGHTCUBE2;
       }
-      else if (cube3 != null && cubeId == cube3.ID) {
+      else if (cube3 != null && objectID == cube3.ID) {
         return ObjectType.Block_LIGHTCUBE3;
       }
       else {
         var charger = robot.GetLightCubeWithObjectType(ObjectType.Charger_Basic);
-        if (charger != null && cubeId == charger.ID) {
+        if (charger != null && objectID == charger.ID) {
           if (warnIfCharger) {
-            DAS.Error("CodeLab.ChargerCubeId", "cubeId " + cubeId.ToString());
+            DAS.Error("CodeLab.ChargerCubeId", "objectID=" + objectID);
           }
         }
         else {
-          DAS.Error("CodeLab.BadCubeId", "cubeId " + cubeId.ToString());
+          // Only report bad cube IDs once (otherwise it would spam on every tick)
+          if (objectID != _LastBadCubeId) {
+            ActiveObject activeObject = robot.GetActiveObjectById(objectID);
+            if (activeObject != null) {
+              DAS.Warn("CodeLab.BadCubeId.ObjectInfo", "objectID=" + objectID + " family=" + activeObject.Family + " type=" + activeObject.ObjectType);
+            }
+            else {
+              DAS.Warn("CodeLab.BadCubeId.NullObject", "objectID=" + objectID);
+            }
+            _LastBadCubeId = objectID;
+          }
         }
 
         return ObjectType.UnknownObject;
@@ -3136,7 +3149,7 @@ namespace CodeLab {
       EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_face', null);");
     }
 
-    public bool FaceIsSad(RobotObservedFace message) {
+    public static bool FaceIsSad(RobotObservedFace message) {
       // Match on Angry or Sad, and only if score is high (minimize false positives)
       if ((message.expression == Anki.Vision.FacialExpression.Anger) ||
         (message.expression == Anki.Vision.FacialExpression.Sadness)) {
@@ -3189,9 +3202,12 @@ namespace CodeLab {
     }
 
     public void CubeMovedVerticalHatBlock(int id, float XAccel, float YAccel, float ZAccel) {
-      int lightCubeIndex = ((int)GetLightCubeIndexFromId(id));
-      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_moved', {CUBE_SELECT: \"" + lightCubeIndex + "\"});");
-      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_moved', {CUBE_SELECT: \"" + kAnyCubeId + "\"});");
+      ObjectType objectType = GetLightCubeIndexFromId(id);
+      if (objectType != ObjectType.UnknownObject) {
+        int lightCubeIndex = (int)objectType;
+        EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_moved', {CUBE_SELECT: \"" + lightCubeIndex + "\"});");
+        EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_moved', {CUBE_SELECT: \"" + kAnyCubeId + "\"});");
+      }
     }
 
     void UnhideWebView() {
