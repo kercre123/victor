@@ -22,10 +22,42 @@ uint16_t volatile Analog::values[ADC_CHANNELS];
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.5);
 static const uint32_t RISING_EDGE =  ADC_WINDOW(0, TRANSITION_POINT);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(TRANSITION_POINT, ~0);
+static const uint16_t MINIMUM_BATTERY = ADC_VOLTS(3.6);
+static const int CHARGE_DELAY = 200; // 1 second
 
 bool Analog::button_pressed;
-static bool chargingAllowed = false;
-static bool onVExtPower;
+static bool onBatPower;
+static bool chargeAllowed;
+static int chargeEnableDelay = 0;
+
+static inline void wait(int us) {
+  __asm {
+    _jump:  nop
+            nop
+            nop
+            nop
+            nop
+            nop
+            nop
+            subs     us,us, #1
+            cmp      us,#0
+            bgt      _jump
+  }
+}
+
+static void setBatteryPower(bool offVext) {
+  if (offVext) {
+    nVEXT_EN::mode(MODE_INPUT);
+    wait(40*5); // Just around 10us
+    BAT_EN::set();
+  } else {
+    BAT_EN::reset();
+    wait(40); // Just around 10us
+    nVEXT_EN::mode(MODE_OUTPUT);
+  }
+
+  onBatPower = offVext;
+}
 
 void Analog::init(void) {
   // Calibrate ADC1
@@ -38,6 +70,7 @@ void Analog::init(void) {
   while ((ADC1->CR & ADC_CR_ADCAL) != 0) ;
 
   // Setup the ADC for continuous mode
+  ADC->CCR = ADC_CCR_VREFEN;
   ADC1->CHSELR = SELECTED_CHANNELS;
   ADC1->CFGR1 = 0
               | ADC_CFGR1_CONT
@@ -54,12 +87,6 @@ void Analog::init(void) {
               ;
   ADC1->IER = ADC_IER_AWDIE;
   ADC1->TR = FALLING_EDGE;
-
-  NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
-  NVIC_EnableIRQ(ADC1_IRQn);
-
-  // Enable VRef
-  ADC->CCR = ADC_CCR_VREFEN;
 
   // Enable ADC
   ADC1->ISR = ADC_ISR_ADRDY;
@@ -80,11 +107,41 @@ void Analog::init(void) {
                      | DMA_CCR_CIRC;
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 
-  // Wait for our first sample
-  DMA1->IFCR = DMA_IFCR_CTCIF1;
-  while (~DMA1->ISR & DMA_ISR_TCIF1) ;
-  
-  // Force state inverted
+  #ifdef BOOTLOADER
+  chargeAllowed = true;
+
+  // This is a fresh boot (no head)
+  if (~USART1->CR1 & USART_CR1_UE) {
+    // Set to VEXT power
+    nVEXT_EN::reset();
+    BAT_EN::reset();
+    nVEXT_EN::mode(MODE_OUTPUT);
+    BAT_EN::mode(MODE_OUTPUT);
+    
+    // Enable (low-current) charging and power
+    nCHG_HC::set();
+    nCHG_HC::mode(MODE_OUTPUT);
+    CHG_EN::mode(MODE_INPUT);
+
+    // Make sure battery is partially charged, and that the robot is on a charger
+    // NOTE: Only one interrupt is enabled here, and it's the 200hz main timing loop
+    // this lowers power consumption and interrupts fire regularly
+    do {
+      setBatteryPower(false);
+      for( int i = 0; i < 100; i++)  __asm("wfi") ;
+      setBatteryPower(true);
+      __asm("wfi\nwfi");  // 5ms~10ms for power to stablize
+    } while (Analog::values[ADC_VBAT] <= MINIMUM_BATTERY);
+
+    // Power the head now that we are adiquately charged
+    POWER_EN::mode(MODE_INPUT);
+    POWER_EN::pull(PULL_UP);
+  }
+  #endif
+
+  // Startup external power interrupt / handler
+  NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
+  NVIC_EnableIRQ(ADC1_IRQn);
   NVIC_SetPendingIRQ(ADC1_IRQn);
 }
 
@@ -107,43 +164,21 @@ void Analog::transmit(BodyToHead* data) {
 }
 
 void Analog::allowCharge(bool enable) {
-  chargingAllowed = enable;
+  chargeAllowed = enable;
 }
 
-static inline void wait(int us) {
-  __asm {
-    _jump:  nop
-            nop
-            nop
-            nop
-            nop
-            nop
-            nop
-            subs     us,us, #1
-            cmp      us,#0
-            bgt      _jump
-  }
+void Analog::delayCharge() {
+  chargeEnableDelay = 0;
 }
 
 extern "C" void ADC1_IRQHandler(void) {
-  onVExtPower = Analog::values[ADC_VEXT] < TRANSITION_POINT;
-
   // Stop the ADC so we can change our watchdog window
   ADC1->CR |= ADC_CR_ADSTP;
   
-  if (onVExtPower) {
-    nVEXT_EN::mode(MODE_INPUT);
-    wait(40*5); // Just around 10us
-    BAT_EN::set();
-    ADC1->TR = RISING_EDGE;
-  } else {
-    BAT_EN::reset();
-    wait(40); // Just around 10us
-    nVEXT_EN::mode(MODE_OUTPUT);
-    ADC1->TR = FALLING_EDGE;
-  }
+  setBatteryPower(Analog::values[ADC_VEXT] < TRANSITION_POINT);
 
   // Clear interrupt and restart ADC
+  ADC1->TR = onBatPower ? RISING_EDGE : FALLING_EDGE;
   ADC1->ISR = ADC_ISR_AWD;
   ADC1->CR |= ADC_CR_ADSTART;
 }
@@ -152,15 +187,12 @@ extern "C" void ADC1_IRQHandler(void) {
 #include "lights.h"
 #endif
 
-static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
-static const int POWER_WIPE_TIME = 200 * 10;  // Erase flash
 static const int BUTTON_THRESHOLD = ADC_VOLTS(4.0);
 static const int BOUNCE_LENGTH = 3;
 
 void Analog::tick(void) {
   static bool bouncy_button;
   static int bouncy_count;
-  static int hold_count;
 
   // Debounce buttons
   bool new_button = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
@@ -172,13 +204,29 @@ void Analog::tick(void) {
     button_pressed = bouncy_button;
   }
 
+  if (chargeAllowed) {
+    if (chargeEnableDelay > CHARGE_DELAY) {
+      CHG_EN::mode(MODE_INPUT);
+    } else {
+      CHG_EN::reset();
+      CHG_EN::mode(MODE_OUTPUT);
+      
+      chargeEnableDelay++;
+    }
+  } else {
+    chargeEnableDelay = 0;
+  }
+
+  #ifndef BOOTLOADER
+  static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
+  static const int POWER_WIPE_TIME = 200 * 10;  // Erase flash
+  static int hold_count;
+
   if (button_pressed) {
     if (hold_count < POWER_DOWN_TIME) {
       hold_count++;
     } else if (hold_count < POWER_WIPE_TIME) {
-      #ifndef BOOTLOADER
       Lights::disable();
-      #endif
     } else {
       Power::softReset(true);
     }
@@ -189,4 +237,5 @@ void Analog::tick(void) {
       hold_count = 0;
     }
   }
+  #endif
 }

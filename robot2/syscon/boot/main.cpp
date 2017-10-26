@@ -81,13 +81,13 @@ extern "C" void TIM14_IRQHandler(void) {
   IWDG->KR = 0xAAAA;
   #endif
   TIM14->SR = 0;
+  Analog::tick();
 }
 
 int main(void) {
-  Power::enableClocking();
+  Power::init();
   timer_init();
   Analog::init();
-  Power::init();
 
   // If fingerprint is invalid, cert is invalid, or reset counter is zero
   // 1) Wipe flash

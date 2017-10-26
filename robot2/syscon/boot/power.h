@@ -3,7 +3,6 @@
 
 namespace Power {
   void init(void);
-  void enableClocking(void);
   void softReset(bool);
   void stop(void);
 }
