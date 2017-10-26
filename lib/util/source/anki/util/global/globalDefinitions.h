@@ -26,7 +26,7 @@
 #if defined(DEBUG)
   #define ANKI_DEVELOPER_CODE     1
   #define ANKI_DEV_CHEATS         1
-  #define ANKI_PROFILING_ENABLED  0
+  #define ANKI_PROFILING_ENABLED  1
   #define ANKI_PRIVACY_GUARD      0 // PII displayed in debug logs!!!
 #elif defined(SHIPPING)
   #define ANKI_DEVELOPER_CODE     0
@@ -36,7 +36,7 @@
 #else // release
   #define ANKI_DEVELOPER_CODE     0
   #define ANKI_DEV_CHEATS         1
-  #define ANKI_PROFILING_ENABLED  0
+  #define ANKI_PROFILING_ENABLED  1
   #define ANKI_PRIVACY_GUARD      0 // PII displayed in non-shipping release logs!!!
 #endif
 
