@@ -29,13 +29,21 @@ namespace Anki {
 namespace Cozmo {
   
 namespace {
+  const std::string kLogDirectory = "sensorData/proxSensor";
+
   const Vec3f kProxSensorPositionVec_mm{kProxSensorPosition_mm[0], kProxSensorPosition_mm[1], kProxSensorPosition_mm[2]};
 
   const u16 kMinObsThreshold_mm  = 30;  // Minimum distance for registering an object detected as an obstacle
   const u16 kMaxObsThreshold_mm  = 300; // Maximum distance for registering an object detected as an obstacle  
   const f32 kMinQualityThreshold = .15; // Minimum sensor reading strength before trying to use sensor data
 
-  const std::string kLogDirectory = "sensorData/proxSensor";
+  const f32 kAperture_rad        = DEG_TO_RAD(25); // aperture angle of the sensor
+
+  // conversion factor for adding dimensionality to an obstacle. We don't want to use the full sensor beam
+  // width since it makes needlessly large objects, but if we assume half width of the aperture, we still
+  // get a decently scaled objects in the navMap. If the obstacle really does extend to the sides of the 
+  // sensor beam, then we will rescan it along a colliding path anyway.
+  const f32 kdistToHalfWidth     = tan(kAperture_rad/4.f); 
 } // end anonymous namespace
 
   
@@ -193,9 +201,9 @@ void ProxSensorComponent::UpdateNavMap()
       MemoryMapData clearRegion(INavMap::EContentType::ClearOfObstacle, lastTimestamp);
       currentNavMemoryMap->AddLine(robotPos.GetTranslation(), objectPos.GetTranslation(), clearRegion);
 
-      // Add prox obstacle if detected and close to robot 
+      // Add proxObstacle if detected and close to robot 
       if (_latestData.distance_mm <= kMaxObsThreshold_mm) { 
-        float obstacleHalfWidth_mm = .1 * _latestData.distance_mm; // assume about ~11• arc for   width  
+        float obstacleHalfWidth_mm = kdistToHalfWidth * _latestData.distance_mm;
         Vec3f offsety1_mm(0,  -obstacleHalfWidth_mm, 0);   
         Vec3f offsety2_mm(0,   obstacleHalfWidth_mm, 0);
 
