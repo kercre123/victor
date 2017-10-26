@@ -105,8 +105,9 @@ void Analog::init(void) {
     
     // Enable (low-current) charging and power
     CHG_HC::reset();
+    CHG_EN::reset();
     CHG_HC::mode(MODE_OUTPUT);
-    CHG_EN::mode(MODE_INPUT);
+    CHG_EN::mode(MODE_OUTPUT);
 
     // Make sure battery is partially charged, and that the robot is on a charger
     // NOTE: Only one interrupt is enabled here, and it's the 200hz main timing loop
