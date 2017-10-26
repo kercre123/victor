@@ -353,6 +353,12 @@ void DASForceFlushWithCallback(const DASFlushCallback& callback) {
   }
 }
 
+void DASPauseUploadingToServer(const bool isPaused) {
+  if (nullptr != sRemoteAppender) {
+    sRemoteAppender->SetIsUploadingPaused(isPaused);
+  }
+}
+
 void DASSetArchiveLogConfig(const DASArchiveFunction& archiveFunction, const DASUnarchiveFunction& unarchiveFunction, const std::string& archiveExtension)
 {
   sLogFileArchiveFunc = archiveFunction;

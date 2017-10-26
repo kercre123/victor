@@ -286,7 +286,7 @@ namespace Anki {
       
       // in general clients should not need to check for this, but it's public for unit tests and asserts
       inline bool HasValidPose() const;
-      inline static bool IsValidPoseState(PoseState poseState);
+      inline static bool IsValidPoseState(const PoseState poseState);
 
       static const char* PoseStateToString(const PoseState& state);
       
@@ -432,7 +432,7 @@ namespace Anki {
       return _poseState != PoseState::Invalid;
     }
     
-    inline bool ObservableObject::IsValidPoseState(PoseState poseState) {
+    inline bool ObservableObject::IsValidPoseState(const PoseState poseState) {
       return poseState != PoseState::Invalid;
     }
 	

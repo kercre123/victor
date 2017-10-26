@@ -320,6 +320,8 @@ Robot::~Robot()
   _petWorld.reset();
   _faceWorld.reset();
   _blockWorld.reset();
+
+  _nvStorageComponent.reset();
 }
     
 void Robot::SetOnCharger(bool onCharger)

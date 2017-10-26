@@ -47,7 +47,7 @@ bool SayTextAction::LoadMetadata(Util::Data::DataPlatform& dataPlatform)
   }
   
   // Check for file
-  const std::string filePath = "config/engine/sayTextintentConfig.json";
+  static const std::string filePath = "config/engine/sayTextintentConfig.json";
   if(!Util::FileUtils::FileExists(dataPlatform.pathToResource(Util::Data::Scope::Resources, filePath))) {
     PRINT_NAMED_ERROR("SayTextAction.LoadMetadata.FileNotFound", "sayTextintentConfig.json");
     return false;

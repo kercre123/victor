@@ -41,6 +41,7 @@ namespace DataPersistence {
 
     public List<DataPersistence.CodeLabProject> CodeLabProjects;
     public int CodeLabHorizontalPlayed;
+    public bool CodeLabRemixCreated;
 
     public List<Anki.Cozmo.UnlockId> NewUnlocks;
 
@@ -66,6 +67,8 @@ namespace DataPersistence {
     // Bump if introducing breaking changes and compare in DataPersistenceManager Constructor.
     public int SaveVersion = kSaveVersionCurrent;
 
+    public int NumTimesToolTipNotifTapped;
+
     public PlayerProfile() {
       FirstTimeUserFlow = true;
       DataCollectionEnabled = true;
@@ -90,6 +93,7 @@ namespace DataPersistence {
       OnboardingStages = new Dictionary<OnboardingManager.OnboardingPhases, int>();
       CodeLabProjects = new List<DataPersistence.CodeLabProject>();
       CodeLabHorizontalPlayed = 0;
+      CodeLabRemixCreated = false;
       NewUnlocks = new List<Anki.Cozmo.UnlockId>();
       DisplayedStars = 0;
       DisplayedSparks = 0;
@@ -105,6 +109,7 @@ namespace DataPersistence {
       LastTimeAskedAboutNotifications = System.DateTime.Now;
       NotificationsToBeSent = new List<Cozmo.Notifications.Notification>();
       MostRecentNotificationClicked = null;
+      NumTimesToolTipNotifTapped = 0;
     }
   }
 }

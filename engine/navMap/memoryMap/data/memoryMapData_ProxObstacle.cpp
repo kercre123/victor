@@ -18,7 +18,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MemoryMapData_ProxObstacle::MemoryMapData_ProxObstacle(Vec2f dir, TimeStamp_t t)
-: MemoryMapData(MemoryMapTypes::EContentType::ObstacleProx, t)
+: MemoryMapData(MemoryMapTypes::EContentType::ObstacleProx, t, true)
 , directionality(dir)
 {
 

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEditor;
 
 [CustomPropertyDrawer(typeof(Anki.Assets.SerializableAssetBundleNames))]
-public class SerializableEnumEditor : PropertyDrawer {
+public class SerializableAssetBundleNamesEditor : PropertyDrawer {
 
   public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
     EditorGUI.BeginProperty(position, label, property);

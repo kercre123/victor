@@ -39,6 +39,7 @@ namespace FaceEnrollment {
       IsPauseable = false;
       _FaceEnrollmentGame = _StateMachine.GetGame() as FaceEnrollmentGame;
       RobotEngineManager.Instance.CurrentRobot.OnEnrolledFaceComplete += HandleEnrolledFace;
+      RobotEngineManager.Instance.AddCallback<GoingToSleep>(HandleGoingToSleep);
       CreateInstructionsModal();
     }
 
@@ -96,6 +97,7 @@ namespace FaceEnrollment {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.OnEnrolledFaceComplete -= HandleEnrolledFace;
       }
+      RobotEngineManager.Instance.RemoveCallback<GoingToSleep>(HandleGoingToSleep);
 
       if (_FaceEnrollmentInstructionsModalInstance != null && _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton != null) {
         _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.QuitGameConfirmed -= HandleUserClosedInstructionsModal;
@@ -135,6 +137,11 @@ namespace FaceEnrollment {
       if (_OnUserCancel != null) {
         _OnUserCancel();
       }
+    }
+
+    // PauseManager has put us in behavior wait and is not going to properly put back into the custom behavior
+    private void HandleGoingToSleep(GoingToSleep msg) {
+      _StateMachine.SetNextState(new FaceSlideState());
     }
 
     private void HandleKnownEnrollmentFailure(FaceEnrollmentCompleted faceEnrollmentCompleted) {

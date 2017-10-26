@@ -114,6 +114,11 @@ namespace Anki {
         {0} //Need zeros as end-of-list marker
       };
       
+      // update every tick of the robot:
+      // some touch values are 0xFFFF, which we want to ignore
+      // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
+      u16 lastValidTouchIntensity_;
+      
     } // "private" namespace
 
     // Forward Declarations
@@ -121,7 +126,7 @@ namespace Anki {
     void InitIMU();
     void ProcessIMUEvents();
     void ProcessButtonEvent();
-
+    void ProcessTouchLevel(void);
     
     inline u16 FlipBytes(u16 v) {
       return ((((v) & 0x00FF)<<8) | ((v)>>8));
@@ -356,10 +361,19 @@ namespace Anki {
 
       //MonitorConnectionState();
 
+      ProcessTouchLevel(); // filter invalid values from touch sensor
+
       ProcessButtonEvent();
 
       ForwardAudioInput();
       return result;
+    }
+    
+    void ProcessTouchLevel(void)
+    {
+      if(bodyData_->touchLevel[0] != 0xFFFF) {
+        lastValidTouchIntensity_ = bodyData_->touchLevel[HAL::BUTTON_CAPACITIVE];
+      }
     }
 
     void ProcessButtonEvent()
@@ -437,6 +451,9 @@ namespace Anki {
     u16 HAL::GetButtonState(const ButtonID button_id)
     {
       assert(button_id >= 0 && button_id < BUTTON_COUNT);
+      if(button_id==HAL::BUTTON_CAPACITIVE) {
+        return lastValidTouchIntensity_;
+      }
       return bodyData_->touchLevel[button_id];
     }
 

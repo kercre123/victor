@@ -64,7 +64,13 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
 
+// Immediately returns on write/erase commands as if they succeeded.
 CONSOLE_VAR(bool, kNoWriteToRobot, "NVStorageComponent", false);
+
+// When enabled this does what kNoWriteToRobot does
+// as well as make all read commands fail with NV_NOT_FOUND.
+// No nvStorage request is ever sent to robot.
+CONSOLE_VAR(bool, kDisableNVStorage, "NVStorageComponent", false);
 
 // For some inexplicable reason this needs to be here in the cpp instead of in the header
 // because we are including consoleInterface.h
@@ -158,6 +164,11 @@ NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* conte
     PRINT_NAMED_WARNING("NVStorageComponent.nullContext", "");
   }
 
+}
+
+NVStorageComponent::~NVStorageComponent()
+{
+  _signalHandles.clear();
 }
 
 void NVStorageComponent::InitSizeTable() {
@@ -361,7 +372,7 @@ bool NVStorageComponent::Write(NVEntryTag tag,
   }
   
   // If we aren't writing to the robot then call the callback immediately
-  if(kNoWriteToRobot)
+  if(kDisableNVStorage || kNoWriteToRobot)
   {
     if(broadcastResultToGame)
     {

@@ -185,11 +185,6 @@ message RobotPoked {
 message RobotStopped {
 }
 
-message RobotTouched {
-  // True if the touch just started, false if it just ended
-  bool touchStarted
-}
-
 message RobotOffTreadsStateChanged {
     OffTreadsState treadsState
 }
@@ -550,7 +545,7 @@ message NeedsState {
   int_32        numStarsAwarded,
   int_32        numStarsForNextUnlock,
   NeedsActionId actionCausingTheUpdate,
-  string        unconnectedDecayTestVariation,
+  string        testVariation,
 }
 
 message NeedsPauseState {

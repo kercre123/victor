@@ -242,18 +242,22 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   PRINT_NAMED_INFO("CozmoEngine.Init.Version", "2");
 
+  // DAS Event: "cozmo_engine.init.build_configuration"
+  // s_val: Build configuration
+  // data: Unused
+  Anki::Util::sEvent("cozmo_engine.init.build_configuration", {},
 #if defined(DEBUG)
-  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "DEBUG");
+                     "DEBUG");
 #elif defined(RELEASE)
-  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "RELEASE");
+                     "RELEASE");
 #elif defined(PROFILE)
-  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "PROFILE");
+                     "PROFILE");
 #elif defined(SHIPPING)
-  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "SHIPPING");
+                     "SHIPPING");
 #else
-  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "UNKNOWN build configuration");
+                     "UNKNOWN");
 #endif
-  
+
   _isInitialized = true;
   
   #if AUTOSTART
@@ -329,6 +333,12 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ConnectToRobot& connect
   }
 
   _context->GetNeedsManager()->InitAfterConnection();
+
+#if USE_DAS
+  // Stop trying to upload DAS files to the server,
+  // since we know we don't have an Internet connection
+  DASPauseUploadingToServer(true);
+#endif
 }
 
 template<>
@@ -530,7 +540,7 @@ void CozmoEngine::UpdateLatencyInfo()
     ExternalInterface::TimingInfo recvQueueTime(queuedTimes_ms.GetMean(), queuedTimes_ms.GetMin(), queuedTimes_ms.GetMax());
 
     // pull image stats from robot if available
-    Util::Stats::StatsAccumulator nullStats;
+    static const Util::Stats::StatsAccumulator nullStats;
     const Robot* firstRobot = GetFirstRobot();
     const bool useRobotStats = firstRobot != nullptr;
     const Util::Stats::StatsAccumulator& imageStats = useRobotStats ? firstRobot->GetImageStats() : nullStats;

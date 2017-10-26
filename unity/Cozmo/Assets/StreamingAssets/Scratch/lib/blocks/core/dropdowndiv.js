@@ -95,6 +95,14 @@ Blockly.DropDownDiv.PADDING_Y = 20;
  */
 Blockly.DropDownDiv.ANIMATION_TIME = 0.25;
 
+// *** Anki change ***
+/**
+ * Height of a dropdown when it may be to large to fit, in px
+ * @type {number}
+ * @const
+ */
+Blockly.DropDownDiv.SHORT_HEIGHT = 100;
+
 /**
  * Timer for animation out, to be cleared if we need to immediately hide
  * without disrupting new shows.
@@ -151,6 +159,11 @@ Blockly.DropDownDiv.getContentDiv = function() {
  */
 Blockly.DropDownDiv.clearContent = function() {
   Blockly.DropDownDiv.content_.innerHTML = '';
+
+  // *** Anki Change ***
+  // revert the changes we made to the content's width because it is a shared object
+  var content = Blockly.DropDownDiv.content_;
+  goog.style.setSize(content, 'auto', 'auto');
 };
 
 /**
@@ -282,6 +295,10 @@ Blockly.DropDownDiv.getPositionMetrics = function(primaryX, primaryY, secondaryX
       renderX = primaryX;
       renderY = primaryY + Blockly.DropDownDiv.PADDING_Y;
       renderedSecondary = false;
+
+      // *** Anki Change ***
+      // Use a smaller height to fit on the screen
+      goog.style.setHeight(Blockly.DropDownDiv.content_, Blockly.DropDownDiv.SHORT_HEIGHT + 'px');
     } else {
       // We can fit above, render secondary
       renderX = secondaryX;

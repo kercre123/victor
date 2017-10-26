@@ -66,7 +66,9 @@ namespace Cozmo.ConnectionFlow.UI {
 
     protected override void CleanUp() {
       WhatsNew.WhatsNewModalManager.OnCodeLabConnectPressed -= HandleCodeLabConnectPressed;
-      Destroy(_MetersWidget.gameObject);
+      if (_MetersWidget != null) {
+        Destroy(_MetersWidget.gameObject);
+      }
     }
 
     protected override void RaiseDialogClosed() {

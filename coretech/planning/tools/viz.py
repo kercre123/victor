@@ -83,7 +83,7 @@ def DrawPath(path, style):
 
 try:
     start = ParseState_c( J["start"] )
-    goal = ParseState_c( J["goal"] )
+    goal = ParseState_c( J["goals"][0] )
 
     obs = []
 

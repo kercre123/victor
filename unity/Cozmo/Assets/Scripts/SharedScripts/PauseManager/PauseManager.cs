@@ -25,6 +25,7 @@ namespace Cozmo {
     private static PauseManager _Instance;
     public Action OnPauseDialogOpen;
     public Action<bool> OnPauseStateChanged;
+    public Action OnCozmoSleepCancelled;
     private bool _IsPaused = false;
     private bool _ClosedMinigameOnPause = false;
     private BaseModal _GoToSleepDialog = null;
@@ -390,6 +391,10 @@ namespace Cozmo {
     private void HandleEngineTriggeredSleepCancel() {
       StopIdleTimeout();
       _EngineTriggeredSleep = false;
+      // Send event for sleep trigger cancelled so that custom behaviors can resume.
+      if (OnCozmoSleepCancelled != null) {
+        OnCozmoSleepCancelled();
+      }
     }
 
     private void OpenGoToSleepDialogAndFreezeUI() {

@@ -74,6 +74,7 @@ static const int kMinimumTimeBetweenDeviceSaves_sec = 60;
 static const int kMinimumTimeBetweenRobotSaves_sec = (60 * 10);  // Less frequently than device saves
 
 static const std::string kUnconnectedDecayRatesExperimentKey = "unconnected_decay_rates";
+static const std::string kTuningExperimentKey = "preholiday_tuning";
 
 // Note:  We don't use zero for 'uninitialized serial number' because
 // running in webots gives us zero as the robot serial number
@@ -207,6 +208,16 @@ namespace {
                                                                                   variationKey,
                                                                                   Util::AnkiLab::AssignmentStatus::ForceAssigned);
   }
+  void ForceTuningVariation( ConsoleFunctionContextRef context )
+  {
+    const char* experimentKey = kTuningExperimentKey.c_str();
+    const char* variationKey = ConsoleArg_Get_String(context, "variationKey");
+    Util::AnkiLab::AddABTestingForcedAssignment(experimentKey, variationKey);
+    context->channel->WriteLog("ForceAssignExperiment %s => %s", experimentKey, variationKey);
+
+    g_DebugNeedsManager->SetTuningTestVariation(variationKey,
+                                                Util::AnkiLab::AssignmentStatus::ForceAssigned);
+  }
   CONSOLE_FUNC( DebugFillNeedMeters, "Needs" );
   CONSOLE_FUNC( DebugGiveStar, "Needs" );
   CONSOLE_FUNC( DebugCompleteDay, "Needs" );
@@ -222,6 +233,7 @@ namespace {
   CONSOLE_FUNC( DebugSetPlayLevel, "Needs", float level );
   CONSOLE_FUNC( DebugPassTimeMinutes, "Needs", float minutes );
   CONSOLE_FUNC( ForceDecayVariation, "A/B Testing", const char* variationKey );
+  CONSOLE_FUNC( ForceTuningVariation, "A/B Testing", const char* variationKey );
 };
 #endif
 
@@ -269,6 +281,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _faceDistortionComponent(new DesiredFaceDistortionComponent(*this))
 , _pendingSparksRewardMsg(false)
 , _sparksRewardMsg()
+, _tuningTestVariationKey("Unknown (unknown)")
 {
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
@@ -443,7 +456,10 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
   // By this time we've finished reading the stored lab assignments from the
   // robot, and immediately after that, the needs state.  So now we can
   // attempt to activate the experiment
+
   AttemptActivateDecayExperiment(_needsState._robotSerialNumber);
+
+  AttemptActivateTuningExperiment(_needsState._robotSerialNumber);
 
   bool needToWriteToDevice = false;
   bool needToWriteToRobot = _robotNeedsVersionUpdate;
@@ -686,8 +702,47 @@ void NeedsManager::AttemptActivateDecayExperiment(u32 robotSerialNumber)
   else
   {
     _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(),
-                                                  _needsConfig.kABTestDecayConfigControlKey,
+                                                  kABTestControlKey,
                                                   assignmentStatus);
+  }
+}
+
+
+void NeedsManager::AttemptActivateTuningExperiment(u32 robotSerialNumber)
+{
+  // If we don't yet have a valid robot serial number, don't try to make
+  // an experiment assignment, since it's based on robot serial number
+  if (robotSerialNumber == kUninitializedSerialNumber)
+  {
+    return;
+  }
+
+  // Call this first to set the audience tags based on current data.
+  // Note that in ActivateExperiment, if there was already an assigned
+  // variation, we'll use that assignment and ignore the audience tags
+  _cozmoContext->GetExperiments()->GetAudienceTags().CalculateQualifiedTags();
+
+  Util::AnkiLab::ActivateExperimentRequest request(kTuningExperimentKey,
+                                                   std::to_string(robotSerialNumber));
+  std::string outVariationKey;
+  const auto assignmentStatus = _cozmoContext->GetExperiments()->ActivateExperiment(request, outVariationKey);
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.AttemptActivateTuningExperiment",
+                "Tuning experiment activation assignment status is: %s; based on serial number %d",
+                EnumToString(assignmentStatus), robotSerialNumber);
+  if (assignmentStatus == Util::AnkiLab::AssignmentStatus::Assigned ||
+      assignmentStatus == Util::AnkiLab::AssignmentStatus::OverrideAssigned ||
+      assignmentStatus == Util::AnkiLab::AssignmentStatus::ForceAssigned)
+  {
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.AttemptActivateTuningExperiment",
+                  "Experiment %s: assigned to variation: %s",
+                  kTuningExperimentKey.c_str(),
+                  outVariationKey.c_str());
+
+    SetTuningTestVariation(outVariationKey, assignmentStatus);
+  }
+  else
+  {
+    SetTuningTestVariation(kABTestControlKey, assignmentStatus);
   }
 }
 
@@ -1110,6 +1165,48 @@ void NeedsManager::SparksRewardCommunicatedToUser()
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame
                     (std::move(_sparksRewardMsg)));
+}
+
+
+void NeedsManager::SetTuningTestVariation(const std::string& variationKey,
+                                          const Util::AnkiLab::AssignmentStatus assignmentStatus)
+{
+  _tuningTestVariationKey = variationKey + " (" +
+                            AssignmentStatusToString(assignmentStatus) + ")";
+
+  // Read the main tuning config file variation based on variation, and use that tuning
+  std::string configFilename = GetConfigBaseFilename();
+  if (variationKey != kABTestControlKey)
+  {
+    configFilename += "_" + variationKey;
+  }
+  configFilename += ".json";
+  Json::Value json;
+  bool parseSuccess = _cozmoContext->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
+                                                                   configFilename, json);
+  if (!ANKI_VERIFY(parseSuccess, "NeedsConfig.SetTuningTestVariation",
+                   "Failed to parse file %s", configFilename.c_str()))
+  {
+    return;
+  }
+  _needsConfig.Init(json);
+
+  // Read the level config file variation based on variation, and use that data
+  std::string levelConfigFilename = GetLevelConfigBaseFilename();
+  if (variationKey != kABTestControlKey)
+  {
+    levelConfigFilename += "_" + variationKey;
+  }
+  levelConfigFilename += ".json";
+  Json::Value levelJson;
+  parseSuccess = _cozmoContext->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
+                                                              levelConfigFilename, levelJson);
+  if (!ANKI_VERIFY(parseSuccess, "NeedsConfig.SetTuningTestVariation",
+                   "Failed to parse file %s", levelConfigFilename.c_str()))
+  {
+    return;
+  }
+  _starRewardsConfig->Init(levelJson);
 }
 
 
@@ -1666,6 +1763,8 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
     // back to the normal unconnected decay rates
     AttemptActivateDecayExperiment(_needsState._robotSerialNumber);
 
+    AttemptActivateTuningExperiment(_needsState._robotSerialNumber);
+
     const bool connected = (_robot == nullptr ? false : true);
     ApplyDecayForTimeSinceLastDeviceWrite(connected);
 
@@ -1710,8 +1809,8 @@ void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpda
     partIsDamaged.push_back(isDamaged);
   }
 
-  const std::string ABTestString = kUnconnectedDecayRatesExperimentKey + ": " +
-                                   _needsConfig.GetUnconnectedDecayTestVariation();
+  const std::string ABTestString = kTuningExperimentKey + ": " +
+                                   _tuningTestVariationKey;
 
   ExternalInterface::NeedsState message(std::move(needLevels), std::move(needBrackets),
                                         std::move(partIsDamaged), _needsState._curNeedsUnlockLevel,

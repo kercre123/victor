@@ -16,6 +16,7 @@
 #include "anki/common/types.h"
 
 #include "clad/types/proxMessages.h"
+#include "clad/types/touchGestureTypes.h"
 
 #include "util/helpers/noncopyable.h"
 #include "util/container/circularBuffer.h"
@@ -40,6 +41,10 @@ public:
 
   void Update(const RobotState& msg);
   
+  TouchGesture GetLatestTouchGesture() const {
+    return _touchGesture;
+  }
+  
   // Start logging raw data from the sensor for the specified duration.
   // Specifying 0 for duration will continue logging indefinitely
   void StartLogging(const uint32_t duration_ms = 0);
@@ -51,16 +56,13 @@ private:
   
   Robot& _robot;
   
-  Util::CircularBuffer<uint16_t> _touchIntensitySamples;
-  
-  // float _lastTimeSentRobotTouchMsg_s;
+  // the latest computed result of touch gesture
+  TouchGesture _touchGesture;
   
   // Logging stuff:
   std::unique_ptr<Util::RollingFileLogger> _rawDataLogger;
   bool _loggingRawData = false;
   float _logRawDataUntil_s = 0.f;
-
-  bool _wasTouched = false;
 };
 
 
