@@ -42,9 +42,12 @@ public:
   virtual bool CarryingObjectHandledInternally() const override {return false;}
   
   virtual void AddListener(IFeedingListener* listener) override{
-    _feedingListeners.push_back(listener);
+    _feedingListeners.insert(listener);
   };
-  
+
+  // remove a listener if preset and return true. Otherwise, return false
+  bool RemoveListeners(IFeedingListener* listener);
+
   void SetTargetObject(const ObjectID& objID){_targetID = objID;}
   
 protected:
@@ -73,7 +76,7 @@ private:
   State _currentState;
   
   // Listeners which should be notified when Cozmo starts eating
-  std::vector<IFeedingListener*> _feedingListeners;
+  std::set<IFeedingListener*> _feedingListeners;
   // Listen for the cube being pulled away from Cozmo
   std::shared_ptr<CubeAccelListeners::MovementListener> _cubeMovementListener; // CubeAccelComponent listener
 

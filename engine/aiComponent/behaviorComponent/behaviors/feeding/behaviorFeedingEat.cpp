@@ -125,6 +125,13 @@ bool BehaviorFeedingEat::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorFeedingEat::RemoveListeners(IFeedingListener* listener)
+{
+  size_t numRemoved = _feedingListeners.erase(listener);
+  return numRemoved > 0;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorFeedingEat::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID) == nullptr){
@@ -364,7 +371,8 @@ void BehaviorFeedingEat::TransitionToEating(BehaviorExternalInterface& behaviorE
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _timeCubeIsSuccessfullyDrained_sec = currentTime_s + timeDrainCube_s;
   
-  DelegateIfInControl(new TriggerAnimationAction(robot, eatingAnim));
+  // DelegateIfInControl(new TriggerAnimationAction(robot, eatingAnim)); // TEMP: only for this branch
+  DelegateIfInControl(new PlayAnimationAction(robot, "anim_energy_eat_01")); // TEMP: 
 }
 
 

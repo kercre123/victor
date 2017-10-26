@@ -212,11 +212,7 @@ void ActivityFeeding::InitActivity(BehaviorExternalInterface& behaviorExternalIn
   ////////
   /// Setup Lights
   ////////
-  
-  // Make the activity a listener for the eating behavior so that it's notified
-  // when the eating process starts
-  _eatFoodBehavior->AddListener(static_cast<IFeedingListener*>(this));
-  
+    
   // Setup choose behavior map
   _stageToBehaviorMap = {
     {FeedingActivityStage::SearchForFace,                 _searchingForFaceBehavior},
@@ -249,6 +245,10 @@ void ActivityFeeding::OnActivatedActivity(BehaviorExternalInterface& behaviorExt
     _currIdle = AnimationTrigger::Count;
     _hasSetIdle = false;
   }
+
+  // Make the activity a listener for the eating behavior so that it's notified
+  // when the eating process starts
+  _eatFoodBehavior->AddListener(static_cast<IFeedingListener*>(this));
   
   _eatingComplete = false;
   SmartDisableReactionsWithLock(behaviorExternalInterface, GetIDStr(), kFeedingActivityAffectedArray);
@@ -337,6 +337,14 @@ void ActivityFeeding::OnActivatedActivity(BehaviorExternalInterface& behaviorExt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityFeeding::OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  
+  // remove listener so we don't get callbacks if other activities / behaviors are using the "eat" beahvior
+  const bool removed = _eatFoodBehavior->RemoveListeners(static_cast<IFeedingListener*>(this));
+  if( !removed ) {
+    PRINT_NAMED_WARNING("ActivityFeeding.OnDeactivatedActivity.NoListener",
+                        "On deactivation, tried to remove eating listener but it wasn't registered");
+  }
+  
   if(_severeBehaviorLocksSet){
     ClearSevereAnims(behaviorExternalInterface);
   }

@@ -172,6 +172,11 @@ public:
   // Equivalent to !robot.IsCarryingObject() in WantsToBeActivated()
   virtual bool CarryingObjectHandledInternally() const = 0;
 
+  // Return true if this is a good time to interrupt this behavior. This allows more gentle interruptions for
+  // things which aren't immediately urgent. Eventually this may become a mandatory override, but for now, the
+  // default is that we can never interrupt gently
+  virtual bool CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const { return false; }
+
   // Helper function for having DriveToObjectActions use the second closest preAction pose useful when the action
   // is being retried or the action failed due to visualVerification
   ActionResult UseSecondClosestPreActionPose(DriveToObjectAction* action,
@@ -211,8 +216,9 @@ public:
                 { DEV_ASSERT(false, "AddListener.FeedingListener.Unimplemented"); }
   
 protected:
-  // Currently unused overrides of IBehavior since no equivalence in old BM system
-  void GetAllDelegates(std::set<IBehavior*>& delegates) const override {}
+
+  // default is no delegates, but behaviors which delegate can overload this
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override { }
   
   using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
 
@@ -350,6 +356,18 @@ protected:
   // true. Otherwise, return false (e.g. if the passed in interface doesn't have access to the delegation
   // component)
   bool DelegateNow(BehaviorExternalInterface& behaviorExternalInterface, IBehavior* delegate);
+
+  // same as above but with a callback that will get called as soon as the delegate stops itself (regardless
+  // of why)
+  bool DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface,
+                           IBehavior* delegate,
+                           BehaviorSimpleCallbackWithExternalInterface callback);
+
+  template<typename T>
+  bool DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface,
+                           IBehavior* delegate,
+                           void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface));
+
   
   // This function cancels the action started by DelegateIfInControl (if there is one). Returns true if an action was
   // canceled, false otherwise. Note that if you are activated, this will trigger a callback for the
@@ -501,6 +519,9 @@ private:
   // for when delegation finishes - if invalid, no action
   RobotCompletedActionCallback _actionCallback;
   bool _stopRequestedAfterAction = false;
+
+  // for when delegation to a _behavior_ finishes. If invalid, no callback
+  BehaviorSimpleCallbackWithExternalInterface _behaviorDelegateCallback;
   
   bool _isActivated;
   // should only be used to allow DelegateIfInControl to start while a behavior is resuming
@@ -675,6 +696,16 @@ bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorEx
                                std::bind(failureCallback, static_cast<T*>(this), std::placeholders::_1));
 }
 
+
+template<typename T>
+bool ICozmoBehavior::DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface,
+                                         IBehavior* delegate,
+                                         void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface))
+{
+  return DelegateIfInControl(behaviorExternalInterface,
+                             delegate,
+                             std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+}
 
 ////////
 //// Scored Behavior functions

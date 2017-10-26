@@ -259,6 +259,16 @@ void DelegationComponent::HandleActionComplete(u32 actionTag)
   _delegator->HandleActionComplete(actionTag);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const IBehavior* DelegationComponent::GetBehaviorDelegatedTo(const IBehavior* delegatingBehavior) const
+{
+  if(USE_BSM){
+    return _bsm->GetBehaviorDelegatedTo(delegatingBehavior);
+  }
+  else {
+    return nullptr;
+  }
+}
 
 } // namespace Cozmo
 } // namespace Anki

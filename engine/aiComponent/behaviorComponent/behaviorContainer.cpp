@@ -52,6 +52,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatchers/behaviorDispatcherRerun.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriority.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriorityWithCooldown.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingSearchForCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/behaviorCheckForStackAtInterval.h"
@@ -107,6 +109,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToStackOfCubes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoFeeding.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoObservingFaceInteraction.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorObservingDemo.h"
 
 #include "engine/robot.h"
 
@@ -720,6 +725,31 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, 
     case BehaviorClass::DriveInDesperation:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDriveInDesperation(config));
+      break;
+    }
+    case BehaviorClass::DispatcherStrictPriority:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDispatcherStrictPriority(config));
+      break;
+    }
+    case BehaviorClass::VictorDemoFeeding:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorVictorDemoFeeding(config));
+      break;
+    }
+    case BehaviorClass::VictorObservingDemo:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorVictorObservingDemo(config));
+      break;
+    }
+    case BehaviorClass::DispatcherStrictPriorityWithCooldown:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDispatcherStrictPriorityWithCooldown(config));
+      break;
+    }
+    case BehaviorClass::VictorDemoObservingFaceInteraction:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorVictorDemoObservingFaceInteraction(config));
       break;
     }
        

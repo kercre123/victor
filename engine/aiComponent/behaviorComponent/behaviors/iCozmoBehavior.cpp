@@ -454,6 +454,7 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
   _isActivated = true;
   _stopRequestedAfterAction = false;
   _actionCallback = nullptr;
+  _behaviorDelegateCallback = nullptr;
   _activatedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _hasSetIdle = false;
   Result initResult = OnBehaviorActivated(behaviorExternalInterface);
@@ -475,7 +476,6 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
   
   return initResult;
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::OnEnteredActivatableScopeInternal()
@@ -609,6 +609,7 @@ ICozmoBehavior::Status ICozmoBehavior::BehaviorUpdate_Legacy(BehaviorExternalInt
   //////
   ICozmoBehavior::Status status = Status::Complete;
   BehaviorUpdate(behaviorExternalInterface);
+
   if(IsActivated()){
     status = UpdateInternal_WhileRunning(behaviorExternalInterface);
       if(!IsControlDelegated() && status != ICozmoBehavior::Status::Running){
@@ -686,6 +687,7 @@ void ICozmoBehavior::StopOnNextActionComplete()
   // clear the callback and don't let any new actions start
   _stopRequestedAfterAction = true;
   _actionCallback = nullptr;
+  _behaviorDelegateCallback = nullptr;
 }
 
 
@@ -821,6 +823,17 @@ void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalI
     DEV_ASSERT_MSG(false,
                    "ICozmoBehavior.UpdateInternal.NotUsingBSM",
                    "This function is BSM specific - please  don't call it if you're using the behavior manager");
+  }
+
+  // fist call the behavior delegation callback if there is one
+  if( IsActivated() &&
+      !IsControlDelegated() &&
+      _behaviorDelegateCallback != nullptr ) {
+
+    // make local copy to avoid any issues with the callback delegating to another behavior
+    auto callback = _behaviorDelegateCallback;
+    _behaviorDelegateCallback = nullptr;
+    callback(behaviorExternalInterface);
   }
   
   BehaviorUpdate_Legacy(behaviorExternalInterface);
@@ -1005,6 +1018,24 @@ bool ICozmoBehavior::DelegateIfInControl(BehaviorExternalInterface& behaviorExte
   return false;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ICozmoBehavior::DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface,
+                                         IBehavior* delegate,
+                                         BehaviorSimpleCallbackWithExternalInterface callback)
+{
+  // TODO:(bn) unit test this!!!
+
+  if( DelegateIfInControl(behaviorExternalInterface, delegate) ) {
+    _behaviorDelegateCallback = callback;
+    return true;
+  }
+  else {
+    // couldn't delegate (for whatever reason)
+    return false;
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::DelegateNow(BehaviorExternalInterface& behaviorExternalInterface, IBehavior* delegate)
 {
@@ -1060,6 +1091,7 @@ bool ICozmoBehavior::CancelDelegates(bool allowCallback, bool allowHelperToConti
   if( IsControlDelegated() ) {
     if(!allowCallback){
       _actionCallback = nullptr;
+      _behaviorDelegateCallback = nullptr;
     }
     if(_behaviorExternalInterface->HasDelegationComponent()){
       _behaviorExternalInterface->GetDelegationComponent().CancelDelegates(this);

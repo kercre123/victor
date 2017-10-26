@@ -1,0 +1,10 @@
+{
+  "behaviorID" : "VictorDemoObservingOnCharger",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": false,
+
+  "behaviors": [
+    "ObservingOnChargerIdle"
+  ]
+}

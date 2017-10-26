@@ -139,6 +139,32 @@ void AIWhiteboard::Init()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::Update()
 {
+
+  Victor_Update();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::Victor_Update()
+{
+  // TODO:(bn) cache this filter
+
+  // Victor wants to eat cube #1 if it's known and upright
+  
+  BlockWorldFilter filter;
+  filter.SetAllowedTypes( { ObjectType::Block_LIGHTCUBE1 } );
+  filter.SetFilterFcn( [](const ObservableObject* obj){
+      return obj->IsPoseStateKnown() &&
+        obj->GetPose().GetWithRespectToRoot().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
+    });
+
+  const auto& blockWorld = _robot.GetBlockWorld();
+  const ObservableObject* obj = blockWorld.FindLocatedObjectClosestTo(_robot.GetPose(), filter);
+  if( obj != nullptr ) {
+    _victor_cubeToEat = obj->GetID();
+  }
+  else {
+    _victor_cubeToEat.UnSet();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

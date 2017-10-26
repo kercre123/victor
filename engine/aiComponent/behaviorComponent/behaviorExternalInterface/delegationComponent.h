@@ -84,6 +84,11 @@ public:
 
   // called when an action completes (with any status). Argument is the action id
   void HandleActionComplete(u32 actionTag);
+
+  // If control of the passed in behavior is delegated (to another behavior), return the pointer of the
+  // behavior that it was delegated to. Otherwise, return nullptr (including if control was delegated to an
+  // action or helper)
+  const IBehavior* GetBehaviorDelegatedTo(const IBehavior* delegatingBehavior) const;
   
 private:
   std::unique_ptr<Delegator>   _delegator;
