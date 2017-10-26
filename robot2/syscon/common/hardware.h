@@ -23,7 +23,8 @@ static const uint32_t WATCHDOG_CLOCK  = 10000;
 static const uint32_t WATCHDOG_LIMIT  = WATCHDOG_CLOCK / 200 * 10; // 10 main execution frames
 
 enum IRQ_Priority {
-  PRIORITY_ENCODERS = 0,
+  PRIORITY_ADC = 0,
+  PRIORITY_ENCODERS = 1,
   PRIORITY_MAIN_EXEC = 2,
   PRIORITY_I2C_TRANSMIT = 2,
   PRIORITY_SPINE_COMMS = 2,

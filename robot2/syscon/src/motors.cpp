@@ -5,7 +5,7 @@
 
 #include "encoders.h"
 #include "motors.h"
-#include "power.h"
+#include "analog.h"
 #include "messages.h"
 #include "timer.h"
 
@@ -242,7 +242,7 @@ void Motors::tick() {
       targetEnable = TARGET_DISABLE;
       break ;
     case TARGET_ENABLE_CHARGER:
-      Power::setCharge(false);
+      Analog::allowCharge(false);
 
       targetEnable = TARGET_DISABLE;
       break ;
@@ -250,7 +250,7 @@ void Motors::tick() {
       // Enable phase
       switch (desiredEnable)  {
         case TARGET_ENABLE_CHARGER:
-          Power::setCharge(true);
+          Analog::allowCharge(true);
           break ;
         case TARGET_ENABLE_MOTORS:
           // Reset our ports (This is portable, but ugly, can easily collapse this into 6 writes)
@@ -322,10 +322,10 @@ void Motors::tick() {
         // Set our Ns to 0 (should happen anyway)
         config->N2_Bank->MODER = (config->N2_Bank->MODER & config->N2_ModeMask) | config->N2_ModeOutput;
         config->N1_Bank->MODER = (config->N1_Bank->MODER & config->N1_ModeMask) | config->N1_ModeOutput;
-      
+
         state->direction = DIRECTION_IDLE;
         break ;
-      
+
       // We are transitioning out of 'idle' state
       case DIRECTION_IDLE:
         switch (direction) {

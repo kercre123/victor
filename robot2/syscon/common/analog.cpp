@@ -13,10 +13,19 @@
 static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL2
   | ADC_CHSELR_CHSEL4
-  | ADC_CHSELR_CHSEL6;
+  | ADC_CHSELR_CHSEL6
+  | ADC_CHSELR_CHSEL17
+  ;
 
 // Since the analog portion is shared with the bootloader, this has to be in the shared ram space
 uint16_t volatile Analog::values[ADC_CHANNELS];
+static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.5);
+static const uint32_t RISING_EDGE =  ADC_WINDOW(0, TRANSITION_POINT);
+static const uint32_t FALLING_EDGE = ADC_WINDOW(TRANSITION_POINT, ~0);
+
+bool Analog::button_pressed;
+static bool chargingAllowed = false;
+static bool onVExtPower;
 
 void Analog::init(void) {
   // Calibrate ADC1
@@ -34,12 +43,20 @@ void Analog::init(void) {
               | ADC_CFGR1_CONT
               | ADC_CFGR1_DMAEN
               | ADC_CFGR1_DMACFG
+              | ADC_CFGR1_AWDEN
+              | ADC_CFGR1_AWDSGL
+              | (ADC_CFGR1_AWDCH_0 * 2) // ADC Channel 2 (VEXT)
               ;
   ADC1->CFGR2 = 0
               | ADC_CFGR2_CKMODE_1
               ;
   ADC1->SMPR  = 0
               ;
+  ADC1->IER = ADC_IER_AWDIE;
+  ADC1->TR = FALLING_EDGE;
+
+  NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
+  NVIC_EnableIRQ(ADC1_IRQn);
 
   // Enable VRef
   ADC->CCR = ADC_CCR_VREFEN;
@@ -62,6 +79,13 @@ void Analog::init(void) {
                      | DMA_CCR_PSIZE_0
                      | DMA_CCR_CIRC;
   DMA1_Channel1->CCR |= DMA_CCR_EN;
+
+  // Wait for our first sample
+  DMA1->IFCR = DMA_IFCR_CTCIF1;
+  while (~DMA1->ISR & DMA_ISR_TCIF1) ;
+  
+  // Force state inverted
+  NVIC_SetPendingIRQ(ADC1_IRQn);
 }
 
 void Analog::stop(void) {
@@ -76,12 +100,52 @@ void Analog::stop(void) {
   while ((~ADC1->CR & ADC_CR_ADEN) != 0) ;
 }
 
-bool Analog::button_pressed;
-
 void Analog::transmit(BodyToHead* data) {
   data->battery.battery = values[ADC_VBAT];
   data->battery.charger = values[ADC_VEXT];
   data->touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
+}
+
+void Analog::allowCharge(bool enable) {
+  chargingAllowed = enable;
+}
+
+static inline void wait(int us) {
+  __asm {
+    _jump:  nop
+            nop
+            nop
+            nop
+            nop
+            nop
+            nop
+            subs     us,us, #1
+            cmp      us,#0
+            bgt      _jump
+  }
+}
+
+extern "C" void ADC1_IRQHandler(void) {
+  onVExtPower = Analog::values[ADC_VEXT] < TRANSITION_POINT;
+
+  // Stop the ADC so we can change our watchdog window
+  ADC1->CR |= ADC_CR_ADSTP;
+  
+  if (onVExtPower) {
+    nVEXT_EN::mode(MODE_INPUT);
+    wait(40*5); // Just around 10us
+    BAT_EN::set();
+    ADC1->TR = RISING_EDGE;
+  } else {
+    BAT_EN::reset();
+    wait(40); // Just around 10us
+    nVEXT_EN::mode(MODE_OUTPUT);
+    ADC1->TR = FALLING_EDGE;
+  }
+
+  // Clear interrupt and restart ADC
+  ADC1->ISR = ADC_ISR_AWD;
+  ADC1->CR |= ADC_CR_ADSTART;
 }
 
 #ifndef BOOTLOADER
@@ -90,7 +154,7 @@ void Analog::transmit(BodyToHead* data) {
 
 static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
 static const int POWER_WIPE_TIME = 200 * 10;  // Erase flash
-static const int BUTTON_THRESHOLD = 0xD00;
+static const int BUTTON_THRESHOLD = ADC_VOLTS(4.0);
 static const int BOUNCE_LENGTH = 3;
 
 void Analog::tick(void) {

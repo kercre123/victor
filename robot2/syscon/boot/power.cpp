@@ -4,7 +4,7 @@
 #include "power.h"
 #include "analog.h"
 
-static const uint16_t MINIMUM_BATTERY = 890; // ~3.6v
+static const uint16_t MINIMUM_BATTERY = ADC_VOLTS(3.6);
 
 void Power::init(void) {
   // Set N pins on motors low for power up
@@ -26,7 +26,10 @@ void Power::init(void) {
   LTN1::mode(MODE_OUTPUT);
   LTN2::mode(MODE_OUTPUT);
 
-  // Enable charging and power
+  // Enable (low-current) charging and power
+  nCHG_HC::set();
+  nCHG_HC::mode(MODE_OUTPUT);
+
   CHG_EN::set();
   CHG_EN::mode(MODE_OUTPUT);
 

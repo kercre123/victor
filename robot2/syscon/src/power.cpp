@@ -34,38 +34,16 @@ static volatile bool eraseSystem = false;
 static volatile bool ejectSystem = false;
 
 void Power::init(void) {
-  POWER_EN::pull(PULL_UP);
-
-  CHG_EN::reset();
-  CHG_EN::mode(MODE_OUTPUT);
+  RCC->APB1ENR |= APB1_CLOCKS;
+  RCC->APB2ENR |= APB2_CLOCKS;
 
   nVDDs_EN::reset();
   nVDDs_EN::mode(MODE_OUTPUT);
 }
 
-void Power::setCharge(bool enable) {
-  if (enable) {
-    // Enable High-current charging
-    nCHG_HC::pull(PULL_DOWN);
-    nCHG_HC::mode(MODE_INPUT);
-    CHG_EN::set();
-    CHG_EN::mode(MODE_OUTPUT);
-  } else {
-    CHG_EN::mode(MODE_INPUT);
-    nCHG_HC::pull(PULL_NONE);
-    nCHG_HC::mode(MODE_INPUT);
-  }
-}
-
 void Power::stop(void) {
   nVDDs_EN::set();
-  CHG_EN::reset();
   POWER_EN::pull(PULL_DOWN);
-}
-
-void Power::enableClocking(void) {
-  RCC->APB1ENR |= APB1_CLOCKS;
-  RCC->APB2ENR |= APB2_CLOCKS;
 }
 
 void Power::softReset(bool erase) {
@@ -84,11 +62,12 @@ void Power::eject(void) {
   }
 
   __disable_irq();
+
   NVIC->ICER[0]  = ~0;  // Disable all interrupts
 
   // Shut down the motors
   Motors::stop();
-  
+
   // Power down accessessories
   nVDDs_EN::set();
 
