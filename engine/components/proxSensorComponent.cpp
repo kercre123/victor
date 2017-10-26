@@ -18,7 +18,6 @@
 
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/common/basestation/math/rotatedRect.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
