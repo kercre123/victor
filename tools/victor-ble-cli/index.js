@@ -77,14 +77,15 @@ var onBLEDiscover = function (peripheral) {
     });
 
     peripheral.once('servicesDiscover', function (services) {
+        var haveVictorServiceId = false;
         services.forEach(function (service) {
             outputResponse("Services discovered for " + localName);
             // Locate Victor service ID
             if (service.uuid !== 'd55e356b59cc42659d5f3c61e9dfd70f') {
-                outputResponse("Did not find Victor's service ID. Disconnecting.");
-                peripheral.disconnect();
                 return;
             }
+
+            haveVictorServiceId = true;
 
             service.on('characteristicsDiscover', function(characteristics) {
                 var receive, send;
@@ -112,6 +113,11 @@ var onBLEDiscover = function (peripheral) {
 
             service.discoverCharacteristics();
         });
+        if (!haveVictorServiceId) {
+            outputResponse("Didn't find required Victor service ID. Disconnecting.");
+            peripheral.disconnect();
+            return;
+        }
     });
 
     peripheral.on('disconnect', function () {
