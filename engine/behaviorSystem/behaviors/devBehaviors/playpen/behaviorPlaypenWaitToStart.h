@@ -30,15 +30,14 @@ protected:
   
   virtual Result         InternalInitInternal(Robot& robot)   override;
   virtual BehaviorStatus InternalUpdateInternal(Robot& robot) override;
-  virtual void           StopInternal(Robot& robot)   override;
-  
-  virtual void HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot) override;
+  virtual void           StopInternal(Robot& robot)           override;
   
   virtual bool ShouldRunWhileOnCharger() const override { return true; }
   
 private:
   
-  TimeStamp_t touchStartTime_ms = 0;
+  TimeStamp_t _touchStartTime_ms = 0;
+
 };
 
 }

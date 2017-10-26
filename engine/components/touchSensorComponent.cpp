@@ -242,15 +242,32 @@ TouchSensorComponent::~TouchSensorComponent() = default;
 void TouchSensorComponent::Update(const RobotState& msg)
 {
   const float kMaxTouchIntensityInvalid = 800;       // arbitrarily chosen for Victor-G
-  const float kTouchIntensityThreshold = 560;        // arbitrarily chosen for Victor-G
+  static float kTouchIntensityThreshold = 560;        // arbitrarily chosen for Victor-G
   static DebounceHelper debouncer( 3, 4);            // arbitrarily chosen for Victor-G
   static TouchGestureClassifier tgc(2.0, 5.0, 0.48); // arbitrarily chosen for Victor-G
-  
+
+  #ifdef FACTORY_TEST
+  static int c = 1;
+  static u32 avg = 0;
+  if(c > 0 && c < 100)
+  {
+    c++;
+    avg += msg.backpackTouchSensorRaw;
+  }
+  else if(c == 100)
+  {
+    avg /= 100;
+    c = 0;
+    kTouchIntensityThreshold = avg + 30;
+  }
+  #endif
+
   // sometimes spurious values that are absurdly high come through the sensor
   if(msg.backpackTouchSensorRaw > kMaxTouchIntensityInvalid) {
     return;
   }
   
+
   const bool isTouched = msg.backpackTouchSensorRaw > kTouchIntensityThreshold;
   
   if( debouncer.ProcessRawKeyPress(isTouched) ) {

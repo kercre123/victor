@@ -855,7 +855,7 @@ namespace Anki {
           // HACK: Temp scaling to rough actual values
           const u16 maxPhysSignal = 700;
           const u16 minPhysSignal = 600;
-          const f32 maxSimSignal  = 20000.f;
+          const f32 maxSimSignal  = std::numeric_limits<u16>::max();
           ss = (u16)((((maxPhysSignal - minPhysSignal) * ss) / maxSimSignal) + minPhysSignal);
           return ss;
         }

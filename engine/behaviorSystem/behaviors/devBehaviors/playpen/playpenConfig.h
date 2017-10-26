@@ -28,21 +28,24 @@ namespace PlaypenConfig {
 
 // ----------General----------
 // Whether or not to disconnect from robot at end of tests
-static bool  kDisconnectAtEnd      = false;
+static bool kDisconnectAtEnd      = false;
 
 // Whether or not to write to robot storage
-static bool  kWriteToStorage       = true;
+static bool kWriteToStorage       = true;
 
 // Whether or not to ignore any test failures
 // The playpen behaviors should be written in such a way so that they can continue running
 // even after something has gone wrong (basically no branching)
-static bool  kIgnoreFailures       = true;
+static bool kIgnoreFailures       = true;
 
 // Default timeout to force a playpen behavior to end
-static f32   kDefaultTimeout_ms    = 20000;
+static f32  kDefaultTimeout_ms    = 20000;
 
 // How long to display the playpen result on Cozmo's face
-static f32 kTimeToDisplayResultOnFace_ms = 10000;
+static f32  kTimeToDisplayResultOnFace_ms = 10000;
+
+// How long the robot has to be touched until playpen starts
+static u32  kTouchDurationToStart_ms      = 1000;
 
 // ----------InitChecks----------
 // Whether or not to check firmware version

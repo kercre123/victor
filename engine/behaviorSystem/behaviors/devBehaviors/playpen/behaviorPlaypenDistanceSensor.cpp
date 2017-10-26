@@ -84,7 +84,7 @@ Result BehaviorPlaypenDistanceSensor::InternalInitInternal(Robot& robot)
   CompoundActionParallel* liftHeadTurn = new CompoundActionParallel(robot, {lift, head, turn});
   
   // After turning wait to process 5 images before trying to refine the turn
-  WaitForImagesAction* wait = new WaitForImagesAction(robot, 5, VisionMode::DetectingMarkers);
+  WaitForImagesAction* wait = new WaitForImagesAction(robot, 10, VisionMode::DetectingMarkers);
   
   CompoundActionSequential* action = new CompoundActionSequential(robot, {liftHeadTurn, wait});
   StartActing(action, [this, &robot]() { TransitionToRefineTurn(robot); });
@@ -172,8 +172,14 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn(Robot& robot)
     // We are within expected distance to update refined turn angle to put us perpendicular with the marker
     else
     {
-      angle = -1*(robot.GetPose().GetRotation().GetAngleAroundZaxis() -
-                  markerPose.GetRotation().GetAngleAroundZaxis());
+      markerPose = markerPose.GetWithRespectToRoot();
+      // Marker pose rotation is kind of wonky, compared to the robot's rotation they are 
+      // rotated 90 degrees. So when the robot is looking at a marker, you have to add
+      // 90 degrees to get its rotation to match that of the robot
+      // Taking the difference of these two angles tells us how much the robot needs to turn
+      // to be perpendicular with the marker
+      angle = ((markerPose.GetRotation().GetAngleAroundZaxis() + DEG_TO_RAD(90)) - 
+               robot.GetPose().GetRotation().GetAngleAroundZaxis());
     }
     
     PRINT_NAMED_INFO("BehaviorPlaypenDistanceSensor.TransitionToRefineTurn.TurnAngle",
@@ -242,6 +248,12 @@ bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Robot& r
         markerPose = marker.GetPose();
         markerName = marker.GetCodeName();
       }
+    }
+
+    if(lastObservedTime < robot.GetLastImageTimeStamp())
+    {
+      PRINT_NAMED_INFO("BehaviorPlaypenDistanceSensor.GetExpectedObjectMarkerPoseWrtRobot.MarkerTooOld","");
+      return false;
     }
     
     const bool res = markerPose.GetWithRespectTo(robot.GetPose(), markerPoseWrtRobot);

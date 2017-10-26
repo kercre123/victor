@@ -119,10 +119,12 @@ template<> void ConsoleVar<Cozmo::CustomObjectMarker>::ToggleValue() { _value = 
 namespace Cozmo {
 namespace PlaypenConfig {
 
-WRAP_EXTERN_CONSOLE_VAR(bool,  kDisconnectAtEnd,      "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(bool,  kWriteToStorage,       "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(bool,  kIgnoreFailures,       "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(float, kDefaultTimeout_ms,    "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(bool,  kDisconnectAtEnd,              "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(bool,  kWriteToStorage,               "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(bool,  kIgnoreFailures,               "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(float, kDefaultTimeout_ms,            "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(float, kTimeToDisplayResultOnFace_ms, "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(u32,   kTouchDurationToStart_ms,      "Playpen");
 
 WRAP_EXTERN_CONSOLE_VAR(bool, kCheckFirmwareVersion,  "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32,  kMinBatteryVoltage,     "Playpen");
