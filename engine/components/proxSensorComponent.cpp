@@ -33,9 +33,9 @@ namespace {
   const Vec3f kProxSensorPositionVec_mm{kProxSensorPosition_mm[0], kProxSensorPosition_mm[1], kProxSensorPosition_mm[2]};
   const Vec3f kProxObstacleSize_mm{10,20,0};
 
-  const u16 kMinObsThreshold_mm = 30;   // Minimum distance for registering an object detected as an obstacle
-  const u16 kMaxObsThreshold_mm = 300;  // Maximum distance for registering an object detected as an obstacle  
-  const f32 kMinQualityThreshold = .25; // Minimum sensor reading strength before trying use sensor data
+  const u16 kMinObsThreshold_mm  = 30;  // Minimum distance for registering an object detected as an obstacle
+  const u16 kMaxObsThreshold_mm  = 300; // Maximum distance for registering an object detected as an obstacle  
+  const f32 kMinQualityThreshold = .15; // Minimum sensor reading strength before trying use sensor data
 
   const std::string kLogDirectory = "sensorData/proxSensor";
 } // end anonymous namespace
@@ -166,18 +166,22 @@ Result ProxSensorComponent::IsLiftInFOV(bool& isInFOV) const
 void ProxSensorComponent::UpdateNavMap()
 {
   const float quality = _latestData.signalIntensity / _latestData.spadCount;
-  const bool validReading = ((quality >= kMinQualityThreshold) && (_latestData.distance_mm >= kMinObsThreshold_mm));
+
+  const bool noObject       = quality <= kMinQualityThreshold;                      // sensor is pointed at free space
+  const bool objectDetected = (quality >= kMinQualityThreshold &&                   // sensor is getting some reading
+                               _latestData.distance_mm >= kMinObsThreshold_mm);     // the sensor is not seeing the lift
   
-  if (validReading)
+  if (objectDetected || noObject)
   {  
     // Clear out any obstacles between the robot and ray if we have good signal strength 
-    // MarkerlessObject tempObstacle(ObjectType::ProxObstacle);    // temp object for getting measurements
     TimeStamp_t lastTimestamp = _robot.GetLastMsgTimestamp();
 
-    // build line for ray cast by getting the robot pose, casting forward by sensor reading, then adding thickness
-    Pose3d  robotPos(_robot.GetPose());
-    Pose3d  objectPos(_robot.GetPose());
-    objectPos.TranslateForward(fmin(_latestData.distance_mm, kMaxObsThreshold_mm) - kProxObstacleSize_mm.x());
+    // build line for ray cast by getting the robot pose, casting forward by sensor reading
+    Vec3f offsetx_mm( (noObject) ? kMaxObsThreshold_mm 
+                                 : fmin(_latestData.distance_mm, kMaxObsThreshold_mm), 0, 0);   
+    
+    Pose3d  robotPos  = _robot.GetPose();
+    Pose3d  objectPos = _robot.GetPose() * Pose3d(0, Z_AXIS_3D(), offsetx_mm);    
     
     // clear out known free space
     INavMap* currentNavMemoryMap = _robot.GetMapComponent().GetCurrentMemoryMap();
@@ -187,22 +191,17 @@ void ProxSensorComponent::UpdateNavMap()
 
       // Add prox obstacle if detected and close to robot 
       if (_latestData.distance_mm <= kMaxObsThreshold_mm) { 
-        float obstacleHalfWidth_mm = .1 * _latestData.distance_mm; // assume about ~11• arc for   width     
-        Vec3f offset1_mm(10, -obstacleHalfWidth_mm, 0);  
-        Vec3f offset2_mm(0,  -obstacleHalfWidth_mm, 0);   
-        Vec3f offset3_mm(10,  obstacleHalfWidth_mm, 0);  
-        Vec3f offset4_mm(0,   obstacleHalfWidth_mm, 0);
+        float obstacleHalfWidth_mm = .1 * _latestData.distance_mm; // assume about ~11• arc for   width  
+        Vec3f offsety1_mm(0,  -obstacleHalfWidth_mm, 0);   
+        Vec3f offsety2_mm(0,   obstacleHalfWidth_mm, 0);
 
-        Point2f p1 = (objectPos * Pose3d(0, Z_AXIS_3D(), offset1_mm)).GetTranslation();
-        Point2f p2 = (objectPos * Pose3d(0, Z_AXIS_3D(), offset2_mm)).GetTranslation();
-        Point2f p3 = (objectPos * Pose3d(0, Z_AXIS_3D(), offset3_mm)).GetTranslation();
-        Point2f p4 = (objectPos * Pose3d(0, Z_AXIS_3D(), offset4_mm)).GetTranslation();
+        Point2f p1 = (objectPos * Pose3d(0, Z_AXIS_3D(), offsety1_mm)).GetTranslation();
+        Point2f p2 = (objectPos * Pose3d(0, Z_AXIS_3D(), offsety2_mm)).GetTranslation();
                 
         const Vec3f rotatedFwdVector = _robot.GetPose().GetWithRespectToRoot().GetRotation() * X_AXIS_3D();
-        const Quad2f proxQuad(p1, p2, p3, p4);
         
         MemoryMapData_ProxObstacle proxData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()}, lastTimestamp);      
-        currentNavMemoryMap->AddQuad( proxQuad, proxData);
+        currentNavMemoryMap->AddLine(p1, p2, proxData);
       }
     }
   }
