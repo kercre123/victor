@@ -6,25 +6,25 @@
     {
       "strategyType"  : "RobotTouchGesture",
       "touchGesture"  : "ContactInitial",
-      "animationName" : "pr_petting_getin_01",
+      "animationName" : "anim_rtpkeepaway_reacttocube_03",
       "animRate_s"    : 4.0
     },
     {
       "strategyType"  : "RobotTouchGesture",
       "touchGesture"  : "ContactSustain",
-      "animationName" : "pr_petting_bliss_cycle",
+      "animationName" : "anim_rtpkeepaway_playeryes_01",
       "animRate_s"    : 2.0
     },
     {
       "strategyType"  : "RobotTouchGesture",
       "touchGesture"  : "SlowRepeating",
-      "animationName" : "pr_petting_slow_01",
+      "animationName" : "anim_rtpmemorymatch_yes_04",
       "animRate_s"    : 1.0
     },
     {
       "strategyType"  : "RobotTouchGesture",
       "touchGesture"  : "FastRepeating",
-      "animationName" : "pr_petting_fast_01",
+      "animationName" : "anim_rtpkeepaway_playeryes_03",
       "animRate_s"    : 0.5
     },
     {
