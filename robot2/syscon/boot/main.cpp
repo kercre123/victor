@@ -12,7 +12,7 @@
 #include "common.h"
 #include "hardware.h"
 
-//#define DISABLE_WDOG
+#define DISABLE_WDOG
 
 extern "C" void StartApplication(const uint32_t* stack, VectorPtr reset);
 
@@ -106,6 +106,10 @@ int main(void) {
   }
 
   Analog::stop();
+
+  // We have passed recovery stage / pre-charge, go ahead and enable syscon battery power
+  POWER_EN::mode(MODE_INPUT);
+  POWER_EN::pull(PULL_UP);
 
   StartApplication(APP->stackStart, APP->resetVector);
 }
