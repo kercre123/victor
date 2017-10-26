@@ -22,7 +22,6 @@ uint16_t volatile Analog::values[ADC_CHANNELS];
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.5);
 static const uint32_t RISING_EDGE =  ADC_WINDOW(0, TRANSITION_POINT);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(TRANSITION_POINT, ~0);
-static const uint16_t MINIMUM_BATTERY = ADC_VOLTS(3.6);
 static const int CHARGE_DELAY = 200; // 1 second
 
 bool Analog::button_pressed;
@@ -94,6 +93,7 @@ void Analog::init(void) {
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 
   #ifdef BOOTLOADER
+  static const uint16_t MINIMUM_BATTERY = ADC_VOLTS(3.6);
   chargeAllowed = true;
 
   // This is a fresh boot (no head)
