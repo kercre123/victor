@@ -67,7 +67,7 @@
     "translation" : "Wenn Cube %1 bewegt wird"
   },
   "codeLabVertical.COZMO_POSITION" : {
-    "translation" : "Cozmo position in world %1"
+    "translation" : "Position von Cozmo in der Welt %1"
   },
   "codeLabVertical.COZMO_PITCH" : {
     "translation" : "Cozmo-Drehung (Querachse, in °)"
@@ -307,7 +307,7 @@
     "translation" : "32 - Cube antippen"
   },
   "codeLabVertical.ANIM_GET_IN_POSITION" : {
-    "translation" : "33 - get in position for tap cube"
+    "translation" : "33 - Position einnehmen, um auf Cube zu tippen"
   },
   "codeLabVertical.ANIM_IDLE" : {
     "translation" : "34 - Inaktiv"
@@ -334,112 +334,112 @@
     "translation" : "Alles"
   },
   "codeLabVertical.SOUND_EIGHTIES_MUSIC" : {
-    "translation" : "1 - eighties music"
+    "translation" : "1 - Musik der 80er-Jahre"
   },
   "codeLabVertical.SOUND_MAMBO_MUSIC" : {
-    "translation" : "2 - mambo music"
+    "translation" : "2 - Mambo"
   },
   "codeLabVertical.SOUND_DISCO_MUSIC" : {
-    "translation" : "3 - disco music"
+    "translation" : "3 - Disco-Musik"
   },
   "codeLabVertical.SOUND_MAGIC" : {
-    "translation" : "4 - magic"
+    "translation" : "4 - Magie"
   },
   "codeLabVertical.SOUND_WIN" : {
-    "translation" : "5 - win"
+    "translation" : "5 - Gewinnen"
   },
   "codeLabVertical.SOUND_LOSE" : {
-    "translation" : "6 - lose"
+    "translation" : "6 - Verlieren"
   },
   "codeLabVertical.SOUND_GAME_START" : {
-    "translation" : "7 - game start"
+    "translation" : "7 - Spielbeginn"
   },
   "codeLabVertical.SOUND_CLOCK_TICK" : {
-    "translation" : "8 - clock tick"
+    "translation" : "8 - Uhr"
   },
   "codeLabVertical.SOUND_BLING" : {
-    "translation" : "9 - bling"
+    "translation" : "9 - Klunker"
   },
   "codeLabVertical.SOUND_SUCCESS" : {
-    "translation" : "10 - success"
+    "translation" : "10 - Erfolg"
   },
   "codeLabVertical.SOUND_FAIL" : {
-    "translation" : "11 - fail"
+    "translation" : "11 - Fehler"
   },
   "codeLabVertical.SOUND_TIMER_WARNING" : {
-    "translation" : "12 - timer warning"
+    "translation" : "12 - Timer-Warnung"
   },
   "codeLabVertical.SOUND_TIMER_END" : {
-    "translation" : "13 - timer end"
+    "translation" : "13 - Timer-Ende"
   },
   "codeLabVertical.SOUND_SPARKLE" : {
-    "translation" : "14 - sparkle"
+    "translation" : "14 - Funkeln"
   },
   "codeLabVertical.SOUND_SWOOSH" : {
-    "translation" : "15 - swoosh"
+    "translation" : "15 - Rauschen"
   },
   "codeLabVertical.SOUND_PING" : {
-    "translation" : "16 - ping"
+    "translation" : "16 - Ping"
   },
   "codeLabVertical.SOUND_HOT_POTATO_END" : {
-    "translation" : "17 - hot potato end"
+    "translation" : "17 - Heiße Kartoffel (Ende)"
   },
   "codeLabVertical.SOUND_HOT_POTATO_MUSIC_SLOW" : {
-    "translation" : "18 - hot potato music slow"
+    "translation" : "18 - Heiße Kartoffel (langsame Musik)"
   },
   "codeLabVertical.SOUND_HOT_POTATO_MUSIC_MEDIUM" : {
-    "translation" : "19 - hot potato music medium"
+    "translation" : "19 - Heiße Kartoffel (mittelschnelle Musik)"
   },
   "codeLabVertical.SOUND_HOT_POTATO_MUSIC_FAST" : {
-    "translation" : "20 - hot potato music fast"
+    "translation" : "20 - Heiße Kartoffel (schnelle Musik)"
   },
   "codeLabVertical.SOUND_HOT_POTATO_MUSIC_SUPERFAST" : {
-    "translation" : "21 - hot potato music superfast"
+    "translation" : "21 - Heiße Kartoffel (superschnelle Musik)"
   },
   "codeLabVertical.SOUND_MAGNET_PULL" : {
-    "translation" : "22 - magnet pull"
+    "translation" : "22 - Magnetische Anziehung"
   },
   "codeLabVertical.SOUND_MAGNET_REPEL" : {
-    "translation" : "23 - magnet repel"
+    "translation" : "23 - Magnetische Abstoßung"
   },
   "codeLabVertical.SOUND_INSTRUMENT_1_MODE_1" : {
-    "translation" : "24 - instrument 1 mode 1 loop"
+    "translation" : "24 - Instrument 1, Modus 1 (Schleife)"
   },
   "codeLabVertical.SOUND_INSTRUMENT_1_MODE_2" : {
-    "translation" : "25 - instrument 1 mode 2 loop"
+    "translation" : "25 - Instrument 1, Modus 2 (Schleife)"
   },
   "codeLabVertical.SOUND_INSTRUMENT_1_MODE_3" : {
-    "translation" : "26 - instrument 1 mode 3 loop"
+    "translation" : "26 - Instrument 1, Modus 3 (Schleife)"
   },
   "codeLabVertical.SOUND_INSTRUMENT_2_MODE_1" : {
-    "translation" : "27 - instrument 2 mode 1 loop"
+    "translation" : "27 - Instrument 2, Modus 1 (Schleife)"
   },
   "codeLabVertical.SOUND_INSTRUMENT_2_MODE_2" : {
-    "translation" : "28 - instrument 2 mode 2 loop"
+    "translation" : "28 - Instrument 2, Modus 2 (Schleife)"
   },
   "codeLabVertical.SOUND_INSTRUMENT_2_MODE_3" : {
-    "translation" : "29 - instrument 2 mode 3 loop"
+    "translation" : "29 - Instrument 2, Modus 3 (Schleife)"
   },
   "codeLabVertical.SOUND_INSTRUMENT_3_MODE_1" : {
-    "translation" : "30 - instrument 3 mode 1 loop"
+    "translation" : "30 - Instrument 3, Modus 1 (Schleife)"
   },
   "codeLabVertical.SOUND_INSTRUMENT_3_MODE_2" : {
-    "translation" : "31 - instrument 3 mode 2 loop"
+    "translation" : "31 - Instrument 3, Modus 2 (Schleife)"
   },
   "codeLabVertical.SOUND_INSTRUMENT_3_MODE_3" : {
-    "translation" : "32 - instrument 3 mode 3 loop"
+    "translation" : "32 - Instrument 3, Modus 3 (Schleife)"
   },
   "codeLabVertical.SOUND_TIMER_START" : {
-    "translation" : "33 - timer start"
+    "translation" : "33 - Timer-Start"
   },
   "codeLabVertical.SOUND_FIRE_TRUCK_ALARM" : {
-    "translation" : "34 - fire truck alarm"
+    "translation" : "34 - Feuerwehralarm"
   },
   "codeLabVertical.SOUND_CUBE_CHARGE" : {
-    "translation" : "35 - cube charge"
+    "translation" : "35 - Cube aufladen"
   },
   "codeLabVertical.SOUND_BACKGROUND_MUSIC" : {
-    "translation" : "36 - background music loop"
+    "translation" : "36 - Hintergrundmusik (Schleife)"
   },
   "codeLabVertical.ANY" : {
     "translation" : "Alles"

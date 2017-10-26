@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "name.cozmo" : {
-    "translation" : "Cozmo"
+    "translation" : "COZMO"
   },
   "name.player" : {
     "translation" : "プレイヤー"

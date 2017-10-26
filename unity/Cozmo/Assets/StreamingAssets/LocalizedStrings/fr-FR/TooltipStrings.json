@@ -55,7 +55,7 @@
     "translation" : "Nourriture indisponible"
   },
   "tooltip.needsbutton.energy.repaircritical" : {
-    "translation" : "Avant d'être nourri, Cozmo a besoin d'être réglé !"
+    "translation" : "Cozmo doit être réglé avant de pouvoir être nourri !"
   },
   "tooltip.needsbutton.play.header" : {
     "translation" : "Jeu indisponible"
@@ -70,7 +70,7 @@
     "translation" : "Progression des boîtes à bonus"
   },
   "tooltip.bonusbar.body.daycomplete" : {
-    "translation" : "Jetons déjà gagnés aujourd'hui. Nouvelle journée dans {0} h {1} m."
+    "translation" : "Jeton déjà gagné aujourd'hui. Nouvelle journée dans {0} h {1} m."
   },
   "tooltip.bonusbar.body.dayincomplete" : {
     "translation" : "Satisfais l'envie de jouer de Cozmo pour gagner un jeton. Le jour se termine dans {0} h {1} m."
@@ -79,6 +79,6 @@
     "translation" : "ÉCLATS"
   },
   "tooltip.sparks.body.main" : {
-    "translation" : "Cozmo will do Tricks and play games for Sparks."
+    "translation" : "Cozmo fera des tours et jouera à des jeux pour gagner des Éclats."
   }
 }

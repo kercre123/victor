@@ -484,19 +484,19 @@
     "translation" : "しんにゅうしゃ警報！"
   },
   "codeLabSampleProject_SayCozmo.projectName" : {
-    "translation" : "Say Cozmo"
+    "translation" : "COZMOと言いましょう"
   },
   "codeLabSampleProject_DrawCozmo.projectName" : {
-    "translation" : "Draw Cozmo"
+    "translation" : "COZMOを描きましょう"
   },
   "codeLabSampleProject_PlayRandomAnims.projectName" : {
-    "translation" : "Play Random Animations"
+    "translation" : "アニメーションをランダムにプレイする"
   },
   "codeLabSampleProject_PlayAllAnims.projectName" : {
-    "translation" : "Play All Animations"
+    "translation" : "すべてのアニメーションをプレイする"
   },
   "codeLabSampleProject_DigitalClock.projectName" : {
-    "translation" : "Clock"
+    "translation" : "時計"
   },
   "codeLabFeaturedProject_HotPotato.projectName" : {
     "translation" : "ホットポテト"
@@ -505,7 +505,7 @@
     "translation" : "音楽が止まったとき、ホットポテトを持っていないようにしましょう!"
   },
   "codeLabFeaturedProject_HotPotato.projectInstructions" : {
-    "translation" : "1. This is a game for two players, plus Cozmo. \u000a\u000a2. Cozmo will ask you to place a Cube under his lift so he can tap it.\u000a\u000a3. In this game, the \"potato\" is indicated by Cube lights. When it lands on you, the lights will first turn red, and then green when the potato can be passed by tapping the Cube.\u000a\u000a4. When the music stops, careful not to be stuck with the potato!"
+    "translation" : "1．このゲームは、2人のプレイヤーとCOZMOでプレイします。\u000a\u000a2. COZMOがプレーヤーに、キューブをタップできるようリフトの下にキューブをおいて、とたのみます。\u000a\u000a3. このゲームでは、キューブのライトで「ジャガイモ」が示されます。ジャガイモがプレーヤーの手元に落ちるとライトは赤く光り、キューブをタップしてジャガイモをパスできるようになると、ライトは緑色に光ります。\u000a\u000a4. 音楽が止まったとき、手にジャガイモを持っていないように注意しましょう！"
   },
   "codeLabFeaturedProject_TinyOrchestra.projectName" : {
     "translation" : "小さなオーケストラ"
@@ -523,7 +523,7 @@
     "translation" : "COZMOをゆさぶってあなたの運勢を教えてもらいましょう。"
   },
   "codeLabFeaturedProject_MagicFortuneTeller.projectInstructions" : {
-    "translation" : "1. After you tap start, when Cozmo has a \"?\" on his face, this means it's your turn to ask him a yes-or-no question.\u000a\u000a2. Then shake Cozmo and listen to your magic fortune!"
+    "translation" : "1．タップしてプレイを開始し、COZMOの顔に「？」が表示されたら、プレイヤーがCOZMOにyes/noのクイズを出す番です。2. COZMOをゆすって占いの結果を教えてもらいましょう。"
   },
   "codeLabFeaturedProject_CubeWhack.projectName" : {
     "translation" : "キューブを引っぱたけ"
@@ -541,7 +541,7 @@
     "translation" : "チックタック！COZMOがタイマーだったらもっと楽しい！"
   },
   "codeLabFeaturedProject_FiretruckAlarm.projectInstructions" : {
-    "translation" : "1. After you tap the start flag, a ten-second timer will begin.\u000a\u000a2. Then count down to Cozmo's fire truck alarm!"
+    "translation" : "1．スタートフラグをタップすると10秒のタイマーがスタートします。\u000a\u000aCOZMOの消防車のアラームに向けてカウントダウンが始まります！"
   },
   "codeLabFeaturedProject_LightShow.projectName" : {
     "translation" : "ライトショー"
@@ -865,37 +865,37 @@
     "translation" : "[テキスト]を[X]、[Y]に描画"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_text" : {
-    "translation" : "Draw the specified [text] at the given pixel position, using [X],[Y] coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Coordinate 0,0 starts at the top left corner of Cozmo's face screen. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation" : "[X]、[Y]座標を使って、任意のピクセル位置に特定の[テキスト]を描画します。COZMOの顔のスクリーンは幅128ピクセル、高さ64ピクセルです。したがって可視範囲は、[X]が0-127、[Y]が0-63です。座標0,0は、COZMOの顔のスクリーンの、左上角から開始します。ヒント：描画しているものを参照するには「COZMOの顔に表示」ブロックを使用してください。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_line" : {
     "translation" : "[X]、[Y]から[X2]、[Y2]に線を描画"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_line" : {
-    "translation" : "Draw a line between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation" : "2つのピクセル座標間に線を描画します。COZMOの顔のスクリーンは幅128ピクセル、高さ64ピクセルです。したがって可視範囲は、[X]が0-127、[Y]が0-63です。ヒント：描画しているものを参照するには「COZMOの顔に表示」ブロックを使用してください。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_rect" : {
     "translation" : "[X]、[Y]から[X2]、[Y2]に塗りつぶされた長方形を描画"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_rect" : {
-    "translation" : "Draw a filled rectangle between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation" : "2つのピクセル座標間に塗りつぶされた長方形を描画します。COZMOの顔のスクリーンは幅128ピクセル、高さ64ピクセルです。したがって可視範囲は、[X]が0-127、[Y]が0-63です。ヒント：描画しているものを参照するには「COZMOの顔に表示」ブロックを使用してください。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_rect" : {
     "translation" : "[X]、[Y]から[X2]、[Y2]に長方形を描画"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_rect" : {
-    "translation" : "Draw a rectangle between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation" : "2つのピクセル座標間に長方形を描画します。COZMOの顔のスクリーンは幅128ピクセル、高さ64ピクセルです。したがって可視範囲は、[X]が0-127、[Y]が0-63です。ヒント：描画しているものを参照するには「COZMOの顔に表示」ブロックを使用してください。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_circle" : {
     "translation" : "[X]、[Y]に半径[Z]の円を描画"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_circle" : {
-    "translation" : "Draw a circle at the given [X],[Y] pixel coordinate with the given [Z] radius in pixels. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation" : "任意の[X]、[Y]ピクセル座標に任意の半径[Z]ピクセルの円を描画します。COZMOの顔のスクリーンは幅128ピクセル、高さ64ピクセルです。したがって可視範囲は、[X]が0-127、[Y]が0-63です。ヒント：描画しているものを参照するには「COZMOの顔に表示」ブロックを使用してください。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_circle" : {
     "translation" : "[X]、[Y]に半径[Z]の塗りつぶされた円を描画"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_circle" : {
-    "translation" : "Draw a filled circle at the given [X],[Y] pixel coordinate with the given [Z] radius in pixels. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation" : "任意の[X]、[Y]ピクセル座標に任意の半径[Z]ピクセルの塗りつぶされた円を描画します。COZMOの顔のスクリーンは幅128ピクセル、高さ64ピクセルです。したがって可視範囲は、[X]が0-127、[Y]が0-63です。ヒント：描画しているものを参照するには「COZMOの顔に表示」ブロックを使用してください。"
   },
   "codeLabGlossary.block_definitions.title.event_whenflagclicked" : {
     "translation" : "緑のフラグがクリックされたとき"
@@ -922,7 +922,7 @@
     "translation" : "このコードブロックをトリガーすると、COZMOが悲しい顔を見るたびにその下位のコードブロックが実行されます。このブロックをトリガーするには、緑のフラグ（スタート）ボタンが有効になっている必要があります。ヒント：ほんとうにご機嫌ななめなしかめっ面になってください。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_event_on_see_cube" : {
-    "translation" : "when Cube [#] seen"
+    "translation" : "キューブ[#]が見えたら"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_see_cube" : {
     "translation" : "このコードブロックをトリガーすればCOZMOがキューブを見るたびにその下位のコードブロックを実行します。"
@@ -1144,7 +1144,7 @@
     "translation" : "特定のキューブのCOZMOのカメラから見える右/左の傾きの角度を度数で返します。この場合、COZMOにキューブが見えていなければなりません。キューブ1：はペーパークリップのように見えます。キューブ2：はランプかハートのように見えます。キューブ3：はベビーシートに座る赤ちゃんのように見えます。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_yaw" : {
-    "translation" : "Cube [#] yaw ° in camera"
+    "translation" : "カメラでのキューブ[#]の向き°"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_yaw" : {
     "translation" : "COZMOのカメラから見えるキューブの右/左の（平らな面にあるかのような）向きの角度を度数で返します。この場合、COZMOにキューブが見えていなければなりません。キューブ1：はペーパークリップのように見えます。キューブ2：はランプかハートのように見えます。キューブ3：はベビーシートに座る赤ちゃんのように見えます。"
@@ -1312,15 +1312,15 @@
     "translation" : "[音楽の名前]音楽を停止ヒント：コードラボのデフォルトの背景音楽を停止するには「背景」音楽を停止します。"
   },
   "codeLab.export_modal.title" : {
-    "translation" : "Export Project"
+    "translation" : "プロジェクトのエクスポート"
   },
   "codeLab.export_modal.body" : {
-    "translation" : "Submit your project to be Featured!\u000a\u000aCopy it to Google Drive, then visit go.anki.com/submission to submit!"
+    "translation" : "注目のプロジェクトとして送信しましょう。\u000a\u000aプロジェクトをGoogleドライブにコピーして、go.anki.com/submissionへ進み、送信してください。"
   },
   "codeLab.export_modal.button.get_drive" : {
-    "translation" : "Get Google Drive"
+    "translation" : "Googleドライブを取得"
   },
   "codeLab.export_modal.button.copy_to_drive" : {
-    "translation" : "Copy to Google Drive"
+    "translation" : "Googleドライブへコピー"
   }
 }

@@ -43,7 +43,7 @@
     "translation" : "COZMOはキューブをころがしています..."
   },
   "behavior.StackCube" : {
-    "translation" : "Cozmoはキューブの山を作っています..."
+    "translation" : "COZMOはキューブの山を作っています..."
   },
   "behavior.LookingForFaces" : {
     "translation" : "COZMOは周りを見ています..."
@@ -172,13 +172,13 @@
     "translation" : "COZMOは「ウィリアム・テル序曲」を歌っています..."
   },
   "behavior.singing.YankeeDoodle" : {
-    "translation" : "Cozmoは「アルプス一万尺」を歌っています..."
+    "translation" : "COZMOは「アルプス一万尺」を歌っています..."
   },
   "behavior.singing.BeautifulDreamer" : {
     "translation" : "COZMOは「夢路より」を歌っています..."
   },
   "behavior.singing.MountainKing" : {
-    "translation" : "Cozmoは「山の魔王の宮殿にて」を歌っています..."
+    "translation" : "COZMOは「山の魔王の宮殿にて」を歌っています..."
   },
   "behavior.singing.TaRaRaBoom" : {
     "translation" : "COZMOは「タララタンタカターン」を歌っています..."
@@ -187,19 +187,19 @@
     "translation" : "COZMOは「剣闘士の入場」を歌っています..."
   },
   "behavior.singing.HelloMyBaby" : {
-    "translation" : "Cozmoは「ハローマイベイビー」を歌っています..."
+    "translation" : "COZMOは「ハローマイベイビー」を歌っています..."
   },
   "behavior.singing.TurkeyInTheStraw" : {
     "translation" : "COZMOは「オクラホマミキサー」を歌っています..."
   },
   "behavior.Dance" : {
-    "translation" : "Cozmoは踊っています..."
+    "translation" : "COZMOは踊っています..."
   },
   "behavior.singing.LondonBridge" : {
     "translation" : "COZMOは「ロンドン橋」を歌っています..."
   },
   "behavior.singing.Sakura" : {
-    "translation" : "Cozmoは「さくらさくら」を歌っています..."
+    "translation" : "COZMOは「さくらさくら」を歌っています..."
   },
   "behavior.singing.MussIDenn" : {
     "translation" : "COZMOは「別れ」を歌っています..."
@@ -274,7 +274,7 @@
     "translation" : "COZMOはお腹が空いています..."
   },
   "behavior.Needs_MildLowPlayRequest" : {
-    "translation" : "Cozmoは退屈していて、遊びたがっています..."
+    "translation" : "COZMOは退屈していて、遊びたがっています..."
   },
   "behavior.Needs_MildLowRepairRequest" : {
     "translation" : "COZMOはチューンアップが必要です..."

@@ -28,7 +28,7 @@
     "translation" : "いないいないばあ"
   },
   "unlockable.PeekABoo.Description" : {
-    "translation" : "Cozmoと一緒に「いないいないばあ」で遊びましょう！両手で自分の顔を隠した後に、両手を外し顔を見せてCozmoをビックリさせます。"
+    "translation" : "COZMOと一緒に「いないいないばあ」で遊びましょう！両手で自分の顔を隠した後に、両手を外し顔を見せてCOZMOをビックリさせます。"
   },
   "unlockable.PeekABoo.SparkButtonDescription" : {
     "translation" : "タップしてCOZMOにいないいないばあをします。"
@@ -52,7 +52,7 @@
     "translation" : "キープアウェイ"
   },
   "unlockable.CubePounce.Description" : {
-    "translation" : "このトリックで、Cozmoはキープアウェイの遊び方を学習します。これは反射神経と反応時間を競うゲームです。"
+    "translation" : "このトリックで、COZMOはキープアウェイの遊び方を学習します。これは反射神経と反応時間を競うゲームです。"
   },
   "unlockable.FaceEnrollment.Title" : {
     "translation" : "おぼえる"
@@ -64,7 +64,7 @@
     "translation" : "メモリーマッチ"
   },
   "unlockable.MemoryMatch.Description" : {
-    "translation" : "このトリックで、Cozmoはメモリーマッチの遊び方を学習します。"
+    "translation" : "このトリックで、COZMOはメモリーマッチの遊び方を学習します。"
   },
   "unlockable.SpeedTap.Title" : {
     "translation" : "クイックタップ"
@@ -100,7 +100,7 @@
     "translation" : "つむ"
   },
   "unlockable.CubeStackAction.Description" : {
-    "translation" : "このトリックで、Cozmoは2つのキューブを使って山を作ることができるようになります。"
+    "translation" : "このトリックで、COZMOは2つのキューブを使って山を作ることができるようになります。"
   },
   "unlockable.CubeStackAction.SparkedStateDescription" : {
     "translation" : "COZMOがキューブの山を作るのを見てください。"
@@ -244,7 +244,7 @@
     "translation" : "COZMOがエナジースパーク状態になりました！"
   },
   "sparks.Spark.ConfirmQuit.Description" : {
-    "translation" : "Cozmoが完了する前に離れると、Cozmoはエナジースパーク状態でなくなります。"
+    "translation" : "COZMOが完了する前に離れると、COZMOはエナジースパーク状態でなくなります。"
   },
   "sparks.NotEnoughSparks.Title" : {
     "translation" : "エナジーボールが足りません"

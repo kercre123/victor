@@ -19,7 +19,7 @@
     "translation" : "プレイ"
   },
   "needs.NeedsEnergyModal.Title" : {
-    "translation" : "Cozmoにチャージする"
+    "translation" : "COZMOにチャージする"
   },
   "needs.NeedsEnergyModal.FeedingSummary" : {
     "translation" : "COZMOを元気いっぱいの状態に保つには、チャージが必要です。"
@@ -118,7 +118,7 @@
     "translation" : "{0}をロック解除しました！"
   },
   "needs.FreeplaySparksReward.CozmoSings" : {
-    "translation" : "Cozmoが歌をうたって {0} エナジーボールを生み出しました！"
+    "translation" : "COZMOが歌をうたって {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.FistBump" : {
     "translation" : "COZMOがグータッチをして {0} エナジーボールを生み出しました！"
@@ -133,7 +133,7 @@
     "translation" : "COZMOがしゃっくりを治して {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.KnockDownCubes" : {
-    "translation" : "Cozmoがキューブをたおして {0} エナジーボールを生み出しました！"
+    "translation" : "COZMOがキューブをたおして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.PeekAboo" : {
     "translation" : "COZMOがいないいないばあをして {0} エナジーボールを生み出しました！"
@@ -151,7 +151,7 @@
     "translation" : "COZMOがピラミッドをして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.RollACube" : {
-    "translation" : "Cozmoがころがして {0} エナジーボールを生み出しました！"
+    "translation" : "COZMOがころがして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.StackCube" : {
     "translation" : "COZMOがキューブをつんで {0} エナジーボールを生み出しました！"

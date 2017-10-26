@@ -484,19 +484,19 @@
     "translation" : "Warnung vor Eindringlingen!"
   },
   "codeLabSampleProject_SayCozmo.projectName" : {
-    "translation" : "Say Cozmo"
+    "translation" : "\"Cozmo\" sagen"
   },
   "codeLabSampleProject_DrawCozmo.projectName" : {
-    "translation" : "Draw Cozmo"
+    "translation" : "Cozmo zeichnen"
   },
   "codeLabSampleProject_PlayRandomAnims.projectName" : {
-    "translation" : "Play Random Animations"
+    "translation" : "Zufällige Animationen abspielen"
   },
   "codeLabSampleProject_PlayAllAnims.projectName" : {
-    "translation" : "Play All Animations"
+    "translation" : "Alle Animationen abspielen"
   },
   "codeLabSampleProject_DigitalClock.projectName" : {
-    "translation" : "Clock"
+    "translation" : "Uhr"
   },
   "codeLabFeaturedProject_HotPotato.projectName" : {
     "translation" : "Heiße Kartoffel"
@@ -505,7 +505,7 @@
     "translation" : "Wenn die Musik aufhört, sollte die heiße Kartoffel nicht bei dir sein!"
   },
   "codeLabFeaturedProject_HotPotato.projectInstructions" : {
-    "translation" : "1. This is a game for two players, plus Cozmo. \u000a\u000a2. Cozmo will ask you to place a Cube under his lift so he can tap it.\u000a\u000a3. In this game, the \"potato\" is indicated by Cube lights. When it lands on you, the lights will first turn red, and then green when the potato can be passed by tapping the Cube.\u000a\u000a4. When the music stops, careful not to be stuck with the potato!"
+    "translation" : "1. Dies ist ein Spiel für zwei Spieler – und Cozmo. \u000a\u000a2. Cozmo bittet dich, einen Cube unter seinen Hebearm zu legen, damit er darauf tippen kann.\u000a\u000a3. Bei diesem Spiel stellen die Cube-Lichter die \"Kartoffel\" dar. Wenn die Kartoffel bei dir landet, werden die Lichter rot. Sobald die Kartoffel durch Antippen des Cubes weitergegeben werden kann, werden die Lichter grün.\u000a\u000a4. Wenn die Musik aufhört, sollte die Kartoffel nicht bei dir sein!"
   },
   "codeLabFeaturedProject_TinyOrchestra.projectName" : {
     "translation" : "Mini-Orchester!"
@@ -523,7 +523,7 @@
     "translation" : "Schüttele Cozmo, und lass dir deine Zukunft vorhersagen."
   },
   "codeLabFeaturedProject_MagicFortuneTeller.projectInstructions" : {
-    "translation" : "1. After you tap start, when Cozmo has a \"?\" on his face, this means it's your turn to ask him a yes-or-no question.\u000a\u000a2. Then shake Cozmo and listen to your magic fortune!"
+    "translation" : "1. Tippe auf \"Starten\". Wenn auf dem Gesicht von Cozmo \"?\" zu sehen ist, kannst du ihm eine \"Ja\"-oder-\"Nein\"-Frage stellen.\u000a\u000a2. Schüttele Cozmo, um dir die Zukunft vorhersagen zu lassen!"
   },
   "codeLabFeaturedProject_CubeWhack.projectName" : {
     "translation" : "Hau den Cube"
@@ -538,10 +538,10 @@
     "translation" : "Feuerwehralarm"
   },
   "codeLabFeaturedProject_FiretruckAlarm.projectDescription" : {
-    "translation" : "Ticktack! Timer machen viel mehr Spaß, wenn es ein Cozmo ist."
+    "translation" : "Ticktack! Ein Timer macht viel mehr Spaß, wenn es ein Cozmo ist."
   },
   "codeLabFeaturedProject_FiretruckAlarm.projectInstructions" : {
-    "translation" : "1. After you tap the start flag, a ten-second timer will begin.\u000a\u000a2. Then count down to Cozmo's fire truck alarm!"
+    "translation" : "1. Tippe auf die Startfahne. Nun beginnt ein 10-sekündiger Timer.\u000a\u000a2. Wenn der Timer abgelaufen ist, ertönt der Feuerwehralarm von Cozmo!"
   },
   "codeLabFeaturedProject_LightShow.projectName" : {
     "translation" : "Lichtshow"
@@ -865,37 +865,37 @@
     "translation" : "[Text] an der Position [X],[Y] darstellen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_text" : {
-    "translation" : "Draw the specified [text] at the given pixel position, using [X],[Y] coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Coordinate 0,0 starts at the top left corner of Cozmo's face screen. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation" : "Angegebenen [Text] an vorgegebener Pixelposition mithilfe von [X]/[Y]-Koordinaten darstellen. Der Bildschirm im Gesicht von Cozmo ist 128 Pixel breit und 64 Pixel hoch. Der sichtbare [X]-Bereich ist daher 0–127, und der sichtbare [Y]-Bereich 0–63. Die Position 0,0 ist auf dem Bildschirm im Gesicht von Cozmo oben links. Tipp: Um zu sehen, was du eingibst, verwende den Block \"Im Gesicht von Cozmo anzeigen\"."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_line" : {
     "translation" : "Linie von [X],[Y] nach [X2],[Y2] zeichnen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_line" : {
-    "translation" : "Draw a line between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation" : "Eine Linie zwischen den beiden Pixelkoordinaten zeichnen. Der Bildschirm im Gesicht von Cozmo ist 128 Pixel breit und 64 Pixel hoch. Der sichtbare [X]-Bereich ist daher 0–127, und der sichtbare [Y]-Bereich 0–63. Tipp: Um zu sehen, was du eingibst, verwende den Block \"Im Gesicht von Cozmo anzeigen\"."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_rect" : {
     "translation" : "Rechteck von [X],[Y] bis [X2],[Y2] zeichnen und füllen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_rect" : {
-    "translation" : "Draw a filled rectangle between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation" : "Ein gefülltes Rechteck zwischen den beiden Pixelkoordinaten zeichnen. Der Bildschirm im Gesicht von Cozmo ist 128 Pixel breit und 64 Pixel hoch. Der sichtbare [X]-Bereich ist daher 0–127, und der sichtbare [Y]-Bereich 0–63. Tipp: Um zu sehen, was du eingibst, verwende den Block \"Im Gesicht von Cozmo anzeigen\"."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_rect" : {
     "translation" : "Rechteck von [X],[Y] bis [X2],[Y2] zeichnen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_rect" : {
-    "translation" : "Draw a rectangle between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation" : "Ein Rechteck zwischen den beiden Pixelkoordinaten zeichnen. Der Bildschirm im Gesicht von Cozmo ist 128 Pixel breit und 64 Pixel hoch. Der sichtbare [X]-Bereich ist daher 0–127, und der sichtbare [Y]-Bereich 0–63. Tipp: Um zu sehen, was du eingibst, verwende den Block \"Im Gesicht von Cozmo anzeigen\"."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_circle" : {
     "translation" : "Kreis mit einem Radius von [Z] um [X],[Y] zeichnen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_circle" : {
-    "translation" : "Draw a circle at the given [X],[Y] pixel coordinate with the given [Z] radius in pixels. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation" : "Kreis an den Pixelkoordinaten [X],[Y] zeichnen, der einen vorgegebenen Radius von [Z] Pixeln hat. Der Bildschirm im Gesicht von Cozmo ist 128 Pixel breit und 64 Pixel hoch. Der sichtbare [X]-Bereich ist daher 0–127, und der sichtbare [Y]-Bereich 0–63. Tipp: Um zu sehen, was du eingibst, verwende den Block \"Im Gesicht von Cozmo anzeigen\"."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_circle" : {
     "translation" : "Kreis mit einem Radius von [Z] um [X],[Y] zeichnen und füllen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_circle" : {
-    "translation" : "Draw a filled circle at the given [X],[Y] pixel coordinate with the given [Z] radius in pixels. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation" : "Gefüllten Kreis an den Pixelkoordinaten [X],[Y] zeichnen, der einen vorgegebenen Radius von [Z] Pixeln hat. Der Bildschirm im Gesicht von Cozmo ist 128 Pixel breit und 64 Pixel hoch. Der sichtbare [X]-Bereich ist daher 0–127, und der sichtbare [Y]-Bereich 0–63. Tipp: Um zu sehen, was du eingibst, verwende den Block \"Im Gesicht von Cozmo anzeigen\"."
   },
   "codeLabGlossary.block_definitions.title.event_whenflagclicked" : {
     "translation" : "Beim Klick auf die grüne Fahne"
@@ -922,7 +922,7 @@
     "translation" : "Löst diesen Codeblock aus und führt die darunter liegenden Codeblöcke aus, wenn Cozmo ein trauriges Gesicht sieht. Damit dieser Block ausgelöst werden kann, muss die grüne Startschaltfläche (Fahne) aktiv sein. Tipp: Runzele die Stirn besonders stark."
   },
   "codeLabGlossary.block_definitions.title.cozmo_event_on_see_cube" : {
-    "translation" : "when Cube [#] seen"
+    "translation" : "Wenn Cube [#] erkannt wird"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_see_cube" : {
     "translation" : "Löst diesen Codeblock aus und führt die darunter liegenden Codeblöcke aus, wenn Cozmo einen Cube sieht."
@@ -1144,7 +1144,7 @@
     "translation" : "Gibt den Winkel in Grad zurück, in dem der angegebene Cube in der Kameraansicht von Cozmo nach links/rechts geneigt ist. Hierfür ist es erforderlich, dass Cozmo den Cube sieht. Cube 1: Sieht aus wie eine Büroklammer. Cube 2: Sieht aus wie eine Lampe oder ein Herz. Cube 3: Sieht aus wie ein Baby in einem Kindersitz."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_yaw" : {
-    "translation" : "Cube [#] yaw ° in camera"
+    "translation" : "Drehung (Vertikalachse) von Cube [#] in der Kamera (in °)"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_yaw" : {
     "translation" : "Gibt den Winkel in Grad zurück, in dem der angegebene Cube in der Kameraansicht von Cozmo nach links/rechts gedreht ist (von oben betrachtet). Hierfür ist es erforderlich, dass Cozmo den Cube sieht. Cube 1: Sieht aus wie eine Büroklammer. Cube 2: Sieht aus wie eine Lampe oder ein Herz. Cube 3: Sieht aus wie ein Baby in einem Kindersitz."
@@ -1312,15 +1312,15 @@
     "translation" : "Ton [Name des Tons] stoppen. Tipp: Wenn du die Standard-Hintergrundmusik von Code Lab deaktivieren möchtest, stoppe den Ton \"Hintergrund\"."
   },
   "codeLab.export_modal.title" : {
-    "translation" : "Export Project"
+    "translation" : "Projekt exportieren"
   },
   "codeLab.export_modal.body" : {
-    "translation" : "Submit your project to be Featured!\u000a\u000aCopy it to Google Drive, then visit go.anki.com/submission to submit!"
+    "translation" : "Sende dein Projekt an Anki, damit es ein ausgewähltes Projekt werden kann!\u000a\u000aKopiere es nach Google Drive, und besuche folgende Webseite: go.anki.com/submission!"
   },
   "codeLab.export_modal.button.get_drive" : {
-    "translation" : "Get Google Drive"
+    "translation" : "Google Drive-Konto erstellen"
   },
   "codeLab.export_modal.button.copy_to_drive" : {
-    "translation" : "Copy to Google Drive"
+    "translation" : "Nach Google Drive kopieren"
   }
 }
