@@ -242,28 +242,40 @@ void CozmoAPI::CozmoInstanceRunner::Run()
       Stop();
     }
     
-    static const auto minimumSleepTimeMs = std::chrono::milliseconds( (long)(BS_TIME_STEP * 0.2) ); // 60 * 0.2 = 12 milliseconds!?
+    static const auto minimumSleepTime_us = std::chrono::microseconds( (long)0 );
     
     const auto tickNow = TimeClock::now();
-    auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - tickStart);
-    if (ms_left < std::chrono::milliseconds(0))
+    const auto tickDuration_us = std::chrono::duration_cast<std::chrono::microseconds>(tickNow - tickStart);
+    auto remaining_us = std::chrono::microseconds(BS_TIME_STEP_MICROSECONDS) - tickDuration_us;
+    //PRINT_NAMED_INFO("CozmoAPI.CozmoInstanceRunner", "tickDuration_us = %lld, remaining_us = %lld", tickDuration_us.count(), remaining_us());
+
+    // Only complain if we're more than 10ms overtime
+    if (remaining_us < std::chrono::microseconds(-10000))
     {
-      // Don't sleep if we're overtime, but only complain if we're more than 10ms overtime
-      if (ms_left < std::chrono::milliseconds(-10))
-      {
-        PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) ran over by %lldms", BS_TIME_STEP, (-ms_left).count());
-      }
+      PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) ran over by %.3fms",
+                          BS_TIME_STEP, (float)(-remaining_us).count() * 0.001f);
     }
-    else
+
     {
       ANKI_CPU_PROFILE("CozmoApi.Runner.Sleep");
-      
-      if (ms_left < minimumSleepTimeMs)
+
+      // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
+      // allows other processes to run
+      if (remaining_us < minimumSleepTime_us)
       {
-        ms_left = minimumSleepTimeMs;
+        remaining_us = minimumSleepTime_us;
       }
-      std::this_thread::sleep_for(ms_left);
+      std::this_thread::sleep_for(remaining_us);
     }
+
+    // pterry 2017/10/25:  Consider a solution that attempts to even out spikes, e.g.
+    // when a tick goes way overtime, make the next tick have a lower budget.  Of
+    // course, with multiple consecutive spikes we'd probably need handle those in
+    // some sane way.
+    // Also, in reality, std::this_thread::sleep_for only guarantees to sleep for
+    // at least the amount of time specified; it can go over, and in my observations
+    // it is going over by a lot.  So what we really need here is to get tick-to-tick
+    // time and use that as the elapsed time.
   }
 }
 
