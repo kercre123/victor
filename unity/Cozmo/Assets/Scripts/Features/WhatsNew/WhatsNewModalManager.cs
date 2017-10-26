@@ -17,6 +17,9 @@ namespace Cozmo.WhatsNew {
     public static bool ShouldAutoOpenProject {
       get { return _sAutoOpenCodeLabProjectGuid != System.Guid.Empty; }
     }
+    public static void ResetAutoOpenCodeLabProject() {
+      _sAutoOpenCodeLabProjectGuid = System.Guid.Empty;
+    }
 
     private static WhatsNewDataCheck _sCurrentWhatsNewDataCheck = null;
     public static DataPersistence.Date CurrentWhatsNewDataCheckDate {
@@ -42,7 +45,7 @@ namespace Cozmo.WhatsNew {
     private void Start() {
       _OpenWhatsNewModalAllowed = false;
       _WhatsNewModalInstance = null;
-      _sAutoOpenCodeLabProjectGuid = System.Guid.Empty;
+      ResetAutoOpenCodeLabProject();
       _sCurrentWhatsNewDataCheck = null;
 
       LoadWhatsNewData();

@@ -3002,6 +3002,7 @@ namespace CodeLab {
 
           if (codeLabFeaturedProject != null) {
             bool wasLoadedFromWhatsNew = Cozmo.WhatsNew.WhatsNewModalManager.ShouldAutoOpenProject;
+            Cozmo.WhatsNew.WhatsNewModalManager.ResetAutoOpenCodeLabProject();
 
             // featured projects are hardcoded to be vertical currently
             SessionState.DAS_Event("robot.code_lab.open_featured_project", codeLabFeaturedProject.DASProjectName, DASUtil.FormatExtraData(wasLoadedFromWhatsNew ? "1" : "0"));
