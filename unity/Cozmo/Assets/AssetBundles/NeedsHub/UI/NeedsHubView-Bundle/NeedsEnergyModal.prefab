@@ -5366,6 +5366,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _MaskImage: {fileID: 114079187837210860}
+  _GlintRateModifier: 8
+  _GlintSpeedModifier: 5
 --- !u!114 &114481379351976618
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -7606,7 +7608,7 @@ MonoBehaviour:
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 65
+  m_fontSizeMin: 45
   m_fontSizeMax: 65
   m_fontStyle: 0
   m_textAlignment: 516
@@ -7639,7 +7641,7 @@ MonoBehaviour:
   m_firstVisibleCharacter: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: -449.10443, y: 0, z: 0, w: 0}
+  m_margin: {x: 0.8513457, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114787660520568632}
     characterCount: 50
@@ -7647,7 +7649,7 @@ MonoBehaviour:
     spaceCount: 9
     wordCount: 10
     linkCount: 0
-    lineCount: 1
+    lineCount: 2
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
@@ -8982,6 +8984,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _MaskImage: {fileID: 114780684895770266}
+  _GlintRateModifier: 8
+  _GlintSpeedModifier: 5
 --- !u!114 &114913889933744788
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -10332,7 +10336,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: -796, y: 156}
-  m_SizeDelta: {x: -1300, y: 200}
+  m_SizeDelta: {x: -1809, y: 200}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &224191074971220908
 RectTransform:
