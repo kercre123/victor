@@ -7,7 +7,7 @@
  * Description: Random number generator class
  *
  **/
-#include "randomGenerator.h"
+#include "util/random/randomGenerator.h"
 
 #include "util/logging/logging.h"
 

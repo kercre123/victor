@@ -18,6 +18,8 @@
 #include "clad/types/animationTrigger.h"
 #include "clad/types/userFacingResults.h"
 
+#include "util/helpers/noncopyable.h"
+
 #include <map>
 
 namespace Anki {
@@ -37,7 +39,7 @@ private:
 };
 
 
-class BehaviorEventAnimResponseDirector {
+class BehaviorEventAnimResponseDirector : private Util::noncopyable {
 public:
   BehaviorEventAnimResponseDirector();
   virtual ~BehaviorEventAnimResponseDirector() {};

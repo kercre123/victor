@@ -13,7 +13,7 @@
 
 #include "engine/activeObject.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/cubeAccelComponent.h"

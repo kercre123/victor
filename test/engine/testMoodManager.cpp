@@ -17,10 +17,13 @@
 #include "gtest/gtest.h"
 
 #include "anki/common/basestation/utils/timer.h"
-#include "engine/behaviorSystem/bsRunnableChoosers/scoringBSRunnableChooser.h"
-#include "engine/behaviorSystem/behaviorContainer.h"
-#include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/scoringBehaviorChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoContext.h"
 #include "engine/moodSystem/emotionAffector.h"
 #include "engine/moodSystem/emotionEvent.h"
@@ -29,6 +32,7 @@
 #include "engine/moodSystem/staticMoodData.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "test/engine/behaviorComponent/testBehaviorFramework.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
@@ -396,7 +400,7 @@ TEST(MoodManager, DecayResetFromAwards)
 static const char* kTestBehavior1Json =
 "{"
 "   \"behaviorClass\" : \"Wait\","
-"   \"behaviorID\" : \"Wait\","
+"   \"behaviorID\" : \"Wait_TestInjectable\","
 "   \"repetitionPenalty\" :"
 "   {"
 "     \"nodes\" :"
@@ -442,9 +446,15 @@ TEST(MoodManager, BehaviorScoring)
   InitStaticMoodData();
   
   CozmoContext context{};
-  Robot testRobot(0, &context);
+  TestBehaviorFramework testBehaviorFramework(1, &context);
+  RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
+  {
+    BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, bc);
+  }
   
-  BehaviorContainer& behaviorFactory = testRobot.GetBehaviorManager().GetBehaviorContainer();
+  Robot& testRobot = testBehaviorFramework.GetRobot();
+  BehaviorContainer& behaviorContainer = testBehaviorFramework.GetBehaviorContainer();
 
   MoodManager& moodManager = testRobot.GetMoodManager();
   TickMoodManager(moodManager, 1, kTickTimestep);
@@ -457,18 +467,29 @@ TEST(MoodManager, BehaviorScoring)
   parsedOK = reader.parse(kTestBehavior2Json, testBehavior2Json, false);
   ASSERT_TRUE(parsedOK);
   
-  // have to alloc the behaviors - they're freed by the chooser
-  IBehaviorPtr testBehaviorReqHappy = behaviorFactory.CreateBehavior(testBehavior1Json, testRobot);
-  testBehaviorReqHappy->ReadFromScoredJson(testBehavior1Json);
+  DelegationComponent delegationComp;
+  BehaviorEventComponent stateChangeComp;
 
-  IBehaviorPtr testBehaviorReqCalm  = behaviorFactory.CreateBehavior(testBehavior2Json, testRobot);
+  
+  // have to alloc the behaviors - they're freed by the chooser
+  ICozmoBehaviorPtr testBehaviorReqHappy = behaviorContainer.CreateBehavior(testBehavior1Json);
+
+  BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
+  testBehaviorReqHappy->ReadFromScoredJson(testBehavior1Json);
+  testBehaviorReqHappy->Init(behaviorExternalInterface);
+  testBehaviorReqHappy->OnEnteredActivatableScope();
+
+  ICozmoBehaviorPtr testBehaviorReqCalm  = behaviorContainer.CreateBehavior(testBehavior2Json);
   testBehaviorReqCalm->ReadFromScoredJson(testBehavior2Json);
+  testBehaviorReqCalm->Init(behaviorExternalInterface);
+  testBehaviorReqCalm->OnEnteredActivatableScope();
+
   ASSERT_NE(testBehaviorReqHappy, nullptr);
   ASSERT_NE(testBehaviorReqCalm,  nullptr);
   
   Json::Value chooserConfig;
   chooserConfig["behaviors"] = "";
-  ScoringBSRunnableChooser behaviorChooser(testRobot, chooserConfig);
+  ScoringBehaviorChooser behaviorChooser(behaviorExternalInterface, chooserConfig);
   
   behaviorChooser.TryAddBehavior(testBehaviorReqHappy);
   behaviorChooser.TryAddBehavior(testBehaviorReqCalm);
@@ -480,49 +501,49 @@ TEST(MoodManager, BehaviorScoring)
 
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
   
-  float score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
-  float score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  float score1 = testBehaviorReqHappy->EvaluateScore(behaviorExternalInterface);
+  float score2 = testBehaviorReqCalm->EvaluateScore(behaviorExternalInterface);
   
   EXPECT_FLOAT_EQ(score1, 0.6666666666f);
   EXPECT_FLOAT_EQ(score2, 0.16666666f);
   
   {
-    IBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(testRobot, nullptr);
+    ICozmoBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqHappy);
   }
   
   moodManager.AddToEmotion(EmotionType::Happy, 0.25f, "Test1", gCurrentTime);
   moodManager.AddToEmotion(EmotionType::Calm,  0.5f, "Test2", gCurrentTime);
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  score1 = testBehaviorReqHappy->EvaluateScore(behaviorExternalInterface);
+  score2 = testBehaviorReqCalm->EvaluateScore(behaviorExternalInterface);
   
   EXPECT_FLOAT_EQ(score1, 0.83333331f);
   EXPECT_FLOAT_EQ(score2, 0.0f);
   
   {
-    IBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(testRobot, nullptr);
+    ICozmoBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqHappy);
   }
   
   moodManager.AddToEmotion(EmotionType::Happy, -2.0f, "Test3", gCurrentTime);
   moodManager.AddToEmotion(EmotionType::Calm,  -2.0f, "Test4", gCurrentTime);
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  score1 = testBehaviorReqHappy->EvaluateScore(behaviorExternalInterface);
+  score2 = testBehaviorReqCalm->EvaluateScore(behaviorExternalInterface);
   
   EXPECT_FLOAT_EQ(score1, 0.0f);
   EXPECT_FLOAT_EQ(score2, 0.5f);
   
   {
-    IBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(testRobot, nullptr);
+    ICozmoBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqCalm);
   }
 
   moodManager.AddToEmotion(EmotionType::Happy, 0.75f, "Test5", gCurrentTime);
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  score1 = testBehaviorReqHappy->EvaluateScore(behaviorExternalInterface);
+  score2 = testBehaviorReqCalm->EvaluateScore(behaviorExternalInterface);
   
   EXPECT_FLOAT_EQ(score1, 0.5f);
   EXPECT_FLOAT_EQ(score2, 0.5f);
@@ -535,7 +556,7 @@ TEST(MoodManager, BehaviorScoring)
 
     for (uint32_t i=0; i < kNumTests; ++i)
     {
-      IBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(testRobot, nullptr);
+      ICozmoBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
       if (behaviorChosen == testBehaviorReqHappy)
       {
         ++behaviorCountHappy;
@@ -558,17 +579,17 @@ TEST(MoodManager, BehaviorScoring)
 
   // 1) never happened:
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  score1 = testBehaviorReqHappy->EvaluateScore(behaviorExternalInterface);
+  score2 = testBehaviorReqCalm->EvaluateScore(behaviorExternalInterface);
   EXPECT_NEAR(score1, 0.5f, 1e-4);
   EXPECT_NEAR(score2, 0.5f, 1e-4);
   
   // 2) happy happened 0.0 seconds ago:
-  
-  testBehaviorReqHappy->Stop();
+  testBehaviorReqHappy->OnActivated(behaviorExternalInterface);
+  testBehaviorReqHappy->OnDeactivated(behaviorExternalInterface);
 
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  score1 = testBehaviorReqHappy->EvaluateScore(behaviorExternalInterface);
+  score2 = testBehaviorReqCalm->EvaluateScore(behaviorExternalInterface);
   EXPECT_NEAR(score1, 0.0f, 1e-4);
   EXPECT_NEAR(score2, 0.5f, 1e-4);
 
@@ -577,10 +598,12 @@ TEST(MoodManager, BehaviorScoring)
   gCurrentTime += 1.0;
 
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
-  testBehaviorReqCalm->Stop();
+  testBehaviorReqCalm->WantsToBeActivated(behaviorExternalInterface);
+  testBehaviorReqCalm->OnActivated(behaviorExternalInterface);
+  testBehaviorReqCalm->OnDeactivated(behaviorExternalInterface);
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  score1 = testBehaviorReqHappy->EvaluateScore(behaviorExternalInterface);
+  score2 = testBehaviorReqCalm->EvaluateScore(behaviorExternalInterface);
   EXPECT_NEAR(score1, 0.0f, 1e-4);
   EXPECT_NEAR(score2, 0.0f, 1e-4);
   
@@ -589,8 +612,8 @@ TEST(MoodManager, BehaviorScoring)
   gCurrentTime += 1.0;
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  score1 = testBehaviorReqHappy->EvaluateScore(behaviorExternalInterface);
+  score2 = testBehaviorReqCalm->EvaluateScore(behaviorExternalInterface);
   EXPECT_NEAR(score1, 0.25f * 0.5f, 1e-4);
   EXPECT_NEAR(score2, 0.0f, 1e-4);
 
@@ -599,8 +622,8 @@ TEST(MoodManager, BehaviorScoring)
   gCurrentTime += 1.0;
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  score1 = testBehaviorReqHappy->EvaluateScore(behaviorExternalInterface);
+  score2 = testBehaviorReqCalm->EvaluateScore(behaviorExternalInterface);
   EXPECT_NEAR(score1, 0.5f * 0.5f, 1e-4);
   EXPECT_NEAR(score2, 0.0f, 1e-4);
 
@@ -609,8 +632,8 @@ TEST(MoodManager, BehaviorScoring)
   gCurrentTime += 1.0;
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  score1 = testBehaviorReqHappy->EvaluateScore(behaviorExternalInterface);
+  score2 = testBehaviorReqCalm->EvaluateScore(behaviorExternalInterface);
   EXPECT_NEAR(score1, 0.75f * 0.5f, 1e-4);
   EXPECT_NEAR(score2, 0.5f * 0.5f, 1e-4);
 
@@ -619,8 +642,8 @@ TEST(MoodManager, BehaviorScoring)
   gCurrentTime += 1.0;
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  score1 = testBehaviorReqHappy->EvaluateScore(behaviorExternalInterface);
+  score2 = testBehaviorReqCalm->EvaluateScore(behaviorExternalInterface);
   EXPECT_NEAR(score1, 0.5f, 1e-4);
   EXPECT_NEAR(score2, 0.5f, 1e-4);
 }
