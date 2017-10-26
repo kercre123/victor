@@ -1871,57 +1871,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     return _robotMsgTimeStampAtChange;
   }
 
-  
-  void BlockWorld::UpdateProxObstaclePoses()
-  {        
-    // BlockWorldFilter filter;      
-    // filter.AddAllowedType(ObjectType::ProxObstacle);
-    // filter.AddAllowedFamily(ObjectFamily::MarkerlessObject);
-    // std::vector<ObservableObject*> result;
-    
-    // FindLocatedMatchingObjects(filter, result);
-    
-    // if (result.size() > 500) {
-    //   PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.UpdateProxObstaclePoses", 
-    //                       "Large number of markerless objects to search through");
-    // }  
-    
-    // u16 distMeasurement_mm = _robot->GetProxSensorComponent().GetLatestDistance_mm();
-    
-    // if (distMeasurement_mm >= kMinObsThreshold_mm) {     
-    //   // Clear out any obstacles between the robot and ray if we have good signal strength 
-    //   MarkerlessObject tempObstacle(ObjectType::ProxObstacle);    // temp object for getting measurements
-
-    //   // build quad for ray cast by getting the robot pose, casting forward by sensor reading, then adding thickness
-    //   Pose2d  p1(_robot->GetPose());
-    //   Pose2d  p2(_robot->GetPose());
-    //   p2.TranslateForward(fmin(distMeasurement_mm, kMaxObsThreshold_mm) - tempObstacle.GetSize().x());
-      
-    //   // add clear info to map
-    //   INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
-    //   if ( currentNavMemoryMap ) {
-    //     MemoryMapData clearObstacleData(INavMap::EContentType::ClearOfObstacle, _robot->GetLastMsgTimestamp());        
-    //     currentNavMemoryMap->AddLine(p1.GetTranslation(), p2.GetTranslation(), clearObstacleData);
-    //   }
-      
-    //   Quad2f ray(p1.GetTranslation(), p1.GetTranslation(), 
-    //              p2.GetTranslation(), p2.GetTranslation());
-      
-    //   // Check if the ray intersects with any other existing prox objects in the scene, then delete the
-    //   DeleteIntersectingObjects(ray, 0, filter);
-      
-      
-    //   // Add prox obstacle if detected and close to robot
-    //   if (distMeasurement_mm <= kMaxObsThreshold_mm) {        
-    //     Vec3f dist(distMeasurement_mm + .5f * tempObstacle.GetSize().x(),0,0);
-    //     Pose3d obsPose(0, Z_AXIS_3D(), dist);
-        
-    //     // TODO: Makes Victor viz lag and sometimes explode so commented out for now
-    //     //AddProxObstacle(_robot->GetPose()*obsPose);
-    //   }
-    // }
-  }
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   ObjectID BlockWorld::AddConnectedActiveObject(ActiveID activeID, FactoryID factoryID, ObjectType objType)
   {
