@@ -30,7 +30,6 @@ namespace Cozmo {
   
 namespace {
   const Vec3f kProxSensorPositionVec_mm{kProxSensorPosition_mm[0], kProxSensorPosition_mm[1], kProxSensorPosition_mm[2]};
-  const Vec3f kProxObstacleSize_mm{10,20,0};
 
   const u16 kMinObsThreshold_mm  = 30;  // Minimum distance for registering an object detected as an obstacle
   const u16 kMaxObsThreshold_mm  = 300; // Maximum distance for registering an object detected as an obstacle  
@@ -176,11 +175,11 @@ void ProxSensorComponent::UpdateNavMap()
     TimeStamp_t lastTimestamp = _robot.GetLastMsgTimestamp();
 
     // build line for ray cast by getting the robot pose, casting forward by sensor reading
-    Vec3f offsetx_mm( (noObject) ? kMaxObsThreshold_mm 
-                                 : fmin(_latestData.distance_mm, kMaxObsThreshold_mm), 0, 0);   
+    const Vec3f offsetx_mm( (noObject) ? kMaxObsThreshold_mm 
+                                       : fmin(_latestData.distance_mm, kMaxObsThreshold_mm), 0, 0);   
     
-    Pose3d  robotPos  = _robot.GetPose();
-    Pose3d  objectPos = _robot.GetPose() * Pose3d(0, Z_AXIS_3D(), offsetx_mm);    
+    const Pose3d  robotPos  = _robot.GetPose();
+    const Pose3d  objectPos = _robot.GetPose() * Pose3d(0, Z_AXIS_3D(), offsetx_mm);    
     
     // clear out known free space
     INavMap* currentNavMemoryMap = _robot.GetMapComponent().GetCurrentMemoryMap();
@@ -194,8 +193,8 @@ void ProxSensorComponent::UpdateNavMap()
         Vec3f offsety1_mm(0,  -obstacleHalfWidth_mm, 0);   
         Vec3f offsety2_mm(0,   obstacleHalfWidth_mm, 0);
 
-        Point2f p1 = (objectPos * Pose3d(0, Z_AXIS_3D(), offsety1_mm)).GetTranslation();
-        Point2f p2 = (objectPos * Pose3d(0, Z_AXIS_3D(), offsety2_mm)).GetTranslation();
+        const Point2f p1 = (objectPos * Pose3d(0, Z_AXIS_3D(), offsety1_mm)).GetTranslation();
+        const Point2f p2 = (objectPos * Pose3d(0, Z_AXIS_3D(), offsety2_mm)).GetTranslation();
                 
         const Vec3f rotatedFwdVector = _robot.GetPose().GetWithRespectToRoot().GetRotation() * X_AXIS_3D();
         
