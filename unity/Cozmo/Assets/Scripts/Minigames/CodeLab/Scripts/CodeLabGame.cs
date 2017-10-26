@@ -575,6 +575,22 @@ namespace CodeLab {
       cubeDest.wasJustTapped = (cubeDest.framesSinceTapped < kMaxFramesToReportCubeTap);
     }
 
+    private Matrix4x4 MatrixFromQuaternion(Quaternion Q) {
+      Matrix4x4 result = new Matrix4x4();
+      result.m00 = 1.0f - 2.0f * Q.y * Q.y - 2.0f * Q.z * Q.z;
+      result.m01 = 2.0f * Q.x * Q.y - 2.0f * Q.z * Q.w;
+      result.m02 = 2.0f * Q.x * Q.z + 2.0f * Q.y * Q.w;
+
+      result.m10 = 2.0f * Q.x * Q.y + 2.0f * Q.z * Q.w;
+      result.m11 = 1.0f - 2.0f * Q.x * Q.x - 2.0f * Q.z * Q.z;
+      result.m12 = 2.0f * Q.y * Q.z - 2.0f * Q.x * Q.w;
+
+      result.m20 = 2.0f * Q.x * Q.z - 2.0f * Q.y * Q.w;
+      result.m21 = 2.0f * Q.y * Q.z + 2.0f * Q.x * Q.w;
+      result.m22 = 1.0f - 2.0f * Q.x * Q.x - 2.0f * Q.y * Q.y;
+      return result;
+    }
+
     private void SendWorldStateToWebView() {
       // Send entire current world state over to JS in Web View
 
@@ -625,24 +641,23 @@ namespace CodeLab {
           _LatestCozmoState.face.expression = "";
         }
 
-        // Set Device data - instead of using the Euler angles, calculate the rotation around each axis only
-        // Code is based on answer at http://answers.unity3d.com/questions/434096/lock-rotation-of-gyroscope-controlled-camera-to-fo.html
+        // Transform gyro quaternion to matrix
+        Matrix4x4 deviceAttitude = MatrixFromQuaternion(Input.gyro.attitude);
 
-        // Transform gyro quaternion to desired space
-        Quaternion deviceRotation = new Quaternion(0.5f, 0.5f, -0.5f, 0.5f) * Input.gyro.attitude * new Quaternion(0, 0, 1, 0);
+        // matrix parameter extraction taken from: http://planning.cs.uiuc.edu/node103.html
+        float pitch = Mathf.Atan2(deviceAttitude.m22, deviceAttitude.m21);
+        float yaw = Mathf.Atan2(deviceAttitude.m00, deviceAttitude.m10);
+        float roll = Mathf.Atan2(Mathf.Sqrt(deviceAttitude.m21 * deviceAttitude.m21 + deviceAttitude.m22 * deviceAttitude.m22), -deviceAttitude.m20);
 
-        // Extract just the components that are rotations around each axis
-        Quaternion upOnly = Quaternion.Inverse(Quaternion.FromToRotation(Vector3.up, deviceRotation * Vector3.up));
-        Quaternion rightOnly = Quaternion.Inverse(Quaternion.FromToRotation(Vector3.right, deviceRotation * Vector3.right));
-        Quaternion forwardOnly = Quaternion.Inverse(Quaternion.FromToRotation(Vector3.forward, deviceRotation * Vector3.forward));
-        Vector3 upOnlyEuler = (upOnly * deviceRotation).eulerAngles;
-        Vector3 rightOnlyEuler = (rightOnly * deviceRotation).eulerAngles;
-        Vector3 forwardOnlyEuler = (forwardOnly * deviceRotation).eulerAngles;
+        // tweak roll so that facing upward is roll 0 instead of roll 90
+        roll -= Mathf.PI / 2;
+        if (roll < -Mathf.PI) {
+          roll += Mathf.PI * 2;
+        }
 
-        // Then remap the relevant component from each Euler angle to the range we use for other rotations
-        _LatestCozmoState.device.pitch_d = Convert360AngleToMinus180To180(rightOnlyEuler.x);
-        _LatestCozmoState.device.roll_d = Convert360AngleToMinus180To180(360.0f - forwardOnlyEuler.z); // invert to match the Robot's roll direction
-        _LatestCozmoState.device.yaw_d = Convert360AngleToMinus180To180(upOnlyEuler.y);
+        _LatestCozmoState.device.pitch_d = pitch * Mathf.Rad2Deg;
+        _LatestCozmoState.device.yaw_d = yaw * Mathf.Rad2Deg;
+        _LatestCozmoState.device.roll_d = roll * Mathf.Rad2Deg;
 
         // Serialize _LatestCozmoState to JSON and send to Web / Javascript side
         string cozmoStateAsJSON = JsonConvert.SerializeObject(_LatestCozmoState);
