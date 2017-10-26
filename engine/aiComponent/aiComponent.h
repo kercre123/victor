@@ -25,7 +25,8 @@ namespace Cozmo {
 // Forward declarations
 class AIInformationAnalyzer;
 class AIWhiteboard;
-class BehaviorEventAnimResponseDirector;
+class BehaviorComponent;
+class BehaviorContainer;
 class BehaviorHelperComponent;
 class DoATrickSelector;
 class FeedingSoundEffectManager;
@@ -36,11 +37,21 @@ class Robot;
 class SevereNeedsComponent;
 class WorkoutComponent;
   
+
+namespace ComponentWrappers{
+struct AIComponentComponents{
+  AIComponentComponents(Robot& robot)
+  :_robot(robot){}
+  Robot& _robot;
+};
+}
+
+  
 class AIComponent : private Util::noncopyable
 {
 public:
   
-  explicit AIComponent(Robot& robot);
+  explicit AIComponent();
   ~AIComponent();
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -57,14 +68,15 @@ public:
     return *_aiInformationAnalyzer;
   }
   
-  inline const BehaviorEventAnimResponseDirector& GetBehaviorEventAnimResponseDirector() const
-    { assert(_behaviorEventAnimResponseDirector); return *_behaviorEventAnimResponseDirector; }
-  inline BehaviorEventAnimResponseDirector&       GetBehaviorEventAnimResponseDirector()
-    { assert(_behaviorEventAnimResponseDirector); return *_behaviorEventAnimResponseDirector; }
   
-  inline const BehaviorHelperComponent& GetBehaviorHelperComponent() const { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
-  inline BehaviorHelperComponent&       GetBehaviorHelperComponent()       { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
+  inline const BehaviorComponent& GetBehaviorComponent() const { assert(_behaviorComponent); return *_behaviorComponent; }
+  inline BehaviorComponent&       GetBehaviorComponent()       { assert(_behaviorComponent); return *_behaviorComponent; }
   
+  // Support legacy code until move helper comp into delegate component
+  const BehaviorHelperComponent& GetBehaviorHelperComponent() const;
+  BehaviorHelperComponent&       GetBehaviorHelperComponent();
+  // For test only
+  BehaviorContainer& GetBehaviorContainer();
   
   inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache() const { assert(_objectInteractionInfoCache); return *_objectInteractionInfoCache; }
   inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache()       { assert(_objectInteractionInfoCache); return *_objectInteractionInfoCache; }
@@ -94,8 +106,12 @@ public:
   // Update and init
   ////////////////////////////////////////////////////////////////////////////////
 
-  Result Init();
-  Result Update();
+  // Pass in behavior component if you have a custom component already set up
+  // If nullptr is passed in AIComponent will generate a default behavior component
+  // AIComponent takes over contrrol of the customBehaviorComponent's memory
+  Result Init(Robot& robot, BehaviorComponent*& customBehaviorComponent);
+  Result Update(Robot& robot, std::string& currentActivityName,
+                              std::string& behaviorDebugStr);
 
   ////////////////////////////////////////////////////////////////////////////////
   // Message handling / dispatch
@@ -111,23 +127,15 @@ public:
   inline bool IsSuddenObstacleDetected() const { return _suddenObstacleDetected; }
 
 private:
-
-  Robot& _robot;
+  std::unique_ptr<ComponentWrappers::AIComponentComponents> _aiComponents;
   bool   _suddenObstacleDetected;
-  
-  void CheckForSuddenObstacle();
   
   // module to analyze information for the AI in processes common to more than one behavior, for example
   // border calculation
   std::unique_ptr<AIInformationAnalyzer>   _aiInformationAnalyzer;
   
-  // Component which behaviors and helpers can query to find out the appropriate animation
-  // to play in response to a user facing action result
-  std::unique_ptr<BehaviorEventAnimResponseDirector> _behaviorEventAnimResponseDirector;
-  
-  // component which behaviors can delegate to for automatic action error handling
-  std::unique_ptr<BehaviorHelperComponent> _behaviorHelperComponent;
-
+  // component hwich manages all aspects of the AI system that relate to behaviors
+  std::unique_ptr<BehaviorComponent> _behaviorComponent;
   
   // Component which tracks and caches the best objects to use for certain interactions
   std::unique_ptr<ObjectInteractionInfoCache> _objectInteractionInfoCache;
@@ -152,7 +160,11 @@ private:
   
   // component for tracking severe needs states
   std::unique_ptr<SevereNeedsComponent> _severeNeedsComponent;
+  
+  void CheckForSuddenObstacle(Robot& robot);
 
+  Result UpdateBehaviorManager(Robot& robot, std::string& currentActivityName,
+                                             std::string& behaviorDebugStr);  
 };
 
 }

@@ -16,18 +16,24 @@
 
 #include "clad/types/unlockTypes.h"
 
+#include "util/helpers/noncopyable.h"
+
+namespace Json {
+class Value;
+}
+
 namespace Anki {
 namespace Cozmo {
   
 // forward declarations
-class IBehavior;
-class Robot;
+class ICozmoBehavior;
+class BehaviorExternalInterface;
   
-class DoATrickSelector{
+class DoATrickSelector : private Util::noncopyable{
 public:
-  DoATrickSelector(Robot& robot);
+  DoATrickSelector(const Json::Value& trickWeightsConfig);
 
-  void RequestATrick(Robot& robot);
+  void RequestATrick(BehaviorExternalInterface& behaviorExternalInterface);
 private:
   std::vector<std::pair<int, UnlockId>> _weightToUnlockMap;
   // track the last trick that was performed

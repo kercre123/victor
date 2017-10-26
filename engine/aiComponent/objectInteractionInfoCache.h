@@ -60,7 +60,7 @@ enum class ObjectInteractionIntention {
 // ObjectInteractionCache - Maintains a map of ObjectInteractionIntentions
 // to the Cache entrys that wrap information about the best objects to use
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class  ObjectInteractionInfoCache{
+class  ObjectInteractionInfoCache : private Util::noncopyable{
 public:
   ObjectInteractionInfoCache(const Robot& robot);
   using BestObjectFunction = std::function<ObjectID(const std::set<ObjectID>& validObjects)>;

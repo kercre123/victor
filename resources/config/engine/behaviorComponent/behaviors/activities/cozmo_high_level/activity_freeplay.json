@@ -1,0 +1,65 @@
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+{
+  "behaviorID" : "Activity_Freeplay",
+  "behaviorClass" : "Activity_Freeplay",
+  // Activity will be kicked out by behaviorManager
+  "activityStrategy":
+  {
+    "type" : "Simple"
+  },
+
+  // parameters to decide between activities on put down
+  "desiredActivityNames" :
+  {
+    "faceAndCubeActivityName"          : "Activity_Socialize",
+    "faceOnlyActivityName"             : "Activity_Socialize",
+    "cubeOnlyActivityName"             : "Activity_PlayAlone",
+    "noFaceNoCubeActivityName"         : "Activity_Hiking"
+  },
+  // sub-activities to create - ensure they're in priority order
+  "subActivities" :
+  [
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    // Spark activities:
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    { "behaviorID" : "Activity_SparksRollBlock", "activityPriority"      : 0 },
+    { "behaviorID" : "Activity_SparksStackBlock", "activityPriority"     : 0 },
+    { "behaviorID" : "Activity_SparksPeekABoo", "activityPriority"       : 0 },
+    { "behaviorID" : "Activity_SparksPounceOnMotion", "activityPriority" : 0 },
+    { "behaviorID" : "Activity_SparksPopAWheelie", "activityPriority"    : 0 },
+    { "behaviorID" : "Activity_SparksKnockOverCubes", "activityPriority" : 0 },
+    { "behaviorID" : "Activity_SparksPickUpCube", "activityPriority"     : 0 },
+    { "behaviorID" : "Activity_SparksWorkout", "activityPriority"        : 0 },
+    { "behaviorID" : "Activity_SparksBuildPyramid", "activityPriority"   : 0 },
+    { "behaviorID" : "Activity_SparksFistBump", "activityPriority"       : 0 },
+    { "behaviorID" : "Activity_SparksGatherCubes", "activityPriority"    : 0 },
+    { "behaviorID" : "Activity_SparksTrackLaser", "activityPriority"     : 0 },
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    // Needs activities
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    { "behaviorID": "Activity_NeedsSevereLowRepair",    "activityPriority" : 1},
+    { "behaviorID": "Activity_NeedsSevereLowEnergy",    "activityPriority" : 2},
+    { "behaviorID": "Activity_NeedsSevereLowPlayGetIn", "activityPriority" : 3},
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    // Freeplay activities:
+    // putDownDispatch      - when Cozmo is put down and wants to figure out what activity to go into
+    // socialize            - when Cozmo wants to interact with faces and players, but without playing games
+    // playWithHumans       - when Cozmo requests games to play with the player
+    // buildPyramid         - when Cozmo knows where his cubes are and decides to build a pyramid
+    // playAlone            - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
+    // hiking               - when Cozmo is exploring its surroundings on his own
+    // nothingToDo          - fallback when Cozmo can't do anything else
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    { "behaviorID" : "Activity_PutDownDispatch", "activityPriority"      : 10},
+    { "behaviorID" : "Activity_Socialize", "activityPriority"            : 11},
+    { "behaviorID" : "Activity_Singing", "activityPriority"              : 12},
+    { "behaviorID" : "Activity_PlayWithHumans", "activityPriority"       : 13},
+    // pyramid is "cooler" than playing alone or hiking for the user, but it
+    // has fairly restrictive runnability and a high cooldown
+    { "behaviorID" : "Activity_BuildPyramid", "activityPriority"         : 14},
+    { "behaviorID" : "Activity_PlayAlone", "activityPriority"            : 15},
+    { "behaviorID" : "Activity_Hiking", "activityPriority"               : 16},
+    { "behaviorID" : "Activity_NothingToDo", "activityPriority"          : 17}
+  ]
+}

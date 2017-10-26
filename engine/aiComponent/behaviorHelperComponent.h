@@ -19,9 +19,9 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_BehaviorHelperComponent_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_BehaviorHelperComponent_H__
 
-#include "engine/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
-#include "engine/behaviorSystem/behaviorHelpers/helperHandle.h"
-#include "engine/behaviorSystem/behaviorHelpers/iHelper.h"
+#include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
+#include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
+#include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
 
 #include <vector>
 #include <memory>
@@ -31,7 +31,7 @@ namespace Anki {
 namespace Cozmo {
   
   
-class BehaviorHelperComponent{
+class BehaviorHelperComponent : private Util::noncopyable{
 public:
   BehaviorHelperComponent();
   
@@ -41,20 +41,20 @@ public:
   // bool CanRunHelper(HelperHandle helper);
   
   
-  bool DelegateToHelper(Robot& robot,
+  bool DelegateToHelper(BehaviorExternalInterface& behaviorExternalInterface,
                         HelperHandle handleToRun,
-                        BehaviorSimpleCallbackWithRobot successCallback,
-                        BehaviorSimpleCallbackWithRobot failureCallback);
+                        BehaviorSimpleCallbackWithExternalInterface successCallback,
+                        BehaviorSimpleCallbackWithExternalInterface failureCallback);
   
   
   bool StopHelperWithoutCallback(const HelperHandle& helperToStop);
   
 protected:
-  friend class AIComponent;
+  friend class BehaviorComponent;
   friend class BehaviorHelperFactory;
   friend class IHelper;
-  void Update(Robot& robot);
-  HelperHandle AddHelperToComponent(IHelper*& helper);
+  void Update(BehaviorExternalInterface& behaviorExternalInterface);
+  HelperHandle AddHelperToComponent(IHelper*& helper,BehaviorExternalInterface& behaviorExternalInterface);
   
 private:
   std::unique_ptr<BehaviorHelperFactory> _helperFactory;
@@ -63,17 +63,17 @@ private:
   using HelperIter = HelperStack::iterator;
   
   HelperStack _helperStack;
-  BehaviorSimpleCallbackWithRobot _behaviorSuccessCallback;
-  BehaviorSimpleCallbackWithRobot _behaviorFailureCallback;
+  BehaviorSimpleCallbackWithExternalInterface _behaviorSuccessCallback;
+  BehaviorSimpleCallbackWithExternalInterface _behaviorFailureCallback;
   
   // TODO: When COZMO-10389 cancels actions on re-jigger
   // it won't be necessary to store/check this value
   // Currently used to track when the block world origin changes
   PoseOriginID_t                  _worldOriginIDAtStart;
   
-  void CheckInactiveStackHelpers(const Robot& robot);
-  void UpdateActiveHelper(Robot& robot);
-  void PushHelperOntoStackAndUpdate(Robot& robot, HelperHandle helper);
+  void CheckInactiveStackHelpers(BehaviorExternalInterface& behaviorExternalInterface);
+  void UpdateActiveHelper(BehaviorExternalInterface& behaviorExternalInterface);
+  void PushHelperOntoStackAndUpdate(BehaviorExternalInterface& behaviorExternalInterface, HelperHandle helper);
 
   // Variables which persist for the life of a stack but should be cleared
   // when the stack fully empties or is cleared

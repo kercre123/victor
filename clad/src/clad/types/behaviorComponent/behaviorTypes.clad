@@ -1,0 +1,405 @@
+// File: behaviorType
+// Author: Lee Crippen
+// Created: 10/15/2015
+// Copyright: Anki, inc. 2015
+
+namespace Anki {
+namespace Cozmo {
+
+// BehaviorClass identifies the ICozmoBehavior child class
+// which the behavior is an instance of
+// PLEASE KEEP ALPHABETIZED
+enum uint_8 BehaviorClass {
+  Activity_BehaviorsOnly,
+  Activity_BuildPyramid,
+  Activity_Feeding,
+  Activity_Freeplay,
+  Activity_GatherCubes,
+  Activity_Socialize,
+  Activity_Sparked,
+  Activity_StrictPriority,
+  Activity_VoiceCommand,
+  Activity_NeedsExpression,
+
+  // Behaviors based on scores
+  Bouncer,
+  BringCubeToBeacon,
+  BuildPyramid,
+  BuildPyramidBase,
+  CantHandleTallStack,
+  CheckForStackAtInterval,
+  CubeLiftWorkout,
+  Dance,
+  DevPettingTestSimple,
+  DevTurnInPlaceTest,
+  DockingTestSimple,
+  DriveInDesperation,
+  DriveOffCharger,
+  DrivePath,
+  DriveToFace,
+  EarnedSparks,
+  EnrollFace,
+  ExploreLookAroundInPlace,
+  ExploreVisitPossibleMarker,
+  ExpressNeeds,
+  FactoryCentroidExtractor,
+  FactoryTest,
+  FeedingEat,
+  FeedingSearchForCube,
+  FindFaces,
+  FistBump,
+  GuardDog,
+  InteractWithFaces,
+  KnockOverCubes,
+  LiftLoadTest,
+  LookAround,
+  LookForFaceAndCube,
+  LookInPlaceMemoryMap,
+  OnConfigSeen,
+  OnboardingShowCube,
+  PeekABoo,
+  PickUpAndPutDownCube,
+  PickUpCube,
+  PlayAnim,
+  PlayAnimOnNeedsChange,
+  PlayAnimWithFace,
+  PlayArbitraryAnim,
+  PopAWheelie,
+  PounceOnMotion,
+  PutDownBlock,
+  PyramidThankYou,
+  RequestGameSimple,
+  RespondPossiblyRoll,
+  RespondToRenameFace,
+  RollBlock,
+  SearchForFace,
+  Singing,
+  StackBlocks,
+  ThinkAboutBeacons,
+  TrackLaser,
+  TurnToFace,
+  VisitInterestingEdge,
+  Wait,
+
+  // Dispatcher Behaviors
+  BehaviorDispatcherRerun,
+
+
+  // Behaviors mapped to reaction triggers
+  AcknowledgeFace,
+  AcknowledgeObject,
+  RamIntoBlock,
+  ReactToCliff,
+  ReactToCubeMoved,
+  ReactToFrustration,
+  ReactToMotorCalibration,
+  ReactToOnCharger,
+  ReactToPet,
+  ReactToPickup,
+  ReactToPlacedOnSlope,
+  ReactToPyramid,
+  ReactToReturnedToTreads,
+  ReactToRobotOnBack,
+  ReactToRobotOnFace,
+  ReactToRobotOnSide,
+  ReactToRobotShaken,
+  ReactToSparked,
+  ReactToStackOfCubes,
+  ReactToUnexpectedMovement,
+  ReactToVoiceCommand
+
+}
+
+
+// BehaviorID is a unique identifier for each instance of a behavior
+// so that they can be referenced by other parts of the behavior system
+// PLEASE KEEP ALPHABETIZED
+enum uint_8 BehaviorID {
+  Activity_BuildPyramid,
+  Activity_Feeding,
+  Activity_Freeplay,
+  Activity_GatherCubes,
+  Activity_Hiking,
+  Activity_MeetCozmo,
+  Activity_NeedsSevereLowEnergy,
+  Activity_NeedsSevereLowRepair,
+  Activity_NeedsSevereLowPlayGetIn,
+  Activity_NothingToDo,
+  Activity_PlayAlone,
+  Activity_PlayWithHumans,
+  Activity_PutDownDispatch,
+  Activity_Selection,
+  Activity_Singing,
+  Activity_Socialize,
+  Activity_SparksBuildPyramid,
+  Activity_SparksFistBump,
+  Activity_SparksGatherCubes,
+  Activity_SparksKnockOverCubes,
+  Activity_SparksPeekABoo,
+  Activity_SparksPickUpCube,
+  Activity_SparksPopAWheelie,
+  Activity_SparksPounceOnMotion,
+  Activity_SparksRollBlock,
+  Activity_SparksStackBlock,
+  Activity_SparksWorkout,
+  Activity_SparksTrackLaser,
+  Activity_VoiceCommand,
+
+
+  AcknowledgeFace,
+  AcknowledgeObject,
+  Bouncer,
+  BuildPyramid,
+  BuildPyramidBase,
+  CantHandleTallStack,
+  CubeLiftWorkout,
+  Dance_Mambo,
+
+  DevExecuteBehaviorRerun,
+  DevPettingTestSimple,
+  DevTurnInPlaceTest,
+  DockingTestSimple,
+  DriveOffCharger,
+  EarnedSparks,
+  EnrollFace,
+  FPPeekABoo,
+  FactoryCentroidExtractor,
+  FactoryTest,
+
+  FeedingEat,
+  FeedingFindFacesSevere,
+  FeedingPlayRequestAtFace,
+  FeedingPlayRequestAtFace_Severe,
+  FeedingReactCubeShake,
+  FeedingReactCubeShake_Severe,
+  FeedingReactFullCube,
+  FeedingReactFullCube_Severe,
+  FeedingReactSeeCharged,
+  FeedingReactSeeCharged_Severe,
+  FeedingSearchForCube,
+
+  FindFaces_socialize,
+  FistBump,
+  GuardDog,
+  Hiccup,
+  Hiking_BringCubeToBeacon,
+  Hiking_DriveOffCharger,
+  Hiking_FirstLookIntro,
+  Hiking_FirstLookWakeUp,
+  Hiking_LookInPlace360,
+  Hiking_LookInPlaceForUnknown,
+  Hiking_PounceOnMotion,
+  Hiking_RollCube,
+  Hiking_ThinkAboutBeacons,
+  Hiking_VisitInterestingEdge,
+
+  InteractWithFaces,
+  KnockOverCubes,
+  LiftLoadTest,
+  MeetCozmo_FindFaces_Socialize,
+  MeetCozmo_InteractWithFaces,
+
+  Needs_SevereLowEnergyForcedGetOut,
+  Needs_SevereLowEnergyGetIn,
+  Needs_SevereLowEnergyState,
+  Needs_SevereLowRepairGetIn,
+  Needs_SevereLowRepairState,
+  Needs_SevereLowPlayBored,
+  Needs_SevereLowPlayGetIn,
+  Needs_SevereLowPlayRequest,
+  Needs_MildLowEnergyRequest,
+  Needs_MildLowPlayRequest,
+  Needs_MildLowRepairRequest,
+  Needs_Wait,
+
+  NothingToDo_BoredAnim,
+  NothingToDo_Idle,
+  OnboardingShowCube,
+  PlayArbitraryAnim,
+  PopAWheelie,
+  PounceOnMotion_Socialize,
+  PounceOnMotion_VoiceCommand,
+  PutDownBlock,
+  PutDownBlockNothingToDo,
+  PutDownDispatch_LookForFaceAndCube,
+  PyramidPutDownBlock,
+  PyramidRespondPossiblyRoll,
+  PyramidThankYou,
+  RamIntoBlock,
+
+  ReactToCliff,
+  ReactToCubeMoved,
+  ReactToFrustrationMajor,
+  ReactToFrustrationMinor,
+  ReactToMotorCalibration,
+  ReactToObstacle,
+  ReactToOnCharger,
+  ReactToPet,
+  ReactToPickup,
+  ReactToPlacedOnSlope,
+  ReactToPyramid,
+  ReactToReturnedToTreads,
+  ReactToRobotOnBack,
+  ReactToRobotOnFace,
+  ReactToRobotOnSide,
+  ReactToRobotShaken,
+  ReactToSparked,
+  ReactToStackOfCubes,
+  ReactToUnexpectedMovement,
+  ReactToVoiceCommand,
+  ReactToVoiceCommand_Wakeup,
+
+  RequestKeepAway,
+  RequestMemoryMatch,
+  RequestSpeedTap,
+  RespondToPyramidBase,
+  RespondToRenameFace,
+  RollBlockOnSide,
+  RollBlockOnSideLowScore,
+
+  Singing_AbaDaba,
+  Singing_BeautifulDreamer,
+  Singing_Beethovens5th,
+  Singing_Bingo,
+  Singing_BuffaloGals,
+  Singing_Camptown,
+  Singing_CanCan1,
+  Singing_CanCan2,
+  Singing_DannyBoy,
+  Singing_EntryOfTheGladiators,
+  Singing_FarmerInTheDell,
+  Singing_FrereJacques,
+  Singing_HelloMyBaby,
+  Singing_ItsyBitsySpider,
+  Singing_LaPaloma,
+  Singing_LondonBridge,
+  Singing_MaryHadALittleLamb,
+  Singing_MountainKing,
+  Singing_MuffinMan,
+  Singing_MulberryBush,
+  Singing_MussIDenn,
+  Singing_OdeToJoy,
+  Singing_PachebelCanon,
+  Singing_PopGoesTheWeasel,
+  Singing_RowYourBoat,
+  Singing_Sakura,
+  Singing_SilveryMoon,
+  Singing_TakeMeOutToTheBallgame,
+  Singing_TaRaRaBoom,
+  Singing_TisketTasket,
+  Singing_Toccata,
+  Singing_TurkeyInTheStraw,
+  Singing_TwinkleTwinkle,
+  Singing_VivaldiSpring,
+  Singing_WaterMusic,
+  Singing_WildAboutHarry,
+  Singing_WilliamTell,
+  Singing_YankeeDoodle,
+  Singing_YellowRose,
+
+  SparksBringCubeToBeacon,
+  SparksCheckForStackAtInterval,
+  SparksCubeLiftWorkout,
+  SparksFindFaces,
+  SparksFistBump,
+  SparksKnockOverCubes,
+  SparksLookInPlace,
+  SparksPeekABoo,
+  SparksPickUpCube,
+  SparksPickupSingleCubeForPyramid,
+  SparksPickupSingleCubeToStack,
+  SparksPopAWheelie,
+  SparksPounceOnMotion,
+  SparksPutDownBlock,
+  SparksRollBlock,
+  SparksStackBlock,
+  SparksThinkAboutBeacons,
+  SparksTrackLaser,
+  SparksVisitPossibleMarker,
+
+  StackBlocks,
+
+  VC_AlrightyResponse,
+  VC_ComeHere,
+  VC_GoToSleep,
+  VC_HowAreYouDoing_AllGood,
+  VC_HowAreYouDoing_Energy,
+  VC_HowAreYouDoing_Play,
+  VC_HowAreYouDoing_Repair,
+  VC_PounceOnMotion,
+  VC_Refuse_Energy,
+  VC_Refuse_Repair,
+  VC_Refuse_Sparks,
+  VC_RequestKeepAway,
+  VC_RequestMemoryMatch,
+  VC_RequestSpeedTap,
+  VC_SearchForFace,
+
+  VictorFreeplay,
+
+  Wait,
+  Wait_TestInjectable // BehaviorID used by tests to create fake behaviors
+}
+
+// Each of these should map to exactly 1 instance of a behavior at runtime
+// Only needs to include behaviors that make sense for e.g. SDK to request directly
+enum uint_8 ExecutableBehaviorType {
+  EnrollFace,
+  FindFaces,
+  FistBump,
+  KnockOverCubes,
+  LiftLoadTest,
+  LookAroundInPlace,
+  PounceOnMotion,
+  RollBlock,
+  StackBlocks,
+  TrackLaser,
+  Wait,
+
+  Count
+}
+
+////////
+// User Facing Behavior Stages
+// Behavior stages which can be broadcast out
+// by the PublicStateBroadcaster to trigger changes in audio/ui/etc
+////////
+
+// Feeding music stages (values must match music rounds)
+enum uint_8 FeedingStage {
+ MildEnergy   = 1,
+ SevereEnergy = 2
+}
+
+
+// Guard Dog behavior stages/states (values must match music rounds)
+enum uint_8 GuardDogStage {
+  Sleeping        = 0,
+  CubeBeingMoved  = 1,
+  Busted          = 2,
+  CubesRemaining  = 3,
+  AllCubesGone    = 4,
+  Count
+}
+
+
+// Construction stages for pyramid
+enum uint_8 PyramidConstructionStage {
+  NoneStage = 0, // used for canceling lights
+  SearchingForCube = 1,
+  InitialCubeCarry,
+  BaseFormed,
+  TopBlockCarry,
+  PyramidCompleteFlourish
+}
+
+
+// Workout behavior stages (values must match music rounds)
+enum uint_8 WorkoutStage {
+  NormalWorkout        = 0,
+  EightiesWorkoutPrep  = 1,
+  EightiesWorkoutLift  = 2,
+}
+
+} // namespace Cozmo
+} // namespace Anki

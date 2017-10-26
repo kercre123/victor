@@ -200,7 +200,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       
     case TestState::TurnBack:
     {
-      // at some point (possibly before we stop moving) the behavior should become runnable and start on it's own
+      // at some point (possibly before we stop moving) the behavior should become activatable and start on it's own
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_startedBehavior == 1, 10) {
         // behavior is running, wait for it to finish
         _pickupObjectResult = ActionResult::RUNNING;

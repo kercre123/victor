@@ -15,8 +15,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
-#include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
-#include "engine/aiComponent/behaviorHelperComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/doATrickSelector.h"
 #include "engine/aiComponent/feedingSoundEffectManager.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
@@ -25,6 +24,12 @@
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/workoutComponent.h"
 #include "engine/components/proxSensorComponent.h"
+#include "engine/components/publicStateBroadcaster.h"
+#include "engine/components/progressionUnlockComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/externalInterface/externalInterface.h"
+#include "engine/moodSystem/moodManager.h"
+#include "engine/needsSystem/needsManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -42,48 +47,73 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AIComponent::AIComponent(Robot& robot)
-: _robot(robot)
-, _suddenObstacleDetected(false)
-, _aiInformationAnalyzer( new AIInformationAnalyzer() )
-, _behaviorEventAnimResponseDirector(new BehaviorEventAnimResponseDirector())
-, _behaviorHelperComponent( new BehaviorHelperComponent())
-, _objectInteractionInfoCache(new ObjectInteractionInfoCache(robot))
-, _whiteboard( new AIWhiteboard(robot) )
-, _workoutComponent( new WorkoutComponent(robot) )
-, _requestGameComponent(new RequestGameComponent(robot))
-, _doATrickSelector(new DoATrickSelector(robot))
-, _feedingSoundEffectManager(new FeedingSoundEffectManager())
-, _freeplayDataTracker( new FreeplayDataTracker() )
-, _severeNeedsComponent( new SevereNeedsComponent(robot))
+AIComponent::AIComponent()
+: _suddenObstacleDetected(false)
+, _aiInformationAnalyzer(new AIInformationAnalyzer() )
+, _freeplayDataTracker(new FreeplayDataTracker() )
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIComponent::~AIComponent()
 {
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result AIComponent::Init()
+Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorComponent)
 {
-  const CozmoContext* context = _robot.GetContext();
+  {
+    _aiComponents.reset(new ComponentWrappers::AIComponentComponents(robot));
+    _objectInteractionInfoCache.reset(new ObjectInteractionInfoCache(robot));
+    _whiteboard.reset(new AIWhiteboard(robot) );
+    _workoutComponent.reset(new WorkoutComponent(robot) );
+    _doATrickSelector.reset(new DoATrickSelector(robot.GetContext()->GetDataLoader()->GetDoATrickWeightsConfig()));
+    _severeNeedsComponent.reset(new SevereNeedsComponent(robot));
+  }
+  
+  
+  const CozmoContext* context = robot.GetContext();
 
-  if( !context ) {
+  if(context == nullptr ) {
     PRINT_NAMED_WARNING("AIComponent.Init.NoContext", "wont be able to load some componenets. May be OK in unit tests");
   }
-
+  
+  if(customBehaviorComponent != nullptr) {
+    _behaviorComponent.reset(customBehaviorComponent);
+    customBehaviorComponent = nullptr;
+  }else{
+    _behaviorComponent = std::make_unique<BehaviorComponent>();
+    _behaviorComponent->Init(BehaviorComponent::GenerateComponents(robot));
+  }
+  
+  if(USE_BSM){
+    // Toggle flag to "start" the tracking process - legacy assumption that freeeplay is not
+    // active on app start
+    _freeplayDataTracker->SetFreeplayPauseFlag(true, FreeplayPauseFlag::OffTreads);
+    _freeplayDataTracker->SetFreeplayPauseFlag(false, FreeplayPauseFlag::OffTreads);
+  }
+  
+  _requestGameComponent = std::make_unique<RequestGameComponent>(robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr,
+                                                                 robot.GetContext()->GetDataLoader()->GetGameRequestWeightsConfig());
+  
   // initialize whiteboard
   assert( _whiteboard );
   _whiteboard->Init();
   
   assert(_severeNeedsComponent);
   _severeNeedsComponent->Init();
+  
+  RobotDataLoader* dataLoader = nullptr;
+  if(context){
+    dataLoader = robot.GetContext()->GetDataLoader();
+  }
+  
 
   // initialize workout component
-  if( context) {
+  if(dataLoader != nullptr){
     assert( _workoutComponent );
-    const Json::Value& workoutConfig = context->GetDataLoader()->GetRobotWorkoutConfig();
+    const Json::Value& workoutConfig = dataLoader->GetRobotWorkoutConfig();
 
     const Result res = _workoutComponent->InitConfiguration(workoutConfig);
     if( res != RESULT_OK ) {
@@ -92,32 +122,36 @@ Result AIComponent::Init()
       return res;      
     }
   }
-
+  
+  
   return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result AIComponent::Update()
+Result AIComponent::Update(Robot& robot, std::string& currentActivityName,
+                                         std::string& behaviorDebugStr)
 {
   // information analyzer should run before behaviors so that they can feed off its findings
-  _aiInformationAnalyzer->Update(_robot);
+  _aiInformationAnalyzer->Update(robot);
 
   _whiteboard->Update();
   _severeNeedsComponent->Update();
   
-  _behaviorHelperComponent->Update(_robot);
+  _behaviorComponent->Update(robot, currentActivityName, behaviorDebugStr);
 
   _freeplayDataTracker->Update();
   
-  CheckForSuddenObstacle();
+  CheckForSuddenObstacle(robot);
    
   return RESULT_OK;
 }
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIComponent::OnRobotDelocalized()
 {
   GetWhiteboard().OnRobotDelocalized();
+  _behaviorComponent->OnRobotDelocalized();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -127,7 +161,7 @@ void AIComponent::OnRobotRelocalized()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIComponent::CheckForSuddenObstacle()
+void AIComponent::CheckForSuddenObstacle(Robot& robot)
 {  
   // calculate average sensor value over several samples
   f32 avgProxValue_mm       = 0;  // average forward sensor value
@@ -135,8 +169,8 @@ void AIComponent::CheckForSuddenObstacle()
   f32 avgRotation_rad       = 0;  // average heading angle
   f32 varRotation_radsq     = 0;  // variance of heading angle
   
-  const auto&       states  = _robot.GetStateHistory()->GetRawPoses();
-  const TimeStamp_t endTime = _robot.GetLastMsgTimestamp() - kObsSampleWindow_ms;
+  const auto&       states  = robot.GetStateHistory()->GetRawPoses();
+  const TimeStamp_t endTime = robot.GetLastMsgTimestamp() - kObsSampleWindow_ms;
   
   int n = 0;
   for(auto st = states.rbegin(); st != states.rend() && st->first > endTime; ++st) {
@@ -163,7 +197,7 @@ void AIComponent::CheckForSuddenObstacle()
   
   varRotation_radsq = fabs(varRotation_radsq - (avgRotation_rad * avgRotation_rad));
 
-  const u16 latestDistance_mm = _robot.GetProxSensorComponent().GetLatestDistance_mm();
+  const u16 latestDistance_mm = robot.GetProxSensorComponent().GetLatestDistance_mm();
   f32 avgObjectSpeed_mmps = 2 * fabs(avgProxValue_mm - latestDistance_mm) / kObsSampleWindow_ms;
 
   
@@ -182,5 +216,28 @@ void AIComponent::CheckForSuddenObstacle()
   } 
 }
 
+// Support legacy code until move helper comp into delegate component
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const BehaviorHelperComponent& AIComponent::GetBehaviorHelperComponent() const
+{
+  assert(_behaviorComponent);
+  return _behaviorComponent->GetBehaviorHelperComponent();
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorHelperComponent& AIComponent::GetBehaviorHelperComponent()
+{
+  assert(_behaviorComponent);
+  return _behaviorComponent->GetBehaviorHelperComponent();
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorContainer& AIComponent::GetBehaviorContainer() {
+  return _behaviorComponent->GetBehaviorContainer();
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

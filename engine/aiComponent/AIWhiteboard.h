@@ -12,7 +12,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_AIWhiteboard_H__
 #define __Cozmo_Basestation_BehaviorSystem_AIWhiteboard_H__
 
-#include "engine/behaviorSystem/AIBeacon.h"
+#include "engine/aiComponent/behaviorComponent/AIBeacon.h"
 
 #include "engine/externalInterface/externalInterface_fwd.h"
 
@@ -22,6 +22,8 @@
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
+
+#include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <list>
@@ -45,7 +47,7 @@ constexpr static const float kObjectInvalidAfterFailureRadius_mm = 60.f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIWhiteboard
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AIWhiteboard
+class AIWhiteboard : private Util::noncopyable
 {
 public:
   
