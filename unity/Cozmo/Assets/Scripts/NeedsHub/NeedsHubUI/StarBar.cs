@@ -21,6 +21,7 @@ namespace Cozmo.Needs.UI {
       CRATE,  //spawn a crate icon
       MODAL,   //spawn the reward modal and hand it our accumulated star level rewards to display to user
       ONBOARDING_WAIT_FOR_FILL, // before bling in onboarding, show an explination, wait for click to continue
+      STAR_MODAL // show the Play Token Reward modal - only appears for the play token 1 & 2 - 3rd opens reg. reward modal
     }
 
     #endregion //Nested Definitions
@@ -63,6 +64,9 @@ namespace Cozmo.Needs.UI {
     [SerializeField]
     private NeedsRewardModal _RewardModalPrefab;
 
+    [SerializeField]
+    private PlayTokenRewardModal _PlayTokenModalPrefab;
+
     #endregion //Serialized Fields
 
     #region Non-serialized Fields
@@ -74,6 +78,7 @@ namespace Cozmo.Needs.UI {
 
     private GameObject _CrateIcon = null;
     private NeedsRewardModal _NeedsModal = null;
+    private PlayTokenRewardModal _PlayTokenModalInstance = null;
 
     private const string _DisableTouchKey = "StarBarRewardSequenceUnderway";
 
@@ -155,7 +160,9 @@ namespace Cozmo.Needs.UI {
           if (DataPersistenceManager.Instance.StarLevelToDisplay) {
             return ChangeState(RewardState.CRATE);
           }
-          return ChangeState(RewardState.IDLE);
+          else {
+            return ChangeState(RewardState.STAR_MODAL);
+          }
         }
         break;
       case RewardState.CRATE:
@@ -165,6 +172,11 @@ namespace Cozmo.Needs.UI {
         break;
       case RewardState.MODAL:
         if (_NeedsModal == null || _NeedsModal.IsClosed) {
+          return ChangeState(RewardState.IDLE);
+        }
+        break;
+      case RewardState.STAR_MODAL:
+        if (_PlayTokenModalInstance == null || _PlayTokenModalInstance.IsClosed) {
           return ChangeState(RewardState.IDLE);
         }
         break;
@@ -236,6 +248,12 @@ namespace Cozmo.Needs.UI {
         // Make really sure we have up to date info
         RobotEngineManager.Instance.Message.GetNeedsState = Singleton<GetNeedsState>.Instance;
         RobotEngineManager.Instance.SendMessage();
+        break;
+      case RewardState.STAR_MODAL:
+        UIManager.OpenModal(_PlayTokenModalPrefab, new ModalPriorityData(), (obj) => {
+          // Saving a reference to the modal so we can query to see if it's still open in StateTransition()
+          _PlayTokenModalInstance = (PlayTokenRewardModal)obj;
+        });
         break;
       }
     }

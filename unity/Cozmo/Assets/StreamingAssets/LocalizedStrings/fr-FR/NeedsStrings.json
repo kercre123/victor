@@ -182,5 +182,8 @@
   },
   "needs.severeAlert.repair.description" : {
     "translation" : "Tu dois régler Cozmo avant de continuer."
+  },
+  "needs.FreeplayTokenReward.Description": {
+    "translation": "Vouz avez gagné le Play Token pour aujourd'hui!"
   }
 }
