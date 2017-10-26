@@ -119,8 +119,8 @@ void Analog::init(void) {
     BAT_EN::mode(MODE_OUTPUT);
     
     // Enable (low-current) charging and power
-    nCHG_HC::set();
-    nCHG_HC::mode(MODE_OUTPUT);
+    CHG_HC::reset();
+    CHG_HC::mode(MODE_OUTPUT);
     CHG_EN::mode(MODE_INPUT);
 
     // Make sure battery is partially charged, and that the robot is on a charger
