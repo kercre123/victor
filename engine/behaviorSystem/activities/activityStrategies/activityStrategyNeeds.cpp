@@ -69,14 +69,15 @@ bool ActivityStrategyNeeds::WantsToEndInternal(const Robot& robot, float lastTim
                  "WantsToRunStrategyNotSpecified")){
     // Special case - if repair falls into severe state while severe energy is active
     // energy should want to end so that severe repair can take over
-    if(_higherPriorityWantsToRunStrategy != nullptr){
-      if(_higherPriorityWantsToRunStrategy->WantsToRun(robot)){
-        robot.GetAIComponent().GetNonConstSevereNeedsComponent().ClearSevereNeedExpression();
+    if (_higherPriorityWantsToRunStrategy != nullptr) {
+      if (_higherPriorityWantsToRunStrategy->WantsToRun(robot)) {
+        auto & severeNeedsComponent = robot.GetAIComponent().GetNonConstSevereNeedsComponent();
+        if (severeNeedsComponent.HasSevereNeedExpression()) {
+          severeNeedsComponent.ClearSevereNeedExpression();
+        }
         return true;
       }
     }
-    
-    
     return !_wantsToRunStrategy->WantsToRun(robot);
   }
   return true;
