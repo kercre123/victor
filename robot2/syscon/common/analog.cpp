@@ -115,7 +115,7 @@ void Analog::init(void) {
     for (;;) {
       BAT_EN::set();
       __asm("wfi\nwfi");  // 5ms~10ms for power to stablize
-      if (Analog::values[ADC_VBAT] <= MINIMUM_BATTERY) break ;
+      if (Analog::values[ADC_VBAT] > MINIMUM_BATTERY) break ;
       BAT_EN::reset();
       for( int i = 0; i < 200; i++)  __asm("wfi") ;
     }
@@ -171,16 +171,18 @@ extern "C" void ADC1_IRQHandler(void) {
     nVEXT_EN::mode(MODE_INPUT);
     wait(40*5); // Just around 10us
     BAT_EN::set();
+    ADC1->TR = RISING_EDGE;
   } else {
     BAT_EN::reset();
     wait(40); // Just around 10us
+    nVEXT_EN::reset();
     nVEXT_EN::mode(MODE_OUTPUT);
+    ADC1->TR = FALLING_EDGE;
   }
 
   onBatPower = offVext;
   
   // Clear interrupt and restart ADC
-  ADC1->TR = onBatPower ? RISING_EDGE : FALLING_EDGE;
   ADC1->ISR = ADC_ISR_AWD;
   ADC1->CR |= ADC_CR_ADSTART;
 }
