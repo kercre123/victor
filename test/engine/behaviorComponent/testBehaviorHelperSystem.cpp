@@ -226,7 +226,7 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
 // delegate to a helper which immediately queues actions, so that we can rely on always having IsActing be true
 TEST(BehaviorHelperSystem, DelegateWithActions)
 {
-  /**UiMessageHandler handler(0, nullptr);
+  UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   BaseStationTimer::getInstance()->UpdateTime(0);
   
@@ -304,9 +304,14 @@ TEST(BehaviorHelperSystem, DelegateWithActions)
 
     // hold a helper reference so we can keep track of stuff
     ASSERT_FALSE(weak.expired());
+    HelperHandle strongHandle = weak.lock();
     
-    DoTicksToComplete(testBehaviorFramework, robot, b, 5);
+    DoTicks(testBehaviorFramework, robot, b, 5);
+    // Ensure that the handle was cleared within the behavior system
+    // and only this strong reference remains
+    ASSERT_EQ(strongHandle.use_count(), 1);
 
+    
     EXPECT_EQ(rawPtr->_initOnStackCount, 1);
     EXPECT_EQ(rawPtr->_stopCount, 1);
     EXPECT_EQ(rawPtr->_shouldCancelCount, 0);
@@ -321,7 +326,7 @@ TEST(BehaviorHelperSystem, DelegateWithActions)
   // now the helper should be destroyed
 
   EXPECT_TRUE(weak.expired());
-  rawPtr = nullptr;**/
+  rawPtr = nullptr;
 }
 
 // Test that the behavior correctly stops it's helper
