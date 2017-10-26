@@ -43,7 +43,7 @@ void AndroidLogPrintLogger::Log(ILoggerProvider::LogLevel level, const std::stri
       break;
   }
   
-  __android_log_print(priority, _tag.c_str(), "%s", message.c_str());
+  __android_log_write(priority, _tag.c_str(), message.c_str());
 }
 
 
