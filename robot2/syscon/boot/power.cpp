@@ -42,6 +42,10 @@ void Power::init(void) {
   RTN2::mode(MODE_OUTPUT);
   LTN1::mode(MODE_OUTPUT);
   LTN2::mode(MODE_OUTPUT);
+
+  // Power the head now that we are adiquately charged
+  POWER_EN::mode(MODE_INPUT);
+  POWER_EN::pull(PULL_UP);
 }
 
 void Power::stop(void) {

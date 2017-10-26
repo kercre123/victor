@@ -45,20 +45,6 @@ static inline void wait(int us) {
   }
 }
 
-static void setBatteryPower(bool offVext) {
-  if (offVext) {
-    nVEXT_EN::mode(MODE_INPUT);
-    wait(40*5); // Just around 10us
-    BAT_EN::set();
-  } else {
-    BAT_EN::reset();
-    wait(40); // Just around 10us
-    nVEXT_EN::mode(MODE_OUTPUT);
-  }
-
-  onBatPower = offVext;
-}
-
 void Analog::init(void) {
   // Calibrate ADC1
   if ((ADC1->CR & ADC_CR_ADEN) != 0) {
@@ -113,7 +99,7 @@ void Analog::init(void) {
   // This is a fresh boot (no head)
   if (~USART1->CR1 & USART_CR1_UE) {
     // Set to VEXT power
-    nVEXT_EN::reset();
+    nVEXT_EN::set();
     BAT_EN::reset();
     nVEXT_EN::mode(MODE_OUTPUT);
     BAT_EN::mode(MODE_OUTPUT);
@@ -126,16 +112,15 @@ void Analog::init(void) {
     // Make sure battery is partially charged, and that the robot is on a charger
     // NOTE: Only one interrupt is enabled here, and it's the 200hz main timing loop
     // this lowers power consumption and interrupts fire regularly
-    do {
-      setBatteryPower(false);
-      for( int i = 0; i < 100; i++)  __asm("wfi") ;
-      setBatteryPower(true);
+    for (;;) {
+      BAT_EN::set();
       __asm("wfi\nwfi");  // 5ms~10ms for power to stablize
-    } while (Analog::values[ADC_VBAT] <= MINIMUM_BATTERY);
-
-    // Power the head now that we are adiquately charged
-    POWER_EN::mode(MODE_INPUT);
-    POWER_EN::pull(PULL_UP);
+      if (Analog::values[ADC_VBAT] <= MINIMUM_BATTERY) break ;
+      BAT_EN::reset();
+      for( int i = 0; i < 200; i++)  __asm("wfi") ;
+    }
+    
+    BAT_EN::reset();
   }
   #endif
 
@@ -180,8 +165,20 @@ extern "C" void ADC1_IRQHandler(void) {
   // Stop the ADC so we can change our watchdog window
   ADC1->CR |= ADC_CR_ADSTP;
   
-  setBatteryPower(Analog::values[ADC_VEXT] < TRANSITION_POINT);
+  bool offVext = Analog::values[ADC_VEXT] < TRANSITION_POINT;
 
+  if (offVext) {
+    nVEXT_EN::mode(MODE_INPUT);
+    wait(40*5); // Just around 10us
+    BAT_EN::set();
+  } else {
+    BAT_EN::reset();
+    wait(40); // Just around 10us
+    nVEXT_EN::mode(MODE_OUTPUT);
+  }
+
+  onBatPower = offVext;
+  
   // Clear interrupt and restart ADC
   ADC1->TR = onBatPower ? RISING_EDGE : FALLING_EDGE;
   ADC1->ISR = ADC_ISR_AWD;
