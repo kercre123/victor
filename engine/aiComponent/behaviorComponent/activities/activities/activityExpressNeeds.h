@@ -1,0 +1,37 @@
+/**
+ * File: activityExpressNeeds.h
+ *
+ * Author: Brad Neuman
+ * Created: 2017-06-20
+ *
+ * Description: Activity to express severe needs states.
+ *
+ * Copyright: Anki, Inc. 2017
+ *
+ **/
+
+#ifndef __Cozmo_Basestation_BehaviorSystem_Activities_Activities_ActivityExpressNeeds_H__
+#define __Cozmo_Basestation_BehaviorSystem_Activities_Activities_ActivityExpressNeeds_H__
+
+#include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
+
+namespace Anki {
+namespace Cozmo {
+
+class ActivityExpressNeeds : public IActivity
+{
+public:
+  ActivityExpressNeeds(const Json::Value& config);
+  virtual ~ActivityExpressNeeds() {};
+
+protected:
+
+  virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
+
+};
+
+}
+}
+
+#endif

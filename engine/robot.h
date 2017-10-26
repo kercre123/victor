@@ -229,8 +229,8 @@ public:
   inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
   inline MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
 
-  inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
-  inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
+  const BehaviorManager& GetBehaviorManager() const;
+  BehaviorManager&       GetBehaviorManager();
   
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
     assert(_progressionUnlockComponent);
@@ -700,6 +700,11 @@ public:
   bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterTimeSync; }
   
 protected:
+  // Geometry / Pose
+  std::unique_ptr<PoseOriginList> _poseOriginList;
+  
+  Pose3d         _pose;
+  
   
   const CozmoContext* _context;
   
@@ -730,9 +735,6 @@ protected:
   std::unique_ptr<PetWorld>              _petWorld;
  
   std::unique_ptr<PublicStateBroadcaster> _publicStateBroadcaster;
-
-  std::unique_ptr<BehaviorManager>       _behaviorMgr;
-  std::unique_ptr<BehaviorSystemManager> _behaviorSysMgr;
   
   ///////// Audio /////////
   std::unique_ptr<Audio::EngineRobotAudioClient> _audioClient;
@@ -767,10 +769,7 @@ protected:
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;
   
-  // Geometry / Pose
-  std::unique_ptr<PoseOriginList> _poseOriginList;
- 
-  Pose3d         _pose;
+
   Pose3d         _driveCenterPose;
   PoseFrameID_t  _frameId                   = 0;
   ObjectID       _localizedToID; // ID of mat object robot is localized to

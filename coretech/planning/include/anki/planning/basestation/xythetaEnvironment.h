@@ -500,7 +500,7 @@ private:
   bool ParseObstacles(const Json::Value& config);
   void DumpObstacles(Util::JsonWriter& writer) const;
 
-  // These are depricated! Consider removing them. They could come in handy again if we need to dump the fully
+  // These are deprecated! Consider removing them. They could come in handy again if we need to dump the fully
   // parsed-out mprims
   void DumpMotionPrims(Util::JsonWriter& writer) const;
   bool ParseMotionPrims(const Json::Value& config, bool useDumpFormat = false);

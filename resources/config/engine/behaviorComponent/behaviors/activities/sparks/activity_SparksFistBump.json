@@ -1,0 +1,23 @@
+{
+  "behaviorID" : "Activity_SparksFistBump",
+  "behaviorClass" : "Activity_Sparked",
+  "requireSpark":"FistBump",
+  "activityStrategy":
+  {
+    "type" : "Spark"
+  },
+  "behaviorChooser" :
+  {
+    "type" : "StrictPriority",
+    "behaviors" : [
+      "DriveOffCharger",
+      "SparksFistBump"
+    ]
+  },
+  "minTimeSecs": 0,
+  "maxTimeSecs": 30,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "FistBumpComplete",
+  "softSparkTrigger": "SoftSparkUpgradeLift",
+  "sparksSuccessTrigger": "" // don't play any animation
+}

@@ -1,0 +1,47 @@
+{
+  "behaviorID" : "Activity_SparksBuildPyramid",
+  "behaviorClass" : "Activity_Sparked",
+  "requireSpark":"BuildPyramid",
+  "activityStrategy":
+  {
+    "type" : "Spark"
+  },
+  "minTimeSecs": 0,
+  "maxTimeSecs": 300,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "BuiltPyramid",
+  "softSparkTrigger": "SoftSparkUpgradeLift",
+  "sparksSuccessTrigger": "", // don't play any animation
+  "subActivityDelegate":
+  {
+    "behaviorID" : "Activity_BuildPyramid",
+    "activityType" : "BuildPyramid",
+    "needsActionID": "PyramidCompleted_Sparked",
+    "name" : "sparksBuildPyramid",
+    "activityStrategy": // not actually used, but required
+    {
+      "type" : "Simple"
+    },
+    "setupChooser" :
+    {
+      "type" : "StrictPriority",
+      "behaviors" : [
+        "DriveOffCharger",
+        "KnockOverCubes",
+        "PyramidPutDownBlock",
+        "SparksLookInPlace"
+       ]
+    },
+    "buildChooser" :
+    {
+      "type" : "StrictPriority",
+      "behaviors" : [
+        "DriveOffCharger",
+        "KnockOverCubes",
+        "RespondToPyramidBase",
+        "SparksPickupSingleCubeForPyramid",
+        "SparksLookInPlace"
+      ]
+    }
+  }
+}

@@ -1,0 +1,38 @@
+// this activity is triggered after being put down from a pick up, so that Cozmo can select what to do next based on
+// what is around him (a face, a cube, ...)
+{
+  "behaviorID" : "Activity_PutDownDispatch",
+  "behaviorClass" : "Activity_BehaviorsOnly",
+  "behaviorChooser" :
+  {
+    "type" : "Scoring",
+    "behaviors" : [
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "PutDownDispatch_LookForFaceAndCube",
+        "scoring"      :
+        {
+          "flatScore": 1.0,
+          // consider using GetTimeAtWhichRobotReturnedToTreadsSecs instead
+          // set cooldown so that the activity finishes (otherwise the behavior is always runnable)
+          "repetitionPenalty": {
+            "nodes": [
+              { "x": 0.2, "y": 0.0 },
+              { "x": 0.2, "y": 1.0 }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "activityStrategy":
+  {
+    "type" : "Simple",
+     // purposely high so that reactions don't prevent activity selection due to timeout
+    "requiredRecentOnTreadsEventSecs" : 5.0
+  }
+}

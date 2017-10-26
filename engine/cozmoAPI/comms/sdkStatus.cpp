@@ -12,7 +12,7 @@
 
 
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/cozmoAPI/comms/sdkStatus.h"
 #include "engine/cozmoAPI/comms/iSocketComms.h"
 #include "clad/externalInterface/messageGameToEngine.h"
