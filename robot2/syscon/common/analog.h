@@ -3,7 +3,7 @@
 
 #include "messages.h"
 
-#define ADC_VOLTS(v) ((uint16_t)(v * 720.0f))
+#define ADC_VOLTS(v) ((uint16_t)(v * 610.0f))
 #define ADC_WINDOW(low, high) (((high & 0xFFF) << 16) | (low & 0xFFF))
 
 enum ADC_CHANNEL {
