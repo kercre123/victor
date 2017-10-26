@@ -120,13 +120,14 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 {
   if (!Util::IsValidNumericCast<ToType>(fromVal)) {
     toVal = Util::numeric_cast_clamped<ToType>(fromVal);
-    
+#if ANKI_DEV_CHEATS
     std::stringstream debugStr;
     debugStr << "cast of " << fromVal << " would be invalid, clamping to " << toVal;
     PRINT_NAMED_WARNING("IKeyFrame.SafeNumericCast.InvalidCast",
                         "%s: %s",
                         debugName,
                         debugStr.str().c_str());
+#endif
   } else {
     toVal = Util::numeric_cast<ToType>(fromVal);
   }

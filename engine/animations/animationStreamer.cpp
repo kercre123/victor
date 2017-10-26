@@ -472,7 +472,7 @@ namespace Cozmo {
       _streamingTime_ms = _startTime_ms;
       
       if(!_sendBuffer.empty()) {
-        PRINT_NAMED_WARNING("Animation.Init.SendBufferNotEmpty",
+        PRINT_NAMED_INFO("Animation.Init.SendBufferNotEmpty",
                             "Expecting SendBuffer to be empty. Will clear.");
         ClearSendBuffer();
       }

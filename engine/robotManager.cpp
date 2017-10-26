@@ -305,10 +305,10 @@ void RobotManager::UpdateAllRobots()
 
     if(robot->HasReceivedRobotState()) {
       _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(robot->GetRobotState()));
-    } else {
-      PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots",
-                          "Not sending robot %d state (none available).",
-                          robotId);
+    }
+    else {
+      PRINT_PERIODIC_CH_INFO(10, "Unnamed", "RobotManager.UpdateAllRobots",
+                              "Not sending robot %d state (none available).",robotId);
     }
   } // End loop on _robots
   
