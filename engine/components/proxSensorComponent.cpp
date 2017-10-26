@@ -163,6 +163,12 @@ Result ProxSensorComponent::IsLiftInFOV(bool& isInFOV) const
 
 void ProxSensorComponent::UpdateNavMap()
 {
+  if (_latestData.spadCount == 0)
+  {
+    PRINT_NAMED_WARNING("ProxSensorComponent.UpdateNavMap", "Invalid sensor reading, SpadCount == 0");
+    return;
+  }
+
   const float quality = _latestData.signalIntensity / _latestData.spadCount;
 
   const bool noObject       = quality <= kMinQualityThreshold;                      // sensor is pointed at free space
