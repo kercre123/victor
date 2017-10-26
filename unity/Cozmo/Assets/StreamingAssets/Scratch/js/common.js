@@ -397,7 +397,7 @@
                 title: $t('codeLab.saveModifiedSampleProjectAsRemixDialog.dialogTitle'),
                 prompt: $t('codeLab.saveModifiedSampleProjectAsRemixDialog.saveAsRemixPrompt'),
                 confirmButtonLabel: $t('codeLab.remixConfirmDialog.saveRemixButtonLabel'),
-                cancelButtonLabel: $t('codeLab.remixConfirmDialog.cancelButtonLabel'),
+                cancelButtonLabel: $t('codeLab.saveModifiedSampleProjectAsRemixDialog.discardChangesButtonLabel'),
                 confirmCallback: function(result) {
                     if (result) {
                         window.player.play('click');

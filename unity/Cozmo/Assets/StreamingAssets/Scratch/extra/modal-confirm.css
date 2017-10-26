@@ -117,7 +117,7 @@
 }
 
 .modal-small-font {
-  font-size: 1.5em;
+  font-size: 1.4em;
 }
 .modal-large-font {
   font-size: 2em;
@@ -125,7 +125,7 @@
 
 @media screen and (max-width: 780px) {
   .modal-small-font {
-    font-size: 1em;
+    font-size: .9em;
   }
   .modal-large-font {
     font-size: 1.5em;

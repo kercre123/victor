@@ -197,16 +197,19 @@
 
         var title = window.$t('codeLab.export_modal.title');
         var body = window.$t('codeLab.export_modal.body');
-        var cancelText = window.$t('codeLab.export_modal.button.get_drive');
+        var cancelText = Blockly.Msg.IOS_CANCEL;
         var confirmText = window.$t('codeLab.export_modal.button.copy_to_drive');
 
-        ModalAlert.open({
+        ModalConfirm.open({
             title: title,
             prompt: body,
             confirmButtonLabel: confirmText,
-            confirmCallback: function() {
+            cancelButtonLabel: cancelText,
+            confirmCallback: function(result) {
                 window.player.play('click');
-                window.onCozmoProjectExportConfirmation();
+                if (result) {
+                    window.onCozmoProjectExportConfirmation();
+                }
             }
         });
     }
