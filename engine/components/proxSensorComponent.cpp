@@ -33,7 +33,7 @@ namespace {
 
   const u16 kMinObsThreshold_mm  = 30;  // Minimum distance for registering an object detected as an obstacle
   const u16 kMaxObsThreshold_mm  = 300; // Maximum distance for registering an object detected as an obstacle  
-  const f32 kMinQualityThreshold = .15; // Minimum sensor reading strength before trying use sensor data
+  const f32 kMinQualityThreshold = .15; // Minimum sensor reading strength before trying to use sensor data
 
   const std::string kLogDirectory = "sensorData/proxSensor";
 } // end anonymous namespace
