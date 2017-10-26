@@ -33,9 +33,10 @@ static constexpr const char* kDataGlobalKey = "$data";
 static constexpr const char* kPhysicalIdGlobalKey = "$phys";
 static constexpr const char* kPlatformGlobalKey = "$platform";
 static constexpr const char* kProductGlobalKey = "$product";
-static constexpr const char* kSessionIdGlobalKey = "$session_id";
 static constexpr const char* kPlayerIdGlobalKey = "$player_id";
 static constexpr const char* kProfileIdGlobalKey = "$profile_id";
+static constexpr const char* kConnectedSessionIdGlobalKey = "$session_id";
+
 
 } // namespace Das
 } // namespace Anki

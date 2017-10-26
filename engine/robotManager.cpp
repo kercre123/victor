@@ -6,6 +6,7 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
+#include "../lib/das-client/src/dasGlobals.h"
 #include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
@@ -167,6 +168,9 @@ void RobotManager::RemoveRobot(const RobotID_t withID, bool robotRejectedConnect
     if (!handledDisconnect) {
       _context->GetExternalInterface()->OnRobotDisconnected(withID);
       _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(0.0f)));
+
+      // stop logging connected session guid
+      Util::sSetGlobal(Das::kConnectedSessionIdGlobalKey, nullptr);
     }
 
     _context->GetNeedsManager()->OnRobotDisconnected();

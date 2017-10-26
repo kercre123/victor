@@ -20,6 +20,9 @@
 #include "util/logging/logging.h"
 #include <json/json.h>
 
+#include "../lib/das-client/src/dasGlobals.h"
+#include "util/string/stringUtils.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -285,6 +288,9 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
       {
         _bodyColor = bodyColor;
       }
+      
+      // start logging connected session id
+      Util::sSetGlobal(Das::kConnectedSessionIdGlobalKey, Util::GetUUIDString().c_str());
       
       SendConnectionResponse(result, robotFwVersion);
 
