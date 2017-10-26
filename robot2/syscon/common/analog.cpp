@@ -169,6 +169,11 @@ void Analog::allowCharge(bool enable) {
 
 void Analog::delayCharge() {
   chargeEnableDelay = 0;
+  
+  if (chargeAllowed) {
+    CHG_EN::reset();
+    CHG_EN::mode(MODE_OUTPUT);
+  }
 }
 
 extern "C" void ADC1_IRQHandler(void) {
