@@ -73,6 +73,8 @@ static constexpr u32 _kMaxNvStorageBlobSize = 1024;
 
 static const char*   _kNVDataFileExtension = ".nvdata";
 
+static const char*   _kFactoryPath = "/data/persist/factory/";
+
 namespace Anki {
 namespace Cozmo {
 
@@ -472,10 +474,12 @@ bool NVStorageComponent::WipeFactory(NVStorageWriteEraseCallback callback)
 {
   if(_writingFactory)
   {
-    return Erase(NVEntryTag::NVEntry_FactoryBaseTag,
-                 callback,
-                 false,
-                 static_cast<u32>(NVConst::NVConst_FACTORY_BLOCK_SIZE));
+    Util::FileUtils::RemoveDirectory(_kFactoryPath);
+    if(callback != nullptr)
+    {
+      callback(NVStorage::NVResult::NV_OKAY);
+    }
+    return true;
   }
   PRINT_NAMED_ERROR("NVStorageComponent.WipeFactory.NotAllowed",
                     "Must be allowed to write to factory addresses");
@@ -556,7 +560,7 @@ void NVStorageComponent::WriteEntryToFile(u32 tag)
   // TODO(Al): This probably needs to write somewhere else for actual factory nvStorage
   if(IsFactoryEntryTag(static_cast<NVEntryTag>(tag)))
   {
-    path = "/data/persist/factory/";
+    path = _kFactoryPath;
   }
 
   // If tag doesn't exist in map, then delete the associated file if it exists
@@ -614,7 +618,7 @@ void NVStorageComponent::LoadDataFromFiles()
   
   // TODO: For now load factory related nvstorage files from the "factory" subdirectory. Will probably
   // be moved to some read only place
-  fileList = Util::FileUtils::FilesInDirectory("/data/persist/factory/", false, _kNVDataFileExtension);
+  fileList = Util::FileUtils::FilesInDirectory(_kFactoryPath, false, _kNVDataFileExtension);
   
   for (auto& fileName : fileList) {
     
@@ -636,7 +640,7 @@ void NVStorageComponent::LoadDataFromFiles()
     }
     
     // Read data from file
-    std::vector<u8> file = Util::FileUtils::ReadFileAsBinary(_kStoragePath + "factory/" + fileName);
+    std::vector<u8> file = Util::FileUtils::ReadFileAsBinary(_kFactoryPath + fileName);
     if(file.empty())
     {
       PRINT_NAMED_ERROR("NVStorageComponent.LoadFactoryDataFromFiles.ReadFileFailed",

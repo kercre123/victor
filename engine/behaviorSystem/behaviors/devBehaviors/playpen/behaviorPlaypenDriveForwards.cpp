@@ -31,6 +31,7 @@ BehaviorPlaypenDriveForwards::BehaviorPlaypenDriveForwards(Robot& robot, const J
 
 Result BehaviorPlaypenDriveForwards::InternalInitInternal(Robot& robot)
 {
+  // Clear and pause cliff sensor component so it doesn't try to update the cliff thresholds
   robot.GetCliffSensorComponent().ClearCliffRunningStats();
   robot.GetCliffSensorComponent().SetPause(true);
 
@@ -46,6 +47,7 @@ Result BehaviorPlaypenDriveForwards::InternalInitInternal(Robot& robot)
   // Drive fowards some amount until front cliffs trigger, which will cause the action to fail with
   // CANCELLED_WHILE_RUNNING
   MoveHeadToAngleAction* headToZero = new MoveHeadToAngleAction(robot, 0);
+  // Move lift up a little so it doesn't rub against the ground as we drive off the charger
   MoveLiftToHeightAction* liftDown = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK + 10);
   DriveStraightAction* driveForwards = new DriveStraightAction(robot,
                                                                PlaypenConfig::kDistanceToTriggerFrontCliffs_mm,

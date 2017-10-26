@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 10/12/17
  *
- * Description: 
+ * Description: Runs forever until the robot is on the charger and has been touched for some amount of time
  *
  * Copyright: Anki, Inc. 2017
  *

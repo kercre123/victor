@@ -109,8 +109,11 @@ Result AIComponent::Update()
 
   _freeplayDataTracker->Update();
   
-//  CheckForSuddenObstacle();
-  
+  // Factory test doesn't care about sudden obstacles so don't bother checking for them
+  #ifndef FACTORY_TEST
+  CheckForSuddenObstacle();
+  #endif
+
   return RESULT_OK;
 }
 

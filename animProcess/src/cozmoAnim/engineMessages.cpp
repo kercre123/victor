@@ -41,8 +41,8 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "util/logging/logging.h"
-#include "util/transport/udpTransport.h"
 
+// For drawing images/text to the face
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 
@@ -95,6 +95,7 @@ namespace Messages {
   void ProcessMessageToRobot(const RobotInterface::EngineToRobot& msg);
   void ProcessMessageToEngine(const RobotInterface::RobotToEngine& msg);
   extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
+  void ProcessBackpackButton(const RobotInterface::BackpackButton& payload);
   void DrawTextOnScreen(const std::string& text, 
                         const ColorRGBA& textColor,
                         const ColorRGBA& bgColor);
@@ -286,48 +287,8 @@ namespace Messages {
       }
       case RobotInterface::RobotToEngine::Tag_backpackButton:
       {
-        if(msg.backpackButton.depressed)
-        {
-          if(!_showingDebugInfo)
-          {
-            _animStreamer->LockTrack(AnimTrackFlag::FACE_IMAGE_TRACK);
-
-            // Open a socket to figure out the ip adress of the wlan0 (wifi) interface
-            const char* const if_name = "wlan0";
-            struct ifreq ifr;
-            size_t if_name_len=strlen(if_name);
-            if (if_name_len<sizeof(ifr.ifr_name)) {
-              memcpy(ifr.ifr_name,if_name,if_name_len);
-              ifr.ifr_name[if_name_len]=0;
-            } else {
-              ASSERT_NAMED_EVENT(false, "ProcessMessageToEngine.BackpackButton.InvalidInterfaceName", "");
-            }
-
-            int fd=socket(AF_INET,SOCK_DGRAM,0);
-            if (fd==-1) {
-              ASSERT_NAMED_EVENT(false, "ProcessMessageToEngine.BackpackButton.OpenSocketFail", "");
-            }
-
-            if (ioctl(fd,SIOCGIFADDR,&ifr)==-1) {
-              int temp_errno=errno;
-              close(fd);
-              ASSERT_NAMED_EVENT(false, "ProcessMessageToEngine.BackpackButton.IoctlError", "%s", strerror(temp_errno));
-            }
-            close(fd);
-
-            struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
-            const std::string ip = std::string(inet_ntoa(ipaddr->sin_addr));
-
-            // Draw the last three digits of the ip on the screen
-            DrawTextOnScreen(ip.substr(10,3), NamedColors::WHITE, NamedColors::BLACK);
-          }
-          else
-          {
-            _animStreamer->UnlockTrack(AnimTrackFlag::FACE_IMAGE_TRACK);
-            FaceDisplay::getInstance()->FaceClear();
-          }
-          _showingDebugInfo = !_showingDebugInfo;
-        }
+        ProcessBackpackButton(msg.backpackButton);
+        // Break and forward message to engine
         break;
       } 
       default:
@@ -474,49 +435,111 @@ namespace Messages {
     }
   }
 
-  void DrawTextOnScreen(const std::string& text, 
-                      const ColorRGBA& textColor,
-                      const ColorRGBA& bgColor)
+  void ProcessBackpackButton(const RobotInterface::BackpackButton& payload)
   {
-    Vision::ImageRGB resultImg(96, 184);
+    if(payload.depressed)
+    {
+      // If we aren't currently showing debug info and the button was pressed then
+      // start showing debug info
+      if(!_showingDebugInfo)
+      {
+        // Lock the face image track to prevent animations from drawing over the debug info
+        _animStreamer->LockTrack(AnimTrackFlag::FACE_IMAGE_TRACK);
+
+        // Open a socket to figure out the ip adress of the wlan0 (wifi) interface
+        const char* const if_name = "wlan0";
+        struct ifreq ifr;
+        size_t if_name_len=strlen(if_name);
+        if (if_name_len<sizeof(ifr.ifr_name)) {
+          memcpy(ifr.ifr_name,if_name,if_name_len);
+          ifr.ifr_name[if_name_len]=0;
+        } else {
+          ASSERT_NAMED_EVENT(false, "ProcessMessageToEngine.BackpackButton.InvalidInterfaceName", "");
+        }
+
+        int fd=socket(AF_INET,SOCK_DGRAM,0);
+        if (fd==-1) {
+          ASSERT_NAMED_EVENT(false, "ProcessMessageToEngine.BackpackButton.OpenSocketFail", "");
+        }
+
+        if (ioctl(fd,SIOCGIFADDR,&ifr)==-1) {
+          int temp_errno=errno;
+          close(fd);
+          ASSERT_NAMED_EVENT(false, "ProcessMessageToEngine.BackpackButton.IoctlError", "%s", strerror(temp_errno));
+        }
+        close(fd);
+
+        struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
+        const std::string ip = std::string(inet_ntoa(ipaddr->sin_addr));
+
+        // Draw the last three digits of the ip on the screen
+        DrawTextOnScreen(ip.substr(10,3), NamedColors::WHITE, NamedColors::BLACK);
+      }
+      // Otherwise we are currently showing debug info and the button has been pressed
+      // so clear the face and unlock the face image track
+      else
+      {
+        _animStreamer->UnlockTrack(AnimTrackFlag::FACE_IMAGE_TRACK);
+        FaceDisplay::getInstance()->FaceClear();
+      }
+      _showingDebugInfo = !_showingDebugInfo;
+    }
+  }
+
+  void DrawTextOnScreen(const std::string& text, 
+                        const ColorRGBA& textColor,
+                        const ColorRGBA& bgColor)
+  {
+    Vision::ImageRGB resultImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     
-    Anki::Rectangle<f32> rect(0, 0, 184, 96);
+    Anki::Rectangle<f32> rect(0, 0, FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
     resultImg.DrawFilledRect(rect, bgColor);
 
-    resultImg.DrawText({0, 86.f},
+    const s32 textLocX = 0;
+    const s32 textLocY = FACE_DISPLAY_HEIGHT-10;
+    // TODO: Expose scale, line, and location(?) thickness as arguments
+    const f32 textScale = 3.f;
+    const u8  textLineThickness = 8;
+    resultImg.DrawText({textLocX, textLocY},
                        text.c_str(),
                        textColor,
-                       3.f,
-                       8);
+                       textScale,
+                       textLineThickness);
 
     // Opencv doesn't support drawing filled text so draw the text a second time
     // slightly offset from the first to attempt to fill it in
-    resultImg.DrawText({1, 87.f},
+    resultImg.DrawText({textLocX+1, textLocY+1},
                        text.c_str(),
                        textColor,
-                       3.f,
-                       8);
+                       textScale,
+                       textLineThickness);
 
+    // Draw the word "Factory" in the top right corner if this is a 
+    // factory build
     #ifdef FACTORY_TEST
-      resultImg.DrawText({0, 10.f},
+      const Point2f factoryTextLoc = {0, 10};
+      const f32 factoryScale = 0.5f;
+      resultImg.DrawText(factoryTextLoc,
                          "Factory",
                          NamedColors::WHITE,
-                         0.5f);
+                         factoryScale);
     #endif
 
-    cv::Mat img565(96, 184, CV_16U);
-    u16* p;
-    const Vision::PixelRGB* p1;
+    // Convert the RGB888 image to RGB565
+    cv::Mat img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, CV_16U);
+    u16* row565;
+    const Vision::PixelRGB* rowRGB;
     for(int i = 0; i < img565.rows; ++i)
     {
-      p = img565.ptr<u16>(i);
-      p1 = resultImg.get_CvMat_().ptr<Vision::PixelRGB>(i);
+      row565 = img565.ptr<u16>(i);
+      rowRGB = resultImg.get_CvMat_().ptr<Vision::PixelRGB>(i);
       for(int j = 0; j < img565.cols; ++j)
       {
-        p[j] = (((int)(p1[j].r() >> 3) << 11) | 
-                ((int)(p1[j].g() >> 2) << 5) | 
-                ((int)(p1[j].b() >> 3) << 0));
-        p[j] = ((p[j]>>8)&0xFF) | ((p[j]&0xFF)<<8);
+        row565[j] = (((int)(rowRGB[j].r() >> 3) << 11) | 
+                     ((int)(rowRGB[j].g() >> 2) << 5)  | 
+                     ((int)(rowRGB[j].b() >> 3) << 0));
+        // Swap byte order
+        row565[j] = ((row565[j]>>8)&0xFF) | ((row565[j]&0xFF)<<8);
       }
     }
 
@@ -574,47 +597,3 @@ void Receiver_OnDisconnect(ReliableConnection* connection)
   ReliableConnection_Init(connection, NULL); // Reset the connection
   Anki::Cozmo::CozmoAnimComms::UpdateEngineCommsState(0);
 }
-
-// const char* const GetLocalIP()
-// {
-//   // Get robot's IPv4 address.
-//   // Looking for (and assuming there is only one) address that starts with 192.
-//   struct ifaddrs *ifaddr, *ifa;
-//   if (getifaddrs(&ifaddr) != 0) {
-//     PRINT_NAMED_ERROR("simHAL.GetLocalIP.getifaddrs_failed", "");
-//     assert(false);
-//   }
-
-//   int family, s, n;
-//   static char host[NI_MAXHOST];
-//   for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
-//     if (ifa->ifa_addr == NULL)
-//       continue;
-
-//     family = ifa->ifa_addr->sa_family;
-
-//     // Display IPv4 addresses only
-//     if (family == AF_INET) {
-//       s = getnameinfo(ifa->ifa_addr,
-//                       (family == AF_INET) ? sizeof(struct sockaddr_in) :
-//                       sizeof(struct sockaddr_in6),
-//                       host, NI_MAXHOST,
-//                       NULL, 0, NI_NUMERICHOST);
-//       if (s != 0) {
-//         PRINT_NAMED_ERROR("simHAL.GetLocalIP.getnameinfo_failed", "");
-//         assert(false);
-//       }
-
-//       // Does address start with 192?
-//       if (strncmp(host, "192.", 4) == 0)
-//       {
-//         PRINT_NAMED_INFO("simHAL.GetLocalIP.IP", "%s", host);
-//         break;
-//       }
-//     }
-//   }
-//   freeifaddrs(ifaddr);
-
-//   return host;
-// }
-

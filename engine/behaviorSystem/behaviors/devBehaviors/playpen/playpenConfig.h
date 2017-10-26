@@ -23,9 +23,7 @@
 #include "util/console/consoleVariable.h"
 
 namespace Anki {
-
 namespace Cozmo {
-  
 namespace PlaypenConfig {
 
 // ----------General----------
@@ -172,6 +170,12 @@ static f32       kToolCodeDistThreshX_pix = 20.f;
 static f32       kToolCodeDistThreshY_pix = 40.f;
 
 // ----------Pickup Cube----------
+// Expected cube pose x relative to playpen starting pose
+static f32 kExpectedCubePoseX_mm                = 309;
+
+// Expected cube pose y relative to playpen starting pose
+static f32 kExpectedCubePoseY_mm                = 0;
+
 // Allowed difference between expected and observed cube pose in x and y
 static f32 kExpectedCubePoseDistThresh_mm       = 30;
 

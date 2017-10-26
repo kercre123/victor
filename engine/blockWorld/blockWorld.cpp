@@ -116,34 +116,6 @@ namespace {
     DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
     
     
-//    RotationMatrix3d r(RotationVector3d(Radians(DEG_TO_RAD(45)), {0, 0, 1}));
-//    RotationVector3d v(Radians(DEG_TO_RAD(-30)), {0, 1, 0});
-////    RotationVector3d v2(Radians(0.78540031), {0, 0, 1});
-//    RotationMatrix3d vm(v);
-////    RotationMatrix3d vm2(v2);
-//    RotationMatrix3d o = r * vm;
-//    
-//    // Front marker relative to object center
-//    Quad3f face2({{12.5, -22, -12.5},
-//                  {-12.5, -22, -12.5},
-//                  {12.5, -22, 12.5},
-//                  {-12.5, -22, 12.5}});
-//    
-//    Quad3f face1({{-22, -12.5, -12.5},
-//      {-22, 12.5, -12.5},
-//      {-22, -12.5, 12.5},
-//      {-22, 12.5, 12.5}});
-//    
-//    Pose3d p(o, {0,0,0});
-//    p.ApplyTo(face2, face2);
-//    
-//    p.ApplyTo(face1, face1);
-//    
-//    PRINT_NAMED_WARNING("", "rotated quad");
-//    face1.Print();
-//    face2.Print();
-    
-    
     // TODO: Create each known block / matpiece from a configuration/definitions file
     
     //////////////////////////////////////////////////////////////////////////
@@ -199,9 +171,11 @@ namespace {
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE2));
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE3));
     
+    #ifdef FACTORY_TEST
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_BULLSEYE2));
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_ARROW));
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_STAR5));
+    #endif
     
     //////////////////////////////////////////////////////////////////////////
     // 2x1 Blocks
@@ -1273,8 +1247,12 @@ namespace {
                                                                                 wasRobotMoving,
                                                                                 distToObjSeen);
         if ( !isConfirmingObservation ) {
-//          PRINT_CH_INFO("BlockWorld", "BlockWorld.AddAndUpdateObjects.NonConfirmingObservation",
-//            "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
+          // Don't print this during the factory test because it spams when seeing the 
+          // calibration target
+          #ifndef FACTORY_TEST
+          PRINT_CH_INFO("BlockWorld", "BlockWorld.AddAndUpdateObjects.NonConfirmingObservation",
+                        "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
+          #endif
           
           // TODO should we broadcast RobotObservedPossibleObject here?
           continue;

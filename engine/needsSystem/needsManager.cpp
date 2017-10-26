@@ -243,7 +243,12 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _previousRobotSerialNumber(0)
 , _robotOnboardingStageCompleted(0)
 , _connectionOccurredThisAppRun(false)
+// Pause needs during factory test
+#ifdef FACTORY_TEST
 , _isPausedOverall(true)
+#else
+, _isPausedOverall(false)
+#endif
 , _timeWhenPausedOverall_s(0.0f)
 , _isDecayPausedForNeed()
 , _isActionsPausedForNeed()

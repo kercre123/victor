@@ -1,10 +1,10 @@
 /**
- * File: behaviorPlaypenDriftCheck.cpp
+ * File: behaviorPlaypenDistanceSensor.cpp
  *
  * Author: Al Chaussee
- * Created: 07/27/17
+ * Created: 09/22/17
  *
- * Description: Checks head and lift motor range, speaker works, mics work, and imu drift is minimal
+ * Description: Turns towards a target marker and records a number of distance sensor readings
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -15,6 +15,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/proxSensorComponent.h"
+#include "engine/components/visionComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
@@ -70,16 +71,22 @@ Result BehaviorPlaypenDistanceSensor::InternalInitInternal(Robot& robot)
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CUBE_NOT_FOUND, RESULT_FAIL);
   }
 
+  // Make sure marker detection is enabled for calibration
+  robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
+
+  // Record starting angle
   _startingAngle = robot.GetPose().GetRotation().GetAngleAroundZaxis();
 
+  // Move head and lift to be able to see target marker and turn towards the target
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(robot, DEG_TO_RAD(0));
   MoveLiftToHeightAction* lift = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
-  CompoundActionParallel* liftAndHead = new CompoundActionParallel(robot, {lift, head});
-  
   TurnInPlaceAction* turn = new TurnInPlaceAction(robot, _angleToTurn.ToFloat(), false);
-  WaitForImagesAction* wait = new WaitForImagesAction(robot, 5);
+  CompoundActionParallel* liftHeadTurn = new CompoundActionParallel(robot, {lift, head, turn});
   
-  CompoundActionSequential* action = new CompoundActionSequential(robot, {liftAndHead, turn, wait});
+  // After turning wait to process 5 images before trying to refine the turn
+  WaitForImagesAction* wait = new WaitForImagesAction(robot, 5, VisionMode::DetectingMarkers);
+  
+  CompoundActionSequential* action = new CompoundActionSequential(robot, {liftHeadTurn, wait});
   StartActing(action, [this, &robot]() { TransitionToRefineTurn(robot); });
   
   return RESULT_OK;
@@ -87,10 +94,12 @@ Result BehaviorPlaypenDistanceSensor::InternalInitInternal(Robot& robot)
 
 BehaviorStatus BehaviorPlaypenDistanceSensor::InternalUpdateInternal(Robot& robot)
 {
+  // Haven't started recording distance readings yet
   if(_numRecordedReadingsLeft == -1)
   {
     return BehaviorStatus::Running;
   }
+  // We have distance readings left to record
   else if(_numRecordedReadingsLeft > 0)
   {
     --_numRecordedReadingsLeft;
@@ -118,8 +127,10 @@ BehaviorStatus BehaviorPlaypenDistanceSensor::InternalUpdateInternal(Robot& robo
     
     return BehaviorStatus::Running;
   }
+  // We've recorded all distance readings we need to
   else
   {
+    // If we aren't acting then turn back to where we were facing when the behavior started
     if(!IsActing())
     {
       TransitionToTurnBack(robot);
@@ -138,13 +149,12 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn(Robot& robot)
 {
   TurnInPlaceAction* action = new TurnInPlaceAction(robot, 0, false);
 
-  BlockWorldFilter filter;
-  filter.AddAllowedType(_expectedObjectType);
-
+  // Get the pose of the marker we should be seeing
   Pose3d markerPose;
   const bool res = GetExpectedObjectMarkerPoseWrtRobot(robot, markerPose);
   if(res)
   {
+    // Check that we are within expected distance to the marker
     Radians angle = 0;
     const f32 distToMarker_mm = markerPose.GetTranslation().x();
     if(!Util::IsNear(distToMarker_mm,
@@ -159,6 +169,7 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn(Robot& robot)
       
       PLAYPEN_SET_RESULT(FactoryTestResultCode::DISTANCE_MARKER_OOR);
     }
+    // We are within expected distance to update refined turn angle to put us perpendicular with the marker
     else
     {
       angle = -1*(robot.GetPose().GetRotation().GetAngleAroundZaxis() -
@@ -172,6 +183,7 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn(Robot& robot)
     action->SetRequestedTurnAngle(angle.ToFloat());
   }
   
+  // Once we are perpendicular to the marker, start recording distance sensor readings
   StartActing(action, [this, &robot]() { TransitionToRecordSensor(robot); });
 }
 
@@ -191,8 +203,10 @@ bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Robot& r
 {
   BlockWorldFilter filter;
   filter.AddAllowedType(_expectedObjectType);
-  ObservableObject* object = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
-  if(object == nullptr)
+  std::vector<ObservableObject*> objects;
+  robot.GetBlockWorld().FindLocatedMatchingObjects(filter, objects);
+
+  if(objects.empty())
   {
     PRINT_NAMED_WARNING("BehaviorPlaypenDistanceSensor.GetExpectedObjectMarkerPoseWrtRobot.NullObject",
                         "Expected object of type %s does not exist or am not seeing it",
@@ -202,8 +216,21 @@ bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Robot& r
   }
   else
   {
+    // Get the most recently observed object of the expected object type
+    ObservableObject* object = nullptr;
+    TimeStamp_t t = 0;
+    for(const auto& obj : objects)
+    {
+      if(obj->GetLastObservedTime() > t)
+      {
+        object = obj;
+        t = obj->GetLastObservedTime();
+      }
+    }
+
     const auto& markers = object->GetMarkers();
     
+    // Get the pose of the marker that was most recently observed
     Pose3d markerPose;
     TimeStamp_t lastObservedTime = 0;
     std::string markerName = "";
@@ -221,9 +248,8 @@ bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Robot& r
     if(!res)
     {
       PRINT_NAMED_WARNING("BehaviorPlaypenDistanceSensor.GetExpectedObjectMarkerPoseWrtRobot.NoClosestMarker",
-                          "Failed to get closest marker pose for object %s with %d",
-                          ObjectTypeToString(_expectedObjectType),
-                          res);
+                          "Failed to get closest marker pose for object %s",
+                          ObjectTypeToString(_expectedObjectType));
       PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::DISTANCE_MARKER_NOT_FOUND, false);
       return false;
     }

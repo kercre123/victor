@@ -43,7 +43,11 @@ ActiveCube::ActiveCube(ObjectType type)
     for(auto & marker : markerList) {
       uniqueCodes.insert(marker.GetCode());
     }
-//    DEV_ASSERT(uniqueCodes.size() == markerList.size(), "ActiveCube.Constructor.InvalidMarkerList");
+    // Factory test uses active cubes that have the same marker on all sides which would
+    // trigger this assert
+    #ifndef FACTORY_TEST
+    DEV_ASSERT(uniqueCodes.size() == markerList.size(), "ActiveCube.Constructor.InvalidMarkerList");
+    #endif
   }
 }
 

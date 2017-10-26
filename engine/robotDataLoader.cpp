@@ -89,30 +89,38 @@ void RobotDataLoader::LoadNonConfigData()
     REMOTE_CONSOLE_ENABLED_ONLY( stressTester.Start() );
   }
   
+  // Don't load these if this is the factory test
+  #ifndef FACTORY_TEST
   {
     ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
-//    CollectAnimFiles();
+    CollectAnimFiles();
   }
 
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
-//    LoadAnimationGroups();
+    LoadAnimationGroups();
   }
   
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeLightAnimations");
-//    LoadCubeLightAnimations();
+    LoadCubeLightAnimations();
   }
   
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
-//    LoadBackpackLightAnimations();
+    LoadBackpackLightAnimations();
   }
 
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
-//    LoadEmotionEvents();
+    LoadEmotionEvents();
   }
+
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
+    LoadCubeAnimationTriggerResponses();
+  }
+  #endif
 
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");
@@ -132,11 +140,6 @@ void RobotDataLoader::LoadNonConfigData()
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationTriggerResponses");
     LoadAnimationTriggerResponses();
-  }
-  
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
-//    LoadCubeAnimationTriggerResponses();
   }
   
   {

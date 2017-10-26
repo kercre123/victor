@@ -1,7 +1,7 @@
 #VRML_SIM V7.3.0 utf8
 
-PROTO CalibrationMarkerStructure2[
-  field SFString name "CalibrationMarkerStructure2"
+PROTO CalibrationMarkerStructure_InvertedBox[
+  field SFString name "CalibrationMarkerStructure_InvertedBox"
 
   field SFVec3f       translation  0 0 0.010
   field SFRotation    rotation     0 0 1 0

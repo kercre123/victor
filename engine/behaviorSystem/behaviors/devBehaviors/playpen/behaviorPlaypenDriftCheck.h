@@ -50,6 +50,7 @@ private:
   // Whether or not the drift check is complete
   bool _driftCheckComplete = false;
   
+  // Struct to hold imu temperature readings before and after drift check
   IMUTempDuration _imuTemp;
 };
 

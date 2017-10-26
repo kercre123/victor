@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 10/12/17
  *
- * Description: 
+ * Description: Runs forever until the robot is on the charger and has been touched for some amount of time
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -15,8 +15,6 @@
 #include "engine/components/bodyLightComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
-
-#include <iomanip>
 
 namespace Anki {
 namespace Cozmo {
@@ -33,6 +31,7 @@ Result BehaviorPlaypenWaitToStart::InternalInitInternal(Robot& robot)
   // run forever until the conditions for playpen to start are met
   ClearTimers();
 
+  // Turn backpack lights blue to know that this behavior is running
   static const BackpackLights lights = {
     .onColors               = {{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}},
     .offColors              = {{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}},
@@ -80,6 +79,7 @@ void BehaviorPlaypenWaitToStart::HandleWhileRunningInternal(const EngineToGameEv
 
     if(payload.touchStarted)
     {
+      // Turn the lights cyan to indicate we are detecting a touch
       static const BackpackLights lights = {
         .onColors               = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
         .offColors              = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
@@ -94,6 +94,7 @@ void BehaviorPlaypenWaitToStart::HandleWhileRunningInternal(const EngineToGameEv
     }
     else
     {
+      // Turn the lights blue to indicate no touch
       static const BackpackLights lights = {
         .onColors               = {{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}},
         .offColors              = {{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}},

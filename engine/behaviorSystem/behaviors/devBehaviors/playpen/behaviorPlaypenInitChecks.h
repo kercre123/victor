@@ -45,8 +45,6 @@ private:
   
   int32_t     _hwVersion = -1;
   bool        _gotMfgID  = false;
-  
-  bool        _eraseComplete = false;
 };
 
 }

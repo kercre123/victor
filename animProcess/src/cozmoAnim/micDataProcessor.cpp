@@ -109,15 +109,21 @@ void MicDataProcessor::ProcessRawAudio(const ResampledAudioChunk& audioChunk)
   // If we aren't starting a block, we're finishing it - time to convert to a single channel
   if (!_inProcessAudioBlockFirstHalf && _audioSamplesToCollect != 0)
   {
+    // Don't both processing mic data if this is a factory build
+    #ifndef FACTORY_TEST
     // Process the current audio block with SE software
-    // static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
-    // AudioUtil::AudioChunk processedBlock;
-    // processedBlock.resize(kSamplesPerBlock);
-    // MMIfProcessMicrophones(dummySpeakerOut.data(), _inProcessAudioBlock.data(), processedBlock.data());
+    static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
+    AudioUtil::AudioChunk processedBlock;
+    processedBlock.resize(kSamplesPerBlock);
+    MMIfProcessMicrophones(dummySpeakerOut.data(), _inProcessAudioBlock.data(), processedBlock.data());
+    #endif
     
     if (kSaveAudio && _audioSamplesToCollect != 0)
     {
-      // _processedAudioData.push_back(std::move(processedBlock));
+      #ifndef FACTORY_TEST
+      _processedAudioData.push_back(std::move(processedBlock));
+      #endif
+
       _collectedAudioSamples += kSamplesPerBlock;
     }
   }
@@ -175,6 +181,7 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
       {
         // Create a packaged task to run fft asynchronously on a copy of the raw mic data
         // The result of the fft will be in availible in a future at some point
+        // Copy raw audio data since it gets moved into the saving thread later on
         std::packaged_task<std::vector<uint32_t>()> fftTask([data = _rawAudioData]() {
           std::vector<uint32_t> perChannelFFT;
 
@@ -195,8 +202,7 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
             // Run fft in place
             Fft::transform(fftArray);
             
-            // Keep track of the largest/most prominent value and index 
-            // from the fft
+            // Keep track of the largest/most prominent value and index from the fft
             // The index of the largest value will correspond to the most prominent
             // frequency in the audio data
             float    largestValue    = 0;
@@ -237,15 +243,15 @@ void MicDataProcessor::ProcessNextAudioChunk(const RawAudioChunk& audioChunk)
       _rawAudioData.clear();
     }
 
-    // if (!_resampledAudioData.empty())
-    // {
-    //   auto saveResampledWave = [dest = (writeLocationBase + kResampledFileExtension), data = std::move(_resampledAudioData)] () {
-    //     AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels);
-    //     PRINT_NAMED_INFO("MicDataProcessor.WriteResampledWaveFile", "%s", dest.c_str());
-    //   };
-    //   std::thread(saveResampledWave).detach();
-    //   _resampledAudioData.clear();
-    // }
+    if (!_resampledAudioData.empty())
+    {
+      auto saveResampledWave = [dest = (writeLocationBase + kResampledFileExtension), data = std::move(_resampledAudioData)] () {
+        AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels);
+        PRINT_NAMED_INFO("MicDataProcessor.WriteResampledWaveFile", "%s", dest.c_str());
+      };
+      std::thread(saveResampledWave).detach();
+      _resampledAudioData.clear();
+    }
 
     if (!_processedAudioData.empty())
     {
@@ -357,14 +363,12 @@ std::string MicDataProcessor::ChooseAndClearNextFileNameBase(std::string& out_de
   }
   
   // If number of files is less than max, name the file miccapture_0000_(filecount())
-  // if (fileNames.size() < _filesToStore)
-  // {
-    static int i = 0;
+  if (fileNames.size() < _filesToStore)
+  {
     std::ostringstream newNameStream;
-    newNameStream << kMicCapturePrefix << "0000_" << std::setfill('0') << std::setw(4) << i;
-    i++;
+    newNameStream << kMicCapturePrefix << "0000_" << std::setfill('0') << std::setw(4) << fileNames.size();
     return newNameStream.str();
-  // }
+  }
   
   // Otherwise:
   // Sort list of files
@@ -385,11 +389,9 @@ std::string MicDataProcessor::ChooseAndClearNextFileNameBase(std::string& out_de
   const auto seqStr = fileToReplace.substr(seqStrBegin, 4);
   
   // use increased iteration number and old seq number to make the new filename
-  {
-    std::ostringstream newNameStream;
-    newNameStream << kMicCapturePrefix << std::setfill('0') << std::setw(4) << (iterationNum + 1) << "_" << seqStr;
-    return newNameStream.str();
-  }
+  std::ostringstream newNameStream;
+  newNameStream << kMicCapturePrefix << std::setfill('0') << std::setw(4) << (iterationNum + 1) << "_" << seqStr;
+  return newNameStream.str();
 }
 
 std::string MicDataProcessor::GetProcessedFileNameFromRaw(const std::string& rawFileName)
@@ -419,7 +421,7 @@ void MicDataProcessor::RecordAudio(uint32_t duration_ms, std::string path, bool 
                    "Recording the next %u ms of audio",
                    duration_ms);
 
-  _audioSamplesToCollect = AudioUtil::kSampleRate_hz * (duration_ms / 1000);
+  _audioSamplesToCollect = AudioUtil::kSampleRate_hz * (duration_ms / 1000.f);
   
   _rawAudioData.clear();
 

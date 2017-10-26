@@ -24,14 +24,18 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-static const Pose3d kExpectedCubePose = Pose3d(0, Z_AXIS_3D(), {309, 0, 22}, "");
+  static const Pose3d kExpectedCubePose = Pose3d(0, Z_AXIS_3D(), 
+                                                 {PlaypenConfig::kExpectedCubePoseX_mm, 
+                                                  PlaypenConfig::kExpectedCubePoseY_mm, 
+                                                  22}, 
+                                                 "");
 
-// Rotation ambiguities for observed blocks.
-// We only care that the block is upright.
-static const RotationAmbiguities kBlockRotationAmbiguities(true, {
-  RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
-  RotationMatrix3d({0,1,0,  1,0,0,  0,0,1})
-});
+  // Rotation ambiguities for observed blocks.
+  // We only care that the block is upright.
+  static const RotationAmbiguities kBlockRotationAmbiguities(true, {
+    RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
+    RotationMatrix3d({0,1,0,  1,0,0,  0,0,1})
+  });
 }
 
 BehaviorPlaypenPickupCube::BehaviorPlaypenPickupCube(Robot& robot, const Json::Value& config)

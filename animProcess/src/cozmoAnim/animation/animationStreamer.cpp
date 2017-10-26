@@ -723,7 +723,10 @@ namespace Cozmo {
         _wasAnimationInterruptedWithNothing = false;
       }
       
-      // _trackLayerComponent->KeepFaceAlive(_liveAnimParams);
+      // Don't keep the face alive when running factory code
+      #ifndef FACTORY_TEST
+      _trackLayerComponent->KeepFaceAlive(_liveAnimParams);
+      #endif
     }
     
     if(_streamingAnimation != nullptr) {

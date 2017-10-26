@@ -103,10 +103,7 @@ namespace Anki
       const s32 ratio1Value_CD = maxDetCD << numFractionalBits;
       const s32 ratio2Value_CD = minDetCD*quadSymmetryThreshold;
       if(ratio1Value_AB >= ratio2Value_AB && ratio1Value_CD >= ratio2Value_CD)
-      {
-        
         return false;
-      }
 
       // Check if any of the corners are close to the edge of the image
       for(s32 i=0; i<4; i++) {

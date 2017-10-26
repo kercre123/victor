@@ -636,7 +636,6 @@ namespace Anki
         // NOTE: The output is not reordered like the matlab version, because the next step
         //       after ExtractLaplacianPeaks() or ExtractLineFitsPeaks() expects sorted corners.
       } else {
-//        PRINT_NAMED_WARNING("", "%zu", corners.size());
         corners.clear();
         
         for(s32 i=0; i<4; i++) {

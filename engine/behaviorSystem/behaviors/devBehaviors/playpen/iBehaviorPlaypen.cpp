@@ -8,7 +8,7 @@
  *              All Playpen behaviors should be written to be able to continue even after
  *              receiving unexpected things (basically conditional branches should only contain code
  *              that calls SET_RESULT) E.g. Even if camera calibration is outside our threshold we should
- *              still be able to continue running the rest through the rest of playpen.
+ *              still be able to continue running through the rest of playpen.
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -27,7 +27,7 @@ namespace Cozmo {
 namespace {
 
 // Set of messages that will immediately cause any playpen behaivor to end
-// Unless they have explicitly subscribed to the a message themselves and are expecting to see it
+// Unless they have explicitly subscribed to the message themselves and are expecting to see it
 static const std::set<ExternalInterface::MessageEngineToGameTag> kFailureTags = {
   ExternalInterface::MessageEngineToGameTag::RobotState,
   ExternalInterface::MessageEngineToGameTag::CliffEvent,
@@ -40,6 +40,7 @@ static const std::set<ExternalInterface::MessageEngineToGameTag> kFailureTags = 
 };
 
 // Static (shared) across all playpen behaviors
+// Maps a behavior name/idStr to a vector of results it has failed/completed with
 static std::map<std::string, std::vector<FactoryTestResultCode>> results;
 }
  
@@ -81,6 +82,7 @@ Result IBehaviorPlaypen::InitInternal(Robot& robot)
   
 BehaviorStatus IBehaviorPlaypen::UpdateInternal(Robot& robot)
 {
+  // Immediately stop the behavior if the result is not success
   if(_result != FactoryTestResultCode::UNKNOWN &&
      _result != FactoryTestResultCode::SUCCESS)
   {
@@ -214,6 +216,7 @@ void IBehaviorPlaypen::SubscribeToTags(std::set<EngineToGameTag>&& tags)
 
 bool IBehaviorPlaypen::StartActing(IActionRunner* action, SimpleCallback callback)
 {
+  // Caller is not checking the action result so fail if the action fails
   auto callbackWrapper = [this, callback](ActionResult result){
     if(result != ActionResult::SUCCESS)
     {
@@ -227,6 +230,8 @@ bool IBehaviorPlaypen::StartActing(IActionRunner* action, SimpleCallback callbac
 
 bool IBehaviorPlaypen::StartActing(IActionRunner* action, ActionResultCallback callback)
 {
+  // Caller is checking the action result so just print a warning on failure and let the
+  // caller deal with the action result
   auto callbackWrapper = [this, callback](ActionResult result){
     if(result != ActionResult::SUCCESS)
     {
@@ -242,6 +247,8 @@ bool IBehaviorPlaypen::StartActing(IActionRunner* action, ActionResultCallback c
 
 bool IBehaviorPlaypen::StartActing(IActionRunner* action, RobotCompletedActionCallback callback)
 {
+  // Caller is checking the rca so just print a warning on failure and let the
+  // caller deal with the rca
   auto callbackWrapper = [this, callback](const ExternalInterface::RobotCompletedAction& rca){
     if(rca.result != ActionResult::SUCCESS)
     {
@@ -255,7 +262,10 @@ bool IBehaviorPlaypen::StartActing(IActionRunner* action, RobotCompletedActionCa
   return IBehavior::StartActing(action, callbackWrapper);
 }
 
-void IBehaviorPlaypen::WriteToStorage(Robot& robot, NVStorage::NVEntryTag tag,const u8* data, size_t size,
+void IBehaviorPlaypen::WriteToStorage(Robot& robot, 
+                                      NVStorage::NVEntryTag tag,
+                                      const u8* data, 
+                                      size_t size,
                                       FactoryTestResultCode failureCode)
 {
   if(PlaypenConfig::kWriteToStorage)
@@ -265,7 +275,9 @@ void IBehaviorPlaypen::WriteToStorage(Robot& robot, NVStorage::NVEntryTag tag,co
   }
   else
   {
-    PRINT_NAMED_INFO("IBehaviorPlaypen.WriteToStorage.WritingNotEnabled", "");
+    PRINT_NAMED_INFO("IBehaviorPlaypen.WriteToStorage.WritingNotEnabled", 
+                     "Not writing to %s",
+                     EnumToString(tag));
   }
 }
   

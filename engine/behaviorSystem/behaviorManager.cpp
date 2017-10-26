@@ -370,9 +370,13 @@ Result BehaviorManager::InitConfiguration(const Json::Value &activitiesConfig)
                                                               activityJson))));
     }
     
-    // start with selection that defaults to Wait
+    #ifdef FACTORY_TEST
+    // Factory test starts in playpen activity
     SetCurrentActivity(HighLevelActivity::PlaypenTest, true);
-    // SetCurrentActivity(HighLevelActivity::Selection, true);
+    #else
+    // start with selection that defaults to Wait
+    SetCurrentActivity(HighLevelActivity::Selection, true);
+    #endif
   }
   else {
     // no activities config (e.g. unit test), so we aren't in freeplay

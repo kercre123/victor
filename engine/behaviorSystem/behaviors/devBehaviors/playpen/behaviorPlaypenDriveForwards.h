@@ -41,6 +41,9 @@ private:
   void TransitionToWaitingForBackCliffs(Robot& robot);
   void TransitionToWaitingForBackCliffUndetected(Robot& robot);
   
+  // Driving over the narrow cliff in playpen should trigger four cliff events
+  // First the front cliffs should be detected and then undetected, then the back cliffs should
+  // be detected and finally undetected
   enum State {
     NONE,
     WAITING_FOR_FRONT_CLIFFS,
@@ -49,6 +52,7 @@ private:
     WAITING_FOR_BACK_CLIFFS_UNDETECTED
   };
   State _waitingForCliffsState = NONE;
+
   bool _frontCliffsDetected = false;
   bool _backCliffsDetected = false;
   

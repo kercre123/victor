@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 09/22/17
  *
- * Description:
+ * Description: Turns towards a target marker and records a number of distance sensor readings
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -37,17 +37,33 @@ protected:
   
 private:
 
+  // If seeing the expected marker/object, turns us to be perpendicular to it
   void TransitionToRefineTurn(Robot& robot);
+
+  // Starts recording distance sensor readings
   void TransitionToRecordSensor(Robot& robot);
+
+  // Turns back to the starting angle
   void TransitionToTurnBack(Robot& robot);
   
+  // Gets the most recently observed marker pose (wrt robot) of the expected object
+  // Returns true if markerPoseWrtRobot is valid
   bool GetExpectedObjectMarkerPoseWrtRobot(Robot& robot,
                                            Pose3d& markerPoseWrtRobot);
   
+  // Initial starting angle when the behavior started
   Radians    _startingAngle               = 0;
+
+  // The angle to turn to be able to see the expected object/marker
   Radians    _angleToTurn                 = 0;
+
+  // The object type we expect to see after turning "_angleToTurn"
   ObjectType _expectedObjectType          = ObjectType::UnknownObject;
+
+  // The expected distance we should be seeing the expected object at
   f32        _expectedDistanceToObject_mm = 0;
+
+  // The number of distance sensor readings left to record
   int        _numRecordedReadingsLeft     = -1;
 };
 

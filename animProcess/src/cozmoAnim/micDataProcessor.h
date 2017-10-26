@@ -48,6 +48,8 @@ public:
   using RawAudioChunk = decltype(RobotInterface::AudioInput::data);
   void ProcessNextAudioChunk(const RawAudioChunk& audioChunk);
 
+  // Record the next duration_ms of audio and save it to path
+  // Optionally run fft on the recorded data
   void RecordAudio(uint32_t duration_ms = kDefaultAudioSamplesPerFile,
                    std::string path = "",
                    bool runFFT = false);
@@ -58,7 +60,7 @@ private:
   uint32_t _collectedAudioSamples = 0;
   uint32_t _audioSamplesToCollect = 0;
   
-  // uint32_t _filesToStore = kDefaultFilesToCapture;
+  uint32_t _filesToStore = kDefaultFilesToCapture;
   std::string _writeLocationDir = "";
   std::string _saveFilesPath = "";
 

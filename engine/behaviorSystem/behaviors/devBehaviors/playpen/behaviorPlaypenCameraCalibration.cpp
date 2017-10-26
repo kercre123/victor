@@ -37,8 +37,6 @@ static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
                                 319, 179,
                                 0.f,
                                 std::vector<f32>({0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f})));
-                                                    /*std::vector<f32>({-0.07f, -0.2f, 0.001f, 0.001f, 0.1f,
-                                                                      0.f, 0.f, 0.f}));*/
 #else
 // V2 Physical camera calibration
 static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(

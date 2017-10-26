@@ -14,7 +14,6 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-
 namespace Util {
   
 // ConsoleVar specialization for BodyColor
@@ -118,7 +117,6 @@ template<> void ConsoleVar<Cozmo::CustomObjectMarker>::ToggleValue() { _value = 
 }
 
 namespace Cozmo {
-
 namespace PlaypenConfig {
 
 WRAP_EXTERN_CONSOLE_VAR(bool,  kDisconnectAtEnd,      "Playpen");
@@ -170,6 +168,8 @@ WRAP_EXTERN_CONSOLE_VAR(f32, kTimeToWaitForCliffEvent_ms,      "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kToolCodeDistThreshX_pix, "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kToolCodeDistThreshY_pix, "Playpen");
 
+WRAP_EXTERN_CONSOLE_VAR(f32, kExpectedCubePoseX_mm,                "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(f32, kExpectedCubePoseY_mm,                "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kExpectedCubePoseDistThresh_mm,       "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kExpectedCubePoseHeightThresh_mm,     "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kExpectedCubePoseAngleThresh_rad,     "Playpen");

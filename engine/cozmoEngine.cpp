@@ -66,6 +66,9 @@
 
 #define MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING 100
 
+// Have engine autostart connection to robot
+// Skips waiting for ui devices (no webots) and automatically adds a robot to
+// the robot manager
 #define AUTOSTART 1
 
 namespace Anki {

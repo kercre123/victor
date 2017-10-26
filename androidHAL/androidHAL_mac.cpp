@@ -67,6 +67,8 @@ namespace Anki {
       std::vector<u8> imageBuffer_;
       TimeStamp_t cameraStartTime_ms_;
       TimeStamp_t lastImageCapturedTime_ms_;
+      
+      
     } // "private" namespace
 
 

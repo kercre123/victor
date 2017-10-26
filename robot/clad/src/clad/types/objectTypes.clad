@@ -109,9 +109,9 @@ namespace Cozmo {
     // Custom "fixed" object (i.e. obstacle)
     CustomFixedObstacle,
 
-Block_STAR5,
-Block_ARROW,
-Block_BULLSEYE2,
+    Block_STAR5,
+    Block_ARROW,
+    Block_BULLSEYE2,
 
   } // enum class ObjectType
   
@@ -158,9 +158,9 @@ Block_BULLSEYE2,
     CustomType18           = 0,
     CustomType19           = 0,
     CustomFixedObstacle    = 0,
-Block_BULLSEYE2 = 0,
-Block_STAR5 = 0,
-Block_ARROW = 0
+    Block_BULLSEYE2        = 0,
+    Block_STAR5            = 0,
+    Block_ARROW            = 0
   }
 
   enum_concept bool IsCharger[ObjectType] {
@@ -203,9 +203,9 @@ Block_ARROW = 0
     CustomType18           = 0,
     CustomType19           = 0,
     CustomFixedObstacle    = 0,
-Block_BULLSEYE2 = 0,
-Block_STAR5 = 0,
-Block_ARROW = 0
+    Block_BULLSEYE2        = 0,
+    Block_STAR5            = 0,
+    Block_ARROW            = 0
   }
   
 } // namespace Cozmo

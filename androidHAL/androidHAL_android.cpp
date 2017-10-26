@@ -180,6 +180,7 @@ namespace Anki {
     Result AndroidHAL::Update()
     {
       //ProcessIMUEvents();
+
       return RESULT_OK;
     }
     

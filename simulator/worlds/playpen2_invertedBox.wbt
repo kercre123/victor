@@ -54,19 +54,19 @@ Transform {
     Transform {
       rotation 0 0 1 0.78539816
       children [
-        CalibrationMarkerStructure2 {
+        CalibrationMarkerStructure_InvertedBox {
           translation -0.03 0 0.03
           rotation 0 0 1 1.5707963
           numCubes 4
           listOfMarkers "\"lightCubes/lightCubeJ_bottom.png\", \"lightCubes/lightCubeJ_front.png\", \"lightCubes/lightCubeJ_left.png\", \"\", \"lightCubes/lightCubeI_left.png\", \"lightCubes/lightCubeI_right.png\", \"lightCubes/lightCubeI_top.png\", \"lightCubes/lightCubeJ_back.png\",\"symbols/arrow.png\",\"lightCubes/lightCubeI_back.png\",\"lightCubes/lightCubeI_bottom.png\",\"lightCubes/lightCubeI_front.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\","
         }
-        CalibrationMarkerStructure2 {
+        CalibrationMarkerStructure_InvertedBox {
           translation -0.03 0.03 0.12
           rotation 0 1 0 -1.5707963
           numCubes 4
           listOfMarkers "\"customSDK/SDK_5Hexagons.png\", \"customSDK/SDK_4Triangles.png\", \"customSDK/SDK_5Triangles.png\", \"symbols/bullseye2.png\", \"customSDK/SDK_4Hexagons.png\", \"customSDK/SDK_4Circles.png, \"customSDK/SDK_4Diamonds.png\", \"symbols/stopWithHand.png\", \"customSDK/SDK_3Triangles.png\", \"customSDK/SDK_3Hexagons.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"customSDK/SDK_3Diamonds.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\","
         }
-        CalibrationMarkerStructure2 {
+        CalibrationMarkerStructure_InvertedBox {
           translation 0 0.03 0.03
           numCubes 4
           listOfMarkers "\"lightCubes/lightCubeK_top.png\", \"lightCubes/lightCubeK_right.png\", \"lightCubes/lightCubeK_left.png\", \"\", \"lightCubes/lightCubeK_bottom.png\", \"lightCubes/lightCubeK_back.png\", \"lightCubes/lightCubeJ_top.png\", \"customSDK/SDK_3Circles.png\", \"customSDK/SDK_2Triangles.png\", \"customSDK/SDK_2Hexagons.png\",\"customSDK/SDK_2Diamonds.png\",\"customSDK/SDK_2Circles.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\",\"symbols/stopWithHand.png\","

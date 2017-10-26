@@ -8,7 +8,7 @@
  *              All Playpen behaviors should be written to be able to continue even after
  *              receiving unexpected things (basically conditional branches should only contain code
  *              that calls SET_RESULT) E.g. Even if camera calibration is outside our threshold we should
- *              still be able to continue running the rest through the rest of playpen.
+ *              still be able to continue running through the rest of playpen.
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -32,7 +32,10 @@ namespace Cozmo {
     SetResult(result); \
     return; \
   } else { \
-    PRINT_NAMED_WARNING("IBehaviorPlaypen.IgnoringFailure", "Ignoring %s failure in behavior %s", EnumToString(result), GetIDStr().c_str()); \
+    PRINT_NAMED_WARNING("IBehaviorPlaypen.IgnoringFailure", \
+                        "Ignoring %s failure in behavior %s", \
+                        EnumToString(result), \
+                        GetIDStr().c_str()); \
     AddToResultList(result); \
   } \
 }
@@ -42,20 +45,18 @@ namespace Cozmo {
     SetResult(result); \
     return retval; \
   } else { \
-    PRINT_NAMED_WARNING("IBehaviorPlaypen.IgnoringFailure", "Ignoring %s failure in behavior %s", EnumToString(result), GetIDStr().c_str()); \
+    PRINT_NAMED_WARNING("IBehaviorPlaypen.IgnoringFailure", \
+                        "Ignoring %s failure in behavior %s", \
+                        EnumToString(result), \
+                        GetIDStr().c_str()); \
     AddToResultList(result); \
   } \
 }
   
-#define PLAYPEN_TRY(expr, result) { \
-                                    if(!(expr)) {PLAYPEN_SET_RESULT(result);}\
-                                  }
+#define PLAYPEN_TRY(expr, result) { if(!(expr)) {PLAYPEN_SET_RESULT(result);} }
   
 class FactoryTestLogger;
-namespace ExternalInterface {
-  class CameraCalibration;
-}
-  
+
 class IBehaviorPlaypen : public IBehavior
 {
 protected:
@@ -91,7 +92,7 @@ protected:
   // InternalUpdateInternal() is provided for the subclass to override if they wish
   virtual BehaviorStatus UpdateInternal(Robot& robot) override final;
   
-  // No playpen behavior can start when carrying an object
+  // No playpen behavior can start while carrying an object
   virtual bool CarryingObjectHandledInternally() const override { return false; }
   
   // Final override of HandleWhileRunning so we can do things before the subclass handles the event
@@ -119,11 +120,16 @@ protected:
   FactoryTestLogger& GetLogger() { return *_factoryTestLogger; }
   
   // Attempts to write to robot storage, if enabled, and will fail with failureCode if writing fails
-  void WriteToStorage(Robot& robot, NVStorage::NVEntryTag tag,const u8* data, size_t size,
+  void WriteToStorage(Robot& robot, 
+                      NVStorage::NVEntryTag tag,
+                      const u8* data, 
+                      size_t size,
                       FactoryTestResultCode failureCode);
   
   // Use the macro PLAYPEN_SET_RESULT if you can instead of directly calling this function
   void SetResult(FactoryTestResultCode result);
+
+  // Add the result to the static list of playpen behavior results
   void AddToResultList(FactoryTestResultCode result);
   
   // Adds a timer that will call the callback when time_ms has passed

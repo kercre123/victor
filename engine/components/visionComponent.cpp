@@ -420,8 +420,8 @@ namespace Cozmo {
         
         // Compress to jpeg and send to game and viz
         // Do this before setting next image since it swaps the image and invalidates it
-        // Result lastResult = CompressAndSendImage(_bufferedImg, 50, "camera");
-        // DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
+        Result lastResult = CompressAndSendImage(_bufferedImg, 50, "camera");
+        DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
         
         // Track how fast we are receiving frames
         if(_lastReceivedImageTimeStamp_ms > 0) {
@@ -478,6 +478,7 @@ namespace Cozmo {
       }
       else
       {
+        // These messages are too spammy, commenting out for now
         // PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
         //                "CapturedImageTime:%d NewestStateInHistory:%d",
         //                _bufferedImg.GetTimestamp(), _robot.GetStateHistory()->GetNewestTimeStamp());
@@ -2244,11 +2245,14 @@ namespace Cozmo {
          
         image_out.Save(fullFilename);
 
+        // Save the undistored image when running factory test
+        #ifdef FACTORY_TEST
         Vision::ImageRGB imgUndistorted(numRows,numCols);
         cv::undistort(image_out.get_CvMat_(), imgUndistorted.get_CvMat_(),
                       _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
                       _camera.GetCalibration()->GetDistortionCoeffs());
         imgUndistorted.Save("/data/misc/camera/test/" + std::to_string(imageId) + "_undistored.png");
+        #endif
 
         if (_imageSaveMode == ImageSendMode::SingleShot)
         {

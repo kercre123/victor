@@ -58,22 +58,22 @@ Transform {
       translation 0.1 -0.1244 0.208
       rotation 0 0 1 0.78540031
       children [
-        CalibrationMarkerStructure {
+        CalibrationMarkerStructure_Qbert {
           translation 0 -0.02 0.03
           numCubes 6
           listOfMarkers "\"\", \"customSDK/SDK_3Circles.png\", \"\", \"customSDK/SDK_5Circles.png\", \"customSDK/SDK_2Diamonds.png\", \"customSDK/SDK_3Diamonds.png\", \"customSDK/SDK_4Diamonds.png\", \"customSDK/SDK_5Diamonds.png\", \"customSDK/SDK_2Hexagons.png\", \"\", \"symbols/arrow.png\",\"\","
         }
-        CalibrationMarkerStructure {
+        CalibrationMarkerStructure_Qbert {
           translation 0 -0.04 0.05
           numCubes 7
           listOfMarkers "\"\", \"customSDK/SDK_5Hexagons.png\", \"\", \"customSDK/SDK_3Triangles.png\", \"customSDK/SDK_4Triangles.png\", \"customSDK/SDK_5Triangles.png\", \"symbols/bullseye2.png\", \"symbols/star5.png, \"lightCubes/lightCubeK_top.png\", \"lightCubes/lightCubeJ_front.png, \"customSDK/SDK_2Circles.png\", \"\",\"customSDK/SDK_4Hexagons.png\",\"\","
         }
-        CalibrationMarkerStructure {
+        CalibrationMarkerStructure_Qbert {
           translation 0 -0.06 0.07
           numCubes 8
           listOfMarkers "\"\", \"customSDK/SDK_2Triangles.png\", \"\", \"lightCubes/lightCubeJ_bottom.png\", \"\", \"lightCubes/lightCubeI_top.png\", \"lightCubes/lightCubeI_back.png\", \"lightCubes/lightCubeI_bottom.png\", \"lightCubes/lightCubeI_front.png\", \"lightCubes/lightCubeI_left.png\", \"lightCubes/lightCubeI_right.png\", \"customSDK/SDK_3Hexagons.png\", \"lightCubes/lightCubeJ_back.png\", \"\",\"customSDK/SDK_4Circles.png\",\"\","
         }
-        CalibrationMarkerStructure {
+        CalibrationMarkerStructure_Qbert {
           listOfMarkers "\"\", \"lightCubes/lightCubeJ_left.png\", \"lightCubes/lightCubeJ_right.png\", \"lightCubes/lightCubeJ_top.png\", \"lightCubes/lightCubeK_back.png\", \"lightCubes/lightCubeK_bottom.png\", \"lightCubes/lightCubeK_front.png\", \"lightCubes/lightCubeK_left.png\", \"lightCubes/lightCubeK_right.png\", \"\","
         }
       ]

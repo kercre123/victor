@@ -55,7 +55,7 @@ int main (void) {
   __enable_irq(); // Start firing interrupts
 
   // This is all driven by IRQ logic
-  // Opto::init();
+  Opto::init();
 
   // Clear boot code lights
   Lights::boot(0);

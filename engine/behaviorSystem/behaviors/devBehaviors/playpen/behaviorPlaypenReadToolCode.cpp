@@ -23,8 +23,7 @@ namespace Cozmo {
 BehaviorPlaypenReadToolCode::BehaviorPlaypenReadToolCode(Robot& robot, const Json::Value& config)
 : IBehaviorPlaypen(robot, config)
 {
-  IBehavior::SubscribeToTags(robot.GetID(),
-                             {RobotInterface::RobotToEngineTag::activeObjectAvailable});
+
 }
 
 Result BehaviorPlaypenReadToolCode::InternalInitInternal(Robot& robot)

@@ -42,10 +42,10 @@ private:
   void HandleRobotObservedObject(Robot& robot, const ExternalInterface::RobotObservedObject& msg);
 
   // Whether or not we are currently computing camera calibration
-  bool        _computingCalibration        = false;
+  bool _computingCalibration = false;
 
   // Whether or not we are currently seeing the target
-  bool        _seeingTarget                = false;
+  bool _seeingTarget         = false;
 };
 
 }

@@ -55,8 +55,7 @@ void TouchSensorComponent::Update(const RobotState& msg)
 {
   if(msg.backpackTouchSensorRaw > 1000)
   {
-    // PRINT_NAMED_WARNING("TOUCH TOO LARGE", "");
-    // return;
+    return;
   }
 
   // a circular buffer maintains the last touch intensity values in some constant time window
@@ -84,10 +83,7 @@ void TouchSensorComponent::Update(const RobotState& msg)
   {
     c = -1;
     kTouchIntensityThreshold = meanTouchIntensity + 30;
-    // kTouchIntensityThreshold = -1;
   }
-  
-  // PRINT_NAMED_WARNING("TOUCH INTENSITY", "%f", meanTouchIntensity);
 
   bool isBeingTouched     = meanTouchIntensity > kTouchIntensityThreshold;
   // const auto now          = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

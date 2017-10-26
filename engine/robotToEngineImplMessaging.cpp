@@ -203,7 +203,9 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                        const auto temp_degC = message.GetData().Get_imuTemperature().temperature_degC;
                                                        // This prints an info every time we receive this message. This is useful for gathering data
                                                        // in the prototype stages, and could probably be removed in production.
-                                                       // PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageImuTemperature", "IMU temperature: %.3f degC", temp_degC);
+                                                       #ifndef FACTORY_TEST
+                                                       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageImuTemperature", "IMU temperature: %.3f degC", temp_degC);
+                                                       #endif
                                                        robot->SetImuTemperature(temp_degC);
                                                      }));
   
@@ -821,8 +823,10 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
     return;
   }
   
-  // Stop whatever we were doing
-//  robot->GetBehaviorManager().RequestCurrentBehaviorEndImmediately("HandleRobotStopped");
+  // Stop whatever we were doing unless this is the factory test
+  #ifndef FACTORY_TEST
+  robot->GetBehaviorManager().RequestCurrentBehaviorEndImmediately("HandleRobotStopped");
+  #endif
   robot->GetActionList().Cancel();
   
   // Forward on with EngineToGame event

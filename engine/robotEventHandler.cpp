@@ -1323,15 +1323,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableLiftPower& 
     PRINT_NAMED_INFO("RobotEventHandler.HandleEnableLiftPower.LiftLocked",
                      "Ignoring ExternalInterface::EnableLiftPower while lift is locked.");
   } else {
-//    robot->GetMoveComponent().EnableLiftPower(msg.enable);
-    // Alt+Z
-    //robot->GetAnimationComponent().PlayAnimByName("anim_reacttocliff_edgeliftup_01", msg.enable ? 2 : 1 );
-    robot->GetAnimationComponent().PlayAnimByName("anim_sparking_earnsparks_01", msg.enable ? 2 : 1 );
-    //robot->GetAnimationComponent().PlayAnimByName(msg.enable ? "anim_bored_event_04" : "anim_bored_event_02" );
-    
-    robot->SendRobotMessage<RobotInterface::StartMotorCalibration>(true, true);
-    
-    return;
+    robot->GetMoveComponent().EnableLiftPower(msg.enable);
   }
 }
 

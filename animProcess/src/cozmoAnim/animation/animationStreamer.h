@@ -106,6 +106,7 @@ namespace Cozmo {
     void SetLockedTracks(u8 whichTracks)   { _lockedTracks = whichTracks; }
     bool IsTrackLocked(u8 trackFlag) const { return ((_lockedTracks & trackFlag) == trackFlag); }
 
+    // Lock or unlock an individual track
     void LockTrack(AnimTrackFlag track) { _lockedTracks |= (u8)track; }
     void UnlockTrack(AnimTrackFlag track) { _lockedTracks &= ~(u8)track; }
     

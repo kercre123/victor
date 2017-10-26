@@ -316,6 +316,8 @@ message SetBackpackLights
   uint_8 layer = 0      // 0 is BPL_USER
 }
 
+// Start recording the next duration_ms of audio and save it to path
+// Optionally run FFT on it afterwards
 message StartRecordingAudio 
 {
   uint_32 duration_ms,
@@ -330,6 +332,7 @@ structure ColorRGB
   uint_8 b
 }
 
+// Draw text on the screen
 message DrawTextOnScreen
 {
   ColorRGB textColor,

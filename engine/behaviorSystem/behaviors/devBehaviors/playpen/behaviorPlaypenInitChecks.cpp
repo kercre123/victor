@@ -31,27 +31,31 @@ BehaviorPlaypenInitChecks::BehaviorPlaypenInitChecks(Robot& robot, const Json::V
 
 Result BehaviorPlaypenInitChecks::InternalInitInternal(Robot& robot)
 {
-  
+  // Should not be seeing any cliffs
   if(robot.GetCliffSensorComponent().IsCliffDetectedStatusBitOn())
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CLIFF_UNEXPECTED, RESULT_FAIL);
   }
   
+  // Battery voltage should be relatively high as we are on the charger
   if(robot.GetBatteryVoltage() < PlaypenConfig::kMinBatteryVoltage)
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::BATTERY_TOO_LOW, RESULT_FAIL);
   }
   
+  // Make sure we are considered on the charger and charging
   if(!(robot.IsOnCharger() && robot.IsCharging()))
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CHARGER_UNDETECTED, RESULT_FAIL);
   }
   
+  // We should have been able to parse the firmware version header
   if(_failedToParseVersionHeader)
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::PARSE_HEADER_FAILED, RESULT_FAIL);
   }
   
+  // If this is a physical robot (not sim) check the firmware version and firmware build type
   if(robot.IsPhysical())
   {
     if(PlaypenConfig::kCheckFirmwareVersion &&
@@ -61,23 +65,16 @@ Result BehaviorPlaypenInitChecks::InternalInitInternal(Robot& robot)
     }
   }
   
+  // Body color should be valid
   if(robot.GetBodyColor() < PlaypenConfig::kMinBodyColor)
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::UNKNOWN_BODY_COLOR, RESULT_FAIL);
   }
   
-  auto callback = [this](NVStorage::NVResult res) {
-    if(res != NVStorage::NVResult::NV_OKAY)
-    {
-      PLAYPEN_SET_RESULT(FactoryTestResultCode::NVSTORAGE_ERASE_FAILED);
-    }
-    
-    _eraseComplete = true;
-  };
-  
-  if(!robot.GetNVStorageComponent().WipeFactory(callback))
+  // Erase all of playpen/factory related nvstorage
+  if(!robot.GetNVStorageComponent().WipeFactory())
   {
-    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::NVSTORAGE_SEND_FAILED, RESULT_FAIL);
+    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::NVSTORAGE_ERASE_FAILED, RESULT_FAIL);
   }
   
   robot.SendMessage(RobotInterface::EngineToRobot{RobotInterface::GetManufacturingInfo{}});
@@ -88,13 +85,13 @@ Result BehaviorPlaypenInitChecks::InternalInitInternal(Robot& robot)
 
 BehaviorStatus BehaviorPlaypenInitChecks::InternalUpdateInternal(Robot& robot)
 {
-  if(_gotMfgID && _hwVersion < PlaypenConfig::kMinHardwareVersion)
+  if(_gotMfgID)
   {
-    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRONG_BODY_HW_VERSION, BehaviorStatus::Failure);
-  }
-  
-  if(_eraseComplete && _gotMfgID)
-  {
+    if(_hwVersion < PlaypenConfig::kMinHardwareVersion)
+    {
+      PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRONG_BODY_HW_VERSION, BehaviorStatus::Failure);
+    }
+
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, BehaviorStatus::Complete);
   }
   

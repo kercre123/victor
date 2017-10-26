@@ -26,9 +26,7 @@ protected:
   friend class BehaviorContainer;
   BehaviorPlaypenReadToolCode(Robot& robot, const Json::Value& config);
   
-protected:
-  
-  virtual Result         InternalInitInternal(Robot& robot)   override;
+  virtual Result InternalInitInternal(Robot& robot)   override;
   
 private:
   

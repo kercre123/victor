@@ -59,9 +59,14 @@ Result BehaviorPlaypenDriftCheck::InternalInitInternal(Robot& robot)
 
 void BehaviorPlaypenDriftCheck::TransitionToPlayingSound(Robot& robot)
 {
+  // Set speaker volume to config value
   robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1, PlaypenConfig::kSoundVolume);
+
+  // Start recording mic audio of the sound and run an FFT on the audio to check that we actually heard the
+  // sound we played
+  const bool runFFT = true;
   robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingAudio(PlaypenConfig::kDurationOfAudioToRecord_ms,
-                                                                                      true,
+                                                                                      runFFT,
                                                                                       GetLogger().GetLogName()+"beep")));
 
   // Record intial starting orientation and after kIMUDriftDetectPeriod_ms check for drift
@@ -80,7 +85,7 @@ void BehaviorPlaypenDriftCheck::CheckDrift(Robot& robot)
 {
   f32 angleChange = std::fabsf((robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>() - _startingRobotOrientation).getDegrees());
   
-  // Write drift rate to robot
+  // Write drift rate and imu temperature change during drift detection period to robot
   IMUInfo imuInfo;
   imuInfo.driftRate_degPerSec = angleChange / (PlaypenConfig::kIMUDriftDetectPeriod_ms / 1000.f);
   _imuTemp.tempEnd_c = robot.GetImuTemperature();
@@ -126,7 +131,8 @@ void BehaviorPlaypenDriftCheck::StopInternal(Robot& robot)
 void BehaviorPlaypenDriftCheck::AlwaysHandle(const RobotToEngineEvent& event, const Robot& robot)
 {
   // TODO(Al): This message is asynchronous and could be handled after this behavior has completed
-  // need some way of having playpen fail if we never get this message
+  // need some way of having playpen fail if we never get this message. Playpen is long enough that
+  // this likely won't happen...
   const auto& tag = event.GetData().GetTag();
   if(tag == RobotInterface::RobotToEngineTag::audioFFTResult)
   {
