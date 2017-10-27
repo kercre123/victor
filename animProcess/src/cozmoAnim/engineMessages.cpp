@@ -77,8 +77,8 @@ namespace Messages {
   // Forward declarations
   extern "C" TimeStamp_t GetTimeStamp(void);
   
-  void ProcessMessageToRobot(const RobotInterface::EngineToRobot& msg);
-  void ProcessMessageToEngine(const RobotInterface::RobotToEngine& msg);
+  void ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg);
+  void ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg);
   extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
 
   
@@ -134,80 +134,97 @@ namespace Messages {
     }
   }
   
-  void ProcessMessageToRobot(const RobotInterface::EngineToRobot& msg)
+// ========== START OF PROCESSING MESSAGES FROM ENGINE ==========  
+
+  void ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
   {
     //PRINT_NAMED_WARNING("ProcessMessage.EngineToRobot", "%d", msg.tag);
-    
+    bool forwardToRobot = false;
     switch(msg.tag)
     {
-      // TODO: If this switch block becomes huge, we can auto-generate it with an emitter.
-      //       Most E2R messages will be ignored here though so it probably shouldn't be necessary.
-      //       OR the emitter could be smart and only create the switch for messages in a specific range of tags.
-      //#include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
-        
-      case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_lockAnimTracks:
-      {
-        //PRINT_NAMED_DEBUG("EngineMessages.ProcessMessageToRobot.LockTracks", "0x%x", msg.lockAnimTracks.whichTracks);
-        _animStreamer->SetLockedTracks(msg.lockAnimTracks.whichTracks);
-        return;
-      }
-        
-      case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_playAnim:
-      {
-        PRINT_NAMED_INFO("EngineMesssages.ProcessMessageToRobot.PlayAnim",
-                         "AnimID: %d, Tag: %d",
-                         msg.playAnim.animID, msg.playAnim.tag);
-        
-        _animStreamer->SetStreamingAnimation(msg.playAnim.animID, msg.playAnim.tag, msg.playAnim.numLoops);
-        return;
-      }
-      case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_abortAnimation:
-      {
-        PRINT_NAMED_WARNING("EngineMessages.ProcessMessageToRobot.AbortAnimNotHookedup",
-                            "Tag: %d",
-                            msg.abortAnimation.tag);
-        
-        // TODO: Need to hook this up to AnimationStreamer
-        //       Maybe _animStreamer->Abort(msg.abortAnimation.tag)?
-        return;
-      }
-        
-      case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_requestAvailableAnimations:
-      {
-        PRINT_NAMED_INFO("EngineMessages.RequestAvailableAnimations", "");
-        if (!_isDolingAnims) {
-          const auto& animIDToNameMap = _animStreamer->GetCannedAnimationContainer().GetAnimationIDToNameMap();
-          if (!animIDToNameMap.empty()) {
-            _nextAnimIDToDole =  animIDToNameMap.begin()->first;
-            _isDolingAnims = true;
-          } else {
-            PRINT_NAMED_WARNING("EngineMessages.RequestAvailableAnimations.NoAnimsAvailable", "");
-          }
-        } else {
-          PRINT_NAMED_WARNING("EngineMessages.RequestAvailableAnimations.AlreadyDoling", "");
-        }
-        return;
-      }
-        
-      case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_postAudioEvent:
-      case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_stopAllAudioEvents:
-      case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_postAudioGameState:
-      case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_postAudioSwitchState:
-      case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_postAudioParameter:
-      {
-        _audioInput->HandleEngineToRobotMsg(msg);
-        break;
-      }
-        
+      #include "clad/robotInterface/messageEngineToRobot_switch_from_0x50_to_0xAF.def"
+      
       default:
+        forwardToRobot = true;
         break;
     }
 
-    // Send message along to robot if it wasn't handled here
-    CozmoAnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
+    if (forwardToRobot) {
+      // Send message along to robot if it wasn't handled here
+      CozmoAnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
+    }
 
-  } // ProcessMessageToRobot()
+  } // ProcessMessageFromEngine()
 
+
+
+  void Process_lockAnimTracks(const Anki::Cozmo::RobotInterface::LockAnimTracks& msg)
+  {
+    //PRINT_NAMED_DEBUG("EngineMessages.Process_lockAnimTracks", "0x%x", msg.whichTracks);
+    _animStreamer->SetLockedTracks(msg.whichTracks);
+  }
+    
+  void Process_playAnim(const Anki::Cozmo::RobotInterface::PlayAnim& msg)
+  {
+    PRINT_NAMED_INFO("EngineMesssages.Process_playAnim",
+                     "AnimID: %d, Tag: %d",
+                     msg.animID, msg.tag);
+    
+    _animStreamer->SetStreamingAnimation(msg.animID, msg.tag, msg.numLoops);
+  }
+
+  void Process_abortAnimation(const Anki::Cozmo::RobotInterface::AbortAnimation& msg)
+  {
+    PRINT_NAMED_WARNING("EngineMessages.Process_abortAnimation.NotHookedup",
+                        "Tag: %d",
+                        msg.tag);
+    
+    // TODO: Need to hook this up to AnimationStreamer
+    //       Maybe _animStreamer->Abort(msg.abortAnimation.tag)?
+  }
+    
+  void Process_requestAvailableAnimations(const Anki::Cozmo::RobotInterface::RequestAvailableAnimations& msg)
+  {
+    PRINT_NAMED_INFO("EngineMessages.Process_requestAvailableAnimations", "");
+    if (!_isDolingAnims) {
+      const auto& animIDToNameMap = _animStreamer->GetCannedAnimationContainer().GetAnimationIDToNameMap();
+      if (!animIDToNameMap.empty()) {
+        _nextAnimIDToDole =  animIDToNameMap.begin()->first;
+        _isDolingAnims = true;
+      } else {
+        PRINT_NAMED_WARNING("EngineMessages.Process_requestAvailableAnimations.NoAnimsAvailable", "");
+      }
+    } else {
+      PRINT_NAMED_WARNING("EngineMessages.Process_requestAvailableAnimations.AlreadyDoling", "");
+    }
+  }
+
+  void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent& msg)
+  {
+    _audioInput->HandleMessage(msg);
+  }
+  void Process_stopAllAudioEvents(const Anki::AudioEngine::Multiplexer::StopAllAudioEvents& msg)
+  {
+    _audioInput->HandleMessage(msg);
+  }
+  void Process_postAudioGameState(const Anki::AudioEngine::Multiplexer::PostAudioGameState& msg)
+  {
+    _audioInput->HandleMessage(msg);
+  }
+  void Process_postAudioSwitchState(const Anki::AudioEngine::Multiplexer::PostAudioSwitchState& msg)
+  {
+    _audioInput->HandleMessage(msg);
+  }
+  void Process_postAudioParameter(const Anki::AudioEngine::Multiplexer::PostAudioParameter& msg)
+  {
+    _audioInput->HandleMessage(msg);
+  }
+  
+// ========== END OF PROCESSING MESSAGES FROM ENGINE ==========
+
+
+
+// ========== START OF PROCESSING MESSAGES FROM ROBOT ==========
 
   static void ProcessAudioInputMessage(const RobotInterface::AudioInput& payload)
   {
@@ -227,8 +244,9 @@ namespace Messages {
       micDataProcessor->ProcessNextAudioChunk(payload.data);
     }
   }
-  
-  void ProcessMessageToEngine(const RobotInterface::RobotToEngine& msg)
+
+
+  void ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg)
   {
     switch(msg.tag)
     {
@@ -248,7 +266,10 @@ namespace Messages {
     // Send up to engine
     const int tagSize = sizeof(msg.tag);
     SendToEngine(msg.GetBuffer()+tagSize, msg.Size()-tagSize, msg.tag);
-  } // ProcessMessageToEngine()
+  } // ProcessMessageFromRobot()
+
+
+// ========== END OF PROCESSING MESSAGES FROM ROBOT ==========
 
 
 // #pragma --- Message Dispatch Functions ---
@@ -334,7 +355,7 @@ namespace Messages {
         PRINT_NAMED_WARNING("Receiver.ReceiveData.SizeError", "Parsed message size error %d != %d (Tag %02x)", dataLen, msgBuf.Size(), msgBuf.tag);
         continue;
       }
-      ProcessMessageToEngine(msgBuf);
+      ProcessMessageFromRobot(msgBuf);
     }
   }
 
@@ -408,7 +429,7 @@ void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnecti
   }
   else
   {
-    Anki::Cozmo::Messages::ProcessMessageToRobot(msgBuf);
+    Anki::Cozmo::Messages::ProcessMessageFromEngine(msgBuf);
   }
 }
 

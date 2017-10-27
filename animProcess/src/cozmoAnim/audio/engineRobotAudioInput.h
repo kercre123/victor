@@ -27,13 +27,17 @@ class EngineRobotAudioInput : public AudioEngine::Multiplexer::AudioMuxInput {
   
 public:
   
-  void HandleEngineToRobotMsg(const RobotInterface::EngineToRobot& msg);
-  
   virtual void PostCallback( AudioEngine::Multiplexer::AudioCallbackDuration&& callbackMessage ) const override;
   virtual void PostCallback( AudioEngine::Multiplexer::AudioCallbackMarker&& callbackMessage ) const override;
   virtual void PostCallback( AudioEngine::Multiplexer::AudioCallbackComplete&& callbackMessage ) const override;
   virtual void PostCallback( AudioEngine::Multiplexer::AudioCallbackError&& callbackMessage ) const override;
   
+  virtual void HandleMessage( const AudioEngine::Multiplexer::PostAudioEvent& eventMessage ) override;
+  virtual void HandleMessage( const AudioEngine::Multiplexer::StopAllAudioEvents& stopEventMessage ) override;
+  virtual void HandleMessage( const AudioEngine::Multiplexer::PostAudioGameState& gameStateMessage ) override;
+  virtual void HandleMessage( const AudioEngine::Multiplexer::PostAudioSwitchState& switchStateMessage ) override;
+  virtual void HandleMessage( const AudioEngine::Multiplexer::PostAudioParameter& parameterMessage ) override;
+  virtual void HandleMessage( const AudioEngine::Multiplexer::PostAudioMusicState& musicStateMessage ) override;
 };
 
 

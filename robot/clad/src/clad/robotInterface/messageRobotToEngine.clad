@@ -17,7 +17,6 @@
 #include "clad/robotInterface/messageFromAnimProcess.clad"
 #include "clad/types/animationEvents.clad"
 #include "clad/types/pathEventTypes.clad"
-#include "clad/types/robotErrors.clad"
 #include "clad/types/factoryFWOnly.clad"
 
 
@@ -109,66 +108,89 @@ message AudioInput
  * 0xB0 and up going to the engine
  */
 union RobotToEngine {
-  // 0xB0 to 0xEF: Reliable messages to the Engine
-  MainCycleTimeError         mainCycleTimeError     = 0xB2,
-  GoalPose                   goalPose               = 0xB3,
-  ObjectMoved                activeObjectMoved      = 0xB4,
-  ObjectStoppedMoving        activeObjectStopped    = 0xB5,
-  ObjectTapped               activeObjectTapped     = 0xB6,
-  PickAndPlaceResult         pickAndPlaceResult     = 0xB8,
-  ObjectTappedFiltered       objectTappedFiltered   = 0xB9,
-  RampTraverseStart          rampTraverseStarted    = 0xBA,
-  RampTraverseComplete       rampTraverseCompleted  = 0xBB,
-  BridgeTraverseStart        bridgeTraverseStarted  = 0xBC,
-  BridgeTraverseComplete     bridgeTraverseCompleted= 0xBD,
-  TimeProfileStat            timeProfStat           = 0xBE,
-  IMUDataChunk               imuDataChunk           = 0xBF,
-  CliffEvent                 cliffEvent             = 0xC0,
-  PotentialCliff             potentialCliff         = 0xC1,
-  SyncTimeAck                syncTimeAck            = 0xC2,
-  RobotPoked                 robotPoked             = 0xC3,
-  FallingEvent               fallingEvent           = 0xC4,
-  MovingLiftPostDock         movingLiftPostDock     = 0xC5,
-  PathFollowingEvent         pathFollowingEvent     = 0xC6,
-  IMURawDataChunk            imuRawDataChunk        = 0xC7,
-  RobotAvailable             robotAvailable         = 0xC9,
-  AnimationStarted           animStarted            = 0xCA,   // V2: sent from anim process
-  AnimationEnded             animEnded              = 0xCB,   // V2: sent from anim process
-  ChargerMountComplete       chargerMountCompleted  = 0xCC,
-  //    FREE SLOT !!!                               = 0xCD,
-  ObjectPowerLevel           objectPowerLevel       = 0xCE,
-  //    FREE SLOT !!!                               = 0xCF,
-  ObjectConnectionState activeObjectConnectionState = 0xD0,
-  MotorCalibration           motorCalibration       = 0xD1,
-  FWVersionInfo              factoryFirmwareVersion = 0xD2, ///< DEPRECATED, only used by factory firmware
-  DockingStatus              dockingStatus          = 0xD3,
-  RobotStopped               robotStopped           = 0xD4,
-  AnimationEvent             animEvent              = 0xD5,
-  ObjectUpAxisChanged        activeObjectUpAxisChanged = 0xD7,
-  MotorAutoEnabled           motorAutoEnabled       = 0xD8,
-  RobotErrorReport           robotError             = 0xD9,
-  LiftLoad                   liftLoad               = 0xDA,
-  BackpackButton             backpackButton         = 0xDB,
-  EndOfMessage               endOfMessage           = 0xDC,
-  IMUTemperature             imuTemperature         = 0xDD,
+  // ==== 0xB0 to 0xEF: Reliable messages to the Engine ====
+  //               NOTE: Messages are currently only reliable between the 
+  //                     animation process and the engine.
+  //                     Everything between the anim and robot processes is UNRELIABLE!
 
-  // V2 Audio
+  // Init / Debug
+  SyncTimeAck                syncTimeAck            = 0xB0,
+  MainCycleTimeError         mainCycleTimeError     = 0xB1,
+  TimeProfileStat            timeProfStat           = 0xB2,
+
+  // Motors / Driving
+  MotorCalibration           motorCalibration       = 0xB3,
+  RobotStopped               robotStopped           = 0xB4,
+  MotorAutoEnabled           motorAutoEnabled       = 0xB5,
+  PathFollowingEvent         pathFollowingEvent     = 0xB6,
+
+  // Docking
+  GoalPose                   goalPose               = 0xB7,
+  DockingStatus              dockingStatus          = 0xB8,  
+  MovingLiftPostDock         movingLiftPostDock     = 0xB9,
+  LiftLoad                   liftLoad               = 0xBA,    
+  PickAndPlaceResult         pickAndPlaceResult     = 0xBB,
+  ChargerMountComplete       chargerMountCompleted  = 0xBC,  
+  RampTraverseStart          rampTraverseStarted    = 0xBD,
+  RampTraverseComplete       rampTraverseCompleted  = 0xBE,
+  BridgeTraverseStart        bridgeTraverseStarted  = 0xBF,
+  BridgeTraverseComplete     bridgeTraverseCompleted= 0xC0,
+
+  // Sensors
+  BackpackButton             backpackButton         = 0xC1,  
+  IMUDataChunk               imuDataChunk           = 0xC2,
+  IMURawDataChunk            imuRawDataChunk        = 0xC3,
+  IMUTemperature             imuTemperature         = 0xC4,
+  CliffEvent                 cliffEvent             = 0xC5,
+  PotentialCliff             potentialCliff         = 0xC6,
+  FallingEvent               fallingEvent           = 0xC7,
+  RobotPoked                 robotPoked             = 0xC8,
+  
+  // TODO: Can probably get rid of these eventually since engine
+  //       can access most of this info directly now.
+  FWVersionInfo              factoryFirmwareVersion = 0xC9, ///< DEPRECATED, only used by factory firmware
+  ManufacturingID            mfgId                  = 0xCB,
+  FirmwareVersion            firmwareVersion        = 0xCC,  
+
+  // TODO: These cube messages will need to be modified and moved to a 
+  //       separate file once we update block connection logic for BLE
+  ObjectConnectionState activeObjectConnectionState = 0xCD,
+  ObjectMoved                activeObjectMoved      = 0xCE,
+  ObjectStoppedMoving        activeObjectStopped    = 0xCF,
+  ObjectTapped               activeObjectTapped     = 0xD0,
+  ObjectTappedFiltered       objectTappedFiltered   = 0xD1,  
+  ObjectUpAxisChanged        activeObjectUpAxisChanged = 0xD2,
+  ObjectPowerLevel           objectPowerLevel       = 0xD3,
+
+  // Messages from animation process to engine
+  RobotAvailable             robotAvailable         = 0xD4,
+  AnimationEvent             animEvent              = 0xD5,
+  AnimationStarted           animStarted            = 0xD6,
+  AnimationEnded             animEnded              = 0xD7,
+  EndOfMessage               endOfMessage           = 0xD8,
+
+  // Audio
   AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,
   AudioEngine::Multiplexer::AudioCallbackMarker   audioCallbackMarker   = 0xE1,
   AudioEngine::Multiplexer::AudioCallbackComplete audioCallbackComplete = 0xE2,
   AudioEngine::Multiplexer::AudioCallbackError    audioCallbackError    = 0xE3,
 
-  ManufacturingID            mfgId                  = 0xED,
-  FirmwareVersion            firmwareVersion        = 0xEE,
 
-  //0xF0 to 0x FE: Unreliable message to the Engine
+  // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====
+  // From robot process
   RobotState                 state                  = 0xF0,
-  AnimationState             animState              = 0xF1,
-  ObjectAvailable            activeObjectAvailable  = 0xF3,
-  ImageImuData               imageGyro              = 0xF4,
-  ObjectAccel                objectAccel            = 0xF5,
-  AnimationAvailable         animationAvailable     = 0xF6,   // V2: sent from anim process
-  AudioInput                 audioInput             = 0xF7
+  ImageImuData               imageGyro              = 0xF1,
+
+  // From anim process  
+  AnimationAvailable         animationAvailable     = 0xF2,
+  AnimationState             animState              = 0xF3,  
+  AudioInput                 audioInput             = 0xF4,
+
+  // TODO: These cube messages will need to be modified and moved to a 
+  //       separate file once we update block connection logic for BLE
+  ObjectAvailable            activeObjectAvailable  = 0xF5,
+  ObjectAccel                objectAccel            = 0xF6,
+  
 }
 
 
