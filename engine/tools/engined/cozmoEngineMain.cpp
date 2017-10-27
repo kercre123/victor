@@ -161,7 +161,7 @@ int cozmo_start(const Json::Value& configuration)
 
   gDataPlatform = createPlatform(filesPath, cachePath, externalPath, resourcesPath);
 
-  logPrintLogger->Log(Anki::Util::AndroidLogPrintLogger::LogLevel::LOG_LEVEL_DEBUG, "resourcesPath: " + resourcesPath);
+  logPrintLogger->PrintLogD(LOGNAME, "CozmoStart.ResourcesPath", {}, resourcesPath.c_str());
 
   // Initialize logging
   #if DEV_LOGGER_ENABLED
