@@ -89,6 +89,10 @@ int main(void) {
   timer_init();
   Analog::init();
 
+  // We have passed pre-charge, go ahead and enable syscon battery power
+  POWER_EN::mode(MODE_INPUT);
+  POWER_EN::pull(PULL_UP);
+
   // If fingerprint is invalid, cert is invalid, or reset counter is zero
   // 1) Wipe flash
   // 2) Start recovery
@@ -106,10 +110,6 @@ int main(void) {
   }
 
   Analog::stop();
-
-  // We have passed recovery stage / pre-charge, go ahead and enable syscon battery power
-  POWER_EN::mode(MODE_INPUT);
-  POWER_EN::pull(PULL_UP);
 
   StartApplication(APP->stackStart, APP->resetVector);
 }
