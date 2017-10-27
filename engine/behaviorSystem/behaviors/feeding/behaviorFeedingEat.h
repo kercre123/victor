@@ -68,7 +68,7 @@ private:
   
   mutable ObjectID _targetID;
   float _timeCubeIsSuccessfullyDrained_sec;
-  bool  _hasRegisteredActionComplete;
+  bool  _hasNotifiedNeedsSystemOfDrain;
 
   State _currentState;
   
@@ -88,6 +88,8 @@ private:
 
   void CubeMovementHandler(Robot& robot, const float movementScore);
   AnimationTrigger CheckNeedsStateAndCalculateAnimation(Robot& robot);
+  
+  bool DidSuccessfullyDrainCube();
 
   // sets the target cube as invalid for future runs of the behavior (unless it is observed again);
   void MarkCubeAsBad(const Robot& robot);

@@ -330,8 +330,6 @@ void FeedingCubeController::UpdateCubeDrain(Robot& robot)
     _cubeStateTracker->_desiredAnimationTrigger = CubeAnimationTrigger::FeedingBlank;
     _cubeStateTracker->_desiredModifier = modifiableLights;
     _cubeStateTracker->_desiredModifierChanged = true;
-  }else if(_cubeStateTracker->_timeStartedDraining_s + _cubeStateTracker->_timeToDrainCube < currentTime_s){
-    ReInitializeController(robot);
   }
 }
 
