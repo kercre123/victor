@@ -144,8 +144,10 @@ class Victor {
         if (body) {
             size += body.length;
         }
-        const hdr = Buffer.from([size, msgID]);
-        const buf = Buffer.concat([hdr, body]);
+        var buf = Buffer.from([size, msgID]);
+        if (body) {
+            buf = Buffer.concat([buf, body]);
+        }
         if (buf.length > Victor.MSG_MAX_SIZE) {
             var off = 0;
             while (off < buf.length) {
