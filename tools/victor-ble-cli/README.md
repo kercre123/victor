@@ -1,9 +1,9 @@
 A Node.js app to talk to Victors over BLE
 
-## Prerequisites
+## Installation
 
 ```sh
-$ ./install-deps.sh
+$ ./install.sh
 ```
 
 ## Configuring WiFi
