@@ -93,7 +93,6 @@ var onBLEDiscover = function (peripheral) {
                 characteristics.forEach(function (char) {
                     switch (char.uuid) {
                     case '30619f2d0f5441bda65a7588d8c85b45':
-                        // char.notify();
                         receive = char;
                         break;
                     case '7d2a4bdad29b4152b7252491478c5cd7':
