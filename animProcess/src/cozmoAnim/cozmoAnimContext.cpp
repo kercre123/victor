@@ -32,7 +32,7 @@ CozmoAnimContext::CozmoAnimContext(Util::Data::DataPlatform* dataPlatform)
 {
   if (dataPlatform != nullptr)
   {
-    _micDataProcessor.reset(new MicDataProcessor(_dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata")));
+    _micDataProcessor.reset(new MicData::MicDataProcessor(_dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata")));
   }
   InitAudio(_dataPlatform);
 }

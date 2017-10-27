@@ -226,7 +226,7 @@ namespace Messages {
 
 // ========== START OF PROCESSING MESSAGES FROM ROBOT ==========
 
-  static void ProcessAudioInputMessage(const RobotInterface::AudioInput& payload)
+  static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
   {
     auto* micDataProcessor = _context->GetMicDataProcessor();
     if (micDataProcessor == nullptr)
@@ -250,10 +250,11 @@ namespace Messages {
   {
     switch(msg.tag)
     {
-      case RobotInterface::RobotToEngine::Tag_audioInput:
+      case RobotInterface::RobotToEngine::Tag_micData:
       {
-        const auto& payload = msg.audioInput;
-        ProcessAudioInputMessage(payload);
+        const auto& payload = msg.micData;
+        ProcessMicDataMessage(payload);
+        return;
       }
       break;
       default:
@@ -314,6 +315,8 @@ namespace Messages {
     MonitorConnectionState();
 
     DoleAvailableAnimations();
+    
+    _context->GetMicDataProcessor()->Update();
     
     // Process incoming messages from engine
     u32 dataLen;

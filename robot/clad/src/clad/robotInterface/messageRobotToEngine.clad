@@ -94,9 +94,9 @@ message LiftLoad
   bool hasLoad
 }
 
-message AudioInput
+message MicData
 {
-  int_16  data[320], // 80 samples of audio 4 channels
+  int_16  data[480], // 120 samples of audio 4 channels
   uint_32 sequenceID
 }
 
@@ -180,11 +180,11 @@ union RobotToEngine {
   // From robot process
   RobotState                 state                  = 0xF0,
   ImageImuData               imageGyro              = 0xF1,
+  MicData                    micData                = 0xF2,
 
   // From anim process  
-  AnimationAvailable         animationAvailable     = 0xF2,
-  AnimationState             animState              = 0xF3,  
-  AudioInput                 audioInput             = 0xF4,
+  AnimationAvailable         animationAvailable     = 0xF3,
+  AnimationState             animState              = 0xF4,
 
   // TODO: These cube messages will need to be modified and moved to a 
   //       separate file once we update block connection logic for BLE
