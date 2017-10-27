@@ -1079,3 +1079,19 @@ I2SPIError ICACHE_FLASH_ATTR i2spiGetErrorCode(int32_t* data)
   self.errorData = 0;
   return ret;
 }
+
+void ICACHE_FLASH_ATTR i2spiGetDebugTelemetry(uint16_t* videoQueued, uint16_t* dropCount,
+                            uint16_t* errCount, int16_t* integralDrift,
+                            uint16_t* rtipRxH, uint16_t* rtipRxT,
+                            uint16_t* rtipTxH, uint16_t* rtipTxT)
+{
+  videoQueued[0] = imageBuffers[0].length;
+  videoQueued[1] = imageBuffers[1].length;
+  *dropCount = self.dropRxCounter;
+  *errCount = self.txOverflowCount + self.rxOverflowCount + self.phaseErrorCount;
+  *integralDrift = self.integralDrift;
+  *rtipRxH = self.rtipBufferWind;
+  *rtipRxT = self.rtipBufferRind;
+  *rtipTxH = self.messageBufferWind;
+  *rtipTxT = self.messageBufferRind;
+}

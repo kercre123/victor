@@ -59,6 +59,9 @@
 namespace Anki {
 namespace Cozmo {
   
+CONSOLE_VAR(bool, kEnableWifiTelemetry, "RobotEventHandler", false);
+  
+  
 namespace{
 const int kBoundedWhileIdlePopLimit = 1000;
 }
@@ -1552,6 +1555,10 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionRe
       PRINT_NAMED_INFO("RobotEventHandler.HandleRobotConnectionResponse.QueueingSetReadyToStreamAnims", "");
       robot->GetNVStorageComponent().AddOneShotOnIdleCallback(callback);
       
+      if (kEnableWifiTelemetry) {
+        PRINT_NAMED_INFO("RobotEventHandler.HandleRobotConnectionResponse.EnablingWifiTelemetry", "");
+        robot->GetRobotMessageHandler()->EnableWifiTelemetry();
+      }
     }
   }
 }

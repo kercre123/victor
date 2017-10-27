@@ -10,6 +10,7 @@
 #include "osapi.h"
 #include "backgroundTask.h"
 #include "user_interface.h"
+#include "wifi_debugging.h"
 #include "driver/uart.h"
 #include "anki/cozmo/transport/IReceiver.h"
 #include "anki/cozmo/transport/reliableTransport.h"
@@ -63,6 +64,11 @@ bool clientCanTransmit(int bytes)
 uint32 clientDropCount(void)
 {
   return dropCount;
+}
+
+bool clientSendHoldoff(void)
+{
+  return sendHoldoff;
 }
 
 uint16 clientConnectCount(void)
@@ -334,4 +340,9 @@ void ProcessMessage(u8* buffer, u16 bufferSize);
 void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnection* conn)
 {
   ProcessMessage(buffer, bufferSize);
+}
+
+void Client_raw_send(uint8_t* data, uint16_t len)
+{
+  espconn_send(socket, data, len);
 }

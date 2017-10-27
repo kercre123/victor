@@ -1029,6 +1029,10 @@ namespace Anki {
       {
         // Nothing to do here
       }
+      void Process_enableWiFiTelemetry(const RobotInterface::EnableWiFiTelemetry&)
+      {
+        // Nothing to do here
+      }
       void Process_testState(const RobotInterface::TestState&)
       {
         // Nothing to do here

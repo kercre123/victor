@@ -22,6 +22,19 @@
 #include "util/transport/transportAddress.h"
 
 
+#ifdef LOG_WIFI_DBG_STATES
+#define DEBUG_WIFI_LOGGING 1
+#include "util/fileUtils/fileUtils.h"
+#include "util/helpers/templateHelpers.h"
+#include "util/time/universalTime.h"
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+static const uint8_t k_WifiTelemetryPacketHeaderPrefix[4] = {'W', 'D', 'B', 'G'};
+static const int kWifiLoggingLatencyTriggerThreshold_ms = 1000;
+#endif
+
+
 namespace Anki {
 namespace Util {
 
@@ -116,8 +129,7 @@ bool ReliableTransport::sTrackAckLatency = false;
 uint32_t ReliableTransport::sMaxPacketsToReSendOnAck = 1;
 uint32_t ReliableTransport::sMaxPacketsToSendOnSendMessage = 1;
   
-  
-ReliableTransport::ReliableTransport(IUnreliableTransport* unreliableTransport, INetTransportDataReceiver* dataReceiver)
+ReliableTransport::ReliableTransport(IUnreliableTransport* unreliableTransport, INetTransportDataReceiver* dataReceiver, const std::string& baseLogDir)
   : INetTransport(dataReceiver)
   , _unreliable(unreliableTransport)
   , _queue(Dispatch::create_queue, "RelTransport", ThreadPriority::High)
@@ -131,6 +143,19 @@ ReliableTransport::ReliableTransport(IUnreliableTransport* unreliableTransport, 
 {
   ChangeSyncMode(false);
   _unreliable->SetDataReceiver(this);
+  
+#ifdef LOG_WIFI_DBG_STATES
+  auto now = std::chrono::system_clock::now();
+  auto now_time = std::chrono::system_clock::to_time_t(now);
+  auto tm = *std::localtime(&now_time);
+
+  std::string wifiLogDir = baseLogDir + "/wifiLogs";
+  Util::FileUtils::CreateDirectory(wifiLogDir);
+  std::ostringstream sstr;
+  sstr << wifiLogDir << "/wifiDebugLog_" << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S") << ".log";
+  _wifiDebugLogFileName = sstr.str();
+  PRINT_NAMED_INFO("ReliableTransport.Ctor.WifiDebugLogging", "%s", _wifiDebugLogFileName.c_str());
+#endif
 }
   
 
@@ -139,6 +164,10 @@ ReliableTransport::~ReliableTransport()
   KillThread();
 
   ClearConnections();
+  
+#ifdef LOG_WIFI_DBG_STATES  
+  Util::SafeDelete(_stringizedBuffer);
+#endif
 }
   
   
@@ -468,9 +497,166 @@ void ReliableTransport::HandleSubMessage(const uint8_t* innerMessage, uint32_t i
   }
 }
 
+// ================= Start of Wifi debug logging =============
+#ifdef LOG_WIFI_DBG_STATES
+  
+void ReliableTransport::EnableWifiTelemetry() {
+  _wifiTelemetryEnabled = true;
+}
+  
+void ReliableTransport::WriteWifiDebugPacketToFile() {
+  
+  if (!_wifiTelemetryEnabled) {
+    return;
+  }
+  
+  // Dispatch in thread?
+  const double startTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  
+  // Compute phone time at start of buffer
+  int bufferTime_ms = startTime_ms - _wifiDebugBufferCnt * 100;
+  
+  // Find start and end index to write entire buffer to file
+  int endIdx = _wifiDebugWriteIndex - 1 < 0 ? NUM_STATES_IN_BUFFER - 1 : _wifiDebugWriteIndex - 1;
+  
+  int startIdx = _wifiDebugWriteIndex - _wifiDebugBufferCnt;
+  if (startIdx < 0) {
+    startIdx += NUM_STATES_IN_BUFFER;
+  }
 
+  // Write buffer to comma-separated string
+  int stringizedBufferSize = 0;
+  
+  // Add newline if the data to be written isn't continuous with last data written
+  if (_wifiDebugBufferCnt >= NUM_STATES_IN_BUFFER) {
+    stringizedBufferSize += sprintf(&_stringizedBuffer[stringizedBufferSize], "\n");
+  }
+
+  
+#define PRINT_STATE_HELPER(stateIdx)\
+  stringizedBufferSize += sprintf(&_stringizedBuffer[stringizedBufferSize], "%u, %u, ", bufferTime_ms, (int)gNetStat2LatencyAvg);\
+  bufferTime_ms += 100;\
+  for (auto it = _wifiDebugLogBuffer[stateIdx].begin(); it != _wifiDebugLogBuffer[stateIdx].end(); ++it) {\
+    stringizedBufferSize += sprintf(&_stringizedBuffer[stringizedBufferSize], "%u, ", *it);\
+  }\
+  stringizedBufferSize += sprintf(&_stringizedBuffer[stringizedBufferSize], "\n");
+  
+  if (endIdx < startIdx) {
+    for (int stateIdx = startIdx; stateIdx < NUM_STATES_IN_BUFFER; ++stateIdx) {
+      PRINT_STATE_HELPER(stateIdx)
+    }
+  }
+  for (int stateIdx = 0; stateIdx <= endIdx; ++stateIdx) {
+    PRINT_STATE_HELPER(stateIdx)
+  }
+  
+  // Write to file  
+  FILE* fd = fopen(_wifiDebugLogFileName.c_str(), "a");
+  size_t sizeWritten = fwrite(_stringizedBuffer, 1, stringizedBufferSize, fd);
+  if (sizeWritten != stringizedBufferSize) {
+    PRINT_NAMED_WARNING("ReliableTransport.WriteWifiDebugPacketToFile.FailedToWriteCompleteLog", "Requested %d bytes, wrote %zu bytes", stringizedBufferSize, sizeWritten);
+  }
+  fclose(fd);
+  
+#if(DEBUG_WIFI_LOGGING)
+  const double endTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  PRINT_NAMED_INFO("ReliableTransport.WriteWifiDebugPacketToFile",
+                   "Duration %f ms (%d entries ending at %f ms, %d fields per entry)",
+                   endTime_ms - startTime_ms, _wifiDebugBufferCnt, startTime_ms, _wifiDebugStateNumFields );
+#endif
+  
+  // Clear buffer
+  _wifiDebugBufferCnt = 0;
+  _wifiDebugWriteIndex = 0;
+}
+  
+void ReliableTransport::LogWifiDebugPacket(const uint8_t* buffer, unsigned int size) {
+  
+  // Should be expected size
+  if (size % (WIFI_DEBUG_STATES_PER_PAYLOAD * sizeof(uint16_t)) != 0) {
+    PRINT_NAMED_WARNING("ReliableTransport.LogWifiDebugPacket.UnexpectedSize",
+                        "Got %u which is not a multiple of %u",
+                        (unsigned int)size, (unsigned int)(WIFI_DEBUG_STATES_PER_PAYLOAD * sizeof(uint16_t)));
+    return;
+  }
+  
+  // Compute size of WifiDebugState struct
+  _wifiDebugStateSize = size / WIFI_DEBUG_STATES_PER_PAYLOAD;
+  _wifiDebugStateNumFields = _wifiDebugStateSize / sizeof(uint16_t);
+  
+  // Allocate stringize buffer
+  if (_stringizedBuffer == nullptr) {
+    _stringizedBuffer = new char[_wifiDebugStateSize * NUM_STATES_IN_BUFFER * MAX_NUM_CHARS_PER_FIELD];
+  }
+  
+  bool writeToFile = false;
+  uint16_t latestBadThingsCountInPayload = _lastBadThingsCount;
+  
+  // Write to buffer
+  uint16_t* buffPtr = (uint16_t*)buffer;
+  for (int recordIdx = 0; recordIdx < WIFI_DEBUG_STATES_PER_PAYLOAD; ++recordIdx) {
+    
+    // Update bad things count
+    latestBadThingsCountInPayload = buffPtr[0];
+    
+    // Copy data into buffer and increment pointer
+    _wifiDebugLogBuffer[_wifiDebugWriteIndex].resize(_wifiDebugStateNumFields);
+    memcpy(_wifiDebugLogBuffer[_wifiDebugWriteIndex].data(), buffPtr, _wifiDebugStateSize);
+    buffPtr += _wifiDebugStateNumFields;
+    
+    // Increment buffer index
+    if (++_wifiDebugWriteIndex >= NUM_STATES_IN_BUFFER) {
+      _wifiDebugWriteIndex = 0;
+    }
+    
+    // Increment buffer count
+    if (_wifiDebugBufferCnt < NUM_STATES_IN_BUFFER) {
+      ++_wifiDebugBufferCnt;
+    }
+  }
+  
+  // If badThings count changes then write to file
+  if (latestBadThingsCountInPayload != _lastBadThingsCount) {
+    writeToFile = true;
+  }
+  _lastBadThingsCount = latestBadThingsCountInPayload;
+
+  
+  // Trigger off high latency too
+  if (gNetStat2LatencyAvg > kWifiLoggingLatencyTriggerThreshold_ms) {
+    writeToFile = true;
+  }
+  
+  if (writeToFile) {
+    WriteWifiDebugPacketToFile();
+  }
+}
+#endif
+// ================= End of Wifi debug logging =============
+  
+  
 void ReliableTransport::ReceiveData(const uint8_t* buffer, unsigned int size, const TransportAddress& sourceAddress)
 {
+  
+#ifdef LOG_WIFI_DBG_STATES
+  // Check for wifi telemetry packet header
+  if (_wifiTelemetryEnabled && size >= sizeof(k_WifiTelemetryPacketHeaderPrefix)) {
+    bool isWifiTelemetryPacket = true;
+    for (int i=0; i < sizeof(k_WifiTelemetryPacketHeaderPrefix); ++i) {
+      if (buffer[i] != k_WifiTelemetryPacketHeaderPrefix[i]) {
+        isWifiTelemetryPacket = false;
+        break;
+      }
+    }
+    
+    if (isWifiTelemetryPacket) {
+      LogWifiDebugPacket(buffer + sizeof(k_WifiTelemetryPacketHeaderPrefix), size - sizeof(k_WifiTelemetryPacketHeaderPrefix));
+      return;
+    }
+  }
+#endif
+  
+  
   bool handledMessageType = false;
   
   // see if this is a message for our layer specifically
@@ -726,6 +912,10 @@ void ReliableTransport::Update()
       if (disconnectOnTimeout)
       {
         PRINT_CH_INFO("Network", "ReliableTransport.Update.ConnectionTimedOut", "Disconnecting TimedOut Connection to '%s'!", existingConnection->GetAddress().ToString().c_str());
+
+#ifdef LOG_WIFI_DBG_STATES
+        WriteWifiDebugPacketToFile();
+#endif
         
         #if ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
         {

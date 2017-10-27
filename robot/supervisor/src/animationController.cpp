@@ -82,6 +82,14 @@ namespace AnimationController {
 
   } // "private" members
 
+  void GetDebugInfo(u16* bufHead, u16* bufTail, bool* starved, bool* playing)
+  {
+    *bufHead = _currentBufferPos;
+    *bufTail = _lastBufferPos;
+    *starved = _isBufferStarved;
+    *playing = _isPlaying;
+  }
+
   Result Init()
   {
 #   if DEBUG_ANIMATION_CONTROLLER

@@ -35,7 +35,7 @@ class RobotConnectionData;
 
 class RobotConnectionManager : private Util::SignalHolder {
 public:
-  RobotConnectionManager(RobotManager* robotManager);
+  RobotConnectionManager(RobotManager* robotManager, const std::string& baseLogDir = "");
   virtual ~RobotConnectionManager();
   
   void Init();
@@ -56,6 +56,8 @@ public:
   const Anki::Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
   
   void SetReliableTransportRunMode(bool isSync);
+  
+  void EnableWifiTelemetry();
   
 private:
   void SendAndResetQueueStats();

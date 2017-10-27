@@ -92,6 +92,8 @@ namespace Anki {
       /// Resumes AnimationController normal operation
       void ResumeAndRestoreBuffer();
       
+      void GetDebugInfo(u16* bufHead, u16* bufTail, bool* starved, bool* playing);
+      
     } // namespace AnimationController
   } // namespace Cozmo
 } // namespace Anki

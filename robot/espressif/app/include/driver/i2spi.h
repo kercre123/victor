@@ -138,5 +138,10 @@ int32_t i2spiGetIntegralDrift(void);
 I2SPIError i2spiGetErrorCode(int32_t* data);
 ///log info about a desynch.
 void i2spiLogDesync(const u8* buffer, int buffer_bytes);
+/// Retrieve data to stuff into wifi debug struct
+void i2spiGetDebugTelemetry(uint16_t* videoQueued, uint16_t* dropCount,
+                            uint16_t* errCount, int16_t* integralDrift,
+                            uint16_t* rtipRxH, uint16_t* rtipRxT,
+                            uint16_t* rtipTxH, uint16_t* rtipTxT);
 
 #endif

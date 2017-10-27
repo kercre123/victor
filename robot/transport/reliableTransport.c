@@ -114,12 +114,7 @@ void ICACHE_FLASH_ATTR ReliableConnection_Init(ReliableConnection* self, void* d
 /// Add a reliable message to the pending reliable message queue
 static ICACHE_FLASH_ATTR bool QueueMessage(const uint8_t* buffer, const uint16_t bufferSize, ReliableConnection* connection, const EReliableMessageType messageType, const uint8_t tag)
 {
-  if (unlikely(connection->canary1 || connection->canary2 || connection->canary3))
-  {
-    printf("ERROR: ReliableConnection structure is corrupt! %x %x %x\r\n",
-           connection->canary1, connection->canary2, connection->canary3);
-    return false;
-  }
+  connection->txMessageCount++;
   if (unlikely(bufferSize+1 > ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE)) // + 1 for tag byte. Easier to assume it's there than check
   {
     //printf("ERROR: Reliable transport can't ever send message of %d bytes > MTU %d\r\n", bufferSize, (int)(ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE));
@@ -254,6 +249,8 @@ bool ICACHE_FLASH_ATTR SendTxBuf(ReliableConnection* connection)
   AnkiReliablePacketHeader* header = (AnkiReliablePacketHeader*)connection->txBuf;
   // Last thing we've received is one previous to the next thing we're expecting by definition
   header->lastReceivedId = PreviousSequenceId(connection->nextInSequenceId);
+
+  connection->txPacketCount++;
 
   if (UnreliableTransport_SendPacket(connection->txBuf, connection->txQueued) == false)
   {

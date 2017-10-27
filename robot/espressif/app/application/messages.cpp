@@ -18,6 +18,7 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 #include "wifi_configuration.h"
 #include "upgradeController.h"
 #include "crashReporter.h"
+#include "wifi_debugging.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
@@ -125,6 +126,11 @@ namespace Anki {
           case RobotInterface::EngineToRobot::Tag_appRunID:
           {
             setAppRunID(msg.appRunID.uuid);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_enableWiFiTelemetry:
+          {
+            wifi_debug_enable();
             break;
           }
           case RobotInterface::EngineToRobot::Tag_testState:
