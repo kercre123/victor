@@ -649,10 +649,10 @@ namespace CodeLab {
         float yaw = Mathf.Atan2(deviceAttitude.m00, deviceAttitude.m10);
         float roll = Mathf.Atan2(Mathf.Sqrt(deviceAttitude.m21 * deviceAttitude.m21 + deviceAttitude.m22 * deviceAttitude.m22), -deviceAttitude.m20);
 
-        // tweak roll so that facing upward is roll 0 instead of roll 90
-        roll -= Mathf.PI / 2;
-        if (roll < -Mathf.PI) {
-          roll += Mathf.PI * 2;
+        // Invert the roll (we want clockwise roll to be positive), and offset it so that facing upward is roll 0 instead of -90
+        roll = (Mathf.PI * 0.5f) - roll;
+        if (roll > Mathf.PI) {
+          roll -= Mathf.PI * 2.0f;
         }
 
         _LatestCozmoState.device.pitch_d = pitch * Mathf.Rad2Deg;
