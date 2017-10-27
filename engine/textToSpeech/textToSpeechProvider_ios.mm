@@ -116,7 +116,12 @@ namespace {
   password:(int)password
    license:(const char*)license
 {
-  @autoreleasepool
+  //
+  // COZMO-13392: Using AcapelaSpeech within @autoreleasepool leads to an application crash (EXC_BAD_ACCESS)
+  // after generating 10-20 audio samples.  It looks like there is an object internal to the class that is not
+  // retained correctly?  Workaround is to omit @autoreleasepool when working with AcapelaSpeech objects.
+  //
+  // NO @autoreleasepool
   {
   
     // Scan for new voices
@@ -168,24 +173,22 @@ namespace {
 shaping:(int)shaping
   pitch:(int)pitch
 {
-  @autoreleasepool
+  //NO @autoreleasepool (COZMO-13392)
   {
     DEV_ASSERT(nullptr != _acaTTS, "TextToSpeechProviderImpl.NoSpeechProvider");
     DEV_ASSERT(nullptr != str, "TextToSpeechProviderImpl.NoString");
     DEV_ASSERT(nullptr != path, "TextToSpeechProviderImpl.NoPath");
   
     LOG_DEBUG("TextToSpeechProviderImpl.GenerateAudioFile", "str=%s path=%s speed=%d shaping=%d pitch=%d",
-              Anki::Util::HidePersonallyIdentifiableInfo(str), path,
-              speed, shaping, pitch);
-  
+              Anki::Util::HidePersonallyIdentifiableInfo(str), path, speed, shaping, pitch);
+    
     NSString* nsstr = [NSString stringWithUTF8String:str];
     NSURL* nsurl = [NSURL fileURLWithFileSystemRepresentation:path isDirectory:NO relativeToURL:nil];
     NSString* nstype = @"pcm";
-  
+
     [_acaTTS setRate:speed];
     [_acaTTS setVoiceShaping:shaping];
     [_acaTTS setTTSSetting:@"SEL_PITCH" settingvalue:pitch];
-
   
     BOOL ok = [_acaTTS generateAudioFile:nsstr toURL:nsurl type:nstype sync:YES];
     if (!ok) {
@@ -240,7 +243,7 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
   using DataPlatform = Anki::Util::Data::DataPlatform;
   using Scope = Anki::Util::Data::Scope;
   
-  @autoreleasepool
+  //NO @autoreleasepool (COZMO-13392)
   {
     // Check for valid data platform before we do any work
     const DataPlatform * dataPlatform = context->GetDataPlatform();
@@ -321,7 +324,7 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
                                                  float durationScalar,
                                                  TextToSpeechProviderData& data)
 {
-  @autoreleasepool
+  //NO @autoreleasepool (COZMO-13392)
   {
     const auto before = std::chrono::steady_clock::now();
 
@@ -337,7 +340,7 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
 
     // Adjust base speed by scalar, then clamp to allowed range
     const float speed = AcapelaTTS::GetSpeechRate(_tts_speed, durationScalar);
-  
+
     Result result = [impl generateAudioFile:text.c_str()
                                        path:_path.c_str()
                                       speed:speed
