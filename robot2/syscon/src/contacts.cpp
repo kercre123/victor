@@ -36,6 +36,9 @@ void Contacts::init(void) {
   memset(&txData, 0, sizeof(ContactData));
   rxDataIndex = 0;
   txDataIndex = 0;
+  
+  static const ContactData boot_msg = {"\nbooted\n"};
+  Contacts::forward( boot_msg );
 }
 
 void Contacts::forward(const ContactData& pkt) {
