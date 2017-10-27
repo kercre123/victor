@@ -224,8 +224,13 @@ CozmoAPI::CozmoInstanceRunner::~CozmoInstanceRunner()
 
 void CozmoAPI::CozmoInstanceRunner::Run()
 {
-  using TimeClock = std::chrono::steady_clock;
+  using namespace std::chrono;
+  using TimeClock = steady_clock;
+
   const auto runStart = TimeClock::now();
+
+  // Set the target time for the end of the first frame
+  auto targetEndFrameTime = runStart + (microseconds)(BS_TIME_STEP_MICROSECONDS);
 
   while(_isRunning)
   {
@@ -233,26 +238,27 @@ void CozmoAPI::CozmoInstanceRunner::Run()
     
     const auto tickStart = TimeClock::now();
 
-    const std::chrono::duration<double> timeSeconds = tickStart - runStart;
-    const double timeNanoseconds = Util::SecToNanoSec(timeSeconds.count());
+    const duration<double> curTimeSeconds = tickStart - runStart;
+    const double curTimeNanoseconds = Util::SecToNanoSec(curTimeSeconds.count());
 
-    // If we fail to update properly stop running
-    if (!Update(Util::numeric_cast<BaseStationTime_t>(timeNanoseconds)))
+    const bool tickSuccess = Update(Util::numeric_cast<BaseStationTime_t>(curTimeNanoseconds));
+    if (!tickSuccess)
     {
+      // If we fail to update properly, stop running
       Stop();
     }
-    
-    static const auto minimumSleepTime_us = std::chrono::microseconds( (long)0 );
-    
-    const auto tickNow = TimeClock::now();
-    const auto tickDuration_us = std::chrono::duration_cast<std::chrono::microseconds>(tickNow - tickStart);
-    auto remaining_us = std::chrono::microseconds(BS_TIME_STEP_MICROSECONDS) - tickDuration_us;
-    //PRINT_NAMED_INFO("CozmoAPI.CozmoInstanceRunner", "tickDuration_us = %lld, remaining_us = %lld", tickDuration_us.count(), remaining_us());
 
-    // Only complain if we're more than 10ms overtime
-    if (remaining_us < std::chrono::microseconds(-10000))
+    const auto tickNow = TimeClock::now();
+    const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickNow);
+
+//    const auto tickDuration_us = duration_cast<microseconds>(tickNow - tickStart);
+//    PRINT_NAMED_INFO("CozmoAPI.CozmoInstanceRunner", "targetEndFrameTime:%8lld, tickDuration_us:%8lld, remaining_us:%8lld",
+//                     TimeClock::time_point(targetEndFrameTime).time_since_epoch().count(), tickDuration_us.count(), remaining_us.count());
+
+    // Only complain if we're more than 10ms behind
+    if (remaining_us < microseconds(-10000))
     {
-      PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) ran over by %.3fms",
+      PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) is behind by %.3fms",
                           BS_TIME_STEP, (float)(-remaining_us).count() * 0.001f);
     }
 
@@ -260,28 +266,37 @@ void CozmoAPI::CozmoInstanceRunner::Run()
       ANKI_CPU_PROFILE("CozmoApi.Runner.Sleep");
 
       // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
-      // allows other processes to run
-      if (remaining_us < minimumSleepTime_us)
-      {
-        remaining_us = minimumSleepTime_us;
-      }
-      std::this_thread::sleep_for(remaining_us);
+      // allows other threads to run
+      static const auto minimumSleepTime_us = microseconds((long)0);
+      std::this_thread::sleep_for(std::max(minimumSleepTime_us, remaining_us));
     }
 
-    // pterry 2017/10/25:  Consider a solution that attempts to even out spikes, e.g.
-    // when a tick goes way overtime, make the next tick have a lower budget.  Of
-    // course, with multiple consecutive spikes we'd probably need handle those in
-    // some sane way.
-    // Also, in reality, std::this_thread::sleep_for only guarantees to sleep for
-    // at least the amount of time specified; it can go over, and in my observations
-    // it is going over by a lot.  So what we really need here is to get tick-to-tick
-    // time and use that as the elapsed time.
+    // Set the target end time for the next frame
+    targetEndFrameTime += (microseconds)(BS_TIME_STEP_MICROSECONDS);
+
+    // See if we've fallen very far behind (this happens e.g. after a 5-second blocking
+    // load operation); if so, compensate by catching the target frame end time up somewhat.
+    // This is so that we don't spend the next SEVERAL frames catching up.
+    const auto timeBehind_us = -remaining_us;
+    static const auto kusPerFrame = ((microseconds)(BS_TIME_STEP_MICROSECONDS)).count();
+    static const int kTooFarBehindFramesThreshold = 4;
+    static const auto kTooFarBehindThreshold = (microseconds)(kTooFarBehindFramesThreshold * kusPerFrame);
+    if (timeBehind_us >= kTooFarBehindThreshold)
+    {
+      const int framesBehind = (int)(timeBehind_us.count() / kusPerFrame);
+      const auto forwardJumpDuration = kusPerFrame * framesBehind;
+      targetEndFrameTime += (microseconds)forwardJumpDuration;
+      PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.catchup",
+                          "Update was too far behind so moving target end frame time forward by an additional %.3fms",
+                          (float)(forwardJumpDuration * 0.001f));
+    }
+
+    // todo: Try to send 'EngineFreq' from here, rather than from within cozmoEngine.
   }
 }
 
 bool CozmoAPI::CozmoInstanceRunner::Update(const BaseStationTime_t currentTime_nanosec)
 {
-
   Result updateResult;
   {
     std::lock_guard<std::mutex> lock{_updateMutex};
