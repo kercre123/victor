@@ -1,0 +1,24 @@
+{
+  "behaviorID" : "Activity_SparksWorkout",
+  "behaviorClass" : "Activity_Sparked",
+  "requireSpark":"Workout",
+  "activityStrategy":
+  {
+    "type" : "Spark"
+  },
+  "behaviorChooser" :
+  {
+    "type" : "StrictPriority",
+    "behaviors" : [
+      "DriveOffCharger",
+      "KnockOverCubes",
+      "SparksCubeLiftWorkout",
+      "SparksLookInPlace"
+    ]
+  },
+  "minTimeSecs": 0,
+  "maxTimeSecs": 60,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "PerformedWorkout",
+  "softSparkTrigger": "SoftSparkUpgradeLift"
+}

@@ -1,0 +1,78 @@
+{
+  "behaviorID" : "Activity_NothingToDo",
+  "behaviorClass" : "Activity_BehaviorsOnly",
+  "behaviorChooser" :
+  {
+    "type" : "Scoring",
+    "behaviors" : [
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "ReactToObstacle",
+        "scoring"      :
+        {
+          "flatScore": 30
+        }
+      },
+      { "behaviorID" : "KnockOverCubes",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "PutDownBlockNothingToDo",
+        "scoring"      :
+        {
+          "flatScore": 1.1
+        }
+      },
+      { "behaviorID" : "NothingToDo_Idle",
+        "scoring"      :
+        {
+          "flatScore": 1.0
+        }
+      },
+      { "behaviorID" : "NothingToDo_BoredAnim",
+        "scoring"      :
+        {
+          "flatScore": 1.0,
+          // we set some repetition penalty so that we Idle normally after playing a bored-game sequence
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.5
+              },
+              {
+                "x": 9.0,
+                "y": 1.0
+              }
+            ]
+          }
+        }
+      }
+    ] // end behaviors []
+  },
+  "interludeBehaviorChooser": {
+    "type": "StrictPriority",
+    "behaviors": [
+      "EarnedSparks",
+      "Needs_SevereLowPlayBored",
+      "Needs_SevereLowPlayRequest",
+      "Needs_MildLowRepairRequest",
+      "Needs_MildLowEnergyRequest",
+      "Needs_MildLowPlayRequest"
+    ]
+  },
+  "activityStrategy":
+  {
+    "type" : "Simple",
+    // activities need to give up so that higher priority can take over. Give up as soon as we finish one
+    // iteration
+    "activityShouldEndDurationSecs" : 1.0,
+    "maxTimeWithoutInteractionSecs" : 0.0
+  }
+}

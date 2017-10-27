@@ -15,6 +15,8 @@
 #define __Cozmo_Basestation_BehaviorSystem_SevereNeedsComponent_H__
 
 #include "clad/types/needsSystemTypes.h"
+
+#include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
@@ -25,7 +27,7 @@ class Robot;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // SevereNeedsComponent
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class SevereNeedsComponent
+class SevereNeedsComponent : private Util::noncopyable
 {
 public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
