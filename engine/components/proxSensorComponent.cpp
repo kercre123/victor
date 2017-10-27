@@ -189,15 +189,14 @@ void ProxSensorComponent::UpdateNavMap()
     // build line for ray cast by getting the robot pose, casting forward by sensor reading
     const Vec3f offsetx_mm( (noObject) ? kMaxObsThreshold_mm 
                                        : fmin(_latestData.distance_mm, kMaxObsThreshold_mm), 0, 0);   
-    
-    const Pose3d  robotPos  = _robot.GetPose();
+
     const Pose3d  objectPos = _robot.GetPose() * Pose3d(0, Z_AXIS_3D(), offsetx_mm);    
     
     // clear out known free space
     INavMap* currentNavMemoryMap = _robot.GetMapComponent().GetCurrentMemoryMap();
     if ( currentNavMemoryMap ) {
       MemoryMapData clearRegion(INavMap::EContentType::ClearOfObstacle, lastTimestamp);
-      currentNavMemoryMap->AddLine(robotPos.GetTranslation(), objectPos.GetTranslation(), clearRegion);
+      currentNavMemoryMap->AddLine(_robot.GetPose().GetTranslation(), objectPos.GetTranslation(), clearRegion);
 
       // Add proxObstacle if detected and close to robot 
       if (_latestData.distance_mm <= kMaxObsThreshold_mm) { 
