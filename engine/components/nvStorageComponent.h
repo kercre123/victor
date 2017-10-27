@@ -213,7 +213,7 @@ private:
   
   // Only BehaviorFactoryTest should ever call this function since it is special and is writing factory data
   friend class BehaviorFactoryTest;
-  friend class ActivityPlaypenTest;
+  friend class BehaviorPlaypenTest;
   void EnableWritingFactory(bool enable) { _writingFactory = enable; }
   
 };

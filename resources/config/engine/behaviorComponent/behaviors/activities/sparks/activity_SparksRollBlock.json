@@ -1,0 +1,25 @@
+{
+  "behaviorID" : "Activity_SparksRollBlock",
+  "behaviorClass" : "Activity_Sparked",
+  "requireSpark":"RollCube",
+  "activityStrategy":
+  {
+    "type" : "Spark"
+  },
+  "behaviorChooser" :
+  {
+    "type" : "StrictPriority",
+    "behaviors" : [
+      "DriveOffCharger",
+      "KnockOverCubes",
+      "SparksRollBlock",
+      "SparksPutDownBlock",
+      "SparksLookInPlace"
+    ]
+  },
+  "minTimeSecs": 0,
+  "maxTimeSecs": 80,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "BlockRolled",
+  "softSparkTrigger": "SoftSparkUpgradeLift"
+}

@@ -15,6 +15,8 @@
 
 #include "anki/common/basestation/utils/timer.h"
 
+#include "util/helpers/noncopyable.h"
+
 #include <set>
 
 namespace Anki {
@@ -28,7 +30,7 @@ enum class FreeplayPauseFlag
   OnCharger
 };
 
-class FreeplayDataTracker
+class FreeplayDataTracker : private Util::noncopyable
 {
 public:
 

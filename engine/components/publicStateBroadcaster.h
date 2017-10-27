@@ -41,7 +41,6 @@ public:
   
   
   void Update(Robot& robot);
-  void UpdateActivity(ActivityID activityID);
   void UpdateBroadcastBehaviorStage(BehaviorStageTag stageType, uint8_t stage);
   
   void UpdateRequestingGame(bool isRequesting);

@@ -85,6 +85,10 @@ DesiredFaceDistortionComponent::Params::~Params()
 
 float DesiredFaceDistortionComponent::GetCurrentDesiredDistortion()
 {
+  // no repair-based eye distortion on Victor. Leave this code here because it may be used in another way
+  return -1.0f;
+
+  
   // Return the same distortion value for the duration of the tick
   const size_t tickCount = BaseStationTimer::getInstance()->GetTickCount();
   if(tickCount == _prevTickCount)

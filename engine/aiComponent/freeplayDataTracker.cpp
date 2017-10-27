@@ -133,10 +133,10 @@ void FreeplayDataTracker::SendData()
   const BaseStationTime_t currTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   
   // if we are currently active, then accumulate time now
-  if( IsActive() ) {
+  if( IsActive() && _countFreeplayFromTime_ns > 0 ) {
 
     // freeplay starts off disabled, so starting time should always be more than 0 nanoseconds
-    DEV_ASSERT(_countFreeplayFromTime_ns > 0, "FreeplayDataTracker.FreeplayStartedAtZero");
+    //DEV_ASSERT(_countFreeplayFromTime_ns > 0, "FreeplayDataTracker.FreeplayStartedAtZero");
     
     _timeData_ns += (currTime_ns - _countFreeplayFromTime_ns);
     PRINT_CH_DEBUG("Behaviors",

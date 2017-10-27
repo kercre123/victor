@@ -1,0 +1,26 @@
+{
+  "behaviorID" : "Activity_SparksPeekABoo",
+  "behaviorClass" : "Activity_Sparked",
+  "requireSpark":"PeekABoo",
+  "activityStrategy":
+  {
+    "type" : "Spark"
+  },
+  "behaviorChooser" :
+  {
+    "type" : "StrictPriority",
+    "behaviors" : [
+      "DriveOffCharger",
+      "SparksPutDownBlock",
+      "SparksPeekABoo",
+      "SparksFindFaces"
+    ]
+  },
+  "minTimeSecs": 0,
+  "maxTimeSecs": 30,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "PeekABooComplete",
+  "softSparkTrigger": "SoftSparkUpgradeLift",
+  "sparksSuccessTrigger": "", // don't play any animation
+  "sparksFailTrigger": "" // don't play any animation
+}
