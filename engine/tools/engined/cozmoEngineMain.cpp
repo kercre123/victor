@@ -38,7 +38,7 @@
 
 const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
 const char* VIZ_HOST_IP = "127.0.0.1";
-const char* LOGNAME = "CozmoEngine";
+const char* LOGNAME = "engine";
                                                                                                     
 Anki::Cozmo::CozmoAPI* gEngineAPI = nullptr;
 Anki::Util::Data::DataPlatform* gDataPlatform = nullptr;

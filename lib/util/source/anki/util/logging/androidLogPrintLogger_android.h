@@ -26,21 +26,21 @@ public:
     const std::vector<std::pair<const char * , const char *>>& keyValues,
     const char * eventValue)
   {
-      Log(LogLevel::LOG_LEVEL_EVENT, "Event", eventName, keyValues, eventValue);
+      Log(LogLevel::LOG_LEVEL_EVENT, eventName, keyValues, eventValue);
   }
 
   virtual void PrintLogE(const char * eventName,
     const std::vector<std::pair<const char *, const char *>>& keyValues,
     const char * eventValue)
   {
-      Log(LogLevel::LOG_LEVEL_ERROR, "Error", eventName, keyValues, eventValue);
+      Log(LogLevel::LOG_LEVEL_ERROR, eventName, keyValues, eventValue);
   }
 
   virtual void PrintLogW(const char* eventName,
     const std::vector<std::pair<const char *, const char *>>& keyValues,
     const char * eventValue)
   {
-      Log(LogLevel::LOG_LEVEL_WARN, "Warning", eventName, keyValues, eventValue);
+      Log(LogLevel::LOG_LEVEL_WARN, eventName, keyValues, eventValue);
   }
 
   virtual void PrintLogI(const char * channel,
@@ -64,6 +64,11 @@ public:
 
 private:
   std::string _tag;
+
+  void Log(LogLevel level,
+    const char * eventName, 
+    const std::vector<std::pair<const char *, const char *>>& keyValues,
+    const char * eventValue);
 
   void Log(LogLevel level, 
     const char * channel, 

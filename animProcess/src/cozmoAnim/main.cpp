@@ -47,7 +47,7 @@ int main(void)
   signal(SIGTERM, Cleanup);
   
   // - create and set logger
-  Util::AndroidLogPrintLogger logPrintLogger("CozmoAnim");
+  Util::AndroidLogPrintLogger logPrintLogger("anim");
   Util::gLoggerProvider = &logPrintLogger;
 
   // TODO: Load DataPlatform paths from json or however engine does it

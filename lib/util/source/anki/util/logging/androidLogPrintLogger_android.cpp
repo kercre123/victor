@@ -44,6 +44,14 @@ static android_LogPriority GetPriority(LogLevel level)
 }
 
 void AndroidLogPrintLogger::Log(LogLevel level, 
+  const char * eventName, 
+  const std::vector<std::pair<const char *, const char *>>& keyValues,
+  const char * eventValue)
+{
+  __android_log_print(GetPriority(level), _tag.c_str(), "%s: %s", eventName, eventValue);
+}
+
+void AndroidLogPrintLogger::Log(LogLevel level, 
   const char * channel, 
   const char * eventName, 
   const std::vector<std::pair<const char *, const char *>>& keyValues,
