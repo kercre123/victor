@@ -14,32 +14,29 @@
 #ifndef __Anki_Cozmo_Basestation_Components_CliffSensorComponent_H__
 #define __Anki_Cozmo_Basestation_Components_CliffSensorComponent_H__
 
-#include "anki/common/types.h"
+#include "engine/components/sensors/iSensorComponent.h"
 
 #include "clad/types/proxMessages.h"
 
-#include "util/helpers/noncopyable.h"
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
-namespace Util {
-  class RollingFileLogger;
-}
 class Pose3d;
 namespace Cozmo {
 
-class Robot;
-struct RobotState;
-
-class CliffSensorComponent : private Util::noncopyable
+class CliffSensorComponent : public ISensorComponent
 {
 public:
-
-  // constructor/destructor
   CliffSensorComponent(Robot& robot);
-  ~CliffSensorComponent();
+  ~CliffSensorComponent() = default;
 
-  void UpdateRobotData(const RobotState& msg);
+protected:
+  virtual void UpdateInternal(const RobotState& msg) override;
+  
+  virtual std::string GetLogHeader() override;
+  virtual std::string GetLogRow() override;
+
+public:
   
   bool IsCliffSensorEnabled() const { return _enableCliffSensor; }
   void SetEnableCliffSensor(const bool val) { _enableCliffSensor = val; }
@@ -71,8 +68,6 @@ public:
   // actually rises while it's stopping in reaction to the supposed cliff.
   void EvaluateCliffSuspiciousnessWhenStopped();
   
-  void EnableRawDataLogging(const uint32_t duration_ms);
-  
   uint32_t GetLastMsgTimestamp() const { return _lastMsgTimestamp; };
   
   bool ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d& cliffPose) const;
@@ -85,13 +80,9 @@ private:
   // Increments count of suspicious cliff. (i.e. Cliff was detected but data looks like maybe it's not real.)
   void IncrementSuspiciousCliffCount();
   
-  void LogRawData();
-  
   static unsigned int GetNumCliffSensors() { return Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT); }
   
 // members:
-  
-  Robot& _robot;
   
   bool _enableCliffSensor = true;
   bool _isCliffDetected = false;
@@ -113,11 +104,6 @@ private:
   f32             _cliffRunningMean    = 0.f;
   f32             _cliffRunningVar     = 0.f;
   f32             _cliffRunningVar_acc = 0.f;
-  
-  
-  std::unique_ptr<Util::RollingFileLogger> _rawDataLogger;
-  bool _loggingRawData = false;
-  float _logRawDataUntil_s = 0.f;
   
 };
 

@@ -18,10 +18,10 @@
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cliffSensorComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
-#include "engine/components/proxSensorComponent.h"
+#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
@@ -1648,7 +1648,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::LogRawCliffData& 
   if (nullptr == robot) {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleLogRawCliffData.InvalidRobotID", "Failed to find robot.");
   } else {
-    robot->GetCliffSensorComponent().EnableRawDataLogging(msg.length_ms);
+    robot->GetCliffSensorComponent().StartLogging(msg.length_ms);
   }
 }
 

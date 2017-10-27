@@ -34,7 +34,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cliffSensorComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"

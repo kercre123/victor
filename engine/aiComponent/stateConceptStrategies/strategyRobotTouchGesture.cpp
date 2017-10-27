@@ -14,7 +14,7 @@
 #include "engine/aiComponent/stateConceptStrategies/strategyRobotTouchGesture.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/components/touchSensorComponent.h"
+#include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 

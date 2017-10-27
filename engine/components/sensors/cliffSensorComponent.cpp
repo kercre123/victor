@@ -11,7 +11,7 @@
  *
  **/
 
-#include "engine/components/cliffSensorComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 
 #include "engine/components/movementComponent.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -19,15 +19,11 @@
 #include "engine/robotStateHistory.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
-
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
-#include "util/logging/rollingFileLogger.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -57,38 +53,47 @@ const f32 kCliffSensorSuspiciouslyCliffyFloorThresh = 10000;
 // began in order to be considered a suspicious cliff. (i.e. We might be on crazy carpet)
 const u16 kMinRiseDuringStopForSuspiciousCliff = 15;
 
-const std::string kLogDirectory = "sensorData/cliffSensors";
+const std::string kLogDirectory = "cliffSensors";
   
 } // end anonymous namespace
 
   
-CliffSensorComponent::CliffSensorComponent(Robot& robot)
-  : _robot(robot)
+CliffSensorComponent::CliffSensorComponent(Robot& robot) : ISensorComponent(robot, kLogDirectory)
   , _cliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL)
 {
   _cliffDataRaw.fill(std::numeric_limits<uint16_t>::max());
 }
-  
-CliffSensorComponent::~CliffSensorComponent() = default;
-  
-void CliffSensorComponent::UpdateRobotData(const RobotState& msg)
+
+
+void CliffSensorComponent::UpdateInternal(const RobotState& msg)
 {
   _cliffDataRaw = msg.cliffDataRaw;
   
   _cliffDetectedStatusBitOn = (msg.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED) != 0;
   
   _lastMsgTimestamp = msg.timestamp;
-  
-  // Log stuff if appropriate:
-  if (_loggingRawData) {
-    const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if (now < _logRawDataUntil_s) {
-      LogRawData();
-    } else {
-      _loggingRawData = false;
-      _logRawDataUntil_s = 0.f;
+}
+
+
+std::string CliffSensorComponent::GetLogHeader()
+{
+  return std::string("timestamp_ms, cliffFL, cliffFR, cliffBL, cliffBR");
+}
+
+
+std::string CliffSensorComponent::GetLogRow()
+{
+  std::string str;
+  str += std::to_string(GetLastMsgTimestamp()) + ", ";
+  const auto nSensors = GetNumCliffSensors();
+  for (int i=0 ; i < nSensors ; i++) {
+    str += std::to_string(GetCliffDataRaw(i));
+    // comma separate
+    if (i < nSensors - 1) {
+      str += ", ";
     }
   }
+  return str;
 }
   
 void CliffSensorComponent::SendCliffDetectThresholdToRobot(const u16 thresh)
@@ -211,40 +216,8 @@ void CliffSensorComponent::IncrementSuspiciousCliffCount()
     }
   }
 }
-  
-void CliffSensorComponent::EnableRawDataLogging(const uint32_t duration_ms)
-{
-  if (!_loggingRawData) {
-    _loggingRawData = true;
-    const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    _logRawDataUntil_s = now + static_cast<float>(duration_ms)/1000.f;
-    PRINT_NAMED_INFO("CliffSensorComponent.EnableRawDataLogging", "Starting raw cliff data logging, duration %d ms (log will appear in '%s')",
-                     duration_ms,
-                     _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, kLogDirectory).c_str());
-  }
-}
 
-void CliffSensorComponent::LogRawData()
-{
-  // Instantiate the logger if it doesn't exist yet
-  if (_rawDataLogger == nullptr) {
-    _rawDataLogger = std::make_unique<Util::RollingFileLogger>(nullptr, _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, kLogDirectory));
-  }
-  
-  std::string str;
-  str += std::to_string(GetLastMsgTimestamp()) + ", ";
-  const auto nSensors = GetNumCliffSensors();
-  for (int i=0 ; i < nSensors ; i++) {
-    str += std::to_string(GetCliffDataRaw(i));
-    // comma separate
-    if (i < nSensors - 1) {
-      str += ", ";
-    }
-  }
-  str += "\n";
-  _rawDataLogger->Write(str);
-}
-  
+
 bool CliffSensorComponent::ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d& cliffPose) const
 {
   if (cliffEvent.detectedFlags == 0) {

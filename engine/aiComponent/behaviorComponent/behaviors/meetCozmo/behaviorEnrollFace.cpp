@@ -22,7 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/cliffSensorComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"

@@ -10,23 +10,22 @@
  *
  **/
 
-#include "engine/components/touchSensorComponent.h"
+#include "engine/components/sensors/touchSensorComponent.h"
+
 #include "engine/externalInterface/externalInterface.h"
-#include "clad/types/touchGestureTypes.h"
 #include "engine/robot.h"
 
-// logging includes
-#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "util/logging/rollingFileLogger.h"
 
-#include <memory>
+#include "clad/types/touchGestureTypes.h"
+
+#include "util/container/circularBuffer.h"
 
 namespace Anki {
 namespace Cozmo {
   
 namespace {
-  const std::string kLogDirectory = "sensorData/touchSensor";
+  const std::string kLogDirectory = "touchSensor";
   
   const int kMaxBufferedStrokeCount = 3;
   
@@ -231,17 +230,13 @@ private:
 };
   
   
-TouchSensorComponent::TouchSensorComponent(Robot& robot)
-  : _robot(robot)
+  TouchSensorComponent::TouchSensorComponent(Robot& robot) : ISensorComponent(robot, kLogDirectory)
   , _touchGesture(TouchGesture::NoTouch)
-  , _rawDataLogger(nullptr)
 {
 }
-  
-  
-TouchSensorComponent::~TouchSensorComponent() = default;
-  
-void TouchSensorComponent::Update(const RobotState& msg)
+
+
+void TouchSensorComponent::UpdateInternal(const RobotState& msg)
 {
   const float kMaxTouchIntensityInvalid = 800;       // arbitrarily chosen for Victor-G
   const float kTouchIntensityThreshold = 560;        // arbitrarily chosen for Victor-G
@@ -264,71 +259,20 @@ void TouchSensorComponent::Update(const RobotState& msg)
   }
   
   _touchGesture = tgc.CalcTouchGesture();
-  
-  Log();
 }
 
 
-void TouchSensorComponent::StartLogging(const uint32_t duration_ms)
+std::string TouchSensorComponent::GetLogHeader()
 {
-  if (!_loggingRawData) {
-    _loggingRawData = true;
-    if (duration_ms != 0) {
-      const auto now     = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      _logRawDataUntil_s = now + static_cast<float>(duration_ms)/1000.f;
-    } else {
-      _logRawDataUntil_s = 0.f;
-    }
-    PRINT_NAMED_INFO("TouchSensorComponent.StartLogging.Start",
-                     "Starting touch sensor data logging, duration %d ms%s. Log will appear in '%s'",
-                     duration_ms,
-                     _logRawDataUntil_s == 0.f ? " (indefinitely)" : "",
-                     _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, kLogDirectory).c_str());
-  } else {
-    PRINT_NAMED_WARNING("TouchSensorComponent.StartLogging.AlreadyLogging", "Already logging raw data!");
-  }
-}
-  
-  
-void TouchSensorComponent::StopLogging()
-{
-  if (_loggingRawData) {
-    const auto now     = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    _logRawDataUntil_s = now;
-  } else {
-    PRINT_NAMED_WARNING("TouchSensorComponent.StopLogging.NotLogging", "Not logging raw data!");
-  }
+  return std::string("timestamp_ms, touchIntensity");
 }
 
-  
-void TouchSensorComponent::Log()
+
+std::string TouchSensorComponent::GetLogRow()
 {
-  if (!_loggingRawData) {
-    return;
-  }
-  
-  // check if logging is complete, based on specified duration
-  const auto now               = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const bool nonZeroLogEndTime = !NEAR_ZERO(_logRawDataUntil_s);
-  const bool nowPastLogEndTime = now >= _logRawDataUntil_s;
-  const bool loggerInit        = _rawDataLogger != nullptr;
-  if( loggerInit && nonZeroLogEndTime && nowPastLogEndTime ) {
-    _rawDataLogger->Flush();
-    _rawDataLogger.reset();
-    _loggingRawData = false;
-    return;
-  }
-  
-  // initialize logger
-  if (_rawDataLogger == nullptr) {
-    _rawDataLogger = std::make_unique<Util::RollingFileLogger>(nullptr, _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, kLogDirectory));
-    _rawDataLogger->Write("timestamp_ms, touchIntensity\n");
-  }
-  
-  // append new data to logger
   std::string str;
   // XXX(agm): figure out what to log
-  _rawDataLogger->Write(str);
+  return str;
 }
 
   

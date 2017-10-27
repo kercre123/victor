@@ -17,7 +17,7 @@
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
-#include "engine/components/cliffSensorComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"

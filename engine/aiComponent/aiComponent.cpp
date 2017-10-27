@@ -23,7 +23,7 @@
 #include "engine/aiComponent/requestGameComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/workoutComponent.h"
-#include "engine/components/proxSensorComponent.h"
+#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/cozmoContext.h"
