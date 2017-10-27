@@ -11,6 +11,7 @@ import (
 )
 
 var client = &http.Client{}
+var cloudTest func(buf []byte) *CloudResponse
 
 // CloudResponse holds data returned from the server each time audio is sent. Result
 // will be nil unless IsFinal is true, in which case Result should hold a valid CloudResult
@@ -51,6 +52,10 @@ const url = "https://127.0.0.1"
 // should be re-used multiple times until the returned CloudResponse has its IsFinal field
 // set to true, at which point a new session should be used for further audio requests.
 func (c *CloudContext) StreamData(buf []byte) *CloudResponse {
+	// test hook
+	if cloudTest != nil {
+		return cloudTest(buf)
+	}
 	// Create request
 	req, err := http.NewRequest("POST", url+"/1/stream-detect-intent", bytes.NewReader(buf))
 	if err != nil {

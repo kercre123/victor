@@ -113,7 +113,8 @@ func NewServerSocket(port int) (Socket, error) {
 			}
 			// catch handshake message for new clients
 			// (behavior defined by UdpServer.cpp)
-			isHandshake := addr != sock.addr && n == 1
+			sameAddress := addr != nil && sock.addr != nil && addr.String() == sock.addr.String()
+			isHandshake := !sameAddress && n == 1
 			sock.addr = addr
 			sock.ready = true
 			if !isHandshake {
