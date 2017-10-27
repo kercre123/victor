@@ -208,10 +208,10 @@ int mm_app_cache_ops(mm_camera_app_meminfo_t *mem_info,
   custom_data.cmd = (unsigned int)cmd;
   custom_data.arg = (unsigned long)&cache_inv_data;
   
-  CDBG("addr = %p, fd = %d, handle = %lx length = %d, ION Fd = %d",
-       cache_inv_data.vaddr, cache_inv_data.fd,
-       (unsigned long)cache_inv_data.handle, cache_inv_data.length,
-       mem_info->main_ion_fd);
+  // CDBG("addr = %p, fd = %d, handle = %lx length = %d, ION Fd = %d",
+  //      cache_inv_data.vaddr, cache_inv_data.fd,
+  //      (unsigned long)cache_inv_data.handle, cache_inv_data.length,
+  //      mem_info->main_ion_fd);
   if(mem_info->main_ion_fd > 0) {
     if(ioctl(mem_info->main_ion_fd, ION_IOC_CUSTOM, &custom_data) < 0) {
       ALOGE("%s: Cache Invalidate failed\n", __func__);

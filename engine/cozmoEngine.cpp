@@ -69,7 +69,11 @@
 // Have engine autostart connection to robot
 // Skips waiting for ui devices (no webots) and automatically adds a robot to
 // the robot manager
-#define AUTOSTART 1
+#ifdef FACTORY_TEST
+  #define AUTOSTART 1
+#else
+  #define AUTOSTART 0
+#endif
 
 namespace Anki {
 namespace Cozmo {
