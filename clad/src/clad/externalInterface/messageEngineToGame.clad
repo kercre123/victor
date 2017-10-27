@@ -11,7 +11,6 @@
 #include "clad/types/actionResults.clad"
 #include "clad/types/animationEvents.clad"
 #include "clad/types/behaviorComponent/behaviorObjectives.clad"
-#include "clad/types/behaviorComponent/behaviorTypes.clad"
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/deviceDataTypes.clad"
 #include "clad/types/engineErrorCodes.clad"
@@ -811,13 +810,13 @@ message SdkStatus {
 
 //notify the game that behavior has transitioned
 message BehaviorTransition{
-  BehaviorID oldBehaviorID,
-  BehaviorID newBehaviorID,
-  BehaviorClass oldBehaviorClass,
-  ExecutableBehaviorType oldBehaviorExecType,
-  BehaviorClass newBehaviorClass,
-  ExecutableBehaviorType newBehaviorExecType,
-  string newBehaviorDisplayKey
+  //BehaviorID oldBehaviorID,
+  //BehaviorID newBehaviorID,
+  //BehaviorClass oldBehaviorClass,
+  //ExecutableBehaviorType oldBehaviorExecType,
+  //BehaviorClass newBehaviorClass,
+  //ExecutableBehaviorType newBehaviorExecType,
+  //string newBehaviorDisplayKey
 }
 
 
@@ -827,12 +826,12 @@ message ReactionTriggerTransition{
 }
 
 message RespondAllBehaviorsList{
-  BehaviorID behaviors[uint_8]
+  //BehaviorID behaviors[uint_8]
 }
 
 
 message RespondReactionTriggerMap{
-  ReactionTriggerToBehavior reactionTriggerEntries[uint_8]
+  //ReactionTriggerToBehavior reactionTriggerEntries[uint_8]
 }
 
 message BehaviorObjectiveAchieved{

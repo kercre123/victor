@@ -413,9 +413,9 @@ namespace Anki {
     
     void UiGameController::HandleBehaviorTransitionBase(ExternalInterface::BehaviorTransition const& msg)
     {
-      PRINT_NAMED_INFO("HandleBehaviorTransition", "Received message that behavior changed from %s to %s",
-                       BehaviorIDToString(msg.oldBehaviorID),
-                       BehaviorIDToString(msg.newBehaviorID));
+      /**PRINT_NAMED_INFO("HandleBehaviorTransition", "Received message that behavior changed from %s to %s",
+                       msg.oldBehaviorID,
+                       msg.newBehaviorID);**/
       
       HandleBehaviorTransition(msg);
     }

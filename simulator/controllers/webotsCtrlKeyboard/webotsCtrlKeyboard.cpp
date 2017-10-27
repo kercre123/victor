@@ -1173,7 +1173,7 @@ namespace Anki {
                   const int numRuns = root_->getField("numBehaviorRuns")->getSFInt32();
                   BehaviorID behaviorID = BehaviorIDFromString(behaviorName);
                   SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::ExecuteBehaviorByID(behaviorID, numRuns)));
+                                ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(behaviorID), numRuns)));
                 }
                 else if(altKeyPressed)
                 {
@@ -2253,7 +2253,7 @@ namespace Anki {
                       
                       // Enable selection chooser and specify EnrollFace now that settings are sent
                       SendMessage(MessageGameToEngine(ActivateHighLevelActivity(HighLevelActivity::Selection)));
-                      SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorID::EnrollFace, -1)));
+                      SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::EnrollFace), -1)));
                     }
                     
                   } else {

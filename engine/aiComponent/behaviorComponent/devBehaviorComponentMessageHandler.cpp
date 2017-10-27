@@ -37,11 +37,12 @@ DevBehaviorComponentMessageHandler::DevBehaviorComponentMessageHandler(Robot& ro
     auto handlerCallback = [this, &bContainer](const GameToEngineEvent& event) {
       const auto& msg = event.GetData().Get_ExecuteBehaviorByID();
       
-      ICozmoBehaviorPtr behaviorToRun = bContainer.FindBehaviorByID(msg.behaviorID);
+      BehaviorID behaviorID = BehaviorIDFromString(msg.behaviorID);
+      ICozmoBehaviorPtr behaviorToRun = bContainer.FindBehaviorByID(behaviorID);
       if(behaviorToRun != nullptr){
         ICozmoBehaviorPtr rerunBehavior =
            WrapRequestedBehaviorInDispatcherRerun(bContainer,
-                                                  msg.behaviorID,
+                                                  behaviorID,
                                                   msg.numRuns);
         rerunBehavior->Init(_behaviorComponent._components->_behaviorExternalInterface);
         auto& subComps = _behaviorComponent._components;

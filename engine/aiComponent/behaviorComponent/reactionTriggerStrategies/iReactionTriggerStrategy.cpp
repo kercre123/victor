@@ -94,7 +94,7 @@ void IReactionTriggerStrategy::AlwaysHandle(const EngineToGameEvent& event, Beha
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IReactionTriggerStrategy::AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
-  switch(event.GetData().GetTag())
+  /**switch(event.GetData().GetTag())
   {
     case GameToEngineTag::ExecuteReactionTrigger:
     {
@@ -115,7 +115,7 @@ void IReactionTriggerStrategy::AlwaysHandle(const GameToEngineEvent& event, Beha
       AlwaysHandleInternal(event, _behaviorExternalInterface);
     }
     break;
-  }
+  }**/
 
 }
 

@@ -104,16 +104,16 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
   switch( event.GetData().GetTag() ) {
     case ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByID: {
       const ExternalInterface::ExecuteBehaviorByID& msg = event.GetData().Get_ExecuteBehaviorByID();
-      selectedBehavior = _behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID( msg.behaviorID );
+      selectedBehavior = _behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BehaviorIDFromString(msg.behaviorID) );
       _numRuns = msg.numRuns;
 
       if( selectedBehavior != nullptr ) {
         PRINT_NAMED_INFO("SelectionBehaviorChooser.HandleExecuteBehaviorByName.SelectBehavior",
-                         "selecting behavior name '%s'", BehaviorIDToString(msg.behaviorID));
+                         "selecting behavior name '%s'", msg.behaviorID.c_str());
       } else {
         PRINT_NAMED_WARNING("SelectionBehaviorChooser.HandleExecuteBehaviorByName.UnknownBehavior",
                             "Unknown behavior %s",
-                            BehaviorIDToString(msg.behaviorID));
+                            msg.behaviorID.c_str());
       }
 
       break;

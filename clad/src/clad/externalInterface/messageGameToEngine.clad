@@ -10,7 +10,6 @@
 #include "clad/externalInterface/messageToBehaviorManager.clad"
 #include "clad/types/actionTypes.clad"
 #include "clad/types/behaviorComponent/activityTypes.clad"
-#include "clad/types/behaviorComponent/behaviorTypes.clad"
 #include "clad/types/controllerChannels.clad"
 #include "clad/types/customObjectMarkers.clad"
 #include "clad/types/debugConsoleTypes.clad"
@@ -549,7 +548,7 @@ message ExecuteBehaviorByExecutableType {
 }
 
 message ExecuteBehaviorByID {
-  BehaviorID behaviorID,
+  string behaviorID,
   int_32 numRuns = -1 // Number of times to run the behavior (-1 is infinite)
 }
 
@@ -606,7 +605,7 @@ message RequestReactionTriggerMap {
 
 // Execute Reaction
 message ExecuteReactionTrigger {
-  ReactionTriggerToBehavior reactionTriggerToBehaviorEntry
+  //ReactionTriggerToBehavior reactionTriggerToBehaviorEntry
 }
 
 //disable all the affected triggers by locking them with the specified lockID

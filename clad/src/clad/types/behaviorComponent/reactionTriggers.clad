@@ -3,8 +3,6 @@
 // Created: 3/1/2017
 // Copyright: Anki, inc. 2017
 
-#include "clad/types/behaviorComponent/behaviorTypes.clad"
-
 namespace Anki {
 namespace Cozmo {
 
@@ -61,11 +59,11 @@ no_default_constructor structure AllTriggersConsidered {
   bool vc
 }
 
-structure ReactionTriggerToBehavior
-{
-  ReactionTrigger trigger,
-  BehaviorID behaviorID
-}
+// structure ReactionTriggerToBehavior
+//{
+//  ReactionTrigger trigger,
+//  BehaviorID behaviorID
+//}
 
 } // namespace Cozmo
 } // namespace Anki

@@ -155,7 +155,7 @@ ICozmoBehaviorPtr ScoringBehaviorChooser::GetDesiredActiveBehavior(BehaviorExter
 
     scoreData.behaviorScore = behavior->EvaluateScore(behaviorExternalInterface);
     scoreData.totalScore    = scoreData.behaviorScore;
-    VIZ_BEHAVIOR_SELECTION_ONLY( scoreData.behaviorID = behavior->GetID() );
+    //VIZ_BEHAVIOR_SELECTION_ONLY( scoreData.behaviorID = behavior->GetID() );
     
     if (scoreData.totalScore > 0.0f)
     {

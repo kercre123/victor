@@ -81,9 +81,9 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
     _externalInterface->Broadcast( GToE(ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)) );
     _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(ExecutableBehaviorType::Wait, -1)) );
       
-    ReactionTriggerToBehavior noneTrigger;
+    /**ReactionTriggerToBehavior noneTrigger;
     noneTrigger.trigger = ReactionTrigger::NoneTrigger;
-    _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteReactionTrigger(noneTrigger)) );
+    _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteReactionTrigger(noneTrigger)) );**/
   }
   
   // Do not put cubes to sleep for internal SDK

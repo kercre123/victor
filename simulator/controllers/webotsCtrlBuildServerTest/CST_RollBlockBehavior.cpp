@@ -122,7 +122,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
         SendMessage(ExternalInterface::MessageGameToEngine(
                       ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
         SendMessage(ExternalInterface::MessageGameToEngine(
-                      ExternalInterface::ExecuteBehaviorByID(kBehaviorID, -1)));
+                      ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(kBehaviorID), -1)));
         
         _behaviorStartedTime = GetSupervisor()->getTime();
         SET_TEST_STATE(DontStartBehavior);
@@ -260,16 +260,16 @@ void CST_RollBlockBehavior::HandleRobotCompletedAction(const ExternalInterface::
   
 void CST_RollBlockBehavior::HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg)
 {
-  PRINT_NAMED_INFO("CST_RollBlockBehavior.transition", "%s -> %s",
-                   BehaviorIDToString(msg.oldBehaviorID),
-                   BehaviorIDToString(msg.newBehaviorID));
+  /**PRINT_NAMED_INFO("CST_RollBlockBehavior.transition", "%s -> %s",
+                   msg.oldBehaviorID.c_str()),
+                   msg.newBehaviorID.c_str());
   
-  if(msg.oldBehaviorID == kBehaviorID) {
+  if(msg.oldBehaviorID == BehaviorIDToString(kBehaviorID) {
     _stoppedBehavior = true;
   }
-  if(msg.newBehaviorID == kBehaviorID) {
+  if(msg.newBehaviorID == BehaviorIDToString(kBehaviorID)) {
     _startedBehavior = true;
-  }
+  }**/
 }
 
 }
