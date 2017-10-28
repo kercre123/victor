@@ -123,7 +123,7 @@ BehaviorStatus BehaviorPlaypenCameraCalibration::InternalUpdateInternal(Behavior
       });
     }
     // Otherwise if we have a calibration image, start computing calibration
-    else if(robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 1)
+    else if(!IsActing() && robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 1)
     {
       robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
       _computingCalibration = true;

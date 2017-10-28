@@ -71,7 +71,10 @@ public:
   // Will be UNKNOWN while running and either SUCCESS or something else when complete
   FactoryTestResultCode GetResult() { return _result; }
   
-  void Reset(BehaviorExternalInterface& behaviorExternalInterface) { OnDeactivated(behaviorExternalInterface); _timers.clear(); _result = FactoryTestResultCode::UNKNOWN; }
+  void Reset(BehaviorExternalInterface& behaviorExternalInterface) { 
+    _timers.clear(); 
+    _result = FactoryTestResultCode::UNKNOWN; 
+  }
   
   static const std::map<std::string, std::vector<FactoryTestResultCode>>& GetAllPlaypenResults();
   static void ResetAllPlaypenResults();
@@ -116,7 +119,7 @@ protected:
   
   virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   
-  virtual BehaviorStatus InternalUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) { return ICozmoBehavior::BehaviorUpdate_Legacy(behaviorExternalInterface); }
+  virtual BehaviorStatus InternalUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) { return BehaviorStatus::Running; }
   
   virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
   

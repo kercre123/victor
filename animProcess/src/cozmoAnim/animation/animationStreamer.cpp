@@ -434,7 +434,7 @@ namespace Cozmo {
     Result lastResult = RESULT_OK;
     
     // Add more stuff to send buffer from various layers
-    while(_trackLayerComponent->HaveLayersToSend())
+    if(_trackLayerComponent->HaveLayersToSend())
     {
       // We don't have an animation but we still have procedural layers to so
       // apply them

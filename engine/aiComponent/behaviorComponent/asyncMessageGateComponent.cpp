@@ -185,8 +185,8 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
   }
   
   for(auto& tag: tags){
-    auto tagIter = _gameToEngineTags.find(tag);
-    if(tagIter == _gameToEngineTags.end()){
+    auto tagIter = _gameToEngineSubscribers.find(tag);
+    if(tagIter == _gameToEngineSubscribers.end()){
       std::set<IBehavior*> subscribers = {subscriber};
       _gameToEngineSubscribers[tag] = subscribers;
       _eventHandles.push_back(_externalInterface->Subscribe(tag,
@@ -211,8 +211,8 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
   }
   
   for(auto& tag: tags){
-    auto tagIter = _engineToGameTags.find(tag);
-    if(tagIter == _engineToGameTags.end()){
+    auto tagIter = _engineToGameSubscribers.find(tag);
+    if(tagIter == _engineToGameSubscribers.end()){
       std::set<IBehavior*> subscribers = {subscriber};
       _engineToGameSubscribers[tag] = subscribers;
       _eventHandles.push_back(_externalInterface->Subscribe(tag,
@@ -238,8 +238,8 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
     return;
   }
   for(auto& tag: tags){
-    auto tagIter = _robotToEngineTags.find(tag);
-    if(tagIter == _robotToEngineTags.end()){
+    auto tagIter = _robotToEngineSubscribers.find(tag);
+    if(tagIter == _robotToEngineSubscribers.end()){
       std::set<IBehavior*> subscribers = {subscriber};
       _robotToEngineSubscribers[tag] = subscribers;
       
