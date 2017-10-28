@@ -112,7 +112,7 @@ Result IBehaviorDispatcher::OnBehaviorActivated(BehaviorExternalInterface& behav
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehaviorDispatcher::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehaviorDispatcher::OnCozmoBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   BehaviorDispatcher_OnDeactivated(behaviorExternalInterface);
 }

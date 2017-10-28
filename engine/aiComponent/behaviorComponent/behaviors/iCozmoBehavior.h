@@ -142,7 +142,10 @@ public:
     
   // This behavior was active, but is now stopping (to make way for a new current
   // behavior). Any behaviors from DelegateIfInControl will be canceled.
-  void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) final override;
+
+  // optional override for child classes to be called when they are deactivated
+  virtual void OnCozmoBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) {}
 
   
   // Prevents the behavior from calling a callback function when ActionCompleted occurs
