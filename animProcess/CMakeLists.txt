@@ -51,8 +51,6 @@ target_link_libraries(victor_anim
   ${SIGNALESSENCE_LIBS}
   ${SPEEXDSP_LIBS}
   # platform
-  PUBLIC
-  # these need to be public until we remove android-specific classes from androidHAL.h
   ${PLATFORM_LIBS}
 )
 
