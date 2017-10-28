@@ -78,7 +78,9 @@ protected:
 private:
 
   enum class StateID {
+    
     ObservingOnCharger,
+    ObservingOnChargerRecentlyPlaced,
     DriveOffChargerIntoObserving,
     Observing,
     Feeding,

@@ -31,6 +31,7 @@ namespace Cozmo {
 namespace {
 
 static constexpr const float kFeedingTimeout_s = 30.0f;
+static constexpr const float kRecentlyPlacedChargerTimeout_s = 60.0f * 10;
 
 // TODO:(bn) move somewhere else
 class TimeoutCondition : public ICondition
@@ -178,6 +179,17 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoObservingOnChargerState);
+    DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingOnChargerState");
+
+    State state(StateID::ObservingOnChargerRecentlyPlaced, behavior);
+    state.AddInterruptingTransition(StateID::Observing, CondOffCharger);
+    state.AddNonInterruptingTransition(StateID::ObservingOnCharger,
+                                       std::make_shared<TimeoutCondition>(kRecentlyPlacedChargerTimeout_s));
+    AddState(std::move(state));
+  }
+
+  {
     ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::DriveOffCharger);
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingDriveOffCharger");
 
@@ -191,7 +203,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingState");
 
     State observing(StateID::Observing, behavior);
-    observing.AddInterruptingTransition(StateID::ObservingOnCharger, CondOnCharger);
+    observing.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
     observing.AddInterruptingTransition(StateID::Feeding, CondCanEat);
     AddState(std::move(observing));
   }
@@ -202,6 +214,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
 
     State feeding(StateID::Feeding, behavior);
     feeding.AddNonInterruptingTransition(StateID::Observing, std::make_shared<TimeoutCondition>(kFeedingTimeout_s));
+    feeding.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
 
     if( _feedingCompleteCondition ) {
       feeding.AddNonInterruptingTransition(StateID::Observing, _feedingCompleteCondition);
@@ -330,6 +343,8 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
 void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& behaviorExternalInterface,
                                                     const StateID targetState)
 {
+
+  // TODO:(bn) don't de- and re-activate behaviors if switching states doesn't change the behavior
   
   if( _currState != StateID::Count ) {
     _states.at(_currState).OnDeactivated();
