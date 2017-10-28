@@ -543,7 +543,7 @@ message ActivateHighLevelActivity {
 
 // ExecuteBehavior
 message ExecuteBehaviorByExecutableType {
-  string behaviorType,
+  ExecutableBehaviorType behaviorType,
   int_32 numRuns = -1 // Number of times to run the behavior (-1 is infinite)
 }
 
