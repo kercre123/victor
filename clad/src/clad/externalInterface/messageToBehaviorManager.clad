@@ -3,7 +3,6 @@
 // Created: 01/25/16
 // Copyright: Anki Inc (c) 2016
 
-#include "clad/types/behaviorComponent/behaviorTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/audio/audioStateTypes.clad"
 #include "clad/audio/audioSwitchTypes.clad"
