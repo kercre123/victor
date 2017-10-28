@@ -976,28 +976,28 @@
     "translation" : "囲まれたコードをプログラムが停止するまで無制限に繰り返します。トラブルシューティング：作成したコードが重いですか？無制限のループに短い「待機」ブロックを追加してみてください。コードにも休憩時間が必要な場合があります。"
   },
   "codeLabGlossary.block_definitions.title.control_if" : {
-    "translation" : "<condition>の場合[A]"
+    "translation" : "<コンディション>の場合[A]"
   },
   "codeLabGlossary.block_definitions.description.control_if" : {
-    "translation" : "<condition>が真の場合[A]内のブロックを実行します。"
+    "translation" : "<コンディション>が真の場合[A]内のブロックを実行します。"
   },
   "codeLabGlossary.block_definitions.title.control_if_else" : {
-    "translation" : "<condition>の場合[A]あるいは[B]"
+    "translation" : "<コンディション>の場合[A]あるいは[B]"
   },
   "codeLabGlossary.block_definitions.description.control_if_else" : {
-    "translation" : "<condition>が真の場合[A]内のブロックを実行し、それ以外の場合は[B]内のブロックを実行します。"
+    "translation" : "<コンディション>が真の場合[A]内のブロックを実行し、それ以外の場合は[B]内のブロックを実行します。"
   },
   "codeLabGlossary.block_definitions.title.control_wait_until" : {
-    "translation" : "<condition>まで待機"
+    "translation" : "<コンディション>まで待機"
   },
   "codeLabGlossary.block_definitions.description.control_wait_until" : {
-    "translation" : "<condition>が真の評価になるまで待機します。"
+    "translation" : "<コンディション>が真の評価になるまで待機します。"
   },
   "codeLabGlossary.block_definitions.title.control_repeat_until" : {
-    "translation" : "<condition>まで繰り返し"
+    "translation" : "<コンディション>まで繰り返し"
   },
   "codeLabGlossary.block_definitions.description.control_repeat_until" : {
-    "translation" : "<condition>が真と評価されるまで無制限に繰り返します。トラブルシューティング：作成したコードの動作が重い。無制限のループに短い「待機」ブロックを追加してみてください。コードにも休憩時間が必要な場合があります。"
+    "translation" : "<コンディション>が真と評価されるまで無制限に繰り返します。トラブルシューティング：作成したコードの動作が重い。無制限のループに短い「待機」ブロックを追加してみてください。コードにも休憩時間が必要な場合があります。"
   },
   "codeLabGlossary.block_definitions.title.control_stop" : {
     "translation" : "[すべて/このスクリプト]を停止"

@@ -442,7 +442,7 @@
     "translation" : "Remixe les blocs de code d'autres projets pour lancer tes propres idées !"
   },
   "codeLab.firstRemixSavedConfirmation.continue_button_label" : {
-    "translation" : "Continue"
+    "translation" : "Continuer"
   },
   "codeLab.saveModifiedSampleProjectAsRemixDialog.dialogTitle" : {
     "translation" : "Tu as apporté des modifications."
@@ -763,13 +763,13 @@
     "translation" : "s'amarrer au cube [#]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_dock_with_cube_by_id" : {
-    "translation" : "Fais en sorte que Cozmo aille jusqu'à un cube particulier et s'y amarre, ce qui veut dire qu'il se mettra en place pour soulever le cube, mais sans lever son bras. Conseil : Cozmo doit voir le cube en question pour s'y amarrer. Il est donc souvent utile de faire une vérification avec le capteur « le cube [#] est-il visible ?». Cube 1  : ressemble à un trombone. Cube 2 : ressemble à une lampe ou un cœur. Cube 3 : ressemble à un bébé dans son siège."
+    "translation" : "Faire bouger Cozmo jusqu'à un cube particulier et s'y amarrer, ce qui veut dire que Cozmo se mettra en place pour soulever le cube, mais sans lever son bras. Astuce : Cozmo doit voir le cube en question pour s'y amarrer, il est donc souvent utile de faire une vérification avec le capteur « le cube [#] est-il visible ?». Cube 1 : ressemble à un trombone. Cube 2 : ressemble à une lampe ou un cœur. Cube 3 : ressemble à un bébé dans son siège."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_set_liftheight" : {
     "translation" : "déplacer le bras à [X] % à  [Y] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_set_liftheight" : {
-    "translation" : "Déplacer le bras à [X] % du maximum (0 % = bas, 100 % = haut) à une vitesse de [Y] degrés par seconde. Remarque : le bras élévateur emploie une vitesse angulaire car, d'un point de vue technique, il effectue une rotation. Vitesse [Y] maxi : 200 °/s."
+    "translation" : "Déplacer le bras à [X] % du maximum (0 % = bas, 100 % = haut) à une vitesse de [Y] degrés par seconde. Remarque : le bras élévateur emploie une vitesse angulaire car, d'un point de vue technique, il effectue une rotation. Vitesse [Y] max. : 200 °/s."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_move_lift" : {
     "translation" : "déplacer le bras de [X] °/s"
@@ -820,16 +820,16 @@
     "translation" : "BLOC DE CODE AVANCÉ. Ce bloc fournit des noms d'animation isolés, que tu peux utiliser pour définir une variable. Astuce : En utilisant le bloc « lire l'animation [nom de l'animation] », fais glisser vers l'extérieur [nom de l'animation] et remplace-le par une variable. Tu peux alors librement affecter n'importe quelle animation à cette variable en fonction des conditions."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_enable_animation_track" : {
-    "translation" : "activer : [chenilles/tête/bras élévateur] dans les animations"
+    "translation" : "activer : [roues/tête/bras élévateur] dans les animations"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_enable_animation_track" : {
-    "translation" : "Si tu as préalablement désactivé les chenilles, la tête ou le bras élévateur de Cozmo pendant les animations, utilise ce bloc pour les réactiver. Les chenilles, la tête ou le bras élévateur de Cozmo sont activés par défaut."
+    "translation" : "Si tu as préalablement désactivé les roues, la tête ou le bras élévateur de Cozmo pendant les animations, utilise ce bloc pour les réactiver. Les roues, la tête ou le bras élévateur de Cozmo sont activés par défaut."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_disable_animation_track" : {
-    "translation" : "désactiver : [chenilles/tête/bras élévateur] dans les animations"
+    "translation" : "désactiver : [roues/tête/bras élévateur] dans les animations"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_disable_animation_track" : {
-    "translation" : "Désactiver désormais les chenilles, la tête ou le bras élévateur de Cozmo dans toutes les animations, jusqu'à ce qu'elles soient activées. Astuce : ce bloc peut être utile si ton projet dépend de la façon dont Cozmo est aligné. Ainsi, si tu souhaites que Cozmo exécute une animation joyeuse, mais qu'il doit rester aligné pour toucher un cube, tu peux désactiver ses chenilles."
+    "translation" : "Désactiver les roues, la tête ou le bras élévateur de Cozmo dans toutes les animations, jusqu'à ce qu'elles soient activées à nouveau. Astuce : ce bloc peut être utile si ton projet dépend de la façon dont Cozmo est aligné. Ainsi, si tu souhaites que Cozmo exécute une animation joyeuse, mais qu'il doit rester aligné pour toucher un cube, tu peux désactiver ses roues."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_clear" : {
     "translation" : "effacer tous les pixels"
@@ -898,49 +898,49 @@
     "translation" : "Dessine un cercle plein aux coordonnées [X],[Y] ayant le rayon [Z] indiqué (valeurs exprimées en pixels). L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
   },
   "codeLabGlossary.block_definitions.title.event_whenflagclicked" : {
-    "translation" : "en cas de clic sur le drapeau vert"
+    "translation" : "quand drapeau vert est cliqué"
   },
   "codeLabGlossary.block_definitions.description.event_whenflagclicked" : {
-    "translation" : "Ce bloc se déclenche lorsque l'on appuie sur le drapeau vert (démarrer). Remarque que l'appui sur le drapeau vert à deux conséquences : 1) Il déclenche tous les blocs « en cas d'appui sur le bouton ver » et 2) Il permet que les autres blocs de la catégorie d'événement soient déclenchés. Par exemple, pendant que tu travailles sur ton projet et que le drapeau vert est inactif, si Cozmo détecte ton visage, un bloc « en cas de détection de visage » n'est PAS déclenché. Une fois que tu appuies sur le bouton vert et qu'il est actif, si Cozmo détecte ton visage, le bloc « en cas de détection de visage » EST déclenché."
+    "translation" : "Ce bloc se déclenche lorsque le bouton drapeau vert (démarrer) est touché. Toucher le drapeau vert à deux conséquences : 1) Il déclenche tous les blocs « quand drapeau vert est cliqué » et 2) Il permet que les autres blocs de la catégorie Événements soient déclenchés. Par exemple, pendant que tu travailles sur ton projet et que le drapeau vert est inactif, si Cozmo détecte ton visage, un bloc « quand un visage est détecté » ne SERA PAS déclenché. Une fois que tu appuies sur le bouton drapeau vert et qu'il est actif, si Cozmo détecte ton visage, le bloc « quand un visage est détecté » SERA déclenché."
   },
   "codeLabGlossary.block_definitions.title.cozmo_event_on_face" : {
-    "translation" : "en cas de détection de visage"
+    "translation" : "quand un visage est détecté"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_face" : {
     "translation" : "Déclenche ce bloc de code et exécute les blocs de code sous celui-ci chaque fois que Cozmo voit un visage. Le bouton de drapeau vert (démarrer) doit être actif pour que ce bloc se déclenche."
   },
   "codeLabGlossary.block_definitions.title.cozmo_event_on_happy_face" : {
-    "translation" : "en cas de détection de visage joyeux"
+    "translation" : "quand un visage joyeux est détecté"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_happy_face" : {
     "translation" : "Déclenche ce bloc de code et exécute les blocs de code sous celui-ci chaque fois que Cozmo voit un visage joyeux. Le bouton de drapeau vert (démarrer) doit être actif pour que ce bloc se déclenche. Astuce : fais un grand sourire !"
   },
   "codeLabGlossary.block_definitions.title.cozmo_event_on_sad_face" : {
-    "translation" : "en cas de détection de visage triste"
+    "translation" : "quand un visage triste est détecté"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_sad_face" : {
     "translation" : "Déclenche ce bloc de code et exécute ceux situés en dessous chaque fois que Cozmo voit un visage triste. Le bouton de drapeau vert (démarrer) doit être actif pour que ce bloc se déclenche. Astuce : montre un visage particulièrement triste."
   },
   "codeLabGlossary.block_definitions.title.cozmo_event_on_see_cube" : {
-    "translation" : "lorsque le cube [#] est détecté"
+    "translation" : "quand le cube [#] est détecté"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_see_cube" : {
     "translation" : "Déclenche ce bloc de code et exécute les blocs de code sous celui-ci chaque fois que Cozmo voit un cube."
   },
   "codeLabGlossary.block_definitions.title.cozmo_event_on_cube_tap" : {
-    "translation" : "lorsque le cube [#] est touché"
+    "translation" : "quand le cube [#] est touché"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_cube_tap" : {
     "translation" : "Déclenche ce bloc de code et exécute ceux situés en dessous chaque fois que le cube [#] spécifié est touché."
   },
   "codeLabGlossary.block_definitions.title.cozmo_event_on_cube_moved" : {
-    "translation" : "lorsque le cube [#] est déplacé"
+    "translation" : "quand le cube [#] est déplacé"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_cube_moved" : {
     "translation" : "Déclenche ce bloc de code et exécute ceux situés en dessous chaque fois que le cube [#] spécifié est déplacé. Astuce : déplacer un cube, c'est le placer dans une position ou à un emplacement légèrement différent. Toucher un cube, c'est lui donner délibérément un petit coup rapide."
   },
   "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived" : {
-    "translation" : "en cas de réception de [message#]"
+    "translation" : "quand [message#] est reçu"
   },
   "codeLabGlossary.block_definitions.description.event_whenbroadcastreceived" : {
     "translation" : "Déclenche ce bloc de code et exécute les blocs de code sous celui-ci chaque fois qu'un autre bloc de code diffuse le message correspondant. Astuce : pour les programmeurs expérimentés, considérez les messages comme des fonctions."
@@ -1282,13 +1282,13 @@
     "translation" : "Opérateurs mathématiques standard : pense aux opérateurs que l'on trouve sur une calculatrice scientifique. [abs] = valeur absolue de [X], [floor] = valeur plancher de [X], [ceiling] = valeur plafond de [X], [sqrt] = racine carrée de [X], [sin] = sinus de [X], [cos] = cosinus de [X], [tan] = tangente de [X], [asin] = inverse du sinus de [X], [acos] = inverse du cosinus de [X], [atan] = inverse de la tangente de [X], [ln] = logarithme naturel de [X], [log] = logarithme de [X], [e^] = e à la puissance [X], [10^] = 10 à la puissance [X]."
   },
   "codeLabGlossary.block_definitions.title.cozmo_play_animation_by_name" : {
-    "translation" : "avancé : lire [text] animation SDK"
+    "translation" : "avancé : lire [texte] animation SDK"
   },
   "codeLabGlossary.block_definitions.description.cozmo_play_animation_by_name" : {
     "translation" : "BLOC DE CODE AVANCÉ. Le SDK Cozmo python donne accès à des centaines d'autres animations de Cozmo. Ce bloc permet de lire l'ID de chaîne de l'animation. Pour en savoir plus sur le SDK, rends-toi sur developer.anki.com."
   },
   "codeLabGlossary.block_definitions.title.cozmo_play_animation_by_triggername" : {
-    "translation" : "avancé : lire le groupe d'animations du SDK [text]"
+    "translation" : "avancé : lire le groupe d'animations du SDK [texte]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_play_animation_by_triggername" : {
     "translation" : "BLOC DE CODE AVANCÉ. Le SDK Cozmo python donne accès à des centaines d'autres animations de Cozmo. Ce bloc permet de lire l'ID de chaîne du groupe d'animations. Pour en savoir plus sur le SDK, rends-toi sur developer.anki.com."

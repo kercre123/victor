@@ -108,7 +108,7 @@ COZMOアプリを実行するには、デバイスのゲームファイルにア
 COZMOアプリを実行するには、デバイスのゲームファイルにアクセスする必要があります。以下のリンクからCOZMOアプリ設定にアクセスし、<b>権限 > ストレージ</b>をタップしてこれを有効にします。
 デバイスID：{0}
 創造力を使ってCOZMOをプログラムし、どんなことが一緒にできるか探ってください！
-COZMOを立たせてプレイできるようにしてください。
+COZMOを立たせて遊べるようにしてください。
 間違い
 キープアウェイ
 方法を見る
@@ -137,46 +137,90 @@ COZMOが人を認識して名前を覚えられるように、手伝います。
 COZMOはしゃっくりをしています
 顔のスキャンを中止しますか？
 COZMOが目を覚まして充電ドックから離れるまでお待ちください。
-パラメーターは潜在的に予測する
-おそらく！！コンパイラは不確実性をコンパイルします。
-そうです！アルゴリズムは正確に主張します。
-変数は有効であることを確認する
-アクチュエーターは肯定を主張する
-おそらく！モジュールは不確実性を測定します。
-そうです！探知機は間違いなく探知します。
-おそらく！パラメーターは潜在的に予測します。
-関数は偽を見つける
-バイナリが0に等しい
-コンパイラは不確実性をコンパイルする
-ログは高い可能性につながる
-探知機は間違いなく探知する
-そうです！プロセッサーは可能性を示唆する。
-エンコーダーは無効を示す
-そうです！プログラムは正確に認識します。
-いいえ！ネットワークが否定を通知します。
-いいえ！ドライブは疑わしいと判断します。
-運動学が正しいと結論を出す
-モジュールは不確実性を測定する
-そうです！アクチュエーターは肯定を主張します。
-ネットワークが否定を通知する。
-いいえ！バイナリが0に等しい。
-そうです！プログラミングは高い確実性を示す。
-そうです！トランスデューサーが正と発信します。
-いいえ！関数は偽を見つけます。
-そうです！回路は確実に引用します。
-いいえ！エンコーダーは無効を示します。
-プロセッサーは可能性を示唆する
-いいえ！センサーが申し訳ないと示唆します。
-アルゴリズムは正確に主張する
-ドライブは疑わしいと判断する
-回路は確実に引用する
-プログラムは正確に認識する
-そうです！ログは高い可能性につながります。
-トランスデューサーが正と発信する
-センサーが申し訳ないと示唆する
-そうです！運動学が正しいと結論を出します。
-プログラミングは高い確実性を示す
-そうです！変数は有効であることを確認します。
+Resets game state.
+Place Cube under my lift.
+Players ready, set?
+cube 1 bad
+Tapping Cube 2 changes instrument 2.
+...while making a magic sound and lighting his backpack.
+definitely
+These blocks control music.
+Starts the program.
+game length
+Lights up each players Cube.
+White 
+cube 2 bad
+Starts game, makes game get faster, triggers end timer.
+Cozmo taps the Cube he thinks he has been given.
+Cozmo taps if he has the potato.
+how long to heat potato
+These blocks control Cube lights.
+selected music
+Lights up potato and waits for tap.
+End of game timer and ending sequence.
+These blocks control Cozmo dancing.
+?
+cozmo
+Tapping Cube 3 changes instrument 3.
+cube 2 color
+Points
+forget it
+...or Cozmo does a Cube tap to see if there is a Cube.
+These blocks display on Cozmos face the seconds left.
+fortune
+Plays animation if music is playing.
+You won
+Picks different Cube as new potato.
+yes
+cube 3 taps
+White
+cube locked
+good tap
+Yellow
+Cozmo asks for a question.
+unsure
+waiting for Cozmos Cube to be moved
+which Cube is about to be the potato
+Ready?
+no chance
+cube 3 color
+Go!
+not set
+no way
+Randomly selects a fortune.
+possibly
+Displays fortune on Cozmos face...
+for sure
+...or if the move read as a tap...
+Orange
+pack color
+Tapping Cube 1 changes instrument 1.
+Checks if player has moved a Cube for Cozmo...
+Blue
+cube 1 taps
+which Cube is the potato
+cube 2 taps
+Cozmos Cube
+cube 3 bad
+Point
+These blocks control the timer.
+length of timer (in seconds)
+random
+Cozmos reaction to winning or losing.
+pack random
+absolutely
+Plays beginning animation and lights.
+timer in sec
+Cozmo asks for Cube and waits.
+cube 1 color
+maybe
+Purple
+end of game timer
+X
+Cube put under lift
+Better luck next time
+...and then assigns that Cube number as Cozmos Cube.
+bad tap
 #31：キューブを元の場所に戻す：<span class='yellow'>キューブが見えたら、</span>COZMOを<span class='blue'>後ろを向かせ、</span>キューブをCOZMOの数フィート後ろに置いて戻ります。<span class='orange'>無制限に繰り返します。</span>
 勝者
 上級のコードブロックCOZMO python SDKによって、今までのものに加えて何百ものCOZMOアニメーションにアクセス可能になります。アニメーションのid文字列はこのブロックによって再生可能です。SDKについての詳細はこちらでご覧になれます。developer.anki.com
@@ -197,7 +241,7 @@ COZMOと言いましょう
 特定のキューブがタップされたか否かに応じて「真」か「偽」を返します。キューブ1：はペーパークリップのように見えます。キューブ2：はランプかハートのように見えます。キューブ3：はベビーシートに座る赤ちゃんのように見えます。
 チャレンジをチェックしてスキルを伸ばしましょう！
 キャンセル
-<condition>が真と評価されるまで無制限に繰り返します。トラブルシューティング：作成したコードの動作が重い。無制限のループに短い「待機」ブロックを追加してみてください。コードにも休憩時間が必要な場合があります。
+<コンディション>が真と評価されるまで無制限に繰り返します。トラブルシューティング：作成したコードの動作が重い。無制限のループに短い「待機」ブロックを追加してみてください。コードにも休憩時間が必要な場合があります。
 #24：「笑って！」と<span class='purple'>言います</span>。<span class='yellow'>笑顔が見えたら、</span><span class='violet'>勝者</span>のように振る舞います。
 変更が加えられました。
 笑顔を見るのを待つ
@@ -207,7 +251,7 @@ COZMOと言いましょう
 COZMOの右/左の傾きの角度を度数で返します。右の場合の値は負、左の場合の値は正です。
 #16：<span class='purple'>リフト</span>を上下に3<span class='orange'>回</span>動かします。
 COZMOのリフトの高さ%
-<condition>が真の評価になるまで待機します。
+<コンディション>が真の評価になるまで待機します。
 このブロックは緑のフラッグ（スタート）ボタンがタップされたときトリガーされます。緑のフラッグボタンには2つの機能があります：1）「緑のフラッグがクリックされたとき」ブロックすべてをトリガーし、2）別のイベントカテゴリーブロックのトリガーを可能にします。例えば、プロジェクトに取り掛かっているときに緑のフラッグが有効ではなかった場合、COZMOがあなたの顔を見ても「顔が見えたら」ブロックはトリガーされません。緑のフラグボタンがタップされ有効になっていれば、COZMOがあなたの顔を見たとき「顔が見えたら」ブロックはトリガーされます。
 #20の答え
 このコードブロックをトリガーすればCOZMOがキューブを見るたびにその下位のコードブロックを実行します。
@@ -233,7 +277,7 @@ COZMOのリフトの高さ%
 #32の答え
 キューブ[#]が移動されたら
 先に課題に取り組んでから「次へ」をタップして答えを確認します！
-<condition>が真の場合[A]内のブロックを実行し、それ以外の場合は[B]内のブロックを実行します。
+<コンディション>が真の場合[A]内のブロックを実行し、それ以外の場合は[B]内のブロックを実行します。
 2つのピクセル座標間に塗りつぶされた長方形を描画します。COZMOの顔のスクリーンは幅128ピクセル、高さ64ピクセルです。したがって可視範囲は、[X]が0-127、[Y]が0-63です。ヒント：描画しているものを参照するには「COZMOの顔に表示」ブロックを使用してください。
 いないいないばあ
 時計
@@ -303,7 +347,7 @@ COZMOを現在位置からの相対的な位置に移動：前に[X]ミリメー
 イベント
 #5の答え
 上級のコードブロック顔が見えた場合、COZMOのワールド上での位置[X]、[Y]、[Z]（高さ）を返します。COZMOの内部マップの原点は（あなたではなく）COZMOが管理しているものだということに注意してください。COZMOのワールド内での物体の位置関係を把握するのに役立ちます。
-<condition>の場合[A]あるいは[B]
+<コンディション>の場合[A]あるいは[B]
 1．このゲームは、2人のプレイヤーとCOZMOでプレイします。
 
 2. COZMOがプレーヤーに、キューブをタップできるようリフトの下にキューブをおいて、とたのみます。
@@ -360,7 +404,7 @@ COZMOを描きましょう
 #10の答え
 あるテキストの文字列の[#]文字を返します。例えば「COZMO」の#1文字は「C」です。経験豊富なプログラマーへのヒント：文字列とこのブロックをクリエイティブに使用して、リストの作成と操作が可能です。
 アニメーション
-<condition>が真の場合[A]内のブロックを実行します。
+<コンディション>が真の場合[A]内のブロックを実行します。
 先に課題に取り組んでから「次へ」をタップして答えを確認します！
 しんにゅうしゃ!
 先に課題に取り組んでから「次へ」をタップして答えを確認します！
@@ -412,7 +456,7 @@ COZMOの回転°
 2. COZMOが音楽に合わせてダンスし、キューブが光のショーを演じるのをご覧ください！
 このコードブロックをトリガーすればCOZMOが笑顔を見るたびにその下位のコードブロックを実行します。このブロックがトリガーされるためには緑のフラグ（スタート）ボタンが有効でなければいけないので注意してください。ヒント：大きな笑顔で！
 #17：キューブを<span class='purple'>リフト</span>します。
-<condition>まで待機
+<コンディション>まで待機
 最大（100%）の高さに対する%でのCOZMOのリフトの高さです。
 #3：正方形を描くように<span class='blue'>進みます</span>。
 先に課題に取り組んでから「次へ」をタップして答えを確認します！
@@ -455,7 +499,7 @@ COZMOのカメラから見えるキューブの右/左の（平らな面にあ�
 右に曲がる
 注目のプロジェクト
 現在の[年/月/日/曜日/時間/分/秒]を返します。
-<condition>の場合[A]
+<コンディション>の場合[A]
 このコードブロックをトリガーすれば別のコードブロックが該当するメッセージを発信するたびにその下位のコードブロックを実行します。ヒント：経験豊富なプログラマーの方はメッセージを関数のようなものと考えてください。
 [X]を繰り返す
 デバイスの傾き°
@@ -480,7 +524,7 @@ Googleドライブを取得
 [X]が[Y]より小さければ真です。
 リミックス
 先に課題に取り組んでから「次へ」をタップして答えを確認します！
-<condition>まで繰り返し
+<コンディション>まで繰り返し
 キューブ[#]とのドッキング
 上級のコードブロックCOZMO python SDKによって、今までのものに加えて何百ものCOZMOアニメーションにアクセス可能になります。アニメーショングループのid文字列はこのブロックによって再生可能です。SDKについての詳細はこちらでご覧になれます。developer.anki.com
 [音楽の名前]音楽を再生して待機
@@ -1124,6 +1168,7 @@ COZMOにチャージする
 {0}をロック解除しました！
 続ける
 メニュー
+You've earned your Play Token for today!
 COZMOがころがして {0} エナジーボールを生み出しました！
 続けるにはCOZMOをチューンアップしてください。
 COZMOがグータッチをして {0} エナジーボールを生み出しました！

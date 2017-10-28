@@ -49,22 +49,22 @@
     "translation" : "dire %1"
   },
   "codeLabVertical.WHEN_SEE_FACE" : {
-    "translation" : "en cas de détection de visage"
+    "translation" : "quand un visage est détecté"
   },
   "codeLabVertical.WHEN_SEE_HAPPY_FACE" : {
-    "translation" : "en cas de détection de visage joyeux"
+    "translation" : "quand un visage joyeux est détecté"
   },
   "codeLabVertical.WHEN_SEE_SAD_FACE" : {
-    "translation" : "en cas de détection de visage triste"
+    "translation" : "quand un visage triste est détecté"
   },
   "codeLabVertical.WHEN_CUBE_SEEN" : {
-    "translation" : "en cas de détection du cube %1"
+    "translation" : "quand le cube %1 est détecté"
   },
   "codeLabVertical.WHEN_CUBE_TAPPED" : {
-    "translation" : "lorsque le cube %1 est touché"
+    "translation" : "quand le cube %1 est touché"
   },
   "codeLabVertical.WHEN_CUBE_MOVED" : {
-    "translation" : "lorsque le cube %1 est déplacé"
+    "translation" : "quand le cube %1 est déplacé"
   },
   "codeLabVertical.COZMO_POSITION" : {
     "translation" : "Position de Cozmo dans l'univers %1"
@@ -133,7 +133,7 @@
     "translation" : "direction de l'appareil °"
   },
   "codeLabVertical.DRIVE_WHEELS" : {
-    "translation" : "avancer la chenille gauche de %1 mm/s, la droite de %2 mm/s"
+    "translation" : "avancer la roue gauche de %1 mm/s, la droite de %2 mm/s"
   },
   "codeLabVertical.ENABLE_WAIT_FOR_ACTIONS" : {
     "translation" : "activer : toujours attendre que Cozmo ait terminé"
@@ -496,7 +496,7 @@
     "translation" : "droite"
   },
   "codeLabVertical.RECEIVE_MESSAGE_BLOCK" : {
-    "translation" : "lorsque %1 est reçu"
+    "translation" : "quand %1 est reçu"
   },
   "codeLabVertical.BROADCAST_MESSAGE_AND_WAIT_BLOCK" : {
     "translation" : "diffuser %1 et attendre qu'il s'achève"
@@ -508,7 +508,7 @@
     "translation" : "avancé : lire le groupe d'animations %1 du SDK"
   },
   "codeLabVertical.EVENTS_BROADCAST_HAT" : {
-    "translation" : "lorsque %1 est reçu"
+    "translation" : "quand %1 est reçu"
   },
   "codeLabVertical.EVENTS_BROADCAST_AND_WAIT" : {
     "translation" : "diffuser %1 et attendre qu'il s'achève"
