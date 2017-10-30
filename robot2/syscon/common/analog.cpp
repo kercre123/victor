@@ -55,7 +55,6 @@ void Analog::init(void) {
   while ((ADC1->CR & ADC_CR_ADCAL) != 0) ;
 
   // Setup the ADC for continuous mode
-  ADC->CCR = ADC_CCR_VREFEN;
   ADC1->CHSELR = SELECTED_CHANNELS;
   ADC1->CFGR1 = 0
               | ADC_CFGR1_CONT
@@ -72,6 +71,8 @@ void Analog::init(void) {
               ;
   ADC1->IER = ADC_IER_AWDIE;
   ADC1->TR = FALLING_EDGE;
+
+  ADC->CCR = ADC_CCR_VREFEN;
 
   // Enable ADC
   ADC1->ISR = ADC_ISR_ADRDY;
@@ -122,6 +123,9 @@ void Analog::init(void) {
     
     BAT_EN::reset();
   }
+  
+  POWER_EN::mode(MODE_INPUT);
+  POWER_EN::pull(PULL_UP);
   #endif
 
   // Startup external power interrupt / handler
@@ -191,7 +195,7 @@ extern "C" void ADC1_IRQHandler(void) {
 #include "lights.h"
 #endif
 
-static const int BUTTON_THRESHOLD = ADC_VOLTS(4.0);
+static const int BUTTON_THRESHOLD = ADC_VOLTS(2.6);
 static const int BOUNCE_LENGTH = 3;
 
 void Analog::tick(void) {
@@ -221,6 +225,11 @@ void Analog::tick(void) {
     chargeEnableDelay = 0;
   }
 
+  static int i = 0;
+  USART2->TDR = values[i];
+  USART2->TDR = (values[i] >> 8) | (i << 4);
+  i = (i + 1) % ADC_CHANNELS; 
+
   #ifndef BOOTLOADER
   static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
   static const int POWER_WIPE_TIME = 200 * 10;  // Erase flash
@@ -236,7 +245,7 @@ void Analog::tick(void) {
     }
   } else {
     if (hold_count >= POWER_DOWN_TIME) {
-      Power::stop();
+      //Power::stop();
     } else {
       hold_count = 0;
     }
