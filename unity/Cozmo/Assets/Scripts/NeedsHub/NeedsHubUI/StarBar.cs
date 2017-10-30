@@ -160,9 +160,12 @@ namespace Cozmo.Needs.UI {
           if (DataPersistenceManager.Instance.StarLevelToDisplay) {
             return ChangeState(RewardState.CRATE);
           }
-          else {
+          // Don't show the modal during onboarding
+          if (!OnboardingManager.Instance.IsAnyOnboardingActive()) {
             return ChangeState(RewardState.STAR_MODAL);
           }
+
+          return ChangeState(RewardState.IDLE);
         }
         break;
       case RewardState.CRATE:
