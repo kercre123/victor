@@ -93,6 +93,10 @@ var PlayNowModal = function(){
    * @returns {void}
    */
   function _handleCloseButtonClick(e){
+    // Prevent duplicate clicks
+    var closeButton = modal.querySelector('#btn-play-now-close');
+    closeButton.removeEventListener('click', _handleCloseButtonClick);
+
     window.exitWorkspace();
   }
 

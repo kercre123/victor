@@ -1,6 +1,10 @@
 (function(){
   'use strict';
 
+  // Prevent duplicate featured project tile clicks.
+  // Could expand to use for all project tiles if desired.
+  var featuredProjectTileClicked = false;
+
   // register onload and body click events
   registerEvents();
 
@@ -91,9 +95,13 @@
         handleSampleProjectClick(typeElem.dataset.uuid);
         break;
       case 'load-featured-project':
-        // we play the click sound before calling unity to make sure sound plays on android
-        playClickSound = false;
-        handleFeaturedProjectClick(typeElem.dataset.uuid);
+        if (!featuredProjectTileClicked) {
+          featuredProjectTileClicked = true;
+
+          // we play the click sound before calling unity to make sure sound plays on android
+          playClickSound = false;
+          handleFeaturedProjectClick(typeElem.dataset.uuid);
+        }
         break;
       case 'load-user-project':
         // we play click the sound before calling unity to make sure sound plays on android
