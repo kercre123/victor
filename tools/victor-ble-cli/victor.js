@@ -1,67 +1,4 @@
 class Victor {
-    static get MSG_MAX_SIZE() {
-        return 20;
-    }
-    static get MSG_PAYLOAD_MAX_SIZE() {
-        return 18;
-    }
-    static get MSG_BASE_SIZE() {
-        return 1;
-    }
-    static get MSG_B2V_BTLE_DISCONNECT() {
-        return 0x0D;
-    }
-    static get MSG_B2V_CORE_PING_REQUEST() {
-        return 0x16;
-    }
-    static get MSG_V2B_CORE_PING_RESPONSE() {
-        return 0x17;
-    }
-    static get MSG_B2V_HEARTBEAT() {
-        return 0x18;
-    }
-    static get MSG_V2B_HEARTBEAT() {
-        return 0x19;
-    }
-    static get MSG_B2V_WIFI_START() {
-        return 0x1A;
-    }
-    static get MSG_B2V_WIFI_STOP() {
-        return 0x1B;
-    }
-    static get MSG_B2V_DEV_PING_WITH_DATA_REQUEST() {
-        return 0x91;
-    }
-    static get MSG_V2B_DEV_PING_WITH_DATA_RESPONSE() {
-        return 0x92;
-    }
-    static get MSG_B2V_DEV_RESTART_ADBD() {
-        return 0x93;
-    }
-    static get MSG_B2V_DEV_EXEC_CMD_LINE() {
-        return 0x94;
-    }
-    static get MSG_V2B_DEV_EXEC_CMD_LINE_RESPONSE() {
-        return 0x95;
-    }
-    static get MSG_B2V_MULTIPART_START() {
-        return 0xF0;
-    }
-    static get MSG_B2V_MULTIPART_CONTINUE() {
-        return 0xF1;
-    }
-    static get MSG_B2V_MULTIPART_FINAL() {
-        return 0xF2;
-    }
-    static get MSG_V2B_MULTIPART_START() {
-        return 0xF3;
-    }
-    static get MSG_V2B_MULTIPART_CONTINUE() {
-        return 0xF4;
-    }
-    static get MSG_V2B_MULTIPART_FINAL() {
-        return 0xF5;
-    }
     constructor(peripheral, service, send, read, outputCallback) {
 
         this._peripheral = peripheral;
@@ -178,5 +115,27 @@ class Victor {
         this._peripheral.disconnect();
     };
 }
+
+Object.defineProperty(Victor, 'MSG_MAX_SIZE', {value: 20, writable: false});
+Object.defineProperty(Victor, 'MSG_PAYLOAD_MAX_SIZE', {value: 18, writable: false});
+Object.defineProperty(Victor, 'MSG_BASE_SIZE', {value: 1, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_BTLE_DISCONNECT', {value: 0x0D, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_CORE_PING_REQUEST', {value: 0x16, writable: false});
+Object.defineProperty(Victor, 'MSG_V2B_CORE_PING_RESPONSE', {value: 0x17, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_HEARTBEAT', {value: 0x18, writable: false});
+Object.defineProperty(Victor, 'MSG_V2B_HEARTBEAT', {value: 0x19, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_WIFI_START', {value: 0x1A, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_WIFI_STOP', {value: 0x1B, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_DEV_PING_WITH_DATA_REQUEST', {value: 0x91, writable: false});
+Object.defineProperty(Victor, 'MSG_V2B_DEV_PING_WITH_DATA_RESPONSE', {value: 0x92, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_DEV_RESTART_ADBD', {value: 0x93, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_DEV_EXEC_CMD_LINE', {value: 0x94, writable: false});
+Object.defineProperty(Victor, 'MSG_V2B_DEV_EXEC_CMD_LINE_RESPONSE', {value: 0x95, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_MULTIPART_START', {value: 0xF0, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_MULTIPART_CONTINUE', {value: 0xF1, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_MULTIPART_FINAL', {value: 0xF2, writable: false});
+Object.defineProperty(Victor, 'MSG_V2B_MULTIPART_START', {value: 0xF3, writable: false});
+Object.defineProperty(Victor, 'MSG_V2B_MULTIPART_CONTINUE', {value: 0xF4, writable: false});
+Object.defineProperty(Victor, 'MSG_V2B_MULTIPART_FINAL', {value: 0xF5, writable: false});
 
 module.exports = Victor;
