@@ -116,7 +116,7 @@ void AudioCaptureSystem::Init()
     OSStatus status = AudioQueueNewInput(&standardAudioFormat, HandleCallbackEntry, _impl.get(), nullptr, nullptr, 0, &_impl->_queue);
     if (kAudioServicesNoError != status)
     {
-      PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueNewInput.Error","OSStatus errorcode: %d", (int)status);
+      PRINT_NAMED_WARNING("AudioCaptureSystem.Constructor.AudioQueueNewInput.Warn","OSStatus errorcode: %d", (int)status);
       _impl.reset();
       return;
     }
@@ -126,7 +126,7 @@ void AudioCaptureSystem::Init()
       status = AudioQueueAllocateBuffer(_impl->_queue, _samplesPerChunk * sizeof(AudioSample), &_impl->_buffers[i]);
       if (kAudioServicesNoError != status)
       {
-        PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueAllocateBuffer.Error","OSStatus errorcode: %d", (int)status);
+        PRINT_NAMED_WARNING("AudioCaptureSystem.Constructor.AudioQueueAllocateBuffer.Warn","OSStatus errorcode: %d", (int)status);
         _impl.reset();
         return;
       }
@@ -312,7 +312,7 @@ void AudioCaptureSystem::StartRecording()
     OSStatus status = AudioQueueStart(_impl->_queue, NULL);
     if (kAudioServicesNoError != status)
     {
-      PRINT_NAMED_ERROR("AudioCaptureSystem.StartRecording.AudioQueueStart.Error","Is permission properly granted? OSStatus errorcode: %d", (int)status);
+      PRINT_NAMED_WARNING("AudioCaptureSystem.StartRecording.AudioQueueStart.Warn","Is permission properly granted? OSStatus errorcode: %d", (int)status);
     }
   }
 }

@@ -189,8 +189,8 @@ void CST_BehaviorTracker::HandleBehaviorTransition(const ExternalInterface::Beha
   time_t currentTime;
   time(&currentTime);
   BehaviorStateChange change;
-  change.newBehaviorID = msg.newBehaviorID;
-  change.oldBehaviorID = msg.oldBehaviorID;
+  //change.newBehaviorID = msg.newBehaviorID;
+  //change.oldBehaviorID = msg.oldBehaviorID;
   change.elapsedTime = difftime(currentTime, _startTime);
   
   _stateChangeList.push_back(change);

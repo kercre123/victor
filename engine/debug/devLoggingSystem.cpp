@@ -342,7 +342,7 @@ template<>
 void DevLoggingSystem::LogMessage(const RobotInterface::RobotToEngine& message)
 {
   // Mic data comes nonstop from the robot so we can't record it all
-  if (RobotInterface::RobotToEngineTag::audioInput == message.GetTag())
+  if (RobotInterface::RobotToEngineTag::micData == message.GetTag())
   {
     return;
   }

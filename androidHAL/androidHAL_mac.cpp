@@ -20,9 +20,6 @@
 
 #include <webots/Supervisor.hpp>
 #include <webots/Camera.hpp>
-#include <webots/Display.hpp>
-#include <webots/Gyro.hpp>
-#include <webots/Accelerometer.hpp>
 
 #define BLUR_CAPTURED_IMAGES 1
 
@@ -50,10 +47,6 @@ namespace Anki {
 
       // Cameras / Vision Processing
       webots::Camera* headCam_;
-      
-      // IMU
-      webots::Gyro* gyro_;
-      webots::Accelerometer* accel_;
       
       // Lens distortion
       const bool kUseLensDistortion = false;
@@ -140,18 +133,6 @@ namespace Anki {
           cameraStartTime_ms_ = GetTimeStamp(); // + VISION_TIME_STEP;
           lastImageCapturedTime_ms_ = 0;
         }
-
-        // Gyro
-        gyro_ = _engineSupervisor->getGyro("gyro");
-        if (nullptr != gyro_) {
-          gyro_->enable(TIME_STEP);
-        }
-
-        // Accelerometer
-        accel_ = _engineSupervisor->getAccelerometer("accel");
-        if (nullptr != accel_) {
-          accel_->enable(TIME_STEP);
-        }
       }
     }
 
@@ -167,28 +148,6 @@ namespace Anki {
       }
       return 0;
     }
-
-    // TODO: If we want higher resolution IMU data than this we need to change this
-    //       function and tick the supervisor at a faster rate than engine.
-    bool AndroidHAL::IMUReadData(IMU_DataStructure &IMUData)
-    {
-      const double* vals = gyro_->getValues();  // rad/s
-      IMUData.rate_x = (f32)(vals[0]);
-      IMUData.rate_y = (f32)(vals[1]);
-      IMUData.rate_z = (f32)(vals[2]);
-
-      vals = accel_->getValues();   // m/s^2
-      IMUData.acc_x = (f32)(vals[0] * 1000);  // convert to mm/s^2
-      IMUData.acc_y = (f32)(vals[1] * 1000);
-      IMUData.acc_z = (f32)(vals[2] * 1000);
-      
-      // Return true if IMU was already read this timestamp
-      static TimeStamp_t lastReadTimestamp = 0;
-      bool newReading = lastReadTimestamp != GetTimeStamp();
-      lastReadTimestamp = GetTimeStamp();
-      return newReading;
-    }
-    
 
     Result AndroidHAL::Update()
     {

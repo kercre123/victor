@@ -895,14 +895,14 @@ bool BehaviorContainer::RemoveBehaviorFromMap(ICozmoBehaviorPtr behavior)
 template<>
 void BehaviorContainer::HandleMessage(const ExternalInterface::RequestAllBehaviorsList& msg)
 {
-  if(_robotExternalInterface != nullptr){
+  /**if(_robotExternalInterface != nullptr){
     std::vector<BehaviorID> behaviorList;
     for(const auto& entry : _idToBehaviorMap){
       behaviorList.push_back(entry.first);
     }
     ExternalInterface::RespondAllBehaviorsList message(std::move(behaviorList));
     _robotExternalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
-  }
+  }**/
 }
 
 

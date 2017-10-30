@@ -34,7 +34,7 @@
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cliffSensorComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
@@ -43,9 +43,9 @@
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
-#include "engine/components/proxSensorComponent.h"
+#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
-#include "engine/components/touchSensorComponent.h"
+#include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
@@ -806,12 +806,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Update robot pitch angle
   _pitchAngle = Radians(msg.pose.pitch_angle);
   
-  // Update cliff sensor component
-  _cliffSensorComponent->UpdateRobotData(msg);
-
-  // Update prox sensor component
+  // Update sensor components:
+  _cliffSensorComponent->Update(msg);
   _proxSensorComponent->Update(msg);
-  
   _touchSensorComponent->Update(msg);
 
   // update current path segment in the path component
@@ -1062,9 +1059,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     }
     
   }
-  
-  // check for new obstacles from prox sensor
-  _blockWorld->UpdateProxObstaclePoses();
   
 # pragma clang diagnostic push
 # pragma clang diagnostic ignored "-Wdeprecated-declarations" 

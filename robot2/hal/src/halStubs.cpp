@@ -324,13 +324,13 @@ namespace Anki {
 
     } // step()
 
-    void ForwardAudioInput(void)
+    void ForwardMicData(void)
     {
-      // Takes advantage of the data in bodyData being ordered such that the required members of AudioInput are already
+      // Takes advantage of the data in bodyData being ordered such that the required members of MicData are already
       // laid correctly.
       // TODO(Al/Lee): Put back once mics and camera can co-exist
-      const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
-      RobotInterface::SendMessage(*latestAudioInput);
+     const auto* latestMicData = reinterpret_cast<const RobotInterface::MicData*>(&bodyData_->audio);
+     RobotInterface::SendMessage(*latestMicData);
     }
 
     Result HAL::Step(void)
@@ -365,7 +365,8 @@ namespace Anki {
 
       ProcessButtonEvent();
 
-      ForwardAudioInput();
+      ForwardMicData();
+
       return result;
     }
     

@@ -782,6 +782,24 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     };
     static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithNotInterestingEdges),
       "This array does not define all types once and only once.");
+
+    constexpr MemoryMapTypes::FullContentArray typesToCalculateBordersWithProx =
+    {
+      {MemoryMapTypes::EContentType::Unknown               , true},
+      {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
+      {MemoryMapTypes::EContentType::ClearOfCliff          , true},
+      {MemoryMapTypes::EContentType::ObstacleCube          , true},
+      {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
+      {MemoryMapTypes::EContentType::ObstacleCharger       , true},
+      {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
+      {MemoryMapTypes::EContentType::ObstacleProx          , false},
+      {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
+      {MemoryMapTypes::EContentType::Cliff                 , true},
+      {MemoryMapTypes::EContentType::InterestingEdge       , true},
+      {MemoryMapTypes::EContentType::NotInterestingEdge    , true}
+    };
+    static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithProx),
+      "This array does not define all types once and only once.");
     
     // GetNavMap Polys
     std::vector<ConvexPolygon> convexHulls;
@@ -789,7 +807,8 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);    
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);
-    
+    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);    
+   
     std::unordered_set<std::shared_ptr<MemoryMapData>> observableObjectData;
     MemoryMapTypes::NodePredicate pred = 
       [](MemoryMapTypes::MemoryMapDataPtr d) -> bool

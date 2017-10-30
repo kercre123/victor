@@ -316,12 +316,10 @@ message SetBackpackLights
   uint_8 layer = 0      // 0 is BPL_USER
 }
 
-// Start recording the next duration_ms of audio and save it to path
-// Optionally run FFT on it afterwards
-message StartRecordingAudio 
+message StartRecordingAudio
 {
   uint_32 duration_ms,
-  bool    runFFT = 0,
+  bool    runFFT,
   string  path
 }
 
@@ -332,12 +330,11 @@ structure ColorRGB
   uint_8 b
 }
 
-// Draw text on the screen
 message DrawTextOnScreen
 {
   ColorRGB textColor,
   ColorRGB bgColor,
-  string text
+  string   text
 }
 
 // ====================================================
@@ -345,16 +342,10 @@ message DrawTextOnScreen
 enum uint_32 ToRobotAddressSpace
 {
   GLOBAL_INVALID_TAG = 0,
-  TO_BODY_START = 0x01,
-  TO_BODY_END   = 0x2F,
-  TO_RTIP_START = 0x30,
-  TO_RTIP_END   = 0x7F,
-  ANIM_BUFFER_START = 0x8E,
-  ANIM_BUFFER_END   = 0x9C,
-  ANIM_RT_START = 0x90,
-  ANIM_RT_END   = 0x9A,
-  TO_WIFI_START = 0x80,
-  TO_WIFI_END   = 0xAF,
+  TO_SUPERVISOR_START = 0x01,
+  TO_SUPERVISOR_END   = 0x4F,
+  TO_ANIM_START = 0x50,
+  TO_ANIM_END   = 0xAF,
   TO_ENG_START  = 0xB0,
   TO_ENG_UNREL  = 0xF0,
   TO_ENG_END    = 0xFE
@@ -362,103 +353,104 @@ enum uint_32 ToRobotAddressSpace
 
 /// *************** Overall message pipe ******************************* ///
 
-/** Pipe from engine to robot and within the robot
+/** Pipe from engine to animation process and robot (supervisor) process
  * This cannot be an auto union because we need explicit tag values to partition the messages between the engine (not
- * included in this file), WiFi, RTIP, body and test fixture. And significantly to make debugging from message dumps
+ * included in this file), anim process, and robot process. And significantly to make debugging from message dumps
  * more sane.
  */
 union EngineToRobot
 {
   // 0x00 Is invalid message
 
-  // 0x01 to 0x2f: Messages to the body / test fixture
-  BackpackSetLayer              setBackpackLayer            = 0x02,
+  // 0x01 to 0x4f: Messages to robot (supervisor) process
 
+  // Init
+  GetManufacturingInfo          getMfgInfo                  = 0x01,
+  SyncTime                      syncTime                    = 0x02,
 
-  // TODO: These cube messages will need to be modified and moved 
-  //       to a separate file once we update block connection logic
-  //       for BLE
-  CubeLights                    setCubeLights               = 0x04,
-  SetPropSlot                   setPropSlot                 = 0x05,
+  // Debug / Test
+  StartControllerTestMode       startControllerTestMode     = 0x0A,
+  ControllerGains               setControllerGains          = 0x0B,
+  SetMotionModelParams          setMotionModelParams        = 0x0C,
+  RollActionParams              rollActionParams            = 0x0D,
 
-  StreamObjectAccel             streamObjectAccel           = 0x08,
+  // Motor control
+  DriveWheels                   drive                       = 0x10,
+  DriveWheelsCurvature          driveCurvature              = 0x11,
+  MoveLift                      moveLift                    = 0x12,
+  MoveHead                      moveHead                    = 0x13,
+  SetLiftHeight                 liftHeight                  = 0x14,
+  SetHeadAngle                  headAngle                   = 0x15,
+  HeadAngleUpdate               headAngleUpdate             = 0x16,
+  SetBodyAngle                  setBodyAngle                = 0x17,
+  TurnInPlaceAtSpeed            turnInPlaceAtSpeed          = 0x18,
+  RecordHeading                 recordHeading               = 0x19,
+  TurnToRecordedHeading         turnToRecordedHeading       = 0x1A,  
+  EnableMotorPower              enableMotorPower            = 0x1B,    
+  StopAllMotors                 stop                        = 0x1C,
 
-  SetCubeGamma                  setCubeGamma                = 0x0C,
-  CubeID                        setCubeID                   = 0x10,
+  // Lights
+  BackpackSetLayer              setBackpackLayer            = 0x1D,
+  SetBackpackLights             setBackpackLights           = 0x1E,
+
+  // Path messages
+  ClearPath                     clearPath                   = 0x20,
+  AppendPathSegmentLine         appendPathSegLine           = 0x21,
+  AppendPathSegmentArc          appendPathSegArc            = 0x22,
+  AppendPathSegmentPointTurn    appendPathSegPointTurn      = 0x23,
+  TrimPath                      trimPath                    = 0x24,
+  ExecutePath                   executePath                 = 0x25,
+
+  // Docking messages
+  DockWithObject                dockWithObject              = 0x26,
+  AbortDocking                  abortDocking                = 0x27,
+  PlaceObjectOnGround           placeObjectOnGround         = 0x28,
+  DockingErrorSignal            dockingErrorSignal          = 0x2A,
+  CarryStateUpdate              setCarryState               = 0x2B,
+  CameraFOVInfo                 cameraFOVInfo               = 0x2C,  
+
+  // Localization
+  AbsoluteLocalizationUpdate    absLocalizationUpdate       = 0x2D,
+  ForceDelocalizeSimulatedRobot forceDelocalizeSimulatedRobot = 0x2E, // Used for simulation only, no-op for physical  
+
+  // Sensor messages
+  IMURequest                    imuRequest                  = 0x30,  
+  CheckLiftLoad                 checkLiftLoad               = 0x31,  
+  SetCliffDetectThreshold       setCliffDetectThreshold     = 0x32,
+
+  // Calibration
+  EnableReadToolCodeMode        enableReadToolCodeMode      = 0x33,
+  StartMotorCalibration         startMotorCalibration       = 0x34,
   
-  GetManufacturingInfo          getMfgInfo                  = 0x25,
+  // Reactions
+  EnableStopOnCliff             enableStopOnCliff           = 0x35,
+  EnableBraceWhenFalling        enableBraceWhenFalling      = 0x36,
 
-  // 0x30 to 0x7f: To RTIP
-  //          FREE SLOT!!!                                  = 0x30,
-  //          FREE SLOT!!!                                  = 0x31,
-  DriveWheels                   drive                       = 0x32,
-  DriveWheelsCurvature          driveCurvature              = 0x33,
-  MoveLift                      moveLift                    = 0x34,
-  MoveHead                      moveHead                    = 0x35,
-  SetLiftHeight                 liftHeight                  = 0x36,
-  SetHeadAngle                  headAngle                   = 0x37,
-  HeadAngleUpdate               headAngleUpdate             = 0x38,
-  SetBodyAngle                  setBodyAngle                = 0x39,
-  TurnInPlaceAtSpeed            turnInPlaceAtSpeed          = 0x3A,
-  StopAllMotors                 stop                        = 0x3B,
-  ClearPath                     clearPath                   = 0x3C,
-  AppendPathSegmentLine         appendPathSegLine           = 0x3D,
-  AppendPathSegmentArc          appendPathSegArc            = 0x3E,
-  AppendPathSegmentPointTurn    appendPathSegPointTurn      = 0x3F,
-  TrimPath                      trimPath                    = 0x40,
-  ExecutePath                   executePath                 = 0x41,
-  DockWithObject                dockWithObject              = 0x42,
-  AbortDocking                  abortDocking                = 0x43,
-  PlaceObjectOnGround           placeObjectOnGround         = 0x44,
-  AbsoluteLocalizationUpdate    absLocalizationUpdate       = 0x45,
-  StartControllerTestMode       startControllerTestMode     = 0x46,
-  ControllerGains               setControllerGains          = 0x47,
-  DockingErrorSignal            dockingErrorSignal          = 0x48,
-  CarryStateUpdate              setCarryState               = 0x49,
-  IMURequest                    imuRequest                  = 0x4A,
-  SyncTime                      syncTime                    = 0x4B,
-  
-  CheckLiftLoad                 checkLiftLoad               = 0x4F,
-  EnableMotorPower              enableMotorPower            = 0x50,
-  SetMotionModelParams          setMotionModelParams        = 0x51,
-  
-  SetCliffDetectThreshold       setCliffDetectThreshold     = 0x54,
-  EnableReadToolCodeMode        enableReadToolCodeMode      = 0x55,
-  
-  StartMotorCalibration         startMotorCalibration       = 0x58,
-  RollActionParams              rollActionParams            = 0x59,
-  CameraFOVInfo                 cameraFOVInfo               = 0x5A,
-  StartRecordingAudio           startRecordingAudio         = 0x5B,
-  DrawTextOnScreen              drawTextOnScreen            = 0x5C,
-  //          FREE SLOT!!!                                  = 0x5D,
-  //          FREE SLOT!!!                                  = 0x5E,
-  //          FREE SLOT!!!                                  = 0x5F,
-  EnableStopOnCliff             enableStopOnCliff           = 0x60,
-  ForceDelocalizeSimulatedRobot forceDelocalizeSimulatedRobot = 0x61, // Used for simulation only, no-op for physical
-  EnableBraceWhenFalling        enableBraceWhenFalling      = 0x63,
+
+  // TODO: These cube messages will need to be modified and moved to a 
+  //       separate file once we update block connection logic for BLE
+  CubeLights                    setCubeLights               = 0x4B,
+  SetPropSlot                   setPropSlot                 = 0x4C,
+  StreamObjectAccel             streamObjectAccel           = 0x4D,
+  SetCubeGamma                  setCubeGamma                = 0x4E,
+  CubeID                        setCubeID                   = 0x4F,
   
 
-  // V2 Audio
+  // 0x50 to 0xAF: To Anim Process
+  PlayAnim                      playAnim                    = 0x50,
+  LockAnimTracks                lockAnimTracks              = 0x51,
+  RequestAvailableAnimations    requestAvailableAnimations  = 0x52,
+  AbortAnimation                abortAnimation              = 0x53,
+  StartRecordingAudio           startRecordingAudio         = 0x54,
+  DrawTextOnScreen              drawTextOnScreen            = 0x55,
+
+
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,
   AudioEngine::Multiplexer::PostAudioGameState    postAudioGameState   = 0x72,
   AudioEngine::Multiplexer::PostAudioSwitchState  postAudioSwitchState = 0x73,
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
 
-  // 0x80 to 0xAF: To WiFi in V1. To Anim Process in V2
-  //       FREE SLOT!!!                                     = 0x80,
-  //       FREE SLOT!!!                                     = 0x81,
-  PlayAnim                      playAnim                    = 0x82,   // V2
-  LockAnimTracks                lockAnimTracks              = 0x83,   // V2
-  RecordHeading                 recordHeading               = 0x84,   // V2
-  TurnToRecordedHeading         turnToRecordedHeading       = 0x85,   // V2
-  //       FREE SLOT!!!                                     = 0x86,
-  //       FREE SLOT!!!                                     = 0x87,
-  //       FREE SLOT!!!                                     = 0x89,
-  SetBackpackLights             setBackpackLights           = 0x8A,   // V2
-  //       FREE SLOT                                        = 0x8B,
-  RequestAvailableAnimations    requestAvailableAnimations  = 0x8C,   // V2
-  AbortAnimation                abortAnimation              = 0x8D,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

@@ -643,7 +643,7 @@ bool BehaviorManager::SwitchToBehaviorBase(BehaviorExternalInterface& behaviorEx
     }
   }
   
-  #if ANKI_DEV_CHEATS
+  /**#if ANKI_DEV_CHEATS
     if( nullptr != nextBehavior ) {
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
@@ -652,7 +652,7 @@ bool BehaviorManager::SwitchToBehaviorBase(BehaviorExternalInterface& behaviorEx
         robot.GetContext()->GetVizManager()->SendNewBehaviorSelected(
              VizInterface::NewBehaviorSelected( nextBehavior->GetID() )));
     }
-  #endif
+  #endif**/
   
   SetRunningAndResumeInfo(behaviorExternalInterface, nextBehaviorInfo);
   SendDasTransitionMessage(behaviorExternalInterface,
@@ -693,14 +693,14 @@ void BehaviorManager::SendDasTransitionMessage(BehaviorExternalInterface& behavi
                          ReactionTriggerToString(newBehaviorInfo.GetCurrentReactionTrigger()));
     }
     
-    ExternalInterface::BehaviorTransition msg;
+    /**ExternalInterface::BehaviorTransition msg;
     msg.oldBehaviorID = oldBehaviorID;
     msg.oldBehaviorClass = nullptr != oldBehavior ? oldBehavior->GetClass() : BehaviorClass::Wait;
     msg.oldBehaviorExecType = nullptr != oldBehavior ? oldBehavior->GetExecutableType() : ExecutableBehaviorType::Wait;
     msg.newBehaviorID = newBehaviorID;
     msg.newBehaviorClass = nullptr != newBehavior ? newBehavior->GetClass() : BehaviorClass::Wait;
     msg.newBehaviorExecType = nullptr != newBehavior ? newBehavior->GetExecutableType() : ExecutableBehaviorType::Wait;
-    msg.newBehaviorDisplayKey = newBehavior ? newBehavior->GetDisplayNameKey() : "";
+    msg.newBehaviorDisplayKey = newBehavior ? newBehavior->GetDisplayNameKey() : "";**/
     //robotExternalInterface->BroadcastToGame<ExternalInterface::BehaviorTransition>(msg);
   //}
 }

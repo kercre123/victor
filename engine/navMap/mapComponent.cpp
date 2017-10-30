@@ -29,7 +29,7 @@
 #include "engine/robotStateHistory.h"
 #include "engine/cozmoContext.h"
 #include "engine/markerlessObject.h"
-#include "engine/components/cliffSensorComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/groundPlaneROI.h"

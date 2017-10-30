@@ -688,6 +688,15 @@ bool QuadTreeNode::CanOverrideSelfWithContent(EContentType newContentType, ECont
       return false;
     }
   }
+  else if ( newContentType == EContentType::ObstacleProx )
+  {
+    if ( ( dataType == EContentType::ObstacleCube         ) ||
+         ( dataType == EContentType::ObstacleCharger      ) ||
+         ( dataType == EContentType::Cliff                ) )
+    {
+      return false;
+    }
+  }
   else if ( newContentType == EContentType::NotInterestingEdge )
   {
     // NotInterestingEdge can only override interesting edges

@@ -14,7 +14,7 @@
 
 #include "engine/actions/basicActions.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/proxSensorComponent.h"
+#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"

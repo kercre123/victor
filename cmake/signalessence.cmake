@@ -21,7 +21,6 @@ set(SIGNALESSENCE_INCLUDE_PATHS
 )
 
 set(SIGNALESSENCE_LIBS
-  mmif
   mmfx
 )
 

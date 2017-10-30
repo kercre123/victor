@@ -24,38 +24,33 @@ namespace Cozmo {
 namespace Audio {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineRobotAudioInput::HandleEngineToRobotMsg(const RobotInterface::EngineToRobot& msg)
+#define AUDIO_MSG_HANDLER_HELPER(msg)  PRINT_CH_DEBUG(AudioMuxInput::kAudioLogChannel, \
+                                                      "EngineRobotAudioInput.HandleMessage.#msg", ""); \
+                                       AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(msg); 
+
+void EngineRobotAudioInput::HandleMessage( const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent ) 
 {
-  PRINT_CH_DEBUG(AudioMuxInput::kAudioLogChannel,
-                 "EngineRobotAudioInput.HandleEngineToRobotMsg", "Handle game event of type %X",
-                 msg.tag);
-
-  switch ( msg.tag ) {
-      
-    case RobotInterface::EngineToRobot::Tag_postAudioEvent:
-      HandleMessage( msg.postAudioEvent );
-      break;
-      
-    case RobotInterface::EngineToRobot::Tag_stopAllAudioEvents:
-      HandleMessage( msg.stopAllAudioEvents );
-      break;
-    
-    case RobotInterface::EngineToRobot::Tag_postAudioGameState:
-      HandleMessage( msg.postAudioGameState );
-      break;
-      
-    case RobotInterface::EngineToRobot::Tag_postAudioSwitchState:
-      HandleMessage( msg.postAudioSwitchState );
-      break;
-      
-    case RobotInterface::EngineToRobot::Tag_postAudioParameter:
-      HandleMessage( msg.postAudioParameter );
-      break;
-
-    default:
-      // Do nothing
-      break;
-  }
+  AUDIO_MSG_HANDLER_HELPER(postAudioEvent);
+}
+void EngineRobotAudioInput::HandleMessage( const AudioEngine::Multiplexer::StopAllAudioEvents& stopAllAudioEvents )
+{
+  AUDIO_MSG_HANDLER_HELPER(stopAllAudioEvents);
+}
+void EngineRobotAudioInput::HandleMessage( const AudioEngine::Multiplexer::PostAudioGameState& postAudioGameState )
+{
+  AUDIO_MSG_HANDLER_HELPER(postAudioGameState);
+}
+void EngineRobotAudioInput::HandleMessage( const AudioEngine::Multiplexer::PostAudioSwitchState& postAudioSwitchState )
+{
+  AUDIO_MSG_HANDLER_HELPER(postAudioSwitchState);
+}
+void EngineRobotAudioInput::HandleMessage( const AudioEngine::Multiplexer::PostAudioParameter& postAudioParameter )
+{
+  AUDIO_MSG_HANDLER_HELPER(postAudioParameter);
+}
+void EngineRobotAudioInput::HandleMessage( const AudioEngine::Multiplexer::PostAudioMusicState& postAudioMusicState )
+{
+  AUDIO_MSG_HANDLER_HELPER(postAudioMusicState);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

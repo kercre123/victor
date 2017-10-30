@@ -1061,7 +1061,7 @@ void VizControllerImpl::ProcessVizNewBehaviorSelectedMessage(const AnkiEvent<Viz
   if (_behaviorEventBuffer.size() > 0)
   {
     std::vector<BehaviorID>& latestEvents =_behaviorEventBuffer.back();
-    latestEvents.push_back(selectData.newCurrentBehavior);
+    latestEvents.push_back(BehaviorIDFromString(selectData.newCurrentBehavior));
   }
 }
 
@@ -1099,7 +1099,7 @@ void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent
   
   for (const VizInterface::BehaviorScoreData& scoreData : selectData.scoreData)
   {
-    BehaviorScoreBuffer& scoreBuffer = FindOrAddScoreBuffer(scoreData.behaviorID);
+    BehaviorScoreBuffer& scoreBuffer = FindOrAddScoreBuffer(BehaviorIDFromString(scoreData.behaviorID));
     if (!scoreBuffer.empty())
     {
       // Remove the dummy entry we added during preUpdate

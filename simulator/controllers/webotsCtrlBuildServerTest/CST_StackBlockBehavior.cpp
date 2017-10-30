@@ -101,7 +101,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       SendMessage(ExternalInterface::MessageGameToEngine(
                     ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
       SendMessage(ExternalInterface::MessageGameToEngine(
-                    ExternalInterface::ExecuteBehaviorByID(kBehaviorID, -1)));
+                    ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(kBehaviorID), -1)));
           
       SendMoveHeadToAngle(0, 100, 100);
       SET_TEST_STATE(WaitForCubeConnections);
@@ -326,7 +326,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
                                             NEAR( ABS(pose2.GetTranslation().z() - pose1.GetTranslation().z()), 44.0f, 10.0f)) {
         // Cancel the stack behavior:
         SendMessage(ExternalInterface::MessageGameToEngine(
-                       ExternalInterface::ExecuteBehaviorByID(BehaviorID::Wait, -1)));
+                       ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::Wait), -1)));
         SET_TEST_STATE(TestDone)
       }
       break;
@@ -371,7 +371,7 @@ void CST_StackBlockBehavior::HandleRobotCompletedAction(const ExternalInterface:
   
 void CST_StackBlockBehavior::HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg)
 {
-  PRINT_NAMED_INFO("CST_StackBlockBehavior.transition", "%s -> %s",
+  /**PRINT_NAMED_INFO("CST_StackBlockBehavior.transition", "%s -> %s",
                    BehaviorIDToString(msg.oldBehaviorID),
                    BehaviorIDToString(msg.newBehaviorID));
   
@@ -380,7 +380,7 @@ void CST_StackBlockBehavior::HandleBehaviorTransition(const ExternalInterface::B
   }
   if(msg.newBehaviorID == kBehaviorID) {
     _startedBehavior++;
-  }
+  }**/
 }
   
 void CST_StackBlockBehavior::HandleActiveObjectConnectionState(const ObjectConnectionState& msg)

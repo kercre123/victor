@@ -15,7 +15,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/cliffSensorComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 

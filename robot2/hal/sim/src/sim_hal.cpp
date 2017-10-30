@@ -173,15 +173,15 @@ namespace Anki {
       // Lights
       webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
       
-      // AudioInput
+      // MicData
       // Use the mac mic as input with AudioCaptureSystem
       constexpr uint32_t kSamplesPerChunk = 120;
       constexpr uint32_t kSampleRate_hz = 24000;
       AudioUtil::AudioCaptureSystem audioCaptureSystem_(kSamplesPerChunk, kSampleRate_hz);
       
       uint32_t audioInputSequenceID_ = 0;
-      std::deque<Anki::Cozmo::RobotInterface::AudioInput> audioInputData_{};
-      std::mutex audioInputMutex_;
+      std::deque<Anki::Cozmo::RobotInterface::MicData> micData_{};
+      std::mutex micDataMutex_;
 
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -240,10 +240,11 @@ namespace Anki {
       
       void AudioInputCallback(const AudioUtil::AudioSample* data, uint32_t numSamples)
       {
-        std::lock_guard<std::mutex> lock(audioInputMutex_);
-        audioInputData_.resize(audioInputData_.size() + 1);
-        auto& newData = audioInputData_.back();
+        std::lock_guard<std::mutex> lock(micDataMutex_);
+        micData_.resize(micData_.size() + 1);
+        auto& newData = micData_.back();
         
+        // Duplicate our mono channel input across 4 interleaved channels to simulate 4 mics
         constexpr int kNumChannels = 4;
         for (int j=0; j<kSamplesPerChunk; j++)
         {
@@ -261,23 +262,23 @@ namespace Anki {
       void AudioInputUpdate()
       {
         // Check if our sim mic thread has delivered more audio for us to send out
-        while(audioInputMutex_.try_lock())
+        while(micDataMutex_.try_lock())
         {
-          if (audioInputData_.empty())
+          if (micData_.empty())
           {
-            audioInputMutex_.unlock();
+            micDataMutex_.unlock();
             break;
           }
             
-          SendMessage(audioInputData_.front());
-          audioInputData_.pop_front();
-          if (audioInputData_.empty())
+          SendMessage(micData_.front());
+          micData_.pop_front();
+          if (micData_.empty())
           {
-            audioInputMutex_.unlock();
+            micDataMutex_.unlock();
             break;
           }
           
-          audioInputMutex_.unlock();
+          micDataMutex_.unlock();
         }
       }
 
@@ -466,8 +467,15 @@ namespace Anki {
       // Audio Input
       audioCaptureSystem_.SetCallback(std::bind(&AudioInputCallback, std::placeholders::_1, std::placeholders::_2));
       audioCaptureSystem_.Init();
-      // VIC-473 Commenting this out since it sometimes causes sim to fail.
-      audioCaptureSystem_.StartRecording();
+
+      if (audioCaptureSystem_.IsValid())
+      {
+        audioCaptureSystem_.StartRecording();
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("HAL.Init", "AudioCaptureSystem not supported on this platform. No mic data input available.");
+      }
 
       isInitialized = true;
       return RESULT_OK;
