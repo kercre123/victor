@@ -70,7 +70,7 @@
     "translation" : "Progression des boîtes à bonus"
   },
   "tooltip.bonusbar.body.daycomplete" : {
-    "translation" : "Jeton déjà gagné aujourd'hui. Nouvelle journée dans {0} h {1} m."
+    "translation" : "Jeton déjà gagné aujourd'hui. Nouvelle journée dans {0} h {1} min."
   },
   "tooltip.bonusbar.body.dayincomplete" : {
     "translation" : "Satisfais l'envie de jouer de Cozmo pour gagner un jeton. Le jour se termine dans {0} h {1} m."

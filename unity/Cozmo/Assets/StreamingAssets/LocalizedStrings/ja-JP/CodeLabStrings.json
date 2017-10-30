@@ -514,16 +514,16 @@
     "translation" : "小さなオーケストラではキューブを楽器に使います！"
   },
   "codeLabFeaturedProject_TinyOrchestra.projectInstructions" : {
-    "translation" : "1. 始める前に、デバイスのサウンドが十分な音量であることを確認します。\u000a\u000a2. COZMOの前に3つのキューブを置きます。\u000a\u000a3.プレイを開始すると、キューブのライトがさまざまな色で回転します。キューブをタップすると、楽器を演奏します。再度タップすると、楽器が変わります。\u000a\u000a4．いろいろな音楽を作って実験してみましょう！\u000a\u000a"
+    "translation" : "1. 始める前に、デバイスのサウンドが十分な音量であることを確認します。\u000a\u000a2. COZMOの前に3つのキューブを置きます。\u000a\u000a3.「スタート」をタップすると、キューブのライトがさまざまな色で回転します。キューブをタップすると、楽器を演奏します。再度タップすると、楽器が変わります。\u000a\u000a4．いろいろな音楽を作って実験してみましょう！\u000a\u000a"
   },
   "codeLabFeaturedProject_MagicFortuneTeller.projectName" : {
     "translation" : "魔法の占い師"
   },
   "codeLabFeaturedProject_MagicFortuneTeller.projectDescription" : {
-    "translation" : "COZMOをゆさぶってあなたの運勢を教えてもらいましょう。"
+    "translation" : "COZMOをゆさぶってあなたの運勢を占ってもらいましょう。"
   },
   "codeLabFeaturedProject_MagicFortuneTeller.projectInstructions" : {
-    "translation" : "1．タップしてプレイを開始し、COZMOの顔に「？」が表示されたら、プレイヤーがCOZMOにyes/noのクイズを出す番です。2. COZMOをゆすって占いの結果を教えてもらいましょう。"
+    "translation" : "1．「スタート」をタップして、COZMOの顔に「？」が表示されたら、プレイヤーがCOZMOにyes/noのクイズを出す番です。\u000a\u000a2. COZMOをゆすって占いの結果を教えてもらいましょう。"
   },
   "codeLabFeaturedProject_CubeWhack.projectName" : {
     "translation" : "キューブを引っぱたけ"
@@ -556,7 +556,7 @@
     "translation" : "自動保存されました"
   },
   "codeLab.SaveProject.NotSaved" : {
-    "translation" : "変更は保存されていません。リミックスしてコピーを保存しましょう。"
+    "translation" : "Remix to save!"
   },
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "マイプロジェクト{0}"

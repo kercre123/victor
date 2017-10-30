@@ -70,7 +70,7 @@
     "translation" : "エナジーボックスの進捗"
   },
   "tooltip.bonusbar.body.daycomplete" : {
-    "translation" : "本日の今日のミッションは獲得済みです。次の日まで{0}時間{1}分です。"
+    "translation" : "今日のプレイトークンミッションは獲得済みです。次の日まで{0}時間{1}分です。"
   },
   "tooltip.bonusbar.body.dayincomplete" : {
     "translation" : "Cozmoのプレイメーターを満たすと、プレイトークンを獲得できます。1日の終了まで{0}時間{1}分です。"
@@ -79,6 +79,6 @@
     "translation" : "エナジーボール"
   },
   "tooltip.sparks.body.main" : {
-    "translation" : "COZMOはエナジーボールのためにパフォーマンスやゲームをプレイします。"
+    "translation" : "COZMOはエナジーボールのためにトリックやゲームをして遊びます。"
   }
 }

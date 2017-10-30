@@ -112,7 +112,7 @@
     "translation" : "fortune"
   },
   "codeLabFeaturedProject.MagicFortuneTeller.yes" : {
-    "translation" : "yes"
+    "translation" : "OUI"
   },
   "codeLabFeaturedProject.MagicFortuneTeller.absolutely" : {
     "translation" : "absolutely"
@@ -208,7 +208,7 @@
     "translation" : "cube 3 bad"
   },
   "codeLabFeaturedProject.CubeWhack.cozmo" : {
-    "translation" : "cozmo"
+    "translation" : "Cozmo"
   },
   "codeLabFeaturedProject.CubeWhack.yellow" : {
     "translation" : "Yellow"

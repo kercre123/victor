@@ -556,7 +556,7 @@
     "translation" : "Automatisch gespeichert"
   },
   "codeLab.SaveProject.NotSaved" : {
-    "translation" : "Änderungen nicht gespeichert. Erstelle einen Remix, um eine Kopie zu speichern!"
+    "translation" : "Remix to save!"
   },
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "Mein Projekt \"{0}\""

@@ -67,7 +67,7 @@
     "translation" : "quand le cube %1 est déplacé"
   },
   "codeLabVertical.COZMO_POSITION" : {
-    "translation" : "Position de Cozmo dans l'univers %1"
+    "translation" : "Position de Cozmo dans le monde %1"
   },
   "codeLabVertical.COZMO_PITCH" : {
     "translation" : "Inclinaison de Cozmo °"
@@ -94,7 +94,7 @@
     "translation" : "position du visage dans la caméra %1"
   },
   "codeLabVertical.FACE_POSITION" : {
-    "translation" : "position du visage dans l'univers %1"
+    "translation" : "position du visage dans le monde %1"
   },
   "codeLabVertical.FACE_EXPRESSION" : {
     "translation" : "expression du visage"
@@ -112,7 +112,7 @@
     "translation" : "Position du cube %1 dans la caméra %2"
   },
   "codeLabVertical.CUBE_POSITION" : {
-    "translation" : "position du cube %1 dans l'univers %2"
+    "translation" : "position du cube %1 dans le monde %2"
   },
   "codeLabVertical.CUBE_PITCH" : {
     "translation" : "Inclinaison du cube %1 dans la caméra (en °)."
@@ -154,7 +154,7 @@
     "translation" : "naviguer de %1 vers l'avant, %2 latéralement, %3 °"
   },
   "codeLabVertical.PATH_TO_X_Y_ANGLE" : {
-    "translation" : "naviguer dans l'univers vers %1x, %2y, %3°"
+    "translation" : "naviguer dans le monde vers %1x, %2y, %3°"
   },
   "codeLabVertical.TURN" : {
     "translation" : "tourner de %1° à %2°/s"
@@ -169,7 +169,7 @@
     "translation" : "déplacer la tête à %1° à %2 °/s"
   },
   "codeLabVertical.SET_X_ON_CUBE" : {
-    "translation" : "sur le cube %2 définir %1 à %3"
+    "translation" : "sur le cube %2 , mettre %1 en %3"
   },
   "codeLabVertical.CUBE_ANIM" : {
     "translation" : "sur le cube %2 %1 s'allume en %3"
@@ -316,13 +316,13 @@
     "translation" : "roues"
   },
   "codeLabVertical.HEAD" : {
-    "translation" : "Tête"
+    "translation" : "tête"
   },
   "codeLabVertical.MOVING_HEAD" : {
     "translation" : "déplacement de la tête"
   },
   "codeLabVertical.LIFT" : {
-    "translation" : "Bras élévateur"
+    "translation" : "bras élévateur"
   },
   "codeLabVertical.MOVING_LIFT" : {
     "translation" : "déplacement du bras"
