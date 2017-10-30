@@ -795,3 +795,45 @@ button:focus {
   }
 
 }
+
+/**
+ * Hide the blockly contents while showing the play now modal
+ * NOTE: any new divs in the html body will need to have the same changes applied to them.
+ */
+.show-play-now-modal #blocks {
+    /** 
+     * We want this to have a layout for blockly spacing calculations
+     * But not to render in the background to improve performance / not look broken on iOS 9 devices
+     * If display:hidden; is used here, the flyout height (and theoretically any other things based on
+     * workspace metrics) will break
+     */
+    visibility: hidden;
+}
+
+.show-play-now-modal #close {
+    display: none;
+}
+
+.show-play-now-modal #glossary-button {
+    display: none;
+}
+
+.show-play-now-modal #exportbtn {
+    display: none;
+}
+
+.show-play-now-modal #navigation {
+    display: none;
+}
+
+.show-play-now-modal #undoRedo {
+    display: none;
+}
+
+.show-play-now-modal #zoomControls {
+    display: none;
+}
+
+.show-play-now-modal #projectText {
+    display: none;
+}

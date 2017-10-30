@@ -63,13 +63,23 @@
             // currently, otherwise the original JSON is not set
             // correctly. - msintov, 10/12/2017
             setTimeout(function(){
-                window.originalSampleProjectJSON = Scratch.vm.toJSON();
+                if (Scratch.vm) {
+                    window.originalSampleProjectJSON = Scratch.vm.toJSON();
+                } else {
+                    // TODO: determine how to properly handle this error
+                    window.cozmoDASError('Scratch vm undefined. Page failed to load properly');
+                }
             }, 100);
         }
 
         if (window.isVertical) {
-            // Move the workspace to its home position after the project loads
-            Scratch.workspace.scrollHome();
+            if (Scratch.workspace) {
+                // Move the workspace to its home position after the project loads
+                Scratch.workspace.scrollHome();
+            } else {
+                // TODO: determine how to properly handle this error
+                window.cozmoDASError('Scratch workspace undefined. Page failed to load properly');
+            }
         }
 
         window.Unity.call({command: "cozmoWorkspaceLoaded"});
@@ -515,8 +525,6 @@
      */
     function prepareForFeaturedProjectPlayNowModal() {
         if (window.isVertical && window.getUrlVar('isFeaturedProject') === 'true') {
-            // Prevent the modal from looking broken before the project loads
-            document.getElementById('play-now-modal').getElementsByClassName('bd')[0].style.visibility = 'hidden';
             document.body.classList.add('show-play-now-modal');
         }
       }

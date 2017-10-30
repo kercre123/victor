@@ -17,9 +17,12 @@
 }
 
 #play-now-modal .bd {
+  display: none;
+  height: 86vh;
+}
+#play-now-modal .bd.modal-ready {
   display: flex;
   flex-direction: row;
-  height: 86vh;
 }
 #play-now-modal .bd .col {
   position: relative;

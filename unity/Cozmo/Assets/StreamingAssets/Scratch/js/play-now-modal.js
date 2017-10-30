@@ -20,7 +20,9 @@ var PlayNowModal = function(){
    * Initialize Play Now Modal
    * @returns {void}
    */
-  function init(){
+  function init() {
+    modal = document.querySelector('#play-now-modal');
+    _registerEvents();
 
     // if this is not a sample project, exit now
     if (!window.isCozmoSampleProject) {
@@ -28,17 +30,11 @@ var PlayNowModal = function(){
       return;
     }
 
-    // This is a sample project.  If it's a featured project, then
-    // we will want to show the play now modal.
-    modal = document.querySelector('#play-now-modal');
-
     // set translations
     setText('#btn-play-now-start .button-label', $t('codeLab.playNowModal.startButtonLabel'));
     setText('#btn-play-now-stop .button-label', $t('codeLab.playNowModal.stopButtonLabel'));
     setText('#btn-play-now-see-inside', $t('codeLab.playNowModal.seeInsideButtonLabel'));
     setText('#play-now-modal .instructions-label', $t('codeLab.playNowModal.instructionsLabel'));
-
-    _registerEvents();
 
     // load featured projects and see if the current project is one of them
     _loadFeaturedProjects();
@@ -143,9 +139,10 @@ var PlayNowModal = function(){
     for(var i=0; i < projects.length; i++) {
       if (projects[i].ProjectUUID == window.cozmoProjectUUID) {
         _showPlayNowModal(projects[i]);
-        break;
+        return;
       }
     }
+    _closeModal();
   }
 
   /**
@@ -164,7 +161,7 @@ var PlayNowModal = function(){
     setText('#play-now-modal .instructions-text', $t(project.FeaturedProjectInstructions));
 
     // show the modal
-    document.getElementById('play-now-modal').getElementsByClassName('bd')[0].style.visibility = 'visible';
+    document.getElementById('play-now-modal').getElementsByClassName('bd')[0].classList.add('modal-ready');
     document.body.classList.add('show-play-now-modal');
   }
 
