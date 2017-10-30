@@ -9,6 +9,7 @@
 #include "power.h"
 #include "vectors.h"
 #include "flash.h"
+#include "lights.h"
 
 static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL2
@@ -17,17 +18,27 @@ static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL17
   ;
 
-// Since the analog portion is shared with the bootloader, this has to be in the shared ram space
-uint16_t volatile Analog::values[ADC_CHANNELS];
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.5);
-static const uint32_t RISING_EDGE =  ADC_WINDOW(0, TRANSITION_POINT);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(TRANSITION_POINT, ~0);
 static const int CHARGE_DELAY = 200; // 1 second
+static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
+static const int POWER_WIPE_TIME = 200 * 10;  // Erase flash
+static const int BUTTON_THRESHOLD = ADC_VOLTS(2.6);
+static const int BOUNCE_LENGTH = 3;
+static const int MINIMUM_VEXT_CYCLES = 200; // 1s
 
-bool Analog::button_pressed;
 static bool onBatPower;
 static bool chargeAllowed;
-static int chargeEnableDelay = 0;
+static int chargeEnableDelay;
+static int vext_debounce;
+static bool last_vext = false;
+static bool vext_status = false;
+static bool bouncy_button;
+static int bouncy_count;
+static int hold_count;
+
+uint16_t volatile Analog::values[ADC_CHANNELS];
+bool Analog::button_pressed;
 
 static inline void wait(int us) {
   __asm {
@@ -42,6 +53,29 @@ static inline void wait(int us) {
             cmp      us,#0
             bgt      _jump
   }
+}
+
+static void setBatteryPower(bool bat) {
+  if (bat) {
+    NVIC_DisableIRQ(ADC1_IRQn);
+
+    __disable_irq();
+    nVEXT_EN::mode(MODE_INPUT);
+    wait(40*5); // Just around 50us
+    BAT_EN::set();
+    __enable_irq();
+  } else {
+    NVIC_EnableIRQ(ADC1_IRQn);
+    
+    __disable_irq();
+    BAT_EN::reset();
+    wait(40); // Just around 10us
+    nVEXT_EN::reset();
+    nVEXT_EN::mode(MODE_OUTPUT);
+    __enable_irq();
+  }
+  
+  onBatPower = true;
 }
 
 void Analog::init(void) {
@@ -62,7 +96,7 @@ void Analog::init(void) {
               | ADC_CFGR1_DMACFG
               | ADC_CFGR1_AWDEN
               | ADC_CFGR1_AWDSGL
-              | (ADC_CFGR1_AWDCH_0 * 2) // ADC Channel 2 (VEXT)
+              | (ADC_CFGR1_AWDCH_0 * 4) // ADC Channel 4 (VMAIN)
               ;
   ADC1->CFGR2 = 0
               | ADC_CFGR2_CKMODE_1
@@ -99,11 +133,11 @@ void Analog::init(void) {
 
   // This is a fresh boot (no head)
   if (~USART1->CR1 & USART_CR1_UE) {
-    // Set to VEXT power
+    // Disable VMAIN power
     nVEXT_EN::mode(MODE_INPUT);
     BAT_EN::reset();
     BAT_EN::mode(MODE_OUTPUT);
-    
+
     // Enable (low-current) charging and power
     CHG_HC::reset();
     CHG_EN::set();
@@ -116,22 +150,21 @@ void Analog::init(void) {
     for (;;) {
       BAT_EN::set();
       __asm("wfi\nwfi");  // 5ms~10ms for power to stablize
-      if (Analog::values[ADC_VBAT] > MINIMUM_BATTERY) break ;
+      if (Analog::values[ADC_VMAIN] > MINIMUM_BATTERY) break ;
       BAT_EN::reset();
       for( int i = 0; i < 200; i++)  __asm("wfi") ;
     }
     
     BAT_EN::reset();
   }
-  
+
   POWER_EN::mode(MODE_INPUT);
   POWER_EN::pull(PULL_UP);
   #endif
 
   // Startup external power interrupt / handler
   NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
-  NVIC_EnableIRQ(ADC1_IRQn);
-  NVIC_SetPendingIRQ(ADC1_IRQn);
+  setBatteryPower(Analog::values[ADC_VEXT] < TRANSITION_POINT); // If VEXT is low, skip it
 }
 
 void Analog::stop(void) {
@@ -147,12 +180,13 @@ void Analog::stop(void) {
 }
 
 void Analog::transmit(BodyToHead* data) {
-  data->battery.battery = values[ADC_VBAT];
+  data->battery.battery = values[ADC_VMAIN];
   data->battery.charger = values[ADC_VEXT];
   data->touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
 }
 
 void Analog::allowCharge(bool enable) {
+  chargeEnableDelay = 0;
   chargeAllowed = enable;
 }
 
@@ -166,52 +200,30 @@ void Analog::delayCharge() {
 }
 
 extern "C" void ADC1_IRQHandler(void) {
-  // Stop the ADC so we can change our watchdog window
-  ADC1->CR |= ADC_CR_ADSTP;
-  
-  bool offVext = Analog::values[ADC_VEXT] < TRANSITION_POINT;
-
-  if (offVext) {
-    nVEXT_EN::mode(MODE_INPUT);
-    wait(40*5); // Just around 10us
-    BAT_EN::set();
-    ADC1->TR = RISING_EDGE;
-  } else {
-    BAT_EN::reset();
-    wait(40); // Just around 10us
-    nVEXT_EN::reset();
-    nVEXT_EN::mode(MODE_OUTPUT);
-    ADC1->TR = FALLING_EDGE;
-  }
-
-  onBatPower = offVext;
-  
-  // Clear interrupt and restart ADC
   ADC1->ISR = ADC_ISR_AWD;
-  ADC1->CR |= ADC_CR_ADSTART;
+  setBatteryPower(true);
 }
 
-#ifndef BOOTLOADER
-#include "lights.h"
-#endif
-
-static const int BUTTON_THRESHOLD = ADC_VOLTS(2.6);
-static const int BOUNCE_LENGTH = 3;
-
 void Analog::tick(void) {
-  static bool bouncy_button;
-  static int bouncy_count;
+  // Debounce VEXT logic
+  bool vext_now = Analog::values[ADC_VEXT] < TRANSITION_POINT;
+  
+  if (vext_now && last_vext) {
+    if (vext_debounce++ >= MINIMUM_VEXT_CYCLES) {
+      vext_status = true;
+    }
+  } else {
+    vext_debounce = 0;
+    vext_status = false;
+  }
+  last_vext = vext_now;
 
-  // Debounce buttons
-  bool new_button = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
-
-  if (bouncy_button != new_button) {
-    bouncy_button = new_button;
-    bouncy_count = 0;
-  } else if (++bouncy_count > BOUNCE_LENGTH) {
-    button_pressed = bouncy_button;
+  // VEXT Switchover
+  if (onBatPower && vext_status) {
+    setBatteryPower(false);
   }
 
+  // Charge logic
   if (chargeAllowed && !onBatPower) {
     if (chargeEnableDelay > CHARGE_DELAY) {
       CHG_EN::mode(MODE_INPUT);
@@ -225,15 +237,15 @@ void Analog::tick(void) {
     chargeEnableDelay = 0;
   }
 
-  static int i = 0;
-  USART2->TDR = values[i];
-  USART2->TDR = (values[i] >> 8) | (i << 4);
-  i = (i + 1) % ADC_CHANNELS; 
+  // Button logic
+  bool new_button = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
 
-  #ifndef BOOTLOADER
-  static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
-  static const int POWER_WIPE_TIME = 200 * 10;  // Erase flash
-  static int hold_count;
+  if (bouncy_button != new_button) {
+    bouncy_button = new_button;
+    bouncy_count = 0;
+  } else if (++bouncy_count > BOUNCE_LENGTH) {
+    button_pressed = bouncy_button;
+  }
 
   if (button_pressed) {
     if (hold_count < POWER_DOWN_TIME) {
@@ -245,10 +257,9 @@ void Analog::tick(void) {
     }
   } else {
     if (hold_count >= POWER_DOWN_TIME) {
-      //Power::stop();
+      Power::stop();
     } else {
       hold_count = 0;
     }
   }
-  #endif
 }
