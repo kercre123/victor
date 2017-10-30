@@ -20,7 +20,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcherStrictPriorityWithCooldown(const Json::Value& config)
-  : IBehaviorDispatcher(config)
+  : BaseClass(config)
 {
   const Json::Value& behaviorArray = config["behaviors"];
   DEV_ASSERT_MSG(!behaviorArray.isNull(),
@@ -46,6 +46,9 @@ BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcherStrictPriorityWi
       _cooldownInfo.emplace_back( CooldownInfo{._cooldown_s = cooldown, ._randomCooldownFactor = randomFactor} );
     }
   }
+
+  // initialize last idx to invalid value
+  _lastDesiredBehaviorIdx = _cooldownInfo.size();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -67,9 +70,7 @@ ICozmoBehaviorPtr BehaviorDispatcherStrictPriorityWithCooldown::GetDesiredBehavi
     if( !cooldownInfo.OnCooldown() &&
         ( behavior->IsActivated() ||
           behavior->WantsToBeActivated(behaviorExternalInterface) ) ) {
-      // we will dispatch to this behavior, so put it on cooldown
-      // TEMP: cooldown should be when behavior stops, not here
-      cooldownInfo.StartCooldown(GetRNG());
+      _lastDesiredBehaviorIdx = idx;
       return behavior;
     }
   }
@@ -77,12 +78,14 @@ ICozmoBehaviorPtr BehaviorDispatcherStrictPriorityWithCooldown::GetDesiredBehavi
   return ICozmoBehaviorPtr{};
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDispatcherStrictPriorityWithCooldown::CooldownInfo::OnCooldown() const
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   return _onCooldownUntil_s >= 0.0f && currTime_s < _onCooldownUntil_s;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherStrictPriorityWithCooldown::CooldownInfo::StartCooldown(Util::RandomGenerator& rng)
 {
   if( _cooldown_s > 0.0f ) {
@@ -95,6 +98,45 @@ void BehaviorDispatcherStrictPriorityWithCooldown::CooldownInfo::StartCooldown(U
     
     _onCooldownUntil_s = currTime_s + _cooldown_s;
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  if( IsActivated() &&
+      _lastDesiredBehaviorIdx < _cooldownInfo.size() &&
+      !IsControlDelegated() ) {
+    // the last behavior must have stopped, so start its cooldown now
+    PRINT_CH_INFO("Behaviors",
+                  "BehaviorDispatcherStrictPriorityWithCooldown.LastBehaviorStopped.StartCooldown",
+                  "Behavior idx %zu '%s' seems to have stopped, start cooldown",
+                  _lastDesiredBehaviorIdx,
+                  IBehaviorDispatcher::GetAllPossibleDispatches()[_lastDesiredBehaviorIdx]->GetIDStr().c_str());
+    _cooldownInfo[ _lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
+    _lastDesiredBehaviorIdx = _cooldownInfo.size();
+  }
+  
+  BaseClass::BehaviorUpdate(behaviorExternalInterface);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcher_OnActivated(
+  BehaviorExternalInterface& behaviorExternalInterface)
+{
+  // reset last dispatched behavior
+  _lastDesiredBehaviorIdx = _cooldownInfo.size();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcher_OnDeactivated(
+  BehaviorExternalInterface& behaviorExternalInterface)
+{
+  // if we are stopped while a behavior was active, put it on cooldown
+  if( _lastDesiredBehaviorIdx < _cooldownInfo.size() ) {
+    _cooldownInfo[ _lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
+    _lastDesiredBehaviorIdx = _cooldownInfo.size();
+  }   
 }
 
 }

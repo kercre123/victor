@@ -97,8 +97,7 @@ void BehaviorVictorDemoObservingFaceInteraction::TransitionToFindFaces(
   
   if( _searchBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
     DelegateIfInControl( behaviorExternalInterface,
-                         _searchBehavior.get(),
-                         &BehaviorVictorDemoObservingFaceInteraction::TransitionToTurnTowardsAFace );
+                         _searchBehavior.get() );
   }
   else {
     PRINT_NAMED_WARNING("BehaviorVictorDemoObservingFaceInteraction.FindFaces.DoesntWantToActivate",
