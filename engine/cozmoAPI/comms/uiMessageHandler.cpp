@@ -426,7 +426,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::TransitionToNextOnboardingState:  return true;
         case GameToEngineTag::RegisterOnboardingComplete:       return true;
         case GameToEngineTag::SetNeedsActionWhitelist:          return true;
-        case GameToEngineTag::ForceSetNeedsLevels:              return true;
         case GameToEngineTag::ForceSetDamagedParts:             return true;
         case GameToEngineTag::SetNeedsPauseState:               return true;
         case GameToEngineTag::SetNeedsPauseStates:              return true;
