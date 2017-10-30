@@ -190,7 +190,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::DriveOffCharger);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoDriveOffChargerIntoObserving);
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingDriveOffCharger");
 
     State driveOffCharger(StateID::DriveOffChargerIntoObserving, behavior);

@@ -352,9 +352,12 @@ enum uint_8 BehaviorID {
   VictorDemoObservingFindFaces,
   VictorDemoObservingOnChargerState,
   VictorDemoObservingOnCharger,
+  VictorDemoDriveOffChargerIntoObserving,
   Needs_SevereLowEnergyRequest,
   ObservingOnChargerIdle,
 
+  ShortLookAroundForFaceAndCube,
+  
   Wait,
   Wait_TestInjectable // BehaviorID used by tests to create fake behaviors
 }
