@@ -47,7 +47,7 @@ static bool boot_test(void) {
   }
 
   BODY_TX::set();
-  return true;
+  return validate();
 }
 
 void timer_init(void) {
