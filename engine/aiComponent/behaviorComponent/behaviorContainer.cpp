@@ -52,6 +52,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherQueue.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRandom.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriority.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriorityWithCooldown.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatchers/behaviorDispatcherRerun.h"
@@ -756,6 +757,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, 
     case BehaviorClass::DispatcherQueue:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDispatcherQueue(config));
+      break;
+    }
+    case BehaviorClass::DispatcherRandom:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDispatcherRandom(config));
       break;
     }
   }
