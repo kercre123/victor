@@ -1,10 +1,10 @@
 /**
- * File: behaviorPlaypenDriftCheck.cpp
+ * File: behaviorPlaypenSoundCheck.cpp
  *
  * Author: Al Chaussee
  * Created: 07/27/17
  *
- * Description: Checks head and lift motor range, speaker works, mics work, and imu drift is minimal
+ * Description: Checks speaker and mics work
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -19,7 +19,6 @@
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "audioUtil/waveFile.h"
 
 namespace Anki {
 namespace Cozmo {

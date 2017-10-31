@@ -242,6 +242,8 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
   static DebounceHelper debouncer( 3, 4);            // arbitrarily chosen for Victor-G
   static TouchGestureClassifier tgc(2.0, 5.0, 0.48); // arbitrarily chosen for Victor-G
 
+  // Quick and dirty static touch bias calculation for factory test
+  // until a proper on is implemented
   #ifdef FACTORY_TEST
   static int c = 1;
   static u32 avg = 0;

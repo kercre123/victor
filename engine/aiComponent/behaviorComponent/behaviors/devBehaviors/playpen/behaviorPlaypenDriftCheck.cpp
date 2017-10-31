@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 07/27/17
  *
- * Description: Checks head and lift motor range, speaker works, mics work, and imu drift is minimal
+ * Description: Checks head and lift motor range, and imu drift is minimal
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -50,7 +50,7 @@ Result BehaviorPlaypenDriftCheck::OnBehaviorActivatedInternal(BehaviorExternalIn
   // the sound and starting more recording
   CompoundActionSequential* action = new CompoundActionSequential(robot, {liftAndHead, 
                                                                           new WaitAction(robot, 
-                                                                                         PlaypenConfig::kDurationOfAudioToRecord_ms/1000)});
+                                                                                         PlaypenConfig::kDurationOfAudioToRecord_ms/1000.f)});
   
   DelegateIfInControl(action, [this, &behaviorExternalInterface](){ TransitionToStartDriftCheck(behaviorExternalInterface); });
   

@@ -364,8 +364,6 @@ namespace Messages {
     MonitorConnectionState();
 
     DoleAvailableAnimations();
-
-    _context->GetMicDataProcessor()->Update();
     
     _context->GetMicDataProcessor()->Update();
     
@@ -518,7 +516,7 @@ namespace Messages {
 
     const s32 textLocX = 0;
     const s32 textLocY = FACE_DISPLAY_HEIGHT-10;
-    // TODO: Expose scale, line, and location(?) thickness as arguments
+    // TODO: Expose scale, line, and location(?) as arguments
     const f32 textScale = 3.f;
     const u8  textLineThickness = 8;
     resultImg.DrawText({textLocX, textLocY},

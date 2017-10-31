@@ -1,5 +1,5 @@
 /**
- * File: behaviorPlaypenInitChecks.cpp
+ * File: behaviorPlaypenEndChecks.cpp
  *
  * Author: Al Chaussee
  * Created: 08/09/17
@@ -28,8 +28,7 @@ BehaviorPlaypenEndChecks::BehaviorPlaypenEndChecks(const Json::Value& config)
 
 void BehaviorPlaypenEndChecks::InitBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  ICozmoBehavior::SubscribeToTags(
-    {RobotInterface::RobotToEngineTag::activeObjectAvailable});
+  ICozmoBehavior::SubscribeToTags({RobotInterface::RobotToEngineTag::activeObjectAvailable});
 }
 
 

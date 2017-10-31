@@ -1,10 +1,10 @@
 /**
- * File: behaviorPlaypenDriftCheck.h
+ * File: behaviorPlaypenSoundCheck.h
  *
  * Author: Al Chaussee
  * Created: 07/27/17
  *
- * Description: Checks head and lift motor range, speaker works, mics work, and imu drift is minimal
+ * Description: Checks speaker and mics work
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -29,8 +29,8 @@ protected:
 protected:
   virtual void InitBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual Result         OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
+  virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual void AlwaysHandle(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   

@@ -29,7 +29,6 @@ namespace {
 // Set of messages that will immediately cause any playpen behaivor to end
 // Unless they have explicitly subscribed to the message themselves and are expecting to see it
 static const std::set<ExternalInterface::MessageEngineToGameTag> kFailureTags = {
-  ExternalInterface::MessageEngineToGameTag::RobotState,
   ExternalInterface::MessageEngineToGameTag::CliffEvent,
   ExternalInterface::MessageEngineToGameTag::RobotStopped,
   ExternalInterface::MessageEngineToGameTag::ChargerEvent,
@@ -60,7 +59,7 @@ bool IBehaviorPlaypen::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
 
 Result IBehaviorPlaypen::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // Add a timer to force the behavior to end if runs too long
+  // Add a timer to force the behavior to end if it runs too long
   AddTimer(PlaypenConfig::kDefaultTimeout_ms, [this](){
     PRINT_NAMED_WARNING("IBehaviorPlaypen.Timeout",
                         "Behavior %s has timed out and we are %signoring failures",
@@ -112,11 +111,6 @@ void IBehaviorPlaypen::HandleWhileActivated(const EngineToGameEvent& event, Beha
   {
     switch(tag)
     {
-      case EngineToGameTag::RobotState:
-      {
-        // TODO(Al): Anything interesting in RobotState to look at for immediate failure
-        break;
-      }
       case EngineToGameTag::CliffEvent:
       {
         PLAYPEN_SET_RESULT(FactoryTestResultCode::CLIFF_UNEXPECTED);

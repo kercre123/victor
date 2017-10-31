@@ -78,7 +78,7 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal(BehaviorExtern
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CUBE_NOT_FOUND, RESULT_FAIL);
   }
 
-  // Make sure marker detection is enabled for calibration
+  // Make sure marker detection is enabled
   robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
 
   // Record starting angle
