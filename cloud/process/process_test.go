@@ -15,13 +15,13 @@ const (
 
 var serverCount = 0
 
-func fakeCloudHandler(buf []byte) *CloudResponse {
+func fakeCloudHandler(buf []byte) (*CloudResponse, error) {
 	serverCount++
 	if serverCount <= 1 {
 		return &CloudResponse{
 			IsFinal: false,
 			Err:     "",
-			Result:  nil}
+			Result:  nil}, nil
 	}
 	return &CloudResponse{
 		IsFinal: true,
@@ -30,7 +30,7 @@ func fakeCloudHandler(buf []byte) *CloudResponse {
 			QueryText:        "How are you feeling?",
 			SpeechConfidence: 0.5,
 			Action:           "murder",
-			IntentConfidence: 1.0}}
+			IntentConfidence: 1.0}}, nil
 }
 
 func TestProcess(t *testing.T) {

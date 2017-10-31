@@ -7,7 +7,7 @@ import (
 
 func main() {
 	fmt.Println("Hello, world!")
-	micSock, err := ipc.NewClientSocket("0.0.0.0", 12345)
+	micSock, err := ipc.NewClientSocket("0.0.0.0", 9880)
 	if err != nil {
 		fmt.Println("Couldn't create mic socket:", err)
 		return

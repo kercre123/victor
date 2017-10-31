@@ -3,6 +3,7 @@ package main
 import (
 	"anki/ipc"
 	"fmt"
+	"strings"
 )
 
 type socketMsg struct {
@@ -11,10 +12,11 @@ type socketMsg struct {
 }
 
 const (
-	chunkHz    = 10                                      // samples every 100ms
-	sampleRate = 16000                                   // audio sample rate
-	sampleBits = 16                                      // size of each sample
-	streamSize = sampleRate / chunkHz * (sampleBits / 8) // how many bytes will be sent per stream
+	chunkHz        = 10                                      // samples every 100ms
+	sampleRate     = 16000                                   // audio sample rate
+	sampleBits     = 16                                      // size of each sample
+	streamSize     = sampleRate / chunkHz * (sampleBits / 8) // how many bytes will be sent per stream
+	hotwordMessage = "hotword"                               // message that signals to us the hotword was triggered
 )
 
 // eternally reads messages from a socket and places them on the channel
@@ -42,13 +44,22 @@ func (ctx *voiceContext) addSamples(samples []byte, cloudChan chan<- string) {
 }
 
 func stream(ctx *CloudContext, samples []byte, cloudChan chan<- string) {
-	resp := ctx.StreamData(samples)
-	if resp.Err != "" {
+	resp, err := ctx.StreamData(samples)
+	if err != nil {
+		fmt.Println("Cloud error:", err)
+		cloudChan <- ""
+	} else if resp.Err != "" {
 		fmt.Println("Cloud error:", resp.Err)
 		cloudChan <- ""
 	} else if resp.IsFinal {
 		cloudChan <- resp.Result.Action
 	}
+}
+
+// bufToGoString converts byte buffers that may be null-terminated if created in C
+// to Go strings by trimming off null chars
+func bufToGoString(buf []byte) string {
+	return strings.Trim(string(buf), "\x00")
 }
 
 func runProcess(micSock ipc.Socket, aiSock ipc.Socket) {
@@ -63,7 +74,7 @@ func runProcess(micSock ipc.Socket, aiSock ipc.Socket) {
 		case msg := <-micChan:
 			// handle mic messages: hotword = get ready to stream data, otherwise add samples to
 			// our buffer
-			if string(msg.buf) == "hotword" {
+			if bufToGoString(msg.buf) == hotwordMessage {
 				if ctx != nil {
 					fmt.Println("Got hotword event while already streaming, weird...")
 				}

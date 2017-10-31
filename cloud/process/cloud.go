@@ -11,7 +11,7 @@ import (
 )
 
 var client = &http.Client{}
-var cloudTest func(buf []byte) *CloudResponse
+var cloudTest func(buf []byte) (*CloudResponse, error)
 
 // CloudResponse holds data returned from the server each time audio is sent. Result
 // will be nil unless IsFinal is true, in which case Result should hold a valid CloudResult
@@ -51,7 +51,7 @@ const url = "https://127.0.0.1"
 // StreamData sends the given buffer of audio byte data to the server. The same CloudContext
 // should be re-used multiple times until the returned CloudResponse has its IsFinal field
 // set to true, at which point a new session should be used for further audio requests.
-func (c *CloudContext) StreamData(buf []byte) *CloudResponse {
+func (c *CloudContext) StreamData(buf []byte) (*CloudResponse, error) {
 	// test hook
 	if cloudTest != nil {
 		return cloudTest(buf)
@@ -60,7 +60,7 @@ func (c *CloudContext) StreamData(buf []byte) *CloudResponse {
 	req, err := http.NewRequest("POST", url+"/1/stream-detect-intent", bytes.NewReader(buf))
 	if err != nil {
 		fmt.Println("Error creating HTTP request:", err)
-		return nil
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/octet-stream")
 	req.Header.Set("Device-Id", c.device)
@@ -71,7 +71,7 @@ func (c *CloudContext) StreamData(buf []byte) *CloudResponse {
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error executing HTTP request:", err)
-		return nil
+		return nil, err
 	}
 
 	// Parse response
@@ -79,13 +79,13 @@ func (c *CloudContext) StreamData(buf []byte) *CloudResponse {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error reading buffer:", err)
-		return nil
+		return nil, err
 	}
 	cloudResp := CloudResponse{}
 	err = json.Unmarshal(body, &resp)
 	if err != nil {
 		fmt.Println("Error unmarshaling cloud response:", err)
-		return nil
+		return nil, err
 	}
 	if cloudResp.IsFinal {
 		*cloudResp.Result = CloudResult{}
@@ -96,5 +96,5 @@ func (c *CloudContext) StreamData(buf []byte) *CloudResponse {
 		}
 	}
 
-	return &cloudResp
+	return &cloudResp, nil
 }
