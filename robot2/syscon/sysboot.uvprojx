@@ -398,11 +398,6 @@
               <FilePath>.\crypto\rsa_pss.cpp</FilePath>
             </File>
             <File>
-              <FileName>sha512.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\crypto\sha512.cpp</FilePath>
-            </File>
-            <File>
               <FileName>comms.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\boot\comms.cpp</FilePath>
@@ -416,6 +411,11 @@
               <FileName>power.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\boot\power.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>sha256.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\crypto\sha256.cpp</FilePath>
             </File>
           </Files>
         </Group>
