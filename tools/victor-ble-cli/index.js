@@ -1,6 +1,7 @@
 const noble = require("noble");
 const readline = require("readline");
 const Victor = require("./victor.js");
+const fs = require('fs');
 
 var victorAds = {};
 var connectedVictor = undefined;
@@ -8,7 +9,7 @@ var connectedVictor = undefined;
 function completer(line) {
     var args = line.split(/(\s+)/);
     args = args.filter(function(entry) {return /\S/.test(entry); });
-    const completions = 'connect dhcptool disconnect help ifconfig ping quit reboot restart-adb scan stop-scan wifi-set-config wpa_cli'.split(' ');
+    const completions = 'connect dhcptool disconnect help ifconfig ping quit reboot restart-adb scan ssh-set-authorized-keys stop-scan wifi-set-config wpa_cli'.split(' ');
     const hits = completions.filter((c) => c.startsWith(args[0]));
     if (hits.length == 0) {
         return [completions, line];
@@ -46,7 +47,8 @@ function printHelp() {
     ping                                  -  Ping Victor
     reboot [boot arg]                     -  Reboot Victor
     restart-adb                           -  Restart adb on Victor
-    wifi-set-config ssid psk [ssid2 psk2] - Overwrite and set wifi config on victor
+    ssh-set-authorized-keys file          -  Use file as the ssh authorized_keys file on Victor
+    wifi-set-config ssid psk [ssid2 psk2] -  Overwrite and set wifi config on victor
     wpa_cli args                          -  Execute wpa_cli with arguments on Victor
     ifconfig [args]                       -  Execute ifconfig on Victor
     dhcptool [args]                       -  Execute dhcptool on Victor`;
@@ -206,6 +208,19 @@ var handleInput = function (line) {
                     buf = Buffer.concat([buf, Buffer.from(args[i]), Buffer.from([0])]);
                 }
                 connectedVictor.send(Victor.MSG_B2V_WIFI_SET_CONFIG, buf);
+            }
+            break;
+        case 'ssh-set-authorized-keys':
+            if (!connectedVictor) {
+                outputResponse("Not connected to a Victor");
+            } else {
+                fs.readFile(args[1], 'utf8', function (err, data) {
+                    if (err) {
+                        outputResponse(err);
+                    } else {
+                        connectedVictor.send(Victor.MSG_B2V_SSH_SET_AUTHORIZED_KEYS, Buffer.from(data));
+                    }
+                });
             }
             break;
         default:
