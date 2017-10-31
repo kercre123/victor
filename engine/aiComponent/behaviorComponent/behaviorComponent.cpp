@@ -16,6 +16,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -319,6 +320,10 @@ void BehaviorComponent::Update(Robot& robot,
 {
   if(_messageHandler == nullptr){
     _messageHandler.reset(new DevBehaviorComponentMessageHandler(robot, *this, _components->_behaviorContainer));
+  }
+
+  if(_cloudReceiver == nullptr){
+    _cloudReceiver.reset(new BehaviorComponentCloudReceiver(robot));
   }
 
   _behaviorHelperComponent->Update(_components->_behaviorExternalInterface);

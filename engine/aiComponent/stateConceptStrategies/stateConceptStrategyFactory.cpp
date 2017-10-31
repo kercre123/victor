@@ -13,6 +13,7 @@
 #include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
 
 #include "engine/aiComponent/stateConceptStrategies/strategyAlwaysRun.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyCloudIntentPending.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyExpressNeedsTransition.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyGeneric.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyInNeedsBracket.h"
@@ -51,6 +52,11 @@ IStateConceptStrategy* StateConceptStrategyFactory::CreateStateConceptStrategy(B
     case StateConceptStrategyType::AlwaysRun:
     {
       strategy = new StrategyAlwaysRun(behaviorExternalInterface, robotExternalInterface, config);
+      break;
+    }
+    case StateConceptStrategyType::CloudIntentPending:
+    {
+      strategy = new StrategyCloudIntentPending(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case StateConceptStrategyType::ExpressNeedsTransition:

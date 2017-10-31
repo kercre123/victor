@@ -82,7 +82,6 @@ enum uint_8 BehaviorClass {
   VisitInterestingEdge,
   Wait,
 
-
   // Behaviors mapped to reaction triggers
   AcknowledgeFace,
   AcknowledgeObject,
