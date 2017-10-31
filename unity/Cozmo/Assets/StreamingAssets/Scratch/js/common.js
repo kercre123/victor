@@ -67,7 +67,7 @@
                     window.originalSampleProjectJSON = Scratch.vm.toJSON();
                 } else {
                     // TODO: determine how to properly handle this error
-                    window.cozmoDASError('Scratch vm undefined. Page failed to load properly');
+                    window.cozmoDASError('Codelab.notifyProjectIsLoaded.ScratchVMUndefined', 'Scratch vm undefined. Page failed to load properly');
                 }
             }, 100);
         }
@@ -78,7 +78,7 @@
                 Scratch.workspace.scrollHome();
             } else {
                 // TODO: determine how to properly handle this error
-                window.cozmoDASError('Scratch workspace undefined. Page failed to load properly');
+                window.cozmoDASError('Codelab.notifyProjectIsLoaded.ScratchWorkspaceUndefined', 'Scratch workspace undefined. Page failed to load properly');
             }
         }
 
