@@ -45,7 +45,7 @@ void Power::init(void) {
 }
 
 void Power::stop(void) {
-  POWER_EN::pull(PULL_DOWN);
+  POWER_EN::pull(PULL_NONE);
 }
 
 void Power::softReset(bool ignore) {

@@ -198,8 +198,16 @@ void Analog::tick(void) {
   // On-charger delay
   bool vext_now = Analog::values[ADC_VEXT] >= TRANSITION_POINT;
 
-  // We've been on the charger (without motors for awhile)
-  if (vext_now && last_vext && vext_debounce++ >= MINIMUM_VEXT_TIME) {
+  // Debounced VEXT line
+  if (vext_now && last_vext) {
+    vext_debounce++;
+  } else {
+    vext_debounce = 0;
+  }
+  last_vext = vext_now;
+
+  // VEXT logic
+  if (vext_debounce >= MINIMUM_VEXT_TIME) {
     // VEXT Switchover when on charger
     if (onBatPower) {
       __disable_irq();
@@ -210,16 +218,11 @@ void Analog::tick(void) {
     // Charge logic
     if (chargeAllowed) {
       CHG_EN::mode(MODE_INPUT);
-    } else {
-      CHG_EN::reset();
-      CHG_EN::mode(MODE_OUTPUT);
     }
-  } else {
+  } else if (chargeAllowed) {
     CHG_EN::reset();
     CHG_EN::mode(MODE_OUTPUT);
-    vext_debounce = 0;
   }
-  last_vext = vext_now;
 
   // Button logic
   bool new_button = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
