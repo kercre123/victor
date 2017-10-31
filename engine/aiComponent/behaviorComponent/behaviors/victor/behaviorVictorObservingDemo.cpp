@@ -21,6 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iFeedingListener.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
+#include "engine/faceWorld.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
 #include "engine/robot.h"
@@ -32,6 +33,7 @@ namespace {
 
 static constexpr const float kFeedingTimeout_s = 30.0f;
 static constexpr const float kRecentlyPlacedChargerTimeout_s = 60.0f * 10;
+static constexpr const float kSocializeKnownFaceCooldown = 60.0f * 2;  // TODO:(bn) longer
 
 // TODO:(bn) move somewhere else
 class TimeoutCondition : public ICondition
@@ -160,6 +162,25 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   auto CondTrue = std::make_shared<TrueCondition>();
+
+  auto CondNewKnownFace = std::make_shared<LambdaCondition>(
+    [this](BehaviorExternalInterface& behaviorExternalInterface) {
+      auto& faceWorld = behaviorExternalInterface.GetFaceWorld();
+      const auto& faces = faceWorld.GetFaceIDs(true);
+      for( const auto& faceID : faces ) {
+        const auto* face = faceWorld.GetFace(faceID);
+        if( face != nullptr ) { // && face->HasName() ) { // TEMP:
+          const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          if( _lastSocializeTime_s < 0.0f ||
+              _lastSocializeTime_s + kSocializeKnownFaceCooldown <= currTime_s ) {
+            
+            _lastSocializeTime_s = currTime_s;
+            return true;
+          }
+        }
+      }
+      return false;
+    });
   
   ////////////////////////////////////////////////////////////////////////////////
   // Define states
@@ -171,11 +192,12 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoObservingOnChargerState);
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingOnChargerState");
 
-    State observingOnCharger(StateID::ObservingOnCharger, behavior);
-    observingOnCharger.AddNonInterruptingTransition(StateID::DriveOffChargerIntoObserving, CondIsHungry);
-    observingOnCharger.AddInterruptingTransition(StateID::Observing, CondOffCharger);
-    observingOnCharger.AddInterruptingTransition(StateID::Feeding, CondCanEat);
-    AddState(std::move(observingOnCharger));
+    State state(StateID::ObservingOnCharger, behavior);
+    state.AddNonInterruptingTransition(StateID::DriveOffChargerIntoObserving, CondIsHungry);
+    state.AddInterruptingTransition(StateID::Observing, CondOffCharger);
+    state.AddInterruptingTransition(StateID::Feeding, CondCanEat);
+    state.AddInterruptingTransition(StateID::Socializing, CondNewKnownFace);
+    AddState(std::move(state));
   }
 
   {
@@ -194,6 +216,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingDriveOffCharger");
 
     State driveOffCharger(StateID::DriveOffChargerIntoObserving, behavior);
+    driveOffCharger.AddNonInterruptingTransition(StateID::Socializing, CondNewKnownFace);
     driveOffCharger.AddExitTransition(StateID::Observing, CondTrue);
     AddState(std::move(driveOffCharger));
   }
@@ -202,25 +225,38 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoObservingState);
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingState");
 
-    State observing(StateID::Observing, behavior);
-    observing.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
-    observing.AddInterruptingTransition(StateID::Feeding, CondCanEat);
-    AddState(std::move(observing));
+    State state(StateID::Observing, behavior);
+    state.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
+    state.AddInterruptingTransition(StateID::Feeding, CondCanEat);
+    state.AddInterruptingTransition(StateID::Socializing, CondNewKnownFace);
+    AddState(std::move(state));
   }
 
   {
     ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoFeedingState);
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoFeedingState");
 
-    State feeding(StateID::Feeding, behavior);
-    feeding.AddNonInterruptingTransition(StateID::Observing, std::make_shared<TimeoutCondition>(kFeedingTimeout_s));
-    feeding.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
+    State state(StateID::Feeding, behavior);
+    state.AddNonInterruptingTransition(StateID::Observing, std::make_shared<TimeoutCondition>(kFeedingTimeout_s));
+    state.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
 
     if( _feedingCompleteCondition ) {
-      feeding.AddNonInterruptingTransition(StateID::Observing, _feedingCompleteCondition);
+      state.AddNonInterruptingTransition(StateID::Observing, _feedingCompleteCondition);
     }        
     
-    AddState(std::move(feeding));
+    AddState(std::move(state));
+  }
+
+  {
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoSocialize);
+    DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoSocialize");
+
+    State state(StateID::Socializing, behavior);
+    state.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
+    state.AddNonInterruptingTransition(StateID::Feeding, CondCanEat);
+    state.AddExitTransition(StateID::Observing, CondTrue);
+    
+    AddState(std::move(state));
   }
 
   // TODO:(bn) assert that all states are present in the map
