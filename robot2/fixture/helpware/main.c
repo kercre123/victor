@@ -38,6 +38,20 @@ int handle_logstart_command(const char* cmd, int len) {
 int handle_logstop_command(const char* cmd, int len) {
   return fixture_log_stop(cmd, len);
 }
+int handle_dutprogram_command(const char* cmd, int len) {
+  fixture_log_writestring("-BEGIN- DUTPROGRAM\n");
+  FILE* pp = popen("./headprogram", "r");
+  if (pp) {
+    char buffer[512];
+    while(fgets(buffer, 512, pp) != NULL) {
+      fixture_log_writestring(buffer);
+    }
+    pclose(pp);
+  }
+  fixture_log_writestring("--END-- DUTPROGRAM\n");
+  return 0;
+
+}
 
 
 #define REGISTER_COMMAND(s) {#s, sizeof(#s)-1, handle_##s##_command}
@@ -57,7 +71,8 @@ static const CommandHandler handlers[] = {
   REGISTER_COMMAND(lcdclr),
   REGISTER_COMMAND(logstart),
   REGISTER_COMMAND(logstop),
-  /* ^^ insert new commands here ^^ */
+  REGISTER_COMMAND(dutprogram),
+ /* ^^ insert new commands here ^^ */
   {0}
 };
 
@@ -248,6 +263,7 @@ int main(int argc, const char* argv[])
   signal(SIGINT, safe_quit);
 
   lcd_init();
+  lcd_set_brightness(20);
   display_init();
 
   gSerialFd = serial_init(FIXTURE_TTY, FIXTURE_BAUD);

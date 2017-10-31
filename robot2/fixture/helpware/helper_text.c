@@ -143,44 +143,6 @@ int helper_lcd_command_parse(const char* command, int linelen)
   return -1; //invalid
 }
 
-/*
-const char* fixture_command_parse(const char*  command, int len) {
-  static char responseBuffer[LINEBUFSZ];
-
-  dprintf("parsing \"%s\"\n", command);
-  if (strncmp(command, "lcdset", min(6,len))==0)
-  {
-    int status = helper_lcdset_command_parse(command+6, len-6);
-    snprintf(responseBuffer, LINEBUFSZ, "lcdset %d\n", status);
-    return responseBuffer;
-  }
-  if (strncmp(command, "lcdshow", min(7,len))==0)
-  {
-    int status = helper_lcdshow_command_parse(command+7, len-7);
-    snprintf(responseBuffer, LINEBUFSZ, "lcdshow %d\n", status);
-    return responseBuffer;
-  }
-  if (strncmp(command, "lcdclr", min(6,len))==0)
-  {
-    //"clr" is same as "set 0"
-    int status = helper_lcdshow_command_parse("0 \n", 3);
-    snprintf(responseBuffer, LINEBUFSZ, "lcdclr %d\n", status);
-    return responseBuffer;
-  }
-
-  //not recognized, echo back invalid command with error code
-  char* endcmd = memchr(command, ' ', len);
-  if (endcmd) { len = endcmd - command; }
-  int i;
-  for (i=0;i<len;i++)
-  {
-    responseBuffer[i]=*command++;
-  }
-  snprintf(responseBuffer+i, LINEBUFSZ-i, " %d\n", -1);
-  return responseBuffer;
-
-}
-*/
 
 //#define SELF_TEST
 #ifdef SELF_TEST

@@ -8,6 +8,8 @@
 #include "core/gpio.h"
 #include "core/common.h"
 
+#define GPIO_BASE_OFFSET 911
+
 struct GPIO_t
 {
   int pin;
@@ -22,7 +24,7 @@ GPIO gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initi
 
    //create io
    int fd = open("/sys/class/gpio/export", O_WRONLY);
-   snprintf(ioname, 32, "%d\n", gpio_number+911);
+   snprintf(ioname, 32, "%d\n", gpio_number+GPIO_BASE_OFFSET);
    if (fd<0) {
      free(gp);
      error_exit(app_DEVICE_OPEN_ERROR, "Can't create exporter %d- %s\n", errno, strerror(errno));
@@ -37,7 +39,7 @@ GPIO gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initi
    gpio_set_direction(gp, direction);
 
    //open value fd
-   snprintf(ioname, 32, "/sys/class/gpio/gpio%d/value", gpio_number+911);
+   snprintf(ioname, 32, "/sys/class/gpio/gpio%d/value", gpio_number+GPIO_BASE_OFFSET);
    fd = open(ioname, O_WRONLY | O_CREAT );
 
    if (fd <0) {
@@ -56,7 +58,7 @@ void gpio_set_direction(GPIO gp, enum Gpio_Dir direction)
 {
   assert(gp != NULL);
    char ioname[40];
-   snprintf(ioname, 40, "/sys/class/gpio/gpio%d/direction", gp->pin+911);
+   snprintf(ioname, 40, "/sys/class/gpio/gpio%d/direction", gp->pin+GPIO_BASE_OFFSET);
    int fd =  open(ioname, O_WRONLY );
    if (direction == gpio_DIR_OUTPUT) {
       write(fd, "out", 3);

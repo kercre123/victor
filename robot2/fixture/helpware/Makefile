@@ -49,7 +49,7 @@ HELPER_OBJ = $(HELPER_SRC:%.c=$(OBJDIR)/%.o)
 
 REMOTE_DEST = /data/local/fixture/
 
-all: $(ANDROID_ARM_TOOLS_ROOT) $(DFU) $(ANIMATE) $(DISPLAY)
+all: $(ANDROID_ARM_TOOLS_ROOT) $(DFU) $(ANIMATE) $(DISPLAY) $(HELPER)
 
 $(ANDROID_ARM_TOOLS_ROOT):
 	$(ANDROID_NDK_ROOT)/build/tools/make_standalone_toolchain.py --arch arm --install-dir $(ANDROID_ARM_TOOLS_ROOT) --api 24
@@ -72,7 +72,7 @@ $(HELPER): $(HELPER_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(HELPER_OBJ) $(LIBPATH) $(LIBS)  -o $(HELPER)
 
 
-app=$(DFU)
+app=$(HELPER)
 
 push: $(app)
 	adb shell -x "mkdir -p $(REMOTE_DEST)"
