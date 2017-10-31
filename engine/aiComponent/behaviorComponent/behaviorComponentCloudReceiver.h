@@ -14,9 +14,12 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorComponentCloudReceiver_H__
 
 #include "clad/types/behaviorComponent/cloudIntents.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudServer.h"
+
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <mutex>
+#include <string>
 #include <vector>
 
 namespace Anki {
@@ -34,13 +37,14 @@ public:
 
   // Clears one intent of the specified type if it's pending
   void ClearIntentIfPending(CloudIntent intent);
-
-private:
   void AddPendingIntent(std::string intent);
+  
+private:
 
   std::mutex _mutex;
   std::vector<::Signal::SmartHandle> _eventHandles;
   std::vector<std::string> _pendingIntents;  
+  BehaviorComponentCloudServer _server;
 };
 
 } // namespace Cozmo

@@ -44,6 +44,7 @@ const FullCloudIntentArray cloudStringMap{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorComponentCloudReceiver::BehaviorComponentCloudReceiver(Robot& robot)
+: _server(std::bind(&BehaviorComponentCloudReceiver::AddPendingIntent, this, std::placeholders::_1), 12345)
 {
   if(robot.HasExternalInterface()){
     auto fakeTriggerWordCallback = [this](const GameToEngineEvent& event) {
