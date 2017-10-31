@@ -21,7 +21,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define console_printf(...) printf(__VA_ARGS__)
+#if defined(ANDROID)
+#include <android/log.h>
+#define console_printf(fmt, ...) __android_log_print(ANDROID_LOG_INFO, "robot", fmt, ##__VA_ARGS__)
+#define log_assert(line, file, expr, fmt, ...) __android_log_assert(expr, "robot", fmt ": failed at line " line " in file " file, ##__VA_ARGS__)
+#define log_error(name, fmt, ...) __android_log_print(ANDROID_LOG_ERROR, "robot", name ": " fmt, ##__VA_ARGS__)
+#define log_warn(name, fmt, ...) __android_log_print(ANDROID_LOG_WARN, "robot", name ": " fmt, ##__VA_ARGS__)
+#define log_event(name, fmt, ...) __android_log_print(ANDROID_LOG_INFO, "robot.event", name ": " fmt, ##__VA_ARGS__)
+#define log_info(name, fmt, ...) __android_log_print(ANDROID_LOG_INFO, "robot", name ": " fmt, ##__VA_ARGS__)
+#define log_debug(name, fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, "robot", name ": " fmt, ##__VA_ARGS__)
+#else
+#define console_printf(fmt, ...) printf(fmt, ##__VA_ARGS__)
+#define log_assert(line, file, expr, fmt, ...) console_printf("[Assert] " fmt ": \"" expr "\" failed at line " line " in file " file "\r\n", ##__VA_ARGS__)
+#define log_error(name, fmt, ...) console_printf("[Error] " name ": " fmt "\r\n", ##__VA_ARGS__)
+#define log_warn(name, fmt, ...) console_printf("[Warn] " name ": " fmt "\r\n", ##__VA_ARGS__)
+#define log_event(name, fmt, ...) console_printf("[Event] " name ": " fmt "\r\n", ##__VA_ARGS__)
+#define log_info(name, fmt, ...) console_printf("[Info] " name ": " fmt "\r\n", ##__VA_ARGS__)
+#define log_debug(name, fmt, ...) console_printf("[Debug] " name ": " fmt "\r\n", ##__VA_ARGS__)
+#endif
 
 // Keil doesn't seem to reliably error on these not being defined below so trigger explictily.
 #ifndef ANKI_DEBUG_EVENTS
@@ -41,7 +58,7 @@ namespace Anki {
 #if ANKI_DEBUG_EVENTS
       #define AnkiEvent(nameString, fmtString, ...) \
       { \
-        console_printf("[Event] " nameString ": " fmtString "\r\n", ##__VA_ARGS__); \
+        log_event(nameString, fmtString, ##__VA_ARGS__); \
       }
 #else
       #define AnkiEvent(...)
@@ -50,7 +67,7 @@ namespace Anki {
 #if ANKI_DEBUG_INFO
       #define AnkiInfo(nameString, fmtString, ...) \
       { \
-        console_printf("[Info] " nameString ": " fmtString "\r\n", ##__VA_ARGS__); \
+        log_info(nameString, fmtString, ##__VA_ARGS__); \
       }
 #else
       #define AnkiInfo(...)
@@ -59,13 +76,13 @@ namespace Anki {
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
       #define AnkiDebug(nameString, fmtString, ...) \
       { \
-        console_printf("[Debug] " nameString ": " fmtString "\r\n", ##__VA_ARGS__); \
+        log_debug(nameString, fmtString, ##__VA_ARGS__); \
       }
       
       #define AnkiDebugPeriodic(num_calls_between_prints, nameString, fmtString, ...) \
       {   static u16 cnt = num_calls_between_prints; \
           if (++cnt > num_calls_between_prints) { \
-            console_printf("[DebugP] " nameString ": " fmtString "\r\n", ##__VA_ARGS__); \
+            log_debug(nameString, fmtString, ##__VA_ARGS__); \
             cnt = 0; \
           } \
       }
@@ -76,23 +93,23 @@ namespace Anki {
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS
       #define AnkiError(nameString, fmtString, ...) { \
-        console_printf("[Error] " nameString ": " fmtString "\r\n", ##__VA_ARGS__); \
+        log_error(nameString, fmtString, ##__VA_ARGS__); \
       }
 
       #define AnkiConditionalError(expression, nameString, fmtString, ...) \
         if (!(expression)) { \
-          console_printf("[Error] " nameString ": " fmtString "\r\n", ##__VA_ARGS__); \
+          log_error(nameString, fmtString, ##__VA_ARGS__); \
         }
 
       #define AnkiConditionalErrorAndReturn(expression, nameString, fmtString, ...) \
         if (!(expression)) { \
-          console_printf("[Error] " nameString ": " fmtString "\r\n", ##__VA_ARGS__); \
+          log_error(nameString, fmtString, ##__VA_ARGS__); \
           return; \
         }
       
       #define AnkiConditionalErrorAndReturnValue(expression, returnValue, nameString, fmtString, ...) \
         if(!(expression)) { \
-          console_printf("[Error] " nameString ": " fmtString "\r\n", ##__VA_ARGS__); \
+          log_error(nameString, fmtString, ##__VA_ARGS__); \
           return returnValue; \
         }
 #else
@@ -104,23 +121,23 @@ namespace Anki {
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
       #define AnkiWarn(nameString, fmtString, ...) { \
-        console_printf("[Warn] " nameString ": " fmtString "\r\n", ##__VA_ARGS__); \
+        log_warn(nameString, fmtString, ##__VA_ARGS__); \
       }
 
       #define AnkiConditionalWarn(expression, nameString, fmtString, ...) \
         if (!(expression)) { \
-          console_printf("[Warn] " nameString ": " fmtString "\r\n", ##__VA_ARGS__); \
+          log_warn(nameString, fmtString, ##__VA_ARGS__); \
         }
 
       #define AnkiConditionalWarnAndReturn(expression, nameString, fmtString, ...) \
         if (!(expression)) { \
-          console_printf("[Warn] " nameString ": " fmtString "\r\n", ##__VA_ARGS__); \
+          log_warn(nameString, fmtString, ##__VA_ARGS__); \
           return; \
         }
       
       #define AnkiConditionalWarnAndReturnValue(expression, returnValue, nameString, fmtString, ...) \
         if(!(expression)) { \
-          console_printf("[Warn] " nameString ": " fmtString "\r\n", ##__VA_ARGS__); \
+          log_warn(nameString, fmtString, ##__VA_ARGS__); \
           return returnValue;\
         }
 #else
@@ -131,12 +148,13 @@ namespace Anki {
 #endif
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
-				
-      // Anki assert sends assesrt CLAD message and then halts main exec
-      #define STRINGIZE(x) #x
+      // Extra level of expansion required for proper stringification of __LINE__
+      #define _STRINGIZE(x) #x
+      #define STRINGIZE(x) _STRINGIZE(x)
+      // Anki assert sends assert CLAD message and then halts main exec
       #define AnkiAssert(expression, fmtString, ...) \
         if (!(expression)) { \
-          console_printf("[Assert] " fmtString ": \"" #expression "\" failed at line " STRINGIZE(__LINE__) " in file " __FILE__ "\r\n", ##__VA_ARGS__); \
+          log_assert(STRINGIZE(__LINE__), __FILE__, #expression, fmtString, ##__VA_ARGS__); \
           exit(-1); \
         }
 #else

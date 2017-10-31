@@ -10,6 +10,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/logging.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string>
@@ -35,9 +36,9 @@ namespace Anki {
 
     Result InitRadio(const char* advertisementIP)
     {
-      printf("HAL.InitRadio.StartListeningPort: %d\n", ROBOT_RADIO_BASE_PORT);
+      AnkiInfo("HAL.InitRadio.StartListeningPort", "Listening on port %d", ROBOT_RADIO_BASE_PORT);
       if (!server.StartListening(ROBOT_RADIO_BASE_PORT)) {
-        printf("HAL.InitRadio.UDPServerFailed\n");
+        AnkiError("HAL.InitRadio.UDPServerFailed", "Unable to listen on port %d", ROBOT_RADIO_BASE_PORT);
         assert(false);
       }
 
@@ -69,7 +70,7 @@ namespace Anki {
 
         u32 bytesSent = server.Send((char*)buffer, length);
         if (bytesSent < length) {
-          printf("ERROR: Failed to send msg contents (%d bytes sent)\n", bytesSent);
+          AnkiError("HAL.RadioSendPacket.FailedToSend", "Failed to send msg contents (%d/%d sent)", bytesSent, length);
           DisconnectRadio();
           return false;
         }
