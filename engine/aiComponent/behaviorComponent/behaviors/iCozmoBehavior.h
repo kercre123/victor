@@ -376,6 +376,11 @@ protected:
   // cancellation unless you set allowCallback to false. If the action was created by a helper, the helper
   // will be canceled as well, unless allowHelperToContinue is true
   bool CancelDelegates(bool allowCallback = true, bool allowHelperToContinue = false);
+
+  // This function cancels this behavior. It never allows callbacks or helpers to continue. This is just a
+  // convenience wrapper for calling CancelSelf on the delegation component. It returns true if the behavior
+  // was successfully canceled, false otherwise (e.g. the behavior wasn't active to begin with)
+  bool CancelSelf();
   
   // Behaviors should call this function when they reach their completion state
   // in order to log das events and notify activity strategies if they listen for the message

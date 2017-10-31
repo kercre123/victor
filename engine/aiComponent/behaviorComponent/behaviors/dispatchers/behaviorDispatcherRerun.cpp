@@ -49,8 +49,8 @@ BehaviorDispatcherRerun::BehaviorDispatcherRerun(const Json::Value& config)
                                              kConfigKeyDelegateID,
                                              "BehaviorDispatcherRerun.Constructor.NoDelegateID"));
   
-  _params._numRuns = JsonTools::ParseUint8(config, kConfigKeyNumRuns,
-                                             "BehaviorDispatcherRerun.Constructor.numRunsNotSpecified");       
+  _params._numRuns = JsonTools::ParseInt8(config, kConfigKeyNumRuns,
+                                          "BehaviorDispatcherRerun.Constructor.numRunsNotSpecified");       
 }
 
 

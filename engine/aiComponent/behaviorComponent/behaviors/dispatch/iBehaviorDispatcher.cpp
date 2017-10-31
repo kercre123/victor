@@ -23,13 +23,33 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace {
+static const char* kInterruptBehaviorKey = "interruptActiveBehavior";
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config)
   : ICozmoBehavior(config)
 {
   _shouldInterruptActiveBehavior = JsonTools::ParseBool(config,
-                                                        "interruptActiveBehavior",
+                                                        kInterruptBehaviorKey,
                                                         "IBehaviorDispatcher.ShouldInterrupt.ConfigError");
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config, bool shouldInterruptActiveBehavior)
+  : ICozmoBehavior(config)
+{
+  _shouldInterruptActiveBehavior = shouldInterruptActiveBehavior;
+
+  // the config should either _not_ set the value at all, or it should be consistent with what the base class
+  // passes in
+  ANKI_VERIFY(config.get(kInterruptBehaviorKey, shouldInterruptActiveBehavior).asBool() == shouldInterruptActiveBehavior,
+              "IBehaviorDispatcher.ConfigMismatch",
+              "Behavior '%s' specified a '%s' value of %s, but behaviors of this type will ignore this flag",
+              GetIDStr().c_str(),
+              kInterruptBehaviorKey,
+              config.get(kInterruptBehaviorKey, false).asBool() ? "true" : "false");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
