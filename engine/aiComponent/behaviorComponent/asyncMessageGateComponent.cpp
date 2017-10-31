@@ -125,6 +125,11 @@ void AsyncMessageGateComponent::PrepareCache()
 void AsyncMessageGateComponent::GetEventsForBehavior(IBehavior* subscriber,
                                                      std::vector<const GameToEngineEvent>& events)
 {
+  if(!ANKI_VERIFY(events.empty(), 
+      "AsyncMessageGateComponent.GetEventsForBehavior.GameToEngineEvents",
+      "Events not empty")){
+    events.clear();    
+  }
   DEV_ASSERT(_isCacheValid,
              "AsyncMessageGateComponent.GetGTEEventsForBehavior.CacheIsClear");
   
@@ -141,6 +146,11 @@ void AsyncMessageGateComponent::GetEventsForBehavior(IBehavior* subscriber,
 void AsyncMessageGateComponent::GetEventsForBehavior(IBehavior* subscriber,
                                                      std::vector<const EngineToGameEvent>& events)
 {
+  if(!ANKI_VERIFY(events.empty(), 
+      "AsyncMessageGateComponent.GetEventsForBehavior.EngineToGameEvents",
+      "Events not empty")){
+    events.clear();    
+  }
   DEV_ASSERT(_isCacheValid,
              "AsyncMessageGateComponent.GetETGEventsForBehavior.CacheIsClear");
   
@@ -157,6 +167,11 @@ void AsyncMessageGateComponent::GetEventsForBehavior(IBehavior* subscriber,
 void AsyncMessageGateComponent::GetEventsForBehavior(IBehavior* subscriber,
                                                      std::vector<const RobotToEngineEvent>& events)
 {
+  if(!ANKI_VERIFY(events.empty(), 
+      "AsyncMessageGateComponent.GetEventsForBehavior.RobotToEngineEvent",
+      "Events not empty")){
+    events.clear();    
+  }
   DEV_ASSERT(_isCacheValid,
              "AsyncMessageGateComponent.GetRTEEventsForBehavior.CacheIsClear");
   auto behaviorEntry = _cachedTracker->_cacheMap.find(subscriber);
@@ -185,8 +200,8 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
   }
   
   for(auto& tag: tags){
-    auto tagIter = _gameToEngineTags.find(tag);
-    if(tagIter == _gameToEngineTags.end()){
+    auto tagIter = _gameToEngineSubscribers.find(tag);
+    if(tagIter == _gameToEngineSubscribers.end()){
       std::set<IBehavior*> subscribers = {subscriber};
       _gameToEngineSubscribers[tag] = subscribers;
       _eventHandles.push_back(_externalInterface->Subscribe(tag,
@@ -211,8 +226,8 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
   }
   
   for(auto& tag: tags){
-    auto tagIter = _engineToGameTags.find(tag);
-    if(tagIter == _engineToGameTags.end()){
+    auto tagIter = _engineToGameSubscribers.find(tag);
+    if(tagIter == _engineToGameSubscribers.end()){
       std::set<IBehavior*> subscribers = {subscriber};
       _engineToGameSubscribers[tag] = subscribers;
       _eventHandles.push_back(_externalInterface->Subscribe(tag,
@@ -238,8 +253,8 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
     return;
   }
   for(auto& tag: tags){
-    auto tagIter = _robotToEngineTags.find(tag);
-    if(tagIter == _robotToEngineTags.end()){
+    auto tagIter = _robotToEngineSubscribers.find(tag);
+    if(tagIter == _robotToEngineSubscribers.end()){
       std::set<IBehavior*> subscribers = {subscriber};
       _robotToEngineSubscribers[tag] = subscribers;
       

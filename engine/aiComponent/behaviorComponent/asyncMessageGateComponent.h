@@ -94,11 +94,6 @@ private:
   /////////
   // Tracking overall subscription maping/event handles
   ////////
-  
-  // Track the events we've already subscribed to
-  std::set<ExternalInterface::MessageGameToEngineTag> _gameToEngineTags;
-  std::set<ExternalInterface::MessageEngineToGameTag> _engineToGameTags;
-  std::set<RobotInterface::RobotToEngineTag> _robotToEngineTags;
 
   // Map tags to the behaviors that subscribe to them
   std::unordered_map<GameToEngineTag, std::set<IBehavior*>>                  _gameToEngineSubscribers;

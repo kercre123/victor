@@ -28,6 +28,8 @@ using namespace Anki::Cozmo;
 
 static constexpr BehaviorClass emptyClass = BehaviorClass::Wait;
 static constexpr BehaviorID emptyID = BehaviorID::Wait;
+static constexpr BehaviorID emptyID2 = BehaviorID::Wait_TestInjectable;
+
 
 TEST(BehaviorInterface, Create)
 {
@@ -283,24 +285,34 @@ TEST(BehaviorInterface, HandleMessages)
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   
-  
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehavior b(empty);
-  
+  Json::Value empty2 = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID2);
+  TestBehavior b2(empty2);
+  b.ReadFromScoredJson(empty);
+  b2.ReadFromScoredJson(empty2);
+
   {
     BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
     testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr, true, bc);
+    IncrementBaseStationTimerTicks();    
   }
   
-  b.ReadFromScoredJson(empty);
-  
-  BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
+  BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();  
+  b2.Init(behaviorExternalInterface);
+  b2.OnEnteredActivatableScope();
+  b2.WantsToBeActivated(behaviorExternalInterface);
+  InjectBehaviorIntoStack(b2, testBehaviorFramework);
+
   Robot& robot = testBehaviorFramework.GetRobot();
-  
 
   EXPECT_EQ(b._alwaysHandleCalls, 0);
   EXPECT_EQ(b._handleWhileRunningCalls, 0);
   EXPECT_EQ(b._handleWhileNotRunningCalls,  0);
+
+  EXPECT_EQ(b2._alwaysHandleCalls, 0);
+  EXPECT_EQ(b2._handleWhileRunningCalls, 0);
+  EXPECT_EQ(b2._handleWhileNotRunningCalls,  0);
 
   using namespace ExternalInterface;
 
@@ -310,7 +322,6 @@ TEST(BehaviorInterface, HandleMessages)
   {
     std::string currentActivityName;
     std::string behaviorDebugStr;
-    IncrementBaseStationTimerTicks();
     testBehaviorFramework.GetBehaviorComponent().Update(robot, currentActivityName, behaviorDebugStr);
   }
   
@@ -318,7 +329,11 @@ TEST(BehaviorInterface, HandleMessages)
   EXPECT_EQ(b._handleWhileRunningCalls, 1);
   EXPECT_EQ(b._handleWhileNotRunningCalls,  0);
 
-  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 2.0 ) );
+  EXPECT_EQ(b2._alwaysHandleCalls, 1);
+  EXPECT_EQ(b2._handleWhileRunningCalls, 1);
+  EXPECT_EQ(b2._handleWhileNotRunningCalls,  0);
+
+  IncrementBaseStationTimerTicks();
   b.OnDeactivated(behaviorExternalInterface);
 
   robot.Broadcast( MessageEngineToGame( Ping() ) );
@@ -333,6 +348,11 @@ TEST(BehaviorInterface, HandleMessages)
   EXPECT_EQ(b._alwaysHandleCalls, 2);
   EXPECT_EQ(b._handleWhileRunningCalls, 1);
   EXPECT_EQ(b._handleWhileNotRunningCalls,  1);
+
+  EXPECT_EQ(b2._alwaysHandleCalls, 2);
+  EXPECT_EQ(b2._handleWhileRunningCalls, 1);
+  EXPECT_EQ(b2._handleWhileNotRunningCalls,  1);
+
 };
 
 TEST(BehaviorInterface, OutsideAction)

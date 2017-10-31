@@ -158,6 +158,10 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
     }
   }
   for(auto& entry: allInActivatableScope){
+    behaviorExternalInterface.GetStateChangeComponent()._gameToEngineEvents.clear();
+    behaviorExternalInterface.GetStateChangeComponent()._engineToGameEvents.clear();
+    behaviorExternalInterface.GetStateChangeComponent()._robotToEngineEvents.clear();
+
     _asyncMessageComponent->GetEventsForBehavior(
        entry,
        behaviorExternalInterface.GetStateChangeComponent()._gameToEngineEvents);
