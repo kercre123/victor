@@ -21,6 +21,8 @@
 #include "engine/robot.h"
 #include "engine/petWorld.h"
 #include "anki/common/basestation/utils/timer.h"
+
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/console/consoleInterface.h"
 
 #define LOG_DEBUG(...) PRINT_CH_DEBUG("ReactionTriggers", ##__VA_ARGS__)

@@ -17,6 +17,7 @@
 #include "anki/vision/basestation/image.h"
 #include "clad/vizInterface/messageViz.h"
 #include "clad/types/animationTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include <webots/Supervisor.hpp>

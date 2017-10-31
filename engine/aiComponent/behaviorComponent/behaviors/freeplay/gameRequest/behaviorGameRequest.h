@@ -16,7 +16,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "anki/vision/basestation/trackedFace.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include <memory>
 #include <set>
 #include <string>

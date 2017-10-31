@@ -21,6 +21,7 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
@@ -122,16 +123,17 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
     case ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByExecutableType:
     {
       const ExternalInterface::ExecuteBehaviorByExecutableType& msg = event.GetData().Get_ExecuteBehaviorByExecutableType();
-      selectedBehavior = _behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByExecutableType( msg.behaviorType );
+      selectedBehavior = _behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByExecutableType(
+                                           ExecutableBehaviorTypeFromString(msg.behaviorType) );
       _numRuns = msg.numRuns;
       
       if( selectedBehavior != nullptr ) {
         PRINT_NAMED_INFO("SelectionBehaviorChooser.ExecuteBehaviorByExecutableType.SelectBehavior",
-                         "selecting behavior '%s' exec type '%s'", selectedBehavior->GetIDStr().c_str(), EnumToString(msg.behaviorType) );
+                         "selecting behavior '%s' exec type '%s'", selectedBehavior->GetIDStr().c_str(), msg.behaviorType.c_str() );
       } else {
         PRINT_NAMED_WARNING("SelectionBehaviorChooser.ExecuteBehaviorByExecutableType.NoBehavior",
                             "No behavior for exec type %s",
-                            EnumToString(msg.behaviorType));
+                            msg.behaviorType.c_str());
       }
       
       break;

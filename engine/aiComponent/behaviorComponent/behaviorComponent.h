@@ -20,7 +20,6 @@
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 #include "util/helpers/noncopyable.h"
 

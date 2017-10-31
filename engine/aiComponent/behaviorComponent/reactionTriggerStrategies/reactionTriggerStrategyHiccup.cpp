@@ -32,6 +32,7 @@
 #include "engine/needsSystem/needsState.h"
 #include "engine/robot.h"
 #include "engine/utils/cozmoFeatureGate.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/console/consoleInterface.h"
 
 

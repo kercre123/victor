@@ -16,6 +16,7 @@
 #include "engine/cozmoAPI/comms/sdkStatus.h"
 #include "engine/cozmoAPI/comms/iSocketComms.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
@@ -79,7 +80,8 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
     
     // Clear Behaviors
     _externalInterface->Broadcast( GToE(ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)) );
-    _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(ExecutableBehaviorType::Wait, -1)) );
+    _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(
+               ExecutableBehaviorTypeToString(ExecutableBehaviorType::Wait), -1)) );
       
     /**ReactionTriggerToBehavior noneTrigger;
     noneTrigger.trigger = ReactionTrigger::NoneTrigger;

@@ -21,6 +21,8 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/robot.h"
 #include "anki/vision/basestation/faceIdTypes.h"
+
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {

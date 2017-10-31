@@ -22,6 +22,8 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 
+#include "clad/types/behaviorComponent/behaviorTypes.h"
+
 namespace Anki {
 namespace Cozmo {
 

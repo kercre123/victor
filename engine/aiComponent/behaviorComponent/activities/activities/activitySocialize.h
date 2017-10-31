@@ -15,7 +15,6 @@
 
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
 
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/behaviorComponent/behaviorObjectives.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <map>
@@ -36,7 +35,7 @@ struct PotentialObjectives {
   PotentialObjectives(const Json::Value& config);
   
   BehaviorObjective objective = BehaviorObjective::Count;
-  BehaviorID behaviorID = BehaviorID::PounceOnMotion_Socialize;
+  BehaviorID behaviorID;
   UnlockId requiredUnlock = UnlockId::Count;
   float probabilityToRequire = 1.0f;
   unsigned int randCompletionsMin = 1;

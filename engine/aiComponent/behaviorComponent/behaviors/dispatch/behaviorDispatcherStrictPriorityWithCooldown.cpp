@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriorityWithCooldown.h"
 
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "coretech/common/include/anki/common/basestation/jsonTools.h"
 #include "coretech/common/include/anki/common/basestation/utils/timer.h"
 

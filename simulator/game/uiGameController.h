@@ -12,6 +12,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/common/basestation/objectIDs.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/gameComms.h"
 #include "engine/cozmoAPI/comms/gameMessageHandler.h"

@@ -17,6 +17,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/robot.h"
 
+#include "clad/types/behaviorComponent/behaviorTypes.h"
+
 #include "util/logging/logging.h"
 
 namespace Anki {

@@ -14,7 +14,6 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SelectionBehaviorChooser_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "json/json.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <vector>

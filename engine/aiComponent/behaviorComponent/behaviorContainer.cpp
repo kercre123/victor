@@ -115,6 +115,8 @@
 
 #include "engine/robot.h"
 
+#include "clad/types/behaviorComponent/behaviorTypes.h"
+
 namespace Anki {
 namespace Cozmo {
   
@@ -836,6 +838,20 @@ void BehaviorContainer::HandleMessage(const ExternalInterface::RequestAllBehavio
 BehaviorClass BehaviorContainer::GetBehaviorClass(ICozmoBehaviorPtr behavior) const
 {
   return behavior->GetClass();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string BehaviorContainer::GetIDString(BehaviorID behaviorID) const
+{
+  return BehaviorIDToString(behaviorID);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string BehaviorContainer::GetClassString(BehaviorClass behaviorClass) const
+{
+  return BehaviorClassToString(behaviorClass);
 }
 
   

@@ -13,9 +13,14 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_ReactionTriggerStrategyObject_H__
 #define __Cozmo_Basestation_BehaviorSystem_ReactionTriggerStrategyObject_H__
 
+#include "anki/common/basestation/objectIDs.h"
+
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerStrategyPositionUpdate.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iReactToObjectListener.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
+
+#include "clad/types/behaviorComponent/behaviorStages.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -39,7 +44,7 @@ protected:
   virtual void SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior) override;
   
 private:
-  BehaviorClass _classTriggerMapsTo = BehaviorClass::Wait;
+  BehaviorClass _classTriggerMapsTo;
                   
 };
 

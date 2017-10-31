@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorGuardDog_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "clad/types/behaviorComponent/behaviorStages.h"
 
 namespace Anki {
 namespace Cozmo {

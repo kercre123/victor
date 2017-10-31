@@ -17,6 +17,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
+#include "clad/types/behaviorComponent/behaviorTypes.h"
+
 namespace Anki {
 namespace Cozmo {
 

@@ -25,7 +25,6 @@
 #include "engine/robotDataLoader.h"
 
 #include "clad/types/behaviorComponent/activityTypes.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
 
 #include "util/helpers/templateHelpers.h"
