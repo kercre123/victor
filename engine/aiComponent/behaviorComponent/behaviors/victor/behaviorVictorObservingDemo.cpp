@@ -33,7 +33,7 @@ namespace {
 
 static constexpr const float kFeedingTimeout_s = 30.0f;
 static constexpr const float kRecentlyPlacedChargerTimeout_s = 60.0f * 10;
-static constexpr const float kSocializeKnownFaceCooldown = 60.0f * 2;  // TODO:(bn) longer
+static constexpr const float kSocializeKnownFaceCooldown = 60.0f * 30;
 
 // TODO:(bn) move somewhere else
 class TimeoutCondition : public ICondition
@@ -169,7 +169,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
       const auto& faces = faceWorld.GetFaceIDs(true);
       for( const auto& faceID : faces ) {
         const auto* face = faceWorld.GetFace(faceID);
-        if( face != nullptr ) { // && face->HasName() ) { // TEMP:
+        if( face != nullptr && face->HasName() ) {
           const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
           if( _lastSocializeTime_s < 0.0f ||
               _lastSocializeTime_s + kSocializeKnownFaceCooldown <= currTime_s ) {

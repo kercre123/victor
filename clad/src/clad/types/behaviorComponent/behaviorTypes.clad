@@ -355,6 +355,7 @@ enum uint_8 BehaviorID {
   VictorDemoObservingOnCharger,
   VictorDemoDriveOffChargerIntoObserving,
   VictorDemoSocialize,
+  VictorDemoSocializeGame,
   
   Needs_SevereLowEnergyRequest,
   ObservingOnChargerIdle,

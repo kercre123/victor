@@ -6,7 +6,6 @@
     "DriveOffCharger",
     "ShortLookAroundForFaceAndCube",
     "InteractWithFaces",
-    // TODO:(bn) add ability to randomize which "social" behavior gets played. Just use peek-a-boo for now
-    "FPPeekABoo"
+    "VictorDemoSocializeGame"
   ]
 }
