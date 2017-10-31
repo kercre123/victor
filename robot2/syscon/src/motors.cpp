@@ -187,6 +187,22 @@ void Motors::init() {
   LTN1::mode(MODE_OUTPUT);
   LTN2::mode(MODE_OUTPUT);
 
+  // Preconfigure the timers for the motor treads
+  LN1::alternate(2);
+  LN2::alternate(2);
+  HN1::alternate(1);
+  HN2::alternate(1);
+  LTN1::alternate(2);
+  LTN2::alternate(2);
+  RTN1::alternate(2);
+  RTN2::alternate(2);
+  
+  // Setup the P-Fets for head and lift
+  LP1::reset();
+  HP1::reset();
+  LP1::mode(MODE_OUTPUT);
+  HP1::mode(MODE_OUTPUT);
+
   // Configure P pins
   LP1::type(TYPE_OPENDRAIN);
   HP1::type(TYPE_OPENDRAIN);
@@ -234,8 +250,6 @@ void Motors::tick() {
     // Disable phase
     switch (targetEnable) {
     case TARGET_ENABLE_MOTORS:
-      LP1::mode(MODE_INPUT);
-      HP1::mode(MODE_INPUT);
       RTP1::mode(MODE_INPUT);
       LTP1::mode(MODE_INPUT);
 
@@ -254,24 +268,11 @@ void Motors::tick() {
           break ;
         case TARGET_ENABLE_MOTORS:
           // Reset our ports (This is portable, but ugly, can easily collapse this into 6 writes)
-          LP1::reset();
-          HP1::reset();
           RTP1::reset();
           LTP1::reset();
 
-          LP1::mode(MODE_OUTPUT);
-          HP1::mode(MODE_OUTPUT);
           RTP1::mode(MODE_OUTPUT);
           LTP1::mode(MODE_OUTPUT);
-
-          LN1::alternate(2);
-          LN2::alternate(2);
-          HN1::alternate(1);
-          HN2::alternate(1);
-          LTN1::alternate(2);
-          LTN2::alternate(2);
-          RTN1::alternate(2);
-          RTN2::alternate(2);
           break ;
         default:
           break ;
