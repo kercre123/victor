@@ -9,7 +9,7 @@ var connectedVictor = undefined;
 function completer(line) {
     var args = line.split(/(\s+)/);
     args = args.filter(function(entry) {return /\S/.test(entry); });
-    const completions = 'connect dhcptool disconnect help ifconfig ping quit reboot restart-adb scan ssh-set-authorized-keys stop-scan wifi-set-config wpa_cli'.split(' ');
+    const completions = 'connect dhcptool disconnect help ifconfig ping quit reboot restart-adb scan ssh-set-authorized-keys stop-scan wifi-set-config wifi-start wifi-stop wpa_cli'.split(' ');
     const hits = completions.filter((c) => c.startsWith(args[0]));
     if (hits.length == 0) {
         return [completions, line];
@@ -49,6 +49,8 @@ function printHelp() {
     restart-adb                           -  Restart adb on Victor
     ssh-set-authorized-keys file          -  Use file as the ssh authorized_keys file on Victor
     wifi-set-config ssid psk [ssid2 psk2] -  Overwrite and set wifi config on victor
+    wifi-start                            -  Bring WiFi interface up
+    wifi-stop                             -  Bring WiFi interface down
     wpa_cli args                          -  Execute wpa_cli with arguments on Victor
     ifconfig [args]                       -  Execute ifconfig on Victor
     dhcptool [args]                       -  Execute dhcptool on Victor`;
@@ -208,6 +210,20 @@ var handleInput = function (line) {
                     buf = Buffer.concat([buf, Buffer.from(args[i]), Buffer.from([0])]);
                 }
                 connectedVictor.send(Victor.MSG_B2V_WIFI_SET_CONFIG, buf);
+            }
+            break;
+        case 'wifi-start':
+            if (!connectedVictor) {
+                outputResponse("Not connected to a Victor");
+            } else {
+                connectedVictor.send(Victor.MSG_B2V_WIFI_START);
+            }
+            break;
+        case 'wifi-stop':
+            if (!connectedVictor) {
+                outputResponse("Not connected to a Victor");
+            } else {
+                connectedVictor.send(Victor.MSG_B2V_WIFI_STOP);
             }
             break;
         case 'ssh-set-authorized-keys':
