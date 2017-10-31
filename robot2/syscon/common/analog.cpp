@@ -20,11 +20,13 @@ static const int SELECTED_CHANNELS = 0
 
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.5);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(TRANSITION_POINT, ~0);
+
 static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
 static const int POWER_WIPE_TIME = 200 * 10;  // Erase flash
+static const int MINIMUM_VEXT_TIME = 20; // 0.1s
+
 static const int BUTTON_THRESHOLD = ADC_VOLTS(2.6);
 static const int BOUNCE_LENGTH = 3;
-static const int MINIMUM_VEXT_CYCLES = 200; // 1s
 
 static bool onBatPower;
 static bool chargeAllowed;
@@ -47,7 +49,7 @@ static inline void wait(int us) {
             nop
             nop
             subs     us,us, #1
-            cmp      us,#0
+            cmp      us, #0
             bgt      _jump
   }
 }
@@ -197,7 +199,7 @@ void Analog::tick(void) {
   bool vext_now = Analog::values[ADC_VEXT] < TRANSITION_POINT;
 
   // We've been on the charger (without motors for awhile)
-  if (vext_now && last_vext && vext_debounce++ >= MINIMUM_VEXT_CYCLES) {
+  if (vext_now && last_vext && vext_debounce++ >= MINIMUM_VEXT_TIME) {
     // VEXT Switchover when on charger
     if (onBatPower) {
       __disable_irq();
