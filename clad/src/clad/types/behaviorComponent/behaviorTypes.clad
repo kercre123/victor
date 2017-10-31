@@ -81,9 +81,6 @@ enum uint_8 BehaviorClass {
   VisitInterestingEdge,
   Wait,
 
-  // Dispatcher Behaviors
-  BehaviorDispatcherRerun,
-
 
   // Behaviors mapped to reaction triggers
   AcknowledgeFace,
@@ -109,8 +106,10 @@ enum uint_8 BehaviorClass {
   ReactToVoiceCommand,
 
   // Dispatch behaviors which exist only to delegate to other behaviors
+  BehaviorDispatcherRerun,
   DispatcherStrictPriority,
   DispatcherStrictPriorityWithCooldown,
+  DispatcherQueue,
 
   // Victor / demo behavior
   VictorObservingDemo,
@@ -354,9 +353,14 @@ enum uint_8 BehaviorID {
   VictorDemoObservingFindFaces,
   VictorDemoObservingOnChargerState,
   VictorDemoObservingOnCharger,
+  VictorDemoDriveOffChargerIntoObserving,
+  VictorDemoSocialize,
+  
   Needs_SevereLowEnergyRequest,
   ObservingOnChargerIdle,
 
+  ShortLookAroundForFaceAndCube,
+  
   Wait,
   Wait_TestInjectable // BehaviorID used by tests to create fake behaviors
 }
