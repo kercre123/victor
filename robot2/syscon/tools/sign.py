@@ -2,7 +2,7 @@
 from __future__ import print_function
 
 from elftools.elf.elffile import ELFFile
-from Crypto.Hash import SHA512
+from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto import Random
 
@@ -81,7 +81,7 @@ def rom_info(file):
 
     return rom_data, base_addr, magic_location
 
-def MGF1(a, b, digestType=SHA512):
+def MGF1(a, b, digestType=SHA256):
     a, index, counter = bytearray(a), 0, 0
 
     while True:
@@ -98,7 +98,7 @@ def MGF1(a, b, digestType=SHA512):
 
         counter += 1
 
-def sign(data, key, digestType=SHA512):
+def sign(data, key, digestType=SHA256):
     # We digest the entire flash space (has to be uninitalized)
     hash = digestType.new()
     hash.update(data)
@@ -106,7 +106,7 @@ def sign(data, key, digestType=SHA512):
     digest = hash.digest()
 
     # Fixed padding lets us know when that hash method we used was
-    fixed_padding = (b"\x00\x01\xFF\xFF" + hash.oid[::-1] + b"\xFF\xFF\x00")[::-1]
+    fixed_padding = (b"\x00\x01\xFF\xFF\xFF\xFF\x00")[::-1]
 
     # determine lengths of the our fields
     pad_length = key.size() % 8

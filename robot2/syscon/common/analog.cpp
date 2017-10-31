@@ -20,7 +20,6 @@ static const int SELECTED_CHANNELS = 0
 
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.5);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(TRANSITION_POINT, ~0);
-static const int CHARGE_DELAY = 200; // 1 second
 static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
 static const int POWER_WIPE_TIME = 200 * 10;  // Erase flash
 static const int BUTTON_THRESHOLD = ADC_VOLTS(2.6);
@@ -29,10 +28,8 @@ static const int MINIMUM_VEXT_CYCLES = 200; // 1s
 
 static bool onBatPower;
 static bool chargeAllowed;
-static int chargeEnableDelay;
 static int vext_debounce;
 static bool last_vext = false;
-static bool vext_status = false;
 static bool bouncy_button;
 static int bouncy_count;
 static int hold_count;
@@ -59,23 +56,19 @@ static void setBatteryPower(bool bat) {
   if (bat) {
     NVIC_DisableIRQ(ADC1_IRQn);
 
-    __disable_irq();
     nVEXT_EN::mode(MODE_INPUT);
     wait(40*5); // Just around 50us
     BAT_EN::set();
-    __enable_irq();
   } else {
     NVIC_EnableIRQ(ADC1_IRQn);
     
-    __disable_irq();
     BAT_EN::reset();
     wait(40); // Just around 10us
     nVEXT_EN::reset();
     nVEXT_EN::mode(MODE_OUTPUT);
-    __enable_irq();
   }
-  
-  onBatPower = true;
+
+  onBatPower = bat;
 }
 
 void Analog::init(void) {
@@ -164,7 +157,7 @@ void Analog::init(void) {
 
   // Startup external power interrupt / handler
   NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
-  setBatteryPower(Analog::values[ADC_VEXT] < TRANSITION_POINT); // If VEXT is low, skip it
+  setBatteryPower(Analog::values[ADC_VEXT] < TRANSITION_POINT);
 }
 
 void Analog::stop(void) {
@@ -186,17 +179,12 @@ void Analog::transmit(BodyToHead* data) {
 }
 
 void Analog::allowCharge(bool enable) {
-  chargeEnableDelay = 0;
   chargeAllowed = enable;
+  vext_debounce = 0;
 }
 
-void Analog::delayCharge() {
-  chargeEnableDelay = 0;
-  
-  if (chargeAllowed) {
-    CHG_EN::reset();
-    CHG_EN::mode(MODE_OUTPUT);
-  }
+void Analog::delayCharge() {  
+  vext_debounce = 0;
 }
 
 extern "C" void ADC1_IRQHandler(void) {
@@ -205,37 +193,31 @@ extern "C" void ADC1_IRQHandler(void) {
 }
 
 void Analog::tick(void) {
-  // Debounce VEXT logic
+  // On-charger delay
   bool vext_now = Analog::values[ADC_VEXT] < TRANSITION_POINT;
-  
-  if (vext_now && last_vext) {
-    if (vext_debounce++ >= MINIMUM_VEXT_CYCLES) {
-      vext_status = true;
+
+  // We've been on the charger (without motors for awhile)
+  if (vext_now && last_vext && vext_debounce++ >= MINIMUM_VEXT_CYCLES) {
+    // VEXT Switchover when on charger
+    if (onBatPower) {
+      __disable_irq();
+      setBatteryPower(false);
+      __enable_irq();
     }
-  } else {
-    vext_debounce = 0;
-    vext_status = false;
-  }
-  last_vext = vext_now;
 
-  // VEXT Switchover
-  if (onBatPower && vext_status) {
-    setBatteryPower(false);
-  }
-
-  // Charge logic
-  if (chargeAllowed && !onBatPower) {
-    if (chargeEnableDelay > CHARGE_DELAY) {
+    // Charge logic
+    if (chargeAllowed) {
       CHG_EN::mode(MODE_INPUT);
     } else {
       CHG_EN::reset();
       CHG_EN::mode(MODE_OUTPUT);
-      
-      chargeEnableDelay++;
     }
   } else {
-    chargeEnableDelay = 0;
+    CHG_EN::reset();
+    CHG_EN::mode(MODE_OUTPUT);
+    vext_debounce = 0;
   }
+  last_vext = vext_now;
 
   // Button logic
   bool new_button = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
