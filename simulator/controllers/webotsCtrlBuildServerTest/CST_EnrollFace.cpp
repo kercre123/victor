@@ -12,7 +12,7 @@
 
 #include "simulator/game/cozmoSimTestController.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
-
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 // If enabled, don't do the first enrollment where we don't see a face and just
 // wait for timeout. This flag is useful for local testing where you don't want

@@ -20,6 +20,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/robot.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/console/consoleInterface.h"
 
 
@@ -43,6 +44,7 @@ ReactionTriggerStrategyObjectPositionUpdated::ReactionTriggerStrategyObjectPosit
                                                                                            const Json::Value& config)
 :ReactionTriggerStrategyPositionUpdate(behaviorExternalInterface, robotExternalInterface,
                                        config, kTriggerStrategyName, ReactionTrigger::ObjectPositionUpdated)
+,_classTriggerMapsTo(BehaviorClass::Wait)
 {
   SubscribeToTags({
     EngineToGameTag::RobotObservedObject,

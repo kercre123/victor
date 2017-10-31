@@ -30,7 +30,6 @@
 
 #include "clad/types/actionResults.h"
 #include "clad/types/behaviorComponent/behaviorObjectives.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/behaviorComponent/reactionTriggers.h"
@@ -227,7 +226,7 @@ protected:
 
   inline void SetDebugStateName(const std::string& inName) {
     PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, FromState:%s ToState:%s",
-                  BehaviorIDToString(GetID()), _debugStateName.c_str(), inName.c_str());
+                  GetIDStr().c_str(), _debugStateName.c_str(), inName.c_str());
     _debugStateName = inName;
   }
   

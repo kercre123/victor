@@ -13,6 +13,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "util/transport/udpTransport.h"
 // includes for physics functions

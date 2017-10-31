@@ -11,6 +11,7 @@
  */
 
 #include "simulator/game/cozmoSimTestController.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
   namespace Cozmo {

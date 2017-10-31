@@ -14,8 +14,6 @@
 #define COZMO_BEHAVIOR_SYSTEM_MANAGER_H
 
 #include "anki/common/types.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
-
 
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"

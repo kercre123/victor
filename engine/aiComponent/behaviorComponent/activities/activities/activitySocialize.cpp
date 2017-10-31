@@ -21,6 +21,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/robot.h"
+
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/math/math.h"
 
 namespace Anki {
@@ -29,6 +31,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PotentialObjectives::PotentialObjectives(const Json::Value& config)
+: behaviorID(BehaviorID::PounceOnMotion_Socialize)
 {
   const std::string& objectiveStr = JsonTools::ParseString(config, "objective",
                                                            "FPSocialize.ObjectiveRequirement.InvalidConfig.NoObjective");

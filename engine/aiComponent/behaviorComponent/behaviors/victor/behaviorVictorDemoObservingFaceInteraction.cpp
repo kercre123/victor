@@ -20,6 +20,8 @@
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
 
+#include "clad/types/behaviorComponent/behaviorTypes.h"
+
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {

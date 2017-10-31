@@ -17,7 +17,6 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/noncopyable.h"
 #include "util/logging/logging.h"
@@ -101,6 +100,11 @@ private:
   
   // helper to avoid including ICozmoBehavior.h here
   BehaviorClass GetBehaviorClass(ICozmoBehaviorPtr behavior) const;
+
+  // hide behaviorTypes.h file in .cpp
+  std::string GetIDString(BehaviorID behaviorID) const;
+  std::string GetClassString(BehaviorClass behaviorClass) const;
+  
 };
 
 template<typename T>
@@ -113,21 +117,21 @@ bool BehaviorContainer::FindBehaviorByIDAndDowncast(BehaviorID behaviorID,
   if( ANKI_VERIFY(behavior != nullptr,
                   "BehaviorContainer.FindBehaviorByIDAndDowncast.NoBehavior",
                   "BehaviorID: %s requiredClass: %s",
-                  BehaviorIDToString(behaviorID),
-                  BehaviorClassToString(requiredClass)) &&
+                  GetIDString(behaviorID).c_str(),
+                  GetClassString(requiredClass).c_str()) &&
      
      ANKI_VERIFY(behavior != nullptr && GetBehaviorClass(behavior) == requiredClass,
                  "BehaviorContainer.FindBehaviorByIDAndDowncast.WrongClass",
                  "BehaviorID: %s requiredClass: %s",
-                 BehaviorIDToString(behaviorID),
-                 BehaviorClassToString(requiredClass)) ) {
+                 GetIDString(behaviorID).c_str(),
+                 GetClassString(requiredClass).c_str()) ) {
        
        outPtr = std::static_pointer_cast<T>(behavior);
        
        if( ANKI_VERIFY(outPtr != nullptr, "BehaviorContainer.FindBehaviorByIDAndDowncast.CastFailed",
                        "BehaviorID: %s requiredClass: %s",
-                       BehaviorIDToString(behaviorID),
-                       BehaviorClassToString(requiredClass)) ) {
+                       GetIDString(behaviorID).c_str(),
+                       GetClassString(requiredClass).c_str()) ) {
          return true;
        }
      }

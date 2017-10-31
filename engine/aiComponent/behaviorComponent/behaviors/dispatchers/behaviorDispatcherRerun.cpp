@@ -18,6 +18,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
 namespace Cozmo {

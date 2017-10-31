@@ -13,8 +13,8 @@
 #define __WebotsCtrlViz_VizControllerImpl_H__
 
 #include "clad/vizInterface/messageViz.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/emotionTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/events/ankiEventMgr.h"
 #include "anki/vision/basestation/image.h"
 #include "engine/encodedImage.h"

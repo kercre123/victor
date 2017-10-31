@@ -18,12 +18,12 @@
 #ifndef __Basestation_Audio_BehaviorAudioComponent_H__
 #define __Basestation_Audio_BehaviorAudioComponent_H__
 
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/events/ankiEventMgr.h"
 
 #include "clad/audio/audioStateTypes.h"
 #include "clad/audio/audioSwitchTypes.h"
 #include "clad/types/behaviorComponent/activityTypes.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/robotPublicState.h"
 #include "clad/types/unlockTypes.h"
 

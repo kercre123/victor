@@ -52,6 +52,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/behaviorComponent/reactionTriggers.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"

@@ -21,6 +21,7 @@
 #include "engine/messageHelpers.h"
 #include "engine/robot.h"
 #include "engine/viz/vizManager.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"

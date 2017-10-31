@@ -28,6 +28,7 @@
 
 #include "clad/audio/audioEventTypes.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 

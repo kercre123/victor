@@ -26,6 +26,9 @@ namespace Anki {
 namespace Cozmo {
 
 class ICozmoBehavior;
+enum class BehaviorID: uint8_t;
+enum class BehaviorClass: uint8_t;
+enum class ExecutableBehaviorType: uint8_t;
 
 enum class BehaviorStatus {
   Failure,

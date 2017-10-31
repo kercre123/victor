@@ -34,7 +34,7 @@
 #include "engine/needsSystem/needsState.h"
 #include "engine/robot.h"
 
-
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/vizInterface/messageViz.h"
 #include "util/console/consoleInterface.h"
 #include "engine/faceWorld.h"

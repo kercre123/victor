@@ -22,6 +22,7 @@
 #include "engine/robot.h"
 
 #include "anki/common/basestation/objectIDs.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace{
 static const char* kTriggerStrategyName = "NoPreDockPoses";

@@ -15,7 +15,7 @@
 
 #include "anki/common/basestation/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorStages.h"
 #include "clad/types/objectTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
 

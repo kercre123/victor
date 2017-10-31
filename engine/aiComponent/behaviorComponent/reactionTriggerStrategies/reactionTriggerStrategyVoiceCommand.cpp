@@ -23,6 +23,7 @@
 #include "engine/robot.h"
 #include "engine/robotIdleTimeoutComponent.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/console/consoleInterface.h"
 
 #define LOG_CHANNEL "VoiceCommands"

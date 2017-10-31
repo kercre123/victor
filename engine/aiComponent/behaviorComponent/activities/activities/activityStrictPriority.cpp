@@ -23,6 +23,7 @@
 #include "engine/robotDataLoader.h"
 #include "engine/robot.h"
 
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/helpers/boundedWhile.h"
 
 namespace Anki {

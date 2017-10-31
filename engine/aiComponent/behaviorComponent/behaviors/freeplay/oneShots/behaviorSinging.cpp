@@ -30,6 +30,7 @@
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/audio/audioEventTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
 namespace Cozmo {

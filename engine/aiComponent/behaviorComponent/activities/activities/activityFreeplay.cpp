@@ -34,6 +34,8 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 
+#include "clad/types/behaviorComponent/behaviorTypes.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"

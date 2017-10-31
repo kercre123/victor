@@ -16,7 +16,6 @@
 
 #include "anki/common/types.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
 
 #include "util/signals/simpleSignal_fwd.h"

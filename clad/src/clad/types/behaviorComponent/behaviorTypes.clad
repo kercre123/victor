@@ -408,47 +408,6 @@ enum uint_8 ExecutableBehaviorType {
   Count
 }
 
-////////
-// User Facing Behavior Stages
-// Behavior stages which can be broadcast out
-// by the PublicStateBroadcaster to trigger changes in audio/ui/etc
-////////
-
-// Feeding music stages (values must match music rounds)
-enum uint_8 FeedingStage {
- MildEnergy   = 1,
- SevereEnergy = 2
-}
-
-
-// Guard Dog behavior stages/states (values must match music rounds)
-enum uint_8 GuardDogStage {
-  Sleeping        = 0,
-  CubeBeingMoved  = 1,
-  Busted          = 2,
-  CubesRemaining  = 3,
-  AllCubesGone    = 4,
-  Count
-}
-
-
-// Construction stages for pyramid
-enum uint_8 PyramidConstructionStage {
-  NoneStage = 0, // used for canceling lights
-  SearchingForCube = 1,
-  InitialCubeCarry,
-  BaseFormed,
-  TopBlockCarry,
-  PyramidCompleteFlourish
-}
-
-
-// Workout behavior stages (values must match music rounds)
-enum uint_8 WorkoutStage {
-  NormalWorkout        = 0,
-  EightiesWorkoutPrep  = 1,
-  EightiesWorkoutLift  = 2,
-}
 
 } // namespace Cozmo
 } // namespace Anki

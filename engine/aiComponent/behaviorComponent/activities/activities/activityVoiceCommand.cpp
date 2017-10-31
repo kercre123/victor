@@ -34,6 +34,7 @@
 #include "engine/robot.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
 
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
