@@ -29,6 +29,8 @@ enum MotorDirection {
 };
 
 struct MotorConfig {
+  bool            charge_exclusive;
+
   // Pin BRSS
   volatile uint32_t* P_BSRR;
   uint32_t           P_Set;
@@ -62,21 +64,25 @@ struct MotorStatus {
 
 static const MotorConfig MOTOR_DEF[MOTOR_COUNT] = {
   {
+    true,
     &LTP1::bank->BSRR, LTP1::mask,
     &TIM1->CCR2, CONFIG_N(LTN1),
     &TIM1->CCR2, CONFIG_N(LTN2)
   },
   {
+    true,
     &RTP1::bank->BSRR, RTP1::mask,
     &TIM1->CCR1, CONFIG_N(RTN1),
     &TIM1->CCR1, CONFIG_N(RTN2)
   },
   {
+    false,
     &LP1::bank->BSRR, LP1::mask,
     &TIM1->CCR3, CONFIG_N(LN1),
     &TIM1->CCR4, CONFIG_N(LN2)
   },
   {
+    false,
     &HP1::bank->BSRR, HP1::mask,
     &TIM3->CCR2, CONFIG_N(HN1),
     &TIM3->CCR4, CONFIG_N(HN2)
@@ -292,11 +298,15 @@ void Motors::tick() {
 
     // Make sure motors are enabled by next phase
     // We will need to table this power change for one transition
-    if (state->power != 0) {
-      idleTimer = 0;
+    if (state->charge_exclusive) {
+      // Reset our timer
+      if (state->power != 0) {
+        idleTimer = 0;
+      }
 
+      // Cannot service this motor if the motor is inactive
       if (targetEnable != TARGET_ENABLE_MOTORS) {
-        break ;
+        continue ;
       }
     }
 
