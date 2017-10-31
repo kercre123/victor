@@ -1218,10 +1218,9 @@ namespace CodeLab {
         }
       }
       else {
-        CodeLabProject projectToUpdate = null;
-        try {
-          // Project already has a guid. Locate the project then update it.
-          projectToUpdate = FindUserProjectWithUUID(projectUUID);
+        // Project already has a guid. Locate the project then update it.
+        CodeLabProject projectToUpdate = FindUserProjectWithUUID(projectUUID);
+        if (projectToUpdate != null) {
           projectToUpdate.ProjectJSON = projectJSON;
           projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
           projectToUpdate.ProjectXML = null; // Set ProjectXML to null as this project might have previously been in XML and we don't want to store it anymore.
@@ -1229,9 +1228,8 @@ namespace CodeLab {
 
           _SessionState.OnUpdatedProject(projectToUpdate);
         }
-        catch (NullReferenceException) {
-          string sanitizedUpdatedProject = PrivacyGuard.HidePersonallyIdentifiableInfo(projectToUpdate.ProjectJSON);
-          DAS.Error("OnCozmoSaveUserProject.NullReferenceExceptionUpdateProject", "Save existing CodeLab user project. projectUUID = " + projectUUID + ", projectToUpdate = " + sanitizedUpdatedProject);
+        else {
+          DAS.Error("OnCozmoSaveUserProject.NullUserProject", "User project unexpectedly not found.");
         }
       }
 
