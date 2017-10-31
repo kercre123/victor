@@ -45,6 +45,13 @@ uint8_t ParseUint8(const Json::Value& config, const char* key, const std::string
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+int8_t ParseInt8(const Json::Value& config, const char* key, const std::string& debugName) {
+  const auto & val = config[key];
+  DEV_ASSERT_MSG(val.isNumeric(), (debugName + ".ParseUint8.NotValidInt8").c_str(), "%s", key);
+  return Anki::Util::numeric_cast<int8_t>(val.asInt());
+}  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ParseBool(const Json::Value& config, const char* key, const std::string& debugName) {
   const auto & val = config[key];
   DEV_ASSERT_MSG(val.isBool(), (debugName + ".ParseBool.NotValidBool").c_str(), "%s", key);
