@@ -63,7 +63,7 @@ bool ITrackLayerManager<FRAME_TYPE>::ApplyLayersToFrame(FRAME_TYPE& frame,
     // Apply the layer's track with frame
     frameUpdated |= applyLayerFunc(layer.track, layer.startTime_ms, layer.streamTime_ms, frame);
     
-    layer.streamTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
+    layer.streamTime_ms += ANIM_TIME_STEP_MS;
     
     if(!layer.track.HasFramesLeft())
     {
@@ -81,7 +81,7 @@ bool ITrackLayerManager<FRAME_TYPE>::ApplyLayersToFrame(FRAME_TYPE& frame,
         {
           //...but is marked persistent, so keep applying last frame
           layer.track.MoveToPrevKeyFrame(); // so we're not at end() anymore
-          layer.streamTime_ms -= RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
+          layer.streamTime_ms -= ANIM_TIME_STEP_MS;
           
           if(DEBUG_FACE_LAYERING)
           {
@@ -180,7 +180,7 @@ void ITrackLayerManager<FRAME_TYPE>::AddToPersistentLayer(AnimationTag tag, FRAM
     // Make keyframe trigger one sample length (plus any internal delay) past
     // the last keyframe's trigger time
     keyframe.SetTriggerTime(track.GetLastKeyFrame()->GetTriggerTime() +
-                            IKeyFrame::SAMPLE_LENGTH_MS +
+                            ANIM_TIME_STEP_MS +
                             keyframe.GetTriggerTime());
     
     track.AddKeyFrameToBack(keyframe);
