@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 
 // For development purposes, while HW is scarce, it's useful to be able to run on phones
@@ -13,7 +14,7 @@
 
 int main(int argc, const char* argv[])
 {
-  printf("Starting robot process\n");
+  AnkiEvent("robot.main", "Starting robot process");
 
   //Robot::Init calls HAL::INIT before anything else.
   // TODO: move HAL::Init here into HAL main.
@@ -25,7 +26,7 @@ int main(int argc, const char* argv[])
     //HAL::Step should never return !OK, but if it does, best not to trust its data.
     if (Anki::Cozmo::HAL::Step() == Anki::RESULT_OK) {
       if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK) {
-        printf("ERROR: MainExecution failed\n");
+        AnkiError("robot.main", "MainExecution failed");
         return -1;
       }
     }

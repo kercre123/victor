@@ -125,6 +125,11 @@ void AsyncMessageGateComponent::PrepareCache()
 void AsyncMessageGateComponent::GetEventsForBehavior(IBehavior* subscriber,
                                                      std::vector<const GameToEngineEvent>& events)
 {
+  if(!ANKI_VERIFY(events.empty(), 
+      "AsyncMessageGateComponent.GetEventsForBehavior.GameToEngineEvents",
+      "Events not empty")){
+    events.clear();    
+  }
   DEV_ASSERT(_isCacheValid,
              "AsyncMessageGateComponent.GetGTEEventsForBehavior.CacheIsClear");
   
@@ -141,6 +146,11 @@ void AsyncMessageGateComponent::GetEventsForBehavior(IBehavior* subscriber,
 void AsyncMessageGateComponent::GetEventsForBehavior(IBehavior* subscriber,
                                                      std::vector<const EngineToGameEvent>& events)
 {
+  if(!ANKI_VERIFY(events.empty(), 
+      "AsyncMessageGateComponent.GetEventsForBehavior.EngineToGameEvents",
+      "Events not empty")){
+    events.clear();    
+  }
   DEV_ASSERT(_isCacheValid,
              "AsyncMessageGateComponent.GetETGEventsForBehavior.CacheIsClear");
   
@@ -157,6 +167,11 @@ void AsyncMessageGateComponent::GetEventsForBehavior(IBehavior* subscriber,
 void AsyncMessageGateComponent::GetEventsForBehavior(IBehavior* subscriber,
                                                      std::vector<const RobotToEngineEvent>& events)
 {
+  if(!ANKI_VERIFY(events.empty(), 
+      "AsyncMessageGateComponent.GetEventsForBehavior.RobotToEngineEvent",
+      "Events not empty")){
+    events.clear();    
+  }
   DEV_ASSERT(_isCacheValid,
              "AsyncMessageGateComponent.GetRTEEventsForBehavior.CacheIsClear");
   auto behaviorEntry = _cachedTracker->_cacheMap.find(subscriber);

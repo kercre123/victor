@@ -84,12 +84,12 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
   // an action - to save on complexity we're accepting this tradeoff for the time being
   // but may decide to address it directly here or within the BSbehavior/one of its subclasses
   // in the future
+  behaviorExternalInterface.GetStateChangeComponent()._actionsCompletedThisTick.clear();  
   for(int idx = 0; idx < _behaviorStack.size(); idx++){
     tickedInStack.insert(_behaviorStack.at(idx));
     behaviorExternalInterface.GetStateChangeComponent()._gameToEngineEvents.clear();
     behaviorExternalInterface.GetStateChangeComponent()._engineToGameEvents.clear();
     behaviorExternalInterface.GetStateChangeComponent()._robotToEngineEvents.clear();
-    behaviorExternalInterface.GetStateChangeComponent()._actionsCompletedThisTick.clear();
     
     asyncMessageGateComp.GetEventsForBehavior(
        _behaviorStack.at(idx),
