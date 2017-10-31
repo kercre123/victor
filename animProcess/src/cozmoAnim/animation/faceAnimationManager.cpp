@@ -260,9 +260,9 @@ namespace Cozmo {
     
     anim->frames.push_back(faceImg);
     
-    if(holdTime_ms > IKeyFrame::SAMPLE_LENGTH_MS)
+    if(holdTime_ms > ANIM_TIME_STEP_MS)
     {
-      const s32 numFramesToAdd = holdTime_ms / IKeyFrame::SAMPLE_LENGTH_MS - 1;
+      const s32 numFramesToAdd = holdTime_ms / ANIM_TIME_STEP_MS - 1;
       for(s32 i=0; i<numFramesToAdd; ++i)
       {
         anim->frames.push_back({});

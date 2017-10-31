@@ -30,7 +30,7 @@ typedef struct {
   uint8_t data[5];
 } INIT_SCRIPT;
 
-static const int DAT_CLOCK = 10000000;
+static const int DAT_CLOCK = 17500000;
 static const int MAX_TRANSFER = 0x1000;
 
 

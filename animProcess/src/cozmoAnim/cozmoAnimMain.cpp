@@ -1,5 +1,5 @@
 /**
-* File: main.cpp
+* File: cozmoAnimMain.cpp
 *
 * Author: Kevin Yoon
 * Created: 6/26/17
@@ -14,6 +14,8 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 
+#include "anki/cozmo/shared/cozmoConfig.h"
+
 #include "util/logging/logging.h"
 #include "util/logging/androidLogPrintLogger_android.h"
 
@@ -21,8 +23,6 @@
 #include <chrono>
 #include <fstream>
 #include <thread>
-
-#define TIC_TIME_MS 33
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -99,25 +99,64 @@ int main(void)
   
   cozmoAnim->Init();
   
-  auto start = std::chrono::steady_clock::now();
-  const auto timeOffset = start;
+  using namespace std::chrono;
+  using TimeClock = steady_clock;
+
+  const auto runStart = TimeClock::now();
   
+  // Set the target time for the end of the first frame
+  auto targetEndFrameTime = runStart + (microseconds)(ANIM_TIME_STEP_US);
+  
+
   while (1) {
 
-    std::chrono::nanoseconds currTime_ns = start - timeOffset;
-    if(cozmoAnim != nullptr)
-    {
-      cozmoAnim->Update(currTime_ns.count());
+    const auto tickStart = TimeClock::now();
+    const duration<double> curTime_s = tickStart - runStart;
+    const BaseStationTime_t curTime_ns = Util::numeric_cast<BaseStationTime_t>(Util::SecToNanoSec(curTime_s.count()));
+
+    if (cozmoAnim->Update(curTime_ns) != RESULT_OK) {
+      PRINT_NAMED_WARNING("CozmoAnimMain.Update.Failed", "Exiting...");
+      break;
     }
     
-    auto end = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::chrono::duration<int, std::micro> sleepTime = std::chrono::milliseconds(TIC_TIME_MS) - elapsed;
-    std::this_thread::sleep_for(sleepTime);
-    //printf("CozmoAnim: currTime: %d us, elapsed: %lld us, Sleep time: %d us\n", static_cast<u32>(0.001 * currTime_ns.count()), elapsed.count(), sleepTime.count());
+    const auto tickNow = TimeClock::now();
+    const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickNow);
 
-    start = std::chrono::steady_clock::now();
+    // Complain if we're going overtime
+    if (remaining_us < microseconds(-ANIM_OVERTIME_WARNING_THRESH_US))
+    {
+      //const auto tickDuration_us = duration_cast<microseconds>(tickNow - tickStart);
+      //PRINT_NAMED_INFO("CozmoAPI.CozmoInstanceRunner", "targetEndFrameTime:%8lld, tickDuration_us:%8lld, remaining_us:%8lld",
+      //                 TimeClock::time_point(targetEndFrameTime).time_since_epoch().count(), tickDuration_us.count(), remaining_us.count());
+
+      PRINT_NAMED_WARNING("CozmoAnimMain.overtime", "Update() (%dms max) is behind by %.3fms",
+                          ANIM_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
+    }
+    
+    // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
+    // allows other threads to run
+    static const auto minimumSleepTime_us = microseconds((long)0);
+    std::this_thread::sleep_for(std::max(minimumSleepTime_us, remaining_us));
+
+    // Set the target end time for the next frame
+    targetEndFrameTime += (microseconds)(ANIM_TIME_STEP_US);
+    
+    // See if we've fallen very far behind (this happens e.g. after a 5-second blocking
+    // load operation); if so, compensate by catching the target frame end time up somewhat.
+    // This is so that we don't spend the next SEVERAL frames catching up.
+    const auto timeBehind_us = -remaining_us;
+    static const auto kusPerFrame = ((microseconds)(ANIM_TIME_STEP_US)).count();
+    static const int kTooFarBehindFramesThreshold = 2;
+    static const auto kTooFarBehindThreshold = (microseconds)(kTooFarBehindFramesThreshold * kusPerFrame);
+    if (timeBehind_us >= kTooFarBehindThreshold)
+    {
+      const int framesBehind = (int)(timeBehind_us.count() / kusPerFrame);
+      const auto forwardJumpDuration = kusPerFrame * framesBehind;
+      targetEndFrameTime += (microseconds)forwardJumpDuration;
+      PRINT_NAMED_WARNING("CozmoAnimMain.catchup",
+                          "Update was too far behind so moving target end frame time forward by an additional %.3fms",
+                          (float)(forwardJumpDuration * 0.001f));
+    }
 
   }
-  
 }

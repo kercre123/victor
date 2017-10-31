@@ -430,7 +430,7 @@ void Animation::SetIsLive(bool isLive)
 void Animation::AppendAnimation(const Animation& appendAnim)
 {
   // Append animation starting at the next keyframe
-  const uint32_t animOffest_ms = GetLastKeyFrameTime_ms() + IKeyFrame::SAMPLE_LENGTH_MS;
+  const uint32_t animOffest_ms = GetLastKeyFrameTime_ms() + ANIM_TIME_STEP_MS;
   
   // Append animation tracks
   _headTrack.AppendTrack(appendAnim.GetTrack<HeadAngleKeyFrame>(), animOffest_ms);

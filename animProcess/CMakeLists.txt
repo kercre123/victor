@@ -41,7 +41,6 @@ target_link_libraries(victor_anim
   cti_vision
   cti_messaging_robot
   robot_clad_cpplite
-  robot_interface
   robot_transport
   audio_engine
   audio_multiplexer_robot
@@ -52,6 +51,8 @@ target_link_libraries(victor_anim
   ${SPEEXDSP_LIBS}
   # platform
   ${PLATFORM_LIBS}
+  PUBLIC
+  robot_interface  # Needs to be public for cozmoConfig.h
 )
 
 android_strip(TARGET victor_anim)

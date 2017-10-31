@@ -114,10 +114,10 @@ Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
     if (! firstUpdate)
     {
       const double timeSinceLastUpdate = startUpdateTimeMs - lastUpdateTimeMs;
-      const double maxLatency = BS_TIME_STEP + 15.;
+      const double maxLatency = ANIM_TIME_STEP_MS + ANIM_OVERTIME_WARNING_THRESH_MS;
       if (timeSinceLastUpdate > maxLatency)
       {
-        Anki::Util::sEventF("cozmo_anim.update.sleep.slow", {{DDATA,TO_DDATA_STR(BS_TIME_STEP)}}, "%.2f", timeSinceLastUpdate);
+        Anki::Util::sEventF("cozmo_anim.update.sleep.slow", {{DDATA,TO_DDATA_STR(ANIM_TIME_STEP_MS)}}, "%.2f", timeSinceLastUpdate);
       }
     }
     lastUpdateTimeMs = startUpdateTimeMs;

@@ -63,7 +63,8 @@ function start_program()
 
     # start process
     cd ${SCRIPT_PATH}
-    exec_background ${BIN_PATH}/${PROGRAM_EXE}
+    # Anim process is higher priority than engine, but less than robot
+    exec_background nice -n -19 ${BIN_PATH}/${PROGRAM_EXE}
     echo $!
 }
 

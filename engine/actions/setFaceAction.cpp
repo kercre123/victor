@@ -92,13 +92,13 @@ ActionResult SetFaceAction::Init()
       
       _duration_ms = kMaxDurationToAvoidScreenBurnIn_ms;
     }
-    // else if(_duration_ms < IKeyFrame::SAMPLE_LENGTH_MS)
+    // else if(_duration_ms < ANIM_TIME_STEP_MS)
     // {
     //   PRINT_NAMED_WARNING("SetFaceAction.Init.DurationTooShort",
     //                       "Clamping duration to %ums which is the minimum animation resolution",
-    //                       IKeyFrame::SAMPLE_LENGTH_MS);
+    //                       ANIM_TIME_STEP_MS);
       
-    //   _duration_ms = IKeyFrame::SAMPLE_LENGTH_MS;
+    //   _duration_ms = ANIM_TIME_STEP_MS;
     // }
   }
   
@@ -113,9 +113,9 @@ ActionResult SetFaceAction::Init()
       addResult = _animation.AddKeyFrameToBack(ProceduralFaceKeyFrame(_procFace));
       
       // Add a second one later to interpolate to, if duration is longer than one keyframe
-      if(RESULT_OK == addResult && _duration_ms > IKeyFrame::SAMPLE_LENGTH_MS)
+      if(RESULT_OK == addResult && _duration_ms > ANIM_TIME_STEP_MS)
       {
-        addResult = _animation.AddKeyFrameToBack(ProceduralFaceKeyFrame(_procFace, _duration_ms-IKeyFrame::SAMPLE_LENGTH_MS));
+        addResult = _animation.AddKeyFrameToBack(ProceduralFaceKeyFrame(_procFace, _duration_ms - ANIM_TIME_STEP_MS));
       }
        */
         

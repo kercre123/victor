@@ -128,7 +128,7 @@ cxx_project(
                         excludes = ['*_android.*',
                                     'android/**/*',
                                     '*_mac.*',
-                                    'main.cpp']),
+                                    'cozmoAnimMain.cpp']),
     platform_srcs = [
         ('android', glob(['android/**/*.cpp',
                           '**/*_android.cpp'])),

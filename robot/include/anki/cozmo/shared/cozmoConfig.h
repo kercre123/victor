@@ -9,8 +9,6 @@
 #include "util/math/math.h"
 #endif
 
-#include "clad/types/imageTypes.h"
-
 namespace Anki {
 namespace Cozmo {
 
@@ -231,8 +229,11 @@ namespace Cozmo {
   // how long there is between stopping the motors and issuing a cliff event (because we have decided there isn't a pickup event)
   const u32 CLIFF_EVENT_DELAY_MS = 500;
   
-  
-  const s32 ANIM_TIME_STEP_MS = 33; //ms
+  // Anim process timing consts
+  const u32 ANIM_TIME_STEP_MS = 33; //ms
+  const u32 ANIM_TIME_STEP_US = ANIM_TIME_STEP_MS * 1000;
+  const s32 ANIM_OVERTIME_WARNING_THRESH_MS = 5;
+  const s32 ANIM_OVERTIME_WARNING_THRESH_US = ANIM_OVERTIME_WARNING_THRESH_MS * 1000;
   
   /***************************************************************************
    *
