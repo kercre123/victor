@@ -236,6 +236,9 @@ bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ProgressionUnlockComponent::IsUnlocked(UnlockId unlock, bool forFreeplay) const
 {
+  // Hack for Victor: everything is always unlocked
+  return true;
+  
   if (_robot.GetContext()->IsInSdkMode())
   {
     // Progression is irrelevant in sdk mode - just force everything unlocked
