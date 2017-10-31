@@ -8,7 +8,7 @@ var connectedVictor = undefined;
 function completer(line) {
     var args = line.split(/(\s+)/);
     args = args.filter(function(entry) {return /\S/.test(entry); });
-    const completions = 'connect dhcptool disconnect help ifconfig ping quit reboot restart-adb scan stop-scan wpa_cli'.split(' ');
+    const completions = 'connect dhcptool disconnect help ifconfig ping quit reboot restart-adb scan stop-scan wifi-set-config wpa_cli'.split(' ');
     const hits = completions.filter((c) => c.startsWith(args[0]));
     if (hits.length == 0) {
         return [completions, line];
@@ -37,18 +37,19 @@ function outputResponse(line) {
 
 function printHelp() {
     var help = `Commands
-    help               -  This message
-    quit               -  Exit this app
-    scan               -  Search for Victors advertising via BLE.  Could take a minute.
-    stop-scan          -  Stop searching for Victors
-    connect [name]     -  Connect to a Victor by name. Defaults to first found
-    disconnect         -  Disconnect from Victor
-    ping               -  Ping Victor
-    reboot [boot arg]  -  Reboot Victor
-    restart-adb        -  Restart adb on Victor
-    wpa_cli args       -  Execute wpa_cli with arguments on Victor
-    ifconfig [args]    -  Execute ifconfig on Victor
-    dhcptool [args]    -  Execute dhcptool on Victor`;
+    help                                  -  This message
+    quit                                  -  Exit this app
+    scan                                  -  Search for Victors advertising via BLE.  Could take a minute.
+    stop-scan                             -  Stop searching for Victors
+    connect [name]                        -  Connect to a Victor by name. Defaults to first found
+    disconnect                            -  Disconnect from Victor
+    ping                                  -  Ping Victor
+    reboot [boot arg]                     -  Reboot Victor
+    restart-adb                           -  Restart adb on Victor
+    wifi-set-config ssid psk [ssid2 psk2] - Overwrite and set wifi config on victor
+    wpa_cli args                          -  Execute wpa_cli with arguments on Victor
+    ifconfig [args]                       -  Execute ifconfig on Victor
+    dhcptool [args]                       -  Execute dhcptool on Victor`;
     outputResponse(help);
 }
 
@@ -194,6 +195,17 @@ var handleInput = function (line) {
                 outputResponse("Not connected to a Victor");
             } else {
                 connectedVictor.send(Victor.MSG_B2V_CORE_PING_REQUEST);
+            }
+            break;
+        case 'wifi-set-config':
+            if (!connectedVictor) {
+                outputResponse("Not connected to a Victor");
+            } else {
+                var buf = Buffer.alloc(0);
+                for (var i = 1 ; i < args.length ; i++) {
+                    buf = Buffer.concat([buf, Buffer.from(args[i]), Buffer.from([0])]);
+                }
+                connectedVictor.send(Victor.MSG_B2V_WIFI_SET_CONFIG, buf);
             }
             break;
         default:

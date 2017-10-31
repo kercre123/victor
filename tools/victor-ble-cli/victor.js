@@ -126,6 +126,7 @@ Object.defineProperty(Victor, 'MSG_B2V_HEARTBEAT', {value: 0x18, writable: false
 Object.defineProperty(Victor, 'MSG_V2B_HEARTBEAT', {value: 0x19, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_WIFI_START', {value: 0x1A, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_WIFI_STOP', {value: 0x1B, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_WIFI_SET_CONFIG', {value: 0x1C, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_DEV_PING_WITH_DATA_REQUEST', {value: 0x91, writable: false});
 Object.defineProperty(Victor, 'MSG_V2B_DEV_PING_WITH_DATA_RESPONSE', {value: 0x92, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_DEV_RESTART_ADBD', {value: 0x93, writable: false});
