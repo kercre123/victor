@@ -78,10 +78,13 @@ protected:
 private:
 
   enum class StateID {
+    
     ObservingOnCharger,
+    ObservingOnChargerRecentlyPlaced,
     DriveOffChargerIntoObserving,
     Observing,
     Feeding,
+    Socializing,
 
     Count
   };
@@ -128,6 +131,8 @@ private:
   StateID _currState = StateID::Count;
 
   bool _initComplete = false;
+
+  float _lastSocializeTime_s = -1.0f;
   
 };
 

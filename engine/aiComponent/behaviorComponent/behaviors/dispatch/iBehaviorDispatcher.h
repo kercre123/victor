@@ -24,6 +24,10 @@ class IBehaviorDispatcher : public ICozmoBehavior
 protected:
   IBehaviorDispatcher(const Json::Value& config);
 
+  // second version of the constructor that allows child classes to force the value of
+  // "interruptActiveBehavior". If not specified, the first constructor will read it from config
+  IBehaviorDispatcher(const Json::Value& config, bool shouldInterruptActiveBehavior);
+
   // called during (child) constructors to add a behavior id that this behavior may dispatch to.
   void AddPossibleDispatch(BehaviorID id) { _behaviorIds.push_back(id); }
 

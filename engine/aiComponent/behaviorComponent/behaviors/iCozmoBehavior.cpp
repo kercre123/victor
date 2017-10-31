@@ -1104,7 +1104,17 @@ bool ICozmoBehavior::CancelDelegates(bool allowCallback, bool allowHelperToConti
   return false;
 }
   
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ICozmoBehavior::CancelSelf()
+{
+  if(_behaviorExternalInterface->HasDelegationComponent()){
+    auto& delegationComponent = _behaviorExternalInterface->GetDelegationComponent();
+    delegationComponent.CancelSelf(this);
+    return true;
+  }
+  return false;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame) const
 {
