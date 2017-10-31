@@ -135,6 +135,7 @@ WRAP_EXTERN_CONSOLE_VAR(BodyColor, kMinBodyColor,     "Playpen");
 
 WRAP_EXTERN_CONSOLE_VAR(u32, kMotorCalibrationTimeout_ms, "Playpen");
 
+WRAP_EXTERN_CONSOLE_VAR(f32, kHeadAngleForDriftCheck,     "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kHeadAngleToPlaySound,       "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kSoundVolume,                "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kDurationOfAudioToRecord_ms, "Playpen");

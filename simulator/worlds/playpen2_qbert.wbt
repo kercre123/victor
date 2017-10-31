@@ -2,11 +2,11 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.98637133 0.11229413 0.12025649 4.864837
-  position -0.16908988 -0.92271909 0.25245053
+  orientation 0.019822803 0.59130607 0.80620357 3.1051152
+  position 0.085387991 1.0245297 0.43009649
 }
 VictorCharger {
-  translation -0.235 0 0
+  translation -0.18943195 4.8176827e-05 0
 }
 Background {
   skyColor [
@@ -29,12 +29,12 @@ DirectionalLight {
   intensity 0.5
 }
 FactoryTestFixtureFloor {
-  xSize 0.5
-  ySize 0.2
-  slotCenterX -0.08
+  xSize 0.8
+  ySize 0.4
+  wallHeight 0
 }
 DEF Cozmo_1 CozmoBot2 {
-  translation -0.15969854 0 0.00029056594
+  translation -0.11428466 0 0.00029056594
   name "CozmoBot_1"
   filterLogs TRUE
 }
@@ -51,60 +51,72 @@ CozmoVizDisplay {
   filterLogs TRUE
 }
 Transform {
-  translation 0.048875267 0.071 -0.10667824
-  rotation 0 -1 0 0.99483767
+  translation 0.05 0 0
+  rotation 0 0 1 0
   children [
     Transform {
-      translation 0.1 -0.1244 0.208
-      rotation 0 0 1 0.78540031
+      translation 0.048875267 0.071 -0.10667824
+      rotation 0 -1 0 0.99483767
       children [
-        CalibrationMarkerStructure_Qbert {
-          translation 0 -0.02 0.03
-          numCubes 6
-          listOfMarkers "\"\", \"customSDK/SDK_3Circles.png\", \"\", \"customSDK/SDK_5Circles.png\", \"customSDK/SDK_2Diamonds.png\", \"customSDK/SDK_3Diamonds.png\", \"customSDK/SDK_4Diamonds.png\", \"customSDK/SDK_5Diamonds.png\", \"customSDK/SDK_2Hexagons.png\", \"\", \"symbols/arrow.png\",\"\","
-        }
-        CalibrationMarkerStructure_Qbert {
-          translation 0 -0.04 0.05
-          numCubes 7
-          listOfMarkers "\"\", \"customSDK/SDK_5Hexagons.png\", \"\", \"customSDK/SDK_3Triangles.png\", \"customSDK/SDK_4Triangles.png\", \"customSDK/SDK_5Triangles.png\", \"symbols/bullseye2.png\", \"symbols/star5.png, \"lightCubes/lightCubeK_top.png\", \"lightCubes/lightCubeJ_front.png, \"customSDK/SDK_2Circles.png\", \"\",\"customSDK/SDK_4Hexagons.png\",\"\","
-        }
-        CalibrationMarkerStructure_Qbert {
-          translation 0 -0.06 0.07
-          numCubes 8
-          listOfMarkers "\"\", \"customSDK/SDK_2Triangles.png\", \"\", \"lightCubes/lightCubeJ_bottom.png\", \"\", \"lightCubes/lightCubeI_top.png\", \"lightCubes/lightCubeI_back.png\", \"lightCubes/lightCubeI_bottom.png\", \"lightCubes/lightCubeI_front.png\", \"lightCubes/lightCubeI_left.png\", \"lightCubes/lightCubeI_right.png\", \"customSDK/SDK_3Hexagons.png\", \"lightCubes/lightCubeJ_back.png\", \"\",\"customSDK/SDK_4Circles.png\",\"\","
-        }
-        CalibrationMarkerStructure_Qbert {
-          listOfMarkers "\"\", \"lightCubes/lightCubeJ_left.png\", \"lightCubes/lightCubeJ_right.png\", \"lightCubes/lightCubeJ_top.png\", \"lightCubes/lightCubeK_back.png\", \"lightCubes/lightCubeK_bottom.png\", \"lightCubes/lightCubeK_front.png\", \"lightCubes/lightCubeK_left.png\", \"lightCubes/lightCubeK_right.png\", \"\","
+        Transform {
+          translation 0.1 -0.1244 0.208
+          rotation 0 0 1 0.78540031
+          children [
+            CalibrationMarkerStructure_Qbert {
+              translation 0 -0.02 0.03
+              numCubes 6
+              listOfMarkers "\"\", \"customSDK/SDK_3Circles.png\", \"\", \"customSDK/SDK_5Circles.png\", \"customSDK/SDK_2Diamonds.png\", \"customSDK/SDK_3Diamonds.png\", \"customSDK/SDK_4Diamonds.png\", \"customSDK/SDK_5Diamonds.png\", \"customSDK/SDK_2Hexagons.png\", \"\", \"symbols/arrow.png\",\"\","
+            }
+            CalibrationMarkerStructure_Qbert {
+              translation 0 -0.04 0.05
+              numCubes 7
+              listOfMarkers "\"\", \"customSDK/SDK_5Hexagons.png\", \"\", \"customSDK/SDK_3Triangles.png\", \"customSDK/SDK_4Triangles.png\", \"customSDK/SDK_5Triangles.png\", \"symbols/bullseye2.png\", \"symbols/star5.png, \"lightCubes/lightCubeK_top.png\", \"lightCubes/lightCubeJ_front.png, \"customSDK/SDK_2Circles.png\", \"\",\"customSDK/SDK_4Hexagons.png\",\"\","
+            }
+            CalibrationMarkerStructure_Qbert {
+              translation 0 -0.06 0.07
+              numCubes 8
+              listOfMarkers "\"\", \"customSDK/SDK_2Triangles.png\", \"\", \"lightCubes/lightCubeJ_bottom.png\", \"\", \"lightCubes/lightCubeI_top.png\", \"lightCubes/lightCubeI_back.png\", \"lightCubes/lightCubeI_bottom.png\", \"lightCubes/lightCubeI_front.png\", \"lightCubes/lightCubeI_left.png\", \"lightCubes/lightCubeI_right.png\", \"customSDK/SDK_3Hexagons.png\", \"lightCubes/lightCubeJ_back.png\", \"\",\"customSDK/SDK_4Circles.png\",\"\","
+            }
+            CalibrationMarkerStructure_Qbert {
+              listOfMarkers "\"\", \"lightCubes/lightCubeJ_left.png\", \"lightCubes/lightCubeJ_right.png\", \"lightCubes/lightCubeJ_top.png\", \"lightCubes/lightCubeK_back.png\", \"lightCubes/lightCubeK_bottom.png\", \"lightCubes/lightCubeK_front.png\", \"lightCubes/lightCubeK_left.png\", \"lightCubes/lightCubeK_right.png\", \"\","
+            }
+          ]
+          rotationStep 0.01
         }
       ]
-      rotationStep 0.01
     }
   ]
 }
 LightCube {
-  translation 0.15 0 0.022
+  translation 0.271 -0.152 0.022
 }
 Block1x1_NotActive {
-  translation 0.030000005 0.34 0.022
-  rotation 0 0 1 1.5707963
+  translation 0.415 0 0.025
+  rotation 0 0 1 6.2831853
+  blockColor 1 1 1
+  width 0.055
   markerWidth 0.044
   markerImg_front "chargerHome.png"
 }
-Block1x1_NotActive {
-  translation 0.029999991 -0.145 0.022
-  rotation 0 0 1 4.7123889
-  markerImg_front "lightCubes/lightCubeJ_top.png"
-}
 CustomWall {
-  translation 0.12096649 0.32320271 0.02
-  rotation 0 0 1 1.5707963
+  translation 0.39373625 0.00071928314 0.02
+  rotation 0 0 1 6.2831853
   width 0.2
 }
 CustomWall {
-  translation 0.12088999 -0.12825129 0.02
-  rotation 0 0 1 1.5707963
+  translation 0.083008662 0.080693482 0.02
+  rotation 0 0 -1 1.5707963
+  width 0.2
+}
+CustomWall {
+  translation 0.083008666 -0.079306518 0.02
+  rotation 0 0 -1 1.5707963
   width 0.2
 }
 HandEmitter {
-  translation -0.2 0 0.07
+  translation -0.15495426 7.0066194e-05 0.07
+}
+Ruler {
+  translation -0.01119277 0.056189919 0.010000093
+  rotation 1.206252e-07 0.70710677 0.70710679 3.1415929
 }

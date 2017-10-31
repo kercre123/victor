@@ -112,11 +112,14 @@ BehaviorStatus BehaviorPlaypenCameraCalibration::InternalUpdateInternal(Behavior
     // Note: Technically don't need to store a calibration image as single image calibration
     // just uses markers detected from the current image, however, we need to store an image
     // so we can grab it later to write to log
-    if(!IsActing() &&
+    if(!_waitingToStoreImage &&
+       !IsActing() &&
        !robot.GetMoveComponent().IsHeadMoving() &&
        robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 0 &&
        _seeingTarget)
     {
+      _waitingToStoreImage = true;
+
       // Wait half a second for marker detection to stabilize
       DelegateIfInControl(new WaitAction(robot, 0.5f), [&robot]{
         robot.GetVisionComponent().StoreNextImageForCameraCalibration();
@@ -155,6 +158,8 @@ void BehaviorPlaypenCameraCalibration::OnBehaviorDeactivated(BehaviorExternalInt
   _computingCalibration = false;
   
   _seeingTarget = false;
+
+  _waitingToStoreImage = false;
 }
 
 void BehaviorPlaypenCameraCalibration::HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)

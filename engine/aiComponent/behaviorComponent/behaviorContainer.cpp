@@ -61,6 +61,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenMotorCalibration.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenPickupCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenReadToolCode.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenSoundCheck.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenWaitToStart.h"
 
@@ -665,6 +666,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, 
     case BehaviorClass::PlaypenReadToolCode:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenReadToolCode(config));
+      break;
+    }
+    case BehaviorClass::PlaypenSoundCheck:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenSoundCheck(config));
       break;
     }
     case BehaviorClass::PlaypenTest:

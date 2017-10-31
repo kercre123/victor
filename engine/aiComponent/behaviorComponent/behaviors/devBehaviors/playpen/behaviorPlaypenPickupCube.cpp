@@ -64,10 +64,29 @@ Result BehaviorPlaypenPickupCube::OnBehaviorActivatedInternal(BehaviorExternalIn
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
 
-  MoveHeadToAngleAction* action = new MoveHeadToAngleAction(robot, DEG_TO_RAD(0));
-  DelegateIfInControl(action, [this, &behaviorExternalInterface](){ TransitionToPickupCube(behaviorExternalInterface); });
+  MoveHeadToAngleAction* head = new MoveHeadToAngleAction(robot, DEG_TO_RAD(0));
+  TurnInPlaceAction* turn = new TurnInPlaceAction(robot, DEG_TO_RAD(-90), false);
+  CompoundActionParallel* action = new CompoundActionParallel(robot, {head, turn});
+  DelegateIfInControl(action, [this, &behaviorExternalInterface](){ TransitionToWaitForCube(behaviorExternalInterface); });
 
   return RESULT_OK;
+}
+
+void BehaviorPlaypenPickupCube::TransitionToWaitForCube(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+  // be removed
+  Robot& robot = behaviorExternalInterface.GetRobot();
+
+  // Clear all objects from blockworld since the marker for the distance sensor check creates an
+  // object that is in the way of the pickup object's predock pose
+  BlockWorldFilter filter;
+  filter.SetFilterFcn(nullptr);
+  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+  robot.GetBlockWorld().DeleteLocatedObjects(filter);
+
+  WaitForImagesAction* action = new WaitForImagesAction(robot, 5, VisionMode::DetectingMarkers);
+  DelegateIfInControl(action, [this, &behaviorExternalInterface](){ TransitionToPickupCube(behaviorExternalInterface); });
 }
 
 void BehaviorPlaypenPickupCube::TransitionToPickupCube(BehaviorExternalInterface& behaviorExternalInterface)

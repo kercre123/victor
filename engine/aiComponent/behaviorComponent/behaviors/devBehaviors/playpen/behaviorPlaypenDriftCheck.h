@@ -27,26 +27,20 @@ protected:
   BehaviorPlaypenDriftCheck(const Json::Value& config);
   
 protected:
-  virtual void InitBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   virtual Result         OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
   virtual BehaviorStatus InternalUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
   
   virtual bool ShouldRunWhileOnCharger() const override { return true; }
-
-  virtual void AlwaysHandle(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   
-  void TransitionToPlayingSound(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToStartDriftCheck(BehaviorExternalInterface& behaviorExternalInterface);
   void CheckDrift(BehaviorExternalInterface& behaviorExternalInterface);
   
   // Angle at the start of drift check
   Radians _startingRobotOrientation = 0;
-  
-  // Whether or not the sound animation has completed
-  bool _soundComplete = false;
   
   // Whether or not the drift check is complete
   bool _driftCheckComplete = false;

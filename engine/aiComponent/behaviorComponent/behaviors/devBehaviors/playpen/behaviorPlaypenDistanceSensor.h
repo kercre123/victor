@@ -57,6 +57,9 @@ private:
   // The angle to turn to be able to see the expected object/marker
   Radians    _angleToTurn                 = 0;
 
+  // The distance to drive forwards to see the target
+  u32        _distToDrive_mm              = 0;
+
   // The object type we expect to see after turning "_angleToTurn"
   ObjectType _expectedObjectType          = ObjectType::UnknownObject;
 

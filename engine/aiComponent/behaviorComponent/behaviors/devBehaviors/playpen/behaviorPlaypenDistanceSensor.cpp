@@ -26,6 +26,7 @@ namespace Cozmo {
 
 namespace {
 static const std::string kAngleToTurnKey    = "AngleToTurnToSeeTarget_deg";
+static const std::string kDistToDriveKey    = "DistanceToDriveToSeeTarget_mm";
 static const std::string kExpectedObjectKey = "ExpectedObjectType";
 static const std::string kExpectedDistKey   = "ExpectedDistance_mm";
 }
@@ -58,6 +59,8 @@ BehaviorPlaypenDistanceSensor::BehaviorPlaypenDistanceSensor(const Json::Value& 
     PRINT_NAMED_ERROR("BehaviorPlaypenDistanceSensor.Constructor.MissingConfigKey",
                       "Missing %s key from PlaypenDistanceSensor Config", kExpectedDistKey.c_str());
   }
+
+  JsonTools::GetValueOptional(config, kDistToDriveKey, _distToDrive_mm);
   
   SubscribeToTags({EngineToGameTag::RobotObservedObject});
 }
@@ -84,13 +87,15 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal(BehaviorExtern
   // Move head and lift to be able to see target marker and turn towards the target
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(robot, DEG_TO_RAD(0));
   MoveLiftToHeightAction* lift = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
+  DriveStraightAction* drive = new DriveStraightAction(robot, _distToDrive_mm);
+  CompoundActionParallel* liftHeadDrive = new CompoundActionParallel(robot, {lift, head, drive});
+
   TurnInPlaceAction* turn = new TurnInPlaceAction(robot, _angleToTurn.ToFloat(), false);
-  CompoundActionParallel* liftHeadTurn = new CompoundActionParallel(robot, {lift, head, turn});
-  
-  // After turning wait to process 5 images before trying to refine the turn
+
+  // After turning wait to process 10 images before trying to refine the turn
   WaitForImagesAction* wait = new WaitForImagesAction(robot, 10, VisionMode::DetectingMarkers);
   
-  CompoundActionSequential* action = new CompoundActionSequential(robot, {liftHeadTurn, wait});
+  CompoundActionSequential* action = new CompoundActionSequential(robot, {liftHeadDrive, turn, wait});
   DelegateIfInControl(action, [this, &behaviorExternalInterface]() { TransitionToRefineTurn(behaviorExternalInterface); });
   
   return RESULT_OK;

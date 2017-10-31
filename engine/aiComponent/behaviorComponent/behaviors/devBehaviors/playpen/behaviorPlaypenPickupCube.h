@@ -35,6 +35,7 @@ protected:
   
 private:
   
+  void TransitionToWaitForCube(BehaviorExternalInterface& behaviorExternalInterface);
   void TransitionToPickupCube(BehaviorExternalInterface& behaviorExternalInterface);
   void TransitionToPlaceCube(BehaviorExternalInterface& behaviorExternalInterface);
   void TransitionToBackup(BehaviorExternalInterface& behaviorExternalInterface);

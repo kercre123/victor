@@ -46,6 +46,9 @@ private:
 
   // Whether or not we are currently seeing the target
   bool _seeingTarget         = false;
+
+  // Whether or not we are waiting to store an image for calibration
+  bool _waitingToStoreImage  = false;
 };
 
 }

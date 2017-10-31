@@ -71,6 +71,8 @@ static BodyColor kMinBodyColor         = BodyColor::WHITE_v15;
 static u32 kMotorCalibrationTimeout_ms = 4000;
 
 // ----------Drift Check----------
+static f32 kHeadAngleForDriftCheck     = DEG_TO_RAD(0.f);
+
 // Head angle at which we should play the sound for both speaker and mic check
 static f32 kHeadAngleToPlaySound       = DEG_TO_RAD(2.f);
 
@@ -154,7 +156,7 @@ static f32 kDistanceToTriggerBackCliffs_mm  = 80;
 
 // Distance to drive forwards to have all cliff sensors on the ground after triggering the
 // back cliff sensors
-static f32 kDistanceToDriveOverCliff_mm     = 120;
+static f32 kDistanceToDriveOverCliff_mm     = 50;
 
 // Speed at which to drive forwards towards cliff
 static f32 kCliffSpeed_mmps                 = 50;
@@ -174,10 +176,10 @@ static f32       kToolCodeDistThreshY_pix = 40.f;
 
 // ----------Pickup Cube----------
 // Expected cube pose x relative to playpen starting pose
-static f32 kExpectedCubePoseX_mm                = 309;
+static f32 kExpectedCubePoseX_mm                = 384;
 
 // Expected cube pose y relative to playpen starting pose
-static f32 kExpectedCubePoseY_mm                = 0;
+static f32 kExpectedCubePoseY_mm                = -152;
 
 // Allowed difference between expected and observed cube pose in x and y
 static f32 kExpectedCubePoseDistThresh_mm       = 30;
