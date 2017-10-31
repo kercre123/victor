@@ -36,14 +36,7 @@ BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcherStrictPriorityWi
       const BehaviorID behaviorID = BehaviorIDFromString(behaviorIDStr);
       IBehaviorDispatcher::AddPossibleDispatch(behaviorID);
 
-      const float cooldown = JsonTools::ParseFloat(
-        behaviorDefinitionGroup,
-        "cooldown_s",
-        "BehaviorDispatcherStrictPriorityWithCooldown.BehaviorGroup.NoCooldown");
-
-      const float randomFactor = behaviorDefinitionGroup.get("cooldown_random_factor", 0.0f).asFloat();
-
-      _cooldownInfo.emplace_back( CooldownInfo{._cooldown_s = cooldown, ._randomCooldownFactor = randomFactor} );
+      _cooldownInfo.emplace_back( BehaviorCooldownInfo{behaviorDefinitionGroup} );
     }
   }
 
@@ -78,27 +71,6 @@ ICozmoBehaviorPtr BehaviorDispatcherStrictPriorityWithCooldown::GetDesiredBehavi
   return ICozmoBehaviorPtr{};
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDispatcherStrictPriorityWithCooldown::CooldownInfo::OnCooldown() const
-{
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  return _onCooldownUntil_s >= 0.0f && currTime_s < _onCooldownUntil_s;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherStrictPriorityWithCooldown::CooldownInfo::StartCooldown(Util::RandomGenerator& rng)
-{
-  if( _cooldown_s > 0.0f ) {
-    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    float cooldown_s = _cooldown_s;
-    if( _randomCooldownFactor > 0.0f ) {
-      cooldown_s *= rng.RandDblInRange( (1.0f - _randomCooldownFactor) * _cooldown_s,
-                                        (1.0f + _randomCooldownFactor) * _cooldown_s );
-    }
-    
-    _onCooldownUntil_s = currTime_s + _cooldown_s;
-  }
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
