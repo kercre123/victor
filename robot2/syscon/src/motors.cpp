@@ -298,7 +298,7 @@ void Motors::tick() {
 
     // Make sure motors are enabled by next phase
     // We will need to table this power change for one transition
-    if (state->charge_exclusive) {
+    if (config->charge_exclusive) {
       // Reset our timer
       if (state->power != 0) {
         idleTimer = 0;
