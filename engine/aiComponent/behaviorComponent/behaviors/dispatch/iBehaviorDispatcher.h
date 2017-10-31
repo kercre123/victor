@@ -44,12 +44,17 @@ protected:
   // behaviors)
   virtual ICozmoBehaviorPtr GetDesiredBehavior(BehaviorExternalInterface& behaviorExternalInterface) = 0;
 
+  // optional override for activated
+  virtual void BehaviorDispatcher_OnActivated(BehaviorExternalInterface& behaviorExternalInterface) {}
+  virtual void BehaviorDispatcher_OnDeactivated(BehaviorExternalInterface& behaviorExternalInterface) {}
+  
   // behaviors will be returned in the order they were added
   const std::vector<ICozmoBehaviorPtr>& GetAllPossibleDispatches() const { return _behaviors; }
 
   // ICozmoBehavior functions:  
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) final override;
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) final override;
+  virtual void OnCozmoBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) final override;
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) final override;
   virtual bool CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const final override;
 

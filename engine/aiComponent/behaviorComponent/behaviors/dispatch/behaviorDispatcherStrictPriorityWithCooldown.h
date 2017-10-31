@@ -20,6 +20,8 @@ namespace Cozmo {
 
 class BehaviorDispatcherStrictPriorityWithCooldown : public IBehaviorDispatcher
 {
+  using BaseClass = IBehaviorDispatcher;
+  
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;  
   BehaviorDispatcherStrictPriorityWithCooldown(const Json::Value& config);
@@ -27,6 +29,10 @@ class BehaviorDispatcherStrictPriorityWithCooldown : public IBehaviorDispatcher
 protected:
   
   virtual ICozmoBehaviorPtr GetDesiredBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorDispatcher_OnActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorDispatcher_OnDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
 
 private:
 
@@ -44,6 +50,10 @@ private:
 
   // index here matches the index in IBehaviorDispatcher::GetAllPossibleDispatches()
   std::vector< CooldownInfo > _cooldownInfo;
+
+  // keep track of which behavior we last requested so that we can properly start the cooldown when the
+  // behavior ends
+  size_t _lastDesiredBehaviorIdx = 0;
   
 };
 

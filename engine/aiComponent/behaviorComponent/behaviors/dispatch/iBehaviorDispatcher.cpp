@@ -106,7 +106,15 @@ void IBehaviorDispatcher::GetAllDelegates(std::set<IBehavior*>& delegates) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result IBehaviorDispatcher::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  BehaviorDispatcher_OnActivated(behaviorExternalInterface);
+
   return Result::RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBehaviorDispatcher::OnCozmoBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  BehaviorDispatcher_OnDeactivated(behaviorExternalInterface);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

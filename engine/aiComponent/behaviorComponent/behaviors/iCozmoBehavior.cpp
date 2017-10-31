@@ -673,6 +673,8 @@ void ICozmoBehavior::OnDeactivatedInternal(BehaviorExternalInterface& behaviorEx
   _customLightObjects.clear();
   
   DEV_ASSERT(_smartLockIDs.empty(), "ICozmoBehavior.Stop.DisabledReactionsNotEmpty");
+
+  OnCozmoBehaviorDeactivated(behaviorExternalInterface);
 }
   
   

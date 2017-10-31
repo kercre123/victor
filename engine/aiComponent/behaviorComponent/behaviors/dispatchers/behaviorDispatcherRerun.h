@@ -32,7 +32,7 @@ public:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override{return true;}
   virtual bool CarryingObjectHandledInternally() const override{ return true;}
   virtual bool ShouldRunWhileOffTreads() const override{return true;}
-
+  virtual bool ShouldRunWhileOnCharger() const override { return true;}
   
 protected:
   // Construction has to go through BehvaiorContainer

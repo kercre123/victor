@@ -21,6 +21,7 @@ function usage() {
     echo "  -F [FEATURE]            enable feature {factoryTest,factoryTestDev}"
     echo "  -T                      list all cmake targets"
     echo "  -t [target]             build specified cmake target"
+    echo "  -e                      export compile commands"
 }
 
 #
@@ -33,13 +34,14 @@ RM_BUILD_ASSETS=0
 RUN_BUILD=1
 CMAKE_TARGET=""
 CMAKE_EXE="${HOME}/.anki/cmake/dist/3.8.1/CMake.app/Contents/bin/cmake"
+EXPORT_COMPILE_COMMANDS=0
 
 CONFIGURATION=Debug
 PLATFORM=android
 CMAKE_GENERATOR=Ninja
 FEATURES=""
 
-while getopts ":x:c:p:t:g:F:hvfdCT" opt; do
+while getopts ":x:c:p:t:g:F:hvfdCTe" opt; do
     case $opt in
         h)
             usage
@@ -83,6 +85,9 @@ while getopts ":x:c:p:t:g:F:hvfdCT" opt; do
             ;;
         t)
             CMAKE_TARGET="${OPTARG}"
+            ;;
+        e)
+            EXPORT_COMPILE_COMMANDS=1
             ;;
         :)
             echo "Option -${OPTARG} required an argument." >&2
@@ -287,7 +292,7 @@ if [ $CONFIGURE -eq 1 ]; then
         -G${CMAKE_GENERATOR} \
         -DCMAKE_BUILD_TYPE=${CONFIGURATION} \
         -DBUILD_SHARED_LIBS=1 \
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=${EXPORT_COMPILE_COMMANDS} \
         ${FEATURE_FLAGS} \
         "${PLATFORM_ARGS[@]}"
         
