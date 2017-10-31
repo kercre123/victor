@@ -196,7 +196,7 @@ extern "C" void ADC1_IRQHandler(void) {
 
 void Analog::tick(void) {
   // On-charger delay
-  bool vext_now = Analog::values[ADC_VEXT] < TRANSITION_POINT;
+  bool vext_now = Analog::values[ADC_VEXT] >= TRANSITION_POINT;
 
   // We've been on the charger (without motors for awhile)
   if (vext_now && last_vext && vext_debounce++ >= MINIMUM_VEXT_TIME) {
