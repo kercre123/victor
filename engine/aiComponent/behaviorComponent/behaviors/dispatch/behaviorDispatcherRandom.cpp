@@ -13,6 +13,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRandom.h"
 
 #include "coretech/common/include/anki/common/basestation/jsonTools.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/random/randomVectorSampler.h"
 
 namespace Anki {
