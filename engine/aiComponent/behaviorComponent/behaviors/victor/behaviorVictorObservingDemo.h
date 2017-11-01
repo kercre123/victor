@@ -79,12 +79,16 @@ private:
 
   enum class StateID {
     
-    ObservingOnCharger,
+    ObservingOnCharger = 0,
     ObservingOnChargerRecentlyPlaced,
     DriveOffChargerIntoObserving,
+    DriveOffChargerIntoPlay,
     Observing,
     Feeding,
     Socializing,
+    Napping,
+    WakingUp,
+    Playing,
 
     Count
   };
@@ -103,6 +107,9 @@ private:
     
     StateID _id;
     ICozmoBehaviorPtr _behavior;
+
+    float _lastTimeStarted_s = -1.0f;
+    float _lastTimeEnded_s = -1.0f;
 
     // Transitions are evaluated in order, and if the function returns true, we will transition to the given
     // state id.     
@@ -123,6 +130,8 @@ private:
   void AddState( State&& state );
 
   void TransitionToState(BehaviorExternalInterface& behaviorExternalInterface, const StateID targetState);
+
+  bool StateExitCooldownExpired(StateID state, float timeout) const;
   
   std::map< StateID, State > _states;
 
@@ -130,10 +139,7 @@ private:
 
   StateID _currState = StateID::Count;
 
-  bool _initComplete = false;
-
-  float _lastSocializeTime_s = -1.0f;
-  
+  bool _initComplete = false;  
 };
 
 }

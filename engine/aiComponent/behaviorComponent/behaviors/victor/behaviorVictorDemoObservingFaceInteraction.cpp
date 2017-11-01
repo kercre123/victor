@@ -74,6 +74,22 @@ Result BehaviorVictorDemoObservingFaceInteraction::OnBehaviorActivated(
   return Result::RESULT_OK;
 }
 
+bool BehaviorVictorDemoObservingFaceInteraction::CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const
+{
+  switch (_state ) {
+    case State::FindFaces: {
+      return true;
+    }
+    case State::TurnTowardsFace: {
+      return !IsControlDelegated();
+    }
+    case State::StareAtFace: {
+      return true;
+    }
+  }
+}
+
+
 ICozmoBehavior::Status BehaviorVictorDemoObservingFaceInteraction::UpdateInternal_WhileRunning(
   BehaviorExternalInterface& behaviorExternalInterface)
 {
