@@ -530,6 +530,9 @@
       // show the card once the background has loaded
       project.style.display = 'inline-block';
 
+      // if title is unusually large, add a class to reduce the font
+      _shrinkLongProjectTitle(description, project);
+
       // show the entire Projects UI when the first featured project is ready to be shown
       projectsUI.style.visibility = 'visible';
     });

@@ -279,6 +279,9 @@ button:focus {
   font-family: 'Avenir Next';
   color: #353535;
 }
+.project-featured .project-description.long-title {
+  font-size: .8em;
+}
 
 
 #projects .ft {
