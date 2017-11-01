@@ -106,7 +106,7 @@ def sign(data, key, digestType=SHA256):
     digest = hash.digest()
 
     # Fixed padding lets us know when that hash method we used was
-    fixed_padding = (b"\x00\x01\xFF\xFF\xFF\xFF\x00")[::-1]
+    fixed_padding = (b"\x00\x01\xFF\xFF" + hash.oid[::-1] + b"\xFF\xFF\x00")[::-1]
 
     # determine lengths of the our fields
     pad_length = key.size() % 8
