@@ -5,9 +5,50 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace CodeLab {
 
+  public class ValueSanitizer {
+    public static float SanitizeFloat(float inValue) {
+      if (float.IsNaN(inValue) || float.IsInfinity(inValue)) {
+        return 0.0f;
+      }
+      else {
+        return inValue;
+      }
+    }
+  }
+
+  public class CodeLabVector2 {
+    public float x = 0.0f;
+    public float y = 0.0f;
+
+    public void Set(float inX, float inY) {
+      x = ValueSanitizer.SanitizeFloat(inX);
+      y = ValueSanitizer.SanitizeFloat(inY);
+    }
+
+    public void Set(Vector2 inVector) {
+      Set(inVector.x, inVector.y);
+    }
+  }
+
+  public class CodeLabVector3 {
+    public float x = 0.0f;
+    public float y = 0.0f;
+    public float z = 0.0f;
+
+    public void Set(float inX, float inY, float inZ) {
+      x = ValueSanitizer.SanitizeFloat(inX);
+      y = ValueSanitizer.SanitizeFloat(inY);
+      z = ValueSanitizer.SanitizeFloat(inZ);
+    }
+
+    public void Set(Vector3 inVector) {
+      Set(inVector.x, inVector.y, inVector.z);
+    }
+  }
+
   public class CubeStateForCodeLab {
-    public Vector3 pos;
-    public Vector2 camPos;
+    public CodeLabVector3 pos = new CodeLabVector3();
+    public CodeLabVector2 camPos = new CodeLabVector2();
     public bool isValid;
     public bool isVisible;
     public bool wasJustTapped;
@@ -18,8 +59,8 @@ namespace CodeLab {
   }
 
   public class FaceStateForCodeLab {
-    public Vector3 pos;
-    public Vector2 camPos;
+    public CodeLabVector3 pos = new CodeLabVector3();
+    public CodeLabVector2 camPos = new CodeLabVector2();
     public string name;
     public bool isVisible;
     public string expression;
@@ -65,7 +106,7 @@ namespace CodeLab {
     public float liftHeightPercentage;
     public float headAngle_d;
     public int lastTappedCube; // 1..3 (0 for none)
-    public Vector3 pos;
+    public CodeLabVector3 pos = new CodeLabVector3();
     public CubeStateForCodeLab cube1 = new CubeStateForCodeLab();
     public CubeStateForCodeLab cube2 = new CubeStateForCodeLab();
     public CubeStateForCodeLab cube3 = new CubeStateForCodeLab();

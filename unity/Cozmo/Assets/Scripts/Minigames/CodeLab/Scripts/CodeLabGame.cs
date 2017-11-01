@@ -552,8 +552,8 @@ namespace CodeLab {
 
     private void SetCubeStateForCodeLab(CubeStateForCodeLab cubeDest, LightCube cubeSrc) {
       if (cubeSrc == null) {
-        cubeDest.pos = new Vector3(0.0f, 0.0f, 0.0f);
-        cubeDest.camPos = new Vector2(0.0f, 0.0f);
+        cubeDest.pos.Set(0.0f, 0.0f, 0.0f);
+        cubeDest.camPos.Set(0.0f, 0.0f);
         cubeDest.isValid = false;
         cubeDest.isVisible = false;
         cubeDest.pitch_d = 0.0f;
@@ -561,15 +561,15 @@ namespace CodeLab {
         cubeDest.yaw_d = 0.0f;
       }
       else {
-        cubeDest.pos = EnginePosToCodeLabPos(cubeSrc.WorldPosition);
-        cubeDest.camPos = cubeSrc.VizRect.center;
+        cubeDest.pos.Set(EnginePosToCodeLabPos(cubeSrc.WorldPosition));
+        cubeDest.camPos.Set(cubeSrc.VizRect.center);
         cubeDest.isValid = true;
         const int kMaxVisionFramesSinceSeeingCube = 30;
         cubeDest.isVisible = (cubeSrc.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingCube);
         // All cube angles are in 0..360 range so must be re-mapped to match robot angle range
-        cubeDest.pitch_d = Convert360AngleToMinus180To180(cubeSrc.PitchDegrees);
-        cubeDest.roll_d = Convert360AngleToMinus180To180(cubeSrc.RollDegrees);
-        cubeDest.yaw_d = -Convert360AngleToMinus180To180(cubeSrc.YawDegrees); // Yaw is inverted as we switched to clockwise rotations for Code Lab
+        cubeDest.pitch_d = ValueSanitizer.SanitizeFloat(Convert360AngleToMinus180To180(cubeSrc.PitchDegrees));
+        cubeDest.roll_d = ValueSanitizer.SanitizeFloat(Convert360AngleToMinus180To180(cubeSrc.RollDegrees));
+        cubeDest.yaw_d = ValueSanitizer.SanitizeFloat(-Convert360AngleToMinus180To180(cubeSrc.YawDegrees)); // Yaw is inverted as we switched to clockwise rotations for Code Lab
       }
 
       cubeDest.wasJustTapped = (cubeDest.framesSinceTapped < kMaxFramesToReportCubeTap);
@@ -599,12 +599,12 @@ namespace CodeLab {
       if ((robot != null) && (_WebViewObjectComponent != null)) {
         // Set Cozmo data
 
-        _LatestCozmoState.pos = EnginePosToCodeLabPos(robot.WorldPosition);
-        _LatestCozmoState.poseYaw_d = -robot.PoseAngle * Mathf.Rad2Deg; // Yaw is inverted as we switched to clockwise rotations for Code Lab
-        _LatestCozmoState.posePitch_d = robot.PitchAngle * Mathf.Rad2Deg;
-        _LatestCozmoState.poseRoll_d = robot.RollAngle * Mathf.Rad2Deg;
-        _LatestCozmoState.liftHeightPercentage = robot.LiftHeightFactor * 100.0f;
-        _LatestCozmoState.headAngle_d = robot.HeadAngle * Mathf.Rad2Deg;
+        _LatestCozmoState.pos.Set(EnginePosToCodeLabPos(robot.WorldPosition));
+        _LatestCozmoState.poseYaw_d = ValueSanitizer.SanitizeFloat(-robot.PoseAngle * Mathf.Rad2Deg); // Yaw is inverted as we switched to clockwise rotations for Code Lab
+        _LatestCozmoState.posePitch_d = ValueSanitizer.SanitizeFloat(robot.PitchAngle * Mathf.Rad2Deg);
+        _LatestCozmoState.poseRoll_d = ValueSanitizer.SanitizeFloat(robot.RollAngle * Mathf.Rad2Deg);
+        _LatestCozmoState.liftHeightPercentage = ValueSanitizer.SanitizeFloat(robot.LiftHeightFactor * 100.0f);
+        _LatestCozmoState.headAngle_d = ValueSanitizer.SanitizeFloat(robot.HeadAngle * Mathf.Rad2Deg);
 
         // Set cube data
 
@@ -627,15 +627,15 @@ namespace CodeLab {
         Face face = InProgressScratchBlock.GetMostRecentlySeenFace();
         const int kMaxVisionFramesSinceSeeingFace = 30;
         if (face != null) {
-          _LatestCozmoState.face.pos = EnginePosToCodeLabPos(face.WorldPosition);
-          _LatestCozmoState.face.camPos = face.VizRect.center;
+          _LatestCozmoState.face.pos.Set(EnginePosToCodeLabPos(face.WorldPosition));
+          _LatestCozmoState.face.camPos.Set(face.VizRect.center);
           _LatestCozmoState.face.name = face.Name;
           _LatestCozmoState.face.isVisible = (face.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingFace);
           _LatestCozmoState.face.expression = GetFaceExpressionName(face);
         }
         else {
-          _LatestCozmoState.face.pos = new Vector3(0.0f, 0.0f, 0.0f);
-          _LatestCozmoState.face.camPos = new Vector2(0.0f, 0.0f);
+          _LatestCozmoState.face.pos.Set(0.0f, 0.0f, 0.0f);
+          _LatestCozmoState.face.camPos.Set(0.0f, 0.0f);
           _LatestCozmoState.face.name = "";
           _LatestCozmoState.face.isVisible = false;
           _LatestCozmoState.face.expression = "";
@@ -655,9 +655,9 @@ namespace CodeLab {
           roll -= Mathf.PI * 2.0f;
         }
 
-        _LatestCozmoState.device.pitch_d = pitch * Mathf.Rad2Deg;
-        _LatestCozmoState.device.yaw_d = yaw * Mathf.Rad2Deg;
-        _LatestCozmoState.device.roll_d = roll * Mathf.Rad2Deg;
+        _LatestCozmoState.device.pitch_d = ValueSanitizer.SanitizeFloat(pitch * Mathf.Rad2Deg);
+        _LatestCozmoState.device.yaw_d = ValueSanitizer.SanitizeFloat(yaw * Mathf.Rad2Deg);
+        _LatestCozmoState.device.roll_d = ValueSanitizer.SanitizeFloat(roll * Mathf.Rad2Deg);
 
         // Serialize _LatestCozmoState to JSON and send to Web / Javascript side
         string cozmoStateAsJSON = JsonConvert.SerializeObject(_LatestCozmoState);
