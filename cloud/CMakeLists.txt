@@ -20,11 +20,18 @@ if (MACOSX)
     ${VOICEGO_HEADER_DIR}
   )
 
+  # need security framework too (SAI dependencies??)
+  find_library(SECURITY_FRAMEWORK Security)
+  if(NOT SECURITY_FRAMEWORK)
+    message(FATAL_ERROR "Security not found")
+  endif()
+
   # link audio and go libraries
   target_link_libraries(voicetest
     PRIVATE
     util_audio
     voicego
+    ${SECURITY_FRAMEWORK}
   )
 endif()
 
