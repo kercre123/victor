@@ -13,7 +13,7 @@ func main() {
 		return
 	}
 
-	aiSock, err := ipc.NewClientSocket("0.0.0.0", 12346)
+	aiSock, err := ipc.NewClientSocket("0.0.0.0", 12345)
 	if err != nil {
 		fmt.Println("Couldn't create AI socket:", err)
 		return
