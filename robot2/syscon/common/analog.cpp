@@ -249,14 +249,15 @@ void Analog::tick(void) {
   if (button_pressed) {
     if (hold_count < POWER_DOWN_TIME) {
       hold_count++;
-    } else if (hold_count < POWER_WIPE_TIME) {
+    } else {
       disableVMain();
       Lights::disable();
-    } else {
-      Power::softReset(true);
     }
   } else {
-    if (hold_count >= POWER_DOWN_TIME) {
+    if (hold_count >= POWER_WIPE_TIME) {
+      // TODO: SIGNAL THE HEAD TO RECOVER
+      enableVMain();
+    } else if (hold_count >= POWER_DOWN_TIME) {
       Power::stop();
     } else {
       hold_count = 0;

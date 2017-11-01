@@ -8,6 +8,21 @@
 static inline void kick_off();
 static void terminate(void);
 
+static inline void wait(int us) {
+  __asm {
+    _jump:  nop
+            nop
+            nop
+            nop
+            nop
+            nop
+            nop
+            subs     us,us, #1
+            cmp      us, #0
+            bgt      _jump
+  }
+}
+
 #include "led_func.h" // Generated with LEDs.py
 
 static const void_funct function_table[4][8] = {
@@ -46,6 +61,7 @@ static LightChannel *current_light;
 static bool disabled;
 
 void Lights::init(void) {
+  //LED_CLK::type(TYPE_OPENDRAIN);
   LED_DAT::reset();
   LED_CLK::reset();
   LED_DAT::mode(MODE_OUTPUT);
