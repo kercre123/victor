@@ -56,9 +56,20 @@ void BehaviorStack::InitBehaviorStack(BehaviorExternalInterface& behaviorExterna
 void BehaviorStack::ClearStack()
 {
   const size_t stackSize = _behaviorStack.size();
-  for(int i = 0; i < stackSize; i++){
+  for(int i = 0; i + 1 < stackSize; i++){
     PopStack();
   }
+
+  // the base of the stack was manually put into scope during InitBehaviorStack, so undo that manually here
+  if( ! _behaviorStack.empty() ) {
+    // TODO:(bn) really need to switch to shared pointers. This code is very unsafe right now because popping
+    // could invalidate oldBaseBehavior (but we never put anything besides an ICozmoBehavior at the base right
+    // now... so it'll work)
+    IBehavior* oldBaseBehavior = _behaviorStack.back();
+    PopStack();
+    oldBaseBehavior->OnLeftActivatableScope();
+  }
+  
   DEV_ASSERT(_behaviorStack.empty(), "BehaviorStack.Destructor.NotAllBehaviorsPoppedFromStack");
 
 }
