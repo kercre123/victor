@@ -188,7 +188,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
       if( StateExitCooldownExpired(StateID::Playing, kWantsToPlayTimeout_s) ) {
         BlockWorldFilter filter;
         filter.SetAllowedTypes( {{ ObjectType::Block_LIGHTCUBE2, ObjectType::Block_LIGHTCUBE3 }} );
-        filter.SetFilterFcn( [this](const ObservableObject* obj){ return obj->IsPoseStateKnown(); });
+        filter.SetFilterFcn( [](const ObservableObject* obj){ return obj->IsPoseStateKnown(); });
         
         const auto& blockWorld = behaviorExternalInterface.GetBlockWorld();
         const auto* block = blockWorld.FindLocatedMatchingObject(filter);
