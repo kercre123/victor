@@ -21,7 +21,6 @@ elseif (MACOSX)
   set(PLATFORM_COMPILE_DEFS 
     SIMULATOR
   )
-  set(PLATFORM_FLAGS -fobjc-arc)
 endif()
 
 

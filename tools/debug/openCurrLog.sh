@@ -2,22 +2,22 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-GAME_LOG_DIR=$DIR/../../build/mac/Debug/playbackLogs/webotsCtrlGameEngine/gameLogs/devLogger/
+playbackLogs="$DIR/../../_build/mac/Debug/playbackLogs"
 
-# If the number 2 is passed in as the first arg, the log for webotsCtrlGameEngine2 will be displayed
-if [ $1 -eq 2 ]; then
-  GAME_LOG_DIR=$DIR/../../build/mac/Debug/playbackLogs/webotsCtrlGameEngine2/gameLogs/devLogger/
+if [ ! -d ${playbackLogs} ]; then
+  echo "No playback logs in ${playbackLogs}"
+  exit 1
 fi
 
-pushd $GAME_LOG_DIR
+pushd $playbackLogs > /dev/null
 
-LOGDIR=`find . -type d -maxdepth 1 -mindepth 1 | cut -c 3- | sort | tail -n 1`
+devLoggerDirs="`find . -type d -name devLogger`"
 
-if [ -d $LOGDIR ];
-then
-    open $LOGDIR/print/*.log
-else
-    print "could not find any logs"
-fi
+for devLoggerDir in ${devLoggerDirs} ; do
+  pushd ${devLoggerDir} > /dev/null
+  latest=`find . -type d -maxdepth 1 -mindepth 1 | cut -c 3- | sort | tail -n 1`
+  open ${latest}/print/*.log
+  popd > /dev/null
+done
 
-popd
+popd > /dev/null

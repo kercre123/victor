@@ -38,7 +38,7 @@
 
 const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
 const char* VIZ_HOST_IP = "127.0.0.1";
-const char* LOGNAME = "CozmoEngine";
+const char* LOGNAME = "engine";
                                                                                                     
 Anki::Cozmo::CozmoAPI* gEngineAPI = nullptr;
 Anki::Util::Data::DataPlatform* gDataPlatform = nullptr;
@@ -161,7 +161,7 @@ int cozmo_start(const Json::Value& configuration)
 
   gDataPlatform = createPlatform(filesPath, cachePath, externalPath, resourcesPath);
 
-  logPrintLogger->Log(Anki::Util::AndroidLogPrintLogger::LogLevel::LOG_LEVEL_DEBUG, "resourcesPath: " + resourcesPath);
+  logPrintLogger->PrintLogD(LOGNAME, "CozmoStart.ResourcesPath", {}, resourcesPath.c_str());
 
   // Initialize logging
   #if DEV_LOGGER_ENABLED

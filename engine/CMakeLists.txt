@@ -48,7 +48,6 @@ elseif (MACOSX)
     THF_FUNCTIONALITY=1
     VC_AUDIOCAPTURE_FUNCTIONALITY=1
   )
-  set(PLATFORM_FLAGS -fobjc-arc)
 endif()
 
 

@@ -30,6 +30,7 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/time/universalTime.h"
 
 #include "cozmoAnim/engineMessages.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -48,8 +49,7 @@ namespace Cozmo {
   
   namespace{
     
-  // Default time to wait before forcing KeepFaceAlive() after the latest stream has stopped and there is no
-  // idle animation
+  // Default time to wait before forcing KeepFaceAlive() after the latest stream has stopped
   const f32 kDefaultLongEnoughSinceLastStreamTimeout_s = 0.5f;
   
   CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
@@ -149,7 +149,6 @@ namespace Cozmo {
     }
     
     const bool wasStreamingSomething = nullptr != _streamingAnimation;
-    const bool wasIdling = nullptr != _idleAnimation;
     
     if(wasStreamingSomething)
     {
@@ -168,7 +167,7 @@ namespace Cozmo {
     }
     
     // If there's something already streaming or we're purposefully clearing the buffer, abort
-    if(wasStreamingSomething || wasIdling || nullptr == anim)
+    if(wasStreamingSomething || nullptr == anim)
     {
       Abort();
     }
@@ -210,20 +209,13 @@ namespace Cozmo {
   
   void AnimationStreamer::Abort()
   {
-    if (nullptr != _streamingAnimation || nullptr != _idleAnimation)
+    if (nullptr != _streamingAnimation)
     {
-      // Log streamer state for diagnostics
-      const auto * anim = (_streamingAnimation != nullptr ? _streamingAnimation : _idleAnimation);
-      const char * type = (_streamingAnimation != nullptr ? "Streaming" : "Idle");
-      
       PRINT_NAMED_INFO("AnimationStreamer.Abort",
-                       //"Tag=%d %s:%s hasFramesLeft=%d audioComplete=%d startSent=%d endSent=%d sendBuffer=%s",
-                       "Tag=%d %s:%s hasFramesLeft=%d startSent=%d endSent=%d",
+                       "Tag=%d %s hasFramesLeft=%d startSent=%d endSent=%d",
                        _tag,
-                       type,
-                       anim->GetName().c_str(),
-                       anim->HasFramesLeft(),
-//                       _audioClient.AnimationIsComplete(),
+                       _streamingAnimation->GetName().c_str(),
+                       _streamingAnimation->HasFramesLeft(),
                        _startOfAnimationSent,
                        _endOfAnimationSent);
       
@@ -275,7 +267,7 @@ namespace Cozmo {
       // Make sure any eye dart (which is persistent) gets removed so it doesn't
       // affect the animation we are about to start streaming. Give it a little
       // duration so it doesn't pop.
-      _trackLayerComponent->RemoveKeepFaceAlive(3*IKeyFrame::SAMPLE_LENGTH_MS);
+      _trackLayerComponent->RemoveKeepFaceAlive(3*ANIM_TIME_STEP_MS);
     }
     return lastResult;
   }
@@ -328,8 +320,8 @@ namespace Cozmo {
   
   void AnimationStreamer::BufferFaceToSend(const ProceduralFace& procFace)
   {
-    Vision::ImageRGB faceImg = ProceduralFaceDrawer::DrawFace(procFace);
-    BufferFaceToSend(faceImg);
+    _faceImg = ProceduralFaceDrawer::DrawFace(procFace);
+    BufferFaceToSend(_faceImg);
   }
   
   void AnimationStreamer::BufferFaceToSend(const Vision::ImageRGB& faceImg)
@@ -342,9 +334,35 @@ namespace Cozmo {
                 FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
     
     // Draws frame to face display
-    cv::Mat img565;
-    cv::cvtColor(faceImg.get_CvMat_(), img565, cv::COLOR_RGB2BGR565);
-    FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
+#ifdef DRAW_FACE_IN_THREAD
+    // If last draw thread is still running then skip this face
+    if (_faceDrawFuture.valid()) {
+      const std::chrono::milliseconds span(0);
+      auto status = _faceDrawFuture.wait_for(span);
+      if (status != std::future_status::ready) {
+        // This could be happening for one or more of the following reasons.
+        // 1) The actual spi calls in FaceDisplay::FaceDraw() are taking too long.
+        //    This is currently happening all the time. Nathan knows about it.
+        // 2) We're calling this function more than once per animation process tic, which we shouldn't be doing.
+        const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+        PRINT_NAMED_WARNING("AnimationStreamer.BufferFaceToSend.SkippingFace", "Still drawing last face from %f ms ago", now_ms - _lastDrawTime_ms);
+        return;
+      }
+    }
+
+    cv::cvtColor(faceImg.get_CvMat_(), _img565, cv::COLOR_RGB2BGR565);
+
+    // Dispatch thread
+    auto draw_face = [](u16* frame) {
+      FaceDisplay::getInstance()->FaceDraw(frame);
+    };
+  
+    _faceDrawFuture = std::async(draw_face, reinterpret_cast<u16*>(_img565.ptr()));
+    _lastDrawTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+#else    
+    cv::cvtColor(faceImg.get_CvMat_(), _img565, cv::COLOR_RGB2BGR565);
+    FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(_img565.ptr()));
+#endif   // #ifdef DRAW_FACE_IN_THREAD
   }
 
   
@@ -431,7 +449,7 @@ namespace Cozmo {
     Result lastResult = RESULT_OK;
     
     // Add more stuff to send buffer from various layers
-    while(_trackLayerComponent->HaveLayersToSend())
+    if (_trackLayerComponent->HaveLayersToSend())
     {
       // We don't have an animation but we still have procedural layers to so
       // apply them
@@ -478,7 +496,7 @@ namespace Cozmo {
       // Increment fake "streaming" time, so we can evaluate below whether
       // it's time to stream out any of the other tracks. Note that it is still
       // relative to the same start time.
-      _streamingTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
+      _streamingTime_ms += ANIM_TIME_STEP_MS;
     }
     
 //    // If we just finished buffering all the layers, send an end of animation message
@@ -645,7 +663,7 @@ namespace Cozmo {
       // Increment fake "streaming" time, so we can evaluate below whether
       // it's time to stream out any of the other tracks. Note that it is still
       // relative to the same start time.
-      _streamingTime_ms += ANIM_TIME_STEP_MS;  //RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
+      _streamingTime_ms += ANIM_TIME_STEP_MS;
       
     } // while(buffering frames)
     
@@ -705,12 +723,11 @@ namespace Cozmo {
     //       first animation of any kind is sent.
     const bool haveStreamingAnimation = _streamingAnimation != nullptr;
     const bool haveStreamedAnything   = _lastStreamTime > 0.f;
-    const bool haveIdleAnimation      = _idleAnimation != nullptr;
     const bool longEnoughSinceStream  = (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime) > _longEnoughSinceLastStreamTimeout_s;
     
     if(!haveStreamingAnimation &&
        haveStreamedAnything &&
-       (!haveIdleAnimation && longEnoughSinceStream))
+       longEnoughSinceStream)
     {
       // If we were interrupted from streaming an animation and we've met all the
       // conditions to even be in this function, then we should make sure we've
@@ -757,7 +774,6 @@ namespace Cozmo {
       else {
         // We do want to store this face to the robot since it's coming from an actual animation
         lastResult = UpdateStream(_streamingAnimation, true);
-        _isIdling = false;
         streamUpdated = true;
         _lastStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
@@ -824,11 +840,6 @@ namespace Cozmo {
 
   } // SetDefaultParams()
   
-  bool AnimationStreamer::IsIdleAnimating() const
-  {
-    return _isIdling;
-  }
-
   const std::string AnimationStreamer::GetStreamingAnimationName() const
   {
     return _streamingAnimation ? _streamingAnimation->GetName() : "";

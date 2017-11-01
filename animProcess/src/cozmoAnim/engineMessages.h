@@ -34,8 +34,8 @@ class EngineRobotAudioInput;
 namespace Messages {
 
   // Create all the dispatch function prototypes (all implemented
-  // manually in messages.cpp).
-  //#include "clad/robotInterface/messageEngineToRobot_declarations.def"
+  // manually in engineMessages.cpp).
+  #include "clad/robotInterface/messageEngineToRobot_declarations.def"
 
   Result Init(AnimationStreamer& animStreamer, Audio::EngineRobotAudioInput& audioInput, const CozmoAnimContext& context);
 

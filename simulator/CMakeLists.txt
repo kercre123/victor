@@ -29,7 +29,6 @@ if (MACOSX)
     ${WEBOTS_SIM_LIBS}
     ${WEBOTS_PLUGINS}
   )
-  set(PLATFORM_FLAGS -fobjc-arc)
 endif()
 
 include(anki_build_cxx)

@@ -1,9 +1,11 @@
 using Anki.Cozmo;
+using Anki.Cozmo.ExternalInterface;
 using Cozmo.Energy.UI;
 using Cozmo.Repair.UI;
 using Cozmo.UI;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Cozmo.Needs.UI {
   public class NeedsHubView : BaseView {
@@ -65,6 +67,9 @@ namespace Cozmo.Needs.UI {
     [SerializeField]
     private GameObject _LiquidMetalTitle;
 
+    [SerializeField]
+    private Button _DemoSetNeedsLevelButton;
+
     private ChallengeStartEdgeCaseAlertController _EdgeCaseAlertController;
 
     // absolutely needs to be in awake to prevent one frame pops.
@@ -111,6 +116,14 @@ namespace Cozmo.Needs.UI {
                       | ChallengeEdgeCases.CheckForDriveOffCharger
                       | ChallengeEdgeCases.CheckForOnTreads;
       _EdgeCaseAlertController = new ChallengeStartEdgeCaseAlertController(new ModalPriorityData(), challengeEdgeCases);
+
+      if (DebugMenuManager.Instance.DemoMode) {
+        _DemoSetNeedsLevelButton.onClick.AddListener(HandleDemoSetNeedsLevelButton);
+        NeedsStateManager.Instance.OnNeedsLevelChanged += HandleOnFirstNeedsUpdate;
+      }
+      else {
+        _DemoSetNeedsLevelButton.gameObject.SetActive(false);
+      }
     }
 
     protected override void CleanUp() {
@@ -274,6 +287,25 @@ namespace Cozmo.Needs.UI {
     private bool ShowEdgeCaseAlertIfNeeded() {
       // We can send in default values because we are not checking cubes or os
       return _EdgeCaseAlertController.ShowEdgeCaseAlertIfNeeded(null, 0, true, null);
+    }
+
+    // Only enabled when in demo mode
+    private void HandleDemoSetNeedsLevelButton() {
+      DemoSetNeedsLevels(0.4f, 0.6f, 0.5f);
+    }
+
+    private void DemoSetNeedsLevels(float energyLevel, float playLevel, float repairLevel) {
+      RobotEngineManager.Instance.Message.ForceSetNeedsLevels =
+                          Singleton<ForceSetNeedsLevels>.Instance.Initialize(new float[3] { repairLevel, energyLevel, playLevel });
+      RobotEngineManager.Instance.SendMessage();
+      PopLatestBracketAndUpdateButtons();
+    }
+
+    // Catch and "override" the first needs update
+    private void HandleOnFirstNeedsUpdate(NeedsActionId actionId) {
+      NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleOnFirstNeedsUpdate;
+      // Set levels to defaults for demo mode
+      DemoSetNeedsLevels(1.0f, 1.0f, 1.0f);
     }
 
     #region Onboarding

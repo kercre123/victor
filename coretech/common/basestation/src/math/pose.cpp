@@ -214,7 +214,7 @@ namespace Anki {
                         Radians& angleDiff) const
   {
     
-    const RotationAmbiguities kNoAmbiguities;
+    static const RotationAmbiguities kNoAmbiguities;
     
     return IsSameAs_WithAmbiguity(P_other,
                                   kNoAmbiguities,
@@ -237,12 +237,13 @@ namespace Anki {
     
     DEV_ASSERT(angleThreshold.ToFloat() >= 0.f, "Pose3d.IsSameAs_WithAmbiguity.NegativeAngleThreshold");
     
-    Pose3d P_other;
-    
     if(&P_other_in == this){
       return true;
     }
-    else if(this->IsChildOf(P_other_in))
+
+    Pose3d P_other;
+
+    if(this->IsChildOf(P_other_in))
     {
       // Other pose is this pose's parent, leave otherPose as default
       // identity transformation and hook up parent connection.
@@ -371,7 +372,7 @@ namespace Anki {
     
     if(angleThreshold >= M_PI)
     {
-      // No need to check the rotation (can't be more than 180 degrees0
+      // No need to check the rotation (can't be more than 180 degrees)
       return true;
     }
     

@@ -208,6 +208,7 @@ Blockly.FieldDropdown.prototype.showEditor_ = function() {
     // We don't need to perform the action because Closure does handle this already.
     // We do however want to clear the highlight from the menu item.
     control.handleMouseUp(e);
+    control.setHighlighted(false); // on drag this won't get cleared, but it should
     // Activate the menu item.
     // control.performActionInternal(e);
   }

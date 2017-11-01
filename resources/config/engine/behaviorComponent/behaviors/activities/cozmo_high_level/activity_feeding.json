@@ -1,0 +1,19 @@
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+{
+  "behaviorID" : "Activity_Feeding",
+  "behaviorClass" : "Activity_Feeding",
+  "activityStrategy":
+  {
+    "type" : "Simple"
+  },
+  "universalChooser" :
+  {
+    "type" : "StrictPriority",
+    "behaviors" : [
+                    "DriveOffCharger",
+                    "KnockOverCubes",
+                    "PyramidPutDownBlock",
+                    "Needs_SevereLowEnergyGetIn"
+                  ]
+  }
+}

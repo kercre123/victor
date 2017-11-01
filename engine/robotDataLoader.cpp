@@ -19,8 +19,9 @@
 #include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/animations/animationTransfer.h"
-#include "engine/behaviorSystem/activities/activities/iActivity.h"
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
+#include "engine/components/cubeLightComponent.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/cozmoContext.h"
@@ -117,11 +118,6 @@ void RobotDataLoader::LoadNonConfigData()
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");
     LoadBehaviors();
-  }
-  
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadActivities");
-    LoadActivities();
   }
   
   {
@@ -291,7 +287,7 @@ void RobotDataLoader::LoadAnimationGroups()
 void RobotDataLoader::WalkAnimationDir(const std::string& animationDir, TimestampMap& timestamps, const std::function<void(const std::string&)>& walkFunc)
 {
   const std::string animationFolder = _platform->pathToResource(Util::Data::Scope::Resources, animationDir);
-  const std::vector<const char*> fileExts = {"json", "bin"};
+  static const std::vector<const char*> fileExts = {"json", "bin"};
   auto filePaths = Util::FileUtils::FilesInDirectory(animationFolder, true, fileExts, true);
 
   for (const auto& path : filePaths) {
@@ -370,7 +366,7 @@ void RobotDataLoader::LoadEmotionEvents()
 
 void RobotDataLoader::LoadBehaviors()
 {
-  const std::string path =  "config/engine/behaviorSystem/behaviors/";
+  const std::string path =  "config/engine/behaviorComponent/behaviors/";
 
   const std::string behaviorFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
   auto behaviorJsonFiles = Util::FileUtils::FilesInDirectory(behaviorFolder, true, ".json", true);
@@ -380,7 +376,7 @@ void RobotDataLoader::LoadBehaviors()
     const bool success = _platform->readAsJson(filename, behaviorJson);
     if (success && !behaviorJson.empty())
     {
-      BehaviorID behaviorID = IBehavior::ExtractBehaviorIDFromConfig(behaviorJson, filename);
+      BehaviorID behaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorJson, filename);
       auto result = _behaviors.emplace(std::piecewise_construct,
                                        std::forward_as_tuple(behaviorID),
                                        std::forward_as_tuple(std::move(behaviorJson)));
@@ -394,35 +390,6 @@ void RobotDataLoader::LoadBehaviors()
     else if (!success)
     {
       PRINT_NAMED_WARNING("RobotDataLoader.Behavior", "Failed to read '%s'", filename.c_str());
-    }
-  }
-}
-  
-void RobotDataLoader::LoadActivities()
-{
-  const std::string path =  "config/engine/behaviorSystem/activities/";
-  
-  const std::string activityFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
-  auto activityJsonFiles = Util::FileUtils::FilesInDirectory(activityFolder, true, ".json", true);
-  for (const auto& filename : activityJsonFiles)
-  {
-    Json::Value activityJson;
-    const bool success = _platform->readAsJson(filename, activityJson);
-    if (success && !activityJson.empty())
-    {
-      ActivityID activityID = IActivity::ExtractActivityIDFromConfig(activityJson);
-      
-      auto result = _activities.emplace(std::piecewise_construct,
-                                        std::forward_as_tuple(activityID),
-                                        std::forward_as_tuple(std::move(activityJson)));
-      DEV_ASSERT_MSG(result.second,
-                     "RobotDataLoader.LoadActivity.FailedEmplace",
-                     "Failed to insert ActivityID %s - make sure all activities have unique IDs",
-                     ActivityIDToString(activityID));
-    }
-    else if (!success)
-    {
-      PRINT_NAMED_WARNING("RobotDataLoader.Activity", "Failed to read '%s'", filename.c_str());
     }
   }
 }
@@ -475,7 +442,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
 
 void RobotDataLoader::LoadReactionTriggerMap()
 {
-  const std::string filename = "config/engine/behaviorSystem/reactionTrigger_behavior_map.json";
+  const std::string filename = "config/engine/behaviorComponent/reactionTrigger_behavior_map.json";
 
   Json::Value reactionJSON;
   const bool success = _platform->readAsJson(Util::Data::Scope::Resources, filename, _reactionTriggerMap);
@@ -516,33 +483,33 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // activities config
   {
-    static const std::string jsonFilename = "config/engine/behaviorSystem/activities_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotActivitiesConfig);
+    static const std::string jsonFilename = "config/engine/behaviorComponent/legacy_cozmo_activities_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _legacyCozmoActivitiesConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.BehaviorConfigJsonFailed",
                         "Behavior Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
-      _robotActivitiesConfig.clear();
+      _legacyCozmoActivitiesConfig.clear();
     }
   }
   
   // victor behavior systems config
   {
-    static const std::string jsonFilename = "config/engine/behaviorSystem/behavior_system_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _behaviorSystemConfig);
+    static const std::string jsonFilename = "config/engine/behaviorComponent/victor_behavior_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _victorFreeplayBehaviorConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.BehaviorSystemJsonFailed",
                         "Behavior Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
-      _behaviorSystemConfig.clear();
+      _victorFreeplayBehaviorConfig.clear();
     }
   }
 
   // Workout config
   {
-    static const std::string jsonFilename = "config/engine/behaviorSystem/workout_config.json";
+    static const std::string jsonFilename = "config/engine/behaviorComponent/workout_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotWorkoutConfig);
     if (!success)
     {
@@ -572,7 +539,7 @@ void RobotDataLoader::LoadRobotConfigs()
   
   // needs system config
   {
-    static const std::string jsonFilename = "config/engine/needs_config.json";
+    static const std::string jsonFilename = NeedsManager::GetConfigBaseFilename() + ".json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsSystemConfig);
     if (!success)
     {
@@ -584,7 +551,7 @@ void RobotDataLoader::LoadRobotConfigs()
   
   // needs level (star rewards) config
   {
-    static const std::string jsonFilename = "config/engine/needs_level_config.json";
+    static const std::string jsonFilename = NeedsManager::GetLevelConfigBaseFilename() + ".json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _starRewardsConfig);
     if (!success)
     {

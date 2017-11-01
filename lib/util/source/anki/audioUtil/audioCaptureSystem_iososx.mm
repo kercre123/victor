@@ -97,8 +97,9 @@ static void HandleCallbackEntry(void * __nullable               inUserData,
   if (data) { data->HandleCallback(inAQ, inBuffer, inStartTime, inNumberPackets, inPacketDescs); }
 }
 
-AudioCaptureSystem::AudioCaptureSystem(uint32_t samplesPerChunk)
+AudioCaptureSystem::AudioCaptureSystem(uint32_t samplesPerChunk, uint32_t sampleRate)
 : _samplesPerChunk(samplesPerChunk)
+, _sampleRate_hz(sampleRate)
 { }
 
 // Note this should be done AFTER permission has been granted
@@ -111,10 +112,11 @@ void AudioCaptureSystem::Init()
     
     AudioStreamBasicDescription standardAudioFormat;
     GetStandardAudioDescriptionFormat(standardAudioFormat);
+    standardAudioFormat.mSampleRate = _sampleRate_hz;
     OSStatus status = AudioQueueNewInput(&standardAudioFormat, HandleCallbackEntry, _impl.get(), nullptr, nullptr, 0, &_impl->_queue);
     if (kAudioServicesNoError != status)
     {
-      PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueNewInput.Error","OSStatus errorcode: %d", (int)status);
+      PRINT_NAMED_WARNING("AudioCaptureSystem.Constructor.AudioQueueNewInput.Warn","OSStatus errorcode: %d", (int)status);
       _impl.reset();
       return;
     }
@@ -124,7 +126,7 @@ void AudioCaptureSystem::Init()
       status = AudioQueueAllocateBuffer(_impl->_queue, _samplesPerChunk * sizeof(AudioSample), &_impl->_buffers[i]);
       if (kAudioServicesNoError != status)
       {
-        PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueAllocateBuffer.Error","OSStatus errorcode: %d", (int)status);
+        PRINT_NAMED_WARNING("AudioCaptureSystem.Constructor.AudioQueueAllocateBuffer.Warn","OSStatus errorcode: %d", (int)status);
         _impl.reset();
         return;
       }
@@ -310,7 +312,7 @@ void AudioCaptureSystem::StartRecording()
     OSStatus status = AudioQueueStart(_impl->_queue, NULL);
     if (kAudioServicesNoError != status)
     {
-      PRINT_NAMED_ERROR("AudioCaptureSystem.StartRecording.AudioQueueStart.Error","Is permission properly granted? OSStatus errorcode: %d", (int)status);
+      PRINT_NAMED_WARNING("AudioCaptureSystem.StartRecording.AudioQueueStart.Warn","Is permission properly granted? OSStatus errorcode: %d", (int)status);
     }
   }
 }

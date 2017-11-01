@@ -1,10 +1,11 @@
 cxx_project(
     name = 'victor_anim',
-    srcs = cxx_src_glob(['src/cozmoAnim'],
+    srcs = cxx_src_glob(['src/cozmoAnim',
+                         'src/signalEssence'],
                         excludes = ['*_android.*',
                                     'android/**/*',
                                     '*_mac.*',
-                                    'main.cpp']),
+                                    'cozmoAnimMain.cpp']),
     platform_srcs = [
         ('android', glob(['android/**/*.cpp',
                           '**/*_android.cpp'])),
@@ -18,7 +19,7 @@ cxx_project(
 
 cxx_project(
     name = 'victor_animator',
-    srcs = glob(['src/cozmoAnim/main.cpp']),
+    srcs = glob(['src/cozmoAnim/cozmoAnimMain.cpp']),
     platform_srcs = [
     ],
     headers = [],

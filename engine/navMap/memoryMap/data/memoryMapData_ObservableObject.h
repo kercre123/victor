@@ -15,6 +15,7 @@
 #include "memoryMapData.h"
 
 #include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/polygon.h"
 #include "anki/vision/basestation/observableObject.h"
 
 namespace Anki {
@@ -23,10 +24,11 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // MemoryMapData_ObservableObject
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-struct MemoryMapData_ObservableObject : public MemoryMapData
+class MemoryMapData_ObservableObject : public MemoryMapData
 {
+public:
   // constructor
-  MemoryMapData_ObservableObject(MemoryMapTypes::EContentType type, TimeStamp_t t);
+  MemoryMapData_ObservableObject(MemoryMapTypes::EContentType type, const ObjectID& id, const Poly2f& p, TimeStamp_t t);
   
   // create a copy of self (of appropriate subclass) and return it
   MemoryMapData* Clone() const override;
@@ -38,7 +40,11 @@ struct MemoryMapData_ObservableObject : public MemoryMapData
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // If you add attributes, make sure you add them to ::Equals and ::Clone (if required)
-  ObjectID id;
+  const ObjectID id;
+  const Poly2f boundingPoly; 
+  
+protected: 
+  MemoryMapData_ObservableObject() : MemoryMapData(MemoryMapTypes::EContentType::ObstacleCube, 0, true), id(), boundingPoly() {}
 };
  
 } // namespace

@@ -69,18 +69,18 @@ bool FaceLayerManager::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& 
         } else {
           /*
            // If we're within one sample period following the currFrame, just play the current frame
-           if (currStreamTime - currentKeyFrame.GetTriggerTime() < IKeyFrame::SAMPLE_LENGTH_MS) {
+           if (currStreamTime - currentKeyFrame.GetTriggerTime() < ANIM_TIME_STEP_MS) {
            interpolatedParams = currentKeyFrame.GetFace().GetParams();
            paramsSet = true;
            }
            // We're on the way to the next frame, but not too close to it: interpolate.
-           else if (nextFrame->GetTriggerTime() - currStreamTime >= IKeyFrame::SAMPLE_LENGTH_MS) {
+           else if (nextFrame->GetTriggerTime() - currStreamTime >= ANIM_TIME_STEP_MS) {
            */
           interpolatedFace = currentKeyFrame.GetInterpolatedFace(*nextFrame, currTime_ms - startTime_ms);
           paramsSet = true;
           //}
           
-          if (nextFrame->IsTimeToPlay(startTime_ms, currTime_ms + IKeyFrame::SAMPLE_LENGTH_MS)) {
+          if (nextFrame->IsTimeToPlay(startTime_ms, currTime_ms + ANIM_TIME_STEP_MS)) {
             track.MoveToNextKeyFrame();
           }
           

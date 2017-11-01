@@ -420,11 +420,11 @@ GTEST_TEST(TestPlanner, PlanAroundBoxDumpAndImportContext)
   }
   EXPECT_NEAR( planner.GetFinalCost(), planner2.GetFinalCost(), tol );
 
-  ASSERT_EQ(planner.GetPlan().actions_.size(), planner2.GetPlan().actions_.size());
-  for(int a=0; a < planner.GetPlan().actions_.size(); ++a) {
-    ASSERT_EQ( planner.GetPlan().actions_[a], planner2.GetPlan().actions_[a] )
+  ASSERT_EQ(planner.GetPlan().Size(), planner2.GetPlan().Size());
+  for(int a=0; a < planner.GetPlan().Size(); ++a) {
+    ASSERT_EQ( planner.GetPlan().GetAction(a), planner2.GetPlan().GetAction(a) )
       << "action # "<<a<<" mismatches";
-    ASSERT_NEAR( planner.GetPlan().penalties_[a], planner2.GetPlan().penalties_[a], tol )
+    ASSERT_NEAR( planner.GetPlan().GetPenalty(a), planner2.GetPlan().GetPenalty(a), tol )
       << "penalty # "<<a<<" mismatches";
   }
 
@@ -462,8 +462,9 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
 
 
   bool hasTurn = false;
-  for(const auto& action : planner.GetPlan().actions_) {
-    if(context.env.GetRawMotionPrimitive(0, action).endStateOffset.theta != 0) {
+  size_t plannerSize = planner.GetPlan().Size();
+  for(size_t i=0; i < plannerSize; ++i) {
+    if(context.env.GetRawMotionPrimitive(0, planner.GetPlan().GetAction(i)).endStateOffset.theta != 0) {
       hasTurn = true;
       break;
     }
@@ -484,8 +485,9 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
   EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   hasTurn = false;
-  for(const auto& action : planner.GetPlan().actions_) {
-    if(context.env.GetRawMotionPrimitive(0, action).endStateOffset.theta != 0) {
+  plannerSize = planner.GetPlan().Size();
+  for(size_t i=0; i < plannerSize; ++i) {
+    if(context.env.GetRawMotionPrimitive(0, planner.GetPlan().GetAction(i)).endStateOffset.theta != 0) {
       hasTurn = true;
       break;
     }
@@ -508,8 +510,9 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
   EXPECT_FALSE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   // context.env.PrintPlan(planner.GetPlan());
-  for(const auto& action : planner.GetPlan().actions_) {
-    ASSERT_EQ(context.env.GetRawMotionPrimitive(0, action).endStateOffset.theta,0)
+  plannerSize = planner.GetPlan().Size();
+  for(size_t i=0; i < plannerSize; ++i) {
+    ASSERT_EQ(context.env.GetRawMotionPrimitive(0, planner.GetPlan().GetAction(i)).endStateOffset.theta,0)
       <<"with low cost, should drive straight through obstacle, but plan has a turn!";
   }
 
@@ -526,9 +529,10 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
   ASSERT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
   EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
-
-  for(const auto& action : planner.GetPlan().actions_) {
-    ASSERT_EQ(context.env.GetRawMotionPrimitive(0, action).endStateOffset.theta,0)
+  
+  plannerSize = planner.GetPlan().Size();
+  for(size_t i=0; i < plannerSize; ++i) {
+    ASSERT_EQ(context.env.GetRawMotionPrimitive(0, planner.GetPlan().GetAction(i)).endStateOffset.theta,0)
       <<"with no obstacle, should drive straight, but plan has a turn!";
   }
 
@@ -732,8 +736,8 @@ GTEST_TEST(TestPlanner, ReplanHard)
   ASSERT_EQ(oldPath.GetNumSegments(), 0) << "path is just one line and the whole thing should be invalid";
 
   StateID currID = oldPlan.start_.GetStateID();
-  for(const auto& action : oldPlan.actions_) {
-    ASSERT_LT(context.env.ApplyAction(action, currID, false), 100.0) << "action penalty too high!";
+  for(size_t i=0; i < oldPlan.Size(); ++i) {
+    ASSERT_LT(context.env.ApplyAction(oldPlan.GetAction(i), currID, false), 100.0) << "action penalty too high!";
   }
 
   ASSERT_EQ(currID, context.env.State_c2State(lastSafeState).GetStateID()) << "end of validOldPlan should match lastSafeState!";
@@ -828,7 +832,7 @@ void TestPlanner_ClosestSegmentToPoseHelper(xythetaPlannerContext& context, xyth
 
   size_t planSize = planner._impl->_plan.Size();
   for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
-    const MotionPrimitive& prim(context.env.GetRawMotionPrimitive(curr.theta, planner._impl->_plan.actions_[planIdx]));
+    const MotionPrimitive& prim(context.env.GetRawMotionPrimitive(curr.theta, planner._impl->_plan.GetAction(planIdx)));
 
     float distFromPlan = 9999.0;
 
@@ -862,7 +866,7 @@ void TestPlanner_ClosestSegmentToPoseHelper(xythetaPlannerContext& context, xyth
     }
 
     StateID currID(curr);
-    context.env.ApplyAction(planner._impl->_plan.actions_[planIdx], currID, false);
+    context.env.ApplyAction(planner._impl->_plan.GetAction(planIdx), currID, false);
     curr = State(currID);
   }
 }

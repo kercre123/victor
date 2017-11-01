@@ -9,6 +9,7 @@ anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 include(flatbuffers)
 include(opencv)
 include(signalessence)
+include(speexdsp)
 
 if (NOT DEFINED USE_DAS)
   set(USE_DAS 0)
@@ -40,7 +41,6 @@ target_link_libraries(victor_anim
   cti_vision
   cti_messaging_robot
   robot_clad_cpplite
-  robot_interface
   robot_transport
   audio_engine
   audio_multiplexer_robot
@@ -48,10 +48,11 @@ target_link_libraries(victor_anim
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS} 
   ${SIGNALESSENCE_LIBS}
+  ${SPEEXDSP_LIBS}
   # platform
-  PUBLIC
-  # these need to be public until we remove android-specific classes from androidHAL.h
   ${PLATFORM_LIBS}
+  PUBLIC
+  robot_interface  # Needs to be public for cozmoConfig.h
 )
 
 android_strip(TARGET victor_anim)
@@ -86,3 +87,5 @@ if (ANDROID)
   android_strip(TARGET victor_animator)
 
 endif()
+
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/signalEssence/policy_actions.c PROPERTIES COMPILE_FLAGS -Wno-shorten-64-to-32)

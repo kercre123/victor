@@ -128,7 +128,7 @@ cxx_project(
                         excludes = ['*_android.*',
                                     'android/**/*',
                                     '*_mac.*',
-                                    'main.cpp']),
+                                    'cozmoAnimMain.cpp']),
     platform_srcs = [
         ('android', glob(['android/**/*.cpp',
                           '**/*_android.cpp'])),
@@ -186,8 +186,6 @@ PRIVATE
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS} 
 # platform
-PUBLIC
-  # these need to be public until we remove android-specific classes from androidHAL.h
   ${PLATFORM_LIBS}
 )
 

@@ -3,13 +3,23 @@
 Shader "UI/Cozmo/DroneModeCameraFeed"
 {
 	Properties {
+		// Grayscale camera feed texture from Cozmo
 		_MainTex ("Base (RGB)", 2D) = "white" {}
-		// _MaskAlphaTex ("Mask texture", 2D) = "white" {} // mask no longer needed
+
+		// Constant; B&W Texture to use for scanline effect; multiplied with the feed texture 
 		_ScanTex ("Scanline texture", 2D) = "white" {}
+
+		// Constant 0-1; Value denoting "strength" or "opacity" of the scan lines
 		_ScanBlend ("Scanline blending", Float) = 0.5
+
+		// Constant; Number of times to repeat the texture in the feed; larger = finer lines
 		_ScanSize ("Scanline Size", Float) = 1
+
+		// Constant; Color of the line effect lerps from top to bottom
 		_TopColor ("Gradient Top Color", Color) = (0.5,0.5,1,1)
 		_BottomColor ("Gradient Bottom Color", Color) = (0.25,0.25,0.5,1)
+
+		// Constant 0-1; Strength, in uv units, to apply a the up-down jittering animation
 		_UVOffsetOverTime ("UV Offset", Float) = 0.25
 	} 
 	SubShader {
@@ -29,19 +39,19 @@ Shader "UI/Cozmo/DroneModeCameraFeed"
 	        #pragma vertex vert
 	        #pragma fragment frag
 			#include "UnityCG.cginc"
-		
+			
+			// Unity requires that the properties above are re-defined in the cg block with the same name
 			uniform sampler2D _MainTex;
-			// uniform sampler2D _MaskAlphaTex; // mask no longer needed
 			uniform sampler2D _ScanTex;
 			
 			fixed _ScanBlend;
 			fixed _ScanSize;
-			fixed _UVOffsetOverTime;
 
 			fixed4 _TopColor;
 			fixed4 _BottomColor;
 
-	        // vertex input: position, UV
+			fixed _UVOffsetOverTime;
+
 	        struct appdata {
 	            fixed4 vertex : POSITION;
 	            fixed4 texcoord : TEXCOORD0;
@@ -54,36 +64,35 @@ Shader "UI/Cozmo/DroneModeCameraFeed"
 	            fixed4 color : COLOR;
 	        };
 	        
+
+	        // Vertex shader
+
 	        v2f vert (appdata v) {
+	        	// Basic vertex position and uv coordinate setting
 	            v2f o;
 	            o.pos = UnityObjectToClipPos( v.vertex );
 	            o.uv = fixed4( v.texcoord.xy, 0, 0 );
+
+	            // Create a gradient effect from top to bottom
 	            o.color = lerp(_BottomColor, _TopColor, o.uv.y);
 
+	            // Apply a uv offset based on animation curve and strength constant
 	            // http://www.iquilezles.org/apps/graphtoy/
 	            fixed graphedTime = (0.5*(sin(10*4*_Time.x)-(sin(14*_Time.x))));
 	            o.uv2 = o.uv + graphedTime * _UVOffsetOverTime;
 	            return o;
 	        }
 	        
+	        
+	        // Fragment shader
+
 	        fixed4 frag( v2f i ) : SV_Target {
+	        	// Sample textures for values based on uvs
 				fixed4 base = tex2D(_MainTex, i.uv);
 				fixed4 scan = tex2D(_ScanTex, i.uv2 * _ScanSize);
 
-				// Manually grayscale
-				// fixed lum = base.r*.3 + base.g*.59 + base.b*.11;
-				// base = fixed4( lum, lum, lum, base.a ); 
-
-				// Scan line effect 1 - blend
-				// base = lerp(base, scan, _ScanBlend) * i.color;
-
-				// Multiply by scan line and color
+				// Multiply by scan line and color for line effect
 				base = base * (scan * _ScanBlend) * i.color;
-
-				// Disabling mask because it's no longer required
-				// Apply mask
-				// fixed4 mask = tex2D(_MaskAlphaTex, i.uv);
-				// base.a = mask.a;
 
 				return base;
 	        }

@@ -25,8 +25,9 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   private CozmoText _AppVerLabel;
 
   [SerializeField]
-  private WifiInstructionsModal _WifiInstructionsModalPrefab;
-  private WifiInstructionsModal _WifiInstructionsModalInstance;
+  private Anki.Assets.GameObjectDataLink _WifiInstructionsModalPrefabData;
+  private WifiInstructionsModal _WifiInstructionsModalPrefab = null;
+  private WifiInstructionsModal _WifiInstructionsModalInstance = null;
 
   [SerializeField]
   private GameObject _WifiAnimationsPrefab;
@@ -90,6 +91,7 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
       UIManager.CloseModalImmediately(_WifiInstructionsModalInstance);
     }
     RobotEngineManager.Instance.RemoveCallback<DeviceDataMessage>(HandleDeviceDataMessage);
+    Anki.Assets.AssetBundleManager.Instance.UnloadAssetBundle(_WifiInstructionsModalPrefabData.AssetBundle);
   }
 
   private void HandleGetACozmoButton() {
@@ -111,11 +113,46 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   }
 
   private void HandleShowMeButton() {
-    var wifiInstructionsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 1,
-                                                                  LowPriorityModalAction.CancelSelf,
-                                                                  HighPriorityModalAction.Stack);
+    if (_WifiInstructionsModalPrefab == null) {
+      Anki.Assets.AssetBundleManager.Instance.LoadAssetBundleAsync(_WifiInstructionsModalPrefabData.AssetBundle,
+                                                                   HandleWifiModalAssetBundleLoaded);
+      _ShowMeButton.Interactable = false;
+    }
+    else {
+      OpenWifiModal();
+    }
+  }
 
-    UIManager.OpenModal(_WifiInstructionsModalPrefab, wifiInstructionsModalPriorityData, HandleWifiModalCreated);
+  private void HandleWifiModalAssetBundleLoaded(bool assetBundleLoadSuccess) {
+    if (assetBundleLoadSuccess) {
+      if (_WifiInstructionsModalPrefab == null) {
+        _WifiInstructionsModalPrefabData.LoadAssetData(HandleWifiModalPrefabLoaded);
+      }
+      else {
+        OpenWifiModal();
+      }
+    }
+    else {
+      _ShowMeButton.Interactable = true;
+    }
+  }
+
+  private void HandleWifiModalPrefabLoaded(GameObject loadedPrefab) {
+    if (loadedPrefab != null) {
+      _WifiInstructionsModalPrefab = loadedPrefab.GetComponent<WifiInstructionsModal>();
+      OpenWifiModal();
+    }
+  }
+
+  private void OpenWifiModal() {
+    _ShowMeButton.Interactable = true;
+    if (_WifiInstructionsModalInstance == null) {
+      var wifiInstructionsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 1,
+                                      LowPriorityModalAction.CancelSelf,
+                                      HighPriorityModalAction.Stack);
+
+      UIManager.OpenModal(_WifiInstructionsModalPrefab, wifiInstructionsModalPriorityData, HandleWifiModalCreated);
+    }
   }
 
   private void HandleWifiModalCreated(BaseModal newModal) {

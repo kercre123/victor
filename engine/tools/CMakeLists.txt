@@ -17,7 +17,6 @@ elseif (MACOSX)
   set(PLATFORM_LIBS
     ${FOUNDATION}
   )
-  set(PLATFORM_FLAGS -fobjc-arc)
 endif()
 
 anki_build_cxx_executable(cozmoengined ${ANKI_SRCLIST_DIR})

@@ -114,13 +114,18 @@ namespace Anki {
         {0} //Need zeros as end-of-list marker
       };
       
+      // update every tick of the robot:
+      // some touch values are 0xFFFF, which we want to ignore
+      // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
+      u16 lastValidTouchIntensity_;
+      
     } // "private" namespace
 
     // Forward Declarations
     Result InitRadio(const char* advertisementIP);
     void InitIMU();
     void ProcessIMUEvents();
-
+    void ProcessTouchLevel(void);
     
     inline u16 FlipBytes(u16 v) {
       return ((((v) & 0x00FF)<<8) | ((v)>>8));
@@ -318,13 +323,13 @@ namespace Anki {
 
     } // step()
 
-    void ForwardAudioInput(void)
+    void ForwardMicData(void)
     {
-      // Takes advantage of the data in bodyData being ordered such that the required members of AudioInput are already
+      // Takes advantage of the data in bodyData being ordered such that the required members of MicData are already
       // laid correctly.
       // TODO(Al/Lee): Put back once mics and camera can co-exist
-//      const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
-//      RobotInterface::SendMessage(*latestAudioInput);
+//      const auto* latestMicData = reinterpret_cast<const RobotInterface::MicData*>(&bodyData_->audio);
+//      RobotInterface::SendMessage(*latestMicData);
     }
 
     Result HAL::Step(void)
@@ -347,14 +352,24 @@ namespace Anki {
 #endif
         
         result =  GetSpineDataFrame();
+        
+        ProcessTouchLevel(); // filter invalid values from touch sensor
+        
         PrintConsoleOutput();
       }
 #endif
 
       //MonitorConnectionState();
 
-      ForwardAudioInput();
+      ForwardMicData();
       return result;
+    }
+    
+    void ProcessTouchLevel(void)
+    {
+      if(bodyData_->touchLevel[0] != 0xFFFF) {
+        lastValidTouchIntensity_ = bodyData_->touchLevel[HAL::BUTTON_CAPACITIVE];
+      }
     }
 
     // Get the number of microseconds since boot
@@ -419,6 +434,9 @@ namespace Anki {
     u16 HAL::GetButtonState(const ButtonID button_id)
     {
       assert(button_id >= 0 && button_id < BUTTON_COUNT);
+      if(button_id==HAL::BUTTON_CAPACITIVE) {
+        return lastValidTouchIntensity_;
+      }
       return bodyData_->touchLevel[button_id];
     }
 

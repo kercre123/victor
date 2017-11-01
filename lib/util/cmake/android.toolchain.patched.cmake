@@ -40,6 +40,16 @@
 
 cmake_minimum_required(VERSION 3.6.0)
 
+# CMake invokes the toolchain file twice during the first build, but only once
+# during subsequent rebuilds. This was causing the various flags to be added
+# twice on the first build, and on a rebuild ninja would see only one set of the
+# flags and rebuild the world.
+# https://github.com/android-ndk/ndk/issues/323
+if(ANDROID_NDK_TOOLCHAIN_INCLUDED)
+        return()
+endif(ANDROID_NDK_TOOLCHAIN_INCLUDED)
+set(ANDROID_NDK_TOOLCHAIN_INCLUDED true)
+
 set(ANDROID_NDK_REVISION 15)
 
 # Touch toolchain variable to suppress "unused variable" warning.

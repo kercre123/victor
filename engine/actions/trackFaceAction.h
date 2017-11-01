@@ -13,8 +13,9 @@
 #ifndef __Anki_Cozmo_Basestation_TrackFaceAction_H__
 #define __Anki_Cozmo_Basestation_TrackFaceAction_H__
 
-#include "engine/actions/trackActionInterface.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "engine/actions/trackActionInterface.h"
+#include "engine/smartFaceId.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
@@ -27,6 +28,7 @@ public:
   using FaceID = Vision::FaceID_t;
   
   TrackFaceAction(Robot& robot, FaceID faceID);
+  TrackFaceAction(Robot& robot, SmartFaceID faceID);
   virtual ~TrackFaceAction();
 
   virtual void GetCompletionUnion(ActionCompletedUnion& completionInfo) const override;
@@ -40,7 +42,7 @@ protected:
   
 private:
 
-  FaceID               _faceID;
+  SmartFaceID          _faceID;
   TimeStamp_t          _lastFaceUpdate = 0;
 
   Signal::SmartHandle _signalHandle;

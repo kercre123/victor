@@ -1,0 +1,23 @@
+{
+  "behaviorID" : "Activity_SparksPounceOnMotion",
+  "behaviorClass" : "Activity_Sparked",
+  "requireSpark":"PounceOnMotionAction",
+  "activityStrategy":
+  {
+    "type" : "Spark"
+  },
+  "behaviorChooser" :
+  {
+    "type" : "StrictPriority",
+    "behaviors" : [
+      "DriveOffCharger",
+      "SparksPutDownBlock",
+      "SparksPounceOnMotion"
+    ]
+  },
+  "minTimeSecs": 0,
+  "maxTimeSecs": 30,
+  "numberOfRepetitions": 0,
+  "behaviorObjective": "PouncedAndCaught",
+  "softSparkTrigger": "SoftSparkUpgradeLift"
+}

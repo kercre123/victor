@@ -21,6 +21,7 @@
 
 #include "simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "engine/actions/basicActions.h"
 #include "engine/activeCube.h"
 #include "engine/customObject.h"

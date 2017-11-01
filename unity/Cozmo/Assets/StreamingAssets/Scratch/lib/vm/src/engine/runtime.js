@@ -410,6 +410,7 @@ class Runtime extends EventEmitter {
                 // Script has just stopped
                 this._ankiAreThreadsRunning = false
                 window.Unity.call({command: "cozmoScriptStopped"});
+                window.onScriptsStopped();
             }
         }
         else {
@@ -417,6 +418,7 @@ class Runtime extends EventEmitter {
                 // Script has just started
                 this._ankiAreThreadsRunning = true
                 window.Unity.call({command: "cozmoScriptStarted"});
+                window.onScriptsStarted();
             }
         }
     };
@@ -712,6 +714,8 @@ class Runtime extends EventEmitter {
         // Code to handle start/end script events. - mwesley, 05/01/17
         window.Unity.call({command: "cozmoGreenFlag"});
 
+        window.onScriptsStarted();
+
         this.stopAll();
         this.ioDevices.clock.resetProjectTimer();
         this.clearEdgeActivatedValues();
@@ -729,6 +733,8 @@ class Runtime extends EventEmitter {
         // *** ANKI CHANGE ***
         // Code to handle start/end script events. - mwesley, 05/01/17
         window.Unity.call({command: "cozmoStopAll"});
+
+        window.onScriptsStopped();
 
         // Dispose all clones.
         const newTargets = [];

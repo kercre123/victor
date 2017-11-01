@@ -238,8 +238,9 @@ int main(int argc, char *argv[])
     cout<<"final state: "<<context.env.State2State_c(context.env.GetPlanFinalState(plan))<<endl;
 
     printf("\n\nTestPlan:\n");
-    for(auto action : plan.actions_) {
-      printf("plan.Push(%d);\n", action);
+    for(size_t i = 0; i < plan.Size(); i++) 
+    {
+      printf("plan.Push(%d);\n", plan.GetAction(i));
     }
   }
 

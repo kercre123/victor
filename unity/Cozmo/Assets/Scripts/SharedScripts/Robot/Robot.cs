@@ -1931,7 +1931,7 @@ public class Robot : IRobot {
     DAS.Debug(this, "Execute Behavior " + type);
 
     if (type == ExecutableBehaviorType.LiftLoadTest) {
-      RobotEngineManager.Instance.Message.SetLiftLoadTestAsRunnable = Singleton<SetLiftLoadTestAsRunnable>.Instance;
+      RobotEngineManager.Instance.Message.SetLiftLoadTestAsActivatable = Singleton<SetLiftLoadTestAsActivatable>.Instance;
       RobotEngineManager.Instance.SendMessage();
     }
 
@@ -1944,7 +1944,7 @@ public class Robot : IRobot {
     DAS.Debug(this, "Execute Behavior By Name" + behaviorID.ToString());
 
     if (behaviorID == BehaviorID.LiftLoadTest) {
-      RobotEngineManager.Instance.Message.SetLiftLoadTestAsRunnable = Singleton<SetLiftLoadTestAsRunnable>.Instance;
+      RobotEngineManager.Instance.Message.SetLiftLoadTestAsActivatable = Singleton<SetLiftLoadTestAsActivatable>.Instance;
       RobotEngineManager.Instance.SendMessage();
     }
 

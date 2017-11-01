@@ -13,8 +13,8 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/pose.h"
 #include "util/helpers/printByteArray.h"
-#include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/block.h"
 #include "engine/encodedImage.h"
@@ -24,7 +24,7 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/image_impl.h"
 #include "clad/types/actionTypes.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/proceduralEyeParameters.h"
 #include "util/math/math.h"
@@ -1168,12 +1168,12 @@ namespace Anki {
 
                   printf("Selecting behavior by NAME: %s\n", behaviorName.c_str());
                   if (behaviorName == "LiftLoadTest") {
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsRunnable()));
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsActivatable()));
                   }
                   const int numRuns = root_->getField("numBehaviorRuns")->getSFInt32();
                   BehaviorID behaviorID = BehaviorIDFromString(behaviorName);
                   SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::ExecuteBehaviorByID(behaviorID, numRuns)));
+                                ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(behaviorID), numRuns)));
                 }
                 else if(altKeyPressed)
                 {
@@ -2253,7 +2253,7 @@ namespace Anki {
                       
                       // Enable selection chooser and specify EnrollFace now that settings are sent
                       SendMessage(MessageGameToEngine(ActivateHighLevelActivity(HighLevelActivity::Selection)));
-                      SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorID::EnrollFace, -1)));
+                      SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::EnrollFace), -1)));
                     }
                     
                   } else {
