@@ -2,8 +2,15 @@ package main
 
 import (
 	"anki/ipc"
+	"context"
 	"fmt"
 	"strings"
+
+	api "github.com/anki/sai-go-util/http/apiclient"
+
+	"github.com/google/uuid"
+
+	"github.com/anki/sai-chipper-voice/client/chipper"
 )
 
 type socketMsg struct {
@@ -28,8 +35,9 @@ func socketReader(s ipc.Socket, ch chan<- socketMsg) {
 }
 
 type voiceContext struct {
-	cloud   *CloudContext
+	client  *chipper.ChipperClient
 	samples []byte
+	context context.Context
 }
 
 func (ctx *voiceContext) addSamples(samples []byte, cloudChan chan<- string) {
@@ -39,20 +47,30 @@ func (ctx *voiceContext) addSamples(samples []byte, cloudChan chan<- string) {
 		// thread for sending to server
 		samples := ctx.samples[:streamSize]
 		ctx.samples = ctx.samples[streamSize:]
-		go stream(ctx.cloud, samples, cloudChan)
+		go stream(ctx, samples, cloudChan)
 	}
 }
 
-func stream(ctx *CloudContext, samples []byte, cloudChan chan<- string) {
-	resp, err := ctx.StreamData(samples)
+func stream(ctx *voiceContext, samples []byte, cloudChan chan<- string) {
+	err := ctx.client.SendAudio(samples)
 	if err != nil {
 		fmt.Println("Cloud error:", err)
-		cloudChan <- ""
-	} else if resp.Err != "" {
-		fmt.Println("Cloud error:", resp.Err)
-		cloudChan <- ""
-	} else if resp.IsFinal {
-		cloudChan <- resp.Result.Action
+		return
+	}
+
+	// set up response routine if this is the first stream
+	if ctx.context == nil {
+		ctx.context = context.Background()
+		go func() {
+			resp, err := ctx.client.WaitForIntent(ctx.context)
+			if err != nil {
+				fmt.Println("CCE error:", err)
+				cloudChan <- ""
+				return
+			}
+			fmt.Println("Intent response ->", resp)
+			cloudChan <- resp.Action
+		}()
 	}
 }
 
@@ -78,14 +96,20 @@ func runProcess(micSock ipc.Socket, aiSock ipc.Socket) {
 				if ctx != nil {
 					fmt.Println("Got hotword event while already streaming, weird...")
 				}
-				ctx = &voiceContext{NewCloudContext("MyDevice"), make([]byte, 0, 4000)}
+				client, err := chipper.NewClient("", "my-device-id", uuid.New().String()[:16],
+					api.WithServerURL("http://127.0.0.1:8000"))
+				if err != nil {
+					fmt.Println("Error creating Chipper:", err)
+					continue
+				}
+				ctx = &voiceContext{client, make([]byte, 0, 4000), nil}
 			} else if ctx != nil {
 				ctx.addSamples(msg.buf, cloudChan)
 			}
 		case intent := <-cloudChan:
 			// we got an answer from the cloud, tell mic to stop...
-			n, err := micSock.Write([]byte{0})
-			if n != 1 || err != nil {
+			n, err := micSock.Write([]byte{0, 0})
+			if n != 2 || err != nil {
 				fmt.Println("Mic write error:", n, err)
 			}
 			// and send intent to AI (unless it's empty, server error)
