@@ -65,6 +65,8 @@ CONSOLE_VAR(float, kBW_DebugRenderBeaconZ, "AIWhiteboard", 35.0f);
 // face tracking
 CONSOLE_VAR(float, kFaceTracking_HeadAngleDistFactor, "AIWhiteboard", 1.0);
 CONSOLE_VAR(float, kFaceTracking_BodyAngleDistFactor, "AIWhiteboard", 3.0);
+
+CONSOLE_VAR(int, kMaxObservationAgeToEatCube_ms, "AIWhiteboard", 3000);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* ObjectActionFailureToString(AIWhiteboard::ObjectActionFailure action)
@@ -153,9 +155,11 @@ void AIWhiteboard::Victor_Update()
   
   BlockWorldFilter filter;
   filter.SetAllowedTypes( { ObjectType::Block_LIGHTCUBE1 } );
-  filter.SetFilterFcn( [](const ObservableObject* obj){
+  filter.SetFilterFcn( [this](const ObservableObject* obj){
       return obj->IsPoseStateKnown() &&
-        obj->GetPose().GetWithRespectToRoot().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
+        obj->GetPose().GetWithRespectToRoot().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS &&
+        obj->GetLastObservedTime() + kMaxObservationAgeToEatCube_ms > _robot.GetLastImageTimeStamp();
+
     });
 
   const auto& blockWorld = _robot.GetBlockWorld();

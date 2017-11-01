@@ -46,7 +46,10 @@ protected:
 private:
 
   void TransitionToVerifyFood(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToWaitForFood(BehaviorExternalInterface& behaviorExternalInterface);
   void TransitionToEating(BehaviorExternalInterface& behaviorExternalInterface);
+
+  TimeStamp_t _imgTimeStartedWaitngForFood = 0;
 
   std::shared_ptr<BehaviorFeedingEat> _eatFoodBehavior;
 };
