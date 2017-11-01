@@ -30,7 +30,7 @@ namespace Anki {
     // angle: angle about z-axis (which runs vertically along marker)
     //     x: distance along marker horizontal
     //     y: distance along marker normal
-    const Pose2d kChargerPreDockPoseOffset = {0, 0, 250.f};
+    const Pose2d kChargerPreDockPoseOffset = {0, 0, 130.f};
     
     const std::vector<Point3f>& Charger::GetCanonicalCorners() const {
     
