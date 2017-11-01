@@ -112,6 +112,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoFeeding.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoNapping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoObservingFaceInteraction.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorObservingDemo.h"
 
@@ -762,6 +763,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, 
     case BehaviorClass::DispatcherRandom:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDispatcherRandom(config));
+      break;
+    }
+    case BehaviorClass::VictorDemoNapping:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorVictorDemoNapping(config));
       break;
     }
   }

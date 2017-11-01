@@ -80,6 +80,18 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior(BehaviorExternalI
         ( behavior->IsActivated() ||
           behavior->WantsToBeActivated(behaviorExternalInterface) ) ) {
       availableBehaviors.PushBack(behavior, _weights[idx]);
+
+      PRINT_CH_DEBUG("Behaviors", "BehaviorDispatcherRandom.ConsiderBehavior",
+                     "%s: considering '%s' with weight %f",
+                     GetIDStr().c_str(),
+                     behavior->GetIDStr().c_str(),
+                     _weights[idx]);
+    }
+    else {
+      PRINT_CH_DEBUG("Behaviors", "BehaviorDispatcherRandom.IgnoreBehavior",
+                     "%s: skipping '%s'",
+                     GetIDStr().c_str(),
+                     behavior->GetIDStr().c_str());
     }
   }
 

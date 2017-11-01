@@ -115,7 +115,8 @@ enum uint_8 BehaviorClass {
   // Victor / demo behavior
   VictorObservingDemo,
   VictorDemoFeeding,
-  VictorDemoObservingFaceInteraction
+  VictorDemoObservingFaceInteraction,
+  VictorDemoNapping
 }
 
 
@@ -356,6 +357,12 @@ enum uint_8 BehaviorID {
   VictorDemoDriveOffChargerIntoObserving,
   VictorDemoSocialize,
   VictorDemoSocializeGame,
+  VictorDemoPlayState,
+  VictorDemoPlay,
+  VictorDemoGoToSleep,
+  VictorDemoNappingState,
+  VictorDemoNapping,
+  VictorDemoNappingWakeUp,
   
   Needs_SevereLowEnergyRequest,
   ObservingOnChargerIdle,

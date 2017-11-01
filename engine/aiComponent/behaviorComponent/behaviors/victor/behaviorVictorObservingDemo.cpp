@@ -21,6 +21,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iFeedingListener.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
+#include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/faceWorld.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
@@ -32,8 +34,11 @@ namespace Cozmo {
 namespace {
 
 static constexpr const float kFeedingTimeout_s = 30.0f;
-static constexpr const float kRecentlyPlacedChargerTimeout_s = 60.0f * 10;
+static constexpr const float kRecentlyPlacedChargerTimeout_s = 60.0f * 0.2f; // 10; // TEMP: 
 static constexpr const float kSocializeKnownFaceCooldown = 60.0f * 30;
+static constexpr const float kGoToSleepTimeout_s = 60.0f * 0.5f; // TEMP: much much longer
+static constexpr const float kWantsToPlayTimeout_s = 60.0f * 20;
+static constexpr const u32 kMinFaceAgeToAllowSleep_ms = 5000;
 
 // TODO:(bn) move somewhere else
 class TimeoutCondition : public ICondition
@@ -170,17 +175,55 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
       for( const auto& faceID : faces ) {
         const auto* face = faceWorld.GetFace(faceID);
         if( face != nullptr && face->HasName() ) {
-          const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          if( _lastSocializeTime_s < 0.0f ||
-              _lastSocializeTime_s + kSocializeKnownFaceCooldown <= currTime_s ) {
-            
-            _lastSocializeTime_s = currTime_s;
+          if( StateExitCooldownExpired(StateID::Socializing, kSocializeKnownFaceCooldown) ) {
             return true;
           }
         }
       }
       return false;
     });
+
+  auto CondWantsToPlay = std::make_shared<LambdaCondition>(
+    [this](BehaviorExternalInterface& behaviorExternalInterface) {
+      if( StateExitCooldownExpired(StateID::Playing, kWantsToPlayTimeout_s) ) {
+        BlockWorldFilter filter;
+        filter.SetAllowedTypes( {{ ObjectType::Block_LIGHTCUBE2, ObjectType::Block_LIGHTCUBE3 }} );
+        filter.SetFilterFcn( [this](const ObservableObject* obj){ return obj->IsPoseStateKnown(); });
+        
+        const auto& blockWorld = behaviorExternalInterface.GetBlockWorld();
+        const auto* block = blockWorld.FindLocatedMatchingObject(filter);
+        if( block != nullptr ) {
+          return true;
+        }
+      }
+      return false;
+    });
+
+  auto CondWantsToSleep = std::make_shared<LambdaCondition>(
+    [this](BehaviorExternalInterface& behaviorExternalInterface) {
+      if( _currState != StateID::ObservingOnCharger ) {
+        PRINT_NAMED_WARNING("BehaviorVictorObservingDemo.WantsToSleepCondition.WrongState",
+                            "This condition only works from ObservingOnCharger");
+        return false;
+      }
+      
+      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if( _states.at(StateID::ObservingOnCharger)._lastTimeStarted_s + kGoToSleepTimeout_s <= currTime_s ) {
+
+        // only go to sleep if we haven't recently seen a face
+        auto& faceWorld = behaviorExternalInterface.GetFaceWorld();
+        Pose3d waste;
+        const bool inRobotOriginOnly = false; // might have been picked up
+        const TimeStamp_t lastFaceTime = faceWorld.GetLastObservedFace(waste, inRobotOriginOnly);
+        const TimeStamp_t lastImgTime = behaviorExternalInterface.GetRobot().GetLastImageTimeStamp();
+        if( lastFaceTime < lastImgTime &&
+            lastImgTime - lastFaceTime > kMinFaceAgeToAllowSleep_ms ) {
+          return true;
+        }
+      }
+      return false;
+    });
+    
   
   ////////////////////////////////////////////////////////////////////////////////
   // Define states
@@ -197,6 +240,8 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     state.AddInterruptingTransition(StateID::Observing, CondOffCharger);
     state.AddInterruptingTransition(StateID::Feeding, CondCanEat);
     state.AddInterruptingTransition(StateID::Socializing, CondNewKnownFace);
+    state.AddNonInterruptingTransition(StateID::Napping, CondWantsToSleep);
+    // state.AddNonInterruptingTransition(StateID::DriveOffChargerIntoPlay, CondWantsToPlay);
     AddState(std::move(state));
   }
 
@@ -222,6 +267,15 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::DriveOffCharger);
+    DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.DriveOffCharger");
+
+    State driveOffCharger(StateID::DriveOffChargerIntoPlay, behavior);
+    driveOffCharger.AddExitTransition(StateID::Playing, CondTrue);
+    AddState(std::move(driveOffCharger));
+  }
+
+  {
     ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoObservingState);
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingState");
 
@@ -229,6 +283,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     state.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
     state.AddInterruptingTransition(StateID::Feeding, CondCanEat);
     state.AddInterruptingTransition(StateID::Socializing, CondNewKnownFace);
+    // state.AddNonInterruptingTransition(StateID::Playing, CondWantsToPlay);
     AddState(std::move(state));
   }
 
@@ -259,6 +314,44 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     AddState(std::move(state));
   }
 
+  {
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoPlayState);
+    DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoPlayState");
+
+    State state(StateID::Playing, behavior);
+    state.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
+    state.AddExitTransition(StateID::Observing, CondTrue);
+    
+    AddState(std::move(state));
+  }
+
+  {
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoNappingState);
+    DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoNappingState");
+
+    State state(StateID::Napping, behavior);
+    state.AddInterruptingTransition(StateID::WakingUp, CondOffCharger);
+    state.AddNonInterruptingTransition(StateID::WakingUp, CondIsHungry);
+    
+    AddState(std::move(state));
+  }
+
+  {
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoNappingWakeUp);
+    DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoNappingWakeUp");
+
+    State state(StateID::WakingUp, behavior);
+    state.AddExitTransition(StateID::ObservingOnCharger, CondTrue);
+    
+    AddState(std::move(state));
+  }
+
+  DEV_ASSERT_MSG( _states.size() == ((size_t)StateID::Count),
+                  "BehaviorVictorObservingDemo.MissingStates",
+                  "Demo has %zu states defined, but there are %zu in the enum",
+                  _states.size(),
+                  ((size_t)StateID::Count) );    
+
   // TODO:(bn) assert that all states are present in the map
 
   _initComplete = true;
@@ -266,7 +359,9 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
 
 void BehaviorVictorObservingDemo::AddState( State&& state )
 {
-  if( ANKI_VERIFY(!_initComplete, "BehaviorVictorObservingDemo.AddState.CalledOutsideInit", "") ) {
+  if( ANKI_VERIFY(!_initComplete, "BehaviorVictorObservingDemo.AddState.CalledOutsideInit", "") &&
+      ANKI_VERIFY( _states.find(state._id) == _states.end(),
+                   "BehaviorVictorObservingDemo.AddState.StateAlreadyExists", "") ) {    
     _states.emplace(state._id, state);
   }
 }
@@ -450,6 +545,9 @@ void BehaviorVictorObservingDemo::State::OnActivated()
     const auto& iConditionPtr = transitionPair.second;
     iConditionPtr->EnteredScope();
   }
+
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _lastTimeStarted_s = currTime_s;       
 }
 
 void BehaviorVictorObservingDemo::State::OnDeactivated()
@@ -466,7 +564,23 @@ void BehaviorVictorObservingDemo::State::OnDeactivated()
     const auto& iConditionPtr = transitionPair.second;
     iConditionPtr->LeftScope();
   }
+
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _lastTimeEnded_s = currTime_s;
 }
+
+bool BehaviorVictorObservingDemo::StateExitCooldownExpired(StateID state, float timeout) const
+{
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if( _states.at(state)._lastTimeEnded_s < 0.0f ||
+      _states.at(state)._lastTimeEnded_s + timeout <= currTime_s ) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
 
 }
 }

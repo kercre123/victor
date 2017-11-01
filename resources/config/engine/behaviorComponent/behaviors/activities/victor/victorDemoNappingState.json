@@ -1,0 +1,9 @@
+{
+  "behaviorID" : "VictorDemoNappingState",
+  "behaviorClass" : "DispatcherQueue",
+
+  "behaviors": [
+    "VictorDemoGoToSleep",
+    "VictorDemoNapping"
+  ]
+}
