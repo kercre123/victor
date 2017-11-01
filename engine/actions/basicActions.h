@@ -274,7 +274,8 @@ namespace Cozmo {
     {
     public:
       enum class Preset : u8 {
-        GROUND_PLANE_VISIBLE      // at this head angle, the whole ground plane (or the max amount) will be visible
+        GROUND_PLANE_VISIBLE,      // at this head angle, the whole ground plane (or the max amount) will be visible
+        IDEAL_BLOCK_VIEW           // ideal angle for looking at blocks
       };
     
       MoveHeadToAngleAction(Robot& robot,
