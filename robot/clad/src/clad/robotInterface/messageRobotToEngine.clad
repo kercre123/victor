@@ -37,6 +37,11 @@ message RobotPoked
 {
 }
 
+// Indicates the robot has heard the trigger word
+message TriggerWordDetected
+{
+}
+
 // This message indicates that the robot experienced a freefall event
 message FallingEvent {
   uint_32 timestamp,       // When the fall started (as a robot timestamp)
@@ -168,6 +173,9 @@ union RobotToEngine {
   AnimationStarted           animStarted            = 0xD6,
   AnimationEnded             animEnded              = 0xD7,
   EndOfMessage               endOfMessage           = 0xD8,
+
+  // Messages relating to trigger word detection
+  TriggerWordDetected        triggerWordDetected    = 0xD9,
 
   // Audio
   AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,

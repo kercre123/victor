@@ -536,6 +536,11 @@ message SetMemoryMapBroadcastFrequency_sec {
 // Behavior Commands
 ///////////////////////////////////////////////////////////////////////////////
 
+// Allows game to fake trigger word detection to the behavior component
+message FakeTriggerWordDetected
+{
+}
+
 // ActivateHighLevelActivity
 message ActivateHighLevelActivity {
   HighLevelActivity activityType
