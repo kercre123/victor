@@ -354,6 +354,15 @@ enum uint_8 BehaviorID {
   VC_SearchForFace,
 
   VictorFreeplay,
+ 
+  VictorCloudDemoBase,
+  VictorCloudDemoAutonomousStub,
+  VictorCloudDemoHello,
+  VictorCloudDemoGoodbye,
+  VictorCloudDemoHowAreYou,
+  VictorCloudDemoFistBump,
+  VictorCloudDemoTriggerDetected,
+  VictorCloudDemoReturnToCharger,
 
   VictorObservingDemo,
   VictorDemoFeedingState,
