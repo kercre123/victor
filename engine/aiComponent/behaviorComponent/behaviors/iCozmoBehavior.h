@@ -60,7 +60,8 @@ class DriveToObjectAction;
 class BehaviorHelperFactory;
 class IHelper;
 enum class ObjectInteractionIntention;
-  
+enum class CloudIntent : uint8_t;
+
 class ISubtaskListener;
 class IReactToFaceListener;
 class IReactToObjectListener;
@@ -484,7 +485,7 @@ private:
 
   // only used if we aren't using the BSM
   u32 _lastActionTag = 0;
-  IStateConceptStrategyPtr _stateConceptStrategy;
+  std::vector<IStateConceptStrategyPtr> _stateConceptStrategies;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const;
@@ -506,6 +507,12 @@ private:
   ExecutableBehaviorType _executableType;
   int _timesResumedFromPossibleInfiniteLoop = 0;
   float _timeCanRunAfterPossibleInfiniteLoopCooldown_sec = 0.f;
+  
+  // when respond to cloud intent is set the behavior will
+  // 1) WantToBeActivated when that intent is pending
+  // 2) Clear the intent when the behavior is activated
+  CloudIntent _respondToCloudIntent;
+
   // if an unlockId is set, the behavior won't be activatable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;
 
