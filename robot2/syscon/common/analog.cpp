@@ -28,7 +28,7 @@ static const int MINIMUM_VEXT_TIME = 20; // 0.1s
 static const int BUTTON_THRESHOLD = ADC_VOLTS(2.6);
 static const int BOUNCE_LENGTH = 3;
 
-static bool onBatPower;
+static volatile bool onBatPower;
 static bool chargeAllowed;
 static int vext_debounce;
 static bool last_vext = false;
@@ -55,6 +55,9 @@ static inline void wait(int us) {
 }
 
 static void setBatteryPower(bool bat) {
+  ADC1->ISR = ADC_ISR_AWD;
+  onBatPower = bat;
+
   if (bat) {
     NVIC_DisableIRQ(ADC1_IRQn);
 
@@ -62,15 +65,13 @@ static void setBatteryPower(bool bat) {
     wait(40*5); // Just around 50us
     BAT_EN::set();
   } else {
-    NVIC_EnableIRQ(ADC1_IRQn);
-    
     BAT_EN::reset();
     wait(40); // Just around 10us
     nVEXT_EN::reset();
     nVEXT_EN::mode(MODE_OUTPUT);
-  }
 
-  onBatPower = bat;
+    NVIC_EnableIRQ(ADC1_IRQn);
+  }
 }
 
 void Analog::init(void) {
@@ -190,7 +191,6 @@ void Analog::delayCharge() {
 }
 
 extern "C" void ADC1_IRQHandler(void) {
-  ADC1->ISR = ADC_ISR_AWD;
   setBatteryPower(true);
 }
 
