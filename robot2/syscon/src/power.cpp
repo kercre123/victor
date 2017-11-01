@@ -43,7 +43,9 @@ void Power::init(void) {
 
 void Power::stop(void) {
   nVDDs_EN::set();
-  POWER_EN::pull(PULL_DOWN);
+  POWER_EN::pull(PULL_NONE);
+  POWER_EN::reset();
+  POWER_EN::mode(MODE_OUTPUT);
 }
 
 void Power::softReset(bool erase) {

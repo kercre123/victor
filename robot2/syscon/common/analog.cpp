@@ -74,6 +74,18 @@ static void setBatteryPower(bool bat) {
   }
 }
 
+static void disableVMain(void) {
+  NVIC_DisableIRQ(ADC1_IRQn);
+  nVEXT_EN::mode(MODE_INPUT);
+  BAT_EN::reset();
+  onBatPower = false;
+  wait(40*5);
+}
+
+static void enableVMain(void) {
+  setBatteryPower(Analog::values[ADC_VEXT] < TRANSITION_POINT);
+}
+
 void Analog::init(void) {
   // Calibrate ADC1
   if ((ADC1->CR & ADC_CR_ADEN) != 0) {
@@ -160,7 +172,7 @@ void Analog::init(void) {
 
   // Startup external power interrupt / handler
   NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
-  setBatteryPower(Analog::values[ADC_VEXT] < TRANSITION_POINT);
+  enableVMain();
 }
 
 void Analog::stop(void) {
@@ -238,6 +250,7 @@ void Analog::tick(void) {
     if (hold_count < POWER_DOWN_TIME) {
       hold_count++;
     } else if (hold_count < POWER_WIPE_TIME) {
+      disableVMain();
       Lights::disable();
     } else {
       Power::softReset(true);
