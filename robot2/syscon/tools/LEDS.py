@@ -15,13 +15,22 @@ def gen(b):
 
 
 def led(x, y):
-	pattern = (8 << x) | (0x7 ^ y)
+	pattern = (0b00100000 << x) | (0b00000111 ^ y)
 
 	print ("static void led_%sx%i(void) {" % (y, x))
-	gen (pattern)
+	gen(pattern)
 	print ("    kick_off();")
 	print ("}")
 
-for x in range(4):
+# Regular RGB
+for x in range(3):
 	for y in range(8):
 		led(x, y)
+
+for y in range(4):
+	pattern = 0b00001000 * (0b11 ^ y)
+
+	print ("static void led_%sx%i(void) {" % (y, 3))
+	gen(pattern)
+	print ("    kick_off();")
+	print ("}")
