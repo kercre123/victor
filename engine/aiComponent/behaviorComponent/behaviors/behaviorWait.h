@@ -40,7 +40,10 @@ public:
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   virtual bool ShouldRunWhileOffTreads() const override { return true;}
   virtual bool ShouldRunWhileOnCharger() const override { return true;}
-  
+
+  virtual bool CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const override {
+    return true; }
+
 protected:
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override
