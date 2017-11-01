@@ -53,14 +53,20 @@ protected:
     
   // ========== Members ==========
   
+  // Class supports playing a series of animation triggers OR a series of animations by name
+  // BUT NOT BOTH AT THE SAME TIME!!!!
   std::vector<AnimationTrigger> _animTriggers;
+  std::vector<std::string>      _animationNames;
   int _numLoops;
   int _sequenceLoopsDone; // for sequences it's not per animation, but per sequence, so we have to wait till the last one
 
 private:
+  void StartPlayingAnimationsByName(BehaviorExternalInterface& behaviorExternalInterface);
+  void StartPlayingAnimationsByTrigger(BehaviorExternalInterface& behaviorExternalInterface);  
 
   // queues actions to play all the animations specified in _animTriggers
-  void StartSequenceLoop(BehaviorExternalInterface& behaviorExternalInterface);
+  void StartSequenceLoopForTriggers(BehaviorExternalInterface& behaviorExternalInterface);
+  void StartSequenceLoopForNames(BehaviorExternalInterface& behaviorExternalInterface);
   
   // We call our listeners whenever an animation completes
   void CallToListeners(BehaviorExternalInterface& behaviorExternalInterface);
