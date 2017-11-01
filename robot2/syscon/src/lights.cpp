@@ -8,20 +8,7 @@
 static inline void kick_off();
 static void terminate(void);
 
-static inline void wait(int us) {
-  __asm {
-    _jump:  nop
-            nop
-            nop
-            nop
-            nop
-            nop
-            nop
-            subs     us,us, #1
-            cmp      us, #0
-            bgt      _jump
-  }
-}
+#define wait() __asm("nop\n");
 
 #include "led_func.h" // Generated with LEDs.py
 
@@ -61,7 +48,7 @@ static LightChannel *current_light;
 static bool disabled;
 
 void Lights::init(void) {
-  //LED_CLK::type(TYPE_OPENDRAIN);
+  LED_CLK::type(TYPE_OPENDRAIN);
   LED_DAT::reset();
   LED_CLK::reset();
   LED_DAT::mode(MODE_OUTPUT);
@@ -97,7 +84,7 @@ static void kick_off(void) {
 
 static void terminate(void) {
   // Shifing by 3 is enough to disable LEDs
-  LED_DAT::set();
+  LED_DAT::reset();
   LED_CLK::set();
   LED_CLK::reset();
   LED_CLK::set();

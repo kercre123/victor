@@ -6,12 +6,12 @@ def gen(b):
 
 		if prev != now:
 			if now:
-				print ("    LED_DAT::set();")
-			else:
 				print ("    LED_DAT::reset();")
+			else:
+				print ("    LED_DAT::set();")
 			prev = now
 
-		print ("    LED_CLK::set(); LED_CLK::reset();")
+		print ('    wait(); LED_CLK::set(); wait(); LED_CLK::reset();')
 
 
 def led(x, y):
