@@ -70,9 +70,9 @@ BehaviorComponentCloudReceiver::BehaviorComponentCloudReceiver(Robot& robot)
             EI->Subscribe(GameToEngineTag::FakeCloudIntent, fakeCloudIntentCallback));
     }
     if(robot.GetRobotMessageHandler() != nullptr){
-        robot.GetRobotMessageHandler()->Subscribe(robot.GetID(),
+      _eventHandles.push_back(robot.GetRobotMessageHandler()->Subscribe(robot.GetID(),
                                                   RobotInterface::RobotToEngineTag::triggerWordDetected,
-                                                  triggerWordCallback);
+                                                  triggerWordCallback));
     }
   }
 }
@@ -81,6 +81,7 @@ BehaviorComponentCloudReceiver::BehaviorComponentCloudReceiver(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorComponentCloudReceiver::IsIntentPending(CloudIntent intent)
 {
+  std::lock_guard<std::mutex> lock{_mutex};  
   if(_pendingIntents.empty()){
       return false;
   }
@@ -97,6 +98,7 @@ bool BehaviorComponentCloudReceiver::IsIntentPending(CloudIntent intent)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponentCloudReceiver::ClearIntentIfPending(CloudIntent intent)
 {
+  std::lock_guard<std::mutex> lock{_mutex};  
   if(_pendingIntents.empty()){
     return;
   }
