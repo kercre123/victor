@@ -134,8 +134,13 @@ int fixture_serial(int serialFd) {
   const char* response = NULL;
   static int linelen = 0;
   int nread = serial_read(serialFd, (uint8_t*)linebuf+linelen, LINEBUFSZ-linelen);
-  if (nread<0) { return 0; }
+  if (nread<=0) { return 0; }
   const char* endl = linebuf+linelen;
+
+  
+  printf("%.*s", nread, linebuf+linelen);
+  fixture_log_write(linebuf+linelen, nread);
+
   linelen+=nread;
   if (linelen >= LINEBUFSZ)
   {
@@ -145,14 +150,12 @@ int fixture_serial(int serialFd) {
   }
   const char* line = find_line(linebuf, linelen, &endl);
   while (line) {
-    printf("%.*s", endl-line, line);
-    fixture_log_write(line, endl-line);
+//    printf("%.*s", endl-line, line);
+//    fixture_log_write(line, endl-line);
     if (line[0]=='>' && line[1]=='>') {
-      if (strncmp(line+2, "exit", 4)==0)  {
-        return 1;
-      }
       response = fixture_command_parse(line+2, endl-line-2);
       if (response) {
+        printf("%s", response);
         fixture_log_writestring(response);
         serial_write(serialFd, (uint8_t*)response, strlen(response));
       }
@@ -233,6 +236,9 @@ int user_terminal(void) {
       }
     }
     if (endl) {
+      if (strncmp(linebuf, "quit", 4)==0)  {
+        return 1;
+      }
       serial_write(gSerialFd, (uint8_t*)linebuf, endl-linebuf);
       serial_write(gSerialFd, (uint8_t*)"\n", 1);
       linelen = 0;
@@ -264,16 +270,19 @@ int main(int argc, const char* argv[])
 
   signal(SIGINT, safe_quit);
 
+  printf("initializing lcd\n");
   lcd_init();
   lcd_set_brightness(20);
+  printf("initializing display\n");
   display_init();
+  printf("initializing log\n");
+  fixture_log_init();
 
   gSerialFd = serial_init(FIXTURE_TTY, FIXTURE_BAUD);
 
-//  fixture_log_start("",0);
 
 
-  serial_write(gSerialFd, (uint8_t*)"\x27\x27\x27\n", 4);
+  serial_write(gSerialFd, (uint8_t*)"\x1b\x1b\n", 4);
   serial_write(gSerialFd, (uint8_t*)"reset\n", 6);
 
 
@@ -281,7 +290,7 @@ int main(int argc, const char* argv[])
   while (!exit)
   {
     exit = fixture_serial(gSerialFd);
-    exit = user_terminal();
+    exit |= user_terminal();
  }
 
   on_exit();

@@ -19,8 +19,8 @@ static struct {
 
 unsigned int get_sequence_number(const char* seqfile)
 {
-  int fd = open(seqfile, O_RDWR);
-  if (!fd) { return 0; }
+  int fd = open(seqfile, O_RDWR|O_CREAT);
+  if (fd<0) { return 0; }
   unsigned int seqnum;
   if (read(fd, &seqnum,sizeof(seqnum)) != sizeof(seqnum))  {
     seqnum = 0;
