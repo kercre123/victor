@@ -37,6 +37,23 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // From INavMemoryMap
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // add a quad with the specified content
+  // virtual void AddQuadInternal(const Quad2f& quad, EContentType type, TimeStamp_t timeMeasured) override;
+  virtual void AddQuad(const Quad2f& quad, const MemoryMapData& content) override;
+  
+  // add a line with the specified content
+  // virtual void AddLineInternal(const Point2f& from, const Point2f& to, EContentType type, TimeStamp_t timeMeasured) override;
+  virtual void AddLine(const Point2f& from, const Point2f& to, const MemoryMapData& content) override;
+  
+  // add a triangle with the specified content
+  // virtual void AddTriangleInternal(const Triangle2f& tri, EContentType type, TimeStamp_t timeMeasured) override;
+  virtual void AddTriangle(const Triangle2f& tri, const MemoryMapData& content) override;
+  
+  // add a point with the specified content
+  // virtual void AddPointInternal(const Point2f& point, EContentType type, TimeStamp_t timeMeasured) override;
+  virtual void AddPoint(const Point2f& point, const MemoryMapData& content) override;
+  
   
   // merge the given map into this map by applying to the other's information the given transform
   // although this methods allows merging any INavMemoryMap into any INavMemoryMap, subclasses are not
@@ -55,6 +72,9 @@ public:
   
   // attempt to apply a transformation function to all nodes in the tree
   virtual void TransformContent(NodeTransformFunction transform) override;
+  
+  // populate a list of all data that matches the predicate
+  virtual void FindContentIf(NodePredicate pred, std::unordered_set<std::shared_ptr<MemoryMapData>>& output) override;
   
   // return the size of the area currently explored
   virtual double GetExploredRegionAreaM2() const override;
@@ -91,25 +111,6 @@ public:
   
 protected:
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // From INavMemoryMap
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // add a quad with the specified content
-  virtual void AddQuadInternal(const Quad2f& quad, EContentType type, TimeStamp_t timeMeasured) override;
-  virtual void AddQuadInternal(const Quad2f& quad, const MemoryMapData& content) override;
-  
-  // add a line with the specified content
-  virtual void AddLineInternal(const Point2f& from, const Point2f& to, EContentType type, TimeStamp_t timeMeasured) override;
-  virtual void AddLineInternal(const Point2f& from, const Point2f& to, const MemoryMapData& content) override;
-  
-  // add a triangle with the specified content
-  virtual void AddTriangleInternal(const Triangle2f& tri, EContentType type, TimeStamp_t timeMeasured) override;
-  virtual void AddTriangleInternal(const Triangle2f& tri, const MemoryMapData& content) override;
-  
-  // add a point with the specified content
-  virtual void AddPointInternal(const Point2f& point, EContentType type, TimeStamp_t timeMeasured) override;
-  virtual void AddPointInternal(const Point2f& point, const MemoryMapData& content) override;
   
   virtual TimeStamp_t GetLastChangedTimeStamp() const override {return _quadTree.GetRootNodeContent().data->GetLastObservedTime();}
 

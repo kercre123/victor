@@ -14,7 +14,7 @@
 #include "engine/components/blockTapFilterComponent.h"
 
 #include "engine/activeObject.h"
-#include "engine/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"

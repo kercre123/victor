@@ -1,5 +1,5 @@
 /**
- * File: memoryMapData_ProxObstacle.h
+ * File: memoryMapData_ObservableObject.cpp
  *
  * Author: Michael Willett
  * Date:   2017-07-31
@@ -12,13 +12,19 @@
 #include "memoryMapData_ObservableObject.h"
 
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/polygon_impl.h"
 
 namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MemoryMapData_ObservableObject::MemoryMapData_ObservableObject(MemoryMapTypes::EContentType type, TimeStamp_t t)
-: MemoryMapData(type, t)
+MemoryMapData_ObservableObject::MemoryMapData_ObservableObject(MemoryMapTypes::EContentType type, 
+                                                               const ObjectID& i, 
+                                                               const Poly2f& p,
+                                                               TimeStamp_t t)
+: MemoryMapData(type, t, true)
+, id(i)
+, boundingPoly(p)
 {
 
 }

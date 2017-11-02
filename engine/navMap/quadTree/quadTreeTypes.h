@@ -40,6 +40,7 @@ enum class ENodeType : uint8_t {
 // content for each node. INavMemoryMapQuadData is polymorphic depending on the content type
 struct NodeContent {
   explicit NodeContent(ENodeType t, const MemoryMapData& m);
+  explicit NodeContent(ENodeType t, MemoryMapTypes::MemoryMapDataPtr m);
   
   // comparison operators
   bool operator==(const NodeContent& other) const;

@@ -94,7 +94,7 @@ namespace Anki {
         _currentTime_ms = 0; // Reset for next time
         return true;
       } else {
-        _currentTime_ms += SAMPLE_LENGTH_MS;
+        _currentTime_ms += ANIM_TIME_STEP_MS;
         return false;
       }
     }
@@ -423,7 +423,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 
         // Taking probabilities into account, select which audio event should be used.
         // TODO: See https://github.com/anki/cozmo-one/pull/5688#discussion_r139861577 for a
-        // suggested improvement to this probability-driven selection (tracked in COZMO-14810)
+        // suggested improvement to this probability-driven selection (tracked in VIC-432)
         const f32 randDbl = GetRNG().RandDbl(1.0);
         f32 randRangeMin = 0.0;
         for (int idx=0; idx<_audioReferences.size(); idx++) {
@@ -454,13 +454,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         return InvalidRef;
       }
       return _audioReferences[selectedAudioIndex];
-    }
-
-    const RobotAudioKeyFrame::AudioRef& RobotAudioKeyFrame::GetAudioRef() const
-    {
-      const int8_t selectedAudioIndex = GetAudioRefIndex();
-      const AudioRef& audioRef = GetAudioRef(selectedAudioIndex);
-      return audioRef;
     }
 
     Result RobotAudioKeyFrame::DefineFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug)

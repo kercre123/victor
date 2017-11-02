@@ -897,7 +897,7 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Challenge Exit
 
-  public void RaiseChallengeQuit() {
+  public virtual void RaiseChallengeQuit() {
     _EndStateIndex = ENDSTATE_QUIT;
     _StateMachine.Stop();
 

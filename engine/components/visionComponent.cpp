@@ -471,7 +471,7 @@ namespace Cozmo {
       else
       {
         PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
-                       "CapturedImageTime:%d OldestStateInHistory:%d",
+                       "CapturedImageTime:%d NewestStateInHistory:%d",
                        _bufferedImg.GetTimestamp(), _robot.GetStateHistory()->GetNewestTimeStamp());
       }
     }
@@ -533,7 +533,7 @@ namespace Cozmo {
                         _imuHistory);
       Unlock();
     }
-    
+
     // Experimental:
     //UpdateOverheadMap(image, _nextPoseData);
     
@@ -911,10 +911,14 @@ namespace Cozmo {
             // Send any images in the debug image lists to Viz for display
             for(auto & debugGray : result.debugImages) {
               debugGray.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
+              // This is the size currently used by Webots
+              debugGray.second.ResizeKeepAspectRatio(360, 640);
               CompressAndSendImage(debugGray.second, kDebugImageCompressQuality, debugGray.first);
             }
             for(auto & debugRGB : result.debugImageRGBs) {
               debugRGB.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
+              // This is the size currently used by Webots
+              debugRGB.second.ResizeKeepAspectRatio(360, 640);
               CompressAndSendImage(debugRGB.second, kDebugImageCompressQuality, debugRGB.first);
             }
           }
@@ -1193,92 +1197,6 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  Result VisionComponent::UpdateOverheadMap(const Vision::ImageRGB& image,
-                                            const VisionPoseData& poseData)
-  {
-    if(poseData.groundPlaneVisible)
-    {
-      const Matrix_3x3f& H = poseData.groundPlaneHomography;
-      
-      const GroundPlaneROI& roi = poseData.groundPlaneROI;
-      
-      Quad2f imgGroundQuad;
-      roi.GetImageQuad(H, image.GetNumCols(), image.GetNumRows(), imgGroundQuad);
-      
-      static Vision::ImageRGB overheadMap(1000.f, 1000.f);
-      
-      // Need to apply a shift after the homography to put things in image
-      // coordinates with (0,0) at the upper left (since groundQuad's origin
-      // is not upper left). Also mirror Y coordinates since we are looking
-      // from above, not below
-      Matrix_3x3f InvShift{
-        1.f, 0.f, roi.GetDist(), // Negated b/c we're using inv(Shift)
-        0.f,-1.f, roi.GetWidthFar()*0.5f,
-        0.f, 0.f, 1.f};
-
-      Pose3d worldPoseWrtRobot = poseData.histState.GetPose().GetInverse();
-      for(s32 i=0; i<roi.GetWidthFar(); ++i) {
-        const u8* mask_i = roi.GetOverheadMask().GetRow(i);
-        const f32 y = static_cast<f32>(i) - 0.5f*roi.GetWidthFar();
-        for(s32 j=0; j<roi.GetLength(); ++j) {
-          if(mask_i[j] > 0) {
-            // Project ground plane point in robot frame to image
-            const f32 x = static_cast<f32>(j) + roi.GetDist();
-            Point3f imgPoint = H * Point3f(x,y,1.f);
-            assert(imgPoint.z() > 0.f);
-            const f32 divisor = 1.f / imgPoint.z();
-            imgPoint.x() *= divisor;
-            imgPoint.y() *= divisor;
-            const s32 x_img = std::round(imgPoint.x());
-            const s32 y_img = std::round(imgPoint.y());
-            if(x_img >= 0 && y_img >= 0 &&
-               x_img < image.GetNumCols() && y_img < image.GetNumRows())
-            {
-              const Vision::PixelRGB value = image(y_img, x_img);
-              
-              // Get corresponding map point in world coords
-              Point3f mapPoint = poseData.histState.GetPose() * Point3f(x,y,0.f);
-              const s32 x_map = std::round( mapPoint.x() + static_cast<f32>(overheadMap.GetNumCols())*0.5f);
-              const s32 y_map = std::round(-mapPoint.y() + static_cast<f32>(overheadMap.GetNumRows())*0.5f);
-              if(x_map >= 0 && y_map >= 0 &&
-                 x_map < overheadMap.GetNumCols() && y_map < overheadMap.GetNumRows())
-              {
-                overheadMap(y_map, x_map).AlphaBlendWith(value, 0.5f);
-              }
-            }
-          }
-        }
-      }
-      
-      Vision::ImageRGB overheadImg = roi.GetOverheadImage(image, H);
-      
-      static s32 updateFreq = 0;
-      if(updateFreq++ == 8){ // DEBUG
-        updateFreq = 0;
-        Vision::ImageRGB dispImg;
-        image.CopyTo(dispImg);
-        dispImg.DrawQuad(imgGroundQuad, NamedColors::RED, 1);
-        dispImg.Display("GroundQuad");
-        overheadImg.Display("OverheadView");
-        
-        // Display current map with the last updated region highlighted with
-        // a red border
-        overheadMap.CopyTo(dispImg);
-        Quad3f lastUpdate;
-        poseData.histState.GetPose().ApplyTo(roi.GetGroundQuad(), lastUpdate);
-        for(auto & point : lastUpdate) {
-          point.x() += static_cast<f32>(overheadMap.GetNumCols()*0.5f);
-          point.y() *= -1.f;
-          point.y() += static_cast<f32>(overheadMap.GetNumRows()*0.5f);
-        }
-        dispImg.DrawQuad(lastUpdate, NamedColors::RED, 2);
-        dispImg.Display("OverheadMap");
-      }
-    } // if ground plane is visible
-    
-    return RESULT_OK;
-  } // UpdateOverheadMap()
-  
   Result VisionComponent::UpdateToolCode(const VisionProcessingResult& procResult)
   {
     for(auto & info : procResult.toolCodes)
@@ -1512,25 +1430,9 @@ namespace Cozmo {
     }
     
     ImageChunk m;
-    
-    // We're hijacking the existing "chunkDebug" member, which used to be a firmware field.
-    // We could rename it to "userData" or something more meaningful if desired...
-    // Here, we'll use it to store [ imageWidth (12 bits) | imageHeight (12 bits) | identifierValue (8 bits)]
-    // Better fix to be provided by VIC-470 when we remove ImageResolution altogether
-    m.chunkDebug = 0;
-    static_assert(sizeof(m.chunkDebug)==4, "ImageChunk.chunkDebug expected to be 4 bytes");
-    
-    m.resolution = ImageResolution::Custom;
-    if(img.GetNumCols() >= 4096 || img.GetNumRows() >= 4096)
-    {
-      PRINT_NAMED_WARNING("VisionComponent.CompressAndSend.ImageTooLarge",
-                          "%dx%d image larger than 4095x4095 max", 
-                          img.GetNumCols(), img.GetNumRows());
-      return RESULT_FAIL;
-    }
-    m.chunkDebug |= ((0xFFF & img.GetNumCols()) << 20);
-    m.chunkDebug |= ((0xFFF & img.GetNumRows()) << 8);
-    
+    m.height = img.GetNumRows();
+    m.width  = img.GetNumCols();
+
     const std::vector<int> compressionParams = {
       CV_IMWRITE_JPEG_QUALITY, quality
     };
@@ -1545,21 +1447,20 @@ namespace Cozmo {
     const u32 kMaxChunkSize = static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE);
     u32 bytesRemainingToSend = static_cast<u32>(compressedBuffer.size());
     
-    // Put the identifier value in the 8 LSBs of chunkDebug
-    s32 identifierValue = 0;
+    // Use the identifier value as the display index
+    m.displayIndex = 0;
     auto displayIndexIter = _vizDisplayIndexMap.find(identifier);
     if(displayIndexIter == _vizDisplayIndexMap.end())
     {
       // New identifier
-      identifierValue = Util::numeric_cast<s32>(_vizDisplayIndexMap.size());
-      _vizDisplayIndexMap.emplace(identifier, identifierValue); // NOTE: this will increase size() for next time
+      m.displayIndex = Util::numeric_cast<s32>(_vizDisplayIndexMap.size());
+      _vizDisplayIndexMap.emplace(identifier, m.displayIndex); // NOTE: this will increase size() for next time
     }
     else
     {
-      identifierValue = displayIndexIter->second;
+      m.displayIndex = displayIndexIter->second;
     }
-    m.chunkDebug |= (0xFF & identifierValue);
-    
+
     static u32 imgID = 0;
     m.imageId = ++imgID;
     
@@ -2294,20 +2195,29 @@ namespace Cozmo {
   
   bool VisionComponent::CaptureImage(Vision::ImageRGB& image_out)
   {
-    // This resolution should match AndroidHAL::_imageCaptureResolution!
-    const ImageResolution expectedResolution = DEFAULT_IMAGE_RESOLUTION;
-    DEV_ASSERT(expectedResolution == AndroidHAL::getInstance()->CameraGetResolution(),
-               "VisionComponent.CaptureImage.ResolutionMismatch");
-    const int cameraRes = static_cast<const int>(expectedResolution);
-    const int numRows = Vision::CameraResInfo[cameraRes].height;
-    const int numCols = Vision::CameraResInfo[cameraRes].width;
+    auto androidHAL = AndroidHAL::getInstance();
+
+    const int numRows = androidHAL->CameraGetHeight();
+    const int numCols = androidHAL->CameraGetWidth();
+
+    if(IsCameraCalibrationSet())
+    {
+      // This resolution should match the resolution at which we calibrated
+      DEV_ASSERT_MSG(numRows == GetCameraCalibration()->GetNrows() &&
+                     numCols == GetCameraCalibration()->GetNcols(), 
+                     "VisionComponent.CaptureAndSendImage.ResolutionMismatch",
+                     "Calibration:%dx%d AndroidHAL:%dx%d",
+                     GetCameraCalibration()->GetNrows(),
+                     GetCameraCalibration()->GetNcols(),
+                     numCols,numRows);
+    }
 
     // Get image buffer
     u8* buffer = nullptr;
     u32 imageId = 0;
     TimeStamp_t imageCaptureSystemTimestamp_ms = 0;
     
-    const bool gotImage = AndroidHAL::getInstance()->CameraGetFrame(buffer, imageId, imageCaptureSystemTimestamp_ms);
+    const bool gotImage = androidHAL->CameraGetFrame(buffer, imageId, imageCaptureSystemTimestamp_ms);
     if(gotImage)
     {
       // Create ImageRGB object from image buffer

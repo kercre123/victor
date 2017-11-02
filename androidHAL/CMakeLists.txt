@@ -72,8 +72,6 @@ PRIVATE
   cti_messaging
   robot_clad # imageTypes.h
 # platform
-#PUBLIC
-  # these need to be public until we remove android-specific classes from androidHAL.h
   ${PLATFORM_LIBS}
 )
 
@@ -81,7 +79,6 @@ android_strip(TARGET androidHAL)
 
 target_compile_definitions(androidHAL
   PRIVATE
-  COZMO_BASESTATION
   ${PLATFORM_COMPILE_DEFS}
 )
 

@@ -43,7 +43,11 @@ public:
   RobotDataLoader(const CozmoAnimContext* context);
   ~RobotDataLoader();
 
-  // loads all data excluding configs, using DispatchWorker to parallelize.
+  // Loads all static configuration data.
+  // Blocks until data is loaded.
+  void LoadConfigData();
+  
+  // Loads all data excluding configs, using DispatchWorker to parallelize.
   // Blocks until the data is loaded.
   void LoadNonConfigData();
   
@@ -56,6 +60,7 @@ public:
   void LoadAnimations();
   void LoadFaceAnimations();
 
+  const Json::Value & GetTextToSpeechConfig() const { return _tts_config; }
 
   using FileJsonMap       = std::unordered_map<std::string, const Json::Value>;
   
@@ -94,6 +99,9 @@ private:
   
   // This gets set when we start loading animations and know the total number
   float _perAnimationLoadingRatio = 0.0f;
+
+  Json::Value _tts_config;
+  
 };
 
 }

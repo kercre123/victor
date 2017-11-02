@@ -11,8 +11,8 @@
  **/
 
 #include "simulator/game/cozmoSimTestController.h"
-#include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
-
+#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 // If enabled, don't do the first enrollment where we don't see a face and just
 // wait for timeout. This flag is useful for local testing where you don't want
@@ -113,7 +113,7 @@ void CST_EnrollFace::StartEnrollment(Vision::FaceID_t saveID, const std::string&
   _faceEnrollmentCompleted = false;
   
   SendMessage(MessageGameToEngine(std::move(setFaceToEnroll)));
-  SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorID::EnrollFace, -1)));
+  SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::EnrollFace), -1)));
 }
   
 void CST_EnrollFace::WaitToSetNewFacePose(double waitTime_sec, webots::Node* face, const Pose3d& newPose, TestState newState)
@@ -125,13 +125,13 @@ void CST_EnrollFace::WaitToSetNewFacePose(double waitTime_sec, webots::Node* fac
   
   _waitStartTime = GetSupervisor()->getTime();
   
-  _testState = TestState::WaitForFacePoseChange;
+  SET_TEST_STATE(WaitForFacePoseChange);
 }
   
 void CST_EnrollFace::LookDownAndTransition(TestState nextState, const std::function<void()>& fcn)
 {
   SendMoveHeadToAngle(MIN_HEAD_ANGLE, 75.f, 100.f);
-  _testState = TestState::WaitForLookDown;
+  SET_TEST_STATE(WaitForLookDown);
   _callback = fcn;
   _waitStartTime = GetSupervisor()->getTime();
   _nextState = nextState;
@@ -142,9 +142,7 @@ s32 CST_EnrollFace::UpdateSimInternal()
   switch (_testState)
   {
     case TestState::Init:
-    {
-      CozmoSimTestController::MakeSynchronous();
-      
+    {      
       _faceID1 = Vision::UnknownFaceID;
       
       _face1 = GetNodeByDefName("Face_1");
@@ -188,7 +186,7 @@ s32 CST_EnrollFace::UpdateSimInternal()
       }
       
       StartEnrollment(Vision::UnknownFaceID, "Face1");
-      _testState = TestState::NewEnroll_NoFace;
+      SET_TEST_STATE(NewEnroll_NoFace);
       
       if(SKIP_INITIAL_ENROLL_TIMEOUT)
       {

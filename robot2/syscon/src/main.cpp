@@ -18,12 +18,9 @@ extern "C" void SystemIdle() {
   Power::eject();
 }
 
-//#define DISABLE_WDOG
 void Main_Execution(void) {
-  #ifndef DISABLE_WDOG
   // Kick watch dog when we enter our service routine
   IWDG->KR = 0xAAAA;
-  #endif
 
   // Do our main execution loop
   Comms::tick();

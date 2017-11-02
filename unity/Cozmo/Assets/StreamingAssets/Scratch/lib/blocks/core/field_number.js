@@ -209,20 +209,31 @@ Blockly.FieldNumber.prototype.position_ = function() {
   var bBox = this.sourceBlock_.getHeightWidth();
   bBox.width *= scale;
   bBox.height *= scale;
-  var position = this.getAbsoluteXY_();
+  // *** Anki change ***
+  // Use the same bounding logic that is used by other fields
+  var position = this.fieldGroup_.getBoundingClientRect();
+  // var position = this.getAbsoluteXY_();
   // If we can fit it, render below the shadow block
   var primaryX = position.x + bBox.width / 2;
-  var primaryY = position.y + bBox.height +
-      Blockly.FieldNumber.DROPDOWN_Y_PADDING;
+  // *** Anki change ***
+  var primaryY = position.y + bBox.height;
+  // var primaryY = position.y + bBox.height +
+  // Blockly.FieldNumber.DROPDOWN_Y_PADDING;
   // If we can't fit it, render above the entire parent block
   var secondaryX = primaryX;
-  var secondaryY = position.y - (Blockly.BlockSvg.MIN_BLOCK_Y * scale) -
-      (Blockly.BlockSvg.FIELD_Y_OFFSET * scale);
+  // *** Anki change ***
+  var secondaryY = position.top;
+  // var secondaryY = position.y - (Blockly.BlockSvg.MIN_BLOCK_Y * scale) -
+  // (Blockly.BlockSvg.FIELD_Y_OFFSET * scale);
 
   Blockly.DropDownDiv.setBoundsElement(
       this.sourceBlock_.workspace.getParentSvg().parentNode);
   Blockly.DropDownDiv.show(this, primaryX, primaryY, secondaryX, secondaryY,
       this.onHide_.bind(this));
+  // *** Anki change ***
+  // It's possible the height may be changed by calling show.
+  // We want to make sure that's not the case for this dropdown.
+  goog.style.setHeight(Blockly.DropDownDiv.getContentDiv(), 'auto');
 };
 
 /**

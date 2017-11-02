@@ -195,6 +195,8 @@ const DAS::IDASPlatform* DASGetPlatform() __attribute__((visibility("default")))
 
 using DASFlushCallback = std::function<void(bool)>; // passes in success/fail
 void DASForceFlushWithCallback(const DASFlushCallback& callback) __attribute((visibility("default")));
+void DASPauseUploadingToServer(const bool isPaused) __attribute((visibility("default")));
+
   
 using DASArchiveFunction = std::function<bool(const std::string&)>;
 using DASUnarchiveFunction = std::function<std::string(const std::string&)>;

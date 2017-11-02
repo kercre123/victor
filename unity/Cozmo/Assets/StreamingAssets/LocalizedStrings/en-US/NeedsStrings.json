@@ -102,6 +102,12 @@
   "needs.NeedsRepairModal.AligningTreads": {
     "translation": "Aligning Treads..."
   },
+  "needs.NeedsRepairModal.CozmoNotOnTreadsTitle": {
+    "translation": "Cozmo is Not Ready"
+  },
+  "needs.NeedsRepairModal.CozmoNotOnTreadsBody": { 
+    "translation": "Please help Cozmo get upright and on his treads."
+  },
   "needs.ContinueButtonText": {
     "translation": "CONTINUE"
   },

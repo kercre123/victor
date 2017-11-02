@@ -23,6 +23,11 @@ namespace QuadTreeTypes {
 NodeContent::NodeContent(ENodeType t, const MemoryMapData& m)
 : type(t)
 , data(m.Clone()) {}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+NodeContent::NodeContent(ENodeType t, MemoryMapTypes::MemoryMapDataPtr m)
+: type(t)
+, data(m) {}
       
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NodeContent::operator==(const NodeContent& other) const

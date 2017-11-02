@@ -10,6 +10,11 @@ var RenameProject = function(){
   var projectNameTextbox;
   var saveButton;
 
+  var PROJECT_TITLE_MAX_LENGTH_ARABIC_LANG = 32;
+  var PROJECT_TITLE_MAX_LENGTH_NON_ARABIC_LANG = 25;
+
+
+
   /**
    * Intialize dialog
    * @returns {void}
@@ -35,7 +40,7 @@ var RenameProject = function(){
    */
   function _show() {
     // set the current proejct name in the title and edit box
-    origProjectName = window.cozmoProjectName || 'Project Name Placeholder';
+    origProjectName = window.cozmoProjectName || '';
     document.querySelector('#rename-project-modal .original-project-name').textContent = origProjectName;
     document.querySelector('#rename-project-modal #rename-project-text-box').value = origProjectName;
 
@@ -66,6 +71,9 @@ var RenameProject = function(){
     projectNameTextbox.removeEventListener('keyup', _handleTextboxKeypress);
     projectNameTextbox.addEventListener('keyup', _handleTextboxKeypress);
 
+    var maxlength = _isArabicLanguage() ? PROJECT_TITLE_MAX_LENGTH_ARABIC_LANG : PROJECT_TITLE_MAX_LENGTH_NON_ARABIC_LANG;
+    projectNameTextbox.setAttribute('maxlength', maxlength);
+
     // Save button
     saveButton.removeEventListener('click', _handleSaveButton);
     saveButton.addEventListener('click', _handleSaveButton);
@@ -83,6 +91,7 @@ var RenameProject = function(){
     // Project title
     var projectTitle = document.querySelector('#app-title');
     if (projectTitle && !window.isCozmoSampleProject) {
+      projectTitle.classList.add('editable');
       projectTitle.removeEventListener('click', _show);
       projectTitle.addEventListener('click', _show);
     }
@@ -123,8 +132,9 @@ var RenameProject = function(){
    * @returns {void}
    */
   function _handleCancelButton(e) {
+    e.stopPropagation();
+    e.preventDefault();
     _hide();
-    return false;
   }
 
   /**
@@ -142,17 +152,37 @@ var RenameProject = function(){
    * @returns {void}
    */
   function callbackAfterProjectRename(newProjectName) {
-    // update the display of the main project name
-    var appTitle = document.querySelector('#app-title');
-    if (appTitle) {
-      appTitle.textContent = newProjectName;
-    }
+    window.setProjectNameAndSavedText(newProjectName, false);
     _hide();
+  }
+
+  /**
+   * Appends "Remix of " to project name and then truncates the result to maximum size
+   * @param {String} originalTitle - title of the current project that will get remixed
+   * @returns {String} new project title for remix
+   */
+  function createRemixProjectTitle(originalTitle) {
+    var locale = window.getUrlVar('locale');
+    var newTitle = $t('codeLab.remixNewProject.nameStartsWith', originalTitle);
+
+    // truncate strings to maxium lengths based on language
+    if (_isArabicLanguage()) {
+      // Latin alphabets get 32 characters
+      return newTitle.substring(0, PROJECT_TITLE_MAX_LENGTH_ARABIC_LANG);
+    } else {
+      // Japanese alphabets get 25 characters
+      return newTitle.substring(0, PROJECT_TITLE_MAX_LENGTH_NON_ARABIC_LANG);
+    }
+  }
+
+  function _isArabicLanguage() {
+    return LOCALE !== 'ja-JP';
   }
 
   // public functions
   return {
     init: init,
-    callbackAfterProjectRename: callbackAfterProjectRename
+    callbackAfterProjectRename: callbackAfterProjectRename,
+    createRemixProjectTitle: createRemixProjectTitle
   };
 }();

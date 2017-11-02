@@ -130,12 +130,11 @@ namespace Cozmo {
     {
       case TestState::MoveHead:
       {
-        MakeSynchronous();
         SendMoveHeadToAngle(DEG_TO_RAD(-5), DEG_TO_RAD(360), DEG_TO_RAD(1000));
         // TakeScreenshotsAtInterval("MultiObjectLocalization", 1.f);
         _turnInPlaceDone = true;
         _moveHeadDone = false;
-        _testState = TestState::InitialLocalization;
+        SET_TEST_STATE(InitialLocalization);
         break;
       }
         
@@ -158,7 +157,7 @@ namespace Cozmo {
           _turnAngle_deg = 90;
           _headAngle_deg = -5;
           _nextState = TestState::LocalizeToObjectB;
-          _testState = TestState::NotifyKidnap;
+          SET_TEST_STATE(NotifyKidnap);
         }
         break;
       }
@@ -169,7 +168,7 @@ namespace Cozmo {
         // from the previous pose are processed after the delocalization.
         SendForceDeloc();        
         _kidnapStartTime = GetSupervisor()->getTime();
-        _testState = TestState::Kidnap;
+        SET_TEST_STATE(Kidnap);
         break;
       }
         
@@ -206,7 +205,7 @@ namespace Cozmo {
           _turnAngle_deg = -90;
           _headAngle_deg = -5;
           _nextState = TestState::LocalizeToObjectC;;
-          _testState = TestState::NotifyKidnap;
+          SET_TEST_STATE(NotifyKidnap);
         }
         break;
       }
@@ -227,7 +226,7 @@ namespace Cozmo {
           SendMoveHeadToAngle(DEG_TO_RAD(45), DEG_TO_RAD(360), DEG_TO_RAD(1000));
           _moveHeadDone = false;
           
-          _testState = TestState::LookBackDown;
+          SET_TEST_STATE(LookBackDown);
         }
         break;
       }
@@ -245,7 +244,7 @@ namespace Cozmo {
           _nextState = TestState::LocalizeToAll;
           _turnAngle_deg = 0;
           _headAngle_deg = -5;
-          _testState = TestState::NotifyKidnap;
+          SET_TEST_STATE(NotifyKidnap);
         }
         break;
       }
@@ -260,7 +259,7 @@ namespace Cozmo {
           CST_ASSERT(CheckObjectPoses({_objectID_A,_objectID_B,_objectID_C}, "LocalizeToAll"),
                      "LocalizeToAll: Object pose checks failed");
           
-          _testState = TestState::TestDone;
+          SET_TEST_STATE(TestDone);
         }
         break;
       }

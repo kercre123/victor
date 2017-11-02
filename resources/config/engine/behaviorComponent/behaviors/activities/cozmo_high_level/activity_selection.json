@@ -1,0 +1,13 @@
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+{
+  "behaviorID" : "Activity_Selection",
+  "behaviorClass" : "Activity_BehaviorsOnly",
+  "behaviorChooser" : {
+    "type": "Selection"
+  },
+  // Activity will be kicked out by behaviorManager
+  "activityStrategy":
+  {
+    "type" : "Simple"
+  }
+}

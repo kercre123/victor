@@ -291,8 +291,7 @@ void AnimationComponent::HandleMessage(const ExternalInterface::RequestAvailable
 void AnimationComponent::HandleAnimationAvailable(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   const auto & payload = message.GetData().Get_animationAvailable();
-  PRINT_CH_INFO("AnimationComponent", "AnimationAvailable", "%d: %s", payload.id, payload.name.c_str());
-  
+  //PRINT_CH_DEBUG("AnimationComponent", "AnimationAvailable", "%d: %s", payload.id, payload.name.c_str());
   _animNameToID[payload.name] = payload.id;
 }
 

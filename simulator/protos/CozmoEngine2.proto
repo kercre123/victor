@@ -26,7 +26,6 @@ Supervisor {
     Connector {
       name "engineConnector"
       model "engineConnector"
-      rotation 0 1 0 3.14159265
       type "symmetric"
       isLocked TRUE
       autoLock TRUE
@@ -34,6 +33,8 @@ Supervisor {
       axisTolerance 3.14
       rotationTolerance 3.14
       numberOfRotations 1
+
+      rotation 0 1 0 -1.5707963
     }
   
     CozmoCamera {

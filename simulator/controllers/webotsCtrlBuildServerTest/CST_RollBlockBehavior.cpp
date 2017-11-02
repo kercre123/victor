@@ -12,13 +12,7 @@
 
 #include "engine/robot.h"
 #include "simulator/game/cozmoSimTestController.h"
-
-#define SET_STATE(s) {                                                  \
-    PRINT_NAMED_INFO("CST_RollBlockBehavior.TransitionTestState",       \
-                     "%s", #s);                                         \
-    _testState = TestState::s;                                          \
-  }
-
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -78,7 +72,6 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
   switch (_testState) {
     case TestState::Init:
     {
-      MakeSynchronous();
       DisableRandomPathSpeeds();
       StartMovieConditional("RollBlockBehavior");
       // TakeScreenshotsAtInterval("RollBlockBehavior", 1.f);
@@ -91,7 +84,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       
       _moveHeadToAngleResult = ActionResult::RUNNING;
       SendMoveHeadToAngle(0, 100, 100);
-      SET_STATE(VerifyObject)
+      SET_TEST_STATE(VerifyObject)
       break;
     }
 
@@ -104,7 +97,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
                                             IsLocalizedToObject()) {
         _turnInPlaceResult = ActionResult::RUNNING;
         SendTurnInPlace(DEG_TO_RAD(90.f), M_PI_F, 500.f);
-        SET_STATE(TurnAway)
+        SET_TEST_STATE(TurnAway)
       }
       break;
     }
@@ -116,7 +109,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
         // Make sure we are still localized (to an object) before sending deloc
         CST_ASSERT( IsLocalizedToObject(), "Should be localized to object before we deloc");
         SendForceDeloc();
-        SET_STATE(WaitForDeloc);
+        SET_TEST_STATE(WaitForDeloc);
       }
       break;
     }
@@ -129,10 +122,10 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
         SendMessage(ExternalInterface::MessageGameToEngine(
                       ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
         SendMessage(ExternalInterface::MessageGameToEngine(
-                      ExternalInterface::ExecuteBehaviorByID(kBehaviorID, -1)));
+                      ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(kBehaviorID), -1)));
         
         _behaviorStartedTime = GetSupervisor()->getTime();
-        SET_STATE(DontStartBehavior);
+        SET_TEST_STATE(DontStartBehavior);
       }
       break;
     }
@@ -148,7 +141,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
         // turn back
         _turnInPlaceResult = ActionResult::RUNNING;
         SendTurnInPlace(DEG_TO_RAD(-90.f), M_PI_F, 500.f);
-        SET_STATE(TurnBack)
+        SET_TEST_STATE(TurnBack)
       }
       break;
     }
@@ -156,13 +149,13 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       
     case TestState::TurnBack:
     {
-      // At some point (possibly before we stop moving) the behavior should become runnable and start on it's own.
+      // At some point (possibly before we stop moving) the behavior should become activatable and start on it's own.
       //  The behavior kicking in may cause the TurnInPlace to be CANCELLED.
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(10,
                                             (_turnInPlaceResult == ActionResult::SUCCESS || _turnInPlaceResult == ActionResult::CANCELLED_WHILE_RUNNING),
                                             _startedBehavior) {
         // behavior is running, wait for it to finish
-        SET_STATE(Rolling)
+        SET_TEST_STATE(Rolling)
       }
       break;
     }
@@ -184,7 +177,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
         // Apply a force to flip the block back into its original orientation.
         //  The behavior will trigger again automatically once the robot sees it.
         SendApplyForce("cube", 15, -10, 0);
-        SET_STATE(PushBlockBackward)
+        SET_TEST_STATE(PushBlockBackward)
       }
       break;
     }
@@ -208,7 +201,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
         // Push the block away so that the roll will fail.
         SendApplyForce("cube", 10, -5, 10);
         _pushedBlockTime = GetSupervisor()->getTime();
-        SET_STATE(PushBlockToSide)
+        SET_TEST_STATE(PushBlockToSide)
       }
       break;
     }
@@ -233,7 +226,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
                                             currTime - _pushedBlockTime > timeToWait_s,
                                             nearBlock,
                                             !_stoppedBehavior) {
-        SET_STATE(TestDone)
+        SET_TEST_STATE(TestDone)
       }
       break;
     }
@@ -267,16 +260,16 @@ void CST_RollBlockBehavior::HandleRobotCompletedAction(const ExternalInterface::
   
 void CST_RollBlockBehavior::HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg)
 {
-  PRINT_NAMED_INFO("CST_RollBlockBehavior.transition", "%s -> %s",
-                   BehaviorIDToString(msg.oldBehaviorID),
-                   BehaviorIDToString(msg.newBehaviorID));
+  /**PRINT_NAMED_INFO("CST_RollBlockBehavior.transition", "%s -> %s",
+                   msg.oldBehaviorID.c_str()),
+                   msg.newBehaviorID.c_str());
   
-  if(msg.oldBehaviorID == kBehaviorID) {
+  if(msg.oldBehaviorID == BehaviorIDToString(kBehaviorID) {
     _stoppedBehavior = true;
   }
-  if(msg.newBehaviorID == kBehaviorID) {
+  if(msg.newBehaviorID == BehaviorIDToString(kBehaviorID)) {
     _startedBehavior = true;
-  }
+  }**/
 }
 
 }

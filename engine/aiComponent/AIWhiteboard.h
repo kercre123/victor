@@ -12,7 +12,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_AIWhiteboard_H__
 #define __Cozmo_Basestation_BehaviorSystem_AIWhiteboard_H__
 
-#include "engine/behaviorSystem/AIBeacon.h"
+#include "engine/aiComponent/behaviorComponent/AIBeacon.h"
 
 #include "engine/externalInterface/externalInterface_fwd.h"
 
@@ -22,6 +22,8 @@
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
+
+#include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <list>
@@ -40,13 +42,12 @@ class BlockWorldFilter;
 namespace DefaultFailToUseParams {
 constexpr static const float kTimeObjectInvalidAfterFailure_sec = 30.f;
 constexpr static const float kObjectInvalidAfterFailureRadius_mm = 60.f;
-static const Radians kAngleToleranceAfterFailure_radians = M_PI;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIWhiteboard
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AIWhiteboard
+class AIWhiteboard : private Util::noncopyable
 {
 public:
   
@@ -231,6 +232,15 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void SetCurrentGameRequestUIRequest(bool isUIRequest){_isGameRequestUIRequest = isUIRequest;}
   bool IsCurrentGameRequestUIRequest(){ return _isGameRequestUIRequest;}
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Victor observing demo state (may eventually become part of victor freeplay)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // feeding state
+  bool Victor_HasCubeToEat() const { return _victor_cubeToEat.IsSet(); }
+  const ObjectID& Victor_GetCubeToEat() const { return _victor_cubeToEat; }
+
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -270,6 +280,9 @@ private:
   void UpdatePossibleObjectRender();
   // update render of beacons
   void UpdateBeaconRender();
+
+  // update things for the victor observing demo
+  void Victor_Update();
 
 
   
@@ -330,6 +343,8 @@ private:
   bool _hasHiccups;
 
   bool _isGameRequestUIRequest;
+
+  ObjectID _victor_cubeToEat;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

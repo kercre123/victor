@@ -13,6 +13,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "util/transport/udpTransport.h"
 // includes for physics functions
@@ -413,9 +414,9 @@ namespace Anki {
     
     void UiGameController::HandleBehaviorTransitionBase(ExternalInterface::BehaviorTransition const& msg)
     {
-      PRINT_NAMED_INFO("HandleBehaviorTransition", "Received message that behavior changed from %s to %s",
-                       BehaviorIDToString(msg.oldBehaviorID),
-                       BehaviorIDToString(msg.newBehaviorID));
+      /**PRINT_NAMED_INFO("HandleBehaviorTransition", "Received message that behavior changed from %s to %s",
+                       msg.oldBehaviorID,
+                       msg.newBehaviorID);**/
       
       HandleBehaviorTransition(msg);
     }
@@ -1099,11 +1100,9 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution)
+    void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode)
     {
-      ExternalInterface::SetRobotImageSendMode m;
-      m.mode = mode;
-      m.resolution = resolution;
+      ExternalInterface::SetRobotImageSendMode m(mode);
       ExternalInterface::MessageGameToEngine message;
       message.Set_SetRobotImageSendMode(m);
       SendMessage(message);

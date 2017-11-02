@@ -14,6 +14,7 @@
 
 #include "clad/vizInterface/messageViz.h"
 #include "clad/types/emotionTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/events/ankiEventMgr.h"
 #include "anki/vision/basestation/image.h"
 #include "engine/encodedImage.h"
@@ -95,6 +96,7 @@ private:
   void ProcessObjectMovingState(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessObjectUpAxisState(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessObjectAccelState(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessBehaviorStackDebug(const AnkiEvent<VizInterface::MessageViz>& msg);
   
   bool IsMoodDisplayEnabled() const;
   void ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -105,7 +107,7 @@ private:
   void ProcessVizNewBehaviorSelectedMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizNewReactionTriggeredMessage(const AnkiEvent<VizInterface::MessageViz> &msg);
   void DrawBehaviorDisplay();
-  
+
   void ProcessVizStartRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEndRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg);
   
@@ -151,6 +153,9 @@ private:
   
   // For displaying behavior selection data
   webots::Display* _behaviorDisp;
+
+  // For the behavior stack
+  webots::Display* _bsmStackDisp;
 
   // For displaying images
   webots::Display* _camDisp;

@@ -26,13 +26,14 @@ public:
   
 CozmoAnimContext::CozmoAnimContext(Util::Data::DataPlatform* dataPlatform)
   : _dataPlatform(dataPlatform)
+  , _locale(new Anki::Util::Locale(Anki::Util::Locale::GetNativeLocale()))  
   , _random(new Anki::Util::RandomGenerator())
   , _dataLoader(new RobotDataLoader(this))
   , _threadIdHolder(new ThreadIDInternal)
 {
   if (dataPlatform != nullptr)
   {
-    _micDataProcessor.reset(new MicDataProcessor(_dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata")));
+    _micDataProcessor.reset(new MicData::MicDataProcessor(_dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata")));
   }
   InitAudio(_dataPlatform);
 }

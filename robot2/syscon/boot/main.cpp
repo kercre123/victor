@@ -59,10 +59,10 @@ void timer_init(void) {
   IWDG->KR = 0x5555;
   IWDG->PR = 0;
   IWDG->RLR = WATCHDOG_LIMIT;
-  while (IWDG->SR) ;
-  IWDG->WINR = WATCHDOG_WINDOW;
+  IWDG->KR = 0xAAAA;
   #endif
 
+  TIM14->CR1 = 0;
   TIM14->PSC = MAIN_EXEC_PRESCALE - 1;
   TIM14->ARR = MAIN_EXEC_PERIOD - 1;
   TIM14->DIER = TIM_DIER_UIE;

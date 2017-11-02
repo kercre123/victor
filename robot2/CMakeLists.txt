@@ -21,11 +21,10 @@ elseif (MACOSX)
   set(PLATFORM_COMPILE_DEFS 
     SIMULATOR
   )
-  set(PLATFORM_FLAGS -fobjc-arc)
 endif()
 
 
-# HACK: halstub is a library generated from halStubs.cpp in this source tree.
+# HACK: robot_hal is a library generated from hal/src in this source tree.
 # However, the actual definition lives in robot/CMakeLists.txt since the 
 # supervisor library also depends on it.
 
@@ -34,7 +33,7 @@ anki_build_cxx_library(spine ${ANKI_SRCLIST_DIR} STATIC)
 
 target_link_libraries(spine
   PRIVATE
-  halstub
+  robot_hal
   ${PLATFORM_LIBS}
 )
 
@@ -56,7 +55,7 @@ android_strip(TARGET robot_supervisor)
 
 target_link_libraries(robot_supervisor
   PRIVATE
-  halstub
+  robot_hal
   supervisor
   robot_transport
   spine

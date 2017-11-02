@@ -94,8 +94,9 @@ static void HandleCallbackEntry(SLAndroidSimpleBufferQueueItf bufferQueue, void 
   if (data) { data->HandleCallback(); }
 }
 
-AudioCaptureSystem::AudioCaptureSystem(uint32_t samplesPerChunk)
+AudioCaptureSystem::AudioCaptureSystem(uint32_t samplesPerChunk, uint32_t sampleRate)
 : _samplesPerChunk(samplesPerChunk)
+, _sampleRate_hz(sampleRate)
 { }
 
 void AudioCaptureSystem::Init()

@@ -38,7 +38,6 @@ struct WaveFileHeaderData
   static const std::array<uint8_t, 4> _subchunk1ID;
   static constexpr uint32_t           _subchunk1Size = 16; // For PCM this omits a couple optional pieces
   static constexpr uint16_t           _audioFormat = 1;
-  static constexpr uint32_t           _sampleRate = kSampleRate_hz;
   
   static constexpr uint16_t           _bitsPerSample = 16; // This is out of order in header for reuse
   
@@ -49,7 +48,7 @@ struct WaveFileHeaderData
   
   static constexpr std::size_t _numChannelsOffset = 22;
   
-  static std::vector<uint8_t> GetHeaderData(uint32_t numSamples, uint16_t numChannels)
+  static std::vector<uint8_t> GetHeaderData(uint32_t numSamples, uint16_t numChannels, uint32_t sampleRate_hz)
   {
     const auto& subchunk2Size = Util::numeric_cast<uint32_t>(numSamples * numChannels * (_bitsPerSample / 8));
     
@@ -82,10 +81,10 @@ struct WaveFileHeaderData
     PackData(numChannels, headerData);
     
     // SampleRate
-    PackData(_sampleRate, headerData);
+    PackData(sampleRate_hz, headerData);
     
     // ByteRate
-    const auto& byteRate = Util::numeric_cast<uint32_t>(_sampleRate * numChannels * (_bitsPerSample / 8));
+    const auto& byteRate = Util::numeric_cast<uint32_t>(sampleRate_hz * numChannels * (_bitsPerSample / 8));
     PackData(byteRate, headerData);
     
     // BlockAlign
@@ -119,7 +118,10 @@ const std::array<uint8_t, 4> WaveFileHeaderData::_format{ {'W', 'A', 'V', 'E'} }
 const std::array<uint8_t, 4> WaveFileHeaderData::_subchunk1ID{ {'f', 'm', 't', ' '} };
 const std::array<uint8_t, 4> WaveFileHeaderData::_subchunk2ID{ {'d', 'a', 't', 'a'} };
 
-bool WaveFile::SaveFile(const std::string& filename, const AudioChunkList& chunkList, uint16_t numChannels)
+  bool WaveFile::SaveFile(const std::string& filename,
+                          const AudioChunkList& chunkList,
+                          uint16_t numChannels,
+                          uint32_t sampleRate_hz)
 {
   if (numChannels == 0)
   {
@@ -134,7 +136,7 @@ bool WaveFile::SaveFile(const std::string& filename, const AudioChunkList& chunk
     numSamples = Util::numeric_cast<uint32_t>(numSamples + chunk.size());
   }
   numSamples /= numChannels;
-  std::vector<uint8_t> dataToWrite = WaveFileHeaderData::GetHeaderData(numSamples, numChannels);
+  std::vector<uint8_t> dataToWrite = WaveFileHeaderData::GetHeaderData(numSamples, numChannels, sampleRate_hz);
   
   // Put a max here in case we have a *lot* of data we're saving, so that we write it out in pieces rather than use up more memory
   constexpr uint32_t kByteBufferMaxSize = 1024 * 512;

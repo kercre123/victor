@@ -16,9 +16,6 @@ namespace Anki {
      *
      **************************************************************************/
     
-    // Resolution of images that are streamed to basestation (dev purposes)
-    const ImageResolution IMG_STREAM_RES = ImageResolution::QQQVGA;
-    
     const f32 MAX_MARKER_NORMAL_ANGLE_FOR_SHOULD_BE_VISIBLE_CHECK_RAD = DEG_TO_RAD(45.f);
     const f32 MIN_MARKER_SIZE_FOR_SHOULD_BE_VISIBLE_CHECK_PIX = 40.f;
     
@@ -47,9 +44,7 @@ namespace Anki {
     const f32 ROBOT_BOUNDING_Y       = 54.2f;
     const f32 ROBOT_BOUNDING_X_FRONT = 32.1f - ROBOT_BOUNDING_X_LIFT; // distance from robot origin to front of bounding box
     const f32 ROBOT_BOUNDING_Z       = 67.7f; // from ground to top of head
-    const f32 ROBOT_BOUNDING_RADIUS  = sqrtf((0.25f*ROBOT_BOUNDING_X*ROBOT_BOUNDING_X) +
-                                             (0.25f*ROBOT_BOUNDING_Y*ROBOT_BOUNDING_Y));
-  
+
     // Apply a conservative negative padding when checking for collisions with known objects to
     // see if their pose should be marked as "dirty".
     // (A negative value means it _really_ has to intersect in order for the object to be dirtied.)

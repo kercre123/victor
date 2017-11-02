@@ -5,7 +5,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/victor",
-                "version": "125"
+                "version": "129"
             },
             "cozmo-assets": {
                 "allow_extra_files": "True",
@@ -34,7 +34,7 @@
                 "build_type_id": "Cte_Master",
                 "extension": "tar.gz",
                 "package_name": "Cte",
-                "version": "173"
+                "version": "178"
             }
         },
         "default_usr": "puller_cozmo",

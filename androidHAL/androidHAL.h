@@ -21,10 +21,6 @@
 namespace webots {
   class Supervisor;
 }
-class ASensorManager;
-class ASensor;
-class ASensorEventQueue;
-class ALooper;
 class NativeCamera;
 class ImageReader;
 
@@ -63,34 +59,6 @@ namespace Anki
       
 #endif
 
-// #pragma mark --- IMU ---
-      /////////////////////////////////////////////////////////////////////
-      // Inertial measurement unit (IMU)
-      //
-
-      // IMU_DataStructure contains 3-axis acceleration and 3-axis gyro data
-      struct IMU_DataStructure
-      {
-        void Reset() {
-          acc_x = acc_y = acc_z = 0;
-          rate_x = rate_y = rate_z = 0;
-        }
-        
-        f32 acc_x;      // mm/s/s
-        f32 acc_y;
-        f32 acc_z;
-        f32 rate_x;     // rad/s
-        f32 rate_y;
-        f32 rate_z;
-      };
-
-      // Read acceleration and rate
-      // x-axis points out cozmo's face
-      // y-axis points out of cozmo's left
-      // z-axis points out the top of cozmo's head
-      bool IMUReadData(IMU_DataStructure &IMUData);
-
-
 // #pragma mark --- Cameras ---
       /////////////////////////////////////////////////////////////////////
       // CAMERAS
@@ -107,16 +75,13 @@ namespace Anki
       // TODO: How fast will this be in hardware? Is image ready and waiting?
       bool CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms);
       
-      ImageResolution CameraGetResolution() const {return _imageCaptureResolution;}
+      u16 CameraGetHeight() const {return _imageCaptureHeight;}
+      u16 CameraGetWidth()  const {return _imageCaptureWidth; }
       
     private:
 
       AndroidHAL();
       static AndroidHAL* _instance;
-
-      void InitIMU();
-      void ProcessIMUEvents();
-      
 
       void DeleteCamera();
       
@@ -127,24 +92,14 @@ namespace Anki
       // Time
       std::chrono::steady_clock::time_point _timeOffset;
       
-      
-      // Android sensor (i.e. IMU)
-      ASensorManager*    _sensorManager;
-      const ASensor*     _accelerometer;
-      const ASensor*     _gyroscope;
-      ASensorEventQueue* _sensorEventQueue;
-      ALooper*           _looper;
-      
-      static constexpr int SENSOR_REFRESH_RATE_HZ = 16;
-      static constexpr int SENSOR_REFRESH_PERIOD_US = 1000000 / SENSOR_REFRESH_RATE_HZ;
-      
       // Camera
       NativeCamera*   _androidCamera;
       ImageReader*    _reader;
 #endif
       
       // Camera
-      ImageResolution _imageCaptureResolution = DEFAULT_IMAGE_RESOLUTION;
+      u16             _imageCaptureHeight = DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+      u16             _imageCaptureWidth  = DEFAULT_CAMERA_RESOLUTION_WIDTH;
       u32             _imageFrameID;
       
       

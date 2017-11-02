@@ -20,7 +20,6 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/types.h"
 #include "util/helpers/ankiDefines.h"
-#include "anki/vision/CameraSettings.h"
 #include "anki/planning/shared/path.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "clad/types/imageTypes.h"
@@ -415,6 +414,7 @@ namespace Anki {
       void SendEndRobotUpdate();
       void SendSaveImages(ImageSendMode mode, std::string path = "");
       void SendSaveState(bool enabled, std::string path = "");
+      void SendBehaviorStackDebug(VizInterface::BehaviorStackDebug&& behaviorStackDebug);
       void SendVizMessage(VizInterface::MessageViz&& event);
 
       

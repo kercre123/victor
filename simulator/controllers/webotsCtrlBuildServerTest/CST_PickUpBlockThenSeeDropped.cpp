@@ -81,12 +81,11 @@ s32 CST_PickUpBlockThenSeeDropped::UpdateSimInternal()
   switch (_testState) {
     case TestState::Init:
     {
-      MakeSynchronous();
       StartMovieConditional("PickUpBlockThenSeeDropped");
       //TakeScreenshotsAtInterval("StackBlocks", 1.f);
       
       SendMoveHeadToAngle(0, 100, 100);
-      _testState = TestState::PickupObject;
+      SET_TEST_STATE(PickupObject);
       break;
     }
     case TestState::PickupObject:
@@ -109,7 +108,7 @@ s32 CST_PickUpBlockThenSeeDropped::UpdateSimInternal()
         ExternalInterface::MessageGameToEngine message;
         message.Set_QueueSingleAction(m);
         SendMessage(message);
-        _testState = TestState::TeleportObject;
+        SET_TEST_STATE(TeleportObject);
       }
       break;
     }
@@ -124,7 +123,7 @@ s32 CST_PickUpBlockThenSeeDropped::UpdateSimInternal()
       {
         DropCube();
         
-        _testState = TestState::MoveBack;
+        SET_TEST_STATE(MoveBack);
       }
       break;
     }
@@ -149,7 +148,7 @@ s32 CST_PickUpBlockThenSeeDropped::UpdateSimInternal()
         message.Set_QueueSingleAction(m);
         SendMessage(message);
         
-        _testState = TestState::TestDone;
+        SET_TEST_STATE(TestDone);
       }
       break;
     }

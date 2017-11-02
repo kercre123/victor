@@ -12,13 +12,7 @@
 
 #include "engine/robot.h"
 #include "simulator/game/cozmoSimTestController.h"
-
-#define SET_STATE(s) {                                                  \
-    PRINT_NAMED_INFO("CST_PickupFromStack.TransitionTestState",      \
-                     "%s", #s);                                         \
-    _testState = TestState::s;                                          \
-  }
-
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -89,7 +83,6 @@ s32 CST_PickupFromStack::UpdateSimInternal()
   switch (_testState) {
     case TestState::Init:
     {
-      MakeSynchronous();
       DisableRandomPathSpeeds();
       StartMovieConditional("StackBlockBehavior_AttemptCube");
       // TakeScreenshotsAtInterval("StackBlockBehavior", 1.f);
@@ -108,10 +101,10 @@ s32 CST_PickupFromStack::UpdateSimInternal()
       
       // Cancel the stack behavior:
       SendMessage(ExternalInterface::MessageGameToEngine(
-                     ExternalInterface::ExecuteBehaviorByID(BehaviorID::Wait, -1)));
+                     ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::Wait), -1)));
 
       // Give one tick for world to load in
-      SET_STATE(WaitForCubeConnections);
+      SET_TEST_STATE(WaitForCubeConnections);
       break;
     }
       
@@ -120,7 +113,7 @@ s32 CST_PickupFromStack::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT((_numObjectsConnected == 2)
                                        && (GetAllObjectIDsByFamily(ObjectFamily::LightCube).size() == 2), 15)
       {
-        SET_STATE(AttemptPickupHigh);
+        SET_TEST_STATE(AttemptPickupHigh);
         // Now attempt to pick up the top block:
         _pickupObjectResult = ActionResult::RUNNING;
         SendPickupObjectByType(_topCube);
@@ -138,7 +131,7 @@ s32 CST_PickupFromStack::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
         // Push the block out of view so that the pickup will fail.
         SendApplyForce(_topCubeStr, 20, 4000, 5);
-        SET_STATE(PickupHighShouldFail)
+        SET_TEST_STATE(PickupHighShouldFail)
       }
       
       break;
@@ -158,7 +151,7 @@ s32 CST_PickupFromStack::UpdateSimInternal()
         // Pick up object 1:
         _pickupObjectResult = ActionResult::RUNNING;
         SendPickupObjectByType(_baseCube);
-        SET_STATE(AttemptPickupLowOutOfView)
+        SET_TEST_STATE(AttemptPickupLowOutOfView)
       }
       
       break;
@@ -176,7 +169,7 @@ s32 CST_PickupFromStack::UpdateSimInternal()
         Vec3f T = cubePose.GetTranslation();
         cubePose.SetTranslation(Vec3f(T.x(), T.y() + 200.f, 25));
         SetLightCubePose(_baseCube, cubePose);
-        SET_STATE(PickupLowOutOfViewShouldFail)
+        SET_TEST_STATE(PickupLowOutOfViewShouldFail)
       }
       
       break;
@@ -194,7 +187,7 @@ s32 CST_PickupFromStack::UpdateSimInternal()
         // move head up to see the cube:
         _moveHeadToAngleResult = ActionResult::RUNNING;
         SendMoveHeadToAngle(0, 100, 100);
-        SET_STATE(MoveHeadUp)
+        SET_TEST_STATE(MoveHeadUp)
       }
       
       break;
@@ -204,7 +197,7 @@ s32 CST_PickupFromStack::UpdateSimInternal()
     case TestState::MoveHeadUp:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_moveHeadToAngleResult == ActionResult::SUCCESS, 5) {
-        SET_STATE(WaitForCubeConfirmation2)
+        SET_TEST_STATE(WaitForCubeConfirmation2)
       }
       break;
     }
@@ -216,7 +209,7 @@ s32 CST_PickupFromStack::UpdateSimInternal()
         // pick up object 1:
         _pickupObjectResult = ActionResult::RUNNING;
         SendPickupObjectByType(_baseCube);
-        SET_STATE(AttemptPickupLowInView);
+        SET_TEST_STATE(AttemptPickupLowInView);
       }
       break;
     }
@@ -232,7 +225,7 @@ s32 CST_PickupFromStack::UpdateSimInternal()
         SendApplyForce(_baseCubeStr, 0, -40, 10);
         // Keep track of where the robot was when the cube was first pushed.
         _robotPoseWhenBlockShoved = GetRobotPoseActual();
-        SET_STATE(TeleportBlockInView)
+        SET_TEST_STATE(TeleportBlockInView)
       }
       
       break;
@@ -256,7 +249,7 @@ s32 CST_PickupFromStack::UpdateSimInternal()
         Vec3f T = cubePose.GetTranslation();
         cubePose.SetTranslation(Vec3f(T.x() + 160.f, T.y(), 22));
         SetLightCubePose(_baseCube, cubePose);
-        SET_STATE(PickupLowInViewShouldFail)
+        SET_TEST_STATE(PickupLowInViewShouldFail)
       }
       
       break;
@@ -271,7 +264,7 @@ s32 CST_PickupFromStack::UpdateSimInternal()
         _pickupObjectResult = ActionResult::RUNNING;
         SendPickupObjectByType(_baseCube);
         
-        SET_STATE(RemoveCube)
+        SET_TEST_STATE(RemoveCube)
       }
       
       break;
@@ -294,7 +287,7 @@ s32 CST_PickupFromStack::UpdateSimInternal()
         _placeObjectResult = ActionResult::RUNNING;
         SendPlaceObjectOnGroundSequence(placePose, _defaultTestMotionProfile);
         
-        SET_STATE(PlaceObjectShouldFail)
+        SET_TEST_STATE(PlaceObjectShouldFail)
       }
       
       break;
@@ -313,7 +306,7 @@ s32 CST_PickupFromStack::UpdateSimInternal()
         PRINT_NAMED_INFO("CST_PickupFromStack.TestInfo",
                          "Finished PlaceObjectShouldFail with code '%s'",
                          EnumToString(_placeObjectResult));
-        SET_STATE(TestDone)
+        SET_TEST_STATE(TestDone)
       }
       
       break;

@@ -13,8 +13,8 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/pose.h"
 #include "util/helpers/printByteArray.h"
-#include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/block.h"
 #include "engine/encodedImage.h"
@@ -24,7 +24,7 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/image_impl.h"
 #include "clad/types/actionTypes.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/proceduralEyeParameters.h"
 #include "util/math/math.h"
@@ -177,9 +177,8 @@ namespace Anki {
     
     void WebotsKeyboardController::HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg)
     {
-      if(cozmoCam_ == nullptr) {
-        printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
-      } else {
+      if(cozmoCam_ != nullptr) 
+      {  
         // Draw a rectangle in red with the object ID as text in the center
         cozmoCam_->setColor(0x000000);
         
@@ -298,8 +297,12 @@ namespace Anki {
     { 
       poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
         
-      cozmoCam_ = GetSupervisor()->getDisplay("uiCamDisplay");
-      
+      const int displayWidth  = root_->getField("streamResolutionWidth")->getSFInt32();
+      const int displayHeight = root_->getField("streamResolutionHeight")->getSFInt32();
+      if(displayWidth > 0 && displayHeight > 0)
+      {
+        cozmoCam_ = GetSupervisor()->getDisplay("uiCamDisplay");
+      }
       auto doAutoBlockpoolField = root_->getField("doAutoBlockpool");
       if (doAutoBlockpoolField) {
         LOG_INFO("WebotsCtrlKeyboard.Init.DoAutoBlockpool", "%d", doAutoBlockpoolField->getSFBool());
@@ -817,27 +820,7 @@ namespace Anki {
                   printf("Requesting single robot image.\n");
                 }
                 
-
-                // Determine resolution from "streamResolution" setting in the keyboard controller
-                // node
-                ImageResolution resolution = (ImageResolution)IMG_STREAM_RES;
-               
-                if (root_) {
-                  const std::string resString = root_->getField("streamResolution")->getSFString();
-                  printf("Attempting to switch robot to %s resolution.\n", resString.c_str());
-                  if(resString == "VGA") {
-                    resolution = ImageResolution::VGA;
-                  } else if(resString == "QVGA") {
-                    resolution = ImageResolution::QVGA;
-                  } else if(resString == "CVGA") {
-                    resolution = ImageResolution::CVGA;
-                  } else {
-                    printf("Unsupported streamResolution = %s\n", resString.c_str());
-                  }
-                }
-                
-                SendSetRobotImageSendMode(mode, resolution);
-
+                SendSetRobotImageSendMode(mode);
                 break;
               }
                 
@@ -1185,12 +1168,12 @@ namespace Anki {
 
                   printf("Selecting behavior by NAME: %s\n", behaviorName.c_str());
                   if (behaviorName == "LiftLoadTest") {
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsRunnable()));
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsActivatable()));
                   }
                   const int numRuns = root_->getField("numBehaviorRuns")->getSFInt32();
                   BehaviorID behaviorID = BehaviorIDFromString(behaviorName);
                   SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::ExecuteBehaviorByID(behaviorID, numRuns)));
+                                ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(behaviorID), numRuns)));
                 }
                 else if(altKeyPressed)
                 {
@@ -2270,7 +2253,7 @@ namespace Anki {
                       
                       // Enable selection chooser and specify EnrollFace now that settings are sent
                       SendMessage(MessageGameToEngine(ActivateHighLevelActivity(HighLevelActivity::Selection)));
-                      SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorID::EnrollFace, -1)));
+                      SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::EnrollFace), -1)));
                     }
                     
                   } else {

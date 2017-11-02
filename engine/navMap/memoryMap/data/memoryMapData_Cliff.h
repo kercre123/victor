@@ -38,6 +38,9 @@ struct MemoryMapData_Cliff : public MemoryMapData
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // If you add attributes, make sure you add them to ::Equals and ::Clone (if required)
   Vec2f directionality; // direction we presume for the cliff (from detection)
+  
+protected: 
+  MemoryMapData_Cliff() : MemoryMapData(MemoryMapTypes::EContentType::Cliff, 0, true), directionality() {}
 };
  
 } // namespace

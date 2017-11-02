@@ -12,6 +12,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/common/basestation/objectIDs.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/gameComms.h"
 #include "engine/cozmoAPI/comms/gameMessageHandler.h"
@@ -161,7 +162,7 @@ protected:
   void SendTapBlockOnGround(const u8 numTaps);
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode);
-  void SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution);
+  void SendSetRobotImageSendMode(ImageSendMode mode);
   void SendSaveImages(ImageSendMode imageMode, const std::string& path = "");
   void SendSaveState(bool enabled, const std::string& path = "");
   void SendEnableDisplay(bool on);
@@ -192,7 +193,7 @@ protected:
                         PathMotionProfile motionProf,
                         const bool usePreDockPose,
                         const bool useApproachAngle = false,
-                        const f32 approachAngle_rad = false,
+                        const f32 approachAngle_rad = 0,
                         const bool useManualSpeed = false);
   
   void SendPickupSelectedObject(PathMotionProfile motionProf,

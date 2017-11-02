@@ -218,5 +218,8 @@ Blockly.WidgetDiv.position = function(anchorX, anchorY, windowSize,
   }
   Blockly.WidgetDiv.DIV.style.left = anchorX + 'px';
   Blockly.WidgetDiv.DIV.style.top = anchorY + 'px';
-  Blockly.WidgetDiv.DIV.style.height = windowSize.height + 'px';
+  // *** ANKI Change ***
+  // The height of the widget was being set to the height of the window.
+  // It should be the height of the content inside the widget.
+  //Blockly.WidgetDiv.DIV.style.height = windowSize.height + 'px';
 };

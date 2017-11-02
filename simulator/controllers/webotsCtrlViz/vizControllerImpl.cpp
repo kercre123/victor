@@ -17,6 +17,7 @@
 #include "anki/vision/basestation/image.h"
 #include "clad/vizInterface/messageViz.h"
 #include "clad/types/animationTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include <webots/Supervisor.hpp>
@@ -105,13 +106,16 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessObjectUpAxisState, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::ObjectAccelState,
     std::bind(&VizControllerImpl::ProcessObjectAccelState, this, std::placeholders::_1));
-  
+  Subscribe(VizInterface::MessageVizTag::BehaviorStackDebug,
+    std::bind(&VizControllerImpl::ProcessBehaviorStackDebug, this, std::placeholders::_1));
+
 
   // Get display devices
   _disp = _vizSupervisor.getDisplay("cozmo_viz_display");
   _dockDisp = _vizSupervisor.getDisplay("cozmo_docking_display");
   _moodDisp = _vizSupervisor.getDisplay("cozmo_mood_display");
   _behaviorDisp = _vizSupervisor.getDisplay("cozmo_behavior_display");
+  _bsmStackDisp = _vizSupervisor.getDisplay("victor_behavior_stack_display");
   _activeObjectDisp = _vizSupervisor.getDisplay("cozmo_active_object_display");
   _cubeAccelDisp = _vizSupervisor.getDisplay("cozmo_cube_accel_display");
 
@@ -155,6 +159,7 @@ void VizControllerImpl::Init()
   _disp->setFont("Lucida Console", 8, true);
   _moodDisp->setFont("Lucida Console", 8, true);
   _activeObjectDisp->setFont("Lucida Console", 8, true);
+  _bsmStackDisp->setFont("Lucida Console", 8, true);
 
   DrawText(_activeObjectDisp, 0, (u32)Anki::NamedColors::WHITE, "Slot | Moving | UpAxis");
   
@@ -496,7 +501,7 @@ void VizControllerImpl::ProcessVizCameraTextMessage(const AnkiEvent<VizInterface
   }
 }
   
-static void DisplayImageHelper(const EncodedImage& encodedImage, webots::ImageRef* imageRef, webots::Display* display)
+static void DisplayImageHelper(const EncodedImage& encodedImage, webots::ImageRef* &imageRef, webots::Display* display)
 {
   // Delete existing image if there is one
   if (imageRef != nullptr) {
@@ -523,7 +528,7 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
 {
   const auto& payload = msg.GetData().Get_ImageChunk();
   
-  const s32 displayIndex = (payload.chunkDebug & 0xFF);
+  const s32 displayIndex = payload.displayIndex;
   
   if(displayIndex == 0)
   {
@@ -1057,7 +1062,7 @@ void VizControllerImpl::ProcessVizNewBehaviorSelectedMessage(const AnkiEvent<Viz
   if (_behaviorEventBuffer.size() > 0)
   {
     std::vector<BehaviorID>& latestEvents =_behaviorEventBuffer.back();
-    latestEvents.push_back(selectData.newCurrentBehavior);
+    latestEvents.push_back(BehaviorIDFromString(selectData.newCurrentBehavior));
   }
 }
 
@@ -1095,7 +1100,7 @@ void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent
   
   for (const VizInterface::BehaviorScoreData& scoreData : selectData.scoreData)
   {
-    BehaviorScoreBuffer& scoreBuffer = FindOrAddScoreBuffer(scoreData.behaviorID);
+    BehaviorScoreBuffer& scoreBuffer = FindOrAddScoreBuffer(BehaviorIDFromString(scoreData.behaviorID));
     if (!scoreBuffer.empty())
     {
       // Remove the dummy entry we added during preUpdate
@@ -1452,6 +1457,25 @@ void VizControllerImpl::ProcessObjectAccelState(const AnkiEvent<VizInterface::Me
   }
 
 }
+
+void VizControllerImpl::ProcessBehaviorStackDebug(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  if( _bsmStackDisp == nullptr ) {
+    return;
+  }
+
+  // Clear the space
+  _bsmStackDisp->setColor(0x0);
+  _bsmStackDisp->fillRectangle(0, 0, _bsmStackDisp->getWidth(), _bsmStackDisp->getHeight());
+  
+  const VizInterface::BehaviorStackDebug& debugData = msg.GetData().Get_BehaviorStackDebug();
+
+  for( size_t i=0; i < debugData.debugStrings.size(); ++i ) {
+    DrawText(_bsmStackDisp, (u32)i, (u32)Anki::NamedColors::WHITE, debugData.debugStrings[i].c_str());
+  }
+}
+
+
 // ========== Start/End of Robot Updates ==========
   
 

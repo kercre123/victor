@@ -128,7 +128,7 @@ cxx_project(
                         excludes = ['*_android.*',
                                     'android/**/*',
                                     '*_mac.*',
-                                    'main.cpp']),
+                                    'cozmoAnimMain.cpp']),
     platform_srcs = [
         ('android', glob(['android/**/*.cpp',
                           '**/*_android.cpp'])),
@@ -186,8 +186,6 @@ PRIVATE
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS} 
 # platform
-PUBLIC
-  # these need to be public until we remove android-specific classes from androidHAL.h
   ${PLATFORM_LIBS}
 )
 
@@ -197,7 +195,6 @@ android_strip(TARGET victor_anim)
 # Define the precompiler definitions for victor_anim
 target_compile_definitions(victor_anim
 PRIVATE
-  COZMO_BASESTATION
   ANKICORETECH_USE_OPENCV=1
   ANKICORETECH_EMBEDDED_USE_OPENCV=1  
   ${PLATFORM_COMPILE_DEFS}

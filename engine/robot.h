@@ -90,7 +90,6 @@ class ActiveCube;
 class CubeLightComponent;
 class BodyLightComponent;
 class RobotToEngineImplMessaging;
-class TextToSpeechComponent;
 class PublicStateBroadcaster;
 class VisionComponent;
 class PathComponent;
@@ -181,15 +180,6 @@ public:
     return *_tapFilterComponent;
   }
 
-  inline TextToSpeechComponent& GetTextToSpeechComponent() {
-    assert(_textToSpeechComponent);
-    return *_textToSpeechComponent;
-  }
-  inline const TextToSpeechComponent& GetTextToSpeechComponent() const {
-    assert(_textToSpeechComponent);
-    return *_textToSpeechComponent;
-  }
-
   inline MovementComponent& GetMoveComponent() {
     assert(_movementComponent);
     return *_movementComponent;
@@ -229,8 +219,8 @@ public:
   inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
   inline MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
 
-  inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
-  inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
+  const BehaviorManager& GetBehaviorManager() const;
+  BehaviorManager&       GetBehaviorManager();
   
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
     assert(_progressionUnlockComponent);
@@ -459,7 +449,7 @@ public:
 
   // Get the bounding quad of the robot at its current or a given pose
   Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const; // at current pose
-  Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 0.f) const; // at specific pose
+  static Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 0.f); // at specific pose
     
   // Return current height of lift's gripper
   f32 GetLiftHeight() const;
@@ -700,6 +690,11 @@ public:
   bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterTimeSync; }
   
 protected:
+  // Geometry / Pose
+  std::unique_ptr<PoseOriginList> _poseOriginList;
+  
+  Pose3d         _pose;
+  
   
   const CozmoContext* _context;
   
@@ -730,9 +725,6 @@ protected:
   std::unique_ptr<PetWorld>              _petWorld;
  
   std::unique_ptr<PublicStateBroadcaster> _publicStateBroadcaster;
-
-  std::unique_ptr<BehaviorManager>       _behaviorMgr;
-  std::unique_ptr<BehaviorSystemManager> _behaviorSysMgr;
   
   ///////// Audio /////////
   std::unique_ptr<Audio::EngineRobotAudioClient> _audioClient;
@@ -751,7 +743,6 @@ protected:
   std::unique_ptr<MapComponent>           _mapComponent;  
   std::unique_ptr<NVStorageComponent>     _nvStorageComponent;
   std::unique_ptr<AIComponent>            _aiComponent;
-  std::unique_ptr<TextToSpeechComponent>  _textToSpeechComponent;
   std::unique_ptr<ObjectPoseConfirmer>    _objectPoseConfirmerPtr;
   std::unique_ptr<CubeLightComponent>     _cubeLightComponent;
   std::unique_ptr<BodyLightComponent>     _bodyLightComponent;
@@ -767,10 +758,7 @@ protected:
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;
   
-  // Geometry / Pose
-  std::unique_ptr<PoseOriginList> _poseOriginList;
- 
-  Pose3d         _pose;
+
   Pose3d         _driveCenterPose;
   PoseFrameID_t  _frameId                   = 0;
   ObjectID       _localizedToID; // ID of mat object robot is localized to

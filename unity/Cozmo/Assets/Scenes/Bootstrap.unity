@@ -108,6 +108,87 @@ NavMeshSettings:
     tileSize: 256
     accuratePlacement: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &10451785
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 10451786}
+  - component: {fileID: 10451789}
+  - component: {fileID: 10451788}
+  - component: {fileID: 10451787}
+  m_Layer: 5
+  m_Name: AnkiLogoCanvas
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &10451786
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 10451785}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 1088180560}
+  m_Father: {fileID: 1852183776}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &10451787
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 10451785}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &10451788
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 10451785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -765806418, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+--- !u!222 &10451789
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 10451785}
 --- !u!1 &169810686
 GameObject:
   m_ObjectHideFlags: 0
@@ -442,7 +523,7 @@ RectTransform:
   - {fileID: 1206147499}
   - {fileID: 1876678849}
   m_Father: {fileID: 1852183776}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -721,6 +802,74 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1020671981}
+--- !u!1 &1088180559
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 1088180560}
+  - component: {fileID: 1088180562}
+  - component: {fileID: 1088180561}
+  m_Layer: 5
+  m_Name: AnkiLogo
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1088180560
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1088180559}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 10451786}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 10.383607}
+  m_SizeDelta: {x: 2425, y: 400}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1088180561
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1088180559}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_Sprite: {fileID: 21300000, guid: ffaec22835f1e4f51a2306d5432abb5c, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+--- !u!222 &1088180562
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1088180559}
 --- !u!1 &1206147498
 GameObject:
   m_ObjectHideFlags: 0
@@ -1210,6 +1359,10 @@ Prefab:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
+      propertyPath: _LoadingCanvas
+      value: 
+      objectReference: {fileID: 1852183772}
+    - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
       propertyPath: _LoadingBar
       value: 
       objectReference: {fileID: 1317867611}
@@ -1218,18 +1371,6 @@ Prefab:
       value: 
       objectReference: {fileID: 735345286}
     - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
-      propertyPath: _BootLocEnStrings
-      value: 
-      objectReference: {fileID: 4900000, guid: 967e8e94df4794813b7db5b5076f5380, type: 3}
-    - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
-      propertyPath: _AndroidPermissionPrefab
-      value: 
-      objectReference: {fileID: 155414, guid: 75db25c32349545d1b369bdf95d35477, type: 2}
-    - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
-      propertyPath: _LoadingCanvas
-      value: 
-      objectReference: {fileID: 1852183772}
-    - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
       propertyPath: _LoadingVersionLabel
       value: 
       objectReference: {fileID: 246005938}
@@ -1237,6 +1378,10 @@ Prefab:
       propertyPath: _LoadingDeviceIdLabel
       value: 
       objectReference: {fileID: 1223342415}
+    - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
+      propertyPath: _LoadingAnkiLogoIcon
+      value: 
+      objectReference: {fileID: 10451787}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 96563fa7c044a44afa01f530712be672, type: 2}
   m_IsPrefabParent: 0
@@ -1411,11 +1556,11 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1831635511}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -961.5693, y: -510.87387, z: 1599.9657}
+  m_LocalPosition: {x: 0, y: 0, z: 1599.9657}
   m_LocalScale: {x: 3.1946757, y: 3.1946757, z: 3.1946757}
   m_Children: []
   m_Father: {fileID: 1852183776}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1852183772
 GameObject:
@@ -1509,6 +1654,7 @@ RectTransform:
   - {fileID: 1020671982}
   - {fileID: 169810687}
   - {fileID: 1317867610}
+  - {fileID: 10451786}
   - {fileID: 813081890}
   - {fileID: 1831635516}
   m_Father: {fileID: 0}

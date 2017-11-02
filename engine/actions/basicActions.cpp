@@ -236,7 +236,7 @@ namespace Anki {
           // Remove anything that may be keeping face alive, since we're
           // doing our own
           // TODO: Restore KeepFaceAlive stuff (VIC-364)
-          //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveKeepFaceAlive(IKeyFrame::SAMPLE_LENGTH_MS);
+          //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveKeepFaceAlive(ANIM_TIME_STEP_MS);
           
           // Store the angular distance at which to remove eye shift (halfway through the turn)
           _absAngularDistToRemoveEyeDart_rad = 0.5f * std::abs(_angularDistExpected_rad);
@@ -255,7 +255,7 @@ namespace Anki {
           _robot.GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
                                                                                       "TurnInPlaceEyeDart",
                                                                                       xPixShift, 0,
-                                                                                      4*IKeyFrame::SAMPLE_LENGTH_MS
+                                                                                      4*ANIM_TIME_STEP_MS
                                                                                       );
            */
         }
@@ -327,7 +327,7 @@ namespace Anki {
                          RAD_TO_DEG(_angularDistTraversed_rad));
           // TODO: Restore eye shifts (VIC-363)
           //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag,
-          //                                                                       3*IKeyFrame::SAMPLE_LENGTH_MS);
+          //                                                                       3*ANIM_TIME_STEP_MS);
           _eyeShiftTag = kNotAnimatingTag;
         }
       }
@@ -824,6 +824,7 @@ namespace Anki {
     {
       switch(preset) {
         case Preset::GROUND_PLANE_VISIBLE: { return DEG_TO_RAD(-15.0f); }
+        case Preset::IDEAL_BLOCK_VIEW: { return kIdealViewBlockHeadAngle; }
       }
       DEV_ASSERT(false, "MoveHeadToAngleAction.NotAPreset");
       return -1.0f;
@@ -833,6 +834,7 @@ namespace Anki {
     {
       switch(preset) {
         case Preset::GROUND_PLANE_VISIBLE: { return "GroundPlaneVisible"; }
+        case Preset::IDEAL_BLOCK_VIEW: { return "IdealBlockView"; }
       }
       DEV_ASSERT(false, "MoveHeadToAngleAction.NotAPreset");
       return "ERROR";
@@ -878,7 +880,7 @@ namespace Anki {
         {
           // Remove anything that may be keeping face alive, since we're doing our own
           // TODO: Restore KeepFaceAlive stuff (VIC-364)
-          //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveKeepFaceAlive(IKeyFrame::SAMPLE_LENGTH_MS);
+          //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveKeepFaceAlive(ANIM_TIME_STEP_MS);
           
           // Lead with the eyes, if not in position
           // Note: assuming screen is about the same x distance from the neck joint as the head cam
@@ -891,7 +893,7 @@ namespace Anki {
                                                                                       "MoveHeadToAngleEyeShift",
                                                                                       0,
                                                                                       yPixShift,
-                                                                                      4*IKeyFrame::SAMPLE_LENGTH_MS);
+                                                                                      4*ANIM_TIME_STEP_MS);
           
            */
           if(!_holdEyes) {
@@ -928,7 +930,7 @@ namespace Anki {
           
           // TODO: Restore eye shifts (VIC-363)
           //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag,
-          //                                                                       3*IKeyFrame::SAMPLE_LENGTH_MS);
+          //                                                                       3*ANIM_TIME_STEP_MS);
           _eyeShiftTag = kNotAnimatingTag;
         }
       }

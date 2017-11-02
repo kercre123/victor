@@ -11,6 +11,9 @@
 set(ANKI_BUILD_CXX_COMPILE_OPTIONS
   $<$<CONFIG:Debug>:-O0>
   $<$<CONFIG:Release>:-Os>
+  $<$<BOOL:${MACOSX}>:-fobjc-arc>
+  $<$<BOOL:${IOS}>:-fobjc-arc>
+  -fsigned-char
   -g
   -Wall
   -Wconditional-uninitialized

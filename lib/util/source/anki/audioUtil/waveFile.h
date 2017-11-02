@@ -22,7 +22,10 @@ namespace AudioUtil {
 
 class WaveFile {
 public:
-  static bool SaveFile(const std::string& filename, const AudioChunkList& chunkList, uint16_t numChannels = 1);
+  static bool SaveFile(const std::string& filename,
+                       const AudioChunkList& chunkList,
+                       uint16_t numChannels = 1,
+                       uint32_t sampleRate_hz = AudioUtil::kSampleRate_hz);
   
   static AudioChunkList ReadFile(const std::string& filename, std::size_t desiredSamplesPerChunk = kSamplesPerChunk);
   

@@ -58,7 +58,6 @@ namespace Cozmo {
   class IKeyFrame
   {
   public:
-    static const u32 SAMPLE_LENGTH_MS = 33;
     
     IKeyFrame();
     //IKeyFrame(const Json::Value& root);
@@ -101,7 +100,7 @@ namespace Cozmo {
     
     TimeStamp_t GetCurrentTime() const { return _currentTime_ms; }
     
-    // Increments member currentTime_ms by SAMPLE_LENGTH_MS and checks it against durationTime_ms.
+    // Increments member currentTime_ms by ANIM_TIME_STEP_MS and checks it against durationTime_ms.
     // Once currentTime_ms >= durationTime, it gets reset to 0 to be ready to call again.
     bool IsDoneHelper(TimeStamp_t durationTime_ms);
     
@@ -238,11 +237,9 @@ namespace Cozmo {
     // this RobotAudioKeyFrame (which is the size of the '_audioReferences' vector)
     const int8_t GetNumAudioRefs() const;
 
-    // The GetAudioRef() method will return an AudioRef. Callers can optionally specify which one to
-    // return as an '_audioReferences' index. If that index is not provided, then GetAudioRefIndex()
-    // is used to lookup the index.
+    // The GetAudioRef() method will return an AudioRef. Callers should specify which one to return
+    // as an '_audioReferences' index and GetAudioRefIndex() can be used to lookup that index.
     const AudioRef& GetAudioRef(const int8_t selectedAudioIndex) const;
-    const AudioRef& GetAudioRef() const;
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     

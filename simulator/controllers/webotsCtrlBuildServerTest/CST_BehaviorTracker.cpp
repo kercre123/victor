@@ -12,6 +12,7 @@
 
 #include "simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "engine/actions/basicActions.h"
 #include "engine/robot.h"
 #include "util/logging/logging.h"
@@ -72,7 +73,6 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
   switch (_testState) {
     case TestState::StartUpFreeplayMode:
     {
-      MakeSynchronous();
       StartMovieConditional("BehaviorTracker", 8);
       TakeScreenshotsAtInterval("BehaviorTracker", 1.f);
 
@@ -85,7 +85,7 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
 
       SendMessage(message);
 
-      _testState = TestState::FreePlay;
+      SET_TEST_STATE(FreePlay);
       break;
     }
     case TestState::FreePlay:
@@ -103,7 +103,7 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
         change.elapsedTime = totalElapsed;
         _stateChangeList.push_back(change);
         
-        _testState = TestState::TestDone;
+        SET_TEST_STATE(TestDone);
       }
       break;
     }
@@ -190,8 +190,8 @@ void CST_BehaviorTracker::HandleBehaviorTransition(const ExternalInterface::Beha
   time_t currentTime;
   time(&currentTime);
   BehaviorStateChange change;
-  change.newBehaviorID = msg.newBehaviorID;
-  change.oldBehaviorID = msg.oldBehaviorID;
+  //change.newBehaviorID = msg.newBehaviorID;
+  //change.oldBehaviorID = msg.oldBehaviorID;
   change.elapsedTime = difftime(currentTime, _startTime);
   
   _stateChangeList.push_back(change);

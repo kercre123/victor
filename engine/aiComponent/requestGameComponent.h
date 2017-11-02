@@ -15,8 +15,7 @@
 #define __Cozmo_Basestation_AIComponent_RequestGameComponent_H__
 
 #include "anki/common/types.h"
-#include "engine/behaviorSystem/behaviors/iBehavior_fwd.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "clad/types/unlockTypes.h"
 
 #include "util/signals/simpleSignal_fwd.h"
@@ -27,6 +26,7 @@ namespace Anki {
 namespace Cozmo {
   
 // forward declarations
+class IExternalInterface;
 class Robot;
   
 struct GameRequestData{
@@ -38,14 +38,15 @@ struct GameRequestData{
   int _weight;
 };
   
-class RequestGameComponent{
+class RequestGameComponent : private Util::noncopyable{
 public:
-  RequestGameComponent(Robot& robot);
+  RequestGameComponent(IExternalInterface* robotExternalInterface,
+                       const Json::Value& requestGameWeights);
   ~RequestGameComponent() {};
   
   // Returns the unlockID of the next game type to request
   // returns count if no game should be requested
-  UnlockId IdentifyNextGameTypeToRequest(const Robot& robot);
+  UnlockId IdentifyNextGameTypeToRequest(BehaviorExternalInterface& behaviorExternalInterface);
   
   
   // declaration for any event handler
@@ -56,7 +57,7 @@ protected:
   // RequestGame should be the only class that registers a game has been requested
   // when it's actually completed making the request so that the behavior isn't
   // penalized if it's interrupted before it makes the request
-  friend class IBehaviorRequestGame;
+  friend class ICozmoBehaviorRequestGame;
   void RegisterRequestingGameType(UnlockId unlockID);
   
 private:
