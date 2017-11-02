@@ -24,19 +24,19 @@ static inline int min(int a, int b){  return a<b?a:b;}
 
 
 void helper_text_small(int line, const char *text, int len) {
-  display_draw_text(LAYER_SMALL, line-1, HELPER_SMALL_TEXT_COLOR_FG, HELPER_SMALL_TEXT_COLOR_BG,  text, len, 0);
+  display_draw_text(DISPLAY_LAYER_SMALL, line-1, HELPER_SMALL_TEXT_COLOR_FG, HELPER_SMALL_TEXT_COLOR_BG,  text, len, 0);
 }
 
 void helper_text_large(uint16_t fg, uint16_t bg, const char *text, int len, bool solo) {
-  display_clear_layer(LAYER_LARGE, fg, bg);
-  display_draw_text(LAYER_LARGE, 1, fg, bg, text, len, 1);
+  display_clear_layer(DISPLAY_LAYER_LARGE, fg, bg);
+  display_draw_text(DISPLAY_LAYER_LARGE, 1, fg, bg, text, len, 1);
 }
 
 void helper_text_show(int largeSolo)
 {
   uint8_t rendermask = 0xFF;
   if (largeSolo) {
-    rendermask = 1<<LAYER_LARGE;
+    rendermask = 1<<DISPLAY_LAYER_LARGE;
   }
   display_render(rendermask);
 }

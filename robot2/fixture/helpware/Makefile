@@ -10,9 +10,9 @@ CFLAGS = -c -fPIC -Wall -pie
 
 CROSS_COMPILE = $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-
 
-# CC := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-gcc
-# CPP := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-g++
-# AR := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-ar
+
+CORE_DIR = ../../core
+CORE = $(CORE_DIR)/libcore.a
 
 # Compiler flags
 # Specify all the flags below which you want to use for your compilation, For this simple example, we only need to specify the include directory path
@@ -20,9 +20,9 @@ CROSS_COMPILE = $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-
 
 # link with core lib
 LIBS    += -lcore
-LIBPATH += -L../../core
+LIBPATH += -L$(CORE_DIR)
 CFLAGS  += -I../
-CFLAGS  += -I../../core/inc
+CFLAGS  += -I$(CORE_DIR)/inc
 
 
 # All the c files in this directory will be compiled
@@ -39,7 +39,7 @@ ANIMATE_SRC = animate.c
 ANIMATE_OBJ = $(ANIMATE_SRC:%.c=$(OBJDIR)/%.o)
 
 DISPLAY = display
-DISPLAY_SRC = display.c helper_text.c
+DISPLAY_SRC = display.c helper_text.c display_test.c
 DISPLAY_OBJ = $(DISPLAY_SRC:%.c=$(OBJDIR)/%.o)
 
 HELPER = helper
@@ -51,6 +51,9 @@ REMOTE_DEST = /data/local/fixture/
 
 all: $(ANDROID_ARM_TOOLS_ROOT) $(DFU) $(ANIMATE) $(DISPLAY) $(HELPER)
 
+$(CORE):
+	cd $(CORE_DIR) && make all
+
 $(ANDROID_ARM_TOOLS_ROOT):
 	$(ANDROID_NDK_ROOT)/build/tools/make_standalone_toolchain.py --arch arm --install-dir $(ANDROID_ARM_TOOLS_ROOT) --api 24
 
@@ -59,16 +62,16 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CROSS_COMPILE)gcc $(CFLAGS) $<  -o $@
 
 
-$(DFU): $(DFU_OBJ)
+$(DFU): $(CORE) $(DFU_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(DFU_OBJ) $(LIBPATH) $(LIBS)  -o $(DFU)
 
-$(ANIMATE): $(ANIMATE_OBJ)
+$(ANIMATE): $(CORE) $(ANIMATE_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(ANIMATE_OBJ) $(LIBPATH) $(LIBS)  -o $(ANIMATE)
 
-$(DISPLAY): $(DISPLAY_OBJ)
+$(DISPLAY): $(CORE) $(DISPLAY_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(DISPLAY_OBJ) $(LIBPATH) $(LIBS)  -o $(DISPLAY)
 
-$(HELPER): $(HELPER_OBJ)
+$(HELPER): $(CORE) $(HELPER_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(HELPER_OBJ) $(LIBPATH) $(LIBS)  -o $(HELPER)
 
 

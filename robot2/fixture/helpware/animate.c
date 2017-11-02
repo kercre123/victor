@@ -20,8 +20,7 @@ static void animate(const char* fn) {
 
   while (!feof(fo)) {
     fread(frame.data, 1, sizeof(frame.data), fo);
-      lcd_draw_frame(&frame);
-    }
+    lcd_draw_frame(&frame);
   }
   fclose(fo);
 }

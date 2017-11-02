@@ -39,6 +39,7 @@ int handle_logstop_command(const char* cmd, int len) {
   return fixture_log_stop(cmd, len);
 }
 int handle_dutprogram_command(const char* cmd, int len) {
+  int retval = -666;
   fixture_log_writestring("-BEGIN- DUTPROGRAM\n");
   FILE* pp = popen("./headprogram", "r");
   if (pp) {
@@ -46,10 +47,11 @@ int handle_dutprogram_command(const char* cmd, int len) {
     while(fgets(buffer, 512, pp) != NULL) {
       fixture_log_writestring(buffer);
     }
-    pclose(pp);
+    retval = pclose(pp);
   }
+
   fixture_log_writestring("--END-- DUTPROGRAM\n");
-  return 0;
+  return retval;
 
 }
 
@@ -245,7 +247,7 @@ void on_exit(void)
   if (gSerialFd) {
     close(gSerialFd);
   }
-  fixture_log_stop("",0);
+  fixture_log_terminate();
   enable_kbhit(0);
 }
 
