@@ -13,6 +13,10 @@ import (
 	"github.com/anki/sai-chipper-voice/client/chipper"
 )
 
+const (
+	ChipperUrl = "https://chipper-dev.api.anki.com"
+)
+
 type socketMsg struct {
 	n   int
 	buf []byte
@@ -111,7 +115,7 @@ func RunProcess(micSock ipc.Socket, aiSock ipc.Socket) {
 					fmt.Println("Got hotword event while already streaming, weird...")
 				}
 				client, err := chipper.NewClient("", "device-id", uuid.New().String()[:16],
-					api.WithServerURL("http://127.0.0.1:8000"))
+					api.WithServerURL(ChipperUrl))
 				if err != nil {
 					fmt.Println("Error creating Chipper:", err)
 					continue
