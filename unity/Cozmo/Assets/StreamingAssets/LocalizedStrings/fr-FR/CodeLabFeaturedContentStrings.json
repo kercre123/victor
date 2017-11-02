@@ -19,7 +19,7 @@
     "translation" : "Cube placé sous le bras élévateur"
   },
   "codeLabFeaturedProject.HotPotato.resets_game_state" : {
-    "translation" : "Réinitialise l’état de la partie."
+    "translation" : "Réinitialise l'état de la partie."
   },
   "codeLabFeaturedProject.HotPotato.cozmo_asks_for_cube_and_waits" : {
     "translation" : "Cozmo demande un cube et attend."
@@ -28,7 +28,7 @@
     "translation" : "quel cube est la patate"
   },
   "codeLabFeaturedProject.HotPotato.which_cube_is_about_to_be_the_potato" : {
-    "translation" : "quel cube s’apprête à devenir la patate"
+    "translation" : "quel cube s'apprête à devenir la patate"
   },
   "codeLabFeaturedProject.HotPotato.how_long_to_heat_potato" : {
     "translation" : "combien de temps avant la fin de la patate chaude"
@@ -49,16 +49,16 @@
     "translation" : "Vérifie si le joueur a déplacé un cube de Cozmo..."
   },
   "codeLabFeaturedProject.HotPotato.or_if_the_move_read_as_a_tap" : {
-    "translation" : "... ou s’il l’a seulement touché..."
+    "translation" : "... ou s'il l'a seulement touché..."
   },
   "codeLabFeaturedProject.HotPotato.starts_game,_makes_game_get_faster,_triggers_end_timer" : {
-    "translation" : "Commence la partie, l’accélère et déclenche le minuteur."
+    "translation" : "Commence la partie, l'accélère et déclenche le minuteur."
   },
   "codeLabFeaturedProject.HotPotato.lights_up_potato_and_waits_for_tap" : {
-    "translation" : "Illumine la patate et attend qu’elle soit touchée."
+    "translation" : "Illumine la patate et attend qu'elle soit touchée."
   },
   "codeLabFeaturedProject.HotPotato.cozmo_taps_if_he_has_the_potato" : {
-    "translation" : "Cozmo touche le cube s’il a la patate."
+    "translation" : "Cozmo touche le cube s'il a la patate."
   },
   "codeLabFeaturedProject.HotPotato.end_of_game_timer_and_ending_sequence" : {
     "translation" : "Minuteur de fin de partie et séquence finale."
@@ -76,10 +76,10 @@
     "translation" : "Illumine le cube de chaque joueur."
   },
   "codeLabFeaturedProject.HotPotato.cozmo_taps_the_cube_he_thinks_he_has_been_given" : {
-    "translation" : "Cozmo touche le cube qu’il pense avoir reçu..."
+    "translation" : "Cozmo touche le cube qu'il pense avoir reçu..."
   },
   "codeLabFeaturedProject.HotPotato.or_cozmo_does_a_cube_tap_to_see_if_there_is_a_cube" : {
-    "translation" : "... ou vérifie s’il y en a un."
+    "translation" : "... ou vérifie s'il y en a un."
   },
   "codeLabFeaturedProject.TinyOrchestra.cube_3_taps" : {
     "translation" : "cube 3 touché"
@@ -91,19 +91,19 @@
     "translation" : "cube 1 touché"
   },
   "codeLabFeaturedProject.TinyOrchestra.tapping_cube_2_changes_instrument_2" : {
-    "translation" : "Toucher le cube 2 modifie l’instrument 2."
+    "translation" : "Toucher le cube 2 modifie l'instrument 2."
   },
   "codeLabFeaturedProject.TinyOrchestra.tapping_cube_3_changes_instrument_3" : {
-    "translation" : "Toucher le cube 3 modifie l’instrument 3."
+    "translation" : "Toucher le cube 3 modifie l'instrument 3."
   },
   "codeLabFeaturedProject.TinyOrchestra.plays_beginning_animation_and_lights" : {
-    "translation" : "Lance l’animation de début et allume les voyants."
+    "translation" : "Lance l'animation de début et allume les voyants."
   },
   "codeLabFeaturedProject.TinyOrchestra.plays_animation_if_music_is_playing" : {
-    "translation" : "Lance l’animation si la musique est jouée."
+    "translation" : "Lance l'animation si la musique est jouée."
   },
   "codeLabFeaturedProject.TinyOrchestra.tapping_cube_1_changes_instrument_1" : {
-    "translation" : "Toucher le cube 1 modifie l’instrument 1."
+    "translation" : "Toucher le cube 1 modifie l'instrument 1."
   },
   "codeLabFeaturedProject.MagicFortuneTeller.?" : {
     "translation" : "?"
@@ -145,7 +145,7 @@
     "translation" : "Démarre le programme."
   },
   "codeLabFeaturedProject.MagicFortuneTeller.cozmo_asks_for_a_question" : {
-    "translation" : "Cozmo veut qu’on lui pose une question."
+    "translation" : "Cozmo veut qu'on lui pose une question."
   },
   "codeLabFeaturedProject.MagicFortuneTeller.randomly_selects_a_fortune" : {
     "translation" : "Sélectionne une réponse au hasard."

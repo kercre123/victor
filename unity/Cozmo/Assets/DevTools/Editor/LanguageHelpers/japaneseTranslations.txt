@@ -137,90 +137,90 @@ COZMOが人を認識して名前を覚えられるように、手伝います。
 COZMOはしゃっくりをしています
 顔のスキャンを中止しますか？
 COZMOが目を覚まして充電ドックから離れるまでお待ちください。
-Resets game state.
-Place Cube under my lift.
-Players ready, set?
-cube 1 bad
-Tapping Cube 2 changes instrument 2.
-...while making a magic sound and lighting his backpack.
-definitely
-These blocks control music.
-Starts the program.
-game length
-Lights up each players Cube.
-White 
-cube 2 bad
-Starts game, makes game get faster, triggers end timer.
-Cozmo taps the Cube he thinks he has been given.
-Cozmo taps if he has the potato.
-how long to heat potato
-These blocks control Cube lights.
-selected music
-Lights up potato and waits for tap.
-End of game timer and ending sequence.
-These blocks control Cozmo dancing.
-?
+ゲームをリセットします。
+キューブをリフトの下においてね。
+準備はいい？
+キューブ1不良
+キューブ2をタップすると楽器2が変わります。
+COZMOの顔に運勢を表示します。
+いいね
+このブロックで音楽を操作します。
+プログラムを開始します。
+ゲーム時間
+プレーヤーのキューブがそれぞれ光ります。
+白 
+キューブ2不良
+ゲームを開始し、ゲームのスピードを上げ、ゲーム終了のタイマーを鳴らします。
+COZMOが自分のキューブだと思うキューブをタップします。
+COZMOがポテトを持っていると、COZMOがタップしてくれます。
+ポテトを温める時間
+このブロックでキューブのライトを操作します。
+選択した音楽
+ポテトが光って、タップを待ちます。
+ゲーム終了タイマーが鳴り、ゲームが終了します。
+このブロックでCOZMOのダンスを操作します。
+？
 COZMO
-Tapping Cube 3 changes instrument 3.
-cube 2 color
-Points
-forget it
-...or Cozmo does a Cube tap to see if there is a Cube.
-These blocks display on Cozmos face the seconds left.
-fortune
-Plays animation if music is playing.
-You won
-Picks different Cube as new potato.
+キューブ3をタップすると楽器3が変わります。
+キューブ2の色
+ポイント
+あきらめよう
+または、キューブタップをしてそこにキューブがあるか確かめます。
+このブロックでCOZMOの顔に残りの時間を表示します。
+運勢
+音楽が鳴っていると、アニメーションが流れます。
+あなたのかち
+別のキューブをポテトに選びます。
 はい
-cube 3 taps
-White
-cube locked
-good tap
-Yellow
-Cozmo asks for a question.
-unsure
-waiting for Cozmos Cube to be moved
-which Cube is about to be the potato
-Ready?
-no chance
-cube 3 color
-Go!
-not set
-no way
-Randomly selects a fortune.
-possibly
-Displays fortune on Cozmos face...
-for sure
-...or if the move read as a tap...
-Orange
-pack color
-Tapping Cube 1 changes instrument 1.
-Checks if player has moved a Cube for Cozmo...
-Blue
-cube 1 taps
-which Cube is the potato
-cube 2 taps
-Cozmos Cube
-cube 3 bad
-Point
-These blocks control the timer.
-length of timer (in seconds)
-random
-Cozmos reaction to winning or losing.
-pack random
-absolutely
-Plays beginning animation and lights.
-timer in sec
-Cozmo asks for Cube and waits.
-cube 1 color
-maybe
-Purple
-end of game timer
+キューブ3をタップ
+白
+キューブがロックされました
+良いタップ
+黄色
+COZMOに質問をしてあげましょう。
+どうかな
+COZMOが動かすキューブを待っています
+どのキューブがポテトになるでしょう
+準備はいい？
+ざんねん
+キューブ3の色
+スタート！
+まだだよ
+ダメだね
+ランダムに運勢を選びます。
+ダメかも
+マジカルな音楽を流して、LEDライトを光らせながら、
+だいじょうぶ
+または、タップして動かし終わったかチェックします。
+オレンジ
+LEDの色
+キューブ1をタップすると、楽器1が変わります。
+プレーヤーがCOZMOのところにキューブを動かしたか、
+青
+キューブ1をタップ
+どのキューブがポテトでしょう
+キューブ2をタップ
+COZMOのキューブ
+キューブ3不良
+ポイント
+このブロックでタイマーを操作します。
+時間（秒）
+ランダム
+COZMOが勝ち、負けに応じて反応します。
+ランダムなLED
+さいこう
+開始のアニメーションが流れ、光ります。
+タイマー（秒）
+COZMOはキューブが欲しいようです。
+キューブ1の色
+たぶんだいじょうぶ
+紫
+ゲーム終了
 X
-Cube put under lift
-Better luck next time
-...and then assigns that Cube number as Cozmos Cube.
-bad tap
+リフトの下にキューブをセット
+つぎはがんばってね
+そして、選んだキューブの番号がCOZMOのキューブになります。
+悪いタップ
 #31：キューブを元の場所に戻す：<span class='yellow'>キューブが見えたら、</span>COZMOを<span class='blue'>後ろを向かせ、</span>キューブをCOZMOの数フィート後ろに置いて戻ります。<span class='orange'>無制限に繰り返します。</span>
 勝者
 上級のコードブロックCOZMO python SDKによって、今までのものに加えて何百ものCOZMOアニメーションにアクセス可能になります。アニメーションのid文字列はこのブロックによって再生可能です。SDKについての詳細はこちらでご覧になれます。developer.anki.com
@@ -280,6 +280,7 @@ COZMOのリフトの高さ%
 <コンディション>が真の場合[A]内のブロックを実行し、それ以外の場合は[B]内のブロックを実行します。
 2つのピクセル座標間に塗りつぶされた長方形を描画します。COZMOの顔のスクリーンは幅128ピクセル、高さ64ピクセルです。したがって可視範囲は、[X]が0-127、[Y]が0-63です。ヒント：描画しているものを参照するには「COZMOの顔に表示」ブロックを使用してください。
 いないいないばあ
+Laser Smile!
 時計
 [X]、[Y]に半径[Z]の円を描画
 #2の答え
@@ -380,7 +381,7 @@ COZMOを現在位置からの相対的な位置に移動：前に[X]ミリメー
 4. 自分の最高スコアを更新できるかな？
 先に課題に取り組んでから「次へ」をタップして答えを確認します！
 このブロックはプロジェクト全体の[すべて]のコードブロックを停止する、または[このスクリプト]を停止することによって現在のブロックの集合の中のすべてのコードブロックを停止するのに使用します。
-Remix to save!
+リミックスして保存しましょう。
 自動的にCOZMOの現在の動作を完了するまで次のブロックへの移行の待機を有効にします。注意：これがデフォルトの状態です。
 手順
 いいえ、キャンセルします
@@ -1170,7 +1171,7 @@ COZMOにチャージする
 {0}をロック解除しました！
 続ける
 メニュー
-You've earned your Play Token for today!
+今日のミッションをクリアしたよ！
 COZMOがころがして {0} エナジーボールを生み出しました！
 続けるにはCOZMOをチューンアップしてください。
 COZMOがグータッチをして {0} エナジーボールを生み出しました！

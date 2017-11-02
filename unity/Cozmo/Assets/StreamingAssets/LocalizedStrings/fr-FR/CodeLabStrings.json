@@ -1322,5 +1322,8 @@
   },
   "codeLab.export_modal.button.copy_to_drive" : {
     "translation" : "Copier dans Google Drive"
+  },
+  "codeLabSampleProject_LaserSmile.projectName" : {
+    "translation" : "Laser Smile!"
   }
 }

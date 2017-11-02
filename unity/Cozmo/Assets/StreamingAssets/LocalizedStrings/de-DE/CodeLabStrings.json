@@ -556,7 +556,7 @@
     "translation" : "Automatisch gespeichert"
   },
   "codeLab.SaveProject.NotSaved" : {
-    "translation" : "Remix to save!"
+    "translation" : "Erstelle einen Remix, um zu speichern!"
   },
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "Mein Projekt \"{0}\""
@@ -1322,5 +1322,8 @@
   },
   "codeLab.export_modal.button.copy_to_drive" : {
     "translation" : "Nach Google Drive kopieren"
+  },
+  "codeLabSampleProject_LaserSmile.projectName" : {
+    "translation" : "Laser Smile!"
   }
 }
