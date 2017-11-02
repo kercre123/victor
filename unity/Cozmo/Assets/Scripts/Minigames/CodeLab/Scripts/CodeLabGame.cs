@@ -649,8 +649,48 @@ namespace CodeLab {
       }
     }
 
-    void StoreDeviceOrientationInState() {
-      if (SystemInfo.supportsGyroscope && Input.gyro.enabled) {
+    private enum UnreliableOrientationDetectionState {
+      NoInformation = 0,
+      GyroSeeminglyNonpresent,
+      GyroDetected
+    }
+    private bool _DeviceGyroSupportReportingInaccurrate = SystemInfo.deviceModel.Contains("Amazon");
+    private UnreliableOrientationDetectionState unreliableOrientationDetectionState = UnreliableOrientationDetectionState.NoInformation;
+
+    private void StoreDeviceOrientationInState() {
+      bool gyroPresent = SystemInfo.supportsGyroscope && Input.gyro.enabled;
+      bool accelerometerPresent = SystemInfo.supportsAccelerometer;
+
+      if (_DeviceGyroSupportReportingInaccurrate) {
+        // The kindle i'm testing on says it has a gyro, but the gyro is returning (0, 0, 1, 0) regardless of orientation
+        // This is not as cleanly diagnosable as "wrong" as if it were returning identity, but is clearly not useful
+        bool suspiciouslyPreciseGyro =
+               Input.gyro.attitude.x == Math.Floor(Input.gyro.attitude.x) &&
+               Input.gyro.attitude.y == Math.Floor(Input.gyro.attitude.y) &&
+               Input.gyro.attitude.z == Math.Floor(Input.gyro.attitude.z) &&
+               Input.gyro.attitude.w == Math.Floor(Input.gyro.attitude.w);
+
+        switch (unreliableOrientationDetectionState) {
+        case UnreliableOrientationDetectionState.NoInformation:
+          if (gyroPresent && suspiciouslyPreciseGyro) {
+            unreliableOrientationDetectionState = UnreliableOrientationDetectionState.GyroSeeminglyNonpresent;
+          }
+          break;
+        case UnreliableOrientationDetectionState.GyroSeeminglyNonpresent:
+          if (!suspiciouslyPreciseGyro) {
+            unreliableOrientationDetectionState = UnreliableOrientationDetectionState.GyroDetected;
+          }
+          break;
+        case UnreliableOrientationDetectionState.GyroDetected:
+          break;
+        }
+
+        if (unreliableOrientationDetectionState == UnreliableOrientationDetectionState.GyroSeeminglyNonpresent) {
+          gyroPresent = false;
+        }
+      }
+
+      if (gyroPresent) {
         // Transform gyro quaternion to matrix
         Matrix4x4 deviceAttitude = MatrixFromQuaternion(Input.gyro.attitude);
 
@@ -681,7 +721,7 @@ namespace CodeLab {
         _LatestCozmoState.device.yaw_d = ValueSanitizer.SanitizeFloat(yaw * Mathf.Rad2Deg);
         _LatestCozmoState.device.roll_d = ValueSanitizer.SanitizeFloat(roll * Mathf.Rad2Deg);
       }
-      else if (SystemInfo.supportsAccelerometer) {
+      else if (accelerometerPresent) {
         // calculate pitch and roll values that work while device is held in a near landscape neutral angle
         float standardPitchStrength = -Mathf.Atan2(Input.acceleration.z, -Input.acceleration.y);
         float yzStrength = (Mathf.Abs(Input.acceleration.y) + Mathf.Abs(Input.acceleration.z)) * -Math.Sign(Input.acceleration.y);
