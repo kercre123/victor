@@ -35,20 +35,34 @@ func socketReader(s ipc.Socket, ch chan<- socketMsg) {
 }
 
 type voiceContext struct {
-	client  *chipper.ChipperClient
-	samples []byte
-	context context.Context
+	client      *chipper.ChipperClient
+	samples     []byte
+	context     context.Context
+	audioStream chan []byte
 }
 
-func (ctx *voiceContext) addSamples(samples []byte, cloudChan chan<- string) {
+func (ctx *voiceContext) addSamples(samples []byte) {
 	ctx.samples = append(ctx.samples, samples...)
 	if len(ctx.samples) >= streamSize {
 		// we have enough samples to stream - slice them off and pass them to another
 		// thread for sending to server
 		samples := ctx.samples[:streamSize]
 		ctx.samples = ctx.samples[streamSize:]
-		go stream(ctx, samples, cloudChan)
+		ctx.audioStream <- samples
 	}
+}
+
+func newVoiceContext(client *chipper.ChipperClient, cloudChan chan<- string) *voiceContext {
+	audioStream := make(chan []byte, 10)
+	ctx := &voiceContext{client, make([]byte, 0, streamSize*2), nil, audioStream}
+
+	go func() {
+		for data := range ctx.audioStream {
+			stream(ctx, data, cloudChan)
+		}
+	}()
+
+	return ctx
 }
 
 func stream(ctx *voiceContext, samples []byte, cloudChan chan<- string) {
@@ -60,7 +74,6 @@ func stream(ctx *voiceContext, samples []byte, cloudChan chan<- string) {
 
 	// set up response routine if this is the first stream
 	if ctx.context == nil {
-		fmt.Println("Adding context")
 		ctx.context = context.Background()
 		go func() {
 			resp, err := ctx.client.WaitForIntent(ctx.context)
@@ -103,9 +116,9 @@ func RunProcess(micSock ipc.Socket, aiSock ipc.Socket) {
 					fmt.Println("Error creating Chipper:", err)
 					continue
 				}
-				ctx = &voiceContext{client, make([]byte, 0, 4000), nil}
+				ctx = newVoiceContext(client, cloudChan)
 			} else if ctx != nil {
-				ctx.addSamples(msg.buf, cloudChan)
+				ctx.addSamples(msg.buf)
 			}
 		case intent := <-cloudChan:
 			// we got an answer from the cloud, tell mic to stop...
@@ -118,6 +131,7 @@ func RunProcess(micSock ipc.Socket, aiSock ipc.Socket) {
 				aiSock.Write([]byte(intent))
 			}
 			// stop streaming until we get another hotword event
+			close(ctx.audioStream)
 			ctx = nil
 		}
 	}
