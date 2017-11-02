@@ -131,6 +131,12 @@ var onBLEDiscover = function (peripheral) {
 };
 
 noble.on('discover', onBLEDiscover);
+noble.on('scanStart', function () {
+    outputResponse("Scanning started.....");
+});
+noble.on('scanStop', function () {
+    outputResponse("Scanning stopped.");
+});
 
 var handleInput = function (line) {
     var trimmedLine = line.trim();
@@ -149,14 +155,24 @@ var handleInput = function (line) {
             if (connectedVictor) {
                 outputResponse("Disconnect from Victor first");
             } else {
-                noble.startScanning();
-                outputResponse("Scanning started.....");
+                if (noble.state !== 'poweredOn') {
+                    outputResponse("Please power on your Bluetooth adapter to start scanning.");
+                    noble.once('stateChange', function (state) {
+                        if (state === 'poweredOn') {
+                            noble.startScanning();
+                        }
+                    });
+                } else {
+                    noble.startScanning();
+                }
             }
             break;
         case 'stop-scan':
-            noble.stopScanning();
+            noble.removeAllListeners('stateChange');
+            if (noble.start === 'poweredOn') {
+                noble.stopScanning();
+            }
             victorAds = {};
-            outputResponse("Scanning stopped.");
             break;
         case 'restart-adb':
             if (connectedVictor) {
