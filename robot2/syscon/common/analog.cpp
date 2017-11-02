@@ -62,11 +62,11 @@ static void setBatteryPower(bool bat) {
     NVIC_DisableIRQ(ADC1_IRQn);
 
     nVEXT_EN::mode(MODE_INPUT);
-    wait(40*5); // Just around 50us
+    wait(40*2); // Just around 20us
     BAT_EN::set();
   } else {
     BAT_EN::reset();
-    wait(40); // Just around 10us
+    wait(40*2); // Just around 20us
     nVEXT_EN::reset();
     nVEXT_EN::mode(MODE_OUTPUT);
 
@@ -162,7 +162,7 @@ void Analog::init(void) {
       BAT_EN::reset();
       for( int i = 0; i < 200; i++)  __asm("wfi") ;
     }
-    
+
     BAT_EN::reset();
   }
 
@@ -198,7 +198,7 @@ void Analog::allowCharge(bool enable) {
   vext_debounce = 0;
 }
 
-void Analog::delayCharge() {  
+void Analog::delayCharge() {
   vext_debounce = 0;
 }
 
