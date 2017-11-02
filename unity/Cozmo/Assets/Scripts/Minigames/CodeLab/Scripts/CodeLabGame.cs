@@ -641,13 +641,35 @@ namespace CodeLab {
           _LatestCozmoState.face.expression = "";
         }
 
+        StoreDeviceOrientationInState();
+
+        // Serialize _LatestCozmoState to JSON and send to Web / Javascript side
+        string cozmoStateAsJSON = JsonConvert.SerializeObject(_LatestCozmoState);
+        this.EvaluateJS(@"window.setCozmoState('" + cozmoStateAsJSON + "');");
+      }
+    }
+
+    void StoreDeviceOrientationInState() {
+      if (SystemInfo.supportsGyroscope && Input.gyro.enabled) {
         // Transform gyro quaternion to matrix
         Matrix4x4 deviceAttitude = MatrixFromQuaternion(Input.gyro.attitude);
 
-        // matrix parameter extraction taken from: http://planning.cs.uiuc.edu/node103.html
-        float pitch = Mathf.Atan2(deviceAttitude.m22, deviceAttitude.m21);
-        float yaw = Mathf.Atan2(deviceAttitude.m00, deviceAttitude.m10);
-        float roll = Mathf.Atan2(Mathf.Sqrt(deviceAttitude.m21 * deviceAttitude.m21 + deviceAttitude.m22 * deviceAttitude.m22), -deviceAttitude.m20);
+        float sy = Mathf.Sqrt(deviceAttitude.m21 * deviceAttitude.m21 + deviceAttitude.m22 * deviceAttitude.m22);
+
+        float pitch, yaw, roll;
+
+        bool singular = sy < 1e-6;
+        if (!singular) {
+          // matrix parameter extraction taken from: http://planning.cs.uiuc.edu/node103.html
+          pitch = Mathf.Atan2(deviceAttitude.m22, deviceAttitude.m21);
+          yaw = Mathf.Atan2(deviceAttitude.m00, deviceAttitude.m10);
+          roll = Mathf.Atan2(sy, -deviceAttitude.m20);
+        }
+        else {
+          pitch = Mathf.Atan2(deviceAttitude.m11, -deviceAttitude.m12);
+          yaw = 0.0f;
+          roll = Mathf.Atan2(sy, -deviceAttitude.m20);
+        }
 
         // Invert the roll (we want clockwise roll to be positive), and offset it so that facing upward is roll 0 instead of -90
         roll = (Mathf.PI * 0.5f) - roll;
@@ -658,10 +680,38 @@ namespace CodeLab {
         _LatestCozmoState.device.pitch_d = ValueSanitizer.SanitizeFloat(pitch * Mathf.Rad2Deg);
         _LatestCozmoState.device.yaw_d = ValueSanitizer.SanitizeFloat(yaw * Mathf.Rad2Deg);
         _LatestCozmoState.device.roll_d = ValueSanitizer.SanitizeFloat(roll * Mathf.Rad2Deg);
+      }
+      else if (SystemInfo.supportsAccelerometer) {
+        // calculate pitch and roll values that work while device is held in a near landscape neutral angle
+        float standardPitchStrength = -Mathf.Atan2(Input.acceleration.z, -Input.acceleration.y);
+        float yzStrength = (Mathf.Abs(Input.acceleration.y) + Mathf.Abs(Input.acceleration.z)) * -Math.Sign(Input.acceleration.y);
+        float standardRollStrength = Mathf.Atan2(Input.acceleration.x, yzStrength);
+        // correct when upside down - since the sign of Y may not exactly corrolate to what the user thinks of as rolling at high pitch
+        if (Mathf.Abs(standardPitchStrength) >= Mathf.PI / 2) {
+          standardRollStrength = (Mathf.PI - Mathf.Abs(standardRollStrength)) * Mathf.Sign(standardRollStrength);
+        }
 
-        // Serialize _LatestCozmoState to JSON and send to Web / Javascript side
-        string cozmoStateAsJSON = JsonConvert.SerializeObject(_LatestCozmoState);
-        this.EvaluateJS(@"window.setCozmoState('" + cozmoStateAsJSON + "');");
+        // calculate a roll factor for when the device is held close to on its side (where the yz interactions are no longer useful)
+        float sidewaysRollStrength = Mathf.Atan2(Input.acceleration.x, -Input.acceleration.y);
+
+        // generate a lerp factor to transition between the two perspectives
+        // unfortunately there really isn't enough information to make an informed decision about pitch close to vertical.
+        float conversionStartFactor = 0.875f; // a bit over 45 degrees
+        float conversionEndFactor = 0.975f; // pretty close to vertical
+        float truncatedDotProduct = Mathf.Max(0.0f, Mathf.Abs(Vector3.Dot(Input.acceleration, Vector3.right)) - conversionStartFactor);
+        float conversionFactor = Mathf.Min(1.0f, truncatedDotProduct / (conversionEndFactor - conversionStartFactor));
+
+        float pitch = Mathf.Lerp(standardPitchStrength, 0.0f, conversionFactor);
+        float roll = Mathf.Lerp(standardRollStrength, sidewaysRollStrength, conversionFactor);
+
+        _LatestCozmoState.device.pitch_d = ValueSanitizer.SanitizeFloat(pitch * Mathf.Rad2Deg);
+        _LatestCozmoState.device.yaw_d = 0.0f;
+        _LatestCozmoState.device.roll_d = ValueSanitizer.SanitizeFloat(roll * Mathf.Rad2Deg);
+      }
+      else {
+        _LatestCozmoState.device.pitch_d = 0.0f;
+        _LatestCozmoState.device.yaw_d = 0.0f;
+        _LatestCozmoState.device.roll_d = 0.0f;
       }
     }
 
