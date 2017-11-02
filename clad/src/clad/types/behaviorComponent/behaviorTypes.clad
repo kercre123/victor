@@ -175,8 +175,14 @@ enum uint_8 BehaviorID {
   EnrollFace,
 
   // Example Behaviors
-  ExampleDispatcherScoring,
   ExampleAnonymousBehaviors,
+  ExampleDispatcherScoring,
+  ExampleFacePositionUpdated,
+  ExampleFrustration,
+  ExampleGlobalReactions,
+  ExampleObjectMoved,
+  ExampleObjectPositionUpdated,
+  ExamplePetInitialDetection,
 
   FPPeekABoo,
   FactoryCentroidExtractor,

@@ -1,0 +1,8 @@
+{
+  "behaviorClass": "PlayAnim",
+  "behaviorID": "ExamplePetInitialDetection",
+  "animTriggers": ["OnboardingReactToCube"],
+  "wantsToRunStrategyConfig": {
+    "strategyType" : "PetInitialDetection"
+  }  
+}

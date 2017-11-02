@@ -31,9 +31,9 @@ namespace Cozmo {
   
 namespace{
 CONSOLE_VAR(bool, kDebugFaceDist, "AcknowledgementBehaviors", false);
-CONSOLE_VAR_RANGED(f32, kDistanceToConsiderClose_mm, "AcknowledgementBehaviors", 300.0f, 0.0f, 1000.0f);
-CONSOLE_VAR_RANGED(f32, kDistanceToConsiderClose_gap_mm, "AcknowledgementBehaviors", 100.0f, 0.0f, 1000.0f);
-CONSOLE_VAR_RANGED(f32, kFaceReactCooldown_s, "AcknowledgementBehaviors", 4.0f, 0.0f, 60.0f);
+//CONSOLE_VAR_RANGED(f32, kDistanceToConsiderClose_mm, "AcknowledgementBehaviors", 300.0f, 0.0f, 1000.0f);
+//CONSOLE_VAR_RANGED(f32, kDistanceToConsiderClose_gap_mm, "AcknowledgementBehaviors", 100.0f, 0.0f, 1000.0f);
+//CONSOLE_VAR_RANGED(f32, kFaceReactCooldown_s, "AcknowledgementBehaviors", 4.0f, 0.0f, 60.0f);
 CONSOLE_VAR(bool, kEnableFaceAcknowledgeReact, "AcknowledgeFaceBehavior", true);
 static const char* kTriggerStrategyName = "Strategy React To Face Position Updated";
 }
@@ -103,7 +103,7 @@ bool ReactionTriggerStrategyFacePositionUpdated::ShouldTriggerBehaviorInternal(B
 void ReactionTriggerStrategyFacePositionUpdated::HandleFaceObserved(BehaviorExternalInterface& behaviorExternalInterface,
                                                                     const ExternalInterface::RobotObservedFace& msg)
 {
-  if( msg.faceID < 0 ) {
+  /**if( msg.faceID < 0 ) {
     // ignore temporary tracking-only ids
     return;
   }
@@ -174,7 +174,7 @@ void ReactionTriggerStrategyFacePositionUpdated::HandleFaceObserved(BehaviorExte
     }
   }
   
-  _faceWasClose[ msg.faceID ] = currPoseClose;
+  _faceWasClose[ msg.faceID ] = currPoseClose;**/
 }
 
 

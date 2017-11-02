@@ -15,12 +15,17 @@
 #include "engine/aiComponent/stateConceptStrategies/strategyAlwaysRun.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyCloudIntentPending.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyExpressNeedsTransition.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyFacePositionUpdated.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyFrustration.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyGeneric.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyInNeedsBracket.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyObjectMoved.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyObjectPositionUpdated.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyObstacleDetected.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyPetInitialDetection.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyPlacedOnCharger.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyRobotPlacedOnSlope.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyRobotShaken.h"
-#include "engine/aiComponent/stateConceptStrategies/strategyObstacleDetected.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyRobotTouchGesture.h"
 
 
@@ -64,6 +69,16 @@ IStateConceptStrategy* StateConceptStrategyFactory::CreateStateConceptStrategy(B
       strategy = new StrategyExpressNeedsTransition(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
+    case StateConceptStrategyType::FacePositionUpdated:
+    {
+      strategy = new StrategyFacePositionUpdated(behaviorExternalInterface, robotExternalInterface, config);
+      break;
+    }
+    case StateConceptStrategyType::Frustration:
+    {
+      strategy = new StrategyFrustration(behaviorExternalInterface, robotExternalInterface, config);
+      break;
+    }
     case StateConceptStrategyType::Generic:
     {
       strategy = new StrategyGeneric(behaviorExternalInterface, robotExternalInterface, config);
@@ -74,9 +89,24 @@ IStateConceptStrategy* StateConceptStrategyFactory::CreateStateConceptStrategy(B
       strategy = new StrategyInNeedsBracket(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
+    case StateConceptStrategyType::ObjectMoved:
+    {
+      strategy = new StrategyObjectMoved(behaviorExternalInterface, robotExternalInterface, config);
+      break;
+    }
+    case StateConceptStrategyType::ObjectPositionUpdated:
+    {
+      strategy = new StrategyObjectPositionUpdated(behaviorExternalInterface, robotExternalInterface, config);
+      break;
+    }
     case StateConceptStrategyType::ObstacleDetected:
     {
       strategy = new StrategyObstacleDetected(behaviorExternalInterface, robotExternalInterface, config);
+      break;
+    }
+    case StateConceptStrategyType::PetInitialDetection:
+    {
+      strategy = new StrategyPetInitialDetection(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case StateConceptStrategyType::PlacedOnCharger:
