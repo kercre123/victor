@@ -34,7 +34,8 @@ endif()
 
 set(include_paths
     ${TENSORFLOW_INCLUDE_PATH}/protobuf
-    ${TENSORFLOW_INCLUDE_PATH}/tensorflow)
+    ${TENSORFLOW_INCLUDE_PATH}/tensorflow
+    ${TENSORFLOW_INCLUDE_PATH}/proto)
 
 set(TENSORFLOW_LIBS
     ${WHOLE_ARCHIVE_FLAG}
