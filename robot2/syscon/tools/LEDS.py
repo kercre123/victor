@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 def gen(b):
 	prev = -1
-	for i in range(6,-1,-1):
+	for i in range(7,-1,-1):
 		now = (b >> i) & 1
 
 		if prev != now:
