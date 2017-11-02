@@ -28,7 +28,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -65,7 +64,6 @@
 namespace Anki {
 namespace Cozmo {
 namespace{
-static const char* kBehaviorTestName = "Behavior factory test";
 }
 
   ////////////////////////////
@@ -315,11 +313,6 @@ static const char* kBehaviorTestName = "Behavior factory test";
     driveAnimsMsg.varName = "EnableDrivingAnimations";
     driveAnimsMsg.tryValue = "false";
     robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetDebugConsoleVarMessage>(std::move(driveAnimsMsg));
-    
-    // Disable reactionary behaviors
-    robot.GetBehaviorManager().DisableReactionsWithLock(
-                                 kBehaviorTestName,
-                                 ReactionTriggerHelpers::GetAffectAllArray());
     
     // Only enable vision modes we actually need
     // NOTE: we do not (yet) restore vision modes afterwards!

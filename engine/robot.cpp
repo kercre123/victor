@@ -1670,14 +1670,6 @@ Result Robot::SyncTime()
   return res;
 }
   
-const BehaviorManager& Robot::GetBehaviorManager() const {
-  return _aiComponent->GetBehaviorComponent().GetBehaviorManager();
-}
-  
-BehaviorManager& Robot::GetBehaviorManager(){
-  return _aiComponent->GetBehaviorComponent().GetBehaviorManager();
-}
-  
 Result Robot::LocalizeToObject(const ObservableObject* seenObject,
                                ObservableObject* existingObject)
 {

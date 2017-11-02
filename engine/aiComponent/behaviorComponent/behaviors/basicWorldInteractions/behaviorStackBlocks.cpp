@@ -39,34 +39,9 @@ namespace Cozmo {
 namespace {
 CONSOLE_VAR(f32, kBSB_ScoreIncreaseForAction, "Behavior.StackBlocks", 0.8f);
 CONSOLE_VAR(f32, kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg, "Behavior.StackBlocks", 90.f);
-CONSOLE_VAR(bool, kCanHiccupWhileStacking, "Hiccups", true);
 
 static const char* const kStackInAnyOrientationKey = "stackInAnyOrientation";
   static const f32   kDistToBackupOnStackFailure_mm = 40;
-
-static constexpr ReactionTriggerHelpers::FullReactionArray kHiccupDisableTriggers = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       true},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
   
 }
 
@@ -249,11 +224,6 @@ void BehaviorStackBlocks::TransitionToStackingBlock(BehaviorExternalInterface& b
                       "wanted to stack, but we aren't carrying a block");
     TransitionToPickingUpBlock(behaviorExternalInterface);
     return;
-  }
-  // Disable hiccup so it can't interrupt the stack
-  if(!kCanHiccupWhileStacking)
-  {
-    SmartDisableReactionsWithLock(GetIDStr(), kHiccupDisableTriggers);
   }
   
   const bool placingOnGround = false;

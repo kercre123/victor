@@ -162,9 +162,6 @@ private:
   std::unique_ptr<SevereNeedsComponent> _severeNeedsComponent;
   
   void CheckForSuddenObstacle(Robot& robot);
-
-  Result UpdateBehaviorManager(Robot& robot, std::string& currentActivityName,
-                                             std::string& behaviorDebugStr);  
 };
 
 }

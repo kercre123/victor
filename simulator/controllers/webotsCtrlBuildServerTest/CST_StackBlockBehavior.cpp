@@ -100,8 +100,6 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
 
       // try to start the behavior now, it shouldn't start for a while
       SendMessage(ExternalInterface::MessageGameToEngine(
-                    ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
-      SendMessage(ExternalInterface::MessageGameToEngine(
                     ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(kBehaviorID), -1)));
           
       SendMoveHeadToAngle(0, 100, 100);

@@ -76,15 +76,6 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
       StartMovieConditional("BehaviorTracker", 8);
       TakeScreenshotsAtInterval("BehaviorTracker", 1.f);
 
-      //Send message to start Cozmo in freeplay mode
-      ExternalInterface::ActivateHighLevelActivity highLevelActivityMsg;
-      highLevelActivityMsg.activityType = HighLevelActivity::Freeplay;
-
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_ActivateHighLevelActivity(highLevelActivityMsg);
-
-      SendMessage(message);
-
       SET_TEST_STATE(FreePlay);
       break;
     }

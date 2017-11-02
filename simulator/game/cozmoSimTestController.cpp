@@ -7,7 +7,6 @@
  */
 
 #include "simulator/game/cozmoSimTestController.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include <sys/stat.h>
 
@@ -22,40 +21,6 @@ const static std::string kScreenShotsPath = kBuildDirectory + "mac/Debug/webots_
 
 namespace Anki {
   namespace Cozmo {
-    
-    namespace {
-      
-      constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSimTestArray = {
-        {ReactionTrigger::CliffDetected,                false},
-        {ReactionTrigger::CubeMoved,                    true},
-        {ReactionTrigger::FacePositionUpdated,          false},
-        {ReactionTrigger::FistBump,                     false},
-        {ReactionTrigger::Frustration,                  true},
-        {ReactionTrigger::Hiccup,                       true},
-        {ReactionTrigger::MotorCalibration,             false},
-        {ReactionTrigger::NoPreDockPoses,               false},
-        {ReactionTrigger::ObjectPositionUpdated,        true},
-        {ReactionTrigger::PlacedOnCharger,              false},
-        {ReactionTrigger::PetInitialDetection,          false},
-        {ReactionTrigger::RobotPickedUp,                true},
-        {ReactionTrigger::RobotPlacedOnSlope,           false},
-        {ReactionTrigger::ReturnedToTreads,             true},
-        {ReactionTrigger::RobotOnBack,                  false},
-        {ReactionTrigger::RobotOnFace,                  false},
-        {ReactionTrigger::RobotOnSide,                  false},
-        {ReactionTrigger::RobotShaken,                  true},
-        {ReactionTrigger::Sparked,                      false},
-        {ReactionTrigger::UnexpectedMovement,           false},
-        {ReactionTrigger::VC,                           false}
-      };
-      
-      static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersSimTestArray),
-                    "Reaction triggers duplicate or non-sequential");
-      
-      static const AllTriggersConsidered kAffectTriggersSimTest =
-      ReactionTriggerHelpers::ConvertReactionArrayToAllTriggersConsidered(kAffectTriggersSimTestArray);
-      
-    } // private namespace
   
     CozmoSimTestController::CozmoSimTestController()
     : UiGameController(BS_TIME_STEP)
@@ -83,12 +48,7 @@ namespace Anki {
     { }
     
   void CozmoSimTestController::HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg)
-  {
-    // by default we don't want pick these reactions, you can override this function if you tests needs them
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::DisableReactionsWithLock(
-                                                         "CozmoSimTestController",
-                                                         kAffectTriggersSimTest)));
-    
+  {    
     // Disable needs during all tests
     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetNeedsPauseState(true)));
 

@@ -23,7 +23,6 @@
 
 #include "clad/audio/audioStateTypes.h"
 #include "clad/audio/audioSwitchTypes.h"
-#include "clad/types/behaviorComponent/activityTypes.h"
 #include "clad/types/robotPublicState.h"
 #include "clad/types/unlockTypes.h"
 
@@ -122,8 +121,6 @@ private:
   void SetActiveBehaviorStage(BehaviorStageTag stageTag);
   
   void HandleWorldEventUpdates(const RobotPublicState& stateEvent);
-  void HandleSparkUpdates(BehaviorExternalInterface& behaviorExternalInterface,
-                          const UnlockId& sparkID, const int behaviorRound);
   void HandleGuardDogUpdates(const BehaviorStageStruct& currPublicStateStruct);
   void HandleDancingUpdates(const BehaviorStageStruct& currPublicStateStruct);
   void HandleFeedingUpdates(const BehaviorStageStruct& currPublicStateStruct);

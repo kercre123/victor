@@ -21,9 +21,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -39,7 +37,6 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-static const char* kBehaviorTestName = "Factory centroid extractor";
 }
 
   // Backpack lights
@@ -101,11 +98,6 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
     _liftCalibrated = false;
     
     robot.GetActionList().Cancel();
-    
-    // Disable reactionary behaviors
-    robot.GetBehaviorManager().DisableReactionsWithLock(
-                                   kBehaviorTestName,
-                                   ReactionTriggerHelpers::GetAffectAllArray());
         
     // Start motor calibration
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));

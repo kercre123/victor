@@ -21,7 +21,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/blockTapFilterComponent.h"
@@ -819,7 +818,6 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   }
   
   // Stop whatever we were doing
-  robot->GetBehaviorManager().RequestCurrentBehaviorEndImmediately("HandleRobotStopped");
   robot->GetActionList().Cancel();
   
   // Forward on with EngineToGame event

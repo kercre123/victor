@@ -13,43 +13,12 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotorCalibration.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 
 
 namespace Anki {
 namespace Cozmo {
-  
-namespace {
-
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersMotorCalibrationArray = {
-  {ReactionTrigger::CliffDetected,                true},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       true},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                true},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             true},
-  {ReactionTrigger::RobotOnBack,                  true},
-  {ReactionTrigger::RobotOnFace,                  true},
-  {ReactionTrigger::RobotOnSide,                  true},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           true}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersMotorCalibrationArray),
-              "Reaction triggers duplicate or non-sequential");
-}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToMotorCalibration::BehaviorReactToMotorCalibration(const Json::Value& config)
@@ -71,9 +40,7 @@ bool BehaviorReactToMotorCalibration::WantsToBeActivatedBehavior(BehaviorExterna
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToMotorCalibration::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  LOG_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersMotorCalibrationArray);
-  
+  LOG_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");  
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();

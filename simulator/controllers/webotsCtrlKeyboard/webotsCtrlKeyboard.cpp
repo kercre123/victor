@@ -13,8 +13,6 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/pose.h"
 #include "util/helpers/printByteArray.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/block.h"
 #include "engine/encodedImage.h"
@@ -27,10 +25,11 @@
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/proceduralFaceTypes.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/math/math.h"
 #include "util/logging/channelFilter.h"
 #include "util/logging/printfLoggerProvider.h"
-#include "util/fileUtils/fileUtils.h"
+#include "util/random/randomGenerator.h"
 #include <fstream>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdio.h>
@@ -1153,18 +1152,8 @@ namespace Anki {
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_PlaySound", "false")));
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_ConnectToRobotOnly", "false")));
                     
-                    Anki::Cozmo::ExternalInterface::DisableReactionsWithLock disableAll(
-                                        "sdk", ReactionTriggerHelpers::kAffectAllReactions);
-                    
-                    Anki::Cozmo::ExternalInterface::MessageGameToEngine disable_reactions_msg;
-                    disable_reactions_msg.Set_DisableReactionsWithLock(std::move(disableAll));
-                    SendMessage(ExternalInterface::MessageGameToEngine(disable_reactions_msg));
-                    
                     SendSetRobotVolume(1.f);
                   }
-                  
-                  SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
 
                   printf("Selecting behavior by NAME: %s\n", behaviorName.c_str());
                   if (behaviorName == "LiftLoadTest") {
@@ -1201,46 +1190,6 @@ namespace Anki {
                                     ExternalInterface::FakeTriggerWordDetected()));
                     break;
                   }
-
-                  if( shiftKeyPressed ) {
-                    webots::Field* unlockNameField = root_->getField("unlockName");
-                    if (unlockNameField == nullptr) {
-                      printf("ERROR: No unlockNameField field found in WebotsKeyboardController.proto\n");
-                      break;
-                    }
-                
-                    std::string unlockName = unlockNameField->getSFString();
-                    if (unlockName.empty()) {
-                      printf("ERROR: unlockName field is empty\n");
-                      break;
-                    }
-
-                    UnlockId unlock = UnlockIdFromString(unlockName.c_str());
-                    if( unlock != UnlockId::Count ) {
-                      ExternalInterface::ActivateSpark activate(unlock);
-                      ExternalInterface::BehaviorManagerMessageUnion behaviorUnion;
-                      behaviorUnion.Set_ActivateSpark(activate);
-                      ExternalInterface::BehaviorManagerMessage behaviorMsg(behaviorUnion);
-                      ExternalInterface::MessageGameToEngine msg;
-                      msg.Set_BehaviorManagerMessage(behaviorMsg);
-                      SendMessage(msg);
-                    }
-                    else {
-                      PRINT_NAMED_WARNING("StartSpark.InvalidSparkName",
-                                          "no unlock found for '%s'",
-                                          unlockName.c_str());
-                    }
-                  }
-                  else {
-                    // deactivate spark
-                    ExternalInterface::ActivateSpark deactivate(UnlockId::Count);
-                    ExternalInterface::BehaviorManagerMessageUnion behaviorUnion;
-                    behaviorUnion.Set_ActivateSpark(deactivate);
-                    ExternalInterface::BehaviorManagerMessage behaviorMsg(behaviorUnion);
-                    ExternalInterface::MessageGameToEngine msg;
-                    msg.Set_BehaviorManagerMessage(behaviorMsg);
-                    SendMessage(msg);
-                  }
                 }
                 else {
                   // select behavior chooser
@@ -1260,7 +1209,6 @@ namespace Anki {
 
                   SendMessage(ExternalInterface::MessageGameToEngine(
                                   ExternalInterface::FakeCloudIntent(cloudIntent)));
-
                 }
                 
                 break;
@@ -2235,7 +2183,6 @@ namespace Anki {
                       SendMessage(MessageGameToEngine(std::move(setFaceToEnroll)));
                       
                       // Enable selection chooser and specify EnrollFace now that settings are sent
-                      SendMessage(MessageGameToEngine(ActivateHighLevelActivity(HighLevelActivity::Selection)));
                       SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::EnrollFace), -1)));
                     }
                     
@@ -2334,28 +2281,7 @@ namespace Anki {
                 
               case (s32)';':
               {
-                // Toggle enabling of reactionary behaviors
-                static bool disable = true;
-                static const char* lockName = "sdk";
-                printf("Disable reactionary behaviors: %d\n", disable);
-                
-                if(disable){
-                  Anki::Cozmo::ExternalInterface::DisableReactionsWithLock disableAll(
-                                  lockName, ReactionTriggerHelpers::kAffectAllReactions);
-                  
-                  Anki::Cozmo::ExternalInterface::MessageGameToEngine disable_reactions_msg;
-                  disable_reactions_msg.Set_DisableReactionsWithLock(std::move(disableAll));
-                  SendMessage(ExternalInterface::MessageGameToEngine(disable_reactions_msg));
-                  
-                }else{
-                  Anki::Cozmo::ExternalInterface::RemoveDisableReactionsLock enableAll(lockName);
-                  
-                  Anki::Cozmo::ExternalInterface::MessageGameToEngine re_enable_reactions_msg;
-                  re_enable_reactions_msg.Set_RemoveDisableReactionsLock(std::move(enableAll));
-                  SendMessage(ExternalInterface::MessageGameToEngine(re_enable_reactions_msg));
-                }
-                
-                disable = !disable;
+                // OPEN KEY!!!
                 break;
               }
                 

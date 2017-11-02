@@ -39,33 +39,6 @@ static const ObjectInteractionIntention kObjectIntention =
 
 static const f32 kPostLiftDriveBackwardDist_mm = 20.f;
 static const f32 kPostLiftDriveBackwardSpeed_mmps = 100.f;  
-  
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersWorkoutArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           true}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersWorkoutArray),
-              "Reaction triggers duplicate or non-sequential");
 }
 
   
@@ -96,8 +69,6 @@ bool BehaviorCubeLiftWorkout::WantsToBeActivatedBehavior(BehaviorExternalInterfa
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorCubeLiftWorkout::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersWorkoutArray);
-
   // disable idle
   SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
 

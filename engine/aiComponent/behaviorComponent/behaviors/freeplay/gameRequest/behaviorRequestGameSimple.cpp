@@ -74,33 +74,6 @@ static const int   kMaxNumberOfRetries = 2;
 // need to be as far away as the size of the robot + 2 blocks + padding
 static const float kSafeDistSqFromObstacle_mm = SQUARE(100);
 
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRequestGameArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     true},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersRequestGameArray),
-              "Reaction triggers duplicate or non-sequential");
-
 } // end namespace
 
 
@@ -185,14 +158,6 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-
-  if( _disableReactionsEarly ) {
-    SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRequestGameArray);
-    PRINT_CH_INFO("Behaviors", "BehaviorRequestGameSimple.DisableReactions.Early",
-                  "%s: disabling reactions in init",
-                  GetIDStr().c_str());
-  }
-
   _verifyStartTime_s = std::numeric_limits<float>::max();
 
   // use the driving motion profile by default
@@ -550,13 +515,6 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(BehaviorExternalInterf
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(BehaviorExternalInterface& behaviorExternalInterface) {
-
-  if( ! _disableReactionsEarly ) {
-    SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRequestGameArray);
-    PRINT_CH_INFO("Behaviors", "BehaviorRequestGameSimple.DisableReactions.Request",
-                  "%s: disabling reactions in TransitionToPlayingRequstAnim",
-                  GetIDStr().c_str());
-  }
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();

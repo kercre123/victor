@@ -20,7 +20,6 @@
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/animations/animationTransfer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/cubeLightComponent.h"
@@ -118,11 +117,6 @@ void RobotDataLoader::LoadNonConfigData()
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");
     LoadBehaviors();
-  }
-  
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadReactionTriggerMap");
-    LoadReactionTriggerMap();
   }
   
   {
@@ -440,18 +434,6 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
 }
 
 
-void RobotDataLoader::LoadReactionTriggerMap()
-{
-  const std::string filename = "config/engine/behaviorComponent/reactionTrigger_behavior_map.json";
-
-  Json::Value reactionJSON;
-  const bool success = _platform->readAsJson(Util::Data::Scope::Resources, filename, _reactionTriggerMap);
-  if (!success)
-  {
-    PRINT_NAMED_ERROR("RobotDataLoader.ReactionTriggerMap", "Failed to read '%s'", filename.c_str());
-  }
-}
-
 void RobotDataLoader::LoadAnimationTriggerResponses()
 {
   _animationTriggerResponses->Load(_platform, "assets/animationGroupMaps");
@@ -478,19 +460,6 @@ void RobotDataLoader::LoadRobotConfigs()
       PRINT_NAMED_ERROR("RobotDataLoader.MoodConfigJsonNotFound",
                         "Mood Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
-    }
-  }
-
-  // activities config
-  {
-    static const std::string jsonFilename = "config/engine/behaviorComponent/legacy_cozmo_activities_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _legacyCozmoActivitiesConfig);
-    if (!success)
-    {
-      PRINT_NAMED_ERROR("RobotDataLoader.BehaviorConfigJsonFailed",
-                        "Behavior Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
-      _legacyCozmoActivitiesConfig.clear();
     }
   }
   

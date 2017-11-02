@@ -20,7 +20,6 @@
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -31,20 +30,11 @@
 #include "clad/types/behaviorComponent/behaviorObjectives.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/needsSystemTypes.h"
-#include "clad/types/behaviorComponent/reactionTriggers.h"
 #include "clad/types/unlockTypes.h"
 #include "util/logging/logging.h"
 
 //Transforms enum into string
 #define DEBUG_SET_STATE(s) SetDebugStateName(#s)
-
-// Dev only macro to lock a single reaction trigger useful for enabling/disabling reactions
-// with a console var
-#if ANKI_DEV_CHEATS
-  #define SMART_DISABLE_REACTION_DEV_ONLY(lock, trigger) SmartDisableReactionWithLock(lock, trigger)
-#else
-  #define SMART_DISABLE_REACTION_DEV_ONLY(lock, trigger)
-#endif
 
 namespace Anki {
 namespace Util{
@@ -70,7 +60,6 @@ class IFistBumpListener;
 class IFeedingListener;
 
 enum class CubeAnimationTrigger;
-struct BehaviorStateLightInfo;
 
 struct PathMotionProfile;
 
@@ -133,7 +122,7 @@ public:
   // be implemented by children to do specific resume behavior (e.g. start at a specific state). If this
   // function returns anything other than RESULT_OK, the behavior will not be resumed (but may still be Init'd
   // later)
-  Result Resume(BehaviorExternalInterface& behaviorExternalInterface, ReactionTrigger resumingFromType);
+  Result Resume(BehaviorExternalInterface& behaviorExternalInterface);
 
   // Step through the behavior and deliver rewards to the robot along the way
   // This calls the protected virtual UpdateInternal() method, which each
@@ -223,7 +212,6 @@ protected:
   // default is no delegates, but behaviors which delegate can overload this
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override { }
   
-  using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
 
   inline void SetDebugStateName(const std::string& inName) {
     PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, FromState:%s ToState:%s",
@@ -414,21 +402,6 @@ protected:
   
   // Remove an idle animation before the beahvior stops
   void SmartRemoveIdleAnimation(BehaviorExternalInterface& behaviorExternalInterface);
-  
-  // Allows the behavior to disable and enable reaction triggers without having to worry about re-enabling them
-  // these triggers will be automatically re-enabled when the behavior stops
-  void SmartDisableReactionsWithLock(const std::string& lockID, const TriggersArray& triggers);
-  
-  // If a behavior needs to re-enable a reaction trigger for later stages after being
-  // disabled with SmartDisablesableReactionaryBehavior  this function will re-enable the behavior
-  // and stop tracking it
-  void SmartRemoveDisableReactionsLock(const std::string& lockID);
-  
-  // Avoid calling this function directly, use the SMART_DISABLE_REACTION_DEV_ONLY macro instead
-  // Locks a single reaction trigger instead of a full TriggersArray
-#if ANKI_DEV_CHEATS
-  void SmartDisableReactionWithLock(const std::string& lockID, const ReactionTrigger& trigger);
-#endif
 
   // For the duration of this behavior, or until SmartClearMotionProfile() is called (whichever is sooner),
   // use the specified motion profile for all motions. Note that this will result in an error if the behavior
@@ -468,10 +441,6 @@ protected:
 
   // Stop a helper delegated with SmartDelegateToHelper
   bool StopHelperWithoutCallback();
-  
-  // Convenience function for setting behavior state lights in the behavior manager
-  void SetBehaviorStateLights(const std::vector<BehaviorStateLightInfo>& structToSet, bool persistOnReaction);
-  
 
   virtual void UpdateTargetBlocksInternal(BehaviorExternalInterface& behaviorExternalInterface) const {};
   
@@ -483,7 +452,7 @@ protected:
   // it's checked in WantsToBeActivatedBase
   AIInformationAnalysis::EProcess _requiredProcess;
   
-  bool ShouldStreamline() const { return (_alwaysStreamline || _sparksStreamline); }
+  bool ShouldStreamline() const { return (_alwaysStreamline); }
   
 private:
   
@@ -574,10 +543,6 @@ private:
 
   //A list of object IDs that have had a custom light pattern set
   std::vector<ObjectID> _customLightObjects;
-  
-  // Allows behaviors to skip certain steps when streamlined
-  // Set if this behavior is a sparked behavior
-  bool _sparksStreamline = false;
   
   // Whether or not the behavior is always be streamlined (set via json)
   bool _alwaysStreamline = false;

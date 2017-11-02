@@ -18,11 +18,9 @@
 #include "engine/actionableObject.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/vision/MarkerCodeDefinitions.h"
 #include "clad/types/dockingSignals.h"
 #include "clad/types/animationTrigger.h"
-#include "clad/types/behaviorComponent/reactionTriggers.h"
 
 
 #include "util/helpers/templateHelpers.h"
@@ -106,10 +104,6 @@ namespace Anki {
       
       // Whether or not we should look up to check if there is an object above the dockObject
       void SetShouldCheckForObjectOnTopOf(const bool b) { _checkForObjectOnTopOf = b; }
-      
-      // Suppress the given reaction triggers during this action
-      void SetShouldSuppressReactionTriggers(const ReactionTriggerHelpers::FullReactionArray* reactionTriggers)
-                          { _reactionTriggersToSuppress = reactionTriggers; }
       
       // Whether or not we should first turn towards and visually verify the dockObject
       void SetShouldFirstTurnTowardsObject(const bool b) { _firstTurnTowardsObject = b; }
@@ -250,8 +244,6 @@ namespace Anki {
       bool                       _checkForObjectOnTopOf          = true;
       bool                       _doLiftLoadCheck                = false;
       LiftLoadState              _liftLoadState                  = LiftLoadState::UNKNOWN;
-      const ReactionTriggerHelpers::FullReactionArray*
-                                 _reactionTriggersToSuppress     = nullptr;
       bool                       _firstTurnTowardsObject         = true;
       DockingComponent&          _dockingComponentRef;
       CarryingComponent&         _carryingComponentRef;

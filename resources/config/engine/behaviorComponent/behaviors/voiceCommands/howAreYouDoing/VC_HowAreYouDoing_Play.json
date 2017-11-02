@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "PlayAnimWithFace",
-  "behaviorID": "VC_HowAreYouDoing_Play",
-  "displayNameKey":"behavior.Bored", // Use same display as bored
-  "animTriggers": ["NeutralFace"] // Is overridden programmatically to play an animation depending on play needs level
-}

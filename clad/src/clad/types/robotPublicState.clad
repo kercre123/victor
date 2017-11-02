@@ -3,9 +3,7 @@
 // Created: 4/5/2017
 // Copyright: Anki, inc. 2017
 
-#include "clad/types/behaviorComponent/activityTypes.clad"
 #include "clad/types/behaviorComponent/behaviorStages.clad"
-#include "clad/types/behaviorComponent/reactionTriggers.clad"
 #include "clad/types/unlockTypes.clad"
 
 namespace Anki {
@@ -40,12 +38,10 @@ structure NeedsLevels{
 // Structure which enumerates all relevant PublicStateBroadcaster information
 // to provide full state updates to interested systems
 no_default_constructor structure RobotPublicState{
-  UnlockId currentSpark,
   bool isCubeInLift,
   bool isRequestingGame,
   uint_8 tallestStackHeight,
   NeedsLevels needsLevels,
-  ReactionTrigger currentReactionTrigger,
   BehaviorStageStruct userFacingBehaviorStageStruct
 }
 

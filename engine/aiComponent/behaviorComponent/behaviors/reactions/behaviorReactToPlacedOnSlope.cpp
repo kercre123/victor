@@ -15,44 +15,12 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 
 namespace Anki {
 namespace Cozmo {
-  
-namespace{
-
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPlacedOnSlopeArray = {
-  {ReactionTrigger::CliffDetected,                true},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                true},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             true},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPlacedOnSlopeArray),
-              "Reaction triggers duplicate or non-sequential");
-  
-} // end namespace
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToPlacedOnSlope::BehaviorReactToPlacedOnSlope(const Json::Value& config)
@@ -71,8 +39,6 @@ bool BehaviorReactToPlacedOnSlope::WantsToBeActivatedBehavior(BehaviorExternalIn
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersPlacedOnSlopeArray);
-
   const double now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool hasBehaviorRunRecently = (now - _lastBehaviorTime < 10.0);
   
