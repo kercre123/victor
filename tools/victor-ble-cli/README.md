@@ -27,47 +27,29 @@ $
 Services discovered for VICTOR_553261a
 $
 Fully connected to VICTOR_553261a
-$ wpa_cli list_networks
-$
-Using interface 'wlan0'
-network id / ssid / bssid / flags
-
-$ wpa_cli add_network
-$
-Using interface 'wlan0'
-0
-
-$ wpa_cli set_network 0 ssid "NETWORKNAME"
+$ wifi-set-config SSID PASSWORD
 $
 Using interface 'wlan0'
 OK
 
-$ wpa_cli set_network 0 psk "PASSWORD"
+$
+Heartbeat 0
+$
+
 $
 Using interface 'wlan0'
-OK
+bssid=80:2a:a8:84:51:62
+freq=2462
+ssid=stu
+id=0
+mode=station
+pairwise_cipher=CCMP
+group_cipher=CCMP
+key_mgmt=WPA2-PSK
+wpa_state=COMPLETED
+ip_address=192.168.77.70
+p2p_device_address=00:0a:f5:4c:98:68
+address=00:0a:f5:4c:98:68
+uuid=d03a0a30-5470-5fbb-80ff-a569b6f53782
 
-$ wpa_cli enable_network 0
-$
-Using interface 'wlan0'
-OK
-
-$ wpa_cli save_config
-$
-Using interface 'wlan0'
-OK
-
-$ dhcptool wlan0
-$
-
-$ ifconfig wlan0
-$
-wlan0     Link encap:Ethernet  HWaddr 00:0a:f5:4c:98:68
-          inet addr:192.168.77.70  Bcast:192.168.77.255  Mask:255.255.255.0
-          inet6 addr: fe80::20a:f5ff:fe4c:9868/64 Scope: Link
-          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-          RX packets:296 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:12 errors:0 dropped:0 overruns:0 carrier:0
-          collisions:0 txqueuelen:1000
-          RX bytes:72798 TX bytes:1416
 ```
