@@ -7,22 +7,20 @@
  *
  */
 
-#include "engine/textToSpeech/textToSpeechProvider.h"
+#include "textToSpeechProvider.h"
 
 #include "util/helpers/ankiDefines.h"
 
 // Which provider implementation do we use for this platform?
 #if defined(ANKI_PLATFORM_OSX)
-#include "engine/textToSpeech/textToSpeechProvider_osx.h"
-#elif defined(ANKI_PLATFORM_IOS)
-#include "engine/textToSpeech/textToSpeechProvider_ios.h"
+#include "textToSpeechProvider_mac.h"
 #elif defined(ANKI_PLATFORM_ANDROID)
-#include "engine/textToSpeech/textToSpeechProvider_android.h"
+#include "textToSpeechProvider_android.h"
 #else
 #error "No text-to-speech provider implemented for this platform"
 #endif
 
-#include "engine/cozmoContext.h"
+#include "cozmoAnim/cozmoAnimContext.h"
 
 #include "json/json.h"
 
@@ -30,7 +28,7 @@ namespace Anki {
 namespace Cozmo {
 namespace TextToSpeech {
       
-TextToSpeechProvider::TextToSpeechProvider(const CozmoContext * ctx, const Json::Value& tts_config)
+TextToSpeechProvider::TextToSpeechProvider(const CozmoAnimContext * ctx, const Json::Value& tts_config)
 {
   // Get configuration struct for this platform
 #if defined(ANKI_PLATFORM_OSX)
@@ -61,4 +59,3 @@ Result TextToSpeechProvider::CreateAudioData(const std::string& text,
 } // end namespace TextToSpeech
 } // end namespace Cozmo
 } // end namespace Anki
-

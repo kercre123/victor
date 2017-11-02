@@ -90,7 +90,6 @@ class ActiveCube;
 class CubeLightComponent;
 class BodyLightComponent;
 class RobotToEngineImplMessaging;
-class TextToSpeechComponent;
 class PublicStateBroadcaster;
 class VisionComponent;
 class PathComponent;
@@ -179,15 +178,6 @@ public:
   inline const BlockTapFilterComponent& GetBlockTapFilter() const {
     assert(_tapFilterComponent);
     return *_tapFilterComponent;
-  }
-
-  inline TextToSpeechComponent& GetTextToSpeechComponent() {
-    assert(_textToSpeechComponent);
-    return *_textToSpeechComponent;
-  }
-  inline const TextToSpeechComponent& GetTextToSpeechComponent() const {
-    assert(_textToSpeechComponent);
-    return *_textToSpeechComponent;
   }
 
   inline MovementComponent& GetMoveComponent() {
@@ -753,7 +743,6 @@ protected:
   std::unique_ptr<MapComponent>           _mapComponent;  
   std::unique_ptr<NVStorageComponent>     _nvStorageComponent;
   std::unique_ptr<AIComponent>            _aiComponent;
-  std::unique_ptr<TextToSpeechComponent>  _textToSpeechComponent;
   std::unique_ptr<ObjectPoseConfirmer>    _objectPoseConfirmerPtr;
   std::unique_ptr<CubeLightComponent>     _cubeLightComponent;
   std::unique_ptr<BodyLightComponent>     _bodyLightComponent;

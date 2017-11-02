@@ -83,9 +83,10 @@ private:
   SayTextVoiceStyle              _style;
   float                          _durationScalar       = 0.f;
   float                          _voicePitch           = 0.f; // Adjust Cozmo voice processing pitch [-1.0, 1.0]
-  uint8_t                        _ttsOperationId       = 0;   // This is set while the action is managing the audio data
-  bool                           _isAudioReady         = false;
+  
   // TODO: SayTextAction is broken (VIC-360)
+  //uint8_t                        _ttsOperationId       = 0;   // This is set while the action is managing the audio data
+  //bool                           _isAudioReady         = false;
   //Animation                      _animation;
   AnimationTrigger               _animationTrigger     = AnimationTrigger::Count; // Count == use built-in animation
   u8                             _ignoreAnimTracks     = (u8)AnimTrackFlag::NO_TRACKS;

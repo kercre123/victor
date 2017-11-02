@@ -9,15 +9,14 @@
  */
 
 
-#ifndef __Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_android_H__
-#define __Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_android_H__
+#ifndef __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_android_H__
+#define __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_android_H__
 
 #include "util/helpers/ankiDefines.h"
 
 #if defined(ANKI_PLATFORM_ANDROID)
 
-#include "engine/textToSpeech/textToSpeechProvider.h"
-#include "util/jni/jniUtils.h"
+#include "textToSpeechProvider.h"
 #include <string>
 
 namespace Anki {
@@ -31,7 +30,7 @@ namespace TextToSpeech {
 class TextToSpeechProviderImpl
 {
 public:
-  TextToSpeechProviderImpl(const CozmoContext* context, const Json::Value& tts_platform_config);
+  TextToSpeechProviderImpl(const CozmoAnimContext* context, const Json::Value& tts_platform_config);
   ~TextToSpeechProviderImpl();
   
   Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);
@@ -40,9 +39,9 @@ private:
   // TTS configuration
   std::string _tts_path;
   std::string _tts_voice;
-  jint _tts_speed;
-  jint _tts_shaping;
-  jint _tts_pitch;
+  int _tts_speed;
+  int _tts_shaping;
+  int _tts_pitch;
 
 }; // class TextToSpeechProviderImpl
 
@@ -52,4 +51,4 @@ private:
 
 #endif // ANKI_PLATFORM_ANDROID
 
-#endif //__Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_android_H__
+#endif //__Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_android_H__

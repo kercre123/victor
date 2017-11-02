@@ -10,8 +10,8 @@
  */
 
 
-#ifndef __Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_H__
-#define __Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_H__
+#ifndef __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_H__
+#define __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_H__
 
 #include "anki/common/types.h"
 
@@ -20,7 +20,7 @@
 // Forward declarations
 namespace Anki {
   namespace Cozmo {
-    class CozmoContext;
+    class CozmoAnimContext;
     namespace TextToSpeech {
       class TextToSpeechProviderImpl;
     }
@@ -84,7 +84,7 @@ public:
   static constexpr const char * kSpeedKey = "speed";
   static constexpr const char * kShapingKey = "shaping";
   
-  TextToSpeechProvider(const CozmoContext* ctx, const Json::Value& tts_config);
+  TextToSpeechProvider(const CozmoAnimContext* ctx, const Json::Value& tts_config);
   ~TextToSpeechProvider();
   
   Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);
@@ -100,4 +100,4 @@ private:
 } // end namespace Cozmo
 } // end namespace Anki
 
-#endif //__Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_H__
+#endif //__Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_H__

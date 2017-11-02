@@ -5,7 +5,6 @@ project(engine)
 include(opencv)
 include(okao)
 include(flatbuffers)
-include(text2speech)
 include(archive)
 include(voice-recognition)
 include(routing_http_server)
@@ -70,7 +69,6 @@ target_link_libraries(cozmo_engine
   # vendor
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}
-  ${TEXT2SPEECH_LIBS}
   ${VOICE_RECOGNITION_LIBS}
   ${BREAKPAD_LIBS}
   # system
@@ -106,10 +104,8 @@ target_include_directories(cozmo_engine
 
 if (ANDROID)
   copy_opencv_android_libs()
-  copy_tts_android_libs()
   add_dependencies(cozmo_engine
     copy_opencv_libs
-    copy_tts_libs
   )
 endif()
 

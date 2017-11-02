@@ -12,8 +12,6 @@
 
 // TODO: Update this to work with Text to Speech in Anim Process
 
-
-#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "engine/actions/sayTextAction.h"
 #include "engine/animations/animationGroup/animationGroup.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
@@ -21,7 +19,9 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
-#include "engine/textToSpeech/textToSpeechComponent.h"
+
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/math.h"
 #include "util/random/randomGenerator.h"
@@ -110,7 +110,7 @@ SayTextAction::SayTextAction(Robot& robot,
 , _style(style)
 , _durationScalar(durationScalar)
 , _voicePitch(voicePitch)
-, _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
+//, _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
 //, _animation("SayTextAnimation") // TODO: SayTextAction is broken (VIC-360)
 {
   PRINT_CH_INFO(kLocalLogChannel,
@@ -131,7 +131,7 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
           RobotActionType::SAY_TEXT,
           (u8)AnimTrackFlag::NO_TRACKS)
 , _text(text)
-, _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
+//, _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
 // , _animation("SayTextAnimation") // TODO: SayTextAction is broken (VIC-360)
 {
   // Get metadata
@@ -172,7 +172,7 @@ SayTextAction::~SayTextAction()
 {
   // Now that we're all done, cleanup possible audio data leaks caused by action or animations being aborted. This is
   // safe to call for success as well.
-  _robot.GetTextToSpeechComponent().CleanupAudioEngine(_ttsOperationId);
+  //_robot.GetTextToSpeechComponent().CleanupAudioEngine(_ttsOperationId);
   
   if(_playAnimationAction != nullptr) {
     _playAnimationAction->PrepForCompletion();
@@ -189,6 +189,9 @@ void SayTextAction::SetAnimationTrigger(AnimationTrigger trigger, u8 ignoreTrack
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult SayTextAction::Init()
 {
+  PRINT_NAMED_WARNING("SayTextAction.Init.Disabled", "TTS disabled");
+
+  #ifdef notdef
   using namespace AudioMetaData;
   TextToSpeechComponent::AudioCreationState state = _robot.GetTextToSpeechComponent().GetOperationState(_ttsOperationId);
   switch (state) {
@@ -312,11 +315,16 @@ ActionResult SayTextAction::Init()
     }
       break;
   }
+  #endif
+  return ActionResult::SUCCESS;
 } // Init()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult SayTextAction::CheckIfDone()
 {
+  PRINT_NAMED_WARNING("SayTextAction.CheckIfDone.Disabled", "TTS disabled");
+
+  #ifdef notdef
   DEV_ASSERT(_isAudioReady, "SayTextAction.CheckIfDone.TextToSpeechNotReady");
   
   if (DEBUG_SAYTEXT_ACTION) {
@@ -324,11 +332,15 @@ ActionResult SayTextAction::CheckIfDone()
   }
   
   return _playAnimationAction->Update();
+  #endif
+
+  return ActionResult::SUCCESS;
 } // CheckIfDone()
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SayTextAction::GenerateTtsAudio()
 {
+  #ifdef notdef
   // Be careful with putting text in the action name because it could be a player name, which is PII
   SetName(std::string("SayText_") + Util::HidePersonallyIdentifiableInfo(_text.c_str()));
   
@@ -337,6 +349,7 @@ void SayTextAction::GenerateTtsAudio()
   if (TextToSpeechComponent::kInvalidOperationId == _ttsOperationId) {
     PRINT_NAMED_ERROR("SayTextAction.SayTextAction.CreateSpeech", "SpeechState is None");
   }
+  #endif
 } // GenerateTtsAudio()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -1,5 +1,5 @@
 /**
- * File: textToSpeechProvider_osx.cpp
+ * File: textToSpeechProvider_mac.cpp
  *
  * Description: Implementation-specific details of text-to-speech conversion
  *
@@ -11,9 +11,10 @@
 
 #if defined(ANKI_PLATFORM_OSX)
 
-#include "engine/cozmoContext.h"
-#include "engine/textToSpeech/textToSpeechProvider_acapela.h"
-#include "engine/textToSpeech/textToSpeechProvider_osx.h"
+#include "textToSpeechProvider_acapela.h"
+#include "textToSpeechProvider_mac.h"
+
+#include "cozmoAnim/cozmoAnimContext.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/data/dataScope.h"
@@ -54,7 +55,7 @@ namespace Cozmo {
 namespace TextToSpeech {
 
 
-TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx,
+TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoAnimContext* ctx,
                                                    const Json::Value& tts_platform_config)
 {
   using Locale = Anki::Util::Locale;
@@ -271,4 +272,3 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
 } // end namespace Anki
 
 #endif // ANKI_PLATFORM_OSX
-

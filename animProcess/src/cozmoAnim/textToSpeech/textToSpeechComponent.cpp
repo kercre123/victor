@@ -14,11 +14,12 @@
  *
  */
 
+#include "textToSpeechComponent.h"
+#include "textToSpeechProvider.h"
 
-#include "engine/cozmoContext.h"
-#include "engine/robotDataLoader.h"
-#include "engine/textToSpeech/textToSpeechComponent.h"
-#include "engine/textToSpeech/textToSpeechProvider.h"
+#include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/robotDataLoader.h"
+
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "audioEngine/audioEngineController.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
@@ -43,7 +44,7 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TextToSpeechComponent::TextToSpeechComponent(const CozmoContext* context)
+TextToSpeechComponent::TextToSpeechComponent(const CozmoAnimContext* context)
 : _dispatchQueue(Util::Dispatch::Create("TtSpeechComponent"))
 {
   const Json::Value& tts_config = context->GetDataLoader()->GetTextToSpeechConfig();
@@ -68,9 +69,9 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::CreateSpeech(const std
 {
   // Prepare to generate TtS on other thread
   OperationId opId = GetNextOperationId();
-  LOG_INFO("TextToSpeechComponent.CreateSpeech", "Text '%s' Style: %s Duration: %f OperationId: %u",
+  LOG_INFO("TextToSpeechComponent.CreateSpeech", "Text '%s' Style: %d Duration: %f OperationId: %u",
            Util::HidePersonallyIdentifiableInfo(text.c_str()), // could be a name!
-           EnumToString(style), durationScalar, opId);
+           (int) style, durationScalar, opId);
   
   const auto it =_ttsWaveDataMap.emplace(opId, TtsBundle());
   if (!it.second) {
@@ -327,4 +328,3 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::GetNextOperationId()
 
 } // end namespace Cozmo
 } // end namespace Anki
-

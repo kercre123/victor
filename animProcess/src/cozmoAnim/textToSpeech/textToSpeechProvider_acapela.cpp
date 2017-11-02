@@ -7,7 +7,7 @@
  *
  */
 
-#include "engine/textToSpeech/textToSpeechProvider_acapela.h"
+#include "textToSpeechProvider_acapela.h"
 
 #include "util/logging/logging.h"
 #include "util/math/math.h"
@@ -110,4 +110,3 @@ std::string AcapelaTTS::GetLicense() {
 } // end namespace TextToSpeech
 } // end namespace Cozmo
 } // end namespace Anki
-

@@ -15,8 +15,8 @@
 // TODO: JIRA VIC-23 - Migrate Text to Speech component to Victor
 
 
-#ifndef __Anki_cozmo_basestation_textToSpeech_textToSpeechComponent_H__
-#define __Anki_cozmo_basestation_textToSpeech_textToSpeechComponent_H__
+#ifndef __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechComponent_H__
+#define __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechComponent_H__
 
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
 #include "anki/common/types.h"
@@ -38,7 +38,7 @@ namespace Anki {
     }
   }
   namespace Cozmo {
-    class CozmoContext;
+    class CozmoAnimContext;
     namespace TextToSpeech {
       class TextToSpeechProvider;
     }
@@ -60,7 +60,7 @@ public:
   };
   
   
-  TextToSpeechComponent(const CozmoContext* context);
+  TextToSpeechComponent(const CozmoAnimContext* context);
   ~TextToSpeechComponent();
 
   using OperationId = uint8_t;
@@ -141,4 +141,4 @@ private:
 } // end namespace Anki
 
 
-#endif //__Anki_cozmo_basestation_textToSpeech_textToSpeechComponent_H__
+#endif //__Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechComponent_H__

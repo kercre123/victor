@@ -1,5 +1,5 @@
 /**
- * File: textToSpeechProvider_ios.h
+ * File: textToSpeechProvider_mac.h
  *
  * Description: Implementation-specific wrapper to generate audio data from a given string and style.
  * This class insulates engine and audio code from details of text-to-speech implementation.
@@ -8,52 +8,57 @@
  *
  */
 
-
-#ifndef __Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_ios_H__
-#define __Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_ios_H__
+#ifndef __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_mac_H__
+#define __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_mac_H__
 
 #include "util/helpers/ankiDefines.h"
 
-#if defined(ANKI_PLATFORM_IOS)
+#if defined(ANKI_PLATFORM_OSX)
 
-#include "engine/textToSpeech/textToSpeechProvider.h"
+#include "textToSpeechProvider.h"
 #include <string>
+
+// Forward declarations (Cozmo)
+namespace Anki {
+  namespace Cozmo {
+    class CozmoAnimContext;
+  }
+}
 
 namespace Anki {
 namespace Cozmo {
 namespace TextToSpeech {
 
 //
-// TextToSpeechProvider: Abstract interface for text-to-speech processing
+// TextToSpeechProviderImpl: Platform-specific implementation of text-to-speech interface
 //
 // This class is used to isolate engine and audio code from details of a specific text-to-speech implementation.
 //
 class TextToSpeechProviderImpl
 {
 public:
-  
-  TextToSpeechProviderImpl(const CozmoContext* ctx, const Json::Value& tts_platform_config);
+  TextToSpeechProviderImpl(const CozmoAnimContext* ctx, const Json::Value& tts_platform_config);
   ~TextToSpeechProviderImpl();
   
   Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);
 
 private:
-  // Voice configuration
+  // Configurable parameters
   std::string _tts_language;
   std::string _tts_voice;
   int _tts_speed;
   int _tts_shaping;
-  int _tts_pitch;
+  bool _tts_licensed;
   
-  // Path to temporary audio file
-  std::string _path;
-  
+  // Opaque handle to Acapela TTS SDK
+  void* _lpBabTTS = nullptr;
+
 }; // class TextToSpeechProviderImpl
 
 } // end namespace TextToSpeech
 } // end namespace Cozmo
 } // end namespace Anki
 
-#endif // ANKI_PLATFORM_IOS
+#endif // ANKI_PLATFORM_OSX
 
-#endif //__Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_ios_H__
+#endif //__Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_H__

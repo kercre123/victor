@@ -8,8 +8,8 @@
  */
 
 
-#ifndef __Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_acapela_H__
-#define __Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_acapela_H__
+#ifndef __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_acapela_H__
+#define __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_acapela_H__
 
 #include "util/global/globalDefinitions.h"
 
@@ -42,5 +42,5 @@ public:
 } // end namespace Cozmo
 } // end namespace Anki
 
-#endif // __Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_acapela_H__
+#endif // __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_acapela_H__
 

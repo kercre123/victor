@@ -63,7 +63,6 @@
 #include "engine/robotManager.h"
 #include "engine/robotStateHistory.h"
 #include "engine/robotToEngineImplMessaging.h"
-#include "engine/textToSpeech/textToSpeechComponent.h"
 #include "engine/viz/vizManager.h"
 
 
@@ -179,7 +178,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _mapComponent(new MapComponent(this))
   , _nvStorageComponent(new NVStorageComponent(*this, _context))
   , _aiComponent(new AIComponent())
-  , _textToSpeechComponent(new TextToSpeechComponent(_context))
   , _objectPoseConfirmerPtr(new ObjectPoseConfirmer(*this))
   , _cubeLightComponent(new CubeLightComponent(*this, _context))
   , _bodyLightComponent(new BodyLightComponent(*this, _context))

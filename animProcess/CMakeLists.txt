@@ -10,6 +10,7 @@ include(flatbuffers)
 include(opencv)
 include(signalessence)
 include(speexdsp)
+include(text2speech)
 
 if (NOT DEFINED USE_DAS)
   set(USE_DAS 0)
@@ -49,6 +50,7 @@ target_link_libraries(victor_anim
   ${FLATBUFFERS_LIBS} 
   ${SIGNALESSENCE_LIBS}
   ${SPEEXDSP_LIBS}
+  ${TEXT2SPEECH_LIBS}
   # platform
   ${PLATFORM_LIBS}
   PUBLIC
