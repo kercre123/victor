@@ -27,13 +27,22 @@ namespace Cozmo {
   
 static const char * const kLogChannelName = "Actions";
   
-TrackFaceAction::TrackFaceAction(Robot& robot, FaceID faceID)
+TrackFaceAction::TrackFaceAction(Robot& robot, FaceID rawFaceID)
+  : ITrackAction(robot,
+                 "TrackFace",
+                 RobotActionType::TRACK_FACE)
+{
+  _faceID = robot.GetFaceWorld().GetSmartFaceID(rawFaceID);
+  SetName("TrackFace" + _faceID.GetDebugStr());
+}
+
+TrackFaceAction::TrackFaceAction(Robot& robot, SmartFaceID faceID)
   : ITrackAction(robot,
                  "TrackFace",
                  RobotActionType::TRACK_FACE)
   , _faceID(faceID)
 {
-   SetName("TrackFace" + std::to_string(_faceID));
+  SetName("TrackFace" + _faceID.GetDebugStr());
 }
 
 TrackFaceAction::~TrackFaceAction()
@@ -51,23 +60,7 @@ ActionResult TrackFaceAction::InitInternal()
     return ActionResult::ABORT;
   }
   
-  using namespace ExternalInterface;
-  auto HandleFaceChangedID = [this](const AnkiEvent<MessageEngineToGame>& event)
-  {
-    auto & msg = event.GetData().Get_RobotChangedObservedFaceID();
-    if(msg.oldID == _faceID)
-    {
-      PRINT_CH_INFO(kLogChannelName, "TrackFaceAction.HandleFaceChangedID",
-                    "Updating tracked face ID from %d to %d",
-                    msg.oldID, msg.newID);
-      
-      _faceID = msg.newID;
-    }
-  };
-  
-  _signalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotChangedObservedFaceID, HandleFaceChangedID);
-  
-  _robot.GetMoveComponent().SetTrackToFace(_faceID);
+  _robot.GetMoveComponent().SetTrackToFace(_faceID.GetID());
   _lastFaceUpdate = 0;
   
   return ActionResult::SUCCESS;
@@ -76,7 +69,7 @@ ActionResult TrackFaceAction::InitInternal()
 void TrackFaceAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
 {
   TrackFaceCompleted completion;
-  completion.faceID = static_cast<s32>(_faceID);
+  completion.faceID = static_cast<s32>(_faceID.GetID());
   completionUnion.Set_trackFaceCompleted(std::move(completion));
 }
   
@@ -87,7 +80,9 @@ ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle,
   
   if(nullptr == face) {
     // No such face
-    PRINT_CH_INFO(kLogChannelName, "TrackFaceAction.UpdateTracking.BadFaceID", "No face %d in FaceWorld", _faceID);
+    PRINT_CH_INFO(kLogChannelName, "TrackFaceAction.UpdateTracking.BadFaceID",
+                  "No face %s in FaceWorld",
+                  _faceID.GetDebugStr().c_str());
     return UpdateResult::NoNewInfo;
   }
   

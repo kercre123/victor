@@ -152,6 +152,13 @@ extern "C" void UnitySendMessage(const char *, const char *, const char *);
     }
     webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     webView.hidden = YES;
+
+    // *** ANKI CHANGE ***
+    // Stop the webView from being able to be dragged off screen
+    for (id subview in webView.subviews)
+        if ([[subview class] isSubclassOfClass: [UIScrollView class]])
+            ((UIScrollView *)subview).bounces = NO;
+
     [view addSubview:webView];
     gameObjectName = [NSString stringWithUTF8String:gameObjectName_];
 

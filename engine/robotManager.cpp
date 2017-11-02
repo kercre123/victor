@@ -36,6 +36,10 @@
 #include "anki/common/robot/config.h"
 #include "util/global/globalDefinitions.h"
 
+#if USE_DAS
+#include <DAS/DAS.h>
+#endif
+
 namespace Anki {
 namespace Cozmo {
 
@@ -149,6 +153,12 @@ void RobotManager::RemoveRobot(const RobotID_t withID, bool robotRejectedConnect
     }
 
     _context->GetNeedsManager()->OnRobotDisconnected();
+
+#if USE_DAS
+    // Resume trying to upload DAS files to the server, because at
+    // least now we know we're no longer connected to the robot
+    DASPauseUploadingToServer(false);
+#endif
 
     delete(iter->second);
     iter = _robots.erase(iter);

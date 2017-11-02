@@ -3,9 +3,9 @@
 // Created: 4/5/2017
 // Copyright: Anki, inc. 2017
 
-#include "clad/types/behaviorSystem/activityTypes.clad"
-#include "clad/types/behaviorSystem/behaviorTypes.clad"
-#include "clad/types/behaviorSystem/reactionTriggers.clad"
+#include "clad/types/behaviorComponent/activityTypes.clad"
+#include "clad/types/behaviorComponent/behaviorStages.clad"
+#include "clad/types/behaviorComponent/reactionTriggers.clad"
 #include "clad/types/unlockTypes.clad"
 
 namespace Anki {
@@ -45,7 +45,6 @@ no_default_constructor structure RobotPublicState{
   bool isRequestingGame,
   uint_8 tallestStackHeight,
   NeedsLevels needsLevels,
-  ActivityID currentActivity,
   ReactionTrigger currentReactionTrigger,
   BehaviorStageStruct userFacingBehaviorStageStruct
 }

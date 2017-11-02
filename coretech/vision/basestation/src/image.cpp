@@ -520,6 +520,12 @@ namespace Vision {
     
   }
   
+  ImageRGB::ImageRGB(s32 nrows, s32 ncols, const PixelRGB& fillValue)
+  : ImageBase<PixelRGB>(nrows, ncols, fillValue)
+  {
+
+  }
+
   ImageRGB::ImageRGB(s32 nrows, s32 ncols, u8* data)
   : ImageBase<PixelRGB>(nrows, ncols, reinterpret_cast<PixelRGB*>(data))
   {

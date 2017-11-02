@@ -1,0 +1,11 @@
+{
+  "behaviorID" : "VictorDemoSocialize",
+  "behaviorClass" : "DispatcherQueue",
+
+  "behaviors" : [
+    "DriveOffCharger",
+    "ShortLookAroundForFaceAndCube",
+    "InteractWithFaces",
+    "VictorDemoSocializeGame"
+  ]
+}

@@ -15,7 +15,7 @@ CFLAGS += -include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorMallocMac
 LD_LIBRARIES = -L$(CPPUTEST_HOME)/lib -lCppUTest -lCppUTestExt
 LDFLAGS += -L$(CPPUTEST_HOME)/lib -lCppUTest -lCppUTestExt -lc++
 
-CODE_UNDER_TEST = ../hal/src/halStubs.cpp
+CODE_UNDER_TEST = ../hal/src/hal.cpp
 
 ifeq ($(PLATFORM),OSX)
 	DEFINES += -DPLATFORM_OSX

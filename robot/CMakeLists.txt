@@ -26,21 +26,22 @@ endif()
 #
 # HACK #1
 #
-# halstub is defined here, because supervisor depends on it, even though
+# robot_hal is defined here, because supervisor depends on it, even though
 # the source file lives in robot2. This will be cleaned up after we fork
 # the victor repo
 #
-add_library(halstub STATIC
-  ${CMAKE_SOURCE_DIR}/robot2/hal/src/halStubs.cpp
+add_library(robot_hal STATIC
+  ${CMAKE_SOURCE_DIR}/robot2/hal/src/hal.cpp
+  ${CMAKE_SOURCE_DIR}/robot2/hal/src/hal_motors.cpp
 )
 
-target_link_libraries(halstub
+target_link_libraries(robot_hal
   PRIVATE
   robot_interface
   robot_clad_cpplite
 )
 
-target_include_directories(halstub
+target_include_directories(robot_hal
   PRIVATE
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/syscon>
   PUBLIC
@@ -48,7 +49,7 @@ target_include_directories(halstub
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/hal/sim/include>
 )
 
-target_compile_definitions(halstub
+target_compile_definitions(robot_hal
   PRIVATE
   COZMO_ROBOT
   ${PLATFORM_COMPILE_DEFS}
@@ -67,7 +68,7 @@ set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
 if (ANDROID)
   set(PLATFORM_LIBS
-    halstub
+    robot_hal
   )
   set(PLATFORM_COMPILE_DEFS
     DEVELOPMENT

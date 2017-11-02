@@ -88,7 +88,7 @@ namespace Anki {
       {
         switch(msg.tag)
         {
-          #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
+          #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x4F.def"
 
           default:
             AnkiWarn( "Messages.ProcessBadTag_EngineToRobot.Recvd", "Received message with bad tag %x", msg.tag);
@@ -173,8 +173,8 @@ namespace Anki {
         robotState_.status |= ProxSensors::IsAnyCliffDetected() ? CLIFF_DETECTED : 0;
         robotState_.status |= IMUFilter::IsFalling() ? IS_FALLING : 0;
         robotState_.status |= HAL::BatteryIsChargerOOS() ? IS_CHARGER_OOS : 0;
-#ifdef  SIMULATOR
         robotState_.batteryVoltage = HAL::BatteryGetVoltage();
+#ifdef  SIMULATOR
         if(isForcedDelocalizing_)
         {
           robotState_.status |= IS_PICKED_UP;
@@ -597,9 +597,11 @@ namespace Anki {
         ProxSensors::EnableStopOnCliff(msg.enable);
       }
 
-      void Process_setCliffDetectThreshold(const RobotInterface::SetCliffDetectThreshold& msg)
+      void Process_setCliffDetectThresholds(const RobotInterface::SetCliffDetectThresholds& msg)
       {
-        ProxSensors::SetCliffDetectThreshold(msg.detectLevel);
+        for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
+          ProxSensors::SetCliffDetectThreshold(i, msg.thresholds[i]);
+        }
       }
 
       void Process_enableBraceWhenFalling(const RobotInterface::EnableBraceWhenFalling& msg)
@@ -607,20 +609,6 @@ namespace Anki {
         IMUFilter::EnableBraceWhenFalling(msg.enable);
       }
 
-      // ---------- Animation Key frame messages -----------
-      
-      // ==== V2 Animation ======
-      // TODO: If these messages are specified by a specific range in the clad file,
-      // we can make it so that some of these handlers don't have to be defined here since
-      // they're meant to be handled by the animation process
-      void Process_playAnim(RobotInterface::PlayAnim const& msg)
-      {
-        // Nothing to do here
-      }
-      void Process_lockAnimTracks(RobotInterface::LockAnimTracks const& msg)
-      {
-        // Nothing to do here
-      }
       void Process_recordHeading(RobotInterface::RecordHeading const& msg)
       {
         SteeringController::RecordHeading();
@@ -639,12 +627,6 @@ namespace Anki {
       {
         BackpackLightController::SetParams(msg);
       }
-      
-      void Process_requestAvailableAnimations(RobotInterface::RequestAvailableAnimations const& msg)
-      {
-        // Nothing to do here
-      }
-      // =========== end V2 animation ==============
 
       void Process_setPropSlot(const SetPropSlot& msg)
       {
@@ -688,14 +670,6 @@ namespace Anki {
       void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer& msg) {
         BackpackLightController::EnableLayer((BackpackLightLayer)msg.layer);
       }
-            
-      // V2 Audio message stubbed
-      void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent&) { /*Nothing to do*/ }
-      void Process_postAudioGameState(const Anki::AudioEngine::Multiplexer::PostAudioGameState&) { /*Nothing to do*/ }
-      void Process_postAudioParameter(const Anki::AudioEngine::Multiplexer::PostAudioParameter&) { /*Nothing to do*/ }
-      void Process_stopAllAudioEvents(const Anki::AudioEngine::Multiplexer::StopAllAudioEvents&) { /*Nothing to do*/ }
-      void Process_postAudioSwitchState(const Anki::AudioEngine::Multiplexer::PostAudioSwitchState&) { /*Nothing to do*/ }
-
 
 // ----------- Send messages -----------------
 

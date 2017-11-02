@@ -7,7 +7,7 @@
 
 #include "engine/robotGyroDriftDetector.h"
 
-#include "engine/components/cliffSensorComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/robot.h"
 

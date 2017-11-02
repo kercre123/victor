@@ -13,15 +13,15 @@
 
 #include "engine/activeObject.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cliffSensorComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
-#include "engine/components/proxSensorComponent.h"
+#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
@@ -896,22 +896,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::WaitForIma
 }
       
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Version for ProceduralFace
-template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DisplayProceduralFace& msg)
-{
-  // TODO: SetFaceAction is broken. Probably pass the ExternalInterface::DisplayProceduralFace all the way through (VIC-360)
-  /*
-  ProceduralFace procFace;
-  procFace.SetFromMessage(msg);
-      
-  SetFaceAction* action = new SetFaceAction(robot, procFace, msg.duration_ms);
-  return action;
-   */
-  return nullptr;
-}
-      
-// Version for face image
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DisplayFaceImage& msg)
 {
@@ -1052,7 +1036,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(alignWithObject,          AlignWithObject,          0),
       DEFINE_HANDLER(calibrateMotors,          CalibrateMotors,          0),
       DEFINE_HANDLER(displayFaceImage,         DisplayFaceImage,         0),
-      DEFINE_HANDLER(displayProceduralFace,    DisplayProceduralFace,    0),
       DEFINE_HANDLER(driveOffChargerContacts,  DriveOffChargerContacts,  1),
       DEFINE_HANDLER(driveStraight,            DriveStraight,            0),
       DEFINE_HANDLER(facePlant,                FacePlant,                0),
@@ -1193,10 +1176,15 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
   
   // Now we fill out our Action and possibly update number of retries:
   IActionRunner* newAction = handlerIter->second.first(*robot, msg);
+  if(nullptr == newAction)
+  {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleActionEvents.NullAction",
+                        "Tag: %s", ExternalInterface::MessageGameToEngineTagToString(msg.GetTag()));
+    return;
+  }
   const u8 numRetries = handlerIter->second.second;
   newAction->SetTag(GetNextGameActionTag());
 
-  
   // Everything's ok and we have an action, so queue it
   robot->GetActionList().QueueAction(QueueActionPosition::NOW, newAction, numRetries);
 }
@@ -1648,7 +1636,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::LogRawCliffData& 
   if (nullptr == robot) {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleLogRawCliffData.InvalidRobotID", "Failed to find robot.");
   } else {
-    robot->GetCliffSensorComponent().EnableRawDataLogging(msg.length_ms);
+    robot->GetCliffSensorComponent().StartLogging(msg.length_ms);
   }
 }
 

@@ -154,6 +154,51 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region CodeLabFeaturedContentStrings
+
+  public const string kCodeLabFeatureFortune_tellerDisplayProbably_response = "codeLabFeature.fortune_teller.display.probably_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechProbably_response = "codeLabFeature.fortune_teller.speech.probably_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayCertainly_response = "codeLabFeature.fortune_teller.display.certainly_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechCertainly_response = "codeLabFeature.fortune_teller.speech.certainly_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayAffirmative_response = "codeLabFeature.fortune_teller.display.affirmative_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechAffirmative_response = "codeLabFeature.fortune_teller.speech.affirmative_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayCorrect_response = "codeLabFeature.fortune_teller.display.correct_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechCorrect_response = "codeLabFeature.fortune_teller.speech.correct_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayDefinitely_response = "codeLabFeature.fortune_teller.display.definitely_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechDefinitely_response = "codeLabFeature.fortune_teller.speech.definitely_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayPrecisely_response = "codeLabFeature.fortune_teller.display.precisely_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechPrecisely_response = "codeLabFeature.fortune_teller.speech.precisely_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayTrue_response = "codeLabFeature.fortune_teller.display.true_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechTrue_response = "codeLabFeature.fortune_teller.speech.true_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayAccurate_response = "codeLabFeature.fortune_teller.display.accurate_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechAccurate_response = "codeLabFeature.fortune_teller.speech.accurate_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayLikely_response = "codeLabFeature.fortune_teller.display.likely_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechLikely_response = "codeLabFeature.fortune_teller.speech.likely_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayValid_response = "codeLabFeature.fortune_teller.display.valid_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechValid_response = "codeLabFeature.fortune_teller.speech.valid_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayPerhaps_response = "codeLabFeature.fortune_teller.display.perhaps_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechPerhaps_response = "codeLabFeature.fortune_teller.speech.perhaps_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayMaybe_so_response = "codeLabFeature.fortune_teller.display.maybe_so_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechMaybe_so_response = "codeLabFeature.fortune_teller.speech.maybe_so_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayInconclusive_response = "codeLabFeature.fortune_teller.display.inconclusive_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechInconclusive_response = "codeLabFeature.fortune_teller.speech.inconclusive_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayPotentially_response = "codeLabFeature.fortune_teller.display.potentially_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechPotentially_response = "codeLabFeature.fortune_teller.speech.potentially_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayZero_response = "codeLabFeature.fortune_teller.display.zero_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechZero_response = "codeLabFeature.fortune_teller.speech.zero_response";
+  public const string kCodeLabFeatureFortune_tellerDisplaySorry_response = "codeLabFeature.fortune_teller.display.sorry_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechSorry_response = "codeLabFeature.fortune_teller.speech.sorry_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayDoubtful_response = "codeLabFeature.fortune_teller.display.doubtful_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechDoubtful_response = "codeLabFeature.fortune_teller.speech.doubtful_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayInvalid_response = "codeLabFeature.fortune_teller.display.invalid_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechInvalid_response = "codeLabFeature.fortune_teller.speech.invalid_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayFalse_response = "codeLabFeature.fortune_teller.display.false_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechFalse_response = "codeLabFeature.fortune_teller.speech.false_response";
+  public const string kCodeLabFeatureFortune_tellerDisplayNegative_response = "codeLabFeature.fortune_teller.display.negative_response";
+  public const string kCodeLabFeatureFortune_tellerSpeechNegative_response = "codeLabFeature.fortune_teller.speech.negative_response";
+
+  #endregion
+
   #region CodeLabStrings
 
   public const string kCodeLabChallenge_driveForwardFourQuestionSlidePrimaryText = "codeLabChallenge_driveForwardFour.questionSlide.primaryText";
@@ -287,6 +332,21 @@ public static class LocalizationKeys {
   public const string kCodeLabProjectsVerticalTabVerticalTabHeroDetail = "codeLab.projects.verticalTab.verticalTabHeroDetail";
   public const string kCodeLabProjectsFeaturedTabFeaturedTabHeroTitle = "codeLab.projects.featuredTab.featuredTabHeroTitle";
   public const string kCodeLabProjectsFeaturedTabFeaturedTabHeroDetail = "codeLab.projects.featuredTab.featuredTabHeroDetail";
+  public const string kCodeLabRenameProjectModalSaveButtonLabel = "codeLab.renameProjectModal.saveButtonLabel";
+  public const string kCodeLabRenameProjectModalCancelButtonLabel = "codeLab.renameProjectModal.cancelButtonLabel";
+  public const string kCodeLabRenameProjectModalRenameProjectPrompt = "codeLab.renameProjectModal.renameProjectPrompt";
+  public const string kCodeLabPlayNowModalStartButtonLabel = "codeLab.playNowModal.startButtonLabel";
+  public const string kCodeLabPlayNowModalStopButtonLabel = "codeLab.playNowModal.stopButtonLabel";
+  public const string kCodeLabPlayNowModalInstructionsLabel = "codeLab.playNowModal.instructionsLabel";
+  public const string kCodeLabPlayNowModalSeeInsideButtonLabel = "codeLab.playNowModal.seeInsideButtonLabel";
+  public const string kCodeLabRemixConfirmDialogDialogTitle = "codeLab.remixConfirmDialog.dialogTitle";
+  public const string kCodeLabRemixConfirmDialogSaveProjectAsRemixPrompt = "codeLab.remixConfirmDialog.saveProjectAsRemixPrompt";
+  public const string kCodeLabRemixConfirmDialogSaveRemixButtonLabel = "codeLab.remixConfirmDialog.saveRemixButtonLabel";
+  public const string kCodeLabRemixConfirmDialogCancelButtonLabel = "codeLab.remixConfirmDialog.cancelButtonLabel";
+  public const string kCodeLabSaveModifiedSampleProjectAsRemixDialogDialogTitle = "codeLab.saveModifiedSampleProjectAsRemixDialog.dialogTitle";
+  public const string kCodeLabSaveModifiedSampleProjectAsRemixDialogSaveAsRemixPrompt = "codeLab.saveModifiedSampleProjectAsRemixDialog.saveAsRemixPrompt";
+  public const string kCodeLabSaveModifiedSampleProjectAsRemixDialogDiscardChangesButtonLabel = "codeLab.saveModifiedSampleProjectAsRemixDialog.discardChangesButtonLabel";
+  public const string kCodeLabRemixNewProjectNameStartsWith = "codeLab.remixNewProject.nameStartsWith";
   public const string kCodeLabSampleProject_DriveInSquareProjectName = "codeLabSampleProject_DriveInSquare.projectName";
   public const string kCodeLabSampleProject_RainbowBackpackProjectName = "codeLabSampleProject_RainbowBackpack.projectName";
   public const string kCodeLabSampleProject_DrivingAndSneezingProjectName = "codeLabSampleProject_DrivingAndSneezing.projectName";
@@ -298,8 +358,22 @@ public static class LocalizationKeys {
   public const string kCodeLabSampleProject_IntruderAlarmProjectName = "codeLabSampleProject_IntruderAlarm.projectName";
   public const string kCodeLabFeaturedProject_HotPotatoProjectName = "codeLabFeaturedProject_HotPotato.projectName";
   public const string kCodeLabFeaturedProject_HotPotatoProjectDescription = "codeLabFeaturedProject_HotPotato.projectDescription";
+  public const string kCodeLabFeaturedProject_HotPotatoProjectInstructions = "codeLabFeaturedProject_HotPotato.projectInstructions";
   public const string kCodeLabFeaturedProject_TinyOrchestraProjectName = "codeLabFeaturedProject_TinyOrchestra.projectName";
   public const string kCodeLabFeaturedProject_TinyOrchestraProjectDescription = "codeLabFeaturedProject_TinyOrchestra.projectDescription";
+  public const string kCodeLabFeaturedProject_TinyOrchestraProjectInstructions = "codeLabFeaturedProject_TinyOrchestra.projectInstructions";
+  public const string kCodeLabFeaturedProject_MagicFortuneTellerProjectName = "codeLabFeaturedProject_MagicFortuneTeller.projectName";
+  public const string kCodeLabFeaturedProject_MagicFortuneTellerProjectDescription = "codeLabFeaturedProject_MagicFortuneTeller.projectDescription";
+  public const string kCodeLabFeaturedProject_MagicFortuneTellerProjectInstructions = "codeLabFeaturedProject_MagicFortuneTeller.projectInstructions";
+  public const string kCodeLabFeaturedProject_CubeWhackProjectName = "codeLabFeaturedProject_CubeWhack.projectName";
+  public const string kCodeLabFeaturedProject_CubeWhackProjectDescription = "codeLabFeaturedProject_CubeWhack.projectDescription";
+  public const string kCodeLabFeaturedProject_CubeWhackProjectInstructions = "codeLabFeaturedProject_CubeWhack.projectInstructions";
+  public const string kCodeLabFeaturedProject_FiretruckAlarmProjectName = "codeLabFeaturedProject_FiretruckAlarm.projectName";
+  public const string kCodeLabFeaturedProject_FiretruckAlarmProjectDescription = "codeLabFeaturedProject_FiretruckAlarm.projectDescription";
+  public const string kCodeLabFeaturedProject_FiretruckAlarmProjectInstructions = "codeLabFeaturedProject_FiretruckAlarm.projectInstructions";
+  public const string kCodeLabFeaturedProject_LightShowProjectName = "codeLabFeaturedProject_LightShow.projectName";
+  public const string kCodeLabFeaturedProject_LightShowProjectDescription = "codeLabFeaturedProject_LightShow.projectDescription";
+  public const string kCodeLabFeaturedProject_LightShowProjectInstructions = "codeLabFeaturedProject_LightShow.projectInstructions";
   public const string kCodeLabSaveProjectAutosaved = "codeLab.SaveProject.Autosaved";
   public const string kCodeLabSaveProjectNotSaved = "codeLab.SaveProject.NotSaved";
   public const string kCodeLabHorizontalUserProjectMyProject = "codeLabHorizontal.UserProject.MyProject";
@@ -369,8 +443,6 @@ public static class LocalizationKeys {
   public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_path_to = "codeLabGlossary.block_definitions.description.cozmo_vert_path_to";
   public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_turn = "codeLabGlossary.block_definitions.title.cozmo_vert_turn";
   public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_turn = "codeLabGlossary.block_definitions.description.cozmo_vert_turn";
-  public const string kCodeLabGlossaryBlock_definitionsTitle = "codeLabGlossary.block_definitions.title.";
-  public const string kCodeLabGlossaryBlock_definitionsDescription = "codeLabGlossary.block_definitions.description.";
   public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_dock_with_cube_by_id = "codeLabGlossary.block_definitions.title.cozmo_vert_dock_with_cube_by_id";
   public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_dock_with_cube_by_id = "codeLabGlossary.block_definitions.description.cozmo_vert_dock_with_cube_by_id";
   public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_set_liftheight = "codeLabGlossary.block_definitions.title.cozmo_vert_set_liftheight";
@@ -403,6 +475,8 @@ public static class LocalizationKeys {
   public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cozmoface_set_draw_color = "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_set_draw_color";
   public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cozmoface_set_text_scale = "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_set_text_scale";
   public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cozmoface_set_text_scale = "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_set_text_scale";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cozmoface_set_text_alignment = "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_set_text_alignment";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cozmoface_set_text_alignment = "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_set_text_alignment";
   public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cozmoface_draw_text = "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_text";
   public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cozmoface_draw_text = "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_text";
   public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cozmoface_draw_line = "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_line";
@@ -481,6 +555,10 @@ public static class LocalizationKeys {
   public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_face_get_position_3d = "codeLabGlossary.block_definitions.description.cozmo_vert_face_get_position_3d";
   public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_face_get_expression = "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_expression";
   public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_face_get_expression = "codeLabGlossary.block_definitions.description.cozmo_vert_face_get_expression";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cube_get_last_tapped = "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_last_tapped";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cube_get_last_tapped = "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_last_tapped";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cube_was_tapped = "codeLabGlossary.block_definitions.title.cozmo_vert_cube_was_tapped";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cube_was_tapped = "codeLabGlossary.block_definitions.description.cozmo_vert_cube_was_tapped";
   public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_external_cube_sensor_select_menu = "codeLabGlossary.block_definitions.title.cozmo_external_cube_sensor_select_menu";
   public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_external_cube_sensor_select_menu = "codeLabGlossary.block_definitions.description.cozmo_external_cube_sensor_select_menu";
   public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cube_get_is_visible = "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_is_visible";
@@ -539,6 +617,16 @@ public static class LocalizationKeys {
   public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_round = "codeLabGlossary.block_definitions.description.operator_round";
   public const string kCodeLabGlossaryBlock_definitionsTitleOperator_mathop = "codeLabGlossary.block_definitions.title.operator_mathop";
   public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_mathop = "codeLabGlossary.block_definitions.description.operator_mathop";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_play_animation_by_name = "codeLabGlossary.block_definitions.title.cozmo_play_animation_by_name";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_play_animation_by_name = "codeLabGlossary.block_definitions.description.cozmo_play_animation_by_name";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_play_animation_by_triggername = "codeLabGlossary.block_definitions.title.cozmo_play_animation_by_triggername";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_play_animation_by_triggername = "codeLabGlossary.block_definitions.description.cozmo_play_animation_by_triggername";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_sound_play = "codeLabGlossary.block_definitions.title.cozmo_sound_play";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_sound_play = "codeLabGlossary.block_definitions.description.cozmo_sound_play";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_sound_play_and_wait = "codeLabGlossary.block_definitions.title.cozmo_sound_play_and_wait";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_sound_play_and_wait = "codeLabGlossary.block_definitions.description.cozmo_sound_play_and_wait";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_sound_stop = "codeLabGlossary.block_definitions.title.cozmo_sound_stop";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_sound_stop = "codeLabGlossary.block_definitions.description.cozmo_sound_stop";
 
   #endregion
 
@@ -549,7 +637,11 @@ public static class LocalizationKeys {
   public const string kCodeLabVerticalVERT_ENABLE_ANIMATION_TRACK = "codeLabVertical.VERT_ENABLE_ANIMATION_TRACK";
   public const string kCodeLabVerticalVERT_DISABLE_ANIMATION_TRACK = "codeLabVertical.VERT_DISABLE_ANIMATION_TRACK";
   public const string kCodeLabVerticalPLAY_ANIMATION = "codeLabVertical.PLAY_ANIMATION";
+  public const string kCodeLabVerticalANIMATION_BLOCK = "codeLabVertical.ANIMATION_BLOCK";
+  public const string kCodeLabVerticalANIMATION_SDK_BLOCK = "codeLabVertical.ANIMATION_SDK_BLOCK";
+  public const string kCodeLabVerticalANIMATION_TRIGGER_SDK_BLOCK = "codeLabVertical.ANIMATION_TRIGGER_SDK_BLOCK";
   public const string kCodeLabVerticalPLAY_SOUND = "codeLabVertical.PLAY_SOUND";
+  public const string kCodeLabVerticalPLAY_SOUND_AND_WAIT = "codeLabVertical.PLAY_SOUND_AND_WAIT";
   public const string kCodeLabVerticalSTOP_SOUND = "codeLabVertical.STOP_SOUND";
   public const string kCodeLabVerticalDOCK_WITH_CUBE = "codeLabVertical.DOCK_WITH_CUBE";
   public const string kCodeLabVerticalDOCK_WITH_CUBE_X = "codeLabVertical.DOCK_WITH_CUBE_X";
@@ -571,7 +663,8 @@ public static class LocalizationKeys {
   public const string kCodeLabVerticalFACE_CAMERA = "codeLabVertical.FACE_CAMERA";
   public const string kCodeLabVerticalFACE_POSITION = "codeLabVertical.FACE_POSITION";
   public const string kCodeLabVerticalFACE_EXPRESSION = "codeLabVertical.FACE_EXPRESSION";
-  public const string kCodeLabVerticalCUBE_X = "codeLabVertical.CUBE_X";
+  public const string kCodeLabVerticalLAST_TAPPED_CUBE = "codeLabVertical.LAST_TAPPED_CUBE";
+  public const string kCodeLabVerticalCUBE_WAS_TAPPED = "codeLabVertical.CUBE_WAS_TAPPED";
   public const string kCodeLabVerticalCUBE_IS_VISIBLE = "codeLabVertical.CUBE_IS_VISIBLE";
   public const string kCodeLabVerticalCUBE_CAMERA = "codeLabVertical.CUBE_CAMERA";
   public const string kCodeLabVerticalCUBE_POSITION = "codeLabVertical.CUBE_POSITION";
@@ -606,25 +699,48 @@ public static class LocalizationKeys {
   public const string kCodeLabVerticalDRAW_CIRCLE = "codeLabVertical.DRAW_CIRCLE";
   public const string kCodeLabVerticalDRAW_TEXT = "codeLabVertical.DRAW_TEXT";
   public const string kCodeLabVerticalDRAW_DISPLAY_ON_FACE = "codeLabVertical.DRAW_DISPLAY_ON_FACE";
-  public const string kCodeLabVerticalHAPPY = "codeLabVertical.HAPPY";
-  public const string kCodeLabVerticalWINNER = "codeLabVertical.WINNER";
-  public const string kCodeLabVerticalSAD = "codeLabVertical.SAD";
-  public const string kCodeLabVerticalSURPRISED = "codeLabVertical.SURPRISED";
-  public const string kCodeLabVerticalDOG = "codeLabVertical.DOG";
-  public const string kCodeLabVerticalCAT = "codeLabVertical.CAT";
-  public const string kCodeLabVerticalSNEEZE = "codeLabVertical.SNEEZE";
-  public const string kCodeLabVerticalEXCITED = "codeLabVertical.EXCITED";
-  public const string kCodeLabVerticalTHINK_HARD = "codeLabVertical.THINK_HARD";
-  public const string kCodeLabVerticalBORED = "codeLabVertical.BORED";
-  public const string kCodeLabVerticalFRUSTRATED = "codeLabVertical.FRUSTRATED";
-  public const string kCodeLabVerticalCHATTY = "codeLabVertical.CHATTY";
-  public const string kCodeLabVerticalDISAPPOINTED = "codeLabVertical.DISAPPOINTED";
-  public const string kCodeLabVerticalSNORE = "codeLabVertical.SNORE";
-  public const string kCodeLabVerticalMYSTERY = "codeLabVertical.MYSTERY";
+  public const string kCodeLabVerticalANIM_MYSTERY = "codeLabVertical.ANIM_MYSTERY";
+  public const string kCodeLabVerticalANIM_HAPPY = "codeLabVertical.ANIM_HAPPY";
+  public const string kCodeLabVerticalANIM_WINNER = "codeLabVertical.ANIM_WINNER";
+  public const string kCodeLabVerticalANIM_SAD = "codeLabVertical.ANIM_SAD";
+  public const string kCodeLabVerticalANIM_SURPRISED = "codeLabVertical.ANIM_SURPRISED";
+  public const string kCodeLabVerticalANIM_DOG = "codeLabVertical.ANIM_DOG";
+  public const string kCodeLabVerticalANIM_CAT = "codeLabVertical.ANIM_CAT";
+  public const string kCodeLabVerticalANIM_SNEEZE = "codeLabVertical.ANIM_SNEEZE";
+  public const string kCodeLabVerticalANIM_EXCITED = "codeLabVertical.ANIM_EXCITED";
+  public const string kCodeLabVerticalANIM_THINK_HARD = "codeLabVertical.ANIM_THINK_HARD";
+  public const string kCodeLabVerticalANIM_BORED = "codeLabVertical.ANIM_BORED";
+  public const string kCodeLabVerticalANIM_FRUSTRATED = "codeLabVertical.ANIM_FRUSTRATED";
+  public const string kCodeLabVerticalANIM_CHATTY = "codeLabVertical.ANIM_CHATTY";
+  public const string kCodeLabVerticalANIM_DISAPPOINTED = "codeLabVertical.ANIM_DISAPPOINTED";
+  public const string kCodeLabVerticalANIM_SNORE = "codeLabVertical.ANIM_SNORE";
+  public const string kCodeLabVerticalANIM_REACT_HAPPY = "codeLabVertical.ANIM_REACT_HAPPY";
+  public const string kCodeLabVerticalANIM_CELEBRATE = "codeLabVertical.ANIM_CELEBRATE";
+  public const string kCodeLabVerticalANIM_TAKA_TAKA = "codeLabVertical.ANIM_TAKA_TAKA";
+  public const string kCodeLabVerticalANIM_AMAZED = "codeLabVertical.ANIM_AMAZED";
+  public const string kCodeLabVerticalANIM_CURIOUS = "codeLabVertical.ANIM_CURIOUS";
+  public const string kCodeLabVerticalANIM_AGREE = "codeLabVertical.ANIM_AGREE";
+  public const string kCodeLabVerticalANIM_DISAGREE = "codeLabVertical.ANIM_DISAGREE";
+  public const string kCodeLabVerticalANIM_UNSURE = "codeLabVertical.ANIM_UNSURE";
+  public const string kCodeLabVerticalANIM_CONDUCTING = "codeLabVertical.ANIM_CONDUCTING";
+  public const string kCodeLabVerticalANIM_DANCING_MAMBO = "codeLabVertical.ANIM_DANCING_MAMBO";
+  public const string kCodeLabVerticalANIM_FIRE_TRUCK = "codeLabVertical.ANIM_FIRE_TRUCK";
+  public const string kCodeLabVerticalANIM_PARTY_TIME = "codeLabVertical.ANIM_PARTY_TIME";
+  public const string kCodeLabVerticalANIM_DIZZY = "codeLabVertical.ANIM_DIZZY";
+  public const string kCodeLabVerticalANIM_DIZZY_END = "codeLabVertical.ANIM_DIZZY_END";
+  public const string kCodeLabVerticalANIM_ONE_TWO_THREE_GO = "codeLabVertical.ANIM_ONE_TWO_THREE_GO";
+  public const string kCodeLabVerticalANIM_WIN_GAME = "codeLabVertical.ANIM_WIN_GAME";
+  public const string kCodeLabVerticalANIM_LOSE_GAME = "codeLabVertical.ANIM_LOSE_GAME";
+  public const string kCodeLabVerticalANIM_TAP_CUBE = "codeLabVertical.ANIM_TAP_CUBE";
+  public const string kCodeLabVerticalANIM_GET_IN_POSITION = "codeLabVertical.ANIM_GET_IN_POSITION";
+  public const string kCodeLabVerticalANIM_IDLE = "codeLabVertical.ANIM_IDLE";
   public const string kCodeLabVerticalWHEELS = "codeLabVertical.WHEELS";
   public const string kCodeLabVerticalHEAD = "codeLabVertical.HEAD";
+  public const string kCodeLabVerticalMOVING_HEAD = "codeLabVertical.MOVING_HEAD";
   public const string kCodeLabVerticalLIFT = "codeLabVertical.LIFT";
+  public const string kCodeLabVerticalMOVING_LIFT = "codeLabVertical.MOVING_LIFT";
   public const string kCodeLabVerticalALL = "codeLabVertical.ALL";
+  public const string kCodeLabVerticalEVERYTHING = "codeLabVertical.EVERYTHING";
   public const string kCodeLabVerticalSELECT = "codeLabVertical.SELECT";
   public const string kCodeLabVerticalWIN = "codeLabVertical.WIN";
   public const string kCodeLabVerticalLOSE = "codeLabVertical.LOSE";
@@ -675,6 +791,8 @@ public static class LocalizationKeys {
   public const string kCodeLabVerticalBOTTOM = "codeLabVertical.BOTTOM";
   public const string kCodeLabVerticalLEFT = "codeLabVertical.LEFT";
   public const string kCodeLabVerticalRIGHT = "codeLabVertical.RIGHT";
+  public const string kCodeLabVerticalRECEIVE_MESSAGE_BLOCK = "codeLabVertical.RECEIVE_MESSAGE_BLOCK";
+  public const string kCodeLabVerticalCodeLabVerticalBROADCAST_MESSAGE_AND_WAIT_BLOCK = "codeLabVertical.codeLabVertical.BROADCAST_MESSAGE_AND_WAIT_BLOCK";
 
   #endregion
 
@@ -986,6 +1104,8 @@ public static class LocalizationKeys {
   public const string kNeedsNeedsRepairModalAlligningHead = "needs.NeedsRepairModal.AlligningHead";
   public const string kNeedsNeedsRepairModalAligningLift = "needs.NeedsRepairModal.AligningLift";
   public const string kNeedsNeedsRepairModalAligningTreads = "needs.NeedsRepairModal.AligningTreads";
+  public const string kNeedsNeedsRepairModalCozmoNotOnTreadsTitle = "needs.NeedsRepairModal.CozmoNotOnTreadsTitle";
+  public const string kNeedsNeedsRepairModalCozmoNotOnTreadsBody = "needs.NeedsRepairModal.CozmoNotOnTreadsBody";
   public const string kNeedsContinueButtonText = "needs.ContinueButtonText";
   public const string kNeedsNeedsRepairModalTuneUpComplete = "needs.NeedsRepairModal.TuneUpComplete";
   public const string kNeedsDone = "needs.Done";
@@ -1332,6 +1452,8 @@ public static class LocalizationKeys {
   public const string kTooltipBonusbarHeader = "tooltip.bonusbar.header";
   public const string kTooltipBonusbarBodyDaycomplete = "tooltip.bonusbar.body.daycomplete";
   public const string kTooltipBonusbarBodyDayincomplete = "tooltip.bonusbar.body.dayincomplete";
+  public const string kTooltipSparksHeader = "tooltip.sparks.header";
+  public const string kTooltipSparksBodyMain = "tooltip.sparks.body.main";
 
   #endregion
 
@@ -1473,6 +1595,18 @@ public static class LocalizationKeys {
   public const string kWhatsNewContent6Description = "whatsNew.content6.description";
   public const string kWhatsNewContent7Title = "whatsNew.content7.title";
   public const string kWhatsNewContent7Description = "whatsNew.content7.description";
+  public const string kWhatsNewCodeLab_VerticalLaunchTitle = "whatsNew.CodeLab_VerticalLaunch.title";
+  public const string kWhatsNewCodeLab_VerticalLaunchDescription = "whatsNew.CodeLab_VerticalLaunch.description";
+  public const string kWhatsNewCodeLab_TinyOrchestraTitle = "whatsNew.CodeLab_TinyOrchestra.title";
+  public const string kWhatsNewCodeLab_TinyOrchestraDescription = "whatsNew.CodeLab_TinyOrchestra.description";
+  public const string kWhatsNewCodeLab_MagicFortuneTellerTitle = "whatsNew.CodeLab_MagicFortuneTeller.title";
+  public const string kWhatsNewCodeLab_MagicFortuneTellerDescription = "whatsNew.CodeLab_MagicFortuneTeller.description";
+  public const string kWhatsNewCodeLab_HotPotatoTitle = "whatsNew.CodeLab_HotPotato.title";
+  public const string kWhatsNewCodeLab_HotPotatoDescription = "whatsNew.CodeLab_HotPotato.description";
+  public const string kWhatsNewCodeLab_FireTruckAlarmTitle = "whatsNew.CodeLab_FireTruckAlarm.title";
+  public const string kWhatsNewCodeLab_FireTruckAlarmDescription = "whatsNew.CodeLab_FireTruckAlarm.description";
+  public const string kWhatsNewCodeLab_CubeWhackTitle = "whatsNew.CodeLab_CubeWhack.title";
+  public const string kWhatsNewCodeLab_CubeWhackDescription = "whatsNew.CodeLab_CubeWhack.description";
 
   #endregion
 

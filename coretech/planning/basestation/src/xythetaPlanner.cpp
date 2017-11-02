@@ -759,12 +759,10 @@ void xythetaPlannerImpl::BuildPlan()
     curr = it->second.backpointer_;
   }  
 
-  std::reverse(_plan.actions_.begin(), _plan.actions_.end());
-  std::reverse(_plan.penalties_.begin(), _plan.penalties_.end());
-
+  _plan.Reverse();
   _plan.start_ = _start;
 
-  PRINT_NAMED_INFO("xythetaPlanner.BuildPlan", "Created plan of length %lu", (unsigned long)_plan.actions_.size());
+  PRINT_NAMED_INFO("xythetaPlanner.BuildPlan", "Created plan of length %lu", (unsigned long)_plan.Size());
 }
 
 void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)

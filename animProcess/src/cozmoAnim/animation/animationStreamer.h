@@ -25,6 +25,12 @@
 #include <list>
 #include <memory>
 
+#ifndef SIMULATOR
+// TODO: Once DMA is fixed to make face write operations faster, this may not be necessary
+#define DRAW_FACE_IN_THREAD
+#include <future>
+#endif
+
 namespace Anki {
 namespace Cozmo {
   
@@ -76,11 +82,10 @@ namespace Cozmo {
                                  u32 numLoops = 1,
                                  bool interruptRunning = true);
     
+    Result SetProceduralFace(const ProceduralFace& face, u32 duration_ms);
+    
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update();
-     
-    // Returns true if the idle animation is playing
-    bool IsIdleAnimating() const;
     
     const std::string GetStreamingAnimationName() const;
     const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
@@ -94,7 +99,6 @@ namespace Cozmo {
     void SetParam(LiveIdleAnimationParameter whichParam, float newValue);
     
     // Set/Reset the amount of time to wait before forcing KeepFaceAlive() after the last stream has stopped
-    // and there is no idle animation
     void SetKeepFaceAliveLastStreamTimeout(const f32 time_s)
       { _longEnoughSinceLastStreamTimeout_s = time_s; }
     void ResetKeepFaceAliveLastStreamTimeout();
@@ -127,14 +131,9 @@ namespace Cozmo {
     // Check whether the animation is done
     bool IsFinished(Animation* anim) const;
     
-    // Update generate frames needed by the "live" idle animation and add them
-    // to the _idleAnimation to be streamed.
-    Result UpdateLiveAnimation();
-    
     // If we are currently streaming, kill it, and make sure not to leave a
     // random face displayed (stream last face keyframe)
     void Abort();
-    
     
     void StopTracks(const u8 whichTracks);
     
@@ -153,9 +152,9 @@ namespace Cozmo {
     // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer& _animationContainer;
     
-    Animation*  _idleAnimation = nullptr;
     Animation*  _streamingAnimation = nullptr;
     Animation*  _neutralFaceAnimation = nullptr;
+    Animation*  _proceduralAnimation = nullptr; // for creating animations "live" or dynamically
 
     std::string _lastPlayedAnimationId;
 
@@ -168,8 +167,6 @@ namespace Cozmo {
     
     // Used to stream _just_ the stuff left in the various layers (all procedural stuff)
     Result StreamLayers();
-    
-    bool _isIdling = false;
     
     u32 _numLoops = 1;
     u32 _loopCtr  = 0;
@@ -231,11 +228,21 @@ namespace Cozmo {
     
     std::unique_ptr<Audio::AnimationAudioClient> _audioClient;
     
-    // Time to wait before forcing KeepFaceAlive() after the latest stream has stopped and there is no
-    // idle animation
+    // Time to wait before forcing KeepFaceAlive() after the latest stream has stopped
     f32 _longEnoughSinceLastStreamTimeout_s;
     
     AnimationTag _liveIdleTurnEyeShiftTag = kNotAnimatingTag;
+
+    // Image and buffer for face drawing
+    Vision::ImageRGB _faceImg;
+    Array2d<u16>     _faceImg565;
+
+#ifdef DRAW_FACE_IN_THREAD
+    std::future<void> _faceDrawFuture;
+    double            _lastDrawTime_ms = 0;
+#endif    
+      
+    std::array<u8, 256> _gammaLUT;
 
   }; // class AnimationStreamer
   

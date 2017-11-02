@@ -341,7 +341,7 @@ void DasLogFileAppender::ConsumeLogFiles(DASLogFileConsumptionBlock ConsumptionB
         while (!shouldStop && ((dirent = readdir(logDir)) != nullptr)) {
           if (DT_REG == dirent->d_type) {
             std::string filename(dirent->d_name);
-            // If we have a callback set for unarchving and this file matches, unarchive it
+            // If we have a callback set for unarchiving and this file matches, unarchive it
             if (_unarchiveCallback && stringEndsWith(filename, _archiveFileExtension))
             {
               filename = _unarchiveCallback(_logDirPath + "/" + filename);

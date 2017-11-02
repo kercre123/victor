@@ -317,7 +317,7 @@ namespace Cozmo.Needs.Sparks.UI {
       }
     }
 
-    private void StopSparkTrick(bool isDialogCleanup, bool doEngineCleanup) {
+    protected void StopSparkTrick(bool isDialogCleanup, bool doEngineCleanup) {
       if (doEngineCleanup) {
         // Send stop message to engine
         if (RobotEngineManager.Instance.CurrentRobot != null

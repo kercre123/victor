@@ -12,7 +12,7 @@
 
 #include "engine/robot.h"
 #include "simulator/game/cozmoSimTestController.h"
-
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -122,7 +122,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
         SendMessage(ExternalInterface::MessageGameToEngine(
                       ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
         SendMessage(ExternalInterface::MessageGameToEngine(
-                      ExternalInterface::ExecuteBehaviorByID(kBehaviorID, -1)));
+                      ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(kBehaviorID), -1)));
         
         _behaviorStartedTime = GetSupervisor()->getTime();
         SET_TEST_STATE(DontStartBehavior);
@@ -149,7 +149,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       
     case TestState::TurnBack:
     {
-      // At some point (possibly before we stop moving) the behavior should become runnable and start on it's own.
+      // At some point (possibly before we stop moving) the behavior should become activatable and start on it's own.
       //  The behavior kicking in may cause the TurnInPlace to be CANCELLED.
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(10,
                                             (_turnInPlaceResult == ActionResult::SUCCESS || _turnInPlaceResult == ActionResult::CANCELLED_WHILE_RUNNING),
@@ -260,16 +260,16 @@ void CST_RollBlockBehavior::HandleRobotCompletedAction(const ExternalInterface::
   
 void CST_RollBlockBehavior::HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg)
 {
-  PRINT_NAMED_INFO("CST_RollBlockBehavior.transition", "%s -> %s",
-                   BehaviorIDToString(msg.oldBehaviorID),
-                   BehaviorIDToString(msg.newBehaviorID));
+  /**PRINT_NAMED_INFO("CST_RollBlockBehavior.transition", "%s -> %s",
+                   msg.oldBehaviorID.c_str()),
+                   msg.newBehaviorID.c_str());
   
-  if(msg.oldBehaviorID == kBehaviorID) {
+  if(msg.oldBehaviorID == BehaviorIDToString(kBehaviorID) {
     _stoppedBehavior = true;
   }
-  if(msg.newBehaviorID == kBehaviorID) {
+  if(msg.newBehaviorID == BehaviorIDToString(kBehaviorID)) {
     _startedBehavior = true;
-  }
+  }**/
 }
 
 }

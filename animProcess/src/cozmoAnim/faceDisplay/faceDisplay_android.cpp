@@ -30,14 +30,14 @@ typedef struct {
   uint8_t data[5];
 } INIT_SCRIPT;
 
-static const int DAT_CLOCK = 10000000;
+static const int DAT_CLOCK = 17500000;
 static const int MAX_TRANSFER = 0x1000;
 
 
 #define RSHIFT 0x1C
 
 static const INIT_SCRIPT init_scr[] = {
-  { 0x11, 0 },
+  { 0x11, 0 }, // Sleep Off
   { 0x36, 1, { 0x00 } },
   { 0xB7, 1, { 0x56 } },
   { 0xBB, 1, { 0x18 } },
@@ -48,11 +48,12 @@ static const INIT_SCRIPT init_scr[] = {
   { 0xC6, 1, { 0x0F } },
   { 0xD0, 2, { 0xA4, 0xA1 } },
   { 0x3A, 1, { 0x55 } },
-  { 0x55, 1, { 0xA0 } },
+  { 0x55, 1, { 0x93 } }, // Content Adaptive Brightness Control: 0x93 = Color Enhancement On (Medium Enhancement), Moving Image Mode 
   { 0x21, 0 },
   { 0x2A, 4, { 0x00, RSHIFT, (Anki::Cozmo::FACE_DISPLAY_WIDTH + RSHIFT - 1) >> 8, (Anki::Cozmo::FACE_DISPLAY_WIDTH + RSHIFT - 1) & 0xFF } },
   { 0x2B, 4, { 0x00, 0x00, (Anki::Cozmo::FACE_DISPLAY_HEIGHT -1) >> 8, (Anki::Cozmo::FACE_DISPLAY_HEIGHT -1) & 0xFF } },
-  { 0x29, 0 },
+  { 0x26, 1, {0x08} }, // Gamma Curve Setting: 0x01=2.2, 0x02=1.8, 0x04=2.5, 0x08=1.0 
+  { 0x29, 0 }, // Display On
   
   { 0 }
 };

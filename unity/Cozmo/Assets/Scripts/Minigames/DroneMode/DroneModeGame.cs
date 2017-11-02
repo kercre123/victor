@@ -37,8 +37,14 @@ namespace Cozmo {
         }
 
         private void InitializeStateMachine() {
-          DroneModeShowInstructionsState instructionState = new DroneModeShowInstructionsState();
-          _StateMachine.SetNextState(instructionState);
+          State startingState;
+          if (!DebugMenuManager.Instance.DemoMode) {
+            startingState = new DroneModeShowInstructionsState();
+          }
+          else {
+            startingState = new DroneModeDriveCozmoState();
+          }
+          _StateMachine.SetNextState(startingState);
         }
 
         private void InitializeRobot() {

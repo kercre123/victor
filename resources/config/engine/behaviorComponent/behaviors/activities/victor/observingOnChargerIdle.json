@@ -1,0 +1,10 @@
+
+{
+  "behaviorClass": "PlayAnim",
+  "behaviorID": "ObservingOnChargerIdle",
+
+  "playOnChargerWithoutBody": true,
+  
+  // anim
+  "animTriggers": [ "NothingToDoBoredIdle" ]
+}

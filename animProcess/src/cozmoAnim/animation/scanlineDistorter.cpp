@@ -161,7 +161,7 @@ s32 ScanlineDistorter::GetEyeDistortionAmount(f32 eyeFrac) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ScanlineDistorter::AddOffNoise(const SmallMatrix<2,3,f32>& warpMatrix,
                                     const s32 eyeHeight, const s32 eyeWidth,
-                                    Vision::Image& faceImg) const
+                                    Vision::ImageRGB& faceImg) const
 {
   for(const auto & pt : _offNoisePoints)
   {
@@ -247,11 +247,11 @@ bool ScanlineDistorter::GetNextDistortionFrame(const f32 degree, ProceduralFace&
     if(Util::IsFltGTZero(distortionIter->probNoDistortionAfter) &&
        (GetRNG().RandDbl() < distortionIter->probNoDistortionAfter))
     {
-      timeInc = 2*IKeyFrame::SAMPLE_LENGTH_MS;
+      timeInc = 2*ANIM_TIME_STEP_MS;
     }
     else
     {
-      timeInc = IKeyFrame::SAMPLE_LENGTH_MS;
+      timeInc = ANIM_TIME_STEP_MS;
     }
     
     ++distortionIter;

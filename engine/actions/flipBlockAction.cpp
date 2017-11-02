@@ -18,7 +18,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/flipBlockAction.h"
-#include "engine/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"

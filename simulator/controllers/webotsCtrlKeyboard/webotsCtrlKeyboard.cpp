@@ -13,8 +13,8 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/pose.h"
 #include "util/helpers/printByteArray.h"
-#include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/block.h"
 #include "engine/encodedImage.h"
@@ -24,9 +24,9 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/image_impl.h"
 #include "clad/types/actionTypes.h"
-#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/ledTypes.h"
-#include "clad/types/proceduralEyeParameters.h"
+#include "clad/types/proceduralFaceTypes.h"
 #include "util/math/math.h"
 #include "util/logging/channelFilter.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -1168,12 +1168,12 @@ namespace Anki {
 
                   printf("Selecting behavior by NAME: %s\n", behaviorName.c_str());
                   if (behaviorName == "LiftLoadTest") {
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsRunnable()));
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsActivatable()));
                   }
                   const int numRuns = root_->getField("numBehaviorRuns")->getSFInt32();
                   BehaviorID behaviorID = BehaviorIDFromString(behaviorName);
                   SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::ExecuteBehaviorByID(behaviorID, numRuns)));
+                                ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(behaviorID), numRuns)));
                 }
                 else if(altKeyPressed)
                 {
@@ -1963,93 +1963,85 @@ namespace Anki {
               case (s32)'*':
               {
                 using namespace ExternalInterface;
-                using Param = ProceduralEyeParameter;
-                DisplayProceduralFace msg;
-                msg.leftEye.resize(static_cast<size_t>(Param::NumParameters),  0);
-                msg.rightEye.resize(static_cast<size_t>(Param::NumParameters), 0);
-                
+
                 if(altKeyPressed) {
-                  // Reset to base face
-                  msg.leftEye[static_cast<s32>(Param::EyeCenterX)]  = 32;
-                  msg.leftEye[static_cast<s32>(Param::EyeCenterY)]  = 32;
-                  msg.rightEye[static_cast<s32>(Param::EyeCenterX)] = 96;
-                  msg.rightEye[static_cast<s32>(Param::EyeCenterY)] = 32;
+                  // Set Hue using "FaceHue" parameter of proto
                   
-                  msg.leftEye[static_cast<s32>(Param::EyeScaleX)] = 1.f;
-                  msg.leftEye[static_cast<s32>(Param::EyeScaleY)] = 1.f;
-                  msg.rightEye[static_cast<s32>(Param::EyeScaleX)] = 1.f;
-                  msg.rightEye[static_cast<s32>(Param::EyeScaleY)] = 1.f;
-                  
-                  for(auto radiusParam : {Param::UpperInnerRadiusX, Param::UpperInnerRadiusY,
-                    Param::UpperOuterRadiusX, Param::UpperOuterRadiusY,
-                    Param::LowerInnerRadiusX, Param::LowerInnerRadiusY,
-                    Param::LowerOuterRadiusX, Param::LowerOuterRadiusY})
-                  {
-                    const s32 radiusIndex = static_cast<s32>(radiusParam);
-                    msg.leftEye[radiusIndex]  = 0.25f;
-                    msg.rightEye[radiusIndex] = 0.25f;
+                  webots::Field* hueField = root_->getField("faceHue");
+                  if(hueField == nullptr) {
+                    printf("ERROR: No faceHue field found in WebotsKeyboardController.proto\n");
+                    break;
                   }
-                  
-                  msg.faceAngle_deg = 0;
-                  msg.faceScaleX = 1.f;
-                  msg.faceScaleY = 1.f;
-                  msg.faceCenX  = 0;
-                  msg.faceCenY  = 0;
+                  SendMessage(MessageGameToEngine(SetFaceHue(hueField->getSFFloat())));
                   
                 } else {
                   // Send a random procedural face
-                  // NOTE: idle animatino should be set to _LIVE_ or _ANIM_TOOL_ first.
+                  using Param = ProceduralEyeParameter;
+                  DisplayProceduralFace msg;
+                  ProceduralFaceParameters& faceParams = msg.faceParams;
+                  static_assert( std::tuple_size<decltype(faceParams.leftEye)>::value == (size_t)Param::NumParameters,
+                                "LeftEye parameter array is the wrong length");
+                  static_assert( std::tuple_size<decltype(faceParams.rightEye)>::value == (size_t)Param::NumParameters,
+                                "RightEye parameter array is the wrong length");
+                  
                   Util::RandomGenerator rng;
                   
-                  msg.leftEye[static_cast<s32>(Param::UpperInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
-                  msg.leftEye[static_cast<s32>(Param::UpperInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
-                  msg.leftEye[static_cast<s32>(Param::LowerInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
-                  msg.leftEye[static_cast<s32>(Param::LowerInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
-                  msg.leftEye[static_cast<s32>(Param::UpperOuterRadiusX)]   = rng.RandDblInRange(0., 1.);
-                  msg.leftEye[static_cast<s32>(Param::UpperOuterRadiusY)]   = rng.RandDblInRange(0., 1.);
-                  msg.leftEye[static_cast<s32>(Param::LowerOuterRadiusX)]   = rng.RandDblInRange(0., 1.);
-                  msg.leftEye[static_cast<s32>(Param::LowerOuterRadiusY)]   = rng.RandDblInRange(0., 1.);
-                  msg.leftEye[static_cast<s32>(Param::EyeCenterX)]    = rng.RandIntInRange(24,40);
-                  msg.leftEye[static_cast<s32>(Param::EyeCenterY)]    = rng.RandIntInRange(28,36);
-                  msg.leftEye[static_cast<s32>(Param::EyeScaleX)]     = 1.f;
-                  msg.leftEye[static_cast<s32>(Param::EyeScaleY)]     = 1.f;
-                  msg.leftEye[static_cast<s32>(Param::EyeAngle)]      = 0;//rng.RandIntInRange(-10,10);
-                  msg.leftEye[static_cast<s32>(Param::LowerLidY)]     = rng.RandDblInRange(0., .25);
-                  msg.leftEye[static_cast<s32>(Param::LowerLidAngle)] = rng.RandIntInRange(-20, 20);
-                  msg.leftEye[static_cast<s32>(Param::LowerLidBend)]  = 0;//rng.RandDblInRange(0, 0.2);
-                  msg.leftEye[static_cast<s32>(Param::UpperLidY)]     = rng.RandDblInRange(0., .25);
-                  msg.leftEye[static_cast<s32>(Param::UpperLidAngle)] = rng.RandIntInRange(-20, 20);
-                  msg.leftEye[static_cast<s32>(Param::UpperLidBend)]  = 0;//rng.RandDblInRange(0, 0.2);
+                  faceParams.leftEye[static_cast<s32>(Param::UpperInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.leftEye[static_cast<s32>(Param::UpperInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.leftEye[static_cast<s32>(Param::LowerInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.leftEye[static_cast<s32>(Param::LowerInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.leftEye[static_cast<s32>(Param::UpperOuterRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.leftEye[static_cast<s32>(Param::UpperOuterRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.leftEye[static_cast<s32>(Param::LowerOuterRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.leftEye[static_cast<s32>(Param::LowerOuterRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.leftEye[static_cast<s32>(Param::EyeCenterX)]    = rng.RandIntInRange(-20,20);
+                  faceParams.leftEye[static_cast<s32>(Param::EyeCenterY)]    = rng.RandIntInRange(-20,20);
+                  faceParams.leftEye[static_cast<s32>(Param::EyeScaleX)]     = rng.RandDblInRange(0.8f, 1.2f);
+                  faceParams.leftEye[static_cast<s32>(Param::EyeScaleY)]     = rng.RandDblInRange(0.8f, 1.2f);
+                  faceParams.leftEye[static_cast<s32>(Param::EyeAngle)]      = 0;//rng.RandIntInRange(-10,10);
+                  faceParams.leftEye[static_cast<s32>(Param::LowerLidY)]     = rng.RandDblInRange(0., .25);
+                  faceParams.leftEye[static_cast<s32>(Param::LowerLidAngle)] = rng.RandIntInRange(-20, 20);
+                  faceParams.leftEye[static_cast<s32>(Param::LowerLidBend)]  = 0;//rng.RandDblInRange(0, 0.2);
+                  faceParams.leftEye[static_cast<s32>(Param::UpperLidY)]     = rng.RandDblInRange(0., .25);
+                  faceParams.leftEye[static_cast<s32>(Param::UpperLidAngle)] = rng.RandIntInRange(-20, 20);
+                  faceParams.leftEye[static_cast<s32>(Param::UpperLidBend)]  = 0;//rng.RandDblInRange(0, 0.2);
+                  faceParams.leftEye[static_cast<s32>(Param::Lightness)]     = rng.RandDblInRange(0.5f, 1.f);
+                  faceParams.leftEye[static_cast<s32>(Param::Saturation)]    = rng.RandDblInRange(0.5f, 1.f);
+                  faceParams.leftEye[static_cast<s32>(Param::GlowSize)]      = rng.RandDblInRange(0.f, 1.f);
                   
-                  msg.rightEye[static_cast<s32>(Param::UpperInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
-                  msg.rightEye[static_cast<s32>(Param::UpperInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
-                  msg.rightEye[static_cast<s32>(Param::LowerInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
-                  msg.rightEye[static_cast<s32>(Param::LowerInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
-                  msg.rightEye[static_cast<s32>(Param::UpperOuterRadiusX)]   = rng.RandDblInRange(0., 1.);
-                  msg.rightEye[static_cast<s32>(Param::UpperOuterRadiusY)]   = rng.RandDblInRange(0., 1.);
-                  msg.rightEye[static_cast<s32>(Param::LowerOuterRadiusX)]   = rng.RandDblInRange(0., 1.);
-                  msg.rightEye[static_cast<s32>(Param::LowerOuterRadiusY)]   = rng.RandDblInRange(0., 1.);
-                  msg.rightEye[static_cast<s32>(Param::EyeCenterX)]    = rng.RandIntInRange(88,104);
-                  msg.rightEye[static_cast<s32>(Param::EyeCenterY)]    = rng.RandIntInRange(28,36);
-                  msg.rightEye[static_cast<s32>(Param::EyeScaleX)]     = rng.RandDblInRange(0.8, 1.2);
-                  msg.rightEye[static_cast<s32>(Param::EyeScaleY)]     = rng.RandDblInRange(0.8, 1.2);
-                  msg.rightEye[static_cast<s32>(Param::EyeAngle)]      = 0;//rng.RandIntInRange(-15,15);
-                  msg.rightEye[static_cast<s32>(Param::LowerLidY)]     = rng.RandDblInRange(0., .25);
-                  msg.rightEye[static_cast<s32>(Param::LowerLidAngle)] = rng.RandIntInRange(-20, 20);
-                  msg.rightEye[static_cast<s32>(Param::LowerLidBend)]  = rng.RandDblInRange(0., 0.2);
-                  msg.rightEye[static_cast<s32>(Param::UpperLidY)]     = rng.RandDblInRange(0., .25);
-                  msg.rightEye[static_cast<s32>(Param::UpperLidAngle)] = rng.RandIntInRange(-20, 20);
-                  msg.rightEye[static_cast<s32>(Param::UpperLidBend)]  = rng.RandDblInRange(0, 0.2);
+                  faceParams.rightEye[static_cast<s32>(Param::UpperInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.rightEye[static_cast<s32>(Param::UpperInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.rightEye[static_cast<s32>(Param::LowerInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.rightEye[static_cast<s32>(Param::LowerInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.rightEye[static_cast<s32>(Param::UpperOuterRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.rightEye[static_cast<s32>(Param::UpperOuterRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.rightEye[static_cast<s32>(Param::LowerOuterRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.rightEye[static_cast<s32>(Param::LowerOuterRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  faceParams.rightEye[static_cast<s32>(Param::EyeCenterX)]    = rng.RandIntInRange(-20,20);
+                  faceParams.rightEye[static_cast<s32>(Param::EyeCenterY)]    = rng.RandIntInRange(-20,20);
+                  faceParams.rightEye[static_cast<s32>(Param::EyeScaleX)]     = rng.RandDblInRange(0.8, 1.2);
+                  faceParams.rightEye[static_cast<s32>(Param::EyeScaleY)]     = rng.RandDblInRange(0.8, 1.2);
+                  faceParams.rightEye[static_cast<s32>(Param::EyeAngle)]      = 0;//rng.RandIntInRange(-15,15);
+                  faceParams.rightEye[static_cast<s32>(Param::LowerLidY)]     = rng.RandDblInRange(0., .25);
+                  faceParams.rightEye[static_cast<s32>(Param::LowerLidAngle)] = rng.RandIntInRange(-20, 20);
+                  faceParams.rightEye[static_cast<s32>(Param::LowerLidBend)]  = rng.RandDblInRange(0., 0.2);
+                  faceParams.rightEye[static_cast<s32>(Param::UpperLidY)]     = rng.RandDblInRange(0., .25);
+                  faceParams.rightEye[static_cast<s32>(Param::UpperLidAngle)] = rng.RandIntInRange(-20, 20);
+                  faceParams.rightEye[static_cast<s32>(Param::UpperLidBend)]  = rng.RandDblInRange(0, 0.2);
+                  faceParams.rightEye[static_cast<s32>(Param::Lightness)]     = rng.RandDblInRange(0.5f, 1.f);
+                  faceParams.rightEye[static_cast<s32>(Param::Saturation)]    = rng.RandDblInRange(0.5f, 1.f);
+                  faceParams.rightEye[static_cast<s32>(Param::GlowSize)]      = rng.RandDblInRange(0.f, 0.75f);
                   
-                  msg.faceAngle_deg = 0; //rng.RandIntInRange(-10, 10);
-                  msg.faceScaleX = 1.f;//rng.RandDblInRange(0.9, 1.1);
-                  msg.faceScaleY = 1.f;//rng.RandDblInRange(0.9, 1.1);
-                  msg.faceCenX  = 0; //rng.RandIntInRange(-5, 5);
-                  msg.faceCenY  = 0; //rng.RandIntInRange(-5, 5);
+                  faceParams.faceAngle_deg = 0; //rng.RandIntInRange(-10, 10);
+                  faceParams.faceScaleX = 1.f;//rng.RandDblInRange(0.9, 1.1);
+                  faceParams.faceScaleY = 1.f;//rng.RandDblInRange(0.9, 1.1);
+                  faceParams.faceCenX  = 0; //rng.RandIntInRange(-5, 5);
+                  faceParams.faceCenY  = 0; //rng.RandIntInRange(-5, 5);
+                  
+                  SendMessage(MessageGameToEngine(std::move(msg)));
                 }
+              
                 
-                SendMessage(MessageGameToEngine(std::move(msg)));
-
                 break;
               }
               case (s32)'^':
@@ -2253,7 +2245,7 @@ namespace Anki {
                       
                       // Enable selection chooser and specify EnrollFace now that settings are sent
                       SendMessage(MessageGameToEngine(ActivateHighLevelActivity(HighLevelActivity::Selection)));
-                      SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorID::EnrollFace, -1)));
+                      SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::EnrollFace), -1)));
                     }
                     
                   } else {

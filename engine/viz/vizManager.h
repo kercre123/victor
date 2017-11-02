@@ -396,7 +396,8 @@ namespace Anki {
                           const u8 imageProcFrameRateHz,
                           const u8 enabledAnimTracks,
                           const u8 animTag,
-                          const f32 imuTemperature_degC);
+                          const f32 imuTemperature_degC,
+                          std::array<uint16_t, 4> cliffThresholds);
       
       void SetOrigin(const SetVizOrigin& msg);
       
@@ -414,6 +415,7 @@ namespace Anki {
       void SendEndRobotUpdate();
       void SendSaveImages(ImageSendMode mode, std::string path = "");
       void SendSaveState(bool enabled, std::string path = "");
+      void SendBehaviorStackDebug(VizInterface::BehaviorStackDebug&& behaviorStackDebug);
       void SendVizMessage(VizInterface::MessageViz&& event);
 
       

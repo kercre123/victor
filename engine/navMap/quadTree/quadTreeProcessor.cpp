@@ -23,7 +23,6 @@
 #include <memory>
 #include <typeinfo>
 #include <type_traits>
-#include <set>
 #include <unordered_map>
 
 namespace Anki {
@@ -598,6 +597,14 @@ void QuadTreeProcessor::TransformContent(NodeTransformFunction transform)
 {
   if (_root) {
     _root->TransformContent_Recursive(transform, _root, *this);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeProcessor::FindContentIf(NodePredicate pred, std::unordered_set<std::shared_ptr<MemoryMapData>>& output)
+{
+  if (_root) {
+    _root->FindContentIf_Recursive(pred, output, *this);
   }
 }
 

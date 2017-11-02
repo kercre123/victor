@@ -21,12 +21,12 @@
 #include "engine/actions/animActions.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cliffSensorComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
@@ -809,10 +809,8 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   
   RobotInterface::RobotStopped payload = message.GetData().Get_robotStopped();
   Util::sEventF("RobotImplMessaging.HandleRobotStopped",
-                {{DDATA, std::to_string(robot->GetCliffSensorComponent().GetCliffRunningVar()).c_str()}},
+                {{DDATA, ""}},
                 "%d", payload.reason);
-  
-  robot->GetCliffSensorComponent().EvaluateCliffSuspiciousnessWhenStopped();
   
   // This is a somewhat overloaded use of enableCliffSensor, but currently only cliffs
   // trigger this RobotStopped message so it's not too crazy.

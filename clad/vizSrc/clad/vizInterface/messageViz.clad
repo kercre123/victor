@@ -4,7 +4,6 @@
 // Copyright: Anki Inc (c) 2015
 
 #include "clad/types/robotStatusAndActions.clad"
-#include "clad/types/behaviorSystem/behaviorTypes.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/vizTypes.clad"
@@ -23,7 +22,8 @@ message RobotStateMessage
   uint_8 imageProcFrameRateHz,
   uint_8 enabledAnimTracks,
   uint_8 animTag,
-  float_32 imuTemperature_degC
+  float_32 imuTemperature_degC,
+  uint_16 cliffThresholds[4]
 }
 
 // VizObject
@@ -338,7 +338,7 @@ structure BehaviorScoreData
 {
   float_32   behaviorScore,
   float_32   totalScore,
-  BehaviorID behaviorID
+  string     behaviorID
 }
 
 message RobotBehaviorSelectData
@@ -348,12 +348,17 @@ message RobotBehaviorSelectData
 
 message NewBehaviorSelected
 {
-  BehaviorID  newCurrentBehavior
+  string newCurrentBehavior
 }
 
 message NewReactionTriggered
 {
   string  reactionStrategyTriggered
+}
+
+message BehaviorStackDebug
+{
+  string debugStrings[uint_8]
 }
 
 message StartRobotUpdate

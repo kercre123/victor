@@ -10,8 +10,6 @@
 #include "engine/robot.h"
 #include "androidHAL/androidHAL.h"
 
-#define USE_BSM 0
-
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/common/basestation/math/quad_impl.h"
@@ -22,14 +20,11 @@
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/behaviorSystem/activities/activities/iActivity.h"
-#include "engine/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
-#include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviorSystemManager.h"
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -39,7 +34,7 @@
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cliffSensorComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
@@ -48,9 +43,9 @@
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
-#include "engine/components/proxSensorComponent.h"
+#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
-#include "engine/components/touchSensorComponent.h"
+#include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
@@ -68,7 +63,6 @@
 #include "engine/robotManager.h"
 #include "engine/robotStateHistory.h"
 #include "engine/robotToEngineImplMessaging.h"
-#include "engine/textToSpeech/textToSpeechComponent.h"
 #include "engine/viz/vizManager.h"
 
 
@@ -166,7 +160,8 @@ const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
 
 
 Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
-  : _context(context)
+  : _poseOriginList(new PoseOriginList())
+  , _context(context)
   , _ID(robotID)
   , _timeSynced(false)
   , _lastMsgTimestamp(0)
@@ -174,8 +169,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _faceWorld(new FaceWorld(*this))
   , _petWorld(new PetWorld(*this))
   , _publicStateBroadcaster(new PublicStateBroadcaster())
-  , _behaviorMgr(new BehaviorManager(*this))
-  , _behaviorSysMgr(new BehaviorSystemManager(*this))
   , _audioClient(new Audio::EngineRobotAudioClient())
   , _pathComponent(new PathComponent(*this, robotID, context))
   , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
@@ -184,8 +177,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _visionComponent( new VisionComponent(*this, _context))
   , _mapComponent(new MapComponent(this))
   , _nvStorageComponent(new NVStorageComponent(*this, _context))
-  , _aiComponent(new AIComponent(*this))
-  , _textToSpeechComponent(new TextToSpeechComponent(_context))
+  , _aiComponent(new AIComponent())
   , _objectPoseConfirmerPtr(new ObjectPoseConfirmer(*this))
   , _cubeLightComponent(new CubeLightComponent(*this, _context))
   , _bodyLightComponent(new BodyLightComponent(*this, _context))
@@ -197,7 +189,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _proxSensorComponent(std::make_unique<ProxSensorComponent>(*this))
   , _touchSensorComponent(std::make_unique<TouchSensorComponent>(*this))
   , _animationComponent(std::make_unique<AnimationComponent>(*this, _context))
-  , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, _pose, "RobotNeck")
   , _headCamPose(_kDefaultHeadCamRotation,
@@ -217,11 +208,18 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _robotToEngineImplMessaging(new RobotToEngineImplMessaging(this))
   , _robotIdleTimeoutComponent(new RobotIdleTimeoutComponent(*this))
 {
+  DEV_ASSERT(context != nullptr,
+             "Robot.Constructor.ContextIsNull");
+  
   PRINT_NAMED_INFO("Robot.Robot", "Created");
       
   _pose.SetName("Robot_" + std::to_string(_ID));
   _driveCenterPose.SetName("RobotDriveCenter_" + std::to_string(_ID));
-      
+  
+  // initialize AI - pass in null behavior component to use default
+  BehaviorComponent* useDefault = nullptr;
+  _aiComponent->Init(*this, useDefault);
+  
   // Initializes _pose, _poseOrigins, and _worldOrigin:
   Delocalize(false);
   
@@ -252,13 +250,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   _progressionUnlockComponent->Init();
   
   _inventoryComponent->Init(_context->GetDataLoader()->GetInventoryConfig());
-
-  _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotActivitiesConfig());
-  _behaviorMgr->InitReactionTriggerMap(_context->GetDataLoader()->GetReactionTriggerMap());
-  
-  if(USE_BSM){
-    _behaviorSysMgr->InitConfiguration(*this, _context->GetDataLoader()->GetBehaviorSystemConfig());
-  }
   
   // Setting camera pose according to current head angle.
   // (Not using SetHeadAngle() because _isHeadCalibrated is initially false making the function do nothing.)
@@ -268,9 +259,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   {
     _visionComponent->Init(_context->GetDataLoader()->GetRobotVisionConfig());
   }
-  
-  // initialize AI
-  _aiComponent->Init();
   
   // Used for CONSOLE_FUNCTION "PlayAnimationByName" above
 #if REMOTE_CONSOLE_ENABLED
@@ -290,11 +278,6 @@ Robot::~Robot()
   GetAIComponent().GetFreeplayDataTracker().ForceUpdate();
   
   AbortAll();
-  
-  // This needs to happen before ActionList is destroyed, because otherwise behaviors will try to respond
-  // to actions shutting down
-  _behaviorMgr.reset();
-  _behaviorSysMgr.reset();
   
   // Destroy our actionList before things like the path planner, since actions often rely on those.
   // ActionList must be cleared before it is destroyed because pending actions may attempt to make use of the pointer.
@@ -321,6 +304,8 @@ Robot::~Robot()
   _petWorld.reset();
   _faceWorld.reset();
   _blockWorld.reset();
+
+  _nvStorageComponent.reset();
 }
     
 void Robot::SetOnCharger(bool onCharger)
@@ -383,9 +368,6 @@ void Robot::SetOnChargerPlatform(bool onPlatform)
       ExternalInterface::MessageEngineToGame(
         ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform))
       );
-    
-    const u32 thresh = (onPlatform ? CLIFF_SENSOR_UNDROP_LEVEL_MIN : CLIFF_SENSOR_DROP_LEVEL);
-    _cliffSensorComponent->SendCliffDetectThresholdToRobot(thresh);
 
     // pause the freeplay tracking if we are on the charger
     GetAIComponent().GetFreeplayDataTracker().SetFreeplayPauseFlag(_isOnChargerPlatform, FreeplayPauseFlag::OnCharger);
@@ -601,8 +583,6 @@ void Robot::Delocalize(bool isCarryingObject)
   _localizedToID.UnSet();
   _localizedToFixedObject = false;
   _localizedMarkerDistToCameraSq = -1.f;
-  
-  _cliffSensorComponent->ClearCliffRunningStats();
 
   // NOTE: no longer doing this here because Delocalize() can be called by
   //  BlockWorld::ClearAllExistingObjects, resulting in a weird loop...
@@ -716,8 +696,6 @@ void Robot::Delocalize(bool isCarryingObject)
   // notify behavior whiteboard
   _aiComponent->OnRobotDelocalized();
   
-  _behaviorMgr->OnRobotDelocalized();
-  
   _movementComponent->OnRobotDelocalized();
   
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
@@ -823,12 +801,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Update robot pitch angle
   _pitchAngle = Radians(msg.pose.pitch_angle);
   
-  // Update cliff sensor component
-  _cliffSensorComponent->UpdateRobotData(msg);
-
-  // Update prox sensor component
+  // Update sensor components:
+  _cliffSensorComponent->Update(msg);
   _proxSensorComponent->Update(msg);
-  
   _touchSensorComponent->Update(msg);
 
   // update current path segment in the path component
@@ -1020,37 +995,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     
     if(frameIsCurrent)
     {
-      if(_totalDistanceTravelled_mm == -1.f)
-      {
-        _totalDistanceTravelled_mm = 0.f;
-        
-        // COZMO-11204: Lower the cliff detect threshold to the minimum value until Cozmo
-        // has driven a certain distance. This is to prevent Cozmo from detecting a cliff while
-        // driving off chargers (specificly 1.5 chargers). The cliff threshold should still be high
-        // enough to detect real cliffs
-        _cliffSensorComponent->SendCliffDetectThresholdToRobot(CLIFF_SENSOR_UNDROP_LEVEL_MIN);
-      }
-    
-      // Update total distance travelled only when this state message is from the current frameId
-      Pose3d curDriveCenterPose;
-      ComputeDriveCenterPose(GetPose(), curDriveCenterPose);
-      
-      const Vec3f transDiff =  curDriveCenterPose.GetTranslation() - prevDriveCenterPose.GetTranslation();
-      _totalDistanceTravelled_mm += ABS(transDiff.Length());
-      
-      // Check if we have travelled far enough to set cliff detect threshold back to
-      // default value
-      constexpr f32 kDistanceTravelledToReEnableCliffs_mm = 50;
-      if(!_pastDistanceToReEnableCliffs &&
-         _totalDistanceTravelled_mm > kDistanceTravelledToReEnableCliffs_mm)
-      {
-        // Reset cliff detect threshold back to default after travelling a distance of
-        // kDistanceTravelledToReEnableCliffs_mm
-        _cliffSensorComponent->SendCliffDetectThresholdToRobot(CLIFF_SENSOR_DROP_LEVEL);
-        
-        _pastDistanceToReEnableCliffs = true;
-      }
-      
       _numMismatchedFrameIDs = 0;
     } else {
       // COZMO-5850 (Al) This is to catch the issue where our frameID is incremented but fails to send
@@ -1080,17 +1024,11 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     
   }
   
-  // check for new obstacles from prox sensor
-  _blockWorld->UpdateProxObstaclePoses();
-  
 # pragma clang diagnostic push
 # pragma clang diagnostic ignored "-Wdeprecated-declarations" 
   _gyroDriftDetector->DetectGyroDrift(msg);
 # pragma clang diagnostic pop
   _gyroDriftDetector->DetectBias(msg);
-  
-  _cliffSensorComponent->UpdateCliffRunningStats(msg);
-  _cliffSensorComponent->UpdateCliffDetectThreshold();
   
   /*
     PRINT_NAMED_INFO("Robot.UpdateFullRobotState.OdometryUpdate",
@@ -1116,7 +1054,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
     _enabledAnimTracks,
     _animationTag,
-    _robotImuTemperature_degC);
+    _robotImuTemperature_degC,
+    _cliffSensorComponent->GetCliffDetectThresholds());
       
   return lastResult;
       
@@ -1366,57 +1305,11 @@ Result Robot::Update()
 
   _tapFilterComponent->Update();
 
-  // Update AI component before behaviors so that behaviors can use the latest information
-  _aiComponent->Update();
-      
-  const char* currentActivityName = "";
-  std::string behaviorDebugStr("<disabled>");
-
-  // https://ankiinc.atlassian.net/browse/COZMO-1242 : moving too early causes pose offset
-  static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
-  if(ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
-  {
-    
-    IBehaviorPtr currentBehavior;
-    if(USE_BSM){
-      _behaviorSysMgr->Update(*this);
-      
-      currentActivityName = "ACTIVITY NAME TBD";
-      
-      behaviorDebugStr = currentActivityName;
-      
-      currentBehavior = _behaviorSysMgr->GetCurrentBehavior();
-    }else{
-      _behaviorMgr->Update(*this);
-      
-      currentActivityName = _behaviorMgr->GetCurrentActivity()->GetIDStr();
-      
-      behaviorDebugStr = currentActivityName;
-      
-      currentBehavior = _behaviorMgr->GetCurrentBehavior();
-    }
-
-
-
-    if(currentBehavior != nullptr) {
-      behaviorDebugStr += " ";
-      behaviorDebugStr +=  BehaviorIDToString(currentBehavior->GetID());
-      const std::string& stateName = currentBehavior->GetDebugStateName();
-      if (!stateName.empty())
-      {
-        behaviorDebugStr += "-" + stateName;
-      }
-    }
-
-  } else {
-    --ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242;
-  }
-      
-  GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
-                                         "%s", behaviorDebugStr.c_str());
+  std::string currentActivityName;
+  std::string behaviorDebugStr;
   
-  GetContext()->SetSdkStatus(SdkStatusType::Behavior,
-                                 std::string(currentActivityName) + std::string(":") + behaviorDebugStr);
+  // Update AI component before behaviors so that behaviors can use the latest information
+  _aiComponent->Update(*this, currentActivityName, behaviorDebugStr);
 
   //////// Update Robot's State Machine /////////////
   const RobotID_t robotID = GetID();
@@ -1540,7 +1433,7 @@ Result Robot::Update()
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
            (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
-           currentActivityName,
+           currentActivityName.c_str(),
            behaviorDebugStr.c_str());
       
   std::hash<std::string> hasher;
@@ -1777,7 +1670,15 @@ Result Robot::SyncTime()
   }
   return res;
 }
-    
+  
+const BehaviorManager& Robot::GetBehaviorManager() const {
+  return _aiComponent->GetBehaviorComponent().GetBehaviorManager();
+}
+  
+BehaviorManager& Robot::GetBehaviorManager(){
+  return _aiComponent->GetBehaviorComponent().GetBehaviorManager();
+}
+  
 Result Robot::LocalizeToObject(const ObservableObject* seenObject,
                                ObservableObject* existingObject)
 {
@@ -2439,7 +2340,11 @@ Result Robot::SendIMURequest(const u32 length_ms) const
 
 bool Robot::HasExternalInterface() const
 {
-  return _context->GetExternalInterface() != nullptr;
+  if(_context != nullptr){
+    return _context->GetExternalInterface() != nullptr;
+  }else{
+    return false;
+  }
 }
 
 IExternalInterface* Robot::GetExternalInterface()
@@ -3172,7 +3077,8 @@ RobotState Robot::GetDefaultRobotState()
 
 RobotInterface::MessageHandler* Robot::GetRobotMessageHandler()
 {
-  if (!_context->GetRobotManager())
+  if ((_context == nullptr) ||
+      (_context->GetRobotManager() == nullptr))
   {
     DEV_ASSERT(false, "Robot.GetRobotMessageHandler.nullptr");
     return nullptr;

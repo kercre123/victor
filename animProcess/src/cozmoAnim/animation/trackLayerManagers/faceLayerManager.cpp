@@ -69,18 +69,18 @@ bool FaceLayerManager::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& 
         } else {
           /*
            // If we're within one sample period following the currFrame, just play the current frame
-           if (currStreamTime - currentKeyFrame.GetTriggerTime() < IKeyFrame::SAMPLE_LENGTH_MS) {
+           if (currStreamTime - currentKeyFrame.GetTriggerTime() < ANIM_TIME_STEP_MS) {
            interpolatedParams = currentKeyFrame.GetFace().GetParams();
            paramsSet = true;
            }
            // We're on the way to the next frame, but not too close to it: interpolate.
-           else if (nextFrame->GetTriggerTime() - currStreamTime >= IKeyFrame::SAMPLE_LENGTH_MS) {
+           else if (nextFrame->GetTriggerTime() - currStreamTime >= ANIM_TIME_STEP_MS) {
            */
           interpolatedFace = currentKeyFrame.GetInterpolatedFace(*nextFrame, currTime_ms - startTime_ms);
           paramsSet = true;
           //}
           
-          if (nextFrame->IsTimeToPlay(startTime_ms, currTime_ms + IKeyFrame::SAMPLE_LENGTH_MS)) {
+          if (nextFrame->IsTimeToPlay(startTime_ms, currTime_ms + ANIM_TIME_STEP_MS)) {
             track.MoveToNextKeyFrame();
           }
           
@@ -197,6 +197,8 @@ void FaceLayerManager::KeepFaceAlive(const std::map<LiveIdleAnimationParameter,f
   _nextBlink_ms   -= ANIM_TIME_STEP_MS;
   _nextEyeDart_ms -= ANIM_TIME_STEP_MS;
   
+  bool layerAdded = false;
+
   // Eye darts
   const f32 MaxDist = GetParam<f32>(params, Param::EyeDartMaxDistance_pix);
   if(_nextEyeDart_ms <= 0 && MaxDist > 0.f)
@@ -222,9 +224,11 @@ void FaceLayerManager::KeepFaceAlive(const std::map<LiveIdleAnimationParameter,f
       {
         AddToPersistentLayer(_eyeDartTag, frame);
       }
-      
+
       _nextEyeDart_ms = GetRNG().RandIntInRange(GetParam<s32>(params, Param::EyeDartSpacingMinTime_ms),
                                                 GetParam<s32>(params, Param::EyeDartSpacingMaxTime_ms));
+
+      layerAdded = true;
     }
   }
   
@@ -260,7 +264,16 @@ void FaceLayerManager::KeepFaceAlive(const std::map<LiveIdleAnimationParameter,f
       blinkSpaceMax_ms = kMaxBlinkSpacingTimeForScreenProtection_ms;
     }
     _nextBlink_ms = GetRNG().RandIntInRange(blinkSpaceMin_ms, blinkSpaceMax_ms);
-    
+    layerAdded = true;
+  }
+  
+  // Send a face just to keep noise moving if nothing else happened
+  if(!layerAdded) 
+  {
+    ProceduralFaceKeyFrame frame;
+    FaceTrack faceTrack;
+    faceTrack.AddKeyFrameToBack(frame);
+    AddLayer("EyeNoise", faceTrack);
   }
   
 } // KeepFaceAlive()

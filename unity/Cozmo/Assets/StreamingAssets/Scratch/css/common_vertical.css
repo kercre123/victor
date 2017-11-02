@@ -163,7 +163,7 @@ button:focus {
 #projecttext {
     display: block;
     position: absolute;
-    top: 0;
+    top: 1px;
     left: 0;
     width: 100%;
     height: 175px;
@@ -175,7 +175,7 @@ button:focus {
 #projecttext .primary {
     display: block;
     position: absolute;
-    top: 25px;
+    top: 0;
     width: 98%;
     text-align: right;
     height: 200px;
@@ -185,27 +185,73 @@ button:focus {
     display: inline-block;
     font-weight: bold;
     font-size: 32px;
-    min-height: 20px;
     background-color: #525253;
     color: #1fadda;
-    max-width: calc(100vw - 290px);
-    min-width: 200px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: hidden;
-    padding: 0 5px;
+    max-width: calc(100vw - 280px);
+    padding: .5em 0 .15em 0;
     pointer-events: all;
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
 }
 #projecttext .primary #app-title.long-title {
-  font-size: 24px;
+    font-size: 24px;
+}
+#projecttext .primary #app-title.editable:before {
+    display: inline-block;
+    content: ' ';
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    background-image: url('../images/ui/pencil.svg');
+    background-position: left top;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
+
+#projecttext .primary #app-title-subtext-line {
+    position: relative;
+    top: -2px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+}
 #projecttext .primary #app-title-subtext {
     display: inline-block;
     color: #c0bfbf;
     font-size: 20px;
     background-color: #525253;
     padding: 0 5px;
+}
+
+#projecttext #app-buttons {
+  border-left: 2px solid #7b7c7d;
+  padding-left: .4em;
+  display: none;
+}
+#projecttext.is-title-set #app-buttons {
+  display: inline-block;
+}
+#projecttext #app-buttons button {
+  width: 30px;
+  height: 30px;
+  background-color: transparent;
+  background-size: 30px 60px;
+  background-repeat: no-repeat;
+  border: 0;
+  pointer-events: all;
+  margin: 0 0 0 5px;
+  padding: 0;
+}
+#projecttext #app-buttons button:active {
+  background-position: 0 -30px;
+}
+#projecttext #app-buttons #remix-button {
+  position: relative;
+  top: 2px;
+  background-image: url('../images/ui/btn_duplicate.svg');
 }
 
 /**
@@ -247,11 +293,10 @@ button:focus {
     background-position:0px -54px;
 }
 
-#navigation .greenflag button img {
-    width: 100%;
-    height: 100%;
-    margin: 0px 0 0 1px;
+.is-program-running #navigation .greenflag button {
+    background-image: url('../images/ui/greenflag_playing_animation.gif');
 }
+
 
 #navigation .stop {
     display: block;
@@ -519,29 +564,41 @@ button:focus {
 
 
     #projecttext {
-        top: 0;
-        left: 0;
         width: 100%;
         height: 200px;
     }
 
     #projecttext .primary {
-        top: 10px;
         width: 98%;
         height: 60px;
     }
 
     #projecttext .primary #app-title {
-        margin-top: 3px;
         font-size: 20px;
-        max-width: calc(100vw - 120px);
+        max-width: calc(100vw - 160px);
+        padding-bottom: 0;
     }
     #projecttext .primary #app-title.long-title {
       font-size: 16px;
     }
+    #projecttext .primary #app-title.editable:before {
+        width: 16px;
+        height: 16px;
+    }
 
+    #projecttext .primary #app-title-subtext-line {
+        top: -4px;
+    }
     #projecttext .primary #app-title-subtext {
         font-size: 15px;
+    }
+    #projecttext #app-buttons #remix-button {
+        height: 22px;
+        width: 22px;
+        background-size: 22px 44px;
+    }
+    #projecttext #app-buttons #remix-button:active {
+        background-position: 0 -22px;
     }
 
 
@@ -563,6 +620,10 @@ button:focus {
 
     #navigation .greenflag button:active {
         background-position:0px -25px;
+    }
+
+    .is-program-running #navigation .greenflag button {
+        background-size: cover;
     }
 
 
@@ -635,7 +696,7 @@ button:focus {
         background-position:0px -25px;
     }
 
-   #zoomControls .zoomOut {
+    #zoomControls .zoomOut {
         top: calc(100% - 68px);
     }
 
@@ -664,4 +725,30 @@ button:focus {
     #zoomControls .zoomReset button:active {
         background-position:0px -25px;
     }
+}
+
+@media only screen and (max-height: 330px) {
+  #projecttext .primary #app-title-subtext-line {
+    top: -4px;
+  }
+  #projecttext #app-buttons #remix-button {
+    top: 0;
+    margin-right: 3px;
+    width: 20px;
+    height: 20px;
+    background-size: 20px 40px;
+  }
+  #projecttext #app-buttons #remix-button:active {
+    background-position: 0 -20px;
+  }
+
+  #projecttext .primary #app-title {
+    padding-top: 6px;
+    margin-right: 2px;
+  }
+
+  #projecttext .primary #app-buttons {
+    height: 20px;
+  }
+
 }

@@ -383,9 +383,9 @@ namespace Anki
   } // applyScalarFunction() to separate result
   
   template<typename T>
-  template<class Tresult>
-  void Array2d<T>::ApplyScalarFunction(std::function<Tresult(const T& thisElem, const T& otherElem)>fcn,
-                                       const Array2d<T>& otherArray,
+  template<class Tother, class Tresult>
+  void Array2d<T>::ApplyScalarFunction(std::function<Tresult(const T& thisElem, const Tother& otherElem)>fcn,
+                                       const Array2d<Tother>& otherArray,
                                        Array2d<Tresult>& result) const
   {
     s32 nrows = this->GetNumRows();
@@ -407,7 +407,7 @@ namespace Anki
     for(s32 i=0; i<nrows; ++i)
     {
       const T *dataThis_i  = this->GetRow(i);
-      const T *dataOther_i = otherArray.GetRow(i);
+      const Tother *dataOther_i = otherArray.GetRow(i);
       Tresult *result_i = result.GetRow(i);
       
       for (s32 j=0; j<ncols; ++j) {

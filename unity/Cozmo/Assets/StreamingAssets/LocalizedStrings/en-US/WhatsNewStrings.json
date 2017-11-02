@@ -24,46 +24,40 @@
   "whatsNew.button.openInCodeLab": {
     "translation": "PLAY NOW IN CODE LAB!"
   },
-  "whatsNew.content1.title": {
-    "translation": "Gray to Black"
+  "whatsNew.CodeLab_VerticalLaunch.title": {
+    "translation": "Code Lab 2.0!"
   },
-  "whatsNew.content1.description": {
-    "translation": "Start Date: 8/1/2017\nEnd Date: 8/8/2017\nQuick Tap"
+  "whatsNew.CodeLab_VerticalLaunch.description": {
+    "translation": "It's all new and filled with featured projects like Light Show!"
   },
-  "whatsNew.content2.title": {
-    "translation": "Red to Green"
+  "whatsNew.CodeLab_TinyOrchestra.title": {
+    "translation": "Tiny Orchestra!"
   },
-  "whatsNew.content2.description": {
-    "translation": "Start Date: 11/1/2017\nEnd Date: 11/8/2017\nCube Pounce"
+  "whatsNew.CodeLab_TinyOrchestra.description": {
+    "translation": "It's your own tiny orchestra, and Cubes are your instrument!"
   },
-  "whatsNew.content3.title": {
-    "translation": "Blue to Yellow"
+  "whatsNew.CodeLab_MagicFortuneTeller.title": {
+    "translation": "Magic Fortune Teller!"
   },
-  "whatsNew.content3.description": {
-    "translation": "Start Date: 11/9/2017\nEnd Date: None\nMemory Match"
+  "whatsNew.CodeLab_MagicFortuneTeller.description": {
+    "translation": "Shake Cozmo and have your fortune told!"
   },
-  "whatsNew.content4.title": {
-    "translation": "Magenta to Cyan"
+  "whatsNew.CodeLab_HotPotato.title": {
+    "translation": "Hot Potato!"
   },
-  "whatsNew.content4.description": {
-    "translation": "Start Date: 11/12/2017\nEnd Date: None\nGuard Dog"
+  "whatsNew.CodeLab_HotPotato.description": {
+    "translation": "When the music stops, don't get stuck with the hot potato!"
   },
-  "whatsNew.content5.title": {
-    "translation": "Red to Yellow"
+  "whatsNew.CodeLab_FireTruckAlarm.title": {
+    "translation": "Fire Truck Alarm!"
   },
-  "whatsNew.content5.description": {
-    "translation": "Start Date: 11/16/2017\nEnd Date: 11/20/2017\nCozmo Sings"
+  "whatsNew.CodeLab_FireTruckAlarm.description": {
+    "translation": "Tick, tock! Timers are more fun when they're a Cozmo."
   },
-  "whatsNew.content6.title": {
-    "translation": "Green to Magenta"
+  "whatsNew.CodeLab_CubeWhack.title": {
+    "translation": "Cube Whack!"
   },
-  "whatsNew.content6.description": {
-    "translation": "Start Date: 12/15/2017\nEnd Date: None\nLaser Pointer"
-  },
-  "whatsNew.content7.title": {
-    "translation": "Blue to Cyan"
-  },
-  "whatsNew.content7.description": {
-    "translation": "Start Date: 2/1/2018\nEnd Date: 2/8/2018\nPyramid"
+  "whatsNew.CodeLab_CubeWhack.description": {
+    "translation": "Whack that Cube! What's your high score?"
   }
 }

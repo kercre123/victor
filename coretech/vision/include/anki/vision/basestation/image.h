@@ -194,6 +194,7 @@ namespace Vision {
   public:
     ImageRGB();
     ImageRGB(s32 nrows, s32 ncols); // allocates
+    ImageRGB(s32 nrows, s32 ncols, const PixelRGB& fillValue);
     ImageRGB(const ImageBase<PixelRGB>& imageBase) : ImageBase<PixelRGB>(imageBase) { }
     
     // No allocation, just wraps header around given data.

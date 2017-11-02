@@ -80,7 +80,6 @@ private:
   s32          _nextBlink_ms         = 0;
   s32          _nextEyeDart_ms       = 0;
   AnimationTag _eyeDartTag           = kNotAnimatingTag;
-
   
   
 };

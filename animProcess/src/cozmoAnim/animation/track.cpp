@@ -30,7 +30,7 @@ namespace Animations {
       // introduced by "extra" stop messages being inserted unnecessarily.
       const TimeStamp_t prevKeyFrameEndTime = (prevKeyFrame->GetTriggerTime() +
                                                prevKeyFrame->GetDurationTime_ms());
-      if(prevKeyFrameEndTime >= addedKeyFrame.GetTriggerTime() - IKeyFrame::SAMPLE_LENGTH_MS) {
+      if(prevKeyFrameEndTime >= addedKeyFrame.GetTriggerTime() - ANIM_TIME_STEP_MS) {
         //PRINT_NAMED_DEBUG("Animations.EnableStopMessageHelper",
         //                  "Disabling stop message for body motion keyframe at t=%d "
         //                  "with duration=%d because of next keyframe at t=%d",

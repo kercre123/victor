@@ -12,6 +12,10 @@ namespace Anki {
   namespace Vision {
     class TrackedFace;
   }
+ 
+  namespace Util {
+    class RandomGenerator;
+  } 
   
 namespace Cozmo {
 
@@ -26,11 +30,7 @@ namespace Cozmo {
     static bool GetNextBlinkFrame(ProceduralFace& faceData, TimeStamp_t& offset);
     
     // Actually draw the face with the current parameters
-    static Vision::Image DrawFace(const ProceduralFace& faceData);
-    
-    // To avoid burn-in this switches which scanlines to use (odd or even), e.g.
-    // to be called each time we blink.
-    static void SwitchInterlacing();
+    static void DrawFace(const ProceduralFace& faceData, const Util::RandomGenerator& rng, Vision::ImageRGB& faceImg);
     
   private:
     
@@ -38,22 +38,22 @@ namespace Cozmo {
     using WhichEye = ProceduralFace::WhichEye;
     using Value = ProceduralFace::Value;
     
-    static void DrawEye(const ProceduralFace& faceData, WhichEye whichEye, Vision::Image& faceImg,
-                        Rectangle<f32>& eyeBoundingBox);
+    // Despite taking in an ImageRGB, note that this method actually draws in HSV and
+    // is just using ImageRGB as a "3 channel image" since we don't (yet) have an ImageHSV.
+    // The resulting face image is converted to RGB by DrawFace at the end.
+    static void DrawEye(const ProceduralFace& faceData, WhichEye whichEye,
+                        const Util::RandomGenerator& rng, 
+                        Vision::ImageRGB& faceImg, Rectangle<f32>& eyeBoundingBox);
     
     static SmallMatrix<2,3,f32> GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
                                                         f32 tX, f32 tY, f32 x0 = 0.f, f32 y0 = 0.f);
     
-    static u8 _firstScanLine;
+    static Vision::Image _glowImg;
+    static Vision::Image _eyeShape;
     
-  }; // class ProceduralFace
-  
-  
-#pragma mark Inlined Methods
-  
-  inline void ProceduralFaceDrawer::SwitchInterlacing() {
-    _firstScanLine = 1 - _firstScanLine;
-  }
+    static const Array2d<f32>& GetNoiseImage(const Util::RandomGenerator& rng);
+    
+  }; // class ProceduralFaceπ
   
   
 } // namespace Cozmo

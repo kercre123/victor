@@ -30,6 +30,7 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/time/universalTime.h"
 
 #include "cozmoAnim/engineMessages.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -48,8 +49,7 @@ namespace Cozmo {
   
   namespace{
     
-  // Default time to wait before forcing KeepFaceAlive() after the latest stream has stopped and there is no
-  // idle animation
+  // Default time to wait before forcing KeepFaceAlive() after the latest stream has stopped
   const f32 kDefaultLongEnoughSinceLastStreamTimeout_s = 0.5f;
   
   CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
@@ -64,7 +64,9 @@ namespace Cozmo {
   , _tracksInUse(0)
   , _audioClient( new Audio::AnimationAudioClient(context->GetAudioController()) )
   , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
-  {    
+  {
+    _proceduralAnimation = new Animation("ProceduralAnimation");
+    _proceduralAnimation->SetIsLive(true);
   }
   
   Result AnimationStreamer::Init()
@@ -99,6 +101,28 @@ namespace Cozmo {
     // Do this after the ProceduralFace class has set to use the right neutral face
     _trackLayerComponent->Init();
     
+    _faceImg.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+    _faceImg565.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+    
+    // Until we address the display gamma issues (VIC-559), apply a gamma<1.0 to darken the
+    // dark end of the range. Not necessary in simulation.
+#   ifdef SIMULATOR
+    const f32 invGamma = 1.f;
+#   else
+    const f32 invGamma = 1.f / 0.5f;
+#   endif
+    const size_t kGammaEndRange = 160;
+    int i=0;
+    for(; i<kGammaEndRange; ++i)
+    {
+      const f32 gammaCorrected = (f32)kGammaEndRange * std::powf((f32)i / (f32)(kGammaEndRange), invGamma);
+      _gammaLUT[i] = Util::numeric_cast_clamped<u8>(std::round(gammaCorrected));
+    }
+    for(; i<_gammaLUT.size(); ++i)
+    {
+      _gammaLUT[i] = i;
+    }
+   
     return RESULT_OK;
   }
   
@@ -111,6 +135,7 @@ namespace Cozmo {
   AnimationStreamer::~AnimationStreamer()
   {
     FaceDisplay::removeInstance();
+    Util::SafeDelete(_proceduralAnimation);
   }
 
   Result AnimationStreamer::SetStreamingAnimation(u32 animID, Tag tag, u32 numLoops, bool interruptRunning)
@@ -149,7 +174,6 @@ namespace Cozmo {
     }
     
     const bool wasStreamingSomething = nullptr != _streamingAnimation;
-    const bool wasIdling = nullptr != _idleAnimation;
     
     if(wasStreamingSomething)
     {
@@ -168,14 +192,19 @@ namespace Cozmo {
     }
     
     // If there's something already streaming or we're purposefully clearing the buffer, abort
-    if(wasStreamingSomething || wasIdling || nullptr == anim)
+    if(wasStreamingSomething || nullptr == anim)
     {
       Abort();
     }
     
     _streamingAnimation = anim;
     
-    if (!GetCannedAnimationContainer().GetAnimIDByName(_streamingAnimation->GetName(), _streamingAnimID)) {
+    if (_streamingAnimation == _proceduralAnimation)
+    {
+      _streamingAnimID = 0;
+    }
+    else if(!GetCannedAnimationContainer().GetAnimIDByName(_streamingAnimation->GetName(), _streamingAnimID))
+    {
       PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.AnimIDNotFound", "%s", _streamingAnimation->GetName().c_str());
       _streamingAnimID = 0;
     }
@@ -208,22 +237,40 @@ namespace Cozmo {
     }
   }
   
+  Result AnimationStreamer::SetProceduralFace(const ProceduralFace& face, u32 duration_ms)
+  {
+    DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetProceduralFace.NullProceduralAnimation");
+    
+    // Always add one keyframe
+    ProceduralFaceKeyFrame keyframe(face);
+    Result result = _proceduralAnimation->AddKeyFrameToBack(keyframe);
+    
+    // Add a second one later to interpolate to, if duration is longer than one keyframe
+    if(RESULT_OK == result && duration_ms > ANIM_TIME_STEP_MS)
+    {
+      keyframe.SetTriggerTime(duration_ms-ANIM_TIME_STEP_MS);
+      result = _proceduralAnimation->AddKeyFrameToBack(keyframe);
+    }
+
+    if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetProceduralFace.FailedToCreateAnim", "")))
+    {
+      return result;
+    }
+    
+    result = SetStreamingAnimation(_proceduralAnimation, 0);
+    
+    return result;
+  }
+  
   void AnimationStreamer::Abort()
   {
-    if (nullptr != _streamingAnimation || nullptr != _idleAnimation)
+    if (nullptr != _streamingAnimation)
     {
-      // Log streamer state for diagnostics
-      const auto * anim = (_streamingAnimation != nullptr ? _streamingAnimation : _idleAnimation);
-      const char * type = (_streamingAnimation != nullptr ? "Streaming" : "Idle");
-      
       PRINT_NAMED_INFO("AnimationStreamer.Abort",
-                       //"Tag=%d %s:%s hasFramesLeft=%d audioComplete=%d startSent=%d endSent=%d sendBuffer=%s",
-                       "Tag=%d %s:%s hasFramesLeft=%d startSent=%d endSent=%d",
+                       "Tag=%d %s hasFramesLeft=%d startSent=%d endSent=%d",
                        _tag,
-                       type,
-                       anim->GetName().c_str(),
-                       anim->HasFramesLeft(),
-//                       _audioClient.AnimationIsComplete(),
+                       _streamingAnimation->GetName().c_str(),
+                       _streamingAnimation->HasFramesLeft(),
                        _startOfAnimationSent,
                        _endOfAnimationSent);
       
@@ -249,14 +296,7 @@ namespace Cozmo {
     Result lastResult = anim->Init();
     if(lastResult == RESULT_OK)
     {
-      // Switch interlacing for both systems that create images to put on the face.
-      // Since animations are relatively short, and InitStream gets called for each
-      // new animation or each loop of the same animation, this guarantees we will
-      // change scanlines periodically to avoid burn-in. Note that KeepFaceAlive
-      // uses a procedural blink, which also switches the scanlines.
-//      ProceduralFaceDrawer::SwitchInterlacing();
-//      FaceAnimationManager::SwitchInterlacing();
-      
+     
       _tag = withTag;
       
       _startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
@@ -275,7 +315,7 @@ namespace Cozmo {
       // Make sure any eye dart (which is persistent) gets removed so it doesn't
       // affect the animation we are about to start streaming. Give it a little
       // duration so it doesn't pop.
-      _trackLayerComponent->RemoveKeepFaceAlive(3*IKeyFrame::SAMPLE_LENGTH_MS);
+      _trackLayerComponent->RemoveKeepFaceAlive(3*ANIM_TIME_STEP_MS);
     }
     return lastResult;
   }
@@ -328,8 +368,59 @@ namespace Cozmo {
   
   void AnimationStreamer::BufferFaceToSend(const ProceduralFace& procFace)
   {
-    Vision::ImageRGB faceImg = ProceduralFaceDrawer::DrawFace(procFace);
-    BufferFaceToSend(faceImg);
+#   define DISPLAY_TEST_PATTERN 0
+    
+    // Display three color strips increasing in brightness from left to right
+    if(DISPLAY_TEST_PATTERN)
+    {
+      _faceImg.FillWith(0);
+      
+      for(int i=0; i<FACE_DISPLAY_HEIGHT/3; ++i)
+      {
+        Vision::PixelRGB* red_i   = _faceImg.GetRow(i);
+        Vision::PixelRGB* green_i = _faceImg.GetRow(i + FACE_DISPLAY_HEIGHT/3);
+        Vision::PixelRGB* blue_i  = _faceImg.GetRow(i + 2*FACE_DISPLAY_HEIGHT/3);
+        for(int j=0; j<FACE_DISPLAY_WIDTH; ++j)
+        {
+          const u8 value = Util::numeric_cast_clamped<u8>(std::round((f32)j/(f32)FACE_DISPLAY_WIDTH * 255.f));
+          red_i[j].r()   = value;
+          green_i[j].g() = value;
+          blue_i[j].b()  = value;
+        }
+      }
+    }
+    else
+    {
+      DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
+      DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
+      ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _faceImg);
+    }
+    
+    BufferFaceToSend(_faceImg);
+  }
+  
+  static void ConvertRGB24toRGB565(const Vision::ImageRGB& faceImg, const std::array<u8,256>& _gammaLUT, Array2d<u16>& _faceImg565)
+  {
+    // Convert to RGB565 format, and flip byte order
+    DEV_ASSERT(faceImg.IsContinuous(), "AnimationStreamer.BufferFaceToSend.FaceImgNotContinuous");
+    DEV_ASSERT(_faceImg565.IsContinuous(), "AnimationStreamer.BufferFaceToSend.FaceImg565NotContinuous");
+    
+    u16* img565_i = _faceImg565.GetRow(0);
+    const Vision::PixelRGB* faceImg_i = faceImg.get_CvMat_().ptr<Vision::PixelRGB>(0);
+    
+    for(int j = 0; j < _faceImg565.GetNumElements(); ++j)
+    {
+      const Vision::PixelRGB& pixRGB24 = faceImg_i[j];
+      u16& pixRGB565 = img565_i[j];
+      
+      // Convert to RGB565 (and incorporate gamma)
+      pixRGB565 = (((int)(_gammaLUT[pixRGB24.r()] >> 3) << 11) |
+                   ((int)(_gammaLUT[pixRGB24.g()] >> 2) << 5)  |
+                   ((int)(_gammaLUT[pixRGB24.b()] >> 3) << 0));
+      
+      // Swap byte ordering
+      pixRGB565 = ((pixRGB565>>8)&0xFF) | ((pixRGB565&0xFF)<<8);
+    }
   }
   
   void AnimationStreamer::BufferFaceToSend(const Vision::ImageRGB& faceImg)
@@ -342,9 +433,35 @@ namespace Cozmo {
                 FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
     
     // Draws frame to face display
-    cv::Mat img565;
-    cv::cvtColor(faceImg.get_CvMat_(), img565, cv::COLOR_RGB2BGR565);
-    FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
+#ifdef DRAW_FACE_IN_THREAD
+    // If last draw thread is still running then skip this face
+    if (_faceDrawFuture.valid()) {
+      const std::chrono::milliseconds span(0);
+      auto status = _faceDrawFuture.wait_for(span);
+      if (status != std::future_status::ready) {
+        // This could be happening for one or more of the following reasons.
+        // 1) The actual spi calls in FaceDisplay::FaceDraw() are taking too long.
+        //    This is currently happening all the time. Nathan knows about it.
+        // 2) We're calling this function more than once per animation process tic, which we shouldn't be doing.
+        const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+        PRINT_NAMED_WARNING("AnimationStreamer.BufferFaceToSend.SkippingFace", "Still drawing last face from %f ms ago", now_ms - _lastDrawTime_ms);
+        return;
+      }
+    }
+
+    ConvertRGB24toRGB565(faceImg, _gammaLUT, _faceImg565);
+    
+    // Dispatch thread
+    auto draw_face = [](u16* frame) {
+      FaceDisplay::getInstance()->FaceDraw(frame);
+    };
+  
+    _faceDrawFuture = std::async(draw_face, _faceImg565.GetRow(0));
+    _lastDrawTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+#else    
+    ConvertRGB24toRGB565(faceImg, _gammaLUT, _faceImg565);
+    FaceDisplay::getInstance()->FaceDraw(_faceImg565.GetRow(0));
+#endif   // #ifdef DRAW_FACE_IN_THREAD
   }
 
   
@@ -431,7 +548,7 @@ namespace Cozmo {
     Result lastResult = RESULT_OK;
     
     // Add more stuff to send buffer from various layers
-    while(_trackLayerComponent->HaveLayersToSend())
+    if(_trackLayerComponent->HaveLayersToSend())
     {
       // We don't have an animation but we still have procedural layers to so
       // apply them
@@ -478,7 +595,7 @@ namespace Cozmo {
       // Increment fake "streaming" time, so we can evaluate below whether
       // it's time to stream out any of the other tracks. Note that it is still
       // relative to the same start time.
-      _streamingTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
+      _streamingTime_ms += ANIM_TIME_STEP_MS;
     }
     
 //    // If we just finished buffering all the layers, send an end of animation message
@@ -645,7 +762,7 @@ namespace Cozmo {
       // Increment fake "streaming" time, so we can evaluate below whether
       // it's time to stream out any of the other tracks. Note that it is still
       // relative to the same start time.
-      _streamingTime_ms += ANIM_TIME_STEP_MS;  //RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
+      _streamingTime_ms += ANIM_TIME_STEP_MS;
       
     } // while(buffering frames)
     
@@ -705,12 +822,11 @@ namespace Cozmo {
     //       first animation of any kind is sent.
     const bool haveStreamingAnimation = _streamingAnimation != nullptr;
     const bool haveStreamedAnything   = _lastStreamTime > 0.f;
-    const bool haveIdleAnimation      = _idleAnimation != nullptr;
     const bool longEnoughSinceStream  = (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime) > _longEnoughSinceLastStreamTimeout_s;
     
     if(!haveStreamingAnimation &&
        haveStreamedAnything &&
-       (!haveIdleAnimation && longEnoughSinceStream))
+       longEnoughSinceStream)
     {
       // If we were interrupted from streaming an animation and we've met all the
       // conditions to even be in this function, then we should make sure we've
@@ -757,7 +873,6 @@ namespace Cozmo {
       else {
         // We do want to store this face to the robot since it's coming from an actual animation
         lastResult = UpdateStream(_streamingAnimation, true);
-        _isIdling = false;
         streamUpdated = true;
         _lastStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
@@ -824,11 +939,6 @@ namespace Cozmo {
 
   } // SetDefaultParams()
   
-  bool AnimationStreamer::IsIdleAnimating() const
-  {
-    return _isIdling;
-  }
-
   const std::string AnimationStreamer::GetStreamingAnimationName() const
   {
     return _streamingAnimation ? _streamingAnimation->GetName() : "";

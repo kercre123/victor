@@ -14,14 +14,23 @@
 #ifndef __AnimProcess_CozmoAnim_MicDataProcessor_H_
 #define __AnimProcess_CozmoAnim_MicDataProcessor_H_
 
-#include "audioUtil/audioDataTypes.h"
+#include "cozmoAnim/micDataTypes.h"
 
 #include <array>
 #include <cstdint>
+#include <memory>
 #include <string>
+#include <thread>
+#include <vector>
+
+struct SpeexResamplerState_;
+typedef struct SpeexResamplerState_ SpeexResamplerState;
 
 namespace Anki {
 namespace Cozmo {
+namespace MicData {
+  
+class MicDataInfo;
 
 class MicDataProcessor {
 public:
@@ -30,37 +39,37 @@ public:
   MicDataProcessor(const MicDataProcessor& other) = delete;
   MicDataProcessor& operator=(const MicDataProcessor& other) = delete;
 
-  static constexpr uint32_t kNumInputChannels = 4;
-  static constexpr uint32_t kSamplesPerChunk = 80;
-  static constexpr uint32_t kChunksPerSEBlock = 2;
-  static constexpr uint32_t kSamplesPerBlock = kSamplesPerChunk * kChunksPerSEBlock;
-  static constexpr uint32_t kSecondsPerFile = 20;
-  static constexpr uint32_t kDefaultAudioSamplesPerFile = AudioUtil::kSampleRate_hz * kSecondsPerFile;
-  static constexpr uint32_t kDefaultFilesToCapture = 15;
+  void ProcessNextAudioChunk(const RawAudioChunk& audioChunk);
+  void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
+  void Update();
 
-  void ProcessNextAudioChunk(const AudioUtil::AudioSample* audioChunk);
-  
 private:
-  uint32_t _collectedAudioSamples = 0;
-  uint32_t _audioSamplesToCollect = kDefaultAudioSamplesPerFile;
-  
-  uint32_t _filesToStore = kDefaultFilesToCapture;
   std::string _writeLocationDir = "";
 
-  AudioUtil::AudioChunkList _rawAudioData{};
-  AudioUtil::AudioChunkList _processedAudioData{};
+  std::deque<std::shared_ptr<MicDataInfo>> _micProcessingJobs;
+  std::mutex _dataRecordJobMutex;
 
   std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> _inProcessAudioBlock;
   bool _inProcessAudioBlockFirstHalf = true;
 
-  void CollectRawAudio(const AudioUtil::AudioSample* audioChunk);
-  void ProcessRawAudio(const AudioUtil::AudioSample* audioChunk);
-  void ProcessExistingRawFiles(const std::string& micDataDir);
-  std::string ChooseAndClearNextFileNameBase(std::string& out_deletedFileName);
-  std::string GetProcessedFileNameFromRaw(const std::string& rawFileName);
-  std::string GetRawFileNameFromProcessed(const std::string& rawFileName);
+  SpeexResamplerState* _speexState = nullptr;
+
+  AudioUtil::AudioChunkList _rawAudioToProcess;
+
+  std::thread _processThread;
+  std::mutex _resampleMutex;
+  bool _processThreadStop = false;
+  
+  std::deque<std::vector<uint32_t>> _fftResultList;
+  std::mutex _fftResultMutex;
+
+  AudioUtil::AudioChunk ProcessResampledAudio(const AudioUtil::AudioChunk& audioChunk);
+  AudioUtil::AudioChunk ResampleAudioChunk(const AudioUtil::AudioChunk& audioChunk);
+
+  void ProcessLoop();
 };
 
+} // namespace MicData
 } // namespace Cozmo
 } // namespace Anki
 

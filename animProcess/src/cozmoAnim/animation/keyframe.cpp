@@ -94,7 +94,7 @@ namespace Anki {
         _currentTime_ms = 0; // Reset for next time
         return true;
       } else {
-        _currentTime_ms += SAMPLE_LENGTH_MS;
+        _currentTime_ms += ANIM_TIME_STEP_MS;
         return false;
       }
     }

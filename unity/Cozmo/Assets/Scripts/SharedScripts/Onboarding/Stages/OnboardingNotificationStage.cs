@@ -16,7 +16,8 @@ namespace Onboarding {
                         LocalizationKeys.kSettingsNotificationpanelTitle,
                         LocalizationKeys.kOnboardingNotificationprepromptBody,
                         new AlertModalButtonData("yes_notifications_button", LocalizationKeys.kButtonYes, HandleShowOSNotificationsPrompt),
-                        new AlertModalButtonData("no_notifications_button", LocalizationKeys.kButtonMaybeLater, HandleMaybeLaterClicked));
+                        new AlertModalButtonData("no_notifications_button", LocalizationKeys.kButtonMaybeLater, HandleMaybeLaterClicked,
+                                  themeType: AlertModalButtonData.ThemeType.Neutral));
 
         var modalPriority = new ModalPriorityData(ModalPriorityLayer.VeryLow, 2,
                     LowPriorityModalAction.CancelSelf,

@@ -9,8 +9,6 @@
 #include "util/math/math.h"
 #endif
 
-#include "clad/types/imageTypes.h"
-
 namespace Anki {
 namespace Cozmo {
 
@@ -172,12 +170,14 @@ namespace Cozmo {
    *
    **************************************************************************/
 
-  // Default cliff detection threshold
-  const u32 CLIFF_SENSOR_DROP_LEVEL = 180;
+  // Cliff detection thresholds (these come from testing with prototype 2 robots - will need
+  // to be adjusted for production hardware)
+  const u16 CLIFF_SENSOR_THRESHOLD_MAX = 180;
+  const u16 CLIFF_SENSOR_THRESHOLD_MIN = 25;
+  const u16 CLIFF_SENSOR_THRESHOLD_DEFAULT = CLIFF_SENSOR_THRESHOLD_MAX;
   
-  // Cliff un-detection threshold (hysteresis)
-  const u32 CLIFF_SENSOR_UNDROP_LEVEL = 210;
-  const u32 CLIFF_SENSOR_UNDROP_LEVEL_MIN = 100;
+  // Cliff sensor value must rise this far above the threshold to 'untrigger' cliff detection.
+  const u16 CLIFF_DETECT_HYSTERESIS = 30;
   
   // V2 cliff sensors (assumes 4 cliff sensors are arranged in a rectangle symmetric about the robot x axis)
   // NOTE: These values are approximate and should be verified for final V2 design.
@@ -231,8 +231,11 @@ namespace Cozmo {
   // how long there is between stopping the motors and issuing a cliff event (because we have decided there isn't a pickup event)
   const u32 CLIFF_EVENT_DELAY_MS = 500;
   
-  
-  const s32 ANIM_TIME_STEP_MS = 33; //ms
+  // Anim process timing consts
+  const u32 ANIM_TIME_STEP_MS = 33; //ms
+  const u32 ANIM_TIME_STEP_US = ANIM_TIME_STEP_MS * 1000;
+  const s32 ANIM_OVERTIME_WARNING_THRESH_MS = 5;
+  const s32 ANIM_OVERTIME_WARNING_THRESH_US = ANIM_OVERTIME_WARNING_THRESH_MS * 1000;
   
   /***************************************************************************
    *

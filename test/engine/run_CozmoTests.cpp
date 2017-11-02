@@ -13,7 +13,7 @@
 #include "engine/activeObject.h"
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
-#include "engine/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorBuildPyramidBase.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/buildPyramid/behaviorBuildPyramidBase.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationPyramid.h"
 #include "engine/blockWorld/blockConfigurationStack.h"

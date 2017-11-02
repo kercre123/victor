@@ -18,7 +18,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationPyramid.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
@@ -64,6 +64,8 @@ CONSOLE_VAR(float, kBW_DebugRenderBeaconZ, "AIWhiteboard", 35.0f);
 // face tracking
 CONSOLE_VAR(float, kFaceTracking_HeadAngleDistFactor, "AIWhiteboard", 1.0);
 CONSOLE_VAR(float, kFaceTracking_BodyAngleDistFactor, "AIWhiteboard", 3.0);
+
+CONSOLE_VAR(int, kMaxObservationAgeToEatCube_ms, "AIWhiteboard", 3000);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* ObjectActionFailureToString(AIWhiteboard::ObjectActionFailure action)
@@ -139,6 +141,34 @@ void AIWhiteboard::Init()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::Update()
 {
+
+  Victor_Update();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::Victor_Update()
+{
+  // TODO:(bn) cache this filter
+
+  // Victor wants to eat cube #1 if it's known and upright
+  
+  BlockWorldFilter filter;
+  filter.SetAllowedTypes( { ObjectType::Block_LIGHTCUBE1 } );
+  filter.SetFilterFcn( [this](const ObservableObject* obj){
+      return obj->IsPoseStateKnown() &&
+        obj->GetPose().GetWithRespectToRoot().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS &&
+        obj->GetLastObservedTime() + kMaxObservationAgeToEatCube_ms > _robot.GetLastImageTimeStamp();
+
+    });
+
+  const auto& blockWorld = _robot.GetBlockWorld();
+  const ObservableObject* obj = blockWorld.FindLocatedObjectClosestTo(_robot.GetPose(), filter);
+  if( obj != nullptr ) {
+    _victor_cubeToEat = obj->GetID();
+  }
+  else {
+    _victor_cubeToEat.UnSet();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
