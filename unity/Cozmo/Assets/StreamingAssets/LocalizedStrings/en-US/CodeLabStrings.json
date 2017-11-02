@@ -1049,9 +1049,6 @@
     "translation": "Broadcasts (sends) a message to trigger the \"when [message#] received\" block, and then waits for the blocks under the \"when [message#] received\" to fully execute before continuing on. Tip: For experienced coders, think of this like a function call in most programming languages."
   },
 
-
-
-
   "codeLabGlossary.block_definitions.title.control_wait": {
     "translation": "wait [X] secs"
   },
@@ -1478,5 +1475,11 @@
   },
   "codeLabSampleProject_LaserSmile.projectName": {
     "translation": "Laser Smile!"
+  },
+  "codeLabSampleProject_LaserSmile.variableInstruction1": {
+    "translation": "The goal is to turn that frown upside down!"
+  },
+  "codeLabSampleProject_LaserSmile.variableInstruction2": {
+    "translation": "Smile to shoot your laser! Move your head to aim."
   }
 }
