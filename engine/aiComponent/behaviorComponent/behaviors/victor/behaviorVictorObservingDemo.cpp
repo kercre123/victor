@@ -23,10 +23,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
+#include "engine/components/visionComponent.h"
 #include "engine/faceWorld.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
 #include "engine/robot.h"
+#include "engine/vision/visionModesHelpers.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -236,6 +238,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingOnChargerState");
 
     State state(StateID::ObservingOnCharger, behavior);
+    state._requiredVisionModes.insert(VisionMode::DetectingMarkers);
     state.AddNonInterruptingTransition(StateID::DriveOffChargerIntoObserving, CondIsHungry);
     state.AddInterruptingTransition(StateID::Observing, CondOffCharger);
     state.AddInterruptingTransition(StateID::Feeding, CondCanEat);
@@ -261,6 +264,8 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingDriveOffCharger");
 
     State driveOffCharger(StateID::DriveOffChargerIntoObserving, behavior);
+    driveOffCharger._requiredVisionModes.insert(VisionMode::DetectingFaces);
+    driveOffCharger._requiredVisionModes.insert(VisionMode::DetectingMarkers);
     driveOffCharger.AddNonInterruptingTransition(StateID::Socializing, CondNewKnownFace);
     driveOffCharger.AddExitTransition(StateID::Observing, CondTrue);
     AddState(std::move(driveOffCharger));
@@ -280,6 +285,8 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingState");
 
     State state(StateID::Observing, behavior);
+    state._requiredVisionModes.insert(VisionMode::DetectingFaces);
+    state._requiredVisionModes.insert(VisionMode::DetectingMarkers); // TODO:(bn) only if hungry?
     state.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
     state.AddInterruptingTransition(StateID::Feeding, CondCanEat);
     state.AddInterruptingTransition(StateID::Socializing, CondNewKnownFace);
@@ -292,6 +299,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoFeedingState");
 
     State state(StateID::Feeding, behavior);
+    state._requiredVisionModes.insert(VisionMode::DetectingMarkers);
     state.AddNonInterruptingTransition(StateID::Observing, std::make_shared<TimeoutCondition>(kFeedingTimeout_s));
     state.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
 
@@ -307,6 +315,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoSocialize");
 
     State state(StateID::Socializing, behavior);
+    state._requiredVisionModes.insert(VisionMode::DetectingFaces);
     state.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
     state.AddNonInterruptingTransition(StateID::Feeding, CondCanEat);
     state.AddExitTransition(StateID::Observing, CondTrue);
@@ -319,6 +328,8 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoPlayState");
 
     State state(StateID::Playing, behavior);
+    state._requiredVisionModes.insert(VisionMode::DetectingMarkers);
+    state._requiredVisionModes.insert(VisionMode::DetectingFaces);
     state.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
     state.AddExitTransition(StateID::Observing, CondTrue);
     
@@ -380,19 +391,36 @@ Result BehaviorVictorObservingDemo::OnBehaviorActivated(BehaviorExternalInterfac
 {
   const bool onCharger = behaviorExternalInterface.GetRobot().IsOnChargerPlatform();
 
+  _visionModesToReEnable.clear();
+  auto& visionComponent = behaviorExternalInterface.GetRobot().GetVisionComponent();
+  for (VisionMode mode = VisionMode::Idle; mode < VisionMode::Count; ++mode) {
+    if( visionComponent.IsModeEnabled(mode) ) {
+      _visionModesToReEnable.push_back(mode);
+      visionComponent.EnableMode(mode, false);
+    }
+  }
+
+  
   if( onCharger ) {
     TransitionToState(behaviorExternalInterface, StateID::ObservingOnCharger);
   }
   else {
     TransitionToState(behaviorExternalInterface, StateID::Observing);
   }
-
+  
   return Result::RESULT_OK;
 }
 
 void BehaviorVictorObservingDemo::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   TransitionToState(behaviorExternalInterface, StateID::Count);
+
+  auto& visionComponent = behaviorExternalInterface.GetRobot().GetVisionComponent();
+  for( const auto& mode : _visionModesToReEnable ) {
+    visionComponent.EnableMode(mode, true);
+  }
+  
+  _visionModesToReEnable.clear();
 }
 
 ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
@@ -475,9 +503,12 @@ void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& b
                                                     const StateID targetState)
 {
 
-  // TODO:(bn) don't de- and re-activate behaviors if switching states doesn't change the behavior
+  // TODO:(bn) don't de- and re-activate behaviors if switching states doesn't change the behavior  
+
+  std::set<VisionMode> visionModesToDisable;
   
   if( _currState != StateID::Count ) {
+    visionModesToDisable = _states.at(_currState)._requiredVisionModes;
     _states.at(_currState).OnDeactivated();
     const bool allowCallback = false;
     CancelDelegates(allowCallback);
@@ -494,15 +525,35 @@ void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& b
 
   _currState = targetState;
 
+  auto setVisionModes = [&behaviorExternalInterface](const std::set<VisionMode>& modes, const bool enabled) {
+    for( const auto& mode : modes ) {
+      auto& visionComponent = behaviorExternalInterface.GetRobot().GetVisionComponent();      
+      if( visionComponent.IsModeEnabled(mode) != enabled ) {
+        visionComponent.EnableMode(mode, enabled);
+      }
+    }
+  };    
+  
   if( _currState != StateID::Count ) {
     State& state = _states.at(_currState);
 
+    // don't disable any vision modes that we'll still need
+    for( const auto& mode : state._requiredVisionModes ) {
+      visionModesToDisable.erase(mode);
+    }
+
+    setVisionModes(visionModesToDisable, false);
+    setVisionModes(state._requiredVisionModes, true);
+    
     state.OnActivated();
 
     if( state._behavior->WantsToBeActivated( behaviorExternalInterface ) ) {
       DelegateIfInControl(behaviorExternalInterface,  state._behavior.get() );
     }
-
+  }
+  else {
+    // disable all modes that were enabled by this state
+    setVisionModes(visionModesToDisable, false);
   }
 }
 

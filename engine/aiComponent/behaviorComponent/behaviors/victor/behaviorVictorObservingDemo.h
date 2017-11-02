@@ -16,6 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 #include "anki/common/basestation/objectIDs.h"
+#include "clad/types/visionModes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -112,7 +113,7 @@ private:
     float _lastTimeEnded_s = -1.0f;
 
     // Transitions are evaluated in order, and if the function returns true, we will transition to the given
-    // state id.     
+    // state id.
     using Transitions = std::vector< std::pair< StateID, std::shared_ptr<ICondition> > >;
 
     // transitions that can happen while the state is active (and in the middle of doing something)
@@ -125,6 +126,10 @@ private:
     // exit transitions only run if the currently-delegated-to behavior stop itself. Note that these are
     // checked _after_ all of the other transitions
     Transitions _exitTransitions;
+
+    // TODO:(bn) maybe these should be a property of ICondition? That way they just turn on automatically?
+    // TODO:(bn) ICozmoBehavior would actually be the better place for this (or a sub-component of ICozmoBehavior)
+    std::set<VisionMode> _requiredVisionModes;
   };
 
   void AddState( State&& state );
@@ -136,6 +141,9 @@ private:
   std::map< StateID, State > _states;
 
   std::shared_ptr<FeedingListenerCondition> _feedingCompleteCondition;
+
+  // hack to turn off all modes when this behavior starts and then back on when it ends
+  std::vector< VisionMode > _visionModesToReEnable;
 
   StateID _currState = StateID::Count;
 
