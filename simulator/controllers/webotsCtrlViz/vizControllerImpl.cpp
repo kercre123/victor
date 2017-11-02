@@ -751,12 +751,15 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_GYRO, Anki::NamedColors::GREEN, txt);
 
   bool cliffDetected = payload.state.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED;
-  sprintf(txt, "Cliff: {%4u, %4u, %4u, %4u} %s",
+  sprintf(txt, "Cliff: {%4u, %4u, %4u, %4u} thresh: {%4u, %4u, %4u, %4u}",
           payload.state.cliffDataRaw[0],
           payload.state.cliffDataRaw[1],
           payload.state.cliffDataRaw[2],
           payload.state.cliffDataRaw[3],
-          cliffDetected ? "CLIFF DETECTED" : "");
+          payload.cliffThresholds[0],
+          payload.cliffThresholds[1],
+          payload.cliffThresholds[2],
+          payload.cliffThresholds[3]);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_CLIFF, cliffDetected ? Anki::NamedColors::RED : Anki::NamedColors::GREEN, txt);
 
   const auto& proxData = payload.state.proxData;

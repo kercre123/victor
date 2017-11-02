@@ -61,7 +61,7 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded(BehaviorExternalInterface& beh
     // Check if cliff detected
     // If not, then calibrate head because we're not likely to be on back if no cliff detected.
     const auto cliffDataRaw = robot.GetCliffSensorComponent().GetCliffDataRaw();
-    if (cliffDataRaw < CLIFF_SENSOR_DROP_LEVEL) {
+    if (cliffDataRaw < CLIFF_SENSOR_THRESHOLD_DEFAULT) {
       AnimationTrigger anim = AnimationTrigger::FlipDownFromBack;
       
       if(behaviorExternalInterface.GetAIComponent().GetWhiteboard().HasHiccups())

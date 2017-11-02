@@ -368,9 +368,6 @@ void Robot::SetOnChargerPlatform(bool onPlatform)
       ExternalInterface::MessageEngineToGame(
         ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform))
       );
-    
-    const u32 thresh = (onPlatform ? CLIFF_SENSOR_UNDROP_LEVEL_MIN : CLIFF_SENSOR_DROP_LEVEL);
-    _cliffSensorComponent->SendCliffDetectThresholdToRobot(thresh);
 
     // pause the freeplay tracking if we are on the charger
     GetAIComponent().GetFreeplayDataTracker().SetFreeplayPauseFlag(_isOnChargerPlatform, FreeplayPauseFlag::OnCharger);
@@ -586,8 +583,6 @@ void Robot::Delocalize(bool isCarryingObject)
   _localizedToID.UnSet();
   _localizedToFixedObject = false;
   _localizedMarkerDistToCameraSq = -1.f;
-  
-  _cliffSensorComponent->ClearCliffRunningStats();
 
   // NOTE: no longer doing this here because Delocalize() can be called by
   //  BlockWorld::ClearAllExistingObjects, resulting in a weird loop...
@@ -1000,37 +995,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     
     if(frameIsCurrent)
     {
-      if(_totalDistanceTravelled_mm == -1.f)
-      {
-        _totalDistanceTravelled_mm = 0.f;
-        
-        // COZMO-11204: Lower the cliff detect threshold to the minimum value until Cozmo
-        // has driven a certain distance. This is to prevent Cozmo from detecting a cliff while
-        // driving off chargers (specificly 1.5 chargers). The cliff threshold should still be high
-        // enough to detect real cliffs
-        _cliffSensorComponent->SendCliffDetectThresholdToRobot(CLIFF_SENSOR_UNDROP_LEVEL_MIN);
-      }
-    
-      // Update total distance travelled only when this state message is from the current frameId
-      Pose3d curDriveCenterPose;
-      ComputeDriveCenterPose(GetPose(), curDriveCenterPose);
-      
-      const Vec3f transDiff =  curDriveCenterPose.GetTranslation() - prevDriveCenterPose.GetTranslation();
-      _totalDistanceTravelled_mm += ABS(transDiff.Length());
-      
-      // Check if we have travelled far enough to set cliff detect threshold back to
-      // default value
-      constexpr f32 kDistanceTravelledToReEnableCliffs_mm = 50;
-      if(!_pastDistanceToReEnableCliffs &&
-         _totalDistanceTravelled_mm > kDistanceTravelledToReEnableCliffs_mm)
-      {
-        // Reset cliff detect threshold back to default after travelling a distance of
-        // kDistanceTravelledToReEnableCliffs_mm
-        _cliffSensorComponent->SendCliffDetectThresholdToRobot(CLIFF_SENSOR_DROP_LEVEL);
-        
-        _pastDistanceToReEnableCliffs = true;
-      }
-      
       _numMismatchedFrameIDs = 0;
     } else {
       // COZMO-5850 (Al) This is to catch the issue where our frameID is incremented but fails to send
@@ -1066,9 +1030,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
 # pragma clang diagnostic pop
   _gyroDriftDetector->DetectBias(msg);
   
-  _cliffSensorComponent->UpdateCliffRunningStats(msg);
-  _cliffSensorComponent->UpdateCliffDetectThreshold();
-  
   /*
     PRINT_NAMED_INFO("Robot.UpdateFullRobotState.OdometryUpdate",
     "Robot %d's pose updated to (%.3f, %.3f, %.3f) @ %.1fdeg based on "
@@ -1093,7 +1054,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
     _enabledAnimTracks,
     _animationTag,
-    _robotImuTemperature_degC);
+    _robotImuTemperature_degC,
+    _cliffSensorComponent->GetCliffDetectThresholds());
       
   return lastResult;
       

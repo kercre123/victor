@@ -267,9 +267,9 @@ message EnableStopOnCliff
   bool enable
 }
 
-message SetCliffDetectThreshold
+message SetCliffDetectThresholds
 {
-  uint_16 detectLevel
+  uint_16 thresholds[4],  // New cliff threshold values for each sensor
 }
 
 message EnableBraceWhenFalling
@@ -409,7 +409,7 @@ union EngineToRobot
   // Sensor messages
   IMURequest                    imuRequest                  = 0x30,  
   CheckLiftLoad                 checkLiftLoad               = 0x31,  
-  SetCliffDetectThreshold       setCliffDetectThreshold     = 0x32,
+  SetCliffDetectThresholds      setCliffDetectThresholds    = 0x32,
 
   // Calibration
   EnableReadToolCodeMode        enableReadToolCodeMode      = 0x33,

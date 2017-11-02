@@ -181,7 +181,7 @@ ICozmoBehavior::Status BehaviorReactToPickup::UpdateInternal_WhileRunning(Behavi
     if (currentTime > _nextRepeatAnimationTime)
     {
       const auto cliffDataRaw = robot.GetCliffSensorComponent().GetCliffDataRaw();
-      if (cliffDataRaw < CLIFF_SENSOR_DROP_LEVEL) {
+      if (cliffDataRaw < CLIFF_SENSOR_THRESHOLD_DEFAULT) {
         StartAnim(behaviorExternalInterface);
       } else {
         LOG_EVENT("BehaviorReactToPickup.CalibratingHead", "%d", cliffDataRaw);

@@ -396,7 +396,8 @@ namespace Anki {
                           const u8 imageProcFrameRateHz,
                           const u8 enabledAnimTracks,
                           const u8 animTag,
-                          const f32 imuTemperature_degC);
+                          const f32 imuTemperature_degC,
+                          std::array<uint16_t, 4> cliffThresholds);
       
       void SetOrigin(const SetVizOrigin& msg);
       

@@ -198,7 +198,7 @@ namespace Anki {
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CarryState::CARRY_NONE);
           ProxSensors::EnableStopOnCliff(true);
-          ProxSensors::SetCliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL);
+          ProxSensors::SetAllCliffDetectThresholds(CLIFF_SENSOR_THRESHOLD_DEFAULT);
           waitForFirstMotorCalibAfterConnect_ = true;
           mode_ = INIT_MOTOR_CALIBRATION;
 

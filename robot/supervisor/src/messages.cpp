@@ -597,9 +597,11 @@ namespace Anki {
         ProxSensors::EnableStopOnCliff(msg.enable);
       }
 
-      void Process_setCliffDetectThreshold(const RobotInterface::SetCliffDetectThreshold& msg)
+      void Process_setCliffDetectThresholds(const RobotInterface::SetCliffDetectThresholds& msg)
       {
-        ProxSensors::SetCliffDetectThreshold(msg.detectLevel);
+        for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
+          ProxSensors::SetCliffDetectThreshold(i, msg.thresholds[i]);
+        }
       }
 
       void Process_enableBraceWhenFalling(const RobotInterface::EnableBraceWhenFalling& msg)
