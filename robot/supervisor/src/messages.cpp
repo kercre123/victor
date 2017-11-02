@@ -173,8 +173,8 @@ namespace Anki {
         robotState_.status |= ProxSensors::IsAnyCliffDetected() ? CLIFF_DETECTED : 0;
         robotState_.status |= IMUFilter::IsFalling() ? IS_FALLING : 0;
         robotState_.status |= HAL::BatteryIsChargerOOS() ? IS_CHARGER_OOS : 0;
-#ifdef  SIMULATOR
         robotState_.batteryVoltage = HAL::BatteryGetVoltage();
+#ifdef  SIMULATOR
         if(isForcedDelocalizing_)
         {
           robotState_.status |= IS_PICKED_UP;

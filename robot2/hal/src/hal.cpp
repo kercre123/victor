@@ -269,7 +269,9 @@ u16 HAL::GetCliffOffLevel(const CliffID cliff_id)
 
 f32 HAL::BatteryGetVoltage()
 {
-  return bodyData_->battery.battery;
+  // On charger battery.battery reports ~2500 so scale it to 5v
+  static const f32 kBatteryScale = 5.f/2500;
+  return kBatteryScale * bodyData_->battery.battery;
 }
 
 bool HAL::BatteryIsCharging()
