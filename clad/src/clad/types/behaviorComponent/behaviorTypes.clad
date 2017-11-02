@@ -111,11 +111,13 @@ enum uint_8 BehaviorClass {
   DispatcherStrictPriority,
   DispatcherStrictPriorityWithCooldown,
   DispatcherQueue,
+  DispatcherRandom,
 
   // Victor / demo behavior
   VictorObservingDemo,
   VictorDemoFeeding,
-  VictorDemoObservingFaceInteraction
+  VictorDemoObservingFaceInteraction,
+  VictorDemoNapping
 }
 
 
@@ -358,6 +360,13 @@ enum uint_8 BehaviorID {
   VictorDemoObservingOnCharger,
   VictorDemoDriveOffChargerIntoObserving,
   VictorDemoSocialize,
+  VictorDemoSocializeGame,
+  VictorDemoPlayState,
+  VictorDemoPlay,
+  VictorDemoGoToSleep,
+  VictorDemoNappingState,
+  VictorDemoNapping,
+  VictorDemoNappingWakeUp,
   
   Needs_SevereLowEnergyRequest,
   ObservingOnChargerIdle,
