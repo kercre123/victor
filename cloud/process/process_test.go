@@ -13,29 +13,7 @@ const (
 	micPort = 17469
 )
 
-var serverCount = 0
-
-func fakeCloudHandler(buf []byte) (*CloudResponse, error) {
-	serverCount++
-	if serverCount <= 1 {
-		return &CloudResponse{
-			IsFinal: false,
-			Err:     "",
-			Result:  nil}, nil
-	}
-	return &CloudResponse{
-		IsFinal: true,
-		Err:     "",
-		Result: &CloudResult{
-			QueryText:        "How are you feeling?",
-			SpeechConfidence: 0.5,
-			Action:           "murder",
-			IntentConfidence: 1.0}}, nil
-}
-
 func TestProcess(t *testing.T) {
-	// inject test hook
-	cloudTest = fakeCloudHandler
 
 	aiServer, err1 := ipc.NewServerSocket(aiPort)
 	micServer, err2 := ipc.NewServerSocket(micPort)

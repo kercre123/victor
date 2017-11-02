@@ -1,6 +1,7 @@
 package main
 
 import (
+	"anki/cloudproc"
 	"anki/ipc"
 	"fmt"
 )
@@ -19,5 +20,5 @@ func main() {
 		return
 	}
 
-	runProcess(micSock, aiSock)
+	cloudproc.RunProcess(micSock, aiSock)
 }

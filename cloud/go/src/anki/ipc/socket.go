@@ -111,6 +111,9 @@ func NewServerSocket(port int) (Socket, error) {
 				fmt.Println("Server couldn't read:", err)
 				break
 			}
+			if n == cap(buf) {
+				fmt.Println("Potential socket overload")
+			}
 			// catch handshake message for new clients
 			// (behavior defined by UdpServer.cpp)
 			sameAddress := addr != nil && sock.addr != nil && addr.String() == sock.addr.String()

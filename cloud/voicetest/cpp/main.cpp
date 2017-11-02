@@ -1,7 +1,12 @@
 #include "audioUtil/audioCaptureSystem.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
-#include "voicego.h"
+
+#ifndef HEADER_NAME
+#define HEADER_NAME "voicego.h"
+#endif
+
+#include HEADER_NAME
 
 #include <functional>
 #include <memory>

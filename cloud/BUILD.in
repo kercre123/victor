@@ -10,6 +10,17 @@ cxx_project(
 )
 
 cxx_project(
+    name = 'proctest',
+    srcs = cxx_src_glob(['voicetest']),
+    headers = cxx_header_glob(['voicetest'])
+)
+
+cxx_project(
+    name = 'proctest_go',
+    srcs = glob(['proctest/**/*.go'])
+)
+
+cxx_project(
     name = 'cloud_process',
     srcs = glob(['process/**/*.go'])
 )

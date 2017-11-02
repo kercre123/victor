@@ -33,6 +33,16 @@ if (MACOSX)
     voicego
     ${SECURITY_FRAMEWORK}
   )
+
+
+  # proctest - test victor audio process w/ laptop mic
+  anki_build_go_c_library(proctest_go PROCTEST_GO_HEADER "proctest" "go" ${ANKI_SRCLIST_DIR})
+  get_filename_component(PROCTEST_HEADER_DIR ${PROCTEST_GO_HEADER} DIRECTORY)
+  anki_build_cxx_executable(proctest ${ANKI_SRCLIST_DIR} ${PROCTEST_GO_HEADER})
+  target_include_directories(proctest PUBLIC ${PROCTEST_HEADER_DIR})
+  target_compile_definitions(proctest PUBLIC "HEADER_NAME=\"proctest_go.h\"")
+  target_link_libraries(proctest PRIVATE util_audio proctest_go ${SECURITY_FRAMEWORK})
+
 endif()
 
 # ipctest - for testing interop capability of C++ and Go socket code

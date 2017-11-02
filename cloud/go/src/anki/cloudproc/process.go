@@ -1,4 +1,4 @@
-package main
+package cloudproc
 
 import (
 	"anki/ipc"
@@ -60,6 +60,7 @@ func stream(ctx *voiceContext, samples []byte, cloudChan chan<- string) {
 
 	// set up response routine if this is the first stream
 	if ctx.context == nil {
+		fmt.Println("Adding context")
 		ctx.context = context.Background()
 		go func() {
 			resp, err := ctx.client.WaitForIntent(ctx.context)
@@ -80,7 +81,7 @@ func bufToGoString(buf []byte) string {
 	return strings.Trim(string(buf), "\x00")
 }
 
-func runProcess(micSock ipc.Socket, aiSock ipc.Socket) {
+func RunProcess(micSock ipc.Socket, aiSock ipc.Socket) {
 	micChan := make(chan socketMsg)
 	go socketReader(micSock, micChan)
 
@@ -96,7 +97,7 @@ func runProcess(micSock ipc.Socket, aiSock ipc.Socket) {
 				if ctx != nil {
 					fmt.Println("Got hotword event while already streaming, weird...")
 				}
-				client, err := chipper.NewClient("", "my-device-id", uuid.New().String()[:16],
+				client, err := chipper.NewClient("", "device-id", uuid.New().String()[:16],
 					api.WithServerURL("http://127.0.0.1:8000"))
 				if err != nil {
 					fmt.Println("Error creating Chipper:", err)
