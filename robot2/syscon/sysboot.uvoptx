@@ -185,7 +185,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\vmware-host\Shared Folders\github\victor\robot2\syscon\boot\startup_stm32f030x8.s</Filename>
+          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot2\syscon\boot\startup_stm32f030x8.s</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\sysboot\boot/startup_stm32f030x8.s\135</Expression>
         </Bp>

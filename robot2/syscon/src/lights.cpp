@@ -83,7 +83,7 @@ static void kick_off(void) {
 }
 
 static void terminate(void) {
-  // Shifing by 3 is enough to disable LEDs
+  // Shifing by 5 is enough to disable LEDs
   LED_DAT::reset();
   wait(); LED_CLK::set(); wait(); LED_CLK::reset();
   wait(); LED_CLK::set(); wait(); LED_CLK::reset();
@@ -132,7 +132,7 @@ void Lights::tick(void) {
       target->funct = function_table[ch][mask];
       target->time = delta;
 
-      mask &= ~sorted[x]->mask;
+      mask ^= sorted[x]->mask;
 
       if (delta >= LIGHT_MINIMUM) target++;
     }
