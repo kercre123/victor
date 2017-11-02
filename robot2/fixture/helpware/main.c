@@ -21,6 +21,15 @@
 #define LINEBUFSZ 255
 
 
+void status_spinner(void) {
+  const char glyphs = "|/-\\";
+  static int i=0;
+  helper_text_large(lcd_BLUE|lcd_GREEN, lcd_BLACK, glyph+i, 1, 1);
+  i=(i+1)%4;
+
+}
+
+
 int handle_lcdset_command(const char* cmd, int len) {
   return helper_lcdset_command_parse(cmd, len);
 }
@@ -45,6 +54,8 @@ int handle_dutprogram_command(const char* cmd, int len) {
   if (pp) {
     char buffer[512];
     while(fgets(buffer, 512, pp) != NULL) {
+      printf("%s", buffer);
+      status_spinner();
       fixture_log_writestring(buffer);
     }
     retval = pclose(pp);
@@ -270,12 +281,9 @@ int main(int argc, const char* argv[])
 
   signal(SIGINT, safe_quit);
 
-  printf("initializing lcd\n");
   lcd_init();
   lcd_set_brightness(20);
-  printf("initializing display\n");
   display_init();
-  printf("initializing log\n");
   fixture_log_init();
 
   gSerialFd = serial_init(FIXTURE_TTY, FIXTURE_BAUD);
