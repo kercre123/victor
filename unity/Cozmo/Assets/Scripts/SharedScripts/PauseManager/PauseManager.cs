@@ -172,6 +172,7 @@ namespace Cozmo {
 
         _ShouldPlayWakeupTimestamp = -1;
         if (!_EngineTriggeredSleep && _IdleTimeOutEnabled) {
+          RobotEngineManager.Instance.SendRobotDisconnectReason(Anki.Cozmo.RobotDisconnectReason.SleepBackground);
           StartIdleTimeout(Settings.AppBackground_TimeTilSleep_sec, Settings.AppBackground_TimeTilDisconnect_sec);
           // Set up a timer so that if we unpause after starting the goToSleep, we'll do the wakeup (using a little buffer past beginning of sleep)
           _ShouldPlayWakeupTimestamp = Time.realtimeSinceStartup + Settings.AppBackground_TimeTilSleep_sec + Settings.AppBackground_SleepAnimGetInBuffer_sec;
@@ -239,18 +240,19 @@ namespace Cozmo {
     }
 
     private void HandleConfirmEngineTriggeredSleepCozmoButtonTapped() {
-      StartPlayerInducedSleep(true);
+      StartPlayerInducedSleep(Anki.Cozmo.RobotDisconnectReason.SleepPlacedOnCharger);
     }
 
     private void HandleConfirmSleepCozmoButtonTapped() {
-      StartPlayerInducedSleep(false);
+      StartPlayerInducedSleep(Anki.Cozmo.RobotDisconnectReason.SleepSettings);
     }
 
-    public void StartPlayerInducedSleep(bool fromEngineTriggeredSleep) {
+    public void StartPlayerInducedSleep(Anki.Cozmo.RobotDisconnectReason reason) {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (null != robot) {
         robot.DisableAllReactionsWithLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
       }
+      RobotEngineManager.Instance.SendRobotDisconnectReason(reason);
       StartIdleTimeout(Settings.PlayerSleepCozmo_TimeTilSleep_sec, Settings.PlayerSleepCozmo_TimeTilDisconnect_sec);
       OpenGoToSleepDialogAndFreezeUI();
     }
@@ -274,7 +276,7 @@ namespace Cozmo {
         // but Cozmo has disconnected, CloseAllDialogs and handle it like a disconnect
         PauseManager.Instance.PauseManagerReset();
         if (NeedsConnectionManager.Instance != null) {
-          NeedsConnectionManager.Instance.ForceBoot();
+          NeedsConnectionManager.Instance.ForceBoot(Anki.Cozmo.RobotDisconnectReason.Unknown);
         }
       }
     }

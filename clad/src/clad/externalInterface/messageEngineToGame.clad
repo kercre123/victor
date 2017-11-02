@@ -72,7 +72,7 @@ message RobotConnectionResponse {
 }
 
 message RobotDisconnected {
-    float_32 timeSinceLastMsg_sec
+    float_32 timeSinceLastMsg_sec // Currently not used; always set to zero
 }
 
 

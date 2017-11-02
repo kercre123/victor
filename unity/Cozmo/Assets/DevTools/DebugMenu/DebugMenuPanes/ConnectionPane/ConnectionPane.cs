@@ -31,7 +31,7 @@ public class ConnectionPane : MonoBehaviour {
   private void OnDisconnectButtonClicked() {
     DebugMenuManager.Instance.CloseDebugMenuDialog();
     if (NeedsConnectionManager.Instance != null) {
-      NeedsConnectionManager.Instance.ForceBoot();
+      NeedsConnectionManager.Instance.ForceBoot(Anki.Cozmo.RobotDisconnectReason.DebugForceDisconnect);
     }
   }
 

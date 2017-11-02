@@ -196,7 +196,7 @@ namespace Cozmo.Settings {
           DataPersistence.DataPersistenceManager.Instance.ResetSaveData();
 
           _EraseCozmoModalInstance.CloseDialog();
-          PauseManager.Instance.StartPlayerInducedSleep(false);
+          PauseManager.Instance.StartPlayerInducedSleep(Anki.Cozmo.RobotDisconnectReason.SleepEraseCozmo);
         }
         else {
           _EraseCozmoModalInstance.ShowInstructionsLabel(Localization.Get(LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoErrorLabel));
@@ -259,7 +259,7 @@ namespace Cozmo.Settings {
 
         if (robotStatusMsg.success) {
           _RestoreCozmoModalInstance.CloseDialog();
-          PauseManager.Instance.StartPlayerInducedSleep(false);
+          PauseManager.Instance.StartPlayerInducedSleep(Anki.Cozmo.RobotDisconnectReason.SleepEraseCozmo);
         }
         else {
           _RestoreCozmoModalInstance.ShowInstructionsLabel(Localization.Get(LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoErrorLabel));

@@ -279,43 +279,20 @@ void RobotManager::UpdateAllRobots()
 {
   ANKI_CPU_PROFILE("RobotManager::UpdateAllRobots");
 
-  //for (auto &r : _robots) {
-  for(auto r = _robots.begin(); r != _robots.end(); ) {
-    // Call update
-    const RobotID_t robotId = r->first; // have to cache this prior to any ++r calls...
+  for(auto r = _robots.begin(); r != _robots.end(); ++r)
+  {
     Robot* robot = r->second;
-    Result result = robot->Update();
+    robot->Update();
     
-    switch(result)
-    {
-      case RESULT_FAIL_IO_TIMEOUT:
-      {
-        PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect");
-        const RobotID_t robotIdToRemove = r->first;
-        ++r;
-        const bool robotRejectedConnection = false;
-        RemoveRobot(robotIdToRemove, robotRejectedConnection);
-        
-        break;
-      }
-        
-        // TODO: Handle other return results here
-        
-      default:
-        // No problems, simply move to next robot
-        ++r;
-        break;
-    }
-
     if(robot->HasReceivedRobotState()) {
       _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(robot->GetRobotState()));
     }
     else {
+      const RobotID_t robotId = r->first;
       PRINT_PERIODIC_CH_INFO(10, "Unnamed", "RobotManager.UpdateAllRobots",
-                              "Not sending robot %d state (none available).",robotId);
+                              "Not sending robot %d state (none available).", robotId);
     }
-  } // End loop on _robots
-  
+  }
 }
 
 void RobotManager::UpdateRobotConnection()

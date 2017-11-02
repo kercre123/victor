@@ -10,11 +10,11 @@
 *
 */
 
-#include "engine/actions/actionContainers.h"
 #include "engine/comms/robotConnectionData.h"
 #include "engine/comms/robotConnectionManager.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
+#include "engine/robotToEngineImplMessaging.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
 #include "util/transport/udpTransport.h"
@@ -38,6 +38,7 @@ RobotConnectionManager::RobotConnectionManager(RobotManager* robotManager, const
 , _udpTransport(new Util::UDPTransport())
 , _reliableTransport(new Util::ReliableTransport(_udpTransport.get(), _currentConnectionData.get(), baseLogDir))
 , _robotManager(robotManager)
+, _robotDisconnectReason(RobotDisconnectReason::Unknown)
 {
   #ifdef ANKI_PLATFORM_ANDROID
   // Provide our UDP socket instance to Android's WifiUtil, so that
@@ -91,7 +92,11 @@ void RobotConnectionManager::Update()
   // If we're running reliableTransport sync we need to update it
   if(_reliableTransport->IsSynchronous())
   {
-    _reliableTransport->Update();
+    const bool success = _reliableTransport->Update();
+    if (!success)
+    {
+      SetRobotDisconnectReason(RobotDisconnectReason::WifiTimeout);
+    }
   }
 
   // Update queue stats before processing messages so we get stats about how big the queue was prior to it
@@ -226,18 +231,39 @@ void RobotConnectionManager::HandleConnectionResponseMessage(RobotConnectionMess
   }
   
   _currentConnectionData->SetState(RobotConnectionData::State::Connected);
+
+  _robotDisconnectReason = RobotDisconnectReason::Unknown;
 }
 
 void RobotConnectionManager::HandleDisconnectMessage(RobotConnectionMessageData& nextMessage)
 {
   const bool connectionWasInWaitingState = (RobotConnectionData::State::Waiting == _currentConnectionData->GetState());
-  
+
+  if (_reliableTransport->ConnectionTimedOut())
+  {
+    SetRobotDisconnectReason(RobotDisconnectReason::WifiTimeout);
+  }
+
+  const Robot* robot = _robotManager->GetFirstRobot();
+  const f32 batteryVoltage = robot != nullptr ? robot->GetBatteryVoltage() : 0.0f;
+
+  // DAS Event
+  // s_val: Disconnection reason
+  //  data: The last known battery voltage of the robot
+  char ddata[128];
+  const f32 batteryPercent = RobotToEngineImplMessaging::GetBatteryPercent(batteryVoltage);
+  snprintf(ddata, sizeof(ddata), "%.2f,%.2f", batteryVoltage, batteryPercent);
+  Util::sEvent("cozmo_engine.robot_connection_manager.disconnect_reason",
+               {{DDATA, ddata}},
+               RobotDisconnectReasonToString(_robotDisconnectReason));
+  // Now that we've sent the DAS message, reset the reason to default (unknown)
+  SetRobotDisconnectReason(RobotDisconnectReason::Unknown);
+
   // This connection is no longer valid.
   // Note not calling DisconnectCurrent because this message means reliableTransport is already deleting this connection data
   _currentConnectionData->Clear();
   
   // This robot is gone.
-  Robot* robot =  _robotManager->GetFirstRobot();
   if (nullptr != robot)
   {
     // If the connection is waiting when we handle this disconnect message, report it as a robot rejection

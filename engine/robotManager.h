@@ -94,8 +94,7 @@ public:
   // Update firmware (if appropriate) on every connected robot
   bool UpdateFirmware();
   
-  // Return a
-  // Return the number of availale robots
+  // Return the number of available robots
   size_t GetNumRobots() const;
 
   CannedAnimationContainer&        GetCannedAnimations()        { return *_cannedAnimations; }

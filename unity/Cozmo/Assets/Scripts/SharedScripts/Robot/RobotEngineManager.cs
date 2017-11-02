@@ -400,7 +400,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void ProcessRobotDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
     DasTracker.Instance.TrackRobotDisconnected(1);
-    DAS.Event("RobotEngineManager.RobotDisconnected", "Robot 1 disconnected after " + message.timeSinceLastMsg_sec.ToString("F3") + " seconds.");
+    DAS.Event("RobotEngineManager.RobotDisconnected", "Robot 1 disconnected");
     RemoveRobot(1);
   }
 
@@ -545,6 +545,11 @@ public class RobotEngineManager : MonoBehaviour {
 
   public void SendGameBeingPaused(bool isPaused) {
     Message.SetGameBeingPaused = Singleton<Anki.Cozmo.ExternalInterface.SetGameBeingPaused>.Instance.Initialize(isPaused);
+    SendMessage();
+  }
+
+  public void SendRobotDisconnectReason(RobotDisconnectReason reason) {
+    Message.SetRobotDisconnectReason = Singleton<Anki.Cozmo.ExternalInterface.SetRobotDisconnectReason>.Instance.Initialize(reason);
     SendMessage();
   }
 
