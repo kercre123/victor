@@ -14,6 +14,7 @@
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/controllerChannels.clad"
+#include "clad/types/proceduralFaceTypes.clad"
 #include "clad/robotInterface/messageToActiveObject.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
@@ -316,6 +317,19 @@ message SetBackpackLights
   uint_8 layer = 0      // 0 is BPL_USER
 }
 
+// DisplayProceduralFace
+message DisplayProceduralFace 
+{
+    ProceduralFaceParameters  faceParams,
+    uint_32                   duration_ms     // Use uint_32 max value to keep the image on the screen
+}
+
+// SetFaceHue
+message SetFaceHue
+{
+    float_32 hue // [0,1]
+}
+
 // ====================================================
 
 enum uint_32 ToRobotAddressSpace
@@ -420,6 +434,8 @@ union EngineToRobot
   LockAnimTracks                lockAnimTracks              = 0x51,
   RequestAvailableAnimations    requestAvailableAnimations  = 0x52,
   AbortAnimation                abortAnimation              = 0x53,
+  DisplayProceduralFace         displayProceduralFace       = 0x54,
+  SetFaceHue                    setFaceHue                  = 0x55,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

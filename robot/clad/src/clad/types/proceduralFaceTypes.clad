@@ -30,8 +30,24 @@ enum uint_8 ProceduralEyeParameter {
     LowerLidY,   // 0=aligned with bottom of eye (open), 1=aligned with top of eye (closed)
     LowerLidAngle,
     LowerLidBend,// 0 for straight, >0 to bend up into eye, <0 to bend down away from eye
-
+    Saturation,       // [0,1] (-1 to leave as is)
+    Lightness,        // [0,1] (-1 to leave as is)
+    GlowSize,         // 0 for no glow, 1 for glow width/height equal to half eye width/height (-1 to leave as is)
+   
     NumParameters
+}
+
+structure ProceduralFaceParameters {
+    float_32 faceAngle_deg,        // Degrees
+    float_32 faceCenX,
+    float_32 faceCenY,
+    float_32 faceScaleX,
+    float_32 faceScaleY,
+    float_32 scanlineOpacity,      // Use -1 to use current
+
+    // Vector of values for each ProceduralEyeParameter for each eye:
+    float_32 leftEye[22],          // NOTE: Must match NumParameters above
+    float_32 rightEye[22]          //   "
 }
 
 } // namespace Cozmo

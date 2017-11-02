@@ -7,6 +7,7 @@
 #include "clad/types/visionModes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/types/pathMotionProfile.clad"
+#include "clad/types/proceduralFaceTypes.clad"
 #include "clad/types/sayTextStyles.clad"
 #include "clad/types/animationTrigger.clad"
 #include "clad/types/petTypes.clad"
@@ -46,21 +47,6 @@ message CalibrateMotors {
 message DisplayFaceImage {
     uint_32  duration_ms,
     uint_8   faceData[2208]          // Bit-image: one bit for each of 184x96 pixels
-}
-
-// DisplayProceduralFace
-message DisplayProceduralFace {
-    float_32 faceAngle_deg,        // Degrees
-    float_32 faceCenX,
-    float_32 faceCenY,
-    float_32 faceScaleX,
-    float_32 faceScaleY,
-
-    // Vector of values for each ProceduralEyeParameter for each eye:
-    float_32 leftEye[uint_8],      // TODO: make this fixed length = ProceduralEyeParameter::NumParameters
-    float_32 rightEye[uint_8],     //
-
-    uint_32  duration_ms           // Use uint_32 max value to keep the image on the screen (still subject to scanline switching)
 }
 
 // DriveOffChargerContacts
@@ -522,7 +508,6 @@ union RobotActionUnion {
   AlignWithObject               alignWithObject,
   CalibrateMotors               calibrateMotors,
   DisplayFaceImage              displayFaceImage,
-  DisplayProceduralFace         displayProceduralFace,
   DriveOffChargerContacts       driveOffChargerContacts,
   DriveStraight                 driveStraight,
   FacePlant                     facePlant,

@@ -130,7 +130,7 @@ void VizControllerImpl::Init()
     }
     else 
     {
-      numDisplays = numDisplaysField->getSFInt32();
+      numDisplays = numDisplaysField->getSFInt32() + 1; // +1 because this is in addition to the camera
     }
     
     _camDisp = nullptr;

@@ -18,6 +18,7 @@
 #include "anki/cozmo/shared/animationTag.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/events/ankiEvent.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"

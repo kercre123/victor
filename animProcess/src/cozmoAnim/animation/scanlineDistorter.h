@@ -26,7 +26,7 @@ namespace Util {
 }
   
 namespace Vision {
-  class Image;
+  class ImageRGB;
 }
 
 namespace Cozmo {
@@ -51,7 +51,7 @@ public:
   // noise into the image.
   void AddOffNoise(const SmallMatrix<2,3,f32>& warpMatrix,
                    const s32 eyeHeight, const s32 eyeWidth,
-                   Vision::Image& faceImg) const;
+                   Vision::ImageRGB& faceImg) const;
   
   // Gets sequence of distortions using the ScanlineDistorter in the given faceData.
   // Call until it returns false, which indicates there are no more distortion frames and the face is back in its

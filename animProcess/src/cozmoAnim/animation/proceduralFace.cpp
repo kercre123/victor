@@ -23,6 +23,12 @@ namespace Anki {
 namespace Cozmo {
   
 ProceduralFace* ProceduralFace::_resetData = nullptr;
+ProceduralFace::Value ProceduralFace::_hue = 0.4f;
+
+namespace {
+  const ProceduralFace::Value kDefaultGlowSize = 0.5f;
+  const ProceduralFace::Value kDefaultScanlineOpacity = 0.7f;
+}
   
 void ProceduralFace::SetResetData(const ProceduralFace& newResetData)
 {
@@ -41,16 +47,29 @@ void ProceduralFace::Reset()
   
 ProceduralFace::ProceduralFace()
 {
-  static const auto eyeScaleParamsList =
+  static const auto defaultToOneParams =
   {
     Parameter::EyeScaleX,
-    Parameter::EyeScaleY
+    Parameter::EyeScaleY,
   };
   
-  for (auto param : eyeScaleParamsList)
+  for (auto param : defaultToOneParams)
   {
     _eyeParams[WhichEye::Left][(int)param] = 1.0f;
   }
+
+  static const auto defaultToUnspecified =
+  {
+    Parameter::Saturation,
+    Parameter::Lightness,
+    Parameter::GlowSize,
+  };
+  
+  for(auto param : defaultToUnspecified)
+  {
+    _eyeParams[WhichEye::Left][(int)param] = -1.f;
+  };
+  
   _eyeParams[WhichEye::Right] = _eyeParams[WhichEye::Left];
 }
   
@@ -96,6 +115,7 @@ static const char* kFaceCenterXKey = "faceCenterX";
 static const char* kFaceCenterYKey = "faceCenterY";
 static const char* kFaceScaleXKey = "faceScaleX";
 static const char* kFaceScaleYKey = "faceScaleY";
+static const char* kScanlineOpacityKey = "scanlineOpacity";
 static const char* kLeftEyeKey = "leftEye";
 static const char* kRightEyeKey = "rightEye";
 
@@ -104,11 +124,12 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
   const char* eyeStr = (eye == WhichEye::Left) ? kLeftEyeKey : kRightEyeKey;
 
   const size_t N = static_cast<size_t>(Parameter::NumParameters);
-  if(eyeArray.size() != N) {
+  const size_t N_old = N - 3; // Before Saturation, Lightness, and Glow were added
+  if(eyeArray.size() != N && eyeArray.size() != N_old)
+  {
     PRINT_NAMED_WARNING("ProceduralFace.SetEyeArrayHelper.WrongNumParams",
-                        "Unexpected number of parameters for %s array (%lu vs. %lu)",
-                        eyeStr, (unsigned long)eyeArray.size(), (unsigned long)N);
-    return;
+                        "Unexpected number of parameters for %s array (%lu vs. %lu or %lu)",
+                        eyeStr, (unsigned long)eyeArray.size(), (unsigned long)N, (unsigned long)N_old);
   }
   
   for(s32 i=0; i<std::min(eyeArray.size(), N); ++i)
@@ -178,10 +199,17 @@ void ProceduralFace::SetFromJson(const Json::Value &jsonRoot)
   {
     SetFaceScale({jsonFaceScaleX, jsonFaceScaleY});
   }
+  
+  f32 scanlineOpacity = -1.f;
+  if(JsonTools::GetValueOptional(jsonRoot, kScanlineOpacityKey, scanlineOpacity))
+  {
+    SetScanlineOpacity(scanlineOpacity);
+  }
 }
 
 void ProceduralFace::SetFromValues(const std::vector<f32>& leftEyeData, const std::vector<f32>& rightEyeData,
-                                   f32 faceAngle_deg, f32 faceCenterX, f32 faceCenterY, f32 faceScaleX, f32 faceScaleY)
+                                   f32 faceAngle_deg, f32 faceCenterX, f32 faceCenterY, f32 faceScaleX, f32 faceScaleY,
+                                   f32 scanlineOpacity)
 {
   std::vector<Value> eyeParams;
 
@@ -200,21 +228,25 @@ void ProceduralFace::SetFromValues(const std::vector<f32>& leftEyeData, const st
   SetFaceAngle(faceAngle_deg);
   SetFacePosition({faceCenterX, faceCenterY});
   SetFaceScale({faceScaleX, faceScaleY});
+  SetScanlineOpacity(scanlineOpacity);
 }
 
-  /*
-void ProceduralFace::SetFromMessage(const ExternalInterface::DisplayProceduralFace& msg)
+void ProceduralFace::SetFromMessage(const ProceduralFaceParameters& msg)
 {
   SetFaceAngle(msg.faceAngle_deg);
   SetFacePosition({msg.faceCenX, msg.faceCenY});
   SetFaceScale({msg.faceScaleX, msg.faceScaleY});
-  SetEyeArrayHelper(WhichEye::Left, msg.leftEye);
-  SetEyeArrayHelper(WhichEye::Right, msg.rightEye);
+  SetScanlineOpacity(msg.scanlineOpacity);
+  
+  for(s32 i=0; i<(size_t)ProceduralEyeParameter::NumParameters; ++i)
+  {
+    SetParameter(WhichEye::Left,  static_cast<ProceduralFace::Parameter>(i), msg.leftEye[i]);
+    SetParameter(WhichEye::Right, static_cast<ProceduralFace::Parameter>(i), msg.rightEye[i]);
+  }
 }
-   */
   
 void ProceduralFace::LookAt(f32 xShift, f32 yShift, f32 xmax, f32 ymax,
-                                  f32 lookUpMaxScale, f32 lookDownMinScale, f32 outerEyeScaleIncrease)
+                            f32 lookUpMaxScale, f32 lookDownMinScale, f32 outerEyeScaleIncrease)
 {
   SetFacePosition({xShift, yShift});
   
@@ -400,6 +432,41 @@ void ProceduralFace::CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamAr
   {
     eyeArray0[(int)param] *= eyeArray1[(int)param];
   }
+
+  static const auto averageIfSetParamList =
+  {
+    std::make_pair((int)Parameter::Saturation,       1.f),
+    std::make_pair((int)Parameter::Lightness,        1.f),
+    std::make_pair((int)Parameter::GlowSize,         kDefaultGlowSize),
+  };
+  for (auto param : averageIfSetParamList)
+  {
+    // Average if both set, use the set one if only one is set, use default if neither set
+    Value& val0 = eyeArray0[param.first];
+    const Value& val1 = eyeArray1[param.first];
+    
+    const bool isSet0 = Util::IsFltGEZero(val0);
+    const bool isSet1 = Util::IsFltGEZero(val1);
+    
+    if(isSet0 && isSet1)
+    {
+      val0 += val1;
+      val0 *= 0.5f;
+    }
+    else if(isSet0)
+    {
+      // Nothing to do: leave eyeArray0 as is
+    }
+    else if(isSet1)
+    {
+      val0 = val1;
+    }
+    else
+    {
+      // Use default
+      val0 = param.second;
+    }
+  }
 }
   
 ProceduralFace& ProceduralFace::Combine(const ProceduralFace& otherFace)
@@ -410,6 +477,27 @@ ProceduralFace& ProceduralFace::Combine(const ProceduralFace& otherFace)
   _faceAngle_deg += otherFace.GetFaceAngle();
   _faceScale *= otherFace.GetFaceScale();
   _faceCenter += otherFace.GetFacePosition();
+  
+  const bool thisHasScanlineOpacity  = Util::InRange(_scanlineOpacity, 0.f, 1.f);
+  const bool otherHasScanlineOpacity = Util::InRange(otherFace._scanlineOpacity, 0.f, 1.f);
+  if(thisHasScanlineOpacity && otherHasScanlineOpacity)
+  {
+    // Average if both set
+    _scanlineOpacity += otherFace._scanlineOpacity;
+    _scanlineOpacity *= 0.5f;
+  }
+  else if(thisHasScanlineOpacity)
+  {
+    // Nothing to do: keep current
+  }
+  else if(otherHasScanlineOpacity)
+  {
+    _scanlineOpacity = otherFace._scanlineOpacity;
+  }
+  else
+  {
+    _scanlineOpacity = kDefaultScanlineOpacity;
+  }
 
   const bool thisHasScanlineDistortion  = (nullptr != _scanlineDistorter);
   const bool otherHasScanlineDistortion = (nullptr != otherFace._scanlineDistorter);
@@ -458,6 +546,9 @@ ProceduralFace::Value ProceduralFace::Clip(WhichEye eye, Parameter param, Value 
     {Parameter::UpperLidY,          {  0,   1}},
     {Parameter::LowerLidBend,       {  0,   1}},
     {Parameter::UpperLidBend,       {  0,   1}},
+    {Parameter::Saturation,         { -1,   1}}, // Really [0,1], but -1 is valid for "unspecified"
+    {Parameter::Lightness,          { -1,   1}}, //   "
+    {Parameter::GlowSize,           { -1,   1}}, //   "
   };
   
   auto limitsIter = LimitsLUT.find(param);

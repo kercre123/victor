@@ -103,9 +103,11 @@ namespace { // "Private members"
     for (u8 i = 0; i < FACE_DISPLAY_HEIGHT; ++i) {
       for (u8 j = 0; j < FACE_DISPLAY_WIDTH; ++j) {
         
-        int color = ((*frame & Rmask) << Rshift) +
-                    ((*frame & Gmask) << Gshift) +
-                    ((*frame & Bmask) << Bshift);
+        const u16 bytesSwapped = ((*frame & 0xFF)<<8) | ((*frame >> 8)&0xFF);
+        
+        int color = ((bytesSwapped & Rmask) << Rshift) +
+                    ((bytesSwapped & Gmask) << Gshift) +
+                    ((bytesSwapped & Bmask) << Bshift);
         ++frame;
         
         face_->setColor(color);

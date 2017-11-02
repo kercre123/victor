@@ -161,7 +161,7 @@ s32 ScanlineDistorter::GetEyeDistortionAmount(f32 eyeFrac) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ScanlineDistorter::AddOffNoise(const SmallMatrix<2,3,f32>& warpMatrix,
                                     const s32 eyeHeight, const s32 eyeWidth,
-                                    Vision::Image& faceImg) const
+                                    Vision::ImageRGB& faceImg) const
 {
   for(const auto & pt : _offNoisePoints)
   {
