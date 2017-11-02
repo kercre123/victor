@@ -27,7 +27,7 @@ void helper_text_small(int line, const char *text, int len) {
   display_draw_text(DISPLAY_LAYER_SMALL, line-1, HELPER_SMALL_TEXT_COLOR_FG, HELPER_SMALL_TEXT_COLOR_BG,  text, len, 0);
 }
 
-void helper_text_large(uint16_t fg, uint16_t bg, const char *text, int len, bool solo) {
+void helper_text_large(uint16_t fg, uint16_t bg, const char *text, int len) {
   display_clear_layer(DISPLAY_LAYER_LARGE, fg, bg);
   display_draw_text(DISPLAY_LAYER_LARGE, 1, fg, bg, text, len, 1);
 }
@@ -113,7 +113,7 @@ int helper_lcdshow_command_parse(const char* command, int linelen)
   //eat trailing space
   while (cp<endp && isspace(endp[-1])) { endp--;}
 
-  helper_text_large(fgcolor, bgcolor, cp, endp-cp, solo);
+  helper_text_large(fgcolor, bgcolor, cp, endp-cp);
   helper_text_show(solo);
   return 0;
 }
@@ -142,6 +142,15 @@ int helper_lcd_command_parse(const char* command, int linelen)
   }
   return -1; //invalid
 }
+
+void helper_lcd_busy_spinner(void) {
+  const char *glyphs = "|/-\\";
+  static int i=0;
+  helper_text_large(lcd_BLUE|lcd_GREEN, lcd_BLACK, glyphs+i, 1);
+  helper_text_show(1);
+  i=(i+1)%4;
+}
+
 
 
 //#define SELF_TEST
