@@ -9,7 +9,7 @@ var connectedVictor = undefined;
 function completer(line) {
     var args = line.split(/(\s+)/);
     args = args.filter(function(entry) {return /\S/.test(entry); });
-    const completions = 'connect dhcptool disconnect help ifconfig ping quit reboot restart-adb scan ssh-set-authorized-keys stop-scan wifi-set-config wifi-start wifi-stop wpa_cli'.split(' ');
+    const completions = 'connect dhcptool disconnect help ifconfig ping quit reboot restart-adb scan ssh-set-authorized-keys stop-scan wifi-scan wifi-set-config wifi-start wifi-stop wpa_cli'.split(' ');
     const hits = completions.filter((c) => c.startsWith(args[0]));
     if (hits.length == 0) {
         return [completions, line];
@@ -48,6 +48,7 @@ function printHelp() {
     reboot [boot arg]                     -  Reboot Victor
     restart-adb                           -  Restart adb on Victor
     ssh-set-authorized-keys file          -  Use file as the ssh authorized_keys file on Victor
+    wifi-scan                             -  Ask Victor to scan for WiFi access points
     wifi-set-config ssid psk [ssid2 psk2] -  Overwrite and set wifi config on victor
     wifi-start                            -  Bring WiFi interface up
     wifi-stop                             -  Bring WiFi interface down
@@ -215,6 +216,13 @@ var handleInput = function (line) {
                 outputResponse("Not connected to a Victor");
             } else {
                 connectedVictor.send(Victor.MSG_B2V_CORE_PING_REQUEST);
+            }
+            break;
+        case 'wifi-scan':
+            if (!connectedVictor) {
+                outputResponse("Not connected to a Victor");
+            } else {
+                connectedVictor.send(Victor.MSG_B2V_WIFI_SCAN);
             }
             break;
         case 'wifi-set-config':

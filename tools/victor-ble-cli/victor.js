@@ -39,6 +39,32 @@ class Victor {
                 this._heartbeat_counter = data[2];
                 this._output("Heartbeat " + this._heartbeat_counter);
                 return;
+            case Victor.MSG_V2B_WIFI_SCAN_RESULTS:
+                var offset = 0;
+                var buf = data.slice(2);
+                var results = "";
+                while (offset < buf.length) {
+                    var secure = buf.readUInt8(offset++);
+                    var signal_strength = buf.readUInt8(offset++);
+                    var end = buf.indexOf(0, offset);
+                    if (end < offset) {
+                        return;
+                    }
+                    var ssid = buf.toString('utf8', offset, end);
+                    offset = end + 1;
+                    if (secure) {
+                        results += "Secure";
+                    } else {
+                        results += "Open";
+                    }
+                    results += "\t";
+                    for (var i = 0 ; i < signal_strength; i++) {
+                        results += "*";
+                    }
+                    results += "\t" + ssid + "\n";
+                }
+                this._output(results);
+                return;
             case Victor.MSG_V2B_DEV_EXEC_CMD_LINE_RESPONSE:
                 this._output(data.toString('utf8', 2, data.length));
                 return;
@@ -127,6 +153,8 @@ Object.defineProperty(Victor, 'MSG_V2B_HEARTBEAT', {value: 0x19, writable: false
 Object.defineProperty(Victor, 'MSG_B2V_WIFI_START', {value: 0x1A, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_WIFI_STOP', {value: 0x1B, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_WIFI_SET_CONFIG', {value: 0x1C, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_WIFI_SCAN', {value: 0x1D, writable: false});
+Object.defineProperty(Victor, 'MSG_V2B_WIFI_SCAN_RESULTS', {value: 0x1E, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_SSH_SET_AUTHORIZED_KEYS', {value: 0x80, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_DEV_PING_WITH_DATA_REQUEST', {value: 0x91, writable: false});
 Object.defineProperty(Victor, 'MSG_V2B_DEV_PING_WITH_DATA_RESPONSE', {value: 0x92, writable: false});
