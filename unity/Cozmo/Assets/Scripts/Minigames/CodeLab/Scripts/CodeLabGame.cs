@@ -25,6 +25,7 @@ namespace CodeLab {
     public string ProjectJSON;
     public string ProjectName; // Stored in sample-projects.js as string key.
     public string DASProjectName; // DAS-friendly name for analytics (same in all languages, and never changes)
+    public string Language;
   }
 
   // CodeLabFeaturedProject are only used in vertical grammar.
@@ -1174,6 +1175,9 @@ namespace CodeLab {
       for (int i = 0; i < _CodeLabSampleProjects.Count; i++) {
         var project = _CodeLabSampleProjects[i];
 
+        if (!string.IsNullOrEmpty(project.Language) && project.Language != Localization.GetStringsLocale()) {
+          continue;
+        }
         if (showVerticalProjects && !project.IsVertical) {
           // We want to show only vertical projects so skip the horizontal projects.
           continue;
@@ -1216,24 +1220,27 @@ namespace CodeLab {
       List<CodeLabFeaturedProject> copyCodeLabFeaturedProjectList = new List<CodeLabFeaturedProject>();
       for (int i = 0; i < _CodeLabFeaturedProjects.Count; i++) {
         var project = _CodeLabFeaturedProjects[i];
-        if (string.IsNullOrEmpty(project.Language) || project.Language == Localization.GetStringsLocale()) {
-          CodeLabFeaturedProject proj = new CodeLabFeaturedProject();
-          proj.ProjectUUID = project.ProjectUUID;
-          proj.ProjectName = project.ProjectName; // value is string key
-          proj.VersionNum = project.VersionNum;
-          proj.FeaturedProjectDescription = project.FeaturedProjectDescription; // value is string key
-          proj.FeaturedProjectImageName = project.FeaturedProjectImageName;
-          proj.FeaturedProjectBackgroundColor = project.FeaturedProjectBackgroundColor;
-          proj.FeaturedProjectTitleTextColor = project.FeaturedProjectTitleTextColor;
-          proj.FeaturedProjectInstructions = project.FeaturedProjectInstructions;
 
-          if (proj.VersionNum > CodeLabProject.kCurrentVersionNum) {
-            // NOTE: While sending ProjectName's is generally a PII risk, Sample projects will never have user configurable names
-            DAS.Warn("Codelab.OnAppLoadedFromData.BadVersionNumber", "featured project " + proj.ProjectName + "'s version number " + project.VersionNum.ToString() + " is greater than the app's codelab version " + CodeLabProject.kCurrentVersionNum.ToString());
-          }
-          else {
-            copyCodeLabFeaturedProjectList.Add(proj);
-          }
+        if (!string.IsNullOrEmpty(project.Language) && project.Language != Localization.GetStringsLocale()) {
+          continue;
+        }
+
+        CodeLabFeaturedProject proj = new CodeLabFeaturedProject();
+        proj.ProjectUUID = project.ProjectUUID;
+        proj.ProjectName = project.ProjectName; // value is string key
+        proj.VersionNum = project.VersionNum;
+        proj.FeaturedProjectDescription = project.FeaturedProjectDescription; // value is string key
+        proj.FeaturedProjectImageName = project.FeaturedProjectImageName;
+        proj.FeaturedProjectBackgroundColor = project.FeaturedProjectBackgroundColor;
+        proj.FeaturedProjectTitleTextColor = project.FeaturedProjectTitleTextColor;
+        proj.FeaturedProjectInstructions = project.FeaturedProjectInstructions;
+
+        if (proj.VersionNum > CodeLabProject.kCurrentVersionNum) {
+          // NOTE: While sending ProjectName's is generally a PII risk, Sample projects will never have user configurable names
+          DAS.Warn("Codelab.OnAppLoadedFromData.BadVersionNumber", "featured project " + proj.ProjectName + "'s version number " + project.VersionNum.ToString() + " is greater than the app's codelab version " + CodeLabProject.kCurrentVersionNum.ToString());
+        }
+        else {
+          copyCodeLabFeaturedProjectList.Add(proj);
         }
       }
 
