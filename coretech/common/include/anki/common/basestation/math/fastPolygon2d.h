@@ -5,7 +5,7 @@
  * Created: 2014-10-14
  *
  * Description: A class that holds a 2d polygon and a bunch of other
- * data in order to do a really fast "contains" check
+ * data in order to do a really fast "contains" check. 
  *
  * Copyright: Anki, Inc. 2014
  *
@@ -16,8 +16,26 @@
 
 #include "anki/common/basestation/math/polygon.h"
 #include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/lineSegment2d.h"
 
 #include <vector>
+
+// NOTE: (mrw) The initial implementation of the FastPolygon class 
+// assumes both that the input polygon is convex, and that the input
+// polygon has all points sorted in clockwise order. Failing either
+// of these criteria results in eronious contains checks.
+//
+// There is alternative polygon contains implementation that does
+// not require these assumptions to hold, but is generally slower.
+// It does, however, contain a fast line intersection check, which
+// may result in greater overall speedup of the path planner code
+// than the loss of time due to worse performance of the point checks.
+// Further improvements could be made by filtering the line segments 
+// by vertical span.
+//
+// To use the slower LineSegment based implementation, set
+// USE_LINESEGMENT_CHECKS = 1 
+#define USE_LINESEGMENT_CHECKS 0
 
 namespace Anki {
 
@@ -35,6 +53,12 @@ public:
   bool Contains(const Point2f& pt) const;
 
   const Poly2f& GetSimplePolygon() const {return _poly;}
+  
+  const Point2f& operator[] (size_t idx) const {return _poly[idx];}
+  
+  const std::vector<LineSegment>& GetEdgeSegments() const { return _edgeSegments; }
+  
+  size_t Size() const {return _poly.size();}
 
   // getters for testing / plotting
 
@@ -60,6 +84,12 @@ public:
   static void ResetCounts();
   static int _numChecks;
   static int _numDotProducts;
+  
+  
+#if USE_LINESEGMENT_CHECKS
+  // checks if line intersects polygon
+  bool Intersects(const LineSegment& l) const;
+#endif
 
 private:
 
@@ -94,6 +124,11 @@ private:
   // the vector. The optional SortEdgeVectors will re-order this for
   // efficiency
   std::vector< std::pair< Vec2f, size_t> > _perpendicularEdgeVectors;
+  
+  using Span = std::pair<float, float>;
+  std::vector< LineSegment > _edgeSegments;
+  
+
 
   // helper functions
 
@@ -103,6 +138,10 @@ private:
 
   // create (unsorted) edge vectors
   void CreateEdgeVectors();
+  
+#if USE_LINESEGMENT_CHECKS
+  bool Contains_Assumptionless(const Point2f& p) const;
+#endif
 
   // helper for sorting function. Returns number of new points hit by
   // the specified edge index. If dryrun is false, it will update the

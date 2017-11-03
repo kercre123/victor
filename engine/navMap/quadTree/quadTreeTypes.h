@@ -29,25 +29,16 @@ namespace QuadTreeTypes {
 // Types
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// content detected in nodes
-enum class ENodeType : uint8_t {
-  Invalid,               // invalid type (not set)
-  Subdivided,            // we are subdivided, children hold more detailed info
-  Leaf,                  // container
-  _Count // added for FullContentArray checker
-};
-
 // content for each node. INavMemoryMapQuadData is polymorphic depending on the content type
 struct NodeContent {
-  explicit NodeContent(ENodeType t, const MemoryMapData& m);
-  explicit NodeContent(ENodeType t, MemoryMapTypes::MemoryMapDataPtr m);
+  explicit NodeContent(const MemoryMapData& m);
+  explicit NodeContent(MemoryMapTypes::MemoryMapDataPtr m);
   
   // comparison operators
   bool operator==(const NodeContent& other) const;
   bool operator!=(const NodeContent& other) const;
   
-  ENodeType type;
-  std::shared_ptr<MemoryMapData> data;
+  MemoryMapTypes::MemoryMapDataPtr data;
 };
 
 // position with respect to the parent
@@ -69,9 +60,6 @@ enum EClockDirection { CW, CCW };
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper functions
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-// String representing ENodeContentType for debugging purposes
-const char* ENodeTypeToString(ENodeType nodeType);
 
 // return the opposite direction to the one given (eg: North vs South, West vs East)
 inline QuadTreeTypes::EDirection GetOppositeDirection(EDirection dir);

@@ -42,7 +42,6 @@
 #include <chrono>
 #include <condition_variable>
 #include <thread>
-#include <unordered_set>
 
 
 // TODO:(bn) ANKI_DEVELOPER_CODE?
@@ -796,7 +795,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);
     }
     
-    std::unordered_set<std::shared_ptr<MemoryMapData>> observableObjectData;
+    MemoryMapTypes::MemoryMapDataConstList observableObjectData;
     MemoryMapTypes::NodePredicate pred = 
       [](MemoryMapTypes::MemoryMapDataPtr d) -> bool
       {
@@ -806,7 +805,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     memoryMap->FindContentIf(pred, observableObjectData);
     for (const auto& nodeData : observableObjectData) 
     {
-      auto castPtr = MemoryMapData::MemoryMapDataCast<MemoryMapData_ObservableObject>( nodeData );
+      auto castPtr = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ObservableObject>( nodeData );
       convexHulls.emplace_back( castPtr->boundingPoly );
     }
 
