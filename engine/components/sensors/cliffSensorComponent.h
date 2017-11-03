@@ -58,14 +58,13 @@ public:
   // Returns current threshold for cliff detection for the given cliff sensor
   uint16_t GetCliffDetectThreshold(unsigned int ind) const;
   
-  CliffSensorDataArray GetCliffDetectThresholds() const { return _cliffDetectThresholds; }
+  const CliffSensorDataArray& GetCliffDetectThresholds() const { return _cliffDetectThresholds; }
   
   // Sends message to the robot process containing all of the current cliff detection thresholds
   void SendCliffDetectThresholdsToRobot();
   
-  // index corresponds to CliffSensor enum
-  // TODO - remove the default value =0 here (VIC-138)
-  uint16_t  GetCliffDataRaw(unsigned int ind = 0) const;
+  // Raw reported cliff sensor values
+  const CliffSensorDataArray& GetCliffDataRaw() const { return _cliffDataRaw; }
   
   // Compute the estimated pose of the cliff obstacle for the given cliff event.
   bool ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d& cliffPose) const;
