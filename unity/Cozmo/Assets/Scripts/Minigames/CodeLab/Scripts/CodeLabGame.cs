@@ -267,9 +267,14 @@ namespace CodeLab {
     //  loaded incorrectly during the same session.
     private static List<string> _importErrors = new List<string>();
 
+    private bool _DeviceGyroSupportReportingInaccurrate = false;
+
     protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
 
       _SessionState.StartSession();
+
+
+      _DeviceGyroSupportReportingInaccurrate = SystemInfo.deviceModel.Contains("Amazon");
 
       SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
 
@@ -655,7 +660,6 @@ namespace CodeLab {
       GyroSeeminglyNonpresent,
       GyroDetected
     }
-    private bool _DeviceGyroSupportReportingInaccurrate = SystemInfo.deviceModel.Contains("Amazon");
     private UnreliableOrientationDetectionState unreliableOrientationDetectionState = UnreliableOrientationDetectionState.NoInformation;
 
     private void StoreDeviceOrientationInState() {
