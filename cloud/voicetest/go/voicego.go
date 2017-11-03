@@ -66,7 +66,9 @@ func GoAudioCallback(cSamples []int16) {
 
 //export GoMain
 func GoMain(startRecording, stopRecording C.voidFunc) {
-	client, err := chipper.NewClient("", "device-id", uuid.New().String()[:16], api.WithServerURL("http://127.0.0.1:8000"))
+	client, err := chipper.NewClient("", "device-id", "dahfahz5ooThoophe9Eig5e",
+		uuid.New().String()[:16],
+		api.WithServerURL("http://127.0.0.1:8000"))
 	if err != nil {
 		fmt.Println("Error starting chipper:", err)
 		return
