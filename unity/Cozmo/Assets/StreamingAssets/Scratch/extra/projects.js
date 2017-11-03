@@ -31,6 +31,16 @@
     setText('#horizontal-tab-hero .tab-hero-detail', $t('codeLab.projects.horizontalTab.horizontalTabHeroDetail'));
 
     setText('#vertical-tab-hero .tab-hero-title', $t('codeLab.projects.verticalTab.verticalTabHeroTitle'));
+
+    var locale = window.getUrlVars()['locale'];
+    if (locale == "de-DE") {
+      // Hack to reduce vertical hero title size due to long German string.
+      //
+      // TODO Dynamically detect if text is too long and reduce font size if so.
+      var elem = document.getElementById("vertical-tab-hero-title");
+      elem.style.fontSize = ".9em";
+    }
+
     setText('#vertical-tab-hero .tab-hero-detail', $t('codeLab.projects.verticalTab.verticalTabHeroDetail'));
 
     setText('#featured-tab-hero .tab-hero-title', $t('codeLab.projects.featuredTab.featuredTabHeroTitle'));
