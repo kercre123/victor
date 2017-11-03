@@ -34,11 +34,14 @@
 
     var locale = window.getUrlVars()['locale'];
     if (locale == "de-DE") {
-      // Hack to reduce vertical hero title size due to long German string.
+      // Hack to reduce sandbox and constructor tabs' hero title size due to long German strings.
       //
       // TODO Dynamically detect if text is too long and reduce font size if so.
-      var elem = document.getElementById("vertical-tab-hero-title");
-      elem.style.fontSize = ".9em";
+      var verticalElem = document.getElementById("vertical-tab-hero-title");
+      verticalElem.style.fontSize = ".9em";
+      
+      var horizontalElem = document.getElementById("horizontal-tab-hero-title");
+      horizontalElem.style.fontSize = ".9em";
     }
 
     setText('#vertical-tab-hero .tab-hero-detail', $t('codeLab.projects.verticalTab.verticalTabHeroDetail'));
