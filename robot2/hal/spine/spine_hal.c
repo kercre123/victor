@@ -50,7 +50,7 @@ static struct HalGlobals {
 #define spine_debug(fmt, args...)  (LOGD( fmt, ##args))
 #endif
 
-#define EXTENDED_SPINE_DEBUG 1
+#define EXTENDED_SPINE_DEBUG 0
 #if EXTENDED_SPINE_DEBUG
 #define spine_debug_x spine_debug
 #else
@@ -260,7 +260,6 @@ int hal_resync_partial(int start_offset, int len) {
     for (base = start_offset; base+numgood < len; ) {
       spine_debug_x(" %02x ", gHal.inbuffer[base+numgood]);
        numgood = spine_sync(gHal.inbuffer+base, numgood);
-       spine_debug_x(" b= %d / ng = %d", base, numgood);
        if (numgood == 0) { //no match: advance base
          base++;
        }
