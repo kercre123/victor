@@ -114,7 +114,8 @@ func RunProcess(micSock ipc.Socket, aiSock ipc.Socket) {
 				if ctx != nil {
 					fmt.Println("Got hotword event while already streaming, weird...")
 				}
-				client, err := chipper.NewClient("", "device-id", uuid.New().String()[:16],
+				client, err := chipper.NewClient("", "dahfahz5ooThoophe9Eig5e", "device-id",
+					uuid.New().String()[:16],
 					api.WithServerURL(ChipperUrl))
 				if err != nil {
 					fmt.Println("Error creating Chipper:", err)
