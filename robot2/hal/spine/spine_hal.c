@@ -1,4 +1,3 @@
- /* #include <stdbool.h> */
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -6,8 +5,6 @@
 #include <assert.h>
 #include <unistd.h>
 #include <termios.h>
-/* #include <string.h> */
-
 
 
 #include "schema/messages.h"
@@ -53,7 +50,7 @@ static struct HalGlobals {
 #define spine_debug(fmt, args...)  (LOGD( fmt, ##args))
 #endif
 
-#define EXTENDED_SPINE_DEBUG 0
+#define EXTENDED_SPINE_DEBUG 1
 #if EXTENDED_SPINE_DEBUG
 #define spine_debug_x spine_debug
 #else
@@ -116,10 +113,10 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
 int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
 {
 
+  usleep(200); //wait a bit.
   int result = read(gHal.fd, buffer, len);
   if (result < 0) {
     if (errno == EAGAIN) { //nonblocking no-data
-      usleep(200); //wait a bit.
       result = 0; //not an error
     }
   }
@@ -258,28 +255,29 @@ int hal_resync_partial(int start_offset, int len) {
        have been copied to the beginning of gHal.inbuffer.
        returns the number of copied bytes
    */
-    unsigned int i;
-    unsigned int index = 0;
-    for (i = start_offset; i+index < len; ) {
-       spine_debug_x(" %02x", gHal.inbuffer[i+index]);
-       unsigned int i2 = spine_sync(gHal.inbuffer+i, index);
-       if (i2 <= index) { //no match, or restarted match at `i2` chars before last scanned char
-          i+=index-i2+1;
+  unsigned int base;  //first possible good sync byte
+  unsigned int numgood = 0;
+    for (base = start_offset; base+numgood < len; ) {
+      spine_debug_x(" %02x ", gHal.inbuffer[base+numgood]);
+       numgood = spine_sync(gHal.inbuffer+base, numgood);
+       spine_debug_x(" b= %d / ng = %d", base, numgood);
+       if (numgood == 0) { //no match: advance base
+         base++;
        }
-       else if (i2 == SPINE_HEADER_LEN) { //whole sync!  
-          index = len-i; //consider rest of buffer valid.
+       else if (numgood == SPINE_HEADER_LEN) { //whole sync!
+         printf("found! @ %d\n",base);
+          numgood = len-base; //consider rest of buffer valid.
           break;
        }
-       index = i2;
+       // else partial match, numgood has been incremented
     }
-    //at this point we have scanned `i`+`index` chars. the last `index` of them are valid.
-    if (index) {
-       memmove(gHal.inbuffer, gHal.inbuffer+i, index);
+    //at this point we have scanned `base`+`numgood` chars. the last `numgood` of them are valid.
+    if (numgood) {
+       memmove(gHal.inbuffer, gHal.inbuffer+base, numgood);
     }
-    
-    spine_debug("\n%u dropped bytes\n", start_offset+i-index);
+    spine_debug("\n%u dropped bytes\n", base);
 
-    return index;
+    return numgood;
 }
 
 
@@ -345,7 +343,7 @@ const struct SpineMessageHeader* hal_read_frame()
     index = hal_resync_partial(SPINE_HEADER_LEN, total_message_length);
     return NULL;
   }
-  
+
   spine_debug_x("found frame %04x!\r", ((struct SpineMessageHeader*)gHal.inbuffer)->payload_type);
   spine_debug_x("payload start: %08x!\r", *(uint32_t*)(((struct SpineMessageHeader*)gHal.inbuffer)+1));
   index = 0; //get ready for next one
@@ -404,9 +402,8 @@ void hal_set_mode(int new_mode)
 
 int main(int argc, const char* argv[])
 {
-   gHal.fd = open("unittest.dat", O_RDONLY);
-   const struct SpineMessageHeader* hdr = hal_get_frame(PAYLOAD_ACK, 1000);
-   assert(hdr && hdr->payload_type == PAYLOAD_ACK);
-   
+  gHal.fd = open("unittest.dat", O_RDONLY);  //expect 46 dropped bytes
+  const struct SpineMessageHeader* hdr = hal_get_frame(PAYLOAD_ACK, 1000);
+  assert(hdr && hdr->payload_type == PAYLOAD_ACK);
 }
 #endif
