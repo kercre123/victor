@@ -8,6 +8,7 @@
 
 #include "core/common.h"
 #include "core/serial.h"
+#include "core/clock.h"
 #include "core/lcd.h"
 #include "helpware/helper_text.h"
 #include "helpware/display.h"
@@ -20,9 +21,53 @@
 
 #define LINEBUFSZ 255
 
+int wait_for_data(int fd, int max_sec) {
+  fd_set fdset;
+  struct timeval timeout = {max_sec,0};
+  FD_ZERO(&fdset);
+  FD_SET(fd, &fdset);
+  int ret = select(1,&fdset,NULL,NULL,&timeout);
+  return (ret>0);
+}
 
 
 
+int shellcommand(const char* command, int timeout_sec) {
+  int retval = -666;
+  uint64_t expiration = steady_clock_now()+(timeout_sec*NSEC_PER_SEC);
+
+  fixture_log_writestring("-BEGIN SHELL- ");
+  fixture_log_writestring(command);
+  fixture_log_writestring("\n");
+
+  FILE* pp = popen("./headprogram", "r");
+  if (pp) {
+    int pfd = fileno(pp);
+
+    char buffer[512];
+    while (!feof(pp)) {
+      if (wait_for_data(pfd, 1)) { //wait 1 second
+        if (fgets(buffer, 512, pp) != NULL) {
+          printf("%s", buffer);
+          fixture_log_writestring(buffer);
+        }
+      }
+      else if (steady_clock_now() > expiration) {
+        printf("TIMEOUT after %d sec\n", timeout_sec);
+        fixture_log_writestring("TIMEOUT");
+        break;
+      }
+    }
+    retval = pclose(pp);
+  }
+
+  fixture_log_writestring("--END SHELL--");
+  fixture_log_writestring(command);
+  fixture_log_writestring("\n");
+
+  return retval;
+
+}
 
 int handle_lcdset_command(const char* cmd, int len) {
   return helper_lcdset_command_parse(cmd, len);
@@ -41,22 +86,17 @@ int handle_logstart_command(const char* cmd, int len) {
 int handle_logstop_command(const char* cmd, int len) {
   return fixture_log_stop(cmd, len);
 }
-int handle_dutprogram_command(const char* cmd, int len) {
-  int retval = -666;
-  fixture_log_writestring("-BEGIN- DUTPROGRAM\n");
-  FILE* pp = popen("./headprogram", "r");
-  if (pp) {
-    char buffer[512];
-    while(fgets(buffer, 512, pp) != NULL) {
-      printf("%s", buffer);
-      helper_lcd_busy_spinner();
-      fixture_log_writestring(buffer);
-    }
-    retval = pclose(pp);
-  }
 
-  fixture_log_writestring("--END-- DUTPROGRAM\n");
-  return retval;
+
+
+int handle_dutprogram_command(const char* cmd, int len) {
+  char* num_end;
+  long timeout_sec = strtol(cmd, &num_end, 10);
+  printf("timeout = %ld\n", timeout_sec);
+  if (num_end == cmd || timeout_sec == 0) {
+    timeout_sec = LONG_MAX;
+  }
+  return shellcommand("./headprogram", timeout_sec);
 
 }
 
@@ -142,7 +182,7 @@ int fixture_serial(int serialFd) {
   if (nread<=0) { return 0; }
   const char* endl = linebuf+linelen;
 
-  
+
   printf("%.*s", nread, linebuf+linelen);
   fixture_log_write(linebuf+linelen, nread);
 
@@ -155,8 +195,6 @@ int fixture_serial(int serialFd) {
   }
   const char* line = find_line(linebuf, linelen, &endl);
   while (line) {
-//    printf("%.*s", endl-line, line);
-//    fixture_log_write(line, endl-line);
     if (line[0]=='>' && line[1]=='>') {
       response = fixture_command_parse(line+2, endl-line-2);
       if (response) {
@@ -229,6 +267,7 @@ int user_terminal(void) {
       putchar(linebuf[linelen+i]);
     }
     fflush(stdout);
+    serial_write(gSerialFd, (uint8_t*)linebuf+linelen, nread);
 
     char* endl = memchr(linebuf+linelen, '\n', nread);
     if (!endl) {
@@ -244,8 +283,6 @@ int user_terminal(void) {
       if (strncmp(linebuf, "quit", 4)==0)  {
         return 1;
       }
-      serial_write(gSerialFd, (uint8_t*)linebuf, endl-linebuf);
-      serial_write(gSerialFd, (uint8_t*)"\n", 1);
       linelen = 0;
     }
   }
@@ -265,7 +302,7 @@ void on_exit(void)
 
 void safe_quit(int n)
 {
-  error_exit(app_USAGE, "Caught signal%d \n", n);
+  error_exit(app_USAGE, "Caught signal %d \n", n);
 }
 
 
@@ -283,7 +320,7 @@ int main(int argc, const char* argv[])
   gSerialFd = serial_init(FIXTURE_TTY, FIXTURE_BAUD);
 
 
-  
+
   serial_write(gSerialFd, (uint8_t*)"\x1b\x1b\n", 4);
   serial_write(gSerialFd, (uint8_t*)"reset\n", 6);
 
