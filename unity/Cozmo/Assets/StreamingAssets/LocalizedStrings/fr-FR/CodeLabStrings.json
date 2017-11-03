@@ -1324,6 +1324,12 @@
     "translation" : "Copier dans Google Drive"
   },
   "codeLabSampleProject_LaserSmile.projectName" : {
-    "translation" : "Laser Smile!"
+    "translation" : "Sourire laser !"
+  },
+  "codeLabSampleProject_LaserSmile.variableInstruction1" : {
+    "translation" : "Le but est de remonter le moral !"
+  },
+  "codeLabSampleProject_LaserSmile.variableInstruction2" : {
+    "translation" : "Souris pour déclencher ton laser ! Bouge ta tête pour viser."
   }
 }

@@ -532,7 +532,7 @@
     "translation" : "あのキューブを引っぱたけ！あなたのハイスコアは？"
   },
   "codeLabFeaturedProject_CubeWhack.projectInstructions" : {
-    "translation" : "1．始める前にCOZMOの前にキューブを3つ置きます。\u000a\u000a2. COZMOのバックパックライトの色が変化します。同じ色になったらすばやくキューブをタップ！\u000a\u000a3. 時間切れになる前にできるだけ多くの同じ色のキューブをタップしてください。\u000a4. 自分の最高スコアを更新できるかな？"
+    "translation" : "1．始める前にCOZMOの前にキューブを3つ置きます。\u000a\u000a2. COZMOのバックパックライトの色が変化します。同じ色になったらすばやくキューブをタップ！\u000a\u000a3. 時間切れになる前にできるだけ多くの同じ色のキューブをタップしてください。\u000a\u000a4. 自分の最高スコアを更新できるかな？"
   },
   "codeLabFeaturedProject_FiretruckAlarm.projectName" : {
     "translation" : "消防車のアラーム"
@@ -541,7 +541,7 @@
     "translation" : "チックタック！COZMOがタイマーだったらもっと楽しい！"
   },
   "codeLabFeaturedProject_FiretruckAlarm.projectInstructions" : {
-    "translation" : "1．スタートフラグをタップすると10秒のタイマーがスタートします。\u000a\u000aCOZMOの消防車のアラームに向けてカウントダウンが始まります！"
+    "translation" : "1．スタートフラグをタップすると10秒のタイマーがスタートします。\u000a\u000a2. COZMOの消防車のアラームに向けてカウントダウンが始まります！"
   },
   "codeLabFeaturedProject_LightShow.projectName" : {
     "translation" : "ライトショー"
@@ -1325,5 +1325,11 @@
   },
   "codeLabSampleProject_LaserSmile.projectName" : {
     "translation" : "Laser Smile!"
+  },
+  "codeLabSampleProject_LaserSmile.variableInstruction1" : {
+    "translation" : "The goal is to turn that frown upside down!"
+  },
+  "codeLabSampleProject_LaserSmile.variableInstruction2" : {
+    "translation" : "Smile to shoot your laser! Move your head to aim."
   }
 }

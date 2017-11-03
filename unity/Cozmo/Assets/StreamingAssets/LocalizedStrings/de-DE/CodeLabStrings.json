@@ -1324,6 +1324,12 @@
     "translation" : "Nach Google Drive kopieren"
   },
   "codeLabSampleProject_LaserSmile.projectName" : {
-    "translation" : "Laser Smile!"
+    "translation" : "Laser-Lächeln!"
+  },
+  "codeLabSampleProject_LaserSmile.variableInstruction1" : {
+    "translation" : "Hier kannst du mit einem Lächeln gewinnen!"
+  },
+  "codeLabSampleProject_LaserSmile.variableInstruction2" : {
+    "translation" : "Lächle, um mit Laserstrahlen zu schießen! Bewege deinen Kopf, um zu zielen."
   }
 }
