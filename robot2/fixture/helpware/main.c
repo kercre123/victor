@@ -184,6 +184,7 @@ int fixture_serial(int serialFd) {
 
 
   printf("%.*s", nread, linebuf+linelen);
+  fflush(stdout);
   fixture_log_write(linebuf+linelen, nread);
 
   linelen+=nread;
@@ -264,7 +265,7 @@ int user_terminal(void) {
     if (nread<0) { return 1; }
     int i;
     for (i=0;i<nread;i++) {
-      putchar(linebuf[linelen+i]);
+      //putchar(linebuf[linelen+i]);
     }
     fflush(stdout);
     serial_write(gSerialFd, (uint8_t*)linebuf+linelen, nread);
