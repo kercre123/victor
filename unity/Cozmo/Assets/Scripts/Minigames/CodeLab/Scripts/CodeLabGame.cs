@@ -670,10 +670,10 @@ namespace CodeLab {
         // The kindle i'm testing on says it has a gyro, but the gyro is returning (0, 0, 1, 0) regardless of orientation
         // This is not as cleanly diagnosable as "wrong" as if it were returning identity, but is clearly not useful
         bool suspiciouslyPreciseGyro =
-               Input.gyro.attitude.x == Math.Floor(Input.gyro.attitude.x) &&
-               Input.gyro.attitude.y == Math.Floor(Input.gyro.attitude.y) &&
-               Input.gyro.attitude.z == Math.Floor(Input.gyro.attitude.z) &&
-               Input.gyro.attitude.w == Math.Floor(Input.gyro.attitude.w);
+               Mathf.Abs(Input.gyro.attitude.x - Mathf.Floor(Input.gyro.attitude.x)) < float.Epsilon &&
+               Mathf.Abs(Input.gyro.attitude.y - Mathf.Floor(Input.gyro.attitude.y)) < float.Epsilon &&
+               Mathf.Abs(Input.gyro.attitude.z - Mathf.Floor(Input.gyro.attitude.z)) < float.Epsilon &&
+               Mathf.Abs(Input.gyro.attitude.w - Mathf.Floor(Input.gyro.attitude.w)) < float.Epsilon;
 
         switch (unreliableOrientationDetectionState) {
         case UnreliableOrientationDetectionState.NoInformation:
