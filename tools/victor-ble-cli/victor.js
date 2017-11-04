@@ -1,3 +1,14 @@
+const WiFiAuth = {
+    AUTH_NONE_OPEN : {value: 0, name: "None" },
+    AUTH_NONE_WEP :  {value: 1, name: "WEP" },
+    AUTH_NONE_WEP_SHARED : {value: 2, name: "WEP Shared"},
+    AUTH_IEEE8021X: {value: 3, name: "IEEE8021X"},
+    AUTH_WPA_PSK: {value: 4, name: "WPA PSK"},
+    AUTH_WPA_EAP: {value: 5, name: "WPA EAP"},
+    AUTH_WPA2_PSK: {value: 6, name: "WPA2 PSK"},
+    AUTH_WPA2_EAP: {value: 7, name: "WPA2 EAP"}
+};
+
 class Victor {
     constructor(peripheral, service, send, read, outputCallback) {
 
@@ -44,21 +55,59 @@ class Victor {
                 var buf = data.slice(2);
                 var results = "";
                 while (offset < buf.length) {
-                    var secure = buf.readUInt8(offset++);
-                    var signal_strength = buf.readUInt8(offset++);
+                    var auth = buf.readUInt8(offset++);
+                    var encrypted = buf.readUInt8(offset++);
+                    var wps = buf.readUInt8(offset++);
+                    var signal_level = buf.readUInt8(offset++);
                     var end = buf.indexOf(0, offset);
                     if (end < offset) {
                         return;
                     }
                     var ssid = buf.toString('utf8', offset, end);
                     offset = end + 1;
-                    if (secure) {
-                        results += "Secure";
+                    switch (auth) {
+                    case WiFiAuth.AUTH_NONE_OPEN.value:
+                        results += WiFiAuth.AUTH_NONE_OPEN.name;
+                        break;
+                    case WiFiAuth.AUTH_NONE_WEP.value:
+                        results += WiFiAuth.AUTH_NONE_WEP.name;
+                        break;
+                    case WiFiAuth.AUTH_NONE_WEP_SHARED.value:
+                        results += WiFiAuth.AUTH_NONE_WEP_SHARED.name;
+                        break;
+                    case WiFiAuth.AUTH_IEEE8021X.value:
+                        results += WiFiAuth.AUTH_IEEE8021X.name;
+                        break;
+                    case WiFiAuth.AUTH_WPA_PSK.value:
+                        results += WiFiAuth.AUTH_WPA_PSK.name;
+                        break;
+                    case WiFiAuth.AUTH_WPA_EAP.value:
+                        results += WiFiAuth.AUTH_WPA_EAP.name;
+                        break;
+                    case WiFiAuth.AUTH_WPA2_PSK.value:
+                        results += WiFiAuth.AUTH_WPA2_PSK.name;
+                        break;
+                    case WiFiAuth.AUTH_WPA2_PSK.value:
+                        results += WiFiAuth.AUTH_WPA2_PSK.name;
+                        break;
+                    default:
+                        result += "Unknown (" + auth + ")";
+                        break;
+                    };
+                    results += "\t";
+                    if (encrypted) {
+                        results += "Encrypted";
                     } else {
-                        results += "Open";
+                        results += "Not Encrypted";
                     }
                     results += "\t";
-                    for (var i = 0 ; i < signal_strength; i++) {
+                    if (wps) {
+                        results += "WPS";
+                    } else {
+                        results += "   ";
+                    }
+                    results += "\t";
+                    for (var i = 0 ; i < signal_level; i++) {
                         results += "*";
                     }
                     results += "\t" + ssid + "\n";
