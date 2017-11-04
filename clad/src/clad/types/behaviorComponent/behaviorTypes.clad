@@ -329,7 +329,8 @@ enum uint_8 BehaviorID {
   VictorDemoNappingState,
   VictorDemoNapping,
   VictorDemoNappingWakeUp,
-  
+  VictorDemoFailedToFindCharger,
+
   Needs_SevereLowEnergyRequest,
   ObservingOnChargerIdle,
 

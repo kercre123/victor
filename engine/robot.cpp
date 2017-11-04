@@ -372,7 +372,15 @@ void Robot::SetOnChargerPlatform(bool onPlatform)
     GetAIComponent().GetFreeplayDataTracker().SetFreeplayPauseFlag(_isOnChargerPlatform, FreeplayPauseFlag::OnCharger);
   }
 }
-  
+
+void Robot::SetIsCharging(bool isCharging)
+{
+  if( isCharging != _isCharging ) {
+    _lastChargingChange_ms = GetLastMsgTimestamp();
+    _isCharging = isCharging;
+  }
+}
+
 bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
 {
   if (!IsHeadCalibrated()) {

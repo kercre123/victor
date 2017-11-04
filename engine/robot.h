@@ -365,6 +365,9 @@ public:
   bool   IsCharging()          const { return _isCharging; }
   // True if charger is out of spec
   bool   IsChargerOOS()        const { return _chargerOOS; }
+  // Return the message timestamp of the last time the value of IsCharging changed
+  TimeStamp_t GetLastChargingStateChangeTimestamp() const { return _lastChargingChange_ms; }
+  
   // Updates pose to be on charger
   Result SetPoseOnCharger();
   
@@ -805,6 +808,7 @@ protected:
   // State
   bool             _isOnCharger              = false;
   bool             _isCharging               = false;
+  TimeStamp_t      _lastChargingChange_ms    = 0;
   bool             _chargerOOS               = false;
   f32              _battVoltage              = 5;
   ImageSendMode    _imageSendMode            = ImageSendMode::Off;
@@ -850,7 +854,7 @@ protected:
   
   void SetOnCharger(bool onCharger);
   void SetOnChargerPlatform(bool onPlatform);
-  void SetIsCharging(bool isCharging)     {_isCharging = isCharging;}
+  void SetIsCharging(bool isCharging);
   
   // returns whether the tread state was updated or not
   bool CheckAndUpdateTreadsState(const RobotState& msg);

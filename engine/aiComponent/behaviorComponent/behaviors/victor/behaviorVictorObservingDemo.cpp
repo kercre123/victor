@@ -14,6 +14,7 @@
 
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/needsSystemTypes.h"
+#include "clad/types/objectTypes.h"
 #include "coretech/common/include/anki/common/basestation/utils/timer.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -41,6 +42,8 @@ static constexpr const float kSocializeKnownFaceCooldown = 60.0f * 30;
 static constexpr const float kGoToSleepTimeout_s = 60.0f * 0.5f; // TEMP: much much longer
 static constexpr const float kWantsToPlayTimeout_s = 60.0f * 20;
 static constexpr const u32 kMinFaceAgeToAllowSleep_ms = 5000;
+static constexpr const u32 kNeedsToChargeTime_ms = 1000 * 60 * 15; // 15 minutes
+
 
 // TODO:(bn) move somewhere else
 class TimeoutCondition : public ICondition
@@ -225,7 +228,32 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
       }
       return false;
     });
-    
+
+  auto CondSeesCharger = std::make_shared<LambdaCondition>(
+    [this](BehaviorExternalInterface& behaviorExternalInterface) {
+      BlockWorldFilter filter;
+      filter.SetFilterFcn( [](const ObservableObject* obj){
+          return IsCharger(obj->GetType(), false) && obj->IsPoseStateKnown();
+        });
+      const auto& blockWorld = behaviorExternalInterface.GetBlockWorld();
+      const auto* block = blockWorld.FindLocatedMatchingObject(filter);
+      return block != nullptr;
+    });
+
+  auto CondNeedsToCharge = std::make_shared<LambdaCondition>(
+    [this](BehaviorExternalInterface& behaviorExternalInterface) {
+      const Robot& robot = behaviorExternalInterface.GetRobot();
+      if( !robot.IsCharging() ) {
+        const TimeStamp_t lastChargeTime = robot.GetLastChargingStateChangeTimestamp();
+        const TimeStamp_t timeSinceNotCharging = 
+          robot.GetLastMsgTimestamp() > lastChargeTime ?
+          robot.GetLastMsgTimestamp() - lastChargeTime :
+          0;
+
+        return timeSinceNotCharging >= kNeedsToChargeTime_ms;
+      }
+      return false;
+    });
   
   ////////////////////////////////////////////////////////////////////////////////
   // Define states
@@ -290,6 +318,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     state.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
     state.AddInterruptingTransition(StateID::Feeding, CondCanEat);
     state.AddInterruptingTransition(StateID::Socializing, CondNewKnownFace);
+    state.AddNonInterruptingTransition(StateID::ReturningToCharger, CondNeedsToCharge);
     // state.AddNonInterruptingTransition(StateID::Playing, CondWantsToPlay);
     AddState(std::move(state));
   }
@@ -356,6 +385,33 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     
     AddState(std::move(state));
   }
+
+  {
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::FindAndGoToHome);
+    DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.FindAndGoToHome");
+
+    State state(StateID::ReturningToCharger, behavior);
+    state._requiredVisionModes.insert(VisionMode::DetectingMarkers);
+    // use "recently placed" so he stays on long enough to charge up a bit. May need a separate state for that
+    // at some point
+    state.AddExitTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
+    state.AddExitTransition(StateID::FailedToFindCharger, CondTrue);
+    
+    AddState(std::move(state));
+  }
+
+  {
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoFailedToFindCharger);
+    DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoFailedToFindCharger");
+
+    State state(StateID::FailedToFindCharger, behavior);
+    state._requiredVisionModes.insert(VisionMode::DetectingMarkers);
+    state.AddInterruptingTransition(StateID::ReturningToCharger, CondSeesCharger);
+    state.AddExitTransition(StateID::ObservingOnCharger, CondOnCharger);
+    
+    AddState(std::move(state));
+  }
+    
 
   DEV_ASSERT_MSG( _states.size() == ((size_t)StateID::Count),
                   "BehaviorVictorObservingDemo.MissingStates",

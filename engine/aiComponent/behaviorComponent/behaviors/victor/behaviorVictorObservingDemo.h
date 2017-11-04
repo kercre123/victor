@@ -90,6 +90,8 @@ private:
     Napping,
     WakingUp,
     Playing,
+    ReturningToCharger,
+    FailedToFindCharger,
 
     Count
   };
