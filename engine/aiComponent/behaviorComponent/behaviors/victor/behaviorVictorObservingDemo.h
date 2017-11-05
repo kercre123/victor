@@ -17,6 +17,7 @@
 
 #include "anki/common/basestation/objectIDs.h"
 #include "clad/types/visionModes.h"
+#include "engine/components/bodyLightComponent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -56,9 +57,11 @@ protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;  
   BehaviorVictorObservingDemo(const Json::Value& config);
-
+  
 public:
 
+  virtual ~BehaviorVictorObservingDemo();
+  
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
     return true; }
   
@@ -84,6 +87,8 @@ private:
     ObservingOnChargerRecentlyPlaced,
     DriveOffChargerIntoObserving,
     DriveOffChargerIntoPlay,
+    DriveOffChargerIntoSocializing,
+    DriveOffChargerIntoFeeding,
     Observing,
     Feeding,
     Socializing,
@@ -96,51 +101,16 @@ private:
     Count
   };
   
-  class State {
-  public:
-    State(StateID id, ICozmoBehaviorPtr behavior);
-
-    void AddInterruptingTransition(StateID toState, std::shared_ptr<ICondition> condition );
-    void AddNonInterruptingTransition(StateID toState, std::shared_ptr<ICondition> condition );
-    void AddExitTransition(StateID toState, std::shared_ptr<ICondition> condition);
-
-    void OnActivated();
-    void OnDeactivated();
-    // TODO:(bn) add asserts for these
-    
-    StateID _id;
-    ICozmoBehaviorPtr _behavior;
-
-    float _lastTimeStarted_s = -1.0f;
-    float _lastTimeEnded_s = -1.0f;
-
-    // Transitions are evaluated in order, and if the function returns true, we will transition to the given
-    // state id.
-    using Transitions = std::vector< std::pair< StateID, std::shared_ptr<ICondition> > >;
-
-    // transitions that can happen while the state is active (and in the middle of doing something)
-    Transitions _interruptingTransitions;
-
-    // transitions that can happen when the currently delegated-to behavior thinks it's a decent time for a
-    // gentle interruption (or if there is no currently delegated behavior)
-    Transitions _nonInterruptingTransitions;
-
-    // exit transitions only run if the currently-delegated-to behavior stop itself. Note that these are
-    // checked _after_ all of the other transitions
-    Transitions _exitTransitions;
-
-    // TODO:(bn) maybe these should be a property of ICondition? That way they just turn on automatically?
-    // TODO:(bn) ICozmoBehavior would actually be the better place for this (or a sub-component of ICozmoBehavior)
-    std::set<VisionMode> _requiredVisionModes;
-  };
+  class State;
 
   void AddState( State&& state );
 
   void TransitionToState(BehaviorExternalInterface& behaviorExternalInterface, const StateID targetState);
 
   bool StateExitCooldownExpired(StateID state, float timeout) const;
-  
-  std::map< StateID, State > _states;
+
+  using StateMap = std::map< StateID, State >;
+  std::unique_ptr< StateMap > _states;
 
   std::shared_ptr<FeedingListenerCondition> _feedingCompleteCondition;
 
@@ -149,7 +119,12 @@ private:
 
   StateID _currState = StateID::Count;
 
-  bool _initComplete = false;  
+  bool _initComplete = false;
+
+  BackpackLights _currDebugLights;
+  bool _debugLightsDirty = false;
+  bool _useDebugLights = false;
+  float _lastHearbeatLightTime = -1.0f;
 };
 
 }

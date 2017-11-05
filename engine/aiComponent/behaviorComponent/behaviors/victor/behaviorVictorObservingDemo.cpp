@@ -15,7 +15,11 @@
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectTypes.h"
+#include "coretech/common/include/anki/common/basestation/colorRGBA.h"
 #include "coretech/common/include/anki/common/basestation/utils/timer.h"
+#include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
+#include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -24,6 +28,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/faceWorld.h"
 #include "engine/needsSystem/needsManager.h"
@@ -36,14 +41,41 @@ namespace Cozmo {
 
 namespace {
 
-static constexpr const float kFeedingTimeout_s = 30.0f;
-static constexpr const float kRecentlyPlacedChargerTimeout_s = 60.0f * 0.2f; // 10; // TEMP: 
-static constexpr const float kSocializeKnownFaceCooldown = 60.0f * 30;
-static constexpr const float kGoToSleepTimeout_s = 60.0f * 0.5f; // TEMP: much much longer
-static constexpr const float kWantsToPlayTimeout_s = 60.0f * 20;
-static constexpr const u32 kMinFaceAgeToAllowSleep_ms = 5000;
-static constexpr const u32 kNeedsToChargeTime_ms = 1000 * 60 * 15; // 15 minutes
+constexpr const float kFeedingTimeout_s = 30.0f;
+constexpr const float kRecentlyPlacedChargerTimeout_s = 60.0f * 2;
+constexpr const float kSocializeKnownFaceCooldown_s = 60.0f * 10;
+constexpr const float kGoToSleepTimeout_s = 60.0f * 4;
+constexpr const float kWantsToPlayTimeout_s = 60.0f * 20;
+constexpr const u32 kMinFaceAgeToAllowSleep_ms = 5000;
+constexpr const u32 kNeedsToChargeTime_ms = 1000 * 60 * 5;
+constexpr const float kMaxFaceDistanceToSocialize_mm = 1000.0f;
+constexpr const float kInitialHeadAngle_deg = 20.0f;
 
+
+static const BackpackLights kLightsOff = {
+  .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+  .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+  .onPeriod_ms            = {{0,0,0}},
+  .offPeriod_ms           = {{0,0,0}},
+  .transitionOnPeriod_ms  = {{0,0,0}},
+  .transitionOffPeriod_ms = {{0,0,0}},
+  .offset                 = {{0,0,0}}
+};
+
+/** backpack debug lights description
+ * on based on json param (see constructor)
+ *
+ * light 0: demo state (front)
+ * light 1: green = on charger, red = cliff detected (purple = both) (middle light)
+ * light 2: blinking while update is running (status light)
+ */
+
+// NOTE: current victor lights are in a wonky order
+static constexpr const u32 kDebugStateLED = 0;
+static constexpr const u32 kDebugRobotStatusLED = 2;
+static constexpr const u32 kDebugHeartbeatLED = 1;
+
+static constexpr const float kHeartbeatPeriod_s = 0.6f;
 
 // TODO:(bn) move somewhere else
 class TimeoutCondition : public ICondition
@@ -77,6 +109,48 @@ bool TimeoutCondition::Evaluate(BehaviorExternalInterface& behaviorExternalInter
 }
 
 }
+
+class BehaviorVictorObservingDemo::State
+{
+public:
+  State(StateID id, ICozmoBehaviorPtr behavior);
+
+  void AddInterruptingTransition(StateID toState, std::shared_ptr<ICondition> condition );
+  void AddNonInterruptingTransition(StateID toState, std::shared_ptr<ICondition> condition );
+  void AddExitTransition(StateID toState, std::shared_ptr<ICondition> condition);
+
+  void OnActivated();
+  void OnDeactivated();
+  // TODO:(bn) add asserts for these
+    
+  StateID _id;
+  ICozmoBehaviorPtr _behavior;
+
+  float _lastTimeStarted_s = -1.0f;
+  float _lastTimeEnded_s = -1.0f;
+
+  // Transitions are evaluated in order, and if the function returns true, we will transition to the given
+  // state id.
+  using Transitions = std::vector< std::pair< StateID, std::shared_ptr<ICondition> > >;
+
+  // transitions that can happen while the state is active (and in the middle of doing something)
+  Transitions _interruptingTransitions;
+
+  // transitions that can happen when the currently delegated-to behavior thinks it's a decent time for a
+  // gentle interruption (or if there is no currently delegated behavior)
+  Transitions _nonInterruptingTransitions;
+
+  // exit transitions only run if the currently-delegated-to behavior stop itself. Note that these are
+  // checked _after_ all of the other transitions
+  Transitions _exitTransitions;
+
+  // TODO:(bn) maybe these should be a property of ICondition? That way they just turn on automatically?
+  // TODO:(bn) ICozmoBehavior would actually be the better place for this (or a sub-component of ICozmoBehavior)
+  std::set<VisionMode> _requiredVisionModes;
+
+  // optional light debugging color
+  ColorRGBA _debugColor = NamedColors::BLACK;
+};
 
 
 // TODO:(bn) move this
@@ -113,6 +187,13 @@ public:
 
 BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& config)
   : ICozmoBehavior(config)
+  , _states(new StateMap)
+  , _currDebugLights(kLightsOff)
+{
+  _useDebugLights = config.get("use_debug_lights", true).asBool();
+}
+
+BehaviorVictorObservingDemo::~BehaviorVictorObservingDemo()
 {
 }
 
@@ -125,19 +206,20 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   // Define conditions
   ////////////////////////////////////////////////////////////////////////////////
 
-  auto CondIsHungry = std::make_shared<LambdaCondition>(
-    [](BehaviorExternalInterface& behaviorExternalInterface) {
-      if(behaviorExternalInterface.HasNeedsManager()){
-        auto& needsManager = behaviorExternalInterface.GetNeedsManager();
-        NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
+  auto isHungryLambda = [](BehaviorExternalInterface& behaviorExternalInterface) {
+    if(behaviorExternalInterface.HasNeedsManager()){
+      auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+      NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
 
-        if( // currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Warning) ||
-            currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical) ) {
-          return true;
-        }
+      if( // currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Warning) ||
+        currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical) ) {
+        return true;
       }
-      return false;
-    });
+    }
+    return false;
+  };
+    
+  auto CondIsHungry = std::make_shared<LambdaCondition>(isHungryLambda);
 
   auto CondOnCharger = std::make_shared<LambdaCondition>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
@@ -151,12 +233,18 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
       return !onCharger;
     });
 
-  auto CondCanEat = std::make_shared<LambdaCondition>(
-    [](BehaviorExternalInterface& behaviorExternalInterface) {
-      const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-      return whiteboard.Victor_HasCubeToEat();
-    });
+  auto canEatLambda = [](BehaviorExternalInterface& behaviorExternalInterface) {
+    const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
+    return whiteboard.Victor_HasCubeToEat();
+  };
+  
+  auto CondCanEat = std::make_shared<LambdaCondition>( canEatLambda );
 
+  auto CondHungryAndCanEat = std::make_shared<LambdaCondition>(
+    [canEatLambda, isHungryLambda](BehaviorExternalInterface& behaviorExternalInterface) {
+      return canEatLambda(behaviorExternalInterface) && isHungryLambda(behaviorExternalInterface);
+    });
+  
   {
     // the feeding complete condition is special because it needs to stay around to be a "listener"a
     auto& BC = behaviorExternalInterface.GetBehaviorContainer();
@@ -173,14 +261,24 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
 
   auto CondTrue = std::make_shared<TrueCondition>();
 
-  auto CondNewKnownFace = std::make_shared<LambdaCondition>(
+  auto CondCloseFaceForSocializing = std::make_shared<LambdaCondition>(
     [this](BehaviorExternalInterface& behaviorExternalInterface) {
+      if( !StateExitCooldownExpired(StateID::Socializing, kSocializeKnownFaceCooldown_s) ) {
+        // still on cooldown
+        return false;
+      }
+      
       auto& faceWorld = behaviorExternalInterface.GetFaceWorld();
       const auto& faces = faceWorld.GetFaceIDs(true);
       for( const auto& faceID : faces ) {
         const auto* face = faceWorld.GetFace(faceID);
-        if( face != nullptr && face->HasName() ) {
-          if( StateExitCooldownExpired(StateID::Socializing, kSocializeKnownFaceCooldown) ) {
+        if( face != nullptr ) {
+          const Pose3d facePose = face->GetHeadPose();
+          float distanceToFace = 0.0f;
+          if( ComputeDistanceSQBetween( behaviorExternalInterface.GetRobot().GetPose(),
+                                      facePose,
+                                      distanceToFace ) &&
+              distanceToFace < Util::Square(kMaxFaceDistanceToSocialize_mm) ) {
             return true;
           }
         }
@@ -213,7 +311,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
       }
       
       const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      if( _states.at(StateID::ObservingOnCharger)._lastTimeStarted_s + kGoToSleepTimeout_s <= currTime_s ) {
+      if( _states->at(StateID::ObservingOnCharger)._lastTimeStarted_s + kGoToSleepTimeout_s <= currTime_s ) {
 
         // only go to sleep if we haven't recently seen a face
         auto& faceWorld = behaviorExternalInterface.GetFaceWorld();
@@ -230,7 +328,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     });
 
   auto CondSeesCharger = std::make_shared<LambdaCondition>(
-    [this](BehaviorExternalInterface& behaviorExternalInterface) {
+    [](BehaviorExternalInterface& behaviorExternalInterface) {
       BlockWorldFilter filter;
       filter.SetFilterFcn( [](const ObservableObject* obj){
           return IsCharger(obj->GetType(), false) && obj->IsPoseStateKnown();
@@ -241,7 +339,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     });
 
   auto CondNeedsToCharge = std::make_shared<LambdaCondition>(
-    [this](BehaviorExternalInterface& behaviorExternalInterface) {
+    [](BehaviorExternalInterface& behaviorExternalInterface) {
       const Robot& robot = behaviorExternalInterface.GetRobot();
       if( !robot.IsCharging() ) {
         const TimeStamp_t lastChargeTime = robot.GetLastChargingStateChangeTimestamp();
@@ -266,11 +364,14 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingOnChargerState");
 
     State state(StateID::ObservingOnCharger, behavior);
+    state._debugColor = NamedColors::ORANGE;
     state._requiredVisionModes.insert(VisionMode::DetectingMarkers);
+    state._requiredVisionModes.insert(VisionMode::DetectingFaces);
+    // TODO:(bn) really need required modes to be in ICondition instead of here
     state.AddNonInterruptingTransition(StateID::DriveOffChargerIntoObserving, CondIsHungry);
     state.AddInterruptingTransition(StateID::Observing, CondOffCharger);
-    state.AddInterruptingTransition(StateID::Feeding, CondCanEat);
-    state.AddInterruptingTransition(StateID::Socializing, CondNewKnownFace);
+    state.AddInterruptingTransition(StateID::DriveOffChargerIntoFeeding, CondHungryAndCanEat);
+    state.AddInterruptingTransition(StateID::DriveOffChargerIntoSocializing, CondCloseFaceForSocializing);
     state.AddNonInterruptingTransition(StateID::Napping, CondWantsToSleep);
     // state.AddNonInterruptingTransition(StateID::DriveOffChargerIntoPlay, CondWantsToPlay);
     AddState(std::move(state));
@@ -281,9 +382,12 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingOnChargerState");
 
     State state(StateID::ObservingOnChargerRecentlyPlaced, behavior);
+    state._debugColor = NamedColors::RED;
+    state._requiredVisionModes.insert(VisionMode::DetectingMarkers);
     state.AddInterruptingTransition(StateID::Observing, CondOffCharger);
     state.AddNonInterruptingTransition(StateID::ObservingOnCharger,
                                        std::make_shared<TimeoutCondition>(kRecentlyPlacedChargerTimeout_s));
+    state.AddNonInterruptingTransition(StateID::DriveOffChargerIntoFeeding, CondHungryAndCanEat);
     AddState(std::move(state));
   }
 
@@ -294,7 +398,8 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     State driveOffCharger(StateID::DriveOffChargerIntoObserving, behavior);
     driveOffCharger._requiredVisionModes.insert(VisionMode::DetectingFaces);
     driveOffCharger._requiredVisionModes.insert(VisionMode::DetectingMarkers);
-    driveOffCharger.AddNonInterruptingTransition(StateID::Socializing, CondNewKnownFace);
+    driveOffCharger.AddNonInterruptingTransition(StateID::DriveOffChargerIntoSocializing,
+                                                 CondCloseFaceForSocializing);
     driveOffCharger.AddExitTransition(StateID::Observing, CondTrue);
     AddState(std::move(driveOffCharger));
   }
@@ -309,15 +414,36 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::DriveOffCharger);
+    DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.DriveOffCharger");
+
+    State driveOffCharger(StateID::DriveOffChargerIntoFeeding, behavior);
+    driveOffCharger.AddExitTransition(StateID::Feeding, CondTrue);
+    AddState(std::move(driveOffCharger));
+  }
+
+  {
+    // TODO:(bn) add an "Excited" animation while on the charger here so coming off looks a bit different
+    
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::DriveOffCharger);
+    DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.DriveOffCharger");
+
+    State driveOffCharger(StateID::DriveOffChargerIntoSocializing, behavior);
+    driveOffCharger.AddExitTransition(StateID::Socializing, CondTrue);
+    AddState(std::move(driveOffCharger));
+  }
+
+  {
     ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoObservingState);
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingState");
 
     State state(StateID::Observing, behavior);
+    state._debugColor = NamedColors::BLUE;
     state._requiredVisionModes.insert(VisionMode::DetectingFaces);
     state._requiredVisionModes.insert(VisionMode::DetectingMarkers); // TODO:(bn) only if hungry?
     state.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
     state.AddInterruptingTransition(StateID::Feeding, CondCanEat);
-    state.AddInterruptingTransition(StateID::Socializing, CondNewKnownFace);
+    state.AddInterruptingTransition(StateID::Socializing, CondCloseFaceForSocializing);
     state.AddNonInterruptingTransition(StateID::ReturningToCharger, CondNeedsToCharge);
     // state.AddNonInterruptingTransition(StateID::Playing, CondWantsToPlay);
     AddState(std::move(state));
@@ -328,6 +454,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoFeedingState");
 
     State state(StateID::Feeding, behavior);
+    state._debugColor = NamedColors::CYAN;
     state._requiredVisionModes.insert(VisionMode::DetectingMarkers);
     state.AddNonInterruptingTransition(StateID::Observing, std::make_shared<TimeoutCondition>(kFeedingTimeout_s));
     state.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
@@ -344,6 +471,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoSocialize");
 
     State state(StateID::Socializing, behavior);
+    state._debugColor = NamedColors::MAGENTA;
     state._requiredVisionModes.insert(VisionMode::DetectingFaces);
     state.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
     state.AddNonInterruptingTransition(StateID::Feeding, CondCanEat);
@@ -357,6 +485,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoPlayState");
 
     State state(StateID::Playing, behavior);
+    state._debugColor = NamedColors::YELLOW;
     state._requiredVisionModes.insert(VisionMode::DetectingMarkers);
     state._requiredVisionModes.insert(VisionMode::DetectingFaces);
     state.AddInterruptingTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
@@ -370,6 +499,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoNappingState");
 
     State state(StateID::Napping, behavior);
+    state._debugColor = NamedColors::GREEN;
     state.AddInterruptingTransition(StateID::WakingUp, CondOffCharger);
     state.AddNonInterruptingTransition(StateID::WakingUp, CondIsHungry);
     
@@ -391,11 +521,13 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.FindAndGoToHome");
 
     State state(StateID::ReturningToCharger, behavior);
+    state._debugColor = NamedColors::WHITE;
     state._requiredVisionModes.insert(VisionMode::DetectingMarkers);
     // use "recently placed" so he stays on long enough to charge up a bit. May need a separate state for that
     // at some point
     state.AddExitTransition(StateID::ObservingOnChargerRecentlyPlaced, CondOnCharger);
     state.AddExitTransition(StateID::FailedToFindCharger, CondTrue);
+    // TODO:(bn) this doesn't work right now because FindAndGoToHome never stops unless it find a charger
     
     AddState(std::move(state));
   }
@@ -413,10 +545,10 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
     
 
-  DEV_ASSERT_MSG( _states.size() == ((size_t)StateID::Count),
+  DEV_ASSERT_MSG( _states->size() == ((size_t)StateID::Count),
                   "BehaviorVictorObservingDemo.MissingStates",
                   "Demo has %zu states defined, but there are %zu in the enum",
-                  _states.size(),
+                  _states->size(),
                   ((size_t)StateID::Count) );    
 
   // TODO:(bn) assert that all states are present in the map
@@ -427,15 +559,15 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
 void BehaviorVictorObservingDemo::AddState( State&& state )
 {
   if( ANKI_VERIFY(!_initComplete, "BehaviorVictorObservingDemo.AddState.CalledOutsideInit", "") &&
-      ANKI_VERIFY( _states.find(state._id) == _states.end(),
+      ANKI_VERIFY( _states->find(state._id) == _states->end(),
                    "BehaviorVictorObservingDemo.AddState.StateAlreadyExists", "") ) {    
-    _states.emplace(state._id, state);
+    _states->emplace(state._id, state);
   }
 }
 
 void BehaviorVictorObservingDemo::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  for( const auto& statePair : _states ) {
+  for( const auto& statePair : *_states ) {
     if( statePair.second._behavior != nullptr ) {
       delegates.insert(statePair.second._behavior.get());
     }
@@ -445,24 +577,37 @@ void BehaviorVictorObservingDemo::GetAllDelegates(std::set<IBehavior*>& delegate
 
 Result BehaviorVictorObservingDemo::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  const bool onCharger = behaviorExternalInterface.GetRobot().IsOnChargerPlatform();
+  // _visionModesToReEnable.clear();
+  // auto& visionComponent = behaviorExternalInterface.GetRobot().GetVisionComponent();
+  // for (VisionMode mode = VisionMode::Idle; mode < VisionMode::Count; ++mode) {
+  //   if( visionComponent.IsModeEnabled(mode) ) {
+  //     _visionModesToReEnable.push_back(mode);
+  //     visionComponent.EnableMode(mode, false);
+  //   }
+  // }
+  // Leave modes alone for now, seems to be a bug with disabled and re-enabling in the same tick
 
-  _visionModesToReEnable.clear();
-  auto& visionComponent = behaviorExternalInterface.GetRobot().GetVisionComponent();
-  for (VisionMode mode = VisionMode::Idle; mode < VisionMode::Count; ++mode) {
-    if( visionComponent.IsModeEnabled(mode) ) {
-      _visionModesToReEnable.push_back(mode);
-      visionComponent.EnableMode(mode, false);
-    }
+  if( _useDebugLights ) {
+    // force an update
+    _debugLightsDirty = true;
   }
-
   
-  if( onCharger ) {
-    TransitionToState(behaviorExternalInterface, StateID::ObservingOnCharger);
-  }
-  else {
-    TransitionToState(behaviorExternalInterface, StateID::Observing);
-  }
+  Robot& robot = behaviorExternalInterface.GetRobot();
+  
+  CompoundActionSequential *initialAction = new CompoundActionSequential(
+    robot,
+    {{ new TriggerAnimationAction(robot, AnimationTrigger::NeutralFace),
+       new MoveHeadToAngleAction(robot, DEG_TO_RAD(kInitialHeadAngle_deg)) }});
+
+  DelegateIfInControl(initialAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
+      const bool onCharger = behaviorExternalInterface.GetRobot().IsOnChargerPlatform();
+      if( onCharger ) {
+        TransitionToState(behaviorExternalInterface, StateID::ObservingOnCharger);
+      }
+      else {
+        TransitionToState(behaviorExternalInterface, StateID::Observing);
+      }
+    });
   
   return Result::RESULT_OK;
 }
@@ -483,9 +628,52 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
   BehaviorExternalInterface& behaviorExternalInterface)
 {
 
-  DEV_ASSERT(_currState != StateID::Count, "VictorObservingDemo.Update.InvalidState");
+  if( _useDebugLights ) {
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if( currTime_s - _lastHearbeatLightTime >= kHeartbeatPeriod_s ) {
+      if( _currDebugLights.onColors[kDebugHeartbeatLED] == NamedColors::CYAN ) {
+        _currDebugLights.onColors[  kDebugHeartbeatLED] =  NamedColors::BLACK;
+        _currDebugLights.offColors[ kDebugHeartbeatLED] =  NamedColors::BLACK;
+      }
+      else {
+        _currDebugLights.onColors[ kDebugHeartbeatLED] = NamedColors::CYAN;
+        _currDebugLights.offColors[kDebugHeartbeatLED] = NamedColors::CYAN;
+      }
+      _lastHearbeatLightTime = currTime_s;
+      _debugLightsDirty = true;
+    }
+
+    Robot& robot = behaviorExternalInterface.GetRobot();
+    
+    ColorRGBA robotStateColor = NamedColors::BLACK;
+    if( robot.IsOnChargerPlatform() ) {
+      robotStateColor.SetG(1.0f);
+    }
+    if( robot.GetCliffSensorComponent().IsCliffDetectedStatusBitOn() ) {
+      robotStateColor.SetR(1.0f);
+    }
+
+    if( _currDebugLights.onColors[kDebugRobotStatusLED] != robotStateColor ) {
+      _currDebugLights.onColors[  kDebugRobotStatusLED]  = robotStateColor;
+      _currDebugLights.offColors[ kDebugRobotStatusLED]  = robotStateColor;
+      
+      _debugLightsDirty = true;
+    }
+
+    if( _debugLightsDirty ) {
+      
+      robot.GetBodyLightComponent().SetBackpackLights(_currDebugLights);
+      _debugLightsDirty = false;
+    }
+  }
+
+  if( _currState == StateID::Count ) {
+    // initial actions must be running
+    // TODO:(bn) make this a proper state?
+    return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }
   
-  State& state = _states.at(_currState);
+  State& state = _states->at(_currState);
 
   // first check the interrupting conditions
   for( const auto& transitionPair : state._interruptingTransitions ) {
@@ -564,8 +752,8 @@ void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& b
   std::set<VisionMode> visionModesToDisable;
   
   if( _currState != StateID::Count ) {
-    visionModesToDisable = _states.at(_currState)._requiredVisionModes;
-    _states.at(_currState).OnDeactivated();
+    visionModesToDisable = _states->at(_currState)._requiredVisionModes;
+    _states->at(_currState).OnDeactivated();
     const bool allowCallback = false;
     CancelDelegates(allowCallback);
   }
@@ -576,8 +764,8 @@ void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& b
   // TODO:(bn) channel for demo?
   PRINT_CH_INFO("Unfiltered", "VictorObservingDemo.TransitionToState",
                 "Transition from state '%s' -> '%s'",
-                _currState  != StateID::Count ? _states.at(_currState )._behavior->GetIDStr().c_str() : "<NONE>",
-                targetState != StateID::Count ? _states.at(targetState)._behavior->GetIDStr().c_str() : "<NONE>");
+                _currState  != StateID::Count ? _states->at(_currState )._behavior->GetIDStr().c_str() : "<NONE>",
+                targetState != StateID::Count ? _states->at(targetState)._behavior->GetIDStr().c_str() : "<NONE>");
 
   _currState = targetState;
 
@@ -591,7 +779,7 @@ void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& b
   };    
   
   if( _currState != StateID::Count ) {
-    State& state = _states.at(_currState);
+    State& state = _states->at(_currState);
 
     // don't disable any vision modes that we'll still need
     for( const auto& mode : state._requiredVisionModes ) {
@@ -602,6 +790,14 @@ void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& b
     setVisionModes(state._requiredVisionModes, true);
     
     state.OnActivated();
+
+    if( _useDebugLights ) {
+      if( _currDebugLights.onColors[kDebugStateLED] != state._debugColor ) {
+        _debugLightsDirty = true;
+        _currDebugLights.onColors[kDebugStateLED] = state._debugColor;
+        _currDebugLights.offColors[kDebugStateLED] = state._debugColor;
+      }
+    }
 
     if( state._behavior->WantsToBeActivated( behaviorExternalInterface ) ) {
       DelegateIfInControl(behaviorExternalInterface,  state._behavior.get() );
@@ -679,8 +875,8 @@ void BehaviorVictorObservingDemo::State::OnDeactivated()
 bool BehaviorVictorObservingDemo::StateExitCooldownExpired(StateID state, float timeout) const
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if( _states.at(state)._lastTimeEnded_s < 0.0f ||
-      _states.at(state)._lastTimeEnded_s + timeout <= currTime_s ) {
+  if( _states->at(state)._lastTimeEnded_s < 0.0f ||
+      _states->at(state)._lastTimeEnded_s + timeout <= currTime_s ) {
     return true;
   }
   else {

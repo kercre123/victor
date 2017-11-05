@@ -3,12 +3,12 @@
   "behaviorClass" : "DispatcherRandom",
 
   "behaviors" : [
-    {
-      "behavior": "FPPeekABoo",
-      "cooldown_s": 1200.0,
-      "cooldown_random_factor": 0.5,
-      "weight": 0.3
-    },
+    // {
+    //   "behavior": "FPPeekABoo",
+    //   "cooldown_s": 1200.0,
+    //   "cooldown_random_factor": 0.5,
+    //   "weight": 0.3
+    // },
     {
       "behavior": "PounceOnMotion_Socialize",
       "cooldown_s": 900.0,
