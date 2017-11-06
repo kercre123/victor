@@ -51,6 +51,13 @@
 
     // Put green flag in its location in the upper left corner of the workspace if no green flag is on workspace.
     window.ensureGreenFlagIsOnWorkspace = function () {
+      // Blockly.Block.prototype.dispose() calls ensureGreenFlagIsOnWorkspace(), sometimes
+      // before the requested project has loaded. When this happens, this can lead to a race condition
+      // where we then identify this project as being a user project that needs to be saved, but
+      // actually we are about to load a sample or featured project. So now we check the isLoadingProject
+      // bool to prevent this problem.
+      if (window.isLoadingProject) return;
+
       // TODO This is currently in XML, but we could migrate to use JSON instead throughout this method.
       // These two lines should help:
       //var projectJSON = '{"targets":[{"id":"9I=:fGU6_w`eoI3X`=J!","name":"Stage","isStage":true,"x":0,"y":0,"size":100,"direction":90,"draggable":false,"currentCostume":0,"costumeCount":0,"visible":true,"rotationStyle":"all around","blocks":{},"variables":{},"lists":{},"costumes":[],"sounds":[]},{"id":"D:hj2q3qXn53^HJG4b,d","name":"Sprite1","isStage":false,"x":0,"y":0,"size":100,"direction":90,"draggable":false,"currentCostume":0,"costumeCount":0,"visible":true,"rotationStyle":"all around","blocks":{"g68)-/+Er8xO7[moRW8J":{"id":"g68)-/+Er8xO7[moRW8J","opcode":"event_whenflagclicked","inputs":{},"fields":{},"next":null,"topLevel":true,"parent":null,"shadow":false,"x":662.4705882352941,"y":426.7058823529412}},"variables":{},"lists":{},"costumes":[],"sounds":[]}],"meta":{"semver":"3.0.0","vm":"0.1.0","agent":"Mozilla/5.0 (iPad; CPU OS 9_1 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13B143 Safari/601.1"}}';

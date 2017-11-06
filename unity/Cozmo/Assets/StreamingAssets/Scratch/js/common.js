@@ -206,9 +206,8 @@
             Scratch.workspace.clearUndo();
             if (window.isLoadingProject) {
                 window.notifyProjectIsLoaded();
+                window.startSaveProjectTimer();
             }
-
-            window.startSaveProjectTimer();
 
             if (window.isVertical) {
                 workspace.toolbox_.flyout_.hide();
