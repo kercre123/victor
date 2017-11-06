@@ -32,7 +32,7 @@ typedef struct {
 
 static const int DAT_CLOCK = 17500000;
 static const int MAX_TRANSFER = 0x1000;
-
+static const int LCD_BRIGHTNESS = 10; // min=0, max=20 (NOTE: Values above 15 (?) seem to cause brownouts)
 
 #define RSHIFT 0x1C
 
@@ -53,6 +53,8 @@ static const INIT_SCRIPT init_scr[] = {
   { 0x2A, 4, { 0x00, RSHIFT, (Anki::Cozmo::FACE_DISPLAY_WIDTH + RSHIFT - 1) >> 8, (Anki::Cozmo::FACE_DISPLAY_WIDTH + RSHIFT - 1) & 0xFF } },
   { 0x2B, 4, { 0x00, 0x00, (Anki::Cozmo::FACE_DISPLAY_HEIGHT -1) >> 8, (Anki::Cozmo::FACE_DISPLAY_HEIGHT -1) & 0xFF } },
   { 0x26, 1, {0x08} }, // Gamma Curve Setting: 0x01=2.2, 0x02=1.8, 0x04=2.5, 0x08=1.0 
+  //{ 0x53, 1, {0x24} },  // Brightness control: Brightness registers active, no dimming, backlight on
+  //{ 0x51, 1, {0x80} },  // Screen brightness value
   { 0x29, 0 }, // Display On
   
   { 0 }
@@ -188,6 +190,19 @@ static void lcd_device_init() {
   }
 }
 
+void lcd_set_brightness(int brightness)
+{
+  brightness = MIN(brightness, 20);
+  brightness = MAX(brightness, 0);
+  int fd = open("/sys/class/leds/face-backlight/brightness",O_WRONLY);
+  if (fd) {
+    char buf[3];
+    snprintf(buf,3,"%02d\n",brightness);
+    write(fd, buf, 3);
+    close(fd);
+  }
+}
+
 static void lcd_draw_frame(uint8_t* frame, int sz) {
   static const uint8_t WRITE_RAM = 0x2C;
   spi(TRUE, 1, &WRITE_RAM);
@@ -197,11 +212,12 @@ static void lcd_draw_frame(uint8_t* frame, int sz) {
 int lcd_init(void) {
   static const uint8_t    MODE = 0;
   
+  // Set backlight brightness
+  lcd_set_brightness(LCD_BRIGHTNESS);
+
   // Echo to device to activate backlight
   // TODO: Open file and write to it instead of shelling out to the system
-  system("echo 10 > /sys/class/leds/face-backlight/brightness");
   system("echo 1 > /sys/kernel/debug/regulator/8916_l17/enable");
-  
   
   // IO Setup
   DnC_PIN = gpio_create(GPIO_LCD_WRX, 1, 1);
