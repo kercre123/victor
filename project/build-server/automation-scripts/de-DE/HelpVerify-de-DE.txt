@@ -17,7 +17,7 @@
 0.550708:click:next_button:0.1572113
 1.369576:text:4 von 9
 0.03998:text:Cozmo wird mit der Zeit immer besser.
-0.503734:text:Für jeden Tag, an dem du Cozmos Spielbedarf erfüllst, erhältst du eine Spielmarke. Mit diesen Marken kannst du Bonuskisten freischalten, die Belohnungen wie Sparks, Spiele und Tricks enthalten.
+0.503734:text:Für jeden Tag, an dem du Cozmos Spielbedarf erfüllst, erhältst du eine tägliche Bonusmarke. Mit diesen Marken kannst du Bonuskisten freischalten, die Belohnungen wie Sparks und Tricks enthalten.
 0.120306:text:<color=#FFFFFF>Verdiene dir jeden Tag </color><b><color=#F5BF2D>Spielmarken</color></b><color=#FFFFFF>.</color>
 0.507623:text:<color=#FFFFFF>Mit 3 Marken lässt sich eine </color><b><color=#F5BF2D>Bonuskiste</color></b> <color=#FFFFFF>freischalten</color>.
 0.069129:click:next_button:0.1307373
