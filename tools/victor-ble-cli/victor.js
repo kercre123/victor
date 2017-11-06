@@ -22,6 +22,7 @@ class Victor {
         this._outgoing_packets = [];
         this._incoming_packets = [];
         this._heartbeat_counter = 0;
+        this._print_heartbeats = false;
 
         this._peripheral.on('disconnect', () => {
             clearInterval(this._interval);
@@ -50,7 +51,9 @@ class Victor {
                 return;
             case Victor.MSG_V2B_HEARTBEAT:
                 this._heartbeat_counter = data[2];
-                this._output("Heartbeat " + this._heartbeat_counter);
+                if (this._print_heartbeats) {
+                    this._output("Heartbeat " + this._heartbeat_counter);
+                }
                 return;
             case Victor.MSG_V2B_WIFI_SCAN_RESULTS:
                 var offset = 0;

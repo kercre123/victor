@@ -9,7 +9,7 @@ var connectedVictor = undefined;
 function completer(line) {
     var args = line.split(/(\s+)/);
     args = args.filter(function(entry) {return /\S/.test(entry); });
-    const completions = 'connect dhcptool disconnect help ifconfig ping quit reboot restart-adb scan ssh-set-authorized-keys stop-scan wifi-scan wifi-set-config wifi-start wifi-stop wpa_cli'.split(' ');
+    const completions = 'connect dhcptool disconnect help ifconfig ping print-heartbeats quit reboot restart-adb scan ssh-set-authorized-keys stop-scan wifi-scan wifi-set-config wifi-start wifi-stop wpa_cli'.split(' ');
     const hits = completions.filter((c) => c.startsWith(args[0]));
     if (hits.length == 0) {
         return [completions, line];
@@ -45,6 +45,7 @@ function printHelp() {
     connect [name]                        -  Connect to a Victor by name. Defaults to first found
     disconnect                            -  Disconnect from Victor
     ping                                  -  Ping Victor
+    print-heartbeats                      -  Toggle heartbeat printing for connected Victor (off by default)
     reboot [boot arg]                     -  Reboot Victor
     restart-adb                           -  Restart adb on Victor
     ssh-set-authorized-keys file          -  Use file as the ssh authorized_keys file on Victor
@@ -151,6 +152,18 @@ var handleInput = function (line) {
         case 'quit':
             rl.close();
             process.exit();
+            break;
+        case 'print-heartbeats':
+            if (connectedVictor) {
+                connectedVictor._print_heartbeats = !connectedVictor._print_heartbeats;
+                if (connectedVictor._print_heartbeats) {
+                    outputResponse("Heartbeat printing is now on.  Current count is " + connectedVictor._heartbeat_counter);
+                } else {
+                    outputResponse("Heartbeat printing is now off");
+                }
+            } else {
+                outputResponse("Not connected to a Victor");
+            }
             break;
         case 'scan':
             if (connectedVictor) {
