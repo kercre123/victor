@@ -37,6 +37,7 @@ enum uint_8 RobotDisconnectReason {
   OutdatedApp,
   DebugForceDisconnect,
   DebugDataPersistenceReset,
+  AppTerminated,
 }
 
 } // namespace Cozmo

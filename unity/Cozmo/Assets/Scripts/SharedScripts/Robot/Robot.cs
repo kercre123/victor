@@ -2282,4 +2282,23 @@ public class Robot : IRobot {
     return SendQueueSingleAction(Singleton<DriveOffChargerContacts>.Instance, callback, queueActionPosition);
   }
 
+  public float BatteryPercent(float batteryVoltage) {
+    // Convert battery voltage to percentage according to profile described by Nathan Monson.
+    // Always returns a value 0-100.
+    // NOTE:  This function is also implemented engine-side
+    //
+    const float batteryEmpty = 1.0f; // 1.0V
+    const float batteryFull = 1.5f;  // 1.5V
+
+    if (batteryVoltage >= batteryFull) {
+      return 100.0f;
+    }
+    if (batteryVoltage > batteryEmpty) {
+      var percent = 100.0f * (batteryVoltage - batteryEmpty) / (batteryFull - batteryEmpty);
+      return percent;
+    }
+    return 0.0f;
+  }
+
+
 }

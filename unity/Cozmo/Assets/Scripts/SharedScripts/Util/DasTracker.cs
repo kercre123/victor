@@ -61,6 +61,17 @@ public class DasTracker {
       HandleSessionEnd();
     }
 
+    if (_RunningRobotTime != null) {
+      // cozmo_engine.robot_connection_manager.disconnect_reason - reason, along with battery voltage/percent
+      var eventName = "cozmo_engine.robot_connection_manager.disconnect_reason";
+      var reason = Anki.Cozmo.RobotDisconnectReason.AppTerminated.ToString();
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      var batteryVoltage = robot != null ? robot.BatteryVoltage : 0.0f;
+      var batteryPercent = robot != null ? robot.BatteryPercent(batteryVoltage) : 0.0f;
+      var dataString = batteryVoltage.ToString("n2") + "," + batteryPercent.ToString("n2");
+      DAS.Event(eventName, reason, new Dictionary<string, string> { { "$data", dataString } });
+    }
+
     // app.terminated - no extra data
     DAS.Event("app.terminated", "");
     // app.apprun.length - time spent in app not including backgrounding

@@ -250,6 +250,7 @@ void RobotConnectionManager::HandleDisconnectMessage(RobotConnectionMessageData&
   // DAS Event
   // s_val: Disconnection reason
   //  data: The last known battery voltage of the robot
+  //  Note: This DAS event is also sent from the game, when app is terminated
   char ddata[128];
   const f32 batteryPercent = RobotToEngineImplMessaging::GetBatteryPercent(batteryVoltage);
   snprintf(ddata, sizeof(ddata), "%.2f,%.2f", batteryVoltage, batteryPercent);
