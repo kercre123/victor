@@ -1,3 +1,16 @@
+const { StringDecoder } = require('string_decoder');
+
+const WiFiAuth = {
+    AUTH_NONE_OPEN : {value: 0, name: "None" },
+    AUTH_NONE_WEP :  {value: 1, name: "WEP" },
+    AUTH_NONE_WEP_SHARED : {value: 2, name: "WEP Shared"},
+    AUTH_IEEE8021X: {value: 3, name: "IEEE8021X"},
+    AUTH_WPA_PSK: {value: 4, name: "WPA PSK"},
+    AUTH_WPA_EAP: {value: 5, name: "WPA EAP"},
+    AUTH_WPA2_PSK: {value: 6, name: "WPA2 PSK"},
+    AUTH_WPA2_EAP: {value: 7, name: "WPA2 EAP"}
+};
+
 class Victor {
     constructor(peripheral, service, send, read, outputCallback) {
 
@@ -9,6 +22,7 @@ class Victor {
         this._outgoing_packets = [];
         this._incoming_packets = [];
         this._heartbeat_counter = 0;
+        this._print_heartbeats = false;
 
         this._peripheral.on('disconnect', () => {
             clearInterval(this._interval);
@@ -37,7 +51,75 @@ class Victor {
                 return;
             case Victor.MSG_V2B_HEARTBEAT:
                 this._heartbeat_counter = data[2];
-                this._output("Heartbeat " + this._heartbeat_counter);
+                if (this._print_heartbeats) {
+                    this._output("Heartbeat " + this._heartbeat_counter);
+                }
+                return;
+            case Victor.MSG_V2B_WIFI_SCAN_RESULTS:
+                var offset = 0;
+                var buf = data.slice(2);
+                var results = "";
+                while (offset < buf.length) {
+                    var auth = buf.readUInt8(offset++);
+                    var encrypted = buf.readUInt8(offset++);
+                    var wps = buf.readUInt8(offset++);
+                    var signal_level = buf.readUInt8(offset++);
+                    var end = buf.indexOf(0, offset);
+                    if (end < offset) {
+                        return;
+                    }
+                    const decoder = new StringDecoder('utf8');
+                    var ssid = decoder.write(buf.slice(offset, end));
+                    ssid += decoder.end();
+                    offset = end + 1;
+                    switch (auth) {
+                    case WiFiAuth.AUTH_NONE_OPEN.value:
+                        results += WiFiAuth.AUTH_NONE_OPEN.name;
+                        break;
+                    case WiFiAuth.AUTH_NONE_WEP.value:
+                        results += WiFiAuth.AUTH_NONE_WEP.name;
+                        break;
+                    case WiFiAuth.AUTH_NONE_WEP_SHARED.value:
+                        results += WiFiAuth.AUTH_NONE_WEP_SHARED.name;
+                        break;
+                    case WiFiAuth.AUTH_IEEE8021X.value:
+                        results += WiFiAuth.AUTH_IEEE8021X.name;
+                        break;
+                    case WiFiAuth.AUTH_WPA_PSK.value:
+                        results += WiFiAuth.AUTH_WPA_PSK.name;
+                        break;
+                    case WiFiAuth.AUTH_WPA_EAP.value:
+                        results += WiFiAuth.AUTH_WPA_EAP.name;
+                        break;
+                    case WiFiAuth.AUTH_WPA2_PSK.value:
+                        results += WiFiAuth.AUTH_WPA2_PSK.name;
+                        break;
+                    case WiFiAuth.AUTH_WPA2_PSK.value:
+                        results += WiFiAuth.AUTH_WPA2_PSK.name;
+                        break;
+                    default:
+                        result += "Unknown (" + auth + ")";
+                        break;
+                    };
+                    results += "\t";
+                    if (encrypted) {
+                        results += "Encrypted";
+                    } else {
+                        results += "Not Encrypted";
+                    }
+                    results += "\t";
+                    if (wps) {
+                        results += "WPS";
+                    } else {
+                        results += "   ";
+                    }
+                    results += "\t";
+                    for (var i = 0 ; i < signal_level; i++) {
+                        results += "*";
+                    }
+                    results += "\t" + ssid + "\n";
+                }
+                this._output(results);
                 return;
             case Victor.MSG_V2B_DEV_EXEC_CMD_LINE_RESPONSE:
                 this._output(data.toString('utf8', 2, data.length));
@@ -127,6 +209,8 @@ Object.defineProperty(Victor, 'MSG_V2B_HEARTBEAT', {value: 0x19, writable: false
 Object.defineProperty(Victor, 'MSG_B2V_WIFI_START', {value: 0x1A, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_WIFI_STOP', {value: 0x1B, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_WIFI_SET_CONFIG', {value: 0x1C, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_WIFI_SCAN', {value: 0x1D, writable: false});
+Object.defineProperty(Victor, 'MSG_V2B_WIFI_SCAN_RESULTS', {value: 0x1E, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_SSH_SET_AUTHORIZED_KEYS', {value: 0x80, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_DEV_PING_WITH_DATA_REQUEST', {value: 0x91, writable: false});
 Object.defineProperty(Victor, 'MSG_V2B_DEV_PING_WITH_DATA_RESPONSE', {value: 0x92, writable: false});
