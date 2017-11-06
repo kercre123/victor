@@ -88,6 +88,9 @@ const f32 TERMINAL_POINT_TURN_ANGLE_TOL = DEG_TO_RAD(5.f);
 namespace Anki {
 namespace Cozmo {
 
+
+// max number of obstacles to import from the navMap, excluding active objects
+CONSOLE_VAR(u32, kMaxNumObstacles, "LatticePlanner", 16);
 CONSOLE_VAR(bool, kDisableVisionObstacles, "LatticePlanner", false);
 
 using namespace Planning;
@@ -795,7 +798,23 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);
     }
     
+    // sort polygons
+    const Point2f r = _robot->GetPose().GetTranslation();
+    auto CHsorter = [&r] (const ConvexPolygon& p1, const ConvexPolygon& p2) {
+      Point2f c1 = p1.ComputeCentroid();
+      Point2f c2 = p2.ComputeCentroid();
+      return (powf(r.x() - c1.x(),2) + powf(r.y() - c1.y(),2)) < (powf(r.x() - c2.x(),2) + powf(r.y() - c2.y(),2));
+    };
+
+    if (convexHulls.size() > kMaxNumObstacles)
+    {
+      std::nth_element(convexHulls.begin(), convexHulls.begin() + kMaxNumObstacles, convexHulls.end(), CHsorter);
+      convexHulls.erase(convexHulls.begin() + kMaxNumObstacles, convexHulls.end());
+    }
+
+    // get cubes
     MemoryMapTypes::MemoryMapDataConstList observableObjectData;
+
     MemoryMapTypes::NodePredicate pred = 
       [](MemoryMapTypes::MemoryMapDataPtr d) -> bool
       {
