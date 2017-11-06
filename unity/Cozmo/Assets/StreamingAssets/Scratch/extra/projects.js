@@ -38,10 +38,10 @@
       //
       // TODO Dynamically detect if text is too long and reduce font size if so.
       var verticalElem = document.getElementById("vertical-tab-hero-title");
-      verticalElem.style.fontSize = ".9em";
+      verticalElem.style.fontSize = ".8em";
       
       var horizontalElem = document.getElementById("horizontal-tab-hero-title");
-      horizontalElem.style.fontSize = ".9em";
+      horizontalElem.style.fontSize = ".8em";
     }
 
     setText('#vertical-tab-hero .tab-hero-detail', $t('codeLab.projects.verticalTab.verticalTabHeroDetail'));
