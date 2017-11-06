@@ -1,3 +1,5 @@
+const { StringDecoder } = require('string_decoder');
+
 const WiFiAuth = {
     AUTH_NONE_OPEN : {value: 0, name: "None" },
     AUTH_NONE_WEP :  {value: 1, name: "WEP" },
@@ -63,7 +65,9 @@ class Victor {
                     if (end < offset) {
                         return;
                     }
-                    var ssid = buf.toString('utf8', offset, end);
+                    const decoder = new StringDecoder('utf8');
+                    var ssid = decoder.write(buf.slice(offset, end));
+                    ssid += decoder.end();
                     offset = end + 1;
                     switch (auth) {
                     case WiFiAuth.AUTH_NONE_OPEN.value:
