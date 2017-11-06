@@ -15,6 +15,8 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+  #define FIXED_INNER_GLOW_POSITION 1
 
   #define CONSOLE_GROUP "ProceduralFace"
 
@@ -63,12 +65,30 @@ namespace Cozmo {
     return W;
   } // GetTransformationMatrix()
 
-  // Based on Taylor series expansion with just 3 terms
+
+  // Based on Taylor series expansion with N terms
   inline static f32 fastExp(f32 x)
   {
-    x = 1.f + (x * 0.125f); // Constant here is 1/(2^N), where N=number of terms
+#   define NUM_FAST_EXP_TERMS 2
+    
+    if(x < -(f32)(2*NUM_FAST_EXP_TERMS))
+    {
+      // Things get numerically unstable for very negative inputs x. Value is basically zero anyway.
+      return 0.f;
+    }
+#   if NUM_FAST_EXP_TERMS==2
+    x = 1.f + (x * 0.25f);  // Constant here is 1/(2^N)
+    x *= x; x *= x;         // Number of multiplies here is also N
+#   elif NUM_FAST_EXP_TERMS==3
+    x = 1.f + (x * 0.125f); // Constant here is 1/(2^N)
     x *= x; x *= x; x *= x; // Number of multiplies here is also N
+#   else
+#   error Unsupported number of terms for fastExp()
+#   endif
+    
     return x;
+    
+#   undef NUM_FAST_EXP_TERMS
   }
   
   inline Array2d<f32> CreateNoiseImage(const Util::RandomGenerator& rng)
@@ -326,12 +346,27 @@ namespace Cozmo {
       const f32 scaledEyeWidth  = faceData.GetParameter(whichEye, Parameter::EyeScaleX) * static_cast<f32>(eyeWidth);
       const f32 scaledEyeHeight = faceData.GetParameter(whichEye, Parameter::EyeScaleY) * static_cast<f32>(eyeHeight);
       
+#     if FIXED_INNER_GLOW_POSITION
+      const s32 glowCenX = eyeCenter.x();
+      const s32 glowCenY = eyeCenter.y();
+#     else
+      // WIP: Move glow center with eye
+      const s32 glowCenOffsetX = eyeCenter.x() - (whichEye == ProceduralFace::Left ? ProceduralFace::NominalLeftEyeX+10 : ProceduralFace::NominalRightEyeX-13);
+      const s32 glowCenOffsetY = eyeCenter.y() - (whichEye == ProceduralFace::Left ? ProceduralFace::NominalEyeY+4      : ProceduralFace::NominalEyeY+3);
+      
+      const f32 innerGlowCenFrac = 4.f;
+      const f32 glowCenX = eyeCenter.x() - innerGlowCenFrac*glowCenOffsetX;
+      const f32 glowCenY = eyeCenter.y() - innerGlowCenFrac*glowCenOffsetY;
+#     endif 
+      
       // Inner Glow = the brighter glow at the center of the eye that falls off radially towards the edge of the eye
       // Outer Glow = the "halo" effect around the outside of the eye shape
       // Add inner glow to the eye shape, before we compute the outer glow, so that boundaries conditions match.
       {
-        const f32 invInnerGlowSigmaX_sq = 1.f / (2.f * std::pow(kProcFace_InnerGlowFrac*scaledEyeWidth,  2));
-        const f32 invInnerGlowSigmaY_sq = 1.f / (2.f * std::pow(kProcFace_InnerGlowFrac*scaledEyeHeight, 2));
+        const f32 sigmaX = kProcFace_InnerGlowFrac*scaledEyeWidth;
+        const f32 sigmaY = kProcFace_InnerGlowFrac*scaledEyeHeight;
+        const f32 invInnerGlowSigmaX_sq = 1.f / (2.f * (sigmaX*sigmaX));
+        const f32 invInnerGlowSigmaY_sq = 1.f / (2.f * (sigmaY*sigmaY));
         for(s32 i=upperLeft.y(); i<=bottomRight.y(); ++i)
         {
           DEV_ASSERT_MSG(i>=0 && i<faceImg.GetNumRows(), "ProceduralFaceDrawer.DrawEye.BadRow", "%d", i);
@@ -347,9 +382,9 @@ namespace Cozmo {
             if(insideEye)
             {
               // TODO: Use a separate approximation helper or LUT to get falloff
-              const s32 dx = j-eyeCenter.x();
-              const s32 dy = i-eyeCenter.y();
-              const f32 falloff = fastExp(-(dx*dx)*invInnerGlowSigmaX_sq - (dy*dy)*invInnerGlowSigmaY_sq);
+              const s32 dx = j-glowCenX;
+              const s32 dy = i-glowCenY;
+              const f32 falloff = fastExp(-f32(dx*dx)*invInnerGlowSigmaX_sq - f32(dy*dy)*invInnerGlowSigmaY_sq);
               DEV_ASSERT_MSG(Util::InRange(falloff, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.BadInnerGlowFalloffValue", "%f", falloff);
 
               eyeValue = Util::numeric_cast_clamped<u8>(std::round(static_cast<f32>(eyeValue) * falloff));

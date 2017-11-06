@@ -110,7 +110,7 @@ std::string CliffSensorComponent::GetLogRow()
   str += std::to_string(_lastMsgTimestamp);
   str += ", ";
   for (int i=0 ; i < kNumCliffSensors ; i++) {
-    str += std::to_string(GetCliffDataRaw(i));
+    str += std::to_string(_cliffDataRaw[i]);
     // comma separate
     if (i < kNumCliffSensors - 1) {
       str += ", ";
@@ -193,13 +193,6 @@ void CliffSensorComponent::SetCliffDetectThreshold(unsigned int ind, uint16_t ne
     curThresh = newThresh;
     QueueCliffThresholdUpdate();
   }
-}
-  
-
-u16 CliffSensorComponent::GetCliffDataRaw(unsigned int ind) const
-{
-  DEV_ASSERT(ind < kNumCliffSensors, "CliffSensorComponent.GetCliffDataRaw.InvalidIndex");
-  return _cliffDataRaw[ind];
 }
 
 

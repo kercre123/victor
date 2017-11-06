@@ -50,7 +50,7 @@ namespace Vision {
     Result Load(const std::string& filename);
     
     // Write to a file, format determined by extension (quality is only used for JPEG)
-    Result Save(const std::string& filename, s32 quality = 90);
+    Result Save(const std::string& filename, s32 quality = 90) const;
     
 #   if ANKICORETECH_USE_OPENCV
     // Construct from a cv::Mat_<T>
@@ -107,7 +107,10 @@ namespace Vision {
     
     // Draw quadrangle defined by four given points
     void DrawQuad(const Quad2f& quad, const ColorRGBA& color, const s32 thickness = 1);
-    
+
+    // Draw a filled convex polygon defined by a list of points
+    void DrawFilledConvexPolygon(const std::vector<Point2i> points, const ColorRGBA& color);
+
     // TODO: Expose font?
     void DrawText(const Point2f& position, const std::string& str, const ColorRGBA& color, f32 scale = 1.f, bool dropShadow = false);
     
