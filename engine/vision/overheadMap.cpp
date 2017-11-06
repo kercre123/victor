@@ -11,18 +11,23 @@
  *
  **/
 
-
-
 #include "overheadMap.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/quad_impl.h" // include this to avoid linking error in android
+#include "anki/cozmo/shared/cozmoConfig.h"
+#include "basestation/jsonTools.h"
+#include "basestation/math/quad_impl.h" // include this to avoid linking error in android
+#include "basestation/utils/data/dataPlatform.h"
+#include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "util/fileUtils/fileUtils.h"
+
+#include <fstream>
 
 namespace Anki {
 namespace Cozmo {
 
 #define DEBUG_VISUALIZE false
+#define DEBUG_SAVE_OVERHEAD false
 
 namespace {
 
@@ -74,13 +79,16 @@ __attribute__((used)) cv::Rect OptimizedBoundingBox(const cv::RotatedRect& rect)
 } // namespace
 
 
-OverheadMap::OverheadMap(int numrows, int numcols)
-: _overheadMap(numrows, numcols)
+OverheadMap::OverheadMap(int numrows, int numcols, const CozmoContext *context)
+  : _overheadMap(numrows, numcols)
+  , _footprintMask(numrows, numcols)
+  , _context(context)
 {
 
 }
 
-OverheadMap::OverheadMap(const Json::Value& config)
+OverheadMap::OverheadMap(const Json::Value& config, const CozmoContext *context)
+  : _context(context)
 {
   int numRows, numCols;
   if (! JsonTools::GetValueOptional(config, "NumRows", numRows)) {
@@ -93,6 +101,9 @@ OverheadMap::OverheadMap(const Json::Value& config)
   }
 
   _overheadMap.Allocate(numRows, numCols);
+  _footprintMask.Allocate(numRows, numCols);
+  ResetMaps();
+
 }
 
 
@@ -159,9 +170,13 @@ Result OverheadMap::Update(const Vision::ImageRGB& image, const VisionPoseData& 
       }
     }
   }
-  PRINT_CH_DEBUG(kLogChannelName, "OverheadMap.Update.UpdatedPixels", "Number of pixels updated in overhead map: %c, "
+  PRINT_CH_DEBUG(kLogChannelName, "OverheadMap.Update.UpdatedPixels", "Number of pixels updated in overhead map: %d, "
                  "number of pixels outside: %d",
                  pointsInMap, int(imgGroundQuad.ComputeArea()) - pointsInMap);
+
+  _overheadMap.SetTimestamp(poseData.timeStamp);
+
+  UpdateFootprintMask(poseData.histState.GetPose(), debugImageRGBs);
 
   // only update here for debug and sending the images over
   if (DEBUG_VISUALIZE) {
@@ -169,7 +184,12 @@ Result OverheadMap::Update(const Vision::ImageRGB& image, const VisionPoseData& 
     debugImageRGBs.emplace_back("RobotFootprint", robotFootPrint);
   }
 
-  _overheadMap.SetTimestamp(poseData.timeStamp);
+  if (DEBUG_SAVE_OVERHEAD) {
+    SaveMaskedOverheadPixels("positivePixels.txt",
+                             "negativePixels.txt",
+                             "overheadMap.jpg");
+  }
+
   return RESULT_OK;
 }
 
@@ -180,45 +200,9 @@ Vision::ImageRGB OverheadMap::GetImageCenteredOnRobot(const Pose3d& robotPose,
   // To extract the pixels underneath the robot, the (cropped) overhead map is rotated by the
   // the current robot angle and then the region underneath the footprint is extracted
 
-  cv::RotatedRect footprintRect;
   // Calculate the footprint as a cv::RotatedRect. To get the correct size the footprint is aligned
   // with the axis
-  {
-    // save the rotation angle, as we need to zero it in the footprint
-    // the angle needs to be flipped here. Only Euclid knows why
-    const Radians R( - robotPose.GetRotation().GetAngleAroundZaxis());
-
-    Pose3d alignedPose(robotPose);
-    // set rotation to 0, i.e. aligned with the axis
-    alignedPose.SetRotation(0, {1, 0, 0});
-    // get the footprint aligned with the coordinate system
-    Quad2f robotFootprint = Robot::GetBoundingQuadXY(alignedPose);
-
-    // The robot footprint is not centered on the robot centroid, but the center of the front axis :(
-    robotFootprint += Point2f(16.9f * std::cos(R.ToFloat()), 16.9f * std::sin(R.ToFloat()));
-
-    // Move the footprint to the image coordinate system, with the center in top left and the y axis pointing down
-    for (auto& point: robotFootprint) {
-      point.x() = point.x() + static_cast<f32>(_overheadMap.GetNumCols()) * 0.5f;
-      point.y() = -point.y() + static_cast<f32>(_overheadMap.GetNumRows()) * 0.5f;
-    }
-
-    // get the data from the robot footprint
-    s32 robotMinX = s32(std::round(robotFootprint.GetMinX()));
-    Util::Clamp(robotMinX, 0, _overheadMap.GetNumCols());
-    s32 robotMaxX = s32(std::round(robotFootprint.GetMaxX()));
-    Util::Clamp(robotMinX, 0, _overheadMap.GetNumCols());
-    s32 robotMinY = s32(std::round(robotFootprint.GetMinY()));
-    Util::Clamp(robotMinX, 0, _overheadMap.GetNumCols());
-    s32 robotMaxY = s32(std::round(robotFootprint.GetMaxY()));
-    Util::Clamp(robotMinX, 0, _overheadMap.GetNumCols());
-
-    const Point2f centroid = robotFootprint.ComputeCentroid();
-    // This is the robot footprint with the right angle
-    footprintRect = cv::RotatedRect(cv::Point2f(centroid.x(), centroid.y()),
-                                    cv::Size2f(robotMaxX - robotMinX, robotMaxY - robotMinY),
-                                    R.getDegrees());
-  }
+  cv::RotatedRect footprintRect = GetFootprintRotatedRect(robotPose);
 
   // get the image to rotate
   const cv::Mat& src = _overheadMap.get_CvMat_();
@@ -285,9 +269,173 @@ Vision::ImageRGB OverheadMap::GetImageCenteredOnRobot(const Pose3d& robotPose,
 
 }
 
+cv::RotatedRect OverheadMap::GetFootprintRotatedRect(const Pose3d& robotPose) const
+{
+
+  // there's a bit of magic in this function, mostly the result of trial and error.
+
+  // save the rotation angle, as we need to zero it in the footprint
+  // the angle needs to be flipped here. Only Euclid knows why
+  const Radians R( - robotPose.GetRotation().GetAngleAroundZaxis());
+
+  Pose3d alignedPose(robotPose);
+  // set rotation to 0, i.e. aligned with the axis
+  alignedPose.SetRotation(0, {1, 0, 0});
+  // get the footprint aligned with the coordinate system
+  Quad2f robotFootprint = Robot::GetBoundingQuadXY(alignedPose);
+
+  // TODO this number has been found in simulation. It's probably a duoplicate of Robot::GetDriveCenterOffset().
+  // TODO This needs further investigation with the real robot
+  const f32 CENTROID_AXIS_OFFSET_MM = 16.9f; // distance between the robot's centroid and the front axis middle point
+
+  // The robot footprint is not centered on the robot centroid, but the center of the front axis :(
+  robotFootprint += Point2f(CENTROID_AXIS_OFFSET_MM * std::cos(R.ToFloat()),
+                            CENTROID_AXIS_OFFSET_MM * std::sin(R.ToFloat()));
+
+  // Move the footprint to the image coordinate system, with the center in top left and the y axis pointing down
+  for (auto& point: robotFootprint) {
+    point.x() = point.x() + static_cast<f32>(_overheadMap.GetNumCols()) * 0.5f;
+    point.y() = -point.y() + static_cast<f32>(_overheadMap.GetNumRows()) * 0.5f;
+  }
+
+  // get the data from the robot footprint
+  s32 robotMinX = s32(std::round(robotFootprint.GetMinX()));
+  robotMinX = Util::Clamp(robotMinX, 0, _overheadMap.GetNumCols());
+  s32 robotMaxX = s32(std::round(robotFootprint.GetMaxX()));
+  robotMaxX = Util::Clamp(robotMaxX, 0, _overheadMap.GetNumCols());
+  s32 robotMinY = s32(std::round(robotFootprint.GetMinY()));
+  robotMinY = Util::Clamp(robotMinY, 0, _overheadMap.GetNumCols());
+  s32 robotMaxY = s32(std::round(robotFootprint.GetMaxY()));
+  robotMaxY = Util::Clamp(robotMaxY, 0, _overheadMap.GetNumCols());
+
+  const Point2f centroid = robotFootprint.ComputeCentroid();
+  // This is the robot footprint with the right angle
+  cv::RotatedRect footprintRect = cv::RotatedRect(cv::Point2f(centroid.x(), centroid.y()),
+                                                  cv::Size2f(robotMaxX - robotMinX, robotMaxY - robotMinY),
+                                                  R.getDegrees());
+  return footprintRect;
+}
+
 const Vision::ImageRGB& OverheadMap::GetOverheadMap() const
 {
   return _overheadMap;
+}
+
+const Vision::Image& OverheadMap::GetFootprintMask() const
+{
+  return _footprintMask;
+}
+
+void OverheadMap::GetDrivableNonDrivablePixels(std::vector<Vision::PixelRGB>& drivablePixels,
+                                               std::vector<Vision::PixelRGB>& nonDrivablePixels) const
+{
+  for (uint i =0; i < _overheadMap.GetNumRows(); i++) {
+    const Vision::PixelRGB* overheadRow_i = _overheadMap.GetRow(i);
+    const u8* maskRow_i = _footprintMask.GetRow(i);
+    for (uint j=0; j < _overheadMap.GetNumCols(); j++) {
+      const Vision::PixelRGB& pixelValue = overheadRow_i[j];
+      if (pixelValue != Vision::PixelRGB(0 ,0, 0)) { // this pixel has been mapped
+        const u8 maskValue = maskRow_i[j];
+        if ((maskValue != 0)) { // this pixel has been deemed traversable
+          drivablePixels.push_back(pixelValue);
+        }
+        else { // the robot never went over these pixels
+          nonDrivablePixels.push_back(pixelValue);
+        }
+      }
+    }
+  }
+}
+
+void OverheadMap::ResetMaps()
+{
+
+  // set the image to be all black
+  for (uint i =0; i < _overheadMap.GetNumRows(); i++) {
+    Vision::PixelRGB* overheadRow_i = _overheadMap.GetRow(i);
+    u8* maskRow_i = _footprintMask.GetRow(i);
+    for (uint j=0; j < _overheadMap.GetNumCols(); j++) {
+      overheadRow_i[j] = Vision::PixelRGB(0 ,0, 0);
+      maskRow_i[j] = 0;
+    }
+  }
+}
+
+void OverheadMap::SaveMaskedOverheadPixels(const std::string& positiveExamplesFilename,
+                                           const std::string& negativeExamplesFileName,
+                                           const std::string& overheadMapFileName) const
+{
+  const std::string path =  _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent,
+                                                                 Util::FileUtils::FullFilePath({"vision",
+                                                                                                "overheadmap"}));
+  if (!Util::FileUtils::CreateDirectory(path, false, true)) {
+    PRINT_NAMED_ERROR("Overheadmap.SaveMaskedOverheadPixels.DirectoryError", "Error while creating folder %s",
+                      path.c_str());
+    return;
+  }
+
+  std::vector<Vision::PixelRGB> drivablePixels;
+  std::vector<Vision::PixelRGB> nonDrivablePixels;
+  GetDrivableNonDrivablePixels(drivablePixels, nonDrivablePixels);
+
+  //save the individual pixels, positive examples
+  {
+    std::string fullPath = Util::FileUtils::FullFilePath({path, positiveExamplesFilename});
+    std::ofstream outputFile(fullPath);
+    if (! outputFile.is_open()) {
+      PRINT_NAMED_ERROR("Overheadmap.SaveMaskedOverheadPixels.FileNotOpen", "Error while opening file %s for writing",
+                        fullPath.c_str());
+      return;
+    }
+
+    for (const auto& pixel : drivablePixels) {
+      outputFile<<int(pixel.r())<<" "<<int(pixel.g())<<" "<<int(pixel.b())<<std::endl;
+    }
+    outputFile.close();
+  }
+
+  //save the individual pixels, negative examples
+  {
+    std::string fullPath = Util::FileUtils::FullFilePath({path, negativeExamplesFileName});
+    std::ofstream outputFile(fullPath);
+    if (! outputFile.is_open()) {
+      PRINT_NAMED_ERROR("Overheadmap.SaveMaskedOverheadPixels.FileNotOpen", "Error while opening file %s for writing",
+                        fullPath.c_str());
+      return;
+    }
+
+    for (const auto& pixel : nonDrivablePixels) {
+      outputFile<<int(pixel.r())<<" "<<int(pixel.g())<<" "<<int(pixel.b())<<std::endl;
+    }
+    outputFile.close();
+  }
+
+  // save overhead image
+  {
+    std::string fullPath = Util::FileUtils::FullFilePath({path, overheadMapFileName});
+    _overheadMap.Save(fullPath, 100);
+  }
+
+
+}
+
+void OverheadMap::UpdateFootprintMask(const Pose3d& robotPose, DebugImageList <Anki::Vision::ImageRGB>& debugImageRGBs)
+{
+  cv::RotatedRect footprintRect = GetFootprintRotatedRect(robotPose);
+  cv::Point2f vertices[4];
+  footprintRect.points(vertices);
+
+  std::vector<Point2i> points = {Point2i(s32(std::round(vertices[0].x)), s32(std::round(vertices[0].y))),
+                                 Point2i(s32(std::round(vertices[1].x)), s32(std::round(vertices[1].y))),
+                                 Point2i(s32(std::round(vertices[2].x)), s32(std::round(vertices[2].y))),
+                                 Point2i(s32(std::round(vertices[3].x)), s32(std::round(vertices[3].y)))};
+
+  _footprintMask.DrawFilledConvexPolygon(points, NamedColors::WHITE);
+
+  if (DEBUG_VISUALIZE) {
+    debugImageRGBs.emplace_back("footprintMask", _footprintMask);
+  }
+
 }
 
 } //namespace Cozmo
