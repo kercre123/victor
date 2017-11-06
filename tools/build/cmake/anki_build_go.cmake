@@ -46,7 +46,7 @@ macro(__anki_run_go_build)
     OUTPUT ${__gobuild_out}
     COMMAND ${CMAKE_COMMAND} -E env ${__go_get_env} go get -d ${__gobuild_basedir}
     COMMAND ${CMAKE_COMMAND} -E env ${__go_compile_env} go build ${__go_build_flags} ${SRCS} ${_ab_PLATFORM_SRCS}
-    DEPENDS ${SRCS} ${_ab_PLATFORM_SRCS} ${__go_deps}
+    DEPENDS ${SRCS} ${_ab_PLATFORM_SRCS} ${__go_deps} ${_ab_GO_DEPS}
   )
 endmacro()
 

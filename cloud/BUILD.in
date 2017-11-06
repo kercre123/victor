@@ -4,8 +4,9 @@ cxx_project(
     headers = cxx_header_glob(['voicetest'])
 )
 
-cxx_project(
+go_project(
     name = 'voicego',
+    gopath = 'go',
     srcs = glob(['voicetest/go/**/*.go'])
 )
 
@@ -15,13 +16,15 @@ cxx_project(
     headers = cxx_header_glob(['voicetest'])
 )
 
-cxx_project(
+go_project(
     name = 'proctest_go',
+    gopath = 'go',
     srcs = glob(['proctest/**/*.go'])
 )
 
-cxx_project(
+go_project(
     name = 'cloud_process',
+    gopath = 'go',
     srcs = glob(['process/**/*.go'])
 )
 
@@ -30,7 +33,8 @@ cxx_project(
     srcs = glob(['ipctest/cpp/*.cpp'])
 )
 
-cxx_project(
+go_project(
     name = 'ipctest_go',
+    gopath = 'go',
     srcs = glob(['ipctest/go/*.go'])
 )
