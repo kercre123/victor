@@ -456,7 +456,7 @@ namespace Messages {
 
   void ProcessBackpackButton(const RobotInterface::BackpackButton& payload)
   {
-    if(payload.depressed)
+    if(ANKI_DEV_CHEATS && payload.depressed)
     {
       // If we aren't currently showing debug info and the button was pressed then
       // start showing debug info
