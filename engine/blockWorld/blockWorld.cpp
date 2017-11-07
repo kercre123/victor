@@ -165,12 +165,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE2));
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE3));
     
-    #ifdef FACTORY_TEST
-    DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_BULLSEYE2));
-    DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_ARROW));
-    DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_STAR5));
-    #endif
-    
     //////////////////////////////////////////////////////////////////////////
     // 2x1 Blocks
     //
