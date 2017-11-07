@@ -33,7 +33,11 @@
 #include <vector>
 #include <map>
 
-#define VIZ_ON_DEVICE 0
+// Send viz to game port?
+#define VIZ_TO_GAMEPORT 0
+
+// Send viz to unity?
+#define VIZ_TO_UNITY 0
 
 namespace Anki {
   
@@ -77,7 +81,7 @@ namespace Anki {
       Result Connect(const char *udp_host_address, const unsigned short port, const char* unity_host_address, const unsigned short unity_port);
       Result Disconnect();
 
-      #if VIZ_ON_DEVICE
+      #if VIZ_TO_GAMEPORT
       void SetMessagePort(GameMessagePort* port) { _unityVizPort = port; }
       #endif
       
@@ -431,13 +435,15 @@ namespace Anki {
       
       bool               _isInitialized;
       UdpClient          _vizClient;
-      #if VIZ_ON_DEVICE
+
+      #if VIZ_TO_GAMEPORT
       GameMessagePort*   _unityVizPort = nullptr;
-      #else
+      #endif
+
+      #if VIZ_TO_UNITY
       UdpClient          _unityVizClient;
       #endif
       
-
       /*
       // Image sending
       std::map<RobotID_t, u8> _imgID;

@@ -289,7 +289,7 @@ void CozmoAPI::CozmoInstanceRunner::SyncWithEngineUpdate(const std::function<voi
 
 GameMessagePort* CozmoAPI::CozmoInstanceRunner::CreateVizMessagePort()
 {
-  #if VIZ_ON_DEVICE && ANKI_DEV_CHEATS
+  #if VIZ_TO_GAMEPORT && ANKI_DEV_CHEATS
   return new GameMessagePort(ExternalInterface::kVizCommsBufferSize, false);
   #else
   return nullptr;

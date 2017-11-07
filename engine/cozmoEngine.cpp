@@ -127,7 +127,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   _dasToSdkHandler.Init(_context->GetExternalInterface());
   InitUnityLogger();
 
-  #if VIZ_ON_DEVICE
+  #if VIZ_TO_GAMEPORT
   _context->GetVizManager()->SetMessagePort(vizMessagePort);
   #endif
 }
