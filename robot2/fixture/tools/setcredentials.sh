@@ -9,6 +9,7 @@ dbpass=r8mCxHBysGTPiHNK
 foldername=emmcdl
 
 #DEBUG: test this out with a public-access folder, no password
+echo ========= DEBUG: test folder with stock password  ================
 dblink=https://www.dropbox.com/sh/17wazbx9xu5rjg0/AAC57fJwCusIs28x8-nL3zi9a?dl=1
 dbpass=""
 foldername=emmcdl_test
@@ -18,7 +19,9 @@ export dblink
 export dbpass
 export foldername
 
-#use curl to download contents of the link (dropbox will zip everything before sending):
+#Usage: dl via curl or wget (dropbox will zip everything before sending):
+#wget --max-redirect=20 -O download.zip https://www.dropbox.com/sh/igoku2mqsjqsmx1/AAAeF57DR2
+#wget -O ${foldername}.zip --password=$dbpass $dblink
 #curl -L -o output.zip https://www.dropbox.com/sh/[folderLink]?dl=1
-#curl -L -o $foldername.zip $dblink
+#curl -L -o ${foldername}.zip --pass $dbpass $dblink
 #unzip $foldername.zip -d $foldername
