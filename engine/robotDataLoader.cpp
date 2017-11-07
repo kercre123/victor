@@ -91,37 +91,38 @@ void RobotDataLoader::LoadNonConfigData()
   }
   
   // Don't load these if this is the factory test
-  #ifndef FACTORY_TEST
+  if(!FACTORY_TEST)
   {
-    ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
-    CollectAnimFiles();
-  }
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
+      CollectAnimFiles();
+    }
 
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
-    LoadAnimationGroups();
-  }
-  
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeLightAnimations");
-    LoadCubeLightAnimations();
-  }
-  
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
-    LoadBackpackLightAnimations();
-  }
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
+      LoadAnimationGroups();
+    }
+    
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeLightAnimations");
+      LoadCubeLightAnimations();
+    }
+    
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
+      LoadBackpackLightAnimations();
+    }
 
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
-    LoadEmotionEvents();
-  }
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
+      LoadEmotionEvents();
+    }
 
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
-    LoadCubeAnimationTriggerResponses();
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
+      LoadCubeAnimationTriggerResponses();
+    }
   }
-  #endif
 
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");

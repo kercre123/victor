@@ -45,9 +45,10 @@ ActiveCube::ActiveCube(ObjectType type)
     }
     // Factory test uses active cubes that have the same marker on all sides which would
     // trigger this assert
-    #ifndef FACTORY_TEST
-    DEV_ASSERT(uniqueCodes.size() == markerList.size(), "ActiveCube.Constructor.InvalidMarkerList");
-    #endif
+    if(!FACTORY_TEST)
+    {
+      DEV_ASSERT(uniqueCodes.size() == markerList.size(), "ActiveCube.Constructor.InvalidMarkerList");
+    }
   }
 }
 

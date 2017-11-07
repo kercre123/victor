@@ -2246,13 +2246,14 @@ namespace Cozmo {
         image_out.Save(fullFilename);
 
         // Save the undistored image when running factory test
-        #ifdef FACTORY_TEST
-        Vision::ImageRGB imgUndistorted(numRows,numCols);
-        cv::undistort(image_out.get_CvMat_(), imgUndistorted.get_CvMat_(),
-                      _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
-                      _camera.GetCalibration()->GetDistortionCoeffs());
-        imgUndistorted.Save("/data/misc/camera/test/" + std::to_string(imageId) + "_undistored.png");
-        #endif
+        if(FACTORY_TEST)
+        {
+          Vision::ImageRGB imgUndistorted(numRows,numCols);
+          cv::undistort(image_out.get_CvMat_(), imgUndistorted.get_CvMat_(),
+                        _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
+                        _camera.GetCalibration()->GetDistortionCoeffs());
+          imgUndistorted.Save("/data/misc/camera/test/" + std::to_string(imageId) + "_undistored.png");
+        }
 
         if (_imageSaveMode == ImageSendMode::SingleShot)
         {

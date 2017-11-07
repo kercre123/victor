@@ -255,12 +255,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _previousRobotSerialNumber(0)
 , _robotOnboardingStageCompleted(0)
 , _connectionOccurredThisAppRun(false)
-// Pause needs during factory test
-#ifdef FACTORY_TEST
-, _isPausedOverall(true)
-#else
 , _isPausedOverall(false)
-#endif
 , _timeWhenPausedOverall_s(0.0f)
 , _isDecayPausedForNeed()
 , _isActionsPausedForNeed()
@@ -283,6 +278,12 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _sparksRewardMsg()
 , _tuningTestVariationKey("Unknown (unknown)")
 {
+  // Pause needs during factory test
+  if(FACTORY_TEST)
+  {
+    _isPausedOverall = true;
+  }
+
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
     _isDecayPausedForNeed[i] = false;

@@ -133,7 +133,7 @@ esac
 #
 # Enable feature flags
 #
-FEATURE_FLAGS=""
+FEATURE_FLAGS="-DFACTORY_TEST=0"
 
 for feature in ${FEATURES} ; do
   case $feature in

@@ -141,10 +141,7 @@ Result AIComponent::Update(Robot& robot, std::string& currentActivityName,
 
   _freeplayDataTracker->Update();
   
-  // Factory test doesn't care about sudden obstacles so don't bother checking for them
-  #ifndef FACTORY_TEST
-    CheckForSuddenObstacle(robot);
-  #endif
+  CheckForSuddenObstacle(robot);
 
   return RESULT_OK;
 }

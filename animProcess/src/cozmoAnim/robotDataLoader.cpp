@@ -103,12 +103,17 @@ void RobotDataLoader::CollectAnimFiles()
 {
   // animations
   {
-    #ifdef FACTORY_TEST
-    // Only need to load engine animations
-    const std::vector<std::string> paths = {"config/engine/animations/"};
-    #else
-    const std::vector<std::string> paths = {"assets/animations/", "config/engine/animations/"};
-    #endif
+    std::vector<std::string> paths;
+    if(FACTORY_TEST)
+    {
+      // Only need to load engine animations
+      paths = {"config/engine/animations/"};
+    }
+    else
+    {
+      paths = {"assets/animations/", "config/engine/animations/"};
+    }
+    
     for (const auto& path : paths) {
       WalkAnimationDir(path, _animFileTimestamps, [this] (const std::string& filename) {
         _jsonFiles[FileType::Animation].push_back(filename);

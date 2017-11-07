@@ -244,21 +244,22 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
 
   // Quick and dirty static touch bias calculation for factory test
   // until a proper on is implemented
-  #ifdef FACTORY_TEST
-  static int c = 1;
-  static u32 avg = 0;
-  if(c > 0 && c < 100)
+  if(FACTORY_TEST)
   {
-    c++;
-    avg += msg.backpackTouchSensorRaw;
+    static int c = 1;
+    static u32 avg = 0;
+    if(c > 0 && c < 100)
+    {
+      c++;
+      avg += msg.backpackTouchSensorRaw;
+    }
+    else if(c == 100)
+    {
+      avg /= 100;
+      c = 0;
+      kTouchIntensityThreshold = avg + 30;
+    }
   }
-  else if(c == 100)
-  {
-    avg /= 100;
-    c = 0;
-    kTouchIntensityThreshold = avg + 30;
-  }
-  #endif
 
   // sometimes spurious values that are absurdly high come through the sensor
   if(msg.backpackTouchSensorRaw > kMaxTouchIntensityInvalid) {

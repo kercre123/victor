@@ -716,96 +716,97 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
   }
   
   // Factory test does not need to check behavior runnability
-  #ifndef FACTORY_TEST
-  // check if required processes are running
-  if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid )
+  if(!FACTORY_TEST)
   {
-    const bool isProcessOn = behaviorExternalInterface.GetAIComponent().GetAIInformationAnalyzer().IsProcessRunning(_requiredProcess);
-    if ( !isProcessOn ) {
-      PRINT_NAMED_ERROR("ICozmoBehavior.WantsToBeActivated.RequiredProcessNotFound",
-        "Required process '%s' is not enabled for '%s'",
-        AIInformationAnalysis::StringFromEProcess(_requiredProcess),
-        GetIDStr().c_str());
-      return false;
-    }
-  }
-
-  // check if a severe needs state is required
-  if( _requiredSevereNeed != NeedId::Count &&
-      _requiredSevereNeed != behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() ) {
-    // not in the correct state
-    return false;
-  }
-
-  const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  // first check the unlock
-  if ( _requiredUnlockId != UnlockId::Count )
-  {
-    if(_behaviorExternalInterface->HasProgressionUnlockComponent()){
-      // ask progression component if the unlockId is currently unlocked
-      auto& progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent();
-      const bool forFreeplay = true;
-      const bool isUnlocked = progressionUnlockComp.IsUnlocked(_requiredUnlockId,
-                                                               forFreeplay );
-      if ( !isUnlocked ) {
+    // check if required processes are running
+    if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid )
+    {
+      const bool isProcessOn = behaviorExternalInterface.GetAIComponent().GetAIInformationAnalyzer().IsProcessRunning(_requiredProcess);
+      if ( !isProcessOn ) {
+        PRINT_NAMED_ERROR("ICozmoBehavior.WantsToBeActivated.RequiredProcessNotFound",
+          "Required process '%s' is not enabled for '%s'",
+          AIInformationAnalysis::StringFromEProcess(_requiredProcess),
+          GetIDStr().c_str());
         return false;
       }
     }
-  }
-  
-  // if there's a timer requiring a recent drive off the charger, check with whiteboard
-  const bool requiresRecentDriveOff = FLT_GE(_requiredRecentDriveOffCharger_sec, 0.0f);
-  if ( requiresRecentDriveOff )
-  {
-    const float lastDriveOff = behaviorExternalInterface.GetAIComponent().GetWhiteboard().GetTimeAtWhichRobotGotOffCharger();
-    const bool hasDrivenOff = FLT_GE(lastDriveOff, 0.0f);
-    if ( !hasDrivenOff ) {
-      // never driven off the charger, can't run
+
+    // check if a severe needs state is required
+    if( _requiredSevereNeed != NeedId::Count &&
+        _requiredSevereNeed != behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() ) {
+      // not in the correct state
       return false;
+    }
+
+    const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    // first check the unlock
+    if ( _requiredUnlockId != UnlockId::Count )
+    {
+      if(_behaviorExternalInterface->HasProgressionUnlockComponent()){
+        // ask progression component if the unlockId is currently unlocked
+        auto& progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent();
+        const bool forFreeplay = true;
+        const bool isUnlocked = progressionUnlockComp.IsUnlocked(_requiredUnlockId,
+                                                                 forFreeplay );
+        if ( !isUnlocked ) {
+          return false;
+        }
+      }
     }
     
-    const bool isRecent = FLT_LE(curTime, (lastDriveOff + _requiredRecentDriveOffCharger_sec));
-    if ( !isRecent ) {
-      // driven off, but not recently enough
+    // if there's a timer requiring a recent drive off the charger, check with whiteboard
+    const bool requiresRecentDriveOff = FLT_GE(_requiredRecentDriveOffCharger_sec, 0.0f);
+    if ( requiresRecentDriveOff )
+    {
+      const float lastDriveOff = behaviorExternalInterface.GetAIComponent().GetWhiteboard().GetTimeAtWhichRobotGotOffCharger();
+      const bool hasDrivenOff = FLT_GE(lastDriveOff, 0.0f);
+      if ( !hasDrivenOff ) {
+        // never driven off the charger, can't run
+        return false;
+      }
+      
+      const bool isRecent = FLT_LE(curTime, (lastDriveOff + _requiredRecentDriveOffCharger_sec));
+      if ( !isRecent ) {
+        // driven off, but not recently enough
+        return false;
+      }
+    }
+    
+    // if there's a timer requiring a recent parent switch
+    const bool requiresRecentParentSwitch = FLT_GE(_requiredRecentSwitchToParent_sec, 0.0);
+    if ( requiresRecentParentSwitch ) {
+      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+      // be removed
+      const Robot& robot = behaviorExternalInterface.GetRobot();
+      const float lastTime = robot.GetBehaviorManager().GetLastBehaviorChooserSwitchTime();
+      const float changedAgoSecs = curTime - lastTime;
+      const bool isSwitchRecent = FLT_LE(changedAgoSecs, _requiredRecentSwitchToParent_sec);
+      if ( !isSwitchRecent ) {
+        return false;
+      }
+    }
+    
+    //check if the behavior runs while in the air
+    if(behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads
+       && !ShouldRunWhileOffTreads()){
       return false;
     }
-  }
-  
-  // if there's a timer requiring a recent parent switch
-  const bool requiresRecentParentSwitch = FLT_GE(_requiredRecentSwitchToParent_sec, 0.0);
-  if ( requiresRecentParentSwitch ) {
+
+    
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     const Robot& robot = behaviorExternalInterface.GetRobot();
-    const float lastTime = robot.GetBehaviorManager().GetLastBehaviorChooserSwitchTime();
-    const float changedAgoSecs = curTime - lastTime;
-    const bool isSwitchRecent = FLT_LE(changedAgoSecs, _requiredRecentSwitchToParent_sec);
-    if ( !isSwitchRecent ) {
+    //check if the behavior can run from the charger platform (don't want most to run because they could damage
+    //the robot by moving too much, and also will generally look dumb if they try to turn)
+    if(robot.IsOnChargerPlatform() && !ShouldRunWhileOnCharger()) {
+      return false;
+    }
+    
+    //check if the behavior can handle holding a block
+    if(robot.GetCarryingComponent().IsCarryingObject() && !CarryingObjectHandledInternally()){
       return false;
     }
   }
-  
-  //check if the behavior runs while in the air
-  if(behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads
-     && !ShouldRunWhileOffTreads()){
-    return false;
-  }
-
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  //check if the behavior can run from the charger platform (don't want most to run because they could damage
-  //the robot by moving too much, and also will generally look dumb if they try to turn)
-  if(robot.IsOnChargerPlatform() && !ShouldRunWhileOnCharger()) {
-    return false;
-  }
-  
-  //check if the behavior can handle holding a block
-  if(robot.GetCarryingComponent().IsCarryingObject() && !CarryingObjectHandledInternally()){
-    return false;
-  }
-  #endif
   
   if((_stateConceptStrategy != nullptr) &&
      !_stateConceptStrategy->AreStateConditionsMet(behaviorExternalInterface)){

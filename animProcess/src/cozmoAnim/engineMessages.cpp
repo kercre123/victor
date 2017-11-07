@@ -535,14 +535,15 @@ namespace Messages {
 
     // Draw the word "Factory" in the top right corner if this is a 
     // factory build
-    #ifdef FACTORY_TEST
+    if(FACTORY_TEST)
+    {
       const Point2f factoryTextLoc = {0, 10};
       const f32 factoryScale = 0.5f;
       resultImg.DrawText(factoryTextLoc,
                          "Factory",
                          NamedColors::WHITE,
                          factoryScale);
-    #endif
+    }
 
     // Convert the RGB888 image to RGB565
     cv::Mat img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, CV_16U);
