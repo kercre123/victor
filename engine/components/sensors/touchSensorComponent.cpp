@@ -11,254 +11,118 @@
  **/
 
 #include "engine/components/sensors/touchSensorComponent.h"
-
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
-
-#include "anki/common/basestation/utils/timer.h"
-
-#include "clad/types/touchGestureTypes.h"
-
-#include "util/container/circularBuffer.h"
 
 namespace Anki {
 namespace Cozmo {
   
 namespace {
   const std::string kLogDirectory = "touchSensor";
+
+  // XXX(agm): arbitrarily chosen constants for Victor-G
+  const float kMaxTouchIntensityInvalid = 800;      
   
-  const int kMaxBufferedStrokeCount = 3;
+  const int kMinCountNoTouchForAccumulation = 1000; // = 30 sec / 30 ms rate
+
+  // press debouncing constants
+  const int kDebounceLimitPressLow = 3;
+  const int kDebounceLimitPressHi = 4;
+
+  // gesture classification constants
+  const float kGestureMinTimeForHeld_s = 2.0f;
+  const float kGestureMaxTimeWithoutTouch_s = 3.0f;
+  const float kGestureMinTimeForSlowStroke_s = 0.48f;
+  const int kGestureMaxBufferedStrokeCount = 3;
+  const int kGestureMinNumSlowStrokes = 2;
   
-  const int kMinNumSlowStrokes = 2;
+  // baseline calibration constants
+  // note: the fast calibration time is ~3 seconds
+  //       = (25 samples) x (4 times) x (30ms / cycle)
+  const int kBaselineNumUpdatesForFastCalib = 4;
+  const int kBaselineNumSamplesPerUpdateForFastCalib = 25;
+  // coefficients for lowpass filtering where:
+  // 0 = static unchanging output (set once)
+  // 1 = filter takes on latest input
+  const float kBaselineFilterCoeffSlow = 0.0005f;
+  const float kBaselineFilterCoeffFast = 0.2f;
+  // the maximum number of standard deviations to allow sensor readings
+  // during the baseline fast-calibration phase before restarting the phase
+  const float kBaselineRestartMaxStdevFactor = 3.5f;
   
+  // the number of standard deviations to consider sensor readings as "noise"
+  const float kNoiseBandStdevFactor = 2.5f;
+
+  // max allowable buffer standard deviation when we accumulate
+  // into the filtered standard deviation. If input stdev is too
+  // large, then assume there is touch and restart calibration
+  const float kBaselineMaxAllowableBufferStdev = 15;
+
+  const float kBaselineMaxAllowStdevFactorForLowMean = 1.5f;
 } // end anonymous namespace
 
-// lightweight helper class to debounce switch values
-// http://www.eng.utah.edu/~cs5780/debouncing.pdf
-class DebounceHelper
-{
-public:
-  DebounceHelper(int loLimit, int hiLimit)
-  : _loLimit(loLimit)
-  , _hiLimit(hiLimit)
-  , _counter(0)
-  , _debouncedKeyPress(false)
-  {
-  }
-  
-  bool ProcessRawKeyPress(bool rawKeyPress)
-  {
-    if(rawKeyPress == _debouncedKeyPress) {
-      // if the debounced state is true (pressed), then the counter should
-      // count the number of cycles it is stably released
-      _counter = _debouncedKeyPress ? _loLimit : _hiLimit;
-    } else {
-      --_counter;
-    }
-    
-    if(_counter==0) {
-      _debouncedKeyPress = rawKeyPress;
-      _counter = _debouncedKeyPress ? _loLimit : _hiLimit;
-      return true;
-    } else {
-      return false;
-    }
-    
-    return false;
-  }
-  
-  bool GetDebouncedKeyPress() const
-  {
-    return _debouncedKeyPress;
-  }
-  
-  
-private:
-  const int _loLimit;
-  const int _hiLimit;
-  
-  int _counter;
-  
-  bool _debouncedKeyPress;
-};
-  
-
-// helper class to classify the stream of touch sensor signal over time
-class TouchGestureClassifier
-{
-public:
-  
-  TouchGestureClassifier(float minHoldTime, float recentTouchTimeout, float slowStrokeTimeThreshold)
-  : _kMinTimeForHeld_s(minHoldTime)
-  , _kMaxTimeForRecentTouch_s(recentTouchTimeout)
-  , _kMinTouchDurationForSlowStroke_s(slowStrokeTimeThreshold)
-  , _touchDurationBuffer(kMaxBufferedStrokeCount)
-  , _touchPressTime_s(0.0)
-  , _touchReleaseTime_s(0.0)
-  {
-  }
-  
-  void AddTouchPressed()
-  {
-    _touchPressTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  }
-  
-  void AddTouchReleased()
-  {
-    _touchReleaseTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    
-    // prune the touch duration buffer to remove ContactSustain level touches
-    const bool orderingCorrect = _touchReleaseTime_s > _touchPressTime_s;
-    const bool isSustainPress  = (_touchReleaseTime_s - _touchPressTime_s) > _kMinTimeForHeld_s;
-    if( orderingCorrect && !isSustainPress ) {
-      _touchDurationBuffer.push_back( _touchReleaseTime_s - _touchPressTime_s );
-    }
-  }
-  
-  TouchGesture CalcTouchGesture()
-  {
-    const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    
-    const bool isInPressPhase = _touchPressTime_s > _touchReleaseTime_s;
-    
-    // transition to next gesture
-    TouchGesture nextGestureState = TouchGesture::Count;
-    switch(_gestureState) {
-      case TouchGesture::NoTouch:
-      {
-        if(isInPressPhase) {
-          nextGestureState = TouchGesture::ContactInitial;
-        }
-        break;
-      }
-      case TouchGesture::ContactInitial: // deliberate fallthrough
-      case TouchGesture::ContactSustain: // deliberate fallthrough
-      case TouchGesture::SlowRepeating:  // deliberate fallthrough
-      case TouchGesture::FastRepeating:
-      {
-        if(isInPressPhase) {
-          nextGestureState = CheckTransitionToSustain(now);
-        } else {
-          nextGestureState = CheckTransitionToNoTouch(now);
-          if(nextGestureState == TouchGesture::Count) {
-            nextGestureState = CheckTransitionToStroking();
-          }
-        }
-        break;
-      }
-      case TouchGesture::Count:
-      {
-        DEV_ASSERT(false, "TouchSensorComponent.InvalidTouchGestureState");
-        break;
-      }
-    }
-    
-    // no-op change to state
-    if(nextGestureState == TouchGesture::Count) {
-      nextGestureState = _gestureState;
-    }
-    
-    // handle on-exit and on-enter actions
-    
-    const bool wasInStroking = (_gestureState==TouchGesture::SlowRepeating ||
-                                _gestureState==TouchGesture::FastRepeating);
-    const bool willNotBeStroking = !(nextGestureState==TouchGesture::SlowRepeating ||
-                                    nextGestureState==TouchGesture::FastRepeating);
-    const bool isExitingStroking = wasInStroking && willNotBeStroking;
-    if(isExitingStroking) {
-      _touchDurationBuffer.clear(); // prevents stale touch data when leaving StrokingX
-    }
-    
-    // apply station transition
-    _gestureState = nextGestureState;
-    
-    return _gestureState;
-  }
-  
-  TouchGesture CheckTransitionToStroking()
-  {
-    if( _touchDurationBuffer.size() == _touchDurationBuffer.capacity() ) {
-      int numSlowStrokes = 0;
-      for(int i=0; i<_touchDurationBuffer.size(); ++i) {
-        const bool isSlowTouch = (_touchDurationBuffer[i] > _kMinTouchDurationForSlowStroke_s);
-        numSlowStrokes += isSlowTouch;
-      }
-      const bool isSlowRepeating = numSlowStrokes >= kMinNumSlowStrokes;
-      return isSlowRepeating ? TouchGesture::SlowRepeating : TouchGesture::FastRepeating;
-    }
-    
-    return TouchGesture::Count; // default do not transition
-  }
-  
-  TouchGesture CheckTransitionToNoTouch(const float now)
-  {
-    return ((now-_touchReleaseTime_s) > _kMaxTimeForRecentTouch_s) ?
-            TouchGesture::NoTouch :
-            TouchGesture::Count; // default do not transition
-  }
-  
-  TouchGesture CheckTransitionToSustain(const float now)
-  {
-    const bool isInPressPhase = _touchPressTime_s > _touchReleaseTime_s;
-    const bool isPressedLong  = (now-_touchPressTime_s) > _kMinTimeForHeld_s;
-    return (isInPressPhase && isPressedLong) ? TouchGesture::ContactSustain : TouchGesture::Count;
-  }
-  
-private:
-  
-  // minimum duration of time that the robot must be
-  // physically contacted for it to be considered "held"
-  const float _kMinTimeForHeld_s;
-  
-  // maximum time to wait for next press before timing out
-  // and returning the "NoTouch" idle state
-  const float _kMaxTimeForRecentTouch_s;
-  
-  // minimum duration of time between touch press and release
-  // for it to be considered a "slow" stroke
-  const float _kMinTouchDurationForSlowStroke_s;
-  
-  // the last N touch durations
-  // used to classify stroking
-  Util::CircularBuffer<float> _touchDurationBuffer;
-  
-  // timestamps of the last touch events
-  float _touchPressTime_s;
-  float _touchReleaseTime_s;
-  
-  TouchGesture _gestureState; // XXX: add an intermediate state for "primed" but not yet "idle"
-};
-  
-  
-  TouchSensorComponent::TouchSensorComponent(Robot& robot) : ISensorComponent(robot, kLogDirectory)
-  , _touchGesture(TouchGesture::NoTouch)
+TouchSensorComponent::TouchSensorComponent(Robot& robot) 
+: ISensorComponent(robot, kLogDirectory)
+, _debouncer(kDebounceLimitPressLow, 
+             kDebounceLimitPressHi)
+, _gestureClassifier(kGestureMinTimeForHeld_s,
+                     kGestureMaxTimeWithoutTouch_s,
+                     kGestureMinTimeForSlowStroke_s,
+                     kGestureMaxBufferedStrokeCount,
+                     kGestureMinNumSlowStrokes)
+, _baselineCalib(kBaselineNumUpdatesForFastCalib,
+                 kBaselineNumSamplesPerUpdateForFastCalib,
+                 kBaselineFilterCoeffSlow,
+                 kBaselineFilterCoeffFast,
+                 kBaselineRestartMaxStdevFactor,
+                 kBaselineMaxAllowableBufferStdev,
+                 kBaselineMaxAllowStdevFactorForLowMean)
+, _touchGesture(TouchGesture::NoTouch)
+, _noContactCounter(0)
 {
 }
 
-
 void TouchSensorComponent::UpdateInternal(const RobotState& msg)
 {
-  const float kMaxTouchIntensityInvalid = 800;       // arbitrarily chosen for Victor-G
-  const float kTouchIntensityThreshold = 560;        // arbitrarily chosen for Victor-G
-  static DebounceHelper debouncer( 3, 4);            // arbitrarily chosen for Victor-G
-  static TouchGestureClassifier tgc(2.0, 5.0, 0.48); // arbitrarily chosen for Victor-G
-  
   // sometimes spurious values that are absurdly high come through the sensor
   if(msg.backpackTouchSensorRaw > kMaxTouchIntensityInvalid) {
     return;
   }
-  
-  const bool isTouched = msg.backpackTouchSensorRaw > kTouchIntensityThreshold;
-  
-  if( debouncer.ProcessRawKeyPress(isTouched) ) {
-    if( debouncer.GetDebouncedKeyPress() ) {
-      tgc.AddTouchPressed();
+
+  const bool isPickedUp = (msg.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP) != 0;
+
+  if( !_baselineCalib.IsCalibrated() ) {
+    // note: do not detect touch instances during fast-calibration
+    if(!isPickedUp) {
+      _baselineCalib.UpdateCalibration(msg.backpackTouchSensorRaw);
+    }
+    _touchGesture = TouchGesture::NoTouch;
+  } else {
+    const auto normTouch = msg.backpackTouchSensorRaw-_baselineCalib.GetFilteredTouchMean();
+    const bool isTouched = normTouch > 
+                            (kNoiseBandStdevFactor*_baselineCalib.GetFilteredTouchStdev());
+    if( _debouncer.ProcessRawPress(isTouched) ) {
+      if( _debouncer.GetDebouncedPress() ) {
+        _gestureClassifier.AddTouchPressed();
+      } else {
+        _gestureClassifier.AddTouchReleased();
+      }
+    }
+    _touchGesture = _gestureClassifier.CalcTouchGesture();
+
+    // require seeing a minimum number of untouched cycles before
+    // continuing accumulation of values for baseline detect
+    if(!isTouched && !isPickedUp) {
+      _noContactCounter++;
+      if(_noContactCounter > kMinCountNoTouchForAccumulation) {
+        _baselineCalib.UpdateCalibration(msg.backpackTouchSensorRaw);
+      }
     } else {
-      tgc.AddTouchReleased();
+      // if we are picked up OR we are being touched
+      _noContactCounter = 0;
     }
   }
-  
-  _touchGesture = tgc.CalcTouchGesture();
+
 }
 
 
