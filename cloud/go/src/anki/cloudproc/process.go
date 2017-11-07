@@ -2,15 +2,13 @@ package cloudproc
 
 import (
 	"anki/ipc"
-	"context"
 	"fmt"
 	"strings"
-
-	api "github.com/anki/sai-go-util/http/apiclient"
-
-	"github.com/google/uuid"
+	"sync"
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
+	api "github.com/anki/sai-go-util/http/apiclient"
+	"github.com/google/uuid"
 )
 
 const (
@@ -41,8 +39,8 @@ func socketReader(s ipc.Socket, ch chan<- socketMsg) {
 type voiceContext struct {
 	client      *chipper.ChipperClient
 	samples     []byte
-	context     context.Context
 	audioStream chan []byte
+	once        sync.Once
 }
 
 func (ctx *voiceContext) addSamples(samples []byte) {
@@ -58,7 +56,10 @@ func (ctx *voiceContext) addSamples(samples []byte) {
 
 func newVoiceContext(client *chipper.ChipperClient, cloudChan chan<- string) *voiceContext {
 	audioStream := make(chan []byte, 10)
-	ctx := &voiceContext{client, make([]byte, 0, streamSize*2), nil, audioStream}
+	ctx := &voiceContext{
+		client:      client,
+		samples:     make([]byte, 0, streamSize*2),
+		audioStream: audioStream}
 
 	go func() {
 		for data := range ctx.audioStream {
@@ -77,10 +78,9 @@ func stream(ctx *voiceContext, samples []byte, cloudChan chan<- string) {
 	}
 
 	// set up response routine if this is the first stream
-	if ctx.context == nil {
-		ctx.context = context.Background()
+	ctx.once.Do(func() {
 		go func() {
-			resp, err := ctx.client.WaitForIntent(ctx.context)
+			resp, err := ctx.client.WaitForIntent(nil)
 			if err != nil {
 				fmt.Println("CCE error:", err)
 				cloudChan <- ""
@@ -89,7 +89,7 @@ func stream(ctx *voiceContext, samples []byte, cloudChan chan<- string) {
 			fmt.Println("Intent response ->", resp)
 			cloudChan <- resp.Action
 		}()
-	}
+	})
 }
 
 // bufToGoString converts byte buffers that may be null-terminated if created in C
