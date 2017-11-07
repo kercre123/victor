@@ -37,7 +37,7 @@ public:
 
   // Clears one intent of the specified type if it's pending
   void ClearIntentIfPending(CloudIntent intent);
-  void AddPendingIntent(std::string intent);
+  void AddPendingIntent(std::string&& intent);
   
 private:
 

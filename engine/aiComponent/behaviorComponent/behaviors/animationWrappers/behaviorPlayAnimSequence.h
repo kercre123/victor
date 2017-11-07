@@ -51,6 +51,12 @@ protected:
   // don't allow resume
   virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override { return RESULT_FAIL; }
     
+  // Returns an action that will play all animations in the class the appropriate number of times for one loop
+  IActionRunner* GetAnimationAction(BehaviorExternalInterface& behaviorExternalInterface);
+  // Returns true if multiple animations will be played as a loop _numLoops times
+  // Returns false if a single animation will play _numLoops times
+  bool IsSequenceLoop();
+  
   // ========== Members ==========
   
   // Class supports playing a series of animation triggers OR a series of animations by name
@@ -61,12 +67,8 @@ protected:
   int _sequenceLoopsDone; // for sequences it's not per animation, but per sequence, so we have to wait till the last one
 
 private:
-  void StartPlayingAnimationsByName(BehaviorExternalInterface& behaviorExternalInterface);
-  void StartPlayingAnimationsByTrigger(BehaviorExternalInterface& behaviorExternalInterface);  
-
   // queues actions to play all the animations specified in _animTriggers
-  void StartSequenceLoopForTriggers(BehaviorExternalInterface& behaviorExternalInterface);
-  void StartSequenceLoopForNames(BehaviorExternalInterface& behaviorExternalInterface);
+  void StartSequenceLoop(BehaviorExternalInterface& behaviorExternalInterface);
   
   // We call our listeners whenever an animation completes
   void CallToListeners(BehaviorExternalInterface& behaviorExternalInterface);

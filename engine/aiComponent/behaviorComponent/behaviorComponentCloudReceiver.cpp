@@ -57,8 +57,9 @@ BehaviorComponentCloudReceiver::BehaviorComponentCloudReceiver(Robot& robot)
     };
 
     auto fakeCloudIntentCallback = [this](const GameToEngineEvent& event) {
-        PRINT_CH_INFO("BehaviorSystem","BehaviorComponentCloudReceiver.FakeCloudIntentReceived","");                        
-        AddPendingIntent(event.GetData().Get_FakeCloudIntent().intent);
+        PRINT_CH_INFO("BehaviorSystem","BehaviorComponentCloudReceiver.FakeCloudIntentReceived","");
+        std::string intentionalCopy = event.GetData().Get_FakeCloudIntent().intent;                        
+        AddPendingIntent(std::move(intentionalCopy));
     };
 
 
@@ -85,7 +86,7 @@ bool BehaviorComponentCloudReceiver::IsIntentPending(CloudIntent intent)
   if(_pendingIntents.empty()){
       return false;
   }
-  std::string intentStr = cloudStringMap[Util::EnumToUnderlying(intent)].Value();
+  const std::string& intentStr = cloudStringMap[Util::EnumToUnderlying(intent)].Value();
   for(auto& pendingStr: _pendingIntents){
     if(pendingStr == intentStr){
       return true;
@@ -102,7 +103,7 @@ void BehaviorComponentCloudReceiver::ClearIntentIfPending(CloudIntent intent)
   if(_pendingIntents.empty()){
     return;
   }
-  std::string intentStr = cloudStringMap[Util::EnumToUnderlying(intent)].Value();
+  const std::string& intentStr = cloudStringMap[Util::EnumToUnderlying(intent)].Value();
   for(auto iter = _pendingIntents.begin(); iter != _pendingIntents.end(); iter++){
     if((*iter) == intentStr){
       _pendingIntents.erase(iter);
@@ -113,7 +114,7 @@ void BehaviorComponentCloudReceiver::ClearIntentIfPending(CloudIntent intent)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorComponentCloudReceiver::AddPendingIntent(std::string intent)
+void BehaviorComponentCloudReceiver::AddPendingIntent(std::string&& intent)
 {
     std::lock_guard<std::mutex> lock{_mutex};
     // handle message here; wrap other calls that access/modify
