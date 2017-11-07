@@ -66,7 +66,7 @@ Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal(BehaviorExternalI
   return RESULT_OK;
 }
 
-BehaviorStatus BehaviorPlaypenWaitToStart::InternalUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

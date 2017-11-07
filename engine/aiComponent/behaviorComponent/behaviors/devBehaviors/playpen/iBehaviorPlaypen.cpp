@@ -94,7 +94,7 @@ BehaviorStatus IBehaviorPlaypen::UpdateInternal_WhileRunning(BehaviorExternalInt
     timer.Tick();
   }
   
-  return InternalUpdateInternal(behaviorExternalInterface);
+  return PlaypenUpdateInternal(behaviorExternalInterface);
 }
   
 void IBehaviorPlaypen::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)

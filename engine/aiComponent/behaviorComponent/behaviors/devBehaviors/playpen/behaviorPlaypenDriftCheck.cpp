@@ -103,7 +103,7 @@ void BehaviorPlaypenDriftCheck::CheckDrift(BehaviorExternalInterface& behaviorEx
   _driftCheckComplete = true;
 }
 
-BehaviorStatus BehaviorPlaypenDriftCheck::InternalUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus BehaviorPlaypenDriftCheck::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Wait until both sound and drift check complete
   if(_driftCheckComplete)

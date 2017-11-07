@@ -93,7 +93,7 @@ Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal(BehaviorExternalIn
   return RESULT_OK;
 }
 
-BehaviorStatus BehaviorPlaypenInitChecks::InternalUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus BehaviorPlaypenInitChecks::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_gotMfgID)
   {

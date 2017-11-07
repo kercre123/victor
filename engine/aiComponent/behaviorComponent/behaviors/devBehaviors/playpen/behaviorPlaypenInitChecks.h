@@ -31,7 +31,7 @@ protected:
   virtual void InitBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   virtual Result         OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  virtual BehaviorStatus InternalUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual BehaviorStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
   
   virtual void AlwaysHandle(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;

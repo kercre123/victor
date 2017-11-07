@@ -99,7 +99,7 @@ Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal(BehaviorExt
   return RESULT_OK;
 }
 
-BehaviorStatus BehaviorPlaypenCameraCalibration::InternalUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

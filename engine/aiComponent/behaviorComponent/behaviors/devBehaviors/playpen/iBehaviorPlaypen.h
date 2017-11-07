@@ -93,7 +93,7 @@ protected:
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override final;
   
   // Final override of UpdateInternal so we can do things before the subclass updates
-  // InternalUpdateInternal() is provided for the subclass to override if they wish
+  // PlaypenUpdateInternal() is provided for the subclass to override if they wish
   virtual BehaviorStatus UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override final;
   
   // No playpen behavior can start while carrying an object
@@ -119,7 +119,7 @@ protected:
   
   virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   
-  virtual BehaviorStatus InternalUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) { return BehaviorStatus::Running; }
+  virtual BehaviorStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) { return BehaviorStatus::Running; }
   
   virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
   

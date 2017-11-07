@@ -94,10 +94,10 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal(BehaviorExterna
   return RESULT_OK;
 }
 
-BehaviorStatus BehaviorPlaypenDriveForwards::InternalUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus BehaviorPlaypenDriveForwards::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // There are times during this behavior that we are not acting (waiting for a message to come from the robot)
-  // so we need to keep Running using this empty InternalUpdateInternal
+  // so we need to keep Running using this empty PlaypenUpdateInternal
   return BehaviorStatus::Running;
 }
 

@@ -37,7 +37,7 @@ Result BehaviorPlaypenMotorCalibration::OnBehaviorActivatedInternal(BehaviorExte
   return RESULT_OK;
 }
 
-BehaviorStatus BehaviorPlaypenMotorCalibration::InternalUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus BehaviorPlaypenMotorCalibration::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_liftCalibrated && _headCalibrated)
   {

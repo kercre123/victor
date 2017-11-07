@@ -101,7 +101,7 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal(BehaviorExtern
   return RESULT_OK;
 }
 
-BehaviorStatus BehaviorPlaypenDistanceSensor::InternalUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
