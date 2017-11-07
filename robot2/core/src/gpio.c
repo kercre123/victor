@@ -4,9 +4,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include "core/gpio.h"
 #include "core/common.h"
+
 
 #define GPIO_BASE_OFFSET 911
 
@@ -14,6 +16,7 @@ struct GPIO_t
 {
   int pin;
   int fd;
+  bool isOpenDrain;
 };
 
 GPIO gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initial_value) {
@@ -50,7 +53,16 @@ GPIO gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initi
    if  (fd>0) {
      gpio_set_value(gp, initial_value);
    }
+   gp->isOpenDrain = false;
    return gp;
+}
+
+GPIO gpio_create_open_drain_output(int gpio_number, enum Gpio_Level initial_value) {
+    enum Gpio_Dir initial_dir = initial_value == gpio_LOW ? gpio_DIR_OUTPUT : gpio_DIR_INPUT;
+    GPIO gp = gpio_create(gpio_number, initial_dir, gpio_LOW);
+    gp->isOpenDrain = true;
+    return gp;
+
 }
 
 
@@ -71,6 +83,10 @@ void gpio_set_direction(GPIO gp, enum Gpio_Dir direction)
 
 void gpio_set_value(GPIO gp, enum Gpio_Level value) {
   assert(gp != NULL);
+  if (gp->isOpenDrain) {
+    gpio_set_direction(gp, value == gpio_LOW ? gpio_DIR_OUTPUT : gpio_DIR_INPUT);
+    return;
+  }
    static const char* trigger[] = {"0","1"};
    write(gp->fd, trigger[value!=0], 1);
 }
