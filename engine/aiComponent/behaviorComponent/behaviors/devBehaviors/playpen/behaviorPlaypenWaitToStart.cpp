@@ -48,6 +48,21 @@ Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal(BehaviorExternalI
   };
   robot.GetBodyLightComponent().SetBackpackLights(lights);
 
+  // Check that raw touch values are in expected range (the range assumes no touch)
+  const u16 rawTouchValue = robot.GetTouchSensorComponent().GetLatestRawTouchValue();
+  if(!Util::InRange(rawTouchValue,
+      PlaypenConfig::kMinExpectedTouchValue,
+      PlaypenConfig::kMaxExpectedTouchValue))
+  {
+    PRINT_NAMED_WARNING("BehaviorPlaypenWaitToStart.OnActivated.TouchOOR", 
+                        "Min %u < Val %u < Max %u",
+                        PlaypenConfig::kMinExpectedTouchValue,
+                        rawTouchValue,
+                        PlaypenConfig::kMaxExpectedTouchValue);
+    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::TOUCH_VALUES_OOR, RESULT_FAIL);
+  }
+  PRINT_NAMED_WARNING("IDLETOUCH","%u", rawTouchValue);
+
   return RESULT_OK;
 }
 

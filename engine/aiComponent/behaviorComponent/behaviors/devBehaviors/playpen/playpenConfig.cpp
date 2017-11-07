@@ -132,6 +132,8 @@ WRAP_EXTERN_CONSOLE_VAR(u32,  kMinFirmwareVersion,    "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(int,  kMinHardwareVersion,    "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32,  kMfgIDTimeout_ms,       "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(BodyColor, kMinBodyColor,     "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(u16,  kMinExpectedTouchValue, "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(u16,  kMaxExpectedTouchValue, "Playpen");
 
 WRAP_EXTERN_CONSOLE_VAR(u32, kMotorCalibrationTimeout_ms, "Playpen");
 

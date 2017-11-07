@@ -66,6 +66,12 @@ static u32       kMfgIDTimeout_ms      = 500;
 // Minimum body color we are looking for
 static BodyColor kMinBodyColor         = BodyColor::WHITE_v15;
 
+// Minimum expected raw touch sensor value
+static u16       kMinExpectedTouchValue= 400;
+
+// Maximum expected raw touch sensor value
+static u16       kMaxExpectedTouchValue= 800;
+
 // ----------Motor Calibration----------
 // Timeout to wait for motor calibration to complete
 static u32 kMotorCalibrationTimeout_ms = 4000;

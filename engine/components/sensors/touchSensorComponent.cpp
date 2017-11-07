@@ -266,6 +266,7 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
     return;
   }
   
+  _lastRawTouchValue = msg.backpackTouchSensorRaw;
 
   const bool isTouched = msg.backpackTouchSensorRaw > kTouchIntensityThreshold;
   

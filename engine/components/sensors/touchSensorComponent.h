@@ -37,11 +37,15 @@ public:
   TouchGesture GetLatestTouchGesture() const {
     return _touchGesture;
   }
+
+  u32 GetLatestRawTouchValue() const { return _lastRawTouchValue; }
   
 private:
   
   // the latest computed result of touch gesture
   TouchGesture _touchGesture;
+
+  u16 _lastRawTouchValue = 0;
 
 };
 
