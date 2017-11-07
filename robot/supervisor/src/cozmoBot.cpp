@@ -132,6 +132,15 @@ namespace Anki {
 
       } // Robot::Init()
 
+      // Handler for cleaning up when this process is killed.
+      // Note: Motors are disabled automatically by syscon after 25ms of spine sync loss
+      void Destroy()
+      {
+        AnkiInfo("CozmoBot.Destroy", "");
+
+        // Turn off lights
+        BackpackLightController::TurnOffAll();
+      }
 
       Result step_MainExecution()
       {

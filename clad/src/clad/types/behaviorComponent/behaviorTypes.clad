@@ -112,6 +112,7 @@ enum uint_8 BehaviorClass {
   DispatcherStrictPriorityWithCooldown,
   DispatcherQueue,
   DispatcherRandom,
+  DispatcherScoring,
 
   // Victor / demo behavior
   VictorObservingDemo,
@@ -172,6 +173,11 @@ enum uint_8 BehaviorID {
   DriveOffCharger,
   EarnedSparks,
   EnrollFace,
+
+  // Example Behaviors
+  ExampleDispatcherScoring,
+
+
   FPPeekABoo,
   FactoryCentroidExtractor,
   FactoryTest,

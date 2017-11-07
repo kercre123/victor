@@ -270,8 +270,9 @@ namespace Cozmo {
                                                              eyeCenter.x(),
                                                              eyeCenter.y());
 
-    const Value glowFraction = faceData.GetParameter(whichEye, Parameter::GlowSize); 
-
+    const Value glowFraction = faceData.GetParameter(whichEye, Parameter::GlowSize);
+    DEV_ASSERT(Util::IsFltGEZero(glowFraction), "ProceduralFaceDrawer.DrawEye.InvalidGlow");
+    
     const SmallMatrix<2, 3, f32> W_glow = GetTransformationMatrix(faceData.GetParameter(whichEye, Parameter::EyeAngle),
                                                                   (1+glowFraction) * faceData.GetParameter(whichEye, Parameter::EyeScaleX),
                                                                   (1+glowFraction) * faceData.GetParameter(whichEye, Parameter::EyeScaleY),
@@ -436,11 +437,20 @@ namespace Cozmo {
         cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kAntiAliasingSize,kAntiAliasingSize));
       }
       
-      const u8 drawHue = std::round(255.f*faceData.GetHue());
-      const u8 drawSat = std::round(255.f*faceData.GetParameter(whichEye, Parameter::Saturation));
+ 
+      const f32 hueFactor = faceData.GetHue();
+      DEV_ASSERT(Util::IsFltGEZero(hueFactor), "ProceduralFaceDrawer.DrawEye.InvalidHue");
+      const u8 drawHue = std::round(255.f*hueFactor);
+      
+      const f32 satFactor = faceData.GetParameter(whichEye, Parameter::Saturation);
+      DEV_ASSERT(Util::IsFltGEZero(satFactor), "ProceduralFaceDrawer.DrawEye.InvalidSaturation");
+      const u8 drawSat = std::round(255.f * satFactor);
+      
       const f32 eyeLightness = faceData.GetParameter(whichEye, Parameter::Lightness);
+      DEV_ASSERT(Util::IsFltGEZero(eyeLightness), "ProceduralFaceDrawer.DrawEye.InvalidLightness");
     
       const f32 scanlineOpacity = faceData.GetScanlineOpacity();
+      DEV_ASSERT(Util::IsFltGEZero(scanlineOpacity), "ProceduralFaceDrawer.DrawEye.InvalidScanlineOpacity");
       
       // Draw the eye into the face image, adding outer glow, noise, and stylized scanlines
       {

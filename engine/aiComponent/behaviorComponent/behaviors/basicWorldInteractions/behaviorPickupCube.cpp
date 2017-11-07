@@ -93,7 +93,7 @@ ICozmoBehavior::Status BehaviorPickUpCube::UpdateInternal_WhileRunning(BehaviorE
   for(auto configType: _configurationsToIgnore) {
     if(behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager()
                   .IsObjectPartOfConfigurationType(configType, _targetBlockID)){
-      StopWithoutImmediateRepetitionPenalty(behaviorExternalInterface);
+      CancelSelf();
       return Status::Complete;
     }
   }

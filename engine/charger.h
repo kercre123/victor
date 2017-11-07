@@ -69,6 +69,8 @@ namespace Anki {
       virtual void    EraseVisualization() const override;
       virtual bool CanIntersectWithRobot() const override { return true; }
       
+      // Assume there is exactly one of these objects at a given time
+      virtual bool IsUnique() const override  { return true; }
 
       virtual Point3f GetSameDistanceTolerance()  const override;
       

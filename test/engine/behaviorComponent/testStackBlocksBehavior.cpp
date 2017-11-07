@@ -257,6 +257,5 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   incrementEngineTime_ns += 100000000.0f;
   BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
   
-  auto status = stackBehavior->BehaviorUpdate_Legacy(behaviorExternalInterface);
-  EXPECT_NE(BehaviorStatus::Running, status) << "should have stopped running";
+  stackBehavior->BehaviorUpdate_Legacy(behaviorExternalInterface);
 }

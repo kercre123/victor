@@ -23,8 +23,6 @@
 #include "engine/aiComponent/behaviorComponent/activities/activityStrategies/iActivityStrategy.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorChoosers/behaviorChooserFactory.h"
-#include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -50,8 +48,6 @@ namespace Cozmo {
 
 namespace {
 static const char* kNeedsActionIDKey                  = "needsActionID";
-static const char* kBehaviorChooserConfigKey          = "behaviorChooser";
-static const char* kInterludeBehaviorChooserConfigKey = "interludeBehaviorChooser";
 static const char* kStrategyConfigKey                 = "activityStrategy";
 static const char* kRequiresSparkKey                  = "requireSpark";
 static const char* kSmartReactionLockSuffix           = "_activityLock";
@@ -163,20 +159,20 @@ void IActivity::ReadConfig(BehaviorExternalInterface& behaviorExternalInterface,
   
   // configure chooser and set in pointer if specified
   // otherwise if ChooseNextBehaviorInternal hasn't been overridden assert should hit below
-  _behaviorChooserPtr.reset();
+  /**_behaviorChooserPtr.reset();
   const Json::Value& chooserConfig = config[kBehaviorChooserConfigKey];
   if(!chooserConfig.isNull()){
     _behaviorChooserPtr = BehaviorChooserFactory::CreateBehaviorChooser
                               (behaviorExternalInterface, chooserConfig);
-  }
+  }**/
 
   // configure the interlude behavior chooser, to specify behaviors that can run in between other behaviors.
-  _interludeBehaviorChooserPtr.reset();
+  /**_interludeBehaviorChooserPtr.reset();
   const Json::Value& interludeChooserConfig = config[kInterludeBehaviorChooserConfigKey];
   if( !interludeChooserConfig.isNull() ) {
     _interludeBehaviorChooserPtr = BehaviorChooserFactory::CreateBehaviorChooser
                                        (behaviorExternalInterface, interludeChooserConfig);
-  }
+  }**/
     
   // strategy
   const Json::Value& strategyConfig = config[kStrategyConfigKey];
@@ -192,7 +188,7 @@ void IActivity::ReadConfig(BehaviorExternalInterface& behaviorExternalInterface,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IActivity::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) {
   if(USE_BSM){
-    if((_behaviorChooserPtr != nullptr) &&
+    /**if((_behaviorChooserPtr != nullptr) &&
        behaviorExternalInterface.HasDelegationComponent() &&
        !behaviorExternalInterface.GetDelegationComponent().IsControlDelegated(this)){
       ICozmoBehaviorPtr nextBehavior = _behaviorChooserPtr->GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
@@ -200,7 +196,7 @@ void IActivity::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterf
       if(delegationComp.HasDelegator(this)){
         delegationComp.GetDelegator(this).Delegate(this, nextBehavior.get());
       }
-    }
+    }**/
   }
   Update_Legacy(behaviorExternalInterface);
 };
@@ -209,12 +205,12 @@ void IActivity::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterf
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IActivity::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
- if(_behaviorChooserPtr.get() != nullptr){
+ /**if(_behaviorChooserPtr.get() != nullptr){
    _behaviorChooserPtr->GetAllDelegates(delegates);
  }
  if(_interludeBehaviorChooserPtr != nullptr){
    _interludeBehaviorChooserPtr->GetAllDelegates(delegates);
- }
+ }**/
 }
 
 
@@ -231,9 +227,9 @@ bool IActivity::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorEx
 Result IActivity::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _lastTimeActivityStartedSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if(_behaviorChooserPtr.get() != nullptr){
+  /**if(_behaviorChooserPtr.get() != nullptr){
     _behaviorChooserPtr->OnActivated(behaviorExternalInterface);
-  }
+  }**/
   
   // set driving animations for this activity if specified in config
   const bool hasDrivingAnims = HasDrivingAnimTriggers();
@@ -272,9 +268,9 @@ Result IActivity::OnBehaviorActivated(BehaviorExternalInterface& behaviorExterna
 void IActivity::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _lastTimeActivityStoppedSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if(_behaviorChooserPtr.get() != nullptr){
+  /**if(_behaviorChooserPtr.get() != nullptr){
     _behaviorChooserPtr->OnDeactivated(behaviorExternalInterface);
-  }
+  }**/
 
   // clear idle if it was set
   if( _idleAnimTrigger != AnimationTrigger::Count ) {
@@ -361,7 +357,7 @@ ICozmoBehaviorPtr IActivity::GetDesiredActiveBehavior(BehaviorExternalInterface&
 
   ICozmoBehaviorPtr ret = GetDesiredActiveBehaviorInternal(behaviorExternalInterface, currentRunningBehavior);
 
-  const bool hasInterludeChooser = _interludeBehaviorChooserPtr != nullptr;
+  const bool hasInterludeChooser = false; //_interludeBehaviorChooserPtr != nullptr;
   const bool switchingBehaviors = ret != currentRunningBehavior;
   if (!switchingBehaviors) {
     DEV_ASSERT_MSG(ret == nullptr || ret->IsActivated(),
@@ -372,7 +368,7 @@ ICozmoBehaviorPtr IActivity::GetDesiredActiveBehavior(BehaviorExternalInterface&
   if( hasInterludeChooser && switchingBehaviors ) {
     // if we are changing behaviors, give the interlude chooser an opportunity to run something. Pass in the
     // behavior that we would otherwise choose (The one that would run next) as "current"
-    _lastChosenInterludeBehavior = _interludeBehaviorChooserPtr->GetDesiredActiveBehavior(behaviorExternalInterface, ret);
+    //_lastChosenInterludeBehavior = _interludeBehaviorChooserPtr->GetDesiredActiveBehavior(behaviorExternalInterface, ret);
     if(_lastChosenInterludeBehavior != nullptr) {
       PRINT_CH_INFO("Behaviors", "IActivity.ChooseInterludeBehavior",
                     "Activity %s is inserting interlude %s between behaviors %s and %s",
@@ -391,14 +387,14 @@ ICozmoBehaviorPtr IActivity::GetDesiredActiveBehavior(BehaviorExternalInterface&
 ICozmoBehaviorPtr IActivity::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior)
 {
   ICozmoBehaviorPtr ret;
-  if(ANKI_VERIFY(_behaviorChooserPtr.get() != nullptr,
+  /**if(ANKI_VERIFY(_behaviorChooserPtr.get() != nullptr,
                  "IActivity.ChooseNextBehaviorInternal.ChooserNotOverwritten",
                  "ChooseNextBehaviorInternal called without behavior chooser overwritten")){
     // at the moment delegate on chooser. At some point we'll have intro/outro and other reactions
     // note we pass
     ICozmoBehaviorPtr ret = _behaviorChooserPtr->GetDesiredActiveBehavior(behaviorExternalInterface, currentRunningBehavior);
     return ret;
-  }
+  }**/
   
   return nullptr;
 }
