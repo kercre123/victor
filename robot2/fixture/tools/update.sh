@@ -31,3 +31,4 @@ cp headprogram ./$folder
 cp helpify ./$folder
 
 #XXX: fetch latest emmcdl folder
+mkdir $folder/emcdl #XXX: manually copy files here
