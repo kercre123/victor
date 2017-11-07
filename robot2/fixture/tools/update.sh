@@ -28,5 +28,6 @@ cp ../helpware/dfu ./$folder
 cp ../helpware/helper ./$folder
 cp ../helpware/display ./$folder
 cp headprogram ./$folder
+cp helpify ./$folder
 
 #XXX: fetch latest emmcdl folder
