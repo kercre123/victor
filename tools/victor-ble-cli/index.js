@@ -75,7 +75,7 @@ var onBLEDiscover = function (peripheral) {
     }
 
     victorAds[localName] = peripheral;
-    outputResponse("Found " + localName);
+    outputResponse("Found " + localName + " (RSSI = " + peripheral.rssi + ")");
 
     peripheral.once('connect', function () {
         victorAds = {};
