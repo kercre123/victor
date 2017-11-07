@@ -26,7 +26,9 @@ ProceduralFace* ProceduralFace::_resetData = nullptr;
 ProceduralFace::Value ProceduralFace::_hue = 0.4f;
 
 namespace {
-  const ProceduralFace::Value kDefaultGlowSize = 0.5f;
+  const ProceduralFace::Value kDefaultSaturation      = 1.f;
+  const ProceduralFace::Value kDefaultLightness       = 1.f;
+  const ProceduralFace::Value kDefaultGlowSize        = 0.5f;
   const ProceduralFace::Value kDefaultScanlineOpacity = 0.7f;
 }
   
@@ -136,6 +138,15 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
   {
     SetParameter(eye, static_cast<ProceduralFace::Parameter>(i), eyeArray[i]);
   }
+  
+  // Set defaults for parameters that are unset because
+  // keyframe is old format
+  if (eyeArray.size() == N_old) {
+    SetParameter(eye, Parameter::Saturation, kDefaultSaturation);
+    SetParameter(eye, Parameter::Lightness,  kDefaultLightness);
+    SetParameter(eye, Parameter::GlowSize,   kDefaultGlowSize);
+  }
+  
 }
 
 void ProceduralFace::SetFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe)
