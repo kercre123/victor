@@ -44,9 +44,9 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal(BehaviorExterna
                             (PlaypenConfig::kDistanceToTriggerBackCliffs_mm / PlaypenConfig::kCliffSpeed_mmps) + 
                             (PlaypenConfig::kDistanceToDriveOverCliff_mm / DEFAULT_PATH_MOTION_PROFILE.speed_mmps));
 
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingAudio(recordTime_s * 1000,
-                                                                                      false,
-                                                                                      GetLogger().GetLogName()+"wheels")));
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMics(recordTime_s * 1000,
+                                                                                     false,
+                                                                                     GetLogger().GetLogName()+"wheels")));
 
   // Drive fowards some amount until front cliffs trigger, which will cause the action to fail with
   // CANCELLED_WHILE_RUNNING

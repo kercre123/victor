@@ -239,7 +239,7 @@ namespace Messages {
     _audioInput->HandleMessage(msg);
   }
 
-  void Process_startRecordingAudio(const Anki::Cozmo::RobotInterface::StartRecordingAudio& msg)
+  void Process_startRecordingMics(const Anki::Cozmo::RobotInterface::StartRecordingMics& msg)
   {
     auto* micDataProcessor = _context->GetMicDataProcessor();
     if (micDataProcessor == nullptr)

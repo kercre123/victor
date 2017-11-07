@@ -316,7 +316,7 @@ message SetBackpackLights
   uint_8 layer = 0      // 0 is BPL_USER
 }
 
-message StartRecordingAudio
+message StartRecordingMics
 {
   uint_32 duration_ms,
   bool    runFFT,
@@ -441,7 +441,7 @@ union EngineToRobot
   LockAnimTracks                lockAnimTracks              = 0x51,
   RequestAvailableAnimations    requestAvailableAnimations  = 0x52,
   AbortAnimation                abortAnimation              = 0x53,
-  StartRecordingAudio           startRecordingAudio         = 0x54,
+  StartRecordingMics            startRecordingMics          = 0x54,
   DrawTextOnScreen              drawTextOnScreen            = 0x55,
 
 

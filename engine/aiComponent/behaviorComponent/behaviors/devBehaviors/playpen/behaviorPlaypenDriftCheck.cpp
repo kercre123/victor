@@ -33,9 +33,9 @@ Result BehaviorPlaypenDriftCheck::OnBehaviorActivatedInternal(BehaviorExternalIn
   Robot& robot = behaviorExternalInterface.GetRobot();
 
 
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingAudio(PlaypenConfig::kDurationOfAudioToRecord_ms,
-                                                                                      false,
-                                                                                      GetLogger().GetLogName()+"head_lift")));
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMics(PlaypenConfig::kDurationOfAudioToRecord_ms,
+                                                                                     false,
+                                                                                     GetLogger().GetLogName()+"head_lift")));
 
   // Move head and lift to extremes then move to sound playing angle
   MoveHeadToAngleAction* moveHeadUp = new MoveHeadToAngleAction(robot, MAX_HEAD_ANGLE);

@@ -62,9 +62,9 @@ void BehaviorPlaypenSoundCheck::TransitionToPlayingSound(BehaviorExternalInterfa
   // Start recording mic audio of the sound and run an FFT on the audio to check that we actually heard the
   // sound we played
   const bool runFFT = true;
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingAudio(PlaypenConfig::kDurationOfAudioToRecord_ms,
-                                                                                      runFFT,
-                                                                                      GetLogger().GetLogName()+"beep")));
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMics(PlaypenConfig::kDurationOfAudioToRecord_ms,
+                                                                                     runFFT,
+                                                                                     GetLogger().GetLogName()+"beep")));
 
   PlayAnimationAction* soundAction = new PlayAnimationAction(robot, "soundTestAnim");
   DelegateIfInControl(soundAction, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS) });
