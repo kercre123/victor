@@ -4,6 +4,15 @@ const Victor = require("./victor.js");
 const fs = require('fs');
 
 var victorAds = {};
+
+const BLEConnectionStates = {
+    DISCONNECTED : 0,
+    CONNECTING : 1,
+    CONNECTED : 2,
+    DISCONNECTING : 3
+};
+
+var bleConnectionState = BLEConnectionStates.DISCONNECTED;
 var connectedVictor = undefined;
 
 function completer(line) {
@@ -78,6 +87,10 @@ var onBLEDiscover = function (peripheral) {
     outputResponse("Found " + localName + " (RSSI = " + peripheral.rssi + ")");
 
     peripheral.once('connect', function () {
+        if (bleConnectionState != BLEConnectionStates.CONNECTING) {
+            return;
+        }
+        bleConnectionState = BLEConnectionStates.CONNECTED;
         victorAds = {};
         outputResponse("Connected to " + localName);
         peripheral.discoverServices();
@@ -109,6 +122,7 @@ var onBLEDiscover = function (peripheral) {
                 });
                 if (!send || !receive) {
                     outputResponse("Didn't find required characteristics. Disconnecting.");
+                    bleConnectionState = BLEConnectionStates.DISCONNECTING;
                     peripheral.disconnect();
                     return;
                 }
@@ -121,6 +135,7 @@ var onBLEDiscover = function (peripheral) {
         });
         if (!haveVictorServiceId) {
             outputResponse("Didn't find required Victor service ID. Disconnecting.");
+            bleConnectionState = BLEConnectionStates.DISCONNECTING;
             peripheral.disconnect();
             return;
         }
@@ -129,6 +144,7 @@ var onBLEDiscover = function (peripheral) {
     peripheral.on('disconnect', function () {
         outputResponse("Disconnected");
         connectedVictor = undefined;
+        bleConnectionState = BLEConnectionStates.DISCONNECTED;
     });
 };
 
@@ -200,7 +216,10 @@ var handleInput = function (line) {
                 outputResponse("You are already connected to a victor");
             } else if (Object.keys(victorAds).length == 0) {
                 outputResponse("No victors found to connect to.");
+            } else if (bleConnectionState != BLEConnectionStates.DISCONNECTED) {
+                outputResponse("Connection in progress.");
             } else {
+                bleConnectionState = BLEConnectionStates.CONNECTING;
                 noble.stopScanning();
                 var peripheral = undefined;
                 var localName = Object.keys(victorAds)[0];
@@ -220,6 +239,7 @@ var handleInput = function (line) {
             if (!connectedVictor) {
                 outputResponse("Not connected to a Victor");
             } else {
+                bleConnectionState = BLEConnectionStates.DISCONNECTING;
                 connectedVictor.disconnect();
                 connectedVictor = undefined;
             }
