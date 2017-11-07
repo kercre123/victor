@@ -54,6 +54,12 @@ namespace BackpackLightController {
     }
   }
 
+  void TurnOffAll()
+  {
+    memset(_ledParams, 0, sizeof(_ledParams));
+    ResetPhases();
+  }
+
   void EnableLayer(const BackpackLightLayer layer, bool forceUpdate)
   {
     if (layer >= BackpackLightLayer::BPL_NUM_LAYERS) {
