@@ -13,9 +13,9 @@ static void terminate(void);
 #include "led_func.h" // Generated with LEDs.py
 
 static const void_funct function_table[4][8] = {
-  { led_0x0, led_1x0, led_2x0, led_3x0, led_4x0, led_5x0, led_6x0, led_7x0 },
-  { led_0x1, led_1x1, led_2x1, led_3x1, led_4x1, led_5x1, led_6x1, led_7x1 },
   { led_0x2, led_1x2, led_2x2, led_3x2, led_4x2, led_5x2, led_6x2, led_7x2 },
+  { led_0x1, led_1x1, led_2x1, led_3x1, led_4x1, led_5x1, led_6x1, led_7x1 },
+  { led_0x0, led_1x0, led_2x0, led_3x0, led_4x0, led_5x0, led_6x0, led_7x0 },
   { led_0x3, led_1x3, led_0x3, led_1x3, led_2x3, led_3x3, led_2x3, led_3x3 }  // Green channel is fixed
 };
 
@@ -37,10 +37,10 @@ static const int LIGHT_SHIFT      = 17 + 2; // 2 is to account for prescalar
 static const uint8_t DARK_OFFSET  = 200; // 245 = 0% dark
 
 static const uint8_t booted[LIGHT_CHANNELS][LIGHT_COLORS] = {
-  { 0xFF, 0xFF, 0xFF },
-  { 0x00, 0x00, 0xFF },
+  { 0xFF, 0x00, 0x00 },
   { 0x00, 0xFF, 0x00 },
-  { 0xFF, 0x00, 0x00 }
+  { 0x00, 0x00, 0xFF },
+  { 0xFF, 0xFF, 0xFF }
 };
 static uint8_t value[LIGHT_CHANNELS][LIGHT_COLORS];
 static LightChannel light[LIGHT_CHANNELS * LIGHT_COLORS + 1];
