@@ -19,6 +19,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
+#include "engine/aiComponent/behaviorComponent/anonymousBehaviorFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
@@ -68,6 +69,11 @@ static const char* kSmartReactionLockSuffix          = "_behaviorLock";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 static const char* kWantsToRunStrategyConfigKey      = "wantsToRunStrategyConfig";
 static const std::string kIdleLockPrefix             = "Behavior_";
+
+// Keys for loading in anonymous behaviors
+static const char* kAnonymousBehaviorMapKey          = "anonymousBehaviors";
+static const char* kAnonymousBehaviorName            = "behaviorName";
+static const char* kAnonymousBehaviorParams          = "params";
 
 
 static const int kMaxResumesFromCliff                = 2;
@@ -141,7 +147,28 @@ Json::Value ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass behaviorCl
   return config;
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::InjectBehaviorClassAndIDIntoConfig(BehaviorClass behaviorClass, BehaviorID behaviorID, Json::Value& config)
+{
+  if(config.isMember(kBehaviorIDConfigKey)){
+    PRINT_NAMED_WARNING("ICozmoBehavior.InjectBehaviorIDIntoConfig.BehaviorIDAlreadyExists",
+                        "Overwriting behaviorID %s with behaviorID %s",
+                        config[kBehaviorIDConfigKey].asString().c_str(),
+                        BehaviorIDToString(behaviorID));
+  }
+  if(config.isMember(kBehaviorClassKey)){
+    PRINT_NAMED_WARNING("ICozmoBehavior.InjectBehaviorIDIntoConfig.BehaviorClassAlreadyExists",
+                        "Overwriting behaviorClass %s with behaviorClass %s",
+                        config[kBehaviorClassKey].asString().c_str(),
+                        BehaviorClassToString(behaviorClass));
+  }
+
+  config[kBehaviorIDConfigKey] = BehaviorIDToString(behaviorID);  
+  config[kBehaviorClassKey] = BehaviorClassToString(behaviorClass);
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorID ICozmoBehavior::ExtractBehaviorIDFromConfig(const Json::Value& config,
                                                   const std::string& fileName)
@@ -289,6 +316,10 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     _wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
   }
 
+  if(config.isMember(kAnonymousBehaviorMapKey)){
+    _anonymousBehaviorMapConfig = config[kAnonymousBehaviorMapKey];
+  }    
+    
   return true;
 }
   
@@ -318,6 +349,24 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
                                                                                   _wantsToRunConfig));
     _wantsToRunConfig.clear();
   }
+
+  if(!_anonymousBehaviorMapConfig.empty()){
+    AnonymousBehaviorFactory factory(behaviorExternalInterface.GetBehaviorContainer()); 
+    for(auto& entry: _anonymousBehaviorMapConfig){
+      const std::string debugStr = "ICozmoBehavior.ReadFromJson.";
+      
+      const std::string behaviorName = JsonTools::ParseString(entry, kAnonymousBehaviorName, debugStr + "BehaviorNameMissing");      
+      const BehaviorClass behaviorClass = BehaviorClassFromString(
+        JsonTools::ParseString(entry, kBehaviorClassKey, debugStr + "BehaviorClassMissing"));
+      Json::Value params;
+      if(entry.isMember(kAnonymousBehaviorParams)){
+        params = entry[kAnonymousBehaviorParams];
+      }
+      _anonymousBehaviorMap.insert(std::make_pair(behaviorName,
+                                   factory.CreateBehavior(behaviorClass, params)));
+    }
+  }
+
 
   // Allow internal init to happen before subscribing to tags in case additional
   // tags are added

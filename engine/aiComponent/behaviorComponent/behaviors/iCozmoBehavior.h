@@ -96,6 +96,7 @@ public:
   using Status = BehaviorStatus;
   
   static Json::Value CreateDefaultBehaviorConfig(BehaviorClass behaviorClass, BehaviorID behaviorID);
+  static void InjectBehaviorClassAndIDIntoConfig(BehaviorClass behaviorClass, BehaviorID behaviorID, Json::Value& config);  
   static BehaviorID ExtractBehaviorIDFromConfig(const Json::Value& config, const std::string& fileName = "");
   static BehaviorClass ExtractBehaviorClassFromConfig(const Json::Value& config);
 
@@ -570,7 +571,15 @@ private:
   std::set<RobotInterface::RobotToEngineTag> _robotToEngineTags;
 
   // Tracking wants to run configs for initialization
-  Json::Value _wantsToRunConfig;  
+  Json::Value _wantsToRunConfig;
+
+  // Behaviors can load in internal "anonymous" behaviors which are not stored
+  // in the behavior container and are referenced by string instead of by ID
+  // This map provides built in "anonymous" functionality, but behaviors
+  // can also load anonymous behaviors directly into variables using the
+  // anonymous behavior factory
+  Json::Value _anonymousBehaviorMapConfig;  
+  std::map<std::string,ICozmoBehaviorPtr> _anonymousBehaviorMap;
 }; // class ICozmoBehavior
 
   

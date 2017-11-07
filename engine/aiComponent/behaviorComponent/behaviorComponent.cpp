@@ -250,7 +250,7 @@ void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
         // Need a base behavior, so make it base behavior wait
         Json::Value config = ICozmoBehavior::CreateDefaultBehaviorConfig(
                                     BehaviorClass::Wait, BehaviorID::Wait);
-        _components->_behaviorContainer.CreateBehavior(config);
+        _components->_behaviorContainer.CreateBehaviorFromConfig(config);
         baseBehavior = _components->_behaviorContainer.FindBehaviorByID(BehaviorID::Wait).get();
       }
     }

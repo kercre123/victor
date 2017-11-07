@@ -159,6 +159,7 @@ enum uint_8 BehaviorID {
 
   AcknowledgeFace,
   AcknowledgeObject,
+  Anonymous,
   Bouncer,
   BuildPyramid,
   BuildPyramidBase,
@@ -176,7 +177,7 @@ enum uint_8 BehaviorID {
 
   // Example Behaviors
   ExampleDispatcherScoring,
-
+  ExampleAnonymousBehaviors,
 
   FPPeekABoo,
   FactoryCentroidExtractor,

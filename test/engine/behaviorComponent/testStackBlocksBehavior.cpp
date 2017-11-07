@@ -57,8 +57,8 @@ void CreateStackBehavior(Robot& robot, ICozmoBehaviorPtr& stackBehavior, Behavio
   bool parseOK = reader.parse( configStr.c_str(), config);
   ASSERT_TRUE(parseOK) << "failed to parse JSON, bug in the test";
 
-  stackBehavior = behaviorContainer.CreateBehavior(BehaviorClass::StackBlocks,
-                                                   config);
+  stackBehavior = behaviorContainer.CreateBehaviorAndAddToContainer(BehaviorClass::StackBlocks,
+                                                                    config);
   stackBehavior->Init(behaviorExternalInterface);
   stackBehavior->OnEnteredActivatableScope();
   ASSERT_TRUE(stackBehavior != nullptr);

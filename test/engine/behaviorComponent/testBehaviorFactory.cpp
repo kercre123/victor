@@ -136,7 +136,7 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
   
-  ICozmoBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
+  ICozmoBehaviorPtr newBehavior = behaviorContainer.CreateBehaviorFromConfig(testBehaviorJson);
   newBehavior->Init(behaviorExternalInterface);
   ASSERT_NE(newBehavior, nullptr);
   
