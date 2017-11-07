@@ -11,7 +11,6 @@ enum Gpio_Level {
   gpio_HIGH
 };
 
-
 struct GPIO_t;
 typedef struct GPIO_t* GPIO;
 
