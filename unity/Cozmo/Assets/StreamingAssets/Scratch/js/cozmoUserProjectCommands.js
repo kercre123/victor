@@ -267,8 +267,8 @@
         if (isCozmoSampleProject && projectXML != null) {
             // Set the coordinate setting in the sample project xml to our desired location on-screen.
             var startingPoint = window.getScriptStartingPoint();
-            projectXML = projectXML.replace("REPLACE_X_COORD", startingPoint.x); // TODO need JSON solution
-            projectXML = projectXML.replace("REPLACE_Y_COORD", startingPoint.y); // TODO need JSON solution
+            projectXML = projectXML.replace("REPLACE_X_COORD", startingPoint.x);
+            projectXML = projectXML.replace("REPLACE_Y_COORD", startingPoint.y);
         }
 
         window.startLoadingProject();
@@ -292,7 +292,6 @@
     // Sets window.cozmoProjectName and sets name on workspace.
     // Makes rename and remix UI visible and tappable, if appropriate.
     window.setProjectNameAndSavedText = function(projectName, isSampleProject) {
-
         var unencodedProjectName = unescapedText( projectName );
 
         window.cozmoProjectName = unencodedProjectName;
