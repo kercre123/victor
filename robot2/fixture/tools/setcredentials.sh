@@ -9,10 +9,16 @@ dbpass=r8mCxHBysGTPiHNK
 foldername=emmcdl
 
 #DEBUG: test this out with a public-access folder, no password
-echo ========= DEBUG: test folder with stock password  ================
-dblink=https://www.dropbox.com/sh/17wazbx9xu5rjg0/AAC57fJwCusIs28x8-nL3zi9a?dl=1
-dbpass=""
-foldername=emmcdl_test
+#echo ========= DEBUG: test folder with stock password  ================
+#dblink=https://www.dropbox.com/sh/17wazbx9xu5rjg0/AAC57fJwCusIs28x8-nL3zi9a?dl=1
+#dbpass=""
+#foldername=emmcdl_test
+
+#DEBUG: test this out with a password protected file (not folder)
+echo ========= DEBUG: test pass-protected file ================
+dblink=https://www.dropbox.com/s/mge4v8dcnt2geiy/20171102%20emmcdl.zip?dl=1
+dbpass=r8mCxHBysGTPiHNK
+foldername=emmcdl_file
 
 echo server/"$foldername" @ $dblink
 export dblink

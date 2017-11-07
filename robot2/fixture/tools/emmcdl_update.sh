@@ -12,14 +12,14 @@ rm -rf ${foldername}_c
 
 #fetch latest and unpack (pwd protected)
 if [ "$dbpasslen" -gt "0" ]; then #password length > 0
-  echo wget -O ${foldername}_w.zip --password=pwd $dblink
+  echo "wget -O ${foldername}_w.zip --password=pwd $dblink"
   wget -O ${foldername}_w.zip --password=$dbpass $dblink
-  echo curl -L -o ${foldername}_c.zip --pass pwd $dblink
+  echo "curl -L -o ${foldername}_c.zip --pass pwd $dblink"
   curl -L -o ${foldername}_c.zip --pass $dbpass $dblink
 elif [ "$dbpasslen" -eq "0" ]; then #no password
-  echo wget -O ${foldername}_w.zip $dblink
+  echo "wget -O ${foldername}_w.zip $dblink"
   wget -O ${foldername}_w.zip $dblink
-  echo curl -L -o ${foldername}_c.zip $dblink
+  echo "curl -L -o ${foldername}_c.zip $dblink"
   curl -L -o ${foldername}_c.zip $dblink
 else
   echo unknown plen=$dbpasslen
