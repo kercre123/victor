@@ -588,19 +588,23 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       }
 
       auto audioEventData = audioKeyframe->audioEventId();
-      auto probabilities = audioKeyframe->probability();
+      auto* probabilities = audioKeyframe->probability();
 
       if(nullptr != probabilities) {
-        // Confirm that we have the same number of probability values as audio events
-        if(probabilities->size() != audioEventData->size()) {
+        if(probabilities->size() == 0) {
+          probabilities = nullptr;
+        } else if(probabilities->size() != audioEventData->size()) {
+          // We must have the same number of probability values as audio events
           PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.UnknownProbabilities",
                             "%s: The number of audio event IDs (%i) does not match number of probabilities (%i)",
                             animNameDebug.c_str(), audioEventData->size(), probabilities->size());
           return RESULT_FAIL;
         }
+      }
 
+      if(nullptr != probabilities) {
         // Check sum of all probabilities to ensure it is <= 1.0
-        f32 totalProb = 0.0;
+        f32 totalProb = 0.0f;
         for (int probIdx=0; probIdx < probabilities->size(); probIdx++) {
           totalProb += probabilities->Get(probIdx);
           if(totalProb > 1.0) {
@@ -660,17 +664,17 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           const bool probabilitySet = JsonTools::GetValueOptional(jsonRoot, "probability", probability);
           if(probabilitySet) {
             probabilities.push_back(probability);
-          } else {
-            // If no probability is set, use equal probability for all audio events
-            const f32 eachProbability = 1.0f / jsonAudioNames.size();
-            for (int idx=0; idx<jsonAudioNames.size(); idx++) {
-              probabilities.push_back(eachProbability);
-            }
           }
         }
 
-        // Confirm that we have the same number of probability values as audio events
-        if(probabilities.size() != jsonAudioNames.size()) {
+        if(probabilities.empty() && !jsonAudioNames.empty()) {
+          // If no probability is set, use equal probability for all audio events
+          const f32 eachProbability = 1.0f / jsonAudioNames.size();
+          for (int idx=0; idx<jsonAudioNames.size(); idx++) {
+            probabilities.push_back(eachProbability);
+          }
+        } else if(probabilities.size() != jsonAudioNames.size()) {
+          // We must have the same number of probability values as audio events
           PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.UnknownProbabilities",
                             "%s: The number of audio event IDs (%u) does not match number of probabilities (%zu)",
                             animNameDebug.c_str(), jsonAudioNames.size(), probabilities.size());
@@ -678,7 +682,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         }
 
         // Check sum of all probabilities to ensure it is <= 1.0
-        f32 totalProb = 0.0;
+        f32 totalProb = 0.0f;
         for (int probIdx=0; probIdx < probabilities.size(); probIdx++) {
           totalProb += probabilities[probIdx];
           if(totalProb > 1.0) {
@@ -707,7 +711,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           return addResult;
         }
       }
-      
+
       return RESULT_OK;
     }
     
