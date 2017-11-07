@@ -41,13 +41,6 @@ bool BehaviorDrivePath::WantsToBeActivatedBehavior(BehaviorExternalInterface& be
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float BehaviorDrivePath::EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
-  return 0.f;
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorDrivePath::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   TransitionToFollowingPath(behaviorExternalInterface);

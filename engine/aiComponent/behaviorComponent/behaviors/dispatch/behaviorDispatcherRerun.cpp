@@ -12,7 +12,7 @@
  *
  **/
 
-#include "engine/aiComponent/behaviorComponent/behaviors/dispatchers/behaviorDispatcherRerun.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
 
 #include "anki/common/basestation/jsonTools.h"
 

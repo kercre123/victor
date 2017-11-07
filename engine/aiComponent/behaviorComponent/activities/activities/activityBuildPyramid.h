@@ -73,9 +73,9 @@ private:
   /// General Chooser structs/tracking
   ///////  
   // Scored behavior choosers that take over when strict priority isn't necessary
-  IBehaviorChooser*                  _activeBehaviorChooser; // One of the two choosers from below
+  /**IBehaviorChooser*                  _activeBehaviorChooser; // One of the two choosers from below
   std::unique_ptr<IBehaviorChooser>  _setupSimpleChooser;
-  std::unique_ptr<IBehaviorChooser>  _buildSimpleChooser;
+  std::unique_ptr<IBehaviorChooser>  _buildSimpleChooser;**/
   
   // Maps a light cube type (in case objectIDs are re-assigned for disconnected objects)
   // to knowledge about how we've altered the light/axis state

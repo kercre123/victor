@@ -48,10 +48,8 @@ TEST(BehaviorInterface, Create)
   TestBehavior b(empty);
   b.Init(behaviorExternalInterface);
   b.OnEnteredActivatableScope();
-  b.ReadFromScoredJson(empty);
 
   EXPECT_FALSE( b.IsActivated() );
-  EXPECT_FLOAT_EQ( b.EvaluateScore(behaviorExternalInterface), TestBehavior::kNotRunningScore);
   EXPECT_TRUE( b.WantsToBeActivated(behaviorExternalInterface));
   EXPECT_FALSE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
@@ -75,13 +73,10 @@ TEST(BehaviorInterface, Init)
   TestBehavior b(empty);
   b.Init(behaviorExternalInterface);
   b.OnEnteredActivatableScope();
-  b.ReadFromScoredJson(empty);
 
   EXPECT_FALSE( b._inited );
-  EXPECT_FLOAT_EQ( b.EvaluateScore(behaviorExternalInterface), TestBehavior::kNotRunningScore );
   b.WantsToBeActivated(behaviorExternalInterface);
   b.OnActivated(behaviorExternalInterface);
-  EXPECT_FLOAT_EQ( b.EvaluateScore(behaviorExternalInterface), TestBehavior::kRunningScore );
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
   EXPECT_FALSE( b._stopped );
@@ -135,148 +130,19 @@ TEST(BehaviorInterface, Run)
   TestBehavior b(empty);
   b.Init(behaviorExternalInterface);
   b.OnEnteredActivatableScope();
-  b.ReadFromScoredJson(empty);
-
-
-  EXPECT_FLOAT_EQ( b.EvaluateScore(behaviorExternalInterface), TestBehavior::kNotRunningScore );
   
   b.WantsToBeActivated(behaviorExternalInterface);
   b.OnActivated(behaviorExternalInterface);
-  for(int i=0; i<5; i++) {
-    EXPECT_FLOAT_EQ( b.EvaluateScore(behaviorExternalInterface), TestBehavior::kRunningScore );
-    b.Update(behaviorExternalInterface);
-    BaseStationTimer::getInstance()->UpdateTime( BaseStationTimer::getInstance()->GetTickCount() + 1 );
-  }
+
 
   BaseStationTimer::getInstance()->UpdateTime( BaseStationTimer::getInstance()->GetTickCount() + 1);
 
   b.OnDeactivated(behaviorExternalInterface);
 
-  EXPECT_FLOAT_EQ( b.EvaluateScore(behaviorExternalInterface), TestBehavior::kNotRunningScore );
-
-  EXPECT_TRUE( b._inited );
-  EXPECT_EQ( b._numUpdates, 5 );
-  EXPECT_TRUE( b._stopped );
-}
-
-void TickAndCheckScore( Robot& robot, ICozmoBehavior& behavior, TestBehaviorFramework& testFramework, int num, float expectedScore )
-{
-  std::string currentActivityName;
-  std::string behaviorDebugStr;
-  for( int i=0; i<num; ++i ) {
-    robot.GetActionList().Update();
-    testFramework.GetBehaviorComponent().Update(robot, currentActivityName, behaviorDebugStr);
-    EXPECT_FLOAT_EQ( expectedScore, behavior.EvaluateScore(testFramework.GetBehaviorExternalInterface()) ) << "i=" << i;
-    IncrementBaseStationTimerTicks();
-  }
-}
-
-
-TEST(BehaviorInterface, ScoreWhileRunning_NotRunning)
-{
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
-  TestBehaviorFramework testBehaviorFramework(1, &context);
-  RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  {
-    BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
-    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, container);
-  }
-  
-  BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
-  
-  Robot& robot = testBehaviorFramework.GetRobot();
-  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
-  
-  BaseStationTimer::getInstance()->UpdateTime(0);
-
-  TestBehavior b(empty);
-  b.Init(behaviorExternalInterface);
-  b.ReadFromScoredJson(empty);
-  b.OnEnteredActivatableScope();
-
-  EXPECT_FLOAT_EQ( b.EvaluateScore(behaviorExternalInterface), TestBehavior::kNotRunningScore );
-
-  {
-    SCOPED_TRACE("");
-    b.WantsToBeActivated(behaviorExternalInterface);
-    b.OnActivated(behaviorExternalInterface);
-    TickAndCheckScore(robot, b, testBehaviorFramework, 5, TestBehavior::kRunningScore);
-  }
-
-  // this should have no effect, since we aren't acting
-  b.CallIncreaseScoreWhileControlDelegated(0.1f);
-
-  {
-    SCOPED_TRACE("");
-    TickAndCheckScore(robot, b, testBehaviorFramework, 5, TestBehavior::kRunningScore);
-  }
-  
-}
-
-TEST(BehaviorInterface, ScoreWhileRunning_Running)
-{
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
-  TestBehaviorFramework testBehaviorFramework(1, &context);
-  RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
-  
-  
-  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
-  TestBehavior b(empty);
-
-  {
-    BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
-    testBehaviorFramework.InitializeStandardBehaviorComponent(&b, nullptr, true, bc);
-  }
-  
-  b.ReadFromScoredJson(empty);
-  
-  BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
-  Robot& robot = testBehaviorFramework.GetRobot();
-
-  IncrementBaseStationTimerTicks();
-  bool done = false;
-  {
-    SCOPED_TRACE("");
-    EXPECT_TRUE( b.CallDelegateIfInControl(robot, done) );
-    TickAndCheckScore(robot, b, testBehaviorFramework, 5, TestBehavior::kRunningScore);
-  }
-
-  {
-    SCOPED_TRACE("");
-    b.CallIncreaseScoreWhileControlDelegated(0.1f);
-    TickAndCheckScore(robot, b, testBehaviorFramework, 5, TestBehavior::kRunningScore + 0.1f);
-  }
-
-  {
-    SCOPED_TRACE("");
-    b.CallIncreaseScoreWhileControlDelegated(1.0f);
-    TickAndCheckScore(robot, b, testBehaviorFramework, 5, TestBehavior::kRunningScore + 0.1f + 1.0f);
-  }
-
-  {
-    SCOPED_TRACE("");
-    done = true;
-    // now the behavior is not acting so the score should revert back
-    TickAndCheckScore(robot, b, testBehaviorFramework, 5, TestBehavior::kRunningScore);
-  }
-
-  {
-    SCOPED_TRACE("");
-    b.CallIncreaseScoreWhileControlDelegated(0.999f);
-    TickAndCheckScore(robot, b, testBehaviorFramework, 5, TestBehavior::kRunningScore);
-  }
-
-  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 2.0 ) );
-
-  b.OnDeactivated(behaviorExternalInterface);
-
-  EXPECT_FLOAT_EQ( b.EvaluateScore(behaviorExternalInterface), TestBehavior::kNotRunningScore );
-
   EXPECT_TRUE( b._inited );
   EXPECT_TRUE( b._stopped );
 }
+
 
 TEST(BehaviorInterface, HandleMessages)
 {
@@ -289,8 +155,6 @@ TEST(BehaviorInterface, HandleMessages)
   TestBehavior b(empty);
   Json::Value empty2 = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID2);
   TestBehavior b2(empty2);
-  b.ReadFromScoredJson(empty);
-  b2.ReadFromScoredJson(empty2);
 
   {
     BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);

@@ -1,20 +1,8 @@
 {
-  "behaviorID" : "Activity_Hiking",
-  "behaviorClass" : "Activity_BehaviorsOnly",
-  "driveStartAnimTrigger" : "HikingDrivingStart",
-  "driveLoopAnimTrigger" : "HikingDrivingLoop",
-  "driveEndAnimTrigger" : "HikingDrivingEnd",
-  "infoAnalyzerProcess": "CalculateInterestingRegions", // update interesting regions during hiking
-  "behaviorChooser" :
-  {
-    "type" : "Scoring",
-    "scoreBonusForCurrentBehavior" : {
-      "nodes" : [
-        { "x" :   0.0, "y" :  1.0 } // give this bonus to continue the same behavior unless score changes by that much
-      ]
-    },
-    
-    "behaviors" : [
+  "behaviorClass": "DispatcherScoring",
+  "behaviorID": "ExampleDispatcherScoring",
+  "interruptActiveBehavior": true,
+  "behaviors" : [
       { "behaviorID" : "ReactToObstacle",
         "scoring"      :
         {
@@ -111,24 +99,12 @@
         {
           "flatScore": 0.1
         }
-      }
+      },
+      {"behaviorID" : "Wait",
+        "scoring"      :
+        {
+          "flatScore": 0.05
+        }
+      } 
     ] // end behaviors []
-  },
-  "interludeBehaviorChooser": {
-    "type": "StrictPriority",
-    "behaviors": [
-      "EarnedSparks",
-      "Needs_SevereLowPlayBored",
-      "Needs_SevereLowPlayRequest",
-      "Needs_MildLowRepairRequest",
-      "Needs_MildLowEnergyRequest",
-      "Needs_MildLowPlayRequest"
-    ]
-  },
-  "activityStrategy":
-  {
-    "type" : "Simple",
-    "activityShouldEndDurationSecs" : 60.0, // hiking will automatically finish when it completes, so a higher max time is ok
-    "cooldownBaseSecs" : 15.0
-  }
 }

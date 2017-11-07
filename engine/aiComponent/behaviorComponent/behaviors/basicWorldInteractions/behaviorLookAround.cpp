@@ -77,19 +77,6 @@ bool BehaviorLookAround::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float BehaviorLookAround::EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
-  float minScore = 0.0f;
-  // if we are going to examine (or searching for) a possible block, increase the minimum score
-  if( _currentState == State::LookingAtPossibleObject || _currentState == State::ExaminingFoundObject ) {
-    minScore = 0.8f;
-  }
-
-  return std::max( minScore, ICozmoBehavior::EvaluateActivatedScoreInternal(behaviorExternalInterface) );
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookAround::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag())

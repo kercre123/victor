@@ -40,7 +40,6 @@ public:
 protected:
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual float EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
   enum class DebugState {
     FollowingPath,

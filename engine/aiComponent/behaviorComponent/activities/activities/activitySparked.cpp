@@ -23,7 +23,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"
-#include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/events/animationTriggerHelpers.h"

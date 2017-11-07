@@ -24,7 +24,6 @@
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"

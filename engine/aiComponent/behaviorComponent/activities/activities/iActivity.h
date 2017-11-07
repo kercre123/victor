@@ -36,7 +36,6 @@ namespace Cozmo {
 
 class BehaviorExternalInterface;
 class IActivityStrategy;
-class IBehaviorChooser;  
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // IActivity
@@ -165,12 +164,12 @@ private:
   
   // behavior chooser for activity (if one is passed in). This is the default used if the derived class
   // doesn't override ChooseNextBehaviorInternal
-  std::unique_ptr<IBehaviorChooser> _behaviorChooserPtr;
+  //std::unique_ptr<IBehaviorChooser> _behaviorChooserPtr;
 
   // Behavior chooser for interludes. An interlude behavior is one that runs in between two other behaviors
   // chosen by GetDesiredActiveBehaviorInternal(). It will get the behavior that is _about_ to run passed in as
   // currentRunningBehavior
-  std::unique_ptr<IBehaviorChooser> _interludeBehaviorChooserPtr;
+  //std::unique_ptr<IBehaviorChooser> _interludeBehaviorChooserPtr;
 
   // The last chosen interlude behavior. When an interlude behavior is chosen, it is always allowed to run to
   // completion before another behavior gets selected

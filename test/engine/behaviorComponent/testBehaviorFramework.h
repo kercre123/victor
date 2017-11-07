@@ -45,12 +45,12 @@ void DoBehaviorComponentTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorCo
 void InjectBehaviorIntoStack(ICozmoBehavior& behavior, TestBehaviorFramework& testFramework);
 
 void IncrementBaseStationTimerTicks(int numTicks = 1);
-void InjectValidDelegateIntoBSM(BehaviorSystemManager& bsm,
+void InjectValidDelegateIntoBSM(TestBehaviorFramework& testFramework,
                                 IBehavior* delegator,
                                 IBehavior* delegated,
                                 bool shouldMarkAsEnterdScope = true);
   
-void InjectAndDelegate(BehaviorSystemManager& bsm,
+void InjectAndDelegate(TestBehaviorFramework& testFramework,
                        IBehavior* delegator,
                        IBehavior* delegated);
   
@@ -162,9 +162,7 @@ public:
   void Bar(BehaviorExternalInterface& behaviorExternalInterface);
   
   bool CallDelegateIfInControl(Robot& robot, bool& actionCompleteRef);
-  
-  void CallIncreaseScoreWhileControlDelegated(float extraScore) { IncreaseScoreWhileControlDelegated(extraScore); }
-  
+    
   bool CallDelegateIfInControlExternalCallback1(Robot& robot,
                                         bool& actionCompleteRef,
                                         ICozmoBehavior::RobotCompletedActionCallback callback);
@@ -180,10 +178,6 @@ public:
   
   bool CallCancelDelegates() { return CancelDelegates(); }
   bool CallCancelDelegates(bool val) { return CancelDelegates(val); }
-  
-protected:
-  virtual float EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual float EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
 };
   
