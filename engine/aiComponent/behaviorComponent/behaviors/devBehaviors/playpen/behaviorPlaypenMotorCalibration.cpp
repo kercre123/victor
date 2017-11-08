@@ -20,8 +20,7 @@ namespace Cozmo {
 BehaviorPlaypenMotorCalibration::BehaviorPlaypenMotorCalibration(const Json::Value& config)
 : IBehaviorPlaypen(config)
 {
-  SubscribeToTags({EngineToGameTag::MotorCalibration/*,
-                    EngineToGameTag::MotorAutoEnabled*/});
+  SubscribeToTags({EngineToGameTag::MotorCalibration});
 }
 
 Result BehaviorPlaypenMotorCalibration::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
@@ -75,12 +74,6 @@ void BehaviorPlaypenMotorCalibration::HandleWhileActivatedInternal(const EngineT
       }
     }
   }
-  /*
-  else if(tag == EngineToGameTag::MotorAutoEnabled)
-  {
-    
-  }
-  */
 }
 
 }
