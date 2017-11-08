@@ -812,7 +812,7 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
         // Reduce "frame rate" and cpu usage by limiting
         // the number of frames we give to engine
         static uint8_t c = 0;
-        static const uint8_t processEveryNumFrames = 1;
+        static const uint8_t processEveryNumFrames = 4;
         if(++c >= processEveryNumFrames)
         {
           c = 0;

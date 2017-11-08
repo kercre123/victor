@@ -162,20 +162,24 @@ void MicDataProcessor::ProcessLoop()
         job->CollectRawAudio(audioChunk);
       }
       
-      // Resample the audio, then collect it if desired
-      AudioUtil::AudioChunk resampledAudioChunk = ResampleAudioChunk(audioChunk);
-      for (auto& job : stolenJobs)
+      // Factory test doesn't need to do any mic processing, it just uses raw data
+      if(!FACTORY_TEST)
       {
-        job->CollectResampledAudio(resampledAudioChunk);
-      }
-      
-      // Process the audio into a single channel, and collect it if desired
-      AudioUtil::AudioChunk processedAudio = ProcessResampledAudio(resampledAudioChunk);
-      if (!processedAudio.empty())
-      {
+        // Resample the audio, then collect it if desired
+        AudioUtil::AudioChunk resampledAudioChunk = ResampleAudioChunk(audioChunk);
         for (auto& job : stolenJobs)
         {
-          job->CollectProcessedAudio(processedAudio);
+          job->CollectResampledAudio(resampledAudioChunk);
+        }
+        
+        // Process the audio into a single channel, and collect it if desired
+        AudioUtil::AudioChunk processedAudio = ProcessResampledAudio(resampledAudioChunk);
+        if (!processedAudio.empty())
+        {
+          for (auto& job : stolenJobs)
+          {
+            job->CollectProcessedAudio(processedAudio);
+          }
         }
       }
       
