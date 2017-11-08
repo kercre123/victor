@@ -128,9 +128,16 @@ BehaviorStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInternal(BehaviorExte
     if(res)
     {
       data.visualDistanceToTarget_mm = markerPose.GetTranslation().x();
-      data.visualAngleAwayFromTarget_rad = (robot.GetPose().GetRotation().GetAngleAroundZaxis() -
-                                            markerPose.GetRotation().GetAngleAroundZaxis() -
-                                            DEG_TO_RAD(180.f)).ToFloat();
+
+      markerPose = markerPose.GetWithRespectToRoot();
+      // Marker pose rotation is kind of wonky, compared to the robot's rotation they are 
+      // rotated 90 degrees. So when the robot is looking at a marker, you have to add
+      // 90 degrees to get its rotation to match that of the robot
+      // Taking the difference of these two angles tells us how much the robot needs to turn
+      // to be perpendicular with the marker
+      const auto angle = ((markerPose.GetRotation().GetAngleAroundZaxis() + DEG_TO_RAD(90)) - 
+                          robot.GetPose().GetRotation().GetAngleAroundZaxis());
+      data.visualAngleAwayFromTarget_rad = angle.ToFloat();
     }
     
     if(!GetLogger().Append(GetIDStr(), std::move(data)))
