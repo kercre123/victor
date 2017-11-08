@@ -58,4 +58,7 @@ func TestSocket(t *testing.T) {
 
 	blockTest(t, client, server)
 	blockTest(t, server, client)
+
+	server.Close()
+	client.Close()
 }
