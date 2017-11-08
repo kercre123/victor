@@ -86,7 +86,7 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal(BehaviorExterna
         PLAYPEN_SET_RESULT(FactoryTestResultCode::FRONT_CLIFFS_NOT_DETECTED);
       }
       
-      _waitingForCliffsState = WAITING_FOR_FRONT_CLIFFS_UNDETCTED;
+      _waitingForCliffsState = WAITING_FOR_FRONT_CLIFFS_UNDETECTED;
       TransitionToWaitingForBackCliffs(behaviorExternalInterface);
     });
   });
@@ -274,7 +274,7 @@ void BehaviorPlaypenDriveForwards::HandleWhileActivatedInternal(const EngineToGa
         
         break;
       }
-      case WAITING_FOR_FRONT_CLIFFS_UNDETCTED:
+      case WAITING_FOR_FRONT_CLIFFS_UNDETECTED:
       {
         // If a cliff has been detected while waiting for cliffs to be undetected then fail
         if(cliffDetected)
