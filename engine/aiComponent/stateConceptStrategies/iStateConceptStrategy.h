@@ -36,6 +36,8 @@ class Robot;
   
 class IStateConceptStrategy{
 public:
+  static Json::Value GenerateBaseStrategyConfig(StateConceptStrategyType type);  
+
   IStateConceptStrategy(BehaviorExternalInterface& behaviorExternalInterface,
                       IExternalInterface* robotExternalInterface,
                       const Json::Value& config);

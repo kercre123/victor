@@ -82,7 +82,6 @@ enum uint_8 BehaviorClass {
   VisitInterestingEdge,
   Wait,
 
-
   // Behaviors mapped to reaction triggers
   AcknowledgeFace,
   AcknowledgeObject,
@@ -355,6 +354,15 @@ enum uint_8 BehaviorID {
   VC_SearchForFace,
 
   VictorFreeplay,
+ 
+  VictorCloudDemoBase,
+  VictorCloudDemoAutonomousStub,
+  VictorCloudDemoHello,
+  VictorCloudDemoGoodbye,
+  VictorCloudDemoHowAreYou,
+  VictorCloudDemoFistBump,
+  VictorCloudDemoTriggerDetected,
+  VictorCloudDemoReturnToCharger,
 
   VictorObservingDemo,
   VictorDemoFeedingState,

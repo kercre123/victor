@@ -21,11 +21,13 @@
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/anonymousBehaviorFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyCloudIntentPending.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
@@ -43,6 +45,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "clad/types/behaviorComponent/cloudIntents.h"
 
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
@@ -68,6 +71,7 @@ static const char* kSparkedBehaviorDisableLock       = "SparkBehaviorDisables";
 static const char* kSmartReactionLockSuffix          = "_behaviorLock";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 static const char* kWantsToRunStrategyConfigKey      = "wantsToRunStrategyConfig";
+static const char* kRespondToCloudIntentKey          = "respondToCloudIntent";
 static const std::string kIdleLockPrefix             = "Behavior_";
 
 // Keys for loading in anonymous behaviors
@@ -225,12 +229,12 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 , _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _lastRunTime_s(0.0f)
 , _activatedTime_s(0.0f)
-, _stateConceptStrategy(nullptr)
 , _id(ExtractBehaviorIDFromConfig(config))
 , _idString(BehaviorIDToString(_id))
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
 , _needsActionID(ExtractNeedsActionIDFromConfig(config))
 , _executableType(ExecutableBehaviorType::Count)
+, _respondToCloudIntent(CloudIntent::Count)
 , _requiredUnlockId( UnlockId::Count )
 , _requiredSevereNeed( NeedId::Count )
 , _requiredRecentDriveOffCharger_sec(-1.0f)
@@ -320,6 +324,10 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     _anonymousBehaviorMapConfig = config[kAnonymousBehaviorMapKey];
   }    
     
+  if(config.isMember(kRespondToCloudIntentKey)){
+    _respondToCloudIntent = CloudIntentFromString(config[kRespondToCloudIntentKey].asCString());
+  }
+
   return true;
 }
   
@@ -343,11 +351,27 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
   assert(_behaviorExternalInterface);
   assert(_robot);
   
-  if(_wantsToRunConfig.size() > 0){
-    _stateConceptStrategy.reset(StateConceptStrategyFactory::CreateStateConceptStrategy(behaviorExternalInterface,
-                                                                                  _robot->HasExternalInterface() ? _robot->GetExternalInterface() : nullptr,
-                                                                                  _wantsToRunConfig));
-    _wantsToRunConfig.clear();
+  {
+    auto externalInterface = _robot->HasExternalInterface() ? _robot->GetExternalInterface() : nullptr;
+    
+    if(_wantsToRunConfig.size() > 0){
+      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(
+                                                  behaviorExternalInterface,
+                                                  externalInterface,
+                                                  _wantsToRunConfig));
+      _stateConceptStrategies.push_back(std::move(strategy));
+      _wantsToRunConfig.clear();
+    }
+
+    if(_respondToCloudIntent != CloudIntent::Count){
+      Json::Value config = StrategyCloudIntentPending::GenerateCloudIntentPendingConfig(_respondToCloudIntent);
+      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(
+                                                  behaviorExternalInterface,
+                                                  externalInterface,
+                                                  config));
+      _stateConceptStrategies.push_back(std::move(strategy));
+    }
+
   }
 
   if(!_anonymousBehaviorMapConfig.empty()){
@@ -511,6 +535,12 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
     SmartDisableReactionsWithLock(kSparkedBehaviorDisableLock, kSparkBehaviorDisablesArray);
   }
   
+  // Clear cloud intent if responding to it
+  if(_respondToCloudIntent != CloudIntent::Count){
+    behaviorExternalInterface.GetAIComponent().GetBehaviorComponent().
+                 GetCloudReceiver().ClearIntentIfPending(_respondToCloudIntent);
+  }
+
   return initResult;
 }
 
@@ -840,9 +870,10 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
     return false;
   }
   
-  if((_stateConceptStrategy != nullptr) &&
-     !_stateConceptStrategy->AreStateConditionsMet(behaviorExternalInterface)){
-    return false;
+  for(auto& strategy: _stateConceptStrategies){
+    if(!strategy->AreStateConditionsMet(behaviorExternalInterface)){
+      return false;
+    }
   }
      
   return true;

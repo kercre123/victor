@@ -1187,7 +1187,9 @@ namespace Anki {
                 }
                 break;
               }
-
+             
+              // shift + alt = Fake trigger word detected
+              // no optional key = Fake cloud intent w/ string in field
               case (s32)'H':
               {
 
@@ -1195,13 +1197,8 @@ namespace Anki {
                 {
 
                   if( shiftKeyPressed && altKeyPressed ) {
-                    HighLevelActivity activity = HighLevelActivityFromString("Selection");
-                    if( activity == HighLevelActivity::Count ) {
-                      break;
-                    }
-
                     SendMessage(ExternalInterface::MessageGameToEngine(
-                                    ExternalInterface::ActivateHighLevelActivity(activity)));
+                                    ExternalInterface::FakeTriggerWordDetected()));
                     break;
                   }
 
@@ -1247,29 +1244,23 @@ namespace Anki {
                 }
                 else {
                   // select behavior chooser
-                  webots::Field* activityNameField = root_->getField("highLevelActivityName");
-                  if (activityNameField == nullptr) {
-                    printf("ERROR: No behaviorChooserNameField field found in WebotsKeyboardController.proto\n");
+                  webots::Field* cloudIntentField = root_->getField("cloudIntent");
+                  if (cloudIntentField == nullptr) {
+                    printf("ERROR: No cloud animation name field found in WebotsKeyboardController.proto\n");
                     break;
                   }
                   
-                  std::string activityName = activityNameField->getSFString();
-                  if (activityName.empty()) {
-                    printf("ERROR: behaviorChooserName field is empty\n");
+                  std::string cloudIntent = cloudIntentField->getSFString();
+                  if (cloudIntent.empty()) {
+                    printf("ERROR: cloudIntent field is empty\n");
                     break;
                   }
                   
-                  HighLevelActivity activity = HighLevelActivityFromString(activityName);
-                  if( activity == HighLevelActivity::Count ) {
-                    printf("ERROR: could not convert string '%s' to valid behavior chooser type\n",
-                           activityName.c_str());
-                    break;
-                  }
-                  
-                  printf("sending high level activity  '%s'\n", activityName.c_str());
-                
+                  printf("sending cloud intent '%s'\n", cloudIntent.c_str());
+
                   SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::ActivateHighLevelActivity(activity)));
+                                  ExternalInterface::FakeCloudIntent(cloudIntent)));
+
                 }
                 
                 break;

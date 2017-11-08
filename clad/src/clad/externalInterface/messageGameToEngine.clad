@@ -541,6 +541,11 @@ message FakeTriggerWordDetected
 {
 }
 
+// Allows Game to fake an intent coming from the cloud
+message FakeCloudIntent{
+  string intent
+}
+
 // ActivateHighLevelActivity
 message ActivateHighLevelActivity {
   HighLevelActivity activityType
