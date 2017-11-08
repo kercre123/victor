@@ -44,11 +44,17 @@ static f32  kDefaultTimeout_ms    = 20000;
 // How long to display the playpen result on Cozmo's face
 static f32  kTimeToDisplayResultOnFace_ms = 10000;
 
+// Whether or not to skip checking we have heard from an active object
+static bool kSkipActiveObjectCheck        = true;
+
+// Whether or not to need touch to start playpen
+static bool kUseTouchToStart              = false;
+
 // How long the robot has to be touched until playpen starts
 static u32  kTouchDurationToStart_ms      = 1000;
 
-// Whether or not to skip checking we have heard from an active object
-static bool kSkipActiveObjectCheck        = true;
+// Whether or not to need a button press to start 
+static bool kUseButtonToStart             = true;
 
 // ----------InitChecks----------
 // Whether or not to check firmware version

@@ -12,7 +12,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenWaitToStart.h"
 
-#include "engine/components/bodyLightComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
@@ -27,6 +26,8 @@ BehaviorPlaypenWaitToStart::BehaviorPlaypenWaitToStart(const Json::Value& config
   // if we get put on the charger, motor calibration on startup, etc...
   std::set<ExternalInterface::MessageEngineToGameTag> tags = GetFailureTags();
   SubscribeToTags(std::move(tags));
+
+  ICozmoBehavior::SubscribeToTags({RobotInterface::RobotToEngineTag::backpackButton});
 }
 
 Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
@@ -39,17 +40,8 @@ Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal(BehaviorExternalI
   // run forever until the conditions for playpen to start are met
   ClearTimers();
 
-  // Turn backpack lights blue to know that this behavior is running
-  static const BackpackLights lights = {
-    .onColors               = {{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}},
-    .offColors              = {{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}},
-    .onPeriod_ms            = {{1000,1000,1000}},
-    .offPeriod_ms           = {{100,100,100}},
-    .transitionOnPeriod_ms  = {{450,450,450}},
-    .transitionOffPeriod_ms = {{450,450,450}},
-    .offset                 = {{0,0,0}}
-  };
-  robot.GetBodyLightComponent().SetBackpackLights(lights);
+  // Turn the middle backpack light green to know that this behavior is running
+  robot.GetBodyLightComponent().SetBackpackLights(_lights);
 
   // Check that raw touch values are in expected range (the range assumes no touch)
   const u16 rawTouchValue = robot.GetTouchSensorComponent().GetLatestRawTouchValue();
@@ -64,7 +56,6 @@ Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal(BehaviorExternalI
                         PlaypenConfig::kMaxExpectedTouchValue);
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::TOUCH_VALUES_OOR, RESULT_FAIL);
   }
-  PRINT_NAMED_WARNING("IDLETOUCH","%u", rawTouchValue);
 
   return RESULT_OK;
 }
@@ -83,38 +74,39 @@ BehaviorStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInternal(BehaviorExterna
   {
     _touchStartTime_ms = curTime;
 
-    // Turn the lights cyan to indicate we are detecting a touch
-    static const BackpackLights lights = {
-      .onColors               = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
-      .offColors              = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
-      .onPeriod_ms            = {{1000,1000,1000}},
-      .offPeriod_ms           = {{100,100,100}},
-      .transitionOnPeriod_ms  = {{450,450,450}},
-      .transitionOffPeriod_ms = {{450,450,450}},
-      .offset                 = {{0,0,0}}
-    };
-    robot.GetBodyLightComponent().SetBackpackLights(lights);
+    _lights.onColors[(int)LEDId::LED_BACKPACK_FRONT] = NamedColors::CYAN;
+    _lights.offColors[(int)LEDId::LED_BACKPACK_FRONT] = NamedColors::CYAN;
+    _needLightUpdate = true;
   }
   else if(gesture == TouchGesture::NoTouch && _touchStartTime_ms != 0)
   {
     _touchStartTime_ms = 0;
 
-    // Turn the lights blue to indicate no touch
-    static const BackpackLights lights = {
-      .onColors               = {{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}},
-      .offColors              = {{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}},
-      .onPeriod_ms            = {{1000,1000,1000}},
-      .offPeriod_ms           = {{100,100,100}},
-      .transitionOnPeriod_ms  = {{450,450,450}},
-      .transitionOffPeriod_ms = {{450,450,450}},
-      .offset                 = {{0,0,0}}
-    };
-    robot.GetBodyLightComponent().SetBackpackLights(lights);
+    _lights.onColors[(int)LEDId::LED_BACKPACK_FRONT] = NamedColors::BLUE;
+    _lights.offColors[(int)LEDId::LED_BACKPACK_FRONT] = NamedColors::BLUE;
+    _needLightUpdate = true;
   }
 
-  if((_touchStartTime_ms != 0 && 
-      curTime - _touchStartTime_ms > PlaypenConfig::kTouchDurationToStart_ms) &&
-     robot.IsOnCharger())
+  if(_needLightUpdate)
+  {
+    robot.GetBodyLightComponent().SetBackpackLights(_lights);
+    _needLightUpdate = false;
+  }
+
+  // If we aren't using touchToStart or we are using it and we have been touched long enough
+  const bool touchGood = !PlaypenConfig::kUseTouchToStart || 
+                         (PlaypenConfig::kUseTouchToStart && 
+                          (_touchStartTime_ms != 0 && 
+                           curTime - _touchStartTime_ms > PlaypenConfig::kTouchDurationToStart_ms));
+
+  // If we aren't using buttonToStart or we are using it and the button has been pressed
+  // or this is sim
+  const bool buttonGood = !PlaypenConfig::kUseButtonToStart || 
+                          (PlaypenConfig::kUseButtonToStart &&
+                           _buttonPressed) || 
+                          !robot.IsPhysical();
+
+  if(touchGood && buttonGood && robot.IsOnCharger())
   {
     // Draw nothing on the screen to clear it
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DrawTextOnScreen(RobotInterface::ColorRGB(0,0,0),
@@ -132,9 +124,30 @@ void BehaviorPlaypenWaitToStart::OnBehaviorDeactivated(BehaviorExternalInterface
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
+  
   _touchStartTime_ms = 0;
+  _buttonPressed = false;
 
   robot.GetBodyLightComponent().SetBackpackLights(robot.GetBodyLightComponent().GetOffBackpackLights());
+}
+
+void BehaviorPlaypenWaitToStart::HandleWhileActivatedInternal(const RobotToEngineEvent& event, 
+                                                              BehaviorExternalInterface& behaviorExternalInterface)
+{
+  const auto& tag = event.GetData().GetTag();
+  if(tag == RobotInterface::RobotToEngineTag::backpackButton)
+  {
+    const auto& payload = event.GetData().Get_backpackButton();
+    if(payload.depressed)
+    {
+      _buttonPressed = true;
+
+      _lights.onColors[(int)LEDId::LED_BACKPACK_BACK] = NamedColors::GREEN;
+      _lights.offColors[(int)LEDId::LED_BACKPACK_BACK] = NamedColors::GREEN;
+      _needLightUpdate = true;
+    }
+  }
+
 }
 
 }
