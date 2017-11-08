@@ -1498,8 +1498,8 @@ Result Robot::Update()
   // Connect to objects requested via ConnectToObjects
   ConnectToRequestedObjects();
   
-  // Send nav memory map data
-  _mapComponent->BroadcastMap();
+  // update and broadcast map
+  _mapComponent->Update();
       
   /////////// Update visualization ////////////
       
