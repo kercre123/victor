@@ -266,6 +266,12 @@ bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Behavior
       }
     }
 
+    if(object == nullptr)
+    {
+      PRINT_NAMED_INFO("BehaviorPlaypenDistanceSensor.GetExpectedObjectMarkerPoseWrtRobot.NullObject","");
+      return false;
+    }
+
     const auto& markers = object->GetMarkers();
     
     // Get the pose of the marker that was most recently observed
