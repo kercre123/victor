@@ -91,12 +91,13 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
 
   const bool isPickedUp = (msg.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP) != 0;
 
+  TouchGesture curGesture = _touchGesture;
   if( !_baselineCalib.IsCalibrated() ) {
     // note: do not detect touch instances during fast-calibration
     if(!isPickedUp) {
       _baselineCalib.UpdateCalibration(msg.backpackTouchSensorRaw);
     }
-    _touchGesture = TouchGesture::NoTouch;
+    curGesture = TouchGesture::NoTouch;
   } else {
     const auto normTouch = msg.backpackTouchSensorRaw-_baselineCalib.GetFilteredTouchMean();
     const bool isTouched = normTouch > 
@@ -108,7 +109,7 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
         _gestureClassifier.AddTouchReleased();
       }
     }
-    _touchGesture = _gestureClassifier.CalcTouchGesture();
+    curGesture = _gestureClassifier.CalcTouchGesture();
 
     // require seeing a minimum number of untouched cycles before
     // continuing accumulation of values for baseline detect
@@ -122,6 +123,11 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
       _noContactCounter = 0;
     }
   }
+
+  if (curGesture != _touchGesture) {
+    _touchGesture = curGesture;
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::TouchGestureEvent(_touchGesture)));
+  }  
 
 }
 
