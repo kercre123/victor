@@ -6,7 +6,6 @@ include(opencv)
 include(okao)
 include(flatbuffers)
 include(archive)
-include(voice-recognition)
 include(routing_http_server)
 include(android_strip)
 
@@ -40,8 +39,8 @@ elseif (MACOSX)
   )
   set(PLATFORM_COMPILE_DEFS
     SIMULATOR
-    THF_FUNCTIONALITY=1
-    VC_AUDIOCAPTURE_FUNCTIONALITY=1
+    THF_FUNCTIONALITY=0
+    VC_AUDIOCAPTURE_FUNCTIONALITY=0
   )
 endif()
 
@@ -69,7 +68,6 @@ target_link_libraries(cozmo_engine
   # vendor
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}
-  ${VOICE_RECOGNITION_LIBS}
   ${BREAKPAD_LIBS}
   # system
   z
@@ -88,9 +86,6 @@ target_compile_definitions(cozmo_engine
   PRIVATE
   CORETECH_BASESTATION
   USE_DAS=${USE_DAS}
-  VOICE_RECOG_NONE=0
-  VOICE_RECOG_THF=1
-  VOICE_RECOG_PROVIDER=VOICE_RECOG_THF
   "${PLATFORM_COMPILE_DEFS}"
 )
 
