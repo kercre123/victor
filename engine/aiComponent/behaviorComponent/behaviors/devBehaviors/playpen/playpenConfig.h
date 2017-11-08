@@ -86,22 +86,8 @@ static u16       kMaxExpectedTouchValue= 800;
 static u32 kMotorCalibrationTimeout_ms = 4000;
 
 // ----------Drift Check----------
+// Head angle at which to check for drift
 static f32 kHeadAngleForDriftCheck     = DEG_TO_RAD(0.f);
-
-// Head angle at which we should play the sound for both speaker and mic check
-static f32 kHeadAngleToPlaySound       = DEG_TO_RAD(2.f);
-
-// Volume to play sound
-static f32 kSoundVolume                = 1.f;
-
-// How long to record audio for when we start playing the sound
-static u32 kDurationOfAudioToRecord_ms = 2000;
-
-// The expected frequency the mics should pickup when the sound is played
-static u32 kFFTExpectedFreq_hz         = 1024;
-
-// The allowed +/- deviation of the FFT frequency from the expected value
-static u32 kFFTFreqTolerance_hz        = 10;
 
 // How long to check drift for
 static u32 kIMUDriftDetectPeriod_ms    = 2000;
@@ -178,6 +164,22 @@ static f32 kCliffSpeed_mmps                 = 50;
 
 // Time to wait for a cliff event after getting a robot stopped event
 static f32 kTimeToWaitForCliffEvent_ms      = CLIFF_EVENT_DELAY_MS + 100;
+
+// ----------Sound Check----------
+// Head angle at which we should play the sound for both speaker and mic check
+static f32 kHeadAngleToPlaySound       = DEG_TO_RAD(2.f);
+
+// Volume to play sound
+static f32 kSoundVolume                = 1.f;
+
+// How long to record audio for when we start playing the sound
+static u32 kDurationOfAudioToRecord_ms = 2000;
+
+// The expected frequency the mics should pickup when the sound is played
+static u32 kFFTExpectedFreq_hz         = 1024;
+
+// The allowed +/- deviation of the FFT frequency from the expected value
+static u32 kFFTFreqTolerance_hz        = 20;
 
 // ----------Tool Code----------
 // Number of tool codes we should be seeing
