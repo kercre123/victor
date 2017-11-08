@@ -28,24 +28,11 @@ protected:
   BehaviorPlaypenInitChecks(const Json::Value& config);
   
 protected:
-  virtual void InitBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual Result         OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  virtual BehaviorStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  
-  virtual void AlwaysHandle(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   virtual bool ShouldRunWhileOnCharger() const override { return true; }
   
-private:
-  
-  std::string _fwBuildType                = "";
-  u32         _fwVersion                  = 0;
-  bool        _failedToParseVersionHeader = false;
-  
-  int32_t     _hwVersion = -1;
-  bool        _gotMfgID  = false;
 };
 
 }

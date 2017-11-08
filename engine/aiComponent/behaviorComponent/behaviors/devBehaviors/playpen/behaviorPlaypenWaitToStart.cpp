@@ -23,7 +23,10 @@ namespace Cozmo {
 BehaviorPlaypenWaitToStart::BehaviorPlaypenWaitToStart(const Json::Value& config)
 : IBehaviorPlaypen(config)
 {
-
+  // Subscribe to all of the base class's failure tags to prevent us from automatically failing
+  // if we get put on the charger, motor calibration on startup, etc...
+  std::set<ExternalInterface::MessageEngineToGameTag> tags = GetFailureTags();
+  SubscribeToTags(std::move(tags));
 }
 
 Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)

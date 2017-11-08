@@ -125,6 +125,7 @@ WRAP_EXTERN_CONSOLE_VAR(bool,  kIgnoreFailures,               "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(float, kDefaultTimeout_ms,            "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(float, kTimeToDisplayResultOnFace_ms, "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32,   kTouchDurationToStart_ms,      "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(bool,  kSkipActiveObjectCheck,        "Playpen");
 
 WRAP_EXTERN_CONSOLE_VAR(bool, kCheckFirmwareVersion,  "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32,  kMinBatteryVoltage,     "Playpen");

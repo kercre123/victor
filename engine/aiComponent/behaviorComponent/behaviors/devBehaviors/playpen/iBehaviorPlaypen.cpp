@@ -301,6 +301,11 @@ void IBehaviorPlaypen::ResetAllPlaypenResults()
 {
   results.clear();
 }
+
+const std::set<ExternalInterface::MessageEngineToGameTag>& IBehaviorPlaypen::GetFailureTags()
+{
+  return kFailureTags;
+}
   
 }
 }

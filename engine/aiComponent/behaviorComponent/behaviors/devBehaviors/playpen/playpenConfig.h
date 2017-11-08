@@ -47,6 +47,9 @@ static f32  kTimeToDisplayResultOnFace_ms = 10000;
 // How long the robot has to be touched until playpen starts
 static u32  kTouchDurationToStart_ms      = 1000;
 
+// Whether or not to skip checking we have heard from an active object
+static bool kSkipActiveObjectCheck        = true;
+
 // ----------InitChecks----------
 // Whether or not to check firmware version
 static bool      kCheckFirmwareVersion = true;
@@ -136,7 +139,7 @@ static f32 kTangentialDistortionTolerance             = 0.05f;
 static f32 kHeadAngleToSeeTarget                      = MAX_HEAD_ANGLE;
 
 // How long we should wait to see the calibration target after looking up at it
-static u32 kTimeoutWaitingForTarget_ms                = 3000;
+static u32 kTimeoutWaitingForTarget_ms                = 5000;
 
 // How long we should wait for camera calibration to be computed
 static u32 kTimeoutForComputingCalibration_ms         = 2000;

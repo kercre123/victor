@@ -79,6 +79,8 @@ public:
   static const std::map<std::string, std::vector<FactoryTestResultCode>>& GetAllPlaypenResults();
   static void ResetAllPlaypenResults();
 
+  static const std::set<ExternalInterface::MessageEngineToGameTag>& GetFailureTags();
+
 protected:
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override {InitBehaviorInternal(behaviorExternalInterface);};  
 

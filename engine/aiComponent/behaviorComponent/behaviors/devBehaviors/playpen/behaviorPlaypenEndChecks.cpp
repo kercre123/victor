@@ -43,7 +43,7 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal(BehaviorExternalInt
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::BATTERY_TOO_LOW, RESULT_FAIL);
   }
   
-  if(!_heardFromLightCube)
+  if(!PlaypenConfig::kSkipActiveObjectCheck && !_heardFromLightCube)
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::NO_ACTIVE_OBJECTS_DISCOVERED, RESULT_FAIL);
   }
