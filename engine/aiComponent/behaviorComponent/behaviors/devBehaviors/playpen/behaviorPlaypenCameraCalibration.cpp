@@ -225,19 +225,18 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(BehaviorExternalI
                  FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED);
   
   // Check if calibration values are sane
-  #define CHECK_OOR(value, min, max) (value < min || value > max)
-  if (CHECK_OOR(calibMsg.focalLength_x,
-                kApproxCalib->GetFocalLength_x() - PlaypenConfig::kFocalLengthTolerance,
-                kApproxCalib->GetFocalLength_x() + PlaypenConfig::kFocalLengthTolerance) ||
-      CHECK_OOR(calibMsg.focalLength_y,
-                kApproxCalib->GetFocalLength_y() - PlaypenConfig::kFocalLengthTolerance,
-                kApproxCalib->GetFocalLength_y() + PlaypenConfig::kFocalLengthTolerance) ||
-      CHECK_OOR(calibMsg.center_x,
-                kApproxCalib->GetCenter_x() - PlaypenConfig::kCenterTolerance,
-                kApproxCalib->GetCenter_x() + PlaypenConfig::kCenterTolerance) ||
-      CHECK_OOR(calibMsg.center_y,
-                kApproxCalib->GetCenter_y() - PlaypenConfig::kCenterTolerance,
-                kApproxCalib->GetCenter_y() + PlaypenConfig::kCenterTolerance) ||
+  if (!Util::InRange(calibMsg.focalLength_x,
+                     kApproxCalib->GetFocalLength_x() - PlaypenConfig::kFocalLengthTolerance,
+                     kApproxCalib->GetFocalLength_x() + PlaypenConfig::kFocalLengthTolerance) ||
+      !Util::InRange(calibMsg.focalLength_y,
+                     kApproxCalib->GetFocalLength_y() - PlaypenConfig::kFocalLengthTolerance,
+                     kApproxCalib->GetFocalLength_y() + PlaypenConfig::kFocalLengthTolerance) ||
+      !Util::InRange(calibMsg.center_x,
+                     kApproxCalib->GetCenter_x() - PlaypenConfig::kCenterTolerance,
+                     kApproxCalib->GetCenter_x() + PlaypenConfig::kCenterTolerance) ||
+      !Util::InRange(calibMsg.center_y,
+                     kApproxCalib->GetCenter_y() - PlaypenConfig::kCenterTolerance,
+                     kApproxCalib->GetCenter_y() + PlaypenConfig::kCenterTolerance) ||
       calibMsg.nrows != kApproxCalib->GetNrows() ||
       calibMsg.ncols != kApproxCalib->GetNcols())
   {
@@ -248,21 +247,22 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(BehaviorExternalI
     PLAYPEN_SET_RESULT(FactoryTestResultCode::CALIBRATION_VALUES_OOR);
   }
   
-  if(CHECK_OOR(calibMsg.distCoeffs[0],
-               kApproxCalib->GetDistortionCoeffs()[0] - PlaypenConfig::kRadialDistortionTolerance,
-               kApproxCalib->GetDistortionCoeffs()[0] + PlaypenConfig::kRadialDistortionTolerance) ||
-     CHECK_OOR(calibMsg.distCoeffs[1],
-               kApproxCalib->GetDistortionCoeffs()[1] - PlaypenConfig::kRadialDistortionTolerance,
-               kApproxCalib->GetDistortionCoeffs()[1] + PlaypenConfig::kRadialDistortionTolerance) ||
-     CHECK_OOR(calibMsg.distCoeffs[2],
-               kApproxCalib->GetDistortionCoeffs()[2] - PlaypenConfig::kTangentialDistortionTolerance,
-               kApproxCalib->GetDistortionCoeffs()[2] + PlaypenConfig::kTangentialDistortionTolerance) ||
-     CHECK_OOR(calibMsg.distCoeffs[3],
-               kApproxCalib->GetDistortionCoeffs()[3] - PlaypenConfig::kTangentialDistortionTolerance,
-               kApproxCalib->GetDistortionCoeffs()[3] + PlaypenConfig::kTangentialDistortionTolerance) ||
-     CHECK_OOR(calibMsg.distCoeffs[4],
-               kApproxCalib->GetDistortionCoeffs()[4] - PlaypenConfig::kRadialDistortionTolerance,
-               kApproxCalib->GetDistortionCoeffs()[4] + PlaypenConfig::kRadialDistortionTolerance) ||
+  // Check if distortion values are sane
+  if(!Util::InRange(calibMsg.distCoeffs[0],
+                    kApproxCalib->GetDistortionCoeffs()[0] - PlaypenConfig::kRadialDistortionTolerance,
+                    kApproxCalib->GetDistortionCoeffs()[0] + PlaypenConfig::kRadialDistortionTolerance) ||
+     !Util::InRange(calibMsg.distCoeffs[1],
+                    kApproxCalib->GetDistortionCoeffs()[1] - PlaypenConfig::kRadialDistortionTolerance,
+                    kApproxCalib->GetDistortionCoeffs()[1] + PlaypenConfig::kRadialDistortionTolerance) ||
+     !Util::InRange(calibMsg.distCoeffs[2],
+                    kApproxCalib->GetDistortionCoeffs()[2] - PlaypenConfig::kTangentialDistortionTolerance,
+                    kApproxCalib->GetDistortionCoeffs()[2] + PlaypenConfig::kTangentialDistortionTolerance) ||
+     !Util::InRange(calibMsg.distCoeffs[3],
+                    kApproxCalib->GetDistortionCoeffs()[3] - PlaypenConfig::kTangentialDistortionTolerance,
+                    kApproxCalib->GetDistortionCoeffs()[3] + PlaypenConfig::kTangentialDistortionTolerance) ||
+     !Util::InRange(calibMsg.distCoeffs[4],
+                    kApproxCalib->GetDistortionCoeffs()[4] - PlaypenConfig::kRadialDistortionTolerance,
+                    kApproxCalib->GetDistortionCoeffs()[4] + PlaypenConfig::kRadialDistortionTolerance) ||
      calibMsg.distCoeffs[5] != 0.f ||
      calibMsg.distCoeffs[6] != 0.f ||
      calibMsg.distCoeffs[7] != 0.f)
