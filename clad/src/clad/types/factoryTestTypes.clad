@@ -132,6 +132,7 @@ enum uint_8 FactoryTestResultCode {
   MIC_BR_NOT_WORKING,
   MIC_BL_NOT_WORKING,
   SPEAKER_NOT_WORKING,
+  NO_FFT_RESULT,
   TOUCH_VALUES_OOR,
 
   // ==== New result codes should be added at the end ========

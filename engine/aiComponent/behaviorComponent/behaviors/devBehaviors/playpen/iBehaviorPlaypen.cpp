@@ -41,6 +41,11 @@ static const std::set<ExternalInterface::MessageEngineToGameTag> kFailureTags = 
 // Static (shared) across all playpen behaviors
 // Maps a behavior name/idStr to a vector of results it has failed/completed with
 static std::map<std::string, std::vector<FactoryTestResultCode>> results;
+
+// Hacky way of giving any playpen behavior easy access to check something that an individual behavior
+// sets. This way the behavior that is checking doesn't have to dynamic cast to the individual behavior.
+// Only behaviorPlaypenSoundCheck should be setting this bool
+static bool receivedFFTResult = false;
 }
  
 IBehaviorPlaypen::IBehaviorPlaypen(const Json::Value& config)
@@ -310,6 +315,18 @@ void IBehaviorPlaypen::ResetAllPlaypenResults()
 const std::set<ExternalInterface::MessageEngineToGameTag>& IBehaviorPlaypen::GetFailureTags()
 {
   return kFailureTags;
+}
+
+void IBehaviorPlaypen::ReceivedFFTResult()
+{
+  receivedFFTResult = true;
+}
+
+bool IBehaviorPlaypen::DidReceiveFFTResult()
+{
+  bool b = receivedFFTResult;
+  receivedFFTResult = false;
+  return b;
 }
   
 }

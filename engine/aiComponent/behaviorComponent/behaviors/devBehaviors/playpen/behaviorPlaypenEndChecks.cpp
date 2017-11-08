@@ -47,6 +47,11 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal(BehaviorExternalInt
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::NO_ACTIVE_OBJECTS_DISCOVERED, RESULT_FAIL);
   }
+
+  if(!DidReceiveFFTResult())
+  {
+    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::NO_FFT_RESULT, RESULT_FAIL);
+  }
   
   PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, RESULT_OK);
 }

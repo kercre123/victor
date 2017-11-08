@@ -83,6 +83,8 @@ void BehaviorPlaypenSoundCheck::AlwaysHandle(const RobotToEngineEvent& event, Be
   const auto& tag = event.GetData().GetTag();
   if(tag == RobotInterface::RobotToEngineTag::audioFFTResult)
   {
+    ReceivedFFTResult();
+
     // Vector that maps channel (index) to mic/mic result code
     static const std::vector<FactoryTestResultCode> channelToMic = {
       FactoryTestResultCode::MIC_BL_NOT_WORKING,

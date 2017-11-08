@@ -149,6 +149,12 @@ protected:
   
   // Returns whether or not we should ignore behavior failures
   bool ShouldIgnoreFailures() const;
+
+  // Marks us as having received the fft result
+  void ReceivedFFTResult();
+
+  // Returns and resets if we have gotten the fft result
+  bool DidReceiveFFTResult();
   
 private:
 
