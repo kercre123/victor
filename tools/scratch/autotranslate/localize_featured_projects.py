@@ -27,8 +27,8 @@ from pprint import pprint
 
 BASE_SRC_SCRATCH_PATH = "../../../unity/Cozmo/Assets/StreamingAssets"
 LOCALIZATION_ROOT_PATH = "LocalizedStrings"
-FEATURED_PROJECT_SOURCE = "Scratch/featured-projects.json"
-FEATURED_PROJECT_TARGET = "Scratch/featured-projects.json"
+LOCALIZATION_TARGET_FILES = [ "CodeLabStrings.json", "CodeLabFeaturedContentStrings.json" ]
+TARGET_PROJECTS = [ "Scratch/featured-projects.json", "Scratch/sample-projects.json" ]
 
 # Plenty of string fields contain these values 
 # but even if they were to be localization translations, it might break a lot ot reverse key them
@@ -69,7 +69,10 @@ class FilterVariable:
         if 'variable' in context and type(src) == dict and 'name' in src:
             string = src['name']
             try:
-                int(string)
+                if len(string) > 1 and string[0] == '.':
+                    int(string[1:])
+                else:
+                    int(string)
             except ValueError:
                 if string not in IGNORE_TEXT_KEYS:
                     src['name'] = transform(string, context)
@@ -84,7 +87,10 @@ class FilterField:
             if type(src) == dict and 'fields' in src and key in src['fields']:
                 string = src['fields'][key]['value']
                 try:
-                    int(string)
+                    if len(string) > 1 and string[0] == '.':
+                        int(string[1:])
+                    else:
+                        int(string)
                 except ValueError:
                     if string not in IGNORE_TEXT_KEYS:
                         src['fields'][key]['value'] = transform(string, context)
@@ -104,7 +110,7 @@ allFilters = [FilterVariable(), FilterField()]
 def translate( string, context ):
     if string in context['loc']:
         # uncomment the print statement to get a verbose log of everything translated
-        print(string + " - " + context['loc'][string])
+        #print(string + " - " + context['loc'][string])
         return context['loc'][string]
     return string
 
@@ -159,8 +165,9 @@ def pull_string( string, context ):
 def extract_all_translatable_values(resultTable, project):
     outputList = []
     extractionContext = { 'outputList' : outputList }
-    encodedProjectJson = json.loads(project["ProjectJSON"])
-    walk_json_tree_and_perform_transformations( encodedProjectJson, allFilters, extractionContext, pull_string )
+    if 'ProjectJSON' in project:
+        encodedProjectJson = json.loads(project['ProjectJSON'])
+        walk_json_tree_and_perform_transformations( encodedProjectJson, allFilters, extractionContext, pull_string )
 
     resultTable[project['ProjectName']] = outputList
 
@@ -198,25 +205,27 @@ def export_all_strings_from_project( resultTable, project ):
         extract_all_translatable_values( resultTable, project )
 
 # read all featured projects, process each one, and export them to another json file
-def process_all_projects( inputFile, outputFile, locTable ):
-    resultProjects = []
+def process_all_projects( inputFiles, locTable ):
     projectsTranslated = 0
 
-    with open(inputFile) as dataFile:
-        allProjects = json.load(dataFile)
-        for project in allProjects:
-            if append_project_results_to_list(resultProjects, project, locTable):
-                projectsTranslated += 1
-    
-    with open(outputFile, 'w') as outputFile:
-        json.dump(resultProjects, outputFile, indent=4)
+    for inputFile in inputFiles:
+        resultProjects = []
+        with open(inputFile) as dataFile:
+            allProjects = json.load(dataFile)
+            for project in allProjects:
+                if append_project_results_to_list(resultProjects, project, locTable):
+                    projectsTranslated += 1
+
+        with open(inputFile, 'w') as inputFile:
+            json.dump(resultProjects, inputFile, indent=4)
+
     return projectsTranslated
 
 # collect all localization key->translation and translation->key mappings from a language folder
 def load_localization_for_language( rootPath, language ):
     resultDict = {'encodings':{}, 'decodings':{}}
     for file in os.listdir(os.path.join(rootPath, language)):
-        if file.endswith('.json') and file == 'CodeLabFeaturedContentStrings.json':
+        if file.endswith('.json') and file in LOCALIZATION_TARGET_FILES:
             filePath = os.path.join(rootPath, language, file)
             with open(filePath) as dataFile:
                 #print( 'loading language file ' + filePath )
@@ -224,8 +233,8 @@ def load_localization_for_language( rootPath, language ):
                 for key in rootData:
                     if key != 'smartling':
                         value = rootData[key]['translation']
-                        resultDict['decodings'][key] = value
-                        resultDict['encodings'][value] = key
+                        resultDict['decodings'][key.lower()] = value
+                        resultDict['encodings'][value] = key.lower()
     return resultDict
 
 # build a dictionary of all loc tables by crawling the loc base path
@@ -238,14 +247,15 @@ def load_and_build_localization_dictionary():
             resultDict[language] = load_localization_for_language(locPath, language)
     return resultDict
 
-def export_all_strings_file(inputFile):
+def export_all_strings_file(inputFiles):
     jsonOut = {}
     stringTable = {}
 
-    with open(inputFile) as dataFile:
-        allProjects = json.load(dataFile)
-        for project in allProjects:
-            export_all_strings_from_project(stringTable, project)
+    for inputFile in inputFiles:
+        with open(inputFile) as dataFile:
+            allProjects = json.load(dataFile)
+            for project in allProjects:
+                export_all_strings_from_project(stringTable, project)
 
     for projectKey in stringTable:
         for content in stringTable[projectKey]:
@@ -259,12 +269,12 @@ def export_all_strings_file(inputFile):
 def main():
     locTable = load_and_build_localization_dictionary()
 
-    inputFile = os.path.join(BASE_SRC_SCRATCH_PATH, FEATURED_PROJECT_SOURCE)
-    outputFile = os.path.join(BASE_SRC_SCRATCH_PATH, FEATURED_PROJECT_TARGET)
-    projectsTranslated = process_all_projects(inputFile, outputFile, locTable)
+    paths = [os.path.join(BASE_SRC_SCRATCH_PATH, project) for project in TARGET_PROJECTS]
+    
+    projectsTranslated = process_all_projects(paths, locTable)
     print('projects translated: ' + str(projectsTranslated))
 
-    export_all_strings_file(inputFile)
+    export_all_strings_file(paths)
 
 if __name__ == "__main__": 
     main()
