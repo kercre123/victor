@@ -23,6 +23,7 @@ class Victor {
         this._incoming_packets = [];
         this._heartbeat_counter = 0;
         this._print_heartbeats = false;
+        this._fixing_date = true;
 
         this._peripheral.on('disconnect', () => {
             clearInterval(this._interval);
@@ -122,7 +123,15 @@ class Victor {
                 this._output(results);
                 return;
             case Victor.MSG_V2B_DEV_EXEC_CMD_LINE_RESPONSE:
-                this._output(data.toString('utf8', 2, data.length));
+                var response = data.toString('utf8', 2, data.length);
+                if (this._fixing_date) {
+                    this._fixing_date = false;
+                    if (response.startsWith("1970")) {
+                        this.syncTime();
+                    }
+                } else {
+                    this._output(response);
+                }
                 return;
             case Victor.MSG_V2B_MULTIPART_START:
                 this._incoming_packets = [];
@@ -152,6 +161,7 @@ class Victor {
         };
         read.on('data', handleMessage.bind(this));
         read.subscribe();
+        setTimeout(function(){ this.sendCommand(["date", "+%Y"]);}.bind(this), 200);
     };
 
     _send (buffer) {
@@ -190,6 +200,24 @@ class Victor {
         } else {
             this._send(buf);
         }
+    };
+
+    sendCommand (args) {
+        var body = undefined;
+        for (var i = 0 ; i < args.length ; i++) {
+            var buf = Buffer.concat([Buffer.from(args[i]), Buffer.from([0])]);
+            if (Buffer.isBuffer(body)) {
+                body = Buffer.concat([body, buf]);
+            } else {
+                body = buf;
+            }
+        }
+        this.send(Victor.MSG_B2V_DEV_EXEC_CMD_LINE, body);
+    };
+
+    syncTime () {
+        var args = ["date", "@" + Math.round(Date.now() / 1000)];
+        this.sendCommand(args);
     };
 
 

@@ -19,7 +19,7 @@ var connectedVictor = undefined;
 function completer(line) {
     var args = line.split(/(\s+)/);
     args = args.filter(function(entry) {return /\S/.test(entry); });
-    const completions = 'connect dhcptool disconnect help ifconfig ping print-heartbeats quit reboot restart-adb scan ssh-set-authorized-keys stop-scan wifi-scan wifi-set-config wifi-start wifi-stop wpa_cli'.split(' ');
+    const completions = 'connect dhcptool disconnect help ifconfig ping print-heartbeats quit reboot restart-adb scan ssh-set-authorized-keys stop-scan sync-time wifi-scan wifi-set-config wifi-start wifi-stop wpa_cli'.split(' ');
     const hits = completions.filter((c) => c.startsWith(args[0]));
     if (hits.length == 0) {
         return [completions, line];
@@ -59,6 +59,7 @@ function printHelp() {
     reboot [boot arg]                     -  Reboot Victor
     restart-adb                           -  Restart adb on Victor
     ssh-set-authorized-keys file          -  Use file as the ssh authorized_keys file on Victor
+    sync-time                             -  Set the clock on Victor to match the host clock
     wifi-scan                             -  Ask Victor to scan for WiFi access points
     wifi-set-config ssid psk [ssid2 psk2] -  Overwrite and set wifi config on victor
     wifi-start                            -  Bring WiFi interface up
@@ -316,18 +317,18 @@ var handleInput = function (line) {
                 });
             }
             break;
+        case 'sync-time':
+            if (!connectedVictor) {
+                outputResponse("Not connected to a Victor");
+            } else {
+                connectedVictor.syncTime();
+            }
+            break;
         default:
             if (!connectedVictor) {
                 outputResponse("Not connected to a Victor");
             } else {
-                var size = trimmedLine.length + 1;
-                const buf = Buffer.alloc(size);
-                var offset = 0;
-                for (var i = 0 ; i < args.length ; i++) {
-                    offset += buf.write(args[i], offset, args[i].length);
-                    offset = buf.writeUInt8(0, offset);
-                }
-                connectedVictor.send(Victor.MSG_B2V_DEV_EXEC_CMD_LINE, buf);
+                connectedVictor.sendCommand(args);
             }
             break;
         }
