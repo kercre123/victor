@@ -5,7 +5,7 @@
 
 #include "touch.h"
 
-static uint16_t touch[2];
+static uint16_t touch[1];
 
 void Touch::init(void) {
   TIM16->PSC = TIM17->PSC = 0;
