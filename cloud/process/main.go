@@ -20,5 +20,5 @@ func main() {
 		return
 	}
 
-	cloudproc.RunProcess(micSock, aiSock)
+	cloudproc.RunProcess(micSock, aiSock, nil)
 }

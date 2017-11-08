@@ -98,13 +98,14 @@ func bufToGoString(buf []byte) string {
 	return strings.Trim(string(buf), "\x00")
 }
 
-func RunProcess(micSock ipc.Socket, aiSock ipc.Socket) {
+func RunProcess(micSock ipc.Socket, aiSock ipc.Socket, stop <-chan struct{}) {
 	micChan := make(chan socketMsg)
 	go socketReader(micSock, micChan)
 
 	cloudChan := make(chan string)
 
 	var ctx *voiceContext
+procloop:
 	for {
 		select {
 		case msg := <-micChan:
@@ -138,6 +139,8 @@ func RunProcess(micSock ipc.Socket, aiSock ipc.Socket) {
 			// stop streaming until we get another hotword event
 			close(ctx.audioStream)
 			ctx = nil
+		case <-stop:
+			break procloop
 		}
 	}
 }

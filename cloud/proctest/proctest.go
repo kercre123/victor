@@ -62,7 +62,8 @@ func GoMain(startRecording, stopRecording C.voidFunc) {
 		return
 	}
 
-	go cloudproc.RunProcess(micClient, aiClient)
+	kill := make(chan struct{})
+	go cloudproc.RunProcess(micClient, aiClient, kill)
 
 	for {
 		app = &appData{micServer, 0}
@@ -87,8 +88,9 @@ func GoMain(startRecording, stopRecording C.voidFunc) {
 			fmt.Println("Unexpected mic response size", n)
 			break
 		}
-
 	}
+
+	kill <- struct{}{}
 }
 
 func main() {}
