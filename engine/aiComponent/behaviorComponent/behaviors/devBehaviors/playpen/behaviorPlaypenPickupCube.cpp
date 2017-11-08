@@ -17,6 +17,7 @@
 #include "engine/actions/dockActions.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
+#include "engine/components/visionComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
@@ -63,6 +64,9 @@ Result BehaviorPlaypenPickupCube::OnBehaviorActivatedInternal(BehaviorExternalIn
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
+  
+  // Make sure marker detection is enabled (probably super overkill...)
+  robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
 
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(robot, DEG_TO_RAD(0));
   TurnInPlaceAction* turn = new TurnInPlaceAction(robot, DEG_TO_RAD(-90), false);
