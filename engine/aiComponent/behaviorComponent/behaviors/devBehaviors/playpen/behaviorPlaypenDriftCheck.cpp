@@ -40,7 +40,7 @@ Result BehaviorPlaypenDriftCheck::OnBehaviorActivatedInternal(BehaviorExternalIn
   // Move head and lift to extremes then move to sound playing angle
   MoveHeadToAngleAction* moveHeadUp = new MoveHeadToAngleAction(robot, MAX_HEAD_ANGLE);
   MoveHeadToAngleAction* moveHeadToAngle = new MoveHeadToAngleAction(robot,
-                                                                          PlaypenConfig::kHeadAngleForDriftCheck);
+                                                                     PlaypenConfig::kHeadAngleForDriftCheck);
   MoveLiftToHeightAction* moveLiftUp = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_CARRY);
   
   CompoundActionSequential* headUpDown = new CompoundActionSequential(robot, {moveHeadUp, moveHeadToAngle});
@@ -48,9 +48,9 @@ Result BehaviorPlaypenDriftCheck::OnBehaviorActivatedInternal(BehaviorExternalIn
 
   // After moving head and lift, wait to ensure that audio recording has stopped before transitioning to playing 
   // the sound and starting more recording
-  CompoundActionSequential* action = new CompoundActionSequential(robot, {liftAndHead, 
-                                                                          new WaitAction(robot, 
-                                                                                         PlaypenConfig::kDurationOfAudioToRecord_ms/1000.f)});
+  CompoundActionSequential* action = new CompoundActionSequential(robot, 
+    {liftAndHead, 
+     new WaitAction(robot, Util::MilliSecToSec((float)PlaypenConfig::kDurationOfAudioToRecord_ms))});
   
   DelegateIfInControl(action, [this, &behaviorExternalInterface](){ TransitionToStartDriftCheck(behaviorExternalInterface); });
   
@@ -81,7 +81,7 @@ void BehaviorPlaypenDriftCheck::CheckDrift(BehaviorExternalInterface& behaviorEx
   
   // Write drift rate and imu temperature change during drift detection period to robot
   IMUInfo imuInfo;
-  imuInfo.driftRate_degPerSec = angleChange / (PlaypenConfig::kIMUDriftDetectPeriod_ms / 1000.f);
+  imuInfo.driftRate_degPerSec = angleChange / Util::MilliSecToSec((float)PlaypenConfig::kIMUDriftDetectPeriod_ms);
   _imuTemp.tempEnd_c = robot.GetImuTemperature();
   _imuTemp.duration_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _imuTemp.duration_ms;
   imuInfo.tempDuration = std::move(_imuTemp);
@@ -96,7 +96,7 @@ void BehaviorPlaypenDriftCheck::CheckDrift(BehaviorExternalInterface& behaviorEx
   {
     PRINT_NAMED_WARNING("BehaviorPlaypenDriftCheck.CheckDrift.DriftDetected",
                         "Angle change of %f deg detected in %f seconds",
-                        angleChange, (PlaypenConfig::kIMUDriftDetectPeriod_ms / 1000.f));
+                        angleChange, Util::MilliSecToSec((float)PlaypenConfig::kIMUDriftDetectPeriod_ms));
     PLAYPEN_SET_RESULT(FactoryTestResultCode::IMU_DRIFTING);
   }
   
