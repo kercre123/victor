@@ -3,6 +3,7 @@ const readline = require("readline");
 const Victor = require("./victor.js");
 const fs = require('fs');
 
+var quitting = false;
 var victorAds = {};
 
 const BLEConnectionStates = {
@@ -38,7 +39,7 @@ const rl = readline.createInterface({
 rl.setPrompt("$ ");
 
 function outputResponse(line) {
-    if (!line) {
+    if (!line || quitting) {
         return;
     }
     console.log("\n" + line);
@@ -166,8 +167,22 @@ var handleInput = function (line) {
             printHelp();
             break;
         case 'quit':
-            rl.close();
-            process.exit();
+            quitting = true;
+            if (connectedVictor) {
+                connectedVictor.send(Victor.MSG_B2V_BTLE_DISCONNECT);
+                setTimeout(function () {
+                    bleConnectionState = BLEConnectionStates.DISCONNECTING;
+                    if (connectedVictor) {
+                        connectedVictor.disconnect();
+                        connectedVictor = undefined;
+                    }
+                    rl.close();
+                    process.exit();
+                }, 30);
+            } else {
+                rl.close();
+                process.exit();
+            }
             break;
         case 'print-heartbeats':
             if (connectedVictor) {
@@ -239,9 +254,14 @@ var handleInput = function (line) {
             if (!connectedVictor) {
                 outputResponse("Not connected to a Victor");
             } else {
-                bleConnectionState = BLEConnectionStates.DISCONNECTING;
-                connectedVictor.disconnect();
-                connectedVictor = undefined;
+                connectedVictor.send(Victor.MSG_B2V_BTLE_DISCONNECT);
+                setTimeout(function () {
+                    bleConnectionState = BLEConnectionStates.DISCONNECTING;
+                    if (connectedVictor) {
+                        connectedVictor.disconnect();
+                        connectedVictor = undefined;
+                    }
+                }, 30);
             }
             break;
         case 'ping':
@@ -312,7 +332,9 @@ var handleInput = function (line) {
             break;
         }
     }
-    rl.prompt();
+    if (!quitting) {
+        rl.prompt();
+    }
 
 };
 
