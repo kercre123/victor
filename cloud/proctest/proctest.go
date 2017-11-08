@@ -56,6 +56,8 @@ func GoMain(startRecording, stopRecording C.voidFunc) {
 
 	aiClient, err3 := ipc.NewClientSocket("0.0.0.0", aiPort)
 	micClient, err4 := ipc.NewClientSocket("0.0.0.0", micPort)
+	defer aiClient.Close()
+	defer micClient.Close()
 
 	if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
 		fmt.Println("Socket error")
@@ -64,6 +66,7 @@ func GoMain(startRecording, stopRecording C.voidFunc) {
 
 	kill := make(chan struct{})
 	go cloudproc.RunProcess(micClient, aiClient, kill)
+	defer close(kill)
 
 	for {
 		app = &appData{micServer, 0}
@@ -90,7 +93,6 @@ func GoMain(startRecording, stopRecording C.voidFunc) {
 		}
 	}
 
-	kill <- struct{}{}
 }
 
 func main() {}

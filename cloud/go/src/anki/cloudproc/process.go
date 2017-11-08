@@ -28,11 +28,19 @@ const (
 	hotwordMessage = "hotword"                               // message that signals to us the hotword was triggered
 )
 
-// eternally reads messages from a socket and places them on the channel
-func socketReader(s ipc.Socket, ch chan<- socketMsg) {
+// reads messages from a socket and places them on the channel
+func socketReader(s ipc.Socket, ch chan<- socketMsg, kill <-chan struct{}) {
 	for {
+		select {
+		case <-kill:
+			return
+		default:
+		}
+
 		n, buf := s.ReadBlock()
-		ch <- socketMsg{n, buf}
+		if n > 0 {
+			ch <- socketMsg{n, buf}
+		}
 	}
 }
 
@@ -100,7 +108,9 @@ func bufToGoString(buf []byte) string {
 
 func RunProcess(micSock ipc.Socket, aiSock ipc.Socket, stop <-chan struct{}) {
 	micChan := make(chan socketMsg)
-	go socketReader(micSock, micChan)
+	killreader := make(chan struct{})
+	go socketReader(micSock, micChan, killreader)
+	defer close(killreader)
 
 	cloudChan := make(chan string)
 

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -25,7 +26,8 @@ type Socket interface {
 
 type socketBase struct {
 	read  chan []byte
-	close chan<- struct{}
+	close chan struct{}
+	group sync.WaitGroup
 }
 
 type clientSocket struct {
@@ -44,7 +46,12 @@ func (s *socketBase) Read() (n int, b []byte) {
 }
 
 func (s *socketBase) ReadBlock() (n int, b []byte) {
-	b = <-s.read
+	// wait until either socket is closed or gets a read
+	select {
+	case <-s.close:
+		b = make([]byte, 0)
+	case b = <-s.read:
+	}
 	n = len(b)
 	return
 }
@@ -54,7 +61,8 @@ func (s *clientSocket) Write(b []byte) (n int, err error) {
 }
 
 func (s *clientSocket) Close() error {
-	s.close <- struct{}{}
+	close(s.close)
+	s.group.Wait()
 	return s.conn.Close()
 }
 
@@ -68,7 +76,7 @@ func NewClientSocket(ip string, port int) (Socket, error) {
 	conn.SetDeadline(time.Time{})
 	read := make(chan []byte)
 	close := make(chan struct{})
-	sock := clientSocket{socketBase{read, close}, conn}
+	sock := clientSocket{socketBase{read, close, sync.WaitGroup{}}, conn}
 
 	// Send one byte to server so it marks us as connected
 	// (behavior defined by UdpClient.cpp)
@@ -78,7 +86,7 @@ func NewClientSocket(ip string, port int) (Socket, error) {
 	readFunc := func(buf []byte) (int, error) {
 		return conn.Read(buf)
 	}
-	go readerRoutine(conn, read, readFunc, close)
+	go readerRoutine(conn, &sock.socketBase, readFunc)
 
 	return &sock, nil
 }
@@ -98,21 +106,26 @@ func (s *serverSocket) Write(b []byte) (n int, err error) {
 }
 
 func (s *serverSocket) Close() error {
-	s.close <- struct{}{}
+	close(s.close)
+	s.group.Wait()
 	return s.conn.Close()
 }
 
+// both net.Conn and net.PacketConn share this method that readerRoutine needs
 type deadliner interface {
 	SetReadDeadline(t time.Time) error
 }
 
-func readerRoutine(conn deadliner, read chan<- []byte, readFunc func([]byte) (int, error), close <-chan struct{}) {
+func readerRoutine(conn deadliner, s *socketBase, readFunc func([]byte) (int, error)) {
+	s.group.Add(1)
+	defer s.group.Done()
+
 	buf := make([]byte, maxPacketSize)
 readloop:
 	for {
 		// see if we've gotten shutdown notification
 		select {
-		case <-close:
+		case <-s.close:
 			break readloop
 		default:
 		}
@@ -134,7 +147,7 @@ readloop:
 		if n > 0 {
 			retbuf := make([]byte, n)
 			copy(retbuf, buf)
-			read <- retbuf
+			s.read <- retbuf
 		}
 	}
 }
@@ -149,7 +162,7 @@ func NewServerSocket(port int) (Socket, error) {
 	conn.SetDeadline(time.Time{})
 	read := make(chan []byte)
 	close := make(chan struct{})
-	sock := serverSocket{socketBase: socketBase{read, close}, conn: conn}
+	sock := serverSocket{socketBase: socketBase{read, close, sync.WaitGroup{}}, conn: conn}
 
 	readFunc := func(buf []byte) (int, error) {
 		n, addr, err := conn.ReadFrom(buf)
@@ -167,7 +180,7 @@ func NewServerSocket(port int) (Socket, error) {
 		}
 		return n, err
 	}
-	go readerRoutine(conn, read, readFunc, close)
+	go readerRoutine(conn, &sock.socketBase, readFunc)
 
 	return &sock, nil
 }
