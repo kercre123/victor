@@ -104,7 +104,8 @@ protected:
   // Final override of HandleWhileActivated so we can do things before the subclass handles the event
   // HandleWhileActivatedInternal() is provided for the subclass to override
   virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override final;
-  
+  virtual void HandleWhileActivated(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override final;
+
   // Hides IBehavior's SubscribeToTags function so we can do some bookkeeping on what the subclass
   // is subscribing to
   void SubscribeToTags(std::set<EngineToGameTag>&& tags); // Hide base class function
@@ -125,6 +126,8 @@ protected:
   
   virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
   
+  virtual void HandleWhileActivatedInternal(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
+
   FactoryTestLogger& GetLogger() { return *_factoryTestLogger; }
   
   // Attempts to write to robot storage, if enabled, and will fail with failureCode if writing fails

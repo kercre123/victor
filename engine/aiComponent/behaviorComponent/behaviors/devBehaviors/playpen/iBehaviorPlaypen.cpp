@@ -187,6 +187,11 @@ void IBehaviorPlaypen::HandleWhileActivated(const EngineToGameEvent& event, Beha
   }
 }
 
+void IBehaviorPlaypen::HandleWhileActivated(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+{
+  HandleWhileActivatedInternal(event, behaviorExternalInterface);
+}
+
 void IBehaviorPlaypen::SubscribeToTags(std::set<EngineToGameTag>&& tags)
 {
   _tagsSubclassSubscribeTo.insert(tags.begin(), tags.end());

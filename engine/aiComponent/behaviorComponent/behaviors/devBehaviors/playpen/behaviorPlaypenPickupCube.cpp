@@ -41,7 +41,7 @@ namespace {
 BehaviorPlaypenPickupCube::BehaviorPlaypenPickupCube(const Json::Value& config)
 : IBehaviorPlaypen(config)
 {
-  SubscribeToTags({EngineToGameTag::BlockPickedUp});
+  ICozmoBehavior::SubscribeToTags({RobotInterface::RobotToEngineTag::pickAndPlaceResult});
 }
 
 PoseData ConvertToPoseData(const Pose3d& p)
@@ -263,13 +263,14 @@ void BehaviorPlaypenPickupCube::OnBehaviorDeactivated(BehaviorExternalInterface&
   _robotAngleAtPickup = 0;
 }
 
-void BehaviorPlaypenPickupCube::HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenPickupCube::HandleWhileActivatedInternal(const RobotToEngineEvent& event, 
+                                                             BehaviorExternalInterface& behaviorExternalInterface)
 {
-  const EngineToGameTag tag = event.GetData().GetTag();
-  if(tag == EngineToGameTag::BlockPickedUp)
+  const auto& tag = event.GetData().GetTag();
+  if(tag == RobotInterface::RobotToEngineTag::pickAndPlaceResult)
   {
-    const auto& payload = event.GetData().Get_BlockPlaced();
-    if(payload.didSucceed)
+    const auto& payload = event.GetData().Get_pickAndPlaceResult();
+    if(payload.didSucceed && payload.blockStatus == BlockStatus::BLOCK_PICKED_UP)
     {
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed

@@ -31,8 +31,9 @@ protected:
   virtual Result         OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
   virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
   
-  virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  
+  virtual void HandleWhileActivatedInternal(const RobotToEngineEvent& event, 
+                                            BehaviorExternalInterface& behaviorExternalInterface) override;
+
 private:
   
   void TransitionToWaitForCube(BehaviorExternalInterface& behaviorExternalInterface);
