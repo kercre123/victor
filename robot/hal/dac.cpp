@@ -118,7 +118,7 @@ void Anki::Cozmo::HAL::DAC::Feed(bool available, uint8_t* samples) {
 
 void Anki::Cozmo::HAL::DAC::SetVolume(uint16_t volume) {
   if (*HW_VERSION == 0x01050000) {
-    targetAudioVolume = volume;
+    targetAudioVolume = volume / 2;
   } else {
     targetAudioVolume = (3  * (int)volume) / 4;
   }
