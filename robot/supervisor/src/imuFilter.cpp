@@ -964,7 +964,7 @@ namespace Anki {
         DetectFalling();
 
         // Send ImageImuData to engine
-        static ImageImuData imageImuData;
+        ImageImuData imageImuData;
         imageImuData.systemTimestamp_ms = HAL::GetTimeStamp();
         imageImuData.rateX = gyro_robot_frame_filt[0];
         imageImuData.rateY = gyro_robot_frame_filt[1];
