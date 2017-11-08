@@ -39,11 +39,11 @@ Result BehaviorPlaypenDriftCheck::OnBehaviorActivatedInternal(BehaviorExternalIn
 
   // Move head and lift to extremes then move to sound playing angle
   MoveHeadToAngleAction* moveHeadUp = new MoveHeadToAngleAction(robot, MAX_HEAD_ANGLE);
-  MoveHeadToAngleAction* moveHeadToSoundAngle = new MoveHeadToAngleAction(robot,
+  MoveHeadToAngleAction* moveHeadToAngle = new MoveHeadToAngleAction(robot,
                                                                           PlaypenConfig::kHeadAngleForDriftCheck);
   MoveLiftToHeightAction* moveLiftUp = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_CARRY);
   
-  CompoundActionSequential* headUpDown = new CompoundActionSequential(robot, {moveHeadUp, moveHeadToSoundAngle});
+  CompoundActionSequential* headUpDown = new CompoundActionSequential(robot, {moveHeadUp, moveHeadToAngle});
   CompoundActionParallel* liftAndHead = new CompoundActionParallel(robot, {headUpDown, moveLiftUp});
 
   // After moving head and lift, wait to ensure that audio recording has stopped before transitioning to playing 
