@@ -49,12 +49,10 @@ namespace Anki {
         Disconnect();
       }
 
-      #if !VIZ_TO_GAMEPORT
       if (!_vizClient.Connect(udp_host_address, port)) {
         PRINT_NAMED_INFO("VizManager.Connect", "Failed to init VizManager client (%s:%d)", udp_host_address, port);
         //_isInitialized = false;
       }
-      #endif
 
       #if VIZ_TO_UNITY
       if (!_unityVizClient.Connect(unity_host_address, unity_port)) {
@@ -112,7 +110,6 @@ namespace Anki {
 
       const size_t numWritten = (uint32_t)message.Pack(buffer, MAX_MESSAGE_SIZE);
       
-      #if !VIZ_TO_GAMEPORT
       {
         
         ANKI_CPU_PROFILE("VizClient.Send");
@@ -120,16 +117,6 @@ namespace Anki {
           PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
         }
       }
-      #endif
-      
-      #if VIZ_TO_GAMEPORT
-      {
-        ANKI_CPU_PROFILE("UnityVizClient.SendToGamePort");
-        if (_unityVizPort != nullptr) {
-          _unityVizPort->PushToGameMessage(buffer, numWritten);
-        }
-      }
-      #endif
 
       #if VIZ_TO_UNITY
       {

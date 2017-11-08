@@ -163,16 +163,6 @@ uint32_t CozmoAPI::ActivateExperiment(const uint8_t* requestBuffer, size_t reque
   const size_t bytesPacked = res.Pack(responseBuffer, responseLen);
   return Anki::Util::numeric_cast<uint32_t>(bytesPacked);
 }
-
-size_t CozmoAPI::SendVizMessages(uint8_t* buffer, size_t bufferSize)
-{
-  GameMessagePort* messagePipe = (_cozmoRunner != nullptr) ? _cozmoRunner->GetVizMessagePort() : nullptr;
-  if (messagePipe == nullptr) {
-    return 0;
-  }
-
-  return messagePipe->PullToGameMessages(buffer, bufferSize);
-}
   
 CozmoAPI::~CozmoAPI()
 {
@@ -205,8 +195,7 @@ CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dat
                                                    const Json::Value& config, bool& initResult)
 : _gameMessagePort(new GameMessagePort(ExternalInterface::kDirectCommsBufferSize,
                                        !config.get("standalone", false).asBool()))
-, _vizMessagePort(CreateVizMessagePort())
-, _cozmoInstance(new CozmoEngine(dataPlatform, _gameMessagePort.get(), _vizMessagePort.get()))
+, _cozmoInstance(new CozmoEngine(dataPlatform, _gameMessagePort.get()))
 , _isRunning(true)
 {
   Result initResultReturn = _cozmoInstance->Init(config);
@@ -285,15 +274,6 @@ void CozmoAPI::CozmoInstanceRunner::SyncWithEngineUpdate(const std::function<voi
 {
   std::lock_guard<std::mutex> lock{_updateMutex};
   func();
-}
-
-GameMessagePort* CozmoAPI::CozmoInstanceRunner::CreateVizMessagePort()
-{
-  #if VIZ_TO_GAMEPORT && ANKI_DEV_CHEATS
-  return new GameMessagePort(ExternalInterface::kVizCommsBufferSize, false);
-  #else
-  return nullptr;
-  #endif
 }
 
 } // namespace Cozmo
