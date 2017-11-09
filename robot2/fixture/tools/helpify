@@ -7,6 +7,11 @@
 #"Both adb remount and adb root don't work on a production build without altering ro.secure, but you can still
 # remount /system by opening a shell, asking for root permissions and typing the mount command."
 
+#modified init sequence after os update
+#cd /data
+echo 'cd /data/local/fixture && ./helper' > /data/appinit.sh
+exit
+
 #start helper application after normal boot
 if ! grep -q './helper' "/system/etc/userinit.sh"; then #if we haven't already added...
   echo remount read-only partition
