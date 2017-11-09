@@ -1,3 +1,4 @@
+var moment = require('moment-timezone');
 const { StringDecoder } = require('string_decoder');
 
 const WiFiAuth = {
@@ -216,10 +217,13 @@ class Victor {
     };
 
     syncTime () {
-        var args = ["date", "@" + Math.round(Date.now() / 1000)];
-        this.sendCommand(args);
+        var date_set_args = ["date", "-u", "@" + Math.round(Date.now() / 1000)];
+        this.sendCommand(date_set_args);
+        var setprop_args = ["setprop", "persist.sys.timezone", moment.tz.guess()];
+        this.sendCommand(setprop_args);
+        var date_display_args = ["date"];
+        this.sendCommand(date_display_args);
     };
-
 
     disconnect () {
         this._peripheral.disconnect();
