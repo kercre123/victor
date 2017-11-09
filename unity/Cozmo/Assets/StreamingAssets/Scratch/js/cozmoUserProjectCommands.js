@@ -266,6 +266,8 @@
 
         if (isCozmoSampleProject && projectXML != null) {
             // Set the coordinate setting in the sample project xml to our desired location on-screen.
+            // Note that for projects serialized as JSON (not XML), Blockly.WorkspaceSvg.prototype.scrollHome
+            // is used to position the workspace correctly at project load time.
             var startingPoint = window.getScriptStartingPoint();
             projectXML = projectXML.replace("REPLACE_X_COORD", startingPoint.x);
             projectXML = projectXML.replace("REPLACE_Y_COORD", startingPoint.y);
