@@ -22,7 +22,7 @@ static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.5);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(TRANSITION_POINT, ~0);
 
 static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
-static const int POWER_WIPE_TIME = 200 * 10;  // Erase flash
+static const int POWER_WIPE_TIME = 200 * 10;  // Enter recovery mode
 static const int MINIMUM_VEXT_TIME = 20; // 0.1s
 
 static const int BUTTON_THRESHOLD = ADC_VOLTS(6.0);
@@ -249,14 +249,21 @@ void Analog::tick(void) {
   if (button_pressed) {
     if (hold_count < POWER_DOWN_TIME) {
       hold_count++;
-    } else {
+    } else if (hold_count < POWER_WIPE_TIME) {
       disableVMain();
       Lights::disable();
+    } else {
+      // We will be signaling a recovery
+      BODY_TX::reset();
+      BODY_TX::mode(MODE_OUTPUT);
+
+      // Reenable power to the head
+      enableVMain();
     }
   } else {
     if (hold_count >= POWER_WIPE_TIME) {
-      // TODO: SIGNAL THE HEAD TO RECOVER
-      enableVMain();
+      // Switch back to transmission mode
+      BODY_TX::mode(MODE_ALTERNATE);
     } else if (hold_count >= POWER_DOWN_TIME) {
       Power::stop();
     } else {

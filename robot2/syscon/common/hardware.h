@@ -12,7 +12,7 @@ TIM6  Byte counter (uart DMA)
 TIM14 Main-exec / Backpack
 TIM15 SPI Master clock
 TIM16 Touch Sense 1
-TIM17 Touch Sense 2
+TIM17
 */
 
 static const uint32_t SYSTEM_CLOCK = 48000000;
