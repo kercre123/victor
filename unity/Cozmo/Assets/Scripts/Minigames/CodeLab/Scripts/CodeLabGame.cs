@@ -324,7 +324,16 @@ namespace CodeLab {
       // Load projects json from file and return list
       string path = streamingAssetsPath + projectFile;
       string json = File.ReadAllText(path);
-      return JsonConvert.DeserializeObject<List<CodeLabSampleProject>>(json);
+
+      List<CodeLabSampleProject> codeLabSampleProjects = JsonConvert.DeserializeObject<List<CodeLabSampleProject>>(json);
+      for (int i = codeLabSampleProjects.Count - 1; i >= 0; i--) {
+        var project = codeLabSampleProjects[i];
+        if (!string.IsNullOrEmpty(project.Language) && project.Language != Localization.GetStringsLocale()) {
+          codeLabSampleProjects.RemoveAt(i);
+        }
+      }
+
+      return codeLabSampleProjects;
     }
 
     // Return featured projects as list.
@@ -339,7 +348,16 @@ namespace CodeLab {
       // Load projects json from file and return list
       string path = streamingAssetsPath + projectFile;
       string json = File.ReadAllText(path);
-      return JsonConvert.DeserializeObject<List<CodeLabFeaturedProject>>(json);
+
+      List<CodeLabFeaturedProject> codeLabFeaturedProjects = JsonConvert.DeserializeObject<List<CodeLabFeaturedProject>>(json);
+      for (int i = codeLabFeaturedProjects.Count - 1; i >= 0; i--) {
+        var project = codeLabFeaturedProjects[i];
+        if (!string.IsNullOrEmpty(project.Language) && project.Language != Localization.GetStringsLocale()) {
+          codeLabFeaturedProjects.RemoveAt(i);
+        }
+      }
+
+      return codeLabFeaturedProjects;
     }
 
     private void HandleGameToGameContents(string messageType, string payload) {
@@ -1179,9 +1197,6 @@ namespace CodeLab {
       for (int i = 0; i < _CodeLabSampleProjects.Count; i++) {
         var project = _CodeLabSampleProjects[i];
 
-        if (!string.IsNullOrEmpty(project.Language) && project.Language != Localization.GetStringsLocale()) {
-          continue;
-        }
         if (showVerticalProjects && !project.IsVertical) {
           // We want to show only vertical projects so skip the horizontal projects.
           continue;
@@ -1224,10 +1239,6 @@ namespace CodeLab {
       List<CodeLabFeaturedProject> copyCodeLabFeaturedProjectList = new List<CodeLabFeaturedProject>();
       for (int i = 0; i < _CodeLabFeaturedProjects.Count; i++) {
         var project = _CodeLabFeaturedProjects[i];
-
-        if (!string.IsNullOrEmpty(project.Language) && project.Language != Localization.GetStringsLocale()) {
-          continue;
-        }
 
         CodeLabFeaturedProject proj = new CodeLabFeaturedProject();
         proj.ProjectUUID = project.ProjectUUID;
