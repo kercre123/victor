@@ -10,6 +10,7 @@
 #modified init sequence after os update
 #cd /data
 echo 'cd /data/local/fixture && ./helper' > /data/appinit.sh
+chmod +x /data/appinit.sh
 exit
 
 #start helper application after normal boot
