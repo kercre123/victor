@@ -19,6 +19,7 @@
 # The intent is that the cozmo app will then mask on locale for any featured project that specifies a language.
 #
 
+import re
 import json
 import random
 import copy
@@ -259,9 +260,10 @@ def export_all_strings_file(inputFiles):
 
     for projectKey in stringTable:
         for content in stringTable[projectKey]:
-            simplifiedContent = content.lower().replace(' ', '_').replace('.', '').replace('\'', '').replace('\"', '').replace('(', '').replace(')', '')
-            projectKeySanitized = projectKey.replace('.projectName','').replace('_','.')
-            jsonOut[projectKeySanitized + '.' + simplifiedContent] = { 'translation' : content }
+            simplifiedContent = re.sub('[^a-z^0-9^_]+', '', content.lower().replace(' ', '_') )
+            if simplifiedContent != '':
+                projectKeySanitized = projectKey.replace('.projectName','').replace('_','.')
+                jsonOut[projectKeySanitized + '.' + simplifiedContent] = { 'translation' : content }
     with open('allStrings.json', 'w') as outputFile:
         json.dump(jsonOut, outputFile, indent=4)
 
