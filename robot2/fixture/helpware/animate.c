@@ -16,19 +16,17 @@
 
 static void animate(const char* fn) {
   LcdFrame frame;
-	FILE *fo = fopen(fn, "rb");
+  FILE *fo = fopen(fn, "rb");
 
-	while (!feof(fo)) {
-		fread(frame.data, 1, sizeof(frame.data), fo);
+  while (!feof(fo)) {
+    fread(frame.data, 1, sizeof(frame.data), fo);
     lcd_draw_frame(&frame);
-	}
+  }
   fclose(fo);
 }
 
 
 #define ENDLESS 1
-
-
 
 
 void on_exit(void) {
@@ -44,7 +42,7 @@ int main(int argc, char** argv) {
     return rc;
   }
 
-	// Start drawing stuff to the screen
+  // Start drawing stuff to the screen
   if (argc>1) {
      do {
         animate(argv[1]);
@@ -56,5 +54,5 @@ int main(int argc, char** argv) {
   }
 
   on_exit();
-	return 0;
+  return 0;
 }

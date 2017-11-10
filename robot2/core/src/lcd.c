@@ -15,44 +15,47 @@
 #define TRUE (!FALSE)
 
 
-static const int DAT_CLOCK = 10000000;
+static const int DAT_CLOCK = 17500000;
 static const int MAX_TRANSFER = 0x1000;
 
 
 #define GPIO_LCD_WRX   110
-#define GPIO_LCD_RESET 55
-static GPIO RESET_PIN;
+#define GPIO_LCD_RESET1 96
+#define GPIO_LCD_RESET2 55
+
+static GPIO RESET_PIN1;
+static GPIO RESET_PIN2;
 static GPIO DnC_PIN;
 
 
 #define RSHIFT 0x1C
 
 typedef struct {
-	uint8_t cmd;
-	uint8_t data_bytes;
-	uint8_t data[5];
+  uint8_t cmd;
+  uint8_t data_bytes;
+  uint8_t data[5];
 } INIT_SCRIPT;
 
 
 static const INIT_SCRIPT init_scr[] = {
-	{ 0x11, 0 },
-	{ 0x36, 1, { 0x00 } },
-	{ 0xB7, 1, { 0x56 } },
-	{ 0xBB, 1, { 0x18 } },
-	{ 0xC0, 1, { 0x2C } },
-	{ 0xC2, 1, { 0x01 } },
-	{ 0xC3, 1, { 0x1F } },
-	{ 0xC4, 1, { 0x20 } },
-	{ 0xC6, 1, { 0x0F } },
-	{ 0xD0, 2, { 0xA4, 0xA1 } },
-	{ 0x3A, 1, { 0x55 } },
-	{ 0x55, 1, { 0xA0 } },
-	{ 0x21, 0 },
-	{ 0x2A, 4, { 0x00, RSHIFT, (LCD_FRAME_WIDTH + RSHIFT - 1) >> 8, (LCD_FRAME_WIDTH + RSHIFT - 1) & 0xFF } },
-	{ 0x2B, 4, { 0x00, 0x00, (LCD_FRAME_HEIGHT -1) >> 8, (LCD_FRAME_HEIGHT -1) & 0xFF } },
-	{ 0x29, 0 },
+  { 0x11, 0 },
+  { 0x36, 1, { 0x00 } },
+  { 0xB7, 1, { 0x56 } },
+  { 0xBB, 1, { 0x18 } },
+  { 0xC0, 1, { 0x2C } },
+  { 0xC2, 1, { 0x01 } },
+  { 0xC3, 1, { 0x1F } },
+  { 0xC4, 1, { 0x20 } },
+  { 0xC6, 1, { 0x0F } },
+  { 0xD0, 2, { 0xA4, 0xA1 } },
+  { 0x3A, 1, { 0x55 } },
+  { 0x55, 1, { 0xA0 } },
+  { 0x21, 0 },
+  { 0x2A, 4, { 0x00, RSHIFT, (LCD_FRAME_WIDTH + RSHIFT - 1) >> 8, (LCD_FRAME_WIDTH + RSHIFT - 1) & 0xFF } },
+  { 0x2B, 4, { 0x00, 0x00, (LCD_FRAME_HEIGHT -1) >> 8, (LCD_FRAME_HEIGHT -1) & 0xFF } },
+  { 0x29, 0 },
 
-	{ 0 }
+  { 0 }
 };
 
 
@@ -66,11 +69,11 @@ static int lcd_spi_init()
 {
   // SPI setup
   static const uint8_t    MODE = 0;
-	int spi_fd = open("/dev/spidev1.0", O_RDWR);
+  int spi_fd = open("/dev/spidev1.0", O_RDWR);
   if (!spi_fd) {
     error_exit(app_DEVICE_OPEN_ERROR, "Can't open LCD SPI interface\n");
   }
-	ioctl(spi_fd, SPI_IOC_RD_MODE, &MODE);
+  ioctl(spi_fd, SPI_IOC_RD_MODE, &MODE);
   /* if (err<0) { */
   /*   error_exit(app_IO_ERROR, "Can't configure LCD SPI. (%d)\n", errno); */
   /* } */
@@ -78,70 +81,97 @@ static int lcd_spi_init()
 }
 
 static void lcd_spi_transfer(int cmd, int bytes, const void* data) {
-	struct spi_ioc_transfer tr = {
-		.tx_buf = (unsigned long)data,
-		.rx_buf = 0,
-		.len = bytes,
-		.delay_usecs = 0,
-		.speed_hz = DAT_CLOCK,
-		.bits_per_word = 8,
-	};
+  struct spi_ioc_transfer tr = {
+    .tx_buf = (unsigned long)data,
+    .rx_buf = 0,
+    .len = bytes,
+    .delay_usecs = 0,
+    .speed_hz = DAT_CLOCK,
+    .bits_per_word = 8,
+  };
 
-	while (bytes > 0) {
+  gpio_set_value(DnC_PIN, cmd ? gpio_LOW : gpio_HIGH);
+  while (bytes > 0) {
      tr.len = (bytes > MAX_TRANSFER) ? MAX_TRANSFER : bytes;
 
-		gpio_set_value(DnC_PIN, cmd ? gpio_LOW : gpio_HIGH);
-		ioctl(spi_fd, SPI_IOC_MESSAGE(1), &tr);
+    ioctl(spi_fd, SPI_IOC_MESSAGE(1), &tr);
 
-		bytes -= tr.len;
-		tr.tx_buf += tr.len;
-	}
+    bytes -= tr.len;
+    tr.tx_buf += tr.len;
+  }
 }
 
 /************ LCD Device Interface *************/
 
 static void lcd_device_init() {
-	int idx;
+  int idx;
 
-	for (idx = 0; init_scr[idx].cmd; idx++) {
-		lcd_spi_transfer(TRUE, 1, &init_scr[idx].cmd);
-		lcd_spi_transfer(FALSE, init_scr[idx].data_bytes, init_scr[idx].data);
-	}
+  for (idx = 0; init_scr[idx].cmd; idx++) {
+    lcd_spi_transfer(TRUE, 1, &init_scr[idx].cmd);
+    lcd_spi_transfer(FALSE, init_scr[idx].data_bytes, init_scr[idx].data);
+  }
 }
 
-void lcd_draw_frame(LcdFrame* frame) {
+void lcd_clear_screen(void) {
+  const LcdFrame frame={{0}};
+  lcd_draw_frame(&frame);
+}
+
+
+void lcd_draw_frame(const LcdFrame* frame) {
    static const uint8_t WRITE_RAM = 0x2C;
    lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
    lcd_spi_transfer(FALSE, sizeof(frame->data), frame->data);
 }
 
+
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#define MIN(a,b) (((a)<(b))?(a):(b))
+
+void lcd_set_brightness(int brightness)
+{
+  brightness = MIN(brightness, 20);
+  brightness = MAX(brightness, 0);
+  int fd = open("/sys/class/leds/face-backlight/brightness",O_WRONLY);
+  if (fd) {
+    char buf[3];
+    snprintf(buf,3,"%02d\n",brightness);
+    write(fd, buf, 3);
+    close(fd);
+  }
+}
+
+
 int lcd_init(void) {
 
 //TODO : BACKLIGHT and REGULATOR INTERFACE
   // Echo to device to activate backlight
-  system("echo 10 > /sys/class/leds/face-backlight/brightness");
   system("echo 1 > /sys/kernel/debug/regulator/8916_l17/enable");
   system("echo 1 > /sys/kernel/debug/regulator/8916_l4/enable");
 
+ lcd_set_brightness(10);
+
   // IO Setup
   DnC_PIN = gpio_create(GPIO_LCD_WRX, gpio_DIR_OUTPUT, gpio_HIGH);
-  RESET_PIN = gpio_create(GPIO_LCD_RESET, gpio_DIR_OUTPUT, gpio_HIGH);
-
-  gpio_set_direction(DnC_PIN, gpio_DIR_OUTPUT);  //TODO: test if needed
-  gpio_set_direction(RESET_PIN, gpio_DIR_OUTPUT);
+  RESET_PIN1 = gpio_create(GPIO_LCD_RESET1, gpio_DIR_OUTPUT, gpio_HIGH);
+  RESET_PIN2 = gpio_create(GPIO_LCD_RESET2, gpio_DIR_OUTPUT, gpio_HIGH);
 
   // SPI setup
 
-	spi_fd = lcd_spi_init();
+  spi_fd = lcd_spi_init();
 
-	// Send reset signal
-	microwait(50);
-	gpio_set_value(RESET_PIN, 0);
-	microwait(50);
-	gpio_set_value(RESET_PIN, 1);
-	microwait(50);
+  // Send reset signal
+  microwait(50);
+  gpio_set_value(RESET_PIN1, 0);
+  gpio_set_value(RESET_PIN2, 0);
+  microwait(50);
+  gpio_set_value(RESET_PIN1, 1);
+  gpio_set_value(RESET_PIN2, 0);
+  microwait(50);
 
   lcd_device_init();
+
+  lcd_clear_screen();
 
   return 0;
 }
@@ -154,7 +184,14 @@ void lcd_shutdown(void) {
     lcd_spi_transfer(TRUE, 1, &SLEEP);
     close(spi_fd);
   }
-  gpio_close(DnC_PIN);
-  gpio_close(RESET_PIN);
+  if (DnC_PIN) {
+    gpio_close(DnC_PIN);
+  }
+  if (RESET_PIN1) {
+    gpio_close(RESET_PIN1);
+  }
+  if (RESET_PIN2) {
+    gpio_close(RESET_PIN2);
+  }
 
 }

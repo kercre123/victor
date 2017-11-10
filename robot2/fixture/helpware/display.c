@@ -12,7 +12,14 @@
 #include "core/common.h"
 #include "core/lcd.h"
 
+#include "helpware/display.h"
 
+
+#ifdef EXTENDED_DISPLAY_DEBUGGING
+#define ddprintf printf
+#else
+#define ddprintf(f,...)
+#endif
 
 
 #define DISPLAY_SCREEN_WIDTH LCD_FRAME_WIDTH
@@ -94,17 +101,6 @@ static const Font gSmallFont = {
 
 #define HUGE_FONT_START_LINE 1
 
-typedef enum {
-  layer_NONE = 0,
-  layer_SMALL_TEXT = 1<<0,
-  layer_MEDIUM_TEXT = 1<<1,
-  layer_BIG_TEXT = 1<<2,
-  layer_HUGE_TEXT = 1<<3,
-  layer_ALL_TEXT = (1<<4)-1
-} DisplayLayer;
-
-#define DISPLAY_NUM_LAYERS 4
-
 
 static const Font* gFont[DISPLAY_NUM_LAYERS] = {
   &gSmallFont,
@@ -171,7 +167,7 @@ static inline unsigned char restrict_to_printable(unsigned char c, unsigned char
 
 static inline void set_map_properties(int scanline, int ct, TextProperties* tp) {
   int i;
-  dprintf("setting scanlines %d..%d to %x/%x\n",scanline, scanline+ct, tp->fg, tp->bg);
+  ddprintf("setting scanlines %d..%d to %x/%x\n",scanline, scanline+ct, tp->fg, tp->bg);
 
   for (i=scanline;i<scanline+ct;i++) {
     gDisplay.map_prop[i]=*tp;
@@ -202,7 +198,7 @@ void display_render_8bit_text(uint8_t* bitmap, int layer, const Font* font)
     uint8_t* map = &bitmap[mapline*LCD_FRAME_WIDTH];
     const char* text = gDisplay.text[layer]+(line*font->CharsPerLine);
     if (*text)  {
-      dprintf(": %s\n", text);
+      ddprintf(": %s\n", text);
       for (col=0;col<font->CharsPerLine; col++)
       {
         unsigned char c = restrict_to_printable(*text++, font->CharStart, font->CharEnd);
@@ -238,7 +234,7 @@ void display_render_16bit_text(uint8_t* bitmap, int layer, const Font* font)
     uint8_t* m2 = &bitmap[(mapline+1)*LCD_FRAME_WIDTH];
     const char* text = gDisplay.text[layer]+(line*font->CharsPerLine);
     if (*text)  {
-      dprintf("< %s\n", text);
+      ddprintf("< %s\n", text);
       for (col=0;col<font->CharsPerLine; col++)
       {
         unsigned char c = restrict_to_printable(*text++, font->CharStart, font->CharEnd);
@@ -261,7 +257,6 @@ void display_render_16bit_text(uint8_t* bitmap, int layer, const Font* font)
     }
     shift ^= ( 16 - font->BitHeight); //only works for 16 or 12
     mapline+= (shift)?1:2;
-    printf("mapline = %d\n", mapline);
   }
 }
 
@@ -283,7 +278,7 @@ void display_render_32bit_text(uint8_t* bitmap, int layer, const Font* font)
 
     const char* text = gDisplay.text[layer]+(line*font->CharsPerLine);
     if (*text)  {
-      dprintf("^ %s\n", text);
+      ddprintf("^ %s\n", text);
       for (col=0;col<font->CharsPerLine; col++)
       {
         unsigned char c = restrict_to_printable(*text++, font->CharStart, font->CharEnd);
@@ -344,7 +339,7 @@ void display_render(uint8_t layermask) {
 
   for (i=0;i<DISPLAY_NUM_LAYERS;i++) {
     if (layermask & (1<<i) ) {
-    dprintf("rendering layer %d\n", i);
+    ddprintf("rendering layer %d\n", i);
       bitmap_render_text(bitmap, i, gFont[i]);
     }
   }
@@ -352,14 +347,14 @@ void display_render(uint8_t layermask) {
   int x,y;
   for (y=0;y<LCD_FRAME_HEIGHT;y++) {
     const TextProperties* tp = &gDisplay.map_prop[y/4];
-    dprintf("%02d %04x/%04x: ",y, tp->fg, tp->bg);
+    ddprintf("%02d %04x/%04x: ",y, tp->fg, tp->bg);
     for (x=0;x<LCD_FRAME_WIDTH;x++) {
       int isSet = EXTRACT_BIT(bitmap,x,y);
       uint16_t color = (isSet) ? tp->fg : tp->bg;
       gDisplay.frame.data[y*LCD_FRAME_WIDTH+x] = color;
-      dprintf("%c", isSet?'X':'.');
+      ddprintf("%c", isSet?'X':'.');
     }
-    dprintf("\n");
+    ddprintf("\n");
   }
   lcd_draw_frame(&gDisplay.frame);
 }
@@ -376,10 +371,10 @@ void display_draw_text(int layer, int line , uint16_t fg, uint16_t bg, const cha
     *textline = 0;
   }
   else  {
-    int leftpad = centered? (font->CharsPerLine - nchars)/2 : 0;
+    int leftpad = centered? (font->CharsPerLine + 1 - nchars)/2 : 0;
     strncpy(textline+leftpad, text, nchars);
   }
-  dprintf("Drawing text %8s\n", textline);
+  ddprintf("Drawing text %8s\n", textline);
   display_set_colors(layer, fg, bg);
   display_set_colors2(layer, line, fg, bg);
 
@@ -438,138 +433,3 @@ const char* parse_color(const char* cp, const char* endp, uint16_t* colorOut)
   while(cp<endp && !isspace(*cp)) {cp++;}
   return cp;
 }
-
-
-//#define SELF_TEST
-#ifdef SELF_TEST
-
-#define isdot(ch) ('.'==(ch))
-#define isdash(ch) ('-'==(ch))
-
-
-//display layer line [rgbit] all the following words
-int display_parse(const char* command, int linelen)
-{
-  int layer=0, line=0;
-  bool invert = 0, exclusive = 0;
-  uint16_t  fgcolor=lcd_WHITE, bgcolor = lcd_BLACK;
-  const char* cp = command;
-  const char* endp = cp+linelen;
-
-  //skip spaces
-  while (cp<endp && isspace(*cp)) { cp++;}
-
-  //layer  N[x]
-  while (cp<endp && isdigit(*cp)){
-    layer = layer*10 + (*cp++ - '0');
-  }
-  if (cp<endp  && ('x' == *cp)) {
-    exclusive=1;
-    cp++;
-  }
-
-  //to next char after space
-  while (cp<endp && !isspace(*cp)){ cp++;}
-  while (cp<endp && isspace(*cp)) { cp++;}
-
-  //line
-  while (cp<endp && isdigit(*cp)) {
-    line = (line*10) + *cp++ - '0';
-  }
-
-  //to next char after space
-  while (cp<endp && !isspace(*cp)){ cp++;}
-  while (cp<endp && isspace(*cp)) { cp++;}
-
-
-
-  // color code: -[i](rgbw|x0000)
-  //   -w = white
-  //   -ir = inverse red
-  //   -xF81F = purple
-  if (cp<endp  && ('i' == *cp)) {
-    invert=1;
-    cp++;
-  }
-  cp = parse_color(cp, endp, &fgcolor);
-
-  if (invert) {
-    uint16_t swap = bgcolor;
-    bgcolor = fgcolor;
-    fgcolor = swap;
-  }
-
-  //skip one space
-  if (cp<endp && isspace(*cp)) { cp++;}
-
-
-  if (layer==0 || layer >= DISPLAY_NUM_LAYERS) {layer = 1; }
-
-
-
-  uint8_t layermask = layer_ALL_TEXT;
-
-  line--; //zero based now
-  if (exclusive) {
-    layermask = (1<<layer);
-    display_clear_layer(layer, bgcolor, fgcolor);
-  }
-  display_draw_text(layer, line, fgcolor, bgcolor,
-                    cp, endp-cp, gFont[layer]->CenteredByDefault);
-
-  display_render(layermask);
-  return 0;
-
-}
-
-void on_exit(void) {
-  lcd_shutdown();
-}
-
-#define TERMBUFSZ 80
-#define LINEBUFSZ 256
-
-
-int main(int argc, const char* argv[])
-{
-  bool exit = false;
-  static char linebuf[LINEBUFSZ];
-  int linelen = 0;
-
-  dprintf("Initializing\n");
-
-  lcd_init();
-
-
-  display_init();
-
-
-  while (!exit)
-  {
-    printf("reading\n");
-    int nread = read(0, linebuf+linelen, LINEBUFSZ-linelen);
-    printf("%s",linebuf);
-    if (nread<0) { exit = true; break; }
-    printf("searching\n");
-    char* endl = memchr(linebuf+linelen, '\n', nread);
-    if (!endl) {
-      linelen+=nread;
-      if (linelen >= LINEBUFSZ)
-      {
-        printf("TOO MANY CHARACTERS, truncating to %d\n", LINEBUFSZ);
-        endl = linebuf+LINEBUFSZ-1;
-        *endl = '\n';
-      }
-    }
-    if (endl) {
-      printf("parsing \"%s\"\n", linebuf);
-      display_parse(linebuf, endl-linebuf);
-      linelen = 0;
-      printf("ok\n");
-    }
-  }
-  return 0;
-}
-
-
-#endif
