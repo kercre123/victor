@@ -40,10 +40,24 @@ struct __attribute__((packed)) IMURawData {
    int16_t temperature;
 };
 
+/** Read up to IMU_MAX_SAMPLES_PER_READ into array of IMURawData structs
+ * Returns the number of valid samples read.
+ */
 int imu_manage(struct IMURawData* raw);
+
+/** Opens the IMU device file handle
+ * returns NULL or error message.
+ */
 const char* imu_open(void);
+
+/** Initalizes IMU device
+ */
 void imu_init(void);
 
+/** Requests temperature update from IMU
+ * Data will be populated into following IMURawData structs on calls to imu_manage
+ */
+void imu_update_temperature(void);
 
 #define STEADY_CLOCK_TICKS_PER_SECOND 1000000000 //nanosecs
 #define TICKS_5MS (STEADY_CLOCK_TICKS_PER_SECOND/200)
