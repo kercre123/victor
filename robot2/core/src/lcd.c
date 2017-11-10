@@ -153,8 +153,9 @@ int lcd_init(void) {
 
   // IO Setup
   DnC_PIN = gpio_create(GPIO_LCD_WRX, gpio_DIR_OUTPUT, gpio_HIGH);
-  RESET_PIN1 = gpio_create(GPIO_LCD_RESET1, gpio_DIR_OUTPUT, gpio_HIGH);
-  RESET_PIN2 = gpio_create(GPIO_LCD_RESET2, gpio_DIR_OUTPUT, gpio_HIGH);
+
+  RESET_PIN1 = gpio_create_open_drain_output(GPIO_LCD_RESET1, gpio_HIGH);
+  RESET_PIN2 = gpio_create_open_drain_output(GPIO_LCD_RESET2, gpio_HIGH);
 
   // SPI setup
 
@@ -166,7 +167,7 @@ int lcd_init(void) {
   gpio_set_value(RESET_PIN2, 0);
   microwait(50);
   gpio_set_value(RESET_PIN1, 1);
-  gpio_set_value(RESET_PIN2, 0);
+  gpio_set_value(RESET_PIN2, 1);
   microwait(50);
 
   lcd_device_init();

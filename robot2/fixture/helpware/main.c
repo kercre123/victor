@@ -32,6 +32,7 @@ int wait_for_data(int fd, int max_sec) {
 
 
 
+
 int shellcommand(const char* command, int timeout_sec) {
   int retval = -666;
   uint64_t expiration = steady_clock_now()+(timeout_sec*NSEC_PER_SEC);
@@ -41,6 +42,9 @@ int shellcommand(const char* command, int timeout_sec) {
   fixture_log_writestring("\n");
 
   FILE* pp = popen("./headprogram", "r");
+
+
+
   if (pp) {
     int pfd = fileno(pp);
 
@@ -52,7 +56,7 @@ int shellcommand(const char* command, int timeout_sec) {
           fixture_log_writestring(buffer);
         }
       }
-      else if (steady_clock_now() > expiration) {
+      if (steady_clock_now() > expiration) {
         printf("TIMEOUT after %d sec\n", timeout_sec);
         fixture_log_writestring("TIMEOUT");
         break;
@@ -159,18 +163,13 @@ const char* fixture_command_parse(const char*  command, int len) {
 const char* find_line(const char* buf, int buflen, const char** last)
 {
   if (!buflen) {return NULL;}
-//  printf("looking for newline in \"%.*s\" (%d)\n",
-//         buflen, *last, buflen);
-//  printf("%x + %x <=? %x\n", buf, buflen, *last);
   assert(buf <= *last && *last <= buf+buflen);
   int remaining = buflen - (*last - buf);
   const char* token = memchr(*last, '\n', remaining);
   if (token) {
-//     printf("found at %d\n", token-*last);
     *last = token+1;
     return buf;
   }
-//  printf("not found\n");
   return NULL;
 }
 
@@ -263,11 +262,6 @@ int user_terminal(void) {
   if (kbhit()) {
     int nread = read(0, linebuf+linelen, LINEBUFSZ-linelen);
     if (nread<0) { return 1; }
-    int i;
-    for (i=0;i<nread;i++) {
-      //putchar(linebuf[linelen+i]);
-    }
-    fflush(stdout);
     serial_write(gSerialFd, (uint8_t*)linebuf+linelen, nread);
 
     char* endl = memchr(linebuf+linelen, '\n', nread);
