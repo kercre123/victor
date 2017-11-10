@@ -89,7 +89,7 @@ if (ANDROID)
   )
 
   android_strip(TARGET victor_animator)
-
+    
 endif()
 
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/signalEssence/policy_actions.c PROPERTIES COMPILE_FLAGS -Wno-shorten-64-to-32)

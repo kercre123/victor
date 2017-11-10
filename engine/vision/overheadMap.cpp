@@ -27,7 +27,7 @@ namespace Anki {
 namespace Cozmo {
 
 #define DEBUG_VISUALIZE false
-#define DEBUG_SAVE_OVERHEAD false
+#define DEBUG_SAVE_OVERHEAD 0 // how many frames before saving the files, 0 means no saving
 
 namespace {
 
@@ -102,6 +102,7 @@ OverheadMap::OverheadMap(const Json::Value& config, const CozmoContext *context)
 
   _overheadMap.Allocate(numRows, numCols);
   _footprintMask.Allocate(numRows, numCols);
+
   ResetMaps();
 
 }
@@ -110,6 +111,8 @@ OverheadMap::OverheadMap(const Json::Value& config, const CozmoContext *context)
 Result OverheadMap::Update(const Vision::ImageRGB& image, const VisionPoseData& poseData,
                            DebugImageList <Vision::ImageRGB>& debugImageRGBs)
 {
+
+  // TODO skip if robot hasn't moved
 
   // nothing to do here if there's no ground plane visible
   if (! poseData.groundPlaneVisible) {
@@ -122,7 +125,17 @@ Result OverheadMap::Update(const Vision::ImageRGB& image, const VisionPoseData& 
   const GroundPlaneROI& roi = poseData.groundPlaneROI;
 
   Quad2f imgGroundQuad;
-  roi.GetImageQuad(H, image.GetNumCols(), image.GetNumRows(), imgGroundQuad);
+  try {
+    roi.GetImageQuad(H, image.GetNumCols(), image.GetNumRows(), imgGroundQuad);
+  }
+  catch (const cv::Exception& e) {
+    PRINT_NAMED_ERROR("OverheadMap.Update.ExceptionGetImageQuad", "Error while getting the image quad: %s",
+                      e.what());
+    return RESULT_FAIL;
+  }
+
+  // TODO a map could have a resolution lower than 1mm per pixel. In that case we need a
+  // different way to index elements here
 
   // For each point on the ground plane, project it back into the image to get the color
   // Then add it to the overhead image
@@ -178,16 +191,20 @@ Result OverheadMap::Update(const Vision::ImageRGB& image, const VisionPoseData& 
 
   UpdateFootprintMask(poseData.histState.GetPose(), debugImageRGBs);
 
-  // only update here for debug and sending the images over
   if (DEBUG_VISUALIZE) {
     const Vision::ImageRGB robotFootPrint = GetImageCenteredOnRobot(poseData.histState.GetPose(), debugImageRGBs);
     debugImageRGBs.emplace_back("RobotFootprint", robotFootPrint);
   }
 
-  if (DEBUG_SAVE_OVERHEAD) {
-    SaveMaskedOverheadPixels("positivePixels.txt",
-                             "negativePixels.txt",
-                             "overheadMap.jpg");
+  if (DEBUG_SAVE_OVERHEAD > 0) {
+    static int frame_no = 0;
+    if (frame_no == 0) {
+      SaveMaskedOverheadPixels("positivePixels.txt", "negativePixels.txt", "overheadMap.jpg");
+      frame_no = DEBUG_SAVE_OVERHEAD;
+    }
+    else {
+      frame_no--;
+    }
   }
 
   return RESULT_OK;
@@ -200,8 +217,6 @@ Vision::ImageRGB OverheadMap::GetImageCenteredOnRobot(const Pose3d& robotPose,
   // To extract the pixels underneath the robot, the (cropped) overhead map is rotated by the
   // the current robot angle and then the region underneath the footprint is extracted
 
-  // Calculate the footprint as a cv::RotatedRect. To get the correct size the footprint is aligned
-  // with the axis
   cv::RotatedRect footprintRect = GetFootprintRotatedRect(robotPose);
 
   // get the image to rotate
@@ -214,7 +229,7 @@ Vision::ImageRGB OverheadMap::GetImageCenteredOnRobot(const Pose3d& robotPose,
   // With the cropped image the center of rotation is the center of the image
   cv::Mat rotatationMatrix = cv::getRotationMatrix2D({float(croppedOverhead.cols)/2.0f,
                                                       float(croppedOverhead.rows)/2.0f},
-                                                     angle, 1.0);
+                                                      angle, 1.0);
 
   cv::Mat rotatedOverhead;
   // rotate the image
@@ -230,9 +245,17 @@ Vision::ImageRGB OverheadMap::GetImageCenteredOnRobot(const Pose3d& robotPose,
   const cv::Size footprintSize = footprintRect.size;
   // crop the resulting image
   Vision::ImageRGB toRet;
-  cv::getRectSubPix(rotatedOverhead, footprintSize,
-                    {float(rotatedOverhead.cols)*0.5f, float(rotatedOverhead.rows)*0.5f}, // since we cropped the image take the center
-                    toRet.get_CvMat_());
+  try {
+    cv::getRectSubPix(rotatedOverhead, footprintSize,
+                      {float(rotatedOverhead.cols) * 0.5f,
+                       float(rotatedOverhead.rows) * 0.5f}, // since we cropped the image take the center
+                      toRet.get_CvMat_());
+  }
+  catch (const cv::Exception& e) {
+    PRINT_NAMED_ERROR("OverheadMap.GetImageCenteredOnRobot.CVError","Error while cv::getRectSubPix: %s",
+                      e.what());
+    return Vision::ImageRGB();
+  }
 
   if (toRet.GetNumCols() == 0 || toRet.GetNumRows()==0) {
     PRINT_NAMED_ERROR("OverheadMap.GetImageCenteredOnRobot.EmptyImage","Error: result image has %d rows and %d cols",
@@ -271,7 +294,6 @@ Vision::ImageRGB OverheadMap::GetImageCenteredOnRobot(const Pose3d& robotPose,
 
 cv::RotatedRect OverheadMap::GetFootprintRotatedRect(const Pose3d& robotPose) const
 {
-
   // there's a bit of magic in this function, mostly the result of trial and error.
 
   // save the rotation angle, as we need to zero it in the footprint
@@ -284,7 +306,7 @@ cv::RotatedRect OverheadMap::GetFootprintRotatedRect(const Pose3d& robotPose) co
   // get the footprint aligned with the coordinate system
   Quad2f robotFootprint = Robot::GetBoundingQuadXY(alignedPose);
 
-  // TODO this number has been found in simulation. It's probably a duoplicate of Robot::GetDriveCenterOffset().
+  // TODO this number has been found in simulation. It's probably a duplicate of Robot::GetDriveCenterOffset().
   // TODO This needs further investigation with the real robot
   const f32 CENTROID_AXIS_OFFSET_MM = 16.9f; // distance between the robot's centroid and the front axis middle point
 
@@ -309,11 +331,19 @@ cv::RotatedRect OverheadMap::GetFootprintRotatedRect(const Pose3d& robotPose) co
   robotMaxY = Util::Clamp(robotMaxY, 0, _overheadMap.GetNumCols());
 
   const Point2f centroid = robotFootprint.ComputeCentroid();
-  // This is the robot footprint with the right angle
-  cv::RotatedRect footprintRect = cv::RotatedRect(cv::Point2f(centroid.x(), centroid.y()),
-                                                  cv::Size2f(robotMaxX - robotMinX, robotMaxY - robotMinY),
-                                                  R.getDegrees());
-  return footprintRect;
+  try {
+    // This is the robot footprint with the right angle
+    cv::RotatedRect footprintRect = cv::RotatedRect(cv::Point2f(centroid.x(), centroid.y()),
+                                                    cv::Size2f(robotMaxX - robotMinX, robotMaxY - robotMinY),
+                                                    R.getDegrees());
+    return footprintRect;
+  }
+  catch (const cv::Exception& e) {
+    PRINT_NAMED_ERROR("OverheadMap.GetFootprintRotatedRect.CV_Exception",
+                      "Error while creating rotate rect: %s", e.what());
+    return cv::RotatedRect();
+  }
+
 }
 
 const Vision::ImageRGB& OverheadMap::GetOverheadMap() const
@@ -326,8 +356,8 @@ const Vision::Image& OverheadMap::GetFootprintMask() const
   return _footprintMask;
 }
 
-void OverheadMap::GetDrivableNonDrivablePixels(std::vector<Vision::PixelRGB>& drivablePixels,
-                                               std::vector<Vision::PixelRGB>& nonDrivablePixels) const
+void OverheadMap::GetDrivableNonDrivablePixels(OverheadMap::PixelSet& drivablePixels,
+                                               OverheadMap::PixelSet& nonDrivablePixels) const
 {
   for (uint i =0; i < _overheadMap.GetNumRows(); i++) {
     const Vision::PixelRGB* overheadRow_i = _overheadMap.GetRow(i);
@@ -336,16 +366,22 @@ void OverheadMap::GetDrivableNonDrivablePixels(std::vector<Vision::PixelRGB>& dr
       const Vision::PixelRGB& pixelValue = overheadRow_i[j];
       if (pixelValue != Vision::PixelRGB(0 ,0, 0)) { // this pixel has been mapped
         const u8 maskValue = maskRow_i[j];
-        if ((maskValue != 0)) { // this pixel has been deemed traversable
-          drivablePixels.push_back(pixelValue);
+        if ((maskValue != 0)) { // this pixel has been deemed drivable
+          drivablePixels.insert(pixelValue);
         }
         else { // the robot never went over these pixels
-          nonDrivablePixels.push_back(pixelValue);
+          nonDrivablePixels.insert(pixelValue);
         }
       }
     }
   }
+
+  // There's some debate as to how to insert elements in an array without duplicates.
+  // See https://stackoverflow.com/q/12200486/1047543
+  // See https://stackoverflow.com/a/24477023/1047543 for a comparison
+  // Using an unordered map seems to yield the best results when the number of duplicates is > 1%
 }
+
 
 void OverheadMap::ResetMaps()
 {
@@ -357,6 +393,7 @@ void OverheadMap::ResetMaps()
     for (uint j=0; j < _overheadMap.GetNumCols(); j++) {
       overheadRow_i[j] = Vision::PixelRGB(0 ,0, 0);
       maskRow_i[j] = 0;
+
     }
   }
 }
@@ -374,8 +411,11 @@ void OverheadMap::SaveMaskedOverheadPixels(const std::string& positiveExamplesFi
     return;
   }
 
-  std::vector<Vision::PixelRGB> drivablePixels;
-  std::vector<Vision::PixelRGB> nonDrivablePixels;
+  PRINT_CH_INFO(kLogChannelName, "OverheadMap.SaveMaskedOverheadPixels.PathInfo",
+                "Saving the files to %s", path.c_str());
+
+  PixelSet drivablePixels;
+  PixelSet nonDrivablePixels;
   GetDrivableNonDrivablePixels(drivablePixels, nonDrivablePixels);
 
   //save the individual pixels, positive examples
@@ -416,12 +456,15 @@ void OverheadMap::SaveMaskedOverheadPixels(const std::string& positiveExamplesFi
     _overheadMap.Save(fullPath, 100);
   }
 
-
 }
 
 void OverheadMap::UpdateFootprintMask(const Pose3d& robotPose, DebugImageList <Anki::Vision::ImageRGB>& debugImageRGBs)
 {
   cv::RotatedRect footprintRect = GetFootprintRotatedRect(robotPose);
+  if ((footprintRect.size.width == 0) || (footprintRect.size.height == 0)) {
+    PRINT_NAMED_WARNING("OverheadMap.UpdateFootprintMask.EmptyFootprintRect", "Empty Footprint Rect!");
+    return;
+  }
   cv::Point2f vertices[4];
   footprintRect.points(vertices);
 
