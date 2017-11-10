@@ -6,8 +6,8 @@
 #include "core/common.h"
 #include "core/serial.h"
 
-#define SERIAL_STREAM_DEBUG_IN 1
-#define SERIAL_STREAM_DEBUG_OUT 1
+#define SERIAL_STREAM_DEBUG_IN 0
+#define SERIAL_STREAM_DEBUG_OUT 0
 
 /// Opens serial port at `devicename` with given `baud` enum.
 /// Returns file descriptor.
