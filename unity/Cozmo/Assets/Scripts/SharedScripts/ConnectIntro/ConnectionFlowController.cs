@@ -65,6 +65,10 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private bool _scanLoopPlaying = false;
 
+  // ConnectionFlow will get destroyed as you cycle back to the main title, and we want 
+  // these vars to persist between instances - but not between appruns
+  private static String _ConnectionRejectedSSID;
+
 #if UNITY_EDITOR
   public static bool sManualProgress;
   public static bool ManualSuccess() {
@@ -145,6 +149,18 @@ public class ConnectionFlowController : MonoBehaviour {
     RobotEngineManager.Instance.SendGameBeingPaused(bPause);
     // flush the message to make sure it is sent
     RobotEngineManager.Instance.FlushChannelMessages();
+
+    // If we're coming back from background, and we're still connected to the same network we were rejected from, DON'T
+    // bother pinging Cozmo
+    if (!bPause && (!String.IsNullOrEmpty(_ConnectionRejectedSSID) && AndroidConnectionFlow.GetCurrentSSID() != _ConnectionRejectedSSID)) {
+      // If we're on the Android flow screen, attempt to start that ping
+      if (_AndroidConnectionFlowInstance != null) {
+        _AndroidConnectionFlowInstance.SafeStartPingTest();
+      }
+      else {
+        _PingStatus.RestartPing();
+      }
+    }
   }
 
   private void DestroyAndroidFlow() {
@@ -225,7 +241,9 @@ public class ConnectionFlowController : MonoBehaviour {
   private bool StartAndroidFlowIfApplicable() {
     bool useAndroidFlow = false;
 #if UNITY_ANDROID
-    useAndroidFlow = (AndroidConnectionFlow.IsAvailable() && !AndroidConnectionFlow.HandleAlreadyOnCozmoWifi());
+    // To get around the Unity ping not working on Android 8, we'll just always use the Android flow - which uses
+    // a native ping internally
+    useAndroidFlow = AndroidConnectionFlow.IsAvailable();
 #endif
 #if UNITY_EDITOR
     useAndroidFlow = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseAndroidFlowInMock;
@@ -308,6 +326,12 @@ public class ConnectionFlowController : MonoBehaviour {
         DestroyAndroidFlow();
         HandleSearchForCozmoScreenDone(false);
       };
+
+      // We were rejected AND we're still on the same WiFi, we don't want to keep checking for a connection
+      if (!String.IsNullOrEmpty(_ConnectionRejectedSSID) && AndroidConnectionFlow.GetCurrentSSID() == _ConnectionRejectedSSID) {
+        _PingStatus.PausePing();
+      }
+
       // create background if not created yet
       if (_SearchForCozmoScreenInstance == null) {
         CreateConnectionFlowBackgroundWithCallback(cancelFunc);
@@ -316,6 +340,10 @@ public class ConnectionFlowController : MonoBehaviour {
         cancelFunc();
       }
     };
+
+    // Initialize only after we've set up all the handlers
+    // A null/empty string means the connection was NOT rejected - therefore, start the ping test
+    _AndroidConnectionFlowInstance.Initialize(String.IsNullOrEmpty(_ConnectionRejectedSSID));
   }
 
   private void ShowSearchForCozmo() {
@@ -328,6 +356,7 @@ public class ConnectionFlowController : MonoBehaviour {
 
     var screenInstance = UIManager.CreateUIElement(_SearchForCozmoScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform).GetComponent<SearchForCozmoScreen>();
     bool androidFlowActive = _AndroidConnectionFlowInstance != null;
+
     PingStatus pingStatusForSearch = _PingStatus;
 #if UNITY_EDITOR
     if (sManualProgress) {
@@ -636,6 +665,8 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void ConnectionRejected() {
+    _ConnectionRejectedSSID = AndroidConnectionFlow.GetCurrentSSID();
+
     _ConnectionFlowBackgroundModalInstance.SetStateFailed(1);
     _ConnectionRejectedScreenInstance = UIManager.CreateUIElement(_ConnectionRejectedScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform).GetComponent<ConnectionRejectedScreen>();
     _ConnectionRejectedScreenInstance.OnCancelButton += () => {
@@ -665,6 +696,8 @@ public class ConnectionFlowController : MonoBehaviour {
       DataPersistence.DataPersistenceManager.Instance.StartNewSession();
     }
     DataPersistence.DataPersistenceManager.Instance.SetHasConnectedWithCozmo();
+    // Successfully connected, reset state
+    _ConnectionRejectedSSID = null;
 
     // When we are in the first time user flow, we enable the block pool when we get to the Pull Cube Tab screen
     if (!DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
