@@ -71,6 +71,7 @@ namespace Anki
       struct s_turn {
         f32 x;
         f32 y;
+        f32 startAngle;
         f32 targetAngle;
         f32 angleTolerance;
         u8  useShortestDir;
@@ -100,7 +101,7 @@ namespace Anki
                      f32 targetSpeed, f32 accel, f32 decel);
       
       // Defines the path segment as a point turn
-      void DefinePointTurn(f32 x, f32 y, f32 targetAngle,
+      void DefinePointTurn(f32 x, f32 y, f32 startAngle, f32 targetAngle,
                            f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
                            f32 angleTolerance,
                            bool useShortestDir);
@@ -114,6 +115,7 @@ namespace Anki
       // Returns length of the segment
       f32 GetLength() const;
       
+      f32  GetStartAngle() const;
       void GetStartPoint(f32 &x, f32 &y) const;
       void GetEndPose(f32 &x, f32 &y, f32 &angle) const;
       
@@ -192,7 +194,7 @@ namespace Anki
       bool AppendArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                      f32 targetSpeed, f32 accel, f32 decel);
       
-      bool AppendPointTurn(f32 x, f32 y, f32 targetAngle,
+      bool AppendPointTurn(f32 x, f32 y, f32 startAngle, f32 targetAngle,
                            f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
                            f32 angleTolerance,
                            bool useShortestDir);

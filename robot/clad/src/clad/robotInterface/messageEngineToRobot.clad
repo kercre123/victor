@@ -161,6 +161,7 @@ message AppendPathSegmentPointTurn
 {
   float_32 x_center_mm,
   float_32 y_center_mm,
+  float_32 startRad,
   float_32 targetRad,
   float_32 angleTolerance,
   PathSegmentSpeed speed, // targetSpeed indicates rotational speed in rad/s

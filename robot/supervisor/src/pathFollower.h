@@ -29,6 +29,7 @@ namespace Anki
                                  f32 targetSpeed, f32 accel, f32 decel);
       
       bool AppendPathSegment_PointTurn(f32 x_mm, f32 y_mm,
+                                       f32 startAngle, 
                                        f32 targetAngle,
                                        f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
                                        f32 angleTolerance,
