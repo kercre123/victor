@@ -69,6 +69,10 @@ public class ConnectionFlowController : MonoBehaviour {
   // these vars to persist between instances - but not between appruns
   private static String _ConnectionRejectedSSID;
 
+  // For Oreo and above, we're reverting to the old Android connection flow due to the
+  // OS being a bit overzealous about wanting to be on an Internet-connected WiFi network (which Cozmo is not)
+  private const int _kAndroidOreoSdkVersion = 26;
+
 #if UNITY_EDITOR
   public static bool sManualProgress;
   public static bool ManualSuccess() {
@@ -243,7 +247,8 @@ public class ConnectionFlowController : MonoBehaviour {
 #if UNITY_ANDROID
     // To get around the Unity ping not working on Android 8, we'll just always use the Android flow - which uses
     // a native ping internally
-    useAndroidFlow = AndroidConnectionFlow.IsAvailable();
+    int deviceSDKVersion = CozmoBinding.GetCurrentActivity().Call<int>("getSDKVersion");
+    useAndroidFlow = AndroidConnectionFlow.IsAvailable() && (deviceSDKVersion < _kAndroidOreoSdkVersion);
 #endif
 #if UNITY_EDITOR
     useAndroidFlow = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseAndroidFlowInMock;
