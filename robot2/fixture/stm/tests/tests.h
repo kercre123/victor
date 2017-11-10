@@ -1,0 +1,77 @@
+#ifndef TESTS_H
+#define TESTS_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdint.h>
+
+typedef void (*TestFunction)(void);
+
+//Debug
+void          TestDebugSetDetect(int ms=1000); //Detect()==true for 'ms'
+bool          TestDebugDetect(void);
+void          TestDebugCleanup(void);
+TestFunction* TestDebugGetTests(void);
+
+//Body
+bool          TestBodyDetect(void);
+void          TestBodyCleanup(void);
+TestFunction* TestBody1GetTests(void);
+TestFunction* TestBody2GetTests(void);
+TestFunction* TestBody3GetTests(void);
+
+//Head
+bool          TestHeadDetect(void);
+void          TestHeadCleanup(void);
+TestFunction* TestHead1GetTests(void);
+TestFunction* TestHead2GetTests(void);
+
+//Backpack
+bool          TestBackpackDetect(void);
+void          TestBackpackCleanup(void);
+TestFunction* TestBackpack1GetTests(void);
+
+//Cube
+bool          TestCubeDetect(void);
+void          TestCubeCleanup(void);
+TestFunction* TestCube1GetTests(void);
+TestFunction* TestCube2GetTests(void);
+bool          TestCubeFinishDetect(void);
+TestFunction* TestCubeFinish1GetTests(void);
+TestFunction* TestCubeFinish2GetTests(void);
+TestFunction* TestCubeFinish3GetTests(void);
+TestFunction* TestCubeFinishXGetTests(void);
+
+//Robot
+bool          TestRobotDetect(void);
+void          TestRobotCleanup(void);
+TestFunction* TestRobot1GetTests(void);
+TestFunction* TestRobot2GetTests(void);
+TestFunction* TestRobotInfoGetTests(void);
+TestFunction* TestRobotPlaypenGetTests(void);
+TestFunction* TestRobotPackoutGetTests(void);
+TestFunction* TestRobotLifetestGetTests(void);
+TestFunction* TestRobotRecharge1GetTests(void);
+TestFunction* TestRobotRecharge2GetTests(void);
+TestFunction* TestRobotSoundGetTests(void);
+TestFunction* TestRobotFacRevertGetTests(void);
+TestFunction* TestRobotEMGetTests(void);
+
+//Motor
+bool          TestMotorDetect(void);
+void          TestMotorCleanup(void);
+TestFunction* TestMotor1LGetTests(void);
+TestFunction* TestMotor1HGetTests(void);
+TestFunction* TestMotor2LGetTests(void);
+TestFunction* TestMotor2HGetTests(void);
+TestFunction* TestMotor3LGetTests(void);
+TestFunction* TestMotor3HGetTests(void);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif //TESTS_H
