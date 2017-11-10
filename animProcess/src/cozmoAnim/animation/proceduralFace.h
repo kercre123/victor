@@ -16,7 +16,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/point.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
-#include "clad/types/proceduralEyeParameters.h"
+#include "clad/types/proceduralFaceTypes.h"
 #include "util/logging/logging.h"
 #include <array>
 #include <vector>
@@ -87,8 +87,9 @@ public:
   void SetFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe);
   void SetFromJson(const Json::Value &jsonRoot);
   void SetFromValues(const std::vector<f32>& leftEyeData, const std::vector<f32>& rightEyeData,
-                     f32 faceAngle_deg, f32 faceCenterX, f32 faceCenterY, f32 faceScaleX, f32 faceScaleY);
-  void SetFromMessage(const ExternalInterface::DisplayProceduralFace& msg);
+                     f32 faceAngle_deg, f32 faceCenterX, f32 faceCenterY, f32 faceScaleX, f32 faceScaleY,
+                     f32 scanlineOpacity);
+  void SetFromMessage(const ProceduralFaceParameters& msg);
   
   // Get/Set each of the above procedural parameters, for each eye
   void  SetParameter(WhichEye whichEye, Parameter param, Value value);
@@ -109,7 +110,15 @@ public:
   // Get/Set the overall face scale
   void SetFaceScale(Point<2,Value> scale);
   Point<2,Value> const& GetFaceScale() const;
+
+  // Get/Set the scanline opacity
+  void SetScanlineOpacity(Value opacity);
+  Value GetScanlineOpacity() const;
   
+  // Set the global hue of all faces
+  static void  SetHue(Value hue); 
+  static Value GetHue();
+
   // Initialize scanline distortion
   void InitScanlineDistorter(s32 maxAmount_pix, f32 noiseProb);
   
@@ -162,10 +171,13 @@ private:
   
   std::unique_ptr<ScanlineDistorter> _scanlineDistorter;
   
-  Value           _faceAngle_deg = 0.0f;
-  Point<2,Value>  _faceScale = 1.0f;
-  Point<2,Value>  _faceCenter = 0.0f;
+  Value           _faceAngle_deg   = 0.0f;
+  Point<2,Value>  _faceScale       = 1.0f;
+  Point<2,Value>  _faceCenter      = 0.0f;
+  Value           _scanlineOpacity = 0.7f;
   
+  static Value    _hue;
+
   void SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& eyeArray);
   void CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1);
   
@@ -227,7 +239,34 @@ inline void ProceduralFace::SetFaceScale(Point<2,Value> scale) {
 inline Point<2,ProceduralFace::Value> const& ProceduralFace::GetFaceScale() const {
   return _faceScale;
 }
+
+inline void ProceduralFace::SetScanlineOpacity(Value opacity)
+{
+  _scanlineOpacity = opacity;
+  if(!Util::InRange(_scanlineOpacity, Value(0), Value(1)))
+  {
+    ClipWarnFcn("ScanlineOpacity", _scanlineOpacity, Value(0), Value(1));
+    _scanlineOpacity = Util::Clamp(_scanlineOpacity, Value(0), Value(1));
+  }
+}
+
+inline ProceduralFace::Value ProceduralFace::GetScanlineOpacity() const {
+  return _scanlineOpacity;
+}
   
+inline void ProceduralFace::SetHue(Value hue) {
+  _hue = hue;
+  if(!Util::InRange(_hue, Value(0), Value(1)))
+  {
+    ClipWarnFcn("Hue", _hue, Value(0), Value(1));
+    _hue = Util::Clamp(_hue, Value(0), Value(1));
+  }
+}
+
+inline ProceduralFace::Value ProceduralFace::GetHue() {
+  return _hue;
+}
+
 } // namespace Cozmo
 } // namespace Anki
 

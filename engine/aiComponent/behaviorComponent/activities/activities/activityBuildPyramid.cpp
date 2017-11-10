@@ -22,8 +22,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/buildPyramid/behaviorBuildPyramid.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/buildPyramid/behaviorBuildPyramidBase.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/buildPyramid/behaviorPyramidThankYou.h"
-#include "engine/aiComponent/behaviorComponent/behaviorChoosers/behaviorChooserFactory.h"
-#include "engine/aiComponent/behaviorComponent/behaviorChoosers/scoringBehaviorChooser.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationPyramid.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -45,8 +43,8 @@ namespace{
 using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
 using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 
-static const char* kSetupChooserConfigKey = "setupChooser";
-static const char* kBuildChooserConfigKey = "buildChooser";
+//static const char* kSetupChooserConfigKey = "setupChooser";
+//static const char* kBuildChooserConfigKey = "buildChooser";
 
 
 static const int kMinUprightBlocksForPyramid      = 3;
@@ -180,7 +178,7 @@ public:
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActivityBuildPyramid::ActivityBuildPyramid(const Json::Value& config)
 : IActivity(config)
-, _activeBehaviorChooser(nullptr)
+//, _activeBehaviorChooser(nullptr)
 , _chooserPhase(ChooserPhase::None)
 , _lastUprightBlockCount(-1)
 , _pyramidObjectiveAchieved(false)
@@ -267,12 +265,12 @@ void ActivityBuildPyramid::InitActivity(BehaviorExternalInterface& behaviorExter
   /////////
   // Get Choosers for setup/build when simple scoring is needed
   ///////
-  const Json::Value& simpleChooserJSON = _config[kSetupChooserConfigKey];
-  const Json::Value& buildChooserJSON  = _config[kBuildChooserConfigKey];
+  //const Json::Value& simpleChooserJSON = _config[kSetupChooserConfigKey];
+  //const Json::Value& buildChooserJSON  = _config[kBuildChooserConfigKey];
   
-  _setupSimpleChooser = BehaviorChooserFactory::CreateBehaviorChooser(behaviorExternalInterface, simpleChooserJSON);
-  _buildSimpleChooser = BehaviorChooserFactory::CreateBehaviorChooser(behaviorExternalInterface, buildChooserJSON);
-  _activeBehaviorChooser = _setupSimpleChooser.get();
+  //_setupSimpleChooser = BehaviorChooserFactory::CreateBehaviorChooser(behaviorExternalInterface, simpleChooserJSON);
+  //_buildSimpleChooser = BehaviorChooserFactory::CreateBehaviorChooser(behaviorExternalInterface, buildChooserJSON);
+  //_activeBehaviorChooser = _setupSimpleChooser.get();
   
   /////////
   // Setup callbacks to update cube light patterns/phase
@@ -376,7 +374,7 @@ void ActivityBuildPyramid::UpdateActiveBehaviorGroup(BehaviorExternalInterface& 
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  /**Robot& robot = behaviorExternalInterface.GetRobot();
   
   // Order matters
   if(settingUpPyramid){
@@ -387,7 +385,7 @@ void ActivityBuildPyramid::UpdateActiveBehaviorGroup(BehaviorExternalInterface& 
   }else{
     _activeBehaviorChooser = _buildSimpleChooser.get();
     robot.GetBehaviorManager().RemoveDisableReactionsLock(kLockForPyramidSetup);
-  }
+  }**/
 }
 
 
@@ -634,7 +632,7 @@ ICozmoBehaviorPtr ActivityBuildPyramid::GetDesiredActiveBehaviorInternal(Behavio
 ICozmoBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorSetup(BehaviorExternalInterface& behaviorExternalInterface,
                                                           const ICozmoBehaviorPtr currentRunningBehavior)
 {
-  return _activeBehaviorChooser->GetDesiredActiveBehavior(behaviorExternalInterface, currentRunningBehavior);
+  return nullptr;//_activeBehaviorChooser->GetDesiredActiveBehavior(behaviorExternalInterface, currentRunningBehavior);
 }
 
 
@@ -671,7 +669,7 @@ ICozmoBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorBuilding(BehaviorExte
     
   }else{
     UpdatePyramidAssignments(nullptr);
-    bestBehavior = _buildSimpleChooser->GetDesiredActiveBehavior(behaviorExternalInterface, currentRunningBehavior);
+    //bestBehavior = _buildSimpleChooser->GetDesiredActiveBehavior(behaviorExternalInterface, currentRunningBehavior);
   }
   
   return bestBehavior;

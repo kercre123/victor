@@ -45,6 +45,41 @@ target_include_directories(cti_planning
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
+#
+# cti_planning_robot
+#
+
+anki_build_cxx_library(cti_planning_robot ${ANKI_SRCLIST_DIR} STATIC)
+
+target_compile_definitions(cti_planning_robot
+PRIVATE
+CORETECH_ROBOT
+)
+
+set_target_properties(cti_planning_robot PROPERTIES
+FOLDER "CoreTech"#/Basestation"
+)
+
+target_compile_options(cti_planning_robot
+PRIVATE
+-stdlib=libc++
+-Os
+)
+
+set_property(TARGET cti_planning_robot PROPERTY CXX_STANDARD 11)
+
+target_link_libraries(cti_planning_robot
+PUBLIC
+cti_common_robot
+PRIVATE
+${OPENCV_LIBS}
+)
+
+target_include_directories(cti_planning_robot
+PUBLIC
+$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
 if (MACOSX)
 
   enable_testing()

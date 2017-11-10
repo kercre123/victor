@@ -22,7 +22,8 @@ message RobotStateMessage
   uint_8 imageProcFrameRateHz,
   uint_8 enabledAnimTracks,
   uint_8 animTag,
-  float_32 imuTemperature_degC
+  float_32 imuTemperature_degC,
+  uint_16 cliffThresholds[4]
 }
 
 // VizObject

@@ -25,8 +25,6 @@
 #include "engine/aiComponent/behaviorComponent/activities/activities/activityFreeplay.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/gameRequest/behaviorRequestGameSimple.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/behaviorChoosers/behaviorChooserFactory.h"
-#include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
@@ -1081,7 +1079,7 @@ void BehaviorManager::SetCurrentActivity(BehaviorExternalInterface& behaviorExte
     
     // channeled log and event - legacy event from when activites were just choosers
     // PLEASE DO NOT CHANGE or you will break analytics queries
-    LOG_EVENT("BehaviorManager.SetBehaviorChooser",
+    LOG_EVENT("BehaviorManager.SetCurrentActivity",
               "Switching behavior chooser from '%s' to '%s'",
               BehaviorIDToString(GetCurrentActivity()->GetID()),
               EnumToString(newActivity));

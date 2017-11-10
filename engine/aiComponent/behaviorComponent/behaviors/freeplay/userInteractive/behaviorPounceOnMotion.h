@@ -29,7 +29,6 @@ private:
   
 public:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual float EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
 
 protected:

@@ -65,7 +65,7 @@ TEST(BehaviorSystemManager, TestDelegationVariants)
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
     bunchOfDelegates.back()->WantsToBeActivated(bei);
-    InjectValidDelegateIntoBSM(bsm, behaviorDelegating, bunchOfDelegates.back().get());
+    InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
     
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
                              bunchOfDelegates.back().get()));
@@ -90,7 +90,7 @@ TEST(BehaviorSystemManager, TestDelegationVariants)
   ICozmoBehavior* waitBehavior = behaviorContainer.FindBehaviorByID(BehaviorID::Wait).get();
   waitBehavior->OnEnteredActivatableScope();
 
-  InjectAndDelegate(testFramework.GetBehaviorSystemManager(),
+  InjectAndDelegate(testFramework,
                     bsm._behaviorStack->GetTopOfStack(),
                     waitBehavior);
 }
@@ -127,7 +127,7 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
     bunchOfDelegates.back()->WantsToBeActivated(bei);
-    InjectValidDelegateIntoBSM(bsm, behaviorDelegating, bunchOfDelegates.back().get());
+    InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
     
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
                              bunchOfDelegates.back().get()));
@@ -163,7 +163,7 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
     bunchOfDelegates.back()->WantsToBeActivated(bei);
-    InjectValidDelegateIntoBSM(bsm, behaviorDelegating, bunchOfDelegates.back().get());
+    InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
     
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
                              bunchOfDelegates.back().get()));
@@ -190,7 +190,7 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
     bunchOfDelegates.back()->WantsToBeActivated(bei);
-    InjectValidDelegateIntoBSM(bsm, behaviorDelegating, bunchOfDelegates.back().get());
+    InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
     
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
                              bunchOfDelegates.back().get()));

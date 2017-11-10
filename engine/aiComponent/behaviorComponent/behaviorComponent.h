@@ -37,6 +37,7 @@ namespace Cozmo {
 class AIComponent;
 class AsyncMessageGateComponent;
 class BehaviorComponent;
+class BehaviorComponentCloudReceiver;
 class BehaviorContainer;
 class BehaviorEventAnimResponseDirector;
 class BehaviorExternalInterface;
@@ -148,6 +149,9 @@ public:
   
   inline const BehaviorEventAnimResponseDirector& GetBehaviorEventAnimResponseDirector() const
            { assert(_behaviorEventAnimResponseDirector); return *_behaviorEventAnimResponseDirector; }
+
+  inline BehaviorComponentCloudReceiver& GetCloudReceiver() const { assert(_cloudReceiver); return *_cloudReceiver;}
+           
   
 protected:
   // Support legacy cozmo code
@@ -181,7 +185,10 @@ private:
   std::unique_ptr<BehaviorManager>       _behaviorMgr;
   
   // Behavior audio client is used to update the audio engine with the current sparked state (a.k.a. "round")
-  std::unique_ptr<Audio::BehaviorAudioComponent> _audioClient;  
+  std::unique_ptr<Audio::BehaviorAudioComponent> _audioClient;
+
+  // Receives and processes messages from the cloud system
+  std::unique_ptr<BehaviorComponentCloudReceiver> _cloudReceiver;
 };
 
 } // namespace Cozmo

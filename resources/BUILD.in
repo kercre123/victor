@@ -8,6 +8,8 @@ asset_project(
                 ('assets', 'voiceCommand/voice-recognition-data.txt'),
                 ('assets', 'voiceCommand/exports/voiceCommand_config.json'),
                 ('assets', 'voiceCommand/exports/**/*.raw'),
+                ('externals/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_01_hey_cosmo_sfs14_b3e3cbba/anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_am.raw'),
+                ('externals/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_01_hey_cosmo_sfs14_b3e3cbba/anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_search_4.raw'),
                 ('externals/animation-assets', 'animations/**/*.bin'),
                 ('externals/animation-assets', 'animationGroups/**/*.json'),
                 ('externals/animation-assets', 'faceAnimations/**/*.png'),

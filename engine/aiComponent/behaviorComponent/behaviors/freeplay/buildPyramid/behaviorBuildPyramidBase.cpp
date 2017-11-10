@@ -133,14 +133,14 @@ ICozmoBehavior::Status BehaviorBuildPyramidBase::UpdateInternal_WhileRunning(Beh
                         FLT_GT(currentTime_s, _timeLastBaseDestroyed + kTimeUntilRespondToBase_s);
 
   if(baseAppearedWhileNotPlacing || baseDestroyedWhileNotPlacing){
-    StopWithoutImmediateRepetitionPenalty(behaviorExternalInterface);
+    CancelSelf();
     return ICozmoBehavior::Status::Complete;
   }
   
   // prevent against visual verify failures
   if(_checkForFullPyramidVisualVerifyFailure){
     if(!pyramids.empty()){
-      StopWithoutImmediateRepetitionPenalty(behaviorExternalInterface);
+      CancelSelf();
       return ICozmoBehavior::Status::Complete;
     }
   }

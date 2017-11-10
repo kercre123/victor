@@ -33,7 +33,9 @@ CozmoAnimContext::CozmoAnimContext(Util::Data::DataPlatform* dataPlatform)
 {
   if (dataPlatform != nullptr)
   {
-    _micDataProcessor.reset(new MicData::MicDataProcessor(_dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata")));
+    const std::string& dataWriteLocation = _dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata");
+    const std::string& triggerDataDir = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/hey_cosmo_and_commands");
+    _micDataProcessor.reset(new MicData::MicDataProcessor(dataWriteLocation, triggerDataDir));
   }
   InitAudio(_dataPlatform);
 }

@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <unistd.h>
 
-#include "anki/types.h"
+#include "anki/common/types.h"
 #include "anki/cozmo/robot/logging.h"
 #include "../spine/spine_hal.h"
 

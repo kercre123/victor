@@ -189,8 +189,8 @@ ICozmoBehavior::Status BehaviorStackBlocks::UpdateInternal_WhileRunning(Behavior
                      "Stopping due to invalid blocks topBlockValid:%d bottomBlockValid:%d",
                      topValid,
                      bottomValid);
-      StopWithoutImmediateRepetitionPenalty(behaviorExternalInterface);
-      return BehaviorStatus::Complete;
+      CancelSelf();
+      return BehaviorStatus::Running;
     }
   }
   
@@ -230,7 +230,6 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(BehaviorExternalInterface& 
                                                               _targetBlockTop, params);
   
   SmartDelegateToHelper(behaviorExternalInterface, pickupHelper, &BehaviorStackBlocks::TransitionToStackingBlock);
-  IncreaseScoreWhileControlDelegated( kBSB_ScoreIncreaseForAction );
 }
 
 
@@ -266,7 +265,6 @@ void BehaviorStackBlocks::TransitionToStackingBlock(BehaviorExternalInterface& b
   SmartDelegateToHelper(behaviorExternalInterface, placeHelper,
                         &BehaviorStackBlocks::TransitionToPlayingFinalAnim,
                         &BehaviorStackBlocks::TransitionToFailedToStack);
-  IncreaseScoreWhileControlDelegated( kBSB_ScoreIncreaseForAction );
 }
 
 
@@ -281,7 +279,6 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(BehaviorExternalInterface
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
     DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
-    IncreaseScoreWhileControlDelegated( kBSB_ScoreIncreaseForAction );
   }
   NeedActionCompleted();
 }

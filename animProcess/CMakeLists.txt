@@ -11,6 +11,7 @@ include(opencv)
 include(signalessence)
 include(speexdsp)
 include(text2speech)
+include(sensory)
 
 if (NOT DEFINED USE_DAS)
   set(USE_DAS 0)
@@ -51,6 +52,7 @@ target_link_libraries(victor_anim
   ${SIGNALESSENCE_LIBS}
   ${SPEEXDSP_LIBS}
   ${TEXT2SPEECH_LIBS}
+  ${SENSORY_LIBS}
   # platform
   ${PLATFORM_LIBS}
   PUBLIC
