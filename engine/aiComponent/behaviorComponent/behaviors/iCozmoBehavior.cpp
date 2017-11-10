@@ -386,8 +386,28 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
       if(entry.isMember(kAnonymousBehaviorParams)){
         params = entry[kAnonymousBehaviorParams];
       }
-      _anonymousBehaviorMap.insert(std::make_pair(behaviorName,
-                                   factory.CreateBehavior(behaviorClass, params)));
+
+      // check for duplicate behavior names since maps require a unique key
+      auto it = _anonymousBehaviorMap.find(behaviorName);
+      if(it == _anonymousBehaviorMap.end()){
+        auto resultPair = _anonymousBehaviorMap.insert(std::make_pair(behaviorName,
+                                                       factory.CreateBehavior(behaviorClass, params)));
+
+        DEV_ASSERT_MSG(resultPair.first->second != nullptr, "ICozmoBehavior.InitInternal.FailedToAllocateAnonymousBehavior",
+                       "Failed to allocate new anonymous behavior (%s) within behavior %s",
+                       behaviorName.c_str(),
+                       GetIDStr().c_str());
+
+        // we need to initlaize the anon behaviors as well
+        resultPair.first->second->Init(behaviorExternalInterface);
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("ICozmoBehavior.InitInternal.DuplicateAnonymousBehaviorName",
+                          "Duplicate anonymous behavior name (%s) found for behavior '%s'",
+                          behaviorName.c_str(),
+                          GetIDStr().c_str());
+      }
     }
   }
 
@@ -1124,6 +1144,20 @@ bool ICozmoBehavior::DelegateNow(BehaviorExternalInterface& behaviorExternalInte
   
   return false;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ICozmoBehaviorPtr ICozmoBehavior::FindAnonymousBehaviorByName(const std::string& behaviorName) const
+{
+  ICozmoBehaviorPtr foundBehavior = nullptr;
+
+  auto it = _anonymousBehaviorMap.find(behaviorName);
+  if (it != _anonymousBehaviorMap.end())
+  {
+    foundBehavior = it->second;
+  }
+
+  return foundBehavior;
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg)
@@ -1496,6 +1530,12 @@ ActionResult ICozmoBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* 
   }
     
   return ActionResult::SUCCESS;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string ICozmoBehavior::GetClassString(BehaviorClass behaviorClass) const
+{
+  return BehaviorClassToString(behaviorClass);
 }
 
   
