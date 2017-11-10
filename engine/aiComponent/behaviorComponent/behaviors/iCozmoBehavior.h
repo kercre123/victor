@@ -371,7 +371,18 @@ protected:
                            IBehavior* delegate,
                            void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface));
 
-  
+  // Behaviors can easily create delegates using "anonymous" behaviors in their config file (see _anonymousBehaviorMap
+  // comments below).  This function enables access to those anonymous behaviors.
+  ICozmoBehaviorPtr FindAnonymousBehaviorByName(const std::string& behaviorName) const;
+
+  // Sometimes it's necessary to downcast to a behavior to a specific behavior pointer, e.g. so an Activity
+  // can access it's member functions. This function will help with that and provide a few assert checks along
+  // the way. It sets outPtr in arguemnts, and returns true if the cast is successful
+  template<typename T>
+  bool FindAnonymousBehaviorByNameAndDowncast(const std::string& behaviorName,
+                                                BehaviorClass requiredClass,
+                                                std::shared_ptr<T>& outPtr ) const;
+
   // This function cancels the action started by DelegateIfInControl (if there is one). Returns true if an action was
   // canceled, false otherwise. Note that if you are activated, this will trigger a callback for the
   // cancellation unless you set allowCallback to false. If the action was created by a helper, the helper
@@ -493,6 +504,9 @@ private:
   bool ReadFromJson(const Json::Value& config);
   
   void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
+
+  // hide behaviorTypes.h file in .cpp
+  std::string GetClassString(BehaviorClass behaviorClass) const;
   
   // ==================== Member Vars ====================
   
@@ -641,6 +655,37 @@ bool ICozmoBehavior::DelegateIfInControl(BehaviorExternalInterface& behaviorExte
   return DelegateIfInControl(behaviorExternalInterface,
                              delegate,
                              std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+}
+
+template<typename T>
+bool ICozmoBehavior::FindAnonymousBehaviorByNameAndDowncast(const std::string& behaviorName,
+                                                              BehaviorClass requiredClass,
+                                                              std::shared_ptr<T>& outPtr) const
+{
+  ICozmoBehaviorPtr behavior = FindAnonymousBehaviorByName(behaviorName);
+  if( ANKI_VERIFY(behavior != nullptr,
+                  "ICozmoBehavior.FindAnonymousBehaviorByNameAndDowncast.NoBehavior",
+                  "BehaviorName: %s requiredClass: %s",
+                  behaviorName.c_str(),
+                  GetClassString(requiredClass).c_str()) &&
+     
+     ANKI_VERIFY(behavior->GetClass() == requiredClass,
+                 "ICozmoBehavior.FindAnonymousBehaviorByNameAndDowncast.WrongClass",
+                 "BehaviorName: %s requiredClass: %s",
+                 behaviorName.c_str(),
+                 GetClassString(requiredClass).c_str()) ) {
+       
+       outPtr = std::static_pointer_cast<T>(behavior);
+       
+       if( ANKI_VERIFY(outPtr != nullptr, "ICozmoBehavior.FindAnonymousBehaviorByNameAndDowncast.CastFailed",
+                       "BehaviorName: %s requiredClass: %s",
+                       behaviorName.c_str(),
+                       GetClassString(requiredClass).c_str()) ) {
+         return true;
+       }
+     }
+  
+  return false;
 }
 
 } // namespace Cozmo

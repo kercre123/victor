@@ -1,9 +1,9 @@
-#VRML_SIM V8.2.1 utf8
+#VRML_SIM V8.5 utf8
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.00992841 0.0100011 0.999901 4.70531
-  position 0.00369197 -0.0994576 1.97111
+  orientation -0.2408952 0.63631081 0.7328561 3.6828741
+  position -2.1261488 2.455865 0.79941287
 }
 Background {
   skyColor [
@@ -27,6 +27,9 @@ DirectionalLight {
 }
 CozmoMat {
   showMarkers FALSE
+}
+Face {
+  translation 0.34 -0.97 0.27
 }
 LightCube {
   translation 0.0884345 0.0833803 0.022
