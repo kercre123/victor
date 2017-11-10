@@ -7,14 +7,17 @@
 
 /************* CLOCK Interface ***************/
 
-#define NSEC_PER_SEC  1000000000
-#define NSEC_PER_MSEC 1000000
-#define NSEC_PER_USEC 1000
+#define NSEC_PER_SEC  ((uint64_t)1000000000)
+#define NSEC_PER_MSEC ((uint64_t)1000000)
+#define NSEC_PER_USEC ((uint64_t)1000)
 
 uint64_t steady_clock_now(void) {
    struct timespec time;
    clock_gettime(CLOCK_REALTIME,&time);
-   return time.tv_nsec + time.tv_sec * NSEC_PER_SEC;
+//   uint64_t now = time.tv_nsec;
+//   uint64_t now = time.tv_sec * NSEC_PER_SEC;
+   return (uint64_t)time.tv_nsec + (uint64_t)time.tv_sec * NSEC_PER_SEC;
+//   return now;
 }
 void microwait(long microsec)
 {

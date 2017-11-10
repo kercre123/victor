@@ -66,7 +66,7 @@ test: app
 stupid:
 	echo $(PLATFORM)
 #	$(CC) -v $(DEFINES) $(LOCAL_LDLIBS) -gcc-toolchain -L../spine -lspine stupid_hal.c
-	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon ../hal/spine/spine_hal.c ../hal/spine/spine_crc.c stupid_hal.c
+	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon -I../core/inc ../hal/spine/spine_hal.c ../hal/spine/spine_crc.c ../core/src/clock.c stupid_hal.c -O2
 	adb push ./a.out /data/local/tmp
 
 spinal_tap:
