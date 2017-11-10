@@ -96,9 +96,13 @@ namespace Messages {
   void ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg);
   extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
   void ProcessBackpackButton(const RobotInterface::BackpackButton& payload);
-  void DrawTextOnScreen(const std::string& text, 
+  void DrawTextOnScreen(const std::vector<std::string>& textVec, 
                         const ColorRGBA& textColor,
-                        const ColorRGBA& bgColor);
+                        const ColorRGBA& bgColor,
+                        const Point2f& loc = {0, 0},
+                        u32 textSpacing_pix = 10,
+                        f32 textScale = 3.f);
+  std::string ExecCommand(const char* cmd);
 
   
 // #pragma mark --- Messages Method Implementations ---
@@ -255,14 +259,15 @@ namespace Messages {
 
   void Process_drawTextOnScreen(const Anki::Cozmo::RobotInterface::DrawTextOnScreen& msg)
   {
-    DrawTextOnScreen(std::string(msg.text,
-                                 msg.text_length),
+    DrawTextOnScreen({std::string(msg.text,
+                                  msg.text_length)},
                      ColorRGBA(msg.textColor.r,
                                msg.textColor.g,
                                msg.textColor.b),
                      ColorRGBA(msg.bgColor.r,
                                msg.bgColor.g,
-                               msg.bgColor.b));
+                               msg.bgColor.b),
+                     { 0, FACE_DISPLAY_HEIGHT-10 });
   }
   
 // ========== END OF PROCESSING MESSAGES FROM ENGINE ==========
@@ -454,6 +459,30 @@ namespace Messages {
     }
   }
 
+  // Executes the provided command and returns the output as a string
+  std::string ExecCommand(const char* cmd) 
+  {
+    std::array<char, 128> buffer;
+    std::string result;
+    std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
+    if (!pipe)
+    {
+      PRINT_NAMED_WARNING("EngineMessages.ExecCommand.FailedToOpenPipe", "");
+      return "";
+    }
+
+    while (!feof(pipe.get()))
+    {
+      if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
+      {
+        result += buffer.data();
+      }
+    }
+
+    // Remove the last character as it is a newline
+    return result.substr(0,result.size()-1);
+  }
+
   void ProcessBackpackButton(const RobotInterface::BackpackButton& payload)
   {
     if(ANKI_DEV_CHEATS && payload.depressed)
@@ -491,8 +520,12 @@ namespace Messages {
         struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
         const std::string ip = std::string(inet_ntoa(ipaddr->sin_addr));
 
+        const std::string serialNo = ExecCommand("getprop ro.serialno");
+
         // Draw the last three digits of the ip on the screen
-        DrawTextOnScreen(ip.substr(10,3), NamedColors::WHITE, NamedColors::BLACK);
+        DrawTextOnScreen({ip, serialNo}, NamedColors::WHITE, NamedColors::BLACK, {0, 30}, 20, 0.5f);
+
+
       }
       // Otherwise we are currently showing debug info and the button has been pressed
       // so clear the face and unlock the face image track
@@ -505,33 +538,35 @@ namespace Messages {
     }
   }
 
-  void DrawTextOnScreen(const std::string& text, 
+  // Draws each element of the textVec on a separate line (spacing determined by textSpacing_pix)
+  // in textColor with a background of bgColor.
+  void DrawTextOnScreen(const std::vector<std::string>& textVec, 
                         const ColorRGBA& textColor,
-                        const ColorRGBA& bgColor)
+                        const ColorRGBA& bgColor,
+                        const Point2f& loc,
+                        u32 textSpacing_pix,
+                        f32 textScale)
   {
     Vision::ImageRGB resultImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     
     Anki::Rectangle<f32> rect(0, 0, FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
     resultImg.DrawFilledRect(rect, bgColor);
 
-    const s32 textLocX = 0;
-    const s32 textLocY = FACE_DISPLAY_HEIGHT-10;
-    // TODO: Expose scale, line, and location(?) as arguments
-    const f32 textScale = 3.f;
+    const f32 textLocX = loc.x();
+    f32 textLocY = loc.y();
+    // TODO: Expose line and location(?) as arguments
     const u8  textLineThickness = 8;
-    resultImg.DrawText({textLocX, textLocY},
-                       text.c_str(),
-                       textColor,
-                       textScale,
-                       textLineThickness);
 
-    // Opencv doesn't support drawing filled text so draw the text a second time
-    // slightly offset from the first to attempt to fill it in
-    resultImg.DrawText({textLocX+1, textLocY+1},
-                       text.c_str(),
-                       textColor,
-                       textScale,
-                       textLineThickness);
+    for(const auto& text : textVec)
+    {
+      resultImg.DrawText({textLocX, textLocY},
+                         text.c_str(),
+                         textColor,
+                         textScale,
+                         textLineThickness);
+
+      textLocY += textSpacing_pix;
+    }
 
     // Draw the word "Factory" in the top right corner if this is a 
     // factory build
