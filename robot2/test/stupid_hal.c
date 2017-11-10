@@ -29,9 +29,9 @@ void handle_incoming_frame(struct BodyToHead* data)
      }
      printf("%08x\n", *(crc_t*)(dp));
      printf("CRC = %08x\n",calc_crc((const uint8_t*)data, sizeof(struct BodyToHead)));
-     
+
    }
-   
+
    lastfc = data->framecounter;
    static uint8_t printcount=0;
    if (( ++printcount & RATEMASK ) == 0) {
@@ -52,6 +52,28 @@ void fill_outgoing_frame(struct HeadToBody* data)
 }
 
 
+int selector(int fd) {
+  fd_set fds;
+  FD_ZERO(&fds);
+  FD_SET(fd, &fds);
+  if (select(fd+1, &fds, NULL, NULL, NULL))
+  {
+    uint8_t test_buffer[SPINE_MAX_BYTES];
+    int result = read(fd, test_buffer, SPINE_MAX_BYTES);
+    if (result < 0) {
+      if (errno == EAGAIN) { //nonblocking no-data
+        result = 0; //not an error
+      }
+    }
+    if (result>0) {
+      spine_receive_bytes(test_buffer, result);
+    }
+    return result;
+  }
+  return 0;
+}
+
+
 int main(int argc, const char* argv[]) {
 
    struct HeadToBody headData = {0};  //-we own this one.
@@ -63,25 +85,26 @@ int main(int argc, const char* argv[]) {
    if (errCode != 0) return errCode;
 
    hal_set_mode(RobotMode_RUN);
-   
+
    printf("Starting loop\n");
    LOGD("Starting loop");
+   int spinefd = spine_fd();
    while (1) {
-      fill_outgoing_frame(&headData);
-      const struct SpineMessageHeader* hdr = hal_get_frame(PAYLOAD_DATA_FRAME, 10);
-      if (!hdr) {  //DEBUG CRASHER
+     if (selector(spinefd)) {
+       fill_outgoing_frame(&headData);
+       const struct SpineMessageHeader* hdr = hal_get_frame(PAYLOAD_DATA_FRAME, 1);
+       if (!hdr) {  //DEBUG CRASHER
          printf(".\n");
-         hal_send_frame(PAYLOAD_DATA_FRAME, &headData, sizeof(headData));
-      }
-      else
-      if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
-         bodyData = (struct BodyToHead*)(hdr+1);
-         handle_incoming_frame(bodyData);
-         hal_send_frame(PAYLOAD_DATA_FRAME, &headData, sizeof(headData));
-      }
+         //    hal_send_frame(PAYLOAD_DATA_FRAME, &headData, sizeof(headData));
+       }
+       else {
+         if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
+           bodyData = (struct BodyToHead*)(hdr+1);
+           handle_incoming_frame(bodyData);
+           hal_send_frame(PAYLOAD_DATA_FRAME, &headData, sizeof(headData));
+         }
+       }
+     }
    }
    return 0;
 }
-
-
-   

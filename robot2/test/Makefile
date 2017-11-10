@@ -23,7 +23,7 @@ ifeq ($(PLATFORM),OSX)
 else
 	DEFINES += -DPLATFORM_ANDROID
   CC = ~/arm/bin/clang -pie
-	LOCAL_LDLIBS += -llog 
+	LOCAL_LDLIBS += -llog
 endif
 
 
@@ -39,7 +39,7 @@ ANDROID_ARM_TOOLS_ROOT := $(TOPLEVEL)/generated/android/tools/arm
 ANDROID_ARM_TOOLS_BIN := $(ANDROID_ARM_TOOLS_ROOT)/bin
 
 # Compilation Tools
-ARMCC := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-gcc -pie
+ARMCC := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-gcc -pie -O2
 ARMCPP := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-g++
 ARMAR := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-ar
 
@@ -53,7 +53,7 @@ lcd_test:  $(ANDROID_ARM_TOOLS_ROOT) lcd_test.c
 
 
 
-app: 
+app:
 	gcc $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $(CODE_UNDER_TEST)
 
 test: app
@@ -66,7 +66,7 @@ test: app
 stupid:
 	echo $(PLATFORM)
 #	$(CC) -v $(DEFINES) $(LOCAL_LDLIBS) -gcc-toolchain -L../spine -lspine stupid_hal.c
-	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon ../hal/spine/spine_hal.c ../hal/spine/spine_crc.c stupid_hal.c 
+	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon ../hal/spine/spine_hal.c ../hal/spine/spine_crc.c stupid_hal.c
 	adb push ./a.out /data/local/tmp
 
 spinal_tap:
