@@ -3,9 +3,9 @@
 
 /************* CLOCK Interface ***************/
 
-#define NSEC_PER_SEC  1000000000
-#define NSEC_PER_MSEC 1000000
-#define NSEC_PER_USEC 1000
+#define NSEC_PER_SEC  ((uint64_t)1000000000)
+#define NSEC_PER_MSEC ((uint64_t)1000000)
+#define NSEC_PER_USEC ((uint64_t)1000)
 
 
 uint64_t steady_clock_now(void);

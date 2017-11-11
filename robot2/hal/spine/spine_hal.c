@@ -1,4 +1,3 @@
- /* #include <stdbool.h> */
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -6,8 +5,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <termios.h>
-/* #include <string.h> */
-
+#include <stdint.h>
 
 
 #include "schema/messages.h"
@@ -20,7 +18,6 @@ typedef uint32_t crc_t;
 
 #define SKIP_CRC_CHECK 0
 
-#define SPINE_MAX_BYTES 1280
 
 #define BODY_TAG_PREFIX ((uint8_t*)&SyncKey)
 #define SPINE_TAG_LEN sizeof(SpineSync)
@@ -60,6 +57,47 @@ static struct HalGlobals {
 #define spine_debug_x(fmt, args...)
 #endif
 
+
+
+/************* CIRCULAR RX BUFFER ***************/
+
+#define MIN(a,b) ((a)<(b)?(a):(b))
+
+typedef uint_fast16_t idx_t;
+#define CB_CAPACITY (1<<13)           //enough for 5 packets
+#define CB_SIZE_MASK (CB_CAPACITY-1)
+
+static struct circular_buffer_t {
+  uint8_t buffer[CB_CAPACITY];
+  idx_t head;
+  idx_t tail;
+} gRx = {0};
+
+static inline idx_t circular_buffer_count() {
+  return ((gRx.head-gRx.tail) & CB_SIZE_MASK);
+}
+
+idx_t circular_buffer_put(const uint8_t* buffer, idx_t len) {
+  idx_t available = CB_CAPACITY-1 - circular_buffer_count();
+  len = available = MIN(len, available);
+  while (available-->0) {
+    gRx.buffer[gRx.head++]=*buffer++;
+    gRx.head &= CB_SIZE_MASK;
+  }
+  return len;
+}
+
+idx_t circular_buffer_get(uint8_t buffer[], idx_t len) {
+  idx_t available = circular_buffer_count();
+  len = available = MIN(len, available);
+  while (available-->0) {
+    *buffer++ = gRx.buffer[gRx.tail++];
+    gRx.tail &= CB_SIZE_MASK;
+  }
+  return len;
+}
+
+
 /************* SERIAL INTERFACE ***************/
 
 static void hal_serial_close()
@@ -69,6 +107,8 @@ static void hal_serial_close()
   close(gHal.fd);
   gHal.fd = 0;
 }
+
+
 
 
 SpineErr hal_serial_open(const char* devicename, long baudrate)
@@ -116,13 +156,13 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
 int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
 {
 
-  int result = read(gHal.fd, buffer, len);
-  if (result < 0) {
-    if (errno == EAGAIN) { //nonblocking no-data
-      usleep(200); //wait a bit.
-      result = 0; //not an error
-    }
-  }
+//  usleep(200); //wait a bit.
+  int result = circular_buffer_get( buffer, len);
+  /* if (result < 0) { */
+  /*   if (errno == EAGAIN) { //nonblocking no-data */
+  /*     result = 0; //not an error */
+  /*   } */
+  /* } */
   return result;
 }
 
@@ -245,6 +285,10 @@ SpineErr hal_init(const char* devicename, long baudrate)
   return hal_serial_open(devicename, baudrate);
 }
 
+int spine_fd(void) {
+  return gHal.fd;
+}
+
 
 
 // Scan the whole payload for sync, to recover after dropped bytes,
@@ -258,29 +302,37 @@ int hal_resync_partial(int start_offset, int len) {
        have been copied to the beginning of gHal.inbuffer.
        returns the number of copied bytes
    */
-    unsigned int i;
-    unsigned int index = 0;
-    for (i = start_offset; i+index < len; ) {
-       spine_debug_x(" %02x", gHal.inbuffer[i+index]);
-       unsigned int i2 = spine_sync(gHal.inbuffer+i, index);
-       if (i2 <= index) { //no match, or restarted match at `i2` chars before last scanned char
-          i+=index-i2+1;
+  unsigned int base;  //first possible good sync byte
+  unsigned int numgood = 0;
+    for (base = start_offset; base+numgood < len; ) {
+      spine_debug_x(" %02x ", gHal.inbuffer[base+numgood]);
+       numgood = spine_sync(gHal.inbuffer+base, numgood);
+       if (numgood == 0) { //no match: advance base
+         base++;
        }
-       else if (i2 == SPINE_HEADER_LEN) { //whole sync!
-          index = len-i; //consider rest of buffer valid.
-          break;
+       else if (numgood == SPINE_HEADER_LEN) { //whole sync!
+         //printf("found! @ %d\n",base);
+         numgood = len-base; //consider rest of buffer valid.
+         break;
        }
-       index = i2;
+       // else partial match, numgood has been incremented
     }
-    //at this point we have scanned `i`+`index` chars. the last `index` of them are valid.
-    if (index) {
-       memmove(gHal.inbuffer, gHal.inbuffer+i, index);
+    //at this point we have scanned `base`+`numgood` chars. the last `numgood` of them are valid.
+    if (numgood) {
+       memmove(gHal.inbuffer, gHal.inbuffer+base, numgood);
     }
-    spine_debug("\n%u dropped bytes\n", start_offset+i-index);
+    spine_debug("\n%u dropped bytes\n", base);
 
-    return index;
+    return numgood;
 }
 
+
+void spine_receive_bytes(const uint8_t *buffer, int len) {
+  const idx_t inserted = circular_buffer_put(buffer, len);
+  if  ( inserted != len) {
+    LOGE("Spine Buffer Too Small: %d bytes dropped", len-inserted);
+  }
+}
 
 
 //gathers most recently queued frame,
@@ -403,8 +455,8 @@ void hal_set_mode(int new_mode)
 
 int main(int argc, const char* argv[])
 {
-   gHal.fd = open("unittest.dat", O_RDONLY);
-   const struct SpineMessageHeader* hdr = hal_get_frame(PAYLOAD_ACK, 1000);
-   assert(hdr && hdr->payload_type == PAYLOAD_ACK);
+  gHal.fd = open("unittest.dat", O_RDONLY);  //expect 46 dropped bytes
+  const struct SpineMessageHeader* hdr = hal_get_frame(PAYLOAD_ACK, 1000);
+  assert(hdr && hdr->payload_type == PAYLOAD_ACK);
 }
 #endif
