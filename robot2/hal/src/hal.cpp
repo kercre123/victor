@@ -33,7 +33,7 @@
 
 namespace Anki {
 namespace Cozmo {
- 
+
 BodyToHead* bodyData_; //buffers are owned by the code that fills them. Spine owns this one
 HeadToBody headData_;  //-we own this one.
 
@@ -50,12 +50,12 @@ namespace { // "Private members"
     .cliffSense = {800, 800, 800, 800}
   };
 #endif
-  
+
   // update every tick of the robot:
   // some touch values are 0xFFFF, which we want to ignore
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
   u16 lastValidTouchIntensity_;
-  
+
 } // "private" namespace
 
 // Forward Declarations
@@ -122,13 +122,13 @@ Result HAL::Init()
         hal_set_mode(RobotMode_RUN);
       }
     } while (result != RESULT_OK);
-    
+
   }
 #else
   bodyData_ = &dummyBodyData_;
 #endif
   assert(bodyData_ != nullptr);
-  
+
 
   for (int m = MOTOR_LIFT; m < MOTOR_COUNT; m++) {
     MotorResetPosition((MotorID)m);
@@ -140,7 +140,7 @@ Result HAL::Init()
 
 void ForwardMicData(void)
 {
-  static_assert(MICDATA_SAMPLES_COUNT == 
+  static_assert(MICDATA_SAMPLES_COUNT ==
                 (sizeof(RobotInterface::MicData::data) / sizeof(RobotInterface::MicData::data[0])),
                 "bad mic data sample count define");
   RobotInterface::MicData micData;
@@ -169,11 +169,11 @@ Result HAL::Step(void)
 #if IMU_WORKING
     ProcessIMUEvents();
 #endif
-    
+
     result =  GetSpineDataFrame();
-    
+
     ProcessTouchLevel(); // filter invalid values from touch sensor
-    
+
     PrintConsoleOutput();
   }
 #endif
@@ -219,9 +219,9 @@ void HAL::SetTimeStamp(TimeStamp_t t)
 void HAL::SetLED(LEDId led_id, u32 color)
 {
   assert(led_id >= 0 && led_id < LED_COUNT);
-  
+
   const u32 ledIdx = (u32)led_id;
-  
+
   uint8_t r = (color >> LED_RED_SHIFT) & LED_CHANNEL_MASK;
   uint8_t g = (color >> LED_GRN_SHIFT) & LED_CHANNEL_MASK;
   uint8_t b = (color >> LED_BLU_SHIFT) & LED_CHANNEL_MASK;
@@ -286,22 +286,22 @@ bool HAL::BatteryIsCharging()
   static bool isCharging = false;
   static bool wasAboveThresh = false;
   static u32 lastTransition_ms = HAL::GetTimeStamp();
-  
+
   const int32_t thresh = 2000; // raw ADC value?
   const u32 debounceTime_ms = 200U;
-  
+
   const bool isAboveThresh = bodyData_->battery.charger > thresh;
-  
+
   if (isAboveThresh != wasAboveThresh) {
     lastTransition_ms = HAL::GetTimeStamp();
   }
-  
+
   const bool canTransition = HAL::GetTimeStamp() > lastTransition_ms + debounceTime_ms;
-  
+
   if (canTransition) {
     isCharging = isAboveThresh;
   }
-  
+
   wasAboveThresh = isAboveThresh;
   return isCharging;
   //return bodyData_->battery.flags & isCharging;

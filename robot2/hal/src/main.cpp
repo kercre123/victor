@@ -20,10 +20,11 @@ void Cleanup(int signum)
   Anki::Cozmo::Robot::Destroy();
 
   // Need to HAL::Step() in order for light commands to go down to robot
-  // so set shutdownSignal here to signal process shutdown after 
+  // so set shutdownSignal here to signal process shutdown after
   // shutdownCounter more tics of main loop.
   shutdownSignal = signum;
 }
+
 
 
 int main(int argc, const char* argv[])
@@ -40,6 +41,7 @@ int main(int argc, const char* argv[])
 
   for (;;) {
     //HAL::Step should never return !OK, but if it does, best not to trust its data.
+    RobotIO::Process(); //send pending, rcv new data
     if (Anki::Cozmo::HAL::Step() == Anki::RESULT_OK) {
       if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK) {
         AnkiError("robot.main", "MainExecution failed");
@@ -47,21 +49,19 @@ int main(int argc, const char* argv[])
       }
     }
 
-    auto end = std::chrono::steady_clock::now();
 #ifdef HAL_NOT_PROVIDING_CLOCK
+    auto end = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::chrono::duration<double, std::micro> sleepTime = std::chrono::milliseconds(5) - elapsed;
-    std::this_thread::sleep_for(sleepTime);
-    ///printf("Main tic: %lld, Sleep time: %f us\n", elapsed.count(), sleepTime.count());
-#endif
-    //printf("TS: %d\n", Anki::Cozmo::HAL::GetTimeStamp() );
     start = end;
-
-
+    std::chrono::duration<double, std::micro> sleepTime = std::chrono::milliseconds(5) - elapsed;
+#else
+    std::chrono::duration<double, std::micro> sleepTime = std::chrono::milliseconds(1)
+#endif
     if (shutdownSignal != 0 && --shutdownCounter == 0) {
       AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
       exit(shutdownSignal);
     }
+    std::this_thread::sleep_for(sleepTime);
   }
   return 0;
 }
