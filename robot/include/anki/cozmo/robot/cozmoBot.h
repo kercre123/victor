@@ -1,7 +1,7 @@
 #ifndef ANKI_COZMOBOT_H
 #define ANKI_COZMOBOT_H
 
-#include "anki/types.h"
+#include "anki/common/types.h"
 
 namespace Anki {
 

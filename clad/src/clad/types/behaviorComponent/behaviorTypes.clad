@@ -82,7 +82,6 @@ enum uint_8 BehaviorClass {
   VisitInterestingEdge,
   Wait,
 
-
   // Behaviors mapped to reaction triggers
   AcknowledgeFace,
   AcknowledgeObject,
@@ -112,6 +111,7 @@ enum uint_8 BehaviorClass {
   DispatcherStrictPriorityWithCooldown,
   DispatcherQueue,
   DispatcherRandom,
+  DispatcherScoring,
 
   // Victor / demo behavior
   VictorObservingDemo,
@@ -158,6 +158,7 @@ enum uint_8 BehaviorID {
 
   AcknowledgeFace,
   AcknowledgeObject,
+  Anonymous,
   Bouncer,
   BuildPyramid,
   BuildPyramidBase,
@@ -172,6 +173,11 @@ enum uint_8 BehaviorID {
   DriveOffCharger,
   EarnedSparks,
   EnrollFace,
+
+  // Example Behaviors
+  ExampleDispatcherScoring,
+  ExampleAnonymousBehaviors,
+
   FPPeekABoo,
   FactoryCentroidExtractor,
   FactoryTest,
@@ -348,6 +354,15 @@ enum uint_8 BehaviorID {
   VC_SearchForFace,
 
   VictorFreeplay,
+ 
+  VictorCloudDemoBase,
+  VictorCloudDemoAutonomousStub,
+  VictorCloudDemoHello,
+  VictorCloudDemoGoodbye,
+  VictorCloudDemoHowAreYou,
+  VictorCloudDemoFistBump,
+  VictorCloudDemoTriggerDetected,
+  VictorCloudDemoReturnToCharger,
 
   VictorObservingDemo,
   VictorDemoFeedingState,

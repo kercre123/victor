@@ -12,6 +12,7 @@ enum uint_8 StateConceptStrategyType {
   Invalid,
 
   AlwaysRun,
+  CloudIntentPending,
   ExpressNeedsTransition,
   Generic,
   InNeedsBracket,

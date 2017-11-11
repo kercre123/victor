@@ -17,7 +17,7 @@
 #ifndef TEST_MODE_CONTROLLER_H_
 #define TEST_MODE_CONTROLLER_H_
 
-#include "anki/types.h"
+#include "anki/common/types.h"
 #include "clad/types/robotTestModes.h"
 
 namespace Anki {

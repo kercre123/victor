@@ -1421,6 +1421,7 @@ bool MotionPrimitive::Create(const Json::Value& config, StateTheta startingAngle
 
     pathSegments_.AppendPointTurn(0.0,
                                   0.0,
+                                  startRads.ToFloat(),
                                   env.GetTheta_c(endStateOffset.theta),
                                   rotSpeed,
                                   LATTICE_PLANNER_ROT_ACCEL,

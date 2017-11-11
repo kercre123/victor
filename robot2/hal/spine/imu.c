@@ -126,7 +126,6 @@
 #define TEMP_AND_LEN_BYTES 4  //TEMPERATURE_0..FIFO_LENGTH_1
 #define DATA_BYTES 12         //DATA_0..DATA_11   
 
-
 // IMU CHIP Configuration
 #define ACC_RANGE_2G 0x03          // Full Scale is 2.0G
 #define ACC_RATE_200HZ 0x19        // 200Hz
@@ -137,6 +136,10 @@
 #define SET_PMU_MODE 0x10
 #define ACC_PMU 0x00
 #define GYR_PMU 0x04
+
+#define FIFO_FLUSH (0xB0)
+
+#define DATA_INVALID (0x80)
 
 #define FIFO_FILTER_NO_DOWNSAMPLE 0x88
 #define FIFO_WATERMARK_200_ENTRIES 200
@@ -191,12 +194,12 @@ static uint8_t spi_read(int reg)
   return response[1];
 }
 
-#define READ_BLOCK_SZ (16)
+#define READ_BLOCK_SZ (256) // Arbitrary, how much stack do you want to take up?
 //Performs BURST READ: we issue a 'read' command followed by `n` zeros.
 // response[1..n] contain the valid data.  response[0] is junk.
 static uint8_t spi_read_n(int reg, uint8_t response[], int n_values)
 {
-   assert(n_values < READ_BLOCK_SZ);
+  assert(n_values < READ_BLOCK_SZ);
   uint8_t sequence[READ_BLOCK_SZ + 1] = {0x80 | reg, 0};
 
   return spi_transfer(1 + n_values, sequence, response);
@@ -251,6 +254,10 @@ void imu_init()
 
 }
 
+void imu_purge(void)
+{
+  spi_write(CMD, FIFO_FLUSH);  //FIFO FLUSH
+}
 
 /* Datasheet notes:
    FIFO  Frame rate is maximum of sensors enabled for fifo in reg x46,x47
@@ -281,67 +288,51 @@ int imu_manage(struct IMURawData* data)
   assert(data != NULL);
 
   //buffers must be 1 byte longer than actual response, which will start at index 1
-  uint8_t rawtime[TIME_BYTES+1];
-  uint8_t rawdata[DATA_BYTES+1];
-  uint8_t rawtemplen[TEMP_AND_LEN_BYTES+1];
-  int16_t len;
+  uint8_t rawdata[DATA_BYTES*IMU_MAX_SAMPLES_PER_READ+1];
+  memset(rawdata, DATA_INVALID, sizeof(rawdata)); // Prefill frame with invalid so we don't have to branch on read success
 
-  //reading 4 bytes from TEMP0 (0x20) gives us 2 bytes of TEMP and 2 bytes of len
-  if (spi_read_n(TEMPERATURE_0, rawtemplen, TEMP_AND_LEN_BYTES)) {
-    return -1; //TODO: crash harder
-  }
-  len = rawtemplen[3] + ((rawtemplen[4] & 7) << 8);
-  if (len > 0) {
+  spi_read_n(FIFO_DATA, (uint8_t*)rawdata, DATA_BYTES*IMU_MAX_SAMPLES_PER_READ);
 
-    spi_read_n(SENSORTIME_0, rawtime, TIME_BYTES);
-
-    if (spi_read_n(FIFO_DATA, (uint8_t*)rawdata, DATA_BYTES)) {
-
-      return -2; //TODO: crash harder
+  int i;
+  for (i=0; i < IMU_MAX_SAMPLES_PER_READ; i++) {
+    uint8_t* sample_data = rawdata + 1 + (DATA_BYTES*i);
+    if (sample_data[0] == 0 && sample_data[1] == DATA_INVALID) {
+      // Fifo overread
+      return i;
     }
-
-    // IMU axes:
-    // x: points down
-    // y: points to robot's left
-    // z: points forward
-    //
-    // Desired axes:
-    // x: points forward
-    // y: points to robot's left
-    // z: points up
-    data->gyro[0] =  (rawdata[6] << 8) | rawdata[5];
-    data->gyro[1] =  (rawdata[4] << 8) | rawdata[3];
-    data->gyro[2] = -((rawdata[2] << 8) | rawdata[1]);
-    data->acc[0]  =  (rawdata[12] << 8) | rawdata[11];
-    data->acc[1]  =  (rawdata[10] << 8) | rawdata[9];
-    data->acc[2]  = -((rawdata[8] << 8) | rawdata[7]);
-
-
-    data->timestamp = (rawtime[3] << 16) | (rawtime[2] << 8) | rawtime[1];
-    data->temperature = rawtemplen[1] + (rawtemplen[2] << 8);
-
+    else {
+      data[i].gyro[0] =  ((sample_data[ 5] << 8) | sample_data[ 4]);
+      data[i].gyro[1] =  ((sample_data[ 3] << 8) | sample_data[ 2]);
+      data[i].gyro[2] = -((sample_data[ 1] << 8) | sample_data[ 0]);
+      data[i].acc[0]  =  ((sample_data[11] << 8) | sample_data[10]);
+      data[i].acc[1]  =  ((sample_data[ 9] << 8) | sample_data[ 8]);
+      data[i].acc[2]  = -((sample_data[ 7] << 8) | sample_data[ 6]);
+      
 #if REALTIME_CONSOLE_OUTPUT
-    {
-       static int rate_limiter=0;
-       if (++rate_limiter == 10) {
-       rate_limiter = 0;
+      {
+         static int rate_limiter=0;
+         if (++rate_limiter == 10) {
+         rate_limiter = 0;
 
-       printf("%d %f %f %f %f %f %f %f\r",
-              data->timestamp,
-              data->gyro[0]*IMU_GYRO_SCALE_DPS,
-              data->gyro[1]*IMU_GYRO_SCALE_DPS,
-              data->gyro[2]*IMU_GYRO_SCALE_DPS,
-              data->acc[0]*IMU_ACCEL_SCALE_G,
-              data->acc[1]*IMU_ACCEL_SCALE_G,
-              data->acc[2]*IMU_ACCEL_SCALE_G,
-              IMU_TEMP_RAW_TO_C(data->temperature)
-          );
-       }
+         printf("%d %f %f %f %f %f %f %f\r",
+                data[i].timestamp,
+                data[i].gyro[0]*IMU_GYRO_SCALE_DPS,
+                data[i].gyro[1]*IMU_GYRO_SCALE_DPS,
+                data[i].gyro[2]*IMU_GYRO_SCALE_DPS,
+                data[i].acc[0]*IMU_ACCEL_SCALE_G,
+                data[i].acc[1]*IMU_ACCEL_SCALE_G,
+                data[i].acc[2]*IMU_ACCEL_SCALE_G,
+                IMU_TEMP_RAW_TO_C(data[i].temperature)
+            );
+         }
+      }
+#endif 
     }
-#endif    
-    return 1; //good data
   }
-  return 0;
+  
+  // If we got here then we had more data than we should so flush the IMU FIFO
+  imu_purge();
+  return i;
 }
 
 
@@ -373,11 +364,6 @@ const char* imu_open(void)
     return "IMU: configuration not successful";
   }
   return NULL;
-}
-
-void imu_purge(void)
-{
-  spi_write(CMD, 0xB0);  //FIFO FLUSH
 }
 
 void imu_close(void)

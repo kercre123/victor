@@ -311,9 +311,9 @@ int hal_resync_partial(int start_offset, int len) {
          base++;
        }
        else if (numgood == SPINE_HEADER_LEN) { //whole sync!
-         printf("found! @ %d\n",base);
-          numgood = len-base; //consider rest of buffer valid.
-          break;
+         //printf("found! @ %d\n",base);
+         numgood = len-base; //consider rest of buffer valid.
+         break;
        }
        // else partial match, numgood has been incremented
     }
@@ -436,7 +436,7 @@ void hal_send_frame(PayloadId type, const void* data, int len)
   const uint8_t* hdr = spine_construct_header(type, len);
   crc_t crc = calc_crc(data, len);
   if (hdr) {
-    spine_debug_x("sending %x packet (%d bytes)\n", type, len);
+    spine_debug_x("sending %x packet (%d bytes) CRC=%08x\n", type, len, crc);
     hal_serial_send(hdr, SPINE_HEADER_LEN);
     hal_serial_send(data, len);
     hal_serial_send((uint8_t*)&crc, sizeof(crc));

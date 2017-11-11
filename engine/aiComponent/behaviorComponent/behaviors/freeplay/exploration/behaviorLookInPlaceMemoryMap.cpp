@@ -202,17 +202,6 @@ void BehaviorLookInPlaceMemoryMap::OnBehaviorDeactivated(BehaviorExternalInterfa
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float BehaviorLookInPlaceMemoryMap::EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
-  float baseScore = BaseClass::EvaluateActivatedScoreInternal(behaviorExternalInterface);
-  
-  // if we have visited the priority count, apply the score reduction now
-  if ( _visitedSectorCount >= _configParams.prioritySectorCount ) {
-    baseScore -= _configParams.lowPriorityScoreReduction;
-  }
-  return baseScore;
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {

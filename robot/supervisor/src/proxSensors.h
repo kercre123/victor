@@ -15,7 +15,7 @@
 #ifndef PROX_SENSORS_H_
 #define PROX_SENSORS_H_
 
-#include "anki/types.h"
+#include "anki/common/types.h"
 
 namespace Anki {
   
@@ -36,9 +36,11 @@ namespace Anki {
 
       bool IsAnyCliffDetected();
       
-      void SetCliffDetectThreshold(u16 level);
+      void SetCliffDetectThreshold(u32 ind, u16 level);
       
-      u16 GetRawCliffValue(unsigned int ind = 0);
+      void SetAllCliffDetectThresholds(u16 level);
+      
+      u16 GetRawCliffValue(u32 ind);
 
       u16 GetRawProxValue();
 

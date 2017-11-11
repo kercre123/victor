@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 #define DEFAULT_IMU_SPI_DEVICE "/dev/spidev0.0"
-   
+
 #define IMU_ACC_RANGE 2.0    // g       [2.11.12: acc_range 2 => +- 2g ]
 #define IMU_GYRO_RANGE 500.0 // deg/sec [2.11.14: gyr_range 2 => +- 500s]
 #define IMU_TEMP_RANGE 64.0 // degC     [2.11.8: 1/pow(2,9) K/LSB.  0x8000/(1<<9)=64]
@@ -23,14 +23,16 @@ extern "C" {
 
 #define RADIANS_PER_DEGREE ((M_PI*2.0)/360.0)
 #define MMPS2_PER_GEE    (9810/1.0)
-   
+
 #define IMU_ACCEL_SCALE_G ((double)(IMU_ACC_RANGE)/MAX_16BIT_POSITIVE)
 #define IMU_GYRO_SCALE_DPS ((double)(IMU_GYRO_RANGE)/MAX_16BIT_POSITIVE)
-   
+
 #define IMU_TEMP_SCALE_C ((double)(IMU_TEMP_RANGE)/(MAX_16BIT_POSITIVE+1))
 
 #define IMU_TEMP_RAW_TO_C(raw)  ((raw)*(IMU_TEMP_SCALE_C)+IMU_TEMP_OFFSET)
-   
+
+#define IMU_MAX_SAMPLES_PER_READ 3
+
 struct __attribute__((packed)) IMURawData {
    int16_t gyro[3];
    int16_t acc[3];

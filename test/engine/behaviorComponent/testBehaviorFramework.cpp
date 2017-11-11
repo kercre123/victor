@@ -195,10 +195,11 @@ void IncrementBaseStationTimerTicks(int numTicks)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void InjectValidDelegateIntoBSM(BehaviorSystemManager& bsm,
+void InjectValidDelegateIntoBSM(TestBehaviorFramework& testFramework,
                                 IBehavior* delegator,
                                 IBehavior* delegated,
                                 bool shouldMarkAsEnterdScope){
+  auto& bsm = testFramework.GetBehaviorSystemManager();
   auto iter = bsm._behaviorStack->_delegatesMap.find(delegator);
   if(iter == bsm._behaviorStack->_delegatesMap.end()){
     // Stack must be empty - inject anyways
@@ -211,17 +212,19 @@ void InjectValidDelegateIntoBSM(BehaviorSystemManager& bsm,
   
   if(shouldMarkAsEnterdScope){
     delegated->OnEnteredActivatableScope();
+    delegated->WantsToBeActivated(testFramework.GetBehaviorExternalInterface());
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void InjectAndDelegate(BehaviorSystemManager& bsm,
+void InjectAndDelegate(TestBehaviorFramework& testFramework,
                        IBehavior* delegator,
                        IBehavior* delegated){
-  InjectValidDelegateIntoBSM(bsm,
+  InjectValidDelegateIntoBSM(testFramework,
                              delegator,
                              delegated);
+  auto& bsm = testFramework.GetBehaviorSystemManager();
   EXPECT_TRUE(bsm.Delegate(delegator, delegated));
 }
 
@@ -341,18 +344,6 @@ void TestBehavior::Foo() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehavior::Bar(BehaviorExternalInterface& behaviorExternalInterface) {
   _calledRobotFunc++;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float TestBehavior::EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const  {
-  return kRunningScore;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float TestBehavior::EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const {
-  return kNotRunningScore;
 }
 
 

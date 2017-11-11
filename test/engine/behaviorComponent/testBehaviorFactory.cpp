@@ -107,22 +107,6 @@ void VerifyBehavior(const ICozmoBehaviorPtr inBehavior, const BehaviorContainer&
 {
   EXPECT_EQ(inBehavior->GetID(), expectedID);
   
-  ASSERT_EQ(inBehavior->GetEmotionScorerCount(), 2);
-  EXPECT_EQ(inBehavior->GetEmotionScorer(0).GetEmotionType(),  EmotionType::Calm);
-  EXPECT_EQ(inBehavior->GetEmotionScorer(0).TrackDeltaScore(), true);
-  EXPECT_EQ(inBehavior->GetEmotionScorer(1).GetEmotionType(),  EmotionType::Excited);
-  EXPECT_EQ(inBehavior->GetEmotionScorer(1).TrackDeltaScore(), false);
-  
-  EXPECT_EQ(inBehavior->GetRepetitionPenalty().GetNumNodes(), 2);
-  EXPECT_FLOAT_EQ(inBehavior->GetRepetitionPenalty().EvaluateY(0.0f), 0.0f);
-  EXPECT_FLOAT_EQ(inBehavior->GetRepetitionPenalty().EvaluateY(4.5f), 0.5f);
-
-  EXPECT_EQ(inBehavior->GetActivatedPenalty().GetNumNodes(), 3);
-  EXPECT_FLOAT_EQ(inBehavior->GetActivatedPenalty().EvaluateY(0.0f), 1.0f);
-  EXPECT_FLOAT_EQ(inBehavior->GetActivatedPenalty().EvaluateY(5.0f), 1.0f);
-  EXPECT_FLOAT_EQ(inBehavior->GetActivatedPenalty().EvaluateY(35.0f), 0.75f);
-  EXPECT_FLOAT_EQ(inBehavior->GetActivatedPenalty().EvaluateY(200.0f), 0.5f);
-  
   EXPECT_EQ(behaviorContainer.FindBehaviorByID(expectedID), inBehavior);
   EXPECT_EQ(behaviorContainer.GetBehaviorMap().size(), expectedBehaviorCount);
 }
@@ -152,7 +136,7 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
   
-  ICozmoBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
+  ICozmoBehaviorPtr newBehavior = behaviorContainer.CreateBehaviorFromConfig(testBehaviorJson);
   newBehavior->Init(behaviorExternalInterface);
   ASSERT_NE(newBehavior, nullptr);
   

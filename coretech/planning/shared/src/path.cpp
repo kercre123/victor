@@ -72,7 +72,7 @@ namespace Anki
       SetSpeedProfile(targetSpeed, accel, decel);
     }
     
-    void PathSegment::DefinePointTurn(f32 x, f32 y, f32 targetAngle,
+    void PathSegment::DefinePointTurn(f32 x, f32 y, f32 startAngle, f32 targetAngle,
                                       f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
                                       f32 angleTolerance,
                                       bool useShortestDir)
@@ -80,6 +80,7 @@ namespace Anki
       type_ = PST_POINT_TURN;
       def_.turn.x = x;
       def_.turn.y = y;
+      def_.turn.startAngle = startAngle;
       def_.turn.targetAngle = targetAngle;
       def_.turn.angleTolerance = angleTolerance;
       def_.turn.useShortestDir = useShortestDir;
@@ -131,6 +132,25 @@ namespace Anki
       default:
         CoreTechPrint("ERROR (OffsetStart): Undefined segment %d\n", type_);
         assert(false);
+      }
+    }
+
+    f32 PathSegment::GetStartAngle() const
+    {
+      switch(type_){
+        case PST_LINE:
+          return def_.line.endAngle;    // for straight lines, startAngle == endAngle
+          break;
+        case PST_ARC:
+          return def_.arc.endAngle - def_.arc.sweepRad;
+          break;
+        case PST_POINT_TURN:
+          return def_.turn.startAngle;
+          break;
+        default:
+          CoreTechPrint("ERROR (GetStartAngle): Undefined segment %d\n", type_);
+          assert(false);
+          return 0;
       }
     }
 
@@ -1110,7 +1130,7 @@ namespace Anki
     }
     
     
-    bool Path::AppendPointTurn(f32 x, f32 y, f32 targetAngle,
+    bool Path::AppendPointTurn(f32 x, f32 y, f32 startAngle, f32 targetAngle,
                                f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
                                f32 angleTolerance,
                                bool useShortestDir)
@@ -1122,7 +1142,7 @@ namespace Anki
         return false;
       }
       
-      path_[numPathSegments_].DefinePointTurn(x,y,targetAngle,
+      path_[numPathSegments_].DefinePointTurn(x,y,startAngle, targetAngle,
                                               targetRotSpeed, rotAccel, rotDecel,
                                               angleTolerance,
                                               useShortestDir);

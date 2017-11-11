@@ -21,9 +21,6 @@
 namespace webots {
   class Supervisor;
 }
-class NativeCamera;
-class ImageReader;
-
 
 namespace Anki
 {
@@ -91,10 +88,6 @@ namespace Anki
       
       // Time
       std::chrono::steady_clock::time_point _timeOffset;
-      
-      // Camera
-      NativeCamera*   _androidCamera;
-      ImageReader*    _reader;
 #endif
       
       // Camera

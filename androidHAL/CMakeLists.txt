@@ -50,8 +50,6 @@ if (ANDROID)
         android
         log
         GLESv2
-        mediandk
-        camera2ndk
         proto_camera)
 elseif (MACOSX)
     include(webots)

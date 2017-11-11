@@ -23,7 +23,6 @@
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 #include "engine/components/cubeLightComponent.h"
-#include "engine/moodSystem/moodScorer.h"
 #include "engine/robotInterface/messageHandler.h"
 #include <set>
 
@@ -61,7 +60,8 @@ class DriveToObjectAction;
 class BehaviorHelperFactory;
 class IHelper;
 enum class ObjectInteractionIntention;
-  
+enum class CloudIntent : uint8_t;
+
 class ISubtaskListener;
 class IReactToFaceListener;
 class IReactToObjectListener;
@@ -97,6 +97,7 @@ public:
   using Status = BehaviorStatus;
   
   static Json::Value CreateDefaultBehaviorConfig(BehaviorClass behaviorClass, BehaviorID behaviorID);
+  static void InjectBehaviorClassAndIDIntoConfig(BehaviorClass behaviorClass, BehaviorID behaviorID, Json::Value& config);  
   static BehaviorID ExtractBehaviorIDFromConfig(const Json::Value& config, const std::string& fileName = "");
   static BehaviorClass ExtractBehaviorClassFromConfig(const Json::Value& config);
 
@@ -370,7 +371,18 @@ protected:
                            IBehavior* delegate,
                            void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface));
 
-  
+  // Behaviors can easily create delegates using "anonymous" behaviors in their config file (see _anonymousBehaviorMap
+  // comments below).  This function enables access to those anonymous behaviors.
+  ICozmoBehaviorPtr FindAnonymousBehaviorByName(const std::string& behaviorName) const;
+
+  // Sometimes it's necessary to downcast to a behavior to a specific behavior pointer, e.g. so an Activity
+  // can access it's member functions. This function will help with that and provide a few assert checks along
+  // the way. It sets outPtr in arguemnts, and returns true if the cast is successful
+  template<typename T>
+  bool FindAnonymousBehaviorByNameAndDowncast(const std::string& behaviorName,
+                                                BehaviorClass requiredClass,
+                                                std::shared_ptr<T>& outPtr ) const;
+
   // This function cancels the action started by DelegateIfInControl (if there is one). Returns true if an action was
   // canceled, false otherwise. Note that if you are activated, this will trigger a callback for the
   // cancellation unless you set allowCallback to false. If the action was created by a helper, the helper
@@ -484,7 +496,7 @@ private:
 
   // only used if we aren't using the BSM
   u32 _lastActionTag = 0;
-  IStateConceptStrategyPtr _stateConceptStrategy;
+  std::vector<IStateConceptStrategyPtr> _stateConceptStrategies;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const;
@@ -492,6 +504,9 @@ private:
   bool ReadFromJson(const Json::Value& config);
   
   void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
+
+  // hide behaviorTypes.h file in .cpp
+  std::string GetClassString(BehaviorClass behaviorClass) const;
   
   // ==================== Member Vars ====================
   
@@ -504,7 +519,14 @@ private:
   BehaviorClass _behaviorClassID;
   NeedsActionId _needsActionID;
   ExecutableBehaviorType _executableType;
+  int _timesResumedFromPossibleInfiniteLoop = 0;
+  float _timeCanRunAfterPossibleInfiniteLoopCooldown_sec = 0.f;
   
+  // when respond to cloud intent is set the behavior will
+  // 1) WantToBeActivated when that intent is pending
+  // 2) Clear the intent when the behavior is activated
+  CloudIntent _respondToCloudIntent;
+
   // if an unlockId is set, the behavior won't be activatable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;
 
@@ -571,93 +593,14 @@ private:
 
   // Tracking wants to run configs for initialization
   Json::Value _wantsToRunConfig;
-  
-////////
-//// Scored Behavior functions
-///////
-  
-public:
-  // Allow us to load scored JSON in seperately from the rest of parameters
-  bool ReadFromScoredJson(const Json::Value& config, const bool fromScoredChooser = true);
-  
-  // Stops the behavior immediately but gives it a couple of tick window during which score
-  // evaluation will not include its activated penalty.  This allows behaviors to
-  // stop themselves in hopes of being re-selected with new fast-forwarding and
-  // block settings without knocking its score down so something else is selected
-  void StopWithoutImmediateRepetitionPenalty(BehaviorExternalInterface& behaviorExternalInterface);
-  
-  
-  float EvaluateScore(BehaviorExternalInterface& behaviorExternalInterface) const;
-  const MoodScorer& GetMoodScorer() const { return _moodScorer; }
-  void ClearEmotionScorers()                         { _moodScorer.ClearEmotionScorers(); }
-  void AddEmotionScorer(const EmotionScorer& scorer) { _moodScorer.AddEmotionScorer(scorer); }
-  size_t GetEmotionScorerCount() const { return _moodScorer.GetEmotionScorerCount(); }
-  const EmotionScorer& GetEmotionScorer(size_t index) const { return _moodScorer.GetEmotionScorer(index); }
-  
-  float EvaluateRepetitionPenalty() const;
-  const Util::GraphEvaluator2d& GetRepetitionPenalty() const { return _repetitionPenalty; }
-  
-  float EvaluateActivatedPenalty() const;
-  const Util::GraphEvaluator2d& GetActivatedPenalty() const { return _activatedPenalty; }
 
-protected:
-  
-  virtual void ScoredActingStateChanged(bool isActing);
-  
-  // EvaluateScoreInternal is used to score each behavior for behavior selection - it uses mood scorer or
-  // flat score depending on configuration. If the behavior is activated, it
-  // uses the activated score to decide if it should stay active
-  virtual float EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const;
-  virtual float EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const;
-  
-  // Additional DelegateIfInControl definitions relating to score
-  
-  // Called after DelegateIfInControl, will add extraScore to the result of EvaluateActivatedScoreInternal. This makes
-  // it easy to encourage the system to keep a behavior activated while control is delegated. NOTE: multiple calls to
-  // this function (for the same action) will be cumulative. The bonus will be reset as soon as the action is
-  // complete, or the behavior is no longer active
-  void IncreaseScoreWhileControlDelegated(float extraScore);
-  
-  // Convenience wrappers that combine IncreaseScoreWhileControlDelegated with DelegateIfInControl,
-  // including any of the callback types above
-  virtual bool DelegateIfInControlExtraScore(IActionRunner* action, float extraScoreWhileControlDelegated) final;
-  
-  template<typename CallbackType>
-  bool DelegateIfInControlExtraScore(IActionRunner* action, float extraScoreWhileControlDelegated, CallbackType callback);
-  
-  bool WantsToBeActivatedScored() const;
-  
-private:
-  void ScoredInit(BehaviorExternalInterface& behaviorExternalInterface);
-  void ActivatedScored();
-  
-  void HandleBehaviorObjective(const ExternalInterface::BehaviorObjectiveAchieved& msg);
-  
-  // ==================== Member Vars ====================
-  MoodScorer              _moodScorer;
-  Util::GraphEvaluator2d  _repetitionPenalty;
-  Util::GraphEvaluator2d  _activatedPenalty;
-  float                   _flatScore = 0;
-  float                   _extraActivatedScore = 0;
-  #if ANKI_DEV_CHEATS
-    // Used to verify that all scoring configs loaded in are equal
-    Json::Value             _scoringValuesCached;
-  #endif
-  // used to allow short times during which repetitionPenalties don't apply
-  float                   _nextTimeRepetitionPenaltyApplies_s = 0;
-  
-  // if this behavior objective gets sent (by any behavior), then consider this behavior to have been activated
-  // (for purposes of repetition penalty, aka cooldown)
-  BehaviorObjective _cooldownOnObjective = BehaviorObjective::Count;
-  
-  
-  bool _enableRepetitionPenalty = true;
-  bool _enableActivatedPenalty = true;
-  
-  // Keep track of the number of times resumed from
-  int _timesResumedFromPossibleInfiniteLoop = 0;
-  float _timeCanRunAfterPossibleInfiniteLoopCooldown_sec = 0;
-  
+  // Behaviors can load in internal "anonymous" behaviors which are not stored
+  // in the behavior container and are referenced by string instead of by ID
+  // This map provides built in "anonymous" functionality, but behaviors
+  // can also load anonymous behaviors directly into variables using the
+  // anonymous behavior factory
+  Json::Value _anonymousBehaviorMapConfig;  
+  std::map<std::string,ICozmoBehaviorPtr> _anonymousBehaviorMap;
 }; // class ICozmoBehavior
 
   
@@ -714,19 +657,35 @@ bool ICozmoBehavior::DelegateIfInControl(BehaviorExternalInterface& behaviorExte
                              std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
 }
 
-////////
-//// Scored Behavior functions
-///////
+template<typename T>
+bool ICozmoBehavior::FindAnonymousBehaviorByNameAndDowncast(const std::string& behaviorName,
+                                                              BehaviorClass requiredClass,
+                                                              std::shared_ptr<T>& outPtr) const
+{
+  ICozmoBehaviorPtr behavior = FindAnonymousBehaviorByName(behaviorName);
+  if( ANKI_VERIFY(behavior != nullptr,
+                  "ICozmoBehavior.FindAnonymousBehaviorByNameAndDowncast.NoBehavior",
+                  "BehaviorName: %s requiredClass: %s",
+                  behaviorName.c_str(),
+                  GetClassString(requiredClass).c_str()) &&
+     
+     ANKI_VERIFY(behavior->GetClass() == requiredClass,
+                 "ICozmoBehavior.FindAnonymousBehaviorByNameAndDowncast.WrongClass",
+                 "BehaviorName: %s requiredClass: %s",
+                 behaviorName.c_str(),
+                 GetClassString(requiredClass).c_str()) ) {
+       
+       outPtr = std::static_pointer_cast<T>(behavior);
+       
+       if( ANKI_VERIFY(outPtr != nullptr, "ICozmoBehavior.FindAnonymousBehaviorByNameAndDowncast.CastFailed",
+                       "BehaviorName: %s requiredClass: %s",
+                       behaviorName.c_str(),
+                       GetClassString(requiredClass).c_str()) ) {
+         return true;
+       }
+     }
   
-inline bool ICozmoBehavior::DelegateIfInControlExtraScore(IActionRunner* action, float extraScoreWhileControlDelegated) {
-  IncreaseScoreWhileControlDelegated(extraScoreWhileControlDelegated);
-  return DelegateIfInControl(action);
-}
-
-template<typename CallbackType>
-inline bool ICozmoBehavior::DelegateIfInControlExtraScore(IActionRunner* action, float extraScoreWhileControlDelegated, CallbackType callback) {
-  IncreaseScoreWhileControlDelegated(extraScoreWhileControlDelegated);
-  return DelegateIfInControl(action, callback);
+  return false;
 }
 
 } // namespace Cozmo

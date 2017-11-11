@@ -60,8 +60,7 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded(BehaviorExternalInterface& beh
     const Robot& robot = behaviorExternalInterface.GetRobot();
     // Check if cliff detected
     // If not, then calibrate head because we're not likely to be on back if no cliff detected.
-    const auto cliffDataRaw = robot.GetCliffSensorComponent().GetCliffDataRaw();
-    if (cliffDataRaw < CLIFF_SENSOR_DROP_LEVEL) {
+    if (robot.GetCliffSensorComponent().IsCliffDetected()) {
       AnimationTrigger anim = AnimationTrigger::FlipDownFromBack;
       
       if(behaviorExternalInterface.GetAIComponent().GetWhiteboard().HasHiccups())
@@ -78,7 +77,8 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded(BehaviorExternalInterface& beh
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
-      LOG_EVENT("BehaviorReactToRobotOnBack.FlipDownIfNeeded.CalibratingHead", "%d", cliffDataRaw);
+      const auto cliffs = robot.GetCliffSensorComponent().GetCliffDataRaw();
+      LOG_EVENT("BehaviorReactToRobotOnBack.FlipDownIfNeeded.CalibratingHead", "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
       DelegateIfInControl(new CalibrateMotorAction(robot, true, false),
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     }

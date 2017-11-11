@@ -15,7 +15,7 @@
 #ifndef COZMO_BLOCK_LIGHT_CONTROLLER_H_
 #define COZMO_BLOCK_LIGHT_CONTROLLER_H_
 
-#include "anki/types.h"
+#include "anki/common/types.h"
 #include "clad/types/ledTypes.h"
 
 namespace Anki {

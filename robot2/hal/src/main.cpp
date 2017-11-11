@@ -12,8 +12,24 @@
 #endif
 
 
+int shutdownSignal = 0;
+int shutdownCounter = 2;
+
+void Cleanup(int signum)
+{
+  Anki::Cozmo::Robot::Destroy();
+
+  // Need to HAL::Step() in order for light commands to go down to robot
+  // so set shutdownSignal here to signal process shutdown after 
+  // shutdownCounter more tics of main loop.
+  shutdownSignal = signum;
+}
+
+
 int main(int argc, const char* argv[])
 {
+  signal(SIGTERM, Cleanup);
+
   AnkiEvent("robot.main", "Starting robot process");
 
   //Robot::Init calls HAL::INIT before anything else.
@@ -40,6 +56,12 @@ int main(int argc, const char* argv[])
 #endif
     //printf("TS: %d\n", Anki::Cozmo::HAL::GetTimeStamp() );
     start = end;
+
+
+    if (shutdownSignal != 0 && --shutdownCounter == 0) {
+      AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
+      exit(shutdownSignal);
+    }
   }
   return 0;
 }

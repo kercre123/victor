@@ -38,12 +38,12 @@ namespace Anki {
     // TEMP: Applied by default to robot bounding box params below mostly for demo purposes
     //       so we don't prematurely delete blocks, but we may eventually want to apply it
     //       conditionally (e.g. when carrying a block)
-    const f32 ROBOT_BOUNDING_X_LIFT  = 10.f;
+    const f32 ROBOT_BOUNDING_X_LIFT  = 19.7f;
     
-    const f32 ROBOT_BOUNDING_X       = 88.f - ROBOT_BOUNDING_X_LIFT; // including gripper fingers
-    const f32 ROBOT_BOUNDING_Y       = 54.2f;
-    const f32 ROBOT_BOUNDING_X_FRONT = 32.1f - ROBOT_BOUNDING_X_LIFT; // distance from robot origin to front of bounding box
-    const f32 ROBOT_BOUNDING_Z       = 67.7f; // from ground to top of head
+    const f32 ROBOT_BOUNDING_X       = 100.7f - ROBOT_BOUNDING_X_LIFT; // including gripper fingers
+    const f32 ROBOT_BOUNDING_Y       = 60.0f;
+    const f32 ROBOT_BOUNDING_X_FRONT = 34.2f - ROBOT_BOUNDING_X_LIFT; // distance from robot origin to front of bounding box
+    const f32 ROBOT_BOUNDING_Z       = 69.3f; // from ground to top of head
 
     // Apply a conservative negative padding when checking for collisions with known objects to
     // see if their pose should be marked as "dirty".

@@ -19,6 +19,7 @@
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -26,15 +27,20 @@
 struct SpeexResamplerState_;
 typedef struct SpeexResamplerState_ SpeexResamplerState;
 
+class UdpServer;
+
 namespace Anki {
 namespace Cozmo {
+
+class SpeechRecognizerTHF;
+
 namespace MicData {
   
 class MicDataInfo;
 
 class MicDataProcessor {
 public:
-  MicDataProcessor(const std::string& writeLocation);
+  MicDataProcessor(const std::string& writeLocation, const std::string& triggerWordDataDir);
   ~MicDataProcessor();
   MicDataProcessor(const MicDataProcessor& other) = delete;
   MicDataProcessor& operator=(const MicDataProcessor& other) = delete;
@@ -46,27 +52,36 @@ public:
 private:
   std::string _writeLocationDir = "";
 
+  // Members for the the mic processing/recording/streaming jobs
   std::deque<std::shared_ptr<MicDataInfo>> _micProcessingJobs;
-  std::mutex _dataRecordJobMutex;
+  std::shared_ptr<MicDataInfo> _currentStreamingJob;
+  std::recursive_mutex _dataRecordJobMutex;
+  bool _currentlyStreaming = false;
 
   std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> _inProcessAudioBlock;
   bool _inProcessAudioBlockFirstHalf = true;
-
   SpeexResamplerState* _speexState = nullptr;
+  std::unique_ptr<SpeechRecognizerTHF> _recognizer;
+  std::unique_ptr<UdpServer> _udpServer;
 
+  // Members for managing the incoming raw audio jobs
   AudioUtil::AudioChunkList _rawAudioToProcess;
-
   std::thread _processThread;
   std::mutex _resampleMutex;
   bool _processThreadStop = false;
   
+  // Members for managing the results of async FFT processing
   std::deque<std::vector<uint32_t>> _fftResultList;
   std::mutex _fftResultMutex;
+
+  // Internal buffer used to add to the streaming audio once a trigger is detected
+  AudioUtil::AudioChunkList _triggerOverlapBuffer;
 
   AudioUtil::AudioChunk ProcessResampledAudio(const AudioUtil::AudioChunk& audioChunk);
   AudioUtil::AudioChunk ResampleAudioChunk(const AudioUtil::AudioChunk& audioChunk);
 
   void ProcessLoop();
+  void ClearCurrentStreamingJob();
 };
 
 } // namespace MicData

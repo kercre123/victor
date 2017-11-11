@@ -12,7 +12,7 @@
  *
  **/
 
-#include "anki/types.h"
+#include "anki/common/types.h"
 #include "clad/types/ledTypes.h"
 
 namespace Anki {
@@ -41,6 +41,9 @@ namespace Anki {
       // Set the parameters of an LED for a specified layer.
       // EnableLayer() must be called to actually apply changes if this is for the non-active layer.
       void SetParams(const RobotInterface::SetBackpackLights& params);
+
+      // Set all lights on all layers to off
+      void TurnOffAll();
       
     } // namespace BackpackLightController
   } // namespace Anki

@@ -59,19 +59,16 @@ bool PopIMU(HAL::IMU_DataStructure& data)
 
 void ProcessIMUEvents()
 {
-  static int64_t lastAccTime, lastGyroTime;
-
-  IMURawData rawData;
+  IMURawData rawData[IMU_MAX_SAMPLES_PER_READ];
   HAL::IMU_DataStructure imuData;
-  while ( imu_manage(&rawData) > 0 ) {
-    imuData.acc_x = rawData.acc[0] * IMU_ACCEL_SCALE_G * MMPS2_PER_GEE;
-    imuData.acc_y = rawData.acc[1] * IMU_ACCEL_SCALE_G * MMPS2_PER_GEE;
-    imuData.acc_z = rawData.acc[2] * IMU_ACCEL_SCALE_G * MMPS2_PER_GEE;
-    imuData.rate_x = rawData.gyro[0] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
-    imuData.rate_y = rawData.gyro[1] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
-    imuData.rate_z = rawData.gyro[2] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
-    imuData.temperature_degC = IMU_TEMP_RAW_TO_C(rawData.temperature);
-    lastAccTime = lastGyroTime = rawData.timestamp * NS_PER_IMU_TICK;
+  const int imu_read_samples = imu_manage(rawData);
+  for (int i=0; i < imu_read_samples; i++) {
+    imuData.acc_x = rawData[i].acc[0] * IMU_ACCEL_SCALE_G * MMPS2_PER_GEE;
+    imuData.acc_y = rawData[i].acc[1] * IMU_ACCEL_SCALE_G * MMPS2_PER_GEE;
+    imuData.acc_z = rawData[i].acc[2] * IMU_ACCEL_SCALE_G * MMPS2_PER_GEE;
+    imuData.rate_x = rawData[i].gyro[0] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
+    imuData.rate_y = rawData[i].gyro[1] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
+    imuData.rate_z = rawData[i].gyro[2] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
     PushIMU(imuData);
     
     static ImageImuData imageImuData;
