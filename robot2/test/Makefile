@@ -69,6 +69,10 @@ stupid:
 	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon -I../core/inc ../hal/spine/spine_hal.c ../hal/spine/spine_crc.c ../core/src/clock.c stupid_hal.c -O2
 	adb push ./a.out /data/local/tmp
 
+experiment:
+	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon -I../core/inc main.c -O2
+	adb push ./a.out /data/local/tmp
+
 spinal_tap:
 	$(CC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon  ../hal/spine/spine_hal.c ../hal/spine/spine_crc.c spinal_tap.c -o spinal_tap
 

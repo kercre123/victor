@@ -5,8 +5,9 @@
 //#include "../spine/spine_protocol.h"
 #include "schema/messages.h"
 #include "../spine/spine_hal.h"
+#include "core/clock.h"
 
-#define RATEMASK (1-1) //(64-1)
+#define RATEMASK (16-1) //(64-1)
 
 #include <spine_crc.h>
 
@@ -38,8 +39,7 @@ void handle_incoming_frame(struct BodyToHead* data)
    lastfc = data->framecounter;
    static uint8_t printcount=0;
    if (( ++printcount & RATEMASK ) == 0) {
-      printf("%ju %jd  %d: %d %d %d %d \r",
-             now,
+      printf("%jd  %d: %d %d %d %d \r",
              now-start,
              data->framecounter,
              data->cliffSense[0],
@@ -65,7 +65,6 @@ int selector(int fd) {
 
   if (select(fd+1, &fds, NULL, NULL, NULL))
   {
-    do {
       uint8_t test_buffer[SPINE_MAX_BYTES];
       result = read(fd, test_buffer, SPINE_MAX_BYTES);
       if (result < 0) {
@@ -73,11 +72,9 @@ int selector(int fd) {
           result = 0; //not an error
         }
       }
-//      printf("\t\t%d\n", result);
       if (result>0) {
         spine_receive_bytes(test_buffer, result);
       }
-    } while (result > 0);
     return result;
   }
   return 0;
@@ -88,7 +85,7 @@ void robot_io(void) {
 
    int spinefd = spine_fd();
    selector(spinefd);
-   microwait(1);
+   microwait(1000);
 }
 
 
