@@ -71,7 +71,7 @@ static struct circular_buffer_t {
   uint8_t buffer[CB_CAPACITY];
   idx_t head;
   idx_t tail;
-} gRx = {0};
+} gRx = {{0}};
 
 static inline idx_t circular_buffer_count() {
   return ((gRx.head-gRx.tail) & CB_SIZE_MASK);

@@ -13,6 +13,8 @@
 // Our Includes
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/robot_io.h"
+
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "../spine/spine_hal.h"
@@ -110,11 +112,15 @@ Result HAL::Init()
     }
     AnkiDebug("HAL.Init.SettingRunMode", "");
 
+    Anki::Cozmo::RobotIO::Init();
+
     hal_set_mode(RobotMode_RUN);
 
     AnkiDebug("HAL.Init.WaitingForDataFrame", "");
     Result result;
     do {
+      Anki::Cozmo::RobotIO::Step();
+
       result = GetSpineDataFrame();
       //spin on good frame
       if (result == RESULT_FAIL_IO_TIMEOUT) {

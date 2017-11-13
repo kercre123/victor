@@ -6,6 +6,8 @@
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 
+#include "anki/cozmo/robot/robot_io.h"
+
 // For development purposes, while HW is scarce, it's useful to be able to run on phones
 #ifdef USING_ANDROID_PHONE
 #define HAL_NOT_PROVIDING_CLOCK 1
@@ -41,7 +43,7 @@ int main(int argc, const char* argv[])
 
   for (;;) {
     //HAL::Step should never return !OK, but if it does, best not to trust its data.
-    RobotIO::Process(); //send pending, rcv new data
+    Anki::Cozmo::RobotIO::Step(); //send pending, rcv new data
     if (Anki::Cozmo::HAL::Step() == Anki::RESULT_OK) {
       if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK) {
         AnkiError("robot.main", "MainExecution failed");
@@ -55,7 +57,7 @@ int main(int argc, const char* argv[])
     start = end;
     std::chrono::duration<double, std::micro> sleepTime = std::chrono::milliseconds(5) - elapsed;
 #else
-    std::chrono::duration<double, std::micro> sleepTime = std::chrono::milliseconds(1)
+    std::chrono::duration<double, std::micro> sleepTime = std::chrono::milliseconds(1);
 #endif
     if (shutdownSignal != 0 && --shutdownCounter == 0) {
       AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);

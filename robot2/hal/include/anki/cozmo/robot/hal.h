@@ -44,7 +44,7 @@ namespace HAL {
 /************************************************************************
  * \section Parameters and Constants
  */
-  
+
 /// Number of time stamp ticks per second
 static const int TICKS_PER_SECOND = 200;
 /// Scale value for maximum motor power in HAL
@@ -94,14 +94,14 @@ struct IMU_DataStructure
     rate_x = rate_y = rate_z = 0.0f;
     temperature_degC = 0.f;
   }
-  
+
   f32 acc_x;  ///< mm/s/s
   f32 acc_y;  ///< mm/s/s
   f32 acc_z;  ///< mm/s/s
   f32 rate_x; ///< rad/s
   f32 rate_y; ///< rad/s
   f32 rate_z; ///< rad/s
-  
+
   f32 temperature_degC;
 };
 
@@ -178,7 +178,7 @@ u16 GetCliffOffLevel(const CliffID cliff_id);
 
 /** Decompresses microphone data from this tick into buffer.
  * @param[out] A buffer with space for AUDIO_DATA_PER_TICK to receive audio data.
- */ 
+ */
 void GetMicrophoneData(u8* buffer);
 
 /************************************************************************
@@ -186,7 +186,7 @@ void GetMicrophoneData(u8* buffer);
  */
 
 /// Button IDs
-typedef enum 
+typedef enum
 {
   BUTTON_CAPACITIVE = 0,
   BUTTON_POWER = 1,
@@ -284,7 +284,7 @@ u8* GetObjectAccelData(u32* activeID);
  */
 
 /// Run levels for the hardware
-typedef enum 
+typedef enum
 {
   POWER_STATE_OFF               = 0x00,
   POWER_STATE_OFF_WAKE_ON_RADIO = 0x01,
@@ -349,7 +349,7 @@ u32 GetID();
 /// Force a hard fault in the processor, used for hardware assert
 void FORCE_HARDFAULT();
 #define HAL_ASSERT(c) do { if(!(c)) FORCE_HARDFAULT(); } while(0)
-  
+
 } // namespace HAL
 } // namespace Cozmo
 } // namespace Anki

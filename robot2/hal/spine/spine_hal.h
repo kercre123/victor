@@ -47,6 +47,11 @@ enum RobotMode { //todo: mode is a dummy value. If ever needed, this should be i
 
 void hal_set_mode(int new_mode);
 
+int spine_fd(void); //returns fd for spine  serial port. Call only _after_ `hal_init`
+
+void spine_receive_bytes(const uint8_t *buffer, int len);
+
+
 #ifdef __cplusplus
 }
 #endif
