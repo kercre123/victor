@@ -15,7 +15,6 @@
 
 
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
-#include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/externalInterface/externalInterface_fwd.h"
 #include "json/json-forwards.h"
 #include "util/helpers/templateHelpers.h"

@@ -7,9 +7,8 @@
 
 #include "core/common.h"
 #include "core/lcd.h"
-#include "display.h"
+#include "helpware/display.h"
 
-#define LINEBUFSZ 255
 
 
 
@@ -25,21 +24,19 @@ static inline int min(int a, int b){  return a<b?a:b;}
 
 
 void helper_text_small(int line, const char *text, int len) {
-  display_draw_text(LAYER_SMALL, line-1, HELPER_SMALL_TEXT_COLOR_FG, HELPER_SMALL_TEXT_COLOR_BG,  text, len, 0);
+  display_draw_text(DISPLAY_LAYER_SMALL, line-1, HELPER_SMALL_TEXT_COLOR_FG, HELPER_SMALL_TEXT_COLOR_BG,  text, len, 0);
 }
 
-void helper_text_large(uint16_t fg, uint16_t bg, const char *text, int len, bool solo) {
-  if (solo || len==0) {
-    display_clear_layer(LAYER_LARGE, fg, bg);
-  }
-  display_draw_text(LAYER_LARGE, 1, fg, bg, text, len, 1);
+void helper_text_large(uint16_t fg, uint16_t bg, const char *text, int len) {
+  display_clear_layer(DISPLAY_LAYER_LARGE, fg, bg);
+  display_draw_text(DISPLAY_LAYER_LARGE, 1, fg, bg, text, len, 1);
 }
 
 void helper_text_show(int largeSolo)
 {
   uint8_t rendermask = 0xFF;
   if (largeSolo) {
-    rendermask = 1<<LAYER_LARGE;
+    rendermask = 1<<DISPLAY_LAYER_LARGE;
   }
   display_render(rendermask);
 }
@@ -62,7 +59,9 @@ int helper_lcdset_command_parse(const char* command, int linelen)
   while (cp<endp && !isspace(*cp)){ cp++;}
   if (cp<endp && isspace(*cp)) { cp++;}
 
-  if (line > SMALL_LINE_COUNT) {line = 1;}
+  if (line > SMALL_LINE_COUNT) {
+    return -1;
+  }
   if (line == 0) {
     for (line=0;line<SMALL_LINE_COUNT;line++)
       helper_text_small(line, " ", 1);
@@ -73,7 +72,7 @@ int helper_lcdset_command_parse(const char* command, int linelen)
   helper_text_show(0);
   return 0;
 }
-/// >>>lcdshow solo color all the text
+/// >>lcdshow solo color all the text
 int helper_lcdshow_command_parse(const char* command, int linelen)
 {
   const char* cp = command;
@@ -111,7 +110,10 @@ int helper_lcdshow_command_parse(const char* command, int linelen)
   //eat one space.
   if (cp<endp && isspace(*cp)) { cp++;}
 
-  helper_text_large(fgcolor, bgcolor, cp, endp-cp, solo);
+  //eat trailing space
+  while (cp<endp && isspace(endp[-1])) { endp--;}
+
+  helper_text_large(fgcolor, bgcolor, cp, endp-cp);
   helper_text_show(solo);
   return 0;
 }
@@ -141,62 +143,17 @@ int helper_lcd_command_parse(const char* command, int linelen)
   return -1; //invalid
 }
 
-const char* fixture_command_parse(const char*  command, int len) {
-  static char responseBuffer[LINEBUFSZ];
-
-  dprintf("parsing \"%s\"\n", command);
-  if (strncmp(command, "lcdset", min(6,len))==0)
-  {
-    int status = helper_lcdset_command_parse(command+6, len-6);
-    snprintf(responseBuffer, LINEBUFSZ, "lcdset %d\n", status);
-    return responseBuffer;
-  }
-  if (strncmp(command, "lcdshow", min(7,len))==0)
-  {
-    int status = helper_lcdshow_command_parse(command+7, len-7);
-    snprintf(responseBuffer, LINEBUFSZ, "lcdshow %d\n", status);
-    return responseBuffer;
-  }
-
-  //not recognized, echo back invalid command with error code
-  char* endcmd = memchr(command, ' ', len);
-  if (endcmd) { len = endcmd - command; }
-  int i;
-  for (i=0;i<len;i++)
-  {
-    responseBuffer[i]=*command++;
-  }
-  snprintf(responseBuffer+i, LINEBUFSZ-i, " %d\n", -1);
-  return responseBuffer;
-
+void helper_lcd_busy_spinner(void) {
+  const char *glyphs = "|/-\\";
+  static int i=0;
+  helper_text_large(lcd_BLUE|lcd_GREEN, lcd_BLACK, glyphs+i, 1);
+  helper_text_show(1);
+  i=(i+1)%4;
 }
 
-void fixture_serial(int serialFd) {
-  static char linebuf[LINEBUFSZ+1];
-  const char* response;
-  int linelen = 0;
-  int nread = read(serialFd, linebuf+linelen, LINEBUFSZ-linelen);
-  dprintf("%s",linebuf);
-  if (nread<0) { return; }
-  char* endl = memchr(linebuf+linelen, '\n', nread);
-  if (!endl) {
-    linelen+=nread;
-    if (linelen >= LINEBUFSZ)
-    {
-      printf("TOO MANY CHARACTERS, truncating to %d\n", LINEBUFSZ);
-      endl = linebuf+LINEBUFSZ;
-      *endl = '\n';
-    }
-  }
-  if (endl) {
-    endl[1]='\0';
-    response = fixture_command_parse(linebuf, endl-linebuf);
-    write(serialFd, response, strlen(response));
-    linelen = 0;
-  }
-}
 
-#define SELF_TEST
+
+//#define SELF_TEST
 #ifdef SELF_TEST
 
 

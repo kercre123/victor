@@ -14,7 +14,7 @@
 #define __Engine_Components_TouchSensorComponent_H__
 
 #include "engine/components/sensors/iSensorComponent.h"
-
+#include "engine/components/sensors/touchSensorHelpers.h"
 #include "clad/types/touchGestureTypes.h"
 
 namespace Anki {
@@ -41,12 +41,19 @@ public:
   u32 GetLatestRawTouchValue() const { return _lastRawTouchValue; }
   
 private:
-  
+  DebounceHelper _debouncer;
+
+  TouchGestureClassifier _gestureClassifier;
+
+  TouchBaselineCalibrator _baselineCalib;
+
   // the latest computed result of touch gesture
   TouchGesture _touchGesture;
 
   u16 _lastRawTouchValue = 0;
 
+  // number of consecutive cycles seeing "no contact" reading
+  size_t _noContactCounter;
 };
 
 

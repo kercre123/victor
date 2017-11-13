@@ -17,7 +17,9 @@ enum LcdColor {
 };
 
 int lcd_init(void);
-void lcd_draw_frame(LcdFrame* frame);
+void lcd_clear_screen(void);
+void lcd_draw_frame(const LcdFrame* frame);
+void lcd_set_brightness(int b); //0..20
 void lcd_shutdown(void);
 
 #endif//CORE_LCD_H_

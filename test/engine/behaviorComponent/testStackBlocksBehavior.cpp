@@ -57,8 +57,8 @@ void CreateStackBehavior(Robot& robot, ICozmoBehaviorPtr& stackBehavior, Behavio
   bool parseOK = reader.parse( configStr.c_str(), config);
   ASSERT_TRUE(parseOK) << "failed to parse JSON, bug in the test";
 
-  stackBehavior = behaviorContainer.CreateBehavior(BehaviorClass::StackBlocks,
-                                                   config);
+  stackBehavior = behaviorContainer.CreateBehaviorAndAddToContainer(BehaviorClass::StackBlocks,
+                                                                    config);
   stackBehavior->Init(behaviorExternalInterface);
   stackBehavior->OnEnteredActivatableScope();
   ASSERT_TRUE(stackBehavior != nullptr);
@@ -257,6 +257,5 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   incrementEngineTime_ns += 100000000.0f;
   BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
   
-  auto status = stackBehavior->BehaviorUpdate_Legacy(behaviorExternalInterface);
-  EXPECT_NE(BehaviorStatus::Running, status) << "should have stopped running";
+  stackBehavior->BehaviorUpdate_Legacy(behaviorExternalInterface);
 }

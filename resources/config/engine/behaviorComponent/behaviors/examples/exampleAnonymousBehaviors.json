@@ -1,0 +1,15 @@
+{
+  "behaviorClass" : "Wait",
+  "behaviorID" : "ExampleAnonymousBehaviors",
+
+  "anonymousBehaviors" :[
+    {
+      "behaviorClass" : "Wait",
+      "behaviorName"  : "example1"
+    },
+    {
+      "behaviorClass" : "Wait",
+      "behaviorName"  : "example2"
+    }
+  ]
+}

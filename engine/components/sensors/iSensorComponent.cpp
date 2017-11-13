@@ -100,14 +100,16 @@ void ISensorComponent::Log()
   // Create a logger if it doesn't exist already
   if (_rawDataLogger == nullptr) {
     _rawDataLogger = std::make_unique<Util::RollingFileLogger>(nullptr, _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, _logDirectory));
-    const auto& header = GetLogHeader();
+    auto header = GetLogHeader();
     DEV_ASSERT((header.find('\n') == std::string::npos) && (header.find('\r') == std::string::npos), "ISensorComponent.Log.LinebreakInHeaderNotAllowed");
-    _rawDataLogger->Write((header + "\n").c_str());
+    header += "\n";
+    _rawDataLogger->Write(header);
   }
   
-  const auto& row = GetLogRow();
+  auto row = GetLogRow();
   DEV_ASSERT((row.find('\n') == std::string::npos) && (row.find('\r') == std::string::npos), "ISensorComponent.Log.LinebreakInRowNotAllowed");
-  _rawDataLogger->Write((row + "\n").c_str());
+  row += "\n";
+  _rawDataLogger->Write(row);
 }
 
   

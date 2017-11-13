@@ -48,6 +48,8 @@ AnimationComponent::AnimationComponent(Robot& robot, const CozmoContext* context
   
       using namespace ExternalInterface;
       helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimations>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceHue>();
     }
   }
   
@@ -55,7 +57,6 @@ AnimationComponent::AnimationComponent(Robot& robot, const CozmoContext* context
   RobotInterface::MessageHandler *messageHandler = robot.GetContext()->GetRobotManager()->GetMsgHandler();
   RobotID_t robotId = robot.GetID();
 
-  
   // Subscribe to RobotToEngine messages
   using localHandlerType = void(AnimationComponent::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);
   // Create a helper lambda for subscribing to a tag with a local handler
@@ -70,7 +71,7 @@ AnimationComponent::AnimationComponent(Robot& robot, const CozmoContext* context
   doRobotSubscribe(RobotInterface::RobotToEngineTag::animEnded,             &AnimationComponent::HandleAnimEnded);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::endOfMessage,          &AnimationComponent::HandleEndOfMessage);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::animEvent,             &AnimationComponent::HandleAnimationEvent);
-  
+
 }
 
 void AnimationComponent::Init()
@@ -161,8 +162,7 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
   PRINT_NAMED_DEBUG("AnimationComponent.PlayAnimByName.PlayingAnim", "[%d] %s", it->second, animName.c_str());
   return PlayAnimByID(it->second, numLoops, interruptRunning, callback, actionTag, timeout_sec);
 }
-  
-  
+    
 Result AnimationComponent::PlayAnimByID(const u32 animID,
                                         int numLoops,
                                         bool interruptRunning,
@@ -208,7 +208,7 @@ Result AnimationComponent::PlayAnimByID(const u32 animID,
   
   return RESULT_OK;
 }
-
+  
 AnimationComponent::Tag AnimationComponent::IsAnimPlaying(u32 animID)
 {
   for (auto it = _callbackMap.begin(); it != _callbackMap.end(); ++it) {
@@ -285,6 +285,30 @@ void AnimationComponent::HandleMessage(const ExternalInterface::RequestAvailable
   _isDolingAnims = true;
 }
   
+template<>
+void AnimationComponent::HandleMessage(const ExternalInterface::DisplayProceduralFace& msg)
+{
+  if (!_isInitialized) {
+    PRINT_NAMED_WARNING("AnimationComponent.DisplayProceduralFace.Uninitialized", "");
+    return;
+  }
+  
+  // TODO: Is this what interruptRunning should mean?
+  //       Or should it queue on anim process side an optionally interrupt currently executing anim?
+  if (IsPlayingAnimation() && !msg.interruptRunning) {
+    PRINT_NAMED_WARNING("AnimationComponent.DisplayProceduralFace.WontInterruptCurrentAnim", "");
+    return;
+  }
+
+  // Convert ExternalInterface version of DisplayProceduralFace to RobotInterface version and send
+  _robot.SendRobotMessage<RobotInterface::DisplayProceduralFace>(msg.faceParams, msg.duration_ms);
+}
+
+template<>
+void AnimationComponent::HandleMessage(const ExternalInterface::SetFaceHue& msg)
+{
+  _robot.SendRobotMessage<RobotInterface::SetFaceHue>(msg.hue);
+}
   
 // ================ Robot message handlers ======================
   

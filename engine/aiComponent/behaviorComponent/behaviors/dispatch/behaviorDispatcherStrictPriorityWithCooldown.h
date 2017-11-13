@@ -15,6 +15,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/iBehaviorDispatcher.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/helpers/behaviorCooldownInfo.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -36,20 +38,8 @@ protected:
 
 private:
 
-  struct CooldownInfo {
-    bool OnCooldown() const;
-    void StartCooldown(Util::RandomGenerator& rng);
-    
-    // params
-    float _cooldown_s = 0.0f;;
-    float _randomCooldownFactor = 0.0f;
-
-    // member
-    float _onCooldownUntil_s = -1.0f;
-  };
-
   // index here matches the index in IBehaviorDispatcher::GetAllPossibleDispatches()
-  std::vector< CooldownInfo > _cooldownInfo;
+  std::vector< BehaviorCooldownInfo > _cooldownInfo;
 
   // keep track of which behavior we last requested so that we can properly start the cooldown when the
   // behavior ends

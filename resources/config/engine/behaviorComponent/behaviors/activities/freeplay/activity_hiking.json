@@ -90,7 +90,7 @@
         "scoring"      :
         {
           "flatScore": 1.25,
-          "runningPenalty": {
+          "activatedPenalty": {
             "nodes": [
               {
                 "x": 0.0,

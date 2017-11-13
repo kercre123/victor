@@ -56,9 +56,6 @@ public:
   // Activate A/B experiment
   ANKI_VISIBLE uint32_t ActivateExperiment(const uint8_t* requestBuffer, size_t requestLen,
                                            uint8_t* responseBuffer, size_t responseLen);
-
-  // Debug viz communication
-  ANKI_VISIBLE size_t SendVizMessages(uint8_t* buffer, size_t bufferSize);
   
   // Destroys any running thread and game instance
   ANKI_VISIBLE void Clear();
@@ -79,14 +76,11 @@ private:
     // For manually ticking the game
     bool Update(const BaseStationTime_t currentTime_nanosec);
     GameMessagePort* GetGameMessagePort() const { return _gameMessagePort.get(); }
-    GameMessagePort* GetVizMessagePort() const { return _vizMessagePort.get(); }
     CozmoEngine* GetEngine() const { return _cozmoInstance.get(); }
     void SyncWithEngineUpdate(const std::function<void()>& func) const;
     
   private:
-    static GameMessagePort* CreateVizMessagePort();
     std::unique_ptr<GameMessagePort> _gameMessagePort;
-    std::unique_ptr<GameMessagePort> _vizMessagePort;
     std::unique_ptr<CozmoEngine> _cozmoInstance;
     std::atomic<bool> _isRunning;
     mutable std::mutex _updateMutex;

@@ -17,6 +17,7 @@
 #include "engine/components/sensors/iSensorComponent.h"
 
 #include "clad/types/proxMessages.h"
+#include "clad/types/robotStatusAndActions.h"
 
 #include "util/helpers/templateHelpers.h"
 
@@ -27,6 +28,11 @@ namespace Cozmo {
 class CliffSensorComponent : public ISensorComponent
 {
 public:
+  static const int kNumCliffSensors = static_cast<int>(CliffSensor::CLIFF_COUNT);
+  
+  using CliffSensorDataArray = std::array<uint16_t, kNumCliffSensors>;
+  static_assert(std::is_same<CliffSensorDataArray, decltype(RobotState::cliffDataRaw)>::value, "CliffSensorDataArray must be same as type used in RobotState");
+
   CliffSensorComponent(Robot& robot);
 
   ~CliffSensorComponent() = default;
@@ -49,43 +55,28 @@ public:
   
   bool IsCliffDetectedStatusBitOn() const { return _cliffDetectedStatusBitOn; }
   
-  // Returns current threshold for cliff detection
-  u16 GetCliffDetectThreshold() const { return _cliffDetectThreshold; }
+  // Adjusts cliff threshold if necessary
+  void UpdateCliffDetectThresholds();
   
-  void SendCliffDetectThresholdToRobot(const u16 thresh);
+  // Returns current threshold for cliff detection for the given cliff sensor
+  uint16_t GetCliffDetectThreshold(unsigned int ind) const;
   
-  // index corresponds to CliffSensor enum
-  u16  GetCliffDataRaw(unsigned int ind = 0) const;
+  const CliffSensorDataArray& GetCliffDetectThresholds() const { return _cliffDetectThresholds; }
   
-  // Assesses suspiciousness of current cliff and adjusts cliff threshold if necessary
-  void UpdateCliffDetectThreshold();
+  // Sends message to the robot process containing all of the current cliff detection thresholds
+  void SendCliffDetectThresholdsToRobot();
   
-  void UpdateCliffRunningStats(const RobotState& msg);
-  void ClearCliffRunningStats();
+  // Raw reported cliff sensor values
+  const CliffSensorDataArray& GetCliffDataRaw() const { return _cliffDataRaw; }
   
-  // Get the mean/variance of cliff readings over the past few seconds. (See kCliffSensorRunningStatsWindowSize)
-  f32  GetCliffRunningMean() const { return _cliffRunningMean; }
-  f32  GetCliffRunningVar()  const { return _cliffRunningVar; }
-  
-  // Evaluate how suspicious the cliff that caused robot to stop is based on how much the reading
-  // actually rises while it's stopping in reaction to the supposed cliff.
-  void EvaluateCliffSuspiciousnessWhenStopped();
-  
-  uint32_t GetLastMsgTimestamp() const { return _lastMsgTimestamp; };
-  
+  // Compute the estimated pose of the cliff obstacle for the given cliff event.
   bool ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d& cliffPose) const;
   
 private:
   
-  // Returns true if floor is suspiciously cliff-y looking based on variance of cliff readings
-  bool IsFloorSuspiciouslyCliffy() const;
+  void QueueCliffThresholdUpdate();
   
-  // Increments count of suspicious cliff. (i.e. Cliff was detected but data looks like maybe it's not real.)
-  void IncrementSuspiciousCliffCount();
-  
-  static unsigned int GetNumCliffSensors() { return Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT); }
-  
-// members:
+  void SetCliffDetectThreshold(unsigned int ind, uint16_t newThresh);
   
   bool _isPaused = false;
   
@@ -97,18 +88,26 @@ private:
   
   uint32_t _lastMsgTimestamp = 0;
   
-  u16 _cliffDetectThreshold;
+  // Cliff detection thresholds for each sensor
+  CliffSensorDataArray _cliffDetectThresholds;
   
-  std::array<uint16_t, Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT)> _cliffDataRaw; // initialized in constructor
+  // Raw cliff sensor data from robot process
+  CliffSensorDataArray _cliffDataRaw;
   
-  u32  _suspiciousCliffCnt  = 0;
-  u32  _cliffStartTimestamp = 0;
+  // Filtered cliff sensor data, which smooths out noise in the data
+  std::array<f32, kNumCliffSensors> _cliffDataFilt;
   
-  // Cliff-yness tracking
-  std::deque<u16> _cliffDataQueue;
-  f32             _cliffRunningMean    = 0.f;
-  f32             _cliffRunningVar     = 0.f;
-  f32             _cliffRunningVar_acc = 0.f;
+  // Minimum observed cliff sensor values (used to adaptively adjust detection thresholds)
+  CliffSensorDataArray _cliffMinObserved;
+  
+  // This is the allowed delta above the minimum-ever-seen cliff sensor value below which cliff detection is triggered.
+  // In other words, if the lowest-ever-seen value for a given cliff sensor is 90, and _cliffDetectAllowedDelta is 40, then
+  // the cliff detection threshold will be set at 130 (90+40). If the raw cliff value ever falls below the threshold, cliff
+  // detection is triggered. This value can also be dynamically adjusted if it is suspected that we are driving on a surface
+  // with poor IR reflectivity (e.g. a carpet).
+  uint16_t _cliffDetectAllowedDelta;
+
+  uint32_t _nextCliffThresholdUpdateToRobot_ms = 0;
   
 };
 

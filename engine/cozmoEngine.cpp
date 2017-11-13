@@ -78,7 +78,7 @@
 namespace Anki {
 namespace Cozmo {
 
-CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* messagePipe, GameMessagePort* vizMessagePort)
+CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* messagePipe)
   : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
   , _deviceDataManager(new DeviceDataManager(_uiMsgHandler.get()))
@@ -135,10 +135,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   _debugConsoleManager.Init(_context->GetExternalInterface());
   _dasToSdkHandler.Init(_context->GetExternalInterface());
   InitUnityLogger();
-
-  #if VIZ_ON_DEVICE
-  _context->GetVizManager()->SetMessagePort(vizMessagePort);
-  #endif
 }
 
 CozmoEngine::~CozmoEngine()

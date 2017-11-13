@@ -2,7 +2,7 @@
 #define COZMO_CONFIG_H
 
 #ifdef COZMO_ROBOT
-#include "anki/types.h"
+#include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 #else
 #include "anki/common/types.h"
@@ -170,12 +170,14 @@ namespace Cozmo {
    *
    **************************************************************************/
 
-  // Default cliff detection threshold
-  const u32 CLIFF_SENSOR_DROP_LEVEL = 250;
+  // Cliff detection thresholds (these come from testing with prototype 2 robots - will need
+  // to be adjusted for production hardware)
+  const u16 CLIFF_SENSOR_THRESHOLD_MAX = 180;
+  const u16 CLIFF_SENSOR_THRESHOLD_MIN = 25;
+  const u16 CLIFF_SENSOR_THRESHOLD_DEFAULT = CLIFF_SENSOR_THRESHOLD_MAX;
   
-  // Cliff un-detection threshold (hysteresis)
-  const u32 CLIFF_SENSOR_UNDROP_LEVEL = 300;
-  const u32 CLIFF_SENSOR_UNDROP_LEVEL_MIN = 100;
+  // Cliff sensor value must rise this far above the threshold to 'untrigger' cliff detection.
+  const u16 CLIFF_DETECT_HYSTERESIS = 30;
   
   // V2 cliff sensors (assumes 4 cliff sensors are arranged in a rectangle symmetric about the robot x axis)
   // NOTE: These values are approximate and should be verified for final V2 design.

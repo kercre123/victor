@@ -197,6 +197,8 @@ void FaceLayerManager::KeepFaceAlive(const std::map<LiveIdleAnimationParameter,f
   _nextBlink_ms   -= ANIM_TIME_STEP_MS;
   _nextEyeDart_ms -= ANIM_TIME_STEP_MS;
   
+  bool layerAdded = false;
+
   // Eye darts
   const f32 MaxDist = GetParam<f32>(params, Param::EyeDartMaxDistance_pix);
   if(_nextEyeDart_ms <= 0 && MaxDist > 0.f)
@@ -222,9 +224,11 @@ void FaceLayerManager::KeepFaceAlive(const std::map<LiveIdleAnimationParameter,f
       {
         AddToPersistentLayer(_eyeDartTag, frame);
       }
-      
+
       _nextEyeDart_ms = GetRNG().RandIntInRange(GetParam<s32>(params, Param::EyeDartSpacingMinTime_ms),
                                                 GetParam<s32>(params, Param::EyeDartSpacingMaxTime_ms));
+
+      layerAdded = true;
     }
   }
   
@@ -260,7 +264,16 @@ void FaceLayerManager::KeepFaceAlive(const std::map<LiveIdleAnimationParameter,f
       blinkSpaceMax_ms = kMaxBlinkSpacingTimeForScreenProtection_ms;
     }
     _nextBlink_ms = GetRNG().RandIntInRange(blinkSpaceMin_ms, blinkSpaceMax_ms);
-    
+    layerAdded = true;
+  }
+  
+  // Send a face just to keep noise moving if nothing else happened
+  if(!layerAdded) 
+  {
+    ProceduralFaceKeyFrame frame;
+    FaceTrack faceTrack;
+    faceTrack.AddKeyFrameToBack(frame);
+    AddLayer("EyeNoise", faceTrack);
   }
   
 } // KeepFaceAlive()

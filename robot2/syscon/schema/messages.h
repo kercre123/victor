@@ -182,17 +182,22 @@ struct SpineMessageFooter
   uint32_t checksum;
 };
 
+// TODO(Al/Lee): Put back once mics and camera can co-exist
+#define MICDATA_ENABLED 1
+#define MICDATA_SAMPLES_COUNT 480 // 120 samples per channel * 4 channels
 /// Start Packets
 struct BodyToHead
 {
-  int16_t audio[480];     // NOTE: This needs to be immediately followed by the uin32_t framecounter, since that is packed
-  uint32_t framecounter;  // as part of the AudioInput struct to the engine process.
+  uint32_t framecounter;
   PowerState powerState;
   struct MotorState motor[4];
   uint16_t cliffSense[4];
   struct BatteryState battery;
   struct RangeData proximity;
   uint16_t touchLevel[2];
+#if MICDATA_ENABLED
+  int16_t audio[MICDATA_SAMPLES_COUNT];
+#endif
 };
 
 struct ContactData

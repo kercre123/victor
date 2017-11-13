@@ -32,7 +32,7 @@ namespace Anki {
 
         bool _stopOnCliff = true;
         
-        u16 _cliffDetectThresh = CLIFF_SENSOR_DROP_LEVEL;
+        u16 _cliffDetectThresh[4] = {CLIFF_SENSOR_THRESHOLD_DEFAULT, CLIFF_SENSOR_THRESHOLD_DEFAULT, CLIFF_SENSOR_THRESHOLD_DEFAULT, CLIFF_SENSOR_THRESHOLD_DEFAULT};
         
         CliffEvent _cliffMsg;
         TimeStamp_t _pendingCliffEvent = 0;
@@ -60,7 +60,7 @@ namespace Anki {
         }
       }
 
-      u16 GetRawCliffValue(unsigned int ind)
+      u16 GetRawCliffValue(u32 ind)
       {
         AnkiConditionalErrorAndReturnValue(ind < HAL::CLIFF_COUNT, 0, "ProxSensors.GetRawCliffValue.InvalidIndex", "Index %d is not valid", ind);
         return HAL::GetRawCliffData(static_cast<HAL::CliffID>(ind));
@@ -82,13 +82,12 @@ namespace Anki {
         
         // Compute bounds on cliff detect/undetect thresholds which may be adjusted according to the
         // intensity of ambient light as measured by the LED-off level.
-        
         // TODO: Not doing it yet, but should do this for Cozmo 2 as well
-        const u16 cliffDetectThresh = _cliffDetectThresh;
-        const u16 cliffUndetectThresh = CLIFF_SENSOR_UNDROP_LEVEL;
         
         for (int i=0 ; i < _nCliffSensors ; i++) {
           // Update cliff status with hysteresis
+          const u16 cliffDetectThresh = _cliffDetectThresh[i];
+          const u16 cliffUndetectThresh = cliffDetectThresh + CLIFF_DETECT_HYSTERESIS;
           const bool alreadyDetected = (_cliffDetectedFlags & (1<<i)) != 0;
           if (!alreadyDetected && _cliffVals[i] < cliffDetectThresh) {
             _cliffDetectedFlags |= (1<<i);
@@ -129,8 +128,7 @@ namespace Anki {
             SteeringController::ExecuteDirectDrive(0,0);
 
             // Send stopped message
-            RobotInterface::RobotStopped msg;
-            RobotInterface::SendMessage(msg);
+            RobotInterface::SendMessage(RobotInterface::RobotStopped());
           }
           else
           {
@@ -178,11 +176,9 @@ namespace Anki {
       
       Result Update()
       {
-        Result retVal = RESULT_OK;
         UpdateCliff();
 
-        return retVal;
-
+        return RESULT_OK;
       } // Update()  
 
       bool IsAnyCliffDetected()
@@ -200,16 +196,25 @@ namespace Anki {
         _stopOnCliff = enable;
       }
 
-      void SetCliffDetectThreshold(u16 level)
+      void SetCliffDetectThreshold(u32 ind, u16 level)
       {
-        if (level > CLIFF_SENSOR_UNDROP_LEVEL) {
-          AnkiWarn( "ProxSensors.SetCliffDetectThreshold.TooHigh", "%d", level);
-        } else {
-          AnkiEvent( "ProxSensors.SetCliffDetectThreshold.NewLevel", "%d", level);
-          _cliffDetectThresh = level;
+        AnkiConditionalError(ind < HAL::CLIFF_COUNT, "ProxSensors.SetCliffDetectThreshold.InvalidIndex", "Index %d is not valid", ind);
+        if (level > CLIFF_SENSOR_THRESHOLD_MAX) {
+          AnkiWarn( "ProxSensors.SetCliffDetectThreshold.TooHigh", "cliff sensor %d, threshold %d", ind, level);
+        } else if (level < CLIFF_SENSOR_THRESHOLD_MIN) {
+          AnkiWarn( "ProxSensors.SetCliffDetectThreshold.TooLow", "cliff sensor %d, threshold %d", ind, level);
+        }else {
+          AnkiEvent( "ProxSensors.SetCliffDetectThreshold.NewLevel", "cliff sensor %d, threshold %d", ind, level);
+          _cliffDetectThresh[ind] = level;
         }
       }
       
+      void SetAllCliffDetectThresholds(u16 level)
+      {
+        for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
+          SetCliffDetectThreshold(i, level);
+        }
+      }
       
       // Since this re-enables 'cliff detect' and 'stop on cliff'
       // it should only be called when the robot disconnects,
@@ -222,7 +227,7 @@ namespace Anki {
         
         _cliffDetectedFlags = 0;
         
-        _cliffDetectThresh = CLIFF_SENSOR_DROP_LEVEL;
+        SetAllCliffDetectThresholds(CLIFF_SENSOR_THRESHOLD_DEFAULT);
         
         _pendingCliffEvent   = 0;
         _pendingUncliffEvent = 0;

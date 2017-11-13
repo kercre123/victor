@@ -8,15 +8,30 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include "util/console/consoleInterface.h"
 #include "util/math/math.h"
+#include "util/math/numericCast.h"
+#include "util/random/randomGenerator.h"
 
 namespace Anki {
 namespace Cozmo {
-
-  u8 ProceduralFaceDrawer::_firstScanLine = 0;
   
+  #define FIXED_INNER_GLOW_POSITION 1
+
+  #define CONSOLE_GROUP "ProceduralFace"
+
+  CONSOLE_VAR_RANGED(f32, kProcFace_InnerGlowFrac,       CONSOLE_GROUP, 0.4f, 0.05f, 1.f);
+  CONSOLE_VAR(bool,       kProcFace_UseAntiAliasing,     CONSOLE_GROUP, true); // Only affects OpenCV drawing, not post-smoothing
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseFraction,       CONSOLE_GROUP, 0.15f, 0.f, 1.f); // TODO: Tie to audio
+
+  #undef CONSOLE_GROUP
+  
+  // Initialize static vars
+  Vision::Image ProceduralFaceDrawer::_glowImg;
+  Vision::Image ProceduralFaceDrawer::_eyeShape;
+
   SmallMatrix<2,3,f32> ProceduralFaceDrawer::GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
-                                                                   f32 tX, f32 tY, f32 x0, f32 y0)
+                                                                     f32 tX, f32 tY, f32 x0, f32 y0)
   {
     //
     // Create a 2x3 warp matrix which incorporates scale, rotation, and translation
@@ -50,9 +65,71 @@ namespace Cozmo {
     return W;
   } // GetTransformationMatrix()
 
+
+  // Based on Taylor series expansion with N terms
+  inline static f32 fastExp(f32 x)
+  {
+#   define NUM_FAST_EXP_TERMS 2
+    
+    if(x < -(f32)(2*NUM_FAST_EXP_TERMS))
+    {
+      // Things get numerically unstable for very negative inputs x. Value is basically zero anyway.
+      return 0.f;
+    }
+#   if NUM_FAST_EXP_TERMS==2
+    x = 1.f + (x * 0.25f);  // Constant here is 1/(2^N)
+    x *= x; x *= x;         // Number of multiplies here is also N
+#   elif NUM_FAST_EXP_TERMS==3
+    x = 1.f + (x * 0.125f); // Constant here is 1/(2^N)
+    x *= x; x *= x; x *= x; // Number of multiplies here is also N
+#   else
+#   error Unsupported number of terms for fastExp()
+#   endif
+    
+    return x;
+    
+#   undef NUM_FAST_EXP_TERMS
+  }
   
-  void ProceduralFaceDrawer::DrawEye(const ProceduralFace& faceData, WhichEye whichEye, Vision::Image& faceImg,
-                                     Rectangle<f32>& eyeBoundingBox)
+  inline Array2d<f32> CreateNoiseImage(const Util::RandomGenerator& rng)
+  {
+    Array2d<f32> noiseImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+    f32* noiseImg_i = noiseImg.GetRow(0);
+    for(s32 j=0; j<noiseImg.GetNumElements(); ++j)
+    {
+      noiseImg_i[j] = rng.RandDblInRange(1.f - kProcFace_NoiseFraction, 1.f + kProcFace_NoiseFraction);
+    }
+    return noiseImg;
+  }
+  
+  const Array2d<f32>& ProceduralFaceDrawer::GetNoiseImage(const Util::RandomGenerator& rng)
+  {
+    // NOTE: Since this is called separately for each eye, this looks better if we use an odd number of images
+    static const s32 kNumNoiseImages = 7;
+    static_assert(kNumNoiseImages % 2 == 1, "Use odd number of noise images");
+    static const std::array<Array2d<f32>, kNumNoiseImages> kNoiseImages{{
+      CreateNoiseImage(rng),
+      CreateNoiseImage(rng),
+      CreateNoiseImage(rng),
+      CreateNoiseImage(rng),
+      CreateNoiseImage(rng),
+      CreateNoiseImage(rng),
+      CreateNoiseImage(rng),
+    }};
+    
+    // Cycle circularly through the set of noise images
+    static auto iter = kNoiseImages.begin();
+    const Array2d<f32>& noiseImg = *iter;
+    ++iter;
+    if(iter == kNoiseImages.end()) {
+      iter = kNoiseImages.begin();
+    }
+    
+    return noiseImg;
+  }
+  
+  void ProceduralFaceDrawer::DrawEye(const ProceduralFace& faceData, WhichEye whichEye, const Util::RandomGenerator& rng,
+                                     Vision::ImageRGB& faceImg, Rectangle<f32>& eyeBoundingBox)
   {
     DEV_ASSERT_MSG(faceImg.GetNumRows() == ProceduralFace::HEIGHT &&
                    faceImg.GetNumCols() == ProceduralFace::WIDTH,
@@ -63,85 +140,87 @@ namespace Cozmo {
     
     const s32 eyeWidth  = ProceduralFace::NominalEyeWidth;
     const s32 eyeHeight = ProceduralFace::NominalEyeHeight;
+    const f32 halfEyeWidth  = 0.5f*eyeWidth;
+    const f32 halfEyeHeight = 0.5f*eyeHeight;
     
     // Left/right here will be in terms of the left eye. We will mirror to get
     // the right eye. So
-    const s32 upLeftRadX  = std::round(faceData.GetParameter(whichEye, Parameter::UpperOuterRadiusX)*0.5f*static_cast<f32>(eyeWidth));
-    const s32 upLeftRadY  = std::round(faceData.GetParameter(whichEye, Parameter::UpperOuterRadiusY)*0.5f*static_cast<f32>(eyeHeight));
-    const s32 lowLeftRadX = std::round(faceData.GetParameter(whichEye, Parameter::LowerOuterRadiusX)*0.5f*static_cast<f32>(eyeWidth));
-    const s32 lowLeftRadY = std::round(faceData.GetParameter(whichEye, Parameter::LowerOuterRadiusY)*0.5f*static_cast<f32>(eyeHeight));
+    const f32 upLeftRadX  = faceData.GetParameter(whichEye, Parameter::UpperOuterRadiusX)*halfEyeWidth;
+    const f32 upLeftRadY  = faceData.GetParameter(whichEye, Parameter::UpperOuterRadiusY)*halfEyeHeight;
+    const f32 lowLeftRadX = faceData.GetParameter(whichEye, Parameter::LowerOuterRadiusX)*halfEyeWidth;
+    const f32 lowLeftRadY = faceData.GetParameter(whichEye, Parameter::LowerOuterRadiusY)*halfEyeHeight;
 
-    const s32 upRightRadX  = std::round(faceData.GetParameter(whichEye, Parameter::UpperInnerRadiusX)*0.5f*static_cast<f32>(eyeWidth));
-    const s32 upRightRadY  = std::round(faceData.GetParameter(whichEye, Parameter::UpperInnerRadiusY)*0.5f*static_cast<f32>(eyeHeight));
-    const s32 lowRightRadX = std::round(faceData.GetParameter(whichEye, Parameter::LowerInnerRadiusX)*0.5f*static_cast<f32>(eyeWidth));
-    const s32 lowRightRadY = std::round(faceData.GetParameter(whichEye, Parameter::LowerInnerRadiusY)*0.5f*static_cast<f32>(eyeHeight));
-
+    const f32 upRightRadX  = faceData.GetParameter(whichEye, Parameter::UpperInnerRadiusX)*halfEyeWidth;
+    const f32 upRightRadY  = faceData.GetParameter(whichEye, Parameter::UpperInnerRadiusY)*halfEyeHeight;
+    const f32 lowRightRadX = faceData.GetParameter(whichEye, Parameter::LowerInnerRadiusX)*halfEyeWidth;
+    const f32 lowRightRadY = faceData.GetParameter(whichEye, Parameter::LowerInnerRadiusY)*halfEyeHeight;
     
     //
     // Compute eye and lid polygons:
     //
     std::vector<cv::Point> eyePoly, segment, lowerLidPoly, upperLidPoly;
-    const s32 ellipseDelta = 10;
+    const s32 kEllipseDelta = 5;
+    const s32 kLineType = (kProcFace_UseAntiAliasing ? cv::LINE_AA : cv::LINE_8);
     
     // 1. Eye shape poly
     {
       // Upper right corner
       if(upRightRadX > 0 && upRightRadY > 0) {
-       cv::ellipse2Poly(cv::Point(eyeWidth/2  - upRightRadX, -eyeHeight/2 + upRightRadY),cv::Size(upRightRadX,upRightRadY), 0, 270, 
-          360, (int)ellipseDelta, segment);
+       cv::ellipse2Poly(cv::Point(std::round(halfEyeWidth  - upRightRadX), std::round(-halfEyeHeight + upRightRadY)),
+                        cv::Size(upRightRadX,upRightRadY), 0, 270, 360, kEllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
-        eyePoly.push_back({eyeWidth/2,-eyeHeight/2});
+        eyePoly.emplace_back(halfEyeWidth,-halfEyeHeight);
       }
       
       // Lower right corner
       if(lowRightRadX > 0 && lowRightRadY > 0) {
-        cv::ellipse2Poly(cv::Point(eyeWidth/2 - lowRightRadX, eyeHeight/2 - lowRightRadY),
-                         cv::Size(lowRightRadX,lowRightRadY), 0, 0, 90, ellipseDelta, segment);
+        cv::ellipse2Poly(cv::Point(std::round(halfEyeWidth - lowRightRadX), std::round(halfEyeHeight - lowRightRadY)),
+                         cv::Size(lowRightRadX,lowRightRadY), 0, 0, 90, kEllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
-        eyePoly.push_back({eyeWidth/2, eyeHeight/2});
+        eyePoly.emplace_back(halfEyeWidth, halfEyeHeight);
       }
       
       // Lower left corner
       if(lowLeftRadX > 0 && lowLeftRadY > 0) {
-       cv::ellipse2Poly(cv::Point(-eyeWidth/2  + lowLeftRadX, eyeHeight/2 - lowLeftRadY),
-                        cv::Size(lowLeftRadX,lowLeftRadY), 0, 90, 180, ellipseDelta, segment);
+       cv::ellipse2Poly(cv::Point(std::round(-halfEyeWidth  + lowLeftRadX), std::round(halfEyeHeight - lowLeftRadY)),
+                        cv::Size(lowLeftRadX,lowLeftRadY), 0, 90, 180, kEllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
-        eyePoly.push_back({-eyeWidth/2, eyeHeight/2});
+        eyePoly.emplace_back(-halfEyeWidth, halfEyeHeight);
       }
-    }
     
-    // Upper left corner
-    if(upLeftRadX > 0 && upLeftRadY > 0) {
-      cv::ellipse2Poly(cv::Point(-eyeWidth/2 + upLeftRadX, -eyeHeight/2 + upLeftRadY),
-                       cv::Size(upLeftRadX,upLeftRadY), 0, 180, 270, ellipseDelta, segment);
-      eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
-    } else {
-      eyePoly.push_back({-eyeWidth/2,-eyeHeight/2});
+      // Upper left corner
+      if(upLeftRadX > 0 && upLeftRadY > 0) {
+        cv::ellipse2Poly(cv::Point(std::round(-halfEyeWidth + upLeftRadX), std::round(-halfEyeHeight + upLeftRadY)),
+                        cv::Size(upLeftRadX,upLeftRadY), 0, 180, 270, kEllipseDelta, segment);
+        eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
+      } else {
+        eyePoly.emplace_back(-halfEyeWidth,-halfEyeHeight);
+      }
     }
     
     // 2. Lower lid poly
     {
-      const s32 lowerLidY = std::round(faceData.GetParameter(whichEye, Parameter::LowerLidY) * static_cast<f32>(eyeHeight));
+      const f32 lowerLidY = faceData.GetParameter(whichEye, Parameter::LowerLidY) * static_cast<f32>(eyeHeight);
       const f32 angleDeg = faceData.GetParameter(whichEye, Parameter::LowerLidAngle);
       const f32 angleRad = DEG_TO_RAD(angleDeg);
-      const s32 yAngleAdj = -std::round(static_cast<f32>(eyeWidth)*.5f * std::tan(angleRad));
+      const f32 yAngleAdj = -halfEyeWidth * std::tan(angleRad);
       lowerLidPoly = {
-        { eyeWidth/2 + 1, eyeHeight/2 - lowerLidY - yAngleAdj}, // Upper right corner
-        { eyeWidth/2 + 1, eyeHeight/2 + 1}, // Lower right corner
-        {-eyeWidth/2 - 1, eyeHeight/2 + 1}, // Lower left corner
-        {-eyeWidth/2 - 1, eyeHeight/2 - lowerLidY + yAngleAdj}, // Upper left corner
+        {(s32)std::round( halfEyeWidth + 1.f), (s32)std::round(halfEyeHeight - lowerLidY - yAngleAdj)}, // Upper right corner
+        {(s32)std::round( halfEyeWidth + 1.f), (s32)std::round(halfEyeHeight + 1.f)}, // Lower right corner
+        {(s32)std::round(-halfEyeWidth - 1.f), (s32)std::round(halfEyeHeight + 1.f)}, // Lower left corner
+        {(s32)std::round(-halfEyeWidth - 1.f), (s32)std::round(halfEyeHeight - lowerLidY + yAngleAdj)}, // Upper left corner
       };
       // Add bend:
-      const f32 yRad = std::round(faceData.GetParameter(whichEye, Parameter::LowerLidBend) * static_cast<f32>(eyeHeight));
+      const f32 yRad = faceData.GetParameter(whichEye, Parameter::LowerLidBend) * static_cast<f32>(eyeHeight);
       if(yRad != 0) {
-        const f32 xRad = std::round(static_cast<f32>(eyeWidth)*.5f / std::cos(angleRad));
-        cv::ellipse2Poly(cv::Point(0, eyeHeight/2 - lowerLidY),
-                         cv::Size(xRad,yRad), angleDeg, 180, 360, ellipseDelta, segment);
+        const f32 xRad = std::round(halfEyeWidth / std::cos(angleRad));
+        cv::ellipse2Poly(cv::Point(0, std::round(halfEyeHeight - lowerLidY)),
+                         cv::Size(xRad,yRad), angleDeg, 180, 360, kEllipseDelta, segment);
         DEV_ASSERT(std::abs(segment.front().x - lowerLidPoly.back().x)<3 &&
-                   std::abs(segment.front().y-lowerLidPoly.back().y)<3,
+                   std::abs(segment.front().y - lowerLidPoly.back().y)<3,
                    "First curved lower lid segment point not close to last lid poly point.");
         DEV_ASSERT(std::abs(segment.back().x - lowerLidPoly.front().x)<3 &&
                    std::abs(segment.back().y - lowerLidPoly.front().y)<3,
@@ -152,22 +231,22 @@ namespace Cozmo {
     
     // 3. Upper lid poly
     {
-      const s32 upperLidY = std::round(faceData.GetParameter(whichEye, Parameter::UpperLidY) * static_cast<f32>(eyeHeight));
+      const f32 upperLidY = faceData.GetParameter(whichEye, Parameter::UpperLidY) * static_cast<f32>(eyeHeight);
       const f32 angleDeg = faceData.GetParameter(whichEye, Parameter::UpperLidAngle);
       const f32 angleRad = DEG_TO_RAD(angleDeg);
-      const s32 yAngleAdj = -std::round(static_cast<f32>(eyeWidth)*.5f * std::tan(angleRad));
+      const f32 yAngleAdj = -halfEyeWidth * std::tan(angleRad);
       upperLidPoly = {
-        {-eyeWidth/2 - 1, -eyeHeight/2 + upperLidY + yAngleAdj}, // Lower left corner
-        {-eyeWidth/2 - 1, -eyeHeight/2 - 1}, // Upper left corner
-        { eyeWidth/2 + 1, -eyeHeight/2 - 1}, // Upper right corner
-        { eyeWidth/2 + 1, -eyeHeight/2 + upperLidY - yAngleAdj}, // Lower right corner
+        {(s32)std::round(-halfEyeWidth - 1.f), (s32)std::round(-halfEyeHeight + upperLidY + yAngleAdj)}, // Lower left corner
+        {(s32)std::round(-halfEyeWidth - 1.f), (s32)std::round(-halfEyeHeight - 1.f)}, // Upper left corner
+        {(s32)std::round( halfEyeWidth + 1.f), (s32)std::round(-halfEyeHeight - 1.f)}, // Upper right corner
+        {(s32)std::round( halfEyeWidth + 1.f), (s32)std::round(-halfEyeHeight + upperLidY - yAngleAdj)}, // Lower right corner
       };
       // Add bend:
-      const f32 yRad = std::round(faceData.GetParameter(whichEye, Parameter::UpperLidBend) * static_cast<f32>(eyeHeight));
+      const f32 yRad = faceData.GetParameter(whichEye, Parameter::UpperLidBend) * static_cast<f32>(eyeHeight);
       if(yRad != 0) {
-        const f32 xRad = std::round(static_cast<f32>(eyeWidth)*.5f / std::cos(angleRad));
-        cv::ellipse2Poly(cv::Point(0, -eyeHeight/2 + upperLidY),
-                         cv::Size(xRad,yRad), angleDeg, 0, 180, ellipseDelta, segment);
+        const f32 xRad = std::round(halfEyeWidth / std::cos(angleRad));
+        cv::ellipse2Poly(cv::Point(0, std::round(-halfEyeHeight + upperLidY)),
+                         cv::Size(xRad,yRad), angleDeg, 0, 180, kEllipseDelta, segment);
         DEV_ASSERT(std::abs(segment.front().x - upperLidPoly.back().x)<3 &&
                    std::abs(segment.front().y - upperLidPoly.back().y)<3,
                    "First curved upper lid segment point not close to last lid poly point");
@@ -179,42 +258,250 @@ namespace Cozmo {
     }
     
     Point<2, Value> eyeCenter = (whichEye == WhichEye::Left) ?
-                                Point<2, Value>(ProceduralFace::NominalLeftEyeX, ProceduralFace::NominalEyeY) :
-                                Point<2, Value>(ProceduralFace::NominalRightEyeX, ProceduralFace::NominalEyeY);
+                                 Point<2, Value>(ProceduralFace::NominalLeftEyeX, ProceduralFace::NominalEyeY) :
+                                 Point<2, Value>(ProceduralFace::NominalRightEyeX, ProceduralFace::NominalEyeY);
     eyeCenter.x() += faceData.GetParameter(whichEye, Parameter::EyeCenterX);
     eyeCenter.y() += faceData.GetParameter(whichEye, Parameter::EyeCenterY);
     
     // Apply rotation, translation, and scaling to the eye and lid polygons:
-    SmallMatrix<2, 3, f32> W = GetTransformationMatrix(faceData.GetParameter(whichEye, Parameter::EyeAngle),
-                                                       faceData.GetParameter(whichEye, Parameter::EyeScaleX),
-                                                       faceData.GetParameter(whichEye, Parameter::EyeScaleY),
-                                                       eyeCenter.x(),
-                                                       eyeCenter.y());
+    const SmallMatrix<2, 3, f32> W = GetTransformationMatrix(faceData.GetParameter(whichEye, Parameter::EyeAngle),
+                                                             faceData.GetParameter(whichEye, Parameter::EyeScaleX),
+                                                             faceData.GetParameter(whichEye, Parameter::EyeScaleY),
+                                                             eyeCenter.x(),
+                                                             eyeCenter.y());
+
+    const Value glowFraction = faceData.GetParameter(whichEye, Parameter::GlowSize);
+    DEV_ASSERT(Util::IsFltGEZero(glowFraction), "ProceduralFaceDrawer.DrawEye.InvalidGlow");
     
+    const SmallMatrix<2, 3, f32> W_glow = GetTransformationMatrix(faceData.GetParameter(whichEye, Parameter::EyeAngle),
+                                                                  (1+glowFraction) * faceData.GetParameter(whichEye, Parameter::EyeScaleX),
+                                                                  (1+glowFraction) * faceData.GetParameter(whichEye, Parameter::EyeScaleY),
+                                                                  eyeCenter.x(),
+                                                                  eyeCenter.y());                                                        
+    
+    // Initialize bounding box corners at their opposite extremes. We will figure out their
+    // true locations as we loop over the eyePoly below.
     Point2f upperLeft(ProceduralFace::WIDTH, ProceduralFace::HEIGHT);
     Point2f bottomRight(0.f,0.f);
     
-    for(auto poly : {&eyePoly, &lowerLidPoly, &upperLidPoly})
+    // Warp the poly and the glow. Use the warped glow (which is a larger shape) to compute
+    // the overall eye bounding box 
+    for(auto & point : eyePoly)
+    {
+      const Point<3,f32> pointF32{
+        static_cast<f32>(whichEye == WhichEye::Left ? point.x : -point.x), static_cast<f32>(point.y), 1.f
+      };
+
+      Point<2,f32> temp = W * pointF32;
+      point.x = std::round(temp.x());
+      point.y = std::round(temp.y());
+
+      // Use glow warp to figure out larger bounding box which contains glow as well
+      temp = W_glow * pointF32;
+      upperLeft.x()   = std::min(upperLeft.x(),   (f32)std::floor(temp.x()));
+      bottomRight.x() = std::max(bottomRight.x(), (f32)std::ceil(temp.x()));
+      upperLeft.y()   = std::min(upperLeft.y(),   (f32)std::floor(temp.y()));
+      bottomRight.y() = std::max(bottomRight.y(), (f32)std::ceil(temp.y()));
+    }
+    
+    // Warp the lids
+    for(auto poly : {&lowerLidPoly, &upperLidPoly})
     {
       for(auto & point : *poly)
       {
-        Point<2,f32> temp = W * Point<3,f32>{
-          static_cast<f32>(whichEye == WhichEye::Left ? point.x : -point.x), static_cast<f32>(point.y), 1.f};
+        const Point<3,f32> pointF32{
+          static_cast<f32>(whichEye == WhichEye::Left ? point.x : -point.x), static_cast<f32>(point.y), 1.f
+        };
+
+        Point<2,f32> temp = W * pointF32;
         point.x = std::round(temp.x());
-        point.y = std::round(temp.y()) + _firstScanLine; // Move _with_ the scanlines
+        point.y = std::round(temp.y());
+      }
+    }
+
+    // Make sure the upper left and bottom right points are in bounds (note that we loop over
+    // pixels below *inclusive* of the bottom right point, so we use HEIGHT/WIDTH-1)
+    upperLeft.x() = std::max(0.f, upperLeft.x());
+    upperLeft.y() = std::max(0.f, upperLeft.y());
+    bottomRight.x() = std::min((f32)(ProceduralFace::WIDTH-1), bottomRight.x());
+    bottomRight.y() = std::min((f32)(ProceduralFace::HEIGHT-1), bottomRight.y());
+    
+    // Create the bounding that we're returning from the upperLeft and bottomRight points
+    eyeBoundingBox = Rectangle<f32>(upperLeft, bottomRight);
+    
+    // Draw eye
+    _eyeShape.Allocate(faceImg.GetNumRows(), faceImg.GetNumCols());   
+    _eyeShape.FillWith(0);                                  
+    cv::fillConvexPoly(_eyeShape.get_CvMat_(), eyePoly, 255, kLineType);
+
+    // Black out lids
+    if(!upperLidPoly.empty()) {
+      cv::fillConvexPoly(_eyeShape.get_CvMat_(), upperLidPoly, 0, kLineType);
+    }
+    if(!lowerLidPoly.empty()) {
+      cv::fillConvexPoly(_eyeShape.get_CvMat_(), lowerLidPoly, 0, kLineType);
+    }
+    
+    if(eyeWidth > 0 && eyeHeight > 0)
+    {
+      const f32 scaledEyeWidth  = faceData.GetParameter(whichEye, Parameter::EyeScaleX) * static_cast<f32>(eyeWidth);
+      const f32 scaledEyeHeight = faceData.GetParameter(whichEye, Parameter::EyeScaleY) * static_cast<f32>(eyeHeight);
+      
+#     if FIXED_INNER_GLOW_POSITION
+      const s32 glowCenX = eyeCenter.x();
+      const s32 glowCenY = eyeCenter.y();
+#     else
+      // WIP: Move glow center with eye
+      const s32 glowCenOffsetX = eyeCenter.x() - (whichEye == ProceduralFace::Left ? ProceduralFace::NominalLeftEyeX+10 : ProceduralFace::NominalRightEyeX-13);
+      const s32 glowCenOffsetY = eyeCenter.y() - (whichEye == ProceduralFace::Left ? ProceduralFace::NominalEyeY+4      : ProceduralFace::NominalEyeY+3);
+      
+      const f32 innerGlowCenFrac = 4.f;
+      const f32 glowCenX = eyeCenter.x() - innerGlowCenFrac*glowCenOffsetX;
+      const f32 glowCenY = eyeCenter.y() - innerGlowCenFrac*glowCenOffsetY;
+#     endif 
+      
+      // Inner Glow = the brighter glow at the center of the eye that falls off radially towards the edge of the eye
+      // Outer Glow = the "halo" effect around the outside of the eye shape
+      // Add inner glow to the eye shape, before we compute the outer glow, so that boundaries conditions match.
+      {
+        const f32 sigmaX = kProcFace_InnerGlowFrac*scaledEyeWidth;
+        const f32 sigmaY = kProcFace_InnerGlowFrac*scaledEyeHeight;
+        const f32 invInnerGlowSigmaX_sq = 1.f / (2.f * (sigmaX*sigmaX));
+        const f32 invInnerGlowSigmaY_sq = 1.f / (2.f * (sigmaY*sigmaY));
+        for(s32 i=upperLeft.y(); i<=bottomRight.y(); ++i)
+        {
+          DEV_ASSERT_MSG(i>=0 && i<faceImg.GetNumRows(), "ProceduralFaceDrawer.DrawEye.BadRow", "%d", i);
+          
+          u8* eyeShape_i = _eyeShape.GetRow(i);
+          for(s32 j=upperLeft.x(); j<=bottomRight.x(); ++j)
+          {
+            DEV_ASSERT_MSG(j>=0 && j<faceImg.GetNumCols(), "ProceduralFaceDrawer.DrawEye.BadCol", "%d", j);
+            
+            u8& eyeValue  = eyeShape_i[j];
+            const bool insideEye = (eyeValue > 0);
+            
+            if(insideEye)
+            {
+              // TODO: Use a separate approximation helper or LUT to get falloff
+              const s32 dx = j-glowCenX;
+              const s32 dy = i-glowCenY;
+              const f32 falloff = fastExp(-f32(dx*dx)*invInnerGlowSigmaX_sq - f32(dy*dy)*invInnerGlowSigmaY_sq);
+              DEV_ASSERT_MSG(Util::InRange(falloff, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.BadInnerGlowFalloffValue", "%f", falloff);
+
+              eyeValue = Util::numeric_cast_clamped<u8>(std::round(static_cast<f32>(eyeValue) * falloff));
+            }
+          }
+        }
+      }
+      
+      const bool kUseGaussianFilter = false; // simpler box filter if not
+      
+      Rectangle<s32> eyeBoundingBoxS32(upperLeft.CastTo<s32>(), bottomRight.CastTo<s32>());
+      Vision::Image eyeShapeROI = _eyeShape.GetROI(eyeBoundingBoxS32);
+      
+      // Compute glow from the final eye shape (after lids are drawn)
+      _glowImg.Allocate(faceImg.GetNumRows(), faceImg.GetNumCols());
+      _glowImg.FillWith(0);
+      
+      if(Util::IsFltGTZero(glowFraction))
+      {
+        Vision::Image glowImgROI  = _glowImg.GetROI(eyeBoundingBoxS32);
         
-        upperLeft.x()   = std::min(upperLeft.x(),   (f32)std::floor(point.x));
-        bottomRight.x() = std::max(bottomRight.x(), (f32)std::ceil(point.x));
-        upperLeft.y()   = std::min(upperLeft.y(),   (f32)std::floor(point.y));
-        bottomRight.y() = std::max(bottomRight.y(), (f32)std::ceil(point.y));
+        s32 glowSizeX = std::ceil(glowFraction * 0.5f * scaledEyeWidth);
+        s32 glowSizeY = std::ceil(glowFraction * 0.5f * scaledEyeHeight);
+
+        // Make sure sizes are odd:
+        if(glowSizeX % 2 == 0) {
+          ++glowSizeX;
+        }
+        if(glowSizeY % 2 == 0) {
+          ++glowSizeY;
+        }
+        
+        if(kUseGaussianFilter) {
+          cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
+                           (f32)glowSizeX, (f32)glowSizeY);
+        } else {
+          cv::boxFilter(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), -1, cv::Size(glowSizeX,glowSizeY));
+        }
+      }
+      
+      // Antialiasing (AFTER glow because it changes eyeShape, which we use to compute the glow above)
+      const s32 kAntiAliasingSize = 5;
+      static_assert(kAntiAliasingSize % 2 == 1, "Antialiasing filter size should be odd");
+      if(kUseGaussianFilter) {
+        const f32 kAntiAliasingSigmaFraction = 0.5f;
+        cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kAntiAliasingSize,kAntiAliasingSize),
+                         (f32)kAntiAliasingSize * kAntiAliasingSigmaFraction);
+      } else {
+        cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kAntiAliasingSize,kAntiAliasingSize));
+      }
+      
+ 
+      const f32 hueFactor = faceData.GetHue();
+      DEV_ASSERT(Util::IsFltGEZero(hueFactor), "ProceduralFaceDrawer.DrawEye.InvalidHue");
+      const u8 drawHue = std::round(255.f*hueFactor);
+      
+      const f32 satFactor = faceData.GetParameter(whichEye, Parameter::Saturation);
+      DEV_ASSERT(Util::IsFltGEZero(satFactor), "ProceduralFaceDrawer.DrawEye.InvalidSaturation");
+      const u8 drawSat = std::round(255.f * satFactor);
+      
+      const f32 eyeLightness = faceData.GetParameter(whichEye, Parameter::Lightness);
+      DEV_ASSERT(Util::IsFltGEZero(eyeLightness), "ProceduralFaceDrawer.DrawEye.InvalidLightness");
+    
+      const f32 scanlineOpacity = faceData.GetScanlineOpacity();
+      DEV_ASSERT(Util::IsFltGEZero(scanlineOpacity), "ProceduralFaceDrawer.DrawEye.InvalidScanlineOpacity");
+      
+      // Draw the eye into the face image, adding outer glow, noise, and stylized scanlines
+      {
+        const Array2d<f32>& noiseImg = GetNoiseImage(rng);
+        
+        for(s32 i=upperLeft.y(); i<=bottomRight.y(); ++i)
+        {
+          //DEV_ASSERT_MSG(i>=0 && i<faceImg.GetNumRows(), "ProceduralFaceDrawer.DrawEye.BadRow", "%d", i);
+          
+          Vision::PixelRGB* faceImg_i = faceImg.GetRow(i);
+          const u8*  eyeShape_i = _eyeShape.GetRow(i);
+          const u8*  glowImg_i  = _glowImg.GetRow(i);
+          const f32* noiseImg_i = noiseImg.GetRow(i);
+          
+          for(s32 j=upperLeft.x(); j<=bottomRight.x(); ++j)
+          {
+            //DEV_ASSERT_MSG(j>=0 && j<faceImg.GetNumCols(), "ProceduralFaceDrawer.DrawEye.BadCol", "%d", j);
+            
+            const u8 eyeValue  = eyeShape_i[j];
+            const u8 glowValue = glowImg_i[j];
+            
+            const bool somethingToDraw = (eyeValue > 0 || glowValue > 0);
+            
+            if(somethingToDraw)
+            {
+              // Combine everything together: noise, scanline, inner glow falloff, and the antialiasing / glow value.
+              // Note that the value in glowImg/eyeShape is already [0,255]
+              f32 newValue = static_cast<f32>(std::max(glowValue,eyeValue));
+              newValue *= noiseImg_i[j] * eyeLightness;
+              
+              // Darken scanlines in pairs (thus the division by 2 before modding by 2).
+              // Don't do scanlines in the glow region.
+              const bool isPartOfEye = (eyeValue >= glowValue); // (and not part of glow)
+              if(isPartOfEye && ((i/2) % 2))
+              {
+                newValue *= scanlineOpacity;
+              }
+              
+              // Put the final value into the face image
+              // Note: If we're drawing the right eye, there may already be something in the image
+              //       from when we drew the left eye (e.g. with large glow), so use max
+              Vision::PixelRGB& facePixel = faceImg_i[j];
+              facePixel.r() = drawHue;
+              facePixel.g() = drawSat;
+              facePixel.b() = std::max(facePixel.b(), Util::numeric_cast_clamped<u8>(std::round(newValue)));
+            }
+          }
+        } 
       }
     }
     
-    eyeBoundingBox = Rectangle<f32>(upperLeft, bottomRight);
-
-    // Draw eye
-    cv::fillConvexPoly(faceImg.get_CvMat_(), eyePoly, 255, 4);
-
     // Add distortion noise
     auto scanlineDistorter = faceData.GetScanlineDistorter();
     if(nullptr != scanlineDistorter)
@@ -222,28 +509,20 @@ namespace Cozmo {
       scanlineDistorter->AddOffNoise(W, eyeHeight, eyeWidth, faceImg);
     }
     
-    // Black out lids
-    if(!upperLidPoly.empty()) {
-      cv::fillConvexPoly(faceImg.get_CvMat_(), upperLidPoly, 0, 4);
-    }
-    if(!lowerLidPoly.empty()) {
-      cv::fillConvexPoly(faceImg.get_CvMat_(), lowerLidPoly, 0, 4);
-    }
-    
   } // DrawEye()
   
-  Vision::Image ProceduralFaceDrawer::DrawFace(const ProceduralFace& faceData)
+  void ProceduralFaceDrawer::DrawFace(const ProceduralFace& faceData, const Util::RandomGenerator& rng, Vision::ImageRGB& faceImg)
   {
-    Vision::Image faceImg(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
-    
-    faceImg.FillWith(0);
+    faceImg.Allocate(ProceduralFace::HEIGHT, ProceduralFace::WIDTH); // Will do nothing if already the right size
+    faceImg.FillWith(Vision::PixelRGB(0,0,0));
     
     Rectangle<f32> leftBBox, rightBBox;
-    DrawEye(faceData, WhichEye::Left,  faceImg, leftBBox);
-    DrawEye(faceData, WhichEye::Right, faceImg, rightBBox);
+    DrawEye(faceData, WhichEye::Left,  rng, faceImg, leftBBox);
+    DrawEye(faceData, WhichEye::Right, rng, faceImg, rightBBox);
     
     s32 rowMin = ProceduralFace::HEIGHT-1, rowMax = 0;
-    
+    s32 colMin = leftBBox.GetX(), colMax = rightBBox.GetXmax();
+
     // Apply whole-face params
     if(faceData.GetFaceAngle() != 0 || !(faceData.GetFacePosition() == 0) || !(faceData.GetFaceScale() == 1.f)) {
       
@@ -266,6 +545,8 @@ namespace Cozmo {
           const Point2f& warpedPoint = W * Point3f(pt.x(), pt.y(), 1.f);
           rowMin = std::min(rowMin, (s32)std::floor(warpedPoint.y()));
           rowMax = std::max(rowMax, (s32)std::ceil(warpedPoint.y()));
+          colMin = std::min(colMin, (s32)std::floor(warpedPoint.x()));
+          colMax = std::max(colMax, (s32)std::ceil(warpedPoint.x()));
         }
       }
       
@@ -281,54 +562,36 @@ namespace Cozmo {
     rowMax = Util::Clamp(rowMax, 0, ProceduralFace::HEIGHT-1);
 
     if(rowMax > rowMin)
-    {
-      // Apply interlacing / scanlines: blank out every other row between min and max
-      // NOTE: we take care to avoid tying which set of scanlines is blanked directly to the
-      //       value of rowMin. Odd or even scanlines should be blanked based entirely on
-      //       _firstScanline, and not rowMin's value, which changes all the time.
-      const bool evenScanlines = (_firstScanLine == 0);
-      const bool evenRowMin    = (rowMin % 2) == 0;
-      const s32  rowMin_off    = (evenScanlines == evenRowMin ? rowMin : rowMin + 1);
-      
-      for(s32 i=rowMin_off; i<rowMax; i+=2) {
-        memset(faceImg.GetRow(i), 0, ProceduralFace::WIDTH);
-      }
-    
-      // Distort the scanlines (only those that are actually "on")
+    {   
+      // Distort the scanlines
       auto scanlineDistorter = faceData.GetScanlineDistorter();
       if(nullptr != scanlineDistorter)
       {
         const f32 scale = 1.f / (rowMax - rowMin);
-        
-        // Only bother distorting rows that are actually "on" (i.e. the ones that
-        // have not been blacked out by the artificial interlacing above). So we
-        // just distort every other row and if the first row is even (or odd) and
-        // the first scanline is also even (or odd), then we need to start one
-        // further down.
-        const s32 rowMin_on  = (evenScanlines == evenRowMin ? rowMin + 1 : rowMin);
-        
-        for(s32 row=rowMin_on; row < rowMax; row+=2)
+        for(s32 row=rowMin; row < rowMax; ++row)
         {
           const f32 eyeFrac = (row - rowMin) * scale;
-          const s32 shift = scanlineDistorter->GetEyeDistortionAmount(eyeFrac);
+          const s32 shift = scanlineDistorter->GetEyeDistortionAmount(eyeFrac) * sizeof(Vision::PixelRGB);
           
           if(shift < 0)
           {
-            u8* faceImg_row = faceImg.GetRow(row);
+            Vision::PixelRGB* faceImg_row = faceImg.GetRow(row);
             memmove(faceImg_row, faceImg_row-shift, ProceduralFace::WIDTH+shift);
             memset(faceImg_row+ProceduralFace::WIDTH+shift, 0, -shift);
           }
           else if(shift > 0)
           {
-            u8* faceImg_row = faceImg.GetRow(row);
+            Vision::PixelRGB* faceImg_row = faceImg.GetRow(row);
             memmove(faceImg_row+shift, faceImg_row, ProceduralFace::WIDTH-shift);
             memset(faceImg_row, 0, shift);
           }
         }
       }
+      
+      Rectangle<s32> eyesROI(colMin, rowMin, colMax-colMin+1, rowMax-rowMin+1);
+      cv::cvtColor(faceImg.GetROI(eyesROI).get_CvMat_(), faceImg.GetROI(eyesROI).get_CvMat_(), CV_HSV2RGB);
     }
     
-    return faceImg;
   } // DrawFace()
 
   bool ProceduralFaceDrawer::GetNextBlinkFrame(ProceduralFace& faceData, TimeStamp_t& offset)
@@ -384,22 +647,20 @@ namespace Cozmo {
       
       for(auto whichEye : {WhichEye::Left, WhichEye::Right}) {
         faceData.SetParameter(whichEye, Parameter::EyeScaleX,
-                     originalFace.GetParameter(whichEye, Parameter::EyeScaleX) * paramIter->width);
+                              originalFace.GetParameter(whichEye, Parameter::EyeScaleX) * paramIter->width);
         faceData.SetParameter(whichEye, Parameter::EyeScaleY,
-                     originalFace.GetParameter(whichEye, Parameter::EyeScaleY) * paramIter->height);
+                              originalFace.GetParameter(whichEye, Parameter::EyeScaleY) * paramIter->height);
       }
       offset = paramIter->t;
       
       switch(paramIter->blinkState)
       {
         case BlinkState::Closed:
-        {
-          SwitchInterlacing();
-          
+        {          
           // In case eyes are at different height, get the average height so the
           // blink line when completely closed is nice and horizontal
           const ProceduralFace::Value blinkHeight = (originalFace.GetParameter(WhichEye::Left,  Parameter::EyeCenterY) +
-                                     originalFace.GetParameter(WhichEye::Right, Parameter::EyeCenterY))/2;
+                                                     originalFace.GetParameter(WhichEye::Right, Parameter::EyeCenterY))/2;
           
           // Zero out the lids so they don't interfere with the "closed" line
           for(auto whichEye : {WhichEye::Left, WhichEye::Right}) {
@@ -415,7 +676,7 @@ namespace Cozmo {
           // Restore eye heights and lids
           for(auto whichEye : {WhichEye::Left, WhichEye::Right}) {
             faceData.SetParameter(whichEye, Parameter::EyeCenterY,
-                         originalFace.GetParameter(whichEye, Parameter::EyeCenterY));
+                                  originalFace.GetParameter(whichEye, Parameter::EyeCenterY));
             for(auto lidParam : lidParams) {
               faceData.SetParameter(whichEye, lidParam, originalFace.GetParameter(whichEye, lidParam));
             }

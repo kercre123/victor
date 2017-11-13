@@ -27,7 +27,7 @@
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/poseStructs.clad"
-#include "clad/types/proceduralEyeParameters.clad"
+#include "clad/types/proceduralFaceTypes.clad"
 #include "clad/types/behaviorComponent/reactionTriggers.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/sayTextStyles.clad"
@@ -536,6 +536,16 @@ message SetMemoryMapBroadcastFrequency_sec {
 // Behavior Commands
 ///////////////////////////////////////////////////////////////////////////////
 
+// Allows game to fake trigger word detection to the behavior component
+message FakeTriggerWordDetected
+{
+}
+
+// Allows Game to fake an intent coming from the cloud
+message FakeCloudIntent{
+  string intent
+}
+
 // ActivateHighLevelActivity
 message ActivateHighLevelActivity {
   HighLevelActivity activityType
@@ -768,6 +778,19 @@ message RemoveDrivingAnimations {
   string lockName
 }
 
+// DisplayProceduralFace
+message DisplayProceduralFace 
+{
+    ProceduralFaceParameters  faceParams,
+    uint_32                   duration_ms,     // Use uint_32 max value to keep the image on the screen (still subject to scanline switching)
+    bool                      interruptRunning
+}
+
+// SetFaceHue
+message SetFaceHue
+{
+    float_32 hue // [0,1]
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Robot / Cube LED Controls

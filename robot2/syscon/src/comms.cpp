@@ -205,7 +205,9 @@ void Comms::tick(void) {
     Analog::transmit(&outboundPacket.sync.payload);
     Motors::transmit(&outboundPacket.sync.payload);
     Opto::transmit(&outboundPacket.sync.payload);
+#if MICDATA_ENABLED
     Mics::transmit(outboundPacket.sync.payload.audio);
+#endif
     Touch::transmit(outboundPacket.sync.payload.touchLevel);
 
     outboundPacket.sync.payload.framecounter++;

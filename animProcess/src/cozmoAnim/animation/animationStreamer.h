@@ -82,6 +82,8 @@ namespace Cozmo {
                                  u32 numLoops = 1,
                                  bool interruptRunning = true);
     
+    Result SetProceduralFace(const ProceduralFace& face, u32 duration_ms);
+    
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update();
     
@@ -138,7 +140,6 @@ namespace Cozmo {
     // random face displayed (stream last face keyframe)
     void Abort();
     
-    
     void StopTracks(const u8 whichTracks);
     
     void StopTracksInUse() {
@@ -158,6 +159,7 @@ namespace Cozmo {
     
     Animation*  _streamingAnimation = nullptr;
     Animation*  _neutralFaceAnimation = nullptr;
+    Animation*  _proceduralAnimation = nullptr; // for creating animations "live" or dynamically
 
     std::string _lastPlayedAnimationId;
 
@@ -238,12 +240,14 @@ namespace Cozmo {
 
     // Image and buffer for face drawing
     Vision::ImageRGB _faceImg;
-    cv::Mat _img565;
+    Array2d<u16>     _faceImg565;
 
-#ifdef DRAW_FACE_IN_THREAD    
+#ifdef DRAW_FACE_IN_THREAD
     std::future<void> _faceDrawFuture;
     double            _lastDrawTime_ms = 0;
 #endif    
+      
+    std::array<u8, 256> _gammaLUT;
 
   }; // class AnimationStreamer
   

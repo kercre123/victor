@@ -19,12 +19,15 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
+#include "engine/aiComponent/behaviorComponent/anonymousBehaviorFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyCloudIntentPending.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
@@ -42,6 +45,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "clad/types/behaviorComponent/cloudIntents.h"
 
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
@@ -67,7 +71,13 @@ static const char* kSparkedBehaviorDisableLock       = "SparkBehaviorDisables";
 static const char* kSmartReactionLockSuffix          = "_behaviorLock";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 static const char* kWantsToRunStrategyConfigKey      = "wantsToRunStrategyConfig";
+static const char* kRespondToCloudIntentKey          = "respondToCloudIntent";
 static const std::string kIdleLockPrefix             = "Behavior_";
+
+// Keys for loading in anonymous behaviors
+static const char* kAnonymousBehaviorMapKey          = "anonymousBehaviors";
+static const char* kAnonymousBehaviorName            = "behaviorName";
+static const char* kAnonymousBehaviorParams          = "params";
 
 
 static const int kMaxResumesFromCliff                = 2;
@@ -141,7 +151,28 @@ Json::Value ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass behaviorCl
   return config;
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::InjectBehaviorClassAndIDIntoConfig(BehaviorClass behaviorClass, BehaviorID behaviorID, Json::Value& config)
+{
+  if(config.isMember(kBehaviorIDConfigKey)){
+    PRINT_NAMED_WARNING("ICozmoBehavior.InjectBehaviorIDIntoConfig.BehaviorIDAlreadyExists",
+                        "Overwriting behaviorID %s with behaviorID %s",
+                        config[kBehaviorIDConfigKey].asString().c_str(),
+                        BehaviorIDToString(behaviorID));
+  }
+  if(config.isMember(kBehaviorClassKey)){
+    PRINT_NAMED_WARNING("ICozmoBehavior.InjectBehaviorIDIntoConfig.BehaviorClassAlreadyExists",
+                        "Overwriting behaviorClass %s with behaviorClass %s",
+                        config[kBehaviorClassKey].asString().c_str(),
+                        BehaviorClassToString(behaviorClass));
+  }
+
+  config[kBehaviorIDConfigKey] = BehaviorIDToString(behaviorID);  
+  config[kBehaviorClassKey] = BehaviorClassToString(behaviorClass);
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorID ICozmoBehavior::ExtractBehaviorIDFromConfig(const Json::Value& config,
                                                   const std::string& fileName)
@@ -198,12 +229,12 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 , _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _lastRunTime_s(0.0f)
 , _activatedTime_s(0.0f)
-, _stateConceptStrategy(nullptr)
 , _id(ExtractBehaviorIDFromConfig(config))
 , _idString(BehaviorIDToString(_id))
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
 , _needsActionID(ExtractNeedsActionIDFromConfig(config))
 , _executableType(ExecutableBehaviorType::Count)
+, _respondToCloudIntent(CloudIntent::Count)
 , _requiredUnlockId( UnlockId::Count )
 , _requiredSevereNeed( NeedId::Count )
 , _requiredRecentDriveOffCharger_sec(-1.0f)
@@ -288,10 +319,16 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   if(config.isMember(kWantsToRunStrategyConfigKey)){
     _wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
   }
-  
-  // Doesn't actually read anything from behavior config, but sets defaults
-  // for certain scoring metrics in case no score json is loaded
-  return ReadFromScoredJson(config, false);
+
+  if(config.isMember(kAnonymousBehaviorMapKey)){
+    _anonymousBehaviorMapConfig = config[kAnonymousBehaviorMapKey];
+  }    
+    
+  if(config.isMember(kRespondToCloudIntentKey)){
+    _respondToCloudIntent = CloudIntentFromString(config[kRespondToCloudIntentKey].asCString());
+  }
+
+  return true;
 }
   
   
@@ -314,26 +351,71 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
   assert(_behaviorExternalInterface);
   assert(_robot);
   
-  if(_wantsToRunConfig.size() > 0){
-    _stateConceptStrategy.reset(StateConceptStrategyFactory::CreateStateConceptStrategy(behaviorExternalInterface,
-                                                                                  _robot->HasExternalInterface() ? _robot->GetExternalInterface() : nullptr,
-                                                                                  _wantsToRunConfig));
-    _wantsToRunConfig.clear();
+  {
+    auto externalInterface = _robot->HasExternalInterface() ? _robot->GetExternalInterface() : nullptr;
+    
+    if(_wantsToRunConfig.size() > 0){
+      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(
+                                                  behaviorExternalInterface,
+                                                  externalInterface,
+                                                  _wantsToRunConfig));
+      _stateConceptStrategies.push_back(std::move(strategy));
+      _wantsToRunConfig.clear();
+    }
+
+    if(_respondToCloudIntent != CloudIntent::Count){
+      Json::Value config = StrategyCloudIntentPending::GenerateCloudIntentPendingConfig(_respondToCloudIntent);
+      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(
+                                                  behaviorExternalInterface,
+                                                  externalInterface,
+                                                  config));
+      _stateConceptStrategies.push_back(std::move(strategy));
+    }
+
   }
+
+  if(!_anonymousBehaviorMapConfig.empty()){
+    AnonymousBehaviorFactory factory(behaviorExternalInterface.GetBehaviorContainer()); 
+    for(auto& entry: _anonymousBehaviorMapConfig){
+      const std::string debugStr = "ICozmoBehavior.ReadFromJson.";
+      
+      const std::string behaviorName = JsonTools::ParseString(entry, kAnonymousBehaviorName, debugStr + "BehaviorNameMissing");      
+      const BehaviorClass behaviorClass = BehaviorClassFromString(
+        JsonTools::ParseString(entry, kBehaviorClassKey, debugStr + "BehaviorClassMissing"));
+      Json::Value params;
+      if(entry.isMember(kAnonymousBehaviorParams)){
+        params = entry[kAnonymousBehaviorParams];
+      }
+
+      // check for duplicate behavior names since maps require a unique key
+      auto it = _anonymousBehaviorMap.find(behaviorName);
+      if(it == _anonymousBehaviorMap.end()){
+        auto resultPair = _anonymousBehaviorMap.insert(std::make_pair(behaviorName,
+                                                       factory.CreateBehavior(behaviorClass, params)));
+
+        DEV_ASSERT_MSG(resultPair.first->second != nullptr, "ICozmoBehavior.InitInternal.FailedToAllocateAnonymousBehavior",
+                       "Failed to allocate new anonymous behavior (%s) within behavior %s",
+                       behaviorName.c_str(),
+                       GetIDStr().c_str());
+
+        // we need to initlaize the anon behaviors as well
+        resultPair.first->second->Init(behaviorExternalInterface);
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("ICozmoBehavior.InitInternal.DuplicateAnonymousBehaviorName",
+                          "Duplicate anonymous behavior name (%s) found for behavior '%s'",
+                          behaviorName.c_str(),
+                          GetIDStr().c_str());
+      }
+    }
+  }
+
 
   // Allow internal init to happen before subscribing to tags in case additional
   // tags are added
-  ScoredInit(behaviorExternalInterface);
   InitBehavior(behaviorExternalInterface);
-  
-  
-  SubscribeToTag(EngineToGameTag::BehaviorObjectiveAchieved,
-                    [this](const EngineToGameEvent& event) {
-                      DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::BehaviorObjectiveAchieved,
-                                 "ICozmoBehavior.BehaviorObjectiveAchieved.WrongEventTypeFromCallback");
-                      HandleBehaviorObjective(event.GetData().Get_BehaviorObjectiveAchieved());
-                    }
-                 );
+
   ///////
   //// Subscribe to tags
   ///////
@@ -473,8 +555,12 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
     SmartDisableReactionsWithLock(kSparkedBehaviorDisableLock, kSparkBehaviorDisablesArray);
   }
   
-  ActivatedScored();
-  
+  // Clear cloud intent if responding to it
+  if(_respondToCloudIntent != CloudIntent::Count){
+    behaviorExternalInterface.GetAIComponent().GetBehaviorComponent().
+                 GetCloudReceiver().ClearIntentIfPending(_respondToCloudIntent);
+  }
+
   return initResult;
 }
 
@@ -808,12 +894,13 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
     }
   }
   
-  if((_stateConceptStrategy != nullptr) &&
-     !_stateConceptStrategy->AreStateConditionsMet(behaviorExternalInterface)){
-    return false;
+  for(auto& strategy: _stateConceptStrategies){
+    if(!strategy->AreStateConditionsMet(behaviorExternalInterface)){
+      return false;
+    }
   }
      
-  return WantsToBeActivatedScored();
+  return true;
 }
 
 
@@ -958,9 +1045,7 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
 
   _actionCallback = callback;
   _lastActionTag = action->GetTag();
-  
-  ScoredActingStateChanged(true);
-  
+    
   return delegateWrapper.Delegate(this,
                                   action);
 }
@@ -1063,11 +1148,24 @@ bool ICozmoBehavior::DelegateNow(BehaviorExternalInterface& behaviorExternalInte
   
   return false;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ICozmoBehaviorPtr ICozmoBehavior::FindAnonymousBehaviorByName(const std::string& behaviorName) const
+{
+  ICozmoBehaviorPtr foundBehavior = nullptr;
+
+  auto it = _anonymousBehaviorMap.find(behaviorName);
+  if (it != _anonymousBehaviorMap.end())
+  {
+    foundBehavior = it->second;
+  }
+
+  return foundBehavior;
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg)
 {
-  ScoredActingStateChanged(false);
   if( _actionCallback ) {
 
     // Note that the callback may itself call DelegateIfInControl and set _actionCallback. Because of that, we create
@@ -1083,8 +1181,6 @@ void ICozmoBehavior::HandleActionComplete(const ExternalInterface::RobotComplete
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::CancelDelegates(bool allowCallback, bool allowHelperToContinue)
 {
-  ScoredActingStateChanged(false);
-
   if( !allowHelperToContinue ) {
     // stop the helper first. This is generally what we want, because if someone else is stopping an action,
     // the helper likely won't know how to respond. Note that helpers can't call StopActing
@@ -1440,299 +1536,11 @@ ActionResult ICozmoBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* 
   return ActionResult::SUCCESS;
 }
 
-
-////////
-//// Scored Behavior functions
-///////
-namespace {
-  static const char* kEmotionScorersKey            = "emotionScorers";
-  static const char* kFlatScoreKey                 = "flatScore";
-  static const char* kRepetitionPenaltyKey         = "repetitionPenalty";
-  static const char* kRunningPenaltyKey            = "runningPenalty";
-  static const char* kCooldownOnObjectiveKey       = "considerThisHasRunForBehaviorObjective";
-  static const constexpr float kDisableRepetitionPenaltyOnStop_s = 1.f;
-}
-  
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::StopWithoutImmediateRepetitionPenalty(BehaviorExternalInterface& behaviorExternalInterface)
+std::string ICozmoBehavior::GetClassString(BehaviorClass behaviorClass) const
 {
-  OnDeactivated(behaviorExternalInterface);
-  _nextTimeRepetitionPenaltyApplies_s  = kDisableRepetitionPenaltyOnStop_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  return BehaviorClassToString(behaviorClass);
 }
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// EvaluateScoreInternal is virtual and can optionally be overridden by subclasses
-float ICozmoBehavior::EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
-  float score = _flatScore;
-  if ( !_moodScorer.IsEmpty()  &&
-      behaviorExternalInterface.HasMoodManager()) {
-    auto& moodManager = behaviorExternalInterface.GetMoodManager();
-    score = _moodScorer.EvaluateEmotionScore(moodManager);
-  }
-  return score;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// EvaluateActivatedScoreInternal is virtual and can optionally be overridden by subclasses
-float ICozmoBehavior::EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
-  // unless specifically overridden it should mimic the non-running score
-  const float nonRunningScore = EvaluateScoreInternal(behaviorExternalInterface);
-  return nonRunningScore;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float ICozmoBehavior::EvaluateRepetitionPenalty() const
-{
-  if (_lastRunTime_s > 0.0f)
-  {
-    const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const float timeSinceRun = currentTime_sec - _lastRunTime_s;
-    const float repetitionPenalty = _repetitionPenalty.EvaluateY(timeSinceRun);
-    return repetitionPenalty;
-  }
-  
-  return 1.0f;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float ICozmoBehavior::EvaluateActivatedPenalty() const
-{
-  if (_activatedTime_s > 0.0f)
-  {
-    const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const float timeSinceStarted = currentTime_sec - _activatedTime_s;
-    const float runningPenalty = _activatedPenalty.EvaluateY(timeSinceStarted);
-    return runningPenalty;
-  }
-  
-  return 1.0f;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float ICozmoBehavior::EvaluateScore(BehaviorExternalInterface& behaviorExternalInterface) const
-{
-#if ANKI_DEV_CHEATS
-  DEV_ASSERT_MSG(!_scoringValuesCached.isNull(),
-                 "ICozmoBehavior.EvaluateScore.ScoreNotSet",
-                 "No score was loaded in for behavior name %s",
-                 GetIDStr().c_str());
-#endif
-  if (IsActivated() || WantsToBeActivated(behaviorExternalInterface))
-  {
-    const bool isRunning = IsActivated();
-    
-    float score = 0.0f;
-    
-    if (isRunning)
-    {
-      score = EvaluateActivatedScoreInternal(behaviorExternalInterface) + _extraActivatedScore;
-    }
-    else
-    {
-      score = EvaluateScoreInternal(behaviorExternalInterface);
-    }
-    
-    // use running penalty while running, repetition penalty otherwise
-    if (_enableActivatedPenalty && isRunning)
-    {
-      const float runningPenalty = EvaluateActivatedPenalty();
-      score *= runningPenalty;
-    }
-
-    
-    if (_enableRepetitionPenalty && !isRunning)
-    {
-      const bool shouldIgnorePenaltyThisTick = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() < _nextTimeRepetitionPenaltyApplies_s;
-      if(!shouldIgnorePenaltyThisTick){
-        const float repetitionPenalty = EvaluateRepetitionPenalty();
-        score *= repetitionPenalty;
-      }
-    }
-    
-    return score;
-  }
-  
-  return 0.0f;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::HandleBehaviorObjective(const ExternalInterface::BehaviorObjectiveAchieved& msg)
-{
-  if( _cooldownOnObjective != BehaviorObjective::Count && msg.behaviorObjective == _cooldownOnObjective ) {
-    // set last run time now (even though this behavior may not have run) so that it will incur repetition
-    // penalty as if it had run. This is useful as a way to sort of "share" cooldowns between multiple
-    // behaviors which are trying to do the same thing (but only if they succeed)
-    _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::IncreaseScoreWhileControlDelegated(float extraScore)
-{
-  if( IsControlDelegated() ) {
-    _extraActivatedScore += extraScore;
-  }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::ReadFromScoredJson(const Json::Value& config, const bool fromScoredChooser)
-{
-  
-  #if ANKI_DEV_CHEATS
-    if(_scoringValuesCached.isNull() && fromScoredChooser){
-      _scoringValuesCached = config;
-    }else if(fromScoredChooser){
-      DEV_ASSERT_MSG(_scoringValuesCached == config,
-                     "ICozmoBehavior.ReadFromScoredJson.Scoring config Mismatch",
-                     "Behavior named %s has two differenc scoring configs",
-                     GetIDStr().c_str());
-      // we've already loaded in scores, don't need to do it again
-      return true;
-    }
-  #endif
-  
-  // - - - - - - - - - -
-  // Mood scorer
-  // - - - - - - - - - -
-  _moodScorer.ClearEmotionScorers();
-  
-  const Json::Value& emotionScorersJson = config[kEmotionScorersKey];
-  if (!emotionScorersJson.isNull())
-  {
-    _moodScorer.ReadFromJson(emotionScorersJson);
-  }
-  
-  // - - - - - - - - - -
-  // Flat score
-  // - - - - - - - - - -
-  
-  const Json::Value& flatScoreJson = config[kFlatScoreKey];
-  if (!flatScoreJson.isNull()) {
-    _flatScore = flatScoreJson.asFloat();
-  }
-  
-  // make sure we only set one scorer (flat or mood)
-  DEV_ASSERT( flatScoreJson.isNull() || _moodScorer.IsEmpty(), "ICozmoBehavior.ReadFromJson.MultipleScorers" );
-  
-  // - - - - - - - - - -
-  // Repetition penalty
-  // - - - - - - - - - -
-  
-  _repetitionPenalty.Clear();
-  
-  const Json::Value& repetitionPenaltyJson = config[kRepetitionPenaltyKey];
-  if (!repetitionPenaltyJson.isNull())
-  {
-    if (!_repetitionPenalty.ReadFromJson(repetitionPenaltyJson))
-    {
-      PRINT_NAMED_WARNING("IScoredBehavior.BadRepetitionPenalty",
-                          "Behavior '%s': %s failed to read",
-                          GetIDStr().c_str(),
-                          kRepetitionPenaltyKey);
-    }
-  }
-  
-  
-  // Ensure there is a valid graph
-  if (_repetitionPenalty.GetNumNodes() == 0)
-  {
-    _repetitionPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
-  }
-  
-  // - - - - - - - - - -
-  // cooldown on other objective
-  // - - - - - - - - - -
-  
-  const Json::Value& cooldownOnObjectiveJson = config[kCooldownOnObjectiveKey];
-  if (!cooldownOnObjectiveJson.isNull()) {
-    const char* objectiveStr = cooldownOnObjectiveJson.asCString();
-    _cooldownOnObjective = BehaviorObjectiveFromString(objectiveStr);
-    if( _cooldownOnObjective == BehaviorObjective::Count ) {
-      PRINT_NAMED_WARNING("IScoredBehavior.BadBehaviorObjective",
-                          "could not convert '%s' to valid behavior objective",
-                          objectiveStr);
-    }
-  }
-  
-  
-  // - - - - - - - - - -
-  // Running penalty
-  // - - - - - - - - - -
-  
-  _activatedPenalty.Clear();
-  
-  const Json::Value& runningPenaltyJson = config[kRunningPenaltyKey];
-  if (!runningPenaltyJson.isNull())
-  {
-    if (!_activatedPenalty.ReadFromJson(runningPenaltyJson))
-    {
-      PRINT_NAMED_WARNING("ICozmoBehavior.BadRunningPenalty",
-                          "Behavior '%s': %s failed to read",
-                          GetIDStr().c_str(),
-                          kRunningPenaltyKey);
-    }
-  }
-  
-  // Ensure there is a valid graph
-  if (_activatedPenalty.GetNumNodes() == 0)
-  {
-    _activatedPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
-  }
-  return true;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::ScoredActingStateChanged(bool isActing)
-{
-  _extraActivatedScore = 0.0f;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::ScoredInit(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  SubscribeToTag(EngineToGameTag::BehaviorObjectiveAchieved,
-                 [this](const EngineToGameEvent& event) {
-                   DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::BehaviorObjectiveAchieved,
-                              "ICozmoBehavior.ScoredConstructor.WrongEventTypeFromCallback");
-                   HandleBehaviorObjective(event.GetData().Get_BehaviorObjectiveAchieved());
-                 });
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::ActivatedScored()
-{
-  _timesResumedFromPossibleInfiniteLoop = 0;
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::WantsToBeActivatedScored() const
-{
-  // Currently we only resume from scored behaviors, which is why we have this
-  // logic separated out
-  const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  // check to see if we're on a cliff cooldown
-  if(curTime < _timeCanRunAfterPossibleInfiniteLoopCooldown_sec){
-    return false;
-  }
-  
-  return true;
-}
-
 
   
 } // namespace Cozmo

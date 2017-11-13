@@ -1,0 +1,11 @@
+{
+  "behaviorID" : "VictorDemoPlayState",
+  "behaviorClass" : "DispatcherQueue",
+
+  "behaviors" : [
+    "DriveOffCharger",
+    "ShortLookAroundForFaceAndCube",
+    "VictorDemoPlay",
+    "PutDownBlock"
+  ]
+}

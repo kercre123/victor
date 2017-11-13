@@ -25,7 +25,10 @@
 
 #define DEBUG_STEERING_CONTROLLER 0
 
-#define INVALID_IDEAL_FOLLOW_LINE_IDX s16_MAX
+#define s16_MIN std::numeric_limits<s16>::min()
+#define s16_MAX std::numeric_limits<s16>::max()
+
+#define INVALID_IDEAL_FOLLOW_LINE_IDX std::numeric_limits<s16>::max()
 
 namespace Anki {
   namespace Cozmo {

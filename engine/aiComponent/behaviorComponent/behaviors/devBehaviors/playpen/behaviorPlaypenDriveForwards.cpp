@@ -36,7 +36,6 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal(BehaviorExterna
   Robot& robot = behaviorExternalInterface.GetRobot();
 
   // Clear and pause cliff sensor component so it doesn't try to update the cliff thresholds
-  robot.GetCliffSensorComponent().ClearCliffRunningStats();
   robot.GetCliffSensorComponent().SetPause(true);
 
   // Record mics while driving forwards for at least how long it should take to complete the 3 drives
@@ -191,11 +190,13 @@ void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffUndetected(Beh
         PLAYPEN_SET_RESULT(FactoryTestResultCode::BACK_CLIFFS_NOT_UNDETECTED);
       }
       
+      const auto& cliffData = robot.GetCliffSensorComponent().GetCliffDataRaw();
+
       // All cliff sensors should be on the ground so record their values
-      const CliffSensorValues cliffVals(robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_FR),
-                                        robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_FL),
-                                        robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BR),
-                                        robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BL));
+      const CliffSensorValues cliffVals(cliffData[(u16)CliffSensor::CLIFF_FR],
+                                        cliffData[(u16)CliffSensor::CLIFF_FL],
+                                        cliffData[(u16)CliffSensor::CLIFF_BR],
+                                        cliffData[(u16)CliffSensor::CLIFF_BL]);
       PLAYPEN_TRY(GetLogger().AppendCliffValuesOnGround(cliffVals), FactoryTestResultCode::WRITE_TO_LOG_FAILED);
       
       PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS);
@@ -215,14 +216,16 @@ void BehaviorPlaypenDriveForwards::HandleWhileActivatedInternal(const EngineToGa
     const auto& payload = event.GetData().Get_CliffEvent();
     
     const bool cliffDetected = (payload.detectedFlags != 0);
+
+    const auto& cliffData = robot.GetCliffSensorComponent().GetCliffDataRaw();
     
     PRINT_NAMED_INFO("BehaviorPlaypenDriveForwards.CliffEvent",
                      "CliffDetected?: %d, FR: %u, FL: %u, BR: %u, BL: %u",
                      cliffDetected,
-                     robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_FR),
-                     robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_FL),
-                     robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BR),
-                     robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BL));
+                     cliffData[(u16)CliffSensor::CLIFF_FR],
+                     cliffData[(u16)CliffSensor::CLIFF_FL],
+                     cliffData[(u16)CliffSensor::CLIFF_BR],
+                     cliffData[(u16)CliffSensor::CLIFF_BL]);
     
     const uint8_t FL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FL));
     const uint8_t FR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FR));
@@ -260,10 +263,10 @@ void BehaviorPlaypenDriveForwards::HandleWhileActivatedInternal(const EngineToGa
         }
         
         // Record all cliff sensor values when seeing just the front cliffs
-        const CliffSensorValues cliffVals(robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_FR),
-                                          robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_FL),
-                                          robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BR),
-                                          robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BL));
+        const CliffSensorValues cliffVals(cliffData[(u16)CliffSensor::CLIFF_FR],
+                                          cliffData[(u16)CliffSensor::CLIFF_FL],
+                                          cliffData[(u16)CliffSensor::CLIFF_BR],
+                                          cliffData[(u16)CliffSensor::CLIFF_BL]);
         
         PLAYPEN_TRY(GetLogger().AppendCliffValuesOnFrontDrop(cliffVals),
                     FactoryTestResultCode::WRITE_TO_LOG_FAILED);
@@ -309,10 +312,10 @@ void BehaviorPlaypenDriveForwards::HandleWhileActivatedInternal(const EngineToGa
         }
         
         // Record all cliff sensor values when just seeing the back cliffs
-        const CliffSensorValues cliffVals(robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_FR),
-                                          robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_FL),
-                                          robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BR),
-                                          robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BL));
+        const CliffSensorValues cliffVals(cliffData[(u16)CliffSensor::CLIFF_FR],
+                                          cliffData[(u16)CliffSensor::CLIFF_FL],
+                                          cliffData[(u16)CliffSensor::CLIFF_BR],
+                                          cliffData[(u16)CliffSensor::CLIFF_BL]);
         
         PLAYPEN_TRY(GetLogger().AppendCliffValuesOnBackDrop(cliffVals),
                     FactoryTestResultCode::WRITE_TO_LOG_FAILED);

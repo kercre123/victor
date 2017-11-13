@@ -161,7 +161,7 @@ EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& sta
     // if we need to drive straight, then apply the previous turn (if there was one) first
     if( deltaTheta.getAbsoluteVal().ToFloat() > MINIMAL_ANGLE_PLANNER_THETA_THRESHOLD ) {
   
-      _path.AppendPointTurn(curr.GetX(), curr.GetY(), turn0Angle.ToFloat(),
+      _path.AppendPointTurn(curr.GetX(), curr.GetY(), curr.GetAngle().ToFloat(), turn0Angle.ToFloat(),
                             deltaTheta < 0 ?
                             -MINIMAL_ANGLE_PLANNER_TARGET_ROT_SPEED
                             : MINIMAL_ANGLE_PLANNER_TARGET_ROT_SPEED,
@@ -193,7 +193,7 @@ EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& sta
   // last but not least, face the correct goal angle
   deltaTheta = _finalTargetAngle - curr.GetAngle();
   if( deltaTheta.getAbsoluteVal().ToFloat() > MINIMAL_ANGLE_PLANNER_THETA_THRESHOLD ) {
-    _path.AppendPointTurn(curr.GetX(), curr.GetY(), _finalTargetAngle.ToFloat(),
+    _path.AppendPointTurn(curr.GetX(), curr.GetY(), curr.GetAngle().ToFloat(), _finalTargetAngle.ToFloat(),
                           deltaTheta < 0 ?
                           -MINIMAL_ANGLE_PLANNER_TARGET_ROT_SPEED
                           : MINIMAL_ANGLE_PLANNER_TARGET_ROT_SPEED,

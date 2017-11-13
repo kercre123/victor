@@ -33,12 +33,14 @@
 #include <cmath>
 #include <thread>
 
-#if THF_FUNCTIONALITY
-
 namespace Anki {
 namespace Cozmo {
 namespace VoiceCommand {
+  
+// forward-declared unique-pointers demand this
+VoiceCommandTuning::~VoiceCommandTuning() = default;
 
+#if THF_FUNCTIONALITY
 VoiceCommandTuning::VoiceCommandTuning(const Util::Data::DataPlatform& dataPlatform,
                                        const CommandPhraseData& commandPhraseData,
                                        Anki::Util::Locale locale,
@@ -85,9 +87,6 @@ VoiceCommandTuning::VoiceCommandTuning(const Util::Data::DataPlatform& dataPlatf
   _baseScoreData._falsePositiveMult = -10.0f;
   _baseScoreData._targetScoreDiffMult = -0.001f;
 }
-
-// forward-declared unique-pointers demand this
-VoiceCommandTuning::~VoiceCommandTuning() = default;
 
 bool VoiceCommandTuning::CalculateParamsForCommand(const std::set<VoiceCommandType>& testCommandSet,
                                                    VoiceCommandType commandType, int& out_paramA, int& out_paramB) const
@@ -330,6 +329,30 @@ TestResultScoreData VoiceCommandTuning::ScoreTriggerAndCommand(const ContextConf
   return scoreData;
 }
   
+#else
+
+VoiceCommandTuning::VoiceCommandTuning(const Util::Data::DataPlatform& dataPlatform,
+                                       const CommandPhraseData& commandPhraseData,
+                                       Anki::Util::Locale locale,
+                                       const std::string& sampleGroupDir)
+: _contextDataMap(commandPhraseData.GetContextData())
+, _languagePhraseData(commandPhraseData.GetLanguagePhraseData(locale.GetLanguage()))
+{}
+
+TestResultScoreData VoiceCommandTuning::ScoreParams(const std::set<VoiceCommandType>& testCommandSet, bool playAudio) const
+{
+  return TestResultScoreData();
+}
+
+TestResultScoreData VoiceCommandTuning::ScoreTriggerAndCommand(const ContextConfig& commandListConfig,
+                                                               bool playAudio,
+                                                               ContextConfigSharedPtr& out_CombinedConfig) const
+{
+  return TestResultScoreData();
+}
+
+#endif // THF_FUNCTIONALITY
+
 TestResultScoreData VoiceCommandTuning::CollectResults(const std::set<VoiceCommandType>& testCommandSet, bool playAudio, ResetTask resetTask) const
 {
   // Load up the test data
@@ -535,5 +558,3 @@ double VoiceCommandTuning::FindBestBruteForce(std::function<double(double)> func
 } // namespace VoiceCommand
 } // namespace Cozmo
 } // namespace Anki
-
-#endif // THF_FUNCTIONALITY

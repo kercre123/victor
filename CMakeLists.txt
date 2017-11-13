@@ -83,9 +83,10 @@ set(ANKI_SRCLIST_DIR "${CMAKE_SOURCE_DIR}/generated/cmake")
 #    message(FATAL_ERROR "breakpad_client not defined")
 #endif()
 
+
 import(clad "tools/message-buffers")
 import(util "lib/util")
-import(audio "lib/audio")
+include(audio) # See ./cmake/audio.cmake for definitions and lib
 import(ble_cozmo "lib/BLECozmo")
 import(DAS "lib/das-client")
 

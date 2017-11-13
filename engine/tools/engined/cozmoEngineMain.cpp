@@ -30,7 +30,6 @@
 #endif
 
 #include <string>
-#include <android/log.h>
 #include <getopt.h>
 #include <libgen.h>
 #include <limits.h>

@@ -536,7 +536,7 @@ namespace Anki {
 
 
         // Compute new pose based on encoders and gyros, but only if there was any motion.
-        movement = (!FLT_NEAR(rDist, 0) || !FLT_NEAR(lDist,0));
+        movement = (!FLT_NEAR(rDist, 0.f) || !FLT_NEAR(lDist,0.f));
         if (movement ) {
 #if(DEBUG_LOCALIZATION)
           PRINT("\ncurrWheelPos (%f, %f)   prevWheelPos (%f, %f)\n",
@@ -567,7 +567,7 @@ namespace Anki {
             cTheta = 0;
             cDist = lDist;
           } else {
-            if (FLT_NEAR(lDist,0)) {
+            if (FLT_NEAR(lDist,0.f)) {
               lRadius = 0;
             } else {
               lRadius = WHEEL_DIST_MM / (rDist / lDist - 1);

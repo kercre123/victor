@@ -1,8 +1,7 @@
 #ifndef PATH_FOLLOWER_H_
 #define PATH_FOLLOWER_H_
 
-#include "anki/types.h"
-#include "path.h"
+#include "anki/planning/shared/path.h"
 
 namespace Anki
 {
@@ -30,6 +29,7 @@ namespace Anki
                                  f32 targetSpeed, f32 accel, f32 decel);
       
       bool AppendPathSegment_PointTurn(f32 x_mm, f32 y_mm,
+                                       f32 startAngle, 
                                        f32 targetAngle,
                                        f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
                                        f32 angleTolerance,

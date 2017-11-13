@@ -50,8 +50,6 @@ if (ANDROID)
         android
         log
         GLESv2
-        mediandk
-        camera2ndk
         proto_camera)
 elseif (MACOSX)
     include(webots)
@@ -79,7 +77,6 @@ android_strip(TARGET androidHAL)
 
 target_compile_definitions(androidHAL
   PRIVATE
-  COZMO_BASESTATION
   ${PLATFORM_COMPILE_DEFS}
 )
 

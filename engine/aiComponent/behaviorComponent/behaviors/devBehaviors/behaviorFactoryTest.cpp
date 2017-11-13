@@ -991,7 +991,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         }
         
         // Record cliff sensor value over drop
-        const CliffSensorValue cliffVal(robot.GetCliffSensorComponent().GetCliffDataRaw());
+        const CliffSensorValue cliffVal(robot.GetCliffSensorComponent().GetCliffDataRaw()[0]);
         PRINT_NAMED_INFO("BehaviorFactoryTest.Update.CliffOnDrop", "%u", cliffVal.val);
         
         // Write cliff val to log on device
@@ -1004,7 +1004,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         
         
         // Check cliff sensor value
-        const auto cliffDataRaw = robot.GetCliffSensorComponent().GetCliffDataRaw();
+        const auto cliffDataRaw = robot.GetCliffSensorComponent().GetCliffDataRaw()[0];
         if (cliffDataRaw > _kMaxCliffValueOverDrop) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CliffValueOverDropTooHigh", "Val: %d", cliffDataRaw);
           END_TEST(FactoryTestResultCode::CLIFF_VALUE_TOO_HIGH);
@@ -1046,7 +1046,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
       case FactoryTestState::GotoCalibrationPose:
       {
         // Record cliff sensor value over ground
-        const CliffSensorValue cliffVal(robot.GetCliffSensorComponent().GetCliffDataRaw());
+        const CliffSensorValue cliffVal(robot.GetCliffSensorComponent().GetCliffDataRaw()[0]);
         PRINT_NAMED_INFO("BehaviorFactoryTest.Update.CliffOnGround", "%u", cliffVal.val);
         
         // Write cliff val to log on device
@@ -1058,7 +1058,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         QueueWriteToRobot(robot, NVStorage::NVEntryTag::NVEntry_CliffValOnGround, buf, numBytes);
         
         // Check cliff sensor value
-        const auto cliffDataRaw = robot.GetCliffSensorComponent().GetCliffDataRaw();
+        const auto cliffDataRaw = robot.GetCliffSensorComponent().GetCliffDataRaw()[0];
         if (cliffDataRaw < _kMinCliffValueOnGround) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CliffValueOnGroundTooLow", "Val: %d", cliffDataRaw);
           END_TEST(FactoryTestResultCode::CLIFF_VALUE_TOO_LOW);

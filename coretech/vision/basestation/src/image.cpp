@@ -76,7 +76,7 @@ namespace Vision {
   }
   
   template<typename T>
-  Result ImageBase<T>::Save(const std::string &filename, s32 quality)
+  Result ImageBase<T>::Save(const std::string &filename, s32 quality) const
   {
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
@@ -248,6 +248,17 @@ namespace Vision {
     DrawLine(quad[CornerName::TopLeft], quad[CornerName::BottomLeft], color, thickness);
     DrawLine(quad[CornerName::TopRight], quad[CornerName::BottomRight], color, thickness);
     DrawLine(quad[CornerName::BottomLeft], quad[CornerName::BottomRight], color, thickness);
+  }
+
+  template<typename T>
+  void ImageBase<T>::DrawFilledConvexPolygon(const std::vector<Point2i> points, const ColorRGBA& color)
+  {
+    std::vector<cv::Point> cvpts;
+    cvpts.reserve(points.size());
+    for (const auto& p: points) {
+      cvpts.push_back(p.get_CvPoint_());
+    }
+    cv::fillConvexPoly(this->get_CvMat_(), cvpts, GetCvColor(color));
   }
   
   // Compile time "LUT" for converting from our resize method to OpenCV's
@@ -521,6 +532,12 @@ namespace Vision {
     
   }
   
+  ImageRGB::ImageRGB(s32 nrows, s32 ncols, const PixelRGB& fillValue)
+  : ImageBase<PixelRGB>(nrows, ncols, fillValue)
+  {
+
+  }
+
   ImageRGB::ImageRGB(s32 nrows, s32 ncols, u8* data)
   : ImageBase<PixelRGB>(nrows, ncols, reinterpret_cast<PixelRGB*>(data))
   {

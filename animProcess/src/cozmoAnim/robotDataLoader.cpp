@@ -62,6 +62,21 @@ RobotDataLoader::~RobotDataLoader()
 static constexpr float _kAnimationsLoadingRatio = 0.7f;
 static constexpr float _kFaceAnimationsLoadingRatio = 0.2f;
 
+void RobotDataLoader::LoadConfigData()
+{
+  // Text-to-speech config
+  {
+    static const std::string & tts_config = "config/engine/tts_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, tts_config, _tts_config);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.TextToSpeechConfigNotFound",
+                        "Text-to-speech config file %s not found or failed to parse",
+                        tts_config.c_str());
+    }
+  }
+}
+
 void RobotDataLoader::LoadNonConfigData()
 {
   if (_platform == nullptr) {

@@ -15,12 +15,6 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
-// Android camera
-#include "androidHAL/android/camera/camera_manager.h"
-#include "androidHAL/android/camera/image_reader.h"
-#include "androidHAL/android/camera/utils/native_debug.h"
-#include "androidHAL/android/proto_camera/victor_camera.h"
-
 #include "androidHAL/android/proto_camera/victor_camera.h"
 
 #include <vector>
@@ -68,8 +62,6 @@ namespace Anki {
     
     AndroidHAL::AndroidHAL()
     : _timeOffset(std::chrono::steady_clock::now())
-    , _androidCamera(nullptr)
-    , _reader(nullptr)
     , _imageFrameID(1)
     {
       InitCamera();
@@ -103,9 +95,6 @@ namespace Anki {
     }
 
     void AndroidHAL::DeleteCamera() {
-      Util::SafeDelete(_androidCamera);
-      Util::SafeDelete(_reader);
-
       int res = camera_stop();
       DEV_ASSERT(res == 0, "AndroidHAL.Delete.CameraStopFailed");
 

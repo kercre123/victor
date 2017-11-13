@@ -33,7 +33,8 @@
 #include <vector>
 #include <map>
 
-#define VIZ_ON_DEVICE 0
+// Send viz to unity?
+#define VIZ_TO_UNITY 0
 
 namespace Anki {
   
@@ -77,10 +78,6 @@ namespace Anki {
       Result Connect(const char *udp_host_address, const unsigned short port, const char* unity_host_address, const unsigned short unity_port);
       Result Disconnect();
 
-      #if VIZ_ON_DEVICE
-      void SetMessagePort(GameMessagePort* port) { _unityVizPort = port; }
-      #endif
-      
       // Whether or not to display the viz objects
       void ShowObjects(bool show);
       
@@ -396,7 +393,8 @@ namespace Anki {
                           const u8 imageProcFrameRateHz,
                           const u8 enabledAnimTracks,
                           const u8 animTag,
-                          const f32 imuTemperature_degC);
+                          const f32 imuTemperature_degC,
+                          std::array<uint16_t, 4> cliffThresholds);
       
       void SetOrigin(const SetVizOrigin& msg);
       
@@ -430,13 +428,11 @@ namespace Anki {
       
       bool               _isInitialized;
       UdpClient          _vizClient;
-      #if VIZ_ON_DEVICE
-      GameMessagePort*   _unityVizPort = nullptr;
-      #else
+
+      #if VIZ_TO_UNITY
       UdpClient          _unityVizClient;
       #endif
       
-
       /*
       // Image sending
       std::map<RobotID_t, u8> _imgID;

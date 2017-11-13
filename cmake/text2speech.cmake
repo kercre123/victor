@@ -1,19 +1,18 @@
 set(TEXT2SPEECH_HOME "${ANKI_EXTERNAL_DIR}/anki-thirdparty/acapela")
 set(TEXT2SPEECH_INCLUDE_PATH "")
-
+set(TEXT2SPEECH_LIBS "")
 set(PLATFORM_SUFFIX "")
+
 if (ANDROID)
-  set(PLATFORM_SUFFIX "android")
-  set(TEXT2SPEECH_LIB_PATH "${TEXT2SPEECH_HOME}/AcapelaTTS_for_Android_V1.612/sdk/armeabi-v7a")
+  # AcapelaTTS for Android requires JNI support, so it doesn't work on victor.
+  # TTS is disabled for now.
+  message(STATUS "text2speech.cmake: Disabled on this platform")
 elseif (MACOSX)
   # TTS (libacatts.dylib) should not be linked directly on mac
   # set(TEXT2SPEECH_LIB_PATH "${TEXT2SPEECH_HOME}/AcapelaTTS_for_Mac_V9.450")
   set(TEXT2SPEECH_INCLUDE_PATH "${TEXT2SPEECH_HOME}/AcapelaTTS_for_Mac_V9.450/SDK/Include")
+  set(TEXT2SPEECH_LIBS acatts)
 endif()
-
-set(TEXT2SPEECH_LIBS
-  acatts
-)
 
 foreach(LIB ${TEXT2SPEECH_LIBS})
   if (TEXT2SPEECH_LIB_PATH)

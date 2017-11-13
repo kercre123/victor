@@ -35,6 +35,7 @@ namespace {
 
 void MicDataInfo::CollectRawAudio(const AudioUtil::AudioChunk& audioChunk)
 {
+  std::lock_guard<std::mutex> lock(_dataMutex);
   if (_typesToRecord.IsBitFlagSet(MicDataType::Raw))
   {
     AudioUtil::AudioChunk newChunk;
@@ -46,6 +47,7 @@ void MicDataInfo::CollectRawAudio(const AudioUtil::AudioChunk& audioChunk)
 
 void MicDataInfo::CollectResampledAudio(const AudioUtil::AudioChunk& audioChunk)
 {
+  std::lock_guard<std::mutex> lock(_dataMutex);
   if (_typesToRecord.IsBitFlagSet(MicDataType::Resampled))
   {
     AudioUtil::AudioChunk newChunk;
@@ -57,6 +59,7 @@ void MicDataInfo::CollectResampledAudio(const AudioUtil::AudioChunk& audioChunk)
 
 void MicDataInfo::CollectProcessedAudio(const AudioUtil::AudioChunk& audioChunk)
 {
+  std::lock_guard<std::mutex> lock(_dataMutex);
   if (_typesToRecord.IsBitFlagSet(MicDataType::Processed))
   {
     AudioUtil::AudioChunk newChunk;
@@ -65,15 +68,40 @@ void MicDataInfo::CollectProcessedAudio(const AudioUtil::AudioChunk& audioChunk)
     _processedAudioData.push_back(std::move(newChunk));
   }
 }
-  
+
+AudioUtil::AudioChunkList MicDataInfo::GetProcessedAudio(size_t beginIndex)
+{
+  std::lock_guard<std::mutex> lock(_dataMutex);
+  AudioUtil::AudioChunkList copiedData;
+  auto currentSize = _processedAudioData.size();
+  if (beginIndex >= currentSize)
+  {
+    return copiedData;
+  }
+
+  auto chunkIter = _processedAudioData.begin() + beginIndex;
+  while (chunkIter != _processedAudioData.end())
+  {
+    const auto& audioChunk = *chunkIter;
+    ++chunkIter;
+    AudioUtil::AudioChunk newChunk;
+    newChunk.resize(kSamplesPerBlock);
+    std::copy(audioChunk.begin(), audioChunk.end(), newChunk.begin());
+    copiedData.push_back(std::move(newChunk));
+  }
+  return copiedData;
+}
+
+void MicDataInfo::SetTimeToRecord(uint32_t timeToRecord)
+{
+  std::lock_guard<std::mutex> lock(_dataMutex);
+  _timeToRecord_ms = timeToRecord;
+}
+
 bool MicDataInfo::CheckDone()
 {
+  std::lock_guard<std::mutex> lock(_dataMutex);
   if (!_typesToRecord.AreAnyFlagsSet())
-  {
-    return true;
-  }
-  
-  if (_timeToRecord_ms == 0)
   {
     return true;
   }
@@ -114,6 +142,15 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
                                      const std::string& nameToUse,
                                      const std::string& nameToRemove)
 {
+  // Check against a min recording length. If we're not recording raw/resampled and our recorded processed time
+  // is too short, we're going to abandon saving it.
+  if (_rawAudioData.empty() && 
+      _resampledAudioData.empty() && 
+      (_processedAudioData.size() * kTimePerChunk_ms * kChunksPerSEBlock) < kMinAudioSizeToSave_ms)
+  {
+    return;
+  }
+
   if (!nameToRemove.empty())
   {
     Util::FileUtils::RemoveDirectory(Util::FileUtils::FullFilePath({ dataDirectory, nameToRemove }));
@@ -197,7 +234,7 @@ std::string MicDataInfo::ChooseNextFileNameBase(std::string& out_dirToDelete)
   }
   
   // If number of entries is less than max, pick the name miccapture_0000_(count())
-  if (dirNames.size() < kDefaultFilesToCapture)
+  if (dirNames.size() < _numMaxFiles)
   {
     std::ostringstream newNameStream;
     newNameStream << kMicCapturePrefix << "0000_" << std::setfill('0') << std::setw(4) << dirNames.size();

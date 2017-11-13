@@ -195,7 +195,6 @@ android_strip(TARGET victor_anim)
 # Define the precompiler definitions for victor_anim
 target_compile_definitions(victor_anim
 PRIVATE
-  COZMO_BASESTATION
   ANKICORETECH_USE_OPENCV=1
   ANKICORETECH_EMBEDDED_USE_OPENCV=1  
   ${PLATFORM_COMPILE_DEFS}

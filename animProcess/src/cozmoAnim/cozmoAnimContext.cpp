@@ -26,13 +26,16 @@ public:
   
 CozmoAnimContext::CozmoAnimContext(Util::Data::DataPlatform* dataPlatform)
   : _dataPlatform(dataPlatform)
+  , _locale(new Anki::Util::Locale(Anki::Util::Locale::GetNativeLocale()))  
   , _random(new Anki::Util::RandomGenerator())
   , _dataLoader(new RobotDataLoader(this))
   , _threadIdHolder(new ThreadIDInternal)
 {
   if (dataPlatform != nullptr)
   {
-    _micDataProcessor.reset(new MicData::MicDataProcessor(_dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata")));
+    const std::string& dataWriteLocation = _dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata");
+    const std::string& triggerDataDir = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/hey_cosmo_and_commands");
+    _micDataProcessor.reset(new MicData::MicDataProcessor(dataWriteLocation, triggerDataDir));
   }
   InitAudio(_dataPlatform);
 }

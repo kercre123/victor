@@ -16,6 +16,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -250,7 +251,7 @@ void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
         // Need a base behavior, so make it base behavior wait
         Json::Value config = ICozmoBehavior::CreateDefaultBehaviorConfig(
                                     BehaviorClass::Wait, BehaviorID::Wait);
-        _components->_behaviorContainer.CreateBehavior(config);
+        _components->_behaviorContainer.CreateBehaviorFromConfig(config);
         baseBehavior = _components->_behaviorContainer.FindBehaviorByID(BehaviorID::Wait).get();
       }
     }
@@ -319,6 +320,10 @@ void BehaviorComponent::Update(Robot& robot,
 {
   if(_messageHandler == nullptr){
     _messageHandler.reset(new DevBehaviorComponentMessageHandler(robot, *this, _components->_behaviorContainer));
+  }
+
+  if(_cloudReceiver == nullptr){
+    _cloudReceiver.reset(new BehaviorComponentCloudReceiver(robot));
   }
 
   _behaviorHelperComponent->Update(_components->_behaviorExternalInterface);

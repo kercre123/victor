@@ -159,13 +159,13 @@ namespace Anki
       }
 
 
-      bool AppendPathSegment_PointTurn(f32 x, f32 y, f32 targetAngle,
+      bool AppendPathSegment_PointTurn(f32 x, f32 y, f32 startAngle, f32 targetAngle,
                                        f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
                                        f32 angleTolerance,
                                        bool useShortestDir)
       {
         TrimPath();
-        return path_.AppendPointTurn(x, y, targetAngle,
+        return path_.AppendPointTurn(x, y, startAngle, targetAngle,
                                      targetRotSpeed, rotAccel, rotDecel,
                                      angleTolerance,
                                      useShortestDir);
@@ -742,9 +742,9 @@ namespace Anki
 
         // Create 3-segment path
         ClearPath();
-        AppendPathSegment_PointTurn(curr_x, curr_y, int_ang1, targetRotVel, startAngAccel, startAngAccel, angleTolerance, false);
-        AppendPathSegment_PointTurn(curr_x, curr_y, int_ang2, targetRotVel, startAngAccel, startAngAccel, angleTolerance, false);
-        AppendPathSegment_PointTurn(curr_x, curr_y, dest_ang, sweep_rad > 0 ? COAST_VELOCITY_RADPS : -COAST_VELOCITY_RADPS, endAngAccel, endAngAccel, angleTolerance, false);
+        AppendPathSegment_PointTurn(curr_x, curr_y, curr_angle.ToFloat(), int_ang1, targetRotVel, startAngAccel, startAngAccel, angleTolerance, false);
+        AppendPathSegment_PointTurn(curr_x, curr_y, int_ang1, int_ang2, targetRotVel, startAngAccel, startAngAccel, angleTolerance, false);
+        AppendPathSegment_PointTurn(curr_x, curr_y, int_ang2, dest_ang, sweep_rad > 0 ? COAST_VELOCITY_RADPS : -COAST_VELOCITY_RADPS, endAngAccel, endAngAccel, angleTolerance, false);
 
         StartPathTraversal();
 
