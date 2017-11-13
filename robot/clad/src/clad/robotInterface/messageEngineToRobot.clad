@@ -15,6 +15,7 @@
 #include "clad/types/imu.clad"
 #include "clad/types/controllerChannels.clad"
 #include "clad/types/proceduralFaceTypes.clad"
+#include "clad/types/proxMessages.clad"
 #include "clad/robotInterface/messageToActiveObject.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
@@ -266,11 +267,6 @@ message EnableReadToolCodeMode
 message EnableStopOnCliff
 {
   bool enable
-}
-
-message SetCliffDetectThresholds
-{
-  uint_16 thresholds[4],  // New cliff threshold values for each sensor
 }
 
 message EnableBraceWhenFalling
