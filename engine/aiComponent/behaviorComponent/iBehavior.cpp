@@ -89,8 +89,8 @@ void IBehavior::Update(BehaviorExternalInterface& behaviorExternalInterface)
                    "IBehavior.Update.TickCountMismatch",
                    "Behavior '%s' is receiving tick on %zu, but hasn't been ticked since %zu",
                    _idString.c_str(),
-                   _lastTickOfUpdate,
-                   tickCount);
+                   tickCount,
+                   _lastTickOfUpdate);
     _lastTickOfUpdate = tickCount;
   }
   

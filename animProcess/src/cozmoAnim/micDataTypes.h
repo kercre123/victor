@@ -41,6 +41,8 @@ namespace MicData {
   static constexpr uint32_t kDefaultFilesToCapture    = 15;
   static constexpr uint32_t kRawAudioChunkSize        = kSamplesPerChunkIncoming * kNumInputChannels;
   static constexpr uint32_t kResampledAudioChunkSize  = kSamplesPerChunkForSE * kNumInputChannels;
+  static constexpr uint32_t kTriggerOverlapSize_ms    = 140;
+  static constexpr uint32_t kMinAudioSizeToSave_ms    = kTriggerOverlapSize_ms + 100;
   
 } // namespace MicData
 } // namespace Cozmo

@@ -184,7 +184,6 @@ void BehaviorRollBlock::TransitionToPerformingAction(BehaviorExternalInterface& 
                                                           params);
   
   SmartDelegateToHelper(behaviorExternalInterface, rollHandle, delegateSuccess, delegateFailure);
-  IncreaseScoreWhileControlDelegated( kBRB_ScoreIncreaseForAction );
   
   // Set the cube lights to interacting for full behavior run time
   std::vector<BehaviorStateLightInfo> basePersistantLight;
@@ -215,7 +214,6 @@ void BehaviorRollBlock::TransitionToRollSuccess(BehaviorExternalInterface& behav
     Robot& robot = behaviorExternalInterface.GetRobot();
     DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
   }
-  IncreaseScoreWhileControlDelegated( kBRB_ScoreIncreaseForAction );
   BehaviorObjectiveAchieved(BehaviorObjective::BlockRolled);
   NeedActionCompleted();
 }

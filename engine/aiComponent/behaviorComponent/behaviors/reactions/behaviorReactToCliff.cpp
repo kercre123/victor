@@ -108,7 +108,7 @@ Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& beha
       Robot& robot = behaviorExternalInterface.GetRobot();
 
       // Record cliff detection threshold before at start of stop
-      _cliffDetectThresholdAtStart = robot.GetCliffSensorComponent().GetCliffDetectThreshold();
+      _cliffDetectThresholdAtStart = robot.GetCliffSensorComponent().GetCliffDetectThreshold(0);
       
       // Wait function for determining if the cliff is suspicious
       auto waitForStopLambda = [this](Robot& robot) {
@@ -116,7 +116,7 @@ Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& beha
           return false;
         }
         
-        if (_cliffDetectThresholdAtStart != robot.GetCliffSensorComponent().GetCliffDetectThreshold()) {
+        if (_cliffDetectThresholdAtStart != robot.GetCliffSensorComponent().GetCliffDetectThreshold(0)) {
           // There was a change in the cliff detection threshold so assuming
           // it was a false cliff and aborting reaction
           PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.QuittingDueToSuspiciousCliff", "");

@@ -113,9 +113,9 @@ namespace Anki
     
     // Apply scalar function that takes each pixel of this array and another array
     // of the same size and stores in a given output array
-    template<class Tresult>
-    void ApplyScalarFunction(std::function<Tresult(const T& thisElem, const T& otherElem)>fcn,
-                             const Array2d<T>& otherArray,
+    template<class Tother, class Tresult>
+    void ApplyScalarFunction(std::function<Tresult(const T& thisElem, const Tother& otherElem)>fcn,
+                             const Array2d<Tother>& otherArray,
                              Array2d<Tresult>& result) const;
     
     Array2d<T>& operator+=(const Array2d<T>& other);

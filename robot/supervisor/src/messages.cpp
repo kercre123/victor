@@ -173,8 +173,8 @@ namespace Anki {
         robotState_.status |= ProxSensors::IsAnyCliffDetected() ? CLIFF_DETECTED : 0;
         robotState_.status |= IMUFilter::IsFalling() ? IS_FALLING : 0;
         robotState_.status |= HAL::BatteryIsChargerOOS() ? IS_CHARGER_OOS : 0;
-#ifdef  SIMULATOR
         robotState_.batteryVoltage = HAL::BatteryGetVoltage();
+#ifdef  SIMULATOR
         if(isForcedDelocalizing_)
         {
           robotState_.status |= IS_PICKED_UP;
@@ -597,9 +597,11 @@ namespace Anki {
         ProxSensors::EnableStopOnCliff(msg.enable);
       }
 
-      void Process_setCliffDetectThreshold(const RobotInterface::SetCliffDetectThreshold& msg)
+      void Process_setCliffDetectThresholds(const RobotInterface::SetCliffDetectThresholds& msg)
       {
-        ProxSensors::SetCliffDetectThreshold(msg.detectLevel);
+        for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
+          ProxSensors::SetCliffDetectThreshold(i, msg.thresholds[i]);
+        }
       }
 
       void Process_enableBraceWhenFalling(const RobotInterface::EnableBraceWhenFalling& msg)

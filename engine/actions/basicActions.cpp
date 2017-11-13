@@ -824,6 +824,7 @@ namespace Anki {
     {
       switch(preset) {
         case Preset::GROUND_PLANE_VISIBLE: { return DEG_TO_RAD(-15.0f); }
+        case Preset::IDEAL_BLOCK_VIEW: { return kIdealViewBlockHeadAngle; }
       }
       DEV_ASSERT(false, "MoveHeadToAngleAction.NotAPreset");
       return -1.0f;
@@ -833,6 +834,7 @@ namespace Anki {
     {
       switch(preset) {
         case Preset::GROUND_PLANE_VISIBLE: { return "GroundPlaneVisible"; }
+        case Preset::IDEAL_BLOCK_VIEW: { return "IdealBlockView"; }
       }
       DEV_ASSERT(false, "MoveHeadToAngleAction.NotAPreset");
       return "ERROR";

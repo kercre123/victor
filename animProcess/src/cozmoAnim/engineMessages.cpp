@@ -182,7 +182,21 @@ namespace Messages {
     // TODO: Need to hook this up to AnimationStreamer
     //       Maybe _animStreamer->Abort(msg.abortAnimation.tag)?
   }
-    
+  
+  void Process_displayProceduralFace(const Anki::Cozmo::RobotInterface::DisplayProceduralFace& msg)
+  {
+    ProceduralFace procFace;
+    procFace.SetFromMessage(msg.faceParams);
+    _animStreamer->SetProceduralFace(procFace, msg.duration_ms);
+    return;
+  }
+  
+  void Process_setFaceHue(const Anki::Cozmo::RobotInterface::SetFaceHue& msg)
+  {
+    ProceduralFace::SetHue(msg.hue);
+    return;
+  }
+  
   void Process_requestAvailableAnimations(const Anki::Cozmo::RobotInterface::RequestAvailableAnimations& msg)
   {
     PRINT_NAMED_INFO("EngineMessages.Process_requestAvailableAnimations", "");

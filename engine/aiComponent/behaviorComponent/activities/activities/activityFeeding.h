@@ -94,7 +94,7 @@ private:
   bool _hasSetIdle;
     
   // Chooser which manages universal response behaviors
-  std::unique_ptr<IBehaviorChooser> _universalResponseChooser;
+  //std::unique_ptr<IBehaviorChooser> _universalResponseChooser;
   
   // Behaviors that the chooser calls directly
   ICozmoBehaviorPtr _searchingForFaceBehavior;

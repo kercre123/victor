@@ -40,42 +40,14 @@ void BackpackLightAnimationContainer::AddBackpackLightStateValues(const std::str
 {
   BackpackLights values;
   
-  // Test to see if we're dealing with V1 or V2 lights.
-  // There are 4 lights in V2 and 5 lights in V1.
-  bool isV1 = false;
-  const char* testKey = "onColors";
-  if(data.isMember(testKey))
-  {
-    const Json::Value& jsonValues = data[testKey];
-    if (5 == jsonValues.size()) {
-      isV1 = true;
-    }
-  }
-  
   bool res = true;
-  if (!isV1) {
-    res &= JsonTools::GetColorValuesToArrayOptional(data, "onColors",  values.onColors, true);
-    res &= JsonTools::GetColorValuesToArrayOptional(data, "offColors", values.offColors, true);
-    res &= JsonTools::GetArrayOptional(data, "onPeriod_ms",            values.onPeriod_ms);
-    res &= JsonTools::GetArrayOptional(data, "offPeriod_ms",           values.offPeriod_ms);
-    res &= JsonTools::GetArrayOptional(data, "transitionOnPeriod_ms",  values.transitionOnPeriod_ms);
-    res &= JsonTools::GetArrayOptional(data, "transitionOffPeriod_ms", values.transitionOffPeriod_ms);
-    res &= JsonTools::GetArrayOptional(data, "offset",                 values.offset);
-  } else {
-    BackpackLights_V1 v1Values;
-    res &= JsonTools::GetColorValuesToArrayOptional(data, "onColors",  v1Values.onColors, true);
-    res &= JsonTools::GetColorValuesToArrayOptional(data, "offColors", v1Values.offColors, true);
-    res &= JsonTools::GetArrayOptional(data, "onPeriod_ms",            v1Values.onPeriod_ms);
-    res &= JsonTools::GetArrayOptional(data, "offPeriod_ms",           v1Values.offPeriod_ms);
-    res &= JsonTools::GetArrayOptional(data, "transitionOnPeriod_ms",  v1Values.transitionOnPeriod_ms);
-    res &= JsonTools::GetArrayOptional(data, "transitionOffPeriod_ms", v1Values.transitionOffPeriod_ms);
-    res &= JsonTools::GetArrayOptional(data, "offset",                 v1Values.offset);
-    
-    if (res) {
-      PRINT_NAMED_INFO("BackpackLightAnimationContainer.AddBackpackLightStateValues.ConvertingV1ToV2", "");
-      values = v1Values;
-    }
-  }
+  res &= JsonTools::GetColorValuesToArrayOptional(data, "onColors",  values.onColors, true);
+  res &= JsonTools::GetColorValuesToArrayOptional(data, "offColors", values.offColors, true);
+  res &= JsonTools::GetArrayOptional(data, "onPeriod_ms",            values.onPeriod_ms);
+  res &= JsonTools::GetArrayOptional(data, "offPeriod_ms",           values.offPeriod_ms);
+  res &= JsonTools::GetArrayOptional(data, "transitionOnPeriod_ms",  values.transitionOnPeriod_ms);
+  res &= JsonTools::GetArrayOptional(data, "transitionOffPeriod_ms", values.transitionOffPeriod_ms);
+  res &= JsonTools::GetArrayOptional(data, "offset",                 values.offset);
   
   // If any of the member fields are missing from the pattern definition return false
   if(!res)

@@ -628,19 +628,6 @@ void RobotDataLoader::LoadRobotConfigs()
                         jsonFilename.c_str());
     }
   }
-
-  // Text-to-speech config
-  {
-    static const std::string jsonFilename = "config/engine/tts_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _textToSpeechConfig);
-    if (!success)
-    {
-      PRINT_NAMED_ERROR("RobotDataLoader.TextToSpeechConfigNotFound",
-                        "Text-to-speech config file %s not found or failed to parse",
-                        jsonFilename.c_str());
-    }
-  }
-
   
   // feature gate
   {

@@ -293,36 +293,7 @@ void BehaviorRequestGameSimple::RequestGame_OnBehaviorDeactivated(BehaviorExtern
   CancelDelegates(false);
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float BehaviorRequestGameSimple::EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
-  // NOTE: can't use _activeConfig because we haven't been Init'd yet  
-  float score = ICozmoBehavior::EvaluateScoreInternal(behaviorExternalInterface);
-  if( GetNumBlocks(behaviorExternalInterface) == 0 ) {
-    score *= _zeroBlockConfig.scoreFactor;
-  }
-  else {
-    score *= _oneBlockConfig.scoreFactor;
-  }
-  return score;
-}
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float BehaviorRequestGameSimple::EvaluateActivatedScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
-  // if we have requested, and are past the timeout, then we don't want to keep running
-  if( IsControlDelegated() ) {
-    // while we are doing things, we really don't want to be interrupted
-    return 1.5f;
-  }
-
-  // otherwise, fall back to running score
-  return EvaluateScoreInternal(behaviorExternalInterface);
-}
-
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(BehaviorExternalInterface& behaviorExternalInterface)
 {

@@ -52,10 +52,6 @@ const int kMinBlocksForSuccess = 1;
 const float kWaitForBlockUpAxisChangeSecs = 0.5f;
 const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = DEG_TO_RAD(90.f);
 
-const float kScoreIncreaseSoNoRoll = 10.f;
-
-
-
 CONSOLE_VAR(f32, kBKS_distanceToTryToGrabFrom_mm, "Behavior.AdmireStack", 85.0f);
 CONSOLE_VAR(f32, kBKS_searchSpeed_mmps, "Behavior.AdmireStack", 60.0f);
   
@@ -418,7 +414,6 @@ void BehaviorKnockOverCubes::AlwaysHandle(const EngineToGameEvent& event, Behavi
 void BehaviorKnockOverCubes::PrepareForKnockOverAttempt()
 {
   _objectsFlipped.clear();
-  IncreaseScoreWhileControlDelegated(kScoreIncreaseSoNoRoll);
   
   // Unlock the reactions b/c we're about to re-lock them
   // It's possible they might not have been locked - it's safe to remove an invalid lock

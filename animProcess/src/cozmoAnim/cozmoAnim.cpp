@@ -16,6 +16,8 @@
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/robotDataLoader.h"
+#include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
+
 #include "anki/common/basestation/utils/timer.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -71,8 +73,12 @@ Result CozmoAnimEngine::Init() {
     PRINT_NAMED_INFO("CozmoEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
   }
 
-  _context->GetDataLoader()->LoadNonConfigData();
+  RobotDataLoader * dataLoader = _context->GetDataLoader();
+  dataLoader->LoadConfigData();
+  dataLoader->LoadNonConfigData();
   
+  _ttsComponent = std::make_unique<TextToSpeechComponent>(_context.get());
+
   // animation streamer must be initialized after loading non config data (otherwise there are no animations loaded)
   _animationStreamer->Init();
   

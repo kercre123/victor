@@ -5,9 +5,7 @@ project(engine)
 include(opencv)
 include(okao)
 include(flatbuffers)
-include(text2speech)
 include(archive)
-include(voice-recognition)
 include(routing_http_server)
 include(android_strip)
 
@@ -45,8 +43,8 @@ elseif (MACOSX)
   )
   set(PLATFORM_COMPILE_DEFS
     SIMULATOR
-    THF_FUNCTIONALITY=1
-    VC_AUDIOCAPTURE_FUNCTIONALITY=1
+    THF_FUNCTIONALITY=0
+    VC_AUDIOCAPTURE_FUNCTIONALITY=0
   )
 endif()
 
@@ -74,8 +72,6 @@ target_link_libraries(cozmo_engine
   # vendor
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}
-  ${TEXT2SPEECH_LIBS}
-  ${VOICE_RECOGNITION_LIBS}
   ${BREAKPAD_LIBS}
   ${TENSORFLOW_LIBS}
   # system
@@ -95,9 +91,6 @@ target_compile_definitions(cozmo_engine
   PRIVATE
   CORETECH_BASESTATION
   USE_DAS=${USE_DAS}
-  VOICE_RECOG_NONE=0
-  VOICE_RECOG_THF=1
-  VOICE_RECOG_PROVIDER=VOICE_RECOG_THF
   "${PLATFORM_COMPILE_DEFS}"
 )
 
@@ -111,10 +104,8 @@ target_include_directories(cozmo_engine
 
 if (ANDROID)
   copy_opencv_android_libs()
-  copy_tts_android_libs()
   add_dependencies(cozmo_engine
     copy_opencv_libs
-    copy_tts_libs
   )
 endif()
 

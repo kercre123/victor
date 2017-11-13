@@ -1,0 +1,11 @@
+{
+  "behaviorClass" : "DispatcherStrictPriority",
+  "behaviorID" : "FindAndGoToHome",
+
+  "interruptActiveBehavior" : true,
+
+  "behaviors" : [
+    "GoHome",
+    "SparksLookInPlace"
+  ]
+}

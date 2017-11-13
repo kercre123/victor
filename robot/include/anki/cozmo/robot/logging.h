@@ -27,9 +27,9 @@
 #define log_assert(line, file, expr, fmt, ...) __android_log_assert(expr, "robot", fmt ": failed at line " line " in file " file, ##__VA_ARGS__)
 #define log_error(name, fmt, ...) __android_log_print(ANDROID_LOG_ERROR, "robot", name ": " fmt, ##__VA_ARGS__)
 #define log_warn(name, fmt, ...) __android_log_print(ANDROID_LOG_WARN, "robot", name ": " fmt, ##__VA_ARGS__)
-#define log_event(name, fmt, ...) __android_log_print(ANDROID_LOG_INFO, "robot.event", name ": " fmt, ##__VA_ARGS__)
-#define log_info(name, fmt, ...) __android_log_print(ANDROID_LOG_INFO, "robot", name ": " fmt, ##__VA_ARGS__)
-#define log_debug(name, fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, "robot", name ": " fmt, ##__VA_ARGS__)
+#define log_event(name, fmt, ...) __android_log_print(ANDROID_LOG_INFO, "robot", name ": " fmt, ##__VA_ARGS__)
+#define log_info(name, fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, "robot", name ": " fmt, ##__VA_ARGS__)
+#define log_debug(name, fmt, ...) __android_log_print(ANDROID_LOG_VERBOSE, "robot", name ": " fmt, ##__VA_ARGS__)
 #else
 #define console_printf(fmt, ...) printf(fmt, ##__VA_ARGS__)
 #define log_assert(line, file, expr, fmt, ...) console_printf("[Assert] " fmt ": \"" expr "\" failed at line " line " in file " file "\r\n", ##__VA_ARGS__)

@@ -29,6 +29,7 @@ namespace Cozmo {
 // Forward declarations
 class CozmoAnimContext;
 class AnimationStreamer;
+class TextToSpeechComponent;
   
 class CozmoAnimEngine
 {
@@ -46,8 +47,9 @@ protected:
   
   bool               _isInitialized = false;
   
-  std::unique_ptr<CozmoAnimContext>       _context;
-  std::unique_ptr<AnimationStreamer>  _animationStreamer;
+  std::unique_ptr<CozmoAnimContext>      _context;
+  std::unique_ptr<AnimationStreamer>     _animationStreamer;
+  std::unique_ptr<TextToSpeechComponent> _ttsComponent;
   
 }; // class CozmoAnimEngine
   

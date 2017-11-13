@@ -65,6 +65,7 @@ void IBehaviorDispatcher::InitBehavior(BehaviorExternalInterface& behaviorExtern
       _behaviors.push_back(behavior);
     }
   }
+  InitDispatcher(behaviorExternalInterface);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

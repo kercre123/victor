@@ -114,24 +114,6 @@ bool BehaviorPounceOnMotion::WantsToBeActivatedBehavior(BehaviorExternalInterfac
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float BehaviorPounceOnMotion::EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
-  // more likely to run if we did happen to see ground motion recently.
-  // This isn't likely unless cozmo is looking down in explore mode, but possible
-  float multiplier = 1.f;
-  if( !IsActivated() )
-  {
-    const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if ( _lastMotionTime + _maxTimeSinceNoMotion_notRunning_sec < currentTime_sec )
-    {
-      multiplier = _boredomMultiplier;
-    }
-  }
-  return ICozmoBehavior::EvaluateScoreInternal(behaviorExternalInterface) * multiplier;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPounceOnMotion::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _humanInteracted = false;

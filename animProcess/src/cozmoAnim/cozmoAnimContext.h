@@ -22,6 +22,7 @@
 // ---------- BEGIN FORWARD DECLARATIONS ----------
 namespace Anki {
 namespace Util {
+  class Locale;
   class RandomGenerator;
   namespace Data {
     class DataPlatform;
@@ -71,7 +72,7 @@ public:
   virtual ~CozmoAnimContext();
   
   Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform; }
-
+  Util::Locale *                        GetLocale() const { return _locale.get(); }
   Util::RandomGenerator*                GetRandom() const { return _random.get(); }
   RobotDataLoader*                      GetDataLoader() const { return _dataLoader.get(); }
   Audio::CozmoAudioController*         GetAudioController() const; // Can return nullptr
@@ -92,6 +93,7 @@ private:
   Util::Data::DataPlatform*                      _dataPlatform = nullptr;
   
   // Context holds onto these things for everybody:
+  std::unique_ptr<Util::Locale>                  _locale;
   std::unique_ptr<AudioMultiplexer>              _audioMux;
   std::unique_ptr<Util::RandomGenerator>         _random;
   std::unique_ptr<RobotDataLoader>               _dataLoader;

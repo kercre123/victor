@@ -206,7 +206,7 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "OverheadMap");
       return RESULT_FAIL;
     }
-    _overheadMap.reset(new OverheadMap(config["OverheadMap"]));
+    _overheadMap.reset(new OverheadMap(config["OverheadMap"], _context));
 
     const Result petTrackerInitResult = _petTracker->Init(config);
     if(RESULT_OK != petTrackerInitResult) {

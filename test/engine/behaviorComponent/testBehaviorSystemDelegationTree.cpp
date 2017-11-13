@@ -45,7 +45,7 @@ void RecursiveDelegation(Robot& robot,
         RecursiveDelegation(robot, bsm, delegateMap);
       }
       delegateMap.erase(iter);
-      bsm.CancelSelf(iter->first);
+      bsm.CancelSelf(topOfStack);
     }else{
       std::set<IBehavior*> tmpDelegates;
       topOfStack->GetAllDelegates(tmpDelegates);

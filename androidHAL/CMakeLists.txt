@@ -79,7 +79,6 @@ android_strip(TARGET androidHAL)
 
 target_compile_definitions(androidHAL
   PRIVATE
-  COZMO_BASESTATION
   ${PLATFORM_COMPILE_DEFS}
 )
 

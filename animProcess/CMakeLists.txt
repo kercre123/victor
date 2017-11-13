@@ -10,6 +10,8 @@ include(flatbuffers)
 include(opencv)
 include(signalessence)
 include(speexdsp)
+include(text2speech)
+include(sensory)
 
 if (NOT DEFINED USE_DAS)
   set(USE_DAS 0)
@@ -49,6 +51,8 @@ target_link_libraries(victor_anim
   ${FLATBUFFERS_LIBS} 
   ${SIGNALESSENCE_LIBS}
   ${SPEEXDSP_LIBS}
+  ${TEXT2SPEECH_LIBS}
+  ${SENSORY_LIBS}
   # platform
   ${PLATFORM_LIBS}
   PUBLIC
@@ -85,6 +89,12 @@ if (ANDROID)
   )
 
   android_strip(TARGET victor_animator)
+
+  copy_tts_android_libs()
+
+  add_dependencies(victor_animator
+    copy_tts_libs
+  )
 
 endif()
 

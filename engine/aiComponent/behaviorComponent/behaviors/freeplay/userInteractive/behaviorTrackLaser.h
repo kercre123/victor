@@ -15,6 +15,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorTrackLaser_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "util/graphEvaluator/graphEvaluator2d.h"
 
 namespace Anki {
 namespace Cozmo {

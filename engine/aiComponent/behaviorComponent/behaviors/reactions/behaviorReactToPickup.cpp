@@ -180,11 +180,11 @@ ICozmoBehavior::Status BehaviorReactToPickup::UpdateInternal_WhileRunning(Behavi
     const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (currentTime > _nextRepeatAnimationTime)
     {
-      const auto cliffDataRaw = robot.GetCliffSensorComponent().GetCliffDataRaw();
-      if (cliffDataRaw < CLIFF_SENSOR_DROP_LEVEL) {
+      if (robot.GetCliffSensorComponent().IsCliffDetected()) {
         StartAnim(behaviorExternalInterface);
       } else {
-        LOG_EVENT("BehaviorReactToPickup.CalibratingHead", "%d", cliffDataRaw);
+        const auto cliffs = robot.GetCliffSensorComponent().GetCliffDataRaw();
+        LOG_EVENT("BehaviorReactToPickup.CalibratingHead", "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
         DelegateIfInControl(new CalibrateMotorAction(robot, true, false));
       }
     }

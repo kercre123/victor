@@ -18,8 +18,6 @@
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviorChoosers/behaviorChooserFactory.h"
-#include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
@@ -48,7 +46,7 @@ namespace{
 CONSOLE_VAR(float, kTimeSearchForFace, "Activity.Feeding", 5.0f);
 CONSOLE_VAR(uint16_t, kMaxFaceAgeToTurnTowards_ms, "Activity.Feeding", 2000);
 
-static const char* kUniversalChooser = "universalChooser";
+//static const char* kUniversalChooser = "universalChooser";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 constexpr ReactionTriggerHelpers::FullReactionArray kFeedingActivityAffectedArray = {
@@ -127,7 +125,7 @@ ActivityFeeding::ActivityFeeding(const Json::Value& config)
 , _severeBehaviorLocksSet(false)
 , _currIdle(AnimationTrigger::Count)
 , _hasSetIdle(false)
-, _universalResponseChooser(nullptr)
+//, _universalResponseChooser(nullptr)
 {
   
 }
@@ -200,14 +198,14 @@ void ActivityFeeding::InitActivity(BehaviorExternalInterface& behaviorExternalIn
   ////////
   /// Setup UniversalChooser
   ////////
-  {
+  /**{
     const Json::Value& universalChooserJSON = _config[kUniversalChooser];
     _universalResponseChooser = BehaviorChooserFactory::CreateBehaviorChooser(
                                                                               behaviorExternalInterface,
                                                                               universalChooserJSON);
     DEV_ASSERT(_universalResponseChooser != nullptr,
                "ActivityFeeding.UniversalChooserNotSpecified");
-  }
+  }**/
   
   ////////
   /// Setup Lights
@@ -398,10 +396,10 @@ ICozmoBehaviorPtr ActivityFeeding::GetDesiredActiveBehaviorInternal(BehaviorExte
   ICozmoBehaviorPtr bestBehavior;
 
   // First check for universal responses - eg drive off charger
-  if(_universalResponseChooser){
+  /**if(_universalResponseChooser){
     bestBehavior = _universalResponseChooser->GetDesiredActiveBehavior(behaviorExternalInterface,
                                                                        currentRunningBehavior);
-  }
+  }**/
   
   if(bestBehavior != nullptr){
     return bestBehavior;
