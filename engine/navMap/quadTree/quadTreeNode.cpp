@@ -107,7 +107,7 @@ QuadTreeNode::AxisAlignedQuad::AxisAlignedQuad(const Point2f& p, const Point2f& 
 : lowerLeft(  Point2f(fmin(p.x(), q.x()), fmin(p.y(), q.y())) )
 , upperRight( Point2f(fmax(p.x(), q.x()), fmax(p.y(), q.y())) )
 , diagonals{{ LineSegment( lowerLeft, upperRight), 
-   LineSegment( Point2f(fmax(p.x(), q.x()), fmin(p.y(), q.y())), Point2f(fmax(p.x(), q.x()), fmin(p.y(), q.y())) )}} {} 
+   LineSegment( Point2f(fmax(p.x(), q.x()), fmin(p.y(), q.y())), Point2f(fmin(p.x(), q.x()), fmax(p.y(), q.y())) )}} {} 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeNode::AxisAlignedQuad::Contains(const Point2f& p) const

@@ -224,7 +224,7 @@ void FastPolygon::CreateEdgeVectors()
 
   size_t numPts = _poly.size();
 
-  if (numPts > 2) // proper polygon
+  if (numPts > 1) // proper polygon
   {
     for(size_t i = 0; i < numPts; ++i) {
       const Vec2f edgeVector( _poly.GetEdgeVector(i) );
@@ -236,16 +236,6 @@ void FastPolygon::CreateEdgeVectors()
 
     }
   } 
-  else if (numPts == 2) // line only
-  {  
-    const Vec2f edgeVector( _poly.GetEdgeVector(0) );
-    float oneOverNorm = 1.0 / edgeVector.Length();
-    _edgeSegments.emplace_back( _poly[0], _poly[1] );
-    _perpendicularEdgeVectors.emplace_back( std::make_pair(
-                                              Vec2f{ -edgeVector.y() * oneOverNorm, edgeVector.x() * oneOverNorm },
-                                              0) );
-    
-  } // otherwise we have a single-point set
 }
 
 void FastPolygon::SortEdgeVectors()
