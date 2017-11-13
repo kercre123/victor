@@ -257,7 +257,6 @@
             var zoomIn = document.querySelector('#zoomIn');
             var zoomOut = document.querySelector('#zoomOut');
             var zoomReset = document.querySelector('#zoomReset');
-            var exportbutton = document.querySelector('#exportbutton');
 
             undo.addEventListener('click', function () {
                 Scratch.workspace.playAudio('click');
@@ -310,16 +309,6 @@
                 e.preventDefault();  // Stop double-clicking from selecting text.
             });
 
-            exportbutton.addEventListener('click', function () {
-                Scratch.workspace.playAudio('click');
-                vm.stopAll();
-
-                window.exportCozmoProject();
-            });
-            exportbutton.addEventListener('touchmove', function (e) {
-                e.preventDefault();
-            });
-
             var glossaryButton = document.querySelector('#glossarybutton');
             glossaryButton.addEventListener('click', function(){
               Scratch.workspace.playAudio('click');
@@ -332,6 +321,17 @@
             // Move the workspace to its home position
             Scratch.workspace.scrollHome();
         }
+
+        var exportbutton = document.querySelector('#exportbutton');
+        exportbutton.addEventListener('click', function () {
+            Scratch.workspace.playAudio('click');
+            vm.stopAll();
+
+            window.exportCozmoProject();
+        });
+        exportbutton.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+        });
 
         var remixButton = document.querySelector("#remix-button");
         remixButton.addEventListener('click', function(){

@@ -1438,6 +1438,21 @@ namespace CodeLab {
         CodeLabProject projectToExport = FindProjectByUUIDAndCreateCodeLabProject(projectUUID, projectType);
 
         if (projectToExport != null) {
+          // Special case: if this is a horizontal sample project serialized as XML, get the current project representation as JSON from scratchRequest.
+          if (projectToExport.ProjectJSON == null && projectType == "sample" && projectToExport.IsVertical == false) {
+            projectToExport.ProjectJSON = scratchRequest.argString2;
+          }
+
+          if (string.IsNullOrEmpty(projectToExport.ProjectJSON)) {
+            DAS.Error("Codelab.OnCozmoShareProject.ScratchProjectJSONNullOrEmpty", "During export, the Scratch project JSON is null or empty for projectType = " + projectType + ", isVertical = " + projectToExport.IsVertical);
+            return;
+          }
+
+          // Look up localized name for featured and sample projects from the localization key in projectToExport.ProjectName.
+          if (projectType == "sample" && projectToExport.ProjectName != null) {
+            projectToExport.ProjectName = Localization.Get(projectToExport.ProjectName);
+          }
+
           string projectToExportJSON = kCodelabPrefix + WWW.EscapeURL(projectToExport.GetSerializedJson());
 
           SessionState.DAS_Event("robot.code_lab.export_project", projectType,

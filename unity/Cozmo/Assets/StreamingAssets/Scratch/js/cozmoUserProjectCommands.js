@@ -196,12 +196,13 @@
         // @todo: inject a new check for featured projects
 
         promiseSaveProject.then(function(result) {
-            window.Unity.call({requestId: -1, command: "cozmoExportProject", argUUID: window.cozmoProjectUUID, argString: projectType});
+            // Pass the projectJSON along to cozmoExportProject in case this project has not yet been saved as JSON (such as with horizontal sample projects).
+            var projectJSON = Scratch.vm.toJSON();
+            window.Unity.call({requestId: -1, command: "cozmoExportProject", argUUID: window.cozmoProjectUUID, argString: projectType, argString2: projectJSON});
         });
     }
 
     window.exportCozmoProject = function() {
-
         var title = window.$t('codeLab.export_modal.title');
         var body = window.$t('codeLab.export_modal.body');
         var cancelText = Blockly.Msg.IOS_CANCEL;
