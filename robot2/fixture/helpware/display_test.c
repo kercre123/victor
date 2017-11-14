@@ -124,7 +124,7 @@ int main(int argc, const char* argv[])
     printf("reading\n");
     int nread = read(0, linebuf+linelen, LINEBUFSZ-linelen);
     printf("%s",linebuf);
-    if (nread<0) { exit = true; break; }
+    if (nread<=0) { exit = true; break; }
     printf("searching\n");
     char* endl = memchr(linebuf+linelen, '\n', nread);
     if (!endl) {
@@ -145,4 +145,3 @@ int main(int argc, const char* argv[])
   }
   return 0;
 }
-
