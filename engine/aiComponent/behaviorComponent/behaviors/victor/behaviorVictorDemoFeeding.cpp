@@ -17,13 +17,12 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/robot.h"
-
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -44,8 +43,8 @@ void BehaviorVictorDemoFeeding::InitBehavior(BehaviorExternalInterface& behavior
 {
   const auto& BC = behaviorExternalInterface.GetBehaviorContainer();
 
-  BC.FindBehaviorByIDAndDowncast(BehaviorID::FeedingEat,
-                                 BehaviorClass::FeedingEat,
+  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(FeedingEat),
+                                 BEHAVIOR_CLASS(FeedingEat),
                                  _eatFoodBehavior);
 }
 

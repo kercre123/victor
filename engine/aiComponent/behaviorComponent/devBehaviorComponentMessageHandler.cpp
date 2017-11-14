@@ -11,24 +11,23 @@
 *
 **/
 
-#include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
 #include "engine/externalInterface/externalInterface.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 
-#include "clad/types/behaviorComponent/behaviorTypes.h"
-
 namespace Anki {
 namespace Cozmo {
 
 namespace {
-static const BehaviorID kBehaviorIDForDevMessage = BehaviorID::DevExecuteBehaviorRerun;
+static const BehaviorID kBehaviorIDForDevMessage = BEHAVIOR_ID(DevExecuteBehaviorRerun);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -39,7 +38,7 @@ DevBehaviorComponentMessageHandler::DevBehaviorComponentMessageHandler(Robot& ro
     auto handlerCallback = [this, &bContainer](const GameToEngineEvent& event) {
       const auto& msg = event.GetData().Get_ExecuteBehaviorByID();
       
-      BehaviorID behaviorID = BehaviorIDFromString(msg.behaviorID);
+      BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(msg.behaviorID);
       ICozmoBehaviorPtr behaviorToRun = bContainer.FindBehaviorByID(behaviorID);
       if(behaviorToRun != nullptr){
         ICozmoBehaviorPtr rerunBehavior =

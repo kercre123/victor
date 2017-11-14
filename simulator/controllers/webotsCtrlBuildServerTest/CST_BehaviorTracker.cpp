@@ -10,14 +10,14 @@
  *
  */
 
-#include "simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/robot.h"
+#include "simulator/game/cozmoSimTestController.h"
 #include "util/logging/logging.h"
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <time.h>
 
 namespace Anki {
@@ -36,8 +36,8 @@ public:
 
 private:
   struct BehaviorStateChange {
-    BehaviorID oldBehaviorID = BehaviorID::Wait;
-    BehaviorID newBehaviorID = BehaviorID::Wait;
+    BehaviorID oldBehaviorID = BEHAVIOR_ID(Wait);
+    BehaviorID newBehaviorID = BEHAVIOR_ID(Wait);
     float elapsedTime = 0.f;
   };
   
@@ -89,7 +89,7 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
       if(totalElapsed > kFreeplayLengthSeconds){
         //Final state
         BehaviorStateChange change;
-        change.newBehaviorID = BehaviorID::Wait;
+        change.newBehaviorID = BEHAVIOR_ID(Wait);
         change.oldBehaviorID = _stateChangeList.back().newBehaviorID;
         change.elapsedTime = totalElapsed;
         _stateChangeList.push_back(change);
@@ -159,11 +159,19 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
       }**/
       
       for(timeMapIter = timeMap.begin(); timeMapIter != timeMap.end(); ++timeMapIter){
-        PRINT_NAMED_INFO("Webots.BehaviorTracker.TestData", "##teamcity[buildStatisticValue key='%s%s' value='%f']", "wbtsBehavior_", BehaviorIDToString(timeMapIter->first), timeMapIter->second);
+        PRINT_NAMED_INFO("Webots.BehaviorTracker.TestData",
+                         "##teamcity[buildStatisticValue key='%s%s' value='%f']",
+                         "wbtsBehavior_",
+                         BehaviorTypesWrapper::BehaviorIDToString(timeMapIter->first),
+                         timeMapIter->second);
       }
       
       for(countMapIter = countMap.begin(); countMapIter != countMap.end(); ++countMapIter){
-        PRINT_NAMED_INFO("Webots.BehaviorTracker.TestData", "##teamcity[buildStatisticValue key='%s%s' value='%d']", "wbtsBehavior_count_", BehaviorIDToString(countMapIter->first), countMapIter->second);
+        PRINT_NAMED_INFO("Webots.BehaviorTracker.TestData",
+                         "##teamcity[buildStatisticValue key='%s%s' value='%d']",
+                         "wbtsBehavior_count_",
+                         BehaviorTypesWrapper::BehaviorIDToString(countMapIter->first),
+                         countMapIter->second);
       }
       
       
@@ -193,4 +201,3 @@ void CST_BehaviorTracker::HandleBehaviorTransition(const ExternalInterface::Beha
   
 } // end namespace Cozmo
 } // end namespace Anki
-

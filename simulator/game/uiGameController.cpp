@@ -8,12 +8,12 @@
 
 #include "simulator/game/uiGameController.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/cozmoAPI/comms/gameComms.h"
 #include "engine/cozmoAPI/comms/gameMessageHandler.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "util/transport/udpTransport.h"
 // includes for physics functions
@@ -1504,7 +1504,7 @@ namespace Anki {
 
     BehaviorClass UiGameController::GetBehaviorClass(const std::string& behaviorClass) const
     {
-      return BehaviorClassFromString(behaviorClass);
+      return BehaviorTypesWrapper::BehaviorClassFromString(behaviorClass);
     }
     
     void UiGameController::SendAbortPath()

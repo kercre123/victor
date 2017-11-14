@@ -11,7 +11,7 @@
  */
 
 #include "simulator/game/cozmoSimTestController.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -41,7 +41,9 @@ namespace Anki {
     {
       if (!_testStarted) {
         SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_PlaySound", "false")));
-        SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::FactoryTest), -1)));
+        SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehaviorByID(
+                                                             BehaviorTypesWrapper::BehaviorIDToString(
+                                                               BEHAVIOR_ID(FactoryTest)), -1)));
         StartMovieConditional("PlayPenFactoryTest");
         //TakeScreenshotsAtInterval("PlayPenFactoryTest", 1.f);
         

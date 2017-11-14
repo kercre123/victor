@@ -12,7 +12,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorObservingDemo.h"
 
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectTypes.h"
 #include "coretech/common/include/anki/common/basestation/colorRGBA.h"
@@ -24,6 +23,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iFeedingListener.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -249,8 +249,8 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     // the feeding complete condition is special because it needs to stay around to be a "listener"a
     auto& BC = behaviorExternalInterface.GetBehaviorContainer();
     std::shared_ptr<BehaviorFeedingEat> eatingBehavior;
-    const bool foundBehavior = BC.FindBehaviorByIDAndDowncast(BehaviorID::FeedingEat,
-                                                              BehaviorClass::FeedingEat,
+    const bool foundBehavior = BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(FeedingEat),
+                                                              BEHAVIOR_CLASS(FeedingEat),
                                                               eatingBehavior);
     if( ANKI_VERIFY(foundBehavior,
                     "VictorObservingDemo.NoEatingBehavior",
@@ -360,7 +360,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   const auto& BC = behaviorExternalInterface.GetBehaviorContainer();
 
   {
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoObservingOnChargerState);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BEHAVIOR_ID(VictorDemoObservingOnChargerState));
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingOnChargerState");
 
     State state(StateID::ObservingOnCharger, behavior);
@@ -378,7 +378,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoObservingOnChargerState);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BEHAVIOR_ID(VictorDemoObservingOnChargerState));
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingOnChargerState");
 
     State state(StateID::ObservingOnChargerRecentlyPlaced, behavior);
@@ -392,7 +392,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoDriveOffChargerIntoObserving);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BEHAVIOR_ID(VictorDemoDriveOffChargerIntoObserving));
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingDriveOffCharger");
 
     State driveOffCharger(StateID::DriveOffChargerIntoObserving, behavior);
@@ -405,7 +405,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::DriveOffCharger);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BEHAVIOR_ID(DriveOffCharger));
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.DriveOffCharger");
 
     State driveOffCharger(StateID::DriveOffChargerIntoPlay, behavior);
@@ -414,7 +414,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::DriveOffCharger);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BEHAVIOR_ID(DriveOffCharger));
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.DriveOffCharger");
 
     State driveOffCharger(StateID::DriveOffChargerIntoFeeding, behavior);
@@ -425,7 +425,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   {
     // TODO:(bn) add an "Excited" animation while on the charger here so coming off looks a bit different
     
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::DriveOffCharger);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BEHAVIOR_ID(DriveOffCharger));
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.DriveOffCharger");
 
     State driveOffCharger(StateID::DriveOffChargerIntoSocializing, behavior);
@@ -434,7 +434,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoObservingState);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BEHAVIOR_ID(VictorDemoObservingState));
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoObservingState");
 
     State state(StateID::Observing, behavior);
@@ -450,7 +450,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoFeedingState);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BEHAVIOR_ID(VictorDemoFeedingState));
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoFeedingState");
 
     State state(StateID::Feeding, behavior);
@@ -467,7 +467,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoSocialize);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BEHAVIOR_ID(VictorDemoSocialize));
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoSocialize");
 
     State state(StateID::Socializing, behavior);
@@ -481,7 +481,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoPlayState);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BEHAVIOR_ID(VictorDemoPlayState));
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoPlayState");
 
     State state(StateID::Playing, behavior);
@@ -495,7 +495,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoNappingState);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BEHAVIOR_ID(VictorDemoNappingState));
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoNappingState");
 
     State state(StateID::Napping, behavior);
@@ -507,7 +507,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoNappingWakeUp);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BEHAVIOR_ID(VictorDemoNappingWakeUp));
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoNappingWakeUp");
 
     State state(StateID::WakingUp, behavior);
@@ -517,7 +517,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::FindAndGoToHome);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BEHAVIOR_ID(FindAndGoToHome));
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.FindAndGoToHome");
 
     State state(StateID::ReturningToCharger, behavior);
@@ -533,7 +533,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
   }
 
   {
-    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BehaviorID::VictorDemoFailedToFindCharger);
+    ICozmoBehaviorPtr behavior = BC.FindBehaviorByID(BEHAVIOR_ID(VictorDemoFailedToFindCharger));
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.VictorDemoFailedToFindCharger");
 
     State state(StateID::FailedToFindCharger, behavior);

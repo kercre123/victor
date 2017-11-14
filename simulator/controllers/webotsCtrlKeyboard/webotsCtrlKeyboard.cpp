@@ -12,23 +12,22 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/pose.h"
-#include "util/helpers/printByteArray.h"
-#include "engine/events/animationTriggerHelpers.h"
-#include "engine/block.h"
-#include "engine/encodedImage.h"
-#include "engine/factory/factoryTestLogger.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/image_impl.h"
 #include "clad/types/actionTypes.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/proceduralFaceTypes.h"
+#include "engine/block.h"
+#include "engine/encodedImage.h"
+#include "engine/events/animationTriggerHelpers.h"
+#include "engine/factory/factoryTestLogger.h"
 #include "util/fileUtils/fileUtils.h"
-#include "util/math/math.h"
+#include "util/helpers/printByteArray.h"
 #include "util/logging/channelFilter.h"
 #include "util/logging/printfLoggerProvider.h"
+#include "util/math/math.h"
 #include "util/random/randomGenerator.h"
 #include <fstream>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -1160,9 +1159,8 @@ namespace Anki {
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsActivatable()));
                   }
                   const int numRuns = root_->getField("numBehaviorRuns")->getSFInt32();
-                  BehaviorID behaviorID = BehaviorIDFromString(behaviorName);
                   SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(behaviorID), numRuns)));
+                                ExternalInterface::ExecuteBehaviorByID(behaviorName, numRuns)));
                 }
                 else if(altKeyPressed)
                 {
@@ -2197,7 +2195,7 @@ namespace Anki {
                       SendMessage(MessageGameToEngine(std::move(setFaceToEnroll)));
                       
                       // Enable selection chooser and specify EnrollFace now that settings are sent
-                      SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::EnrollFace), -1)));
+                      SendMessage(MessageGameToEngine(ExecuteBehaviorByID("EnrollFace", -1)));
                     }
                     
                   } else {

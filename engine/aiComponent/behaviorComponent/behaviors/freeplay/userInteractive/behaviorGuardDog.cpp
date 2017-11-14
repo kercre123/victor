@@ -30,8 +30,6 @@
 #include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 
-#include "clad/types/behaviorComponent/behaviorTypes.h"
-
 #include "util/console/consoleInterface.h"
 
 namespace Anki {

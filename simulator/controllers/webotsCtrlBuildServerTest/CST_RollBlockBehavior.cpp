@@ -12,7 +12,7 @@
 
 #include "engine/robot.h"
 #include "simulator/game/cozmoSimTestController.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -30,7 +30,7 @@ enum class TestState {
   TestDone
 };
 
-static BehaviorID kBehaviorID = BehaviorID::RollBlockOnSide;
+static BehaviorID kBehaviorID = BEHAVIOR_ID(RollBlockOnSide);
 
 class CST_RollBlockBehavior : public CozmoSimTestController {
 private:
@@ -119,7 +119,8 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsLocalizedToObject(), 2) {
         SendMessage(ExternalInterface::MessageGameToEngine(
-                      ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(kBehaviorID), -1)));
+                      ExternalInterface::ExecuteBehaviorByID(
+                        BehaviorTypesWrapper::BehaviorIDToString(kBehaviorID), -1)));
         
         _behaviorStartedTime = GetSupervisor()->getTime();
         SET_TEST_STATE(DontStartBehavior);

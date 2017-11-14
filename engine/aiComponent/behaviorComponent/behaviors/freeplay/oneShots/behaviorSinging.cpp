@@ -15,8 +15,9 @@
 // TODO: VIC-24 - Migrate Cozmo Sings to Victor - Fix Audio Game Object
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorSinging.h"
 
-#include "engine/activeObject.h"
 #include "engine/actions/animActions.h"
+#include "engine/activeObject.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubeAccelComponent.h"
@@ -30,7 +31,6 @@
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/audio/audioEventTypes.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -268,7 +268,7 @@ BehaviorStatus BehaviorSinging::UpdateInternal_WhileRunning(BehaviorExternalInte
   {
     const TimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     
-    const char* song = EnumToString(GetID());
+    const char* song = BehaviorTypesWrapper::BehaviorIDToString(GetID());
     const TimeStamp_t durationOfShake_ms = curTime_ms - _cubeShakingStartTime_ms;
     
     // If the shake was longer than 500 ms then log event with the shake duration and song

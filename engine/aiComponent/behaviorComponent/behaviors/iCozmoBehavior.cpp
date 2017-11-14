@@ -15,20 +15,21 @@
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
-#include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
-#include "engine/aiComponent/behaviorHelperComponent.h"
+#include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/behaviorComponent/anonymousBehaviorFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorHelperComponent.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyCloudIntentPending.h"
-#include "engine/components/cubeLightComponent.h"
 #include "engine/components/carryingComponent.h"
+#include "engine/components/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/cozmoContext.h"
@@ -43,7 +44,6 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/behaviorComponent/cloudIntents.h"
 
 #include "util/enums/stringToEnumMapper.hpp"
@@ -82,8 +82,8 @@ static const char* kAnonymousBehaviorParams          = "params";
 Json::Value ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass behaviorClass, BehaviorID behaviorID)
 {
   Json::Value config;
-  config[kBehaviorClassKey] = BehaviorClassToString(behaviorClass);
-  config[kBehaviorIDConfigKey] = BehaviorIDToString(behaviorID);
+  config[kBehaviorClassKey] = BehaviorTypesWrapper::BehaviorClassToString(behaviorClass);
+  config[kBehaviorIDConfigKey] = BehaviorTypesWrapper::BehaviorIDToString(behaviorID);
   return config;
 }
 
@@ -95,17 +95,17 @@ void ICozmoBehavior::InjectBehaviorClassAndIDIntoConfig(BehaviorClass behaviorCl
     PRINT_NAMED_WARNING("ICozmoBehavior.InjectBehaviorIDIntoConfig.BehaviorIDAlreadyExists",
                         "Overwriting behaviorID %s with behaviorID %s",
                         config[kBehaviorIDConfigKey].asString().c_str(),
-                        BehaviorIDToString(behaviorID));
+                        BehaviorTypesWrapper::BehaviorIDToString(behaviorID));
   }
   if(config.isMember(kBehaviorClassKey)){
     PRINT_NAMED_WARNING("ICozmoBehavior.InjectBehaviorIDIntoConfig.BehaviorClassAlreadyExists",
                         "Overwriting behaviorClass %s with behaviorClass %s",
                         config[kBehaviorClassKey].asString().c_str(),
-                        BehaviorClassToString(behaviorClass));
+                        BehaviorTypesWrapper::BehaviorClassToString(behaviorClass));
   }
 
-  config[kBehaviorIDConfigKey] = BehaviorIDToString(behaviorID);  
-  config[kBehaviorClassKey] = BehaviorClassToString(behaviorClass);
+  config[kBehaviorIDConfigKey] = BehaviorTypesWrapper::BehaviorIDToString(behaviorID);  
+  config[kBehaviorClassKey] = BehaviorTypesWrapper::BehaviorClassToString(behaviorClass);
 }
 
 
@@ -132,7 +132,7 @@ BehaviorID ICozmoBehavior::ExtractBehaviorIDFromConfig(const Json::Value& config
                    behaviorID_str.c_str());
   }
   
-  return BehaviorIDFromString(behaviorID_str);
+  return BehaviorTypesWrapper::BehaviorIDFromString(behaviorID_str);
 }
 
 
@@ -141,7 +141,7 @@ BehaviorClass ICozmoBehavior::ExtractBehaviorClassFromConfig(const Json::Value& 
 {
   const Json::Value& behaviorTypeJson = config[kBehaviorClassKey];
   const char* behaviorTypeString = behaviorTypeJson.isString() ? behaviorTypeJson.asCString() : "";
-  return BehaviorClassFromString(behaviorTypeString);
+  return BehaviorTypesWrapper::BehaviorClassFromString(behaviorTypeString);
 }
 
 
@@ -161,15 +161,15 @@ NeedsActionId ICozmoBehavior::ExtractNeedsActionIDFromConfig(const Json::Value& 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
-: IBehavior(BehaviorIDToString(ExtractBehaviorIDFromConfig(config)))
+: IBehavior(BehaviorTypesWrapper::BehaviorIDToString(ExtractBehaviorIDFromConfig(config)))
 , _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _lastRunTime_s(0.0f)
 , _activatedTime_s(0.0f)
 , _id(ExtractBehaviorIDFromConfig(config))
-, _idString(BehaviorIDToString(_id))
+, _idString(BehaviorTypesWrapper::BehaviorIDToString(_id))
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
 , _needsActionID(ExtractNeedsActionIDFromConfig(config))
-, _executableType(ExecutableBehaviorType::Count)
+, _executableType(BehaviorTypesWrapper::GetDefaultExecutableBehaviorType())
 , _respondToCloudIntent(CloudIntent::Count)
 , _requiredUnlockId( UnlockId::Count )
 , _requiredSevereNeed( NeedId::Count )
@@ -247,7 +247,7 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   const Json::Value& executableBehaviorTypeJson = config[kExecutableBehaviorTypeKey];
   if (executableBehaviorTypeJson.isString())
   {
-    _executableType = ExecutableBehaviorTypeFromString(executableBehaviorTypeJson.asCString());
+    _executableType = BehaviorTypesWrapper::ExecutableBehaviorTypeFromString(executableBehaviorTypeJson.asCString());
   }
   
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
@@ -316,7 +316,7 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
       const std::string debugStr = "ICozmoBehavior.ReadFromJson.";
       
       const std::string behaviorName = JsonTools::ParseString(entry, kAnonymousBehaviorName, debugStr + "BehaviorNameMissing");      
-      const BehaviorClass behaviorClass = BehaviorClassFromString(
+      const BehaviorClass behaviorClass = BehaviorTypesWrapper::BehaviorClassFromString(
         JsonTools::ParseString(entry, kBehaviorClassKey, debugStr + "BehaviorClassMissing"));
       Json::Value params;
       if(entry.isMember(kAnonymousBehaviorParams)){
@@ -1371,7 +1371,7 @@ ActionResult ICozmoBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string ICozmoBehavior::GetClassString(BehaviorClass behaviorClass) const
 {
-  return BehaviorClassToString(behaviorClass);
+  return BehaviorTypesWrapper::BehaviorClassToString(behaviorClass);
 }
 
   

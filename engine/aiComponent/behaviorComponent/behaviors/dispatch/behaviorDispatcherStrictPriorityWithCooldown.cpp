@@ -12,9 +12,9 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriorityWithCooldown.h"
 
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "coretech/common/include/anki/common/basestation/jsonTools.h"
 #include "coretech/common/include/anki/common/basestation/utils/timer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -34,7 +34,7 @@ BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcherStrictPriorityWi
         "behavior",
         "BehaviorDispatcherStrictPriorityWithCooldown.BehaviorGroup.NoBehaviorID");
       
-      const BehaviorID behaviorID = BehaviorIDFromString(behaviorIDStr);
+      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(behaviorIDStr);
       IBehaviorDispatcher::AddPossibleDispatch(behaviorID);
 
       _cooldownInfo.emplace_back( BehaviorCooldownInfo{behaviorDefinitionGroup} );

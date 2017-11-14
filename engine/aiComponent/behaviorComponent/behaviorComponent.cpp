@@ -31,7 +31,7 @@
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -243,9 +243,9 @@ void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
     }else{
       // Need a base behavior, so make it base behavior wait
       Json::Value config = ICozmoBehavior::CreateDefaultBehaviorConfig(
-                                  BehaviorClass::Wait, BehaviorID::Wait);
+        BEHAVIOR_CLASS(Wait), BEHAVIOR_ID(Wait));
       _components->_behaviorContainer.CreateBehaviorFromConfig(config);
-      baseBehavior = _components->_behaviorContainer.FindBehaviorByID(BehaviorID::Wait).get();
+      baseBehavior = _components->_behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
     }
   }
   

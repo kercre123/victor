@@ -16,17 +16,17 @@
 #define protected public
 
 #include "engine/actions/basicActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/robotDataLoader.h"
 #include "engine/robot.h"
+#include "engine/robotDataLoader.h"
 #include "gtest/gtest.h"
 
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
@@ -92,7 +92,7 @@ TEST(DelegationComponent, TestDelegationVariants)
   
   // Delegate an arbitrarily large number of times to cozmoBehaviors
   {
-    Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+    Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BEHAVIOR_CLASS(Wait), BEHAVIOR_ID(Wait));
     for(int i = 0; i < arbitraryDelegationNumber; i++){
       bunchOfCozmoBehaviors.push_back(std::make_unique<TestBehavior>(empty));
       auto& toDelegate = bunchOfCozmoBehaviors.back();

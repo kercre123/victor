@@ -15,14 +15,15 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/behaviorHelperComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorHelperComponent.h"
+#include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
-#include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
 
@@ -30,8 +31,8 @@ using namespace Anki;
 using namespace Anki::Cozmo;
 
 
-static constexpr BehaviorClass emptyClass = BehaviorClass::Wait;
-static constexpr BehaviorID emptyID = BehaviorID::Wait;
+static const BehaviorClass emptyClass = BEHAVIOR_CLASS(Wait);
+static const BehaviorID emptyID = BEHAVIOR_ID(Wait);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Test behavior to run actions and delegate to helpers

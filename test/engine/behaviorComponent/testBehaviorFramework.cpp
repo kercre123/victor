@@ -20,16 +20,17 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/robotDataLoader.h"
 #include "engine/robot.h"
+#include "engine/robotDataLoader.h"
 #include "gtest/gtest.h"
 
 #include <string>
@@ -91,7 +92,7 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
   
   // stack is unused - put an arbitrary behavior on it
   if(baseBehavior == nullptr){
-    baseBehavior = subComponents->_behaviorContainer.FindBehaviorByID(BehaviorID::Wait).get();
+    baseBehavior = subComponents->_behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
     shouldCallInitOnBase = false;
   }
   

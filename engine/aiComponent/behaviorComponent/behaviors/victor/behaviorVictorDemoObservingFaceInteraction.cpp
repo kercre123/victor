@@ -17,10 +17,9 @@
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/trackFaceAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
-
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -45,8 +44,8 @@ void BehaviorVictorDemoObservingFaceInteraction::InitBehavior(BehaviorExternalIn
 {
   const auto& BC = behaviorExternalInterface.GetBehaviorContainer();
 
-  BC.FindBehaviorByIDAndDowncast(BehaviorID::VictorDemoObservingFindFaces,
-                                 BehaviorClass::FindFaces,
+  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(VictorDemoObservingFindFaces),
+                                 BEHAVIOR_CLASS(FindFaces),
                                  _searchBehavior);
 
 }

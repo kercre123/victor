@@ -10,23 +10,23 @@
 *
 */
 
-#include "vizControllerImpl.h"
 #include "anki/common/basestation/array2d_impl.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/vision/basestation/image.h"
-#include "clad/vizInterface/messageViz.h"
 #include "clad/types/animationTypes.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "clad/vizInterface/messageViz.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
-#include <webots/Supervisor.hpp>
-#include <webots/ImageRef.hpp>
-#include <webots/Display.hpp>
+#include "vizControllerImpl.h"
+#include <functional>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
-#include <functional>
+#include <webots/Display.hpp>
+#include <webots/ImageRef.hpp>
+#include <webots/Supervisor.hpp>
 
 namespace Anki {
 namespace Cozmo {
@@ -1073,7 +1073,7 @@ void VizControllerImpl::ProcessVizNewBehaviorSelectedMessage(const AnkiEvent<Viz
   if (_behaviorEventBuffer.size() > 0)
   {
     std::vector<BehaviorID>& latestEvents =_behaviorEventBuffer.back();
-    latestEvents.push_back(BehaviorIDFromString(selectData.newCurrentBehavior));
+    latestEvents.push_back(BehaviorTypesWrapper::BehaviorIDFromString(selectData.newCurrentBehavior));
   }
 }
 
@@ -1111,7 +1111,8 @@ void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent
   
   for (const VizInterface::BehaviorScoreData& scoreData : selectData.scoreData)
   {
-    BehaviorScoreBuffer& scoreBuffer = FindOrAddScoreBuffer(BehaviorIDFromString(scoreData.behaviorID));
+    BehaviorScoreBuffer& scoreBuffer = FindOrAddScoreBuffer(
+      BehaviorTypesWrapper::BehaviorIDFromString(scoreData.behaviorID));
     if (!scoreBuffer.empty())
     {
       // Remove the dummy entry we added during preUpdate
@@ -1224,7 +1225,7 @@ void VizControllerImpl::DrawBehaviorDisplay()
         for (BehaviorID eventID : eventsThisTick)
         {
           _behaviorDisp->drawLine(xVal, eventY, xVal, eventY + 30);
-          _behaviorDisp->drawText(BehaviorIDToString(eventID), xVal, eventY + kTextOffsetY);
+          _behaviorDisp->drawText(BehaviorTypesWrapper::BehaviorIDToString(eventID), xVal, eventY + kTextOffsetY);
           
           eventY += kTextSpacingY;
           if (eventY > kBottomTextY)
@@ -1316,7 +1317,7 @@ void VizControllerImpl::DrawBehaviorDisplay()
       
       char valueString[32];
       snprintf(valueString, sizeof(valueString), "%1.2f: ", scoreBuffer.back()._value);
-      const char * idStr = BehaviorIDToString(namedScoreBuffer._id);
+      const char * idStr = BehaviorTypesWrapper::BehaviorIDToString(namedScoreBuffer._id);
       std::string text = std::string(valueString) + (idStr == nullptr ? "<null>" : idStr);
       
       _behaviorDisp->drawText(text, textX, textY + kTextOffsetY);

@@ -16,17 +16,17 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 
-#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/workoutComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/workoutComponent.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 
 #include "clad/audio/audioEventTypes.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 

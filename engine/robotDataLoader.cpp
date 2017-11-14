@@ -378,7 +378,7 @@ void RobotDataLoader::LoadBehaviors()
       DEV_ASSERT_MSG(result.second,
                      "RobotDataLoader.LoadBehaviors.FailedEmplace",
                      "Failed to insert BehaviorID %s - make sure all behaviors have unique IDs",
-                     BehaviorIDToString(behaviorID));
+                     BehaviorTypesWrapper::BehaviorIDToString(behaviorID));
       
     }
     else if (!success)
