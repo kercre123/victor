@@ -87,7 +87,11 @@ namespace Anki {
       f32 pointTurnSpeedMaxIntegralError_ = 100;
       
       f32 pointTurnKp_ = 450.f;
+#ifdef SIMULATOR
+      f32 pointTurnKd_ = 500.f; // Too high a derivative gain causes issues in sim
+#else
       f32 pointTurnKd_ = 4000.f;
+#endif
       f32 pointTurnKi_ = 20.f;
       f32 pointTurnMaxIntegralError_ = 5;
       f32 prevPointTurnAngleError_ = 0;
