@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 
 #include "core/common.h"
 #include "core/serial.h"
@@ -13,6 +14,7 @@
 #include "helpware/helper_text.h"
 #include "helpware/display.h"
 #include "helpware/logging.h"
+#include "helpware/pidopen.h"
 
 
 #define FIXTURE_TTY "/dev/ttyHSL1"
@@ -21,15 +23,6 @@
 
 #define LINEBUFSZ 255
 
-int wait_for_data(int fd, int max_sec) {
-  fd_set fdset;
-  struct timeval timeout = {max_sec,0};
-  FD_ZERO(&fdset);
-  FD_SET(fd, &fdset);
-  int ret = select(1,&fdset,NULL,NULL,&timeout);
-  return (ret>0);
-}
-
 
 
 
@@ -37,35 +30,41 @@ int shellcommand(const char* command, int timeout_sec) {
   int retval = -666;
   uint64_t expiration = steady_clock_now()+(timeout_sec*NSEC_PER_SEC);
 
+
   fixture_log_writestring("-BEGIN SHELL- ");
   fixture_log_writestring(command);
   fixture_log_writestring("\n");
 
-  FILE* pp = popen("./headprogram", "r");
+  int pid;
+  int pfd = pidopen("./headprogram", &pid);
+  bool timedout = false;
 
-
-
-  if (pp) {
-    int pfd = fileno(pp);
-
+  if (pfd>0) {
+    uint64_t scnow = steady_clock_now();
     char buffer[512];
-    while (!feof(pp)) {
-      if (wait_for_data(pfd, 1)) { //wait 1 second
-        if (fgets(buffer, 512, pp) != NULL) {
-          printf("%s", buffer);
-          fixture_log_writestring(buffer);
+    int n;
+    do {
+      if (wait_for_data(pfd, 0)) {
+        n = read(pfd, buffer, 512);
+        if (n>0) {
+          printf("%.*s", n, buffer);
+          fixture_log_write(buffer,n);
+
         }
       }
-      if (steady_clock_now() > expiration) {
+      scnow = steady_clock_now();
+      if (scnow > expiration) {
         printf("TIMEOUT after %d sec\n", timeout_sec);
-        fixture_log_writestring("TIMEOUT");
+        fixture_log_writestring("TIMEOUT ");
+        timedout = true;
         break;
       }
-    }
-    retval = pclose(pp);
+    } while (n>0 );
+    retval = pidclose(pid, timedout);
   }
 
-  fixture_log_writestring("--END SHELL--");
+
+  fixture_log_writestring("--END SHELL-- ");
   fixture_log_writestring(command);
   fixture_log_writestring("\n");
 
@@ -81,7 +80,6 @@ int handle_lcdshow_command(const char* cmd, int len) {
 }
 int handle_lcdclr_command(const char* cmd, int len) {
   //"clr" is same as "set 0"
-  printf("handle lcdclr\n");
   return helper_lcdset_command_parse("0 \n", 3);
 }
 int handle_logstart_command(const char* cmd, int len) {
@@ -89,6 +87,7 @@ int handle_logstart_command(const char* cmd, int len) {
 }
 int handle_logstop_command(const char* cmd, int len) {
   return fixture_log_stop(cmd, len);
+  return 0;
 }
 
 
@@ -104,6 +103,12 @@ int handle_dutprogram_command(const char* cmd, int len) {
 
 }
 
+int handle_shell_timeout_test_command(const char* cmd, int len) {
+  //return handle_dutprogram_command(cmd, len);
+  printf("shell test disabled\n"); fflush(stdout);
+  fixture_log_writestring("shell test disabled\n");
+  return 0;
+}
 
 #define REGISTER_COMMAND(s) {#s, sizeof(#s)-1, handle_##s##_command}
 
@@ -123,6 +128,8 @@ static const CommandHandler handlers[] = {
   REGISTER_COMMAND(logstart),
   REGISTER_COMMAND(logstop),
   REGISTER_COMMAND(dutprogram),
+  REGISTER_COMMAND(shell_timeout_test),
+  {"shell-timeout-test", 18, handle_shell_timeout_test_command},
  /* ^^ insert new commands here ^^ */
   {0}
 };
@@ -130,7 +137,7 @@ static const CommandHandler handlers[] = {
 const char* fixture_command_parse(const char*  command, int len) {
   static char responseBuffer[LINEBUFSZ];
 
-//  printf("parsing \"%s\"\n", command);
+//  printf("\tparsing  \"%.*s\"\n", len, command);
 
   const CommandHandler* candidate = &handlers[0];
 
@@ -144,7 +151,6 @@ const char* fixture_command_parse(const char*  command, int len) {
     }
     candidate++;
   }
-  printf("NO MATCH");
   //not recognized, echo back invalid command with error code
   char* endcmd = memchr(command, ' ', len);
   if (endcmd) { len = endcmd - command; }
@@ -155,7 +161,7 @@ const char* fixture_command_parse(const char*  command, int len) {
   {
     responseBuffer[2+i]=*command++;
   }
-  snprintf(responseBuffer+i, LINEBUFSZ-i, " %d\n", -1);
+  snprintf(responseBuffer+2+i, LINEBUFSZ-2-i, " %d\n", -1);
   return responseBuffer;
 
 }
@@ -173,6 +179,7 @@ const char* find_line(const char* buf, int buflen, const char** last)
   return NULL;
 }
 
+int linecount = 0 ;
 int fixture_serial(int serialFd) {
   static char linebuf[LINEBUFSZ+1];
   const char* response = NULL;
@@ -195,11 +202,10 @@ int fixture_serial(int serialFd) {
   }
   const char* line = find_line(linebuf, linelen, &endl);
   while (line) {
+    linecount++;
     if (line[0]=='>' && line[1]=='>') {
       response = fixture_command_parse(line+2, endl-line-2);
       if (response) {
-        printf("%s", response);
-        fixture_log_writestring(response);
         serial_write(serialFd, (uint8_t*)response, strlen(response));
       }
     }
@@ -278,6 +284,12 @@ int user_terminal(void) {
       if (strncmp(linebuf, "quit", 4)==0)  {
         return 1;
       }
+      if (linebuf[0]=='>'&& linebuf[1]=='>') {
+        const char * response = fixture_command_parse(linebuf+2, endl-linebuf-2);
+        if (response) {
+          printf("~%s", response);
+        }
+      }
       linelen = 0;
     }
   }
@@ -301,11 +313,13 @@ void safe_quit(int n)
 }
 
 
+
 int main(int argc, const char* argv[])
 {
   bool exit = false;
 
   signal(SIGINT, safe_quit);
+  signal(SIGKILL, safe_quit);
 
   lcd_init();
   lcd_set_brightness(20);
@@ -314,11 +328,8 @@ int main(int argc, const char* argv[])
 
   gSerialFd = serial_init(FIXTURE_TTY, FIXTURE_BAUD);
 
-
-
   serial_write(gSerialFd, (uint8_t*)"\x1b\x1b\n", 4);
   serial_write(gSerialFd, (uint8_t*)"reset\n", 6);
-
 
   enable_kbhit(1);
   while (!exit)
