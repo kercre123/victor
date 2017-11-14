@@ -492,6 +492,9 @@ class CLADParser(PLYParser):
                               member.coord)
 
     def _check_message_member_initializer(self, member_type_ref, initializer, member_coord):
+        # Is this is a string type initializer we can't check it (could also be a use of the verbatim keyword)
+        if initializer.type is "str":
+            return
         if not member_type_ref.type.name in ast.builtin_types:
             self._parse_error("{0} is not a built in data type".format(member_type_ref.type.name),
                               member_coord)
