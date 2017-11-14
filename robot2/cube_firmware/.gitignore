@@ -1,0 +1,10 @@
+.DS_Store
+build
+JLinkLog.txt
+JLinkSettings.ini
+*.uvguix.*
+*.uvgui.*
+Listings
+Objects
+RTE
+EventRecorderStub.scvd
