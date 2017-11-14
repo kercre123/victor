@@ -16,9 +16,11 @@
 #include "clad/types/debugConsoleTypes.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/robotInterface/messageHandler.h"
 #include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleChannelFile.h"
 #include "anki/messaging/basestation/IComms.h"
 
@@ -28,15 +30,20 @@
 namespace Anki {
 namespace Cozmo {
   
-  void DebugConsoleManager::Init( IExternalInterface* externalInterface )
+  void DebugConsoleManager::Init( IExternalInterface* externalInterface, RobotInterface::MessageHandler* robotInterface )
   {
+    DEV_ASSERT(nullptr != externalInterface, "DebugConsoleManager.Init.NullExternalInterface");
+    DEV_ASSERT(nullptr != robotInterface,    "DebugConsoleManager.Init.NullRobotInterface");
+    
     _externalInterface = externalInterface;
+    _robotInterface    = robotInterface;
     
     auto debugConsoleEventCallback = std::bind(&DebugConsoleManager::HandleEvent, this, std::placeholders::_1);
     std::vector<ExternalInterface::MessageGameToEngineTag> tagList =
     {
       ExternalInterface::MessageGameToEngineTag::GetAllDebugConsoleVarMessage,
       ExternalInterface::MessageGameToEngineTag::SetDebugConsoleVarMessage,
+      ExternalInterface::MessageGameToEngineTag::SetAnimDebugConsoleVarMessage,
       ExternalInterface::MessageGameToEngineTag::RunDebugConsoleFuncMessage,
       ExternalInterface::MessageGameToEngineTag::GetDebugConsoleVarMessage,
     };
@@ -201,6 +208,18 @@ namespace Cozmo {
     externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
   }
   
+  template<typename T, size_t N_in>
+  inline static void CopyStringHelper(const std::string& inputString, std::array<T,N_in>& outputString)
+  {
+    // Ensure zero-termination
+    outputString.fill(0);
+    
+    // Make sure we don't look outside input or output's bounds, and leave outputString zero-terminated
+    size_t N = std::min(outputString.size()-1, inputString.size());
+    
+    // Do the copy
+    std::copy_n(inputString.begin(), N, outputString.begin());
+  }
   
   void DebugConsoleManager::HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
   {
@@ -249,6 +268,7 @@ namespace Cozmo {
       case ExternalInterface::MessageGameToEngineTag::SetDebugConsoleVarMessage:
       {
         const Anki::Cozmo::ExternalInterface::SetDebugConsoleVarMessage& msg = eventData.Get_SetDebugConsoleVarMessage();
+        
         Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(msg.varName.c_str());
         if (consoleVar && consoleVar->ParseText(msg.tryValue.c_str()) )
         {
@@ -257,10 +277,38 @@ namespace Cozmo {
         else
         {
           PRINT_NAMED_WARNING("DebugConsoleManager.HandleEvent.SetDebugConsoleVarMessage", "Error setting %svar '%s' to '%s'",
-                            consoleVar ? "" : "UNKNOWN ", msg.varName.c_str(), msg.tryValue.c_str());
+                              consoleVar ? "" : "UNKNOWN ", msg.varName.c_str(), msg.tryValue.c_str());
           SendVerifyDebugConsoleVarMessage(_externalInterface, msg.varName.c_str(),
                                            consoleVar ? "Error: Failed to Parse" : "Error: No such variable",
                                            consoleVar, false);
+        }
+      }
+      break;
+      case ExternalInterface::MessageGameToEngineTag::SetAnimDebugConsoleVarMessage:
+      {
+        const Anki::Cozmo::ExternalInterface::SetAnimDebugConsoleVarMessage& msg = eventData.Get_SetAnimDebugConsoleVarMessage();
+        
+        RobotInterface::SetDebugConsoleVarMessage robotInterfaceMsg;
+        
+        if(msg.varName.size() > robotInterfaceMsg.varName.size())
+        {
+          PRINT_NAMED_WARNING("DebugConsoleManager.HandleEvent.SetDebugConsoleVarMessage.VarNameTooLong",
+                              "Variable name '%s' exceeds maximum length of %zu",
+                              msg.varName.c_str(), robotInterfaceMsg.varName.size());
+        }
+        else
+        {
+          CopyStringHelper(msg.varName,  robotInterfaceMsg.varName);
+          CopyStringHelper(msg.tryValue, robotInterfaceMsg.tryValue);
+          
+          const bool reliable = true;
+          const bool hot = false;
+          
+          Result sendResult = _robotInterface->SendMessage(-1, RobotInterface::EngineToRobot(std::move(robotInterfaceMsg)), reliable, hot);
+          if(sendResult != RESULT_OK) {
+            PRINT_NAMED_WARNING("DebugConsoleManager.HandleEvent.SetDebugConsoleVarMessage.SendFailed",
+                                "Failed to send message to set '%s'", msg.varName.c_str());
+          }
         }
       }
       break;

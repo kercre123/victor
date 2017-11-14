@@ -2093,20 +2093,34 @@ namespace Anki {
                 if(nullptr == field) {
                   printf("No consoleVarName field\n");
                 } else {
-                  ExternalInterface::SetDebugConsoleVarMessage msg;
-                  msg.varName = field->getSFString();
-                  if(msg.varName.empty()) {
+                  
+                  const std::string varName( field->getSFString() );
+                  if(varName.empty()) {
                     printf("Empty consoleVarName\n");
+                    break;
+                  }
+                  
+                  std::string tryValue;
+                  
+                  field = root_->getField("consoleVarValue");
+                  if(nullptr == field) {
+                    printf("No consoleVarValue field\n");
                   } else {
-                    field = root_->getField("consoleVarValue");
-                    if(nullptr == field) {
-                      printf("No consoleVarValue field\n");
-                    } else {
-                      msg.tryValue = field->getSFString();
-                      printf("Trying to set console var '%s' to '%s'\n",
-                             msg.varName.c_str(), msg.tryValue.c_str());
-                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
-                    }
+                    tryValue = field->getSFString();
+                    printf("Trying to set console var '%s' to '%s'\n",
+                           varName.c_str(), tryValue.c_str());
+                  }
+                  
+                  using namespace ExternalInterface;
+                  if(altKeyPressed)
+                  {
+                    // Alt: Send to Anim process
+                    SendMessage(MessageGameToEngine(SetAnimDebugConsoleVarMessage(varName, tryValue)));
+                  }
+                  else
+                  {
+                    // Normal: Send to Engine process
+                    SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage(varName, tryValue)));
                   }
                 }
                 break;                

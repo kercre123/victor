@@ -1004,6 +1004,12 @@ message SetDebugConsoleVarMessage {
   string tryValue
 }
 
+// Same as above, but for setting console vars in the anim process
+message SetAnimDebugConsoleVarMessage {
+  string varName,
+  string tryValue
+}
+
 message RunDebugConsoleFuncMessage {
   string funcName,
   string funcArgs

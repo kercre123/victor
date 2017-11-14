@@ -123,7 +123,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   _signalHandles.emplace_back(_context->GetExperiments()->GetAnkiLab()
                               .ActiveAssignmentsUpdatedSignal().ScopedSubscribe(handler));
 
-  _debugConsoleManager.Init(_context->GetExternalInterface());
+  _debugConsoleManager.Init(_context->GetExternalInterface(), _context->GetRobotManager()->GetMsgHandler());
   _dasToSdkHandler.Init(_context->GetExternalInterface());
   InitUnityLogger();
 }

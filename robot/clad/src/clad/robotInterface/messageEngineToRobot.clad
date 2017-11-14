@@ -327,6 +327,12 @@ message SetFaceHue
     float_32 hue // [0,1]
 }
 
+// SetDebugConsoleVarMessage - for getting console vars to AnimProcess (until we have nicer web interface)
+message SetDebugConsoleVarMessage {
+  uint_8 varName[64],   // Array of chars, zero-terminated
+  uint_8 tryValue[16]   //   "
+}
+
 // ====================================================
 
 enum uint_32 ToRobotAddressSpace
@@ -440,6 +446,7 @@ union EngineToRobot
   AudioEngine::Multiplexer::PostAudioSwitchState  postAudioSwitchState = 0x73,
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
 
+  SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }
