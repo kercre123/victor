@@ -26,15 +26,13 @@ namespace Cozmo {
   
 MountChargerAction::MountChargerAction(Robot& robot,
                                        ObjectID chargerID,
-                                       const bool useCliffSensorCorrection,
-                                       const bool useManualSpeed)
+                                       const bool useCliffSensorCorrection)
   : IAction(robot,
             "MountCharger",
             RobotActionType::MOUNT_CHARGER,
             (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK)
   , _chargerID(chargerID)
   , _useCliffSensorCorrection(useCliffSensorCorrection)
-  , _useManualSpeed(useManualSpeed)
 {
   
 }
@@ -42,7 +40,6 @@ MountChargerAction::MountChargerAction(Robot& robot,
 ActionResult MountChargerAction::Init()
 {
   // Reset the compound actions to ensure they get re-configured:
-  _alignWithChargerAction.reset();
   _turnAndMountAction.reset();
   _driveForRetryAction.reset();
   
@@ -59,8 +56,8 @@ ActionResult MountChargerAction::Init()
   // Tell robot which charger it will be using
   _robot.SetCharger(_chargerID);
 
-  // Set up the align with charger compound action
-  ActionResult result = ConfigureAlignWithChargerAction();
+  // Set up the turnAndMount compound action
+  ActionResult result = ConfigureTurnAndMountAction();
   
   return result;
 }
@@ -68,21 +65,6 @@ ActionResult MountChargerAction::Init()
 ActionResult MountChargerAction::CheckIfDone()
 {
   auto result = ActionResult::RUNNING;
-  
-  // Tick the alignWithCharger action (if needed):
-  if (_alignWithChargerAction != nullptr) {
-    result = _alignWithChargerAction->Update();
-    if (result == ActionResult::SUCCESS) {
-      // Finished with alignWithChargerAction.
-      // Null the action and keep running.
-      _alignWithChargerAction.reset();
-      // Configure the turnAndMount action:
-      result = ConfigureTurnAndMountAction();
-      if (result != ActionResult::SUCCESS) {
-        return result;
-      }
-    }
-  }
   
   // Tick the turnAndMount action (if needed):
   if (_turnAndMountAction != nullptr) {
@@ -128,29 +110,7 @@ ActionResult MountChargerAction::CheckIfDone()
   return result;
 }
 
-ActionResult MountChargerAction::ConfigureAlignWithChargerAction()
-{
-  DEV_ASSERT(_alignWithChargerAction == nullptr, "MountChargerAction.ConfigureAlignWithChargerAction.AlreadyConfigured");
-  _alignWithChargerAction.reset(new CompoundActionSequential(_robot));
-  _alignWithChargerAction->ShouldSuppressTrackLocking(true);
-  
-  // Dock action to align with the charger marker
-  const float distanceFromMarker_mm = 130.f;
-  const float alignSpeed_mmps = 30.f;
-  auto alignAction = new AlignWithObjectAction(_robot,
-                                               _chargerID,
-                                               distanceFromMarker_mm,
-                                               AlignmentType::CUSTOM,
-                                               _useManualSpeed);
-  alignAction->SetSpeed(alignSpeed_mmps);
-  _alignWithChargerAction->AddAction(alignAction);
-  
-  // Look straight to see marker clearly
-  _alignWithChargerAction->AddAction(new MoveHeadToAngleAction(_robot, 0.f));
-  
-  return ActionResult::SUCCESS;
-}
-  
+
 ActionResult MountChargerAction::ConfigureTurnAndMountAction()
 {
   DEV_ASSERT(_turnAndMountAction == nullptr, "MountChargerAction.ConfigureTurnAndMountAction.AlreadyConfigured");
@@ -291,8 +251,9 @@ DriveToAndMountChargerAction::DriveToAndMountChargerAction(Robot& robot,
                                                false,
                                                0,
                                                useManualSpeed);
+  driveToAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
   AddAction(driveToAction);
-  AddAction(new MountChargerAction(robot, objectID, useCliffSensorCorrection, useManualSpeed));
+  AddAction(new MountChargerAction(robot, objectID, useCliffSensorCorrection));
 }
   
   

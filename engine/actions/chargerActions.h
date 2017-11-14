@@ -26,16 +26,14 @@ class Robot;
 
 // MountChargerAction
 //
-// Use the robot's docking controller to align with the charger, then turn
-// around and drive backward onto the charger, optionally using the cliff
+// Turn around and drive backward onto the charger, optionally using the cliff
 // sensors to detect the charger docking pattern and correct while reversing.
 class MountChargerAction : public IAction
 {
 public:
   MountChargerAction(Robot& robot,
                      ObjectID chargerID,
-                     const bool useCliffSensorCorrection = true,
-                     const bool useManualSpeed = false);
+                     const bool useCliffSensorCorrection = true);
   
 protected:
   
@@ -46,15 +44,12 @@ private:
   const ObjectID _chargerID;
 
   const bool _useCliffSensorCorrection;
-  const bool _useManualSpeed;
   
   // Pointers to compound actions which comprise this action:
-  std::unique_ptr<ICompoundAction> _alignWithChargerAction = nullptr;
   std::unique_ptr<ICompoundAction> _turnAndMountAction = nullptr;
   std::unique_ptr<DriveStraightAction> _driveForRetryAction = nullptr;
   
   // Allocate and add actions to the member compound actions:
-  ActionResult ConfigureAlignWithChargerAction();
   ActionResult ConfigureTurnAndMountAction();
   ActionResult ConfigureDriveForRetryAction();
   
