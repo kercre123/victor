@@ -25,7 +25,7 @@ SCRIPTDIR=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || ech
 #
 # Create symbol cache
 #
-if [ ! -d ${SYMFS} ] ; then
+if [ ! -d ${ANKI_PROFILE_SYMBOLCACHE} ] ; then
   bash ${SCRIPTDIR}/make_symbol_cache.sh ${ANKI_PROFILE_SYMBOLCACHE}
 fi
 
