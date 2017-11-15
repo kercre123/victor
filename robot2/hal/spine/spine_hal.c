@@ -119,7 +119,7 @@ int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
   int result = read(gHal.fd, buffer, len);
   if (result < 0) {
     if (errno == EAGAIN) { //nonblocking no-data
-      usleep(200); //wait a bit.
+      usleep(1000); //wait a bit.
       result = 0; //not an error
     }
   }

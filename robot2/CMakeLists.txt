@@ -9,7 +9,7 @@ set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
 if (ANDROID)
-  set(PLATFORM_LIBS android log)
+  set(PLATFORM_LIBS log)
   set(PLATFORM_COMPILE_DEFS 
     DEVELOPMENT
   )
@@ -39,6 +39,7 @@ target_link_libraries(spine
 
 target_include_directories(spine
   PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/clad/src>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/syscon>
 )
@@ -78,6 +79,7 @@ target_compile_definitions(robot_supervisor
 target_include_directories(robot_supervisor
   PRIVATE
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/hal/include>
+  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/syscon>
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal/include>
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot>
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/hal>
