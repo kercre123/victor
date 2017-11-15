@@ -4,7 +4,6 @@ JLinkLog.txt
 JLinkSettings.ini
 *.uvguix.*
 *.uvgui.*
-Listings
-Objects
+cube_application.bin
 RTE
 EventRecorderStub.scvd
