@@ -26,6 +26,8 @@
 #include "gpio.h"
 #include "uart.h"                    // UART initialization
 
+#include "../app/board.h"
+
 /**
  ****************************************************************************************
  * @brief Each application reserves its own GPIOs here.
@@ -53,19 +55,23 @@ i.e.
 
 void periph_init(void)
 {
-    // Power up peripherals' power domain
-    SetBits16(PMU_CTRL_REG, PERIPH_SLEEP, 0);
-    while (!(GetWord16(SYS_STAT_REG) & PER_IS_UP));
+  // Power up peripherals' power domain
+  SetBits16(PMU_CTRL_REG, PERIPH_SLEEP, 0);
+  while (!(GetWord16(SYS_STAT_REG) & PER_IS_UP));
 
-    SetBits16(CLK_16M_REG, XTAL16_BIAS_SH_ENABLE, 1);
+  SetBits16(CLK_16M_REG, XTAL16_BIAS_SH_ENABLE, 1);
 
-    //rom patch
-    patch_func();
+  //rom patch
+  patch_func();
 
-    // (Re)Initialize peripherals
-    // i.e.
-    //  uart_init(UART_BAUDRATE_115K2, 3);
+  // (Re)Initialize peripherals
+  // i.e.
+  //  uart_init(UART_BAUDRATE_115K2, 3);
 
-    // Enable the pads
-    SetBits16(SYS_CTRL_REG, PAD_LATCH_EN, 1);
+  // Enable the pads
+  SetBits16(SYS_CTRL_REG, PAD_LATCH_EN, 1);
+
+  // Disable things
+  GPIO_INIT_PIN(BOOST_EN, OUTPUT, PID_GPIO, 0, GPIO_POWER_RAIL_1V );
+  GPIO_INIT_PIN(ACC_CS,  OUTPUT,          PID_GPIO, 1, GPIO_POWER_RAIL_3V );
 }

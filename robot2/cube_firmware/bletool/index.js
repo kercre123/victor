@@ -9,7 +9,7 @@ factory.on('advertised', (info) => {
 
 factory.on('connected', (cube) => {
 	cube.upload(fs.readFileSync(process.argv[2]));
-	cube.send(new Buffer([1,2,3,4]));
+	setInterval(() => cube.send(new Buffer([1,2,3,4])), 1000);
 
 	cube.on('disconnect', () => console.log('Disconnected'));
 })

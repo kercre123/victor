@@ -175,11 +175,11 @@ static const struct gapm_configuration user_gapm_conf = {
     /// Peripheral only: *****************************************************************
     /// Slave preferred Minimum of connection interval  measured in ble double slots (1.25ms)
     /// use the macro MS_TO_DOUBLESLOTS to convert from milliseconds (ms) to double slots
-    .con_intv_min = MS_TO_DOUBLESLOTS(10),
+    .con_intv_min = 2,
 
     /// Slave preferred Maximum of connection interval  measured in ble double slots (1.25ms)
     /// use the macro MS_TO_DOUBLESLOTS to convert from milliseconds (ms) to double slots
-    .con_intv_max = MS_TO_DOUBLESLOTS(20),
+    .con_intv_max = 4,
 
     /// Slave preferred Connection latency. It is measured in connection events skipped
     .con_latency = 0,

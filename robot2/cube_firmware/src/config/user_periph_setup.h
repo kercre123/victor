@@ -28,6 +28,8 @@
 #include "arch.h"
 #include "da1458x_periph_setup.h"
 
+#define GPIO_DRV_PIN_ALLOC_MON_DISABLED
+
 /*
  * FUNCTION DECLARATIONS
  ****************************************************************************************

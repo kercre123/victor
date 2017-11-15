@@ -13,25 +13,12 @@
 //        Board Config
 //-----------------------------------------------------------
 static const uint32_t SYSTEM_CLOCK = 16*1000000;
-static const uint32_t COMMS_BAUDRATE = 57600;
-
-//hardware version string
-#if defined(HWVER21)
-  #define HWVERS "v2.1"
-#elif defined(HWVER20)
-  #define HWVERS "v2.0"
-#else
-  #define HWVERS "v?.?"
-#endif
 
 //-----------------------------------------------------------
 //        Board API
 //-----------------------------------------------------------
 
 void board_init(void);
-
-//global
-char* snformat(char *s, size_t n, const char *format, ...);
 
 //-----------------------------------------------------------
 //        pin defines

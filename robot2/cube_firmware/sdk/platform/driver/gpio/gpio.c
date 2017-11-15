@@ -22,7 +22,7 @@
 
 #include "arch.h"
 #include "gpio.h"
-//#include "user_periph_setup.h"
+#include "user_periph_setup.h"
 
 #if DEVELOPMENT_DEBUG
     #ifndef GPIO_DRV_PIN_ALLOC_MON_DISABLED
