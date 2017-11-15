@@ -3,7 +3,7 @@
 #include "board.h"
 #include "datasheet.h"
 
-//------------------------------------------------  
+//------------------------------------------------
 //    Board
 //------------------------------------------------
 
@@ -11,7 +11,7 @@ void board_init(void)
 {
   //Init boost regulator control (NOTE: 1V-BAT logic level)
   GPIO_INIT_PIN(BOOST_EN, OUTPUT, PID_GPIO, 0, GPIO_POWER_RAIL_1V );
-  
+
   // Init LEDs
   GPIO_INIT_PIN(D0,  OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(D1,  OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
@@ -25,15 +25,15 @@ void board_init(void)
   GPIO_INIT_PIN(D9,  OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(D10, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(D11, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
-  
+
   //SPI
   GPIO_INIT_PIN(ACC_SCK, OUTPUT,          PID_GPIO, 1, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(ACC_SDA, INPUT_PULLDOWN , PID_GPIO, 0, GPIO_POWER_RAIL_3V );
-  
+
   //UART
   GPIO_INIT_PIN(UTX, INPUT_PULLUP, PID_GPIO, 0, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(URX, INPUT_PULLUP, PID_GPIO, 0, GPIO_POWER_RAIL_3V );
-  
+
   //OTHER
   GPIO_INIT_PIN(CAPI,     INPUT_PULLDOWN, PID_GPIO, 0, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(CAPO,     INPUT_PULLDOWN, PID_GPIO, 0, GPIO_POWER_RAIL_3V );

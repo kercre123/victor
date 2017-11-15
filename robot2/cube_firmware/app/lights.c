@@ -2,32 +2,62 @@
 #include "lights.h"
 #include "irq.h"
 
-static IrqCallback swtim_irq;
+// 40000 total ticks (/2 divider so dark time can run at 200hz)
+#define TICKS_PER_FRAME   (8000000 / 200)
+#define GPIO_S_REGISTER(port) (volatile uint16_t*)(GPIO_BASE + (port << 5) + 2)
+#define GPIO_R_REGISTER(port) (volatile uint16_t*)(GPIO_BASE + (port << 5) + 4)
+
+typedef struct {
+  volatile uint16_t* toggle;
+  uint16_t pin;
+  int index;
+} LED_DEF;
+
 static void SWTIM_IRQHandler(void);
 
-// 8000 total ticks
-#define TICKS_PER_FRAME   (1600000 / 200)
-#define LED_WRAP          (12)
+static const LED_DEF pin_assignment[] = {
+  { GPIO_R_REGISTER(2), 1 << 2,  0 },
+  { GPIO_R_REGISTER(2), 1 << 9,  3 },
+  { GPIO_R_REGISTER(2), 1 << 6,  6 },
+  { GPIO_R_REGISTER(2), 1 << 3,  9 },
 
+  { GPIO_R_REGISTER(0), 1 << 7,  1 },
+  { GPIO_R_REGISTER(2), 1 << 8,  4 },
+  { GPIO_R_REGISTER(1), 1 << 0,  7 },
+  { GPIO_R_REGISTER(1), 1 << 1, 10 },
+
+  { GPIO_R_REGISTER(2), 1 << 1,  2 },
+  { GPIO_R_REGISTER(2), 1 << 7,  5 },
+  { GPIO_R_REGISTER(2), 1 << 5,  8 },
+  { GPIO_R_REGISTER(2), 1 << 4, 11 }
+};
+
+static const uint16_t SET_R0 = (1 << 7);
+static const uint16_t SET_R1 = (1 << 1) | (1 << 0);
+static const uint16_t SET_R2 = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5)
+                             | (1 << 6) | (1 << 7) | (1 << 8) | (1 << 9);
+
+static IrqCallback swtim_irq;
+
+// These are mass pin set values
 void hal_led_init(void) {
   hal_led_off();
   GPIO_SET(BOOST_EN);
 
-  swtim_irq = IRQ_Vectors[SWTIM_IRQn];
-  IRQ_Vectors[SWTIM_IRQn] = SWTIM_IRQHandler;
+  // Setup Timer (global, /2 divider (TIM0), fast clock)
+  SetWord32(CLK_PER_REG, TMR_ENABLE | 1);
 
-  // Setup Timer (global, no divider, fast clock)
-  SetWord32(CLK_PER_REG, TMR_ENABLE);
-  
   // Setup Timer0
   SetWord16(TIMER0_RELOAD_N_REG, 0);
   SetWord16(TIMER0_RELOAD_M_REG, 0);
+  SetWord16(TIMER0_ON_REG, TICKS_PER_FRAME / 12);
 
-  NVIC_SetPriority (SWTIM_IRQn, 3);
-
-  SetWord16(TIMER0_ON_REG, TICKS_PER_FRAME / LED_WRAP);
+  // Configure the IRQ
+  swtim_irq = IRQ_Vectors[SWTIM_IRQn];
+  IRQ_Vectors[SWTIM_IRQn] = SWTIM_IRQHandler;
+  NVIC_SetPriority(SWTIM_IRQn, 3);
   NVIC_EnableIRQ(SWTIM_IRQn);
-  
+
   // Start Timer
   SetWord32(TIMER0_CTRL_REG,TIM0_CLK_DIV | TIM0_CLK_SEL | TIM0_CTRL); // 16mhz, no PWM / div
 }
@@ -47,55 +77,24 @@ void hal_led_stop(void) {
 
 void hal_led_off(void)
 {
-  GPIO_SET(D0);
-  GPIO_SET(D1);
-  GPIO_SET(D2);
-  GPIO_SET(D3);
-  GPIO_SET(D4);
-  GPIO_SET(D5);
-  GPIO_SET(D6);
-  GPIO_SET(D7);
-  GPIO_SET(D8);
-  GPIO_SET(D9);
-  GPIO_SET(D10);
-  GPIO_SET(D11);
+  *GPIO_S_REGISTER(0) = SET_R0;
+  *GPIO_S_REGISTER(1) = SET_R1;
+  *GPIO_S_REGISTER(2) = SET_R2;
 }
 
 void hal_led_on(uint16_t n)
 {
   hal_led_off();
 
-  switch(n)
-  {
-    case HAL_LED_D1_RED: GPIO_CLR(D2); break;
-    case HAL_LED_D1_GRN: GPIO_CLR(D1); break;
-    case HAL_LED_D1_BLU: GPIO_CLR(D0); break;
-
-    case HAL_LED_D2_RED: GPIO_CLR(D5); break;
-    case HAL_LED_D2_GRN: GPIO_CLR(D4); break;
-    case HAL_LED_D2_BLU: GPIO_CLR(D3); break;
-
-    case HAL_LED_D3_RED: GPIO_CLR(D8); break;
-    case HAL_LED_D3_GRN: GPIO_CLR(D7); break;
-    case HAL_LED_D3_BLU: GPIO_CLR(D6); break;
-
-    case HAL_LED_D4_RED: GPIO_CLR(D11); break;
-    case HAL_LED_D4_GRN: GPIO_CLR(D10); break;
-    case HAL_LED_D4_BLU: GPIO_CLR(D9); break;
-
-    default: return;
-  }
+  *pin_assignment[n].toggle = pin_assignment[n].pin;
 }
 
 static void SWTIM_IRQHandler(void) {
-  static int countup = 0;
   static int led = 0;
 
-  if (countup++ < 10) return ;
   hal_led_on(led++);
 
   if (led >= LED_WRAP) {
     led = 0;
   }
-  countup = 0;
 }
