@@ -4,7 +4,9 @@ using System.IO;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using Cozmo.Util;
+using Cozmo.Needs;
 using Anki.Cozmo;
+using Anki.Cozmo.ExternalInterface;
 
 namespace DataPersistence {
   public class DataPersistenceManager {
@@ -330,6 +332,17 @@ namespace DataPersistence {
         DAS.Debug("DataPersistenceManager.Save.StackTrace", DASUtil.FormatStackTrace(ex.StackTrace));
         HockeyApp.ReportStackTrace("DataPersistenceManager.Save", ex.StackTrace);
       }
+    }
+
+
+
+    // Use this function to update data in the profile that may cause bugs if persisted from another robot
+    // NB: Not bothering to reset the DisplayedStar count, as it will be overwritten from NeedsState
+    // before StarBar is instantiated
+    public void OnFirstNeedsUpdate() {
+      Data.DefaultProfile.DisplayedStars = NeedsStateManager.Instance.GetLatestStarAwardedFromEngine();
+      Data.DefaultProfile.NewStarLevels.Clear();
+      NeedsStateManager.kRobotChangedFromLastSession = false;
     }
 
     #region DebugMenuAPI

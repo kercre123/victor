@@ -464,6 +464,7 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 
   bool needToWriteToDevice = false;
   bool needToWriteToRobot = _robotNeedsVersionUpdate;
+  bool robotHasChanged = false;
 
   // DAS Event: "needs.resolve_on_connection"
   // s_val: Whether device had valid needs data (1 or 0), and whether robot
@@ -522,6 +523,8 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
         PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt",
                       "Attempted to read alternate save file %s; file missing or read failed; could be because of brand new robot", filename.c_str());
       }
+
+      robotHasChanged = true;
     }
 
     // Either way, we definitely want to write to robot
@@ -579,7 +582,15 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
       _needsState._timeLastDisconnect = Time();
       // Similar for time since last app backgrounded; let's not confuse things
       _needsState._timeLastAppBackgrounded = Time();
+      robotHasChanged = true;
     }
+  }
+
+  // Special message to tell the game to clear some robot-specific data that was cached app-side
+  if (robotHasChanged) {
+    ExternalInterface::RobotChangedFromLastSession message;
+    const auto& extInt = _cozmoContext->GetExternalInterface();
+    extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
   }
 
   if (useStateFromRobot)
