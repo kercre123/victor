@@ -408,7 +408,8 @@ namespace Cozmo {
     u16* img565_i = _faceImg565.GetRow(0);
     const Vision::PixelRGB* faceImg_i = faceImg.get_CvMat_().ptr<Vision::PixelRGB>(0);
     
-    for(int j = 0; j < _faceImg565.GetNumElements(); ++j)
+    const auto nElements = _faceImg565.GetNumElements();
+    for(int j = 0; j < nElements; ++j)
     {
       const Vision::PixelRGB& pixRGB24 = faceImg_i[j];
       u16& pixRGB565 = img565_i[j];

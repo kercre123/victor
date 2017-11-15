@@ -32,6 +32,9 @@ namespace { // "Private members"
   // Face display
   webots::Display* face_;
   
+  // Face 'image' to send to webots each frame
+  u32 faceImg_[FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT] = {0};
+  
 } // "private" namespace
 
 
@@ -93,27 +96,37 @@ namespace { // "Private members"
   
   void FaceDisplay::FaceDraw(u16* frame)
   {
+    // Masks and shifts to convert an RGB565 color into a
+    // 32-bit BGRA color (i.e. 0xBBGGRRAA) which webots expects
     const u16 Rmask = 0xf800;
     const u16 Gmask = 0x07e0;
     const u16 Bmask = 0x001f;
-    const u16 Rshift = 8;
-    const u16 Gshift = 5;
-    const u16 Bshift = 3;
+    const u16 Rshift = 0;
+    const u16 Gshift = 13;
+    const u16 Bshift = 27;
     
-    for (u8 i = 0; i < FACE_DISPLAY_HEIGHT; ++i) {
-      for (u8 j = 0; j < FACE_DISPLAY_WIDTH; ++j) {
-        
-        const u16 bytesSwapped = ((*frame & 0xFF)<<8) | ((*frame >> 8)&0xFF);
-        
-        int color = ((bytesSwapped & Rmask) << Rshift) +
-                    ((bytesSwapped & Gmask) << Gshift) +
-                    ((bytesSwapped & Bmask) << Bshift);
-        ++frame;
-        
-        face_->setColor(color);
-        face_->drawPixel(j, i);
-      }
+    u32* imgPtr = &faceImg_[0];
+    
+    for (u32 i = 0; i < FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT; ++i) {
+      const u16 bytesSwapped = ((*frame & 0xFF)<<8) | ((*frame >> 8)&0xFF);
+      
+      // Convert RGB565 color into BGRA (i.e. 0xBBGGRRAA)
+      // Set alpha to 0xFF, since we don't want any transparency.
+      const u32 color = ((u32) (bytesSwapped & Rmask) << Rshift) |
+                        ((u32) (bytesSwapped & Gmask) << Gshift) |
+                        ((u32) (bytesSwapped & Bmask) << Bshift) |
+                        0x000000FF;
+      
+      *imgPtr++ = color;
+      ++frame;
     }
+
+    // Send the entire image to webots (by using the webots::Display 'clipboard' functionality),
+    // paste it from the 'clipboard' to the main display, then delete it.
+    // (see https://www.cyberbotics.com/doc/reference/display#display-functions)
+    auto imgRef = face_->imageNew(FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, faceImg_, webots::Display::ARGB);
+    face_->imagePaste(imgRef, 0, 0);
+    face_->imageDelete(imgRef);
   }
   
   void FaceDisplay::FacePrintf(const char* format, ...)
