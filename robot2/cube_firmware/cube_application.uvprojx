@@ -397,6 +397,11 @@
               <FileType>1</FileType>
               <FilePath>.\app\lights.c</FilePath>
             </File>
+            <File>
+              <FileName>animation.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\app\animation.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

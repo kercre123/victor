@@ -9,7 +9,12 @@ factory.on('advertised', (info) => {
 
 factory.on('connected', (cube) => {
 	cube.upload(fs.readFileSync(process.argv[2]));
-	setInterval(() => cube.send(new Buffer([1,2,3,4])), 1000);
+	setTimeout(() => {
+		cube.send(new Buffer([0x00, 0xFF,0xFF,0xFF, 50, 100,0x00,0x00,0x00, 50, 100]));
+		cube.send(new Buffer([0x01, 0xFF,0xFF,0xFF, 50, 100,0x00,0x00,0x00, 50, 100]));
+		cube.send(new Buffer([0x02, 0xFF,0xFF,0xFF, 50, 100,0x00,0x00,0x00, 50, 100]));
+		cube.send(new Buffer([0x0F, 0xFF,0xFF,0xFF, 50, 100,0x00,0x00,0x00, 50, 100]));
+	}, 1000);
 
 	cube.on('disconnect', () => console.log('Disconnected'));
-})
+});

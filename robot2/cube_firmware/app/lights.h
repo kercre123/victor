@@ -20,8 +20,6 @@ enum led_e {
 
 void hal_led_init(void);
 void hal_led_stop(void);
-void hal_led_power(bool on);
-void hal_led_off(void);
-void hal_led_on(uint16_t n);
+void hal_led_set(const uint8_t* colors);
 
 #endif
