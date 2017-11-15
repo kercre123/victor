@@ -35,10 +35,10 @@ void hal_led_init(void) {
 void hal_led_stop(void) {
   // Stop Timer and reset
   SetWord32(TIMER0_CTRL_REG, 0);
+  SetWord32(CLK_PER_REG, 0);
 
   // Teardown timer
   NVIC_DisableIRQ(SWTIM_IRQn);
-  SetWord32(CLK_PER_REG, 0);
   IRQ_Vectors[SWTIM_IRQn] = swtim_irq;
 
   hal_led_off();

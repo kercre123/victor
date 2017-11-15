@@ -334,7 +334,7 @@
               <MiscControls>--c99 --thumb -c --bss_threshold=0</MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>./sdk/platform/driver/gpio;./sdk/platform/arch/;./sdk/platform/arch/compiler/rvds/;./sdk/platform/arch/ll/rvds/;./sdk/platform/include/;./sdk/platform/driver/reg/</IncludePath>
+              <IncludePath>./sdk/platform/driver/gpio;./sdk/platform/arch/;./sdk/platform/arch/compiler/rvds/;./sdk/platform/arch/ll/rvds/;./sdk/platform/include/;./sdk/platform/driver/reg/;./src/config;./sdk/platform/core_modules/rwip/api;./sdk/common_project_files/</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -391,6 +391,11 @@
               <FileName>board.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\app\board.c</FilePath>
+            </File>
+            <File>
+              <FileName>lights.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\app\lights.c</FilePath>
             </File>
           </Files>
         </Group>
