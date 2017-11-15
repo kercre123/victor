@@ -9,10 +9,6 @@
 
 void board_init(void)
 {
-  static int inited = 0;
-  if( inited )
-    return;
-  
   //Init boost regulator control (NOTE: 1V-BAT logic level)
   GPIO_INIT_PIN(BOOST_EN, OUTPUT, PID_GPIO, 0, GPIO_POWER_RAIL_1V );
   
@@ -43,6 +39,4 @@ void board_init(void)
   GPIO_INIT_PIN(CAPO,     INPUT_PULLDOWN, PID_GPIO, 0, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(NC_P12,   INPUT_PULLDOWN, PID_GPIO, 0, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(NC_P13,   INPUT_PULLDOWN, PID_GPIO, 0, GPIO_POWER_RAIL_3V );
-  
-  inited = 1;
 }

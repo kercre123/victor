@@ -5,68 +5,9 @@
 static IrqCallback swtim_irq;
 static void SWTIM_IRQHandler(void);
 
-volatile struct __CLK_PER_REG clk_per_reg __attribute__((at(CLK_PER_REG)));
-volatile struct __TIMER0_CTRL_REG timer0_ctrl_reg __attribute__((at(TIMER0_CTRL_REG)));
-volatile struct __TRIPLE_PWM_CTRL_REG triple_pwm_ctrl_reg __attribute__((at(TRIPLE_PWM_CTRL_REG)));
-
-#define NO_PWM            0x0
-#define RELOAD_100MS      2250
-
-typedef enum
-{
-    PWM_MODE_ONE,
-    PWM_MODE_CLOCK_DIV_BY_TWO
-} PWM_MODE_t;
-
-typedef enum
-{
-    TIM0_CLK_DIV_BY_10,
-    TIM0_CLK_NO_DIV
-} TIM0_CLK_DIV_t;
-
-typedef enum
-{
-    TIM0_CLK_32K,
-    TIM0_CLK_FAST
-} TIM0_CLK_SEL_t;
-
-typedef enum
-{
-    TIM0_CTRL_OFF_RESET,
-    TIM0_CTRL_RUNNING
-} TIM0_CTRL_t;
-
-typedef enum
-{
-    CLK_PER_REG_TMR_DISABLED,
-    CLK_PER_REG_TMR_ENABLED,
-} CLK_PER_REG_TMR_ENABLE_t;
-
-typedef enum
-{
-    CLK_PER_REG_TMR_DIV_1,
-    CLK_PER_REG_TMR_DIV_2,
-    CLK_PER_REG_TMR_DIV_4,
-    CLK_PER_REG_TMR_DIV_8
-} CLK_PER_REG_TMR_DIV_t;
-
-typedef enum
-{
-    HW_CAN_NOT_PAUSE_PWM_2_3_4,
-    HW_CAN_PAUSE_PWM_2_3_4
-} TRIPLE_PWM_HW_PAUSE_EN_t;
-
-typedef enum
-{
-    PWM_2_3_4_SW_PAUSE_DISABLED,
-    PWM_2_3_4_SW_PAUSE_ENABLED
-} TRIPLE_PWM_SW_PAUSE_EN_t;
-
-typedef enum
-{
-    TRIPLE_PWM_DISABLED,
-    TRIPLE_PWM_ENABLED
-} TRIPLE_PWM_ENABLE_t;
+// 8000 total ticks
+#define TICKS_PER_FRAME   (1600000 / 200)
+#define LED_WRAP          (12)
 
 void hal_led_init(void) {
   hal_led_off();
@@ -76,31 +17,28 @@ void hal_led_init(void) {
   IRQ_Vectors[SWTIM_IRQn] = SWTIM_IRQHandler;
 
   // Setup Timer (global, no divider, fast clock)
-  clk_per_reg.BITFLD_TMR_ENABLE = CLK_PER_REG_TMR_ENABLED;
-  clk_per_reg.BITFLD_TMR_DIV = CLK_PER_REG_TMR_DIV_1;
+  SetWord32(CLK_PER_REG, TMR_ENABLE);
   
   // Setup Timer0
-  SetWord16(TIMER0_RELOAD_N_REG, NO_PWM);
-  SetWord16(TIMER0_RELOAD_M_REG, NO_PWM); 
-  timer0_ctrl_reg.BITFLD_PWM_MODE = PWM_MODE_ONE;
-  timer0_ctrl_reg.BITFLD_TIM0_CLK_DIV = TIM0_CLK_NO_DIV;
-  timer0_ctrl_reg.BITFLD_TIM0_CLK_SEL = TIM0_CLK_FAST;
+  SetWord16(TIMER0_RELOAD_N_REG, 0);
+  SetWord16(TIMER0_RELOAD_M_REG, 0);
+
   NVIC_SetPriority (SWTIM_IRQn, 3);
 
-  SetWord16(TIMER0_ON_REG, RELOAD_100MS);
+  SetWord16(TIMER0_ON_REG, TICKS_PER_FRAME / LED_WRAP);
   NVIC_EnableIRQ(SWTIM_IRQn);
   
   // Start Timer
-  timer0_ctrl_reg.BITFLD_TIM0_CTRL = TIM0_CTRL_RUNNING;
+  SetWord32(TIMER0_CTRL_REG,TIM0_CLK_DIV | TIM0_CLK_SEL | TIM0_CTRL); // 16mhz, no PWM / div
 }
 
 void hal_led_stop(void) {
   // Stop Timer and reset
-  timer0_ctrl_reg.BITFLD_TIM0_CTRL = TIM0_CTRL_OFF_RESET;
+  SetWord32(TIMER0_CTRL_REG, 0);
 
   // Teardown timer
   NVIC_DisableIRQ(SWTIM_IRQn);
-  clk_per_reg.BITFLD_TMR_ENABLE = CLK_PER_REG_TMR_DISABLED;
+  SetWord32(CLK_PER_REG, 0);
   IRQ_Vectors[SWTIM_IRQn] = swtim_irq;
 
   hal_led_off();
@@ -156,7 +94,7 @@ static void SWTIM_IRQHandler(void) {
   if (countup++ < 10) return ;
   hal_led_on(led++);
 
-  if (led >= 12) {
+  if (led >= LED_WRAP) {
     led = 0;
   }
   countup = 0;
