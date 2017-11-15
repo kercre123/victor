@@ -37,7 +37,7 @@ void PushIMU(const HAL::IMU_DataStructure& data)
     _imuNewestIdx = 0;
   }
   if (_imuNewestIdx == _imuLastReadIdx) {
-    AnkiWarn( "HAL.PushIMU.ArrayIsFull", "Dropping data");
+    //AnkiWarn( "HAL.PushIMU.ArrayIsFull", "Dropping data");
   }
 
   _imuDataArr[_imuNewestIdx] = data;
@@ -76,7 +76,7 @@ void ProcessIMUEvents()
     imageImuData.rateX = imuData.rate_x;
     imageImuData.rateY = imuData.rate_y;
     imageImuData.rateZ = imuData.rate_z;
-    RobotInterface::SendMessage(imageImuData);
+    //RobotInterface::SendMessage(imageImuData);
   }
 }
 

@@ -30,11 +30,15 @@
 #ifndef __MM_QCAMERA_DBG_H__
 #define __MM_QCAMERA_DBG_H__
 
-//#define LOG_DEBUG 1
+#define LOG_DEBUG 0
 
+#if LOG_DEBUG
     #include <stdio.h>
     #define CDBG(fmt, args...) fprintf(stderr, fmt "\n", ##args)
 //    #define ALOGE(fmt, args...) fprintf(stderr, fmt, ##args)
+#else
+    #define CDBG(fmt, args...)
+#endif
 
 #if 0
 #ifndef LOG_DEBUG

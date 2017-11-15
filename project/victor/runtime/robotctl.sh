@@ -66,8 +66,12 @@ function start_program()
     export LD_LIBRARY_PATH="${LIB_PATH}"
 
     cd ${SCRIPT_PATH}
-    exec_background nice -n -20 ${BIN_PATH}/${PROGRAM_EXE}
-    echo $!
+    exec_background ${BIN_PATH}/${PROGRAM_EXE}
+    PROG_PID=$!
+    echo "started ${PROGRAM_EXE} (${PROG_PID})"
+    taskset -a -p 8 ${PROG_PID}
+    renice -n -20 -p ${PROG_PID}
+    echo ${PROG_PID}
 }
 
 function stop_program()
