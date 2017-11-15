@@ -2,37 +2,40 @@
 #include "lights.h"
 #include "irq.h"
 
-// 40000 total ticks (/2 divider so dark time can run at 200hz)
-#define TICKS_PER_FRAME   (8000000 / 200)
-#define GPIO_S_REGISTER(port) (volatile uint16_t*)(GPIO_BASE + (port << 5) + 2)
-#define GPIO_R_REGISTER(port) (volatile uint16_t*)(GPIO_BASE + (port << 5) + 4)
+#define GPIO_REGISTER(port) (volatile uint16_t*)(GPIO_BASE + (port << 5) + 2)
 
 typedef struct {
-  volatile uint16_t* toggle;
+  volatile uint16_t* port;
   uint16_t pin;
   int index;
-} LED_DEF;
+} LedDefinition;
+
+typedef struct {
+  volatile uint16_t* port;
+  uint16_t pin;
+  uint16_t count;
+} LedSlot;
 
 static void SWTIM_IRQHandler(void);
 
-static const LED_DEF pin_assignment[] = {
+static const LedDefinition pin_assignment[] = {
+  // Blue
+  { GPIO_REGISTER(2), 1 << 1,  2 },
+  { GPIO_REGISTER(2), 1 << 7,  5 },
+  { GPIO_REGISTER(2), 1 << 5,  8 },
+  { GPIO_REGISTER(2), 1 << 4, 11 },
+
   // Green
-  { GPIO_R_REGISTER(2), 1 << 1,  2 },
-  { GPIO_R_REGISTER(2), 1 << 7,  5 },
-  { GPIO_R_REGISTER(2), 1 << 5,  8 },
-  { GPIO_R_REGISTER(2), 1 << 4, 11 },
+  { GPIO_REGISTER(0), 1 << 7,  1 },
+  { GPIO_REGISTER(2), 1 << 8,  4 },
+  { GPIO_REGISTER(1), 1 << 0,  7 },
+  { GPIO_REGISTER(1), 1 << 1, 10 },
 
   // Red
-  { GPIO_R_REGISTER(0), 1 << 7,  1 },
-  { GPIO_R_REGISTER(2), 1 << 8,  4 },
-  { GPIO_R_REGISTER(1), 1 << 0,  7 },
-  { GPIO_R_REGISTER(1), 1 << 1, 10 },
-
-  // Blue
-  { GPIO_R_REGISTER(2), 1 << 2,  0 },
-  { GPIO_R_REGISTER(2), 1 << 9,  3 },
-  { GPIO_R_REGISTER(2), 1 << 6,  6 },
-  { GPIO_R_REGISTER(2), 1 << 3,  9 },
+  { GPIO_REGISTER(2), 1 << 2,  0 },
+  { GPIO_REGISTER(2), 1 << 9,  3 },
+  { GPIO_REGISTER(2), 1 << 6,  6 },
+  { GPIO_REGISTER(2), 1 << 3,  9 },
 };
 
 static const uint16_t SET_R0 = (1 << 7);
@@ -40,10 +43,51 @@ static const uint16_t SET_R1 = (1 << 1) | (1 << 0);
 static const uint16_t SET_R2 = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5)
                              | (1 << 6) | (1 << 7) | (1 << 8) | (1 << 9);
 
+// Timing registers and constants
 static const int LED_COUNT = 12;
+static const uint16_t TOTAL_TIME = (16000000 / 2 / 200);  // 200hz period at a /2 clock divider
+static const int LED_SHIFT = 4;
+static const int LIGHT_MINIMUM = 0x20;  // Minimum time for a light pattern
 
 static IrqCallback swtim_irq;
-static uint8_t intensity[LED_COUNT];
+static LedSlot led_slots[LED_COUNT+1];
+static LedSlot* led_slot_current = led_slots;
+static uint8_t intensity[LED_COUNT] = {
+  0xFF, 0x00, 0x00,
+  0x00, 0xFF, 0x00,
+  0x00, 0x00, 0xFF,
+  0xFF, 0xFF, 0xFF
+};
+
+static void led_next() {
+  SetWord32(TIMER0_CTRL_REG,TIM0_CLK_DIV | TIM0_CLK_SEL | TIM0_CTRL); // 16mhz, no PWM / div
+
+}
+
+static void led_kickoff() {
+  uint16_t dark_time = TOTAL_TIME;
+  LedSlot* slots = led_slots;
+
+  for (int i = 0; i < LED_COUNT; i++) {
+    const LedDefinition* led = &pin_assignment[i];
+    int scale = intensity[led->index];
+    uint16_t timer = (scale * scale) >> LED_SHIFT;
+
+    if (timer < LIGHT_MINIMUM) continue ;
+
+    dark_time -= timer;
+
+    slots->port = led->port;
+    slots->pin = led->pin;
+    slots->count = timer;
+    slots++;
+  }
+
+  // Dummy write
+  slots->port = GPIO_REGISTER(2);
+  slots->pin = 0;
+  slots->count = dark_time;
+}
 
 // These are mass pin set values
 void hal_led_init(void) {
@@ -56,7 +100,7 @@ void hal_led_init(void) {
   // Setup Timer0
   SetWord16(TIMER0_RELOAD_N_REG, 0);
   SetWord16(TIMER0_RELOAD_M_REG, 0);
-  SetWord16(TIMER0_ON_REG, TICKS_PER_FRAME / LED_COUNT);
+  SetWord16(TIMER0_ON_REG, TOTAL_TIME);
 
   // Configure the IRQ
   swtim_irq = IRQ_Vectors[SWTIM_IRQn];
@@ -64,8 +108,8 @@ void hal_led_init(void) {
   NVIC_SetPriority(SWTIM_IRQn, 3);
   NVIC_EnableIRQ(SWTIM_IRQn);
 
-  // Start Timer
-  SetWord32(TIMER0_CTRL_REG,TIM0_CLK_DIV | TIM0_CLK_SEL | TIM0_CTRL); // 16mhz, no PWM / div
+  // Start the LED timer
+  led_kickoff();
 }
 
 void hal_led_stop(void) {
@@ -83,24 +127,12 @@ void hal_led_stop(void) {
 
 void hal_led_off(void)
 {
-  *GPIO_S_REGISTER(0) = SET_R0;
-  *GPIO_S_REGISTER(1) = SET_R1;
-  *GPIO_S_REGISTER(2) = SET_R2;
-}
-
-void hal_led_on(uint16_t n)
-{
-  hal_led_off();
-
-  *pin_assignment[n].toggle = pin_assignment[n].pin;
+  *GPIO_REGISTER(0) = SET_R0;
+  *GPIO_REGISTER(1) = SET_R1;
+  *GPIO_REGISTER(2) = SET_R2;
 }
 
 static void SWTIM_IRQHandler(void) {
-  static int led = 0;
-
-  hal_led_on(led++);
-
-  if (led >= LED_COUNT) {
-    led = 0;
-  }
+  SetWord32(TIMER0_CTRL_REG,TIM0_CLK_DIV | TIM0_CLK_SEL | TIM0_CTRL);
+  led_next();
 }
