@@ -38,6 +38,10 @@ public:
     return _touchGesture;
   }
   
+  bool IsCalibrated() const {
+    return _baselineCalib.IsCalibrated();
+  }
+  
 private:
   DebounceHelper _debouncer;
 

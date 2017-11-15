@@ -206,6 +206,10 @@ message ChargerEvent {
   bool   onCharger
 }
 
+message TouchButtonEvent {
+  bool  isPressed
+}
+
 message TouchGestureEvent {
   TouchGesture gesture
 }
