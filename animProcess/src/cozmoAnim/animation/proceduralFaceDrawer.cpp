@@ -342,10 +342,13 @@ namespace Cozmo {
       cv::fillConvexPoly(_eyeShape.get_CvMat_(), lowerLidPoly, 0, kLineType);
     }
     
-    if(eyeWidth > 0 && eyeHeight > 0)
+    const f32 eyeScaleX = faceData.GetParameter(whichEye, Parameter::EyeScaleX);
+    const f32 eyeScaleY = faceData.GetParameter(whichEye, Parameter::EyeScaleY);
+    
+    if(eyeWidth > 0 && eyeHeight > 0 && eyeScaleX > 0 && eyeScaleY > 0)
     {
-      const f32 scaledEyeWidth  = faceData.GetParameter(whichEye, Parameter::EyeScaleX) * static_cast<f32>(eyeWidth);
-      const f32 scaledEyeHeight = faceData.GetParameter(whichEye, Parameter::EyeScaleY) * static_cast<f32>(eyeHeight);
+      const f32 scaledEyeWidth  = eyeScaleX * static_cast<f32>(eyeWidth);
+      const f32 scaledEyeHeight = eyeScaleY * static_cast<f32>(eyeHeight);
       
 #     if FIXED_INNER_GLOW_POSITION
       const s32 glowCenX = eyeCenter.x();

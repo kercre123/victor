@@ -109,7 +109,7 @@ namespace Cozmo {
 #   ifdef SIMULATOR
     const f32 invGamma = 1.f;
 #   else
-    const f32 invGamma = 1.f / 0.5f;
+    const f32 invGamma = 1.f;
 #   endif
     const size_t kGammaEndRange = 160;
     int i=0;
