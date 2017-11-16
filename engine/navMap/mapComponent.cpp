@@ -595,30 +595,39 @@ void MapComponent::UpdateObjectPose(const ObservableObject& object, const Pose3d
                      "MapComponent.OnObjectPoseChanged.ObjectOriginNotInOriginList",
                      "ID:%d", curOriginID);
       const auto poseInNewOriginIter = reportedPosesForObject.find( curOriginID );
-      if ( poseInNewOriginIter != reportedPosesForObject.end() )
-      {
-        // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
-        // be smaller than the threshold to not report
-        DEV_ASSERT(kObjectPositionChangeToReport_mm < object.GetDimInParentFrame<'Z'>()*0.5f,
-                  "OnObjectPoseChanged.ChangeThresholdTooBig");
-        const float distThreshold = kObjectPositionChangeToReport_mm;
-        const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
 
-        // compare new pose with previous entry and decide if isFarFromPrev
-        const PoseInMapInfo& info = poseInNewOriginIter->second;
-        const bool isFarFromPrev =
-          ( !info.isInMap || (!object.GetPose().IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
-        
-        // if it is far from previous (or previous was not in the map, remove-add)
-        if ( isFarFromPrev ) {
-          RemoveObservableObject(object, curOriginID);
+      if ( newPoseState == PoseState::Dirty && poseInNewOriginIter != reportedPosesForObject.end() )
+      {
+        // Object is dirty, so remove it so we dont try to plan around it. Ideally we would differentiate 
+        // between "object moved" and "object seen from far away", but that distinction is not available now,
+        // so just keep fully verified cubes in the map.
+        RemoveObservableObject(object, curOriginID);
+      } else {
+        if ( poseInNewOriginIter != reportedPosesForObject.end() )
+        {
+          // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
+          // be smaller than the threshold to not report
+          DEV_ASSERT(kObjectPositionChangeToReport_mm < object.GetDimInParentFrame<'Z'>()*0.5f,
+                    "OnObjectPoseChanged.ChangeThresholdTooBig");
+          const float distThreshold = kObjectPositionChangeToReport_mm;
+          const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
+
+          // compare new pose with previous entry and decide if isFarFromPrev
+          const PoseInMapInfo& info = poseInNewOriginIter->second;
+          const bool isFarFromPrev =
+            ( !info.isInMap || (!object.GetPose().IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
+          
+          // if it is far from previous (or previous was not in the map, remove-add)
+          if ( isFarFromPrev ) {
+            RemoveObservableObject(object, curOriginID);
+            AddObservableObject(object, object.GetPose());
+          }
+        }
+        else
+        {
+          // did not find an entry in the current origin for this object, add it now
           AddObservableObject(object, object.GetPose());
         }
-      }
-      else
-      {
-        // did not find an entry in the current origin for this object, add it now
-        AddObservableObject(object, object.GetPose());
       }
     }
     else if ( oldValid && !newValid )
