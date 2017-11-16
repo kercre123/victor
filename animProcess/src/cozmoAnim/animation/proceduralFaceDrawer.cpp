@@ -258,8 +258,8 @@ namespace Cozmo {
     }
     
     Point<2, Value> eyeCenter = (whichEye == WhichEye::Left) ?
-                                 Point<2, Value>(ProceduralFace::NominalLeftEyeX, ProceduralFace::NominalEyeY) :
-                                 Point<2, Value>(ProceduralFace::NominalRightEyeX, ProceduralFace::NominalEyeY);
+                                 Point<2, Value>(ProceduralFace::GetNominalLeftEyeX(), ProceduralFace::GetNominalEyeY()) :
+                                 Point<2, Value>(ProceduralFace::GetNominalRightEyeX(), ProceduralFace::GetNominalEyeY());
     eyeCenter.x() += faceData.GetParameter(whichEye, Parameter::EyeCenterX);
     eyeCenter.y() += faceData.GetParameter(whichEye, Parameter::EyeCenterY);
     
@@ -352,8 +352,8 @@ namespace Cozmo {
       const s32 glowCenY = eyeCenter.y();
 #     else
       // WIP: Move glow center with eye
-      const s32 glowCenOffsetX = eyeCenter.x() - (whichEye == ProceduralFace::Left ? ProceduralFace::NominalLeftEyeX+10 : ProceduralFace::NominalRightEyeX-13);
-      const s32 glowCenOffsetY = eyeCenter.y() - (whichEye == ProceduralFace::Left ? ProceduralFace::NominalEyeY+4      : ProceduralFace::NominalEyeY+3);
+      const s32 glowCenOffsetX = eyeCenter.x() - (whichEye == ProceduralFace::Left ? ProceduralFace::GetNominalLeftEyeX()+10 : ProceduralFace::GetNominalRightEyeX()-13);
+      const s32 glowCenOffsetY = eyeCenter.y() - (whichEye == ProceduralFace::Left ? ProceduralFace::GetNominalEyeY()+4      : ProceduralFace::GetNominalEyeY()+3);
       
       const f32 innerGlowCenFrac = 4.f;
       const f32 glowCenX = eyeCenter.x() - innerGlowCenFrac*glowCenOffsetX;
@@ -439,18 +439,18 @@ namespace Cozmo {
       
  
       const f32 hueFactor = faceData.GetHue();
-      DEV_ASSERT(Util::IsFltGEZero(hueFactor), "ProceduralFaceDrawer.DrawEye.InvalidHue");
+      DEV_ASSERT(Util::InRange(hueFactor, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidHue");
       const u8 drawHue = std::round(255.f*hueFactor);
       
       const f32 satFactor = faceData.GetParameter(whichEye, Parameter::Saturation);
-      DEV_ASSERT(Util::IsFltGEZero(satFactor), "ProceduralFaceDrawer.DrawEye.InvalidSaturation");
+      DEV_ASSERT(Util::InRange(satFactor, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidSaturation");
       const u8 drawSat = std::round(255.f * satFactor);
       
       const f32 eyeLightness = faceData.GetParameter(whichEye, Parameter::Lightness);
-      DEV_ASSERT(Util::IsFltGEZero(eyeLightness), "ProceduralFaceDrawer.DrawEye.InvalidLightness");
+      DEV_ASSERT(Util::InRange(eyeLightness, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidLightness");
     
       const f32 scanlineOpacity = faceData.GetScanlineOpacity();
-      DEV_ASSERT(Util::IsFltGEZero(scanlineOpacity), "ProceduralFaceDrawer.DrawEye.InvalidScanlineOpacity");
+      DEV_ASSERT(Util::InRange(scanlineOpacity, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidScanlineOpacity");
       
       // Draw the eye into the face image, adding outer glow, noise, and stylized scanlines
       {

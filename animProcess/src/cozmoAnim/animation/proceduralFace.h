@@ -54,10 +54,6 @@ public:
   // V1 height: 64   New:  96  => 1.5x  increase
   static constexpr s32   NominalEyeHeight       = 57;  // V1: 40;
   static constexpr s32   NominalEyeWidth        = 43;  // V1: 30;
-  static constexpr s32   NominalEyeSpacing      = 91;  // V1: 64;
-  static constexpr s32   NominalLeftEyeX        = (WIDTH - NominalEyeSpacing)/2;
-  static constexpr s32   NominalRightEyeX       = NominalLeftEyeX + NominalEyeSpacing;
-  static constexpr s32   NominalEyeY            = HEIGHT/2;
   
   using Value = f32;
   using Parameter = ProceduralEyeParameter;
@@ -90,6 +86,10 @@ public:
                      f32 faceAngle_deg, f32 faceCenterX, f32 faceCenterY, f32 faceScaleX, f32 faceScaleY,
                      f32 scanlineOpacity);
   void SetFromMessage(const ProceduralFaceParameters& msg);
+  
+  static s32 GetNominalLeftEyeX();
+  static s32 GetNominalRightEyeX();
+  static s32 GetNominalEyeY();
   
   // Get/Set each of the above procedural parameters, for each eye
   void  SetParameter(WhichEye whichEye, Parameter param, Value value);

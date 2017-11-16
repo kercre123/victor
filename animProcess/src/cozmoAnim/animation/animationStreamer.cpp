@@ -54,6 +54,11 @@ namespace Cozmo {
   
   CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
   CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
+    
+  // Overrides whatever faces we're sending with a 3-stripe test pattern
+  // (seems more related to the other ProceduralFace console vars, so putting it in that group instead)
+  CONSOLE_VAR(bool, kProcFace_DisplayTestPattern, "ProceduralFace", false);
+    
   } // namespace
   
   AnimationStreamer::AnimationStreamer(const CozmoAnimContext* context)
@@ -368,11 +373,9 @@ namespace Cozmo {
   
   void AnimationStreamer::BufferFaceToSend(const ProceduralFace& procFace)
   {
-#   define DISPLAY_TEST_PATTERN 0
-    
-    // Display three color strips increasing in brightness from left to right
-    if(DISPLAY_TEST_PATTERN)
+    if(kProcFace_DisplayTestPattern)
     {
+      // Display three color strips increasing in brightness from left to right
       _faceImg.FillWith(0);
       
       for(int i=0; i<FACE_DISPLAY_HEIGHT/3; ++i)
