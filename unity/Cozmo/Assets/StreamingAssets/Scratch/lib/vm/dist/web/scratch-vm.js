@@ -19376,7 +19376,7 @@ Scratch3CozmoBlocks.prototype.waitForCubeTap = function (args, util) {
  * @private
  */
 Scratch3CozmoBlocks.prototype._getColor = function (colorName) {
-    var colorNameToHexTable = [{ colorName: 'yellow', colorHex: 0xffff00ff }, { colorName: 'orange', colorHex: 0xffA500ff }, { colorName: 'coral', colorHex: 0xff0000ff }, { colorName: 'purple', colorHex: 0xff00ffff }, { colorName: 'blue', colorHex: 0x0000ffff }, { colorName: 'green', colorHex: 0x00ff00ff }, { colorName: 'white', colorHex: 0xffffffff }, { colorName: 'off', colorHex: 0x00000000 }];
+    var colorNameToHexTable = [{ colorName: 'yellow', colorHex: 0xffff00ff }, { colorName: 'orange', colorHex: 0xff6600ff }, { colorName: 'coral', colorHex: 0xff0000ff }, { colorName: 'purple', colorHex: 0xff00ffff }, { colorName: 'blue', colorHex: 0x0000ffff }, { colorName: 'green', colorHex: 0x00ff00ff }, { colorName: 'white', colorHex: 0xffffffff }, { colorName: 'off', colorHex: 0x00000000 }];
 
     if (colorName == 'mystery') {
         // Don't allow black to be an option that can be selected
