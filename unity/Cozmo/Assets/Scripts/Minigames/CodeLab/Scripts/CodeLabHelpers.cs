@@ -135,6 +135,10 @@ namespace CodeLab {
     public bool argBool3 { get; set; }
   }
 
+  public class ScratchRequests {
+    public List<ScratchRequest> messages;
+  }
+
   public delegate void ScratchBlockUpdate();
 
   public class InProgressScratchBlock {

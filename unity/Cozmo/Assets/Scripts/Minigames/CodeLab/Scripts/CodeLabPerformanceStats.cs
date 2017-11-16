@@ -11,6 +11,7 @@ namespace CodeLab {
       public string engineFreq;
       public string engine;
       public string jsToCS;
+      public string jsToCSSub;
       public string csToJS;
       public string running;
     }
@@ -19,13 +20,19 @@ namespace CodeLab {
 
     private int _NumEvaluateJSCallsThisTick = 0;
     private int _NumWebViewCallsThisTick = 0;
+    private int _NumWebViewSubMessagesThisTick = 0; // there can be multiple requests per call!
     private float _AvgEvaluateJSCallsPerTick = 0.0f;
     private float _AvgWebViewCallsThisTick = 0.0f;
+    private float _AvgWebViewSubMessagesThisTick = 0.0f;
 
     private int _NumTicks = 0;
 
     public void AddWebViewCall() {
       ++_NumWebViewCallsThisTick;
+    }
+
+    public void AddWebViewSubMessages(int numMessages) {
+      _NumWebViewSubMessagesThisTick += numMessages;
     }
 
     public void AddEvaluateJSCall() {
@@ -43,8 +50,11 @@ namespace CodeLab {
 
       _AvgEvaluateJSCallsPerTick = SmoothedAverage(_AvgEvaluateJSCallsPerTick, (float)_NumEvaluateJSCallsThisTick);
       _AvgWebViewCallsThisTick = SmoothedAverage(_AvgWebViewCallsThisTick, (float)_NumWebViewCallsThisTick);
+      _AvgWebViewSubMessagesThisTick = SmoothedAverage(_AvgWebViewSubMessagesThisTick, (float)_NumWebViewSubMessagesThisTick);
+
       _NumEvaluateJSCallsThisTick = 0;
       _NumWebViewCallsThisTick = 0;
+      _NumWebViewSubMessagesThisTick = 0;
 
       // To minimize skewing of the data from cost of sending this, only update every N ticks
       if (DataPersistenceManager.Instance.Data.DebugPrefs.DisplayPerfDataInCodeLab && ((_NumTicks % 5) == 0)) {
@@ -54,6 +64,7 @@ namespace CodeLab {
         _Output.engineFreq = perfHUD.GetEngineFreqSectionData();
         _Output.engine = perfHUD.GetEngineSectionData();
         _Output.jsToCS = _AvgWebViewCallsThisTick.ToString("F2");
+        _Output.jsToCSSub = _AvgWebViewSubMessagesThisTick.ToString("F2");
         _Output.csToJS = _AvgEvaluateJSCallsPerTick.ToString("F2");
         _Output.running = isProgramRunning.ToString();
 

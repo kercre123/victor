@@ -61,17 +61,20 @@ namespace Anki {
 #if (defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID))
   #define ANKI_ENABLE_SDK_OVER_UDP  0
   #if defined(SHIPPING)
-    CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", false);
+    CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk,  "Sdk", false);
   #else
-    CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", true);
+    CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk, "Sdk", true);
   #endif
+  CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", false);
 #else
   #define ANKI_ENABLE_SDK_OVER_UDP  0
   CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", true);
+  CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk, "Sdk", true);
 #endif
     
 #if defined(SHIPPING)
     static_assert(!kEnableSdkCommsAlways, "Must be const and false - we cannot leave the socket open outside of sdk for released builds!");
+    static_assert(!kEnableSdkCommsInInternalSdk, "Must be const and false - we cannot leave the socket open outside of sdk for released builds!");
 #endif
     
 CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enabled in non-SHIPPING apps, for internal dev
@@ -241,7 +244,8 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     
     bool UiMessageHandler::IsSdkCommunicationEnabled() const
     {
-      return (_sdkStatus.IsInExternalSdkMode() || kEnableSdkCommsAlways);
+      return _sdkStatus.IsInExternalSdkMode() || kEnableSdkCommsAlways ||
+             (_sdkStatus.IsInInternalSdkMode() && kEnableSdkCommsInInternalSdk);
     }
     
 
@@ -1086,9 +1090,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       const ExternalInterface::EnterSdkMode& msg = event.GetData().Get_EnterSdkMode();
       _sdkStatus.EnterMode(msg.isExternalSdkMode);
       
-      if (msg.isExternalSdkMode) {
-        UpdateIsSdkCommunicationEnabled();
-      }
+      UpdateIsSdkCommunicationEnabled();
 
       _context->GetNeedsManager()->SetPaused(true);
     }

@@ -1643,11 +1643,11 @@ namespace CodeLab {
       _PerformanceStats.AddWebViewCall();
 #endif // ANKI_DEV_CHEATS
 
-      ScratchRequest scratchRequest = null;
+      ScratchRequests scratchRequests = null;
       try {
         //DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + jsonStringFromJS);
 
-        scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
+        scratchRequests = JsonConvert.DeserializeObject<ScratchRequests>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
       }
       catch (Exception exception) {
         if (exception is JsonReaderException || exception is JsonSerializationException) {
@@ -1670,18 +1670,32 @@ namespace CodeLab {
         }
       }
 
-      if (HandleNonBlockScratchRequest(scratchRequest)) {
+      if (scratchRequests.messages == null) {
+        DAS.Error("CodeLabGame.WebViewCallback.NullMessages", "");
         return;
       }
 
-      if (IsResettingToHomePose() || UpdateIsGettingOffCharger()) {
-        // Any requests from Scratch that occur whilst Cozmo is resetting to home pose are queued
-        string safeArgString = PrivacyGuard.HidePersonallyIdentifiableInfo(scratchRequest.argString);
-        DAS.Info("CodeLab.QueueScratchReq", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId + ", argString = " + safeArgString);
-        _queuedScratchRequests.Enqueue(scratchRequest);
-      }
-      else {
-        HandleBlockScratchRequest(scratchRequest);
+#if ANKI_DEV_CHEATS
+      _PerformanceStats.AddWebViewSubMessages(scratchRequests.messages.Count);
+#endif // ANKI_DEV_CHEATS
+
+      for (int i = 0; i < scratchRequests.messages.Count; ++i) {
+        ScratchRequest scratchRequest = scratchRequests.messages[i];
+
+        if (HandleNonBlockScratchRequest(scratchRequest)) {
+          // Handled - continue
+        }
+        else {
+          if (IsResettingToHomePose() || UpdateIsGettingOffCharger()) {
+            // Any requests from Scratch that occur whilst Cozmo is resetting to home pose are queued
+            string safeArgString = PrivacyGuard.HidePersonallyIdentifiableInfo(scratchRequest.argString);
+            DAS.Info("CodeLab.QueueScratchReq", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId + ", argString = " + safeArgString);
+            _queuedScratchRequests.Enqueue(scratchRequest);
+          }
+          else {
+            HandleBlockScratchRequest(scratchRequest);
+          }
+        }
       }
     }
 
