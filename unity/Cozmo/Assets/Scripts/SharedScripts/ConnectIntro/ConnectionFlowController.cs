@@ -244,7 +244,7 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private bool StartAndroidFlowIfApplicable() {
     bool useAndroidFlow = false;
-#if UNITY_ANDROID
+#if UNITY_ANDROID && !UNITY_EDITOR
     // To get around the Unity ping not working on Android 8, we'll just always use the Android flow - which uses
     // a native ping internally
     int deviceSDKVersion = CozmoBinding.GetCurrentActivity().Call<int>("getSDKVersion");
