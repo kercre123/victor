@@ -1,4 +1,4 @@
-const noble = require("noble");
+const noble = (process['platform'] == 'win32') ? require("noble-uwp") : require("noble");
 const readline = require("readline");
 const Victor = require("./victor.js");
 const fs = require('fs');
@@ -29,7 +29,7 @@ const rl = readline.createInterface({
     completer: completer
 });
 
-rl.setPrompt("$ ");
+rl.setPrompt("victor-ble-cli$ ");
 
 function outputResponse(line) {
     if (!line || quitting) {
