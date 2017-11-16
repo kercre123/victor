@@ -16,7 +16,6 @@
       '-Winit-self',
       '-Wconditional-uninitialized',
       '-Wno-deprecated-register',
-      '-Wno-unguarded-availability',
       '-Wformat',
       '-Werror=format-security',
       '-g',

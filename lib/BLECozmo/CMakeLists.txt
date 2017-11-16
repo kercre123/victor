@@ -9,7 +9,7 @@ if (MACOSX)
   find_library(SECURITY Security)
   find_library(CB CoreBluetooth)
   set(PLATFORM_LIBS ${FOUNDATION} ${SECURITY} ${CB})
-  set(PLATFORM_FLAGS -fobjc-arc -Wno-unguarded-availability)
+  set(PLATFORM_FLAGS "-fobjc-arc")
   set(PLATFORM_INCLUDES 
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ios>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ios/Central>
@@ -51,9 +51,8 @@ target_link_libraries(ble_cozmo
   ${PLATFORM_LIBS}
 )
 
-target_compile_options(ble_cozmo 
-  PRIVATE
-  ${PLATFORM_FLAGS}
+target_compile_options(ble_cozmo PRIVATE
+    "${PLATFORM_FLAGS}"
 )
 
 target_include_directories(ble_cozmo PUBLIC

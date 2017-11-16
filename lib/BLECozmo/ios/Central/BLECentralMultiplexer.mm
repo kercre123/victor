@@ -160,7 +160,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
     dispatch_queue_set_specific(_dispatchQueue, &IsOnBLEQueue, (__bridge void *) self, NULL);
     _centralManager = centralManager;
     _centralManager.delegate = self;
-    _centralManagerState = (CBCentralManagerState) centralManager.state;
+    _centralManagerState = centralManager.state;
     _registeredServicesByServiceID = [NSMutableDictionary dictionaryWithCapacity:4];
     _scanningServices = [NSMutableSet setWithCapacity:4];
     _usePeripheralNameIfLocalNameIsAbsent = kOnMacOsX;
@@ -246,7 +246,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
 
     // Always issue a 'startScanning' command, which ensure that we restart,
     // even from a paused state.
-    if (((CBCentralManagerState) _centralManager.state) == CBCentralManagerStatePoweredOn) {
+    if(_centralManager.state == CBCentralManagerStatePoweredOn) {
       [self startScanning];
     }
   }];
@@ -299,7 +299,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
 }
 
 -(void)stopScanning {
-  if (_isScanning && ((CBCentralManagerState)_centralManager.state) == CBCentralManagerStatePoweredOn) {
+  if(_isScanning && _centralManager.state == CBCentralManagerStatePoweredOn) {
     [_centralManager stopScan];
   }
   _isScanning = NO;
@@ -819,7 +819,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
   }
   
   CBCentralManagerState previousState = _centralManagerState;
-  _centralManagerState = (CBCentralManagerState) central.state;
+  _centralManagerState = central.state;
   
   // Notify observers that power state changed
   if ( previousState != _centralManagerState ) {
