@@ -68,7 +68,7 @@ namespace Cozmo {
   // flies off of the robot and comes back! So for now, we just don't
   // drive the lift down that far. We also skip calibration in sim.
   const f32 LIFT_HEIGHT_LOWDOCK               = 32.f; // For interfacing with a cube that is on the ground.
-  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR = 39.f; // TODO: Confirm this on a real robot. At this lift height, the lift crossbar is directly occluding the prox sensor's beam.
+  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR = 41.f; // At this lift height, the lift crossbar is directly occluding the prox sensor's beam.
   const f32 LIFT_HEIGHT_HIGHDOCK              = 76.f; // For interfacing with a cube that is stacked on top of another cube.
   const f32 LIFT_HEIGHT_CARRY                 = 92.f; // Cube carrying height.
   const f32 LIFT_HEIGHT_LOW_ROLL              = 68.f; // For rolling a cube that is on the ground.
