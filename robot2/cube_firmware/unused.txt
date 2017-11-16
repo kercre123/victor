@@ -1,4 +1,4 @@
-;#<FEEDBACK># ARM Linker, 5060183: Last Updated: Wed Nov 15 13:42:22 2017
+;#<FEEDBACK># ARM Linker, 5060183: Last Updated: Thu Nov 16 13:34:37 2017
 ;VERSION 0.2
 ;FILE adc.o
 adc_calibrate <= USED 0
@@ -150,7 +150,6 @@ syscntl_set_dcdc_vbat3v_level <= USED 0
 user_custs1_app_read_ntf_cfm_handler <= USED 0
 user_custs1_loaded_app_ntf_cfm_handler <= USED 0
 ;FILE user_periph_setup.o
-GPIO_reservations <= USED 0
 ;FILE user_peripheral.o
 ;FILE wkupct_quadec.o
 quad_decoder_disable_irq <= USED 0

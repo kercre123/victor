@@ -7,3 +7,4 @@ JLinkSettings.ini
 cube_application.bin
 RTE
 EventRecorderStub.scvd
+!*.obj

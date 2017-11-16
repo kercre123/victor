@@ -58,7 +58,12 @@ static volatile uint16_t* led_port;
 static uint16_t led_pin;
 
 static IrqCallback swtim_irq;
-static uint8_t intensity[LED_COUNT];
+static uint8_t intensity[LED_COUNT] = {
+  0xFF, 0xFF, 0xFF,
+  0xFF, 0x00, 0x00,
+  0x00, 0xFF, 0x00,
+  0x00, 0x00, 0xFF
+};
 
 // These are mass pin set values
 void hal_led_init(void) {
@@ -78,7 +83,7 @@ void hal_led_init(void) {
   NVIC_EnableIRQ(SWTIM_IRQn);
 
   // Start the LED timer
-  memset(intensity, 0, sizeof(intensity));
+  //memset(intensity, 0, sizeof(intensity));
 
   led_pin = 0;
   led_calculate();
