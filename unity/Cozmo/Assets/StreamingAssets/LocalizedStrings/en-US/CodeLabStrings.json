@@ -596,6 +596,9 @@
  "codeLabHorizontal.UserProject.MyProject": {
     "translation": "My Project {0}"
   },
+ "codeLab.UserProject.NewProject": {
+    "translation": "New Project"
+  },
  "codeLabHorizontal.CozmoSaysBlock.DefaultText": {
     "translation": "Hi"
   },

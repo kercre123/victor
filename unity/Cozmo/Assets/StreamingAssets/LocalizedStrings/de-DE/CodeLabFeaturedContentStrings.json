@@ -33,10 +33,10 @@
   "codeLabFeaturedProject.HotPotato.how_long_to_heat_potato" : {
     "translation" : "Wie lange wird die Kartoffel erhitzt?"
   },
-  "codeLabFeaturedProject.HotPotato.players_ready,_set?" : {
+  "codeLabFeaturedProject.HotPotato.players_ready_set" : {
     "translation" : "Auf die Plätze, fertig..."
   },
-  "codeLabFeaturedProject.HotPotato.go!" : {
+  "codeLabFeaturedProject.HotPotato.go" : {
     "translation" : "Los!"
   },
   "codeLabFeaturedProject.HotPotato.end_of_game_timer" : {
@@ -51,7 +51,7 @@
   "codeLabFeaturedProject.HotPotato.or_if_the_move_read_as_a_tap" : {
     "translation" : "...oder ob das Bewegen als Antippen gewertet wurde..."
   },
-  "codeLabFeaturedProject.HotPotato.starts_game,_makes_game_get_faster,_triggers_end_timer" : {
+  "codeLabFeaturedProject.HotPotato.starts_game_makes_game_get_faster_triggers_end_timer" : {
     "translation" : "Startet das Spiel, erhöht die Spielgeschwindigkeit, löst den End-Timer aus."
   },
   "codeLabFeaturedProject.HotPotato.lights_up_potato_and_waits_for_tap" : {
@@ -105,7 +105,7 @@
   "codeLabFeaturedProject.TinyOrchestra.tapping_cube_1_changes_instrument_1" : {
     "translation" : "Wenn Cube 1 angetippt wird, wird Instrument 1 geändert."
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.?" : {
+  "codeLabFeaturedProject.MagicFortuneTeller.question_mark" : {
     "translation" : "?"
   },
   "codeLabFeaturedProject.MagicFortuneTeller.fortune" : {
@@ -216,7 +216,7 @@
   "codeLabFeaturedProject.CubeWhack.purple" : {
     "translation" : "Lila"
   },
-  "codeLabFeaturedProject.CubeWhack.ready?" : {
+  "codeLabFeaturedProject.CubeWhack.ready" : {
     "translation" : "Bereit?"
   },
   "codeLabFeaturedProject.CubeWhack.pack_random" : {

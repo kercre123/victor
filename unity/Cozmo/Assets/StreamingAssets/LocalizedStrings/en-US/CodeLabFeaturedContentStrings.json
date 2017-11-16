@@ -45,10 +45,10 @@
     "codeLabFeaturedProject.HotPotato.how_long_to_heat_potato": {
         "translation": "how long to heat potato"
     },
-    "codeLabFeaturedProject.HotPotato.players_ready,_set?": {
+    "codeLabFeaturedProject.HotPotato.players_ready_set": {
         "translation": "Players ready, set?"
     },
-    "codeLabFeaturedProject.HotPotato.go!": {
+    "codeLabFeaturedProject.HotPotato.go": {
         "translation": "Go!"
     },
     "codeLabFeaturedProject.HotPotato.end_of_game_timer": {
@@ -63,7 +63,7 @@
     "codeLabFeaturedProject.HotPotato.or_if_the_move_read_as_a_tap": {
         "translation": "...or if the move read as a tap..."
     },
-    "codeLabFeaturedProject.HotPotato.starts_game,_makes_game_get_faster,_triggers_end_timer": {
+    "codeLabFeaturedProject.HotPotato.starts_game_makes_game_get_faster_triggers_end_timer": {
         "translation": "Starts game, makes game get faster, triggers end timer."
     },
     "codeLabFeaturedProject.HotPotato.lights_up_potato_and_waits_for_tap": {
@@ -117,7 +117,7 @@
     "codeLabFeaturedProject.TinyOrchestra.tapping_cube_1_changes_instrument_1": {
         "translation": "Tapping Cube 1 changes instrument 1."
     },
-    "codeLabFeaturedProject.MagicFortuneTeller.?": {
+    "codeLabFeaturedProject.MagicFortuneTeller.question_mark": {
         "translation": "?"
     },
     "codeLabFeaturedProject.MagicFortuneTeller.fortune": {
@@ -228,7 +228,7 @@
     "codeLabFeaturedProject.CubeWhack.purple": {
         "translation": "Purple"
     },
-    "codeLabFeaturedProject.CubeWhack.ready?": {
+    "codeLabFeaturedProject.CubeWhack.ready": {
         "translation": "Ready?"
     },
     "codeLabFeaturedProject.CubeWhack.pack_random": {

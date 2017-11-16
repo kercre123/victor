@@ -1428,37 +1428,48 @@ namespace CodeLab {
       DAS.Info("Codelab.OnCozmoExportProject.Called", "User intends to share project");
 
       string projectUUID = scratchRequest.argUUID;
+      string projectType = scratchRequest.argString;
 
-      if (String.IsNullOrEmpty(projectUUID)) {
-        DAS.Error("Codelab.OnCozmoExportProject.BadUUID", "Attempt to export project with no project UUID specified.");
+      if (String.IsNullOrEmpty(projectUUID) && projectType == "sample") {
+        DAS.Error("Codelab.OnCozmoExportSampleProject.BadUUID", "Attempt to export sample project with no project UUID specified.");
+        return;
+      }
+
+      CodeLabProject projectToExport = null;
+      if (String.IsNullOrEmpty(projectUUID) && projectType == "user") {
+        // User project as not yet been saved and is likely empty or green flag block only. Send current workspace representation of project.
+        string projectJSON = scratchRequest.argString2;
+        bool isVertical = scratchRequest.argBool;
+
+        string newProjectString = Localization.Get(LocalizationKeys.kCodeLabUserProjectNewProject);
+        projectToExport = new CodeLabProject(newProjectString, projectJSON, isVertical);
       }
       else {
-        string projectType = scratchRequest.argString;
+        projectToExport = FindProjectByUUIDAndCreateCodeLabProject(projectUUID, projectType);
+      }
 
-        CodeLabProject projectToExport = FindProjectByUUIDAndCreateCodeLabProject(projectUUID, projectType);
+      if (projectToExport != null) {
+        // Special case: if this is a horizontal sample project serialized as XML, get the current project representation as JSON from scratchRequest.
+        if (projectToExport.ProjectJSON == null && projectType == "sample" && projectToExport.IsVertical == false) {
+          projectToExport.ProjectJSON = scratchRequest.argString2;
+        }
 
-        if (projectToExport != null) {
-          // Special case: if this is a horizontal sample project serialized as XML, get the current project representation as JSON from scratchRequest.
-          if (projectToExport.ProjectJSON == null && projectType == "sample" && projectToExport.IsVertical == false) {
-            projectToExport.ProjectJSON = scratchRequest.argString2;
-          }
+        if (string.IsNullOrEmpty(projectToExport.ProjectJSON)) {
+          DAS.Error("Codelab.OnCozmoShareProject.ScratchProjectJSONNullOrEmpty", "During export, the Scratch project JSON is null or empty for projectType = " + projectType + ", isVertical = " + projectToExport.IsVertical);
+          return;
+        }
 
-          if (string.IsNullOrEmpty(projectToExport.ProjectJSON)) {
-            DAS.Error("Codelab.OnCozmoShareProject.ScratchProjectJSONNullOrEmpty", "During export, the Scratch project JSON is null or empty for projectType = " + projectType + ", isVertical = " + projectToExport.IsVertical);
-            return;
-          }
+        // Look up localized name for featured and sample projects from the localization key in projectToExport.ProjectName.
+        if (projectType == "sample" && projectToExport.ProjectName != null) {
+          projectToExport.ProjectName = Localization.Get(projectToExport.ProjectName);
+        }
 
-          // Look up localized name for featured and sample projects from the localization key in projectToExport.ProjectName.
-          if (projectType == "sample" && projectToExport.ProjectName != null) {
-            projectToExport.ProjectName = Localization.Get(projectToExport.ProjectName);
-          }
+        string projectToExportJSON = kCodelabPrefix + WWW.EscapeURL(projectToExport.GetSerializedJson());
 
-          string projectToExportJSON = kCodelabPrefix + WWW.EscapeURL(projectToExport.GetSerializedJson());
+        SessionState.DAS_Event("robot.code_lab.export_project", projectType,
+                               DASUtil.FormatExtraData(projectToExportJSON.Length.ToString()));
 
-          SessionState.DAS_Event("robot.code_lab.export_project", projectType,
-                                 DASUtil.FormatExtraData(projectToExportJSON.Length.ToString()));
-
-          System.Action<string, string> sendFileCall = null;
+        System.Action<string, string> sendFileCall = null;
 
 #if !UNITY_EDITOR
 #if UNITY_IPHONE
@@ -1469,22 +1480,21 @@ namespace CodeLab {
           sendFileCall = (string name, string json) => DAS.Error("Codelab.OnCozmoShareProject.PlatformNotSupported", "Platform not supported");
 #endif
 #else
-          sendFileCall = (string name, string json) => DAS.Error("Codelab.OnCozmoShareProject.PlatformNotSupportedEditor", "Unity Editor does not implement sharing codelab project");
+        sendFileCall = (string name, string json) => DAS.Error("Codelab.OnCozmoShareProject.PlatformNotSupportedEditor", "Unity Editor does not implement sharing codelab project");
 #endif
 
-          if (string.IsNullOrEmpty(projectToExportJSON)) {
-            DAS.Error("Codelab.OnCozmoShareProject.ProjectJsonNullOrEmpty", "Error creating Json string");
-          }
-          else if (sendFileCall == null) {
-            DAS.Error("Codelab.OnCozmoShareProject.PlatformNotFound", "Could not create an export call for the current platform.");
-          }
-          else {
-            sendFileCall(projectToExport.ProjectName, projectToExportJSON);
-          }
+        if (string.IsNullOrEmpty(projectToExportJSON)) {
+          DAS.Error("Codelab.OnCozmoShareProject.ProjectJsonNullOrEmpty", "Error creating Json string");
+        }
+        else if (sendFileCall == null) {
+          DAS.Error("Codelab.OnCozmoShareProject.PlatformNotFound", "Could not create an export call for the current platform.");
         }
         else {
-          DAS.Error("Codelab.OnCozmoExportProject.NullProject", "Could not find the project of type=" + projectType);
+          sendFileCall(projectToExport.ProjectName, projectToExportJSON);
         }
+      }
+      else {
+        DAS.Error("Codelab.OnCozmoExportProject.NullProject", "Could not find the project of type=" + projectType);
       }
     }
 
