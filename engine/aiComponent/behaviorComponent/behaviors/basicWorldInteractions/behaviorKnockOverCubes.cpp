@@ -110,20 +110,8 @@ Result BehaviorKnockOverCubes::OnBehaviorActivated(BehaviorExternalInterface& be
     return Result::RESULT_FAIL;
   }
 }
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorKnockOverCubes::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  if(InitializeMemberVars()){
-    TransitionToKnockingOverStack(behaviorExternalInterface);
-    return Result::RESULT_OK;
-  }else{
-    return Result::RESULT_FAIL;
-  }
-}
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {

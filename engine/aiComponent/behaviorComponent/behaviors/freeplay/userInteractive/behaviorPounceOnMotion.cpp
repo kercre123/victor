@@ -124,13 +124,13 @@ Result BehaviorPounceOnMotion::OnBehaviorActivated(BehaviorExternalInterface& be
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPounceOnMotion::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
+/**Result BehaviorPounceOnMotion::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _motionObserved = false;
   InitHelper(behaviorExternalInterface);
   TransitionToBringingHeadDown(behaviorExternalInterface);
   return Result::RESULT_OK;
-}
+}**/
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

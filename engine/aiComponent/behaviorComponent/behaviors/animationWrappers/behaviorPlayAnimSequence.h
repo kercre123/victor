@@ -48,9 +48,6 @@ protected:
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  // don't allow resume
-  virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override { return RESULT_FAIL; }
-    
   // Returns an action that will play all animations in the class the appropriate number of times for one loop
   IActionRunner* GetAnimationAction(BehaviorExternalInterface& behaviorExternalInterface);
   // Returns true if multiple animations will be played as a loop _numLoops times

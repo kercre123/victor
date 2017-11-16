@@ -40,10 +40,6 @@ protected:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-
-  // behavior can't be resumed (may be selected again, which should fast-forward if needed)
-  virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override { return RESULT_FAIL; }
-
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;

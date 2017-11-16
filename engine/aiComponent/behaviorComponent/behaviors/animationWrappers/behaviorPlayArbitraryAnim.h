@@ -43,8 +43,6 @@ public:
   
 protected:
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  // We shouldn't play the animation a second time if it's interrupted so simply return RESULT_OK
-  virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
 

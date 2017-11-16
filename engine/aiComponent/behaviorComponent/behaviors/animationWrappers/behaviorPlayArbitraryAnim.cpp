@@ -84,15 +84,8 @@ Result BehaviorPlayArbitraryAnim::OnBehaviorActivated(BehaviorExternalInterface&
   BaseClass::StartPlayingAnimations(behaviorExternalInterface);
   return Result::RESULT_OK;
 }
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPlayArbitraryAnim::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  return RESULT_OK;
-}
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPlayArbitraryAnim::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {

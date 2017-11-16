@@ -116,13 +116,6 @@ public:
            {OnActivatedInternal_Legacy(behaviorExternalInterface); }
   Result OnActivatedInternal_Legacy(BehaviorExternalInterface& behaviorExternalInterface);
 
-  // If this behavior is resuming after a short interruption (e.g. a cliff reaction), this Resume function
-  // will be called instead. It calls ResumeInternal(), which defaults to simply calling OnBehaviorActivated, but can
-  // be implemented by children to do specific resume behavior (e.g. start at a specific state). If this
-  // function returns anything other than RESULT_OK, the behavior will not be resumed (but may still be Init'd
-  // later)
-  Result Resume(BehaviorExternalInterface& behaviorExternalInterface);
-
   // Step through the behavior and deliver rewards to the robot along the way
   // This calls the protected virtual UpdateInternal() method, which each
   // derived class should implement.
@@ -224,9 +217,6 @@ protected:
 
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) = 0;
-  virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface);
-  bool IsResuming() { return _isResuming;}
-
   
   void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) {};
@@ -520,8 +510,6 @@ private:
   BehaviorSimpleCallbackWithExternalInterface _behaviorDelegateCallback;
   
   bool _isActivated;
-  // should only be used to allow DelegateIfInControl to start while a behavior is resuming
-  bool _isResuming;
   
   // A set of the locks that a behavior has used to disable reactions
   // these will be automatically re-enabled on behavior stop

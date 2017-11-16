@@ -92,16 +92,7 @@ Result BehaviorRespondPossiblyRoll::OnBehaviorActivated(BehaviorExternalInterfac
   return Result::RESULT_OK;
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRespondPossiblyRoll::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  _metadata.SetPlayedOnSideAnim();
-  return OnActivatedInternal_Legacy(behaviorExternalInterface);
-}
 
-  
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {

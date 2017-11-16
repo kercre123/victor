@@ -92,14 +92,6 @@ Result BehaviorPyramidThankYou::OnBehaviorActivated(BehaviorExternalInterface& b
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPyramidThankYou::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  // don't resume - if the animation was interrupted the moment is gone
-  return Result::RESULT_FAIL;
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPyramidThankYou::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _targetID = -1;

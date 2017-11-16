@@ -39,9 +39,7 @@ protected:
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual BehaviorStatus UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
-  virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override { return RESULT_FAIL; }
-  
+    
 private:
   using AudioSwitchGroup = AudioMetaData::SwitchState::SwitchGroupType;
   AudioSwitchGroup _audioSwitchGroup;

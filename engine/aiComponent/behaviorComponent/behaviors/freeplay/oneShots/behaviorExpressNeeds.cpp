@@ -181,14 +181,6 @@ Result BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExpressNeeds::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  // don't resume, since it will run again anyway if it wants to
-  return Result::RESULT_FAIL;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExpressNeeds::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_shouldClearExpressedState){

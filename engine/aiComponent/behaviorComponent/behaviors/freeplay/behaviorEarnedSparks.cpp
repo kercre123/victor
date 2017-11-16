@@ -57,14 +57,6 @@ Result BehaviorEarnedSparks::OnBehaviorActivated(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorEarnedSparks::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  // Don't allow resuming
-  return RESULT_FAIL;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEarnedSparks::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(behaviorExternalInterface.HasNeedsManager()){

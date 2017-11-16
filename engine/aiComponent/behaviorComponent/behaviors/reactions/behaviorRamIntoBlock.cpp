@@ -60,13 +60,6 @@ Result BehaviorRamIntoBlock::OnBehaviorActivated(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRamIntoBlock::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  return Result::RESULT_FAIL;
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRamIntoBlock::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _targetID = -1;

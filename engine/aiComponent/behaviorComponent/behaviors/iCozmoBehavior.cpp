@@ -176,7 +176,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 , _requiredRecentDriveOffCharger_sec(-1.0f)
 , _requiredRecentSwitchToParent_sec(-1.0f)
 , _isActivated(false)
-, _isResuming(false)
 , _hasSetIdle(false)
 {
   if(!ReadFromJson(config)){
@@ -498,29 +497,6 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ICozmoBehavior::Resume(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Resume").c_str(), "Resuming...");
-  DEV_ASSERT(!_isActivated, "ICozmoBehavior.Resume.ShouldNotBeRunningIfWeTryToResume");
-  
-  _isResuming = true;
-  _activatedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  Result initResult = ResumeInternal(behaviorExternalInterface);
-  _isResuming = false;
-  
-  if ( initResult == RESULT_OK ) {
-    // default implementation of ResumeInternal also sets it to true, but behaviors that override it
-    // might not set it
-    _isActivated = true;
-  } else {
-    _isActivated = false;
-  }
-  
-  return initResult;
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::Status ICozmoBehavior::BehaviorUpdate_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
 {
   //// Event handling
@@ -818,20 +794,6 @@ float ICozmoBehavior::GetActivatedDuration() const
   return 0.0f;
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ICozmoBehavior::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  // by default, if we are activatable again, initialize and start over
-  Result resumeResult = RESULT_FAIL;
-  
-  if ( WantsToBeActivated(behaviorExternalInterface) ) {
-    _isActivated = true;
-    resumeResult = OnActivatedInternal_Legacy(behaviorExternalInterface);
-  }
-  return resumeResult;
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::IsControlDelegated() const
@@ -887,7 +849,7 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
     return false;
   }
   
-  if( !IsResuming() && !IsActivated() ) {
+  if( !IsActivated() ) {
     PRINT_NAMED_WARNING("ICozmoBehavior.DelegateIfInControl.Failure.NotRunning",
                         "Behavior '%s' can't start %s action because it is not running",
                         GetIDStr().c_str(), action->GetName().c_str());

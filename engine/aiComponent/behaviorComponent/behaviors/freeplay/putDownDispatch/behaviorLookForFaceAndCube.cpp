@@ -144,7 +144,7 @@ Result BehaviorLookForFaceAndCube::OnBehaviorActivated(BehaviorExternalInterface
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorLookForFaceAndCube::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
+/**Result BehaviorLookForFaceAndCube::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // reset side picks done because we always switch to next state
   _currentSidePicksDone = 0;
@@ -158,7 +158,7 @@ Result BehaviorLookForFaceAndCube::ResumeInternal(BehaviorExternalInterface& beh
   ResumeCurrentState(behaviorExternalInterface);
 
   return RESULT_OK;
-}
+}**/
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookForFaceAndCube::ResumeCurrentState(BehaviorExternalInterface& behaviorExternalInterface)

@@ -138,22 +138,12 @@ void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, BehaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorLookAround::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  _moveAreaCenter = behaviorExternalInterface.GetRobot().GetPose();
-  TransitionToWaitForOtherActions(behaviorExternalInterface);
-  
-  return Result::RESULT_OK;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorLookAround::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Update explorable area center to current robot pose
   ResetSafeRegion(behaviorExternalInterface);
   
-  return Result::RESULT_OK;//ResumeInternal(robot);
+  return Result::RESULT_OK;
 }
 
 

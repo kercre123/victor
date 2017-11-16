@@ -323,13 +323,13 @@ ICozmoBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorE
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorTrackLaser::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
+/**Result BehaviorTrackLaser::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _lastLaserObservation.type = LaserObservation::Type::None;
   InitHelper(behaviorExternalInterface);
   TransitionToBringingHeadDown(behaviorExternalInterface);
   return Result::RESULT_OK;
-}
+}**/
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTrackLaser::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
