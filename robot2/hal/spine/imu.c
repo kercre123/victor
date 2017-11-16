@@ -152,6 +152,7 @@ static  uint32_t k_spi_speed = 15000000;
 
 static int gSPI_fd;
 
+static int16_t m_latest_temperature = 0;
 
 static int spi_setup(int fd, uint32_t key, uint32_t* val)
 {
@@ -281,8 +282,6 @@ void imu_purge(void)
 
    0x24 triggers burst read.  read out as many bytes as needed.
 */
-
-
 int imu_manage(struct IMURawData* data)
 {
   assert(data != NULL);
@@ -307,6 +306,7 @@ int imu_manage(struct IMURawData* data)
       data[i].acc[0]  =  ((sample_data[11] << 8) | sample_data[10]);
       data[i].acc[1]  =  ((sample_data[ 9] << 8) | sample_data[ 8]);
       data[i].acc[2]  = -((sample_data[ 7] << 8) | sample_data[ 6]);
+      data[i].temperature = m_latest_temperature;
       
 #if REALTIME_CONSOLE_OUTPUT
       {
@@ -333,6 +333,15 @@ int imu_manage(struct IMURawData* data)
   // If we got here then we had more data than we should so flush the IMU FIFO
   imu_purge();
   return i;
+}
+
+void imu_update_temperature(void)
+{
+  uint8_t temp_buf[4];
+  if (spi_read_n(TEMPERATURE_0, temp_buf, 2) != 2) {
+    return; // TODO Handle error
+  }
+  m_latest_temperature = temp_buf[1] | (temp_buf[2] << 8);
 }
 
 

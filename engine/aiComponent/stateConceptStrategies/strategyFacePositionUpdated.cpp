@@ -1,0 +1,165 @@
+/**
+* File: StrategyFacePositionUpdated.h
+*
+* Author:  Kevin M. Karol
+* Created: 11/1/17
+*
+* Description: Strategy which monitors large changes in face position
+*
+* Copyright: Anki, Inc. 2017
+*
+**/
+
+#include "engine/aiComponent/stateConceptStrategies/strategyFacePositionUpdated.h"
+
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/cozmoContext.h"
+#include "engine/faceWorld.h"
+#include "engine/robot.h"
+
+#include "anki/common/basestation/utils/timer.h"
+#include "util/console/consoleInterface.h"
+
+namespace Anki {
+namespace Cozmo {
+  
+namespace{
+const bool kDebugFaceDist = false;
+CONSOLE_VAR_RANGED(f32, kDistanceToConsiderClose_mm, "AcknowledgementBehaviors", 300.0f, 0.0f, 1000.0f);
+CONSOLE_VAR_RANGED(f32, kDistanceToConsiderClose_gap_mm, "AcknowledgementBehaviors", 100.0f, 0.0f, 1000.0f);
+CONSOLE_VAR_RANGED(f32, kFaceReactCooldown_s, "AcknowledgementBehaviors", 4.0f, 0.0f, 60.0f);
+
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+StrategyFacePositionUpdated::StrategyFacePositionUpdated(BehaviorExternalInterface& behaviorExternalInterface,
+                                                          IExternalInterface* robotExternalInterface,
+                                                          const Json::Value& config)
+: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
+{
+  SubscribeToTags({
+    EngineToGameTag::RobotObservedFace
+  });
+
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool StrategyFacePositionUpdated::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+{ 
+  // add a check for offTreadsState?
+  return !_desiredTargets.empty();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void StrategyFacePositionUpdated::AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+{
+  switch(event.GetData().GetTag())
+  {
+    case EngineToGameTag::RobotObservedFace:
+    {
+      HandleFaceObserved(behaviorExternalInterface, event.GetData().Get_RobotObservedFace());
+      break;
+    }
+    
+    default:
+    {
+      PRINT_NAMED_ERROR("ReactionStrategyFacePositionUpdate.HandleMessages.InvalidTag",
+                      "Received event with unhandled tag %hhu.",
+                      event.GetData().GetTag());
+    }
+    break;
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void StrategyFacePositionUpdated::HandleFaceObserved(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                    const ExternalInterface::RobotObservedFace& msg)
+{
+  if( msg.faceID < 0 ) {
+    // ignore temporary tracking-only ids
+    return;
+  }
+  
+  const Vision::TrackedFace* face = behaviorExternalInterface.GetFaceWorld().GetFace(msg.faceID);
+  if( nullptr == face ) {
+    return;
+  }
+  
+  // We always want to react the first time we see a named face
+  const bool newNamedFace = face->HasName() && _hasReactedToFace.find( msg.faceID ) == _hasReactedToFace.end();
+  
+  if( newNamedFace ) {
+    bool added = AddDesiredFace(behaviorExternalInterface, msg.faceID);
+    if(added) {
+      PRINT_NAMED_DEBUG("BehaviorAcknowledgeFace.InitialFaceReaction",
+                        "saw face ID %d (which is named) for the first time, want to react",
+                        msg.faceID);
+    }
+  }
+  
+  float currDistance_mm = 0.0f;
+  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+  // be removed
+  const Robot& robot = behaviorExternalInterface.GetRobot();
+  // We also want to react if the face was previously seen far away, but is now seen closer up
+  if( ! ComputeDistanceBetween( robot.GetPose(), face->GetHeadPose(), currDistance_mm ) ) {
+    PRINT_NAMED_ERROR("BehaviorAcknowledgeFace.PoseInWrongFrame",
+                      "We couldnt get the distance from the robot to the face pose that we just saw...");
+    robot.GetPose().Print("Unfiltered", "RobotPose");
+    face->GetHeadPose().Print("Unfiltered", "HeadPose");
+    return;
+  }
+  
+  if( kDebugFaceDist ) {
+    PRINT_CH_INFO("ReactionTriggers", "BehaviorAcknowledgeFace.Debug.FaceDist",
+                  "%d: %fmm",
+                  msg.faceID,
+                  currDistance_mm);
+  }
+  
+  
+  float closeThresh_mm = kDistanceToConsiderClose_mm;
+  bool lastPoseClose = true; // (default to true so we don't react)
+  
+  auto it = _faceWasClose.find( msg.faceID );
+  if( it != _faceWasClose.end() ) {
+    lastPoseClose = it->second;
+    if( lastPoseClose ) {
+      // apply hysteresis to prevent flipping between close and not close
+      closeThresh_mm += kDistanceToConsiderClose_gap_mm;
+    }
+  }
+  
+  const bool currPoseClose = currDistance_mm < closeThresh_mm;
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
+  const bool faceBecameClose = !lastPoseClose && currPoseClose;
+  const bool notOnCooldown = _lastReactionTime_s < 0.0f || _lastReactionTime_s + kFaceReactCooldown_s <= currTime_s;
+  if( faceBecameClose && notOnCooldown && ! newNamedFace ) {
+    
+    bool added = AddDesiredFace(behaviorExternalInterface, msg.faceID);
+    if(added) {
+      PRINT_NAMED_DEBUG("BehaviorAcknowledgeFace.FaceBecomeClose",
+                        "face ID %d became close (currDist = %fmm)",
+                        msg.faceID,
+                        currDistance_mm);
+    }
+  }
+  
+  _faceWasClose[ msg.faceID ] = currPoseClose;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool StrategyFacePositionUpdated::AddDesiredFace(BehaviorExternalInterface& behaviorExternalInterface, Vision::FaceID_t faceID)
+{
+  auto res = _desiredTargets.insert(faceID);
+  return res.second;
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

@@ -87,12 +87,11 @@ Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorCompone
     _behaviorComponent->Init(BehaviorComponent::GenerateComponents(robot));
   }
   
-  if(USE_BSM){
-    // Toggle flag to "start" the tracking process - legacy assumption that freeeplay is not
-    // active on app start
-    _freeplayDataTracker->SetFreeplayPauseFlag(true, FreeplayPauseFlag::OffTreads);
-    _freeplayDataTracker->SetFreeplayPauseFlag(false, FreeplayPauseFlag::OffTreads);
-  }
+  // Toggle flag to "start" the tracking process - legacy assumption that freeeplay is not
+  // active on app start - full fix requires a deeper update to the data tracking system
+  // that is outside of scope for this PR but should be addressed in VIC-626
+  _freeplayDataTracker->SetFreeplayPauseFlag(true, FreeplayPauseFlag::OffTreads);
+  _freeplayDataTracker->SetFreeplayPauseFlag(false, FreeplayPauseFlag::OffTreads);
   
   _requestGameComponent = std::make_unique<RequestGameComponent>(robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr,
                                                                  robot.GetContext()->GetDataLoader()->GetGameRequestWeightsConfig());
@@ -151,7 +150,6 @@ Result AIComponent::Update(Robot& robot, std::string& currentActivityName,
 void AIComponent::OnRobotDelocalized()
 {
   GetWhiteboard().OnRobotDelocalized();
-  _behaviorComponent->OnRobotDelocalized();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

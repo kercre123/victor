@@ -16,7 +16,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/sayTextAction.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -82,9 +81,7 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
     robot.GetCarryingComponent().SetCarriedObjectAsUnattached(clearCarriedObjects);
   }
   
-  // Don't respond to people or pets during hard spark
-  const BehaviorManager& behaviorMgr = robot.GetBehaviorManager();
-  const bool isHardSpark = behaviorMgr.IsActiveSparkHard();
+  const bool isHardSpark = false;
   
   // If we're seeing a human or pet face, react to that, otherwise, react to being picked up
   const TimeStamp_t lastImageTimeStamp = robot.GetLastImageTimeStamp();

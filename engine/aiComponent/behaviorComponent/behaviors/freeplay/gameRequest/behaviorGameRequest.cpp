@@ -13,7 +13,6 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/actionInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"

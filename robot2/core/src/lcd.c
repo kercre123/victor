@@ -38,7 +38,7 @@ typedef struct {
 
 
 static const INIT_SCRIPT init_scr[] = {
-  { 0x11, 0 },
+  { 0x11, 0 }, // Sleep Off
   { 0x36, 1, { 0x00 } },
   { 0xB7, 1, { 0x56 } },
   { 0xBB, 1, { 0x18 } },
@@ -49,12 +49,15 @@ static const INIT_SCRIPT init_scr[] = {
   { 0xC6, 1, { 0x0F } },
   { 0xD0, 2, { 0xA4, 0xA1 } },
   { 0x3A, 1, { 0x55 } },
-  { 0x55, 1, { 0xA0 } },
+  { 0x55, 1, { 0x93 } }, // Content Adaptive Brightness Control: 0x93 = Color Enhancement On (Medium Enhancement), Moving Image Mode 
   { 0x21, 0 },
   { 0x2A, 4, { 0x00, RSHIFT, (LCD_FRAME_WIDTH + RSHIFT - 1) >> 8, (LCD_FRAME_WIDTH + RSHIFT - 1) & 0xFF } },
   { 0x2B, 4, { 0x00, 0x00, (LCD_FRAME_HEIGHT -1) >> 8, (LCD_FRAME_HEIGHT -1) & 0xFF } },
-  { 0x29, 0 },
-
+  { 0x26, 1, {0x08} }, // Gamma Curve Setting: 0x01=2.2, 0x02=1.8, 0x04=2.5, 0x08=1.0 
+  //{ 0x53, 1, {0x24} },  // Brightness control: Brightness registers active, no dimming, backlight on
+  //{ 0x51, 1, {0x80} },  // Screen brightness value
+  { 0x29, 0 }, // Display On
+  
   { 0 }
 };
 
@@ -81,23 +84,17 @@ static int lcd_spi_init()
 }
 
 static void lcd_spi_transfer(int cmd, int bytes, const void* data) {
-  struct spi_ioc_transfer tr = {
-    .tx_buf = (unsigned long)data,
-    .rx_buf = 0,
-    .len = bytes,
-    .delay_usecs = 0,
-    .speed_hz = DAT_CLOCK,
-    .bits_per_word = 8,
-  };
+  const uint8_t* tx_buf = data;
 
   gpio_set_value(DnC_PIN, cmd ? gpio_LOW : gpio_HIGH);
+
   while (bytes > 0) {
-     tr.len = (bytes > MAX_TRANSFER) ? MAX_TRANSFER : bytes;
-
-    ioctl(spi_fd, SPI_IOC_MESSAGE(1), &tr);
-
-    bytes -= tr.len;
-    tr.tx_buf += tr.len;
+    const size_t count = bytes > MAX_TRANSFER ? MAX_TRANSFER : bytes;
+    
+    write(spi_fd, tx_buf, count);
+    
+    bytes -= count;
+    tx_buf += count;
   }
 }
 
@@ -117,13 +114,17 @@ void lcd_clear_screen(void) {
   lcd_draw_frame(&frame);
 }
 
-
 void lcd_draw_frame(const LcdFrame* frame) {
    static const uint8_t WRITE_RAM = 0x2C;
    lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
    lcd_spi_transfer(FALSE, sizeof(frame->data), frame->data);
 }
 
+void lcd_draw_frame2(uint16_t* frame, size_t size) {
+   static const uint8_t WRITE_RAM = 0x2C;
+   lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
+   lcd_spi_transfer(FALSE, size, frame);
+}
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -149,7 +150,7 @@ int lcd_init(void) {
   system("echo 1 > /sys/kernel/debug/regulator/8916_l17/enable");
   system("echo 1 > /sys/kernel/debug/regulator/8916_l4/enable");
 
- lcd_set_brightness(10);
+  lcd_set_brightness(10);
 
   // IO Setup
   DnC_PIN = gpio_create(GPIO_LCD_WRX, gpio_DIR_OUTPUT, gpio_HIGH);
@@ -180,6 +181,9 @@ int lcd_init(void) {
 
 void lcd_shutdown(void) {
   //todo: turn off screen?
+  system("echo 0 > /sys/kernel/debug/regulator/8916_l17/enable");
+  system("echo 0 > /sys/kernel/debug/regulator/8916_l4/enable");
+
   if (spi_fd) {
     static const uint8_t SLEEP = 0x10;
     lcd_spi_transfer(TRUE, 1, &SLEEP);

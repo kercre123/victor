@@ -15,6 +15,7 @@
 #include "quadTreeProcessor.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/polygon_impl.h"
 #include "util/math/math.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -91,54 +92,45 @@ static_assert( !std::is_move_constructible<QuadTreeNode>::value, "QuadTreeNode w
 QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent, MemoryMapData& data)
 : _center(center)
 , _sideLen(sideLength)
+, _boundingBox(center - Point3f(sideLength/2, sideLength/2, 0), center + Point3f(sideLength/2, sideLength/2, 0))
 , _parent(parent)
 , _level(level)
 , _quadrant(quadrant)
-, _content(ENodeType::Invalid, data)
+, _content(data)
 {
   DEV_ASSERT(_quadrant <= EQuadrant::Root, "QuadTreeNode.Constructor.InvalidQuadrant");
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::Contains(const Quad2f& quad) const
+QuadTreeNode::AxisAlignedQuad::AxisAlignedQuad(const Point2f& p, const Point2f& q)
+: lowerLeft(  Point2f(fmin(p.x(), q.x()), fmin(p.y(), q.y())) )
+, upperRight( Point2f(fmax(p.x(), q.x()), fmax(p.y(), q.y())) )
+, diagonals{{ LineSegment( lowerLeft, upperRight), 
+   LineSegment( Point2f(fmax(p.x(), q.x()), fmin(p.y(), q.y())), Point2f(fmin(p.x(), q.x()), fmax(p.y(), q.y())) )}} {} 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTreeNode::AxisAlignedQuad::Contains(const Point2f& p) const
 {
-  // this should be using the new faster checks. It's only called from outside during expansion atm though, so
-  // not worth changing atm (no way of testing speed impact)
-  const bool ret = MakeQuadXY().Contains(quad);
-  return ret;
+  return FLT_GE(p.x(), lowerLeft.x()) && FLT_LE(p.x(), upperRight.x()) && 
+         FLT_GE(p.y(), lowerLeft.y()) && FLT_LE(p.y(), upperRight.y());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::Contains(const Point2f& point) const
+void QuadTreeNode::ResetBoundingBox()
 {
-  // this should be using the new faster checks. It's only called from outside during expansion atm though, so
-  // not worth changing atm (no way of testing speed impact)
-  const bool ret = MakeQuadXY().Contains(point);
-  return ret;
+  Point3f offset(_sideLen/2, _sideLen/2, 0);
+  _boundingBox = AxisAlignedQuad(_center - offset, _center + offset );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::Contains(const Triangle2f& tri) const
+bool QuadTreeNode::Contains(const FastPolygon& poly) const
 {
-  // this should be using the new faster checks. It's only called from outside during expansion atm though, so
-  // not worth changing atm (no way of testing speed impact)
-  const Quad2f& myQuad = MakeQuadXY();
-  const bool ret = myQuad.Contains(tri[0]) && myQuad.Contains(tri[1]) && myQuad.Contains(tri[2]);
-  return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Quad3f QuadTreeNode::MakeQuad() const
-{
-  const float halfLen = _sideLen * 0.5f;
-  Quad3f ret
+  for (const auto& pt : poly.GetSimplePolygon()) 
   {
-    {_center.x()+halfLen, _center.y()+halfLen, _center.z()}, // up L
-    {_center.x()-halfLen, _center.y()+halfLen, _center.z()}, // lo L
-    {_center.x()+halfLen, _center.y()-halfLen, _center.z()}, // up R
-    {_center.x()-halfLen, _center.y()-halfLen, _center.z()}  // lo R
-  };
-  return ret;
+    if (!_boundingBox.Contains(pt)) return false;
+  }
+  return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -172,133 +164,17 @@ const std::unique_ptr<QuadTreeNode>& QuadTreeNode::GetChildAt(size_t index) cons
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::AddContentPoint(const Point2f& point, const NodeContent& detectedContent, QuadTreeProcessor& processor)
+bool QuadTreeNode::Insert(const FastPolygon& poly, const MemoryMapData& data, QuadTreeProcessor& processor)
 {
-  ANKI_CPU_PROFILE("QuadTreeNode::AddContentPoint");
+  ANKI_CPU_PROFILE("QuadTreeNode::Insert");
   
-  // set up optimized triangle checks
-  bool changed = AddPoint_Recursive(point, detectedContent, processor);
+  NodeContent detectedContent(data);
+  const bool changed = Insert_Recursive(poly, detectedContent, processor);
   return changed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::AddContentTriangle(const Triangle2f& tri, const NodeContent& detectedContent, QuadTreeProcessor& processor)
-{
-  ANKI_CPU_PROFILE("QuadTreeNode::AddContentTriangle");
-  
-  // set up optimized triangle checks
-  bool changed = AddTriangle_Setup(tri, detectedContent, processor);
-  return changed;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::AddContentLine(const Point2f& from, const Point2f& to,
-  const NodeContent& detectedContent, QuadTreeProcessor& processor)
-{
-  ANKI_CPU_PROFILE("QuadTreeNode::AddContentLine");
-
-  // add line recursively
-  SegmentLineEquation segmentLine(from, to);
-  bool changed = AddLine_Recursive(segmentLine, detectedContent, processor);
-  return changed;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::AddContentQuad(const Quad2f& quad, const NodeContent& detectedContent, QuadTreeProcessor& processor)
-{
-  ANKI_CPU_PROFILE("QuadTreeNode::AddContentQuad");
-  
-  // delegate on optimized implementation (under testing)
-  bool changed = AddQuad_NewSetup(quad, detectedContent, processor);
-  return changed;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::AddQuad_OldRecursive(const Quad2f& quad, const NodeContent& detectedContent, QuadTreeProcessor& processor)
-{
-  // ANKI_CPU_PROFILE("QuadTreeNode::AddQuad_OldRecursive"); // recursive functions don't properly show averages
-  
-  // if we won't gain any new info, no need to process
-  const bool isSameInfo = _content == detectedContent;
-  if ( isSameInfo ) {
-    return false;
-  }
-  
-  // to check for changes
-  NodeContent previousContent = _content;
-  bool childChanged = false;
-
-  // check if the quad affects us
-  const Quad2f& myQuad = MakeQuadXY();
-  if ( myQuad.Intersects(quad) )
-  {
-    EContentOverlap overlap = EContentOverlap::Partial; // default value may change later
-  
-    // am I fully contained within the quad?
-    if ( quad.Contains(myQuad) )
-    {
-      overlap = EContentOverlap::Total;
-      
-      // if subdivided
-      if ( IsSubdivided() )
-      {
-        // we are subdivided, see if we can merge children or we should tell them to add the new quad
-        if ( CanOverrideSelfAndChildrenWithContent(detectedContent.data->type, overlap) )
-        {
-          // merge to the new content, we already made sure we can override the type
-          Merge(detectedContent, processor);
-        }
-        else
-        {
-          // delegate on children
-          for( auto& childPtr : _childrenPtr ) {
-            childChanged = childPtr->AddQuad_OldRecursive(quad, detectedContent, processor) || childChanged;
-          }
-        }
-      }
-      else
-      {
-        // we can try to set our content, since we fit fully and we don't have children
-        TrySetDetectedContentType( detectedContent, overlap, processor );
-      }
-    }
-    else
-    {
-      // see if we can subdivide
-      const bool wasSubdivided = IsSubdivided();
-      if ( !wasSubdivided && CanSubdivide() )
-      {
-        // do now
-        Subdivide( processor );
-      }
-      
-      // if we have children, delegate on them
-      const bool isSubdivided = IsSubdivided();
-      if ( isSubdivided )
-      {
-        // ask children to add quad
-        for( auto& childPtr : _childrenPtr ) {
-          childChanged = childPtr->AddQuad_OldRecursive(quad, detectedContent, processor) || childChanged;
-        }
-        
-        // try to automerge (if it does, our content type will change from subdivided to the merged type)
-        if ( childChanged ) {
-          TryAutoMerge(processor);
-        }
-      }
-      else
-      {
-        TrySetDetectedContentType(detectedContent, overlap, processor);
-      }
-    }
-  }
-  
-  const bool ret = (_content != previousContent) || childChanged;
-  return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, QuadTreeProcessor& processor)
+bool QuadTreeNode::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& processor)
 {
   bool xPlusAxisReq  = false;
   bool xMinusAxisReq = false;
@@ -341,6 +217,7 @@ bool QuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, QuadTre
   // but top and bottom will remain the same
   _center.x() = _center.x() + (xShift ? (xPlusAxisReq ? rootHalfLen : -rootHalfLen) : 0.0f);
   _center.y() = _center.y() + (yShift ? (yPlusAxisReq ? rootHalfLen : -rootHalfLen) : 0.0f);
+  ResetBoundingBox();
   
   // if the root has children, update them, otherwise no further changes are necessary
   if ( !_childrenPtr.empty() )
@@ -386,7 +263,7 @@ bool QuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, QuadTre
     
     // this content is set to the children that don't inherit old children
     MemoryMapData data(EContentType::Unknown, timeCreated);
-    NodeContent emptyUnknownContent(ENodeType::Leaf, data);
+    NodeContent emptyUnknownContent(data);
     
     // calculate which children are brought over from the old ones
     if ( xShift && yShift )
@@ -517,7 +394,7 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
   // we have to set the new first level children as Unknown, since they are initialized as Invalid
   // except the child that takes my place, since that one is going to inherit my content
   MemoryMapData unknownData(EContentType::Unknown, timeCreated);
-  NodeContent emptyUnknownContent(ENodeType::Leaf, unknownData);
+  NodeContent emptyUnknownContent(unknownData);
   for(size_t idx=0; idx<_childrenPtr.size(); ++idx) {
     if ( idx != childIdx ) {
       _childrenPtr[idx]->ForceSetDetectedContentType(emptyUnknownContent, processor);
@@ -534,13 +411,12 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
 
   // set the content type I had in the child that takes my place
   childTakingMyPlace.ForceSetDetectedContentType( _content, processor );
-  
-  NodeContent emptySubdividedContent(ENodeType::Subdivided, unknownData);
-  ForceSetDetectedContentType(emptySubdividedContent, processor);
+  ForceSetDetectedContentType(emptyUnknownContent, processor);
   
   // upgrade my remaining stats
   _sideLen = _sideLen * 2.0f;
   ++_level;
+  ResetBoundingBox();
 
   // log
   PRINT_CH_INFO("QuadTree", "QuadTree.UpdgradeRootLevel", "Root expanded to level %u. Allowing %.2fm", _level, MM_TO_M(_sideLen));
@@ -607,7 +483,7 @@ void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
   }
   
   // set our content type to subdivided
-  NodeContent emptySubdividedContent(ENodeType::Subdivided, newData);
+  NodeContent emptySubdividedContent(newData);
   ForceSetDetectedContentType(emptySubdividedContent, processor);
 }
 
@@ -637,7 +513,7 @@ void QuadTreeNode::ClearDescendants(QuadTreeProcessor& processor)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::CanOverrideSelfWithContent(EContentType newContentType, EContentOverlap overlap) const
+bool QuadTreeNode::CanOverrideSelfWithContent(EContentType newContentType, ESetOverlap overlap) const
 {
   // TODO To guarantee that the future doesn't break this, we should require a matrix of old vs new to be fully
   // specified here. Some values however depend on overlap, so we could not cache / make const
@@ -651,7 +527,7 @@ bool QuadTreeNode::CanOverrideSelfWithContent(EContentType newContentType, ECont
   else if ( dataType == EContentType::Cliff )
   {
     // Cliff can only be overridden by a full ClearOfCliff (the cliff is gone)
-    const bool isTotalClear = (newContentType == EContentType::ClearOfCliff) && (overlap == EContentOverlap::Total);
+    const bool isTotalClear = (newContentType == EContentType::ClearOfCliff) && (overlap == ESetOverlap::SupersetOf);
     return isTotalClear;
   }
   else if ( newContentType == EContentType::ClearOfObstacle )
@@ -671,7 +547,7 @@ bool QuadTreeNode::CanOverrideSelfWithContent(EContentType newContentType, ECont
          ( dataType == EContentType::InterestingEdge      ) ||
          ( dataType == EContentType::NotInterestingEdge   ) )
     {
-      const bool isTotalClear = (overlap == EContentOverlap::Total);
+      const bool isTotalClear = (overlap == ESetOverlap::SupersetOf);
       return isTotalClear;
     }
   }
@@ -723,8 +599,13 @@ bool QuadTreeNode::CanOverrideSelfWithContent(EContentType newContentType, ECont
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::CanOverrideSelfAndChildrenWithContent(EContentType newContentType, EContentOverlap overlap) const
+bool QuadTreeNode::CanOverrideSelfAndChildrenWithContent(EContentType newContentType, ESetOverlap overlap) const
 {
+  if (ESetOverlap::SupersetOf != overlap)
+  {
+    return false;
+  }
+  
   // ask us
   if ( !CanOverrideSelfWithContent(newContentType, overlap) ) {
     return false;
@@ -747,31 +628,26 @@ void QuadTreeNode::TryAutoMerge(QuadTreeProcessor& processor)
 {
   DEV_ASSERT(IsSubdivided(), "QuadTreeNode.TryAutoMerge.NotSubdivided");
 
-  // check if all children classified the same content
-  ENodeType childType = _childrenPtr[0]->GetNodeType();
-  if ( childType == ENodeType::Subdivided ) {
-    // any subdivided quad prevents the parent from merging
-    return;
-  }
-  
-  bool allChildrenEqual = true;
-  TimeStamp_t firstObservedTime = _childrenPtr[0]->GetData()->GetFirstObservedTime();
-  TimeStamp_t lastObservedTime  = _childrenPtr[0]->GetData()->GetLastObservedTime();
-  for(size_t idx1=0; idx1<_childrenPtr.size()-1; ++idx1)
-  {
-    firstObservedTime = fmin(firstObservedTime, _childrenPtr[idx1]->GetData()->GetFirstObservedTime());
-    lastObservedTime  = fmax(lastObservedTime,  _childrenPtr[idx1]->GetData()->GetLastObservedTime());
-    for(size_t idx2=idx1+1; idx2<_childrenPtr.size(); ++idx2)
-    {
-      if ( _childrenPtr[idx1]->GetContent() != _childrenPtr[idx2]->GetContent() )
-      {
-        allChildrenEqual = false;
-        break;
-      }
+  // can't merge if any children are subdivided
+  for (const auto& child : _childrenPtr) {
+    if ( child->IsSubdivided() ) {
+      return;
     }
   }
   
-  // if they did, we can merge and set that type on this parent
+  bool allChildrenEqual = true;
+  TimeStamp_t firstObservedTime = _childrenPtr[3]->GetData()->GetFirstObservedTime();
+  TimeStamp_t lastObservedTime  = _childrenPtr[3]->GetData()->GetLastObservedTime();
+  
+  // check if all children classified the same content (assumes node content equality is transitive)
+  for(size_t i=0; i<_childrenPtr.size()-1; ++i)
+  {
+    firstObservedTime = fmin(firstObservedTime, _childrenPtr[i]->GetData()->GetFirstObservedTime());
+    lastObservedTime  = fmax(lastObservedTime,  _childrenPtr[i]->GetData()->GetLastObservedTime());
+    allChildrenEqual &= (_childrenPtr[i]->GetContent() == _childrenPtr[i+1]->GetContent());
+  }
+  
+  // we can merge and set that type on this parent
   if ( allChildrenEqual )
   {
     NodeContent childContent = _childrenPtr[0]->GetContent(); // do a copy since merging will destroy children
@@ -783,7 +659,7 @@ void QuadTreeNode::TryAutoMerge(QuadTreeProcessor& processor)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::TrySetDetectedContentType(const NodeContent& detectedContent, EContentOverlap overlap,
+void QuadTreeNode::TrySetDetectedContentType(const NodeContent& detectedContent, ESetOverlap overlap,
   QuadTreeProcessor& processor)
 {
   // if we don't want to override with the new content, do not call ForceSet
@@ -798,8 +674,8 @@ void QuadTreeNode::TrySetDetectedContentType(const NodeContent& detectedContent,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::ForceSetDetectedContentType(const NodeContent& detectedContent, QuadTreeProcessor& processor)
 {
-  const NodeContent oldContent(_content);
   const EContentType oldContentType = _content.data->type;
+  const bool wasEmptyType = IsEmptyType();
 
   // if we are trying to set a removed type, convert to the type we want to actually set
   NodeContent finalContent = detectedContent;
@@ -810,7 +686,7 @@ void QuadTreeNode::ForceSetDetectedContentType(const NodeContent& detectedConten
     if ( isObstacleRemoved )
     {
       MemoryMapData newData(EContentType::ClearOfObstacle, detectedContent.data->GetLastObservedTime());
-      finalContent = NodeContent(ENodeType::Leaf, newData);
+      finalContent = NodeContent(newData);
     }
   }
   
@@ -822,7 +698,7 @@ void QuadTreeNode::ForceSetDetectedContentType(const NodeContent& detectedConten
   if ( typeChanged ) {
     // we no longer check if if the type changes from Invalid or Subdivided in the processor, 
     // so we should move the check here.
-    processor.OnNodeContentTypeChanged(this, oldContent, _content);
+    processor.OnNodeContentTypeChanged(this, oldContentType, wasEmptyType);
   }
 }
 
@@ -1029,550 +905,101 @@ void QuadTreeNode::AddSmallestDescendantsDepthFirst(NodeCPtrVector& descendants)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Optimizations
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-namespace QTOptimizations {
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// This function was useful when Contains was slow for nonAAQuads, but now that is faster it doesn't gain much in the
-// best case, and it does weigh for the worse case (bad happens more often than good)
-//inline void GetAABBox(const Quad2f& nonAAQuad, Point2f& outMin, Point2f& outMax)
-//{
-//  const Point2f& cornerTL = nonAAQuad.GetTopLeft();
-//  const Point2f& cornerTR = nonAAQuad.GetTopRight();
-//  const Point2f& cornerBL = nonAAQuad.GetBottomLeft();
-//  const Point2f& cornerBR = nonAAQuad.GetBottomRight();
-//  outMin.x() = MIN( MIN(cornerTL.x(), cornerTR.x()), MIN(cornerBL.x(), cornerBR.x()));
-//  outMin.y() = MIN( MIN(cornerTL.y(), cornerTR.y()), MIN(cornerBL.y(), cornerBR.y()));
-//  outMax.x() = MAX( MAX(cornerTL.x(), cornerTR.x()), MAX(cornerBL.x(), cornerBR.x()));
-//  outMax.y() = MAX( MAX(cornerTL.y(), cornerTR.y()), MAX(cornerBL.y(), cornerBR.y()));
-//}
-
-// Standard AA Quad:
-// Top    = max X
-// Bottom = min X
-// Left   = max Y
-// Right  = min Y
-// PositiveX is Bottom -> Top
-// PositiveY is Right -> Left
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-__attribute__ ((used))
-inline bool IsStandardAA(const Quad2f& quad)
-{
-  ANKI_CPU_PROFILE("NewQuadCheck::IsStandardAA");
-  const Point2f& cornerTL = quad.GetTopLeft();
-  const Point2f& cornerTR = quad.GetTopRight();
-  const Point2f& cornerBL = quad.GetBottomLeft();
-  const Point2f& cornerBR = quad.GetBottomRight();
-  const bool ret =
-    Anki::Util::IsFltNear(cornerTL.x(), cornerTR.x() ) && // TopLeft and TopRight have same X
-    Anki::Util::IsFltNear(cornerBL.x(), cornerBR.x() ) && // BottomLeft and BottomRight have same X
-    Anki::Util::IsFltGT  (cornerTL.x(), cornerBL.x() ) && // TopLeft has greater X than BottomLeft (and *right because of previous checks)
-    Anki::Util::IsFltNear(cornerTL.y(), cornerBL.y() ) && // TopLeft and BottomLeft have same Y
-    Anki::Util::IsFltNear(cornerTR.y(), cornerBR.y() ) && // TopRight and BottomRight have same Y
-    Anki::Util::IsFltGT  (cornerTL.y(), cornerTR.y() ) ;  // TopLeft has greater Y than TopRight (and bottom* because of previous checks)
-  return ret;
-};
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// is point within aaBBox
-inline bool Contains(const Point2f& min, const Point2f& max, const Point2f& point)
-{
-  const bool contains =
-    FLT_GE(point.x(), min.x()) &&
-    FLT_LE(point.x(), max.x()) &&
-    FLT_GE(point.y(), min.y()) &&
-    FLT_LE(point.y(), max.y());
-  return contains;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline bool IntersectsX(const float atX,
-  const float minY, const float maxY,
-  const QuadTreeNode::SegmentLineEquation& line )
-{
-  if ( line.isXAligned )
-  {
-    // if the line is X aligned, it intersects if they overlap. If they overlap however, this should be
-    // caught by Contains, so as an optimization, do not bother rechecking here.
-    return false;
-  }
-  else
-  {
-    // line is not aligned with X
-    
-    // true if the segment intersects with the segment that goes from (atX,minY) to (atX,maxY)
-    // 1) check segment.x crosses atX
-    // 1.1) or at least one is atX, but since we call this after Contains, there is not need to check that
-    const bool crosses = ( FLT_GE(line.from.x(), atX) != FLT_GE(line.to.x(), atX) ) ;
-    if ( !crosses ) {
-      return false;
-    }
+QuadTreeNode::ESetOverlap QuadTreeNode::GetOverlapType(const FastPolygon& poly) const
+{  
+  bool containsOne = false;
+  bool containsAll = true;
   
-    // 2) find segment.y at 'atX'
-    const float segYatX = line.isYAligned ?
-      (line.from.y()) :    // from.y == to.y, and all other Ys
-      (line.segM * atX + line.segB); // y = mx + b
-    // 2.1) check that segmentAtX.y() is between minY and maxY
-    const bool intersectsBetweenMinMaxY = ( FLT_GE(segYatX, minY) && FLT_LE(segYatX, maxY) );
-    return intersectsBetweenMinMaxY;
-  }
-}
+  for (const auto& pt : poly.GetSimplePolygon()) 
+  {
+    bool containsThis = _boundingBox.Contains(pt); 
+    containsOne |= containsThis;
+    containsAll &= containsThis;
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline bool IntersectsY(const float atY,
-  const float minX, const float maxX,
-  const QuadTreeNode::SegmentLineEquation& line)
-{
-  if ( line.isYAligned )
-  {
-    // if the line is Y aligned, it intersects if they overlap. If they overlap however, this should be
-    // caught by Contains, so as an optimization, do not bother rechecking here.
-    return false;
+    // exit early if we know the only case is the two sets are itersecting
+    if ( containsOne && !containsAll ) 
+    {
+      return ESetOverlap::Intersecting;
+    }
   }
-  else
+
+  // all of the poly points are fully contained within the current node
+  if (containsAll)
   {
-    // true if the segment intersects with the segment that goes from (minX,atY) to (maxX,atY)
-    // 1) check segment.y crosses atY
-    // 1.1) or at least one is atY, but since we call this after Contains, there is not need to check that
-    const bool crosses = ( FLT_GE(line.from.y(), atY) != FLT_GE(line.to.y(), atY) ) ;
-    if ( !crosses ) {
-      return false;
+    return ESetOverlap::SubsetOf;
+  }
+  
+  size_t numVerticies = poly.Size();
+  if (numVerticies > 1) // skip for point inserts
+  {
+    // check all edges of the polygon
+    for (const auto& diag : _boundingBox.diagonals)
+    {
+      for (const auto& curLine : poly.GetEdgeSegments())
+      {
+        if (curLine.IntersectsWith(diag)) 
+        {
+          return ESetOverlap::Intersecting;
+        }
+      }
     }
     
-    // 2) find segment.x at 'atY'
-    const float segXatY = line.isXAligned ?
-    (line.from.x()):                    // from.x == to.x, and all other Xs
-    (atY - line.segB) * line.oneOverM;  // y = mx + b -> x = (y-b)/m
-    // 2.1) check that segmentAtX.y() is between minY and maxY
-    const bool intersectsBetweenMinMaxX = ( FLT_GE(segXatY, minX) && FLT_LE(segXatY, maxX) );
-    return intersectsBetweenMinMaxX;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Calculates the sign of p1 with respect to p2 and p3; the sign being which halfPlane it falls into, the positive
-// or negative with respect to the line p2<->p3
-float HalfPlaneSign(const Point2f& p1, const Point2f& p2, const Point2f& p3)
-{
-  return (p1.x() - p3.x()) * (p2.y() - p3.y()) - (p2.x() - p3.x()) * (p1.y() - p3.y());
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// IsPointInTri If the point in on the same side of the three half-planes. Alternatively, if we know the direction
-// in which the tri edges are defined (CW vs CCW), we know what Sign to expect, so we could rule out as soon as the point
-// is out of any of the planes. This version allows Tris to come CW or CCW
-bool IsPointInTri(const Point2f& pt, const Point2f& v1, const Point2f& v2, const Point2f& v3)
-{
-  const bool b1 = FLT_LE(HalfPlaneSign(pt, v1, v2), 0.0f);
-  const bool b2 = FLT_LE(HalfPlaneSign(pt, v2, v3), 0.0f);
-  const bool b3 = FLT_LE(HalfPlaneSign(pt, v3, v1), 0.0f);
-
-  return ((b1 == b2) && (b2 == b3));
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IsPointInNonAAQuad(const Quad2f& nonAAQuad, const Point2f& pt)
-{
-  return
-    IsPointInTri(pt, nonAAQuad.GetBottomLeft(), nonAAQuad.GetTopLeft(), nonAAQuad.GetBottomRight()) ||
-    IsPointInTri(pt, nonAAQuad.GetBottomRight(), nonAAQuad.GetTopLeft(), nonAAQuad.GetTopRight());
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// This function is a little helper for 1 point, but do not call several times if you ahve a set of points, since it can
-// be slightly slower than callin Contains directly with cached aaMin/aaMax
-inline bool IsPointInAAQuad(const Quad2f& aaQuad, const Point2f& pt)
-{
-  assert(IsStandardAA(aaQuad));
-  
-  // get aa bbox and check against point
-  const Point2f& aaMax = aaQuad.GetTopLeft();
-  const Point2f& aaMin = aaQuad.GetBottomRight();
-  const bool isInside = Contains(aaMin, aaMax, pt);
-  return isInside;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// intersection check that is optimized when one quad is axis aligned. In the case that there is intersection,
-// it also stores in isAAQuadContainedInNonAAQuad whether the axisAligned quad is fully inside the nonAA one.
-__attribute__ ((used))
-inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad, const Quad2f& nonAAQuad,
-  const QuadTreeNode::QuadSegmentArray& nonAAQuadSegments,
-  bool& isAAQuadContainedInNonAAQuad)
-{
-  assert(IsStandardAA(axisAlignedQuad));
-  
-  // if any of the corners in the nonAAQuad is inside the quad
-  const Point2f& aaMax = axisAlignedQuad.GetTopLeft();
-  const Point2f& aaMin = axisAlignedQuad.GetBottomRight();
-  const bool aaContainsSomePoint =
-    Contains(aaMin, aaMax, nonAAQuad.GetTopLeft()    ) ||
-    Contains(aaMin, aaMax, nonAAQuad.GetTopRight()   ) ||
-    Contains(aaMin, aaMax, nonAAQuad.GetBottomLeft() ) ||
-    Contains(aaMin, aaMax, nonAAQuad.GetBottomRight());
-  if ( aaContainsSomePoint ) {
-    // the aa quad is not contained, since aaQuad contains at least one point from non-aa
-    isAAQuadContainedInNonAAQuad = false;
-    // however they do overlap
-    return true;
-  }
-  
-  // iterate all segments from the nonAAQuad
-  for(const QuadTreeNode::SegmentLineEquation& curLine : nonAAQuadSegments)
-  {
-    // if any segment intersects with the AA lines, the quads intersect
-    const bool segmentIntersects =
-      IntersectsX(aaMin.x(), aaMin.y(), aaMax.y(), curLine) ||
-      IntersectsX(aaMax.x(), aaMin.y(), aaMax.y(), curLine) ||
-      IntersectsY(aaMin.y(), aaMin.x(), aaMax.x(), curLine) ||
-      IntersectsY(aaMax.y(), aaMin.x(), aaMax.x(), curLine);
-    if ( segmentIntersects ) {
-      // the aa quad is not contained, since edges intersect (consider overlapping edges as not containment as optimization)
-      isAAQuadContainedInNonAAQuad = false;
-      // however they do overlap
-      return true;
-    }
-  }
-  
-  // In order to calculate whether we overlap we need to check whether at least one point is contained.
-  // Note that since we checked segment collisions before, and we are here, we know there are NO edge collisions. That
-  // means that either all points from the aaQuad are inside the nonAAQuad, or none are. We only need to check one
-  // (We could do the same to check whether nonAA points are inside the aaQuad, but that's a faster check).
-  bool containsAnyAndAll = IsPointInNonAAQuad(nonAAQuad, axisAlignedQuad.GetTopLeft() );
-  if ( containsAnyAndAll ) {
-    // at least one point is inside, and there's no collision, all are
-    isAAQuadContainedInNonAAQuad = containsAnyAndAll;
-    // quads overlap
-    return true;
-  }
-  
-  // quads don't overlap
-  isAAQuadContainedInNonAAQuad = false;
-  return false;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// intersection check that is optimized when the quad is axis aligned. In the case that there is intersection,
-// it also stores in isQuadContainedInTriangle whether the axisAligned quad is fully inside the triangle
-__attribute__ ((used))
-inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
-  const Triangle2f& triangle,
-  const QuadTreeNode::TriangleSegmentArray& triSegments,
-  bool& isQuadContainedInTriangle)
-{
-  assert(IsStandardAA(axisAlignedQuad));
-  
-  // if any of the corners in the nonAAQuad is inside the quad
-  const Point2f& aaMax = axisAlignedQuad.GetTopLeft();
-  const Point2f& aaMin = axisAlignedQuad.GetBottomRight();
-  const bool aaContainsSomePoint =
-    Contains(aaMin, aaMax, triangle[0] ) ||
-    Contains(aaMin, aaMax, triangle[1] ) ||
-    Contains(aaMin, aaMax, triangle[2] );
-  if ( aaContainsSomePoint ) {
-    // the aa quad is not contained, since aaQuad contains at least one point from non-aa
-    isQuadContainedInTriangle = false;
-    // however they do overlap
-    return true;
-  }
-  
-  // iterate all segments from the triangle
-  for(const QuadTreeNode::SegmentLineEquation& curLine : triSegments)
-  {
-    // if any segment intersects with the AA lines, the quads intersect
-    const bool segmentIntersects =
-      IntersectsX(aaMin.x(), aaMin.y(), aaMax.y(), curLine) ||
-      IntersectsX(aaMax.x(), aaMin.y(), aaMax.y(), curLine) ||
-      IntersectsY(aaMin.y(), aaMin.x(), aaMax.x(), curLine) ||
-      IntersectsY(aaMax.y(), aaMin.x(), aaMax.x(), curLine);
-    if ( segmentIntersects ) {
-      // the aa quad is not contained, since edges intersect (consider overlapping edges as not containment as optimization)
-      isQuadContainedInTriangle = false;
-      // however they do overlap
-      return true;
-    }
-  }
-  
-  // In order to calculate whether we intersect we need to check whether at least one point is contained.
-  // Note that since we checked segment collisions before, and we are here, we know there are NO edge collisions. That
-  // means that either all points from the aaQuad are inside the nonAAQuad, or none are. We only need to check one
-  // (We could do the same to check whether nonAA points are inside the aaQuad, but that's a faster check).
-  bool containsAnyAndAll = IsPointInTri(axisAlignedQuad.GetTopLeft(), triangle[0], triangle[1], triangle[2]);
-  if ( containsAnyAndAll ) {
-    // at least one point is inside, and there's no collision, all are
-    isQuadContainedInTriangle = containsAnyAndAll;
-    // quads intersect
-    return true;
-  }
-  
-  // quads don't overlap
-  isQuadContainedInTriangle = false;
-  return false;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// intersection check for line that is optimized when the quad is axis aligned
-// doesLineCrossQuad: true if the line crosses the quad (two intersections), false if one end stays inside the quad
-__attribute__ ((used))
-inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
-  const QuadTreeNode::SegmentLineEquation& line,
-  bool& doesLineCrossQuad)
-{
-  assert(IsStandardAA(axisAlignedQuad));
-  
-  // if any of the points from the line is inside the aaQuad
-  const Point2f& aaMax = axisAlignedQuad.GetTopLeft();
-  const Point2f& aaMin = axisAlignedQuad.GetBottomRight();
-  const bool aaContainsSomePoint =
-    Contains(aaMin, aaMax, line.from ) ||
-    Contains(aaMin, aaMax, line.to   );
-  if ( aaContainsSomePoint ) {
-    // at least one end is inside the quad
-    doesLineCrossQuad = false;
-    return true;
-  }
-  
-  // if any segment intersects with the AA lines, the quads intersect
-  const bool segmentIntersects =
-    IntersectsX(aaMin.x(), aaMin.y(), aaMax.y(), line) ||
-    IntersectsX(aaMax.x(), aaMin.y(), aaMax.y(), line) ||
-    IntersectsY(aaMin.y(), aaMin.x(), aaMax.x(), line) ||
-    IntersectsY(aaMax.y(), aaMin.x(), aaMax.x(), line);
-  if ( segmentIntersects ) {
-    // they intersect, and since the line points are not inside the quad, the line crossed the quad
-    doesLineCrossQuad = true;
-    return true;
+    // there are no line intersections and none of the poly points are in the quad. Therefor, if at least one of
+    // the quad points is contained in the poly, then all points of the quad are in the poly.
+    bool containsAnyAndAll = poly.Contains( _boundingBox.lowerLeft );
+    if ( containsAnyAndAll ) 
+    {
+      return ESetOverlap::SupersetOf;
+    }  
   }
 
-  // does not contain or intersect with the segment
-  doesLineCrossQuad = false;
-  return false;
-}
-
-};
-  
-using namespace QTOptimizations;
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::ContainsOrOverlapsQuad(const Quad2f& inQuad) const
-{
-  // get my quad
-  const Quad2f& myQuad = MakeQuadXY();
-  
-  // break the quad into segments to fast-compute m and b for them
-  QuadSegmentArray nonAAQuadSegments = {
-    SegmentLineEquation(inQuad.GetTopLeft(), inQuad.GetTopRight()),
-    SegmentLineEquation(inQuad.GetTopRight(), inQuad.GetBottomRight()),
-    SegmentLineEquation(inQuad.GetBottomRight(), inQuad.GetBottomLeft()),
-    SegmentLineEquation(inQuad.GetBottomLeft(), inQuad.GetTopLeft()) };
-  
-  // call optimized version of addquad
-  bool containmentFlag;
-  const bool ret = OverlapsOrContains(myQuad, inQuad, nonAAQuadSegments, containmentFlag);
-  return ret;
+  return ESetOverlap::Disjoint;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::AddQuad_NewSetup(const Quad2f &quad, const NodeContent& detectedContent, QuadTreeProcessor& processor)
-{
-  // break the quad into segments to fast-compute m and b for them
-  QuadSegmentArray nonAAQuadSegments = {
-    SegmentLineEquation(quad.GetTopLeft(), quad.GetTopRight()),
-    SegmentLineEquation(quad.GetTopRight(), quad.GetBottomRight()),
-    SegmentLineEquation(quad.GetBottomRight(), quad.GetBottomLeft()),
-    SegmentLineEquation(quad.GetBottomLeft(), quad.GetTopLeft()) };
-  
-  // call optimized version of addquad
-  const bool ret = AddQuad_NewRecursive(quad, nonAAQuadSegments, detectedContent, processor);
-  return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::AddQuad_NewRecursive(const Quad2f& quad,
-  const QuadSegmentArray& nonAAQuadSegments,
+bool QuadTreeNode::Insert_Recursive(const FastPolygon& poly, 
   const NodeContent& detectedContent,
   QuadTreeProcessor& processor)
-{
-  // ANKI_CPU_PROFILE("QuadTreeNode::AddQuad_NewRecursive"); // recursive functions don't properly show averages
-  
+{  
   // if we won't gain any new info, no need to process
-  const bool isSameInfo = _content == detectedContent;
-  if ( isSameInfo ) {
+  const bool isSameInfo = _content.data == detectedContent.data;
+  if ( isSameInfo ) 
+  {
     return false;
   }
   
   // to check for changes
-  NodeContent previousContent = _content;
   bool childChanged = false;
-
-  // check if the quad affects us
-  const Quad2f& myQuad = MakeQuadXY();
-  bool isMyQuadContained = false;
-  const bool quadsOverlap = OverlapsOrContains(myQuad, quad, nonAAQuadSegments, isMyQuadContained);
-  if ( quadsOverlap )
+  NodeContent previousContent = _content;
+  ESetOverlap overlap = GetOverlapType(poly);
+  if ( ESetOverlap::Disjoint != overlap )
   {
-    const EContentOverlap overlap = isMyQuadContained ? EContentOverlap::Total : EContentOverlap::Partial;
     _content.data->SetLastObservedTime(detectedContent.data->GetLastObservedTime());
-  
-    // am I fully contained within the quad?
-    if ( isMyQuadContained )
+
+    if ( IsSubdivided() && CanOverrideSelfAndChildrenWithContent(detectedContent.data->type, overlap) )
     {
-      // if subdivided
-      if ( IsSubdivided() )
-      {
-        // we are subdivided, see if we can merge children or we should tell them to add the new quad
-        if ( CanOverrideSelfAndChildrenWithContent(detectedContent.data->type, overlap) )
-        {
-          // merge to the new content, we already made sure we can override the type
-          Merge(detectedContent, processor);
-        }
-        else
-        {
-          // delegate on children
-          for( auto& childPtr : _childrenPtr ) {
-            childChanged = childPtr->AddQuad_NewRecursive(quad, nonAAQuadSegments, detectedContent, processor) || childChanged;
-          }
-        }
-      }
-      else
-      {
-        // we can try to set our content, since we fit fully and we don't have children
-        TrySetDetectedContentType( detectedContent, overlap, processor );
-      }
+      Merge(detectedContent, processor);
     }
-    else
+    else 
     {
-      // see if we can subdivide
-      const bool wasSubdivided = IsSubdivided();
-      if ( !wasSubdivided && CanSubdivide() )
+      if (  ESetOverlap::SupersetOf != overlap && !IsSubdivided() && CanSubdivide())
       {
-        // do now
         Subdivide( processor );
       }
       
-      // if we have children, delegate on them
-      const bool isSubdivided = IsSubdivided();
-      if ( isSubdivided )
+      if ( IsSubdivided() )
       {
-        // ask children to add quad
-        for( auto& childPtr : _childrenPtr ) {
-          childChanged = childPtr->AddQuad_NewRecursive(quad, nonAAQuadSegments, detectedContent, processor) || childChanged;
-        }
-        
-        // try to automerge (if it does, our content type will change from subdivided to the merged type)
+        for( auto& childPtr : _childrenPtr ) 
+        {
+          childChanged |= childPtr->Insert_Recursive(poly, detectedContent, processor);
+        }  
         TryAutoMerge(processor);
       }
       else
       {
-        TrySetDetectedContentType(detectedContent, overlap, processor);
-      }
-    }
-  }
-  
-  const bool ret = (_content != previousContent) || childChanged;
-  return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::AddTriangle_Setup(const Triangle2f& triangle,
-  const NodeContent& detectedContent,
-  QuadTreeProcessor& processor)
-{
-  // break the quad into segments to fast-compute m and b for them
-  TriangleSegmentArray triangleSegments = {
-    SegmentLineEquation(triangle[0], triangle[1]),
-    SegmentLineEquation(triangle[1], triangle[2]),
-    SegmentLineEquation(triangle[2], triangle[0])};
-
-  // call optimized version of addquad
-  const bool ret = AddTriangle_Recursive(triangle, triangleSegments, detectedContent, processor);
-  return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::AddTriangle_Recursive(const Triangle2f& triangle,
-  const TriangleSegmentArray& triangleSegments,
-  const NodeContent& detectedContent,
-  QuadTreeProcessor& processor)
-{
-  // ANKI_CPU_PROFILE("QuadTreeNode::AddTriangle_Recursive"); // recursive functions don't properly show averages
-
-  // if we won't gain any new info, no need to process
-  const bool isSameInfo = _content == detectedContent;
-  if ( isSameInfo ) {
-    return false;
-  }
-
-  // to check for changes
-  NodeContent previousContent = _content;
-  bool childChanged = false;
-
-  // check if the triangle affects us
-  const Quad2f& myQuad = MakeQuadXY();
-  bool isMyQuadContained = false;
-  const bool quadsOverlap = OverlapsOrContains(myQuad, triangle, triangleSegments, isMyQuadContained);
-  if ( quadsOverlap )
-  {
-    const EContentOverlap overlap = isMyQuadContained ? EContentOverlap::Total : EContentOverlap::Partial;
-  
-    // am I fully contained within the quad?
-    if ( isMyQuadContained )
-    {
-      _content.data->SetLastObservedTime(detectedContent.data->GetLastObservedTime());
-      
-      // if subdivided
-      if ( IsSubdivided() )
-      {
-        // we are subdivided, see if we can merge children or we should tell them to add the new quad
-        if ( CanOverrideSelfAndChildrenWithContent(detectedContent.data->type, overlap) )
-        {
-          // merge to the new content, we already made sure we can override the type
-          Merge(detectedContent, processor);
-        }
-        else
-        {
-          // delegate on children
-          for( auto& childPtr : _childrenPtr ) {
-            childChanged = childPtr->AddTriangle_Recursive(triangle, triangleSegments, detectedContent, processor) || childChanged;
-          }
-        }
-      }
-      else
-      {
-        // we can try to set our content, since we fit fully and we don't have children
         TrySetDetectedContentType( detectedContent, overlap, processor );
       }
     }
-    else
-    {
-      // see if we can subdivide
-      const bool wasSubdivided = IsSubdivided();
-      if ( !wasSubdivided && CanSubdivide() )
-      {
-        // do now
-        Subdivide( processor );
-      }
-      
-      // if we have children, delegate on them
-      const bool isSubdivided = IsSubdivided();
-      if ( isSubdivided )
-      {
-        // ask children to add quad
-        for( auto& childPtr : _childrenPtr ) {
-          childChanged = childPtr->AddTriangle_Recursive(triangle, triangleSegments, detectedContent, processor) || childChanged;
-        }
-        
-        // try to automerge (if it does, our content type will change from subdivided to the merged type)
-        if ( childChanged ) {
-          TryAutoMerge(processor);
-        }
-      }
-      else
-      {
-        TrySetDetectedContentType(detectedContent, overlap, processor);
-      }
-    }
   }
   
   const bool ret = (_content != previousContent) || childChanged;
@@ -1580,194 +1007,66 @@ bool QuadTreeNode::AddTriangle_Recursive(const Triangle2f& triangle,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::AddLine_Recursive(const SegmentLineEquation& segmentLine,
-  const NodeContent& detectedContent, QuadTreeProcessor& processor)
-{
-  // ANKI_CPU_PROFILE("QuadTreeNode::AddLine_Recursive"); // recursive functions don't properly show averages
-  
-  // if we won't gain any new info, no need to process
-  const bool isSameInfo = _content == detectedContent;
-  if ( isSameInfo ) {
-    return false;
-  }
-  
-  // to check for changes
-  NodeContent previousContent = _content;
-  bool childChanged = false;
-
-  // check if the line affects us
-  bool doesLineCrossQuad = false;
-  const Quad2f& myQuad = MakeQuadXY();
-  const bool isQuadAffected = OverlapsOrContains(myQuad, segmentLine, doesLineCrossQuad);
-  if ( isQuadAffected )
-  {
-    // for any given node, unless the line crosses the exact center of my quad, at least a child won't be affected.
-    // In the general case this won't happen, so instead of checking whether lines cross centers, simply try to
-    // subdivide. If it turned out to cross it, the children will automerge after checking themselves.
-    // For content override, consider that if the line fully crosses the quad, the overlap is total,
-    // but if the line stays in, the overlap is partial (this can prevent removing some borders at the edge of
-    // the line, while fully crossing a quad means that the new detected border is beyond)
-    // const EContentOverlap overlap = doesLineCrossQuad ? EContentOverlap::Total : EContentOverlap::Partial;
-    
-    // rsam 09/11/2016 note: the comment above is not always right. What I intended was to clear interesting edges
-    // that are created from far away with a bad estimation of the ground plane distance. By getting closer and
-    // detecting the proper edge, we would be able to clear the previous misleading information. Unfortunately,
-    // this can destroy information in other cases by not seeing a partial border in a quad, and allowing a line
-    // to clear it just because it's passing by a corner of the quad to a border we detected behind (also would happen
-    // with curves). For that reason and until I find a better way to represent this (or to trust timestamps, distance
-    // to detected content, etc, as a measurement of trust), I am going to revert lines to being partial
-    const EContentOverlap overlap = EContentOverlap::Partial;
-    _content.data->SetLastObservedTime(detectedContent.data->GetLastObservedTime());
-  
-    // see if we can subdivide
-    const bool wasSubdivided = IsSubdivided();
-    if ( !wasSubdivided && CanSubdivide() )
-    {
-      // do now
-      Subdivide( processor );
-    }
-    
-    // if we have children, delegate on them
-    const bool isSubdivided = IsSubdivided();
-    if ( isSubdivided )
-    {
-      // ask children to add quad
-      for( auto& childPtr : _childrenPtr ) {
-        childChanged = childPtr->AddLine_Recursive(segmentLine, detectedContent, processor) || childChanged;
-      }
-      
-      // try to automerge (if it does, our content type will change from subdivided to the merged type)
-      if ( childChanged ) {
-        TryAutoMerge(processor);
-      }
-    }
-    else
-    {
-      TrySetDetectedContentType(detectedContent, overlap, processor);
-    }
-  }
-  
-  const bool ret = (_content != previousContent) || childChanged;
-  return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::TransformContent_Recursive(NodeTransformFunction transform, 
-                                              QuadTreeNode* insertFrom, 
-                                              QuadTreeProcessor& processor)
+bool QuadTreeNode::Transform(const FastPolygon& poly,
+                              NodeTransformFunction transform, 
+                              QuadTreeProcessor& processor)
 {  
   bool contentChanged = false;
-  if (_content.data)
+  
+  ESetOverlap overlap = GetOverlapType(poly);
+  if ( ESetOverlap::Disjoint != overlap )
   {
-    MemoryMapDataPtr newData = transform(_content.data);
-    NodeContent newContent(_content.type, newData);
-    
-    // AddContentPoint checks if content has changed for us
-    contentChanged = _content != newContent;
-    if (contentChanged) 
+    if ( IsSubdivided() )
     {
-      TrySetDetectedContentType(newContent, EContentOverlap::Partial, processor);
-      if (_content.type == ENodeType::Subdivided)
+      for ( const auto& cPtr : _childrenPtr )
       {
-        TryAutoMerge(processor);
+        cPtr->Transform(poly, transform, processor);
+      }
+      TryAutoMerge(processor);
+    }
+    
+    // if the node contains any data, attempt to perform the transform
+    if (_content.data)
+    {
+      auto newData = transform(_content.data);
+      NodeContent newContent(newData);
+      
+      // AddContentPoint checks if content has changed for us
+      contentChanged = (_content != newContent) && !IsSubdivided();
+      if (contentChanged) 
+      {
+        ForceSetDetectedContentType(newContent, processor);
       }
     }
-  }
-  
-  for ( const auto& cPtr : _childrenPtr )
-  {
-      contentChanged |= cPtr->TransformContent_Recursive(transform, insertFrom, processor);
+    
   }
   
   return contentChanged;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::FindContentIf_Recursive(MemoryMapTypes::NodePredicate pred, 
-                                           std::unordered_set<std::shared_ptr<MemoryMapData>>& output, 
-                                           QuadTreeProcessor& processor)
+void QuadTreeNode::FindIf(const FastPolygon& poly, MemoryMapTypes::NodePredicate pred, 
+                                    MemoryMapTypes::MemoryMapDataConstList& output)
 {  
-  if (_content.data)
+  ESetOverlap overlap = GetOverlapType(poly);
+  if ( ESetOverlap::Disjoint != overlap )
   {
-    if (pred(_content.data)) {
-      output.insert(_content.data);
-    }
-  }
-  
-  for ( const auto& cPtr : _childrenPtr )
-  {
-      cPtr->FindContentIf_Recursive(pred, output, processor);
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::AddPoint_Recursive(const Point2f& point,
-  const NodeContent& detectedContent, QuadTreeProcessor& processor)
-{
-  // ANKI_CPU_PROFILE("QuadTreeNode::AddPoint_Recursive"); // recursive functions don't properly show averages
-  
-  // if we won't gain any new info, no need to process
-  const bool isSameInfo = _content == detectedContent;
-  if ( isSameInfo ) {
-    return false;
-  }
-
-  // if we won't be overriding any types, there's no reason to process down anymore
-  // todo optimization: I could be checking this in all recursive functions, not just on recursive calls. It earlies
-  // out if the given content won't have any effect on the children. The problem however is that
-  // CanOverrideSelfAndChildrenWithContent currently returns if it can override ALL children, whereas here I want to
-  // know if it can override ANY of them. While it can be trivial to implement, it is not trivial to understand
-  // whether it's an optimization. Note that I would have to go down to the lowest level every time, checking if it can
-  // be overridden. For the positive cases, this means at least N-1 explorations at level N, O(n^2) superflous checks.
-  //  const bool canOverride = CanOverrideSelfAndChildrenWithContent(detectedContent.type, EContentOverlap::Partial);
-  //  if ( !canOverride ) {
-  //    return false;
-  //  }
-  
-  // to check for changes
-  NodeContent previousContent = _content;
-  bool childChanged = false;
-
-  // check if the point is in this quad
-  const Quad2f& myQuad = MakeQuadXY();
-  const bool quadContainsPoint = IsPointInAAQuad(myQuad, point);
-  if ( quadContainsPoint )
-  {
-    _content.data->SetLastObservedTime(detectedContent.data->GetLastObservedTime());
-    const EContentOverlap overlap = EContentOverlap::Partial; // makes sense
-  
-    // for any given node, a point can only be in one of their children, so we should always subdivide, since potentially
-    // only one of the children will inherit the type
-    // see if we can subdivide
-    const bool wasSubdivided = IsSubdivided();
-    if ( !wasSubdivided && CanSubdivide() )
+    if ( IsSubdivided() )
     {
-      // do now
-      Subdivide( processor );
+      for ( const auto& cPtr : _childrenPtr )
+      {
+        cPtr->FindIf(poly, pred, output);
+      }
     }
     
-    // if we have children, delegate on them
-    const bool isSubdivided = IsSubdivided();
-    if ( isSubdivided )
+    // if the node contains any data, attempt to perform the transform
+    if (_content.data)
     {
-      // ask children to add quad
-      for( auto& childPtr : _childrenPtr ) {
-        childChanged = childChanged = childPtr->AddPoint_Recursive(point, detectedContent, processor) || childChanged;
+      if (pred(_content.data)) {
+        output.insert(std::const_pointer_cast<MemoryMapData>(_content.data));
       }
-      
-      // try to automerge (if it does, our content type will change from subdivided to the merged type)
-      if ( childChanged ) {
-        TryAutoMerge(processor);
-      }
-    }
-    else
-    {
-      TrySetDetectedContentType(detectedContent, overlap, processor);
     }
   }
-  
-  const bool ret = (_content != previousContent) || childChanged;
-  return ret;
 }
 
 } // namespace Cozmo

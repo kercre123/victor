@@ -48,33 +48,6 @@ namespace {
   
   static const AudioMetaData::GameParameter::ParameterType kVibratoParam =
     AudioMetaData::GameParameter::ParameterType::Cozmo_Singing_Vibrato;
-  
-  constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSinging = {
-    {ReactionTrigger::CliffDetected,                false},
-    {ReactionTrigger::CubeMoved,                    true},
-    {ReactionTrigger::FacePositionUpdated,          true},
-    {ReactionTrigger::FistBump,                     false},
-    {ReactionTrigger::Frustration,                  false},
-    {ReactionTrigger::Hiccup,                       false},
-    {ReactionTrigger::MotorCalibration,             false},
-    {ReactionTrigger::NoPreDockPoses,               false},
-    {ReactionTrigger::ObjectPositionUpdated,        true},
-    {ReactionTrigger::PlacedOnCharger,              false},
-    {ReactionTrigger::PetInitialDetection,          true},
-    {ReactionTrigger::RobotPickedUp,                false},
-    {ReactionTrigger::RobotPlacedOnSlope,           false},
-    {ReactionTrigger::ReturnedToTreads,             false},
-    {ReactionTrigger::RobotOnBack,                  false},
-    {ReactionTrigger::RobotOnFace,                  false},
-    {ReactionTrigger::RobotOnSide,                  false},
-    {ReactionTrigger::RobotShaken,                  false},
-    {ReactionTrigger::Sparked,                      false},
-    {ReactionTrigger::UnexpectedMovement,           true},
-    {ReactionTrigger::VC,                           false}
-  };
-  
-  static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersSinging),
-                "Reaction triggers duplicate or non-sequential");
 }
 
 
@@ -189,9 +162,6 @@ Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
   robot.GetAudioClient()->PostSwitchState(_audioSwitchGroup,
                                           _audioSwitch,
                                           AudioMetaData::GameObjectType::Default /* FIXME: Not correct game object */);
-
-  // Disable reactions
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersSinging);
 
   // Clear listeners and averages
   _cubeAccelListeners.clear();

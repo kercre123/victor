@@ -18,13 +18,13 @@ if ! grep -q './helper' "/system/etc/userinit.sh"; then #if we haven't already a
   echo remount read-only partition
   cd /
   mount -o rw,remount /system
-  
+
   echo adding helper to bootup
   cd /system/etc
   echo 'cd /data/local/fixture && ./helper' > userinit_helper.sh
   cat userinit_helper.sh >> userinit.sh
   rm userinit_helper.sh
-  
+
 else
   echo helper boot ok
 fi

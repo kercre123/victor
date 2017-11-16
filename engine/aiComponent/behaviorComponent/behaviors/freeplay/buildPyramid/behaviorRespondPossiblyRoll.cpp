@@ -14,7 +14,6 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -123,11 +122,7 @@ ICozmoBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondPossiblyRoll::DetermineNextResponse(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  // Ensure behavior cube lights have been cleared
-  std::vector<BehaviorStateLightInfo> basePersistantLight;
-  SetBehaviorStateLights(basePersistantLight, false);
-  
+{  
   const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_metadata.GetObjectID());
   if(nullptr != object){
     if (!_metadata.GetPoseUpAxisAccurate() ||
@@ -202,12 +197,6 @@ void BehaviorRespondPossiblyRoll::DelegateToRollHelper(BehaviorExternalInterface
                                                           parameters);
   
   SmartDelegateToHelper(behaviorExternalInterface, rollHelper, [this](BehaviorExternalInterface& behaviorExternalInterface){DetermineNextResponse(behaviorExternalInterface);}, nullptr);
-  // Set the cube lights to interacting for full behavior run time
-  std::vector<BehaviorStateLightInfo> basePersistantLight;
-  basePersistantLight.push_back(
-    BehaviorStateLightInfo(_metadata.GetObjectID(), CubeAnimationTrigger::InteractingBehaviorLock)
-  );
-  SetBehaviorStateLights(basePersistantLight, false);
 }
 
 } // namespace Cozmo

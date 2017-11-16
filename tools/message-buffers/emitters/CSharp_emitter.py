@@ -203,6 +203,11 @@ class StructEmitter(ast.NodeVisitor):
                         member_str = str(member_val) + "f"
                     elif member.type.name == "float_64":
                         member_str = str(member_val) + "d"
+                    elif member.init is not None and type(member.init.value) is str:
+                        member_str=member.init.value
+                        if "::" in member_str:
+                            # Replace '::' with '.'
+                            member_str = member_str.replace("::", ".")
                     else:
                         member_str = str(member_val)
                     self.output.write(" = %s" % member_str)

@@ -26,33 +26,7 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersDance = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     true},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
-};
 
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersDance),
-              "Reaction triggers duplicate or non-sequential");
-  
 const std::vector<CubeAnimationTrigger> kDanceCubeAnims = {
   CubeAnimationTrigger::Dance_01,
   CubeAnimationTrigger::Dance_02,
@@ -75,8 +49,6 @@ BehaviorDance::BehaviorDance(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorDance::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersDance);
-
   BlockWorldFilter filter;
   filter.AddAllowedFamily(ObjectFamily::LightCube);
   filter.SetFilterFcn(nullptr);

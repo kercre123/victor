@@ -13,7 +13,6 @@
 
 #include "engine/aiComponent/doATrickSelector.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/cozmoContext.h"
@@ -91,15 +90,6 @@ void DoATrickSelector::RequestATrick(BehaviorExternalInterface& behaviorExternal
     }
     
     _lastTrickPerformed = nextTrick;
-  }
-  
-  
-  if(_lastTrickPerformed != UnlockId::Invalid){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    const bool isSoftSpark = false;
-    robot.GetBehaviorManager().SetRequestedSpark(_lastTrickPerformed, isSoftSpark);
   }
 }
 

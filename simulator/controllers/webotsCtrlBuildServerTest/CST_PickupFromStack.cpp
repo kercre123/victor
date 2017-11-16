@@ -92,10 +92,6 @@ s32 CST_PickupFromStack::UpdateSimInternal()
       CST_ASSERT(unlock != UnlockId::Count, "couldn't get valid unlock id");
       SendMessage( ExternalInterface::MessageGameToEngine(
                      ExternalInterface::RequestSetUnlock(unlock, true)));
-
-      // try to start the behavior now, it shouldn't start for a while
-      SendMessage(ExternalInterface::MessageGameToEngine(
-                    ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
           
       SendMoveHeadToAngle(0, 100, 100);
       

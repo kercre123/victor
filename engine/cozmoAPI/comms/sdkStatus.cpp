@@ -12,7 +12,6 @@
 
 
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/cozmoAPI/comms/sdkStatus.h"
 #include "engine/cozmoAPI/comms/iSocketComms.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -62,28 +61,17 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
 {
   using GToE = ExternalInterface::MessageGameToEngine;
   
-  static const char* lockName = "sdk";
-  if (isExitingSDKMode) {
-    // Enable reactionary behaviors
-    ExternalInterface::RemoveDisableReactionsLock reEnableAll(lockName);
-    _externalInterface->Broadcast(GToE(std::move(reEnableAll)));
-    
+  if (isExitingSDKMode) {    
     // Return to freeplay
-    _externalInterface->Broadcast( GToE(ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Freeplay)) );
+    //_externalInterface->Broadcast( GToE(ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Freeplay)) );
   }
-  else {
-    // Disable reactionary behaviors
-    ExternalInterface::DisableReactionsWithLock disableAll(
-                   lockName, ReactionTriggerHelpers::kAffectAllReactions);
-    _externalInterface->Broadcast(GToE(std::move(disableAll)));
-    
-    
+  else {    
     // Clear Behaviors
-    _externalInterface->Broadcast( GToE(ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)) );
+    /**_externalInterface->Broadcast( GToE(ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)) );
     _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(
                ExecutableBehaviorTypeToString(ExecutableBehaviorType::Wait), -1)) );
       
-    /**ReactionTriggerToBehavior noneTrigger;
+    ReactionTriggerToBehavior noneTrigger;
     noneTrigger.trigger = ReactionTrigger::NoneTrigger;
     _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteReactionTrigger(noneTrigger)) );**/
   }

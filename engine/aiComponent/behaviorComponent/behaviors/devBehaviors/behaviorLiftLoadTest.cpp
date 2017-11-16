@@ -22,8 +22,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -44,7 +42,6 @@ if ((_BEHAVIORDEF)) { PRINT_NAMED_INFO( __VA_ARGS__ ); } \
 else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
 } while(0) \
 
-static const char* kBehaviorTestName = "LiftLoadTest";
 }
 
 
@@ -91,10 +88,6 @@ namespace Anki {
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
-      robot.GetBehaviorManager().DisableReactionsWithLock(
-                                     kBehaviorTestName,
-                                     ReactionTriggerHelpers::GetAffectAllArray());
-      
 
       _abortTest = false;
       _currentState = State::Init;
@@ -218,10 +211,6 @@ namespace Anki {
     
     void BehaviorLiftLoadTest::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      robot.GetBehaviorManager().RemoveDisableReactionsLock(kBehaviorTestName);
     }
     
     void BehaviorLiftLoadTest::SetCurrState(State s)

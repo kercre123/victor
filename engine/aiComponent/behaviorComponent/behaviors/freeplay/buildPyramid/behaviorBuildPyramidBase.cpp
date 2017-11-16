@@ -18,7 +18,6 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/retryWrapperAction.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -155,11 +154,6 @@ ICozmoBehavior::Status BehaviorBuildPyramidBase::UpdateInternal_WhileRunning(Beh
 void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(DrivingToBaseBlock);
-  std::vector<BehaviorStateLightInfo> basePersistantLight;
-  basePersistantLight.push_back(
-    BehaviorStateLightInfo(_baseBlockID, CubeAnimationTrigger::PyramidSingle)
-  );
-  SetBehaviorStateLights(basePersistantLight, false);
   
   auto success = [this](BehaviorExternalInterface& behaviorExternalInterface){
     TransitionToPlacingBaseBlock(behaviorExternalInterface);
@@ -179,8 +173,6 @@ void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock(BehaviorExternalIn
 void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(PlacingBaseBlock);
-  std::vector<BehaviorStateLightInfo> basePersistantLight;
-  SetBehaviorStateLights(basePersistantLight, false);
   
   const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
   if(nullptr == object)

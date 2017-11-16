@@ -21,7 +21,7 @@ CORE = $(CORE_DIR)/libcore.a
 # link with core lib
 LIBS    += -lcore
 LIBPATH += -L$(CORE_DIR)
-CFLAGS  += -I../
+CFLAGS  += -I../ -O2
 CFLAGS  += -I$(CORE_DIR)/inc
 
 
@@ -43,8 +43,12 @@ DISPLAY_SRC = display.c helper_text.c display_test.c
 DISPLAY_OBJ = $(DISPLAY_SRC:%.c=$(OBJDIR)/%.o)
 
 HELPER = helper
-HELPER_SRC = main.c display.c helper_text.c logging.c
+HELPER_SRC = main.c display.c helper_text.c logging.c pidopen.c
 HELPER_OBJ = $(HELPER_SRC:%.c=$(OBJDIR)/%.o)
+
+PIDOPEN = pidopen
+PIDOPEN_SRC = pidopen.c
+PIDOPEN_OBJ = $(PIDOPEN_SRC:%.c=$(OBJDIR)/%.o)
 
 
 REMOTE_DEST = /data/local/fixture/
@@ -73,6 +77,9 @@ $(DISPLAY): $(CORE) $(DISPLAY_OBJ)
 
 $(HELPER): $(CORE) $(HELPER_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(HELPER_OBJ) $(LIBPATH) $(LIBS)  -o $(HELPER)
+
+$(PIDOPEN): $(CORE) $(PIDOPEN_OBJ)
+	$(CROSS_COMPILE)gcc -pie $(PIDOPEN_OBJ) $(LIBPATH) $(LIBS)  -o $(PIDOPEN)
 
 
 app=$(HELPER)

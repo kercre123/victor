@@ -1,0 +1,10 @@
+{
+  "behaviorClass" : "DispatcherQueue",
+  "behaviorID" : "VictorDemoFailedToFindCharger",
+
+  "behaviors" : [
+    "ReactToFrustrationMajor", // TODO:(bn) custom animation
+    "VictorDemoGoToSleep",
+    "Wait" // run forever
+  ]
+}

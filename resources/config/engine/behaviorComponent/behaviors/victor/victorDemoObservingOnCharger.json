@@ -1,0 +1,18 @@
+{
+  "behaviorID" : "VictorDemoObservingOnCharger",
+  "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
+
+  "interruptActiveBehavior": false,
+
+  "behaviors": [
+    {
+      "behavior": "Needs_SevereLowEnergyRequest",
+      "cooldown_s": 90.0,
+      "cooldown_random_factor": 0.5
+    },
+    {
+      "behavior": "ObservingOnChargerIdle",
+      "cooldown_s": 0.0
+    }
+  ]
+}

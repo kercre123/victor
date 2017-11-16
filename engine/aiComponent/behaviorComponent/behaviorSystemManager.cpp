@@ -13,7 +13,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 
 #include "engine/actions/actionContainers.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -25,8 +24,6 @@
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/viz/vizManager.h"
-
-#include "clad/types/behaviorComponent/reactionTriggers.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/boundedWhile.h"

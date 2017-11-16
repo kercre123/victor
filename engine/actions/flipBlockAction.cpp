@@ -18,7 +18,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/flipBlockAction.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
@@ -41,34 +40,6 @@ bool WithinPreActionThreshold(const Robot& robot, std::vector<Pose3d>& possibleP
   
   return false;
 }
-  
-// Triggers for FlipBlock
-constexpr ReactionTriggerHelpers::FullReactionArray kDisableForFlip = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kDisableForFlip),
-              "Reaction triggers duplicate or non-sequential");
   
 }
 
@@ -293,9 +264,6 @@ FlipBlockAction::~FlipBlockAction()
   {
     _robot.GetActionList().Cancel(_flipTag);
   }
-  
-  // Re-enable all from reaction triggers from flip
-  _robot.GetBehaviorManager().RemoveDisableReactionsLock(GetName());
 }
 
 void FlipBlockAction::SetShouldCheckPreActionPose(bool shouldCheck)
@@ -337,10 +305,6 @@ ActionResult FlipBlockAction::Init()
   // Need to suppress track locking so the two lift actions don't fail because the other locked the lift track
   // A little dangerous as animations playing in parallel to this action could move lift
   _compoundAction.ShouldSuppressTrackLocking(true);
-  
-  // Ensure that the robot doesn't react to slowing down when it hits the blocks
-  _robot.GetBehaviorManager().DisableReactionsWithLock(GetName(),
-                                                      kDisableForFlip);
   
   // Drive through the block
   DriveStraightAction* drive = new DriveStraightAction(_robot, p.GetTranslation().Length() + kDrivingDist_mm, kDrivingSpeed_mmps);

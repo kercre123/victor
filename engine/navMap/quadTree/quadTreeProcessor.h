@@ -4,8 +4,10 @@
  * Author: Raul
  * Date:   01/13/2016
  *
- * Description: Class for processing a quadTree. It relies on the quadTree and quadTreeNodes to
- * share the proper information for the Processor.
+ * Description: Helper class for processing a quadTree. It performs a bunch of caching operations for 
+ * quick access to important data, without having to explicitly travel the whole tree. We want to use this
+ * class specifically for any operations that want to query all Data directly, but don't have constraints
+ * on where it is located in the tree.
  *
  * Copyright: Anki, Inc. 2016
  **/
@@ -47,10 +49,13 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // set root
-  void SetRoot(QuadTreeNode* node);
+  // NOTE: (mrw) used to set type from Invalid -> Valid so that only SetRoot and subdivide could create
+  //       a validated node in the tree. Any other type of node instantiation would be flagged so that
+  //       we know it was not attached to a tree. We could consider adding that safety mechanism back.
+  void SetRoot(QuadTreeNode* node) { _root = node; };
 
   // notification when the content type changes for the given node
-  void OnNodeContentTypeChanged(const QuadTreeNode* node, const NodeContent& oldContent, const NodeContent& newContent);
+  void OnNodeContentTypeChanged(const QuadTreeNode* node, const EContentType& oldContent, const bool wasEmpty);
 
   // notification when a node is going to be removed entirely
   void OnNodeDestroyed(const QuadTreeNode* node);
@@ -76,19 +81,13 @@ public:
   
   // fills content regions of filledType that have borders with any content in fillingTypeFlags, converting the filledType
   // region to the content type given (newContent)
-  void FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const NodeContent& newContent);
-  
-  // replaces the given content with the new one to set
-  void ReplaceContent(const Quad2f& inQuad, EContentType typeToReplace, const NodeContent& newContent);
-
-  // replaces the given content with the new one to set
-  void ReplaceContent(EContentType typeToReplace, const NodeContent& newContent);
-  
+  void FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapData& data);
+    
   // attempt to apply a transformation function to all nodes in the tree
-  void TransformContent(NodeTransformFunction transform);
-  
+  void Transform(NodeTransformFunction transform);  
+    
   // populate a list of all data that matches the predicate
-  void FindContentIf(NodePredicate pred, std::unordered_set<std::shared_ptr<MemoryMapData>>& output);
+  void FindIf(NodePredicate pred, MemoryMapDataConstList& output);
   
   // returns true if there are any nodes of the given type, false otherwise
   bool HasContentType(EContentType type) const;
@@ -139,7 +138,6 @@ private:
   static bool IsCached(EContentType contentType);
   
   // returns a color used to represent the given contentType for debugging purposes
-  static ColorRGBA GetDebugColor(ENodeType contentType);
   static ColorRGBA GetDebugColor(EContentType contentType);
   
   // returns a number that represents the given combination inner-outers
@@ -189,8 +187,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // checks if the given node or any of its children collides with the given ray and matches the type
-  bool HasCollisionRayWithTypes(const QuadTreeNode* node, const Point2f& rayFrom, const Point2f& rayTo,
-    EContentTypePackedType types) const;
+  bool HasCollisionRayWithTypes(const QuadTreeNode* node, const FastPolygon& poly, EContentTypePackedType types) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
@@ -222,7 +219,6 @@ private:
   QuadTreeNode* _root;
   
   // true if there have been changes since last drawn
-  mutable bool _contentGfxDirty;
   mutable bool _borderGfxDirty;
   
   // area of all quads that have been explored

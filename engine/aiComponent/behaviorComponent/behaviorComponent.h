@@ -27,9 +27,6 @@
 #include <memory>
 #include <set>
 
-#define USE_BSM 1
-
-
 namespace Anki {
 namespace Cozmo {
 
@@ -140,9 +137,7 @@ public:
   void Update(Robot& robot,
               std::string& currentActivityName,
               std::string& behaviorDebugStr);
-  
-  void OnRobotDelocalized();
-  
+    
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const override;
@@ -159,8 +154,6 @@ protected:
   friend class AIComponent;
   friend class DevBehaviorComponentMessageHandler;
   friend class TestBehaviorFramework; // for testing access to internals
-  inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
-  inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
   
   inline const BehaviorHelperComponent& GetBehaviorHelperComponent() const { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
   inline BehaviorHelperComponent&       GetBehaviorHelperComponent()       { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
@@ -180,9 +173,6 @@ private:
 
   // component that receives dev messages and then sets properties in the behavior component as a result
   std::unique_ptr<DevBehaviorComponentMessageHandler> _messageHandler;
-
-  // components which manage the behavior system
-  std::unique_ptr<BehaviorManager>       _behaviorMgr;
   
   // Behavior audio client is used to update the audio engine with the current sparked state (a.k.a. "round")
   std::unique_ptr<Audio::BehaviorAudioComponent> _audioClient;

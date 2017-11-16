@@ -7,9 +7,7 @@
 
 #include "clad/externalInterface/messageActions.clad"
 #include "clad/externalInterface/messageShared.clad"
-#include "clad/externalInterface/messageToBehaviorManager.clad"
 #include "clad/types/actionTypes.clad"
-#include "clad/types/behaviorComponent/activityTypes.clad"
 #include "clad/types/controllerChannels.clad"
 #include "clad/types/customObjectMarkers.clad"
 #include "clad/types/debugConsoleTypes.clad"
@@ -28,7 +26,6 @@
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/poseStructs.clad"
 #include "clad/types/proceduralFaceTypes.clad"
-#include "clad/types/behaviorComponent/reactionTriggers.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/sayTextStyles.clad"
 #include "clad/types/uiConnectionTypes.clad"
@@ -546,11 +543,6 @@ message FakeCloudIntent{
   string intent
 }
 
-// ActivateHighLevelActivity
-message ActivateHighLevelActivity {
-  HighLevelActivity activityType
-}
-
 // ExecuteBehavior
 message ExecuteBehaviorByExecutableType {
   string behaviorType,
@@ -567,10 +559,6 @@ message ExecuteBehaviorByID {
 message SetLiftLoadTestAsActivatable {
 }
 
-// Any message intended for a specific robot's behaviorManager
-message BehaviorManagerMessage {
-  BehaviorManagerMessageUnion  BehaviorManagerMessageUnion
-}
 
 // Enable/Disable Cozmo's ability to request a game
 message CanCozmoRequestGame {
@@ -607,33 +595,6 @@ message StartTestMode {
 message RequestAllBehaviorsList {
 }
 
-// request reaction trigger map
-message RequestReactionTriggerMap {
-
-}
-
-
-// Execute Reaction
-message ExecuteReactionTrigger {
-  //ReactionTriggerToBehavior reactionTriggerToBehaviorEntry
-}
-
-//disable all the affected triggers by locking them with the specified lockID
-message DisableReactionsWithLock{
-  string lockID,
-  AllTriggersConsidered triggersAffected
-}
-
-//remove the specified lockID from all triggers -
-//if no locks remain the trigger will be re-enabled
-message RemoveDisableReactionsLock{
-  string lockID
-}
-
-// disable all reactions with a lock - SHOULD ONLY BE USED BY SDK
-message DisableAllReactionsWithLock{
-  string lockID
-}
 
 // Engine will preserve the head and lift state between reactionary behaviors
 message SetDefaultHeadAndLiftState {
@@ -1039,6 +1000,12 @@ message RequestDeviceData {
 ///////////////////////////////////////////////////////////////////////////////
 
 message SetDebugConsoleVarMessage {
+  string varName,
+  string tryValue
+}
+
+// Same as above, but for setting console vars in the anim process
+message SetAnimDebugConsoleVarMessage {
   string varName,
   string tryValue
 }

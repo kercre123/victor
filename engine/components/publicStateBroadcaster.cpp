@@ -14,7 +14,6 @@
 
 #include "engine/components/publicStateBroadcaster.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
@@ -44,12 +43,10 @@ PublicStateBroadcaster::PublicStateBroadcaster()
   const int  tallestStackHeight = 0;
   const NeedsLevels needsLevels(0,0,0);
   
-  _currentState.reset(new RobotPublicState(UnlockId::Count,
-                                           isCubeInLift,
+  _currentState.reset(new RobotPublicState(isCubeInLift,
                                            isRequestingGame,
                                            tallestStackHeight,
                                            needsLevels,
-                                           ReactionTrigger::NoneTrigger,
                                            empty));
 }
 
@@ -58,36 +55,6 @@ PublicStateBroadcaster::PublicStateBroadcaster()
 void PublicStateBroadcaster::Update(Robot& robot)
 {
   bool currentStateUpdated = false;
-  
-  // Check if current spark has changed - when a user cancels a spark we leave the
-  // active spark the same until the action ends, but this is an implementation detail
-  // of the way the activity system works - to the rest of the system the spark should
-  // be considered ended
-  const auto& bm = robot.GetBehaviorManager();
-  
-  const bool hasActiveSparkChanged = bm.GetActiveSpark() != _currentState->currentSpark;
-  const bool didUserCancelSpark = (bm.GetRequestedSpark() == UnlockId::Count) &&
-                                  (bm.GetActiveSpark() != bm.GetRequestedSpark());
-  
-  if(hasActiveSparkChanged && !didUserCancelSpark){
-    _currentState->currentSpark = robot.GetBehaviorManager().GetActiveSpark();
-    currentStateUpdated = true;
-    PRINT_CH_INFO(kChannelName,
-                  "PublicStateBroadcaster.Update.SparkStateHasChanged",
-                  "Spark state has changed to %s",
-                  EnumToString(_currentState->currentSpark)
-                  );
-  }
-  
-  if(didUserCancelSpark && _currentState->currentSpark != UnlockId::Count){
-    PRINT_CH_INFO(kChannelName,
-                  "PublicStateBroadcaster.Update.UserCanceldSpark",
-                  "Spark state has changed from %s",
-                  EnumToString(_currentState->currentSpark)
-                  );
-    _currentState->currentSpark = UnlockId::Count;
-    currentStateUpdated = true;
-  }
   
   const bool isCarryingObject = robot.GetCarryingComponent().IsCarryingObject();
   // Check if a cube has been added to/removed from the lift
@@ -98,17 +65,6 @@ void PublicStateBroadcaster::Update(Robot& robot)
                   "PublicStateBroadcaster.Update.RobotCarryingObjectChanged",
                   "Robot %s carrying an object",
                   isCarryingObject ? "is now" : "is no longer"
-                  );
-  }
-  
-  // Check if current reaction trigger has changed
-  if(robot.GetBehaviorManager().GetCurrentReactionTrigger() != _currentState->currentReactionTrigger){
-    _currentState->currentReactionTrigger = robot.GetBehaviorManager().GetCurrentReactionTrigger();
-    currentStateUpdated = true;
-    PRINT_CH_INFO(kChannelName,
-                  "PublicStateBroadcaster.Update.ReactionTriggered",
-                  "Robot is now reacting to trigger %s",
-                  EnumToString(_currentState->currentReactionTrigger)
                   );
   }
   

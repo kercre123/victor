@@ -12,6 +12,7 @@ include(signalessence)
 include(speexdsp)
 include(text2speech)
 include(sensory)
+include(robot_core)
 
 if (NOT DEFINED USE_DAS)
   set(USE_DAS 0)
@@ -24,7 +25,8 @@ set(PLATFORM_COMPILE_DEFS "")
 if (ANDROID)
     set(PLATFORM_LIBS
         android
-        log)
+        log
+        robot_core)
 elseif (MACOSX)
     include(webots)
     set(PLATFORM_LIBS

@@ -10,7 +10,7 @@
 
 uint64_t steady_clock_now(void) {
    struct timespec time;
-   clock_gettime(CLOCK_REALTIME,&time);
+   clock_gettime(CLOCK_MONOTONIC,&time);
    return time.tv_nsec + time.tv_sec * NSEC_PER_SEC;
 }
 void microwait(long microsec)

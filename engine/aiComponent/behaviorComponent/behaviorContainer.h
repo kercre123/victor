@@ -66,8 +66,7 @@ public:
   using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
   BehaviorContainer(const BehaviorIDJsonMap& behaviorData);
   
-  void Init(BehaviorExternalInterface& behaviorExternalInterface,
-            const bool shouldAddToActivatableScope);
+  void Init(BehaviorExternalInterface& behaviorExternalInterface);
 protected:
   friend class AnonymousBehaviorFactory;  
   friend class BehaviorComponent;

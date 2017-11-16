@@ -17,7 +17,6 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/retryWrapperAction.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
@@ -35,9 +34,7 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-CONSOLE_VAR(bool, kCanHiccupWhilePlacingPyramid, "Hiccups", true);
-  
+    
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace{
 RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
@@ -52,34 +49,6 @@ static const float kHeadAngleCheckTopBlock_rad = DEG_TO_RAD(25);
 static const float kLiftHeightCheckTopBlock_mm = 0;
 static const float kWaitForVisualTopBlock_sec = 1;
 static const float kHeadBottomCheckTopBlock_rad = DEG_TO_RAD(15);
-
-
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersBuildPyramidArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersBuildPyramidArray),
-              "Reaction triggers duplicate or non-sequential");
 } // end namespace
 
   
@@ -167,14 +136,7 @@ void BehaviorBuildPyramid::TransitionToDrivingToTopBlock(BehaviorExternalInterfa
 void BehaviorBuildPyramid::TransitionToPlacingTopBlock(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(PlacingTopBlock);
-  
-  if(!kCanHiccupWhilePlacingPyramid)
-  {
-    SMART_DISABLE_REACTION_DEV_ONLY(GetIDStr(), ReactionTrigger::Hiccup);
-  }
-  
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersBuildPyramidArray);
-  
+    
   const ObservableObject* staticBlock = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
   const ObservableObject* baseBlock = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_baseBlockID);
 
