@@ -79,7 +79,6 @@ static void disableVMain(void) {
   nVEXT_EN::mode(MODE_INPUT);
   BAT_EN::reset();
   onBatPower = false;
-  wait(40*5);
 }
 
 static void enableVMain(void) {
@@ -247,18 +246,17 @@ void Analog::tick(void) {
   }
 
   if (button_pressed) {
-    if (hold_count < POWER_DOWN_TIME) {
-      hold_count++;
-    } else if (hold_count < POWER_WIPE_TIME) {
-      disableVMain();
-      Lights::disable();
-    } else {
+    hold_count++;
+    if (hold_count >= POWER_WIPE_TIME) {
       // We will be signaling a recovery
       BODY_TX::reset();
       BODY_TX::mode(MODE_OUTPUT);
 
       // Reenable power to the head
       enableVMain();
+    } else if (hold_count >= POWER_DOWN_TIME) {
+      disableVMain();
+      Lights::disable();
     }
   } else {
     if (hold_count >= POWER_WIPE_TIME) {
@@ -266,8 +264,8 @@ void Analog::tick(void) {
       BODY_TX::mode(MODE_ALTERNATE);
     } else if (hold_count >= POWER_DOWN_TIME) {
       Power::stop();
-    } else {
-      hold_count = 0;
     }
+
+    hold_count = 0;
   }
 }
