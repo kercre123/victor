@@ -71,6 +71,6 @@
 /*      -   Enables Debug module and sets code execution in breakpoint in Hardfault and NMI (Watcdog) handleres.*/
 /*          It allows developer to hot attach debugger and get debug information                                */
 /****************************************************************************************************************/
-#define CFG_DEVELOPMENT_DEBUG
+#undef CFG_DEVELOPMENT_DEBUG
 
 #endif // _DA1458X_CONFIG_BASIC_H_
