@@ -13,7 +13,7 @@
 #define ANKI_COZMO_FACE_ANIMATION_MANAGER_H
 
 #include <string>
-#include <vector>
+#include <deque>
 #include <unordered_map>
 
 #include "anki/common/types.h"
@@ -48,7 +48,9 @@ namespace Cozmo {
 
     // Get a pointer to an RLE-compressed frame for the given animation.
     // Returns nullptr if animation or frame do not exist.
-    const Vision::ImageRGB* GetFrame(const std::string& animName, u32 frameNum) const;
+    // Note: For procedural animation, frameNum is ignored and the front 
+    // frame is always popped and returned.
+    const Vision::ImageRGB GetFrame(const std::string& animName, u32 frameNum);
     
     // Return the total number of frames in the given animation. Returns 0 if the
     // animation doesn't exist.
@@ -71,11 +73,14 @@ namespace Cozmo {
     // Protected default constructor for singleton.
     FaceAnimationManager();
     
+    // Pops the front frame of the ProceduralAnim only
+    void PopFront();
+
     static FaceAnimationManager* _singletonInstance;
 
     struct AvailableAnim {
       time_t lastLoadedTime;
-      std::vector< Vision::ImageRGB > frames;
+      std::deque< Vision::ImageRGB > frames;
       size_t GetNumFrames() const { return frames.size(); }
     };
     

@@ -14,6 +14,7 @@
  **/
 
 
+#include "anki/common/basestation/array2d_impl.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -291,9 +292,15 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     bool FaceAnimationKeyFrame::IsDone()
     {
-      // Note the dynamic check for num frames, since (in the case of streaming
-      // procedural animations) the number of keyframes could be increasing
-      // while we're playing and thus isn't known up front.
+      // For canned animations we check if GetFaceImage() has been called as many
+      // times as there are frames.
+      // For procedural animations, frames are deleted (with PopFront) after they are
+      // played in order to avoid unbounded growth (since a procedural animation can
+      // be played for an arbitrary period of time) so we check for whether or not
+      // there are any frames left.
+      if (_animName == FaceAnimationManager::ProceduralAnimName) {
+        return FaceAnimationManager::getInstance()->GetNumFrames(_animName) == 0;
+      }
       return (_curFrame >= FaceAnimationManager::getInstance()->GetNumFrames(_animName));
     }
     
@@ -301,24 +308,19 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
       if(!IsDone()) 
       {
-        _faceImg = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame);
-        
-        if(_faceImg == nullptr) {
-          PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMessage",
-                            "Failed to get frame %d from animation %s",
-                            _curFrame, _animName.c_str());
+        _faceImg = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame);        
+        ++_curFrame;
+
+        if(_faceImg.IsEmpty() ) {
           return nullptr;
         }
-        
-        ++_curFrame;
-        
-        return _faceImg;
+        return &_faceImg;
       } else {
         _curFrame = 0;
         return nullptr;
       }
     }
-    
+
 #pragma mark -
 #pragma mark ProceduralFaceKeyFrame
     

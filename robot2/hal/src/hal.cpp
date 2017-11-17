@@ -154,7 +154,6 @@ void ForwardMicData(void)
 Result HAL::Step(void)
 {
   Result result = RESULT_OK;
-  TimeStamp_t now = HAL::GetTimeStamp();
 
 #ifndef USING_ANDROID_PHONE
   {

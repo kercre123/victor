@@ -19,13 +19,20 @@
 #include "engine/robotManager.h"
 #include "engine/robotInterface/messageHandler.h"
 
+#include "clad/types/animationTypes.h"
+
+#include "anki/common/basestation/array2d_impl.h"
 #include "anki/common/basestation/utils/timer.h"
+
 
 namespace Anki {
 namespace Cozmo {
  
 namespace {
   const u32 kMaxNumAvailableAnimsToReportPerTic = 50;
+
+  static const u32 kNumImagePixels     = FACE_DISPLAY_HEIGHT * FACE_DISPLAY_WIDTH;
+  static const u32 kNumHalfImagePixels = kNumImagePixels / 2;
 }
   
   
@@ -37,7 +44,10 @@ AnimationComponent::AnimationComponent(Robot& robot, const CozmoContext* context
 , _isDolingAnims(false)
 , _nextAnimToDole("")
 , _currPlayingAnim("")
-, _disabledTracks(0)
+, _lockedTracks(0)
+, _isAnimating(false)
+, _currAnimId(0)
+, _currAnimTag(0)
 {
   if (context) {
     // Setup game message handlers
@@ -50,6 +60,7 @@ AnimationComponent::AnimationComponent(Robot& robot, const CozmoContext* context
       helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimations>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceHue>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageBinaryChunk>();
     }
   }
   
@@ -71,7 +82,7 @@ AnimationComponent::AnimationComponent(Robot& robot, const CozmoContext* context
   doRobotSubscribe(RobotInterface::RobotToEngineTag::animEnded,             &AnimationComponent::HandleAnimEnded);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::endOfMessage,          &AnimationComponent::HandleEndOfMessage);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::animEvent,             &AnimationComponent::HandleAnimationEvent);
-
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::animState,             &AnimationComponent::HandleAnimState);
 }
 
 void AnimationComponent::Init()
@@ -175,6 +186,12 @@ Result AnimationComponent::PlayAnimByID(const u32 animID,
     return RESULT_FAIL;
   }
   
+  // Check that animID is valid
+  if (animID == static_cast<u32>(AnimConstants::PROCEDURAL_ANIM_ID)) {
+    PRINT_NAMED_WARNING("AnimationCompnoent.PlayAnimByID.Invalid", "%d", animID);
+    return RESULT_FAIL;
+  }
+
   // Check that a valid actionTag was specified if there is non-empty callback
   if (callback != nullptr && actionTag == 0) {
     PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.MissingActionTag", "");
@@ -182,7 +199,7 @@ Result AnimationComponent::PlayAnimByID(const u32 animID,
   }
   
   // TODO: Is this what interruptRunning should mean?
-  //       Or should it queue on anim process side an optionally interrupt currently executing anim?
+  //       Or should it queue on anim process side and optionally interrupt currently executing anim?
   if (IsPlayingAnimation() && !interruptRunning) {
     PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByID.WontInterruptCurrentAnim", "");
     return RESULT_FAIL;
@@ -253,26 +270,149 @@ Result AnimationComponent::StopAnimByName(const std::string& animName)
   
 // Enables only the specified tracks. 
 // Status of other tracks remain unchanged.
-void AnimationComponent::EnableTracks(u8 tracks)
+void AnimationComponent::UnlockTracks(u8 tracks)
 {
-  _disabledTracks &= ~tracks;
-  _robot.SendRobotMessage<RobotInterface::LockAnimTracks>(_disabledTracks);
+  _lockedTracks &= ~tracks;
+  _robot.SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
 }
 
-void AnimationComponent::EnableAllTracks()
+void AnimationComponent::UnlockAllTracks()
 {
-  if (_disabledTracks != 0) {
-    _disabledTracks = 0;
-    _robot.SendRobotMessage<RobotInterface::LockAnimTracks>(_disabledTracks);
+  if (_lockedTracks != 0) {
+    _lockedTracks = 0;
+    _robot.SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
   }
 }
 
 // Disables only the specified tracks. 
 // Status of other tracks remain unchanged.
-void AnimationComponent::DisableTracks(u8 tracks)
+void AnimationComponent::LockTracks(u8 tracks)
 {
-  _disabledTracks |= tracks;
-  _robot.SendRobotMessage<RobotInterface::LockAnimTracks>(_disabledTracks);
+  _lockedTracks |= tracks;
+  _robot.SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
+}
+
+
+Result AnimationComponent::DisplayFaceImageBinary(const Vision::Image& img, u32 duration_ms, bool interruptRunning)
+{
+  if (!_isInitialized) {
+    PRINT_NAMED_WARNING("AnimationComponent.DisplayFaceImageBinary.Uninitialized", "");
+    return RESULT_FAIL;
+  }
+  
+  // TODO: Is this what interruptRunning should mean?
+  //       Or should it queue on anim process side and optionally interrupt currently executing anim?
+  if (IsPlayingAnimation() && !interruptRunning) {
+    PRINT_NAMED_WARNING("AnimationComponent.DisplayFaceImageBinary.WontInterruptCurrentAnim", "");
+    return RESULT_FAIL;
+  }
+
+  // Verify that image is expected size
+  const bool imageIsValidSize = (img.GetNumRows() == FACE_DISPLAY_HEIGHT) && 
+                                (img.GetNumCols() == FACE_DISPLAY_WIDTH) &&
+                                (img.GetNumChannels() == 1) &&
+                                img.IsContinuous();
+  
+  if (!ANKI_VERIFY(imageIsValidSize, 
+                   "AnimationComponent.DisplayFaceImageBinary.InvalidImageSize", 
+                   "%d x %d (continuous: %d), expected %d x %d", 
+                   img.GetNumCols(), img.GetNumRows(), img.IsContinuous(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT)) {
+    return RESULT_FAIL;
+  }
+
+  // Convert image into bit images (top half and bottom half)
+  const u8* imageData_i = img.GetDataPointer();
+
+  for (int halfIdx = 0; halfIdx < 2; ++halfIdx) {
+
+    RobotInterface::DisplayFaceImageBinaryChunk msg;
+    static const u32 kFaceArraySize = sizeof(msg.faceData);
+    static_assert(8 * kFaceArraySize == kNumHalfImagePixels, "AnimationComponent.DisplayFaceImageBinary.WrongFaceDataSize");
+  
+    msg.imageId = 0;
+    msg.chunkIndex = halfIdx;
+    msg.duration_ms = duration_ms;
+
+    u8* byte = msg.faceData.data();
+    for (int i=0; i < kFaceArraySize; ++i) {
+      *byte = 0;
+      for (int b = 7; b >= 0; --b){
+        if (*imageData_i > 0) {
+          *byte |= 1 << b;
+        }
+        ++imageData_i;
+      }
+      ++byte;
+    }
+    _robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+  }
+
+  return RESULT_OK;
+}
+
+Result AnimationComponent::DisplayFaceImage(const std::array<u16, FACE_DISPLAY_NUM_PIXELS>& imgRGB565, u32 duration_ms, bool interruptRunning)
+{
+  if (!_isInitialized) {
+    PRINT_NAMED_WARNING("AnimationComponent.DisplayFaceImage.Uninitialized", "");
+    return RESULT_FAIL;
+  }
+  
+  // TODO: Is this what interruptRunning should mean?
+  //       Or should it queue on anim process side and optionally interrupt currently executing anim?
+  if (IsPlayingAnimation() && !interruptRunning) {
+    PRINT_NAMED_WARNING("AnimationComponent.DisplayFaceImage.WontInterruptCurrentAnim", "");
+    return RESULT_FAIL;
+  }
+
+  static const int kMaxPixelsPerMsg = RobotInterface::DisplayFaceImageRGBChunk().faceData.size();
+  
+  int chunkCount = 0;
+  int pixelsLeftToSend = FACE_DISPLAY_NUM_PIXELS;
+  auto startIt = imgRGB565.begin();
+  while (pixelsLeftToSend > 0) {
+    RobotInterface::DisplayFaceImageRGBChunk msg;
+    msg.duration_ms = duration_ms;
+    msg.imageId = 0;
+    msg.chunkIndex = chunkCount++;
+    msg.numPixels = std::min(kMaxPixelsPerMsg, pixelsLeftToSend);
+
+    std::copy_n(startIt, msg.numPixels, std::begin(msg.faceData));
+
+    pixelsLeftToSend -= msg.numPixels;
+    std::advance(startIt, msg.numPixels);
+
+    _robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+  }
+
+  static const int kExpectedNumChunks = static_cast<int>(std::ceilf( (f32)FACE_DISPLAY_NUM_PIXELS / kMaxPixelsPerMsg ));
+  DEV_ASSERT_MSG(chunkCount == kExpectedNumChunks, "AnimationComponent.DisplayFaceImage.UnexpectedNumChunks", "%d", chunkCount);
+
+  return RESULT_OK;
+}
+
+static void ConvertRGB24toRGB565(const Vision::ImageRGB& faceImg, std::array<u16, FACE_DISPLAY_NUM_PIXELS>& faceImg565)
+{
+  DEV_ASSERT(faceImg.IsContinuous(), "AnimationComponent.ConvertRGB24toRGB565.FaceImgNotContinuous");
+ 
+  const Vision::PixelRGB* faceImg_i = faceImg.get_CvMat_().ptr<Vision::PixelRGB>(0);
+  
+  for(int j = 0; j < FACE_DISPLAY_NUM_PIXELS; ++j)
+  {
+    const Vision::PixelRGB& pixRGB24 = faceImg_i[j];
+    u16& pixRGB565 = faceImg565[j];
+    
+    // Convert to RGB565
+    pixRGB565 = (((int)(pixRGB24.r() >> 3) << 11) |
+                 ((int)(pixRGB24.g() >> 2) << 5)  |
+                 ((int)(pixRGB24.b() >> 3) << 0));
+  }
+}
+
+Result AnimationComponent::DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning)
+{
+  std::array<u16, FACE_DISPLAY_NUM_PIXELS> img565;
+  ConvertRGB24toRGB565(img, img565);
+  return DisplayFaceImage(img565, duration_ms, interruptRunning);
 }
 
 
@@ -294,7 +434,7 @@ void AnimationComponent::HandleMessage(const ExternalInterface::DisplayProcedura
   }
   
   // TODO: Is this what interruptRunning should mean?
-  //       Or should it queue on anim process side an optionally interrupt currently executing anim?
+  //       Or should it queue on anim process side and optionally interrupt currently executing anim?
   if (IsPlayingAnimation() && !msg.interruptRunning) {
     PRINT_NAMED_WARNING("AnimationComponent.DisplayProceduralFace.WontInterruptCurrentAnim", "");
     return;
@@ -309,7 +449,26 @@ void AnimationComponent::HandleMessage(const ExternalInterface::SetFaceHue& msg)
 {
   _robot.SendRobotMessage<RobotInterface::SetFaceHue>(msg.hue);
 }
+
+template<>
+void AnimationComponent::HandleMessage(const ExternalInterface::DisplayFaceImageBinaryChunk& msg)
+{
+  if (!_isInitialized) {
+    PRINT_NAMED_WARNING("AnimationComponent.HandleDisplayFaceImageBinaryChunk.Uninitialized", "");
+    return;
+  }
   
+  // TODO: Is this what interruptRunning should mean?
+  //       Or should it queue on anim process side and optionally interrupt currently executing anim?
+  if (IsPlayingAnimation() && !msg.interruptRunning) {
+    PRINT_NAMED_WARNING("AnimationComponent.HandleDisplayFaceImage.WontInterruptCurrentAnim", "");
+    return;
+  }
+
+  // Convert ExternalInterface version of DisplayFaceImage to RobotInterface version and send
+  _robot.SendRobotMessage<RobotInterface::DisplayFaceImageBinaryChunk>(msg.duration_ms, msg.faceData, msg.imageId, msg.chunkIndex);
+}
+
 // ================ Robot message handlers ======================
   
 void AnimationComponent::HandleAnimationAvailable(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -325,9 +484,14 @@ void AnimationComponent::HandleAnimStarted(const AnkiEvent<RobotInterface::Robot
   auto it = _callbackMap.find(payload.tag);
   if (it != _callbackMap.end()) {
     PRINT_CH_INFO("AnimationComponent", "AnimStarted.Tag", "id=%d, tag=%d", payload.id, payload.tag);
-  } else {
+  } else if (payload.id != static_cast<u32>(AnimConstants::PROCEDURAL_ANIM_ID)) {
     PRINT_NAMED_WARNING("AnimationComponent.AnimStarted.UnexpectedTag", "id=%d, tag=%d", payload.id, payload.tag);
+    return;
   }
+
+  _isAnimating = true;
+  _currAnimId = payload.id;
+  _currAnimTag = payload.tag;
 }
 
 void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -340,9 +504,14 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
     PRINT_CH_INFO("AnimationComponent", "AnimEnded.Tag", "id=%d, tag=%d", payload.id, payload.tag);
     it->second.ExecuteCallback(payload.wasAborted ? AnimResult::Aborted : AnimResult::Completed);
     _callbackMap.erase(it);
-  } else {
+  } else if (payload.id != static_cast<u32>(AnimConstants::PROCEDURAL_ANIM_ID)) {
     PRINT_NAMED_WARNING("AnimationComponent.AnimEnded.UnexpectedTag", "id=%d, tag=%d", payload.id, payload.tag);
+    return;
   }
+
+  _isAnimating = false;
+  DEV_ASSERT_MSG(_currAnimId == payload.id, "AnimationComponent.AnimEnded.UnexpectedId", "Got %d, expected %d", payload.id, _currAnimId);
+  DEV_ASSERT_MSG(_currAnimTag == payload.tag, "AnimationComponent.AnimEnded.UnexpectedTag", "Got %d, expected %d", payload.tag, _currAnimTag);
 }
   
 void AnimationComponent::HandleEndOfMessage(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -367,6 +536,10 @@ void AnimationComponent::HandleAnimationEvent(const AnkiEvent<RobotInterface::Ro
   }
 }
   
+void AnimationComponent::HandleAnimState(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  _animState = message.GetData().Get_animState();
+}
   
   
 } // namespace Cozmo

@@ -753,6 +753,24 @@ message SetFaceHue
     float_32 hue // [0,1]
 }
 
+
+// TODO: Move to shared file with anim process?
+// DisplayFaceImageBinaryChunk
+// Bit-image: one bit for each of 184x96 pixels = 2208 bytes
+// If index == 0, this is the top half of the image
+// If index == 1, this is the bottom half of the image
+// Image is actually drawn when index == 1 as long as the associated 
+// top half (i.e. index == 0) message with matching tag was received.
+// The duration_ms that is actually used is whichever last image half
+// is sent. Just make sure they're the same for both halves!
+message DisplayFaceImageBinaryChunk {
+    uint_32  duration_ms,    // Use uint_32 max value to keep the image on the screen
+    uint_8   faceData[1104],
+    uint_8   imageId,
+    uint_8   chunkIndex,
+    bool     interruptRunning
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Robot / Cube LED Controls
 ///////////////////////////////////////////////////////////////////////////////

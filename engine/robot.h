@@ -527,26 +527,12 @@ public:
     
   // =========== Animation Commands =============
 
-  void SetEnabledAnimTracks(u8 enabledAnimTracks) {
-    _enabledAnimTracks = enabledAnimTracks;
-  }
-  
-  void SetAnimationTag(u8 animationTag) {
-    _animationTag = animationTag;
-  }
-
   // Returns true if the robot is currently playing an animation, according
   // to most recent state message. NOTE: Will also be true if the animation
   // is the "idle" animation!
   bool IsAnimating() const;
-    
-  // Returns true iff the robot is currently playing the idle animation.
-  bool IsIdleAnimating() const;
-    
-  // Returns the "tag" of the animation currently playing on the robot
-  u8 GetCurrentAnimationTag() const;
 
-  u8 GetEnabledAnimationTracks() const { return _enabledAnimTracks; }
+  u8 GetEnabledAnimationTracks() const;
   
   // =========== Audio =============
   Audio::EngineRobotAudioClient* GetAudioClient() { return _audioClient.get(); }
@@ -732,9 +718,6 @@ protected:
   // handles planning and path following
   std::unique_ptr<PathComponent> _pathComponent;
   
-  ///////// Animation /////////
-  AnimationTag      _animationTag                    = kNotAnimatingTag;
-  
   std::unique_ptr<DrivingAnimationHandler> _drivingAnimationHandler;
     
   std::unique_ptr<ActionList>             _actionList;
@@ -813,7 +796,6 @@ protected:
   f32              _battVoltage              = 5;
   ImageSendMode    _imageSendMode            = ImageSendMode::Off;
   u32              _lastSentImageID          = 0;
-  u8               _enabledAnimTracks        = (u8)AnimTrackFlag::ALL_TRACKS;
   bool             _isPickedUp               = false;
   bool             _isOnChargerPlatform      = false;
   bool             _isCliffReactionDisabled  = false;
@@ -1016,18 +998,6 @@ inline const f32 Robot::GetLiftAngle() const
 inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
   _rampID = rampID;
   _rampDirection = direction;
-}
-  
-inline u8 Robot::GetCurrentAnimationTag() const {
-  return _animationTag;
-}
-
-inline bool Robot::IsAnimating() const {
-  return _animationTag != 0;
-}
-
-inline bool Robot::IsIdleAnimating() const {
-  return _animationTag == 255;
 }
 
 inline f32 Robot::GetLocalizedToDistanceSq() const {

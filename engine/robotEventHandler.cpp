@@ -35,7 +35,6 @@
 #include "engine/actions/flipBlockAction.h"
 #include "engine/actions/retryWrapperAction.h"
 #include "engine/actions/sayTextAction.h"
-#include "engine/actions/setFaceAction.h"
 #include "engine/actions/trackGroundPointAction.h"
 #include "engine/actions/trackFaceAction.h"
 #include "engine/actions/trackMotionAction.h"
@@ -895,36 +894,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::WaitForIma
 }
       
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DisplayFaceImage& msg)
-{
-  // Expand the bit-packed msg.faceData (every bit == 1 pixel) to byte array (every byte == 1 pixel)
-  Vision::Image image(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-  static_assert(std::tuple_size<decltype(msg.faceData)>::value * 8 == (FACE_DISPLAY_HEIGHT*FACE_DISPLAY_WIDTH),
-                "Mismatched face image and bit image sizes");
-      
-  assert(image.IsContinuous());
-      
-  uint8_t* imageData_i = image.GetDataPointer();
-      
-  uint32_t destI = 0;
-  for (int i = 0; i < msg.faceData.size(); ++i)
-  {
-    uint8_t currentByte = msg.faceData[i];
-      
-    for (uint8_t bit = 0; bit < 8; ++bit)
-    {
-      imageData_i[destI] = ((currentByte & 0x80) > 0) ? 255 : 0;
-      ++destI;
-      currentByte = (uint8_t)(currentByte << 1);
-    }
-  }
-  assert(destI == (FACE_DISPLAY_HEIGHT*FACE_DISPLAY_WIDTH));
-      
-  SetFaceAction* action = new SetFaceAction(robot, image, msg.duration_ms);
-      
-  return action;
-}
+
       
 // =====================================================================================================================
 #pragma mark -
@@ -1034,7 +1004,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       
       DEFINE_HANDLER(alignWithObject,          AlignWithObject,          0),
       DEFINE_HANDLER(calibrateMotors,          CalibrateMotors,          0),
-      DEFINE_HANDLER(displayFaceImage,         DisplayFaceImage,         0),
       DEFINE_HANDLER(driveOffChargerContacts,  DriveOffChargerContacts,  1),
       DEFINE_HANDLER(driveStraight,            DriveStraight,            0),
       DEFINE_HANDLER(facePlant,                FacePlant,                0),

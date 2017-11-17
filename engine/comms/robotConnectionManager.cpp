@@ -68,7 +68,7 @@ void RobotConnectionManager::ConfigureReliableTransport()
 {
   // Set parameters for all reliable transport instances
   Util::ReliableTransport::SetSendAckOnReceipt(false);
-  Util::ReliableTransport::SetSendUnreliableMessagesImmediately(false);
+  Util::ReliableTransport::SetSendUnreliableMessagesImmediately(true);
   Util::ReliableTransport::SetMaxPacketsToReSendOnAck(0);
   Util::ReliableTransport::SetMaxPacketsToSendOnSendMessage(1);
   Util::ReliableTransport::SetTrackAckLatency(true);
@@ -148,7 +148,7 @@ bool RobotConnectionManager::SendData(const uint8_t* buffer, unsigned int size)
     return false;
   }
   
-  _reliableTransport->SendData(true, _currentConnectionData->GetAddress(), buffer, size);
+  _reliableTransport->SendData(false, _currentConnectionData->GetAddress(), buffer, size);
   
   return true;
 }

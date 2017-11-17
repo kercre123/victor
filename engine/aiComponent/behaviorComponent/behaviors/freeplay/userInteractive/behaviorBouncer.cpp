@@ -10,7 +10,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorBouncer.h"
 
 #include "engine/actions/animActions.h"
-#include "engine/actions/setFaceAction.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
@@ -471,12 +470,7 @@ void BehaviorBouncer::UpdateDisplay(BehaviorExternalInterface& behaviorExternalI
     Robot& robot = behaviorExternalInterface.GetRobot();
     // Display image
     LOG_TRACE("BehaviorBouncer.UpdateDisplay", "Start face action");
-    const u32 duration_ms = ANIM_TIME_STEP_MS;
-    IActionRunner * setFaceAction = new SetFaceAction(robot, image, duration_ms);
-    SimpleCallback callback = []() {
-      LOG_TRACE("BehaviorBouncer.UpdateDisplay.Callback", "Face action complete");
-    };
-    DelegateIfInControl(setFaceAction, callback);
+    robot.GetAnimationComponent().DisplayFaceImageBinary(image, ANIM_TIME_STEP_MS);
   }
 
 }

@@ -21,6 +21,7 @@
 #include "cozmoAnim/micDataProcessor.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
+#include "anki/common/basestation/array2d_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -71,7 +72,7 @@ namespace Messages {
     // If negative, it means we're not currently doling.
     bool _isDolingAnims = false;
     u32 _nextAnimIDToDole;
-    
+
   } // private namespace
 
 
@@ -98,7 +99,7 @@ namespace Messages {
     _animStreamer = &animStreamer;
     _audioInput   = &audioInput;
     _context      = &context;
-    
+
     return RESULT_OK;
   }
   
@@ -197,6 +198,17 @@ namespace Messages {
     ProceduralFace::SetHue(msg.hue);
     return;
   }
+
+  void Process_displayFaceImageBinaryChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageBinaryChunk& msg) 
+  {
+    _animStreamer->Process_displayFaceImageChunk(msg);
+  }
+
+  void Process_displayFaceImageRGBChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageRGBChunk& msg) 
+  {
+    _animStreamer->Process_displayFaceImageChunk(msg);
+  }
+
   
   void Process_requestAvailableAnimations(const Anki::Cozmo::RobotInterface::RequestAvailableAnimations& msg)
   {
@@ -419,8 +431,12 @@ namespace Messages {
   
   bool SendToEngine(const void *buffer, const u16 size, const u8 msgID)
   {
-    const bool reliable = msgID < EnumToUnderlyingType(RobotInterface::ToRobotAddressSpace::TO_ENG_UNREL);
-    const bool hot = false;
+    // TODO: Don't need reliable transport between engine and anim process. Domain sockets should be good enough.
+    //       For now, send everything unreliable.
+    //const bool reliable = msgID < EnumToUnderlyingType(RobotInterface::ToRobotAddressSpace::TO_ENG_UNREL);
+    const bool reliable = false;
+    const bool hot = true;
+
     if (CozmoAnimComms::EngineIsConnected())
     {
       if (reliable)

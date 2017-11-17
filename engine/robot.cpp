@@ -98,6 +98,9 @@ CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
 // if false, vision system keeps running while picked up, on side, etc.
 CONSOLE_VAR(bool, kUseVisionOnlyWhileOnTreads,    "Robot", false);
 
+// Enable to enable example code of face image drawing
+CONSOLE_VAR(bool, kEnableTestFaceImageRGBDrawing,  "Robot", false);
+
 // Play an animation by name from the debug console.
 // Note: If COZMO-11199 is implemented (more user-friendly playing animations by name
 //   on the Unity side), then this console func can be removed.
@@ -781,6 +784,83 @@ bool Robot::IsPoseInWorldOrigin(const Pose3d& pose) const
   return GetPoseOriginList().IsPoseInCurrentOrigin(pose);
 }
   
+
+// Example update call for animating color image to face
+void UpdateFaceImageRGBExample(Robot& robot)
+{
+  static Point2f pos(5,5);
+  static Vision::PixelRGB backgroundPixel(10,10,10);
+  static int framesToSend = 0;  // 0 == send frames forever
+
+  // Frame send counter
+  if (framesToSend > 0) {
+    if (--framesToSend < 0) {
+      return;
+    }
+  }
+
+  // Throttle frames
+  // Don't send if the number of procAnim keyframes gets large enough
+  // (One keyframe == 33ms)
+  if (robot.GetAnimationComponent().GetAnimState_NumProcAnimFaceKeyframes() > 30) {
+    return;
+  }
+
+  // Move 'X' through the image
+  const f32 xStep = 5.f;
+  pos.x() += xStep;
+  if (pos.x() >= FACE_DISPLAY_WIDTH - 1) {
+    pos.x() = 0;
+    pos.y() += 1.f;
+    if (pos.y() >= FACE_DISPLAY_HEIGHT - 1) {
+      pos.x() = 0;
+      pos.y() = 0;
+    }
+  }
+
+  // Update background color
+  // Increase R, increase G, increase B, decrease R, decrease G, decrease B
+  const u8 highVal = 230;
+  const u8 lowVal  = 30;
+  const u8 step    = 10;
+  static bool goingUp = true;
+  if (goingUp) {
+    if (backgroundPixel.r() < highVal) {
+      backgroundPixel.r() += step;
+    } else if (backgroundPixel.g() < highVal) {
+      backgroundPixel.g() += step;
+    } else if (backgroundPixel.b() < highVal) {
+      backgroundPixel.b() += step;
+    } else {
+      goingUp = false;
+    }
+  } else {
+    if (backgroundPixel.r() > lowVal) {
+      backgroundPixel.r() -= step;
+    } else if (backgroundPixel.g() > lowVal) {
+      backgroundPixel.g() -= step;
+    } else if (backgroundPixel.b() > lowVal) {
+      backgroundPixel.b() -= step;
+    } else {
+      goingUp = true;
+    }
+  }
+
+  static Vision::ImageRGB img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+  img.FillWith(backgroundPixel);
+  img.DrawText(pos, "x", ColorRGBA(0xff), 0.5f);
+
+  // std::ostringstream ss;
+  // ss << "files/images/img_" << GetLastMsgTimestamp() << ".jpg";
+  // img.Save(ss.str().c_str());
+
+  // The duration of the image should ideally be some multiple of ANIM_TIME_STEP_MS,
+  // especially if you're playing a bunch of images in sequence, otherwise the 
+  // speed of the animation may not be as expected.
+  u32 duration_ms = 2 * ANIM_TIME_STEP_MS;
+  robot.GetAnimationComponent().DisplayFaceImage(img, duration_ms);
+}
+
 Result Robot::UpdateFullRobotState(const RobotState& msg)
 {
   
@@ -791,6 +871,11 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Ignore state messages received before time sync
   if (!_timeSynced) {
     return lastResult;
+  }
+  
+  if (kEnableTestFaceImageRGBDrawing) {
+    // Example update function for animating to face
+    UpdateFaceImageRGBExample(*this);
   }
   
   _gotStateMsgAfterTimeSync = true;
@@ -1059,10 +1144,14 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     stateMsg,
     (u8)MIN(((u8)imageFrameRate), std::numeric_limits<u8>::max()),
     (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
-    _enabledAnimTracks,
-    _animationTag,
+    _animationComponent->GetAnimState_NumProcAnimFaceKeyframes(),    
+    _animationComponent->GetAnimState_LockedTracks(),
+    _animationComponent->GetAnimState_TracksInUse(),
+    _animationComponent->GetPlayingAnimId(),
+    _animationComponent->GetPlayingAnimTag(),
     _robotImuTemperature_degC,
-    _cliffSensorComponent->GetCliffDetectThresholds());
+    _cliffSensorComponent->GetCliffDetectThresholds()
+    );
       
   return lastResult;
       
@@ -2495,6 +2584,17 @@ Result Robot::RequestIMU(const u32 length_ms) const
 }
     
     
+bool Robot::IsAnimating() const 
+{ 
+  return _animationComponent->IsAnimating(); 
+}
+
+u8 Robot::GetEnabledAnimationTracks() const 
+{ 
+  return ~_animationComponent->GetLockedTracks(); 
+}
+  
+
 // ============ Pose history ===============
 
 Result Robot::AddRobotStateToHistory(const Pose3d& pose, const RobotState& state)
@@ -3020,7 +3120,6 @@ ExternalInterface::RobotState Robot::GetRobotState() const
   
   msg.status = _lastStatusFlags;
   if(IsAnimating())        { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING; }
-  if(IsIdleAnimating())    { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING_IDLE; }
   if(GetCarryingComponent().IsCarryingObject())   {
     msg.status |= (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK;
     msg.carryingObjectID = GetCarryingComponent().GetCarryingObject();

@@ -775,12 +775,20 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     (int)payload.state.rwheel_speed_mmps);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_SPEEDS, Anki::NamedColors::GREEN, txt);
 
-  sprintf(txt, "Batt: %2.1f V  AnimTracksLocked: %c%c%c",
-    payload.state.batteryVoltage,
-          !(payload.enabledAnimTracks & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
-          !(payload.enabledAnimTracks & (u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
-          !(payload.enabledAnimTracks & (u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ');
+  sprintf(txt, "Batt: %2.1f V", payload.state.batteryVoltage);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
+
+  sprintf(txt, "AnimID: %d, Tag: %d, Locked: %c%c%c, InUse: %c%c%c, ProcFaceFrames: %d",
+        payload.animId, 
+        payload.animTag,
+        (payload.lockedAnimTracks & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
+        (payload.lockedAnimTracks & (u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
+        (payload.lockedAnimTracks & (u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
+        (payload.animTracksInUse  & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
+        (payload.animTracksInUse  & (u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
+        (payload.animTracksInUse  & (u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
+         payload.numProcAnimFaceKeyframes);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ANIM, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Video: %d Hz   Proc: %d Hz",
     payload.videoFrameRateHz, payload.imageProcFrameRateHz);

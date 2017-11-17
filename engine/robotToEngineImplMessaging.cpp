@@ -135,15 +135,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   
   
   // lambda for some simple message handling
-  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::animState,
-                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
-                                                       ANKI_CPU_PROFILE("RobotTag::animState");
-                                                       if (robot->GetTimeSynced()) {
-                                                         robot->SetEnabledAnimTracks(message.GetData().Get_animState().enabledAnimTracks);
-                                                         robot->SetAnimationTag(message.GetData().Get_animState().tag);
-                                                       }
-                                                     }));
-  
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::rampTraverseStarted,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::rampTraverseStarted");

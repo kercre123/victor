@@ -124,6 +124,7 @@ namespace Cozmo {
   // Face display resolution, in pixels
   const s32 FACE_DISPLAY_WIDTH = 184;
   const s32 FACE_DISPLAY_HEIGHT = 96;
+  const s32 FACE_DISPLAY_NUM_PIXELS = FACE_DISPLAY_WIDTH * FACE_DISPLAY_HEIGHT;
   
   /***************************************************************************
    *

@@ -15,7 +15,9 @@
 #define __Cozmo_Basestation_Components_AnimationComponent_H__
 
 #include "anki/common/types.h"
+#include "anki/vision/basestation/image.h"
 #include "anki/cozmo/shared/animationTag.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/events/ankiEvent.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -74,15 +76,32 @@ public:
   
   Result StopAnimByName(const std::string& animName);
 
+  // If you want to play multiple frames in sequence, duration_ms should be multiples of ANIM_TIME_STEP_MS.
+  // TODO: Replace with ImageRGB565?
+  Result DisplayFaceImageBinary(const Vision::Image& img, u32 duration_ms, bool interruptRunning = false);
+  Result DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning = false);
+  Result DisplayFaceImage(const std::array<u16, FACE_DISPLAY_NUM_PIXELS>& imgRGB565, u32 duration_ms, bool interruptRunning = false);
+
   // Enables only the specified tracks. 
   // Status of other tracks remain unchanged.
-  void EnableTracks(u8 tracks);
-  void EnableAllTracks();
+  void UnlockTracks(u8 tracks);
+  void UnlockAllTracks();
 
   // Disables only the specified tracks. 
   // Status of other tracks remain unchanged.
-  void DisableTracks(u8 tracks);
+  void LockTracks(u8 tracks);
+
+  u8   GetLockedTracks() const {return _lockedTracks; }
   
+  bool IsAnimating()       const { return _isAnimating; }
+  u8   GetPlayingAnimId()  const { return _currAnimId;  }
+  u8   GetPlayingAnimTag() const { return _currAnimTag; }
+
+  // Accessors for latest animState values
+  u32 GetAnimState_NumProcAnimFaceKeyframes() const { return _animState.numProcAnimFaceKeyframes; }   
+  u8  GetAnimState_LockedTracks()             const { return _animState.lockedTracks;             }
+  u8  GetAnimState_TracksInUse()              const { return _animState.tracksInUse;              }
+
   // Event/Message handling
   template<typename T>
   void HandleMessage(const T& msg);
@@ -93,7 +112,8 @@ public:
   void HandleAnimEnded(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleEndOfMessage(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAnimationEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  
+  void HandleAnimState(const AnkiEvent<RobotInterface::RobotToEngine>& message);  
+
 private:
   
   Result PlayAnimByID(const u32 animID,
@@ -119,6 +139,7 @@ private:
 
   AnimationGroupContainer&  _animationGroups;
   
+  // Map of animation names to IDs
   std::unordered_map<std::string, u32> _animNameToID;
   
   bool _isDolingAnims;
@@ -126,7 +147,17 @@ private:
   
   std::string _currPlayingAnim;
 
-  u8 _disabledTracks;
+  u8 _lockedTracks;
+
+  // For tracking whether or not an animation is playing based on
+  // AnimStarted and AnimEnded messages
+  bool          _isAnimating;
+  u8            _currAnimId;
+  AnimationTag  _currAnimTag;
+
+  // Latest state message received from anim process
+  RobotInterface::AnimationState _animState;
+
 
   struct AnimCallbackInfo {
     AnimCallbackInfo(const u32 animID,
