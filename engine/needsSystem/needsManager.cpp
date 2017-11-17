@@ -37,9 +37,6 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
-// Adding a comment here for good luck so we can try rebuilding the PR without some
-// completely random webots tests failing.  Good grief.
-
 namespace Anki {
 namespace Cozmo {
 
@@ -789,6 +786,7 @@ void NeedsManager::OnRobotDisconnected()
 // This is called whether we are connected to a robot or not
 void NeedsManager::Update(const float currentTime_s)
 {
+  ANKI_CPU_PROFILE("NeedsManager::Update");
   _currentTime_s = currentTime_s;
 
   if (_isPausedOverall)
@@ -1479,8 +1477,8 @@ void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComp
     // only complete resets are allowed, however if connecting to a new robot from an old
     // app we do allow people to restart onboarding.
     PRINT_NAMED_INFO("NeedsManager.HandleMessage.RegisterOnboardingComplete",
-                        "Negative onboarding progress %d -> %d is ignored",
-                        _robotOnboardingStageCompleted, msg.onboardingStage);
+                     "Negative onboarding progress %d -> %d is ignored",
+                     _robotOnboardingStageCompleted, msg.onboardingStage);
   }
   else
   {

@@ -88,6 +88,7 @@ namespace Anki {
     
     VizManager::VizManager()
     : _isInitialized(false)
+    , _messageCountViz(0)
     , _sendImages(false)
     {
       // Compute the max IDs permitted by VizObject type
@@ -104,6 +105,8 @@ namespace Anki {
       }
       
       ANKI_CPU_PROFILE("VizManager::SendMessage");
+
+      ++_messageCountViz;
 
       const size_t MAX_MESSAGE_SIZE{(size_t)VizConstants::MaxMessageSize};
       uint8_t buffer[MAX_MESSAGE_SIZE];

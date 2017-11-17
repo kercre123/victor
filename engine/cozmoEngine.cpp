@@ -26,6 +26,7 @@
 #include "engine/components/visionComponent.h"
 #include "engine/deviceData/deviceDataManager.h"
 #include "engine/needsSystem/needsManager.h"
+#include "engine/perfMetric.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "engine/viz/vizManager.h"
@@ -241,6 +242,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   _context->GetRobotManager()->Init(_config, _context->GetDataLoader()->GetDasEventConfig());
 
+  _context->GetPerfMetric()->Init();
+
 #ifdef COZMO_V2
   PRINT_NAMED_INFO("CozmoEngine.Init.Version", "2");
 #else
@@ -262,8 +265,6 @@ Result CozmoEngine::Init(const Json::Value& config) {
 #else
                      "UNKNOWN");
 #endif
-
-  _prevEndUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 
   _isInitialized = true;
 
@@ -395,6 +396,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     firstUpdate = false;
   }
 #endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
+
+  _uiMsgHandler->ResetMessageCounts();
+  _context->GetRobotManager()->GetMsgHandler()->ResetMessageCounts();
+  _context->GetVizManager()->ResetMessageCount();
   
   _context->GetVoiceCommandComponent()->Update();
   
@@ -482,21 +487,12 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
                           {{DDATA, targetMs.c_str()}},
                           "%.2f", updateLengthMs);
     }
-    ExternalInterface::MessageEngineToGame perfEngMsg(
-                                          ExternalInterface::DebugPerformanceTick("Engine", updateLengthMs));
-    _context->GetExternalInterface()->Broadcast(std::move(perfEngMsg));
-
-    const double timeSinceLastTickMs = endUpdateTimeMs - _prevEndUpdateTimeMs;
-    _prevEndUpdateTimeMs = endUpdateTimeMs;
-    ExternalInterface::MessageEngineToGame perfEngFreqMsg(
-                                          ExternalInterface::DebugPerformanceTick("EngineFreq", timeSinceLastTickMs));
-    _context->GetExternalInterface()->Broadcast(std::move(perfEngFreqMsg));
   }
 #endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
 
   return RESULT_OK;
 }
-  
+
 #if REMOTE_CONSOLE_ENABLED
 void PrintTimingInfoStats(const ExternalInterface::TimingInfo& timingInfo, const char* name)
 {
@@ -819,6 +815,25 @@ Util::AnkiLab::AssignmentStatus CozmoEngine::ActivateExperiment(
   const Util::AnkiLab::ActivateExperimentRequest& request, std::string& outVariationKey)
 {
   return _context->GetExperiments()->ActivateExperiment(request, outVariationKey);
+}
+
+void CozmoEngine::RegisterEngineTickPerformance(const float tickDuration_ms,
+                                                const float tickFrequency_ms,
+                                                const float sleepDurationIntended_ms,
+                                                const float sleepDurationActual_ms) const
+{
+  // Send two of these stats to the game for on-screen display
+  ExternalInterface::MessageEngineToGame perfEngMsg(ExternalInterface::DebugPerformanceTick(
+                                                    "Engine", tickDuration_ms));
+  _context->GetExternalInterface()->Broadcast(std::move(perfEngMsg));
+
+  ExternalInterface::MessageEngineToGame perfEngFreqMsg(ExternalInterface::DebugPerformanceTick(
+                                                    "EngineFreq", tickFrequency_ms));
+   _context->GetExternalInterface()->Broadcast(std::move(perfEngFreqMsg));
+
+  // Update the PerfMetric system for end of tick
+  _context->GetPerfMetric()->Update(tickDuration_ms, tickFrequency_ms,
+                                    sleepDurationIntended_ms, sleepDurationActual_ms);
 }
 
 } // namespace Cozmo

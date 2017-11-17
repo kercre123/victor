@@ -164,6 +164,17 @@ uint32_t CozmoAPI::ActivateExperiment(const uint8_t* requestBuffer, size_t reque
   return Anki::Util::numeric_cast<uint32_t>(bytesPacked);
 }
 
+void CozmoAPI::RegisterEngineTickPerformance(const float tickDuration_ms,
+                                             const float tickFrequency_ms,
+                                             const float sleepDurationIntended_ms,
+                                             const float sleepDurationActual_ms) const
+{
+  _cozmoRunner->GetEngine()->RegisterEngineTickPerformance(tickDuration_ms,
+                                                           tickFrequency_ms,
+                                                           sleepDurationIntended_ms,
+                                                           sleepDurationActual_ms);
+}
+
 size_t CozmoAPI::SendVizMessages(uint8_t* buffer, size_t bufferSize)
 {
   GameMessagePort* messagePipe = (_cozmoRunner != nullptr) ? _cozmoRunner->GetVizMessagePort() : nullptr;
@@ -228,6 +239,8 @@ void CozmoAPI::CozmoInstanceRunner::Run()
   using TimeClock = steady_clock;
 
   const auto runStart = TimeClock::now();
+  auto prevTickStart  = runStart;
+  auto tickStart      = runStart;
 
   // Set the target time for the end of the first frame
   auto targetEndFrameTime = runStart + (microseconds)(BS_TIME_STEP_MICROSECONDS);
@@ -236,8 +249,6 @@ void CozmoAPI::CozmoInstanceRunner::Run()
   {
     ANKI_CPU_TICK("CozmoEngine", kMaxDesiredEngineDuration, Util::CpuThreadProfiler::kLogFrequencyNever);
     
-    const auto tickStart = TimeClock::now();
-
     const duration<double> curTimeSeconds = tickStart - runStart;
     const double curTimeNanoseconds = Util::SecToNanoSec(curTimeSeconds.count());
 
@@ -248,10 +259,9 @@ void CozmoAPI::CozmoInstanceRunner::Run()
       Stop();
     }
 
-    const auto tickNow = TimeClock::now();
-    const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickNow);
-
-//    const auto tickDuration_us = duration_cast<microseconds>(tickNow - tickStart);
+    const auto tickAfterEngineExecution = TimeClock::now();
+    const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickAfterEngineExecution);
+    const auto tickDuration_us = duration_cast<microseconds>(tickAfterEngineExecution - tickStart);
 //    PRINT_NAMED_INFO("CozmoAPI.CozmoInstanceRunner", "targetEndFrameTime:%8lld, tickDuration_us:%8lld, remaining_us:%8lld",
 //                     TimeClock::time_point(targetEndFrameTime).time_since_epoch().count(), tickDuration_us.count(), remaining_us.count());
 
@@ -262,13 +272,14 @@ void CozmoAPI::CozmoInstanceRunner::Run()
                           BS_TIME_STEP, (float)(-remaining_us).count() * 0.001f);
     }
 
+    // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
+    // allows other threads to run
+    static const auto minimumSleepTime_us = microseconds((long)0);
+    const auto sleepTime_us = std::max(minimumSleepTime_us, remaining_us);
     {
       ANKI_CPU_PROFILE("CozmoApi.Runner.Sleep");
 
-      // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
-      // allows other threads to run
-      static const auto minimumSleepTime_us = microseconds((long)0);
-      std::this_thread::sleep_for(std::max(minimumSleepTime_us, remaining_us));
+      std::this_thread::sleep_for(sleepTime_us);
     }
 
     // Set the target end time for the next frame
@@ -291,7 +302,16 @@ void CozmoAPI::CozmoInstanceRunner::Run()
                           (float)(forwardJumpDuration * 0.001f));
     }
 
-    // todo: Try to send 'EngineFreq' from here, rather than from within cozmoEngine.
+    tickStart = TimeClock::now();
+
+    const auto timeSinceLastTick_us = duration_cast<microseconds>(tickStart - prevTickStart);
+    prevTickStart = tickStart;
+
+    const auto sleepTimeActual_us = duration_cast<microseconds>(tickStart - tickAfterEngineExecution);
+    GetEngine()->RegisterEngineTickPerformance(tickDuration_us.count() * 0.001f,
+                                               timeSinceLastTick_us.count() * 0.001f,
+                                               sleepTime_us.count() * 0.001f,
+                                               sleepTimeActual_us.count() * 0.001f);
   }
 }
 

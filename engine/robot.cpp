@@ -1390,7 +1390,6 @@ Result Robot::Update()
   _aiComponent->Update();
       
   const char* currentActivityName = "";
-  std::string behaviorDebugStr("<disabled>");
 
   // https://ankiinc.atlassian.net/browse/COZMO-1242 : moving too early causes pose offset
   static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
@@ -1403,7 +1402,7 @@ Result Robot::Update()
       
       currentActivityName = "ACTIVITY NAME TBD";
       
-      behaviorDebugStr = currentActivityName;
+      _behaviorDebugStr = currentActivityName;
       
       currentBehavior = _behaviorSysMgr->GetCurrentBehavior();
     }else{
@@ -1411,7 +1410,7 @@ Result Robot::Update()
       
       currentActivityName = _behaviorMgr->GetCurrentActivity()->GetIDStr();
       
-      behaviorDebugStr = currentActivityName;
+      _behaviorDebugStr = currentActivityName;
       
       currentBehavior = _behaviorMgr->GetCurrentBehavior();
     }
@@ -1419,24 +1418,25 @@ Result Robot::Update()
 
 
     if(currentBehavior != nullptr) {
-      behaviorDebugStr += " ";
-      behaviorDebugStr +=  BehaviorIDToString(currentBehavior->GetID());
+      _behaviorDebugStr += " ";
+      _behaviorDebugStr +=  BehaviorIDToString(currentBehavior->GetID());
       const std::string& stateName = currentBehavior->GetDebugStateName();
       if (!stateName.empty())
       {
-        behaviorDebugStr += "-" + stateName;
+        _behaviorDebugStr += "-" + stateName;
       }
     }
 
   } else {
     --ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242;
+    _behaviorDebugStr = "<disabled>";
   }
       
   GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
-                                         "%s", behaviorDebugStr.c_str());
+                                         "%s", _behaviorDebugStr.c_str());
   
   GetContext()->SetSdkStatus(SdkStatusType::Behavior,
-                                 std::string(currentActivityName) + std::string(":") + behaviorDebugStr);
+                                 std::string(currentActivityName) + std::string(":") + _behaviorDebugStr);
 
   //////// Update Robot's State Machine /////////////
   const RobotID_t robotID = GetID();
@@ -1557,7 +1557,7 @@ Result Robot::Update()
   // So we can have an arbitrary number of data here that is likely to change want just hash it all
   // together if anything changes without spamming
   snprintf(buffer, sizeof(buffer),
-           "%c%c%c%c%c%c %2dHz %s %s ",
+           "%c%c%c%c%c%c %2dHz %s",
            GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
            GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
            GetMoveComponent().IsMoving() ? 'B' : ' ',
@@ -1569,8 +1569,8 @@ Result Robot::Update()
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
            (u8)MIN(((u8)updateRatePerSec), std::numeric_limits<u8>::max()),
-           currentActivityName,
-           behaviorDebugStr.c_str());
+           //currentActivityName,
+           _behaviorDebugStr.c_str());
       
   std::hash<std::string> hasher;
   size_t curr_hash = hasher(std::string(buffer));

@@ -7,9 +7,7 @@ using System.Linq;
 using System.Text;
 using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
-using Anki.Cozmo.Audio;
 using RobotChannel = ChannelBase<RobotMessageIn, RobotMessageOut>;
-using Cozmo.RequestGame;
 
 /// <summary>
 /// Robot engine manager lives on a GameObject(named MasterObject) in our Intro scene,
@@ -558,6 +556,17 @@ public class RobotEngineManager : MonoBehaviour {
     Message.NotificationsManagerReady = Singleton<Anki.Cozmo.ExternalInterface.NotificationsManagerReady>.Instance;
     SendMessage();
   }
+
+  public void SendPerfMetricCommand(PerfMetricCommandType command) {
+    Message.PerfMetricCommand = Singleton<PerfMetricCommand>.Instance.Initialize(command);
+    SendMessage();
+  }
+
+  public void SendPerfMetricGetStatus() {
+    Message.PerfMetricGetStatus = Singleton<PerfMetricGetStatus>.Instance;
+    SendMessage();
+  }
+
 
   public bool AllCubesConnected() {
     return (CurrentRobot != null && CurrentRobot.LightCubes.Count >= kMaxCubeCount);

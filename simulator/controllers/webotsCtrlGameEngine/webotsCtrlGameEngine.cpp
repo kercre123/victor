@@ -256,42 +256,57 @@ int main(int argc, char **argv)
   //
   // Main Execution loop: step the world forward forever
   //
-  auto tick_start = std::chrono::steady_clock::now();
+  using namespace std::chrono;
+  auto tickStart = steady_clock::now();
+  auto prevTickStart = tickStart;
   while (basestationController.step(BS_TIME_STEP) != -1)
   {
     stopWatch.Start();
 
-    double currTimeNanoseconds = Util::SecToNanoSec(basestationController.getTime());
+    const double currTimeNanoseconds = Util::SecToNanoSec(basestationController.getTime());
     myCozmo.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
 
-    double timeMS = stopWatch.Stop();
+    const double timeMS = stopWatch.Stop();
 
     if( timeMS >= BS_TIME_STEP ) {
       PRINT_NAMED_WARNING("EngineHeartbeat.Overtime", "Update took %f ms (tick heartbeat is %dms)", timeMS, BS_TIME_STEP);
     }
-    else if( timeMS >= 0.85*BS_TIME_STEP) {
+    else if( timeMS >= 0.85 * BS_TIME_STEP) {
       PRINT_NAMED_INFO("EngineHeartbeat.SlowTick", "Update took %f ms (tick heartbeat is %dms)", timeMS, BS_TIME_STEP);
     }
-    
+
+    float sleepTime_ms = 0.0f;
+    float sleepTimeActual_ms = 0.0f;
     if (sleepUntilEndOfTic) {
-      auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - (std::chrono::steady_clock::now() - tick_start);
-      
+      const auto tickBeforeSleep = steady_clock::now();
+      auto ms_left = milliseconds(BS_TIME_STEP) - (tickBeforeSleep - tickStart);
+      sleepTime_ms = Util::numeric_cast<float>(ms_left.count());
       // ms_left is almost always negative when connected to a sim robot. The amount of time that step() takes depends
       // on what all controllers in the sim world are doing so this while loop usually takes more than 60 real milliseconds per iteration.
       // Occurs less frequently when connected to physical robot, since there's no robot controller,
       // but still enough to be annoying so commenting this out and using for debug only.
-//      if (ms_left < std::chrono::milliseconds(0)) {
+//      if (ms_left < milliseconds(0)) {
 //        PRINT_NAMED_WARNING("EngineHeartbeat.total_tic_overtime", "over by %lld ms (BSTime: %f)",
-//                            std::chrono::duration_cast<std::chrono::milliseconds>(-ms_left).count(),
-//                             basestationController.getTime());
+//                            duration_cast<milliseconds>(-ms_left).count(),
+//                            basestationController.getTime());
 //      }
-      
+
       std::this_thread::sleep_for(ms_left);
+      const auto tickAfterSleep = steady_clock::now();
+      const auto sleepTimeActual = duration_cast<milliseconds>(tickAfterSleep - tickBeforeSleep);
+      sleepTimeActual_ms = Util::numeric_cast<float>(sleepTimeActual.count());
     }
 
-    tick_start = std::chrono::steady_clock::now();
-    
+    tickStart = steady_clock::now();
+    const auto timeSinceLastTick_us = duration_cast<microseconds>(tickStart - prevTickStart);
+    prevTickStart = tickStart;
+    myCozmo.RegisterEngineTickPerformance(Util::numeric_cast<float>(timeMS),
+                                          timeSinceLastTick_us.count() * 0.001f,
+                                          sleepTime_ms,
+                                          sleepTimeActual_ms);
+
   } // while still stepping
+
 #if ANKI_DEV_CHEATS
   DevLoggingSystem::DestroyInstance();
 #endif

@@ -231,6 +231,7 @@ public:
 
   inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
   inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
+  inline const std::string&     GetBehaviorDebugString() const { return _behaviorDebugStr; }
   
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
     assert(_progressionUnlockComponent);
@@ -753,7 +754,8 @@ protected:
 
   std::unique_ptr<BehaviorManager>       _behaviorMgr;
   std::unique_ptr<BehaviorSystemManager> _behaviorSysMgr;
-  
+  std::string                            _behaviorDebugStr;
+
   ///////// Audio /////////
   std::unique_ptr<Audio::RobotAudioClient> _audioClient;
 

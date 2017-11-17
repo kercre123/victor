@@ -236,6 +236,10 @@ message RestoreRobotOptions {
   uint_32 robotsWithBackupData[uint_8]
 }
 
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////  DEBUG/PERFORMANCE  ///////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 // Generic string for sending debug string up to game
 message DebugString {
     string    text
@@ -246,6 +250,10 @@ message DebugAnimationString {
 message DebugPerformanceTick {
     string    systemName,
     float_32  lastTickTime
+}
+message PerfMetricStatus {
+  bool   isRecording,
+  string statusString,
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -57,6 +57,12 @@ public:
   ANKI_VISIBLE uint32_t ActivateExperiment(const uint8_t* requestBuffer, size_t requestLen,
                                            uint8_t* responseBuffer, size_t responseLen);
 
+  ANKI_VISIBLE void RegisterEngineTickPerformance(const float tickDuration_ms,
+                                                  const float tickFrequency_ms,
+                                                  const float sleepDurationIntended_ms,
+                                                  const float sleepDurationActual_ms) const;
+
+
   // Debug viz communication
   ANKI_VISIBLE size_t SendVizMessages(uint8_t* buffer, size_t bufferSize);
   
@@ -64,7 +70,7 @@ public:
   ANKI_VISIBLE void Clear();
   
   ANKI_VISIBLE ~CozmoAPI();
-  
+
 private:
   class CozmoInstanceRunner
   {

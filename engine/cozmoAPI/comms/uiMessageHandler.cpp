@@ -155,6 +155,8 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID, GameMessagePort* gameMessagePort)
       : _sdkStatus(this)
       , _hostUiDeviceID(hostUiDeviceID)
+      , _messageCountGtE(0)
+      , _messageCountEtG(0)
     {
       const bool isSdkCommunicationEnabled = IsSdkCommunicationEnabled();
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
@@ -270,6 +272,8 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       //if (GetNumConnectedDevicesOnAnySocket() > 0)
       {
         ANKI_CPU_PROFILE("UiMH::DeliverToGame");
+
+        ++_messageCountEtG;
         
         Comms::MsgPacket p;
         message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
@@ -446,6 +450,8 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::NVStorageReadEntry:               return true;
         case GameToEngineTag::EnterSdkMode:                     return true;
         case GameToEngineTag::ExitSdkMode:                      return true;
+        case GameToEngineTag::PerfMetricCommand:                return true;
+        case GameToEngineTag::PerfMetricGetStatus:              return true;
         default:
           return false;
       }
@@ -455,6 +461,8 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     void UiMessageHandler::HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message,
                                 UiConnectionType connectionType, size_t messageSize, bool handleMessagesFromConnection)
     {
+      ++_messageCountGtE;
+
       const ExternalInterface::MessageGameToEngine::Tag messageTag = message.GetTag();
       if (!handleMessagesFromConnection)
       {

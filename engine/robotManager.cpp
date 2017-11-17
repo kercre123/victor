@@ -15,6 +15,7 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/firmwareUpdater/firmwareUpdater.h"
 #include "engine/needsSystem/needsManager.h"
+#include "engine/perfMetric.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInitialConnection.h"
@@ -174,6 +175,7 @@ void RobotManager::RemoveRobot(const RobotID_t withID, bool robotRejectedConnect
     }
 
     _context->GetNeedsManager()->OnRobotDisconnected();
+    _context->GetPerfMetric()->OnRobotDisconnected();
 
 #if USE_DAS
     // Resume trying to upload DAS files to the server, because at
