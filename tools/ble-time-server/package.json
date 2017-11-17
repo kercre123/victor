@@ -1,0 +1,19 @@
+{
+  "name": "ble-time-server",
+  "version": "1.0.0",
+  "description": "BLE Time Server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Stuart Eichert",
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "bleno": "^0.4.2",
+    "moment-timezone": "^0.5.14"
+  },
+  "os": [
+    "darwin",
+    "linux"
+  ]
+}
