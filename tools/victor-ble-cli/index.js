@@ -1,7 +1,8 @@
-const noble = (process['platform'] == 'win32') ? require("noble-uwp") : require("noble");
+const noble = require("noble");
 const readline = require("readline");
 const Victor = require("./victor.js");
 const fs = require('fs');
+const sleep = require('system-sleep');
 
 var quitting = false;
 var victorAds = {};
@@ -225,6 +226,7 @@ var handleInput = function (line) {
                 outputResponse("No victors found to connect to.");
             } else {
                 noble.stopScanning();
+                sleep(500);
                 var localName = Object.keys(victorAds)[0];
                 if (args.length > 1) {
                     localName = args[1];
