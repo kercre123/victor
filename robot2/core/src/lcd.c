@@ -122,7 +122,7 @@ void lcd_draw_frame(const LcdFrame* frame) {
    lcd_spi_transfer(FALSE, sizeof(frame->data), frame->data);
 }
 
-void lcd_draw_frame2(uint16_t* frame, size_t size) {
+void lcd_draw_frame2(const uint16_t* frame, size_t size) {
    static const uint8_t WRITE_RAM = 0x2C;
    lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
    lcd_spi_transfer(FALSE, size, frame);

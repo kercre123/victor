@@ -65,7 +65,7 @@ namespace Cozmo {
     FaceDraw(frame);
   }
   
-  void FaceDisplay::FaceDraw(u16* frame)
+  void FaceDisplay::FaceDraw(const u16* frame)
   {
     lcd_draw_frame2(frame, FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*sizeof(u16));
   }

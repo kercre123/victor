@@ -328,6 +328,131 @@ GTEST_TEST(ColorPixels, GrayConverters)
   
 }
 
+GTEST_TEST(ColorPixels, RGB565Conversion)
+{
+  using namespace Anki::Vision;
+  
+  // RGB24 to RGB565
+  const std::vector<u8> valuesRGB = {
+    0, 3, 6, 15, 31, 64, 197, 200, 255,
+  };
+  
+#define SCALE(value,bits) ((value>>bits)<<bits)
+  
+  for(auto rValue : valuesRGB)
+  {
+    for(auto gValue : valuesRGB)
+    {
+      for(auto bValue : valuesRGB)
+      {
+        const PixelRGB pRGB(rValue, gValue, bValue);
+        
+        printf("RGB=(%d,%d,%d)\n", rValue, gValue, bValue);
+        
+        // For byte-swapped version
+        const PixelRGB565_<true> pRGB565_swapped(pRGB);
+        
+        printf("RGB565[swapped]=(%d,%d,%d)\n", pRGB565_swapped.r(), pRGB565_swapped.g(), pRGB565_swapped.b());
+        
+        EXPECT_EQ(pRGB565_swapped.r(), SCALE(pRGB.r(),3));
+        EXPECT_EQ(pRGB565_swapped.g(), SCALE(pRGB.g(),2));
+        EXPECT_EQ(pRGB565_swapped.b(), SCALE(pRGB.b(),3));
+        
+        // For unswapped version
+        const PixelRGB565_<false> pRGB565(pRGB);
+        
+        printf("RGB565[UNswapped]=(%d,%d,%d)\n", pRGB565.r(), pRGB565.g(), pRGB565.b());
+        
+        EXPECT_EQ(pRGB565.r(), SCALE(pRGB.r(),3));
+        EXPECT_EQ(pRGB565.g(), SCALE(pRGB.g(),2));
+        EXPECT_EQ(pRGB565.b(), SCALE(pRGB.b(),3));
+        
+      }
+    }
+  }
+  
+  // RGB565 to RGB24
+  const std::vector<u8> valuesRB = {
+    0, 3, 6, 15, 20, 31,
+  };
+  
+  const std::vector<u8> valuesG = {
+    0, 3, 6, 15, 31, 42, 63,
+  };
+  
+  for(auto rValue : valuesRB)
+  {
+    ASSERT_LT(rValue, 1<<5);
+    rValue = (rValue << 3);
+    
+    for(auto gValue : valuesG)
+    {
+      ASSERT_LT(gValue, 1<<6);
+      gValue = (gValue << 2);
+      
+      for(auto bValue : valuesRB)
+      {
+        ASSERT_LT(bValue, 1<<5);
+        bValue = (bValue << 3);
+        
+        // For byte-swapped version
+        const PixelRGB565_<true> pRGB565_swapped(rValue, gValue, bValue);
+        PixelRGB pRGB = pRGB565_swapped.ToPixelRGB();
+        
+        printf("RGB565_swapped=(%d,%d,%d) vs. (%d,%d,%d)\n", rValue, gValue, bValue,
+               pRGB565_swapped.r(), pRGB565_swapped.g(), pRGB565_swapped.b());
+        
+        printf("RGB=(%d,%d,%d)\n", pRGB.r(), pRGB.g(), pRGB.b());
+        
+        EXPECT_EQ(pRGB.r(), pRGB565_swapped.r());
+        EXPECT_EQ(pRGB.g(), pRGB565_swapped.g());
+        EXPECT_EQ(pRGB.b(), pRGB565_swapped.b());
+        
+        // For unswapped version
+        const PixelRGB565_<false> pRGB565(rValue, gValue, bValue);
+        pRGB = pRGB565.ToPixelRGB();
+        
+        printf("RGB565=(%d,%d,%d) vs. (%d,%d,%d)\n", rValue, gValue, bValue,
+               pRGB565.r(), pRGB565.g(), pRGB565.b());
+        
+        printf("RGB=(%d,%d,%d)\n", pRGB.r(), pRGB.g(), pRGB.b());
+        
+        EXPECT_EQ(pRGB.r(), pRGB565.r());
+        EXPECT_EQ(pRGB.g(), pRGB565.g());
+        EXPECT_EQ(pRGB.b(), pRGB565.b());
+      }
+    }
+  }
+  
+  // RGB565 to BGRA32
+  for(auto rValue : valuesRGB)
+  {
+    for(auto gValue : valuesRGB)
+    {
+      for(auto bValue : valuesRGB)
+      {
+        for(auto aValue : valuesRGB)
+        {
+          const PixelRGB565 pix565(rValue, gValue, bValue);
+          const u32 color = pix565.ToBGRA32(aValue);
+          
+          const u8 bCheck = (color >> 24);
+          const u8 gCheck = ((0x00FF0000 & color) >> 16);
+          const u8 rCheck = ((0x0000FF00 & color) >> 8);
+          const u8 aCheck = (0x000000FF & color);
+          
+          EXPECT_EQ(SCALE(bValue,3), bCheck);
+          EXPECT_EQ(SCALE(gValue,2), gCheck);
+          EXPECT_EQ(SCALE(rValue,3), rCheck);
+          EXPECT_EQ(aValue, aCheck);
+        }
+      }
+    }
+  }
+  
+#undef SCALE
+}
+
 GTEST_TEST(ImageCache, ImageCacheGray)
 {
   using namespace Anki::Vision;

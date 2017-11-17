@@ -114,7 +114,7 @@ namespace Cozmo {
     _faceDrawBuf.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     _procFaceImg.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     _faceImageBinary.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-    _faceImageRGB.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+    _faceImageRGB565.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     
     // Until we address the display gamma issues (VIC-559), apply a gamma<1.0 to darken the
     // dark end of the range. Not necessary in simulation.
@@ -275,31 +275,6 @@ namespace Cozmo {
     return result;
   }
 
-
-  // This is NOT an exact reversal of ConvertRGB24toRGB565.
-  // This is used to convert RGB565 images from engine to ImageRGB via scaling only.
-  // We can't recover the bits that were lost when this was originally converted from RGB24.
-  // The other conversion function also applies gamma correction and does byte swapping to 
-  // support the LCD display.
-  // TODO: Eventually we should store RGB565 directly in FaceAnimation Manager and 
-  //       this function shouldn't be necessary at all. (VIC-684)
-  static void ConvertRGB565toRGB24(const std::array<u16, FACE_DISPLAY_NUM_PIXELS>& faceImg565, Vision::ImageRGB& faceImg)
-  {
-    DEV_ASSERT(faceImg.IsContinuous(), "AnimationStreamer.ConvertRGB565toRGB24.FaceImgNotContinuous");
-    
-    Vision::PixelRGB* faceImg_i = faceImg.get_CvMat_().ptr<Vision::PixelRGB>(0);
-    
-    for(int j = 0; j < FACE_DISPLAY_NUM_PIXELS; ++j)
-    {
-      Vision::PixelRGB& pixRGB24 = faceImg_i[j];
-      const u16& pixRGB565 = faceImg565[j];
-      
-      pixRGB24.r() = (pixRGB565 & 0xf800) >> 8;
-      pixRGB24.g() = (pixRGB565 & 0x07e0) >> 3;
-      pixRGB24.b() = (pixRGB565 & 0x001f) << 3;
-    }
-  }
-
   void AnimationStreamer::Process_displayFaceImageChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageBinaryChunk& msg) 
   {
     // Expand the bit-packed msg.faceData (every bit == 1 pixel) to byte array (every byte == 1 pixel)
@@ -360,13 +335,12 @@ namespace Cozmo {
     
     static const u16 kMaxNumPixelsPerChunk = sizeof(msg.faceData) / sizeof(msg.faceData[0]);
     const auto numPixels = std::min(msg.numPixels, kMaxNumPixelsPerChunk);
-    std::copy_n(msg.faceData, numPixels, _faceImageRGB_recv_buffer.begin() + (msg.chunkIndex * kMaxNumPixelsPerChunk) );
+    std::copy_n(msg.faceData, numPixels, _faceImageRGB565.GetRawDataPointer() + (msg.chunkIndex * kMaxNumPixelsPerChunk) );
     
     if (_faceImageRGBChunksReceivedBitMask == kAllFaceImageRGBChunksReceivedMask) {
       //PRINT_NAMED_DEBUG("AnimationStreamer.Process_displayFaceImageRGBChunk.CompleteFaceReceived", "");
 
-      ConvertRGB565toRGB24(_faceImageRGB_recv_buffer, _faceImageRGB);
-      SetFaceImage(_faceImageRGB, msg.duration_ms);
+      SetFaceImage(_faceImageRGB565, msg.duration_ms);
       _faceImageRGBId = 0;
       _faceImageRGBChunksReceivedBitMask = 0;
     }
@@ -374,18 +348,18 @@ namespace Cozmo {
 
   Result AnimationStreamer::SetFaceImage(const Vision::Image& img, u32 duration_ms)
   {
-    // Create RGB image from grey scale
+    // Create RGB565 image from grey scale
     // TODO: Set to some default or user-defined color?
-    Vision::ImageRGB imgRGB(img);
+    Vision::ImageRGB565 imgRGB565(img);
 
-    return SetFaceImage(imgRGB, duration_ms);
+    return SetFaceImage(imgRGB565, duration_ms);
   }
 
 
-  Result AnimationStreamer::SetFaceImage(const Vision::ImageRGB& imgRGB, u32 duration_ms)
+  Result AnimationStreamer::SetFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms)
   {
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetFaceImage.NullProceduralAnimation");
-    DEV_ASSERT(imgRGB.IsContinuous(), "AnimationStreamer.SetFaceImage.ImageIsNotContinuous");
+    DEV_ASSERT(imgRGB565.IsContinuous(), "AnimationStreamer.SetFaceImage.ImageIsNotContinuous");
     
     FaceAnimationManager* faceAnimMgr = FaceAnimationManager::getInstance();
     
@@ -398,7 +372,7 @@ namespace Cozmo {
       faceAnimMgr->ClearAnimation(FaceAnimationManager::ProceduralAnimName);
     }
 
-    Result result = faceAnimMgr->AddImage(FaceAnimationManager::ProceduralAnimName, imgRGB, duration_ms);
+    Result result = faceAnimMgr->AddImage(FaceAnimationManager::ProceduralAnimName, imgRGB565, duration_ms);
     if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetFaceImage.AddImageFailed", "")))
     {
       return result;
@@ -530,19 +504,17 @@ namespace Cozmo {
     if(kProcFace_DisplayTestPattern)
     {
       // Display three color strips increasing in brightness from left to right
-      _procFaceImg.FillWith(0);
-      
       for(int i=0; i<FACE_DISPLAY_HEIGHT/3; ++i)
       {
-        Vision::PixelRGB* red_i   = _procFaceImg.GetRow(i);
-        Vision::PixelRGB* green_i = _procFaceImg.GetRow(i + FACE_DISPLAY_HEIGHT/3);
-        Vision::PixelRGB* blue_i  = _procFaceImg.GetRow(i + 2*FACE_DISPLAY_HEIGHT/3);
+        Vision::PixelRGB565* red_i   = _faceDrawBuf.GetRow(i);
+        Vision::PixelRGB565* green_i = _faceDrawBuf.GetRow(i + FACE_DISPLAY_HEIGHT/3);
+        Vision::PixelRGB565* blue_i  = _faceDrawBuf.GetRow(i + 2*FACE_DISPLAY_HEIGHT/3);
         for(int j=0; j<FACE_DISPLAY_WIDTH; ++j)
         {
           const u8 value = Util::numeric_cast_clamped<u8>(std::round((f32)j/(f32)FACE_DISPLAY_WIDTH * 255.f));
-          red_i[j].r()   = value;
-          green_i[j].g() = value;
-          blue_i[j].b()  = value;
+          red_i[j]   = Vision::PixelRGB565(value, 0, 0);
+          green_i[j] = Vision::PixelRGB565(0, value, 0);
+          blue_i[j]  = Vision::PixelRGB565(0, 0, value);
         }
       }
     }
@@ -551,44 +523,19 @@ namespace Cozmo {
       DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
       DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
       ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _procFaceImg);
+      _faceDrawBuf.SetFromImageRGB(_procFaceImg, _gammaLUT);
     }
     
-    BufferFaceToSend(_procFaceImg);
+    BufferFaceToSend(_faceDrawBuf);
   }
   
-  static void ConvertRGB24toRGB565(const Vision::ImageRGB& faceImg, const std::array<u8,256>& _gammaLUT, Array2d<u16>& faceImg565)
+  void AnimationStreamer::BufferFaceToSend(const Vision::ImageRGB565& faceImg565)
   {
-    // Convert to RGB565 format, and flip byte order
-    DEV_ASSERT(faceImg.IsContinuous(), "AnimationStreamer.ConvertRGB24toRGB565.FaceImgNotContinuous");
-    DEV_ASSERT(faceImg565.IsContinuous(), "AnimationStreamer.ConvertRGB24toRGB565.FaceImg565NotContinuous");
-    
-    u16* img565_i = faceImg565.GetRow(0);
-    const Vision::PixelRGB* faceImg_i = faceImg.get_CvMat_().ptr<Vision::PixelRGB>(0);
-    
-    const auto nElements = faceImg565.GetNumElements();
-    for(int j = 0; j < nElements; ++j)
-    {
-      const Vision::PixelRGB& pixRGB24 = faceImg_i[j];
-      u16& pixRGB565 = img565_i[j];
-      
-      // Convert to RGB565 (and incorporate gamma)
-      pixRGB565 = (((int)(_gammaLUT[pixRGB24.r()] >> 3) << 11) |
-                   ((int)(_gammaLUT[pixRGB24.g()] >> 2) << 5)  |
-                   ((int)(_gammaLUT[pixRGB24.b()] >> 3) << 0));
-      
-      // Swap byte ordering
-      pixRGB565 = ((pixRGB565>>8)&0xFF) | ((pixRGB565&0xFF)<<8);
-    }
-  }
-
-  
-  void AnimationStreamer::BufferFaceToSend(const Vision::ImageRGB& faceImg)
-  {
-    DEV_ASSERT_MSG(faceImg.GetNumCols() == FACE_DISPLAY_WIDTH &&
-                   faceImg.GetNumRows() == FACE_DISPLAY_HEIGHT,
+    DEV_ASSERT_MSG(faceImg565.GetNumCols() == FACE_DISPLAY_WIDTH &&
+                   faceImg565.GetNumRows() == FACE_DISPLAY_HEIGHT,
                    "AnimationStreamer.BufferFaceToSend.InvalidImageSize",
                    "Got %d x %d. Expected %d x %d",
-                   faceImg.GetNumCols(), faceImg.GetNumRows(),
+                   faceImg565.GetNumCols(), faceImg565.GetNumRows(),
                    FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
     
     // Draws frame to face display
@@ -607,19 +554,16 @@ namespace Cozmo {
         return;
       }
     }
-
-    ConvertRGB24toRGB565(faceImg, _gammaLUT, _faceDrawBuf);
     
     // Dispatch thread
-    auto draw_face = [](u16* frame) {
+    auto draw_face = [](const u16* frame) {
       FaceDisplay::getInstance()->FaceDraw(frame);
     };
   
-    _faceDrawFuture = std::async(draw_face, _faceDrawBuf.GetRow(0));
+    _faceDrawFuture = std::async(draw_face, faceImg565.GetRawDataPointer());
     _lastDrawTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-#else    
-    ConvertRGB24toRGB565(faceImg, _gammaLUT, _faceDrawBuf);
-    FaceDisplay::getInstance()->FaceDraw(_faceDrawBuf.GetRow(0));
+#else
+    FaceDisplay::getInstance()->FaceDraw(faceImg565.GetRawDataPointer());
 #endif   // #ifdef DRAW_FACE_IN_THREAD
   }
 
@@ -880,13 +824,10 @@ namespace Cozmo {
         auto & faceKeyFrame = faceAnimTrack.GetCurrentKeyFrame();
         if(faceKeyFrame.IsTimeToPlay(_streamingTime_ms - _startTime_ms))
         {
-          const auto faceImgPtr = faceKeyFrame.GetFaceImage();
-          if (faceImgPtr != nullptr) {
-            // Check for empty image
-            if (!faceImgPtr->IsEmpty()) {
-              DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
-              BufferFaceToSend(*faceImgPtr);
-            }
+          const bool gotImage = faceKeyFrame.GetFaceImage(_faceDrawBuf);
+          if (gotImage) {
+            DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
+            BufferFaceToSend(_faceDrawBuf);
           }
           
           if(faceKeyFrame.IsDone()) {

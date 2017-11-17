@@ -304,21 +304,18 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       return (_curFrame >= FaceAnimationManager::getInstance()->GetNumFrames(_animName));
     }
     
-    const Vision::ImageRGB* FaceAnimationKeyFrame::GetFaceImage()
+    bool FaceAnimationKeyFrame::GetFaceImage(Vision::ImageRGB565& imgRGB565)
     {
-      if(!IsDone()) 
+      if(IsDone())
       {
-        _faceImg = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame);        
-        ++_curFrame;
-
-        if(_faceImg.IsEmpty() ) {
-          return nullptr;
-        }
-        return &_faceImg;
-      } else {
         _curFrame = 0;
-        return nullptr;
+        return false;
       }
+      
+      const bool gotFrame = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame, imgRGB565);
+      ++_curFrame;
+      
+      return gotFrame;
     }
 
 #pragma mark -

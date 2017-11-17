@@ -46,7 +46,7 @@ public:
   //      cv::Mat img565;
   //      cv::cvtColor(testImg.get_CvMat_(), img565, cv::COLOR_RGB2BGR565);
   //      FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
-  void FaceDraw(u16* frame);
+  void FaceDraw(const u16* frame);
 
   // Print text to face display
   void FacePrintf(const char *format, ...);

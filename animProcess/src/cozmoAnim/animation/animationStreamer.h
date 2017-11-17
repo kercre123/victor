@@ -89,7 +89,7 @@ namespace Cozmo {
     void Process_displayFaceImageChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageRGBChunk& msg);
 
     Result SetFaceImage(const Vision::Image& img, u32 duration_ms);
-    Result SetFaceImage(const Vision::ImageRGB& img, u32 duration_ms);
+    Result SetFaceImage(const Vision::ImageRGB565& img, u32 duration_ms);
     
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update();
@@ -170,7 +170,7 @@ namespace Cozmo {
     std::unique_ptr<TrackLayerComponent>  _trackLayerComponent;
     
     void BufferFaceToSend(const ProceduralFace& procFace);
-    void BufferFaceToSend(const Vision::ImageRGB& image);
+    void BufferFaceToSend(const Vision::ImageRGB565& image);
     
     // Used to stream _just_ the stuff left in the various layers (all procedural stuff)
     Result StreamLayers();
@@ -240,8 +240,8 @@ namespace Cozmo {
     
     AnimationTag _liveIdleTurnEyeShiftTag = kNotAnimatingTag;
 
-    // Image buffer that is fed directly to face display
-    Array2d<u16>     _faceDrawBuf;
+    // Image buffer that is fed directly to face display (in RGB565 format)
+    Vision::ImageRGB565 _faceDrawBuf;
 
     // Image buffer for ProceduralFace
     Vision::ImageRGB _procFaceImg;
@@ -254,11 +254,10 @@ namespace Cozmo {
     const u8         kAllFaceImageChunksReceivedMask    = 0x3;        // 2 bits for 2 expected chunks
 
     // RGB images
-    std::array<u16, FACE_DISPLAY_NUM_PIXELS> _faceImageRGB_recv_buffer;
-    Vision::ImageRGB _faceImageRGB;
-    u32              _faceImageRGBId                    = 0;          // Used only for tracking chunks of the same image as they are received
-    u32              _faceImageRGBChunksReceivedBitMask = 0;
-    const u32        kAllFaceImageRGBChunksReceivedMask = 0x3fffffff; // 30 bits for 30 expected chunks (FACE_DISPLAY_NUM_PIXELS / 600 pixels_per_msg ~= 30)
+    Vision::ImageRGB565 _faceImageRGB565;
+    u32                 _faceImageRGBId                    = 0;          // Used only for tracking chunks of the same image as they are received
+    u32                 _faceImageRGBChunksReceivedBitMask = 0;
+    const u32           kAllFaceImageRGBChunksReceivedMask = 0x3fffffff; // 30 bits for 30 expected chunks (FACE_DISPLAY_NUM_PIXELS / 600 pixels_per_msg ~= 30)
         
     // Tic counter for sending animState message
     u32           _numTicsToSendAnimState            = 0;

@@ -350,7 +350,7 @@ Result AnimationComponent::DisplayFaceImageBinary(const Vision::Image& img, u32 
   return RESULT_OK;
 }
 
-Result AnimationComponent::DisplayFaceImage(const std::array<u16, FACE_DISPLAY_NUM_PIXELS>& imgRGB565, u32 duration_ms, bool interruptRunning)
+Result AnimationComponent::DisplayFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms, bool interruptRunning)
 {
   if (!_isInitialized) {
     PRINT_NAMED_WARNING("AnimationComponent.DisplayFaceImage.Uninitialized", "");
@@ -364,11 +364,13 @@ Result AnimationComponent::DisplayFaceImage(const std::array<u16, FACE_DISPLAY_N
     return RESULT_FAIL;
   }
 
+  ASSERT_NAMED(imgRGB565.IsContinuous(), "AnimationComponent.DisplayFaceImage.NotContinuous");
+  
   static const int kMaxPixelsPerMsg = RobotInterface::DisplayFaceImageRGBChunk().faceData.size();
   
   int chunkCount = 0;
   int pixelsLeftToSend = FACE_DISPLAY_NUM_PIXELS;
-  auto startIt = imgRGB565.begin();
+  const u16* startIt = imgRGB565.GetRawDataPointer();
   while (pixelsLeftToSend > 0) {
     RobotInterface::DisplayFaceImageRGBChunk msg;
     msg.duration_ms = duration_ms;
@@ -390,28 +392,10 @@ Result AnimationComponent::DisplayFaceImage(const std::array<u16, FACE_DISPLAY_N
   return RESULT_OK;
 }
 
-static void ConvertRGB24toRGB565(const Vision::ImageRGB& faceImg, std::array<u16, FACE_DISPLAY_NUM_PIXELS>& faceImg565)
-{
-  DEV_ASSERT(faceImg.IsContinuous(), "AnimationComponent.ConvertRGB24toRGB565.FaceImgNotContinuous");
- 
-  const Vision::PixelRGB* faceImg_i = faceImg.get_CvMat_().ptr<Vision::PixelRGB>(0);
-  
-  for(int j = 0; j < FACE_DISPLAY_NUM_PIXELS; ++j)
-  {
-    const Vision::PixelRGB& pixRGB24 = faceImg_i[j];
-    u16& pixRGB565 = faceImg565[j];
-    
-    // Convert to RGB565
-    pixRGB565 = (((int)(pixRGB24.r() >> 3) << 11) |
-                 ((int)(pixRGB24.g() >> 2) << 5)  |
-                 ((int)(pixRGB24.b() >> 3) << 0));
-  }
-}
-
 Result AnimationComponent::DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning)
 {
-  std::array<u16, FACE_DISPLAY_NUM_PIXELS> img565;
-  ConvertRGB24toRGB565(img, img565);
+  static Vision::ImageRGB565 img565; // static to avoid repeatedly allocating this once it's used
+  img565.SetFromImageRGB(img);
   return DisplayFaceImage(img565, duration_ms, interruptRunning);
 }
 

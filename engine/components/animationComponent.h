@@ -77,10 +77,9 @@ public:
   Result StopAnimByName(const std::string& animName);
 
   // If you want to play multiple frames in sequence, duration_ms should be multiples of ANIM_TIME_STEP_MS.
-  // TODO: Replace with ImageRGB565?
   Result DisplayFaceImageBinary(const Vision::Image& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning = false);
-  Result DisplayFaceImage(const std::array<u16, FACE_DISPLAY_NUM_PIXELS>& imgRGB565, u32 duration_ms, bool interruptRunning = false);
+  Result DisplayFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms, bool interruptRunning = false);
 
   // Enables only the specified tracks. 
   // Status of other tracks remain unchanged.
@@ -157,7 +156,6 @@ private:
 
   // Latest state message received from anim process
   RobotInterface::AnimationState _animState;
-
 
   struct AnimCallbackInfo {
     AnimCallbackInfo(const u32 animID,

@@ -12,6 +12,7 @@
  **/
 
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
+#include "anki/vision/basestation/colorPixelTypes.h"
 #include "util/logging/logging.h"
 
 #include <webots/Supervisor.hpp>
@@ -94,30 +95,13 @@ namespace { // "Private members"
     face_->fillRectangle(0,0, FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
   }
   
-  void FaceDisplay::FaceDraw(u16* frame)
+  void FaceDisplay::FaceDraw(const u16* frame)
   {
-    // Masks and shifts to convert an RGB565 color into a
-    // 32-bit BGRA color (i.e. 0xBBGGRRAA) which webots expects
-    const u16 Rmask = 0xf800;
-    const u16 Gmask = 0x07e0;
-    const u16 Bmask = 0x001f;
-    const u16 Rshift = 0;
-    const u16 Gshift = 13;
-    const u16 Bshift = 27;
-    
+    // Convert an RGB565 color into a 32-bit BGRA color image (i.e. 0xBBGGRRAA) which webots expects
     u32* imgPtr = &faceImg_[0];
-    
     for (u32 i = 0; i < FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT; ++i) {
-      const u16 bytesSwapped = ((*frame & 0xFF)<<8) | ((*frame >> 8)&0xFF);
-      
-      // Convert RGB565 color into BGRA (i.e. 0xBBGGRRAA)
-      // Set alpha to 0xFF, since we don't want any transparency.
-      const u32 color = ((u32) (bytesSwapped & Rmask) << Rshift) |
-                        ((u32) (bytesSwapped & Gmask) << Gshift) |
-                        ((u32) (bytesSwapped & Bmask) << Bshift) |
-                        0x000000FF;
-      
-      *imgPtr++ = color;
+      Vision::PixelRGB565 rgb565(*frame);
+      *imgPtr++ = rgb565.ToBGRA32();
       ++frame;
     }
 

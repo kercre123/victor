@@ -559,6 +559,12 @@ namespace Vision {
     SetTimestamp(imageRGBA.GetTimestamp());
   }
   
+  ImageRGB::ImageRGB(const ImageRGB565& rgb565)
+  : ImageRGB(rgb565.GetNumRows(), rgb565.GetNumCols())
+  {
+    SetFromRGB565(rgb565);
+  }
+  
   ImageRGB::ImageRGB(const Image& imageGray)
   : ImageBase<PixelRGB>(imageGray.GetNumRows(), imageGray.GetNumCols())
   {
@@ -569,6 +575,20 @@ namespace Vision {
   {
     cv::cvtColor(imageGray.get_CvMat_(), this->get_CvMat_(), CV_GRAY2RGB);
     SetTimestamp(imageGray.GetTimestamp());
+    return *this;
+  }
+  
+  ImageRGB& ImageRGB::SetFromRGB565(const ImageRGB565 &rgb565)
+  {
+    Allocate(rgb565.GetNumRows(), rgb565.GetNumCols());
+    
+    std::function<PixelRGB(const PixelRGB565& pixRGB565)> convertFcn = [](const PixelRGB565& pixRGB565)
+    {
+      return pixRGB565.ToPixelRGB();
+    };
+    
+    rgb565.ApplyScalarFunction(convertFcn, *this);
+
     return *this;
   }
   
@@ -602,6 +622,73 @@ namespace Vision {
     return out;
   }
   
+#if 0
+#pragma mark --- ImageRGB565 ---
+#endif
 
+
+  ImageRGB565::ImageRGB565(const ImageRGB& imageRGB)
+  : ImageRGB565(imageRGB.GetNumRows(), imageRGB.GetNumCols())
+  {
+    SetFromImageRGB(imageRGB);
+  }
+  
+  ImageRGB565::ImageRGB565()
+  : Array2d<PixelRGB565>()
+  {
+    
+  }
+  
+  ImageRGB565::ImageRGB565(s32 nrows, s32 ncols)
+  : Array2d<PixelRGB565>(nrows, ncols)
+  {
+    
+  }
+  
+  ImageRGB565& ImageRGB565::SetFromImage(const Image& image)
+  {
+    Allocate(image.GetNumRows(), image.GetNumCols());
+    
+    std::function<PixelRGB565(const u8&)> convertFcn = [](const u8& pix)
+    {
+      PixelRGB565 pixRGB565(pix,pix,pix);
+      return pixRGB565;
+    };
+    
+    image.ApplyScalarFunction(convertFcn, *this);
+    
+    return *this;
+  }
+  
+  ImageRGB565& ImageRGB565::SetFromImageRGB(const ImageRGB& imageRGB)
+  {
+    Allocate(imageRGB.GetNumRows(), imageRGB.GetNumCols());
+    
+    std::function<PixelRGB565(const PixelRGB&)> convertFcn = [](const PixelRGB& pixRGB)
+    {
+      PixelRGB565 pixRGB565(pixRGB);
+      return pixRGB565;
+    };
+    
+    imageRGB.ApplyScalarFunction(convertFcn, *this);
+    
+    return *this;
+  }
+  
+  ImageRGB565& ImageRGB565::SetFromImageRGB(const ImageRGB& imageRGB, const std::array<u8, 256>& gammaLUT)
+  {
+    Allocate(imageRGB.GetNumRows(), imageRGB.GetNumCols());
+    
+    std::function<PixelRGB565(const PixelRGB&)> convertFcn = [&gammaLUT](const PixelRGB& pixRGB)
+    {
+      PixelRGB565 pixRGB565(gammaLUT[pixRGB.r()], gammaLUT[pixRGB.g()], gammaLUT[pixRGB.b()]);
+      return pixRGB565;
+    };
+    
+    imageRGB.ApplyScalarFunction(convertFcn, *this);
+    
+    return *this;
+  }
+  
 } // namespace Vision
 } // namespace Anki

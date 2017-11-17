@@ -43,6 +43,10 @@ namespace CozmoAnim {
 
 namespace Anki {
   
+  namespace Vision {
+    class ImageRGB565;
+  }
+  
 namespace Cozmo {
   
   // Forward declaration
@@ -282,8 +286,8 @@ namespace Cozmo {
     
     // This function actually retrieves image data and increments the frame count so that it will
     // retrieve the next image on the next call.
-    const Vision::ImageRGB* GetFaceImage();
-
+    bool GetFaceImage(Vision::ImageRGB565& imgRGB565);
+    
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
   protected:
@@ -292,9 +296,7 @@ namespace Cozmo {
     
   private:
     std::string  _animName;
-    Vision::ImageRGB  _faceImg;
-    
-    s32   _curFrame = 0;
+    s32          _curFrame = 0;
     
   }; // class FaceAnimationKeyFrame
   
