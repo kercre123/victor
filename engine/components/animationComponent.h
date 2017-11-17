@@ -94,7 +94,7 @@ public:
   u8   GetLockedTracks() const {return _lockedTracks; }
   
   bool IsAnimating()       const { return _isAnimating; }
-  u8   GetPlayingAnimId()  const { return _currAnimId;  }
+  u32  GetPlayingAnimId()  const { return _currAnimId;  }
   u8   GetPlayingAnimTag() const { return _currAnimTag; }
 
   // Accessors for latest animState values
@@ -152,7 +152,7 @@ private:
   // For tracking whether or not an animation is playing based on
   // AnimStarted and AnimEnded messages
   bool          _isAnimating;
-  u8            _currAnimId;
+  u32           _currAnimId;
   AnimationTag  _currAnimTag;
 
   // Latest state message received from anim process

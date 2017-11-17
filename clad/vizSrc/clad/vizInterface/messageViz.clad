@@ -20,12 +20,12 @@ message RobotStateMessage
   RobotState state,
   float_32 imuTemperature_degC,
   uint_32  numProcAnimFaceKeyframes,
+  uint_32  animId,
   uint_16  cliffThresholds[4],
   uint_8   videoFrameRateHz,
   uint_8   imageProcFrameRateHz,
   uint_8   lockedAnimTracks,
   uint_8   animTracksInUse,
-  uint_8   animId,
   uint_8   animTag,
 }
 
