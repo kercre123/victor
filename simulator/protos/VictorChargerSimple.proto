@@ -1,8 +1,8 @@
 #VRML_SIM V8.5.3 utf8
-# Victor charger
+# Victor charger without the tilted platform (which causes physics bugs in some Webots versions)
 
-PROTO VictorCharger [
-  field SFString name "VictorCharger"
+PROTO VictorChargerSimple [
+  field SFString name "VictorChargerSimple"
 
   # Dimensions
   field SFFloat backThickness  .015
@@ -10,9 +10,9 @@ PROTO VictorCharger [
   field SFFloat backHeight     .076
   field SFFloat platformWidth  .0875  # Platform is the flat part that robot sits on when charging
   field SFFloat platformLength .094
-  field SFFloat platformThickness .001
+  field SFFloat platformHeight .001
 
-  field SFFloat platformTiltAngle 0.122 # ~7 degree tilt angle
+  field SFFloat platformTiltAngle  0#0.09
 
   field SFFloat dockMarkerWidth  0.044
   field SFFloat dockMarkerHeight 0.044
@@ -32,8 +32,8 @@ Robot {
   children [
     # Charger vision marker
     Transform {
-      rotation 0 1 0 3.1415 # 90 deg about z-axis
-      translation 0 %{=fields.backThickness.value}% .0485
+      rotation 0 0 1 1.5708 # 90 deg about z-axis
+      translation %{=fields.backThickness.value}% 0 .0485
       children [
         VisionMarker {
           image "chargerHome.png"
@@ -47,9 +47,9 @@ Robot {
       children [
         # Back side
         # Origin is center of back side of charger
-        # x-axis points to robot right when robot is in charger, y-axis points toward ramp, z-axis points up
+        # x-axis points toward ramp, y-axis points to robot left when robot is in charger, z-axis points up
         Transform {
-          translation 0 %{=fields.backThickness.value/2}% %{=fields.backHeight.value/2}%
+          translation %{=fields.backThickness.value/2}% 0 %{=fields.backHeight.value/2}%
           children [
             Shape {
               appearance Appearance {
@@ -58,7 +58,7 @@ Robot {
                 }
               }
               geometry Box {
-                size %{=fields.backWidth.value}% %{=fields.backThickness.value}% %{=fields.backHeight.value}%
+                size %{=fields.backThickness.value}% %{=fields.backWidth.value}% %{=fields.backHeight.value}%
               }
             }
           ]
@@ -66,12 +66,12 @@ Robot {
 
         # Platform        
         Transform {
-          rotation 1 0 0 %{=-1.0*fields.platformTiltAngle.value}%
-          translation 0 %{=fields.backThickness.value + 0.5*fields.platformLength.value}% %{=fields.platformLength.value*math.sin(fields.platformTiltAngle.value)/2.0}%
+          rotation 1 0 0 1.5708
+          translation %{=fields.backThickness.value + 0.5*fields.platformLength.value}% 0 0.0001
           children [
             Shape {
-              geometry Box {
-                size %{=fields.platformWidth.value}% %{=fields.platformLength.value}% %{=fields.platformThickness.value}%
+              geometry Plane {
+                size %{=fields.platformLength.value}% %{=fields.platformWidth.value}%
               }
               appearance Appearance {
                 texture ImageTexture {
@@ -87,7 +87,7 @@ Robot {
 
     # Charger contacts:
     Transform {
-      translation 0 %{=fields.backThickness.value + 0.038}% %{=fields.platformLength.value*math.sin(fields.platformTiltAngle.value)/2.0}%
+      translation %{=fields.backThickness.value + 0.038}% 0 %{=fields.platformHeight.value}%
       rotation 1 0 0 0
       children [
         Connector {

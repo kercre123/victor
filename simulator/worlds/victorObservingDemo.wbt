@@ -28,7 +28,7 @@ DirectionalLight {
 CozmoMat {
   showMarkers FALSE
 }
-VictorCharger {
+VictorChargerSimple {
   translation -0.076696196 0.00014978189 2.4646951e-14
 }
 Face {
