@@ -13,6 +13,7 @@ set(ANKI_BUILD_CXX_COMPILE_OPTIONS
   $<$<CONFIG:Release>:-Os>
   $<$<BOOL:${MACOSX}>:-fobjc-arc>
   $<$<BOOL:${IOS}>:-fobjc-arc>
+  -fdiagnostics-show-category=name
   -fsigned-char
   -g
   -Wall

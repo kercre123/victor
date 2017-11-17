@@ -422,14 +422,13 @@ if __name__ == '__main__':
         #print(project)
         if options.verbose:
             print("processing project: {}".format(name))
-            for (lst_filename, entries) in project.items():
-                print(type(entries))
 
         for (lst_filename, files) in project.items():
+            if options.verbose:
+                print("  {} ({} files)".format(lst_filename, len(files)))
+
             lst_path = os.path.join(output_dir, lst_filename)
             if options.output != '-':
-                if options.verbose:
-                    print("  writing {} ({} files)".format(lst_path, len(files)))
                 with open(lst_path, 'w') as f:
                     f.write("\n".join(files))
                     f.flush()
