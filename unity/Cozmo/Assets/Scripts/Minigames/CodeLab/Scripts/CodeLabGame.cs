@@ -1439,7 +1439,7 @@ namespace CodeLab {
       if (String.IsNullOrEmpty(projectUUID) && projectType == "user") {
         // User project as not yet been saved and is likely empty or green flag block only. Send current workspace representation of project.
         string projectJSON = scratchRequest.argString2;
-        bool isVertical = scratchRequest.argBool;
+        bool isVertical = (_SessionState.GetGrammarMode() == GrammarMode.Vertical);
 
         string newProjectString = Localization.Get(LocalizationKeys.kCodeLabUserProjectNewProject);
         projectToExport = new CodeLabProject(newProjectString, projectJSON, isVertical);
