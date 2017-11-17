@@ -19,7 +19,7 @@
                     "faceAnimations"
                 ],
                 "export_dirname": "animation-assets",
-                "version": "2401"
+                "version": "2529"
             },
             "victor-audio-assets": {
                "allow_extra_files": "True",
