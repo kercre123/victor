@@ -20,10 +20,14 @@ namespace Cozmo {
 
   #define CONSOLE_GROUP "ProceduralFace"
 
-  CONSOLE_VAR_RANGED(f32, kProcFace_InnerGlowFrac,       CONSOLE_GROUP, 0.4f, 0.05f, 1.f);
-  CONSOLE_VAR(bool,       kProcFace_UseAntiAliasing,     CONSOLE_GROUP, true); // Only affects OpenCV drawing, not post-smoothing
-  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseFraction,       CONSOLE_GROUP, 0.15f, 0.f, 1.f); // TODO: Tie to audio
-
+  CONSOLE_VAR_RANGED(f32, kProcFace_InnerGlowFrac,            CONSOLE_GROUP, 0.4f, 0.05f, 1.f);
+  CONSOLE_VAR(bool,       kProcFace_UseAntiAliasing,          CONSOLE_GROUP, true); // Only affects OpenCV drawing, not post-smoothing
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseFraction,            CONSOLE_GROUP, 0.15f, 0.f, 1.f); // TODO: Tie to audio
+  CONSOLE_VAR(bool,       kProcFace_GaussianGlowFilter,       CONSOLE_GROUP, false); // simpler box filter if not
+  CONSOLE_VAR(f32,        kProcFace_GlowSizeMultiplier,       CONSOLE_GROUP, 1.f);
+  CONSOLE_VAR(f32,        kProcFace_GlowBrightnessMultiplier, CONSOLE_GROUP, 1.f);
+  CONSOLE_VAR(f32,        kProcFace_EyeBrightnessMultiplier,  CONSOLE_GROUP, 1.f);
+  
   #undef CONSOLE_GROUP
   
   // Initialize static vars
@@ -270,7 +274,7 @@ namespace Cozmo {
                                                              eyeCenter.x(),
                                                              eyeCenter.y());
 
-    const Value glowFraction = faceData.GetParameter(whichEye, Parameter::GlowSize);
+    const Value glowFraction = kProcFace_GlowSizeMultiplier * faceData.GetParameter(whichEye, Parameter::GlowSize);
     DEV_ASSERT(Util::IsFltGEZero(glowFraction), "ProceduralFaceDrawer.DrawEye.InvalidGlow");
     
     const SmallMatrix<2, 3, f32> W_glow = GetTransformationMatrix(faceData.GetParameter(whichEye, Parameter::EyeAngle),
@@ -397,8 +401,6 @@ namespace Cozmo {
         }
       }
       
-      const bool kUseGaussianFilter = false; // simpler box filter if not
-      
       Rectangle<s32> eyeBoundingBoxS32(upperLeft.CastTo<s32>(), bottomRight.CastTo<s32>());
       Vision::Image eyeShapeROI = _eyeShape.GetROI(eyeBoundingBoxS32);
       
@@ -421,7 +423,7 @@ namespace Cozmo {
           ++glowSizeY;
         }
         
-        if(kUseGaussianFilter) {
+        if(kProcFace_GaussianGlowFilter) {
           cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
                            (f32)glowSizeX, (f32)glowSizeY);
         } else {
@@ -432,7 +434,7 @@ namespace Cozmo {
       // Antialiasing (AFTER glow because it changes eyeShape, which we use to compute the glow above)
       const s32 kAntiAliasingSize = 5;
       static_assert(kAntiAliasingSize % 2 == 1, "Antialiasing filter size should be odd");
-      if(kUseGaussianFilter) {
+      if(kProcFace_GaussianGlowFilter) {
         const f32 kAntiAliasingSigmaFraction = 0.5f;
         cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kAntiAliasingSize,kAntiAliasingSize),
                          (f32)kAntiAliasingSize * kAntiAliasingSigmaFraction);
@@ -487,9 +489,18 @@ namespace Cozmo {
               // Darken scanlines in pairs (thus the division by 2 before modding by 2).
               // Don't do scanlines in the glow region.
               const bool isPartOfEye = (eyeValue >= glowValue); // (and not part of glow)
-              if(isPartOfEye && ((i/2) % 2))
+              if(isPartOfEye)
               {
-                newValue *= scanlineOpacity;
+                if((i/2) % 2)
+                {
+                  newValue *= scanlineOpacity;
+                }
+                
+                newValue *= kProcFace_EyeBrightnessMultiplier;
+              }
+              else
+              {
+                newValue *= kProcFace_GlowBrightnessMultiplier;
               }
               
               // Put the final value into the face image
