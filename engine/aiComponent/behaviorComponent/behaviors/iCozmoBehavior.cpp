@@ -22,6 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
@@ -37,7 +38,6 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/needsSystem/needsManager.h"
-#include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 
@@ -277,18 +277,14 @@ ICozmoBehavior::~ICozmoBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
   // Assumes there's only one external interface being passed in from AIComponent
   _behaviorExternalInterface = &behaviorExternalInterface;
-  _robot = &robot;
   assert(_behaviorExternalInterface);
-  assert(_robot);
   
   {
-    auto externalInterface = _robot->HasExternalInterface() ? _robot->GetExternalInterface() : nullptr;
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    auto externalInterface = robotInfo.HasExternalInterface() ? robotInfo.GetExternalInterface() : nullptr;
     
     if(_wantsToRunConfig.size() > 0){
       IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(
@@ -426,13 +422,9 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Init").c_str(), "Starting...");
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
   // Check if there are any engine-generated actions in the action list, because there shouldn't be!
   // If there is, a behavior probably didn't use DelegateIfInControl() where it should have.
-  bool engineActionStillRunning = false;
+  /**bool engineActionStillRunning = false;
   for (auto listIt = robot.GetActionList().begin();
        listIt != robot.GetActionList().end() && !engineActionStillRunning;
        ++listIt) {
@@ -460,7 +452,7 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
     PRINT_NAMED_WARNING("ICozmoBehavior.Init.ActionsInQueue",
                         "Initializing %s: %zu actions already in queue",
                         GetIDStr().c_str(), robot.GetActionList().GetQueueLength(0));
-  }
+  }**/
   
   _isActivated = true;
   _stopRequestedAfterAction = false;
@@ -637,10 +629,7 @@ void ICozmoBehavior::OnDeactivatedInternal(BehaviorExternalInterface& behaviorEx
 
   // Unlock any tracks which the behavior hasn't had a chance to unlock
   for(const auto& entry: _lockingNameToTracksMap){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = _behaviorExternalInterface->GetRobot();
-    robot.GetMoveComponent().UnlockTracks(entry.second, entry.first);
+    behaviorExternalInterface.GetRobotInfo().GetMoveComponent().UnlockTracks(entry.second, entry.first);
   }
   
   
@@ -760,18 +749,15 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
     return false;
   }
 
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   //check if the behavior can run from the charger platform (don't want most to run because they could damage
   //the robot by moving too much, and also will generally look dumb if they try to turn)
-  if(robot.IsOnChargerPlatform() && !ShouldRunWhileOnCharger()) {
+  if(robotInfo.IsOnChargerPlatform() && !ShouldRunWhileOnCharger()) {
     return false;
   }
   
   //check if the behavior can handle holding a block
-  if(robot.GetCarryingComponent().IsCarryingObject() && !CarryingObjectHandledInternally()){
+  if(robotInfo.GetCarryingComponent().IsCarryingObject() && !CarryingObjectHandledInternally()){
     return false;
   }
   
@@ -1126,9 +1112,6 @@ void ICozmoBehavior::SmartPushIdleAnimation(BehaviorExternalInterface& behaviorE
                  "Behavior %s has already set an idle animation",
                  GetIDStr().c_str())){
     // TODO: Restore idle animations (VIC-366)
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    //Robot& robot = behaviorExternalInterface.GetRobot();
     //robot.GetAnimationStreamer().PushIdleAnimation(animation, kIdleLockPrefix + GetIDStr());
     _hasSetIdle = true;
   }
@@ -1143,9 +1126,6 @@ void ICozmoBehavior::SmartRemoveIdleAnimation(BehaviorExternalInterface& behavio
                  "Behavior %s is trying to remove an idle, but none is currently set",
                  GetIDStr().c_str())){
     // TODO: Restore idle animations (VIC-366)
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    //Robot& robot = behaviorExternalInterface.GetRobot();
     //robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleLockPrefix + GetIDStr());
     _hasSetIdle = false;
   }
@@ -1158,11 +1138,8 @@ void ICozmoBehavior::SmartSetMotionProfile(const PathMotionProfile& motionProfil
   ANKI_VERIFY(!_hasSetMotionProfile,
               "ICozmoBehavior.SmartSetMotionProfile.AlreadySet",
               "a profile was already set and not cleared");
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = _behaviorExternalInterface->GetRobot();
   
-  robot.GetPathComponent().SetCustomMotionProfile(motionProfile);
+  _behaviorExternalInterface->GetRobotInfo().GetPathComponent().SetCustomMotionProfile(motionProfile);
   _hasSetMotionProfile = true;
 }
 
@@ -1172,11 +1149,7 @@ void ICozmoBehavior::SmartClearMotionProfile()
   ANKI_VERIFY(_hasSetMotionProfile,
               "ICozmoBehavior.SmartClearMotionProfile.NotSet",
               "a profile was not set, so can't be cleared");
-
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = _behaviorExternalInterface->GetRobot();
-  robot.GetPathComponent().ClearCustomMotionProfile();
+  _behaviorExternalInterface->GetRobotInfo().GetPathComponent().ClearCustomMotionProfile();
   _hasSetMotionProfile = false;
 }
 
@@ -1186,10 +1159,7 @@ bool ICozmoBehavior::SmartLockTracks(u8 animationTracks, const std::string& who,
   // Only lock the tracks if we haven't already locked them with that key
   const bool insertionSuccessfull = _lockingNameToTracksMap.insert(std::make_pair(who, animationTracks)).second;
   if(insertionSuccessfull){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = _behaviorExternalInterface->GetRobot();
-    robot.GetMoveComponent().LockTracks(animationTracks, who, debugName);
+    _behaviorExternalInterface->GetRobotInfo().GetMoveComponent().LockTracks(animationTracks, who, debugName);
     return true;
   }else{
     PRINT_NAMED_WARNING("ICozmoBehavior.SmartLockTracks.AttemptingToLockTwice", "Attempted to lock tracks with key named %s but key already exists", who.c_str());
@@ -1206,10 +1176,7 @@ bool ICozmoBehavior::SmartUnLockTracks(const std::string& who)
     PRINT_NAMED_WARNING("ICozmoBehavior.SmartUnlockTracks.InvalidUnlock", "Attempted to unlock tracks with key named %s but key not found", who.c_str());
     return false;
   }else{
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = _behaviorExternalInterface->GetRobot();
-    robot.GetMoveComponent().UnlockTracks(mapIter->second, who);
+    _behaviorExternalInterface->GetRobotInfo().GetMoveComponent().UnlockTracks(mapIter->second, who);
     mapIter = _lockingNameToTracksMap.erase(mapIter);
     return true;
   }
@@ -1221,10 +1188,7 @@ bool ICozmoBehavior::SmartSetCustomLightPattern(const ObjectID& objectID,
                                            const ObjectLights& modifier)
 {
   if(std::find(_customLightObjects.begin(), _customLightObjects.end(), objectID) == _customLightObjects.end()){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = _behaviorExternalInterface->GetRobot();
-    robot.GetCubeLightComponent().PlayLightAnim(objectID, anim, nullptr, true, modifier);
+    _behaviorExternalInterface->GetCubeLightComponent().PlayLightAnim(objectID, anim, nullptr, true, modifier);
     _customLightObjects.push_back(objectID);
     return true;
   }else{
@@ -1243,10 +1207,7 @@ bool ICozmoBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
   if(objectIter != _customLightObjects.end()){
     for(const auto& anim : anims)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = _behaviorExternalInterface->GetRobot();
-      robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(anim, objectID);
+      _behaviorExternalInterface->GetCubeLightComponent().StopLightAnimAndResumePrevious(anim, objectID);
     }
     _customLightObjects.erase(objectIter);
     return true;
@@ -1299,7 +1260,7 @@ bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorEx
   // helpers to queue actions - but if the delegation fails this tmp handle will fall
   // out of scope as soon as this function ends so that _currentHelperHandle becomes
   // invalid again
-  HelperHandle tmpHandle = _robot->GetAIComponent().GetBehaviorHelperComponent().
+  HelperHandle tmpHandle = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().
                                         GetBehaviorHelperFactory().CreatePlaceBlockHelper(*_behaviorExternalInterface, *this);
   _currentHelperHandle = tmpHandle;
   
@@ -1358,10 +1319,8 @@ ActionResult ICozmoBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* 
     return result;
   }
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = _behaviorExternalInterface->GetRobot();
-  if( possiblePoses.size() > 1 && IDockAction::RemoveMatchingPredockPose( robot.GetPose(), possiblePoses ) ) {
+  auto& robotPose = _behaviorExternalInterface->GetRobotInfo().GetPose();
+  if( possiblePoses.size() > 1 && IDockAction::RemoveMatchingPredockPose(robotPose, possiblePoses ) ) {
     alreadyInPosition = false;
   }
     

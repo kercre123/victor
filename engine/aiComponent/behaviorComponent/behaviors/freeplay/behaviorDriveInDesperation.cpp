@@ -21,11 +21,11 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperParameters.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/pathComponent.h"
-#include "engine/robot.h"
 #include "clad/types/pathMotionProfile.h"
 #include "util/console/consoleInterface.h"
 
@@ -307,10 +307,12 @@ void BehaviorDriveInDesperation::TransitionToDriveToCube(BehaviorExternalInterfa
                                                      0.0f);
   IDockAction::PreActionPoseOutput preActionPoseOutput;
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    IDockAction::GetPreActionPoses(robot, preActionPoseInput, preActionPoseOutput);
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
+    IDockAction::GetPreActionPoses(robotInfo.GetPose(), 
+                                   robotInfo.GetCarryingComponent(), 
+                                   behaviorExternalInterface.GetBlockWorld(),
+                                   preActionPoseInput, preActionPoseOutput);
   }
 
   const bool hasPoseToDriveTo = preActionPoseOutput.actionResult == ActionResult::SUCCESS &&
@@ -408,15 +410,14 @@ void BehaviorDriveInDesperation::TransitionFromIdle_WithCubes(BehaviorExternalIn
     behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(*_validCubesFilter, cubes);
 
     if( !cubes.empty() ) {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
+      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
       
       float maxDistanceSq = -1.0f;
       ObjectID furthestObject;
       for( const auto* cube : cubes ) {
         float distSq = std::numeric_limits<float>::max();
-        const bool distanceOK = ComputeDistanceSQBetween(robot.GetPose(), cube->GetPose(), distSq);
+        const bool distanceOK = ComputeDistanceSQBetween(robotInfo.GetPose(), cube->GetPose(), distSq);
         if( distanceOK && distSq > maxDistanceSq ) {
           maxDistanceSq = distSq;
           furthestObject = cube->GetID();
@@ -451,11 +452,10 @@ void BehaviorDriveInDesperation::GetRandomDrivingPose(const BehaviorExternalInte
 
   const float distance_mm = GetRNG().RandDblInRange(kMinDriveDistance_mm, kMaxDriveDistance_mm);
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  outPose = robot.GetPose();
+
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
+  outPose = robotInfo.GetPose();
 
   Radians newAngle = outPose.GetRotationAngle<'Z'>() + Radians(turnAngle);
   outPose.SetRotation( outPose.GetRotation() * Rotation3d{ newAngle, Z_AXIS_3D() } );
@@ -466,10 +466,10 @@ void BehaviorDriveInDesperation::GetRandomDrivingPose(const BehaviorExternalInte
                  GetIDStr().c_str(),
                  RAD_TO_DEG(turnAngle),
                  distance_mm,
-                 robot.GetPose().GetTranslation().x(),
-                 robot.GetPose().GetTranslation().y(),
-                 robot.GetPose().GetTranslation().z(),
-                 robot.GetPose().GetRotationAngle<'Z'>().getDegrees(),
+                 robotInfo.GetPose().GetTranslation().x(),
+                 robotInfo.GetPose().GetTranslation().y(),
+                 robotInfo.GetPose().GetTranslation().z(),
+                 robotInfo.GetPose().GetRotationAngle<'Z'>().getDegrees(),
                  outPose.GetTranslation().x(),
                  outPose.GetTranslation().y(),
                  outPose.GetTranslation().z(),

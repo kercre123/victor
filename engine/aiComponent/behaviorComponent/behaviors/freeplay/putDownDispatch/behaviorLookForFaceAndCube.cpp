@@ -16,9 +16,9 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
@@ -109,10 +109,8 @@ Result BehaviorLookForFaceAndCube::OnBehaviorActivated(BehaviorExternalInterface
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting to look for face at center");
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  _startingBodyFacing_rad = robot.GetPose().GetWithRespectToRoot().GetRotationAngle<'Z'>();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  _startingBodyFacing_rad = robotInfo.GetPose().GetWithRespectToRoot().GetRotationAngle<'Z'>();
   _currentSidePicksDone = 0;
   _currentState = State::S0FaceOnCenter;
   _verifiedFaces.clear();

@@ -15,10 +15,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorDance.h"
 
 #include "engine/activeObject.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
-#include "engine/robot.h"
 
 #include "util/helpers/boundedWhile.h"
 
@@ -73,15 +73,12 @@ Result BehaviorDance::OnBehaviorActivated(BehaviorExternalInterface& behaviorExt
     const CubeAnimationTrigger trigger = GetRandomAnimTrigger(behaviorExternalInterface,
                                                               CubeAnimationTrigger::Count);
     
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    robot.GetCubeLightComponent().PlayLightAnim(objectID,
-                                                trigger,
-                                                animCompleteCallback,
-                                                false,
-                                                {},
-                                                durationModifier_ms);
+    behaviorExternalInterface.GetCubeLightComponent().PlayLightAnim(objectID,
+                                                                    trigger,
+                                                                    animCompleteCallback,
+                                                                    false,
+                                                                    {},
+                                                                    durationModifier_ms);
     
     // The dancing song is 183Bpm so each beat is ~328ms so offset each
     // light animation by a beat
@@ -126,15 +123,13 @@ void BehaviorDance::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExt
     // Layer the fadeOff light animation on top of the last played animation
     // and stop all animations once the fadeOff completes
     const ObjectID& objectID = object->GetID();
-    
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    robot.GetCubeLightComponent().PlayLightAnim(objectID,
-                                                CubeAnimationTrigger::DanceFadeOff,
-                                                [&robot](){
-                                                  robot.GetCubeLightComponent().StopAllAnims();
-                                                });
+    behaviorExternalInterface.GetCubeLightComponent().PlayLightAnim(
+      objectID,
+      CubeAnimationTrigger::DanceFadeOff,
+      [&behaviorExternalInterface](){
+        behaviorExternalInterface.GetCubeLightComponent().StopAllAnims();
+      }
+    );
   }
 }
 
@@ -157,13 +152,10 @@ void BehaviorDance::CubeAnimComplete(BehaviorExternalInterface& behaviorExternal
 
   const CubeAnimationTrigger trigger = GetRandomAnimTrigger(behaviorExternalInterface, _lastAnimTrigger[objectID]);
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // Stop the previous animation and play the new random one
-  robot.GetCubeLightComponent().PlayLightAnim(objectID,
-                                              trigger,
-                                              animCompleteCallback);
+  behaviorExternalInterface.GetCubeLightComponent().PlayLightAnim(objectID,
+                                                                  trigger,
+                                                                  animCompleteCallback);
   
   _lastAnimTrigger[objectID] = trigger;
 }

@@ -23,7 +23,6 @@
 #include "engine/faceWorld.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "util/console/consoleInterface.h"

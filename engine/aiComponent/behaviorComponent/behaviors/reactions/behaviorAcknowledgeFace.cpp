@@ -25,7 +25,6 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageFromActiveObject.h"
 #include "util/console/consoleInterface.h"
@@ -120,12 +119,11 @@ void BehaviorAcknowledgeFace::BeginIteration(BehaviorExternalInterface& behavior
                                                                 M_PI_F,
                                                                 sayName);
 
-  Robot& robot = behaviorExternalInterface.GetRobot();
   const float freeplayStartedTime_s = 0.f;//robot.GetBehaviorManager().GetFirstTimeFreeplayStarted();    
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();  
   const bool withinMinSessionTime = freeplayStartedTime_s >= 0.0f &&
     (currTime_s - freeplayStartedTime_s) <= kMaxTimeForInitialGreeting_s;
-  const bool alreadyTurnedTowards = robot.GetFaceWorld().HasTurnedTowardsFace(_targetFace);
+  const bool alreadyTurnedTowards = behaviorExternalInterface.GetFaceWorld().HasTurnedTowardsFace(_targetFace);
   const bool shouldPlayInitialGreeting = !_hasPlayedInitialGreeting && withinMinSessionTime && !alreadyTurnedTowards;
 
   PRINT_CH_INFO("Behaviors", "AcknowledgeFace.DoAcknowledgement",
@@ -135,7 +133,7 @@ void BehaviorAcknowledgeFace::BeginIteration(BehaviorExternalInterface& behavior
                 shouldPlayInitialGreeting ? 1 : 0);
   
   if( shouldPlayInitialGreeting ) {
-    auto& moodManager = robot.GetMoodManager();
+    auto& moodManager = behaviorExternalInterface.GetMoodManager();
     turnAction->SetSayNameTriggerCallback([this, &moodManager](const Robot& robot, const SmartFaceID& faceID){
         // only play the initial greeting once, so if we are going to use it, mark that here
         _hasPlayedInitialGreeting = true;

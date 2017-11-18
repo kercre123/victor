@@ -23,7 +23,7 @@ class ObjectID;
 namespace Cozmo {
   
 // forward declarations
-class Robot;
+class IExternalInterface;
   
 class FeedingSoundEffectManager{
 public:
@@ -38,7 +38,7 @@ public:
   
   FeedingSoundEffectManager();
   
-  void NotifyChargeStateChange(Robot& robot,
+  void NotifyChargeStateChange(IExternalInterface& externalInterface,
                                const ObjectID& objID, int currentChargeLevel,
                                ChargeStateChange changeEnumVal);
 
@@ -47,7 +47,7 @@ private:
   int _dominantChargeLevel;
   ChargeStateChange _dominantChargeChange;
   
-  void ResetChargeSound(Robot& robot);
+  void ResetChargeSound(IExternalInterface& externalInterface);
   
 };
   

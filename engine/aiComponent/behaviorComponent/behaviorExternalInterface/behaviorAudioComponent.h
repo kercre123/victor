@@ -34,7 +34,6 @@ namespace Cozmo {
 
 class BehaviorExternalInterface;
 class BehaviorManager;
-class Robot;
 
 namespace Audio {
 

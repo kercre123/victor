@@ -16,7 +16,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {

@@ -17,10 +17,10 @@
 
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/pickupBlockHelper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/placeBlockHelper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/rollBlockHelper.h"
-#include "engine/robot.h"
 #include "util/helpers/boundedWhile.h"
 
 #include <iterator>
@@ -75,10 +75,7 @@ bool BehaviorHelperComponent::DelegateToHelper(BehaviorExternalInterface& behavi
   }
   
   PushHelperOntoStackAndUpdate(behaviorExternalInterface, handleToRun);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  _worldOriginIDAtStart = robot.GetWorldOriginID();
+  _worldOriginIDAtStart = behaviorExternalInterface.GetRobotInfo().GetWorldOriginID();
   return true;
 }
 
@@ -137,13 +134,12 @@ void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& beha
   if(!_helperStack.empty()){
     auto activeIter = _helperStack.end();
     activeIter--;
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
+
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     // TODO: COZMO-10389 - return to base helper if origin changes
-    bool blockWorldOriginChange = (robot.GetWorldOriginID() != _worldOriginIDAtStart);
+    bool blockWorldOriginChange = (robotInfo.GetWorldOriginID() != _worldOriginIDAtStart);
     if(blockWorldOriginChange){
-      _worldOriginIDAtStart = robot.GetWorldOriginID();
+      _worldOriginIDAtStart = robotInfo.GetWorldOriginID();
     }
     while(!_helperStack.empty() &&
           activeIter != _helperStack.end()){

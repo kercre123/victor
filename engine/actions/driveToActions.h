@@ -29,10 +29,10 @@ namespace Anki {
   class Pose3d;
 
   namespace Cozmo {
-  
+
+    // forward declarations
     class BlockWorld;
     class IDockAction;
-    
 
     class DriveToPoseAction : public IAction
     {

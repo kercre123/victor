@@ -14,8 +14,8 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/robot.h"
 #include "engine/actions/basicActions.h"
 #include "util/console/consoleInterface.h"
 
@@ -43,10 +43,7 @@ BehaviorPutDownBlock::BehaviorPutDownBlock(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPutDownBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  return robot.GetCarryingComponent().IsCarryingObject() || IsControlDelegated();
+  return behaviorExternalInterface.GetRobotInfo().GetCarryingComponent().IsCarryingObject() || IsControlDelegated();
 }
 
 
@@ -73,10 +70,8 @@ void BehaviorPutDownBlock::LookDownAtBlock(BehaviorExternalInterface& behaviorEx
 {
   DelegateIfInControl(CreateLookAfterPlaceAction(behaviorExternalInterface, true),
               [&behaviorExternalInterface]() {
-                // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-                // be removed
-                Robot& robot = behaviorExternalInterface.GetRobot();
-                if(robot.GetCarryingComponent().IsCarryingObject()) {
+                auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+                if(robotInfo.GetCarryingComponent().IsCarryingObject()) {
                   // No matter what, even if we didn't see the object we were
                   // putting down for some reason, mark the robot as not carrying
                   // anything so we don't get stuck in a loop of trying to put
@@ -84,7 +79,7 @@ void BehaviorPutDownBlock::LookDownAtBlock(BehaviorExternalInterface& behaviorEx
                   // TODO: We should really be using some kind of PlaceOnGroundAction instead of raw animation (see COZMO-2192)
                   PRINT_NAMED_WARNING("BehaviorPutDownBlock.LookDownAtBlock.DidNotSeeBlock",
                                       "Forcibly setting carried objects as unattached (See COZMO-2192)");
-                  robot.GetCarryingComponent().SetCarriedObjectAsUnattached();
+                  robotInfo.GetCarryingComponent().SetCarriedObjectAsUnattached();
                 }
               });
 }
@@ -93,11 +88,9 @@ void BehaviorPutDownBlock::LookDownAtBlock(BehaviorExternalInterface& behaviorEx
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(BehaviorExternalInterface& behaviorExternalInterface, bool doLookAtFaceAfter)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   CompoundActionSequential* action = new CompoundActionSequential();
-  if( robot.GetCarryingComponent().IsCarryingObject() ) {
+  if( robotInfo.GetCarryingComponent().IsCarryingObject() ) {
     // glance down to see if we see the cube if we still think we are carrying
     static const int kNumFrames = 2;
     

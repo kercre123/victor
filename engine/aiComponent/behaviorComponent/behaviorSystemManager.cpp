@@ -55,7 +55,8 @@ BehaviorSystemManager::~BehaviorSystemManager()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorSystemManager::InitConfiguration(IBehavior* baseBehavior,
+Result BehaviorSystemManager::InitConfiguration(Robot& robot,
+                                                IBehavior* baseBehavior,
                                                 BehaviorExternalInterface& behaviorExternalInterface,
                                                 AsyncMessageGateComponent* asyncMessageComponent)
 {
@@ -71,7 +72,6 @@ Result BehaviorSystemManager::InitConfiguration(IBehavior* baseBehavior,
   _asyncMessageComponent = asyncMessageComponent;
   ResetBehaviorStack(baseBehavior);
   
-  Robot& robot = behaviorExternalInterface.GetRobot();
   if(robot.HasExternalInterface()){
     _eventHandles.push_back(robot.GetExternalInterface()->Subscribe(EngineToGameTag::RobotCompletedAction,
                                             [this](const EngineToGameEvent& event) {

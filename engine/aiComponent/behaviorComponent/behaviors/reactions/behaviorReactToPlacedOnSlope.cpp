@@ -14,8 +14,8 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 
@@ -44,11 +44,9 @@ Result BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterfa
   
   // Double check that we should play the animation or recalibrate:
   if (hasBehaviorRunRecently && _endedOnInclineLastTime) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     // Don't run the animation. Instead, run a motor cal since his head may be out of calibration.
-    LOG_EVENT("BehaviorReactToPlacedOnSlope.CalibratingHead", "%f", robot.GetPitchAngle().getDegrees());
+    LOG_EVENT("BehaviorReactToPlacedOnSlope.CalibratingHead", "%f", robotInfo.GetPitchAngle().getDegrees());
     DelegateIfInControl(new CalibrateMotorAction(true, false));
     _endedOnInclineLastTime = false;
   } else {
@@ -76,11 +74,9 @@ Result BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterfa
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPlacedOnSlope::CheckPitch(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // Was the robot on an inclined surface or was the lift simply perched on something?
-  _endedOnInclineLastTime = (robot.GetPitchAngle().getDegrees() > 10.0f);
+  _endedOnInclineLastTime = (robotInfo.GetPitchAngle().getDegrees() > 10.0f);
 }
 
 

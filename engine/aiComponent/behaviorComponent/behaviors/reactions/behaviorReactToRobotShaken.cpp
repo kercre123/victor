@@ -14,10 +14,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotShaken.h"
 
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 
@@ -73,10 +73,8 @@ ICozmoBehavior::Status BehaviorReactToRobotShaken::UpdateInternal_WhileRunning(B
   switch(_state) {
     case EState::Shaking:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
-      const float accMag = robot.GetHeadAccelMagnitudeFiltered();
+      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      const float accMag = robotInfo.GetHeadAccelMagnitudeFiltered();
       _maxShakingAccelMag = std::max(_maxShakingAccelMag, accMag);
       
       // Done shaking? Then transition to the next state.

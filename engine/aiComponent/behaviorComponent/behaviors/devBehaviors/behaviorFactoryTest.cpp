@@ -30,6 +30,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/carryingComponent.h"
@@ -207,7 +208,7 @@ namespace{
   
   void BehaviorFactoryTest::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
   {
-    _robot = &behaviorExternalInterface.GetRobot();
+    _robot = &behaviorExternalInterface.GetRobotInfo()._robot;
     assert(_robot);
     RobotID_t robotId = _robot->GetID();
     
@@ -250,9 +251,7 @@ namespace{
   
   Result BehaviorFactoryTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
     const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
     Result lastResult = RESULT_OK;
@@ -687,9 +686,7 @@ namespace{
   
   ICozmoBehavior::Status BehaviorFactoryTest::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
     #define END_TEST(ERRCODE) EndTest(robot, ERRCODE); return Status::Running;
     
     if(!ENABLE_FACTORY_TEST)
@@ -1681,9 +1678,7 @@ namespace{
     }
     
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
       EndTest(robot, FactoryTestResultCode::TEST_CANCELLED);
     }
   }
@@ -1691,9 +1686,7 @@ namespace{
   
   void BehaviorFactoryTest::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
     switch(event.GetData().GetTag())
     {
       case EngineToGameTag::RobotObservedObject:

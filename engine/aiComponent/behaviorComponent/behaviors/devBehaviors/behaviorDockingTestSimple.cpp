@@ -28,6 +28,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/sayTextAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDockingTestSimple.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/bodyLightComponent.h"
@@ -129,10 +130,10 @@ namespace Anki {
     
     void BehaviorDockingTestSimple::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
     {
-      _logger = std::make_unique<Util::RollingFileLogger>(nullptr, behaviorExternalInterface.GetRobot().GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"));
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
+      _logger = std::make_unique<Util::RollingFileLogger>(nullptr, 
+           behaviorExternalInterface.GetRobotInfo()._robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"));
+
+      const Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
       if(nullptr != robot.GetContext()->GetRobotManager() &&
          robot.GetContext()->GetRobotManager()->GetMsgHandler() != nullptr)
       {
@@ -150,9 +151,7 @@ namespace Anki {
     
     Result BehaviorDockingTestSimple::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
       _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, robot.GetWorldOrigin());
 
       // force the default speeds
@@ -212,9 +211,7 @@ namespace Anki {
     
     ICozmoBehavior::Status BehaviorDockingTestSimple::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
       if(_numAttempts == kMaxNumAttempts && _currentState != State::ManualReset)
       {
         Write("\nTest Completed Successfully");
@@ -781,9 +778,7 @@ namespace Anki {
     
     void BehaviorDockingTestSimple::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
       // Cancel all actions
       for (const auto& tag : _actionCallbackMap) {
@@ -868,9 +863,7 @@ namespace Anki {
     
     void BehaviorDockingTestSimple::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
       switch(event.GetData().GetTag())
       {
         case EngineToGameTag::RobotCompletedAction:

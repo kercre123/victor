@@ -21,6 +21,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/blockWorld/blockConfiguration.h"
@@ -32,7 +33,6 @@
 #include "engine/components/movementComponent.h"
 #include "engine/cozmoObservableObject.h"
 #include "engine/namedColors/namedColors.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "clad/types/unlockTypes.h"
@@ -87,11 +87,9 @@ bool BehaviorBuildPyramidBase::WantsToBeActivatedBehavior(BehaviorExternalInterf
 Result BehaviorBuildPyramidBase::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   ResetMemberVars();
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
-  if(!robot.GetCarryingComponent().IsCarryingObject()){
+  if(!robotInfo.GetCarryingComponent().IsCarryingObject()){
     TransitionToDrivingToBaseBlock(behaviorExternalInterface);
   }else{
     TransitionToPlacingBaseBlock(behaviorExternalInterface);
@@ -288,10 +286,9 @@ void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets(BehaviorExternalInter
                            {entry.first, entry.second, -blockSize.z()},
                            zRotatedPose);
       f32 newDistSquared;
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
-      ComputeDistanceSQBetween(robot.GetPose(), potentialPose, newDistSquared);
+
+      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      ComputeDistanceSQBetween(robotInfo.GetPose(), potentialPose, newDistSquared);
       
       if(newDistSquared < nearestDistanceSQ){
         nearestDistanceSQ = newDistSquared;

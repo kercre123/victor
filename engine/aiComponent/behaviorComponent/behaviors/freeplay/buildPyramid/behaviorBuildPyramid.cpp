@@ -21,6 +21,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/blockWorld/blockConfiguration.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
@@ -28,7 +29,6 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoObservableObject.h"
-#include "engine/robot.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -87,23 +87,17 @@ Result BehaviorBuildPyramid::OnBehaviorActivated(BehaviorExternalInterface& beha
     _checkForFullPyramidVisualVerifyFailure = false;
   }
     
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   const auto& pyramidBases = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
   if(!pyramidBases.empty() || !pyramids.empty()){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
     
-    if(!robot.GetCarryingComponent().IsCarryingObject()){
+    if(!robotInfo.GetCarryingComponent().IsCarryingObject()){
       TransitionToDrivingToTopBlock(behaviorExternalInterface);
     }else{
       TransitionToPlacingTopBlock(behaviorExternalInterface);
     }
   }else{
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    
-    if(!robot.GetCarryingComponent().IsCarryingObject()){
+    if(!robotInfo.GetCarryingComponent().IsCarryingObject()){
       TransitionToDrivingToBaseBlock(behaviorExternalInterface);
     }else{
       TransitionToPlacingBaseBlock(behaviorExternalInterface);
@@ -157,11 +151,10 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(BehaviorExternalInterface
       
       using namespace BlockConfigurations;
       Pose3d idealTopPlacementWRTWorld;
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       
-      if(!PyramidBase::GetBaseInteriorMidpoint(robot, staticBlock, baseBlock, idealTopPlacementWRTWorld)){
+      if(!PyramidBase::GetBaseInteriorMidpoint(robotInfo.GetPose(), robotInfo.GetWorldOrigin(),
+                                               staticBlock, baseBlock, idealTopPlacementWRTWorld)){
         return;
       }
       
@@ -175,11 +168,9 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(BehaviorExternalInterface
       const bool relativeCurrentMarker = false;
       
       auto removeSoonFailure = [this](BehaviorExternalInterface& behaviorExternalInterface){
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        Robot& robot = behaviorExternalInterface.GetRobot();
+        const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
         
-        if(!robot.GetCarryingComponent().IsCarryingObject()){
+        if(!robotInfo.GetCarryingComponent().IsCarryingObject()){
           _checkForFullPyramidVisualVerifyFailure = true;
           // This will be removed by a helper soon - hopefully....
           CompoundActionParallel* checkForTopBlock =
@@ -201,7 +192,7 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(BehaviorExternalInterface
         TransitionToReactingToPyramid(behaviorExternalInterface);
       };
       
-      auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+      auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
       PlaceRelObjectParameters params;
       params.placementOffsetX_mm = idealPlacementWRTUnrotatedStatic.GetTranslation().x();
       params.placementOffsetY_mm = idealPlacementWRTUnrotatedStatic.GetTranslation().y();

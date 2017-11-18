@@ -18,8 +18,8 @@
 #include "engine/actions/trackFaceAction.h"
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "util/console/consoleInterface.h"
@@ -52,13 +52,11 @@ BehaviorDriveToFace::BehaviorDriveToFace(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDriveToFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
   Pose3d facePose;
   const TimeStamp_t timeLastFaceObserved = behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(facePose, true);
-  const bool lastFaceInCurrentOrigin = robot.IsPoseInWorldOrigin(facePose);
+  const bool lastFaceInCurrentOrigin = robotInfo.IsPoseInWorldOrigin(facePose);
   if(lastFaceInCurrentOrigin){
     const auto facesObserved = behaviorExternalInterface.GetFaceWorld().GetFaceIDsObservedSince(timeLastFaceObserved);
     if(facesObserved.size() > 0){
@@ -197,15 +195,14 @@ bool BehaviorDriveToFace::CalculateDistanceToFace(BehaviorExternalInterface& beh
   // Get the distance between the robot and the head's pose on the X/Y plane
   const Vision::TrackedFace* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(_targetFace);
   if(facePtr != nullptr){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
     
     Pose3d headPoseModified = facePtr->GetHeadPose();
     headPoseModified.SetTranslation({headPoseModified.GetTranslation().x(),
       headPoseModified.GetTranslation().y(),
-      robot.GetPose().GetTranslation().z()});
-    return ComputeDistanceBetween(headPoseModified, robot.GetPose(), distance);
+      robotInfo.GetPose().GetTranslation().z()});
+    return ComputeDistanceBetween(headPoseModified, robotInfo.GetPose(), distance);
   }
   
   return false;

@@ -22,6 +22,7 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iFeedingListener.h"
@@ -33,7 +34,6 @@
 #include "engine/faceWorld.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
-#include "engine/robot.h"
 #include "engine/vision/visionModesHelpers.h"
 
 namespace Anki {
@@ -223,13 +223,13 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
 
   auto CondOnCharger = std::make_shared<LambdaCondition>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
-      const bool onCharger = behaviorExternalInterface.GetRobot().IsOnChargerPlatform();
+      const bool onCharger = behaviorExternalInterface.GetRobotInfo().IsOnChargerPlatform();
       return onCharger;
     });
 
   auto CondOffCharger = std::make_shared<LambdaCondition>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
-      const bool onCharger = behaviorExternalInterface.GetRobot().IsOnChargerPlatform();
+      const bool onCharger = behaviorExternalInterface.GetRobotInfo().IsOnChargerPlatform();
       return !onCharger;
     });
 
@@ -275,7 +275,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
         if( face != nullptr ) {
           const Pose3d facePose = face->GetHeadPose();
           float distanceToFace = 0.0f;
-          if( ComputeDistanceSQBetween( behaviorExternalInterface.GetRobot().GetPose(),
+          if( ComputeDistanceSQBetween( behaviorExternalInterface.GetRobotInfo().GetPose(),
                                       facePose,
                                       distanceToFace ) &&
               distanceToFace < Util::Square(kMaxFaceDistanceToSocialize_mm) ) {
@@ -318,7 +318,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
         Pose3d waste;
         const bool inRobotOriginOnly = false; // might have been picked up
         const TimeStamp_t lastFaceTime = faceWorld.GetLastObservedFace(waste, inRobotOriginOnly);
-        const TimeStamp_t lastImgTime = behaviorExternalInterface.GetRobot().GetLastImageTimeStamp();
+        const TimeStamp_t lastImgTime = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
         if( lastFaceTime < lastImgTime &&
             lastImgTime - lastFaceTime > kMinFaceAgeToAllowSleep_ms ) {
           return true;
@@ -340,12 +340,12 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
 
   auto CondNeedsToCharge = std::make_shared<LambdaCondition>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
-      const Robot& robot = behaviorExternalInterface.GetRobot();
-      if( !robot.IsCharging() ) {
-        const TimeStamp_t lastChargeTime = robot.GetLastChargingStateChangeTimestamp();
+      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      if( !robotInfo.IsCharging() ) {
+        const TimeStamp_t lastChargeTime = robotInfo.GetLastChargingStateChangeTimestamp();
         const TimeStamp_t timeSinceNotCharging = 
-          robot.GetLastMsgTimestamp() > lastChargeTime ?
-          robot.GetLastMsgTimestamp() - lastChargeTime :
+          robotInfo.GetLastMsgTimestamp() > lastChargeTime ?
+          robotInfo.GetLastMsgTimestamp() - lastChargeTime :
           0;
 
         return timeSinceNotCharging >= kNeedsToChargeTime_ms;
@@ -578,7 +578,7 @@ void BehaviorVictorObservingDemo::GetAllDelegates(std::set<IBehavior*>& delegate
 Result BehaviorVictorObservingDemo::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // _visionModesToReEnable.clear();
-  // auto& visionComponent = behaviorExternalInterface.GetRobot().GetVisionComponent();
+  // auto& visionComponent = behaviorExternalInterface.GetVisionComponent();
   // for (VisionMode mode = VisionMode::Idle; mode < VisionMode::Count; ++mode) {
   //   if( visionComponent.IsModeEnabled(mode) ) {
   //     _visionModesToReEnable.push_back(mode);
@@ -597,7 +597,7 @@ Result BehaviorVictorObservingDemo::OnBehaviorActivated(BehaviorExternalInterfac
   CompoundActionSequential *initialAction = new CompoundActionSequential(std::move(actions));
 
   DelegateIfInControl(initialAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
-      const bool onCharger = behaviorExternalInterface.GetRobot().IsOnChargerPlatform();
+      const bool onCharger = behaviorExternalInterface.GetRobotInfo().IsOnChargerPlatform();
       if( onCharger ) {
         TransitionToState(behaviorExternalInterface, StateID::ObservingOnCharger);
       }
@@ -613,7 +613,7 @@ void BehaviorVictorObservingDemo::OnBehaviorDeactivated(BehaviorExternalInterfac
 {
   TransitionToState(behaviorExternalInterface, StateID::Count);
 
-  auto& visionComponent = behaviorExternalInterface.GetRobot().GetVisionComponent();
+  auto& visionComponent = behaviorExternalInterface.GetVisionComponent();
   for( const auto& mode : _visionModesToReEnable ) {
     visionComponent.EnableMode(mode, true);
   }
@@ -640,13 +640,13 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
       _debugLightsDirty = true;
     }
 
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     
     ColorRGBA robotStateColor = NamedColors::BLACK;
-    if( robot.IsOnChargerPlatform() ) {
+    if( robotInfo.IsOnChargerPlatform() ) {
       robotStateColor.SetG(1.0f);
     }
-    if( robot.GetCliffSensorComponent().IsCliffDetectedStatusBitOn() ) {
+    if( robotInfo.GetCliffSensorComponent().IsCliffDetectedStatusBitOn() ) {
       robotStateColor.SetR(1.0f);
     }
 
@@ -659,7 +659,7 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
 
     if( _debugLightsDirty ) {
       
-      robot.GetBodyLightComponent().SetBackpackLights(_currDebugLights);
+      behaviorExternalInterface.GetBodyLightComponent().SetBackpackLights(_currDebugLights);
       _debugLightsDirty = false;
     }
   }
@@ -768,7 +768,7 @@ void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& b
 
   auto setVisionModes = [&behaviorExternalInterface](const std::set<VisionMode>& modes, const bool enabled) {
     for( const auto& mode : modes ) {
-      auto& visionComponent = behaviorExternalInterface.GetRobot().GetVisionComponent();      
+      auto& visionComponent = behaviorExternalInterface.GetVisionComponent();      
       if( visionComponent.IsModeEnabled(mode) != enabled ) {
         visionComponent.EnableMode(mode, enabled);
       }

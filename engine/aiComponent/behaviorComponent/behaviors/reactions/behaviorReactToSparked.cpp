@@ -11,7 +11,6 @@
  **/
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToSparked.h"
-#include "engine/robot.h"
 
 
 namespace Anki {

@@ -16,12 +16,12 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/robot.h"
 #include "engine/robotStateHistory.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
@@ -71,20 +71,18 @@ Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& beha
   switch( _state ) {
     case State::PlayingStopReaction:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
       // Record cliff detection threshold before at start of stop
-      _cliffDetectThresholdAtStart = robot.GetCliffSensorComponent().GetCliffDetectThreshold(0);
+      _cliffDetectThresholdAtStart = robotInfo.GetCliffSensorComponent().GetCliffDetectThreshold(0);
       
       // Wait function for determining if the cliff is suspicious
-      auto waitForStopLambda = [this](Robot& robot) {
-        if ( robot.GetMoveComponent().AreWheelsMoving() ) {
+      auto waitForStopLambda = [this, &robotInfo](Robot& robot) {
+        if ( robotInfo.GetMoveComponent().AreWheelsMoving() ) {
           return false;
         }
         
-        if (_cliffDetectThresholdAtStart != robot.GetCliffSensorComponent().GetCliffDetectThreshold(0)) {
+        if (_cliffDetectThresholdAtStart != robotInfo.GetCliffSensorComponent().GetCliffDetectThreshold(0)) {
           // There was a change in the cliff detection threshold so assuming
           // it was a false cliff and aborting reaction
           PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.QuittingDueToSuspiciousCliff", "");
@@ -95,7 +93,7 @@ Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& beha
       
       // skip the "huh" animation if in severe energy or repair
       auto callbackFunc = &BehaviorReactToCliff::TransitionToPlayingStopReaction;
-      NeedId expressedNeed = robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
+      NeedId expressedNeed = behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
       if((expressedNeed == NeedId::Energy) || (expressedNeed == NeedId::Repair)){
         callbackFunc = &BehaviorReactToCliff::TransitionToPlayingCliffReaction;
       }
@@ -181,12 +179,10 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(BehaviorExternalInte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::TransitionToBackingUp(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
   // if the animation doesn't drive us backwards enough, do it manually
-  if( robot.GetCliffSensorComponent().IsCliffDetected() ) {
+  if( robotInfo.GetCliffSensorComponent().IsCliffDetected() ) {
       DelegateIfInControl(new DriveStraightAction(-kCliffBackupDist_mm, kCliffBackupSpeed_mmps),
                   [this,&behaviorExternalInterface](){
                       SendFinishedReactToCliffMessage(behaviorExternalInterface);
@@ -202,10 +198,7 @@ void BehaviorReactToCliff::TransitionToBackingUp(BehaviorExternalInterface& beha
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::SendFinishedReactToCliffMessage(BehaviorExternalInterface& behaviorExternalInterface) {
   // Send message that we're done reacting
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCliffEventFinished()));
+  //robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCliffEventFinished()));
 }
   
   

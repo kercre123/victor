@@ -16,8 +16,8 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/events/animationTriggerHelpers.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/jsonTools.h"
 
@@ -93,10 +93,7 @@ void BehaviorThinkAboutBeacons::SelectNewBeacon(BehaviorExternalInterface& behav
 {
   // TODO implement the real deal
    AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  whiteboard.AddBeacon( robot.GetPose().GetWithRespectToRoot(), _configParams.beaconRadius_mm );
+  whiteboard.AddBeacon( behaviorExternalInterface.GetRobotInfo().GetPose().GetWithRespectToRoot(), _configParams.beaconRadius_mm );
 }
 
 } // namespace Cozmo

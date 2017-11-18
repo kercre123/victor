@@ -17,12 +17,11 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/needsManager.h"
-#include "engine/robot.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -182,13 +181,11 @@ void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, Behavior
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PlaceRelObjectHelper::MarkFailedToStackOrPlace(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const BlockWorld& blockWorld = behaviorExternalInterface.GetBlockWorld();
+  auto& carryingComp = behaviorExternalInterface.GetRobotInfo().GetCarryingComponent();
   
-  const ObservableObject* placeRelObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
-  const ObservableObject* carryingObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(
-                                                      robot.GetCarryingComponent().GetCarryingObject());
+  const ObservableObject* placeRelObj = blockWorld.GetLocatedObjectByID(_targetID);
+  const ObservableObject* carryingObj = blockWorld.GetLocatedObjectByID(carryingComp.GetCarryingObject());
   
   if((placeRelObj != nullptr) &&
      (carryingObj != nullptr)){

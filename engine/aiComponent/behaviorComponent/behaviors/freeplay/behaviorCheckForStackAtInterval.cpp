@@ -15,9 +15,9 @@
 
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/robot.h"
 #include "anki/common/basestation/utils/timer.h"
 
 namespace {
@@ -88,10 +88,8 @@ void BehaviorCheckForStackAtInterval::OnBehaviorDeactivated(BehaviorExternalInte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCheckForStackAtInterval::TransitionToSetup(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  _initialRobotPose = robot.GetPose();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  _initialRobotPose = robotInfo.GetPose();
   _knownBlockIndex = 0;
   TransitionToFacingBlock(behaviorExternalInterface);
 }
@@ -127,10 +125,8 @@ void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock(BehaviorExt
       ghostPose.GetTranslation().y(),
       ghostPose.GetTranslation().z() + obj->GetDimInParentFrame<'Z'>(ghostPose)});
     
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    robot.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), ghostPose, PoseState::Dirty);
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    robotInfo.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), ghostPose, PoseState::Dirty);
     
     // use 0 for max turn angle so we only look with the head
     TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(ObjectID{}, 0.f);

@@ -15,11 +15,14 @@
 #include "engine/aiComponent/stateConceptStrategies/strategyObjectPositionUpdated.h"
 
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/robot.h"
+
+#include "anki/common/basestation/math/point_impl.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -87,16 +90,14 @@ void StrategyObjectPositionUpdated::HandleObjectObserved(BehaviorExternalInterfa
     return;
   }
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // check if we want to react based on pose and cooldown, and also update position data even if we don't
   // react
-  Pose3d obsPose( msg.pose, robot.GetPoseOriginList() );
+  Pose3d obsPose( msg.pose, robotInfo.GetPoseOriginList() );
 
   // ignore cubes we are carrying or docking to (don't react to them)
-  if(msg.objectID == robot.GetCarryingComponent().GetCarryingObject() ||
-     msg.objectID == robot.GetDockingComponent().GetDockObject())
+  if(msg.objectID == robotInfo.GetCarryingComponent().GetCarryingObject() ||
+     msg.objectID == robotInfo.GetDockingComponent().GetDockObject())
   {
     const bool considerReaction = false;
     HandleNewObservation(msg.objectID, obsPose, msg.timestamp, considerReaction);
@@ -179,7 +180,7 @@ void StrategyObjectPositionUpdated::HandleNewObservation(s32 id,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool StrategyObjectPositionUpdated::ShouldReactToTarget_poseHelper(const Pose3d& thisPose,
-                                                                       const Pose3d& otherPose) const
+                                                                   const Pose3d& otherPose) const
 {
   // TODO:(bn) ideally pose should have an IsSameAs function which can return "yes", "no", or
   // "don't know" / "wrong frame"
@@ -256,10 +257,8 @@ bool StrategyObjectPositionUpdated::ShouldReactToTarget(BehaviorExternalInterfac
     
     // if we have reacted, then check if we want to react again based on the last pose and time we reacted.
     if( hasEverReactedToThisId ) {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
-      const u32 currTimestamp = robot.GetLastImageTimeStamp();
+      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      const u32 currTimestamp = robotInfo.GetLastImageTimeStamp();
       const bool isCooldownOver = currTimestamp - reactionPair.second.lastReactionTime_ms > _params.coolDownDuration_ms;
       
       const bool shouldReactToPose = ShouldReactToTarget_poseHelper(reactionPair.second.lastPose,

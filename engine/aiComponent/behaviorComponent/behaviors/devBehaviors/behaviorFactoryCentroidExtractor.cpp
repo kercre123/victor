@@ -21,6 +21,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/cozmoContext.h"
@@ -83,9 +84,7 @@ namespace{
 
   Result BehaviorFactoryCentroidExtractor::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
     std::stringstream serialNumString;
     serialNumString << std::hex << robot.GetHeadSerialNumber();
     _factoryTestLogger.StartLog(serialNumString.str() + "_centroids", true, robot.GetContextDataPlatform());
@@ -143,9 +142,7 @@ namespace{
   
   void BehaviorFactoryCentroidExtractor::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
     if(event.GetData().GetTag() == EngineToGameTag::RobotCompletedFactoryDotTest)
     {
       const auto& msg = event.GetData().Get_RobotCompletedFactoryDotTest();

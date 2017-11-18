@@ -19,12 +19,12 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
@@ -144,10 +144,8 @@ void BehaviorPounceOnMotion::InitHelper(BehaviorExternalInterface& behaviorExter
   // Don't override sparks idle animation
   if(!ShouldStreamline()){
     SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::PounceFace);
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    robot.GetDrivingAnimationHandler().PushDrivingAnimations(
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(
      {AnimationTrigger::PounceDriveStart,
       AnimationTrigger::PounceDriveLoop,
       AnimationTrigger::PounceDriveEnd},
@@ -205,22 +203,20 @@ void BehaviorPounceOnMotion::TransitionToInitialPounce(BehaviorExternalInterface
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPounceOnMotion::IsFingerCaught(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   const float liftHeightThresh = 35.5f;
   const float bodyAngleThresh = 0.02f;
   
-  float robotBodyAngleDelta = robot.GetPitchAngle().ToFloat() - _prePouncePitch;
+  float robotBodyAngleDelta = robotInfo.GetPitchAngle().ToFloat() - _prePouncePitch;
   
   // check the lift angle, after some time, transition state
   PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
-                robot.GetLiftHeight(),
+                robotInfo.GetLiftHeight(),
                 RAD_TO_DEG(robotBodyAngleDelta),
                 robotBodyAngleDelta,
                 RAD_TO_DEG(_prePouncePitch),
-                robot.GetPitchAngle().getDegrees());
-  return robot.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
+                robotInfo.GetPitchAngle().getDegrees());
+  return robotInfo.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
 }
 
 
@@ -383,11 +379,7 @@ void BehaviorPounceOnMotion::TransitionToTurnToMotion(BehaviorExternalInterface&
   Radians relPanAngle;
   Radians relTiltAngle;
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  robot.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, relPanAngle, relTiltAngle);
+  behaviorExternalInterface.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, relPanAngle, relTiltAngle);
   
   auto callback = &BehaviorPounceOnMotion::TransitionToCreepForward;
   // steadily increase the chance we'll pounce if we haven't pounced while seeing motion in a while
@@ -432,10 +424,8 @@ void BehaviorPounceOnMotion::TransitionToPounce(BehaviorExternalInterface& behav
 {
   SET_STATE(Pouncing);
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  _prePouncePitch = robot.GetPitchAngle().ToFloat();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  _prePouncePitch = robotInfo.GetPitchAngle().ToFloat();
   if( _backUpDistance <= 0.f )
   {
     _backUpDistance = GetDriveDistance();
@@ -671,11 +661,9 @@ void BehaviorPounceOnMotion::PounceOnMotionWithCallback(BehaviorExternalInterfac
   compAction->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::PouncePounce));
 
   DelegateIfInControl(compAction, [this, callback](BehaviorExternalInterface& behaviorExternalInterface){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     // wait for the lift to relax 
-    robot.GetMoveComponent().EnableLiftPower(false);
+    robotInfo.GetMoveComponent().EnableLiftPower(false);
     SET_STATE(RelaxingLift);
     _relaxedLift = true;
     // We don't get an accurate pitch evaulation if the head is moving during an animation
@@ -683,10 +671,7 @@ void BehaviorPounceOnMotion::PounceOnMotionWithCallback(BehaviorExternalInterfac
     const float relaxTime = 0.15f;
     
     DelegateIfInControl(new WaitAction(relaxTime), [this, callback](BehaviorExternalInterface& behaviorExternalInterface){
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      robot.GetMoveComponent().EnableLiftPower(true);
+      behaviorExternalInterface.GetRobotInfo().GetMoveComponent().EnableLiftPower(true);
       _relaxedLift = false;
       (this->*callback)(behaviorExternalInterface);
     });
@@ -702,10 +687,7 @@ void BehaviorPounceOnMotion::Cleanup(BehaviorExternalInterface& behaviorExternal
 {
   SET_STATE(Complete);
   if( _relaxedLift ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    robot.GetMoveComponent().EnableLiftPower(true);
+    behaviorExternalInterface.GetRobotInfo().GetMoveComponent().EnableLiftPower(true);
     _relaxedLift = false;
   }
   
@@ -716,11 +698,8 @@ void BehaviorPounceOnMotion::Cleanup(BehaviorExternalInterface& behaviorExternal
   
   // Only pop animations if set within this behavior
   if(!ShouldStreamline()){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
     SmartRemoveIdleAnimation(behaviorExternalInterface);
-    robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+    behaviorExternalInterface.GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
   }
 }
 

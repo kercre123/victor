@@ -22,6 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -74,7 +75,8 @@ namespace Anki {
     
     void BehaviorLiftLoadTest::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
     {
-      _logger = std::make_unique<Util::RollingFileLogger>(nullptr, behaviorExternalInterface.GetRobot().GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "liftLoadTest"));
+      _logger = std::make_unique<Util::RollingFileLogger>(nullptr, 
+        behaviorExternalInterface.GetRobotInfo()._robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "liftLoadTest"));
     }
 
     
@@ -85,9 +87,7 @@ namespace Anki {
     
     Result BehaviorLiftLoadTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
       _abortTest = false;
       _currentState = State::Init;
@@ -153,9 +153,7 @@ namespace Anki {
       {
         case State::Init:
         {
-          // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-          // be removed
-          Robot& robot = behaviorExternalInterface.GetRobot();
+          Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
           auto lowerLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
           lowerLiftAction->SetMaxLiftSpeed(DEFAULT_LIFT_SPEED_RAD_PER_SEC);
           lowerLiftAction->SetLiftAccel(DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);

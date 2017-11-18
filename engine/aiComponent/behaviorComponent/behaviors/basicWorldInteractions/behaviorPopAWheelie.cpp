@@ -19,6 +19,7 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
@@ -143,8 +144,6 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface
   auto disableCliff = [this](Robot& robot) {
     // tell the robot not to stop the current action / animation if the cliff sensor fires
     _hasDisabledcliff = true;
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(false)));
   };
   goPopAWheelie->SetPreDockCallback(disableCliff);
@@ -180,14 +179,10 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface
                                      "Failed to pop with %s, searching for block",
                                      EnumToString(msg.result));
                     
-                    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-                    // be removed
-                    Robot& robot = behaviorExternalInterface.GetRobot();
-                    
                     // mark the block as inaccessible
-                    const ObservableObject* failedObject = failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlock);
+                    const ObservableObject* failedObject = failedObject = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetBlock);
                     if(failedObject){
-                      robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
+                      behaviorExternalInterface.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
                     }
                     break;
                   }
@@ -248,13 +243,11 @@ void BehaviorPopAWheelie::ResetBehavior(BehaviorExternalInterface& behaviorExter
 
   if( _hasDisabledcliff ) {
     _hasDisabledcliff = false;
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     // NOTE: assumes that we want the cliff to be re-enabled when we leave this behavior. If it was disabled
     // before this behavior started, it will be enabled anyway. If this becomes a problem, then we need to
     // count / track the requests to enable and disable like we do with track locking or reactionary behaviors
-    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(true)));
+    robotInfo.EnableStopOnCliff(true);
   }
 }
   

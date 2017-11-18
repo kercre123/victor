@@ -15,10 +15,10 @@
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/charger.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 
@@ -49,11 +49,9 @@ BehaviorDriveOffCharger::BehaviorDriveOffCharger(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDriveOffCharger::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // assumes it's not possible to be OnCharger without being OnChargerPlatform
-  DEV_ASSERT(robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
+  DEV_ASSERT(robotInfo.IsOnChargerPlatform() || !robotInfo.IsOnCharger(),
              "BehaviorDriveOffCharger.WantsToBeActivatedBehavior.InconsistentChargerFlags");
 
   // can run any time we are on the charger platform
@@ -63,7 +61,7 @@ bool BehaviorDriveOffCharger::WantsToBeActivatedBehavior(BehaviorExternalInterfa
   // but that caused other issues (if the robot was bumped during wakeup, it wouldn't drive off the
   // charger). Now, we've gone back to OnChargerPlatofrm but fixed it to work better (see the comments in
   // robot.h)
-  const bool onChargerPlatform = robot.IsOnChargerPlatform();
+  const bool onChargerPlatform = robotInfo.IsOnChargerPlatform();
   return onChargerPlatform;
 }
 
@@ -73,10 +71,8 @@ Result BehaviorDriveOffCharger::OnBehaviorActivated(BehaviorExternalInterface& b
   
   _pushedIdleAnimation = false;
   if(NeedId::Count == behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    robot.GetDrivingAnimationHandler().PushDrivingAnimations(
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(
            {AnimationTrigger::DriveStartLaunch,
             AnimationTrigger::DriveLoopLaunch,
             AnimationTrigger::DriveEndLaunch},
@@ -100,20 +96,16 @@ Result BehaviorDriveOffCharger::OnBehaviorActivated(BehaviorExternalInterface& b
 void BehaviorDriveOffCharger::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_pushedIdleAnimation){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    robotInfo.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
   }
 }
     
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::Status BehaviorDriveOffCharger::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  if( robot.IsOnChargerPlatform() ) {
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  if( robotInfo.IsOnChargerPlatform() ) {
     const bool onTreads = behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnTreads;
     if( !onTreads ) {
       // if we aren't on the treads anymore, but we are on the charger, then the user must be holding us
@@ -147,11 +139,9 @@ ICozmoBehavior::Status BehaviorDriveOffCharger::UpdateInternal_WhileRunning(Beha
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveOffCharger::TransitionToDrivingForward(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   DEBUG_SET_STATE(DrivingForward);
-  if( robot.IsOnChargerPlatform() )
+  if( robotInfo.IsOnChargerPlatform() )
   {
     // probably interrupted by getting off the charger platform
     DriveStraightAction* action = new DriveStraightAction(_distToDrive_mm);

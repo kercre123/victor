@@ -18,7 +18,6 @@
 namespace Anki {
 namespace Cozmo {
   
-class Robot;
 class SmartFaceID;
 
 class IReactToFaceListener{

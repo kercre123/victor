@@ -20,11 +20,11 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/helpers/boundedWhile.h"
 #include <cmath>
@@ -181,14 +181,12 @@ void BehaviorLookAround::TransitionToRoaming(BehaviorExternalInterface& behavior
   for (int i = MAX_NUM_CONSIDERED_DEST_POSES; i > 0; --i) {
     destPose = GetDestinationPose(_currentDestination);
     
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     // Get robot bounding box at destPose
-    Quad2f robotQuad = robot.GetBoundingQuadXY(destPose);
+    Quad2f robotQuad = robotInfo.GetBoundingQuadXY(destPose);
     
     std::vector<ObservableObject*> existingObjects;
-    robot.GetBlockWorld().FindLocatedIntersectingObjects(robotQuad, existingObjects, 10);
+    behaviorExternalInterface.GetBlockWorld().FindLocatedIntersectingObjects(robotQuad, existingObjects, 10);
     
     if (existingObjects.empty()) {
       break;
@@ -238,15 +236,14 @@ void BehaviorLookAround::TransitionToRoaming(BehaviorExternalInterface& behavior
 void BehaviorLookAround::TransitionToLookingAtPossibleObject(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(State::LookingAtPossibleObject);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   CompoundActionSequential* action = new CompoundActionSequential();
   action->AddAction(new TurnTowardsPoseAction(_lastPossibleObjectPose));
 
   // if the pose is too far away, drive towards it 
   Pose3d relPose;
-  if( _lastPossibleObjectPose.GetWithRespectTo( robot.GetPose(), relPose ) ) {
+  if( _lastPossibleObjectPose.GetWithRespectTo( robotInfo.GetPose(), relPose ) ) {
     const Pose2d relPose2d(relPose);
     float dist2 = relPose2d.GetTranslation().LengthSq();
     if( dist2 > kMaxObservationDistanceSq_mm ) {
@@ -259,7 +256,7 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(BehaviorExternalInt
       
       Pose3d newTargetPose(RotationVector3d{},
                            newTranslation * (oldLength - kPossibleObjectViewingDist_mm),
-                           robot.GetPose());
+                           robotInfo.GetPose());
 
       action->AddAction(new DriveToPoseAction(newTargetPose, false));
     }
@@ -332,10 +329,10 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(BehaviorExternalInterf
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::Status BehaviorLookAround::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
-
 #if SAFE_ZONE_VIZ
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
-  robot.GetContext()->GetVizManager()->DrawXYCircle(robot.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
+  robotInfo.GetContext()->GetVizManager()->DrawXYCircle(robotInfo.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
 #endif
 
   if( IsControlDelegated() ) {
@@ -343,17 +340,14 @@ ICozmoBehavior::Status BehaviorLookAround::UpdateInternal_WhileRunning(BehaviorE
   }
   
   if( _currentState == State::WaitForOtherActions ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    if( robot.GetActionList().IsEmpty() ) {
+    if( !IsControlDelegated() ) {
       TransitionToRoaming(behaviorExternalInterface);
     }
     return Status::Running;
   }
   
 #if SAFE_ZONE_VIZ
-  robot.GetContext()->GetVizManager()->EraseCircle(robot.GetID());
+  robotInfo.GetContext()->GetVizManager()->EraseCircle(robotInfo.GetID());
 #endif
   
   return Status::Complete;
@@ -461,12 +455,10 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
   if (familyList.count(msg.objectFamily) > 0) {
     if( ! confirmed ) {
       if( _currentState != State::LookingAtPossibleObject && _currentState != State::ExaminingFoundObject ) {
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        const Robot& robot = behaviorExternalInterface.GetRobot();
+        const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
         _lastPossibleObjectPose = Pose3d{0, Z_AXIS_3D(),
                                          {msg.pose.x, msg.pose.y, msg.pose.z},
-                                         robot.GetWorldOrigin()};
+                                         robotInfo.GetWorldOrigin()};
         PRINT_NAMED_DEBUG("BehaviorLookAround.HandleObjectObserved.LookingAtPossibleObject",
                           "stopping to look at possible object");
         CancelDelegates(false);
@@ -690,11 +682,8 @@ void BehaviorLookAround::HandleRobotOfftreadsStateChanged(const EngineToGameEven
 void BehaviorLookAround::HandleCliffEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( event.GetData().Get_CliffEvent().detectedFlags != 0 ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
     // consider this location an obstacle
-    UpdateSafeRegionForCliff(robot.GetPose());
+    UpdateSafeRegionForCliff(behaviorExternalInterface.GetRobotInfo().GetPose());
   }
 }
 
@@ -702,10 +691,7 @@ void BehaviorLookAround::HandleCliffEvent(const EngineToGameEvent& event, Behavi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookAround::ResetSafeRegion(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  _moveAreaCenter = robot.GetPose();
+  _moveAreaCenter = behaviorExternalInterface.GetRobotInfo().GetPose();
   _safeRadius = kDefaultSafeRadius;
   PRINT_NAMED_DEBUG("BehaviorLookAround.ResetSafeRegion", "safe region reset");
 }

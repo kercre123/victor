@@ -28,8 +28,6 @@ class GraphEvaluator2d;
 
 namespace Cozmo {
 
-class Robot;
-
 class BehaviorExpressNeeds : public ICozmoBehavior
 {
 protected:

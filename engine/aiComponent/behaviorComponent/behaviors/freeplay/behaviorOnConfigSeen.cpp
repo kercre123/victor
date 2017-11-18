@@ -13,7 +13,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/behaviorOnConfigSeen.h"
 
-#include "engine/robot.h"
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/events/animationTriggerHelpers.h"

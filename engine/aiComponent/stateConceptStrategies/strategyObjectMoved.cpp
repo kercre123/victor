@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/stateConceptStrategies/strategyObjectMoved.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
@@ -92,10 +93,8 @@ bool StrategyObjectMoved::AreStateConditionsMetInternal(BehaviorExternalInterfac
     if(objIter->ObjectOutsideIgnoreArea(behaviorExternalInterface)
        && ((objIter->ObjectHasMovedLongEnough(behaviorExternalInterface)) || objIter->ObjectUpAxisHasChanged(behaviorExternalInterface)))
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
-      const bool isVisible = cube->IsVisibleFrom(robot.GetVisionComponent().GetCamera(),
+      VisionComponent& visComp = behaviorExternalInterface.GetVisionComponent();
+      const bool isVisible = cube->IsVisibleFrom(visComp.GetCamera(),
                                                  kMaxNormalAngle,
                                                  kMinImageSizePix,
                                                  false);
@@ -230,10 +229,7 @@ bool ReactionObjectData::ObjectHasMovedLongEnough(BehaviorExternalInterface& beh
   }
   
   if(_isObjectMoving && _observedSinceLastReaction){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    TimeStamp_t time_ms = robot.GetLastMsgTimestamp();
+    TimeStamp_t time_ms = behaviorExternalInterface.GetRobotInfo().GetLastMsgTimestamp();
     if(_timeStartedMoving != 0 && time_ms - _timeStartedMoving > kMinTimeMoving_ms){
       return true;
     }
@@ -263,11 +259,8 @@ bool ReactionObjectData::ObjectOutsideIgnoreArea(BehaviorExternalInterface& beha
     return false;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
   const Pose3d& blockPose = object->GetPose();
-  const Pose3d& robotPose = robot.GetPose();
+  const Pose3d& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
   f32 distance = 0;
   bool distanceComputed = ComputeDistanceBetween(blockPose, robotPose, distance);
   if(!distanceComputed){

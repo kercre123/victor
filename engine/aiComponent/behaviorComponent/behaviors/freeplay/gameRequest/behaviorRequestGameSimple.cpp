@@ -22,13 +22,13 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/gameRequest/behaviorRequestGameSimple.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/faceWorld.h"
 #include "engine/pathMotionProfileHelpers.h"
-#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -175,11 +175,8 @@ Result BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExtern
     }
   }
   else {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
     _activeConfig = &_oneBlockConfig;
-    if(robot.GetCarryingComponent().IsCarryingObject()){
+    if(behaviorExternalInterface.GetRobotInfo().GetCarryingComponent().IsCarryingObject()){
       TransitionToDrivingToFace(behaviorExternalInterface);
     }else if( ! IsControlDelegated() ) {
       TransitionToPlayingInitialAnimation(behaviorExternalInterface);
@@ -282,11 +279,8 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(BehaviorExternalInterfac
                      "block no longer exists (or has moved). Searching for block");
     
     SET_STATE(SearchingForBlock);
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
 
-    auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+    auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
     SearchParameters params;
     params.numberOfBlocksToLocate = 1;
     HelperHandle searchHelper = factory.CreateSearchForBlockHelper(behaviorExternalInterface, *this, params);
@@ -563,10 +557,8 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface
     return false;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  if( ! facePose.GetWithRespectTo(robot.GetPose(), facePose) ) {
+  auto& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
+  if( ! facePose.GetWithRespectTo(robotPose, facePose) ) {
     PRINT_NAMED_ERROR("BehaviorRequestGameSimple.NoFacePose",
                       "could not get face pose with respect to robot. This should never happen");
     return false;
@@ -587,7 +579,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface
     float relX = distanceRatio * facePose.GetTranslation().x();
     float relY = distanceRatio * facePose.GetTranslation().y();
 
-    targetPose = Pose3d{ targetAngle, Z_AXIS_3D(), {relX, relY, 0.0f}, robot.GetPose() };
+    targetPose = Pose3d{ targetAngle, Z_AXIS_3D(), {relX, relY, 0.0f}, robotPose };
     targetPose = targetPose.GetWithRespectToRoot();
 
     BlockWorldFilter filter;
@@ -597,9 +589,9 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface
           // ignore unknown obstacles
           return false;
         }
-
-        if( robot.GetCarryingComponent().IsCarryingObject() &&
-            robot.GetCarryingComponent().GetCarryingObject() == obj->GetID() ) {
+        auto& carryingComp = behaviorExternalInterface.GetRobotInfo().GetCarryingComponent();
+        if( carryingComp.IsCarryingObject() &&
+            carryingComp.GetCarryingObject() == obj->GetID() ) {
           // ignore the block we are carrying
           return false;
         }
@@ -618,7 +610,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface
       });
 
     std::vector<ObservableObject*> blocks;
-    robot.GetBlockWorld().FindLocatedMatchingObjects(filter, blocks);
+    behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(filter, blocks);
 
     if(blocks.empty()) {
       targetPoseRet = targetPose;
@@ -628,7 +620,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface
 
   PRINT_NAMED_INFO("BehaviorRequestGameSimple.NoSafeBlockPose",
                    "Could not find a safe place to put down the cube, using current position");  
-  targetPoseRet = Pose3d{ targetAngle, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f}, robot.GetPose() };
+  targetPoseRet = Pose3d{ targetAngle, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f}, robotPose };
   targetPoseRet = targetPoseRet.GetWithRespectToRoot();
 
   return true;

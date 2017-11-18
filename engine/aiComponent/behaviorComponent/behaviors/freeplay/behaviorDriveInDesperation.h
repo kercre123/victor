@@ -22,7 +22,6 @@ class Pose3d;
 
 namespace Cozmo {
 
-class Robot;
 class BlockWorldFilter;
 
 class BehaviorDriveInDesperation : public ICozmoBehavior

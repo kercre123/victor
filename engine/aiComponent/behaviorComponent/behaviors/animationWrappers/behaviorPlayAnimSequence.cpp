@@ -11,10 +11,11 @@
  **/
 
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
+
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/events/animationTriggerHelpers.h"
-#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -182,8 +183,8 @@ void BehaviorPlayAnimSequence::CallToListeners(BehaviorExternalInterface& behavi
 u8 BehaviorPlayAnimSequence::GetTracksToLock(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   if( _supportCharger ) {
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    if( robot.IsOnChargerPlatform() ) {
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    if( robotInfo.IsOnChargerPlatform() ) {
       // we are supporting the charger and are on it, so lock out the body
       return (u8)AnimTrackFlag::BODY_TRACK;
     }

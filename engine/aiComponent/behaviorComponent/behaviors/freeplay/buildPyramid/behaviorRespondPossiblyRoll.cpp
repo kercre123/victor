@@ -20,7 +20,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/robot.h"
 #include "anki/common/basestation/utils/timer.h"
 
 

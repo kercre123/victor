@@ -44,7 +44,6 @@ class ObjectID;
 namespace Cozmo {
   
 // Forward declarations
-class Robot;
 class ActionableObject;
 class DriveToObjectAction;
 class BehaviorHelperFactory;
@@ -458,7 +457,6 @@ private:
   
   NeedsActionId ExtractNeedsActionIDFromConfig(const Json::Value& config);
 
-  Robot* _robot;
   BehaviorExternalInterface* _behaviorExternalInterface;
   float _lastRunTime_s;
   float _activatedTime_s;

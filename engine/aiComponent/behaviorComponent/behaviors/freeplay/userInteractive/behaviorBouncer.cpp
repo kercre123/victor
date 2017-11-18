@@ -11,9 +11,9 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
 #include "anki/common/basestation/utils/timer.h"
@@ -80,11 +80,8 @@ CONSOLE_VAR_RANGED(s32, kBouncerBallRadius_px, CONSOLE_GROUP, 3, 1, 5);
 // Check if feature gate is open
 static inline bool IsFeatureEnabled(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
   // Is this feature enabled?
-  const auto * ctx = robot.GetContext();
+  const auto * ctx = behaviorExternalInterface.GetRobotInfo().GetContext();
   const auto * featureGate = ctx->GetFeatureGate();
   return featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::Bouncer);
 }
@@ -92,9 +89,8 @@ static inline bool IsFeatureEnabled(BehaviorExternalInterface& behaviorExternalI
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Get random choice of 1 or -1
-static int GetRandomSign(Robot & robot)
+static int GetRandomSign(Util::RandomGenerator& rng)
 {
-  auto & rng = robot.GetRNG();
   double val = rng.RandDbl();
   return (val < 0.5 ? 1 : -1);
 }
@@ -102,9 +98,8 @@ static int GetRandomSign(Robot & robot)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Get random value in range [minVal,maxVal]
-static float GetRandomFloat(Robot & robot, float minVal, float maxVal)
+static float GetRandomFloat(Util::RandomGenerator& rng, float minVal, float maxVal)
 {
-  auto & rng = robot.GetRNG();
   double val = rng.RandDblInRange(minVal, maxVal);
   return static_cast<float>(val);
 }
@@ -302,12 +297,10 @@ Result BehaviorBouncer::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
   // Disable idle animation
   SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // Stash robot parameters
-  _displayWidth_px = robot.GetDisplayWidthInPixels();
-  _displayHeight_px = robot.GetDisplayHeightInPixels();
+  _displayWidth_px = robotInfo.GetDisplayWidthInPixels();
+  _displayHeight_px = robotInfo.GetDisplayHeightInPixels();
   
   // Reset player stats
   _playerHits = 0;
@@ -321,8 +314,9 @@ Result BehaviorBouncer::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
   // Ball starts at center of bottom row with small upward velocity.
   _ballPosX = (_displayWidth_px/2);
   _ballPosY = _displayHeight_px;
-  _ballSpeedX = GetRandomSign(robot) * GetRandomFloat(robot, kBouncerMinBallSpeed, kBouncerMaxBallSpeed);
-  _ballSpeedY = -1 * GetRandomFloat(robot, kBouncerMinBallSpeed, kBouncerMaxBallSpeed);
+  auto& rng = behaviorExternalInterface.GetRNG();
+  _ballSpeedX = GetRandomSign(rng) * GetRandomFloat(rng, kBouncerMinBallSpeed, kBouncerMaxBallSpeed);
+  _ballSpeedY = -1 * GetRandomFloat(rng, kBouncerMinBallSpeed, kBouncerMaxBallSpeed);
   
   // No pending hits
   _ballHitFloor = false;
@@ -469,10 +463,11 @@ void BehaviorBouncer::UpdateDisplay(BehaviorExternalInterface& behaviorExternalI
     
     // Display image
     LOG_TRACE("BehaviorBouncer.UpdateDisplay", "Start face action");
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    robot.GetAnimationComponent().DisplayFaceImageBinary(image, ANIM_TIME_STEP_MS);
+
+    if(ANKI_VERIFY(behaviorExternalInterface.HasAnimationComponent(),
+                   "BehaviorBouncer.UpdateDisplay.NoAnimationComponent","")){
+      behaviorExternalInterface.GetAnimationComponent().DisplayFaceImageBinary(image, ANIM_TIME_STEP_MS);
+    }
   }
 
 }
@@ -503,12 +498,9 @@ BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInte
     return BehaviorStatus::Complete;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
   // Validate face
   TimeStamp_t lastObserved_ms = face->GetTimeStamp();
-  TimeStamp_t lastImage_ms = robot.GetLastImageTimeStamp();
+  TimeStamp_t lastImage_ms = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
   if (lastImage_ms - lastObserved_ms > Util::SecToMilliSec(kBouncerMissingFace_sec)) {
     LOG_WARNING("BehaviorBouncer.UpdateIntern_Legacy", "Target face (%s) has gone stale",
                 _target.GetDebugStr().c_str());

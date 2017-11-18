@@ -19,7 +19,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 #include "engine/robotIdleTimeoutComponent.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 

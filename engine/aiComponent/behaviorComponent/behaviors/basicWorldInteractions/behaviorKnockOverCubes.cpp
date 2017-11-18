@@ -21,13 +21,13 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/jsonTools.h"
-#include "engine/robot.h"
 #include "util/console/consoleInterface.h"
 
 
@@ -143,15 +143,12 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(BehaviorExternalInterf
     return;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   CompoundActionSequential* action = new CompoundActionSequential();
   
   action->AddAction(new TurnTowardsObjectAction(_bottomBlockID));
   
   Pose3d poseWrtRobot;
-  if(topBlock->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot) ) {
+  if(topBlock->GetPose().GetWithRespectTo(behaviorExternalInterface.GetRobotInfo().GetPose(), poseWrtRobot) ) {
     const float fudgeFactor = 10.0f;
     if( poseWrtRobot.GetTranslation().x() + fudgeFactor > kBKS_distanceToTryToGrabFrom_mm) {
       float distToDrive = poseWrtRobot.GetTranslation().x() - kBKS_distanceToTryToGrabFrom_mm;
@@ -246,12 +243,9 @@ void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(BehaviorExternalInterfa
 void BehaviorKnockOverCubes::TransitionToPlayingReaction(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(PlayingReaction);
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+
   // notify configuration manager that the tower was knocked over
-  robot.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
+  behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
   
   // determine if the robot successfully knocked over the min number of cubes
   auto animationTrigger = _knockOverFailureTrigger;

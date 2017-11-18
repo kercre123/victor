@@ -284,7 +284,9 @@ namespace Anki {
       return ActionResult::SUCCESS;
     }
     
-    void IDockAction::GetPreActionPoses(Robot& robot,
+    void IDockAction::GetPreActionPoses(const Pose3d& robotPose,
+                                        const CarryingComponent& carryingComp,
+                                        BlockWorld& blockWorld,
                                         const PreActionPoseInput& input,
                                         PreActionPoseOutput& output)
     {
@@ -305,7 +307,7 @@ namespace Anki {
         return;
       }
       
-      if(dockObject->GetID() == robot.GetCarryingComponent().GetCarryingObject())
+      if(dockObject->GetID() == carryingComp.GetCarryingObject())
       {
         PRINT_NAMED_WARNING("IsCloseEnoughToPreActionPose.CarryingSelectedObject",
                             "Robot is currently carrying action object with ID=%d",
@@ -315,25 +317,25 @@ namespace Anki {
       }
       
       // select the object so it shows up properly in viz
-      robot.GetBlockWorld().SelectObject(dockObject->GetID());
+      blockWorld.SelectObject(dockObject->GetID());
       
       // Verify that we ended up near enough a PreActionPose of the right type
       std::vector<std::pair<Quad2f, ObjectID> > obstacles;
-      robot.GetBlockWorld().GetObstacles(obstacles);
+      blockWorld.GetObstacles(obstacles);
       
       PRINT_CH_DEBUG("Actions", "IsCloseEnoughToPreActionPose.GetCurrentPreActionPoses",
                      "Using preDockPoseOffset_mm %f and %s",
                      preDockPoseDistOffsetX_mm,
                      (doNearPredockPoseCheck ? "checking if near pose" : "NOT checking if near pose"));
       dockObject->GetCurrentPreActionPoses(preActionPoses,
-                                           robot.GetPose(),
+                                           robotPose,
                                            {preActionPoseType},
                                            std::set<Vision::Marker::Code>(),
                                            obstacles,
                                            nullptr,
                                            preDockPoseDistOffsetX_mm);
       
-      const Pose3d& robotPoseParent = robot.GetPose().GetParent();
+      const Pose3d& robotPoseParent = robotPose.GetParent();
       
       // If using approach angle remove any preAction poses that aren't close to the desired approach angle
       if(input.useApproachAngle)
@@ -371,8 +373,8 @@ namespace Anki {
         return;
       }
       
-      const Point2f currentXY(robot.GetPose().GetTranslation().x(),
-                              robot.GetPose().GetTranslation().y());
+      const Point2f currentXY(robotPose.GetTranslation().x(),
+                              robotPose.GetTranslation().y());
       
       closestIndex = preActionPoses.size();
       float closestDistSq = std::numeric_limits<float>::max();
@@ -416,7 +418,7 @@ namespace Anki {
       }
       
       PRINT_CH_INFO("Actions", "IsCloseEnoughToPreActionPose.ClosestPoint",
-                    "Closest point (%f, %f) robot (%f, %f) dist = %f",
+                    "Closest point (%f, %f) robot pose (%f, %f) dist = %f",
                     preActionPoses[closestIndex].GetPose().GetTranslation().x(),
                     preActionPoses[closestIndex].GetPose().GetTranslation().y(),
                     currentXY.x(), currentXY.y(),
@@ -449,7 +451,7 @@ namespace Anki {
         else
         {
           Pose3d p;
-          preActionPoses[closestIndex].GetPose().GetWithRespectTo(robot.GetPose(), p);
+          preActionPoses[closestIndex].GetPose().GetWithRespectTo(robotPose, p);
 
           if(FLT_LT(std::abs(p.GetRotation().GetAngleAroundZaxis().ToFloat()), preActionPoseAngleTolerance.ToFloat()))
           {
@@ -513,7 +515,11 @@ namespace Anki {
                                               _preActionPoseAngleTolerance.ToFloat(),
                                               false, 0);
         
-        GetPreActionPoses(GetRobot(), preActionPoseInput, preActionPoseOutput);
+        GetPreActionPoses(GetRobot().GetPose(),
+                          GetRobot().GetCarryingComponent(),
+                          GetRobot().GetBlockWorld(), 
+                          preActionPoseInput, 
+                          preActionPoseOutput);
         
         if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
         {
@@ -2055,7 +2061,11 @@ namespace Anki {
     ActionResult PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(const ActionableObject* object,
                                                                         const f32 placementOffsetX_mm,
                                                                         const f32 placementOffsetY_mm,
-                                                                        Robot& robot,
+                                                                        const Pose3d& robotPose,
+                                                                        const Pose3d& worldOrigin,
+                                                                        const CarryingComponent& carryingComp,
+                                                                        BlockWorld& blockWorld,
+                                                                        const VisionComponent& visionComp,
                                                                         std::vector<Pose3d>& possiblePoses,
                                                                         bool& alreadyInPosition)
     {
@@ -2074,7 +2084,9 @@ namespace Anki {
                                                                0);
       IDockAction::PreActionPoseOutput preActionPoseOutput;
       
-      IDockAction::GetPreActionPoses(robot,
+      IDockAction::GetPreActionPoses(robotPose,
+                                     carryingComp,
+                                     blockWorld,
                                      preActionPoseInput,
                                      preActionPoseOutput);
       
@@ -2173,7 +2185,7 @@ namespace Anki {
               // Find the max lateral offset from the preDock pose that the object will still be visible
               // This is to ensure we will be seeing the object when we are at the preDock pose
               f32 maxOffset_mm = 0;
-              const Result res = GetMaxOffsetObjectStillVisible(robot.GetVisionComponent().GetCamera(),
+              const Result res = GetMaxOffsetObjectStillVisible(visionComp.GetCamera(),
                                                                 object,
                                                                 distanceToObject,
                                                                 preDockOffsetX,
@@ -2228,7 +2240,7 @@ namespace Anki {
                                                       trans.y() + clipY_mm,
                                                       trans.z()});
               
-              const bool poseOriginOk = preDocWRTUnrotatedBlock.GetWithRespectTo(robot.GetWorldOrigin(), *fullIter);
+              const bool poseOriginOk = preDocWRTUnrotatedBlock.GetWithRespectTo(worldOrigin, *fullIter);
               if ( !poseOriginOk ) {
                 // this should not be possible at all, since the predock poses are in robot origin
                 PRINT_NAMED_ERROR("DriveToPlaceRelObjectAction.GetPossiblePosesFunc.UnrotatedBlockPoseBadOrigin",
@@ -2244,9 +2256,9 @@ namespace Anki {
               // alreadyInPosition
               // Don't really care about z
               static const f32 kDontCareZThreshold = 100;
-              if(robot.GetPose().IsSameAs(*fullIter,
-                                          {distThreshold.x(), distThreshold.y(), kDontCareZThreshold},
-                                          DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE))
+              if(robotPose.IsSameAs(*fullIter,
+                                    {distThreshold.x(), distThreshold.y(), kDontCareZThreshold},
+                                    DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE))
               {
                 alreadyInPosition = true;
               }
@@ -2314,10 +2326,10 @@ namespace Anki {
       SetShouldFirstTurnTowardsObject(!enable);
     }
     
-    bool RollObjectAction::CanActionRollObject(const Robot& robot,
+    bool RollObjectAction::CanActionRollObject(const DockingComponent& dockingComponent,
                                                const ObservableObject* object)
     {
-      return robot.GetDockingComponent().CanPickUpObjectFromGround(*object);
+      return dockingComponent.CanPickUpObjectFromGround(*object);
     }
 
     

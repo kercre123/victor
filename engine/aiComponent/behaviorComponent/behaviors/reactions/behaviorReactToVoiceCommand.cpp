@@ -13,11 +13,11 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/components/movementComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
 #include "anki/common/basestation/math/pose.h"
 #include "clad/types/animationTrigger.h"
@@ -42,10 +42,9 @@ bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior(BehaviorExternalInt
     // If we don't know where this face is right now, switch it to Invalid so we just look toward the last face pose
     const auto* face = behaviorExternalInterface.GetFaceWorld().GetFace(_desiredFace);
     Pose3d pose;
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    if(nullptr == face || !face->GetHeadPose().HasSameRootAs(robot.GetPose()))
+
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    if(nullptr == face || !face->GetHeadPose().HasSameRootAs(robotInfo.GetPose()))
     {
       _desiredFace.Reset();
     }
@@ -58,12 +57,10 @@ bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior(BehaviorExternalInt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToVoiceCommand::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
   // Stop all movement so we can listen for a command
-  robot.GetMoveComponent().StopAllMotors();
+  robotInfo.GetMoveComponent().StopAllMotors();
   
   auto* actionSeries = new CompoundActionSequential();
   
@@ -108,8 +105,8 @@ Result BehaviorReactToVoiceCommand::OnBehaviorActivated(BehaviorExternalInterfac
   DelegateIfInControl(actionSeries, completionCallback);
   
   Anki::Util::sEvent("voice_command.responding_to_command", {}, EnumToString(VoiceCommandType::HeyCozmo));
-  robot.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommand(VoiceCommandType::HeyCozmo));
-  robot.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommandStart(VoiceCommandType::HeyCozmo));
+  robotInfo.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommand(VoiceCommandType::HeyCozmo));
+  robotInfo.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommandStart(VoiceCommandType::HeyCozmo));
   
   return RESULT_OK;
 }
@@ -118,13 +115,11 @@ Result BehaviorReactToVoiceCommand::OnBehaviorActivated(BehaviorExternalInterfac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  robot.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::TriggerPhrase);
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  robotInfo.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::TriggerPhrase);
   
   using namespace ::Anki::Cozmo::VoiceCommand;
-  robot.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommandEnd(VoiceCommandType::HeyCozmo));
+  robotInfo.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommandEnd(VoiceCommandType::HeyCozmo));
 }
 
 } // namespace Cozmo

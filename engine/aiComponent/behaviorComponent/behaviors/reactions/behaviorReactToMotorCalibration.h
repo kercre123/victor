@@ -20,7 +20,6 @@
 namespace Anki {
 namespace Cozmo {
 
-class Robot;
   
 class BehaviorReactToMotorCalibration : public ICozmoBehavior
 {

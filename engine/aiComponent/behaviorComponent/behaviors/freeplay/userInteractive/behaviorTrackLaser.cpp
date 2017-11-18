@@ -21,6 +21,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/trackGroundPointAction.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
@@ -29,7 +30,6 @@
 #include "engine/drivingAnimationHandler.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -130,17 +130,15 @@ void BehaviorTrackLaser::SetParamsFromConfig(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorTrackLaser::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  const bool featureEnabled = robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::Laser);
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const bool featureEnabled = robotInfo.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::Laser);
   if(!featureEnabled)
   {
     return false;
   }
 
-  if(robot.GetDockingComponent().IsPickingOrPlacing() ||
-     robot.GetCarryingComponent().IsCarryingObject())
+  if(robotInfo.GetDockingComponent().IsPickingOrPlacing() ||
+     robotInfo.GetCarryingComponent().IsCarryingObject())
   {
     // Don't interrupt while docking (since exposure change for confirmation can be really bad
     // and noticeable while tracking a cube). Also don't get distracted while carrying a cube.
@@ -156,7 +154,7 @@ bool BehaviorTrackLaser::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
     // Have we seen a potential laser observation recently?
     if(_lastLaserObservation.type != LaserObservation::Type::None)
     {
-      const TimeStamp_t lastImgTime_ms = robot.GetLastImageTimeStamp();
+      const TimeStamp_t lastImgTime_ms = robotInfo.GetLastImageTimeStamp();
       const TimeStamp_t seenWithin_ms  = Util::SecToMilliSec(_params.startIfLaserSeenWithin_sec);
       
       const bool crntSeenRecently = ((_lastLaserObservation.timestamp_ms + seenWithin_ms) > lastImgTime_ms);
@@ -202,12 +200,8 @@ void BehaviorTrackLaser::InitHelper(BehaviorExternalInterface& behaviorExternalI
   _haveEverConfirmedLaser = false;
   _shouldSendTrackingObjectiveAchieved = false;
   
-
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  _originalCameraSettings.exposureTime_ms = robot.GetVisionComponent().GetCurrentCameraExposureTime_ms();
-  _originalCameraSettings.gain = robot.GetVisionComponent().GetCurrentCameraGain();
+  _originalCameraSettings.exposureTime_ms = behaviorExternalInterface.GetVisionComponent().GetCurrentCameraExposureTime_ms();
+  _originalCameraSettings.gain = behaviorExternalInterface.GetVisionComponent().GetCurrentCameraGain();
   
   // disable all vision except what's needed laser point detection and confirmation
   const bool kUseDefaultsForUnspecified = false;
@@ -215,8 +209,8 @@ void BehaviorTrackLaser::InitHelper(BehaviorExternalInterface& behaviorExternalI
     {VisionMode::DetectingLaserPoints, VisionModeSchedule(true)},
     {VisionMode::ComputingStatistics,  VisionModeSchedule(true)},
   }, kUseDefaultsForUnspecified);
-  robot.GetVisionComponent().PushNextModeSchedule(std::move(schedule));
-  robot.GetVisionComponent().SetAndDisableAutoExposure(_params.darkenedExposure_ms, _params.darkenedGain);
+  behaviorExternalInterface.GetVisionComponent().PushNextModeSchedule(std::move(schedule));
+  behaviorExternalInterface.GetVisionComponent().SetAndDisableAutoExposure(_params.darkenedExposure_ms, _params.darkenedGain);
   
   _exposureChangedTime_ms = 0;
   _imageMean = -1;
@@ -354,10 +348,7 @@ bool BehaviorTrackLaser::CheckForTimeout(BehaviorExternalInterface& behaviorExte
   // We're done if we haven't seen a laser in a long while or we've exceeded the max time for the behavior
   bool isTimedOut = false;
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  const TimeStamp_t lastImgTime_ms = robot.GetLastImageTimeStamp();
+  const TimeStamp_t lastImgTime_ms = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
   
   if (_haveEverConfirmedLaser &&
       (_lastLaserObservation.timestamp_ms + (_currentLostLaserTimeout_s * 1000)) < lastImgTime_ms )
@@ -495,15 +486,11 @@ void BehaviorTrackLaser::TransitionToWaitForExposureChange(BehaviorExternalInter
 {
   SET_STATE(WaitingForExposureChange);
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // Wait a couple of images for the exposure change to take effect.
   // Note that we don't care what kind of processing occurred in those images;
   // any image will do.
   const s32 numImagesToWait = (s32)_params.numImagesToWaitForExposureChange;
-  CompoundActionParallel* action = new CompoundActionParallel(
-                                                              {new WaitForImagesAction(numImagesToWait)});
+  CompoundActionParallel* action = new CompoundActionParallel({new WaitForImagesAction(numImagesToWait)});
   
   if(ShouldStreamline())
   {
@@ -512,11 +499,11 @@ void BehaviorTrackLaser::TransitionToWaitForExposureChange(BehaviorExternalInter
   
   // Once we've gottena a couple of images, switch to looking for a laser dot
   // to confirm it.
-  DelegateIfInControl(action, [this, &robot](BehaviorExternalInterface& behaviorExternalInterface)
+  DelegateIfInControl(action, [this](BehaviorExternalInterface& behaviorExternalInterface)
   {
     // We *assume* exposure has changed after seeing enough images, no way to know for sure!
     // Once this is true, observed lasers will be considered "confirmed".
-    _exposureChangedTime_ms = robot.GetLastImageTimeStamp();
+    _exposureChangedTime_ms = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
     TransitionToWaitForLaser(behaviorExternalInterface);
     
     PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.TransitionToWaitForExposureChange.AssumingChanged",
@@ -537,17 +524,14 @@ void BehaviorTrackLaser::TransitionToWaitForLaser(BehaviorExternalInterface& beh
 void BehaviorTrackLaser::TransitionToRespondToLaser(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(RespondToLaser);
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // Wait until we actually confirm a laser to adjust the idle/driving animations, to
   // avoid eyes changing if we see a possible laser and end up _not_ confirming.
   // However, don't override sparks driving or idle animations (i.e. when "streamlining").
   if(!ShouldStreamline() && !_haveAdjustedAnimations)
   {
-    SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::LaserFace);
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
-    robot.GetDrivingAnimationHandler().PushDrivingAnimations(
+    SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::LaserFace);    
+    robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(
                                                              {AnimationTrigger::LaserDriveStart,
                                                                AnimationTrigger::LaserDriveLoop,
                                                                AnimationTrigger::LaserDriveEnd},
@@ -556,12 +540,8 @@ void BehaviorTrackLaser::TransitionToRespondToLaser(BehaviorExternalInterface& b
     _haveAdjustedAnimations = true;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
   const Point2f& pt = _lastLaserObservation.pointWrtRobot;
-  const Pose3d laserPointPose(0.f, Z_AXIS_3D(), {pt.x(), pt.y(), 0.f}, robot.GetPose());
+  const Pose3d laserPointPose(0.f, Z_AXIS_3D(), {pt.x(), pt.y(), 0.f}, robotInfo.GetPose());
   
   CompoundActionSequential* action = new CompoundActionSequential({
     new TurnTowardsPoseAction(laserPointPose, M_PI_F),
@@ -800,21 +780,17 @@ void BehaviorTrackLaser::Cleanup(BehaviorExternalInterface& behaviorExternalInte
   _exposureChangedTime_ms = 0;
   _lastLaserObservation.type = LaserObservation::Type::None;
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
   // Leave the exposure/color settings as they were when we started
-  robot.GetVisionComponent().PopCurrentModeSchedule();
-  robot.GetVisionComponent().SetAndDisableAutoExposure(_originalCameraSettings.exposureTime_ms,
-                                                       _originalCameraSettings.gain);
-  robot.GetVisionComponent().EnableAutoExposure(true);
+  behaviorExternalInterface.GetVisionComponent().PopCurrentModeSchedule();
+  behaviorExternalInterface.GetVisionComponent().SetAndDisableAutoExposure(
+    _originalCameraSettings.exposureTime_ms, _originalCameraSettings.gain);
+  behaviorExternalInterface.GetVisionComponent().EnableAutoExposure(true);
   
   // Only pop animations if set within this behavior
   if(_haveAdjustedAnimations)
   {
     SmartRemoveIdleAnimation(behaviorExternalInterface);
-    robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+    behaviorExternalInterface.GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
     _haveAdjustedAnimations = false;
   }
 }

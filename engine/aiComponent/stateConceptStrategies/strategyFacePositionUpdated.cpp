@@ -12,10 +12,10 @@
 
 #include "engine/aiComponent/stateConceptStrategies/strategyFacePositionUpdated.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "util/console/consoleInterface.h"
@@ -101,14 +101,12 @@ void StrategyFacePositionUpdated::HandleFaceObserved(BehaviorExternalInterface& 
   }
   
   float currDistance_mm = 0.0f;
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // We also want to react if the face was previously seen far away, but is now seen closer up
-  if( ! ComputeDistanceBetween( robot.GetPose(), face->GetHeadPose(), currDistance_mm ) ) {
+  if( ! ComputeDistanceBetween( robotInfo.GetPose(), face->GetHeadPose(), currDistance_mm ) ) {
     PRINT_NAMED_ERROR("BehaviorAcknowledgeFace.PoseInWrongFrame",
                       "We couldnt get the distance from the robot to the face pose that we just saw...");
-    robot.GetPose().Print("Unfiltered", "RobotPose");
+    robotInfo.GetPose().Print("Unfiltered", "RobotPose");
     face->GetHeadPose().Print("Unfiltered", "HeadPose");
     return;
   }

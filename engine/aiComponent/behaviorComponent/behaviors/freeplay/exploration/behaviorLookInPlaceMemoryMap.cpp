@@ -17,11 +17,12 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/groundPlaneROI.h"
 #include "engine/navMap/iNavMap.h"
-#include "engine/robot.h"
+#include "engine/viz/vizManager.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
@@ -84,16 +85,18 @@ BehaviorLookInPlaceMemoryMap::~BehaviorLookInPlaceMemoryMap()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorLookInPlaceMemoryMap::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  if(!behaviorExternalInterface.HasMapComponent()){
+    return false;
+  }
   
   // obviously this behavior needs memory map
-  const INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
+  const INavMap* memoryMap = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap();
   if ( nullptr == memoryMap ) {
     return false;
   }
   
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
   // Unfortunately we need to calculate borders in the memory map in order to check whether they are
   // inside our radius of action. Since I don't wanna break the const correctness of the Robot during WantsToBeActivated,
   // I'm going to validate as long as we have not failed previously at this location, and always as long
@@ -101,7 +104,7 @@ bool BehaviorLookInPlaceMemoryMap::WantsToBeActivatedBehavior(BehaviorExternalIn
   float distanceSQ;
   const float distThreshold = _configParams.distanceThresholdForLocations_mm;
   const float closeDistSQ = distThreshold*distThreshold;
-  const Pose3d& currentPose = robot.GetPose();
+  const Pose3d& currentPose = robotInfo.GetPose();
   for( const auto& previousFullLocation : _previousFullLocations )
   {
     // try to grab distance between robot pose and previousFullLocation (if comparable)
@@ -173,11 +176,8 @@ Result BehaviorLookInPlaceMemoryMap::OnBehaviorActivated(BehaviorExternalInterfa
   
   _visitedSectorCount = 0; // note that doing this here will be reset if we Resume (should consider different ResumeInternal)
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  _startingBodyFacing_rad = robot.GetPose().GetWithRespectToRoot().GetRotationAngle<'Z'>();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  _startingBodyFacing_rad = robotInfo.GetPose().GetWithRespectToRoot().GetRotationAngle<'Z'>();
   
   // restart all sectors
   _sectors.assign( _sectors.size(), SectorStatus::NeedsChecking);
@@ -193,12 +193,10 @@ Result BehaviorLookInPlaceMemoryMap::OnBehaviorActivated(BehaviorExternalInterfa
 void BehaviorLookInPlaceMemoryMap::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if ( kDrawDebugInfo ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     
-    robot.GetContext()->GetVizManager()->EraseSegments("BehaviorLookInPlaceMemoryMap.kDrawDebugInfo");
-    robot.GetContext()->GetVizManager()->EraseSegments("BehaviorLookInPlaceMemoryMap.kDrawDebugInfo.UpdateSectorRender");
+    robotInfo.GetContext()->GetVizManager()->EraseSegments("BehaviorLookInPlaceMemoryMap.kDrawDebugInfo");
+    robotInfo.GetContext()->GetVizManager()->EraseSegments("BehaviorLookInPlaceMemoryMap.kDrawDebugInfo.UpdateSectorRender");
   }
 }
 
@@ -334,17 +332,19 @@ void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(BehaviorExternalInter
   
   const Vec3f& sectorNormal = rotateAbsAroundUp * kFwdVector;
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
   // from robot current pose towards
-  const Point3f robotLocation = robot.GetPose().GetWithRespectToRoot().GetTranslation();
+  const Point3f robotLocation = robotInfo.GetPose().GetWithRespectToRoot().GetTranslation();
   const Point3f& from3D = robotLocation + sectorNormal * minDist;
   const Point3f& to3D   = robotLocation + sectorNormal * maxDist;
   
+  if(!behaviorExternalInterface.HasMapComponent()){
+    return;
+  }
+
   // grab mem map
-  const INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
+  const INavMap* memoryMap = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap();
   DEV_ASSERT(memoryMap, "BehaviorLookInPlaceMemoryMap.NeedMemoryMap"); // checked before
   
   // ask the memory map by tracing the ray cast whether we want to visit the sector
@@ -360,8 +360,8 @@ void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(BehaviorExternalInter
   // debug render
   if ( kDrawDebugInfo ) {
     const ColorRGBA& color = needsVisit ? NamedColors::YELLOW : NamedColors::DARKGRAY;
-    robot.GetContext()->GetVizManager()->DrawSegment("BehaviorLookInPlaceMemoryMap.kDrawDebugInfo",
-        from3D, to3D, color, false, 15.0f);
+    behaviorExternalInterface.GetRobotInfo().GetContext()->GetVizManager()->
+      DrawSegment("BehaviorLookInPlaceMemoryMap.kDrawDebugInfo", from3D, to3D, color, false, 15.0f);
   }
 }
 
@@ -461,12 +461,11 @@ void BehaviorLookInPlaceMemoryMap::FinishedAllSectorsAtLocation(BehaviorExternal
     if ( _previousFullLocations.size() >= _configParams.maxPreviousLocationCount ) {
       _previousFullLocations.pop_front();
     }
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
+
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     
     // add this new one
-    _previousFullLocations.emplace_back( robot.GetPose() );
+    _previousFullLocations.emplace_back( robotInfo.GetPose() );
   }
 }
 
@@ -510,13 +509,11 @@ void BehaviorLookInPlaceMemoryMap::UpdateSectorRender(BehaviorExternalInterface&
   {
     if ( kDrawDebugInfo )
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
-      
+      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
       // clear previous
       const std::string debugId("BehaviorLookInPlaceMemoryMap.kDrawDebugInfo.UpdateSectorRender");
-      robot.GetContext()->GetVizManager()->EraseSegments(debugId);
+      robotInfo.GetContext()->GetVizManager()->EraseSegments(debugId);
       
       const ColorRGBA& needCheckColor = NamedColors::LIGHTGRAY;
       const ColorRGBA& noVisitColor   = NamedColors::DARKGRAY;
@@ -528,10 +525,10 @@ void BehaviorLookInPlaceMemoryMap::UpdateSectorRender(BehaviorExternalInterface&
       const float maxDist = MaxCircleDist();
       
       // render rings
-      const Point3f renderCenter = (robot.GetPose().GetWithRespectToRoot().GetTranslation()) + Vec3f{0,0,15.0f}; // z offset to render above mem map
-      robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments(debugId,
+      const Point3f renderCenter = (robotInfo.GetPose().GetWithRespectToRoot().GetTranslation()) + Vec3f{0,0,15.0f}; // z offset to render above mem map
+      robotInfo.GetContext()->GetVizManager()->DrawXYCircleAsSegments(debugId,
         renderCenter, minDist, needCheckColor, false, kSectorsPerLocation);
-      robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments(debugId,
+      robotInfo.GetContext()->GetVizManager()->DrawXYCircleAsSegments(debugId,
         renderCenter, maxDist, needCheckColor, false, kSectorsPerLocation);
       
       // for every sector, render segments at the end of the sector to delimit it
@@ -559,7 +556,7 @@ void BehaviorLookInPlaceMemoryMap::UpdateSectorRender(BehaviorExternalInterface&
           const Vec3f& sectorStartLine = startRotateAbsAroundUp * kFwdVector;
           const Point3f& from3D = renderCenter + sectorStartLine * minDist;
           const Point3f& to3D   = renderCenter + sectorStartLine * maxDist;
-          robot.GetContext()->GetVizManager()->DrawSegment(debugId, from3D, to3D, thisSectorColor, false);
+          robotInfo.GetContext()->GetVizManager()->DrawSegment(debugId, from3D, to3D, thisSectorColor, false);
         }
 
         {
@@ -569,7 +566,7 @@ void BehaviorLookInPlaceMemoryMap::UpdateSectorRender(BehaviorExternalInterface&
           const Vec3f& sectorEndLine = endRotateAbsAroundUp * kFwdVector;
           const Point3f& from3D = renderCenter + sectorEndLine * minDist;
           const Point3f& to3D   = renderCenter + sectorEndLine * maxDist;
-          robot.GetContext()->GetVizManager()->DrawSegment(debugId, from3D, to3D, thisSectorColor, false);
+          robotInfo.GetContext()->GetVizManager()->DrawSegment(debugId, from3D, to3D, thisSectorColor, false);
           
         }
       }

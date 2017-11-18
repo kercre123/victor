@@ -20,6 +20,7 @@
 #include "engine/actions/sayTextAction.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
@@ -27,7 +28,6 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/needsSystem/needsManager.h"
-#include "engine/robot.h"
 #include "engine/viz/vizManager.h"
 
 #include "anki/common/basestation/utils/timer.h"
@@ -222,19 +222,15 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
   
   _saveEnrollResult    = ActionResult::NOT_STARTED;
   _saveAlbumResult     = ActionResult::NOT_STARTED;
-
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
   // Reset flag in FaceWorld because we're starting a new enrollment and will
   // be waiting for this new enrollment to be "complete" after this
-  robot.GetFaceWorld().SetFaceEnrollmentComplete(false);
+  behaviorExternalInterface.GetFaceWorldMutable().SetFaceEnrollmentComplete(false);
   
   // Make sure enrollment is enabled for session-only faces when we start. Otherwise,
   // we won't even be able to start enrollment because everything will remain a
   // "tracking only" face.
-  robot.GetFaceWorld().Enroll(Vision::UnknownFaceID);
+  behaviorExternalInterface.GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
   
   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal",
                 "Initialize with ID=%d and name '%s', to be saved to ID=%d",
@@ -300,10 +296,7 @@ ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorE
         // If we complete successfully, unset the observed ID/name
         _observedUnusableID = Vision::UnknownFaceID;
         _observedUnusableName.clear();
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        Robot& robot = behaviorExternalInterface.GetRobot();
-        robot.GetVisionComponent().AssignNameToFace(_faceID, _faceName, _saveID);
+        behaviorExternalInterface.GetVisionComponent().AssignNameToFace(_faceID, _faceName, _saveID);
 
         // Note that we will wait to disable face enrollment until the very end of
         // the behavior so that we remain resume-able from reactions, in case we
@@ -321,11 +314,10 @@ ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorE
         // Check to see if the face we've been enrolling has changed based on what was
         // observed since the last tick
         UpdateFaceToEnroll(behaviorExternalInterface);
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        const Robot& robot = behaviorExternalInterface.GetRobot();
+
+        const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
         // If we haven't seen the person (and only the one person) in too long, go back to looking for them
-        if(robot.GetLastImageTimeStamp() - _lastFaceSeenTime_ms > kEnrollFace_TimeoutForReLookForFace_ms)
+        if(robotInfo.GetLastImageTimeStamp() - _lastFaceSeenTime_ms > kEnrollFace_TimeoutForReLookForFace_ms)
         {
           _lastFaceSeenTime_ms = 0;
           
@@ -357,11 +349,8 @@ ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorE
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // Leave general-purpose / session-only enrollment enabled (i.e. not for a specific face)
-  robot.GetFaceWorld().Enroll(Vision::UnknownFaceID);
+  behaviorExternalInterface.GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
   
   ExternalInterface::FaceEnrollmentCompleted info;
   
@@ -460,10 +449,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated(BehaviorExternalInterface& behavi
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.ErasingNewlyEnrolledFace",
                     "Erasing new face %d as a precaution because we are about to report failure result: %s",
                     _faceID, EnumToString(info.result));
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      robot.GetVisionComponent().EraseFace(_faceID);
+      behaviorExternalInterface.GetVisionComponent().EraseFace(_faceID);
     }
     
     if(info.result == FaceEnrollmentResult::Success)
@@ -478,10 +464,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated(BehaviorExternalInterface& behavi
                   "In state:%hhu, FaceEnrollmentResult=%s",
                   _state, EnumToString(info.result));
     
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(info)));
+    //robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(info)));
     
     // Done (whether success or failure), so reset state for next run
     SET_STATE(NotStarted);
@@ -505,12 +488,8 @@ bool BehaviorEnrollFace::IsEnrollmentRequested() const
 void BehaviorEnrollFace::DisableEnrollment(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _settings->name.clear();
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // Leave "session-only" face enrollment enabled when we finish
-  robot.GetFaceWorld().Enroll(Vision::UnknownFaceID);
+  behaviorExternalInterface.GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -545,11 +524,9 @@ bool BehaviorEnrollFace::CanMoveTreads(BehaviorExternalInterface& behaviorExtern
   {
     return false;
   }
- 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  if(robot.GetCliffSensorComponent().IsCliffDetected())
+
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  if(robotInfo.GetCliffSensorComponent().IsCliffDetected())
   {
     return false;
   }
@@ -640,11 +617,8 @@ void BehaviorEnrollFace::TransitionToEnrolling(BehaviorExternalInterface& behavi
 {
   SET_STATE(Enrolling);
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // Actually enable directed enrollment of the selected face in the vision system
-  robot.GetFaceWorld().Enroll(_faceID);
+  behaviorExternalInterface.GetFaceWorldMutable().Enroll(_faceID);
 
   TrackFaceAction* trackAction = new TrackFaceAction(_faceID);
     
@@ -796,11 +770,7 @@ void BehaviorEnrollFace::TransitionToSavingToRobot(BehaviorExternalInterface& be
     }
   };
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  robot.GetVisionComponent().SaveFaceAlbumToRobot(saveAlbumCallback, saveEnrollCallback);
+  behaviorExternalInterface.GetVisionComponent().SaveFaceAlbumToRobot(saveAlbumCallback, saveEnrollCallback);
   
   std::function<bool(Robot& robot)> waitForSave = [this](Robot& robot) -> bool
   {
@@ -864,9 +834,6 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
                                                                Vision::FaceID_t saveID,
                                                                bool playScanningGetOut)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   CompoundActionParallel* liftAndTurnTowardsAction = new CompoundActionParallel({
     new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK)
   });
@@ -890,7 +857,7 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
   if(faceID != Vision::UnknownFaceID)
   {
     // Try to look at the specified face
-    const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(faceID);
+    const Vision::TrackedFace* face = behaviorExternalInterface.GetFaceWorld().GetFace(faceID);
     if(nullptr != face) {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.TurningTowardsFaceID",
                     "Turning towards faceID=%d (saveID=%d)",
@@ -909,15 +876,15 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
     const Vision::TrackedFace* faceToTurnTowards = nullptr;
     if(saveID != Vision::UnknownFaceID )
     {
-      faceToTurnTowards = robot.GetFaceWorld().GetFace(saveID);
+      faceToTurnTowards = behaviorExternalInterface.GetFaceWorld().GetFace(saveID);
     }
     
     if(faceToTurnTowards == nullptr)
     {
-      auto allFaceIDs = robot.GetFaceWorld().GetFaceIDs();
+      auto allFaceIDs = behaviorExternalInterface.GetFaceWorld().GetFaceIDs();
       for(auto & ID : allFaceIDs)
       {
-        const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(ID);
+        const Vision::TrackedFace* face = behaviorExternalInterface.GetFaceWorld().GetFace(ID);
         if(ANKI_VERIFY(face != nullptr, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.NullFace", "ID:%d", ID))
         {
           if(!face->HasName())
@@ -930,7 +897,7 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
             if((faceToTurnTowards == nullptr) ||
                (face->GetTimeStamp() > faceToTurnTowards->GetTimeStamp()) ||
                (face->GetTimeStamp() == faceToTurnTowards->GetTimeStamp() &&
-                robot.GetRNG().RandDbl() < 0.5))
+                behaviorExternalInterface.GetRNG().RandDbl() < 0.5))
             {
               faceToTurnTowards = face;
             }
@@ -1078,13 +1045,11 @@ bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeSt
 void BehaviorEnrollFace::UpdateFaceToEnroll(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const FaceWorld& faceWorld = behaviorExternalInterface.GetFaceWorld();
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
-  const TimeStamp_t lastImgTime = robot.GetLastImageTimeStamp();
+  const TimeStamp_t lastImgTime = robotInfo.GetLastImageTimeStamp();
   
-  const bool tooManyFaces = IsSeeingTooManyFaces(robot.GetFaceWorld(), lastImgTime);
+  const bool tooManyFaces = IsSeeingTooManyFaces(behaviorExternalInterface.GetFaceWorldMutable(), lastImgTime);
   if(tooManyFaces)
   {
     PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.UpdateFaceToEnroll.TooManyFaces", "");

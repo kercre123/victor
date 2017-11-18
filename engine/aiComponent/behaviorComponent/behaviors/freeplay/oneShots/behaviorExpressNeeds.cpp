@@ -18,10 +18,10 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
-#include "engine/robot.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/cozmoContext.h"
@@ -146,11 +146,9 @@ Result BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& beha
 {  
   CompoundActionSequential* action = new CompoundActionSequential();
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
-  if( !robot.IsOnChargerPlatform() ) {
+  if( !robotInfo.IsOnChargerPlatform() ) {
     // only turn towards the last face if we aren't on the charger
     // TODO:(bn) support "look with head and eyes" when we are on the charger.
     
@@ -223,8 +221,8 @@ float BehaviorExpressNeeds::GetCooldownSec(BehaviorExternalInterface& behaviorEx
 u8 BehaviorExpressNeeds::GetTracksToLock(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   if( _supportCharger ) {
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    if( robot.IsOnChargerPlatform() ) {
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    if( robotInfo.IsOnChargerPlatform() ) {
       // we are supporting the charger and are on it, so lock out the body
       return (u8)AnimTrackFlag::BODY_TRACK;
     }

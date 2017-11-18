@@ -137,10 +137,7 @@ void BehaviorAudioComponent::Init(BehaviorExternalInterface& behaviorExternalInt
   
   if(ANKI_DEV_CHEATS)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    /**const Robot& robot = behaviorExternalInterface.GetRobot();
-    
+    /** 
     const auto nonSparkFreeplayActivities = robot.GetBehaviorManager().GetNonSparkFreeplayActivities();
     for(const auto& activity : nonSparkFreeplayActivities)
     {

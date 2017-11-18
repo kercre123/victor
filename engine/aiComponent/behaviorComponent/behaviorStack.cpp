@@ -15,12 +15,12 @@
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/viz/vizManager.h"
 #include "util/logging/logging.h"
 
 // TODO:(bn) put viz manager in BehaviorExternalInterface, then remove these includes
-#include "engine/robot.h"
 #include "engine/cozmoContext.h"
 
 namespace Anki {
@@ -214,7 +214,13 @@ void BehaviorStack::SendDebugVizMessages(BehaviorExternalInterface& behaviorExte
     data.debugStrings.push_back( behavior->GetPrintableID() );
   }  
   
-  behaviorExternalInterface.GetRobot().GetContext()->GetVizManager()->SendBehaviorStackDebug(std::move(data));
+  auto context = behaviorExternalInterface.GetRobotInfo().GetContext();
+  if(context != nullptr){
+    auto vizManager = context->GetVizManager();
+    if(vizManager != nullptr){
+      vizManager->SendBehaviorStackDebug(std::move(data));
+    }
+  }
 }
 
 

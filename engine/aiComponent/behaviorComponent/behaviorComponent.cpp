@@ -191,11 +191,13 @@ void BehaviorComponent::InitializeSubComponents(Robot& robot,
                                  behaviorContainer,
                                  blockWorld,
                                  faceWorld,
+                                 robot.GetPetWorld(),
                                  behaviorEventComponent);
   
   behaviorContainer.Init(behaviorExternalInterface);
 
-  behaviorSysMgr.InitConfiguration(baseBehavior,
+  behaviorSysMgr.InitConfiguration(robot,
+                                   baseBehavior,
                                    behaviorExternalInterface,
                                    &asyncMessageComponent);
   
@@ -268,7 +270,16 @@ void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
                     &_components->_robot.GetMoodManager(),
                     _components->_robot.GetContext()->GetNeedsManager(),
                     &_components->_robot.GetProgressionUnlockComponent(),
-                    &_components->_robot.GetPublicStateBroadcaster());
+                    &_components->_robot.GetPublicStateBroadcaster(),
+                    &_components->_robot.GetTouchSensorComponent(),
+                    &_components->_robot.GetVisionComponent(),
+                    &_components->_robot.GetMapComponent(),
+                    &_components->_robot.GetCubeLightComponent(),
+                    &_components->_robot.GetObjectPoseConfirmer(),
+                    &_components->_robot.GetCubeAccelComponent(),
+                    &_components->_robot.GetAnimationComponent(),
+                    _components->_robot.GetAudioClient(),
+                    &_components->_robot.GetBodyLightComponent());
 
   _audioClient->Init(_components->_behaviorExternalInterface);
 }

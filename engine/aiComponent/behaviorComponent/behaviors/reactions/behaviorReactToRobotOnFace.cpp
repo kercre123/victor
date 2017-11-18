@@ -16,8 +16,8 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -55,11 +55,9 @@ Result BehaviorReactToRobotOnFace::OnBehaviorActivated(BehaviorExternalInterface
 void BehaviorReactToRobotOnFace::FlipOverIfNeeded(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnFace ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     AnimationTrigger anim;
-    if(robot.GetLiftAngle() < kRobotMinLiftAngleForArmUpAnim_s){
+    if(robotInfo.GetLiftAngle() < kRobotMinLiftAngleForArmUpAnim_s){
       anim = AnimationTrigger::FacePlantRoll;
     }else{
       anim = AnimationTrigger::FacePlantRollArmUp;

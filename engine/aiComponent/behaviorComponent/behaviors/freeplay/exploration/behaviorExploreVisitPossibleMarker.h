@@ -74,10 +74,10 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // create the proper action to see the cube
-  void ApproachPossibleCube(Robot& robot, ObjectType objectType, const Pose3d& possibleCubePose);
+  void ApproachPossibleCube(BehaviorExternalInterface& behaviorExternalInterface, ObjectType objectType, const Pose3d& possibleCubePose);
 
   // mark the pose as invalid since we tried to search for something there and failed
-  void MarkPossiblePoseAsEmpty(Robot& robot, ObjectType objectType, const Pose3d& pose);
+  void MarkPossiblePoseAsEmpty(BehaviorExternalInterface& behaviorExternalInterface, ObjectType objectType, const Pose3d& pose);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods

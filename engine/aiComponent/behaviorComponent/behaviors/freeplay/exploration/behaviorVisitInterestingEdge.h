@@ -228,7 +228,6 @@ private:
   
   // tag of the wait for images action when we are focused on edges
   u32                 _waitForImagesActionTag;
-  Signal::SmartHandle _waitForImagesActionHandle;
   
   // tag of the play anim action playing loop squint
   u32  _squintLoopAnimActionTag;

@@ -17,9 +17,9 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
 #include "anki/common/basestation/utils/timer.h"
 
 
@@ -69,14 +69,10 @@ bool BehaviorPyramidThankYou::WantsToBeActivatedBehavior(BehaviorExternalInterfa
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPyramidThankYou::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
   CompoundActionSequential* turnVerifyThank = new CompoundActionSequential();
   Pose3d facePose;
   behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(facePose);
-  const bool lastFaceInCurrentOrigin = robot.IsPoseInWorldOrigin(facePose);
+  const bool lastFaceInCurrentOrigin = behaviorExternalInterface.GetRobotInfo().IsPoseInWorldOrigin(facePose);
   if(lastFaceInCurrentOrigin){
    // Turn to the user and say thank you
     TurnTowardsFaceAction* turnTowardsAction = new TurnTowardsLastFacePoseAction();

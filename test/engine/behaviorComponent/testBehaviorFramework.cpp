@@ -23,6 +23,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
@@ -290,8 +292,8 @@ void TestSuperPoweredBehavior::OnLeftActivatableScopeInternal() {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehavior::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) {
-  
-  auto robotExternalInterface = _robot->HasExternalInterface() ? _robot->GetExternalInterface() : nullptr;
+  auto robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto robotExternalInterface = robotInfo.HasExternalInterface() ? robotInfo.GetExternalInterface() : nullptr;
   if(robotExternalInterface != nullptr) {
     SubscribeToTags({EngineToGameTag::Ping});
   }

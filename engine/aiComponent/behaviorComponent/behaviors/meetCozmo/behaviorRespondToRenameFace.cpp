@@ -17,7 +17,6 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {

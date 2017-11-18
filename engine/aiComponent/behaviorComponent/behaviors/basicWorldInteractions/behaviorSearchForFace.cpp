@@ -16,7 +16,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {

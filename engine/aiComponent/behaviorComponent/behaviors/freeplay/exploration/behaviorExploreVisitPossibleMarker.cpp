@@ -17,8 +17,8 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/cozmoContext.h"
-#include "engine/robot.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
@@ -69,19 +69,17 @@ Result BehaviorExploreVisitPossibleMarker::OnBehaviorActivated(BehaviorExternalI
   const AIWhiteboard::PossibleObject* closestPossibleObject = nullptr;
   float distToClosestSQ = 0.0f;
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
   // get all markers from whiteboard
   for( const auto& possibleObject : _possibleObjects )
   {
     // all possible objects have to be in robot's origin, otherwise whiteboard lied to us
-    DEV_ASSERT(robot.IsPoseInWorldOrigin(possibleObject.pose),
+    DEV_ASSERT(robotInfo.IsPoseInWorldOrigin(possibleObject.pose),
                "BehaviorExploreVisitPossibleMarker.InitInternal.InvalidOrigin" );
   
     // pick closest marker to us
-    const Vec3f& dirToPossibleObject = possibleObject.pose.GetTranslation() - robot.GetPose().GetTranslation();
+    const Vec3f& dirToPossibleObject = possibleObject.pose.GetTranslation() - robotInfo.GetPose().GetTranslation();
     const float distToPosObjSQ = dirToPossibleObject.LengthSq();
     // don't think we need this anymore since we remove them once we look at them
     // if( distToMarkerSQ < std::pow( kEvpm_DistanceFromPossibleCubeMin_mm, 2) ) {      
@@ -104,7 +102,7 @@ Result BehaviorExploreVisitPossibleMarker::OnBehaviorActivated(BehaviorExternalI
                       distToClosestSQ);
     
     // calculate best approach position
-    ApproachPossibleCube(robot, closestPossibleObject->type, closestPossibleObject->pose);
+    ApproachPossibleCube(behaviorExternalInterface, closestPossibleObject->type, closestPossibleObject->pose);
   
     return Result::RESULT_OK;
   }
@@ -118,12 +116,13 @@ Result BehaviorExploreVisitPossibleMarker::OnBehaviorActivated(BehaviorExternalI
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
+void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(BehaviorExternalInterface& behaviorExternalInterface,
                                                               ObjectType objectType,
                                                               const Pose3d& possibleCubePose)
 {
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // trust that the whiteboard will never return information that is not valid in the current origin
-  DEV_ASSERT(robot.IsPoseInWorldOrigin(possibleCubePose),
+  DEV_ASSERT(robotInfo.IsPoseInWorldOrigin(possibleCubePose),
              "BehaviorExploreVisitPossibleMarker.WhiteboardPossibleMarkersDirty");
 
   // TODO if we are closer than max, limit max to that. I dont want to simply face the cube in that case because
@@ -136,7 +135,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
     kEvpm_DistanceFromPossibleCubeMin_mm, kEvpm_DistanceFromPossibleCubeMax_mm));
 
   Pose3d relPose;
-  if( possibleCubePose.GetWithRespectTo( robot.GetPose(), relPose ) ) {
+  if( possibleCubePose.GetWithRespectTo( robotInfo.GetPose(), relPose ) ) {
 
     const float distSq = relPose.GetTranslation().LengthSq();
     
@@ -156,9 +155,9 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
       PRINT_NAMED_INFO("BehaviorExploreVisitPossibleMarker.WithinRange.Verify",
                        "robot is already within range of the cube, check if we can see it");
       
-      DelegateIfInControl(action, [this, &robot, objectType, possibleCubePose](ActionResult res) {
+      DelegateIfInControl(action, [this, &behaviorExternalInterface, objectType, possibleCubePose](ActionResult res) {
           if( res == ActionResult::SUCCESS ) {
-            MarkPossiblePoseAsEmpty(robot, objectType, possibleCubePose);
+            MarkPossiblePoseAsEmpty(behaviorExternalInterface, objectType, possibleCubePose);
           }
         });
       return;
@@ -184,7 +183,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
     possiblePoints[3] = possibleCubePose.GetTranslation() - (side * distanceRand);
 
     // pick closest
-    const Vec3f& robotLoc = robot.GetPose().GetTranslation();
+    const Vec3f& robotLoc = robotInfo.GetPose().GetTranslation();
     size_t bestIndex = 0;
     float bestDistSq = (possiblePoints[bestIndex] - robotLoc).LengthSq();
     for( size_t i=1; i<possiblePoints.size(); ++i)
@@ -212,7 +211,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
     }
   
     const Vec3f& kUpVector = Z_AXIS_3D();
-    const Pose3d goalPose(goalRotation_rad, kUpVector, goalLocation, robot.GetWorldOrigin());
+    const Pose3d goalPose(goalRotation_rad, kUpVector, goalLocation, robotInfo.GetWorldOrigin());
     approachAction->AddAction( new DriveToPoseAction(goalPose, false) );
   }
   else {
@@ -231,7 +230,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
       
       Pose3d newTargetPose(RotationVector3d{},
                            newTranslation * (oldLength - distanceRand),
-                           robot.GetPose());
+                           robotInfo.GetPose());
 
       // turn first to signal intent
       approachAction->AddAction( new TurnTowardsPoseAction(possibleCubePose, M_PI_F) );
@@ -248,12 +247,12 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
   DelegateIfInControl(approachAction);
 }
 
-void BehaviorExploreVisitPossibleMarker::MarkPossiblePoseAsEmpty(Robot& robot, ObjectType objectType, const Pose3d& pose)
+void BehaviorExploreVisitPossibleMarker::MarkPossiblePoseAsEmpty(BehaviorExternalInterface& behaviorExternalInterface, ObjectType objectType, const Pose3d& pose)
 {
   PRINT_NAMED_INFO("BehaviorExploreVisitPossibleMarker.ClearPose",
                    "robot looked at pose, so clear it");
 
-  robot.GetAIComponent().GetWhiteboard().FinishedSearchForPossibleCubeAtPose(objectType, pose);
+  behaviorExternalInterface.GetAIComponent().GetWhiteboard().FinishedSearchForPossibleCubeAtPose(objectType, pose);
 }
 
 

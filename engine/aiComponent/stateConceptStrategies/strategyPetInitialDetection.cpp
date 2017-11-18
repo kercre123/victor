@@ -15,7 +15,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoContext.h"
 #include "engine/petWorld.h"
-#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -38,11 +37,8 @@ StrategyPetInitialDetection::StrategyPetInitialDetection(BehaviorExternalInterfa
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool StrategyPetInitialDetection::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 { 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
   // Check for new pets
-  const auto & petWorld = robot.GetPetWorld();
+  const auto & petWorld = behaviorExternalInterface.GetPetWorld();
   const auto & pets = petWorld.GetAllKnownPets();
   
   for (const auto & it : pets) {

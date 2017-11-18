@@ -24,7 +24,6 @@ namespace Cozmo {
 
 class BlockWorldFilter;
 class ObservableObject;
-class Robot;
 
 class BehaviorKnockOverCubes : public ICozmoBehavior
 {

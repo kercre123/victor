@@ -16,9 +16,9 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -55,12 +55,10 @@ Result BehaviorReactToRobotOnBack::OnBehaviorActivated(BehaviorExternalInterface
 void BehaviorReactToRobotOnBack::FlipDownIfNeeded(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnBack ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     // Check if cliff detected
     // If not, then calibrate head because we're not likely to be on back if no cliff detected.
-    if (robot.GetCliffSensorComponent().IsCliffDetected()) {
+    if (robotInfo.GetCliffSensorComponent().IsCliffDetected()) {
       AnimationTrigger anim = AnimationTrigger::FlipDownFromBack;
       
       if(behaviorExternalInterface.GetAIComponent().GetWhiteboard().HasHiccups())
@@ -71,10 +69,7 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded(BehaviorExternalInterface& beh
       DelegateIfInControl(new TriggerAnimationAction(anim),
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     } else {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      const auto cliffs = robot.GetCliffSensorComponent().GetCliffDataRaw();
+      const auto cliffs = robotInfo.GetCliffSensorComponent().GetCliffDataRaw();
       LOG_EVENT("BehaviorReactToRobotOnBack.FlipDownIfNeeded.CalibratingHead", "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
       DelegateIfInControl(new CalibrateMotorAction(true, false),
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);

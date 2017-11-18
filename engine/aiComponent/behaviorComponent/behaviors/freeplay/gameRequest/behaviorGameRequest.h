@@ -23,6 +23,7 @@
 namespace Anki {
 namespace Cozmo {
 
+class DockingComponent;
 class ObservableObject;
 
 namespace ExternalInterface {
@@ -115,7 +116,10 @@ private:
 
   std::unique_ptr<BlockWorldFilter>  _blockworldFilter;
 
-  bool FilterBlocks(const Robot* robot, const ObservableObject* obj) const;
+  bool FilterBlocks(ProgressionUnlockComponent* unlockComp,
+                    AIComponent* aiComp,
+                    DockingComponent* dockingComp,
+                    const ObservableObject* obj) const;
 
   const ObservableObject* GetClosestBlock(BehaviorExternalInterface& behaviorExternalInterface) const;
   

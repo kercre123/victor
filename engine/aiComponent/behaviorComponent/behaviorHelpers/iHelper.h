@@ -28,7 +28,6 @@ namespace Anki {
 namespace Cozmo {
 
 // Forward Declarations
-class Robot;
 class IActionRunner;
 class BehaviorHelperFactory;
 

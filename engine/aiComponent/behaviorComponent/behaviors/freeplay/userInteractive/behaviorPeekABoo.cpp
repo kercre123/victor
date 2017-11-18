@@ -20,10 +20,10 @@
 #include "engine/actions/trackFaceAction.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/animTrackHelpers.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "anki/vision/basestation/faceTracker.h"
 
@@ -94,9 +94,6 @@ bool BehaviorPeekABoo::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
   // for COZMO-8914 - no way to play spark get out if no face is found during spark search
   // so run the peek a boo behavior with a flag set to indicate that we should just play the
   // spark get out animation
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
   if((_timeSparkAboutToEnd_Sec > 0) &&
      (currentTime_Sec > _timeSparkAboutToEnd_Sec)){
     _timeSparkAboutToEnd_Sec = kSparkShouldPlaySparkFailFlag;
@@ -106,9 +103,10 @@ bool BehaviorPeekABoo::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
   // The sparked version of this behavior is grouped with look for faces behavior in case no faces were seen recently.
   _cachedFace.Reset();
 
+  const auto context = behaviorExternalInterface.GetRobotInfo().GetContext();
   return (_nextTimeWantsToBeActivated_Sec < currentTime_Sec) &&
          (GetInteractionFace(behaviorExternalInterface).IsValid()) &&
-         robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::PeekABoo);
+         context->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::PeekABoo);
 }
 
   
@@ -148,10 +146,8 @@ Result BehaviorPeekABoo::OnBehaviorActivated(BehaviorExternalInterface& behavior
 ICozmoBehavior::Status BehaviorPeekABoo::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   UpdateTimestampSets(behaviorExternalInterface);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  const bool seeingEyes = !WasFaceHiddenAfterTimestamp(behaviorExternalInterface, robot.GetLastImageTimeStamp());
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const bool seeingEyes = !WasFaceHiddenAfterTimestamp(behaviorExternalInterface, robotInfo.GetLastImageTimeStamp());
   
   // Check to see if a face has appeared/disappeared every tick
   // these functions are their own callback, so allowing the callback
@@ -235,9 +231,6 @@ void BehaviorPeekABoo::TransitionTurnToFace(BehaviorExternalInterface& behaviorE
 void BehaviorPeekABoo::TransitionPlayPeekABooAnim(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(RequestPeekaBooAnim);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   _lastRequestTime_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   CompoundActionSequential* action = new CompoundActionSequential();
 
@@ -249,10 +242,10 @@ void BehaviorPeekABoo::TransitionPlayPeekABooAnim(BehaviorExternalInterface& beh
     action->AddAction(new TurnTowardsFaceAction(GetInteractionFace(behaviorExternalInterface)));
   }
   
-  DelegateIfInControl(action,[this, &robot](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(action,[this](BehaviorExternalInterface& behaviorExternalInterface) {
     // If we saw a face in the frame buffer, assume that they haven't tried to peekaboo yet
     // if we didn't see a face, assume their face is hidden and they are about to finish the peekaboo
-    const TimeStamp_t timestampHeadSteady = robot.GetLastImageTimeStamp();
+    const TimeStamp_t timestampHeadSteady = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
     if(WasFaceHiddenAfterTimestamp(behaviorExternalInterface, timestampHeadSteady)) {
       _stillSawFaceAfterRequest = false;
       TransitionWaitToSeeFace(behaviorExternalInterface);
@@ -314,9 +307,6 @@ IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(BehaviorExternalInter
 {
   // create action which alternated between idle and re-request for the desired number of times, and then
   // loops idle the desired number of times until the timeout.
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   CompoundActionSequential* idleAndReRequestAction = new CompoundActionSequential();
 
   const u32 singleLoop = 1;
@@ -324,10 +314,11 @@ IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(BehaviorExternalInter
   // In cases where the head isn't already in use, lock it here so that it doesn't move
   const u8 headLock = lockHeadTrack ? (u8)AnimTrackFlag::HEAD_TRACK : (u8)AnimTrackFlag::NO_TRACKS;
 
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // If the face is too low, then the "PeekABooShort" anim will actually cause the lift to block the camera,
   // which looses track of the face (and then thinks the user peeked when they didn't). If the robots head is
   // below a certain angle, _also_ lock the lift to avoid this case
-  const bool headBelowAngle = robot.GetHeadAngle() < DEG_TO_RAD( kHeadAngleWhereLiftBlocksCamera_deg );
+  const bool headBelowAngle = robotInfo.GetHeadAngle() < DEG_TO_RAD( kHeadAngleWhereLiftBlocksCamera_deg );
   const u8 liftLock = headBelowAngle ? (u8)AnimTrackFlag::LIFT_TRACK : (u8)AnimTrackFlag::NO_TRACKS;
 
   const u8 lockTracks = headLock | liftLock;
@@ -335,20 +326,18 @@ IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(BehaviorExternalInter
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".BuildAnims").c_str(),
                 "Playing idle with %d re-requests. Head angle = %fdeg Locking: %s",
                 _params.numReRequestsPerTimeout,
-                RAD_TO_DEG(robot.GetHeadAngle()),
+                RAD_TO_DEG(robotInfo.GetHeadAngle()),
                 AnimTrackHelpers::AnimTrackFlagsToString(lockTracks).c_str());
 
   if( _params.numReRequestsPerTimeout > 0 ) {
     // we want to do re-requests. To avoid eye pops, we will alternate idle animations (which are a few
     // seconds each) with re-requests for the desired number of times
     for( int i=0; i<_params.numReRequestsPerTimeout; ++i ) {
-      idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(
-                                                                            AnimationTrigger::PeekABooIdle,
+      idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(AnimationTrigger::PeekABooIdle,
                                                                             singleLoop,
                                                                             interruptRunningAnimation,
                                                                             lockTracks) );
-      idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(
-                                                                            AnimationTrigger::PeekABooShort,
+      idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(AnimationTrigger::PeekABooShort,
                                                                             singleLoop,
                                                                             interruptRunningAnimation,
                                                                             lockTracks) );
@@ -442,19 +431,17 @@ void BehaviorPeekABoo::UpdateTimestampSets(BehaviorExternalInterface& behaviorEx
     _timestampEyeNotVisibleMap.erase(_timestampEyeNotVisibleMap.begin());
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // If no robot images have been received, don't bother updating
   if(!(_timestampEyeNotVisibleMap.size() == 0) &&
-     (robot.GetLastImageTimeStamp() == _timestampEyeNotVisibleMap.rbegin()->first)){
+     (robotInfo.GetLastImageTimeStamp() == _timestampEyeNotVisibleMap.rbegin()->first)){
     return;
   }
   
   
   const bool kRecognizableFacesOnly = true;
-  std::set< Vision::FaceID_t > faceIDs = robot.GetFaceWorld().GetFaceIDsObservedSince(robot.GetLastImageTimeStamp(),
-                                                                                      kRecognizableFacesOnly);
+  std::set< Vision::FaceID_t > faceIDs = behaviorExternalInterface.GetFaceWorld().GetFaceIDsObservedSince(
+                                           robotInfo.GetLastImageTimeStamp(), kRecognizableFacesOnly);
   // We originally kept a "Target face' to know where to initially turn, however
   // when they're constantly covering up their eyes it's likely our face ID is changing a lot. So just allow multiple faces
   // if multiple people are looking at cozmo this means it'll be easier for him to be happy.
@@ -464,7 +451,7 @@ void BehaviorPeekABoo::UpdateTimestampSets(BehaviorExternalInterface& behaviorEx
   {
     for(const auto& faceID : faceIDs)
     {
-      const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(faceID);
+      const Vision::TrackedFace* face = behaviorExternalInterface.GetFaceWorld().GetFace(faceID);
       if(face != nullptr )
       {
         // If we've seen any eyes go for it...
@@ -487,18 +474,16 @@ void BehaviorPeekABoo::UpdateTimestampSets(BehaviorExternalInterface& behaviorEx
   const int framesEyesMissingCount = seeingEyes ? 0 : cumulativeEyeMissingCountNoWrap;
 
   
-  _timestampEyeNotVisibleMap.insert(std::make_pair(robot.GetLastImageTimeStamp(), framesEyesMissingCount));
+  _timestampEyeNotVisibleMap.insert(std::make_pair(robotInfo.GetLastImageTimeStamp(), framesEyesMissingCount));
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPeekABoo::WasFaceHiddenAfterTimestamp(BehaviorExternalInterface& behaviorExternalInterface, TimeStamp_t timestamp)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // make sure the list is up to date
-  if(_timestampEyeNotVisibleMap.rbegin()->first != robot.GetLastImageTimeStamp()){
+  if(_timestampEyeNotVisibleMap.rbegin()->first != robotInfo.GetLastImageTimeStamp()){
     UpdateTimestampSets(behaviorExternalInterface);
   }
   
@@ -520,12 +505,10 @@ bool BehaviorPeekABoo::WasFaceHiddenAfterTimestamp(BehaviorExternalInterface& be
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SmartFaceID BehaviorPeekABoo::GetInteractionFace(const BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   const bool kUseRecognizableOnly = false;
   std::set< Vision::FaceID_t > faces = behaviorExternalInterface.GetFaceWorld().GetFaceIDsObservedSince(
-                    robot.GetLastImageTimeStamp() - _params.oldestFaceToConsider_MS, kUseRecognizableOnly);
+                    robotInfo.GetLastImageTimeStamp() - _params.oldestFaceToConsider_MS, kUseRecognizableOnly);
 
   std::set<SmartFaceID> smartFaces;
   for(auto& entry: faces){
@@ -535,7 +518,7 @@ SmartFaceID BehaviorPeekABoo::GetInteractionFace(const BehaviorExternalInterface
   const Vision::TrackedFace* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(_cachedFace);
   if((facePtr != nullptr) &&
      (faces.find(facePtr->GetID()) == faces.end())){
-    const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
+    const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
     _cachedFace = whiteboard.GetBestFaceToTrack(smartFaces, false);
   }
 

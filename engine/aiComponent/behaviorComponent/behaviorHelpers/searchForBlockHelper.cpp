@@ -26,9 +26,9 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
-#include "engine/robot.h"
 #include "anki/common/basestation/utils/timer.h"
 
 
@@ -88,11 +88,8 @@ bool SearchForBlockHelper::ShouldCancelDelegates(BehaviorExternalInterface& beha
 BehaviorStatus SearchForBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _nextSearchIntensity = SearchIntensity::QuickSearch;
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    _robotCameraAtSearchStart = robot.GetVisionComponent().GetCamera();
+  if(behaviorExternalInterface.HasVisionComponent()){
+    _robotCameraAtSearchStart = behaviorExternalInterface.GetVisionComponent().GetCamera();
   }
   _objectsSeenDuringSearch.clear();
   
@@ -247,10 +244,7 @@ void SearchForBlockHelper::SearchFinishedWithoutInterruption(BehaviorExternalInt
                         "Failed to find known block - wiping");
       BlockWorldFilter filter;
       filter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame); // not necessary, just to be explicit
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      robot.GetBlockWorld().DeleteLocatedObjects(filter);
+      behaviorExternalInterface.GetBlockWorld().DeleteLocatedObjects(filter);
     }
     _status = BehaviorStatus::Failure;
   }else if((_params.numberOfBlocksToLocate > 0) &&

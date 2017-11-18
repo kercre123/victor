@@ -18,11 +18,11 @@
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "util/console/consoleInterface.h"
 
@@ -90,10 +90,8 @@ ICozmoBehavior::Status BehaviorRollBlock::UpdateInternal_WhileRunning(BehaviorEx
       // so check distance between Cozmo and the cube to see whether he is still
       // rolling the cube himself or it was put upright by the user
       f32 distBetween = 0;
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
-      if(ComputeDistanceSQBetween(robot.GetPose(), object->GetPose(), distBetween) &&
+      if(ComputeDistanceSQBetween(behaviorExternalInterface.GetRobotInfo().GetPose(), 
+                                  object->GetPose(), distBetween) &&
          (distBetween > (kMaxDistCozmoIsRollingCube_mm * kMaxDistCozmoIsRollingCube_mm))){
         
         UpdateTargetsUpAxis(behaviorExternalInterface);

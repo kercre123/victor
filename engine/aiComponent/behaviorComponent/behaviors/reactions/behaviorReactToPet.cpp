@@ -12,7 +12,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/trackPetFaceAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iReactToPetListener.h"
-#include "engine/robot.h"
 #include "engine/petWorld.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "util/console/consoleInterface.h"
@@ -175,11 +174,8 @@ void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExter
   
   _target = Vision::UnknownFaceID;
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // React to the first valid target.  Don't worry about choosing "best".
-  const auto & petWorld = robot.GetPetWorld();
+  const auto & petWorld = behaviorExternalInterface.GetPetWorld();
   const Vision::TrackedPet * pet = nullptr;
   
   for (auto petID : _targets) {
@@ -206,7 +202,7 @@ void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExter
   // Tracking animations do not end by themselves.
   // Choose a random duration and rely on UpdateInternal_WhileRunning() to end the action.
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const float randTime_s = Util::numeric_cast<float>(robot.GetRNG().RandDblInRange(kReactToPetMinTime_s, kReactToPetMaxTime_s));
+  const float randTime_s = Util::numeric_cast<float>(behaviorExternalInterface.GetRNG().RandDblInRange(kReactToPetMinTime_s, kReactToPetMaxTime_s));
   const float endTime_s = currTime_s + randTime_s;
 
   PRINT_INFO("ReactToPet.BeginIteration", "Reacting to petID %d type %d from t=%f to t=%f",

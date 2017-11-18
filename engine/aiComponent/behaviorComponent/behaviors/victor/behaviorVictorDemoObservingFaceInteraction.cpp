@@ -17,9 +17,9 @@
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/trackFaceAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -238,7 +238,7 @@ TimeStamp_t BehaviorVictorDemoObservingFaceInteraction::GetRecentFaceTime(
   BehaviorExternalInterface& behaviorExternalInterface)
 {
 
-  const TimeStamp_t lastImgTime = behaviorExternalInterface.GetRobot().GetLastImageTimeStamp();
+  const TimeStamp_t lastImgTime = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
   const TimeStamp_t recentTime = lastImgTime > kMaxTimeSinceSeenFaceToLook_ms ?
                                  ( lastImgTime - kMaxTimeSinceSeenFaceToLook_ms ) :
                                  0;

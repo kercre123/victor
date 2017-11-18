@@ -15,9 +15,9 @@
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
-#include "engine/robot.h"
 #include "engine/robotManager.h"
 #include "engine/moodSystem/moodManager.h"
+#include "util/helpers/templateHelpers.h"
 
 
 namespace Anki {

@@ -14,6 +14,7 @@
 #include "engine/aiComponent/stateConceptStrategies/strategyRobotTouchGesture.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -53,12 +54,11 @@ bool StrategyRobotTouchGesture::AreStateConditionsMetInternal(BehaviorExternalIn
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool StrategyRobotTouchGesture::IsReceivingTouchGesture(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  TouchGesture touchGesture = robot.GetTouchSensorComponent().GetLatestTouchGesture();
+  TouchGesture touchGesture = behaviorExternalInterface.GetTouchSensorComponent().GetLatestTouchGesture();
   const bool gotTargetTouchGesture = touchGesture == _targetTouchGesture;
   return gotTargetTouchGesture;
+
+  return false;
 }
 
 

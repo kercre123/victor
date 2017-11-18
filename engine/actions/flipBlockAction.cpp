@@ -78,7 +78,8 @@ DriveAndFlipBlockAction::DriveAndFlipBlockAction(const ObjectID objectID,
         static_cast<FlipBlockAction*>(_flipBlockAction.lock().get())->SetShouldCheckPreActionPose(!withinThreshold);
       }
       
-      return GetPossiblePoses(GetRobot(), object, possiblePoses, alreadyInPosition, false);        
+      return GetPossiblePoses(GetRobot().GetPose(), GetRobot().GetCarryingComponent(), GetRobot().GetBlockWorld(), GetRobot().GetFaceWorld(), 
+                              object, possiblePoses, alreadyInPosition, false);        
     });
   }
   
@@ -102,12 +103,16 @@ void DriveAndFlipBlockAction::ShouldDriveToClosestPreActionPose(bool tf)
       }
       
       
-      return GetPossiblePoses(GetRobot(), object, possiblePoses, alreadyInPosition, tf);
+      return GetPossiblePoses(GetRobot().GetPose(), GetRobot().GetCarryingComponent(), GetRobot().GetBlockWorld(), GetRobot().GetFaceWorld(),
+                              object, possiblePoses, alreadyInPosition, tf);
     });
   }
 }
 
-ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
+ActionResult DriveAndFlipBlockAction::GetPossiblePoses(const Pose3d& robotPose,
+                                                       const CarryingComponent& carryingComp,
+                                                       BlockWorld& blockWorld,
+                                                       FaceWorld& faceWorld,
                                                        ActionableObject* object,
                                                        std::vector<Pose3d>& possiblePoses,
                                                        bool& alreadyInPosition,
@@ -123,7 +128,8 @@ ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
   
   IDockAction::PreActionPoseOutput preActionPoseOutput;
   
-  IDockAction::GetPreActionPoses(robot, preActionPoseInput, preActionPoseOutput);
+  IDockAction::GetPreActionPoses(robotPose, carryingComp, blockWorld, 
+                                 preActionPoseInput, preActionPoseOutput);
   
   if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
   {
@@ -132,7 +138,7 @@ ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
   }
   
   Pose3d facePose;
-  TimeStamp_t faceTime = robot.GetFaceWorld().GetLastObservedFace(facePose);
+  TimeStamp_t faceTime = faceWorld.GetLastObservedFace(facePose);
   
   if(preActionPoseOutput.preActionPoses.empty())
   {
@@ -155,7 +161,7 @@ ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
   for(auto iter = preActionPoseOutput.preActionPoses.begin(); iter != preActionPoseOutput.preActionPoses.end(); ++iter)
   {
     Pose3d poseWrtRobot;
-    if(!iter->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot))
+    if(!iter->GetPose().GetWithRespectTo(robotPose, poseWrtRobot))
     {
       continue;
     }
@@ -234,7 +240,8 @@ void DriveToFlipBlockPoseAction::ShouldDriveToClosestPreActionPose(bool tf)
 {
   SetGetPossiblePosesFunc([this, tf](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
   {
-    return DriveAndFlipBlockAction::GetPossiblePoses(GetRobot(), object, possiblePoses, alreadyInPosition, tf);
+    return DriveAndFlipBlockAction::GetPossiblePoses(GetRobot().GetPose(), GetRobot().GetCarryingComponent(), GetRobot().GetBlockWorld(), GetRobot().GetFaceWorld(),
+                                                     object, possiblePoses, alreadyInPosition, tf);
   });
 }
 
@@ -243,7 +250,8 @@ void DriveToFlipBlockPoseAction::OnRobotSetInternalDriveToObj()
 {
   SetGetPossiblePosesFunc([this](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
   {
-    return DriveAndFlipBlockAction::GetPossiblePoses(GetRobot(), object, possiblePoses, alreadyInPosition, false);
+    return DriveAndFlipBlockAction::GetPossiblePoses(GetRobot().GetPose(), GetRobot().GetCarryingComponent(), GetRobot().GetBlockWorld(), GetRobot().GetFaceWorld(), 
+                                                     object, possiblePoses, alreadyInPosition, false);
   });
 }
 
@@ -294,7 +302,8 @@ ActionResult FlipBlockAction::Init()
   
   IDockAction::PreActionPoseOutput preActionPoseOutput;
   
-  IDockAction::GetPreActionPoses(GetRobot(), preActionPoseInput, preActionPoseOutput);
+  IDockAction::GetPreActionPoses(GetRobot().GetPose(), GetRobot().GetCarryingComponent(), GetRobot().GetBlockWorld(),
+                                 preActionPoseInput, preActionPoseOutput);
   
   if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
   {

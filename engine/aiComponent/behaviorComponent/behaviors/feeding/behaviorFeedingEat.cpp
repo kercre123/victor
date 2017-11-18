@@ -19,6 +19,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iFeedingListener.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/animationComponent.h"
@@ -28,7 +29,6 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
-#include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 
@@ -115,19 +115,21 @@ Result BehaviorFeedingEat::OnBehaviorActivated(BehaviorExternalInterface& behavi
     CubeMovementHandler(behaviorExternalInterface, movementScore);
   };
   
-  auto listener = std::make_shared<CubeAccelListeners::MovementListener>(kHighPassFiltCoef,
-                                                                         kMaxMovementScoreToAdd,
-                                                                         kMovementScoreDecay,
-                                                                         kFeedingMovementScoreMax, // max allowed movement score
-                                                                         movementDetectedCallback);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  robot.GetCubeAccelComponent().AddListener(_targetID, listener);
-  DEV_ASSERT(_cubeMovementListener == nullptr,
+  if(behaviorExternalInterface.HasCubeAccelComponent()){
+    auto listener = std::make_shared<CubeAccelListeners::MovementListener>(kHighPassFiltCoef,
+                                                                          kMaxMovementScoreToAdd,
+                                                                          kMovementScoreDecay,
+                                                                          kFeedingMovementScoreMax, // max allowed movement score
+                                                                          movementDetectedCallback);
+                                                                        
+    behaviorExternalInterface.GetCubeAccelComponent().AddListener(_targetID, listener);
+    DEV_ASSERT(_cubeMovementListener == nullptr,
              "BehaviorFeedingEat.InitInternal.PreviousListenerAlreadySetup");
-  // keep a pointer to this listener around so that we can remove it later:
-  _cubeMovementListener = listener;
+    // keep a pointer to this listener around so that we can remove it later:
+    _cubeMovementListener = listener;
+  }
+
+
   
   TransitionToDrivingToFood(behaviorExternalInterface);
   return Result::RESULT_OK;
@@ -173,10 +175,8 @@ void BehaviorFeedingEat::CubeMovementHandler(BehaviorExternalInterface& behavior
   // Logic for determining whether the player has "stolen" cozmo's cube while he's
   // eating.  We only want to respond if the player pulls the cube away while
   // Cozmo is actively in the "eating" stage and has not drained the cube yet
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  if(robot.IsPhysical()){
+
+  if(behaviorExternalInterface.GetRobotInfo().IsPhysical()){
     if(movementScore > kCubeMovedTooFastInterrupt){
       const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       const bool currentlyEating = (_currentState == State::Eating) &&
@@ -207,14 +207,11 @@ void BehaviorFeedingEat::OnBehaviorDeactivated(BehaviorExternalInterface& behavi
     }
   }
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+
+  behaviorExternalInterface.GetRobotInfo().EnableStopOnCliff(true);
   
-  robot.GetRobotMessageHandler()->SendMessage(robot.GetID(),
-    RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(true)));
-  
-  const bool removeSuccessfull = robot.GetCubeAccelComponent().RemoveListener(_targetID, _cubeMovementListener);
+  const bool removeSuccessfull = behaviorExternalInterface.HasCubeAccelComponent() &&
+    behaviorExternalInterface.GetCubeAccelComponent().RemoveListener(_targetID, _cubeMovementListener);
   ANKI_VERIFY(removeSuccessfull,
              "BehaviorFeedingEat.StopInternal.FailedToRemoveAccellComponent",
               "");
@@ -287,24 +284,20 @@ void BehaviorFeedingEat::TransitionToPlacingLiftOnCube(BehaviorExternalInterface
 void BehaviorFeedingEat::TransitionToEating(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(Eating);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  robot.GetRobotMessageHandler()->SendMessage(robot.GetID(),
-    RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(false)));
+  behaviorExternalInterface.GetRobotInfo().EnableStopOnCliff(false);
   
   AnimationTrigger eatingAnim = CheckNeedsStateAndCalculateAnimation(behaviorExternalInterface);
   
   uint32_t timeDrainCube_s = 0;
-  RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
+  RobotManager* robot_mgr = behaviorExternalInterface.GetRobotInfo().GetContext()->GetRobotManager();
   if( robot_mgr->HasAnimationForTrigger(eatingAnim) )
   {
     // TODO: We do not have direct access to the CannedAnimationContainer and the raw animation data in this process (VIC-368)
     /*
     // Extract the length of time that the animation will be playing for so that
     // it can be passed through to listeners
-    const auto& animComponent = robot.GetAnimationComponent();
-    const auto& cannedAnims = robot.GetContext()->GetRobotManager()->GetCannedAnimations();
+    const auto& animComponent = behaviorExternalInterface.GetAnimationComponent();
+    const auto& cannedAnims = behaviorExternalInterface.GetRobotInfo().GetContext()->GetRobotManager()->GetCannedAnimations();
     
     const auto& animGroupName = robot_mgr->GetAnimationForTrigger(eatingAnim);
     const auto& animName = animComponent.GetAnimationNameFromGroup(animGroupName, robot);
@@ -420,21 +413,15 @@ void BehaviorFeedingEat::MarkCubeAsBad(BehaviorExternalInterface& behaviorExtern
                     GetIDStr().c_str()) ) {
     return;
   }
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  const TimeStamp_t lastPoseUpdateTime_ms = robot.GetObjectPoseConfirmer().GetLastPoseUpdatedTime(_targetID);
+
+  const TimeStamp_t lastPoseUpdateTime_ms = behaviorExternalInterface.GetObjectPoseConfirmer().GetLastPoseUpdatedTime(_targetID);
   _badCubesMap[_targetID] = lastPoseUpdateTime_ms;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFeedingEat::IsCubeBad(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& objectID) const
-{
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  const TimeStamp_t lastPoseUpdateTime_ms = robot.GetObjectPoseConfirmer().GetLastPoseUpdatedTime(objectID);
+{ 
+  const TimeStamp_t lastPoseUpdateTime_ms = behaviorExternalInterface.GetObjectPoseConfirmer().GetLastPoseUpdatedTime(objectID);
 
   auto iter = _badCubesMap.find( objectID );
   if( iter != _badCubesMap.end() ) {

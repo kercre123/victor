@@ -22,7 +22,6 @@
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "anki/common/basestation/jsonTools.h"
-#include "engine/robot.h"
 
 namespace {
 static const char* kLookingWaitInitial = "lookingInitialWait_s";

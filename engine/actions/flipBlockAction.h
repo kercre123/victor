@@ -40,7 +40,10 @@ public:
   
   void ShouldDriveToClosestPreActionPose(bool tf);
   
-  static ActionResult GetPossiblePoses(Robot& robot,
+  static ActionResult GetPossiblePoses(const Pose3d& robotPose,
+                                       const CarryingComponent& carryingComp,
+                                       BlockWorld& blockWorld,
+                                       FaceWorld& faceWorld,
                                        ActionableObject* object,
                                        std::vector<Pose3d>& possiblePoses,
                                        bool& alreadyInPosition,

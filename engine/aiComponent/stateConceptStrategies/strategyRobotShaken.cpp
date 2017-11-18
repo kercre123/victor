@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/stateConceptStrategies/strategyRobotShaken.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -37,11 +38,9 @@ StrategyRobotShaken::StrategyRobotShaken(BehaviorExternalInterface& behaviorExte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool StrategyRobotShaken::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // trigger this behavior when the filtered total accelerometer magnitude data exceeds a threshold
-  bool shouldTrigger = (robot.GetHeadAccelMagnitudeFiltered() > kAccelMagnitudeShakingStartedThreshold);
+  bool shouldTrigger = (robotInfo.GetHeadAccelMagnitudeFiltered() > kAccelMagnitudeShakingStartedThreshold);
   
   // add a check for offTreadsState?
   return shouldTrigger;

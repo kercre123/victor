@@ -17,7 +17,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
-#include "engine/robot.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {

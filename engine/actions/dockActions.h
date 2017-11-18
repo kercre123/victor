@@ -38,11 +38,13 @@ namespace Anki {
   namespace Cozmo {
     
     // Forward Declarations:
-    class Robot;
     class Animation;
+    class BlockWorld;
+    class CarryingComponent;
     class DriveToPlaceCarriedObjectAction;
     class DockingComponent;
-    class CarryingComponent;
+    class VisionComponent;
+    class Robot;
     
     Point2f ComputePreActionPoseDistThreshold(const Pose3d& preActionPose,
                                               const Pose3d& actionObject,
@@ -169,7 +171,11 @@ namespace Anki {
                                                         const Pose3d& placementPose,
                                                         f32& approachAngle_rad);
       
-      static void GetPreActionPoses(Robot& robot, const PreActionPoseInput& input, PreActionPoseOutput& output);
+      static void GetPreActionPoses(const Pose3d& robotPose,
+                                    const CarryingComponent& carryingComp,
+                                    BlockWorld& blockWorld,
+                                    const PreActionPoseInput& input, 
+                                    PreActionPoseOutput& output);
 
       // Common function for filtering a list of possible predock poses by removing any "matching" the given
       // pose. Returns true if one or more elements were removed from the vector, false otherwise
@@ -477,7 +483,11 @@ namespace Anki {
       static ActionResult ComputePlaceRelObjectOffsetPoses(const ActionableObject* object,
                                                            const f32 placementOffsetX_mm,
                                                            const f32 placementOffsetY_mm,
-                                                           Robot& robot,
+                                                           const Pose3d& robotPose,
+                                                           const Pose3d& worldOrigin,
+                                                           const CarryingComponent& carryingComp,
+                                                           BlockWorld& blockWorld,
+                                                           const VisionComponent& visionComp,
                                                            std::vector<Pose3d>& possiblePoses,
                                                            bool& alreadyInPosition);
       
@@ -537,7 +547,7 @@ namespace Anki {
       // Not compatable with deep rolling
       void EnableRollWithoutDock(bool enable);
       
-      static bool CanActionRollObject(const Robot& robot,
+      static bool CanActionRollObject(const DockingComponent& dockingComponent,
                                       const ObservableObject* object);
       
     protected:

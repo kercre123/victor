@@ -37,6 +37,7 @@
 namespace Anki {
   
   namespace Cozmo {
+    class BlockWorld;
 
     namespace {
       CONSOLE_VAR(bool, kEnablePredockDistanceCheckFix, "DriveToActions", true);
@@ -146,7 +147,8 @@ namespace Anki {
                                                                _approachAngle_rad.ToFloat());
       IDockAction::PreActionPoseOutput preActionPoseOutput;
       
-      IDockAction::GetPreActionPoses(GetRobot(), preActionPoseInput, preActionPoseOutput);
+      IDockAction::GetPreActionPoses(GetRobot().GetPose(), GetRobot().GetCarryingComponent(), GetRobot().GetBlockWorld(),
+                                     preActionPoseInput, preActionPoseOutput);
       
       if(preActionPoseOutput.actionResult == ActionResult::SUCCESS){
         if(preActionPoseOutput.preActionPoses.size() > 0){
@@ -179,7 +181,8 @@ namespace Anki {
                                                                _approachAngle_rad.ToFloat());
       IDockAction::PreActionPoseOutput preActionPoseOutput;
     
-      IDockAction::GetPreActionPoses(GetRobot(), preActionPoseInput, preActionPoseOutput);
+      IDockAction::GetPreActionPoses(GetRobot().GetPose(), GetRobot().GetCarryingComponent(), GetRobot().GetBlockWorld(),
+                                     preActionPoseInput, preActionPoseOutput);
       
       if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
       {
@@ -1393,7 +1396,11 @@ namespace Anki {
               return PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(object,
                                                                             placementOffsetX_mm,
                                                                             placementOffsetY_mm,
-                                                                            GetRobot(),
+                                                                            GetRobot().GetPose(),
+                                                                            GetRobot().GetWorldOrigin(),
+                                                                            GetRobot().GetCarryingComponent(),
+                                                                            GetRobot().GetBlockWorld(),
+                                                                            GetRobot().GetVisionComponent(),
                                                                             possiblePoses,
                                                                             alreadyInPosition);
 

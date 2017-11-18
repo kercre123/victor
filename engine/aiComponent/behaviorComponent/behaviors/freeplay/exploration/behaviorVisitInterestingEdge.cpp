@@ -19,11 +19,11 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/groundPlaneROI.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -143,11 +143,10 @@ bool BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior(BehaviorExternalIn
 {
   ANKI_CPU_PROFILE("BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior"); // we are doing some processing now, keep an eye
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
   // clear debug render from previous runs
-  robot.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
+  robotInfo.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
   
   // reset the computed info, since we use this to check whether we are activatable
   _cache.Reset();
@@ -208,9 +207,10 @@ bool BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior(BehaviorExternalIn
   const bool foundGoal = _cache.IsSet();
   
   // clear debug render we may generate during WantsToBeActivated (comment out when debugging)
-  if ( !foundGoal )
-    robot.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
-  
+  if ( !foundGoal ){
+    robotInfo.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
+  }
+
   return foundGoal;
 }
   
@@ -238,20 +238,15 @@ void BehaviorVisitInterestingEdge::OnBehaviorDeactivated(BehaviorExternalInterfa
   // remove our request to disable the analysis process
   behaviorExternalInterface.GetAIComponent().GetAIInformationAnalyzer().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetIDStr());
 
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    // clear debug render
-    robot.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
-  }
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  // clear debug render
+  robotInfo.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
   
   // make sure if we were interrupted that this anim doesn't run anymore (since we queue in parallel)
   StopSquintLoop(behaviorExternalInterface);
   
   // no need to receive notifications if not waiting for images, clear that. We could also stop the action, but it
   // has no effect on the robot, so keep it running but don't listen to it
-  _waitForImagesActionHandle.reset();
   _waitForImagesActionTag = ActionConstants::INVALID_TAG;
 }
 
@@ -316,45 +311,28 @@ void BehaviorVisitInterestingEdge::StartWaitingForEdges(BehaviorExternalInterfac
 {
   DEV_ASSERT(!IsWaitingForImages(), "BehaviorVisitInterestingEdge.StartWaitingForEdges.AlreadyWaiting");
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  // clear the borders in front of us, so that we can get new ones
-  robot.GetMapComponent().FlagGroundPlaneROIInterestingEdgesAsUncertain();
+  if(behaviorExternalInterface.HasMapComponent()){
+    // clear the borders in front of us, so that we can get new ones
+    behaviorExternalInterface.GetMapComponent().FlagGroundPlaneROIInterestingEdgesAsUncertain();
 
-  // after we have removed edges we expect to capture
-  // cache the current interesting edge area so that when we get new ones we know how much we have grown
-  const INavMap* currentMap = robot.GetMapComponent().GetCurrentMemoryMap();
-  _interestingEdgesArea_m2 = currentMap->GetInterestingEdgeAreaM2();
-  // create an action and store the tag so we know when it's done
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    WaitForImagesAction* waitForImgs = new WaitForImagesAction(kNumEdgeImagesToGetAccurateEdges, VisionMode::DetectingOverheadEdges);
-    const Result queuedOK = robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, waitForImgs);
-    
-    // if queued successfully
-    if ( queuedOK == RESULT_OK )
+    // after we have removed edges we expect to capture
+    // cache the current interesting edge area so that when we get new ones we know how much we have grown
+    const INavMap* currentMap = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap();
+    _interestingEdgesArea_m2 = currentMap->GetInterestingEdgeAreaM2();
+    // create an action and store the tag so we know when it's done
     {
-      // grab the tag
-      _waitForImagesActionTag = waitForImgs->GetTag();
-      
-      // wait for the action to complete to clear the tag
-      auto actionCompleteLambda = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg)
-      {
-        using namespace ExternalInterface;
-        DEV_ASSERT(MessageEngineToGameTag::RobotCompletedAction == msg.GetData().GetTag(),
-                   "actionCompleteLambda.InvalidTag");
-        if ( _waitForImagesActionTag == msg.GetData().Get_RobotCompletedAction().idTag )
-        {
-          // our action finished, stop waiting for it and unsubscribe
+      WaitForImagesAction* waitForImgs = new WaitForImagesAction(kNumEdgeImagesToGetAccurateEdges, VisionMode::DetectingOverheadEdges);      
+      const bool success = DelegateIfInControl(waitForImgs,
+        [this](BehaviorExternalInterface& behaviorExternalInterface){
           _waitForImagesActionTag = ActionConstants::INVALID_TAG;
-        }
-      };
-      
-      // subscribe to the action completion notification
-      _waitForImagesActionHandle = robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotCompletedAction, actionCompleteLambda);
+        });
+
+      // if queued successfully
+      if (success)
+      {
+        // grab the tag
+        _waitForImagesActionTag = waitForImgs->GetTag();     
+      }
     }
   }
 }
@@ -365,17 +343,8 @@ void BehaviorVisitInterestingEdge::StopSquintLoop(BehaviorExternalInterface& beh
   // if looping, request to stop
   if ( IsPlayingSquintLoop() )
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    // request to cancel and clear the tag
-    bool cancelled = robot.GetActionList().Cancel(_squintLoopAnimActionTag);
+    CancelDelegates(false);
     _squintLoopAnimActionTag = ActionConstants::INVALID_TAG;
-    
-    if ( !cancelled ) {
-      // if interrupted this is ok, but otherwise there has been a problem with the action queues
-      PRINT_CH_INFO("Behaviors", "BehaviorVisitInterestingEdge.StopSquintLoop.SquintLoopNotFound", "Could not cancel squint. Was it interrupted?");
-    }
   }
 }
 
@@ -416,9 +385,6 @@ float dist_Point_to_SegmentSQ( const Point3f& p, const Point3f& s0, const Point3
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorVisitInterestingEdge::PickGoals(BehaviorExternalInterface& behaviorExternalInterface, BorderRegionScoreVector& validGoals) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
   
   // can't be running while picking the best goal, since we are not analyzing regions anymore
   DEV_ASSERT(!IsActivated(), "BehaviorVisitInterestingEdge.PickBestGoal.CantTrustAnalysisWhileRunning");
@@ -426,18 +392,16 @@ void BehaviorVisitInterestingEdge::PickGoals(BehaviorExternalInterface& behavior
   validGoals.clear();
 
   // ask the information analyzer about the regions it has detected (should have been this frame)
-  const INavMap::BorderRegionVector& interestingRegions = robot.GetAIComponent().GetAIInformationAnalyzer().GetDetectedInterestingRegions();
+  const INavMap::BorderRegionVector& interestingRegions = behaviorExternalInterface.GetAIComponent().GetAIInformationAnalyzer().GetDetectedInterestingRegions();
   
   // process them and see if we can pick one
-  if ( !interestingRegions.empty() )
+  if ( !interestingRegions.empty() && behaviorExternalInterface.HasMapComponent() )
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    const Vec3f& robotLoc = robot.GetPose().GetWithRespectToRoot().GetTranslation();
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    const Vec3f& robotLoc = robotInfo.GetPose().GetWithRespectToRoot().GetTranslation();
 
     // define what a small region is in order to discard them as noise
-    const float memMapPrecision_mm = robot.GetMapComponent().GetCurrentMemoryMap()->GetContentPrecisionMM();
+    const float memMapPrecision_mm = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap()->GetContentPrecisionMM();
     const float memMapPrecision_m  = MM_TO_M(memMapPrecision_mm);
     const float kMinRegionArea_m2 = kMinUsefulRegionUnits*(memMapPrecision_m*memMapPrecision_m);
   
@@ -497,14 +461,15 @@ void BehaviorVisitInterestingEdge::PickGoals(BehaviorExternalInterface& behavior
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorVisitInterestingEdge::CheckGoalReachable(BehaviorExternalInterface& behaviorExternalInterface, const Vec3f& goalPosition) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
-  const INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
+  INavMap* memoryMap = nullptr;
+  if(behaviorExternalInterface.HasMapComponent()){
+    memoryMap = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap();
+  }
   DEV_ASSERT(nullptr != memoryMap, "BehaviorVisitInterestingEdge.CheckGoalReachable.NeedMemoryMap");
   
-  const Vec3f& fromRobot = robot.GetPose().GetWithRespectToRoot().GetTranslation();
+  const Vec3f& fromRobot = robotInfo.GetPose().GetWithRespectToRoot().GetTranslation();
 
   const Vec3f& toGoal    = goalPosition; // assumed wrt origin
   
@@ -521,7 +486,7 @@ bool BehaviorVisitInterestingEdge::CheckGoalReachable(BehaviorExternalInterface&
   if ( kVieDrawDebugInfo )
   {
     const ColorRGBA& color = hasCollision ? Anki::NamedColors::RED : Anki::NamedColors::GREEN;
-    robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+    robotInfo.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
       fromRobot, toGoal, color, false, 20.0f);
   }
   
@@ -537,10 +502,8 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(BehaviorExternalInterfa
   const Vec3f& kRightVector = -Y_AXIS_3D();
   const Vec3f& kUpVector = Z_AXIS_3D();
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  const Pose3d& worldOrigin = robot.GetWorldOrigin();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const Pose3d& worldOrigin = robotInfo.GetWorldOrigin();
 
   outVantagePoints.clear();
   {
@@ -599,7 +562,7 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(BehaviorExternalInterfa
         const float clearDistanceBehind  = _configParams.additionalClearanceBehind_mm  + robotBack;
         const Vec3f& toPoint   = vantagePointPos - (normalFromLookAtTowardsVantage * clearDistanceInFront);
         const Vec3f& fromPoint = vantagePointPos + (normalFromLookAtTowardsVantage * clearDistanceBehind );
-        const INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
+        const INavMap* memoryMap = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap();
         assert(memoryMap); // otherwise we are not even activatable
         
         // the vantage point is valid if there's no collision with the invalid types (would block the view or the pose)
@@ -611,13 +574,13 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(BehaviorExternalInterfa
         {
           const float kUpLine_mm = 10.0f;
           const ColorRGBA& color = isValidVantagePoint ? Anki::NamedColors::GREEN : Anki::NamedColors::RED;
-          robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+          robotInfo.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
             fromPoint, toPoint, color, false, 15.0f);
-          robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+          robotInfo.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
             vantagePointPos-Vec3f{0,0,kUpLine_mm}, vantagePointPos+Vec3f{0,0,kUpLine_mm}, color, false, 15.0f);
-          robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+          robotInfo.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
             fromPoint-Vec3f{0,0,kUpLine_mm}, fromPoint+Vec3f{0,0,kUpLine_mm}, color, false, 15.0f);
-          robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+          robotInfo.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
             toPoint-Vec3f{0,0,kUpLine_mm}, toPoint+Vec3f{0,0,kUpLine_mm}, color, false, 15.0f);
         }
       }
@@ -713,13 +676,10 @@ void BehaviorVisitInterestingEdge::TransitionToS2_GatherAccurateEdge(BehaviorExt
   SetDebugStateName("S2_GatherBorderPrecision");
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S2").c_str(), "At vantage point, trying to grab more accurate borders");
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // start squint loop
   DEV_ASSERT(!IsPlayingSquintLoop(), "BehaviorVisitInterestingEdge.TransitionToS2_GatherAccurateEdge.AlreadySquintLooping");
   IAction* squintLoopAnimAction = new TriggerLiftSafeAnimationAction(_configParams.squintLoopAnimTrigger, 0); // loop forever
-  robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, squintLoopAnimAction);
+  DelegateIfInControl(squintLoopAnimAction);
   _squintLoopAnimActionTag = squintLoopAnimAction->GetTag();
 
   // wait for new edges
@@ -790,11 +750,9 @@ void BehaviorVisitInterestingEdge::FlagVisitedQuadAsNotInteresting(BehaviorExter
   float farPlaneDistFromRobot_mm,
   float halfWidthAtFarPlane_mm)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
-  const Pose3d& robotPoseWrtOrigin = robot.GetPose().GetWithRespectToRoot();
+  const Pose3d& robotPoseWrtOrigin = robotInfo.GetPose().GetWithRespectToRoot();
   
   // bottom corners of the quad are based on the robot pose
   const Point3f& cornerBL = robotPoseWrtOrigin * Vec3f{ 0.f, +halfWidthAtRobot_mm, 0.f};
@@ -804,13 +762,14 @@ void BehaviorVisitInterestingEdge::FlagVisitedQuadAsNotInteresting(BehaviorExter
   const Point3f& cornerTL = robotPoseWrtOrigin * Vec3f{ +farPlaneDistFromRobot_mm, +halfWidthAtFarPlane_mm, 0.f};
   const Point3f& cornerTR = robotPoseWrtOrigin * Vec3f{ +farPlaneDistFromRobot_mm, -halfWidthAtFarPlane_mm, 0.f};
 
-  const Quad2f robotToFarPlaneQuad{ cornerTL, cornerBL, cornerTR, cornerBR };
-  robot.GetMapComponent().FlagQuadAsNotInterestingEdges(robotToFarPlaneQuad);
-
-  // render the quad we are flagging as not interesting anymore
-  if ( kVieDrawDebugInfo ) {
-    robot.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
-      robotToFarPlaneQuad, 32.0f, Anki::NamedColors::BLUE, true);
+  if(behaviorExternalInterface.HasMapComponent()){
+    const Quad2f robotToFarPlaneQuad{ cornerTL, cornerBL, cornerTR, cornerBR };
+    behaviorExternalInterface.GetMapComponent().FlagQuadAsNotInterestingEdges(robotToFarPlaneQuad);
+    // render the quad we are flagging as not interesting anymore
+    if ( kVieDrawDebugInfo ) {
+      robotInfo.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+        robotToFarPlaneQuad, 32.0f, Anki::NamedColors::BLUE, true);
+    }
   }
 }
 
@@ -829,20 +788,15 @@ void BehaviorVisitInterestingEdge::FlagQuadAroundGoalAsNotInteresting(BehaviorEx
   const Point3f& cornerTL = goalPoint + forwardDir - rightDir;
   const Point3f& cornerTR = goalPoint + forwardDir + rightDir;
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  // creat
-  const Quad2f quadAroundGoal{ cornerTL, cornerBL, cornerTR, cornerBR };
-  robot.GetMapComponent().FlagQuadAsNotInterestingEdges(quadAroundGoal);
-  
-  // render the quad we are flagging as not interesting beacuse
-  if ( kVieDrawDebugInfo ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    robot.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
-      quadAroundGoal, 32.0f, Anki::NamedColors::BLUE, true);
+  if(behaviorExternalInterface.HasMapComponent()){
+    const Quad2f quadAroundGoal{ cornerTL, cornerBL, cornerTR, cornerBR };
+    behaviorExternalInterface.GetMapComponent().FlagQuadAsNotInterestingEdges(quadAroundGoal);
+    // render the quad we are flagging as not interesting beacuse
+    if ( kVieDrawDebugInfo ) {
+      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      robotInfo.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+        quadAroundGoal, 32.0f, Anki::NamedColors::BLUE, true);
+    }
   }
 }
 
@@ -863,21 +817,16 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
   }
   
   // no need to receive notifications if not waiting for images
-  _waitForImagesActionHandle.reset();
   _waitForImagesActionTag = ActionConstants::INVALID_TAG;
   
   // check distance to closest detected edge
   const float lastEdgeDistance_mm = behaviorExternalInterface.GetAIComponent().GetWhiteboard().GetLastEdgeClosestDistance();
   const bool detectedEdges = !std::isnan(lastEdgeDistance_mm);
-  if ( detectedEdges )
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    
+  if ( detectedEdges && behaviorExternalInterface.HasMapComponent() )
+  { 
     // are the new edges big enough? otherwise this is probably a reflection, noise, or something whose border
     // changes drastically depending on where we look from
-    const INavMap* currentMap = robot.GetMapComponent().GetCurrentMemoryMap();
+    const INavMap* currentMap = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap();
     const double newArea_m2 = currentMap->GetInterestingEdgeAreaM2();
     const double changeInArea_m2 = newArea_m2 - _interestingEdgesArea_m2;
     const float memMapPrecision_mm = currentMap->GetContentPrecisionMM();
@@ -971,13 +920,11 @@ void BehaviorVisitInterestingEdge::RenderDiscardedRegion(BehaviorExternalInterfa
   {
     if ( kVieDrawDebugInfo )
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
+      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       for( size_t idx=0; idx<region.segments.size(); ++idx )
       {
         const MemoryMapTypes::BorderSegment& candidateSegment = region.segments[idx];
-        robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+        robotInfo.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
           candidateSegment.from, candidateSegment.to, Anki::NamedColors::RED, false, 35.0f);
       }
     }
@@ -992,13 +939,12 @@ void BehaviorVisitInterestingEdge::RenderAcceptedRegion(BehaviorExternalInterfac
   {
     if ( kVieDrawDebugInfo )
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
+      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
       for( size_t idx=0; idx<region.segments.size(); ++idx )
       {
         const MemoryMapTypes::BorderSegment& candidateSegment = region.segments[idx];
-        robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+        robotInfo.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
           candidateSegment.from, candidateSegment.to, Anki::NamedColors::YELLOW, false, 35.0f);
       }
     }
@@ -1013,15 +959,13 @@ void BehaviorVisitInterestingEdge::RenderChosenGoal(BehaviorExternalInterface& b
   {
     if ( kVieDrawDebugInfo && bestGoal.IsValid() )
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
+      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       
       const MemoryMapTypes::BorderSegment& b = bestGoal.GetSegment();
-      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+      robotInfo.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
         b.from, b.to, Anki::NamedColors::CYAN, false, 38.0f);
       Vec3f centerLine = (b.from + b.to)*0.5f;
-      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+      robotInfo.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
         centerLine, centerLine+b.normal*15.0f, Anki::NamedColors::CYAN, false, 38.0f);
     }
   }

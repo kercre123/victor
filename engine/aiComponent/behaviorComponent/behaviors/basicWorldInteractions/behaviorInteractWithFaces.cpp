@@ -17,6 +17,7 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -25,7 +26,6 @@
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "engine/needsSystem/needsManager.h"
-#include "engine/robot.h"
 #include "engine/viz/vizManager.h"
 
 #include "anki/common/basestation/jsonTools.h"
@@ -183,36 +183,32 @@ bool BehaviorInteractWithFaces::WantsToBeActivatedBehavior(BehaviorExternalInter
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInteractWithFaces::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  _lastImageTimestampWhileRunning = robot.GetLastImageTimeStamp();
+  _lastImageTimestampWhileRunning = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorInteractWithFaces::CanDriveIdealDistanceForward(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  if( kInteractWithFaces_DoMemoryMapCheckForDriveForward ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
+  if( kInteractWithFaces_DoMemoryMapCheckForDriveForward && 
+      behaviorExternalInterface.HasMapComponent()) {
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
-    const INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
+    const INavMap* memoryMap = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap();
     
     DEV_ASSERT(nullptr != memoryMap, "BehaviorInteractWithFaces.CanDriveIdealDistanceForward.NeedMemoryMap");
 
-    const Vec3f& fromRobot = robot.GetPose().GetTranslation();
+    const Vec3f& fromRobot = robotInfo.GetPose().GetTranslation();
 
     const Vec3f ray{kInteractWithFaces_DriveForwardIdealDist_mm, 0.0f, 0.0f};
-    const Vec3f toGoal = robot.GetPose() * ray;
+    const Vec3f toGoal = robotInfo.GetPose() * ray;
     
     const bool hasCollision = memoryMap->HasCollisionRayWithTypes(fromRobot, toGoal, typesToBlockDriving);
 
     if( kInteractWithFaces_VizMemoryMapCheck ) {
       const char* vizID = "BehaviorInteractWithFaces.MemMapCheck";
       const float zOffset_mm = 15.0f;
-      robot.GetContext()->GetVizManager()->EraseSegments(vizID);
-      robot.GetContext()->GetVizManager()->DrawSegment(vizID,
+      robotInfo.GetContext()->GetVizManager()->EraseSegments(vizID);
+      robotInfo.GetContext()->GetVizManager()->DrawSegment(vizID,
                                                        fromRobot, toGoal,
                                                        hasCollision ? Anki::NamedColors::YELLOW
                                                                     : Anki::NamedColors::BLUE,
@@ -263,12 +259,8 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction(BehaviorExternalInte
                                           MoodManager::GetCurrentTimeInSeconds());
         }
         
-        {
-          // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-          // be removed
-          const Robot& robot = behaviorExternalInterface.GetRobot();
-          _lastImageTimestampWhileRunning = robot.GetLastImageTimeStamp();
-        }
+        _lastImageTimestampWhileRunning =  behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
+        
         SmartFaceID oldTargetFace = _targetFace;
         SelectFaceToTrack(behaviorExternalInterface);
         if(_targetFace != oldTargetFace) {

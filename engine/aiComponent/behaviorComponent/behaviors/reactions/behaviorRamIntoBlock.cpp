@@ -16,9 +16,9 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/dockActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/math/pose.h"
 
@@ -50,11 +50,7 @@ bool BehaviorRamIntoBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorRamIntoBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-
-  if(robot.GetCarryingComponent().IsCarryingObject()){
+  if(behaviorExternalInterface.GetRobotInfo().GetCarryingComponent().IsCarryingObject()){
     TransitionToPuttingDownBlock(behaviorExternalInterface);
   }else{
     TransitionToTurningToBlock(behaviorExternalInterface);
@@ -80,16 +76,14 @@ void BehaviorRamIntoBlock::OnBehaviorDeactivated(BehaviorExternalInterface& beha
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
   CompoundActionSequential* placeAction = new CompoundActionSequential();
-  if(robot.GetCarryingComponent().GetCarryingObject() != _targetID){
-    const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(robot.GetCarryingComponent().GetCarryingObject());
+  if(robotInfo.GetCarryingComponent().GetCarryingObject() != _targetID){
+    const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(robotInfo.GetCarryingComponent().GetCarryingObject());
     if(obj != nullptr){
       Vec3f outVector;
-      if(ComputeVectorBetween(robot.GetPose(), obj->GetPose(), outVector)){
+      if(ComputeVectorBetween(robotInfo.GetPose(), obj->GetPose(), outVector)){
         Radians angle = FLT_NEAR(outVector.x(), 0.0f) ?
                   Radians(0)                          :
                   Radians(atanf(outVector.y()/outVector.x()));
@@ -123,11 +117,9 @@ void BehaviorRamIntoBlock::TransitionToRammingIntoBlock(BehaviorExternalInterfac
 {  
   const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(obj != nullptr){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    auto& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
 
-    const f32 distToObj = ComputeDistanceBetween(robot.GetPose(), obj->GetPose());
+    const f32 distToObj = ComputeDistanceBetween(robotPose, obj->GetPose());
     
     
     CompoundActionParallel* ramAction = new CompoundActionParallel({
