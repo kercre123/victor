@@ -106,7 +106,7 @@ BehaviorStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInternal(BehaviorExterna
                            _buttonPressed) || 
                           !robot.IsPhysical();
 
-  if(touchGood && buttonGood && robot.IsOnCharger())
+  if(touchGood && buttonGood && (robot.IsOnCharger() || robot.IsCharging()))
   {
     // Draw nothing on the screen to clear it
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DrawTextOnScreen(RobotInterface::ColorRGB(0,0,0),
@@ -127,6 +127,16 @@ void BehaviorPlaypenWaitToStart::OnBehaviorDeactivated(BehaviorExternalInterface
   
   _touchStartTime_ms = 0;
   _buttonPressed = false;
+
+  _lights = {
+    .onColors               = {{NamedColors::BLUE,NamedColors::GREEN,NamedColors::RED}},
+    .offColors              = {{NamedColors::BLUE,NamedColors::GREEN,NamedColors::RED}},
+    .onPeriod_ms            = {{1000,1000,1000}},
+    .offPeriod_ms           = {{100,100,100}},
+    .transitionOnPeriod_ms  = {{450,450,450}},
+    .transitionOffPeriod_ms = {{450,450,450}},
+    .offset                 = {{0,0,0}}
+  };
 
   robot.GetBodyLightComponent().SetBackpackLights(robot.GetBodyLightComponent().GetOffBackpackLights());
 }

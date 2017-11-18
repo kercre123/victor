@@ -28,6 +28,9 @@ namespace { // "Private members"
   u8 _imuLastReadIdx = 0;
   u8 _imuNewestIdx = 0;
 
+  // How often, in ticks, to update the imu tempurature
+  const u32 IMU_TEMP_UPDATE_FREQ_TICKS = 200; // ~1 second
+
 } // "private" namespace
 
 
@@ -59,6 +62,13 @@ bool PopIMU(HAL::IMU_DataStructure& data)
 
 void ProcessIMUEvents()
 {
+  static u8 tempCount = 0;
+  if(tempCount++ >= IMU_TEMP_UPDATE_FREQ_TICKS)
+  {
+    tempCount = 0;
+    imu_update_temperature();
+  } 
+
   IMURawData rawData[IMU_MAX_SAMPLES_PER_READ];
   HAL::IMU_DataStructure imuData;
   const int imu_read_samples = imu_manage(rawData);
@@ -69,6 +79,7 @@ void ProcessIMUEvents()
     imuData.rate_x = rawData[i].gyro[0] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
     imuData.rate_y = rawData[i].gyro[1] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
     imuData.rate_z = rawData[i].gyro[2] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
+    imuData.temperature_degC = IMU_TEMP_RAW_TO_C(rawData[i].temperature);
     PushIMU(imuData);
   }
 }

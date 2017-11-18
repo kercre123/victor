@@ -89,6 +89,8 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
     return;
   }
 
+  _lastRawTouchValue = msg.backpackTouchSensorRaw;
+
   const bool isPickedUp = (msg.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP) != 0;
 
   TouchGesture curGesture = _touchGesture;

@@ -93,7 +93,7 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal(BehaviorExtern
   TurnInPlaceAction* turn = new TurnInPlaceAction(robot, _angleToTurn.ToFloat(), false);
 
   // After turning wait to process 10 images before trying to refine the turn
-  WaitForImagesAction* wait = new WaitForImagesAction(robot, 10, VisionMode::DetectingMarkers);
+  WaitForImagesAction* wait = new WaitForImagesAction(robot, 5, VisionMode::DetectingMarkers);
   
   CompoundActionSequential* action = new CompoundActionSequential(robot, {liftHeadDrive, turn, wait});
   DelegateIfInControl(action, [this, &behaviorExternalInterface]() { TransitionToRefineTurn(behaviorExternalInterface); });

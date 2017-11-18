@@ -121,11 +121,6 @@ std::string CliffSensorComponent::GetLogRow()
 
 void CliffSensorComponent::UpdateCliffDetectThresholds()
 {
-  if(_isPaused)
-  {
-    return;
-  }
-
   // Estimate whether or not we are on a dark surface and adjust the cliff allowedDelta to reduce
   // false positive cliff detections. Note that this will also reduce the allowedDelta while the robot
   // is in the air, but that is fine since we don't know what kind of surface he'll be on when he's
@@ -166,6 +161,11 @@ void CliffSensorComponent::QueueCliffThresholdUpdate()
 
 void CliffSensorComponent::SendCliffDetectThresholdsToRobot()
 {
+  if(_isPaused)
+  {
+    return;
+  }
+  
   PRINT_NAMED_INFO("CliffSensorComponent.SendCliffDetectThresholdsToRobot.SendThresholds",
                    "New cliff thresholds being sent to robot: %d %d %d %d",
                    _cliffDetectThresholds[0], _cliffDetectThresholds[1], _cliffDetectThresholds[2], _cliffDetectThresholds[3]);

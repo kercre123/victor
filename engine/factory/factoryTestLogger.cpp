@@ -97,7 +97,7 @@ namespace Cozmo {
   void FactoryTestLogger::CloseLog()
   {
     if (_logFileHandle.is_open()) {
-      PRINT_NAMED_INFO("FactoryTestLogger.CloseLog.Closing","");
+      PRINT_NAMED_INFO("FactoryTestLogger.CloseLog.Closing", "%s", _logFileName.c_str());
       
       // If exporting json, write it to file here
       if (_exportJson) {

@@ -328,6 +328,18 @@ bool IBehaviorPlaypen::DidReceiveFFTResult()
   receivedFFTResult = false;
   return b;
 }
+
+void IBehaviorPlaypen::RemoveTimer(const std::string& name)
+{
+  for(auto iter = _timers.begin(); iter != _timers.end(); ++iter)
+  {
+    if(iter->GetName() == name)
+    {
+      _timers.erase(iter);
+      return;
+    }
+  }
+}
   
 }
 }

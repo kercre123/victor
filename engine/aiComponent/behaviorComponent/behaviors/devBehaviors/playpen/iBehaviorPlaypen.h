@@ -144,8 +144,11 @@ protected:
   void AddToResultList(FactoryTestResultCode result);
   
   // Adds a timer that will call the callback when time_ms has passed
-  void AddTimer(TimeStamp_t time_ms, std::function<void(void)> callback)
-    { _timers.push_back(Timer(time_ms, callback)); }
+  void AddTimer(TimeStamp_t time_ms, std::function<void(void)> callback, const std::string& name = "")
+    { _timers.push_back(Timer(time_ms, callback, name)); }
+
+  // Removes the first timer with the given name
+  void RemoveTimer(const std::string& name);
   
   // Returns whether or not we should ignore behavior failures
   bool ShouldIgnoreFailures() const;
@@ -167,9 +170,10 @@ private:
   class Timer
   {
   public:
-    Timer(TimeStamp_t time_ms, std::function<void(void)> callback)
+    Timer(TimeStamp_t time_ms, std::function<void(void)> callback, const std::string& name = "")
     : _time_ms(BaseStationTimer::getInstance()->GetCurrentTimeStamp() + time_ms),
-      _callback(callback)
+      _callback(callback),
+      _name(name)
     {
     
     }
@@ -186,10 +190,13 @@ private:
         _callback = nullptr;
       }
     }
+
+    const std::string& GetName() const { return _name; }
     
   private:
     TimeStamp_t _time_ms = 0;
     std::function<void(void)> _callback = nullptr;
+    std::string _name = "";
   };
 
   std::vector<Timer> _timers;

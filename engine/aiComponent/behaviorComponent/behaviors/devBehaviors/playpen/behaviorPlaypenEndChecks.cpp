@@ -13,6 +13,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenEndChecks.h"
 
+#include "engine/actions/basicActions.h"
+#include "engine/actions/compoundActions.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
@@ -52,8 +54,14 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal(BehaviorExternalInt
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::NO_FFT_RESULT, RESULT_FAIL);
   }
-  
-  PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, RESULT_OK);
+
+  TurnInPlaceAction* turn = new TurnInPlaceAction(robot, DEG_TO_RAD(180), false);
+  MoveHeadToAngleAction* head = new MoveHeadToAngleAction(robot, MAX_HEAD_ANGLE);
+  CompoundActionParallel* action = new CompoundActionParallel(robot, {turn, head});
+
+  DelegateIfInControl(action, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS); });
+
+  return RESULT_OK;
 }
 
 void BehaviorPlaypenEndChecks::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)

@@ -97,12 +97,12 @@ static f32 kIMUDriftAngleThreshDeg     = 0.2f;
 
 // ----------Distance Sensor----------
 // Number of distance sensor readings to record
-static u32 kNumDistanceSensorReadingsToRecord       = 50;
+static u32 kNumDistanceSensorReadingsToRecord       = 30;
 
 // Threshold on calculated distance to distance sensor target (using detected marker)
 // +/- this from the expected distance to the object/marker defined in the distance sensor
 // behavior json file
-static f32 kVisualDistanceToDistanceSensorObjectThresh_mm = 10;
+static f32 kVisualDistanceToDistanceSensorObjectThresh_mm = 30;
 
 // Threshold on the raw distance sensor reading from the expected distance defined in the
 // distance sensor behavior json file
@@ -165,6 +165,9 @@ static f32 kCliffSpeed_mmps                 = 50;
 // Time to wait for a cliff event after getting a robot stopped event
 static f32 kTimeToWaitForCliffEvent_ms      = CLIFF_EVENT_DELAY_MS + 100;
 
+// Set threshold for cliff detection while the Drive Forwards behavior is running
+static u16 kCliffSensorThreshold            = 300;
+
 // ----------Sound Check----------
 // Head angle at which we should play the sound for both speaker and mic check
 static f32 kHeadAngleToPlaySound       = DEG_TO_RAD(2.f);
@@ -193,10 +196,10 @@ static f32       kToolCodeDistThreshY_pix = 40.f;
 
 // ----------Pickup Cube----------
 // Expected cube pose x relative to playpen starting pose
-static f32 kExpectedCubePoseX_mm                = 384;
+static f32 kExpectedCubePoseX_mm                = 380;
 
 // Expected cube pose y relative to playpen starting pose
-static f32 kExpectedCubePoseY_mm                = -152;
+static f32 kExpectedCubePoseY_mm                = -200;
 
 // Allowed difference between expected and observed cube pose in x and y
 static f32 kExpectedCubePoseDistThresh_mm       = 30;

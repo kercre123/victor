@@ -37,6 +37,11 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal(BehaviorExterna
 
   // Clear and pause cliff sensor component so it doesn't try to update the cliff thresholds
   robot.GetCliffSensorComponent().SetPause(true);
+  CliffSensorComponent::CliffSensorDataArray thresholds = {{PlaypenConfig::kCliffSensorThreshold,
+                                                            PlaypenConfig::kCliffSensorThreshold, 
+                                                            PlaypenConfig::kCliffSensorThreshold, 
+                                                            PlaypenConfig::kCliffSensorThreshold}};
+  robot.SendRobotMessage<SetCliffDetectThresholds>(std::move(thresholds));
 
   // Record mics while driving forwards for at least how long it should take to complete the 3 drives
   const u32 recordTime_s = ((PlaypenConfig::kDistanceToTriggerFrontCliffs_mm / PlaypenConfig::kCliffSpeed_mmps) +

@@ -172,7 +172,7 @@ namespace Cozmo {
 
   // Cliff detection thresholds (these come from testing with prototype 2 robots - will need
   // to be adjusted for production hardware)
-  const u16 CLIFF_SENSOR_THRESHOLD_MAX = 180;
+  const u16 CLIFF_SENSOR_THRESHOLD_MAX = 300;
   const u16 CLIFF_SENSOR_THRESHOLD_MIN = 25;
   const u16 CLIFF_SENSOR_THRESHOLD_DEFAULT = CLIFF_SENSOR_THRESHOLD_MAX;
   

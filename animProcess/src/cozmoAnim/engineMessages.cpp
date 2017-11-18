@@ -381,6 +381,7 @@ namespace Messages {
       
       RobotInterface::RobotAvailable idMsg;
       idMsg.hwRevision = 0;
+      idMsg.serialNumber = std::stoul(ExecCommand("getprop ro.serialno"), nullptr, 16);
       RobotInterface::SendMessageToEngine(idMsg);
       
       // send firmware info indicating simulated or physical robot type
@@ -529,7 +530,7 @@ namespace Messages {
 
   void ProcessBackpackButton(const RobotInterface::BackpackButton& payload)
   {
-    if(ANKI_DEV_CHEATS && payload.depressed)
+    if((ANKI_DEV_CHEATS || FACTORY_TEST) && payload.depressed)
     {
       // If we aren't currently showing debug info and the button was pressed then
       // start showing debug info

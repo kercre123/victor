@@ -188,6 +188,9 @@ struct SpineMessageFooter
 /// Start Packets
 struct BodyToHead
 {
+#if MICDATA_ENABLED
+  int16_t audio[MICDATA_SAMPLES_COUNT];
+#endif
   uint32_t framecounter;
   PowerState powerState;
   struct MotorState motor[4];
@@ -195,9 +198,6 @@ struct BodyToHead
   struct BatteryState battery;
   struct RangeData proximity;
   uint16_t touchLevel[2];
-#if MICDATA_ENABLED
-  int16_t audio[MICDATA_SAMPLES_COUNT];
-#endif
 };
 
 struct ContactData

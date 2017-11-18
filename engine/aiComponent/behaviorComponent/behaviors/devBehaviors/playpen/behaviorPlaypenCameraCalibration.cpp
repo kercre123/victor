@@ -46,6 +46,9 @@ static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
                                 0.f,
                                 std::vector<f32>({-0.1, -0.1, 0.00005, -0.0001, 0.05, 0.f, 0.f, 0.f})));
 #endif
+
+  const std::string kWaitingForTargetTimer = "Target";
+  const std::string kWaitingForCalibTimer = "Calib";
 }
 
 BehaviorPlaypenCameraCalibration::BehaviorPlaypenCameraCalibration(const Json::Value& config)
@@ -93,7 +96,7 @@ Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal(BehaviorExt
                                                                       new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK)});
   
   DelegateIfInControl(action, [this]() {
-    AddTimer(PlaypenConfig::kTimeoutWaitingForTarget_ms, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::NOT_SEEING_CALIB_TARGET_TIMEOUT); });
+    AddTimer(PlaypenConfig::kTimeoutWaitingForTarget_ms, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::NOT_SEEING_CALIB_TARGET_TIMEOUT); }, kWaitingForTargetTimer);
   });
   
   return RESULT_OK;
@@ -130,7 +133,7 @@ BehaviorStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateInternal(BehaviorE
     {
       robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
       _computingCalibration = true;
-      AddTimer(PlaypenConfig::kTimeoutForComputingCalibration_ms, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::CALIBRATION_TIMED_OUT); });
+      AddTimer(PlaypenConfig::kTimeoutForComputingCalibration_ms, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::CALIBRATION_TIMED_OUT); }, kWaitingForCalibTimer);
     }
   }
   
@@ -177,6 +180,9 @@ void BehaviorPlaypenCameraCalibration::HandleWhileActivatedInternal(const Engine
 void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(BehaviorExternalInterface& behaviorExternalInterface,
                                                                const CameraCalibration& calibMsg)
 {
+  // We recieved calibration so remove the waiting for calibration timer
+  RemoveTimer(kWaitingForCalibTimer);
+
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
@@ -289,6 +295,9 @@ void BehaviorPlaypenCameraCalibration::HandleRobotObservedObject(BehaviorExterna
   if(msg.objectType == ObjectType::CustomType00)
   {
     _seeingTarget = true;
+
+    // We are seeing the target remove the waiting for target timer
+    RemoveTimer(kWaitingForTargetTimer);
   }
 }
 

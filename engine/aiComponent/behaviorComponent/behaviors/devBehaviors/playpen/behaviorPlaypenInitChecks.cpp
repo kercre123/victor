@@ -57,6 +57,9 @@ Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal(BehaviorExternalIn
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::NVSTORAGE_ERASE_FAILED, RESULT_FAIL);
   }
   
+  // Force delocalize the robot to ensure consistent starting pose
+  robot.Delocalize(false);
+
   PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, RESULT_OK);
   
   return RESULT_OK;

@@ -285,6 +285,8 @@ Result HAL::Step(void)
 
   ProcessTouchLevel(); // filter invalid values from touch sensor
     
+  ProcessButtonEvent();
+
   PrintConsoleOutput();
 
   return result;
@@ -301,6 +303,7 @@ void ProcessButtonEvent()
 {
   static bool wasPressed = false;
   const bool isPressed = bodyData_->touchLevel[HAL::ButtonID::BUTTON_POWER];
+  
   if(wasPressed != isPressed)
   {
     wasPressed = isPressed;
