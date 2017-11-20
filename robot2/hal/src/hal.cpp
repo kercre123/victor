@@ -205,34 +205,6 @@ void ForwardMicData(void)
 #endif
 }
 
-void process_frame()
-{
-  #ifndef USING_ANDROID_PHONE
-  {
-    static int repeater = FRAMES_PER_RESPONSE;
-    if (--repeater <= 0) {
-      repeater = FRAMES_PER_RESPONSE;
-      headData_.framecounter++;
-      spine_write_h2b_frame(&spine_, &headData_);
-    }
-
-    // Process IMU while next frame is buffering in the background
-#if IMU_WORKING
-    ProcessIMUEvents();
-#endif
-
-        
-    ProcessTouchLevel(); // filter invalid values from touch sensor
-
-    ProcessButtonEvent();
-    
-    PrintConsoleOutput();
-
-    //ForwardMicData();
-  }
-#endif 
-}
-
 Result spine_get_frame() {
   Result result = RESULT_FAIL_IO_TIMEOUT;
   uint8_t frame_buffer[SPINE_B2H_FRAME_LEN];
