@@ -30,7 +30,7 @@ namespace Anki {
     
 #pragma mark ---- ICompoundAction ----
     
-    ICompoundAction::ICompoundAction(Robot& robot, std::list<IActionRunner*> actions)
+    ICompoundAction::ICompoundAction(Robot& robot, const std::list<IActionRunner*> & actions)
     : IActionRunner(robot,
                     "ICompoundAction",
                     RobotActionType::COMPOUND,
@@ -273,7 +273,7 @@ namespace Anki {
       
     }
     
-    CompoundActionSequential::CompoundActionSequential(Robot& robot, std::list<IActionRunner*> actions)
+    CompoundActionSequential::CompoundActionSequential(Robot& robot, const std::list<IActionRunner*> & actions)
     : ICompoundAction(robot, actions)
     , _delayBetweenActionsInSeconds(0)
     {
@@ -452,7 +452,7 @@ namespace Anki {
       
     }
     
-    CompoundActionParallel::CompoundActionParallel(Robot& robot, std::list<IActionRunner*> actions)
+    CompoundActionParallel::CompoundActionParallel(Robot& robot, const std::list<IActionRunner*> & actions)
     : ICompoundAction(robot, actions)
     {
       

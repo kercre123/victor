@@ -169,14 +169,13 @@ IBehaviorPtr BehaviorContainer::FindBehaviorByID(BehaviorID behaviorID) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehaviorPtr BehaviorContainer::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
 {
-  for(const auto behavior : _idToBehaviorMap)
+  for (const auto & behavior : _idToBehaviorMap)
   {
-    if(behavior.second->GetExecutableType() == type)
+    if (behavior.second->GetExecutableType() == type)
     {
       return behavior.second;
     }
   }
-  
   return nullptr;
 }
 
