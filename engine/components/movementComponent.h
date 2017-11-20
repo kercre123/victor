@@ -162,10 +162,10 @@ private:
   
   Robot& _robot;
   
-  bool _isMoving;
-  bool _isHeadMoving;
-  bool _isLiftMoving;
-  bool _areWheelsMoving;
+  bool _isMoving = false;
+  bool _isHeadMoving = false;
+  bool _isLiftMoving = false;
+  bool _areWheelsMoving = false;
   
   std::list<Signal::SmartHandle> _eventHandles;
   
