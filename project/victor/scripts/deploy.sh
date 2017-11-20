@@ -156,3 +156,7 @@ $ADB shell mkdir -p $HAL_CONF_PATH
 # If hal.conf already exists in com.anki.cozmoengine directory, move it to /data/persist (if folder exists)
 $ADB shell test -f ${INSTALL_ROOT}/hal.conf && $ADB shell mv ${INSTALL_ROOT}/hal.conf $HAL_CONF_PATH
 
+#
+# Put a link in /data/appinit.sh for automatic startup
+#
+$ADB shell ln -sf ${INSTALL_ROOT}/appinit.sh /data/appinit.sh
