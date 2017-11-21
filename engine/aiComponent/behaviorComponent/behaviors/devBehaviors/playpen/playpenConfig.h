@@ -119,10 +119,10 @@ static f32 kGain                                      = 2.f;
 static u32 kFocalLengthTolerance                      = 30;
 
 // Tolerance on the calculated camera center
-static u32 kCenterTolerance                           = 30;
+static u32 kCenterTolerance                           = 50;
 
 // Tolerance on the camera's radial distortion
-static f32 kRadialDistortionTolerance                 = 0.05f;
+static f32 kRadialDistortionTolerance                 = 0.075f;
 
 // Tolerance on the camera's tangential distortion
 static f32 kTangentialDistortionTolerance             = 0.05f;

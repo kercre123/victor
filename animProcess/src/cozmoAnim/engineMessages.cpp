@@ -381,7 +381,14 @@ namespace Messages {
       
       RobotInterface::RobotAvailable idMsg;
       idMsg.hwRevision = 0;
-      idMsg.serialNumber = std::stoul(ExecCommand("getprop ro.serialno"), nullptr, 16);
+      idMsg.serialNumber = 0;
+
+      const std::string serialNo = ExecCommand("getprop ro.serialno");
+      if(!serialNo.empty())
+      {
+        idMsg.serialNumber = static_cast<u32>(std::stoul(serialNo, nullptr, 16));
+      }
+      
       RobotInterface::SendMessageToEngine(idMsg);
       
       // send firmware info indicating simulated or physical robot type
@@ -507,25 +514,32 @@ namespace Messages {
   // Executes the provided command and returns the output as a string
   std::string ExecCommand(const char* cmd) 
   {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
-    if (!pipe)
+    try
     {
-      PRINT_NAMED_WARNING("EngineMessages.ExecCommand.FailedToOpenPipe", "");
+      std::array<char, 128> buffer;
+      std::string result;
+      std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
+      if (!pipe)
+      {
+        PRINT_NAMED_WARNING("EngineMessages.ExecCommand.FailedToOpenPipe", "");
+        return "";
+      }
+
+      while (!feof(pipe.get()))
+      {
+        if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
+        {
+          result += buffer.data();
+        }
+      }
+
+      // Remove the last character as it is a newline
+      return result.substr(0,result.size()-1);
+    }
+    catch(...)
+    {
       return "";
     }
-
-    while (!feof(pipe.get()))
-    {
-      if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
-      {
-        result += buffer.data();
-      }
-    }
-
-    // Remove the last character as it is a newline
-    return result.substr(0,result.size()-1);
   }
 
   void ProcessBackpackButton(const RobotInterface::BackpackButton& payload)

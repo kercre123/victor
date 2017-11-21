@@ -17,6 +17,7 @@
 
 #include <sstream>
 #include <chrono>
+#include <iomanip>
 
 #define ARCHIVE_OLD_LOGS 1
 
@@ -43,22 +44,86 @@ namespace Cozmo {
     CloseLog();
   }
   
+  std::string FactoryTestLogger::ChooseNextFileName(const std::string& dir, const std::string& name)
+  {
+    static constexpr uint32_t kNumberDigitsLength = 4;
+
+    std::vector<std::string> dirNames;
+    Util::FileUtils::ListAllDirectories(dir, dirNames);
+
+    if(dirNames.empty())
+    {
+      std::ostringstream newNameStream;
+      newNameStream << name
+                    << "_-_"
+                    << std::setfill('0')
+                    << std::setw(kNumberDigitsLength)
+                    << 0;
+      return newNameStream.str();
+    }
+
+    auto listIter = dirNames.begin();
+    while (listIter != dirNames.end())
+    {
+      // Remove entries not starting with prefix
+      if (listIter->compare(0, name.length(), name) != 0)
+      {
+        listIter = dirNames.erase(listIter);
+        continue;
+      }
+
+      listIter++;
+    }
+    
+    // Otherwise:
+    // Sort list of entries
+    std::sort(dirNames.begin(), dirNames.end(), std::greater<std::string>());
+    
+    // Take the first name in the list
+    const auto& entryToReplace = dirNames.front();
+    
+    // Pull out the iteration number, +3 for "_-_"
+    const auto iterStrBegin = name.length() + 3;
+    static constexpr uint32_t kMaxIterationNum = 9999;
+    auto iterationNum = std::stoi(entryToReplace.substr(iterStrBegin, kNumberDigitsLength));
+
+    if (iterationNum == kMaxIterationNum)
+    {
+      PRINT_NAMED_ERROR("FactoryTestLogger.ChooseNextFileName",
+                        "Reached max number of iterations %d. Won't save more files.",
+                        kMaxIterationNum);
+      return "";
+    }
+    
+    // use increased iteration number to make the new filename
+    std::ostringstream newNameStream;
+    newNameStream << name
+                  << "_-_"
+                  << std::setfill('0')
+                  << std::setw(kNumberDigitsLength)
+                  << ++iterationNum;
+    return newNameStream.str();
+  }
 
   bool FactoryTestLogger::StartLog(const std::string& logName, bool appendDateTime, Util::Data::DataPlatform* dataPlatform)
   {
     // Generate new log dir name
     std::string newLogDir = "";
     if (dataPlatform) {
-      newLogDir = Util::FileUtils::FullFilePath({dataPlatform->pathToResource(_kLogScope, _kLogRootDirName), logName});
+      newLogDir = Util::FileUtils::FullFilePath({dataPlatform->pathToResource(_kLogScope, _kLogRootDirName)});
+      newLogDir += "/" + ChooseNextFileName(dataPlatform->pathToResource(_kLogScope, _kLogRootDirName), logName) + "/";
     } else {
-      newLogDir = Util::FileUtils::FullFilePath({_kLogRootDirName, logName});
+      newLogDir = Util::FileUtils::FullFilePath({_kLogRootDirName});
+      newLogDir += "/" + ChooseNextFileName(_kLogRootDirName, logName) + "/";
     }
 
+    // TODO(Al): Uncomment if we get correct time on robot
     // Append date time to log name
-    if (appendDateTime) {
-      newLogDir += "_-_" + GetCurrDateTime() + "/";
-    }
+    // if (appendDateTime) {
+    //   newLogDir += "_-_" + GetCurrDateTime() + "/";
+    // }
 
+    
     
     // Check if it already exists
     if (Util::FileUtils::DirectoryExists(newLogDir)) {

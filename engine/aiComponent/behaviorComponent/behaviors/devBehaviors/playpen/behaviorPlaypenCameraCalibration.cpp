@@ -211,7 +211,8 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(BehaviorExternalI
   std::list<std::vector<u8> > rawJpegData = robot.GetVisionComponent().GetCalibrationImageJpegData(nullptr);
   
   // Verify number of images
-  const u32 NUM_CAMERA_CALIB_IMAGES = 1;
+  // 2 images, the second is the undistorted version of the first
+  const u32 NUM_CAMERA_CALIB_IMAGES = 2;
   bool invalidNumCalibImages = rawJpegData.size() != NUM_CAMERA_CALIB_IMAGES;
   if (invalidNumCalibImages)
   {
@@ -229,6 +230,10 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(BehaviorExternalI
                  rawJpegData.begin()->data(),
                  rawJpegData.begin()->size(),
                  FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED);
+
+  // Write calibration image to log
+  PLAYPEN_TRY(GetLogger().AddFile("calibImageUndistort.jpg", *(++rawJpegData.begin())),
+              FactoryTestResultCode::WRITE_TO_LOG_FAILED);
   
   // Check if calibration values are sane
   if (!Util::InRange(calibMsg.focalLength_x,

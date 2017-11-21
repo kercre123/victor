@@ -274,6 +274,13 @@ message EnableBraceWhenFalling
   bool enable
 }
 
+// Enable/disable charging
+// When charging is enabled all motors are disabled
+message EnableCharging
+{
+  bool enable
+}
+
 // ========== V2 Animation process messages ===========
 
 // TODO: Make animation files referencable by integer tag so we don't have to send a string.
@@ -384,6 +391,7 @@ union EngineToRobot
   // Init
   GetManufacturingInfo          getMfgInfo                  = 0x01,
   SyncTime                      syncTime                    = 0x02,
+  EnableCharging                enableCharging              = 0x03,
 
   // Debug / Test
   StartControllerTestMode       startControllerTestMode     = 0x0A,

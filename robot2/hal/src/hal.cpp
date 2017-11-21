@@ -66,6 +66,8 @@ namespace { // "Private members"
   bool processedIMU_ = false;
   uint32_t lastFrameCounter_ = 0;
   Result lastResult_;
+
+  bool chargingEnabled_ = false;
   
 } // "private" namespace
 
@@ -246,6 +248,13 @@ Result HAL::Step(void)
   if (--repeater <= 0) {
     repeater = FRAMES_PER_RESPONSE;
     headData_.framecounter++;
+
+    // Send zero motor power when charging is enabled
+    if(chargingEnabled_)
+    {
+      memset(headData_.motorPower, 0, sizeof(headData_.motorPower));
+    }
+
     spine_write_h2b_frame(&spine_, &headData_);
   }
 
@@ -413,6 +422,12 @@ bool HAL::BatteryIsOnCharger()
 bool HAL::BatteryIsChargerOOS()
 {
   return bodyData_->battery.flags & chargerOOS;
+}
+
+void HAL::BatteryEnableCharging(bool enable)
+{
+  AnkiInfo("HAL.BatteryEnableCharging", "%s charging", (enable ? "Enabling" : "Disabling"));
+  chargingEnabled_ = enable;
 }
 
 Result HAL::SetBlockLight(const u32 activeID, const u32* colors)

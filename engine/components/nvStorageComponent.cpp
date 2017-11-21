@@ -583,7 +583,7 @@ void NVStorageComponent::WriteEntryToFile(u32 tag)
   }
   
   // Write data to file
-  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.WriteEntryToFile.Writing", "Tag 0x%x, side %zu", tag, iter->second.size());
+  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.WriteEntryToFile.Writing", "Tag 0x%x, size %zu", tag, iter->second.size());
   Util::FileUtils::CreateDirectory(path);
   if (!Util::FileUtils::WriteFile(path + ss.str(), iter->second)) {
     PRINT_NAMED_ERROR("NVStorageComponent.WriteEntryToFile.Failed", "%s", ss.str().c_str());

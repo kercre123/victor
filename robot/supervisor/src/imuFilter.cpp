@@ -335,8 +335,8 @@ namespace Anki {
 
       void Reset()
       {
-        rot_ = 0;
-        rotSpeed_ = 0;
+        // rot_ = 0;
+        // rotSpeed_ = 0;
         pitch_ = 0;
         imu_data_.Reset();
         
@@ -774,7 +774,7 @@ namespace Anki {
         const f32 temperatureDiffThresh_degC = 0.5f;
         const TimeStamp_t curTime = HAL::GetTimeStamp();
         
-        if (curTime > timeOfLastImuTempSample_ms_ + imuTempReadingRate_ms) {
+        if (curTime > timeOfLastImuTempSample_ms_ + imuTempReadingRate_ms && HeadController::IsCalibrated()) {
           const bool temperatureChanging = fabsf(lastImuTempSample_degC_ - imu_data_.temperature_degC) > temperatureDiffThresh_degC;
           gyroBiasCoeff_ = temperatureChanging ?
             GYRO_BIAS_FILT_COEFF_TEMP_CHANGING :

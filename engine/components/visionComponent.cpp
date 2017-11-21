@@ -1582,6 +1582,14 @@ namespace Cozmo {
       std::vector<u8> imgVec;
       cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));
       
+      Vision::Image imgUndistorted(img.GetNumRows(),img.GetNumCols());
+      cv::undistort(img.get_CvMat_(), imgUndistorted.get_CvMat_(),
+                    _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
+                    _camera.GetCalibration()->GetDistortionCoeffs());
+      
+      std::vector<u8> imgVecUndistort;
+      cv::imencode(".jpg", imgUndistorted.get_CvMat_(), imgVecUndistort, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));
+
       /*
       std::string imgFilename = "savedImg_" + std::to_string(imgIdx) + ".jpg";
       FILE* fp = fopen(imgFilename.c_str(), "w");
@@ -1590,6 +1598,7 @@ namespace Cozmo {
       */
       
       rawJpegData.emplace_back(std::move(imgVec));
+      rawJpegData.emplace_back(std::move(imgVecUndistort));
       
       ++imgIdx;
     }

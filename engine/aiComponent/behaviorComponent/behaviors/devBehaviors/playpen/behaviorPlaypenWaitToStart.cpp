@@ -36,6 +36,10 @@ Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal(BehaviorExternalI
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
 
+  // Enable charging while we are waiting for playpen to start
+  // This will disable motors!
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCharging(true)));
+
   // Remove the default playpen behavior timeout timer since this behavior will
   // run forever until the conditions for playpen to start are met
   ClearTimers();
@@ -124,6 +128,9 @@ void BehaviorPlaypenWaitToStart::OnBehaviorDeactivated(BehaviorExternalInterface
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
+
+  // Make sure to disable charging so we can use motors
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCharging(false)));
   
   _touchStartTime_ms = 0;
   _buttonPressed = false;

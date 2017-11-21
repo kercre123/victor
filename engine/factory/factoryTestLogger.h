@@ -90,6 +90,8 @@ public:
   
 private:
   
+  std::string ChooseNextFileName(const std::string& dir, const std::string& name);
+
   bool AppendCliffSensorValue(const std::string& readingName, const CliffSensorValue& data);
   bool AppendCliffSensorValues(const std::string& readingName, const CliffSensorValues& data);
   bool AppendPoseData(const std::string& poseName, const PoseData& data);
