@@ -119,7 +119,7 @@ int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
   int result = read(gHal.fd, buffer, len);
   if (result < 0) {
     if (errno == EAGAIN) { //nonblocking no-data
-      usleep(200); //wait a bit.
+      usleep(SERIAL_POLL_INTERVAL_US); //wait a bit.
       result = 0; //not an error
     }
   }
@@ -245,6 +245,10 @@ SpineErr hal_init(const char* devicename, long baudrate)
   return hal_serial_open(devicename, baudrate);
 }
 
+void hal_terminate(void) {
+  hal_serial_close();
+}
+
 
 
 // Scan the whole payload for sync, to recover after dropped bytes,
@@ -356,7 +360,7 @@ const struct SpineMessageHeader* hal_read_frame()
 
 const void* hal_get_frame(uint16_t type, int32_t timeout_ms)
 {
-  timeout_ms *= 5;
+  timeout_ms *= 1000.0/SERIAL_POLL_INTERVAL_US;
   const struct SpineMessageHeader* hdr;
   do {
     hdr = hal_read_frame();

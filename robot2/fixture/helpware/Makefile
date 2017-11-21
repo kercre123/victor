@@ -23,6 +23,10 @@ LIBS    += -lcore
 LIBPATH += -L$(CORE_DIR)
 CFLAGS  += -I../ -O2
 CFLAGS  += -I$(CORE_DIR)/inc
+CFLAGS  += -I../../hal
+CFLAGS  += -I../../syscon
+
+CFLAGS  += -DPLATFORM_ANDROID
 
 
 # All the c files in this directory will be compiled
@@ -43,12 +47,19 @@ DISPLAY_SRC = display.c helper_text.c display_test.c
 DISPLAY_OBJ = $(DISPLAY_SRC:%.c=$(OBJDIR)/%.o)
 
 HELPER = helper
-HELPER_SRC = main.c display.c helper_text.c logging.c pidopen.c
+HELPER_SRC = main.c display.c helper_text.c logging.c pidopen.c kbhit.c
 HELPER_OBJ = $(HELPER_SRC:%.c=$(OBJDIR)/%.o)
 
 PIDOPEN = pidopen
 PIDOPEN_SRC = pidopen.c
 PIDOPEN_OBJ = $(PIDOPEN_SRC:%.c=$(OBJDIR)/%.o)
+
+COMMANDER = commander
+COMMANDER_SRC = commander.c kbhit.c display.c
+COMMANDER_OBJ = $(COMMANDER_SRC:%.c=$(OBJDIR)/%.o) $(SPINE_OBJ)
+
+SPINE_SRC = spine_hal.c spine_crc.c
+SPINE_OBJ = $(SPINE_SRC:%.c=$(OBJDIR)/%.o)
 
 
 REMOTE_DEST = /data/local/fixture/
@@ -80,6 +91,14 @@ $(HELPER): $(CORE) $(HELPER_OBJ)
 
 $(PIDOPEN): $(CORE) $(PIDOPEN_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(PIDOPEN_OBJ) $(LIBPATH) $(LIBS)  -o $(PIDOPEN)
+
+$(COMMANDER): $(CORE) $(COMMANDER_OBJ)
+	$(CROSS_COMPILE)gcc -pie $(COMMANDER_OBJ) $(LIBPATH) $(LIBS) -llog -o $(COMMANDER)
+
+$(OBJDIR)/spine_hal.o:
+	$(CROSS_COMPILE)gcc $(CFLAGS) ../../hal/spine/spine_hal.c  -o $@
+$(OBJDIR)/spine_crc.o:
+	$(CROSS_COMPILE)gcc $(CFLAGS) ../../hal/spine/spine_crc.c  -o $@
 
 
 app=$(HELPER)
