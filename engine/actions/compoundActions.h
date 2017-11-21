@@ -32,7 +32,7 @@ namespace Anki {
     class ICompoundAction : public IActionRunner
     {
     public:
-      ICompoundAction(Robot& robot, std::list<IActionRunner*> actions);
+      ICompoundAction(Robot& robot, const std::list<IActionRunner*> & actions);
       
       // Adds an action to this compound action. Completely hands ownership and memory management
       // of the action over to this compoundAction
@@ -105,7 +105,7 @@ namespace Anki {
     {
     public:
       CompoundActionSequential(Robot& robot);
-      CompoundActionSequential(Robot& robot, std::list<IActionRunner*> actions);
+      CompoundActionSequential(Robot& robot, const std::list<IActionRunner*> & actions);
       
       // Add a delay, in seconds, between running each action in the group.
       // Default is 0 (no delay).
@@ -139,7 +139,7 @@ namespace Anki {
     {
     public:
       CompoundActionParallel(Robot& robot);
-      CompoundActionParallel(Robot& robot, std::list<IActionRunner*> actions);
+      CompoundActionParallel(Robot& robot, const std::list<IActionRunner*> & actions);
       
     protected:
       

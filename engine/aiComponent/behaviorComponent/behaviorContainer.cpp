@@ -194,14 +194,13 @@ ICozmoBehaviorPtr BehaviorContainer::FindBehaviorByID(BehaviorID behaviorID) con
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr BehaviorContainer::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
 {
-  for(const auto behavior : _idToBehaviorMap)
+  for (const auto & behavior : _idToBehaviorMap)
   {
-    if(behavior.second->GetExecutableType() == type)
+    if (behavior.second->GetExecutableType() == type)
     {
       return behavior.second;
     }
   }
-  
   return nullptr;
 }
 

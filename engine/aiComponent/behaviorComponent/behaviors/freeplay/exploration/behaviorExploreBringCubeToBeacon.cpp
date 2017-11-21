@@ -320,16 +320,16 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(BehaviorExternal
       const BlockWorld& world = robot.GetBlockWorld();
 
       size_t bestIndex = 0;
-      const ObservableObject* candidateObj = GetCandidate(world, bestIndex);
       float bestDistSQ = FLT_MAX;
-      for( size_t idx=0; idx<_candidateObjects.size(); ++idx)
+
+      for (size_t idx=0; idx <_candidateObjects.size(); ++idx)
       {
-        candidateObj = GetCandidate(world, bestIndex);
+        const ObservableObject* candidateObj = GetCandidate(world, idx);
         
         // calculate distance wrt robot
         Pose3d objWrtRobot;
         const bool canGetWrtRobot = (candidateObj && candidateObj->GetPose().GetWithRespectTo(robotPose, objWrtRobot) );
-        const float candidateDistSQ = canGetWrtRobot ? objWrtRobot.GetTranslation().LengthSq() : FLT_MAX;
+        const float candidateDistSQ = (canGetWrtRobot ? objWrtRobot.GetTranslation().LengthSq() : FLT_MAX);
         
         // check if candidate is better than current best
         if ( FLT_LT(candidateDistSQ, bestDistSQ) )

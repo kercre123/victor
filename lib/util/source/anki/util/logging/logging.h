@@ -149,7 +149,7 @@ void sDebugBreakOnError();
 // Does not invoke exit handlers.
 // Never returns to caller.
 //
-void sAbort();
+__attribute__((noreturn)) void sAbort();
   
 } // namespace Util
 } // namespace Anki
@@ -220,8 +220,11 @@ void sAbort();
 //     return FAIL;
 //   }
 //
+// Note that "&& false" is used to inform static analysis that the "verify failed" branch always returns false.
+// This prevents analyzers from generating bogus warnings caused by impossible code paths.
+//
 #define ANKI_VERIFY(expr, name, format, ...) \
-  (expr ? true : ::Anki::Util::sVerifyFailedReturnFalse(name, "VERIFY(%s): " format, #expr, ##__VA_ARGS__))
+  (expr ? true : (::Anki::Util::sVerifyFailedReturnFalse(name, "VERIFY(%s): " format, #expr, ##__VA_ARGS__) && false))
 
 //
 // Logging with channels.
