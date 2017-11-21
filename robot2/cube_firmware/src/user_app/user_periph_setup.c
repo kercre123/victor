@@ -73,7 +73,7 @@ void periph_init(void)
 
   // Enable the pads
   SetBits16(SYS_CTRL_REG, PAD_LATCH_EN, 1);
-
+/*
   // Disable things
   GPIO_INIT_PIN(BOOST_EN, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_1V );
   GPIO_INIT_PIN(ACC_CS,  OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
@@ -97,4 +97,5 @@ void periph_init(void)
     *GPIO_S_REGISTER(2) = p;
   }
   GPIO_CLR(BOOST_EN);
+*/
 }
