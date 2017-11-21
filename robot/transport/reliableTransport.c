@@ -372,7 +372,7 @@ uint8_t ICACHE_FLASH_ATTR UpdateLastAckedMessage(ReliableConnection* connection,
 void ICACHE_FLASH_ATTR ReceivePing(uint8_t* msg, uint16_t msgLen, ReliableConnection* connection)
 {
   // Just echo the ping back for now
-  ReliableTransport_SendMessage(msg, msgLen, connection, eRMT_Ping, false, false);
+  ReliableTransport_SendMessage(msg, msgLen, connection, eRMT_Ping, false, GLOBAL_INVALID_TAG);
 }
 
 /// Process one message
