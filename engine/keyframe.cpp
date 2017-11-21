@@ -860,7 +860,10 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
     
     BodyMotionKeyFrame::BodyMotionKeyFrame()
     {
+      // The stop message should command the wheel speeds to zero immediately, so command
+      // zero velocity and 'infinite' radius
       _stopMsg.speed = 0;
+      _stopMsg.curvatureRadius_mm = std::numeric_limits<decltype(_stopMsg.curvatureRadius_mm)>::max();
     }
     
     BodyMotionKeyFrame::BodyMotionKeyFrame(s16 speed, s16 curvatureRadius_mm, s32 duration_ms)
