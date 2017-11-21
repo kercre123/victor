@@ -17,6 +17,10 @@
 
 #define DEBUG_LIFT_CONTROLLER 0
 
+// In order to allow charging even when the processes are
+// running, automatically disable motors when the robot is on charger.
+// This is a temporary measure to support limitations of current HW.
+#define DISABLE_MOTORS_ON_CHARGER 1
 
 namespace Anki {
   namespace Cozmo {
@@ -169,6 +173,10 @@ namespace Anki {
         const u32 CHECKING_FOR_LOAD_TIMEOUT_MS = 500;
         const f32 CHECKING_FOR_LOAD_ANGLE_DIFF_THRESH = DEG_TO_RAD_F32(1.f);
         
+#if DISABLE_MOTORS_ON_CHARGER
+        bool wasOnCharger_ = false;
+#endif
+
       } // "private" members
 
 
@@ -561,6 +569,16 @@ namespace Anki {
         CalibrationUpdate();
 
         PoseAndSpeedFilterUpdate();
+
+#if DISABLE_MOTORS_ON_CHARGER
+        if (!wasOnCharger_ && HAL::BatteryIsOnCharger()) {
+          wasOnCharger_ = true;
+          Disable();
+        } else if (wasOnCharger_ && !HAL::BatteryIsOnCharger()) {
+          wasOnCharger_ = false;
+          Enable();
+        }
+#endif
 
         // If disabled, do not activate motors
         if(!enable_) {
