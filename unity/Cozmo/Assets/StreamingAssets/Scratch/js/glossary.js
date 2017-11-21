@@ -93,6 +93,10 @@ var Glossary = function(){
     var blocks = xml.querySelectorAll('category[name="' + categoryName + '"] block');
     var eDefs = eGlossary.querySelector('#definitions');
     eDefs.innerHTML = '';
+    var style = window.getComputedStyle(eDefs);
+    var defsPadLeft = parseFloat(style.getPropertyValue('padding-left'));
+    var defsPadRight = parseFloat(style.getPropertyValue('padding-right'));
+    var defsPadding = defsPadLeft + defsPadRight;
 
     for (var i=0; i < blocks.length; i++) {
       var blockXml = blocks[i];
@@ -104,8 +108,12 @@ var Glossary = function(){
       var svg = Blockly.utils.createSvgElement('svg', {}, null);
       svg.appendChild(svgRoot);
       svg.setAttribute('class', 'block-image');
-      svg.setAttribute('width', blockBounds.width);
-      svg.setAttribute('height', blockBounds.height);
+
+      var viewWidth = eDefs.clientWidth - defsPadding;
+
+      var w = Math.max(blockBounds.width, viewWidth);
+      var h = blockBounds.height;
+      svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
 
       // make room for Event blocks to have an overflow curved shape on top
       if (svgRoot.getAttribute('data-shapes') === 'hat') {
