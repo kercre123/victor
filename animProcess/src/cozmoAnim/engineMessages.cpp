@@ -41,6 +41,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "util/console/consoleSystem.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
 // For drawing images/text to the face
@@ -85,8 +86,106 @@ namespace Messages {
     u32 _nextAnimIDToDole;
 
     // Whether or not we are currently showing debug info on the screen
-    bool _showingDebugInfo = false;
-    
+    u8 _whichDebugScreen = 0;
+    const u8 kNumDebugScreens = 3;
+
+    bool _haveBirthCert = false;
+    const u8 kNumTicksToCheckForBC = 60; // ~2seconds
+    u8 _bcCheckCount = 0;
+
+    struct DebugScreenInfo {
+      std::string ip = "0.0.0.0";
+      std::string serialNo = "0";
+      std::string cliffs = "0 0 0 0";
+      std::string motors = "0 0 0 0";
+      std::string touchAndBat = "0 0.0v";
+      std::string prox = "0 0 0 0";
+      std::string accelGyroX = "0 0";
+      std::string accelGyroY = "0 0";
+      std::string accelGyroZ = "0 0";
+
+      void Update(const RobotState& state)
+      {
+        char temp[32] = "";
+        sprintf(temp, 
+                "%u %u %u %u", 
+                state.cliffDataRaw[0], 
+                state.cliffDataRaw[1], 
+                state.cliffDataRaw[2], 
+                state.cliffDataRaw[3]);
+        cliffs = temp;
+
+        sprintf(temp, 
+                "%.2f %.2f %.1f %.1f", 
+                state.headAngle, 
+                state.liftAngle, 
+                state.lwheel_speed_mmps, 
+                state.rwheel_speed_mmps);
+        motors = temp;
+
+        sprintf(temp, 
+                "%u %0.2fv", 
+                state.backpackTouchSensorRaw,
+                state.batteryVoltage);
+        touchAndBat = temp;
+
+        sprintf(temp, 
+                "%.1f %.1f %.1f %u", 
+                state.proxData.signalIntensity,
+                state.proxData.ambientIntensity,
+                state.proxData.spadCount,
+                state.proxData.distance_mm);
+        prox = temp;
+
+        sprintf(temp, 
+                "%*.2f %*.2f", 
+                8,
+                state.accel.x,
+                8, 
+                state.gyro.x);
+        accelGyroX = temp;
+
+        sprintf(temp, 
+                "%*.2f %*.2f",
+                8, 
+                state.accel.y,
+                8, 
+                state.gyro.y);
+        accelGyroY = temp;
+
+        sprintf(temp, 
+                "%*.2f %*.2f", 
+                8,
+                state.accel.z,
+                8,
+                state.gyro.z);
+        accelGyroZ = temp;
+      }
+
+      void ToVec(u8 whichScreen, std::vector<std::string>& vec)
+      {
+        vec.clear();
+        if(whichScreen == 1)
+        {
+          vec.push_back(ip);
+          vec.push_back(serialNo);
+        }
+        else if(whichScreen == 2)
+        {
+          vec.push_back(cliffs);
+          vec.push_back(motors);
+          vec.push_back(prox);
+          vec.push_back(touchAndBat);
+        }
+        else if (whichScreen == 3)
+        {
+          vec.push_back(accelGyroX);
+          vec.push_back(accelGyroY);
+          vec.push_back(accelGyroZ);
+        }
+      }
+    } _debugScreenInfo;
+
   } // private namespace
 
 
@@ -105,6 +204,9 @@ namespace Messages {
                         f32 textScale = 3.f);
   std::string ExecCommand(const char* cmd);
 
+  void UpdateFAC();
+  void UpdateDebugScreen();
+
   
 // #pragma mark --- Messages Method Implementations ---
 
@@ -121,6 +223,10 @@ namespace Messages {
     _animStreamer = &animStreamer;
     _audioInput   = &audioInput;
     _context      = &context;
+
+    _haveBirthCert = Util::FileUtils::FileExists("/data/persist/factory/80000000.nvdata");
+
+    UpdateFAC();
     
     return RESULT_OK;
   }
@@ -155,6 +261,19 @@ namespace Messages {
       } else {
         _nextAnimIDToDole = it->first;
       }
+    }
+  }
+
+  void UpdateFAC()
+  {
+    if(!_haveBirthCert)
+    {
+      _animStreamer->LockTrack(AnimTrackFlag::FACE_IMAGE_TRACK);
+
+      DrawTextOnScreen({"FAC"},
+                       NamedColors::BLACK,
+                       NamedColors::RED,
+                       { 0, FACE_DISPLAY_HEIGHT-10 });
     }
   }
   
@@ -274,6 +393,8 @@ namespace Messages {
 
   void Process_drawTextOnScreen(const Anki::Cozmo::RobotInterface::DrawTextOnScreen& msg)
   {
+    _whichDebugScreen = 0;
+
     DrawTextOnScreen({std::string(msg.text,
                                   msg.text_length)},
                      ColorRGBA(msg.textColor.r,
@@ -356,6 +477,12 @@ namespace Messages {
         // Break and forward message to engine
         break;
       } 
+      case RobotInterface::RobotToEngine::Tag_state:
+      {
+        _debugScreenInfo.Update(msg.state);
+        // Break and forward message to engine
+        break;
+      }
       default:
       {
         break;
@@ -466,6 +593,15 @@ namespace Messages {
       }
       ProcessMessageFromRobot(msgBuf);
     }
+
+    // Do after message processing so we draw the latest state info
+    UpdateDebugScreen();
+
+    if(++_bcCheckCount >= kNumTicksToCheckForBC)
+    {
+      _bcCheckCount = 0;
+      _haveBirthCert = Util::FileUtils::FileExists("/data/persist/factory/80000000.nvdata");
+    }
   }
 
   // Required by reliableTransport.c
@@ -546,9 +682,15 @@ namespace Messages {
   {
     if((ANKI_DEV_CHEATS || FACTORY_TEST) && payload.depressed)
     {
+      ++_whichDebugScreen;
+      if(_whichDebugScreen > kNumDebugScreens)
+      {
+        _whichDebugScreen = 0;
+      }
+
       // If we aren't currently showing debug info and the button was pressed then
       // start showing debug info
-      if(!_showingDebugInfo)
+      if(_whichDebugScreen != 0)
       {
         // Lock the face image track to prevent animations from drawing over the debug info
         _animStreamer->LockTrack(AnimTrackFlag::FACE_IMAGE_TRACK);
@@ -577,12 +719,12 @@ namespace Messages {
         close(fd);
 
         struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
-        const std::string ip = std::string(inet_ntoa(ipaddr->sin_addr));
+        _debugScreenInfo.ip = std::string(inet_ntoa(ipaddr->sin_addr));
 
-        const std::string serialNo = ExecCommand("getprop ro.serialno");
+        _debugScreenInfo.serialNo = ExecCommand("getprop ro.serialno");
 
         // Draw the last three digits of the ip on the screen
-        DrawTextOnScreen({ip, serialNo}, NamedColors::WHITE, NamedColors::BLACK, {0, 30}, 20, 0.5f);
+        DrawTextOnScreen({_debugScreenInfo.ip, _debugScreenInfo.serialNo}, NamedColors::WHITE, NamedColors::BLACK, {0, 30}, 20, 0.5f);
 
 
       }
@@ -592,8 +734,19 @@ namespace Messages {
       {
         _animStreamer->UnlockTrack(AnimTrackFlag::FACE_IMAGE_TRACK);
         FaceDisplay::getInstance()->FaceClear();
+
+        UpdateFAC();
       }
-      _showingDebugInfo = !_showingDebugInfo;
+    }
+  }
+
+  void UpdateDebugScreen()
+  {
+    if(_whichDebugScreen != 0)
+    {
+      std::vector<std::string> text;
+      _debugScreenInfo.ToVec(_whichDebugScreen, text);
+      DrawTextOnScreen(text, NamedColors::WHITE, NamedColors::BLACK, {0, 30}, 20, 0.5f);
     }
   }
 
@@ -639,25 +792,8 @@ namespace Messages {
                          factoryScale);
     }
 
-    // Convert the RGB888 image to RGB565
-    cv::Mat img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, CV_16U);
-    u16* row565;
-    const Vision::PixelRGB* rowRGB;
-    for(int i = 0; i < img565.rows; ++i)
-    {
-      row565 = img565.ptr<u16>(i);
-      rowRGB = resultImg.get_CvMat_().ptr<Vision::PixelRGB>(i);
-      for(int j = 0; j < img565.cols; ++j)
-      {
-        row565[j] = (((int)(rowRGB[j].r() >> 3) << 11) | 
-                     ((int)(rowRGB[j].g() >> 2) << 5)  | 
-                     ((int)(rowRGB[j].b() >> 3) << 0));
-        // Swap byte order
-        row565[j] = ((row565[j]>>8)&0xFF) | ((row565[j]&0xFF)<<8);
-      }
-    }
-
-    FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
+    static Array2d<u16> img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+    _animStreamer->DrawToFace(resultImg, img565);
   }
 
 } // namespace Messages

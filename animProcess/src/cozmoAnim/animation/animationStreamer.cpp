@@ -435,37 +435,41 @@ namespace Cozmo {
                   faceImg.GetNumCols(), faceImg.GetNumRows(),
                   FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
 
-      // Draws frame to face display
-#ifdef DRAW_FACE_IN_THREAD
-      // If last draw thread is still running then skip this face
-      if (_faceDrawFuture.valid()) {
-        const std::chrono::milliseconds span(0);
-        auto status = _faceDrawFuture.wait_for(span);
-        if (status != std::future_status::ready) {
-          // This could be happening for one or more of the following reasons.
-          // 1) The actual spi calls in FaceDisplay::FaceDraw() are taking too long.
-          //    This is currently happening all the time. Nathan knows about it.
-          // 2) We're calling this function more than once per animation process tic, which we shouldn't be doing.
-          const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-          PRINT_NAMED_WARNING("AnimationStreamer.BufferFaceToSend.SkippingFace", "Still drawing last face from %f ms ago", now_ms - _lastDrawTime_ms);
-          return;
-        }
-      }
+      DrawToFace(faceImg, _faceImg565);
+    }
+  }
 
-    ConvertRGB24toRGB565(faceImg, _gammaLUT, _faceImg565);
+  void AnimationStreamer::DrawToFace(const Vision::ImageRGB& img, Array2d<u16>& img565_out)
+  {
+#ifdef DRAW_FACE_IN_THREAD
+    // If last draw thread is still running then skip this face
+    if (_faceDrawFuture.valid()) {
+      const std::chrono::milliseconds span(0);
+      auto status = _faceDrawFuture.wait_for(span);
+      if (status != std::future_status::ready) {
+        // This could be happening for one or more of the following reasons.
+        // 1) The actual spi calls in FaceDisplay::FaceDraw() are taking too long.
+        //    This is currently happening all the time. Nathan knows about it.
+        // 2) We're calling this function more than once per animation process tic, which we shouldn't be doing.
+        const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+        PRINT_NAMED_WARNING("AnimationStreamer.BufferFaceToSend.SkippingFace", "Still drawing last face from %f ms ago", now_ms - _lastDrawTime_ms);
+        return;
+      }
+    }
+
+    ConvertRGB24toRGB565(img, _gammaLUT, img565_out);
     
     // Dispatch thread
     auto draw_face = [](u16* frame) {
       FaceDisplay::getInstance()->FaceDraw(frame);
     };
   
-    _faceDrawFuture = std::async(draw_face, _faceImg565.GetRow(0));
+    _faceDrawFuture = std::async(draw_face, img565_out.GetRow(0));
     _lastDrawTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 #else    
-    ConvertRGB24toRGB565(faceImg, _gammaLUT, _faceImg565);
-    FaceDisplay::getInstance()->FaceDraw(_faceImg565.GetRow(0));
+    ConvertRGB24toRGB565(img, _gammaLUT, img565_out);
+    FaceDisplay::getInstance()->FaceDraw(img565_out.GetRow(0));
 #endif   // #ifdef DRAW_FACE_IN_THREAD
-    }
   }
 
   

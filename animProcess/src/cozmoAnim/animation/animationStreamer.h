@@ -113,6 +113,8 @@ namespace Cozmo {
     // Lock or unlock an individual track
     void LockTrack(AnimTrackFlag track) { _lockedTracks |= (u8)track; }
     void UnlockTrack(AnimTrackFlag track) { _lockedTracks &= ~(u8)track; }
+
+    void DrawToFace(const Vision::ImageRGB& img, Array2d<u16>& img565_out);
     
   private:
     
