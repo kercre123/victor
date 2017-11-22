@@ -197,6 +197,14 @@ namespace Anki {
       MakeSynchronous();
     }
 
+    void CozmoSimTestController::ExitTest()
+    {
+      if (_quitWebotsAfterTest) {
+        QuitWebots(_result); // Terminate the Webots process
+      } else {
+        QuitController(_result); // Just quit the controller, but keep Webots running
+      }
+    }
     
     //Only runs if #define RECORD_TEST 1, use for local testing
     void CozmoSimTestController::StartMovieConditional(const std::string& name, int speed)
