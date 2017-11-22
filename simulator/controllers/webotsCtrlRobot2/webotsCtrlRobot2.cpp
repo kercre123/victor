@@ -65,6 +65,7 @@ int main(int argc, char **argv)
   << "rotation "    << robotRotation[0] << " " << robotRotation[1] << " " << robotRotation[2] << " " << robotRotation[3] << " }";
   
   ss << "CozmoAnim{"
+  << "filterLogs " << (params.filterLog ? "TRUE " : "FALSE ")
   << "translation " << robotPosition[0] << " " << robotPosition[1] << " " << robotPosition[2] + kApproxCameraHeight << " "
   << "rotation "    << robotRotation[0] << " " << robotRotation[1] << " " << robotRotation[2] << " " << robotRotation[3] << " }";
 
