@@ -229,6 +229,11 @@ namespace Vision {
     
     virtual s32 GetNumChannels() const override { return 3; }
     
+    // Divide each channel by the sum across channels. Multiply result by 255 to keep in 8bit range.
+    // Optionally, you can provide a working array to avoid allocation (will allocate to [NumRows x NumCols x 1])
+    ImageRGB& NormalizeColor(Array2d<s32>* workingArray = nullptr); // in place
+    void GetNormalizedColor(ImageRGB& imgNorm, Array2d<s32>* workingArray = nullptr) const;
+    
   }; // class ImageRGB
   
   // NOTE: Despite this being called an "Image" it inherits directly from Array2d because it's

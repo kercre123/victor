@@ -622,6 +622,53 @@ namespace Vision {
     return out;
   }
   
+  ImageRGB& ImageRGB::NormalizeColor(Array2d<s32>* workingArray)
+  {
+    GetNormalizedColor(*this, workingArray);
+    return *this;
+  }
+  
+  void ImageRGB::GetNormalizedColor(ImageRGB& imgNorm, Array2d<s32>* workingArray) const
+  {
+    imgNorm.Allocate(GetNumRows(), GetNumCols());
+    
+    // Wrap an Nx3 "header" around the original color data
+    const cv::Mat imageVector = get_CvMat_().reshape(1, GetNumElements());
+    
+    // Compute the sum along the rows, yielding an Nx1 vector
+    cv::Mat_<s32> imageSum;
+    if(workingArray != nullptr)
+    {
+      imageSum = workingArray->get_CvMat_();
+    }
+    try
+    {
+      cv::reduce(imageVector, imageSum, 1, CV_REDUCE_SUM, CV_32SC1);
+    }
+    catch (cv::Exception& e)
+    {
+      PRINT_NAMED_ERROR("ImageRGB.GetNormalizedColor.OpenCvReduceFailed",
+                        "%s", e.what());
+      return;
+    }
+    
+    // Wrap an Nx3 "header" around the output normalized data. We will divide directly into this below.
+    cv::Mat imageNorm = imgNorm.get_CvMat_().reshape(1, imgNorm.GetNumElements());
+    
+    // Scale each row by 255 and divide by the sum
+    // TODO: Avoid the repeat?
+    try
+    {
+      cv::divide(imageVector, cv::repeat(imageSum, 1, imageVector.cols), imageNorm, 255.0, CV_8UC1);
+    }
+    catch (cv::Exception& e)
+    {
+      PRINT_NAMED_ERROR("ImageRGB.GetNormalizedColor.OpenCvDivideFailed",
+                        "%s", e.what());
+      return;
+    }
+  }
+  
 #if 0
 #pragma mark --- ImageRGB565 ---
 #endif

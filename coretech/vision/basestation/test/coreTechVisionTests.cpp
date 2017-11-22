@@ -347,12 +347,12 @@ GTEST_TEST(ColorPixels, RGB565Conversion)
       {
         const PixelRGB pRGB(rValue, gValue, bValue);
         
-        printf("RGB=(%d,%d,%d)\n", rValue, gValue, bValue);
+        //printf("RGB=(%d,%d,%d)\n", rValue, gValue, bValue);
         
         // For byte-swapped version
         const PixelRGB565_<true> pRGB565_swapped(pRGB);
         
-        printf("RGB565[swapped]=(%d,%d,%d)\n", pRGB565_swapped.r(), pRGB565_swapped.g(), pRGB565_swapped.b());
+        //printf("RGB565[swapped]=(%d,%d,%d)\n", pRGB565_swapped.r(), pRGB565_swapped.g(), pRGB565_swapped.b());
         
         EXPECT_EQ(pRGB565_swapped.r(), SCALE(pRGB.r(),3));
         EXPECT_EQ(pRGB565_swapped.g(), SCALE(pRGB.g(),2));
@@ -361,7 +361,7 @@ GTEST_TEST(ColorPixels, RGB565Conversion)
         // For unswapped version
         const PixelRGB565_<false> pRGB565(pRGB);
         
-        printf("RGB565[UNswapped]=(%d,%d,%d)\n", pRGB565.r(), pRGB565.g(), pRGB565.b());
+        //printf("RGB565[UNswapped]=(%d,%d,%d)\n", pRGB565.r(), pRGB565.g(), pRGB565.b());
         
         EXPECT_EQ(pRGB565.r(), SCALE(pRGB.r(),3));
         EXPECT_EQ(pRGB565.g(), SCALE(pRGB.g(),2));
@@ -399,10 +399,10 @@ GTEST_TEST(ColorPixels, RGB565Conversion)
         const PixelRGB565_<true> pRGB565_swapped(rValue, gValue, bValue);
         PixelRGB pRGB = pRGB565_swapped.ToPixelRGB();
         
-        printf("RGB565_swapped=(%d,%d,%d) vs. (%d,%d,%d)\n", rValue, gValue, bValue,
-               pRGB565_swapped.r(), pRGB565_swapped.g(), pRGB565_swapped.b());
+        //printf("RGB565_swapped=(%d,%d,%d) vs. (%d,%d,%d)\n", rValue, gValue, bValue,
+        //       pRGB565_swapped.r(), pRGB565_swapped.g(), pRGB565_swapped.b());
         
-        printf("RGB=(%d,%d,%d)\n", pRGB.r(), pRGB.g(), pRGB.b());
+        //printf("RGB=(%d,%d,%d)\n", pRGB.r(), pRGB.g(), pRGB.b());
         
         EXPECT_EQ(pRGB.r(), pRGB565_swapped.r());
         EXPECT_EQ(pRGB.g(), pRGB565_swapped.g());
@@ -412,10 +412,10 @@ GTEST_TEST(ColorPixels, RGB565Conversion)
         const PixelRGB565_<false> pRGB565(rValue, gValue, bValue);
         pRGB = pRGB565.ToPixelRGB();
         
-        printf("RGB565=(%d,%d,%d) vs. (%d,%d,%d)\n", rValue, gValue, bValue,
-               pRGB565.r(), pRGB565.g(), pRGB565.b());
+        //printf("RGB565=(%d,%d,%d) vs. (%d,%d,%d)\n", rValue, gValue, bValue,
+        //       pRGB565.r(), pRGB565.g(), pRGB565.b());
         
-        printf("RGB=(%d,%d,%d)\n", pRGB.r(), pRGB.g(), pRGB.b());
+        //printf("RGB=(%d,%d,%d)\n", pRGB.r(), pRGB.g(), pRGB.b());
         
         EXPECT_EQ(pRGB.r(), pRGB565.r());
         EXPECT_EQ(pRGB.g(), pRGB565.g());
@@ -565,4 +565,49 @@ GTEST_TEST(ImageCache, ImageCacheGray)
   ASSERT_EQ(true, cache.HasColor());
   cache.GetRGB(ImageCache::Size::Half_NN, &getType);
   ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
+}
+
+
+GTEST_TEST(ImageRGB, NormalizedColor)
+{
+  using namespace Anki::Vision;
+  
+  ImageRGB img(3,3);
+  img(0,0) = {0,0,0};
+  img(0,1) = {255,255,255};
+  img(0,2) = {0, 255, 255};
+  img(1,0) = {0, 0, 255};
+  img(1,1) = {128, 0, 0};
+  img(1,2) = {17, 0, 47};
+  img(2,0) = {97, 54, 250};
+  img(2,1) = {10, 10, 10};
+  img(2,2) = {100, 200, 0};
+  
+  ImageRGB imgNorm;
+  img.GetNormalizedColor(imgNorm);
+  
+  for(s32 i=0; i<img.GetNumRows(); ++i)
+  {
+    const PixelRGB* img_i = img.GetRow(i);
+    const PixelRGB* imgNorm_i = imgNorm.GetRow(i);
+    
+    for(s32 j=0; j<img.GetNumCols(); ++j)
+    {
+      const PixelRGB& p = img_i[j];
+      const PixelRGB& pNorm = imgNorm_i[j];
+      
+      const s32 sum = (s32)p.r() + (s32)p.g() + (s32)p.b();
+      const PixelRGB truth(sum == 0 ? 0 : Util::numeric_cast<u8>(((s32)p.r() * 255)/sum),
+                           sum == 0 ? 0 : Util::numeric_cast<u8>(((s32)p.g() * 255)/sum),
+                           sum == 0 ? 0 : Util::numeric_cast<u8>(((s32)p.b() * 255)/sum));
+      
+      //printf("Img=(%d,%d,%d) ImgNorm=(%d,%d,%d) Truth=(%d,%d,%d)\n",
+      //       p.r(), p.g(), p.b(), pNorm.r(), pNorm.g(), pNorm.b(), truth.r(), truth.g(), truth.b());
+      
+      // Note: rounding error depending on order of operations can yield +/-1 variation
+      EXPECT_NEAR(truth.r(), pNorm.r(), 1);
+      EXPECT_NEAR(truth.g(), pNorm.g(), 1);
+      EXPECT_NEAR(truth.b(), pNorm.b(), 1);
+    }
+  }
 }
