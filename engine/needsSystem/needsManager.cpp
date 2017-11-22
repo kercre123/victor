@@ -72,7 +72,6 @@ static const float kNeedLevelStorageMultiplier = 100000.0f;
 static const int kMinimumTimeBetweenDeviceSaves_sec = 60;
 static const int kMinimumTimeBetweenRobotSaves_sec = (60 * 10);  // Less frequently than device saves
 
-static const std::string kUnconnectedDecayRatesExperimentKey = "unconnected_decay_rates";
 static const std::string kTuningExperimentKey = "preholiday_tuning";
 
 // Note:  We don't use zero for 'uninitialized serial number' because
@@ -196,17 +195,6 @@ namespace {
       g_DebugNeedsManager->DebugPassTimeMinutes(minutes);
     }
   }
-  void ForceDecayVariation( ConsoleFunctionContextRef context )
-  {
-    const char* experimentKey = kUnconnectedDecayRatesExperimentKey.c_str();
-    const char* variationKey = ConsoleArg_Get_String(context, "variationKey");
-    Util::AnkiLab::AddABTestingForcedAssignment(experimentKey, variationKey);
-    context->channel->WriteLog("ForceAssignExperiment %s => %s", experimentKey, variationKey);
-
-    g_DebugNeedsManager->GetNeedsConfigMutable().SetUnconnectedDecayTestVariation(g_DebugNeedsManager->GetDecayConfigBaseFilename(),
-                                                                                  variationKey,
-                                                                                  Util::AnkiLab::AssignmentStatus::ForceAssigned);
-  }
   void ForceTuningVariation( ConsoleFunctionContextRef context )
   {
     const char* experimentKey = kTuningExperimentKey.c_str();
@@ -231,7 +219,6 @@ namespace {
   CONSOLE_FUNC( DebugSetEnergyLevel, "Needs", float level );
   CONSOLE_FUNC( DebugSetPlayLevel, "Needs", float level );
   CONSOLE_FUNC( DebugPassTimeMinutes, "Needs", float minutes );
-  CONSOLE_FUNC( ForceDecayVariation, "A/B Testing", const char* variationKey );
   CONSOLE_FUNC( ForceTuningVariation, "A/B Testing", const char* variationKey );
 };
 #endif
@@ -241,7 +228,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _robot(nullptr)
 , _needsState()
 , _needsStateFromRobot()
-, _needsConfig(cozmoContext)
+, _needsConfig()
 , _actionsConfig()
 , _starRewardsConfig()
 , _localNotifications(new LocalNotifications(cozmoContext, *this))
@@ -450,8 +437,6 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
   // By this time we've finished reading the stored lab assignments from the
   // robot, and immediately after that, the needs state.  So now we can
   // attempt to activate the experiment
-
-  AttemptActivateDecayExperiment(_needsState._robotSerialNumber);
 
   AttemptActivateTuningExperiment(_needsState._robotSerialNumber);
 
@@ -671,49 +656,6 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
   }
 
   _localNotifications->Generate();
-}
-
-
-void NeedsManager::AttemptActivateDecayExperiment(u32 robotSerialNumber)
-{
-  // If we don't yet have a valid robot serial number, don't try to make
-  // an experiment assignment, since it's based on robot serial number
-  if (robotSerialNumber == kUninitializedSerialNumber)
-  {
-    return;
-  }
-
-  // Call this first to set the audience tags based on current data.
-  // Note that in ActivateExperiment, if there was already an assigned
-  // variation, we'll use that assignment and ignore the audience tags
-  _cozmoContext->GetExperiments()->GetAudienceTags().CalculateQualifiedTags();
-
-  Util::AnkiLab::ActivateExperimentRequest request(kUnconnectedDecayRatesExperimentKey,
-                                                   std::to_string(robotSerialNumber));
-  std::string outVariationKey;
-  const auto assignmentStatus = _cozmoContext->GetExperiments()->ActivateExperiment(request, outVariationKey);
-  PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitInternal",
-                "Unconnected decay experiment activation assignment status is: %s; based on serial number %d",
-                EnumToString(assignmentStatus), robotSerialNumber);
-  if (assignmentStatus == Util::AnkiLab::AssignmentStatus::Assigned ||
-      assignmentStatus == Util::AnkiLab::AssignmentStatus::OverrideAssigned ||
-      assignmentStatus == Util::AnkiLab::AssignmentStatus::ForceAssigned)
-  {
-    PRINT_CH_INFO(kLogChannelName, "NeedsManager.AttemptActivateDecayExperiment",
-                  "Experiment %s: assigned to variation: %s",
-                  kUnconnectedDecayRatesExperimentKey.c_str(),
-                  outVariationKey.c_str());
-
-    _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(),
-                                                  outVariationKey,
-                                                  assignmentStatus);
-  }
-  else
-  {
-    _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(),
-                                                  kABTestControlKey,
-                                                  assignmentStatus);
-  }
 }
 
 
@@ -1784,11 +1726,9 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
   {
     // When un-backgrounding, apply decay for the time we were backgrounded
 
-    // Attempt to set the experiment variation for unconnected decay; this
-    // is to cover the case where the user backgrounds the app, and then
-    // the experiment's end date passes; in that case we want to switch
-    // back to the normal unconnected decay rates
-    AttemptActivateDecayExperiment(_needsState._robotSerialNumber);
+    // Attempt to set the experiment variation; this is to cover the case
+    // where the user backgrounds the app, and then the experiment's end
+    // date passes
 
     AttemptActivateTuningExperiment(_needsState._robotSerialNumber);
 

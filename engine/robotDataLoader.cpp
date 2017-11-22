@@ -770,16 +770,8 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // needs system decay config
   {
-    const std::string jsonFilename = NeedsManager::GetDecayConfigBaseFilename() + ".json";
-    // For our unconnected_decay_rates experiment, look for this file in the saved files folder first
-    Util::Data::Scope scope = Util::Data::Scope::Persistent;
-    std::string fullPathFilename = _platform->pathToResource(scope, jsonFilename);
-    if (!Util::FileUtils::FileExists(fullPathFilename))
-    {
-      // If not found, fall back to looking for it in the resources
-      scope = Util::Data::Scope::Resources;
-    }
-    const bool success = _platform->readAsJson(scope, jsonFilename, _needsDecayConfig);
+    static const std::string jsonFilename = NeedsManager::GetDecayConfigBaseFilename() + ".json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigJsonNotFound",

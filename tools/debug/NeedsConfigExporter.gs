@@ -45,8 +45,6 @@ function onOpen() {
     {name: "Export JSON for ActionConfig sheet", functionName: "exportActionConfigSheet"},
     {name: "Export JSON for ActionConfigOrig sheet", functionName: "exportActionConfigOrigSheet"},
     {name: "Export JSON for DecayConfig sheet", functionName: "exportDecayConfigSheet"},
-    {name: "Export JSON for DecayA sheet", functionName: "exportDecayASheet"},
-    {name: "Export JSON for DecayB sheet", functionName: "exportDecayBSheet"},
     {name: "Export JSON for RewardsConfig sheet", functionName: "exportRewardsConfigSheet"},
     {name: "Export JSON for RewardsConfigFaster sheet", functionName: "exportRewardsConfigFasterSheet"},
     {name: "Export JSON for LocalNotificationConfig sheet", functionName: "exportLocalNotificationConfigSheet"},
@@ -161,14 +159,6 @@ function rangeError(actionIdName, fieldName) {
 
 function exportDecayConfigSheet(e) {
   return exportGivenDecayConfigSheet(e, "DecayConfig");
-}
-
-function exportDecayASheet(e) {
-  return exportGivenDecayConfigSheet(e, "DecayA");
-}
-
-function exportDecayBSheet(e) {
-  return exportGivenDecayConfigSheet(e, "DecayB");
 }
 
 function exportGivenDecayConfigSheet(e, sheetName) {

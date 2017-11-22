@@ -147,7 +147,6 @@ private:
 
   void InitAfterReadFromRobotAttempt();
 
-  void AttemptActivateDecayExperiment(u32 robotSerialNumber);
   void AttemptActivateTuningExperiment(u32 robotSerialNumber);
 
   void ApplyDecayAllNeeds(const bool connected);
