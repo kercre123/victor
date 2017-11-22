@@ -281,12 +281,6 @@ namespace Anki
       // IMU_DataStructure contains 3-axis acceleration and 3-axis gyro data
       struct IMU_DataStructure
       {
-        void Reset() {
-          acc_x = acc_y = acc_z = 0;
-          rate_x = rate_y = rate_z = 0;
-          temperature_degC = 0.f;
-        }
-        
         f32 acc_x;      // mm/s/s
         f32 acc_y;
         f32 acc_z;

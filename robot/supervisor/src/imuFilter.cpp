@@ -47,7 +47,7 @@ namespace Anki {
         HAL::IMU_DataStructure imu_data_;
 
         // Orientation and speed in XY-plane (i.e. horizontal plane) of robot
-        f32 rot_ = 0;   // radians
+        Radians rot_ = 0;   // radians
         f32 rotSpeed_ = 0; // rad/s
 
         // Pitch angle: Approaches angle of accelerometer wrt gravity horizontal
@@ -342,10 +342,8 @@ namespace Anki {
 
       void Reset()
       {
-        rot_ = 0;
         rotSpeed_ = 0;
         pitch_ = 0;
-        imu_data_.Reset();
         
         prevHeadAngle_ = UNINIT_HEAD_ANGLE;
         
@@ -1085,7 +1083,7 @@ namespace Anki {
       f32 GetRotation()
       {
         //return _zAngle;  // Computed from 3D orientation tracker (Madgwick filter)
-        return rot_;     // Computed from simplified yaw-only tracker
+        return rot_.ToFloat();     // Computed from simplified yaw-only tracker
       }
 
       f32 GetRotationSpeed()
