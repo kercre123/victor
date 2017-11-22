@@ -19,7 +19,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimOnNeedsChange.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequenceWithFace.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDrivePath.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindFaces.h"
@@ -304,11 +303,6 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::PlayAnimWithFace:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPlayAnimSequenceWithFace(config));
-      break;
-    }
-    case BehaviorClass::PlayArbitraryAnim:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorPlayArbitraryAnim(config));
       break;
     }
     case BehaviorClass::PounceOnMotion:
