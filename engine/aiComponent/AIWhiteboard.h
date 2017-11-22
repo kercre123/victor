@@ -19,6 +19,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/vision/basestation/faceIdTypes.h"
+#include "engine/entity.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
@@ -48,7 +49,7 @@ constexpr static const float kObjectInvalidAfterFailureRadius_mm = 60.f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIWhiteboard
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AIWhiteboard : private Util::noncopyable
+class AIWhiteboard : public ManageableComponent, private Util::noncopyable
 {
 public:
   

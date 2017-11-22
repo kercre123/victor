@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_AiComponent_FreeplayDataTracker_H__
 
 #include "anki/common/basestation/utils/timer.h"
+#include "engine/entity.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -30,7 +31,7 @@ enum class FreeplayPauseFlag
   OnCharger
 };
 
-class FreeplayDataTracker : private Util::noncopyable
+class FreeplayDataTracker : public ManageableComponent, private Util::noncopyable
 {
 public:
 

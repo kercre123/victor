@@ -17,9 +17,11 @@
 
 #include "engine/aiComponent/behaviorComponent/iBehaviorMessageSubscriber.h"
 
+#include "engine/entity.h"
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
+
 
 #include "util/helpers/noncopyable.h"
 
@@ -33,6 +35,7 @@ namespace Cozmo {
 // Forward declarations
 class AIComponent;
 class AsyncMessageGateComponent;
+class BEIRobotInfo;
 class BehaviorComponent;
 class BehaviorComponentCloudReceiver;
 class BehaviorContainer;
@@ -58,6 +61,7 @@ namespace ComponentWrappers{
 class BehaviorComponentComponents{
 public:
   BehaviorComponentComponents(Robot& robot,
+                              std::unique_ptr<BEIRobotInfo>&& robotInfoPtr,
                               AIComponent& aiComponent,
                               BlockWorld& blockWorld,
                               FaceWorld& faceWorld,
@@ -70,6 +74,7 @@ public:
   virtual ~BehaviorComponentComponents();
   
   Robot&                     _robot;
+  BEIRobotInfo&              _robotInfo;
   AIComponent&               _aiComponent;
   BlockWorld&                _blockWorld;
   FaceWorld&                 _faceWorld;
@@ -81,6 +86,8 @@ public:
   DelegationComponent&       _delegationComponent;
   
 protected:
+  std::unique_ptr<BEIRobotInfo>               _robotInfoPtr;
+
   // When generate default components is called, unique ptrs are generated
   // for the following classes referenced above - they are kept within hidden
   // scope so that if in other cases the references are passed in directly
@@ -95,7 +102,7 @@ protected:
 };
 }
 
-class BehaviorComponent : public IBehaviorMessageSubscriber, private Util::noncopyable
+class BehaviorComponent : public IBehaviorMessageSubscriber, public ManageableComponent, private Util::noncopyable
 {
 public:
   BehaviorComponent();
@@ -116,6 +123,7 @@ public:
   // Function which encapsalates the initialization dependency graph
   // for the behavior components - does not initialize behavior component
   static void InitializeSubComponents(Robot& robot,
+                                      BEIRobotInfo& robotInfo,
                                       IBehavior* baseBehavior,
                                       BehaviorSystemManager& behaviorSysMgr,
                                       IBehaviorMessageSubscriber& messageSubscriber,
@@ -163,6 +171,7 @@ protected:
   
 private:
   ComponentsPtr _components;
+  
   
   // Component which behaviors and helpers can query to find out the appropriate animation
   // to play in response to a user facing action result

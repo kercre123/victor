@@ -16,12 +16,16 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/entity.h"
 
 #include "clad/types/offTreadsStates.h"
 
+#include "util/helpers/noncopyable.h"
+#include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
 
 #include <memory>
+#include <unordered_map>
 
 namespace Anki {
 namespace Cozmo {
@@ -48,7 +52,6 @@ class ObjectPoseConfirmer;
 class PetWorld;
 class ProgressionUnlockComponent;
 class PublicStateBroadcaster;
-class Robot;
 class TouchSensorComponent;
 class VisionComponent;
   
@@ -56,142 +59,181 @@ namespace Audio {
 class EngineRobotAudioClient;
 }
 
-namespace ComponentWrappers{
-struct BehaviorExternalInterfaceComponents{
-  BehaviorExternalInterfaceComponents(BEIRobotInfo&& robotInfo,
-                                      AIComponent& aiComponent,
-                                      const BehaviorContainer& behaviorContainer,
-                                      BlockWorld& blockWorld,
-                                      FaceWorld& faceWorld,
-                                      PetWorld& petWorld,
-                                      BehaviorEventComponent& behaviorEventComponent);
-  
-  std::unique_ptr<BEIRobotInfo> _robotInfo;
-  AIComponent&                  _aiComponent;
-  const BehaviorContainer&      _behaviorContainer;
-  BlockWorld&                   _blockWorld;
-  FaceWorld&                    _faceWorld;
-  const PetWorld&               _petWorld;
-  BehaviorEventComponent&       _behaviorEventComponent;
+
+class BEIComponentAccessGuard{
 };
-}
-  
-class BehaviorExternalInterface {
+
+enum class BEIComponentID{
+  AIComponent,
+  Animation,
+  BehaviorContainer,
+  BehaviorEvent,
+  BlockWorld,
+  BodyLightComponent,
+  CubeAccel,
+  CubeLight,
+  Delegation,
+  FaceWorld,
+  Map,
+  MicDirectionHistory,
+  MoodManager,
+  NeedsManager,
+  ObjectPoseConfirmer,
+  PetWorld,
+  ProgressionUnlock,
+  PublicStateBroadcaster,
+  RobotAudioClient,
+  RobotInfo,
+  TouchSensor,
+  Vision,
+
+  Count
+};
+
+class BEIComponentWrapper : public ComponentWrapper {
+  public:
+    template<typename T>
+    BEIComponentWrapper(T* component)
+    : ComponentWrapper(component){}
+
+    // Maintain a reference to the access guard in order to strip the component out of BEI
+    // when the access guard falls out of scope the component will be added back into BEI
+    // automatically
+    std::shared_ptr<BEIComponentAccessGuard> StripComponent(){return _accessGuard;}
+
+    virtual bool IsValueValidInternal() const override {return _accessGuard.use_count() == 1;}
+
+  private:
+    std::shared_ptr<BEIComponentAccessGuard> _accessGuard = std::make_shared<BEIComponentAccessGuard>();
+};
+
+class BehaviorExternalInterface : private Util::noncopyable{
 public:
-  BehaviorExternalInterface();
+  BehaviorExternalInterface(){}
   
-  void Init(Robot& robot,
-            AIComponent& aiComponent,
-            const BehaviorContainer& behaviorContainer,
-            BlockWorld& blockWorld,
-            FaceWorld& faceWorld,
-            PetWorld& petWorld,
-            BehaviorEventComponent& behaviorEventComponent);
-  
-  void SetOptionalInterfaces(DelegationComponent*           delegationComponent,
-                             MoodManager*                   moodManager,
-                             NeedsManager*                  needsManager,
-                             ProgressionUnlockComponent*    progressionUnlockComponent,
-                             PublicStateBroadcaster*        publicStateBroadcaster,
-                             TouchSensorComponent*          touchSensorComponent,
-                             VisionComponent*               visionComponent,
-                             MapComponent*                  mapComponent,
-                             CubeLightComponent*            cubeLightComponent,
-                             ObjectPoseConfirmer*           objectPoseConfirmer,
-                             CubeAccelComponent*            cubeAccelComponent,
-                             AnimationComponent*            animationComponent,
-                             Audio::EngineRobotAudioClient* robotAudioClient,
-                             BodyLightComponent*            bodyLightComponent,
-                             MicDirectionHistory*           micDirectionHistory);
-  
+  void Init(AIComponent*                   aiComponent,
+            AnimationComponent*            animationComponent,
+            BehaviorContainer*             behaviorContainer,
+            BehaviorEventComponent*        behaviorEventComponent,
+            BlockWorld*                    blockWorld,
+            BodyLightComponent*            bodyLightComponent,
+            CubeAccelComponent*            cubeAccelComponent,
+            CubeLightComponent*            cubeLightComponent,
+            DelegationComponent*           delegationComponent,
+            FaceWorld*                     faceWorld,
+            MapComponent*                  mapComponent,
+            MicDirectionHistory*           micDirectionHistory,
+            MoodManager*                   moodManager,
+            NeedsManager*                  needsManager,
+            ObjectPoseConfirmer*           objectPoseConfirmer,
+            PetWorld*                      petWorld,
+            ProgressionUnlockComponent*    progressionUnlockComponent,
+            PublicStateBroadcaster*        publicStateBroadcaster,
+            Audio::EngineRobotAudioClient* robotAudioClient,
+            BEIRobotInfo*                  robotInfo,
+            TouchSensorComponent*          touchSensorComponent,
+            VisionComponent*               visionComponent);
+    
   virtual ~BehaviorExternalInterface();
+
+  const BEIComponentWrapper& GetComponentWrapper(BEIComponentID componentID) const;
   
   // Access components which the BehaviorSystem can count on will always exist
   // when making decisions
-  AIComponent&             GetAIComponent()               const { assert(_beiComponents); return _beiComponents->_aiComponent;}
-  const FaceWorld&         GetFaceWorld()                 const { assert(_beiComponents); return _beiComponents->_faceWorld;}
-  FaceWorld&               GetFaceWorldMutable()          const { assert(_beiComponents); return _beiComponents->_faceWorld;}
-  const PetWorld&          GetPetWorld()                  const { assert(_beiComponents); return _beiComponents->_petWorld;}
-  const BlockWorld&        GetBlockWorld()                const { assert(_beiComponents); return _beiComponents->_blockWorld;}
-  BlockWorld&              GetBlockWorld()                      { assert(_beiComponents); return _beiComponents->_blockWorld;}
-  const BehaviorContainer& GetBehaviorContainer()         const { assert(_beiComponents); return _beiComponents->_behaviorContainer;}
-  BehaviorEventComponent&  GetStateChangeComponent()      const { assert(_beiComponents); return _beiComponents->_behaviorEventComponent;}
+  AIComponent&             GetAIComponent()               const { return GetComponentWrapper(BEIComponentID::AIComponent).GetValue<AIComponent>();}
+  const FaceWorld&         GetFaceWorld()                 const { return GetComponentWrapper(BEIComponentID::FaceWorld).GetValue<FaceWorld>();}
+  FaceWorld&               GetFaceWorldMutable()                { return GetComponentWrapper(BEIComponentID::FaceWorld).GetValue<FaceWorld>();}
+  const PetWorld&          GetPetWorld()                  const { return GetComponentWrapper(BEIComponentID::PetWorld).GetValue<PetWorld>();}
+  const BlockWorld&        GetBlockWorld()                const { return GetComponentWrapper(BEIComponentID::BlockWorld).GetValue<BlockWorld>();}
+  BlockWorld&              GetBlockWorld()                      { return GetComponentWrapper(BEIComponentID::BlockWorld).GetValue<BlockWorld>();}
+  const BehaviorContainer& GetBehaviorContainer()         const { return GetComponentWrapper(BEIComponentID::BehaviorContainer).GetValue<BehaviorContainer>();}
+  BehaviorEventComponent&  GetStateChangeComponent()      const { return GetComponentWrapper(BEIComponentID::BehaviorEvent).GetValue<BehaviorEventComponent>();}
 
   // Give behaviors/activities access to information about robot
-  BEIRobotInfo& GetRobotInfo() { assert(_beiComponents); return *_beiComponents->_robotInfo;}
-  const BEIRobotInfo& GetRobotInfo() const { assert(_beiComponents); return *_beiComponents->_robotInfo;}
+  BEIRobotInfo& GetRobotInfo() { return GetComponentWrapper(BEIComponentID::RobotInfo).GetValue<BEIRobotInfo>();}
+  const BEIRobotInfo& GetRobotInfo() const { return GetComponentWrapper(BEIComponentID::RobotInfo).GetValue<BEIRobotInfo>();}
 
   // Access components which may or may not exist - you must call
   // has before get or you may hit a nullptr assert
-  inline bool HasDelegationComponent() const { return _delegationComponent != nullptr;}
-  inline DelegationComponent& GetDelegationComponent() const {assert(_delegationComponent); return *_delegationComponent;}
+  inline bool HasDelegationComponent() const { return GetComponentWrapper(BEIComponentID::Delegation).IsValueValid();}
+  inline DelegationComponent& GetDelegationComponent() const  { return GetComponentWrapper(BEIComponentID::Delegation).GetValue<DelegationComponent>();}
   
-  inline bool HasPublicStateBroadcaster() const { return _publicStateBroadcaster != nullptr;}
-  PublicStateBroadcaster& GetRobotPublicStateBroadcaster() const {assert(_publicStateBroadcaster); return *_publicStateBroadcaster;}
+  inline bool HasPublicStateBroadcaster() const { return GetComponentWrapper(BEIComponentID::PublicStateBroadcaster).IsValueValid();}
+  PublicStateBroadcaster& GetRobotPublicStateBroadcaster() const { return GetComponentWrapper(BEIComponentID::PublicStateBroadcaster).GetValue<PublicStateBroadcaster>();}
   
-  inline bool HasProgressionUnlockComponent() const { return _progressionUnlockComponent != nullptr;}
-  ProgressionUnlockComponent& GetProgressionUnlockComponent() const {assert(_progressionUnlockComponent); return *_progressionUnlockComponent;}
+  inline bool HasProgressionUnlockComponent() const { return GetComponentWrapper(BEIComponentID::ProgressionUnlock).IsValueValid();}
+  ProgressionUnlockComponent& GetProgressionUnlockComponent() const {return GetComponentWrapper(BEIComponentID::ProgressionUnlock).GetValue<ProgressionUnlockComponent>();}
   
-  inline bool HasMoodManager() const { return _moodManager != nullptr;}
-  MoodManager& GetMoodManager()  const {assert(_moodManager); return *_moodManager;}
+  inline bool HasMoodManager() const { return GetComponentWrapper(BEIComponentID::MoodManager).IsValueValid();}
+  MoodManager& GetMoodManager() const{ return GetComponentWrapper(BEIComponentID::MoodManager).GetValue<MoodManager>();}
   
-  inline bool HasNeedsManager() const { return _needsManager != nullptr;}
-  NeedsManager& GetNeedsManager() const {assert(_needsManager); return *_needsManager;}
+  inline bool HasNeedsManager() const { return GetComponentWrapper(BEIComponentID::NeedsManager).IsValueValid();}
+  NeedsManager& GetNeedsManager() const { return GetComponentWrapper(BEIComponentID::NeedsManager).GetValue<NeedsManager>();}
 
-  inline bool HasTouchSensorComponent() const { return _touchSensorComponent != nullptr;}
-  TouchSensorComponent& GetTouchSensorComponent() const {assert(_touchSensorComponent); return *_touchSensorComponent;}
+  inline bool HasTouchSensorComponent() const { return GetComponentWrapper(BEIComponentID::TouchSensor).IsValueValid();}
+  TouchSensorComponent& GetTouchSensorComponent() const { return GetComponentWrapper(BEIComponentID::TouchSensor).GetValue<TouchSensorComponent>();}
 
-  inline bool HasVisionComponent() const { return _visionComponent != nullptr;}
-  VisionComponent& GetVisionComponent() const{assert(_visionComponent); return *_visionComponent;}
+  inline bool HasVisionComponent() const { return GetComponentWrapper(BEIComponentID::Vision).IsValueValid();}
+  VisionComponent& GetVisionComponent() const { return GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();}
 
-  inline bool HasMapComponent() const { return _mapComponent != nullptr;}
-  MapComponent& GetMapComponent() const{assert(_mapComponent); return *_mapComponent;}
+  inline bool HasMapComponent() const { return GetComponentWrapper(BEIComponentID::Map).IsValueValid();}
+  MapComponent& GetMapComponent() const { return GetComponentWrapper(BEIComponentID::Map).GetValue<MapComponent>();}
 
-  inline bool HasCubeLightComponent() const { return _mapComponent != nullptr;}
-  CubeLightComponent& GetCubeLightComponent() const{assert(_cubeLightComponent); return *_cubeLightComponent;}
+  inline bool HasCubeLightComponent() const { return GetComponentWrapper(BEIComponentID::CubeLight).IsValueValid();}
+  CubeLightComponent& GetCubeLightComponent() const { return GetComponentWrapper(BEIComponentID::CubeLight).GetValue<CubeLightComponent>();}
 
-  inline bool HasObjectPoseConfirmer() const { return _objectPoseConfirmer != nullptr;}
-  ObjectPoseConfirmer& GetObjectPoseConfirmer() const{assert(_objectPoseConfirmer); return *_objectPoseConfirmer;}
+  inline bool HasObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).IsValueValid();}
+  ObjectPoseConfirmer& GetObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).GetValue<ObjectPoseConfirmer>();}
 
-  inline bool HasCubeAccelComponent() const { return _cubeAccelComponent != nullptr;}
-  CubeAccelComponent& GetCubeAccelComponent() const{assert(_cubeAccelComponent); return *_cubeAccelComponent;}
+  inline bool HasCubeAccelComponent() const { return GetComponentWrapper(BEIComponentID::CubeAccel).IsValueValid();}
+  CubeAccelComponent& GetCubeAccelComponent() const { return GetComponentWrapper(BEIComponentID::CubeAccel).GetValue<CubeAccelComponent>();}
 
-  inline bool HasAnimationComponent() const { return _animationComponent != nullptr;}
-  AnimationComponent& GetAnimationComponent() const{assert(_animationComponent); return *_animationComponent;}
+  inline bool HasAnimationComponent() const { return GetComponentWrapper(BEIComponentID::Animation).IsValueValid();}
+  AnimationComponent& GetAnimationComponent() const { return GetComponentWrapper(BEIComponentID::Animation).GetValue<AnimationComponent>();}
 
-  inline bool HasRobotAudioClient() const { return _robotAudioClient != nullptr;}
-  Audio::EngineRobotAudioClient& GetRobotAudioClient() const{assert(_robotAudioClient); return *_robotAudioClient;}
-
-  inline bool HasBodyLightComponent() const { return _bodyLightComponent != nullptr;}
-  BodyLightComponent& GetBodyLightComponent() const{assert(_bodyLightComponent); return *_bodyLightComponent;}
+  inline bool HasRobotAudioClient() const { return GetComponentWrapper(BEIComponentID::RobotAudioClient).IsValueValid();}
+  Audio::EngineRobotAudioClient& GetRobotAudioClient() const { return GetComponentWrapper(BEIComponentID::RobotAudioClient).GetValue<Audio::EngineRobotAudioClient>();}
   
-  inline bool HasMicDirectionHistory() const { return _micDirectionHistory != nullptr;}
-  const MicDirectionHistory& GetMicDirectionHistory() const {assert(_micDirectionHistory); return *_micDirectionHistory;}
+  inline bool HasBodyLightComponent() const { return GetComponentWrapper(BEIComponentID::BodyLightComponent).IsValueValid();}
+  BodyLightComponent& GetBodyLightComponent() const { return GetComponentWrapper(BEIComponentID::BodyLightComponent).GetValue<BodyLightComponent>();}
+
+  inline bool HasMicDirectionHistory() const { return GetComponentWrapper(BEIComponentID::MicDirectionHistory).IsValueValid();}
+  const MicDirectionHistory& GetMicDirectionHistory() const {return GetComponentWrapper(BEIComponentID::MicDirectionHistory).GetValue<MicDirectionHistory>();}
+
 
   // Util functions
   OffTreadsState GetOffTreadsState() const;
   Util::RandomGenerator& GetRNG();
 
 private:
-  std::unique_ptr<ComponentWrappers::BehaviorExternalInterfaceComponents> _beiComponents;
-  
-  DelegationComponent*           _delegationComponent;
-  MoodManager*                   _moodManager;
-  NeedsManager*                  _needsManager;
-  ProgressionUnlockComponent*    _progressionUnlockComponent;
-  PublicStateBroadcaster*        _publicStateBroadcaster;
-  TouchSensorComponent*          _touchSensorComponent;
-  VisionComponent*               _visionComponent;
-  MapComponent*                  _mapComponent;
-  MicDirectionHistory*           _micDirectionHistory;
-  CubeLightComponent*            _cubeLightComponent;
-  ObjectPoseConfirmer*           _objectPoseConfirmer;
-  CubeAccelComponent*            _cubeAccelComponent;
-  AnimationComponent*            _animationComponent;
-  Audio::EngineRobotAudioClient* _robotAudioClient;
-  BodyLightComponent*            _bodyLightComponent;
-
-
+  struct CompArrayWrapper{
+    public:
+      CompArrayWrapper(AIComponent*                  aiComponent,
+                       AnimationComponent*            animationComponent,
+                       BehaviorContainer*             behaviorContainer,
+                       BehaviorEventComponent*        behaviorEventComponent,
+                       BlockWorld*                    blockWorld,
+                       BodyLightComponent*            bodyLightComponent,
+                       CubeAccelComponent*            cubeAccelComponent,
+                       CubeLightComponent*            cubeLightComponent,
+                       DelegationComponent*           delegationComponent,
+                       FaceWorld*                     faceWorld,
+                       MapComponent*                  mapComponent,
+                       MicDirectionHistory*           micDirectionHistory,
+                       MoodManager*                   moodManager,
+                       NeedsManager*                  needsManager,
+                       ObjectPoseConfirmer*           objectPoseConfirmer,
+                       PetWorld*                      petWorld,
+                       ProgressionUnlockComponent*    progressionUnlockComponent,
+                       PublicStateBroadcaster*        publicStateBroadcaster,
+                       Audio::EngineRobotAudioClient* robotAudioClient,
+                       BEIRobotInfo*                  robotInfo,
+                       TouchSensorComponent*          touchSensorComponent,
+                       VisionComponent*               visionComponent);
+      ~CompArrayWrapper(){};
+      EntityFullEnumeration<BEIComponentID, BEIComponentWrapper, BEIComponentID::Count> _array;
+  };
+  std::unique_ptr<CompArrayWrapper> _arrayWrapper;
 };
 
 } // namespace Cozmo

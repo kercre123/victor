@@ -14,9 +14,9 @@
 #include "engine/aiComponent/faceSelectionComponent.h"
 
 #include "engine/actions/basicActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/faceWorld.h"
 #include "engine/micDirectionHistory.h"
+#include "engine/robot.h"
 #include "engine/smartFaceId.h"
 
 #include "util/helpers/fullEnumToValueArrayChecker.h"
@@ -104,13 +104,13 @@ FaceSelectionComponent::FaceSelectionPenaltyMultiplier FaceSelectionComponent::F
 float FaceSelectionComponent::CalculateHeadAngleCost(const Vision::TrackedFace* currentFace) const
 {
   Pose3d poseWrtRobot;    
-  if( ! currentFace->GetHeadPose().GetWithRespectTo(_robotInfo.GetPose(), poseWrtRobot) ) {
+  if( ! currentFace->GetHeadPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot) ) {
     // no transform, probably a different origin
     return 0.0f;
   }
 
   Radians absHeadTurnAngle = TurnTowardsPoseAction::GetAbsoluteHeadAngleToLookAtPose(poseWrtRobot.GetTranslation());
-  Radians relHeadTurnAngle = absHeadTurnAngle - _robotInfo.GetHeadAngle();
+  Radians relHeadTurnAngle = absHeadTurnAngle - _robot.GetHeadAngle();
   return relHeadTurnAngle.getAbsoluteVal().ToFloat();
 }
 
@@ -119,7 +119,7 @@ float FaceSelectionComponent::CalculateHeadAngleCost(const Vision::TrackedFace* 
 float FaceSelectionComponent::CalculateBodyAngleCost(const Vision::TrackedFace* currentFace) const
 {
   Pose3d poseWrtRobot;    
-  if( ! currentFace->GetHeadPose().GetWithRespectTo(_robotInfo.GetPose(), poseWrtRobot) ) {
+  if( ! currentFace->GetHeadPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot) ) {
     // no transform, probably a different origin
     return 0.0f;
   }

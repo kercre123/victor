@@ -15,6 +15,7 @@
 #define __Cozmo_Basestation_AIComponent_FaceSelectionComponent_H__
 
 #include "anki/common/types.h"
+#include "engine/entity.h"
 #include "util/helpers/noncopyable.h"
 
 #include <set>
@@ -30,14 +31,14 @@ class TrackedFace;
 
 namespace Cozmo {
 
-class BEIRobotInfo;
+class Robot;
 class FaceWorld;
 class MicDirectionHistory;
 class SmartFaceID;
 
 
   
-class FaceSelectionComponent : private Util::noncopyable
+class FaceSelectionComponent : public ManageableComponent, private Util::noncopyable
 {
 public:
   // Enum that specifies the way that score penalties are applied when selecting face
@@ -53,8 +54,8 @@ public:
   };
   using FaceSelectionFactorMap = std::unordered_map<FaceSelectionPenaltyMultiplier, float>;
   
-  explicit FaceSelectionComponent(const BEIRobotInfo& robotInfo, const FaceWorld& faceWorld, const MicDirectionHistory& micDirectionHistory)
-  : _robotInfo(robotInfo)
+  explicit FaceSelectionComponent(const Robot& robot, const FaceWorld& faceWorld, const MicDirectionHistory& micDirectionHistory)
+  : _robot(robot)
   , _faceWorld(faceWorld)
   , _micDirectionHistory(micDirectionHistory){}
   ~FaceSelectionComponent();
@@ -66,7 +67,7 @@ public:
   static FaceSelectionPenaltyMultiplier FaceSelectionPenaltyFromString(const std::string& str);
 
 private:
-  const BEIRobotInfo& _robotInfo;
+  const Robot& _robot;
   const FaceWorld& _faceWorld;
   const MicDirectionHistory& _micDirectionHistory;
 
