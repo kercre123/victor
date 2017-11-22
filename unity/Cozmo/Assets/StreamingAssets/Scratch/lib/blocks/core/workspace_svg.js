@@ -1793,18 +1793,23 @@ Blockly.WorkspaceSvg.prototype.scrollHome = function() {
   Blockly.hideChaff(false);
   var metrics = this.getMetrics();
   var bounds = this.getBlocksBoundingBox();
+  
+  // Padding to make the blocks not rest on the toolbox
+  var paddingLeft = 50.0 * this.scale;
+  var paddingTop = this.toolbox_.top + 25.0 * this.scale;
 
-  // Either top-left corner, or center if smaller than window
-  if (bounds.width > metrics.viewWidth) {
-    var x = (metrics.viewWidth) / 2 * this.scale;
-  } else {
-    var x = (metrics.contentWidth - metrics.viewWidth) / 2;
-  }
-  if (bounds.height > metrics.viewHeight) {
-    var y = (metrics.viewHeight - 100) / 2  * this.scale;
-  } else {
-    var y = (metrics.contentHeight - metrics.viewHeight) / 2;
-  }
+  // Mimic the behavior of getMetrics to consistently anchor in the top-left
+  var margin = Blockly.Flyout.prototype.CORNER_RADIUS - 1;
+
+  var adjustedViewWidth = metrics.viewWidth - margin;
+  var distanceFromViewCenterX = adjustedViewWidth / 2;
+  var boundsViewDifferenceX = adjustedViewWidth - bounds.width * this.scale;
+  var x = Math.max(distanceFromViewCenterX, boundsViewDifferenceX) - paddingLeft;
+
+  var adjustedViewHeight = metrics.viewHeight - margin;
+  var distanceFromViewCenterY = adjustedViewHeight / 2;
+  var boundsViewDifferenceY = adjustedViewHeight - bounds.height * this.scale;
+  var y = Math.max(distanceFromViewCenterY, boundsViewDifferenceY) - paddingTop;
 
   this.scrollbar.set(x, y);
 };

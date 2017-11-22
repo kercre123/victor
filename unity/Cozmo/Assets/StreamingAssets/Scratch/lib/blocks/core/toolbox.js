@@ -98,6 +98,8 @@ Blockly.Toolbox.prototype.width = 90;
  */
 Blockly.Toolbox.prototype.height = 0;
 
+Blockly.Toolbox.prototype.top = 0;
+
 Blockly.Toolbox.prototype.selectedItem_ = null;
 
 /**
@@ -124,10 +126,12 @@ Blockly.Toolbox.prototype.init = function() {
   // *** ANKI CHANGE ***
   if (window.isVertical) {
     // Set default value
-    this.HtmlDiv.style.top = "100px";
-     if (window.innerWidth < window.TABLET_WIDTH) {
+    this.top = 100;
+    this.HtmlDiv.style.top = this.top + "px";
+    if (window.innerWidth < window.TABLET_WIDTH) {
       // Move toolbox down different amount for phones.
-      this.HtmlDiv.style.top = "60px";
+      this.top = 60;
+      this.HtmlDiv.style.top = this.top + "px";
     }
   }
 
