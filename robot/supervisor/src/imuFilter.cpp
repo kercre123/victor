@@ -565,9 +565,9 @@ namespace Anki {
             
             for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
               if (cliffValsWhileNotMoving_[i] == 0) {
-                cliffValsWhileNotMoving_[i] = ProxSensors::GetRawCliffValue(i);
+                cliffValsWhileNotMoving_[i] = ProxSensors::GetCliffValue(i);
               } else {
-                const s16 absCliffDelta = ABS(cliffValsWhileNotMoving_[i] - ProxSensors::GetRawCliffValue(i));
+                const s16 absCliffDelta = ABS(cliffValsWhileNotMoving_[i] - ProxSensors::GetCliffValue(i));
                 maxCliffDelta = MAX(maxCliffDelta, absCliffDelta);
               }
             }

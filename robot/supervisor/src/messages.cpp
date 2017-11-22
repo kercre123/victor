@@ -147,7 +147,7 @@ namespace Anki {
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
 
         for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
-          robotState_.cliffDataRaw[i] = ProxSensors::GetRawCliffValue(i);
+          robotState_.cliffDataRaw[i] = ProxSensors::GetCliffValue(i);
         }
         robotState_.proxData = HAL::GetRawProxData();
         

@@ -839,8 +839,8 @@ namespace Anki {
               SendChargerMountCompleteMessage(true);
               Reset();
             } else if (useCliffSensorAlignment_) {              
-              const u16 cliffBL = ProxSensors::GetRawCliffValue((int) HAL::CLIFF_BL);
-              const u16 cliffBR = ProxSensors::GetRawCliffValue((int) HAL::CLIFF_BR);
+              const u16 cliffBL = ProxSensors::GetCliffValue((int) HAL::CLIFF_BL);
+              const u16 cliffBR = ProxSensors::GetCliffValue((int) HAL::CLIFF_BR);
               
               float leftSpeed  = kChargerDockingSpeedHigh;
               float rightSpeed = kChargerDockingSpeedHigh;
