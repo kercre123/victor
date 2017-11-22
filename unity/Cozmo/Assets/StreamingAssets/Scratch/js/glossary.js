@@ -113,6 +113,8 @@ var Glossary = function(){
 
       var w = Math.max(blockBounds.width, viewWidth);
       var h = blockBounds.height;
+      svg.setAttribute('width', viewWidth);
+      svg.setAttribute('height', blockBounds.height);
       svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
 
       // make room for Event blocks to have an overflow curved shape on top
