@@ -661,6 +661,15 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 
 void NeedsManager::AttemptActivateTuningExperiment(u32 robotSerialNumber)
 {
+  // This return is just to prevent activation of the experiment during the
+  // experiment start/end dates, while in dev.
+  // I'd rip all this stuff out now but my sense is to wait until we're
+  // really really sure we don't want to re-run any of this
+
+  // TODO:  Rip out all this stuff, when we're sure we don't need it.
+  // https://ankiinc.atlassian.net/browse/COZMO-15657
+  return;
+
   // If we don't yet have a valid robot serial number, don't try to make
   // an experiment assignment, since it's based on robot serial number
   if (robotSerialNumber == kUninitializedSerialNumber)
