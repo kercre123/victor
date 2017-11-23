@@ -26,7 +26,6 @@ namespace Anki {
     namespace IMUFilter {
 
       Result Init();
-      void Reset();
 
       // TODO: Add if/when needed?
       // ReturnCode Init();
