@@ -225,28 +225,29 @@ var handleInput = function (line) {
             } else if (Object.keys(victorAds).length == 0) {
                 outputResponse("No victors found to connect to.");
             } else {
+                noble.once('scanStop', function () {
+                    var localName = Object.keys(victorAds)[0];
+                    if (args.length > 1) {
+                        localName = args[1];
+                    }
+                    connectingPeripheral = victorAds[localName];
+                    if (!connectingPeripheral) {
+                        outputResponse("Couldn't find victor named " + localName);
+                    } else {
+                        victorAds = {};
+                        connectingPeripheral.removeAllListeners();
+                        outputResponse("Trying to connect to " + localName + "....");
+                        connectingPeripheral.once('connect', onBLEConnect.bind(this, connectingPeripheral));
+                        connectingPeripheral.connect(function (error) {
+                            if (error) {
+                                outputResponse(error);
+                                connectingPeripheral.removeAllListeners();
+                                connectingPeripheral = undefined;
+                            }
+                        });
+                    }
+                });
                 noble.stopScanning();
-                sleep(500);
-                var localName = Object.keys(victorAds)[0];
-                if (args.length > 1) {
-                    localName = args[1];
-                }
-                connectingPeripheral = victorAds[localName];
-                if (!connectingPeripheral) {
-                    outputResponse("Couldn't find victor named " + localName);
-                } else {
-                    victorAds = {};
-                    connectingPeripheral.removeAllListeners();
-                    outputResponse("Trying to connect to " + localName + "....");
-                    connectingPeripheral.once('connect', onBLEConnect.bind(this, connectingPeripheral));
-                    connectingPeripheral.connect(function (error) {
-                        if (error) {
-                            outputResponse(error);
-                            connectingPeripheral.removeAllListeners();
-                            connectingPeripheral = undefined;
-                        }
-                    });
-                }
             }
             break;
         case 'disconnect':
