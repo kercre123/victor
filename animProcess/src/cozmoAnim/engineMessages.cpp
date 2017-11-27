@@ -85,24 +85,32 @@ namespace Messages {
     bool _isDolingAnims = false;
     u32 _nextAnimIDToDole;
 
+    u32 _serialNumber = 0;
+
     // Whether or not we are currently showing debug info on the screen
-    u8 _whichDebugScreen = 0;
-    const u8 kNumDebugScreens = 3;
+    enum DebugScreen {
+      NONE,
+      GENERAL_INFO,
+      SENSORS1,
+      SENSORS2,
+      COUNT
+    };
+    DebugScreen _curDebugScreen = DebugScreen::NONE;
 
     bool _haveBirthCert = false;
     const u8 kNumTicksToCheckForBC = 60; // ~2seconds
     u8 _bcCheckCount = 0;
 
     struct DebugScreenInfo {
-      std::string ip = "0.0.0.0";
-      std::string serialNo = "0";
-      std::string cliffs = "0 0 0 0";
-      std::string motors = "0 0 0 0";
+      std::string ip          = "0.0.0.0";
+      std::string serialNo    = "0";
+      std::string cliffs      = "0 0 0 0";
+      std::string motors      = "0 0 0 0";
       std::string touchAndBat = "0 0.0v";
-      std::string prox = "0 0 0 0";
-      std::string accelGyroX = "0 0";
-      std::string accelGyroY = "0 0";
-      std::string accelGyroZ = "0 0";
+      std::string prox        = "0 0 0 0";
+      std::string accelGyroX  = "0 0";
+      std::string accelGyroY  = "0 0";
+      std::string accelGyroZ  = "0 0";
 
       void Update(const RobotState& state)
       {
@@ -162,26 +170,41 @@ namespace Messages {
         accelGyroZ = temp;
       }
 
-      void ToVec(u8 whichScreen, std::vector<std::string>& vec)
+      void ToVec(DebugScreen whichScreen, std::vector<std::string>& vec)
       {
         vec.clear();
-        if(whichScreen == 1)
+
+        switch(whichScreen)
         {
-          vec.push_back(ip);
-          vec.push_back(serialNo);
-        }
-        else if(whichScreen == 2)
-        {
-          vec.push_back(cliffs);
-          vec.push_back(motors);
-          vec.push_back(prox);
-          vec.push_back(touchAndBat);
-        }
-        else if (whichScreen == 3)
-        {
-          vec.push_back(accelGyroX);
-          vec.push_back(accelGyroY);
-          vec.push_back(accelGyroZ);
+          case DebugScreen::NONE:
+          {
+            break;
+          }
+          case DebugScreen::GENERAL_INFO:
+          {
+            vec.push_back(ip);
+            vec.push_back(serialNo);
+            break;
+          }
+          case DebugScreen::SENSORS1:
+          {
+            vec.push_back(cliffs);
+            vec.push_back(motors);
+            vec.push_back(prox);
+            vec.push_back(touchAndBat);
+            break;
+          }
+          case DebugScreen::SENSORS2:
+          {
+            vec.push_back(accelGyroX);
+            vec.push_back(accelGyroY);
+            vec.push_back(accelGyroZ);
+            break;
+          }
+          case DebugScreen::COUNT:
+          {
+            break;
+          }
         }
       }
     } _debugScreenInfo;
@@ -202,6 +225,8 @@ namespace Messages {
                         const Point2f& loc = {0, 0},
                         u32 textSpacing_pix = 10,
                         f32 textScale = 3.f);
+
+  std::string GetIPAddress();
   std::string ExecCommand(const char* cmd);
 
   void UpdateFAC();
@@ -227,6 +252,9 @@ namespace Messages {
     _haveBirthCert = Util::FileUtils::FileExists("/data/persist/factory/80000000.nvdata");
 
     UpdateFAC();
+
+    std::string serialString = ExecCommand("getprop ro.serialno");
+    _serialNumber = static_cast<u32>(std::stoul(serialString, nullptr, 16));
     
     return RESULT_OK;
   }
@@ -393,7 +421,7 @@ namespace Messages {
 
   void Process_drawTextOnScreen(const Anki::Cozmo::RobotInterface::DrawTextOnScreen& msg)
   {
-    _whichDebugScreen = 0;
+    _curDebugScreen = DebugScreen::NONE;
 
     DrawTextOnScreen({std::string(msg.text,
                                   msg.text_length)},
@@ -508,13 +536,7 @@ namespace Messages {
       
       RobotInterface::RobotAvailable idMsg;
       idMsg.hwRevision = 0;
-      idMsg.serialNumber = 0;
-
-      const std::string serialNo = ExecCommand("getprop ro.serialno");
-      if(!serialNo.empty())
-      {
-        idMsg.serialNumber = static_cast<u32>(std::stoul(serialNo, nullptr, 16));
-      }
+      idMsg.serialNumber = _serialNumber;
       
       RobotInterface::SendMessageToEngine(idMsg);
       
@@ -647,6 +669,35 @@ namespace Messages {
     }
   }
 
+  std::string GetIPAddress()
+  {
+    // Open a socket to figure out the ip adress of the wlan0 (wifi) interface
+      const char* const if_name = "wlan0";
+      struct ifreq ifr;
+      size_t if_name_len=strlen(if_name);
+      if (if_name_len<sizeof(ifr.ifr_name)) {
+        memcpy(ifr.ifr_name,if_name,if_name_len);
+        ifr.ifr_name[if_name_len]=0;
+      } else {
+        ASSERT_NAMED_EVENT(false, "EngineMessages.GetIPAddress.InvalidInterfaceName", "");
+      }
+
+      int fd=socket(AF_INET,SOCK_DGRAM,0);
+      if (fd==-1) {
+        ASSERT_NAMED_EVENT(false, "EngineMessages.GetIPAddress.OpenSocketFail", "");
+      }
+
+      if (ioctl(fd,SIOCGIFADDR,&ifr)==-1) {
+        int temp_errno=errno;
+        close(fd);
+        ASSERT_NAMED_EVENT(false, "EngineMessages.GetIPAddress.IoctlError", "%s", strerror(temp_errno));
+      }
+      close(fd);
+
+      struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
+      return std::string(inet_ntoa(ipaddr->sin_addr));
+  }
+
   // Executes the provided command and returns the output as a string
   std::string ExecCommand(const char* cmd) 
   {
@@ -682,49 +733,28 @@ namespace Messages {
   {
     if((ANKI_DEV_CHEATS || FACTORY_TEST) && payload.depressed)
     {
-      ++_whichDebugScreen;
-      if(_whichDebugScreen > kNumDebugScreens)
+      _curDebugScreen = (DebugScreen)(((int)_curDebugScreen) + 1);
+      
+      if(_curDebugScreen == DebugScreen::COUNT)
       {
-        _whichDebugScreen = 0;
+        _curDebugScreen = DebugScreen::NONE;
       }
 
       // If we aren't currently showing debug info and the button was pressed then
       // start showing debug info
-      if(_whichDebugScreen != 0)
+      if(_curDebugScreen != DebugScreen::NONE)
       {
         // Lock the face image track to prevent animations from drawing over the debug info
         _animStreamer->LockTrack(AnimTrackFlag::FACE_IMAGE_TRACK);
 
-        // Open a socket to figure out the ip adress of the wlan0 (wifi) interface
-        const char* const if_name = "wlan0";
-        struct ifreq ifr;
-        size_t if_name_len=strlen(if_name);
-        if (if_name_len<sizeof(ifr.ifr_name)) {
-          memcpy(ifr.ifr_name,if_name,if_name_len);
-          ifr.ifr_name[if_name_len]=0;
-        } else {
-          ASSERT_NAMED_EVENT(false, "ProcessMessageToEngine.BackpackButton.InvalidInterfaceName", "");
-        }
-
-        int fd=socket(AF_INET,SOCK_DGRAM,0);
-        if (fd==-1) {
-          ASSERT_NAMED_EVENT(false, "ProcessMessageToEngine.BackpackButton.OpenSocketFail", "");
-        }
-
-        if (ioctl(fd,SIOCGIFADDR,&ifr)==-1) {
-          int temp_errno=errno;
-          close(fd);
-          ASSERT_NAMED_EVENT(false, "ProcessMessageToEngine.BackpackButton.IoctlError", "%s", strerror(temp_errno));
-        }
-        close(fd);
-
-        struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
-        _debugScreenInfo.ip = std::string(inet_ntoa(ipaddr->sin_addr));
+        UpdateDebugScreen();
+        _debugScreenInfo.ip = GetIPAddress();
 
         _debugScreenInfo.serialNo = ExecCommand("getprop ro.serialno");
 
         // Draw the last three digits of the ip on the screen
-        DrawTextOnScreen({_debugScreenInfo.ip, _debugScreenInfo.serialNo}, NamedColors::WHITE, NamedColors::BLACK, {0, 30}, 20, 0.5f);
+        DrawTextOnScreen({_debugScreenInfo.ip, _debugScreenInfo.serialNo}, 
+                         NamedColors::WHITE, NamedColors::BLACK, {0, 30}, 20, 0.5f);
 
 
       }
@@ -742,10 +772,10 @@ namespace Messages {
 
   void UpdateDebugScreen()
   {
-    if(_whichDebugScreen != 0)
+    if(_curDebugScreen != DebugScreen::NONE)
     {
       std::vector<std::string> text;
-      _debugScreenInfo.ToVec(_whichDebugScreen, text);
+      _debugScreenInfo.ToVec(_curDebugScreen, text);
       DrawTextOnScreen(text, NamedColors::WHITE, NamedColors::BLACK, {0, 30}, 20, 0.5f);
     }
   }
