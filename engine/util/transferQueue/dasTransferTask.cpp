@@ -24,7 +24,8 @@ namespace Util {
 void DasTransferTask::OnTransferReady(Dispatch::Queue* queue, const TransferQueueMgr::TaskCompleteFunc& completionFunc)
 {
   #if USE_DAS
-  auto callbackWrapper = [completionFunc] (bool success) {
+  auto callbackWrapper = [completionFunc] (bool success, std::string response) {
+    (void) response;
     LOG_EVENT(success ? "das.upload" : "das.upload.fail", "background");
     completionFunc();
   };

@@ -40,6 +40,7 @@ DasAppender::DasAppender(const std::string& dasLogDir,
 , _maxLogLength(maxLogLength)
 , _isWaitingForFlush(false)
 , _lastFlushFailed(false)
+, _lastFlushResponse("")
 , _isUploadingPaused(true)
 , _flushIntervalSeconds(flush_interval)
 {
@@ -138,7 +139,7 @@ void DasAppender::ForceFlushWithCallback(const DASFlushCallback& callback)
   _syncQueue.Wake([this, callback] {
     Flush();
     if (callback) {
-      callback(!_lastFlushFailed);
+      callback(!_lastFlushFailed, _lastFlushResponse);
     }
   });
 }
@@ -191,6 +192,7 @@ bool DasAppender::ConsumeALogFile(const std::string& logFilePath, bool *stop)
   std::string postBody = "[" + logFileData + "]";
   std::string postResponse = "";
   bool success = dasPostToServer(_url, postBody, postResponse);
+  _lastFlushResponse = postResponse;
   // Stop consuming logs if we can't post
   if (success) {
     _lastFlushFailed = false;

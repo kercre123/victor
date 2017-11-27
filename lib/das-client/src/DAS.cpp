@@ -336,6 +336,10 @@ void SetDASLocalLoggerMode(DASLocalLoggerMode logMode)
 void DASClose() {
   _DAS_DestroyRemoteAppender();
   _DAS_DestroyGameLogAppender();
+  if (nullptr != sLocalAppender) {
+    sLocalAppender->flush();
+    delete sLocalAppender;
+  }
 }
 
 void DASForceFlushNow() {
@@ -349,7 +353,7 @@ void DASForceFlushWithCallback(const DASFlushCallback& callback) {
     sRemoteAppender->ForceFlushWithCallback(callback);
   }
   else if (callback) {
-    callback(false);
+    callback(false, "");
   }
 }
 

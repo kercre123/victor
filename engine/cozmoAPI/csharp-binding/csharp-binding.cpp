@@ -341,7 +341,8 @@ int cozmo_startup(const char *configuration_data)
   
   #if USE_DAS
   // try to post to server just in case we have internet at app startup
-  auto callback = [] (bool success) {
+  auto callback = [] (bool success, std::string response) {
+    (void) response;
     LOG_EVENT(success ? "das.upload" : "das.upload.fail", "live");
   };
   DASForceFlushWithCallback(callback);

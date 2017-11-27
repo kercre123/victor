@@ -82,7 +82,7 @@ bool dasPostToServer(const std::string& url, const std::string& postBody, std::s
                                   completionHandler:^(NSData *data, NSURLResponse *blockResponse, NSError *blockError) {
                                     error = blockError;
                                     response = blockResponse;
-                                    responseData = data;
+                                    responseData = [[NSData alloc] initWithData:data];
                                     dispatch_semaphore_signal(completionSignal);
       }];
       [task resume];

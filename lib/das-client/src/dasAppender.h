@@ -63,6 +63,7 @@ private:
   size_t _maxLogLength;
   bool _isWaitingForFlush;
   bool _lastFlushFailed;
+  std::string _lastFlushResponse;
   bool _isUploadingPaused;
   uint32_t _flushIntervalSeconds;
   TaskExecutor _syncQueue;
