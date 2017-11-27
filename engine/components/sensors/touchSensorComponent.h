@@ -49,6 +49,8 @@ private:
 
   TouchBaselineCalibrator _baselineCalib;
 
+  float _touchDetectStdevFactor;
+
   // the latest computed result of touch gesture
   TouchGesture _touchGesture;
 

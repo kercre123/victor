@@ -11,6 +11,14 @@
  * --gtest_filter=TouchSensor*
  **/
 
+// note: uncomment this line to build the parameter sweeping code
+// #define ENABLE_PARAMETER_SWEEP
+
+#ifdef ENABLE_PARAMETER_SWEEP
+#define private public
+#define protected public
+#endif
+
 // core testing focus
 #include "engine/components/sensors/touchSensorComponent.h"
 
@@ -31,6 +39,7 @@
 #include "util/helpers/includeGTest.h"
 
 // system includes
+#include <iomanip>
 #include <stdio.h>
 #include <sstream>
 #include <vector>
@@ -329,3 +338,163 @@ TEST_F(TouchSensorTest, CalibrateAndClassifyMultirobotTests)
     _msgMonitor->ResetCountTouchButtonEvent();
   }
 }
+
+#ifdef ENABLE_PARAMETER_SWEEP
+TEST_F(TouchSensorTest, ParameterSweepTouchDetect)
+{
+  using namespace Anki::Cozmo::ExternalInterface;
+
+  const std::string basePath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, kTestResourcesDir);
+  const std::string configFile = "config.json";
+
+  std::vector<std::vector<size_t> > readingsList;
+  std::vector<Annotation> annotations;
+  LoadAnnotationsFromFile(basePath, configFile, readingsList, annotations);
+
+  // progress tracker helper lambda
+  struct ProgressTracker
+  {
+    int count;
+    int total;
+    int stride;
+    int lastPercent;
+    
+    ProgressTracker(int total, int stride)
+    : count(0) 
+    , total(total)
+    , stride(stride)
+    , lastPercent(0)
+    {
+    }
+
+
+    void Tick()
+    {
+      int percent = std::floor(float(100*(++count))/total);
+      if( (lastPercent+stride) == (percent) ) {
+        lastPercent = percent;
+        PRINT_NAMED_INFO("TestTouchSensor","%d%%",percent);
+      }
+    }
+  };
+
+  // parameters to be sweeped:
+  // - debouncer limit (low)
+  // - debouncer limit (high)
+  // - stdev factor for classification post-calib
+  //
+  // create a table to be plotted and inspected later
+  
+  int debounceLimLo;
+  int debounceLimHi;
+  float stdevFactor;
+
+  struct ParameterEntry
+  {
+    int dbLimLo;
+    int dbLimHi;
+    float sdFactor;
+  };
+  std::vector<ParameterEntry> paramTable;
+
+  struct ResultScores
+  {
+    float hardTouchPercent;
+    float softTouchPercent;
+    bool didCalibrate;
+    bool noFalsePositiveTouch;
+    
+    // calibration values
+    float calibMean;
+    float calibStdev;
+  };
+
+  // helper lambda -- feed in touch input values in the interval
+  auto helperFeedTouchInputs = [&](const std::vector<size_t>& rst,
+                                  TouchSensorComponent& tscomp,
+                                  IntervalType interval)
+  {
+    for(size_t j=interval.first; j<interval.second; ++j) {
+      uint16_t touch = rst[j];
+      Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
+      msg.backpackTouchSensorRaw = touch;
+      tscomp.Update(msg);
+    }
+  };
+
+  std::stringstream parameterSS;
+
+  for(debounceLimLo = 2; debounceLimLo < 6; debounceLimLo++) {
+    for(debounceLimHi = 2; debounceLimHi < 6; debounceLimHi++) {
+      for(stdevFactor = 1.25f; stdevFactor < 1.75f; stdevFactor += 0.05f) {
+        paramTable.push_back({debounceLimLo, debounceLimHi, stdevFactor});
+        parameterSS << debounceLimLo << ", " << debounceLimHi << ", "
+                    << std::setprecision(3) << std::setw(4)
+                    << stdevFactor << std::endl;
+      }
+    }
+  }
+  
+  Util::FileUtils::WriteFile(basePath+"parameters.csv", parameterSS.str());
+
+  // main test body
+  
+  ProgressTracker progress(int(readingsList.size() * paramTable.size()), 5);
+  std::vector<ResultScores> resultScoresList;
+  for(int i=0; i<readingsList.size(); ++i)
+  {
+    for(int j=0; j<paramTable.size(); ++j)
+    {
+      TouchSensorComponent tscomp(*_robot);
+      
+      tscomp._debouncer._loLimit = paramTable[j].dbLimLo;
+      tscomp._debouncer._hiLimit = paramTable[j].dbLimHi;
+      tscomp._touchDetectStdevFactor = paramTable[j].sdFactor;
+      
+      const auto& rawTouchSensorReadings = readingsList[i];
+      const auto& anot                   = annotations[i];
+
+      // calibrate first
+      _msgMonitor->ResetCountTouchButtonEvent();
+      helperFeedTouchInputs(rawTouchSensorReadings, tscomp, anot.idle);
+      bool noFalsePositiveTouch = _msgMonitor->GetCountTouchButtonEvent()==0;
+      
+      // compute the "score" for each parameter sweep, using the factors:
+      // 
+      // - hard strokes percent
+      // - soft strokes percent
+      // - whether the system is calibrated after the sweep
+      // - whether there are spurious touch detects in the idle data
+       
+      _msgMonitor->ResetCountTouchButtonEvent();
+      helperFeedTouchInputs(rawTouchSensorReadings, tscomp, anot.hard);
+      float hardPercent = float(_msgMonitor->GetCountTouchButtonEvent())/anot.hardCount;
+
+      _msgMonitor->ResetCountTouchButtonEvent();
+      helperFeedTouchInputs(rawTouchSensorReadings, tscomp, anot.soft);
+      float softPercent = float(_msgMonitor->GetCountTouchButtonEvent())/anot.softCount;
+
+      resultScoresList.push_back({hardPercent,
+                                  softPercent, 
+                                  tscomp.IsCalibrated(), 
+                                  noFalsePositiveTouch,
+                                  tscomp._baselineCalib.GetFilteredTouchMean(),
+                                  tscomp._baselineCalib.GetFilteredTouchStdev()});
+      
+      progress.Tick();
+    }
+  }
+
+  std::stringstream resultSS;
+  for(const auto& scores : resultScoresList)
+  {
+    resultSS  << std::setprecision(4) << scores.hardTouchPercent << ","
+              << std::setprecision(4) << scores.softTouchPercent << ","
+              << scores.didCalibrate  << ","
+              << scores.noFalsePositiveTouch << ","
+              << std::setprecision(4) << scores.calibMean << ","
+              << std::setprecision(4) << scores.calibStdev << std::endl;
+  }
+  Util::FileUtils::WriteFile(basePath+"results.csv", resultSS.str());
+}
+#endif // ifdef ENABLE_PARAMETER_SWEEP
