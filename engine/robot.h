@@ -229,8 +229,10 @@ public:
   inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
   inline MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
 
+  inline bool                   HasBehaviorManager() const { return (_behaviorMgr != nullptr); }
   inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
   inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
+
   inline const std::string&     GetBehaviorDebugString() const { return _behaviorDebugStr; }
   
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {

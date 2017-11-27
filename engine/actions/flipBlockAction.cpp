@@ -290,13 +290,17 @@ FlipBlockAction::FlipBlockAction(Robot& robot, ObjectID objectID)
 FlipBlockAction::~FlipBlockAction()
 {
   _compoundAction.PrepForCompletion();
-  if(_flipTag != -1)
+  if (_flipTag != -1)
   {
     _robot.GetActionList().Cancel(_flipTag);
   }
-  
+
   // Re-enable all from reaction triggers from flip
-  _robot.GetBehaviorManager().RemoveDisableReactionsLock(GetName());
+  // Note BehaviorMgr may be destroyed before action is destroyed
+  if (_robot.HasBehaviorManager())
+  {
+    _robot.GetBehaviorManager().RemoveDisableReactionsLock(GetName());
+  }
 }
 
 void FlipBlockAction::SetShouldCheckPreActionPose(bool shouldCheck)
