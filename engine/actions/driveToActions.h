@@ -77,6 +77,7 @@ namespace Anki {
 
     protected:
       
+      virtual f32 GetTimeoutInSeconds() const override;
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       

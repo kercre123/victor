@@ -133,7 +133,7 @@ Supervisor {
         DistanceSensor {
           name "forwardProxSensor"
           translation 0.01 0 0
-          rotation 0 1 0 0
+          rotation 0 1 0 -0.10472
           type "generic"
           lookupTable [ 0.015    25  .0,
                         0.400   410  .0,

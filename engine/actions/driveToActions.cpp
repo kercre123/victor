@@ -40,6 +40,7 @@ namespace Anki {
 
     namespace {
       CONSOLE_VAR(bool, kEnablePredockDistanceCheckFix, "DriveToActions", true);
+      CONSOLE_VAR(f32, kDriveToPoseTimeout, "DriveToActions", 30.f);
     }
     
 #pragma mark ---- DriveToObjectAction ----
@@ -659,6 +660,8 @@ namespace Anki {
       return SetGoals(poses, distThreshold, angleThreshold);
     }
         
+    f32 DriveToPoseAction::GetTimeoutInSeconds() const { return kDriveToPoseTimeout; }  
+
     ActionResult DriveToPoseAction::Init()
     {
       _robot.GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());

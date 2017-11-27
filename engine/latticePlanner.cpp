@@ -56,6 +56,9 @@
 // amount of padding to subtract for replan-checks. MUST be less than the above values
 #define LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT 5.0
 
+// scaling for robot size when inserting for Configuration Space expansion (to avoid clipping corners)
+#define LATTICE_PLANNER_ROBOT_EXPANSION_SCALING 1.2 
+
 // whether this planner should consider multiple goals
 // todo: probably have this decided in the calling functions based on the world state/goal types/etc
 #define LATTICE_PLANNER_MULTIPLE_GOALS 1
@@ -861,7 +864,8 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       
       // Get the robot polygon, and inflate it by a bit to handle error
       Poly2f robotPoly;
-      robotPoly.ImportQuad2d(_robot->GetBoundingQuadXY(robotOriginPose, robotPadding) );
+      robotPoly.ImportQuad2d(_robot->GetBoundingQuadXY(robotOriginPose, robotPadding)
+                                    .Scale(LATTICE_PLANNER_ROBOT_EXPANSION_SCALING) );
       
       for(const auto& boundingPoly : convexHulls) {
         _context.env.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
