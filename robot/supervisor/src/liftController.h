@@ -30,6 +30,7 @@ namespace Anki {
       void Disable(bool autoReEnable = false);
       
       // Moves lift all the way down and sets that position to 0
+      // Automatically enables motor if it was disabled
       void StartCalibrationRoutine(bool autoStarted = false);
       
       // Returns true if calibration has completed
@@ -78,7 +79,8 @@ namespace Anki {
       Result Update();
 
       void SetGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError);
-      
+
+      // Momentarily enables motor even if it was disabled
       void Brace();
       void Unbrace();
       
