@@ -117,7 +117,7 @@ namespace Anki {
       {
         // This will assert if someone is storing a shared_ptr to this action
         // (locked the weak_ptr returned from AddAction) and has not yet released it
-        DEV_ASSERT(iter->unique(), "ICompoundAction.DeleteActions.ActionPtrHasMulipleOwners");
+        DEV_ASSERT(iter->unique(), "ICompoundAction.DeleteActions.ActionPtrHasMultipleOwners");
         
         std::shared_ptr<IActionRunner> action = *iter;
         assert(action != nullptr);
@@ -163,7 +163,7 @@ namespace Anki {
     {
       // This will assert if someone is storing a shared_ptr to this action
       // (locked the weak_ptr returned from AddAction) and has not yet released it
-      DEV_ASSERT(currentAction->unique(), "ICompoundAction.StoreUnionAndDelete.ActionPtrHasMulipleOwners");
+      DEV_ASSERT(currentAction->unique(), "ICompoundAction.StoreUnionAndDelete.ActionPtrHasMultipleOwners");
       
       // Store this actions completion union before deleting it
       ActionCompletedUnion actionUnion;
@@ -193,7 +193,11 @@ namespace Anki {
       {
         // If we aren't deleting actions when they complete we need to unlock their tracks so
         // subsequent actions can run
-        _robot.GetMoveComponent().UnlockTracks((*currentAction)->GetTracksToLock(), (*currentAction)->GetTag());
+        const auto & action = *currentAction;
+        if (!action->IsSuppressingTrackLocking() && action->GetState() != ActionResult::NOT_STARTED)
+        {
+          _robot.GetMoveComponent().UnlockTracks(action->GetTracksToLock(), action->GetTag());
+        }
         ++currentAction;
       }
     }
