@@ -209,22 +209,20 @@ Blockly.FieldNumber.prototype.position_ = function() {
   var bBox = this.sourceBlock_.getHeightWidth();
   bBox.width *= scale;
   bBox.height *= scale;
-  // *** Anki change ***
-  // Use the same bounding logic that is used by other fields
-  var position = this.fieldGroup_.getBoundingClientRect();
-  // var position = this.getAbsoluteXY_();
+  var position = this.getAbsoluteXY_();
   // If we can fit it, render below the shadow block
   var primaryX = position.x + bBox.width / 2;
-  // *** Anki change ***
-  var primaryY = position.y + bBox.height;
-  // var primaryY = position.y + bBox.height +
-  // Blockly.FieldNumber.DROPDOWN_Y_PADDING;
+  var primaryY = position.y + bBox.height +
+                 Blockly.FieldNumber.DROPDOWN_Y_PADDING;
   // If we can't fit it, render above the entire parent block
   var secondaryX = primaryX;
   // *** Anki change ***
-  var secondaryY = position.top;
-  // var secondaryY = position.y - (Blockly.BlockSvg.MIN_BLOCK_Y * scale) -
-  // (Blockly.BlockSvg.FIELD_Y_OFFSET * scale);
+  // Don't pad for an entire block's height in vertical
+  var secondaryY = position.y;
+  if (!window.isVertical) {
+    secondaryY = secondaryY - (Blockly.BlockSvg.MIN_BLOCK_Y * scale) -
+                 (Blockly.BlockSvg.FIELD_Y_OFFSET * scale);
+  }
 
   Blockly.DropDownDiv.setBoundsElement(
       this.sourceBlock_.workspace.getParentSvg().parentNode);
