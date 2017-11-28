@@ -81,9 +81,9 @@ namespace { // "Private members"
   {
     if (_server.HasClient()) {
 
-      u32 bytesSent = _server.Send((char*)buffer, length);
+      const ssize_t bytesSent = _server.Send((char*)buffer, length);
       if (bytesSent < length) {
-        LOG_ERROR("SendPacketToEngine.FailedSend", "Failed to send msg contents (%d of %d bytes sent)", bytesSent, length);
+        LOG_ERROR("SendPacketToEngine.FailedSend", "Failed to send msg contents (%zd of %d bytes sent)", bytesSent, length);
         DisconnectEngine();
         return false;
       }
@@ -98,14 +98,14 @@ namespace { // "Private members"
   u32 GetNextPacketFromEngine(u8* buffer, u32 max_length)
   {
     // Read available datagram
-    int dataLen = _server.Recv((char*)buffer, max_length);
+    const ssize_t dataLen = _server.Recv((char*)buffer, max_length);
     if (dataLen < 0) {
       // Something went wrong
       DisconnectEngine();
       return 0;
     }
 
-    return dataLen;
+    return (u32) dataLen;
   }
 
   
@@ -118,9 +118,9 @@ namespace { // "Private members"
   {
     if (_robotClient.IsConnected()) {
       
-      u32 bytesSent = _robotClient.Send((char*)buffer, length);
+      ssize_t bytesSent = _robotClient.Send((char*)buffer, length);
       if (bytesSent < length) {
-        LOG_ERROR("SendPacketToRobot.FailedSend", "Failed to send msg contents (%d bytes sent)\n", bytesSent);
+        LOG_ERROR("SendPacketToRobot.FailedSend", "Failed to send msg contents (%zd bytes sent)\n", bytesSent);
         DisconnectRobot();
         return false;
       }
@@ -136,14 +136,14 @@ namespace { // "Private members"
   u32 GetNextPacketFromRobot(u8* buffer, u32 max_length)
   {
     // Read available datagram
-    int dataLen = _robotClient.Recv((char*)buffer, max_length);
+    ssize_t dataLen = _robotClient.Recv((char*)buffer, max_length);
     if (dataLen < 0) {
       // Something went wrong
       DisconnectRobot();
       return 0;
     }
     
-    return dataLen;
+    return (u32) dataLen;
   }
 
       

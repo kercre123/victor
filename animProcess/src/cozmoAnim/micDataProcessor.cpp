@@ -368,7 +368,7 @@ void MicDataProcessor::Update()
   static constexpr int kMaxReceiveBytes = 2000;
   char receiveArray[kMaxReceiveBytes];
   
-  const int bytesReceived = _udpServer->Recv(receiveArray, kMaxReceiveBytes);
+  const ssize_t bytesReceived = _udpServer->Recv(receiveArray, kMaxReceiveBytes);
   if (bytesReceived == 2)
   {
     if (receiveArray[0] != '\0' || receiveArray[1] != '\0')

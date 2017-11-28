@@ -40,7 +40,7 @@ namespace Cozmo {
     // Returns 0 if no messages are available.
     virtual u32 GetNumPendingMsgPackets();
   
-    virtual size_t Send(const Comms::MsgPacket &p);
+    virtual ssize_t Send(const Comms::MsgPacket &p);
 
     virtual bool GetNextMsgPacket(std::vector<uint8_t> &buf);
     
@@ -88,7 +88,7 @@ namespace Cozmo {
     
     static const int MAX_RECV_BUF_SIZE = 1920000; // [TODO] 1.9MB seems excessive?
     u8  _recvBuf[MAX_RECV_BUF_SIZE];
-    int recvDataSize = 0;
+    ssize_t recvDataSize = 0;
     
   };
 

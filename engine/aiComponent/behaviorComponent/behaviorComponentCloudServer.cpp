@@ -37,7 +37,7 @@ void BehaviorComponentCloudServer::RunThread()
   _server.StartListening(_port);
   char buf[512];
   while (!_shutdown) {
-    const int received = _server.Recv(buf, sizeof(buf));
+    const ssize_t received = _server.Recv(buf, sizeof(buf));
     if (received > 0) {
       std::string msg{buf, buf+received};
       _callback(std::move(msg));
