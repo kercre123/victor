@@ -56,6 +56,8 @@ void BehaviorPlaypenSoundCheck::TransitionToPlayingSound(BehaviorExternalInterfa
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
 
+  RecordTouchSensorData(robot, GetIDStr());
+
   // Set speaker volume to config value
   robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1, PlaypenConfig::kSoundVolume);
 

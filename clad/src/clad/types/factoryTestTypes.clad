@@ -189,6 +189,10 @@ structure DistanceSensorData {
   float_32       visualAngleAwayFromTarget_rad
 }
 
+structure TouchSensorValues {
+  uint_16 data[uint_16]
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

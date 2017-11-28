@@ -69,11 +69,14 @@ public:
 
   // Returns the current result of a playpen behavior
   // Will be UNKNOWN while running and either SUCCESS or something else when complete
-  FactoryTestResultCode GetResult() { return _result; }
+  FactoryTestResultCode GetResult() { if(_recordingTouch) { return FactoryTestResultCode::UNKNOWN; } return _result; }
   
   void Reset(BehaviorExternalInterface& behaviorExternalInterface) { 
     _timers.clear(); 
     _result = FactoryTestResultCode::UNKNOWN; 
+    _recordingTouch = false;
+    _touchSensorValues.data.clear();
+    _lastStatus = BehaviorStatus::Running;
   }
   
   static const std::map<std::string, std::vector<FactoryTestResultCode>>& GetAllPlaypenResults();
@@ -158,13 +161,19 @@ protected:
 
   // Returns and resets if we have gotten the fft result
   bool DidReceiveFFTResult();
-  
+
+  // Starts recording touch sensor data and will automatically stop once 'kDurationOfTouchToRecord_ms'
+  // time has passed
+  void RecordTouchSensorData(Robot& robot, const std::string& nameOfData);
+
 private:
 
   // Let WaitToStart be able to clear its timers on init so it can remove
   // the default timeout timer
   friend class BehaviorPlaypenWaitToStart;
-  void ClearTimers() { _timers.clear(); }
+
+  // Clears all timers except those marked as "DontDelete"
+  void ClearTimers();
 
   // Simple class that will call a callback when some amount of time has passed
   class Timer
@@ -207,7 +216,13 @@ private:
   
   // Set of EngineToGameTags that a subclass has subscribed to
   std::set<EngineToGameTag> _tagsSubclassSubscribeTo;
-  
+
+  // Some subclass record touch sensor data
+  TouchSensorValues _touchSensorValues;
+  bool _recordingTouch = false;
+
+  // The last value UpdateInternal returned
+  BehaviorStatus _lastStatus = BehaviorStatus::Running;
 };
   
 }

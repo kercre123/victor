@@ -563,6 +563,32 @@ namespace Cozmo {
     return AppendToFile(ss.str());
   }
   
+  bool FactoryTestLogger::Append(const std::string& dataTypeName, const TouchSensorValues& data)
+  {
+    std::stringstream ss;
+    
+    if(_exportJson)
+    {
+      Json::Value& node = _json[dataTypeName];
+      for(const auto& val : data.data)
+      {
+        node.append(val);
+      }
+      ss << "[" << dataTypeName << "]\n" << node;
+    }
+    else
+    {
+      ss << "\n[" << dataTypeName << "]\n";
+      for(const auto& val : data.data)
+      {
+        ss << val << ", ";
+      }
+    }
+
+    PRINT_NAMED_INFO("FactoryTestLogger.Append.TouchSensorValues", "%s", ss.str().c_str());
+    return AppendToFile(ss.str());
+  }
+
   bool FactoryTestLogger::AppendToFile(const std::string& data) {
     
     // If log name was not actually defined yet, do nothing.

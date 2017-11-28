@@ -16,9 +16,12 @@
 #include "engine/components/sensors/iSensorComponent.h"
 #include "engine/components/sensors/touchSensorHelpers.h"
 #include "clad/types/touchGestureTypes.h"
+#include "clad/types/factoryTestTypes.h"
 
 namespace Anki {
 namespace Cozmo {
+
+class IBehaviorPlaypen;
 
 class TouchSensorComponent : public ISensorComponent
 {
@@ -45,6 +48,17 @@ public:
   }
   
 private:
+
+  // Let Playpen behaviors have access to Start/Stop recording touch sensor data
+  // TODO(Al): Could probably move the recording logic to IBehaviorPlaypen by handling
+  // state messages
+  friend class IBehaviorPlaypen;
+  void StartRecordingData(TouchSensorValues* data);
+  void StopRecordingData() { _dataToRecord = nullptr; } 
+
+  // Pointer to a struct that should be populated with touch sensor data when recording
+  TouchSensorValues* _dataToRecord = nullptr;
+
   DebounceHelper _debouncer;
 
   TouchGestureClassifier _gestureClassifier;

@@ -18,6 +18,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenTest.h"
 #include "engine/components/nvStorageComponent.h"
+#include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
@@ -98,8 +99,20 @@ BehaviorStatus IBehaviorPlaypen::UpdateInternal_WhileRunning(BehaviorExternalInt
   {
     timer.Tick();
   }
+
+  // Keep updating behavior until it completes
+  if(_lastStatus != BehaviorStatus::Complete)
+  {
+    _lastStatus = PlaypenUpdateInternal(behaviorExternalInterface);
+  }
   
-  return PlaypenUpdateInternal(behaviorExternalInterface);
+  // Finish recording touch data before letting the behavior complete
+  if(_recordingTouch)
+  {
+    return BehaviorStatus::Running;
+  }
+
+  return _lastStatus;
 }
   
 void IBehaviorPlaypen::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
@@ -293,7 +306,7 @@ bool IBehaviorPlaypen::ShouldIgnoreFailures() const
 void IBehaviorPlaypen::SetResult(FactoryTestResultCode result)
 {
   _result = result;
-  _timers.clear();
+  ClearTimers();
   AddToResultList(result);
 }
 
@@ -337,6 +350,43 @@ void IBehaviorPlaypen::RemoveTimer(const std::string& name)
     {
       _timers.erase(iter);
       return;
+    }
+  }
+}
+
+void IBehaviorPlaypen::RecordTouchSensorData(Robot& robot, const std::string& nameOfData)
+{
+  if(PlaypenConfig::kDurationOfTouchToRecord_ms > 0)
+  {
+    // Start recording data to the _touchSensorValues struct
+    _recordingTouch = true;
+    robot.GetTouchSensorComponent().StartRecordingData(&_touchSensorValues);
+
+    // Add a timer that will stop recording touch data and write it to log
+    // This timer will not be removed from the timer vector so it must complete before the behavior is allowed to
+    // complete
+    AddTimer(PlaypenConfig::kDurationOfTouchToRecord_ms, [this, &robot, nameOfData](){ 
+      robot.GetTouchSensorComponent().StopRecordingData();
+      PLAYPEN_TRY(GetLogger().Append("TouchSensor_" + nameOfData, _touchSensorValues), FactoryTestResultCode::WRITE_TO_LOG_FAILED);
+      _touchSensorValues.data.clear();
+      _recordingTouch = false;
+    },
+    "DontDelete");
+  }
+}
+
+void IBehaviorPlaypen::ClearTimers()
+{
+  // Remove all timers except for the ones marked as "DontDelete"
+  for(auto iter = _timers.begin(); iter < _timers.end();)
+  {
+    if(iter->GetName() != "DontDelete")
+    {
+      iter = _timers.erase(iter);
+    }
+    else
+    {
+      ++iter;
     }
   }
 }

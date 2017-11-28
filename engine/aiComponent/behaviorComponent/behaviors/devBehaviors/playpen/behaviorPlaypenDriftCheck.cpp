@@ -67,6 +67,8 @@ void BehaviorPlaypenDriftCheck::TransitionToStartDriftCheck(BehaviorExternalInte
   _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
   _imuTemp.tempStart_c = robot.GetImuTemperature();
   _imuTemp.duration_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+
+  RecordTouchSensorData(robot, GetIDStr());
   
   AddTimer(PlaypenConfig::kIMUDriftDetectPeriod_ms, [this, &behaviorExternalInterface](){ CheckDrift(behaviorExternalInterface); });
 }

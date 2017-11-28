@@ -64,6 +64,8 @@ Result BehaviorPlaypenPickupCube::OnBehaviorActivatedInternal(BehaviorExternalIn
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
+
+  RecordTouchSensorData(robot, GetIDStr());
   
   // Make sure marker detection is enabled (probably super overkill...)
   robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);

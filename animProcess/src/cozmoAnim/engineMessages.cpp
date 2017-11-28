@@ -254,7 +254,10 @@ namespace Messages {
     UpdateFAC();
 
     std::string serialString = ExecCommand("getprop ro.serialno");
-    _serialNumber = static_cast<u32>(std::stoul(serialString, nullptr, 16));
+    if(!serialString.empty())
+    {
+      _serialNumber = static_cast<u32>(std::stoul(serialString, nullptr, 16));
+    }
     
     return RESULT_OK;
   }

@@ -56,6 +56,9 @@ static u32  kTouchDurationToStart_ms      = 1000;
 // Whether or not to need a button press to start 
 static bool kUseButtonToStart             = true;
 
+// How long to record touch sensor data
+static u32  kDurationOfTouchToRecord_ms   = 3000;
+
 // ----------InitChecks----------
 // Whether or not to check firmware version
 static bool      kCheckFirmwareVersion = true;
