@@ -97,7 +97,6 @@ BehaviorInteractWithFaces::BehaviorInteractWithFaces(const Json::Value& config)
 {
   LoadConfig(config["params"]);
 
-  SubscribeToTags({ EngineToGameTag::RobotChangedObservedFaceID });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -141,7 +140,7 @@ Result BehaviorInteractWithFaces::OnBehaviorActivated(BehaviorExternalInterface&
   // reset the time to stop tracking (in the tracking state)
   _trackFaceUntilTime_s = -1.0f;
 
-  if( _targetFace != Vision::UnknownFaceID ) {
+  if( _targetFace.IsValid() ) {
     TransitionToInitialReaction(behaviorExternalInterface);
     return RESULT_OK;
   }
@@ -174,10 +173,10 @@ ICozmoBehavior::Status BehaviorInteractWithFaces::UpdateInternal_WhileRunning(Be
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorInteractWithFaces::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  _targetFace = Vision::UnknownFaceID;
+  _targetFace.Reset();
   SelectFaceToTrack(behaviorExternalInterface);
 
-  return _targetFace != Vision::UnknownFaceID;
+  return _targetFace.IsValid();
 }
 
   
@@ -238,13 +237,10 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction(BehaviorExternalInte
 {
   DEBUG_SET_STATE(VerifyFace);
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  CompoundActionSequential* action = new CompoundActionSequential();
 
   {
-    TurnTowardsFaceAction* turnAndAnimateAction = new TurnTowardsFaceAction(robot, _targetFace, M_PI_F, true);
+    TurnTowardsFaceAction* turnAndAnimateAction = new TurnTowardsFaceAction(_targetFace, M_PI_F, true);
     turnAndAnimateAction->SetSayNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialNamed);
     turnAndAnimateAction->SetNoNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialUnnamed);
     turnAndAnimateAction->SetRequireFaceConfirmation(true);
@@ -273,14 +269,14 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction(BehaviorExternalInte
           const Robot& robot = behaviorExternalInterface.GetRobot();
           _lastImageTimestampWhileRunning = robot.GetLastImageTimeStamp();
         }
-        FaceID_t oldTargetFace = _targetFace;
+        SmartFaceID oldTargetFace = _targetFace;
         SelectFaceToTrack(behaviorExternalInterface);
-        if( _targetFace != oldTargetFace ) {
+        if(_targetFace != oldTargetFace) {
           // only retry a max of one time to avoid loops
           PRINT_CH_INFO("Behaviors","BehaviorInteractWithFaces.InitialReactionFailed.TryAgain",
-                        "tracking face %d failed, but will try again with face %d",
-                        oldTargetFace,
-                        _targetFace);
+                        "tracking face %s failed, but will try again with face %s",
+                        oldTargetFace.GetDebugStr().c_str(),
+                        _targetFace.GetDebugStr().c_str());
 
           TransitionToInitialReaction(behaviorExternalInterface);
         }
@@ -301,10 +297,7 @@ void BehaviorInteractWithFaces::TransitionToGlancingDown(BehaviorExternalInterfa
   if( kInteractWithFaces_DoGlanceDown && kInteractWithFaces_DoMemoryMapCheckForDriveForward ) {
     // TODO:(bn) get a better measurement for this and put it in cozmo config
     const float kLowHeadAngle_rads = DEG_TO_RAD(-10.0f);
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new MoveHeadToAngleAction(robot, kLowHeadAngle_rads),
+    DelegateIfInControl(new MoveHeadToAngleAction(kLowHeadAngle_rads),
                 &BehaviorInteractWithFaces::TransitionToDrivingForward);
   }
   else {
@@ -323,11 +316,8 @@ void BehaviorInteractWithFaces::TransitionToDrivingForward(BehaviorExternalInter
     kInteractWithFaces_DriveForwardIdealDist_mm :
     kInteractWithFaces_DriveForwardMinDist_mm;
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // drive straight while keeping the head tracking the (players) face
-  CompoundActionParallel* action = new CompoundActionParallel(robot);
+  CompoundActionParallel* action = new CompoundActionParallel();
 
   // the head tracking action normally loops forever, so set up the drive action first, tell it to emit
   // completion signals, then pass it's tag in to the tracking action so the tracking action can stop itself
@@ -337,8 +327,7 @@ void BehaviorInteractWithFaces::TransitionToDrivingForward(BehaviorExternalInter
   {
     // don't play driving animations (to avoid sounds which don't make sense here)
     // TODO:(bn) custom driving animations for this action?
-    DriveStraightAction* driveAction = new DriveStraightAction(robot,
-                                                               distToDrive_mm,
+    DriveStraightAction* driveAction = new DriveStraightAction(distToDrive_mm,
                                                                kInteractWithFaces_DriveForwardSpeed_mmps,
                                                                false);
     const bool ignoreFailure = false;
@@ -348,7 +337,7 @@ void BehaviorInteractWithFaces::TransitionToDrivingForward(BehaviorExternalInter
   }
 
   {
-    TrackFaceAction* trackWithHeadAction = new TrackFaceAction(robot, _targetFace);
+    TrackFaceAction* trackWithHeadAction = new TrackFaceAction(_targetFace);
     trackWithHeadAction->SetMode(ITrackAction::Mode::HeadOnly);
     trackWithHeadAction->StopTrackingWhenOtherActionCompleted( driveActionTag );
     trackWithHeadAction->SetTiltTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingPanAngle_deg));
@@ -373,13 +362,11 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace(BehaviorExternalInterfa
   PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.TrackTime", "will track for %f seconds", randomTimeToTrack_s);
   _trackFaceUntilTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + randomTimeToTrack_s;
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionParallel* action = new CompoundActionParallel(robot);
+
+  CompoundActionParallel* action = new CompoundActionParallel();
 
   {
-    TrackFaceAction* trackAction = new TrackFaceAction(robot, _targetFace);
+    TrackFaceAction* trackAction = new TrackFaceAction(_targetFace);
     trackAction->SetTiltTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingPanAngle_deg));
     trackAction->SetPanTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingTiltAngle_deg));
     trackAction->SetClampSmallAnglesToTolerances(_configParams.clampSmallAngles);
@@ -388,7 +375,7 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace(BehaviorExternalInterfa
   }
   
   // loop animation forever to keep the eyes moving
-  action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::InteractWithFaceTrackingIdle, 0));
+  action->AddAction(new TriggerAnimationAction(AnimationTrigger::InteractWithFaceTrackingIdle, 0));
   
   DelegateIfInControl(action, &BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent);
 }
@@ -415,25 +402,16 @@ void BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent(BehaviorExternal
 void BehaviorInteractWithFaces::SelectFaceToTrack(BehaviorExternalInterface& behaviorExternalInterface) const
 {  
   const bool considerTrackingOnlyFaces = false;
-  std::set< FaceID_t > faces = behaviorExternalInterface.GetFaceWorld().GetFaceIDsObservedSince(_lastImageTimestampWhileRunning,
+  std::set< Vision::FaceID_t > faces = behaviorExternalInterface.GetFaceWorld().GetFaceIDsObservedSince(_lastImageTimestampWhileRunning,
                                                                                  considerTrackingOnlyFaces);
-
+  
+  std::set<SmartFaceID> smartFaces;
+  for(auto& entry : faces){
+    smartFaces.insert(behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(entry));
+  }
   const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
   const bool preferName = true;
-  _targetFace = whiteboard.GetBestFaceToTrack(faces, preferName);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInteractWithFaces::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
-{
-  if( event.GetData().GetTag() == EngineToGameTag::RobotChangedObservedFaceID )
-  {
-    auto const& msg = event.GetData().Get_RobotChangedObservedFaceID();
-    if( msg.oldID == _targetFace ) {
-      _targetFace = msg.newID;
-    }
-  }
+  _targetFace = whiteboard.GetBestFaceToTrack(smartFaces, preferName);
 }
 
 

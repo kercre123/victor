@@ -98,11 +98,8 @@ Result BehaviorOnConfigSeen::OnBehaviorActivated(BehaviorExternalInterface& beha
 void BehaviorOnConfigSeen::TransitionToPlayAnimationSequence(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_animTriggerIndex < _animTriggers.size()){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
     const AnimationTrigger animTrigger = _animTriggers[0];
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, animTrigger));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(animTrigger));
   }
 }
 

@@ -95,9 +95,9 @@ bool BehaviorAcknowledgeFace::UpdateBestTarget(BehaviorExternalInterface& behavi
 {
   const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
   const bool preferName = false;  
-  Vision::FaceID_t bestFace = whiteboard.GetBestFaceToTrack( _desiredTargets, preferName );
+  SmartFaceID bestFace = whiteboard.GetBestFaceToTrack( _desiredTargets, preferName );
   
-  if( bestFace == Vision::UnknownFaceID ) {
+  if( !bestFace.IsValid() ) {
     return false;
   }
   else {
@@ -110,21 +110,17 @@ bool BehaviorAcknowledgeFace::UpdateBestTarget(BehaviorExternalInterface& behavi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeFace::BeginIteration(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  _targetFace = Vision::UnknownFaceID;
+  _targetFace.Reset();
   if( !UpdateBestTarget(behaviorExternalInterface) ) {
     return;
   }
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
   const bool sayName = true;
-  TurnTowardsFaceAction* turnAction = new TurnTowardsFaceAction(robot,
-                                                                _targetFace,
+  TurnTowardsFaceAction* turnAction = new TurnTowardsFaceAction(_targetFace,
                                                                 M_PI_F,
                                                                 sayName);
 
+  Robot& robot = behaviorExternalInterface.GetRobot();
   const float freeplayStartedTime_s = 0.f;//robot.GetBehaviorManager().GetFirstTimeFreeplayStarted();    
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();  
   const bool withinMinSessionTime = freeplayStartedTime_s >= 0.0f &&

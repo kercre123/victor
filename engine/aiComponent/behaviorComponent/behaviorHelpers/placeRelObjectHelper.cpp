@@ -127,11 +127,8 @@ void PlaceRelObjectHelper::StartPlaceRelObject(BehaviorExternalInterface& behavi
                                     });
     DelegateAfterUpdate(properties);
   }else{
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
     PlaceRelObjectAction* placeObj =
-            new PlaceRelObjectAction(robot, _targetID, _placingOnGround,
+            new PlaceRelObjectAction(_targetID, _placingOnGround,
                                      _params.placementOffsetX_mm,
                                      _params.placementOffsetY_mm,
                                      false, _params.relativeCurrentMarker);

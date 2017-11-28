@@ -50,11 +50,8 @@ bool BehaviorEarnedSparks::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorEarnedSparks::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   const AnimationTrigger animTrigger = AnimationTrigger::EarnedSparks;
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, animTrigger));
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(animTrigger));
 
   return RESULT_OK;
 }

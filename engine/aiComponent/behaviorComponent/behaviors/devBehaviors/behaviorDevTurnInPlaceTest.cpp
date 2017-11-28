@@ -146,17 +146,17 @@ CompoundActionSequential* BehaviorDevTurnInPlaceTest::GenerateTestAction(Robot& 
                 test.angle_deg, test.speed_deg_per_sec, test.accel_deg_per_sec2, test.tol_deg,
                 robot.GetPose().GetRotation().GetAngleAroundZaxis().getDegrees());
   
-  auto turnAction = new TurnInPlaceAction(robot, DEG_TO_RAD(test.angle_deg), false);
+  auto turnAction = new TurnInPlaceAction(DEG_TO_RAD(test.angle_deg), false);
   turnAction->SetAccel(DEG_TO_RAD(test.accel_deg_per_sec2));
   turnAction->SetMaxSpeed(DEG_TO_RAD(test.speed_deg_per_sec));
   turnAction->SetTolerance(DEG_TO_RAD(test.tol_deg));
   turnAction->SetVariability(0.f);
   
   // Optionally wait in between TurnInPlace actions
-  const auto waitAction = new WaitAction(robot, _gapBetweenTests_s);
+  const auto waitAction = new WaitAction(_gapBetweenTests_s);
   
   // Create the compound action
-  auto compoundAction = new CompoundActionSequential(robot);
+  auto compoundAction = new CompoundActionSequential();
   compoundAction->AddAction(turnAction);
   compoundAction->AddAction(waitAction);
   

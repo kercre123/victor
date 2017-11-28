@@ -37,7 +37,7 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand(const Json::Value& conf
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  if (Vision::UnknownFaceID != _desiredFace)
+  if (_desiredFace.IsValid())
   {
     // If we don't know where this face is right now, switch it to Invalid so we just look toward the last face pose
     const auto* face = behaviorExternalInterface.GetFaceWorld().GetFace(_desiredFace);
@@ -47,7 +47,7 @@ bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior(BehaviorExternalInt
     const Robot& robot = behaviorExternalInterface.GetRobot();
     if(nullptr == face || !face->GetHeadPose().HasSameRootAs(robot.GetPose()))
     {
-      _desiredFace = Vision::UnknownFaceID;
+      _desiredFace.Reset();
     }
   }
   
@@ -65,19 +65,18 @@ Result BehaviorReactToVoiceCommand::OnBehaviorActivated(BehaviorExternalInterfac
   // Stop all movement so we can listen for a command
   robot.GetMoveComponent().StopAllMotors();
   
-  auto* actionSeries = new CompoundActionSequential(robot);
+  auto* actionSeries = new CompoundActionSequential();
   
   // Tilt the head up slightly, like we're listening, and wait a bit
   {
     actionSeries->AddAction(
-      new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::VC_Listening));
+      new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_Listening));
   }
   
   // After waiting let's turn toward the face we know about, if we have one
-  if(_desiredFace != Vision::UnknownFaceID){
+  if(_desiredFace.IsValid()){
     const bool sayName = true;
-    TurnTowardsFaceAction* turnAction = new TurnTowardsFaceAction(robot,
-                                                                  _desiredFace,
+    TurnTowardsFaceAction* turnAction = new TurnTowardsFaceAction(_desiredFace,
                                                                   M_PI_F,
                                                                   sayName);
     
@@ -88,11 +87,11 @@ Result BehaviorReactToVoiceCommand::OnBehaviorActivated(BehaviorExternalInterfac
     
     // Play animation to indicate "You wanted something" since he's looking at the user
     actionSeries->AddAction(
-       new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::VC_NoFollowupCommand_WithFace));
+       new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_NoFollowupCommand_WithFace));
   }else{
     // Play animation to indicate "What was that" since no face to tun towards
     actionSeries->AddAction(
-       new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::VC_NoFollowupCommand_NoFace));
+       new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_NoFollowupCommand_NoFace));
   }
   
   using namespace ::Anki::Cozmo::VoiceCommand;

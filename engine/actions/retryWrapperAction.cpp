@@ -20,12 +20,10 @@
 namespace Anki {
 namespace Cozmo {
   
-  RetryWrapperAction::RetryWrapperAction(Robot& robot,
-                                         IAction* action,
+  RetryWrapperAction::RetryWrapperAction(IAction* action,
                                          RetryCallback retryCallback,
                                          u8 numRetries)
-  : IAction(robot,
-            "RetryWrapper",
+  : IAction("RetryWrapper",
             RobotActionType::UNKNOWN,
             (u8)AnimTrackFlag::NO_TRACKS)
   , _subAction(action)
@@ -42,12 +40,10 @@ namespace Cozmo {
     SetName("Retry["+action->GetName()+"]");
   }
   
-  RetryWrapperAction::RetryWrapperAction(Robot& robot,
-                                         ICompoundAction* action,
+  RetryWrapperAction::RetryWrapperAction(ICompoundAction* action,
                                          RetryCallback retryCallback,
                                          u8 numRetries)
-  : IAction(robot,
-            "RetryWrapper",
+  : IAction("RetryWrapper",
             RobotActionType::UNKNOWN,
             (u8)AnimTrackFlag::NO_TRACKS)
   , _subAction(action)
@@ -67,8 +63,8 @@ namespace Cozmo {
     SetName("Retry["+action->GetName()+"]");
   }
 
-  RetryWrapperAction::RetryWrapperAction(Robot& robot, IAction* action, AnimationTrigger retryTrigger, u8 numRetries)
-    : RetryWrapperAction(robot, action, RetryCallback{}, numRetries)
+  RetryWrapperAction::RetryWrapperAction(IAction* action, AnimationTrigger retryTrigger, u8 numRetries)
+    : RetryWrapperAction(action, RetryCallback{}, numRetries)
   {
     _retryCallback = [retryTrigger](const ExternalInterface::RobotCompletedAction&,
                                     const u8 retryCount,
@@ -78,11 +74,10 @@ namespace Cozmo {
     };
   }
 
-  RetryWrapperAction::RetryWrapperAction(Robot& robot,
-                                         ICompoundAction* action,
+  RetryWrapperAction::RetryWrapperAction(ICompoundAction* action,
                                          AnimationTrigger retryTrigger,
                                          u8 numRetries)
-    : RetryWrapperAction(robot, action, RetryCallback{}, numRetries)
+    : RetryWrapperAction(action, RetryCallback{}, numRetries)
   {
     _retryCallback = [retryTrigger](const ExternalInterface::RobotCompletedAction&,
                                     const u8 retryCount,
@@ -102,6 +97,13 @@ namespace Cozmo {
     if(_animationAction != nullptr)
     {
       _animationAction->PrepForCompletion();
+    }
+  }
+
+  void RetryWrapperAction::OnRobotSet()
+  {
+    if(_subAction != nullptr){
+      _subAction->SetRobot(&GetRobot());
     }
   }
   
@@ -142,7 +144,7 @@ namespace Cozmo {
         _subAction->GetCompletionUnion(completionUnion);
         
         std::vector<ActionResult> subActionResults;
-        _robot.GetActionList().GetActionWatcher().GetSubActionResults(_subAction->GetTag(), subActionResults);
+        GetRobot().GetActionList().GetActionWatcher().GetSubActionResults(_subAction->GetTag(), subActionResults);
         
         using RCA = ExternalInterface::RobotCompletedAction;
         RCA robotCompletedAction = RCA(_subAction->GetTag(),
@@ -180,7 +182,8 @@ namespace Cozmo {
         }
         else
         {
-          _animationAction.reset(new TriggerLiftSafeAnimationAction(_robot, animTrigger));
+          _animationAction.reset(new TriggerLiftSafeAnimationAction(animTrigger));
+          _animationAction->SetRobot(&GetRobot());
         }
       }
       else

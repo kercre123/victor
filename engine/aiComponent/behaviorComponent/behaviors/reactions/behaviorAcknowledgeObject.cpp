@@ -178,25 +178,25 @@ void BehaviorAcknowledgeObject::BeginIteration(BehaviorExternalInterface& behavi
   // Only bother checking below the robot if the object is significantly above the robot
   _shouldCheckBelowTarget = poseWrtRobot.GetTranslation().z() > ROBOT_BOUNDING_Z * 0.5f;
   
-  TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, _currTarget,
+  TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(_currTarget,
                                                                     _params.maxTurnAngle_rad);
   turnAction->SetTiltTolerance(_params.tiltTolerance_rad);
   turnAction->SetPanTolerance(_params.panTolerance_rad);
 
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  CompoundActionSequential* action = new CompoundActionSequential();
   action->AddAction(turnAction);
 
   if( _params.numImagesToWaitFor > 0 ) {
     // If visual verification fails (e.g. because object has moved since we saw it),
     // then the compound action fails, and we don't play animation, since it's silly
     // to react to something that's no longer there.
-    VisuallyVerifyObjectAction* verifyAction = new VisuallyVerifyObjectAction(robot, _currTarget);
+    VisuallyVerifyObjectAction* verifyAction = new VisuallyVerifyObjectAction(_currTarget);
     verifyAction->SetNumImagesToWaitFor(_params.numImagesToWaitFor);
     action->AddAction(verifyAction);
   }
 
   if(!ShouldStreamline()){
-    action->AddAction(new TriggerLiftSafeAnimationAction(robot, _params.reactionAnimTrigger));
+    action->AddAction(new TriggerLiftSafeAnimationAction(_params.reactionAnimTrigger));
   }
 
   DelegateIfInControl(action,
@@ -386,23 +386,20 @@ bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(BehaviorExternalInterfa
 template<typename T>
 void BehaviorAcknowledgeObject::LookAtGhostBlock(BehaviorExternalInterface& behaviorExternalInterface, bool backupFirst, void(T::*callback)(BehaviorExternalInterface&))
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* compoundAction = new CompoundActionSequential();
   
   if(backupFirst)
   {
-    compoundAction->AddAction(new DriveStraightAction(robot, -kBackupDistance_mm, kBackupSpeed_mmps, false));
+    compoundAction->AddAction(new DriveStraightAction(-kBackupDistance_mm, kBackupSpeed_mmps, false));
   }
   
   // use 0 for max turn angle so we only look with the head
-  TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, ObjectID{}, 0.f);
+  TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(ObjectID{}, 0.f);
   turnAction->UseCustomObject(_ghostStackedObject.get());
   
   // turn and then wait for images to give us a chance to see the new marker
   compoundAction->AddAction(turnAction);
-  compoundAction->AddAction(new WaitForImagesAction(robot, _params.numImagesToWaitFor,
+  compoundAction->AddAction(new WaitForImagesAction(_params.numImagesToWaitFor,
                                                     VisionMode::DetectingMarkers));
   
   DelegateIfInControl(compoundAction, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
@@ -436,12 +433,9 @@ void BehaviorAcknowledgeObject::FinishIteration(BehaviorExternalInterface& behav
   }
   else
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
     // There's nothing else to react to, so turn back towards the target so we're
     // left facing it (as long as it wasn't too far to turn towards to begin with)
-    DelegateIfInControl(new TurnTowardsObjectAction(robot, _currTarget, _params.maxTurnAngle_rad), callback);
+    DelegateIfInControl(new TurnTowardsObjectAction(_currTarget, _params.maxTurnAngle_rad), callback);
   }
 }
  

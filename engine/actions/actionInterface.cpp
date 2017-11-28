@@ -69,12 +69,10 @@ namespace Anki {
     }
     
     
-    IActionRunner::IActionRunner(Robot& robot,
-                                 const std::string name,
+    IActionRunner::IActionRunner(const std::string name,
                                  const RobotActionType type,
                                  const u8 trackToLock)
-    : _robot(robot)
-    , _completionUnion(ActionCompletedUnion())
+    : _completionUnion(ActionCompletedUnion())
     , _type(type)
     , _name(name)
     , _tracks(trackToLock)
@@ -187,33 +185,38 @@ namespace Anki {
         PRINT_NAMED_ERROR("IActionRunner.Destructor.NotPreppedForCompletion", "[%d]", GetTag());
       }
 
+      if(!HasRobot()){
+        PRINT_NAMED_ERROR("IActionRunner.Destructor.RobotNotSet", "");
+        return;
+      }
+
       // clear the motion profile, if desired
-      if( _shouldClearMotionProfile ) {
-        _robot.GetPathComponent().ClearCustomMotionProfile();
+      if(_shouldClearMotionProfile ) {
+        GetRobot().GetPathComponent().ClearCustomMotionProfile();
       }
       
       // Erase the tags as they are no longer in use
       IActionRunner::sInUseTagSet.erase(_customTag);
       IActionRunner::sInUseTagSet.erase(_idTag);
-    
+  
       // Stop motion on any movement tracks that are locked by this action
       // and that are currently moving.
-      const auto& mc = _robot.GetMoveComponent();
+      const auto& mc = GetRobot().GetMoveComponent();
       const auto& lockStr = std::to_string(GetTag());
       std::string debugStr;
       if (mc.IsHeadMoving() &&
           mc.AreAllTracksLockedBy((u8) AnimTrackFlag::HEAD_TRACK, lockStr)) {
-        _robot.GetMoveComponent().StopHead();
+        GetRobot().GetMoveComponent().StopHead();
         debugStr += "HEAD_TRACK, ";
       }
       if (mc.IsLiftMoving() &&
           mc.AreAllTracksLockedBy((u8) AnimTrackFlag::LIFT_TRACK, lockStr)) {
-        _robot.GetMoveComponent().StopLift();
+        GetRobot().GetMoveComponent().StopLift();
         debugStr += "LIFT_TRACK, ";
       }
       if (mc.AreWheelsMoving() &&
           mc.AreAllTracksLockedBy((u8) AnimTrackFlag::BODY_TRACK, lockStr)) {
-        _robot.GetMoveComponent().StopBody();
+        GetRobot().GetMoveComponent().StopBody();
         debugStr += "BODY_TRACK, ";
       }
       // Log if we've stopped movement on any tracks
@@ -234,12 +237,27 @@ namespace Anki {
                         _name.c_str(),
                         _idTag);
         }
-        _robot.GetMoveComponent().UnlockTracks(_tracks, GetTag());
+        GetRobot().GetMoveComponent().UnlockTracks(_tracks, GetTag());
       }
       
-      _robot.GetActionList().GetActionWatcher().ActionEnding(this);
+      GetRobot().GetActionList().GetActionWatcher().ActionEnding(this);
     }
 
+    Robot& IActionRunner::GetRobot()
+    {
+      DEV_ASSERT_MSG(_robot != nullptr, 
+                     "IActionRunner.GetRobot.RobotIsNull",
+                     "Robot not set for action %s with tag %d", GetName().c_str(), GetTag());
+      return *_robot;
+    }
+
+    Robot& IActionRunner::GetRobot() const
+    {
+      DEV_ASSERT_MSG(_robot != nullptr, 
+                     "IActionRunner.GetRobot.RobotIsNull",
+                     "Robot not set for action %s with tag %d", GetName().c_str(), GetTag());
+      return *_robot;
+    }
     
     bool IActionRunner::SetTag(u32 tag)
     {
@@ -277,7 +295,8 @@ namespace Anki {
       if(InterruptInternal())
       {
         // Only need to unlock tracks if this is running because Update() locked tracks
-        if(!_suppressTrackLocking && _state == ActionResult::RUNNING)
+        if(!_suppressTrackLocking && 
+           (_state == ActionResult::RUNNING))
         {
           u8 tracks = GetTracksToLock();
           if(DEBUG_ANIM_TRACK_LOCKING)
@@ -290,7 +309,7 @@ namespace Anki {
                           _idTag);
           }
 
-          _robot.GetMoveComponent().UnlockTracks(tracks, GetTag());
+          GetRobot().GetMoveComponent().UnlockTracks(tracks, GetTag());
         }
         Reset(false);
         _state = ActionResult::INTERRUPTED;
@@ -312,9 +331,9 @@ namespace Anki {
     
     ActionResult IActionRunner::Update()
     {
-      auto & actionList = _robot.GetActionList();
+      auto & actionList = GetRobot().GetActionList();
       auto & actionWatcher = actionList.GetActionWatcher();
-      auto & moveComponent = _robot.GetMoveComponent();
+      auto & moveComponent = GetRobot().GetMoveComponent();
       
       actionWatcher.ActionStartUpdating(this);
       
@@ -328,8 +347,8 @@ namespace Anki {
           // one. This will apply the profile automatically to every action that runs, including nested or
           // compound actions. It's up to each individual action to implement the SetMotionProfile function to
           // update their motion profile appropriately
-          if( _robot.GetPathComponent().HasCustomMotionProfile() ) {
-            const bool profileApplied = SetMotionProfile( _robot.GetPathComponent().GetCustomMotionProfile() );
+          if( GetRobot().GetPathComponent().HasCustomMotionProfile() ) {
+            const bool profileApplied = SetMotionProfile( GetRobot().GetPathComponent().GetCustomMotionProfile() );
             if( !profileApplied ) {
               PRINT_CH_INFO("Actions", "IActionRunner.SetMotionProfile.Unused",
                             "Action %s [%d] unable to set motion profile. Perhaps speeds already set manually?",
@@ -347,7 +366,7 @@ namespace Anki {
             if (moveComponent.AreAnyTracksLocked(tracksToLock))
             {
               // Print special, more helpful message in SDK mode, if on charger
-              if (_robot.GetContext()->IsInSdkMode() && _robot.IsOnCharger())
+              if (GetRobot().GetContext()->IsInSdkMode() && GetRobot().IsOnCharger())
               {
                 PRINT_CH_INFO(kLogChannelName, "IActionRunner.Update.TracksLockedOnChargerInSDK",
                               "Use of head/lift/body motors is limited while on charger in SDK mode");
@@ -428,10 +447,10 @@ namespace Anki {
       actionWatcher.ActionEndUpdating(this);
       return _state;
     }
-
+    
     void IActionRunner::SetEnableMoodEventOnCompletion(bool enable)
     {
-      _robot.GetMoodManager().SetEnableMoodEventOnCompletion(GetTag(), enable);
+      GetRobot().GetMoodManager().SetEnableMoodEventOnCompletion(GetTag(), enable);        
     }
   
     void IActionRunner::PrepForCompletion()
@@ -474,7 +493,8 @@ namespace Anki {
     void IActionRunner::UnlockTracks()
     {
       // Tracks aren't locked until the action starts so don't unlock them until then
-      if(!_suppressTrackLocking && _state != ActionResult::NOT_STARTED)
+      if(!_suppressTrackLocking && 
+         (_state != ActionResult::NOT_STARTED))
       {
         u8 tracks = GetTracksToLock();
         if(DEBUG_ANIM_TRACK_LOCKING)
@@ -486,7 +506,7 @@ namespace Anki {
                         _name.c_str(),
                         _idTag);
         }
-        _robot.GetMoveComponent().UnlockTracks(tracks, GetTag());
+        GetRobot().GetMoveComponent().UnlockTracks(tracks, GetTag());
       }
     }
     
@@ -516,7 +536,7 @@ namespace Anki {
     void IActionRunner::GetRobotCompletedActionMessage(ExternalInterface::RobotCompletedAction& msg)
     {
       std::vector<ActionResult> subActionResults;
-      _robot.GetActionList().GetActionWatcher().GetSubActionResults(GetTag(), subActionResults);
+      GetRobot().GetActionList().GetActionWatcher().GetSubActionResults(GetTag(), subActionResults);        
       
       ActionCompletedUnion acu;
       GetCompletionUnion(acu);
@@ -530,12 +550,10 @@ namespace Anki {
     
 #pragma mark ---- IAction ----
     
-    IAction::IAction(Robot& robot,
-                     const std::string name,
+    IAction::IAction(const std::string name,
                      const RobotActionType type,
                      const u8 trackToLock)
-    : IActionRunner(robot,
-                    name,
+    : IActionRunner(name,
                     type,
                     trackToLock)
     {
@@ -555,7 +573,7 @@ namespace Anki {
     
     Util::RandomGenerator& IAction::GetRNG() const
     {
-      return _robot.GetRNG();
+      return GetRobot().GetRNG();        
     }
     
     ActionResult IAction::UpdateInternal()
@@ -633,7 +651,7 @@ namespace Anki {
         if(IsMessageDisplayEnabled()) {
           PRINT_CH_INFO(kLogChannelName, "IAction.Update.CurrentActionFailedRetrying",
                         "Robot %d failed running action %s. Retrying.",
-                        _robot.GetID(), GetName().c_str());
+                        GetRobot().GetID(), GetName().c_str());
         }
         
         // Don't unlock the tracks if retrying

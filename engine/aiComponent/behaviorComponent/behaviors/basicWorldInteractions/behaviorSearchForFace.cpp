@@ -73,10 +73,7 @@ ICozmoBehavior::Status BehaviorSearchForFace::UpdateInternal_WhileRunning(Behavi
 void BehaviorSearchForFace::TransitionToSearchingAnimation(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(SearchingForFace);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::ComeHere_SearchForFace));
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ComeHere_SearchForFace));
 }
 
 
@@ -84,10 +81,7 @@ void BehaviorSearchForFace::TransitionToSearchingAnimation(BehaviorExternalInter
 void BehaviorSearchForFace::TransitionToFoundFace(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(FoundFace);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::ComeHere_SearchForFace_FoundFace));
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ComeHere_SearchForFace_FoundFace));
 }
 
 

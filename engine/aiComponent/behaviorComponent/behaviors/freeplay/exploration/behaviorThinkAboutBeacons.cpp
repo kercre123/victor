@@ -70,12 +70,8 @@ Result BehaviorThinkAboutBeacons::OnBehaviorActivated(BehaviorExternalInterface&
   const std::string& animGroupName = _configParams.newAreaAnimTrigger;
   AnimationTrigger trigger = animGroupName.empty() ? AnimationTrigger::Count : AnimationTriggerFromString(animGroupName.c_str());
   if ( trigger != AnimationTrigger::Count )
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
-    IAction* animNewArea = new TriggerAnimationAction(robot,trigger);
+  {    
+    IAction* animNewArea = new TriggerAnimationAction(trigger);
     DelegateIfInControl( animNewArea );
   }
   

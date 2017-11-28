@@ -57,7 +57,7 @@ void BehaviorDrivePath::TransitionToFollowingPath(BehaviorExternalInterface& beh
   DEBUG_SET_STATE(FollowingPath);
   SelectPath(robot.GetPose(), _path);
   
-  IActionRunner* drivePath = new DrivePathAction(robot, _path);
+  IActionRunner* drivePath = new DrivePathAction(_path);
   //Perform action and then callback
   DelegateIfInControl(drivePath, [this](ActionResult res) {
     switch(IActionRunner::GetActionResultCategory(res))

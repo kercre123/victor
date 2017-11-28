@@ -124,7 +124,7 @@ namespace{
   
   void BehaviorFactoryCentroidExtractor::TransitionToMovingHead(Robot& robot)
   {
-    MoveHeadToAngleAction* action = new MoveHeadToAngleAction(robot, 0);
+    MoveHeadToAngleAction* action = new MoveHeadToAngleAction(0);
     DelegateIfInControl(action, [this, &robot](ActionResult res)
                 {
                   if(res == ActionResult::SUCCESS)

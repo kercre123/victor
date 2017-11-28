@@ -57,12 +57,10 @@ void BehaviorVictorDemoNapping::TransitionToSleeping(BehaviorExternalInterface& 
 {
   SetDebugStateName("sleeping");
   
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
   _numRemainingInBout = GetRNG().RandIntInRange(kSleepingBoutNumStirs_min, kSleepingBoutNumStirs_max);
     
   const float waitTime_s = GetRNG().RandDblInRange(kSleepingStirSpacing_min_s, kSleepingStirSpacing_max_s);
-  DelegateIfInControl(new WaitAction(robot, waitTime_s), &BehaviorVictorDemoNapping::TransitionToBoutOfStirring);
+  DelegateIfInControl(new WaitAction(waitTime_s), &BehaviorVictorDemoNapping::TransitionToBoutOfStirring);
 }
 
 void BehaviorVictorDemoNapping::TransitionToBoutOfStirring(BehaviorExternalInterface& behaviorExternalInterface)
@@ -71,16 +69,14 @@ void BehaviorVictorDemoNapping::TransitionToBoutOfStirring(BehaviorExternalInter
 
   _animIsPlaying = false;
 
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
   if( _numRemainingInBout-- >= 0 ) {
     // start bout (wait first, then animate)    
     const float waitTime_s = GetRNG().RandDblInRange(kSleepingBoutSpacing_min_s, kSleepingBoutSpacing_max_s);
-    DelegateIfInControl(new WaitAction(robot, waitTime_s), &BehaviorVictorDemoNapping::TransitionToPlayStirAnim);
+    DelegateIfInControl(new WaitAction(waitTime_s), &BehaviorVictorDemoNapping::TransitionToPlayStirAnim);
   }
   else {
     // back to sleep
-    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::GoToSleepOff),
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::GoToSleepOff),
                         &BehaviorVictorDemoNapping::TransitionToSleeping);
   }
 
@@ -89,10 +85,9 @@ void BehaviorVictorDemoNapping::TransitionToBoutOfStirring(BehaviorExternalInter
 void BehaviorVictorDemoNapping::TransitionToPlayStirAnim(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SetDebugStateName("stirring");
-  Robot& robot = behaviorExternalInterface.GetRobot();
   _animIsPlaying = true;
 
-  DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::GoToSleepSleeping),
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::GoToSleepSleeping),
                       &BehaviorVictorDemoNapping::TransitionToBoutOfStirring);  
 }
 

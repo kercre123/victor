@@ -28,7 +28,7 @@ class DriveOffChargerContactsAction : public DriveStraightAction
 {
 public:
   
-  DriveOffChargerContactsAction(Robot& robot);
+  DriveOffChargerContactsAction();
   virtual ~DriveOffChargerContactsAction() { }
   
 protected:

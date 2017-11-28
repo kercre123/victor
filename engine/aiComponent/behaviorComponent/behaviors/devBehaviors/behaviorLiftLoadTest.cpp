@@ -156,15 +156,15 @@ namespace Anki {
           // DEPRECATED - Grabbing robot to support current cozmo code, but this should
           // be removed
           Robot& robot = behaviorExternalInterface.GetRobot();
-          auto lowerLiftAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
+          auto lowerLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
           lowerLiftAction->SetMaxLiftSpeed(DEFAULT_LIFT_SPEED_RAD_PER_SEC);
           lowerLiftAction->SetLiftAccel(DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
           
-          auto raiseLiftAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_CARRY);
+          auto raiseLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_CARRY);
           raiseLiftAction->SetMaxLiftSpeed(DEFAULT_LIFT_SPEED_RAD_PER_SEC);
           raiseLiftAction->SetLiftAccel(DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
           
-          CompoundActionSequential* compoundAction = new CompoundActionSequential(robot, { lowerLiftAction, raiseLiftAction });
+          CompoundActionSequential* compoundAction = new CompoundActionSequential({ lowerLiftAction, raiseLiftAction });
           
           DelegateIfInControl(compoundAction,
                       [this, &robot](ActionResult result){
@@ -177,7 +177,7 @@ namespace Anki {
                           auto waitForLiftLoadMsgLambda = [this](Robot& robot) {
                             return _loadStatusReceived;
                           };
-                          auto waitAction = new WaitForLambdaAction(robot, waitForLiftLoadMsgLambda);
+                          auto waitAction = new WaitForLambdaAction(waitForLiftLoadMsgLambda);
                           DelegateIfInControl(waitAction);
                           
                         } else {

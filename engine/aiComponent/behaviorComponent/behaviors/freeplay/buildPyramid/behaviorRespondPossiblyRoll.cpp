@@ -141,15 +141,12 @@ void BehaviorRespondPossiblyRoll::DetermineNextResponse(BehaviorExternalInterfac
 void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(RespondingPositively);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  CompoundActionSequential* turnAndReact = new CompoundActionSequential(robot);
-  turnAndReact->AddAction(new TurnTowardsObjectAction(robot, _metadata.GetObjectID(), Radians(M_PI_F), true));
+  CompoundActionSequential* turnAndReact = new CompoundActionSequential();
+  turnAndReact->AddAction(new TurnTowardsObjectAction(_metadata.GetObjectID(), Radians(M_PI_F), true));
   const unsigned long animIndex = _metadata.GetUprightAnimIndex() < kUprightAnims.size() ?
                                          _metadata.GetUprightAnimIndex() : kUprightAnims.size() - 1;
-  turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(robot, kUprightAnims[animIndex]));
+  turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(kUprightAnims[animIndex]));
   DelegateIfInControl(turnAndReact, [this](ActionResult result){
     if((result == ActionResult::SUCCESS) ||
        (result == ActionResult::VISUAL_OBSERVATION_FAILED)){
@@ -163,17 +160,14 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(BehaviorExternalInter
 void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(RespondingNegatively);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  CompoundActionSequential* turnAndReact = new CompoundActionSequential(robot);
-  turnAndReact->AddAction(new TurnTowardsObjectAction(robot, _metadata.GetObjectID(), Radians(M_PI_F), true));
+  CompoundActionSequential* turnAndReact = new CompoundActionSequential();
+  turnAndReact->AddAction(new TurnTowardsObjectAction(_metadata.GetObjectID(), Radians(M_PI_F), true));
   if((!_metadata.GetPlayedOnSideAnim()) &&
      (_metadata.GetOnSideAnimIndex() >= 0)){
     const unsigned long animIndex =  _metadata.GetOnSideAnimIndex() < kOnSideAnims.size() ?
                                           _metadata.GetOnSideAnimIndex() : kOnSideAnims.size() - 1;
-    turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(robot, kOnSideAnims[animIndex]));
+    turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(kOnSideAnims[animIndex]));
     _metadata.SetPlayedOnSideAnim();
   }
   

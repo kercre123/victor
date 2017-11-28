@@ -55,11 +55,8 @@ Result BehaviorReactToRobotShaken::OnBehaviorActivated(BehaviorExternalInterface
   _shakenDuration_s = 0.f;
   _reactionPlayed = EReaction::None;
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // Start the animations:
-  DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::DizzyShakeLoop, 0));
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DizzyShakeLoop, 0));
   
   // Kick off the state machine:
   _state = EState::Shaking;
@@ -95,12 +92,8 @@ ICozmoBehavior::Status BehaviorReactToRobotShaken::UpdateInternal_WhileRunning(B
     case EState::DoneShaking:
     {
       CancelDelegates(false);
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      CompoundActionSequential* action = new CompoundActionSequential(robot,
-                                                                      {new TriggerAnimationAction(robot, AnimationTrigger::DizzyShakeStop),
-                                                                       new TriggerAnimationAction(robot, AnimationTrigger::DizzyStillPickedUp)});
+      CompoundActionSequential* action = new CompoundActionSequential({new TriggerAnimationAction(AnimationTrigger::DizzyShakeStop),
+                                                                       new TriggerAnimationAction(AnimationTrigger::DizzyStillPickedUp)});
       DelegateIfInControl(action);
       
       _state = EState::WaitTilOnTreads;
@@ -125,24 +118,15 @@ ICozmoBehavior::Status BehaviorReactToRobotShaken::UpdateInternal_WhileRunning(B
       CancelDelegates(false);
       // Play appropriate reaction based on duration of shaking:
       if (_shakenDuration_s > kShakenDurationThresholdHard) {
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        Robot& robot = behaviorExternalInterface.GetRobot();
-        DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::DizzyReactionHard));
+        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DizzyReactionHard));
         _reactionPlayed = EReaction::Hard;
         NeedActionCompleted(NeedsActionId::DizzyHard);
       } else if (_shakenDuration_s > kShakenDurationThresholdMedium) {
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        Robot& robot = behaviorExternalInterface.GetRobot();
-        DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::DizzyReactionMedium));
+        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DizzyReactionMedium));
         _reactionPlayed = EReaction::Medium;
         NeedActionCompleted(NeedsActionId::DizzyMedium);
       } else {
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        Robot& robot = behaviorExternalInterface.GetRobot();
-        DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::DizzyReactionSoft));
+        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DizzyReactionSoft));
         _reactionPlayed = EReaction::Soft;
         NeedActionCompleted(NeedsActionId::DizzySoft);
       }

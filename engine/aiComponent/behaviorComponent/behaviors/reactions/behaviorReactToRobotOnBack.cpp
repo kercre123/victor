@@ -68,10 +68,7 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded(BehaviorExternalInterface& beh
         anim = AnimationTrigger::HiccupRobotOnBack;
       }
     
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      DelegateIfInControl(new TriggerAnimationAction(robot, anim),
+      DelegateIfInControl(new TriggerAnimationAction(anim),
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     } else {
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
@@ -79,7 +76,7 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded(BehaviorExternalInterface& beh
       Robot& robot = behaviorExternalInterface.GetRobot();
       const auto cliffs = robot.GetCliffSensorComponent().GetCliffDataRaw();
       LOG_EVENT("BehaviorReactToRobotOnBack.FlipDownIfNeeded.CalibratingHead", "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
-      DelegateIfInControl(new CalibrateMotorAction(robot, true, false),
+      DelegateIfInControl(new CalibrateMotorAction(true, false),
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     }
   }
@@ -93,10 +90,7 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded(BehaviorExternalInterface& beh
 void BehaviorReactToRobotOnBack::DelayThenFlipDown(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnBack ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
+    DelegateIfInControl(new WaitAction(kWaitTimeBeforeRepeatAnim_s),
                 &BehaviorReactToRobotOnBack::FlipDownIfNeeded);
   }
   else {

@@ -183,11 +183,8 @@ void BehaviorDriveInDesperation::TransitionToIdle(BehaviorExternalInterface& beh
                 (GetIDStr() + ".Idle").c_str(),
                 "idling for %f sec",
                 timeToIdle);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  DelegateIfInControl(new WaitAction(robot, timeToIdle), &BehaviorDriveInDesperation::TransitionFromIdle);
+
+  DelegateIfInControl(new WaitAction(timeToIdle), &BehaviorDriveInDesperation::TransitionFromIdle);
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -197,14 +194,10 @@ void BehaviorDriveInDesperation::TransitionToDriveRandom(BehaviorExternalInterfa
 
   Pose3d randomPose;
   GetRandomDrivingPose(behaviorExternalInterface, randomPose);
-
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
   // drive somewhere and then idle
   const bool lookDown = true;
-  DriveToPoseAction* driveAction = new DriveToPoseAction(robot, randomPose, lookDown);
+  DriveToPoseAction* driveAction = new DriveToPoseAction(randomPose, lookDown);
   
   DelegateIfInControl(driveAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
       // if we are using cubes, do a search now at this location. Otherwise, leave the behavior
@@ -232,19 +225,15 @@ void BehaviorDriveInDesperation::TransitionToRequest(BehaviorExternalInterface& 
 {
   SET_STATE(Request);
   // TODO:(bn) turn towards previous face instead of most recent (similar to "hey cozmo" behavior)
-
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  IActionRunner* animAction = new TriggerAnimationAction(robot, _params->_requestAnimTrigger);
-  TurnTowardsFaceWrapperAction* faceAction = new TurnTowardsFaceWrapperAction(robot, animAction);
+  IActionRunner* animAction = new TriggerAnimationAction(_params->_requestAnimTrigger);
+  TurnTowardsFaceWrapperAction* faceAction = new TurnTowardsFaceWrapperAction(animAction);
   
-  DelegateIfInControl(faceAction, [this, &robot](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(faceAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
       // if we were visiting a cube before this request, turn back to it before finishing (and likely looping
       // back to the idle state). Otherwise just finish now
       if( _targetCube.IsSet() ) {
-        TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, _targetCube);
+        TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(_targetCube);
         DelegateIfInControl(turnAction);
         // we are done with this cube now.
         _targetCube.UnSet();
@@ -332,11 +321,8 @@ void BehaviorDriveInDesperation::TransitionToDriveToCube(BehaviorExternalInterfa
     for( const auto& preActionPose : preActionPoseOutput.preActionPoses ) {
       poses.emplace_back(preActionPose.GetPose());
     }
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DriveToPoseAction* driveAction = new DriveToPoseAction(robot,
-                                                           poses,
+
+    DriveToPoseAction* driveAction = new DriveToPoseAction(poses,
                                                            false, // don't force head down
                                                            false, // no manual speed
                                                            Point3f{kDriveToCubeDistTolerance},
@@ -362,14 +348,10 @@ void BehaviorDriveInDesperation::TransitionToLookAtCube(BehaviorExternalInterfac
     TransitionToIdle(behaviorExternalInterface);
     return;
   }
-
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
   const bool verifyWhenDone = true;
   const bool headTrackWhenDone = false;
-  TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot,
+  TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(
                                                                     _targetCube,
                                                                     Radians{M_PI_F},
                                                                     verifyWhenDone,

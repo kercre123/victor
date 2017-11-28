@@ -52,7 +52,6 @@ static constexpr float kHeadAngleWhereLiftBlocksCamera_deg = 22.0f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPeekABoo::BehaviorPeekABoo(const Json::Value& config)
 : ICozmoBehavior(config)
-, _cachedFace(Vision::UnknownFaceID)
 , _numPeeksRemaining(0)
 , _numPeeksTotal(1)
 , _nextTimeWantsToBeActivated_Sec(0.0f)
@@ -105,10 +104,10 @@ bool BehaviorPeekABoo::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
   }
   
   // The sparked version of this behavior is grouped with look for faces behavior in case no faces were seen recently.
-  _cachedFace = Vision::UnknownFaceID;
+  _cachedFace.Reset();
 
   return (_nextTimeWantsToBeActivated_Sec < currentTime_Sec) &&
-         (GetInteractionFace(behaviorExternalInterface) != Vision::UnknownFaceID) &&
+         (GetInteractionFace(behaviorExternalInterface).IsValid()) &&
          robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::PeekABoo);
 }
 
@@ -119,11 +118,8 @@ Result BehaviorPeekABoo::OnBehaviorActivated(BehaviorExternalInterface& behavior
   // for COZMO-8914
   if(ShouldStreamline() &&
      (_timeSparkAboutToEnd_Sec == kSparkShouldPlaySparkFailFlag)){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
     _timeSparkAboutToEnd_Sec = 0.0f;
-    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::SparkFailure));
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::SparkFailure));
     return RESULT_OK;
   }
   
@@ -187,10 +183,7 @@ void BehaviorPeekABoo::OnBehaviorDeactivated(BehaviorExternalInterface& behavior
 void BehaviorPeekABoo::TransitionToIntroAnim(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(DoingInitialReaction);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PeekABooGetIn),&BehaviorPeekABoo::TransitionTurnToFace);
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PeekABooGetIn),&BehaviorPeekABoo::TransitionTurnToFace);
 }
 
   
@@ -198,10 +191,7 @@ void BehaviorPeekABoo::TransitionToIntroAnim(BehaviorExternalInterface& behavior
 void BehaviorPeekABoo::TransitionTurnToFace(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(TurningToFace);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  TurnTowardsFaceAction* action = new TurnTowardsFaceAction(robot, GetInteractionFace(behaviorExternalInterface), M_PI_F, false);
+  TurnTowardsFaceAction* action = new TurnTowardsFaceAction(GetInteractionFace(behaviorExternalInterface), M_PI_F, false);
   action->SetRequireFaceConfirmation(_params.requireFaceConfirmBeforeRequest);
   DelegateIfInControl(action, [this, &behaviorExternalInterface](ActionResult ret )
   {
@@ -225,7 +215,7 @@ void BehaviorPeekABoo::TransitionTurnToFace(BehaviorExternalInterface& behaviorE
         TransitionTurnToFace(behaviorExternalInterface);
       }else{
         // Failed because target face wasn't there, but maybe another one is
-        if(GetInteractionFace(behaviorExternalInterface) != Vision::UnknownFaceID )
+        if(GetInteractionFace(behaviorExternalInterface).IsValid())
         {
           // Try to look for the next best face
           TransitionTurnToFace(behaviorExternalInterface);
@@ -249,14 +239,14 @@ void BehaviorPeekABoo::TransitionPlayPeekABooAnim(BehaviorExternalInterface& beh
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   _lastRequestTime_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  CompoundActionSequential* action = new CompoundActionSequential();
 
   // TODO: Peekaboo animations all end with the head looking up at a high angle
   // If the user doesn't have their face in this part of face world we have less
   // accuracy since we get a few frames for free at the end of the anim
-  action->AddAction(new TriggerLiftSafeAnimationAction(robot, GetPeekABooAnimation()));
+  action->AddAction(new TriggerLiftSafeAnimationAction(GetPeekABooAnimation()));
   if(kCenterFaceAfterPeekABoo){
-    action->AddAction(new TurnTowardsFaceAction(robot, GetInteractionFace(behaviorExternalInterface)));
+    action->AddAction(new TurnTowardsFaceAction(GetInteractionFace(behaviorExternalInterface)));
   }
   
   DelegateIfInControl(action,[this, &robot](BehaviorExternalInterface& behaviorExternalInterface) {
@@ -279,20 +269,13 @@ void BehaviorPeekABoo::TransitionPlayPeekABooAnim(BehaviorExternalInterface& beh
 void BehaviorPeekABoo::TransitionWaitToHideFace(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(WaitingToHideFace);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // first turn towards the face so the head angle is set (needed for GetIdleAndReRequestAction)
-  DelegateIfInControl(new TurnTowardsFaceAction(robot, GetInteractionFace(behaviorExternalInterface)), [this](BehaviorExternalInterface& behaviorExternalInterface) {
-
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+  DelegateIfInControl(new TurnTowardsFaceAction(GetInteractionFace(behaviorExternalInterface)), [this](BehaviorExternalInterface& behaviorExternalInterface) {
     // now track the face and set up the idles
-    CompoundActionParallel* trackAndIdleAction = new CompoundActionParallel(robot);
+    CompoundActionParallel* trackAndIdleAction = new CompoundActionParallel();
 
     {
-      TrackFaceAction* trackFaceAction = new TrackFaceAction(robot, GetInteractionFace(behaviorExternalInterface));
+      TrackFaceAction* trackFaceAction = new TrackFaceAction(GetInteractionFace(behaviorExternalInterface));
       IActionRunner* idleAction = GetIdleAndReRequestAction(behaviorExternalInterface, false);
 
       // tracking should stop when the idles finish (to handle timeouts)
@@ -315,11 +298,8 @@ void BehaviorPeekABoo::TransitionWaitToHideFace(BehaviorExternalInterface& behav
 void BehaviorPeekABoo::TransitionWaitToSeeFace(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(WaitingToSeeFace);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // first turn towards the face so the head angle is set (needed for GetIdleAndReRequestAction)
-  DelegateIfInControl(new TurnTowardsFaceAction(robot, GetInteractionFace(behaviorExternalInterface)), [this](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(new TurnTowardsFaceAction(GetInteractionFace(behaviorExternalInterface)), [this](BehaviorExternalInterface& behaviorExternalInterface) {
       // Idle until the timeout. This transition will be aborted if the face is seen, so this just handles no
       // user interaction timeout
       DelegateIfInControl( GetIdleAndReRequestAction(behaviorExternalInterface, true), [this](BehaviorExternalInterface& behaviorExternalInterface) {
@@ -337,7 +317,7 @@ IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(BehaviorExternalInter
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* idleAndReRequestAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* idleAndReRequestAction = new CompoundActionSequential();
 
   const u32 singleLoop = 1;
   const bool interruptRunningAnimation = true;
@@ -362,12 +342,12 @@ IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(BehaviorExternalInter
     // we want to do re-requests. To avoid eye pops, we will alternate idle animations (which are a few
     // seconds each) with re-requests for the desired number of times
     for( int i=0; i<_params.numReRequestsPerTimeout; ++i ) {
-      idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(robot,
+      idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(
                                                                             AnimationTrigger::PeekABooIdle,
                                                                             singleLoop,
                                                                             interruptRunningAnimation,
                                                                             lockTracks) );
-      idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(robot,
+      idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(
                                                                             AnimationTrigger::PeekABooShort,
                                                                             singleLoop,
                                                                             interruptRunningAnimation,
@@ -383,7 +363,7 @@ IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(BehaviorExternalInter
                    _params.numReRequestsPerTimeout,
                    _params.noUserInteractionTimeout_numIdles) ) {
     const u32 numFinalIdles = _params.noUserInteractionTimeout_numIdles - _params.numReRequestsPerTimeout;
-    idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(robot,
+    idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(
                                                                           AnimationTrigger::PeekABooIdle,
                                                                           numFinalIdles,
                                                                           lockTracks) );
@@ -412,10 +392,7 @@ void BehaviorPeekABoo::TransitionSeeFaceAfterHiding(BehaviorExternalInterface& b
   if(_numPeeksRemaining == 0) {
     TransitionExit(behaviorExternalInterface);
   }else{
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PeekABooSurprised),
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PeekABooSurprised),
                 &BehaviorPeekABoo::TransitionTurnToFace);
   }
 }
@@ -430,10 +407,7 @@ void BehaviorPeekABoo::TransitionToNoUserInteraction(BehaviorExternalInterface& 
   _hasMadeFollowUpRequest = true;
 
   if(shouldReRequest){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    IActionRunner* failAnim = new TriggerAnimationAction(robot, AnimationTrigger::PeekABooNoUserInteraction);
+    IActionRunner* failAnim = new TriggerAnimationAction(AnimationTrigger::PeekABooNoUserInteraction);
     DelegateIfInControl(failAnim, &BehaviorPeekABoo::TransitionTurnToFace);
   }else{
     TransitionExit(behaviorExternalInterface);
@@ -447,11 +421,8 @@ void BehaviorPeekABoo::TransitionExit(BehaviorExternalInterface& behaviorExterna
   SET_STATE(DoingFinalReaction);
   
   const bool anySuccessfullReactions = _numPeeksRemaining != _numPeeksTotal;
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // last state, just existing after this...
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot,
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(
      anySuccessfullReactions ? AnimationTrigger::PeekABooGetOutHappy : AnimationTrigger::PeekABooGetOutSad));
   
   // Must be done after the animation so this plays
@@ -547,18 +518,25 @@ bool BehaviorPeekABoo::WasFaceHiddenAfterTimestamp(BehaviorExternalInterface& be
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Vision::FaceID_t BehaviorPeekABoo::GetInteractionFace(const BehaviorExternalInterface& behaviorExternalInterface) const
+SmartFaceID BehaviorPeekABoo::GetInteractionFace(const BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   const Robot& robot = behaviorExternalInterface.GetRobot();
   const bool kUseRecognizableOnly = false;
-  std::set< Vision::FaceID_t > faces = robot.GetFaceWorld().GetFaceIDsObservedSince(
+  std::set< Vision::FaceID_t > faces = behaviorExternalInterface.GetFaceWorld().GetFaceIDsObservedSince(
                     robot.GetLastImageTimeStamp() - _params.oldestFaceToConsider_MS, kUseRecognizableOnly);
-  
-  if(faces.find(_cachedFace) == faces.end()){
+
+  std::set<SmartFaceID> smartFaces;
+  for(auto& entry: faces){
+    smartFaces.insert(behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(entry));
+  }
+
+  const Vision::TrackedFace* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(_cachedFace);
+  if((facePtr != nullptr) &&
+     (faces.find(facePtr->GetID()) == faces.end())){
     const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
-    _cachedFace = whiteboard.GetBestFaceToTrack(faces, false);
+    _cachedFace = whiteboard.GetBestFaceToTrack(smartFaces, false);
   }
 
   return _cachedFace;

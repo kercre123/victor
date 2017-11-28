@@ -166,14 +166,11 @@ void SearchForBlockHelper::SearchForBlock(ActionResult result, BehaviorExternalI
   switch(_nextSearchIntensity){
     case SearchIntensity::QuickSearch:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      auto searchNearby = new SearchForNearbyObjectAction(robot, targetID);
+      auto searchNearby = new SearchForNearbyObjectAction(targetID);
       
-      CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+      CompoundActionSequential* compoundAction = new CompoundActionSequential();
       if(targetID.IsSet()){
-        compoundAction->AddAction(new TurnTowardsObjectAction(robot, targetID), true);
+        compoundAction->AddAction(new TurnTowardsObjectAction(targetID), true);
       }
       compoundAction->AddAction(searchNearby);
       DelegateIfInControl(compoundAction, &SearchForBlockHelper::SearchForBlock);
@@ -182,31 +179,26 @@ void SearchForBlockHelper::SearchForBlock(ActionResult result, BehaviorExternalI
     }
     case SearchIntensity::StandardSearch:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
       const bool ignoreFailure = true;
-      CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
-      compoundAction->AddAction(new DriveStraightAction(robot,
-                                                        -kDriveBackDist_mm,
+      CompoundActionSequential* compoundAction = new CompoundActionSequential();
+      compoundAction->AddAction(new DriveStraightAction(-kDriveBackDist_mm,
                                                         kDriveBackSpeed_mmps,
                                                         false), ignoreFailure);
-      compoundAction->AddAction(new TurnInPlaceAction(robot, M_PI_4, false), ignoreFailure);
-      compoundAction->AddAction(new TurnInPlaceAction(robot, M_PI_4, false), ignoreFailure);
+      compoundAction->AddAction(new TurnInPlaceAction(M_PI_4, false), ignoreFailure);
+      compoundAction->AddAction(new TurnInPlaceAction(M_PI_4, false), ignoreFailure);
       
       if(targetID.IsSet()){
-        compoundAction->AddAction(new SearchForNearbyObjectAction(robot, targetID), ignoreFailure);
+        compoundAction->AddAction(new SearchForNearbyObjectAction(targetID), ignoreFailure);
       }
 
-      compoundAction->AddAction(new DriveStraightAction(robot,
-                                                        -kDriveBackDist_mm,
+      compoundAction->AddAction(new DriveStraightAction(-kDriveBackDist_mm,
                                                         kDriveBackSpeed_mmps,
                                                         false), ignoreFailure);
-      compoundAction->AddAction(new TurnInPlaceAction(robot, -( M_PI_2 + M_PI_4), false), ignoreFailure);
-      compoundAction->AddAction(new TurnInPlaceAction(robot, -M_PI_4, false), ignoreFailure);
+      compoundAction->AddAction(new TurnInPlaceAction(-( M_PI_2 + M_PI_4), false), ignoreFailure);
+      compoundAction->AddAction(new TurnInPlaceAction(-M_PI_4, false), ignoreFailure);
       
       if(targetID.IsSet()){
-        compoundAction->AddAction(new SearchForNearbyObjectAction(robot, targetID), ignoreFailure);
+        compoundAction->AddAction(new SearchForNearbyObjectAction(targetID), ignoreFailure);
       }
       
       DelegateIfInControl(compoundAction, &SearchForBlockHelper::SearchForBlock);
@@ -215,21 +207,17 @@ void SearchForBlockHelper::SearchForBlock(ActionResult result, BehaviorExternalI
     }
     case SearchIntensity::ExhaustiveSearch:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+      CompoundActionSequential* compoundAction = new CompoundActionSequential();
       
       for(int i = 0; i < kSearchAdditionalSegments; i++){
-        compoundAction->AddAction(new DriveStraightAction(robot,
-                                                          -kDriveBackDist_mm,
+        compoundAction->AddAction(new DriveStraightAction(-kDriveBackDist_mm,
                                                           kDriveBackSpeed_mmps,
                                                           false));
-        compoundAction->AddAction(new TurnInPlaceAction(robot, -M_PI_4, false));
-        compoundAction->AddAction(new TurnInPlaceAction(robot, -M_PI_4, false));
+        compoundAction->AddAction(new TurnInPlaceAction(-M_PI_4, false));
+        compoundAction->AddAction(new TurnInPlaceAction(-M_PI_4, false));
         
         if(targetID.IsSet()){
-          compoundAction->AddAction(new SearchForNearbyObjectAction(robot, targetID));
+          compoundAction->AddAction(new SearchForNearbyObjectAction(targetID));
         }
       }
       

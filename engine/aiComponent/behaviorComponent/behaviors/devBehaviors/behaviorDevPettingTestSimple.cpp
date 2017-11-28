@@ -104,10 +104,7 @@ BehaviorStatus BehaviorDevPettingTestSimple::UpdateInternal_WhileRunning(Behavio
     float rate             = gotAnim->animationRate_s;
     float timeLastPlayed_s = gotAnim->timeLastPlayed_s;
     if((now-timeLastPlayed_s) > rate) {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      PlayAnimationAction* action = new PlayAnimationAction(robot, animToPlay, 1, true, (u8)AnimTrackFlag::BODY_TRACK);
+      PlayAnimationAction* action = new PlayAnimationAction(animToPlay, 1, true, (u8)AnimTrackFlag::BODY_TRACK);
       DelegateIfInControl(action);
       gotAnim->timeLastPlayed_s = now;
     }

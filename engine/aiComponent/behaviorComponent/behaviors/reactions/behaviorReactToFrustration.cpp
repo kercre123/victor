@@ -90,11 +90,7 @@ void BehaviorReactToFrustration::OnBehaviorDeactivated(BehaviorExternalInterface
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToFrustration::TransitionToReaction(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
-  TriggerLiftSafeAnimationAction* action = new TriggerLiftSafeAnimationAction(robot, _animToPlay);
+  TriggerLiftSafeAnimationAction* action = new TriggerLiftSafeAnimationAction(_animToPlay);
 
   DelegateIfInControl(action, [this](BehaviorExternalInterface& behaviorExternalInterface) {
       AnimationComplete(behaviorExternalInterface);
@@ -154,7 +150,7 @@ void BehaviorReactToFrustration::AnimationComplete(BehaviorExternalInterface& be
 
     // TODO:(bn) motion profile?
     const bool kForceHeadDown = false;
-    DriveToPoseAction* action = new DriveToPoseAction(robot, randomPoseRotAndTrans.GetWithRespectToRoot(), kForceHeadDown);
+    DriveToPoseAction* action = new DriveToPoseAction(randomPoseRotAndTrans.GetWithRespectToRoot(), kForceHeadDown);
     DelegateIfInControl(action); // finish behavior when we are done
   }
   BehaviorObjectiveAchieved(BehaviorObjective::ReactedToFrustration);

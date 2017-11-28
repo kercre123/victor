@@ -245,10 +245,7 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(BehaviorExternalInterface
   
   BehaviorObjectiveAchieved(BehaviorObjective::StackedBlock);
   if(!ShouldStreamline()){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::StackBlocksSuccess));
   }
   NeedActionCompleted();
 }
@@ -270,11 +267,10 @@ void BehaviorStackBlocks::TransitionToFailedToStack(BehaviorExternalInterface& b
   // If cozmo thinks he's still carrying the cube, try placing it on the ground to
   // see if it's really there - then see if we can try again
   if(robot.GetCarryingComponent().IsCarryingObject()){
-    CompoundActionSequential* placeAction = new CompoundActionSequential(robot, {
-      new DriveStraightAction(robot,
-                              -kDistToBackupOnStackFailure_mm,
+    CompoundActionSequential* placeAction = new CompoundActionSequential({
+      new DriveStraightAction(-kDistToBackupOnStackFailure_mm,
                               DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
-      new PlaceObjectOnGroundAction(robot)});
+      new PlaceObjectOnGroundAction()});
     DelegateIfInControl(placeAction, retryIfPossible);
   }else{
     retryIfPossible(behaviorExternalInterface);

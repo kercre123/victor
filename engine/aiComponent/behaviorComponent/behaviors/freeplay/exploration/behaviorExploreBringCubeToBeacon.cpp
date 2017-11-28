@@ -353,13 +353,9 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(BehaviorExternal
     {
       PRINT_CH_INFO("Behaviors", (GetIDStr() + ".TransitionToPickUpObject.Retry").c_str(), "Trying to pick up '%d' again", _selectedObjectID.GetValue());
     }
-
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
     
     // fire action with proper callback
-    DriveToPickupObjectAction* pickUpAction = new DriveToPickupObjectAction(robot, _selectedObjectID );
+    DriveToPickupObjectAction* pickUpAction = new DriveToPickupObjectAction(_selectedObjectID );
     RobotCompletedActionCallback onPickUpActionResult = [this, &behaviorExternalInterface, attempt](const ExternalInterface::RobotCompletedAction& actionRet)
     {
       // arguably here we could check isCarrying regardless of action result. Even if the action failed, as long
@@ -428,13 +424,9 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(BehaviorExternal
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreBringCubeToBeacon::TryToStackOn(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& bottomCubeID, int attempt)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
   // note pass bottomCubeID to the lambda as copy, do not trust it's scope
   // create action to stack
-  DriveToPlaceOnObjectAction* stackAction = new DriveToPlaceOnObjectAction(robot, bottomCubeID);
+  DriveToPlaceOnObjectAction* stackAction = new DriveToPlaceOnObjectAction(bottomCubeID);
   RobotCompletedActionCallback onStackActionResult = [this, &behaviorExternalInterface, bottomCubeID, attempt](const ExternalInterface::RobotCompletedAction& actionRet)
   {
     bool stackOnCubeFinalFail = false;
@@ -504,11 +496,8 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(BehaviorExternalInterface& b
   // create action to drive to the drop location
   const bool checkFreeDestination = true;
   const float padding_mm = kBebctb_PaddingBetweenCubes_mm;
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(robot, pose, false, false, checkFreeDestination, padding_mm);
+  PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(pose, false, false, checkFreeDestination, padding_mm);
   RobotCompletedActionCallback onPlaceActionResult = [this, &behaviorExternalInterface, pose, attempt](const ExternalInterface::RobotCompletedAction& actionRet)
   {
     bool placeAtCubeFinalFail = false;

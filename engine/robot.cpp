@@ -111,7 +111,7 @@ static void PlayAnimationByName(ConsoleFunctionContextRef context)
   if (_thisRobot != nullptr) {
     const char* animName = ConsoleArg_Get_String(context, "animName");
     _thisRobot->GetActionList().QueueAction(QueueActionPosition::NOW,
-                                            new PlayAnimationAction(*_thisRobot, animName));
+                                            new PlayAnimationAction(animName));
   }
 }
 CONSOLE_FUNC(PlayAnimationByName, "PlayAnimationByName", const char* animName);
@@ -174,7 +174,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _audioClient(new Audio::EngineRobotAudioClient())
   , _pathComponent(new PathComponent(*this, robotID, context))
   , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
-  , _actionList(new ActionList())
+  , _actionList(new ActionList(*this))
   , _movementComponent(new MovementComponent(*this))
   , _visionComponent( new VisionComponent(*this, _context))
   , _mapComponent(new MapComponent(this))

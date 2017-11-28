@@ -86,13 +86,10 @@ void BehaviorPopAWheelie::TransitionToReactingToBlock(BehaviorExternalInterface&
 {
   DEBUG_SET_STATE(ReactingToBlock);
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // Turn towards the object and then react to it before performing the pop a wheelie action
-  DelegateIfInControl(new CompoundActionSequential(robot, {
-      new TurnTowardsObjectAction(robot, _targetBlock),
-      new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PopAWheelieInitial),
+  DelegateIfInControl(new CompoundActionSequential({
+      new TurnTowardsObjectAction(_targetBlock),
+      new TriggerLiftSafeAnimationAction(AnimationTrigger::PopAWheelieInitial),
     }),
     [this, &behaviorExternalInterface](const ActionResult& res){
       if(res == ActionResult::SUCCESS)
@@ -132,11 +129,8 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface
   
   // Only turn towards face if this is _not_ a retry
   const Radians maxTurnToFaceAngle( (isRetry || ShouldStreamline() ? 0 : DEG_TO_RAD(90)) );
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DriveToPopAWheelieAction* goPopAWheelie = new DriveToPopAWheelieAction(robot,
-                                                                         _targetBlock,
+
+  DriveToPopAWheelieAction* goPopAWheelie = new DriveToPopAWheelieAction(_targetBlock,
                                                                          false,
                                                                          0,
                                                                          false,
@@ -163,7 +157,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface
                   case ActionResultCategory::SUCCESS:
                   {
                     _lastBlockReactedTo.UnSet();
-                    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie));
+                    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::SuccessfulWheelie));
                     BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
                     NeedActionCompleted();
                     break;
@@ -185,6 +179,10 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface
                     PRINT_NAMED_INFO("BehaviorPopAWheelie.FailedAbort",
                                      "Failed to pop with %s, searching for block",
                                      EnumToString(msg.result));
+                    
+                    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+                    // be removed
+                    Robot& robot = behaviorExternalInterface.GetRobot();
                     
                     // mark the block as inaccessible
                     const ObservableObject* failedObject = failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlock);
@@ -221,18 +219,12 @@ void BehaviorPopAWheelie::SetupRetryAction(BehaviorExternalInterface& behaviorEx
   {
     case ActionResult::DID_NOT_REACH_PREACTION_POSE:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      animAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PopAWheelieRealign);
+      animAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::PopAWheelieRealign);
       break;
     }
       
     default: {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      animAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PopAWheelieRetry);
+      animAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::PopAWheelieRetry);
       break;
     }
   }

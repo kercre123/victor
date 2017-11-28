@@ -52,14 +52,20 @@ namespace Anki {
     class IDockAction : public IAction
     {
     public:
-      IDockAction(Robot& robot,
-                  ObjectID objectID,
+      IDockAction(ObjectID objectID,
                   const std::string name,
                   const RobotActionType type,
                   const bool useManualSpeed = false);
       
       virtual ~IDockAction();
-      
+
+      virtual void OnRobotSet() override final;
+
+      // Functions to check if docking/carrying component pointers are set
+      bool VerifyDockingComponentValid() const;
+      bool VerifyCarryingComponentValid() const;
+
+
       // If true robot will check that it is close enough to the closest preaction pose before docking
       // If false robot will dock with closest visible marker on dockObject from current position
       void SetDoNearPredockPoseCheck(bool doCheck) { _doNearPredockPoseCheck = doCheck; }
@@ -245,8 +251,8 @@ namespace Anki {
       bool                       _doLiftLoadCheck                = false;
       LiftLoadState              _liftLoadState                  = LiftLoadState::UNKNOWN;
       bool                       _firstTurnTowardsObject         = true;
-      DockingComponent&          _dockingComponentRef;
-      CarryingComponent&         _carryingComponentRef;
+      DockingComponent*          _dockingComponentPtr            = nullptr;
+      CarryingComponent*         _carryingComponentPtr           = nullptr;
       
     private:
     
@@ -281,7 +287,7 @@ namespace Anki {
     class PopAWheelieAction : public IDockAction
     {
     public:
-      PopAWheelieAction(Robot& robot, ObjectID objectID, const bool useManualSpeed = false);
+      PopAWheelieAction(ObjectID objectID, const bool useManualSpeed = false);
       
       // Override completion signal to fill in information about rolled objects
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
@@ -300,7 +306,7 @@ namespace Anki {
     class FacePlantAction : public IDockAction
     {
     public:
-      FacePlantAction(Robot& robot, ObjectID objectID, const bool useManualSpeed = false);
+      FacePlantAction(ObjectID objectID, const bool useManualSpeed = false);
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
@@ -321,8 +327,7 @@ namespace Anki {
     class AlignWithObjectAction : public IDockAction
     {
     public:
-      AlignWithObjectAction(Robot& robot,
-                            ObjectID objectID,
+      AlignWithObjectAction(ObjectID objectID,
                             const f32 distanceFromMarker_mm,
                             const AlignmentType alignmentType = AlignmentType::CUSTOM,
                             const bool useManualSpeed = false);
@@ -362,8 +367,7 @@ namespace Anki {
     class PickupObjectAction : public IDockAction
     {
     public:
-      PickupObjectAction(Robot& robot,
-                         ObjectID objectID,
+      PickupObjectAction(ObjectID objectID,
                          const bool useManualSpeed = false);
       
       virtual ~PickupObjectAction();
@@ -411,7 +415,7 @@ namespace Anki {
     {
     public:
       
-      PlaceObjectOnGroundAction(Robot& robot);
+      PlaceObjectOnGroundAction();
       virtual ~PlaceObjectOnGroundAction();
       
     protected:
@@ -438,8 +442,7 @@ namespace Anki {
     class PlaceObjectOnGroundAtPoseAction : public CompoundActionSequential
     {
     public:
-      PlaceObjectOnGroundAtPoseAction(Robot& robot,
-                                      const Pose3d& placementPose,
+      PlaceObjectOnGroundAtPoseAction(const Pose3d& placementPose,
                                       const bool useExactRotation = false,
                                       const bool useManualSpeed = false,
                                       const bool checkFreeDestination = false,
@@ -454,8 +457,7 @@ namespace Anki {
     class PlaceRelObjectAction : public IDockAction
     {
     public:
-      PlaceRelObjectAction(Robot& robot,
-                           ObjectID objectID,
+      PlaceRelObjectAction(ObjectID objectID,
                            const bool placeOnGround = false,
                            const f32 placementOffsetX_mm = 0,
                            const f32 placementOffsetY_mm = 0,
@@ -518,7 +520,7 @@ namespace Anki {
     class RollObjectAction : public IDockAction
     {
     public:
-      RollObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed = false);
+      RollObjectAction(ObjectID objectID, const bool useManualSpeed = false);
       virtual ~RollObjectAction()
       {
         if(_rollVerifyAction != nullptr)
@@ -566,7 +568,7 @@ namespace Anki {
     class CrossBridgeAction : public IDockAction
     {
     public:
-      CrossBridgeAction(Robot& robot, ObjectID bridgeID, const bool useManualSpeed);
+      CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed);
       
     protected:
       
@@ -587,7 +589,7 @@ namespace Anki {
     class AscendOrDescendRampAction : public IDockAction
     {
     public:
-      AscendOrDescendRampAction(Robot& robot, ObjectID rampID, const bool useManualSpeed);
+      AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed);
       
     protected:
       

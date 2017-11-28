@@ -146,20 +146,20 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(BehaviorExternalInterf
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  CompoundActionSequential* action = new CompoundActionSequential();
   
-  action->AddAction(new TurnTowardsObjectAction(robot, _bottomBlockID));
+  action->AddAction(new TurnTowardsObjectAction(_bottomBlockID));
   
   Pose3d poseWrtRobot;
   if(topBlock->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot) ) {
     const float fudgeFactor = 10.0f;
     if( poseWrtRobot.GetTranslation().x() + fudgeFactor > kBKS_distanceToTryToGrabFrom_mm) {
       float distToDrive = poseWrtRobot.GetTranslation().x() - kBKS_distanceToTryToGrabFrom_mm;
-      action->AddAction(new DriveStraightAction(robot, distToDrive, kBKS_searchSpeed_mmps));
+      action->AddAction(new DriveStraightAction(distToDrive, kBKS_searchSpeed_mmps));
     }
   }
   
-  action->AddAction(new TriggerLiftSafeAnimationAction(robot, _reachForBlockTrigger));
+  action->AddAction(new TriggerLiftSafeAnimationAction(_reachForBlockTrigger));
   DelegateIfInControl(action, &BehaviorKnockOverCubes::TransitionToKnockingOverStack);
   
 }
@@ -197,23 +197,26 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(BehaviorExternalInter
   
   //skips turning towards face if this action is streamlined
   const f32 angleTurnTowardsFace_rad = (ShouldStreamline() || _numRetries > 0) ? 0 : kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad;
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  DriveAndFlipBlockAction* flipAction = new DriveAndFlipBlockAction(robot, _bottomBlockID, false, 0, false, angleTurnTowardsFace_rad, false, kMinThresholdRealign);
+
+  DriveAndFlipBlockAction* flipAction = new DriveAndFlipBlockAction(_bottomBlockID, 
+                                                                    false, 
+                                                                    0, 
+                                                                    false, 
+                                                                    angleTurnTowardsFace_rad, 
+                                                                    false, 
+                                                                    kMinThresholdRealign);
   
   flipAction->SetSayNameAnimationTrigger(AnimationTrigger::KnockOverPreActionNamedFace);
   flipAction->SetNoNameAnimationTrigger(AnimationTrigger::KnockOverPreActionUnnamedFace);
   
   
   // Set the action sequence
-  CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential(robot);
-  flipAndWaitAction->AddAction(new TurnTowardsObjectAction(robot, _bottomBlockID));
+  CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential();
+  flipAndWaitAction->AddAction(new TurnTowardsObjectAction( _bottomBlockID));
   // emit completion signal so that the mood manager can react
   const bool shouldEmitCompletion = true;
   flipAndWaitAction->AddAction(flipAction, false, shouldEmitCompletion);
-  flipAndWaitAction->AddAction(new WaitAction(robot, kWaitForBlockUpAxisChangeSecs));
+  flipAndWaitAction->AddAction(new WaitAction(kWaitForBlockUpAxisChangeSecs));
   
   // make sure we only account for blocks flipped during the actual knock over action
   PrepareForKnockOverAttempt();
@@ -225,16 +228,13 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(BehaviorExternalInter
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential();
   {
-    FlipBlockAction* flipAction = new FlipBlockAction(robot, _bottomBlockID);
+    FlipBlockAction* flipAction = new FlipBlockAction( _bottomBlockID);
     flipAction->SetShouldCheckPreActionPose(false);
   
     flipAndWaitAction->AddAction(flipAction);
-    flipAndWaitAction->AddAction(new WaitAction(robot, kWaitForBlockUpAxisChangeSecs));
+    flipAndWaitAction->AddAction(new WaitAction(kWaitForBlockUpAxisChangeSecs));
   }
   
   PrepareForKnockOverAttempt();
@@ -263,7 +263,7 @@ void BehaviorKnockOverCubes::TransitionToPlayingReaction(BehaviorExternalInterfa
   
   // play a reaction if not streamlined
   if(!ShouldStreamline()){
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, animationTrigger));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(animationTrigger));
   }
 }
   

@@ -288,26 +288,23 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::Up
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IActionRunner* BehaviorVisitInterestingEdge::CreateLowLiftAndLowHeadActions(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionParallel* allDownAction = new CompoundActionParallel(robot);
+  CompoundActionParallel* allDownAction = new CompoundActionParallel();
 
   // lift
   {
-    IAction* liftDownAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
+    IAction* liftDownAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
     allDownAction->AddAction( liftDownAction );
   }
   
   // head
   {
-    IAction* headDownAction = new MoveHeadToAngleAction(robot, MoveHeadToAngleAction::Preset::GROUND_PLANE_VISIBLE);
+    IAction* headDownAction = new MoveHeadToAngleAction(MoveHeadToAngleAction::Preset::GROUND_PLANE_VISIBLE);
     allDownAction->AddAction( headDownAction );
   }
   
   // also play get in to squint
   {
-    IAction* squintInAnimAction = new TriggerLiftSafeAnimationAction(robot,_configParams.squintStartAnimTrigger);
+    IAction* squintInAnimAction = new TriggerLiftSafeAnimationAction(_configParams.squintStartAnimTrigger);
     allDownAction->AddAction( squintInAnimAction );
   }
 
@@ -334,7 +331,7 @@ void BehaviorVisitInterestingEdge::StartWaitingForEdges(BehaviorExternalInterfac
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    WaitForImagesAction* waitForImgs = new WaitForImagesAction(robot, kNumEdgeImagesToGetAccurateEdges, VisionMode::DetectingOverheadEdges);
+    WaitForImagesAction* waitForImgs = new WaitForImagesAction(kNumEdgeImagesToGetAccurateEdges, VisionMode::DetectingOverheadEdges);
     const Result queuedOK = robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, waitForImgs);
     
     // if queued successfully
@@ -661,17 +658,14 @@ void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(BehaviorExt
   DEV_ASSERT(!_cache._vantagePoints.empty(),
     "BehaviorVisitInterestingEdge.TransitionToS1_MoveToVantagePoint.NoVantagePoints");
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // create compound action to force lift to be on low dock (just in case) and then move
-  CompoundActionSequential* moveAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* moveAction = new CompoundActionSequential();
 
   // 1) move to the vantage point
   {
     // request the action
     const bool kForceHeadDown = true;
-    DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( robot, _cache._vantagePoints, kForceHeadDown );
+    DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( _cache._vantagePoints, kForceHeadDown );
     moveAction->AddAction( driveToPoseAction );
   }
   
@@ -724,7 +718,7 @@ void BehaviorVisitInterestingEdge::TransitionToS2_GatherAccurateEdge(BehaviorExt
   Robot& robot = behaviorExternalInterface.GetRobot();
   // start squint loop
   DEV_ASSERT(!IsPlayingSquintLoop(), "BehaviorVisitInterestingEdge.TransitionToS2_GatherAccurateEdge.AlreadySquintLooping");
-  IAction* squintLoopAnimAction = new TriggerLiftSafeAnimationAction(robot,_configParams.squintLoopAnimTrigger, 0); // loop forever
+  IAction* squintLoopAnimAction = new TriggerLiftSafeAnimationAction(_configParams.squintLoopAnimTrigger, 0); // loop forever
   robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, squintLoopAnimAction);
   _squintLoopAnimActionTag = squintLoopAnimAction->GetTag();
 
@@ -761,29 +755,26 @@ void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose(BehaviorExter
   const float halfWidthAtFarPlane_mm = _configParams.forwardConeHalfWidthAtFarPlane_mm;
   FlagVisitedQuadAsNotInteresting(behaviorExternalInterface, halfWidthAtRobot_mm, farPlaneDistFromRobot_mm, halfWidthAtFarPlane_mm);
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* observationActions = new CompoundActionSequential(robot);
+  CompoundActionSequential* observationActions = new CompoundActionSequential();
 
   // 1) move closer if we have to
   if ( distanceToMoveForward_mm > 0.0f )
   {
     const float speed_mmps = _configParams.borderApproachSpeed_mmps;
-    DriveStraightAction* driveCloser = new DriveStraightAction(robot, distanceToMoveForward_mm, speed_mmps, false);
+    DriveStraightAction* driveCloser = new DriveStraightAction(distanceToMoveForward_mm, speed_mmps, false);
     observationActions->AddAction( driveCloser );
   }
 
   // 2) despite we stop the squint loop, it looks better to do this after moving. Alternatively we could do 1 and 2
   // in parallel, and then observe
   {
-    IAction* squintOutAnimAction = new TriggerLiftSafeAnimationAction(robot,_configParams.squintEndAnimTrigger);
+    IAction* squintOutAnimAction = new TriggerLiftSafeAnimationAction(_configParams.squintEndAnimTrigger);
     observationActions->AddAction( squintOutAnimAction );
   }
 
   // 3) play "i'm observing stuff" animation
   {
-    IAction* observeInPlaceAction = new TriggerLiftSafeAnimationAction(robot,_configParams.observeEdgeAnimTrigger);
+    IAction* observeInPlaceAction = new TriggerLiftSafeAnimationAction(_configParams.observeEdgeAnimTrigger);
     observationActions->AddAction( observeInPlaceAction );
   }
   
@@ -926,14 +917,11 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
       const bool isControlDelegated = IsControlDelegated();
       if ( !isControlDelegated )
       {
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        Robot& robot = behaviorExternalInterface.GetRobot();
         // distance is not important since we will find close or far, or stop because there are no edges in front
         // the speed should be sufficiently slow that we get images before running over stuff
         const float distance_mm = 200.0f;
         const float speed_mmps = _configParams.borderApproachSpeed_mmps;
-        IAction* driveFwd = new DriveStraightAction(robot, distance_mm, speed_mmps, false);
+        IAction* driveFwd = new DriveStraightAction(distance_mm, speed_mmps, false);
         DelegateIfInControl( driveFwd );
       }
 
@@ -949,22 +937,18 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
     // stop moving
     CancelDelegates();
     
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
     // action for final animations
-    CompoundActionSequential* noEdgesFoundAnims = new CompoundActionSequential(robot);
+    CompoundActionSequential* noEdgesFoundAnims = new CompoundActionSequential();
     
     // play get out of squint
     {
-      IAction* squintOutAnimAction = new TriggerLiftSafeAnimationAction(robot,_configParams.squintEndAnimTrigger);
+      IAction* squintOutAnimAction = new TriggerLiftSafeAnimationAction(_configParams.squintEndAnimTrigger);
       noEdgesFoundAnims->AddAction( squintOutAnimAction );
     }
  
     // then play "where the hell is the object that should be here? I can't see it" anim
     {
-      IAction* noEdgeHereAnimAction = new TriggerLiftSafeAnimationAction(robot,_configParams.edgesNotFoundAnimTrigger);
+      IAction* noEdgeHereAnimAction = new TriggerLiftSafeAnimationAction(_configParams.edgesNotFoundAnimTrigger);
       noEdgesFoundAnims->AddAction( noEdgeHereAnimAction );
     }
     

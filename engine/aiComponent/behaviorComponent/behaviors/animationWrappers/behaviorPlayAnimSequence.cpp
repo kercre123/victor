@@ -128,20 +128,17 @@ IActionRunner* BehaviorPlayAnimSequence::GetAnimationAction(BehaviorExternalInte
   if(IsSequenceLoop()){
     numLoops = 1; // just one loop per animation, so we can loop the entire sequence together
   }
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+
   // create sequence with all triggers
-  CompoundActionSequential* sequenceAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* sequenceAction = new CompoundActionSequential();
   for (AnimationTrigger trigger : _animTriggers) {
     const bool interruptRunning = true;
     const u8 tracksToLock = GetTracksToLock(behaviorExternalInterface);
 
-    IAction* playAnim = new TriggerLiftSafeAnimationAction(robot,
-                                                            trigger,
-                                                            numLoops,
-                                                            interruptRunning,
-                                                            tracksToLock);
+    IAction* playAnim = new TriggerLiftSafeAnimationAction(trigger,
+                                                           numLoops,
+                                                           interruptRunning,
+                                                           tracksToLock);
     sequenceAction->AddAction(playAnim);
   }
 
@@ -149,8 +146,7 @@ IActionRunner* BehaviorPlayAnimSequence::GetAnimationAction(BehaviorExternalInte
     const bool interruptRunning = true;
     const u8 tracksToLock = GetTracksToLock(behaviorExternalInterface);
 
-    IAction* playAnim = new PlayAnimationAction(robot,
-                                                name,
+    IAction* playAnim = new PlayAnimationAction(name,
                                                 numLoops,
                                                 interruptRunning,
                                                 tracksToLock);

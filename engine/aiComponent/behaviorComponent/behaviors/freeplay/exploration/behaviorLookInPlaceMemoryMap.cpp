@@ -404,12 +404,8 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(BehaviorExternalInterface& behavi
   PRINT_CH_INFO("Behaviors", (GetIDStr()).c_str(), "Going to visit sector %d (at %.2fdeg from %.2f = abs %.2f)",
     index, relativeAngle_deg, _startingBodyFacing_rad.getDegrees(), bodyTargetAngle_deg );
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
   // create action and run
-  CompoundActionSequential* fullVisitAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* fullVisitAction = new CompoundActionSequential();
   
   // 1) turn to the sector
   IAction* turnAction1 = CreateBodyAndHeadTurnAction( behaviorExternalInterface,
@@ -424,14 +420,14 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(BehaviorExternalInterface& behavi
   
   // 2) make sure lift is down
   {
-    IAction* moveLiftDownAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
+    IAction* moveLiftDownAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
     fullVisitAction->AddAction( moveLiftDownAction );
   }
   
   // 3) play anim
   if ( _configParams.lookInPlaceAnimTrigger != AnimationTrigger::Count )
   {
-    IAction* imExploringAction = new TriggerLiftSafeAnimationAction(robot, _configParams.lookInPlaceAnimTrigger);
+    IAction* imExploringAction = new TriggerLiftSafeAnimationAction(_configParams.lookInPlaceAnimTrigger);
     fullVisitAction->AddAction( imExploringAction );
   }
   
@@ -496,15 +492,11 @@ IAction* BehaviorLookInPlaceMemoryMap::CreateBodyAndHeadTurnAction(BehaviorExter
   
   // [min,max] range for random head angle turn
   const double headTargetAngleAbs_deg = GetRNG().RandDblInRange(headAbsoluteMin_deg, headAbsoluteMax_deg);
-
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
   // create proper action for body & head turn
   const Radians bodyTargetAngleAbs_rad( DEG_TO_RAD(bodyTargetAngleAbs_deg) );
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
-  PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
+  PanAndTiltAction* turnAction = new PanAndTiltAction(bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
   turnAction->SetMaxPanSpeed ( DEG_TO_RAD(bodyTurnSpeed_degPerSec) );
   turnAction->SetMaxTiltSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
 

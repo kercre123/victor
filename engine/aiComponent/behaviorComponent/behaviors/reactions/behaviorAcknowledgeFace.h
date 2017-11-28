@@ -19,6 +19,7 @@
 #include "anki/common/shared/radians.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/smartFaceId.h"
 
 #include "anki/vision/basestation/faceIdTypes.h"
 
@@ -46,7 +47,7 @@ public:
 
   virtual void AddListener(IReactToFaceListener* listener) override;
   
-  void SetFacesToAcknowledge(const std::set<Vision::FaceID_t> targetFaces){_desiredTargets = targetFaces;}
+  void SetFacesToAcknowledge(const std::set<SmartFaceID> targetFaces){_desiredTargets = targetFaces;}
   
 protected:
   // Enforce creation through BehaviorContainer
@@ -69,10 +70,10 @@ private:
   bool UpdateBestTarget(BehaviorExternalInterface& behaviorExternalInterface);
 
   // current target
-  Vision::FaceID_t _targetFace = Vision::UnknownFaceID;
+  SmartFaceID _targetFace;
 
   // everything we want to react to before we stop (to handle multiple faces in the same frame)
-  std::set< Vision::FaceID_t > _desiredTargets;
+  std::set<SmartFaceID> _desiredTargets;
   
   bool _shouldStart = false;
 

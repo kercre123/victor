@@ -181,14 +181,11 @@ void BehaviorPounceOnMotion::TransitionToInitialPounce(BehaviorExternalInterface
   const bool cliffInFront = (currentTime_sec - _lastCliffEvent_sec) < kMinCliffInFrontWait_sec;
   
   if(cliffInFront){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
     // This initial turn means that if Cozmo hits a cliff during an initial pounce
     // he won't get stuck in an infinite loop
     const Radians bodyPan(DEG_TO_RAD(90));
     const Radians headTilt(0);
-    potentialCliffSafetyTurn = new PanAndTiltAction(robot, bodyPan, headTilt, false, false);
+    potentialCliffSafetyTurn = new PanAndTiltAction(bodyPan, headTilt, false, false);
   }
   
   // Skip the initial pounce and go straight to search if streamlined
@@ -235,10 +232,7 @@ void BehaviorPounceOnMotion::TransitionToInitialReaction(BehaviorExternalInterfa
   bool caught = IsFingerCaught(behaviorExternalInterface);
   if( caught )
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceSuccess), &BehaviorPounceOnMotion::TransitionToInitialSearch);
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PounceSuccess), &BehaviorPounceOnMotion::TransitionToInitialSearch);
     PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.TransitionToInitialReaction.Caught", "got it!");
   }
   else
@@ -254,11 +248,8 @@ void BehaviorPounceOnMotion::TransitionToInitialSearch(BehaviorExternalInterface
   PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToInitialSearch",
                     "BehaviorPounceOnMotion.TransitionToInitialSearch");
   SET_STATE(InitialSearch);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  CompoundActionSequential* fullAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* fullAction = new CompoundActionSequential();
   
   float panDirection = 1.0f;
   {
@@ -272,7 +263,7 @@ void BehaviorPounceOnMotion::TransitionToInitialSearch(BehaviorExternalInterface
     
     panAngle *= panDirection;
     
-    IActionRunner* panAndTilt = new PanAndTiltAction(robot, panAngle, tiltRads, false, true);
+    IActionRunner* panAndTilt = new PanAndTiltAction(panAngle, tiltRads, false, true);
     fullAction->AddAction(panAndTilt);
   }
   
@@ -284,7 +275,7 @@ void BehaviorPounceOnMotion::TransitionToInitialSearch(BehaviorExternalInterface
     // opposite direction
     panAngle *= -panDirection;
     
-    IActionRunner* panAndTilt = new PanAndTiltAction(robot, panAngle, tiltRads, false, true);
+    IActionRunner* panAndTilt = new PanAndTiltAction(panAngle, tiltRads, false, true);
     fullAction->AddAction(panAndTilt);
   }
   
@@ -300,12 +291,8 @@ void BehaviorPounceOnMotion::TransitionToBringingHeadDown(BehaviorExternalInterf
   PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToBringingHeadDown","BehaviorPounceOnMotion.TransitionToBringingHeadDown");
   SET_STATE(BringingHeadDown);
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
   Radians tiltRads(MIN_HEAD_ANGLE);
-  DelegateIfInControl(new MoveHeadToAngleAction(robot, tiltRads),
+  DelegateIfInControl(new MoveHeadToAngleAction(tiltRads),
               &BehaviorPounceOnMotion::TransitionToWaitForMotion);
 }
 
@@ -326,11 +313,7 @@ void BehaviorPounceOnMotion::TransitionToRotateToWatchingNewArea(BehaviorExterna
   }
   _cumulativeTurn_rad += panAngle;
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  IActionRunner* panAction = new PanAndTiltAction(robot, panAngle, tiltRads, false, false);
+  IActionRunner* panAction = new PanAndTiltAction(panAngle, tiltRads, false, false);
   
   //if we are above the threshold percentage, pounce and pan - otherwise, just pan
   const float shouldPounceOnTurn = GetRNG().RandDblInRange(0, 1);
@@ -350,12 +333,8 @@ void BehaviorPounceOnMotion::TransitionToWaitForMotion(BehaviorExternalInterface
   _backUpDistance = 0.f;
   _motionObserved = false;
   SmartLockTracks((u8)AnimTrackFlag::HEAD_TRACK, kTrackLockName, kTrackLockName);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  DelegateIfInControl(new WaitAction(robot, kWaitForMotionInterval_s), &BehaviorPounceOnMotion::TransitionFromWaitForMotion);
-  
+  DelegateIfInControl(new WaitAction(kWaitForMotionInterval_s), &BehaviorPounceOnMotion::TransitionFromWaitForMotion);
 }
 
 
@@ -421,7 +400,7 @@ void BehaviorPounceOnMotion::TransitionToTurnToMotion(BehaviorExternalInterface&
     _motionObservedNoPounceCount++;
   }
   
-  DelegateIfInControl(new PanAndTiltAction(robot, relPanAngle, tiltRads, false, false),
+  DelegateIfInControl(new PanAndTiltAction(relPanAngle, tiltRads, false, false),
               callback);
 }
 
@@ -440,10 +419,7 @@ void BehaviorPounceOnMotion::TransitionToCreepForward(BehaviorExternalInterface&
   // Sneak... Sneak... Sneak...
   _backUpDistance = GetDriveDistance();
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DriveStraightAction* driveAction = new DriveStraightAction(robot, _backUpDistance, DEFAULT_PATH_MOTION_PROFILE.dockSpeed_mmps);
+  DriveStraightAction* driveAction = new DriveStraightAction(_backUpDistance, DEFAULT_PATH_MOTION_PROFILE.dockSpeed_mmps);
   driveAction->SetAccel(DEFAULT_PATH_MOTION_PROFILE.dockAccel_mmps2);
 
   SmartLockTracks((u8)AnimTrackFlag::HEAD_TRACK, kTrackLockName, kTrackLockName);
@@ -479,24 +455,15 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(BehaviorExternalInterface& b
 
   IActionRunner* newAction = nullptr;
   if( caught ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    newAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceSuccess);
+    newAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::PounceSuccess);
     PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult.Caught", "got it!");
   }
   else {
     // currently equivalent to "isSparked" - don't play failure anim when sparked
     if(!ShouldStreamline()){
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      newAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceFail );
+      newAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::PounceFail );
     }else{
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      newAction = new TriggerAnimationAction(robot, AnimationTrigger::Count);
+      newAction = new TriggerAnimationAction(AnimationTrigger::Count);
     }
     PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
   }
@@ -523,10 +490,7 @@ void BehaviorPounceOnMotion::TransitionToBackUp(BehaviorExternalInterface& behav
 {
   SET_STATE(BackUp);
   // back up some of the way
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new DriveStraightAction(robot, -_backUpDistance, DEFAULT_PATH_MOTION_PROFILE.reverseSpeed_mmps),
+  DelegateIfInControl(new DriveStraightAction(-_backUpDistance, DEFAULT_PATH_MOTION_PROFILE.reverseSpeed_mmps),
               &BehaviorPounceOnMotion::TransitionToBringingHeadDown);
 }
 
@@ -537,10 +501,7 @@ void BehaviorPounceOnMotion::TransitionToGetOutBored(BehaviorExternalInterface& 
   SET_STATE(GetOutBored);
   if(!_skipGetOutAnim)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceGetOut));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PounceGetOut));
   }
 }
 
@@ -701,16 +662,13 @@ void BehaviorPounceOnMotion::HandleWhileActivated(const EngineToGameEvent& event
 template<typename T>
 void BehaviorPounceOnMotion::PounceOnMotionWithCallback(BehaviorExternalInterface& behaviorExternalInterface, void(T::*callback)(BehaviorExternalInterface&),  IActionRunner* intermittentAction)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* compAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* compAction = new CompoundActionSequential();
   
   if(intermittentAction != nullptr){
     compAction->AddAction(intermittentAction);
   }
   
-  compAction->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PouncePounce));
+  compAction->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::PouncePounce));
 
   DelegateIfInControl(compAction, [this, callback](BehaviorExternalInterface& behaviorExternalInterface){
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
@@ -724,7 +682,7 @@ void BehaviorPounceOnMotion::PounceOnMotionWithCallback(BehaviorExternalInterfac
     // so hold this for a bit longer
     const float relaxTime = 0.15f;
     
-    DelegateIfInControl(new WaitAction(robot, relaxTime), [this, callback](BehaviorExternalInterface& behaviorExternalInterface){
+    DelegateIfInControl(new WaitAction(relaxTime), [this, callback](BehaviorExternalInterface& behaviorExternalInterface){
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();

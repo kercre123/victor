@@ -225,7 +225,7 @@ Result BehaviorExploreLookAroundInPlace::OnBehaviorActivated(BehaviorExternalInt
   if( _configParams.behavior_ShouldLowerLift
      && !(_configParams.behavior_CanCarryCube && robot.GetCarryingComponent().IsCarryingObject())
   ){
-    IActionRunner* lowerLiftAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
+    IActionRunner* lowerLiftAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
     DelegateIfInControl(lowerLiftAction, &BehaviorExploreLookAroundInPlace::BeginStateMachine);
   }
   else {
@@ -334,22 +334,14 @@ void BehaviorExploreLookAroundInPlace::TransitionToS2_Pause(BehaviorExternalInte
   const std::string& animGroupName = _configParams.s2_WaitAnimTrigger;
   AnimationTrigger trigger = animGroupName.empty()  ? AnimationTrigger::Count : AnimationTriggerFromString(animGroupName.c_str());
   if ( trigger != AnimationTrigger::Count )
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
-    pauseAction = new TriggerLiftSafeAnimationAction(robot,trigger);
+  {    
+    pauseAction = new TriggerLiftSafeAnimationAction(trigger);
   }
   else
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
+  {    
     // create wait action
     const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s2_WaitMin_sec, _configParams.s2_WaitMax_sec);
-    pauseAction = new WaitAction( robot, waitTime_sec );
+    pauseAction = new WaitAction(waitTime_sec );
   }
   
   // request action with transition to proper state
@@ -441,23 +433,15 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(BehaviorExterna
   const std::string& animGroupName = _configParams.s4_WaitAnimTrigger;
   AnimationTrigger trigger = animGroupName.empty()  ? AnimationTrigger::Count : AnimationTriggerFromString(animGroupName.c_str());
   if ( trigger != AnimationTrigger::Count )
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
-    pauseAction = new TriggerLiftSafeAnimationAction(robot, trigger);
+  {    
+    pauseAction = new TriggerLiftSafeAnimationAction(trigger);
   }
   else
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
+  {    
     // create wait action
     const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s4_WaitBetweenChangesMin_sec,
                                                       _configParams.s4_WaitBetweenChangesMax_sec);
-    pauseAction = new WaitAction( robot, waitTime_sec );
+    pauseAction = new WaitAction(waitTime_sec );
   }
   
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S4.StartingPauseAnimAction").c_str(), "Triggering %s",
@@ -617,10 +601,8 @@ IAction* BehaviorExploreLookAroundInPlace::CreateBodyAndHeadTurnAction(BehaviorE
   // create proper action for body & head turn
   const Radians bodyTargetAngleAbs_rad( _iterationStartingBodyFacing_rad + DEG_TO_RAD(bodyTargetAngleRelative_deg) );
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
+  
+  PanAndTiltAction* turnAction = new PanAndTiltAction(bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
 
   if( _configParams.customMotionProfile == nullptr ) {
     // only set speeds if the motion profile won't be doing it for us
@@ -660,10 +642,8 @@ IAction* BehaviorExploreLookAroundInPlace::CreateHeadTurnAction(BehaviorExternal
   // create proper action for body & head turn
   const Radians bodyTargetAngleAbs_rad( DEG_TO_RAD(bodyReference_deg + bodyTargetAngleRelative_deg) );
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
+
+  PanAndTiltAction* turnAction = new PanAndTiltAction(bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
 
   if( _configParams.customMotionProfile == nullptr ) {
     // only set speeds if the motion profile won't be doing it for us

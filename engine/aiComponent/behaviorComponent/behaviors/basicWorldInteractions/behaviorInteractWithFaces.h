@@ -19,6 +19,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/events/animationTriggerHelpers.h"
+#include "engine/smartFaceId.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 
 #include <string>
@@ -60,7 +61,6 @@ protected:
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
 
 private:
   
@@ -75,7 +75,6 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   using Face = Vision::TrackedFace;
-  using FaceID_t = Vision::FaceID_t;
 
   void LoadConfig(const Json::Value& config);
 
@@ -95,7 +94,7 @@ private:
   ////////////////////////////////////////////////////////////////////////////////
 
   // ID of face we are currently interested in
-  mutable FaceID_t _targetFace = Vision::UnknownFaceID;
+  mutable SmartFaceID _targetFace;
 
   // We only want to run for faces we've seen since the last time we ran, so keep track of the final timestamp
   // when the behavior finishes

@@ -57,13 +57,10 @@ Result BehaviorPutDownBlock::OnBehaviorActivated(BehaviorExternalInterface& beha
   // TODO: Make this smarter and find a place away from other known objects
   // For now, just back up blindly and play animation.
   const float backupDistance = GetRNG().RandDblInRange(kBPDB_kBackupDistanceMin_mm, kBPDB_kBackupDistanceMax_mm);
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new CompoundActionSequential(robot, {
-                new DriveStraightAction(robot, backupDistance, kBPDB_putDownBackupSpeed_mm),
-                new TriggerAnimationAction(robot, AnimationTrigger::PutDownBlockPutDown),
+
+  DelegateIfInControl(new CompoundActionSequential({
+                new DriveStraightAction(backupDistance, kBPDB_putDownBackupSpeed_mm),
+                new TriggerAnimationAction(AnimationTrigger::PutDownBlockPutDown),
               }),
               &BehaviorPutDownBlock::LookDownAtBlock);
   
@@ -99,24 +96,22 @@ IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(BehaviorExternal
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  CompoundActionSequential* action = new CompoundActionSequential();
   if( robot.GetCarryingComponent().IsCarryingObject() ) {
     // glance down to see if we see the cube if we still think we are carrying
     static const int kNumFrames = 2;
     
-    CompoundActionParallel* parallel = new CompoundActionParallel(robot,
-                                                                  {new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBPDB_finalHeadAngle_deg)),
-                                                                   new DriveStraightAction(robot, kBPDB_verifyBackupDist_mm)});
+    CompoundActionParallel* parallel = new CompoundActionParallel({new MoveHeadToAngleAction(DEG_TO_RAD(kBPDB_finalHeadAngle_deg)),
+                                                                   new DriveStraightAction(kBPDB_verifyBackupDist_mm)});
     action->AddAction(parallel);
-    action->AddAction(new WaitForImagesAction(robot, kNumFrames, VisionMode::DetectingMarkers));
+    action->AddAction(new WaitForImagesAction(kNumFrames, VisionMode::DetectingMarkers));
   }
 
   if(doLookAtFaceAfter)
   {
     // in any case, look back at the last face after this is done (to give them a chance to show another cube)
     const bool sayName = false;
-    action->AddAction(new TurnTowardsFaceWrapperAction(robot,
-                                                       new TriggerAnimationAction(robot, AnimationTrigger::PutDownBlockKeepAlive),
+    action->AddAction(new TurnTowardsFaceWrapperAction(new TriggerAnimationAction(AnimationTrigger::PutDownBlockKeepAlive),
                                                        true, false, M_PI_F, sayName));
   }
   

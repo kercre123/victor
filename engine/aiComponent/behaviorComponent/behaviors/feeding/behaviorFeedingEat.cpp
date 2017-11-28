@@ -232,11 +232,7 @@ void BehaviorFeedingEat::TransitionToDrivingToFood(BehaviorExternalInterface& be
     return;
   }
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DriveToAlignWithObjectAction* action = new DriveToAlignWithObjectAction(robot,
-                                                                          _targetID,
+  DriveToAlignWithObjectAction* action = new DriveToAlignWithObjectAction(_targetID,
                                                                           kDistanceFromMarker_mm);
   action->SetPreActionPoseAngleTolerance(DEG_TO_RAD(kFeedingPreActionAngleTol_deg));
   
@@ -282,10 +278,7 @@ void BehaviorFeedingEat::TransitionToPlacingLiftOnCube(BehaviorExternalInterface
                                AnimationTrigger::FeedingPlaceLiftOnCube_Severe :
                                AnimationTrigger::FeedingPlaceLiftOnCube_Normal;
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TriggerAnimationAction(robot, bestAnim),
+  DelegateIfInControl(new TriggerAnimationAction(bestAnim),
               &BehaviorFeedingEat::TransitionToEating);
 }
 
@@ -337,8 +330,8 @@ void BehaviorFeedingEat::TransitionToEating(BehaviorExternalInterface& behaviorE
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _timeCubeIsSuccessfullyDrained_sec = currentTime_s + timeDrainCube_s;
   
-  // DelegateIfInControl(new TriggerAnimationAction(robot, eatingAnim)); // TEMP: only for this branch
-  DelegateIfInControl(new PlayAnimationAction(robot, "anim_energy_eat_01")); // TEMP: 
+  // DelegateIfInControl(new TriggerAnimationAction(eatingAnim)); // TEMP: only for this branch
+  DelegateIfInControl(new PlayAnimationAction("anim_energy_eat_01")); // TEMP: 
 }
 
 
@@ -366,10 +359,7 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption(BehaviorExternalInte
     trigger = AnimationTrigger::FeedingInterrupted_Severe;
   }
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, trigger));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(trigger));
   }
 }
 

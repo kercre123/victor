@@ -154,7 +154,7 @@ void BehaviorDriveOffCharger::TransitionToDrivingForward(BehaviorExternalInterfa
   if( robot.IsOnChargerPlatform() )
   {
     // probably interrupted by getting off the charger platform
-    DriveStraightAction* action = new DriveStraightAction(robot, _distToDrive_mm);
+    DriveStraightAction* action = new DriveStraightAction(_distToDrive_mm);
     DelegateIfInControl(action,[this, &behaviorExternalInterface](ActionResult res){
       if(res == ActionResult::SUCCESS){
         BehaviorObjectiveAchieved(BehaviorObjective::DroveAsIntended);

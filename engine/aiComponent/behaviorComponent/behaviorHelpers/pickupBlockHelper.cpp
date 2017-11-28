@@ -19,7 +19,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperParameters.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -115,20 +114,16 @@ void PickupBlockHelper::StartPickupAction(BehaviorExternalInterface& behaviorExt
     PRINT_CH_INFO("BehaviorHelpers", "PickupBlockHelper.StartPickupAction.PickingUpObject",
                   "Picking up target object %d",
                   _targetID.GetValue());
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    CompoundActionSequential* action = new CompoundActionSequential(robot);
+    CompoundActionSequential* action = new CompoundActionSequential();
     if(_params.animBeforeDock != AnimationTrigger::Count){
-      action->AddAction(new TriggerAnimationAction(robot, _params.animBeforeDock));
+      action->AddAction(new TriggerAnimationAction(_params.animBeforeDock));
       // In case we repeat, null out anim
       _params.animBeforeDock = AnimationTrigger::Count;
     }
     
     if((_dockAttemptCount == 0) &&
        !NEAR_ZERO(_params.maxTurnTowardsFaceAngle_rad.ToFloat())){
-      auto turnTowrdsFaceAction = new TurnTowardsLastFacePoseAction(robot,
-                                                                    _params.maxTurnTowardsFaceAngle_rad,
+      auto turnTowrdsFaceAction = new TurnTowardsLastFacePoseAction(_params.maxTurnTowardsFaceAngle_rad,
                                                                     _params.sayNameBeforePickup);
       turnTowrdsFaceAction->SetSayNameAnimationTrigger(AnimationTrigger::PickupHelperPreActionNamedFace);
       turnTowrdsFaceAction->SetNoNameAnimationTrigger(AnimationTrigger::PickupHelperPreActionUnnamedFace);
@@ -136,14 +131,13 @@ void PickupBlockHelper::StartPickupAction(BehaviorExternalInterface& behaviorExt
       action->AddAction(turnTowrdsFaceAction,
                         ignoreFailure);
       
-      action->AddAction(new TurnTowardsObjectAction(robot,
-                                                    _targetID,
+      action->AddAction(new TurnTowardsObjectAction(_targetID,
                                                     M_PI_F),
                         ignoreFailure);
     }
 
     {
-      PickupObjectAction* pickupAction = new PickupObjectAction(robot, _targetID);
+      PickupObjectAction* pickupAction = new PickupObjectAction(_targetID);
       // no need to do an extra check in the action
       pickupAction->SetDoNearPredockPoseCheck(false);
       

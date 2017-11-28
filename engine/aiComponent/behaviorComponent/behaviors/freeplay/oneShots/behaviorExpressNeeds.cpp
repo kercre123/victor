@@ -143,27 +143,26 @@ bool BehaviorExpressNeeds::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
-{
+{  
+  CompoundActionSequential* action = new CompoundActionSequential();
+
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
 
   if( !robot.IsOnChargerPlatform() ) {
     // only turn towards the last face if we aren't on the charger
     // TODO:(bn) support "look with head and eyes" when we are on the charger.
     
     const bool ignoreFailure = true;
-    action->AddAction(new TurnTowardsLastFacePoseAction(robot), ignoreFailure);
+    action->AddAction(new TurnTowardsLastFacePoseAction(), ignoreFailure);
   }
 
   for( const auto& trigger : _animTriggers ) {
     const u32 numLoops = 1;
     const bool interruptRunning = true;
     const u8 tracksToLock = GetTracksToLock(behaviorExternalInterface);
-    IAction* playAnim = new TriggerLiftSafeAnimationAction(robot,
-                                                           trigger,
+    IAction* playAnim = new TriggerLiftSafeAnimationAction(trigger,
                                                            numLoops,
                                                            interruptRunning,
                                                            tracksToLock);

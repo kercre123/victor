@@ -57,8 +57,7 @@ Result BehaviorGoHome::OnBehaviorActivated(BehaviorExternalInterface& behaviorEx
     return Result::RESULT_FAIL;
   }
   
-  auto action = new DriveToAndMountChargerAction(behaviorExternalInterface.GetRobot(),
-                                                 object->GetID());
+  auto action = new DriveToAndMountChargerAction(object->GetID());
   const bool success = DelegateIfInControl(action);
   
   return success ? Result::RESULT_OK : Result::RESULT_FAIL;

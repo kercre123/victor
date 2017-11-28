@@ -253,7 +253,7 @@ TEST(BehaviorInterface, OutsideAction)
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
   
-  WaitForLambdaAction* action = new WaitForLambdaAction(robot, [&done](Robot& r){ return done; });
+  WaitForLambdaAction* action = new WaitForLambdaAction([&done](Robot& r){ return done; });
   robot.GetActionList().QueueAction(QueueActionPosition::NOW, action);
 
   DoBehaviorInterfaceTicks(robot, b, behaviorExternalInterface);
@@ -617,10 +617,7 @@ public:
 
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override {
     _inited = true;
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    WaitForLambdaAction* action = new WaitForLambdaAction(robot, [this](Robot& r){ return _stopAction; });
+    WaitForLambdaAction* action = new WaitForLambdaAction([this](Robot& r){ return _stopAction; });
     DelegateIfInControl(action);
 
     return RESULT_OK;

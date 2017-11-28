@@ -55,14 +55,11 @@ Result BehaviorReactToPickup::OnBehaviorActivated(BehaviorExternalInterface& beh
 {
   _repeatAnimatingMultiplier = 1;
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // Delay introduced since cozmo can be marked as "In air" in robot.cpp while we
   // wait for the cliffDetect sensor to confirm he's on the ground
   const f32 bufferDelay_s = .5f;
   const f32 wait_s = CLIFF_EVENT_DELAY_MS/1000 + bufferDelay_s;
-  DelegateIfInControl(new WaitAction(robot, wait_s), &BehaviorReactToPickup::StartAnim);
+  DelegateIfInControl(new WaitAction(wait_s), &BehaviorReactToPickup::StartAnim);
   return Result::RESULT_OK;
 }
  
@@ -110,11 +107,11 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
     if(name.empty())
     {
       // Just react to unnamed face, but without using treads
-      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::AcknowledgeFaceUnnamed, 1, true, kTracksToLock));
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::AcknowledgeFaceUnnamed, 1, true, kTracksToLock));
     }
     else
     {
-      SayTextAction* sayText = new SayTextAction(robot, name, SayTextIntent::Name_Normal);
+      SayTextAction* sayText = new SayTextAction(name, SayTextIntent::Name_Normal);
       sayText->SetAnimationTrigger(AnimationTrigger::AcknowledgeFaceNamed, kTracksToLock);
       DelegateIfInControl(sayText);
     }
@@ -131,7 +128,7 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
       }
       
       // React, but without using body track, since we're picked up
-      DelegateIfInControl(new TriggerAnimationAction(robot, animTrigger, 1, true, kTracksToLock));
+      DelegateIfInControl(new TriggerAnimationAction(animTrigger, 1, true, kTracksToLock));
     }
     else
     {
@@ -141,10 +138,7 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
       {
         anim = AnimationTrigger::HiccupRobotPickedUp;
       }
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      DelegateIfInControl(new TriggerAnimationAction(robot, anim));
+      DelegateIfInControl(new TriggerAnimationAction(anim));
     }
   }
   
@@ -182,7 +176,7 @@ ICozmoBehavior::Status BehaviorReactToPickup::UpdateInternal_WhileRunning(Behavi
       } else {
         const auto cliffs = robot.GetCliffSensorComponent().GetCliffDataRaw();
         LOG_EVENT("BehaviorReactToPickup.CalibratingHead", "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
-        DelegateIfInControl(new CalibrateMotorAction(robot, true, false));
+        DelegateIfInControl(new CalibrateMotorAction(true, false));
       }
     }
   }

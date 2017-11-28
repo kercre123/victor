@@ -149,9 +149,9 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
 
       static const int kNumImagesForVerification = 5;
       
-      CompoundActionSequential* action = new CompoundActionSequential(robot, {
-          new TurnTowardsPoseAction(robot, relPose),
-          new WaitForImagesAction(robot, kNumImagesForVerification, VisionMode::DetectingMarkers) });
+      CompoundActionSequential* action = new CompoundActionSequential({
+          new TurnTowardsPoseAction(relPose),
+          new WaitForImagesAction(kNumImagesForVerification, VisionMode::DetectingMarkers) });
 
       PRINT_NAMED_INFO("BehaviorExploreVisitPossibleMarker.WithinRange.Verify",
                        "robot is already within range of the cube, check if we can see it");
@@ -170,7 +170,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
     return;
   }
   
-  CompoundActionSequential* approachAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* approachAction = new CompoundActionSequential();
   
   if( APPROACH_NORMAL_TO_MARKERS ) {
     // generate all possible points to pick one later on
@@ -213,15 +213,15 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
   
     const Vec3f& kUpVector = Z_AXIS_3D();
     const Pose3d goalPose(goalRotation_rad, kUpVector, goalLocation, robot.GetWorldOrigin());
-    approachAction->AddAction( new DriveToPoseAction(robot, goalPose, false) );
+    approachAction->AddAction( new DriveToPoseAction(goalPose, false) );
   }
   else {
 
     // if we're too close, back up
     if( std::pow(kEvpm_DistanceFromPossibleCubeMin_mm, 2) > relPose.GetTranslation().LengthSq() ) {
-      approachAction->AddAction( new TurnTowardsPoseAction(robot, possibleCubePose, M_PI_F) );
+      approachAction->AddAction( new TurnTowardsPoseAction(possibleCubePose, M_PI_F) );
       const float backupDist = distanceRand - relPose.GetTranslation().Length();
-      approachAction->AddAction( new DriveStraightAction(robot, -backupDist, kBEVPM_backupSpeed_mmps) );
+      approachAction->AddAction( new DriveStraightAction(-backupDist, kBEVPM_backupSpeed_mmps) );
     }
     else {    
       // drive directly to the cube
@@ -234,8 +234,8 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
                            robot.GetPose());
 
       // turn first to signal intent
-      approachAction->AddAction( new TurnTowardsPoseAction(robot, possibleCubePose, M_PI_F) );
-      approachAction->AddAction( new DriveToPoseAction(robot, newTargetPose, false) );
+      approachAction->AddAction( new TurnTowardsPoseAction(possibleCubePose, M_PI_F) );
+      approachAction->AddAction( new DriveToPoseAction(newTargetPose, false) );
 
       // This requires us to bail out of this behavior if we see one, but that's not currently happening
       // // add a search action after driving / facing, in case we don't see the object

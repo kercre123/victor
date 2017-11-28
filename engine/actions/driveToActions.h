@@ -26,16 +26,18 @@
 #include <memory>
 
 namespace Anki {
-  
+  class Pose3d;
+
   namespace Cozmo {
   
+    class BlockWorld;
     class IDockAction;
+    
 
     class DriveToPoseAction : public IAction
     {
     public:
-      DriveToPoseAction(Robot& robot,
-                        const Pose3d& pose,
+      DriveToPoseAction(const Pose3d& pose,
                         const bool forceHeadDown,
                         const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
@@ -43,12 +45,10 @@ namespace Anki {
                         const float maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S,
                         const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
       
-      DriveToPoseAction(Robot& robot,
-                        const bool forceHeadDown,
+      DriveToPoseAction(const bool forceHeadDown,
                         const bool useManualSpeed = false); // Note that SetGoal(s) must be called before Update()!
       
-      DriveToPoseAction(Robot& robot,
-                        const std::vector<Pose3d>& poses,
+      DriveToPoseAction(const std::vector<Pose3d>& poses,
                         const bool forceHeadDown,
                         const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
@@ -115,16 +115,14 @@ namespace Anki {
     class DriveToObjectAction : public IAction
     {
     public:
-      DriveToObjectAction(Robot& robot,
-                          const ObjectID& objectID,
+      DriveToObjectAction(const ObjectID& objectID,
                           const PreActionPose::ActionType& actionType,
                           const f32 predockOffsetDistX_mm = 0,
                           const bool useApproachAngle = false,
                           const f32 approachAngle_rad = 0,
                           const bool useManualSpeed = false);
       
-      DriveToObjectAction(Robot& robot,
-                          const ObjectID& objectID,
+      DriveToObjectAction(const ObjectID& objectID,
                           const f32 distance_mm,
                           const bool useManualSpeed = false);
       virtual ~DriveToObjectAction();
@@ -178,6 +176,8 @@ namespace Anki {
       
       ActionResult InitHelper(ActionableObject* object);
       
+      virtual void OnRobotSet() override final;
+      virtual void OnRobotSetInternalDriveToObj() {};
       
       // Not private b/c DriveToPlaceCarriedObject uses
       ObjectID                   _objectID;
@@ -208,8 +208,7 @@ namespace Anki {
     {
     public:
       // destinationObjectPadding_mm: padding around the object size at destination used if checkDestinationFree is true
-      DriveToPlaceCarriedObjectAction(Robot& robot,
-                                      const Pose3d& placementPose,
+      DriveToPlaceCarriedObjectAction(const Pose3d& placementPose,
                                       const bool placeOnGround,
                                       const bool useExactRotation = false,
                                       const bool useManualSpeed = false,
@@ -223,6 +222,8 @@ namespace Anki {
       
       // checks if the placement destination is free (alternatively we could provide an std::function callback)
       bool IsPlacementGoalFree() const;
+
+      virtual void OnRobotSetInternalDriveToObj() override final;
       
       Pose3d _placementPose;
       
@@ -241,18 +242,16 @@ namespace Anki {
     {
     protected:
       // Not directly instantiable
-      IDriveToInteractWithObject(Robot& robot,
-                                 const ObjectID& objectID,
+      IDriveToInteractWithObject(const ObjectID& objectID,
                                  const PreActionPose::ActionType& actionType,
                                  const f32 predockOffsetDistX_mm,
                                  const bool useApproachAngle,
                                  const f32 approachAngle_rad,
                                  const bool useManualSpeed,
-                                 Radians maxTurnTowardsFaceAngle_rad,
+                                 const Radians& maxTurnTowardsFaceAngle_rad,
                                  const bool sayName);
       
-      IDriveToInteractWithObject(Robot& robot,
-                                 const ObjectID& objectID,
+      IDriveToInteractWithObject(const ObjectID& objectID,
                                  const f32 distance,
                                  const bool useManualSpeed);
 
@@ -307,6 +306,8 @@ namespace Anki {
       // If set, instead of driving to the nearest preActionPose, only the preActionPose
       // that is most closely aligned with the approach angle is considered.
       void SetApproachAngle(const f32 angle_rad);
+
+      virtual void OnRobotSetInternalCompound() override final;
       
     private:
       // Keep weak_ptrs to each of the actions inside this compound action so they can be easily
@@ -323,7 +324,42 @@ namespace Anki {
       bool     _lightsSet = false;
       f32      _preDockPoseDistOffsetX_mm = 0;
       PreDockCallback _preDockCallback;
-      
+
+      struct ConstructorParams{
+        ConstructorParams(const f32 distance, const bool useManualSpeed)
+        : usedSimpleConstructor(true)
+        , distance(distance)
+        , useManualSpeed(useManualSpeed){}
+
+        ConstructorParams(const PreActionPose::ActionType actionType, const f32 predockOffsetDistX_mm, 
+                          const bool useApproachAngle,  const f32 approachAngle_rad,  const bool useManualSpeed, 
+                          const Radians& maxTurnTowardsFaceAngle_rad, const bool sayName)
+        : usedSimpleConstructor(false)
+        , actionType(actionType)
+        , predockOffsetDistX_mm(predockOffsetDistX_mm)
+        , useApproachAngle(useApproachAngle)
+        , approachAngle_rad(approachAngle_rad)
+        , useManualSpeed(useManualSpeed)
+        , maxTurnTowardsFaceAngle_rad(maxTurnTowardsFaceAngle_rad)
+        , sayName(sayName){}
+
+        // There's slightly different logic based on constructor
+        // This bool identifies the desired path when moving the logic out of constructors
+        // and into the single robot set function
+        bool usedSimpleConstructor;
+
+        f32                       distance = 0.f;
+        PreActionPose::ActionType actionType = PreActionPose::NONE;
+        f32                       predockOffsetDistX_mm = 0.f;
+        bool                      useApproachAngle = false;
+        f32                       approachAngle_rad = 0.f;
+        bool                      useManualSpeed = false;
+        Radians                   maxTurnTowardsFaceAngle_rad;
+        bool                      sayName = false;
+
+      };
+
+      std::unique_ptr<ConstructorParams> _params;
     }; // class IDriveToInteractWithObject
         
     
@@ -337,8 +373,7 @@ namespace Anki {
     class DriveToAlignWithObjectAction : public IDriveToInteractWithObject
     {
     public:
-      DriveToAlignWithObjectAction(Robot& robot,
-                                   const ObjectID& objectID,
+      DriveToAlignWithObjectAction(const ObjectID& objectID,
                                    const f32 distanceFromMarker_mm,
                                    const bool useApproachAngle = false,
                                    const f32 approachAngle_rad = 0,
@@ -359,8 +394,7 @@ namespace Anki {
     class DriveToPickupObjectAction : public IDriveToInteractWithObject
     {
     public:
-      DriveToPickupObjectAction(Robot& robot,
-                                const ObjectID& objectID,
+      DriveToPickupObjectAction(const ObjectID& objectID,
                                 const bool useApproachAngle = false,
                                 const f32 approachAngle_rad = 0,
                                 const bool useManualSpeed = false,
@@ -387,8 +421,7 @@ namespace Anki {
     public:
       
       // Places carried object on top of objectID
-      DriveToPlaceOnObjectAction(Robot& robot,
-                                 const ObjectID& objectID,
+      DriveToPlaceOnObjectAction(const ObjectID& objectID,
                                  const bool useApproachAngle = false,
                                  const f32 approachAngle_rad = 0,
                                  const bool useManualSpeed = false,
@@ -412,8 +445,7 @@ namespace Anki {
     public:
       // Place carried object on ground at specified placementOffset from objectID,
       // chooses preAction pose closest to approachAngle_rad if useApproachAngle == true.
-      DriveToPlaceRelObjectAction(Robot& robot,
-                                  const ObjectID& objectID,
+      DriveToPlaceRelObjectAction(const ObjectID& objectID,
                                   const bool placingOnGround = true,
                                   const f32 placementOffsetX_mm = 0,
                                   const f32 placementOffsetY_mm = 0,
@@ -438,8 +470,7 @@ namespace Anki {
     class DriveToRollObjectAction : public IDriveToInteractWithObject
     {
     public:
-      DriveToRollObjectAction(Robot& robot,
-                              const ObjectID& objectID,
+      DriveToRollObjectAction(const ObjectID& objectID,
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
                               const bool useManualSpeed = false,
@@ -450,13 +481,14 @@ namespace Anki {
       
       // Sets the approach angle so that, if possible, the roll action will roll the block to land upright. If
       // the block is upside down or already upright, and roll action will be allowed
-      void RollToUpright();
+      void RollToUpright(const BlockWorld& blockWorld, const Pose3d& robotPose);
 
       // Calculate the approach angle the robot should use to drive to the pre-dock
       // pose that will result in the block being rolled upright.  Returns true
       // if the angle parameter has been set, false if the angle couldn't be
       // calculated or an approach angle to roll upright doesn't exist
-      static bool GetRollToUprightApproachAngle(Robot& robot,
+      static bool GetRollToUprightApproachAngle(const BlockWorld& blockWorld,
+                                                const Pose3d& robotPose,
                                                 const ObjectID& objID,
                                                 f32& approachAngle_rad);
 
@@ -475,8 +507,7 @@ namespace Anki {
     class DriveToPopAWheelieAction : public IDriveToInteractWithObject
     {
     public:
-      DriveToPopAWheelieAction(Robot& robot,
-                               const ObjectID& objectID,
+      DriveToPopAWheelieAction(const ObjectID& objectID,
                                const bool useApproachAngle = false,
                                const f32 approachAngle_rad = 0,
                                const bool useManualSpeed = false,
@@ -493,8 +524,7 @@ namespace Anki {
     class DriveToFacePlantAction : public IDriveToInteractWithObject
     {
     public:
-      DriveToFacePlantAction(Robot& robot,
-                             const ObjectID& objectID,
+      DriveToFacePlantAction(const ObjectID& objectID,
                              const bool useApproachAngle = false,
                              const f32 approachAngle_rad = 0,
                              const bool useManualSpeed = false,
@@ -508,8 +538,7 @@ namespace Anki {
     class DriveToAndTraverseObjectAction : public IDriveToInteractWithObject
     {
     public:
-      DriveToAndTraverseObjectAction(Robot& robot,
-                                     const ObjectID& objectID,
+      DriveToAndTraverseObjectAction(const ObjectID& objectID,
                                      const bool useManualSpeed = false,
                                      Radians maxTurnTowardsFaceAngle_rad = 0.f,
                                      const bool sayName = false);
@@ -521,7 +550,14 @@ namespace Anki {
     class DriveToRealignWithObjectAction : public CompoundActionSequential
     {
     public:
-      DriveToRealignWithObjectAction(Robot& robot, ObjectID objectID, float dist_mm);
+      DriveToRealignWithObjectAction(ObjectID objectID, float dist_mm);
+
+    protected:
+      virtual void OnRobotSetInternalCompound() override final;
+
+    private:
+      ObjectID _objectID;
+      float _dist_mm;
     };
   }
 }

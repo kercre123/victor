@@ -207,13 +207,10 @@ void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(BehaviorExternalInte
 void BehaviorBuildPyramidBase::TransitionToObservingBase(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(ObservingBase);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(new DriveStraightAction(robot, -kDriveBackDistance_mm, kDriveBackSpeed_mm_s));
-  action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BuildPyramidReactToBase));
+  CompoundActionSequential* action = new CompoundActionSequential();
+  action->AddAction(new DriveStraightAction(-kDriveBackDistance_mm, kDriveBackSpeed_mm_s));
+  action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::BuildPyramidReactToBase));
 
   DelegateIfInControl(action,
               [this, &behaviorExternalInterface]{

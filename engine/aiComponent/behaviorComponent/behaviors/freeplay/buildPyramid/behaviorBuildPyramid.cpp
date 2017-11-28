@@ -183,16 +183,16 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(BehaviorExternalInterface
           _checkForFullPyramidVisualVerifyFailure = true;
           // This will be removed by a helper soon - hopefully....
           CompoundActionParallel* checkForTopBlock =
-          new CompoundActionParallel(robot,{
-            new DriveStraightAction(robot, -kBackupDistCheckTopBlock_mm,
+          new CompoundActionParallel({
+            new DriveStraightAction(-kBackupDistCheckTopBlock_mm,
                                     kBackupSpeedCheckTopBlock_mm_s, false),
-            new MoveHeadToAngleAction(robot, kHeadAngleCheckTopBlock_rad),
-            new MoveLiftToHeightAction(robot, kLiftHeightCheckTopBlock_mm)
+            new MoveHeadToAngleAction(kHeadAngleCheckTopBlock_rad),
+            new MoveLiftToHeightAction(kLiftHeightCheckTopBlock_mm)
           });
-          CompoundActionSequential* scanForPyramid = new CompoundActionSequential(robot);
+          CompoundActionSequential* scanForPyramid = new CompoundActionSequential();
           scanForPyramid->AddAction(checkForTopBlock);
-          scanForPyramid->AddAction(new WaitAction(robot, kWaitForVisualTopBlock_sec));
-          scanForPyramid->AddAction(new MoveHeadToAngleAction(robot, kHeadBottomCheckTopBlock_rad));
+          scanForPyramid->AddAction(new WaitAction(kWaitForVisualTopBlock_sec));
+          scanForPyramid->AddAction(new MoveHeadToAngleAction(kHeadBottomCheckTopBlock_rad));
           DelegateIfInControl(scanForPyramid);
         }
       };
@@ -222,11 +222,8 @@ void BehaviorBuildPyramid::TransitionToReactingToPyramid(BehaviorExternalInterfa
   SET_STATE(ReactingToPyramid);
   BehaviorObjectiveAchieved(BehaviorObjective::BuiltPyramid);
   NeedActionCompleted();
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BuildPyramidSuccess));
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::BuildPyramidSuccess));
 }
 
 

@@ -101,8 +101,7 @@ ICozmoBehavior::Status BehaviorVictorDemoFeeding::UpdateInternal_WhileRunning(
   if( !IsControlDelegated() &&
       WantsToBeActivatedBehavior(behaviorExternalInterface) &&
      _imgTimeStartedWaitngForFood == 0) {
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    IActionRunner* animAction = new TriggerAnimationAction(robot, AnimationTrigger::FeedingReactToFullCube_Normal);
+    IActionRunner* animAction = new TriggerAnimationAction(AnimationTrigger::FeedingReactToFullCube_Normal);
 
     DelegateIfInControl(animAction, &BehaviorVictorDemoFeeding::TransitionToVerifyFood);
   }
@@ -121,10 +120,8 @@ void BehaviorVictorDemoFeeding::TransitionToVerifyFood(BehaviorExternalInterface
   const ObjectID foodCubeID = whiteboard.Victor_GetCubeToEat();
   
   if( foodCubeID.IsSet() ) {
-    Robot& robot = behaviorExternalInterface.GetRobot();
     const bool verifyWhenDone = true;
-    IActionRunner* turnAndVerifyAction = new TurnTowardsObjectAction(robot,
-                                                                     foodCubeID,
+    IActionRunner* turnAndVerifyAction = new TurnTowardsObjectAction(foodCubeID,
                                                                      Radians{M_PI_F},
                                                                      verifyWhenDone);
 
@@ -164,10 +161,10 @@ void BehaviorVictorDemoFeeding::TransitionToWaitForFood(BehaviorExternalInterfac
 
   // if wait finishes without interruption, we lost the food, so also queue a frustrated anim
 
-  CompoundActionSequential* action = new CompoundActionSequential(robot, {
-      new MoveHeadToAngleAction(robot, MoveHeadToAngleAction::Preset::IDEAL_BLOCK_VIEW),
-      new WaitAction(robot, kTimeToWaitForCube),
-      new TriggerAnimationAction( robot, AnimationTrigger::FeedingSearchFailure )
+  CompoundActionSequential* action = new CompoundActionSequential({
+      new MoveHeadToAngleAction(MoveHeadToAngleAction::Preset::IDEAL_BLOCK_VIEW),
+      new WaitAction(kTimeToWaitForCube),
+      new TriggerAnimationAction(AnimationTrigger::FeedingSearchFailure )
         });
 
   // Update will interrupt this if the cube is seen, otherwise after the timeout the behavior will end

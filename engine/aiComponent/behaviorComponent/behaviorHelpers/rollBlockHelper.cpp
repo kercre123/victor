@@ -117,10 +117,10 @@ void RollBlockHelper::DetermineAppropriateAction(BehaviorExternalInterface& beha
           // If rolling to upright, set the drive to helper approach angle if possible
           f32 uprightApproachAngle_rad;
           if(_shouldUpright &&
-             DriveToRollObjectAction::GetRollToUprightApproachAngle(
-                                                    robot,
-                                                    _targetID,
-                                                    uprightApproachAngle_rad)){
+             DriveToRollObjectAction::GetRollToUprightApproachAngle(robot.GetBlockWorld(),
+                                                                    robot.GetPose(),
+                                                                    _targetID,
+                                                                    uprightApproachAngle_rad)){
                params.useApproachAngle = true;
                params.approachAngle_rad = uprightApproachAngle_rad;
           }
@@ -244,14 +244,15 @@ void RollBlockHelper::StartRollingAction(BehaviorExternalInterface& behaviorExte
   _shouldRoll = false;
   DriveToRollObjectAction* rollAction = nullptr;
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    rollAction = new DriveToRollObjectAction(robot, _targetID);
+    rollAction = new DriveToRollObjectAction(_targetID);
   }
   
   if( _shouldUpright ) {
-    rollAction->RollToUpright();
+    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+    // be removed
+    Robot& robot = behaviorExternalInterface.GetRobot();
+    
+    rollAction->RollToUpright(robot.GetBlockWorld(), robot.GetPose());
   }
   if(_params.preDockCallback != nullptr){
     rollAction->SetPreDockCallback(_params.preDockCallback);

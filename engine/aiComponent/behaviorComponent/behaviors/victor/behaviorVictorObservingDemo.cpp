@@ -591,13 +591,10 @@ Result BehaviorVictorObservingDemo::OnBehaviorActivated(BehaviorExternalInterfac
     // force an update
     _debugLightsDirty = true;
   }
-  
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  CompoundActionSequential *initialAction = new CompoundActionSequential(
-    robot,
-    {{ new TriggerAnimationAction(robot, AnimationTrigger::NeutralFace),
-       new MoveHeadToAngleAction(robot, DEG_TO_RAD(kInitialHeadAngle_deg)) }});
+
+  std::list<IActionRunner*> actions = {{ new TriggerAnimationAction(AnimationTrigger::NeutralFace),
+       new MoveHeadToAngleAction(DEG_TO_RAD(kInitialHeadAngle_deg)) }};
+  CompoundActionSequential *initialAction = new CompoundActionSequential(std::move(actions));
 
   DelegateIfInControl(initialAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
       const bool onCharger = behaviorExternalInterface.GetRobot().IsOnChargerPlatform();

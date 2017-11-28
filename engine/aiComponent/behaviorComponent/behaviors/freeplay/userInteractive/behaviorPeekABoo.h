@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_Sparkable_BehaviorPeekABoo_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/smartFaceId.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -66,7 +67,7 @@ protected:
   bool WasFaceHiddenAfterTimestamp(BehaviorExternalInterface& behaviorExternalInterface, TimeStamp_t timestamp);
   
   AnimationTrigger GetPeekABooAnimation();
-  Vision::FaceID_t GetInteractionFace(const BehaviorExternalInterface& behaviorExternalInterface) const;
+  SmartFaceID GetInteractionFace(const BehaviorExternalInterface& behaviorExternalInterface) const;
 
   IActionRunner* GetIdleAndReRequestAction(BehaviorExternalInterface& behaviorExternalInterface, bool lockHead) const;
   
@@ -87,7 +88,7 @@ private:
   
   // ID of face we were just interacting with - used to give preference
   // to faces we were tracking before but should not be accessed directly
-  mutable Vision::FaceID_t _cachedFace = Vision::UnknownFaceID;
+  mutable SmartFaceID _cachedFace;
   unsigned int   _numPeeksRemaining;
   unsigned int   _numPeeksTotal;
   float          _nextTimeWantsToBeActivated_Sec;

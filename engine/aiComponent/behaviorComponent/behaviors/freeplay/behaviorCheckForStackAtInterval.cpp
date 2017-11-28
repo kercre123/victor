@@ -100,13 +100,10 @@ void BehaviorCheckForStackAtInterval::TransitionToSetup(BehaviorExternalInterfac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCheckForStackAtInterval::TransitionToFacingBlock(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   const ObservableObject* obj = GetKnownObject(behaviorExternalInterface, _knownBlockIndex);
   if(nullptr != obj)
   {
-    IActionRunner* action = new TurnTowardsObjectAction(robot, obj->GetID());
+    IActionRunner* action = new TurnTowardsObjectAction(obj->GetID());
     
     // check above even if turn action fails
     DelegateIfInControl(action, &BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock);
@@ -136,7 +133,7 @@ void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock(BehaviorExt
     robot.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), ghostPose, PoseState::Dirty);
     
     // use 0 for max turn angle so we only look with the head
-    TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, ObjectID{}, 0.f);
+    TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(ObjectID{}, 0.f);
     turnAction->UseCustomObject(_ghostStackedObject.get());
     
     // after checking the object, go back to the rotation we had at start, or continue with next block if any left
@@ -166,10 +163,8 @@ void BehaviorCheckForStackAtInterval::TransitionToReturnToSearch(BehaviorExterna
 {
   const Radians initialRobotRotation = _initialRobotPose.GetWithRespectToRoot()
                                            .GetRotation().GetAngleAroundZaxis();
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  IActionRunner* action = new PanAndTiltAction(robot, initialRobotRotation, 0, true, false);
+
+  IActionRunner* action = new PanAndTiltAction(initialRobotRotation, 0, true, false);
   DelegateIfInControl(action, [this](){
     _nextCheckTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _delayBetweenChecks_s;
   });

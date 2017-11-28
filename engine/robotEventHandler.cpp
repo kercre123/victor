@@ -22,6 +22,7 @@
 #include "engine/components/pathComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/faceWorld.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 
@@ -73,9 +74,9 @@ static IActionRunner* GetActionHelper(Robot& robot, const MessageType& msg);
 //IActionRunner* GetPlaceObjectOnGroundHereAction(Robot& robot, const ExternalInterface::PlaceObjectOnGroundHere& msg)
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceObjectOnGroundHere& msg)
-    {
-  return new PlaceObjectOnGroundAction(robot);
-    }
+{
+  return new PlaceObjectOnGroundAction();
+}
     
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //IActionRunner* GetPlaceObjectOnGroundAction(Robot& robot, const ExternalInterface::PlaceObjectOnGround& msg)
@@ -87,8 +88,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceObjec
   // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
   Rotation3d rot(UnitQuaternion(msg.qw, msg.qx, msg.qy, msg.qz));
   Pose3d targetPose(rot, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot.GetWorldOrigin());
-  return new PlaceObjectOnGroundAtPoseAction(robot,
-                                             targetPose,
+  return new PlaceObjectOnGroundAtPoseAction(targetPose,
                                              msg.useExactRotation,
                                              msg.useManualSpeed,
                                              msg.checkDestinationFree);
@@ -121,14 +121,14 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
 {
   AnimTrackFlagType ignoreTracks = GetIgnoreTracks(msg.ignoreBodyTrack, msg.ignoreHeadTrack, msg.ignoreLiftTrack);
   const bool kInterruptRunning = true; // TODO: expose this option in CLAD?
-  return new PlayAnimationAction(robot, msg.animationName, msg.numLoops, kInterruptRunning, ignoreTracks);
+  return new PlayAnimationAction(msg.animationName, msg.numLoops, kInterruptRunning, ignoreTracks);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper function that is friended by TriggerCubeAnimationAction so we can call its private constructor
 IActionRunner* GetPlayCubeAnimationHelper(Robot& robot, const ExternalInterface::PlayCubeAnimationTrigger& msg)
 {
-  return new TriggerCubeAnimationAction(robot, msg.objectID, msg.trigger);
+  return new TriggerCubeAnimationAction(msg.objectID, msg.trigger);
 }
   
 template<>
@@ -149,8 +149,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoPose& 
   // TODO: expose whether or not to drive with head down in message?
   const bool driveWithHeadDown = false;
   
-  DriveToPoseAction* action = new DriveToPoseAction(robot,
-                                                    targetPose,
+  DriveToPoseAction* action = new DriveToPoseAction(targetPose,
                                                     driveWithHeadDown,
                                                     msg.useManualSpeed);
   
@@ -170,7 +169,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::FlipBlock&
     selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
   }
 
-  DriveAndFlipBlockAction* action = new DriveAndFlipBlockAction(robot, selectedObjectID);
+  DriveAndFlipBlockAction* action = new DriveAndFlipBlockAction(selectedObjectID);
   
   if(msg.motionProf.isCustom)
 {
@@ -183,7 +182,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::FlipBlock&
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PanAndTilt& msg)
 {
-  return new PanAndTiltAction(robot, Radians(msg.bodyPan),
+  return new PanAndTiltAction(Radians(msg.bodyPan),
                               Radians(msg.headTilt),
                               msg.isPanAbsolute,
                               msg.isTiltAbsolute);
@@ -202,8 +201,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PickupObje
   
   if(static_cast<bool>(msg.usePreDockPose))
   {
-    DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot,
-                                                                      selectedObjectID,
+    DriveToPickupObjectAction* action = new DriveToPickupObjectAction(selectedObjectID,
                                                                       msg.useApproachAngle,
                                                                       msg.approachAngle_rad,
                                                                       msg.useManualSpeed);
@@ -217,7 +215,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PickupObje
   }
   else
   {
-    PickupObjectAction* action = new PickupObjectAction(robot, selectedObjectID, msg.useManualSpeed);
+    PickupObjectAction* action = new PickupObjectAction(selectedObjectID, msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -242,8 +240,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceRelOb
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    DriveToPlaceRelObjectAction* action = new DriveToPlaceRelObjectAction(robot,
-                                                                          selectedObjectID,
+    DriveToPlaceRelObjectAction* action = new DriveToPlaceRelObjectAction(selectedObjectID,
                                                                           true,
                                                                           msg.placementOffsetX_mm,
                                                                           0,
@@ -256,8 +253,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceRelOb
     }
     return action;
   } else {
-    PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
-                                                            selectedObjectID,
+    PlaceRelObjectAction* action = new PlaceRelObjectAction(selectedObjectID,
                                                             true,
                                                             msg.placementOffsetX_mm,
                                                             0,
@@ -282,8 +278,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceOnObj
   
   if(static_cast<bool>(msg.usePreDockPose)) {
     
-    DriveToPlaceOnObjectAction* action = new DriveToPlaceOnObjectAction(robot,
-                                                                        selectedObjectID,
+    DriveToPlaceOnObjectAction* action = new DriveToPlaceOnObjectAction(selectedObjectID,
                                                                         msg.useApproachAngle,
                                                                         msg.approachAngle_rad,
                                                                         msg.useManualSpeed);
@@ -294,8 +289,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceOnObj
     action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
   } else {
-    PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
-                                                            selectedObjectID,
+    PlaceRelObjectAction* action = new PlaceRelObjectAction(selectedObjectID,
                                                             false,
                                                             0,
                                                             0,
@@ -322,12 +316,10 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoObject
   DriveToObjectAction* action;
   if(msg.usePreDockPose)
   {
-    action = new DriveToObjectAction(robot,
-                                     selectedObjectID,
+    action = new DriveToObjectAction(selectedObjectID,
                                      PreActionPose::ActionType::DOCKING);
   } else {
-    action = new DriveToObjectAction(robot,
-                                     selectedObjectID,
+    action = new DriveToObjectAction(selectedObjectID,
                                      msg.distanceFromObjectOrigin_mm,
                                      msg.useManualSpeed);
   }
@@ -352,8 +344,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::AlignWithO
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    DriveToAlignWithObjectAction* action = new DriveToAlignWithObjectAction(robot,
-                                                                            selectedObjectID,
+    DriveToAlignWithObjectAction* action = new DriveToAlignWithObjectAction(selectedObjectID,
                                                                             msg.distanceFromMarker_mm,
                                                                             msg.useApproachAngle,
                                                                             msg.approachAngle_rad,
@@ -366,8 +357,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::AlignWithO
     
     return action;
   } else {
-    AlignWithObjectAction* action = new AlignWithObjectAction(robot,
-                                                              selectedObjectID,
+    AlignWithObjectAction* action = new AlignWithObjectAction(selectedObjectID,
                                                               msg.distanceFromMarker_mm,
                                                               msg.alignmentType,
                                                               msg.useManualSpeed);
@@ -386,8 +376,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::AlignWithO
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::CalibrateMotors& msg)
 {
-    CalibrateMotorAction* action = new CalibrateMotorAction(robot,
-                                                            msg.calibrateHead,
+    CalibrateMotorAction* action = new CalibrateMotorAction(msg.calibrateHead,
                                                             msg.calibrateLift);
     return action;
 }
@@ -396,14 +385,14 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::CalibrateM
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DriveStraight& msg)
 {
-  return new DriveStraightAction(robot, msg.dist_mm, msg.speed_mmps, msg.shouldPlayAnimation);
+  return new DriveStraightAction(msg.dist_mm, msg.speed_mmps, msg.shouldPlayAnimation);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DriveOffChargerContacts& msg)
 {
-  return new DriveOffChargerContactsAction(robot);
+  return new DriveOffChargerContactsAction();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -418,8 +407,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RollObject
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    DriveToRollObjectAction* action = new DriveToRollObjectAction(robot,
-                                                                  selectedObjectID,
+    DriveToRollObjectAction* action = new DriveToRollObjectAction(selectedObjectID,
                                                                   msg.useApproachAngle,
                                                                   msg.approachAngle_rad,
                                                                   msg.useManualSpeed);
@@ -431,7 +419,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RollObject
     action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
   } else {
-    RollObjectAction* action = new RollObjectAction(robot, selectedObjectID, msg.useManualSpeed);
+    RollObjectAction* action = new RollObjectAction(selectedObjectID, msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -458,8 +446,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PopAWheeli
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    DriveToPopAWheelieAction* action = new DriveToPopAWheelieAction(robot,
-                                                                    selectedObjectID,
+    DriveToPopAWheelieAction* action = new DriveToPopAWheelieAction(selectedObjectID,
                                                                     msg.useApproachAngle,
                                                                     msg.approachAngle_rad,
                                                                     msg.useManualSpeed);
@@ -470,7 +457,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PopAWheeli
     
     return action;
   } else {
-    PopAWheelieAction* action = new PopAWheelieAction(robot, selectedObjectID, msg.useManualSpeed);
+    PopAWheelieAction* action = new PopAWheelieAction(selectedObjectID, msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -494,8 +481,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::FacePlant&
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    DriveToFacePlantAction* action = new DriveToFacePlantAction(robot,
-                                                                selectedObjectID,
+    DriveToFacePlantAction* action = new DriveToFacePlantAction(selectedObjectID,
                                                                 msg.useApproachAngle,
                                                                 msg.approachAngle_rad,
                                                                 msg.useManualSpeed);
@@ -506,7 +492,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::FacePlant&
     
     return action;
   } else {
-    FacePlantAction* action = new FacePlantAction(robot, selectedObjectID, msg.useManualSpeed);
+    FacePlantAction* action = new FacePlantAction(selectedObjectID, msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -525,8 +511,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TraverseOb
   ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    DriveToAndTraverseObjectAction* action = new DriveToAndTraverseObjectAction(robot,
-                                                                                selectedObjectID,
+    DriveToAndTraverseObjectAction* action = new DriveToAndTraverseObjectAction(selectedObjectID,
                                                                                 msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
@@ -534,7 +519,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TraverseOb
     }
     return action;
   } else {
-    TraverseObjectAction* traverseAction = new TraverseObjectAction(robot, selectedObjectID, msg.useManualSpeed);
+    TraverseObjectAction* traverseAction = new TraverseObjectAction(selectedObjectID, msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, traverseAction);
@@ -554,8 +539,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::MountCharg
     selectedObjectID = msg.objectID;
   }
   
-  auto action =  new DriveToAndMountChargerAction(robot,
-                                                  selectedObjectID,
+  auto action =  new DriveToAndMountChargerAction(selectedObjectID,
                                                   msg.useCliffSensorCorrection,
                                                   msg.useManualSpeed);
   if(msg.motionProf.isCustom)
@@ -577,7 +561,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RealignWit
     selectedObjectID = msg.objectID;
   }
   
-  DriveToRealignWithObjectAction* driveToRealignWithObjectAction = new DriveToRealignWithObjectAction(robot, selectedObjectID, msg.dist_mm);
+  DriveToRealignWithObjectAction* driveToRealignWithObjectAction = new DriveToRealignWithObjectAction(selectedObjectID, msg.dist_mm);
   return driveToRealignWithObjectAction;
 }
 
@@ -585,7 +569,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RealignWit
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnInPlace& msg)
 {
-  TurnInPlaceAction* action = new TurnInPlaceAction(robot, msg.angle_rad, msg.isAbsolute);
+  TurnInPlaceAction* action = new TurnInPlaceAction(msg.angle_rad, msg.isAbsolute);
   action->SetMaxSpeed(msg.speed_rad_per_sec);
   action->SetAccel(msg.accel_rad_per_sec2);
   action->SetTolerance(msg.tol_rad);
@@ -603,8 +587,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnToward
     objectID = msg.objectID;
   }
   
-  TurnTowardsObjectAction* action = new TurnTowardsObjectAction(robot,
-                                                                objectID,
+  TurnTowardsObjectAction* action = new TurnTowardsObjectAction(objectID,
                                                                 Radians(msg.maxTurnAngle_rad),
                                                                 msg.visuallyVerifyWhenDone,
                                                                 msg.headTrackWhenDone);
@@ -626,7 +609,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnToward
   Pose3d pose(0, Z_AXIS_3D(), {msg.world_x, msg.world_y, msg.world_z},
               robot.GetWorldOrigin());
   
-  TurnTowardsPoseAction* action = new TurnTowardsPoseAction(robot, pose, Radians(msg.maxTurnAngle_rad));
+  TurnTowardsPoseAction* action = new TurnTowardsPoseAction(pose, Radians(msg.maxTurnAngle_rad));
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);
@@ -642,7 +625,8 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnToward
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsFace& msg)
 {
-  TurnTowardsFaceAction* action = new TurnTowardsFaceAction(robot, msg.faceID, Radians(msg.maxTurnAngle_rad), msg.sayName);
+  SmartFaceID smartID = robot.GetFaceWorld().GetSmartFaceID(msg.faceID);
+  TurnTowardsFaceAction* action = new TurnTowardsFaceAction(smartID, Radians(msg.maxTurnAngle_rad), msg.sayName);
   
   if(msg.sayName)
   {
@@ -664,7 +648,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnToward
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsImagePoint& msg)
 {
-  TurnTowardsImagePointAction* action = new TurnTowardsImagePointAction(robot, Point2f(msg.x, msg.y), msg.timestamp);
+  TurnTowardsImagePointAction* action = new TurnTowardsImagePointAction(Point2f(msg.x, msg.y), msg.timestamp);
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);
@@ -680,7 +664,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnToward
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsLastFacePose& msg)
 {
-  TurnTowardsLastFacePoseAction* action = new TurnTowardsLastFacePoseAction(robot, Radians(msg.maxTurnAngle_rad), msg.sayName);
+  TurnTowardsLastFacePoseAction* action = new TurnTowardsLastFacePoseAction(Radians(msg.maxTurnAngle_rad), msg.sayName);
   
   if(msg.sayName)
   {
@@ -702,7 +686,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnToward
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToFace& trackFace)
 {
-  TrackFaceAction* action = new TrackFaceAction(robot, trackFace.faceID);
+  TrackFaceAction* action = new TrackFaceAction(trackFace.faceID);
   
   // TODO: Support body-only mode
   if(trackFace.headOnly) {
@@ -716,7 +700,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToFac
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToLaserPoint& trackLaser)
 {
-  TrackGroundPointAction* action = new TrackGroundPointAction(robot, ExternalInterface::MessageEngineToGameTag::RobotObservedLaserPoint);
+  TrackGroundPointAction* action = new TrackGroundPointAction(ExternalInterface::MessageEngineToGameTag::RobotObservedLaserPoint);
   
   return action;
 }
@@ -725,7 +709,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToLas
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToObject& trackObject)
 {
-  TrackObjectAction* action = new TrackObjectAction(robot, trackObject.objectID);
+  TrackObjectAction* action = new TrackObjectAction(trackObject.objectID);
   action->SetMoveEyes(true);
   
   // TODO: Support body-only mode
@@ -744,11 +728,11 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToPet
   
   if(trackPet.petID != Vision::UnknownFaceID)
   {
-    action = new TrackPetFaceAction(robot, trackPet.petID);
+    action = new TrackPetFaceAction(trackPet.petID);
   }
   else
   {
-    action = new TrackPetFaceAction(robot, trackPet.petType);
+    action = new TrackPetFaceAction(trackPet.petType);
   }
   
   action->SetUpdateTimeout(trackPet.timeout_sec);
@@ -760,7 +744,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToPet
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetHeadAngle& setHeadAngle)
 {
-  MoveHeadToAngleAction* action = new MoveHeadToAngleAction(robot, setHeadAngle.angle_rad);
+  MoveHeadToAngleAction* action = new MoveHeadToAngleAction(setHeadAngle.angle_rad);
   action->SetMaxSpeed(setHeadAngle.max_speed_rad_per_sec);
   action->SetAccel(setHeadAngle.accel_rad_per_sec2);
   action->SetDuration(setHeadAngle.duration_sec);
@@ -772,8 +756,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetHeadAng
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayText& sayText)
 {
-  SayTextAction* sayTextAction = new SayTextAction(robot,
-                                                   sayText.text,
+  SayTextAction* sayTextAction = new SayTextAction(sayText.text,
                                                    sayText.voiceStyle,
                                                    sayText.durationScalar,
                                                    sayText.voicePitch);
@@ -786,7 +769,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayText& s
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayTextWithIntent& sayTextWithIntent)
 {
-  SayTextAction* sayTextAction = new SayTextAction(robot, sayTextWithIntent.text, sayTextWithIntent.intent);
+  SayTextAction* sayTextAction = new SayTextAction(sayTextWithIntent.text, sayTextWithIntent.intent);
   sayTextAction->SetAnimationTrigger(sayTextWithIntent.playEvent);
   sayTextAction->SetFitToDuration(sayTextWithIntent.fitToDuration);
   return sayTextAction;
@@ -800,13 +783,13 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetLiftHei
   if (msg.height_mm == LIFT_HEIGHT_LOWDOCK && robot.GetCarryingComponent().IsCarryingObject())
   {
     // ...put the block down right here.
-    IActionRunner* newAction = new PlaceObjectOnGroundAction(robot);
+    IActionRunner* newAction = new PlaceObjectOnGroundAction();
     return newAction;
   }
   else
   {
       // In the normal case directly set the lift height
-    MoveLiftToHeightAction* action = new MoveLiftToHeightAction(robot, msg.height_mm);
+    MoveLiftToHeightAction* action = new MoveLiftToHeightAction(msg.height_mm);
       action->SetMaxLiftSpeed(msg.max_speed_rad_per_sec);
       action->SetLiftAccel(msg.accel_rad_per_sec2);
       action->SetDuration(msg.duration_sec);
@@ -819,7 +802,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetLiftHei
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::VisuallyVerifyFace& msg)
 {
-  VisuallyVerifyFaceAction* action = new VisuallyVerifyFaceAction(robot, msg.faceID);
+  VisuallyVerifyFaceAction* action = new VisuallyVerifyFaceAction(msg.faceID);
   action->SetNumImagesToWaitFor(msg.numImagesToWait);
   return action;
 }
@@ -828,7 +811,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::VisuallyVe
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::VisuallyVerifyObject& msg)
 {
-  VisuallyVerifyObjectAction* action = new VisuallyVerifyObjectAction(robot, msg.objectID);
+  VisuallyVerifyObjectAction* action = new VisuallyVerifyObjectAction(msg.objectID);
   action->SetNumImagesToWaitFor(msg.numImagesToWait);
   return action;
 }
@@ -838,7 +821,7 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::VisuallyVerifyNoObjectAtPose& msg)
 {
   Pose3d p(0, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, msg.z_mm), robot.GetWorldOrigin());
-  return new VisuallyVerifyNoObjectAtPoseAction(robot, p, {msg.x_thresh_mm, msg.y_thresh_mm, msg.z_thresh_mm});
+  return new VisuallyVerifyNoObjectAtPoseAction(p, {msg.x_thresh_mm, msg.y_thresh_mm, msg.z_thresh_mm});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -850,10 +833,10 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
   const bool kInterruptRunning = true; // TODO: expose this option in CLAD?
   
   if( msg.useLiftSafe ) {
-    newAction = new TriggerLiftSafeAnimationAction(robot, msg.trigger, msg.numLoops, kInterruptRunning, ignoreTracks);
+    newAction = new TriggerLiftSafeAnimationAction(msg.trigger, msg.numLoops, kInterruptRunning, ignoreTracks);
   }
   else {
-    newAction = new TriggerAnimationAction(robot, msg.trigger, msg.numLoops, kInterruptRunning, ignoreTracks);
+    newAction = new TriggerAnimationAction(msg.trigger, msg.numLoops, kInterruptRunning, ignoreTracks);
   }
   return newAction;
 }
@@ -862,39 +845,36 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayNeedsGetOutAnimIfNeeded& msg)
 {
-  return new PlayNeedsGetOutAnimIfNeeded(robot);
+  return new PlayNeedsGetOutAnimIfNeeded();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::ReadToolCode& msg)
 {
-  return new ReadToolCodeAction(robot);
+  return new ReadToolCodeAction();
 }
       
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SearchForNearbyObject& msg)
 {
-  return new SearchForNearbyObjectAction(robot, msg.desiredObjectID, msg.backupDistance_mm, msg.backupSpeed_mms, msg.headAngle_rad);
+  return new SearchForNearbyObjectAction(msg.desiredObjectID, msg.backupDistance_mm, msg.backupSpeed_mms, msg.headAngle_rad);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::Wait& msg)
 {
-  return new WaitAction(robot, msg.time_s);
+  return new WaitAction(msg.time_s);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::WaitForImages& msg)
 {
-  return new WaitForImagesAction(robot, msg.numImages, msg.visionMode, msg.afterTimeStamp);
+  return new WaitForImagesAction(msg.numImages, msg.visionMode, msg.afterTimeStamp);
 }
-      
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
       
 // =====================================================================================================================
 #pragma mark -
@@ -1184,11 +1164,11 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction
     IActionRunner* actionRunnerPtr = handlerIter->second(*robot, msg.action);
     IAction* actionPtr = dynamic_cast<IAction*>(actionRunnerPtr);
     if (actionPtr != nullptr) {
-      action = new RetryWrapperAction(*robot, actionPtr, AnimationTrigger::Count, msg.numRetries);
+      action = new RetryWrapperAction(actionPtr, AnimationTrigger::Count, msg.numRetries);
     } else {
       ICompoundAction* compoundActionPtr = dynamic_cast<ICompoundAction*>(actionRunnerPtr);
       if (compoundActionPtr != nullptr) {
-        action = new RetryWrapperAction(*robot, compoundActionPtr, AnimationTrigger::Count, msg.numRetries);
+        action = new RetryWrapperAction(compoundActionPtr, AnimationTrigger::Count, msg.numRetries);
       } else {
         PRINT_NAMED_WARNING("RobotEventHandler.HandleQueueSingleAction.InvalidActionForRetries", "%s", actionRunnerPtr->GetName().c_str());
         return;
@@ -1218,9 +1198,9 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
   // Create an empty parallel or sequential compound action:
   ICompoundAction* compoundAction = nullptr;
   if(msg.parallel) {
-    compoundAction = new CompoundActionParallel(*robot);
+    compoundAction = new CompoundActionParallel();
   } else {
-    compoundAction = new CompoundActionSequential(*robot);
+    compoundAction = new CompoundActionSequential();
   }
   
   // Add all the actions in the message to the compound action, according
@@ -1249,7 +1229,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
   // If numRetries > 0, wrap in retry action
   IActionRunner* action = nullptr;
   if (msg.numRetries > 0) {
-    action = new RetryWrapperAction(*robot, compoundAction, AnimationTrigger::Count, msg.numRetries);
+    action = new RetryWrapperAction(compoundAction, AnimationTrigger::Count, msg.numRetries);
   } else {
     action = compoundAction;
   }

@@ -30,8 +30,7 @@ class FlipBlockAction;
 class DriveAndFlipBlockAction : public IDriveToInteractWithObject
 {
 public:
-  DriveAndFlipBlockAction(Robot& robot,
-                          const ObjectID objectID,
+  DriveAndFlipBlockAction(const ObjectID objectID,
                           const bool useApproachAngle = false,
                           const f32 approachAngle_rad = 0,
                           const bool useManualSpeed = false,
@@ -56,9 +55,11 @@ private:
 class DriveToFlipBlockPoseAction : public DriveToObjectAction
 {
 public:
-  DriveToFlipBlockPoseAction(Robot& robot, ObjectID objectID);
+  DriveToFlipBlockPoseAction(ObjectID objectID);
   
   void ShouldDriveToClosestPreActionPose(bool tf);
+protected:
+  virtual void OnRobotSetInternalDriveToObj() override final;  
 };
 
 
@@ -66,7 +67,7 @@ public:
 class FlipBlockAction : public IAction
 {
 public:
-  FlipBlockAction(Robot& robot, ObjectID objectID);
+  FlipBlockAction(ObjectID objectID);
   virtual ~FlipBlockAction();
   
   void SetShouldCheckPreActionPose(bool shouldCheck);
@@ -75,6 +76,9 @@ public:
 protected:
   virtual ActionResult Init() override;
   virtual ActionResult CheckIfDone() override;
+
+  virtual void OnRobotSet() override;
+
 
 private:
   ObjectID _objectID;

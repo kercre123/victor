@@ -231,10 +231,7 @@ void BehaviorBouncer::StartAnimation(BehaviorExternalInterface& behaviorExternal
     TransitionToState(nextState);
   };
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  IActionRunner* action = new TriggerAnimationAction(robot, animationTrigger);
+  IActionRunner* action = new TriggerAnimationAction(animationTrigger);
   DelegateIfInControl(action, callback);
   
   // DelegateIfInControl shouldn't fail
@@ -273,12 +270,17 @@ bool BehaviorBouncer::WantsToBeActivatedBehavior(BehaviorExternalInterface& beha
     LOG_TRACE("BehaviorBouncer.WantsToBeActivatedBehavior", "No faces to track");
     return false;
   }
+
+  std::set<SmartFaceID> smartIDs;
+  for(auto& entry: faceIDs){
+    smartIDs.insert(faceWorld.GetSmartFaceID(entry));
+  }
   
   const auto & whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
   const bool preferKnownFaces = true;
-  const auto faceID = whiteboard.GetBestFaceToTrack(faceIDs, preferKnownFaces);
-  _target = faceWorld.GetSmartFaceID(faceID);
-  
+  _target = whiteboard.GetBestFaceToTrack(smartIDs, preferKnownFaces);
+
+
   if (!_target.IsValid()) {
     LOG_WARNING("BehaviorBouncer.WantsToBeActivatedBehavior", "Best face (%s) is not valid", _target.GetDebugStr().c_str());
     return false;
@@ -465,11 +467,11 @@ void BehaviorBouncer::UpdateDisplay(BehaviorExternalInterface& behaviorExternalI
     DrawBall(image);
     DrawScore(image);
     
+    // Display image
+    LOG_TRACE("BehaviorBouncer.UpdateDisplay", "Start face action");
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    // Display image
-    LOG_TRACE("BehaviorBouncer.UpdateDisplay", "Start face action");
     robot.GetAnimationComponent().DisplayFaceImageBinary(image, ANIM_TIME_STEP_MS);
   }
 

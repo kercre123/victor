@@ -69,10 +69,11 @@ void BehaviorFindFaces::BeginStateMachine(BehaviorExternalInterface& behaviorExt
 void BehaviorFindFaces::TransitionToLookUp(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(FindFacesLookUp);
-
+  
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   const Robot& robot = behaviorExternalInterface.GetRobot();
+
   // use the base class's helper function to create a random head motion
   IAction* moveHeadAction = BaseClass::CreateHeadTurnAction(behaviorExternalInterface,
                                                             kHeadUpBodyAngleRelativeMin_deg,
@@ -105,10 +106,7 @@ void BehaviorFindFaces::TransitionToLookUp(BehaviorExternalInterface& behaviorEx
 void BehaviorFindFaces::TransitionToLookAtLastFace(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(FindFacesLookAtLast);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TurnTowardsLastFacePoseAction(robot), &BehaviorFindFaces::TransitionToBaseClass);
+  DelegateIfInControl(new TurnTowardsLastFacePoseAction(), &BehaviorFindFaces::TransitionToBaseClass);
 }
 
   

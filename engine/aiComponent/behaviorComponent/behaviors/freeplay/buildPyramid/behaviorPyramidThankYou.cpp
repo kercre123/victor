@@ -73,23 +73,21 @@ Result BehaviorPyramidThankYou::OnBehaviorActivated(BehaviorExternalInterface& b
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   
-  CompoundActionSequential* turnVerifyThank = new CompoundActionSequential(robot);
+  CompoundActionSequential* turnVerifyThank = new CompoundActionSequential();
   Pose3d facePose;
   behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(facePose);
   const bool lastFaceInCurrentOrigin = robot.IsPoseInWorldOrigin(facePose);
   if(lastFaceInCurrentOrigin){
    // Turn to the user and say thank you
-    TurnTowardsFaceAction* turnTowardsAction = new TurnTowardsLastFacePoseAction(robot);
+    TurnTowardsFaceAction* turnTowardsAction = new TurnTowardsLastFacePoseAction();
     turnTowardsAction->SetRequireFaceConfirmation(true);
     turnVerifyThank->AddAction(turnTowardsAction);
-    turnVerifyThank->AddAction(new TriggerAnimationAction(robot,
-                                      AnimationTrigger::BuildPyramidThankUser));
+    turnVerifyThank->AddAction(new TriggerAnimationAction(AnimationTrigger::BuildPyramidThankUser));
   }else{
     // Turn to the block that was just righted, and say thanks
-    turnVerifyThank->AddAction(new TurnTowardsObjectAction(robot, _targetID,
+    turnVerifyThank->AddAction(new TurnTowardsObjectAction(_targetID,
                                                            Radians(M_PI_F), true));
-    turnVerifyThank->AddAction(new TriggerAnimationAction(robot,
-                                      AnimationTrigger::BuildPyramidThankUser));
+    turnVerifyThank->AddAction(new TriggerAnimationAction(AnimationTrigger::BuildPyramidThankUser));
   }
   
   DelegateIfInControl(turnVerifyThank);

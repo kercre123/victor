@@ -102,7 +102,7 @@ Result BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface
   {
    // Can't transition out of WaitForShowCube state until
     // GetDockingComponent().CanPickUpObjectFromGround is true so the next transition will wait until the putdown is complete.
-    DelegateIfInControl(new PlaceObjectOnGroundAction(robot));
+    DelegateIfInControl(new PlaceObjectOnGroundAction());
   }
   
   return Result::RESULT_OK;
@@ -233,7 +233,7 @@ void BehaviorOnboardingShowCube::TransitionToNextState(BehaviorExternalInterface
 
       TimeStamp_t startWaitTime = robot.GetLastImageTimeStamp();
       const int kNumFramesWaitForImages = 3;
-      DelegateIfInControl(new WaitForImagesAction(robot, kNumFramesWaitForImages, VisionMode::DetectingMarkers),
+      DelegateIfInControl(new WaitForImagesAction(kNumFramesWaitForImages, VisionMode::DetectingMarkers),
                   [this, &behaviorExternalInterface, &robot, startWaitTime](ActionResult result) {
                     bool blockError = true;
                     bool lightsError = false;
@@ -303,12 +303,8 @@ void BehaviorOnboardingShowCube::TransitionToWaitToInspectCube(BehaviorExternalI
   // Move lift up so can safely put down, since place object on ground does unpredictable things in the middle
   // PlaceObjectOnGroundHere
   // AnimationTrigger.OnboardingReactToCubePutDown
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
 
-  DelegateIfInControl(new TriggerAnimationAction(robot,AnimationTrigger::OnboardingReactToCube),
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::OnboardingReactToCube),
               [this, &behaviorExternalInterface](const ActionResult& result){
                 if(result == ActionResult::SUCCESS)
                 {
@@ -352,7 +348,7 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(BehaviorExternalInterf
         robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
         _targetBlock = lastSeenObject->GetID();
       }
-      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::OnboardingCubeDockFail),
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::OnboardingCubeDockFail),
                   &BehaviorOnboardingShowCube::StartSubStatePickUpBlock);
     }
     else
@@ -380,21 +376,21 @@ void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(BehaviorExternalIn
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
 
-  CompoundActionSequential* action = new CompoundActionSequential(robot,
+  CompoundActionSequential* action = new CompoundActionSequential(
   {
-    new TriggerAnimationAction(robot, AnimationTrigger::OnboardingInteractWithCube),
-    new MoveLiftToHeightAction(robot,MoveLiftToHeightAction::Preset::CARRY),
+    new TriggerAnimationAction(AnimationTrigger::OnboardingInteractWithCube),
+    new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::CARRY),
   });
   
   // because PutDown isn't a real docking action, it doesn't have any sounds associated with it.
   // So just play a sound animation at the same time.
-  CompoundActionParallel* parallelAction = new CompoundActionParallel(robot,{
-    new TriggerAnimationAction(robot, AnimationTrigger::OnboardingSoundOnlyLiftEffortPlaceLow),
-    new PlaceObjectOnGroundAction(robot)
+  CompoundActionParallel* parallelAction = new CompoundActionParallel({
+    new TriggerAnimationAction(AnimationTrigger::OnboardingSoundOnlyLiftEffortPlaceLow),
+    new PlaceObjectOnGroundAction()
   });
   action->AddAction(parallelAction);
   
-  action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::OnboardingReactToCubePutDown));
+  action->AddAction(new TriggerAnimationAction(AnimationTrigger::OnboardingReactToCubePutDown));
   
   DelegateIfInControl(action,
               [this,&robot, &behaviorExternalInterface](const ExternalInterface::RobotCompletedAction& msg)

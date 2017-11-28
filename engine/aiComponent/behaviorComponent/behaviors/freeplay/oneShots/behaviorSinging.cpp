@@ -200,10 +200,10 @@ Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
   }
   
   // Setup the only action this behavior does, three sequential animations
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(new TriggerAnimationAction(robot, kGetInTrigger));
-  action->AddAction(new TriggerAnimationAction(robot, _songAnimTrigger));
-  action->AddAction(new TriggerAnimationAction(robot, kGetOutTrigger));
+  CompoundActionSequential* action = new CompoundActionSequential();
+  action->AddAction(new TriggerAnimationAction(kGetInTrigger));
+  action->AddAction(new TriggerAnimationAction(_songAnimTrigger));
+  action->AddAction(new TriggerAnimationAction(kGetOutTrigger));
   DelegateIfInControl(action, [this](const ActionResult& res) {
     if(res == ActionResult::SUCCESS)
     {

@@ -41,13 +41,14 @@ DevBehaviorComponentMessageHandler::DevBehaviorComponentMessageHandler(Robot& ro
       BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(msg.behaviorID);
       ICozmoBehaviorPtr behaviorToRun = bContainer.FindBehaviorByID(behaviorID);
       if(behaviorToRun != nullptr){
-        ICozmoBehaviorPtr rerunBehavior =
-           WrapRequestedBehaviorInDispatcherRerun(bContainer,
-                                                  behaviorID,
-                                                  msg.numRuns);
-        rerunBehavior->Init(_behaviorComponent._components->_behaviorExternalInterface);
+        ICozmoBehaviorPtr newRerunBaseBehavior =
+          WrapRequestedBehaviorInDispatcherRerun(bContainer,
+                                                 behaviorID,
+                                                 msg.numRuns);
+        newRerunBaseBehavior->Init(_behaviorComponent._components->_behaviorExternalInterface);
         auto& subComps = _behaviorComponent._components;
-        subComps->_behaviorSysMgr.ResetBehaviorStack(rerunBehavior.get());
+        subComps->_behaviorSysMgr.ResetBehaviorStack(newRerunBaseBehavior.get());
+        _rerunBehavior = newRerunBaseBehavior;
       }
     };
 

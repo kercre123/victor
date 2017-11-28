@@ -200,10 +200,7 @@ void BehaviorRollBlock::TransitionToRollSuccess(BehaviorExternalInterface& behav
   UpdateTargetsUpAxis(behaviorExternalInterface);
 
   if(!ShouldStreamline()){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::RollBlockSuccess));
   }
   BehaviorObjectiveAchieved(BehaviorObjective::BlockRolled);
   NeedActionCompleted();

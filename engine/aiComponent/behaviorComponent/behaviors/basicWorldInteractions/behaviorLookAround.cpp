@@ -209,19 +209,16 @@ void BehaviorLookAround::TransitionToRoaming(BehaviorExternalInterface& behavior
   }
 
   SET_STATE(State::Roaming);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  IActionRunner* goToPoseAction = new DriveToPoseAction(robot,
-                                                        destPose,
+
+  IActionRunner* goToPoseAction = new DriveToPoseAction(destPose,
                                                         false);
 
   // move head and lift to reasonable place before we start Roaming
-  IActionRunner* setHeadAndLiftAction = new CompoundActionParallel(robot, {
-      new MoveHeadToAngleAction(robot, _lookAroundHeadAngle_rads),
-      new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK) });
+  IActionRunner* setHeadAndLiftAction = new CompoundActionParallel({
+      new MoveHeadToAngleAction(_lookAroundHeadAngle_rads),
+      new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK) });
 
-  DelegateIfInControl(new CompoundActionSequential(robot, {setHeadAndLiftAction, goToPoseAction}),
+  DelegateIfInControl(new CompoundActionSequential({setHeadAndLiftAction, goToPoseAction}),
               [this, &behaviorExternalInterface](ActionResult result) {
                 const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
                 if( resCat == ActionResultCategory::SUCCESS || resCat == ActionResultCategory::RETRY ) {
@@ -244,8 +241,8 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(BehaviorExternalInt
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(new TurnTowardsPoseAction(robot, _lastPossibleObjectPose));
+  CompoundActionSequential* action = new CompoundActionSequential();
+  action->AddAction(new TurnTowardsPoseAction(_lastPossibleObjectPose));
 
   // if the pose is too far away, drive towards it 
   Pose3d relPose;
@@ -264,7 +261,7 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(BehaviorExternalInt
                            newTranslation * (oldLength - kPossibleObjectViewingDist_mm),
                            robot.GetPose());
 
-      action->AddAction(new DriveToPoseAction(robot, newTargetPose, false));
+      action->AddAction(new DriveToPoseAction(newTargetPose, false));
     }
   }
   else {
@@ -278,7 +275,7 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(BehaviorExternalInt
   }
 
   // add a search action after driving / facing, in case we don't see the object
-  action->AddAction(new SearchForNearbyObjectAction(robot));
+  action->AddAction(new SearchForNearbyObjectAction());
   
   // Note that in the positive case, this drive to action is likely to get canceled
   // because we discover it is a real object
@@ -313,12 +310,9 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(BehaviorExternalInterf
   PRINT_NAMED_DEBUG("BehaviorLookAround.TransitionToExaminingFoundObject", "examining new object %d",
                     recentObjectID.GetValue());
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new CompoundActionSequential(robot, {
-                  new TurnTowardsObjectAction(robot, recentObjectID),
-                  new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BlockReact) }),
+  DelegateIfInControl(new CompoundActionSequential({
+                  new TurnTowardsObjectAction(recentObjectID),
+                  new TriggerLiftSafeAnimationAction(AnimationTrigger::BlockReact) }),
                [this, &behaviorExternalInterface, recentObjectID](ActionResult result) {
                  if( result == ActionResult::SUCCESS ) {
                    PRINT_NAMED_DEBUG("BehaviorLookAround.Objects",

@@ -76,10 +76,7 @@ void BehaviorPickUpAndPutDownCube::TransitionToDriveWithCube(BehaviorExternalInt
     turn_rad *= -1;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TurnInPlaceAction(robot,turn_rad,false),
+  DelegateIfInControl(new TurnInPlaceAction(turn_rad,false),
               &BehaviorPickUpAndPutDownCube::TransitionToPutDownCube);
 }
 
@@ -92,10 +89,10 @@ void BehaviorPickUpAndPutDownCube::TransitionToPutDownCube(BehaviorExternalInter
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  CompoundActionSequential* action = new CompoundActionSequential();
 
   {
-    PlaceObjectOnGroundAction* placeAction = new PlaceObjectOnGroundAction(robot);
+    PlaceObjectOnGroundAction* placeAction = new PlaceObjectOnGroundAction();
     const bool shouldEmitCompletion = true;
     action->AddAction(placeAction, false, shouldEmitCompletion);
   }
@@ -105,7 +102,7 @@ void BehaviorPickUpAndPutDownCube::TransitionToPutDownCube(BehaviorExternalInter
     static constexpr float kBackUpMaxMM = 70.0;
     double backup_amount = robot.GetRNG().RandDblInRange(kBackUpMinMM,kBackUpMaxMM);
     
-    action->AddAction( new DriveStraightAction(robot, -backup_amount, DEFAULT_PATH_MOTION_PROFILE.speed_mmps) );
+    action->AddAction( new DriveStraightAction(-backup_amount, DEFAULT_PATH_MOTION_PROFILE.speed_mmps) );
   }
 
   DelegateIfInControl(action, [this]()

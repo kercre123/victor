@@ -131,8 +131,7 @@ void BehaviorVictorDemoObservingFaceInteraction::TransitionToTurnTowardsAFace(
   const SmartFaceID face = GetFaceToStareAt(behaviorExternalInterface);
   if( face.IsValid() ) {
     
-    TurnTowardsFaceAction* action = new TurnTowardsFaceAction( behaviorExternalInterface.GetRobot(),
-                                                               face );
+    TurnTowardsFaceAction* action = new TurnTowardsFaceAction(face);
 
     DelegateIfInControl(action, [this, face](ActionResult res,
                                              BehaviorExternalInterface& behaviorExternalInterface) {
@@ -171,9 +170,8 @@ void BehaviorVictorDemoObservingFaceInteraction::TransitionToStareAtFace(
     
     _faceIdsLookedAt.push_back( face );
 
-    WaitAction* waitAction = new WaitAction(behaviorExternalInterface.GetRobot(), kStaringTime_s);
-    TrackFaceAction* trackAction = new TrackFaceAction(behaviorExternalInterface.GetRobot(),
-                                                       face);
+    WaitAction* waitAction = new WaitAction(kStaringTime_s);
+    TrackFaceAction* trackAction = new TrackFaceAction(face);
     trackAction->StopTrackingWhenOtherActionCompleted( waitAction->GetTag() );
     trackAction->SetTiltTolerance(DEG_TO_RAD(kMinTrackingTiltAngle_deg));
     trackAction->SetPanTolerance(DEG_TO_RAD(kMinTrackingPanAngle_deg));
@@ -181,8 +179,7 @@ void BehaviorVictorDemoObservingFaceInteraction::TransitionToStareAtFace(
     trackAction->SetClampSmallAnglesPeriod(kMinTrackingClampPeriod_s, kMaxTrackingClampPeriod_s);
 
     // stare for a while, then turn towards another face
-    DelegateIfInControl( new CompoundActionParallel(behaviorExternalInterface.GetRobot(),
-                                                    {waitAction, trackAction}),
+    DelegateIfInControl( new CompoundActionParallel({waitAction, trackAction}),
                          &BehaviorVictorDemoObservingFaceInteraction::TransitionToTurnTowardsAFace );
   }
   else {

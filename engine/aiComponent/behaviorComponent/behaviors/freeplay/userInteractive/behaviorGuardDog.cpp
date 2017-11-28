@@ -222,11 +222,8 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
   switch (_state) {
     case State::Init:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
       // Play the 'soothing' pulse animation
-      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogPulse), [this]() { SET_STATE(DriveToBlocks); });
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::GuardDogPulse), [this]() { SET_STATE(DriveToBlocks); });
       
       // Set cube lights to 'setup'
       StartLightCubeAnims(behaviorExternalInterface, CubeAnimationTrigger::GuardDogSetup);
@@ -240,18 +237,15 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
     }
     case State::DriveToBlocks:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
       // Compute a goal starting pose near the blocks and drive there.
       Pose3d startingPose;
       ComputeStartingPose(behaviorExternalInterface, startingPose);
       const bool kForceHeadDown = false;
-      auto driveToStartingPoseAction = new DriveToPoseAction(robot, startingPose, kForceHeadDown);
+      auto driveToStartingPoseAction = new DriveToPoseAction(startingPose, kForceHeadDown);
       
       // Wrap this in a retry action in case it fails.
       const u8 kNumRetries = 2;
-      auto retryAction = new RetryWrapperAction(robot, driveToStartingPoseAction, AnimationTrigger::Count, kNumRetries);
+      auto retryAction = new RetryWrapperAction(driveToStartingPoseAction, AnimationTrigger::Count, kNumRetries);
       DelegateIfInControl(retryAction, [this](ActionResult res)
                                {
                                  if (res != ActionResult::SUCCESS) {
@@ -268,7 +262,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
-      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogSettle),
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::GuardDogSettle),
                   [this, &behaviorExternalInterface, &robot]() {
                                      // Stop setup light cube animation and go to "sleeping" lights:
                                      StartLightCubeAnims(behaviorExternalInterface, CubeAnimationTrigger::GuardDogSleeping);
@@ -283,16 +277,12 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
     }
     case State::StartSleeping:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
       // Start the sleeping loop animation (override default timeout)
-      DelegateIfInControl(new TriggerAnimationAction(robot,
-                                             AnimationTrigger::GuardDogSleepLoop,
-                                             0,                                   // numLoops (0 = infinite)
-                                             true,                                // interruptRunning
-                                             (u8)AnimTrackFlag::NO_TRACKS,        // tracksToLock
-                                             kSleepingMaxDuration_s));            // timeout_sec
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::GuardDogSleepLoop,
+                                                     0,                                   // numLoops (0 = infinite)
+                                                     true,                                // interruptRunning
+                                                     (u8)AnimTrackFlag::NO_TRACKS,        // tracksToLock
+                                                     kSleepingMaxDuration_s));            // timeout_sec
       SET_STATE(Sleeping);
       break;
     }
@@ -305,10 +295,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
     }
     case State::Fakeout:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogFakeout), [this]() { SET_STATE(StartSleeping); });
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::GuardDogFakeout), [this]() { SET_STATE(StartSleeping); });
       break;
     }
     case State::Busted:
@@ -323,7 +310,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       using namespace ExternalInterface;
       robot.Broadcast( MessageEngineToGame( GuardDogEnd(false) ) );
 
-      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogBusted), [this]() { SET_STATE(Complete); });
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::GuardDogBusted), [this]() { SET_STATE(Complete); });
       UpdatePublicBehaviorStage(behaviorExternalInterface, GuardDogStage::Busted);
       break;
     }
@@ -336,7 +323,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       using namespace ExternalInterface;
       robot.Broadcast( MessageEngineToGame( GuardDogEnd(false) ) );
 
-      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogCubeDisconnect), [this]() { SET_STATE(Complete); });
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::GuardDogCubeDisconnect), [this]() { SET_STATE(Complete); });
       break;
     }
     case State::Timeout:
@@ -345,10 +332,10 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
-      auto action = new CompoundActionSequential(robot);
+      auto action = new CompoundActionSequential();
       
       // Timeout wake-up animation:
-      action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeout));
+      action->AddAction(new TriggerAnimationAction(AnimationTrigger::GuardDogTimeout));
 
       // Ask blockworld for the closest cube and turn toward it.
       // Note: We ignore failures for the TurnTowardsPose and DriveStraight actions, since these are
@@ -356,21 +343,21 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       //  being played.
       const ObservableObject* closestBlock = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(), *_connectedCubesOnlyFilter);
       if (ANKI_VERIFY(closestBlock, "BehaviorGuardDog.UpdateInternal_Legacy.Timeout.NoClosestBlock", "No closest block returned by blockworld!")) {
-        action->AddAction(new TurnTowardsPoseAction(robot, closestBlock->GetPose()), true);
+        action->AddAction(new TurnTowardsPoseAction(closestBlock->GetPose()), true);
       }
 
-      action->AddAction(new DriveStraightAction(robot, -80.f, 150.f), true); // ignore failures (see note above)
+      action->AddAction(new DriveStraightAction(-80.f, 150.f), true); // ignore failures (see note above)
       
       // Play the CubesRemaining music and animation at the same time:
       auto updateStageCubesRemainingLambda = [this, &behaviorExternalInterface] (Robot& robot) { UpdatePublicBehaviorStage(behaviorExternalInterface, GuardDogStage::CubesRemaining); return true; };
-      action->AddAction(new WaitForLambdaAction(robot, updateStageCubesRemainingLambda));
+      action->AddAction(new WaitForLambdaAction(updateStageCubesRemainingLambda));
       
       if ((_nCubesMoved == 0) && (_nCubesFlipped == 0)) {
         RecordResult("TimeoutCubesUntouched");
-        action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeoutCubesUntouched));
+        action->AddAction(new TriggerAnimationAction(AnimationTrigger::GuardDogTimeoutCubesUntouched));
       } else {
         RecordResult("TimeoutCubesTouched");
-        action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeoutCubesTouched));
+        action->AddAction(new TriggerAnimationAction(AnimationTrigger::GuardDogTimeoutCubesTouched));
       }
       
       using namespace ExternalInterface;
@@ -392,10 +379,10 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
-      auto action = new CompoundActionSequential(robot);
+      auto action = new CompoundActionSequential();
       
       // Timeout wake-up animation:
-      action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeout));
+      action->AddAction(new TriggerAnimationAction(AnimationTrigger::GuardDogTimeout));
       
       // Ask blockworld for the closest cube and turn toward it.
       // Note: We ignore failures for the TurnTowardsPose and DriveStraight actions, since these are
@@ -403,17 +390,17 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       //  being played.
       const ObservableObject* closestBlock = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(), *_connectedCubesOnlyFilter);
       if (ANKI_VERIFY(closestBlock, "BehaviorGuardDog.UpdateInternal_Legacy.PlayerSuccess.NoClosestBlock", "No closest block returned by blockworld!")) {
-        action->AddAction(new TurnTowardsPoseAction(robot, closestBlock->GetPose()), true);
+        action->AddAction(new TurnTowardsPoseAction(closestBlock->GetPose()), true);
       }
 
-      action->AddAction(new DriveStraightAction(robot, -80.f, 150.f), true); // ignore failures (see note above)
+      action->AddAction(new DriveStraightAction(-80.f, 150.f), true); // ignore failures (see note above)
       
       // Update the music stage
       auto updateStageAllCubesGoneLambda = [this, &behaviorExternalInterface] (Robot& robot) { UpdatePublicBehaviorStage(behaviorExternalInterface, GuardDogStage::AllCubesGone); return true; };
-      action->AddAction(new WaitForLambdaAction(robot, updateStageAllCubesGoneLambda));
+      action->AddAction(new WaitForLambdaAction(updateStageAllCubesGoneLambda));
       
       // Play the PlayerSuccess animation
-      action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogPlayerSuccess));
+      action->AddAction(new TriggerAnimationAction(AnimationTrigger::GuardDogPlayerSuccess));
       
       using namespace ExternalInterface;
       robot.Broadcast( MessageEngineToGame( GuardDogEnd(true) ) );

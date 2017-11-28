@@ -100,7 +100,7 @@ Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& beha
         callbackFunc = &BehaviorReactToCliff::TransitionToPlayingCliffReaction;
       }
 
-      WaitForLambdaAction* waitForStopAction = new WaitForLambdaAction(robot, waitForStopLambda);
+      WaitForLambdaAction* waitForStopAction = new WaitForLambdaAction(waitForStopLambda);
       DelegateIfInControl(waitForStopAction, callbackFunc);
       break;
     }
@@ -134,17 +134,13 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction(BehaviorExternalInter
   const float latencyDelay_s = 0.05f;
   const float maxWaitTime_s = (1.0f / 1000.0f ) * CLIFF_EVENT_DELAY_MS + latencyDelay_s;
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
-  auto action = new CompoundActionParallel(robot);
+  auto action = new CompoundActionParallel();
 
   // Wait for the cliff event before jumping to cliff reaction
   auto waitForCliffLambda = [this](Robot& robot) {
     return _gotCliff;
   };
-  action->AddAction(new WaitForLambdaAction(robot, waitForCliffLambda, maxWaitTime_s), true);
+  action->AddAction(new WaitForLambdaAction(waitForCliffLambda, maxWaitTime_s), true);
   DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
 }
 
@@ -174,10 +170,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(BehaviorExternalInte
 
     auto action = GetCliffPreReactAction(behaviorExternalInterface, _detectedFlags);
 
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    action->AddAction(new TriggerLiftSafeAnimationAction(robot, reactionAnim));
+    action->AddAction(new TriggerLiftSafeAnimationAction(reactionAnim));
     
     DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToBackingUp);
   }
@@ -194,7 +187,7 @@ void BehaviorReactToCliff::TransitionToBackingUp(BehaviorExternalInterface& beha
 
   // if the animation doesn't drive us backwards enough, do it manually
   if( robot.GetCliffSensorComponent().IsCliffDetected() ) {
-      DelegateIfInControl(new DriveStraightAction(robot, -kCliffBackupDist_mm, kCliffBackupSpeed_mmps),
+      DelegateIfInControl(new DriveStraightAction(-kCliffBackupDist_mm, kCliffBackupSpeed_mmps),
                   [this,&behaviorExternalInterface](){
                       SendFinishedReactToCliffMessage(behaviorExternalInterface);
                   });
@@ -309,11 +302,7 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(BehaviorE
   const uint8_t BL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BL));
   const uint8_t BR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BR));
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  auto action = new CompoundActionSequential(robot);
+  auto action = new CompoundActionSequential();
   
   float amountToTurn_deg = 0.f;
   float amountToDrive_mm = 0.f;
@@ -323,16 +312,16 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(BehaviorE
   switch (cliffDetectedFlags) {
     case (FL | FR):
       // Hit cliff straight-on. Play stop reaction and move on
-      action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
+      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffDetectorStop));
       break;
     case FL:
       // Play stop reaction animation and turn CCW a bit
-      action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
+      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffDetectorStop));
       amountToTurn_deg = 15.f;
       break;
     case FR:
       // Play stop reaction animation and turn CW a bit
-      action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
+      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffDetectorStop));
       amountToTurn_deg = -15.f;
       break;
     case BL:
@@ -365,15 +354,15 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(BehaviorE
       break;
     default:
       // In the default case, just play the stop reaction and move on.
-      action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
+      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffDetectorStop));
       break;
   }
   
-  auto turnAction = new TurnInPlaceAction(robot, DEG_TO_RAD(amountToTurn_deg), false);
+  auto turnAction = new TurnInPlaceAction(DEG_TO_RAD(amountToTurn_deg), false);
   turnAction->SetAccel(MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2);
   turnAction->SetMaxSpeed(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
   
-  auto driveAction = new DriveStraightAction(robot, amountToDrive_mm, MAX_WHEEL_SPEED_MMPS, false);
+  auto driveAction = new DriveStraightAction(amountToDrive_mm, MAX_WHEEL_SPEED_MMPS, false);
   driveAction->SetAccel(MAX_WHEEL_ACCEL_MMPS2);
   driveAction->SetDecel(MAX_WHEEL_ACCEL_MMPS2);
   

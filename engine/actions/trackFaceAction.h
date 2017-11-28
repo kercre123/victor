@@ -27,8 +27,8 @@ public:
   
   using FaceID = Vision::FaceID_t;
   
-  TrackFaceAction(Robot& robot, FaceID faceID);
-  TrackFaceAction(Robot& robot, SmartFaceID faceID);
+  TrackFaceAction(FaceID faceID);
+  TrackFaceAction(SmartFaceID faceID);
   virtual ~TrackFaceAction();
 
   virtual void GetCompletionUnion(ActionCompletedUnion& completionInfo) const override;
@@ -40,8 +40,11 @@ protected:
   // Required by ITrackAction:
   virtual UpdateResult UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm) override;
   
-private:
+  virtual void OnRobotSet() override final;
 
+private:
+  // store face id as non-smart until robot is accessible
+  FaceID               _tmpFaceID;
   SmartFaceID          _faceID;
   TimeStamp_t          _lastFaceUpdate = 0;
 

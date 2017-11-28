@@ -224,16 +224,16 @@ void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExter
   // If playing animation takes too long, the original petXY may be pushed out of pose history.
   // A better version would rescan pet world after animation has completed.
   //
-  auto turnAction = new TurnTowardsImagePointAction(robot, petXY, pet->GetTimeStamp());
-  auto animAction = new TriggerAnimationAction(robot, trigger);
-  auto trackAction = new TrackPetFaceAction(robot, Vision::PetType::Unknown);
+  auto turnAction = new TurnTowardsImagePointAction(petXY, pet->GetTimeStamp());
+  auto animAction = new TriggerAnimationAction(trigger);
+  auto trackAction = new TrackPetFaceAction(Vision::PetType::Unknown);
   
   // Limit the amount of time that tracker will run without finding a target.
   // If pets are visible after animation, behavior will run until ended by update method.
   // If no pets are visible, behavior will end after tracking timeout.
   trackAction->SetUpdateTimeout(kReactToPetTrackUpdateTimeout);
   
-  auto compoundAction = new CompoundActionSequential(robot);
+  auto compoundAction = new CompoundActionSequential();
   compoundAction->AddAction(turnAction);
   compoundAction->AddAction(animAction);
   compoundAction->AddAction(trackAction);

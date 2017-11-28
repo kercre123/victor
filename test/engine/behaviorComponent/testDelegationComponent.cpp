@@ -143,7 +143,7 @@ TEST(DelegationComponent, TestDelegationVariants)
   
   // Delegate to an action
   {
-    DriveStraightAction* action = new DriveStraightAction(testFramework.GetRobot(), 0);
+    DriveStraightAction* action = new DriveStraightAction(0);
     ASSERT_TRUE(delegationComp.HasDelegator(behaviorDelegating));
     auto& delegatorComp = delegationComp.GetDelegator(behaviorDelegating);
     EXPECT_TRUE(delegatorComp.Delegate(behaviorDelegating,
@@ -169,7 +169,7 @@ TEST(DelegationComponent, TestDelegationVariants)
   bunchOfBehaviors.pop_back();
   // Delegate to an action and cancel it
   {
-    DriveStraightAction* action = new DriveStraightAction(testFramework.GetRobot(), 0);
+    DriveStraightAction* action = new DriveStraightAction(0);
     ASSERT_TRUE(delegationComp.HasDelegator(bunchOfBehaviors.back().get()));
     auto& delegatorComp = delegationComp.GetDelegator(bunchOfBehaviors.back().get());
     EXPECT_TRUE(delegatorComp.Delegate(bunchOfBehaviors.back().get(),

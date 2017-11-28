@@ -40,11 +40,8 @@ bool BehaviorReactToReturnedToTreads::WantsToBeActivatedBehavior(BehaviorExterna
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToReturnedToTreads::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // Wait for a bit to allow pitch to correct
-  DelegateIfInControl(new WaitAction(robot, 0.5f),
+  DelegateIfInControl(new WaitAction(0.5f),
               &BehaviorReactToReturnedToTreads::CheckForHighPitch);
   
   return Result::RESULT_OK;
@@ -66,7 +63,7 @@ void BehaviorReactToReturnedToTreads::CheckForHighPitch(BehaviorExternalInterfac
   // for unnecessary head calibrations.
   if (std::fabsf(robot.GetPitchAngle().getDegrees()) > 10.f) {
     LOG_EVENT("BehaviorReactToReturnedToTreads.CalibratingHead", "%f", robot.GetPitchAngle().getDegrees());
-    DelegateIfInControl(new CalibrateMotorAction(robot, true, false));
+    DelegateIfInControl(new CalibrateMotorAction(true, false));
   }
 }
 

@@ -97,11 +97,7 @@ void DriveToHelper::DriveToPreActionPose(BehaviorExternalInterface& behaviorExte
   
   if((_params.actionType != PreActionPose::PLACE_RELATIVE) ||
      ((_params.placeRelOffsetX_mm == 0) && (_params.placeRelOffsetY_mm == 0))){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DriveToObjectAction* driveToAction = new DriveToObjectAction(robot,
-                                                                 _targetID,
+    DriveToObjectAction* driveToAction = new DriveToObjectAction(_targetID,
                                                                  _params.actionType);
 
     if(_params.useApproachAngle){
@@ -150,15 +146,15 @@ void DriveToHelper::DriveToPreActionPose(BehaviorExternalInterface& behaviorExte
           _status = BehaviorStatus::Complete;
         }else{
           // Drive to the nearest allowed pose, and then perform a visual verify
-          CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+          CompoundActionSequential* compoundAction = new CompoundActionSequential();
           
           const bool kForceHeadDown = false;
-          auto driveToPoseAction = new DriveToPoseAction(robot, possiblePoses, kForceHeadDown);
+          auto driveToPoseAction = new DriveToPoseAction(possiblePoses, kForceHeadDown);
           
           const bool shouldIgnoreFailure = true;
           compoundAction->AddAction(driveToPoseAction, shouldIgnoreFailure);
           
-          compoundAction->AddAction(new VisuallyVerifyObjectAction(robot, _targetID));
+          compoundAction->AddAction(new VisuallyVerifyObjectAction(_targetID));
           DelegateIfInControl(compoundAction, &DriveToHelper::RespondToDriveResult);
         }
       }else{

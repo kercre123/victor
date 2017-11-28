@@ -35,9 +35,10 @@ namespace Anki {
 namespace Cozmo {
 
 // Forward declarations
+class BlockWorldFilter;  
 class ObservableObject;
 class Robot;
-class BlockWorldFilter;  
+class SmartFaceID;
 
 namespace DefaultFailToUseParams {
 constexpr static const float kTimeObjectInvalidAfterFailure_sec = 30.f;
@@ -191,7 +192,7 @@ public:
   
   // shared logic to get a face to track which requires the least panning and tilting (based on the current
   // robot pose). If preferNamed is true, then will prefer faces with a name to those without
-  Vision::FaceID_t GetBestFaceToTrack(const std::set< Vision::FaceID_t >& possibleFaces,
+  SmartFaceID GetBestFaceToTrack(const std::set<SmartFaceID>& possibleFaces,
                                       const bool preferNamedFaces) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

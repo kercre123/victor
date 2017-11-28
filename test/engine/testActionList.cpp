@@ -39,7 +39,7 @@ uint8_t track3 = (u8)AnimTrackFlag::FACE_IMAGE_TRACK | (u8)AnimTrackFlag::EVENT_
 class TestAction : public IAction
 {
   public:
-    TestAction(Robot& robot, std::string name, RobotActionType type, u8 tracks = 0);
+    TestAction(std::string name, RobotActionType type, u8 tracks = 0);
     virtual ~TestAction() { actionsDestroyed.push_back(GetName()); }
     int _numRetries = 0;
     bool _complete = false;
@@ -48,9 +48,8 @@ class TestAction : public IAction
     virtual ActionResult CheckIfDone() override;
 };
 
-TestAction::TestAction(Robot& robot, std::string name, RobotActionType type, u8 tracks)
-: IAction(robot,
-          name,
+TestAction::TestAction(std::string name, RobotActionType type, u8 tracks)
+: IAction(name,
           type,
           tracks)
 {
@@ -73,7 +72,7 @@ ActionResult TestAction::CheckIfDone()
 class TestInterruptAction : public IAction
 {
 public:
-  TestInterruptAction(Robot& robot, std::string name, RobotActionType type, u8 tracks = 0);
+  TestInterruptAction(std::string name, RobotActionType type, u8 tracks = 0);
   virtual ~TestInterruptAction() { actionsDestroyed.push_back(GetName()); }
   bool _complete;
 protected:
@@ -83,9 +82,8 @@ protected:
 };
 
 
-TestInterruptAction::TestInterruptAction(Robot& robot, std::string name, RobotActionType type, u8 tracks)
-: IAction(robot,
-          name,
+TestInterruptAction::TestInterruptAction(std::string name, RobotActionType type, u8 tracks)
+: IAction(name,
           type,
           tracks)
 {
@@ -103,17 +101,16 @@ ActionResult TestInterruptAction::CheckIfDone()
 class TestCompoundActionSequential : public CompoundActionSequential
 {
 public:
-  TestCompoundActionSequential(Robot& robot, std::initializer_list<IActionRunner*> actions, std::string name);
+  TestCompoundActionSequential(std::initializer_list<IActionRunner*> actions, std::string name);
   virtual ~TestCompoundActionSequential() { actionsDestroyed.push_back(_name); }
   virtual std::list<std::shared_ptr<IActionRunner>>& GetActions() { return _actions; }
 private:
   std::string _name;
 };
 
-TestCompoundActionSequential::TestCompoundActionSequential(Robot& robot,
-                                                           std::initializer_list<IActionRunner*> actions,
+TestCompoundActionSequential::TestCompoundActionSequential(std::initializer_list<IActionRunner*> actions,
                                                            std::string name)
-: CompoundActionSequential(robot, actions)
+: CompoundActionSequential(actions)
 {
   _name = name;
   SetName(name);
@@ -123,17 +120,16 @@ TestCompoundActionSequential::TestCompoundActionSequential(Robot& robot,
 class TestCompoundActionParallel : public CompoundActionParallel
 {
 public:
-  TestCompoundActionParallel(Robot& robot, std::initializer_list<IActionRunner*> actions, std::string name);
+  TestCompoundActionParallel(std::initializer_list<IActionRunner*> actions, std::string name);
   virtual ~TestCompoundActionParallel() { actionsDestroyed.push_back(_name); }
   virtual std::list<std::shared_ptr<IActionRunner>>& GetActions() { return _actions; }
 private:
   std::string _name;
 };
 
-TestCompoundActionParallel::TestCompoundActionParallel(Robot& robot,
-                                                       std::initializer_list<IActionRunner*> actions,
+TestCompoundActionParallel::TestCompoundActionParallel(std::initializer_list<IActionRunner*> actions,
                                                        std::string name)
-: CompoundActionParallel(robot, actions)
+: CompoundActionParallel(actions)
 {
   _name = name;
   SetName(name);
@@ -143,7 +139,7 @@ TestCompoundActionParallel::TestCompoundActionParallel(Robot& robot,
 class TestActionWithinAction : public IAction
 {
 public:
-  TestActionWithinAction(Robot& robot, std::string name, RobotActionType type);
+  TestActionWithinAction(std::string name, RobotActionType type);
   virtual ~TestActionWithinAction() { actionsDestroyed.push_back(GetName()); }
   TestCompoundActionSequential* GetAction() { return &_compoundAction; }
   bool _complete;
@@ -155,9 +151,8 @@ private:
   TestCompoundActionSequential _compoundAction;
 };
 
-TestActionWithinAction::TestActionWithinAction(Robot& robot, std::string name, RobotActionType type)
-: IAction(robot,
-          name,
+TestActionWithinAction::TestActionWithinAction(std::string name, RobotActionType type)
+: IAction(name,
           type,
           track1 | track2)
 , _compoundAction(robot, {}, "Comp1")
@@ -190,7 +185,7 @@ ActionResult TestActionWithinAction::CheckIfDone()
 class TestActionThatCancels : public IAction
 {
 public:
-  TestActionThatCancels(Robot& robot, std::string name, RobotActionType type, u8 tracks = 0);
+  TestActionThatCancels(std::string name, RobotActionType type, u8 tracks = 0);
   virtual ~TestActionThatCancels()
   {
     actionsDestroyed.push_back(GetName());
@@ -215,9 +210,8 @@ protected:
   virtual ActionResult CheckIfDone() override;
 };
 
-TestActionThatCancels::TestActionThatCancels(Robot& robot, std::string name, RobotActionType type, u8 tracks)
-: IAction(robot,
-          name,
+TestActionThatCancels::TestActionThatCancels(std::string name, RobotActionType type, u8 tracks)
+: IAction(name,
           type,
           tracks)
 {

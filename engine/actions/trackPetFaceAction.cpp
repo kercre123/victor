@@ -20,9 +20,8 @@ namespace Cozmo {
   
 static const char * const kLogChannelName = "Actions";
   
-TrackPetFaceAction::TrackPetFaceAction(Robot& robot, FaceID faceID)
-: ITrackAction(robot,
-               "TrackPetFace" + std::to_string(faceID),
+TrackPetFaceAction::TrackPetFaceAction(FaceID faceID)
+: ITrackAction("TrackPetFace" + std::to_string(faceID),
                RobotActionType::TRACK_PET_FACE)
 , _faceID(faceID)
 {
@@ -30,9 +29,8 @@ TrackPetFaceAction::TrackPetFaceAction(Robot& robot, FaceID faceID)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TrackPetFaceAction::TrackPetFaceAction(Robot& robot, Vision::PetType petType)
-: ITrackAction(robot,
-               "TrackPetFace",
+TrackPetFaceAction::TrackPetFaceAction(Vision::PetType petType)
+: ITrackAction("TrackPetFace",
                RobotActionType::TRACK_PET_FACE)
 , _petType(petType)
 {
@@ -75,7 +73,7 @@ ITrackAction::UpdateResult TrackPetFaceAction::UpdateTracking(Radians& absPanAng
   
   if(_faceID != Vision::UnknownFaceID)
   {
-    petFace = _robot.GetPetWorld().GetPetByID(_faceID);
+    petFace = GetRobot().GetPetWorld().GetPetByID(_faceID);
     
     if(nullptr == petFace)
     {
@@ -87,10 +85,10 @@ ITrackAction::UpdateResult TrackPetFaceAction::UpdateTracking(Radians& absPanAng
   }
   else
   {
-    auto petIDs = _robot.GetPetWorld().GetKnownPetsWithType(_petType);
+    auto petIDs = GetRobot().GetPetWorld().GetKnownPetsWithType(_petType);
     if(!petIDs.empty())
     {
-      petFace = _robot.GetPetWorld().GetPetByID(*petIDs.begin());
+      petFace = GetRobot().GetPetWorld().GetPetByID(*petIDs.begin());
     }
     else
     {
@@ -106,7 +104,7 @@ ITrackAction::UpdateResult TrackPetFaceAction::UpdateTracking(Radians& absPanAng
   }
   _lastFaceUpdate = petFace->GetTimeStamp();
   
-  Result result = _robot.ComputeTurnTowardsImagePointAngles(petFace->GetRect().GetMidPoint(), petFace->GetTimeStamp(),
+  Result result = GetRobot().ComputeTurnTowardsImagePointAngles(petFace->GetRect().GetMidPoint(), petFace->GetTimeStamp(),
                                                             absPanAngle, absTiltAngle);
   if(RESULT_OK != result)
   {

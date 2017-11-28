@@ -563,13 +563,10 @@ void BehaviorEnrollFace::TransitionToLookingForFace(BehaviorExternalInterface& b
   const bool playScanningGetOut = (State::Enrolling == _state);
   
   SET_STATE(LookingForFace);
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  IActionRunner* action = new CompoundActionSequential(robot, {
+
+  IActionRunner* action = new CompoundActionSequential({
     CreateTurnTowardsFaceAction(behaviorExternalInterface, _faceID, _saveID, playScanningGetOut),
-    new WaitForImagesAction(robot, kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces),
+    new WaitForImagesAction(kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces),
   });
 
   
@@ -608,23 +605,20 @@ void BehaviorEnrollFace::TransitionToLookingForFace(BehaviorExternalInterface& b
                   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.LookingForFace.FaceSeen",
                                 "Found face %d to enroll. Timeout set to %.1fsec",
                                 _faceID, _timeout_sec);
-                  
-                  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-                  // be removed
-                  Robot& robot = behaviorExternalInterface.GetRobot();
 
-                  auto getInAnimAction = new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceGetIn);
+                  auto getInAnimAction = new TriggerAnimationAction(AnimationTrigger::MeetCozmoLookFaceGetIn);
                   
                   IActionRunner* action = nullptr;
                   if(CanMoveTreads(behaviorExternalInterface))
                   {
+                    SmartFaceID smartID = behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(_faceID);
                     // Turn towards the person we've chosen to enroll, play the "get in" animation
                     // to start "scanning" and move towards the person a bit to show intentionality
-                    action = new CompoundActionSequential(robot, {
-                      new TurnTowardsFaceAction(robot, _faceID, M_PI, false),
-                      new CompoundActionParallel(robot, {
+                    action = new CompoundActionSequential({
+                      new TurnTowardsFaceAction(smartID, M_PI, false),
+                      new CompoundActionParallel({
                         getInAnimAction,
-                        new DriveStraightAction(robot, kEnrollFace_DriveForwardIntentDist_mm,
+                        new DriveStraightAction(kEnrollFace_DriveForwardIntentDist_mm,
                                                 kEnrollFace_DriveForwardIntentSpeed_mmps, false)
                       })
                     });
@@ -652,7 +646,7 @@ void BehaviorEnrollFace::TransitionToEnrolling(BehaviorExternalInterface& behavi
   // Actually enable directed enrollment of the selected face in the vision system
   robot.GetFaceWorld().Enroll(_faceID);
 
-  TrackFaceAction* trackAction = new TrackFaceAction(robot, _faceID);
+  TrackFaceAction* trackAction = new TrackFaceAction(_faceID);
     
   if(!CanMoveTreads(behaviorExternalInterface))
   {
@@ -669,9 +663,9 @@ void BehaviorEnrollFace::TransitionToEnrolling(BehaviorExternalInterface& behavi
   
   // Play the scanning animation in parallel while we're tracking
   const s32 numLoops = 0; // loop forever
-  TriggerAnimationAction* scanLoop  = new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoScanningIdle, numLoops);
+  TriggerAnimationAction* scanLoop  = new TriggerAnimationAction(AnimationTrigger::MeetCozmoScanningIdle, numLoops);
   
-  CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {trackAction, scanLoop});
+  CompoundActionParallel* compoundAction = new CompoundActionParallel({trackAction, scanLoop});
   
   // Tracking never completes. UpdateInternal will watch for timeout or for
   // face enrollment to complete and stop this behavior or transition to
@@ -686,12 +680,8 @@ void BehaviorEnrollFace::TransitionToScanningInterrupted(BehaviorExternalInterfa
   
   // Make sure we stop tracking necessary (in case we timed out while tracking)
   CancelDelegates(false);
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
 
-  DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceInterrupt),
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::MeetCozmoLookFaceInterrupt),
               [this]() {
                 SET_STATE(TimedOut);
               });
@@ -705,13 +695,9 @@ void BehaviorEnrollFace::TransitionToSayingName(BehaviorExternalInterface& behav
   // Stop tracking/scanning the face
   CancelDelegates(false);
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
   // Get out of the scanning face
-  CompoundActionSequential* finalAnimation = new CompoundActionSequential(robot, {
-    new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceGetOut)
+  CompoundActionSequential* finalAnimation = new CompoundActionSequential({
+    new TriggerAnimationAction(AnimationTrigger::MeetCozmoLookFaceGetOut)
   });
   
   if(_sayName)
@@ -730,28 +716,28 @@ void BehaviorEnrollFace::TransitionToSayingName(BehaviorExternalInterface& behav
       
       {
         // 1. Say name once
-        SayTextAction* sayNameAction1 = new SayTextAction(robot, _faceName, SayTextIntent::Name_FirstIntroduction_1);
+        SayTextAction* sayNameAction1 = new SayTextAction(_faceName, SayTextIntent::Name_FirstIntroduction_1);
         sayNameAction1->SetAnimationTrigger(AnimationTrigger::MeetCozmoFirstEnrollmentSayName);
         finalAnimation->AddAction(sayNameAction1);
       }
       
       {
         // 2. Repeat name
-        SayTextAction* sayNameAction2 = new SayTextAction(robot, _faceName, SayTextIntent::Name_FirstIntroduction_2);
+        SayTextAction* sayNameAction2 = new SayTextAction(_faceName, SayTextIntent::Name_FirstIntroduction_2);
         sayNameAction2->SetAnimationTrigger(AnimationTrigger::MeetCozmoFirstEnrollmentRepeatName);
         finalAnimation->AddAction(sayNameAction2);
       }
       
       {
         // 3. Big celebrate (no name being said)
-        TriggerAnimationAction* celebrateAction = new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoFirstEnrollmentCelebration);
+        TriggerAnimationAction* celebrateAction = new TriggerAnimationAction(AnimationTrigger::MeetCozmoFirstEnrollmentCelebration);
         finalAnimation->AddAction(celebrateAction);
       }
     }
     else
     {
       // This is a re-enrollment, so do the more subdued animation
-      SayTextAction* sayNameAction = new SayTextAction(robot, _faceName, SayTextIntent::Name_Normal);
+      SayTextAction* sayNameAction = new SayTextAction(_faceName, SayTextIntent::Name_Normal);
       sayNameAction->SetAnimationTrigger(AnimationTrigger::MeetCozmoReEnrollmentSayName);
       
       finalAnimation->AddAction(sayNameAction);
@@ -858,7 +844,7 @@ void BehaviorEnrollFace::TransitionToSavingToRobot(BehaviorExternalInterface& be
   };
   
   const f32 kMaxSaveTime_sec = 5.f; // Don't wait the default (long) time for save to complete
-  WaitForLambdaAction* action = new WaitForLambdaAction(robot, waitForSave, kMaxSaveTime_sec);
+  WaitForLambdaAction* action = new WaitForLambdaAction(waitForSave, kMaxSaveTime_sec);
   
   DelegateIfInControl(action, [this](ActionResult actionResult) {
     if (ActionResult::SUCCESS == actionResult) {
@@ -881,15 +867,15 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionParallel* liftAndTurnTowardsAction = new CompoundActionParallel(robot, {
-    new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK)
+  CompoundActionParallel* liftAndTurnTowardsAction = new CompoundActionParallel({
+    new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK)
   });
   
   if(playScanningGetOut)
   {
     // If we we are enrolling, we need to get out of the "scanning face" animation while
     // doing this
-    liftAndTurnTowardsAction->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceInterrupt));
+    liftAndTurnTowardsAction->AddAction(new TriggerAnimationAction(AnimationTrigger::MeetCozmoLookFaceInterrupt));
   }
   
   if(!CanMoveTreads(behaviorExternalInterface))
@@ -909,8 +895,9 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.TurningTowardsFaceID",
                     "Turning towards faceID=%d (saveID=%d)",
                     faceID, saveID);
-      
-      turnAction = new TurnTowardsFaceAction(robot, faceID, DEG_TO_RAD(45.f));
+
+      SmartFaceID smartID = behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(faceID);
+      turnAction = new TurnTowardsFaceAction(smartID, DEG_TO_RAD(45.f));
     }
   }
   else
@@ -958,8 +945,9 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.FoundFace",
                     "Turning towards faceID=%d last seen at t=%d (saveID=%d)",
                     faceToTurnTowards->GetID(), faceToTurnTowards->GetTimeStamp(), saveID);
-      
-      turnAction = new TurnTowardsFaceAction(robot, faceToTurnTowards->GetID(), DEG_TO_RAD(90.f));
+
+      SmartFaceID smartID = behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(faceToTurnTowards->GetID());
+      turnAction = new TurnTowardsFaceAction(smartID, DEG_TO_RAD(90.f));
     }
   }
   
@@ -971,7 +959,7 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
                   faceID, saveID);
     
     // No face found to look towards: fallback on looking at last face pose
-    turnAction = new TurnTowardsLastFacePoseAction(robot, DEG_TO_RAD(45.f));
+    turnAction = new TurnTowardsLastFacePoseAction(DEG_TO_RAD(45.f));
   }
   
   // Add whatever turn action we decided to create to the parallel action and return it
@@ -995,16 +983,12 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction(BehaviorExternalInterf
                                         -_lastRelBodyAngle.ToDouble());
   const Radians relBodyAngle = newAngle -_lastRelBodyAngle;
   _lastRelBodyAngle = newAngle;
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
 
-  CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* compoundAction = new CompoundActionSequential();
   
   if(CanMoveTreads(behaviorExternalInterface))
   {
-    compoundAction->AddAction(new PanAndTiltAction(robot, relBodyAngle, absHeadAngle, false, true));
+    compoundAction->AddAction(new PanAndTiltAction(relBodyAngle, absHeadAngle, false, true));
     
     // Also back up a little if we haven't gone too far back already
     if(_totalBackup_mm <= kEnrollFace_MaxTotalBackup_mm)
@@ -1013,17 +997,17 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction(BehaviorExternalInterf
       const f32 backupDist_mm = GetRNG().RandDblInRange(kEnrollFace_MinBackup_mm, kEnrollFace_MaxBackup_mm);
       _totalBackup_mm += backupDist_mm;
       const bool shouldPlayAnimation = false; // don't want head to move down!
-      DriveStraightAction* backUpAction = new DriveStraightAction(robot, -backupDist_mm, backupSpeed_mmps, shouldPlayAnimation);
+      DriveStraightAction* backUpAction = new DriveStraightAction(-backupDist_mm, backupSpeed_mmps, shouldPlayAnimation);
       compoundAction->AddAction(backUpAction);
     }
   }
   else
   {
     // If in the air (i.e. held in hand), just move head, not body
-    compoundAction->AddAction(new MoveHeadToAngleAction(robot, absHeadAngle));
+    compoundAction->AddAction(new MoveHeadToAngleAction(absHeadAngle));
   }
   
-  compoundAction->AddAction(new WaitForImagesAction(robot, kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces));
+  compoundAction->AddAction(new WaitForImagesAction(kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces));
   
   return compoundAction;
 }

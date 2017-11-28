@@ -84,7 +84,7 @@ void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(BehaviorExternalInterfac
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
 
-  CompoundActionSequential* placeAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* placeAction = new CompoundActionSequential();
   if(robot.GetCarryingComponent().GetCarryingObject() != _targetID){
     const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(robot.GetCarryingComponent().GetCarryingObject());
     if(obj != nullptr){
@@ -98,12 +98,12 @@ void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(BehaviorExternalInterfac
         const bool isAbsolute = true;
         
         // Overshoot the angle to ram by a quarter turn and then place the block down
-        placeAction->AddAction(new TurnInPlaceAction(robot, angle.ToFloat(), isAbsolute));
+        placeAction->AddAction(new TurnInPlaceAction(angle.ToFloat(), isAbsolute));
       }
     }
   }
   
-  placeAction->AddAction(new PlaceObjectOnGroundAction(robot));
+  placeAction->AddAction(new PlaceObjectOnGroundAction());
   DelegateIfInControl(placeAction, &BehaviorRamIntoBlock::TransitionToTurningToBlock);
 }
 
@@ -111,13 +111,9 @@ void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(BehaviorExternalInterfac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRamIntoBlock::TransitionToTurningToBlock(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
-  CompoundActionParallel* action = new CompoundActionParallel(robot, {
-    new TurnTowardsObjectAction(robot, _targetID),
-    new MoveLiftToHeightAction(robot,  MoveLiftToHeightAction::Preset::CARRY)
+  CompoundActionParallel* action = new CompoundActionParallel({
+    new TurnTowardsObjectAction(_targetID),
+    new MoveLiftToHeightAction( MoveLiftToHeightAction::Preset::CARRY)
   });
   DelegateIfInControl(action, &BehaviorRamIntoBlock::TransitionToRammingIntoBlock);
 }
@@ -134,20 +130,20 @@ void BehaviorRamIntoBlock::TransitionToRammingIntoBlock(BehaviorExternalInterfac
     const f32 distToObj = ComputeDistanceBetween(robot.GetPose(), obj->GetPose());
     
     
-    CompoundActionParallel* ramAction = new CompoundActionParallel(robot, {
-      new DriveStraightAction(robot,
+    CompoundActionParallel* ramAction = new CompoundActionParallel({
+      new DriveStraightAction(
                               distToObj + kDistancePastBlockToDrive_mm,
                               kSpeedToDriveThroughBlock_mmps,
                               false),
-      new TriggerAnimationAction(robot, AnimationTrigger::SoundOnlyRamIntoBlock)
+      new TriggerAnimationAction(AnimationTrigger::SoundOnlyRamIntoBlock)
     });
     
 
-    IActionRunner* driveOut = new DriveStraightAction(robot,
+    IActionRunner* driveOut = new DriveStraightAction(
                                                       -kDistanceBackUpFromBlock_mm,
                                                       kSpeedBackUpFromBlock_mmps);
     
-    CompoundActionSequential* driveAction = new CompoundActionSequential(robot);
+    CompoundActionSequential* driveAction = new CompoundActionSequential();
     driveAction->AddAction(ramAction);
     driveAction->AddAction(driveOut);
     DelegateIfInControl(driveAction);

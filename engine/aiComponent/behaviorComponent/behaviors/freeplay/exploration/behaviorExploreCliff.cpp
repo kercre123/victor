@@ -127,7 +127,7 @@
 //  }
 //  
 //  // request the action
-//  DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( robot, _currentVantagePoints );
+//  DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( _currentVantagePoints );
 //  _currentActionTag = driveToPoseAction->GetTag();
 //  robot.GetActionList().QueueActionNow(driveToPoseAction);
 //

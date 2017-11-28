@@ -404,10 +404,7 @@ void IHelper::RespondToActionWithAnim(const T& res, ActionResult actionResult,
       AnimationTrigger responseAnim = AnimationResponseToActionResult(behaviorExternalInterface, userResult);
       if(responseAnim != AnimationTrigger::Count)
       {
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        Robot& robot = behaviorExternalInterface.GetRobot();
-        DelegateIfInControl(new TriggerAnimationAction(robot, responseAnim),
+        DelegateIfInControl(new TriggerAnimationAction(responseAnim),
                     [res, &callback](ActionResult animPlayed, BehaviorExternalInterface& behaviorExternalInterface){
                       // Pass through the true action result, not the played animation result
                       auto tmpCallback = callback;

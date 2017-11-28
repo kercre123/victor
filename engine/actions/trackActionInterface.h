@@ -122,7 +122,7 @@ public:
   
 protected:
 
-  ITrackAction(Robot& robot, const std::string name, const RobotActionType type);
+  ITrackAction(const std::string name, const RobotActionType type);
   virtual ~ITrackAction();
   
   // Note that derived classes should override InitInternal, which is called by Init

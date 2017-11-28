@@ -68,10 +68,8 @@ Result BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalIn
   }else if(expressedNeed == NeedId::Repair){
     reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement_Severe_Repair;
   }
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, reactionAnimation,
+
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(reactionAnimation,
                                                  kNumLoops, kInterruptRunning, tracksToLock), [this]()
   {
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);

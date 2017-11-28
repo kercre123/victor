@@ -352,7 +352,7 @@ void TestBehavior::Bar(BehaviorExternalInterface& behaviorExternalInterface) {
 bool TestBehavior::CallDelegateIfInControl(Robot& robot, bool& actionCompleteRef)
 {
   WaitForLambdaAction* action =
-  new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+  new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
   
   return DelegateIfInControl(action);
 }
@@ -364,7 +364,7 @@ bool TestBehavior::CallDelegateIfInControlExternalCallback1(Robot& robot,
                                                             ICozmoBehavior::RobotCompletedActionCallback callback)
 {
   WaitForLambdaAction* action =
-  new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+  new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
   
   return DelegateIfInControl(action, callback);
 }
@@ -376,7 +376,7 @@ bool TestBehavior::CallDelegateIfInControlExternalCallback2(Robot& robot,
                                                             ICozmoBehavior::ActionResultCallback callback)
 {
   WaitForLambdaAction* action =
-  new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+  new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
   
   return DelegateIfInControl(action, callback);
 }
@@ -387,7 +387,7 @@ bool TestBehavior::CallDelegateIfInControlInternalCallbackVoid(Robot& robot,
                                                                bool& actionCompleteRef)
 {
   WaitForLambdaAction* action =
-  new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+  new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
   
   return DelegateIfInControl(action, &TestBehavior::Foo);
 }
@@ -398,7 +398,7 @@ bool TestBehavior::CallDelegateIfInControlInternalCallbackRobot(Robot& robot,
                                                                 bool& actionCompleteRef)
 {
   WaitForLambdaAction* action =
-  new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+  new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
   
   return DelegateIfInControl(action, &TestBehavior::Bar);
 }
@@ -534,12 +534,8 @@ void TestHelper::SetActionToRunOnNextUpdate(IActionRunner* action) {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestHelper::StartAutoAction(BehaviorExternalInterface& behaviorExternalInterface) {
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   _selfActionDone = false;
-  _nextActionToRun = new WaitForLambdaAction(robot, [this](Robot& t) {
+  _nextActionToRun = new WaitForLambdaAction([this](Robot& t) {
     printf("%s: ShouldStopActing: %d\n", _name.c_str(), _selfActionDone);
     return _selfActionDone;
   });
