@@ -40,8 +40,9 @@
 }
 
 #play-now-modal .project-img {
-  width: 35vw;
+  width: auto;
   height: 35vw;
+  max-height: 85%;
   display: block;
   margin: 0 auto;
 }
