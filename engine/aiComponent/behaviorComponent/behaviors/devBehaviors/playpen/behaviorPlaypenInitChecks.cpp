@@ -42,6 +42,7 @@ Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal(BehaviorExternalIn
   // Battery voltage should be relatively high as we are on the charger
   if(robot.GetBatteryVoltage() < PlaypenConfig::kMinBatteryVoltage)
   {
+    PRINT_NAMED_WARNING("BehaviorPlaypenInitChecks.OnActivated.BatteryTooLow", "%fv", robot.GetBatteryVoltage());
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::BATTERY_TOO_LOW, RESULT_FAIL);
   }
   

@@ -125,6 +125,9 @@ BehaviorStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateInternal(BehaviorE
 
       // Wait half a second for marker detection to stabilize
       DelegateIfInControl(new WaitAction(robot, 0.5f), [&robot]{
+        // Turn CLAHE off
+        NativeAnkiUtilConsoleSetValueWithString("UseCLAHE_u8", "0");
+
         robot.GetVisionComponent().StoreNextImageForCameraCalibration();
       });
     }
@@ -133,7 +136,29 @@ BehaviorStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateInternal(BehaviorE
     {
       robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
       _computingCalibration = true;
-      AddTimer(PlaypenConfig::kTimeoutForComputingCalibration_ms, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::CALIBRATION_TIMED_OUT); }, kWaitingForCalibTimer);
+      AddTimer(PlaypenConfig::kTimeoutForComputingCalibration_ms, [this, &robot](){ 
+          // We have at least seen the calibration target so we should at least save the image we were trying to use for
+          // calibration before failing with calibration timeout
+          std::list<std::vector<u8> > rawJpegData = robot.GetVisionComponent().GetCalibrationImageJpegData(nullptr);
+          
+          // Verify number of images
+          // 2 images, the second is the undistorted version of the first
+          const u32 NUM_CAMERA_CALIB_IMAGES = 2;
+          bool invalidNumCalibImages = rawJpegData.size() != NUM_CAMERA_CALIB_IMAGES;
+          if (invalidNumCalibImages)
+          {
+            PRINT_NAMED_WARNING("BehaviorPlaypenCameraCalibration.HandleCameraCalibration.InvalidNumCalibImagesFound",
+                                "%zu images found. Why?", rawJpegData.size());
+            rawJpegData.resize(NUM_CAMERA_CALIB_IMAGES);
+          }
+          
+          // Write calibration image to log
+          PLAYPEN_TRY(GetLogger().AddFile("calibImage.jpg", *rawJpegData.begin()),
+                      FactoryTestResultCode::WRITE_TO_LOG_FAILED);
+
+          PLAYPEN_SET_RESULT(FactoryTestResultCode::CALIBRATION_TIMED_OUT); 
+        }, 
+        kWaitingForCalibTimer);
     }
   }
   
@@ -151,6 +176,9 @@ void BehaviorPlaypenCameraCalibration::OnBehaviorDeactivated(BehaviorExternalInt
   // Make sure to disable computing calibration mode in case it was left on for some reason
   robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, false);
   
+  // Turn CLAHE back to "WhenDark"
+  NativeAnkiUtilConsoleSetValueWithString("UseCLAHE_u8", "4");
+
   // Clear all objects from blockworld since calib target contains markers it will
   // cause objects to get added to the world
   BlockWorldFilter filter;

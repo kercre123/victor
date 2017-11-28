@@ -42,6 +42,7 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal(BehaviorExternalInt
 
   if(robot.GetBatteryVoltage() < PlaypenConfig::kMinBatteryVoltage)
   {
+    PRINT_NAMED_WARNING("BehaviorPlaypenEndChecks.OnActivated.BatteryTooLow", "%fv", robot.GetBatteryVoltage());
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::BATTERY_TOO_LOW, RESULT_FAIL);
   }
   
