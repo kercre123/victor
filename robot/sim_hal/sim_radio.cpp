@@ -199,7 +199,7 @@ namespace Anki {
         }
         bytesSent = server.Send((char*)buffer, length);
 #else
-        ssize_t bytesSent = server.Send((const char*)buffer, length);
+        const ssize_t bytesSent = server.Send((const char*)buffer, length);
 #endif
         if (bytesSent < length) {
           printf("ERROR: Failed to send msg contents (%zd bytes sent)\n", bytesSent);
@@ -243,7 +243,7 @@ namespace Anki {
       const size_t tempSize = RECV_BUFFER_SIZE - recvBufSize_;
       assert(tempSize < std::numeric_limits<int>::max());
       
-      ssize_t dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], static_cast<int>(tempSize));
+      const ssize_t dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], static_cast<int>(tempSize));
       if (dataSize > 0) {
         recvBufSize_ += dataSize;
       } else if (dataSize < 0) {
@@ -338,7 +338,7 @@ namespace Anki {
 #else
 
       // Read available datagram
-      ssize_t dataLen = server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
+      const ssize_t dataLen = server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
       if (dataLen < 0) {
         // Something went wrong
         DisconnectRadio();
@@ -377,3 +377,4 @@ namespace Anki {
 
   } // namespace Cozmo
 } // namespace Anki
+

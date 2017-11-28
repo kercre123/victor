@@ -345,7 +345,7 @@ namespace Cozmo {
       {
         UdpClient* udpClient = c.GetInClient();
         
-        ssize_t bytes_recvd = udpClient->Recv((char*)recvBuf, kMaxRecvBufSize);
+        const ssize_t bytes_recvd = udpClient->Recv((char*)recvBuf, kMaxRecvBufSize);
         
         if (bytes_recvd == 0) {
           it++;
