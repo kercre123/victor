@@ -64,7 +64,8 @@ static u32  kDurationOfTouchToRecord_ms   = 3000;
 static bool      kCheckFirmwareVersion = true;
 
 // Minimum battery voltage the robot should have at the start and end of playpen
-static f32       kMinBatteryVoltage    = 3.6;
+// TODO(Al): Reenable
+static f32       kMinBatteryVoltage    = 0;
 
 // Minimum firmare version we are looking for
 static u32       kMinFirmwareVersion   = 10501;
