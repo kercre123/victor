@@ -66,7 +66,7 @@ namespace Cozmo {
     return isInitialized_;
   }
   
-  size_t GameComms::Send(const Comms::MsgPacket &p)
+  ssize_t GameComms::Send(const Comms::MsgPacket &p)
   {
 
     if (HasClient()) {
@@ -243,7 +243,7 @@ namespace Cozmo {
     uint8_t messageBuffer[64];
     const size_t bytesPacked = outMessage.Pack(messageBuffer, sizeof(messageBuffer));
     
-    regClient_.Send((char*)messageBuffer, (int)bytesPacked);
+    regClient_.Send((const char*)messageBuffer, (int)bytesPacked);
   }
   
   

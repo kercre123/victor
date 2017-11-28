@@ -38,7 +38,7 @@ int main(int argc, char **argv)
   VizControllerImpl vizController(vizSupervisor);
   const size_t maxPacketSize{(size_t)VizConstants::MaxMessageSize};
   uint8_t data[maxPacketSize]{0};
-  size_t numBytesRecvd;
+  ssize_t numBytesRecvd;
   
   // Setup server to listen for commands
   UdpServer server;
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
   while (vizSupervisor.step(Anki::Cozmo::TIME_STEP) != -1)
   {
     // Any messages received?
-    while ((numBytesRecvd = (size_t)server.Recv((char*)data, maxPacketSize)) > 0) {
+    while ((numBytesRecvd = server.Recv((char*)data, maxPacketSize)) > 0) {
       physicsClient.Send((char*)data, (int)numBytesRecvd);
       vizController.ProcessMessage(VizInterface::MessageViz(data, numBytesRecvd));
     } // while server.Recv

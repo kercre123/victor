@@ -122,7 +122,7 @@ bool UdpSocketComms::SendMessageInternal(const Comms::MsgPacket& msgPacket)
 {
   if (_comms->GetNumConnectedDevices() > 0)
   {
-    size_t bytesSent = _comms->Send(msgPacket);
+    ssize_t bytesSent = _comms->Send(msgPacket);
     return (bytesSent >= msgPacket.dataLen);
   }
   else

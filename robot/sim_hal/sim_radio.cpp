@@ -1,7 +1,7 @@
 /*
  * sim_radio.cpp
  *
- *   Implemenation of HAL radio functionality for the simulator.
+ *   Implementation of HAL radio functionality for the simulator.
  *
  *   Author: Andrew Stein
  *
@@ -134,7 +134,7 @@ namespace Anki {
 
       // Register with advertising service by sending IP and port info
       // NOTE: Since there is no ACK robot_advertisement_controller must be running before this happens!
-      //       We also assume that when working with simluated robots on Webots, the advertisement service is running on the same host.
+      //       We also assume that when working with simulated robots on Webots, the advertisement service is running on the same host.
       advRegClient.Connect(advertisementIP, ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
 
 
@@ -193,17 +193,16 @@ namespace Anki {
         assert (packRes == UTILMSG_OK);
 
         // Send header and message content
-        u32 bytesSent = 0;
-        bytesSent = server.Send((char*)header, HEADER_LENGTH);
+        ssize_t bytesSent = server.Send((char*)header, HEADER_LENGTH);
         if (bytesSent < HEADER_LENGTH) {
-          printf("ERROR: Failed to send header (%d bytes sent)\n", bytesSent);
+          printf("ERROR: Failed to send header (%zd bytes sent)\n", bytesSent);
         }
         bytesSent = server.Send((char*)buffer, length);
 #else
-        u32 bytesSent = server.Send((char*)buffer, length);
+        ssize_t bytesSent = server.Send((const char*)buffer, length);
 #endif
         if (bytesSent < length) {
-          printf("ERROR: Failed to send msg contents (%d bytes sent)\n", bytesSent);
+          printf("ERROR: Failed to send msg contents (%zd bytes sent)\n", bytesSent);
           DisconnectRadio();
           return false;
         }
@@ -241,12 +240,10 @@ namespace Anki {
 #endif
 
       // Check for incoming data and add it to receive buffer
-      int dataSize;
-
-      // Read available data
       const size_t tempSize = RECV_BUFFER_SIZE - recvBufSize_;
       assert(tempSize < std::numeric_limits<int>::max());
-      dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], static_cast<int>(tempSize));
+      
+      ssize_t dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], static_cast<int>(tempSize));
       if (dataSize > 0) {
         recvBufSize_ += dataSize;
       } else if (dataSize < 0) {
@@ -341,25 +338,25 @@ namespace Anki {
 #else
 
       // Read available datagram
-      int dataLen = server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
-      if (dataLen > 0) {
-        recvBufSize_ = dataLen;
-      } else if (dataLen < 0) {
+      ssize_t dataLen = server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
+      if (dataLen < 0) {
         // Something went wrong
         DisconnectRadio();
-        return retVal;
-      } else {
-        return retVal;
+        return 0;
+      } else if (dataLen == 0) {
+        // Nothing available
+        return 0;
       }
 
+      recvBufSize_ = dataLen;
       // Copy message contents to buffer
       std::memcpy((void*)buffer, recvBuf_, dataLen);
-      retVal = dataLen;
+      retVal = (u32) dataLen;
 
 #endif
 
       return retVal;
-    } // RadioGetNextMessage()
+    } // RadioGetNextPacket()
 
 
     void RadioUpdate()

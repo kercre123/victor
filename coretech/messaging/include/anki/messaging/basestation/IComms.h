@@ -69,7 +69,7 @@ namespace Anki {
       // messages are available.
       virtual u32 GetNumPendingMsgPackets() = 0;
       
-      virtual size_t Send(const MsgPacket &p) = 0;
+      virtual ssize_t Send(const MsgPacket &p) = 0;
       
       virtual bool GetNextMsgPacket(std::vector<uint8_t> &p) = 0;
       

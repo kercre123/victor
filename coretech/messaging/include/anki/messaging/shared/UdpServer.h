@@ -23,8 +23,8 @@ public:
   
   int GetNumClients();
 
-  int Send(const char* data, int size);
-  int Recv(char* data, int maxSize);
+  ssize_t Send(const char* data, int size);
+  ssize_t Recv(char* data, int maxSize);
   //int GetNumBytesAvailable();
   
 private:
