@@ -151,6 +151,14 @@ for feature in ${FEATURES} ; do
   esac
 done
 
+#
+# Enable export flags
+#
+EXPORT_FLAGS=""
+if [ ${EXPORT_COMPILE_COMMANDS} -ne 0 ]; then
+  EXPORT_FLAGS="-DCMAKE_EXPORT_COMPILE_COMMANDS=${EXPORT_COMPILE_COMMANDS}"
+fi
+
 # For non-ninja builds, add generator type to build dir
 BUILD_SYSTEM_TAG=""
 if [ ${CMAKE_GENERATOR} != "Ninja" ]; then
@@ -292,7 +300,7 @@ if [ $CONFIGURE -eq 1 ]; then
         -G${CMAKE_GENERATOR} \
         -DCMAKE_BUILD_TYPE=${CONFIGURATION} \
         -DBUILD_SHARED_LIBS=1 \
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=${EXPORT_COMPILE_COMMANDS} \
+        ${EXPORT_FLAGS} \
         ${FEATURE_FLAGS} \
         "${PLATFORM_ARGS[@]}"
         
