@@ -91,7 +91,7 @@ protected:
   void WriteMat(const cv::Mat& mat, const char *filename) const;
 
   template<class T>
-  void WriteMat(const cv::Mat& mat, std::__1::ofstream& outputFile) const;
+  void WriteMat(const cv::Mat& mat, std::ofstream& outputFile) const;
 };
 
 /****************************************************************
