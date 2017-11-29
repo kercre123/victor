@@ -104,10 +104,16 @@ namespace Messages {
     struct DebugScreenInfo {
       std::string ip          = "0.0.0.0";
       std::string serialNo    = "0";
+      std::string osNum       = "0";
+      #if FACTORY_TEST
+      std::string playpenVer  = "V1";
+      #endif
+
       std::string cliffs      = "0 0 0 0";
       std::string motors      = "0 0 0 0";
       std::string touchAndBat = "0 0.0v";
       std::string prox        = "0 0 0 0";
+
       std::string accelGyroX  = "0 0";
       std::string accelGyroY  = "0 0";
       std::string accelGyroZ  = "0 0";
@@ -184,6 +190,11 @@ namespace Messages {
           {
             vec.push_back(ip);
             vec.push_back(serialNo);
+            vec.push_back(osNum);
+            if(FACTORY_TEST)
+            {
+              vec.push_back(playpenVer);
+            }
             break;
           }
           case DebugScreen::SENSORS1:
@@ -750,16 +761,11 @@ namespace Messages {
         // Lock the face image track to prevent animations from drawing over the debug info
         _animStreamer->LockTrack(AnimTrackFlag::FACE_IMAGE_TRACK);
 
-        UpdateDebugScreen();
-        _debugScreenInfo.ip = GetIPAddress();
-
+        _debugScreenInfo.ip       = GetIPAddress();
         _debugScreenInfo.serialNo = ExecCommand("getprop ro.serialno");
+        _debugScreenInfo.osNum    = ExecCommand("getprop ro.anki.os_build_number");
 
-        // Draw the last three digits of the ip on the screen
-        DrawTextOnScreen({_debugScreenInfo.ip, _debugScreenInfo.serialNo}, 
-                         NamedColors::WHITE, NamedColors::BLACK, {0, 30}, 20, 0.5f);
-
-
+        UpdateDebugScreen();
       }
       // Otherwise we are currently showing debug info and the button has been pressed
       // so clear the face and unlock the face image track
