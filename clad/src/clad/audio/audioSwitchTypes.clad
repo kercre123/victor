@@ -126,6 +126,7 @@ enum uint_32 Cozmo_Sings_100Bpm
   Cozmo_Sings_Camptown_Races = 2068892721,
   Cozmo_Sings_Can_Can_1 = 1565293210,
   Cozmo_Sings_Can_Can_2 = 1565293209,
+  Cozmo_Sings_Farmer_In_The_Dell = 3199213520,
   Cozmo_Sings_Itsy_Bitsy_Spider = 4216855774,
   Cozmo_Sings_London_Bridge = 1890869377,
   Cozmo_Sings_Mountain_King = 2556694018,
