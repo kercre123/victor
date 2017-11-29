@@ -105,7 +105,8 @@ enum uint_8 BehaviorClass {
   VictorObservingDemo,
   VictorDemoFeeding,
   VictorDemoObservingFaceInteraction,
-  VictorDemoNapping
+  VictorDemoNapping,
+  ObservingOnCharger
 }
 
 

@@ -101,6 +101,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToStackOfCubes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorObservingOnCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoFeeding.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoNapping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoObservingFaceInteraction.h"
@@ -728,6 +729,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::VictorDemoNapping:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorVictorDemoNapping(config));
+      break;
+    }
+    case BehaviorClass::ObservingOnCharger:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorObservingOnCharger(config));
       break;
     }
   }
