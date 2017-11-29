@@ -73,13 +73,13 @@ namespace Anki {
       return pose;
     }
     
-    void UiGameController::HandlePingBase(ExternalInterface::Ping const& msg)
+    void UiGameController::HandlePingBase(const ExternalInterface::Ping& msg)
     {
       SendPing(true);
       HandlePing(msg);
     }
     
-    void UiGameController::HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg)
+    void UiGameController::HandleRobotStateUpdateBase(const ExternalInterface::RobotState& msg)
     {
       _robotPose = CreatePoseHelper(msg.pose);
       _robotPose.SetName("RobotPose");
@@ -97,14 +97,14 @@ namespace Anki {
       HandleRobotStateUpdate(msg);
     }
     
-    void UiGameController::HandleRobotDelocalizedBase(ExternalInterface::RobotDelocalized const& msg)
+    void UiGameController::HandleRobotDelocalizedBase(const ExternalInterface::RobotDelocalized& msg)
     {
       // the robot has delocalized, update VizOrigin to the robot automatically
       // (for example if we forceDeloc with a message)
       UpdateVizOriginToRobot();
     }
 
-    void UiGameController::HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg)
+    void UiGameController::HandleRobotObservedObjectBase(const ExternalInterface::RobotObservedObject& msg)
     {
       AddOrUpdateObject(msg.objectID, msg.objectType, msg.objectFamily, msg.pose);
       
@@ -119,19 +119,19 @@ namespace Anki {
       HandleRobotObservedObject(msg);
     }
     
-    void UiGameController::HandleRobotObservedFaceBase(ExternalInterface::RobotObservedFace const& msg)
+    void UiGameController::HandleRobotObservedFaceBase(const ExternalInterface::RobotObservedFace& msg)
     {
       _lastObservedFaceID = msg.faceID;
       
       HandleRobotObservedFace(msg);
     }
     
-    void UiGameController::HandleRobotObservedPetBase(ExternalInterface::RobotObservedPet const& msg)
+    void UiGameController::HandleRobotObservedPetBase(const ExternalInterface::RobotObservedPet& msg)
     {
       HandleRobotObservedPet(msg);
     }
     
-    void UiGameController::HandleLoadedKnownFaceBase(Vision::LoadedKnownFace const& msg)
+    void UiGameController::HandleLoadedKnownFaceBase(const Vision::LoadedKnownFace& msg)
     {
       HandleLoadedKnownFace(msg);
     }
@@ -156,7 +156,7 @@ namespace Anki {
       HandleEngineErrorCode(msg);
     }
     
-    void UiGameController::HandleRobotDeletedLocatedObjectBase(ExternalInterface::RobotDeletedLocatedObject const& msg)
+    void UiGameController::HandleRobotDeletedLocatedObjectBase(const ExternalInterface::RobotDeletedLocatedObject& msg)
     {
       PRINT_NAMED_INFO("UiGameController.HandleRobotDeletedObjectBase", "Robot reported deleting object %d", msg.objectID);
       
@@ -175,7 +175,7 @@ namespace Anki {
       HandleRobotDeletedLocatedObject(msg);
     }
 
-    void UiGameController::HandleUiDeviceAvailableBase(ExternalInterface::UiDeviceAvailable const& msgIn)
+    void UiGameController::HandleUiDeviceAvailableBase(const ExternalInterface::UiDeviceAvailable& msgIn)
     {
       // Just send a message back to the game to connect to any UI device that's
       // advertising (since we don't have a selection mechanism here)
@@ -189,7 +189,7 @@ namespace Anki {
       HandleUiDeviceAvailable(msgIn);
     }
     
-    void UiGameController::HandleUiDeviceConnectedBase(ExternalInterface::UiDeviceConnected const& msg)
+    void UiGameController::HandleUiDeviceConnectedBase(const ExternalInterface::UiDeviceConnected& msg)
     {
       // Redirect Viz
       webots::Field* redirectVizField = _root->getField("redirectViz");
@@ -211,7 +211,7 @@ namespace Anki {
       HandleUiDeviceConnected(msg);
     }
     
-    void UiGameController::HandleRobotConnectedBase(ExternalInterface::RobotConnectionResponse const &msg)
+    void UiGameController::HandleRobotConnectedBase(const ExternalInterface::RobotConnectionResponse& msg)
     {
       // Once robot connects, set resolution
       //SendSetRobotImageSendMode(ISM_STREAM);
@@ -225,7 +225,7 @@ namespace Anki {
       }
     }
     
-    void UiGameController::HandleRobotCompletedActionBase(ExternalInterface::RobotCompletedAction const& msg)
+    void UiGameController::HandleRobotCompletedActionBase(const ExternalInterface::RobotCompletedAction& msg)
     {
       switch((RobotActionType)msg.actionType)
       {
@@ -277,26 +277,26 @@ namespace Anki {
     
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).
-    void UiGameController::HandleImageChunkBase(ImageChunk const& msg)
+    void UiGameController::HandleImageChunkBase(const ImageChunk& msg)
     {
       HandleImageChunk(msg);
     } // HandleImageChunk()
     
-    void UiGameController::HandleActiveObjectAccelBase(ObjectAccel const& msg)
+    void UiGameController::HandleActiveObjectAccelBase(const ObjectAccel& msg)
     {
       //PRINT_NAMED_INFO("HandleActiveObjectAccel", "ObjectID %d, timestamp %d, accel {%.2f, %.2f, %.2f}",
       //                 msg.objectID, msg.timestamp, msg.accel.x, msg.accel.y, msg.accel.z);
       HandleActiveObjectAccel(msg);
     }
     
-    void UiGameController::HandleActiveObjectConnectionStateBase(ObjectConnectionState const& msg)
+    void UiGameController::HandleActiveObjectConnectionStateBase(const ObjectConnectionState& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectConnectionState", "ObjectID %d (factoryID 0x%x): %s",
                        msg.objectID, msg.factoryID, msg.connected ? "CONNECTED" : "DISCONNECTED");
       HandleActiveObjectConnectionState(msg);
     }
     
-    void UiGameController::HandleActiveObjectMovedBase(ObjectMoved const& msg)
+    void UiGameController::HandleActiveObjectMovedBase(const ObjectMoved& msg)
     {
      // PRINT_NAMED_INFO("HandleActiveObjectMovedWrapper", "Received message that object %d moved. Accel=(%f,%f,%f). UpAxis=%s",
      //                  msg.objectID, msg.accel.x, msg.accel.y, msg.accel.z, UpAxisToString(msg.upAxis));
@@ -304,7 +304,7 @@ namespace Anki {
       HandleActiveObjectMoved(msg);
     }
     
-    void UiGameController::HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg)
+    void UiGameController::HandleActiveObjectStoppedMovingBase(const ObjectStoppedMoving& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectStoppedMoving", "Received message that object %d stopped moving",
                        msg.objectID);
@@ -312,7 +312,7 @@ namespace Anki {
       HandleActiveObjectStoppedMoving(msg);
     }
     
-    void UiGameController::HandleActiveObjectTappedBase(ObjectTapped const& msg)
+    void UiGameController::HandleActiveObjectTappedBase(const ObjectTapped& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectTapped", "Received message that object %d was tapped %d times.",
                        msg.objectID, msg.numTaps);
@@ -320,7 +320,7 @@ namespace Anki {
       HandleActiveObjectTapped(msg);
     }
     
-    void UiGameController::HandleActiveObjectUpAxisChangedBase(ObjectUpAxisChanged const& msg)
+    void UiGameController::HandleActiveObjectUpAxisChangedBase(const ObjectUpAxisChanged& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectUpAxisChanged", "Received message that object %d's UpAxis has changed (new UpAxis = %s).",
                        msg.objectID, UpAxisToString(msg.upAxis));
@@ -328,7 +328,7 @@ namespace Anki {
       HandleActiveObjectUpAxisChanged(msg);
     }
 
-    void UiGameController::HandleConnectedObjectStatesBase(ExternalInterface::ConnectedObjectStates const& msg)
+    void UiGameController::HandleConnectedObjectStatesBase(const ExternalInterface::ConnectedObjectStates& msg)
     {
       for(auto & objectState : msg.objects)
       {
@@ -343,7 +343,7 @@ namespace Anki {
       HandleConnectedObjectStates(msg);
     }
     
-    void UiGameController::HandleLocatedObjectStatesBase(ExternalInterface::LocatedObjectStates const& msg)
+    void UiGameController::HandleLocatedObjectStatesBase(const ExternalInterface::LocatedObjectStates& msg)
     {
       PRINT_NAMED_INFO("HandleObjectStates", "Clearing all objects before updating with %zu new objects",
                        msg.objects.size());
@@ -369,7 +369,7 @@ namespace Anki {
       HandleLocatedObjectStates(msg);
     }
 
-    void UiGameController::HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg)
+    void UiGameController::HandleAnimationAvailableBase(const ExternalInterface::AnimationAvailable& msg)
     {
       PRINT_CH_INFO("Animations", "UiGameController.HandleAnimationAvailableBase.HandleAnimationAvailable",
                     "Animation available: %s", msg.animName.c_str());
@@ -377,20 +377,20 @@ namespace Anki {
       HandleAnimationAvailable(msg);
     }
 
-    void UiGameController::HandleAnimationAbortedBase(ExternalInterface::AnimationAborted const& msg)
+    void UiGameController::HandleAnimationAbortedBase(const ExternalInterface::AnimationAborted& msg)
     {
       PRINT_NAMED_INFO("HandleAnimationAborted", "Tag: %u", msg.tag);
 
       HandleAnimationAborted(msg);
     }
     
-    void UiGameController::HandleDebugStringBase(ExternalInterface::DebugString const& msg)
+    void UiGameController::HandleDebugStringBase(const ExternalInterface::DebugString& msg)
     {
       //PRINT_NAMED_INFO("HandleDebugString", "%s", msg.text.c_str());
       HandleDebugString(msg);
     }
     
-    void UiGameController::HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg)
+    void UiGameController::HandleNVStorageOpResultBase(const ExternalInterface::NVStorageOpResult& msg)
     {
       PRINT_NAMED_INFO("HandleNVStorageOpResult",
                        "%s - res: %s,  operation: %s, index: %d, size %zu",
@@ -411,7 +411,7 @@ namespace Anki {
     }
     
 
-    void UiGameController::HandleFactoryTestResultEntryBase(FactoryTestResultEntry const& msg)
+    void UiGameController::HandleFactoryTestResultEntryBase(const FactoryTestResultEntry& msg)
     {
       PRINT_NAMED_INFO("HandleFactoryTestResultEntry",
                        "Test result: %s", EnumToString(msg.result));
@@ -420,7 +420,7 @@ namespace Anki {
     }
 
 
-    void UiGameController::HandleEndOfMessageBase(EndOfMessage const& msg)
+    void UiGameController::HandleEndOfMessageBase(const EndOfMessage& msg)
     {
       PRINT_NAMED_INFO("HandleEndOfMessage",
                        "messageType: %s", EnumToString(msg.messageType));
@@ -428,7 +428,7 @@ namespace Anki {
       HandleEndOfMessage(msg);
     }
     
-    void UiGameController::HandleBehaviorTransitionBase(ExternalInterface::BehaviorTransition const& msg)
+    void UiGameController::HandleBehaviorTransitionBase(const ExternalInterface::BehaviorTransition& msg)
     {
       /**PRINT_NAMED_INFO("HandleBehaviorTransition", "Received message that behavior changed from %s to %s",
                        msg.oldBehaviorID,
@@ -437,7 +437,7 @@ namespace Anki {
       HandleBehaviorTransition(msg);
     }
 
-    void UiGameController::HandleRobotOffTreadsStateChangedBase(ExternalInterface::RobotOffTreadsStateChanged const& msg)
+    void UiGameController::HandleRobotOffTreadsStateChangedBase(const ExternalInterface::RobotOffTreadsStateChanged& msg)
     {
       PRINT_NAMED_INFO("HandleRobotOfftreadsStateChanged", "Received RobotPickedUp message.");
       HandleRobotOffTreadsStateChanged(msg);

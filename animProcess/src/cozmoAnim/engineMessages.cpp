@@ -86,7 +86,7 @@ namespace Messages {
   
 // #pragma mark --- Messages Method Implementations ---
 
-  Result Init(AnimationStreamer& animStreamer, Audio::EngineRobotAudioInput& audioInput, const CozmoAnimContext& context)
+  Result Init(AnimationStreamer* animStreamer, Audio::EngineRobotAudioInput* audioInput, const CozmoAnimContext* context)
   {
     
     // Setup robot and engine sockets
@@ -96,9 +96,13 @@ namespace Messages {
     ReliableTransport_Init();
     ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
 
-    _animStreamer = &animStreamer;
-    _audioInput   = &audioInput;
-    _context      = &context;
+    _animStreamer = animStreamer;
+    _audioInput   = audioInput;
+    _context      = context;
+
+    DEV_ASSERT(_animStreamer != nullptr, "EngineMessages.Init.NullAnimStreamer");
+    DEV_ASSERT(_audioInput != nullptr, "EngineMessages.Init.NullAudioInput");
+    DEV_ASSERT(_context != nullptr, "EngineMessages.Init.NullContext");
 
     return RESULT_OK;
   }

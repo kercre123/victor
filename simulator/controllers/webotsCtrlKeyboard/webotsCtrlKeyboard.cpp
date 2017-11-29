@@ -112,7 +112,7 @@ namespace Anki {
     
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).
-    void WebotsKeyboardController::HandleImageChunk(ImageChunk const& msg)
+    void WebotsKeyboardController::HandleImageChunk(const ImageChunk& msg)
     {
       const bool isImageReady = _encodedImage.AddChunk(msg);
       
@@ -173,7 +173,7 @@ namespace Anki {
     } // HandleImageChunk()
     
     
-    void WebotsKeyboardController::HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg)
+    void WebotsKeyboardController::HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg)
     {
       if(cozmoCam_ != nullptr) 
       {  
@@ -201,7 +201,7 @@ namespace Anki {
       
     }
     
-    void WebotsKeyboardController::HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg)
+    void WebotsKeyboardController::HandleRobotObservedFace(const ExternalInterface::RobotObservedFace& msg)
     {
       //printf("RECEIVED FACE OBSERVED: faceID %llu\n", msg.faceID);
       // _lastFace = msg;
@@ -210,19 +210,19 @@ namespace Anki {
       _lastObservedImageCentroid.SetFromMessage(msg);
     }
 
-    void WebotsKeyboardController::HandleRobotObservedPet(ExternalInterface::RobotObservedPet const& msg)
+    void WebotsKeyboardController::HandleRobotObservedPet(const ExternalInterface::RobotObservedPet& msg)
     {
       // Record centroid of observation in image
       _lastObservedImageCentroid.SetFromMessage(msg);
     }
     
-    void WebotsKeyboardController::HandleLoadedKnownFace(Vision::LoadedKnownFace const& msg)
+    void WebotsKeyboardController::HandleLoadedKnownFace(const Vision::LoadedKnownFace& msg)
     {
       printf("HandleLoadedKnownFace: '%s' (ID:%d) first enrolled %zd seconds ago, last updated %zd seconds ago, last seen %zd seconds ago\n",
              msg.name.c_str(), msg.faceID, msg.secondsSinceFirstEnrolled, msg.secondsSinceLastUpdated, msg.secondsSinceLastSeen);
     }
     
-    void WebotsKeyboardController::HandleDebugString(ExternalInterface::DebugString const& msg)
+    void WebotsKeyboardController::HandleDebugString(const ExternalInterface::DebugString& msg)
     {
       // Useful for debug, but otherwise unneeded since this is displayed in the
       // status window
@@ -2549,14 +2549,14 @@ namespace Anki {
         }
       }
     
-      void WebotsKeyboardController::HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg)
+      void WebotsKeyboardController::HandleRobotConnected(const ExternalInterface::RobotConnectionResponse& msg)
       {
         // Things to do on robot connect
         SendSetRobotVolume(0);
       }
    
     
-      void WebotsKeyboardController::HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg)
+      void WebotsKeyboardController::HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult& msg)
       {
         if (msg.op != NVStorage::NVOperation::NVOP_READ ||
             msg.result == NVStorage::NVResult::NV_MORE) {

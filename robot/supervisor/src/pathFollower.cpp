@@ -268,7 +268,6 @@ namespace Anki
                 path_[currPathSegment_].GetAccel(),
                 path_[currPathSegment_].GetDecel());
 
-          //Robot::SetOperationMode(Robot::FOLLOW_PATH);
           SteeringController::SetPathFollowMode();
          
         }

@@ -429,7 +429,7 @@ namespace Anki {
       
       void SendMessage(const VizInterface::MessageViz& message);
       
-      bool               _isInitialized;
+      bool               _isConnected;
       UdpClient          _vizClient;
 
       #if VIZ_TO_UNITY
