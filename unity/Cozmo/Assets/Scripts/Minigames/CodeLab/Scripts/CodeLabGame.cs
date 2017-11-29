@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.IO;
 using Cozmo.UI;
 using Cozmo.MinigameWidgets;
+using Cozmo.WhatsNew;
 
 namespace CodeLab {
   public class CodeLabSampleProject {
@@ -39,6 +40,8 @@ namespace CodeLab {
     public string FeaturedProjectBackgroundColor;
     public string FeaturedProjectTitleTextColor;
     public string FeaturedProjectInstructions;
+    public SimpleDate StartDate; // Optional start date for content availability
+    public SimpleDate EndDate; // Optional end date for content availability
     public string ProjectJSONFile; // Serialized Scratch project file
   }
 
@@ -347,6 +350,40 @@ namespace CodeLab {
       string json = File.ReadAllText(path);
 
       List<CodeLabFeaturedProject> codeLabFeaturedProjects = JsonConvert.DeserializeObject<List<CodeLabFeaturedProject>>(json);
+
+      // Review StartDate and EndDate for each featured content project and 
+      // remove the projects that should not currently be shown from the list.
+      // 
+      // Can force all featured content to show regardless of StartDate/EndDate
+      // settings with Debug Console setting.
+#if SHIPPING
+      bool filterProjectsByDate = true;
+#else
+      bool filterProjectsByDate = !DataPersistenceManager.Instance.Data.DebugPrefs.ShowAllCodeLabFeaturedContent;
+#endif
+      if (filterProjectsByDate) {
+        for (int i = codeLabFeaturedProjects.Count - 1; i >= 0; i--) {
+          var project = codeLabFeaturedProjects[i];
+
+          // If end date exists and today is after the end date, remove project from list
+          if (project.EndDate != null) {
+            Date endDate = SimpleDate.DateFromSimpleDate(project.EndDate);
+            if (DataPersistenceManager.Today > endDate) {
+              codeLabFeaturedProjects.RemoveAt(i);
+              continue;
+            }
+          }
+
+          // If start date exists and today is before the start date, remove project from list
+          if (project.StartDate != null) {
+            Date startDate = SimpleDate.DateFromSimpleDate(project.StartDate);
+            if (DataPersistenceManager.Today < startDate) {
+              codeLabFeaturedProjects.RemoveAt(i);
+            }
+          }
+        }
+      }
+
       return codeLabFeaturedProjects;
     }
 
@@ -887,9 +924,9 @@ namespace CodeLab {
         _WebViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
         _WebViewObjectComponent.Init(WebViewCallback, false, err: WebViewError, ld: WebViewLoaded, enableWKWebView: true);
 
-        if (Cozmo.WhatsNew.WhatsNewModalManager.ShouldAutoOpenProject) {
+        if (WhatsNewModalManager.ShouldAutoOpenProject) {
           OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplayFeaturedProject,
-                             Cozmo.WhatsNew.WhatsNewModalManager.AutoOpenCodeLabProjectGuid.ToString(),
+                             WhatsNewModalManager.AutoOpenCodeLabProjectGuid.ToString(),
                              isVertical: true);
         }
         else {
@@ -3175,8 +3212,8 @@ namespace CodeLab {
           codeLabFeaturedProject = _CodeLabFeaturedProjects.Find(findProject);
 
           if (codeLabFeaturedProject != null) {
-            bool wasLoadedFromWhatsNew = Cozmo.WhatsNew.WhatsNewModalManager.ShouldAutoOpenProject;
-            Cozmo.WhatsNew.WhatsNewModalManager.ResetAutoOpenCodeLabProject();
+            bool wasLoadedFromWhatsNew = WhatsNewModalManager.ShouldAutoOpenProject;
+            WhatsNewModalManager.ResetAutoOpenCodeLabProject();
 
             // featured projects are hardcoded to be vertical currently
             SessionState.DAS_Event("robot.code_lab.open_featured_project", codeLabFeaturedProject.DASProjectName, DASUtil.FormatExtraData(wasLoadedFromWhatsNew ? "1" : "0"));

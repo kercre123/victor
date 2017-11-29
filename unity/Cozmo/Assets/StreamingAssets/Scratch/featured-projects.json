@@ -96,5 +96,29 @@
         "FeaturedProjectBackgroundColor": "#ffe700",
         "FeaturedProjectTitleTextColor": "#e4e4e4",
         "ProjectJSONFile": "LaserSmile"
+    },
+    {
+        "ProjectUUID": "1a9f3d85-63ca-43f4-a7d2-9105d6f66d84",
+        "ProjectName": "Laser Smile Timed Example, 12/10 - 12/20",
+        "DASProjectName": "LaserSmileTimedExample",
+        "VersionNum": "3",
+        "IsVertical": "true",
+        "DisplayOrder": "7",
+        "FeaturedProjectDescription": "Start/End Date temp test only (Amy to remove)",
+        "FeaturedProjectInstructions": "Start/End Date temp test only",
+        "FeaturedProjectImageName": "LightShow",
+        "FeaturedProjectBackgroundColor": "#ffe700",
+        "FeaturedProjectTitleTextColor": "#e4e4e4",
+        "ProjectJSONFile": "LaserSmile",
+        "StartDate": {
+            "Month": "12",
+            "Day": "10",
+            "Year": "2017"
+        },
+        "EndDate": {
+            "Month": "12",
+            "Day": "20",
+            "Year": "2017"
+        }
     }
 ]
