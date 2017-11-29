@@ -23,7 +23,6 @@
 #include "engine/aiComponent/stateConceptStrategies/strategyObjectPositionUpdated.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyObstacleDetected.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyPetInitialDetection.h"
-#include "engine/aiComponent/stateConceptStrategies/strategyPlacedOnCharger.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyRobotPlacedOnSlope.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyRobotShaken.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyRobotTouchGesture.h"
@@ -107,11 +106,6 @@ IStateConceptStrategy* StateConceptStrategyFactory::CreateStateConceptStrategy(B
     case StateConceptStrategyType::PetInitialDetection:
     {
       strategy = new StrategyPetInitialDetection(behaviorExternalInterface, robotExternalInterface, config);
-      break;
-    }
-    case StateConceptStrategyType::PlacedOnCharger:
-    {
-      strategy = new StrategyPlacedOnCharger(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case StateConceptStrategyType::RobotPlacedOnSlope:

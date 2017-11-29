@@ -22,7 +22,6 @@ enum uint_8 StateConceptStrategyType {
   ObjectPositionUpdated,
   ObstacleDetected,
   PetInitialDetection,
-  PlacedOnCharger,
   RobotPlacedOnSlope,
   RobotShaken,
   RobotTouchGesture
