@@ -300,18 +300,18 @@ button:focus {
 #navigation {
     display: block;
     position: absolute;
-    top: calc(100% - 350px);
-    left: 0;
-    width: 100%;
-    height: 200px;
+    top: 150px;
+    left: calc(100% - 80px);
+    width: 5%;
+    height: 170px;
     z-index: 1;
     pointer-events: none;
 }
 
+
 #navigation .greenflag {
     display: block;
     position: absolute;
-    left: calc(100% - 90px);
 }
 
 #navigation .greenflag button {
@@ -339,8 +339,7 @@ button:focus {
 #navigation .stop {
     display: block;
     position: absolute;
-    left: calc(100% - 90px);
-    top: 85px;
+    top: 90px;
 }
 
 #navigation .stop button {
@@ -475,10 +474,6 @@ button:focus {
 
 
 @media only screen and (max-width: 799px) {
-    #navigation {
-        top: calc(100% - 250px);
-    }
-
     #close .primary {
         display: block;
         position: absolute;
@@ -600,9 +595,13 @@ button:focus {
         background-position: 0 -22px;
     }
 
-    #navigation .greenflag {
+    #navigation {
+        top: calc(100% - 260px);
         left: calc(100% - 40px);
-        top: calc(100% - 160px);
+        height: 75px;
+        width: 4.5%;
+        border-width: 1px;
+        border-bottom-width: 1px;
     }
 
     #navigation .greenflag button {
@@ -622,8 +621,7 @@ button:focus {
 
 
     #navigation .stop {
-        left: calc(100% - 40px);
-        top: calc(100% - 115px);
+        top: calc(100% - 35px);
     }
 
     #navigation .stop button {
@@ -639,5 +637,19 @@ button:focus {
 
     .blocklyTooltipDiv {
         font-size: 10pt;
+    }
+}
+
+
+
+/* Used by Kindle Fire HD 8, 962 x 601 */
+@media only screen and (min-height: 590px) and (max-height: 605px) {
+    #navigation {
+        top: calc(100% - 490px);
+        height: 150px;
+   }
+
+    #navigation .stop {
+        top: calc(100% - 75px);
     }
 }
