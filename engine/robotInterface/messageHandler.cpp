@@ -174,13 +174,18 @@ void MessageHandler::Broadcast(const uint32_t robotId, RobotInterface::RobotToEn
   _eventMgr.Broadcast(robotId, AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
 }
   
-Result MessageHandler::AddRobotConnection(const ExternalInterface::ConnectToRobot& connectMsg)
+Result MessageHandler::AddRobotConnection(RobotID_t robotId)
 {
-  // Note: robotID is always 1
-  int port = !connectMsg.isSimulated ? Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT : Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT + 1;
-  PRINT_NAMED_WARNING("AddRobotConnection", "%s:%d", (const char*)connectMsg.ipAddress.data(), port);
+  const char* robotProcessIPAddress = "127.0.0.1";
 
-  Anki::Util::TransportAddress address((const char*)connectMsg.ipAddress.data(), static_cast<uint16_t>(port));
+  #ifdef SIMULATOR
+  int port = Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT + robotId;
+  #else
+  int port = Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT;
+  #endif
+  PRINT_NAMED_WARNING("AddRobotConnection", "%s:%d", robotProcessIPAddress, port);
+
+  Anki::Util::TransportAddress address(robotProcessIPAddress, static_cast<uint16_t>(port));
   _robotConnectionManager->Connect(address);
   
   return RESULT_OK;

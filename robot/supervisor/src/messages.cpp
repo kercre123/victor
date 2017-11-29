@@ -209,10 +209,6 @@ namespace Anki {
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
 
-        // Start motor calibration
-        LiftController::StartCalibrationRoutine();
-        HeadController::StartCalibrationRoutine();
-
         AnkiEvent( "watchdog_reset_count", "%d", HAL::GetWatchdogResetCounter());
       } // ProcessRobotInit()
 
@@ -264,7 +260,11 @@ namespace Anki {
         if (!syncTimeAckSent_) {
           // Make sure we wait some tics after receiving syncTime so that we're sure the
           // timestamp from the body has propagated up.
-          if (initReceived_ && (++ticsSinceInitReceived_ > 3) && IMUFilter::IsBiasFilterComplete()) {
+          if (initReceived_ && 
+              (++ticsSinceInitReceived_ > 3) && 
+              IMUFilter::IsBiasFilterComplete() &&
+              LiftController::IsCalibrated() &&
+              HeadController::IsCalibrated()) {
             RobotInterface::SyncTimeAck syncTimeAckMsg;
             while (RobotInterface::SendMessage(syncTimeAckMsg) == false);
             syncTimeAckSent_ = true;

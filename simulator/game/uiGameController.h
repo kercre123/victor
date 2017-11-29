@@ -97,6 +97,7 @@ protected:
   // TODO: These default handlers and senders should be CLAD-generated!
   
   // Message handlers
+  virtual void HandlePing(ExternalInterface::Ping const& msg){};
   virtual void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg){};
   virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg){};
   virtual void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg){};
@@ -137,7 +138,7 @@ protected:
   
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
-  void SendPing();
+  void SendPing(bool isResponse);
   void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps, const f32 lwheel_accel_mmps2, const f32 rwheel_accel_mmps2);
   void SendDriveArc(const f32 speed, const f32 accel, const s16 curvature_mm);
   void SendDriveStraight(f32 speed_mmps,  // Speed should be positive
@@ -484,6 +485,7 @@ protected:
   
   
 private:
+  void HandlePingBase(ExternalInterface::Ping const& msg);
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
   void HandleRobotDelocalizedBase(ExternalInterface::RobotDelocalized const& msg);
   void HandleRobotOffTreadsStateChangedBase(ExternalInterface::RobotOffTreadsStateChanged const& msg);
@@ -523,7 +525,6 @@ private:
   void HandleRobotDeletedFixedCustomObjectsBase(const ExternalInterface::RobotDeletedFixedCustomObjects& msg);
   
   void UpdateActualObjectPoses();
-  bool ForceAddRobotIfSpecified();
   
   ///
   // @brief      Iterates through _lightCubes and returns the first light cube with the given ID

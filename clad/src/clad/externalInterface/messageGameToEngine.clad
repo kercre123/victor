@@ -64,11 +64,6 @@ message UiDeviceConnectionSuccess {
   string  cpuVersion
 }
 
-message ConnectToRobot {
-    uint_8 ipAddress[16],
-    uint_8 isSimulated
-}
-
 // ConnectToUiDevice
 message ConnectToUiDevice {
     UiConnectionType  connectionType,
@@ -79,13 +74,6 @@ message ConnectToUiDevice {
 message DisconnectFromUiDevice {
     UiConnectionType  connectionType,
     uint_8 deviceID
-}
-
-// StartEngine
-// Tell the engine to start running.
-message StartEngine {
-    uint_32 random_seed = 0,   // Use 0 for randomly generated seed, or a specific value for repeatability
-    string locale              // Application locale, if different from default locale
 }
 
 message ReliableTransportRunMode {

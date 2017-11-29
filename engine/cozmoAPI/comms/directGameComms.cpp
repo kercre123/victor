@@ -32,7 +32,7 @@ bool DirectGameComms::Init(UiConnectionType connectionType, const Json::Value& c
   return true;
 }
 
-void DirectGameComms::Update()
+void DirectGameComms::UpdateInternal()
 {
   std::list<std::vector<uint8_t>> newMessages = _messagePort->PullFromGameMessages();
   if (newMessages.empty()) {
@@ -79,6 +79,12 @@ bool DirectGameComms::ConnectToDeviceByID(ISocketComms::DeviceId deviceId)
 }
 
 bool DirectGameComms::DisconnectDeviceByID(ISocketComms::DeviceId deviceId)
+{
+  _connectState = ConnectionState::Disconnected;
+  return true;
+}
+
+bool DirectGameComms::DisconnectAllDevices()
 {
   _connectState = ConnectionState::Disconnected;
   return true;

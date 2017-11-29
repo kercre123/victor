@@ -105,7 +105,7 @@ void TcpSocketComms::HandleDisconnect()
 }
   
   
-void TcpSocketComms::Update()
+void TcpSocketComms::UpdateInternal()
 {
   ANKI_CPU_PROFILE("TcpSocketComms::Update");
   
@@ -265,6 +265,11 @@ bool TcpSocketComms::DisconnectDeviceByID(DeviceId deviceId)
   {
     return false;
   }
+}
+
+bool TcpSocketComms::DisconnectAllDevices() 
+{
+  return DisconnectDeviceByID(_connectedId);
 }
 
 

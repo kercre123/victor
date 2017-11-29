@@ -775,8 +775,10 @@ protected:
   f32              _leftWheelSpeed_mmps;
   f32              _rightWheelSpeed_mmps;
   
-  bool             _isHeadCalibrated = false;
-  bool             _isLiftCalibrated = false;
+  // We can assume the motors are calibrated by the time
+  // engine connects to robot
+  bool             _isHeadCalibrated = true;
+  bool             _isLiftCalibrated = true;
     
   // Ramping
   bool             _onRamp = false;

@@ -73,6 +73,12 @@ namespace Anki {
       return pose;
     }
     
+    void UiGameController::HandlePingBase(ExternalInterface::Ping const& msg)
+    {
+      SendPing(true);
+      HandlePing(msg);
+    }
+    
     void UiGameController::HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg)
     {
       _robotPose = CreatePoseHelper(msg.pose);
@@ -454,6 +460,7 @@ namespace Anki {
 
     void UiGameController::HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg)
     {
+      PRINT_NAMED_INFO("UiGameController.HandleEngineLoadingStatus.RatioComplete", "%f", msg.ratioComplete);
       _engineLoadedRatio = msg.ratioComplete;
     }
     
@@ -567,6 +574,9 @@ namespace Anki {
         switch (message.GetTag()) {
           case ExternalInterface::MessageEngineToGame::Tag::RobotConnectionResponse:
             HandleRobotConnectedBase(message.Get_RobotConnectionResponse());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::Ping:
+            HandlePingBase(message.Get_Ping());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::RobotState:
             HandleRobotStateUpdateBase(message.Get_RobotState());
@@ -686,61 +696,6 @@ namespace Anki {
       
       InitInternal();
     }
-    
-  
-    bool UiGameController::ForceAddRobotIfSpecified()
-    {
-      bool doForceAddRobot = true;
-      bool forcedRobotIsSim = true;
-      std::string forcedRobotIP = "127.0.0.1";
-      int  forcedRobotId = 1;
-      
-      webots::Field* forceAddRobotField = _root->getField("forceAddRobot");
-      if(forceAddRobotField != nullptr) {
-        doForceAddRobot = forceAddRobotField->getSFBool();
-        if(doForceAddRobot) {
-          webots::Field *forcedRobotIsSimField = _root->getField("forcedRobotIsSimulated");
-          if(forcedRobotIsSimField == nullptr) {
-            PRINT_NAMED_ERROR("UiGameController.Update",
-                              "Could not find 'forcedRobotIsSimulated' field.");
-            doForceAddRobot = false;
-          } else {
-            forcedRobotIsSim = forcedRobotIsSimField->getSFBool();
-          }
-          
-          webots::Field* forcedRobotIpField = _root->getField("forcedRobotIP");
-          if(forcedRobotIpField == nullptr) {
-            PRINT_NAMED_ERROR("UiGameController.Update",
-                              "Could not find 'forcedRobotIP' field.");
-            doForceAddRobot = false;
-          } else {
-            forcedRobotIP = forcedRobotIpField->getSFString();
-          }
-          
-          webots::Field* forcedRobotIdField = _root->getField("forcedRobotID");
-          if(forcedRobotIdField == nullptr) {
-            
-          } else {
-            forcedRobotId = forcedRobotIdField->getSFInt32();
-          }
-        } // if(doForceAddRobot)
-      }
-      
-      if(doForceAddRobot) {
-        ExternalInterface::ConnectToRobot msg;
-        msg.isSimulated = forcedRobotIsSim;
-        std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
-        std::string ipStr = forcedRobotIP;
-        std::copy(ipStr.begin(), ipStr.end(), msg.ipAddress.data());
-        
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_ConnectToRobot(msg);
-        _msgHandler.SendMessage(1, message); // TODO: don't hardcode ID here
-      }
-      
-      return doForceAddRobot;
-      
-    } // ForceAddRobotIfSpecified()
   
     s32 UiGameController::Update()
     {
@@ -759,16 +714,6 @@ namespace Anki {
           if (!_gameComms->HasClient()) {
             return 0;
           } else {
-            // Once gameComms has a client, tell the engine to start, force-add
-            // robot if necessary, and switch states in the UI
-            const uint32_t seed = _randomSeed;
-            const std::string& locale = _locale;
-            auto msg = ExternalInterface::StartEngine(seed, locale);
-            
-            PRINT_NAMED_INFO("UiGameController.Update", "Sending StartEngine(seed=%d,locale=%s)", seed, locale.c_str());
-          
-            // TODO: don't hardcode ID here
-            _msgHandler.SendMessage(1, ExternalInterface::MessageGameToEngine(std::move(msg)));
             _uiState = UI_WAITING_FOR_ENGINE_LOAD;
           }
           break;
@@ -780,21 +725,13 @@ namespace Anki {
           
           if (_engineLoadedRatio >= 1.0f)
           {
-            bool didForceAdd = ForceAddRobotIfSpecified();
-            
-            if(didForceAdd) {
-              PRINT_NAMED_INFO("UiGameController.Update", "Sent force-add robot message.");
-            }
-            
             _uiState = UI_RUNNING;
           }
           break;
         }
           
         case UI_RUNNING:
-        {
-          SendPing();
-          
+        { 
           UpdateActualObjectPoses();
           
           _msgHandler.ProcessMessages();
@@ -963,9 +900,10 @@ namespace Anki {
     
 
 
-    void UiGameController::SendPing()
+    void UiGameController::SendPing(bool isResponse)
     {
       static ExternalInterface::Ping m;
+      m.isResponse = isResponse;
       ExternalInterface::MessageGameToEngine message;
       message.Set_Ping(m);
       SendMessage(message);

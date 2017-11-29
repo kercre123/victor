@@ -104,7 +104,7 @@ bool UdpSocketComms::Init(UiConnectionType connectionType, const Json::Value& co
 }
 
 
-void UdpSocketComms::Update()
+void UdpSocketComms::UpdateInternal()
 {
   if(_comms->IsInitialized())
   {
@@ -152,6 +152,11 @@ bool UdpSocketComms::DisconnectDeviceByID(DeviceId deviceId)
   return success;
 }
 
+bool UdpSocketComms::DisconnectAllDevices()
+{
+  _comms->DisconnectAllDevices();
+  return true;
+}
 
 void UdpSocketComms::GetAdvertisingDeviceIDs(std::vector<ISocketComms::DeviceId>& outDeviceIds)
 {
