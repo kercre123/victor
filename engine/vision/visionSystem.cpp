@@ -92,6 +92,9 @@ namespace Cozmo {
   
   CONSOLE_VAR(u32, kCalibTargetType, "Vision.Calibration", (u32)CameraCalibrator::CalibTargetType::CHECKERBOARD);
   
+  // If non-zero, toggles the corresponding VisionMode and sets back to 0
+  CONSOLE_VAR(u32, kToggleVisionMode, "Vision.General", 0);
+  
   namespace {
     // These are initialized from Json config:
     u8 kTooDarkValue   = 15;
@@ -1211,6 +1214,22 @@ namespace Cozmo {
       PRINT_NAMED_WARNING("VisionSystem.Update.NotReady",
                           "Must be initialized and have calibrated camera to Update");
       return RESULT_FAIL;
+    }
+    
+    // Make it possible to toggle vision modes using console vars:
+    if(kToggleVisionMode > 0)
+    {
+      const VisionMode mode = static_cast<VisionMode>(kToggleVisionMode);
+      bool enable = true;
+      if(_mode.IsBitFlagSet(mode))
+      {
+        enable = false;
+      }
+      
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.Update.TogglingVisionModeByConsoleVar",
+                    "%s mode %s", (enable ? "Enabling" : "Disabling"), EnumToString(mode));
+      EnableMode(mode, enable);
+      kToggleVisionMode = 0;
     }
     
     _frameNumber++;
