@@ -783,8 +783,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _DASEventDialogName: PlayTokenRewardModal
   _OpenAudioEvent:
-    _Event: Invalid
-    _EventType: GenericEvent
+    _Event: Play__Sfx__Nurture_Earn_Play_Token
+    _EventType: Sfx
   _AlphaController: {fileID: 0}
   _MoveTweenSettings:
     staggerType: 0
@@ -849,6 +849,7 @@ MonoBehaviour:
   _PlayTokenAwardedEffectNoIconPrefab: {fileID: 1803302756666880, guid: fc598d6d479ec44b5aafdb527f2fae3e,
     type: 2}
   _PlayTokenEffectAnchor: {fileID: 224885907882841728}
+  _BurstEffectLoopTime: 22
 --- !u!114 &114927910601200844
 MonoBehaviour:
   m_ObjectHideFlags: 1
