@@ -31,6 +31,8 @@ public:
                       IExternalInterface* robotExternalInterface,
                       const Json::Value& config);
 
+  virtual ~StrategyObjectMoved();
+
 protected:
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;

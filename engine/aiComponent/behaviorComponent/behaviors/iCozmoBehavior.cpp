@@ -11,7 +11,9 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
+
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
@@ -32,6 +34,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
+#include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
@@ -41,7 +44,6 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 
-
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/cloudIntents.h"
@@ -49,7 +51,6 @@
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/numericCast.h"
-#include "engine/components/pathComponent.h"
 
 #define LOG_CHANNEL    "Behaviors"
 
@@ -292,7 +293,7 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
                                                   behaviorExternalInterface,
                                                   externalInterface,
                                                   _wantsToRunConfig));
-      _stateConceptStrategies.push_back(std::move(strategy));
+      _stateConceptStrategies.push_back(strategy);
       _wantsToRunConfig.clear();
     }
 
@@ -302,7 +303,7 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
                                                   behaviorExternalInterface,
                                                   externalInterface,
                                                   config));
-      _stateConceptStrategies.push_back(std::move(strategy));
+      _stateConceptStrategies.push_back(strategy);
     }
 
   }

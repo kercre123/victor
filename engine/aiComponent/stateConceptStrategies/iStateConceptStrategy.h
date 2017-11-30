@@ -15,6 +15,8 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_StateConceptStrategies_IStateConceptStrategy_H__
 #define __Cozmo_Basestation_BehaviorSystem_StateConceptStrategies_IStateConceptStrategy_H__
 
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy_fwd.h"
+
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 
 #include "engine/events/ankiEvent.h"
@@ -81,8 +83,6 @@ private:
   void HandleEvent(const EventType& event);
   
 };
-
-using IStateConceptStrategyPtr = std::unique_ptr<IStateConceptStrategy>;
 
 template<class EventType>
 void IStateConceptStrategy::HandleEvent(const EventType& event)

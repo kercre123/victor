@@ -73,7 +73,11 @@ StrategyObjectMoved::StrategyObjectMoved(BehaviorExternalInterface& behaviorExte
   }});
 }
 
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+StrategyObjectMoved::~StrategyObjectMoved()
+{
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool StrategyObjectMoved::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
