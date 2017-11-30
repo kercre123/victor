@@ -486,6 +486,10 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
     auto& infoProcessor = _behaviorExternalInterface->GetAIComponent().GetAIInformationAnalyzer();
     infoProcessor.AddEnableRequest(_requiredProcess, GetIDStr().c_str());
   }
+
+  for( auto& strategy : _stateConceptStrategies ) {
+    strategy->Reset(*_behaviorExternalInterface);
+  }
 }
 
 

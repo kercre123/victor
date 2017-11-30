@@ -52,8 +52,16 @@ IStateConceptStrategy::IStateConceptStrategy(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IStateConceptStrategy::Reset(BehaviorExternalInterface& bei)
+{
+  _hasEverBeenReset = true;
+  ResetInternal(bei);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IStateConceptStrategy::AreStateConditionsMet(BehaviorExternalInterface& behaviorExternalInterface) const
 {
+  DEV_ASSERT(_hasEverBeenReset, "IStateConceptStrategy.AreStateConditionsMet.NotEverReset");
   return AreStateConditionsMetInternal(behaviorExternalInterface);
 }
   

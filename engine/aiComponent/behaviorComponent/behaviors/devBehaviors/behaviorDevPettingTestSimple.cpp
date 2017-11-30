@@ -77,6 +77,12 @@ void BehaviorDevPettingTestSimple::InitBehavior(BehaviorExternalInterface& behav
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorDevPettingTestSimple::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  for( auto& tgAnim :  _tgAnimConfigs ) {
+    if( tgAnim.strategy ) {
+      tgAnim.strategy->Reset(behaviorExternalInterface);
+    }
+  }
+    
   return RESULT_OK;
 }
 
