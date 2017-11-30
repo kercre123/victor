@@ -244,14 +244,6 @@ namespace Cozmo {
    *
    **************************************************************************/
   
-  // Comms type for Basestation-robot comms
-  // 0: Use TCP
-  // 1: Use UDP
-#define USE_UDP_ROBOT_COMMS 1
-  
-  // Comms types for UI-game comms
-#define USE_UDP_UI_COMMS 1
-  
   const u32 MAX_SENT_BYTES_PER_TIC_TO_ROBOT = 200;
   const u32 MAX_SENT_BYTES_PER_TIC_TO_UI = 0;
   

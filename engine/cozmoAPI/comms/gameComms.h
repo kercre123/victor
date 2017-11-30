@@ -59,11 +59,7 @@ namespace Cozmo {
   private:
     
     // For connection from game
-#if(USE_UDP_UI_COMMS)
     UdpServer server_;
-#else
-    TcpServer server_;
-#endif
     
     // For connecting to advertisement service
     UdpClient regClient_;
