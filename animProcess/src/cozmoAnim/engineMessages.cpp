@@ -93,6 +93,7 @@ namespace Messages {
       GENERAL_INFO,
       SENSORS1,
       SENSORS2,
+      MIC,
       COUNT
     };
     DebugScreen _curDebugScreen = DebugScreen::NONE;
@@ -117,6 +118,11 @@ namespace Messages {
       std::string accelGyroX  = "0 0";
       std::string accelGyroY  = "0 0";
       std::string accelGyroZ  = "0 0";
+
+      std::string micData0     = "0";
+      std::string micData1     = "0";
+      std::string micData2     = "0";
+      std::string micData3     = "0";
 
       void Update(const RobotState& state)
       {
@@ -176,6 +182,30 @@ namespace Messages {
         accelGyroZ = temp;
       }
 
+      void Update(const RobotInterface::MicData& payload)
+      {
+        char temp[32] = "";
+        sprintf(temp, 
+                "%d", 
+                payload.data[0]);
+        micData0 = temp;
+
+        sprintf(temp, 
+                "%d", 
+                payload.data[1]);
+        micData1 = temp;
+
+        sprintf(temp, 
+                "%d", 
+                payload.data[2]);
+        micData2 = temp;
+
+        sprintf(temp, 
+                "%d", 
+                payload.data[3]);
+        micData3 = temp;
+      } 
+
       void ToVec(DebugScreen whichScreen, std::vector<std::string>& vec)
       {
         vec.clear();
@@ -210,6 +240,14 @@ namespace Messages {
             vec.push_back(accelGyroX);
             vec.push_back(accelGyroY);
             vec.push_back(accelGyroZ);
+            break;
+          }
+          case DebugScreen::MIC:
+          {
+            vec.push_back(micData0);
+            vec.push_back(micData1);
+            vec.push_back(micData2);
+            vec.push_back(micData3);
             break;
           }
           case DebugScreen::COUNT:
@@ -511,6 +549,8 @@ namespace Messages {
       {
         const auto& payload = msg.micData;
         ProcessMicDataMessage(payload);
+
+        _debugScreenInfo.Update(payload);
         return;
       }
       case RobotInterface::RobotToEngine::Tag_backpackButton:
