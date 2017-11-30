@@ -157,7 +157,12 @@ void BehaviorPlaypenWaitToStart::HandleWhileActivatedInternal(const RobotToEngin
     const auto& payload = event.GetData().Get_backpackButton();
     if(payload.depressed)
     {
-      _buttonPressed = true;
+      Robot& robot = behaviorExternalInterface.GetRobot();
+
+      if(robot.IsOnCharger() || robot.IsCharging())
+      {
+        _buttonPressed = true;
+      }
 
       _lights.onColors[(int)LEDId::LED_BACKPACK_BACK] = NamedColors::GREEN;
       _lights.offColors[(int)LEDId::LED_BACKPACK_BACK] = NamedColors::GREEN;
