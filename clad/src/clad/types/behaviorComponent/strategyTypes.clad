@@ -24,7 +24,8 @@ enum uint_8 StateConceptStrategyType {
   PetInitialDetection,
   RobotPlacedOnSlope,
   RobotShaken,
-  RobotTouchGesture
+  RobotTouchGesture,
+  Lambda
 }
 
 } // namespace Cozmo

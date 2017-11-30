@@ -39,6 +39,7 @@ class Robot;
 class IStateConceptStrategy{
 public:
   static Json::Value GenerateBaseStrategyConfig(StateConceptStrategyType type);  
+  static StateConceptStrategyType ExtractStrategyType(const Json::Value& config);
 
   IStateConceptStrategy(BehaviorExternalInterface& behaviorExternalInterface,
                       IExternalInterface* robotExternalInterface,
@@ -51,8 +52,6 @@ public:
   Util::RandomGenerator& GetRNG() const;
   
   StateConceptStrategyType GetStrategyType(){return _strategyType;}
-  
-  static StateConceptStrategyType ExtractStrategyType(const Json::Value& config);
   
 protected:
   using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;

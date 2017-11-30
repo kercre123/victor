@@ -48,7 +48,6 @@ StateConceptStrategyType IStateConceptStrategy::ExtractStrategyType(const Json::
   return StateConceptStrategyTypeFromString(strategyType);
 }
 
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IStateConceptStrategy::IStateConceptStrategy(BehaviorExternalInterface& behaviorExternalInterface,
                                          IExternalInterface* robotExternalInterface,

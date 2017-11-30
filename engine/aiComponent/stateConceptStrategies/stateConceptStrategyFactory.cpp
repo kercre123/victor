@@ -123,6 +123,11 @@ IStateConceptStrategyPtr StateConceptStrategyFactory::CreateStateConceptStrategy
       strategy = std::make_shared<StrategyRobotTouchGesture>(bei, rei, config);
       break;
     }
+    case StateConceptStrategyType::Lambda:
+    {
+      DEV_ASSERT(false, "StateConceptStrategyFactory.CreateWantsToRunStrategy.CantCreateLambdaFromConfig");
+      break;
+    }
     case StateConceptStrategyType::Invalid:
     {
       DEV_ASSERT(false, "StateConceptStrategyFactory.CreateWantsToRunStrategy.InvalidType");
