@@ -586,6 +586,9 @@ GTEST_TEST(ImageRGB, NormalizedColor)
   ImageRGB imgNorm;
   img.GetNormalizedColor(imgNorm);
   
+  ASSERT_EQ(img.GetNumRows(), imgNorm.GetNumRows());
+  ASSERT_EQ(img.GetNumCols(), imgNorm.GetNumCols());
+  
   for(s32 i=0; i<img.GetNumRows(); ++i)
   {
     const PixelRGB* img_i = img.GetRow(i);
@@ -610,4 +613,70 @@ GTEST_TEST(ImageRGB, NormalizedColor)
       EXPECT_NEAR(truth.b(), pNorm.b(), 1);
     }
   }
+  
+  // Try with an ROI
+  Rectangle<s32> roi(0,0,2,2);
+  ImageRGB imgROI = img.GetROI(roi);
+  EXPECT_FALSE(imgROI.IsContinuous());
+  imgROI.GetNormalizedColor(imgNorm);
+  ASSERT_EQ(imgROI.GetNumRows(), imgNorm.GetNumRows());
+  ASSERT_EQ(imgROI.GetNumCols(), imgNorm.GetNumCols());
+  
+  for(s32 i=0; i<imgROI.GetNumRows(); ++i)
+  {
+    const PixelRGB* img_i = imgROI.GetRow(i);
+    const PixelRGB* imgNorm_i = imgNorm.GetRow(i);
+    
+    for(s32 j=0; j<imgROI.GetNumCols(); ++j)
+    {
+      const PixelRGB& p = img_i[j];
+      const PixelRGB& pNorm = imgNorm_i[j];
+      
+      const s32 sum = (s32)p.r() + (s32)p.g() + (s32)p.b();
+      const PixelRGB truth(sum == 0 ? 0 : Util::numeric_cast<u8>(((s32)p.r() * 255)/sum),
+                           sum == 0 ? 0 : Util::numeric_cast<u8>(((s32)p.g() * 255)/sum),
+                           sum == 0 ? 0 : Util::numeric_cast<u8>(((s32)p.b() * 255)/sum));
+      
+      //printf("Img=(%d,%d,%d) ImgNorm=(%d,%d,%d) Truth=(%d,%d,%d)\n",
+      //       p.r(), p.g(), p.b(), pNorm.r(), pNorm.g(), pNorm.b(), truth.r(), truth.g(), truth.b());
+      
+      // Note: rounding error depending on order of operations can yield +/-1 variation
+      EXPECT_NEAR(truth.r(), pNorm.r(), 1);
+      EXPECT_NEAR(truth.g(), pNorm.g(), 1);
+      EXPECT_NEAR(truth.b(), pNorm.b(), 1);
+    }
+  }
+}
+
+GTEST_TEST(ResizeImage, CorrectSizes)
+{
+  Vision::Image origImg(10,20);
+  Vision::Image largerSize(30,25);
+
+  const Vision::ResizeMethod kMethod = Vision::ResizeMethod::NearestNeighbor;
+  
+  // Regular resize should yield 30x25 image
+  origImg.Resize(largerSize, kMethod);
+  EXPECT_EQ(30, largerSize.GetNumRows());
+  EXPECT_EQ(25, largerSize.GetNumCols());
+  EXPECT_EQ(10, origImg.GetNumRows());
+  EXPECT_EQ(20, origImg.GetNumCols());
+  
+  // Keep aspect ratio should yield 12x25 (13 = 25/20 * 10)
+  origImg.ResizeKeepAspectRatio(largerSize, kMethod);
+  EXPECT_EQ(13, largerSize.GetNumRows());
+  EXPECT_EQ(25, largerSize.GetNumCols());
+  EXPECT_EQ(10, origImg.GetNumRows());
+  EXPECT_EQ(20, origImg.GetNumCols());
+  
+  // Resize in place with keep aspect ratio and onlySmaller=true should not change origImg
+  origImg.ResizeKeepAspectRatio(30, 25, Vision::ResizeMethod::NearestNeighbor, true);
+  EXPECT_EQ(10, origImg.GetNumRows());
+  EXPECT_EQ(20, origImg.GetNumCols());
+  
+  // Resize in place with keep aspect ratio and onlySmaller=false should yield 13x25
+  origImg.ResizeKeepAspectRatio(30, 25, Vision::ResizeMethod::NearestNeighbor, false);
+  EXPECT_EQ(13, origImg.GetNumRows());
+  EXPECT_EQ(25, origImg.GetNumCols());
+  
 }

@@ -520,7 +520,22 @@ static void DisplayImageHelper(const EncodedImage& encodedImage, webots::ImageRe
     return;
   }
   
-  imageRef = display->imageNew(img.GetNumCols(), img.GetNumRows(), img.GetDataPointer(), webots::Display::RGB);
+  if(img.GetNumCols() == display->getWidth() && img.GetNumRows() == display->getHeight())
+  {
+    // Simple case: image already the right size
+    imageRef = display->imageNew(img.GetNumCols(), img.GetNumRows(), img.GetDataPointer(), webots::Display::RGB);
+  }
+  else
+  {
+    // Resize to fit the display
+    // NOTE: making fixed-size data buffer static because resizedImage will change dims each time it's used. 
+    static std::vector<u8> buffer(display->getWidth()*display->getHeight()*3);
+    Vision::ImageRGB resizedImage(display->getHeight(), display->getWidth(), buffer.data());
+    img.ResizeKeepAspectRatio(resizedImage, Vision::ResizeMethod::NearestNeighbor);
+    imageRef = display->imageNew(resizedImage.GetNumCols(), resizedImage.GetNumRows(),
+                                 resizedImage.GetDataPointer(), webots::Display::RGB);
+  }
+  
   display->imagePaste(imageRef, 0, 0);
 }
 

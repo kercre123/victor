@@ -80,7 +80,9 @@ namespace Vision {
     void Resize(ImageBase<T>& resizedImage, ResizeMethod method = ResizeMethod::Linear) const;
 
     // Resize in place to a specific size, keeps the aspect ratio
-    void ResizeKeepAspectRatio(s32 desiredRows, s32 desiredCols, ResizeMethod method = ResizeMethod::Linear);
+    // If onlyReduceSize=true, does not resize if new size is larger than requested size
+    void ResizeKeepAspectRatio(s32 desiredRows, s32 desiredCols,
+                               ResizeMethod method = ResizeMethod::Linear, bool onlyReduceSize = false);
 
     // Resize into the new image (which is already the desired size), keeps the aspect ratio
     void ResizeKeepAspectRatio(ImageBase<T>& resizedImage, ResizeMethod method = ResizeMethod::Linear) const;
