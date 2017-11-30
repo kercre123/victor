@@ -931,7 +931,8 @@ message ForceSetDamagedParts {
 
 message RegisterOnboardingComplete {
   int_32 onboardingStage,
-  bool   finalStage
+  bool   finalStage,
+  bool   onboardingSkipped,
 }
 
 message SetNeedsPauseState {

@@ -337,12 +337,9 @@ namespace DataPersistence {
 
 
     // Use this function to update data in the profile that may cause bugs if persisted from another robot
-    // NB: Not bothering to reset the DisplayedStar count, as it will be overwritten from NeedsState
-    // before StarBar is instantiated
     public void OnFirstNeedsUpdate() {
-      Data.DefaultProfile.DisplayedStars = NeedsStateManager.Instance.GetLatestStarAwardedFromEngine();
+      DisplayedStars = NeedsStateManager.Instance.GetLatestStarAwardedFromEngine();
       Data.DefaultProfile.NewStarLevels.Clear();
-      NeedsStateManager.kRobotChangedFromLastSession = false;
     }
 
     #region DebugMenuAPI

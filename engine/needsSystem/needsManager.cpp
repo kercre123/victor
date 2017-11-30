@@ -345,9 +345,21 @@ void NeedsManager::Init(const float currentTime_s,      const Json::Value& inJso
 }
 
 
-void NeedsManager::InitReset(const float currentTime_s, const u32 serialNumber)
+void NeedsManager::InitReset(const float currentTime_s, const u32 serialNumber,
+                             const bool onboardingSkipped)
 {
-  _needsState.Init(_needsConfig, serialNumber, _starRewardsConfig, _cozmoContext->GetRandom());
+  if (onboardingSkipped)
+  {
+    // If the user has skipped onboarding, we want to reset needs levels, stars awarded,
+    // levels completed, etc. to what it was prior to onboarding.  Note that the user
+    // can only skip onboarding if they are running a freshly-installed cozmo app with
+    // a robot that has already completed onboarding
+    SetNeedsStateFromRobotNeedsState();
+  }
+  else
+  {
+    _needsState.Init(_needsConfig, serialNumber, _starRewardsConfig, _cozmoContext->GetRandom());
+  }
 
   _timeForNextPeriodicDecay_s = currentTime_s + _needsConfig._decayPeriod;
 
@@ -569,7 +581,8 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
   }
 
   // Special message to tell the game to clear some robot-specific data that was cached app-side
-  if (robotHasChanged) {
+  if (robotHasChanged || useStateFromRobot)
+  {
     ExternalInterface::RobotChangedFromLastSession message;
     const auto& extInt = _cozmoContext->GetExternalInterface();
     extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
@@ -577,14 +590,8 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 
   if (useStateFromRobot)
   {
-    const Time savedTimeLastDisconnect = _needsState._timeLastDisconnect;
-    const Time savedTimeLastAppBackgrounded = _needsState._timeLastAppBackgrounded;
-
     // Copy the loaded robot needs state into our device needs state
-    _needsState = _needsStateFromRobot;
-
-    _needsState._timeLastDisconnect = savedTimeLastDisconnect;
-    _needsState._timeLastAppBackgrounded = savedTimeLastAppBackgrounded;
+    SetNeedsStateFromRobotNeedsState();
 
     // Now apply decay for the unconnected time for THIS robot
     // (We did it earlier, in Init, but that was for a different robot)
@@ -656,6 +663,18 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
   }
 
   _localNotifications->Generate();
+}
+
+
+void NeedsManager::SetNeedsStateFromRobotNeedsState()
+{
+  const Time savedTimeLastDisconnect = _needsState._timeLastDisconnect;
+  const Time savedTimeLastAppBackgrounded = _needsState._timeLastAppBackgrounded;
+
+  _needsState = _needsStateFromRobot;
+
+  _needsState._timeLastDisconnect = savedTimeLastDisconnect;
+  _needsState._timeLastAppBackgrounded = savedTimeLastAppBackgrounded;
 }
 
 
@@ -1436,19 +1455,23 @@ void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComp
     _robotOnboardingStageCompleted = msg.onboardingStage;
   }
   PRINT_CH_INFO(kLogChannelName, "RegisterOnboardingComplete",
-                "OnboardingStageCompleted: %d, finalStage: %d",
-                _robotOnboardingStageCompleted, msg.finalStage);
+                "OnboardingStageCompleted: %d, finalStage: %d, skipped: %d",
+                _robotOnboardingStageCompleted, msg.finalStage, msg.onboardingSkipped);
 
   // phase 1 is just the first part showing the needs hub.
   if( msg.finalStage )
   {
-    // Reset cozmo's need levels to their starting points, and reset timers
-    InitReset(_currentTime_s, _needsState._robotSerialNumber);
+    // Reset timers, and reset cozmo's need levels to their starting points
+    // unless onboarding was skipped
+    InitReset(_currentTime_s, _needsState._robotSerialNumber, msg.onboardingSkipped);
 
-    // onboarding unlocks one star.
-    _needsState._numStarsAwarded = 1;
-    const Time nowTime = system_clock::now();
-    _needsState._timeLastStarAwarded = nowTime;
+    if (!msg.onboardingSkipped)
+    {
+      // onboarding unlocks one star (unless onboarding was skipped)
+      _needsState._numStarsAwarded = 1;
+      const Time nowTime = system_clock::now();
+      _needsState._timeLastStarAwarded = nowTime;
+    }
 
     // Un-pause the needs system if we are not already
     if (_isPausedOverall)

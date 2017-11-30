@@ -33,7 +33,7 @@ namespace Cozmo.Needs {
 
     // Used to track when we've connected to a different robot than the last apprun, so that we can notify
     // other parts of the app of the change on the first NeedsState update
-    public static bool kRobotChangedFromLastSession = false;
+    public static bool HasRobotChangedFromLastSession = false;
 
     private NeedsState _LatestStateFromEngine;
 #if UNITY_EDITOR
@@ -83,6 +83,7 @@ namespace Cozmo.Needs {
         RobotEngineManager.Instance.RemoveCallback<NeedsState>(HandleNeedsStateFromEngine);
         RobotEngineManager.Instance.RemoveCallback<StarLevelCompleted>(HandleStarLevelCompleted);
         RobotEngineManager.Instance.RemoveCallback<StarUnlocked>(HandleStarUnlocked);
+        RobotEngineManager.Instance.RemoveCallback<RobotChangedFromLastSession>(HandleRobotChangedFromLastSession);
       }
       DataPersistence.DataPersistenceManager.Instance.OnSaveDataReset -= HandleOnSaveDataReset;
     }
@@ -226,9 +227,9 @@ namespace Cozmo.Needs {
       }
 
       // On the first Needs update, reset certain data that may have been cached from a previous robot
-      if (kRobotChangedFromLastSession) {
+      if (HasRobotChangedFromLastSession) {
         DataPersistenceManager.Instance.OnFirstNeedsUpdate();
-        kRobotChangedFromLastSession = false;
+        HasRobotChangedFromLastSession = false;
       }
     }
 
@@ -271,7 +272,7 @@ namespace Cozmo.Needs {
     }
 
     private void HandleRobotChangedFromLastSession(RobotChangedFromLastSession message) {
-      kRobotChangedFromLastSession = true;
+      HasRobotChangedFromLastSession = true;
     }
   }
 

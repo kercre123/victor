@@ -127,7 +127,8 @@ public:
 
 private:
 
-  void InitReset(const float currentTime_s, const u32 serialNumber);
+  void InitReset(const float currentTime_s, const u32 serialNumber,
+                 const bool onboardingSkipped = false);
   void InitInternal(const float currentTime_s);
 
   bool DeviceHasNeedsState(const std::string& filename);
@@ -146,6 +147,8 @@ private:
   bool FinishReadFromRobot(const u8* data, const size_t size, const NVStorage::NVResult res);
 
   void InitAfterReadFromRobotAttempt();
+
+  void SetNeedsStateFromRobotNeedsState();
 
   void AttemptActivateTuningExperiment(u32 robotSerialNumber);
 

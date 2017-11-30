@@ -338,9 +338,12 @@ namespace Cozmo.Needs.UI {
       HandleDialogFinishedOpenAnimation();
 
       // They've completed everything really.
+      const bool kCompleted = true;
+      const bool kSkipped = true;
       RobotEngineManager.Instance.Message.RegisterOnboardingComplete =
                  new Anki.Cozmo.ExternalInterface.RegisterOnboardingComplete(
-                      System.Enum.GetNames(typeof(OnboardingManager.OnboardingPhases)).Length - 1, true);
+                      System.Enum.GetNames(typeof(OnboardingManager.OnboardingPhases)).Length - 1,
+                            kCompleted, kSkipped);
       RobotEngineManager.Instance.SendMessage();
       if (_MetersWidget != null) {
         _MetersWidget.OnboardingSkipped();

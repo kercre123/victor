@@ -331,9 +331,11 @@ public class OnboardingManager : MonoBehaviour {
       Cozmo.PauseManager.Instance.ExitChallengeOnPause = true;
     }
 
+    bool kCompleted = _CurrPhase == OnboardingPhases.PlayIntro;
+    const bool kSkipped = false;
     RobotEngineManager.Instance.Message.RegisterOnboardingComplete =
            new Anki.Cozmo.ExternalInterface.RegisterOnboardingComplete((int)_CurrPhase,
-                                                                     _CurrPhase == OnboardingPhases.PlayIntro);
+               kCompleted, kSkipped);
     RobotEngineManager.Instance.SendMessage();
   }
 
