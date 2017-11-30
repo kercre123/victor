@@ -57,7 +57,7 @@ public:
   virtual void TransformContent(const Poly2f& poly, NodeTransformFunction transform) override;
 
   // populate a list of all data that matches the predicate
-  virtual void FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) override;
+  virtual void FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const override;
 
   
   // return the size of the area currently explored

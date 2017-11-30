@@ -15,6 +15,7 @@
 #include "memoryMapData.h"
 
 #include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/pose.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -25,7 +26,7 @@ namespace Cozmo {
 struct MemoryMapData_Cliff : public MemoryMapData
 {
   // constructor
-  MemoryMapData_Cliff(Vec2f dir, TimeStamp_t t);
+  MemoryMapData_Cliff(const Pose3d& cliffPose, TimeStamp_t t);
   
   // create a copy of self (of appropriate subclass) and return it
   MemoryMapData* Clone() const override;
@@ -37,10 +38,10 @@ struct MemoryMapData_Cliff : public MemoryMapData
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // If you add attributes, make sure you add them to ::Equals and ::Clone (if required)
-  Vec2f directionality; // direction we presume for the cliff (from detection)
-  
+  Pose3d pose; // location and direction we presume for the cliff (from detection)
+
 protected: 
-  MemoryMapData_Cliff() : MemoryMapData(MemoryMapTypes::EContentType::Cliff, 0, true), directionality() {}
+  MemoryMapData_Cliff() : MemoryMapData(MemoryMapTypes::EContentType::Cliff, 0, true) {}
 };
  
 } // namespace
