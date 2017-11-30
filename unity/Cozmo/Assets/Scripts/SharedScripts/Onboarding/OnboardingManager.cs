@@ -19,6 +19,7 @@ public class OnboardingManager : MonoBehaviour {
     }
   }
 
+  // DO NOT DELETE ENUMS FROM THIS LIST. They are saved within the save file by name.
   public enum OnboardingPhases : int {
     InitialSetup,
     MeetCozmo,
@@ -456,6 +457,7 @@ public class OnboardingManager : MonoBehaviour {
   private void SetSpecificStage(int nextStage, bool canStartNewPhase = true) {
     if (_CurrStageInst != null) {
       GameObject.Destroy(_CurrStageInst);
+      _CurrStageInst = null;
     }
     if (_OnboardingUIInstance == null) {
       DAS.Error("onboardingmanager.SetSpecificStage", "Onboarding Asset Bundle load not completed");
@@ -495,6 +497,11 @@ public class OnboardingManager : MonoBehaviour {
         }
       }
       UnloadIfDoneWithAllPhases();
+      // Request an update of latest needs state to update buttons if all onboarding is completed
+      if (_CurrPhase == OnboardingPhases.None) {
+        RobotEngineManager.Instance.Message.GetNeedsState = new Anki.Cozmo.ExternalInterface.GetNeedsState();
+        RobotEngineManager.Instance.SendMessage();
+      }
     }
 
     DataPersistenceManager.Instance.Save();
