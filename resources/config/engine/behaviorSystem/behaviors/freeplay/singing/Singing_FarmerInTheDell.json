@@ -3,6 +3,6 @@
   "behaviorID":"Singing_FarmerInTheDell",
   "displayNameKey":"behavior.singing.FarmerInTheDell",
   "requiredUnlockId":"Singing_FarmerInTheDell",
-  "audioSwitchGroup":"Cozmo_Sings_80Bpm",
+  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
   "audioSwitch":"Cozmo_Sings_Farmer_In_The_Dell"
 }
