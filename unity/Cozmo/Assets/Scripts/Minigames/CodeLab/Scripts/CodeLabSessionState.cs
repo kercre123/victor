@@ -432,7 +432,7 @@ namespace CodeLab {
             DAS_Event("robot.code_lab.aborted_program_horizontal.time." + projectTypeString, dasProjectName, DASUtil.FormatExtraData(timeInProgram_s.ToString()));
             DAS_Event("robot.code_lab.aborted_program_horizontal.blocks." + projectTypeString, dasProjectName, DASUtil.FormatExtraData(_NumBlocksExecuted.ToString()));
           }
-          DAS_Event("robot.code_lab.end_program_horizontal.time." + projectTypeString, dasProjectName, DASUtil.FormatExtraData(_NumBlocksExecuted.ToString()));
+          DAS_Event("robot.code_lab.end_program_horizontal.time." + projectTypeString, dasProjectName, DASUtil.FormatExtraData(timeInProgram_s.ToString()));
           DAS_Event("robot.code_lab.end_program_horizontal.blocks." + projectTypeString, dasProjectName, DASUtil.FormatExtraData(_NumBlocksExecuted.ToString()));
           break;
         case GrammarMode.Vertical:
