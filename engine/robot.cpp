@@ -46,8 +46,9 @@
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
-#include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/micDirectionHistory.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
@@ -209,6 +210,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _lastDisconnectedCheckTime(0)
   , _robotToEngineImplMessaging(new RobotToEngineImplMessaging(this))
   , _robotIdleTimeoutComponent(new RobotIdleTimeoutComponent(*this))
+  , _micDirectionHistory(new MicDirectionHistory())
 {
   DEV_ASSERT(context != nullptr,
              "Robot.Constructor.ContextIsNull");

@@ -16,6 +16,8 @@
 
 #include "cozmoAnim/micDataTypes.h"
 
+#include "anki/common/types.h"
+
 #include <array>
 #include <cstdint>
 #include <memory>
@@ -32,11 +34,17 @@ class UdpServer;
 namespace Anki {
 namespace Cozmo {
 
+namespace RobotInterface {
+  struct MicData;
+  struct RobotToEngine;
+}
+
 class SpeechRecognizerTHF;
 
 namespace MicData {
   
 class MicDataInfo;
+class MicImmediateDirection;
 
 class MicDataProcessor {
 public:
@@ -45,9 +53,11 @@ public:
   MicDataProcessor(const MicDataProcessor& other) = delete;
   MicDataProcessor& operator=(const MicDataProcessor& other) = delete;
 
-  void ProcessNextAudioChunk(const RawAudioChunk& audioChunk);
+  void ProcessMicDataPayload(const RobotInterface::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
   void Update();
+
+  void SetForceRecordClip(bool newValue) { _forceRecordClip = newValue; }
 
 private:
   std::string _writeLocationDir = "";
@@ -58,14 +68,21 @@ private:
   std::recursive_mutex _dataRecordJobMutex;
   bool _currentlyStreaming = false;
 
+  // Members for general purpose processing and state
   std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> _inProcessAudioBlock;
   bool _inProcessAudioBlockFirstHalf = true;
   SpeexResamplerState* _speexState = nullptr;
   std::unique_ptr<SpeechRecognizerTHF> _recognizer;
   std::unique_ptr<UdpServer> _udpServer;
+  std::unique_ptr<MicImmediateDirection> _micImmediateDirection;
+  bool _forceRecordClip = false;
 
   // Members for managing the incoming raw audio jobs
-  AudioUtil::AudioChunkList _rawAudioToProcess;
+  struct TimedMicData {
+    TimeStamp_t timestamp;
+    AudioUtil::AudioChunk audioChunk;
+  };
+  std::deque<TimedMicData> _rawAudioToProcess;
   std::thread _processThread;
   std::mutex _resampleMutex;
   bool _processThreadStop = false;
@@ -75,9 +92,13 @@ private:
   std::mutex _fftResultMutex;
 
   // Internal buffer used to add to the streaming audio once a trigger is detected
-  AudioUtil::AudioChunkList _triggerOverlapBuffer;
+  std::deque<TimedMicData> _triggerOverlapBuffer;
 
-  AudioUtil::AudioChunk ProcessResampledAudio(const AudioUtil::AudioChunk& audioChunk);
+  // Members for holding outgoing messages
+  std::vector<std::unique_ptr<RobotInterface::RobotToEngine>> _msgsToEngine;
+  std::mutex _msgsMutex;
+
+  AudioUtil::AudioChunk ProcessResampledAudio(TimeStamp_t timestamp, const AudioUtil::AudioChunk& audioChunk);
   AudioUtil::AudioChunk ResampleAudioChunk(const AudioUtil::AudioChunk& audioChunk);
 
   void ProcessLoop();

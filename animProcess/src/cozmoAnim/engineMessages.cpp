@@ -289,22 +289,11 @@ namespace Messages {
   static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
   {
     auto* micDataProcessor = _context->GetMicDataProcessor();
-    if (micDataProcessor == nullptr)
+    if (micDataProcessor != nullptr)
     {
-      return;
-    }
-
-    static uint32_t sLatestSequenceID = 0;
-    
-    // Since mic data is sent unreliably, make sure the sequence id increases appropriately
-    if (payload.sequenceID > sLatestSequenceID ||
-        (sLatestSequenceID - payload.sequenceID) > (UINT32_MAX / 2)) // To handle rollover case
-    {
-      sLatestSequenceID = payload.sequenceID;
-      micDataProcessor->ProcessNextAudioChunk(payload.data);
+      micDataProcessor->ProcessMicDataPayload(payload);
     }
   }
-
 
   void ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg)
   {

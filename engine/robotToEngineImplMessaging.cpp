@@ -31,6 +31,7 @@
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/micDirectionHistory.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/pathPlanner.h"
 #include "engine/robot.h"
@@ -123,6 +124,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::objectPowerLevel,               &RobotToEngineImplMessaging::HandleObjectPowerLevel);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::timeProfStat,                              &RobotToEngineImplMessaging::HandleTimeProfileStat);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::micDirection,                   &RobotToEngineImplMessaging::HandleMicDirection);
   
   // lambda wrapper to call internal handler
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::state,
@@ -1065,6 +1067,12 @@ void RobotToEngineImplMessaging::HandleTimeProfileStat(const AnkiEvent<RobotInte
   {
     PRINT_NAMED_INFO("Profile", "name:%s avg:%u max:%u", payload.profName.c_str(), payload.avg, payload.max);
   }
+}
+
+void RobotToEngineImplMessaging::HandleMicDirection(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  const auto & payload = message.GetData().Get_micDirection();
+  robot->GetMicDirectionHistory().AddDirectionSample(payload.timestamp, payload.direction, payload.confidence);
 }
 
 } // end namespace Cozmo

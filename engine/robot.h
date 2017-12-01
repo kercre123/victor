@@ -100,6 +100,7 @@ class ProxSensorComponent;
 class TouchSensorComponent;
 class AnimationComponent;
 class MapComponent;
+class MicDirectionHistory;
 
 namespace Audio {
   class EngineRobotAudioClient;
@@ -313,6 +314,9 @@ public:
       
   const Util::RandomGenerator& GetRNG() const;
   Util::RandomGenerator& GetRNG();
+
+  const MicDirectionHistory& GetMicDirectionHistory() const { return *_micDirectionHistory; }
+  MicDirectionHistory&       GetMicDirectionHistory()       { return *_micDirectionHistory; }
   
   // =========== Localization ===========
   
@@ -914,6 +918,7 @@ protected:
 
   std::unique_ptr<RobotToEngineImplMessaging> _robotToEngineImplMessaging;
   std::unique_ptr<RobotIdleTimeoutComponent>  _robotIdleTimeoutComponent;
+  std::unique_ptr<MicDirectionHistory>        _micDirectionHistory;
 
   Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                    const TimeStamp_t&   t,

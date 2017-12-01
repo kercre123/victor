@@ -145,6 +145,7 @@ void ForwardMicData(void)
                 "bad mic data sample count define");
   RobotInterface::MicData micData;
   micData.sequenceID = bodyData_->framecounter;
+  micData.timestamp = HAL::GetTimeStamp();
 #if MICDATA_ENABLED
   std::copy(bodyData_->audio, bodyData_->audio + MICDATA_SAMPLES_COUNT, micData.data);
   RobotInterface::SendMessage(micData);

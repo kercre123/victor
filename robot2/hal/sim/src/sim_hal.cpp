@@ -257,6 +257,7 @@ namespace Anki {
           }
         }
         newData.sequenceID = audioInputSequenceID_++;
+        newData.timestamp = HAL::GetTimeStamp();
       }
       
       void AudioInputUpdate()
