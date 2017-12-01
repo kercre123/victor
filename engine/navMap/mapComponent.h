@@ -25,6 +25,7 @@
 
 #include <assert.h>
 #include <string>
+#include <list>
 
 namespace Anki {
 namespace Cozmo {
@@ -54,6 +55,9 @@ public:
   
   // Processes the edges found in the given frame
   Result ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
+  
+  // add obstacles detected from the driving classifier to navMap
+  void AddDetectedObstacles(const std::list<Poly2f>& polys);
 
   ////////////////////////////////////////////////////////////////////////////////
   // Message handling / dispatch

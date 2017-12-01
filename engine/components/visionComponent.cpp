@@ -1185,6 +1185,9 @@ namespace Cozmo {
                       "Received %d obstacles", int(procResult.visualObstacles.size()));
     // procResult.visualObstacles is a list of Poly2f std::list<Poly2f>
     // TODO Michael goes here
+    if (!procResult.visualObstacles.empty()){
+      _robot.GetMapComponent().AddDetectedObstacles(procResult.visualObstacles);
+    }
 
     return RESULT_OK;
   }
