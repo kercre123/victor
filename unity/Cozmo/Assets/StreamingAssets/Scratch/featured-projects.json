@@ -11,7 +11,7 @@
         "FeaturedProjectImageName": "HotPotato",
         "FeaturedProjectBackgroundColor": "#831fb7",
         "FeaturedProjectTitleTextColor": "#e4e4e4",
-        "ProjectJSONFile": "HotPotato"
+        "ProjectJSONFile": "hot_potato"
     },
     {
         "ProjectUUID": "29e14062-8cc5-480d-964f-37c62cf4a3a9",
@@ -25,7 +25,7 @@
         "FeaturedProjectImageName": "TinyOrchestra",
         "FeaturedProjectBackgroundColor": "#ffe700",
         "FeaturedProjectTitleTextColor": "#696b68",
-        "ProjectJSONFile": "TinyOrchestra"
+        "ProjectJSONFile": "tiny_orchestra"
     },
     {
         "ProjectUUID": "8170ed3b-bfea-41f8-bc0a-b9ea75d4c523",
@@ -39,7 +39,7 @@
         "FeaturedProjectImageName": "MagicFortuneTeller",
         "FeaturedProjectBackgroundColor": "#ffe700",
         "FeaturedProjectTitleTextColor": "#f2f2f2",
-        "ProjectJSONFile": "MagicFortuneTeller"
+        "ProjectJSONFile": "magic_fortune_teller"
     },
     {
         "ProjectUUID": "cb8f716e-1b8f-4f37-af10-4fe30a8ec31b",
@@ -53,7 +53,7 @@
         "FeaturedProjectImageName": "CubeWhack",
         "FeaturedProjectBackgroundColor": "#ffe700",
         "FeaturedProjectTitleTextColor": "#f2f2f2",
-        "ProjectJSONFile": "CubeWhack"
+        "ProjectJSONFile": "cube_whack"
     },
     {
         "ProjectUUID": "43b2136b-759b-432c-b17b-938a4c3db9e1",
@@ -67,7 +67,7 @@
         "FeaturedProjectImageName": "FiretruckAlarm",
         "FeaturedProjectBackgroundColor": "#ffe700",
         "FeaturedProjectTitleTextColor": "#696b68",
-        "ProjectJSONFile": "FiretruckAlarm"
+        "ProjectJSONFile": "firetruck_alarm"
     },
     {
         "ProjectUUID": "ce67e190-c2d6-4e64-8084-5183eec50d94",
@@ -81,7 +81,7 @@
         "FeaturedProjectImageName": "LightShow",
         "FeaturedProjectBackgroundColor": "#ffe700",
         "FeaturedProjectTitleTextColor": "#e4e4e4",
-        "ProjectJSONFile": "LightShow"
+        "ProjectJSONFile": "light_show"
     },
     {
         "ProjectUUID": "467f67d5-9217-4e0c-9bf4-3896070f0318",
@@ -95,7 +95,7 @@
         "FeaturedProjectImageName": "LightShow",
         "FeaturedProjectBackgroundColor": "#ffe700",
         "FeaturedProjectTitleTextColor": "#e4e4e4",
-        "ProjectJSONFile": "LaserSmile"
+        "ProjectJSONFile": "laser_smile"
     },
     {
         "ProjectUUID": "1a9f3d85-63ca-43f4-a7d2-9105d6f66d84",
@@ -109,7 +109,7 @@
         "FeaturedProjectImageName": "LightShow",
         "FeaturedProjectBackgroundColor": "#ffe700",
         "FeaturedProjectTitleTextColor": "#e4e4e4",
-        "ProjectJSONFile": "LaserSmile",
+        "ProjectJSONFile": "laser_smile",
         "StartDate": {
             "Month": "12",
             "Day": "10",

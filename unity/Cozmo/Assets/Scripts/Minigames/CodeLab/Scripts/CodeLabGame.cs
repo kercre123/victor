@@ -3274,7 +3274,7 @@ namespace CodeLab {
         string featuredProjectJSONFileName = featuredProjectJSONFileNameStartsWith + "_" + Localization.GetStringsLocale() + ".json";
 
         // TODO Refactor this path and loading code, as it appears in multiple other places in CodeLabGame.cs.
-        string featuredProjectJSONFile = "/Scratch/featuredProjects/" + featuredProjectJSONFileName;
+        string featuredProjectJSONFile = "/Scratch/featuredProjects/" + featuredProjectJSONFileName.ToLower();
 #if UNITY_EDITOR || UNITY_IOS
         string streamingAssetsPath = Application.streamingAssetsPath + featuredProjectJSONFile;
 #elif UNITY_ANDROID
