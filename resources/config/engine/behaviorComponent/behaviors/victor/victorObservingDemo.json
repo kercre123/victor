@@ -1,4 +1,71 @@
 {
   "behaviorID" : "VictorObservingDemo",
-  "behaviorClass" : "VictorObservingDemo"
+  "behaviorClass" : "VictorObservingDemo",
+
+
+  "states": [
+    {
+      "name": "ObservingOnCharger",
+      "behavior": "VictorDemoObservingOnChargerState",
+      "visionModes": [ "DetectingMarkers", "DetectingFaces" ],
+      "debugColor": "ORANGE"
+    },
+    {
+      "name": "ObservingOnChargerRecentlyPlaced",
+      "behavior": "VictorDemoObservingOnChargerState",
+      "visionModes": [ "DetectingMarkers" ],
+      "debugColor": "RED"
+    },
+    {
+      "name": "DriveOffChargerIntoObserving",
+      "behavior": "VictorDemoDriveOffChargerIntoObserving",
+      "visionModes": [ "DetectingFaces", "DetectingMarkers" ]
+    },
+    {
+      "name": "DriveOffChargerIntoFeeding",
+      "behavior": "DriveOffCharger"
+    },
+    {
+      "name": "DriveOffChargerIntoSocializing",
+      "behavior": "DriveOffCharger"
+    },
+    {
+      "name": "Observing",
+      "behavior": "VictorDemoObservingState",
+      "visionModes": [ "DetectingFaces", "DetectingMarkers" ],
+      "debugColor": "BLUE"
+    },
+    {
+      "name": "Feeding",
+      "behavior": "VictorDemoFeedingState",
+      "visionModes": [ "DetectingMarkers" ],
+      "debugColor": "CYAN"
+    },
+    {
+      "name": "Socializing",
+      "behavior": "VictorDemoSocialize",
+      "visionModes": [ "DetectingFaces" ],
+      "debugColor": "MAGENTA"
+    },
+    {
+      "name": "Napping",
+      "behavior": "VictorDemoNappingState",
+      "debugColor": "GREEN"
+    },
+    {
+      "name": "WakingUp",
+      "behavior": "VictorDemoNappingWakeUp"
+    },
+    {
+      "name": "ReturningToCharger",
+      "behavior": "FindAndGoToHome",
+      "visionModes": [ "DetectingMarkers" ],
+      "debugColor": "WHITE"
+    },
+    {
+      "name": "FailedToFindCharger",
+      "behavior": "VictorDemoFailedToFindCharger",
+      "visionModes": [ "DetectingMarkers" ]
+    }
+  ]      
 }

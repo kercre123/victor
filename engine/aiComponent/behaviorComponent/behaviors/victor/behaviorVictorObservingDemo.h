@@ -81,8 +81,6 @@ private:
 
   StateID _currState = InvalidStateID;
 
-  bool _initComplete = false;
-
   BackpackLights _currDebugLights;
   bool _debugLightsDirty = false;
   bool _useDebugLights = false;
