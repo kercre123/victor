@@ -6,6 +6,21 @@
 #   VICTOR_2ecbdf7d 0
 # }
 
+# List of robots we have successfully pulled logs from
+# is written to file at end of run
+
+set completed {}
+
+if {[file exists "downloaded.txt"]} {
+  set f [open "downloaded.txt" "r"]
+  set completed [split [read $f] "\n"]
+  close $f
+}
+
+foreach i $completed {
+  puts "Will ignore $i"
+}
+
 # Start victor node ble cli tool
 spawn node ./index.js
 
@@ -42,12 +57,10 @@ array set robotToIP {}
 foreach name [array names robots] {
   set found 0
 
-  # if { [info exists ignore($robots($name))] } {
-  #   puts "Ignoring $robots($name)\n"
-  #   # continue
-  # } else {
-  #   continue
-  # }
+  if { [lsearch $completed $robots($name)] > 0 } {
+    puts "Ignoring $robots($name)\n"
+    continue
+  }
 
   # Rescan for the current robot
   sleep 1
@@ -134,6 +147,11 @@ foreach name [array names robotToIP] {
   puts "$name $robotToIP($name)"
 }
 
+# Disconnect from anything first
+sleep 1
+spawn adb disconnect
+expect "disconnected everything"
+
 # Set dir to the current date/time
 set dir [clock format [clock seconds] -format {%Y-%m-%d_%H:%M:%S}]
 
@@ -145,7 +163,7 @@ foreach name [array names robotToIP] {
   spawn adb connect $robotToIP($name)
   expect {
     "connected to $robotToIP($name)" {
-      sleep 1
+      sleep 3
     }
     "unable to connect" {
       # Couldn't connect so move on to the next one
@@ -154,8 +172,30 @@ foreach name [array names robotToIP] {
     }
   }
 
+  # Check if device is offline
+  spawn adb devices
+  expect {
+    "\tdevice" { }
+    "offline" {
+      sleep 1
+      spawn adb disconnect
+      expect "disconnected everything"
+      continue
+    }
+  }
+
   # Shell into the robot
+  set timeout 2
   spawn adb shell
+  expect {
+    "no devices" {
+      sleep 1
+      spawn adb disconnect
+      expect "disconnected everything"
+      continue
+    }
+    timeout { }
+  }
 
   # Draw the ip address on the face using the "display" program
   sleep 1
@@ -180,11 +220,14 @@ foreach name [array names robotToIP] {
 
   # Stop the processes in case they are running
   send "victor_stop\r"
+  set timeout 5
   expect "stopped"
+  set timeout 5
   expect "stopped"
+  set timeout 5
   expect "stopped"
 
-  # Create Logs/<cur date>/<robot name> directories on desktops
+  # Create Logs/<cur date>/<robot name> directories on desktop
   sleep 1
   send "mkdir -p ~/Desktop/Logs/$dir/$name\r"
 
@@ -200,8 +243,11 @@ foreach name [array names robotToIP] {
   # Restart the processes
   sleep 1
   send "victor_restart\r"
+  set timeout 5
   expect "stopped"
+  set timeout 5
   expect "stopped"
+  set timeout 5
   expect "stopped"
 
   # Disconnect from robot
@@ -209,5 +255,15 @@ foreach name [array names robotToIP] {
   spawn adb disconnect
   expect "disconnected everything"
 
+  lappend completed $name
+
   sleep 1 
 }
+
+set var [open "downloaded.txt" "w"]
+foreach r $completed {
+  puts $var "$r"
+}
+close $var
+
+puts "Done"
