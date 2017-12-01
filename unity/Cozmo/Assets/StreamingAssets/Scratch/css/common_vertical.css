@@ -158,6 +158,27 @@ button:focus {
 }
 
 /**
+ * shared button attributes
+ */
+
+#close .primary button:after,
+#glossary-button .primary button:after,
+#exportbtn .primary button:after,
+#navigation .greenflag button:after,
+#navigation .stop button:after,
+#undoRedo .redo button:after,
+#undoRedo .undo button:after,
+#zoomControls .zoomIn button:after,
+#zoomControls .zoomOut button:after,
+#zoomControls .zoomReset button:after {
+    content:'';
+    position:absolute;
+    top:-10px; bottom:-10px; 
+    left:-10px; right:-10px; 
+}
+
+
+/**
  * projecttext
  */
 #projecttext {
