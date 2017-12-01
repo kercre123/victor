@@ -36,9 +36,9 @@ GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const Co
   // TODO the classifier should be loaded from a file, not created here
   {
     _classifier.reset(new DTDrivingSurfaceClassifier(config, context));
-//    const std::string path = _context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
-//                                                                         "test/groundPlaneClassifier");
-    const std::string path = "/Users/lorenzori/tmp/images_training/simulated_images";
+    const std::string path = _context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
+                                                                         "vision/groundclassification");
+//    const std::string path = "/Users/lorenzori/tmp/images_training/simulated_images";
     PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.pathToData", "the path to data is: %s",
                     path.c_str());
 

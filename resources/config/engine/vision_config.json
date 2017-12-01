@@ -14,7 +14,7 @@
     "DetectingBlinkAmount"       : false,
     "DetectingLaserPoints"       : false,
     "ComputingStatistics"        : false,
-    "BuildingOverheadMap"        : false
+    "BuildingOverheadMap"        : false,
     "DetectingVisualObstacles"   : true
   },
   
