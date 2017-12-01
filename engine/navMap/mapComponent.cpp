@@ -969,11 +969,11 @@ void MapComponent::AddDetectedObstacles(const std::list<Poly2f>& polys)
       Poly2f globalObs;
       for (const Point2f& p : obs)
       {
-        Point2f newP = robotTransform * p;
+        // Point2f newP = robotTransform * p;
         globalObs.emplace_back(robotTransform * p);
-        PRINT_NAMED_WARNING("MapComponent.AddDetectedObstacles.AddingObstacle",
-                      "Adding obstacles with gobal (%.2f %.2f) local (%.2f %.2f)", 
-                      newP.x(), newP.y(),  p.x(), p.y());
+        // PRINT_NAMED_WARNING("MapComponent.AddDetectedObstacles.AddingObstacle",
+        //               "Adding obstacles with gobal (%.2f %.2f) local (%.2f %.2f)", 
+        //               newP.x(), newP.y(),  p.x(), p.y());
       }
 
       // PRINT_NAMED_WARNING("MapComponent.AddDetectedObstacles.AddingObstacle",

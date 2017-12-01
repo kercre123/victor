@@ -38,7 +38,7 @@ GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const Co
   {
     _classifier.reset(new DTDrivingSurfaceClassifier(config, context));
     const std::string path = _context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
-                                                                         "vision/groundclassification");
+                                                                         "config/vision/groundclassification");
 //    const std::string path = "/Users/lorenzori/tmp/images_training/simulated_images";
     PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.pathToData", "the path to data is: %s",
                     path.c_str());
@@ -132,8 +132,8 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
     for (auto& point : contour) {
 
       // ground_x = point.y, ground.y = point.x ??
-      const f32 ground_x = static_cast<f32>(point.y) + groundPlaneROI.GetDist();
-      const f32 ground_y = static_cast<f32>(point.x) - 0.5f*groundPlaneROI.GetWidthFar(); // Zero is at the center;
+      const f32 ground_y = -1*(static_cast<f32>(point.y) - 0.5f*groundPlaneROI.GetWidthFar());
+      const f32 ground_x = static_cast<f32>(point.x) + groundPlaneROI.GetDist(); // Zero is at the center;
 
       polygon.emplace_back(Point2f(ground_x, ground_y));
     }
