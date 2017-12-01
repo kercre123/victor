@@ -24,33 +24,6 @@ namespace Cozmo {
 
 class BehaviorFeedingEat;
 
-// TODO:(bn) combine this with WantsToRunStrategy
-class ICondition {
-public:
-  ICondition() {}
-  virtual ~ICondition() {}
-
-  virtual void EnteredScope() { }
-  virtual void LeftScope() { }
-
-  virtual bool Evaluate(BehaviorExternalInterface& behaviorExternalInterface) = 0;
-};
-
-class LambdaCondition : public ICondition {
-public:
-  using TransitionFunction = std::function<bool(BehaviorExternalInterface& behaviorExternalInterface)>;
-  LambdaCondition(TransitionFunction func) :_func(func) {}
-
-  virtual bool Evaluate(BehaviorExternalInterface& behaviorExternalInterface) override {
-    return _func(behaviorExternalInterface);
-  }
-
-private:
-  TransitionFunction _func;
-};
-
-class FeedingListenerCondition;
-
 class BehaviorVictorObservingDemo : public ICozmoBehavior
 {
 protected:
@@ -102,8 +75,6 @@ private:
 
   using StateMap = std::map< StateID, State >;
   std::unique_ptr< StateMap > _states;
-
-  std::shared_ptr<FeedingListenerCondition> _feedingCompleteCondition;
 
   // hack to turn off all modes when this behavior starts and then back on when it ends
   std::vector< VisionMode > _visionModesToReEnable;

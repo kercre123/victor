@@ -25,8 +25,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-#include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iFeedingListener.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyLambda.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
@@ -35,6 +36,9 @@
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
 #include "engine/vision/visionModesHelpers.h"
+
+// TODO:(bn) remove this after data-driving
+#include "engine/aiComponent/stateConceptStrategies/strategyAlwaysRun.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -78,31 +82,32 @@ static constexpr const u32 kDebugHeartbeatLED = 1;
 static constexpr const float kHeartbeatPeriod_s = 0.6f;
 
 // TODO:(bn) move somewhere else
-class TimeoutCondition : public ICondition
+class TimerStrategy : public IStateConceptStrategy
 {
 public:
-  TimeoutCondition(const float timeout_s);
+  TimerStrategy(const float timeout_s);
 
-  virtual void EnteredScope() override;
-  virtual bool Evaluate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void ResetInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
 private:
   const float _timeout_s;
   float _timeToEnd_s = -1.0f;
 };
 
-TimeoutCondition::TimeoutCondition(const float timeout_s)
-  : _timeout_s(timeout_s)
+TimerStrategy::TimerStrategy(const float timeout_s)
+  : IStateConceptStrategy(IStateConceptStrategy::GenerateBaseStrategyConfig(StateConceptStrategyType::Timer))
+  , _timeout_s(timeout_s)
 {
 }
 
-void TimeoutCondition::EnteredScope()
+void TimerStrategy::ResetInternal(BehaviorExternalInterface& bei)
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _timeToEnd_s = currTime_s + _timeout_s;
 }
 
-bool TimeoutCondition::Evaluate(BehaviorExternalInterface& behaviorExternalInterface)
+bool TimerStrategy::AreStateConditionsMetInternal(BehaviorExternalInterface& bei) const
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   return currTime_s >= _timeToEnd_s;
@@ -115,11 +120,11 @@ class BehaviorVictorObservingDemo::State
 public:
   State(StateID id, ICozmoBehaviorPtr behavior);
 
-  void AddInterruptingTransition(StateID toState, std::shared_ptr<ICondition> condition );
-  void AddNonInterruptingTransition(StateID toState, std::shared_ptr<ICondition> condition );
-  void AddExitTransition(StateID toState, std::shared_ptr<ICondition> condition);
+  void AddInterruptingTransition(StateID toState, IStateConceptStrategyPtr condition );
+  void AddNonInterruptingTransition(StateID toState, IStateConceptStrategyPtr condition );
+  void AddExitTransition(StateID toState, IStateConceptStrategyPtr condition);
 
-  void OnActivated();
+  void OnActivated(BehaviorExternalInterface& bei);
   void OnDeactivated();
   // TODO:(bn) add asserts for these
     
@@ -131,7 +136,7 @@ public:
 
   // Transitions are evaluated in order, and if the function returns true, we will transition to the given
   // state id.
-  using Transitions = std::vector< std::pair< StateID, std::shared_ptr<ICondition> > >;
+  using Transitions = std::vector< std::pair< StateID, IStateConceptStrategyPtr > >;
 
   // transitions that can happen while the state is active (and in the middle of doing something)
   Transitions _interruptingTransitions;
@@ -150,38 +155,7 @@ public:
 
   // optional light debugging color
   ColorRGBA _debugColor = NamedColors::BLACK;
-};
-
-
-// TODO:(bn) move this
-class FeedingListenerCondition : public ICondition, public IFeedingListener
-{
-public:
-
-  FeedingListenerCondition(std::shared_ptr<BehaviorFeedingEat> feedingBehavior) : _behavior(feedingBehavior) {
-    _behavior->AddListener(this);
-  }
-  virtual ~FeedingListenerCondition() { if( _behavior ) { _behavior->RemoveListeners(this); } }
-  
-  // Implementation of IFeedingListener
-  virtual void StartedEating(BehaviorExternalInterface& behaviorExternalInterface, const int duration_s) override { _complete = false; }
-  virtual void EatingComplete(BehaviorExternalInterface& behaviorExternalInterface) override { _complete = true; }
-  virtual void EatingInterrupted(BehaviorExternalInterface& behaviorExternalInterface) override { _complete = true; }
-
-  virtual bool Evaluate(BehaviorExternalInterface& behaviorExternalInterface) override { return _complete; }
-
-private:
-
-  bool _complete = false;
-  std::shared_ptr<BehaviorFeedingEat> _behavior = nullptr;
-};
-
-class TrueCondition : public ICondition
-{
-public:
-  virtual bool Evaluate(BehaviorExternalInterface& behaviorExternalInterface) override { return true; }
-};
-  
+};  
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -235,15 +209,15 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     return false;
   };
     
-  auto CondIsHungry = std::make_shared<LambdaCondition>(isHungryLambda);
+  auto CondIsHungry = std::make_shared<StrategyLambda>(isHungryLambda);
 
-  auto CondOnCharger = std::make_shared<LambdaCondition>(
+  auto CondOnCharger = std::make_shared<StrategyLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       const bool onCharger = behaviorExternalInterface.GetRobotInfo().IsOnChargerPlatform();
       return onCharger;
     });
 
-  auto CondOffCharger = std::make_shared<LambdaCondition>(
+  auto CondOffCharger = std::make_shared<StrategyLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       const bool onCharger = behaviorExternalInterface.GetRobotInfo().IsOnChargerPlatform();
       return !onCharger;
@@ -254,30 +228,18 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     return whiteboard.Victor_HasCubeToEat();
   };
   
-  auto CondCanEat = std::make_shared<LambdaCondition>( canEatLambda );
+  auto CondCanEat = std::make_shared<StrategyLambda>( canEatLambda );
 
-  auto CondHungryAndCanEat = std::make_shared<LambdaCondition>(
+  auto CondHungryAndCanEat = std::make_shared<StrategyLambda>(
     [canEatLambda, isHungryLambda](BehaviorExternalInterface& behaviorExternalInterface) {
       return canEatLambda(behaviorExternalInterface) && isHungryLambda(behaviorExternalInterface);
     });
   
-  {
-    // the feeding complete condition is special because it needs to stay around to be a "listener"a
-    auto& BC = behaviorExternalInterface.GetBehaviorContainer();
-    std::shared_ptr<BehaviorFeedingEat> eatingBehavior;
-    const bool foundBehavior = BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(FeedingEat),
-                                                              BEHAVIOR_CLASS(FeedingEat),
-                                                              eatingBehavior);
-    if( ANKI_VERIFY(foundBehavior,
-                    "VictorObservingDemo.NoEatingBehavior",
-                    "couldn't find and downcast eating behavior" ) ) {
-      _feedingCompleteCondition.reset( new FeedingListenerCondition( eatingBehavior ) );
-    }
-  }
+  // TEMP:  // TODO:(bn) rename this to "true" since "run" doesn't make sense anymore
+  auto CondTrue = std::make_shared<StrategyAlwaysRun>(
+    IStateConceptStrategy::GenerateBaseStrategyConfig(StateConceptStrategyType::AlwaysRun));
 
-  auto CondTrue = std::make_shared<TrueCondition>();
-
-  auto CondCloseFaceForSocializing = std::make_shared<LambdaCondition>(
+  auto CondCloseFaceForSocializing = std::make_shared<StrategyLambda>(
     [this](BehaviorExternalInterface& behaviorExternalInterface) {
       if( !StateExitCooldownExpired(GetStateID("Socializing"), kSocializeKnownFaceCooldown_s) ) {
         // still on cooldown
@@ -302,7 +264,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
       return false;
     });
 
-  auto CondWantsToPlay = std::make_shared<LambdaCondition>(
+  auto CondWantsToPlay = std::make_shared<StrategyLambda>(
     [this](BehaviorExternalInterface& behaviorExternalInterface) {
       if( StateExitCooldownExpired(GetStateID("Playing"), kWantsToPlayTimeout_s) ) {
         BlockWorldFilter filter;
@@ -318,7 +280,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
       return false;
     });
 
-  auto CondWantsToSleep = std::make_shared<LambdaCondition>(
+  auto CondWantsToSleep = std::make_shared<StrategyLambda>(
     [this](BehaviorExternalInterface& behaviorExternalInterface) {
       if( _currState != GetStateID("ObservingOnCharger") ) {
         PRINT_NAMED_WARNING("BehaviorVictorObservingDemo.WantsToSleepCondition.WrongState",
@@ -343,7 +305,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
       return false;
     });
 
-  auto CondSeesCharger = std::make_shared<LambdaCondition>(
+  auto CondSeesCharger = std::make_shared<StrategyLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       BlockWorldFilter filter;
       filter.SetFilterFcn( [](const ObservableObject* obj){
@@ -354,7 +316,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
       return block != nullptr;
     });
 
-  auto CondNeedsToCharge = std::make_shared<LambdaCondition>(
+  auto CondNeedsToCharge = std::make_shared<StrategyLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       if( !robotInfo.IsCharging() ) {
@@ -403,7 +365,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     state._requiredVisionModes.insert(VisionMode::DetectingMarkers);
     state.AddInterruptingTransition(GetStateID("Observing"), CondOffCharger);
     state.AddNonInterruptingTransition(GetStateID("ObservingOnCharger"),
-                                       std::make_shared<TimeoutCondition>(kRecentlyPlacedChargerTimeout_s));
+                                       std::make_shared<TimerStrategy>(kRecentlyPlacedChargerTimeout_s));
     state.AddNonInterruptingTransition(GetStateID("DriveOffChargerIntoFeeding"), CondHungryAndCanEat);
     AddState(std::move(state));
   }
@@ -435,7 +397,8 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     DEV_ASSERT(behavior != nullptr, "ObservingDemo.NoBehavior.DriveOffCharger");
 
     State driveOffCharger(GetStateID("DriveOffChargerIntoFeeding"), behavior);
-    driveOffCharger.AddExitTransition(GetStateID("Feeding"), CondTrue);
+    driveOffCharger.AddExitTransition(GetStateID("Feeding"), CondCanEat);
+    driveOffCharger.AddExitTransition(GetStateID("Observing"), CondTrue);
     AddState(std::move(driveOffCharger));
   }
 
@@ -473,12 +436,9 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     State state(GetStateID("Feeding"), behavior);
     state._debugColor = NamedColors::CYAN;
     state._requiredVisionModes.insert(VisionMode::DetectingMarkers);
-    state.AddNonInterruptingTransition(GetStateID("Observing"), std::make_shared<TimeoutCondition>(kFeedingTimeout_s));
+    state.AddNonInterruptingTransition(GetStateID("Observing"), std::make_shared<TimerStrategy>(kFeedingTimeout_s));
     state.AddInterruptingTransition(GetStateID("ObservingOnChargerRecentlyPlaced"), CondOnCharger);
-
-    if( _feedingCompleteCondition ) {
-      state.AddNonInterruptingTransition(GetStateID("Observing"), _feedingCompleteCondition);
-    }        
+    state.AddExitTransition(GetStateID("Observing"), CondTrue);
     
     AddState(std::move(state));
   }
@@ -491,7 +451,7 @@ void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behavi
     state._debugColor = NamedColors::MAGENTA;
     state._requiredVisionModes.insert(VisionMode::DetectingFaces);
     state.AddInterruptingTransition(GetStateID("ObservingOnChargerRecentlyPlaced"), CondOnCharger);
-    state.AddNonInterruptingTransition(GetStateID("Feeding"), CondCanEat);
+    state.AddNonInterruptingTransition(GetStateID("Feeding"), CondHungryAndCanEat);
     state.AddExitTransition(GetStateID("Observing"), CondTrue);
     
     AddState(std::move(state));
@@ -688,7 +648,7 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
     const auto stateID = transitionPair.first;
     const auto& iConditionPtr = transitionPair.second;
 
-    if( iConditionPtr->Evaluate(behaviorExternalInterface) ) {
+    if( iConditionPtr->AreStateConditionsMet(behaviorExternalInterface) ) {
       TransitionToState(behaviorExternalInterface, stateID);
       return Status::Running;
     }
@@ -718,7 +678,7 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
       const auto stateID = transitionPair.first;
       const auto& iConditionPtr = transitionPair.second;
       
-      if( iConditionPtr->Evaluate(behaviorExternalInterface) ) {
+      if( iConditionPtr->AreStateConditionsMet(behaviorExternalInterface) ) {
         TransitionToState(behaviorExternalInterface, stateID);
         return Status::Running;
       }
@@ -730,7 +690,7 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
         const auto stateID = transitionPair.first;
         const auto& iConditionPtr = transitionPair.second;
       
-        if( iConditionPtr->Evaluate(behaviorExternalInterface) ) {
+        if( iConditionPtr->AreStateConditionsMet(behaviorExternalInterface) ) {
           TransitionToState(behaviorExternalInterface, stateID);
           return Status::Running;
         }
@@ -797,7 +757,7 @@ void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& b
     setVisionModes(visionModesToDisable, false);
     setVisionModes(state._requiredVisionModes, true);
     
-    state.OnActivated();
+    state.OnActivated(behaviorExternalInterface);
 
     if( _useDebugLights ) {
       if( _currDebugLights.onColors[kDebugStateLED] != state._debugColor ) {
@@ -825,36 +785,36 @@ BehaviorVictorObservingDemo::State::State(StateID id, ICozmoBehaviorPtr behavior
 }
 
 void BehaviorVictorObservingDemo::State::AddInterruptingTransition(StateID toState,
-                                                                   std::shared_ptr<ICondition> condition)
+                                                                   IStateConceptStrategyPtr condition)
 {
   // TODO:(bn) references / rvalue / avoid copies?
   _interruptingTransitions.emplace_back(toState, condition);
 }
 
 void BehaviorVictorObservingDemo::State::AddNonInterruptingTransition(StateID toState,
-                                                                      std::shared_ptr<ICondition> condition )
+                                                                      IStateConceptStrategyPtr condition )
 {
   _nonInterruptingTransitions.emplace_back(toState, condition);
 }
 
-void BehaviorVictorObservingDemo::State::AddExitTransition(StateID toState, std::shared_ptr<ICondition> condition)
+void BehaviorVictorObservingDemo::State::AddExitTransition(StateID toState, IStateConceptStrategyPtr condition)
 {
   _exitTransitions.emplace_back(toState, condition);
 }
 
-void BehaviorVictorObservingDemo::State::OnActivated()
+void BehaviorVictorObservingDemo::State::OnActivated(BehaviorExternalInterface& bei)
 {
   for( const auto& transitionPair : _interruptingTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->EnteredScope();
+    iConditionPtr->Reset(bei);
   }
   for( const auto& transitionPair : _nonInterruptingTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->EnteredScope();
+    iConditionPtr->Reset(bei);
   }
   for( const auto& transitionPair : _exitTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->EnteredScope();
+    iConditionPtr->Reset(bei);
   }
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -863,19 +823,6 @@ void BehaviorVictorObservingDemo::State::OnActivated()
 
 void BehaviorVictorObservingDemo::State::OnDeactivated()
 {
-  for( const auto& transitionPair : _interruptingTransitions ) {
-    const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->LeftScope();
-  }
-  for( const auto& transitionPair : _nonInterruptingTransitions ) {
-    const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->LeftScope();
-  }
-  for( const auto& transitionPair : _exitTransitions ) {
-    const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->LeftScope();
-  }
-
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _lastTimeEnded_s = currTime_s;
 }

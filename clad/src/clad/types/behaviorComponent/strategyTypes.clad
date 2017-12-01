@@ -24,7 +24,8 @@ enum uint_8 StateConceptStrategyType {
   RobotPlacedOnSlope,
   RobotShaken,
   RobotTouchGesture,
-  Lambda
+  Lambda,
+  Timer
 }
 
 } // namespace Cozmo
