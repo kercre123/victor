@@ -1,9 +1,9 @@
 
 #!/usr/bin/env expect -f
 
+# #   VICTOR_ed3dd857 0
 # array set ignore {
 #   VICTOR_2ecbdf7d 0
-#   VICTOR_ed3dd857 0
 # }
 
 # Start victor node ble cli tool
@@ -44,6 +44,8 @@ foreach name [array names robots] {
 
   # if { [info exists ignore($robots($name))] } {
   #   puts "Ignoring $robots($name)\n"
+  #   # continue
+  # } else {
   #   continue
   # }
 
@@ -120,7 +122,6 @@ foreach name [array names robots] {
       continue
     }
   }
-  
 }
 
 # We have finished trying to connect to and configuring wifi on the robots
@@ -132,6 +133,9 @@ send "quit\r"
 foreach name [array names robotToIP] {
   puts "$name $robotToIP($name)"
 }
+
+# Set dir to the current date/time
+set dir [clock format [clock seconds] -format {%Y-%m-%d_%H:%M:%S}]
 
 # For each of the robots that have an ip address
 foreach name [array names robotToIP] {
@@ -180,24 +184,17 @@ foreach name [array names robotToIP] {
   expect "stopped"
   expect "stopped"
 
-  # Figure out the root project directory
-  # For some reason the GET_GIT_ROOT alias does not work
+  # Create Logs/<cur date>/<robot name> directories on desktops
   sleep 1
-  send "git rev-parse --show-toplevel\r"
-  expect "\/Users\/*\/victor"
-  set proj_root $expect_out(0,string)
+  send "mkdir -p ~/Desktop/Logs/$dir/$name\r"
 
-  # Deploy build
-  send "${proj_root}/project/victor/scripts/deploy.sh -c Release\r"
-  expect "deploy /data/data/com.anki.cozmoengine/config/wpa_supplicant_ankitest2.conf"
-
-  # Deploy assests
+  # Pull factory logs off robot into newly created directory
   sleep 1
-  send "${proj_root}/project/victor/scripts/deploy-assets.sh ${proj_root}/_build/android/Release/assets\r"
+  send "adb pull /data/data/com.anki.cozmoengine/files/output/factory_test_logs/ ~/Desktop/Logs/$dir/$name/\r"
   set timeout 600
   expect {
-    "assets installed to" { }
-    "assets available at" { }
+    "files pulled" { }
+    "does not exist" { }
   }
 
   # Restart the processes
