@@ -19,10 +19,13 @@
                     "faceAnimations"
                 ],
                 "export_dirname": "animation-assets",
-                "version": "2529"
+                "additional_files": [
+                    "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
+                ],
+                "version": "2535"
             },
             "victor-audio-assets": {
-               "allow_extra_files": "True",
+                "allow_extra_files": "True",
                 "version": "7"
             }
         },
