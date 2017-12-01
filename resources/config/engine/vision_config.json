@@ -15,6 +15,7 @@
     "DetectingLaserPoints"       : false,
     "ComputingStatistics"        : false,
     "BuildingOverheadMap"        : false
+    "DetectingVisualObstacles"   : true
   },
   
   "InitialModeSchedules" :

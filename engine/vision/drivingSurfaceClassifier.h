@@ -68,6 +68,8 @@ public:
    */
   virtual uchar PredictClass(const Vision::PixelRGB& pixel) const = 0;
 
+  void classifyImage(const Vision::ImageRGB& image, Vision::Image& outputMask) const;
+
   /*
    * Predict the class of a vector of pixels (1 is drivable, 0 is not)
    */

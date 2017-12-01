@@ -74,6 +74,8 @@ int AppendFileToMatrix(const char *filename, cv::Mat& mat) {
  *                     DrivingSurfaceClassifier               *
  ****************************************************************/
 
+// TODO Implement serialization and deserialization, probably with a static factory here
+
 bool DrivingSurfaceClassifier::Train(const OverheadMap::PixelSet& drivablePixels,
                                      const OverheadMap::PixelSet& nonDrivablePixels)
 {
@@ -214,6 +216,16 @@ bool DrivingSurfaceClassifier::TrainFromFiles(const char *positiveDataFileName, 
           classes);
 
   return Train(inputElements, classes, numberOfPositives);
+}
+
+void DrivingSurfaceClassifier::classifyImage(const Vision::ImageRGB& image, Vision::Image& outputMask) const
+{
+  auto f = [this](const Vision::PixelRGB& pixel){
+    return u8(255 * this->PredictClass(pixel));
+  };
+
+  image.ApplyScalarFunction<u8>(f, outputMask);
+
 }
 
 /****************************************************************

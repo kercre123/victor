@@ -902,6 +902,7 @@ namespace Cozmo {
         tryAndReport(&VisionComponent::UpdateComputedCalibration, VisionMode::ComputingCalibration);
         tryAndReport(&VisionComponent::UpdateImageQuality,        VisionMode::CheckingQuality);
         tryAndReport(&VisionComponent::UpdateLaserPoints,         VisionMode::DetectingLaserPoints);
+        tryAndReport(&VisionComponent::UpdateVisualObstacles,     VisionMode::DetectingVisualObstacles);
         
         // Display any debug images left by the vision system
         if(ANKI_DEV_CHEATS)
@@ -1176,6 +1177,17 @@ namespace Cozmo {
 
     return RESULT_OK;
   } // UpdateMotionCentroid()
+
+  Result VisionComponent::UpdateVisualObstacles(const VisionProcessingResult& procResult)
+  {
+
+    PRINT_NAMED_DEBUG("VisionComponent.UpdateVisualObstacles.ReceivedObstacles",
+                      "Received %d obstacles", int(procResult.visualObstacles.size()));
+    // procResult.visualObstacles is a list of Poly2f
+    // TODO Michael goes here
+
+    return RESULT_OK;
+  }
   
   Result VisionComponent::UpdateLaserPoints(const VisionProcessingResult& procResult)
   {

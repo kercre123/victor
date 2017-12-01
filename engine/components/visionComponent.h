@@ -129,6 +129,7 @@ struct DockingErrorSignal;
     Result UpdateToolCode(const VisionProcessingResult& result);
     Result UpdateComputedCalibration(const VisionProcessingResult& result);
     Result UpdateImageQuality(const VisionProcessingResult& procResult);
+    Result UpdateVisualObstacles(const VisionProcessingResult& procResult);
 
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
