@@ -317,9 +317,9 @@ namespace Cozmo {
       Count
     };
     
-    Result ApplyCLAHE(const Vision::Image& inputImageGray, const MarkerDetectionCLAHE useCLAHE, Vision::Image& claheImage);
+    Result ApplyCLAHE(Vision::ImageCache& imageCache, const MarkerDetectionCLAHE useCLAHE, Vision::Image& claheImage);
     
-    Result DetectMarkersWithCLAHE(const Vision::Image& inputImageGray,
+    Result DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
                                   const Vision::Image& claheImage,
                                   std::vector<Anki::Rectangle<s32>>& detectionRects,
                                   MarkerDetectionCLAHE useCLAHE);

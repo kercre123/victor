@@ -61,6 +61,11 @@ public:
     // TODO: add other sizes/methods (e.g. cubic interpolation)
   };
   
+  // Get the image dimensions of the image returned for a given Size, based on
+  // the original number of rows/cols.
+  s32 GetNumRows(const Size atSize) const;
+  s32 GetNumCols(const Size atSize) const;
+  
   // Look up a Size enum, given a scale and resize method
   static Size GetSize(s32 scale, Vision::ResizeMethod method);
   
