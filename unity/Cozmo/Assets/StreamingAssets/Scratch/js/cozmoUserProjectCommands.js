@@ -8,9 +8,9 @@
         return resultStr;
     }
 
-    window.isCozmoSampleProject = false;
+    window.isCozmoSampleProject = window.getUrlVar('isFeaturedProject') || false;
     window.cozmoProjectName = null;
-    window.cozmoProjectUUID = null;
+    window.cozmoProjectUUID = window.getUrlVar('projectID') || null;
     window.previouslySavedProjectJSON = null;
     window.originalSampleProjectJSON = null;
     window.saveProjectTimerId = null;
@@ -256,12 +256,6 @@
         window.previouslySavedProjectJSON = null;
 
         window.setProjectNameAndSavedText(projectName, isCozmoSampleProject);
-
-        // TODO only call for featured projects, not all sample projects.
-        // window.cozmoProjectUUID must be set before Play Now Modal is rendered.
-        if (window.isCozmoSampleProject && window.isVertical) {
-            PlayNowModal.init();
-        }
 
         window.clearSaveProjectTimer();
 

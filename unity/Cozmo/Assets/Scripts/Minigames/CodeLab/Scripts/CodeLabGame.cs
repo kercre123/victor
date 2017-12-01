@@ -2780,6 +2780,7 @@ namespace CodeLab {
 
         if (request == RequestToOpenProjectOnWorkspace.DisplayFeaturedProject) {
           parameters.Add("isFeaturedProject", "true");
+          parameters.Add("projectID", projectUUID);
         }
         else {
           parameters.Add("isFeaturedProject", "false");

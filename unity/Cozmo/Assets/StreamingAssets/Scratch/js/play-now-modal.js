@@ -29,6 +29,9 @@ var PlayNowModal = function(){
       // user project, so no Play Now modal
       return;
     }
+    // Cover the screen with the play now modal, but the contents won't show until the
+    // _show function is called.
+    document.body.classList.add('show-play-now-modal');
 
     // set translations
     setText('#btn-play-now-start .button-label', $t('codeLab.playNowModal.startButtonLabel'));

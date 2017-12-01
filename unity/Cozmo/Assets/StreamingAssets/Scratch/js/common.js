@@ -524,9 +524,9 @@
      */
     function prepareForFeaturedProjectPlayNowModal() {
         if (window.isVertical && window.getUrlVar('isFeaturedProject') === 'true') {
-            document.body.classList.add('show-play-now-modal');
+            PlayNowModal.init();
         }
-      }
+    }
 
     document.addEventListener('DOMContentLoaded', function(e){
         prepareForFeaturedProjectPlayNowModal();
