@@ -792,6 +792,24 @@ Blockly.Blocks['cozmo_vert_get_head_angle'] = {
   }
 };
 
+Blockly.Blocks['cozmo_vert_get_is_picked_up'] = {
+  /**
+   * Block to read if Cozmo is currently picked up (airborne)
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "%{BKY_IS_PICKED_UP}",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Boolean",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
 // Faces (Sensors / Inputs)
 
 Blockly.Blocks['cozmo_vert_face_get_is_visible'] = {

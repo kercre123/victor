@@ -1180,6 +1180,13 @@
     "translation": "Returns the angle of Cozmo's head in degrees. (-25° = max down, 0° = level, 45° = max up)"
   },
 
+  "codeLabGlossary.block_definitions.title.cozmo_vert_get_is_picked_up": {
+    "translation": "is Cozmo picked up"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_get_is_picked_up": {
+    "translation": "Returns \"true\" or \"false\" depending on if Cozmo is currently picked up (floating in the air)."
+  },
+
   "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_is_visible": {
     "translation": "is face visible"
   },

@@ -84,6 +84,9 @@
   "codeLabVertical.HEAD_ANGLE" : {
     "translation" : "Angle de la tête de Cozmo °"
   },
+  "codeLabVertical.IS_PICKED_UP": {
+    "translation": "is Cozmo picked up"
+  },
   "codeLabVertical.FACE_VISIBLE" : {
     "translation" : "un visage est-il visible"
   },

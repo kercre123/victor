@@ -642,7 +642,23 @@ class CodeLabInterface():
                 except KeyError:
                     project_language = None
 
+                try:
+                    project_json_file = project_json["ProjectJSONFile"]
+                except KeyError:
+                    project_json_file = None
+
                 if not project_language or project_language == command_args.locale_to_use:
+
+                    if project_json_file:
+                        # We need to load the actual project data from a separate file
+                        # directory is hardcoded as featuredProjects for now (no other project type uses this)
+                        contents_filename = project_json_file + "_" + command_args.locale_to_use + ".json"
+                        contents_pathname = os.path.join(BASE_SRC_SCRATCH_PATH, "featuredProjects", contents_filename)
+
+                        with open(contents_pathname) as contents_data_file:
+                            contents_data = json.load(contents_data_file)
+                            project_json['ProjectJSON'] = contents_data['ProjectJSON']
+
                     if command_args.verbose:
                         log_text("load_project_dict Adding %s '%s'" % (project_uuid, project_json["ProjectName"]))
                     dest_dict[project_uuid] = project_json
@@ -933,7 +949,7 @@ class CodeLabInterface():
                             project_copy["ProjectJSON"] = None
                             featuredProjectsAsJSON.append(project_copy)
 
-                    featuredProjectsAsJSON = sorted(featuredProjectsAsJSON, key=lambda project: project["DisplayOrder"])
+                    featuredProjectsAsJSON = sorted(featuredProjectsAsJSON, key=lambda project: int(project["DisplayOrder"]))
                     featuredProjectsAsEncodedJSON = json.dumps(featuredProjectsAsJSON, ensure_ascii=False)
 
                     self.send_to_webpage(
@@ -982,7 +998,7 @@ class CodeLabInterface():
                             project_copy["ProjectJSON"] = None
                             sampleProjectsAsJSON.append(project_copy)
 
-                    sampleProjectsAsJSON = sorted(sampleProjectsAsJSON, key=lambda project: project["DisplayOrder"])
+                    sampleProjectsAsJSON = sorted(sampleProjectsAsJSON, key=lambda project: int(project["DisplayOrder"]))
 
                     userProjectsAsEncodedJSON = json.dumps(userProjectsAsJSON, ensure_ascii=False)
                     sampleProjectsAsEncodedJSON = json.dumps(sampleProjectsAsJSON, ensure_ascii=False)
@@ -1176,7 +1192,8 @@ class CodeLabInterface():
 
     def on_openCozmoProject_helper(self, project_uuid, project_name, project_xml, project_json, is_sample):
         is_connected_to_unity = (app['sdk_conn'] is not None)
-        if is_connected_to_unity and not command_args.use_python_projects:
+        use_python_projects_with_unity = is_connected_to_unity and not command_args.use_python_projects
+        if use_python_projects_with_unity:
             # Forward the message on to the computer's web browser too
 
             if project_xml is None and project_json is None:
@@ -1213,7 +1230,7 @@ class CodeLabInterface():
                         wait_for_page_load=wait_for_page_load)
 
         is_sample = js_bool_to_python_bool(is_sample)
-        if not is_sample:
+        if not is_sample and not use_python_projects_with_unity:
             is_vertical_str = python_bool_to_js_bool_str(self._is_vertical_grammar)
             project_data = {'VersionNum': None,
                             'ProjectUUID': project_uuid,
@@ -1245,6 +1262,12 @@ class CodeLabInterface():
         self.on_openCozmoProject_helper(project_uuid, project_name, project_xml, project_json, is_sample)
 
     def on_recv_window_renderProjects(self, user_projects, sample_projects):
+        is_connected_to_unity = (app['sdk_conn'] is not None)
+        use_python_projects_with_unity = is_connected_to_unity and not command_args.use_python_projects
+        if use_python_projects_with_unity:
+            # ignore
+            return
+
         # Update our data on user projects
         user_projects = user_projects.replace('\\"', '"')
         try:

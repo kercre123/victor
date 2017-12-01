@@ -656,6 +656,7 @@ namespace CodeLab {
         _LatestCozmoState.poseRoll_d = ValueSanitizer.SanitizeFloat(robot.RollAngle * Mathf.Rad2Deg);
         _LatestCozmoState.liftHeightPercentage = ValueSanitizer.SanitizeFloat(robot.LiftHeightFactor * 100.0f);
         _LatestCozmoState.headAngle_d = ValueSanitizer.SanitizeFloat(robot.HeadAngle * Mathf.Rad2Deg);
+        _LatestCozmoState.isPickedUp = robot.Status(RobotStatusFlag.IS_PICKED_UP);
 
         // Set cube data
 

@@ -100,6 +100,7 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_vert_get_yaw: this.verticalCozmoGetYaw,
         cozmo_vert_get_lift_height: this.verticalCozmoGetLiftHeight,
         cozmo_vert_get_head_angle: this.verticalCozmoGetHeadAngle,
+        cozmo_vert_get_is_picked_up: this.verticalCozmoGetIsPickedUp,
         // Faces
         cozmo_vert_face_get_is_visible: this.verticalFaceGetIsVisible,
         cozmo_vert_face_get_name: this.verticalFaceGetName,
@@ -196,6 +197,7 @@ function InitTestCozmoWorldState() {
     jsonData.poseYaw_d = 0.0;
     jsonData.liftHeightPercentage = 0.0;
     jsonData.headAngle_d = 0.0;
+    jsonData.isPickedUp = false;
     jsonData.lastTappedCube = 0;
     jsonData.pos = InitVectorState(0.0, 0.0, 0.0);
     jsonData.cube1 = InitCubeState(1);
@@ -870,6 +872,10 @@ Scratch3CozmoBlocks.prototype.verticalCozmoGetLiftHeight = function(args, util) 
 
 Scratch3CozmoBlocks.prototype.verticalCozmoGetHeadAngle = function(args, util) {
     return Cast.toNumber(gCozmoWorldState.headAngle_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoGetIsPickedUp = function(args, util) {
+    return Cast.toBoolean(gCozmoWorldState.isPickedUp);
 };
 
 // Faces

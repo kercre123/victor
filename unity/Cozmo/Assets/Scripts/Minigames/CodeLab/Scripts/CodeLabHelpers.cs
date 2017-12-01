@@ -105,6 +105,7 @@ namespace CodeLab {
     public float poseYaw_d;
     public float liftHeightPercentage;
     public float headAngle_d;
+    public bool isPickedUp;
     public int lastTappedCube; // 1..3 (0 for none)
     public CodeLabVector3 pos = new CodeLabVector3();
     public CubeStateForCodeLab cube1 = new CubeStateForCodeLab();
