@@ -16,6 +16,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_StrategyObjectPositionUpdated_H__
 
 #include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategyEventHandler.h"
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/constantsAndMacros.h"
@@ -24,16 +25,20 @@
 namespace Anki {
 namespace Cozmo {
 
-class StrategyObjectPositionUpdated : public IStateConceptStrategy
+class StateConceptStrategyMessageHelper;
+
+class StrategyObjectPositionUpdated : public IStateConceptStrategy, private IStateConceptStrategyEventHandler
 {
 public:
   StrategyObjectPositionUpdated(BehaviorExternalInterface& behaviorExternalInterface,
-                      IExternalInterface* robotExternalInterface,
-                      const Json::Value& config);
+                                IExternalInterface& robotExternalInterface,
+                                const Json::Value& config);
+
+  virtual ~StrategyObjectPositionUpdated();
 
 protected:
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   // Default configuration parameters which can be overridden by JSON config
@@ -81,6 +86,8 @@ private:
   
   bool ShouldReactToTarget_poseHelper(const Pose3d& thisPair,
                                       const Pose3d& otherPair) const;
+
+  std::unique_ptr<StateConceptStrategyMessageHelper> _messageHelper;
   
   mutable ReactionDataMap _reactionData;
 };

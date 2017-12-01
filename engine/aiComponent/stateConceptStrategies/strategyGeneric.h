@@ -14,17 +14,24 @@
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_StrategyGeneric_H__
 
 #include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategyEventHandler.h"
+
+#include <set>
 
 namespace Anki {
 namespace Cozmo {
 
-class StrategyGeneric : public IStateConceptStrategy
+class StateConceptStrategyMessageHelper;
+
+class StrategyGeneric : public IStateConceptStrategy, private IStateConceptStrategyEventHandler
 {
 public:
 
   StrategyGeneric(BehaviorExternalInterface& behaviorExternalInterface,
-                  IExternalInterface* robotExternalInterface,
+                  IExternalInterface& robotExternalInterface,
                   const Json::Value& config);
+
+  virtual ~StrategyGeneric();
   
   using E2GHandleCallbackType = std::function<bool(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)>;
   
@@ -44,9 +51,9 @@ protected:
 
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual void AlwaysHandleInternal(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleEvent(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
 
@@ -59,6 +66,8 @@ private:
   G2EHandleCallbackType     _gameToEngineHandleCallback;
   
   ShouldTriggerCallbackType _shouldTriggerCallback;
+
+  std::unique_ptr<StateConceptStrategyMessageHelper> _messageHelper;
   
   mutable bool _wantsToRun = false;
 };

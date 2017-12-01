@@ -17,11 +17,8 @@
 namespace Anki {
 namespace Cozmo {
 
-StrategyLambda::StrategyLambda(BehaviorExternalInterface& behaviorExternalInterface,
-                               std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc)
-  : IStateConceptStrategy(behaviorExternalInterface,
-                          nullptr, // no robot external interface
-                          IStateConceptStrategy::GenerateBaseStrategyConfig(StateConceptStrategyType::Lambda))
+StrategyLambda::StrategyLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc)
+  : IStateConceptStrategy(IStateConceptStrategy::GenerateBaseStrategyConfig(StateConceptStrategyType::Lambda))
   , _lambda(areConditionsMetFunc)
 {
 }

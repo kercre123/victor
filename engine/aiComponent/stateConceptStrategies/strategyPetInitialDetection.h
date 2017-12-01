@@ -17,15 +17,15 @@
 
 #include "anki/vision/basestation/faceIdTypes.h"
 
+#include <set>
+
 namespace Anki {
 namespace Cozmo {
 
 class StrategyPetInitialDetection : public IStateConceptStrategy
 {
 public:
-  StrategyPetInitialDetection(BehaviorExternalInterface& behaviorExternalInterface,
-                      IExternalInterface* robotExternalInterface,
-                      const Json::Value& config);
+  explicit StrategyPetInitialDetection(const Json::Value& config);
 
 protected:
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

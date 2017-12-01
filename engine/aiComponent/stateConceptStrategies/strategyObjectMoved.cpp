@@ -15,6 +15,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyMessageHelper.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
@@ -60,11 +61,12 @@ private:
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 StrategyObjectMoved::StrategyObjectMoved(BehaviorExternalInterface& behaviorExternalInterface,
-                                         IExternalInterface* robotExternalInterface,
+                                         IExternalInterface& robotExternalInterface,
                                          const Json::Value& config)
-: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
+: IStateConceptStrategy(config)
+, _messageHelper(new StateConceptStrategyMessageHelper(this, behaviorExternalInterface))
 {
-  SubscribeToTags({{
+  _messageHelper->SubscribeToTags({{
     EngineToGameTag::ObjectMoved,
     EngineToGameTag::ObjectStoppedMoving,
     EngineToGameTag::RobotObservedObject,
@@ -115,7 +117,7 @@ bool StrategyObjectMoved::AreStateConditionsMetInternal(BehaviorExternalInterfac
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void StrategyObjectMoved::AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void StrategyObjectMoved::HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag()){
     case EngineToGameTag::ObjectMoved:

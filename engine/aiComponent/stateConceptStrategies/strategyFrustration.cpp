@@ -31,10 +31,8 @@ static const char* kCooldownTime_sKey = "cooldownTime_s";
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyFrustration::StrategyFrustration(BehaviorExternalInterface& behaviorExternalInterface,
-                                         IExternalInterface* robotExternalInterface,
-                                         const Json::Value& config)
-: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
+StrategyFrustration::StrategyFrustration(const Json::Value& config)
+  : IStateConceptStrategy(config)
 {
   LoadJson(config);  
 }

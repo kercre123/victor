@@ -27,9 +27,7 @@ class StrategyCloudIntentPending : public IStateConceptStrategy
 public:
   static Json::Value GenerateCloudIntentPendingConfig(CloudIntent intent);
   
-  StrategyCloudIntentPending(BehaviorExternalInterface& behaviorExternalInterface,
-                             IExternalInterface* robotExternalInterface,
-                             const Json::Value& config);
+  explicit StrategyCloudIntentPending(const Json::Value& config);
 
 protected:
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

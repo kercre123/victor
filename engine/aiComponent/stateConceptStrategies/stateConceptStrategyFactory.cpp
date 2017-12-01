@@ -55,72 +55,80 @@ IStateConceptStrategyPtr StateConceptStrategyFactory::CreateStateConceptStrategy
   switch (strategyType) {
     case StateConceptStrategyType::AlwaysRun:
     {
-      strategy = std::make_shared<StrategyAlwaysRun>(bei, rei, config);
+      strategy = std::make_shared<StrategyAlwaysRun>(config);
       break;
     }
     case StateConceptStrategyType::CloudIntentPending:
     {
-      strategy = std::make_shared<StrategyCloudIntentPending>(bei, rei, config);
+      strategy = std::make_shared<StrategyCloudIntentPending>(config);
       break;
     }
     case StateConceptStrategyType::ExpressNeedsTransition:
     {
-      strategy = std::make_shared<StrategyExpressNeedsTransition>(bei, rei, config);
+      strategy = std::make_shared<StrategyExpressNeedsTransition>(config);
       break;
     }
     case StateConceptStrategyType::FacePositionUpdated:
     {
-      strategy = std::make_shared<StrategyFacePositionUpdated>(bei, rei, config);
+      DEV_ASSERT_MSG(rei, "StateConceptStrategyType.RobotExternalInterfaceRequired", "%s",
+                     StateConceptStrategyTypeToString(IStateConceptStrategy::ExtractStrategyType(config)));
+      strategy = std::make_shared<StrategyFacePositionUpdated>(bei, *rei, config);
       break;
     }
     case StateConceptStrategyType::Frustration:
     {
-      strategy = std::make_shared<StrategyFrustration>(bei, rei, config);
+      strategy = std::make_shared<StrategyFrustration>(config);
       break;
     }
     case StateConceptStrategyType::Generic:
     {
-      strategy = std::make_shared<StrategyGeneric>(bei, rei, config);
+      DEV_ASSERT_MSG(rei, "StateConceptStrategyType.RobotExternalInterfaceRequired", "%s",
+                     StateConceptStrategyTypeToString(IStateConceptStrategy::ExtractStrategyType(config)));
+      strategy = std::make_shared<StrategyGeneric>(bei, *rei, config);
       break;
     }
     case StateConceptStrategyType::InNeedsBracket:
     {
-      strategy = std::make_shared<StrategyInNeedsBracket>(bei, rei, config);
+      strategy = std::make_shared<StrategyInNeedsBracket>(config);
       break;
     }
     case StateConceptStrategyType::ObjectMoved:
     {
-      strategy = std::make_shared<StrategyObjectMoved>(bei, rei, config);
+      DEV_ASSERT_MSG(rei, "StateConceptStrategyType.RobotExternalInterfaceRequired", "%s",
+                     StateConceptStrategyTypeToString(IStateConceptStrategy::ExtractStrategyType(config)));
+      strategy = std::make_shared<StrategyObjectMoved>(bei, *rei, config);
       break;
     }
     case StateConceptStrategyType::ObjectPositionUpdated:
     {
-      strategy = std::make_shared<StrategyObjectPositionUpdated>(bei, rei, config);
+      DEV_ASSERT_MSG(rei, "StateConceptStrategyType.RobotExternalInterfaceRequired", "%s",
+                     StateConceptStrategyTypeToString(IStateConceptStrategy::ExtractStrategyType(config)));
+      strategy = std::make_shared<StrategyObjectPositionUpdated>(bei, *rei, config);
       break;
     }
     case StateConceptStrategyType::ObstacleDetected:
     {
-      strategy = std::make_shared<StrategyObstacleDetected>(bei, rei, config);
+      strategy = std::make_shared<StrategyObstacleDetected>(config);
       break;
     }
     case StateConceptStrategyType::PetInitialDetection:
     {
-      strategy = std::make_shared<StrategyPetInitialDetection>(bei, rei, config);
+      strategy = std::make_shared<StrategyPetInitialDetection>(config);
       break;
     }
     case StateConceptStrategyType::RobotPlacedOnSlope:
     {
-      strategy = std::make_shared<StrategyRobotPlacedOnSlope>(bei, rei, config);
+      strategy = std::make_shared<StrategyRobotPlacedOnSlope>(config);
       break;
     }
     case StateConceptStrategyType::RobotShaken:
     {
-      strategy = std::make_shared<StrategyRobotShaken>(bei, rei, config);
+      strategy = std::make_shared<StrategyRobotShaken>(config);
       break;
     }
     case StateConceptStrategyType::RobotTouchGesture:
     {
-      strategy = std::make_shared<StrategyRobotTouchGesture>(bei, rei, config);
+      strategy = std::make_shared<StrategyRobotTouchGesture>(config);
       break;
     }
     case StateConceptStrategyType::Lambda:

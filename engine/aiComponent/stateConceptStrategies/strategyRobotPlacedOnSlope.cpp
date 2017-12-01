@@ -26,10 +26,8 @@ namespace Anki {
 namespace Cozmo {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyRobotPlacedOnSlope::StrategyRobotPlacedOnSlope(BehaviorExternalInterface& behaviorExternalInterface,
-                                                       IExternalInterface* robotExternalInterface,
-                                                       const Json::Value& config)
-: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
+StrategyRobotPlacedOnSlope::StrategyRobotPlacedOnSlope(const Json::Value& config)
+: IStateConceptStrategy(config)
 {
   
 }

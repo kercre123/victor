@@ -25,14 +25,15 @@ namespace Cozmo {
 /////
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyObstacleDetected::StrategyObstacleDetected(BehaviorExternalInterface& behaviorExternalInterface,
-                                                   IExternalInterface* robotExternalInterface,
-                                                   const Json::Value& config)
-: StrategyGeneric(behaviorExternalInterface, robotExternalInterface, config)
+StrategyObstacleDetected::StrategyObstacleDetected(const Json::Value& config)
+: IStateConceptStrategy(config)
 {
-  SetShouldTriggerCallback(
-    [](BehaviorExternalInterface& behaviorExternalInterface) -> bool { return behaviorExternalInterface.GetAIComponent().IsSuddenObstacleDetected(); }
-  );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool StrategyObstacleDetected::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+{
+  return behaviorExternalInterface.GetAIComponent().IsSuddenObstacleDetected();
 }
 
   

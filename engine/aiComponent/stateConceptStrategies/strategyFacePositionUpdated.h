@@ -14,22 +14,30 @@
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_StrategyFacePositionUpdated_H__
 
 #include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategyEventHandler.h"
 
 #include "anki/vision/basestation/faceIdTypes.h"
+
+#include <set>
 
 namespace Anki {
 namespace Cozmo {
 
-class StrategyFacePositionUpdated : public IStateConceptStrategy
+class StateConceptStrategyMessageHelper;
+
+class StrategyFacePositionUpdated : public IStateConceptStrategy, private IStateConceptStrategyEventHandler
 {
 public:
   StrategyFacePositionUpdated(BehaviorExternalInterface& behaviorExternalInterface,
-                      IExternalInterface* robotExternalInterface,
-                      const Json::Value& config);
+                              IExternalInterface& robotExternalInterface,
+                              const Json::Value& config);
+
+  virtual ~StrategyFacePositionUpdated();
 
 protected:
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleEvent(const EngineToGameEvent& event,
+                           BehaviorExternalInterface& behaviorExternalInterface) override;
   
 
 private:
@@ -49,6 +57,8 @@ private:
   
   // true if we saw the face close last time, false otherwise (applies hysteresis internally)
   std::map< Vision::FaceID_t, bool > _faceWasClose;
+
+  std::unique_ptr<StateConceptStrategyMessageHelper> _messageHelper;
 
 };
 

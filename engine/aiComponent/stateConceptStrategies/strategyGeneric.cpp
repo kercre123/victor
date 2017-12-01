@@ -13,21 +13,29 @@
 #include "engine/aiComponent/stateConceptStrategies/strategyGeneric.h"
 
 #include "anki/common/basestation/jsonTools.h"
+#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyMessageHelper.h"
 
 namespace Anki {
 namespace Cozmo {
 
 StrategyGeneric::StrategyGeneric(BehaviorExternalInterface& behaviorExternalInterface,
-                                 IExternalInterface* robotExternalInterface,
+                                 IExternalInterface& robotExternalInterface,
                                  const Json::Value& config)
-: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
+: IStateConceptStrategy(config)
+, _messageHelper(new StateConceptStrategyMessageHelper(this, behaviorExternalInterface))
 {
   
+}
+
+StrategyGeneric::~StrategyGeneric()
+{
+
 }
 
 void StrategyGeneric::ConfigureRelevantEvents(std::set<EngineToGameTag> relevantEvents,
                                               E2GHandleCallbackType callback)
 {
+  // TEMP:  // TEMP: these are never called??
   if(!ANKI_VERIFY(_relevantEngineToGameEvents.empty(),
                   "ReactionTriggerStrategyGeneric::SetEventHandleCallback.EventsAlreadySet", ""))
   {
@@ -41,7 +49,7 @@ void StrategyGeneric::ConfigureRelevantEvents(std::set<EngineToGameTag> relevant
   }
   
   _relevantEngineToGameEvents = relevantEvents; // keep a copy on this instance for validation later
-  SubscribeToTags(std::move(relevantEvents));
+  _messageHelper->SubscribeToTags(std::move(relevantEvents));
   _engineToGameHandleCallback = callback;
 }
 
@@ -61,7 +69,7 @@ void StrategyGeneric::ConfigureRelevantEvents(std::set<GameToEngineTag> relevant
   }
   
   _relevantGameToEngineEvents = relevantEvents; // keep a copy on this instance for validation later
-  SubscribeToTags(std::move(relevantEvents));
+  _messageHelper->SubscribeToTags(std::move(relevantEvents));
   _gameToEngineHandleCallback = callback;
 }
 
@@ -75,11 +83,11 @@ bool StrategyGeneric::AreStateConditionsMetInternal(BehaviorExternalInterface& b
   return wantsToRun || shouldTrigger;
 }
 
-void StrategyGeneric::AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void StrategyGeneric::HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   if (_relevantEngineToGameEvents.find(event.GetData().GetTag()) == _relevantEngineToGameEvents.end())
   {
-    PRINT_NAMED_ERROR("ReactionTriggerStrategyGeneric.AlwaysHandleInternal.BadEventType",
+    PRINT_NAMED_ERROR("ReactionTriggerStrategyGeneric.HandleEvent.BadEventType",
                       "GenericStrategy not configured to handle tag type %s",
                       MessageEngineToGameTagToString(event.GetData().GetTag()));
     return;
@@ -91,11 +99,11 @@ void StrategyGeneric::AlwaysHandleInternal(const EngineToGameEvent& event, Behav
   }
 }
 
-void StrategyGeneric::AlwaysHandleInternal(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void StrategyGeneric::HandleEvent(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   if (_relevantGameToEngineEvents.find(event.GetData().GetTag()) == _relevantGameToEngineEvents.end())
   {
-    PRINT_NAMED_ERROR("ReactionTriggerStrategyGeneric.AlwaysHandleInternal.BadEventType",
+    PRINT_NAMED_ERROR("ReactionTriggerStrategyGeneric.HandleEvent.BadEventType",
                       "GenericStrategy not configured to handle tag type %s",
                       MessageGameToEngineTagToString(event.GetData().GetTag()));
     return;

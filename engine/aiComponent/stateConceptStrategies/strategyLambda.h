@@ -24,11 +24,8 @@ class StrategyLambda : public IStateConceptStrategy
 {
 public:
   
-  // NOTE: this strategy does not take a RobotExternalInterface because it is not possible for it to subscribe
-  // to messages using the normal IStateConceptStrategy message handling API. It also takes no config, because
-  // it can't be data defined
-  StrategyLambda(BehaviorExternalInterface& behaviorExternalInterface,
-                 std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc);
+  // NOTE: this strategy takes no config, because it can't be data defined
+  StrategyLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc);
 
 protected:
 

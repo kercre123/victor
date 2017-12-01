@@ -25,9 +25,7 @@ namespace Cozmo {
 class StrategyExpressNeedsTransition : public IStateConceptStrategy
 {
 public:
-  StrategyExpressNeedsTransition(BehaviorExternalInterface& behaviorExternalInterface,
-                                 IExternalInterface* robotExternalInterface,
-                                 const Json::Value& config);
+  explicit StrategyExpressNeedsTransition(const Json::Value& config);
 
 protected:
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
