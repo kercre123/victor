@@ -1164,8 +1164,11 @@ namespace Cozmo {
         break;
     }
     
-    for(auto & marker : _currentResult.observedMarkers)
+    auto markerIter = _currentResult.observedMarkers.begin();
+    while(markerIter != _currentResult.observedMarkers.end())
     {
+      auto & marker = *markerIter;
+      
       // Add the bounding rect of the (unwarped) marker to the detection rectangles
       detectionRects.emplace_back(marker.GetImageCorners());
       
@@ -1208,7 +1211,17 @@ namespace Cozmo {
           
           std::swap(marker, warpedMarker);
         }
+        else
+        {
+          PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.DetectMarkersWithCLAHE.RemovingMarkerOOB", 
+                         "%s", Vision::MarkerTypeStrings[marker.GetCode()]);
+          markerIter = _currentResult.observedMarkers.erase(markerIter);
+          continue;
+        }
+        
       }
+      
+      ++markerIter;
     }
     
     return lastResult;
