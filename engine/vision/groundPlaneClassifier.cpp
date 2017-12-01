@@ -126,12 +126,16 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
 
   // STEP 5: Create the polygons with the right metric information
   // In the overhead image (and mask) 1 pixel == 1 mm. Thanks Andrew!!
-  // TODO ^^ is that true?
   for (auto& contour : contours) {
     Poly2f polygon;
     polygon.reserve(contour.size());
     for (auto& point : contour) {
-      polygon.emplace_back(Point2f(point.x, point.y));
+
+      // ground_x = point.y, ground.y = point.x ??
+      const f32 ground_x = static_cast<f32>(point.y) + groundPlaneROI.GetDist();
+      const f32 ground_y = static_cast<f32>(point.x) - 0.5f*groundPlaneROI.GetWidthFar(); // Zero is at the center;
+
+      polygon.emplace_back(Point2f(ground_x, ground_y));
     }
     outPolygons.push_back(polygon);
   }
