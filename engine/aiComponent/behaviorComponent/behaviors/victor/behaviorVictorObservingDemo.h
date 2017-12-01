@@ -81,31 +81,22 @@ protected:
 
 private:
 
-  enum class StateID {
-    
-    ObservingOnCharger = 0,
-    ObservingOnChargerRecentlyPlaced,
-    DriveOffChargerIntoObserving,
-    DriveOffChargerIntoPlay,
-    DriveOffChargerIntoSocializing,
-    DriveOffChargerIntoFeeding,
-    Observing,
-    Feeding,
-    Socializing,
-    Napping,
-    WakingUp,
-    Playing,
-    ReturningToCharger,
-    FailedToFindCharger,
+  using StateID = size_t;
+  static const StateID InvalidStateID = 0;
 
-    Count
-  };
+  std::map< std::string, StateID > _stateNameToID;
   
   class State;
 
+  // returns the newly created ID
+  StateID AddStateName(const std::string& stateName);
+
+  // asserts if not found
+  StateID GetStateID(const std::string& stateName) const;
+  
   void AddState( State&& state );
 
-  void TransitionToState(BehaviorExternalInterface& behaviorExternalInterface, const StateID targetState);
+  void TransitionToState(BehaviorExternalInterface& behaviorExternalInterface, StateID targetState);
 
   bool StateExitCooldownExpired(StateID state, float timeout) const;
 
@@ -117,7 +108,7 @@ private:
   // hack to turn off all modes when this behavior starts and then back on when it ends
   std::vector< VisionMode > _visionModesToReEnable;
 
-  StateID _currState = StateID::Count;
+  StateID _currState = InvalidStateID;
 
   bool _initComplete = false;
 
