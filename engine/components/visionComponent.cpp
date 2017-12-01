@@ -1183,7 +1183,7 @@ namespace Cozmo {
 
     PRINT_NAMED_DEBUG("VisionComponent.UpdateVisualObstacles.ReceivedObstacles",
                       "Received %d obstacles", int(procResult.visualObstacles.size()));
-    // procResult.visualObstacles is a list of Poly2f
+    // procResult.visualObstacles is a list of Poly2f std::list<Poly2f>
     // TODO Michael goes here
 
     return RESULT_OK;
