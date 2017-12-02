@@ -62,6 +62,7 @@
 namespace Anki {
  
 namespace Vision {
+  class Benchmark;
   class FaceTracker;
   class ImageCache;
   class ImagingPipeline;
@@ -297,7 +298,8 @@ namespace Cozmo {
     std::unique_ptr<OverheadEdgesDetector>  _overheadEdgeDetector;
     std::unique_ptr<CameraCalibrator>       _cameraCalibrator;
     std::unique_ptr<OverheadMap>            _overheadMap;
-
+    std::unique_ptr<Vision::Benchmark>      _benchmark;
+    
     // Tool code stuff
     TimeStamp_t                   _firstReadToolCodeTime_ms = 0;
     const TimeStamp_t             kToolCodeMotionTimeout_ms = 1000;

@@ -245,6 +245,18 @@ GTEST_TEST(Camera, VisibilityAndOcclusion)
 
 } // GTEST_TEST(Camera, VisibilityAndOcclusion)
 
+GTEST_TEST(ColorPixels, Wrapping)
+{
+  using namespace Anki::Vision;
+  PixelRGB p1(255, 100, 0);
+  const PixelRGB p2(255, 255, 1);
+  
+  p1 -= p2;
+  
+  EXPECT_EQ(0, p1.r());
+  EXPECT_EQ(0, p1.g());
+  EXPECT_EQ(0, p1.b());
+}
 
 GTEST_TEST(ColorPixels, Accessors)
 {

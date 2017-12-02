@@ -4,7 +4,10 @@
  * Author: Andrew Stein
  * Date:   12/11/2015
  *
- * Description: Defines a tracking action interface, derived from the general IAction interface.
+ * Description: Vision system component for benchmarking operations. Add new methods as needed to
+ *              compare performance of various ways of implementing operations on images (e.g. using OpenCV,
+ *              directly looping over the pixels, using a lookup table, etc. Each method is tied to a "Mode"
+ *              which can be enabled/disabled via console vars as well.
  *
  *
  * Copyright: Anki, Inc. 2015

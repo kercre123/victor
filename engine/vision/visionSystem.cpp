@@ -28,6 +28,7 @@
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
+#include "anki/vision/basestation/benchmark.h"
 #include "anki/vision/basestation/cameraImagingPipeline.h"
 #include "anki/vision/basestation/faceTracker.h"
 #include "anki/vision/basestation/image_impl.h"
@@ -120,6 +121,7 @@ namespace Cozmo {
   , _laserPointDetector(new LaserPointDetector(_vizManager))
   , _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, *this))
   , _cameraCalibrator(new CameraCalibrator(*this))
+  , _benchmark(new Vision::Benchmark())
   , _clahe(cv::createCLAHE())
   {
     DEV_ASSERT(_context != nullptr, "VisionSystem.Constructor.NullContext");
@@ -1496,6 +1498,21 @@ namespace Cozmo {
         return lastResult;
       }
       visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
+    }
+    
+    if(ShouldProcessVisionMode(VisionMode::Benchmarking))
+    {
+      Tic("Benchmarking");
+      lastResult = _benchmark->Update(imageCache);
+      Toc("BenchMarking");
+      
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.BenchmarkFailed", "");
+        // Continue processing, since this should be independent of other modes
+      }
+      else {
+        visionModesProcessed.SetBitFlag(VisionMode::Benchmarking, true);
+      }
     }
     
     // We've computed everything from this image that we're gonna compute.
