@@ -158,6 +158,9 @@ var PlayNowModal = function(){
    * @returns {void}
    */
   function _showPlayNowModal(project) {
+    if (window.isDev()) {
+      _devLoadProject(project);
+    }
     // set the project active and inactive images
     var imgUrlRoot = './images/ui/play-now-modal/icon_' + project.FeaturedProjectImageName.toLowerCase();
     modal.querySelector('.project-img-active').setAttribute('src', imgUrlRoot + '_active.jpg');
@@ -176,5 +179,27 @@ var PlayNowModal = function(){
     init: init,
     callbackReceiveFeaturedProjects: callbackReceiveFeaturedProjects
   };
+  
+  function _devLoadProject(project) {
+    var file = 'featuredProjects/' + project.ProjectJSONFile + '_' + window.getUrlVar('locale').toLowerCase() + '.json';
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', file, true );
+    
+    xhr.onload = function () {
+      var p = window.JSON.parse( xhr.responseText );
+      project.projectJSON = JSON.parse(p.ProjectJSON);
+      project.projectUUID = p.ProjectUUID;
+      window.openCozmoProjectJSON(project);
+    };
+    
+    xhr.onerror = function () {
+      //process error
+    };
 
+    var oldLoad = window.onload;
+    window.onload = function (){
+      oldLoad();
+      xhr.send();
+    }; 
+  }
 }();
