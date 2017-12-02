@@ -239,7 +239,7 @@ namespace Cozmo.Needs.UI {
       }
     }
 
-    private void PopLatestBracketAndUpdateButtons() {
+    public void PopLatestBracketAndUpdateButtons() {
       // Wait until Needs meter animates up for first time
       if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
         return;

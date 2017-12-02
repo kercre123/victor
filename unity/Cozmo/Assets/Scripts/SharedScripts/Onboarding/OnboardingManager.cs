@@ -499,10 +499,9 @@ public class OnboardingManager : MonoBehaviour {
         }
       }
       UnloadIfDoneWithAllPhases();
-      // Request an update of latest needs state to update buttons if all onboarding is completed
-      if (_CurrPhase == OnboardingPhases.None) {
-        RobotEngineManager.Instance.Message.GetNeedsState = new Anki.Cozmo.ExternalInterface.GetNeedsState();
-        RobotEngineManager.Instance.SendMessage();
+      // Onboarding turns back on buttons by default, so force the brackets to update the buttons again.
+      if (_NeedsHubView != null && _CurrPhase == OnboardingPhases.None) {
+        _NeedsHubView.PopLatestBracketAndUpdateButtons();
       }
     }
 
