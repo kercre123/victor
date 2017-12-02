@@ -682,6 +682,11 @@ namespace Anki.Cozmo.Viz {
         vizQuad = UIManager.CreateUIElement(_VizQuadPrefab, _VizScene).GetComponent<VizQuad>();
         vizQuad.Initialize("SimpleQuadVector_" + begin.identifier);
         _SimpleQuadVectors.Add(begin.identifier, vizQuad);
+      } else {
+        foreach (var obj in _SimpleQuadVectors.Values) {
+          Destroy(obj.gameObject);
+        }
+        _SimpleQuadVectors.Clear();
       }
       vizQuad.StartUpdateQuadList();
     }

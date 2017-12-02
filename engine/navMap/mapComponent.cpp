@@ -85,6 +85,9 @@ CONSOLE_VAR(float, kRobotPositionChangeToReport_mm, "MapComponent", 8.0f);
 CONSOLE_VAR(float, kVisionTimeout_ms, "MapComponent", 120.0f * 1000);
 CONSOLE_VAR(float, kCliffTimeout_ms, "MapComponent", 30.0f * 1000);
 
+// kDisplayCachedMaps: if true, render additional cached memory maps in webots and unity
+CONSOLE_VAR(bool, kDisplayCachedMaps, "MapComponent", false);
+
 
 namespace {
 
@@ -474,8 +477,11 @@ void MapComponent::DrawMap() const
         
         const bool isCurrent = (originID == _currentMapOriginID);
         size_t indexHint = isCurrent ? 0 : (++lastIndexNonCurrent);
-        memMapPair.second->DrawDebugProcessorInfo(indexHint);
-        memMapPair.second->BroadcastMemoryMapDraw(originID, indexHint);
+        if (isCurrent || kDisplayCachedMaps)
+        {
+          memMapPair.second->DrawDebugProcessorInfo(indexHint);
+          memMapPair.second->BroadcastMemoryMapDraw(originID, indexHint);
+        }
       }
     }
   }
