@@ -89,15 +89,22 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
     return RESULT_OK;
   }
 
-  // TODO Probably STEP 1 and 2 can be combined in a single pass
+  // TODO Probably STEP 1 and 2 and 3 can be combined in a single pass
 
   // STEP 1: Obtain the overhead ground plane image
   GroundPlaneROI groundPlaneROI;
   const Matrix_3x3f& H = poseData.groundPlaneHomography;
   const Vision::ImageRGB groundPlaneImage = groundPlaneROI.GetOverheadImage(image, H);
 
+  // TODO This is not working!!!
+//  const Vision::Image visibleMask = groundPlaneROI.GetVisibleOverheadMask(H, image.GetNumCols(), image.GetNumRows());
+
+  // TODO Hacky fallback
+  const Vision::Image visibleMask = groundPlaneImage.Threshold(0, true);
+
   if (DEBUG_DISPLAY_IMAGES) {
     debugImageRGBs.emplace_back("OverheadImage", groundPlaneImage);
+//    debugImageRGBs.emplace_back("OverheadImage",visibleMask);
   }
 
   // STEP 2: Classify the overhead image
@@ -107,9 +114,9 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   // STEP 3: To find the contours only in the right area, invert the mask while applying the overhead mask
   //         This way obstacles become white and everything else is black
   // TODO this thing is not working when the head is up and a bit of black shows at the bottom of the plane!!!
-  cv::bitwise_not(classifiedMask.get_CvMat_(),
+    cv::bitwise_not(classifiedMask.get_CvMat_(),
                   classifiedMask.get_CvMat_(),
-                  groundPlaneROI.GetOverheadMask().get_CvMat_());
+                  visibleMask.get_CvMat_());
 
   Vision::ImageRGB colorMask;
   if (DEBUG_DISPLAY_IMAGES) {
@@ -131,7 +138,6 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
     polygon.reserve(contour.size());
     for (auto& point : contour) {
 
-      // ground_x = point.y, ground.y = point.x ??
       const f32 ground_y = -1*(static_cast<f32>(point.y) - 0.5f*groundPlaneROI.GetWidthFar());
       const f32 ground_x = static_cast<f32>(point.x) + groundPlaneROI.GetDist(); // Zero is at the center;
 

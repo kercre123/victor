@@ -85,7 +85,27 @@ bool GroundPlaneROI::GetVisibleGroundQuad(const Matrix_3x3f& H, s32 imgWidth, s3
 
   return intersectsBorder;
 } // GetVisibleGroundQuad()
-  
+
+const Vision::Image GroundPlaneROI::GetVisibleOverheadMask(const Matrix_3x3f& H, s32 imgWidth, s32 imgHeight) const {
+
+  // TODO Coordinate system is all wonky here, needs a fix!
+//  Vision::Image mask(_widthFar, _length, u8(0));
+//  Quad2f groundQuad;
+//  GetVisibleGroundQuad(H, imgWidth, imgHeight, groundQuad);
+//
+//  groundQuad.SortCornersClockwise();
+//  const std::vector<cv::Point> cvPoints{groundQuad.GetTopLeft().get_CvPoint_(),
+//                                        groundQuad.GetTopRight().get_CvPoint_(),
+//                                        groundQuad.GetBottomRight().get_CvPoint_(),
+//                                        groundQuad.GetBottomLeft().get_CvPoint_()};
+//
+//  cv::fillConvexPoly(mask.get_CvMat_(), cvPoints, 255);
+//
+//  return mask;
+
+  return Vision::Image();
+}
+
   
 void GroundPlaneROI::GetVisibleX(const Matrix_3x3f& H, s32 imageWidth, s32 imageHeight,
                                  f32& near, f32& far) const
