@@ -223,6 +223,14 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, Robot& robot)
       _status = BehaviorStatus::Failure;
       break;
     }
+    case ActionResult::PATH_PLANNING_FAILED_ABORT:
+    {
+      if (PreActionPose::ActionType::ROLLING == _params.actionType && _params.useApproachAngle) {
+        _params.useApproachAngle = false;
+        DriveToPreActionPose(robot);
+      }
+      break;
+    }
     default:
     {
       //DEV_ASSERT(false, "HANDLE CASE!");
