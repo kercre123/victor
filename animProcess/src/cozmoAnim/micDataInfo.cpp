@@ -33,38 +33,38 @@ namespace {
   const std::string kResampledFileExtension = "_resamp.wav";
 }
 
-void MicDataInfo::CollectRawAudio(const AudioUtil::AudioChunk& audioChunk)
+void MicDataInfo::CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size_t size)
 {
   std::lock_guard<std::mutex> lock(_dataMutex);
   if (_typesToRecord.IsBitFlagSet(MicDataType::Raw))
   {
     AudioUtil::AudioChunk newChunk;
     newChunk.resize(kRawAudioChunkSize);
-    std::copy(audioChunk.begin(), audioChunk.end(), newChunk.begin());
+    std::copy(audioChunk, audioChunk + size, newChunk.begin());
     _rawAudioData.push_back(std::move(newChunk));
   }
 }
 
-void MicDataInfo::CollectResampledAudio(const AudioUtil::AudioChunk& audioChunk)
+void MicDataInfo::CollectResampledAudio(const AudioUtil::AudioSample* audioChunk, size_t size)
 {
   std::lock_guard<std::mutex> lock(_dataMutex);
   if (_typesToRecord.IsBitFlagSet(MicDataType::Resampled))
   {
     AudioUtil::AudioChunk newChunk;
     newChunk.resize(kResampledAudioChunkSize);
-    std::copy(audioChunk.begin(), audioChunk.end(), newChunk.begin());
+    std::copy(audioChunk, audioChunk + size, newChunk.begin());
     _resampledAudioData.push_back(std::move(newChunk));
   }
 }
 
-void MicDataInfo::CollectProcessedAudio(const AudioUtil::AudioChunk& audioChunk)
+void MicDataInfo::CollectProcessedAudio(const AudioUtil::AudioSample* audioChunk, size_t size)
 {
   std::lock_guard<std::mutex> lock(_dataMutex);
   if (_typesToRecord.IsBitFlagSet(MicDataType::Processed))
   {
     AudioUtil::AudioChunk newChunk;
     newChunk.resize(kSamplesPerBlock);
-    std::copy(audioChunk.begin(), audioChunk.end(), newChunk.begin());
+    std::copy(audioChunk, audioChunk + size, newChunk.begin());
     _processedAudioData.push_back(std::move(newChunk));
   }
 }
