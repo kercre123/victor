@@ -51,7 +51,12 @@
 
 // The amount of time that the UI must have not been
 // returning pings before we consider it disconnected
+#ifdef SIMULATOR
+// No timeout in sim
+static const u32 kPingTimeoutForDisconnect_ms = 0;
+#else
 static const u32 kPingTimeoutForDisconnect_ms = 5000;
+#endif
 
 namespace Anki {
   namespace Cozmo {

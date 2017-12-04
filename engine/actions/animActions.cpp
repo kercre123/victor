@@ -153,7 +153,7 @@ namespace Anki {
         return ActionResult::NO_ANIM_NAME;
       }
       
-      _animName = GetRobot().GetAnimationComponent().GetAnimationNameFromGroup(_animGroupName, GetRobot());
+      _animName = GetRobot().GetAnimationComponent().GetAnimationNameFromGroup(_animGroupName);
 
       if( _animName.empty() ) {
         return ActionResult::NO_ANIM_NAME;

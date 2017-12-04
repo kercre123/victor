@@ -393,12 +393,12 @@ namespace Anki {
                           const u8  imageProcFrameRateHz,
                           const u32 numProcAnimFaceKeyframes,
                           const u8  lockedTracks,
-                          const u8  tracksInUse,                                    
-                          const u32 animId,
-                          const u8  animTag,
+                          const u8  tracksInUse,
                           const f32 imuTemperature_degC,
                           std::array<uint16_t, 4> cliffThresholds);
       
+      void SendCurrentAnimation(const std::string& animName, u8 animTag);
+
       void SetOrigin(const SetVizOrigin& msg);
       
       void SubscribeToEngineEvents(IExternalInterface& externalInterface);

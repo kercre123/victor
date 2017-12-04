@@ -82,6 +82,8 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessVizTrackerQuadMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::RobotStateMessage,
     std::bind(&VizControllerImpl::ProcessVizRobotStateMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::CurrentAnimation,
+    std::bind(&VizControllerImpl::ProcessVizCurrentAnimation, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::RobotMood,
     std::bind(&VizControllerImpl::ProcessVizRobotMoodMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::RobotBehaviorSelectData,
@@ -793,17 +795,21 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   sprintf(txt, "Batt: %2.1f V", payload.state.batteryVoltage);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
 
-  sprintf(txt, "AnimID: %d, Tag: %d, Locked: %c%c%c, InUse: %c%c%c, ProcFaceFrames: %d",
-        payload.animId, 
-        payload.animTag,
+  sprintf(txt, "Anim: %32s [%d], ProcFaceFrames: %d",
+        _currAnimName.c_str(), 
+        _currAnimTag,
+         payload.numProcAnimFaceKeyframes);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ANIM, Anki::NamedColors::GREEN, txt);
+
+  sprintf(txt, "Locked: %c%c%c, InUse: %c%c%c",
         (payload.lockedAnimTracks & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
         (payload.lockedAnimTracks & (u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
         (payload.lockedAnimTracks & (u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
         (payload.animTracksInUse  & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
         (payload.animTracksInUse  & (u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
-        (payload.animTracksInUse  & (u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
-         payload.numProcAnimFaceKeyframes);
-  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ANIM, Anki::NamedColors::GREEN, txt);
+        (payload.animTracksInUse  & (u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ');
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ANIM_TRACK_LOCKS, Anki::NamedColors::GREEN, txt);
+
 
   sprintf(txt, "Video: %d Hz   Proc: %d Hz",
     payload.videoFrameRateHz, payload.imageProcFrameRateHz);
@@ -815,16 +821,8 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP ? "PICKDUP" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_FALLING ? "FALLING" : "");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
-
-  char animLabel[16] = {0};
-  if(payload.animTag == 255) {
-    sprintf(animLabel, "ANIM_IDLE");
-  } else if(payload.animTag != 0) {
-    sprintf(animLabel, "ANIM[%d]", payload.animTag);
-  }
   
-  sprintf(txt, "    %10s %10s",
-          animLabel,
+  sprintf(txt, "   %10s",
           payload.state.status & (uint32_t)RobotStatusFlag::IS_CHARGING ? "CHARGING" :
           (payload.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER ? "ON_CHARGER" : ""));
   
@@ -863,6 +861,12 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   } // if(_saveState)
 }
 
+void VizControllerImpl::ProcessVizCurrentAnimation(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_CurrentAnimation();
+  _currAnimName = payload.animName;
+  _currAnimTag = payload.tag;
+}
   
   
 static const int kTextSpacingY = 10;

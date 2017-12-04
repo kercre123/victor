@@ -75,7 +75,7 @@ namespace Cozmo {
   , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
   , _numTicsToSendAnimState(kAnimStateReportingPeriod_tics)
   {
-    _proceduralAnimation = new Animation("ProceduralAnimation");
+    _proceduralAnimation = new Animation(EnumToString(AnimConstants::PROCEDURAL_ANIM));
     _proceduralAnimation->SetIsLive(true);
   }
   
@@ -149,17 +149,6 @@ namespace Cozmo {
     FaceDisplay::removeInstance();
     Util::SafeDelete(_proceduralAnimation);
   }
-
-  Result AnimationStreamer::SetStreamingAnimation(u32 animID, Tag tag, u32 numLoops, bool interruptRunning)
-  {
-    std::string animName = "";
-    if (!_animationContainer.GetAnimNameByID(animID, animName)) {
-      PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.InvalidAnimID", "%d", animID);
-      return RESULT_FAIL;
-    }
-    return SetStreamingAnimation(animName, tag, numLoops, interruptRunning);
-  }
-  
   
   Result AnimationStreamer::SetStreamingAnimation(const std::string& name, Tag tag, u32 numLoops, bool interruptRunning)
   {
@@ -220,19 +209,8 @@ namespace Cozmo {
       }
       return RESULT_FAIL;
     }
-
     
-    if (_streamingAnimation == _proceduralAnimation)
-    {
-      _streamingAnimID = static_cast<u32>(AnimConstants::PROCEDURAL_ANIM_ID);
-    }
-    else if(!GetCannedAnimationContainer().GetAnimIDByName(_streamingAnimation->GetName(), _streamingAnimID))
-    {
-      PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.AnimIDNotFound", "%s", _streamingAnimation->GetName().c_str());
-      _streamingAnimID = static_cast<u32>(AnimConstants::PROCEDURAL_ANIM_ID);
-    }
-    
-    _lastPlayedAnimationId = _streamingAnimation->GetName();
+    _streamingAnimName = _streamingAnimation->GetName();
   
     // Get the animation ready to play
     InitStream(_streamingAnimation, tag);
@@ -593,13 +571,14 @@ namespace Cozmo {
   Result AnimationStreamer::SendStartOfAnimation()
   {
     if(DEBUG_ANIMATION_STREAMING) {
-      PRINT_NAMED_DEBUG("AnimationStreamer.SendStartOfAnimation.BufferedStartOfAnimation", "Tag=%d, ID=%d, loopCtr=%d",
-                        _tag, _streamingAnimID, _loopCtr);
+      PRINT_NAMED_DEBUG("AnimationStreamer.SendStartOfAnimation.BufferedStartOfAnimation", "Tag=%d, Name=%s, loopCtr=%d",
+                        _tag, _streamingAnimName.c_str(), _loopCtr);
     }
 
     if (_loopCtr == 0) {
-      RobotInterface::AnimationStarted startMsg;
-      startMsg.id = _streamingAnimID;
+      AnimationStarted startMsg;
+      memcpy(startMsg.animName, _streamingAnimName.c_str(), _streamingAnimName.length());
+      startMsg.animName_length = _streamingAnimName.length();
       startMsg.tag = _tag;
       if (!RobotInterface::SendMessageToEngine(startMsg)) {
         return RESULT_FAIL;
@@ -627,8 +606,9 @@ namespace Cozmo {
     }
     
     if (_loopCtr == _numLoops - 1) {
-      RobotInterface::AnimationEnded endMsg;
-      endMsg.id = _streamingAnimID;
+      AnimationEnded endMsg;
+      memcpy(endMsg.animName, _streamingAnimName.c_str(), _streamingAnimName.length());
+      endMsg.animName_length = _streamingAnimName.length();
       endMsg.tag = _tag;
       endMsg.wasAborted = false;
       if (!RobotInterface::SendMessageToEngine(endMsg)) {
@@ -809,7 +789,7 @@ namespace Cozmo {
         // Get keyframe and send contents to engine
         auto eventKeyFrame = eventTrack.GetCurrentKeyFrame();
 
-        RobotInterface::AnimationEvent eventMsg;
+        AnimationEvent eventMsg;
         eventMsg.event_id = eventKeyFrame.GetAnimEvent();
         eventMsg.timestamp = currTime_ms;
         eventMsg.tag = _tag;
@@ -999,12 +979,12 @@ namespace Cozmo {
 
     // Send animState message
     if (--_numTicsToSendAnimState == 0) {
-      RobotInterface::AnimationState msg;
+      AnimationState msg;
       msg.numProcAnimFaceKeyframes = FaceAnimationManager::getInstance()->GetNumFrames(FaceAnimationManager::ProceduralAnimName);
       msg.lockedTracks             = _lockedTracks;
       msg.tracksInUse              = _tracksInUse;
 
-      SendMessageToEngine(msg);
+      RobotInterface::SendMessageToEngine(msg);
       _numTicsToSendAnimState = kAnimStateReportingPeriod_tics;
     }
 

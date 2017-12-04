@@ -420,7 +420,7 @@ namespace Anki {
     }
 
 
-    void UiGameController::HandleEndOfMessageBase(const EndOfMessage& msg)
+    void UiGameController::HandleEndOfMessageBase(const ExternalInterface::EndOfMessage& msg)
     {
       PRINT_NAMED_INFO("HandleEndOfMessage",
                        "messageType: %s", EnumToString(msg.messageType));
@@ -1565,7 +1565,6 @@ namespace Anki {
       {
         PRINT_NAMED_INFO("SendAnimation", "sending %s", animName);
         ExternalInterface::PlayAnimation m;
-        //m.animationID = animId;
         m.animationName = animName;
         m.numLoops = numLoops;
         ExternalInterface::MessageGameToEngine message;
@@ -1604,7 +1603,6 @@ namespace Anki {
       {
         PRINT_NAMED_INFO("SendDevAnimation", "sending %s", animName);
         ExternalInterface::PlayAnimation_DEV m;
-        //m.animationID = animId;
         m.robotId = 1;
         m.animationName = animName;
         m.numLoops = numLoops;

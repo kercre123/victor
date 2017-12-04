@@ -276,16 +276,11 @@ message EnableBraceWhenFalling
 
 // ========== V2 Animation process messages ===========
 
-// TODO: Make animation files referencable by integer tag so we don't have to send a string.
-message RequestAvailableAnimations
-{
-}
-
 message PlayAnim
 {
-  uint_32 animID,
   uint_32 numLoops = 1,
-  uint_8  tag
+  uint_8  tag,
+  string animName,
 }
 
 message LockAnimTracks
@@ -461,7 +456,7 @@ union EngineToRobot
   // 0x50 to 0xAF: To Anim Process
   PlayAnim                      playAnim                    = 0x50,
   LockAnimTracks                lockAnimTracks              = 0x51,
-  RequestAvailableAnimations    requestAvailableAnimations  = 0x52,
+  //      FREE SLOT                                         = 0x52,
   AbortAnimation                abortAnimation              = 0x53,
   DisplayProceduralFace         displayProceduralFace       = 0x54,
   SetFaceHue                    setFaceHue                  = 0x55,

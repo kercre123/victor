@@ -28,7 +28,6 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine_sendToEngine_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_sendToRobot_helper.h"
-#include "clad/robotInterface/messageFromAnimProcess.h"
 
 // For animProcess<->Engine communications
 #include "anki/cozmo/transport/IUnreliableTransport.h"
@@ -64,14 +63,6 @@ namespace Messages {
     AnimationStreamer*            _animStreamer = nullptr;
     Audio::EngineRobotAudioInput* _audioInput = nullptr;
     const CozmoAnimContext*       _context = nullptr;
-    
-    
-    const u32 kMaxNumAvailableAnimsToReportPerTic = 100;
-    
-    // The last AnimID that was sent to engine in response to RequestAvailableAnimations.
-    // If negative, it means we're not currently doling.
-    bool _isDolingAnims = false;
-    u32 _nextAnimIDToDole;
 
   } // private namespace
 
@@ -108,38 +99,6 @@ namespace Messages {
   }
   
   
-  void DoleAvailableAnimations()
-  {
-    // If not already doling, dole animations
-    if (_isDolingAnims) {
-      u32 numAnimsDoledThisTic = 0;
-      const auto& animIDToNameMap = _animStreamer->GetCannedAnimationContainer().GetAnimationIDToNameMap();
-      auto it = animIDToNameMap.find(_nextAnimIDToDole);
-      for (; it != animIDToNameMap.end() && numAnimsDoledThisTic < kMaxNumAvailableAnimsToReportPerTic; ++it) {
-        
-        RobotInterface::AnimationAvailable msg;
-        msg.id = it->first;
-        msg.name_length = it->second.length();
-        snprintf(msg.name, sizeof(msg.name), "%s", it->second.c_str());
-        SendMessageToEngine(msg);
-        
-        //PRINT_NAMED_INFO("AvailableAnim", "[%d]: %s", msg.id, msg.name);
-
-        ++numAnimsDoledThisTic;
-      }
-      if (it == animIDToNameMap.end()) {
-        PRINT_NAMED_INFO("EngineMessages.DoleAvailableAnimations.Done", "%zu anims doled", animIDToNameMap.size());
-        _isDolingAnims = false;
-        
-        EndOfMessage msg;
-        msg.messageType = MessageType::AnimationAvailable;
-        RobotInterface::SendMessageToEngine(msg);
-      } else {
-        _nextAnimIDToDole = it->first;
-      }
-    }
-  }
-  
 // ========== START OF PROCESSING MESSAGES FROM ENGINE ==========  
 
   void ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
@@ -172,11 +131,13 @@ namespace Messages {
     
   void Process_playAnim(const Anki::Cozmo::RobotInterface::PlayAnim& msg)
   {
+    const std::string animName(msg.animName, msg.animName_length);
+
     PRINT_NAMED_INFO("EngineMesssages.Process_playAnim",
-                     "AnimID: %d, Tag: %d",
-                     msg.animID, msg.tag);
+                     "Anim: %s, Tag: %d",
+                     animName.c_str(), msg.tag);
     
-    _animStreamer->SetStreamingAnimation(msg.animID, msg.tag, msg.numLoops);
+    _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops);
   }
 
   void Process_abortAnimation(const Anki::Cozmo::RobotInterface::AbortAnimation& msg)
@@ -211,23 +172,6 @@ namespace Messages {
   void Process_displayFaceImageRGBChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageRGBChunk& msg) 
   {
     _animStreamer->Process_displayFaceImageChunk(msg);
-  }
-
-  
-  void Process_requestAvailableAnimations(const Anki::Cozmo::RobotInterface::RequestAvailableAnimations& msg)
-  {
-    PRINT_NAMED_INFO("EngineMessages.Process_requestAvailableAnimations", "");
-    if (!_isDolingAnims) {
-      const auto& animIDToNameMap = _animStreamer->GetCannedAnimationContainer().GetAnimationIDToNameMap();
-      if (!animIDToNameMap.empty()) {
-        _nextAnimIDToDole =  animIDToNameMap.begin()->first;
-        _isDolingAnims = true;
-      } else {
-        PRINT_NAMED_WARNING("EngineMessages.Process_requestAvailableAnimations.NoAnimsAvailable", "");
-      }
-    } else {
-      PRINT_NAMED_WARNING("EngineMessages.Process_requestAvailableAnimations.AlreadyDoling", "");
-    }
   }
 
   void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent& msg)
@@ -362,8 +306,6 @@ namespace Messages {
   void Update()
   {
     MonitorConnectionState();
-
-    DoleAvailableAnimations();
     
     _context->GetMicDataProcessor()->Update();
     

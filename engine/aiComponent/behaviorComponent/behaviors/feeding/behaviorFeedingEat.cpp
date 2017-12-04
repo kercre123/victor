@@ -292,23 +292,19 @@ void BehaviorFeedingEat::TransitionToEating(BehaviorExternalInterface& behaviorE
   RobotManager* robot_mgr = behaviorExternalInterface.GetRobotInfo().GetContext()->GetRobotManager();
   if( robot_mgr->HasAnimationForTrigger(eatingAnim) )
   {
-    // TODO: We do not have direct access to the CannedAnimationContainer and the raw animation data in this process (VIC-368)
-    /*
     // Extract the length of time that the animation will be playing for so that
     // it can be passed through to listeners
     const auto& animComponent = behaviorExternalInterface.GetAnimationComponent();
-    const auto& cannedAnims = behaviorExternalInterface.GetRobotInfo().GetContext()->GetRobotManager()->GetCannedAnimations();
-    
     const auto& animGroupName = robot_mgr->GetAnimationForTrigger(eatingAnim);
-    const auto& animName = animComponent.GetAnimationNameFromGroup(animGroupName, robot);
-    const Animation* eatingAnimRawPointer = cannedAnims.GetAnimation(animName);
-    const auto& track = eatingAnimRawPointer->GetTrack<EventKeyFrame>();
-    if(!track.IsEmpty()){
-      // assumes only one keyframe per eating anim
-      timeDrainCube_s = Util::MilliSecToSec((f32)track.GetLastKeyFrame()->GetTriggerTime());
+    const auto& animName = animComponent.GetAnimationNameFromGroup(animGroupName);
+
+    AnimationComponent::AnimationMetaInfo metaInfo;
+    if (animComponent.GetAnimationMetaInfo(animName, metaInfo) == RESULT_OK) {
+      timeDrainCube_s = Util::MilliSecToSec((float)metaInfo.length_ms);
+    } else {
+      PRINT_NAMED_WARNING("BehaviorFeedingEat.TransitionToEating.AnimationLengthNotFound", "Anim: %s", animName.c_str());
+      timeDrainCube_s = 2.f;
     }
-    */
-    timeDrainCube_s = 2.f; // HACK until VIC-368 is done
   }
   
   

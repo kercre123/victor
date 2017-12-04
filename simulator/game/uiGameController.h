@@ -128,7 +128,7 @@ protected:
   virtual void HandleSetCliffDetectThresholds(const SetCliffDetectThresholds& msg){};
   
   virtual void HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg){};
-  virtual void HandleEndOfMessage(const EndOfMessage& msg){};
+  virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
   virtual void HandleRobotOffTreadsStateChanged(const ExternalInterface::RobotOffTreadsStateChanged& msg){};
   virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) {};
   virtual void HandleDefinedCustomObject(const ExternalInterface::DefinedCustomObject& msg) {};
@@ -511,7 +511,7 @@ private:
   void HandleDebugStringBase(const ExternalInterface::DebugString& msg);
   void HandleNVStorageOpResultBase(const ExternalInterface::NVStorageOpResult& msg);
   void HandleBehaviorTransitionBase(const ExternalInterface::BehaviorTransition& msg);
-  void HandleEndOfMessageBase(const EndOfMessage& msg);
+  void HandleEndOfMessageBase(const ExternalInterface::EndOfMessage& msg);
   void HandleFactoryTestResultEntryBase(const FactoryTestResultEntry& msg);
   void HandleLoadedKnownFaceBase(const Vision::LoadedKnownFace& msg);
   void HandleFaceEnrollmentCompletedBase(const ExternalInterface::FaceEnrollmentCompleted &msg);

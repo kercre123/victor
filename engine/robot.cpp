@@ -1149,8 +1149,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     _animationComponent->GetAnimState_NumProcAnimFaceKeyframes(),    
     _animationComponent->GetAnimState_LockedTracks(),
     _animationComponent->GetAnimState_TracksInUse(),
-    _animationComponent->GetPlayingAnimId(),
-    _animationComponent->GetPlayingAnimTag(),
     _robotImuTemperature_degC,
     _cliffSensorComponent->GetCliffDetectThresholds()
     );

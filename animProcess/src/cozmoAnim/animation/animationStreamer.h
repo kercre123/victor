@@ -77,11 +77,6 @@ namespace Cozmo {
                                  u32 numLoops = 1,
                                  bool interruptRunning = true);
     
-    Result SetStreamingAnimation(u32 animID,
-                                 Tag tag,
-                                 u32 numLoops = 1,
-                                 bool interruptRunning = true);
-    
     Result SetProceduralFace(const ProceduralFace& face, u32 duration_ms);
     
 
@@ -163,9 +158,7 @@ namespace Cozmo {
     Animation*  _neutralFaceAnimation = nullptr;
     Animation*  _proceduralAnimation = nullptr; // for creating animations "live" or dynamically
 
-    std::string _lastPlayedAnimationId;
-
-    u32 _streamingAnimID;
+    std::string _streamingAnimName;
     
     std::unique_ptr<TrackLayerComponent>  _trackLayerComponent;
     
