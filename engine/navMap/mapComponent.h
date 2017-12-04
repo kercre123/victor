@@ -58,6 +58,8 @@ public:
   
   // add obstacles detected from the driving classifier to navMap
   void AddDetectedObstacles(const std::list<Poly2f>& polys);
+  
+  void AddDetectedObstacles(const OverheadEdgeFrame& edgeObstacle);
 
   ////////////////////////////////////////////////////////////////////////////////
   // Message handling / dispatch

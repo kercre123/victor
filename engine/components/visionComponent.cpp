@@ -1180,15 +1180,14 @@ namespace Cozmo {
 
   Result VisionComponent::UpdateVisualObstacles(const VisionProcessingResult& procResult)
   {
-
     PRINT_NAMED_DEBUG("VisionComponent.UpdateVisualObstacles.ReceivedObstacles",
                       "Received %d obstacles", int(procResult.visualObstacles.size()));
-    // procResult.visualObstacles is a list of Poly2f std::list<Poly2f>
-    // TODO Michael goes here
-    if (!procResult.visualObstacles.empty()){
-      _robot.GetMapComponent().AddDetectedObstacles(procResult.visualObstacles);
+    
+    for(auto & edgeFrame : procResult.visualObstacles)
+    {
+      _robot.GetMapComponent().AddDetectedObstacles(edgeFrame);
     }
-
+    
     return RESULT_OK;
   }
   

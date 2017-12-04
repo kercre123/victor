@@ -86,24 +86,31 @@ bool GroundPlaneROI::GetVisibleGroundQuad(const Matrix_3x3f& H, s32 imgWidth, s3
   return intersectsBorder;
 } // GetVisibleGroundQuad()
 
-const Vision::Image GroundPlaneROI::GetVisibleOverheadMask(const Matrix_3x3f& H, s32 imgWidth, s32 imgHeight) const {
-
-  // TODO Coordinate system is all wonky here, needs a fix!
-//  Vision::Image mask(_widthFar, _length, u8(0));
-//  Quad2f groundQuad;
-//  GetVisibleGroundQuad(H, imgWidth, imgHeight, groundQuad);
-//
-//  groundQuad.SortCornersClockwise();
-//  const std::vector<cv::Point> cvPoints{groundQuad.GetTopLeft().get_CvPoint_(),
-//                                        groundQuad.GetTopRight().get_CvPoint_(),
-//                                        groundQuad.GetBottomRight().get_CvPoint_(),
-//                                        groundQuad.GetBottomLeft().get_CvPoint_()};
-//
-//  cv::fillConvexPoly(mask.get_CvMat_(), cvPoints, 255);
-//
-//  return mask;
-
-  return Vision::Image();
+const Vision::Image GroundPlaneROI::GetVisibleOverheadMask(const Matrix_3x3f& H, s32 imgWidth, s32 imgHeight) const
+{
+  // Start with full overhead mask
+  Vision::Image mask(GetOverheadMask());
+  
+  // Blank out anything that is closer than nearx or farther than farx
+  f32 xnearF32, xfarF32;
+  GetVisibleX(H, imgWidth, imgHeight, xnearF32, xfarF32);
+  const s32 xnear = std::round(xnearF32);
+  const s32 xfar  = std::round(xfarF32);
+  if(xnear > 0)
+  {
+    Rectangle<s32> nearROI(0,0,xnear,mask.GetNumRows());
+    Vision::Image ROI = mask.GetROI(nearROI);
+    ROI.FillWith(0);
+  }
+  
+  if(xfar < mask.GetNumCols())
+  {
+    Rectangle<s32> farROI(xfar,0,mask.GetNumCols()-xfar,mask.GetNumRows());
+    Vision::Image ROI = mask.GetROI(farROI);
+    ROI.FillWith(0);
+  }
+  
+  return mask;
 }
 
   

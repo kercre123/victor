@@ -28,9 +28,6 @@ bool LiftInterferesWithEdges(bool isLiftTopInCamera, float liftTopY,
                              bool isLiftBotInCamera, float liftBotY,
                              int planeTopY, int planeBotY);
 
-void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder,
-                  std::vector<OverheadEdgePointChain>& imageChains );
-
 bool CheckThreshold(Vision::PixelRGB_<f32> pixel, f32 threshold);
 
 bool CheckThreshold(f32 pixel, f32 threshold);
@@ -230,8 +227,10 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
   edgeImgX.SetMaskTo(mask, 0);
   _profiler.Toc("GroundQuadEdgeMasking");
 
-  std::vector<OverheadEdgePointChain> candidateChains;
-
+  // create edge frame info to send
+  OverheadEdgeFrame edgeFrame;
+  OverheadEdgeChainVector& candidateChains = edgeFrame.chains;
+  
   // Find first strong edge in each column, in the ground plane mask, working
   // upward from bottom.
   // Note: looping only over the ROI portion of full image, but working in
@@ -271,7 +270,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
 
           edgePoint.gradient = getGradient(edgePixelX);
           foundBorder = true;
-          AddEdgePoint(edgePoint, foundBorder, candidateChains);
+          candidateChains.AddEdgePoint(edgePoint, foundBorder);
         }
         break; // only keep first edge found in each row (working right to left)
       }
@@ -289,7 +288,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
         const bool success = SetEdgePosition(invH, i, bbox.GetY(), edgePoint);
         if (success) {
           edgePoint.gradient = 0.0f;
-          AddEdgePoint(edgePoint, foundBorder, candidateChains);
+          candidateChains.AddEdgePoint(edgePoint, foundBorder);
         }
       }
     }
@@ -313,7 +312,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
     tempQuad += dispOffset;
     dispImg.DrawQuad(tempQuad, NamedColors::RED, 1);
 
-    for (const auto &chain : candidateChains) {
+    for (const auto &chain : candidateChains.GetVector()) {
       if (chain.points.size() >= _kMinChainLength) {
         for (s32 i = 1; i < chain.points.size(); ++i) {
           Anki::Point2f startPoint(chain.points[i - 1].position);
@@ -349,7 +348,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
     edgeImgX.ApplyScalarFunction(fcn, dispEdgeImg);
 
     // Project edges on the ground back into image for display
-    for (const auto &chain : candidateChains) {
+    for (const auto &chain : candidateChains.GetVector()) {
       for (s32 i = 0; i < chain.points.size(); ++i) {
         const Anki::Point2f &groundPoint = chain.points[i].position;
         Point3f temp = H * Anki::Point3f(groundPoint.x(), groundPoint.y(), 1.f);
@@ -365,27 +364,19 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
     currentResult.debugImageRGBs.push_back({"EdgeImage", dispEdgeImg});
   } // if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
 
-  // create edge frame info to send
-  OverheadEdgeFrame edgeFrame;
   edgeFrame.timestamp = image.GetTimestamp();
   edgeFrame.groundPlaneValid = true;
 
   roi.GetVisibleGroundQuad(H, image.GetNumCols(), image.GetNumRows(), edgeFrame.groundplane);
 
   // Copy only the chains with at least k points (less is considered noise)
-  for (const auto &chain : candidateChains) {
-    // filter chains that don't have a minimum number of points
-    if (chain.points.size() >= _kMinChainLength) {
-      edgeFrame.chains.emplace_back(std::move(chain));
-    }
-  }
-  candidateChains.clear(); // some chains are in undefined state after std::move, clear them now
-
+  edgeFrame.chains.RemoveChainsShorterThan(_kMinChainLength);
+  
   // Transform border points into 3D, and into camera view and render
   static const bool kRenderEdgesInCameraView = false;
   if (kRenderEdgesInCameraView) {
     _vizManager->EraseSegments("kRenderEdgesInCameraView");
-    for (const auto &chain : edgeFrame.chains) {
+    for (const auto &chain : edgeFrame.chains.GetVector()) {
       if (!chain.isBorder) {
         continue;
       }
@@ -506,58 +497,6 @@ bool LiftInterferesWithEdges(bool isLiftTopInCamera, float liftTopY,
     }
   }
   return ret;
-}
-
-void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder, std::vector<OverheadEdgePointChain>& imageChains )
-{
-  static const f32 kMaxDistBetweenEdges_mm = 5.f; // start new chain after this distance seen
-
-  // can we add to the current image chain?
-  bool addToCurrentChain = false;
-  if ( !imageChains.empty() )
-  {
-    OverheadEdgePointChain& currentChain = imageChains.back();
-    if ( currentChain.points.empty() )
-    {
-      // current chain does not have points yet, we can add this one as the first one
-      addToCurrentChain = true;
-    }
-    else
-    {
-      // there are points, does the chain and this point match border vs no_border flag?
-      if ( isBorder == currentChain.isBorder )
-      {
-        // they do, is the new point close enough to the last point in the current chain?
-        const f32 distToPrevPoint = ComputeDistanceBetween(pointInfo.position,
-                                                           imageChains.back().points.back().position);
-        if ( distToPrevPoint <= kMaxDistBetweenEdges_mm )
-        {
-          // it is close, this point should be added to the current chain
-          addToCurrentChain = true;
-        }
-      }
-    }
-  }
-
-  // if we don't want to add the point to the current chain, then we need to start a new chain
-  if ( !addToCurrentChain )
-  {
-    imageChains.emplace_back();
-    imageChains.back().isBorder = isBorder;
-  }
-
-  // add to current chain (can be the newly created for this border)
-  OverheadEdgePointChain& newCurrentChain = imageChains.back();
-
-  // if we have an empty chain, set isBorder now
-  if ( newCurrentChain.points.empty() ) {
-    newCurrentChain.isBorder = isBorder;
-  } else {
-    DEV_ASSERT(newCurrentChain.isBorder == isBorder, "VisionSystem.AddEdgePoint.BadBorderFlag");
-  }
-
-  // now add this point
-  newCurrentChain.points.emplace_back( pointInfo );
 }
 
 bool CheckThreshold(Vision::PixelRGB_<f32> pixel, f32 threshold)

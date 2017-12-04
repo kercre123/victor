@@ -25,7 +25,8 @@ namespace Cozmo {
 
 // Forward declaration
 class CozmoContext;
-
+struct OverheadEdgeFrame;
+  
 class GroundPlaneClassifier
 {
 public:
@@ -33,7 +34,7 @@ public:
 
   Result Update(const Vision::ImageRGB& image, const VisionPoseData& poseData,
                 DebugImageList <Vision::ImageRGB>& debugImageRGBs,
-                std::list<Poly2f>& outPolygons);
+                std::list<OverheadEdgeFrame>& outEdges);
 
 protected:
   std::unique_ptr<DrivingSurfaceClassifier> _classifier;
