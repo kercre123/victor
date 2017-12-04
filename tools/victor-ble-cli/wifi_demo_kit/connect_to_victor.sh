@@ -5,18 +5,6 @@ set SSID      [lindex $argv 1]
 set password  [lindex $argv 2]
 set number_of_tries 5
 
-# spawn node ../index.js
-
-# sleep 2
-# send "scan\r"
-# set timeout 10
-# expect "Found $robot" 
-
-# sleep 2
-# send "connect $robot\r" 
-# set timeout 25
-# expect "Fully connected to $robot\r"
-
 while { $number_of_tries > 0 } {
 	spawn node ../index.js
 
