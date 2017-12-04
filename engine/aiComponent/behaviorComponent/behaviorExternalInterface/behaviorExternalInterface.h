@@ -99,7 +99,7 @@ class BEIComponentWrapper : public ComponentWrapper {
     // Maintain a reference to the access guard in order to strip the component out of BEI
     // when the access guard falls out of scope the component will be added back into BEI
     // automatically
-    std::shared_ptr<BEIComponentAccessGuard> StripComponent(){return _accessGuard;}
+    std::shared_ptr<BEIComponentAccessGuard> StripComponent() const {return _accessGuard;}
 
     virtual bool IsValueValidInternal() const override {return _accessGuard.use_count() == 1;}
 
