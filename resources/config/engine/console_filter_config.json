@@ -18,6 +18,7 @@
       { "channel": "Unfiltered",           "enabled": true  }, // Things that are always required (like callstack on assert)
       { "channel": "CpuProfiler",          "enabled": true  },
       { "channel": "Keyboard",             "enabled": true },
+      { "channel": "Puzzle",               "enabled": false },
       { "channel": "Network",              "enabled": false },
       { "channel": "Profiler",             "enabled": false },
       { "channel": "Unity"   ,             "enabled": false },

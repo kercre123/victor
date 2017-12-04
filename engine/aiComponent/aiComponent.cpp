@@ -20,6 +20,7 @@
 #include "engine/aiComponent/feedingSoundEffectManager.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
+#include "engine/aiComponent/puzzleComponent.h"
 #include "engine/aiComponent/requestGameComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/workoutComponent.h"
@@ -70,6 +71,7 @@ Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorCompone
     _workoutComponent.reset(new WorkoutComponent(robot) );
     _doATrickSelector.reset(new DoATrickSelector(robot.GetContext()->GetDataLoader()->GetDoATrickWeightsConfig()));
     _severeNeedsComponent.reset(new SevereNeedsComponent(robot));
+    _puzzleComponent.reset(new PuzzleComponent(robot));
   }
   
   
@@ -112,6 +114,9 @@ Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorCompone
   // initialize workout component
   if(dataLoader != nullptr){
     assert( _workoutComponent );
+    assert( _puzzleComponent );
+    _puzzleComponent->InitConfigs();
+    
     const Json::Value& workoutConfig = dataLoader->GetRobotWorkoutConfig();
 
     const Result res = _workoutComponent->InitConfiguration(workoutConfig);
@@ -121,7 +126,6 @@ Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorCompone
       return res;      
     }
   }
-  
   
   return RESULT_OK;
 }

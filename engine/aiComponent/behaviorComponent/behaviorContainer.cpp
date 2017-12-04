@@ -76,6 +76,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorGuardDog.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPounceOnMotion.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPuzzleMaze.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorTrackLaser.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorEnrollFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorRespondToRenameFace.h"
@@ -560,6 +561,12 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::PlayAnimOnNeedsChange:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPlayAnimOnNeedsChange(config));
+      break;
+    }
+      
+    case BehaviorClass::PuzzleMaze:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPuzzleMaze(config));
       break;
     }
 

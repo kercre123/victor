@@ -56,6 +56,7 @@ enum uint_8 BehaviorClass {
   PopAWheelie,
   PounceOnMotion,
   PutDownBlock,
+  PuzzleMaze,
   PyramidThankYou,
   RequestGameSimple,
   RespondPossiblyRoll,
@@ -173,6 +174,7 @@ enum uint_8 BehaviorID {
   Hiking_RollCube,
   Hiking_ThinkAboutBeacons,
   Hiking_VisitInterestingEdge,
+  PuzzleMaze,
 
   InteractWithFaces,
   KnockOverCubes,
