@@ -50,6 +50,8 @@ namespace Cozmo {
   
   namespace{
     
+  const char* kLogChannelName = "Animations";
+
   // Specifies how often to send AnimState message
   static const u32 kAnimStateReportingPeriod_tics = 2;
 
@@ -155,9 +157,9 @@ namespace Cozmo {
     // Special case: stop streaming the current animation
     if(name.empty()) {
       if(DEBUG_ANIMATION_STREAMING) {
-        PRINT_NAMED_DEBUG("AnimationStreamer.SetStreamingAnimation.StoppingCurrent",
-                          "Stopping streaming of animation '%s'.",
-                          GetStreamingAnimationName().c_str());
+        PRINT_CH_DEBUG(kLogChannelName, "AnimationStreamer.SetStreamingAnimation.StoppingCurrent",
+                       "Stopping streaming of animation '%s'.",
+                       GetStreamingAnimationName().c_str());
       }
 
       return SetStreamingAnimation(nullptr, kNotAnimatingTag);
@@ -168,10 +170,11 @@ namespace Cozmo {
   
   Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, bool interruptRunning)
   {
-    if(DEBUG_ANIMATION_STREAMING && (anim != nullptr))
+    if(DEBUG_ANIMATION_STREAMING)
     {
-      PRINT_NAMED_DEBUG("AnimationStreamer.SetStreamingAnimation", "Name:%s Tag:%d NumLoops:%d",
-                        anim->GetName().c_str(), tag, numLoops);
+      PRINT_CH_DEBUG(kLogChannelName, 
+                     "AnimationStreamer.SetStreamingAnimation", "Name:%s Tag:%d NumLoops:%d",
+                     anim != nullptr ? anim->GetName().c_str() : "NULL", tag, numLoops);
     }
     
     const bool wasStreamingSomething = nullptr != _streamingAnimation;
@@ -179,10 +182,11 @@ namespace Cozmo {
     if(wasStreamingSomething)
     {
       if(nullptr != anim && !interruptRunning) {
-        PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation.NotInterrupting",
-                         "Already streaming %s, will not interrupt with %s",
-                         _streamingAnimation->GetName().c_str(),
-                         anim->GetName().c_str());
+        PRINT_CH_INFO(kLogChannelName,
+                      "AnimationStreamer.SetStreamingAnimation.NotInterrupting",
+                      "Already streaming %s, will not interrupt with %s",
+                      _streamingAnimation->GetName().c_str(),
+                      anim->GetName().c_str());
         return RESULT_FAIL;
       }
       
@@ -190,27 +194,16 @@ namespace Cozmo {
                           "Animation %s is interrupting animation %s",
                           anim != nullptr ? anim->GetName().c_str() : "NULL",
                           _streamingAnimation->GetName().c_str());
-    }
-    
-    // If there's something already streaming or we're purposefully clearing the buffer, abort
-    if(wasStreamingSomething || nullptr == anim)
-    {
-      Abort();
+
+      Abort();                          
     }
     
     _streamingAnimation = anim;
-
-    
     if(_streamingAnimation == nullptr) {
-      // Set flag if we are interrupting a streaming animation with nothing.
-      // If we get to KeepFaceAlive with this flag set, we'll stream neutral face for safety.
-      if(wasStreamingSomething) {
-        _wasAnimationInterruptedWithNothing = true;
-      }
-      return RESULT_FAIL;
+      return RESULT_OK;
     }
-    
-    _streamingAnimName = _streamingAnimation->GetName();
+
+    _wasAnimationInterruptedWithNothing = false;
   
     // Get the animation ready to play
     InitStream(_streamingAnimation, tag);
@@ -219,9 +212,10 @@ namespace Cozmo {
     _loopCtr = 0;
     
     if(DEBUG_ANIMATION_STREAMING) {
-      PRINT_NAMED_DEBUG("AnimationStreamer.SetStreamingAnimation",
-                        "Will start streaming '%s' animation %d times with tag=%d.",
-                        _streamingAnimation->GetName().c_str(), numLoops, tag);
+      PRINT_CH_DEBUG(kLogChannelName, 
+                     "AnimationStreamer.SetStreamingAnimation",
+                     "Will start streaming '%s' animation %d times with tag=%d.",
+                     _streamingAnimation->GetName().c_str(), numLoops, tag);
     }
     
     return RESULT_OK;
@@ -290,7 +284,7 @@ namespace Cozmo {
     assert(destI == kExpectedNumPixels * (1+msg.chunkIndex));
     
     if (_faceImageChunksReceivedBitMask == kAllFaceImageChunksReceivedMask) {
-      //PRINT_NAMED_DEBUG("AnimationStreamer.Process_displayFaceImageChunk.CompleteFaceReceived", "");
+      //PRINT_CH_DEBUG(kLogChannelName, "AnimationStreamer.Process_displayFaceImageChunk.CompleteFaceReceived", "");
       SetFaceImage(_faceImageBinary, msg.duration_ms);
       _faceImageId = 0;
       _faceImageChunksReceivedBitMask = 0;
@@ -316,8 +310,7 @@ namespace Cozmo {
     std::copy_n(msg.faceData, numPixels, _faceImageRGB565.GetRawDataPointer() + (msg.chunkIndex * kMaxNumPixelsPerChunk) );
     
     if (_faceImageRGBChunksReceivedBitMask == kAllFaceImageRGBChunksReceivedMask) {
-      //PRINT_NAMED_DEBUG("AnimationStreamer.Process_displayFaceImageRGBChunk.CompleteFaceReceived", "");
-
+      //PRINT_CH_DEBUG(kLogChannelName, "AnimationStreamer.Process_displayFaceImageRGBChunk.CompleteFaceReceived", "");
       SetFaceImage(_faceImageRGB565, msg.duration_ms);
       _faceImageRGBId = 0;
       _faceImageRGBChunksReceivedBitMask = 0;
@@ -377,16 +370,17 @@ namespace Cozmo {
   {
     if (nullptr != _streamingAnimation)
     {
-      PRINT_NAMED_INFO("AnimationStreamer.Abort",
-                       "Tag=%d %s hasFramesLeft=%d startSent=%d endSent=%d",
-                       _tag,
-                       _streamingAnimation->GetName().c_str(),
-                       _streamingAnimation->HasFramesLeft(),
-                       _startOfAnimationSent,
-                       _endOfAnimationSent);
+      PRINT_CH_INFO(kLogChannelName,
+                    "AnimationStreamer.Abort",
+                    "Tag=%d %s hasFramesLeft=%d startSent=%d endSent=%d",
+                    _tag,
+                    _streamingAnimation->GetName().c_str(),
+                    _streamingAnimation->HasFramesLeft(),
+                    _startOfAnimationSent,
+                    _endOfAnimationSent);
       
       if (_startOfAnimationSent) {
-        SendEndOfAnimation();
+        SendEndOfAnimation(true);
       }
 
       EnableBackpackAnimationLayer(false);
@@ -397,6 +391,22 @@ namespace Cozmo {
         _proceduralAnimation->Clear();
         FaceAnimationManager::getInstance()->ClearAnimation(FaceAnimationManager::ProceduralAnimName);
       }
+
+      // Reset the current FaceAnimationKeyFrame if there is one.
+      // Note: This is currently the only keyframe that modifies a variable
+      // as it's read and needs to be reset before the next time it's read,
+      // which is why we're not resetting all tracks in the same way
+      auto & faceAnimTrack = _streamingAnimation->GetTrack<FaceAnimationKeyFrame>();
+      if (faceAnimTrack.HasFramesLeft()) {
+        auto & faceKeyFrame = faceAnimTrack.GetCurrentKeyFrame();
+        faceKeyFrame.Reset();
+      }
+
+      // Reset animation pointer
+      _streamingAnimation = nullptr;
+
+      // If we get to KeepFaceAlive with this flag set, we'll stream neutral face for safety.
+      _wasAnimationInterruptedWithNothing = true;
     }
   } // Abort()
 
@@ -570,18 +580,27 @@ namespace Cozmo {
   
   Result AnimationStreamer::SendStartOfAnimation()
   {
+    DEV_ASSERT(!_startOfAnimationSent, "AnimationStreamer.SendStartOfAnimation.AlreadySent");
+    DEV_ASSERT(_streamingAnimation != nullptr, "AnimationStreamer.SendStartOfAnimation.NullAnim");
+    const std::string& streamingAnimName = _streamingAnimation->GetName();
+
     if(DEBUG_ANIMATION_STREAMING) {
-      PRINT_NAMED_DEBUG("AnimationStreamer.SendStartOfAnimation.BufferedStartOfAnimation", "Tag=%d, Name=%s, loopCtr=%d",
-                        _tag, _streamingAnimName.c_str(), _loopCtr);
+      PRINT_CH_DEBUG(kLogChannelName,
+                     "AnimationStreamer.SendStartOfAnimation", "Tag=%d, Name=%s, loopCtr=%d",
+                     _tag, streamingAnimName.c_str(), _loopCtr);
     }
 
     if (_loopCtr == 0) {
-      AnimationStarted startMsg;
-      memcpy(startMsg.animName, _streamingAnimName.c_str(), _streamingAnimName.length());
-      startMsg.animName_length = _streamingAnimName.length();
-      startMsg.tag = _tag;
-      if (!RobotInterface::SendMessageToEngine(startMsg)) {
-        return RESULT_FAIL;
+      // Don't actually send start message for proceduralFace or neutralFace anims since
+      // they weren't requested by engine
+      if (_streamingAnimation != _proceduralAnimation && _streamingAnimation != _neutralFaceAnimation) {
+        AnimationStarted startMsg;
+        memcpy(startMsg.animName, streamingAnimName.c_str(), streamingAnimName.length());
+        startMsg.animName_length = streamingAnimName.length();
+        startMsg.tag = _tag;
+        if (!RobotInterface::SendMessageToEngine(startMsg)) {
+          return RESULT_FAIL;
+        }
       }
     }
   
@@ -593,26 +612,30 @@ namespace Cozmo {
   
   // TODO: Is this actually being called at the right time?
   //       Need to call this after triggerTime+durationTime of last keyframe has expired.
-  Result AnimationStreamer::SendEndOfAnimation()
+  Result AnimationStreamer::SendEndOfAnimation(bool abortingAnim)
   {
-    Result lastResult = RESULT_OK;
-    
-    DEV_ASSERT(_startOfAnimationSent,
-               "Should not be sending end of animation without having first sent start of animation.");
-    
+    DEV_ASSERT(_startOfAnimationSent && !_endOfAnimationSent, "AnimationStreamer.SendEndOfAnimation.StartNotSentOrEndAlreadySent");
+    DEV_ASSERT(_streamingAnimation != nullptr, "AnimationStreamer.SendStartOfAnimation.NullAnim");
+    const std::string& streamingAnimName = _streamingAnimation->GetName();
+
     if(DEBUG_ANIMATION_STREAMING) {
-      PRINT_NAMED_INFO("AnimationStreamer.SendEndOfAnimation.SendingToEngine", "t=%dms, loopCtr=%d, numLoops=%d",
-                       _streamingTime_ms - _startTime_ms, _loopCtr, _numLoops);
+      PRINT_CH_INFO(kLogChannelName,
+                    "AnimationStreamer.SendEndOfAnimation", "Tag=%d, Name=%s, t=%dms, loopCtr=%d, numLoops=%d",
+                    _tag, streamingAnimName.c_str(), _streamingTime_ms - _startTime_ms, _loopCtr, _numLoops);
     }
     
-    if (_loopCtr == _numLoops - 1) {
-      AnimationEnded endMsg;
-      memcpy(endMsg.animName, _streamingAnimName.c_str(), _streamingAnimName.length());
-      endMsg.animName_length = _streamingAnimName.length();
-      endMsg.tag = _tag;
-      endMsg.wasAborted = false;
-      if (!RobotInterface::SendMessageToEngine(endMsg)) {
-        return RESULT_FAIL;
+    if (abortingAnim || (_loopCtr == _numLoops - 1)) {
+      // Don't actually send end message for proceduralFace or neutralFace anims since
+      // they weren't requested by engine
+      if (_streamingAnimation != _proceduralAnimation && _streamingAnimation != _neutralFaceAnimation) {
+        AnimationEnded endMsg;
+        memcpy(endMsg.animName, streamingAnimName.c_str(), streamingAnimName.length());
+        endMsg.animName_length = streamingAnimName.length();
+        endMsg.tag = _tag;
+        endMsg.wasAborted = abortingAnim;
+        if (!RobotInterface::SendMessageToEngine(endMsg)) {
+          return RESULT_FAIL;
+        }
       }
     }
     
@@ -622,7 +645,7 @@ namespace Cozmo {
     // Every time we end an animation we should also re-enable BPL_USER layer on robot
     EnableBackpackAnimationLayer(false);
     
-    return lastResult;
+    return RESULT_OK;
   } // SendEndOfAnimation()
 
 
@@ -735,8 +758,9 @@ namespace Cozmo {
       
       if(DEBUG_ANIMATION_STREAMING) {
         // Very verbose!
-        //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.",
-        //                 numBytesToSend);
+        //PRINT_CH_INFO(kLogChannelName,
+        //              "Animation.Update", "%d bytes left to send this Update.",
+        //              numBytesToSend);
       }
       
       // Apply any track layers to the animation
@@ -746,28 +770,13 @@ namespace Cozmo {
                                               _streamingTime_ms,
                                               layeredKeyFrames,
                                               storeFace);
-      
-//      // Audio keyframe always goes first
-//      if(layeredKeyFrames.haveAudioKeyFrame)
-//      {
-//        BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(layeredKeyFrames.audioKeyFrame)));
-//      }
-//      else
-//      {
-//        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
-//      }
-      
-      //
-      // We are guaranteed to have sent some kind of audio frame at this point.
-      // Now send any other frames that are ready, so they will be timed with
-      // that audio frame (silent or not).
-      //
-      
+            
 #     if DEBUG_ANIMATION_STREAMING
 #       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__) \
-                  PRINT_NAMED_INFO("AnimationStreamer.UpdateStream", \
-                                   "Streaming %sKeyFrame at t=%dms.", __KF_NAME__, \
-                                   _streamingTime_ms - _startTime_ms)
+                  PRINT_CH_INFO(kLogChannelName, 
+                                "AnimationStreamer.UpdateStream", \
+                                "Streaming %sKeyFrame at t=%dms.", __KF_NAME__, \
+                                _streamingTime_ms - _startTime_ms)
 #     else
 #       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__)
 #     endif
@@ -930,10 +939,11 @@ namespace Cozmo {
         
         if(_numLoops == 0 || _loopCtr < _numLoops) {
          if(DEBUG_ANIMATION_STREAMING) {
-           PRINT_NAMED_INFO("AnimationStreamer.Update.Looping",
-                            "Finished loop %d of %d of '%s' animation. Restarting.",
-                            _loopCtr, _numLoops,
-                            _streamingAnimation->GetName().c_str());
+           PRINT_CH_INFO(kLogChannelName,
+                         "AnimationStreamer.Update.Looping",
+                         "Finished loop %d of %d of '%s' animation. Restarting.",
+                         _loopCtr, _numLoops,
+                         _streamingAnimation->GetName().c_str());
          }
           
           // Reset the animation so it can be played again:
@@ -944,9 +954,10 @@ namespace Cozmo {
         }
         else {
           if(DEBUG_ANIMATION_STREAMING) {
-            PRINT_NAMED_INFO("AnimationStreamer.Update.FinishedStreaming",
-                             "Finished streaming '%s' animation.",
-                             _streamingAnimation->GetName().c_str());
+            PRINT_CH_INFO(kLogChannelName,
+                          "AnimationStreamer.Update.FinishedStreaming",
+                          "Finished streaming '%s' animation.",
+                          _streamingAnimation->GetName().c_str());
           }
           
           _streamingAnimation = nullptr;

@@ -287,6 +287,9 @@ namespace Cozmo {
     // This function actually retrieves image data and increments the frame count so that it will
     // retrieve the next image on the next call.
     bool GetFaceImage(Vision::ImageRGB565& imgRGB565);
+
+    // Resets the keyframe so that the next call to GetFaceImage returns the first image of the set
+    void Reset() { _curFrame = 0; }
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     

@@ -239,11 +239,6 @@ message GetManufacturingInfo
 {
 }
 
-message AbortAnimation
-{
-  uint_8 tag
-}
-
 message CheckLiftLoad
 {
 }
@@ -281,6 +276,11 @@ message PlayAnim
   uint_32 numLoops = 1,
   uint_8  tag,
   string animName,
+}
+
+// Aborts the currently executing animation
+message AbortAnimation
+{
 }
 
 message LockAnimTracks

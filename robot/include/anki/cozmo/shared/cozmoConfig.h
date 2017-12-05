@@ -321,6 +321,15 @@ namespace Cozmo {
   
   // Number of frames to skip when streaming images to basestation
   const u8 IMG_STREAM_SKIP_FRAMES = 2;
+
+  // Local (unix-domain) socket paths
+  #ifdef SIMULATOR
+  constexpr char ROBOT_UDP_PATH[] = "/tmp/_robot_udp";
+  constexpr char ANIM_UDP_PATH[] = "/tmp/_anim_udp";
+  #else
+  constexpr char ROBOT_UDP_PATH[] = "/data/data/com.anki.cozmoengine/cache/_robot_udp";
+  constexpr char ANIM_UDP_PATH[] = "/data/data/com.anki.cozmoengine/cache/_anim_udp";
+  #endif
   
 } // namespace Cozmo
 } // namespace Anki

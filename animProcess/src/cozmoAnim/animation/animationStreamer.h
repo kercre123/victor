@@ -63,10 +63,13 @@ namespace Cozmo {
     
     // Sets an animation to be streamed and how many times to stream it.
     // Use numLoops = 0 to play the animation indefinitely.
-    // Returns a tag you can use to monitor whether the robot is done playing this
-    // animation.
+    //
     // If interruptRunning == true, any currently-streaming animation will be aborted.
     // Actual streaming occurs on calls to Update().
+    // 
+    // If name == "" or anim == nullptr, it is equivalent to calling Abort()
+    // if there is an animation currently playing, or no-op if there's no
+    // animation playing
     Result SetStreamingAnimation(const std::string& name,
                                  Tag tag,
                                  u32 numLoops = 1,
@@ -88,6 +91,9 @@ namespace Cozmo {
     
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update();
+
+    // Stop currently running animation
+    void Abort();
     
     const std::string GetStreamingAnimationName() const;
     const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
@@ -123,8 +129,13 @@ namespace Cozmo {
     // This performs the test cases for the animation while loop
     bool ShouldProcessAnimationFrame( Animation* anim, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
     
+    // Sends the start of animation message to engine
     Result SendStartOfAnimation();
-    Result SendEndOfAnimation();
+
+    // Sends the end of animation message to engine if the
+    // number of commanded loops of the animation has completed.
+    // If abortingAnim == true, then the message is sent even if all loops were not completed.
+    Result SendEndOfAnimation(bool abortingAnim = false);
     
     // Enables/Disables the backpack lights animation layer on the robot
     // if it hasn't already been enabled/disabled
@@ -132,10 +143,6 @@ namespace Cozmo {
     
     // Check whether the animation is done
     bool IsFinished(Animation* anim) const;
-    
-    // If we are currently streaming, kill it, and make sure not to leave a
-    // random face displayed (stream last face keyframe)
-    void Abort();
     
     void StopTracks(const u8 whichTracks);
     
@@ -146,8 +153,6 @@ namespace Cozmo {
       // a head animation while driving a path.
       StopTracks(_tracksInUse);
     }
-
-    
     
     const CozmoAnimContext* _context = nullptr;
     
@@ -158,8 +163,6 @@ namespace Cozmo {
     Animation*  _neutralFaceAnimation = nullptr;
     Animation*  _proceduralAnimation = nullptr; // for creating animations "live" or dynamically
 
-    std::string _streamingAnimName;
-    
     std::unique_ptr<TrackLayerComponent>  _trackLayerComponent;
     
     void BufferFaceToSend(const ProceduralFace& procFace);

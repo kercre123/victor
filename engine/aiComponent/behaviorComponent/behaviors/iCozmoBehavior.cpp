@@ -51,6 +51,7 @@
 #include "util/math/numericCast.h"
 #include "engine/components/pathComponent.h"
 
+#define LOG_CHANNEL    "Behaviors"
 
 namespace Anki {
 namespace Cozmo {
@@ -199,9 +200,10 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     
     // this is probably the only place where we need this, otherwise please refactor to proper header
     const UnlockId requiredUnlock = UnlockIdFromString(requiredUnlockJson.asString());
-    if ( requiredUnlock != UnlockId::Count ) {
-      PRINT_NAMED_INFO("ICozmoBehavior.ReadFromJson.RequiredUnlock", "Behavior '%s' requires unlock '%s'",
-                        GetIDStr().c_str(), requiredUnlockJson.asString().c_str() );
+    if (requiredUnlock != UnlockId::Count) {
+      PRINT_CH_DEBUG(LOG_CHANNEL, "ICozmoBehavior.ReadFromJson.RequiredUnlock",
+                     "Behavior '%s' requires unlock '%s'",
+                     GetIDStr().c_str(), requiredUnlockJson.asString().c_str());
       _requiredUnlockId = requiredUnlock;
     } else {
       PRINT_NAMED_ERROR("ICozmoBehavior.ReadFromJson.InvalidUnlockId", "Could not convert string to unlock id '%s'",

@@ -162,11 +162,11 @@ void IBehavior::OnLeftActivatableScope()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::SetActivationState_DevOnly(ActivationState state)
 {
-  PRINT_CH_INFO("Behaviors",
-                "IBehavior.SetActivationState",
-                "%s: Activation state set to %s",
-                _idString.c_str(),
-                ActivationStateToString(state).c_str());
+  PRINT_CH_DEBUG("Behaviors",
+                 "IBehavior.SetActivationState",
+                 "%s: Activation state set to %s",
+                 _idString.c_str(),
+                 ActivationStateToString(state).c_str());
   
   #if ANKI_DEV_CHEATS
     _currentActivationState = state;

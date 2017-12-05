@@ -142,12 +142,8 @@ namespace Messages {
 
   void Process_abortAnimation(const Anki::Cozmo::RobotInterface::AbortAnimation& msg)
   {
-    PRINT_NAMED_WARNING("EngineMessages.Process_abortAnimation.NotHookedup",
-                        "Tag: %d",
-                        msg.tag);
-    
-    // TODO: Need to hook this up to AnimationStreamer
-    //       Maybe _animStreamer->Abort(msg.abortAnimation.tag)?
+    PRINT_NAMED_INFO("EngineMessages.Process_abortAnimation", "");
+    _animStreamer->Abort();
   }
   
   void Process_displayProceduralFace(const Anki::Cozmo::RobotInterface::DisplayProceduralFace& msg)

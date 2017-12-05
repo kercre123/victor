@@ -45,7 +45,7 @@ void set_nonblock(int socket) {
 bool TcpMultiClientServer::server_handler()
 {
 
-  int listenfd; // Listening socket descripter
+  int listenfd; // Listening socket descriptor
   int status;
   struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
   struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.

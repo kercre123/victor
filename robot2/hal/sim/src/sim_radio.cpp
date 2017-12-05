@@ -19,7 +19,7 @@
 
 #include "anki/messaging/shared/TcpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
-#include "anki/messaging/shared/UdpServer.h"
+#include "anki/messaging/shared/LocalUdpServer.h"
 #include "anki/messaging/shared/utilMessaging.h"
 
 #include "clad/types/advertisementTypes.h"
@@ -42,9 +42,10 @@ namespace Anki {
     namespace { // "Private members"
       const size_t RECV_BUFFER_SIZE = 1024 * 4;
 
-      // For communications with basestation
-      UdpServer server;
+      // For communications with animProcess
+      LocalUdpServer server;
 
+      // For advertising service
       UdpClient advRegClient;
 
       u8 recvBuf_[RECV_BUFFER_SIZE];
@@ -124,9 +125,10 @@ namespace Anki {
 
     Result InitSimRadio(const char* advertisementIP)
     {
-      PRINT_NAMED_INFO("simHAL.InitSimRadio.StartListeningPort", "%d", ROBOT_RADIO_BASE_PORT + HAL::GetID());
-      if (!server.StartListening(ROBOT_RADIO_BASE_PORT + HAL::GetID())) {
-        PRINT_NAMED_ERROR("HAL.InitSimRadio.UDPServerFailed", "");
+      PRINT_NAMED_INFO("simHAL.InitSimRadio.StartListening", "Listening on %s", ROBOT_UDP_PATH);
+      if (!server.StartListening(ROBOT_UDP_PATH)) {
+        PRINT_NAMED_ERROR("HAL.InitSimRadio.ListenFailed", "Unable to listen on %s", ROBOT_UDP_PATH);
+        return RESULT_FAIL_IO;
       }
 
       // Register with advertising service by sending IP and port info
@@ -164,7 +166,7 @@ namespace Anki {
 
     void HAL::DisconnectRadio(void)
     {
-      server.DisconnectClient();
+      server.Disconnect();
       recvBufSize_ = 0;
     }
 
@@ -177,7 +179,7 @@ namespace Anki {
         const ssize_t bytesSent = server.Send((const char*)buffer, length);
 
         if (bytesSent < length) {
-          printf("ERROR: Failed to send msg contents (%zd bytes sent)\n", bytesSent);
+          PRINT_NAMED_ERROR("HAL.RadioSendPacket", "Failed to send msg contents (%zd bytes sent)", bytesSent);
           DisconnectRadio();
           return false;
         }
@@ -218,6 +220,7 @@ namespace Anki {
         recvBufSize_ += dataSize;
       } else if (dataSize < 0) {
         // Something went wrong
+        PRINT_NAMED_ERROR("HAL.RadioGetNumBytesAvailable", "Failed to receive data");
         HAL::DisconnectRadio();
       }
 
@@ -258,6 +261,7 @@ namespace Anki {
       const ssize_t dataLen = server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
       if (dataLen < 0) {
         // Something went wrong
+        PRINT_NAMED_ERROR("HAL.RadioGetNextPacket", "Failed to receive data");
         DisconnectRadio();
         return 0;
       } else if (dataLen == 0) {

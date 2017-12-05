@@ -21,7 +21,7 @@ private:
   struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
 
   void set_nonblock(int socket);
-  int socketfd; // The socket descripter
+  int socketfd; // The socket descriptor
 };
 
 #endif

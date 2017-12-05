@@ -106,6 +106,7 @@ anki_build_cxx_library(robot_transport ${ANKI_SRCLIST_DIR} STATIC)
 target_compile_definitions(robot_transport
   PRIVATE
   COZMO_ROBOT
+  ${PLATFORM_COMPILE_DEFS}
 )
 
 target_include_directories(robot_transport

@@ -16,6 +16,8 @@
 
 #include "util/logging/logging.h"
 
+#define LOG_CHANNEL "Animations"
+
 namespace Anki {
 namespace Cozmo {
   
@@ -127,7 +129,8 @@ namespace Cozmo {
     }
     
     animationName = animationNames[0];
-    PRINT_NAMED_DEBUG("CannedAnimationContainer::DefineFromJson", "Loading '%s'", animationName.c_str());
+
+    PRINT_CH_DEBUG(LOG_CHANNEL, "CannedAnimationContainer::DefineFromJson", "Loading '%s'", animationName.c_str());
 
     Animation* animation = GetAnimationWrapper(animationName);
     if(animation == nullptr) {
@@ -149,9 +152,9 @@ namespace Cozmo {
     }
     
     if(RESULT_OK != AddAnimation(animationName)) {
-      PRINT_NAMED_INFO("CannedAnimationContainer.DefineFromJson.ReplaceName",
-                       "Replacing existing animation named '%s'.",
-                       animationName.c_str());
+      PRINT_CH_DEBUG(LOG_CHANNEL, "CannedAnimationContainer.DefineFromJson.ReplaceName",
+                     "Replacing existing animation named '%s'.",
+                     animationName.c_str());
     }
     
     Animation* animation = GetAnimation(animationName);

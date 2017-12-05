@@ -39,7 +39,7 @@ private:
   typedef std::vector<struct sockaddr_in>::iterator client_list_it;
   std::vector<struct sockaddr_in> client_list;
 
-  int socketfd; // Listening socket descripter
+  int socketfd; // Listening socket descriptor
 };
 
 #endif

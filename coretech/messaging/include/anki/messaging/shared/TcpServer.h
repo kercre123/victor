@@ -36,8 +36,8 @@ private:
 
   void set_nonblock(int socket);
   
-  int socketfd; // Listening socket descripter
-  int client_sd; // Client socket descripter
+  int socketfd; // Listening socket descriptor
+  int client_sd; // Client socket descriptor
 };
 
 #endif
