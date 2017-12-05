@@ -12,6 +12,10 @@
 
 #include "anki/common/basestation/math/point_impl.h"
 
+namespace {
+  const float kRotationTolerance = 1e-6f;
+}
+
 namespace Anki {
 namespace Cozmo {
 
@@ -37,8 +41,10 @@ bool MemoryMapData_Cliff::Equals(const MemoryMapData* other) const
   }
 
   const MemoryMapData_Cliff* castPtr = static_cast<const MemoryMapData_Cliff*>( other );
-  const bool isSame = pose.IsSameAs( castPtr->pose, Point3f( 0.0f ), 0.0f );
-  return isSame;
+  const bool isNearLocation = IsNearlyEqual( pose.GetTranslation(), castPtr->pose.GetTranslation() );
+  const bool isNearRotation = IsNearlyEqual( pose.GetRotation(), castPtr->pose.GetRotation(), kRotationTolerance );
+  
+  return ( isNearLocation && isNearRotation );
 }
 
 } // namespace Cozmo

@@ -14,7 +14,6 @@
 
 #include "memoryMapData.h"
 
-#include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/pose.h"
 
 namespace Anki {
