@@ -1213,8 +1213,4 @@ public class MockRobot : IRobot {
   public uint DriveOffChargerContacts(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     return (uint)ActionConstants.INVALID_TAG;
   }
-
-  public float BatteryPercent(float batteryVoltage) {
-    return 100.0f;
-  }
 }

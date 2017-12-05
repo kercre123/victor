@@ -397,10 +397,9 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ProcessRobotDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
-    byte robotID = 1;
-    DasTracker.Instance.TrackRobotDisconnected(robotID);
-    DAS.Event("RobotEngineManager.RobotDisconnected", "Robot " + robotID + " disconnected");
-    RemoveRobot(robotID);
+    DasTracker.Instance.TrackRobotDisconnected(1);
+    DAS.Event("RobotEngineManager.RobotDisconnected", "Robot 1 disconnected");
+    RemoveRobot(1);
   }
 
   private void ProcessCLADVersionMismatch(Anki.Cozmo.ExternalInterface.EngineRobotCLADVersionMismatch message) {

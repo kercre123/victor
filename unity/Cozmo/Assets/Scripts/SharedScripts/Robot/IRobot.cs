@@ -418,6 +418,4 @@ public interface IRobot : IDisposable {
   uint DisplayFaceImage(uint duration_ms, byte[] faceData, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   uint DriveOffChargerContacts(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
-
-  float BatteryPercent(float batteryVoltage);
 }
