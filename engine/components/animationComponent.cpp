@@ -136,7 +136,7 @@ void AnimationComponent::Update()
   while(it != _callbackMap.end()) {
     if (it->second.abortTime_sec != 0 && currTime_sec >= it->second.abortTime_sec) {
       PRINT_NAMED_WARNING("AnimationComponent.Update.AnimTimedOut", "Anim: %s", it->second.animName.c_str());
-      _robot.SendRobotMessage<RobotInterface::AbortAnimation>(it->first);
+      _robot.SendRobotMessage<RobotInterface::AbortAnimation>();
       it->second.ExecuteCallback(AnimResult::Timedout);
       it = _callbackMap.erase(it);
     }
@@ -170,7 +170,7 @@ void AnimationComponent::DoleAvailableAnimations()
       ++numAnimsDoledThisTic;
     }
     if (it == _availableAnims.end()) {
-      PRINT_CH_INFO("AnimationComponent", "DoleAvailableAnimations.Done", "");
+      PRINT_CH_INFO(kLogChannelName, "DoleAvailableAnimations.Done", "");
       _isDolingAnims = false;
       _nextAnimToDole = "";
       _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::EndOfMessage(ExternalInterface::MessageType::AnimationAvailable)));
@@ -260,17 +260,13 @@ AnimationComponent::Tag AnimationComponent::IsAnimPlaying(const std::string& ani
   
 Result AnimationComponent::StopAnimByName(const std::string& animName)
 {
-  // TODO: This should be on a delay timer and should be smart about
-  //       actually aborting the anim vs. playing the next anim down the stack.
-  
-  // TODO: Animation process handler for this message not hooked up yet!
-  
   // Verify that the animation is currently playing
   const auto it = _availableAnims.find(animName);
   if (it != _availableAnims.end()) {
     const Tag tag = IsAnimPlaying(animName);
     if (tag != kNotAnimatingTag) {
-      return _robot.SendRobotMessage<RobotInterface::AbortAnimation>(tag);
+      PRINT_CH_DEBUG(kLogChannelName, "AnimationComponent.StopAnimByName.AbortingAnim", "%s", animName.c_str());
+      return _robot.SendRobotMessage<RobotInterface::AbortAnimation>();
     }
     else {
       PRINT_NAMED_WARNING("AnimationComponent.StopAnimByName.AnimNotPlaying",
