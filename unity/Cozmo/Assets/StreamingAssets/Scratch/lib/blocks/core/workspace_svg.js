@@ -1781,8 +1781,10 @@ Blockly.WorkspaceSvg.prototype.scrollCenter = function() {
 // *** Anki change ***
 /**
  * Focus on the top-left of the workspace.
+ * @param {boolean} centerX Scroll to center of x-axis.
+ * @param {boolean} centerY Scroll to center of y-axis.
  */
-Blockly.WorkspaceSvg.prototype.scrollHome = function() {
+Blockly.WorkspaceSvg.prototype.scrollHome = function(centerX, centerY) {
   if (!this.scrollbar) {
     // Can't scroll a non-scrolling workspace.
     return;
@@ -1810,6 +1812,18 @@ Blockly.WorkspaceSvg.prototype.scrollHome = function() {
   var distanceFromViewCenterY = adjustedViewHeight / 2;
   var boundsViewDifferenceY = adjustedViewHeight - bounds.height * this.scale;
   var y = Math.max(distanceFromViewCenterY, boundsViewDifferenceY) - paddingTop;
+
+  // Handle centering of x and/or y.
+  if (centerX) {
+    x = (metrics.contentWidth - metrics.viewWidth) / 2;
+
+    if (this.flyout_) {
+      x -= this.flyout_.width_ / 2;
+    }
+  }
+  if (centerY) {
+    y = (metrics.contentHeight - metrics.viewHeight) / 2;
+  }
 
   this.scrollbar.set(x, y);
 };

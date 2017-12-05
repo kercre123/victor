@@ -73,6 +73,9 @@
         // No other blocks are on the workspace so put green flag back on workspace by itself.
         var xmlTextWithGreenFlag = xmlStart + greenFlagXML + xmlEnd;
         window.openCozmoProjectXML(window.cozmoProjectUUID, window.cozmoProjectName, xmlTextWithGreenFlag, window.isCozmoSampleProject);
+        if (window.isVertical) {
+            Blockly.getMainWorkspace().scrollHome(true);
+        }
       }
       else {
         if (!window.isGreenFlagOnWorkspace()) {
