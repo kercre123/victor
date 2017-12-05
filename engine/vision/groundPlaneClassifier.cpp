@@ -30,7 +30,7 @@ namespace Anki {
 namespace Cozmo {
 
 GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const CozmoContext *context)
-  : _context(context)
+: _context(context)
 {
 
   DEV_ASSERT(context != nullptr, "GroundPlaneClassifier.ContextCantBeNULL");
@@ -163,6 +163,7 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
     
     for (const auto &chain : candidateChains.GetVector())
     {
+      // Draw line segments between all pairs of points in this chain
       Anki::Point2f startPoint(chain.points[0].position);
       startPoint -= overheadOrigin;
       
@@ -170,13 +171,14 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
         Anki::Point2f endPoint(chain.points[i].position);
         endPoint -= overheadOrigin;
         
-        leadingEdgeDisp.DrawLine(startPoint, endPoint, *color, 1);
+        leadingEdgeDisp.DrawLine(startPoint, endPoint, *color, 3);
         std::swap(endPoint, startPoint);
-        
-        ++color;
-        if (color == lineColorList.end()) {
-          color = lineColorList.begin();
-        }
+      }
+      
+      // Switch colors for next segment
+      ++color;
+      if (color == lineColorList.end()) {
+        color = lineColorList.begin();
       }
     }
     

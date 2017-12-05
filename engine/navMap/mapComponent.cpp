@@ -992,7 +992,10 @@ void MapComponent::AddDetectedObstacles(const std::list<Poly2f>& polys)
 void MapComponent::AddDetectedObstacles(const OverheadEdgeFrame& edgeObstacles)
 {
   // TODO: Do something different with these vs. "interesting" overhead edges?
-  AddVisionOverheadEdges(edgeObstacles);
+  if( edgeObstacles.groundPlaneValid && !edgeObstacles.chains.GetVector().empty() )
+  {
+    AddVisionOverheadEdges(edgeObstacles);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
