@@ -100,6 +100,7 @@ class ProxSensorComponent;
 class TouchSensorComponent;
 class AnimationComponent;
 class MapComponent;
+class MicDirectionHistory;
 
 namespace Audio {
   class EngineRobotAudioClient;
@@ -218,9 +219,6 @@ public:
 
   inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
   inline MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
-
-  const BehaviorManager& GetBehaviorManager() const;
-  BehaviorManager&       GetBehaviorManager();
   
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
     assert(_progressionUnlockComponent);
@@ -316,6 +314,9 @@ public:
       
   const Util::RandomGenerator& GetRNG() const;
   Util::RandomGenerator& GetRNG();
+
+  const MicDirectionHistory& GetMicDirectionHistory() const { return *_micDirectionHistory; }
+  MicDirectionHistory&       GetMicDirectionHistory()       { return *_micDirectionHistory; }
   
   // =========== Localization ===========
   
@@ -368,6 +369,9 @@ public:
   bool   IsCharging()          const { return _isCharging; }
   // True if charger is out of spec
   bool   IsChargerOOS()        const { return _chargerOOS; }
+  // Return the message timestamp of the last time the value of IsCharging changed
+  TimeStamp_t GetLastChargingStateChangeTimestamp() const { return _lastChargingChange_ms; }
+  
   // Updates pose to be on charger
   Result SetPoseOnCharger();
   
@@ -527,26 +531,12 @@ public:
     
   // =========== Animation Commands =============
 
-  void SetEnabledAnimTracks(u8 enabledAnimTracks) {
-    _enabledAnimTracks = enabledAnimTracks;
-  }
-  
-  void SetAnimationTag(u8 animationTag) {
-    _animationTag = animationTag;
-  }
-
   // Returns true if the robot is currently playing an animation, according
   // to most recent state message. NOTE: Will also be true if the animation
   // is the "idle" animation!
   bool IsAnimating() const;
-    
-  // Returns true iff the robot is currently playing the idle animation.
-  bool IsIdleAnimating() const;
-    
-  // Returns the "tag" of the animation currently playing on the robot
-  u8 GetCurrentAnimationTag() const;
 
-  u8 GetEnabledAnimationTracks() const { return _enabledAnimTracks; }
+  u8 GetEnabledAnimationTracks() const;
   
   // =========== Audio =============
   Audio::EngineRobotAudioClient* GetAudioClient() { return _audioClient.get(); }
@@ -732,9 +722,6 @@ protected:
   // handles planning and path following
   std::unique_ptr<PathComponent> _pathComponent;
   
-  ///////// Animation /////////
-  AnimationTag      _animationTag                    = kNotAnimatingTag;
-  
   std::unique_ptr<DrivingAnimationHandler> _drivingAnimationHandler;
     
   std::unique_ptr<ActionList>             _actionList;
@@ -792,8 +779,10 @@ protected:
   f32              _leftWheelSpeed_mmps;
   f32              _rightWheelSpeed_mmps;
   
-  bool             _isHeadCalibrated = false;
-  bool             _isLiftCalibrated = false;
+  // We can assume the motors are calibrated by the time
+  // engine connects to robot
+  bool             _isHeadCalibrated = true;
+  bool             _isLiftCalibrated = true;
     
   // Ramping
   bool             _onRamp = false;
@@ -808,11 +797,11 @@ protected:
   // State
   bool             _isOnCharger              = false;
   bool             _isCharging               = false;
+  TimeStamp_t      _lastChargingChange_ms    = 0;
   bool             _chargerOOS               = false;
   f32              _battVoltage              = 5;
   ImageSendMode    _imageSendMode            = ImageSendMode::Off;
   u32              _lastSentImageID          = 0;
-  u8               _enabledAnimTracks        = (u8)AnimTrackFlag::ALL_TRACKS;
   bool             _isPickedUp               = false;
   bool             _isOnChargerPlatform      = false;
   bool             _isCliffReactionDisabled  = false;
@@ -853,7 +842,7 @@ protected:
   
   void SetOnCharger(bool onCharger);
   void SetOnChargerPlatform(bool onPlatform);
-  void SetIsCharging(bool isCharging)     {_isCharging = isCharging;}
+  void SetIsCharging(bool isCharging);
   
   // returns whether the tread state was updated or not
   bool CheckAndUpdateTreadsState(const RobotState& msg);
@@ -929,6 +918,7 @@ protected:
 
   std::unique_ptr<RobotToEngineImplMessaging> _robotToEngineImplMessaging;
   std::unique_ptr<RobotIdleTimeoutComponent>  _robotIdleTimeoutComponent;
+  std::unique_ptr<MicDirectionHistory>        _micDirectionHistory;
 
   Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                    const TimeStamp_t&   t,
@@ -1015,18 +1005,6 @@ inline const f32 Robot::GetLiftAngle() const
 inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
   _rampID = rampID;
   _rampDirection = direction;
-}
-  
-inline u8 Robot::GetCurrentAnimationTag() const {
-  return _animationTag;
-}
-
-inline bool Robot::IsAnimating() const {
-  return _animationTag != 0;
-}
-
-inline bool Robot::IsIdleAnimating() const {
-  return _animationTag == 255;
 }
 
 inline f32 Robot::GetLocalizedToDistanceSq() const {

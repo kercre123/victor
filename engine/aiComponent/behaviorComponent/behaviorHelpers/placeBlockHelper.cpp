@@ -17,8 +17,6 @@
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/robot.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -55,10 +53,7 @@ BehaviorStatus PlaceBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& b
     turn_rad *= -1;
   }
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new TurnInPlaceAction(robot, (float) turn_rad, false),
+    DelegateIfInControl(new TurnInPlaceAction((float) turn_rad, false),
                 &PlaceBlockHelper::RespondToTurnAction);
   }
 
@@ -77,13 +72,10 @@ BehaviorStatus PlaceBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInter
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PlaceBlockHelper::RespondToTurnAction(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  CompoundActionSequential* action = new CompoundActionSequential();
   
   {
-    PlaceObjectOnGroundAction* placeAction = new PlaceObjectOnGroundAction(robot);
+    PlaceObjectOnGroundAction* placeAction = new PlaceObjectOnGroundAction();
     const bool shouldEmitCompletion = true;
     action->AddAction(placeAction, false, shouldEmitCompletion);
   }
@@ -93,7 +85,7 @@ void PlaceBlockHelper::RespondToTurnAction(ActionResult result, BehaviorExternal
   //   static constexpr float kBackUpMaxMM = 40.0;
   //   double backup_amount = robot.GetRNG().RandDblInRange(kBackUpMinMM,kBackUpMaxMM);
     
-  //   action->AddAction( new DriveStraightAction(robot, -backup_amount, DEFAULT_PATH_MOTION_PROFILE.speed_mmps) );
+  //   action->AddAction( new DriveStraightAction(-backup_amount, DEFAULT_PATH_MOTION_PROFILE.speed_mmps) );
   // }  
   
   DelegateIfInControl(action, &PlaceBlockHelper::RespondToPlacedAction);

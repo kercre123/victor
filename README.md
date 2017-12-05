@@ -15,9 +15,7 @@ If you need to work on Cozmo, you should look in [cozmo-one].
 
 If you are new to Anki please also see the [New Hire Onboarding](https://ankiinc.atlassian.net/wiki/pages/viewpage.action?pageId=72614010) page.
 
-Detailed documentation for building, running and debugging is available under `docs/`.
-
-## Quick Start Guide
+More documentation related to development, building, and running is available under [/docs](/docs).
 
 ### Getting the code
 
@@ -52,61 +50,96 @@ Alternatively when fetching the code:
 git clone --recursive <git url>
 ```
 
-### Building Victor
+## Building Victor
+
+It is highly recommended that you check out the [Victor Build System Walkthrough](/docs/build-system-walkthrough.md) doc to familiarize yourself with the build system.
 
 The underlying build system for victor is currently `CMake`.  The appropriate version of CMake and other dependencies required for building victor will be fetched automatically.
 
-Configure your shell for command-line builds:
+To speed up builds, [install `ccache`](docs/ccache.md) on your system and the build system will automatically start using it.
+
+First, add the following to your `~/.bash_profile`:
 
 ```
-source project/victor/envsetup.sh
+source <PATH_TO_YOUR_VICTOR_REPO>/project/victor/scripts/usefulALiases.sh
 ```
+
+This will give you access to very useful aliases for the various build/deploy scripts. These aliases will be referenced extensively in this doc.
 
 To build for embedded android (the default):
 
 ```
-./project/victor/build-victor.sh
+project/victor/build-victor.sh
 
 # you can also explicitly pass the platform
-./project/victor/build-victor.sh -p android
+project/victor/build-victor.sh -p android
 ```
 
 To build for mac:
 
 ```
-./project/victor/build-victor.sh -p mac
+project/victor/build-victor.sh -p mac
 
 # To generate an Xcode project without building
-./project/victor/build-victor.sh -p mac -g Xcode -C
+project/victor/build-victor.sh -p mac -g Xcode -C
 ```
 
 We use a helper script to generate file lists to tell CMake what to build. Sometimes, when changing branches, CMake doesn't notice that it needs to regenerate build files. You can force it do to so by passing the `-f` flag:
 
 ```
-./project/victor/build-victor.sh -f
+project/victor/build-victor.sh -f
 ```
 
-To speed up builds, [install `ccache`](docs/ccache.md) on your system and the build system will automatically start using it.
+If you want to force a 'clean' build, the brute-force method is to:
+
+```
+rm -rf _build EXTERNALS generated
+```
 
 See [build-instructions](docs/development/build-instructions.md) for a more thorough description of build options.
 
-## Deploy Victor
+## Deploying Victor
 
-1. First you need to enable adb connections to robot. This can be done over USB or wifi.
+### ADB setup
 
-### USB
+Since the Android SDK and NDK are automatically downloaded with `./configure.py` you should be using `adb` from there. Make sure you do not have android-sdk installed from `brew` by running. 
+
+`brew uninstall android-sdk`
+
+That way you only have one version of adb on your system. (If you have two they fight with each other, i.e. disconnect)
+
+Make sure the following is in your `~/.bash_profile`:
+
+```
+ANKI_ANDROID_ROOT=~/.anki/android
+ANDROID_SDK_REPOSITORY=${ANKI_ANDROID_ROOT}/sdk-repository
+export ANDROID_HOME=${ANDROID_SDK_REPOSITORY}/`ls $ANDROID_SDK_REPOSITORY/| tail -1`
+export ANDROID_ROOT=$ANDROID_HOME
+
+export ANDROID_NDK_REPOSITORY=${ANKI_ANDROID_ROOT}/ndk-repository
+export ANDROID_NDK_ROOT=${ANDROID_NDK_REPOSITORY}/`ls $ANDROID_NDK_REPOSITORY/| tail -1`
+export ANDROID_NDK_HOME=$ANDROID_NDK_ROOT
+export ANDROID_NDK=$ANDROID_NDK_ROOT
+export NDK_ROOT=$ANDROID_NDK_ROOT
+export PATH=${PATH}:${ANDROID_HOME}/platform-tools  # for adb
+export PATH=${PATH}:${ANDROID_HOME}/anki/bin # For tools like buck
+```
+
+Run `source ~/.bash_profile` or open a new terminal and `adb` should now be in your path.
+
+### Connecting over USB
+
 Connect cable to robot. Run `adb devices` to verify that only one device is available.
 
-### Wifi
-Connect your computer to the `AnkiTest2` access point (Password is "password"). If you don't know the IP address of your robot, connect to the robot with USB and run
+### Connecting over Wifi
+
+Connect your computer to the `AnkiTest2` access point (ask around for the password). If you don't know the IP address of your robot, connect to the robot with USB and run
 
 ```
 adb shell ifconfig
 ```
 
-The `inet addr` for `wlan0` is the robot's IP address.
-
-You can then disconnect the cable and run
+The `inet addr` for `wlan0` is the robot's IP address. You can then disconnect the cable and run
 
 ```
 adb connect <Robot's IP address>
@@ -114,90 +147,44 @@ adb connect <Robot's IP address>
 
 (If the operation times out, try connecting with USB, running `adb root`, and trying again.)
 
-You should now see the robot's IP as a connected device when you run `adb devices`. (Disconnect USB if still connected.)
+You should now see the robot's IP as a connected device when you run `adb devices`. Disconnect USB if still connected.
 
-2. Deploy Engine, Robot, and assets to physical robot
-```
-./project/victor/scripts/deploy.sh
-./project/victor/scripts/deploy-assets.sh
-```
+### Deploying binaries and assets to physical robot
 
-  If you want to deploy the release build,
+Run `victor_deploy` and `victor_assets` to deploy the binaries and asset files to the robot (see [usefulAliases.sh](project/victor/scripts/usefulALiases.sh) to see what these do).
+
+If you want to deploy the release build, run
+
 ```
 ANKI_BUILD_TYPES=Release ./project/victor/scripts/deploy.sh
 ```
 
 ## Running Victor
 
-1. Connect to the robot via adb over wifi
+Once the binaries and assets are deployed, you can run everything by running `victor_restart`.
 
-```
-adb shell
-```
-
-2. Go to where the binaries are deployed.
-
-```
-cd /data/data/com.anki.cozmoengine
-```
-
-3. Start robot process
-
-```
-./robotctl.sh start
-```
-
-After starting the robot process, you should see/hear head and lift calibrating within a few seconds. If you don't, restart the robot process by running:
-```
- ./robotctl.sh restart
- ```
-
-4. Start anim process
-```
-./animctl.sh start
-```
-
-5. Start engine process
-
-```
-./cozmoctl.sh start
-```
-
-6. You can view output from all processes by running `logcat`
-
+You can view output from all processes by running `victor_log`.
 
 ## Connect to Victor with Webots 
 
-1. Modify the world `cozmo2Viz.wbt` so that `forcedRobotIP` and `engineIP` are both the same as the robot's IP address. 
+1. Make sure you have built for mac by running `./project/victor/build-victor.sh -p mac` on the same branch as the binaries on the physical robot.
 
-2. Run the world to connect to the robot.
+1. Open the world `cozmo2Viz.wbt` in a text editor, and set the fields `forcedRobotIP` and `engineIP` to match your robot's IP address. 
 
-3. Ad-hoc connections to a robot are not yet supported. If you disconnect Webots and you want to connect again, you will first need to restart the engine, animation and robot processes with
+1. Run the world to connect to the robot. The processes must be fully up and running before connecting with webots. If in doubt, stop the world and run `victor_restart` first.
 
-```
-./cozmoctl.sh restart
-./animctl.sh restart
-./robotctl.sh restart
-```
-## Running Victor in Webots (simulation)
+1. Ad-hoc connections to a robot are not yet supported. If you disconnect Webots and you want to connect again, you will first need to restart the engine, animation, and robot processes by running `victor_restart`.
 
-If you get a crash in  `webotsCtrlGameEngine2` process, and an error message mentioning "shared memory" appears in the console log for Webots (towards the beginning), then it may be because simulating the Cozmo2 camera requires a larger memory budget than allocated. To increase it, edit the `/etc/sysctl.conf` file to have the following contents:
-```
-# Modified setup (currently not set)
-kern.sysv.shmmax=67108864
-kern.sysv.shmmin=1
-kern.sysv.shmmni=256
-kern.sysv.shmseg=64
-kern.sysv.shmall=4096
-```
-And then restart OSX, for the changes to take effect. The shared-memory crash should no longer occur.
+## Running Victor in Webots (simulated robot)
 
-## Updating syscon
+See [simulator/README.md](simulator/README.md).
+
+## Updating syscon (body firmware)
 
 Most developers shouldn't have to do this. Better to ask someone in hardware or Al or Kevin Y.
 
 1. To build syscon, run `vmake.sh` in `robot2/`. 
 
-2. If the robot has previously run the robot process since last boot then you'll need to first reboot the robot. 
+1. If the robot has previously run the robot process since last boot then you'll need to first reboot the robot. 
 
-3. Run `dfu.sh` in `robot2/`. There should be a bunch of messages indicating transfer of data. Might need to run twice.
+1. Run `dfu.sh` in `robot2/`. There should be a bunch of messages indicating transfer of data. Might need to run twice.

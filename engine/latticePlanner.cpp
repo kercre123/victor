@@ -42,7 +42,6 @@
 #include <chrono>
 #include <condition_variable>
 #include <thread>
-#include <unordered_set>
 
 
 // TODO:(bn) ANKI_DEVELOPER_CODE?
@@ -56,6 +55,9 @@
 
 // amount of padding to subtract for replan-checks. MUST be less than the above values
 #define LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT 5.0
+
+// scaling for robot size when inserting for Configuration Space expansion (to avoid clipping corners)
+#define LATTICE_PLANNER_ROBOT_EXPANSION_SCALING 1.2 
 
 // whether this planner should consider multiple goals
 // todo: probably have this decided in the calling functions based on the world state/goal types/etc
@@ -809,7 +811,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);    
    
-    std::unordered_set<std::shared_ptr<MemoryMapData>> observableObjectData;
+    MemoryMapTypes::MemoryMapDataConstList observableObjectData;
     MemoryMapTypes::NodePredicate pred = 
       [](MemoryMapTypes::MemoryMapDataPtr d) -> bool
       {
@@ -819,7 +821,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     memoryMap->FindContentIf(pred, observableObjectData);
     for (const auto& nodeData : observableObjectData) 
     {
-      auto castPtr = MemoryMapData::MemoryMapDataCast<MemoryMapData_ObservableObject>( nodeData );
+      auto castPtr = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ObservableObject>( nodeData );
       convexHulls.emplace_back( castPtr->boundingPoly );
     }
 
@@ -829,14 +831,25 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       hull.SetClockDirection(ConvexPolygon::CW);
     }  
     
-    _context.env.ClearObstacles();
-    
+    // clear old obstacles
+    // note: (mrw) This is most definitely a hack. Right now VizManager does not enforce that new objects
+    //       are inserted with unique IDs. Since the vizManager renders polygons as paths, for now, to 
+    //       prevent ID collision with the robot path, always set our start index to be one higher the the 
+    //       robot ID (this relies on any call the render the robot path to set its ID to the robot ID, 
+    //       but that cannot be enforced here). See ticket (VIC-647) for generating unique ids in vizManager 
+    //       to prevent future collisions.
+
+    unsigned int startIdx = _robot->GetID() + 1;      
     if(vizColor != nullptr) {
-      _robot->GetContext()->GetVizManager()->EraseAllPlannerObstacles(isReplanning);
+      for (int i = startIdx; i <= _context.env.GetNumObstacles() + startIdx; ++i)
+      {
+        _robot->GetContext()->GetVizManager()->ErasePath(i);
+      }
     }
+    _context.env.ClearObstacles();
 
     unsigned int numAdded = 0;
-    unsigned int vizID = 0;
+    unsigned int vizID = startIdx;
 
     Planning::StateTheta numAngles = (StateTheta) _context.env.GetNumAngles();
     for(StateTheta theta=0; theta < numAngles; ++theta) {
@@ -851,7 +864,8 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       
       // Get the robot polygon, and inflate it by a bit to handle error
       Poly2f robotPoly;
-      robotPoly.ImportQuad2d(_robot->GetBoundingQuadXY(robotOriginPose, robotPadding) );
+      robotPoly.ImportQuad2d(_robot->GetBoundingQuadXY(robotOriginPose, robotPadding)
+                                    .Scale(LATTICE_PLANNER_ROBOT_EXPANSION_SCALING) );
       
       for(const auto& boundingPoly : convexHulls) {
         _context.env.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
@@ -1158,7 +1172,7 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
                   "Adding point turn.",
                   angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed );
       
-    path.AppendPointTurn(end_x, end_y, desiredGoalAngle.ToFloat(),
+    path.AppendPointTurn(end_x, end_y, plannedGoalAngle.ToFloat(), desiredGoalAngle.ToFloat(),
                          rotSpeed,
                          TERMINAL_POINT_TURN_ACCEL,
                          TERMINAL_POINT_TURN_DECEL,

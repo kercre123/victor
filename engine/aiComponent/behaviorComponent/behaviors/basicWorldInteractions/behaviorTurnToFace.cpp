@@ -17,7 +17,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -52,10 +51,7 @@ bool BehaviorTurnToFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 Result BehaviorTurnToFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_targetFace.IsValid()){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new TurnTowardsFaceAction(robot, _targetFace));
+    DelegateIfInControl(new TurnTowardsFaceAction(_targetFace));
     return Result::RESULT_OK;
   }else{
     return RESULT_FAIL;

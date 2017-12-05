@@ -11,6 +11,7 @@
 
 
 #include "simulator/game/uiGameController.h"
+#include "util/helpers/variadicMacroHelpers.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -22,14 +23,7 @@ namespace Cozmo {
 
 ////////// Macros for condition checking and exiting ////////
   
-// For local testing, set to 1 so that Webots doesn't exit
-#define DO_NOT_QUIT_WEBOTS 0
-  
-#if (DO_NOT_QUIT_WEBOTS == 1)
-#define CST_EXIT()  QuitController(_result);
-#else
-#define CST_EXIT()  QuitWebots(_result);  
-#endif
+#define CST_EXIT()  ExitTest();
   
 #define DEFAULT_TIMEOUT 10
   
@@ -58,7 +52,10 @@ if (!(x)) { \
   
 #define IF_CONDITION_WITH_TIMEOUT_ASSERT(cond, timeout) static double COMBINE(startTime,__LINE__) = GetSupervisor()->getTime(); if (IsTrueBeforeTimeout(cond, #cond, COMBINE(startTime,__LINE__), timeout, __FILE__, __FUNCTION__, __LINE__))
   
-#define IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(timeout, ...) static double COMBINE(startTime,__LINE__) = GetSupervisor()->getTime(); if(AllTrueBeforeTimeout({__VA_ARGS__}, #__VA_ARGS__, COMBINE(startTime,__LINE__), timeout, __FILE__, __FUNCTION__, __LINE__))
+#define IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(timeout, ...) static double COMBINE(startTime,__LINE__) = GetSupervisor()->getTime(); \
+                                                            if(AllTrueBeforeTimeout({__VA_ARGS__}, {PP_STRINGIZE_X(__VA_ARGS__)}, COMBINE(startTime,__LINE__), timeout, __FILE__, __FUNCTION__, __LINE__))
+
+  
   
 // Derived classes should create an enum class called TestState, and a variable called _testState.
 // They should follow the pattern of modifying test state via this macro instead of directly.
@@ -74,14 +71,21 @@ public:
   CozmoSimTestController();
   virtual ~CozmoSimTestController();
   
+  void SetQuitWebotsAfterTest(bool b=true) { _quitWebotsAfterTest = b; }
+  
 protected:
   
   virtual s32 UpdateInternal() override final;
   virtual s32 UpdateSimInternal() = 0;
   virtual void InitInternal() override final;
   
+  void ExitTest();
+  
   u8 _result = RESULT_OK;
   bool _isRecording;
+  
+  // If set to true, Webots will automatically exit after the test is complete.
+  bool _quitWebotsAfterTest = false;
   
   //Variables for taking screenshots
   f32 _screenshotInterval;
@@ -103,8 +107,8 @@ protected:
                            const char* func,
                            int line);
   
-  bool AllTrueBeforeTimeout(std::vector<bool> conditions,
-                            const char* conditionsAsString,
+  bool AllTrueBeforeTimeout(const std::vector<bool>& conditionBools,
+                            const std::vector<std::string>& conditionStrings,
                             double start_time,
                             double timeout,
                             const char* file,

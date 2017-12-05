@@ -27,10 +27,7 @@
 
 // Forward declarations
 namespace Anki {
-namespace Comms {
-  class AdvertisementService;
-  class MsgPacket;
-}
+
 namespace Util {
   namespace Stats {
     class StatsAccumulator;

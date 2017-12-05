@@ -27,3 +27,25 @@ target_include_directories(cti_common_clad
 target_link_libraries(cti_common_clad
     clad
 )
+
+#
+# cti_common_clad_cpplite
+#
+
+set(CPPLITE_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/robot/common")
+
+generate_clad_cpplite(
+    SRCS ${SRCS}
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${CPPLITE_OUTPUT_DIR}"
+    OUTPUT_SRCS CLAD_CPPLITE_GEN_SRCS
+)
+
+add_library(cti_common_clad_cpplite STATIC
+    ${CLAD_CPPLITE_GEN_SRCS}
+)
+
+target_include_directories(cti_common_clad_cpplite
+    PUBLIC
+    $<BUILD_INTERFACE:${CPPLITE_OUTPUT_DIR}>
+)

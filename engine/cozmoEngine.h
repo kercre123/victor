@@ -130,11 +130,13 @@ protected:
   Anki::Cozmo::DasToSdkHandler                              _dasToSdkHandler;
   bool                                                      _isGamePaused = false;
   bool                                                      _hasRunFirstUpdate = false;
+  bool                                                      _uiWasConnected = false;
 
   virtual Result InitInternal();
   
   void SetEngineState(EngineState newState);
   
+  Result ConnectToRobotProcess();
   Result AddRobot(RobotID_t robotID);
   
   void UpdateLatencyInfo();

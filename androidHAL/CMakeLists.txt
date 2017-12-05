@@ -34,9 +34,14 @@ target_compile_definitions(proto_camera
   NUM_RECORDING_BUFFERS=9
 )
 
- set_target_properties(proto_camera PROPERTIES LINKER_LANGUAGE C)
+target_compile_options(proto_camera
+  PRIVATE
+  -O3
+)
+
+set_target_properties(proto_camera PROPERTIES LINKER_LANGUAGE C)
  
- endif()
+endif()
 
 include(anki_build_cxx)
 
@@ -50,8 +55,6 @@ if (ANDROID)
         android
         log
         GLESv2
-        mediandk
-        camera2ndk
         proto_camera)
 elseif (MACOSX)
     include(webots)

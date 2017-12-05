@@ -14,7 +14,6 @@
 #define __AnimProcess_CozmoAnim_MicDataTypes_H_
 
 #include "audioUtil/audioDataTypes.h"
-#include "clad/robotInterface/messageRobotToEngine.h"
 
 #include <cstdint>
 
@@ -22,7 +21,7 @@ namespace Anki {
 namespace Cozmo {
 namespace MicData {
 
-  using RawAudioChunk = decltype(RobotInterface::MicData::data);
+  using RawAudioChunk = int16_t[480]; // decltype(RobotInterface::MicData::data);
 
   enum class MicDataType {
     Raw,

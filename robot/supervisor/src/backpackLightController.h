@@ -12,7 +12,7 @@
  *
  **/
 
-#include "anki/types.h"
+#include "anki/common/types.h"
 #include "clad/types/ledTypes.h"
 
 namespace Anki {

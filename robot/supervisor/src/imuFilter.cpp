@@ -47,7 +47,7 @@ namespace Anki {
         HAL::IMU_DataStructure imu_data_;
 
         // Orientation and speed in XY-plane (i.e. horizontal plane) of robot
-        f32 rot_ = 0;   // radians
+        Radians rot_ = 0;   // radians
         f32 rotSpeed_ = 0; // rad/s
 
         // Pitch angle: Approaches angle of accelerometer wrt gravity horizontal
@@ -332,20 +332,6 @@ namespace Anki {
         EnableBraceWhenFalling(DEFAULT_BRACE_WHEN_FALLING);
         return RESULT_OK;
       }
-
-      void Reset()
-      {
-        rot_ = 0;
-        rotSpeed_ = 0;
-        pitch_ = 0;
-        imu_data_.Reset();
-        
-        prevHeadAngle_ = UNINIT_HEAD_ANGLE;
-        
-        ResetPickupVars();
-
-        timeOfLastImuTempSample_ms_ = 0;
-      }
       
       // Applies low-pass filtering to 3-element input, storing result to 3-element output assuming
       // output is passed in with previous timestep's filter values.
@@ -565,9 +551,9 @@ namespace Anki {
             
             for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
               if (cliffValsWhileNotMoving_[i] == 0) {
-                cliffValsWhileNotMoving_[i] = ProxSensors::GetRawCliffValue(i);
+                cliffValsWhileNotMoving_[i] = ProxSensors::GetCliffValue(i);
               } else {
-                const s16 absCliffDelta = ABS(cliffValsWhileNotMoving_[i] - ProxSensors::GetRawCliffValue(i));
+                const s16 absCliffDelta = ABS(cliffValsWhileNotMoving_[i] - ProxSensors::GetCliffValue(i));
                 maxCliffDelta = MAX(maxCliffDelta, absCliffDelta);
               }
             }
@@ -857,7 +843,9 @@ namespace Anki {
         
         // Don't do any other IMU updates until head is calibrated
         if (!HeadController::IsCalibrated()) {
-          Reset();
+          pitch_ = 0.f;
+          prevHeadAngle_ = UNINIT_HEAD_ANGLE;
+          ResetPickupVars();
           return retVal;
         }
 
@@ -1027,7 +1015,7 @@ namespace Anki {
       f32 GetRotation()
       {
         //return _zAngle;  // Computed from 3D orientation tracker (Madgwick filter)
-        return rot_;     // Computed from simplified yaw-only tracker
+        return rot_.ToFloat();     // Computed from simplified yaw-only tracker
       }
 
       f32 GetRotationSpeed()

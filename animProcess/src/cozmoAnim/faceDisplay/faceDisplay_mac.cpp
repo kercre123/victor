@@ -12,6 +12,7 @@
  **/
 
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
+#include "anki/vision/basestation/colorPixelTypes.h"
 #include "util/logging/logging.h"
 
 #include <webots/Supervisor.hpp>
@@ -31,6 +32,9 @@ namespace { // "Private members"
 
   // Face display
   webots::Display* face_;
+  
+  // Face 'image' to send to webots each frame
+  u32 faceImg_[FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT] = {0};
   
 } // "private" namespace
 
@@ -91,29 +95,22 @@ namespace { // "Private members"
     face_->fillRectangle(0,0, FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
   }
   
-  void FaceDisplay::FaceDraw(u16* frame)
+  void FaceDisplay::FaceDraw(const u16* frame)
   {
-    const u16 Rmask = 0xf800;
-    const u16 Gmask = 0x07e0;
-    const u16 Bmask = 0x001f;
-    const u16 Rshift = 8;
-    const u16 Gshift = 5;
-    const u16 Bshift = 3;
-    
-    for (u8 i = 0; i < FACE_DISPLAY_HEIGHT; ++i) {
-      for (u8 j = 0; j < FACE_DISPLAY_WIDTH; ++j) {
-        
-        const u16 bytesSwapped = ((*frame & 0xFF)<<8) | ((*frame >> 8)&0xFF);
-        
-        int color = ((bytesSwapped & Rmask) << Rshift) +
-                    ((bytesSwapped & Gmask) << Gshift) +
-                    ((bytesSwapped & Bmask) << Bshift);
-        ++frame;
-        
-        face_->setColor(color);
-        face_->drawPixel(j, i);
-      }
+    // Convert an RGB565 color into a 32-bit BGRA color image (i.e. 0xBBGGRRAA) which webots expects
+    u32* imgPtr = &faceImg_[0];
+    for (u32 i = 0; i < FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT; ++i) {
+      Vision::PixelRGB565 rgb565(*frame);
+      *imgPtr++ = rgb565.ToBGRA32();
+      ++frame;
     }
+
+    // Send the entire image to webots (by using the webots::Display 'clipboard' functionality),
+    // paste it from the 'clipboard' to the main display, then delete it.
+    // (see https://www.cyberbotics.com/doc/reference/display#display-functions)
+    auto imgRef = face_->imageNew(FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, faceImg_, webots::Display::ARGB);
+    face_->imagePaste(imgRef, 0, 0);
+    face_->imageDelete(imgRef);
   }
   
   void FaceDisplay::FacePrintf(const char* format, ...)

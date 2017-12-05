@@ -15,9 +15,9 @@
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
-#include "engine/robot.h"
 #include "engine/robotManager.h"
 #include "engine/moodSystem/moodManager.h"
+#include "util/helpers/templateHelpers.h"
 
 
 namespace Anki {
@@ -68,10 +68,8 @@ Result BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalIn
   }else if(expressedNeed == NeedId::Repair){
     reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement_Severe_Repair;
   }
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, reactionAnimation,
+
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(reactionAnimation,
                                                  kNumLoops, kInterruptRunning, tracksToLock), [this]()
   {
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);

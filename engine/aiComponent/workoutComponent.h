@@ -51,8 +51,8 @@ public:
   AnimationTrigger weakLiftAnim = AnimationTrigger::Count;
   AnimationTrigger putDownAnim = AnimationTrigger::Count;
 
-  unsigned int GetNumStrongLifts(const Robot& robot) const;
-  unsigned int GetNumWeakLifts(const Robot& robot) const;
+  unsigned int GetNumStrongLifts(const MoodManager& moodManager) const;
+  unsigned int GetNumWeakLifts(const MoodManager& moodManager) const;
   
   BehaviorObjective GetAdditionalBehaviorObjectiveOnComplete() const { return _additionalBehaviorObjectiveOnComplete; }
   
@@ -62,7 +62,7 @@ private:
   MoodScorer _numStrongLiftScorer;
   MoodScorer _numWeakLiftScorer;
 
-  static unsigned int MoodScoreHelper(const Robot& robot, const MoodScorer& moodScorer);
+  static unsigned int MoodScoreHelper(const MoodManager& moodManager, const MoodScorer& moodScorer);
 
 
   // emotion event to trigger when this workout competed

@@ -132,7 +132,7 @@ namespace Cozmo {
     return true;
   }
   
-  size_t MultiClientComms::Send(const Comms::MsgPacket &p)
+  ssize_t MultiClientComms::Send(const Comms::MsgPacket &p)
   {
     // TODO: Instead of sending immediately, maybe we should queue them and send them all at
     // once to more closely emulate BTLE.
@@ -161,7 +161,7 @@ namespace Cozmo {
     return numBytesSent;
   }
   
-  int MultiClientComms::RealSend(const Comms::MsgPacket &p)
+  ssize_t MultiClientComms::RealSend(const Comms::MsgPacket &p)
   {
     #endif // #if(DO_SIM_COMMS_LATENCY)
     
@@ -169,15 +169,15 @@ namespace Cozmo {
     if (it != connectedDevices_.end())
     {
       UdpClient* udpClient = it->second.GetOutClient();
-      const int sendRes = udpClient->Send((const char*)p.data, p.dataLen);
+      const ssize_t sent = udpClient->Send((const char*)p.data, p.dataLen);
     
-      if (sendRes < 0)
+      if (sent < 0)
       {
-        PRINT_NAMED_WARNING("MultiClientComms.RealSend.SendFailed", "destId: %d, socket %d, sendRes = %d (errno = %d '%s')",
-                            p.destId, udpClient->GetSocketFd(), sendRes, errno, strerror(errno));
+        PRINT_NAMED_WARNING("MultiClientComms.RealSend.SendFailed", "destId: %d, socket %d, sent = %zd (errno = %d '%s')",
+                            p.destId, udpClient->GetSocketFd(), sent, errno, strerror(errno));
       }
       
-      return sendRes;
+      return sent;
     }
     else
     {
@@ -197,7 +197,7 @@ namespace Cozmo {
     AdvertisementMsg advMsg;
     const size_t kMinAdMsgSize = sizeof(EMessageTag) + advMsg.Size(); // Size of message with an empty ip string
     
-    int bytes_recvd = 0;
+    ssize_t bytes_recvd = 0;
     do {
       uint8_t messageData[64];
       bytes_recvd = advertisingChannelClient_.Recv((char*)messageData, sizeof(messageData));
@@ -208,7 +208,7 @@ namespace Cozmo {
         if (messageTag == kAdvertisementMsgTag)
         {
           const uint8_t* innerMessageBytes = &messageData[sizeof(EMessageTag)];
-          const size_t   innerMessageSize  = bytes_recvd - sizeof(EMessageTag);
+          const size_t   innerMessageSize  = (size_t) bytes_recvd - sizeof(EMessageTag);
           
           const size_t bytesUnpacked = advMsg.Unpack(innerMessageBytes, innerMessageSize);
           
@@ -345,7 +345,7 @@ namespace Cozmo {
       {
         UdpClient* udpClient = c.GetInClient();
         
-        int bytes_recvd = udpClient->Recv((char*)recvBuf, kMaxRecvBufSize);
+        const ssize_t bytes_recvd = udpClient->Recv((char*)recvBuf, kMaxRecvBufSize);
         
         if (bytes_recvd == 0) {
           it++;
@@ -364,7 +364,7 @@ namespace Cozmo {
         {
           if (bytes_recvd >= kMaxRecvBufSize) // == indicated truncation
           {
-            PRINT_NAMED_ERROR("MultiClientComms.ReadTruncated", "Read %d, buffer size only %d", bytes_recvd, kMaxRecvBufSize);
+            PRINT_NAMED_ERROR("MultiClientComms.ReadTruncated", "Read %zd, buffer size only %d", bytes_recvd, kMaxRecvBufSize);
           }
           
           receivedAnything = true;

@@ -56,6 +56,10 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // Broadcast navmesh
+  // NOTE: (mrw)
+  //   The only difference between Broadcast and BoadcastMemoryMapDraw is whether or not we
+  //   are converting EContentType to ENodeContentTypeEnum or ENodeContentTypeDebugVizEnum. Why can't
+  //   the consumers share this data? 
   void Broadcast(uint32_t originID) const;
   void BroadcastMemoryMapDraw(uint32_t originID, size_t maxIdxHint) const;
 
@@ -68,21 +72,25 @@ public:
   float GetContentPrecisionMM() const;
 
   // return the Processor associated to this QuadTree for queries
-  QuadTreeProcessor& GetProcessor() { return _processor; }
+        QuadTreeProcessor& GetProcessor()       { return _processor; }
   const QuadTreeProcessor& GetProcessor() const { return _processor; }
+  
   const NodeContent& GetRootNodeContent() const { return _root.GetContent(); }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Operations
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // notify the navmesh that the given quad/point/line/triangle has the specified content
+  // notify the QT that the given poly has the specified content
   // shiftAllowedCount: number of shifts we can do for a fully expanded root that still needs to move to
   // fit the data.
-  void AddQuad(const Quad2f& quad, const NodeContent& nodeContent, int shiftAllowedCount);
-  void AddLine(const Point2f& from, const Point2f& to, const NodeContent& nodeContent, int shiftAllowedCount);
-  void AddTriangle(const Triangle2f& tri, const NodeContent& nodeContent, int shiftAllowedCount);
-  void AddPoint(const Point2f& point, const NodeContent& nodeContent, int shiftAllowedCount);
+  void Insert(const FastPolygon& poly, const MemoryMapData& data, int shiftAllowedCount);
+  
+  // modify content bounded by poly. Note that if the poly extends outside the current size of the root node,
+  // it will not expand the root node
+  void Transform(const Poly2f& poly, NodeTransformFunction transform) {_root.Transform(poly, transform, _processor);}
+  
+  void FindIf(const Poly2f& poly, NodePredicate pred, MemoryMapDataConstList& output) {_root.FindIf(poly, pred, output);}
   
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform
   void Merge(const QuadTree& other, const Pose3d& transform);
@@ -95,9 +103,7 @@ private:
 
   // Expand the root node so that the given quad/point/triangle is included in the navMesh, up to the max root size limit.
   // shiftAllowedCount: number of shifts we can do if the root reaches the max size upon expanding (or already is at max.)
-  void Expand(const Quad2f& quadToCover, int shiftAllowedCount);
-  void Expand(const Point2f& pointToInclude, int shiftAllowedCount);
-  void Expand(const Triangle2f& triangleToCover, int shiftAllowedCount);
+  void Expand(const Poly2f& polyToCover, int shiftAllowedCount);  
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes

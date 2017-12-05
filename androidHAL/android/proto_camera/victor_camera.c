@@ -9,12 +9,202 @@
 /*************************************/
 #include "victor_camera.h"
 
+#define DEFAULT_RAW_RDI_FORMAT        CAM_FORMAT_BAYER_MIPI_RAW_10BPP_BGGR
+
 typedef struct cameraobj_t
 {
   mm_camera_lib_handle lib_handle;
   
 } CameraObj;
 
+mm_camera_stream_t * mm_app_add_rdi_stream(mm_camera_test_obj_t *test_obj,
+                                           mm_camera_channel_t *channel,
+                                           mm_camera_buf_notify_t stream_cb,
+                                           void *userdata,
+                                           uint8_t num_bufs,
+                                           uint8_t num_burst)
+{
+  int rc = MM_CAMERA_OK;
+  size_t i;
+  mm_camera_stream_t *stream = NULL;
+  cam_capability_t *cam_cap = (cam_capability_t *)(test_obj->cap_buf.buf.buffer);
+  cam_format_t fmt = CAM_FORMAT_MAX;
+  cam_stream_buf_plane_info_t *buf_planes;
+
+  stream = mm_app_add_stream(test_obj, channel);
+  if (NULL == stream) {
+      CDBG_ERROR("%s: add stream failed\n", __func__);
+      return NULL;
+  }
+
+  // BRC: Supported raw formats based on capabilities
+  // CAM_FORMAT_BAYER_MIPI_RAW_10BPP_BGGR
+  // CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_10BPP_BGGR
+  // CAM_FORMAT_BAYER_QCOM_RAW_10BPP_BGGR
+  // CAM_FORMAT_YUV_422_NV16
+  // CAM_FORMAT_YUV_422_NV61
+  // Only CAM_FORMAT_BAYER_MIPI_RAW_10BPP_BGGR seems to actually bypass ISP
+
+  CDBG("%s: raw_dim w:%d height:%d\n", __func__,
+                                      cam_cap->raw_dim.width,
+                                      cam_cap->raw_dim.height);
+  for (i = 0;i < cam_cap->supported_raw_fmt_cnt;i++) {
+    cam_format_t cur_fmt = cam_cap->supported_raw_fmts[i];
+    CDBG("%s: supported_raw_fmts[%zu]=%d\n", __func__, i, cur_fmt);
+    if (DEFAULT_RAW_RDI_FORMAT == cur_fmt) {
+      fmt = cur_fmt;
+      break;
+    }
+  }
+
+  if (CAM_FORMAT_MAX == fmt) {
+      CDBG_ERROR("%s: rdi format not supported\n", __func__);
+      return NULL;
+  }
+
+  // BRC: Leaving this commented out as documentation about what formats
+  // actually work as expected with RDI (from mm_qcamera_rdi.c)
+  // if (!(CAM_FORMAT_BAYER_MIPI_RAW_8BPP_GBRG <= fmt &&
+  //       CAM_FORMAT_BAYER_MIPI_RAW_12BPP_BGGR >= fmt)) {
+  //     CDBG_ERROR("%s: rdi does not support DEFAULT_RAW_FORMAT\n", __func__);
+  //     return NULL;
+  // }
+
+  stream->s_config.mem_vtbl.get_bufs = mm_app_stream_initbuf;
+  stream->s_config.mem_vtbl.put_bufs = mm_app_stream_deinitbuf;
+  stream->s_config.mem_vtbl.clean_invalidate_buf = mm_app_stream_clean_invalidate_buf;
+  stream->s_config.mem_vtbl.invalidate_buf = mm_app_stream_invalidate_buf;
+  stream->s_config.mem_vtbl.user_data = (void *)stream;
+  stream->s_config.stream_cb = stream_cb;
+  stream->s_config.userdata = userdata;
+  stream->num_of_bufs = num_bufs;
+
+  stream->s_config.stream_info = (cam_stream_info_t *)stream->s_info_buf.buf.buffer;
+  memset(stream->s_config.stream_info, 0, sizeof(cam_stream_info_t));
+  stream->s_config.stream_info->stream_type = CAM_STREAM_TYPE_RAW;
+  if (num_burst == 0) {
+    stream->s_config.stream_info->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
+  } else {
+    stream->s_config.stream_info->streaming_mode = CAM_STREAMING_MODE_BURST;
+    stream->s_config.stream_info->num_of_burst = num_burst;
+  }
+  stream->s_config.stream_info->fmt = fmt;
+  stream->s_config.stream_info->dim.width = cam_cap->raw_dim.width;
+  stream->s_config.stream_info->dim.height = cam_cap->raw_dim.height;
+  stream->s_config.padding_info = cam_cap->padding_info;
+
+  rc = mm_app_config_stream(test_obj, channel, stream, &stream->s_config);
+  if (MM_CAMERA_OK != rc) {
+    CDBG_ERROR("%s:config rdi stream err=%d\n", __func__, rc);
+    return NULL;
+  }
+
+  buf_planes = &stream->s_config.stream_info->buf_planes;
+  CDBG("%s: plane_info %dx%d len:%d frame_len:%d\n", __func__,
+      buf_planes->plane_info.mp[0].stride, buf_planes->plane_info.mp[0].scanline,
+      buf_planes->plane_info.mp[0].len, buf_planes->plane_info.frame_len);
+
+  return stream;
+}
+
+mm_camera_channel_t * mm_app_add_rdi_channel(mm_camera_test_obj_t *test_obj,
+                                             uint8_t num_burst,
+                                             mm_camera_buf_notify_t stream_cb)
+{
+  mm_camera_channel_t *channel = NULL;
+  mm_camera_stream_t *stream = NULL;
+
+  channel = mm_app_add_channel(test_obj,
+                                MM_CHANNEL_TYPE_RDI,
+                                NULL,
+                                NULL,
+                                NULL);
+  if (NULL == channel) {
+    CDBG_ERROR("%s: add channel failed", __func__);
+    return NULL;
+  }
+
+  stream = mm_app_add_rdi_stream(test_obj,
+                                  channel,
+                                  stream_cb,
+                                  (void *)test_obj,
+                                  RDI_BUF_NUM,
+                                  num_burst);
+  if (NULL == stream) {
+    CDBG_ERROR("%s: add stream failed\n", __func__);
+    mm_app_del_channel(test_obj, channel);
+    return NULL;
+  }
+
+  CDBG("%s: channel=%d stream=%d\n", __func__, channel->ch_id, stream->s_id);
+  return channel;
+}
+
+int mm_app_stop_and_del_rdi_channel(mm_camera_test_obj_t *test_obj,
+                                    mm_camera_channel_t *channel)
+{
+  int rc = MM_CAMERA_OK;
+  mm_camera_stream_t *stream = NULL;
+  uint8_t i;
+
+  rc = mm_app_stop_channel(test_obj, channel);
+  if (MM_CAMERA_OK != rc) {
+    CDBG_ERROR("%s:Stop RDI failed rc=%d\n", __func__, rc);
+  }
+
+  for (i = 0; i < channel->num_streams; i++) {
+    stream = &channel->streams[i];
+    rc = mm_app_del_stream(test_obj, channel, stream);
+    if (MM_CAMERA_OK != rc) {
+      CDBG_ERROR("%s:del stream(%d) failed rc=%d\n", __func__, i, rc);
+    }
+  }
+
+  rc = mm_app_del_channel(test_obj, channel);
+  if (MM_CAMERA_OK != rc) {
+    CDBG_ERROR("%s:delete channel failed rc=%d\n", __func__, rc);
+  }
+
+  return rc;
+}
+
+int victor_start_rdi(mm_camera_test_obj_t *test_obj,
+                     uint8_t num_burst,
+                     mm_camera_buf_notify_t stream_cb)
+{
+  int rc = MM_CAMERA_OK;
+  mm_camera_channel_t *channel = NULL;
+
+  channel = mm_app_add_rdi_channel(test_obj, num_burst, stream_cb);
+  if (NULL == channel) {
+    CDBG_ERROR("%s: add channel failed", __func__);
+    return -MM_CAMERA_E_GENERAL;
+  }
+
+  rc = mm_app_start_channel(test_obj, channel);
+  if (MM_CAMERA_OK != rc) {
+    CDBG_ERROR("%s:start rdi failed rc=%d\n", __func__, rc);
+    mm_app_del_channel(test_obj, channel);
+    return rc;
+  }
+
+  return rc;
+}
+
+int victor_stop_rdi(mm_camera_test_obj_t *test_obj)
+{
+  int rc = MM_CAMERA_OK;
+
+  mm_camera_channel_t *channel =
+      &test_obj->channels[MM_CHANNEL_TYPE_RDI];
+
+  rc = mm_app_stop_and_del_rdi_channel(test_obj, channel);
+  if (MM_CAMERA_OK != rc) {
+    CDBG_ERROR("%s:Stop RDI failed rc=%d\n", __func__, rc);
+  }
+
+  return rc;
+}
 
 mm_camera_stream_t * mm_app_add_raw_stream(mm_camera_test_obj_t *test_obj,
                                            mm_camera_channel_t *channel,
@@ -36,6 +226,7 @@ mm_camera_stream_t * mm_app_add_raw_stream(mm_camera_test_obj_t *test_obj,
   stream->s_config.mem_vtbl.get_bufs = mm_app_stream_initbuf;
   stream->s_config.mem_vtbl.put_bufs = mm_app_stream_deinitbuf;
   stream->s_config.mem_vtbl.invalidate_buf = mm_app_stream_invalidate_buf;
+  stream->s_config.mem_vtbl.clean_invalidate_buf = mm_app_stream_clean_invalidate_buf;
   stream->s_config.mem_vtbl.user_data = (void *)stream;
   stream->s_config.stream_cb = stream_cb;
   stream->s_config.userdata = userdata;
@@ -688,72 +879,85 @@ void camera_install_callback(camera_cb cb)
   user_frame_callback = cb;
 }
 
+#define CLIP(in__, out__) out__ = ( ((in__) < 0) ? 0 : ((in__) > 255 ? 255 : (in__)) )
 
 #define X 640
 #define Y 360
-#define X6 214
-#define MASK_10BIT 1023
-// A raw frame is 720x214 where each element is 64 bits and contains 6 color channels
-// (each color channel is 10bits)
-// The least significant bits contain the left-most color channel so the 4 most significant bits are unused
-// A raw frame is in a 2x2 bayer format, each 2x2 area will become one pixel in the output image
+
 //
-// R G R G ...
-// G B G B ...
-// R G R G ...
-// ...
+// raw RDI pixel format is CAM_FORMAT_BAYER_MIPI_RAW_10BPP_BGGR
+// This appears to be the same as:
+// https://www.linuxtv.org/downloads/v4l-dvb-apis-old/pixfmt-srggb10p.html
 //
-// (0,0) is red
-static void downsample_frame(uint64_t in[Y*2][X6], uint8_t out[Y][X][3]) {
-  int x = 0, y = 0, i = 0;
-  for (y = 0; y < Y; y++)
-  {
-    for (x = 0; x < X6; x++)
-    {
-      // Grayscale downsampling
-//      g = (((p>>00) & 1023) + ((p>>10) & 1023) + ((q>>00) & 1023) + ((q>>10) & 1023)) >> DIM;
-//      out[y][x*3+0] = (g > 255) ? 255 : g;
-//      g = (((p>>20) & 1023) + ((p>>30) & 1023) + ((q>>20) & 1023) + ((q>>30) & 1023)) >> DIM;
-//      out[y][x*3+1] = (g > 255) ? 255 : g;
-//      g = (((p>>40) & 1023) + ((p>>50) & 1023) + ((q>>40) & 1023) + ((q>>50) & 1023)) >> DIM;
-//      out[y][x*3+2] = (g > 255) ? 255 : g;
-      
-      unsigned long long row1 = in[y*2][x], row2 = in[y*2+1][x];
-      int raw10bits;
-      
-      uint8_t* pixel0 = (uint8_t*)&(out[y][x*3+0]);
-      uint8_t* pixel1 = pixel0 + 3; // Pointer math: Add three to move forwards a pixel (3 uint8_ts)
-      uint8_t* pixel2 = pixel1 + 3;
-      
-      // Red
-      raw10bits = (((row1>>00) & MASK_10BIT));
-      pixel0[0] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      raw10bits = (((row1>>20) & MASK_10BIT));
-      pixel1[0] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      raw10bits = (((row1>>40) & MASK_10BIT));
-      pixel2[0] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      // Green (two green per 2x2 square so add and divide by two)
-      raw10bits = (((row1>>10) & MASK_10BIT) + ((row2>>00) & MASK_10BIT)) >> 1;
-      pixel0[1] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      raw10bits = (((row1>>30) & MASK_10BIT) + ((row2>>20) & MASK_10BIT)) >> 1;
-      pixel1[1] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      raw10bits = (((row1>>50) & MASK_10BIT) + ((row2>>40) & MASK_10BIT)) >> 1;
-      pixel2[1] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      // Blue
-      raw10bits = (((row2>>10) & MASK_10BIT));
-      pixel0[2] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      raw10bits = (((row2>>30) & MASK_10BIT));
-      pixel1[2] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      raw10bits = (((row2>>50) & MASK_10BIT));
-      pixel2[2] = (raw10bits > 255) ? 255 : raw10bits;
+// 4 pixels stored in 5 bytes. Each of the first 4 bytes contain the 8 high order bits
+// of the pixel. The 5th byte contains the two least significant bits of each pixel in the
+// same order.
+//
+static void downsample_frame(const uint8_t *bayer, uint8_t *rgb, int bayer_sx, int bayer_sy, int bpp)
+{
+  // input width must be divisble by bpp
+  assert((bayer_sx % bpp) == 0);
+
+  uint8_t *outR, *outG, *outB;
+  register int i, j;
+  int tmp;
+
+  outB = &rgb[0];
+  outG = &rgb[1];
+  outR = &rgb[2];
+
+  // Raw image are reported as 1280x720, 10bpp BGGR MIPI Bayer format
+  // Based on frame metadata, the raw image dimensions are actually 1600x720 10bpp pixels.
+  // Simple conversion + downsample to RGB yields: 640x360 images
+  const int dim = (bayer_sx*bayer_sy);
+
+  // output rows have 8-bit pixels
+  const int out_sx = bayer_sx * 8/bpp;
+
+  const int dim_step = (bayer_sx << 1);
+  const int out_dim_step = (out_sx << 1);
+
+  int out_i, out_j;
+  
+  for (i = 0, out_i = 0; i < dim; i += dim_step, out_i += out_dim_step) {
+    // process 2 rows at a time
+    for (j = 0, out_j = 0; j < bayer_sx; j += 5, out_j += 4) {
+      // process 4 col at a time
+      // A B A_ B_ -> B G B G
+      // C D C_ D_    G R G R
+
+      // Read 4 10-bit px from row0
+      const int r0_idx = i + j;
+      uint16_t px_A  = (bayer[r0_idx+0] << 2) | ((bayer[r0_idx+4] & 0xc0) >> 6);
+      uint16_t px_B  = (bayer[r0_idx+1] << 2) | ((bayer[r0_idx+4] & 0x30) >> 4);
+      uint16_t px_A_ = (bayer[r0_idx+2] << 2) | ((bayer[r0_idx+4] & 0x0c) >> 2);
+      uint16_t px_B_ = (bayer[r0_idx+3] << 2) |  (bayer[r0_idx+4] & 0x03);
+
+      // Read 4 10-bit px from row1
+      const int r1_idx = (i + bayer_sx) + j;
+      uint16_t px_C  = (bayer[r1_idx+0] << 2) | ((bayer[r1_idx+4] & 0xc0) >> 6);
+      uint16_t px_D  = (bayer[r1_idx+1] << 2) | ((bayer[r1_idx+4] & 0x30) >> 4);
+      uint16_t px_C_ = (bayer[r1_idx+2] << 2) | ((bayer[r1_idx+4] & 0x0c) >> 2);
+      uint16_t px_D_ = (bayer[r1_idx+3] << 2) |  (bayer[r1_idx+4] & 0x03);
+
+      // output index:
+      // out_i represents 2 rows -> divide by 4
+      // out_j represents 1 col  -> divide by 2
+      const int rgb_0_idx = ((out_i >> 2) + (out_j >> 1)) * 3;
+      tmp = (px_C + px_B) >> 1;
+      CLIP(tmp, outG[rgb_0_idx]);
+      tmp = px_D;
+      CLIP(tmp, outR[rgb_0_idx]);
+      tmp = px_A;
+      CLIP(tmp, outB[rgb_0_idx]);
+
+      const int rgb_1_idx = ((out_i >> 2) + ((out_j+2) >> 1)) * 3;
+      tmp = (px_C_ + px_B_) >> 1;
+      CLIP(tmp, outG[rgb_1_idx]);
+      tmp = px_D_;
+      CLIP(tmp, outR[rgb_1_idx]);
+      tmp = px_A_;
+      CLIP(tmp, outB[rgb_1_idx]);
     }
   }
 }
@@ -764,7 +968,7 @@ static void downsample_frame(uint64_t in[Y*2][X6], uint8_t out[Y][X][3]) {
 // used by outside sources (engine) and then we alternate writing new images to the other two
 // This way there is always a complete image available that can be switched to after the current image
 // is done being processed
-static uint8_t raw_buffer[BUFFER_SIZE][Y+1][X][3];
+static uint8_t raw_buffer[BUFFER_SIZE][Y][X][3];
 
 // Index that is currently being processed by the outside and we should not touch
 static uint8_t processing_idx = 0;
@@ -774,6 +978,29 @@ static uint8_t potential_processing_idx = 0;
 
 // The next index to write new images to
 static uint8_t next_idx = 1;
+
+int dump_image_data(uint8_t *img, int width, int height)
+{
+  char file_name[64];
+  static int frame_idx = 0;
+  const char* name = "vic_cam";
+  const char* ext = "bayer";
+  int file_fd;
+
+  snprintf(file_name, sizeof(file_name), "/data/misc/camera/test/%s_%04d.%s", name, frame_idx++, ext);
+  file_fd = open(file_name, O_RDWR | O_CREAT, 0777);
+  if (file_fd < 0) {
+     printf("%s: cannot open file %s \n", __func__, file_name);
+  } else {
+    write(file_fd,
+          img,
+          width * height);
+  }
+
+  close(file_fd);
+  printf("dump %s", file_name);
+  return 0;
+}
 
 static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
                                           void *user_data)
@@ -811,18 +1038,22 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
     rc = -1;
     goto EXIT;
   }
-  
-  
+
+  // Get raw frame info from stream
+  cam_stream_buf_plane_info_t *buf_planes = &m_stream->s_config.stream_info->buf_planes;
+  const int raw_frame_width = buf_planes->plane_info.mp[0].stride;
+  const int raw_frame_height = buf_planes->plane_info.mp[0].scanline;
+
   // find snapshot frame
   if (user_frame_callback) {
     for (i = 0; i < bufs->num_bufs; i++) {
       if (bufs->bufs[i]->stream_id == m_stream->s_id) {
         
-        uint8_t* outbuf = (uint8_t*) raw_buffer[next_idx];
+        uint8_t* outbuf = (uint8_t*)&raw_buffer[next_idx];
         m_frame = bufs->bufs[i];
-        
-        downsample_frame((uint64_t (*)[X6])m_frame->buffer,
-                         (uint8_t (*)[X][3])outbuf);
+        const uint8_t* inbuf = (uint8_t *)m_frame->buffer + m_frame->planes[i].data_offset;
+
+        downsample_frame(inbuf, outbuf, raw_frame_width, raw_frame_height, 10 /* bpp */);
         
         // image has been taken from the buffer and downsampled, it is now safe for
         // it to be potentially processed by engine
@@ -973,6 +1204,15 @@ EXIT:
 }
 
 
+int mm_camera_start_rdi_capture(mm_camera_lib_handle *handle) {
+  int rc = victor_start_rdi(&handle->test_obj, 0, mm_app_snapshot_notify_cb_raw);
+  if (rc != MM_CAMERA_OK) {
+    CDBG_ERROR("%s: mm_app_start_rdi() err=%d\n",
+               __func__, rc);
+    return rc;
+  }
+  return 0;
+}
 
 
 int mm_camera_start_raw_capture(mm_camera_lib_handle *handle) {
@@ -1063,7 +1303,7 @@ int camera_start(camera_cb cb)
   int rc = MM_CAMERA_OK;
   camera_install_callback(cb);
   
-  rc = mm_camera_start_raw_capture(&gTheCamera.lib_handle);
+  rc = mm_camera_start_rdi_capture(&gTheCamera.lib_handle);
   if (rc != MM_CAMERA_OK) {
     CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
     return rc;
@@ -1077,13 +1317,12 @@ void camera_set_processing_frame()
   processing_idx = potential_processing_idx;
 }
 
-
 int camera_stop()
 {
   int rc;
   CameraObj* camera = &gTheCamera;
   
-  rc = mm_app_stop_capture_raw(&(camera->lib_handle.test_obj));
+  rc = victor_stop_rdi(&(camera->lib_handle.test_obj));
   if (rc != MM_CAMERA_OK) {
     CDBG_ERROR("%s: mm_app_stop_capture() err=%d\n",
                __func__, rc);

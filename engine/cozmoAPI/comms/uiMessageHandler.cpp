@@ -25,7 +25,6 @@
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "engine/messaging/advertisementService.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 
 #include "engine/viz/vizManager.h"
 #include "engine/buildVersion.h"
@@ -49,6 +48,15 @@
 #include "util/time/universalTime.h"
 
 #define USE_DIRECT_COMMS 0
+
+// The amount of time that the UI must have not been
+// returning pings before we consider it disconnected
+#ifdef SIMULATOR
+// No timeout in sim
+static const u32 kPingTimeoutForDisconnect_ms = 0;
+#else
+static const u32 kPingTimeoutForDisconnect_ms = 5000;
+#endif
 
 namespace Anki {
   namespace Cozmo {
@@ -152,7 +160,16 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       const bool isSdkCommunicationEnabled = IsSdkCommunicationEnabled();
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
-        _socketComms[(uint32_t)i] = CreateSocketComms(i, gameMessagePort, GetHostUiDeviceID(), isSdkCommunicationEnabled);
+        auto& socket = _socketComms[(uint32_t)i];
+        socket = CreateSocketComms(i, gameMessagePort, GetHostUiDeviceID(), isSdkCommunicationEnabled);
+      
+        // If UI disconnects due to timeout, disconnect Viz too
+        if ((i == UiConnectionType::UI) && (socket != nullptr)) {
+          ISocketComms::DisconnectCallback disconnectCallback = [this]() {
+            _context->GetVizManager()->Disconnect();
+          };
+          socket->SetPingTimeoutForDisconnect(kPingTimeoutForDisconnect_ms, disconnectCallback);
+        }
       }
     }
     
@@ -714,7 +731,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
           {
             if (deviceId == GetHostUiDeviceID())
             {
-              // Force connection to first (local) UI device
+              // Force connection to first UI device if not already connected
               if (ConnectToUiDevice(deviceId, i))
               {
                 PRINT_CH_INFO("UiComms", "UiMessageHandler.Update.Connected",

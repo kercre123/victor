@@ -40,9 +40,18 @@ private:
   void TransitionToBoutOfStirring(BehaviorExternalInterface& behaviorExternalInterface);
   void TransitionToPlayStirAnim(BehaviorExternalInterface& behaviorExternalInterface);
 
+  // helper to "wait" without doing procedural face motions and then run a callback
+  void HoldFaceForTime(BehaviorExternalInterface& behaviorExternalInterface,
+                       const float waitTime_s,
+                       void(BehaviorVictorDemoNapping::*callback)(BehaviorExternalInterface& behaviorExternalInterface));
+  void LoopHoldFace(BehaviorExternalInterface& behaviorExternalInterface,
+                    void(BehaviorVictorDemoNapping::*callback)(BehaviorExternalInterface& behaviorExternalInterface));
+
   bool _animIsPlaying = false;
 
   int _numRemainingInBout = 0;
+
+  float _stopHoldingFaceAtTime_s = 0.0f;
 };
 
 }

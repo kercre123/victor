@@ -12,6 +12,7 @@ include(signalessence)
 include(speexdsp)
 include(text2speech)
 include(sensory)
+include(robot_core)
 
 if (NOT DEFINED USE_DAS)
   set(USE_DAS 0)
@@ -24,7 +25,8 @@ set(PLATFORM_COMPILE_DEFS "")
 if (ANDROID)
     set(PLATFORM_LIBS
         android
-        log)
+        log
+        robot_core)
 elseif (MACOSX)
     include(webots)
     set(PLATFORM_LIBS
@@ -89,13 +91,7 @@ if (ANDROID)
   )
 
   android_strip(TARGET victor_animator)
-
-  copy_tts_android_libs()
-
-  add_dependencies(victor_animator
-    copy_tts_libs
-  )
-
+    
 endif()
 
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/signalEssence/policy_actions.c PROPERTIES COMPILE_FLAGS -Wno-shorten-64-to-32)

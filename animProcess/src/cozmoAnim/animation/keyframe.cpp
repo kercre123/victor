@@ -14,6 +14,7 @@
  **/
 
 
+#include "anki/common/basestation/array2d_impl.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -291,34 +292,32 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     bool FaceAnimationKeyFrame::IsDone()
     {
-      // Note the dynamic check for num frames, since (in the case of streaming
-      // procedural animations) the number of keyframes could be increasing
-      // while we're playing and thus isn't known up front.
+      // For canned animations we check if GetFaceImage() has been called as many
+      // times as there are frames.
+      // For procedural animations, frames are deleted (with PopFront) after they are
+      // played in order to avoid unbounded growth (since a procedural animation can
+      // be played for an arbitrary period of time) so we check for whether or not
+      // there are any frames left.
+      if (_animName == FaceAnimationManager::ProceduralAnimName) {
+        return FaceAnimationManager::getInstance()->GetNumFrames(_animName) == 0;
+      }
       return (_curFrame >= FaceAnimationManager::getInstance()->GetNumFrames(_animName));
     }
     
-    const Vision::ImageRGB* FaceAnimationKeyFrame::GetFaceImage()
+    bool FaceAnimationKeyFrame::GetFaceImage(Vision::ImageRGB565& imgRGB565)
     {
-      if(!IsDone()) 
+      if(IsDone())
       {
-        _faceImg = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame);
-        
-        if(_faceImg == nullptr) {
-          PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMessage",
-                            "Failed to get frame %d from animation %s",
-                            _curFrame, _animName.c_str());
-          return nullptr;
-        }
-        
-        ++_curFrame;
-        
-        return _faceImg;
-      } else {
         _curFrame = 0;
-        return nullptr;
+        return false;
       }
+      
+      const bool gotFrame = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame, imgRGB565);
+      ++_curFrame;
+      
+      return gotFrame;
     }
-    
+
 #pragma mark -
 #pragma mark ProceduralFaceKeyFrame
     
@@ -736,8 +735,11 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     {
       _streamMsg.accel = 0.f;
       
+      // The stop message should command the wheel speeds to zero immediately, so command
+      // zero velocity and 'infinite' radius
       _stopMsg.speed = 0.f;
       _stopMsg.accel = 0.f;
+      _stopMsg.curvatureRadius_mm = std::numeric_limits<decltype(_stopMsg.curvatureRadius_mm)>::max();
     }
     
     BodyMotionKeyFrame::BodyMotionKeyFrame(s16 speed, s16 curvatureRadius_mm, s32 duration_ms)

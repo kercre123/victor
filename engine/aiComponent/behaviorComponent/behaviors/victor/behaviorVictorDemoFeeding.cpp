@@ -17,13 +17,12 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/dockingComponent.h"
-#include "engine/robot.h"
-
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -44,8 +43,8 @@ void BehaviorVictorDemoFeeding::InitBehavior(BehaviorExternalInterface& behavior
 {
   const auto& BC = behaviorExternalInterface.GetBehaviorContainer();
 
-  BC.FindBehaviorByIDAndDowncast(BehaviorID::FeedingEat,
-                                 BehaviorClass::FeedingEat,
+  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(FeedingEat),
+                                 BEHAVIOR_CLASS(FeedingEat),
                                  _eatFoodBehavior);
 }
 
@@ -86,9 +85,9 @@ ICozmoBehavior::Status BehaviorVictorDemoFeeding::UpdateInternal_WhileRunning(
           obj->GetLastObservedTime() > _imgTimeStartedWaitngForFood;
       });
 
-    const Robot& robot = behaviorExternalInterface.GetRobot();
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     const auto& blockWorld = behaviorExternalInterface.GetBlockWorld();
-    const ObservableObject* obj = blockWorld.FindLocatedObjectClosestTo(robot.GetPose(), filter);
+    const ObservableObject* obj = blockWorld.FindLocatedObjectClosestTo(robotInfo.GetPose(), filter);
     if( obj != nullptr ) {
       PRINT_CH_INFO("Behaviors",
                     "VictorDemoFeeding.FoundFoodAfterWaiting",
@@ -102,8 +101,7 @@ ICozmoBehavior::Status BehaviorVictorDemoFeeding::UpdateInternal_WhileRunning(
   if( !IsControlDelegated() &&
       WantsToBeActivatedBehavior(behaviorExternalInterface) &&
      _imgTimeStartedWaitngForFood == 0) {
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    IActionRunner* animAction = new TriggerAnimationAction(robot, AnimationTrigger::FeedingReactToFullCube_Normal);
+    IActionRunner* animAction = new TriggerAnimationAction(AnimationTrigger::FeedingReactToFullCube_Normal);
 
     DelegateIfInControl(animAction, &BehaviorVictorDemoFeeding::TransitionToVerifyFood);
   }
@@ -122,10 +120,8 @@ void BehaviorVictorDemoFeeding::TransitionToVerifyFood(BehaviorExternalInterface
   const ObjectID foodCubeID = whiteboard.Victor_GetCubeToEat();
   
   if( foodCubeID.IsSet() ) {
-    Robot& robot = behaviorExternalInterface.GetRobot();
     const bool verifyWhenDone = true;
-    IActionRunner* turnAndVerifyAction = new TurnTowardsObjectAction(robot,
-                                                                     foodCubeID,
+    IActionRunner* turnAndVerifyAction = new TurnTowardsObjectAction(foodCubeID,
                                                                      Radians{M_PI_F},
                                                                      verifyWhenDone);
 
@@ -137,13 +133,13 @@ void BehaviorVictorDemoFeeding::TransitionToVerifyFood(BehaviorExternalInterface
           // grab the cube and check if it's on the ground (so we can eat it)
           const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
           const auto& blockWorld = behaviorExternalInterface.GetBlockWorld();
-          const Robot& robot = behaviorExternalInterface.GetRobot();
-
+          
+          const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
           const ObjectID foodCubeID = whiteboard.Victor_GetCubeToEat();
           const ObservableObject* cube = blockWorld.GetLocatedObjectByID(foodCubeID);
 
           if( cube &&
-              robot.GetDockingComponent().CanPickUpObjectFromGround(*cube) ) {
+              robotInfo.GetDockingComponent().CanPickUpObjectFromGround(*cube) ) {
             TransitionToEating(behaviorExternalInterface);
             return;
           }
@@ -160,15 +156,15 @@ void BehaviorVictorDemoFeeding::TransitionToWaitForFood(BehaviorExternalInterfac
   SetDebugStateName("WaitForFood");
 
   // TODO:(bn) better animation or something here, but for now just look down and wait
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  _imgTimeStartedWaitngForFood = robot.GetLastImageTimeStamp();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  _imgTimeStartedWaitngForFood = robotInfo.GetLastImageTimeStamp();
 
   // if wait finishes without interruption, we lost the food, so also queue a frustrated anim
 
-  CompoundActionSequential* action = new CompoundActionSequential(robot, {
-      new MoveHeadToAngleAction(robot, MoveHeadToAngleAction::Preset::IDEAL_BLOCK_VIEW),
-      new WaitAction(robot, kTimeToWaitForCube),
-      new TriggerAnimationAction( robot, AnimationTrigger::FeedingSearchFailure )
+  CompoundActionSequential* action = new CompoundActionSequential({
+      new MoveHeadToAngleAction(MoveHeadToAngleAction::Preset::IDEAL_BLOCK_VIEW),
+      new WaitAction(kTimeToWaitForCube),
+      new TriggerAnimationAction(AnimationTrigger::FeedingSearchFailure )
         });
 
   // Update will interrupt this if the cube is seen, otherwise after the timeout the behavior will end

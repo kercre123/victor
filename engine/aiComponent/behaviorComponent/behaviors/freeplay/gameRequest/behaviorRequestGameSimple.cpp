@@ -22,13 +22,13 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/gameRequest/behaviorRequestGameSimple.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/faceWorld.h"
 #include "engine/pathMotionProfileHelpers.h"
-#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -73,33 +73,6 @@ static const int   kMaxNumberOfRetries = 2;
 
 // need to be as far away as the size of the robot + 2 blocks + padding
 static const float kSafeDistSqFromObstacle_mm = SQUARE(100);
-
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRequestGameArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     true},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersRequestGameArray),
-              "Reaction triggers duplicate or non-sequential");
 
 } // end namespace
 
@@ -185,25 +158,14 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-
-  if( _disableReactionsEarly ) {
-    SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRequestGameArray);
-    PRINT_CH_INFO("Behaviors", "BehaviorRequestGameSimple.DisableReactions.Early",
-                  "%s: disabling reactions in init",
-                  GetIDStr().c_str());
-  }
-
   _verifyStartTime_s = std::numeric_limits<float>::max();
 
   // use the driving motion profile by default
   SmartSetMotionProfile(_driveToPlaceProfile);
   
   if(_wasTriggeredAsInterrupt){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
     _activeConfig = &_zeroBlockConfig;
-    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::RequestGameInterrupt),
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::RequestGameInterrupt),
                 &BehaviorRequestGameSimple::TransitionToLookingAtFace);
   }else if( GetNumBlocks(behaviorExternalInterface) == 0 ) {
     _activeConfig = &_zeroBlockConfig;
@@ -213,11 +175,8 @@ Result BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExtern
     }
   }
   else {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
     _activeConfig = &_oneBlockConfig;
-    if(robot.GetCarryingComponent().IsCarryingObject()){
+    if(behaviorExternalInterface.GetRobotInfo().GetCarryingComponent().IsCarryingObject()){
       TransitionToDrivingToFace(behaviorExternalInterface);
     }else if( ! IsControlDelegated() ) {
       TransitionToPlayingInitialAnimation(behaviorExternalInterface);
@@ -297,13 +256,9 @@ void BehaviorRequestGameSimple::RequestGame_OnBehaviorDeactivated(BehaviorExtern
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
   IActionRunner* animationAction = new TurnTowardsFaceWrapperAction(
-    robot,
-    new TriggerAnimationAction(robot, _activeConfig->initialAnimTrigger) );
+    new TriggerAnimationAction(_activeConfig->initialAnimTrigger) );
   DelegateIfInControl( animationAction, &BehaviorRequestGameSimple::TransitionToFacingBlock );
   SET_STATE(PlayingInitialAnimation);
 }
@@ -312,12 +267,10 @@ void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(BehaviorExte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToFacingBlock(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+
   ObjectID targetBlockID = GetRobotsBlockID(behaviorExternalInterface);
   if( targetBlockID.IsSet() ) {
-    DelegateIfInControl(new TurnTowardsObjectAction( robot, targetBlockID),
+    DelegateIfInControl(new TurnTowardsObjectAction(targetBlockID),
                 &BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation);
     SET_STATE(FacingBlock);
   }
@@ -326,7 +279,8 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(BehaviorExternalInterfac
                      "block no longer exists (or has moved). Searching for block");
     
     SET_STATE(SearchingForBlock);
-    auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+
+    auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
     SearchParameters params;
     params.numberOfBlocksToLocate = 1;
     HelperHandle searchHelper = factory.CreateSearchForBlockHelper(behaviorExternalInterface, *this, params);
@@ -338,10 +292,7 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(BehaviorExternalInterfac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  IActionRunner* animationAction = new TriggerAnimationAction(robot, _activeConfig->preDriveAnimTrigger);
+  IActionRunner* animationAction = new TriggerAnimationAction(_activeConfig->preDriveAnimTrigger);
   DelegateIfInControl(animationAction, &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
   SET_STATE(PlayingPreDriveAnimation);
 }
@@ -372,19 +323,13 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(BehaviorExternalInter
 
     // couldn't pick up this block. If we have another, try that. Otherwise, fail
     if( SwitchRobotsBlock(behaviorExternalInterface) ) {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail),
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::RequestGamePickupFail),
                               &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
     }else {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
       // if its an abort failure, do nothing, which will cause the behavior to stop
       PRINT_NAMED_INFO("BehaviorRequestGameSimple.PickingUpBlock.Failed",
                        "Helper failed to pick up block, so ending the behavior");
-      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail));
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::RequestGamePickupFail));
     }
   };
   
@@ -426,11 +371,7 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(BehaviorExternalInterf
     return;
   }
   else {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DriveToPoseAction* action = new DriveToPoseAction(robot,
-                                                      _faceInteractionPose,
+    DriveToPoseAction* action = new DriveToPoseAction(_faceInteractionPose,
                                                       false,
                                                       false,
                                                       _driveToPlacePoseThreshold_mm,
@@ -465,18 +406,15 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(BehaviorExternalInterfa
     return;
   }
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  CompoundActionSequential* action = new CompoundActionSequential();
 
   {
     const bool shouldEmitCompletion = true;
-    action->AddAction( new PlaceObjectOnGroundAction(robot), false, shouldEmitCompletion );
+    action->AddAction( new PlaceObjectOnGroundAction(), false, shouldEmitCompletion );
   }
 
   // TODO:(bn) use same motion profile here
-  action->AddAction(new DriveStraightAction(robot, -_afterPlaceBackupDist_mm, _afterPlaceBackupSpeed_mmps));
+  action->AddAction(new DriveStraightAction(-_afterPlaceBackupDist_mm, _afterPlaceBackupSpeed_mmps));
 
   DelegateIfInControl(action,
               [this, &behaviorExternalInterface](ActionResult result) {
@@ -508,11 +446,8 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(BehaviorExternalInterfa
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToLookingAtFace(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   const bool sayName = true;
-  DelegateIfInControl(new TurnTowardsLastFacePoseAction(robot, M_PI_F, sayName),
+  DelegateIfInControl(new TurnTowardsLastFacePoseAction(M_PI_F, sayName),
               &BehaviorRequestGameSimple::TransitionToVerifyingFace);
   SET_STATE(LookingAtFace);
 }
@@ -522,11 +457,8 @@ void BehaviorRequestGameSimple::TransitionToLookingAtFace(BehaviorExternalInterf
 void BehaviorRequestGameSimple::TransitionToVerifyingFace(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( DO_FACE_VERIFICATION_STEP ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
     _verifyStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    DelegateIfInControl(new WaitForImagesAction(robot, kFaceVerificationNumImages, VisionMode::DetectingFaces),
+    DelegateIfInControl(new WaitForImagesAction(kFaceVerificationNumImages, VisionMode::DetectingFaces),
                 [this, &behaviorExternalInterface](ActionResult result) {
                   if( result == ActionResult::SUCCESS && GetLastSeenFaceTime() >= _verifyStartTime_s ) {
                     TransitionToPlayingRequstAnim(behaviorExternalInterface);
@@ -551,16 +483,7 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(BehaviorExternalInterf
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(BehaviorExternalInterface& behaviorExternalInterface) {
 
-  if( ! _disableReactionsEarly ) {
-    SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRequestGameArray);
-    PRINT_CH_INFO("Behaviors", "BehaviorRequestGameSimple.DisableReactions.Request",
-                  "%s: disabling reactions in TransitionToPlayingRequstAnim",
-                  GetIDStr().c_str());
-  }
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TriggerAnimationAction(robot, _activeConfig->requestAnimTrigger),
+  DelegateIfInControl(new TriggerAnimationAction(_activeConfig->requestAnimTrigger),
               &BehaviorRequestGameSimple::TransitionToIdle);
   SET_STATE(PlayingRequestAnim);
 }
@@ -583,13 +506,10 @@ void BehaviorRequestGameSimple::IdleLoop(BehaviorExternalInterface& behaviorExte
     SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
   }
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   if(GetFaceID() != Vision::UnknownFaceID){
-    DelegateIfInControl(new TrackFaceAction(robot, GetFaceID()));
+    DelegateIfInControl(new TrackFaceAction(GetFaceID()));
   }else{
-    DelegateIfInControl( new HangAction(robot) );
+    DelegateIfInControl( new HangAction() );
   }
   
   BehaviorObjectiveAchieved(BehaviorObjective::RequestedGame);
@@ -599,10 +519,7 @@ void BehaviorRequestGameSimple::IdleLoop(BehaviorExternalInterface& behaviorExte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  IActionRunner* denyAnimAction = new TriggerAnimationAction( robot, _activeConfig->denyAnimTrigger );
+  IActionRunner* denyAnimAction = new TriggerAnimationAction(_activeConfig->denyAnimTrigger );
   DelegateIfInControl(denyAnimAction);
   SET_STATE(PlayingDenyAnim);
 } 
@@ -640,10 +557,8 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface
     return false;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  if( ! facePose.GetWithRespectTo(robot.GetPose(), facePose) ) {
+  auto& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
+  if( ! facePose.GetWithRespectTo(robotPose, facePose) ) {
     PRINT_NAMED_ERROR("BehaviorRequestGameSimple.NoFacePose",
                       "could not get face pose with respect to robot. This should never happen");
     return false;
@@ -664,7 +579,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface
     float relX = distanceRatio * facePose.GetTranslation().x();
     float relY = distanceRatio * facePose.GetTranslation().y();
 
-    targetPose = Pose3d{ targetAngle, Z_AXIS_3D(), {relX, relY, 0.0f}, robot.GetPose() };
+    targetPose = Pose3d{ targetAngle, Z_AXIS_3D(), {relX, relY, 0.0f}, robotPose };
     targetPose = targetPose.GetWithRespectToRoot();
 
     BlockWorldFilter filter;
@@ -674,9 +589,9 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface
           // ignore unknown obstacles
           return false;
         }
-
-        if( robot.GetCarryingComponent().IsCarryingObject() &&
-            robot.GetCarryingComponent().GetCarryingObject() == obj->GetID() ) {
+        auto& carryingComp = behaviorExternalInterface.GetRobotInfo().GetCarryingComponent();
+        if( carryingComp.IsCarryingObject() &&
+            carryingComp.GetCarryingObject() == obj->GetID() ) {
           // ignore the block we are carrying
           return false;
         }
@@ -695,7 +610,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface
       });
 
     std::vector<ObservableObject*> blocks;
-    robot.GetBlockWorld().FindLocatedMatchingObjects(filter, blocks);
+    behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(filter, blocks);
 
     if(blocks.empty()) {
       targetPoseRet = targetPose;
@@ -705,7 +620,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface
 
   PRINT_NAMED_INFO("BehaviorRequestGameSimple.NoSafeBlockPose",
                    "Could not find a safe place to put down the cube, using current position");  
-  targetPoseRet = Pose3d{ targetAngle, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f}, robot.GetPose() };
+  targetPoseRet = Pose3d{ targetAngle, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f}, robotPose };
   targetPoseRet = targetPoseRet.GetWithRespectToRoot();
 
   return true;

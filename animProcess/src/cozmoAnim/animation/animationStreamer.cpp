@@ -18,6 +18,7 @@
 #include "cozmoAnim/animation/animationStreamer.h"
 //#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 #include "cozmoAnim/animation/cannedAnimationContainer.h"
+#include "cozmoAnim/animation/faceAnimationManager.h"
 #include "cozmoAnim/animation/proceduralFaceDrawer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
@@ -49,11 +50,19 @@ namespace Cozmo {
   
   namespace{
     
+  // Specifies how often to send AnimState message
+  static const u32 kAnimStateReportingPeriod_tics = 2;
+
   // Default time to wait before forcing KeepFaceAlive() after the latest stream has stopped
   const f32 kDefaultLongEnoughSinceLastStreamTimeout_s = 0.5f;
   
   CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
   CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
+    
+  // Overrides whatever faces we're sending with a 3-stripe test pattern
+  // (seems more related to the other ProceduralFace console vars, so putting it in that group instead)
+  CONSOLE_VAR(bool, kProcFace_DisplayTestPattern, "ProceduralFace", false);
+    
   } // namespace
   
   AnimationStreamer::AnimationStreamer(const CozmoAnimContext* context)
@@ -64,8 +73,9 @@ namespace Cozmo {
   , _tracksInUse(0)
   , _audioClient( new Audio::AnimationAudioClient(context->GetAudioController()) )
   , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
+  , _numTicsToSendAnimState(kAnimStateReportingPeriod_tics)
   {
-    _proceduralAnimation = new Animation("ProceduralAnimation");
+    _proceduralAnimation = new Animation(EnumToString(AnimConstants::PROCEDURAL_ANIM));
     _proceduralAnimation->SetIsLive(true);
   }
   
@@ -101,15 +111,17 @@ namespace Cozmo {
     // Do this after the ProceduralFace class has set to use the right neutral face
     _trackLayerComponent->Init();
     
-    _faceImg.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-    _faceImg565.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+    _faceDrawBuf.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+    _procFaceImg.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+    _faceImageBinary.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+    _faceImageRGB565.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     
     // Until we address the display gamma issues (VIC-559), apply a gamma<1.0 to darken the
     // dark end of the range. Not necessary in simulation.
 #   ifdef SIMULATOR
     const f32 invGamma = 1.f;
 #   else
-    const f32 invGamma = 1.f / 0.5f;
+    const f32 invGamma = 1.f;
 #   endif
     const size_t kGammaEndRange = 160;
     int i=0;
@@ -137,17 +149,6 @@ namespace Cozmo {
     FaceDisplay::removeInstance();
     Util::SafeDelete(_proceduralAnimation);
   }
-
-  Result AnimationStreamer::SetStreamingAnimation(u32 animID, Tag tag, u32 numLoops, bool interruptRunning)
-  {
-    std::string animName = "";
-    if (!_animationContainer.GetAnimNameByID(animID, animName)) {
-      PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.InvalidAnimID", "%d", animID);
-      return RESULT_FAIL;
-    }
-    return SetStreamingAnimation(animName, tag, numLoops, interruptRunning);
-  }
-  
   
   Result AnimationStreamer::SetStreamingAnimation(const std::string& name, Tag tag, u32 numLoops, bool interruptRunning)
   {
@@ -198,43 +199,33 @@ namespace Cozmo {
     }
     
     _streamingAnimation = anim;
-    
-    if (_streamingAnimation == _proceduralAnimation)
-    {
-      _streamingAnimID = 0;
-    }
-    else if(!GetCannedAnimationContainer().GetAnimIDByName(_streamingAnimation->GetName(), _streamingAnimID))
-    {
-      PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.AnimIDNotFound", "%s", _streamingAnimation->GetName().c_str());
-      _streamingAnimID = 0;
-    }
+
     
     if(_streamingAnimation == nullptr) {
       // Set flag if we are interrupting a streaming animation with nothing.
       // If we get to KeepFaceAlive with this flag set, we'll stream neutral face for safety.
       if(wasStreamingSomething) {
-        _wasAnimationInterruptedWithNothing |= true;
+        _wasAnimationInterruptedWithNothing = true;
       }
       return RESULT_FAIL;
     }
-    else
-    {
-      _lastPlayedAnimationId = _streamingAnimation->GetName();
     
-      // Get the animation ready to play
-      InitStream(_streamingAnimation, tag);
-      
-      _numLoops = numLoops;
-      _loopCtr = 0;
-      
-      if(DEBUG_ANIMATION_STREAMING) {
-        PRINT_NAMED_DEBUG("AnimationStreamer.SetStreamingAnimation",
-                          "Will start streaming '%s' animation %d times with tag=%d.",
-                          _streamingAnimation->GetName().c_str(), numLoops, tag);
-      }
-      
-      return RESULT_OK;
+    _streamingAnimName = _streamingAnimation->GetName();
+  
+    // Get the animation ready to play
+    InitStream(_streamingAnimation, tag);
+    
+    _numLoops = numLoops;
+    _loopCtr = 0;
+    
+    if(DEBUG_ANIMATION_STREAMING) {
+      PRINT_NAMED_DEBUG("AnimationStreamer.SetStreamingAnimation",
+                        "Will start streaming '%s' animation %d times with tag=%d.",
+                        _streamingAnimation->GetName().c_str(), numLoops, tag);
     }
+    
+    return RESULT_OK;
+
   }
   
   Result AnimationStreamer::SetProceduralFace(const ProceduralFace& face, u32 duration_ms)
@@ -261,6 +252,126 @@ namespace Cozmo {
     
     return result;
   }
+
+  void AnimationStreamer::Process_displayFaceImageChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageBinaryChunk& msg) 
+  {
+    // Expand the bit-packed msg.faceData (every bit == 1 pixel) to byte array (every byte == 1 pixel)
+    static const u32 kExpectedNumPixels = FACE_DISPLAY_NUM_PIXELS/2;
+    static const u32 kDataLength = sizeof(msg.faceData);
+    static_assert(8 * kDataLength == kExpectedNumPixels, "Mismatched face image and bit image sizes");
+
+    if (msg.imageId != _faceImageId) {
+      if (_faceImageChunksReceivedBitMask != 0) {
+        PRINT_NAMED_WARNING("AnimationStreamer.Process_displayFaceImageChunk.UnfinishedFace", 
+                            "Overwriting ID %d with ID %d", 
+                            _faceImageId, msg.imageId);
+      }
+      _faceImageId = msg.imageId;
+      _faceImageChunksReceivedBitMask = 1 << msg.chunkIndex;
+    } else {
+      _faceImageChunksReceivedBitMask |= 1 << msg.chunkIndex;
+    }
+    
+    uint8_t* imageData_i = _faceImageBinary.GetDataPointer();
+
+    uint32_t destI = msg.chunkIndex * kExpectedNumPixels;
+    
+    for (int i = 0; i < kDataLength; ++i)
+    {
+      uint8_t currentByte = msg.faceData[i];
+        
+      for (uint8_t bit = 0; bit < 8; ++bit)
+      {
+        imageData_i[destI] = ((currentByte & 0x80) > 0) ? 255 : 0;
+        ++destI;
+        currentByte = (uint8_t)(currentByte << 1);
+      }
+    }
+    assert(destI == kExpectedNumPixels * (1+msg.chunkIndex));
+    
+    if (_faceImageChunksReceivedBitMask == kAllFaceImageChunksReceivedMask) {
+      //PRINT_NAMED_DEBUG("AnimationStreamer.Process_displayFaceImageChunk.CompleteFaceReceived", "");
+      SetFaceImage(_faceImageBinary, msg.duration_ms);
+      _faceImageId = 0;
+      _faceImageChunksReceivedBitMask = 0;
+    }
+  }
+
+  void AnimationStreamer::Process_displayFaceImageChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageRGBChunk& msg) 
+  {
+    if (msg.imageId != _faceImageRGBId) {
+      if (_faceImageRGBChunksReceivedBitMask != 0) {
+        PRINT_NAMED_WARNING("AnimationStreamer.Process_displayFaceImageRGBChunk.UnfinishedFace", 
+                            "Overwriting ID %d with ID %d", 
+                            _faceImageRGBId, msg.imageId);
+      }
+      _faceImageRGBId = msg.imageId;
+      _faceImageRGBChunksReceivedBitMask = 1 << msg.chunkIndex;
+    } else {
+      _faceImageRGBChunksReceivedBitMask |= 1 << msg.chunkIndex;
+    }
+    
+    static const u16 kMaxNumPixelsPerChunk = sizeof(msg.faceData) / sizeof(msg.faceData[0]);
+    const auto numPixels = std::min(msg.numPixels, kMaxNumPixelsPerChunk);
+    std::copy_n(msg.faceData, numPixels, _faceImageRGB565.GetRawDataPointer() + (msg.chunkIndex * kMaxNumPixelsPerChunk) );
+    
+    if (_faceImageRGBChunksReceivedBitMask == kAllFaceImageRGBChunksReceivedMask) {
+      //PRINT_NAMED_DEBUG("AnimationStreamer.Process_displayFaceImageRGBChunk.CompleteFaceReceived", "");
+
+      SetFaceImage(_faceImageRGB565, msg.duration_ms);
+      _faceImageRGBId = 0;
+      _faceImageRGBChunksReceivedBitMask = 0;
+    }
+  }
+
+  Result AnimationStreamer::SetFaceImage(const Vision::Image& img, u32 duration_ms)
+  {
+    // Create RGB565 image from grey scale
+    // TODO: Set to some default or user-defined color?
+    Vision::ImageRGB565 imgRGB565(img);
+
+    return SetFaceImage(imgRGB565, duration_ms);
+  }
+
+
+  Result AnimationStreamer::SetFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms)
+  {
+    DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetFaceImage.NullProceduralAnimation");
+    DEV_ASSERT(imgRGB565.IsContinuous(), "AnimationStreamer.SetFaceImage.ImageIsNotContinuous");
+    
+    FaceAnimationManager* faceAnimMgr = FaceAnimationManager::getInstance();
+    
+    // Is proceduralAnimation already playing a FaceAnimationKeyFrame?
+    auto& faceAnimTrack = _proceduralAnimation->GetTrack<FaceAnimationKeyFrame>();
+    bool hasFaceAnimKeyFrame = !faceAnimTrack.IsEmpty();
+
+    // Clear FaceAnimationMAnager if not already playing
+    if (!hasFaceAnimKeyFrame) {
+      faceAnimMgr->ClearAnimation(FaceAnimationManager::ProceduralAnimName);
+    }
+
+    Result result = faceAnimMgr->AddImage(FaceAnimationManager::ProceduralAnimName, imgRGB565, duration_ms);
+    if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetFaceImage.AddImageFailed", "")))
+    {
+      return result;
+    }
+
+    // Add keyframe if one isn't already there
+    if (!hasFaceAnimKeyFrame) {
+      // Trigger time of keyframe is 0 since we want it to start playing immediately
+      result = _proceduralAnimation->AddKeyFrameToBack(FaceAnimationKeyFrame(FaceAnimationManager::ProceduralAnimName));
+      if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetFaceImage.FailedToAddKeyFrame", "")))
+      {
+        return result;
+      }
+    }
+    
+    if (_streamingAnimation != _proceduralAnimation) {
+      result = SetStreamingAnimation(_proceduralAnimation, 0);
+    }
+    return result;
+    
+  }
   
   void AnimationStreamer::Abort()
   {
@@ -282,10 +393,10 @@ namespace Cozmo {
 
       _audioClient->StopCozmoEvent();
 
-//      if (_audioClient.HasAnimation()) {
-//        _audioClient.GetCurrentAnimation()->AbortAnimation();
-//      }
-//      _audioClient.ClearCurrentAnimation();
+      if (_streamingAnimation == _proceduralAnimation) {
+        _proceduralAnimation->Clear();
+        FaceAnimationManager::getInstance()->ClearAnimation(FaceAnimationManager::ProceduralAnimName);
+      }
     }
   } // Abort()
 
@@ -368,24 +479,20 @@ namespace Cozmo {
   
   void AnimationStreamer::BufferFaceToSend(const ProceduralFace& procFace)
   {
-#   define DISPLAY_TEST_PATTERN 0
-    
-    // Display three color strips increasing in brightness from left to right
-    if(DISPLAY_TEST_PATTERN)
+    if(kProcFace_DisplayTestPattern)
     {
-      _faceImg.FillWith(0);
-      
+      // Display three color strips increasing in brightness from left to right
       for(int i=0; i<FACE_DISPLAY_HEIGHT/3; ++i)
       {
-        Vision::PixelRGB* red_i   = _faceImg.GetRow(i);
-        Vision::PixelRGB* green_i = _faceImg.GetRow(i + FACE_DISPLAY_HEIGHT/3);
-        Vision::PixelRGB* blue_i  = _faceImg.GetRow(i + 2*FACE_DISPLAY_HEIGHT/3);
+        Vision::PixelRGB565* red_i   = _faceDrawBuf.GetRow(i);
+        Vision::PixelRGB565* green_i = _faceDrawBuf.GetRow(i + FACE_DISPLAY_HEIGHT/3);
+        Vision::PixelRGB565* blue_i  = _faceDrawBuf.GetRow(i + 2*FACE_DISPLAY_HEIGHT/3);
         for(int j=0; j<FACE_DISPLAY_WIDTH; ++j)
         {
           const u8 value = Util::numeric_cast_clamped<u8>(std::round((f32)j/(f32)FACE_DISPLAY_WIDTH * 255.f));
-          red_i[j].r()   = value;
-          green_i[j].g() = value;
-          blue_i[j].b()  = value;
+          red_i[j]   = Vision::PixelRGB565(value, 0, 0);
+          green_i[j] = Vision::PixelRGB565(0, value, 0);
+          blue_i[j]  = Vision::PixelRGB565(0, 0, value);
         }
       }
     }
@@ -393,44 +500,21 @@ namespace Cozmo {
     {
       DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
       DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
-      ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _faceImg);
+      ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _procFaceImg);
+      _faceDrawBuf.SetFromImageRGB(_procFaceImg, _gammaLUT);
     }
     
-    BufferFaceToSend(_faceImg);
+    BufferFaceToSend(_faceDrawBuf);
   }
   
-  static void ConvertRGB24toRGB565(const Vision::ImageRGB& faceImg, const std::array<u8,256>& _gammaLUT, Array2d<u16>& _faceImg565)
+  void AnimationStreamer::BufferFaceToSend(const Vision::ImageRGB565& faceImg565)
   {
-    // Convert to RGB565 format, and flip byte order
-    DEV_ASSERT(faceImg.IsContinuous(), "AnimationStreamer.BufferFaceToSend.FaceImgNotContinuous");
-    DEV_ASSERT(_faceImg565.IsContinuous(), "AnimationStreamer.BufferFaceToSend.FaceImg565NotContinuous");
-    
-    u16* img565_i = _faceImg565.GetRow(0);
-    const Vision::PixelRGB* faceImg_i = faceImg.get_CvMat_().ptr<Vision::PixelRGB>(0);
-    
-    for(int j = 0; j < _faceImg565.GetNumElements(); ++j)
-    {
-      const Vision::PixelRGB& pixRGB24 = faceImg_i[j];
-      u16& pixRGB565 = img565_i[j];
-      
-      // Convert to RGB565 (and incorporate gamma)
-      pixRGB565 = (((int)(_gammaLUT[pixRGB24.r()] >> 3) << 11) |
-                   ((int)(_gammaLUT[pixRGB24.g()] >> 2) << 5)  |
-                   ((int)(_gammaLUT[pixRGB24.b()] >> 3) << 0));
-      
-      // Swap byte ordering
-      pixRGB565 = ((pixRGB565>>8)&0xFF) | ((pixRGB565&0xFF)<<8);
-    }
-  }
-  
-  void AnimationStreamer::BufferFaceToSend(const Vision::ImageRGB& faceImg)
-  {
-    ANKI_VERIFY(faceImg.GetNumCols() == FACE_DISPLAY_WIDTH &&
-                faceImg.GetNumRows() == FACE_DISPLAY_HEIGHT,
-                "AnimationStreamer.BufferFaceToSend.InvalidImageSize",
-                "Got %d x %d. Expected %d x %d",
-                faceImg.GetNumCols(), faceImg.GetNumRows(),
-                FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
+    DEV_ASSERT_MSG(faceImg565.GetNumCols() == FACE_DISPLAY_WIDTH &&
+                   faceImg565.GetNumRows() == FACE_DISPLAY_HEIGHT,
+                   "AnimationStreamer.BufferFaceToSend.InvalidImageSize",
+                   "Got %d x %d. Expected %d x %d",
+                   faceImg565.GetNumCols(), faceImg565.GetNumRows(),
+                   FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
     
     // Draws frame to face display
 #ifdef DRAW_FACE_IN_THREAD
@@ -448,19 +532,16 @@ namespace Cozmo {
         return;
       }
     }
-
-    ConvertRGB24toRGB565(faceImg, _gammaLUT, _faceImg565);
     
     // Dispatch thread
-    auto draw_face = [](u16* frame) {
+    auto draw_face = [](const u16* frame) {
       FaceDisplay::getInstance()->FaceDraw(frame);
     };
   
-    _faceDrawFuture = std::async(draw_face, _faceImg565.GetRow(0));
+    _faceDrawFuture = std::async(draw_face, faceImg565.GetRawDataPointer());
     _lastDrawTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-#else    
-    ConvertRGB24toRGB565(faceImg, _gammaLUT, _faceImg565);
-    FaceDisplay::getInstance()->FaceDraw(_faceImg565.GetRow(0));
+#else
+    FaceDisplay::getInstance()->FaceDraw(faceImg565.GetRawDataPointer());
 #endif   // #ifdef DRAW_FACE_IN_THREAD
   }
 
@@ -490,13 +571,14 @@ namespace Cozmo {
   Result AnimationStreamer::SendStartOfAnimation()
   {
     if(DEBUG_ANIMATION_STREAMING) {
-      PRINT_NAMED_DEBUG("AnimationStreamer.SendStartOfAnimation.BufferedStartOfAnimation", "Tag=%d, ID=%d, loopCtr=%d",
-                        _tag, _streamingAnimID, _loopCtr);
+      PRINT_NAMED_DEBUG("AnimationStreamer.SendStartOfAnimation.BufferedStartOfAnimation", "Tag=%d, Name=%s, loopCtr=%d",
+                        _tag, _streamingAnimName.c_str(), _loopCtr);
     }
 
     if (_loopCtr == 0) {
-      RobotInterface::AnimationStarted startMsg;
-      startMsg.id = _streamingAnimID;
+      AnimationStarted startMsg;
+      memcpy(startMsg.animName, _streamingAnimName.c_str(), _streamingAnimName.length());
+      startMsg.animName_length = _streamingAnimName.length();
       startMsg.tag = _tag;
       if (!RobotInterface::SendMessageToEngine(startMsg)) {
         return RESULT_FAIL;
@@ -524,8 +606,9 @@ namespace Cozmo {
     }
     
     if (_loopCtr == _numLoops - 1) {
-      RobotInterface::AnimationEnded endMsg;
-      endMsg.id = _streamingAnimID;
+      AnimationEnded endMsg;
+      memcpy(endMsg.animName, _streamingAnimName.c_str(), _streamingAnimName.length());
+      endMsg.animName_length = _streamingAnimName.length();
       endMsg.tag = _tag;
       endMsg.wasAborted = false;
       if (!RobotInterface::SendMessageToEngine(endMsg)) {
@@ -706,7 +789,7 @@ namespace Cozmo {
         // Get keyframe and send contents to engine
         auto eventKeyFrame = eventTrack.GetCurrentKeyFrame();
 
-        RobotInterface::AnimationEvent eventMsg;
+        AnimationEvent eventMsg;
         eventMsg.event_id = eventKeyFrame.GetAnimEvent();
         eventMsg.timestamp = currTime_ms;
         eventMsg.tag = _tag;
@@ -721,10 +804,10 @@ namespace Cozmo {
         auto & faceKeyFrame = faceAnimTrack.GetCurrentKeyFrame();
         if(faceKeyFrame.IsTimeToPlay(_streamingTime_ms - _startTime_ms))
         {
-          const auto faceImgPtr = faceKeyFrame.GetFaceImage();
-          if (faceImgPtr != nullptr) {
+          const bool gotImage = faceKeyFrame.GetFaceImage(_faceDrawBuf);
+          if (gotImage) {
             DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
-            BufferFaceToSend(*faceImgPtr);
+            BufferFaceToSend(_faceDrawBuf);
           }
           
           if(faceKeyFrame.IsDone()) {
@@ -893,6 +976,19 @@ namespace Cozmo {
     // Tick audio engine
     _audioClient->Update();
     
+
+    // Send animState message
+    if (--_numTicsToSendAnimState == 0) {
+      AnimationState msg;
+      msg.numProcAnimFaceKeyframes = FaceAnimationManager::getInstance()->GetNumFrames(FaceAnimationManager::ProceduralAnimName);
+      msg.lockedTracks             = _lockedTracks;
+      msg.tracksInUse              = _tracksInUse;
+
+      RobotInterface::SendMessageToEngine(msg);
+      _numTicsToSendAnimState = kAnimStateReportingPeriod_tics;
+    }
+
+
     return lastResult;
   } // AnimationStreamer::Update()
   

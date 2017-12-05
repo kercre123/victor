@@ -7,9 +7,7 @@
 
 #include "clad/externalInterface/messageActions.clad"
 #include "clad/externalInterface/messageShared.clad"
-#include "clad/externalInterface/messageToBehaviorManager.clad"
 #include "clad/types/actionTypes.clad"
-#include "clad/types/behaviorComponent/activityTypes.clad"
 #include "clad/types/controllerChannels.clad"
 #include "clad/types/customObjectMarkers.clad"
 #include "clad/types/debugConsoleTypes.clad"
@@ -28,7 +26,6 @@
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/poseStructs.clad"
 #include "clad/types/proceduralFaceTypes.clad"
-#include "clad/types/behaviorComponent/reactionTriggers.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/sayTextStyles.clad"
 #include "clad/types/uiConnectionTypes.clad"
@@ -67,11 +64,6 @@ message UiDeviceConnectionSuccess {
   string  cpuVersion
 }
 
-message ConnectToRobot {
-    uint_8 ipAddress[16],
-    uint_8 isSimulated
-}
-
 // ConnectToUiDevice
 message ConnectToUiDevice {
     UiConnectionType  connectionType,
@@ -82,13 +74,6 @@ message ConnectToUiDevice {
 message DisconnectFromUiDevice {
     UiConnectionType  connectionType,
     uint_8 deviceID
-}
-
-// StartEngine
-// Tell the engine to start running.
-message StartEngine {
-    uint_32 random_seed = 0,   // Use 0 for randomly generated seed, or a specific value for repeatability
-    string locale              // Application locale, if different from default locale
 }
 
 message ReliableTransportRunMode {
@@ -541,9 +526,9 @@ message FakeTriggerWordDetected
 {
 }
 
-// ActivateHighLevelActivity
-message ActivateHighLevelActivity {
-  HighLevelActivity activityType
+// Allows Game to fake an intent coming from the cloud
+message FakeCloudIntent{
+  string intent
 }
 
 // ExecuteBehavior
@@ -562,10 +547,6 @@ message ExecuteBehaviorByID {
 message SetLiftLoadTestAsActivatable {
 }
 
-// Any message intended for a specific robot's behaviorManager
-message BehaviorManagerMessage {
-  BehaviorManagerMessageUnion  BehaviorManagerMessageUnion
-}
 
 // Enable/Disable Cozmo's ability to request a game
 message CanCozmoRequestGame {
@@ -602,33 +583,6 @@ message StartTestMode {
 message RequestAllBehaviorsList {
 }
 
-// request reaction trigger map
-message RequestReactionTriggerMap {
-
-}
-
-
-// Execute Reaction
-message ExecuteReactionTrigger {
-  //ReactionTriggerToBehavior reactionTriggerToBehaviorEntry
-}
-
-//disable all the affected triggers by locking them with the specified lockID
-message DisableReactionsWithLock{
-  string lockID,
-  AllTriggersConsidered triggersAffected
-}
-
-//remove the specified lockID from all triggers -
-//if no locks remain the trigger will be re-enabled
-message RemoveDisableReactionsLock{
-  string lockID
-}
-
-// disable all reactions with a lock - SHOULD ONLY BE USED BY SDK
-message DisableAllReactionsWithLock{
-  string lockID
-}
 
 // Engine will preserve the head and lift state between reactionary behaviors
 message SetDefaultHeadAndLiftState {
@@ -785,6 +739,24 @@ message DisplayProceduralFace
 message SetFaceHue
 {
     float_32 hue // [0,1]
+}
+
+
+// TODO: Move to shared file with anim process?
+// DisplayFaceImageBinaryChunk
+// Bit-image: one bit for each of 184x96 pixels = 2208 bytes
+// If index == 0, this is the top half of the image
+// If index == 1, this is the bottom half of the image
+// Image is actually drawn when index == 1 as long as the associated 
+// top half (i.e. index == 0) message with matching tag was received.
+// The duration_ms that is actually used is whichever last image half
+// is sent. Just make sure they're the same for both halves!
+message DisplayFaceImageBinaryChunk {
+    uint_32  duration_ms,    // Use uint_32 max value to keep the image on the screen
+    uint_8   faceData[1104],
+    uint_8   imageId,
+    uint_8   chunkIndex,
+    bool     interruptRunning
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1034,6 +1006,12 @@ message RequestDeviceData {
 ///////////////////////////////////////////////////////////////////////////////
 
 message SetDebugConsoleVarMessage {
+  string varName,
+  string tryValue
+}
+
+// Same as above, but for setting console vars in the anim process
+message SetAnimDebugConsoleVarMessage {
   string varName,
   string tryValue
 }

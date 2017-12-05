@@ -14,14 +14,12 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/robot.h"
 #include "anki/common/basestation/utils/timer.h"
 
 
@@ -94,16 +92,7 @@ Result BehaviorRespondPossiblyRoll::OnBehaviorActivated(BehaviorExternalInterfac
   return Result::RESULT_OK;
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRespondPossiblyRoll::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  _metadata.SetPlayedOnSideAnim();
-  return OnActivatedInternal_Legacy(behaviorExternalInterface);
-}
 
-  
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
@@ -123,11 +112,7 @@ ICozmoBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondPossiblyRoll::DetermineNextResponse(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  // Ensure behavior cube lights have been cleared
-  std::vector<BehaviorStateLightInfo> basePersistantLight;
-  SetBehaviorStateLights(basePersistantLight, false);
-  
+{  
   const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_metadata.GetObjectID());
   if(nullptr != object){
     if (!_metadata.GetPoseUpAxisAccurate() ||
@@ -146,15 +131,12 @@ void BehaviorRespondPossiblyRoll::DetermineNextResponse(BehaviorExternalInterfac
 void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(RespondingPositively);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  CompoundActionSequential* turnAndReact = new CompoundActionSequential(robot);
-  turnAndReact->AddAction(new TurnTowardsObjectAction(robot, _metadata.GetObjectID(), Radians(M_PI_F), true));
+  CompoundActionSequential* turnAndReact = new CompoundActionSequential();
+  turnAndReact->AddAction(new TurnTowardsObjectAction(_metadata.GetObjectID(), Radians(M_PI_F), true));
   const unsigned long animIndex = _metadata.GetUprightAnimIndex() < kUprightAnims.size() ?
                                          _metadata.GetUprightAnimIndex() : kUprightAnims.size() - 1;
-  turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(robot, kUprightAnims[animIndex]));
+  turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(kUprightAnims[animIndex]));
   DelegateIfInControl(turnAndReact, [this](ActionResult result){
     if((result == ActionResult::SUCCESS) ||
        (result == ActionResult::VISUAL_OBSERVATION_FAILED)){
@@ -168,17 +150,14 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(BehaviorExternalInter
 void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(RespondingNegatively);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  CompoundActionSequential* turnAndReact = new CompoundActionSequential(robot);
-  turnAndReact->AddAction(new TurnTowardsObjectAction(robot, _metadata.GetObjectID(), Radians(M_PI_F), true));
+  CompoundActionSequential* turnAndReact = new CompoundActionSequential();
+  turnAndReact->AddAction(new TurnTowardsObjectAction(_metadata.GetObjectID(), Radians(M_PI_F), true));
   if((!_metadata.GetPlayedOnSideAnim()) &&
      (_metadata.GetOnSideAnimIndex() >= 0)){
     const unsigned long animIndex =  _metadata.GetOnSideAnimIndex() < kOnSideAnims.size() ?
                                           _metadata.GetOnSideAnimIndex() : kOnSideAnims.size() - 1;
-    turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(robot, kOnSideAnims[animIndex]));
+    turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(kOnSideAnims[animIndex]));
     _metadata.SetPlayedOnSideAnim();
   }
   
@@ -202,12 +181,6 @@ void BehaviorRespondPossiblyRoll::DelegateToRollHelper(BehaviorExternalInterface
                                                           parameters);
   
   SmartDelegateToHelper(behaviorExternalInterface, rollHelper, [this](BehaviorExternalInterface& behaviorExternalInterface){DetermineNextResponse(behaviorExternalInterface);}, nullptr);
-  // Set the cube lights to interacting for full behavior run time
-  std::vector<BehaviorStateLightInfo> basePersistantLight;
-  basePersistantLight.push_back(
-    BehaviorStateLightInfo(_metadata.GetObjectID(), CubeAnimationTrigger::InteractingBehaviorLock)
-  );
-  SetBehaviorStateLights(basePersistantLight, false);
 }
 
 } // namespace Cozmo

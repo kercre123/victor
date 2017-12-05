@@ -95,7 +95,7 @@ namespace Cozmo {
     // Returns 0 if no messages are available.
     virtual u32 GetNumPendingMsgPackets();
   
-    virtual size_t Send(const Comms::MsgPacket &p);
+    virtual ssize_t Send(const Comms::MsgPacket &p);
 
     virtual bool GetNextMsgPacket(std::vector<uint8_t> &p);
     
@@ -176,7 +176,7 @@ namespace Cozmo {
     std::map<int, PacketQueue_t> sendMsgPackets_;
 
     // The actual function that does the sending when we're simulating latency
-    int RealSend(const Comms::MsgPacket &p);
+    ssize_t RealSend(const Comms::MsgPacket &p);
     
     // Outgoing bytes sent since last call to Update()
     int bytesSentThisUpdateCycle_;

@@ -18,9 +18,9 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -45,16 +45,14 @@ bool BehaviorPickUpAndPutDownCube::WantsToBeActivatedBehavior(BehaviorExternalIn
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPickUpAndPutDownCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  if(robot.GetCarryingComponent().IsCarryingObject()){
-    _targetBlockID = robot.GetCarryingComponent().GetCarryingObject();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  if(robotInfo.GetCarryingComponent().IsCarryingObject()){
+    _targetBlockID = robotInfo.GetCarryingComponent().GetCarryingObject();
     TransitionToDriveWithCube(behaviorExternalInterface);
     return Result::RESULT_OK;
   }
   
-  auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
   PickupBlockParamaters params;
   params.allowedToRetryFromDifferentPose = true;
   HelperHandle pickupHelper = factory.CreatePickupBlockHelper(behaviorExternalInterface, *this, _targetBlockID, params);
@@ -76,10 +74,7 @@ void BehaviorPickUpAndPutDownCube::TransitionToDriveWithCube(BehaviorExternalInt
     turn_rad *= -1;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TurnInPlaceAction(robot,turn_rad,false),
+  DelegateIfInControl(new TurnInPlaceAction(turn_rad,false),
               &BehaviorPickUpAndPutDownCube::TransitionToPutDownCube);
 }
 
@@ -89,13 +84,9 @@ void BehaviorPickUpAndPutDownCube::TransitionToPutDownCube(BehaviorExternalInter
 {
   DEBUG_SET_STATE(PutDownCube);
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
-
+  CompoundActionSequential* action = new CompoundActionSequential();
   {
-    PlaceObjectOnGroundAction* placeAction = new PlaceObjectOnGroundAction(robot);
+    PlaceObjectOnGroundAction* placeAction = new PlaceObjectOnGroundAction();
     const bool shouldEmitCompletion = true;
     action->AddAction(placeAction, false, shouldEmitCompletion);
   }
@@ -103,9 +94,9 @@ void BehaviorPickUpAndPutDownCube::TransitionToPutDownCube(BehaviorExternalInter
   {  
     static constexpr float kBackUpMinMM = 40.0;
     static constexpr float kBackUpMaxMM = 70.0;
-    double backup_amount = robot.GetRNG().RandDblInRange(kBackUpMinMM,kBackUpMaxMM);
+    double backup_amount = behaviorExternalInterface.GetRNG().RandDblInRange(kBackUpMinMM,kBackUpMaxMM);
     
-    action->AddAction( new DriveStraightAction(robot, -backup_amount, DEFAULT_PATH_MOTION_PROFILE.speed_mmps) );
+    action->AddAction( new DriveStraightAction(-backup_amount, DEFAULT_PATH_MOTION_PROFILE.speed_mmps) );
   }
 
   DelegateIfInControl(action, [this]()

@@ -22,12 +22,12 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
-#include "engine/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "util/console/consoleInterface.h"
 
@@ -39,34 +39,9 @@ namespace Cozmo {
 namespace {
 CONSOLE_VAR(f32, kBSB_ScoreIncreaseForAction, "Behavior.StackBlocks", 0.8f);
 CONSOLE_VAR(f32, kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg, "Behavior.StackBlocks", 90.f);
-CONSOLE_VAR(bool, kCanHiccupWhileStacking, "Hiccups", true);
 
 static const char* const kStackInAnyOrientationKey = "stackInAnyOrientation";
   static const f32   kDistToBackupOnStackFailure_mm = 40;
-
-static constexpr ReactionTriggerHelpers::FullReactionArray kHiccupDisableTriggers = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       true},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
   
 }
 
@@ -92,12 +67,9 @@ bool BehaviorStackBlocks::WantsToBeActivatedBehavior(BehaviorExternalInterface& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorStackBlocks::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  if(robot.GetCarryingComponent().GetCarryingObject() == _targetBlockTop){
+  if(robotInfo.GetCarryingComponent().GetCarryingObject() == _targetBlockTop){
     TransitionToStackingBlock(behaviorExternalInterface);
   }else{
     TransitionToPickingUpBlock(behaviorExternalInterface);
@@ -238,22 +210,16 @@ void BehaviorStackBlocks::TransitionToStackingBlock(BehaviorExternalInterface& b
 {
   SET_STATE(StackingBlock);
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
   // if we aren't carrying the top block, fail back to pick up
-  const bool holdingTopBlock = robot.GetCarryingComponent().IsCarryingObject() &&
-                               robot.GetCarryingComponent().GetCarryingObject() == _targetBlockTop;
+  const bool holdingTopBlock = robotInfo.GetCarryingComponent().IsCarryingObject() &&
+                               robotInfo.GetCarryingComponent().GetCarryingObject() == _targetBlockTop;
   if( ! holdingTopBlock ) {
     PRINT_NAMED_DEBUG("BehaviorStackBlocks.FailBackToPickup",
                       "wanted to stack, but we aren't carrying a block");
     TransitionToPickingUpBlock(behaviorExternalInterface);
     return;
-  }
-  // Disable hiccup so it can't interrupt the stack
-  if(!kCanHiccupWhileStacking)
-  {
-    SmartDisableReactionsWithLock(GetIDStr(), kHiccupDisableTriggers);
   }
   
   const bool placingOnGround = false;
@@ -275,10 +241,7 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(BehaviorExternalInterface
   
   BehaviorObjectiveAchieved(BehaviorObjective::StackedBlock);
   if(!ShouldStreamline()){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::StackBlocksSuccess));
   }
   NeedActionCompleted();
 }
@@ -287,9 +250,6 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(BehaviorExternalInterface
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStackBlocks::TransitionToFailedToStack(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   auto retryIfPossible = [this](BehaviorExternalInterface& behaviorExternalInterface){
     UpdateTargetBlocks(behaviorExternalInterface);
     if(_targetBlockTop.IsSet() && _targetBlockBottom.IsSet()){
@@ -297,14 +257,14 @@ void BehaviorStackBlocks::TransitionToFailedToStack(BehaviorExternalInterface& b
     }
   };
   
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // If cozmo thinks he's still carrying the cube, try placing it on the ground to
   // see if it's really there - then see if we can try again
-  if(robot.GetCarryingComponent().IsCarryingObject()){
-    CompoundActionSequential* placeAction = new CompoundActionSequential(robot, {
-      new DriveStraightAction(robot,
-                              -kDistToBackupOnStackFailure_mm,
+  if(robotInfo.GetCarryingComponent().IsCarryingObject()){
+    CompoundActionSequential* placeAction = new CompoundActionSequential({
+      new DriveStraightAction(-kDistToBackupOnStackFailure_mm,
                               DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
-      new PlaceObjectOnGroundAction(robot)});
+      new PlaceObjectOnGroundAction()});
     DelegateIfInControl(placeAction, retryIfPossible);
   }else{
     retryIfPossible(behaviorExternalInterface);
@@ -324,17 +284,16 @@ ObjectID BehaviorStackBlocks::GetClosestValidBottom(BehaviorExternalInterface& b
   const ObservableObject* currentTarget =  behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
   f32 distToClosestBottom_mm_sq;
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
   if((currentTarget != nullptr) &&
-     ComputeDistanceSQBetween(robot.GetPose(), currentTarget->GetPose(), distToClosestBottom_mm_sq)){
+     ComputeDistanceSQBetween(robotInfo.GetPose(), currentTarget->GetPose(), distToClosestBottom_mm_sq)){
     auto validObjs = objInfoCache.GetValidObjectsForIntention(bottomIntention);
     for(const auto& objID : validObjs){
       const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(objID);
       f32 distanceToValid;
       if((obj != nullptr) &&
-         ComputeDistanceSQBetween(robot.GetPose(), obj->GetPose(), distanceToValid)){
+         ComputeDistanceSQBetween(robotInfo.GetPose(), obj->GetPose(), distanceToValid)){
         if(distanceToValid < distToClosestBottom_mm_sq){
           bestBottom = objID;
           distToClosestBottom_mm_sq = distanceToValid;
@@ -375,13 +334,13 @@ void BehaviorStackBlocks::PrintCubeDebug(BehaviorExternalInterface& behaviorExte
     case PoseState::Dirty: poseStateStr = "dirty"; break;
     case PoseState::Invalid: poseStateStr = "invalid"; break;
   }
-  
+
   PRINT_NAMED_DEBUG(event,
                     "block %d: blockUpright?%d CanPickUpObject%d CanStackOnTopOfObject?%d poseState=%s moving?%d restingFlat?%d",
                     obj->GetID().GetValue(),
                     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS,
-                    behaviorExternalInterface.GetRobot().GetDockingComponent().CanPickUpObject(*obj),
-                    behaviorExternalInterface.GetRobot().GetDockingComponent().CanStackOnTopOfObject(*obj),
+                    behaviorExternalInterface.GetRobotInfo().GetDockingComponent().CanPickUpObject(*obj),
+                    behaviorExternalInterface.GetRobotInfo().GetDockingComponent().CanStackOnTopOfObject(*obj),
                     poseStateStr,
                     obj->IsMoving(),
                     obj->IsRestingFlat());

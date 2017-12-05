@@ -2,7 +2,7 @@
 #define COZMO_CONFIG_H
 
 #ifdef COZMO_ROBOT
-#include "anki/types.h"
+#include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 #else
 #include "anki/common/types.h"
@@ -68,7 +68,7 @@ namespace Cozmo {
   // flies off of the robot and comes back! So for now, we just don't
   // drive the lift down that far. We also skip calibration in sim.
   const f32 LIFT_HEIGHT_LOWDOCK               = 32.f; // For interfacing with a cube that is on the ground.
-  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR = 39.f; // TODO: Confirm this on a real robot. At this lift height, the lift crossbar is directly occluding the prox sensor's beam.
+  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR = 41.f; // At this lift height, the lift crossbar is directly occluding the prox sensor's beam.
   const f32 LIFT_HEIGHT_HIGHDOCK              = 76.f; // For interfacing with a cube that is stacked on top of another cube.
   const f32 LIFT_HEIGHT_CARRY                 = 92.f; // Cube carrying height.
   const f32 LIFT_HEIGHT_LOW_ROLL              = 68.f; // For rolling a cube that is on the ground.
@@ -124,6 +124,7 @@ namespace Cozmo {
   // Face display resolution, in pixels
   const s32 FACE_DISPLAY_WIDTH = 184;
   const s32 FACE_DISPLAY_HEIGHT = 96;
+  const s32 FACE_DISPLAY_NUM_PIXELS = FACE_DISPLAY_WIDTH * FACE_DISPLAY_HEIGHT;
   
   /***************************************************************************
    *
@@ -242,14 +243,6 @@ namespace Cozmo {
    *                          Communications
    *
    **************************************************************************/
-  
-  // Comms type for Basestation-robot comms
-  // 0: Use TCP
-  // 1: Use UDP
-#define USE_UDP_ROBOT_COMMS 1
-  
-  // Comms types for UI-game comms
-#define USE_UDP_UI_COMMS 1
   
   const u32 MAX_SENT_BYTES_PER_TIC_TO_ROBOT = 200;
   const u32 MAX_SENT_BYTES_PER_TIC_TO_UI = 0;

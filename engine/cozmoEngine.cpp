@@ -102,7 +102,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   auto helper = MakeAnkiEventUtil(*_context->GetExternalInterface(), *this, _signalHandles);
   
   using namespace ExternalInterface;
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::ConnectToRobot>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ImageRequest>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadFaceAnimationDir>();
@@ -112,7 +111,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFeatureToggle>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotImageSendMode>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::StartEngine>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StartTestMode>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::UpdateFirmware>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestLocale>();
@@ -123,7 +121,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   _signalHandles.emplace_back(_context->GetExperiments()->GetAnkiLab()
                               .ActiveAssignmentsUpdatedSignal().ScopedSubscribe(handler));
 
-  _debugConsoleManager.Init(_context->GetExternalInterface());
+  _debugConsoleManager.Init(_context->GetExternalInterface(), _context->GetRobotManager()->GetMsgHandler());
   _dasToSdkHandler.Init(_context->GetExternalInterface());
   InitUnityLogger();
 }
@@ -231,7 +229,17 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   _context->GetRobotManager()->Init(_config, _context->GetDataLoader()->GetDasEventConfig());
 
+  // TODO: Specify random seed from config?
+  //       Setting to non-zero value for now for repeatable testing.
+  _context->SetRandomSeed(1);
+
+  // VIC-722: Set this automatically using location services
+  //          and/or set from UI/SDK?
+  _context->SetLocale("en-US");
+
   PRINT_NAMED_INFO("CozmoEngine.Init.Version", "2");
+
+  SetEngineState(EngineState::LoadingData);
 
   // DAS Event: "cozmo_engine.init.build_configuration"
   // s_val: Build configuration
@@ -254,19 +262,6 @@ Result CozmoEngine::Init(const Json::Value& config) {
   return RESULT_OK;
 }
 
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::StartEngine& msg)
-{
-  _context->SetRandomSeed(msg.random_seed);
-  _context->SetLocale(msg.locale);
-  
-  if (EngineState::Running == _engineState) {
-    PRINT_NAMED_ERROR("CozmoEngine.HandleMessage.StartEngine.AlreadyStarted", "");
-    return;
-  }
-  
-  SetEngineState(EngineState::WaitingForUIDevices);
-}
 
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::UpdateFirmware& msg)
@@ -297,33 +292,6 @@ template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::SetFeatureToggle& message)
 {
   _context->GetFeatureGate()->SetFeatureEnabled(message.feature, message.value);
-}
-  
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::ConnectToRobot& connectMsg)
-{
-  const RobotID_t kDefaultRobotID = 1;
-  if(CozmoEngine::HasRobotWithID(kDefaultRobotID)) {
-    PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobot.AlreadyConnected", "Robot already connected");
-    return;
-  }
-  
-  _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(connectMsg);
-  
-  // Another exception for hosts: have to tell the basestation to add the robot as well
-  if(AddRobot(kDefaultRobotID) == RESULT_OK) {
-    PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobot.Success", "Connected to robot!");
-  } else {
-    PRINT_NAMED_ERROR("CozmoEngine.HandleMessage.ConnectToRobot.Fail", "Failed to connect to robot!");
-  }
-
-  _context->GetNeedsManager()->InitAfterConnection();
-
-#if USE_DAS
-  // Stop trying to upload DAS files to the server,
-  // since we know we don't have an Internet connection
-  DASPauseUploadingToServer(true);
-#endif
 }
 
 template<>
@@ -376,6 +344,20 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   _context->GetVoiceCommandComponent()->Update();
   
   // Handle UI
+  if (!_uiWasConnected && _uiMsgHandler->HasDesiredNumUiDevices()) {
+    PRINT_NAMED_INFO("CozmoEngine.Update.UIConnected", "");
+    SendSupportInfo();
+
+    if (_engineState == EngineState::Running) {
+      _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(1.f);
+    }
+
+    _uiWasConnected = true;
+  } else if (_uiWasConnected && !_uiMsgHandler->HasDesiredNumUiDevices()) {
+    PRINT_NAMED_INFO("CozmoEngine.Update.UIDisconnected", "");
+    _uiWasConnected = false;
+  }
+
   Result lastResult = _uiMsgHandler->Update();
   if (RESULT_OK != lastResult)
   {
@@ -389,21 +371,15 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     {
       break;
     }
-    case EngineState::WaitingForUIDevices:
-    {
-      if (_uiMsgHandler->HasDesiredNumUiDevices()) {
-        SendSupportInfo();
-        SetEngineState(EngineState::LoadingData);
-      }
-      break;
-    }
     case EngineState::LoadingData:
     {
       float currentLoadingDone = 0.0f;
       if (_context->GetDataLoader()->DoNonConfigDataLoading(currentLoadingDone))
       {
+        ConnectToRobotProcess();
         SetEngineState(EngineState::Running);
       }
+      PRINT_NAMED_INFO("LoadingRatio", "%f", currentLoadingDone);
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(currentLoadingDone);
       break;
     }
@@ -590,7 +566,30 @@ Result CozmoEngine::InitInternal()
   
   return RESULT_OK;
 }
-  
+
+Result CozmoEngine::ConnectToRobotProcess()
+{
+  const RobotID_t kDefaultRobotID = 1;
+  if(HasRobotWithID(kDefaultRobotID)) {
+    PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobotProcess.AlreadyConnected", "Robot already connected");
+    return RESULT_OK;
+  }
+
+  _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(kDefaultRobotID);
+
+  // Another exception for hosts: have to tell the basestation to add the robot as well
+  if(AddRobot(kDefaultRobotID) == RESULT_OK) {
+    PRINT_NAMED_INFO("CozmoEngine.ConnectToRobotProcess.Success", "Connected to robot!!!");
+  } else {
+    PRINT_NAMED_ERROR("CozmoEngine.ConnectToRobotProcess.Fail", "Failed to connect to robot!!!");
+    return RESULT_FAIL;
+  }
+
+  _context->GetNeedsManager()->InitAfterConnection();
+
+  return RESULT_OK;
+}
+
 Result CozmoEngine::AddRobot(RobotID_t robotID)
 {
   Result lastResult = RESULT_OK;

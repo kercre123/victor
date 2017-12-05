@@ -13,10 +13,8 @@
 #include "anki/common/robot/utilities.h"
 #include "anki/common/types.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/animTrackHelpers.h"
@@ -238,10 +236,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
     const bool isValidTypeOfUnexpectedMovement = (unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED ||
                                                   unexpectedMovementType == UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION);
     
-    // TODO: Should we really be checking this here? It prevents collision obstacles from being created while reaction is disabled. (COZMO-13034)
-    const bool isReactToUnexpectedMovementEnabled = _robot.GetBehaviorManager().
-                        IsReactionTriggerEnabled(ReactionTrigger::UnexpectedMovement);
-    if(kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement && isReactToUnexpectedMovementEnabled)
+    if(kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement)
     {
       // Add obstacle based on when this started and how robot was trying to turn
       // TODO: Broadcast sufficient information to blockworld and do it there?
@@ -758,7 +753,7 @@ void MovementComponent::CompletelyUnlockAllTracks()
       _trackLockCount[i].clear();
     }
   }
-  _robot.GetAnimationComponent().EnableAllTracks();
+  _robot.GetAnimationComponent().UnlockAllTracks();
 }
 
 void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const std::string& debugName)
@@ -781,7 +776,7 @@ void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const
   
   if(tracksToDisable > 0)
   {
-    _robot.GetAnimationComponent().DisableTracks(tracksToDisable);
+    _robot.GetAnimationComponent().LockTracks(tracksToDisable);
   }
   
   if(DEBUG_ANIMATION_LOCKING) {
@@ -828,7 +823,7 @@ bool MovementComponent::UnlockTracks(uint8_t tracks, const std::string& who)
   
   if(tracksToEnable > 0)
   {
-    _robot.GetAnimationComponent().EnableTracks(tracksToEnable);
+    _robot.GetAnimationComponent().UnlockTracks(tracksToEnable);
   }
   
   if(DEBUG_ANIMATION_LOCKING) {

@@ -18,7 +18,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/flipBlockAction.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
@@ -42,48 +41,18 @@ bool WithinPreActionThreshold(const Robot& robot, std::vector<Pose3d>& possibleP
   return false;
 }
   
-// Triggers for FlipBlock
-constexpr ReactionTriggerHelpers::FullReactionArray kDisableForFlip = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kDisableForFlip),
-              "Reaction triggers duplicate or non-sequential");
-  
 }
 
 static constexpr f32 kPreDockPoseAngleTolerance = DEG_TO_RAD(5.f);
 
-DriveAndFlipBlockAction::DriveAndFlipBlockAction(Robot& robot,
-                                                 const ObjectID objectID,
+DriveAndFlipBlockAction::DriveAndFlipBlockAction(const ObjectID objectID,
                                                  const bool useApproachAngle,
                                                  const f32 approachAngle_rad,
                                                  const bool useManualSpeed,
                                                  Radians maxTurnTowardsFaceAngle_rad,
                                                  const bool sayName,
                                                  const float minAlignThreshold_mm)
-: IDriveToInteractWithObject(robot,
-                             objectID,
+: IDriveToInteractWithObject(objectID,
                              PreActionPose::FLIPPING,
                              0,
                              useApproachAngle,
@@ -92,24 +61,25 @@ DriveAndFlipBlockAction::DriveAndFlipBlockAction(Robot& robot,
                              maxTurnTowardsFaceAngle_rad,
                              sayName)
 {
-  FlipBlockAction* flipBlockAction = new FlipBlockAction(robot, objectID);
+  FlipBlockAction* flipBlockAction = new FlipBlockAction(objectID);
 
   SetName("DriveToAndFlipBlock");
   
   DriveToObjectAction* driveToObjectAction = GetDriveToObjectAction();
   if(driveToObjectAction != nullptr)
   {
-    driveToObjectAction->SetGetPossiblePosesFunc([this, &robot](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
+    driveToObjectAction->SetGetPossiblePosesFunc([this](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
     {
       
       // Check to see if the robot is close enough to the preActionPose to prevent tiny re-alignments
-      if(!alreadyInPosition && _minAlignThreshold_mm >= 0){
-        bool withinThreshold = WithinPreActionThreshold(robot, possiblePoses, _minAlignThreshold_mm);
+      if(!alreadyInPosition && (_minAlignThreshold_mm >= 0)){
+        bool withinThreshold = WithinPreActionThreshold(GetRobot(), possiblePoses, _minAlignThreshold_mm);
         alreadyInPosition = withinThreshold;
         static_cast<FlipBlockAction*>(_flipBlockAction.lock().get())->SetShouldCheckPreActionPose(!withinThreshold);
       }
       
-      return GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition, false);
+      return GetPossiblePoses(GetRobot().GetPose(), GetRobot().GetCarryingComponent(), GetRobot().GetBlockWorld(), GetRobot().GetFaceWorld(), 
+                              object, possiblePoses, alreadyInPosition, false);        
     });
   }
   
@@ -127,18 +97,22 @@ void DriveAndFlipBlockAction::ShouldDriveToClosestPreActionPose(bool tf)
       
       // Check to see if the robot is close enough to the preActionPose to prevent tiny re-alignments
       if(!alreadyInPosition && _minAlignThreshold_mm >= 0){
-        bool withinThreshold = WithinPreActionThreshold(_robot, possiblePoses, _minAlignThreshold_mm);
+        bool withinThreshold = WithinPreActionThreshold(GetRobot(), possiblePoses, _minAlignThreshold_mm);
         alreadyInPosition = withinThreshold;
         static_cast<FlipBlockAction*>(_flipBlockAction.lock().get())->SetShouldCheckPreActionPose(!withinThreshold);
       }
       
       
-      return GetPossiblePoses(_robot, object, possiblePoses, alreadyInPosition, tf);
+      return GetPossiblePoses(GetRobot().GetPose(), GetRobot().GetCarryingComponent(), GetRobot().GetBlockWorld(), GetRobot().GetFaceWorld(),
+                              object, possiblePoses, alreadyInPosition, tf);
     });
   }
 }
 
-ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
+ActionResult DriveAndFlipBlockAction::GetPossiblePoses(const Pose3d& robotPose,
+                                                       const CarryingComponent& carryingComp,
+                                                       BlockWorld& blockWorld,
+                                                       FaceWorld& faceWorld,
                                                        ActionableObject* object,
                                                        std::vector<Pose3d>& possiblePoses,
                                                        bool& alreadyInPosition,
@@ -154,7 +128,8 @@ ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
   
   IDockAction::PreActionPoseOutput preActionPoseOutput;
   
-  IDockAction::GetPreActionPoses(robot, preActionPoseInput, preActionPoseOutput);
+  IDockAction::GetPreActionPoses(robotPose, carryingComp, blockWorld, 
+                                 preActionPoseInput, preActionPoseOutput);
   
   if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
   {
@@ -163,7 +138,7 @@ ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
   }
   
   Pose3d facePose;
-  TimeStamp_t faceTime = robot.GetFaceWorld().GetLastObservedFace(facePose);
+  TimeStamp_t faceTime = faceWorld.GetLastObservedFace(facePose);
   
   if(preActionPoseOutput.preActionPoses.empty())
   {
@@ -186,7 +161,7 @@ ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
   for(auto iter = preActionPoseOutput.preActionPoses.begin(); iter != preActionPoseOutput.preActionPoses.end(); ++iter)
   {
     Pose3d poseWrtRobot;
-    if(!iter->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot))
+    if(!iter->GetPose().GetWithRespectTo(robotPose, poseWrtRobot))
     {
       continue;
     }
@@ -254,33 +229,39 @@ ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
 }
 
 
-DriveToFlipBlockPoseAction::DriveToFlipBlockPoseAction(Robot& robot, ObjectID objectID)
-: DriveToObjectAction(robot, objectID, PreActionPose::FLIPPING)
+DriveToFlipBlockPoseAction::DriveToFlipBlockPoseAction(ObjectID objectID)
+: DriveToObjectAction(objectID, PreActionPose::FLIPPING)
 {
   SetName("DriveToFlipBlockPose");
   SetType(RobotActionType::DRIVE_TO_FLIP_BLOCK_POSE);
-  SetGetPossiblePosesFunc([&robot](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
-  {
-    return DriveAndFlipBlockAction::GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition, false);
-  });
 }
 
 void DriveToFlipBlockPoseAction::ShouldDriveToClosestPreActionPose(bool tf)
 {
   SetGetPossiblePosesFunc([this, tf](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
   {
-    return DriveAndFlipBlockAction::GetPossiblePoses(_robot, object, possiblePoses, alreadyInPosition, tf);
+    return DriveAndFlipBlockAction::GetPossiblePoses(GetRobot().GetPose(), GetRobot().GetCarryingComponent(), GetRobot().GetBlockWorld(), GetRobot().GetFaceWorld(),
+                                                     object, possiblePoses, alreadyInPosition, tf);
   });
 }
 
 
-FlipBlockAction::FlipBlockAction(Robot& robot, ObjectID objectID)
-: IAction(robot,
-          "FlipBlock", 
+void DriveToFlipBlockPoseAction::OnRobotSetInternalDriveToObj()
+{
+  SetGetPossiblePosesFunc([this](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
+  {
+    return DriveAndFlipBlockAction::GetPossiblePoses(GetRobot().GetPose(), GetRobot().GetCarryingComponent(), GetRobot().GetBlockWorld(), GetRobot().GetFaceWorld(), 
+                                                     object, possiblePoses, alreadyInPosition, false);
+  });
+}
+
+
+FlipBlockAction::FlipBlockAction(ObjectID objectID)
+: IAction("FlipBlock", 
           RobotActionType::FLIP_BLOCK,
           ((u8)AnimTrackFlag::LIFT_TRACK | (u8)AnimTrackFlag::BODY_TRACK))
 , _objectID(objectID)
-, _compoundAction(robot)
+, _compoundAction()
 , _shouldCheckPreActionPose(true)
 {
 }
@@ -291,11 +272,8 @@ FlipBlockAction::~FlipBlockAction()
   _compoundAction.PrepForCompletion();
   if(_flipTag != -1)
   {
-    _robot.GetActionList().Cancel(_flipTag);
+    GetRobot().GetActionList().Cancel(_flipTag);
   }
-  
-  // Re-enable all from reaction triggers from flip
-  _robot.GetBehaviorManager().RemoveDisableReactionsLock(GetName());
 }
 
 void FlipBlockAction::SetShouldCheckPreActionPose(bool shouldCheck)
@@ -308,7 +286,7 @@ ActionResult FlipBlockAction::Init()
   // Incase we are being retried
   _compoundAction.ClearActions();
   
-  ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
+  ActionableObject* object = dynamic_cast<ActionableObject*>(GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID));
   if(nullptr == object)
   {
     PRINT_NAMED_WARNING("FlipBlockAction.Init.NullObject", "ObjectID=%d", _objectID.GetValue());
@@ -324,7 +302,8 @@ ActionResult FlipBlockAction::Init()
   
   IDockAction::PreActionPoseOutput preActionPoseOutput;
   
-  IDockAction::GetPreActionPoses(_robot, preActionPoseInput, preActionPoseOutput);
+  IDockAction::GetPreActionPoses(GetRobot().GetPose(), GetRobot().GetCarryingComponent(), GetRobot().GetBlockWorld(),
+                                 preActionPoseInput, preActionPoseOutput);
   
   if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
   {
@@ -332,21 +311,17 @@ ActionResult FlipBlockAction::Init()
   }
   
   Pose3d p;
-  object->GetPose().GetWithRespectTo(_robot.GetPose(), p);
+  object->GetPose().GetWithRespectTo(GetRobot().GetPose(), p);
 
   // Need to suppress track locking so the two lift actions don't fail because the other locked the lift track
   // A little dangerous as animations playing in parallel to this action could move lift
   _compoundAction.ShouldSuppressTrackLocking(true);
   
-  // Ensure that the robot doesn't react to slowing down when it hits the blocks
-  _robot.GetBehaviorManager().DisableReactionsWithLock(GetName(),
-                                                      kDisableForFlip);
-  
   // Drive through the block
-  DriveStraightAction* drive = new DriveStraightAction(_robot, p.GetTranslation().Length() + kDrivingDist_mm, kDrivingSpeed_mmps);
+  DriveStraightAction* drive = new DriveStraightAction(p.GetTranslation().Length() + kDrivingDist_mm, kDrivingSpeed_mmps);
   
   // Need to set the initial lift height to fit lift base into block corner edge
-  MoveLiftToHeightAction* initialLift = new MoveLiftToHeightAction(_robot, kInitialLiftHeight_mm);
+  MoveLiftToHeightAction* initialLift = new MoveLiftToHeightAction(kInitialLiftHeight_mm);
 
   _compoundAction.AddAction(initialLift);
   _compoundAction.AddAction(drive);
@@ -356,11 +331,10 @@ ActionResult FlipBlockAction::Init()
 
 ActionResult FlipBlockAction::CheckIfDone()
 {
-
   const ActionResult result = _compoundAction.Update();
   
   // grab object now because we use regardless of result
-  ObservableObject* bottomBlock = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
+  ObservableObject* bottomBlock = GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID);
   
   if(result != ActionResult::RUNNING)
   {
@@ -368,7 +342,7 @@ ActionResult FlipBlockAction::CheckIfDone()
     if ( nullptr != bottomBlock )
     {
       const bool propagateStack = true;
-      _robot.GetObjectPoseConfirmer().MarkObjectUnknown(bottomBlock, propagateStack);
+      GetRobot().GetObjectPoseConfirmer().MarkObjectUnknown(bottomBlock, propagateStack);
     }
     else
     {
@@ -384,19 +358,26 @@ ActionResult FlipBlockAction::CheckIfDone()
   }
   
   Pose3d p;
-  bottomBlock->GetPose().GetWithRespectTo(_robot.GetPose(), p);
-  if(p.GetTranslation().Length() < kDistToObjectToFlip_mm && _flipTag == -1)
+  bottomBlock->GetPose().GetWithRespectTo(GetRobot().GetPose(), p);
+  if((p.GetTranslation().Length() < kDistToObjectToFlip_mm && _flipTag == -1))
   {
-    IAction* action = new MoveLiftToHeightAction(_robot, MoveLiftToHeightAction::Preset::CARRY);
+    IAction* action = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::CARRY);
 
     // FlipBlockAction is already locking all tracks so this lift action doesn't need to lock
     action->ShouldSuppressTrackLocking(true);
     _flipTag = action->GetTag();
-    _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, action);
+    GetRobot().GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, action);
   }
 
   return ActionResult::RUNNING;
 }
+
+
+void FlipBlockAction::OnRobotSet()
+{
+  _compoundAction.SetRobot(&GetRobot());
+}
+
   
 }
 }

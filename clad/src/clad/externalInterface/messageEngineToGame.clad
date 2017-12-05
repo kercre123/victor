@@ -6,7 +6,6 @@
 #include "clad/audio/audioCallbackMessage.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
-#include "clad/robotInterface/messageFromAnimProcess.clad"
 #include "clad/types/actionTypes.clad"
 #include "clad/types/actionResults.clad"
 #include "clad/types/animationEvents.clad"
@@ -38,7 +37,6 @@
 #include "clad/types/cladPoint.clad"
 #include "clad/types/cladRect.clad"
 #include "clad/types/gameStatusFlag.clad"
-#include "clad/types/behaviorComponent/reactionTriggers.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/toolCodes.clad"
@@ -205,6 +203,10 @@ message RobotHiccupsChanged {
 // Whether or not the robot's charge contacts are in contact with the charger contacts
 message ChargerEvent {
   bool   onCharger
+}
+
+message TouchButtonEvent {
+  bool  isPressed
 }
 
 message TouchGestureEvent {
@@ -531,6 +533,26 @@ message AnimationEvent {
   AnimEvent event_id
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  META  /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// For messages where an end of message might make sense to denote the full list of messages has
+// been broadcasted. Example: robot might broadcast all available animations, however, there would
+// be no way to tell if all the AnimationAvailable messages have been received without an `end of
+// message` message.
+// Can be extended for other message types later
+
+enum uint_8 MessageType {
+  AnimationAvailable
+}
+
+message EndOfMessage {
+  MessageType messageType
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Mood / Emotions
 ///////////////////////////////////////////////////////////////////////////////
@@ -832,20 +854,10 @@ message BehaviorTransition{
   //string newBehaviorDisplayKey
 }
 
-
-message ReactionTriggerTransition{
-  ReactionTrigger oldTrigger,
-  ReactionTrigger newTrigger
-}
-
 message RespondAllBehaviorsList{
   //BehaviorID behaviors[uint_8]
 }
 
-
-message RespondReactionTriggerMap{
-  //ReactionTriggerToBehavior reactionTriggerEntries[uint_8]
-}
 
 message BehaviorObjectiveAchieved{
   BehaviorObjective behaviorObjective

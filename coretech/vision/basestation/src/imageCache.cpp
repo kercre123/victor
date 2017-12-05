@@ -116,6 +116,17 @@ static inline f32 GetScaleFactor(ImageCache::Size size)
       return 0.25f;
   }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+s32 ImageCache::GetNumRows(const Size atSize) const
+{
+  return std::round(GetScaleFactor(atSize)*(f32)GetOrigNumRows());
+}
+  
+s32 ImageCache::GetNumCols(const Size atSize) const
+{
+  return std::round(GetScaleFactor(atSize)*(f32)GetOrigNumCols());
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 static inline ResizeMethod GetMethod(ImageCache::Size size)
@@ -242,6 +253,7 @@ ImageCache::Size ImageCache::GetSize(s32 scale, Vision::ResizeMethod method)
             DEV_ASSERT(false, "ImageCache.GetSize.UnsupportedScaleLinear");
             break;
         }
+        break;
       }
         
       case Vision::ResizeMethod::AverageArea:

@@ -24,7 +24,6 @@ namespace Anki {
     
     class BlockWorldFilter;
     class ObservableObject;
-    class Robot;
     
     class BehaviorPopAWheelie : public ICozmoBehavior
     {

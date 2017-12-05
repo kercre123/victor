@@ -15,6 +15,7 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
@@ -62,10 +63,8 @@ bool StrategyInNeedsBracket::AreStateConditionsMetInternal(BehaviorExternalInter
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool StrategyInNeedsBracket::InRequiredNeedBracket(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  NeedsState& currNeedState = robotInfo.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   const bool inBracket = currNeedState.IsNeedAtBracket(_need, _requiredBracket);
   return inBracket;
 }

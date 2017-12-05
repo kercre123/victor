@@ -65,7 +65,7 @@ private:
   
   void Reset();
 
-  CompoundActionSequential* GenerateTestAction(Robot& robot, const int testInd) const;
+  CompoundActionSequential* GenerateTestAction(const Pose3d& robotPose, const int testInd) const;
   
   void ActionCallback(BehaviorExternalInterface&);
 

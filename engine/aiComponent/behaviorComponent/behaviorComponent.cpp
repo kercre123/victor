@@ -14,14 +14,13 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
@@ -30,8 +29,9 @@
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "engine/robotDataLoader.h"
 
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -87,7 +87,6 @@ BehaviorComponent::~BehaviorComponent()
 {
   // This needs to happen before ActionList is destroyed, because otherwise behaviors will try to respond
   // to actions shutting down
-  _behaviorMgr.reset();
   _components.reset();
 }
 
@@ -192,12 +191,13 @@ void BehaviorComponent::InitializeSubComponents(Robot& robot,
                                  behaviorContainer,
                                  blockWorld,
                                  faceWorld,
+                                 robot.GetPetWorld(),
                                  behaviorEventComponent);
   
-  behaviorContainer.Init(behaviorExternalInterface,
-                         !static_cast<bool>(USE_BSM));
+  behaviorContainer.Init(behaviorExternalInterface);
 
-  behaviorSysMgr.InitConfiguration(baseBehavior,
+  behaviorSysMgr.InitConfiguration(robot,
+                                   baseBehavior,
                                    behaviorExternalInterface,
                                    &asyncMessageComponent);
   
@@ -216,10 +216,7 @@ void BehaviorComponent::Init(ComponentsPtr&& components, IBehavior* baseBehavior
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
 {
-  _audioClient.reset(new Audio::BehaviorAudioComponent(_components->_robot.GetAudioClient()));
-  
-  _behaviorMgr = std::make_unique<BehaviorManager>();
-  
+  _audioClient.reset(new Audio::BehaviorAudioComponent(_components->_robot.GetAudioClient()));  
   
   // Extract base behavior from config if not passed in through init
   if(baseBehavior == nullptr){
@@ -240,19 +237,17 @@ void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
     const Json::Value& behaviorSystemConfig = (dataLoader != nullptr) ?
          dataLoader->GetVictorFreeplayBehaviorConfig() : blankActivitiesConfig;
     
-    if(USE_BSM){
-      if(!behaviorSystemConfig.empty()){
-        BehaviorID baseBehaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
-        baseBehavior = _components->_behaviorContainer.FindBehaviorByID(baseBehaviorID).get();
-        DEV_ASSERT(baseBehavior != nullptr,
-                   "BehaviorComponent.Init.InvalidbaseBehavior");
-      }else{
-        // Need a base behavior, so make it base behavior wait
-        Json::Value config = ICozmoBehavior::CreateDefaultBehaviorConfig(
-                                    BehaviorClass::Wait, BehaviorID::Wait);
-        _components->_behaviorContainer.CreateBehaviorFromConfig(config);
-        baseBehavior = _components->_behaviorContainer.FindBehaviorByID(BehaviorID::Wait).get();
-      }
+    if(!behaviorSystemConfig.empty()){
+      BehaviorID baseBehaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
+      baseBehavior = _components->_behaviorContainer.FindBehaviorByID(baseBehaviorID).get();
+      DEV_ASSERT(baseBehavior != nullptr,
+                  "BehaviorComponent.Init.InvalidbaseBehavior");
+    }else{
+      // Need a base behavior, so make it base behavior wait
+      Json::Value config = ICozmoBehavior::CreateDefaultBehaviorConfig(
+        BEHAVIOR_CLASS(Wait), BEHAVIOR_ID(Wait));
+      _components->_behaviorContainer.CreateBehaviorFromConfig(config);
+      baseBehavior = _components->_behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
     }
   }
   
@@ -275,40 +270,18 @@ void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
                     &_components->_robot.GetMoodManager(),
                     _components->_robot.GetContext()->GetNeedsManager(),
                     &_components->_robot.GetProgressionUnlockComponent(),
-                    &_components->_robot.GetPublicStateBroadcaster());
+                    &_components->_robot.GetPublicStateBroadcaster(),
+                    &_components->_robot.GetTouchSensorComponent(),
+                    &_components->_robot.GetVisionComponent(),
+                    &_components->_robot.GetMapComponent(),
+                    &_components->_robot.GetCubeLightComponent(),
+                    &_components->_robot.GetObjectPoseConfirmer(),
+                    &_components->_robot.GetCubeAccelComponent(),
+                    &_components->_robot.GetAnimationComponent(),
+                    _components->_robot.GetAudioClient(),
+                    &_components->_robot.GetBodyLightComponent());
 
   _audioClient->Init(_components->_behaviorExternalInterface);
-
-  // LEGACY Configure behavior manager
-  {
-    Json::Value blankActivitiesConfig;
-    
-    const CozmoContext* context = _components->_robot.GetContext();
-    
-    if(context == nullptr ) {
-      PRINT_NAMED_WARNING("BehaviorComponent.Init.NoContext",
-                          "wont be able to load some componenets. May be OK in unit tests");
-    }
-    
-    RobotDataLoader* dataLoader = nullptr;
-    if(context){
-      dataLoader = _components->_robot.GetContext()->GetDataLoader();
-    }
-    
-    const Json::Value& oldActivitesConfig = (dataLoader != nullptr) ?
-              dataLoader->GetLegacyCozmoActivitiesConfig() : blankActivitiesConfig;
-    
-    const Json::Value& reactionTriggerConfig = (dataLoader != nullptr) ?
-              dataLoader->GetReactionTriggerMap() : blankActivitiesConfig;
-    
-
-    
-    _behaviorMgr->InitConfiguration(_components->_behaviorExternalInterface,
-                                    _components->_robot.HasExternalInterface() ? _components->_robot.GetExternalInterface() : nullptr,
-                                    oldActivitesConfig);
-    _behaviorMgr->InitReactionTriggerMap(_components->_behaviorExternalInterface,
-                                         reactionTriggerConfig);
-  }
 }
 
 
@@ -321,40 +294,13 @@ void BehaviorComponent::Update(Robot& robot,
     _messageHandler.reset(new DevBehaviorComponentMessageHandler(robot, *this, _components->_behaviorContainer));
   }
 
+  if(_cloudReceiver == nullptr){
+    _cloudReceiver.reset(new BehaviorComponentCloudReceiver(robot));
+  }
+
   _behaviorHelperComponent->Update(_components->_behaviorExternalInterface);
 
-  if(USE_BSM){
-    _components->_behaviorSysMgr.Update(_components->_behaviorExternalInterface);
-  }else{
-    // https://ankiinc.atlassian.net/browse/COZMO-1242 : moving too early causes pose offset
-    static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
-    if(ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
-    {
-      ICozmoBehaviorPtr currentBehavior;
-
-      Result res = _behaviorMgr->Update(_components->_behaviorExternalInterface);
-      if(res == RESULT_OK){
-        currentActivityName = _behaviorMgr->GetCurrentActivity()->GetIDStr();
-        
-        behaviorDebugStr = currentActivityName;
-        
-        currentBehavior = _behaviorMgr->GetCurrentBehavior();
-      }
-      
-      if(currentBehavior != nullptr) {
-        behaviorDebugStr += " ";
-        behaviorDebugStr +=  BehaviorIDToString(currentBehavior->GetID());
-        const std::string& stateName = currentBehavior->GetDebugStateName();
-        if (!stateName.empty())
-        {
-          behaviorDebugStr += "-" + stateName;
-        }
-      }
-      
-    } else {
-      --ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242;
-    }
-  }
+  _components->_behaviorSysMgr.Update(_components->_behaviorExternalInterface);
   
   robot.GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
                                                "%s", behaviorDebugStr.c_str());
@@ -362,15 +308,6 @@ void BehaviorComponent::Update(Robot& robot,
   robot.GetContext()->SetSdkStatus(SdkStatusType::Behavior,
                                    std::string(currentActivityName) + std::string(":") + behaviorDebugStr);
   
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorComponent::OnRobotDelocalized()
-{
-  if(!USE_BSM){
-    _behaviorMgr->OnRobotDelocalized();
-  }
 }
 
 

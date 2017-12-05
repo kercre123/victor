@@ -17,12 +17,12 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/driveToActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iSubtaskListener.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/moodSystem/moodManager.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "engine/robot.h"
 #include "util/math/math.h"
 
 // TODO:(bn) this entire behavior could be generic for any type of emotion.... but that's too much effort
@@ -57,12 +57,10 @@ BehaviorReactToFrustration::BehaviorReactToFrustration(const Json::Value& config
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToFrustration::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
   // push driving animations in case we decide to drive
-  robot.GetDrivingAnimationHandler().PushDrivingAnimations(kFrustratedDrivingAnims, GetIDStr());
+  robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(kFrustratedDrivingAnims, GetIDStr());
   
   if(_animToPlay != AnimationTrigger::Count) {
     TransitionToReaction(behaviorExternalInterface);
@@ -79,22 +77,15 @@ Result BehaviorReactToFrustration::OnBehaviorActivated(BehaviorExternalInterface
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToFrustration::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
-  robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  robotInfo.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToFrustration::TransitionToReaction(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
-  TriggerLiftSafeAnimationAction* action = new TriggerLiftSafeAnimationAction(robot, _animToPlay);
+  TriggerLiftSafeAnimationAction* action = new TriggerLiftSafeAnimationAction(_animToPlay);
 
   DelegateIfInControl(action, [this](BehaviorExternalInterface& behaviorExternalInterface) {
       AnimationComplete(behaviorExternalInterface);
@@ -135,10 +126,7 @@ void BehaviorReactToFrustration::AnimationComplete(BehaviorExternalInterface& be
     float randomDist_mm = GetRNG().RandDblInRange(_minDistanceToDrive_mm,
                                                   _maxDistanceToDrive_mm);
 
-    
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
     // pick a pose by starting at the robot pose, then turning by randomAngle, then driving straight by
     // randomDriveMaxDist_mm (note that the real path may be different than this). This makes it look nicer
@@ -147,14 +135,14 @@ void BehaviorReactToFrustration::AnimationComplete(BehaviorExternalInterface& be
     
     Pose3d randomPoseRot( DEG_TO_RAD(randomAngleDeg), Z_AXIS_3D(),
                           {0.0f, 0.0f, 0.0f},
-                          robot.GetPose() );
+                          robotInfo.GetPose() );
     Pose3d randomPoseRotAndTrans( 0.f, Z_AXIS_3D(),
                                   {randomDist_mm, 0.0f, 0.0f},
                                   randomPoseRot );
 
     // TODO:(bn) motion profile?
     const bool kForceHeadDown = false;
-    DriveToPoseAction* action = new DriveToPoseAction(robot, randomPoseRotAndTrans.GetWithRespectToRoot(), kForceHeadDown);
+    DriveToPoseAction* action = new DriveToPoseAction(randomPoseRotAndTrans.GetWithRespectToRoot(), kForceHeadDown);
     DelegateIfInControl(action); // finish behavior when we are done
   }
   BehaviorObjectiveAchieved(BehaviorObjective::ReactedToFrustration);

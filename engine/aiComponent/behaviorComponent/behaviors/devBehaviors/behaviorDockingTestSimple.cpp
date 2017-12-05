@@ -28,7 +28,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/sayTextAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDockingTestSimple.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/bodyLightComponent.h"
@@ -56,7 +56,6 @@ if ((_BEHAVIORDEF)) { PRINT_NAMED_INFO( __VA_ARGS__ ); } \
 else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
 } while(0) \
 
-static const char* kBehaviorTestName = "Docking test simple";
 }
 
 
@@ -131,10 +130,10 @@ namespace Anki {
     
     void BehaviorDockingTestSimple::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
     {
-      _logger = std::make_unique<Util::RollingFileLogger>(nullptr, behaviorExternalInterface.GetRobot().GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"));
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
+      _logger = std::make_unique<Util::RollingFileLogger>(nullptr, 
+           behaviorExternalInterface.GetRobotInfo()._robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"));
+
+      const Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
       if(nullptr != robot.GetContext()->GetRobotManager() &&
          robot.GetContext()->GetRobotManager()->GetMsgHandler() != nullptr)
       {
@@ -152,13 +151,8 @@ namespace Anki {
     
     Result BehaviorDockingTestSimple::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
       _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, robot.GetWorldOrigin());
-      
-      robot.GetBehaviorManager().DisableReactionsWithLock(kBehaviorTestName,
-                                                          ReactionTriggerHelpers::GetAffectAllArray());
 
       // force the default speeds
       PathMotionProfile motionProfile;
@@ -217,9 +211,7 @@ namespace Anki {
     
     ICozmoBehavior::Status BehaviorDockingTestSimple::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
       if(_numAttempts == kMaxNumAttempts && _currentState != State::ManualReset)
       {
         Write("\nTest Completed Successfully");
@@ -267,7 +259,7 @@ namespace Anki {
           
           _initialPreActionPoseAngle_rad = kInvalidAngle;
           
-          CompoundActionSequential* action = new CompoundActionSequential(robot, {new MoveHeadToAngleAction(robot, 0, DEG_TO_RAD(1), 0), new WaitAction(robot, 2)});
+          CompoundActionSequential* action = new CompoundActionSequential({new MoveHeadToAngleAction(0, DEG_TO_RAD(1), 0), new WaitAction(2)});
           DelegateIfInControl(robot, action,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         if (result != ActionResult::SUCCESS) {
@@ -318,14 +310,14 @@ namespace Anki {
             _initialVisionMarker = const_cast<Vision::KnownMarker&>(block->GetTopMarker(junk));
             
             
-            DriveToObjectAction* driveAction = new DriveToObjectAction(robot, _blockObjectIDPickup, PreActionPose::ROLLING);
+            DriveToObjectAction* driveAction = new DriveToObjectAction(_blockObjectIDPickup, PreActionPose::ROLLING);
             DelegateIfInControl(robot, driveAction,
                         [this, &robot](const ActionResult& result, const ActionCompletedUnion& completionUnion){
                           if(result == ActionResult::SUCCESS)
                           {
                             _initialRobotPose = robot.GetPose();
                             
-                            RollObjectAction* action = new RollObjectAction(robot, _blockObjectIDPickup);
+                            RollObjectAction* action = new RollObjectAction(_blockObjectIDPickup);
                             action->SetDockingMethod((DockingMethod)kTestDockingMethod);
                             action->EnableDeepRoll(kDoDeepRoll);
                             
@@ -457,7 +449,7 @@ namespace Anki {
             // If we are just doing a straight pickup without driving to the preDock pose
             if(kJustPickup)
             {
-              PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectIDPickup);
+              PickupObjectAction* action = new PickupObjectAction(_blockObjectIDPickup);
               action->SetDockingMethod((DockingMethod)kTestDockingMethod);
               action->SetDoNearPredockPoseCheck(false);
               DelegateIfInControl(robot, action,
@@ -487,20 +479,19 @@ namespace Anki {
                 // This compound action will essentially function as a DriveToPickupObjectAction
                 // By aligning to the LIFT_PLATE and then moving the lift up we should
                 // pickup the object
-                action = new CompoundActionSequential(robot,
-                  {new DriveToAlignWithObjectAction(robot,
-                                                    _blockObjectIDPickup,
+                action = new CompoundActionSequential(
+                  {new DriveToAlignWithObjectAction(_blockObjectIDPickup,
                                                     0,
                                                     false,
                                                     0,
                                                     AlignmentType::LIFT_PLATE),
-                   new MoveLiftToHeightAction(robot,
+                   new MoveLiftToHeightAction(
                                               MoveLiftToHeightAction::Preset::CARRY)
                   });
               }
               else
               {
-                action = new DriveToPickupObjectAction(robot,
+                action = new DriveToPickupObjectAction(
                                                        _blockObjectIDPickup,
                                                        true,
                                                        _initialPreActionPoseAngle_rad);
@@ -531,7 +522,7 @@ namespace Anki {
             }
             else
             {
-              DriveToObjectAction* driveAction = new DriveToObjectAction(robot,
+              DriveToObjectAction* driveAction = new DriveToObjectAction(
                                                                          _blockObjectIDPickup,
                                                                          PreActionPose::DOCKING,
                                                                          0,
@@ -542,7 +533,7 @@ namespace Anki {
                             if(result == ActionResult::SUCCESS)
                             {
                               _initialRobotPose = robot.GetPose();
-                              PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectIDPickup);
+                              PickupObjectAction* action = new PickupObjectAction(_blockObjectIDPickup);
                               action->SetDockingMethod((DockingMethod)kTestDockingMethod);
                               DelegateIfInControl(robot, action,
                                           [this, &robot](const ActionResult& result, const ActionCompletedUnion& completedUnion){
@@ -581,7 +572,7 @@ namespace Anki {
         }
         case State::PlaceLow:
         {
-          PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(robot,
+          PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(
                                                                                         _cubePlacementPose,
                                                                                         true);
           DelegateIfInControl(robot, action,
@@ -700,19 +691,19 @@ namespace Anki {
           
           Pose3d p(Radians(angle + randA), Z_AXIS_3D(), {x + randX, y + randY, 0}, robot.GetWorldOrigin());
           
-          ICompoundAction* action = new CompoundActionSequential(robot);
+          ICompoundAction* action = new CompoundActionSequential();
           
           // If we are carrying the object when we reset then make sure to put it down before driving to the pose
           if(robot.GetCarryingComponent().IsCarryingObject())
           {
-            PlaceObjectOnGroundAtPoseAction* placeAction = new PlaceObjectOnGroundAtPoseAction(robot,
+            PlaceObjectOnGroundAtPoseAction* placeAction = new PlaceObjectOnGroundAtPoseAction(
                                                                                                _cubePlacementPose,
                                                                                                true);
             action->AddAction(placeAction);
           }
           
           const bool kDriveWithDown = true;
-          DriveToPoseAction* driveAction = new DriveToPoseAction(robot, p, kDriveWithDown);
+          DriveToPoseAction* driveAction = new DriveToPoseAction(p, kDriveWithDown);
           action->AddAction(driveAction);
           
           DelegateIfInControl(robot, action,
@@ -744,7 +735,7 @@ namespace Anki {
               robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Off);
             }
             
-            IActionRunner* action = new CompoundActionSequential(robot, {new SayTextAction(robot, "Test Complete", SayTextIntent::Text), new WaitAction(robot, 3)});
+            IActionRunner* action = new CompoundActionSequential({new SayTextAction("Test Complete", SayTextIntent::Text), new WaitAction(3)});
             DelegateIfInControl(robot, action,
                         [this](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                           if(result == ActionResult::SUCCESS)
@@ -763,7 +754,7 @@ namespace Anki {
               robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Off);
             }
             
-            IActionRunner* action = new CompoundActionSequential(robot, {new SayTextAction(robot, "Help", SayTextIntent::Text), new WaitAction(robot, 3)});
+            IActionRunner* action = new CompoundActionSequential({new SayTextAction("Help", SayTextIntent::Text), new WaitAction(3)});
             DelegateIfInControl(robot, action,
                         [this](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                           if(result == ActionResult::SUCCESS)
@@ -787,10 +778,7 @@ namespace Anki {
     
     void BehaviorDockingTestSimple::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      robot.GetBehaviorManager().RemoveDisableReactionsLock(kBehaviorTestName);
+      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
       // Cancel all actions
       for (const auto& tag : _actionCallbackMap) {
@@ -875,9 +863,7 @@ namespace Anki {
     
     void BehaviorDockingTestSimple::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
       switch(event.GetData().GetTag())
       {
         case EngineToGameTag::RobotCompletedAction:

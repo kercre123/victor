@@ -38,12 +38,18 @@ public:
     return _touchGesture;
   }
   
+  bool IsCalibrated() const {
+    return _baselineCalib.IsCalibrated();
+  }
+  
 private:
   DebounceHelper _debouncer;
 
   TouchGestureClassifier _gestureClassifier;
 
   TouchBaselineCalibrator _baselineCalib;
+
+  float _touchDetectStdevFactor;
 
   // the latest computed result of touch gesture
   TouchGesture _touchGesture;

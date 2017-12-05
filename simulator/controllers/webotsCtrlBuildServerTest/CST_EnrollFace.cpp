@@ -11,8 +11,7 @@
  **/
 
 #include "simulator/game/cozmoSimTestController.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 // If enabled, don't do the first enrollment where we don't see a face and just
 // wait for timeout. This flag is useful for local testing where you don't want
@@ -113,7 +112,8 @@ void CST_EnrollFace::StartEnrollment(Vision::FaceID_t saveID, const std::string&
   _faceEnrollmentCompleted = false;
   
   SendMessage(MessageGameToEngine(std::move(setFaceToEnroll)));
-  SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::EnrollFace), -1)));
+  SendMessage(MessageGameToEngine(ExecuteBehaviorByID(
+                                    BehaviorTypesWrapper::BehaviorIDToString(BEHAVIOR_ID(EnrollFace)), -1)));
 }
   
 void CST_EnrollFace::WaitToSetNewFacePose(double waitTime_sec, webots::Node* face, const Pose3d& newPose, TestState newState)
@@ -151,12 +151,6 @@ s32 CST_EnrollFace::UpdateSimInternal()
       CST_ASSERT(nullptr != _face1, "CST_EnrollFace.Init.MissingFace1");
       CST_ASSERT(nullptr != _face2, "CST_EnrollFace.Init.MissingFace2");
       
-      {
-        using namespace ExternalInterface;
-        // Enable selection chooser so we can specify EnrollFace
-        SendMessage(MessageGameToEngine(ActivateHighLevelActivity(HighLevelActivity::Selection)));
-      }
-      
       PRINT_NAMED_INFO("CST_EnrollFace.Init",
                        "Setting both faces out of FOV and starting enrollment");
       
@@ -172,11 +166,6 @@ s32 CST_EnrollFace::UpdateSimInternal()
         SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("EnrollFace_Timeout_sec", "8")));
         SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("EnrollFace_TimeoutMax_sec", "15")));
         SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("EnrollFace_TimeoutExtraTime_sec", "4")));
-        
-        // Disable AcknowledgeFace reaction, to keep the test simpler and avoid it cancelling
-        // the LookDown action in some cases
-        SendMessage(MessageGameToEngine(DisableReactionsWithLock("CST_EnrollFace",
-                                                                ReactionTriggerHelpers::kAffectAllReactions)));
         
         if(!ENABLE_AUDIO)
         {

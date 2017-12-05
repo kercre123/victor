@@ -12,14 +12,11 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeCubeMoved.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/components/visionComponent.h"
-#include "engine/robot.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -32,33 +29,6 @@ namespace{
 
 const float kDelayForUserPresentBlock_s = 1.0f;
 const float kDelayToRecognizeBlock_s = 0.5f;
-
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersAcknowledgeCubeArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersAcknowledgeCubeArray),
-              "Reaction triggers duplicate or non-sequential");
 
 }
   
@@ -88,7 +58,6 @@ bool BehaviorAcknowledgeCubeMoved::WantsToBeActivatedBehavior(BehaviorExternalIn
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorAcknowledgeCubeMoved::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersAcknowledgeCubeArray);
   _activeObjectSeen = false;
   switch(_state){
     case State::TurningToLastLocationOfBlock:
@@ -111,12 +80,8 @@ ICozmoBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal_WhileRunning
   if(_state == State::TurningToLastLocationOfBlock
      && _activeObjectSeen)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-
     CancelDelegates(false);
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::AcknowledgeObject));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::AcknowledgeObject));
     SET_STATE(ReactingToBlockPresence);
   }
   
@@ -135,13 +100,10 @@ void BehaviorAcknowledgeCubeMoved::OnBehaviorDeactivated(BehaviorExternalInterfa
 void BehaviorAcknowledgeCubeMoved::TransitionToPlayingSenseReaction(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(PlayingSenseReaction);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
 
-  DelegateIfInControl(new CompoundActionParallel(robot, {
-    new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::CubeMovedSense),
-    new WaitAction(robot, kDelayForUserPresentBlock_s) }),
+  DelegateIfInControl(new CompoundActionParallel({
+    new TriggerLiftSafeAnimationAction(AnimationTrigger::CubeMovedSense),
+    new WaitAction(kDelayForUserPresentBlock_s) }),
               &BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock);
   
 }
@@ -161,13 +123,10 @@ void BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock(Beha
     return;
   }
   const Pose3d& blockPose = obj->GetPose();
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
 
-  DelegateIfInControl(new CompoundActionParallel(robot, {
-    new TurnTowardsPoseAction(robot, blockPose),
-    new WaitAction(robot, kDelayToRecognizeBlock_s) }),
+  DelegateIfInControl(new CompoundActionParallel({
+    new TurnTowardsPoseAction(blockPose),
+    new WaitAction(kDelayToRecognizeBlock_s) }),
               &BehaviorAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence);
 }
   
@@ -176,11 +135,7 @@ void BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock(Beha
 void BehaviorAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(ReactingToBlockAbsence);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::CubeMovedUpset));
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::CubeMovedUpset));
   BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedCubeMoved);
 }
   

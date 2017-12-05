@@ -1,0 +1,11 @@
+{
+  "behaviorID" : "VictorDemoGoToSleep",
+  "behaviorClass" : "PlayAnim",
+
+  "playOnChargerWithoutBody": true,
+
+  "animTriggers": [
+    "GoToSleepGetIn",
+    "GoToSleepSleeping"
+  ]
+}

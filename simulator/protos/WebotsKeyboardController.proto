@@ -18,8 +18,9 @@ PROTO WebotsKeyboardController [
   field SFString behaviorName "DISABLED"
   field SFInt32  numBehaviorRuns 1
 
-  # BehaviorChooser to send
-  field SFString highLevelActivityName "Freeplay"
+  # Fake cloud commands
+  # Send a fake cloud intent to respond to
+  field SFString cloudIntent "Count"
 
   field SFString emotionName "WantToPlay"
   field SFFloat emotionVal 1.0
@@ -210,12 +211,6 @@ PROTO WebotsKeyboardController [
   # Redirect viz to this host upon connect
   # Only useful if engine is not on the same host as this webots controller
   field SFBool  redirectViz FALSE
-
-  # Force-add robot options
-  field SFBool   forceAddRobot TRUE
-  field SFString forcedRobotIP "127.0.0.1"
-  field SFInt32  forcedRobotID 1
-  field SFBool   forcedRobotIsSimulated TRUE  
   
   # Cozmo engine location
   field SFString engineIP "127.0.0.1"

@@ -13,17 +13,16 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorRollBlock.h"
 
 #include "engine/actions/animActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "util/console/consoleInterface.h"
 
@@ -91,10 +90,8 @@ ICozmoBehavior::Status BehaviorRollBlock::UpdateInternal_WhileRunning(BehaviorEx
       // so check distance between Cozmo and the cube to see whether he is still
       // rolling the cube himself or it was put upright by the user
       f32 distBetween = 0;
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
-      if(ComputeDistanceSQBetween(robot.GetPose(), object->GetPose(), distBetween) &&
+      if(ComputeDistanceSQBetween(behaviorExternalInterface.GetRobotInfo().GetPose(), 
+                                  object->GetPose(), distBetween) &&
          (distBetween > (kMaxDistCozmoIsRollingCube_mm * kMaxDistCozmoIsRollingCube_mm))){
         
         UpdateTargetsUpAxis(behaviorExternalInterface);
@@ -184,14 +181,6 @@ void BehaviorRollBlock::TransitionToPerformingAction(BehaviorExternalInterface& 
                                                           params);
   
   SmartDelegateToHelper(behaviorExternalInterface, rollHandle, delegateSuccess, delegateFailure);
-  
-  // Set the cube lights to interacting for full behavior run time
-  std::vector<BehaviorStateLightInfo> basePersistantLight;
-  basePersistantLight.push_back(
-    BehaviorStateLightInfo(_targetID, CubeAnimationTrigger::InteractingBehaviorLock)
-  );
-  SetBehaviorStateLights(basePersistantLight, false);
-  
 }
 
   
@@ -209,10 +198,7 @@ void BehaviorRollBlock::TransitionToRollSuccess(BehaviorExternalInterface& behav
   UpdateTargetsUpAxis(behaviorExternalInterface);
 
   if(!ShouldStreamline()){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::RollBlockSuccess));
   }
   BehaviorObjectiveAchieved(BehaviorObjective::BlockRolled);
   NeedActionCompleted();

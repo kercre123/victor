@@ -1,0 +1,32 @@
+{
+  "behaviorClass": "ExpressNeeds",
+  
+  "behaviorID": "Needs_SevereLowEnergyRequest",
+  "displayNameKey":"behavior.Needs_MildLowEnergyRequest",
+  "animTriggers": ["NeedsMildLowEnergyRequest"],  
+  "need": "Energy",
+  "needBracket": "Critical",
+
+  "playOnChargerWithoutBody": true,
+
+  "cooldown": {
+    "nodes": [
+      // x = needs level
+      // y = cooldown in seconds.
+      // Note that this behavior only runs in the critical state
+
+      {
+        "x": 0.0,
+        "y": 7.0
+      },
+      {
+        "x": 0.3,
+        "y": 20.0
+      },
+      {
+        "x": 0.5,
+        "y": 60.0
+      }
+    ]
+  }  
+}

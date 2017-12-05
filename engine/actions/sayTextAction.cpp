@@ -97,13 +97,11 @@ bool SayTextAction::LoadMetadata(Util::Data::DataPlatform& dataPlatform)
  
 // Public Methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SayTextAction::SayTextAction(Robot& robot,
-                             const std::string& text,
+SayTextAction::SayTextAction(const std::string& text,
                              const SayTextVoiceStyle style,
                              const float durationScalar,
                              const float voicePitch)
-: IAction(robot,
-          "SayText",
+: IAction("SayText",
           RobotActionType::SAY_TEXT,
           (u8)AnimTrackFlag::NO_TRACKS)
 , _text(text)
@@ -125,46 +123,16 @@ SayTextAction::SayTextAction(Robot& robot,
 } // SayTextAction()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTextIntent intent)
-: IAction(robot,
-          "SayText",
+SayTextAction::SayTextAction(const std::string& text, const SayTextIntent intent)
+: IAction("SayText",
           RobotActionType::SAY_TEXT,
           (u8)AnimTrackFlag::NO_TRACKS)
 , _text(text)
+, _intent(intent)
 //, _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
 // , _animation("SayTextAnimation") // TODO: SayTextAction is broken (VIC-360)
 {
-  // Get metadata
-  const auto it = _intentConfigs.find( intent );
-  if ( it != _intentConfigs.end() ) {
-    // Set intent values
-    const SayTextIntentConfig& config = it->second;
-    
-    // Set audio processing style type
-    _style = config.style;
-    
-    // Get Duration val
-    const SayTextIntentConfig::ConfigTrait& durationTrait = config.FindDurationTraitTextLength(Util::numeric_cast<uint>(text.length()));
-    _durationScalar = durationTrait.GetDuration( robot.GetRNG() );
-    
-    // Get Pitch val
-    const SayTextIntentConfig::ConfigTrait& pitchTrait = config.FindPitchTraitTextLength(Util::numeric_cast<uint>(text.length()));
-    _voicePitch = pitchTrait.GetDuration( robot.GetRNG() );
-  }
-  else {
-    PRINT_NAMED_ERROR("SayTextAction.CanNotFind.SayTextIntentConfig", "%s", EnumToString(intent));
-  }
-  
-  PRINT_CH_INFO(kLocalLogChannel,
-                "SayTextAction.InitWithIntent",
-                "Text '%s' Intent '%s' Style '%s' DurScalar %f Pitch %f",
-                Util::HidePersonallyIdentifiableInfo(_text.c_str()),
-                EnumToString(intent),
-                EnumToString(_style),
-                _durationScalar,
-                _voicePitch);
-  
-  GenerateTtsAudio();
+
 } // SayTextAction()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -178,6 +146,44 @@ SayTextAction::~SayTextAction()
     _playAnimationAction->PrepForCompletion();
   }
 } // ~SayTextAction()
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SayTextAction::OnRobotSet()
+{
+  // Get metadata
+  const auto it = _intentConfigs.find( _intent );
+  if ( it != _intentConfigs.end() ) {
+    // Set intent values
+    const SayTextIntentConfig& config = it->second;
+    
+    // Set audio processing style type
+    _style = config.style;
+    
+    // Get Duration val
+    const SayTextIntentConfig::ConfigTrait& durationTrait = config.FindDurationTraitTextLength(Util::numeric_cast<uint>(_text.length()));
+    _durationScalar = durationTrait.GetDuration( GetRobot().GetRNG() );
+    
+    // Get Pitch val
+    const SayTextIntentConfig::ConfigTrait& pitchTrait = config.FindPitchTraitTextLength(Util::numeric_cast<uint>(_text.length()));
+    _voicePitch = pitchTrait.GetDuration( GetRobot().GetRNG() );
+  }
+  else {
+    PRINT_NAMED_ERROR("SayTextAction.RobotSet.CanNotFind.SayTextIntentConfig", "%s", EnumToString(_intent));
+  }
+  
+  PRINT_CH_INFO(kLocalLogChannel,
+                "SayTextAction.RobotSet",
+                "Text '%s' Intent '%s' Style '%s' DurScalar %f Pitch %f",
+                Util::HidePersonallyIdentifiableInfo(_text.c_str()),
+                EnumToString(_intent),
+                EnumToString(_style),
+                _durationScalar,
+                _voicePitch);
+  
+  GenerateTtsAudio();
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SayTextAction::SetAnimationTrigger(AnimationTrigger trigger, u8 ignoreTracks)
@@ -265,11 +271,12 @@ ActionResult SayTextAction::Init()
         }
         else {
           // Use current animation trigger
-          _playAnimationAction.reset(new TriggerLiftSafeAnimationAction(_robot,
+          _playAnimationAction.reset(new TriggerLiftSafeAnimationAction(
                                                                         _animationTrigger,
                                                                         1,
                                                                         true,
                                                                         _ignoreAnimTracks));
+          _playAnimationAction->SetRobot(&GetRobot());
         }
       }
       

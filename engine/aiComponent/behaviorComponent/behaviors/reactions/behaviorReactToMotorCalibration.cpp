@@ -12,44 +12,13 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotorCalibration.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
-#include "engine/robot.h"
 #include "engine/robotManager.h"
 
 
 namespace Anki {
 namespace Cozmo {
-  
-namespace {
-
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersMotorCalibrationArray = {
-  {ReactionTrigger::CliffDetected,                true},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       true},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                true},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             true},
-  {ReactionTrigger::RobotOnBack,                  true},
-  {ReactionTrigger::RobotOnFace,                  true},
-  {ReactionTrigger::RobotOnSide,                  true},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           true}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersMotorCalibrationArray),
-              "Reaction triggers duplicate or non-sequential");
-}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToMotorCalibration::BehaviorReactToMotorCalibration(const Json::Value& config)
@@ -71,21 +40,17 @@ bool BehaviorReactToMotorCalibration::WantsToBeActivatedBehavior(BehaviorExterna
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToMotorCalibration::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  LOG_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersMotorCalibrationArray);
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  LOG_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");  
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
   // Start a hang action just to keep this behavior alive until the calibration complete message is received
-  DelegateIfInControl(new WaitAction(robot, _kTimeout_sec), [&robot](ActionResult res)
+  DelegateIfInControl(new WaitAction(_kTimeout_sec), [&robotInfo](ActionResult res)
     {
       if (IActionRunner::GetActionResultCategory(res) != ActionResultCategory::CANCELLED  &&
-          (!robot.IsHeadCalibrated() || !robot.IsLiftCalibrated())) {
+          (!robotInfo.IsHeadCalibrated() || !robotInfo.IsLiftCalibrated())) {
         PRINT_NAMED_WARNING("BehaviorReactToMotorCalibration.Timeout",
                             "Calibration didn't complete (lift: %d, head: %d)",
-                            robot.IsLiftCalibrated(), robot.IsHeadCalibrated());
+                            robotInfo.IsLiftCalibrated(), robotInfo.IsHeadCalibrated());
       }
     });
 
@@ -99,11 +64,9 @@ void BehaviorReactToMotorCalibration::HandleWhileActivated(const EngineToGameEve
   switch(event.GetData().GetTag()) {
     case EngineToGameTag::MotorCalibration:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
+      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
-      if (robot.IsHeadCalibrated() && robot.IsLiftCalibrated()) {
+      if (robotInfo.IsHeadCalibrated() && robotInfo.IsLiftCalibrated()) {
         PRINT_CH_INFO("Behaviors", "BehaviorReactToMotorCalibration.HandleWhileRunning.Stop", "");
         CancelDelegates();
       }

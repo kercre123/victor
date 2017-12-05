@@ -381,8 +381,8 @@ void PathComponent::HandlePossibleOriginChanges()
   else if (haveOriginsChanged && canAdjustOrigin) {
     RejiggerTargetsAndReplan();
   }
-  else if( _robot.GetBlockWorld().DidObjectsChange() ) {
-    // we didn't need to adjust origins, but the obstacles have moved around, so replan if we need to
+  else {
+    // we didn't need to adjust origins, so delegate on Restart to decide if we should replan
     RestartPlannerIfNeeded();
   }
 
@@ -872,12 +872,32 @@ void PathComponent::RestartPlannerIfNeeded()
       break;
       
     case EComputePathStatus::Running:
+    {
       PRINT_CH_DEBUG("Planner", "PathComponent.Replan.Running", "ComputeNewPathIfNeeded running");
-      // TODO:(bn) really need to truncate the plan here, otherwise if we take a while to plan we will plow
-      // straight into the obstacle even though we know it's there. See COZMO-10581
-      _plannerActive = true;
-      break;
+
+      // check if a path is currently being executed
+      const Planning::Path currPath = _pdo->GetPath();
+      if (currPath.GetNumSegments() > 0)
+      {
+        const float startAngle = currPath.GetSegmentConstRef(0).GetStartAngle();
+        Planning::Path validSubPath;
+        if (!_selectedPathPlanner->CheckIsPathSafe(currPath, startAngle, validSubPath))
+        {
+          // entire path is not safe, set the current path to just the valid portion
+          if (_pdo->GetLastDoledIdx() >= validSubPath.GetNumSegments()) 
+          {
+            // we already sent the extent of the valid path, so force stop
+            PRINT_NAMED_INFO("PathComponent.RestartPlannerIfNeeded", "Replanning and current Path invalid. ESTOP Robot");
+            ClearPath();
+          } else {
+            _pdo->ReplacePath(validSubPath);
+          }
+        }
+      }
       
+      _plannerActive = true; 
+      break;
+    }
     case EComputePathStatus::NoPlanNeeded:
       DEV_ASSERT( _driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath,
                   "Robot.PathComponent.RestarTPlannerIfNeeded.NoPlan.InconsistentState" );

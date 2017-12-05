@@ -17,13 +17,13 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/robot.h"
 #include "engine/viz/vizManager.h"
 
 #include "util/console/consoleInterface.h"
@@ -69,8 +69,8 @@ const float kLocationFailureRot_rad = M_PI_F;
 // LocationCalculator: given row and column can calculate a 3d pose in a beacon
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 struct LocationCalculator {
-  LocationCalculator(const ObservableObject* pickedUpObject, const Vec3f& beaconCenter, const Rotation3d& directionality, float beaconRadius_mm, const Robot& robot, float recentFailureCooldown_sec)
-  : object(pickedUpObject), center(beaconCenter), rotation(directionality), radiusSQ(beaconRadius_mm*beaconRadius_mm), robotRef(robot), renderAsFirstFind(true), recentFailureCooldown_sec(recentFailureCooldown_sec)
+  LocationCalculator(const ObservableObject* pickedUpObject, const Vec3f& beaconCenter, const Rotation3d& directionality, float beaconRadius_mm, const BehaviorExternalInterface& bei, float recentFailureCooldown_sec)
+  : object(pickedUpObject), center(beaconCenter), rotation(directionality), radiusSQ(beaconRadius_mm*beaconRadius_mm), beiRef(bei), renderAsFirstFind(true), recentFailureCooldown_sec(recentFailureCooldown_sec)
   {
     DEV_ASSERT(nullptr != object, "BehaviorExploreBringCubeToBeacon.LocationCalculator.NullObjectWillCrash");
   }
@@ -79,7 +79,7 @@ struct LocationCalculator {
   const Vec3f& center;
   const Rotation3d& rotation;
   const float radiusSQ;
-  const Robot& robotRef;
+  const BehaviorExternalInterface& beiRef;
   mutable bool renderAsFirstFind;
   const float recentFailureCooldown_sec;
 
@@ -107,7 +107,7 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
   Vec3f offset{ locOffset*row, locOffset*col, 0.0f};
   offset = rotation * offset;
   Vec3f candidateLoc = center + offset;
-  outPose = Pose3d(rotation, candidateLoc, robotRef.GetWorldOrigin()); // override even if not free
+  outPose = Pose3d(rotation, candidateLoc, beiRef.GetRobotInfo().GetWorldOrigin()); // override even if not free
   
   // check if out of radius
   if ( offset.LengthSq() > radiusSQ )
@@ -116,14 +116,14 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
     if ( kBebctb_DebugRenderAll )
     {
       Quad2f candidateQuad = object->GetBoundingQuadXY(outPose);
-      robotRef.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorExploreBringCubeToBeacon.Locations",
+      beiRef.GetRobotInfo().GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorExploreBringCubeToBeacon.Locations",
         candidateQuad, 20.0f, NamedColors::BLACK, false);
     }
     return false;
   }
   
   // calculate if candidate pose is close to a previous failure
-  const bool isLocationFailureInWhiteboard = robotRef.GetAIComponent().GetWhiteboard().DidFailToUse(-1,
+  const bool isLocationFailureInWhiteboard = beiRef.GetAIComponent().GetWhiteboard().DidFailToUse(-1,
     AIWhiteboard::ObjectActionFailure::PlaceObjectAt,
     recentFailureCooldown_sec,
     outPose, kLocationFailureDist_mm, kLocationFailureRot_rad);
@@ -141,7 +141,7 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
 
     // TODO rsam: this only checks for other cubes, but not for unknown obstacles since we don't have collision sensor
     std::vector<const ObservableObject *> intersectingObjects;
-    robotRef.GetBlockWorld().FindLocatedIntersectingObjects(candidateQuad,
+    beiRef.GetBlockWorld().FindLocatedIntersectingObjects(candidateQuad,
                                                             intersectingObjects,
                                                             kBebctb_PaddingBetweenCubes_mm,
                                                             ignoreSelfFilter);
@@ -154,7 +154,7 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
   
   // debug render
   if ( kBebctb_DebugRenderAll ) {
-    robotRef.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorExploreBringCubeToBeacon.Locations",
+    beiRef.GetRobotInfo().GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorExploreBringCubeToBeacon.Locations",
       object->GetBoundingQuadXY(outPose), 20.0f, isFree ? (renderAsFirstFind ? NamedColors::YELLOW : NamedColors::WHITE) : NamedColors::RED, false);
     renderAsFirstFind = renderAsFirstFind && !isFree; // render as first as long as we don't find one free
   }
@@ -248,17 +248,13 @@ Result BehaviorExploreBringCubeToBeacon::OnBehaviorActivated(BehaviorExternalInt
   // clear variables from previous run
   _selectedObjectID.UnSet();
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  
   // calculate starting state
-  if ( robot.GetCarryingComponent().IsCarryingObject() )
+  if (behaviorExternalInterface.GetRobotInfo().GetCarryingComponent().IsCarryingObject() )
   {
     // we are carrying an object
     // assert what we expect from WantsToBeActivated cache
     DEV_ASSERT(_candidateObjects.size() == 1 &&
-               _candidateObjects[0].id == robot.GetCarryingComponent().GetCarryingObject(),
+               _candidateObjects[0].id == behaviorExternalInterface.GetRobotInfo().GetCarryingComponent().GetCarryingObject(),
                "BehaviorExploreBringCubeToBeacon.InitInternal.CarryingObjectNotCached" );
     
     // select it and pretend we just picked it up
@@ -276,7 +272,7 @@ Result BehaviorExploreBringCubeToBeacon::OnBehaviorActivated(BehaviorExternalInt
   // the beacon as not valid anymore
   bool shouldControlBeDelegated = true;
   if ( !IsControlDelegated() ) {
-    const AIBeacon* activeBeacon = robot.GetAIComponent().GetWhiteboard().GetActiveBeacon();
+    const AIBeacon* activeBeacon = behaviorExternalInterface.GetAIComponent().GetWhiteboard().GetActiveBeacon();
     const float lastBeaconFailure = activeBeacon->GetLastTimeFailedToFindLocation();
     const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     const bool beaconFlaggedFail = FLT_NEAR(curTime, lastBeaconFailure);
@@ -294,11 +290,9 @@ void BehaviorExploreBringCubeToBeacon::OnBehaviorDeactivated(BehaviorExternalInt
 {
   // clear render on exit just in case
   if ( kBebctb_DebugRenderAll ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     
-    robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreBringCubeToBeacon.Locations");
+    robotInfo.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreBringCubeToBeacon.Locations");
   }
 }
 
@@ -310,26 +304,22 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(BehaviorExternal
     // if _selectedObjectID is set this is a retry
     const bool isRetry = _selectedObjectID.IsSet();
     if ( !isRetry )
-    {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
-      
+    { 
       // pick closest block (rsam/brad: this would be a good place to use path distance instead of euclidean)
-      const Pose3d& robotPose = robot.GetPose();
-      const BlockWorld& world = robot.GetBlockWorld();
+      const Pose3d& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
+      const BlockWorld& world = behaviorExternalInterface.GetBlockWorld();
 
       size_t bestIndex = 0;
-      const ObservableObject* candidateObj = GetCandidate(world, bestIndex);
       float bestDistSQ = FLT_MAX;
-      for( size_t idx=0; idx<_candidateObjects.size(); ++idx)
+
+      for (size_t idx=0; idx <_candidateObjects.size(); ++idx)
       {
-        candidateObj = GetCandidate(world, bestIndex);
+        const ObservableObject* candidateObj = GetCandidate(world, idx);
         
         // calculate distance wrt robot
         Pose3d objWrtRobot;
         const bool canGetWrtRobot = (candidateObj && candidateObj->GetPose().GetWithRespectTo(robotPose, objWrtRobot) );
-        const float candidateDistSQ = canGetWrtRobot ? objWrtRobot.GetTranslation().LengthSq() : FLT_MAX;
+        const float candidateDistSQ = (canGetWrtRobot ? objWrtRobot.GetTranslation().LengthSq() : FLT_MAX);
         
         // check if candidate is better than current best
         if ( FLT_LT(candidateDistSQ, bestDistSQ) )
@@ -353,13 +343,9 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(BehaviorExternal
     {
       PRINT_CH_INFO("Behaviors", (GetIDStr() + ".TransitionToPickUpObject.Retry").c_str(), "Trying to pick up '%d' again", _selectedObjectID.GetValue());
     }
-
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
     
     // fire action with proper callback
-    DriveToPickupObjectAction* pickUpAction = new DriveToPickupObjectAction(robot, _selectedObjectID );
+    DriveToPickupObjectAction* pickUpAction = new DriveToPickupObjectAction(_selectedObjectID );
     RobotCompletedActionCallback onPickUpActionResult = [this, &behaviorExternalInterface, attempt](const ExternalInterface::RobotCompletedAction& actionRet)
     {
       // arguably here we could check isCarrying regardless of action result. Even if the action failed, as long
@@ -373,13 +359,11 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(BehaviorExternal
       }
       else if (resCat == ActionResultCategory::RETRY)
       {
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        const Robot& robot = behaviorExternalInterface.GetRobot();
+        const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
         
         // do we currently have the object in the lift?
-        const bool isCarrying = (robot.GetCarryingComponent().IsCarryingObject() &&
-                                 robot.GetCarryingComponent().GetCarryingObject() == _selectedObjectID);
+        const bool isCarrying = (robotInfo.GetCarryingComponent().IsCarryingObject() &&
+                                 robotInfo.GetCarryingComponent().GetCarryingObject() == _selectedObjectID);
         if ( isCarrying )
         {
           PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onPickUpActionResult.RetryOk").c_str(), "We do have '%d' picked up, so pretend we are fine", _selectedObjectID.GetValue());
@@ -414,7 +398,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(BehaviorExternal
         
         // rsam: considering this, but pickUp action would already fire emotion events
         // fire emotion event, Cozmo is sad he could not pick up the cube it selected
-        // robot.GetMoodManager().TriggerEmotionEvent("HikingFailedToPickUp", MoodManager::GetCurrentTimeInSeconds());
+        // behaviorExternalInterface.GetMoodManager().TriggerEmotionEvent("HikingFailedToPickUp", MoodManager::GetCurrentTimeInSeconds());
       }
     };
     DelegateIfInControl(pickUpAction, onPickUpActionResult);
@@ -428,13 +412,9 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(BehaviorExternal
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreBringCubeToBeacon::TryToStackOn(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& bottomCubeID, int attempt)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
   // note pass bottomCubeID to the lambda as copy, do not trust it's scope
   // create action to stack
-  DriveToPlaceOnObjectAction* stackAction = new DriveToPlaceOnObjectAction(robot, bottomCubeID);
+  DriveToPlaceOnObjectAction* stackAction = new DriveToPlaceOnObjectAction(bottomCubeID);
   RobotCompletedActionCallback onStackActionResult = [this, &behaviorExternalInterface, bottomCubeID, attempt](const ExternalInterface::RobotCompletedAction& actionRet)
   {
     bool stackOnCubeFinalFail = false;
@@ -448,13 +428,11 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(BehaviorExternalInterface& b
     }
     else if (resCat == ActionResultCategory::RETRY)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
+      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       
       const bool canRetry = (attempt < kMaxAttempts);
-      const bool isCarrying = (robot.GetCarryingComponent().IsCarryingObject() &&
-                               robot.GetCarryingComponent().GetCarryingObject() == _selectedObjectID);
+      const bool isCarrying = (robotInfo.GetCarryingComponent().IsCarryingObject() &&
+                               robotInfo.GetCarryingComponent().GetCarryingObject() == _selectedObjectID);
       if ( canRetry && isCarrying )
       {
         PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onStackActionResult.CanRetry").c_str(),
@@ -491,7 +469,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(BehaviorExternalInterface& b
       
       // rsam: considering this, but placeOn action would already fire emotion events
       // fire emotion event, Cozmo is sad he could not stack the cube on top of the other one
-      // robot.GetMoodManager().TriggerEmotionEvent("HikingFailedToStack", MoodManager::GetCurrentTimeInSeconds());
+      // behaviorExternalInterface.GetMoodManager().TriggerEmotionEvent("HikingFailedToStack", MoodManager::GetCurrentTimeInSeconds());
     }
   };
   DelegateIfInControl( stackAction, onStackActionResult );
@@ -504,11 +482,8 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(BehaviorExternalInterface& b
   // create action to drive to the drop location
   const bool checkFreeDestination = true;
   const float padding_mm = kBebctb_PaddingBetweenCubes_mm;
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(robot, pose, false, false, checkFreeDestination, padding_mm);
+  PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(pose, false, false, checkFreeDestination, padding_mm);
   RobotCompletedActionCallback onPlaceActionResult = [this, &behaviorExternalInterface, pose, attempt](const ExternalInterface::RobotCompletedAction& actionRet)
   {
     bool placeAtCubeFinalFail = false;
@@ -522,13 +497,11 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(BehaviorExternalInterface& b
     }
     else if (resCat == ActionResultCategory::RETRY)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
+      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       
       const bool canRetry = false || (attempt < kMaxAttempts);
-      const bool isCarrying = (robot.GetCarryingComponent().IsCarryingObject() &&
-                               robot.GetCarryingComponent().GetCarryingObject() == _selectedObjectID);
+      const bool isCarrying = (robotInfo.GetCarryingComponent().IsCarryingObject() &&
+                               robotInfo.GetCarryingComponent().GetCarryingObject() == _selectedObjectID);
       if ( canRetry && isCarrying )
       {
         PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onPlaceActionResult.Done.CanRetry").c_str(),
@@ -565,7 +538,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(BehaviorExternalInterface& b
 
       // rsam: considering this, but placeAt action would already fire emotion events
       // fire emotion event, Cozmo is sad he could not place the cube at the selected destination
-      // robot.GetMoodManager().TriggerEmotionEvent("HikingFailedToPlace", MoodManager::GetCurrentTimeInSeconds());
+      // behaviorExternalInterface.GetMoodManager().TriggerEmotionEvent("HikingFailedToPlace", MoodManager::GetCurrentTimeInSeconds());
     }
 
   };
@@ -596,24 +569,17 @@ void BehaviorExploreBringCubeToBeacon::FireEmotionEvents(BehaviorExternalInterfa
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // clear this render to not mistake previous frame debug with this
   if ( kBebctb_DebugRenderAll ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    
-    robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreBringCubeToBeacon.Locations");
+    robotInfo.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreBringCubeToBeacon.Locations");
   }
-
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
   // if we successfully picked up the object we wanted we can continue, otherwise freak out
-  if ( robot.GetCarryingComponent().IsCarryingObject() &&
-       robot.GetCarryingComponent().GetCarryingObject() == _selectedObjectID )
+  if ( robotInfo.GetCarryingComponent().IsCarryingObject() &&
+       robotInfo.GetCarryingComponent().GetCarryingObject() == _selectedObjectID )
   {
-    const ObservableObject* const pickedUpObject = robot.GetBlockWorld().GetLocatedObjectByID( _selectedObjectID);
+    const ObservableObject* const pickedUpObject = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID( _selectedObjectID);
     if ( pickedUpObject == nullptr ) {
       PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.ObjectIsNull",
         "Could not obtain obj from ID '%d'", _selectedObjectID.GetValue());
@@ -621,7 +587,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(BehaviorExtern
     }
     
     // grab the selected beacon (there should be one)
-    AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
+    AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
     AIBeacon* selectedBeacon = whiteboard.GetActiveBeacon();
     if (nullptr == selectedBeacon) {
       DEV_ASSERT(nullptr!= selectedBeacon, "BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.NullBeacon");
@@ -675,7 +641,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(BehaviorExtern
         // fire emotion event, Cozmo is sad he could not put down the cube in the beacon
         // This may be hard for the player to understand, but at least will give context as to why
         // Cozmo is simply putting down the cube
-        robot.GetMoodManager().TriggerEmotionEvent("HikingNoLocationAtBeacon", MoodManager::GetCurrentTimeInSeconds());
+        behaviorExternalInterface.GetMoodManager().TriggerEmotionEvent("HikingNoLocationAtBeacon", MoodManager::GetCurrentTimeInSeconds());
       }
     }
   }
@@ -739,12 +705,10 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
     const bool isBlockInSelectedBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose(), inwardThreshold_mm);
     if ( isBlockInSelectedBeacon )
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
+      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       
       // check if we can stack on top of this object
-      const bool canStackOnObject = robot.GetDockingComponent().CanStackOnTopOfObject(*blockPtr);
+      const bool canStackOnObject = robotInfo.GetDockingComponent().CanStackOnTopOfObject(*blockPtr);
       if ( canStackOnObject )
       {
         // TODO rsam: this stops at the first found, not closest or anything fancy
@@ -885,12 +849,10 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
   // if there are no objects currently in the beacon, or could not get a valid directionality, calculate one now
   if( !isDirectionalitySetFromObjects )
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     
     // TODO rsam put this utility somewhere: create Rotation3d from vector in XY plane
-    Vec3f beaconNormal = (beacon->GetPose().GetWithRespectToRoot().GetTranslation() - robot.GetPose().GetTranslation());
+    Vec3f beaconNormal = (beacon->GetPose().GetWithRespectToRoot().GetTranslation() - robotInfo.GetPose().GetTranslation());
     beaconNormal.z() = 0.0f;
     float distance = beaconNormal.MakeUnitLength();
     
@@ -908,12 +870,8 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
       beaconDirectionality = Rotation3d( rotRads, kUpVector );
     }
   }
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  
   const Vec3f beaconCenter = beacon->GetPose().GetWithRespectToRoot().GetTranslation();
-  LocationCalculator locCalc(object, beaconCenter, beaconDirectionality, beacon->GetRadius(), robot, recentFailureCooldown_sec);
+  LocationCalculator locCalc(object, beaconCenter, beaconDirectionality, beacon->GetRadius(), behaviorExternalInterface, recentFailureCooldown_sec);
 
   const int kMaxRow = beacon->GetRadius() / locCalc.GetLocationOffset();
   const int kMaxCol = kMaxRow;

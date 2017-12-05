@@ -16,10 +16,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 
+#include "engine/smartFaceId.h"
+
 namespace Anki {
 namespace Cozmo {
-
-class Robot;
   
 class BehaviorReactToVoiceCommand : public ICozmoBehavior
 {
@@ -32,7 +32,7 @@ private:
 public:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
-  void SetDesiredFace(const Vision::FaceID_t& desiredFace){_desiredFace = desiredFace;}
+  void SetDesiredFace(const SmartFaceID& desiredFace){_desiredFace = desiredFace;}
   
   // Empty override of AddListener because the strategy that controls this behavior is a listener
   // The strategy controls multiple different behaviors and listeners are necessary for the other behaviors
@@ -44,7 +44,7 @@ protected:
   virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
-  mutable Vision::FaceID_t _desiredFace = Vision::UnknownFaceID;
+  mutable SmartFaceID _desiredFace;
   
 }; // class BehaviorReactToVoiceCommand
 

@@ -126,7 +126,7 @@ TEST(EnumHelpers, TestStringToEnum)
 
 
 // ================================================================================
-// Enum implemenations - i.e. everything that would normally be in a separate CPP file:
+// Enum implementations - i.e. everything that would normally be in a separate CPP file:
 
 
 const char* EnumToString(const TestEnum m)

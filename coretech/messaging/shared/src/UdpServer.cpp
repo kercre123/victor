@@ -116,7 +116,7 @@ void UdpServer::StopListening()
 }
 
 
-int UdpServer::Send(const char* data, int size)
+ssize_t UdpServer::Send(const char* data, int size)
 {
   if (size <= 0) return 0;
 
@@ -143,7 +143,7 @@ int UdpServer::Send(const char* data, int size)
   return static_cast<int>(bytes_sent);
 }
 
-int UdpServer::Recv(char* data, int maxSize)
+ssize_t UdpServer::Recv(char* data, int maxSize)
 {
   socklen_t cliLen = sizeof(cliaddr);
   ssize_t bytes_received;

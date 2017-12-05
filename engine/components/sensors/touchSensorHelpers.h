@@ -35,8 +35,8 @@ public:
   }
   
 private:
-  const int _loLimit;
-  const int _hiLimit;
+  int _loLimit;
+  int _hiLimit;
   
   int _counter;
   

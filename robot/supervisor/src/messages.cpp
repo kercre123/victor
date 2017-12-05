@@ -147,7 +147,7 @@ namespace Anki {
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
 
         for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
-          robotState_.cliffDataRaw[i] = ProxSensors::GetRawCliffValue(i);
+          robotState_.cliffDataRaw[i] = ProxSensors::GetCliffValue(i);
         }
         robotState_.proxData = HAL::GetRawProxData();
         
@@ -209,10 +209,6 @@ namespace Anki {
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
 
-        // Start motor calibration
-        LiftController::StartCalibrationRoutine();
-        HeadController::StartCalibrationRoutine();
-
         AnkiEvent( "watchdog_reset_count", "%d", HAL::GetWatchdogResetCounter());
       } // ProcessRobotInit()
 
@@ -264,7 +260,11 @@ namespace Anki {
         if (!syncTimeAckSent_) {
           // Make sure we wait some tics after receiving syncTime so that we're sure the
           // timestamp from the body has propagated up.
-          if (initReceived_ && (++ticsSinceInitReceived_ > 3) && IMUFilter::IsBiasFilterComplete()) {
+          if (initReceived_ && 
+              (++ticsSinceInitReceived_ > 3) && 
+              IMUFilter::IsBiasFilterComplete() &&
+              LiftController::IsCalibrated() &&
+              HeadController::IsCalibrated()) {
             RobotInterface::SyncTimeAck syncTimeAckMsg;
             while (RobotInterface::SendMessage(syncTimeAckMsg) == false);
             syncTimeAckSent_ = true;
@@ -325,7 +325,7 @@ namespace Anki {
       }
 
       void Process_appendPathSegPointTurn(const RobotInterface::AppendPathSegmentPointTurn& msg) {
-        PathFollower::AppendPathSegment_PointTurn(msg.x_center_mm, msg.y_center_mm, msg.targetRad,
+        PathFollower::AppendPathSegment_PointTurn(msg.x_center_mm, msg.y_center_mm, msg.startRad, msg.targetRad,
                                                   msg.speed.target, msg.speed.accel, msg.speed.decel,
                                                   msg.angleTolerance, msg.useShortestDir);
       }
@@ -597,7 +597,7 @@ namespace Anki {
         ProxSensors::EnableStopOnCliff(msg.enable);
       }
 
-      void Process_setCliffDetectThresholds(const RobotInterface::SetCliffDetectThresholds& msg)
+      void Process_setCliffDetectThresholds(const SetCliffDetectThresholds& msg)
       {
         for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
           ProxSensors::SetCliffDetectThreshold(i, msg.thresholds[i]);

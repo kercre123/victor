@@ -18,7 +18,6 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationPyramid.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
@@ -640,11 +639,12 @@ AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(AIWhiteboa
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Vision::FaceID_t AIWhiteboard::GetBestFaceToTrack(const std::set< Vision::FaceID_t >& possibleFaces,
+SmartFaceID AIWhiteboard::GetBestFaceToTrack(const std::set<SmartFaceID>& possibleFaces,
                                                   bool preferNamedFaces) const
 {
   if( possibleFaces.empty() ) {
-    return Vision::UnknownFaceID;
+    SmartFaceID invalidID;
+    return invalidID;
   }
 
   if( possibleFaces.size() == 1 ) {
@@ -655,7 +655,7 @@ Vision::FaceID_t AIWhiteboard::GetBestFaceToTrack(const std::set< Vision::FaceID
   const f32 unnamedFacePenalty = preferNamedFaces ? 1000.0f : 0.0f;
   
   float bestCost = std::numeric_limits<float>::max();
-  Vision::FaceID_t bestFace = Vision::UnknownFaceID;
+  SmartFaceID bestFace;
   for( auto targetID : possibleFaces ) {
 
     const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(targetID);

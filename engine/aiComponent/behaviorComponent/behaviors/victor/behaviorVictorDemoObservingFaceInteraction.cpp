@@ -17,10 +17,9 @@
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/trackFaceAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
-
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -45,8 +44,8 @@ void BehaviorVictorDemoObservingFaceInteraction::InitBehavior(BehaviorExternalIn
 {
   const auto& BC = behaviorExternalInterface.GetBehaviorContainer();
 
-  BC.FindBehaviorByIDAndDowncast(BehaviorID::VictorDemoObservingFindFaces,
-                                 BehaviorClass::FindFaces,
+  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(VictorDemoObservingFindFaces),
+                                 BEHAVIOR_CLASS(FindFaces),
                                  _searchBehavior);
 
 }
@@ -132,8 +131,7 @@ void BehaviorVictorDemoObservingFaceInteraction::TransitionToTurnTowardsAFace(
   const SmartFaceID face = GetFaceToStareAt(behaviorExternalInterface);
   if( face.IsValid() ) {
     
-    TurnTowardsFaceAction* action = new TurnTowardsFaceAction( behaviorExternalInterface.GetRobot(),
-                                                               face );
+    TurnTowardsFaceAction* action = new TurnTowardsFaceAction(face);
 
     DelegateIfInControl(action, [this, face](ActionResult res,
                                              BehaviorExternalInterface& behaviorExternalInterface) {
@@ -172,9 +170,8 @@ void BehaviorVictorDemoObservingFaceInteraction::TransitionToStareAtFace(
     
     _faceIdsLookedAt.push_back( face );
 
-    WaitAction* waitAction = new WaitAction(behaviorExternalInterface.GetRobot(), kStaringTime_s);
-    TrackFaceAction* trackAction = new TrackFaceAction(behaviorExternalInterface.GetRobot(),
-                                                       face);
+    WaitAction* waitAction = new WaitAction(kStaringTime_s);
+    TrackFaceAction* trackAction = new TrackFaceAction(face);
     trackAction->StopTrackingWhenOtherActionCompleted( waitAction->GetTag() );
     trackAction->SetTiltTolerance(DEG_TO_RAD(kMinTrackingTiltAngle_deg));
     trackAction->SetPanTolerance(DEG_TO_RAD(kMinTrackingPanAngle_deg));
@@ -182,8 +179,7 @@ void BehaviorVictorDemoObservingFaceInteraction::TransitionToStareAtFace(
     trackAction->SetClampSmallAnglesPeriod(kMinTrackingClampPeriod_s, kMaxTrackingClampPeriod_s);
 
     // stare for a while, then turn towards another face
-    DelegateIfInControl( new CompoundActionParallel(behaviorExternalInterface.GetRobot(),
-                                                    {waitAction, trackAction}),
+    DelegateIfInControl( new CompoundActionParallel({waitAction, trackAction}),
                          &BehaviorVictorDemoObservingFaceInteraction::TransitionToTurnTowardsAFace );
   }
   else {
@@ -242,7 +238,7 @@ TimeStamp_t BehaviorVictorDemoObservingFaceInteraction::GetRecentFaceTime(
   BehaviorExternalInterface& behaviorExternalInterface)
 {
 
-  const TimeStamp_t lastImgTime = behaviorExternalInterface.GetRobot().GetLastImageTimeStamp();
+  const TimeStamp_t lastImgTime = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
   const TimeStamp_t recentTime = lastImgTime > kMaxTimeSinceSeenFaceToLook_ms ?
                                  ( lastImgTime - kMaxTimeSinceSeenFaceToLook_ms ) :
                                  0;

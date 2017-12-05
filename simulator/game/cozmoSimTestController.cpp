@@ -7,7 +7,6 @@
  */
 
 #include "simulator/game/cozmoSimTestController.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include <sys/stat.h>
 
@@ -22,40 +21,6 @@ const static std::string kScreenShotsPath = kBuildDirectory + "mac/Debug/webots_
 
 namespace Anki {
   namespace Cozmo {
-    
-    namespace {
-      
-      constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSimTestArray = {
-        {ReactionTrigger::CliffDetected,                false},
-        {ReactionTrigger::CubeMoved,                    true},
-        {ReactionTrigger::FacePositionUpdated,          false},
-        {ReactionTrigger::FistBump,                     false},
-        {ReactionTrigger::Frustration,                  true},
-        {ReactionTrigger::Hiccup,                       true},
-        {ReactionTrigger::MotorCalibration,             false},
-        {ReactionTrigger::NoPreDockPoses,               false},
-        {ReactionTrigger::ObjectPositionUpdated,        true},
-        {ReactionTrigger::PlacedOnCharger,              false},
-        {ReactionTrigger::PetInitialDetection,          false},
-        {ReactionTrigger::RobotPickedUp,                true},
-        {ReactionTrigger::RobotPlacedOnSlope,           false},
-        {ReactionTrigger::ReturnedToTreads,             true},
-        {ReactionTrigger::RobotOnBack,                  false},
-        {ReactionTrigger::RobotOnFace,                  false},
-        {ReactionTrigger::RobotOnSide,                  false},
-        {ReactionTrigger::RobotShaken,                  true},
-        {ReactionTrigger::Sparked,                      false},
-        {ReactionTrigger::UnexpectedMovement,           false},
-        {ReactionTrigger::VC,                           false}
-      };
-      
-      static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersSimTestArray),
-                    "Reaction triggers duplicate or non-sequential");
-      
-      static const AllTriggersConsidered kAffectTriggersSimTest =
-      ReactionTriggerHelpers::ConvertReactionArrayToAllTriggersConsidered(kAffectTriggersSimTestArray);
-      
-    } // private namespace
   
     CozmoSimTestController::CozmoSimTestController()
     : UiGameController(BS_TIME_STEP)
@@ -83,12 +48,7 @@ namespace Anki {
     { }
     
   void CozmoSimTestController::HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg)
-  {
-    // by default we don't want pick these reactions, you can override this function if you tests needs them
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::DisableReactionsWithLock(
-                                                         "CozmoSimTestController",
-                                                         kAffectTriggersSimTest)));
-    
+  {    
     // Disable needs during all tests
     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetNeedsPauseState(true)));
 
@@ -117,46 +77,44 @@ namespace Anki {
     }
     
     
-    bool CozmoSimTestController::AllTrueBeforeTimeout(std::vector<bool> conditions,
-                                                      const char* conditionsAsString,
+    bool CozmoSimTestController::AllTrueBeforeTimeout(const std::vector<bool>& conditionBools,
+                                                      const std::vector<std::string>& conditionStrings,
                                                       double start_time,
                                                       double timeout,
                                                       const char* file,
                                                       const char* func,
                                                       int line)
     {
-      bool allTrue = true;
-      for(bool thisCond : conditions)
-      {
-        if(!thisCond)
-        {
-          allTrue = false;
-          break;
-        }
+      const bool allTrue = !std::any_of(conditionBools.begin(), conditionBools.end(), [](bool b){ return (b==false); });
+      
+      if (allTrue) {
+        return true;
       }
       
+      // Some conditions were false. Check for timeout.
       if (GetSupervisor()->getTime() - start_time > timeout) {
-        if (!allTrue) {
-          std::string failedConditions;
-          for(s32 iCond = 0; iCond < conditions.size(); ++iCond)
-          {
-            if(!conditions[iCond])
-            {
-              failedConditions += std::to_string(iCond) + " ";
-            }
-          }
-          
-          PRINT_STREAM_WARNING("ALL_CONDITIONS_WITH_TIMEOUT_ASSERT", "Conditions: {" << conditionsAsString << "}. Which still false after " << timeout << " seconds: " << failedConditions << "(" << file << "." << func << "." << line << " started at: " << start_time << ")");
-          _result = 255;
-          
-          StopMovie();
-          
-          CST_EXIT();
+        DEV_ASSERT(conditionStrings.size() == conditionBools.size(), "CozmoSimTestController.AllTrueBeforeTimeout.NumberOfConditionsMismatch");
+
+        std::ostringstream msg;
+        msg << "Conditions: \n\n";
+        for (int i=0 ; i < conditionBools.size() ; i++) {
+          msg << (conditionBools[i] ? "<TRUE>   " : "<FALSE>  ") << conditionStrings[i] << "\n";
         }
+        
+        msg << "\nAbove conditions were still false after " << timeout << " seconds (started at " << start_time << ")\n";
+        msg << "File: \"" << file << "\", line " << line << ", in function \"" << func << "()\"";
+        
+        PRINT_STREAM_WARNING("ALL_CONDITIONS_WITH_TIMEOUT_ASSERT", msg.str().c_str());
+        _result = 255;
+        
+        StopMovie();
+        
+        CST_EXIT();
       }
       
-      return allTrue;
+      return false;
     }
+    
     
     s32 CozmoSimTestController::UpdateInternal()
     {
@@ -198,6 +156,14 @@ namespace Anki {
       MakeSynchronous();
     }
 
+    void CozmoSimTestController::ExitTest()
+    {
+      if (_quitWebotsAfterTest) {
+        QuitWebots(_result); // Terminate the Webots process
+      } else {
+        QuitController(_result); // Just quit the controller, but keep Webots running
+      }
+    }
     
     //Only runs if #define RECORD_TEST 1, use for local testing
     void CozmoSimTestController::StartMovieConditional(const std::string& name, int speed)

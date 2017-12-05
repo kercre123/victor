@@ -27,7 +27,7 @@ static const char * const kLogChannelName = "Actions";
   
 ActionResult TrackMotionAction::InitInternal()
 {
-  if(false == _robot.HasExternalInterface()) {
+  if(false == GetRobot().HasExternalInterface()) {
     PRINT_NAMED_ERROR("TrackMotionAction.Init.NoExternalInterface",
                       "Robot must have an external interface so action can "
                       "subscribe to motion observation events.");
@@ -43,7 +43,7 @@ ActionResult TrackMotionAction::InitInternal()
     this->_motionObservation = event.GetData().Get_RobotObservedMotion();
   };
   
-  _signalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedMotion, HandleObservedMotion);
+  _signalHandle = GetRobot().GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedMotion, HandleObservedMotion);
   
   return ActionResult::SUCCESS;
 } // InitInternal()
@@ -60,16 +60,16 @@ ITrackAction::UpdateResult TrackMotionAction::UpdateTracking(Radians& absPanAngl
     const Point2f motionCentroid(_motionObservation.img_x, _motionObservation.img_y);
     
     // Note: we start with relative angles here, but make them absolute below.
-    _robot.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, absPanAngle, absTiltAngle);
+    GetRobot().GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, absPanAngle, absTiltAngle);
     
     // Find pose of robot at time motion was observed
     HistRobotState* histStatePtr = nullptr;
     TimeStamp_t junkTime;
-    if(RESULT_OK != _robot.GetStateHistory()->ComputeAndInsertStateAt(_motionObservation.timestamp, junkTime, &histStatePtr)) {
+    if(RESULT_OK != GetRobot().GetStateHistory()->ComputeAndInsertStateAt(_motionObservation.timestamp, junkTime, &histStatePtr)) {
       PRINT_NAMED_ERROR("TrackMotionAction.UpdateTracking.PoseHistoryError",
                         "Could not get historical pose for motion observed at t=%d (lastRobotMsgTime = %d)",
                         _motionObservation.timestamp,
-                        _robot.GetLastMsgTimestamp());
+                        GetRobot().GetLastMsgTimestamp());
       return UpdateResult::NoNewInfo;
     }
     

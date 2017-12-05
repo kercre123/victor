@@ -1,0 +1,11 @@
+{
+  "behaviorClass": "ReactToFrustration",
+  "behaviorID": "ExampleFrustration",
+
+  "anim": "FrustratedByFailure",
+  "finalEmotionEvent": "FinishedMinorFrustration",
+
+  "wantsToRunStrategyConfig": {
+    "strategyType" : "Frustration"
+  }  
+}

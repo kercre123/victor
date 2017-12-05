@@ -62,6 +62,7 @@
 namespace Anki {
  
 namespace Vision {
+  class Benchmark;
   class FaceTracker;
   class ImageCache;
   class ImagingPipeline;
@@ -301,6 +302,7 @@ namespace Cozmo {
     std::unique_ptr<OverheadEdgesDetector>  _overheadEdgeDetector;
     std::unique_ptr<CameraCalibrator>       _cameraCalibrator;
     std::unique_ptr<OverheadMap>            _overheadMap;
+    std::unique_ptr<Vision::Benchmark>      _benchmark;
     std::unique_ptr<Vision::ObjectDetector> _generalObjectDetector;
     
     // Tool code stuff
@@ -322,9 +324,9 @@ namespace Cozmo {
       Count
     };
     
-    Result ApplyCLAHE(const Vision::Image& inputImageGray, const MarkerDetectionCLAHE useCLAHE, Vision::Image& claheImage);
+    Result ApplyCLAHE(Vision::ImageCache& imageCache, const MarkerDetectionCLAHE useCLAHE, Vision::Image& claheImage);
     
-    Result DetectMarkersWithCLAHE(const Vision::Image& inputImageGray,
+    Result DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
                                   const Vision::Image& claheImage,
                                   std::vector<Anki::Rectangle<s32>>& detectionRects,
                                   MarkerDetectionCLAHE useCLAHE);

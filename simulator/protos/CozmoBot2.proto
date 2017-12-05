@@ -133,7 +133,7 @@ Supervisor {
         DistanceSensor {
           name "forwardProxSensor"
           translation 0.01 0 0
-          rotation 0 1 0 0
+          rotation 0 1 0 -0.10472
           type "generic"
           lookupTable [ 0.015    25  .0,
                         0.400   410  .0,
@@ -225,7 +225,7 @@ Supervisor {
           children [
             HingeJoint {
               jointParameters HingeJointParameters {
-                dampingConstant 1
+                dampingConstant 2
                 position IS headAngle
                 maxStop IS headAngle_highLimit
                 minStop IS headAngle_lowLimit
@@ -789,7 +789,7 @@ Supervisor {
             DEF SHOULDER HingeJoint {
               jointParameters HingeJointParameters {
                 axis 0 -1 0
-                dampingConstant 1
+                dampingConstant 6
                 position IS liftAngle
                 minStop IS liftAngle_lowLimit
                 maxStop IS liftAngle_highLimit

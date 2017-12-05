@@ -135,6 +135,7 @@ Pose3d RelativePathTurn::ExtendPath(const Pose3d& pose, Planning::Path& path) co
   //Calculate target angle
   const Rotation3d& rotation = pose.GetRotation();
   Radians zAxisRotation = rotation.GetAngleAroundZaxis();
+  const f32 startAngle = zAxisRotation.ToFloat();
   Radians rotRadians = Radians(_rotRadians);
   
   if(_clockwise){
@@ -149,7 +150,7 @@ Pose3d RelativePathTurn::ExtendPath(const Pose3d& pose, Planning::Path& path) co
     useShortestDistance = false;
   }
   
-  path.AppendPointTurn(x_start, y_start, zAxisRotation.ToFloat(), _targetRotSpeed, _rotAccel, _rotDecel, _angleTolerance, useShortestDistance);
+  path.AppendPointTurn(x_start, y_start, startAngle, zAxisRotation.ToFloat(), _targetRotSpeed, _rotAccel, _rotDecel, _angleTolerance, useShortestDistance);
   
   //Create Ending Pose
   Pose3d newRobotRotated = Pose3d(rotRadians, Z_AXIS_3D(), {0.f, 0.f, 0.f}, pose);

@@ -36,16 +36,16 @@ protected:
   virtual void InitInternal() override;
   virtual s32 UpdateInternal() override;
 
-  virtual void HandleImageChunk(ImageChunk const& msg) override;
-  virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg) override;
-  virtual void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg) override;
-  virtual void HandleRobotObservedPet(ExternalInterface::RobotObservedPet const& msg) override;
-  virtual void HandleDebugString(ExternalInterface::DebugString const& msg) override;
-  virtual void HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg) override;
-  virtual void HandleFaceEnrollmentCompleted(const ExternalInterface::FaceEnrollmentCompleted &msg) override;
-  virtual void HandleLoadedKnownFace(Vision::LoadedKnownFace const& msg) override;
+  virtual void HandleImageChunk(const ImageChunk& msg) override;
+  virtual void HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg) override;
+  virtual void HandleRobotObservedFace(const ExternalInterface::RobotObservedFace& msg) override;
+  virtual void HandleRobotObservedPet(const ExternalInterface::RobotObservedPet& msg) override;
+  virtual void HandleDebugString(const ExternalInterface::DebugString& msg) override;
+  virtual void HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult& msg) override;
+  virtual void HandleFaceEnrollmentCompleted(const ExternalInterface::FaceEnrollmentCompleted& msg) override;
+  virtual void HandleLoadedKnownFace(const Vision::LoadedKnownFace& msg) override;
   virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) override;
-  virtual void HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg) override;
+  virtual void HandleRobotConnected(const ExternalInterface::RobotConnectionResponse& msg) override;
   
 private:
 

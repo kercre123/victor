@@ -1,7 +1,7 @@
 /*
  * sim_radio.cpp
  *
- *   Implemenation of HAL radio functionality for the simulator.
+ *   Implementation of HAL radio functionality for the simulator.
  *
  *   Author: Andrew Stein
  *
@@ -43,11 +43,8 @@ namespace Anki {
       const size_t RECV_BUFFER_SIZE = 1024 * 4;
 
       // For communications with basestation
-#if(USE_UDP_ROBOT_COMMS)
       UdpServer server;
-#else
-      TcpServer server;
-#endif
+
       UdpClient advRegClient;
 
       u8 recvBuf_[RECV_BUFFER_SIZE];
@@ -134,7 +131,7 @@ namespace Anki {
 
       // Register with advertising service by sending IP and port info
       // NOTE: Since there is no ACK robot_advertisement_controller must be running before this happens!
-      //       We also assume that when working with simluated robots on Webots, the advertisement service is running on the same host.
+      //       We also assume that when working with simulated robots on Webots, the advertisement service is running on the same host.
       advRegClient.Connect(advertisementIP, ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
 
       
@@ -144,10 +141,6 @@ namespace Anki {
       //regMsg.toEnginePort = ROBOT_RADIO_BASE_PORT + regMsg.id;
       regMsg.toEnginePort = ANIM_PROCESS_SERVER_BASE_PORT + regMsg.id;
       regMsg.fromEnginePort = regMsg.toEnginePort;
-      
-      #if !USE_UDP_ROBOT_COMMS
-        #error TCP is no longer supported
-      #endif
       
       strncpy(regMsg.ip, GetLocalIP(), sizeof(regMsg.ip));
       regMsg.ip[ARRAY_SIZE(regMsg.ip)-1] = 0; // ensure null termination in event of strncpy src > dest
@@ -181,31 +174,10 @@ namespace Anki {
 
       if (server.HasClient()) {
 
-#if(USE_UDP_ROBOT_COMMS==0)
-        // Send the message header (0xBEEF + size(of following bytes)
-        // For TCP comms, send timestamp immediately after the header.
-        // This is needed on the basestation side to properly order messages.
-        const u8 HEADER_LENGTH = 6;
-        u8 header[HEADER_LENGTH];
-        UtilMsgError packRes = SafeUtilMsgPack(header, HEADER_LENGTH, NULL, "cci",
-                    RADIO_PACKET_HEADER[0],
-                    RADIO_PACKET_HEADER[1],
-                    length);
+        const ssize_t bytesSent = server.Send((const char*)buffer, length);
 
-        assert (packRes == UTILMSG_OK);
-
-        // Send header and message content
-        u32 bytesSent = 0;
-        bytesSent = server.Send((char*)header, HEADER_LENGTH);
-        if (bytesSent < HEADER_LENGTH) {
-          printf("ERROR: Failed to send header (%d bytes sent)\n", bytesSent);
-        }
-        bytesSent = server.Send((char*)buffer, length);
-#else
-        u32 bytesSent = server.Send((char*)buffer, length);
-#endif
         if (bytesSent < length) {
-          printf("ERROR: Failed to send msg contents (%d bytes sent)\n", bytesSent);
+          printf("ERROR: Failed to send msg contents (%zd bytes sent)\n", bytesSent);
           DisconnectRadio();
           return false;
         }
@@ -236,19 +208,12 @@ namespace Anki {
 
     size_t RadioGetNumBytesAvailable(void)
     {
-#if(USE_UDP_ROBOT_COMMS==0)
-      if (!server.HasClient()) {
-        return 0;
-      }
-#endif
 
       // Check for incoming data and add it to receive buffer
-      int dataSize;
-
-      // Read available data
       const size_t tempSize = RECV_BUFFER_SIZE - recvBufSize_;
       assert(tempSize < std::numeric_limits<int>::max());
-      dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], static_cast<int>(tempSize));
+      
+      const ssize_t dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], static_cast<int>(tempSize));
       if (dataSize > 0) {
         recvBufSize_ += dataSize;
       } else if (dataSize < 0) {
@@ -289,96 +254,32 @@ namespace Anki {
     //       radio functions.
     u32 HAL::RadioGetNextPacket(u8* buffer)
     {
-      u32 retVal = 0;
-
-#if(USE_UDP_ROBOT_COMMS==0)
-      if (server.HasClient()) {
-        const size_t bytesAvailable = RadioGetNumBytesAvailable();
-        const u32 headerSize = sizeof(RADIO_PACKET_HEADER);
-        if(bytesAvailable >= headerSize) {
-
-          // Look for valid header
-          int n = -1;
-          for(int i = 0; i < recvBufSize_-1; ++i) {
-            if (recvBuf_[i] == RADIO_PACKET_HEADER[0]) {
-              if (recvBuf_[i+1] == RADIO_PACKET_HEADER[1]) {
-                n = i;
-                break;
-              }
-            }
-          }
-
-          if (n < 0) {
-            // Header not found at all
-            // Delete everything
-            recvBufSize_ = 0;
-            return retVal;
-          } else if (n != 0) {
-            // Header was not found at the beginning.
-            // Delete everything up until the header.
-            memcpy(recvBuf_, recvBuf_ + n, recvBufSize_ - n);
-            recvBufSize_ -= n;
-          }
-
-          // Check if expected number of bytes are in the msg
-          if (recvBufSize_ > headerSize) {
-            const u32 dataLen = recvBuf_[headerSize] +
-                                (recvBuf_[headerSize+1] << 8) +
-                                (recvBuf_[headerSize+2] << 16) +
-                                (recvBuf_[headerSize+3] << 24);
-            if (recvBufSize_ >= headerSize + 4 + dataLen) {
-
-              // Copy message contents to buffer
-              std::memcpy((void*)buffer, recvBuf_ + headerSize + 4, dataLen);
-              retVal = dataLen;
-
-              // Shift recvBuf contents down
-              const u32 entireMsgSize = headerSize + 4 + dataLen;
-              memcpy(recvBuf_, recvBuf_ + entireMsgSize, recvBufSize_ - entireMsgSize);
-              recvBufSize_ -= entireMsgSize;
-            }
-          }
-        } // if bytesAvailable > 0
-      }
-#else
-
       // Read available datagram
-      int dataLen = server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
-      if (dataLen > 0) {
-        recvBufSize_ = dataLen;
-      } else if (dataLen < 0) {
+      const ssize_t dataLen = server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
+      if (dataLen < 0) {
         // Something went wrong
         DisconnectRadio();
-        return retVal;
-      } else {
-        return retVal;
+        return 0;
+      } else if (dataLen == 0) {
+        // Nothing available
+        return 0;
       }
 
+      recvBufSize_ = dataLen;
+      
       // Copy message contents to buffer
       std::memcpy((void*)buffer, recvBuf_, dataLen);
-      retVal = dataLen;
 
-#endif
+      return (u32) dataLen;
 
-      return retVal;
-    } // RadioGetNextMessage()
-
+    } // RadioGetNextPacket()
 
     void RadioUpdate()
     {
-#if(USE_UDP_ROBOT_COMMS)
       if (!server.HasClient()) {
         AdvertiseRobot();
       }
-#else
-      if(!server.HasClient()) {
-        if (!server.Accept()) {
-          AdvertiseRobot();
-        }
-      }
-#endif
     }
-
 
   } // namespace Cozmo
 } // namespace Anki

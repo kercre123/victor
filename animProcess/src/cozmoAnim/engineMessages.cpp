@@ -21,13 +21,13 @@
 #include "cozmoAnim/micDataProcessor.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
+#include "anki/common/basestation/array2d_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine_sendToEngine_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_sendToRobot_helper.h"
-#include "clad/robotInterface/messageFromAnimProcess.h"
 
 // For animProcess<->Engine communications
 #include "anki/cozmo/transport/IUnreliableTransport.h"
@@ -39,6 +39,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
 
 #include <string.h>
@@ -62,15 +63,7 @@ namespace Messages {
     AnimationStreamer*            _animStreamer = nullptr;
     Audio::EngineRobotAudioInput* _audioInput = nullptr;
     const CozmoAnimContext*       _context = nullptr;
-    
-    
-    const u32 kMaxNumAvailableAnimsToReportPerTic = 100;
-    
-    // The last AnimID that was sent to engine in response to RequestAvailableAnimations.
-    // If negative, it means we're not currently doling.
-    bool _isDolingAnims = false;
-    u32 _nextAnimIDToDole;
-    
+
   } // private namespace
 
 
@@ -84,7 +77,7 @@ namespace Messages {
   
 // #pragma mark --- Messages Method Implementations ---
 
-  Result Init(AnimationStreamer& animStreamer, Audio::EngineRobotAudioInput& audioInput, const CozmoAnimContext& context)
+  Result Init(AnimationStreamer* animStreamer, Audio::EngineRobotAudioInput* audioInput, const CozmoAnimContext* context)
   {
     
     // Setup robot and engine sockets
@@ -94,45 +87,17 @@ namespace Messages {
     ReliableTransport_Init();
     ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
 
-    _animStreamer = &animStreamer;
-    _audioInput   = &audioInput;
-    _context      = &context;
-    
+    _animStreamer = animStreamer;
+    _audioInput   = audioInput;
+    _context      = context;
+
+    DEV_ASSERT(_animStreamer != nullptr, "EngineMessages.Init.NullAnimStreamer");
+    DEV_ASSERT(_audioInput != nullptr, "EngineMessages.Init.NullAudioInput");
+    DEV_ASSERT(_context != nullptr, "EngineMessages.Init.NullContext");
+
     return RESULT_OK;
   }
   
-  
-  void DoleAvailableAnimations()
-  {
-    // If not already doling, dole animations
-    if (_isDolingAnims) {
-      u32 numAnimsDoledThisTic = 0;
-      const auto& animIDToNameMap = _animStreamer->GetCannedAnimationContainer().GetAnimationIDToNameMap();
-      auto it = animIDToNameMap.find(_nextAnimIDToDole);
-      for (; it != animIDToNameMap.end() && numAnimsDoledThisTic < kMaxNumAvailableAnimsToReportPerTic; ++it) {
-        
-        RobotInterface::AnimationAvailable msg;
-        msg.id = it->first;
-        msg.name_length = it->second.length();
-        snprintf(msg.name, sizeof(msg.name), "%s", it->second.c_str());
-        SendMessageToEngine(msg);
-        
-        //PRINT_NAMED_INFO("AvailableAnim", "[%d]: %s", msg.id, msg.name);
-
-        ++numAnimsDoledThisTic;
-      }
-      if (it == animIDToNameMap.end()) {
-        PRINT_NAMED_INFO("EngineMessages.DoleAvailableAnimations.Done", "%zu anims doled", animIDToNameMap.size());
-        _isDolingAnims = false;
-        
-        EndOfMessage msg;
-        msg.messageType = MessageType::AnimationAvailable;
-        RobotInterface::SendMessageToEngine(msg);
-      } else {
-        _nextAnimIDToDole = it->first;
-      }
-    }
-  }
   
 // ========== START OF PROCESSING MESSAGES FROM ENGINE ==========  
 
@@ -166,11 +131,13 @@ namespace Messages {
     
   void Process_playAnim(const Anki::Cozmo::RobotInterface::PlayAnim& msg)
   {
+    const std::string animName(msg.animName, msg.animName_length);
+
     PRINT_NAMED_INFO("EngineMesssages.Process_playAnim",
-                     "AnimID: %d, Tag: %d",
-                     msg.animID, msg.tag);
+                     "Anim: %s, Tag: %d",
+                     animName.c_str(), msg.tag);
     
-    _animStreamer->SetStreamingAnimation(msg.animID, msg.tag, msg.numLoops);
+    _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops);
   }
 
   void Process_abortAnimation(const Anki::Cozmo::RobotInterface::AbortAnimation& msg)
@@ -196,21 +163,15 @@ namespace Messages {
     ProceduralFace::SetHue(msg.hue);
     return;
   }
-  
-  void Process_requestAvailableAnimations(const Anki::Cozmo::RobotInterface::RequestAvailableAnimations& msg)
+
+  void Process_displayFaceImageBinaryChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageBinaryChunk& msg) 
   {
-    PRINT_NAMED_INFO("EngineMessages.Process_requestAvailableAnimations", "");
-    if (!_isDolingAnims) {
-      const auto& animIDToNameMap = _animStreamer->GetCannedAnimationContainer().GetAnimationIDToNameMap();
-      if (!animIDToNameMap.empty()) {
-        _nextAnimIDToDole =  animIDToNameMap.begin()->first;
-        _isDolingAnims = true;
-      } else {
-        PRINT_NAMED_WARNING("EngineMessages.Process_requestAvailableAnimations.NoAnimsAvailable", "");
-      }
-    } else {
-      PRINT_NAMED_WARNING("EngineMessages.Process_requestAvailableAnimations.AlreadyDoling", "");
-    }
+    _animStreamer->Process_displayFaceImageChunk(msg);
+  }
+
+  void Process_displayFaceImageRGBChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageRGBChunk& msg) 
+  {
+    _animStreamer->Process_displayFaceImageChunk(msg);
   }
 
   void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent& msg)
@@ -234,6 +195,35 @@ namespace Messages {
     _audioInput->HandleMessage(msg);
   }
   
+  void Process_setDebugConsoleVarMessage(const Anki::Cozmo::RobotInterface::SetDebugConsoleVarMessage& msg)
+  {
+    // We are using messages generated by the CppLite emitter here, which does not support
+    // variable length arrays. CLAD also doesn't have a char, so the "strings" in this message
+    // are actually arrays of uint8's. Thus we need to do this reinterpret cast here.
+    // In some future world, ideally we avoid all this and use, for example, a web interface to
+    // set/access console vars, instead of passing around via CLAD messages.
+    const char* varName  = reinterpret_cast<const char *>(msg.varName);
+    const char* tryValue = reinterpret_cast<const char *>(msg.tryValue);
+    
+    // TODO: Ideally, we'd send back a verify message that we (failed to) set this
+    
+    Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(varName);
+    if (consoleVar && consoleVar->ParseText(tryValue) )
+    {
+      //SendVerifyDebugConsoleVarMessage(_externalInterface, varName, consoleVar->ToString().c_str(), consoleVar, true);
+      PRINT_NAMED_INFO("Process_setDebugConsoleVarMessage.Success", "'%s' set to '%s'", varName, tryValue);
+      
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("Process_setDebugConsoleVarMessage.Fail", "Error setting '%s' to '%s'",
+                          varName, tryValue);
+      //      SendVerifyDebugConsoleVarMessage(_externalInterface, msg.varName.c_str(),
+      //                                       consoleVar ? "Error: Failed to Parse" : "Error: No such variable",
+      //                                       consoleVar, false);
+    }
+  }
+  
 // ========== END OF PROCESSING MESSAGES FROM ENGINE ==========
 
 
@@ -243,22 +233,11 @@ namespace Messages {
   static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
   {
     auto* micDataProcessor = _context->GetMicDataProcessor();
-    if (micDataProcessor == nullptr)
+    if (micDataProcessor != nullptr)
     {
-      return;
-    }
-
-    static uint32_t sLatestSequenceID = 0;
-    
-    // Since mic data is sent unreliably, make sure the sequence id increases appropriately
-    if (payload.sequenceID > sLatestSequenceID ||
-        (sLatestSequenceID - payload.sequenceID) > (UINT32_MAX / 2)) // To handle rollover case
-    {
-      sLatestSequenceID = payload.sequenceID;
-      micDataProcessor->ProcessNextAudioChunk(payload.data);
+      micDataProcessor->ProcessMicDataPayload(payload);
     }
   }
-
 
   void ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg)
   {
@@ -327,8 +306,6 @@ namespace Messages {
   void Update()
   {
     MonitorConnectionState();
-
-    DoleAvailableAnimations();
     
     _context->GetMicDataProcessor()->Update();
     
@@ -389,8 +366,12 @@ namespace Messages {
   
   bool SendToEngine(const void *buffer, const u16 size, const u8 msgID)
   {
-    const bool reliable = msgID < EnumToUnderlyingType(RobotInterface::ToRobotAddressSpace::TO_ENG_UNREL);
-    const bool hot = false;
+    // TODO: Don't need reliable transport between engine and anim process. Domain sockets should be good enough.
+    //       For now, send everything unreliable.
+    //const bool reliable = msgID < EnumToUnderlyingType(RobotInterface::ToRobotAddressSpace::TO_ENG_UNREL);
+    const bool reliable = false;
+    const bool hot = true;
+
     if (CozmoAnimComms::EngineIsConnected())
     {
       if (reliable)

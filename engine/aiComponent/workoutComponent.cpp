@@ -87,23 +87,23 @@ Result WorkoutConfig::InitConfiguration(const Json::Value& config)
   return RESULT_OK;
 }
 
-unsigned int WorkoutConfig::GetNumStrongLifts(const Robot& robot) const
+unsigned int WorkoutConfig::GetNumStrongLifts(const MoodManager& moodManager) const
 {
-  return MoodScoreHelper(robot, _numStrongLiftScorer);
+  return MoodScoreHelper(moodManager, _numStrongLiftScorer);
 }
 
-unsigned int WorkoutConfig::GetNumWeakLifts(const Robot& robot) const
+unsigned int WorkoutConfig::GetNumWeakLifts(const MoodManager& moodManager) const
 {
-  return MoodScoreHelper(robot, _numWeakLiftScorer);
+  return MoodScoreHelper(moodManager, _numWeakLiftScorer);
 }
   
-unsigned int WorkoutConfig::MoodScoreHelper(const Robot& robot, const MoodScorer& moodScorer)
+unsigned int WorkoutConfig::MoodScoreHelper(const MoodManager& moodManager, const MoodScorer& moodScorer)
 {
   if( moodScorer.IsEmpty() ) {
     return 0;
   }
 
-  float moodScore = moodScorer.EvaluateEmotionScore(robot.GetMoodManager());
+  float moodScore = moodScorer.EvaluateEmotionScore(moodManager);
 
   const unsigned int num = Util::numeric_cast<unsigned int>(std::round(moodScore));
   return num;
@@ -170,7 +170,7 @@ bool WorkoutComponent::ShouldPlayEightiesMusic()
   if (!_hasComputedIfEightiesMusicShouldPlay) {
     // 80's music should only be played if this is a strong workout, and it should be
     //   pseudo-random with the configured probability.
-    _shouldPlayEightiesMusic = ((*_currWorkout)->GetNumStrongLifts(_robot) > 0) &&
+    _shouldPlayEightiesMusic = ((*_currWorkout)->GetNumStrongLifts(_robot.GetMoodManager()) > 0) &&
                                (_robot.GetRNG().RandDbl() < kEightiesWorkoutMusicProbability);
     
     _hasComputedIfEightiesMusicShouldPlay = true;

@@ -18,10 +18,10 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
-#include "engine/robot.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/cozmoContext.h"
@@ -37,6 +37,7 @@ static const char* kCooldownConfigKey            = "cooldown";
 
 static const char* kClearExpressedStateConfigKey      = "shouldClearExpressedState";
 static const char* kCaresAboutExpressedStateConfigKey = "caresAboutExpressedState";
+static const char* kSupportCharger = "playOnChargerWithoutBody";
 }
 
 
@@ -48,6 +49,7 @@ BehaviorExpressNeeds::BehaviorExpressNeeds(const Json::Value& config)
 , _cooldownEvaluator( new Util::GraphEvaluator2d() )
 , _shouldClearExpressedState(false)
 , _caresAboutExpressedState(false)
+, _supportCharger(false)
 {
   {
     const auto& needStr = JsonTools::ParseString(config,
@@ -88,6 +90,9 @@ BehaviorExpressNeeds::BehaviorExpressNeeds(const Json::Value& config)
   JsonTools::GetValueOptional(config, kClearExpressedStateConfigKey, _shouldClearExpressedState);
 
   JsonTools::GetValueOptional(config, kCaresAboutExpressedStateConfigKey, _caresAboutExpressedState);
+
+  // do anims work on the charger?
+  _supportCharger = config.get(kSupportCharger, false).asBool();
   
   // load anim triggers
   for (const auto& trigger : config[kAnimTriggersKey])
@@ -138,18 +143,29 @@ bool BehaviorExpressNeeds::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
+{  
+  CompoundActionSequential* action = new CompoundActionSequential();
 
-  const bool ignoreFailure = true;
-  action->AddAction(new TurnTowardsLastFacePoseAction(robot), ignoreFailure);
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
+  if( !robotInfo.IsOnChargerPlatform() ) {
+    // only turn towards the last face if we aren't on the charger
+    // TODO:(bn) support "look with head and eyes" when we are on the charger.
+    
+    const bool ignoreFailure = true;
+    action->AddAction(new TurnTowardsLastFacePoseAction(), ignoreFailure);
+  }
 
   for( const auto& trigger : _animTriggers ) {
-    action->AddAction(new TriggerAnimationAction(robot, trigger));
+    const u32 numLoops = 1;
+    const bool interruptRunning = true;
+    const u8 tracksToLock = GetTracksToLock(behaviorExternalInterface);
+    IAction* playAnim = new TriggerLiftSafeAnimationAction(trigger,
+                                                           numLoops,
+                                                           interruptRunning,
+                                                           tracksToLock);
+
+    action->AddAction(playAnim);
   }
   
   DelegateIfInControl(action, [this](ActionResult res) {
@@ -161,14 +177,6 @@ Result BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& beha
     });
 
   return Result::RESULT_OK;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExpressNeeds::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  // don't resume, since it will run again anyway if it wants to
-  return Result::RESULT_FAIL;
 }
 
 
@@ -199,6 +207,21 @@ float BehaviorExpressNeeds::GetCooldownSec(BehaviorExternalInterface& behaviorEx
     }
   }
   return 0.0f;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+u8 BehaviorExpressNeeds::GetTracksToLock(BehaviorExternalInterface& behaviorExternalInterface) const
+{
+  if( _supportCharger ) {
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    if( robotInfo.IsOnChargerPlatform() ) {
+      // we are supporting the charger and are on it, so lock out the body
+      return (u8)AnimTrackFlag::BODY_TRACK;
+    }
+  }
+
+  // otherwise nothing to lock
+  return (u8)AnimTrackFlag::NO_TRACKS;   
 }
 
 }

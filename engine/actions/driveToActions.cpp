@@ -37,22 +37,22 @@
 namespace Anki {
   
   namespace Cozmo {
+    class BlockWorld;
 
     namespace {
       CONSOLE_VAR(bool, kEnablePredockDistanceCheckFix, "DriveToActions", true);
+      CONSOLE_VAR(f32, kDriveToPoseTimeout, "DriveToActions", 30.f);
     }
     
 #pragma mark ---- DriveToObjectAction ----
     
-    DriveToObjectAction::DriveToObjectAction(Robot& robot,
-                                             const ObjectID& objectID,
+    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
                                              const PreActionPose::ActionType& actionType,
                                              const f32 predockOffsetDistX_mm,
                                              const bool useApproachAngle,
                                              const f32 approachAngle_rad,
                                              const bool useManualSpeed)
-    : IAction(robot,
-              "DriveToObject",
+    : IAction("DriveToObject",
               RobotActionType::DRIVE_TO_OBJECT,
               (useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK))
     , _objectID(objectID)
@@ -60,7 +60,7 @@ namespace Anki {
     , _distance_mm(-1.f)
     , _predockOffsetDistX_mm(predockOffsetDistX_mm)
     , _useManualSpeed(useManualSpeed)
-    , _compoundAction(robot)
+    , _compoundAction()
     , _useApproachAngle(useApproachAngle)
     , _approachAngle_rad(approachAngle_rad)
     , _preActionPoseAngleTolerance_rad(DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE)
@@ -73,12 +73,10 @@ namespace Anki {
                               });
     }
     
-    DriveToObjectAction::DriveToObjectAction(Robot& robot,
-                                             const ObjectID& objectID,
+    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
                                              const f32 distance,
                                              const bool useManualSpeed)
-    : IAction(robot,
-              "DriveToObject",
+    : IAction("DriveToObject",
               RobotActionType::DRIVE_TO_OBJECT,
               (useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK))
     , _objectID(objectID)
@@ -86,7 +84,7 @@ namespace Anki {
     , _distance_mm(distance)
     , _predockOffsetDistX_mm(0)
     , _useManualSpeed(useManualSpeed)
-    , _compoundAction(robot)
+    , _compoundAction()
     , _useApproachAngle(false)
     , _approachAngle_rad(0)
     , _preActionPoseAngleTolerance_rad(DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE)
@@ -106,9 +104,15 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "DriveToObjectAction.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DrivingTo, _objectID);
+        GetRobot().GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DrivingTo, _objectID);
       }
       _compoundAction.PrepForCompletion();
+    }
+    
+    void DriveToObjectAction::OnRobotSet()
+    {
+      _compoundAction.SetRobot(&GetRobot());
+      OnRobotSetInternalDriveToObj();
     }
     
     void DriveToObjectAction::SetApproachAngle(const f32 angle_rad)
@@ -143,7 +147,8 @@ namespace Anki {
                                                                _approachAngle_rad.ToFloat());
       IDockAction::PreActionPoseOutput preActionPoseOutput;
       
-      IDockAction::GetPreActionPoses(_robot, preActionPoseInput, preActionPoseOutput);
+      IDockAction::GetPreActionPoses(GetRobot().GetPose(), GetRobot().GetCarryingComponent(), GetRobot().GetBlockWorld(),
+                                     preActionPoseInput, preActionPoseOutput);
       
       if(preActionPoseOutput.actionResult == ActionResult::SUCCESS){
         if(preActionPoseOutput.preActionPoses.size() > 0){
@@ -176,7 +181,8 @@ namespace Anki {
                                                                _approachAngle_rad.ToFloat());
       IDockAction::PreActionPoseOutput preActionPoseOutput;
     
-      IDockAction::GetPreActionPoses(_robot, preActionPoseInput, preActionPoseOutput);
+      IDockAction::GetPreActionPoses(GetRobot().GetPose(), GetRobot().GetCarryingComponent(), GetRobot().GetBlockWorld(),
+                                     preActionPoseInput, preActionPoseOutput);
       
       if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
       {
@@ -200,9 +206,9 @@ namespace Anki {
         PRINT_NAMED_INFO("DriveToObjectAction.GetPossiblePoses.UseRobotPose",
                          "Robot's current pose (x:%f y:%f a:%f) is close enough to preAction pose (x:%f y:%f a:%f)"
                          " with threshold (%f,%f), using current robot pose as goal",
-                         _robot.GetPose().GetTranslation().x(),
-                         _robot.GetPose().GetTranslation().y(),
-                         _robot.GetPose().GetRotation().GetAngleAroundZaxis().getDegrees(),
+                         GetRobot().GetPose().GetTranslation().x(),
+                         GetRobot().GetPose().GetTranslation().y(),
+                         GetRobot().GetPose().GetRotation().GetAngleAroundZaxis().getDegrees(),
                          p.GetTranslation().x(),
                          p.GetTranslation().y(),
                          p.GetRotation().GetAngleAroundZaxis().getDegrees(),
@@ -234,12 +240,12 @@ namespace Anki {
         } else {
           
           Pose3d objectWrtRobotParent;
-          if(false == object->GetPose().GetWithRespectTo(_robot.GetPose().GetParent(), objectWrtRobotParent)) {
+          if(false == object->GetPose().GetWithRespectTo(GetRobot().GetPose().GetParent(), objectWrtRobotParent)) {
             PRINT_NAMED_ERROR("DriveToObjectAction.InitHelper.PoseProblem",
                               "Could not get object pose w.r.t. robot parent pose.");
             result = ActionResult::BAD_POSE;
           } else {
-            Point2f vec(_robot.GetPose().GetTranslation());
+            Point2f vec(GetRobot().GetPose().GetTranslation());
             vec -= Point2f(objectWrtRobotParent.GetTranslation());
             const f32 currentDistance = vec.MakeUnitLength();
             if(currentDistance < _distance_mm) {
@@ -248,7 +254,7 @@ namespace Anki {
               vec *= _distance_mm;
               const Point3f T(vec.x() + objectWrtRobotParent.GetTranslation().x(),
                               vec.y() + objectWrtRobotParent.GetTranslation().y(),
-                              _robot.GetPose().GetTranslation().z());
+                              GetRobot().GetPose().GetTranslation().z());
               possiblePoses.push_back(Pose3d(std::atan2f(-vec.y(), -vec.x()), Z_AXIS_3D(), T, objectWrtRobotParent.GetParent()));
             }
             result = ActionResult::SUCCESS;
@@ -267,16 +273,16 @@ namespace Anki {
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {
           
-          DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(_robot, true, _useManualSpeed);
+          DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(true, _useManualSpeed);
           driveToPoseAction->SetGoals(possiblePoses, object->GetPose());
           _compoundAction.AddAction(driveToPoseAction);
         }
         
         // Make sure we can see the object, unless we are carrying it (i.e. if we
         // are doing a DriveToPlaceCarriedObject action)
-        if(!_robot.GetCarryingComponent().IsCarryingObject(object->GetID()))
+        if(!GetRobot().GetCarryingComponent().IsCarryingObject(object->GetID()))
         {
-          TurnTowardsObjectAction* turnTowardsObjectAction = new TurnTowardsObjectAction(_robot, _objectID, Radians(0), true, false);
+          TurnTowardsObjectAction* turnTowardsObjectAction = new TurnTowardsObjectAction(_objectID, Radians(0), true, false);
           PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
                             GetTag(),
                             GetName().c_str(),
@@ -300,12 +306,12 @@ namespace Anki {
     ActionResult DriveToObjectAction::Init()
     {
       ActionResult result = ActionResult::SUCCESS;
-      ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID));
       if(object == nullptr)
       {
         PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.NoObjectWithID",
                             "Robot %d's block world does not have an ActionableObject with ID=%d.",
-                            _robot.GetID(), _objectID.GetValue());
+                            GetRobot().GetID(), _objectID.GetValue());
         return ActionResult::BAD_OBJECT;
       }
 
@@ -323,7 +329,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "DriveToObjectAction.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
+        GetRobot().GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
         _lightsSet = true;
       }
       
@@ -347,19 +353,19 @@ namespace Anki {
         // Initialization has now moved and we may not be in position, even if
         // we completed the planned path successfully. If that's the case, we
         // want to retry.
-        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
+        ActionableObject* object = dynamic_cast<ActionableObject*>(GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID));
         if(object == nullptr)
         {
           PRINT_NAMED_WARNING("DriveToObjectAction.CheckIfDone.NoObjectWithID",
                               "Robot %d's block world does not have an ActionableObject with ID=%d.",
-                              _robot.GetID(), _objectID.GetValue());
+                              GetRobot().GetID(), _objectID.GetValue());
           result = ActionResult::BAD_OBJECT;
         }
         else if( _actionType == PreActionPose::ActionType::NONE)
         {
           // Check to see if we got close enough
           Pose3d objectPoseWrtRobotParent;
-          if(false == object->GetPose().GetWithRespectTo(_robot.GetPose().GetParent(), objectPoseWrtRobotParent))
+          if(false == object->GetPose().GetWithRespectTo(GetRobot().GetPose().GetParent(), objectPoseWrtRobotParent))
           {
             PRINT_NAMED_ERROR("DriveToObjectAction.InitHelper.PoseProblem",
                               "Could not get object pose w.r.t. robot parent pose.");
@@ -367,7 +373,7 @@ namespace Anki {
           }
           else
           {
-            const f32 distanceSq = (Point2f(objectPoseWrtRobotParent.GetTranslation()) - Point2f(_robot.GetPose().GetTranslation())).LengthSq();
+            const f32 distanceSq = (Point2f(objectPoseWrtRobotParent.GetTranslation()) - Point2f(GetRobot().GetPose().GetTranslation())).LengthSq();
             if(distanceSq > _distance_mm*_distance_mm) {
               PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone",
                                "[%d] Robot not close enough, will return FAILURE_RETRY.",
@@ -402,15 +408,13 @@ namespace Anki {
     
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
-    DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(Robot& robot,
-                                                                     const Pose3d& placementPose,
+    DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Pose3d& placementPose,
                                                                      const bool placeOnGround,
                                                                      const bool useExactRotation,
                                                                      const bool useManualSpeed,
                                                                      const bool checkDestinationFree,
                                                                      const float destinationObjectPadding_mm)
-    : DriveToObjectAction(robot,
-                          robot.GetCarryingComponent().GetCarryingObject(),
+    : DriveToObjectAction(0,
                           placeOnGround ? PreActionPose::PLACE_ON_GROUND : PreActionPose::PLACE_RELATIVE,
                           0,
                           false,
@@ -424,24 +428,29 @@ namespace Anki {
       SetName("DriveToPlaceCarriedObject");
       SetType(RobotActionType::DRIVE_TO_PLACE_CARRIED_OBJECT);
     }
+
+    void DriveToPlaceCarriedObjectAction::OnRobotSetInternalDriveToObj()
+    {
+      _objectID = GetRobot().GetCarryingComponent().GetCarryingObject();
+    }
     
     ActionResult DriveToPlaceCarriedObjectAction::Init()
     {
       ActionResult result = ActionResult::SUCCESS;
       
-      if(_robot.GetCarryingComponent().IsCarryingObject() == false) {
+      if(GetRobot().GetCarryingComponent().IsCarryingObject() == false) {
         PRINT_NAMED_WARNING("DriveToPlaceCarriedObjectAction.CheckPreconditions.NotCarryingObject",
                           "Robot %d cannot place an object because it is not carrying anything.",
-                          _robot.GetID());
+                          GetRobot().GetID());
         result = ActionResult::NOT_CARRYING_OBJECT_ABORT;
       } else {
-        _objectID = _robot.GetCarryingComponent().GetCarryingObject();
+        _objectID = GetRobot().GetCarryingComponent().GetCarryingObject();
         
-        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
+        ActionableObject* object = dynamic_cast<ActionableObject*>(GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID));
         if(object == nullptr) {
           PRINT_NAMED_ERROR("DriveToPlaceCarriedObjectAction.CheckPreconditions.NoObjectWithID",
                             "Robot %d's block world does not have an ActionableObject with ID=%d.",
-                            _robot.GetID(), _objectID.GetValue());
+                            GetRobot().GetID(), _objectID.GetValue());
           
           result = ActionResult::BAD_OBJECT;
         } else {
@@ -449,7 +458,7 @@ namespace Anki {
           // Compute the approach angle given the desired placement pose of the carried block
           if (_useExactRotation) {
             f32 approachAngle_rad;
-            ActionResult res = IDockAction::ComputePlacementApproachAngle(_robot, _placementPose, approachAngle_rad);
+            ActionResult res = IDockAction::ComputePlacementApproachAngle(GetRobot(), _placementPose, approachAngle_rad);
             if (res != ActionResult::SUCCESS) {
               PRINT_NAMED_WARNING("DriveToPlaceCarriedObjectAction.Init.FailedToComputeApproachAngle", "");
               return res;
@@ -503,7 +512,7 @@ namespace Anki {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     bool DriveToPlaceCarriedObjectAction::IsPlacementGoalFree() const
     {
-      ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_robot.GetCarryingComponent().GetCarryingObject());
+      ObservableObject* object = GetRobot().GetBlockWorld().GetLocatedObjectByID(GetRobot().GetCarryingComponent().GetCarryingObject());
       if ( nullptr != object )
       {
         BlockWorldFilter ignoreSelfFilter;
@@ -514,7 +523,7 @@ namespace Anki {
         
         // TODO rsam: this only checks for other cubes, but not for unknown obstacles since we don't have collision sensor
         std::vector<ObservableObject *> intersectingObjects;
-        _robot.GetBlockWorld().FindLocatedIntersectingObjects(candidateQuad, intersectingObjects, _destinationObjectPadding_mm, ignoreSelfFilter);
+        GetRobot().GetBlockWorld().FindLocatedIntersectingObjects(candidateQuad, intersectingObjects, _destinationObjectPadding_mm, ignoreSelfFilter);
         bool isFree = intersectingObjects.empty();
         return isFree;
       }
@@ -526,11 +535,9 @@ namespace Anki {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #pragma mark ---- DriveToPoseAction ----
     
-    DriveToPoseAction::DriveToPoseAction(Robot& robot,
-                                         const bool forceHeadDown,
+    DriveToPoseAction::DriveToPoseAction(const bool forceHeadDown,
                                          const bool useManualSpeed) //, const Pose3d& pose)
-    : IAction(robot,
-              "DriveToPose",
+    : IAction("DriveToPose",
               RobotActionType::DRIVE_TO_POSE,
               (useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK))
     , _isGoalSet(false)
@@ -546,15 +553,14 @@ namespace Anki {
 
     }
     
-    DriveToPoseAction::DriveToPoseAction(Robot& robot,
-                                         const Pose3d& pose,
+    DriveToPoseAction::DriveToPoseAction(const Pose3d& pose,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed,
                                          const Point3f& distThreshold,
                                          const Radians& angleThreshold,
                                          const float maxPlanningTime,
                                          const float maxReplanPlanningTime)
-    : DriveToPoseAction(robot, forceHeadDown, useManualSpeed)
+    : DriveToPoseAction(forceHeadDown, useManualSpeed)
     {
       _maxPlanningTime = maxPlanningTime;
       _maxReplanPlanningTime = maxReplanPlanningTime;
@@ -562,15 +568,14 @@ namespace Anki {
       SetGoal(pose, distThreshold, angleThreshold);
     }
     
-    DriveToPoseAction::DriveToPoseAction(Robot& robot,
-                                         const std::vector<Pose3d>& poses,
+    DriveToPoseAction::DriveToPoseAction(const std::vector<Pose3d>& poses,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed,
                                          const Point3f& distThreshold,
                                          const Radians& angleThreshold,
                                          const float maxPlanningTime,
                                          const float maxReplanPlanningTime)
-    : DriveToPoseAction(robot, forceHeadDown, useManualSpeed)
+    : DriveToPoseAction(forceHeadDown, useManualSpeed)
     {
       _maxPlanningTime = maxPlanningTime;
       _maxReplanPlanningTime = maxReplanPlanningTime;
@@ -580,16 +585,20 @@ namespace Anki {
     
     DriveToPoseAction::~DriveToPoseAction()
     {
-      // If we are not running anymore, for any reason, clear the path and its
-      // visualization
-      if( _robot.GetPathComponent().IsActive() ) {
-        _robot.GetPathComponent().Abort();
+      if(!HasRobot()){
+        return;
       }
 
-      _robot.GetContext()->GetVizManager()->EraseAllPlannerObstacles(true);
-      _robot.GetContext()->GetVizManager()->EraseAllPlannerObstacles(false);
+      // If we are not running anymore, for any reason, clear the path and its
+      // visualization
+      if( GetRobot().GetPathComponent().IsActive() ) {
+        GetRobot().GetPathComponent().Abort();
+      }
+
+      GetRobot().GetContext()->GetVizManager()->EraseAllPlannerObstacles(true);
+      GetRobot().GetContext()->GetVizManager()->EraseAllPlannerObstacles(false);
       
-      _robot.GetDrivingAnimationHandler().ActionIsBeingDestroyed();
+      GetRobot().GetDrivingAnimationHandler().ActionIsBeingDestroyed();
     }
     
     Result DriveToPoseAction::SetGoal(const Pose3d& pose,
@@ -659,13 +668,15 @@ namespace Anki {
       return SetGoals(poses, distThreshold, angleThreshold);
     }
         
+    f32 DriveToPoseAction::GetTimeoutInSeconds() const { return kDriveToPoseTimeout; }  
+
     ActionResult DriveToPoseAction::Init()
     {
-      _robot.GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());
+      GetRobot().GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());
     
       ActionResult result = ActionResult::SUCCESS;
 
-      auto& pathComponent = _robot.GetPathComponent();
+      auto& pathComponent = GetRobot().GetPathComponent();
       
       _timeToAbortPlanning = -1.0f;
       
@@ -678,7 +689,7 @@ namespace Anki {
         
         // Make the poses w.r.t. robot:
         for(auto & pose : _goalPoses) {
-          if(pose.GetWithRespectTo(_robot.GetWorldOrigin(), pose) == false) {
+          if(pose.GetWithRespectTo(GetRobot().GetWorldOrigin(), pose) == false) {
             // this means someone passed in a goal in a different origin than the robot.
             PRINT_NAMED_WARNING("DriveToPoseAction.Init.OriginMisMatch",
                                 "Could not get goal pose w.r.t. to robot origin.");
@@ -707,7 +718,7 @@ namespace Anki {
           if(_driveWithHeadDown) {
             // Now put the head at the right angle for following paths
             // TODO: Make it possible to set the speed/accel somewhere?
-            if(_robot.GetMoveComponent().MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
+            if(GetRobot().GetMoveComponent().MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
               PRINT_NAMED_ERROR("DriveToPoseAction.Init.MoveHeadFailed", "Failed to move head to path-following angle.");
               result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
             }
@@ -723,12 +734,12 @@ namespace Anki {
       ActionResult result = ActionResult::RUNNING;
       
       // Still running while the drivingEnd animation is playing
-      if(_robot.GetDrivingAnimationHandler().IsPlayingEndAnim())
+      if(GetRobot().GetDrivingAnimationHandler().IsPlayingEndAnim())
       {
         return ActionResult::RUNNING;
       }
       
-      switch( _robot.GetPathComponent().GetDriveToPoseStatus() ) {
+      switch( GetRobot().GetPathComponent().GetDriveToPoseStatus() ) {
         case ERobotDriveToPoseStatus::Failed:
           PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure", "Robot driving to pose failed");
           _timeToAbortPlanning = -1.0f;
@@ -746,7 +757,7 @@ namespace Anki {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.ComputingPathTimeout",
                              "Robot has been planning for more than %f seconds, aborting",
                              _maxPlanningTime);
-            _robot.GetPathComponent().Abort();
+            GetRobot().GetPathComponent().Abort();
             result = ActionResult::PATH_PLANNING_FAILED_ABORT;
             _timeToAbortPlanning = -1.0f;
           }
@@ -757,7 +768,7 @@ namespace Anki {
         
           // If we are following a path start playing driving animations
           // Won't do anything if DrivingAnimationHandler has already been inited
-          _robot.GetDrivingAnimationHandler().PlayStartAnim();
+          GetRobot().GetDrivingAnimationHandler().PlayStartAnim();
         
           // clear abort timing, since we got a path
           _timeToAbortPlanning = -1.0f;
@@ -768,9 +779,9 @@ namespace Anki {
                              "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.",
                              GetTag(),
                              _debugPrintCtr,
-                             _robot.GetPathComponent().GetCurrentPathSegment(),
-                             _robot.GetPathComponent().GetLastSentPathID(),
-                             _robot.GetPathComponent().GetLastRecvdPathID());
+                             GetRobot().GetPathComponent().GetCurrentPathSegment(),
+                             GetRobot().GetPathComponent().GetLastSentPathID(),
+                             GetRobot().GetPathComponent().GetLastRecvdPathID());
           }
           break;
         }
@@ -785,7 +796,7 @@ namespace Anki {
           // HACK: Loosen z threshold bigtime:
           Point3f distanceThreshold(_goalDistanceThreshold.x(),
                                     _goalDistanceThreshold.y(),
-                                    _robot.GetHeight());
+                                    GetRobot().GetHeight());
           
           // If the goals were generated from an object then compute the distance threshold using the
           // pose of the goal that was actually selected
@@ -799,15 +810,15 @@ namespace Anki {
             distanceThreshold.y() = thresh.y();
           }
           
-          if(_robot.GetPose().IsSameAs(_goalPoses[*_selectedGoalIndex], distanceThreshold, _goalAngleThreshold, Tdiff))
+          if(GetRobot().GetPose().IsSameAs(_goalPoses[*_selectedGoalIndex], distanceThreshold, _goalAngleThreshold, Tdiff))
           {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
                              "[%d] Robot %d successfully finished following path (Tdiff=%.1fmm) robotPose (%.1f, %.1f) goalPose (%.1f %.1f) threshold (%.1f %.1f).",
                              GetTag(),
-                             _robot.GetID(),
+                             GetRobot().GetID(),
                              Tdiff.Length(),
-                             _robot.GetPose().GetTranslation().x(),
-                             _robot.GetPose().GetTranslation().y(),
+                             GetRobot().GetPose().GetTranslation().x(),
+                             GetRobot().GetPose().GetTranslation().y(),
                              _goalPoses[*_selectedGoalIndex].GetTranslation().x(),
                              _goalPoses[*_selectedGoalIndex].GetTranslation().y(),
                              distanceThreshold.x(),
@@ -817,21 +828,21 @@ namespace Anki {
           }
           // The last path sent was definitely received by the robot
           // and it is no longer executing it, but we appear to not be in position
-          else if (_robot.GetPathComponent().GetLastSentPathID() == _robot.GetPathComponent().GetLastRecvdPathID()) {
+          else if (GetRobot().GetPathComponent().GetLastSentPathID() == GetRobot().GetPathComponent().GetLastRecvdPathID()) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
                              "[%d] Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d"
                              " goal %d (%f, %f, %f, %fdeg), actual (%f, %f, %f, %fdeg), threshold (%f, %f)",
                              GetTag(),
-                             Tdiff.Length(), _robot.GetPathComponent().GetLastRecvdPathID(),
+                             Tdiff.Length(), GetRobot().GetPathComponent().GetLastRecvdPathID(),
                              (int) *_selectedGoalIndex,
                              _goalPoses[*_selectedGoalIndex].GetTranslation().x(),
                              _goalPoses[*_selectedGoalIndex].GetTranslation().y(),
                              _goalPoses[*_selectedGoalIndex].GetTranslation().z(),
                              _goalPoses[*_selectedGoalIndex].GetRotationAngle<'Z'>().getDegrees(),
-                             _robot.GetPose().GetTranslation().x(),
-                             _robot.GetPose().GetTranslation().y(),
-                             _robot.GetPose().GetTranslation().z(),
-                             _robot.GetPose().GetRotationAngle<'Z'>().getDegrees(),
+                             GetRobot().GetPose().GetTranslation().x(),
+                             GetRobot().GetPose().GetTranslation().y(),
+                             GetRobot().GetPose().GetTranslation().z(),
+                             GetRobot().GetPose().GetRotationAngle<'Z'>().getDegrees(),
                              distanceThreshold.x(),
                              distanceThreshold.y());
             
@@ -860,7 +871,7 @@ namespace Anki {
       if(result != ActionResult::RUNNING &&
          result != ActionResult::PATH_PLANNING_FAILED_ABORT &&
          result != ActionResult::PATH_PLANNING_FAILED_RETRY &&
-         _robot.GetDrivingAnimationHandler().PlayEndAnim())
+         GetRobot().GetDrivingAnimationHandler().PlayEndAnim())
       {
         result = ActionResult::RUNNING;
       }
@@ -870,179 +881,199 @@ namespace Anki {
     
 #pragma mark ---- IDriveToInteractWithObjectAction ----
     
-    IDriveToInteractWithObject::IDriveToInteractWithObject(Robot& robot,
-                                                           const ObjectID& objectID,
+    IDriveToInteractWithObject::IDriveToInteractWithObject(const ObjectID& objectID,
                                                            const PreActionPose::ActionType& actionType,
                                                            const f32 predockOffsetDistX_mm,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
                                                            const bool useManualSpeed,
-                                                           Radians maxTurnTowardsFaceAngle_rad,
+                                                           const Radians& maxTurnTowardsFaceAngle_rad,
                                                            const bool sayName)
-    : CompoundActionSequential(robot)
+    : CompoundActionSequential()
     , _objectID(objectID)
     , _preDockPoseDistOffsetX_mm(predockOffsetDistX_mm)
+    , _params(new ConstructorParams(actionType, predockOffsetDistX_mm, useApproachAngle, 
+              approachAngle_rad, useManualSpeed, maxTurnTowardsFaceAngle_rad, sayName))
     {
-      if(objectID == robot.GetCarryingComponent().GetCarryingObject())
-      {
-        PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor",
-                            "Robot is currently carrying action object with ID=%d",
-                            objectID.GetValue());
-        return;
-      }
-    
-      IActionRunner* driveToObjectAction = new DriveToObjectAction(robot,
-                                                                   objectID,
-                                                                   actionType,
-                                                                   predockOffsetDistX_mm,
-                                                                   useApproachAngle,
-                                                                   approachAngle_rad,
-                                                                   useManualSpeed);
-
-      // TODO: Use the function-based ShouldIgnoreFailure option for AddAction to catch some failures of DriveToObject earlier
-      //  (Started to do this but it started to feel messy/dangerous right before ship)
-      /*
-      // Ignore DriveTo failures iff we simply did not reach preaction pose or
-      // failed visual verification (since we'll presumably recheck those at start
-      // of object interaction action)
-      ICompoundAction::ShouldIgnoreFailureFcn shouldIgnoreFailure = [](ActionResult result, const IActionRunner* action)
-      {
-        if(nullptr == action)
-        {
-          PRINT_NAMED_ERROR("IDriveToInteractWithObject.Constructor.NullAction",
-                            "ShouldIgnoreFailureFcn cannot check null action");
-          return false;
-        }
-        
-        if(ActionResult::SUCCESS == result)
-        {
-          PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor.CheckingIgnoreForSuccessResult",
-                              "Not expecting ShouldIgnoreFailure to be called for successful action result");
-          return false;
-        }
-       
-        // Note that DriveToObjectActions return ObjectInteractionCompleted unions
-        ActionCompletedUnion completionUnion;
-        action->GetCompletionUnion(completionUnion);
-        const ObjectInteractionCompleted& objInteractionCompleted = completionUnion.Get_objectInteractionCompleted();
-        
-        switch(objInteractionCompleted.result)
-        {
-          case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
-          case ObjectInteractionResult::VISUAL_VERIFICATION_FAILED:
-            return true;
-            
-          default:
-            return false;
-        }
-      };
-      
-      
-      AddAction(_driveToObjectAction, shouldIgnoreFailure);
-      */
-
-      if( kEnablePredockDistanceCheckFix ) {
-
-        // This is a workaround for the bug in COZMO-5880. The problem is that the DriveTo action has a
-        // predock pose check which is different from the Dock action. This causes DriveTo to succeed, but
-        // Dock to fail. Then, if this whole action is retried, the same thing happens, and the robot fails to
-        // dock without ever moving
-
-        // The fix is to _not_ do the check within the dock action, but _only_ if the entire driveTo action
-        // succeeds. We need to ignore failures from the drive action because of the way the proxy action
-        // works, so we work around this by adding an inner action. The inner action cannot fail, but within
-        // the inner action is the drive to action, which _can_ fail. If that action fails, it will _not_ call
-        // the Wait action, otherwise it will. This way, we have a lambda that only gets called when the drive
-        // to succeeds
-
-        // create an inner action to hold the drive to and the lambda
-        CompoundActionSequential* innerAction = new CompoundActionSequential(robot);
-        // within innerAction, we do want to consider failures of driving (to prevent the lambda from running
-        // if the drive fails)
-        _driveToObjectAction = innerAction->AddAction(driveToObjectAction, false);
-
-        auto waitLambda = [this](Robot& robot) {
-          if (_shouldSetCubeLights) {
-            // Keep the cube lights set while the waitForLambda action is running
-            robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
-          }
-        
-          // if this lambda gets called, that means the drive to must have succeeded.
-          if( !_dockAction.expired() ) {
-            PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.DriveToSuccess",
-                          "DriveTo action succeeded, telling dock action not to check predock pose distance");
-            
-            // For debug builds do a dynamic cast for validity checks
-            DEV_ASSERT(dynamic_cast<IDockAction*>(_dockAction.lock().get()) != nullptr,
-                       "IDriveToInteractWithObjectAction.Constructor.DynamicCastFailed");
-                       
-            IDockAction* rawDockAction = static_cast<IDockAction*>(_dockAction.lock().get());
-            rawDockAction->SetDoNearPredockPoseCheck(false);
-          }
-          else {
-            PRINT_NAMED_ERROR("IDriveToInteractWithObject.InnerAction.WaitLambda.NoDockAction",
-                              "Dock action is null! This is a bug!!!");
-          }
-
-          // immediately finish the wait action
-          return true;
-        };
-
-        WaitForLambdaAction* waitAction = new WaitForLambdaAction(robot, waitLambda);
-        innerAction->AddAction(waitAction, false);
-
-        // Add the entire inner action, but ignore failures here so that we will always run the dock action
-        // even if driving fails (so that the dock action will be the one to fail)
-        AddAction(innerAction, true);
-      }
-      else {
-        _driveToObjectAction = AddAction(driveToObjectAction, true);
-      }
-        
-      if(maxTurnTowardsFaceAngle_rad > 0.f)
-      {
-        _turnTowardsLastFacePoseAction = AddAction(new TurnTowardsLastFacePoseAction(robot,
-                                                                                     maxTurnTowardsFaceAngle_rad,
-                                                                                     sayName),
-                                                   true);
-        
-        _turnTowardsObjectAction = AddAction(new TurnTowardsObjectAction(robot,
-                                                                         objectID,
-                                                                         maxTurnTowardsFaceAngle_rad),
-                                             true);
-      }
     }
     
-    IDriveToInteractWithObject::IDriveToInteractWithObject(Robot& robot,
-                                const ObjectID& objectID,
-                                const f32 distance,
-                                const bool useManualSpeed)
-    : CompoundActionSequential(robot)
+    IDriveToInteractWithObject::IDriveToInteractWithObject(const ObjectID& objectID,
+                                                           const f32 distance,
+                                                           const bool useManualSpeed)
+    : CompoundActionSequential()
     , _objectID(objectID)
+    , _params(new ConstructorParams(distance, useManualSpeed))
     {
-      if(objectID == robot.GetCarryingComponent().GetCarryingObject())
+
+    }
+
+    void IDriveToInteractWithObject::OnRobotSetInternalCompound()
+    {
+      if(_params == nullptr){
+        return; 
+      }
+
+      if(_objectID == GetRobot().GetCarryingComponent().GetCarryingObject())
       {
         PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor",
                             "Robot is currently carrying action object with ID=%d",
-                            objectID.GetValue());
+                            _objectID.GetValue());
         return;
       }
+
+      if(_params->usedSimpleConstructor){ 
+        // Only set cube lights if the dock object is a light cube
+        const auto* object = GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID);
+        _shouldSetCubeLights = (object != nullptr) &&
+                                IsValidLightCube(object->GetType(), false);
+        
+        _driveToObjectAction = AddAction(new DriveToObjectAction(_objectID,
+                                                                  _params->distance,
+                                                                  _params->useManualSpeed),
+                                          true);
+      }else{
+        IActionRunner* driveToObjectAction = new DriveToObjectAction(_objectID,
+                                                                      _params->actionType,
+                                                                      _params->predockOffsetDistX_mm,
+                                                                      _params->useApproachAngle,
+                                                                      _params->approachAngle_rad,
+                                                                      _params->useManualSpeed);
+
+        // TODO: Use the function-based ShouldIgnoreFailure option for AddAction to catch some failures of DriveToObject earlier
+        //  (Started to do this but it started to feel messy/dangerous right before ship)
+        /*
+        // Ignore DriveTo failures iff we simply did not reach preaction pose or
+        // failed visual verification (since we'll presumably recheck those at start
+        // of object interaction action)
+        ICompoundAction::ShouldIgnoreFailureFcn shouldIgnoreFailure = [](ActionResult result, const IActionRunner* action)
+        {
+          if(nullptr == action)
+          {
+            PRINT_NAMED_ERROR("IDriveToInteractWithObject.Constructor.NullAction",
+                              "ShouldIgnoreFailureFcn cannot check null action");
+            return false;
+          }
+          
+          if(ActionResult::SUCCESS == result)
+          {
+            PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor.CheckingIgnoreForSuccessResult",
+                                "Not expecting ShouldIgnoreFailure to be called for successful action result");
+            return false;
+          }
+        
+          // Note that DriveToObjectActions return ObjectInteractionCompleted unions
+          ActionCompletedUnion completionUnion;
+          action->GetCompletionUnion(completionUnion);
+          const ObjectInteractionCompleted& objInteractionCompleted = completionUnion.Get_objectInteractionCompleted();
+          
+          switch(objInteractionCompleted.result)
+          {
+            case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+            case ObjectInteractionResult::VISUAL_VERIFICATION_FAILED:
+              return true;
+              
+            default:
+              return false;
+          }
+        };
+        
+        
+        AddAction(_driveToObjectAction, shouldIgnoreFailure);
+        */
+
+        if( kEnablePredockDistanceCheckFix ) {
+
+          // This is a workaround for the bug in COZMO-5880. The problem is that the DriveTo action has a
+          // predock pose check which is different from the Dock action. This causes DriveTo to succeed, but
+          // Dock to fail. Then, if this whole action is retried, the same thing happens, and the robot fails to
+          // dock without ever moving
+
+          // The fix is to _not_ do the check within the dock action, but _only_ if the entire driveTo action
+          // succeeds. We need to ignore failures from the drive action because of the way the proxy action
+          // works, so we work around this by adding an inner action. The inner action cannot fail, but within
+          // the inner action is the drive to action, which _can_ fail. If that action fails, it will _not_ call
+          // the Wait action, otherwise it will. This way, we have a lambda that only gets called when the drive
+          // to succeeds
+
+          // create an inner action to hold the drive to and the lambda
+          CompoundActionSequential* innerAction = new CompoundActionSequential();
+          // within innerAction, we do want to consider failures of driving (to prevent the lambda from running
+          // if the drive fails)
+          _driveToObjectAction = innerAction->AddAction(driveToObjectAction, false);
+
+          auto waitLambda = [this](Robot& robot) {
+            if (_shouldSetCubeLights) {
+              // Keep the cube lights set while the waitForLambda action is running
+              GetRobot().GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
+            }
+          
+            // if this lambda gets called, that means the drive to must have succeeded.
+            if( !_dockAction.expired() ) {
+              PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.DriveToSuccess",
+                            "DriveTo action succeeded, telling dock action not to check predock pose distance");
+              
+              // For debug builds do a dynamic cast for validity checks
+              DEV_ASSERT(dynamic_cast<IDockAction*>(_dockAction.lock().get()) != nullptr,
+                        "IDriveToInteractWithObjectAction.Constructor.DynamicCastFailed");
+                        
+              IDockAction* rawDockAction = static_cast<IDockAction*>(_dockAction.lock().get());
+              rawDockAction->SetDoNearPredockPoseCheck(false);
+            }
+            else {
+              PRINT_NAMED_ERROR("IDriveToInteractWithObject.InnerAction.WaitLambda.NoDockAction",
+                                "Dock action is null! This is a bug!!!");
+            }
+
+            // immediately finish the wait action
+            return true;
+          };
+
+          WaitForLambdaAction* waitAction = new WaitForLambdaAction(waitLambda);
+          innerAction->AddAction(waitAction, false);
+
+          // Add the entire inner action, but ignore failures here so that we will always run the dock action
+          // even if driving fails (so that the dock action will be the one to fail)
+          AddAction(innerAction, true);
+        }
+        else {
+          _driveToObjectAction = AddAction(driveToObjectAction, true);
+        }
+          
+        if(_params->maxTurnTowardsFaceAngle_rad > 0.f)
+        {
+          _turnTowardsLastFacePoseAction = AddAction(new TurnTowardsLastFacePoseAction(_params->maxTurnTowardsFaceAngle_rad,
+                                                                                       _params->sayName),
+                                                    true);
+          
+          _turnTowardsObjectAction = AddAction(new TurnTowardsObjectAction(_objectID,
+                                                                           _params->maxTurnTowardsFaceAngle_rad),
+                                              true);
+        }
+      }
       
-      // Only set cube lights if the dock object is a light cube
-      const auto* object = robot.GetBlockWorld().GetLocatedObjectByID(objectID);
-      _shouldSetCubeLights = (object != nullptr) &&
-                             IsValidLightCube(object->GetType(), false);
       
-      _driveToObjectAction = AddAction(new DriveToObjectAction(robot,
-                                                               objectID,
-                                                               distance,
-                                                               useManualSpeed),
-                                       true);
-    }
+      if(auto driveAction = _driveToObjectAction.lock()){
+        driveAction->SetRobot(&GetRobot());
+      }
+      if(auto turnFaceAction = _turnTowardsLastFacePoseAction.lock()){
+        turnFaceAction->SetRobot(&GetRobot());
+      }
+      if(auto turnObjAction = _turnTowardsObjectAction.lock()){
+        turnObjAction->SetRobot(&GetRobot());
+      }
+      if(auto dockAction = _dockAction.lock()){
+        dockAction->SetRobot(&GetRobot());
+      }
+      _params.reset();
+    } // end OnRobotSetInternalCompound()
     
     std::weak_ptr<IActionRunner> IDriveToInteractWithObject::AddDockAction(IDockAction* dockAction,
                                                                            bool ignoreFailure)
     {
+      if(HasRobot()){
+        dockAction->SetRobot(&GetRobot());
+      }
+      
       // right before the dock action, we want to call the PreDock callback (if one was specified). TO achieve
       // this, we use a WaitForLambda action which always completes immediately.
       // TODO:(bn) this could be done much more elegantly as part of CompoundActionSequential
@@ -1050,7 +1081,7 @@ namespace Anki {
         auto lambdaToWaitFor = [this](Robot& robot) {
           if (_shouldSetCubeLights) {
             // Keep the cube lights set while the waitForLambda action is running
-            _robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
+            GetRobot().GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
           }
           
           if( _preDockCallback ) {
@@ -1059,7 +1090,7 @@ namespace Anki {
           // immediately finish the action
           return true;
         };
-        AddAction( new WaitForLambdaAction(_robot, lambdaToWaitFor) );
+        AddAction( new WaitForLambdaAction(lambdaToWaitFor) );
       }
       
       dockAction->SetPreDockPoseDistOffset(_preDockPoseDistOffsetX_mm);
@@ -1171,7 +1202,8 @@ namespace Anki {
         PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetApproachAngle.NullDriveToAction", "");
       }
     }
-    
+
+
     const bool IDriveToInteractWithObject::GetUseApproachAngle() const
     {
       if(!_driveToObjectAction.expired())
@@ -1199,7 +1231,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
+        GetRobot().GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
         _lightsSet = true;
       }
       return RESULT_OK;
@@ -1211,15 +1243,14 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DrivingTo, _objectID);
+        GetRobot().GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DrivingTo, _objectID);
         _lightsSet = false;
       }
     }
     
 #pragma mark ---- DriveToAlignWithObjectAction ----
     
-    DriveToAlignWithObjectAction::DriveToAlignWithObjectAction(Robot& robot,
-                                                               const ObjectID& objectID,
+    DriveToAlignWithObjectAction::DriveToAlignWithObjectAction(const ObjectID& objectID,
                                                                const f32 distanceFromMarker_mm,
                                                                const bool useApproachAngle,
                                                                const f32 approachAngle_rad,
@@ -1227,8 +1258,7 @@ namespace Anki {
                                                                const bool useManualSpeed,
                                                                Radians maxTurnTowardsFaceAngle_rad,
                                                                const bool sayName)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
+    : IDriveToInteractWithObject(objectID,
                                  AlignWithObjectAction::GetPreActionTypeFromAlignmentType(alignmentType),
                                  0,
                                  useApproachAngle,
@@ -1237,7 +1267,7 @@ namespace Anki {
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
-      AlignWithObjectAction* action = new AlignWithObjectAction(robot,
+      AlignWithObjectAction* action = new AlignWithObjectAction(
                                                objectID,
                                                distanceFromMarker_mm,
                                                alignmentType,
@@ -1248,16 +1278,14 @@ namespace Anki {
     
 #pragma mark ---- DriveToPickupObjectAction ----
     
-    DriveToPickupObjectAction::DriveToPickupObjectAction(Robot& robot,
-                                                         const ObjectID& objectID,
+    DriveToPickupObjectAction::DriveToPickupObjectAction(const ObjectID& objectID,
                                                          const bool useApproachAngle,
                                                          const f32 approachAngle_rad,
                                                          const bool useManualSpeed,
                                                          Radians maxTurnTowardsFaceAngle_rad,
                                                          const bool sayName,
                                                          AnimationTrigger animBeforeDock)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
+    : IDriveToInteractWithObject(objectID,
                                  PreActionPose::DOCKING,
                                  0,
                                  useApproachAngle,
@@ -1267,10 +1295,10 @@ namespace Anki {
                                  sayName)
     {
       if(animBeforeDock != AnimationTrigger::Count){
-        AddAction(new TriggerAnimationAction(robot, animBeforeDock));
+        AddAction(new TriggerAnimationAction(animBeforeDock));
       }
       
-      PickupObjectAction* rawPickup = new PickupObjectAction(robot, objectID, useManualSpeed);
+      PickupObjectAction* rawPickup = new PickupObjectAction(objectID, useManualSpeed);
       const u32 pickUpTag = rawPickup->GetTag();
       _pickupAction = AddDockAction(rawPickup);
       SetProxyTag(pickUpTag);
@@ -1298,15 +1326,13 @@ namespace Anki {
     
 #pragma mark ---- DriveToPlaceOnObjectAction ----
     
-    DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(Robot& robot,
-                                                           const ObjectID& objectID,
+    DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(const ObjectID& objectID,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
                                                            const bool useManualSpeed,
                                                            Radians maxTurnTowardsFaceAngle_rad,
                                                            const bool sayName)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
+    : IDriveToInteractWithObject(objectID,
                                  PreActionPose::PLACE_RELATIVE,
                                  0,
                                  useApproachAngle,
@@ -1315,8 +1341,7 @@ namespace Anki {
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
-      PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
-                                                              objectID,
+      PlaceRelObjectAction* action = new PlaceRelObjectAction(objectID,
                                                               false,
                                                               0,
                                                               0,
@@ -1328,8 +1353,7 @@ namespace Anki {
 #pragma mark ---- DriveToPlaceRelObjectAction ----
 
     
-    DriveToPlaceRelObjectAction::DriveToPlaceRelObjectAction(Robot& robot,
-                                                             const ObjectID& objectID,
+    DriveToPlaceRelObjectAction::DriveToPlaceRelObjectAction(const ObjectID& objectID,
                                                              const bool placingOnGround,
                                                              const f32 placementOffsetX_mm,
                                                              const f32 placementOffsetY_mm,
@@ -1339,8 +1363,7 @@ namespace Anki {
                                                              Radians maxTurnTowardsFaceAngle_rad,
                                                              const bool sayName,
                                                              const bool relativeCurrentMarker)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
+    : IDriveToInteractWithObject(objectID,
                                  PreActionPose::PLACE_RELATIVE,
                                  0,
                                  useApproachAngle,
@@ -1349,8 +1372,7 @@ namespace Anki {
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
-      PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
-                                                              objectID,
+      PlaceRelObjectAction* action = new PlaceRelObjectAction(objectID,
                                                               placingOnGround,
                                                               placementOffsetX_mm,
                                                               placementOffsetY_mm,
@@ -1367,16 +1389,21 @@ namespace Anki {
         if(driveToAction != nullptr)
         {
           driveToAction->SetGetPossiblePosesFunc(
-            [&robot, placementOffsetX_mm, placementOffsetY_mm](ActionableObject* object,
+            [this, placementOffsetX_mm, placementOffsetY_mm](ActionableObject* object,
                                                                std::vector<Pose3d>& possiblePoses,
                                                                bool& alreadyInPosition)
             {
               return PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(object,
                                                                             placementOffsetX_mm,
                                                                             placementOffsetY_mm,
-                                                                            robot,
+                                                                            GetRobot().GetPose(),
+                                                                            GetRobot().GetWorldOrigin(),
+                                                                            GetRobot().GetCarryingComponent(),
+                                                                            GetRobot().GetBlockWorld(),
+                                                                            GetRobot().GetVisionComponent(),
                                                                             possiblePoses,
                                                                             alreadyInPosition);
+
             });
         }
         else
@@ -1391,15 +1418,13 @@ namespace Anki {
     
 #pragma mark ---- DriveToRollObjectAction ----
     
-    DriveToRollObjectAction::DriveToRollObjectAction(Robot& robot,
-                                                     const ObjectID& objectID,
+    DriveToRollObjectAction::DriveToRollObjectAction(const ObjectID& objectID,
                                                      const bool useApproachAngle,
                                                      const f32 approachAngle_rad,
                                                      const bool useManualSpeed,
                                                      Radians maxTurnTowardsFaceAngle_rad,
                                                      const bool sayName)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
+    : IDriveToInteractWithObject(objectID,
                                  PreActionPose::ROLLING,
                                  0,
                                  useApproachAngle,
@@ -1409,11 +1434,11 @@ namespace Anki {
                                  sayName)
     , _objectID(objectID)
     {
-      _rollAction = AddDockAction(new RollObjectAction(robot, objectID, useManualSpeed));
+      _rollAction = AddDockAction(new RollObjectAction(objectID, useManualSpeed));
       SetProxyTag(_rollAction.lock().get()->GetTag());
     }
 
-    void DriveToRollObjectAction::RollToUpright()
+    void DriveToRollObjectAction::RollToUpright(const BlockWorld& blockWorld, const Pose3d& robotPose)
     {
       if( GetState() != ActionResult::NOT_STARTED ) {
         PRINT_NAMED_WARNING("DriveToRollObjectAction.RollToUpright.AlreadyRunning",
@@ -1430,7 +1455,8 @@ namespace Anki {
       }
       
       f32 approachAngle_rad;
-      if(DriveToRollObjectAction::GetRollToUprightApproachAngle(_robot,
+      if(DriveToRollObjectAction::GetRollToUprightApproachAngle(blockWorld,
+                                                                robotPose,
                                                                 _objectID,
                                                                 approachAngle_rad)){
         SetApproachAngle(approachAngle_rad);
@@ -1438,7 +1464,8 @@ namespace Anki {
       
     }
     
-    bool DriveToRollObjectAction::GetRollToUprightApproachAngle(Robot& robot,
+    bool DriveToRollObjectAction::GetRollToUprightApproachAngle(const BlockWorld& blockWorld,
+                                                                const Pose3d& robotPose,
                                                                 const ObjectID& objID,
                                                                 f32& approachAngle_rad)
     {
@@ -1449,12 +1476,11 @@ namespace Anki {
         return false;
       }
       
-      const BlockWorld& blockWorld = robot.GetBlockWorld();
       std::vector<std::pair<Quad2f, ObjectID> > obstacles;
       blockWorld.GetObstacles(obstacles);
 
       // Compute approach angle so that rolling rights the block, using docking
-      ObservableObject* observableObject = robot.GetBlockWorld().GetLocatedObjectByID(objID);
+      const ObservableObject* observableObject = blockWorld.GetLocatedObjectByID(objID);
       if( nullptr == observableObject ) {
         PRINT_NAMED_WARNING("DriveToRollObjectAction.RollToUpright.NullObject",
                             "invalid object id %d",
@@ -1470,7 +1496,7 @@ namespace Anki {
       }
 
       // unfortunately this needs to be a dynamic cast because Block inherits from observable object virtually
-      Block* block = dynamic_cast<Block*>(observableObject);
+      const Block* block = dynamic_cast<const Block*>(observableObject);
       if( block == nullptr ) {
         PRINT_NAMED_ERROR("DriveToRollObjectAction.RollToUpright.NotABlock",
                           "object %d exists, but can't be cast to a Block. This is a bug",
@@ -1481,7 +1507,7 @@ namespace Anki {
       
       std::vector<PreActionPose> preActionPoses;
       block->GetCurrentPreActionPoses(preActionPoses,
-                                      robot.GetPose(),
+                                      robotPose,
                                       {PreActionPose::ROLLING},
                                       std::set<Vision::Marker::Code>(),
                                       obstacles);
@@ -1538,15 +1564,13 @@ namespace Anki {
     
 #pragma mark ---- DriveToPopAWheelieAction ----
     
-    DriveToPopAWheelieAction::DriveToPopAWheelieAction(Robot& robot,
-                                                       const ObjectID& objectID,
+    DriveToPopAWheelieAction::DriveToPopAWheelieAction(const ObjectID& objectID,
                                                        const bool useApproachAngle,
                                                        const f32 approachAngle_rad,
                                                        const bool useManualSpeed,
                                                        Radians maxTurnTowardsFaceAngle_rad,
                                                        const bool sayName)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
+    : IDriveToInteractWithObject(objectID,
                                  PreActionPose::ROLLING,
                                  0,
                                  useApproachAngle,
@@ -1555,7 +1579,7 @@ namespace Anki {
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
-      PopAWheelieAction* action = new PopAWheelieAction(robot, objectID, useManualSpeed);
+      PopAWheelieAction* action = new PopAWheelieAction(objectID, useManualSpeed);
       AddDockAction(action);
       SetProxyTag(action->GetTag());
     }
@@ -1563,15 +1587,13 @@ namespace Anki {
     
 #pragma mark ---- DriveToFacePlantAction ----
     
-    DriveToFacePlantAction::DriveToFacePlantAction(Robot& robot,
-                                                   const ObjectID& objectID,
+    DriveToFacePlantAction::DriveToFacePlantAction(const ObjectID& objectID,
                                                    const bool useApproachAngle,
                                                    const f32 approachAngle_rad,
                                                    const bool useManualSpeed,
                                                    Radians maxTurnTowardsFaceAngle_rad,
                                                    const bool sayName)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
+    : IDriveToInteractWithObject(objectID,
                                  PreActionPose::DOCKING,
                                  0,
                                  useApproachAngle,
@@ -1580,7 +1602,7 @@ namespace Anki {
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
-      FacePlantAction* action = new FacePlantAction(robot, objectID, useManualSpeed);
+      FacePlantAction* action = new FacePlantAction(objectID, useManualSpeed);
       AddDockAction(action);
       SetProxyTag(action->GetTag());
     }
@@ -1588,13 +1610,11 @@ namespace Anki {
     
 #pragma mark ---- DriveToAndTraverseObjectAction ----
     
-    DriveToAndTraverseObjectAction::DriveToAndTraverseObjectAction(Robot& robot,
-                                                                   const ObjectID& objectID,
+    DriveToAndTraverseObjectAction::DriveToAndTraverseObjectAction(const ObjectID& objectID,
                                                                    const bool useManualSpeed,
                                                                    Radians maxTurnTowardsFaceAngle_rad,
                                                                    const bool sayName)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
+    : IDriveToInteractWithObject(objectID,
                                  PreActionPose::ENTRY,
                                  0,
                                  false,
@@ -1603,53 +1623,61 @@ namespace Anki {
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
-      TraverseObjectAction* action = new TraverseObjectAction(robot, objectID, useManualSpeed);
+      TraverseObjectAction* action = new TraverseObjectAction(objectID, useManualSpeed);
       SetProxyTag(action->GetTag());
       AddAction(action);
     }
     
 #pragma mark ---- DriveToReAlignWithObjectAction ----
     
-    DriveToRealignWithObjectAction::DriveToRealignWithObjectAction(Robot& robot,
-                                    ObjectID objectID,
-                                    float dist_mm)
-    : CompoundActionSequential(robot)
+    DriveToRealignWithObjectAction::DriveToRealignWithObjectAction(ObjectID objectID,
+                                                                   float dist_mm)
+    : CompoundActionSequential()
+    , _objectID(objectID)
+    , _dist_mm(dist_mm)
+    {
+
+    }
+
+
+    void DriveToRealignWithObjectAction::OnRobotSetInternalCompound()
     {
       const f32 minTrans = 20.0f;
       const f32 moveBackDist = 35.0f;
       const f32 waitTime = 3.0f;
       
 
-      ObservableObject* observableObject = robot.GetBlockWorld().GetLocatedObjectByID(objectID);
+      ObservableObject* observableObject = GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID);
       if(nullptr == observableObject)
       {
         PRINT_NAMED_WARNING("DriveToRealignWithObjectAction.Constructor.NullObservableObject",
                             "ObjectID=%d. Will not use add MoveHead+DriveStraight+Wait actions.",
-                            objectID.GetValue());
+                            _objectID.GetValue());
       }
       else
       {
         // if block's state is not known, find it.
         Pose3d p;
-        observableObject->GetPose().GetWithRespectTo(robot.GetPose(), p);
+        observableObject->GetPose().GetWithRespectTo(GetRobot().GetPose(), p);
         if(!(observableObject->IsPoseStateKnown()) || (p.GetTranslation().y() < minTrans))
         {
-          MoveHeadToAngleAction* moveHeadToAngleAction = new MoveHeadToAngleAction(robot, kIdealViewBlockHeadAngle);
+          MoveHeadToAngleAction* moveHeadToAngleAction = new MoveHeadToAngleAction(kIdealViewBlockHeadAngle);
           AddAction(moveHeadToAngleAction);
-          DriveStraightAction* driveAction = new DriveStraightAction(robot, -moveBackDist);
+          DriveStraightAction* driveAction = new DriveStraightAction(-moveBackDist);
           driveAction->SetShouldPlayAnimation(false);
           AddAction(driveAction);
-          WaitAction* waitAction = new WaitAction(robot, waitTime);
+          WaitAction* waitAction = new WaitAction(waitTime);
           AddAction(waitAction);
         }
       }
       
       // Drive towards found block and verify it.
-      DriveToAlignWithObjectAction* driveToAlignWithObjectAction = new DriveToAlignWithObjectAction(robot, objectID, dist_mm);
+      DriveToAlignWithObjectAction* driveToAlignWithObjectAction = new DriveToAlignWithObjectAction(_objectID, _dist_mm);
       driveToAlignWithObjectAction->SetNumRetries(0);
       AddAction(driveToAlignWithObjectAction);
       SetNumRetries(0);
     }
+
   }
 }
 

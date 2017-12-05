@@ -22,8 +22,8 @@ enum uint_32 RobotStatusFlag {
     IS_PATHING              = 0x00000080,
     LIFT_IN_POS             = 0x00000100,
     HEAD_IN_POS             = 0x00000200,
-    IS_ANIM_BUFFER_FULL     = 0x00000400,
-    IS_ANIMATING_IDLE       = 0x00000800,
+    // FREE FLAG            = 0x00000400,
+    // FREE FLAG            = 0x00000800,
     IS_ON_CHARGER           = 0x00001000,
     IS_CHARGING             = 0x00002000,
     CLIFF_DETECTED          = 0x00004000,
@@ -108,19 +108,6 @@ enum int_8 BodyColor
   CE_LM_v15 = 3,  // Black/Collector's Edition/Liquid Metal Cozmo 1.5
 
   COUNT
-}
-
-namespace RobotInterface {
-
-  message AnimationState
-  {
-    uint_32 timestamp,
-    int_32  numAnimBytesPlayed,
-    int_32  numAudioFramesPlayed,
-    uint_8  enabledAnimTracks,
-    uint_8 tag,
-  }
-
 }
 
 } // namespace Cozmo

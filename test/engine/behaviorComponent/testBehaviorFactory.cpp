@@ -18,13 +18,13 @@
 
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "engine/cozmoContext.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
 using namespace Anki::Cozmo;
@@ -100,7 +100,7 @@ static const char* kTestBehaviorJson =
 "  }"
 "}";
 
-static const BehaviorID expectedID = BehaviorID::Wait_TestInjectable;
+static const BehaviorID expectedID = BEHAVIOR_ID(Wait_TestInjectable);
 
 // verifies that behavior matches expected data based on the Json above and factory contains it correctly
 void VerifyBehavior(const ICozmoBehaviorPtr inBehavior, const BehaviorContainer& behaviorContainer, size_t expectedBehaviorCount)

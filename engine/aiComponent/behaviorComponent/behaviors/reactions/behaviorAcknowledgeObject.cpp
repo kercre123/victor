@@ -22,13 +22,13 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iReactToObjectListener.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageFromActiveObject.h"
 #include "util/console/consoleInterface.h"
@@ -67,12 +67,10 @@ BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeObject::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
   // give the ghost object and ID so we can visualize it
-  _ghostStackedObject->SetVizManager(robot.GetContext()->GetVizManager());
+  _ghostStackedObject->SetVizManager(robotInfo.GetContext()->GetVizManager());
   _ghostStackedObject->InitPose(Pose3d(), PoseState::Dirty); // we rely on restoring poses, so just set a valid one
 }
 
@@ -168,35 +166,33 @@ void BehaviorAcknowledgeObject::BeginIteration(BehaviorExternalInterface& behavi
     return;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
   Pose3d poseWrtRobot;
-  targetObj->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot);
+  targetObj->GetPose().GetWithRespectTo(robotInfo.GetPose(), poseWrtRobot);
   
   // Only bother checking below the robot if the object is significantly above the robot
   _shouldCheckBelowTarget = poseWrtRobot.GetTranslation().z() > ROBOT_BOUNDING_Z * 0.5f;
   
-  TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, _currTarget,
+  TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(_currTarget,
                                                                     _params.maxTurnAngle_rad);
   turnAction->SetTiltTolerance(_params.tiltTolerance_rad);
   turnAction->SetPanTolerance(_params.panTolerance_rad);
 
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  CompoundActionSequential* action = new CompoundActionSequential();
   action->AddAction(turnAction);
 
   if( _params.numImagesToWaitFor > 0 ) {
     // If visual verification fails (e.g. because object has moved since we saw it),
     // then the compound action fails, and we don't play animation, since it's silly
     // to react to something that's no longer there.
-    VisuallyVerifyObjectAction* verifyAction = new VisuallyVerifyObjectAction(robot, _currTarget);
+    VisuallyVerifyObjectAction* verifyAction = new VisuallyVerifyObjectAction(_currTarget);
     verifyAction->SetNumImagesToWaitFor(_params.numImagesToWaitFor);
     action->AddAction(verifyAction);
   }
 
   if(!ShouldStreamline()){
-    action->AddAction(new TriggerLiftSafeAnimationAction(robot, _params.reactionAnimTrigger));
+    action->AddAction(new TriggerLiftSafeAnimationAction(_params.reactionAnimTrigger));
   }
 
   DelegateIfInControl(action,
@@ -256,16 +252,14 @@ void BehaviorAcknowledgeObject::LookForStackedCubes(BehaviorExternalInterface& b
     }
     else
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
+      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       // First see if we need to back up first, by checking if we can even reach a head
       // angle that would put the center of the closest marker (in XY) in our FOV. Note that
       // we don't just use the ghost object's pose b/c at close range, seeing the closest
       // marker could require a significantly larger angle than the center of the cube.
       Radians headAngle(0.f);
       Pose3d checkPose;
-      Result result = _ghostStackedObject->GetClosestMarkerPose(robot.GetPose(), true, checkPose);
+      Result result = _ghostStackedObject->GetClosestMarkerPose(robotInfo.GetPose(), true, checkPose);
       
       if(RESULT_OK != result)
       {
@@ -273,7 +267,7 @@ void BehaviorAcknowledgeObject::LookForStackedCubes(BehaviorExternalInterface& b
         checkPose = _ghostStackedObject->GetPose();
       }
       
-      result = robot.ComputeHeadAngleToSeePose(checkPose, headAngle, .1f);
+      result = robotInfo.ComputeHeadAngleToSeePose(checkPose, headAngle, .1f);
       
       const f32 kMaxHeadAngleBeforeBackingUp_rad = MAX_HEAD_ANGLE - DEG_TO_RAD(10);
       backupFirst = (RESULT_OK != result || FLT_GT(headAngle.ToFloat(), kMaxHeadAngleBeforeBackingUp_rad));
@@ -313,12 +307,11 @@ void BehaviorAcknowledgeObject::SetGhostBlockPoseRelObject(BehaviorExternalInter
     ghostPose.GetTranslation().x(),
     ghostPose.GetTranslation().y(),
     ghostPose.GetTranslation().z() + zOffset});
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  // Using the PoseConfimer for ghost objects is weird, we need to fake PoseConfirmations here
-  robot.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), ghostPose, PoseState::Dirty);
+
+  if(behaviorExternalInterface.HasObjectPoseConfirmer()){
+    // Using the PoseConfimer for ghost objects is weird, we need to fake PoseConfirmations here
+    behaviorExternalInterface.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), ghostPose, PoseState::Dirty);
+  }
 }
   
   
@@ -353,16 +346,17 @@ bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(BehaviorExternalInterfa
     Vision::KnownMarker::NotVisibleReason::OCCLUDED,
     Vision::KnownMarker::NotVisibleReason::NOTHING_BEHIND }};
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  Vision::KnownMarker::NotVisibleReason reason = _ghostStackedObject->IsVisibleFromWithReason(robot.GetVisionComponent().GetCamera(),
+
+  Vision::KnownMarker::NotVisibleReason reason = _ghostStackedObject->IsVisibleFromWithReason(behaviorExternalInterface.GetVisionComponent().GetCamera(),
                                                                                               kMaxNormalAngle,
                                                                                               kMinImageSizePix,
                                                                                               false);
   
-  //restore ghost pose
-  robot.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), currentGhostPose, PoseState::Dirty);
+  if(behaviorExternalInterface.HasObjectPoseConfirmer()){
+    //restore ghost pose
+    behaviorExternalInterface.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), currentGhostPose, PoseState::Dirty);
+  }
+
   
   // If we couldn't see the ghost cube b/c it was outside FOV, we should retry
   shouldRetry = (reason == Vision::KnownMarker::NotVisibleReason::OUTSIDE_FOV);
@@ -386,23 +380,20 @@ bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(BehaviorExternalInterfa
 template<typename T>
 void BehaviorAcknowledgeObject::LookAtGhostBlock(BehaviorExternalInterface& behaviorExternalInterface, bool backupFirst, void(T::*callback)(BehaviorExternalInterface&))
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* compoundAction = new CompoundActionSequential();
   
   if(backupFirst)
   {
-    compoundAction->AddAction(new DriveStraightAction(robot, -kBackupDistance_mm, kBackupSpeed_mmps, false));
+    compoundAction->AddAction(new DriveStraightAction(-kBackupDistance_mm, kBackupSpeed_mmps, false));
   }
   
   // use 0 for max turn angle so we only look with the head
-  TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, ObjectID{}, 0.f);
+  TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(ObjectID{}, 0.f);
   turnAction->UseCustomObject(_ghostStackedObject.get());
   
   // turn and then wait for images to give us a chance to see the new marker
   compoundAction->AddAction(turnAction);
-  compoundAction->AddAction(new WaitForImagesAction(robot, _params.numImagesToWaitFor,
+  compoundAction->AddAction(new WaitForImagesAction(_params.numImagesToWaitFor,
                                                     VisionMode::DetectingMarkers));
   
   DelegateIfInControl(compoundAction, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
@@ -436,12 +427,9 @@ void BehaviorAcknowledgeObject::FinishIteration(BehaviorExternalInterface& behav
   }
   else
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
     // There's nothing else to react to, so turn back towards the target so we're
     // left facing it (as long as it wasn't too far to turn towards to begin with)
-    DelegateIfInControl(new TurnTowardsObjectAction(robot, _currTarget, _params.maxTurnAngle_rad), callback);
+    DelegateIfInControl(new TurnTowardsObjectAction(_currTarget, _params.maxTurnAngle_rad), callback);
   }
 }
  

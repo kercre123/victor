@@ -70,6 +70,9 @@ namespace { // "Private members"
 
   static f32 HAL_LIFT_MOTOR_CALIB_POWER = -0.4f;
 
+  // Stubbed here but not used in robot process; used in animProcess
+  static f32 HAL_SOME_MICS_BROKEN = 0.0f;
+
   struct {
     s32 motorOffset[MOTOR_COUNT];
     CONSOLE_DATA(f32 motorPower[MOTOR_COUNT]);
@@ -87,6 +90,7 @@ namespace { // "Private members"
     {"Head Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_HEAD]},
     {"Lift Motor Calib Power",     HALConfig::FLOAT, &HAL_LIFT_MOTOR_CALIB_POWER},
     {"Head Motor Calib Power",     HALConfig::FLOAT, &HAL_HEAD_MOTOR_CALIB_POWER},
+    {"Some Mics Broken",     HALConfig::FLOAT, &HAL_SOME_MICS_BROKEN},
     {0} //Need zeros as end-of-list marker
   };
   

@@ -16,10 +16,9 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/dockActions.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/math/pose.h"
 
@@ -31,34 +30,6 @@ const float kDistancePastBlockToDrive_mm   = 100.0f;
 const float kSpeedToDriveThroughBlock_mmps = 200.0f;
 const float kDistanceBackUpFromBlock_mm    = 100.0f;
 const float kSpeedBackUpFromBlock_mmps     = 100.0f;
-
-  
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRamIntoBlockArray = {
-  {ReactionTrigger::CliffDetected,                true},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersRamIntoBlockArray),
-              "Reaction triggers duplicate or non-sequential");
 
 } // end namespace
   
@@ -79,11 +50,7 @@ bool BehaviorRamIntoBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorRamIntoBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-
-  if(robot.GetCarryingComponent().IsCarryingObject()){
+  if(behaviorExternalInterface.GetRobotInfo().GetCarryingComponent().IsCarryingObject()){
     TransitionToPuttingDownBlock(behaviorExternalInterface);
   }else{
     TransitionToTurningToBlock(behaviorExternalInterface);
@@ -92,13 +59,6 @@ Result BehaviorRamIntoBlock::OnBehaviorActivated(BehaviorExternalInterface& beha
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRamIntoBlock::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  return Result::RESULT_FAIL;
-}
-
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRamIntoBlock::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
@@ -109,16 +69,14 @@ void BehaviorRamIntoBlock::OnBehaviorDeactivated(BehaviorExternalInterface& beha
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
-  CompoundActionSequential* placeAction = new CompoundActionSequential(robot);
-  if(robot.GetCarryingComponent().GetCarryingObject() != _targetID){
-    const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(robot.GetCarryingComponent().GetCarryingObject());
+  CompoundActionSequential* placeAction = new CompoundActionSequential();
+  if(robotInfo.GetCarryingComponent().GetCarryingObject() != _targetID){
+    const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(robotInfo.GetCarryingComponent().GetCarryingObject());
     if(obj != nullptr){
       Vec3f outVector;
-      if(ComputeVectorBetween(robot.GetPose(), obj->GetPose(), outVector)){
+      if(ComputeVectorBetween(robotInfo.GetPose(), obj->GetPose(), outVector)){
         Radians angle = FLT_NEAR(outVector.x(), 0.0f) ?
                   Radians(0)                          :
                   Radians(atanf(outVector.y()/outVector.x()));
@@ -127,12 +85,12 @@ void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(BehaviorExternalInterfac
         const bool isAbsolute = true;
         
         // Overshoot the angle to ram by a quarter turn and then place the block down
-        placeAction->AddAction(new TurnInPlaceAction(robot, angle.ToFloat(), isAbsolute));
+        placeAction->AddAction(new TurnInPlaceAction(angle.ToFloat(), isAbsolute));
       }
     }
   }
   
-  placeAction->AddAction(new PlaceObjectOnGroundAction(robot));
+  placeAction->AddAction(new PlaceObjectOnGroundAction());
   DelegateIfInControl(placeAction, &BehaviorRamIntoBlock::TransitionToTurningToBlock);
 }
 
@@ -140,45 +98,37 @@ void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(BehaviorExternalInterfac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRamIntoBlock::TransitionToTurningToBlock(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
-  CompoundActionParallel* action = new CompoundActionParallel(robot, {
-    new TurnTowardsObjectAction(robot, _targetID),
-    new MoveLiftToHeightAction(robot,  MoveLiftToHeightAction::Preset::CARRY)
+  CompoundActionParallel* action = new CompoundActionParallel({
+    new TurnTowardsObjectAction(_targetID),
+    new MoveLiftToHeightAction( MoveLiftToHeightAction::Preset::CARRY)
   });
   DelegateIfInControl(action, &BehaviorRamIntoBlock::TransitionToRammingIntoBlock);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRamIntoBlock::TransitionToRammingIntoBlock(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRamIntoBlockArray);
-  
+{  
   const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(obj != nullptr){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    auto& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
 
-    const f32 distToObj = ComputeDistanceBetween(robot.GetPose(), obj->GetPose());
+    const f32 distToObj = ComputeDistanceBetween(robotPose, obj->GetPose());
     
     
-    CompoundActionParallel* ramAction = new CompoundActionParallel(robot, {
-      new DriveStraightAction(robot,
+    CompoundActionParallel* ramAction = new CompoundActionParallel({
+      new DriveStraightAction(
                               distToObj + kDistancePastBlockToDrive_mm,
                               kSpeedToDriveThroughBlock_mmps,
                               false),
-      new TriggerAnimationAction(robot, AnimationTrigger::SoundOnlyRamIntoBlock)
+      new TriggerAnimationAction(AnimationTrigger::SoundOnlyRamIntoBlock)
     });
     
 
-    IActionRunner* driveOut = new DriveStraightAction(robot,
+    IActionRunner* driveOut = new DriveStraightAction(
                                                       -kDistanceBackUpFromBlock_mm,
                                                       kSpeedBackUpFromBlock_mmps);
     
-    CompoundActionSequential* driveAction = new CompoundActionSequential(robot);
+    CompoundActionSequential* driveAction = new CompoundActionSequential();
     driveAction->AddAction(ramAction);
     driveAction->AddAction(driveOut);
     DelegateIfInControl(driveAction);

@@ -37,7 +37,7 @@ namespace Messages {
   // manually in engineMessages.cpp).
   #include "clad/robotInterface/messageEngineToRobot_declarations.def"
 
-  Result Init(AnimationStreamer& animStreamer, Audio::EngineRobotAudioInput& audioInput, const CozmoAnimContext& context);
+  Result Init(AnimationStreamer* animStreamer, Audio::EngineRobotAudioInput* audioInput, const CozmoAnimContext* context);
 
   void Update();
   

@@ -43,10 +43,6 @@ namespace Cozmo {
 class RobotManager;
 class CozmoContext;
 class RobotConnectionManager;
-  
-namespace ExternalInterface {
-  struct ConnectToRobot;
-}
 
 namespace RobotInterface {
 
@@ -70,7 +66,7 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
-  Result AddRobotConnection(const ExternalInterface::ConnectToRobot& connectMsg);
+  Result AddRobotConnection(RobotID_t robotId);
   Result RemoveRobotConnection(const uint32_t robotId);
   
   void Disconnect();

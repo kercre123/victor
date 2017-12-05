@@ -25,7 +25,6 @@ namespace Cozmo {
 
 class ActiveObject;
 class BehaviorExternalInterface;
-class Robot;
 struct CubeStateTracker;
 namespace CubeAccelListeners {
 class ShakeListener;

@@ -145,6 +145,20 @@ pathupdate()
     esac
 }
 
+#
+# If cmake is not already on $PATH, find it and add it
+#
+function set_cmake_env()
+{
+    local cmake="`which cmake`"
+    if [ -z ${cmake} ]; then
+        local toplevel=$(gettop)
+        cmake="`${toplevel}/tools/build/tools/ankibuild/cmake.py`"
+        cmake=$(dirname ${cmake})
+        pathupdate ${cmake}
+    fi
+}
+
 function set_android_env()
 {
     local TOPLEVEL=$(gettop)
@@ -163,7 +177,13 @@ function set_android_env()
     fi
 }
 
+# setup cmake environment unless SKIP_CMAKE_SETUP is set
+if [ -z ${SKIP_CMAKE_SETUP+x} ]; then
+    set_cmake_env
+fi
+
 # setup android environment unless SKIP_ANDROID_SETUP is set
 if [ -z ${SKIP_ANDROID_SETUP+x} ]; then
     set_android_env
 fi
+

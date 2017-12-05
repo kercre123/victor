@@ -22,8 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -44,7 +43,6 @@ if ((_BEHAVIORDEF)) { PRINT_NAMED_INFO( __VA_ARGS__ ); } \
 else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
 } while(0) \
 
-static const char* kBehaviorTestName = "LiftLoadTest";
 }
 
 
@@ -77,7 +75,8 @@ namespace Anki {
     
     void BehaviorLiftLoadTest::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
     {
-      _logger = std::make_unique<Util::RollingFileLogger>(nullptr, behaviorExternalInterface.GetRobot().GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "liftLoadTest"));
+      _logger = std::make_unique<Util::RollingFileLogger>(nullptr, 
+        behaviorExternalInterface.GetRobotInfo()._robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "liftLoadTest"));
     }
 
     
@@ -88,13 +87,7 @@ namespace Anki {
     
     Result BehaviorLiftLoadTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      robot.GetBehaviorManager().DisableReactionsWithLock(
-                                     kBehaviorTestName,
-                                     ReactionTriggerHelpers::GetAffectAllArray());
-      
+      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
       _abortTest = false;
       _currentState = State::Init;
@@ -160,18 +153,16 @@ namespace Anki {
       {
         case State::Init:
         {
-          // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-          // be removed
-          Robot& robot = behaviorExternalInterface.GetRobot();
-          auto lowerLiftAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
+          Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+          auto lowerLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
           lowerLiftAction->SetMaxLiftSpeed(DEFAULT_LIFT_SPEED_RAD_PER_SEC);
           lowerLiftAction->SetLiftAccel(DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
           
-          auto raiseLiftAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_CARRY);
+          auto raiseLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_CARRY);
           raiseLiftAction->SetMaxLiftSpeed(DEFAULT_LIFT_SPEED_RAD_PER_SEC);
           raiseLiftAction->SetLiftAccel(DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
           
-          CompoundActionSequential* compoundAction = new CompoundActionSequential(robot, { lowerLiftAction, raiseLiftAction });
+          CompoundActionSequential* compoundAction = new CompoundActionSequential({ lowerLiftAction, raiseLiftAction });
           
           DelegateIfInControl(compoundAction,
                       [this, &robot](ActionResult result){
@@ -184,7 +175,7 @@ namespace Anki {
                           auto waitForLiftLoadMsgLambda = [this](Robot& robot) {
                             return _loadStatusReceived;
                           };
-                          auto waitAction = new WaitForLambdaAction(robot, waitForLiftLoadMsgLambda);
+                          auto waitAction = new WaitForLambdaAction(waitForLiftLoadMsgLambda);
                           DelegateIfInControl(waitAction);
                           
                         } else {
@@ -218,10 +209,6 @@ namespace Anki {
     
     void BehaviorLiftLoadTest::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      robot.GetBehaviorManager().RemoveDisableReactionsLock(kBehaviorTestName);
     }
     
     void BehaviorLiftLoadTest::SetCurrState(State s)

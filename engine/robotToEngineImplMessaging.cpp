@@ -21,7 +21,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/blockTapFilterComponent.h"
@@ -32,6 +31,7 @@
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/micDirectionHistory.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/pathPlanner.h"
 #include "engine/robot.h"
@@ -124,6 +124,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::objectPowerLevel,               &RobotToEngineImplMessaging::HandleObjectPowerLevel);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::timeProfStat,                              &RobotToEngineImplMessaging::HandleTimeProfileStat);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::micDirection,                   &RobotToEngineImplMessaging::HandleMicDirection);
   
   // lambda wrapper to call internal handler
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::state,
@@ -136,15 +137,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   
   
   // lambda for some simple message handling
-  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::animState,
-                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
-                                                       ANKI_CPU_PROFILE("RobotTag::animState");
-                                                       if (robot->GetTimeSynced()) {
-                                                         robot->SetEnabledAnimTracks(message.GetData().Get_animState().enabledAnimTracks);
-                                                         robot->SetAnimationTag(message.GetData().Get_animState().tag);
-                                                       }
-                                                     }));
-  
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::rampTraverseStarted,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::rampTraverseStarted");
@@ -819,7 +811,6 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   }
   
   // Stop whatever we were doing
-  robot->GetBehaviorManager().RequestCurrentBehaviorEndImmediately("HandleRobotStopped");
   robot->GetActionList().Cancel();
   
   // Forward on with EngineToGame event
@@ -840,7 +831,7 @@ void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<Robot
   }
   
   if(robot->GetIsCliffReactionDisabled()){
-    IActionRunner* action = new TriggerLiftSafeAnimationAction(*robot, AnimationTrigger::DroneModeCliffEvent);
+    IActionRunner* action = new TriggerLiftSafeAnimationAction(AnimationTrigger::DroneModeCliffEvent);
     robot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
   } else if (!robot->GetContext()->IsInSdkMode()) {
     PRINT_NAMED_WARNING("Robot.HandlePotentialCliffEvent", "Got potential cliff message but not in drone mode");
@@ -1076,6 +1067,12 @@ void RobotToEngineImplMessaging::HandleTimeProfileStat(const AnkiEvent<RobotInte
   {
     PRINT_NAMED_INFO("Profile", "name:%s avg:%u max:%u", payload.profName.c_str(), payload.avg, payload.max);
   }
+}
+
+void RobotToEngineImplMessaging::HandleMicDirection(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  const auto & payload = message.GetData().Get_micDirection();
+  robot->GetMicDirectionHistory().AddDirectionSample(payload.timestamp, payload.direction, payload.confidence);
 }
 
 } // end namespace Cozmo

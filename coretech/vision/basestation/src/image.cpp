@@ -23,38 +23,43 @@
 #endif
 
 namespace {
+  
 template <typename T>
 void ResizeKeepAspectRatioHelper(const cv::Mat_<T>& src, cv::Mat_<T>& dest, s32 desiredCols, s32 desiredRows,
-                                 int method)
+                                 int method, bool onlyReduceSize)
 {
 
   const double ratio = double(src.rows) / double(src.cols); //without the double it's the nastiest bug!!
-  const double newNumberCols = desiredCols * ratio;
-  const double newNumberRows =  desiredRows * (1.0 / ratio);
+  const int newNumberCols = std::round(desiredCols * ratio);
+  const int newNumberRows = std::round(desiredRows / ratio);
+  cv::Size desiredSize;
   if (newNumberCols <= desiredRows) {
-    const cv::Size desiredSize(desiredCols, newNumberCols);
-    try {
-      cv::resize(src, dest, desiredSize, 0, 0, method);
-    }
-    catch (cv::Exception& e) {
-      PRINT_NAMED_ERROR("ResizeKeepAspectRatioHelper.CvResizeException1", "Error while resizing image: %s,"
-                        "ratio %f, rows: %d, cols: %d, desiredSize: (%d, %d)",
-                        e.what(), ratio, src.rows, src.cols, desiredSize.width, desiredSize.height);
-    }
+    desiredSize = {desiredCols, newNumberCols};
   }
   else {
-    const cv::Size desiredSize(newNumberRows, desiredRows);
+    desiredSize = {newNumberRows, desiredRows};
+  }
+ 
+  if(onlyReduceSize && src.rows < desiredSize.height && src.cols < desiredSize.width)
+  {
+    // Source is already smaller than the desired size in both dimensions, and onlyReduceSize was specifed, so
+    // don't resize (i.e. don't make small src bigger)
+    dest = src;
+  }
+  else
+  {
     try {
       cv::resize(src, dest, desiredSize, 0, 0, method);
     }
     catch (cv::Exception& e) {
-      PRINT_NAMED_ERROR("ResizeKeepAspectRatioHelper.CvResizeException2", "Error while resizing image: %s,"
+      PRINT_NAMED_ERROR("ResizeKeepAspectRatioHelper.CvResizeException", "Error while resizing image: %s,"
                         "ratio %f, rows: %d, cols: %d, desiredSize: (%d, %d)",
                         e.what(), ratio, src.rows, src.cols, desiredSize.width, desiredSize.height);
     }
   }
 }
-}
+  
+} // anonymous namespace
 
 namespace Anki {
 namespace Vision {
@@ -339,12 +344,12 @@ namespace Vision {
   }
 
   template <typename T>
-  void ImageBase<T>::ResizeKeepAspectRatio(s32 desiredRows, s32 desiredCols, ResizeMethod method)
+  void ImageBase<T>::ResizeKeepAspectRatio(s32 desiredRows, s32 desiredCols, ResizeMethod method, bool onlyReduce)
   {
 
     if(desiredRows != GetNumRows() || desiredCols != GetNumCols()) {
       ResizeKeepAspectRatioHelper(this->get_CvMat_(), this->get_CvMat_(), desiredCols, desiredRows,
-                                  GetOpenCvInterpMethod(method));
+                                  GetOpenCvInterpMethod(method), onlyReduce);
     }
   }
 
@@ -359,7 +364,7 @@ namespace Vision {
 
     const s32 desiredCols = resizedImage.GetNumCols();
     const s32 desiredRows = resizedImage.GetNumRows();
-    ResizeKeepAspectRatioHelper(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredCols, desiredRows, GetOpenCvInterpMethod(method));
+    ResizeKeepAspectRatioHelper(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredCols, desiredRows, GetOpenCvInterpMethod(method), false);
     resizedImage.SetTimestamp(this->GetTimestamp());
   }
 
@@ -572,6 +577,12 @@ namespace Vision {
     SetTimestamp(imageRGBA.GetTimestamp());
   }
   
+  ImageRGB::ImageRGB(const ImageRGB565& rgb565)
+  : ImageRGB(rgb565.GetNumRows(), rgb565.GetNumCols())
+  {
+    SetFromRGB565(rgb565);
+  }
+  
   ImageRGB::ImageRGB(const Image& imageGray)
   : ImageBase<PixelRGB>(imageGray.GetNumRows(), imageGray.GetNumCols())
   {
@@ -582,6 +593,20 @@ namespace Vision {
   {
     cv::cvtColor(imageGray.get_CvMat_(), this->get_CvMat_(), CV_GRAY2RGB);
     SetTimestamp(imageGray.GetTimestamp());
+    return *this;
+  }
+  
+  ImageRGB& ImageRGB::SetFromRGB565(const ImageRGB565 &rgb565)
+  {
+    Allocate(rgb565.GetNumRows(), rgb565.GetNumCols());
+    
+    std::function<PixelRGB(const PixelRGB565& pixRGB565)> convertFcn = [](const PixelRGB565& pixRGB565)
+    {
+      return pixRGB565.ToPixelRGB();
+    };
+    
+    rgb565.ApplyScalarFunction(convertFcn, *this);
+
     return *this;
   }
   
@@ -615,6 +640,129 @@ namespace Vision {
     return out;
   }
   
+  ImageRGB& ImageRGB::NormalizeColor(Array2d<s32>* workingArray)
+  {
+    GetNormalizedColor(*this, workingArray);
+    return *this;
+  }
+  
+  void ImageRGB::GetNormalizedColor(ImageRGB& imgNorm, Array2d<s32>* workingArray) const
+  {
+    this->CopyTo(imgNorm); // makes data continuous, which is required for reshape
+    
+    DEV_ASSERT(imgNorm.IsContinuous(), "ImageRGB.GetNormalizedColor.NotContinuous");
+    
+    // Wrap an Nx3 "header" around the original color data
+    cv::Mat imageVector;
+    try
+    {
+      imageVector = imgNorm.get_CvMat_().reshape(1, GetNumElements());
+    }
+    catch(cv::Exception& e)
+    {
+      PRINT_NAMED_ERROR("ImageRGB.GetNormalizedColor.OpenCvReshapeFailed",
+                        "%s", e.what());
+      return;
+    }
+    
+    // Compute the sum along the rows, yielding an Nx1 vector
+    cv::Mat_<s32> imageSum;
+    if(workingArray != nullptr)
+    {
+      imageSum = workingArray->get_CvMat_();
+    }
+    try
+    {
+      cv::reduce(imageVector, imageSum, 1, CV_REDUCE_SUM, CV_32SC1);
+    }
+    catch (cv::Exception& e)
+    {
+      PRINT_NAMED_ERROR("ImageRGB.GetNormalizedColor.OpenCvReduceFailed",
+                        "%s", e.what());
+      return;
+    }
+    
+    // Scale each row by 255 and divide by the sum, placing the result directly into output data
+    // TODO: Avoid the repeat?
+    try
+    {
+      cv::divide(imageVector, cv::repeat(imageSum, 1, imageVector.cols), imageVector, 255.0, CV_8UC1);
+    }
+    catch (cv::Exception& e)
+    {
+      PRINT_NAMED_ERROR("ImageRGB.GetNormalizedColor.OpenCvDivideFailed",
+                        "%s", e.what());
+      return;
+    }
+  }
+  
+#if 0
+#pragma mark --- ImageRGB565 ---
+#endif
 
+
+  ImageRGB565::ImageRGB565(const ImageRGB& imageRGB)
+  : ImageRGB565(imageRGB.GetNumRows(), imageRGB.GetNumCols())
+  {
+    SetFromImageRGB(imageRGB);
+  }
+  
+  ImageRGB565::ImageRGB565()
+  : Array2d<PixelRGB565>()
+  {
+    
+  }
+  
+  ImageRGB565::ImageRGB565(s32 nrows, s32 ncols)
+  : Array2d<PixelRGB565>(nrows, ncols)
+  {
+    
+  }
+  
+  ImageRGB565& ImageRGB565::SetFromImage(const Image& image)
+  {
+    Allocate(image.GetNumRows(), image.GetNumCols());
+    
+    std::function<PixelRGB565(const u8&)> convertFcn = [](const u8& pix)
+    {
+      PixelRGB565 pixRGB565(pix,pix,pix);
+      return pixRGB565;
+    };
+    
+    image.ApplyScalarFunction(convertFcn, *this);
+    
+    return *this;
+  }
+  
+  ImageRGB565& ImageRGB565::SetFromImageRGB(const ImageRGB& imageRGB)
+  {
+    Allocate(imageRGB.GetNumRows(), imageRGB.GetNumCols());
+    
+    std::function<PixelRGB565(const PixelRGB&)> convertFcn = [](const PixelRGB& pixRGB)
+    {
+      PixelRGB565 pixRGB565(pixRGB);
+      return pixRGB565;
+    };
+    
+    imageRGB.ApplyScalarFunction(convertFcn, *this);
+    
+    return *this;
+  }
+  
+  ImageRGB565& ImageRGB565::SetFromImageRGB(const ImageRGB& imageRGB, const std::array<u8, 256>& gammaLUT)
+  {
+    Allocate(imageRGB.GetNumRows(), imageRGB.GetNumCols());
+    
+    std::function<PixelRGB565(const PixelRGB&)> convertFcn = [&gammaLUT](const PixelRGB& pixRGB)
+    {
+      PixelRGB565 pixRGB565(gammaLUT[pixRGB.r()], gammaLUT[pixRGB.g()], gammaLUT[pixRGB.b()]);
+      return pixRGB565;
+    };
+    
+    imageRGB.ApplyScalarFunction(convertFcn, *this);
+    
+    return *this;
+  }
+  
 } // namespace Vision
 } // namespace Anki

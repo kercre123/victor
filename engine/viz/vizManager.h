@@ -389,13 +389,16 @@ namespace Anki {
                            const u16 bottomLeft_x, const u16 bottomLeft_y);
       
       void SendRobotState(const RobotState &msg,
-                          const u8 videoFrameRateHz,
-                          const u8 imageProcFrameRateHz,
-                          const u8 enabledAnimTracks,
-                          const u8 animTag,
+                          const u8  videoFrameRateHz,
+                          const u8  imageProcFrameRateHz,
+                          const u32 numProcAnimFaceKeyframes,
+                          const u8  lockedTracks,
+                          const u8  tracksInUse,
                           const f32 imuTemperature_degC,
                           std::array<uint16_t, 4> cliffThresholds);
       
+      void SendCurrentAnimation(const std::string& animName, u8 animTag);
+
       void SetOrigin(const SetVizOrigin& msg);
       
       void SubscribeToEngineEvents(IExternalInterface& externalInterface);
@@ -426,7 +429,7 @@ namespace Anki {
       
       void SendMessage(const VizInterface::MessageViz& message);
       
-      bool               _isInitialized;
+      bool               _isConnected;
       UdpClient          _vizClient;
 
       #if VIZ_TO_UNITY

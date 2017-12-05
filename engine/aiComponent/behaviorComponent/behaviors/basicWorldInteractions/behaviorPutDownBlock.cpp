@@ -14,8 +14,8 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/robot.h"
 #include "engine/actions/basicActions.h"
 #include "util/console/consoleInterface.h"
 
@@ -30,35 +30,7 @@ CONSOLE_VAR(f32, kBPDB_scoreIncreaseDuringPutDown,   "Behavior.PutDownBlock", 5.
 CONSOLE_VAR(f32, kBPDB_scoreIncreasePostPutDown,     "Behavior.PutDownBlock", 5.0);
 CONSOLE_VAR(f32, kBPDB_kBackupDistanceMin_mm,     "Behavior.PutDownBlock", -45.0);
 CONSOLE_VAR(f32, kBPDB_kBackupDistanceMax_mm,     "Behavior.PutDownBlock", -75.0);
-
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPutDownBlockArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPutDownBlockArray),
-              "Reaction triggers duplicate or non-sequential");
-  
-  
+ 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -71,31 +43,21 @@ BehaviorPutDownBlock::BehaviorPutDownBlock(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPutDownBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  return robot.GetCarryingComponent().IsCarryingObject() || IsControlDelegated();
+  return behaviorExternalInterface.GetRobotInfo().GetCarryingComponent().IsCarryingObject() || IsControlDelegated();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPutDownBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // Disable double tap so we don't try to turn to a tapped object while in the middle of putting the block
-  // down
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersPutDownBlockArray);
-
   // Choose where to put the block down
   // TODO: Make this smarter and find a place away from other known objects
   // For now, just back up blindly and play animation.
   const float backupDistance = GetRNG().RandDblInRange(kBPDB_kBackupDistanceMin_mm, kBPDB_kBackupDistanceMax_mm);
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new CompoundActionSequential(robot, {
-                new DriveStraightAction(robot, backupDistance, kBPDB_putDownBackupSpeed_mm),
-                new TriggerAnimationAction(robot, AnimationTrigger::PutDownBlockPutDown),
+
+  DelegateIfInControl(new CompoundActionSequential({
+                new DriveStraightAction(backupDistance, kBPDB_putDownBackupSpeed_mm),
+                new TriggerAnimationAction(AnimationTrigger::PutDownBlockPutDown),
               }),
               &BehaviorPutDownBlock::LookDownAtBlock);
   
@@ -108,10 +70,8 @@ void BehaviorPutDownBlock::LookDownAtBlock(BehaviorExternalInterface& behaviorEx
 {
   DelegateIfInControl(CreateLookAfterPlaceAction(behaviorExternalInterface, true),
               [&behaviorExternalInterface]() {
-                // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-                // be removed
-                Robot& robot = behaviorExternalInterface.GetRobot();
-                if(robot.GetCarryingComponent().IsCarryingObject()) {
+                auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+                if(robotInfo.GetCarryingComponent().IsCarryingObject()) {
                   // No matter what, even if we didn't see the object we were
                   // putting down for some reason, mark the robot as not carrying
                   // anything so we don't get stuck in a loop of trying to put
@@ -119,7 +79,7 @@ void BehaviorPutDownBlock::LookDownAtBlock(BehaviorExternalInterface& behaviorEx
                   // TODO: We should really be using some kind of PlaceOnGroundAction instead of raw animation (see COZMO-2192)
                   PRINT_NAMED_WARNING("BehaviorPutDownBlock.LookDownAtBlock.DidNotSeeBlock",
                                       "Forcibly setting carried objects as unattached (See COZMO-2192)");
-                  robot.GetCarryingComponent().SetCarriedObjectAsUnattached();
+                  robotInfo.GetCarryingComponent().SetCarriedObjectAsUnattached();
                 }
               });
 }
@@ -128,27 +88,23 @@ void BehaviorPutDownBlock::LookDownAtBlock(BehaviorExternalInterface& behaviorEx
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(BehaviorExternalInterface& behaviorExternalInterface, bool doLookAtFaceAfter)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
-  if( robot.GetCarryingComponent().IsCarryingObject() ) {
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  CompoundActionSequential* action = new CompoundActionSequential();
+  if( robotInfo.GetCarryingComponent().IsCarryingObject() ) {
     // glance down to see if we see the cube if we still think we are carrying
     static const int kNumFrames = 2;
     
-    CompoundActionParallel* parallel = new CompoundActionParallel(robot,
-                                                                  {new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBPDB_finalHeadAngle_deg)),
-                                                                   new DriveStraightAction(robot, kBPDB_verifyBackupDist_mm)});
+    CompoundActionParallel* parallel = new CompoundActionParallel({new MoveHeadToAngleAction(DEG_TO_RAD(kBPDB_finalHeadAngle_deg)),
+                                                                   new DriveStraightAction(kBPDB_verifyBackupDist_mm)});
     action->AddAction(parallel);
-    action->AddAction(new WaitForImagesAction(robot, kNumFrames, VisionMode::DetectingMarkers));
+    action->AddAction(new WaitForImagesAction(kNumFrames, VisionMode::DetectingMarkers));
   }
 
   if(doLookAtFaceAfter)
   {
     // in any case, look back at the last face after this is done (to give them a chance to show another cube)
     const bool sayName = false;
-    action->AddAction(new TurnTowardsFaceWrapperAction(robot,
-                                                       new TriggerAnimationAction(robot, AnimationTrigger::PutDownBlockKeepAlive),
+    action->AddAction(new TurnTowardsFaceWrapperAction(new TriggerAnimationAction(AnimationTrigger::PutDownBlockKeepAlive),
                                                        true, false, M_PI_F, sayName));
   }
   

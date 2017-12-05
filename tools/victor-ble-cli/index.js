@@ -2,23 +2,18 @@ const noble = require("noble");
 const readline = require("readline");
 const Victor = require("./victor.js");
 const fs = require('fs');
+const sleep = require('system-sleep');
 
+var quitting = false;
 var victorAds = {};
 
-const BLEConnectionStates = {
-    DISCONNECTED : 0,
-    CONNECTING : 1,
-    CONNECTED : 2,
-    DISCONNECTING : 3
-};
-
-var bleConnectionState = BLEConnectionStates.DISCONNECTED;
 var connectedVictor = undefined;
+var connectingPeripheral = undefined;
 
 function completer(line) {
     var args = line.split(/(\s+)/);
     args = args.filter(function(entry) {return /\S/.test(entry); });
-    const completions = 'connect dhcptool disconnect help ifconfig ping print-heartbeats quit reboot restart-adb scan ssh-set-authorized-keys stop-scan wifi-scan wifi-set-config wifi-start wifi-stop wpa_cli'.split(' ');
+    const completions = 'connect dhcptool disconnect help ifconfig ping print-heartbeats quit reboot restart-adb scan ssh-set-authorized-keys stop-scan sync-time wifi-scan wifi-set-config wifi-start wifi-stop wpa_cli'.split(' ');
     const hits = completions.filter((c) => c.startsWith(args[0]));
     if (hits.length == 0) {
         return [completions, line];
@@ -35,10 +30,10 @@ const rl = readline.createInterface({
     completer: completer
 });
 
-rl.setPrompt("$ ");
+rl.setPrompt("victor-ble-cli$ ");
 
 function outputResponse(line) {
-    if (!line) {
+    if (!line || quitting) {
         return;
     }
     console.log("\n" + line);
@@ -58,6 +53,7 @@ function printHelp() {
     reboot [boot arg]                     -  Reboot Victor
     restart-adb                           -  Restart adb on Victor
     ssh-set-authorized-keys file          -  Use file as the ssh authorized_keys file on Victor
+    sync-time                             -  Set the clock on Victor to match the host clock
     wifi-scan                             -  Ask Victor to scan for WiFi access points
     wifi-set-config ssid psk [ssid2 psk2] -  Overwrite and set wifi config on victor
     wifi-start                            -  Bring WiFi interface up
@@ -67,6 +63,63 @@ function printHelp() {
     dhcptool [args]                       -  Execute dhcptool on Victor`;
     outputResponse(help);
 }
+
+var onBLEServiceDiscovery = function (peripheral, error, services, characteristics) {
+    if (error) {
+        outputResponse("Error discovering services for "
+                       + peripheral.advertisement.localName + " , error = " + error);
+        peripheral.disconnect();
+        return;
+    }
+    var victorService = undefined;
+    outputResponse("Services discovered for " + peripheral.advertisement.localName);
+    services.forEach(function (service) {
+        // Locate Victor service ID
+        if (service.uuid === Victor.SERVICE_UUID) {
+            victorService = service;
+        }
+    });
+    if (!victorService) {
+        outputResponse("Did not discover required Victor service ");
+        peripheral.disconnect();
+        return;
+    }
+    var receive, send;
+    characteristics.forEach(function (char) {
+        switch (char.uuid) {
+        case Victor.RECV_CHAR_UUID:
+            receive = char;
+            break;
+        case Victor.SEND_CHAR_UUID:
+            send = char;
+            break;
+        }
+    });
+    if (!send || !receive) {
+        outputResponse("Didn't find required characteristics. Disconnecting.");
+        peripheral.disconnect();
+        return;
+    }
+    connectingPeripheral = undefined;
+    connectedVictor = new Victor(peripheral, victorService, send, receive, outputResponse);
+    outputResponse("Fully connected to " + peripheral.advertisement.localName);
+};
+
+var onBLEConnect = function (peripheral) {
+    peripheral.once('disconnect', onBLEDisconnect.bind(this, peripheral));
+    outputResponse("Connected to " + peripheral.advertisement.localName);
+    var serviceUUIDs = [Victor.SERVICE_UUID];
+    var characteristicUUIDs = [Victor.RECV_CHAR_UUID, Victor.SEND_CHAR_UUID];
+    peripheral.discoverSomeServicesAndCharacteristics(serviceUUIDs, characteristicUUIDs,
+                                                      onBLEServiceDiscovery.bind(this, peripheral));
+};
+
+var onBLEDisconnect = function (peripheral) {
+    peripheral.removeAllListeners();
+    outputResponse("Disconnected from " + peripheral.advertisement.localName);
+    connectingPeripheral = undefined;
+    connectedVictor = undefined;
+};
 
 var onBLEDiscover = function (peripheral) {
     if (!peripheral) {
@@ -85,67 +138,6 @@ var onBLEDiscover = function (peripheral) {
 
     victorAds[localName] = peripheral;
     outputResponse("Found " + localName + " (RSSI = " + peripheral.rssi + ")");
-
-    peripheral.once('connect', function () {
-        if (bleConnectionState != BLEConnectionStates.CONNECTING) {
-            return;
-        }
-        bleConnectionState = BLEConnectionStates.CONNECTED;
-        victorAds = {};
-        outputResponse("Connected to " + localName);
-        peripheral.discoverServices();
-    });
-
-    peripheral.once('servicesDiscover', function (services) {
-        var haveVictorServiceId = false;
-        services.forEach(function (service) {
-            outputResponse("Services discovered for " + localName);
-            // Locate Victor service ID
-            if (service.uuid !== 'd55e356b59cc42659d5f3c61e9dfd70f') {
-                return;
-            }
-
-            haveVictorServiceId = true;
-
-            service.on('characteristicsDiscover', function(characteristics) {
-                var receive, send;
-
-                characteristics.forEach(function (char) {
-                    switch (char.uuid) {
-                    case '30619f2d0f5441bda65a7588d8c85b45':
-                        receive = char;
-                        break;
-                    case '7d2a4bdad29b4152b7252491478c5cd7':
-                        send = char;
-                        break;
-                    }
-                });
-                if (!send || !receive) {
-                    outputResponse("Didn't find required characteristics. Disconnecting.");
-                    bleConnectionState = BLEConnectionStates.DISCONNECTING;
-                    peripheral.disconnect();
-                    return;
-                }
-                connectedVictor = new Victor(peripheral, service, send, receive, outputResponse);
-                outputResponse("Fully connected to " + localName);
-
-            });
-
-            service.discoverCharacteristics();
-        });
-        if (!haveVictorServiceId) {
-            outputResponse("Didn't find required Victor service ID. Disconnecting.");
-            bleConnectionState = BLEConnectionStates.DISCONNECTING;
-            peripheral.disconnect();
-            return;
-        }
-    });
-
-    peripheral.on('disconnect', function () {
-        outputResponse("Disconnected");
-        connectedVictor = undefined;
-        bleConnectionState = BLEConnectionStates.DISCONNECTED;
-    });
 };
 
 noble.on('discover', onBLEDiscover);
@@ -166,8 +158,21 @@ var handleInput = function (line) {
             printHelp();
             break;
         case 'quit':
-            rl.close();
-            process.exit();
+            quitting = true;
+            if (connectedVictor) {
+                connectedVictor.send(Victor.MSG_B2V_BTLE_DISCONNECT);
+                setTimeout(function () {
+                    if (connectedVictor) {
+                        connectedVictor.disconnect();
+                        connectedVictor = undefined;
+                    }
+                    rl.close();
+                    process.exit();
+                }, 30);
+            } else {
+                rl.close();
+                process.exit();
+            }
             break;
         case 'print-heartbeats':
             if (connectedVictor) {
@@ -214,34 +219,59 @@ var handleInput = function (line) {
         case 'connect':
             if (connectedVictor) {
                 outputResponse("You are already connected to a victor");
+            } else if (connectingPeripheral) {
+                outputResponse("Connecting already in progress to "
+                               + connectingPeripheral.advertisement.localName);
             } else if (Object.keys(victorAds).length == 0) {
                 outputResponse("No victors found to connect to.");
-            } else if (bleConnectionState != BLEConnectionStates.DISCONNECTED) {
-                outputResponse("Connection in progress.");
             } else {
-                bleConnectionState = BLEConnectionStates.CONNECTING;
+                noble.once('scanStop', function () {
+                    var localName = Object.keys(victorAds)[0];
+                    if (args.length > 1) {
+                        localName = args[1];
+                    }
+                    connectingPeripheral = victorAds[localName];
+                    if (!connectingPeripheral) {
+                        outputResponse("Couldn't find victor named " + localName);
+                    } else {
+                        victorAds = {};
+                        connectingPeripheral.removeAllListeners();
+                        outputResponse("Trying to connect to " + localName + "....");
+                        connectingPeripheral.once('connect', onBLEConnect.bind(this, connectingPeripheral));
+                        connectingPeripheral.connect(function (error) {
+                            if (error) {
+                                outputResponse(error);
+                                connectingPeripheral.removeAllListeners();
+                                connectingPeripheral = undefined;
+                            }
+                        });
+                    }
+                });
                 noble.stopScanning();
-                var peripheral = undefined;
-                var localName = Object.keys(victorAds)[0];
-                if (args.length > 1) {
-                    localName = args[1];
-                }
-                peripheral = victorAds[localName];
-                if (!peripheral) {
-                    outputResponse("Couldn't find victor named " + localName);
-                } else {
-                    outputResponse("Trying to connect to " + localName + "....");
-                    peripheral.connect(function (error) {outputResponse(error);});
-                }
             }
             break;
         case 'disconnect':
             if (!connectedVictor) {
-                outputResponse("Not connected to a Victor");
+                if (connectingPeripheral) {
+                    connectingPeripheral.disconnect(function (error) {
+                        connectingPeripheral = undefined;
+                        if (error) {
+                            outputResponse("Error disconnecting. error = " + error);
+                        }
+                    });
+                    connectingPeripheral = undefined;
+                    outputResponse("Stopping connection attempt");
+                } else {
+                    outputResponse("Not connected to a Victor");
+                }
             } else {
-                bleConnectionState = BLEConnectionStates.DISCONNECTING;
-                connectedVictor.disconnect();
-                connectedVictor = undefined;
+                connectedVictor.send(Victor.MSG_B2V_BTLE_DISCONNECT);
+                setTimeout(function () {
+                    if (connectedVictor) {
+                        connectedVictor.disconnect();
+                        connectedVictor = undefined;
+                    }
+                }, 30);
             }
             break;
         case 'ping':
@@ -296,23 +326,25 @@ var handleInput = function (line) {
                 });
             }
             break;
+        case 'sync-time':
+            if (!connectedVictor) {
+                outputResponse("Not connected to a Victor");
+            } else {
+                connectedVictor.syncTime();
+            }
+            break;
         default:
             if (!connectedVictor) {
                 outputResponse("Not connected to a Victor");
             } else {
-                var size = trimmedLine.length + 1;
-                const buf = Buffer.alloc(size);
-                var offset = 0;
-                for (var i = 0 ; i < args.length ; i++) {
-                    offset += buf.write(args[i], offset, args[i].length);
-                    offset = buf.writeUInt8(0, offset);
-                }
-                connectedVictor.send(Victor.MSG_B2V_DEV_EXEC_CMD_LINE, buf);
+                connectedVictor.sendCommand(args);
             }
             break;
         }
     }
-    rl.prompt();
+    if (!quitting) {
+        rl.prompt();
+    }
 
 };
 

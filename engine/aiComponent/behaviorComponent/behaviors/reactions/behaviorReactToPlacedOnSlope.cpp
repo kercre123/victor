@@ -14,45 +14,13 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 
 namespace Anki {
 namespace Cozmo {
-  
-namespace{
-
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPlacedOnSlopeArray = {
-  {ReactionTrigger::CliffDetected,                true},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                true},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             true},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPlacedOnSlopeArray),
-              "Reaction triggers duplicate or non-sequential");
-  
-} // end namespace
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToPlacedOnSlope::BehaviorReactToPlacedOnSlope(const Json::Value& config)
@@ -71,19 +39,15 @@ bool BehaviorReactToPlacedOnSlope::WantsToBeActivatedBehavior(BehaviorExternalIn
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersPlacedOnSlopeArray);
-
   const double now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool hasBehaviorRunRecently = (now - _lastBehaviorTime < 10.0);
   
   // Double check that we should play the animation or recalibrate:
   if (hasBehaviorRunRecently && _endedOnInclineLastTime) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     // Don't run the animation. Instead, run a motor cal since his head may be out of calibration.
-    LOG_EVENT("BehaviorReactToPlacedOnSlope.CalibratingHead", "%f", robot.GetPitchAngle().getDegrees());
-    DelegateIfInControl(new CalibrateMotorAction(robot, true, false));
+    LOG_EVENT("BehaviorReactToPlacedOnSlope.CalibratingHead", "%f", robotInfo.GetPitchAngle().getDegrees());
+    DelegateIfInControl(new CalibrateMotorAction(true, false));
     _endedOnInclineLastTime = false;
   } else {
     // Play the animation then check if we're still on a slope or if we were perched on something:
@@ -98,10 +62,7 @@ Result BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterfa
       reactionAnim = AnimationTrigger::NeedsSevereLowRepairSlopeReact;
     }
     
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new TriggerAnimationAction(robot, reactionAnim),
+    DelegateIfInControl(new TriggerAnimationAction(reactionAnim),
                 &BehaviorReactToPlacedOnSlope::CheckPitch);
   }
 
@@ -113,11 +74,9 @@ Result BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterfa
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPlacedOnSlope::CheckPitch(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // Was the robot on an inclined surface or was the lift simply perched on something?
-  _endedOnInclineLastTime = (robot.GetPitchAngle().getDegrees() > 10.0f);
+  _endedOnInclineLastTime = (robotInfo.GetPitchAngle().getDegrees() > 10.0f);
 }
 
 

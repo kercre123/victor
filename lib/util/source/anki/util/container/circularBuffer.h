@@ -130,7 +130,7 @@ public:
     --_numEntries;
   }
   
-  void push_front(const T& newEntry)
+  T& push_front()
   {
     assert(_numEntries <= _capacity);
     if (_numEntries >= _capacity)
@@ -139,14 +139,11 @@ public:
     }
     
     _firstIndex = (_firstIndex > 0) ? (_firstIndex - 1) : (_capacity - 1);
-    
-    const size_t newIndex = _firstIndex;
-
-    _buffer[newIndex] = newEntry;
     ++_numEntries;
+    return _buffer[_firstIndex];
   }
   
-  void push_back(const T& newEntry)
+  T& push_back()
   {
     assert(_numEntries <= _capacity);
     if (_numEntries >= _capacity)
@@ -155,9 +152,20 @@ public:
     }
     
     const size_t newIndex = ItemIndexToBufferIndex(_numEntries);
-
-    _buffer[newIndex] = newEntry;
     ++_numEntries;
+    return _buffer[newIndex];
+  }
+  
+  void push_front(const T& newEntry)
+  {
+    auto& nextSlot = push_front();
+    nextSlot = newEntry;
+  }
+  
+  void push_back(const T& newEntry)
+  {
+    auto& nextSlot = push_back();
+    nextSlot = newEntry;
   }
   
   void push_back(const T* newEntryArray, size_t arraySize)

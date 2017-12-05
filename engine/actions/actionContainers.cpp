@@ -26,8 +26,9 @@ namespace Anki {
     
 #pragma mark ---- ActionList ----
     
-    ActionList::ActionList()
-    : _actionWatcher(new ActionWatcher())
+    ActionList::ActionList(Robot& robot)
+    : _robot(robot)
+    , _actionWatcher(new ActionWatcher())
     {
     
     }
@@ -45,6 +46,8 @@ namespace Anki {
         PRINT_NAMED_ERROR("ActionList.QueueAction.NullAction", "Can't queue null action");
         return RESULT_FAIL;
       }
+      
+      action->SetRobot(&_robot);
       
       // If we are ignoring external actions and this is an external action or
       // if this action has a bad tag then delete it
@@ -64,8 +67,9 @@ namespace Anki {
                             "Failed to set tag, deleting action %s",
                             EnumToString(action->GetType()));
         }
+        
       
-        _queues[0].DeleteAction(action);
+        GetActionQueueForSlot(0).DeleteAction(action);
         return RESULT_OK;
       }
     
@@ -130,7 +134,7 @@ namespace Anki {
       {
         return RESULT_FAIL;
       }
-      return _queues[0].QueueNext(action, numRetries);
+      return GetActionQueueForSlot(0).QueueNext(action, numRetries);
     }
     
     Result ActionList::QueueActionAtEnd(IActionRunner* action, u8 numRetries)
@@ -139,7 +143,7 @@ namespace Anki {
       {
         return RESULT_FAIL;
       }
-      return _queues[0].QueueAtEnd(action, numRetries);
+      return GetActionQueueForSlot(0).QueueAtEnd(action, numRetries);
     }
     
     Result ActionList::QueueActionNow(IActionRunner* action, u8 numRetries)
@@ -148,7 +152,7 @@ namespace Anki {
       {
         return RESULT_FAIL;
       }
-      return _queues[0].QueueNow(action, numRetries);
+      return GetActionQueueForSlot(0).QueueNow(action, numRetries);
     }
     
     Result ActionList::QueueActionAtFront(IActionRunner* action, u8 numRetries)
@@ -157,7 +161,7 @@ namespace Anki {
       {
         return RESULT_FAIL;
       }
-      return _queues[0].QueueAtFront(action, numRetries);
+      return GetActionQueueForSlot(0).QueueAtFront(action, numRetries);
     }
     
     bool ActionList::Cancel(RobotActionType withType)
@@ -275,7 +279,11 @@ namespace Anki {
         ++currentSlot;
       }
       
-      if(_queues[currentSlot].QueueAtEnd(action, numRetries) != RESULT_OK) {
+
+      // create a new queue in the slot selected
+      auto& queue = GetActionQueueForSlot(currentSlot);
+
+      if(queue.QueueAtEnd(action, numRetries) != RESULT_OK) {
         PRINT_NAMED_ERROR("ActionList.AddAction.FailedToAdd", "Failed to add action to new queue");
         return -1;
       }
@@ -363,10 +371,25 @@ namespace Anki {
       return GetActionWatcher().UnregisterCallback(callbackID);
     }
 
+    ActionQueue& ActionList::GetActionQueueForSlot(SlotHandle handle)
+    {
+      auto iter = _queues.find(handle);
+      if(iter == _queues.end()){
+        ActionQueue newQueue(_robot);
+        const auto resultPair = _queues.insert(std::make_pair(handle, std::move(newQueue)));
+        ANKI_VERIFY(resultPair.second, 
+                    "ActionList.GetActionQueueForSlot.FailedInsert","");
+        iter = resultPair.first;
+      }
+
+      return iter->second;
+    }
+
 
 #pragma mark ---- ActionQueue ----
     
-    ActionQueue::ActionQueue()
+    ActionQueue::ActionQueue(Robot& robot)
+    : _robot(robot)
     {
       
     }
@@ -594,6 +617,9 @@ namespace Anki {
           _currentAction = GetNextActionToRun();
         }
         assert(_currentAction != nullptr);
+        if(!_currentAction->HasRobot()){
+          _currentAction->SetRobot(&_robot);
+        }
         _currentAction->GetRobot().GetActionList().GetActionWatcher().ParentActionUpdating(_currentAction);
         
         const CozmoContext* cozmoContext = _currentAction->GetRobot().GetContext();

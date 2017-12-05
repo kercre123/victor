@@ -28,8 +28,6 @@ class GraphEvaluator2d;
 
 namespace Cozmo {
 
-class Robot;
-
 class BehaviorExpressNeeds : public ICozmoBehavior
 {
 protected:
@@ -40,12 +38,11 @@ protected:
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  // don't resume, since it will run again anyway if it wants to
-  virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
   virtual bool CarryingObjectHandledInternally() const override { return false; }
+
+  virtual bool ShouldRunWhileOnCharger() const override { return _supportCharger; }
 
 private:
 
@@ -65,6 +62,9 @@ private:
   bool _shouldClearExpressedState;
   bool _caresAboutExpressedState;
 
+  // defaults to false, but if set true, this will allow the behavior to work while the robot is sitting on
+  // the charger. It will lock out the body track to avoid coming off the charger (if we're on one)
+  bool _supportCharger;
 
   //////////
   // Members
@@ -77,6 +77,11 @@ private:
   ////////////
   
   float GetCooldownSec(BehaviorExternalInterface& behaviorExternalInterface) const;
+
+  // internal helper to properly handle locking extra tracks if needed
+  // TODO:(bn) this is code duplication from BehaviorPlayAnimSequence. See if we can combine
+  u8 GetTracksToLock(BehaviorExternalInterface& behaviorExternalInterface) const; 
+  
   
 };
 

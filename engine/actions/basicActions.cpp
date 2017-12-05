@@ -41,9 +41,8 @@ namespace Anki {
     // Whether or not to insert WaitActions before and after TurnTowardsObject's VisuallyVerifyAction
     CONSOLE_VAR(bool, kInsertWaitsInTurnTowardsObjectVerify,"TurnTowardsObject", false);
     
-    TurnInPlaceAction::TurnInPlaceAction(Robot& robot, const float angle_rad, const bool isAbsolute)
-    : IAction(robot,
-              "TurnInPlace",
+    TurnInPlaceAction::TurnInPlaceAction(const float angle_rad, const bool isAbsolute)
+    : IAction("TurnInPlace",
               RobotActionType::TURN_IN_PLACE,
               (u8)AnimTrackFlag::BODY_TRACK)
     , _requestedAngle_rad(angle_rad)
@@ -59,7 +58,7 @@ namespace Anki {
         // Make sure eye shift gets removed no matter what
         if(kNotAnimatingTag != _eyeShiftTag) {
           // TODO: Restore eye shifts (VIC-363)
-          //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag);
+          //GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag);
           _eyeShiftTag = kNotAnimatingTag;
         }
       }
@@ -145,14 +144,14 @@ namespace Anki {
       //  the robot should always just take the shortest path to the desired angle.
       setBodyAngle.num_half_revolutions   = _isAbsoluteAngle ? 0 : (uint16_t) std::floor( std::abs(_angularDistExpected_rad / M_PI_F) );
       
-      Result result = _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle));
+      Result result = GetRobot().SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle));        
       return result;
     }
     
     bool TurnInPlaceAction::IsOffTreadsStateValid() const
     {
       // If the robot is not on its treads, it may exhibit erratic turning behavior
-      const auto otState = _robot.GetOffTreadsState();
+      const auto otState = GetRobot().GetOffTreadsState();
       const bool valid = (otState == OffTreadsState::OnTreads);
       if (!valid) {
         PRINT_NAMED_WARNING("TurnInPlaceAction.OffTreadsStateInvalid",
@@ -172,12 +171,12 @@ namespace Anki {
       
       // Grab the robot's current heading and PoseFrameId (which
       //  is used later to detect if relocalization occurred mid-turn)
-      _prevPoseFrameId = _robot.GetPoseFrameID();
+      _prevPoseFrameId = GetRobot().GetPoseFrameID();
       _relocalizedCnt = 0;
       
-      DEV_ASSERT(_robot.GetPose().IsChildOf(_robot.GetWorldOrigin()), "TurnInPlaceAction.Init.RobotOriginMismatch");
+      DEV_ASSERT(GetRobot().GetPose().IsChildOf(GetRobot().GetWorldOrigin()), "TurnInPlaceAction.Init.RobotOriginMismatch");
       
-      _currentAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
+      _currentAngle = GetRobot().GetPose().GetRotation().GetAngleAroundZaxis();
       
       // Compute variability to add to target angle (if any):
       float variabilityToAdd_rad = 0.f;
@@ -236,7 +235,7 @@ namespace Anki {
           // Remove anything that may be keeping face alive, since we're
           // doing our own
           // TODO: Restore KeepFaceAlive stuff (VIC-364)
-          //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveKeepFaceAlive(ANIM_TIME_STEP_MS);
+          //GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->RemoveKeepFaceAlive(ANIM_TIME_STEP_MS);
           
           // Store the angular distance at which to remove eye shift (halfway through the turn)
           _absAngularDistToRemoveEyeDart_rad = 0.5f * std::abs(_angularDistExpected_rad);
@@ -251,8 +250,8 @@ namespace Anki {
           // TODO: Restore eye shifts (VIC-363)
           /*
           const f32 x_mm = std::tan(angleDiff_rad) * HEAD_CAM_POSITION[0];
-          const f32 xPixShift = x_mm * (static_cast<f32>(_robot.GetDisplayWidthInPixels()) / (4*SCREEN_SIZE[0]));
-          _robot.GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
+          const f32 xPixShift = x_mm * (static_cast<f32>(GetRobot().GetDisplayWidthInPixels()) / (4*SCREEN_SIZE[0]));
+          GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
                                                                                       "TurnInPlaceEyeDart",
                                                                                       xPixShift, 0,
                                                                                       4*ANIM_TIME_STEP_MS
@@ -266,7 +265,7 @@ namespace Anki {
     
     bool TurnInPlaceAction::IsBodyInPosition(Radians& currentAngle) const
     {
-      currentAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
+      currentAngle = GetRobot().GetPose().GetRotation().GetAngleAroundZaxis();
       bool inPosition = false;
       
       const float absAngularDistToTarget_rad = std::abs(_angularDistExpected_rad - _angularDistTraversed_rad);
@@ -284,7 +283,7 @@ namespace Anki {
           inPosition = true;
         }
       }
-      return inPosition && !_robot.GetMoveComponent().AreWheelsMoving();
+      return inPosition && !GetRobot().GetMoveComponent().AreWheelsMoving();
     }
     
     ActionResult TurnInPlaceAction::CheckIfDone()
@@ -293,19 +292,19 @@ namespace Anki {
       
       // Check to see if the pose frame ID has changed
       //  (due to robot re-localizing)
-      if(_prevPoseFrameId != _robot.GetPoseFrameID())
+      if(_prevPoseFrameId != GetRobot().GetPoseFrameID())
       {
         ++_relocalizedCnt;
         PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.PfidChanged",
                       "[%d] pose frame ID changed (old=%d, new=%d). "
                       "No longer comparing angles to check if done - using angular distance traversed instead. "
                       "(relocalizedCnt=%d) (inPositionNow=%d)",
-                      GetTag(), _prevPoseFrameId, _robot.GetPoseFrameID(),
+                      GetTag(), _prevPoseFrameId, GetRobot().GetPoseFrameID(),
                       _relocalizedCnt, IsBodyInPosition(_currentAngle));
-        _prevPoseFrameId = _robot.GetPoseFrameID();
+        _prevPoseFrameId = GetRobot().GetPoseFrameID();
         // Need to update previous angle since pose has changed (to
         //  keep _angularDistTraversed semi-accurate)
-        _previousAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
+        _previousAngle = GetRobot().GetPose().GetRotation().GetAngleAroundZaxis();
       }
       
       if(!_inPosition) {
@@ -326,13 +325,13 @@ namespace Anki {
                          _currentTargetAngle.getDegrees(),
                          RAD_TO_DEG(_angularDistTraversed_rad));
           // TODO: Restore eye shifts (VIC-363)
-          //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag,
+          //GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag,
           //                                                                       3*ANIM_TIME_STEP_MS);
           _eyeShiftTag = kNotAnimatingTag;
         }
       }
 
-      if( _robot.GetMoveComponent().AreWheelsMoving()) {
+      if( GetRobot().GetMoveComponent().AreWheelsMoving()) {
         _turnStarted = true;
       }
       
@@ -350,7 +349,7 @@ namespace Anki {
                       RAD_TO_DEG(_angularDistTraversed_rad),
                       RAD_TO_DEG(_angularDistExpected_rad),
                       _angleTolerance.getDegrees(),
-                      _robot.GetPoseFrameID());
+                      GetRobot().GetPoseFrameID());
       } else {
         // Don't spam "AngleNotReached" messages
         PRINT_PERIODIC_CH_DEBUG(10, "Actions", "TurnInPlaceAction.CheckIfDone.AngleNotReached",
@@ -362,9 +361,9 @@ namespace Anki {
                                 RAD_TO_DEG(_angularDistTraversed_rad),
                                 RAD_TO_DEG(_angularDistExpected_rad),
                                 _angleTolerance.getDegrees(),
-                                _robot.GetPoseFrameID());
+                                GetRobot().GetPoseFrameID());
         
-        if( _turnStarted && !_robot.GetMoveComponent().AreWheelsMoving()) {
+        if( _turnStarted && !GetRobot().GetMoveComponent().AreWheelsMoving()) {
           PRINT_NAMED_WARNING("TurnInPlaceAction.StoppedMakingProgress",
                               "[%d] giving up since we stopped moving. currentAngle=%.1fdeg, target=%.1fdeg, angDistExp=%.1fdeg, angDistTrav=%.1fdeg (pfid: %d)",
                               GetTag(),
@@ -372,7 +371,7 @@ namespace Anki {
                               _currentTargetAngle.getDegrees(),
                               RAD_TO_DEG(_angularDistExpected_rad),
                               RAD_TO_DEG(_angularDistTraversed_rad),
-                              _robot.GetPoseFrameID());
+                              GetRobot().GetPoseFrameID());
           result = ActionResult::MOTOR_STOPPED_MAKING_PROGRESS;
         }
       }
@@ -394,41 +393,48 @@ namespace Anki {
 
 #pragma mark ---- SearchForNearbyObjectAction ----
 
-    SearchForNearbyObjectAction::SearchForNearbyObjectAction(Robot& robot,
-                                                             const ObjectID& desiredObjectID,
+    SearchForNearbyObjectAction::SearchForNearbyObjectAction(const ObjectID& desiredObjectID,
                                                              f32 backupDistance_mm,
                                                              f32 backupSpeed_mms,
                                                              f32 headAngle_rad)
-    : IAction(robot,
-              "SearchForNearbyObjectAction",
+    : IAction("SearchForNearbyObjectAction",
               RobotActionType::SEARCH_FOR_NEARBY_OBJECT,
               (u8)AnimTrackFlag::BODY_TRACK)
-    , _compoundAction(robot)
+    , _compoundAction()
     , _desiredObjectID(desiredObjectID)
     , _objectObservedDuringSearch(false)
     , _backupDistance_mm(backupDistance_mm)
     , _backupSpeed_mms(backupSpeed_mms)
     , _headAngle_rad(headAngle_rad)
     {
-      auto observedObjectCallback =
-        [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event){
-          if(event.GetData().Get_RobotObservedObject().objectID == _desiredObjectID){
-            _objectObservedDuringSearch = true;
-          }
-        };
-      
-      if(robot.HasExternalInterface()){
-        using namespace ExternalInterface;
-        _eventHalders.push_back(robot.GetExternalInterface()->Subscribe(
-                    ExternalInterface::MessageEngineToGameTag::RobotObservedObject,
-                    observedObjectCallback));
-      }
+
     }
   
     SearchForNearbyObjectAction::~SearchForNearbyObjectAction()
     {
       _compoundAction.PrepForCompletion();
     }
+
+    void SearchForNearbyObjectAction::OnRobotSet()
+    {
+      if(GetRobot().HasExternalInterface()){
+        using namespace ExternalInterface;
+
+        auto observedObjectCallback =
+        [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event){
+          if(event.GetData().Get_RobotObservedObject().objectID == _desiredObjectID){
+            _objectObservedDuringSearch = true;
+          }
+        };
+
+        _eventHandlers.push_back(GetRobot().GetExternalInterface()->Subscribe(
+                    ExternalInterface::MessageEngineToGameTag::RobotObservedObject,
+                    observedObjectCallback));
+      }
+
+      _compoundAction.SetRobot(&GetRobot());
+    }
+    
   
     void SearchForNearbyObjectAction::SetSearchAngle(f32 minSearchAngle_rads, f32 maxSearchAngle_rads)
     {
@@ -466,7 +472,7 @@ namespace Anki {
                         RAD_TO_DEG(secondAngle_rads),
                         afterSecondTurnWait_s);
 
-      AddToCompoundAction(new WaitAction(_robot, initialWait_s));
+      AddToCompoundAction(new WaitAction(initialWait_s));
 
       DriveStraightAction* driveBackAction = nullptr;
 
@@ -474,35 +480,35 @@ namespace Anki {
       if( Util::IsFltNear(defaultBackupSpeed, _backupSpeed_mms ) ) {
         // if using the default backup speed, don't specify it to the action (So the motion profile can take
         // over if it's set)
-        driveBackAction = new DriveStraightAction(_robot, _backupDistance_mm);
+        driveBackAction = new DriveStraightAction(_backupDistance_mm);
         driveBackAction->SetShouldPlayAnimation(false);
       }
       else {
         // otherwise, manually specify the backup speed
-        driveBackAction = new DriveStraightAction(_robot, _backupDistance_mm, _backupSpeed_mms, false);
+        driveBackAction = new DriveStraightAction(_backupDistance_mm, _backupSpeed_mms, false);
       }
       
-      IActionRunner* driveAndLook = new CompoundActionParallel(_robot, {
+      IActionRunner* driveAndLook = new CompoundActionParallel({
         driveBackAction,
-        new MoveHeadToAngleAction(_robot,_headAngle_rad)
+        new MoveHeadToAngleAction(_headAngle_rad)
       });
       
       
       AddToCompoundAction(driveAndLook);
       
-      AddToCompoundAction(new WaitAction(_robot, initialWait_s));
+      AddToCompoundAction(new WaitAction(initialWait_s));
 
-      TurnInPlaceAction* turn0 = new TurnInPlaceAction(_robot, firstAngle_rads, false);
+      TurnInPlaceAction* turn0 = new TurnInPlaceAction(firstAngle_rads, false);
       turn0->SetTolerance(DEG_TO_RAD(4.0f));
       AddToCompoundAction(turn0);
       
-      AddToCompoundAction(new WaitAction(_robot, afterFirstTurnWait_s));
+      AddToCompoundAction(new WaitAction(afterFirstTurnWait_s));
 
-      TurnInPlaceAction* turn1 = new TurnInPlaceAction(_robot, secondAngle_rads, false);
+      TurnInPlaceAction* turn1 = new TurnInPlaceAction(secondAngle_rads, false);
       turn1->SetTolerance(DEG_TO_RAD(4.0f));
       AddToCompoundAction(turn1);
 
-      AddToCompoundAction(new WaitAction(_robot, afterSecondTurnWait_s));
+      AddToCompoundAction(new WaitAction(afterSecondTurnWait_s));
 
       // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
       _compoundAction.ShouldSuppressTrackLocking(true);
@@ -552,9 +558,8 @@ namespace Anki {
 
 #pragma mark ---- DriveStraightAction ----
     
-    DriveStraightAction::DriveStraightAction(Robot& robot, f32 dist_mm)
-    : IAction(robot,
-              "DriveStraight",
+    DriveStraightAction::DriveStraightAction(f32 dist_mm)
+    : IAction("DriveStraight",
               RobotActionType::DRIVE_STRAIGHT,
               (u8)AnimTrackFlag::BODY_TRACK)
     , _dist_mm(dist_mm)
@@ -571,8 +576,8 @@ namespace Anki {
       SetName("DriveStraight" + std::to_string(_dist_mm) + "mm");
     }
   
-    DriveStraightAction::DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps, bool shouldPlayAnimation)
-      : DriveStraightAction(robot, dist_mm)
+    DriveStraightAction::DriveStraightAction(f32 dist_mm, f32 speed_mmps, bool shouldPlayAnimation)
+      : DriveStraightAction(dist_mm)
     {
       _speed_mmps = speed_mmps;
       _motionProfileManuallySet = true; // speed has been specified manually
@@ -602,11 +607,13 @@ namespace Anki {
 
     DriveStraightAction::~DriveStraightAction()
     {
-      if( _robot.GetPathComponent().IsActive() ) {
-        _robot.GetPathComponent().Abort();
-      }
+      if(HasRobot()){
+        if( GetRobot().GetPathComponent().IsActive() ) {
+          GetRobot().GetPathComponent().Abort();
+        }
 
-      _robot.GetDrivingAnimationHandler().ActionIsBeingDestroyed();
+        GetRobot().GetDrivingAnimationHandler().ActionIsBeingDestroyed();
+      }
     }
 
     void DriveStraightAction::SetAccel(f32 accel_mmps2)
@@ -637,7 +644,7 @@ namespace Anki {
   
     ActionResult DriveStraightAction::Init()
     {
-      _robot.GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());
+      GetRobot().GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());
       
       if(Util::IsNearZero(_dist_mm)) {
         // special case
@@ -645,9 +652,9 @@ namespace Anki {
         return ActionResult::SUCCESS;
       }
       
-      const Radians heading = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
+      const Radians heading = GetRobot().GetPose().GetRotation().GetAngleAroundZaxis();
       
-      const Vec3f& T = _robot.GetDriveCenterPose().GetTranslation();
+      const Vec3f& T = GetRobot().GetDriveCenterPose().GetTranslation();
       const f32 x_start = T.x();
       const f32 y_start = T.y();
       
@@ -665,7 +672,7 @@ namespace Anki {
       _hasStarted = false;
       
       // Tell robot to execute this simple path
-      if(RESULT_OK != _robot.GetPathComponent().ExecuteCustomPath(path, false)) {
+      if(RESULT_OK != GetRobot().GetPathComponent().ExecuteCustomPath(path, false)) {
         return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
       }
       
@@ -674,31 +681,31 @@ namespace Anki {
     
     ActionResult DriveStraightAction::CheckIfDone()
     {
-      if(_robot.GetDrivingAnimationHandler().IsPlayingEndAnim())
+      if(GetRobot().GetDrivingAnimationHandler().IsPlayingEndAnim())
       {
         return ActionResult::RUNNING;
       }
 
-      if( _robot.GetPathComponent().LastPathFailed() ) {
+      if( GetRobot().GetPathComponent().LastPathFailed() ) {
         return ActionResult::FAILED_TRAVERSING_PATH;
       }
       
       if(!_hasStarted) {
         PRINT_CH_INFO("Actions", "DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
-        _hasStarted = _robot.GetPathComponent().HasPathToFollow();
+        _hasStarted = GetRobot().GetPathComponent().HasPathToFollow();
         if( _hasStarted )
         {
           PRINT_CH_DEBUG("Actions", "DriveStraightAction.CheckIfDone.PathJustStarted", "");
           if(_shouldPlayDrivingAnimation) {
-            _robot.GetDrivingAnimationHandler().PlayStartAnim();
+            GetRobot().GetDrivingAnimationHandler().PlayStartAnim();
           }
         }
       }
 
-      if ( _hasStarted && !_robot.GetPathComponent().IsActive() ) {
+      if ( _hasStarted && !GetRobot().GetPathComponent().IsActive() ) {
         PRINT_CH_DEBUG("Actions", "DriveStraightAction.CheckIfDone.PathJustCompleted", "");
         if( _shouldPlayDrivingAnimation ) {
-          if( _robot.GetDrivingAnimationHandler().PlayEndAnim()) {
+          if( GetRobot().GetDrivingAnimationHandler().PlayEndAnim()) {
             return ActionResult::RUNNING;
           }
         }
@@ -713,11 +720,9 @@ namespace Anki {
     
 #pragma mark ---- CalibrateMotorAction ----
     
-    CalibrateMotorAction::CalibrateMotorAction(Robot& robot,
-                                               bool calibrateHead,
+    CalibrateMotorAction::CalibrateMotorAction(bool calibrateHead,
                                                bool calibrateLift)
-    : IAction(robot,
-              "CalibrateMotor-" + std::string(calibrateHead ? "Head" : "") + std::string(calibrateLift ? "Lift" : ""),
+    : IAction("CalibrateMotor-" + std::string(calibrateHead ? "Head" : "") + std::string(calibrateLift ? "Lift" : ""),
               RobotActionType::CALIBRATE_MOTORS,
               (calibrateHead ? (u8)AnimTrackFlag::HEAD_TRACK : 0) | (calibrateLift ? (u8)AnimTrackFlag::LIFT_TRACK : 0) )
     , _calibHead(calibrateHead)
@@ -733,14 +738,14 @@ namespace Anki {
       ActionResult result = ActionResult::SUCCESS;
       _headCalibStarted = false;
       _liftCalibStarted = false;
-      if (RESULT_OK != _robot.GetMoveComponent().CalibrateMotors(_calibHead, _calibLift)) {
+      if (RESULT_OK != GetRobot().GetMoveComponent().CalibrateMotors(_calibHead, _calibLift)) {
         return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
       }
       
-      if(_robot.HasExternalInterface())
+      if(GetRobot().HasExternalInterface())
       {
         using namespace ExternalInterface;
-        auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
+        auto helper = MakeAnkiEventUtil(*(GetRobot().GetExternalInterface()), *this, _signalHandles);
         helper.SubscribeEngineToGame<MessageEngineToGameTag::MotorCalibration>();
       }
       
@@ -750,8 +755,8 @@ namespace Anki {
     ActionResult CalibrateMotorAction::CheckIfDone()
     {
       ActionResult result = ActionResult::RUNNING;
-      bool headCalibrating = !_robot.IsHeadCalibrated();
-      bool liftCalibrating = !_robot.IsLiftCalibrated();
+      bool headCalibrating = !GetRobot().IsHeadCalibrated();
+      bool liftCalibrating = !GetRobot().IsLiftCalibrated();
       
       bool headComplete = !_calibHead || (_headCalibStarted && !headCalibrating);
       bool liftComplete = !_calibLift || (_liftCalibStarted && !liftCalibrating);
@@ -778,9 +783,8 @@ namespace Anki {
     
 #pragma mark ---- MoveHeadToAngleAction ----
     
-    MoveHeadToAngleAction::MoveHeadToAngleAction(Robot& robot, const Radians& headAngle, const Radians& tolerance, const Radians& variability)
-    : IAction(robot,
-              "MoveHeadTo" + std::to_string(headAngle.getDegrees()) + "Deg",
+    MoveHeadToAngleAction::MoveHeadToAngleAction(const Radians& headAngle, const Radians& tolerance, const Radians& variability)
+    : IAction("MoveHeadTo" + std::to_string(headAngle.getDegrees()) + "Deg",
               RobotActionType::MOVE_HEAD_TO_ANGLE,
               (u8)AnimTrackFlag::HEAD_TRACK)
     , _headAngle(headAngle)
@@ -814,8 +818,8 @@ namespace Anki {
       }
     }
     
-    MoveHeadToAngleAction::MoveHeadToAngleAction(Robot& robot, const Preset preset, const Radians& tolerance, const Radians& variability)
-      : MoveHeadToAngleAction(robot, GetPresetHeadAngle(preset), tolerance, variability)
+    MoveHeadToAngleAction::MoveHeadToAngleAction(const Preset preset, const Radians& tolerance, const Radians& variability)
+      : MoveHeadToAngleAction(GetPresetHeadAngle(preset), tolerance, variability)
     {
       SetName(std::string("MoveHeadTo_") + GetPresetName(preset));
     }
@@ -846,10 +850,10 @@ namespace Anki {
       {
         // Make sure eye shift gets removed, by this action, or by the MoveComponent if "hold" is enabled
         if(_holdEyes) {
-          _robot.GetMoveComponent().RemoveFaceLayerWhenHeadMoves(_eyeShiftTag, 3*ANIM_TIME_STEP_MS);
+          GetRobot().GetMoveComponent().RemoveFaceLayerWhenHeadMoves(_eyeShiftTag, 3*ANIM_TIME_STEP_MS);
         } else {
           // TODO: Restore eye shifts (VIC-363)
-          //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag);
+          //GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag);
         }
         _eyeShiftTag = kNotAnimatingTag;
       }
@@ -857,7 +861,7 @@ namespace Anki {
     
     bool MoveHeadToAngleAction::IsHeadInPosition() const
     {
-      const bool inPosition = _headAngle.IsNear(_robot.GetHeadAngle(), _angleTolerance.ToFloat()+Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+      const bool inPosition = _headAngle.IsNear(GetRobot().GetHeadAngle(), _angleTolerance.ToFloat()+Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
       return inPosition;
     }
     
@@ -868,7 +872,7 @@ namespace Anki {
       _inPosition = IsHeadInPosition();
       
       if(!_inPosition) {
-        if(RESULT_OK != _robot.GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(),
+        if(RESULT_OK != GetRobot().GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(),
                                                                    _maxSpeed_radPerSec,
                                                                    _accel_radPerSec2,
                                                                    _duration_sec))
@@ -880,16 +884,16 @@ namespace Anki {
         {
           // Remove anything that may be keeping face alive, since we're doing our own
           // TODO: Restore KeepFaceAlive stuff (VIC-364)
-          //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveKeepFaceAlive(ANIM_TIME_STEP_MS);
+          //GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->RemoveKeepFaceAlive(ANIM_TIME_STEP_MS);
           
           // Lead with the eyes, if not in position
           // Note: assuming screen is about the same x distance from the neck joint as the head cam
           // TODO: Restore eye shifts (VIC-363)
           /*
-          Radians angleDiff =  _robot.GetHeadAngle() - _headAngle;
+          Radians angleDiff =  GetRobot().GetHeadAngle() - _headAngle;
           const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
-          const f32 yPixShift = y_mm * (static_cast<f32>(_robot.GetDisplayHeightInPixels()/4) / SCREEN_SIZE[1]);
-          _robot.GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
+          const f32 yPixShift = y_mm * (static_cast<f32>(GetRobot().GetDisplayHeightInPixels()/4) / SCREEN_SIZE[1]);
+          GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
                                                                                       "MoveHeadToAngleEyeShift",
                                                                                       0,
                                                                                       yPixShift,
@@ -898,7 +902,7 @@ namespace Anki {
            */
           if(!_holdEyes) {
             // Store the half the angle differene so we know when to remove eye shift
-            _halfAngle = 0.5f*(_headAngle - _robot.GetHeadAngle()).getAbsoluteVal();
+            _halfAngle = 0.5f*(_headAngle - GetRobot().GetHeadAngle()).getAbsoluteVal();
           }
         }
       }
@@ -918,24 +922,24 @@ namespace Anki {
       {
         // If we're not there yet but at least halfway, and we're not supposed
         // to "hold" the eyes, then remove eye shift
-        if(_inPosition || _headAngle.IsNear(_robot.GetHeadAngle(), _halfAngle))
+        if(_inPosition || _headAngle.IsNear(GetRobot().GetHeadAngle(), _halfAngle))
         {
           PRINT_CH_DEBUG("Actions", "MoveHeadToAngleAction.CheckIfDone.RemovingEyeShift",
                          "[%d] Currently at %.1fdeg, on the way to %.1fdeg, within "
                          "half angle of %.1fdeg",
                          GetTag(),
-                         RAD_TO_DEG(_robot.GetHeadAngle()),
+                         RAD_TO_DEG(GetRobot().GetHeadAngle()),
                          _headAngle.getDegrees(),
                          _halfAngle.getDegrees());
           
           // TODO: Restore eye shifts (VIC-363)
-          //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag,
+          //GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag,
           //                                                                       3*ANIM_TIME_STEP_MS);
           _eyeShiftTag = kNotAnimatingTag;
         }
       }
       
-      if( _robot.GetMoveComponent().IsHeadMoving() ) {
+      if( GetRobot().GetMoveComponent().IsHeadMoving() ) {
         _motionStarted = true;
       }
       
@@ -944,28 +948,28 @@ namespace Anki {
       // TODO: Is this really necessary in practice?
       if(_inPosition) {
       
-        if(_robot.GetMoveComponent().IsHeadMoving())
+        if(GetRobot().GetMoveComponent().IsHeadMoving())
         {
           PRINT_CH_INFO("Actions",
                         "MoveHeadToAngleAction.CheckIfDone.HeadMovingInPosition",
                         "[%d] Head considered in position at %.1fdeg but still moving at %.1fdeg",
                         GetTag(),
                         _headAngle.getDegrees(),
-                        RAD_TO_DEG(_robot.GetHeadAngle()));
+                        RAD_TO_DEG(GetRobot().GetHeadAngle()));
         }
       
-        result = _robot.GetMoveComponent().IsHeadMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
+        result = GetRobot().GetMoveComponent().IsHeadMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
       } else {
         // Don't spam "not in position messages"
         PRINT_PERIODIC_CH_DEBUG(10, "Actions", "MoveHeadToAngleAction.CheckIfDone.NotInPosition",
                                 "[%d] Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f) tol:%.1fdeg",
                                 GetTag(),
-                                RAD_TO_DEG(_robot.GetHeadAngle()),
+                                RAD_TO_DEG(GetRobot().GetHeadAngle()),
                                 _headAngle.getDegrees(),
                                 _variability.getDegrees(),
                                 _angleTolerance.getDegrees());
         
-        if( _motionStarted && ! _robot.GetMoveComponent().IsHeadMoving() ) {
+        if( _motionStarted && ! GetRobot().GetMoveComponent().IsHeadMoving() ) {
           PRINT_NAMED_WARNING("MoveHeadToAngleAction.CheckIfDone.StoppedMakingProgress",
                               "[%d] giving up since we stopped moving",
                               GetTag());
@@ -978,9 +982,8 @@ namespace Anki {
     
 #pragma mark ---- MoveLiftToHeightAction ----
     
-    MoveLiftToHeightAction::MoveLiftToHeightAction(Robot& robot, const f32 height_mm, const f32 tolerance_mm, const f32 variability)
-    : IAction(robot,
-              "MoveLiftTo" + std::to_string(height_mm) + "mm",
+    MoveLiftToHeightAction::MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm, const f32 variability)
+    : IAction("MoveLiftTo" + std::to_string(height_mm) + "mm",
               RobotActionType::MOVE_LIFT_TO_HEIGHT,
               (u8)AnimTrackFlag::LIFT_TRACK)
     , _height_mm(height_mm)
@@ -991,8 +994,8 @@ namespace Anki {
       
     }
     
-    MoveLiftToHeightAction::MoveLiftToHeightAction(Robot& robot, const Preset preset, const f32 tolerance_mm)
-    : MoveLiftToHeightAction(robot, GetPresetHeight(preset), tolerance_mm, 0.f)
+    MoveLiftToHeightAction::MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm)
+    : MoveLiftToHeightAction(GetPresetHeight(preset), tolerance_mm, 0.f)
     {
       SetName("MoveLiftTo" + GetPresetName(preset));
     }
@@ -1031,8 +1034,8 @@ namespace Anki {
     
     bool MoveLiftToHeightAction::IsLiftInPosition() const
     {
-      const bool inPosition = (NEAR(_heightWithVariation, _robot.GetLiftHeight(), _heightTolerance) &&
-                               !_robot.GetMoveComponent().IsLiftMoving());
+      const bool inPosition = (NEAR(_heightWithVariation, GetRobot().GetLiftHeight(), _heightTolerance) &&
+                               !GetRobot().GetMoveComponent().IsLiftMoving());
       
       return inPosition;
     }
@@ -1049,7 +1052,7 @@ namespace Anki {
       
       if(_height_mm < 0.f) {
         // Choose whatever is closer to current height, LOW or CARRY:
-        const f32 currentHeight = _robot.GetLiftHeight();
+        const f32 currentHeight = GetRobot().GetLiftHeight();
         const f32 low   = GetPresetHeight(Preset::LOW_DOCK);
         const f32 carry = GetPresetHeight(Preset::CARRY);
         // Absolute values here shouldn't be necessary, since these are supposed
@@ -1104,7 +1107,7 @@ namespace Anki {
       _inPosition = IsLiftInPosition();
       
       if(!_inPosition) {
-        if(_robot.GetMoveComponent().MoveLiftToHeight(_heightWithVariation,
+        if(GetRobot().GetMoveComponent().MoveLiftToHeight(_heightWithVariation,
                                                        _maxLiftSpeedRadPerSec,
                                                        _liftAccelRacPerSec2,
                                                        _duration) != RESULT_OK) {
@@ -1129,24 +1132,24 @@ namespace Anki {
        // then stop moving
        static bool liftStartedMoving = false;
        if(!liftStartedMoving) {
-       liftStartedMoving = _robot.IsLiftMoving();
+       liftStartedMoving = GetRobot().IsLiftMoving();
        }
        else
        */
       
-      if( _robot.GetMoveComponent().IsLiftMoving() ) {
+      if( GetRobot().GetMoveComponent().IsLiftMoving() ) {
         _motionStarted = true;
       }
       
       if(_inPosition) {
-        result = _robot.GetMoveComponent().IsLiftMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
+        result = GetRobot().GetMoveComponent().IsLiftMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
       } else {
         PRINT_PERIODIC_CH_DEBUG(10, "Actions", "MoveLiftToHeightAction.CheckIfDone.NotInPosition",
                                 "[%d] Waiting for lift to get in position: %.1fmm vs. %.1fmm (tol: %f)",
                                 GetTag(),
-                                _robot.GetLiftHeight(), _heightWithVariation, _heightTolerance);
+                                GetRobot().GetLiftHeight(), _heightWithVariation, _heightTolerance);
         
-        if( _motionStarted && ! _robot.GetMoveComponent().IsLiftMoving() ) {
+        if( _motionStarted && ! GetRobot().GetMoveComponent().IsLiftMoving() ) {
           PRINT_NAMED_WARNING("MoveLiftToHeightAction.CheckIfDone.StoppedMakingProgress",
                               "[%d] giving up since we stopped moving",
                               GetTag());
@@ -1159,13 +1162,12 @@ namespace Anki {
     
 #pragma mark ---- PanAndTiltAction ----
     
-    PanAndTiltAction::PanAndTiltAction(Robot& robot, Radians bodyPan, Radians headTilt,
+    PanAndTiltAction::PanAndTiltAction(Radians bodyPan, Radians headTilt,
                                        bool isPanAbsolute, bool isTiltAbsolute)
-    : IAction(robot,
-              "PanAndTilt",
+    : IAction("PanAndTilt",
               RobotActionType::PAN_AND_TILT,
               (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK)
-    , _compoundAction(robot)
+    , _compoundAction()
     , _bodyPanAngle(bodyPan)
     , _headTiltAngle(headTilt)
     , _isPanAbsolute(isPanAbsolute)
@@ -1180,7 +1182,14 @@ namespace Anki {
     {
       _compoundAction.PrepForCompletion();
     }
+
+    void PanAndTiltAction::OnRobotSet()
+    {
+      _compoundAction.SetRobot(&GetRobot());
+      OnRobotSetInternalPan();
+    }
     
+
     void PanAndTiltAction::SetMaxPanSpeed(f32 maxSpeed_radPerSec)
     {
       if (maxSpeed_radPerSec == 0.f) {
@@ -1273,7 +1282,7 @@ namespace Anki {
       _compoundAction.ClearActions();
       _compoundAction.EnableMessageDisplay(IsMessageDisplayEnabled());
       
-      TurnInPlaceAction* action = new TurnInPlaceAction(_robot, _bodyPanAngle.ToFloat(), _isPanAbsolute);      
+      TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle.ToFloat(), _isPanAbsolute);      
       action->SetTolerance(_panAngleTol);
       action->SetMoveEyes(_moveEyes);
       if( _panSpeedsManuallySet ) {
@@ -1282,8 +1291,8 @@ namespace Anki {
       }
       _compoundAction.AddAction(action);
       
-      const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : _robot.GetHeadAngle() + _headTiltAngle;
-      MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(_robot, newHeadAngle, _tiltAngleTol);
+      const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : GetRobot().GetHeadAngle() + _headTiltAngle;
+      MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(newHeadAngle, _tiltAngleTol);
       headAction->SetMoveEyes(_moveEyes);
       if( _tiltSpeedsManuallySet ) {
         headAction->SetMaxSpeed(_maxTiltSpeed_radPerSec);
@@ -1315,13 +1324,11 @@ namespace Anki {
     }
     #pragma mark ---- TurnTowardsObjectAction ----
     
-    TurnTowardsObjectAction::TurnTowardsObjectAction(Robot& robot,
-                                       ObjectID objectID,
-                                       Radians maxTurnAngle,
-                                       bool visuallyVerifyWhenDone,
-                                       bool headTrackWhenDone)
-    : TurnTowardsObjectAction(robot,
-                              objectID,
+    TurnTowardsObjectAction::TurnTowardsObjectAction(ObjectID objectID,
+                                                     Radians maxTurnAngle,
+                                                     bool visuallyVerifyWhenDone,
+                                                     bool headTrackWhenDone)
+    : TurnTowardsObjectAction(objectID,
                               Vision::Marker::ANY_CODE,
                               maxTurnAngle,
                               visuallyVerifyWhenDone,
@@ -1330,13 +1337,12 @@ namespace Anki {
 
     }
     
-    TurnTowardsObjectAction::TurnTowardsObjectAction(Robot& robot,
-                                       ObjectID objectID,
-                                       Vision::Marker::Code whichCode,
-                                       Radians maxTurnAngle,
-                                       bool visuallyVerifyWhenDone,
-                                       bool headTrackWhenDone)
-    : TurnTowardsPoseAction(robot, maxTurnAngle)
+    TurnTowardsObjectAction::TurnTowardsObjectAction(ObjectID objectID,
+                                                     Vision::Marker::Code whichCode,
+                                                     Radians maxTurnAngle,
+                                                     bool visuallyVerifyWhenDone,
+                                                     bool headTrackWhenDone)
+    : TurnTowardsPoseAction(maxTurnAngle)
     , _facePoseCompoundActionDone(false)
     , _visuallyVerifyWhenDone(visuallyVerifyWhenDone)
     , _objectID(objectID)
@@ -1386,13 +1392,13 @@ namespace Anki {
         }
         
         // A custom object's pose must be in the robot's origin to turn towards it
-        if(!_robot.IsPoseInWorldOrigin(_objectPtr->GetPose())) {
+        if(!GetRobot().IsPoseInWorldOrigin(_objectPtr->GetPose())) {
           PRINT_NAMED_WARNING("TurnTowardsObjectAction.Init.CustomObjectNotInRobotFrame",
                               "Custom %s object %d in origin:%s vs. robot in origin:%s",
                               EnumToString(_objectPtr->GetType()),
                               _objectPtr->GetID().GetValue(),
                               _objectPtr->GetPose().FindRoot().GetName().c_str(),
-                              _robot.GetWorldOrigin().GetName().c_str());
+                              GetRobot().GetWorldOrigin().GetName().c_str());
           return ActionResult::BAD_POSE;
         }
         
@@ -1405,7 +1411,7 @@ namespace Anki {
       }
       else
       {
-        _objectPtr = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
+        _objectPtr = GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID);
         if(nullptr == _objectPtr) {
           PRINT_NAMED_WARNING("TurnTowardsObjectAction.Init.ObjectNotFound",
                               "Object with ID=%d no longer exists in the world.",
@@ -1423,7 +1429,7 @@ namespace Anki {
         // Solution: project all points into 2D and pick the closest. The top and bottom faces will never be
         // closer than the closest side face (unless we are inside the cube)
         
-        const Result poseResult = _objectPtr->GetClosestMarkerPose(_robot.GetPose(), true, objectPoseWrtRobot);
+        const Result poseResult = _objectPtr->GetClosestMarkerPose(GetRobot().GetPose(), true, objectPoseWrtRobot);
         
         if( RESULT_OK != poseResult ) {
           // This should not occur because we checked above that the object is in the
@@ -1451,7 +1457,7 @@ namespace Anki {
         f32 closestDist = std::numeric_limits<f32>::max();
         Pose3d markerPoseWrtRobot;
         for(auto marker : markers) {
-          if(false == marker->GetPose().GetWithRespectTo(_robot.GetPose(), markerPoseWrtRobot)) {
+          if(false == marker->GetPose().GetWithRespectTo(GetRobot().GetPose(), markerPoseWrtRobot)) {
             PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.MarkerOriginProblem",
                               "Could not get pose of marker with code %d of %sobject %d "
                               "w.r.t. robot pose.", _whichCode,
@@ -1521,15 +1527,18 @@ namespace Anki {
             IActionRunner* action = nullptr;
             if(kInsertWaitsInTurnTowardsObjectVerify)
             {
-              action = new CompoundActionSequential(_robot, {new WaitAction(_robot, 2),
-                  new VisuallyVerifyObjectAction(_robot, _objectPtr->GetID(), _whichCode),
-                  new WaitAction(_robot, 2)});
+              action = new CompoundActionSequential({new WaitAction(2),
+                  new VisuallyVerifyObjectAction(_objectPtr->GetID(), _whichCode),
+                  new WaitAction(2)});
             }
             else
             {
-              action = new VisuallyVerifyObjectAction(_robot, _objectPtr->GetID(), _whichCode);
+              action = new VisuallyVerifyObjectAction(_objectPtr->GetID(), _whichCode);
             }
             _visuallyVerifyAction.reset(action);
+            if(_visuallyVerifyAction != nullptr){
+              _visuallyVerifyAction->SetRobot(&GetRobot());
+            }
             
             // Disable completion signals since this is inside another action
             _visuallyVerifyAction->ShouldSuppressTrackLocking(true);
@@ -1560,8 +1569,8 @@ namespace Anki {
           // TODO:(bn) hang action here for consistency?
         }
         else {
-          _robot.GetActionList().QueueAction(QueueActionPosition::NEXT,
-                                             new TrackObjectAction(_robot, _objectID));
+          GetRobot().GetActionList().QueueAction(QueueActionPosition::NEXT,
+                                             new TrackObjectAction(_objectID));
         }
       }
       return ActionResult::SUCCESS;
@@ -1577,9 +1586,8 @@ namespace Anki {
     
 #pragma mark ---- TraverseObjectAction ----
     
-    TraverseObjectAction::TraverseObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed)
-    : IActionRunner(robot,
-                    "TraverseObject",
+    TraverseObjectAction::TraverseObjectAction(ObjectID objectID, const bool useManualSpeed)
+    : IActionRunner("TraverseObject",
                     RobotActionType::TRAVERSE_OBJECT,
                     (u8)AnimTrackFlag::BODY_TRACK)
     , _objectID(objectID)
@@ -1598,7 +1606,7 @@ namespace Anki {
       // Select the chosen action based on the object's type, if we haven't
       // already
       if(_chosenAction == nullptr) {
-        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
+        ActionableObject* object = dynamic_cast<ActionableObject*>(GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID));
         if(object == nullptr) {
           PRINT_NAMED_ERROR("TraverseObjectAction.UpdateInternal.ObjectNotFound",
                             "Could not get actionable object with ID = %d from world.", _objectID.GetValue());
@@ -1608,21 +1616,23 @@ namespace Anki {
         if(object->GetType() == ObjectType::Bridge_LONG ||
            object->GetType() == ObjectType::Bridge_SHORT)
         {
-          CrossBridgeAction* bridgeAction = new CrossBridgeAction(_robot, _objectID, _useManualSpeed);
+          CrossBridgeAction* bridgeAction = new CrossBridgeAction(_objectID, _useManualSpeed);
           bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2, _decel_mmps2);
           bridgeAction->ShouldSuppressTrackLocking(true);
           _chosenAction.reset(bridgeAction);
+          _chosenAction->SetRobot(&GetRobot());
         }
         else if(object->GetType() == ObjectType::Ramp_Basic) {
-          AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_robot, _objectID, _useManualSpeed);
+          AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
           rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2, _decel_mmps2);
           rampAction->ShouldSuppressTrackLocking(true);
           _chosenAction.reset(rampAction);
+          _chosenAction->SetRobot(&GetRobot());
         }
         else {
           PRINT_NAMED_ERROR("TraverseObjectAction.UpdateInternal.CannotTraverseObjectType",
                             "Robot %d was asked to traverse object ID=%d of type %s, but "
-                            "that traversal is not defined.", _robot.GetID(),
+                            "that traversal is not defined.", GetRobot().GetID(),
                             object->GetID().GetValue(), ObjectTypeToString(object->GetType()));
           
           return ActionResult::BAD_OBJECT;
@@ -1637,8 +1647,8 @@ namespace Anki {
     
 #pragma mark ---- TurnTowardsPoseAction ----
     
-    TurnTowardsPoseAction::TurnTowardsPoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle)
-    : PanAndTiltAction(robot, 0, 0, false, true)
+    TurnTowardsPoseAction::TurnTowardsPoseAction(const Pose3d& pose, Radians maxTurnAngle)
+    : PanAndTiltAction(0, 0, false, true)
     , _poseWrtRobot(pose)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     , _isPoseSet(true)
@@ -1647,8 +1657,8 @@ namespace Anki {
       SetType(RobotActionType::TURN_TOWARDS_POSE);
     }
     
-    TurnTowardsPoseAction::TurnTowardsPoseAction(Robot& robot, Radians maxTurnAngle)
-    : PanAndTiltAction(robot, 0, 0, false, true)
+    TurnTowardsPoseAction::TurnTowardsPoseAction(Radians maxTurnAngle)
+    : PanAndTiltAction(0, 0, false, true)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     , _isPoseSet(false)
     {
@@ -1707,7 +1717,7 @@ namespace Anki {
       // in case of re-run
       _nothingToDo = false;
       SetBodyPanAngle(0);
-      
+
       if(!_isPoseSet) {
         PRINT_NAMED_ERROR("TurnTowardsPoseAction.Init.PoseNotSet", "");
         return ActionResult::BAD_POSE;
@@ -1715,21 +1725,21 @@ namespace Anki {
       
       if(!_poseWrtRobot.HasParent()) {
         PRINT_CH_INFO("Actions", "TurnTowardsPoseAction.Init.AssumingRobotOriginAsParent", "");
-        _poseWrtRobot.SetParent(_robot.GetWorldOrigin());
+        _poseWrtRobot.SetParent(GetRobot().GetWorldOrigin());
       }
-      else if(false == _poseWrtRobot.GetWithRespectTo(_robot.GetPose(), _poseWrtRobot))
+      else if(false == _poseWrtRobot.GetWithRespectTo(GetRobot().GetPose(), _poseWrtRobot))
       {
         // TODO: It's possible this is just "normal" when dealing with delocalization, so possibly downgradable to Info later
         PRINT_NAMED_WARNING("TurnTowardsPoseAction.Init.PoseOriginFailure",
                             "Could not get pose (in frame %d) w.r.t. robot pose (in frame %d).",
                             _poseWrtRobot.FindRoot().GetID(),
-                            _robot.GetPoseOriginList().GetCurrentOriginID());
+                            GetRobot().GetPoseOriginList().GetCurrentOriginID());
         
         if(ANKI_DEVELOPER_CODE)
         {
           _poseWrtRobot.Print();
           _poseWrtRobot.PrintNamedPathToRoot(false);
-          _robot.GetPose().PrintNamedPathToRoot(false);
+          GetRobot().GetPose().PrintNamedPathToRoot(false);
         }
         return ActionResult::BAD_POSE;
       }
@@ -1757,7 +1767,7 @@ namespace Anki {
       // Compute the required head angle to face the object
       Radians headAngle;
       const f32 kYTolFrac = 0.01f; // Fraction of image height
-      Result result = _robot.ComputeHeadAngleToSeePose(_poseWrtRobot, headAngle, kYTolFrac);
+      Result result = GetRobot().ComputeHeadAngleToSeePose(_poseWrtRobot, headAngle, kYTolFrac);
       if(RESULT_OK != result)
       {
         PRINT_NAMED_WARNING("TurnTowardsPoseAction.Init.FailedToComputedHeadAngle",
@@ -1790,8 +1800,8 @@ namespace Anki {
   
 #pragma mark ---- TurnTowardsImagePointAction ----
     
-    TurnTowardsImagePointAction::TurnTowardsImagePointAction(Robot& robot, const Point2f& imgPoint, const TimeStamp_t t)
-    : PanAndTiltAction(robot, 0, 0, true, true)
+    TurnTowardsImagePointAction::TurnTowardsImagePointAction(const Point2f& imgPoint, const TimeStamp_t t)
+    : PanAndTiltAction(0, 0, true, true)
     , _imgPoint(imgPoint)
     , _timestamp(t)
     {
@@ -1802,7 +1812,7 @@ namespace Anki {
     ActionResult TurnTowardsImagePointAction::Init()
     {
       Radians panAngle, tiltAngle;
-      Result result = _robot.ComputeTurnTowardsImagePointAngles(_imgPoint, _timestamp, panAngle, tiltAngle);
+      Result result = GetRobot().ComputeTurnTowardsImagePointAngles(_imgPoint, _timestamp, panAngle, tiltAngle);
       if(RESULT_OK != result)
       {
         PRINT_NAMED_WARNING("TurnTowardsImagePointAction.Init.ComputeTurnTowardsImagePointAnglesFailed",
@@ -1818,28 +1828,16 @@ namespace Anki {
     
 #pragma mark ---- TurnTowardsLastFacePoseAction ----
 
-    TurnTowardsFaceAction::TurnTowardsFaceAction(Robot& robot,
-                                                 const SmartFaceID& faceID,
+    TurnTowardsFaceAction::TurnTowardsFaceAction(const SmartFaceID& faceID,
                                                  Radians maxTurnAngle,
                                                  bool sayName)
-    : TurnTowardsPoseAction(robot, maxTurnAngle)
+    : TurnTowardsPoseAction(maxTurnAngle)
     , _faceID(faceID)
     , _sayName(sayName)
     {
       SetName("TurnTowardsFace" + _faceID.GetDebugStr());
       SetType(RobotActionType::TURN_TOWARDS_FACE);
       SetTracksToLock((u8)AnimTrackFlag::NO_TRACKS);
-    }
-
-    TurnTowardsFaceAction::TurnTowardsFaceAction(Robot& robot,
-                                                 Vision::FaceID_t faceID,
-                                                 Radians maxTurnAngle,
-                                                 bool sayName)
-      : TurnTowardsFaceAction(robot,
-                              robot.GetFaceWorld().GetSmartFaceID(faceID),
-                              maxTurnAngle,
-                              sayName)
-    {
     }
 
     
@@ -1852,6 +1850,10 @@ namespace Anki {
       if(nullptr != _action) {
         _action->ShouldSuppressTrackLocking(true);
       }
+      
+      if(_action != nullptr && HasRobot()){
+        _action->SetRobot(&GetRobot());
+      }
     }
     
     TurnTowardsFaceAction::~TurnTowardsFaceAction()
@@ -1860,9 +1862,16 @@ namespace Anki {
       
       // In case we got interrupted and didn't get a chance to do this
       if(_tracksLocked) {
-        _robot.GetMoveComponent().UnlockTracks((u8)AnimTrackFlag::HEAD_TRACK |
+        GetRobot().GetMoveComponent().UnlockTracks((u8)AnimTrackFlag::HEAD_TRACK |
                                                (u8)AnimTrackFlag::BODY_TRACK,
                                                GetTag());
+      }
+    }
+    
+    void TurnTowardsFaceAction::OnRobotSetInternalPan()
+    {
+      if(_action != nullptr){
+        _action->SetRobot(&GetRobot());
       }
     }
 
@@ -1916,15 +1925,15 @@ namespace Anki {
       
       if(_faceID.IsValid())
       {
-        auto face = _robot.GetFaceWorld().GetFace(_faceID);
-        if(nullptr != face && face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), pose)) {
+        auto face = GetRobot().GetFaceWorld().GetFace(_faceID);
+        if(nullptr != face && face->GetHeadPose().GetWithRespectTo(GetRobot().GetPose(), pose)) {
           gotPose = true;
         }
       }
-      else if(_robot.GetFaceWorld().GetLastObservedFace(pose, kLastObservedFaceMustBeInRobotOrigin) != 0)
+      else if(GetRobot().GetFaceWorld().GetLastObservedFace(pose, kLastObservedFaceMustBeInRobotOrigin) != 0)
       {
         // Make w.r.t. robot pose, not robot _origin_
-        const bool success = pose.GetWithRespectTo(_robot.GetPose(), pose);
+        const bool success = pose.GetWithRespectTo(GetRobot().GetPose(), pose);
         if(success) {
           gotPose = true;
         } else {
@@ -1941,15 +1950,15 @@ namespace Anki {
         _obsFaceID.Reset();
         _closestDistSq = std::numeric_limits<f32>::max();
         
-        if(_robot.HasExternalInterface())
+        if(GetRobot().HasExternalInterface())
         {
           using namespace ExternalInterface;
-          auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
+          auto helper = MakeAnkiEventUtil(*(GetRobot().GetExternalInterface()), *this, _signalHandles);
           helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedFace>();
         }
         
         _state = State::Turning;
-        _robot.GetMoveComponent().LockTracks((u8)AnimTrackFlag::HEAD_TRACK |
+        GetRobot().GetMoveComponent().LockTracks((u8)AnimTrackFlag::HEAD_TRACK |
                                              (u8)AnimTrackFlag::BODY_TRACK,
                                              GetTag(),
                                              GetName());
@@ -1989,13 +1998,13 @@ namespace Anki {
         {
           // We are looking for any face.
           // Record this face if it is closer than any we've seen so far
-          const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(faceID);
+          const Vision::TrackedFace* face = GetRobot().GetFaceWorld().GetFace(faceID);
           if(nullptr != face) {
             Pose3d faceWrtRobot;
-            if(true == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), faceWrtRobot)) {
+            if(true == face->GetHeadPose().GetWithRespectTo(GetRobot().GetPose(), faceWrtRobot)) {
               const f32 distSq = faceWrtRobot.GetTranslation().LengthSq();
               if(distSq < _closestDistSq) {
-                _robot.GetFaceWorld().UpdateSmartFaceToID(faceID, _obsFaceID);
+                GetRobot().GetFaceWorld().UpdateSmartFaceToID(faceID, _obsFaceID);
                 _closestDistSq = distSq;
                 PRINT_NAMED_DEBUG("TurnTowardsFaceAction.ObservedFaceCallback",
                                   "Observed ID=%s at distSq=%.1f",
@@ -2012,22 +2021,22 @@ namespace Anki {
       PRINT_NAMED_DEBUG("TurnTowardsFaceAction.CreateFinalAction.SawFace",
                         "Observed ID=%s. Will fine tune.", _obsFaceID.GetDebugStr().c_str());
 
-      if( _obsFaceID.IsValid() ) {
-        const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_obsFaceID);
+      if(_obsFaceID.IsValid() ) {
+        const Vision::TrackedFace* face = GetRobot().GetFaceWorld().GetFace(_obsFaceID);
         if( ANKI_VERIFY(nullptr != face,
                         "TurnTowardsFaceAction.FindTune.NullFace",
                         "id %s returned null",
                         _obsFaceID.GetDebugStr().c_str()) ) {
           // Valid face...        
-          _robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
+          GetRobot().GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
           Pose3d pose;
-          if(true == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), pose)) {
-            _robot.GetMoodManager().TriggerEmotionEvent("LookAtFaceVerified", MoodManager::GetCurrentTimeInSeconds());
+          if(true == face->GetHeadPose().GetWithRespectTo(GetRobot().GetPose(), pose)) {
+            GetRobot().GetMoodManager().TriggerEmotionEvent("LookAtFaceVerified", MoodManager::GetCurrentTimeInSeconds());
           
             // ... with valid pose w.r.t. robot. Turn towards that face -- iff it doesn't
             // require too large of an adjustment.
             const Radians maxFineTuneAngle( std::min( GetMaxTurnAngle().ToFloat(), DEG_TO_RAD(45.f)) );
-            SetAction(new TurnTowardsPoseAction(_robot, pose, maxFineTuneAngle));
+            SetAction(new TurnTowardsPoseAction(pose, maxFineTuneAngle));
           }
         } else {
           SetAction(nullptr);
@@ -2051,7 +2060,7 @@ namespace Anki {
         {
           result = TurnTowardsPoseAction::CheckIfDone();
           if(ActionResult::RUNNING != result) {
-            _robot.GetMoveComponent().UnlockTracks((u8)AnimTrackFlag::HEAD_TRACK |
+            GetRobot().GetMoveComponent().UnlockTracks((u8)AnimTrackFlag::HEAD_TRACK |
                                                    (u8)AnimTrackFlag::BODY_TRACK,
                                                    GetTag());
             _tracksLocked = false;
@@ -2066,7 +2075,7 @@ namespace Anki {
                                 "Will wait no more than %d frames",
                                 _maxFramesToWait);
               DEV_ASSERT(nullptr == _action, "TurnTowardsFaceAction.CheckIfDone.ActionPointerShouldStillBeNull");
-              SetAction(new WaitForImagesAction(_robot, _maxFramesToWait, VisionMode::DetectingFaces));
+              SetAction(new WaitForImagesAction(_maxFramesToWait, VisionMode::DetectingFaces));
               // TODO:(bn) parallel action with an animation here? This will let us span the gap a bit better
               // and buy us more time. Skipping for now
               _state = State::WaitingForFace;
@@ -2108,13 +2117,13 @@ namespace Anki {
             result = _action->Update();
             if(ActionResult::SUCCESS == result && _sayName)
             {
-              const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_obsFaceID);
+              const Vision::TrackedFace* face = GetRobot().GetFaceWorld().GetFace(_obsFaceID);
               if(nullptr != face) {
                 if( face->GetName().empty() ) {
                   if( _noNameTriggerCallback ) {
-                    AnimationTrigger noNameAnim = _noNameTriggerCallback(_robot, _obsFaceID);
+                    AnimationTrigger noNameAnim = _noNameTriggerCallback(GetRobot(), _obsFaceID);
                     if( noNameAnim != AnimationTrigger::Count ) {
-                      SetAction(new TriggerLiftSafeAnimationAction(_robot, noNameAnim));
+                      SetAction(new TriggerLiftSafeAnimationAction(noNameAnim));
                       _state = State::SayingName;
                       result = ActionResult::RUNNING;
                     }
@@ -2122,9 +2131,9 @@ namespace Anki {
                 }
                 else {
                   // we have a name
-                  SayTextAction* sayText = new SayTextAction(_robot, face->GetName(), SayTextIntent::Name_Normal);
+                  SayTextAction* sayText = new SayTextAction(face->GetName(), SayTextIntent::Name_Normal);
                   if( _sayNameTriggerCallback ) {
-                    AnimationTrigger sayNameAnim = _sayNameTriggerCallback(_robot, _obsFaceID);
+                    AnimationTrigger sayNameAnim = _sayNameTriggerCallback(GetRobot(), _obsFaceID);
                     if( sayNameAnim != AnimationTrigger::Count ) {
                       sayText->SetAnimationTrigger( sayNameAnim );
                     }
@@ -2148,7 +2157,7 @@ namespace Anki {
             // Wait for say name action to finish
             result = _action->Update();
             if( ActionResult::SUCCESS == result ) {
-              _robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::SayName);
+              GetRobot().GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::SayName);
             }
           }
             
@@ -2159,7 +2168,7 @@ namespace Anki {
 
       if( ActionResult::SUCCESS == result && _obsFaceID.IsValid() ) {
         // tell face world that we have successfully turned towards this face
-        _robot.GetFaceWorld().SetTurnedTowardsFace(_obsFaceID);
+        GetRobot().GetFaceWorld().SetTurnedTowardsFace(_obsFaceID);
       }
       
       return result;
@@ -2168,20 +2177,19 @@ namespace Anki {
 
 #pragma mark ---- TurnTowardsFaceWrapperAction ----
 
-    TurnTowardsFaceWrapperAction::TurnTowardsFaceWrapperAction(Robot& robot,
-                                                               IActionRunner* action,
+    TurnTowardsFaceWrapperAction::TurnTowardsFaceWrapperAction(IActionRunner* action,
                                                                bool turnBeforeAction,
                                                                bool turnAfterAction,
                                                                Radians maxTurnAngle,
                                                                bool sayName)
-    : CompoundActionSequential(robot)
+    : CompoundActionSequential()
     {
       if( turnBeforeAction ) {
-        AddAction( new TurnTowardsLastFacePoseAction(robot, maxTurnAngle, sayName) );
+        AddAction( new TurnTowardsLastFacePoseAction(maxTurnAngle, sayName) );
       }
       AddAction(action);
       if( turnAfterAction ) {
-        AddAction( new TurnTowardsLastFacePoseAction(robot, maxTurnAngle, sayName) ) ;
+        AddAction( new TurnTowardsLastFacePoseAction(maxTurnAngle, sayName) ) ;
       }
       
       // Use the action we're wrapping for the completion info and type
@@ -2190,9 +2198,8 @@ namespace Anki {
     
 #pragma mark ---- WaitAction ----
     
-    WaitAction::WaitAction(Robot& robot, f32 waitTimeInSeconds)
-    : IAction(robot,
-              "WaitSeconds",
+    WaitAction::WaitAction(f32 waitTimeInSeconds)
+    : IAction("WaitSeconds",
               RobotActionType::WAIT,
               (u8)AnimTrackFlag::NO_TRACKS)
     , _waitTimeInSeconds(waitTimeInSeconds)
@@ -2222,9 +2229,8 @@ namespace Anki {
     
 #pragma mark ---- WaitForImagesAction ----
     
-    WaitForImagesAction::WaitForImagesAction(Robot& robot, u32 numFrames, VisionMode visionMode, TimeStamp_t afterTimeStamp)
-    : IAction(robot,
-              "WaitFor" + std::to_string(numFrames) + "Images",
+    WaitForImagesAction::WaitForImagesAction(u32 numFrames, VisionMode visionMode, TimeStamp_t afterTimeStamp)
+    : IAction("WaitFor" + std::to_string(numFrames) + "Images",
               RobotActionType::WAIT_FOR_IMAGES,
               (u8)AnimTrackFlag::NO_TRACKS)
     , _numFramesToWaitFor(numFrames)
@@ -2267,7 +2273,7 @@ namespace Anki {
         }
       };
       
-      _imageProcSignalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotProcessedImage, imageProcLambda);
+      _imageProcSignalHandle = GetRobot().GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotProcessedImage, imageProcLambda);
       
       return ActionResult::SUCCESS;
     }
@@ -2287,13 +2293,12 @@ namespace Anki {
     
 #pragma mark ---- ReadToolCodeAction ----
     
-    ReadToolCodeAction::ReadToolCodeAction(Robot& robot, bool doCalibration)
-    : IAction(robot,
-              "ReadToolCode",
+    ReadToolCodeAction::ReadToolCodeAction(bool doCalibration)
+    : IAction("ReadToolCode",
               RobotActionType::READ_TOOL_CODE,
               (u8)AnimTrackFlag::NO_TRACKS)
     , _doCalibration(doCalibration)
-    , _headAndLiftDownAction(robot)
+    , _headAndLiftDownAction()
     {
       _toolCodeInfo.code = ToolCode::UnknownTool;
     }
@@ -2301,12 +2306,13 @@ namespace Anki {
     ActionResult ReadToolCodeAction::Init()
     {
       // Put the head and lift down for read
-      _headAndLiftDownAction.AddAction(new MoveHeadToAngleAction(_robot, MIN_HEAD_ANGLE));
-      _headAndLiftDownAction.AddAction(new MoveLiftToHeightAction(_robot, LIFT_HEIGHT_LOWDOCK, READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM));
-      
+      _headAndLiftDownAction.AddAction(new MoveHeadToAngleAction(MIN_HEAD_ANGLE));
+      _headAndLiftDownAction.AddAction(new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK, READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM));
+      _headAndLiftDownAction.SetRobot(&GetRobot());
+
       _state = State::WaitingToGetInPosition;
       
-      _toolReadSignalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotReadToolCode,
+      _toolReadSignalHandle = GetRobot().GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotReadToolCode,
          [this] (const AnkiEvent<ExternalInterface::MessageEngineToGame> &msg) {
            _toolCodeInfo = msg.GetData().Get_RobotReadToolCode().info;
            PRINT_CH_INFO("Actions", "ReadToolCodeAction.SignalHandler",
@@ -2319,8 +2325,10 @@ namespace Anki {
     
     ReadToolCodeAction::~ReadToolCodeAction()
     {
-      _robot.GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, false);
       _headAndLiftDownAction.PrepForCompletion();
+      if(HasRobot()){
+        GetRobot().GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, false);        
+      }
     }
     
     ActionResult ReadToolCodeAction::CheckIfDone()
@@ -2337,14 +2345,14 @@ namespace Anki {
           {
             result = ActionResult::RUNNING; // return value should still be running
             
-            Result setCalibResult = _robot.GetVisionComponent().EnableToolCodeCalibration(_doCalibration);
+            Result setCalibResult = GetRobot().GetVisionComponent().EnableToolCodeCalibration(_doCalibration);
             if(RESULT_OK != setCalibResult) {
               PRINT_CH_INFO("Actions", "ReadToolCodeAction.CheckIfDone.FailedToSetCalibration", "");
               result = ActionResult::FAILED_SETTING_CALIBRATION;
             } else {
               // Tell the VisionSystem thread to check the tool code in the next image it gets.
               // It will disable this mode when it completes.
-              _robot.GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, true);
+              GetRobot().GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, true);
               _state = State::WaitingForRead;
             }
           }

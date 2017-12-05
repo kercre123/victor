@@ -15,22 +15,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-// Behaviors:
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityBehaviorsOnly.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityBuildPyramid.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityExpressNeeds.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityFeeding.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityFreeplay.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityGatherCubes.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activitySocialize.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activitySparked.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityStrictPriority.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityVoiceCommand.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimOnNeedsChange.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequenceWithFace.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDrivePath.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindFaces.h"
@@ -88,6 +76,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorGuardDog.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPounceOnMotion.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPuzzleMaze.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorTrackLaser.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorEnrollFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorRespondToRenameFace.h"
@@ -113,6 +102,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToStackOfCubes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorObservingOnCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoFeeding.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoNapping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoObservingFaceInteraction.h"
@@ -170,8 +160,7 @@ BehaviorContainer::~BehaviorContainer()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorContainer::Init(BehaviorExternalInterface& behaviorExternalInterface,
-                             const bool shouldAddToActivatableScope)
+void BehaviorContainer::Init(BehaviorExternalInterface& behaviorExternalInterface)
 {
   /**auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   if(externalInterface != nullptr) {
@@ -183,11 +172,6 @@ void BehaviorContainer::Init(BehaviorExternalInterface& behaviorExternalInterfac
   
   for(auto& behaviorMap: _idToBehaviorMap){
     behaviorMap.second->Init(behaviorExternalInterface);
-    // To support old behavior manager functionality, have all behaviors be within
-    // "activatable" scope since the old behavior manager isn't aware of this state
-    if(shouldAddToActivatableScope){
-      behaviorMap.second->OnEnteredActivatableScope();
-    }
   }
 }
 
@@ -211,14 +195,13 @@ ICozmoBehaviorPtr BehaviorContainer::FindBehaviorByID(BehaviorID behaviorID) con
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr BehaviorContainer::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
 {
-  for(const auto behavior : _idToBehaviorMap)
+  for (const auto & behavior : _idToBehaviorMap)
   {
-    if(behavior.second->GetExecutableType() == type)
+    if (behavior.second->GetExecutableType() == type)
     {
       return behavior.second;
     }
   }
-  
   return nullptr;
 }
 
@@ -294,56 +277,6 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
   
   switch (behaviorType)
   {
-    case BehaviorClass::Activity_BehaviorsOnly:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityBehaviorsOnly(config));
-      break;
-    }
-    case BehaviorClass::Activity_BuildPyramid:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityBuildPyramid(config));
-      break;
-    }
-    case BehaviorClass::Activity_Feeding:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityFeeding(config));
-      break;
-    }
-    case BehaviorClass::Activity_Freeplay:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityFreeplay(config));
-      break;
-    }
-    case BehaviorClass::Activity_GatherCubes:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityGatherCubes(config));
-      break;
-    }
-    case BehaviorClass::Activity_Socialize:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivitySocialize(config));
-      break;
-    }
-    case BehaviorClass::Activity_Sparked:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivitySparked(config));
-      break;
-    }
-    case BehaviorClass::Activity_StrictPriority:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityStrictPriority(config));
-      break;
-    }
-    case BehaviorClass::Activity_VoiceCommand:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityVoiceCommand(config));
-      break;
-    }
-    case BehaviorClass::Activity_NeedsExpression:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityExpressNeeds(config));
-      break;
-    }
     case BehaviorClass::Wait:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorWait(config));
@@ -372,11 +305,6 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::PlayAnimWithFace:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPlayAnimSequenceWithFace(config));
-      break;
-    }
-    case BehaviorClass::PlayArbitraryAnim:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorPlayArbitraryAnim(config));
       break;
     }
     case BehaviorClass::PounceOnMotion:
@@ -635,6 +563,12 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
       newBehavior = ICozmoBehaviorPtr(new BehaviorPlayAnimOnNeedsChange(config));
       break;
     }
+      
+    case BehaviorClass::PuzzleMaze:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPuzzleMaze(config));
+      break;
+    }
 
     case BehaviorClass::DevPettingTestSimple:
     {
@@ -802,6 +736,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::VictorDemoNapping:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorVictorDemoNapping(config));
+      break;
+    }
+    case BehaviorClass::ObservingOnCharger:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorObservingOnCharger(config));
       break;
     }
   }

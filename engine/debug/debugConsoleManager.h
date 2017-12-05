@@ -30,20 +30,27 @@ class AnkiEvent;
 namespace ExternalInterface {
   class MessageGameToEngine;
 }
+  
+namespace RobotInterface {
+  class MessageHandler;
+}
+  
 class CozmoEngineHostImpl;
 class IExternalInterface;
+  
   
 class DebugConsoleManager
 {
 //----------------------------------------------------------------------------------------------------------------------------
 public:
-  void Init( IExternalInterface* externalInterface );
+  void Init( IExternalInterface* externalInterface, RobotInterface::MessageHandler* robotInterface );
   void HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
 //----------------------------------------------------------------------------------------------------------------------------
 private:
   void SendAllDebugConsoleVars();
   std::vector<Signal::SmartHandle> _signalHandles;
   IExternalInterface* _externalInterface = nullptr;
+  RobotInterface::MessageHandler* _robotInterface = nullptr;
 };
   
 

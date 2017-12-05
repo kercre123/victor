@@ -32,6 +32,7 @@ class DoATrickSelector;
 class FeedingSoundEffectManager;
 class FreeplayDataTracker;
 class ObjectInteractionInfoCache;
+class PuzzleComponent;
 class RequestGameComponent;
 class Robot;
 class SevereNeedsComponent;
@@ -84,6 +85,9 @@ public:
   inline const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
   inline AIWhiteboard& GetNonConstWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
   inline AIWhiteboard&       GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
+  
+  inline const PuzzleComponent& GetPuzzleComponent() const { assert(_puzzleComponent); return *_puzzleComponent; }
+  inline PuzzleComponent&       GetPuzzleComponent()       { assert(_puzzleComponent); return *_puzzleComponent; }
   
   inline const WorkoutComponent& GetWorkoutComponent() const { assert(_workoutComponent); return *_workoutComponent; }
   inline WorkoutComponent&       GetWorkoutComponent()       { assert(_workoutComponent); return *_workoutComponent; }
@@ -161,10 +165,10 @@ private:
   // component for tracking severe needs states
   std::unique_ptr<SevereNeedsComponent> _severeNeedsComponent;
   
+  // component for tracking cozmo's puzzle behaviors
+  std::unique_ptr< PuzzleComponent >      _puzzleComponent;
+  
   void CheckForSuddenObstacle(Robot& robot);
-
-  Result UpdateBehaviorManager(Robot& robot, std::string& currentActivityName,
-                                             std::string& behaviorDebugStr);  
 };
 
 }

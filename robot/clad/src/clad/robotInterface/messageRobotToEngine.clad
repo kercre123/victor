@@ -15,7 +15,6 @@
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/robotInterface/messageFromAnimProcess.clad"
-#include "clad/types/animationEvents.clad"
 #include "clad/types/pathEventTypes.clad"
 #include "clad/types/factoryFWOnly.clad"
 
@@ -40,6 +39,15 @@ message RobotPoked
 // Indicates the robot has heard the trigger word
 message TriggerWordDetected
 {
+  uint_32 timestamp,
+  uint_16 direction
+}
+
+message MicDirection
+{
+  uint_32 timestamp,
+  uint_16 direction,
+  int_16  confidence
 }
 
 // This message indicates that the robot experienced a freefall event
@@ -61,32 +69,6 @@ message PathFollowingEvent
   PathEventType  eventType
 }
 
-message AnimationAvailable {
-  uint_32 id,
-  string  name
-}
-
-// These two messages bookend animations as they are played on the robot
-message AnimationStarted
-{
-  uint_32 id,
-  uint_8  tag
-}
-
-message AnimationEnded
-{
-  uint_32 id,
-  uint_8  tag,
-  bool    wasAborted
-}
-
-message AnimationEvent
-{
-  uint_32   timestamp,
-  uint_8    tag,
-  AnimEvent event_id
-}
-
 message ManufacturingID
 { // See definitions in syscon/hal/hardware.h
   uint_32 esn,
@@ -102,7 +84,8 @@ message LiftLoad
 message MicData
 {
   int_16  data[480], // 120 samples of audio 4 channels
-  uint_32 sequenceID
+  uint_32 sequenceID,
+  uint_32 timestamp
 }
 
 /// *************** Overall message pipe ******************************* ///
@@ -172,10 +155,10 @@ union RobotToEngine {
   AnimationEvent             animEvent              = 0xD5,
   AnimationStarted           animStarted            = 0xD6,
   AnimationEnded             animEnded              = 0xD7,
-  EndOfMessage               endOfMessage           = 0xD8,
 
   // Messages relating to trigger word detection
   TriggerWordDetected        triggerWordDetected    = 0xD9,
+  MicDirection               micDirection           = 0xDA,
 
   // Audio
   AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,
@@ -191,8 +174,7 @@ union RobotToEngine {
   MicData                    micData                = 0xF2,
 
   // From anim process  
-  AnimationAvailable         animationAvailable     = 0xF3,
-  AnimationState             animState              = 0xF4,
+  AnimationState             animState              = 0xF3,
 
   // TODO: These cube messages will need to be modified and moved to a 
   //       separate file once we update block connection logic for BLE

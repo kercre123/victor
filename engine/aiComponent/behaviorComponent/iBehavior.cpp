@@ -79,20 +79,18 @@ void IBehavior::OnEnteredActivatableScope()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::Update(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  if(USE_BSM){
-    AssertNotActivationState_DevOnly(ActivationState::NotInitialized);
-    AssertNotActivationState_DevOnly(ActivationState::OutOfScope);
-  
-    // Ensure update is ticked every tick while in activatable scope
-    const size_t tickCount = BaseStationTimer::getInstance()->GetTickCount();
-    DEV_ASSERT_MSG(_lastTickOfUpdate == (tickCount - kBSTickInterval),
-                   "IBehavior.Update.TickCountMismatch",
-                   "Behavior '%s' is receiving tick on %zu, but hasn't been ticked since %zu",
-                   _idString.c_str(),
-                   tickCount,
-                   _lastTickOfUpdate);
-    _lastTickOfUpdate = tickCount;
-  }
+  AssertNotActivationState_DevOnly(ActivationState::NotInitialized);
+  AssertNotActivationState_DevOnly(ActivationState::OutOfScope);
+
+  // Ensure update is ticked every tick while in activatable scope
+  const size_t tickCount = BaseStationTimer::getInstance()->GetTickCount();
+  DEV_ASSERT_MSG(_lastTickOfUpdate == (tickCount - kBSTickInterval),
+                "IBehavior.Update.TickCountMismatch",
+                "Behavior '%s' is receiving tick on %zu, but hasn't been ticked since %zu",
+                _idString.c_str(),
+                tickCount,
+                _lastTickOfUpdate);
+  _lastTickOfUpdate = tickCount;
   
   UpdateInternal(behaviorExternalInterface);
 }
@@ -101,10 +99,8 @@ void IBehavior::Update(BehaviorExternalInterface& behaviorExternalInterface)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::WantsToBeActivated(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  if(USE_BSM){
-    AssertActivationState_DevOnly(ActivationState::InScope);
-    _lastTickWantsToBeActivatedCheckedOn = BaseStationTimer::getInstance()->GetTickCount();
-  }
+  AssertActivationState_DevOnly(ActivationState::InScope);
+  _lastTickWantsToBeActivatedCheckedOn = BaseStationTimer::getInstance()->GetTickCount();
   return WantsToBeActivatedInternal(behaviorExternalInterface);
 }
 
@@ -112,17 +108,15 @@ bool IBehavior::WantsToBeActivated(BehaviorExternalInterface& behaviorExternalIn
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::OnActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  if(USE_BSM){
-    AssertActivationState_DevOnly(ActivationState::InScope);
+  AssertActivationState_DevOnly(ActivationState::InScope);
 
-    const size_t tickCount = BaseStationTimer::getInstance()->GetTickCount();
-    DEV_ASSERT_MSG(tickCount == _lastTickWantsToBeActivatedCheckedOn,
-                   "IBehavior.OnActivated.WantsToRunNotCheckedThisTick",
-                   "Attempted to activate %s on tick %zu, but wants to run was last checked on %zu",
-                   _idString.c_str(),
-                   tickCount,
-                   _lastTickWantsToBeActivatedCheckedOn);
-  }
+  const size_t tickCount = BaseStationTimer::getInstance()->GetTickCount();
+  DEV_ASSERT_MSG(tickCount == _lastTickWantsToBeActivatedCheckedOn,
+                  "IBehavior.OnActivated.WantsToRunNotCheckedThisTick",
+                  "Attempted to activate %s on tick %zu, but wants to run was last checked on %zu",
+                  _idString.c_str(),
+                  tickCount,
+                  _lastTickWantsToBeActivatedCheckedOn);
   
   SetActivationState_DevOnly(ActivationState::Activated);
   OnActivatedInternal(behaviorExternalInterface);
@@ -132,9 +126,7 @@ void IBehavior::OnActivated(BehaviorExternalInterface& behaviorExternalInterface
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::OnDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  if(USE_BSM){
-    AssertActivationState_DevOnly(ActivationState::Activated);
-  }
+  AssertActivationState_DevOnly(ActivationState::Activated);
   
   SetActivationState_DevOnly(ActivationState::InScope);
   OnDeactivatedInternal(behaviorExternalInterface);

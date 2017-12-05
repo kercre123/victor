@@ -21,9 +21,8 @@
 #include "engine/actions/basicActions.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -39,7 +38,6 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-static const char* kBehaviorTestName = "Factory centroid extractor";
 }
 
   // Backpack lights
@@ -86,9 +84,7 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
 
   Result BehaviorFactoryCentroidExtractor::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
     std::stringstream serialNumString;
     serialNumString << std::hex << robot.GetHeadSerialNumber();
     _factoryTestLogger.StartLog(serialNumString.str() + "_centroids", true, robot.GetContextDataPlatform());
@@ -101,11 +97,6 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
     _liftCalibrated = false;
     
     robot.GetActionList().Cancel();
-    
-    // Disable reactionary behaviors
-    robot.GetBehaviorManager().DisableReactionsWithLock(
-                                   kBehaviorTestName,
-                                   ReactionTriggerHelpers::GetAffectAllArray());
         
     // Start motor calibration
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
@@ -132,7 +123,7 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
   
   void BehaviorFactoryCentroidExtractor::TransitionToMovingHead(Robot& robot)
   {
-    MoveHeadToAngleAction* action = new MoveHeadToAngleAction(robot, 0);
+    MoveHeadToAngleAction* action = new MoveHeadToAngleAction(0);
     DelegateIfInControl(action, [this, &robot](ActionResult res)
                 {
                   if(res == ActionResult::SUCCESS)
@@ -151,9 +142,7 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
   
   void BehaviorFactoryCentroidExtractor::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
     if(event.GetData().GetTag() == EngineToGameTag::RobotCompletedFactoryDotTest)
     {
       const auto& msg = event.GetData().Get_RobotCompletedFactoryDotTest();

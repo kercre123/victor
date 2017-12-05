@@ -18,10 +18,10 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/retryWrapperAction.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/blockWorld/blockConfiguration.h"
@@ -33,7 +33,6 @@
 #include "engine/components/movementComponent.h"
 #include "engine/cozmoObservableObject.h"
 #include "engine/namedColors/namedColors.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "clad/types/unlockTypes.h"
@@ -88,11 +87,9 @@ bool BehaviorBuildPyramidBase::WantsToBeActivatedBehavior(BehaviorExternalInterf
 Result BehaviorBuildPyramidBase::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   ResetMemberVars();
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
-  if(!robot.GetCarryingComponent().IsCarryingObject()){
+  if(!robotInfo.GetCarryingComponent().IsCarryingObject()){
     TransitionToDrivingToBaseBlock(behaviorExternalInterface);
   }else{
     TransitionToPlacingBaseBlock(behaviorExternalInterface);
@@ -155,11 +152,6 @@ ICozmoBehavior::Status BehaviorBuildPyramidBase::UpdateInternal_WhileRunning(Beh
 void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(DrivingToBaseBlock);
-  std::vector<BehaviorStateLightInfo> basePersistantLight;
-  basePersistantLight.push_back(
-    BehaviorStateLightInfo(_baseBlockID, CubeAnimationTrigger::PyramidSingle)
-  );
-  SetBehaviorStateLights(basePersistantLight, false);
   
   auto success = [this](BehaviorExternalInterface& behaviorExternalInterface){
     TransitionToPlacingBaseBlock(behaviorExternalInterface);
@@ -179,8 +171,6 @@ void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock(BehaviorExternalIn
 void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(PlacingBaseBlock);
-  std::vector<BehaviorStateLightInfo> basePersistantLight;
-  SetBehaviorStateLights(basePersistantLight, false);
   
   const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
   if(nullptr == object)
@@ -215,13 +205,10 @@ void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(BehaviorExternalInte
 void BehaviorBuildPyramidBase::TransitionToObservingBase(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(ObservingBase);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(new DriveStraightAction(robot, -kDriveBackDistance_mm, kDriveBackSpeed_mm_s));
-  action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BuildPyramidReactToBase));
+  CompoundActionSequential* action = new CompoundActionSequential();
+  action->AddAction(new DriveStraightAction(-kDriveBackDistance_mm, kDriveBackSpeed_mm_s));
+  action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::BuildPyramidReactToBase));
 
   DelegateIfInControl(action,
               [this, &behaviorExternalInterface]{
@@ -299,10 +286,9 @@ void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets(BehaviorExternalInter
                            {entry.first, entry.second, -blockSize.z()},
                            zRotatedPose);
       f32 newDistSquared;
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
-      ComputeDistanceSQBetween(robot.GetPose(), potentialPose, newDistSquared);
+
+      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      ComputeDistanceSQBetween(robotInfo.GetPose(), potentialPose, newDistSquared);
       
       if(newDistSquared < nearestDistanceSQ){
         nearestDistanceSQ = newDistSquared;

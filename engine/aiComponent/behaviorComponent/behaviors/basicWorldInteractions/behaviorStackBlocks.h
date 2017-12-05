@@ -23,7 +23,6 @@ namespace Cozmo {
 
 class BlockWorldFilter;
 class ObservableObject;
-class Robot;
 
 class BehaviorStackBlocks : public ICozmoBehavior
 {

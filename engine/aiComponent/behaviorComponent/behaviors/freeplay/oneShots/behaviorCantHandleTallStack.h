@@ -22,8 +22,6 @@
 namespace Anki {
 namespace Cozmo {
 
-class Robot;
-
 class BehaviorCantHandleTallStack : public ICozmoBehavior
 {
 protected:

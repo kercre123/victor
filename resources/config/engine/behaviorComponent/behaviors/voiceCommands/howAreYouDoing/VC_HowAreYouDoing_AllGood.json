@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "PlayAnimWithFace",
-  "behaviorID": "VC_HowAreYouDoing_AllGood",
-  "displayNameKey":"behavior.VC_HowAreYouDoing_AllGood",
-  "animTriggers": ["VC_HowAreYouDoing_AllGood"]
-}

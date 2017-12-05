@@ -38,7 +38,7 @@ class DrivePathAction : public IAction
 public:
   // NOTE: this action does not support custom motion profiles from the path component. It will always
   // execute the given path at the speed specified in path.
-  DrivePathAction(Robot& robot, const Planning::Path& path);
+  DrivePathAction(const Planning::Path& path);
   
 protected:
   virtual ActionResult Init() override;
@@ -46,7 +46,6 @@ protected:
   
   
 private:
-  Robot& _robot;
   Planning::Path _path;
   std::vector<Signal::SmartHandle> _signalHandles;
   

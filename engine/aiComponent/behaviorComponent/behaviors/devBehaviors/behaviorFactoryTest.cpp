@@ -28,9 +28,9 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/carryingComponent.h"
@@ -65,7 +65,6 @@
 namespace Anki {
 namespace Cozmo {
 namespace{
-static const char* kBehaviorTestName = "Behavior factory test";
 }
 
   ////////////////////////////
@@ -209,7 +208,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
   
   void BehaviorFactoryTest::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
   {
-    _robot = &behaviorExternalInterface.GetRobot();
+    _robot = &behaviorExternalInterface.GetRobotInfo()._robot;
     assert(_robot);
     RobotID_t robotId = _robot->GetID();
     
@@ -252,9 +251,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
   
   Result BehaviorFactoryTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
     const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
     Result lastResult = RESULT_OK;
@@ -315,11 +312,6 @@ static const char* kBehaviorTestName = "Behavior factory test";
     driveAnimsMsg.varName = "EnableDrivingAnimations";
     driveAnimsMsg.tryValue = "false";
     robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetDebugConsoleVarMessage>(std::move(driveAnimsMsg));
-    
-    // Disable reactionary behaviors
-    robot.GetBehaviorManager().DisableReactionsWithLock(
-                                 kBehaviorTestName,
-                                 ReactionTriggerHelpers::GetAffectAllArray());
     
     // Only enable vision modes we actually need
     // NOTE: we do not (yet) restore vision modes afterwards!
@@ -694,9 +686,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
   
   ICozmoBehavior::Status BehaviorFactoryTest::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
     #define END_TEST(ERRCODE) EndTest(robot, ERRCODE); return Status::Running;
     
     if(!ENABLE_FACTORY_TEST)
@@ -879,9 +869,9 @@ static const char* kBehaviorTestName = "Behavior factory test";
         
         
         // Move lift to correct height and head to correct angle
-        CompoundActionParallel* headAndLiftAction = new CompoundActionParallel(robot, {
-          new MoveLiftToHeightAction(robot, LIFT_HEIGHT_CARRY),
-          new MoveHeadToAngleAction(robot, DEG_TO_RAD(2.f)),
+        CompoundActionParallel* headAndLiftAction = new CompoundActionParallel({
+          new MoveLiftToHeightAction(LIFT_HEIGHT_CARRY),
+          new MoveHeadToAngleAction(DEG_TO_RAD(2.f)),
         });
         DelegateIfInControl(headAndLiftAction,
                     [this,&robot](ActionResult result){
@@ -899,7 +889,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
                       
                       // Play sound
                       if (kBFT_PlaySound) {
-                        PlayAnimationAction* soundAction = new PlayAnimationAction(robot, "soundTestAnim");
+                        PlayAnimationAction* soundAction = new PlayAnimationAction("soundTestAnim");
                         DelegateIfInControl(soundAction,
                                     [this,&robot](ActionResult result){
                                       if (result != ActionResult::SUCCESS) {
@@ -963,11 +953,11 @@ static const char* kBehaviorTestName = "Behavior factory test";
           // 1) Drive off charger towards slot.
           // 2) Move head down slowly. If head is stiff, hopefully this will catch it
           //    by triggering a motor calibration.
-          auto driveAction = new DriveStraightAction(robot, 250, 100);
-          auto headAction = new MoveHeadToAngleAction(robot, MAX_HEAD_ANGLE);
-          auto liftAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
+          auto driveAction = new DriveStraightAction(250, 100);
+          auto headAction = new MoveHeadToAngleAction(MAX_HEAD_ANGLE);
+          auto liftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
           headAction->SetMaxSpeed(DEG_TO_RAD(20.f));
-          CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {driveAction, headAction, liftAction});
+          CompoundActionParallel* compoundAction = new CompoundActionParallel({driveAction, headAction, liftAction});
           
           DelegateIfInControl(compoundAction,
                       [this](ActionResult result){
@@ -1025,7 +1015,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         // Force the robot to delocalize to reset pose
         robot.Delocalize(false);
         
-        DriveStraightAction* action = new DriveStraightAction(robot, -_kBackupFromCliffDist_mm, 100);
+        DriveStraightAction* action = new DriveStraightAction(-_kBackupFromCliffDist_mm, 100);
         action->SetAccel(1000);
         action->SetDecel(1000);
         
@@ -1102,7 +1092,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         if (!robot.GetMoveComponent().IsMoving()) {
           // NOTE: "-1" is due to initial image take on the charger, which has no stored pose in _camCalibPoseIndex
           if (robot.GetVisionComponent().GetNumStoredCameraCalibrationImages()-1 == _camCalibPoseIndex) {
-            PanAndTiltAction *ptAction = new PanAndTiltAction(robot,
+            PanAndTiltAction *ptAction = new PanAndTiltAction(
                                                               _camCalibPanAndTiltAngles[_camCalibPoseIndex].first,
                                                               _camCalibPanAndTiltAngles[_camCalibPoseIndex].second,
                                                               true,
@@ -1125,7 +1115,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         // Update _expectedLightCubePose parent since we delocalized since it was set
         _expectedLightCubePose.SetParent(robot.GetWorldOrigin());
         // Turn towards block
-        TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(robot, _expectedLightCubePose, M_PI_2_F);
+        TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(_expectedLightCubePose, M_PI_2_F);
         DelegateIfInControl(turnAction);
 
         
@@ -1246,7 +1236,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
           }
         
           
-          ReadToolCodeAction* toolCodeAction = new ReadToolCodeAction(robot, false);
+          ReadToolCodeAction* toolCodeAction = new ReadToolCodeAction(false);
           
           // Read lift tool code
           DelegateIfInControl(toolCodeAction,
@@ -1378,9 +1368,9 @@ static const char* kBehaviorTestName = "Behavior factory test";
         
         
         // Goto predock pose and then turn towards the block again for good alignment
-        DriveToPoseAction* driveAction = new DriveToPoseAction(robot, _closestPredockPose, false);
-        TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(robot, blockPose, M_PI_2_F);
-        CompoundActionSequential* compoundAction = new CompoundActionSequential(robot, {driveAction, turnAction});
+        DriveToPoseAction* driveAction = new DriveToPoseAction(_closestPredockPose, false);
+        TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(blockPose, M_PI_2_F);
+        CompoundActionSequential* compoundAction = new CompoundActionSequential({driveAction, turnAction});
         
         DelegateIfInControl(compoundAction,
                     [](ActionResult result){
@@ -1506,7 +1496,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         // Pickup block
         PRINT_NAMED_INFO("BehaviorFactory.Update.PickingUp", "Attempt %d", _attemptCounter);
         ++_attemptCounter;
-        PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectID);
+        PickupObjectAction* action = new PickupObjectAction(_blockObjectID);
         action->SetShouldCheckForObjectOnTopOf(false);
         DelegateIfInControl(action,
                     pickupCallback);
@@ -1545,7 +1535,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         };
         
         // Put block down
-        PlaceObjectOnGroundAction* action = new PlaceObjectOnGroundAction(robot);
+        PlaceObjectOnGroundAction* action = new PlaceObjectOnGroundAction();
         DelegateIfInControl(action,
                     placementCallback);
         ++_numPlacementAttempts;
@@ -1557,7 +1547,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
       case FactoryTestState::PlacingBlock:
       {
         // Play animation that backs up 3 times. If there's a sticky wheel hopefully this cause some turns.
-        auto action = new PlayAnimationAction(robot, "anim_triple_backup");
+        auto action = new PlayAnimationAction("anim_triple_backup");
         DelegateIfInControl(action);
         
         SetCurrState(FactoryTestState::BackAndForth);
@@ -1688,9 +1678,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
     }
     
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
       EndTest(robot, FactoryTestResultCode::TEST_CANCELLED);
     }
   }
@@ -1698,9 +1686,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
   
   void BehaviorFactoryTest::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
     switch(event.GetData().GetTag())
     {
       case EngineToGameTag::RobotObservedObject:

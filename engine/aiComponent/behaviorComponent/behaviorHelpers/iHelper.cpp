@@ -21,11 +21,11 @@
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/robot.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "util/logging/logging.h"
@@ -341,14 +341,16 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(BehaviorExternalIn
   
   if(actionType == PreActionPose::ActionType::PLACE_RELATIVE)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     std::vector<Pose3d> possiblePoses_unused;
     PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(object,
                                                            offsetX_mm,
                                                            offsetY_mm,
-                                                           robot,
+                                                           robotInfo.GetPose(),
+                                                           robotInfo.GetWorldOrigin(),
+                                                           robotInfo.GetCarryingComponent(),
+                                                           behaviorExternalInterface.GetBlockWorld(),
+                                                           behaviorExternalInterface.GetVisionComponent(),
                                                            possiblePoses_unused,
                                                            alreadyInPosition);
   }
@@ -364,10 +366,11 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(BehaviorExternalIn
     
     IDockAction::PreActionPoseOutput preActionPoseOutput;
     
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    IDockAction::GetPreActionPoses(robot, preActionPoseInput, preActionPoseOutput);
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    IDockAction::GetPreActionPoses(robotInfo.GetPose(),
+                                   robotInfo.GetCarryingComponent(),
+                                   behaviorExternalInterface.GetBlockWorld(),
+                                   preActionPoseInput, preActionPoseOutput);
     
     if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
     {
@@ -404,10 +407,7 @@ void IHelper::RespondToActionWithAnim(const T& res, ActionResult actionResult,
       AnimationTrigger responseAnim = AnimationResponseToActionResult(behaviorExternalInterface, userResult);
       if(responseAnim != AnimationTrigger::Count)
       {
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        Robot& robot = behaviorExternalInterface.GetRobot();
-        DelegateIfInControl(new TriggerAnimationAction(robot, responseAnim),
+        DelegateIfInControl(new TriggerAnimationAction(responseAnim),
                     [res, &callback](ActionResult animPlayed, BehaviorExternalInterface& behaviorExternalInterface){
                       // Pass through the true action result, not the played animation result
                       auto tmpCallback = callback;

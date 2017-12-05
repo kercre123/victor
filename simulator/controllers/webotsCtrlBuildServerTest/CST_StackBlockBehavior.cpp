@@ -12,8 +12,7 @@
 
 #include "engine/robot.h"
 #include "simulator/game/cozmoSimTestController.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
-
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -35,7 +34,7 @@ enum class TestState {
   TestDone
 };
 
-static const BehaviorID kBehaviorID = BehaviorID::StackBlocks;
+static const BehaviorID kBehaviorID = BEHAVIOR_ID(StackBlocks);
 
 namespace {
   static const Pose3d kidnapCubePose(M_PI_F, Z_AXIS_3D(), {40.0, -150.0, 22.0});
@@ -100,9 +99,8 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
 
       // try to start the behavior now, it shouldn't start for a while
       SendMessage(ExternalInterface::MessageGameToEngine(
-                    ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
-      SendMessage(ExternalInterface::MessageGameToEngine(
-                    ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(kBehaviorID), -1)));
+                    ExternalInterface::ExecuteBehaviorByID(
+                      BehaviorTypesWrapper::BehaviorIDToString(kBehaviorID), -1)));
           
       SendMoveHeadToAngle(0, 100, 100);
       SET_TEST_STATE(WaitForCubeConnections);
@@ -327,7 +325,8 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
                                             NEAR( ABS(pose2.GetTranslation().z() - pose1.GetTranslation().z()), 44.0f, 10.0f)) {
         // Cancel the stack behavior:
         SendMessage(ExternalInterface::MessageGameToEngine(
-                       ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::Wait), -1)));
+                       ExternalInterface::ExecuteBehaviorByID(
+                         BehaviorTypesWrapper::BehaviorIDToString(BEHAVIOR_ID(Wait)), -1)));
         SET_TEST_STATE(TestDone)
       }
       break;

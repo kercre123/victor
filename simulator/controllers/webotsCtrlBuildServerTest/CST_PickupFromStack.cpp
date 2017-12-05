@@ -12,7 +12,7 @@
 
 #include "engine/robot.h"
 #include "simulator/game/cozmoSimTestController.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -92,16 +92,13 @@ s32 CST_PickupFromStack::UpdateSimInternal()
       CST_ASSERT(unlock != UnlockId::Count, "couldn't get valid unlock id");
       SendMessage( ExternalInterface::MessageGameToEngine(
                      ExternalInterface::RequestSetUnlock(unlock, true)));
-
-      // try to start the behavior now, it shouldn't start for a while
-      SendMessage(ExternalInterface::MessageGameToEngine(
-                    ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
           
       SendMoveHeadToAngle(0, 100, 100);
       
       // Cancel the stack behavior:
       SendMessage(ExternalInterface::MessageGameToEngine(
-                     ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::Wait), -1)));
+                     ExternalInterface::ExecuteBehaviorByID(
+                       BehaviorTypesWrapper::BehaviorIDToString(BEHAVIOR_ID(Wait)), -1)));
 
       // Give one tick for world to load in
       SET_TEST_STATE(WaitForCubeConnections);

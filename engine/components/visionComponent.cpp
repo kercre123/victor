@@ -910,16 +910,20 @@ namespace Cozmo {
           if(kDebugImageCompressQuality > 0)
           {
             // Send any images in the debug image lists to Viz for display
+            // Resize to fit display, but don't if it would make the image larger (to save bandwidth)
+            const bool kOnlyResizeIfSmaller = true;
+            const s32  kDisplayNumRows = 360; // TODO: Get these from VizManager perhaps?
+            const s32  kDisplayNumCols = 640; //   "
             for(auto & debugGray : result.debugImages) {
               debugGray.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
-              // This is the size currently used by Webots
-              debugGray.second.ResizeKeepAspectRatio(360, 640);
+              debugGray.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
+                                                     Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
               CompressAndSendImage(debugGray.second, kDebugImageCompressQuality, debugGray.first);
             }
             for(auto & debugRGB : result.debugImageRGBs) {
               debugRGB.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
-              // This is the size currently used by Webots
-              debugRGB.second.ResizeKeepAspectRatio(360, 640);
+              debugRGB.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
+                                                    Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
               CompressAndSendImage(debugRGB.second, kDebugImageCompressQuality, debugRGB.first);
             }
           }

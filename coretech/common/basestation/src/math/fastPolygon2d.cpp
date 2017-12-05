@@ -70,6 +70,10 @@ bool FastPolygon::Contains(float x, float y) const
   // the goal here is to throw out points as quickly as
   // possible. First compute the squared distance to the center, and
   // do circle checks
+  
+#if USE_LINESEGMENT_CHECKS 
+  return Contains_Assumptionless(Point2f(x,y));
+#else
 
 #ifndef NDEBUG
   _numChecks++;
@@ -120,11 +124,17 @@ bool FastPolygon::Contains(float x, float y) const
 
   // was inside of outer circle, and inside of all edges, so is inside
   return true;
+
+#endif
 }
 
 bool FastPolygon::Contains(const Point2f& pt) const
-{
+{  
+#if USE_LINESEGMENT_CHECKS 
+  return Contains_Assumptionless(pt);
+#else
   return Contains(pt.x(), pt.y());
+#endif
 }
 
 
@@ -162,37 +172,45 @@ void FastPolygon::ComputeCircles()
   // circumscribing radius. Also compute the distance to the closest
   // point on each line (using the perpendicular edge vectors) and the
   // minimum of those is the inscribing radius
-  assert(!_perpendicularEdgeVectors.empty());
 
   _circumscribedRadiusSquared = 0.0f;
   _inscribedRadiusSquared = FLT_MAX;
 
   size_t numPts = _poly.size();
-  assert(_perpendicularEdgeVectors.size() == numPts);
+  assert(_perpendicularEdgeVectors.size() <= numPts);
 
-  for(size_t i = 0; i < numPts; ++i) {
-    float distanceToPointSquared =
-      std::pow( _poly[i].x() - _circleCenter.x(), 2 ) +
-      std::pow( _poly[i].y() - _circleCenter.y(), 2 );
+  if (numPts > 2)
+  {
+    for(size_t i = 0; i < numPts; ++i) {
+      float distanceToPointSquared =
+        std::pow( _poly[i].x() - _circleCenter.x(), 2 ) +
+        std::pow( _poly[i].y() - _circleCenter.y(), 2 );
 
-    if( distanceToPointSquared > _circumscribedRadiusSquared ) {
-      _circumscribedRadiusSquared = distanceToPointSquared;
-    }
+      if( distanceToPointSquared > _circumscribedRadiusSquared ) {
+        _circumscribedRadiusSquared = distanceToPointSquared;
+      }
 
-    size_t pointIdx = _perpendicularEdgeVectors[i].second;
+      size_t pointIdx = _perpendicularEdgeVectors[i].second;
 
-    float distanceToEdgeSquared = std::pow(
-      Anki::DotProduct( _perpendicularEdgeVectors[i].first, _circleCenter - _poly[pointIdx] ),
-      2);
-    if(distanceToEdgeSquared < _inscribedRadiusSquared) {
-      _inscribedRadiusSquared = distanceToEdgeSquared;
-    }
+      float distanceToEdgeSquared = std::pow(
+        Anki::DotProduct( _perpendicularEdgeVectors[i].first, _circleCenter - _poly[pointIdx] ),
+        2);
+      if(distanceToEdgeSquared < _inscribedRadiusSquared) {
+        _inscribedRadiusSquared = distanceToEdgeSquared;
+      }
+    } 
+  } 
+  else 
+  {
+    const Point2f line = _poly.GetEdgeVector(0);
+    _circumscribedRadiusSquared = std::pow( line.x(), 2 ) + std::pow( line.y(), 2 );
+    _inscribedRadiusSquared = 0;
   }
 
-  assert(_circumscribedRadiusSquared > 0.0f);
+  assert(_circumscribedRadiusSquared >= 0.0f);
   assert(_inscribedRadiusSquared >= 0.0f);
 
-  if( _inscribedRadiusSquared >= _circumscribedRadiusSquared ) {
+  if( _inscribedRadiusSquared > _circumscribedRadiusSquared ) {
     CoreTechPrint("ERROR: inscribed radius of %f is >= circumscribed radius of %f\n",
                   _inscribedRadiusSquared,
                   _circumscribedRadiusSquared);
@@ -202,16 +220,22 @@ void FastPolygon::ComputeCircles()
 void FastPolygon::CreateEdgeVectors()
 {
   _perpendicularEdgeVectors.clear();
+  _edgeSegments.clear();  
 
   size_t numPts = _poly.size();
 
-  for(size_t i = 0; i < numPts; ++i) {
-    const Vec2f edgeVector( _poly.GetEdgeVector(i) );
-    float oneOverNorm = 1.0 / edgeVector.Length();
-    _perpendicularEdgeVectors.emplace_back( std::make_pair(
-                                              Vec2f{ -edgeVector.y() * oneOverNorm, edgeVector.x() * oneOverNorm },
-                                              i) );
-  }
+  if (numPts > 1) // proper polygon
+  {
+    for(size_t i = 0; i < numPts; ++i) {
+      const Vec2f edgeVector( _poly.GetEdgeVector(i) );
+      float oneOverNorm = 1.0 / edgeVector.Length();
+      _edgeSegments.emplace_back( _poly[i], _poly[(i+1) % numPts] );
+      _perpendicularEdgeVectors.emplace_back( std::make_pair(
+                                                Vec2f{ -edgeVector.y() * oneOverNorm, edgeVector.x() * oneOverNorm },
+                                                i) );
+
+    }
+  } 
 }
 
 void FastPolygon::SortEdgeVectors()
@@ -311,5 +335,57 @@ unsigned int FastPolygon::CheckTestPoints(std::vector< std::pair< bool, Point2f 
 
   return newHits;
 }
+
+#if USE_LINESEGMENT_CHECKS
+bool FastPolygon::Contains_Assumptionless(const Point2f& p) const
+{
+  // check circles first
+  float dy = p.y() - _circleCenter.y();
+  float dx = p.x() - _circleCenter.x();
+
+  float distSquared = SQUARE(dx) + SQUARE(dy);
+
+  if(distSquared > _circumscribedRadiusSquared) return false; // definitely not inside
+  if(distSquared < _inscribedRadiusSquared)     return true;  // definitely is inside
+  
+  // Point is inbetween cached circles. Do a proper polygon intersection check
+  // NOTE: (mrw) see algorithm details here:
+  //              http://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
+
+  // TODO: (mrw) cache sqrt call or dont use sqrt at all. Try improved winding# algo here:
+  //             http://geomalgorithms.com/a03-_inclusion.html
+  int nCollisions = 0;
+  const LineSegment testRay(p, p+Point2f(2*sqrt(_circumscribedRadiusSquared), 0));
+    
+  for (const auto& edge : _edgeSegments) {
+    if ( edge.OnSegment(p) ) // point is on the edge of the poly
+    {
+      return true;
+    }
+    if ( edge.IntersectsWith(testRay) ) 
+    {
+      ++nCollisions;  
+    }
+  } 
+  return (nCollisions % 2 == 1);
+}
+
+bool FastPolygon::Intersects(const LineSegment& l) const
+{
+  // TODO: we can add a AABB check on the line segment to see if it is even possible for the line segment
+  //       to intersect the circumscribed sphere before we do the point checks.
+
+  // check contains on the end points
+  if (Contains(l.GetFrom()) || Contains(l.GetTo())) return true;
+  
+  // need to explicitly check all edges since the end points of the test segment are both outside the polygon
+  for (const auto& edge : _edgeSegments)
+  {
+    if (edge.IntersectsWith(l)) return true;
+  }
+  return false;
+}
+#endif
+
 
 }

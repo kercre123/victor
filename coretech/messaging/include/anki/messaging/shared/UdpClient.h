@@ -1,6 +1,8 @@
 #ifndef UDP_CLIENT_H
 #define UDP_CLIENT_H
 
+#include <sys/types.h> // ssize_t
+
 #define DEBUG_UDP_CLIENT(__expr__)
 //#define DEBUG_UDP_CLIENT(__expr__) (std::cout << __expr__ << std::endl)
 
@@ -13,8 +15,8 @@ public:
   bool Connect(const char *host_address, const unsigned short port);
   bool Disconnect();
   bool IsConnected() const { return socketfd >= 0; }
-  int Send(const char* data, int size);
-  int Recv(char* data, int maxSize);
+  ssize_t Send(const char* data, int size);
+  ssize_t Recv(char* data, int maxSize);
   
   int GetSocketFd() const { return socketfd; }
 

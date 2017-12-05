@@ -2159,6 +2159,27 @@
     {
       "CladEvent": "WorkoutWeakLift_mediumEnergy",
       "AnimName": "ag_workout_mediumenergy_weak"
+    },
+    {
+      "CladEvent": "ObservingLookUp",
+      "AnimName": "ag_generic_look_up_01"
+    },
+    {
+      "CladEvent": "ObservingLookStraight",
+      "AnimName": "ag_generic_look_stright_01"
+    },
+    {
+      "CladEvent": "ObservingIdleEyesOnly",
+      "AnimName": "ag_keepalive_eyesonly_loop_01"
+    },
+    {
+      "CladEvent": "ObservingIdleWithHeadLookingUp",
+      "AnimName": "ag_generic_look_up_idle"
+    },
+    {
+      "CladEvent": "ObservingIdleWithHeadLookingStraight",
+      "AnimName": "ag_keepalive_eyesandhead_loop_01"
     }
+    
   ]
 }

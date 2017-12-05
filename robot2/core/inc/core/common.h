@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#define DEBUG_CORE
+//#define DEBUG_CORE
 #ifdef DEBUG_CORE
 #define dprintf printf
 #else

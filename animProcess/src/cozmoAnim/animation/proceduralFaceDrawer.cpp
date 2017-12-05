@@ -20,10 +20,14 @@ namespace Cozmo {
 
   #define CONSOLE_GROUP "ProceduralFace"
 
-  CONSOLE_VAR_RANGED(f32, kProcFace_InnerGlowFrac,       CONSOLE_GROUP, 0.4f, 0.05f, 1.f);
-  CONSOLE_VAR(bool,       kProcFace_UseAntiAliasing,     CONSOLE_GROUP, true); // Only affects OpenCV drawing, not post-smoothing
-  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseFraction,       CONSOLE_GROUP, 0.15f, 0.f, 1.f); // TODO: Tie to audio
-
+  CONSOLE_VAR_RANGED(f32, kProcFace_InnerGlowFrac,            CONSOLE_GROUP, 0.4f, 0.05f, 1.f);
+  CONSOLE_VAR(bool,       kProcFace_UseAntiAliasing,          CONSOLE_GROUP, true); // Only affects OpenCV drawing, not post-smoothing
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseFraction,            CONSOLE_GROUP, 0.15f, 0.f, 1.f); // TODO: Tie to audio
+  CONSOLE_VAR(bool,       kProcFace_GaussianGlowFilter,       CONSOLE_GROUP, false); // simpler box filter if not
+  CONSOLE_VAR(f32,        kProcFace_GlowSizeMultiplier,       CONSOLE_GROUP, 1.f);
+  CONSOLE_VAR(f32,        kProcFace_GlowBrightnessMultiplier, CONSOLE_GROUP, 1.f);
+  CONSOLE_VAR(f32,        kProcFace_EyeBrightnessMultiplier,  CONSOLE_GROUP, 1.f);
+  
   #undef CONSOLE_GROUP
   
   // Initialize static vars
@@ -258,8 +262,8 @@ namespace Cozmo {
     }
     
     Point<2, Value> eyeCenter = (whichEye == WhichEye::Left) ?
-                                 Point<2, Value>(ProceduralFace::NominalLeftEyeX, ProceduralFace::NominalEyeY) :
-                                 Point<2, Value>(ProceduralFace::NominalRightEyeX, ProceduralFace::NominalEyeY);
+                                 Point<2, Value>(ProceduralFace::GetNominalLeftEyeX(), ProceduralFace::GetNominalEyeY()) :
+                                 Point<2, Value>(ProceduralFace::GetNominalRightEyeX(), ProceduralFace::GetNominalEyeY());
     eyeCenter.x() += faceData.GetParameter(whichEye, Parameter::EyeCenterX);
     eyeCenter.y() += faceData.GetParameter(whichEye, Parameter::EyeCenterY);
     
@@ -270,7 +274,7 @@ namespace Cozmo {
                                                              eyeCenter.x(),
                                                              eyeCenter.y());
 
-    const Value glowFraction = faceData.GetParameter(whichEye, Parameter::GlowSize);
+    const Value glowFraction = kProcFace_GlowSizeMultiplier * faceData.GetParameter(whichEye, Parameter::GlowSize);
     DEV_ASSERT(Util::IsFltGEZero(glowFraction), "ProceduralFaceDrawer.DrawEye.InvalidGlow");
     
     const SmallMatrix<2, 3, f32> W_glow = GetTransformationMatrix(faceData.GetParameter(whichEye, Parameter::EyeAngle),
@@ -342,18 +346,21 @@ namespace Cozmo {
       cv::fillConvexPoly(_eyeShape.get_CvMat_(), lowerLidPoly, 0, kLineType);
     }
     
-    if(eyeWidth > 0 && eyeHeight > 0)
+    const f32 eyeScaleX = faceData.GetParameter(whichEye, Parameter::EyeScaleX);
+    const f32 eyeScaleY = faceData.GetParameter(whichEye, Parameter::EyeScaleY);
+    
+    if(eyeWidth > 0 && eyeHeight > 0 && eyeScaleX > 0 && eyeScaleY > 0)
     {
-      const f32 scaledEyeWidth  = faceData.GetParameter(whichEye, Parameter::EyeScaleX) * static_cast<f32>(eyeWidth);
-      const f32 scaledEyeHeight = faceData.GetParameter(whichEye, Parameter::EyeScaleY) * static_cast<f32>(eyeHeight);
+      const f32 scaledEyeWidth  = eyeScaleX * static_cast<f32>(eyeWidth);
+      const f32 scaledEyeHeight = eyeScaleY * static_cast<f32>(eyeHeight);
       
 #     if FIXED_INNER_GLOW_POSITION
       const s32 glowCenX = eyeCenter.x();
       const s32 glowCenY = eyeCenter.y();
 #     else
       // WIP: Move glow center with eye
-      const s32 glowCenOffsetX = eyeCenter.x() - (whichEye == ProceduralFace::Left ? ProceduralFace::NominalLeftEyeX+10 : ProceduralFace::NominalRightEyeX-13);
-      const s32 glowCenOffsetY = eyeCenter.y() - (whichEye == ProceduralFace::Left ? ProceduralFace::NominalEyeY+4      : ProceduralFace::NominalEyeY+3);
+      const s32 glowCenOffsetX = eyeCenter.x() - (whichEye == ProceduralFace::Left ? ProceduralFace::GetNominalLeftEyeX()+10 : ProceduralFace::GetNominalRightEyeX()-13);
+      const s32 glowCenOffsetY = eyeCenter.y() - (whichEye == ProceduralFace::Left ? ProceduralFace::GetNominalEyeY()+4      : ProceduralFace::GetNominalEyeY()+3);
       
       const f32 innerGlowCenFrac = 4.f;
       const f32 glowCenX = eyeCenter.x() - innerGlowCenFrac*glowCenOffsetX;
@@ -394,8 +401,6 @@ namespace Cozmo {
         }
       }
       
-      const bool kUseGaussianFilter = false; // simpler box filter if not
-      
       Rectangle<s32> eyeBoundingBoxS32(upperLeft.CastTo<s32>(), bottomRight.CastTo<s32>());
       Vision::Image eyeShapeROI = _eyeShape.GetROI(eyeBoundingBoxS32);
       
@@ -418,7 +423,7 @@ namespace Cozmo {
           ++glowSizeY;
         }
         
-        if(kUseGaussianFilter) {
+        if(kProcFace_GaussianGlowFilter) {
           cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
                            (f32)glowSizeX, (f32)glowSizeY);
         } else {
@@ -429,7 +434,7 @@ namespace Cozmo {
       // Antialiasing (AFTER glow because it changes eyeShape, which we use to compute the glow above)
       const s32 kAntiAliasingSize = 5;
       static_assert(kAntiAliasingSize % 2 == 1, "Antialiasing filter size should be odd");
-      if(kUseGaussianFilter) {
+      if(kProcFace_GaussianGlowFilter) {
         const f32 kAntiAliasingSigmaFraction = 0.5f;
         cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kAntiAliasingSize,kAntiAliasingSize),
                          (f32)kAntiAliasingSize * kAntiAliasingSigmaFraction);
@@ -439,18 +444,18 @@ namespace Cozmo {
       
  
       const f32 hueFactor = faceData.GetHue();
-      DEV_ASSERT(Util::IsFltGEZero(hueFactor), "ProceduralFaceDrawer.DrawEye.InvalidHue");
+      DEV_ASSERT(Util::InRange(hueFactor, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidHue");
       const u8 drawHue = std::round(255.f*hueFactor);
       
       const f32 satFactor = faceData.GetParameter(whichEye, Parameter::Saturation);
-      DEV_ASSERT(Util::IsFltGEZero(satFactor), "ProceduralFaceDrawer.DrawEye.InvalidSaturation");
+      DEV_ASSERT(Util::InRange(satFactor, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidSaturation");
       const u8 drawSat = std::round(255.f * satFactor);
       
       const f32 eyeLightness = faceData.GetParameter(whichEye, Parameter::Lightness);
-      DEV_ASSERT(Util::IsFltGEZero(eyeLightness), "ProceduralFaceDrawer.DrawEye.InvalidLightness");
+      DEV_ASSERT(Util::InRange(eyeLightness, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidLightness");
     
       const f32 scanlineOpacity = faceData.GetScanlineOpacity();
-      DEV_ASSERT(Util::IsFltGEZero(scanlineOpacity), "ProceduralFaceDrawer.DrawEye.InvalidScanlineOpacity");
+      DEV_ASSERT(Util::InRange(scanlineOpacity, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidScanlineOpacity");
       
       // Draw the eye into the face image, adding outer glow, noise, and stylized scanlines
       {
@@ -484,9 +489,18 @@ namespace Cozmo {
               // Darken scanlines in pairs (thus the division by 2 before modding by 2).
               // Don't do scanlines in the glow region.
               const bool isPartOfEye = (eyeValue >= glowValue); // (and not part of glow)
-              if(isPartOfEye && ((i/2) % 2))
+              if(isPartOfEye)
               {
-                newValue *= scanlineOpacity;
+                if((i/2) % 2)
+                {
+                  newValue *= scanlineOpacity;
+                }
+                
+                newValue *= kProcFace_EyeBrightnessMultiplier;
+              }
+              else
+              {
+                newValue *= kProcFace_GlowBrightnessMultiplier;
               }
               
               // Put the final value into the face image

@@ -20,16 +20,19 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/robotDataLoader.h"
 #include "engine/robot.h"
+#include "engine/robotDataLoader.h"
 #include "gtest/gtest.h"
 
 #include <string>
@@ -91,7 +94,7 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
   
   // stack is unused - put an arbitrary behavior on it
   if(baseBehavior == nullptr){
-    baseBehavior = subComponents->_behaviorContainer.FindBehaviorByID(BehaviorID::Wait).get();
+    baseBehavior = subComponents->_behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
     shouldCallInitOnBase = false;
   }
   
@@ -289,8 +292,8 @@ void TestSuperPoweredBehavior::OnLeftActivatableScopeInternal() {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehavior::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) {
-  
-  auto robotExternalInterface = _robot->HasExternalInterface() ? _robot->GetExternalInterface() : nullptr;
+  auto robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto robotExternalInterface = robotInfo.HasExternalInterface() ? robotInfo.GetExternalInterface() : nullptr;
   if(robotExternalInterface != nullptr) {
     SubscribeToTags({EngineToGameTag::Ping});
   }
@@ -351,7 +354,7 @@ void TestBehavior::Bar(BehaviorExternalInterface& behaviorExternalInterface) {
 bool TestBehavior::CallDelegateIfInControl(Robot& robot, bool& actionCompleteRef)
 {
   WaitForLambdaAction* action =
-  new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+  new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
   
   return DelegateIfInControl(action);
 }
@@ -363,7 +366,7 @@ bool TestBehavior::CallDelegateIfInControlExternalCallback1(Robot& robot,
                                                             ICozmoBehavior::RobotCompletedActionCallback callback)
 {
   WaitForLambdaAction* action =
-  new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+  new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
   
   return DelegateIfInControl(action, callback);
 }
@@ -375,7 +378,7 @@ bool TestBehavior::CallDelegateIfInControlExternalCallback2(Robot& robot,
                                                             ICozmoBehavior::ActionResultCallback callback)
 {
   WaitForLambdaAction* action =
-  new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+  new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
   
   return DelegateIfInControl(action, callback);
 }
@@ -386,7 +389,7 @@ bool TestBehavior::CallDelegateIfInControlInternalCallbackVoid(Robot& robot,
                                                                bool& actionCompleteRef)
 {
   WaitForLambdaAction* action =
-  new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+  new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
   
   return DelegateIfInControl(action, &TestBehavior::Foo);
 }
@@ -397,7 +400,7 @@ bool TestBehavior::CallDelegateIfInControlInternalCallbackRobot(Robot& robot,
                                                                 bool& actionCompleteRef)
 {
   WaitForLambdaAction* action =
-  new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+  new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
   
   return DelegateIfInControl(action, &TestBehavior::Bar);
 }
@@ -533,12 +536,8 @@ void TestHelper::SetActionToRunOnNextUpdate(IActionRunner* action) {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestHelper::StartAutoAction(BehaviorExternalInterface& behaviorExternalInterface) {
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   _selfActionDone = false;
-  _nextActionToRun = new WaitForLambdaAction(robot, [this](Robot& t) {
+  _nextActionToRun = new WaitForLambdaAction([this](Robot& t) {
     printf("%s: ShouldStopActing: %d\n", _name.c_str(), _selfActionDone);
     return _selfActionDone;
   });

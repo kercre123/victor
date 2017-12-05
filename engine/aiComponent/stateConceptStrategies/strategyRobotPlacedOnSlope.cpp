@@ -16,8 +16,8 @@
 #include "engine/aiComponent/stateConceptStrategies/strategyRobotPlacedOnSlope.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "clad/types/robotStatusAndActions.h"
@@ -38,15 +38,13 @@ StrategyRobotPlacedOnSlope::StrategyRobotPlacedOnSlope(BehaviorExternalInterface
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool StrategyRobotPlacedOnSlope::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
   // Grab the current time:
   const double now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // Determine if the robot is moving at all by checking the gyros:
-  const GyroData& g = robot.GetHeadGyroData();
+  const GyroData& g = robotInfo.GetHeadGyroData();
   const bool isMovingNow = std::max({std::abs(g.x), std::abs(g.y), std::abs(g.z)}) > _kIsMovingNowGyroThreshold_degPerSec;
   
   if (isMovingNow) {
@@ -57,11 +55,11 @@ bool StrategyRobotPlacedOnSlope::AreStateConditionsMetInternal(BehaviorExternalI
   const bool isStationary = (now - _lastMovingTime > _kIsStationaryTimeThreshold_sec);
   
   // Check pitch angle to see if we're inclined (but not too far as to interrupt 'OnBack' behavior):
-  const float pitch_deg = robot.GetPitchAngle().getDegrees();
+  const float pitch_deg = robotInfo.GetPitchAngle().getDegrees();
   const bool isOnIncline = (pitch_deg > _kOnInclinePitchThresholdLow_deg) && (pitch_deg < _kOnInclinePitchThresholdHigh_deg);
   
   // Keep track of the last time the robot was reporting PickedUp state:
-  const bool isPickedUp = robot.IsPickedUp();
+  const bool isPickedUp = robotInfo.IsPickedUp();
   
   if (isPickedUp) {
     _lastPickedUpTime = now;
@@ -73,7 +71,7 @@ bool StrategyRobotPlacedOnSlope::AreStateConditionsMetInternal(BehaviorExternalI
   bool shouldTrigger = isOnIncline && isStationary && (isPickedUp || recentlyTransitionedToNotPickedUp);
 
   // Final check - only trigger this behavior if the OffTreadsState makes sense
-  const OffTreadsState ot = robot.GetOffTreadsState();
+  const OffTreadsState ot = robotInfo.GetOffTreadsState();
   if ( (ot != OffTreadsState::OnTreads) && (ot != OffTreadsState::InAir) ) {
     shouldTrigger = false;
   }

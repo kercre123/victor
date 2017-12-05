@@ -18,11 +18,11 @@
 namespace Anki {
 namespace Cozmo {
   
-class Robot;
+class SmartFaceID;
 
 class IReactToFaceListener{
 public:
-  virtual void FinishedReactingToFace(BehaviorExternalInterface& behaviorExternalInterface, Vision::FaceID_t faceID) = 0;
+  virtual void FinishedReactingToFace(BehaviorExternalInterface& behaviorExternalInterface, SmartFaceID faceID) = 0;
   virtual void ClearDesiredTargets() = 0;
 };
 

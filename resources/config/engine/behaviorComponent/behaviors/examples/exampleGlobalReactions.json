@@ -1,0 +1,18 @@
+{
+  "behaviorID": "ExampleGlobalReactions",  
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": true,
+  "behaviors": [
+    "ExampleFacePositionUpdated",
+    "ExampleObjectMoved",
+    "ExampleObjectPositionUpdated",
+    "ExamplePetInitialDetection",
+    "ExampleFrustration",    
+    "RollBlockOnSide",
+    "SparksStackBlock",
+    "PopAWheelie",
+    "FindFaces_socialize",
+    "PutDownDispatch_LookForFaceAndCube"   
+  ]
+}

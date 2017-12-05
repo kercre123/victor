@@ -21,13 +21,13 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/jsonTools.h"
-#include "engine/robot.h"
 #include "util/console/consoleInterface.h"
 
 
@@ -43,8 +43,6 @@ static const char* const kKnockOverSuccessTrigger = "knockOverSuccessTrigger";
 static const char* const kKnockOverFailureTrigger = "knockOverFailureTrigger";
 static const char* const kPutDownTrigger = "knockOverPutDownTrigger";
 static const char* const kMinimumStackHeight = "minimumStackHeight";
-static const char* const kPreparingToKnockOverStackLock = "preparingToKnockOverDisable";
-
 
 const int kMaxNumRetries = 2;
 const float kMinThresholdRealign = 20.f;
@@ -54,63 +52,6 @@ const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = DEG_TO_RAD(90.f);
 
 CONSOLE_VAR(f32, kBKS_distanceToTryToGrabFrom_mm, "Behavior.AdmireStack", 85.0f);
 CONSOLE_VAR(f32, kBKS_searchSpeed_mmps, "Behavior.AdmireStack", 60.0f);
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-constexpr ReactionTriggerHelpers::FullReactionArray kKnockOverCubesAffectedArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       true},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kKnockOverCubesAffectedArray),
-              "Reaction triggers duplicate or non-sequential");
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPreparingKnockOverArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           true}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPreparingKnockOverArray),
-              "Reaction triggers duplicate or non-sequential");
-
 } // end namespace
 
   
@@ -169,20 +110,8 @@ Result BehaviorKnockOverCubes::OnBehaviorActivated(BehaviorExternalInterface& be
     return Result::RESULT_FAIL;
   }
 }
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorKnockOverCubes::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  if(InitializeMemberVars()){
-    TransitionToKnockingOverStack(behaviorExternalInterface);
-    return Result::RESULT_OK;
-  }else{
-    return Result::RESULT_FAIL;
-  }
-}
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
@@ -202,23 +131,20 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(BehaviorExternalInterf
     return;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  CompoundActionSequential* action = new CompoundActionSequential();
   
-  action->AddAction(new TurnTowardsObjectAction(robot, _bottomBlockID));
+  action->AddAction(new TurnTowardsObjectAction(_bottomBlockID));
   
   Pose3d poseWrtRobot;
-  if(topBlock->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot) ) {
+  if(topBlock->GetPose().GetWithRespectTo(behaviorExternalInterface.GetRobotInfo().GetPose(), poseWrtRobot) ) {
     const float fudgeFactor = 10.0f;
     if( poseWrtRobot.GetTranslation().x() + fudgeFactor > kBKS_distanceToTryToGrabFrom_mm) {
       float distToDrive = poseWrtRobot.GetTranslation().x() - kBKS_distanceToTryToGrabFrom_mm;
-      action->AddAction(new DriveStraightAction(robot, distToDrive, kBKS_searchSpeed_mmps));
+      action->AddAction(new DriveStraightAction(distToDrive, kBKS_searchSpeed_mmps));
     }
   }
   
-  action->AddAction(new TriggerLiftSafeAnimationAction(robot, _reachForBlockTrigger));
+  action->AddAction(new TriggerLiftSafeAnimationAction(_reachForBlockTrigger));
   DelegateIfInControl(action, &BehaviorKnockOverCubes::TransitionToKnockingOverStack);
   
 }
@@ -256,23 +182,26 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(BehaviorExternalInter
   
   //skips turning towards face if this action is streamlined
   const f32 angleTurnTowardsFace_rad = (ShouldStreamline() || _numRetries > 0) ? 0 : kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad;
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  DriveAndFlipBlockAction* flipAction = new DriveAndFlipBlockAction(robot, _bottomBlockID, false, 0, false, angleTurnTowardsFace_rad, false, kMinThresholdRealign);
+
+  DriveAndFlipBlockAction* flipAction = new DriveAndFlipBlockAction(_bottomBlockID, 
+                                                                    false, 
+                                                                    0, 
+                                                                    false, 
+                                                                    angleTurnTowardsFace_rad, 
+                                                                    false, 
+                                                                    kMinThresholdRealign);
   
   flipAction->SetSayNameAnimationTrigger(AnimationTrigger::KnockOverPreActionNamedFace);
   flipAction->SetNoNameAnimationTrigger(AnimationTrigger::KnockOverPreActionUnnamedFace);
   
   
   // Set the action sequence
-  CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential(robot);
-  flipAndWaitAction->AddAction(new TurnTowardsObjectAction(robot, _bottomBlockID));
+  CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential();
+  flipAndWaitAction->AddAction(new TurnTowardsObjectAction( _bottomBlockID));
   // emit completion signal so that the mood manager can react
   const bool shouldEmitCompletion = true;
   flipAndWaitAction->AddAction(flipAction, false, shouldEmitCompletion);
-  flipAndWaitAction->AddAction(new WaitAction(robot, kWaitForBlockUpAxisChangeSecs));
+  flipAndWaitAction->AddAction(new WaitAction(kWaitForBlockUpAxisChangeSecs));
   
   // make sure we only account for blocks flipped during the actual knock over action
   PrepareForKnockOverAttempt();
@@ -284,16 +213,13 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(BehaviorExternalInter
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential();
   {
-    FlipBlockAction* flipAction = new FlipBlockAction(robot, _bottomBlockID);
+    FlipBlockAction* flipAction = new FlipBlockAction( _bottomBlockID);
     flipAction->SetShouldCheckPreActionPose(false);
   
     flipAndWaitAction->AddAction(flipAction);
-    flipAndWaitAction->AddAction(new WaitAction(robot, kWaitForBlockUpAxisChangeSecs));
+    flipAndWaitAction->AddAction(new WaitAction(kWaitForBlockUpAxisChangeSecs));
   }
   
   PrepareForKnockOverAttempt();
@@ -305,12 +231,9 @@ void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(BehaviorExternalInterfa
 void BehaviorKnockOverCubes::TransitionToPlayingReaction(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(PlayingReaction);
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+
   // notify configuration manager that the tower was knocked over
-  robot.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
+  behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
   
   // determine if the robot successfully knocked over the min number of cubes
   auto animationTrigger = _knockOverFailureTrigger;
@@ -322,7 +245,7 @@ void BehaviorKnockOverCubes::TransitionToPlayingReaction(BehaviorExternalInterfa
   
   // play a reaction if not streamlined
   if(!ShouldStreamline()){
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, animationTrigger));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(animationTrigger));
   }
 }
   
@@ -332,7 +255,6 @@ bool BehaviorKnockOverCubes::InitializeMemberVars()
 {
   if(auto tallestStack = _currentTallestStack.lock()){
   // clear for success state check
-    SmartDisableReactionsWithLock(GetIDStr(), kKnockOverCubesAffectedArray);
     _objectsFlipped.clear();
     _numRetries = 0;
     _bottomBlockID = tallestStack->GetBottomBlockID();
@@ -414,13 +336,6 @@ void BehaviorKnockOverCubes::AlwaysHandle(const EngineToGameEvent& event, Behavi
 void BehaviorKnockOverCubes::PrepareForKnockOverAttempt()
 {
   _objectsFlipped.clear();
-  
-  // Unlock the reactions b/c we're about to re-lock them
-  // It's possible they might not have been locked - it's safe to remove an invalid lock
-  // but locking twice due to a retry will cause a crash
-  SmartRemoveDisableReactionsLock(kPreparingToKnockOverStackLock);
-  SmartDisableReactionsWithLock(kPreparingToKnockOverStackLock,
-                                kAffectTriggersPreparingKnockOverArray);
 }
   
 }

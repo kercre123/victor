@@ -3,7 +3,7 @@ A Node.js app to talk to Victors over BLE
 ## Installation
 
 ```sh
-$ ./install.sh
+bash$ ./install.sh
 ```
 
 ## Configuring WiFi
@@ -12,31 +12,31 @@ First, power on the victor and wait about 1 minute to get it to start advertisin
 
 
 ```sh
-$ node ./index.js
-$ scan
+bash$ node ./index.js
+victor-ble-cli$ scan
 
 Scanning started.....
-$
+victor-ble-cli$
 Found VICTOR_553261a
-$ connect
+victor-ble-cli$ connect
 
 Trying to connect to VICTOR_553261a....
-$
+victor-ble-cli$
 Connected to VICTOR_553261a
-$
+victor-ble-cli$
 Services discovered for VICTOR_553261a
-$
+victor-ble-cli$
 Fully connected to VICTOR_553261a
-$ wifi-set-config SSID PASSWORD
-$
+victor-ble-cli$ wifi-set-config SSID PASSWORD
+victor-ble-cli$
 Using interface 'wlan0'
 OK
 
-$
+victor-ble-cli$
 Heartbeat 0
-$
+victor-ble-cli$
 
-$
+victor-ble-cli$
 Using interface 'wlan0'
 bssid=80:2a:a8:84:51:62
 freq=2462

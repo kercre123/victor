@@ -13,14 +13,14 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevPettingTestSimple.h"
 
-#include "engine/actions/animActions.h"
-#include "engine/actions/basicActions.h"
-#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
-#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
-#include "engine/robot.h"
-
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/jsonTools.h"
+
+#include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
 
 #include <vector>
 #include <memory>
@@ -56,9 +56,7 @@ bool BehaviorDevPettingTestSimple::WantsToBeActivatedBehavior(BehaviorExternalIn
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevPettingTestSimple::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
   Json::Value::const_iterator it = _configArray.begin();
   for(;it!=_configArray.end();++it) {
@@ -67,7 +65,7 @@ void BehaviorDevPettingTestSimple::InitBehavior(BehaviorExternalInterface& behav
     
     _tgAnimConfigs.emplace_back(StateConceptStrategyFactory::CreateStateConceptStrategy(
                         behaviorExternalInterface, 
-                        robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr,
+                        robotInfo.HasExternalInterface() ? robotInfo.GetExternalInterface() : nullptr,
                         *it),
                                 anim,
                                 rate,
@@ -79,8 +77,6 @@ void BehaviorDevPettingTestSimple::InitBehavior(BehaviorExternalInterface& behav
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorDevPettingTestSimple::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // Disable all reactions
-  SmartDisableReactionsWithLock(GetIDStr(), ReactionTriggerHelpers::GetAffectAllArray());
   return RESULT_OK;
 }
 
@@ -106,10 +102,7 @@ BehaviorStatus BehaviorDevPettingTestSimple::UpdateInternal_WhileRunning(Behavio
     float rate             = gotAnim->animationRate_s;
     float timeLastPlayed_s = gotAnim->timeLastPlayed_s;
     if((now-timeLastPlayed_s) > rate) {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      PlayAnimationAction* action = new PlayAnimationAction(robot, animToPlay, 1, true, (u8)AnimTrackFlag::BODY_TRACK);
+      PlayAnimationAction* action = new PlayAnimationAction(animToPlay, 1, true, (u8)AnimTrackFlag::BODY_TRACK);
       DelegateIfInControl(action);
       gotAnim->timeLastPlayed_s = now;
     }

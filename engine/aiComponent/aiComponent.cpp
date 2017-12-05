@@ -20,6 +20,7 @@
 #include "engine/aiComponent/feedingSoundEffectManager.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
+#include "engine/aiComponent/puzzleComponent.h"
 #include "engine/aiComponent/requestGameComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/workoutComponent.h"
@@ -70,6 +71,7 @@ Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorCompone
     _workoutComponent.reset(new WorkoutComponent(robot) );
     _doATrickSelector.reset(new DoATrickSelector(robot.GetContext()->GetDataLoader()->GetDoATrickWeightsConfig()));
     _severeNeedsComponent.reset(new SevereNeedsComponent(robot));
+    _puzzleComponent.reset(new PuzzleComponent(robot));
   }
   
   
@@ -87,12 +89,11 @@ Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorCompone
     _behaviorComponent->Init(BehaviorComponent::GenerateComponents(robot));
   }
   
-  if(USE_BSM){
-    // Toggle flag to "start" the tracking process - legacy assumption that freeeplay is not
-    // active on app start
-    _freeplayDataTracker->SetFreeplayPauseFlag(true, FreeplayPauseFlag::OffTreads);
-    _freeplayDataTracker->SetFreeplayPauseFlag(false, FreeplayPauseFlag::OffTreads);
-  }
+  // Toggle flag to "start" the tracking process - legacy assumption that freeeplay is not
+  // active on app start - full fix requires a deeper update to the data tracking system
+  // that is outside of scope for this PR but should be addressed in VIC-626
+  _freeplayDataTracker->SetFreeplayPauseFlag(true, FreeplayPauseFlag::OffTreads);
+  _freeplayDataTracker->SetFreeplayPauseFlag(false, FreeplayPauseFlag::OffTreads);
   
   _requestGameComponent = std::make_unique<RequestGameComponent>(robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr,
                                                                  robot.GetContext()->GetDataLoader()->GetGameRequestWeightsConfig());
@@ -113,6 +114,9 @@ Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorCompone
   // initialize workout component
   if(dataLoader != nullptr){
     assert( _workoutComponent );
+    assert( _puzzleComponent );
+    _puzzleComponent->InitConfigs();
+    
     const Json::Value& workoutConfig = dataLoader->GetRobotWorkoutConfig();
 
     const Result res = _workoutComponent->InitConfiguration(workoutConfig);
@@ -122,7 +126,6 @@ Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorCompone
       return res;      
     }
   }
-  
   
   return RESULT_OK;
 }
@@ -151,7 +154,6 @@ Result AIComponent::Update(Robot& robot, std::string& currentActivityName,
 void AIComponent::OnRobotDelocalized()
 {
   GetWhiteboard().OnRobotDelocalized();
-  _behaviorComponent->OnRobotDelocalized();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

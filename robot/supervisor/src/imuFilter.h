@@ -15,8 +15,8 @@
 #ifndef IMU_FILTER_H_
 #define IMU_FILTER_H_
 
-#include "radians.h"
-#include "anki/types.h"
+#include "anki/common/shared/radians.h"
+#include "anki/common/types.h"
 #include "anki/cozmo/robot/hal.h"
 
 namespace Anki {
@@ -26,7 +26,6 @@ namespace Anki {
     namespace IMUFilter {
 
       Result Init();
-      void Reset();
 
       // TODO: Add if/when needed?
       // ReturnCode Init();

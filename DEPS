@@ -5,7 +5,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/victor",
-                "version": "138"
+                "version": "140"
             },
             "cozmo-assets": {
                 "allow_extra_files": "True",
@@ -19,10 +19,13 @@
                     "faceAnimations"
                 ],
                 "export_dirname": "animation-assets",
-                "version": "2401"
+                "additional_files": [
+                    "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
+                ],
+                "version": "2535"
             },
             "victor-audio-assets": {
-               "allow_extra_files": "True",
+                "allow_extra_files": "True",
                 "version": "7"
             }
         },

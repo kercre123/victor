@@ -212,10 +212,12 @@ int main(int argc, const char* argv[])
     printf("Already running target version or newer\n\tuse '-f' to force update\n");
     //exit unless "-f" force flag
     if (argc <2 || strncmp(argv[2],"-f",2) != 0) {
-       exit(0);       
+       exit(0);
     }
   }
   //else needs update
+
+
 
   dprint("erasing installed image\n");
   if (SendCommand(PAYLOAD_ERASE, NULL, 0, 1) == NULL) {

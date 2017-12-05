@@ -14,7 +14,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/iBehaviorDispatcher.h"
 
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "coretech/common/include/anki/common/basestation/jsonTools.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -60,7 +60,7 @@ void IBehaviorDispatcher::InitBehavior(BehaviorExternalInterface& behaviorExtern
     DEV_ASSERT_MSG(behavior != nullptr,
                    "IBehaviorDispatcher.InitBehavior.FailedToFindBehavior",
                    "Behavior not found: %s",
-                   BehaviorIDToString(behaviorID));
+                   BehaviorTypesWrapper::BehaviorIDToString(behaviorID));
     if(behavior != nullptr){
       _behaviors.push_back(behavior);
     }
