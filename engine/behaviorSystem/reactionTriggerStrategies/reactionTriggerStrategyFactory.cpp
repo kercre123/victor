@@ -147,9 +147,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
       {
         MessageEngineToGameTag::FallingStarted
       };
-      genericStrategy->ConfigureRelevantEvents(relevantTypes,[] (const AnkiEvent<ExternalInterface::MessageEngineToGame>& event, const Robot& robot) {
-        return robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::RobotFalling);
-      });
+      genericStrategy->ConfigureRelevantEvents(relevantTypes);
       strategy = genericStrategy;
       break;
     }
