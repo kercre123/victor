@@ -363,11 +363,35 @@
         }
     }
 
+    // Removes variable values from serialized project string so that projects can be compared
+    // without considering the variable values.
+    //
+    // Returns project as string.
+    function cleanSerializedProjectStringForComparison(serializedProjectAsString) {
+        var serializedProjectJSONObject = JSON.parse(serializedProjectAsString);
+        for (var key in serializedProjectJSONObject.targets[0].variables) {
+            if (serializedProjectJSONObject.targets[0].variables.hasOwnProperty(key)) {
+                serializedProjectJSONObject.targets[0].variables[key].value = "";
+            }
+        }
+
+        return JSON.stringify(serializedProjectJSONObject)
+    }
+
     // Check if sample or featured project blocks have been altered since the project was loaded.
     window.hasSampleProjectChanged = function() {
         if (window.isCozmoSampleProject) {
-            var currentSampleProjectJSON = Scratch.vm.toJSON();
-            if (currentSampleProjectJSON != window.originalSampleProjectJSON) {
+            // For the featured and sample projects, if the user merely runs a project and tries to
+            // exit, we don't want to prompt them to remix. If the project have a variable, and
+            // upon running the project the var setting gets changed by the blocks, then technically
+            // the project has changed (in its serialization), but we don't want to prompt the user
+            // to remix in this case.
+            //
+            // So, for both current and original JSON, we will set all var values to empty string ("")
+            // so we can ignore the var differences when we decide to prompt for remix.
+            var currentSampleProjectJSONString = cleanSerializedProjectStringForComparison(Scratch.vm.toJSON());
+            var originalSampleProjectJSONString = cleanSerializedProjectStringForComparison(window.originalSampleProjectJSON);
+            if (currentSampleProjectJSONString != originalSampleProjectJSONString) {
                 return true;
             }
         }
