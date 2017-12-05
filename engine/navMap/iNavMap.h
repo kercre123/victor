@@ -16,7 +16,6 @@
 #include "memoryMap/memoryMapTypes.h"
 #include "memoryMap/data/memoryMapData.h"
 
-#include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/math/triangle.h"
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad.h"
@@ -57,35 +56,18 @@ public:
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // TODO: change these so there is only Insert(Poly2f). This will hide polygon_impl from the header include
-  
+
   // add a quad with the specified additional content. Such content specifies the associated EContentType
-  inline void AddQuad(const Quad2f& quad, const MemoryMapData& data) {
-    Poly2f poly;
-    poly.ImportQuad2d(quad); // use import rather than initializer list because ¯\_(ツ)_/¯
-    Insert(poly, data);
-  }
+  virtual void AddQuad(const Quad2f& quad, const MemoryMapData& content) = 0;
   
   // add a line with the specified additional content. Such content specifies the associated EContentType
-  inline void AddLine(const Point2f& from, const Point2f& to, const MemoryMapData& data) {
-    Poly2f poly({from, to});
-    Insert(poly, data);
-  }
+  virtual void AddLine(const Point2f& from, const Point2f& to, const MemoryMapData& content) = 0;
 
   // add a triangle with the specified additional content. Such content specifies the associated EContentType
-  inline void AddTriangle(const Triangle2f& tri, const MemoryMapData& data) {
-    Poly2f poly({tri[0], tri[1], tri[2]});
-    Insert(poly, data);
-  }
-
-  // add a point with the specified additional content. Such content specifies the associated EContentType
-  inline void AddPoint(const Point2f& point, const MemoryMapData& data) {
-    Poly2f poly({point});
-    Insert(poly, data);
-  }
+  virtual void AddTriangle(const Triangle2f& tri, const MemoryMapData& content) = 0;
   
-  // add a poly with the specified content. 
-  virtual void Insert(const Poly2f& poly, const MemoryMapData& data) = 0;
+  // add a point with the specified additional content. Such content specifies the associated EContentType
+  virtual void AddPoint(const Point2f& point, const MemoryMapData& content) = 0;
   
   // merge the given map into this map by applying to the other's information the given transform
   // although this methods allows merging any INavMap into any INavMap, subclasses are not
@@ -101,16 +83,24 @@ public:
     DEV_ASSERT(!ExpectsAdditionalData(newTypeSet), "INavMap.FillBorder.CantFillExtraInfo");
     FillBorderInternal(typeToReplace, neighborsToFillFrom, newTypeSet, timeMeasured);
   }
+
+  // replaces the given content type with the given new type, within the given quad
+  void ReplaceContent(const Quad2f& quad, EContentType typeToReplace, EContentType newTypeSet, TimeStamp_t timeMeasured) {
+    DEV_ASSERT(!ExpectsAdditionalData(newTypeSet), "INavMemoryMap.ReplaceContent.CantFillExtraInfo");
+    ReplaceContentInternal(quad, typeToReplace, newTypeSet, timeMeasured);
+  }
+  
+  // replaces the given content type with the given new type
+  void ReplaceContent(EContentType typeToReplace, EContentType newTypeSet, TimeStamp_t timeMeasured) {
+    DEV_ASSERT(!ExpectsAdditionalData(newTypeSet), "INavMemoryMap.ReplaceContent.CantFillExtraInfo");
+    ReplaceContentInternal(typeToReplace, newTypeSet, timeMeasured);
+  }
   
   // attempt to apply a transformation function to all nodes in the tree
   virtual void TransformContent(NodeTransformFunction transform) = 0;
   
-  // attempt to apply a transformation function to all nodes in the tree constrained by poly
-  virtual void TransformContent(const Poly2f& poly, NodeTransformFunction transform) = 0;
-
   // populate a list of all data that matches the predicate
-  virtual void FindContentIf(NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) = 0;
-
+  virtual void FindContentIf(NodePredicate pred, std::unordered_set<std::shared_ptr<MemoryMapData>>& output) = 0;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
@@ -156,11 +146,16 @@ public:
   virtual void Broadcast(uint32_t originID) const = 0;
   virtual void BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) const = 0;
   
-protected:
-  
+protected:  
   // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
   virtual void FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured) = 0;
 
+  // change the content type from typeToReplace into newTypeSet within the given quad
+  virtual void ReplaceContentInternal(const Quad2f& inQuad, EContentType typeToReplace, EContentType newTypeSet, TimeStamp_t timeMeasured) = 0;
+
+  // change the content type from typeToReplace into newTypeSet in all known space
+  virtual void ReplaceContentInternal(EContentType typeToReplace, EContentType newTypeSet, TimeStamp_t timeMeasured) = 0;
+  
 }; // class
 
 } // namespace

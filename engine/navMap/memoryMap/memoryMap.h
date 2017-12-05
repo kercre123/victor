@@ -36,10 +36,24 @@ public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // From INavMemoryMap
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // add a quad with the specified content
+  // virtual void AddQuadInternal(const Quad2f& quad, EContentType type, TimeStamp_t timeMeasured) override;
+  virtual void AddQuad(const Quad2f& quad, const MemoryMapData& content) override;
   
-  // add data to the memory map defined by poly
-  virtual void Insert(const Poly2f& poly, const MemoryMapData& data) override;
+  // add a line with the specified content
+  // virtual void AddLineInternal(const Point2f& from, const Point2f& to, EContentType type, TimeStamp_t timeMeasured) override;
+  virtual void AddLine(const Point2f& from, const Point2f& to, const MemoryMapData& content) override;
+  
+  // add a triangle with the specified content
+  // virtual void AddTriangleInternal(const Triangle2f& tri, EContentType type, TimeStamp_t timeMeasured) override;
+  virtual void AddTriangle(const Triangle2f& tri, const MemoryMapData& content) override;
+  
+  // add a point with the specified content
+  // virtual void AddPointInternal(const Point2f& point, EContentType type, TimeStamp_t timeMeasured) override;
+  virtual void AddPoint(const Point2f& point, const MemoryMapData& content) override;
+  
   
   // merge the given map into this map by applying to the other's information the given transform
   // although this methods allows merging any INavMemoryMap into any INavMemoryMap, subclasses are not
@@ -50,15 +64,17 @@ public:
   // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
   virtual void FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured) override;
   
+  // change the content type from typeToReplace into newTypeSet within the given quad
+  virtual void ReplaceContentInternal(const Quad2f& inQuad, EContentType typeToReplace, EContentType newTypeSet, TimeStamp_t timeMeasured) override;
+  
+  // change the content type from typeToReplace into newTypeSet in all known space
+  virtual void ReplaceContentInternal(EContentType typeToReplace, EContentType newTypeSet, TimeStamp_t timeMeasured) override;
+  
   // attempt to apply a transformation function to all nodes in the tree
   virtual void TransformContent(NodeTransformFunction transform) override;
   
-  // attempt to apply a transformation function to any node intersecting the poly
-  virtual void TransformContent(const Poly2f& poly, NodeTransformFunction transform) override;
-
   // populate a list of all data that matches the predicate
-  virtual void FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) override;
-
+  virtual void FindContentIf(NodePredicate pred, std::unordered_set<std::shared_ptr<MemoryMapData>>& output) override;
   
   // return the size of the area currently explored
   virtual double GetExploredRegionAreaM2() const override;
@@ -92,9 +108,10 @@ public:
   // Broadcast the memory map
   virtual void Broadcast(uint32_t originID) const override;
   virtual void BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) const override;
+  
+protected:
 
-  // get the timestamp the QT was last measured (we can update the QT with a new timestamp even if the content
-  // does not change)
+  
   virtual TimeStamp_t GetLastChangedTimeStamp() const override {return _quadTree.GetRootNodeContent().data->GetLastObservedTime();}
 
 private:
@@ -103,7 +120,7 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // underlaying data container
+  // underlaying nav mesh representation
   QuadTree _quadTree;
   
 }; // class

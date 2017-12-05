@@ -326,19 +326,9 @@ void MapComponent::FlagGroundPlaneROIInterestingEdgesAsUncertain()
   // ask memory map to clear
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagGroundPlaneROIInterestingEdgesAsUncertain.NullMap");
-  TimeStamp_t t = _robot->GetLastImageTimeStamp();
-  
-  NodeTransformFunction transform = [t] (MemoryMapDataPtr oldData) -> MemoryMapDataPtr
-    {
-        if (EContentType::InterestingEdge == oldData->type) {
-          return std::make_shared<MemoryMapData>(EContentType::Unknown, t);
-        }
-        return oldData;
-    };
-  
-  Poly2f poly;
-  poly.ImportQuad2d(groundPlaneWrtRobot);
-  currentNavMemoryMap->TransformContent(poly, transform);
+  const EContentType typeInteresting = EContentType::InterestingEdge;
+  const EContentType typeUnknown = EContentType::Unknown;
+  currentNavMemoryMap->ReplaceContent(groundPlaneWrtRobot, typeInteresting, typeUnknown, _robot->GetLastImageTimeStamp());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -361,17 +351,8 @@ void MapComponent::FlagInterestingEdgesAsUseless()
     
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagInterestingEdgesAsUseless.NullMap");
-  TimeStamp_t t = _robot->GetLastImageTimeStamp();
-  
-  NodeTransformFunction transform = [t] (MemoryMapDataPtr oldData) -> MemoryMapDataPtr
-    {
-        if (EContentType::InterestingEdge == oldData->type) {
-          return std::make_shared<MemoryMapData>(EContentType::Unknown, t);
-        }
-        return oldData;
-    };
-    
-  currentNavMemoryMap->TransformContent(transform);
+  const EContentType newType = EContentType::Unknown;
+  currentNavMemoryMap->ReplaceContent(EContentType::InterestingEdge, newType, _robot->GetLastImageTimeStamp());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

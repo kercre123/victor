@@ -81,32 +81,64 @@ void MemoryMap::FillBorderInternal(EContentType typeToReplace, const FullContent
     using namespace QuadTreeTypes;
     const EContentTypePackedType nodeNeighborsToFillFrom = ConvertContentArrayToFlags(neighborsToFillFrom);
     MemoryMapData data(newTypeSet, timeMeasured);
+    NodeContent emptyNewNodeContent(ENodeType::Leaf, data);
 
     // ask the processor to do it
-    _quadTree.GetProcessor().FillBorder(typeToReplace, nodeNeighborsToFillFrom, data);
+    _quadTree.GetProcessor().FillBorder(typeToReplace, nodeNeighborsToFillFrom, emptyNewNodeContent);
+    _quadTree.ForceRedraw();
+  } 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MemoryMap::ReplaceContentInternal(const Quad2f& inQuad, EContentType typeToReplace, EContentType newTypeSet, TimeStamp_t timeMeasured)
+{
+  if (!kDisableNavMap) {
+    // convert into node types and emtpy (no extra info) node content
+    MemoryMapData data(newTypeSet, timeMeasured);
+    NodeContent emptyNewNodeContent(ENodeType::Leaf, data);
+
+    // Implementation note: since we define a quad, we should be directly asking the navMesh to do this. Currently
+    // however I do not have a way to do this in AddQuad, and I think it would be slightly more difficult to
+    // do in AddQuad (since we have to pass the typeToReplace around and change the logic based on whether a typeToReplace
+    // has been specified). Additionally, if I add this to AddQuad, I would also have to add it to AddLine and AddPoint,
+    // so the change is bigger than asking the processor to do this.
+    // The issue with the processor is that the processor provides fast access to nodes of a given type, but regardless
+    // of location (which is exaclty what the quadTree provides), so it may be more or less efficient depending on
+    // the number of nodes currently with the given type versus the number of quads that fall within the quad. Since
+    // I do not have that metric at the moment for the use cases, I am going with a simpler implementation, unless
+    // profile shows that it's not adequate
+    _quadTree.GetProcessor().ReplaceContent(inQuad, typeToReplace, emptyNewNodeContent);
     _quadTree.ForceRedraw();
   }
 }
 
-void MemoryMap::TransformContent(NodeTransformFunction transform)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MemoryMap::ReplaceContentInternal(EContentType typeToReplace, EContentType newTypeSet, TimeStamp_t timeMeasured)
 {
   if (!kDisableNavMap) {
-    _quadTree.GetProcessor().Transform(transform);
-  }
-}
+    // convert into node types and emtpy (no extra info) node content
+    MemoryMapData data(newTypeSet, timeMeasured);
+    NodeContent emptyNewNodeContent(ENodeType::Leaf, data);
 
-void MemoryMap::TransformContent(const Poly2f& poly, NodeTransformFunction transform)
-{
-  if (!kDisableNavMap) {
-    _quadTree.Transform(poly, transform);
+    // ask the processor
+    _quadTree.GetProcessor().ReplaceContent(typeToReplace, emptyNewNodeContent);
+    _quadTree.ForceRedraw();
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output)
+void MemoryMap::TransformContent(NodeTransformFunction transform)
 {
   if (!kDisableNavMap) {
-    _quadTree.GetProcessor().FindIf(pred, output);
+    _quadTree.GetProcessor().TransformContent(transform);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MemoryMap::FindContentIf(NodePredicate pred, std::unordered_set<std::shared_ptr<MemoryMapData>>& output)
+{
+  if (!kDisableNavMap) {
+    _quadTree.GetProcessor().FindContentIf(pred, output);
   }
 }
 
@@ -204,10 +236,38 @@ void MemoryMap::BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) con
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::Insert(const Poly2f& poly, const MemoryMapData& data)
+void MemoryMap::AddQuad(const Quad2f& quad, const MemoryMapData& content)
 {
   if (!kDisableNavMap) {
-    _quadTree.Insert(poly, data, numberOfAllowedShiftsToIncludeContent);
+    NodeContent nodeContent(ENodeType::Leaf, content);
+    _quadTree.AddQuad(quad, nodeContent, numberOfAllowedShiftsToIncludeContent);
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MemoryMap::AddLine(const Point2f& from, const Point2f& to, const MemoryMapData& content)
+{
+  if (!kDisableNavMap) {
+    NodeContent nodeContent(ENodeType::Leaf, content);
+    _quadTree.AddLine(from, to, nodeContent, numberOfAllowedShiftsToIncludeContent);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MemoryMap::AddTriangle(const Triangle2f& tri, const MemoryMapData& content)
+{
+  if (!kDisableNavMap) {
+    NodeContent nodeContent(ENodeType::Leaf, content);
+    _quadTree.AddTriangle(tri, nodeContent, numberOfAllowedShiftsToIncludeContent);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MemoryMap::AddPoint(const Point2f& point, const MemoryMapData& content)
+{
+  if (!kDisableNavMap) {
+    NodeContent nodeContent(ENodeType::Leaf, content);
+    _quadTree.AddPoint(point, nodeContent, numberOfAllowedShiftsToIncludeContent);
   }
 }
 

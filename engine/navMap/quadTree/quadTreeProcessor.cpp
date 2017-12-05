@@ -13,7 +13,6 @@
 #include "quadTreeNode.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/vision/basestation/profiler.h"
 
 #include "util/console/consoleInterface.h"
@@ -29,6 +28,7 @@
 namespace Anki {
 namespace Cozmo {
 
+CONSOLE_VAR(bool , kRenderContentTypes , "QuadTreeProcessor", false); // renders registered content nodes for webots
 CONSOLE_VAR(bool , kRenderSeeds        , "QuadTreeProcessor", false); // renders seeds differently for debugging purposes
 CONSOLE_VAR(bool , kRenderBordersFrom  , "QuadTreeProcessor", false); // renders detected borders (origin quad)
 CONSOLE_VAR(bool , kRenderBordersToDot , "QuadTreeProcessor", false); // renders detected borders (border center) as dots
@@ -47,6 +47,7 @@ if ( kDebugFindBorders ) {                                                      
 QuadTreeProcessor::QuadTreeProcessor(VizManager* vizManager)
 : _currentBorderCombination(nullptr)
 , _root(nullptr)
+, _contentGfxDirty(false)
 , _borderGfxDirty(false)
 , _totalExploredArea_m2(0.0)
 , _totalInterestingEdgeArea_m2(0.0)
@@ -56,18 +57,42 @@ QuadTreeProcessor::QuadTreeProcessor(VizManager* vizManager)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, const EContentType& oldType, const bool wasEmpty)
+void QuadTreeProcessor::SetRoot(QuadTreeNode* node)
 {
+  // grab new root
+  _root = node;
+  
+  // check type if valid root
+  if ( nullptr != _root )
+  {
+    // we expect to set the root before anyone else (and only then)
+    DEV_ASSERT(node->GetNodeType() == ENodeType::Invalid, "QuadTreeProcessor.SetRoot.RootIsInitialized");
+    // change from invalid to unknown; this is required when Unknown is cached, so that we cache the root as soon as we get it
+    MemoryMapData data(EContentType::Unknown, node->_content.data->GetLastObservedTime());
+    QuadTreeTypes::NodeContent rootContent(ENodeType::Leaf, data);
+    _root->ForceSetDetectedContentType(rootContent, *this);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, const NodeContent& oldContent, const NodeContent& newContent)
+{
+  DEV_ASSERT(oldContent != newContent, "QuadTreeProcessor.OnNodeContentTypeChanged.ContentNotChanged");
   
   using namespace MemoryMapTypes;
-  EContentType newType = node->GetContent().data->type;
-
-  DEV_ASSERT(oldType != newType, "QuadTreeProcessor.OnNodeContentTypeChanged.ContentNotChanged");
+  EContentType oldType = oldContent.data->type;
+  EContentType newType = newContent.data->type;
 
   // update exploration area based on the content type
   {
-    const bool needsToRemove = !wasEmpty &&  node->IsEmptyType();
-    const bool needsToAdd    =  wasEmpty && !node->IsEmptyType();
+    const bool wasOutOld = (oldContent.type == ENodeType::Invalid   ) ||
+                           (oldType == EContentType::Unknown   ) ||
+                           (oldContent.type == ENodeType::Subdivided);
+    const bool isOutNew  = (newContent.type == ENodeType::Invalid   ) ||
+                           (newType == EContentType::Unknown   ) ||
+                           (newContent.type == ENodeType::Subdivided);
+    const bool needsToRemove = !wasOutOld &&  isOutNew;
+    const bool needsToAdd    =  wasOutOld && !isOutNew;
     if ( needsToRemove )
     {
       const float side_m = MM_TO_M(node->GetSideLen());
@@ -109,6 +134,9 @@ void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, const
     DEV_ASSERT(_nodeSets[oldType].find(node) != _nodeSets[oldType].end(),
                "QuadTreeProcessor.OnNodeContentTypeChanged.InvalidRemove");
     _nodeSets[oldType].erase( node );
+    
+    // flag as dirty
+    _contentGfxDirty = true;
   }
 
   if ( IsCached(newType) )
@@ -117,6 +145,9 @@ void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, const
     DEV_ASSERT(_nodeSets[newType].find(node) == _nodeSets[newType].end(),
                "QuadTreeProcessor.OnNodeContentTypeChanged.InvalidInsert");
     _nodeSets[newType].insert(node);
+    
+    // flag as dirty
+    _contentGfxDirty = true;
   }
   
   // invalidate all borders. Note this is not optimal, we could invalidate only affected borders (if such
@@ -135,11 +166,16 @@ void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
     DEV_ASSERT(_nodeSets[oldContent].find(node) != _nodeSets[oldContent].end(),
                "QuadTreeProcessor.OnNodeDestroyed.InvalidNode");
     _nodeSets[oldContent].erase(node);
+    
+    // flag as dirty
+    _contentGfxDirty = true;
   }
 
   // remove the area for this node if it was counted before
   {
-    const bool wasOutOld = node->IsEmptyType();
+    const bool wasOutOld = (node->GetNodeType() == ENodeType::Invalid   ) ||
+                           (node->GetData()->type == EContentType::Unknown   ) ||
+                           (node->GetNodeType() == ENodeType::Subdivided);
     const bool needsToRemove = !wasOutOld;
     if ( needsToRemove )
     {
@@ -379,13 +415,12 @@ bool QuadTreeProcessor::HasCollisionRayWithTypes(const Point2f& rayFrom, const P
   ANKI_CPU_PROFILE("QuadTreeProcessor::HasCollisionRayWithTypesNonRecursive");
 
   // search from root
-  const Poly2f poly({rayFrom, rayTo});
-  const bool ret = HasCollisionRayWithTypes(_root, FastPolygon(poly), types);
+  const bool ret = HasCollisionRayWithTypes(_root, rayFrom, rayTo, types);
   return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::HasCollisionRayWithTypes(const QuadTreeNode* node, const FastPolygon& poly, EContentTypePackedType types) const
+bool QuadTreeProcessor::HasCollisionRayWithTypes(const QuadTreeNode* node, const Point2f& rayFrom, const Point2f& rayTo, EContentTypePackedType types) const
 {
   // this function could be easily optimized by using axis-aligned math available in QuadTreeNode. Adding profile
   // here to prove that we need to
@@ -400,7 +435,9 @@ bool QuadTreeProcessor::HasCollisionRayWithTypes(const QuadTreeNode* node, const
   }
 
   // if a quad contains any of the points, or the ray intersects with the quad, then the quad is relevant
-  const bool isQuadRelevant = QuadTreeNode::ESetOverlap::Disjoint != node->GetOverlapType(poly);
+  const Quad2f& curQuad = node->MakeQuadXY();
+  bool doesLineCrossQuad = false;
+  const bool isQuadRelevant = QTOptimizations::OverlapsOrContains(curQuad, QuadTreeNode::SegmentLineEquation(rayFrom, rayTo), doesLineCrossQuad);
   if ( isQuadRelevant )
   {
     // the quad is relevant, let's check type
@@ -417,7 +454,7 @@ bool QuadTreeProcessor::HasCollisionRayWithTypes(const QuadTreeNode* node, const
       // grab children at index and ask for collision/type check
       const std::unique_ptr<QuadTreeNode>& childPtr = node->GetChildAt(index);
       DEV_ASSERT(childPtr, "QuadTreeProcessor.HasCollisionRayWithTypes.NullChild");
-      const bool childMatches = HasCollisionRayWithTypes(childPtr.get(), poly, types);
+      const bool childMatches = HasCollisionRayWithTypes(childPtr.get(), rayFrom, rayTo, types);
       if ( childMatches ) {
         // child said yes, we are also a yes
         return true;
@@ -429,7 +466,7 @@ bool QuadTreeProcessor::HasCollisionRayWithTypes(const QuadTreeNode* node, const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapData& data)
+void QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const NodeContent& newContent)
 {
   ANKI_CPU_PROFILE("QuadTreeProcessor.FillBorder");
 
@@ -469,31 +506,105 @@ void QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedTy
   
   // add flooded centers to the tree (not this does not cause flood filling)
   for( const auto& center : floodedQuadCenters ) {
-    _root->Insert(Poly2f({center}), data, *this);
+    _root->AddContentPoint(center, newContent, *this);
   }
   
   timer.Toc("QuadTreeProcessor.FillBorder");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::Transform(NodeTransformFunction transform)
+void QuadTreeProcessor::ReplaceContent(const Quad2f& inQuad, EContentType typeToReplace, const NodeContent& newContent)
 {
-  // TODO: use cached data in the processor to access all data directly, since we don't have constraints on locality
-  if (_root) {
-    Poly2f p;
-    p.ImportQuad2d(_root->MakeQuadXY());
-    _root->Transform(FastPolygon(p), transform, *this);
+  DEV_ASSERT_MSG(IsCached(typeToReplace), "QuadTreeProcessor.ReplaceContent",
+                 "%s is not cached", EContentTypeToString(typeToReplace));
+  
+  auto nodeSetMatch = _nodeSets.find(typeToReplace);
+  if (nodeSetMatch != _nodeSets.end())
+  {
+    const NodeSet& nodesToReplaceSet = nodeSetMatch->second;
+    if ( !nodesToReplaceSet.empty() )
+    {
+      // when we change the content type, nodeSet for that type changes (erases nodes). Instead of caching iterators
+      // in different functions, grab their center and readd content
+      std::vector<Point2f> affectedNodeCenters;
+      affectedNodeCenters.reserve( nodesToReplaceSet.size() );
+      
+      // iterate all nodes adding centers
+      for( const auto& node : nodesToReplaceSet )
+      {
+        // check if the node and the quad overlap. In some cases this will cause this implementation to be slower. In
+        // others it will be faster (depends on number of quads in inQuad, vs number of nodes with typeToReplace content)
+        const bool isAffected = node->ContainsOrOverlapsQuad(inQuad);
+        if ( isAffected ) {
+          affectedNodeCenters.emplace_back( node->GetCenter() );
+        }
+      }
+      
+      // re-add all centers with the new type
+      for( const Point2f& point : affectedNodeCenters ) {
+        _root->AddContentPoint(point, newContent, *this);
+      }
+    }
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::FindIf(NodePredicate pred, MemoryMapDataConstList& output)
+void QuadTreeProcessor::ReplaceContent(EContentType typeToReplace, const NodeContent& newContent)
 {
-  // TODO: use cached data in the processor to access all data directly, since we don't have constraints on locality
+  DEV_ASSERT_MSG(IsCached(typeToReplace), "QuadTreeProcessor.ReplaceContent",
+                 "%s is not cached", EContentTypeToString(typeToReplace));
+  
+  // note: QuadTreeProcessor.FillBorder uses quads instead of nodes, and re-adds those quads as detected
+  // content in order to change the memory map. That approach is a good way of having the processor not modify
+  // nodes directly, but allow QuadTreeNodes to change their content and automerge parents properly. It
+  // however can be slow, since it adds every quad without any other spatial information, having to start
+  // from the root and explore down
+  // Additionally, content override requirements may not meet, which I'm not sure it's a good or a bad thing:
+  // did the caller of ReplaceContent actually mean "replace" or "tenative set"? At this moment I consider it
+  // an actual replace, regardless of regular requirements for content overriding, which means we should bypass
+  // the QTNodes' checks
+  // For now, I am going to try the same approach but using AddPoint, which should be the 2nd fastest way of doing this,
+  // since directly changing nodes would be faster, but probably the fastest one providing automerge without becoming
+  // difficult to understand
+  
+  auto nodeSetMatch = _nodeSets.find(typeToReplace);
+  if (nodeSetMatch != _nodeSets.end())
+  {
+    const NodeSet& nodesToReplaceSet = nodeSetMatch->second;
+    if ( !nodesToReplaceSet.empty() )
+    {
+      // when we change the content type, nodeSet for that type changes (erases nodes). Instead of caching iterators
+      // in different functions, grab their center and readd content
+      std::vector<Point2f> affectedNodeCenters;
+      affectedNodeCenters.reserve( nodesToReplaceSet.size() );
+      
+      // iterate all nodes adding centers
+      for( const auto& node : nodesToReplaceSet )
+      {
+        affectedNodeCenters.emplace_back( node->GetCenter() );
+      }
+      
+      // re-add all centers with the new type
+      for( const Point2f& point : affectedNodeCenters ) {
+        _root->AddContentPoint(point, newContent, *this);
+      }
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeProcessor::TransformContent(NodeTransformFunction transform)
+{
   if (_root) {
-    Poly2f p;
-    p.ImportQuad2d(_root->MakeQuadXY());
-    _root->FindIf(FastPolygon(p), pred, output);
+    _root->TransformContent_Recursive(transform, _root, *this);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeProcessor::FindContentIf(NodePredicate pred, std::unordered_set<std::shared_ptr<MemoryMapData>>& output)
+{
+  if (_root) {
+    _root->FindContentIf_Recursive(pred, output, *this);
   }
 }
 
@@ -512,6 +623,23 @@ bool QuadTreeProcessor::HasContentType(EContentType nodeType) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeProcessor::Draw() const
 {
+  // content quads
+  if ( _contentGfxDirty && kRenderContentTypes )
+  {
+    VizManager::SimpleQuadVector quadVector;
+
+    // add registered types
+    for ( const auto& it : _nodeSets )
+    {
+      EContentType type = it.first;
+      AddQuadsToDraw(type, quadVector, GetDebugColor(type), kRenderZOffset);
+    }
+    
+    _vizManager->DrawQuadVector("QuadTreeProcessorContent", quadVector);
+    
+    _contentGfxDirty = false;
+  }
+
   // borders
   if ( _borderGfxDirty && (kRenderBordersFrom || kRenderBordersToDot || kRenderBordersToQuad) )
   {
@@ -590,6 +718,7 @@ void QuadTreeProcessor::ClearDraw() const
   _vizManager->EraseQuadVector("QuadTreeProcessorBorders");
   
   // flag as dirty for next draw
+  _contentGfxDirty = true;
   _borderGfxDirty = true;
 }
 
@@ -606,6 +735,18 @@ bool QuadTreeProcessor::IsCached(EContentType contentType)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ColorRGBA QuadTreeProcessor::GetDebugColor(ENodeType contentType)
+{
+  ColorRGBA ret = Anki::NamedColors::BLACK;
+  switch (contentType) {
+    case ENodeType::Invalid:               { DEV_ASSERT(false, "QuadTreeProcessor.Invalid.NotSupported"); break; };
+    case ENodeType::Subdivided:            { ret = ColorRGBA(0.2f, 0.2f, 0.2f, 0.3f); break; };
+    case ENodeType::Leaf:                  { ret = ColorRGBA(0.2f, 0.2f, 0.2f, 0.3f); break; };
+    case ENodeType::_Count:                { DEV_ASSERT(false, "QuadTreeProcessor._Count.NotSupported"); break; };
+  }
+  return ret;
+}
+
 ColorRGBA QuadTreeProcessor::GetDebugColor(MemoryMapTypes::EContentType contentType)
 {
   ColorRGBA ret = Anki::NamedColors::BLACK;
@@ -630,7 +771,7 @@ ColorRGBA QuadTreeProcessor::GetDebugColor(MemoryMapTypes::EContentType contentT
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTreeProcessor::BorderKeyType QuadTreeProcessor::GetBorderTypeKey(EContentType innerType, EContentTypePackedType outerTypes)
 {
-  using UnderlyingContentType = std::underlying_type<EContentType>::type;
+  using UnderlyingContentType = std::underlying_type<ENodeType>::type;
 
   static_assert( (sizeof(EContentTypePackedType)+sizeof(UnderlyingContentType)) <= (sizeof(BorderKeyType)),
   "BorderKeyType should hold 2 EContentTypePackedType" );
@@ -1232,6 +1373,27 @@ QuadTreeProcessor::BorderCombination& QuadTreeProcessor::RefreshBorderCombinatio
   
   return borderCombination;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeProcessor::AddQuadsToDraw(EContentType contentType,
+  VizManager::SimpleQuadVector& quadVector, const ColorRGBA& color, float zOffset) const
+{
+  // find the set of quads for that content type
+  auto match = _nodeSets.find(contentType);
+  if ( match != _nodeSets.end() )
+  {
+    // iterate the set
+    for ( const auto& nodePtr : match->second )
+    {
+      // add a quad for this ndoe
+      Point3f center = nodePtr->GetCenter();
+      center.z() += zOffset;
+      const float sideLen = nodePtr->GetSideLen();
+      quadVector.emplace_back(VizManager::MakeSimpleQuad(color, center, sideLen));
+    }
+  }
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

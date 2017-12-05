@@ -9,13 +9,13 @@
  * Copyright: Anki, Inc. 2015
  **/
 #include "quadTree.h"
+#include "quadTreeTypes.h"
 
 #include "engine/viz/vizManager.h"
 #include "engine/robot.h"
 
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
 
 #include "anki/messaging/basestation/IComms.h"
 
@@ -101,46 +101,193 @@ float QuadTree::GetContentPrecisionMM() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTree::Insert(const FastPolygon& poly, const MemoryMapData& data, int shiftAllowedCount)
+void QuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent, int shiftAllowedCount)
 {
-  ANKI_CPU_PROFILE("QuadTree::Insert");
+  ANKI_CPU_PROFILE("QuadTree::AddQuad");
   
   {
     // I have had a unit test send here a NaN quad, probably because a cube pose was busted, detect that case
     // here and ignore the quad so that we don't assert because we expand indefinitely
-    bool isNaNPoly = false;
-    for (const auto& pt : poly.GetSimplePolygon()) 
-    {
-      isNaNPoly |= std::isnan(pt.x()) ||   std::isnan(pt.y());
-    }
-  
-    if ( isNaNPoly ) {
-      PRINT_NAMED_ERROR("QuadTree.Insert.NaNPoly",
-        "Poly is not valid, at least one coordinate is NaN.");
-      Util::sDumpCallstack("QuadTree::Insert");
+    const bool isNaNQuad =
+      std::isnan(quad.GetTopLeft().x()    ) ||
+      std::isnan(quad.GetTopLeft().y()    ) ||
+      std::isnan(quad.GetTopRight().x()   ) ||
+      std::isnan(quad.GetTopRight().y()   ) ||
+      std::isnan(quad.GetBottomLeft().x() ) ||
+      std::isnan(quad.GetBottomLeft().y() ) ||
+      std::isnan(quad.GetBottomRight().x()) ||
+      std::isnan(quad.GetBottomRight().y());
+    if ( isNaNQuad ) {
+      PRINT_NAMED_ERROR("QuadTree.AddQuad.NaNQuad",
+        "Quad is not valid, at least one coordinate is NaN.");
+      Util::sDumpCallstack("QuadTree::AddQuad");
       return;
     }
   }
   
-  // if the root does not contain the poly, expand
-  if ( !_root.Contains( poly ) )
+  // render approx last quad added
+  if ( kRenderLastAddedQuad )
   {
-    // TODO: (mrw) we now remove objects by ID, so we should never be adding the removal type at all?
+    ANKI_CPU_PROFILE("QuadTree::AddQuad.Render");
     
-    // if we are 'adding' a removal poly, do not expand, since it would be useless to expand or shift to try
+    ColorRGBA color = Anki::NamedColors::WHITE;
+    const float z = 70.0f;
+    Point3f topLeft = {quad[Quad::CornerName::TopLeft].x(), quad[Quad::CornerName::TopLeft].y(), z};
+    Point3f topRight = {quad[Quad::CornerName::TopRight].x(), quad[Quad::CornerName::TopRight].y(), z};
+    Point3f bottomLeft = {quad[Quad::CornerName::BottomLeft].x(), quad[Quad::CornerName::BottomLeft].y(), z};
+    Point3f bottomRight = {quad[Quad::CornerName::BottomRight].x(), quad[Quad::CornerName::BottomRight].y(), z};
+    _vizManager->DrawSegment("QuadTree::AddQuad", topLeft, topRight, color, true);
+    _vizManager->DrawSegment("QuadTree::AddQuad", topRight, bottomRight, color, false);
+    _vizManager->DrawSegment("QuadTree::AddQuad", bottomRight, bottomLeft, color, false);
+    _vizManager->DrawSegment("QuadTree::AddQuad", bottomLeft, topLeft, color, false);
+  }
+
+  // if the root does not contain the quad, expand
+  if ( !_root.Contains( quad ) )
+  {
+    // if we are 'adding' a removal quad, do not expand, since it would be useless to expand or shift to try
     // to remove data.
-    const bool isRemovingContent = MemoryMapTypes::IsRemovalType(data.type);
+    const bool isRemovingContent = MemoryMapTypes::IsRemovalType(nodeContent.data->type);
     if ( isRemovingContent ) {
-      PRINT_NAMED_WARNING("QuadTree.Insert.RemovalPolyNotContained",
-        "Poly is not fully contained in root, removal does not cause expansion.");
+      PRINT_NAMED_INFO("QuadTree.AddQuad.RemovalQuadNotContained",
+        "Quad is not fully contained in root, removal does not cause expansion.");
     }
     else
     {
-      Expand( poly.GetSimplePolygon(), shiftAllowedCount );
+      Expand( quad, shiftAllowedCount );
     }
   }
 
-  const bool changed = _root.Insert(poly, data, _processor);
+  // add quad now
+  const bool changed = _root.AddContentQuad(quad, nodeContent, _processor);
+  _gfxDirty |= changed;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTree::AddLine(const Point2f& from, const Point2f& to, const NodeContent& nodeContent, int shiftAllowedCount)
+{
+  ANKI_CPU_PROFILE("QuadTree::AddLine");
+  
+  {
+    // I have had a unit test send here a NaN quad, probably because a cube pose was busted, detect here
+    // if a line is also nan
+    const bool isNaNLine =
+      std::isnan(from.x()) ||
+      std::isnan(from.y()) ||
+      std::isnan(to.x()  ) ||
+      std::isnan(to.y()  );
+    if ( isNaNLine ) {
+      PRINT_NAMED_ERROR("QuadTree.AddLine.NaNQuad",
+        "Line is not valid, at least one coordinate is NaN.");
+      Util::sDumpCallstack("QuadTree::AddLine");
+      return;
+    }
+  }
+
+  // if the root does not contain origin, we need to expand in that direction
+  if ( !_root.Contains( from ) )
+  {
+    // if we are 'adding' a removal line, do not expand, since it would be useless to expand or shift to try
+    // to remove data.
+    const bool isRemovingContent = MemoryMapTypes::IsRemovalType(nodeContent.data->type);
+    if ( isRemovingContent ) {
+      PRINT_NAMED_INFO("QuadTree.AddLine.RemovalLineFromNotContained",
+        "Line 'from' point is not fully contained in root, removal does not cause expansion.");
+    }
+    else
+    {
+      Expand( from, shiftAllowedCount );
+    }
+  }
+
+  // if the root does not contain destination, we need to expand in that direction
+  if ( !_root.Contains( to ) )
+  {
+    // if we are 'adding' a removal line, do not expand, since it would be useless to expand or shift to try
+    // to remove data.
+    const bool isRemovingContent = MemoryMapTypes::IsRemovalType(nodeContent.data->type);
+    if ( isRemovingContent ) {
+      PRINT_NAMED_INFO("QuadTree.AddLine.RemovalLineToNotContained",
+        "Line 'to' point is not fully contained in root, removal does not cause expansion.");
+    }
+    else
+    {
+      Expand( to, shiftAllowedCount );
+    }
+  }
+
+  // add segment now
+  const bool changed = _root.AddContentLine(from, to, nodeContent, _processor);
+  _gfxDirty |= changed;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& nodeContent, int shiftAllowedCount)
+{
+  ANKI_CPU_PROFILE("QuadTree::AddTriangle");
+  
+  {
+    // I have had a unit test send here a NaN quad, probably because a cube pose was busted, detect here if
+    // a triangle becomes NaN ever to prevent expanding indefinitely
+    const bool isNaNTri =
+      std::isnan(tri[0].x()) ||
+      std::isnan(tri[0].y()) ||
+      std::isnan(tri[1].x()) ||
+      std::isnan(tri[1].y()) ||
+      std::isnan(tri[2].x()) ||
+      std::isnan(tri[2].y());
+    if ( isNaNTri ) {
+      PRINT_NAMED_ERROR("QuadTree.AddTriangle.NaNQuad",
+        "Triangle is not valid, at least one coordinate is NaN.");
+      Util::sDumpCallstack("QuadTree::AddTriangle");
+      return;
+    }
+  }
+
+  // if the root does not contain the triangle, we need to expand in that direction
+  if ( !_root.Contains( tri ) )
+  {
+    // if we are 'adding' a removal triangle, do not expand, since it would be useless to expand or shift to try
+    // to remove data.
+    const bool isRemovingContent = MemoryMapTypes::IsRemovalType(nodeContent.data->type);
+    if ( isRemovingContent ) {
+      PRINT_NAMED_INFO("QuadTree.AddTriangle.RemovalTriangleNotContained",
+        "Triangle is not fully contained in root, removal does not cause expansion.");
+    }
+    else
+    {
+      Expand( tri, shiftAllowedCount );
+    }
+  }
+
+  // add triangle now
+  const bool changed = _root.AddContentTriangle(tri, nodeContent, _processor);
+  _gfxDirty |= changed;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTree::AddPoint(const Point2f& point, const NodeContent& nodeContent, int shiftAllowedCount)
+{
+  ANKI_CPU_PROFILE("QuadTree::AddPoint");
+  
+  // if the root does not contain the point, we need to expand in that direction
+  if ( !_root.Contains( point ) )
+  {
+    // if we are 'adding' a removal point, do not expand, since it would be useless to expand or shift to try
+    // to remove data.
+    const bool isRemovingContent = MemoryMapTypes::IsRemovalType(nodeContent.data->type);
+    if ( isRemovingContent ) {
+      PRINT_NAMED_INFO("QuadTree.AddPoint.RemovalPointNotContained",
+        "Point is not contained in root, removal does not cause expansion.");
+    }
+    else
+    {
+      Expand( point, shiftAllowedCount );
+    }
+  }
+  
+  // add point now
+  const bool changed = _root.AddContentPoint(point, nodeContent, _processor);
   _gfxDirty |= changed;
 }
 
@@ -198,63 +345,183 @@ void QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
       // At this moment is just a known issue
       
       // add to this
-      // TODO: don't copy the data, pass the shared pointer. Also generate the poly directly rather than through a quad
-      MemoryMapData* copyOfData(nodeInOther->GetContent().data.get());
-      Poly2f transformedPoly;
-      transformedPoly.ImportQuad2d(transformedQuad2d);
-      
-//      AddQuad(transformedQuad2d, *copyOfData, maxNumberOfShifts);
-        Insert(transformedPoly, *copyOfData, maxNumberOfShifts);
+      NodeContent copyOfContent = nodeInOther->GetContent();
+      AddQuad(transformedQuad2d, copyOfContent, maxNumberOfShifts);
     }
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTree::Expand(const Poly2f& polyToCover, int shiftAllowedCount)
+void QuadTree::Expand(const Quad2f& quadToCover, int shiftAllowedCount)
 {
-  ANKI_CPU_PROFILE("QuadTree::Expand");
+  ANKI_CPU_PROFILE("QuadTree::ExpandByQuad");
   
-  // allow expanding several times until the poly fits in the tree, as long as we can expand, we keep trying,
+  // allow expanding several times until the quad fits in the tree, as long as we can expand, we keep trying,
   // relying on the root to tell us if we reached a limit
   bool expanded = false;
-  bool fitsInMap = false;
+  bool quadFitsInMap = false;
   
   do
   {
     // find in which direction we are expanding, upgrade root level in that direction (center moves)
-    const Vec2f& direction = polyToCover.ComputeCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
+    const Vec2f& direction = quadToCover.ComputeCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
     expanded = _root.UpgradeRootLevel(direction, kQuadTreeMaxRootDepth, _processor);
 
-    // check if the poly now fits in the expanded root
-    fitsInMap = _root.Contains(polyToCover);
+    // check if the quad now fits in the expanded root
+    quadFitsInMap = _root.Contains(quadToCover);
     
-  } while( !fitsInMap && expanded );
+  } while( !quadFitsInMap && expanded );
 
-  // if the poly still doesn't fit, see if we can shift
+  // if the quad still doesn't fit, see if we can shift
   int shiftsDone = 0;
   bool canShift = (shiftsDone<shiftAllowedCount);
-  if ( !fitsInMap && canShift )
+  if ( !quadFitsInMap && canShift )
   {
-    // shift as many times as we can until the poly fits
+    // calculate points for shift
+    std::vector<Point2f> requiredPoints;
+    requiredPoints.reserve(4);
+    for( const Point2f& p : quadToCover ) {
+      requiredPoints.emplace_back(p);
+    }
+    
+    // shift as many times as we can until the quad fits
     do
     {
-      // shift the root to try to cover the poly, by removing opposite nodes in the map
-      _root.ShiftRoot(polyToCover, _processor);
+      // shift the root to try to cover the quad, by removing opposite nodes in the map
+      _root.ShiftRoot(requiredPoints, _processor);
       ++shiftsDone;
       canShift = (shiftsDone<shiftAllowedCount);
 
-      // check if the poly now fits in the expanded root
-      fitsInMap = _root.Contains(polyToCover);
+      // check if the quad now fits in the expanded root
+      quadFitsInMap = _root.Contains(quadToCover);
       
-    } while( !fitsInMap && canShift );
+    } while( !quadFitsInMap && canShift );
   }
   
-  // the poly should be contained, if it's not, we have reached the limit of expansions and shifts, and the poly does not
+  // the quad should be contained, if it's not, we have reached the limit of expansions and shifts, and the quad does not
   // fit, which will cause information loss
-  if ( !fitsInMap ) {
-    PRINT_NAMED_WARNING("QuadTree.Expand.InsufficientExpansion",
-      "Quad caused expansion, but expansion was not enough PolyCenter(%.2f, %.2f), Root(%.2f,%.2f) with sideLen(%.2f).",
-      polyToCover.ComputeCentroid().x(), polyToCover.ComputeCentroid().y(),
+  if ( !quadFitsInMap ) {
+    PRINT_NAMED_ERROR("QuadTree.ExpandByQuad.InsufficientExpansion",
+      "Quad caused expansion, but expansion was not enough QuadCenter(%.2f, %.2f), Root(%.2f,%.2f) with sideLen(%.2f).",
+      quadToCover.ComputeCentroid().x(), quadToCover.ComputeCentroid().y(),
+      _root.GetCenter().x(), _root.GetCenter().y(),
+      _root.GetSideLen() );
+  }
+  
+  // always flag as dirty since we have modified the root (potentially)
+  _gfxDirty = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTree::Expand(const Point2f& pointToInclude, int shiftAllowedCount)
+{
+  ANKI_CPU_PROFILE("QuadTree::ExpandByPoint");
+  
+  // allow expanding several times until the point fits in the tree, as long as we can expand, we keep trying,
+  // relying on the root to tell us if we reached a limit
+  bool expanded = false;
+  bool pointInMap = false;
+  
+  do {
+
+    // find in which direction we are expanding and upgrade root level in that direction (center moves)
+    const Vec2f& direction = pointToInclude - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
+    expanded = _root.UpgradeRootLevel(direction, kQuadTreeMaxRootDepth, _processor);
+    
+    // check if the point now fits in the expanded root
+    pointInMap = _root.Contains(pointToInclude);
+    
+  } while( !pointInMap && expanded );
+  
+  // if the point still doesn't fit, see if we can shift
+  int shiftsDone = 0;
+  bool canShift = (shiftsDone<shiftAllowedCount);
+  if ( !pointInMap && canShift )
+  {
+    // calculate points for shift
+    std::vector<Point2f> requiredPoints;
+    requiredPoints.reserve(1);
+    requiredPoints.emplace_back(pointToInclude);
+    
+    // shift as many times as we can until the quad fits
+    do
+    {
+      // shift the root to try to cover the point, by removing opposite nodes in the map
+      _root.ShiftRoot(requiredPoints, _processor);
+      ++shiftsDone;
+      canShift = (shiftsDone<shiftAllowedCount);
+
+      // check if the point now fits in the expanded root
+      pointInMap = _root.Contains(pointToInclude);
+      
+    } while( !pointInMap && canShift );
+  }
+  
+  // the point should be contained, if it's not, we have reached the limit of expansions and shifts, and the point does not
+  // fit, which will cause information loss
+  if ( !pointInMap ) {
+    PRINT_NAMED_ERROR("QuadTree.ExpandByPoint.InsufficientExpansion",
+      "Point caused expansion, but expansion was not enough Point(%.2f, %.2f), Root(%.2f,%.2f) with sideLen(%.2f).",
+      pointToInclude.x(), pointToInclude.y(), _root.GetCenter().x(), _root.GetCenter().y(), _root.GetSideLen() );
+  }
+  
+  // always flag as dirty since we have modified the root (potentially)
+  _gfxDirty = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTree::Expand(const Triangle2f& triangleToCover, int shiftAllowedCount)
+{
+  ANKI_CPU_PROFILE("QuadTree::ExpandByTriangle");
+  
+  // allow expanding several times until the triangle fits in the tree, as long as we can expand, we keep trying,
+  // relying on the root to tell us if we reached a limit
+  bool expanded = false;
+  bool triangleInMap = false;
+  
+  do {
+
+    // find in which direction we are expanding and upgrade root level in that direction (center moves)
+    const Vec2f& direction = triangleToCover.GetCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
+    expanded = _root.UpgradeRootLevel(direction, kQuadTreeMaxRootDepth, _processor);
+    
+    // check if the point now fits in the expanded root
+    triangleInMap = _root.Contains(triangleToCover);
+    
+  } while( !triangleInMap && expanded );
+  
+  // if the triangle still doesn't fit, see if we can shift
+  int shiftsDone = 0;
+  bool canShift = (shiftsDone<shiftAllowedCount);
+  if ( !triangleInMap && canShift )
+  {
+    // calculate points for shift
+    std::vector<Point2f> requiredPoints;
+    requiredPoints.reserve(3);
+    for( const Point2f& p : triangleToCover ) {
+      requiredPoints.emplace_back(p);
+    }
+    
+    // shift as many times as we can until the triangle fits
+    do
+    {
+      // shift the root to try to cover the triangle, by removing opposite nodes in the map
+      _root.ShiftRoot(requiredPoints, _processor);
+      ++shiftsDone;
+      canShift = (shiftsDone<shiftAllowedCount);
+
+      // check if the triangle now fits in the expanded root
+      triangleInMap = _root.Contains(triangleToCover);
+      
+    } while( !triangleInMap && canShift );
+  }
+  
+  // the point should be contained, if it's not, we have reached the limit of expansions and shifts, and the point does not
+  // fit, which will cause information loss
+  if ( !triangleInMap ) {
+    PRINT_NAMED_ERROR("QuadTree.ExpandByTriangle.InsufficientExpansion",
+      "Triangle caused expansion, but expansion was not enough TriCenter(%.2f, %.2f), Root(%.2f,%.2f) with sideLen(%.2f).",
+      triangleToCover.GetCentroid().x(), triangleToCover.GetCentroid().y(),
       _root.GetCenter().x(), _root.GetCenter().y(),
       _root.GetSideLen() );
   }

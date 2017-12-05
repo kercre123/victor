@@ -20,17 +20,21 @@ namespace Cozmo {
 namespace QuadTreeTypes {
       
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NodeContent::NodeContent(const MemoryMapData& m)
-: data(m.Clone()) {}
+NodeContent::NodeContent(ENodeType t, const MemoryMapData& m)
+: type(t)
+, data(m.Clone()) {}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NodeContent::NodeContent(MemoryMapTypes::MemoryMapDataPtr m)
-: data(m) {}
+NodeContent::NodeContent(ENodeType t, MemoryMapTypes::MemoryMapDataPtr m)
+: type(t)
+, data(m) {}
       
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NodeContent::operator==(const NodeContent& other) const
 {
-  if (data->type == other.data->type) 
+  const bool sameType = ( type == other.type ) && ( data->type == other.data->type );
+  
+  if (sameType) 
   {
     const bool equals =    
       (data == other.data) || 
@@ -49,6 +53,18 @@ bool NodeContent::operator!=(const NodeContent& other) const
 {
   const bool ret = !(this->operator==(other));
   return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const char* ENodeTypeToString(ENodeType nodeType)
+{
+  switch (nodeType) {
+    case ENodeType::Invalid: return "Invalid";
+    case ENodeType::Subdivided: return "Subdivided";
+    case ENodeType::Leaf: return "Leaf";
+    case ENodeType::_Count: return "ERROR_COUNT_SHOULD_NOT_BE_USED";
+  }
+  return "ERROR";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

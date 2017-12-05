@@ -23,34 +23,67 @@
 
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/triangle.h"
-#include "anki/common/basestation/math/lineSegment2d.h"
+
 
 #include "util/helpers/noncopyable.h"
 
 #include <memory>
 #include <vector>
+#include <unordered_set>
 
 namespace Anki {
 namespace Cozmo {
 
 class QuadTreeProcessor;
 using namespace QuadTreeTypes;
-using namespace MemoryMapTypes;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class QuadTreeNode : private Util::noncopyable
 {
 public:
+  friend class QuadTreeProcessor;
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  using NodeCPtrVector = std::vector<const QuadTreeNode*>;  
+
+  using NodeCPtrVector = std::vector<const QuadTreeNode*>;
+
+  struct SegmentLineEquation {
+    const Point2f& from;
+    const Point2f& to;
+    bool isXAligned; // m and 1/m are not useful in this case
+    bool isYAligned; // m and 1/m are not useful in this case
+    float segM;      // m (segment-line slope)
+    float oneOverM;  // 1/m
+    float segB;      // y-intercept
+    
+    inline void CalculateMB()
+    {
+      const float xInc = from.x() - to.x();
+      const float yInc = from.y() - to.y();
+      isXAligned = FLT_NEAR(xInc, 0.0f);
+      isYAligned = FLT_NEAR(yInc, 0.0f);
+      const bool computeLineEq = !isXAligned && !isYAligned;
+      if ( computeLineEq )
+      {
+        // m = (y-y1) / (x-x1)
+        segM = yInc / xInc;
+        oneOverM = 1.0f / segM;
+        // y = mx + b   -->   b = y - mx
+        segB = from.y() - (segM * from.x());
+      }
+      else {
+        segM = oneOverM = segB = 0.0f; // they are not 0, I just set to 0 because I don't use them for X or Y aligned segments
+      }
+    }
+    
+    inline SegmentLineEquation(const Point2f& f, const Point2f& t) : from(f), to(t) { CalculateMB(); }
+  };
+  using QuadSegmentArray = SegmentLineEquation[4];
+  using TriangleSegmentArray = SegmentLineEquation[3];
   using QuadInfoVector = std::vector<ExternalInterface::MemoryMapQuadInfo>;
   using QuadInfoDebugVizVector = std::vector<ExternalInterface::MemoryMapQuadInfoDebugViz>;
-  
-  // type of overlap for two sets
-  enum class ESetOverlap { Disjoint, Intersecting, SupersetOf, SubsetOf};
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization
@@ -84,10 +117,19 @@ public:
 
   // consider using the concrete checks if you are going to do GetContentType() == X, in case the meaning of that
   // comparison changes
-  MemoryMapDataPtr GetData() const { return _content.data; }
-  bool IsContentTypeUnknown() const { return _content.data->type == EContentType::Unknown; }
+  ENodeType GetNodeType() const { return _content.type; }
+  std::shared_ptr<MemoryMapData> GetData() const { return _content.data; }
+  bool IsContentTypeUnknown() const { return _content.data->type == MemoryMapTypes::EContentType::Unknown; }
   
+  // returns true if this node FULLY contains the given quad, false if any corner is not within this node's quad
+  bool Contains(const Quad2f& quad) const;
+  // returns true if this node contains the given point
+  bool Contains(const Point2f& point) const;
+  // returns true if this node FULLY contains the given triangle
+  bool Contains(const Triangle2f& tri) const;
+
   // Builds a quad from our coordinates
+  Quad3f MakeQuad() const;
   Quad2f MakeQuadXY(const float padding_mm=0.0f) const;
   
   // return the unique_ptr for our child at the given index. If no child is present at the given index, it returns
@@ -96,34 +138,26 @@ public:
   
   // return number of current children
   size_t GetNumChildren() const { return _childrenPtr.size(); }
-  
-  // return if the node contains any useful data
-  bool IsEmptyType() const { return (IsSubdivided() || (_content.data->type == EContentType::Unknown));  }
-  
-  // return true if this quad is already subdivided
-  bool IsSubdivided() const { return !_childrenPtr.empty(); }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // store data in the tree bounded by the provided polygon
-  bool Insert(const FastPolygon& poly, const MemoryMapData& data, QuadTreeProcessor& processor);
+  // processes the given quad within the tree and appropriately stores the content in the quad tree where the quad overlaps
+  bool AddContentQuad(const Quad2f& quad, const NodeContent& detectedContent, QuadTreeProcessor& processor);
+  
+  // processes the given line within the tree and appropriately stores the content in the quad tree where the line collides
+  bool AddContentLine(const Point2f& from, const Point2f& to, const NodeContent& detectedContent, QuadTreeProcessor& processor);
+  
+  // processes the given triangle within the tree and appropriately stores the content in the quad tree where the line collides
+  bool AddContentTriangle(const Triangle2f& tri, const NodeContent& detectedContent, QuadTreeProcessor& processor);
+  
+  // processes the given point within the tree and appropriately stores the content in the quad tree where the point resides
+  bool AddContentPoint(const Point2f& point, const NodeContent& detectedContent, QuadTreeProcessor& processor);
 
-  
-  // attempt to apply a transformation function to the node, returns true of content changes
-  bool Transform(const FastPolygon& poly,
-                 NodeTransformFunction transform,
-                 QuadTreeProcessor& processor);                        
-  
-  // populate a list of all data that matches the predicate
-  void FindIf(const FastPolygon& poly,
-              NodePredicate pred, 
-              MemoryMapDataConstList& output);    
-              
   // moves this node's center towards the required points, so that they can be included in this node
   // returns true if the root shifts, false if it can't shift to accomodate all points or the points are already contained
-  bool ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& processor);
+  bool ShiftRoot(const std::vector<Point2f>& requiredPoints, QuadTreeProcessor& processor);
 
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
   // In order for a quadtree to be valid, the only way this could work without further operations is calling this
@@ -152,16 +186,6 @@ public:
   void AddSmallestDescendantsDepthFirst(NodeCPtrVector& descendants) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Collision checks
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // calculates in what manner the sets defined by the node and poly may intersect
-  ESetOverlap GetOverlapType(const FastPolygon& poly) const;
-  
-  // returns true if this node FULLY contains the given poly
-  bool Contains(const FastPolygon& poly) const;
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
@@ -182,48 +206,88 @@ private:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  struct AxisAlignedQuad {
-    AxisAlignedQuad(const Point2f& p, const Point2f& q);
-    bool Contains(const Point2f& p) const;
-    
-    Point2f lowerLeft; 
-    Point2f upperRight; 
-    std::array<LineSegment, 2> diagonals;
-  };
-  
   // info about moving towards a neighbor
   struct MoveInfo {
     EQuadrant neighborQuadrant;  // destination quadrant
     bool sharesParent;           // whether destination quadrant is in the same parent
   };
-    
+  
+  // type of overlap for quads
+  enum class EContentOverlap { Partial, Total };
+  
   // container for each node's children
   using ChildrenVector = std::vector< std::unique_ptr<QuadTreeNode> >;
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Collision checks
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // returns true if the quad contains this node, this node contains the quad, or if they overlap
+  bool ContainsOrOverlapsQuad(const Quad2f& inQuad) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // attempt to apply a transformation function to the node, returns true of content changes
+  bool TransformContent_Recursive(MemoryMapTypes::NodeTransformFunction transform,
+                                  QuadTreeNode* insertFrom, 
+                                  QuadTreeProcessor& processor);
+                                  
+  // populate a list of all data that matches the predicate
+  void FindContentIf_Recursive(MemoryMapTypes::NodePredicate pred, 
+                               std::unordered_set<std::shared_ptr<MemoryMapData>>& output, 
+                               QuadTreeProcessor& processor);
+  
+  // checks if the given point is contained in the quad, and properly acts, delegating on children if needed
+  bool AddPoint_Recursive(const Point2f& point, const NodeContent& detectedContent, QuadTreeProcessor& processor);
+
+  // setup precomputes common variables that the recursive method is going to use
+  bool AddTriangle_Setup(const Triangle2f& quad,
+                         const NodeContent& detectedContent,
+                         QuadTreeProcessor& processor);
+
+  // checks how the given triangle affects this node, and properly acts, delegating on children if needed
+  bool AddTriangle_Recursive(const Triangle2f& triangle,
+                             const TriangleSegmentArray& triangleSegments,
+                             const NodeContent& detectedContent,
+                             QuadTreeProcessor& processor);
+  
+  // checks how the given line affects this node, and properly acts, delegating on children if needed
+  bool AddLine_Recursive(const SegmentLineEquation& segmentLine, const NodeContent& detectedContent, QuadTreeProcessor& processor);
+ 
+  // old implementation (slow) of AddQuad
+  // checks how the given quad affects this node, and properly acts, delegating on children if needed
+  bool AddQuad_OldRecursive(const Quad2f& quad, const NodeContent& detectedContent, QuadTreeProcessor& processor);
+  
+  // new implementation (fast) of AddQuad
+  // setup precomputes common variables that the recursive method is going to use
+  bool AddQuad_NewSetup(const Quad2f &quad,
+                        const NodeContent& detectedContent,
+                        QuadTreeProcessor& processor);
+  
+  // new implementation (fast) of AddQuad
+  // checks how the given quad affects this node, and properly acts, delegating on children if needed
+  bool AddQuad_NewRecursive(const Quad2f& quad,
+                            const QuadSegmentArray& nonAAQuadSegments,
+                            const NodeContent& detectedContent,
+                            QuadTreeProcessor& processor);
   
   // return true if this quad can subdivide
   bool CanSubdivide() const { return _level > 0; }
+  
+  // return true if this quad is already subdivided
+  bool IsSubdivided() const { return !_childrenPtr.empty(); }
   
   // returns true if this node can override children with the given content type (some changes in content
   // type are not allowed to preserve information). This is a necessity now to prevent Cliffs from being
   // removed by Clear. Note that eventually we have to support that since it's possible that the player
   // actually covers the cliff with something transitable
-  bool CanOverrideSelfWithContent(EContentType newContentType, ESetOverlap overlap ) const;
-  bool CanOverrideSelfAndChildrenWithContent(EContentType newContentType, ESetOverlap overlap) const;
+  bool CanOverrideSelfWithContent(MemoryMapTypes::EContentType newContentType, EContentOverlap overlap ) const;
+  bool CanOverrideSelfAndChildrenWithContent(MemoryMapTypes::EContentType newContentType, EContentOverlap overlap) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // push content into the QT bounded by poly    
-  // TODO: (mrw) merge this with `Insert` Method once we figure out why creating NodeContent in the recursive call 
-  //       breaks dynamic casting of MemoryMapData          
-  bool Insert_Recursive(const FastPolygon& poly, 
-                        const NodeContent& detectedContent,
-                        QuadTreeProcessor& processor);
 
   // subdivide/merge children
   void Subdivide(QuadTreeProcessor& processor);
@@ -235,7 +299,7 @@ private:
   
   // sets the content type to the detected one.
   // try checks por priority first, then calls force
-  void TrySetDetectedContentType(const NodeContent& detectedContent, ESetOverlap overlap, QuadTreeProcessor& processor);
+  void TrySetDetectedContentType(const NodeContent& detectedContent, EContentOverlap overlap, QuadTreeProcessor& processor);
   // force sets the type and updates shared container
   void ForceSetDetectedContentType(const NodeContent& detectedContent, QuadTreeProcessor& processor);
   
@@ -247,9 +311,6 @@ private:
   
   // read the note in destructor on why we manually destroy nodes when they are removed
   static void DestroyNodes(ChildrenVector& nodes, QuadTreeProcessor& processor);
-  
-  // reset the parameters of the AABB after center or size have changed
-  void ResetBoundingBox();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration
@@ -278,8 +339,6 @@ private:
   Point3f _center;
   float   _sideLen;
 
-  AxisAlignedQuad _boundingBox;
-
   // parent node
   const QuadTreeNode* _parent;
 
@@ -293,6 +352,14 @@ private:
   NodeContent _content;
     
 }; // class
+  
+namespace QTOptimizations{
+  bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
+                          const QuadTreeNode::SegmentLineEquation& line,
+                          bool& doesLineCrossQuad);
+  
+  
+} // namespace QTOptimizations
   
 } // namespace
 } // namespace
