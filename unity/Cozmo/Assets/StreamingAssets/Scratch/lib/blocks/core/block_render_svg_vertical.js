@@ -1073,7 +1073,13 @@ Blockly.BlockSvg.prototype.renderDrawTop_ =
   /* eslint-disable indent */
   // Position the cursor at the top-left starting point.
   if (this.squareTopLeftCorner_) {
-    steps.push('m 0,0');
+    // *** Anki Change ***
+    // This was adding two consecutive moves which was causing
+    // minor rendering issues on Android. See COZMO-15512.
+    if (this.startHat_ || !this.edgeShapeWidth_) {
+      steps.push('m 0,0');
+    }
+    // steps.push('m 0,0');
     if (this.startHat_) {
       steps.push(Blockly.BlockSvg.START_HAT_PATH);
     }
