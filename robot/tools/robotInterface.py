@@ -161,7 +161,7 @@ class _Dispatcher(IDataReceiver):
                 if len(buffer):
                     tag = ord(buffer[0]) if sys.version_info.major < 3 else buffer[0]
                     sys.stderr.write("Error decoding incoming message {0:02x}[{1:d}]{linesep}\t{2:s}{linesep}".format(tag, len(buffer), str(e), linesep=os.linesep))
-                elif False: # Causes problems at the moment, might be useful in future
+                else:
                     sys.stderr.write("Got 0 length message!")
                     sys.stderr.write(os.linesep)
                 sys.stderr.flush()
@@ -303,10 +303,6 @@ def UnsubscribeFromTag(tag, callback):
     if tag in dispatcher.ReceiveDataSubscribers:
         if callback in dispatcher.ReceiveDataSubscribers[tag]:
             dispatcher.ReceiveDataSubscribers[tag].remove(callback)
-
-def SetOtherPacketHandler(callback):
-    global dispatcher
-    dispatcher.transport.SetOtherPacketHandler(callback)
 
 def Step():
     "Step transport thread if not forked"

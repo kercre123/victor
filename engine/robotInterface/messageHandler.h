@@ -80,10 +80,6 @@ public:
   void ReadLabAssignmentsFromRobot(u32 serialNumber) const;
 
   void ConnectRobotToNeedsManager(u32 serialNumber) const;
-  
-  // Enables wifi telemetry on robot and enables reliableTransport to process it.
-  // Telemetry can only be disabled by powering down robot.
-  void EnableWifiTelemetry();
 
   uint32_t GetMessageCountRtE() const { return _messageCountRtE; }
   uint32_t GetMessageCountEtR() const { return _messageCountEtR; }

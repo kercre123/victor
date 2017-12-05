@@ -31,8 +31,6 @@
 #include "util/global/globalDefinitions.h"
 #include "util/transport/transportAddress.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-
 namespace Anki {
 namespace Cozmo {
 namespace RobotInterface {
@@ -59,14 +57,8 @@ void MessageHandler::Init(const Json::Value& config, RobotManager* robotMgr, con
   Anki::Util::TransportAddress address(ipString, static_cast<uint16_t>(port));
   PRINT_STREAM_DEBUG("RobotInterface.MessageHandler.Init", "Initializing on address: " << address << ": " << address.GetIPAddress() << ":" << address.GetIPPort() << "; originals: " << ipString << ":" << port);
   
-  
-  std::string baseLogDir = "";
-  if (context != nullptr) {
-    baseLogDir = context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Cache, "");
-  }
-  
   _robotManager = robotMgr;
-  _robotConnectionManager.reset(new RobotConnectionManager(_robotManager, baseLogDir));
+  _robotConnectionManager.reset(new RobotConnectionManager(_robotManager));
   _robotConnectionManager->Init();
   
   _isInitialized = true;
@@ -244,21 +236,6 @@ void MessageHandler::ReadLabAssignmentsFromRobot(u32 serialNumber) const
 void MessageHandler::ConnectRobotToNeedsManager(u32 serialNumber) const
 {
   _robotManager->ConnectRobotToNeedsManager(serialNumber);
-}
-  
-void MessageHandler::EnableWifiTelemetry()
-{
-  _robotConnectionManager->EnableWifiTelemetry();
-
-  Robot* destRobot = _robotManager->GetFirstRobot();
-  if (nullptr == destRobot)
-  {
-    PRINT_NAMED_WARNING("MessageHandler.EnableWifiTelemetry.NoRobot", "");
-    return;
-  }
-  
-  auto robotId = destRobot->GetID();
-  SendMessage(robotId, RobotInterface::EngineToRobot(RobotInterface::EnableWiFiTelemetry()));
 }
 
 

@@ -5,14 +5,11 @@ Python command line tool for echoing messages coming from the Cozmo robot to the
 __author__ = "Daniel Casner <daniel@anki.com>"
 
 import sys, os, time, argparse
-from array import array
 sys.path.insert(0, os.path.join("tools"))
 try:
     import robotInterface
 except ImportError:
     sys.exit("Couldn't import robotInterface library. Are you running from <engine>/robot ?")
-
-TELEMETRY_STATES_PER_PACKET = 8
 
 class TopicPrinter:
     "Class for receiving messages and printing them to stdout."
@@ -28,22 +25,6 @@ class TopicPrinter:
     def imageDebug(self, img):
         sys.stdout.write("\tts={0.frameTimeStamp:08d}\tid={0.imageId:08d}\tdb={0.chunkDebug:08x}\tcc={0.imageChunkCount:02d}\tci={0.chunkId:02d}{1}".format(img, os.linesep))
     
-    def telemetryHandler(self, data):
-        "Handle telemetry packets"
-        now = int(time.time()*1000)
-        TELEMETRY_PREFIX = b"WDBG"
-        if data.startswith(TELEMETRY_PREFIX):
-            telemetry = array('H')
-            telemetry.frombytes(data[len(TELEMETRY_PREFIX):])
-            state_size = len(telemetry)//TELEMETRY_STATES_PER_PACKET
-            for i in range(TELEMETRY_STATES_PER_PACKET):
-                sys.stdout.write("{:08x}, ".format(now))
-                sys.stdout.write(", ".join(("{:04x}".format(e) for e in telemetry[i*state_size:(i+1)*state_size])))
-                sys.stdout.write(os.linesep)
-            sys.stdout.flush()
-        else:
-            sys.stderr.write("Unexpected packet: {!r}{}".format(data, os.linesep))
-
     def __init__(self, args):
         if args.state_parse:
             self.stateParse = args.state_parse
@@ -59,9 +40,6 @@ class TopicPrinter:
                 else:
                     sys.exit("Unkown tag \"{}\"".format(t))
                 robotInterface.SubscribeToTag(topic, self.printMsg)
-        if args.telemetry:
-            robotInterface.SetOtherPacketHandler(self.telemetryHandler)
-            robotInterface.Send(robotInterface.RI.EngineToRobot(enableWiFiTelemetry=robotInterface.RI.EnableWiFiTelemetry()))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog="topic",
@@ -74,7 +52,6 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--ip_address', default="172.31.1.1", help="Specify robot's ip address")
     parser.add_argument('-p', '--port', default=5551, type=int, help="Manually specify robot's port")
     parser.add_argument('-b', '--no-blinkers', action='store_true', help="Do not turn on backpack light test pattern")
-    parser.add_argument('-t', '--telemetry', action='store_true', help="Print wifi debugging telemetry packets")
     parser.add_argument('--state_parse', nargs='*', help="Print just the specified fields from the robot state message")
     parser.add_argument('--image_debug', action='store_true', help="Print image chunk debugging summary")
     parser.add_argument('tags', nargs='*', help="The tags to subscribe to")

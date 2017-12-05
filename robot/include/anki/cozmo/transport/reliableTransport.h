@@ -90,8 +90,6 @@ typedef struct _ReliableConnection
   ReliableSequenceId nextInSequenceId; ///< The next sequence ID we are looking for
   uint32_t latestUnackedMessageSentTime; ///< The last time we sent unacknowledged messages
   uint32_t latestRecvTime; ///< latestRecvTime
-  uint32_t txPacketCount; ///< How many packets have we sent
-  uint32_t txMessageCount; ///< How many messages we have sent
   uint16_t txQueued; ///< The number of bytes of data queued up in txBuf
   uint16_t pendingReliableBytes; ///< The number of bytes of pending reliable messages stored
   uint8_t  txBuf[UnreliableTransport_MAX_BYTES_PER_PACKET]; ///< Buffer for forming packets

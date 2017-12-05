@@ -26,17 +26,6 @@
 #include <map>
 #include <mutex>
 
-// For logging special state packets from robot that bypass reliableTransport.
-// EnableWifiTelemtry() must be called in addition to LOG_WIFI_DBG_STATES being
-// defined in order for this to work.
-#define LOG_WIFI_DBG_STATES
-
-#ifdef LOG_WIFI_DBG_STATES
-#include <array>
-#include <vector>
-#endif
-
-
 
 #if ANKI_PROFILING_ENABLED
   #define ENABLE_RT_UPDATE_TIME_DIAGNOSTICS 1
@@ -58,7 +47,7 @@ class TransportAddress;
 class ReliableTransport : public INetTransport, public INetTransportDataReceiver {
 
 public:
-  ReliableTransport(IUnreliableTransport* unreliableTransport, INetTransportDataReceiver* dataReceiver, const std::string& baseLogDir = "");
+  ReliableTransport(IUnreliableTransport* unreliableTransport, INetTransportDataReceiver* dataReceiver);
   virtual ~ReliableTransport();
 
   // for INetTransport
@@ -136,49 +125,8 @@ private:
   static uint32_t         sMaxPacketsToReSendOnAck;
   static uint32_t         sMaxPacketsToSendOnSendMessage;
 
-  
-#ifdef LOG_WIFI_DBG_STATES
-  
-    // ============================== WiFiDebugState Vars ==============================
-  
-public:
-  
-  void EnableWifiTelemetry();
-  
-private:
-
-  // Writes the last NUM_STATES_TO_WRITE states to file
-  void WriteWifiDebugPacketToFile();
-  
-  // Adds a packet of WifiDebugStates to ring buffer
-  void LogWifiDebugPacket(const uint8_t* buffer, unsigned int size);
-  
-  // Log file
-  std::string              _wifiDebugLogFileName;
-  
-  bool                     _wifiTelemetryEnabled         = false;
-  uint16_t                 _lastBadThingsCount           = 0;
-  
-  // WifiDebugState payload properties
-  static const int         WIFI_DEBUG_STATES_PER_PAYLOAD = 8;  // Number of WifiDebugStates per packet. Should match espressif's wifi_debugging.h
-  int                      _wifiDebugStateNumFields      = 0;  // Number of u16s in WifiDebugState. Computed dynamically.
-  int                      _wifiDebugStateSize           = 0;  // Byte size of WifiDebugState. Computed dynamically.
-  
-  // Ring buffer
-  static const int         NUM_STATES_IN_BUFFER          = 60;
-  int                      _wifiDebugBufferCnt           = 0;  // Num states in buffer
-  int                      _wifiDebugWriteIndex          = 0;  // Index of next write
-  using WiFiDebugStateArray = std::vector<uint16_t>;
-  std::array<WiFiDebugStateArray, NUM_STATES_IN_BUFFER > _wifiDebugLogBuffer;
-  
-  // Buffer for storing string-ized wifiDebugStates before writing to file
-  static const int         MAX_NUM_CHARS_PER_FIELD = 7;
-  char*                    _stringizedBuffer             = nullptr;
-  
-#endif
-  
   // ============================== Member Vars ==============================
-  
+
 protected:
 
   IUnreliableTransport* _unreliable;

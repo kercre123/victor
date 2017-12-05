@@ -56,9 +56,6 @@ bool clientCanTransmit(int bytes);
 /// Gets the count of send attempts that the client has dropped
 uint32 clientDropCount(void);
 
-/// Gets the send holdoff status
-bool clientSendHoldoff(void);
-
 /// Gets the number of times the robot has been connected to since boot
 uint16 clientConnectCount(void);
 

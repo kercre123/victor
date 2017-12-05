@@ -424,11 +424,6 @@ message SetAppRunID
   uint_32 uuid[4]
 }
 
-/// Activate WiFi debugging telemetry until next robot reboot
-message EnableWiFiTelemetry
-{
-}
-
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from engine to robot and within the robot
@@ -527,7 +522,7 @@ union EngineToRobot
   // 0x80 to 0xAF: To WiFi
   RequestCrashReports           requestCrashReports         = 0x80,
   NVStorage::NVCommand          commandNV                   = 0x81,
-  EnableWiFiTelemetry           enableWiFiTelemetry         = 0x82,
+  //          FREE SLOT!!!                                  = 0x82,
   //          FREE SLOT!!!                                  = 0x83,
   //          FREE SLOT!!!                                  = 0x84,
   //          FREE SLOT!!!                                  = 0x85,

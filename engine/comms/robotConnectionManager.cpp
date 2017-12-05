@@ -33,10 +33,10 @@ namespace {
 static const int kNumQueueSizeStatsToSendToDas = 4000;
 }
   
-RobotConnectionManager::RobotConnectionManager(RobotManager* robotManager, const std::string& baseLogDir)
+RobotConnectionManager::RobotConnectionManager(RobotManager* robotManager)
 : _currentConnectionData(new RobotConnectionData())
 , _udpTransport(new Util::UDPTransport())
-, _reliableTransport(new Util::ReliableTransport(_udpTransport.get(), _currentConnectionData.get(), baseLogDir))
+, _reliableTransport(new Util::ReliableTransport(_udpTransport.get(), _currentConnectionData.get()))
 , _robotManager(robotManager)
 {
   #ifdef ANKI_PLATFORM_ANDROID
@@ -290,10 +290,5 @@ void RobotConnectionManager::SetReliableTransportRunMode(bool isSync)
   _reliableTransport->ChangeSyncMode(isSync);
 }
 
-void RobotConnectionManager::EnableWifiTelemetry()
-{
-  _reliableTransport->EnableWifiTelemetry();
-}
-  
 } // end namespace Cozmo
 } // end namespace Anki

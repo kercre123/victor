@@ -36,8 +36,6 @@ os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task
 #define EXPECTED_BT_INTERVAL_US 5000
 #define BT_MAX_RUN_TIME_US      2000
 
-u16 cozmoBackgroundTaskLoopCount;
-
 namespace Anki {
 namespace Cozmo {
 namespace BackgroundTask {
@@ -188,7 +186,6 @@ void Exec(os_event_t *event)
   static u8 periodicPrint = 0;
   const u32 btStart  = system_get_time();
   const u32 btInterval = btStart - lastBTT;
-  cozmoBackgroundTaskLoopCount++;
   if ((btInterval > EXPECTED_BT_INTERVAL_US*2) && (periodicPrint++ == 0))
   {
     AnkiWarn( 51, "BackgroundTask.IntervalTooLong", 295, "Background task interval too long: %dus!", 1, btInterval);
@@ -320,8 +317,6 @@ extern "C" int8_t backgroundTaskInit(void)
 {
   //os_printf("backgroundTask init\r\n");
   BackgroundTaskError result = BTE_ok;
-  cozmoBackgroundTaskLoopCount = 0;
-  
   if (system_os_task(Anki::Cozmo::BackgroundTask::Exec, backgroundTask_PRIO, backgroundTaskQueue, backgroundTaskQueueLen) == false)
   {
     os_printf("\tCouldn't register background OS task\r\n");

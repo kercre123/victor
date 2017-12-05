@@ -97,7 +97,6 @@ class ReliableTransport(threading.Thread):
         self.lock = threading.Lock()
         self._continue = True
         self.connections = {}
-        self.other_packet_handler = None
 
     def __del__(self):
         self.KillThread()
@@ -178,11 +177,6 @@ class ReliableTransport(threading.Thread):
         "Request disconnection from remote end"
         self.QueueMessage(True, destAddress, b"", EReliableMessageType.DisconnectRequest)
 
-    def SetOtherPacketHandler(self, callback):
-        "Sets handler for otherwise unhandled packets"
-        print("Setting up other packet handler")
-        self.other_packet_handler = callback
-
     def HandleSubMessage(self, innerMessage, messageType, seqId, connectionInfo, sourceAddress):
         "Handle a single message from inside a multi-part message"
         if messageType in RELIABLE_MESSAGE_TYPES:
@@ -230,9 +224,7 @@ class ReliableTransport(threading.Thread):
             try:
                 reliablePacketHeader = AnkiReliablePacketHeader(buffer=buffer)
             except:
-                if callable(self.other_packet_handler):
-                    self.other_packet_handler(buffer)
-                return # No longer spew and error since this is now a case that can happen
+                sys.stderr.write("ReceiveData incorrect header: %02x%02x%02x%02x" % tuple(buffer[:4]))
             else:
                 connectionInfo = self.FindConnection(sourceAddress, True)
                 handledMessageType = True
