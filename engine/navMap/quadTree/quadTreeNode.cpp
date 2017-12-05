@@ -1026,7 +1026,7 @@ bool QuadTreeNode::Transform(const FastPolygon& poly,
       contentChanged = (_content != newContent) && !IsSubdivided();
       if (contentChanged) 
       {
-        ForceSetDetectedContentType(newContent, processor);
+        TrySetDetectedContentType(newContent, ESetOverlap::SupersetOf, processor);
       }
     }
     

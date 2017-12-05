@@ -82,9 +82,6 @@ CONSOLE_VAR(float, kRobotRotationChangeToReport_deg, "MapComponent", 20.0f);
 // kRobotPositionChangeToReport_mm: if the position of the robot changes by this much, memory map will be notified
 CONSOLE_VAR(float, kRobotPositionChangeToReport_mm, "MapComponent", 8.0f);
 
-CONSOLE_VAR(float, kVisionTimeout_ms, "MapComponent", 120.0f * 1000);
-CONSOLE_VAR(float, kCliffTimeout_ms, "MapComponent", 30.0f * 1000);
-
 
 namespace {
 
@@ -152,8 +149,6 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
 
 };
 
-using namespace MemoryMapTypes;
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MapComponent::MapComponent(Robot* robot)
 : _robot(robot)
@@ -193,35 +188,8 @@ void MapComponent::HandleMessage(const ExternalInterface::SetMemoryMapBroadcastF
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result MapComponent::Update()
 { 
-  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
-  if (currentNavMemoryMap)
-  {
-    const TimeStamp_t currentTime = _robot->GetLastMsgTimestamp();
-
-    // ternary to prevent uInt wrapping on subtract
-    const TimeStamp_t cliffTooOld  = (currentTime <= kCliffTimeout_ms)  ? 0 : currentTime - kCliffTimeout_ms;
-    const TimeStamp_t visionTooOld = (currentTime <= kVisionTimeout_ms) ? 0 : currentTime - kVisionTimeout_ms;
-
-    NodeTransformFunction timeoutObjects = 
-      [cliffTooOld, visionTooOld, currentTime] (MemoryMapDataPtr data) -> MemoryMapDataPtr
-      {
-        const EContentType nodeType = data->type;
-        const TimeStamp_t lastObs = data->GetLastObservedTime();
-
-        if ((EContentType::Cliff              == nodeType && lastObs <= cliffTooOld)  ||
-            (EContentType::InterestingEdge    == nodeType && lastObs <= visionTooOld) ||
-            (EContentType::NotInterestingEdge == nodeType && lastObs <= visionTooOld)) 
-        {
-          return std::make_shared<MemoryMapData>(EContentType::Unknown, currentTime);
-        }
-        return data;
-      };
-
-
-    currentNavMemoryMap->TransformContent(timeoutObjects);
-  }
-
-  BroadcastMap();
+  // Currently this is not doing anything, but ultimately we might want to add timers to certain object types
+  // or update other state generically, and it could all go here.
   return RESULT_OK;
 }
 
@@ -283,6 +251,7 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::UpdateRobotPose()
 {
+  using namespace MemoryMapTypes;
   ANKI_CPU_PROFILE("MapComponent::UpdateRobotPoseInMemoryMap");
   
   // grab current robot pose
@@ -348,6 +317,7 @@ void MapComponent::UpdateRobotPose()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::FlagGroundPlaneROIInterestingEdgesAsUncertain()
 {
+  using namespace MemoryMapTypes;
   // get quad wrt robot
   const Pose3d& curRobotPose = _robot->GetPose().GetWithRespectToRoot();
   Quad3f groundPlaneWrtRobot;
@@ -374,6 +344,7 @@ void MapComponent::FlagGroundPlaneROIInterestingEdgesAsUncertain()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin)
 {
+  using namespace MemoryMapTypes;
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagQuadAsNotInterestingEdges.NullMap");
   currentNavMemoryMap->AddQuad(quadWRTOrigin, MemoryMapData(EContentType::NotInterestingEdge, _robot->GetLastImageTimeStamp()));
@@ -386,6 +357,7 @@ void MapComponent::FlagInterestingEdgesAsUseless()
   // we detected something, but we discarded it because it didn't have enough info; however that increases
   // complexity when raycasting, finding boundaries, readding edges, etc. By flagging Unknown we simply say
   // "there was something here, but we are not sure what it was", which can be good to re-explore the area
+  using namespace MemoryMapTypes;
     
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagInterestingEdgesAsUseless.NullMap");
@@ -741,6 +713,8 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOriginID_t originID)
 {
+  using namespace MemoryMapTypes;
+    
   const ObjectFamily objectFam = object.GetFamily();
   const MemoryMapTypes::EContentType removalType = ObjectFamilyToMemoryMapContentType(objectFam, false);
   if ( removalType == MemoryMapTypes::EContentType::Unknown )
@@ -846,6 +820,8 @@ void MapComponent::UpdateOriginsOfObjects(PoseOriginID_t curOriginID, PoseOrigin
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::ClearRobotToMarkers(const ObservableObject* object)
 {
+  using namespace MemoryMapTypes;
+    
   // the newPose should be directly in the robot's origin
   DEV_ASSERT(object->GetPose().IsChildOf(_robot->GetWorldOrigin()),
              "MapComponent.ClearRobotToMarkers.ObservedObjectParentNotRobotOrigin");
@@ -940,7 +916,9 @@ void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, INavMap* map
   // ask the memory map to do the merge
   // some implementations make require parameters like max distance to merge, but for now trust continuity
   if( map )
-  {	
+  {	    
+    using namespace MemoryMapTypes;
+    
     // interesting edges adjacent to any of these types will be deemed not interesting
     constexpr FullContentArray typesWhoseEdgesAreNotInteresting =
     {
@@ -968,6 +946,8 @@ void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, INavMap* map
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 {
+  using namespace MemoryMapTypes;
+    
   ANKI_CPU_PROFILE("MapComponent::AddVisionOverheadEdges");
   _robot->GetContext()->GetVizManager()->EraseSegments("MapComponent.AddVisionOverheadEdges");
   
