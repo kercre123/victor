@@ -102,7 +102,6 @@ namespace Cozmo {
     std::list<ToolCodeInfo>                                     toolCodes;
     std::list<ExternalInterface::RobotObservedLaserPoint>       laserPoints;
     std::list<Vision::CameraCalibration>                        cameraCalibration;
-    //std::list<Poly2f>                                           visualObstacles;
     std::list<OverheadEdgeFrame>                                visualObstacles;
     
     // Used to pass debug images back to main thread for display:

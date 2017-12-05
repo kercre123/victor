@@ -1180,9 +1180,6 @@ namespace Cozmo {
 
   Result VisionComponent::UpdateVisualObstacles(const VisionProcessingResult& procResult)
   {
-    PRINT_NAMED_DEBUG("VisionComponent.UpdateVisualObstacles.ReceivedObstacles",
-                      "Received %d obstacles", int(procResult.visualObstacles.size()));
-    
     for(auto & edgeFrame : procResult.visualObstacles)
     {
       _robot.GetMapComponent().AddDetectedObstacles(edgeFrame);

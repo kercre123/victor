@@ -97,11 +97,6 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   const Matrix_3x3f& H = poseData.groundPlaneHomography;
   const Vision::ImageRGB groundPlaneImage = groundPlaneROI.GetOverheadImage(image, H);
 
-  if (DEBUG_DISPLAY_IMAGES) {
-    debugImageRGBs.emplace_back("OverheadImage", groundPlaneImage);
-//    debugImageRGBs.emplace_back("OverheadImage",visibleMask);
-  }
-
   // STEP 2: Classify the overhead image
   Vision::Image classifiedMask(groundPlaneImage.GetNumRows(), groundPlaneImage.GetNumCols(), u8(0));
   _classifier->classifyImage(groundPlaneImage, classifiedMask);
@@ -151,6 +146,8 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   
   if(DEBUG_DISPLAY_IMAGES)
   {
+    debugImageRGBs.emplace_back("OverheadImage", groundPlaneImage);
+    
     Vision::ImageRGB leadingEdgeDisp(classifiedMask);
     
     static const std::vector<ColorRGBA> lineColorList = {
@@ -183,62 +180,7 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
     }
     
     debugImageRGBs.emplace_back("LeadingEdges", std::move(leadingEdgeDisp));
-  }
-
-# define USE_POLYGONS false
-  if(USE_POLYGONS)
-  {
-    // STEP 3: To find the contours only in the right area, invert the mask while applying the overhead mask
-    //         This way obstacles become white and everything else is black
-    const Vision::Image visibleMask = groundPlaneROI.GetVisibleOverheadMask(H, image.GetNumCols(), image.GetNumRows());
-    
-    cv::bitwise_not(classifiedMask.get_CvMat_(),
-                    classifiedMask.get_CvMat_(),
-                    visibleMask.get_CvMat_());
-    
-    Vision::ImageRGB colorMask;
-    if (DEBUG_DISPLAY_IMAGES) {
-      // save a copy of the original mask
-      colorMask.SetFromGray(classifiedMask);
-    }
-    
-    // STEP 4: Get the bounding box around the objects
-    std::vector<std::vector<cv::Point>> contours;
-    // TODO experiment with CHAIN_APPROX_TC89_L1 or CHAIN_APPROX_TC89_KCOS
-    cv::findContours(classifiedMask.get_CvMat_(), contours, cv::RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-    
-    PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.Update.FindContours", "%d contours found", int(contours.size()));
-    
-    // STEP 5: Create the polygons with the right metric information
-    // In the overhead image (and mask) 1 pixel == 1 mm. Thanks Andrew!!
-    for (auto& contour : contours) {
-      Poly2f polygon;
-      polygon.reserve(contour.size());
-      for (auto& point : contour) {
-        
-        const f32 ground_y = -1*(static_cast<f32>(point.y) - 0.5f*groundPlaneROI.GetWidthFar());
-        const f32 ground_x = static_cast<f32>(point.x) + groundPlaneROI.GetDist(); // Zero is at the center;
-        
-        polygon.emplace_back(Point2f(ground_x, ground_y));
-      }
-      
-#     if USE_POLYGONS
-      outPolygons.push_back(polygon);
-#     endif
-    }
-    
-    if (DEBUG_DISPLAY_IMAGES) {
-      cv::Scalar color(255, 0, 0);
-      cv::drawContours(colorMask.get_CvMat_(),
-                       contours,
-                       -1,
-                       color,
-                       1);
-      debugImageRGBs.emplace_back("ColoredMask", colorMask);
-    }
-  }
   
-  if (DEBUG_DISPLAY_IMAGES) {
     // Draw Ground plane on the image and display it
     Vision::ImageRGB toDisplay;
     image.CopyTo(toDisplay);
