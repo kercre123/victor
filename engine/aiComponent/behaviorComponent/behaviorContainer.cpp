@@ -112,6 +112,8 @@
 
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 
+#define LOG_CHANNEL    "Behaviors"
+
 namespace Anki {
 namespace Cozmo {
   
@@ -766,13 +768,14 @@ ICozmoBehaviorPtr BehaviorContainer::AddToContainer(ICozmoBehaviorPtr newBehavio
 
   if (addedNewEntry)
   {
-    PRINT_NAMED_INFO("behaviorContainer::AddToContainer", "Added new behavior '%s' %p",
-                     BehaviorIDToString(behaviorID), newBehavior.get());
+    PRINT_CH_DEBUG(LOG_CHANNEL, "BehaviorContainer::AddToContainer",
+                   "Added new behavior '%s' %p",
+                   BehaviorIDToString(behaviorID), newBehavior.get());
   }
   else
   {
     DEV_ASSERT_MSG(false,
-                   "behaviorContainer.AddToContainer.DuplicateID",
+                   "BehaviorContainer.AddToContainer.DuplicateID",
                    "Attempted to create a second behavior with id %s",
                    newBehavior->GetIDStr().c_str());
   }
