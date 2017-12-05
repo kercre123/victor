@@ -17,7 +17,6 @@
 #include "anki/common/types.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/types/engineState.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <memory>
 
@@ -75,8 +74,7 @@ public:
   Result RemoveRobotConnection(const uint32_t robotId);
   
   void Disconnect();
-  void SetRobotDisconnectReason(RobotDisconnectReason reason);
-
+  
   const Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
 
   void ReadLabAssignmentsFromRobot(u32 serialNumber) const;

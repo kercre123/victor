@@ -275,8 +275,7 @@ namespace Cozmo.ConnectionFlow {
       // Later on Robot unlocks happen
     }
 
-    public void ForceBoot(Anki.Cozmo.RobotDisconnectReason reason) {
-      RobotEngineManager.Instance.SendRobotDisconnectReason(reason);
+    public void ForceBoot() {
       RobotEngineManager.Instance.StartIdleTimeout(0f, 0f);
       OnRobotDisconnect(new Anki.Cozmo.ExternalInterface.RobotDisconnected());
     }

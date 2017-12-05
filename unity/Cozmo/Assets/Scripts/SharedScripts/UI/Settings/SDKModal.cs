@@ -188,7 +188,6 @@ namespace Cozmo.Settings {
           robot.ExitSDKMode(true);
         }
 
-        RobotEngineManager.Instance.SendRobotDisconnectReason(Anki.Cozmo.RobotDisconnectReason.ExitSDKMode);
         RobotEngineManager.Instance.StartIdleTimeout(0.0f, 0.0f);
         _BackgroundTimeoutSent = true;
       }

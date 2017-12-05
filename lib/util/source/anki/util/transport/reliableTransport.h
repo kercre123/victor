@@ -85,7 +85,7 @@ public:
                    EReliableMessageType messageType, bool flushPacket, NetTimeStamp queuedTime=kNetTimeStampZero);
 
   void KillThread();
-  bool Update();
+  void Update();
   void Print() const;
 
   uint32_t MaxTotalBytesPerMessage() const;
@@ -108,8 +108,6 @@ public:
   
   void ChangeSyncMode(bool isSync);
   bool IsSynchronous() const { return _runSynchronous; }
-
-  bool ConnectionTimedOut() const { return _connectionTimedOut; }
 
 private:
   
@@ -202,8 +200,6 @@ private:
 #endif // ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
   
   bool                    _runSynchronous;
-
-  bool                    _connectionTimedOut;
 };
 
 

@@ -22,7 +22,6 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "engine/robotIdleTimeoutComponent.h"
-#include "engine/robotManager.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -110,7 +109,6 @@ Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
     SmartPushIdleAnimation(robot, AnimationTrigger::Count);
   }
   StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PlacedOnCharger));
-  robot.GetContext()->GetRobotManager()->GetMsgHandler()->SetRobotDisconnectReason(RobotDisconnectReason::SleepPlacedOnCharger);
   robot.GetExternalInterface()->BroadcastToEngine<StartIdleTimeout>(_timeTilSleepAnimation_s, _timeTilDisconnect_s);
   return Result::RESULT_OK;
 }

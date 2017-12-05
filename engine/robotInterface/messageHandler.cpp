@@ -76,7 +76,6 @@ void MessageHandler::Init(const Json::Value& config, RobotManager* robotMgr, con
     using namespace ExternalInterface;
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ReliableTransportRunMode>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ExitSdkMode>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotDisconnectReason>();
   }
 }
 
@@ -107,7 +106,7 @@ void MessageHandler::ProcessMessages()
         continue;
       }
 
-      const auto robotId = destRobot->GetID();
+      auto robotId = destRobot->GetID();
 
       // see if message type should be filtered out based on potential firmware mismatch
       const RobotInterface::RobotToEngineTag msgType = static_cast<RobotInterface::RobotToEngineTag>(nextData.data()[0]);
@@ -231,12 +230,7 @@ void MessageHandler::Disconnect()
 {
   _robotConnectionManager->DisconnectCurrent();
 }
-
-void MessageHandler::SetRobotDisconnectReason(RobotDisconnectReason reason)
-{
-  _robotConnectionManager->SetRobotDisconnectReason(reason);
-}
-
+ 
 const Util::Stats::StatsAccumulator& MessageHandler::GetQueuedTimes_ms() const
 {
   return _robotConnectionManager->GetQueuedTimes_ms();
@@ -263,7 +257,7 @@ void MessageHandler::EnableWifiTelemetry()
     return;
   }
   
-  const auto robotId = destRobot->GetID();
+  auto robotId = destRobot->GetID();
   SendMessage(robotId, RobotInterface::EngineToRobot(RobotInterface::EnableWiFiTelemetry()));
 }
 
@@ -279,17 +273,10 @@ void MessageHandler::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
 {
   // Force robot to disconnect when leaving the sdk - ensures they will be in a default initialized state for main app
   if (msg.isExternalSdkMode) {
-    _robotConnectionManager->SetRobotDisconnectReason(RobotDisconnectReason::ExitSDKMode);
     Disconnect();
   }
 }
-
-template<>
-void MessageHandler::HandleMessage(const ExternalInterface::SetRobotDisconnectReason& msg)
-{
-  _robotConnectionManager->SetRobotDisconnectReason(msg.robotDisconnectReason);
-}
-
+  
 } // end namespace RobotInterface
 } // end namespace Cozmo
 } // end namespace Anki

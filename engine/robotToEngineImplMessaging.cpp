@@ -1134,7 +1134,7 @@ void RobotToEngineImplMessaging::HandleDefaultCameraParams(const AnkiEvent<Robot
 // Convert battery voltage to percentage according to profile described by Nathan Monson.
 // Always returns a value 0-100.
 //
-float RobotToEngineImplMessaging::GetBatteryPercent(const float batteryVoltage)
+static float GetBatteryPercent(float batteryVoltage)
 {
   const float batteryEmpty = 1.0f; // 1.0V
   const float batteryFull = 1.5f; // 1.5V

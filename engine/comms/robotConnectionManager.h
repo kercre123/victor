@@ -12,7 +12,6 @@
 #ifndef __Cozmo_Basestation_Comms_RobotConnectionManager_H_
 #define __Cozmo_Basestation_Comms_RobotConnectionManager_H_
 
-#include "clad/types/engineState.h"
 #include "engine/comms/robotConnectionMessageData.h"
 #include "util/stats/recentStatsAccumulator.h"
 #include "util/signals/signalHolder.h"
@@ -59,8 +58,6 @@ public:
   void SetReliableTransportRunMode(bool isSync);
   
   void EnableWifiTelemetry();
-
-  void SetRobotDisconnectReason(RobotDisconnectReason reason) { _robotDisconnectReason = reason; }
   
 private:
   void SendAndResetQueueStats();
@@ -75,7 +72,6 @@ private:
   std::unique_ptr<Util::ReliableTransport>  _reliableTransport;
   RobotManager*                             _robotManager = nullptr;
   std::deque<std::vector<uint8_t>>          _readyData;
-  RobotDisconnectReason                     _robotDisconnectReason = RobotDisconnectReason::Unknown;
   
 #if TRACK_INCOMING_PACKET_LATENCY
   Util::Stats::RecentStatsAccumulator _queuedTimes_ms = 100; // how many ms between packet arriving and it being passed onto game

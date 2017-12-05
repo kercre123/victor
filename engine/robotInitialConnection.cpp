@@ -125,7 +125,8 @@ void RobotInitialConnection::HandleFactoryFirmware(const AnkiEvent<RobotToEngine
   
   Util::sEventF("robot.factory_firmware_version", {}, "0");
 
-  OnNotified(RobotConnectionResult::OutdatedFirmware, 0);
+  const auto result = RobotConnectionResult::OutdatedFirmware;
+  OnNotified(result, 0);
 }
 
 void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine>& message)
@@ -254,11 +255,7 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
 {
   switch (result) {
     case RobotConnectionResult::OutdatedFirmware:
-      _robotMessageHandler->SetRobotDisconnectReason(RobotDisconnectReason::OutdatedFirmware);
-      _validFirmware = false;
-      break;
     case RobotConnectionResult::OutdatedApp:
-      _robotMessageHandler->SetRobotDisconnectReason(RobotDisconnectReason::OutdatedApp);
       _validFirmware = false;
       break;
     default:

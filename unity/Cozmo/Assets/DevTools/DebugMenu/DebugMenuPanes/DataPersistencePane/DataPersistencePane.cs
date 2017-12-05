@@ -71,7 +71,7 @@ namespace DataPersistence {
       }
 
       if (NeedsConnectionManager.Instance != null) {
-        NeedsConnectionManager.Instance.ForceBoot(Anki.Cozmo.RobotDisconnectReason.DebugDataPersistenceReset);
+        NeedsConnectionManager.Instance.ForceBoot();
       }
     }
 
@@ -89,7 +89,7 @@ namespace DataPersistence {
         DataPersistenceManager.Instance.Save();
       }
       if (NeedsConnectionManager.Instance != null) {
-        NeedsConnectionManager.Instance.ForceBoot(Anki.Cozmo.RobotDisconnectReason.DebugDataPersistenceReset);
+        NeedsConnectionManager.Instance.ForceBoot();
       }
     }
 
@@ -149,7 +149,7 @@ namespace DataPersistence {
           }
           else {
             if (NeedsConnectionManager.Instance != null) {
-              NeedsConnectionManager.Instance.ForceBoot(Anki.Cozmo.RobotDisconnectReason.DebugDataPersistenceReset);
+              NeedsConnectionManager.Instance.ForceBoot();
             }
           }
           DebugMenuManager.Instance.CloseDebugMenuDialog();

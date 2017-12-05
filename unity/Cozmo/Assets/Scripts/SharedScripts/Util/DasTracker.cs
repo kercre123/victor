@@ -284,9 +284,8 @@ public class DasTracker {
   }
 
   private void UpdateRunningTimers() {
-    var now = DateTime.UtcNow;
-    double secondsSinceLastUpdate = (now - _LastTimerUpdateUtcTime).TotalSeconds;
-    _LastTimerUpdateUtcTime = now; // prevents potential double counting
+    double secondsSinceLastUpdate = (DateTime.UtcNow - _LastTimerUpdateUtcTime).TotalSeconds;
+    _LastTimerUpdateUtcTime = DateTime.UtcNow; // prevents potential double counting
 
     _RunningApprunTime += secondsSinceLastUpdate;
     _RunningSessionTime += secondsSinceLastUpdate;

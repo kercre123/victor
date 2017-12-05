@@ -25,19 +25,5 @@ enum uint_8 RobotConnectionResult {
   PinMaxAttemptsReached,
 }
 
-enum uint_8 RobotDisconnectReason {
-  Unknown,
-  WifiTimeout,
-  SleepSettings,
-  SleepEraseCozmo,
-  SleepPlacedOnCharger,
-  SleepBackground,
-  ExitSDKMode,
-  OutdatedFirmware,
-  OutdatedApp,
-  DebugForceDisconnect,
-  DebugDataPersistenceReset,
-}
-
 } // namespace Cozmo
 } // namespace Anki

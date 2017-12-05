@@ -140,7 +140,6 @@ ReliableTransport::ReliableTransport(IUnreliableTransport* unreliableTransport, 
   , _lastReportOfSlowUpdate(kNetTimeStampZero)
 #endif // ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
   , _runSynchronous(true)
-  , _connectionTimedOut(false)
 {
   ChangeSyncMode(false);
   _unreliable->SetDataReceiver(this);
@@ -344,7 +343,6 @@ void ReliableTransport::SendData(bool reliable, const TransportAddress& destAddr
 
 void ReliableTransport::Connect(const TransportAddress& destAddress)
 {
-  _connectionTimedOut = false;
   QueueMessage(true, destAddress, nullptr, 0, eRMT_ConnectionRequest, true);
 }
   
@@ -872,7 +870,7 @@ void DumpUpdateStats(const Stats::StatsAccumulator& timesBetweenUpdates)
 #endif //ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
   
   
-bool ReliableTransport::Update()
+void ReliableTransport::Update()
 {
   // lock on mutex to make sure nothing sends at the same time we receive data or examine our connection data
   std::lock_guard<std::mutex> lock(_mutex);
@@ -902,8 +900,6 @@ bool ReliableTransport::Update()
   #endif // ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
   
   _unreliable->Update();
-
-  bool success = true;
   
   for (ReliableConnectionMap::iterator it = _reliableConnectionMap.begin(); it != _reliableConnectionMap.end(); )
   {
@@ -911,8 +907,6 @@ bool ReliableTransport::Update()
     if (!existingConnection->Update(this))
     {
       // Connection has timed out!
-      success = false;
-
       // TODO - allow game to turn this off in lobby to workaround bug where BLE scanning prevents all IP received on Android
       const bool disconnectOnTimeout = true;
       if (disconnectOnTimeout)
@@ -980,7 +974,6 @@ bool ReliableTransport::Update()
   }
 #endif // ENABLE_RUN_TIME_PROFILING
 
-  return success;
 }
 
 
@@ -1148,7 +1141,7 @@ void ReliableTransport::ChangeSyncMode(bool isSync)
   }
   else if(_runSynchronous && !isSync)
   {
-    _updateHandle = Dispatch::ScheduleCallback(_queue.get(), std::chrono::milliseconds(2), [this] { if (!Update()) { _connectionTimedOut = true; } } );
+    _updateHandle = Dispatch::ScheduleCallback(_queue.get(), std::chrono::milliseconds(2), [this] { Update(); } );
   }
   _runSynchronous = isSync;
 }

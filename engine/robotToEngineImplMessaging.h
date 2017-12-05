@@ -74,9 +74,7 @@ public:
   void HandleObjectAccel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   
   double GetLastImageReceivedTime() const { return _lastImageRecvTime; }
-
-  static float GetBatteryPercent(const float batteryVoltage);
-
+  
 private:
   // Copy of last received firmware version info from robot
   RobotInterface::FWVersionInfo _factoryFirmwareVersion;

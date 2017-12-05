@@ -15,7 +15,6 @@
 #include "clad/types/customObjectMarkers.clad"
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/emotionTypes.clad"
-#include "clad/types/engineState.clad"
 #include "clad/types/featureGateTypes.clad"
 #include "clad/types/firmwareTypes.clad"
 #include "clad/types/globalVizOrigin.clad"
@@ -125,10 +124,6 @@ message RequestLocale {
 
 message RequestDataCollectionOption {
   bool CollectionEnabled
-}
-
-message SetRobotDisconnectReason {
-  RobotDisconnectReason robotDisconnectReason,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
