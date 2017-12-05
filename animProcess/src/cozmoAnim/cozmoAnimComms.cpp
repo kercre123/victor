@@ -19,9 +19,9 @@
 #include <string>
 
 #include "anki/messaging/shared/UdpServer.h"
-#include "anki/messaging/shared/UdpClient.h"
+#include "anki/messaging/shared/LocalUdpClient.h"
 
-#define LOG_CHANNEL    "Robot"
+#define LOG_CHANNEL    "Transport"
 #define LOG_ERROR      PRINT_NAMED_ERROR
 #define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 #define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##_VA_ARGS__)
@@ -36,7 +36,7 @@ namespace { // "Private members"
   UdpServer _server;
 
   // For comms with robot
-  UdpClient _robotClient;
+  LocalUdpClient _robotClient;
 }
 
 
@@ -48,14 +48,18 @@ namespace { // "Private members"
 #else
     const u16 robotID = 0;
 #endif
-    _robotClient.Connect("127.0.0.1", ROBOT_RADIO_BASE_PORT + robotID);
+    bool ok = _robotClient.Connect(ANIM_UDP_PATH, ROBOT_UDP_PATH);
+    if (!ok) {
+      LOG_ERROR("InitComms.ConnectFailed", "Unable to connect to robot at %s", ROBOT_UDP_PATH);
+      return RESULT_FAIL_IO;
+    }
     
     // Setup engine comms
     const u16 port = ANIM_PROCESS_SERVER_BASE_PORT + robotID;
     LOG_INFO("InitComms.StartListeningPort", "Listen on port %d", port);
     if (!_server.StartListening(port)) {
       LOG_ERROR("InitComms.UDPServerFailed", "Unable to listen on port %d", port);
-      assert(false);
+      return RESULT_FAIL_IO;
     }
     
     return RESULT_OK;
@@ -66,7 +70,7 @@ namespace { // "Private members"
     return _server.HasClient();
   }
 
-  
+
   void DisconnectEngine(void)
   {
     _server.DisconnectClient();
@@ -101,6 +105,7 @@ namespace { // "Private members"
     const ssize_t dataLen = _server.Recv((char*)buffer, max_length);
     if (dataLen < 0) {
       // Something went wrong
+      LOG_ERROR("GetNextPacketFromEngine.FailedRecv", "Failed to receive from engine");
       DisconnectEngine();
       return 0;
     }
@@ -139,6 +144,7 @@ namespace { // "Private members"
     ssize_t dataLen = _robotClient.Recv((char*)buffer, max_length);
     if (dataLen < 0) {
       // Something went wrong
+      LOG_ERROR("GetNextPacketFromRobot.FailedRecv", "Failed to receive from robot");
       DisconnectRobot();
       return 0;
     }

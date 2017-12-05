@@ -30,21 +30,22 @@ CozmoMat {
   xSize 2
   ySize 1.5
 }
+
 LightCube {
   translation 0.21 0.0450001 0.0219931
   rotation -1.83704e-06 -1.83704e-06 1 4.71239
 }
+
 LightCube {
   translation 0.208767 -0.00128903 0.021993
   rotation -1.83704e-06 -1.83704e-06 1 4.71239
   ID 2
 }
-BlockWorldComms {
-  filterLogs TRUE
-}
-DEF Cozmo_1 CozmoBot {
+
+DEF Cozmo_1 CozmoBot2 {
   rotation 0 1 0 0
   name "CozmoBot_1"
+  filterLogs TRUE
 }
 Face {
   translation -0.01 0.31 0.11
@@ -59,8 +60,11 @@ Face {
   rotation 0 0 1 5.23599
   image "cat07.png"
 }
+
 WebotsKeyboardController {
  translation 0.288125 0.0208444 0.08
+ filterLogs TRUE
 }
+
 CozmoVizDisplay {
 }

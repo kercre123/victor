@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <string>
 
-#include "anki/messaging/shared/UdpServer.h"
+#include "anki/messaging/shared/LocalUdpServer.h"
 
 #define ARRAY_SIZE(inArray)   (sizeof(inArray) / sizeof((inArray)[0]))
 
@@ -27,7 +27,7 @@ namespace Anki {
       const size_t RECV_BUFFER_SIZE = 1024 * 4;
 
       // For communications with basestation
-      UdpServer server;
+      LocalUdpServer server;
 
       u8 recvBuf_[RECV_BUFFER_SIZE];
       size_t recvBufSize_ = 0;
@@ -36,10 +36,10 @@ namespace Anki {
 
     Result InitRadio(const char* advertisementIP)
     {
-      AnkiInfo("HAL.InitRadio.StartListeningPort", "Listening on port %d", ROBOT_RADIO_BASE_PORT);
-      if (!server.StartListening(ROBOT_RADIO_BASE_PORT)) {
-        AnkiError("HAL.InitRadio.UDPServerFailed", "Unable to listen on port %d", ROBOT_RADIO_BASE_PORT);
-        assert(false);
+      AnkiInfo("HAL.InitRadio.StartListening", "Start listening");
+      if (!server.StartListening(ROBOT_UDP_PATH)) {
+        AnkiError("HAL.InitRadio.UDPServerFailed", "Unable to listen at %s", ROBOT_UDP_PATH);
+        return RESULT_FAIL_IO;
       }
 
       return RESULT_OK;
@@ -58,7 +58,7 @@ namespace Anki {
 
     void HAL::DisconnectRadio(void)
     {
-      server.DisconnectClient();
+      server.Disconnect();
       recvBufSize_ = 0;
     }
 
@@ -68,7 +68,7 @@ namespace Anki {
 
       if (server.HasClient()) {
 
-        u32 bytesSent = server.Send((char*)buffer, length);
+        ssize_t bytesSent = server.Send((char*)buffer, length);
         if (bytesSent < length) {
           AnkiError("HAL.RadioSendPacket.FailedToSend", "Failed to send msg contents (%d/%d sent)", bytesSent, length);
           DisconnectRadio();
@@ -102,12 +102,12 @@ namespace Anki {
     size_t RadioGetNumBytesAvailable(void)
     {
       // Check for incoming data and add it to receive buffer
-      int dataSize;
 
       // Read available data
       const size_t tempSize = RECV_BUFFER_SIZE - recvBufSize_;
       assert(tempSize < std::numeric_limits<int>::max());
-      dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], static_cast<int>(tempSize));
+
+      const ssize_t dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], static_cast<int>(tempSize));
       if (dataSize > 0) {
         recvBufSize_ += dataSize;
       }
@@ -149,30 +149,26 @@ namespace Anki {
     //       radio functions.
     u32 HAL::RadioGetNextPacket(u8* buffer)
     {
-      u32 retVal = 0;
-
       // Read available datagram
-      int dataLen = server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
+      const ssize_t dataLen = server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
       if (dataLen > 0) {
         recvBufSize_ = dataLen;
       }
       else if (dataLen < 0) {
         // Something went wrong
+        AnkiError("HAL.RadioGetNextPacket", "Receive failed");
         DisconnectRadio();
-        return retVal;
+        return 0;
       }
       else {
-        return retVal;
+        return 0;
       }
 
       // Copy message contents to buffer
       std::memcpy((void*)buffer, recvBuf_, dataLen);
-      retVal = dataLen;
+      
+      return dataLen;
 
-      return retVal;
     } // RadioGetNextMessage()
-
-
-
   } // namespace Cozmo
 } // namespace Anki
