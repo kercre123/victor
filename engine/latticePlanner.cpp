@@ -84,12 +84,8 @@ const f32 TERMINAL_POINT_TURN_DECEL = 10.f;
 // The angular tolerance to use for the point turn that is appended at the end of every path
 const f32 TERMINAL_POINT_TURN_ANGLE_TOL = DEG_TO_RAD(5.f);
 
-
-
 namespace Anki {
 namespace Cozmo {
-
-CONSOLE_VAR(bool, kDisableVisionObstacles, "LatticePlanner", false);
 
 using namespace Planning;
 
@@ -791,10 +787,8 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     std::vector<ConvexPolygon> convexHulls;
     INavMap* memoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
     
-    if (!kDisableVisionObstacles) {
-      GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);    
-      GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);
-    }
+    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);    
+    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);
     
     std::unordered_set<std::shared_ptr<MemoryMapData>> observableObjectData;
     MemoryMapTypes::NodePredicate pred = 
