@@ -451,14 +451,7 @@ void ActivityFeeding::UpdateCurrentStage(Robot& robot)
       else if( currentTime_s >= _timeFaceSearchShouldEnd_s ) {
         // if we've been searching too long, give up and go to the next stage
         TransitionToBestActivityStage(robot);
-      }else if(anyCubesCharging){
-        // Allow cube shaking to interrupt searching for face
-        if(isNeedSevere){
-          SET_STAGE(robot, ReactingToShake_Severe);
-        }else{
-          SET_STAGE(robot, ReactingToShake);
-        }
-      }
+      }        
       break;
     }
       
