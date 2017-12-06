@@ -176,7 +176,7 @@ s32 CST_EnrollFace::UpdateSimInternal()
         // Disable AcknowledgeFace reaction, to keep the test simpler and avoid it cancelling
         // the LookDown action in some cases
         SendMessage(MessageGameToEngine(DisableReactionsWithLock("CST_EnrollFace",
-                                                                ReactionTriggerHelpers::GetAffectAllReactions())));
+                                                                ReactionTriggerHelpers::kAffectAllReactions)));
         
         if(!ENABLE_AUDIO)
         {

@@ -73,7 +73,7 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
   else {
     // Disable reactionary behaviors
     ExternalInterface::DisableReactionsWithLock disableAll(
-                   lockName, ReactionTriggerHelpers::GetAffectAllReactions());
+                   lockName, ReactionTriggerHelpers::kAffectAllReactions);
     _externalInterface->Broadcast(GToE(std::move(disableAll)));
     
     
