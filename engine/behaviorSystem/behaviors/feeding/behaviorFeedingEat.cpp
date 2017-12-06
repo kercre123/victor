@@ -71,7 +71,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kDisableCliffWhileEating = {
   {ReactionTrigger::ObjectPositionUpdated,        false},
   {ReactionTrigger::PlacedOnCharger,              false},
   {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotFalling,                 true},
   {ReactionTrigger::RobotPickedUp,                true},
   {ReactionTrigger::RobotPlacedOnSlope,           true},
   {ReactionTrigger::ReturnedToTreads,             true},

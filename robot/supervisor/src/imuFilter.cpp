@@ -475,9 +475,9 @@ namespace Anki {
             // to determine when the robot is definitely no longer moving.
             if((fabsf(accel_robot_frame_high_pass[0]) < STOPPED_TUMBLING_THRESH) &&
                (now - braceStartedTime_ > bracingTime_ms)) {
-              // Send the FallingStopped message:
-              RobotInterface::FallingStopped msg;
-              msg.timestamp = HAL::GetTimeStamp();
+              // Send the FallingEvent message:
+              RobotInterface::FallingEvent msg;
+              msg.timestamp = fallStartedTime_;
               msg.duration_ms = freefallDuration_;
               msg.impactIntensity = fallDetectMaxHighPassAccel_;
               RobotInterface::SendMessage(msg);
@@ -494,10 +494,6 @@ namespace Anki {
               falling_ = true;
               braceStartedTime_ = now;
               BraceForImpact();
-              // Send a FallingStarted message signifying that falling has begun:
-              RobotInterface::FallingStarted msg;
-              msg.timestamp = fallStartedTime_;
-              RobotInterface::SendMessage(msg);
             } else {
               // only clear the flag if aMag rises above the higher threshold.
               fallStarted_ = (accelMagnitudeSqrd_ < FALLING_THRESH_HIGH_MMPS2_SQRD) && ProxSensors::IsAnyCliffDetected();

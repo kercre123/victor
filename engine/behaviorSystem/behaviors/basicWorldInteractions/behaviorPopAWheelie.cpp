@@ -47,7 +47,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPopAWheelieAr
   {ReactionTrigger::ObjectPositionUpdated,        false},
   {ReactionTrigger::PlacedOnCharger,              false},
   {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotFalling,                 true},
   {ReactionTrigger::RobotPickedUp,                true},
   {ReactionTrigger::RobotPlacedOnSlope,           false},
   {ReactionTrigger::ReturnedToTreads,             true},

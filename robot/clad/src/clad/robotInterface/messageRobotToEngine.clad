@@ -38,15 +38,10 @@ message RobotPoked
 {
 }
 
-// This message indicates that the robot has detected that it is in freefall
-message FallingStarted {
-uint_32 timestamp,       // When the freefall started (as a robot timestamp)
-}
-
 // This message indicates that the robot experienced a freefall event
-message FallingStopped {
-  uint_32 timestamp,       // When the fall ended (as a robot timestamp)
-  uint_32 duration_ms,     // The approximate _freefall_ duration
+message FallingEvent {
+  uint_32 timestamp,       // When the fall started (as a robot timestamp)
+  uint_32 duration_ms,     // The approximate freefall duration
   float_32 impactIntensity // A measure of how 'hard' the impact was (this is computed as the
                            // maximum experienced high-pass filtered accelerometer value)
 }
@@ -126,7 +121,7 @@ union RobotToEngine {
   PotentialCliff             potentialCliff         = 0xC1,
   SyncTimeAck                syncTimeAck            = 0xC2,
   RobotPoked                 robotPoked             = 0xC3,
-//               FREE SLOT!!!                       = 0xC4,
+  FallingEvent               fallingEvent           = 0xC4,
   MovingLiftPostDock         movingLiftPostDock     = 0xC5,
   PathFollowingEvent         pathFollowingEvent     = 0xC6,
   IMURawDataChunk            imuRawDataChunk        = 0xC7,
@@ -150,8 +145,6 @@ union RobotToEngine {
   LiftLoad                   liftLoad               = 0xDA,
   BackpackButton             backpackButton         = 0xDB,
   IMUTemperature             imuTemperature         = 0xDC,
-  FallingStarted             fallingStarted         = 0xDD,
-  FallingStopped             fallingStopped         = 0xDE,
 
   WiFiFlashID                wifiFlashID            = 0xEC,
   ManufacturingID            mfgId                  = 0xED,

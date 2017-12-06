@@ -58,7 +58,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersFistBumpArray
   {ReactionTrigger::ObjectPositionUpdated,        true},
   {ReactionTrigger::PlacedOnCharger,              false},
   {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotFalling,                 true},
   {ReactionTrigger::RobotPickedUp,                true},
   {ReactionTrigger::RobotPlacedOnSlope,           false},
   {ReactionTrigger::ReturnedToTreads,             true},

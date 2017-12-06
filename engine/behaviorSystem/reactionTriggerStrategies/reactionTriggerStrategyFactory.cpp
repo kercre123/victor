@@ -140,17 +140,6 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
       strategy = new ReactionTriggerStrategyPetInitialDetection(robot, config);
       break;
     }
-    case ReactionTrigger::RobotFalling:
-    {
-      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
-      std::set<MessageEngineToGameTag> relevantTypes =
-      {
-        MessageEngineToGameTag::FallingStarted
-      };
-      genericStrategy->ConfigureRelevantEvents(relevantTypes);
-      strategy = genericStrategy;
-      break;
-    }
     case ReactionTrigger::RobotPickedUp:
     {
       auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);

@@ -39,7 +39,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersDance = {
   {ReactionTrigger::ObjectPositionUpdated,        true},
   {ReactionTrigger::PlacedOnCharger,              false},
   {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotFalling,                 false},
   {ReactionTrigger::RobotPickedUp,                false},
   {ReactionTrigger::RobotPlacedOnSlope,           false},
   {ReactionTrigger::ReturnedToTreads,             false},

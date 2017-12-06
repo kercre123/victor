@@ -26,7 +26,6 @@
   {ReactionTrigger::ObjectPositionUpdated,        triggers.objectPositionUpdated}, \
   {ReactionTrigger::PlacedOnCharger,              triggers.placedOnCharger}, \
   {ReactionTrigger::PetInitialDetection,          triggers.petInitialDetection}, \
-  {ReactionTrigger::RobotFalling,                 triggers.robotFalling},  \
   {ReactionTrigger::RobotPickedUp,                triggers.robotPickedUp},  \
   {ReactionTrigger::RobotPlacedOnSlope,           triggers.robotPlacedOnSlope},  \
   {ReactionTrigger::ReturnedToTreads,             triggers.returnedToTreads},  \
@@ -161,13 +160,6 @@ static void EnsureFullReactionArrayConversionsValid(const FullReactionArray& rea
                    "EnsureFullReactionArrayConversionsValid.PetInitialDetection");
         break;
       }
-      case ReactionTrigger::RobotFalling:
-      {
-        DEV_ASSERT((triggersAffected.robotFalling == reactionEntry.Value()) &&
-                   (triggersAffected.robotFalling == commutativeEntry.Value()),
-                   "EnsureFullReactionArrayConversionsValid.RobotFalling");
-        break;
-      }
       case ReactionTrigger::RobotPickedUp:
       {
         DEV_ASSERT((triggersAffected.robotPickedUp == reactionEntry.Value()) &&
@@ -266,7 +258,6 @@ static AllTriggersConsidered ConvertReactionArrayToAllTriggersConsidered(const F
        reactions[Util::EnumToUnderlying(ReactionTrigger::ObjectPositionUpdated)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::PlacedOnCharger)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::PetInitialDetection)].Value(),
-       reactions[Util::EnumToUnderlying(ReactionTrigger::RobotFalling)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::RobotPickedUp)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::RobotPlacedOnSlope)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::ReturnedToTreads)].Value(),
