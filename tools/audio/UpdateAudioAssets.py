@@ -1,12 +1,12 @@
 #!/usr/bin/python
 
-import sys
-import subprocess
 import argparse
 import json
-import os
-import tempfile
 import logging
+import os
+import subprocess
+import sys
+import tempfile
 from os import path
 
 
@@ -17,6 +17,7 @@ __engineScriptDir = path.join(__projectRoot, 'project', 'buildScripts')
 sys.path.append(__projectScriptDir)
 sys.path.append(__engineScriptDir)
 import dependencies
+
 
 
 # Project specific files and directors to perform scripts
@@ -39,8 +40,7 @@ __update_alt_workspace = 'update-alt-workspace'
 __generate_maya_cozmo_data = 'generate-maya-cozmo-data'
 
 # Parse input
-def __parse_input_args():
-    argv = sys.argv
+def __parse_input_args(argv):
 
     parser = argparse.ArgumentParser(description='Update Audio event metadata.csv file & generate project CLAD files')
 
@@ -64,44 +64,52 @@ def __parse_input_args():
     generate_maya_data_parser.add_argument('outputFilePath', action='store', help='Location the CozmoMayaPlugIn.json will be stored')
     generate_maya_data_parser.add_argument('groups', nargs='+', help='List of Event Group names to insert into json file')
 
-    options = parser.parse_args(sys.argv[1:])
+    options = parser.parse_args(argv)
 
     return options
 
 
 # MAIN!
-def main():
+def main(argv):
 
     logging.basicConfig(level=logging.INFO)
 
     # Verify Paths
-    if path.exists(__wwiseToAppMetadataScript) == False:
-        __abort((__errorMsg.format(__wwiseToAppMetadataScript)))
+    if not path.exists(__wwiseToAppMetadataScript):
+        logging.error(__errorMsg.format(__wwiseToAppMetadataScript))
+        return os.EX_SOFTWARE
 
-    if path.exists(__audioCladDir) == False:
-        __abort((__errorMsg.format(__audioCladDir)))
+    if not path.exists(__audioCladDir):
+        logging.error(__errorMsg.format(__audioCladDir))
+        return os.EX_SOFTWARE
 
-    if path.exists(__depsFilePath) == False:
-        __abort((__errorMsg.format(__depsFilePath)))
+    if not path.exists(__depsFilePath):
+        logging.error(__errorMsg.format(__depsFilePath))
+        return os.EX_SOFTWARE
 
-    if path.exists(__externalsDir) == False:
-        __abort((__errorMsg.format(__externalsDir)))
+    if not path.exists(__externalsDir):
+        logging.error(__errorMsg.format(__externalsDir))
+        return os.EX_SOFTWARE
 
     # Parse input
-    options = __parse_input_args()
+    options = __parse_input_args(argv)
 
     # Perform command
     if __update_command == options.commands:
-        __updateSoundbanks(options.version, options.metadata_merge)
+        if not __updateSoundbanks(options.version, options.metadata_merge):
+            return os.EX_SOFTWARE
 
     elif __generate_command == options.commands:
         __generateProjectFiles()
 
     elif __update_alt_workspace == options.commands:
-        __updateAltWorkspace(options.soundBankDir, options.metadata_merge)
+        if not __updateAltWorkspace(options.soundBankDir, options.metadata_merge):
+            return os.EX_SOFTWARE
 
     elif __generate_maya_cozmo_data == options.commands:
         __generateMayaCozmoData(options.outputFilePath, options.groups)
+
+    return os.EX_OK
 
 
 def __updateSoundbanks(version, mergeMetadataPath):
@@ -120,16 +128,20 @@ def __updateSoundbanks(version, mergeMetadataPath):
             abortMsg = 'Can not update Soundbank Version!!!!!! Can\'t Find'
 
             if svn_key not in deps_json:
-                __abort('{} {}'.format(abortMsg, svn_key))
+                logging.error('{} {}'.format(abortMsg, svn_key))
+                return False
 
             if repo_names_key not in deps_json[svn_key]:
-                __abort('{} {}'.format(abortMsg, repo_names_key))
+                logging.error('{} {}'.format(abortMsg, repo_names_key))
+                return False
 
             if cozmosoundbanks_key not in deps_json[svn_key][repo_names_key]:
-                __abort('{} {}'.format(abortMsg, cozmosoundbanks_key))
+                logging.error('{} {}'.format(abortMsg, cozmosoundbanks_key))
+                return False
 
             if version_key not in deps_json[svn_key][repo_names_key][cozmosoundbanks_key]:
-                __abort('{} {}'.format(abortMsg, version_key))
+                logging.error('{} {}'.format(abortMsg, version_key))
+                return False
 
         # Set soundbank version value
         deps_json[svn_key][repo_names_key][cozmosoundbanks_key][version_key] = version
@@ -150,14 +162,17 @@ def __updateSoundbanks(version, mergeMetadataPath):
         previousMetadataFilePath = mergeMetadataPath
 
     # Verify wwise id header is available
-    if path.exists(__wwiseIdsFilePath) == False:
-        __abort((__errorMsg.format(__wwiseIdsFilePath)))
+    if not path.exists(__wwiseIdsFilePath):
+        logging.error(__errorMsg.format(__wwiseIdsFilePath))
+        return False
 
     # Update Audio Metadata.csv
     updateMetadataCmd = [__wwiseToAppMetadataScript, 'metadata', __wwiseIdsFilePath, __audioMetadataFilePath, '-m', previousMetadataFilePath]
     logging.debug("Running: {}".format(' '.join(updateMetadataCmd)))
     subprocess.call(updateMetadataCmd)
     logging.info('Metadata CSV has been updated and is ready for manual updates, file is located at: \'{}\''.format(path.realpath(__audioMetadataFilePath)))
+
+    return True
 
 
 def __generateProjectFiles():
@@ -173,9 +188,9 @@ def __updateAltWorkspace(soundBankDir, mergeMetaFilePath):
     previousMetaPath = None
 
     # Check if sound bank dir exist
-    if path.exists(soundBankDir) == False:
+    if not path.exists(soundBankDir):
         logging.info('Sound Bank directory \'{}\' DOES NOT exist!'.format(soundBankDir))
-        return
+        return False
 
     if mergeMetaFilePath == None:
         # 1st check if there is one in the Sound Bank Dir
@@ -196,6 +211,8 @@ def __updateAltWorkspace(soundBankDir, mergeMetaFilePath):
     subprocess.call([__wwiseToAppMetadataScript, 'metadata', altWwiseHeaderIdPath, altMetadataPath, '-m', previousMetaPath])
     logging.info('Metadata CSV has been updated and is ready for manual updates, file is located at: \'{}\''.format(path.realpath(altMetadataPath)))
 
+    return True
+
 
 def __generateMayaCozmoData(outputFilePath, groups):
 
@@ -213,11 +230,7 @@ def __generateMayaCozmoData(outputFilePath, groups):
     os.remove(tempMetaFilePath)
 
 
-def __abort(msg):
-    logging.error(msg)
-    exit(1)
-
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main(sys.argv[1:]))
 

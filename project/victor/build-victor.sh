@@ -22,6 +22,7 @@ function usage() {
     echo "  -T                      list all cmake targets"
     echo "  -t [target]             build specified cmake target"
     echo "  -e                      export compile commands"
+    echo "  -I                      ignore external dependencies"
 }
 
 #
@@ -35,13 +36,14 @@ RUN_BUILD=1
 CMAKE_TARGET=""
 CMAKE_EXE="${HOME}/.anki/cmake/dist/3.8.1/CMake.app/Contents/bin/cmake"
 EXPORT_COMPILE_COMMANDS=0
+IGNORE_EXTERNAL_DEPENDENCIES=0
 
 CONFIGURATION=Debug
 PLATFORM=android
 CMAKE_GENERATOR=Ninja
 FEATURES=""
 
-while getopts ":x:c:p:t:g:F:hvfdCTe" opt; do
+while getopts ":x:c:p:t:g:F:hvfdCTeI" opt; do
     case $opt in
         h)
             usage
@@ -89,6 +91,9 @@ while getopts ":x:c:p:t:g:F:hvfdCTe" opt; do
         e)
             EXPORT_COMPILE_COMMANDS=1
             ;;
+        I)
+            IGNORE_EXTERNAL_DEPENDENCIES=1
+            ;;
         :)
             echo "Option -${OPTARG} required an argument." >&2
             usage
@@ -104,8 +109,12 @@ shift $(($OPTIND - 1))
 # settings
 #
 
-echo "Attempting to run fetch-build-deps.sh"
-${TOPLEVEL}/project/victor/scripts/fetch-build-deps.sh
+if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
+  echo "Attempting to run fetch-build-deps.sh"
+  ${TOPLEVEL}/project/victor/scripts/fetch-build-deps.sh
+else
+  echo "Ignore external dependencies"
+fi
 
 PLATFORM=`echo $PLATFORM | tr "[:upper:]" "[:lower:]"`
 
