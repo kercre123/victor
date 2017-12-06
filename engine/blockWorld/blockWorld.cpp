@@ -1796,14 +1796,12 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     switch (type) {
       case ObjectType::CliffDetection:
       {
-        // cliffs currently have extra data (for directionality)
-        const Pose3d& robotPose = _robot->GetPose();
-        const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToRoot();
-        Vec3f rotatedFwdVector = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
-        MemoryMapData_Cliff cliffData(Vec2f {rotatedFwdVector.x(), rotatedFwdVector.y()}, lastTimestamp);
+        // cliffs currently have extra data (for directionality and position)
+        Pose3d cliffPose = obsPose.GetWithRespectToRoot();
+        MemoryMapData_Cliff cliffData(cliffPose, lastTimestamp);
         
         // calculate cliff quad where it's being placed (wrt origin since memory map is 2d wrt current origin)
-        const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToRoot() );
+        const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( cliffPose );
       
         INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
         DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");

@@ -487,7 +487,7 @@ void QuadTreeProcessor::Transform(NodeTransformFunction transform)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::FindIf(NodePredicate pred, MemoryMapDataConstList& output)
+void QuadTreeProcessor::FindIf(NodePredicate pred, MemoryMapDataConstList& output) const
 {
   // TODO: use cached data in the processor to access all data directly, since we don't have constraints on locality
   if (_root) {

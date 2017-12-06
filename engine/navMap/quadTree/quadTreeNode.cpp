@@ -1048,7 +1048,7 @@ bool QuadTreeNode::Transform(const FastPolygon& poly,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::FindIf(const FastPolygon& poly, MemoryMapTypes::NodePredicate pred, 
-                                    MemoryMapTypes::MemoryMapDataConstList& output)
+                                    MemoryMapTypes::MemoryMapDataConstList& output) const
 {  
   ESetOverlap overlap = GetOverlapType(poly);
   if ( ESetOverlap::Disjoint != overlap )

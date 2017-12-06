@@ -307,7 +307,7 @@ void MapComponent::UpdateRobotPose()
     // cliff quad: clear or cliff
     {
       // TODO configure this size somethere else
-      Point3f cliffSize = MarkerlessObject(ObjectType::ProxObstacle).GetSize() * 0.5f;
+      Point3f cliffSize = MarkerlessObject(ObjectType::CliffDetection).GetSize() * 0.5f;
       Quad3f cliffquad {
         {+cliffSize.x(), +cliffSize.y(), cliffSize.z()},  // up L
         {-cliffSize.x(), +cliffSize.y(), cliffSize.z()},  // lo L
@@ -318,9 +318,11 @@ void MapComponent::UpdateRobotPose()
       // depending on cliff on/off, add as ClearOfCliff or as Cliff
       if ( _robot->GetCliffSensorComponent().IsCliffDetected() )
       {
-        // build data we want to embed for this quad
-        Vec3f rotatedFwdVector = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
-        MemoryMapData_Cliff cliffData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()}, currentTimestamp);
+        // since we don't know which sensor detected the cliff, we can't approximiate it's location, so just throw
+        // it at the robot's origin.
+        // note: could assume most cliffs are detected by the forward sensors and push the cliff forward, but
+        //       it would be wrong in the cases when detected by the rear sensors.
+        MemoryMapData_Cliff cliffData(robotPoseWrtOrigin, currentTimestamp);
         currentNavMemoryMap->AddQuad(cliffquad, cliffData);
       }
       else

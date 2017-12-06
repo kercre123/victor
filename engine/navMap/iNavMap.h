@@ -109,7 +109,7 @@ public:
   virtual void TransformContent(const Poly2f& poly, NodeTransformFunction transform) = 0;
 
   // populate a list of all data that matches the predicate
-  virtual void FindContentIf(NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) = 0;
+  virtual void FindContentIf(NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) const = 0;
 
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
