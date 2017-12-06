@@ -279,7 +279,8 @@ void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
                     &_components->_robot.GetCubeAccelComponent(),
                     &_components->_robot.GetAnimationComponent(),
                     _components->_robot.GetAudioClient(),
-                    &_components->_robot.GetBodyLightComponent());
+                    &_components->_robot.GetBodyLightComponent(),
+                    &_components->_robot.GetMicDirectionHistory());
 
   _audioClient->Init(_components->_behaviorExternalInterface);
 }

@@ -25,10 +25,12 @@ namespace Cozmo {
 // Forward declarations
 class AIInformationAnalyzer;
 class AIWhiteboard;
+class BEIRobotInfo;
 class BehaviorComponent;
 class BehaviorContainer;
 class BehaviorHelperComponent;
 class DoATrickSelector;
+class FaceSelectionComponent;
 class FeedingSoundEffectManager;
 class FreeplayDataTracker;
 class ObjectInteractionInfoCache;
@@ -88,6 +90,8 @@ public:
   
   inline const PuzzleComponent& GetPuzzleComponent() const { assert(_puzzleComponent); return *_puzzleComponent; }
   inline PuzzleComponent&       GetPuzzleComponent()       { assert(_puzzleComponent); return *_puzzleComponent; }
+
+  inline const FaceSelectionComponent& GetFaceSelectionComponent() const {assert(_faceSelectionComponent); return *_faceSelectionComponent;}
   
   inline const WorkoutComponent& GetWorkoutComponent() const { assert(_workoutComponent); return *_workoutComponent; }
   inline WorkoutComponent&       GetWorkoutComponent()       { assert(_workoutComponent); return *_workoutComponent; }
@@ -167,6 +171,12 @@ private:
   
   // component for tracking cozmo's puzzle behaviors
   std::unique_ptr< PuzzleComponent >      _puzzleComponent;
+
+  // component for deciding what face to use
+  std::unique_ptr<FaceSelectionComponent> _faceSelectionComponent;
+
+  // tmp
+  std::unique_ptr<BEIRobotInfo> _robotInfo;
   
   void CheckForSuddenObstacle(Robot& robot);
 };

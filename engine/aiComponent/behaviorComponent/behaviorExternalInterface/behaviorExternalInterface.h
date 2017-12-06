@@ -42,6 +42,7 @@ class ICozmoBehavior;
 class IExternalInterface;
 class NeedsManager;
 class MapComponent;
+class MicDirectionHistory;
 class MoodManager;
 class ObjectPoseConfirmer;
 class PetWorld;
@@ -100,7 +101,8 @@ public:
                              CubeAccelComponent*            cubeAccelComponent,
                              AnimationComponent*            animationComponent,
                              Audio::EngineRobotAudioClient* robotAudioClient,
-                             BodyLightComponent*            bodyLightComponent);
+                             BodyLightComponent*            bodyLightComponent,
+                             MicDirectionHistory*           micDirectionHistory);
   
   virtual ~BehaviorExternalInterface();
   
@@ -162,7 +164,9 @@ public:
 
   inline bool HasBodyLightComponent() const { return _bodyLightComponent != nullptr;}
   BodyLightComponent& GetBodyLightComponent() const{assert(_bodyLightComponent); return *_bodyLightComponent;}
-
+  
+  inline bool HasMicDirectionHistory() const { return _micDirectionHistory != nullptr;}
+  const MicDirectionHistory& GetMicDirectionHistory() const {assert(_micDirectionHistory); return *_micDirectionHistory;}
 
   // Util functions
   OffTreadsState GetOffTreadsState() const;
@@ -179,6 +183,7 @@ private:
   TouchSensorComponent*          _touchSensorComponent;
   VisionComponent*               _visionComponent;
   MapComponent*                  _mapComponent;
+  MicDirectionHistory*           _micDirectionHistory;
   CubeLightComponent*            _cubeLightComponent;
   ObjectPoseConfirmer*           _objectPoseConfirmer;
   CubeAccelComponent*            _cubeAccelComponent;

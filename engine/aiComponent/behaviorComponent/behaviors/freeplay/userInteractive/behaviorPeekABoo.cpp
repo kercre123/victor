@@ -21,6 +21,7 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/components/animTrackHelpers.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
@@ -518,8 +519,11 @@ SmartFaceID BehaviorPeekABoo::GetInteractionFace(const BehaviorExternalInterface
   const Vision::TrackedFace* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(_cachedFace);
   if((facePtr != nullptr) &&
      (faces.find(facePtr->GetID()) == faces.end())){
-    const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-    _cachedFace = whiteboard.GetBestFaceToTrack(smartFaces, false);
+    const auto& faceSelection = behaviorExternalInterface.GetAIComponent().GetFaceSelectionComponent();
+    FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
+    criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
+    criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
+    _cachedFace = faceSelection.GetBestFaceToUse(criteriaMap, smartFaces);
   }
 
   return _cachedFace;

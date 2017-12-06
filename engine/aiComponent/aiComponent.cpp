@@ -16,7 +16,9 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/doATrickSelector.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/aiComponent/feedingSoundEffectManager.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
@@ -65,6 +67,7 @@ AIComponent::~AIComponent()
 Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorComponent)
 {
   {
+    _robotInfo.reset(new BEIRobotInfo(robot));
     _aiComponents.reset(new ComponentWrappers::AIComponentComponents(robot));
     _objectInteractionInfoCache.reset(new ObjectInteractionInfoCache(robot));
     _whiteboard.reset(new AIWhiteboard(robot) );
@@ -72,6 +75,7 @@ Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorCompone
     _doATrickSelector.reset(new DoATrickSelector(robot.GetContext()->GetDataLoader()->GetDoATrickWeightsConfig()));
     _severeNeedsComponent.reset(new SevereNeedsComponent(robot));
     _puzzleComponent.reset(new PuzzleComponent(robot));
+    _faceSelectionComponent.reset(new FaceSelectionComponent(*_robotInfo, robot.GetFaceWorld(), robot.GetMicDirectionHistory()));
   }
   
   

@@ -14,10 +14,10 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/trackFaceAction.h"
-#include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -401,9 +401,12 @@ void BehaviorInteractWithFaces::SelectFaceToTrack(BehaviorExternalInterface& beh
   for(auto& entry : faces){
     smartFaces.insert(behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(entry));
   }
-  const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-  const bool preferName = true;
-  _targetFace = whiteboard.GetBestFaceToTrack(smartFaces, preferName);
+  const auto& faceSelection = behaviorExternalInterface.GetAIComponent().GetFaceSelectionComponent();
+  FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::UnnamedFace, 1000));
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
+  _targetFace = faceSelection.GetBestFaceToUse(criteriaMap, smartFaces);
 }
 
 

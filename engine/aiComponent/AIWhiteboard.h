@@ -187,15 +187,6 @@ public:
   AIBeacon* GetActiveBeacon();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Face tracking
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // shared logic to get a face to track which requires the least panning and tilting (based on the current
-  // robot pose). If preferNamed is true, then will prefer faces with a name to those without
-  SmartFaceID GetBestFaceToTrack(const std::set<SmartFaceID>& possibleFaces,
-                                      const bool preferNamedFaces) const;
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Impossible States handling
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void SetNoPreDockPosesOnObject(const ObjectID& objectID) { _objectIDWithoutPreDock = objectID; }

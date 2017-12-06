@@ -103,7 +103,8 @@ void BehaviorExternalInterface::Init(Robot& robot,
                         &robot.GetCubeAccelComponent(),
                         &robot.GetAnimationComponent(),
                         robot.GetAudioClient(),
-                        &robot.GetBodyLightComponent());
+                        &robot.GetBodyLightComponent(),
+                        &robot.GetMicDirectionHistory());
 }
   
   
@@ -121,7 +122,8 @@ void BehaviorExternalInterface::SetOptionalInterfaces(DelegationComponent*      
                                                       CubeAccelComponent*            cubeAccelComponent,
                                                       AnimationComponent*            animationComponent,
                                                       Audio::EngineRobotAudioClient* robotAudioClient,
-                                                      BodyLightComponent*            bodyLightComponent)
+                                                      BodyLightComponent*            bodyLightComponent,
+                                                      MicDirectionHistory*           micDirectionHistory)
 {
 
 
@@ -139,6 +141,7 @@ void BehaviorExternalInterface::SetOptionalInterfaces(DelegationComponent*      
   _animationComponent         = animationComponent;
   _robotAudioClient           = robotAudioClient;
   _bodyLightComponent         = bodyLightComponent;
+  _micDirectionHistory        = micDirectionHistory;
 }
 
 

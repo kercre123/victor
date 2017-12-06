@@ -19,9 +19,9 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
-#include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iReactToFaceListener.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
@@ -92,9 +92,11 @@ ICozmoBehavior::Status BehaviorAcknowledgeFace::UpdateInternal_WhileRunning(Beha
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorAcknowledgeFace::UpdateBestTarget(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-  const bool preferName = false;  
-  SmartFaceID bestFace = whiteboard.GetBestFaceToTrack( _desiredTargets, preferName );
+  const auto& faceSelection = behaviorExternalInterface.GetAIComponent().GetFaceSelectionComponent();
+  FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
+  SmartFaceID bestFace  = faceSelection.GetBestFaceToUse(criteriaMap, _desiredTargets);
   
   if( !bestFace.IsValid() ) {
     return false;
