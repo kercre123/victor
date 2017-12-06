@@ -163,7 +163,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   : _context(context)
   , _ID(robotID)
   , _timeSynced(false)
-  , _readyToStreamAnims(false)
   , _lastMsgTimestamp(0)
   , _blockWorld(new BlockWorld(this))
   , _faceWorld(new FaceWorld(*this))
@@ -1447,7 +1446,7 @@ Result Robot::Update()
   }
   
   //////// Stream Animations /////////
-  if (_timeSynced && _readyToStreamAnims) { // Don't stream anything before we've connected
+  if (_timeSynced) { // Don't stream anything before we've connected
     result = _animationStreamer.Update(*this);
     if (result != RESULT_OK) {
       PRINT_NAMED_WARNING("Robot.Update.AnimationStreamer",

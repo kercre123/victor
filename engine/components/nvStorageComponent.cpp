@@ -967,9 +967,6 @@ void NVStorageComponent::Update()
     {
       // Send requests if there are any in the queue
       ProcessRequest();
-      
-      // Process onIdle callbacks if there are any in the queue
-      ProcessOnIdleCallbacks();
       break;
     }
     case NVSCState::SENDING_WRITE_DATA:
@@ -1094,24 +1091,6 @@ void NVStorageComponent::SetState(NVSCState s)
   _state = s;
 }
 
-void NVStorageComponent::AddOneShotOnIdleCallback(NVStorageOnIdleCallback callback)
-{
-  _onIdleCallbackQueue.emplace(callback);
-  ProcessOnIdleCallbacks();
-}
-  
-void NVStorageComponent::ProcessOnIdleCallbacks()
-{
-  if (_requestQueue.empty() && _state == NVSCState::IDLE) {
-    while (!_onIdleCallbackQueue.empty()) {
-      PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.ProcessOnIdleCallbacks.ProcessingCallback", "");
-      _onIdleCallbackQueue.front()();  // Execute callback
-      _onIdleCallbackQueue.pop();
-    }
-  }
-}
-  
-  
 bool NVStorageComponent::HasPendingRequests()
 {
   return !_requestQueue.empty() || _recvDataInfo.pending || _writeDataAckInfo.pending;
