@@ -79,7 +79,7 @@
     "translation" : "COZMOは接続されていません"
   },
   "needs.unconnected.needToConnect.description" : {
-    "translation" : "COZMOをお世話してメーターをチェックするには、まずCozmoに接続する必要があります。"
+    "translation" : "COZMOをお世話してメーターをチェックするには、まずCOZMOに接続する必要があります。"
   },
   "label.cancelText" : {
     "translation" : "キャンセル"

@@ -12,12 +12,6 @@
   "unlockable.OSNotSupported.Description" : {
     "translation" : "Code Lab requiert Android {0} ou plus récent."
   },
-  "unlockable.Mystery.Title" : {
-    "translation" : "Compétence verrouillée"
-  },
-  "unlockable.Mystery.Description" : {
-    "translation" : "Satisfais l'envie de jouer de Cozmo au quotidien pour gagner des jetons. Ces derniers permettent de débloquer des boîtes à bonus qui contiennent des éclats, des tours et plus encore !"
-  },
   "unlockable.FistBump.Title" : {
     "translation" : "Check"
   },
@@ -198,29 +192,41 @@
   "unlockable.GuardDog.Description" : {
     "translation" : "Lorsque ses cubes sont proches les uns des autres, Cozmo fait parfois une petite sieste tout en les surveillant. Essaie de les retourner sans le réveiller !"
   },
-  "unlockable.CozmoSings.Title": {
-    "translation": "Cozmo Chante"
+  "unlockable.TrackLaser.Title" : {
+    "translation" : "Chasse-laser"
   },
-  "unlockable.CozmoSings.DescriptionFirstLine": {
-    "translation": "Quand Cozmo est heureux, il chantera des chantes et explorer le monde."
+  "unlockable.TrackLaser.Description" : {
+    "translation" : "Suis ce laser ! Avec ce tour, allume un pointeur laser devant Cozmo pour le guider."
   },
-  "unlockable.CozmoSings.DescriptionSecondLine": {
-    "translation": "Si on secoue un cube quand il est en train de chanter, on peut modifier sa voix."
+  "unlockable.TrackLaser.SparkButtonDescription" : {
+    "translation" : "Appuie pour que Cozmo suive un point laser."
   },
-  "unlockable.CozmoSings.ButtonPromptTitle": {
-    "translation": "Appuie le touche"
+  "unlockable.TrackLaser.SparkedStateDescription" : {
+    "translation" : "Cozmo suivra le laser jusqu'à ce que cela l'ennuie."
   },
-  "unlockable.CozmoSings.ButtonPromptDescription": {
-    "translation": "de voir les chantes de Cozmo"
+  "unlockable.CozmoSings.Title" : {
+    "translation" : "Cozmo chante"
   },
-  "unlockable.CozmoSings.ButtonText": {
-    "translation": "Playlist de Cozmo"
+  "unlockable.CozmoSings.DescriptionFirstLine" : {
+    "translation" : "Lorsque Cozmo est heureux, il chante des chasons tout en explorant son environnement."
   },
-  "unlockable.CozmoSings.ModalTitle": {
-    "translation": "Chantes de Cozmo"
+  "unlockable.CozmoSings.DescriptionSecondLine" : {
+    "translation" : "Pour changer sa voix, il te suffit de secouer un cube pendant qu'il chante."
   },
-  "unlockable.CozmoSings.LockedSongTitle": {
-    "translation": "????"
+  "unlockable.CozmoSings.ButtonPromptTitle" : {
+    "translation" : "Touche le bouton"
+  },
+  "unlockable.CozmoSings.ButtonPromptDescription" : {
+    "translation" : "pour voir les chansons de Cozmo"
+  },
+  "unlockable.CozmoSings.ButtonText" : {
+    "translation" : "Playlist de Cozmo"
+  },
+  "unlockable.CozmoSings.ModalTitle" : {
+    "translation" : "Chansons de Cozmo"
+  },
+  "unlockable.CozmoSings.LockedSongTitle" : {
+    "translation" : "????"
   },
   "sparks.Sparked" : {
     "translation" : "Cozmo est chargé d'éclats :"

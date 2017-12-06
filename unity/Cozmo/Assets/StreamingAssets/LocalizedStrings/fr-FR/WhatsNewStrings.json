@@ -1,0 +1,51 @@
+{
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
+  },
+  "whatsNew.modal.title" : {
+    "translation" : "Quoi de neuf"
+  },
+  "whatsNew.button.openInCodeLab" : {
+    "translation" : "JOUE MAINTENANT DANS L'ATELIER DE CODAGE !"
+  },
+  "whatsNew.CodeLab_VerticalLaunch.title" : {
+    "translation" : "Atelier de codage 2.0 !"
+  },
+  "whatsNew.CodeLab_VerticalLaunch.description" : {
+    "translation" : "Tout nouveau, il regorge de projets comme \"Sons et Lumières\" !"
+  },
+  "whatsNew.CodeLab_TinyOrchestra.title" : {
+    "translation" : "Petit orchestre !"
+  },
+  "whatsNew.CodeLab_TinyOrchestra.description" : {
+    "translation" : "C'est ton propre petit orchestre et les cubes sont tes instruments !"
+  },
+  "whatsNew.CodeLab_MagicFortuneTeller.title" : {
+    "translation" : "Voyant magique !"
+  },
+  "whatsNew.CodeLab_MagicFortuneTeller.description" : {
+    "translation" : "Secoue Cozmo pour qu'il te dise ton avenir !"
+  },
+  "whatsNew.CodeLab_HotPotato.title" : {
+    "translation" : "Patate chaude !"
+  },
+  "whatsNew.CodeLab_HotPotato.description" : {
+    "translation" : "Lorsque la musique s'arrête, évite d'être bloqué avec la patate chaude !"
+  },
+  "whatsNew.CodeLab_FireTruckAlarm.title" : {
+    "translation" : "Sirène de pompier !"
+  },
+  "whatsNew.CodeLab_FireTruckAlarm.description" : {
+    "translation" : "Tic tac ! Une minuterie, c'est bien plus drôle avec Cozmo."
+  },
+  "whatsNew.CodeLab_CubeWhack.title" : {
+    "translation" : "Frappe de cube !"
+  },
+  "whatsNew.CodeLab_CubeWhack.description" : {
+    "translation" : "Frappe ce cube ! Quel est ton meilleur score ?"
+  }
+}

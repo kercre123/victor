@@ -158,6 +158,27 @@ button:focus {
 }
 
 /**
+ * shared button attributes
+ */
+
+#close .primary button:after,
+#glossary-button .primary button:after,
+#exportbtn .primary button:after,
+#navigation .greenflag button:after,
+#navigation .stop button:after,
+#undoRedo .redo button:after,
+#undoRedo .undo button:after,
+#zoomControls .zoomIn button:after,
+#zoomControls .zoomOut button:after,
+#zoomControls .zoomReset button:after {
+    content:'';
+    position:absolute;
+    top:-10px; bottom:-10px; 
+    left:-10px; right:-10px; 
+}
+
+
+/**
  * projecttext
  */
 #projecttext {
@@ -287,6 +308,7 @@ button:focus {
     background-size: cover;
     pointer-events: auto;
     border: 0;
+    padding: 0;
 }
 
 #navigation .greenflag button:active {
@@ -727,6 +749,48 @@ button:focus {
     }
 }
 
+/* Used by Kindle Fire HD 8, 962 x 601 */
+@media only screen and (min-height: 590px) and (max-height: 605px) {
+    #navigation {
+        top: calc(100% - 490px);
+        height: 150px;
+   }
+
+    #navigation .stop {
+        top: calc(100% - 75px);
+    }
+
+    #undoRedo {
+        top: calc(100% - 345px);
+        height: 140px;
+    }
+
+    #undoRedo .redo {
+        top: calc(100% - 125px);
+    }
+
+    #undoRedo .undo {
+        top: calc(100% - 65px);
+    }
+
+    #zoomControls {
+        height: 200px;
+        top: calc(100% - 200px);
+    }
+
+    #zoomControls .zoomIn {
+        top: calc(100% - 190px);
+    }
+
+    #zoomControls .zoomOut {
+        top: calc(100% - 130px);
+    }
+
+    #zoomControls .zoomReset {
+        top: calc(100% - 70px);
+    }
+}
+
 @media only screen and (max-height: 330px) {
   #projecttext .primary #app-title-subtext-line {
     top: -4px;
@@ -751,4 +815,46 @@ button:focus {
     height: 20px;
   }
 
+}
+
+/**
+ * Hide the blockly contents while showing the play now modal
+ * NOTE: any new divs in the html body will need to have the same changes applied to them.
+ */
+.show-play-now-modal #blocks {
+    /** 
+     * We want this to have a layout for blockly spacing calculations
+     * But not to render in the background to improve performance / not look broken on iOS 9 devices
+     * If display:hidden; is used here, the flyout height (and theoretically any other things based on
+     * workspace metrics) will break
+     */
+    visibility: hidden;
+}
+
+.show-play-now-modal #close {
+    display: none;
+}
+
+.show-play-now-modal #glossary-button {
+    display: none;
+}
+
+.show-play-now-modal #exportbtn {
+    display: none;
+}
+
+.show-play-now-modal #navigation {
+    display: none;
+}
+
+.show-play-now-modal #undoRedo {
+    display: none;
+}
+
+.show-play-now-modal #zoomControls {
+    display: none;
+}
+
+.show-play-now-modal #projectText {
+    display: none;
 }

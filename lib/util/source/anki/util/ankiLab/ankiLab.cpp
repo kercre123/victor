@@ -210,20 +210,11 @@ AssignmentStatus AnkiLab::ActivateExperimentInternal(const std::string& experime
     return AssignmentStatus::ExperimentNotFound;
   }
 
-  // lambda to create a new session ID in logic branches that involve assigning
-  // the user to a new experiment
-  auto onStateChanged = [] {
-    LOG_EVENT("session_id.end", "exp_assigned");
-    Util::sSetGlobal("$session_id", Util::GetUUIDString().c_str());
-    LOG_EVENT("session_id.start", "exp_assigned");
-  };
-
   // Check for force assignment
   // TODO-BRC: Also need to check that variant is valid?
   {
     AssignmentDef* def = FindAssignment(_forceAssignments, experimentKey, userId);
     if (nullptr != def) {
-      onStateChanged();
       outVariationKey = def->GetVariation_key();
       return AssignmentStatus::ForceAssigned;
     }
@@ -251,7 +242,6 @@ AssignmentStatus AnkiLab::ActivateExperimentInternal(const std::string& experime
   // check override assignment
   AssignmentDef* overrideAssignment = FindAssignment(_overrideAssignments, experimentKey, userId);
   if (nullptr != overrideAssignment) {
-    onStateChanged();
     outVariationKey = overrideAssignment->GetVariation_key();
     return AssignmentStatus::OverrideAssigned;
   }
@@ -281,7 +271,6 @@ AssignmentStatus AnkiLab::ActivateExperimentInternal(const std::string& experime
     AssignmentDef assignment{experimentKey, userId, variation->GetKey()};
     AssignExperimentVariation(assignment);
     status = AssignmentStatus::Assigned;
-    onStateChanged();
   }
 
   return status;

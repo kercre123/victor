@@ -194,5 +194,8 @@
   },
   "settings.acknowledgementsPanel.dataCollectionTitle" : {
     "translation" : "データコレクション"
+  },
+  "settings.notificationpanel.title" : {
+    "translation" : "COZMOからのメッセージ"
   }
 }

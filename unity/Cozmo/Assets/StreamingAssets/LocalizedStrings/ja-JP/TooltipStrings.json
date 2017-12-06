@@ -7,72 +7,78 @@
     "source_key_paths" : ["/{*}"]
   },
   "tooltip.needstate.energy.header" : {
-    "translation" : "Feed Need"
+    "translation" : "チャージメーター"
   },
   "tooltip.needstate.energy.0" : {
-    "translation" : "Cozmo is fully fed."
+    "translation" : "COZMOは満タンにチャージされました。"
   },
   "tooltip.needstate.energy.1" : {
-    "translation" : "Cozmo needs to be fed a little."
+    "translation" : "COZMOは少しチャージする必要があります。"
   },
   "tooltip.needstate.energy.2" : {
-    "translation" : "Cozmo needs to be fed."
+    "translation" : "COZMOはチャージする必要があります。"
   },
   "tooltip.needstate.energy.3" : {
-    "translation" : "Cozmo really needs to be fed!"
+    "translation" : "COZMOは本当にチャージする必要があります！"
   },
   "tooltip.needstate.repair.header" : {
-    "translation" : "Tune Up Need"
+    "translation" : "チューンアップメーター"
   },
   "tooltip.needstate.repair.0" : {
-    "translation" : "Cozmo is fully tuned up."
+    "translation" : "COZMOは満タンにチューンアップされました。"
   },
   "tooltip.needstate.repair.1" : {
-    "translation" : "Cozmo needs a little tune-up."
+    "translation" : "COZMOは少しチューンアップする\u000a必要があります。"
   },
   "tooltip.needstate.repair.2" : {
-    "translation" : "Cozmo needs a tune-up."
+    "translation" : "COZMOはチューンアップが必要です。"
   },
   "tooltip.needstate.repair.3" : {
-    "translation" : "Cozmo really needs a tune-up!"
+    "translation" : "COZMOは本当にチューンアップを\u000a必要としています！"
   },
   "tooltip.needstate.play.header" : {
-    "translation" : "Play Need"
+    "translation" : "プレイメーター"
   },
   "tooltip.needstate.play.0" : {
-    "translation" : "Cozmo is at full play."
+    "translation" : "COZMOは十分に遊びました。"
   },
   "tooltip.needstate.play.1" : {
-    "translation" : "Cozmo needs to play a little."
+    "translation" : "COZMOは少し遊ぶ必要があります。"
   },
   "tooltip.needstate.play.2" : {
-    "translation" : "Cozmo needs to play."
+    "translation" : "COZMOは遊ぶ必要があります。"
   },
   "tooltip.needstate.play.3" : {
-    "translation" : "Cozmo really needs to play!"
+    "translation" : "COZMOは本当に遊ぶ必要があります！"
   },
   "tooltip.needsbutton.energy.header" : {
-    "translation" : "Feed Unavailable"
+    "translation" : "チャージを利用不可"
   },
   "tooltip.needsbutton.energy.repaircritical" : {
-    "translation" : "Cozmo needs to be tuned up before he can eat!"
+    "translation" : "COZMOはチャージの前にチューンアップが必要です。"
   },
   "tooltip.needsbutton.play.header" : {
-    "translation" : "Play Unavailable"
+    "translation" : "プレイを利用不可"
   },
   "tooltip.needsbutton.play.repaircritical" : {
-    "translation" : "Cozmo needs to be tuned up before he can play!"
+    "translation" : "COZMOは遊ぶ前にチューンアップが必要です！"
   },
   "tooltip.needsbutton.play.feedcritical" : {
-    "translation" : "Cozmo needs to be fed before he can play!"
+    "translation" : "COZMOは遊ぶ前にチャージが必要です！"
   },
   "tooltip.bonusbar.header" : {
-    "translation" : "Bonus Box Progress"
+    "translation" : "エナジーボックスの進捗"
   },
   "tooltip.bonusbar.body.daycomplete" : {
-    "translation" : "Bonus Token already earned today. New Day in {0}h {1}m."
+    "translation" : "今日のプレイトークンミッションは獲得済みです。次の日まで{0}時間{1}分です。"
   },
   "tooltip.bonusbar.body.dayincomplete" : {
-    "translation" : "Fill Cozmo’s Play Need to earn a Bonus Token. Day ends in {0}h {1}m."
+    "translation" : "Cozmoのプレイメーターを満たすと、プレイトークンを獲得できます。1日の終了まで{0}時間{1}分です。"
+  },
+  "tooltip.sparks.header" : {
+    "translation" : "エナジーボール"
+  },
+  "tooltip.sparks.body.main" : {
+    "translation" : "COZMOはエナジーボールのためにトリックやゲームをして遊びます。"
   }
 }

@@ -132,6 +132,7 @@ var RenameProject = function(){
    * @returns {void}
    */
   function _handleCancelButton(e) {
+    window.player.play('click');
     e.stopPropagation();
     e.preventDefault();
     _hide();
@@ -143,7 +144,17 @@ var RenameProject = function(){
    * @returns {void}
    */
   function _handleSaveButton(e) {
-    window.renameProject("RenameProject.callbackAfterProjectRename", window.cozmoProjectUUID, projectNameTextbox.value);
+    window.player.play('click');
+    var newProjectName = projectNameTextbox.value.substring(0, _getMaxLength());
+    // The editable text element will sometimes auto convert into smart-quotes, often not bothering to match them.
+    // Replacing all smart quotes with standard quotes means only those 2 characters have to be processed internally
+
+    newProjectName = newProjectName.replaceAll('‘', '\'');
+    newProjectName = newProjectName.replaceAll('’', '\'');
+    newProjectName = newProjectName.replaceAll('“', '\"');
+    newProjectName = newProjectName.replaceAll('”', '\"');
+
+    window.renameProject("RenameProject.callbackAfterProjectRename", window.cozmoProjectUUID, newProjectName);
   }
 
   /**
@@ -166,12 +177,16 @@ var RenameProject = function(){
     var newTitle = $t('codeLab.remixNewProject.nameStartsWith', originalTitle);
 
     // truncate strings to maxium lengths based on language
+    return newTitle.substring(0, _getMaxLength());
+  }
+
+  function _getMaxLength() {
     if (_isArabicLanguage()) {
       // Latin alphabets get 32 characters
-      return newTitle.substring(0, PROJECT_TITLE_MAX_LENGTH_ARABIC_LANG);
+      return PROJECT_TITLE_MAX_LENGTH_ARABIC_LANG;
     } else {
       // Japanese alphabets get 25 characters
-      return newTitle.substring(0, PROJECT_TITLE_MAX_LENGTH_NON_ARABIC_LANG);
+      return PROJECT_TITLE_MAX_LENGTH_NON_ARABIC_LANG;
     }
   }
 

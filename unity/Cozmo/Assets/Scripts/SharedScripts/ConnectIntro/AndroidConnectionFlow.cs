@@ -120,6 +120,8 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
   [NonSerialized]
   public string Password;
 
+  private Coroutine _CheckConnectivityCoroutine = null;
+
   private void Start() {
     if (Instance != null) {
       DAS.Error("AndroidConnectionFlow.Start", "Instance already exists!");
@@ -146,15 +148,18 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
 
     _Stage = Stage.Init;
     SelectNextStage();
+  }
 
-    // An attempt to ping Cozmo will run in the background throughout the duration
-    // of this flow; if at any point we detect we can successfully ping a Cozmo, we
-    // kick the user out of this platform-specific flow and continue with normal
-    // connection flow. This ping test is the successful exit point of this flow;
-    // the only other way out is if the user hits a button to leave and use the old
-    // flow, or if we detect failure on the Connecting screen.
-    StartPingTest();
-    StartCoroutine("CheckConnectivity");
+  public void Initialize(bool shouldStartPingTest) {
+    if (shouldStartPingTest) {
+      // An attempt to ping Cozmo will run in the background throughout the duration
+      // of this flow; if at any point we detect we can successfully ping a Cozmo, we
+      // kick the user out of this platform-specific flow and continue with normal
+      // connection flow. This ping test is the successful exit point of this flow;
+      // the only other way out is if the user hits a button to leave and use the old
+      // flow, or if we detect failure on the Connecting screen.
+      SafeStartPingTest();
+    }
 
     RegisterJavaListener(_MessageReceiver, "scanPermissionsIssue", p => NeedPermissions());
   }
@@ -163,8 +168,9 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     if (_Disabled) {
       return;
     }
-    StopPingTest();
-    StopCoroutine("CheckConnectivity");
+
+    SafeStopPingTest();
+
     if (_StageInstance != null) {
       DestroyStage();
     }
@@ -183,24 +189,33 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     base.OnDestroy();
   }
 
+  // Use this method to avoid starting multiple ConnectivityCheck coroutines
+  public void SafeStartPingTest() {
+    // Safe to call beginPingTest multiple times - WifiUtil.java handles the case that the ping is already running
+    StartPingTest();
+    if (_CheckConnectivityCoroutine == null) {
+      _CheckConnectivityCoroutine = StartCoroutine(CheckConnectivity());
+    }
+  }
+
+  private void SafeStopPingTest() {
+    StopPingTest();
+    if (_CheckConnectivityCoroutine != null) {
+      StopCoroutine(_CheckConnectivityCoroutine);
+      _CheckConnectivityCoroutine = null;
+    }
+  }
+
   public static void StartPingTest() {
     CallJava("beginPingTest", RobotEngineManager.kRobotIP, kPingTimeoutMs, kPingRetryDelayMs);
   }
 
-  public static void StopPingTest() {
+  private static void StopPingTest() {
     CallJava("endPingTest");
   }
 
-  // test if we're already connected and shut down the ping test if so
-  // return if connected or not
-  public static bool HandleAlreadyOnCozmoWifi() {
-    if (CallJava<bool>("isPingSuccessful")) {
-      StopPingTest();
-      return true;
-    }
-    else {
-      return false;
-    }
+  public static String GetCurrentSSID() {
+    return CallJava<String>("getCurrentSSID");
   }
 
   private void DestroyStage() {
@@ -257,6 +272,7 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
         OnScreenComplete(true);
         yield break;
       }
+
       yield return new WaitForSeconds(0.5f);
     }
   }
@@ -361,12 +377,16 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
   }
 
   public bool Connect(string SSID, string password) {
+    SafeStartPingTest();
+
     bool result = CallJava<bool>("connect", SSID, password, kTimeoutMs);
     OnStartConnect();
     return result;
   }
 
   public bool ConnectExisting(string SSID) {
+    SafeStartPingTest();
+
     bool result = CallJava<bool>("connectExisting", SelectedSSID, kTimeoutMs);
     OnStartConnect();
     return result;

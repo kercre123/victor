@@ -2309,21 +2309,9 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
         }
       }
     }
-
-    // - - - - -
-    // update memory map
-    // - - - - -
-    _robot->GetMapComponent().UpdateObjectPose(object, oldPose, oldPoseState);
     
     // notify the block configuration manager
     _blockConfigurationManager->SetObjectPoseChanged(objectID, object.GetPoseState());
-  }
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::OnObjectVisuallyVerified(const ObservableObject* object)
-  {
-      // -- clear memory map from robot to markers
-      _robot->GetMapComponent().ClearRobotToMarkers(object);
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -1,12 +1,26 @@
 ﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
+// Intended to be used as a framing element or rectangular vignetting element. 
+// Built to emulate a "soft mask" or clipping for scrolling views and lists.
+// Based on the screen as opposed to an image. Meant for full screen scrolling content
 Shader "UI/Cozmo/GradientComplexScreenspaceClippingShader"
 {
   Properties
   {
+    // Both the _ClippingSize and _ClippingEnd vectors' element values
+    // represent one side of the rect; x = right, y = top, z = left, w = bottom
+
+    // Indicates the size of the gradient, as a half-percentage value
+    // 1 would indicate "gradient should be the same size as screen edge to center"
+    // Values must be greater than 0, but can be > 1
     _ClippingSize ("DEV ONLY Clipping Start", Vector) = (0.5, 0.5, 0.5, 0.5)
+
+    // Indicates the distance from the edge that the gradient should start (aka 
+    // the end of clipping). All values valid; positive closer to center negative 
+    // away from center. 0 would be the screen edge. 1 would be the screen center.
     _ClippingEnd ("DEV ONLY Clipping End", Vector) = (0.5, 0.5, 0.5, 0.5)
 
+    // Offset if using a sprite atlas because we need to sample the texture
     _AtlasUV ("DEV ONLY UV", Vector) = (0.5, 0.5, 0.5, 0.5)
   }
   SubShader
@@ -50,7 +64,7 @@ Shader "UI/Cozmo/GradientComplexScreenspaceClippingShader"
 
         o.uv = ((o.vertex + float2(1,1)) * 0.5);
         
-        //modify uv x to match screen ratio since we are using PreserveAspect.
+        // Modify uv x to match screen ratio since we are using PreserveAspect.
         o.uv.x -= 0.5;
 
         float screenRatio = (_ScreenParams.x / _ScreenParams.y);
@@ -59,17 +73,17 @@ Shader "UI/Cozmo/GradientComplexScreenspaceClippingShader"
         o.uv *= _AtlasUV.zw;
         o.uv += _AtlasUV.xy;
 
-        // translate atlas UV to sprite UV
+        // Translate atlas UV to sprite UV
         float2 spriteUV = (v.uv.xy - _AtlasUV.xy) / ( _AtlasUV.zw);
 
-        // precalculate denominator
+        // Precalculate denominator to speed up calulations
         float4 denominator = 2 / _ClippingSize;
         float4 offset = _ClippingEnd / _ClippingSize;
 
-        // make the top right of the gradient frame
+        // Make the top right of the gradient frame
         float2 topRightAlpha = denominator.xy - spriteUV.xy * denominator.xy - offset.xy;
 
-        // make the bottom left of the gradient frame
+        // Make the bottom left of the gradient frame
         float2 bottomLeftAlpha = spriteUV.xy * denominator.zw - offset.zw;
 
         o.topRightAlpha = topRightAlpha;
@@ -82,10 +96,8 @@ Shader "UI/Cozmo/GradientComplexScreenspaceClippingShader"
 
       fixed4 frag (v2f i) : SV_Target
       {
-        //return float4(i.uv, 0, 1);
-
+        // More opaque at the edges, less opaque in the middle to allow content
         fixed4 col = tex2D(_MainTex, i.uv);
-
         float2 minAlpha2 = min(i.topRightAlpha,i.bottomLeftAlpha);
         col.a = min(col.a, 1 - min(minAlpha2.x, minAlpha2.y));
 

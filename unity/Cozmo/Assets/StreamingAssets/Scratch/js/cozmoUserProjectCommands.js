@@ -1,8 +1,16 @@
 (function () {
+    function unescapedText(str) {
+        if (str === null || str === undefined) {
+            return str;
+        }
+        var resultStr = str.replaceAll('\\\'', '\'');
+        resultStr = resultStr.replaceAll('\\\"', '\"');
+        return resultStr;
+    }
 
-    window.isCozmoSampleProject = false;
+    window.isCozmoSampleProject = window.getUrlVar('isFeaturedProject') || false;
     window.cozmoProjectName = null;
-    window.cozmoProjectUUID = null;
+    window.cozmoProjectUUID = window.getUrlVar('projectID') || null;
     window.previouslySavedProjectJSON = null;
     window.originalSampleProjectJSON = null;
     window.saveProjectTimerId = null;
@@ -43,6 +51,13 @@
 
     // Put green flag in its location in the upper left corner of the workspace if no green flag is on workspace.
     window.ensureGreenFlagIsOnWorkspace = function () {
+      // Blockly.Block.prototype.dispose() calls ensureGreenFlagIsOnWorkspace(), sometimes
+      // before the requested project has loaded. When this happens, this can lead to a race condition
+      // where we then identify this project as being a user project that needs to be saved, but
+      // actually we are about to load a sample or featured project. So now we check the isLoadingProject
+      // bool to prevent this problem.
+      if (window.isLoadingProject) return;
+
       // TODO This is currently in XML, but we could migrate to use JSON instead throughout this method.
       // These two lines should help:
       //var projectJSON = '{"targets":[{"id":"9I=:fGU6_w`eoI3X`=J!","name":"Stage","isStage":true,"x":0,"y":0,"size":100,"direction":90,"draggable":false,"currentCostume":0,"costumeCount":0,"visible":true,"rotationStyle":"all around","blocks":{},"variables":{},"lists":{},"costumes":[],"sounds":[]},{"id":"D:hj2q3qXn53^HJG4b,d","name":"Sprite1","isStage":false,"x":0,"y":0,"size":100,"direction":90,"draggable":false,"currentCostume":0,"costumeCount":0,"visible":true,"rotationStyle":"all around","blocks":{"g68)-/+Er8xO7[moRW8J":{"id":"g68)-/+Er8xO7[moRW8J","opcode":"event_whenflagclicked","inputs":{},"fields":{},"next":null,"topLevel":true,"parent":null,"shadow":false,"x":662.4705882352941,"y":426.7058823529412}},"variables":{},"lists":{},"costumes":[],"sounds":[]}],"meta":{"semver":"3.0.0","vm":"0.1.0","agent":"Mozilla/5.0 (iPad; CPU OS 9_1 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13B143 Safari/601.1"}}';
@@ -58,6 +73,9 @@
         // No other blocks are on the workspace so put green flag back on workspace by itself.
         var xmlTextWithGreenFlag = xmlStart + greenFlagXML + xmlEnd;
         window.openCozmoProjectXML(window.cozmoProjectUUID, window.cozmoProjectName, xmlTextWithGreenFlag, window.isCozmoSampleProject);
+        if (window.isVertical) {
+            Blockly.getMainWorkspace().scrollHome(true);
+        }
       }
       else {
         if (!window.isGreenFlagOnWorkspace()) {
@@ -171,7 +189,7 @@
         window.Unity.call({requestId: -1, command: "cozmoSaveUserProject", argString: json, argUUID: window.cozmoProjectUUID});
     }
 
-    window.exportCozmoProject = function() {
+    window.onCozmoProjectExportConfirmation = function() {
         var promiseSaveProject = window.promiseWaitForSaveProject();
 
         var projectType = "user";
@@ -181,7 +199,29 @@
         // @todo: inject a new check for featured projects
 
         promiseSaveProject.then(function(result) {
-            window.Unity.call({requestId: -1, command: "cozmoExportProject", argUUID: window.cozmoProjectUUID, argString: projectType});
+            // Pass the projectJSON along to cozmoExportProject in case this project has not yet been saved as JSON (such as with horizontal sample projects).
+            var projectJSON = Scratch.vm.toJSON();
+            window.Unity.call({requestId: -1, command: "cozmoExportProject", argUUID: window.cozmoProjectUUID, argString: projectType, argString2: projectJSON});
+        });
+    }
+
+    window.exportCozmoProject = function() {
+        var title = window.$t('codeLab.export_modal.title');
+        var body = window.$t('codeLab.export_modal.body');
+        var cancelText = Blockly.Msg.IOS_CANCEL;
+        var confirmText = window.$t('codeLab.export_modal.button.copy_to_drive');
+
+        ModalConfirm.open({
+            title: title,
+            prompt: body,
+            confirmButtonLabel: confirmText,
+            cancelButtonLabel: cancelText,
+            confirmCallback: function(result) {
+                window.player.play('click');
+                if (result) {
+                    window.onCozmoProjectExportConfirmation();
+                }
+            }
         });
     }
 
@@ -203,8 +243,6 @@
     // Don't call this method directly. Please call openCozmoProjectJSON instead.
     // This method takes a projectXML parameter to support pre-2.1 builds.
     window.openCozmoProject = function(projectUUID, projectName, projectJSON, projectXML, isCozmoSampleProjectStr) {
-        var startTime = performance.now()
-
         var isCozmoSampleProject = (isCozmoSampleProjectStr == 'true');
         window.isCozmoSampleProject = isCozmoSampleProject;
 
@@ -222,21 +260,15 @@
 
         window.setProjectNameAndSavedText(projectName, isCozmoSampleProject);
 
-        // TODO only call for featured projects, not all sample projects.
-        // window.cozmoProjectUUID must be set before Play Now Modal is rendered.
-        if (window.isCozmoSampleProject && window.isVertical) {
-            PlayNowModal.init();
-        }
-
-        if (window.saveProjectTimerId) {
-            clearInterval(window.saveProjectTimerId);
-        }
+        window.clearSaveProjectTimer();
 
         if (isCozmoSampleProject && projectXML != null) {
             // Set the coordinate setting in the sample project xml to our desired location on-screen.
+            // Note that for projects serialized as JSON (not XML), Blockly.WorkspaceSvg.prototype.scrollHome
+            // is used to position the workspace correctly at project load time.
             var startingPoint = window.getScriptStartingPoint();
-            projectXML = projectXML.replace("REPLACE_X_COORD", startingPoint.x); // TODO need JSON solution
-            projectXML = projectXML.replace("REPLACE_Y_COORD", startingPoint.y); // TODO need JSON solution
+            projectXML = projectXML.replace("REPLACE_X_COORD", startingPoint.x);
+            projectXML = projectXML.replace("REPLACE_Y_COORD", startingPoint.y);
         }
 
         window.startLoadingProject();
@@ -247,12 +279,8 @@
             // User project was build pre-Cozmo app 2.1 release. Open projectXML.
             openBlocklyXML(projectXML);
             window.notifyProjectIsLoaded();
+            window.startSaveProjectTimer();
         }
-
-        window.startSaveProjectTimer();
-
-        var loadTime = (performance.now() - startTime) * 0.001;
-        window.cozmoDASLog("openCozmoProject", "Took: " + loadTime.toFixed(3) + "s");
     }
 
     window.newProjectCreated = function(projectUUID, projectName) {
@@ -264,9 +292,11 @@
     // Sets window.cozmoProjectName and sets name on workspace.
     // Makes rename and remix UI visible and tappable, if appropriate.
     window.setProjectNameAndSavedText = function(projectName, isSampleProject) {
-        window.cozmoProjectName = projectName;
+        var unencodedProjectName = unescapedText( projectName );
 
-        setText('#app-title', $t(projectName));
+        window.cozmoProjectName = unencodedProjectName;
+
+        setText('#app-title', $t(unencodedProjectName));
 
         // if the title overflows the container, reduce the font size to make it fit
         var title = document.querySelector('#app-title');
@@ -278,7 +308,7 @@
         if (isSampleProject) {
             autosavedText = window.$t('codeLab.SaveProject.NotSaved');
         }
-        else if (projectName == '' || projectName == null) {
+        else if (unencodedProjectName == '' || unencodedProjectName == null) {
             // When user selects 'Create New Project' from save/load UI, at first project has no name and is not yet autosaved.
             autosavedText = '';
         }
@@ -314,9 +344,17 @@
         window.startSaveProjectTimer();
     }
 
+    window.clearSaveProjectTimer = function() {
+        if (window.saveProjectTimerId != null) {
+            clearInterval(window.saveProjectTimerId);
+            window.saveProjectTimerId = null;
+        }
+    }
+
     window.startSaveProjectTimer = function() {
         // Start timer for intervals at which we'll check if the user project should be saved.
         if (!window.isCozmoSampleProject) {
+            window.clearSaveProjectTimer();  
             var timeInterval_ms = 3000;
             window.saveProjectTimerId = setInterval(saveProjectTimer, timeInterval_ms);
             function saveProjectTimer() {

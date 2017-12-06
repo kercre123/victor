@@ -118,7 +118,6 @@
             ],
            },
           'defines': [
-            '_LIBCPP_DEBUG=0',
             'DEBUG=1',
           ],
       },

@@ -46,7 +46,7 @@
     "translation" : "Cozmo peut désormais continuer à jouer"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Body" : {
-    "translation" : "Pour qu'il soit bien nourri, suis les instructions pour l'aider à reconnaître ses cubes."
+    "translation" : "Assure-toi qu'il est bien nourri en suivant les instructions pour l'aider à reconnaître ses cubes."
   },
   "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Title" : {
     "translation" : ""

@@ -69,7 +69,7 @@ protected:
     }
 
     logStream << "," << this_id_ << ",," << eventName << ",";
-    logStream << eventValue << ",," << phys  << ",,,,,," << globals_[kGameIdGlobalKey] << ",," ;
+    logStream << eventValue << ",," << phys  << ",,,,,," << globals_[kGameIdGlobalKey] << ",,," ;
     logStream << kMessageVersionGlobalValue << std::endl;
 
     return logStream.str();
@@ -243,7 +243,7 @@ TEST_F(DasGameLogAppenderTest, WriteMessageWithLotsOfGlobalsAndData) {
   expectedData += oss.str() + ",";
   expectedData += "info,TestEvent1,TestValue1,some data,0xbeef5678,\"\"\"android phone\"\"\",0xffff-1234-abcd,\"1.5.4,f\",0xaaaa-987623-bbbb,,";
   expectedData += globals_[Anki::Das::kGameIdGlobalKey];
-  expectedData += ",qa,1\n";
+  expectedData += ",qa,,1\n";
 
   std::string verificationData = StringFromContentsOfLogFile();
   ASSERT_EQ(expectedData, verificationData);

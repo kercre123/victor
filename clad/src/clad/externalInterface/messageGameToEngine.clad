@@ -909,7 +909,8 @@ message ForceSetDamagedParts {
 
 message RegisterOnboardingComplete {
   int_32 onboardingStage,
-  bool   finalStage
+  bool   finalStage,
+  bool   onboardingSkipped,
 }
 
 message SetNeedsPauseState {
@@ -1043,6 +1044,26 @@ message LogRawCliffData {
 
 message LogRawProxData {
   uint_32 length_ms // length of time to record data for. Data will appear in <CACHE>/sensorData/proxSensor
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Performance Metric
+///////////////////////////////////////////////////////////////////////////////
+
+enum uint_8 PerfMetricCommandType {
+  Reset,
+  Start,
+  Stop,
+  Dump,
+  DumpAll,
+  DumpFiles,
+}
+
+message PerfMetricCommand {
+  PerfMetricCommandType command,
+}
+
+message PerfMetricGetStatus {
 }
 
 ///////////////////////////////////////////////////////////////////////////////

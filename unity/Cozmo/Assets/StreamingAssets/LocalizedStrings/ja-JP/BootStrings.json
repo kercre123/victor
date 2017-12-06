@@ -7,13 +7,13 @@
     "source_key_paths" : ["/{*}"]
   },
   "boot.errorDiskFull" : {
-    "translation" : "デバイスのストレージがいっぱいなのでCOZMOアプリをロードできませんでした。メディアや使っていないアプリをデバイスから削除して、もう一度試してください。"
+    "translation" : "デバイスのストレージがいっぱいなのでCOZMOアプリを読み込めませんでした。メディアや使っていないアプリをデバイスから削除して、もう一度試してください。"
   },
   "boot.errorReadingFiles" : {
     "translation" : "COZMOアプリはファイルを読めませんでした。エラー：{0}"
   },
   "boot.needStoragePermission" : {
-    "translation" : "Cozmoアプリを実行するには、デバイスのゲームファイルにアクセスする必要があります。"
+    "translation" : "COZMOアプリを実行するには、デバイスのゲームファイルにアクセスする必要があります。"
   },
   "boot.appSettingsPermission" : {
     "translation" : "COZMOアプリを実行するには、デバイスのゲームファイルにアクセスする必要があります。以下のリンクからCOZMOアプリ設定にアクセスし、<b>権限 > ストレージ</b>をタップしてこれを有効にします。"

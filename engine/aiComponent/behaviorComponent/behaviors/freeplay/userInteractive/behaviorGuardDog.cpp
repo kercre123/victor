@@ -419,6 +419,10 @@ void BehaviorGuardDog::OnBehaviorDeactivated(BehaviorExternalInterface& behavior
   
   // Log some DAS Events:
   LogDasEvents();
+  
+  // In case we are being interrupted, make sure we send the GuardDogEnd message to unity to close the modal
+  using namespace ExternalInterface;
+  // robot.Broadcast( MessageEngineToGame( GuardDogEnd(_state == State::Complete) ) );
 }
 
 

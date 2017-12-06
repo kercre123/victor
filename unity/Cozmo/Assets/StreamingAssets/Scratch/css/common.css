@@ -64,15 +64,15 @@ button:focus {
 #close .primary {
     display: block;
     position: absolute;
-    top: 10px;
+    top: 20px;
     left: 15px;
 }
 
 #close .primary button {
     display: block;
     position: relative;
-    width: 72px;
-    height: 72px;
+    width: 54px;
+    height: 54px;
     background-color: transparent;
     background-image: url('../images/ui/close.svg');
     background-size: cover;
@@ -81,36 +81,34 @@ button:focus {
 }
 
 #close .primary button:active {
-    background-position:0px -72px;
+    background-position:0px -54px;
 }
 
 /**
   * Challenges button
-  */
+ */
 
 #challenges {
-    display: block;
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: 100px;
+    height: 100%;
     z-index: 1;
     pointer-events: none;
 }
 
 #challenges .primary {
-    display: block;
     position: absolute;
-    top: -8px;
-    left: 90px;
+    top: 20px;
+    left: 100px;
 }
 
 #challenges .primary button {
     display: block;
     position: relative;
-    width: 108px;
-    height: 108px;
+    width: 54px;
+    height: 54px;
     background-color: transparent;
     background-image: url('../images/ui/challenges.svg');
     background-size: cover;
@@ -119,7 +117,7 @@ button:focus {
 }
 
 #challenges .primary button:active {
-    background-position:0px -108px;
+    background-position: 0 -54px;
 }
 
 /**
@@ -140,15 +138,15 @@ button:focus {
 #tutorial .primary {
     display: block;
     position: absolute;
-    top: 10px;
-    left: 201px;
+    top: 20px;
+    left: 185px;
 }
 
 #tutorial .primary button {
     display: block;
     position: relative;
-    width: 72px;
-    height: 72px;
+    width: 54px;
+    height: 54px;
     background-color: transparent;
     background-image: url('../images/ui/tutorials.svg');
     background-size: cover;
@@ -157,7 +155,61 @@ button:focus {
 }
 
 #tutorial .primary button:active {
-    background-position:0px -72px;
+    background-position:0px -54px;
+}
+
+/**
+  * Export button
+  */
+
+#exportbtn {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+#exportbtn .primary {
+    display: block;
+    position: absolute;
+    top: 20px;
+    left: 270px;
+}
+
+#exportbtn .primary button {
+    display: block;
+    position: relative;
+    width: 54px;
+    height: 54px;
+    background-color: transparent;
+    background-image: url('../images/ui/export.svg');
+    background-size: cover;
+    pointer-events: auto;
+    border: 0;
+}
+
+#exportbtn .primary button:active {
+    background-position:0px -54px;
+}
+
+/**
+ * shared button attributes
+ */
+
+#close .primary button:after,
+#challenges .primary button:after,
+#tutorial .primary button:after,
+#exportbtn .primary button:after,
+#navigation .greenflag button:after,
+#navigation .stop button:after {
+    content:'';
+    position:absolute;
+    top:-10px; bottom:-10px; 
+    left:-10px; right:-10px; 
 }
 
 /**
@@ -171,8 +223,8 @@ button:focus {
     width: 100%;
     height: 175px;
     z-index: 1;
-    pointer-events: none;
     text-align: right;
+    pointer-events: none;
 }
 
 #projecttext .primary {
@@ -190,7 +242,7 @@ button:focus {
     font-size: 32px;
     background-color: #525253;
     color: #1fadda;
-    max-width: calc(100vw - 300px);
+    max-width: calc(100vw - 350px);
     white-space: nowrap;
     overflow-x: hidden;
     text-overflow: ellipsis;
@@ -198,7 +250,7 @@ button:focus {
     pointer-events: all;
 }
 #projecttext .primary #app-title.long-title {
-  font-size: 24px;
+    font-size: 24px;
 }
 #projecttext .primary #app-title.editable:before {
     display: inline-block;
@@ -222,23 +274,18 @@ button:focus {
     justify-content: flex-end;
     align-items: center;
 }
-
 #projecttext .primary #app-title-subtext {
-    height: 100%;
-
     display: inline-block;
     color: #c0bfbf;
+    font-size: 20px;
     background-color: #525253;
-    font-size: 22px;
     padding: 0 5px;
 }
 
 #projecttext #app-buttons {
-  display: none;
   border-left: 2px solid #7b7c7d;
-  padding-left: .2em;
-  margin-left: .2em;
-  height: 100%;
+  padding-left: .4em;
+  display: none;
 }
 #projecttext.is-title-set #app-buttons {
   display: inline-block;
@@ -246,19 +293,20 @@ button:focus {
 #projecttext #app-buttons button {
   width: 30px;
   height: 30px;
-  background-size: 30px 60px;
   background-color: transparent;
+  background-size: 30px 60px;
   background-repeat: no-repeat;
   border: 0;
   pointer-events: all;
-  margin-left: 5px;
+  margin: 0 0 0 5px;
+  padding: 0;
 }
-#projecttext #app-buttons #remix-button:active {
+#projecttext #app-buttons button:active {
   background-position: 0 -30px;
 }
 #projecttext #app-buttons #remix-button {
   position: relative;
-  top: 1px;
+  top: 2px;
   background-image: url('../images/ui/btn_duplicate.svg');
 }
 
@@ -268,54 +316,53 @@ button:focus {
 #navigation {
     display: block;
     position: absolute;
-    top: calc(100% - 350px);
-    left: 0;
-    width: 100%;
-    height: 200px;
+    top: 150px;
+    left: calc(100% - 80px);
+    width: 5%;
+    height: 170px;
     z-index: 1;
     pointer-events: none;
 }
 
+
 #navigation .greenflag {
     display: block;
     position: absolute;
-    left: calc(100% - 90px);
 }
 
 #navigation .greenflag button {
     display: block;
     position: relative;
-    width: 72px;
-    height: 72px;
+    width: 54px;
+    height: 54px;
     background-color: transparent;
     background-image: url('../images/ui/greenflag.svg');
     background-size: cover;
     pointer-events: auto;
     border: 0;
+    padding: 0;
 }
 
 #navigation .greenflag button:active {
-    background-position:0px -72px;
+    background-position:0px -54px;
 }
 
 .is-program-running #navigation .greenflag button {
     background-image: url('../images/ui/greenflag_playing_animation.gif');
-    background-size: cover;
 }
 
 
 #navigation .stop {
     display: block;
     position: absolute;
-    left: calc(100% - 90px);
-    top: 85px;
+    top: 90px;
 }
 
 #navigation .stop button {
     display: block;
     position: relative;
-    width: 72px;
-    height: 72px;
+    width: 54px;
+    height: 54px;
     background-color: transparent;
     background-image: url('../images/ui/stop.svg');
     background-size: cover;
@@ -324,7 +371,7 @@ button:focus {
 }
 
 #navigation .stop button:active {
-    background-position:0px -72px;
+    background-position:0px -54px;
 }
 
 #navigation .stop button img {
@@ -336,33 +383,32 @@ button:focus {
 /* Challenges */
 
 #challenges-frame-container {
-  position: absolute;
+    position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
   display: none;
 }
 
 #challenges-frame-container #challenges-frame-modal-bg {
-  position: absolute;
+    position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
   opacity: .5;
   background-color: #000;
   z-index: 99;
 }
 
 #challenges-frame-container #challenges-frame {
-  position: absolute;
+    position: absolute;
   top: 0;
   left: 0;
   margin: 2.0vh 2.0vw;
   width: 95vw;
   height: 94vh;
-
   background-color: #525252;
   border: 2px solid #1fadda;
   border-radius: 10px;
@@ -373,7 +419,7 @@ button:focus {
 
 #challenges-frame-container #btn-close-challenges {
   z-index: 101;
-  position: absolute;
+    position: absolute;
   top: 0;
   left: 0;
   border: none;
@@ -393,36 +439,36 @@ button:focus {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
   display: none;
 }
 
 #tutorial-frame-container #tutorial-frame-modal-bg {
-  position: absolute;
+    position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
   opacity: .5;
   background-color: #000;
   z-index: 99;
 }
 
 #tutorial-frame-container #tutorial-frame {
-  position: absolute;
+    position: absolute;
   top: 0;
   left: 0;
   margin: 2.0vh 2.0vw;
   width: 95vw;
   height: 94vh;
 
-  background-color: #525252;
+  background-color: #5d5e5f;
   border: 2px solid #1fadda;
   border-radius: 10px;
   z-index: 100;
   overflow: hidden;
-  padding: 2px;
+  padding: 3px;
 }
 
 #tutorial-frame-container #btn-close-tutorial {
@@ -431,7 +477,7 @@ button:focus {
   top: 0;
   left: 0;
   border: none;
-  background-color: transparent;
+    background-color: transparent;
   padding: 3vw 3vw 3vw 4vw;
   z-index: 999;
 }
@@ -444,57 +490,88 @@ button:focus {
 
 
 @media only screen and (max-width: 799px) {
-    #navigation {
-        top: calc(100% - 250px);
-    }
-
     #close .primary {
         display: block;
         position: absolute;
-        top: 5px;
-        left: 5px;
+        top: 11px;
+        left: 15px;
     }
 
     #close .primary button {
-        width:44px;
-        height:44px;
+        width: 25px;
+        height: 25px;
+        /* We were seeing weird behavior where these buttons were being
+           improperly sized as rectangles but only in safari on ios5.
+           The buttons were coming out as 32x25, and cutting off the
+           bottom 7 px.  Could not yet find a way to rescale them that
+           would not also impact chrome and other device configurations.
+           However, limiting the background size to 25, and preventing
+           it from horizontally repeating visually fixed the issue. */
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #close .primary button:active {
-        background-position:0px -44px;
+        background-position:0px -25px;
     }
+
 
     #challenges .primary {
         display: block;
         position: absolute;
-        top: -6px;
-        left: 55px;
+        top: 11px;
+        left: 60px;
     }
 
     #challenges .primary button {
-        width:66px;
-        height:66px;
+        width: 25px;
+        height: 25px;
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #challenges .primary button:active {
-        background-position:0px -66px;
+        background-position:0px -25px;
     }
+
 
     #tutorial .primary {
         display: block;
         position: absolute;
-        top: 5px;
-        left: 127px;
+        top: 11px;
+        left: 105px;
     }
 
     #tutorial .primary button {
-        width:44px;
-        height:44px;
+        width: 25px;
+        height: 25px;
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #tutorial .primary button:active {
-        background-position:0px -44px;
+        background-position:0px -25px;
     }
+
+
+    #exportbtn .primary {
+        display: block;
+        position: absolute;
+        top: 11px;
+        left: 150px;
+    }
+
+    #exportbtn .primary button {
+        width: 25px;
+        height: 25px;
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
+    }
+
+    #exportbtn .primary button:active {
+        background-position:0px -25px;
+    }
+
 
     #projecttext {
         width: 100%;
@@ -506,10 +583,10 @@ button:focus {
         height: 60px;
     }
 
-
     #projecttext .primary #app-title {
         font-size: 20px;
-        max-width: calc(100vw - 190px);
+        max-width: calc(100vw - 195px);
+        padding-bottom: 0;
     }
     #projecttext .primary #app-title.long-title {
       font-size: 16px;
@@ -520,55 +597,75 @@ button:focus {
     }
 
     #projecttext .primary #app-title-subtext-line {
-        top: 0;
-        height: 25px;
-        line-height: 25px;
-
+        top: -4px;
     }
-
     #projecttext .primary #app-title-subtext {
         font-size: 15px;
     }
-
     #projecttext #app-buttons #remix-button {
         height: 22px;
         width: 22px;
         background-size: 22px 44px;
-        padding: 0;
     }
     #projecttext #app-buttons #remix-button:active {
-      background-position: 0 -22px;
+        background-position: 0 -22px;
     }
 
-    #navigation .greenflag {
-        left: calc(100% - 55px);
-        top: calc(100% - 170px);
+    #navigation {
+        top: calc(100% - 260px);
+        left: calc(100% - 40px);
+        height: 75px;
+        width: 4.5%;
+        border-width: 1px;
+        border-bottom-width: 1px;
     }
 
     #navigation .greenflag button {
-        width:44px;
-        height:44px;
+        width: 25px;
+        height: 25px;
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #navigation .greenflag button:active {
-        background-position:0px -44px;
+        background-position:0px -25px;
     }
 
+    .is-program-running #navigation .greenflag button {
+        background-size: cover;
+    }
+
+
     #navigation .stop {
-        left: calc(100% - 55px);
-        top: calc(100% - 115px);
+        top: calc(100% - 35px);
     }
 
     #navigation .stop button {
-        width:44px;
-        height:44px;
+        width: 25px;
+        height: 25px;
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #navigation .stop button:active {
-        background-position:0px -44px;
+        background-position:0px -25px;
     }
 
     .blocklyTooltipDiv {
         font-size: 10pt;
+    }
+}
+
+
+
+/* Used by Kindle Fire HD 8, 962 x 601 */
+@media only screen and (min-height: 590px) and (max-height: 605px) {
+    #navigation {
+        top: calc(100% - 490px);
+        height: 150px;
+   }
+
+    #navigation .stop {
+        top: calc(100% - 75px);
     }
 }

@@ -39,17 +39,23 @@ rm -f "${ARTIFACT_ROOT}/${IPA_FILE}"
 
 EXIT_CODE=`/usr/bin/codesign --verify -vvvv ${APP_BUNDLE}`
 
-if [ ${EXIT_CODE} != 0 ]; then
+if [ -n "${EXIT_CODE}" ]; then
     echo "\nError: Codesigning Verification Failed. Try rebuilding.\n"
     /usr/bin/codesign --display --verbose=4 -r- ${APP_BUNDLE}
     exit ${EXIT_CODE}
 fi
 
-xcrun \
-    -sdk ${SDK_PLATFORM} \
-    PackageApplication \
-    -v ${APP_BUNDLE} \
-    -o "${BUILT_PRODUCTS_PATH}/${ANKI_BUILD_BUNDLE_NAME}.ipa"
+# zipipa start
+IPATMPDIR=${ANKI_BUILD_ROOT}/tmp/ios/ipastage
+DESTAPPDIR=${IPATMPDIR}/Payload
+rm -rf ${IPATMPDIR}
+mkdir -p ${DESTAPPDIR}
+cp -Rp "${APP_BUNDLE}" "${DESTAPPDIR}"
+pushd "${IPATMPDIR}" >> /dev/null
+/usr/bin/zip --symlinks --verbose --recurse-paths "${BUILT_PRODUCTS_PATH}/${ANKI_BUILD_BUNDLE_NAME}.ipa" .
+popd >> /dev/null
+rm -rf "${IPATMPDIR}"
+# zipipa end
 
 cp -p "${BUILT_PRODUCTS_PATH}/${ANKI_BUILD_BUNDLE_NAME}.ipa" "${ARTIFACT_ROOT}/${IPA_FILE}"
 

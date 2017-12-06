@@ -312,7 +312,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(BehaviorExternal
       size_t bestIndex = 0;
       float bestDistSQ = FLT_MAX;
 
-      for (size_t idx=0; idx <_candidateObjects.size(); ++idx)
+      for (size_t idx=0; idx < _candidateObjects.size(); ++idx)
       {
         const ObservableObject* candidateObj = GetCandidate(world, idx);
         

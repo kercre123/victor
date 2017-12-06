@@ -2,6 +2,7 @@ using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
 using System.Collections.Generic;
 using UnityEngine;
+using DataPersistence;
 
 namespace Cozmo.Needs {
   public class NeedsStateManager : MonoBehaviour {
@@ -29,6 +30,10 @@ namespace Cozmo.Needs {
     public event LatestNeedBracketChangedHandler OnNeedsBracketChanged;
 
     public static NeedsStateManager Instance { get; private set; }
+
+    // Used to track when we've connected to a different robot than the last apprun, so that we can notify
+    // other parts of the app of the change on the first NeedsState update
+    public static bool HasRobotChangedFromLastSession = false;
 
     private NeedsState _LatestStateFromEngine;
 #if UNITY_EDITOR
@@ -63,6 +68,9 @@ namespace Cozmo.Needs {
       RobotEngineManager.Instance.AddCallback<NeedsState>(HandleNeedsStateFromEngine);
       RobotEngineManager.Instance.AddCallback<StarLevelCompleted>(HandleStarLevelCompleted);
       RobotEngineManager.Instance.AddCallback<StarUnlocked>(HandleStarUnlocked);
+      RobotEngineManager.Instance.AddCallback<RobotChangedFromLastSession>(HandleRobotChangedFromLastSession);
+      DataPersistence.DataPersistenceManager.Instance.OnSaveDataReset += HandleOnSaveDataReset;
+
       _LatestStateFromEngine = CreateNewNeedsState();
       _CurrentDisplayState = CreateNewNeedsState();
 
@@ -75,7 +83,9 @@ namespace Cozmo.Needs {
         RobotEngineManager.Instance.RemoveCallback<NeedsState>(HandleNeedsStateFromEngine);
         RobotEngineManager.Instance.RemoveCallback<StarLevelCompleted>(HandleStarLevelCompleted);
         RobotEngineManager.Instance.RemoveCallback<StarUnlocked>(HandleStarUnlocked);
+        RobotEngineManager.Instance.RemoveCallback<RobotChangedFromLastSession>(HandleRobotChangedFromLastSession);
       }
+      DataPersistence.DataPersistenceManager.Instance.OnSaveDataReset -= HandleOnSaveDataReset;
     }
 
     private void RequestNeedsState() {
@@ -165,6 +175,10 @@ namespace Cozmo.Needs {
       RobotEngineManager.Instance.SendMessage();
     }
 
+    public int GetLatestRepairRounds() {
+      return _LatestStateFromEngine.repairRounds;
+    }
+
 #if UNITY_EDITOR
     public void MockHandleNeedsStateFromEngine(NeedsState newNeedsState) {
       if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
@@ -211,6 +225,12 @@ namespace Cozmo.Needs {
           OnNeedsBracketChanged(newNeedsState.actionCausingTheUpdate, (NeedId)need);
         }
       }
+
+      // On the first Needs update, reset certain data that may have been cached from a previous robot
+      if (HasRobotChangedFromLastSession) {
+        DataPersistenceManager.Instance.OnFirstNeedsUpdate();
+        HasRobotChangedFromLastSession = false;
+      }
     }
 
     private void HandleStarLevelCompleted(StarLevelCompleted message) {
@@ -244,6 +264,15 @@ namespace Cozmo.Needs {
       needsState.numStarsForNextUnlock = 0;
 
       return needsState;
+    }
+
+    private void HandleOnSaveDataReset() {
+      _LatestStateFromEngine = CreateNewNeedsState();
+      _CurrentDisplayState = CreateNewNeedsState();
+    }
+
+    private void HandleRobotChangedFromLastSession(RobotChangedFromLastSession message) {
+      HasRobotChangedFromLastSession = true;
     }
   }
 
