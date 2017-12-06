@@ -892,9 +892,124 @@ namespace Anki {
     : CompoundActionSequential()
     , _objectID(objectID)
     , _preDockPoseDistOffsetX_mm(predockOffsetDistX_mm)
-    , _params(new ConstructorParams(actionType, predockOffsetDistX_mm, useApproachAngle, 
-              approachAngle_rad, useManualSpeed, maxTurnTowardsFaceAngle_rad, sayName))
     {
+      IActionRunner* driveToObjectAction = new DriveToObjectAction(_objectID,
+                                                                   actionType,
+                                                                   predockOffsetDistX_mm,
+                                                                   useApproachAngle,
+                                                                   approachAngle_rad,
+                                                                   useManualSpeed);
+
+      // TODO: Use the function-based ShouldIgnoreFailure option for AddAction to catch some failures of DriveToObject earlier
+      //  (Started to do this but it started to feel messy/dangerous right before ship)
+      /*
+      // Ignore DriveTo failures iff we simply did not reach preaction pose or
+      // failed visual verification (since we'll presumably recheck those at start
+      // of object interaction action)
+      ICompoundAction::ShouldIgnoreFailureFcn shouldIgnoreFailure = [](ActionResult result, const IActionRunner* action)
+      {
+      if(nullptr == action)
+      {
+      PRINT_NAMED_ERROR("IDriveToInteractWithObject.Constructor.NullAction",
+      "ShouldIgnoreFailureFcn cannot check null action");
+      return false;
+      }
+          
+      if(ActionResult::SUCCESS == result)
+      {
+      PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor.CheckingIgnoreForSuccessResult",
+      "Not expecting ShouldIgnoreFailure to be called for successful action result");
+      return false;
+      }
+        
+      // Note that DriveToObjectActions return ObjectInteractionCompleted unions
+      ActionCompletedUnion completionUnion;
+      action->GetCompletionUnion(completionUnion);
+      const ObjectInteractionCompleted& objInteractionCompleted = completionUnion.Get_objectInteractionCompleted();
+          
+      switch(objInteractionCompleted.result)
+      {
+      case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+      case ObjectInteractionResult::VISUAL_VERIFICATION_FAILED:
+      return true;
+              
+      default:
+      return false;
+      }
+      };
+        
+        
+      AddAction(_driveToObjectAction, shouldIgnoreFailure);
+      */
+
+      if( kEnablePredockDistanceCheckFix ) {
+
+        // This is a workaround for the bug in COZMO-5880. The problem is that the DriveTo action has a
+        // predock pose check which is different from the Dock action. This causes DriveTo to succeed, but
+        // Dock to fail. Then, if this whole action is retried, the same thing happens, and the robot fails to
+        // dock without ever moving
+
+        // The fix is to _not_ do the check within the dock action, but _only_ if the entire driveTo action
+        // succeeds. We need to ignore failures from the drive action because of the way the proxy action
+        // works, so we work around this by adding an inner action. The inner action cannot fail, but within
+        // the inner action is the drive to action, which _can_ fail. If that action fails, it will _not_ call
+        // the Wait action, otherwise it will. This way, we have a lambda that only gets called when the drive
+        // to succeeds
+
+        // create an inner action to hold the drive to and the lambda
+        CompoundActionSequential* innerAction = new CompoundActionSequential();
+        // within innerAction, we do want to consider failures of driving (to prevent the lambda from running
+        // if the drive fails)
+        _driveToObjectAction = innerAction->AddAction(driveToObjectAction, false);
+
+        auto waitLambda = [this](Robot& robot) {
+          if (_shouldSetCubeLights) {
+            // Keep the cube lights set while the waitForLambda action is running
+            robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
+          }
+          
+          // if this lambda gets called, that means the drive to must have succeeded.
+          if( !_dockAction.expired() ) {
+            PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.DriveToSuccess",
+                          "DriveTo action succeeded, telling dock action not to check predock pose distance");
+              
+            // For debug builds do a dynamic cast for validity checks
+            DEV_ASSERT(dynamic_cast<IDockAction*>(_dockAction.lock().get()) != nullptr,
+                       "IDriveToInteractWithObjectAction.Constructor.DynamicCastFailed");
+                        
+            IDockAction* rawDockAction = static_cast<IDockAction*>(_dockAction.lock().get());
+            rawDockAction->SetDoNearPredockPoseCheck(false);
+          }
+          else {
+            PRINT_NAMED_ERROR("IDriveToInteractWithObject.InnerAction.WaitLambda.NoDockAction",
+                              "Dock action is null! This is a bug!!!");
+          }
+
+          // immediately finish the wait action
+          return true;
+        };
+
+        WaitForLambdaAction* waitAction = new WaitForLambdaAction(waitLambda);
+        innerAction->AddAction(waitAction, false);
+
+        // Add the entire inner action, but ignore failures here so that we will always run the dock action
+        // even if driving fails (so that the dock action will be the one to fail)
+        AddAction(innerAction, true);
+      }
+      else {
+        _driveToObjectAction = AddAction(driveToObjectAction, true);
+      }
+          
+      if(maxTurnTowardsFaceAngle_rad > 0.f)
+      {
+        _turnTowardsLastFacePoseAction = AddAction(new TurnTowardsLastFacePoseAction(maxTurnTowardsFaceAngle_rad,
+                                                                                     sayName),
+                                                   true);
+          
+        _turnTowardsObjectAction = AddAction(new TurnTowardsObjectAction(_objectID,
+                                                                         maxTurnTowardsFaceAngle_rad),
+                                             true);
+      }
     }
     
     IDriveToInteractWithObject::IDriveToInteractWithObject(const ObjectID& objectID,
@@ -902,17 +1017,16 @@ namespace Anki {
                                                            const bool useManualSpeed)
     : CompoundActionSequential()
     , _objectID(objectID)
-    , _params(new ConstructorParams(distance, useManualSpeed))
     {
+      _driveToObjectAction = AddAction(new DriveToObjectAction(_objectID,
+                                                               distance,
+                                                               useManualSpeed),
+                                       true);
 
     }
 
     void IDriveToInteractWithObject::OnRobotSetInternalCompound()
     {
-      if(_params == nullptr){
-        return; 
-      }
-
       if(_objectID == GetRobot().GetCarryingComponent().GetCarryingObject())
       {
         PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor",
@@ -920,137 +1034,6 @@ namespace Anki {
                             _objectID.GetValue());
         return;
       }
-
-      if(_params->usedSimpleConstructor){ 
-        // Only set cube lights if the dock object is a light cube
-        const auto* object = GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID);
-        _shouldSetCubeLights = (object != nullptr) &&
-                                IsValidLightCube(object->GetType(), false);
-        
-        _driveToObjectAction = AddAction(new DriveToObjectAction(_objectID,
-                                                                  _params->distance,
-                                                                  _params->useManualSpeed),
-                                          true);
-      }else{
-        IActionRunner* driveToObjectAction = new DriveToObjectAction(_objectID,
-                                                                      _params->actionType,
-                                                                      _params->predockOffsetDistX_mm,
-                                                                      _params->useApproachAngle,
-                                                                      _params->approachAngle_rad,
-                                                                      _params->useManualSpeed);
-
-        // TODO: Use the function-based ShouldIgnoreFailure option for AddAction to catch some failures of DriveToObject earlier
-        //  (Started to do this but it started to feel messy/dangerous right before ship)
-        /*
-        // Ignore DriveTo failures iff we simply did not reach preaction pose or
-        // failed visual verification (since we'll presumably recheck those at start
-        // of object interaction action)
-        ICompoundAction::ShouldIgnoreFailureFcn shouldIgnoreFailure = [](ActionResult result, const IActionRunner* action)
-        {
-          if(nullptr == action)
-          {
-            PRINT_NAMED_ERROR("IDriveToInteractWithObject.Constructor.NullAction",
-                              "ShouldIgnoreFailureFcn cannot check null action");
-            return false;
-          }
-          
-          if(ActionResult::SUCCESS == result)
-          {
-            PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor.CheckingIgnoreForSuccessResult",
-                                "Not expecting ShouldIgnoreFailure to be called for successful action result");
-            return false;
-          }
-        
-          // Note that DriveToObjectActions return ObjectInteractionCompleted unions
-          ActionCompletedUnion completionUnion;
-          action->GetCompletionUnion(completionUnion);
-          const ObjectInteractionCompleted& objInteractionCompleted = completionUnion.Get_objectInteractionCompleted();
-          
-          switch(objInteractionCompleted.result)
-          {
-            case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
-            case ObjectInteractionResult::VISUAL_VERIFICATION_FAILED:
-              return true;
-              
-            default:
-              return false;
-          }
-        };
-        
-        
-        AddAction(_driveToObjectAction, shouldIgnoreFailure);
-        */
-
-        if( kEnablePredockDistanceCheckFix ) {
-
-          // This is a workaround for the bug in COZMO-5880. The problem is that the DriveTo action has a
-          // predock pose check which is different from the Dock action. This causes DriveTo to succeed, but
-          // Dock to fail. Then, if this whole action is retried, the same thing happens, and the robot fails to
-          // dock without ever moving
-
-          // The fix is to _not_ do the check within the dock action, but _only_ if the entire driveTo action
-          // succeeds. We need to ignore failures from the drive action because of the way the proxy action
-          // works, so we work around this by adding an inner action. The inner action cannot fail, but within
-          // the inner action is the drive to action, which _can_ fail. If that action fails, it will _not_ call
-          // the Wait action, otherwise it will. This way, we have a lambda that only gets called when the drive
-          // to succeeds
-
-          // create an inner action to hold the drive to and the lambda
-          CompoundActionSequential* innerAction = new CompoundActionSequential();
-          // within innerAction, we do want to consider failures of driving (to prevent the lambda from running
-          // if the drive fails)
-          _driveToObjectAction = innerAction->AddAction(driveToObjectAction, false);
-
-          auto waitLambda = [this](Robot& robot) {
-            if (_shouldSetCubeLights) {
-              // Keep the cube lights set while the waitForLambda action is running
-              GetRobot().GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
-            }
-          
-            // if this lambda gets called, that means the drive to must have succeeded.
-            if( !_dockAction.expired() ) {
-              PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.DriveToSuccess",
-                            "DriveTo action succeeded, telling dock action not to check predock pose distance");
-              
-              // For debug builds do a dynamic cast for validity checks
-              DEV_ASSERT(dynamic_cast<IDockAction*>(_dockAction.lock().get()) != nullptr,
-                        "IDriveToInteractWithObjectAction.Constructor.DynamicCastFailed");
-                        
-              IDockAction* rawDockAction = static_cast<IDockAction*>(_dockAction.lock().get());
-              rawDockAction->SetDoNearPredockPoseCheck(false);
-            }
-            else {
-              PRINT_NAMED_ERROR("IDriveToInteractWithObject.InnerAction.WaitLambda.NoDockAction",
-                                "Dock action is null! This is a bug!!!");
-            }
-
-            // immediately finish the wait action
-            return true;
-          };
-
-          WaitForLambdaAction* waitAction = new WaitForLambdaAction(waitLambda);
-          innerAction->AddAction(waitAction, false);
-
-          // Add the entire inner action, but ignore failures here so that we will always run the dock action
-          // even if driving fails (so that the dock action will be the one to fail)
-          AddAction(innerAction, true);
-        }
-        else {
-          _driveToObjectAction = AddAction(driveToObjectAction, true);
-        }
-          
-        if(_params->maxTurnTowardsFaceAngle_rad > 0.f)
-        {
-          _turnTowardsLastFacePoseAction = AddAction(new TurnTowardsLastFacePoseAction(_params->maxTurnTowardsFaceAngle_rad,
-                                                                                       _params->sayName),
-                                                    true);
-          
-          _turnTowardsObjectAction = AddAction(new TurnTowardsObjectAction(_objectID,
-                                                                           _params->maxTurnTowardsFaceAngle_rad),
-                                              true);
-        }
-      }
-      
       
       if(auto driveAction = _driveToObjectAction.lock()){
         driveAction->SetRobot(&GetRobot());
@@ -1064,7 +1047,6 @@ namespace Anki {
       if(auto dockAction = _dockAction.lock()){
         dockAction->SetRobot(&GetRobot());
       }
-      _params.reset();
     } // end OnRobotSetInternalCompound()
     
     std::weak_ptr<IActionRunner> IDriveToInteractWithObject::AddDockAction(IDockAction* dockAction,
