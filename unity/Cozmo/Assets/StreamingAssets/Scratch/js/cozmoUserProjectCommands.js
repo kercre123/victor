@@ -8,7 +8,13 @@
         return resultStr;
     }
 
+    // TODO This setting of isCozmoSampleProject is misleading. Only featured projects
+    // have isFeaturedProject set to true, but isFeaturedProject could be false and the
+    // user could still have opened a sample program. Code that is run later will set
+    // window.isCozmoSampleProject correctly for sample projects. Probably isCozmoSampleProject
+    // and isCozmoFeaturedProject should be broken out separately.
     window.isCozmoSampleProject = window.getUrlVar('isFeaturedProject') || false;
+
     window.cozmoProjectName = null;
     window.cozmoProjectUUID = window.getUrlVar('projectID') || null;
     window.previouslySavedProjectJSON = null;
@@ -210,6 +216,13 @@
         var body = window.$t('codeLab.export_modal.body');
         var cancelText = Blockly.Msg.IOS_CANCEL;
         var confirmText = window.$t('codeLab.export_modal.button.copy_to_drive');
+
+        // On Kindle, use alternate text since Google Drive app is unavailable for Kindle.
+        var isKindle = window.getUrlVar('isKindle') == 'true';
+        if (isKindle) {
+            body = window.$t('codeLab.export_modal_kindle.body');
+            confirmText = window.$t('codeLab.export_modal_kindle.button.copy_to_drive');
+        }
 
         ModalConfirm.open({
             title: title,

@@ -1483,6 +1483,12 @@
   "codeLab.export_modal.button.copy_to_drive": {
     "translation": "Copy to Google Drive"
   },
+  "codeLab.export_modal_kindle.body": {
+    "translation": "Open Device Menu to export your project.\n\nVisit go.anki.com/submission for a chance to have your projects featured!"
+  },
+  "codeLab.export_modal_kindle.button.copy_to_drive": {
+    "translation": "Open Device Menu"
+  },
   "codeLabSampleProject_LaserSmile.projectName": {
     "translation": "Laser Smile!"
   },

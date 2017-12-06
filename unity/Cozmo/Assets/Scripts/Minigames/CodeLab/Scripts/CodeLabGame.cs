@@ -2752,6 +2752,17 @@ namespace CodeLab {
       }
     }
 
+    private bool IsKindle() {
+#if UNITY_ANDROID && !UNITY_EDITOR
+      AndroidJavaClass dasClass = new AndroidJavaClass("com.anki.daslib.DAS");
+      bool isKindle = dasClass.CallStatic<bool>("IsOnKindle");
+      if (isKindle) {
+        return true;
+      }
+#endif
+      return false;
+    }
+
     private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID, bool isVertical) {
       PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
 
@@ -2761,6 +2772,12 @@ namespace CodeLab {
       ShowGettingReadyScreen();
 
       Dictionary<string, string> parameters = new Dictionary<string, string>();
+
+      String isKindleUrlParam = "false";
+      if (IsKindle()) {
+        isKindleUrlParam = "true";
+      }
+      parameters.Add("isKindle", isKindleUrlParam);
 
       if (!isVertical) {
         _SessionState.SetGrammarMode(GrammarMode.Horizontal);
