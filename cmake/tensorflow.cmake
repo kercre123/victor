@@ -32,10 +32,9 @@ else()
   set(NO_STATIC_FLAG "")
 endif()
 
-set(include_paths
+set(TENSORFLOW_INCLUDE_PATHS
     ${TENSORFLOW_INCLUDE_PATH}/protobuf
-    ${TENSORFLOW_INCLUDE_PATH}/tensorflow
-    ${TENSORFLOW_INCLUDE_PATH}/proto)
+    ${TENSORFLOW_INCLUDE_PATH}/tensorflow)
 
 set(TENSORFLOW_LIBS
     ${WHOLE_ARCHIVE_FLAG}
@@ -51,7 +50,7 @@ set_target_properties(libtensorflow-core PROPERTIES
       IMPORTED_LOCATION
       ${TENSORFLOW_LIB_PATH}/libtensorflow-core.a
       INTERFACE_INCLUDE_DIRECTORIES
-      "${include_paths}")
+      "${TENSORFLOW_INCLUDE_PATHS}")
 
 add_library(libprotobuf STATIC IMPORTED)
 
@@ -59,7 +58,7 @@ set_target_properties(libprotobuf PROPERTIES
       IMPORTED_LOCATION
       ${TENSORFLOW_LIB_PATH}/libprotobuf.a
       INTERFACE_INCLUDE_DIRECTORIES
-      "${include_paths}")
+      "${TENSORFLOW_INCLUDE_PATHS}")
 
 if (MACOSX)
   # Add Frameworks

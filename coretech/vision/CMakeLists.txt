@@ -36,11 +36,7 @@ target_include_directories(cti_vision
   PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/basestation/src>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>  # For access to engine/vision/nearestNeighborLibraryData.h 
-
-  # TODO: Somehow use the INTERFACE_INCLUDE_DIRECTORIES from tensorflow.cmake?
-  ${TENSORFLOW_INCLUDE_PATH}/protobuf
-  ${TENSORFLOW_INCLUDE_PATH}/tensorflow
-  ${TENSORFLOW_INCLUDE_PATH}/proto
+  ${TENSORFLOW_INCLUDE_PATHS}
 )
 
 target_compile_definitions(cti_vision

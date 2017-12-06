@@ -14,6 +14,16 @@ if(USE_TENSORFLOW)
   include(tensorflow)
 endif()
 
+if(USE_TENSORFLOW_LITE)
+  if(USE_TENSORFLOW)
+    message(ERROR "Cannot use Tensorflow and TensorFlow Lite at the same time")
+  endif()
+
+  message(STATUS "Including TensorFlow Lite in engine")
+  include(tensorflow-lite)
+endif()
+
+
 include(anki_build_cxx)
 anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR})
 

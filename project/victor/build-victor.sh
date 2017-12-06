@@ -42,7 +42,9 @@ CMAKE_GENERATOR=Ninja
 FEATURES=""
 
 # TODO: provide command line option?
-USE_TENSORFLOW=1
+# NOTE: these can't both be true (but can both be false)
+USE_TENSORFLOW=0
+USE_TENSORFLOW_LITE=1
 
 while getopts ":x:c:p:t:g:F:hvfdCTe" opt; do
     case $opt in
@@ -306,6 +308,7 @@ if [ $CONFIGURE -eq 1 ]; then
         ${EXPORT_FLAGS} \
         ${FEATURE_FLAGS} \
         -DUSE_TENSORFLOW=${USE_TENSORFLOW} \
+        -DUSE_TENSORFLOW_LITE=${USE_TENSORFLOW_LITE} \
         "${PLATFORM_ARGS[@]}"
         
 fi

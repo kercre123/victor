@@ -32,6 +32,8 @@
 #  else
 #    include "objectDetectorModel_tensorflow.cpp"
 #  endif
+#elif USE_TENSORFLOW_LITE
+#  include "objectDetectorModel_tensorflow_lite.cpp"
 #else
 #  include "objectDetectorModel_opencvdnn.cpp"
 #endif

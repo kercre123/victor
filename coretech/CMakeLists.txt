@@ -12,7 +12,16 @@ if(USE_TENSORFLOW)
   include(tensorflow)
 endif()
 
-add_definitions(-DUSE_TENSORFLOW=${USE_TENSORFLOW})
+
+if(USE_TENSORFLOW_LITE)
+  message(STATUS "Including TensorFlow Lite in coretech-vision")
+  include(tensorflow-lite)
+endif()
+
+add_definitions(
+  -DUSE_TENSORFLOW=${USE_TENSORFLOW}
+  -DUSE_TENSORFLOW_LITE=${USE_TENSORFLOW_LITE}
+)
 
 #set(CTI_COMMON_GENERATED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/generated/clad/common)
 #set(CTI_VISION_GENERATED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/generated/clad/vision)
