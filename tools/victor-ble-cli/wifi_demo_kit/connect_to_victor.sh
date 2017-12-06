@@ -3,49 +3,134 @@
 set robot     [lindex $argv 0]
 set SSID      [lindex $argv 1]
 set password  [lindex $argv 2]
-set number_of_tries 5
+set general_timeout 15
+set sleep_duration 5
 
-while { $number_of_tries > 0 } {
-	spawn node ../index.js
-
-	sleep 5
-	send "scan\r"
-	set timeout 15
-	expect "Found $robot\r" 
-
-	sleep 2
-	send "connect $robot\r" 
-	set timeout 25
-	expect "Fully connected to $robot\r"
-
-	sleep 5
-	send "wifi-set-config $SSID $password\r"
-	set timeout 500
-	expect {
-		timeout {puts "reached timeout";  set number_of_tries [ expr $number_of_tries-1]}
-		"wpa_state=COMPLETED" {puts "WPA State COMPLETED, will now check for a connection"}
+proc ble_scan {} {
+	set ble_scan_attempts 5
+	global general_timeout
+	global sleep_duration
+	global robot
+	
+	puts "Bluetooth scanning for $robot"
+	while { $ble_scan_attempts > 0 } {
+		sleep $sleep_duration
+		send "scan\r"
+		set timeout $general_timeout
+		expect {
+			timeout {
+				puts "reached timeout when scanning for ble connection, retrying"
+				set ble_scan_attempts [ expr $ble_scan_attempts-1 ]
+			}	
+			"Found ${robot}" {
+				puts "Found $robot through ble.\n"
+				return
+			}
+		} 
 	}
+	puts "\n\nUnable to find $robot after scanning through ble,\
+	      try restarting $robot"
+	exit
+}
 
-	sleep 2
-	send "disconnect\r"
-	set timeout 10
-	expect "Disconnected from $robot\r" 
+proc ble_connection {} {
+	set ble_connect_attempts 5
+	global general_timeout
+	global sleep_duration
+	global robot
+ 
+	while { $ble_connect_attempts > 0 } {
+		sleep $sleep_duration
+		send "connect $robot\r" 
+		set timeout $general_timeout
+		expect {
+			"Fully connected to $robot" {return}
+			"You are already connected" {return}
+			timeout {
+				puts "reached timeout when connecting to ble, retrying"
+				set ble_connect_attempts [ expr $ble_connect_attempts-1 ]
+			}	
+		}
+	}
+	puts "\n\nReached attempts limit for ble connection.\
+		 Try restarting Victor\n"
+	exit
+}
 
-	sleep 2
-	send "quit\r"
-	set timeout 10
-	expect "" 
+proc wifi_test_connection {} {
+	global general_timeout
+	global sleep_duration
 
-	sleep 5
-	spawn bash -c "adb shell ping 8.8.8.8"
+	puts "IP address assigned, checking connection"
+	sleep $sleep_duration
+	set timeout $general_timeout
+	# Currently, need to set a limit on packets sent, because ping for ble-cli tool will run in the backround indefinitly without the ability to exit out
+	send "/system/bin/ping -c 2 8.8.8.8\r" 
 	expect {
-		"bytes" {puts "Got a connection will now exit";exit}
-		"unreach" {puts "don't have a connection, will attempt to connect again"; set number_of_tries [ expr $number_of_tries-1]}
+		"bytes" {
+			puts "Got a connection will now exit"
+			exit
+		}
+		"unreach" {
+			puts "don't have a connection,\
+				  please reboot Victor and try the script again"
+			return
+		}
+		timeout {
+			puts "Reached timeout for testing wifi connection, will attempt to connect again"
+			return
+		}
 	}
 }
 
-puts "\n\n\nReached 5 attempts, try unplugging and trying again"
+proc wifi_connection_and_test {} {
+	set wifi_connect_attempts 5
+	set wifi_connect_timeout 500
+	global general_timeout
+	global sleep_duration
+	global robot
+	global SSID
+	global password
 
-sleep 2
-send "quit\r"
+	while { $wifi_connect_attempts > 0 } {
+		sleep $sleep_duration
+		send "wifi-set-config $SSID $password\r"
+		set timeout $wifi_connect_timeout
+		expect {
+			timeout {
+				puts "reached timeout when attempting to establish wifi, retrying\r"
+				set wifi_connect_attempts [ expr $wifi_connect_attempts-1]
+			}
+			"ip_address=" {
+				puts "IP address assigned, checking connection"
+				wifi_test_connection #If successful, will exit script
+				set wifi_connect_attempts [ expr $wifi_connect_attempts-1]
+			}
+			"fail" {
+				puts "hit a failure, retrying"
+				set wifi_connect_attempts [ expr $wifi_connect_attempts-1]	
+			}		
+		}
+	}
+	puts "Reached maximum amount of tries to connect through wifi.\
+	      Try restarting victor"
+	exit
+}	
+
+
+#Main Program
+#Will start victor-ble-cli javascript 
+#program in terminal, which is used to interact with victor
+#The following functions will be manually sending commands to
+#the javascript program 
+
+spawn node ../index.js
+
+ble_scan
+ble_connection
+wifi_connection_and_test
+exit
+
+
+
 
