@@ -21,8 +21,7 @@ namespace Cozmo{
   
 namespace{
 const uint8_t kInvalidMessageSTage = -1;
-// Dependent on console_var kChargeLevelToFillSide in feedingCubeController
-const float kShakesToFillCube = 16.f;
+const float kSFXLevelsToFillCube = 30.f;
 }
 
 
@@ -50,7 +49,7 @@ void FeedingSoundEffectManager::NotifyChargeStateChange(Robot& robot,
   // should be ignored
   if(objID == _dominantObject){
     message.stage = Util::EnumToUnderlying(changeEnumVal);
-    message.chargePercentage = currentChargeLevel/kShakesToFillCube;
+    message.chargePercentage = currentChargeLevel/kSFXLevelsToFillCube;
     robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::FeedingSFXStageUpdate>(message);
     updateDominantProperties = true;
   }else{
@@ -65,7 +64,7 @@ void FeedingSoundEffectManager::NotifyChargeStateChange(Robot& robot,
        (changeEnumVal == ChargeStateChange::Charge_Up)){
       ResetChargeSound(robot);
       message.stage = Util::EnumToUnderlying(ChargeStateChange::Charge_Up);
-      message.chargePercentage = currentChargeLevel/kShakesToFillCube;
+      message.chargePercentage = currentChargeLevel/kSFXLevelsToFillCube;
       for(int i = 0; i < currentChargeLevel; i++){
         robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::FeedingSFXStageUpdate>(message);
       }

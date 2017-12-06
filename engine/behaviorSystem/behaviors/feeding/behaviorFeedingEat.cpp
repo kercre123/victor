@@ -93,7 +93,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kDisableCliffWhileEating
 BehaviorFeedingEat::BehaviorFeedingEat(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _timeCubeIsSuccessfullyDrained_sec(FLT_MAX)
-, _hasNotifiedNeedsSystemOfDrain(false)
+, _hasRegisteredActionComplete(false)
 , _currentState(State::DrivingToFood)
 {
   SubscribeToTags({
@@ -132,7 +132,7 @@ Result BehaviorFeedingEat::InitInternal(Robot& robot)
   }
   
   _timeCubeIsSuccessfullyDrained_sec = FLT_MAX;
-  _hasNotifiedNeedsSystemOfDrain = false;
+  _hasRegisteredActionComplete = false;
 
   // generic lambda closure for cube accel listeners
   auto movementDetectedCallback = [this, &robot] (const float movementScore) {
@@ -158,16 +158,26 @@ Result BehaviorFeedingEat::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorFeedingEat::UpdateInternal(Robot& robot)
 {
-  if(!_hasNotifiedNeedsSystemOfDrain &&
-     DidSuccessfullyDrainCube()){
-    _hasNotifiedNeedsSystemOfDrain = true;
+  // Feeding should be considered "complete" so long as the animation has reached
+  // the point where all light has been drained from the cube.  If the behavior
+  // is interrupted after that point in the animation or the animation completes
+  // successfully, register the action as complete.  If it's interrupted before
+  // reaching that time (indicated by _timeCubeIsSuccessfullyDrained_sec) then
+  // Cozmo didn't successfully finish "eating" and doesn't get the energy for it
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if(!_hasRegisteredActionComplete &&
+     (currentTime_s > _timeCubeIsSuccessfullyDrained_sec)){
+    _hasRegisteredActionComplete = true;
     robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::Feed);
+    for(auto& listener: _feedingListeners){
+      listener->EatingComplete(robot);
+    }
   }
-     
+
   
   if((_currentState != State::ReactingToInterruption) &&
      (robot.GetOffTreadsState() != OffTreadsState::OnTreads) &&
-     !DidSuccessfullyDrainCube()){
+     !_hasRegisteredActionComplete){
     TransitionToReactingToInterruption(robot);
   }
   
@@ -205,19 +215,12 @@ void BehaviorFeedingEat::StopInternal(Robot& robot)
 {
   // If the behavior is being stopped while feeding is still ongoing notify
   // listeners that feeding is being interrupted
-  if(!DidSuccessfullyDrainCube() &&
+  if(!_hasRegisteredActionComplete &&
      (_currentState >= State::PlacingLiftOnCube)){
     for(auto& listener: _feedingListeners){
       listener->EatingInterrupted(robot);
     }
   }
-  
-  if(DidSuccessfullyDrainCube()){
-    for(auto& listener: _feedingListeners){
-      listener->EatingComplete(robot);
-    }
-  }
-  
   
   robot.GetRobotMessageHandler()->SendMessage(robot.GetID(),
     RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(true)));
@@ -228,14 +231,6 @@ void BehaviorFeedingEat::StopInternal(Robot& robot)
               "");
   _cubeMovementListener.reset();
   _targetID.UnSet();
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFeedingEat::DidSuccessfullyDrainCube()
-{
-  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  return currentTime_s > _timeCubeIsSuccessfullyDrained_sec;
 }
 
 
