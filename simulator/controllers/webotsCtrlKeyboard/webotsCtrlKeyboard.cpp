@@ -63,8 +63,7 @@ namespace Anki {
         webots::Node* root_ = nullptr;
         
         u8 poseMarkerMode_ = 0;
-        Anki::Pose3d prevPoseMarkerPose_;
-        Anki::Pose3d poseMarkerPose_;
+        Anki::Pose3d prevGoalMarkerPose_;
         webots::Field* poseMarkerDiffuseColor_ = nullptr;
         double poseMarkerColor_[2][3] = { {0.1, 0.8, 0.1} // Goto pose color
           ,{0.8, 0.1, 0.1} // Place object color
@@ -921,37 +920,44 @@ namespace Anki {
                   
                   if (poseMarkerMode_ == 0) {
                     // Execute path to pose
+                    
+                    // the pose of the green-cone marker in the WebotsOrigin frame
+                    Pose3d goalMarkerPose = GetGoalMarkerPose();
                     printf("Going to pose marker at x=%f y=%f angle=%f (useManualSpeed: %d)\n",
-                           poseMarkerPose_.GetTranslation().x(),
-                           poseMarkerPose_.GetTranslation().y(),
-                           poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(),
+                           goalMarkerPose.GetTranslation().x(),
+                           goalMarkerPose.GetTranslation().y(),
+                           goalMarkerPose.GetRotationAngle<'Z'>().ToFloat(),
                            useManualSpeed);
                     
-                    // get believed vs actual robot pose transformation in case they are significantly different
-                    // Pose3d origin = GetRobotPose().FindOrigin();
-                    Pose3d robotPose(GetRobotPose().GetWithRespectToRoot());
-                    Pose3d robotPoseActual(GetRobotPoseActual().GetWithRespectToRoot());
-                    Pose3d targetCpy(poseMarkerPose_.GetWithRespectToRoot());
-                    Pose3d ref;
-                    Pose3d beliefErr;
-                    Pose3d corrected;
+                    // note: Goal is w.r.t. webots origin which may not match
+                    // engine origin (due to delocalization or drift). This
+                    // correction makes them match so the robot drives to where
+                    // you actually see the goal in Webots.
+                    //
+                    // pose math below:
+                    //
+                    // G = goal marker
+                    // E = engine
+                    // W = webots
+                    // R = robot
+                    //
+                    // Pose^E_G = Pose^E_W                 * Pose^W_G
+                    //          = Pose^E_R *     Pose^R_W  * Pose^W_G
+                    //          = Pose^E_R * inv(Pose^W_R) * Pose^W_G
+                    Pose3d markerPose_inEngineFrame = GetRobotPose() *
+                                                      GetRobotPoseActual().GetInverse() *
+                                                      goalMarkerPose;
                     
-                    robotPose.SetParent(ref);
-                    robotPoseActual.SetParent(ref);
-                    targetCpy.SetParent(ref);
-                    
-                    robotPoseActual.GetWithRespectTo(robotPose, beliefErr);  // calculate belief state error
-                    targetCpy.GetWithRespectTo(beliefErr, corrected);        // account for error
-                    
-                    SendExecutePathToPose(corrected, pathMotionProfile_, useManualSpeed);
+                    SendExecutePathToPose(markerPose_inEngineFrame, pathMotionProfile_, useManualSpeed);
                     //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                   } else {
-                  
+                    Pose3d goalMarkerPose = GetGoalMarkerPose();
+                    
                     // Indicate whether or not to place object at the exact rotation specified or
                     // just use the nearest preActionPose so that it's merely aligned with the specified pose.
-                    printf("Setting block on ground at rotation %f rads about z-axis (%s)\n", poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(), useExactRotation ? "Using exact rotation" : "Using nearest preActionPose" );
+                    printf("Setting block on ground at rotation %f rads about z-axis (%s)\n", goalMarkerPose.GetRotationAngle<'Z'>().ToFloat(), useExactRotation ? "Using exact rotation" : "Using nearest preActionPose" );
                   
-                    SendPlaceObjectOnGroundSequence(poseMarkerPose_,
+                    SendPlaceObjectOnGroundSequence(goalMarkerPose,
                                                     pathMotionProfile_,
                                                     useExactRotation,
                                                     useManualSpeed);
@@ -2517,25 +2523,26 @@ namespace Anki {
         }
       } // TestLightCube()
     
+      Pose3d WebotsKeyboardController::GetGoalMarkerPose()
+      {
+        // pose of the goal marker is configured in
+        // proto for the controller to be reflected
+        // in the pose of the Webots::Node
+        return GetPose3dOfNode(root_);
+      }
+    
             
       s32 WebotsKeyboardController::UpdateInternal()
       {
-        // Get poseMarker pose
-        const double* trans = root_->getPosition();
-        const double* rot = root_->getOrientation();
-        poseMarkerPose_.SetTranslation({1000*static_cast<f32>(trans[0]),
-                                        1000*static_cast<f32>(trans[1]),
-                                        1000*static_cast<f32>(trans[2])});
-        poseMarkerPose_.SetRotation({static_cast<f32>(rot[0]), static_cast<f32>(rot[1]), static_cast<f32>(rot[2]),
-                                     static_cast<f32>(rot[3]), static_cast<f32>(rot[4]), static_cast<f32>(rot[5]),
-                                     static_cast<f32>(rot[6]), static_cast<f32>(rot[7]), static_cast<f32>(rot[8])} );
+        Pose3d goalMarkerPose = GetGoalMarkerPose();
         
         // Update pose marker if different from last time
-        if (!(prevPoseMarkerPose_ == poseMarkerPose_)) {
+        if (!(prevGoalMarkerPose_ == goalMarkerPose)) {
           if (poseMarkerMode_ != 0) {
             // Place object mode
-            SendDrawPoseMarker(poseMarkerPose_);
+            SendDrawPoseMarker(goalMarkerPose);
           }
+          prevGoalMarkerPose_ = goalMarkerPose;
         }
 
         
