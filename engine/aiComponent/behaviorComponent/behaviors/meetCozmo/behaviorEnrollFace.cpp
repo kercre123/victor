@@ -351,6 +351,14 @@ void BehaviorEnrollFace::OnBehaviorDeactivated(BehaviorExternalInterface& behavi
 {
   // Leave general-purpose / session-only enrollment enabled (i.e. not for a specific face)
   behaviorExternalInterface.GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
+
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  // if on the charger, we're exiting to the on charger reaction, unity is going to try to cancel but too late.
+  if( robotInfo.IsOnCharger() )
+  {
+    PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.CancelBecauseOnCharger","");
+    SET_STATE(Cancelled);
+  }
   
   ExternalInterface::FaceEnrollmentCompleted info;
   

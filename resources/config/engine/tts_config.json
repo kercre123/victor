@@ -71,22 +71,22 @@
     "en":
     {
       "voice": "Ryan",
-      "speed": 85
+      "speed": 50
     },
     "fr":
     {
       "voice": "Bruno",
-      "speed": 82
+      "speed": 45
     },
     "de":
     {
       "voice": "Klaus",
-      "speed": 79
+      "speed": 43
     },
     "ja":
     {
       "voice": "Sakura",
-      "speed": 80,
+      "speed": 101,
       "pitch": 100,
       "shaping": 115
     }

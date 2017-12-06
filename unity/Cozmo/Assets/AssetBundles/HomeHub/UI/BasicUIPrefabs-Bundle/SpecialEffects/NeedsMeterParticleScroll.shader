@@ -2,17 +2,15 @@
 {
 	Properties
 	{
-        // Unity yells if we don't have _MainTex even if we don't use it
-        _MainTex ("Base (RGB)", 2D) = "white" {}
-
-		// Red = Masking to use with bar full, where redder = more visible
+		// Red   = Masking to use with bar full, where redder = more visible
 		// Green = Particle texture
-		// Blue = Masking to use with bar empty, where bluer = more visible
+		// Blue  = Masking to use with bar empty, where bluer = more visible
 		_ParticleTex ("Particle Texture", 2D) = "white" {}
 
-		// Red = Masking for the shape of the bar
+		// Red   = Masking for the shape of the bar
 		// Green = Masking used to display the value of the bar, based on a cutoff. Should run from 
-		// green -> black for full -> empty
+		//         green -> black for full -> empty
+		// Blue  = Not used
 		_MaskTex ("Mask Texture", 2D) = "white" {}
 
 		// Used to display particles on a part of the bar
@@ -95,7 +93,7 @@
 				if (cutoffTex.g < _Cutoff){
 					// Compile particle color
 					col.rgb = 1;
-					col.a = tex2D(_ParticleTex, i.particleUV1.xy).g; 	// Direction 1
+					col.a = tex2D(_ParticleTex, i.particleUV1.xy).g; 	        // Direction 1
 					col.a = col.a + tex2D(_ParticleTex, i.particleUV1.zw).g;	// Direction 2
 					col.a = col.a + tex2D(_ParticleTex, i.particleUV2.xy).g;	// Direction 3
 					col.a = col.a + tex2D(_ParticleTex, i.particleUV2.zw).g;	// Direction 4

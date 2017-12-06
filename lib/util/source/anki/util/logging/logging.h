@@ -394,6 +394,7 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
 #define DDATA "$data"
 #define DGROUP "$group"
 #define DGAME "$game"
+#define DCONNECTSESSION "$session_id"
 
 // send BI event
 #define LOG_EVENT(name, format, ...) do { \

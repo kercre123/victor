@@ -202,7 +202,58 @@
     "translation" : "Cozmo singt das Sakura-Lied..."
   },
   "behavior.singing.MussIDenn" : {
-    "translation" : "Cozmo singt \"Muss i denn, muss i denn zum Städtele hinaus\"..."
+    "translation" : "Cozmo singt \"Muss i denn\"..."
+  },
+  "behavior.singing.FarmerInTheDell" : {
+    "translation" : "Cozmo singt \"Farmer in the Dell\"..."
+  },
+  "behavior.singing.MuffinMan" : {
+    "translation" : "Cozmo singt \"Muffin Man\"..."
+  },
+  "behavior.singing.MulberryBush" : {
+    "translation" : "Cozmo singt \"Mulberry Bush\"..."
+  },
+  "behavior.singing.DannyBoy" : {
+    "translation" : "Cozmo singt \"Danny Boy\"..."
+  },
+  "behavior.singing.VivaldiSpring" : {
+    "translation" : "Cozmo singt \"Vivaldi – Frühling\"..."
+  },
+  "behavior.singing.WaterMusic" : {
+    "translation" : "Cozmo singt \"Wassermusik\"..."
+  },
+  "behavior.singing.AbaDaba" : {
+    "translation" : "Cozmo singt \"Aba Daba Honeymoon\"..."
+  },
+  "behavior.singing.TisketTasket" : {
+    "translation" : "Cozmo singt \"A-Tisket, A-Tasket\"..."
+  },
+  "behavior.singing.Bingo" : {
+    "translation" : "Cozmo singt \"Bingo\"..."
+  },
+  "behavior.singing.BuffaloGals" : {
+    "translation" : "Cozmo singt \"Buffalo Gals\"..."
+  },
+  "behavior.singing.YellowRose" : {
+    "translation" : "Cozmo singt \"Yellow Rose\"..."
+  },
+  "behavior.singing.CanCan1" : {
+    "translation" : "Cozmo singt \"Cancan\"..."
+  },
+  "behavior.singing.CanCan2" : {
+    "translation" : "Cozmo singt \"Cancan\"..."
+  },
+  "behavior.singing.SilveryMoon" : {
+    "translation" : "Cozmo singt \"By the Light of the Silvery Moon\"..."
+  },
+  "behavior.singing.LaPaloma" : {
+    "translation" : "Cozmo singt \"La Paloma\"..."
+  },
+  "behavior.singing.Toccata" : {
+    "translation" : "Cozmo singt \"Toccata und Fuge\"..."
+  },
+  "behavior.singing.WildAboutHarry" : {
+    "translation" : "Cozmo singt \"I'm Just Wild About Harry\"..."
   },
   "behavior.VC_Refuse_Energy" : {
     "translation" : "Cozmo muss gefüttert werden..."

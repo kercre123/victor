@@ -622,13 +622,15 @@ public class MediaPlayerCtrl : MonoBehaviour {
                 strError += "MEDIA_ERROR_UNSUPPORTED";
                 break;
             default:
-                strError = "Unknown error " + iCode;
+                // <ANKI> Don't overwrite error code </ANKI>
+                // strError = "Unknown error " + iCode;
+                strError += "Unknown extra " + iCodeExtra;
                 break;
         }
 
-
-
-        Debug.LogError(strError);
+        // <ANKI> Report to DAS instead of unity log </ANKI>
+        // Debug.LogError(strError);
+        DAS.Error("MediaPlayerCtrl.OnError", strError);
 
         if (OnVideoError != null)
         {

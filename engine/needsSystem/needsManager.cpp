@@ -37,7 +37,6 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
-
 namespace Anki {
 namespace Cozmo {
 
@@ -73,7 +72,6 @@ static const float kNeedLevelStorageMultiplier = 100000.0f;
 static const int kMinimumTimeBetweenDeviceSaves_sec = 60;
 static const int kMinimumTimeBetweenRobotSaves_sec = (60 * 10);  // Less frequently than device saves
 
-static const std::string kUnconnectedDecayRatesExperimentKey = "unconnected_decay_rates";
 static const std::string kTuningExperimentKey = "preholiday_tuning";
 
 // Note:  We don't use zero for 'uninitialized serial number' because
@@ -197,17 +195,6 @@ namespace {
       g_DebugNeedsManager->DebugPassTimeMinutes(minutes);
     }
   }
-  void ForceDecayVariation( ConsoleFunctionContextRef context )
-  {
-    const char* experimentKey = kUnconnectedDecayRatesExperimentKey.c_str();
-    const char* variationKey = ConsoleArg_Get_String(context, "variationKey");
-    Util::AnkiLab::AddABTestingForcedAssignment(experimentKey, variationKey);
-    context->channel->WriteLog("ForceAssignExperiment %s => %s", experimentKey, variationKey);
-
-    g_DebugNeedsManager->GetNeedsConfigMutable().SetUnconnectedDecayTestVariation(g_DebugNeedsManager->GetDecayConfigBaseFilename(),
-                                                                                  variationKey,
-                                                                                  Util::AnkiLab::AssignmentStatus::ForceAssigned);
-  }
   void ForceTuningVariation( ConsoleFunctionContextRef context )
   {
     const char* experimentKey = kTuningExperimentKey.c_str();
@@ -232,7 +219,6 @@ namespace {
   CONSOLE_FUNC( DebugSetEnergyLevel, "Needs", float level );
   CONSOLE_FUNC( DebugSetPlayLevel, "Needs", float level );
   CONSOLE_FUNC( DebugPassTimeMinutes, "Needs", float minutes );
-  CONSOLE_FUNC( ForceDecayVariation, "A/B Testing", const char* variationKey );
   CONSOLE_FUNC( ForceTuningVariation, "A/B Testing", const char* variationKey );
 };
 #endif
@@ -242,7 +228,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _robot(nullptr)
 , _needsState()
 , _needsStateFromRobot()
-, _needsConfig(cozmoContext)
+, _needsConfig()
 , _actionsConfig()
 , _starRewardsConfig()
 , _localNotifications(new LocalNotifications(cozmoContext, *this))
@@ -359,9 +345,21 @@ void NeedsManager::Init(const float currentTime_s,      const Json::Value& inJso
 }
 
 
-void NeedsManager::InitReset(const float currentTime_s, const u32 serialNumber)
+void NeedsManager::InitReset(const float currentTime_s, const u32 serialNumber,
+                             const bool onboardingSkipped)
 {
-  _needsState.Init(_needsConfig, serialNumber, _starRewardsConfig, _cozmoContext->GetRandom());
+  if (onboardingSkipped)
+  {
+    // If the user has skipped onboarding, we want to reset needs levels, stars awarded,
+    // levels completed, etc. to what it was prior to onboarding.  Note that the user
+    // can only skip onboarding if they are running a freshly-installed cozmo app with
+    // a robot that has already completed onboarding
+    SetNeedsStateFromRobotNeedsState();
+  }
+  else
+  {
+    _needsState.Init(_needsConfig, serialNumber, _starRewardsConfig, _cozmoContext->GetRandom());
+  }
 
   _timeForNextPeriodicDecay_s = currentTime_s + _needsConfig._decayPeriod;
 
@@ -452,12 +450,15 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
   // robot, and immediately after that, the needs state.  So now we can
   // attempt to activate the experiment
 
-  AttemptActivateDecayExperiment(_needsState._robotSerialNumber);
-
   AttemptActivateTuningExperiment(_needsState._robotSerialNumber);
+
+  // Now that experiment(s) have been set, we write the lab assignments
+  // out to robot, if they are different from before in any way
+  _cozmoContext->GetExperiments()->PossiblyWriteLabAssignmentsToRobot();
 
   bool needToWriteToDevice = false;
   bool needToWriteToRobot = _robotNeedsVersionUpdate;
+  bool robotHasChanged = false;
 
   // DAS Event: "needs.resolve_on_connection"
   // s_val: Whether device had valid needs data (1 or 0), and whether robot
@@ -516,6 +517,8 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
         PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt",
                       "Attempted to read alternate save file %s; file missing or read failed; could be because of brand new robot", filename.c_str());
       }
+
+      robotHasChanged = true;
     }
 
     // Either way, we definitely want to write to robot
@@ -573,19 +576,22 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
       _needsState._timeLastDisconnect = Time();
       // Similar for time since last app backgrounded; let's not confuse things
       _needsState._timeLastAppBackgrounded = Time();
+      robotHasChanged = true;
     }
+  }
+
+  // Special message to tell the game to clear some robot-specific data that was cached app-side
+  if (robotHasChanged || useStateFromRobot)
+  {
+    ExternalInterface::RobotChangedFromLastSession message;
+    const auto& extInt = _cozmoContext->GetExternalInterface();
+    extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
   }
 
   if (useStateFromRobot)
   {
-    const Time savedTimeLastDisconnect = _needsState._timeLastDisconnect;
-    const Time savedTimeLastAppBackgrounded = _needsState._timeLastAppBackgrounded;
-
     // Copy the loaded robot needs state into our device needs state
-    _needsState = _needsStateFromRobot;
-
-    _needsState._timeLastDisconnect = savedTimeLastDisconnect;
-    _needsState._timeLastAppBackgrounded = savedTimeLastAppBackgrounded;
+    SetNeedsStateFromRobotNeedsState();
 
     // Now apply decay for the unconnected time for THIS robot
     // (We did it earlier, in Init, but that was for a different robot)
@@ -660,51 +666,29 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 }
 
 
-void NeedsManager::AttemptActivateDecayExperiment(u32 robotSerialNumber)
+void NeedsManager::SetNeedsStateFromRobotNeedsState()
 {
-  // If we don't yet have a valid robot serial number, don't try to make
-  // an experiment assignment, since it's based on robot serial number
-  if (robotSerialNumber == kUninitializedSerialNumber)
-  {
-    return;
-  }
+  const Time savedTimeLastDisconnect = _needsState._timeLastDisconnect;
+  const Time savedTimeLastAppBackgrounded = _needsState._timeLastAppBackgrounded;
 
-  // Call this first to set the audience tags based on current data.
-  // Note that in ActivateExperiment, if there was already an assigned
-  // variation, we'll use that assignment and ignore the audience tags
-  _cozmoContext->GetExperiments()->GetAudienceTags().CalculateQualifiedTags();
+  _needsState = _needsStateFromRobot;
 
-  Util::AnkiLab::ActivateExperimentRequest request(kUnconnectedDecayRatesExperimentKey,
-                                                   std::to_string(robotSerialNumber));
-  std::string outVariationKey;
-  const auto assignmentStatus = _cozmoContext->GetExperiments()->ActivateExperiment(request, outVariationKey);
-  PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitInternal",
-                "Unconnected decay experiment activation assignment status is: %s; based on serial number %d",
-                EnumToString(assignmentStatus), robotSerialNumber);
-  if (assignmentStatus == Util::AnkiLab::AssignmentStatus::Assigned ||
-      assignmentStatus == Util::AnkiLab::AssignmentStatus::OverrideAssigned ||
-      assignmentStatus == Util::AnkiLab::AssignmentStatus::ForceAssigned)
-  {
-    PRINT_CH_INFO(kLogChannelName, "NeedsManager.AttemptActivateDecayExperiment",
-                  "Experiment %s: assigned to variation: %s",
-                  kUnconnectedDecayRatesExperimentKey.c_str(),
-                  outVariationKey.c_str());
-
-    _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(),
-                                                  outVariationKey,
-                                                  assignmentStatus);
-  }
-  else
-  {
-    _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(),
-                                                  kABTestControlKey,
-                                                  assignmentStatus);
-  }
+  _needsState._timeLastDisconnect = savedTimeLastDisconnect;
+  _needsState._timeLastAppBackgrounded = savedTimeLastAppBackgrounded;
 }
 
 
 void NeedsManager::AttemptActivateTuningExperiment(u32 robotSerialNumber)
 {
+  // This return is just to prevent activation of the experiment during the
+  // experiment start/end dates, while in dev.
+  // I'd rip all this stuff out now but my sense is to wait until we're
+  // really really sure we don't want to re-run any of this
+
+  // TODO:  Rip out all this stuff, when we're sure we don't need it.
+  // https://ankiinc.atlassian.net/browse/COZMO-15657
+  return;
+
   // If we don't yet have a valid robot serial number, don't try to make
   // an experiment assignment, since it's based on robot serial number
   if (robotSerialNumber == kUninitializedSerialNumber)
@@ -772,6 +756,7 @@ void NeedsManager::OnRobotDisconnected()
 // This is called whether we are connected to a robot or not
 void NeedsManager::Update(const float currentTime_s)
 {
+  ANKI_CPU_PROFILE("NeedsManager::Update");
   _currentTime_s = currentTime_s;
 
   if (_isPausedOverall)
@@ -1202,6 +1187,23 @@ void NeedsManager::SetTuningTestVariation(const std::string& variationKey,
     return;
   }
   _starRewardsConfig->Init(levelJson);
+
+  // Read the action config file variation based on variation, and use that data
+  std::string actionConfigFilename = GetActionConfigBaseFilename();
+  if (variationKey != kABTestControlKey)
+  {
+    actionConfigFilename += "_" + variationKey;
+  }
+  actionConfigFilename += ".json";
+  Json::Value actionJson;
+  parseSuccess = _cozmoContext->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
+                                                              actionConfigFilename, actionJson);
+  if (!ANKI_VERIFY(parseSuccess, "NeedsConfig.SetTuningTestVariation",
+                   "Failed to parse file %s", actionConfigFilename.c_str()))
+  {
+    return;
+  }
+  _actionsConfig.Init(actionJson);
 }
 
 
@@ -1445,27 +1447,31 @@ void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComp
     // only complete resets are allowed, however if connecting to a new robot from an old
     // app we do allow people to restart onboarding.
     PRINT_NAMED_INFO("NeedsManager.HandleMessage.RegisterOnboardingComplete",
-                        "Negative onboarding progress %d -> %d is ignored",
-                        _robotOnboardingStageCompleted, msg.onboardingStage);
+                     "Negative onboarding progress %d -> %d is ignored",
+                     _robotOnboardingStageCompleted, msg.onboardingStage);
   }
   else
   {
     _robotOnboardingStageCompleted = msg.onboardingStage;
   }
   PRINT_CH_INFO(kLogChannelName, "RegisterOnboardingComplete",
-                "OnboardingStageCompleted: %d, finalStage: %d",
-                _robotOnboardingStageCompleted, msg.finalStage);
+                "OnboardingStageCompleted: %d, finalStage: %d, skipped: %d",
+                _robotOnboardingStageCompleted, msg.finalStage, msg.onboardingSkipped);
 
   // phase 1 is just the first part showing the needs hub.
   if( msg.finalStage )
   {
-    // Reset cozmo's need levels to their starting points, and reset timers
-    InitReset(_currentTime_s, _needsState._robotSerialNumber);
+    // Reset timers, and reset cozmo's need levels to their starting points
+    // unless onboarding was skipped
+    InitReset(_currentTime_s, _needsState._robotSerialNumber, msg.onboardingSkipped);
 
-    // onboarding unlocks one star.
-    _needsState._numStarsAwarded = 1;
-    const Time nowTime = system_clock::now();
-    _needsState._timeLastStarAwarded = nowTime;
+    if (!msg.onboardingSkipped)
+    {
+      // onboarding unlocks one star (unless onboarding was skipped)
+      _needsState._numStarsAwarded = 1;
+      const Time nowTime = system_clock::now();
+      _needsState._timeLastStarAwarded = nowTime;
+    }
 
     // Un-pause the needs system if we are not already
     if (_isPausedOverall)
@@ -1752,13 +1758,15 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
   {
     // When un-backgrounding, apply decay for the time we were backgrounded
 
-    // Attempt to set the experiment variation for unconnected decay; this
-    // is to cover the case where the user backgrounds the app, and then
-    // the experiment's end date passes; in that case we want to switch
-    // back to the normal unconnected decay rates
-    AttemptActivateDecayExperiment(_needsState._robotSerialNumber);
+    // Attempt to set the experiment variation; this is to cover the case
+    // where the user backgrounds the app, and then the experiment's end
+    // date passes
 
     AttemptActivateTuningExperiment(_needsState._robotSerialNumber);
+
+    // Now that experiment(s) have been set, we write the lab assignments
+    // out to robot, IF they are different from before in any way
+    _cozmoContext->GetExperiments()->PossiblyWriteLabAssignmentsToRobot();
 
     const bool connected = (_robot == nullptr ? false : true);
     ApplyDecayForTimeSinceLastDeviceWrite(connected);
@@ -1810,7 +1818,8 @@ void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpda
   ExternalInterface::NeedsState message(std::move(needLevels), std::move(needBrackets),
                                         std::move(partIsDamaged), _needsState._curNeedsUnlockLevel,
                                         _needsState._numStarsAwarded, _needsState._numStarsForNextUnlock,
-                                        actionCausingTheUpdate, std::move(ABTestString));
+                                        actionCausingTheUpdate, std::move(ABTestString),
+                                        _needsConfig._repairRounds);
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 

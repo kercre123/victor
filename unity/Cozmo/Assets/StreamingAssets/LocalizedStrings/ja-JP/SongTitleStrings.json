@@ -6,6 +6,57 @@
     "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
     "source_key_paths" : ["/{*}"]
   },
+  "song.title.farmerInTheDell" : {
+    "translation" : "谷間の農夫"
+  },
+  "song.title.muffinMan" : {
+    "translation" : "マフィン売り"
+  },
+  "song.title.mulberryBush" : {
+    "translation" : "クワの茂み"
+  },
+  "song.title.dannyBoy" : {
+    "translation" : "ダニーボーイ"
+  },
+  "song.title.vivaldiSpring" : {
+    "translation" : "ヴィヴァルディ春"
+  },
+  "song.title.waterMusic" : {
+    "translation" : "水上の音楽"
+  },
+  "song.title.abaDaba" : {
+    "translation" : "Aba Daba Honeymoon"
+  },
+  "song.title.tisketTasket" : {
+    "translation" : "A-Tisket, A-Tasket"
+  },
+  "song.title.bingo" : {
+    "translation" : "ビンゴ"
+  },
+  "song.title.buffaloGals" : {
+    "translation" : "バッファローギャル"
+  },
+  "song.title.yellowRose" : {
+    "translation" : "Yellow Rose"
+  },
+  "song.title.canCan1" : {
+    "translation" : "フレンチカンカン"
+  },
+  "song.title.canCan2" : {
+    "translation" : "フレンチカンカン"
+  },
+  "song.title.silveryMoon" : {
+    "translation" : "By the Light of the Silvery Moon"
+  },
+  "song.title.laPaloma" : {
+    "translation" : "ラ・パロマ"
+  },
+  "song.title.toccata" : {
+    "translation" : "トッカータとフーガ"
+  },
+  "song.title.wildAboutHarry" : {
+    "translation" : "I'm Just Wild About Harry"
+  },
   "song.title.camptown" : {
     "translation" : "「草競馬」"
   },

@@ -1,7 +1,7 @@
 PROTO BuildServerTestController [
   field SFString name "BuildServerTestController"
   field SFString controllerArgs ""
-  field SFInt32  randomSeed 0    # 0 means "dynamically/randomly chosen"
+  field SFInt32  randomSeed 1    # 0 means "dynamically/randomly chosen"
 ]
 {
 Supervisor {

@@ -219,6 +219,8 @@ public:
 
   inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
   inline MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
+
+  inline const std::string&     GetBehaviorDebugString() const { return _behaviorDebugStr; }
   
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
     assert(_progressionUnlockComponent);
@@ -715,7 +717,9 @@ protected:
   std::unique_ptr<PetWorld>              _petWorld;
  
   std::unique_ptr<PublicStateBroadcaster> _publicStateBroadcaster;
-  
+
+  std::string                            _behaviorDebugStr;
+
   ///////// Audio /////////
   std::unique_ptr<Audio::EngineRobotAudioClient> _audioClient;
 
@@ -929,7 +933,10 @@ protected:
   
   float _syncTimeSentTime_sec = 0.0f;
   constexpr static float kMaxSyncTimeAckDelay_sec = 5.0f;
-  
+
+  // Used to calculate tick rate
+  float _prevCurrentTime_sec = 0.0f;
+
   // Send robot's current pose
   Result SendAbsLocalizationUpdate() const;
     
@@ -943,7 +950,7 @@ protected:
     
   // =========  Active Object messages  ============
   void ActiveObjectLightTest(const ObjectID& objectID);  // For testing
-  
+
 }; // class Robot
 
 //

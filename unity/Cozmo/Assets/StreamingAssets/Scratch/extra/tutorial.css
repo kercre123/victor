@@ -5,14 +5,11 @@
 }
 
 #tutorial-frame-modal .modal-inner {
-  color: #fff;
   font-family: "Avenir Next";
   border: none;
   border-radius: 0;
-  background-color: transparent;
   width: 100%;
   height: 100%;
-  background-color: #5E5E5E;
 }
 
 #tutorial-frame-modal .modal-title {
@@ -60,6 +57,7 @@
   color: #d7d8d9;
   font-family: 'Avenir Next';
   font-size: 4.5vh;
+  font-weight: normal;
   display: flex;
   flex-direction: column;
   justify-content: center;

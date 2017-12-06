@@ -931,7 +931,7 @@ Blockly.WorkspaceSvg.prototype.glowBlock = function(id, isGlowingBlock) {
     block = this.getBlockById(id);
     if (!block) {
       // *** ANKI CHANGE ***
-      // This throw can happen if the user taps a block in the toolbar then switches categories. Seems save to ignore.
+      // This throw can happen if the user taps a block in the toolbar then switches categories. Seems safe to ignore.
       //throw 'Tried to glow block that does not exist.';
     }
   }
@@ -952,10 +952,15 @@ Blockly.WorkspaceSvg.prototype.glowStack = function(id, isGlowingStack) {
   if (id) {
     block = this.getBlockById(id);
     if (!block) {
-      throw 'Tried to glow stack on block that does not exist.';
+      // *** ANKI CHANGE ***
+      // This throw can happen if we're trying to leave the workspace while running. Seems safe to ignore.
+      // throw 'Tried to glow stack on block that does not exist.';
     }
   }
-  block.setGlowStack(isGlowingStack);
+  // *** ANKI CHANGE ***
+  if (block) {
+    block.setGlowStack(isGlowingStack);
+  }
 };
 
 /**
@@ -1465,6 +1470,7 @@ Blockly.WorkspaceSvg.prototype.showContextMenu_ = function(e) {
         Blockly.confirm(Blockly.Msg.DELETE_ALL_BLOCKS.
             replace('%1', String(deleteCount)),
             function(ok) {
+              window.player.play('click');
               if (ok) {
                 deleteNext();
               }
@@ -1769,6 +1775,56 @@ Blockly.WorkspaceSvg.prototype.scrollCenter = function() {
     x -= this.flyout_.width_ / 2;
   }
   var y = (metrics.contentHeight - metrics.viewHeight) / 2;
+  this.scrollbar.set(x, y);
+};
+
+// *** Anki change ***
+/**
+ * Focus on the top-left of the workspace.
+ * @param {boolean} centerX Scroll to center of x-axis.
+ * @param {boolean} centerY Scroll to center of y-axis.
+ */
+Blockly.WorkspaceSvg.prototype.scrollHome = function(centerX, centerY) {
+  if (!this.scrollbar) {
+    // Can't scroll a non-scrolling workspace.
+    return;
+  }
+  // Hide the WidgetDiv without animation (zoom makes field out of place with div)
+  Blockly.WidgetDiv.hide(true);
+  Blockly.DropDownDiv.hideWithoutAnimation();
+  Blockly.hideChaff(false);
+  var metrics = this.getMetrics();
+  var bounds = this.getBlocksBoundingBox();
+  
+  // Padding to make the blocks not rest on the toolbox
+  var paddingLeft = 50.0 * this.scale;
+  var paddingTop = this.toolbox_.top + 25.0 * this.scale;
+
+  // Mimic the behavior of getMetrics to consistently anchor in the top-left
+  var margin = Blockly.Flyout.prototype.CORNER_RADIUS - 1;
+
+  var adjustedViewWidth = metrics.viewWidth - margin;
+  var distanceFromViewCenterX = adjustedViewWidth / 2;
+  var boundsViewDifferenceX = adjustedViewWidth - bounds.width * this.scale;
+  var x = Math.max(distanceFromViewCenterX, boundsViewDifferenceX) - paddingLeft;
+
+  var adjustedViewHeight = metrics.viewHeight - margin;
+  var distanceFromViewCenterY = adjustedViewHeight / 2;
+  var boundsViewDifferenceY = adjustedViewHeight - bounds.height * this.scale;
+  var y = Math.max(distanceFromViewCenterY, boundsViewDifferenceY) - paddingTop;
+
+  // Handle centering of x and/or y.
+  if (centerX) {
+    x = (metrics.contentWidth - metrics.viewWidth) / 2;
+
+    if (this.flyout_) {
+      x -= this.flyout_.width_ / 2;
+    }
+  }
+  if (centerY) {
+    y = (metrics.contentHeight - metrics.viewHeight) / 2;
+  }
+
   this.scrollbar.set(x, y);
 };
 

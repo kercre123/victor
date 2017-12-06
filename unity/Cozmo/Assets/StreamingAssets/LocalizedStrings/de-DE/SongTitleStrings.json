@@ -6,6 +6,57 @@
     "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
     "source_key_paths" : ["/{*}"]
   },
+  "song.title.farmerInTheDell" : {
+    "translation" : "Farmer in the Dell"
+  },
+  "song.title.muffinMan" : {
+    "translation" : "Muffin Man"
+  },
+  "song.title.mulberryBush" : {
+    "translation" : "Mulberry Bush"
+  },
+  "song.title.dannyBoy" : {
+    "translation" : "Danny Boy"
+  },
+  "song.title.vivaldiSpring" : {
+    "translation" : "Vivaldi – Frühling"
+  },
+  "song.title.waterMusic" : {
+    "translation" : "Wassermusik"
+  },
+  "song.title.abaDaba" : {
+    "translation" : "Aba Daba Honeymoon"
+  },
+  "song.title.tisketTasket" : {
+    "translation" : "A-Tisket, A-Tasket"
+  },
+  "song.title.bingo" : {
+    "translation" : "Bingo"
+  },
+  "song.title.buffaloGals" : {
+    "translation" : "Buffalo Gals"
+  },
+  "song.title.yellowRose" : {
+    "translation" : "Yellow Rose"
+  },
+  "song.title.canCan1" : {
+    "translation" : "Cancan"
+  },
+  "song.title.canCan2" : {
+    "translation" : "Cancan"
+  },
+  "song.title.silveryMoon" : {
+    "translation" : "By the Light of the Silvery Moon"
+  },
+  "song.title.laPaloma" : {
+    "translation" : "La Paloma"
+  },
+  "song.title.toccata" : {
+    "translation" : "Toccata und Fuge"
+  },
+  "song.title.wildAboutHarry" : {
+    "translation" : "I'm Just Wild About Harry"
+  },
   "song.title.camptown" : {
     "translation" : "Camptown Races"
   },
@@ -70,6 +121,6 @@
     "translation" : "Sakura-Lied"
   },
   "song.title.mussIDenn" : {
-    "translation" : "Muss i denn, muss i denn zum Städtele hinaus"
+    "translation" : "Muss i denn"
   }
 }

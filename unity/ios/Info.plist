@@ -2,46 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>UTImportedTypeDeclarations</key>
-	<array>
-		<dict>
-			<key>UTTypeConformsTo</key>
-			<array>
-				<string>public.data</string>
-			</array>
-			<key>UTTypeIdentifier</key>
-			<string>com.anki.cozmo.customUTI.codelab</string>
-			<key>UTTypeTagSpecification</key>
-			<dict>
-				<key>public.filename-extension</key>
-				<string>codelab</string>
-			</dict>
-		</dict>
-	</array>
-	<key>UTExportedTypeDeclarations</key>
-	<array>
-		<dict>
-			<key>UTTypeConformsTo</key>
-			<array>
-				<string>public.data</string>
-			</array>
-			<key>UTTypeDescription</key>
-			<string>Custom File Extension CodeLab</string>
-			<key>UTTypeIdentifier</key>
-			<string>com.anki.cozmo.customUTI.codelab</string>
-			<key>UTTypeTagSpecification</key>
-			<dict>
-				<key>public.filename-extension</key>
-				<string>codelab</string>
-			</dict>
-		</dict>
-	</array>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Cozmo</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleTypeIconFiles</key>
-			<array>
-			</array>
+			<array/>
 			<key>CFBundleTypeName</key>
 			<string>Code Lab Program</string>
 			<key>LSHandlerRank</key>
@@ -52,10 +21,6 @@
 			</array>
 		</dict>
 	</array>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
-	<key>CFBundleDisplayName</key>
-	<string>Cozmo</string>
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
 	<key>CFBundleIconFiles</key>
@@ -77,7 +42,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.1.0</string>
+	<string>2.2.0</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -123,10 +88,10 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Required for crash reporting</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Enable microphone access to talk to Cozmo</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Enable microphone access to talk to Cozmo</string>
 	<key>UIApplicationExitsOnSuspend</key>
 	<false/>
 	<key>UIBackgroundModes</key>
@@ -163,6 +128,40 @@
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Custom File Extension CodeLab</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.anki.cozmo.customUTI.codelab</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<string>codelab</string>
+			</dict>
+		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeIdentifier</key>
+			<string>com.anki.cozmo.customUTI.codelab</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<string>codelab</string>
+			</dict>
+		</dict>
 	</array>
 	<key>Unity_LoadingActivityIndicatorStyle</key>
 	<integer>-1</integer>

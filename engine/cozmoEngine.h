@@ -111,6 +111,13 @@ public:
 
   Util::AnkiLab::AssignmentStatus ActivateExperiment(const Util::AnkiLab::ActivateExperimentRequest& request,
                                                      std::string& outVariationKey);
+
+  void RegisterEngineTickPerformance(const float tickDuration_ms,
+                                     const float tickFrequency_ms,
+                                     const float sleepDurationIntended_ms,
+                                     const float sleepDurationActual_ms) const;
+
+  UiMessageHandler* GetUiMsgHandler() const { return _uiMsgHandler.get(); }
   
   // Handle various message types
   template<typename T>

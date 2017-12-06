@@ -19,6 +19,8 @@
 #include "util/logging/logging.h"
 #include <json/json.h>
 
+#include "util/string/stringUtils.h"
+
 namespace Anki {
 namespace Cozmo {
 

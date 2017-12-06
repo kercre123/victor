@@ -3,490 +3,517 @@
     "translate_paths" : ["*/translation"],
     "variants_enabled" : true,
     "translate_mode" : "custom",
-    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "[$]\\{[^\\}\\{]+?\\}", "__[^_]+?__", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "placeholder_format_custom" : ["%[0-9]+"],
     "source_key_paths" : ["/{*}"]
   },
-  "codeLabVertical.COZMO_VERT_DRIVE": {
-    "translation": "drive %1mm at %2mm/s"
+  "codeLabVertical.COZMO_VERT_DRIVE" : {
+    "translation" : "avancer de %1 mm à %2 mm/s"
   },
-  "codeLabVertical.COZMO_VERT_SETBACKPACKCOLOR": {
-    "translation": "set backpack light %1"
+  "codeLabVertical.COZMO_VERT_SETBACKPACKCOLOR" : {
+    "translation" : "définir la lumière des voyants dorsaux sur %1"
   },
-  "codeLabVertical.VERT_ENABLE_ANIMATION_TRACK": {
-    "translation": "enable: %1 in animations"
+  "codeLabVertical.VERT_ENABLE_ANIMATION_TRACK" : {
+    "translation" : "activer : %1 dans les animations"
   },
-  "codeLabVertical.VERT_DISABLE_ANIMATION_TRACK": {
-    "translation": "disable: %1 in animations"
+  "codeLabVertical.VERT_DISABLE_ANIMATION_TRACK" : {
+    "translation" : "désactiver : %1 dans les animations"
   },
-  "codeLabVertical.PLAY_ANIMATION": {
-    "translation": "play %1 animation"
+  "codeLabVertical.PLAY_ANIMATION" : {
+    "translation" : "lire l'animation %1"
   },
-  "codeLabVertical.ANIMATION_BLOCK": {
-    "translation": "%1 animation"
+  "codeLabVertical.ANIMATION_BLOCK" : {
+    "translation" : "animation %1"
   },
-  "codeLabVertical.ANIMATION_SDK_BLOCK": {
-    "translation": "advanced: play %1 SDK animation"
+  "codeLabVertical.ANIMATION_SDK_BLOCK" : {
+    "translation" : "avancé : lire l'animation %1 du SDK"
   },
-  "codeLabVertical.ANIMATION_TRIGGER_SDK_BLOCK": {
-    "translation": "advanced: play %1 SDK animation group"
+  "codeLabVertical.ANIMATION_TRIGGER_SDK_BLOCK" : {
+    "translation" : "avancé : lire le groupe d'animations %1 du SDK"
   },
-  "codeLabVertical.PLAY_SOUND": {
-    "translation": "play %1 sound"
+  "codeLabVertical.PLAY_SOUND" : {
+    "translation" : "lire le son %1"
   },
-  "codeLabVertical.PLAY_SOUND_AND_WAIT": {
-    "translation": "play %1 sound and wait"
+  "codeLabVertical.PLAY_SOUND_AND_WAIT" : {
+    "translation" : "lire le son %1 et attendre"
   },
-  "codeLabVertical.STOP_SOUND": {
-    "translation": "stop %1 sound"
+  "codeLabVertical.STOP_SOUND" : {
+    "translation" : "arrêter le son %1"
   },
-  "codeLabVertical.DOCK_WITH_CUBE": {
-    "translation": "dock with Cube"
+  "codeLabVertical.DOCK_WITH_CUBE" : {
+    "translation" : "s'amarrer au cube"
   },
-  "codeLabVertical.DOCK_WITH_CUBE_X": {
-    "translation": "dock with Cube %1"
+  "codeLabVertical.DOCK_WITH_CUBE_X" : {
+    "translation" : "s'amarrer au cube %1"
   },
-  "codeLabVertical.SAY_X": {
-    "translation": "say %1"
+  "codeLabVertical.SAY_X" : {
+    "translation" : "dire %1"
   },
-  "codeLabVertical.WHEN_SEE_FACE": {
-    "translation": "when face seen"
+  "codeLabVertical.WHEN_SEE_FACE" : {
+    "translation" : "quand un visage est détecté"
   },
-  "codeLabVertical.WHEN_SEE_HAPPY_FACE": {
-    "translation": "when happy face seen"
+  "codeLabVertical.WHEN_SEE_HAPPY_FACE" : {
+    "translation" : "quand un visage joyeux est détecté"
   },
-  "codeLabVertical.WHEN_SEE_SAD_FACE": {
-    "translation": "when sad face seen"
+  "codeLabVertical.WHEN_SEE_SAD_FACE" : {
+    "translation" : "quand un visage triste est détecté"
   },
-  "codeLabVertical.WHEN_CUBE_SEEN": {
-    "translation": "when Cube %1 seen"
+  "codeLabVertical.WHEN_CUBE_SEEN" : {
+    "translation" : "quand le cube %1 est détecté"
   },
-  "codeLabVertical.WHEN_CUBE_TAPPED": {
-    "translation": "when Cube %1 tapped"
+  "codeLabVertical.WHEN_CUBE_TAPPED" : {
+    "translation" : "quand le cube %1 est touché"
   },
-  "codeLabVertical.WHEN_CUBE_MOVED": {
-    "translation": "when Cube %1 moved"
+  "codeLabVertical.WHEN_CUBE_MOVED" : {
+    "translation" : "quand le cube %1 est déplacé"
   },
-  "codeLabVertical.COZMO_POSITION": {
-    "translation": "Cozmo position %1 in world"
+  "codeLabVertical.COZMO_POSITION" : {
+    "translation" : "Position de Cozmo dans le monde %1"
   },
-  "codeLabVertical.COZMO_PITCH": {
-    "translation": "Cozmo pitch °"
+  "codeLabVertical.COZMO_PITCH" : {
+    "translation" : "Inclinaison de Cozmo °"
   },
-  "codeLabVertical.COZMO_ROLL": {
-    "translation": "Cozmo roll °"
+  "codeLabVertical.COZMO_ROLL" : {
+    "translation" : "Tangage de Cozmo°"
   },
-  "codeLabVertical.COZMO_YAW": {
-    "translation": "Cozmo yaw °"
+  "codeLabVertical.COZMO_YAW" : {
+    "translation" : "Direction de Cozmo °"
   },
-  "codeLabVertical.LIFT_HEIGHT": {
-    "translation": "Cozmo lift height %"
+  "codeLabVertical.LIFT_HEIGHT" : {
+    "translation" : "Hauteur de levage de Cozmo %"
   },
-  "codeLabVertical.HEAD_ANGLE": {
-    "translation": "Cozmo head angle °"
+  "codeLabVertical.HEAD_ANGLE" : {
+    "translation" : "Angle de la tête de Cozmo °"
   },
-  "codeLabVertical.FACE_VISIBLE": {
-    "translation": "is face visible"
+  "codeLabVertical.IS_PICKED_UP": {
+    "translation": "is Cozmo picked up"
   },
-  "codeLabVertical.FACE_NAME": {
-    "translation": "face name"
+  "codeLabVertical.FACE_VISIBLE" : {
+    "translation" : "un visage est-il visible"
   },
-  "codeLabVertical.FACE_CAMERA": {
-    "translation": "face position in camera %1"
+  "codeLabVertical.FACE_NAME" : {
+    "translation" : "nom du visage"
   },
-  "codeLabVertical.FACE_POSITION": {
-    "translation": "face position in world %1"
+  "codeLabVertical.FACE_CAMERA" : {
+    "translation" : "position du visage dans la caméra %1"
   },
-  "codeLabVertical.FACE_EXPRESSION": {
-    "translation": "face expression"
+  "codeLabVertical.FACE_POSITION" : {
+    "translation" : "position du visage dans le monde %1"
   },
-  "codeLabVertical.LAST_TAPPED_CUBE": {
-    "translation": "last tapped Cube"
+  "codeLabVertical.FACE_EXPRESSION" : {
+    "translation" : "expression du visage"
   },
-  "codeLabVertical.CUBE_WAS_TAPPED": {
-    "translation": "was Cube %1 tapped"
+  "codeLabVertical.LAST_TAPPED_CUBE" : {
+    "translation" : "dernier cube touché"
   },
-  "codeLabVertical.CUBE_IS_VISIBLE": {
-    "translation": "is Cube %1 visible"
+  "codeLabVertical.CUBE_WAS_TAPPED" : {
+    "translation" : "le cube %1 a-t-il été touché"
   },
-  "codeLabVertical.CUBE_CAMERA": {
-    "translation": "Cube %1 position in camera %2"
+  "codeLabVertical.CUBE_IS_VISIBLE" : {
+    "translation" : "le cube %1 est-il visible"
   },
-  "codeLabVertical.CUBE_POSITION": {
-    "translation": "Cube %1 position in world %2"
+  "codeLabVertical.CUBE_CAMERA" : {
+    "translation" : "Position du cube %1 dans la caméra %2"
   },
-  "codeLabVertical.CUBE_PITCH": {
-    "translation": "Cube %1 pitch ° in camera"
+  "codeLabVertical.CUBE_POSITION" : {
+    "translation" : "position du cube %1 dans le monde %2"
   },
-  "codeLabVertical.CUBE_ROLL": {
-    "translation": "Cube %1 roll ° in camera"
+  "codeLabVertical.CUBE_PITCH" : {
+    "translation" : "Inclinaison du cube %1 dans la caméra (en °)."
   },
-  "codeLabVertical.CUBE_YAW": {
-    "translation": "Cube %1 yaw ° in camera"
+  "codeLabVertical.CUBE_ROLL" : {
+    "translation" : "Tangage du cube %1 dans la caméra (en °)"
   },
-  "codeLabVertical.DEVICE_PITCH": {
-    "translation": "device pitch °"
+  "codeLabVertical.CUBE_YAW" : {
+    "translation" : "Direction du cube %1 dans la caméra (en°)"
   },
-  "codeLabVertical.DEVICE_ROLL": {
-    "translation": "device roll °"
+  "codeLabVertical.DEVICE_PITCH" : {
+    "translation" : "inclinaison de l'appareil °"
   },
-  "codeLabVertical.DEVICE_YAW": {
-    "translation": "device yaw °"
+  "codeLabVertical.DEVICE_ROLL" : {
+    "translation" : "tangage de l'appareil °"
   },
-  "codeLabVertical.DRIVE_WHEELS": {
-    "translation": "drive left wheel %1mm/s, right %2mm/s"
+  "codeLabVertical.DEVICE_YAW" : {
+    "translation" : "direction de l'appareil °"
   },
-  "codeLabVertical.ENABLE_WAIT_FOR_ACTIONS": {
-    "translation": "enable: always wait for Cozmo to finish"
+  "codeLabVertical.DRIVE_WHEELS" : {
+    "translation" : "avancer la roue gauche de %1 mm/s, la droite de %2 mm/s"
   },
-  "codeLabVertical.DISABLE_WAIT_FOR_ACTIONS": {
-    "translation": "disable: always wait for Cozmo to finish"
+  "codeLabVertical.ENABLE_WAIT_FOR_ACTIONS" : {
+    "translation" : "activer : toujours attendre que Cozmo ait terminé"
   },
-  "codeLabVertical.WAIT_FOR_ACTIONS": {
-    "translation": "wait for Cozmo to finish %1"
+  "codeLabVertical.DISABLE_WAIT_FOR_ACTIONS" : {
+    "translation" : "désactiver : toujours attendre que Cozmo ait terminé"
   },
-  "codeLabVertical.STOP_ACTIONS": {
-    "translation": "stop Cozmo %1"
+  "codeLabVertical.WAIT_FOR_ACTIONS" : {
+    "translation" : "attendre que Cozmo termine %1"
   },
-  "codeLabVertical.STOP_MOTORS": {
-    "translation": "stop %1"
+  "codeLabVertical.STOP_ACTIONS" : {
+    "translation" : "arrêter %1 de Cozmo"
   },
-  "codeLabVertical.PATH_FORWARD": {
-    "translation": "navigate %1forward, %2to side,%3°"
+  "codeLabVertical.STOP_MOTORS" : {
+    "translation" : "arrêter %1"
   },
-  "codeLabVertical.PATH_TO_X_Y_ANGLE": {
-    "translation": "navigate in world to %1x, %2y, %3°"
+  "codeLabVertical.PATH_FORWARD" : {
+    "translation" : "naviguer de %1 vers l'avant, %2 latéralement, %3 °"
   },
-  "codeLabVertical.TURN": {
-    "translation": "turn %1° at %2°/s"
+  "codeLabVertical.PATH_TO_X_Y_ANGLE" : {
+    "translation" : "naviguer dans le monde vers %1x, %2y, %3°"
   },
-  "codeLabVertical.MOVE_LIFT_TO_X": {
-    "translation": "move lift to %1% at %2°/s"
+  "codeLabVertical.TURN" : {
+    "translation" : "tourner de %1° à %2°/s"
   },
-  "codeLabVertical.MOVE_LIFT": {
-    "translation": "move lift %1°/s"
+  "codeLabVertical.MOVE_LIFT_TO_X" : {
+    "translation" : "déplacer le bras de %1% à %2°/s"
   },
-  "codeLabVertical.MOVE_HEAD_TO_X": {
-    "translation": "move head to %1° at %2°/s"
+  "codeLabVertical.MOVE_LIFT" : {
+    "translation" : "déplacer le bras à %1°/s"
   },
-  "codeLabVertical.SET_X_ON_CUBE": {
-    "translation": "on Cube %2 set %1 to %3"
+  "codeLabVertical.MOVE_HEAD_TO_X" : {
+    "translation" : "déplacer la tête à %1° à %2 °/s"
   },
-  "codeLabVertical.CUBE_ANIM": {
-    "translation": "on Cube %2 %1 lights in %3"
+  "codeLabVertical.SET_X_ON_CUBE" : {
+    "translation" : "sur le cube %2 , mettre %1 en %3"
   },
-  "codeLabVertical.DRAW_CLEAR_SCREEN": {
-    "translation": "clear all pixels"
+  "codeLabVertical.CUBE_ANIM" : {
+    "translation" : "sur le cube %2 %1 s'allume en %3"
   },
-  "codeLabVertical.DRAW_COLOR": {
-    "translation": "set drawing mode to %1"
+  "codeLabVertical.DRAW_CLEAR_SCREEN" : {
+    "translation" : "effacer tous les pixels"
   },
-  "codeLabVertical.DRAW_TEXT_SCALE": {
-    "translation": "set text scale to %1%"
+  "codeLabVertical.DRAW_COLOR" : {
+    "translation" : "définir le mode de dessin sur %1"
   },
-  "codeLabVertical.DRAW_TEXT_ALIGNMENT": {
-    "translation": "set text alignment to %1 %2"
+  "codeLabVertical.DRAW_TEXT_SCALE" : {
+    "translation" : "définir l'échelle du texte sur %1 %"
   },
-  "codeLabVertical.DRAW_LINE": {
-    "translation": "draw line from %1,%2 to %3,%4"
+  "codeLabVertical.DRAW_TEXT_ALIGNMENT" : {
+    "translation" : "définir l'alignement du texte sur %1 %2"
   },
-  "codeLabVertical.DRAW_FILL_RECT": {
-    "translation": "fill rectangle from %1,%2 to %3,%4"
+  "codeLabVertical.DRAW_LINE" : {
+    "translation" : "dessiner une ligne de %1,%2 à %3,%4"
   },
-  "codeLabVertical.DRAW_RECT": {
-    "translation": "draw rectangle from %1,%2 to %3,%4"
+  "codeLabVertical.DRAW_FILL_RECT" : {
+    "translation" : "remplir un rectangle de %1,%2 à %3,%4"
   },
-  "codeLabVertical.DRAW_FILL_CIRCLE": {
-    "translation": "fill circle at %1,%2 with radius %3"
+  "codeLabVertical.DRAW_RECT" : {
+    "translation" : "dessiner un rectangle de %1,%2 à %3,%4"
   },
-  "codeLabVertical.DRAW_CIRCLE": {
-    "translation": "draw circle at %1,%2 with radius %3"
+  "codeLabVertical.DRAW_FILL_CIRCLE" : {
+    "translation" : "remplir un cercle en %1,%2 de rayon %3"
   },
-  "codeLabVertical.DRAW_TEXT": {
-    "translation": "draw %1 at %2,%3"
+  "codeLabVertical.DRAW_CIRCLE" : {
+    "translation" : "dessiner un cercle en %1,%2 de rayon %3"
   },
-  "codeLabVertical.DRAW_DISPLAY_ON_FACE": {
-    "translation": "display on Cozmo's face"
+  "codeLabVertical.DRAW_TEXT" : {
+    "translation" : "dessiner %1 en %2,%3"
   },
-  "codeLabVertical.ANIM_MYSTERY": {
-    "translation": "0 - mystery"
+  "codeLabVertical.DRAW_DISPLAY_ON_FACE" : {
+    "translation" : "afficher sur le visage de Cozmo"
   },
-  "codeLabVertical.ANIM_HAPPY": {
-    "translation": "1 - happy"
+  "codeLabVertical.ANIM_MYSTERY" : {
+    "translation" : "0 - mystère"
   },
-  "codeLabVertical.ANIM_WINNER": {
-    "translation": "2 - winner"
+  "codeLabVertical.ANIM_HAPPY" : {
+    "translation" : "1 - heureux"
   },
-  "codeLabVertical.ANIM_SAD": {
-    "translation": "3 - sad"
+  "codeLabVertical.ANIM_WINNER" : {
+    "translation" : "2 - vainqueur"
   },
-  "codeLabVertical.ANIM_SURPRISED": {
-    "translation": "4 - surprised"
+  "codeLabVertical.ANIM_SAD" : {
+    "translation" : "3 - triste"
   },
-  "codeLabVertical.ANIM_DOG": {
-    "translation": "5 - dog"
+  "codeLabVertical.ANIM_SURPRISED" : {
+    "translation" : "4 - surpris"
   },
-  "codeLabVertical.ANIM_CAT": {
-    "translation": "6 - cat"
+  "codeLabVertical.ANIM_DOG" : {
+    "translation" : "5 - chien"
   },
-  "codeLabVertical.ANIM_SNEEZE": {
-    "translation": "7 - sneeze"
+  "codeLabVertical.ANIM_CAT" : {
+    "translation" : "6 - chat"
   },
-  "codeLabVertical.ANIM_EXCITED": {
-    "translation": "8 - excited"
+  "codeLabVertical.ANIM_SNEEZE" : {
+    "translation" : "7 - éternuement"
   },
-  "codeLabVertical.ANIM_THINK_HARD": {
-    "translation": "9 - think hard"
+  "codeLabVertical.ANIM_EXCITED" : {
+    "translation" : "8 - excité"
   },
-  "codeLabVertical.ANIM_BORED": {
-    "translation": "10 - bored"
+  "codeLabVertical.ANIM_THINK_HARD" : {
+    "translation" : "9 - profonde réflexion"
   },
-  "codeLabVertical.ANIM_FRUSTRATED": {
-    "translation": "11 - frustrated"
+  "codeLabVertical.ANIM_BORED" : {
+    "translation" : "10 - ennui"
   },
-  "codeLabVertical.ANIM_CHATTY": {
-    "translation": "12 - chatty"
+  "codeLabVertical.ANIM_FRUSTRATED" : {
+    "translation" : "11 - frustré"
   },
-  "codeLabVertical.ANIM_DISAPPOINTED": {
-    "translation": "13 - disappointed"
+  "codeLabVertical.ANIM_CHATTY" : {
+    "translation" : "12 - bavard"
   },
-  "codeLabVertical.ANIM_SNORE": {
-    "translation": "14 - snore"
+  "codeLabVertical.ANIM_DISAPPOINTED" : {
+    "translation" : "13 - déçu"
   },
-  "codeLabVertical.ANIM_REACT_HAPPY": {
-    "translation": "15 - react happy"
+  "codeLabVertical.ANIM_SNORE" : {
+    "translation" : "14 - ronfler"
   },
-  "codeLabVertical.ANIM_CELEBRATE": {
-    "translation": "16 - celebrate"
+  "codeLabVertical.ANIM_REACT_HAPPY" : {
+    "translation" : "15 - réagir avec joie"
   },
-  "codeLabVertical.ANIM_TAKA_TAKA": {
-    "translation": "17 - talka-talka"
+  "codeLabVertical.ANIM_CELEBRATE" : {
+    "translation" : "16 - fêter"
   },
-  "codeLabVertical.ANIM_AMAZED": {
-    "translation": "18 - amazed"
+  "codeLabVertical.ANIM_TAKA_TAKA" : {
+    "translation" : "17 - talka-talka"
   },
-  "codeLabVertical.ANIM_CURIOUS": {
-    "translation": "19 - curious"
+  "codeLabVertical.ANIM_AMAZED" : {
+    "translation" : "18 - étonné"
   },
-  "codeLabVertical.ANIM_AGREE": {
-    "translation": "20 - agree"
+  "codeLabVertical.ANIM_CURIOUS" : {
+    "translation" : "19 - curieux"
   },
-  "codeLabVertical.ANIM_DISAGREE": {
-    "translation": "21 - disagree"
+  "codeLabVertical.ANIM_AGREE" : {
+    "translation" : "20 - d'accord"
   },
-  "codeLabVertical.ANIM_UNSURE": {
-    "translation": "22 - unsure"
+  "codeLabVertical.ANIM_DISAGREE" : {
+    "translation" : "21 - désaccord"
   },
-  "codeLabVertical.ANIM_CONDUCTING": {
-    "translation": "23 - conducting"
+  "codeLabVertical.ANIM_UNSURE" : {
+    "translation" : "22 - incertain"
   },
-  "codeLabVertical.ANIM_DANCING_MAMBO": {
-    "translation": "24 - dancing mambo"
+  "codeLabVertical.ANIM_CONDUCTING" : {
+    "translation" : "23 - dirigeant"
   },
-  "codeLabVertical.ANIM_FIRE_TRUCK": {
-    "translation": "25 - fire truck"
+  "codeLabVertical.ANIM_DANCING_MAMBO" : {
+    "translation" : "24 - dansant le mambo"
   },
-  "codeLabVertical.ANIM_PARTY_TIME": {
-    "translation": "26 - partytime"
+  "codeLabVertical.ANIM_FIRE_TRUCK" : {
+    "translation" : "25 - camion de pompiers"
   },
-  "codeLabVertical.ANIM_DIZZY": {
-    "translation": "27 - dizzy"
+  "codeLabVertical.ANIM_PARTY_TIME" : {
+    "translation" : "26 - l'heure de la fête"
   },
-  "codeLabVertical.ANIM_DIZZY_END": {
-    "translation": "28 - dizzy (end)"
+  "codeLabVertical.ANIM_DIZZY" : {
+    "translation" : "27 - étourdi"
   },
-  "codeLabVertical.ANIM_ONE_TWO_THREE_GO": {
-    "translation": "29 - one, two, three, go!"
+  "codeLabVertical.ANIM_DIZZY_END" : {
+    "translation" : "28 - étourdi (fin)"
   },
-  "codeLabVertical.ANIM_WIN_GAME": {
-    "translation": "30 - win game"
+  "codeLabVertical.ANIM_ONE_TWO_THREE_GO" : {
+    "translation" : "29 - un, deux, trois, partez !"
   },
-  "codeLabVertical.ANIM_LOSE_GAME": {
-    "translation": "31 - lose game"
+  "codeLabVertical.ANIM_WIN_GAME" : {
+    "translation" : "30 - partie gagnée"
   },
-  "codeLabVertical.ANIM_TAP_CUBE": {
-    "translation": "32 - tap cube"
+  "codeLabVertical.ANIM_LOSE_GAME" : {
+    "translation" : "31 - partie perdue"
   },
-  "codeLabVertical.ANIM_GET_IN_POSITION": {
-    "translation": "33 - get in position"
+  "codeLabVertical.ANIM_TAP_CUBE" : {
+    "translation" : "32 - toucher un cube"
   },
-  "codeLabVertical.ANIM_IDLE": {
-    "translation": "34 - idle"
+  "codeLabVertical.ANIM_GET_IN_POSITION" : {
+    "translation" : "33 - se mettre en position pour taper sur le cube"
   },
-  "codeLabVertical.WHEELS": {
-    "translation": "wheels"
+  "codeLabVertical.ANIM_IDLE" : {
+    "translation" : "34 - inactif"
   },
-  "codeLabVertical.HEAD": {
-    "translation": "head"
+  "codeLabVertical.WHEELS" : {
+    "translation" : "roues"
   },
-  "codeLabVertical.MOVING_HEAD": {
-    "translation": "moving head"
+  "codeLabVertical.HEAD" : {
+    "translation" : "tête"
   },
-  "codeLabVertical.LIFT": {
-    "translation": "lift"
+  "codeLabVertical.MOVING_HEAD" : {
+    "translation" : "déplacement de la tête"
   },
-  "codeLabVertical.MOVING_LIFT": {
-    "translation": "moving lift"
+  "codeLabVertical.LIFT" : {
+    "translation" : "bras élévateur"
   },
-  "codeLabVertical.ALL": {
-    "translation": "all"
+  "codeLabVertical.MOVING_LIFT" : {
+    "translation" : "déplacement du bras"
   },
-  "codeLabVertical.EVERYTHING": {
-    "translation": "everything"
+  "codeLabVertical.ALL" : {
+    "translation" : "tout"
   },
-  "codeLabVertical.SELECT": {
-    "translation": "select"
+  "codeLabVertical.EVERYTHING" : {
+    "translation" : "tout"
   },
-  "codeLabVertical.WIN": {
-    "translation": "win"
+  "codeLabVertical.SOUND_EIGHTIES_MUSIC" : {
+    "translation" : "1 - musique des années 80"
   },
-  "codeLabVertical.LOSE": {
-    "translation": "lose"
+  "codeLabVertical.SOUND_MAMBO_MUSIC" : {
+    "translation" : "2 - musique mambo"
   },
-  "codeLabVertical.GAME_START": {
-    "translation": "game start"
+  "codeLabVertical.SOUND_DISCO_MUSIC" : {
+    "translation" : "3 - musique disco"
   },
-  "codeLabVertical.CLOCK_TICK": {
-    "translation": "clock tick"
+  "codeLabVertical.SOUND_MAGIC" : {
+    "translation" : "4 - magique"
   },
-  "codeLabVertical.BLING": {
-    "translation": "bling"
+  "codeLabVertical.SOUND_WIN" : {
+    "translation" : "5 - gagner"
   },
-  "codeLabVertical.SUCCESS": {
-    "translation": "success"
-                },
-  "codeLabVertical.FAIL": {
-    "translation": "fail"
+  "codeLabVertical.SOUND_LOSE" : {
+    "translation" : "6 - perdre"
   },
-  "codeLabVertical.TIMER_WARNING": {
-    "translation": "timer warning"
+  "codeLabVertical.SOUND_GAME_START" : {
+    "translation" : "7 - début de partie"
   },
-  "codeLabVertical.TIMER_END": {
-    "translation": "timer end"
+  "codeLabVertical.SOUND_CLOCK_TICK" : {
+    "translation" : "8 - battement d'horloge"
   },
-  "codeLabVertical.EIGHTIES_MUSIC": {
-    "translation": "eighties music"
+  "codeLabVertical.SOUND_BLING" : {
+    "translation" : "9 - tape-à-l'œil"
   },
-  "codeLabVertical.MAMBO_MUSIC": {
-    "translation": "mambo music"
+  "codeLabVertical.SOUND_SUCCESS" : {
+    "translation" : "10 - succès"
   },
-  "codeLabVertical.BACKGROUND_MUSIC": {
-    "translation": "background music"
+  "codeLabVertical.SOUND_FAIL" : {
+    "translation" : "11 - échec"
   },
-  "codeLabVertical.SPARKLE": {
-    "translation": "sparkle"
-                },
-  "codeLabVertical.SWOOSH": {
-    "translation": "swoosh"
+  "codeLabVertical.SOUND_TIMER_WARNING" : {
+    "translation" : "12 - avertissement de compte à rebours"
   },
-  "codeLabVertical.PING": {
-    "translation": "ping"
+  "codeLabVertical.SOUND_TIMER_END" : {
+    "translation" : "13 - fin du compte à rebours"
   },
-  "codeLabVertical.HOT_POTATO_END": {
-    "translation": "hot potato end"
+  "codeLabVertical.SOUND_SPARKLE" : {
+    "translation" : "14 - éclat"
   },
-  "codeLabVertical.HOT_POTATO_MUSIC_SLOW": {
-    "translation": "hot potato music slow"
+  "codeLabVertical.SOUND_SWOOSH" : {
+    "translation" : "15 - sifflement"
   },
-  "codeLabVertical.HOT_POTATO_MUSIC_MEDIUM": {
-    "translation": "hot potato music medium"
+  "codeLabVertical.SOUND_PING" : {
+    "translation" : "16 - bruit métallique"
   },
-  "codeLabVertical.HOT_POTATO_MUSIC_FAST": {
-    "translation": "hot potato music fast"
+  "codeLabVertical.SOUND_HOT_POTATO_END" : {
+    "translation" : "17 - fin de la patate chaude"
   },
-  "codeLabVertical.HOT_POTATO_MUSIC_SUPERFAST": {
-    "translation": "hot potato music superfast"
+  "codeLabVertical.SOUND_HOT_POTATO_MUSIC_SLOW" : {
+    "translation" : "18 - musique lente de la patate chaude"
   },
-  "codeLabVertical.MAGNET_PULL": {
-    "translation": "magnet pull"
+  "codeLabVertical.SOUND_HOT_POTATO_MUSIC_MEDIUM" : {
+    "translation" : "19 - musique moyenne de la patate chaude"
   },
-  "codeLabVertical.MAGNET_REPEL": {
-    "translation": "magnet repel"
+  "codeLabVertical.SOUND_HOT_POTATO_MUSIC_FAST" : {
+    "translation" : "20 - musique rapide de la patate chaude"
   },
-  "codeLabVertical.INSTRUMENT_1_MODE_1": {
-    "translation": "instrument 1 mode 1"
+  "codeLabVertical.SOUND_HOT_POTATO_MUSIC_SUPERFAST" : {
+    "translation" : "21 - musique super-rapide de la patate chaude"
   },
-  "codeLabVertical.INSTRUMENT_1_MODE_2": {
-    "translation": "instrument 1 mode 2"
+  "codeLabVertical.SOUND_MAGNET_PULL" : {
+    "translation" : "22 - attraction magnétique"
   },
-  "codeLabVertical.INSTRUMENT_1_MODE_3": {
-    "translation": "instrument 1 mode 3"
+  "codeLabVertical.SOUND_MAGNET_REPEL" : {
+    "translation" : "23 - répulsion magnétique"
   },
-  "codeLabVertical.INSTRUMENT_2_MODE_1": {
-    "translation": "instrument 2 mode 1"
+  "codeLabVertical.SOUND_INSTRUMENT_1_MODE_1" : {
+    "translation" : "24 - instrument 1 mode 1 boucle"
   },
-  "codeLabVertical.INSTRUMENT_2_MODE_2": {
-    "translation": "instrument 2 mode 2"
+  "codeLabVertical.SOUND_INSTRUMENT_1_MODE_2" : {
+    "translation" : "25 - instrument 1 mode 2 boucles"
   },
-  "codeLabVertical.INSTRUMENT_2_MODE_3": {
-    "translation": "instrument 2 mode 3"
+  "codeLabVertical.SOUND_INSTRUMENT_1_MODE_3" : {
+    "translation" : "26 - instrument 1 mode 3 boucles"
   },
-  "codeLabVertical.INSTRUMENT_3_MODE_1": {
-    "translation": "instrument 3 mode 1"
+  "codeLabVertical.SOUND_INSTRUMENT_2_MODE_1" : {
+    "translation" : "27 - instrument 2 mode 1 boucle"
   },
-  "codeLabVertical.INSTRUMENT_3_MODE_2": {
-    "translation": "instrument 3 mode 2"
+  "codeLabVertical.SOUND_INSTRUMENT_2_MODE_2" : {
+    "translation" : "28 - instrument 2 mode 2 boucles"
   },
-  "codeLabVertical.INSTRUMENT_3_MODE_3": {
-    "translation": "instrument 3 mode 3"
+  "codeLabVertical.SOUND_INSTRUMENT_2_MODE_3" : {
+    "translation" : "29 - instrument 2 mode 3 boucles"
   },
-  "codeLabVertical.ANY": {
-    "translation": "any"
+  "codeLabVertical.SOUND_INSTRUMENT_3_MODE_1" : {
+    "translation" : "30 - instrument 3 mode 1 boucle"
   },
-  "codeLabVertical.DRIVE": {
-    "translation": "driving"
+  "codeLabVertical.SOUND_INSTRUMENT_3_MODE_2" : {
+    "translation" : "31 - instrument 3 mode 2 boucles"
   },
-  "codeLabVertical.SAY": {
-    "translation": "saying text"
+  "codeLabVertical.SOUND_INSTRUMENT_3_MODE_3" : {
+    "translation" : "32 - instrument 3 mode 3 boucles"
   },
-  "codeLabVertical.ANIMATION": {
-    "translation": "animations"
+  "codeLabVertical.SOUND_TIMER_START" : {
+    "translation" : "33 - début du compte à rebours"
   },
-  "codeLabVertical.LIGHT_1": {
-    "translation": "light 1"
+  "codeLabVertical.SOUND_FIRE_TRUCK_ALARM" : {
+    "translation" : "34 - sirène de pompier"
   },
-  "codeLabVertical.LIGHT_2": {
-    "translation": "light 2"
+  "codeLabVertical.SOUND_CUBE_CHARGE" : {
+    "translation" : "35 - chargement de cube"
   },
-  "codeLabVertical.LIGHT_3": {
-    "translation": "light 3"
+  "codeLabVertical.SOUND_BACKGROUND_MUSIC" : {
+    "translation" : "36 - musique de fond en boucle"
   },
-  "codeLabVertical.LIGHT_4": {
-    "translation": "light 4"
+  "codeLabVertical.ANY" : {
+    "translation" : "quelconque"
   },
-  "codeLabVertical.ALL_LIGHTS": {
-    "translation": "all lights"
+  "codeLabVertical.DRIVE" : {
+    "translation" : "conduite"
   },
-  "codeLabVertical.SPIN": {
-    "translation": "spin"
+  "codeLabVertical.SAY" : {
+    "translation" : "prononciation du texte"
   },
-  "codeLabVertical.BLINK": {
-    "translation": "blink"
+  "codeLabVertical.ANIMATION" : {
+    "translation" : "Animations"
   },
-  "codeLabVertical.LIGHT": {
-    "translation": "draw pixels"
+  "codeLabVertical.LIGHT_1" : {
+    "translation" : "voyant 1"
   },
-  "codeLabVertical.ERASE": {
-    "translation": "erase pixels"
+  "codeLabVertical.LIGHT_2" : {
+    "translation" : "voyant 2"
   },
-  "codeLabVertical.TOP": {
-    "translation": "top"
+  "codeLabVertical.LIGHT_3" : {
+    "translation" : "voyant 3"
   },
-  "codeLabVertical.CENTER": {
-    "translation": "center"
+  "codeLabVertical.LIGHT_4" : {
+    "translation" : "voyant 4"
   },
-  "codeLabVertical.BOTTOM": {
-    "translation": "bottom"
+  "codeLabVertical.ALL_LIGHTS" : {
+    "translation" : "tous les voyants"
   },
-  "codeLabVertical.LEFT": {
-    "translation": "left"
+  "codeLabVertical.SPIN" : {
+    "translation" : "tourner"
   },
-  "codeLabVertical.RIGHT": {
-    "translation": "right"
+  "codeLabVertical.BLINK" : {
+    "translation" : "cligner des yeux"
   },
-  "codeLabVertical.RECEIVE_MESSAGE_BLOCK": {
-    "translation": "when %1 received"
+  "codeLabVertical.LIGHT" : {
+    "translation" : "dessiner les pixels"
   },
-  "codeLabVertical.codeLabVertical.BROADCAST_MESSAGE_AND_WAIT_BLOCK": {
-    "translation": "broadcast %1 and wait to complete"
+  "codeLabVertical.ERASE" : {
+    "translation" : "effacer des pixels"
+  },
+  "codeLabVertical.TOP" : {
+    "translation" : "haut"
+  },
+  "codeLabVertical.CENTER" : {
+    "translation" : "centre"
+  },
+  "codeLabVertical.BOTTOM" : {
+    "translation" : "bas"
+  },
+  "codeLabVertical.LEFT" : {
+    "translation" : "gauche"
+  },
+  "codeLabVertical.RIGHT" : {
+    "translation" : "droite"
+  },
+  "codeLabVertical.RECEIVE_MESSAGE_BLOCK" : {
+    "translation" : "quand %1 est reçu"
+  },
+  "codeLabVertical.BROADCAST_MESSAGE_AND_WAIT_BLOCK" : {
+    "translation" : "diffuser %1 et attendre qu'il s'achève"
+  },
+  "codeLabVertical.PLAY_ANIMATION_BY_NAME_BLOCK" : {
+    "translation" : "avancé : lire l'animation %1 du SDK"
+  },
+  "codeLabVertical.PLAY_ANIMATION_BY_TRIGGER_NAME_BLOCK" : {
+    "translation" : "avancé : lire le groupe d'animations %1 du SDK"
+  },
+  "codeLabVertical.EVENTS_BROADCAST_HAT" : {
+    "translation" : "quand %1 est reçu"
+  },
+  "codeLabVertical.EVENTS_BROADCAST_AND_WAIT" : {
+    "translation" : "diffuser %1 et attendre qu'il s'achève"
   }
 }

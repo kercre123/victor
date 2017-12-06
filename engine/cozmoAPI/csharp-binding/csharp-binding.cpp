@@ -25,6 +25,7 @@
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
+#include "util/md5/md5.h"
 
 #include <algorithm>
 #include <string>
@@ -37,6 +38,8 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/rollingFileLogger.h"
 #endif
+
+
 
 #if USE_DAS
 #include <DAS/DAS.h>
@@ -321,15 +324,25 @@ int cozmo_startup(const char *configuration_data)
   }
   DASNativeInit(std::move(dasPlatform), "cozmo");
 #endif
+  // DAS is started up with uploading paused, so now that it is initialized we can unpause. This prevents DAS from
+  // potentially logging events related to uploading before all initialization data has been set (which can cause
+  // malformed DAS events to be created which will be thrown out by the server).
+  DASPauseUploadingToServer(false);
   
 #if USE_DAS && ANKI_DEV_CHEATS
   // Now that das has been initialized, update the devlog data with the deviceID
   DevLoggingSystem::GetInstance()->UpdateDeviceId(DASGetPlatform()->GetDeviceId());
 #endif
 
+#if USE_DAS
+  MD5 playerIDHash(DASGetPlatform()->GetDeviceId());
+  Anki::Util::sSetGlobal("$player_id", playerIDHash.hexdigest().c_str());
+#endif
+  
   #if USE_DAS
   // try to post to server just in case we have internet at app startup
-  auto callback = [] (bool success) {
+  auto callback = [] (bool success, std::string response) {
+    (void) response;
     LOG_EVENT(success ? "das.upload" : "das.upload.fail", "live");
   };
   DASForceFlushWithCallback(callback);
