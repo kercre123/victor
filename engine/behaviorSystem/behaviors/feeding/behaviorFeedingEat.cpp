@@ -303,7 +303,7 @@ void BehaviorFeedingEat::TransitionToEating(Robot& robot)
   AnimationTrigger eatingAnimTrigger = CheckNeedsStateAndCalculateAnimation(robot);
   std::string eatingAnimName;
   
-  float timeDrainCube_s = 0;
+  uint32_t timeDrainCube_s = 0;
   RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
   if( robot_mgr->HasAnimationForTrigger(eatingAnimTrigger) )
   {
@@ -318,10 +318,10 @@ void BehaviorFeedingEat::TransitionToEating(Robot& robot)
     const auto& track = eatingAnimRawPointer->GetTrack<EventKeyFrame>();
     if(!track.IsEmpty()){
       // assumes only one keyframe per eating anim
-      timeDrainCube_s = track.GetLastKeyFrame()->GetTriggerTime()/1000.0f;
+      timeDrainCube_s = track.GetLastKeyFrame()->GetTriggerTime()/1000;
       PRINT_CH_INFO("Behaviors",
                     "BehaviorFeedingEat.TransitionToEating.TimeDrainCube",
-                    "For animation named %s time to drain cube is %f seconds",
+                    "For animation named %s time to drain cube is %d seconds",
                     eatingAnimName.c_str(),
                     timeDrainCube_s);
     }else{

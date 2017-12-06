@@ -42,7 +42,7 @@ public:
   virtual Result Update(Robot& robot) override;
   
   // Implementation of IFeedingListener
-  virtual void StartedEating(Robot& robot, const float duration_s) override;
+  virtual void StartedEating(Robot& robot, const int duration_s) override;
   virtual void EatingComplete(Robot& robot) override;
   virtual void EatingInterrupted(Robot& robot) override;
   
