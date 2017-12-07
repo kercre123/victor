@@ -20,7 +20,6 @@
 #endif
 
 #include "anki/vision/basestation/objectDetector.h"
-#include "anki/vision/basestation/objectDetectorModel_tensorflow_lite.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/profiler.h"
 
@@ -31,6 +30,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
 
+#include <fstream>
 #include <list>
 #include <queue>
 
@@ -42,6 +42,8 @@
 namespace Anki {
 namespace Vision {
 
+static const char * const kLogChannelName = "VisionSystem";
+  
 class ObjectDetector::Model : Vision::Profiler
 {
 public:
@@ -135,6 +137,7 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
   GetFromConfig(input_mean_B);
   GetFromConfig(input_std);
   GetFromConfig(labels);
+  GetFromConfig(top_K);
   
   GetFromConfig(mode);
   if(_params.mode == "detection")
@@ -156,7 +159,7 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
   const int num_threads = 1; // TODO: Parameter in config?
   
   std::string input_layer_type = "float";
-  std::vector<int> sizes = {1, _params.input_width, _params.input_height, 3};
+  std::vector<int> sizes = {1, _params.input_height, _params.input_width, 3};
   
   const std::string graphFileName = Util::FileUtils::FullFilePath({modelPath,_params.graph});
   
@@ -274,14 +277,13 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<DetectedObject>
   float* output = _interpreter->typed_output_tensor<float>(0);
   const size_t output_size = _labels.size();
   
-  DetectedObject object;
-  
   if(_isDetectionMode)
   {
     DEV_ASSERT(false, "ObjectDetector.Model.Run.DetectionModeNotSupported");
+    // TODO: Create a DetectedObject and put it in the returned objects list
     return RESULT_FAIL;
   }
-  else
+  else // Whole-image classification
   {
     std::vector<std::pair<float, int> > top_results;
     GetTopN(output, output_size, _params.top_K, _params.min_score, &top_results);
@@ -292,16 +294,19 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<DetectedObject>
     {
       if(result.second < _labels.size())
       {
-      object.timestamp = img.GetTimestamp();
-      object.score     = result.first;
-      object.name      = _labels.at((size_t)result.second);
-      object.rect      = Rectangle<s32>(0,0,img.GetNumCols(),img.GetNumRows());
+        objects.emplace_back(DetectedObject{
+          .timestamp = img.GetTimestamp(),
+          .score     = result.first,
+          .name      = _labels.at((size_t)result.second),
+          .rect      = Rectangle<s32>(0,0,img.GetNumCols(),img.GetNumRows())
+        });
       }
       else
       {
-        PRINT_NAMED_WARNING("ObjectDetector.Model.Run.BadResultIndex", "%d > %zu", result.second, _labels.size());
+        PRINT_NAMED_WARNING("ObjectDetector.Model.Run.BadResultIndex", "%d >= %zu", result.second, _labels.size());
       }
     }
+    
   }
   
   return RESULT_OK;

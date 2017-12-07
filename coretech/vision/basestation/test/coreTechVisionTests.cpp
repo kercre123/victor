@@ -709,7 +709,18 @@ GTEST_TEST(ObjectDetector, SimpleImage)
   std::string testImageFile = Util::FileUtils::FullFilePath({testImagePath, "daisy.jpg"});
   
   Json::Value config;
-  config["graph"] = "mobilenet_0.50_224_flower_photos_opencvdnn.pb";
+  if(USE_TENSORFLOW)
+  {
+    config["graph"] = "mobilenet_0.50_224_flower_photos_optimized.pb";
+  }
+  else if(USE_TENSORFLOW_LITE)
+  {
+    config["graph"] = "mobilenet_0.50_224_flower_photos_float.lite";
+  }
+  else
+  {
+    config["graph"] = "mobilenet_0.50_224_flower_photos_opencvdnn.pb";
+  }
   config["labels"] = "flower_photos_labels.txt";
   config["mode"] = "classification";
   config["input_width"] = 224;
@@ -761,8 +772,15 @@ GTEST_TEST(ObjectDetector, SimpleImage)
     result = DetectionHelper(imageCache, objects);
     ASSERT_EQ(RESULT_OK, result);
     
-    ASSERT_EQ(1, objects.size());
-    ASSERT_EQ("military uniform", objects.front().name);
+    for(auto const& object : objects)
+    {
+      printf("Found %s in image %s\n", object.name.c_str(), testImageFile.c_str());
+    }
+    EXPECT_EQ(1, objects.size());
+    if(!objects.empty())
+    {
+      EXPECT_EQ("military uniform", objects.front().name);
+    }
     
     testImageFile = Util::FileUtils::FullFilePath({testImagePath, "image3.JPG"});
     result = testImg.Load(testImageFile);
@@ -771,72 +789,82 @@ GTEST_TEST(ObjectDetector, SimpleImage)
     
     result = DetectionHelper(imageCache, objects);
     ASSERT_EQ(RESULT_OK, result);
-    ASSERT_EQ(1, objects.size());
-    ASSERT_NE(std::string::npos, objects.front().name.find("cat"));
+    
+    for(auto const& object : objects)
+    {
+      printf("Found %s in image %s\n", object.name.c_str(), testImageFile.c_str());
+    }
+    EXPECT_EQ(1, objects.size());
+    if(!objects.empty())
+    {
+      EXPECT_EQ(std::string::npos, objects.front().name.find("cat"));
+    }
   }
   
   //
   // Change models
   //
-  
-  if(USE_TENSORFLOW)
+  if(!USE_TENSORFLOW_LITE) // SSD model not supported by TF Lite
   {
-    // Tensorflow SSD
-    //config["graph"] = "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb"; // full floating point model
-    config["graph"] = "ssd_mobilenet_v1_coco_11_06_2017_quantized.pb"; // quantized model
-    //config["graph"] = "ssd_inception_v2_coco_11_06_2017_frozen.pb";
-    //config["graph"] = "rfcn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
-    //config["graph"] = "faster_rcnn_inception_resnet_v2_atrous_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "FloorMod"
-    //config["graph"] = "faster_rcnn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
-    config["labels"] = "cocostuff-labels-no-numbers.txt";
-    config["mode"] = "detection";
-    config["input_width"] = 200;
-    config["input_height"] = 200;
-    config["do_crop"] = true;
-    config["input_layer"] = "image_tensor";
-    config["output_scores_layer"] = "detection_scores";
-    config["output_classes_layer"] = "detection_classes";
-    config["output_boxes_layer"] = "detection_boxes";
-    config["output_num_detections_layer"] = "num_detections";
-    config["top_K"] = 5;
-    config["min_score"] = 0.5f;
-  }
-  else
-  {
-    // OpenCV DNN w/ Caffe SSD Model
-    config["graph"] = "MobileNetSSD_deploy";
-    config["labels"] = "coco-labels-20.txt";
-    config["input_width"] = 100;
-    config["input_height"] = 100;
-    config["input_mean_R"] = 127.5;
-    config["input_mean_G"] = 127.5;
-    config["input_mean_B"] = 127.5;
-    config["input_std"] = 127.5;
-    config["top_K"] = 1;
-    config["min_score"] = 0.5f;
-  }
-  
-  result = detector.Init(modelPath, config);
-  ASSERT_EQ(RESULT_OK, result);
-  
-  testImageFile = Util::FileUtils::FullFilePath({testImagePath, "image3.JPG"});
-  result = testImg.Load(testImageFile);
-  ASSERT_EQ(RESULT_OK, result);
-  imageCache.Reset(testImg);
+    if(USE_TENSORFLOW)
+    {
+      // Tensorflow SSD
+      //config["graph"] = "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb"; // full floating point model
+      config["graph"] = "ssd_mobilenet_v1_coco_11_06_2017_quantized.pb"; // quantized model
+      //config["graph"] = "ssd_inception_v2_coco_11_06_2017_frozen.pb";
+      //config["graph"] = "rfcn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
+      //config["graph"] = "faster_rcnn_inception_resnet_v2_atrous_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "FloorMod"
+      //config["graph"] = "faster_rcnn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
+      config["labels"] = "cocostuff-labels-no-numbers.txt";
+      config["mode"] = "detection";
+      config["input_width"] = 200;
+      config["input_height"] = 200;
+      config["do_crop"] = true;
+      config["input_layer"] = "image_tensor";
+      config["output_scores_layer"] = "detection_scores";
+      config["output_classes_layer"] = "detection_classes";
+      config["output_boxes_layer"] = "detection_boxes";
+      config["output_num_detections_layer"] = "num_detections";
+      config["top_K"] = 5;
+      config["min_score"] = 0.5f;
+    }
+    else
+    {
+      // OpenCV DNN w/ Caffe SSD Model
+      config["graph"] = "MobileNetSSD_deploy";
+      config["labels"] = "coco-labels-20.txt";
+      config["input_width"] = 100;
+      config["input_height"] = 100;
+      config["input_mean_R"] = 127.5;
+      config["input_mean_G"] = 127.5;
+      config["input_mean_B"] = 127.5;
+      config["input_std"] = 127.5;
+      config["top_K"] = 1;
+      config["min_score"] = 0.5f;
+    }
     
-  result = DetectionHelper(imageCache, objects);
-  ASSERT_EQ(RESULT_OK, result);
-
-  bool catFound = false;
-  std::for_each(objects.begin(), objects.end(),
-                [&catFound](const Vision::ObjectDetector::DetectedObject& object)
-                {
-                  if(object.name == "cat")
+    result = detector.Init(modelPath, config);
+    ASSERT_EQ(RESULT_OK, result);
+    
+    testImageFile = Util::FileUtils::FullFilePath({testImagePath, "image3.JPG"});
+    result = testImg.Load(testImageFile);
+    ASSERT_EQ(RESULT_OK, result);
+    imageCache.Reset(testImg);
+    
+    result = DetectionHelper(imageCache, objects);
+    ASSERT_EQ(RESULT_OK, result);
+    
+    bool catFound = false;
+    std::for_each(objects.begin(), objects.end(),
+                  [&catFound](const Vision::ObjectDetector::DetectedObject& object)
                   {
-                    catFound = true;
-                  }
-                });
-  EXPECT_TRUE(catFound);
+                    if(object.name == "cat")
+                    {
+                      catFound = true;
+                    }
+                  });
+    EXPECT_TRUE(catFound);
+  }
   
   Anki::Util::CpuProfiler::GetInstance().GetCurrentThreadProfiler()->LogProfile();
   
