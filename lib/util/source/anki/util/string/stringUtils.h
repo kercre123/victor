@@ -6,7 +6,7 @@
  *
  * Description: Utilities for strings
  *
- * Copyright: Anki, Inc. 2014
+ * Copyright: Anki, Inc. 2014-2017
  *
  **/
 
@@ -78,8 +78,12 @@ std::string UrlEncodeString(const std::string& str);
 // Simple way to handle comma-delimited strings
 std::string StringJoin(const std::vector<std::string>& strings, char delim=',');
 std::vector<std::string> StringSplit(const std::string& string, char delim=',');
-  
-void StringReplace( std::string& toChange, const std::string& oldStr, const std::string& newStr );
+
+// Replace all occurrences of 'oldStr' with 'newStr' using case-sensitive comparison
+void StringReplace(std::string& toChange, const std::string& oldStr, const std::string& newStr);
+
+// Replace all occurrences of 'oldStr' with 'newStr' using case-insensitive comparison
+void StringCaseInsensitiveReplace(std::string& toChange, const std::string& oldStr, const std::string& newStr);
 
 // @return posix Epoch time in seconds (time since Jan 1, 1970, midnight UTC) based on
 // the specified date string in ISO8601 format: `YYYY-MM-DDTHH:MM:SSZ`.

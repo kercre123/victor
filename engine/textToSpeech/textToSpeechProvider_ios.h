@@ -44,6 +44,7 @@ private:
   int _tts_speed;
   int _tts_shaping;
   int _tts_pitch;
+  std::string _tts_cozmo;
   
   // Path to temporary audio file
   std::string _path;

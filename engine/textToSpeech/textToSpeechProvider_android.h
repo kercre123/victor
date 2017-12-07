@@ -43,6 +43,7 @@ private:
   jint _tts_speed;
   jint _tts_shaping;
   jint _tts_pitch;
+  std::string _tts_cozmo;
 
 }; // class TextToSpeechProviderImpl
 

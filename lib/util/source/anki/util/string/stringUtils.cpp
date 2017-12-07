@@ -402,14 +402,29 @@ std::vector<std::string> StringSplit(const std::string& string, char delim)
   return result;
 }
 
-void StringReplace( std::string& toChange, const std::string& oldStr, const std::string& newStr )
+void StringReplace(std::string& toChange, const std::string& oldStr, const std::string& newStr)
 {
   std::string::size_type n = 0;
-  while( ( n = toChange.find( oldStr, n ) ) != std::string::npos )
+  while ((n = toChange.find(oldStr, n)) != std::string::npos)
   {
-    toChange.replace( n, oldStr.size(), newStr );
+    toChange.replace(n, oldStr.size(), newStr);
     n += newStr.size();
   }
+}
+
+void StringCaseInsensitiveReplace(std::string& toChange, const std::string& oldStr, const std::string& newStr)
+{
+  std::string::size_type n = 0;
+  while (n < toChange.length()) {
+    if (strncasecmp(toChange.c_str()+n, oldStr.c_str(), oldStr.length()) == 0) {
+      // Found a string match
+      toChange.replace(n, oldStr.length(), newStr);
+      n += newStr.length();
+      continue;
+    }
+    ++n;
+  }
+
 }
 
 uint32_t EpochSecFromIso8601UTCDateString(const std::string& dateString)

@@ -12,12 +12,29 @@
 #define __Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_acapela_H__
 
 #include "util/global/globalDefinitions.h"
+#include "util/helpers/ankiDefines.h"
 
 #include <string>
 
 namespace Anki {
 namespace Cozmo {
 namespace TextToSpeech {
+
+// Default parameters
+#if defined(ANKI_PLATFORM_OSX)
+#define TTS_DEFAULT_VOICE "Ryan22k_CO"
+#elif defined(ANKI_PLATFORM_IOS)
+#define TTS_DEFAULT_VOICE "enu_ryan_22k_co.fl"
+#elif defined(ANKI_PLATFORM_ANDROID)
+#define TTS_DEFAULT_VOICE "Ryan"
+#endif
+
+#define TTS_DEFAULT_SPEED      100
+#define TTS_DEFAULT_SHAPING    100
+#define TTS_DEFAULT_PITCH      100
+#define TTS_DEFAULT_COZMO      "Cozmo" // No translation
+#define TTS_LEADINGSILENCE_MS  50      // Minimum allowed by Acapela TTS SDK
+#define TTS_TRAILINGSILENCE_MS 50      // Minimum allowed by Acapela TTS SDK
   
 class AcapelaTTS
 {

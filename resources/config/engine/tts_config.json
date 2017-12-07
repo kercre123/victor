@@ -21,7 +21,8 @@
     "en":
     {
       "voice": "Ryan22k_CO",
-      "speed": 85
+      "speed": 85,
+      "cozmo": "\\Prn=k_h O z m @U\\"
     },
     "fr":
     {
@@ -31,7 +32,8 @@
     "de":
     {
       "voice": "Klaus22k_CO",
-      "speed": 79
+      "speed": 79,
+      "cozmo": "\\Prn=k O z m o\\"
     },
     "ja":
     {
@@ -46,7 +48,8 @@
     "en":
     {
       "voice": "enu_ryan_22k_co.fl",
-      "speed": 85
+      "speed": 85,
+      "cozmo": "\\Prn=k_h O z m @U\\"
     },
     "fr":
     {
@@ -56,7 +59,8 @@
     "de":
     {
       "voice": "ged_klaus_22k_co.fl",
-      "speed": 79
+      "speed": 79,
+      "cozmo": "\\Prn=k O z m o\\"
     },
     "ja":
     {
@@ -71,7 +75,8 @@
     "en":
     {
       "voice": "Ryan",
-      "speed": 50
+      "speed": 50,
+      "cozmo":  "\\Prn=k_h O z m @U\\"
     },
     "fr":
     {
@@ -81,7 +86,8 @@
     "de":
     {
       "voice": "Klaus",
-      "speed": 43
+      "speed": 43,
+      "cozmo": "\\Prn=k O z m o\\"
     },
     "ja":
     {

@@ -48,6 +48,7 @@ private:
   std::string _tts_voice;
   int _tts_speed;
   int _tts_shaping;
+  std::string _tts_cozmo;
   bool _tts_licensed;
   
   // Opaque handle to Acapela TTS SDK

@@ -22,6 +22,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/environment/locale.h"
 #include "util/logging/logging.h"
+#include "util/string/stringUtils.h"
 
 #include <thread>
 
@@ -40,7 +41,6 @@
 #define LOG_TRACE(...) { }
 #endif
 
-
 // Acapela configuration
 #import "AcapelaSpeech.h"
 
@@ -50,19 +50,15 @@
 #define CONSOLE_GROUP "TextToSpeech.VoiceParameters"
 
 namespace {
-  CONSOLE_VAR_RANGED(s32, kVoiceSpeed, CONSOLE_GROUP, 100, 30, 300);
-  CONSOLE_VAR_RANGED(s32, kVoiceShaping, CONSOLE_GROUP, 100, 70, 140);
-  CONSOLE_VAR_RANGED(s32, kVoicePitch, CONSOLE_GROUP, 100, 70, 160);
+  CONSOLE_VAR_RANGED(s32, kVoiceSpeed, CONSOLE_GROUP, TTS_DEFAULT_SPEED, 30, 300);
+  CONSOLE_VAR_RANGED(s32, kVoiceShaping, CONSOLE_GROUP, TTS_DEFAULT_SHAPING, 70, 140);
+  CONSOLE_VAR_RANGED(s32, kVoicePitch, CONSOLE_GROUP, TTS_DEFAULT_PITCH, 70, 160);
 }
 
 #endif
 
 // Max samples per read
 #define TTS_BLOCKSIZE (16*1024)
-
-// Fixed parameters
-#define TTS_LEADINGSILENCE_MS  50 // Minimum allowed by Acapela TTS SDK
-#define TTS_TRAILINGSILENCE_MS 50 // Minimum allowed by Acapela TTS SDK
 
 //
 // This interface is used to provide a pure-C interface on top of Acapela's Objective-C SDK.
@@ -263,10 +259,10 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
     
     // Set up default parameters
     _tts_language = locale->GetLanguageString();
-    _tts_voice = "enu_ryan_22k_co.fl";
-    _tts_speed = 100;
-    _tts_shaping = 100;
-    _tts_pitch = 100;
+    _tts_voice = TTS_DEFAULT_VOICE;
+    _tts_speed = TTS_DEFAULT_SPEED;
+    _tts_shaping = TTS_DEFAULT_SHAPING;
+    _tts_pitch = TTS_DEFAULT_PITCH;
 
     //
     // Allow language configuration to override defaults.  Note pitch is not
@@ -279,11 +275,12 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
     JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kSpeedKey, _tts_speed);
     JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kShapingKey, _tts_shaping);
     //JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kPitchKey, _tts_pitch);
-    
+    JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kCozmoKey, _tts_cozmo);
+
     LOG_INFO("TextToSpeechProvider.Initialize",
-             "language=%s voice=%s speed=%d shaping=%d pitch=%d",
+             "language=%s voice=%s speed=%d shaping=%d pitch=%d cozmo=%s",
              _tts_language.c_str(), _tts_voice.c_str(), _tts_speed,
-             _tts_shaping, _tts_pitch);
+             _tts_shaping, _tts_pitch, _tts_cozmo.c_str());
 
 #if REMOTE_CONSOLE_ENABLED
     // Initialize debug sliders to match voice params
@@ -338,10 +335,14 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
     _tts_pitch = kVoicePitch;
 #endif
 
+    // Perform name substitution
+    std::string replacement_text = text;
+    Anki::Util::StringCaseInsensitiveReplace(replacement_text, "Cozmo", _tts_cozmo);
+
     // Adjust base speed by scalar, then clamp to allowed range
     const float speed = AcapelaTTS::GetSpeechRate(_tts_speed, durationScalar);
 
-    Result result = [impl generateAudioFile:text.c_str()
+    Result result = [impl generateAudioFile:replacement_text.c_str()
                                        path:_path.c_str()
                                       speed:speed
                                     shaping:_tts_shaping

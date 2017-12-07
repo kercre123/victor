@@ -23,6 +23,7 @@
 #include "util/jni/includeJni.h"
 #include "util/jni/jniUtils.h"
 #include "util/logging/logging.h"
+#include "util/string/stringUtils.h"
 
 // Log options
 #define LOG_CHANNEL    "TextToSpeech"
@@ -37,9 +38,9 @@
 #define CONSOLE_GROUP "TextToSpeech.VoiceParameters"
 
 namespace {
-  CONSOLE_VAR_RANGED(s32, kVoiceSpeed, CONSOLE_GROUP, 100, 30, 300);
-  CONSOLE_VAR_RANGED(s32, kVoiceShaping, CONSOLE_GROUP, 100, 70, 140);
-  CONSOLE_VAR_RANGED(s32, kVoicePitch, CONSOLE_GROUP, 100, 70, 160);
+  CONSOLE_VAR_RANGED(s32, kVoiceSpeed, CONSOLE_GROUP, TTS_DEFAULT_SPEED, 30, 300);
+  CONSOLE_VAR_RANGED(s32, kVoiceShaping, CONSOLE_GROUP, TTS_DEFAULT_SHAPING, 70, 140);
+  CONSOLE_VAR_RANGED(s32, kVoicePitch, CONSOLE_GROUP, TTS_DEFAULT_PITCH, 70, 160);
 }
 
 #endif
@@ -123,10 +124,11 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
 
   // Set up default parameters
   _tts_path = dataPlatform->pathToResource(Anki::Util::Data::Scope::Resources, "tts");
-  _tts_voice = "Ryan";
-  _tts_speed = 100;
-  _tts_shaping = 100;
-  _tts_pitch = 100;
+  _tts_voice = TTS_DEFAULT_VOICE;
+  _tts_speed = TTS_DEFAULT_SPEED;
+  _tts_shaping = TTS_DEFAULT_SHAPING;
+  _tts_pitch = TTS_DEFAULT_PITCH;
+  _tts_cozmo = TTS_DEFAULT_COZMO;
 
   //
   // Allow language configuration to override defaults.  Note pitch is not
@@ -140,9 +142,10 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
   JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kSpeedKey, _tts_speed);
   JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kShapingKey, _tts_shaping);
   //JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kPitchKey, _tts_pitch);
+  JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kCozmoKey, _tts_cozmo);
 
-  LOG_DEBUG("TextToSpeechProvider.Initialize", "language=%s voice=%s speed=%d shaping=%d pitch=%d",
-            language.c_str(), _tts_voice.c_str(), _tts_speed, _tts_shaping, _tts_pitch);
+  LOG_DEBUG("TextToSpeechProvider.Initialize", "language=%s voice=%s speed=%d shaping=%d pitch=%d cozmo=%s",
+            language.c_str(), _tts_voice.c_str(), _tts_speed, _tts_shaping, _tts_pitch, _tts_cozmo.c_str());
 
 #if REMOTE_CONSOLE_ENABLED
   kVoiceSpeed = _tts_speed;
@@ -246,8 +249,12 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
 
   const auto before = std::chrono::steady_clock::now();
 
+  // Perform name substitution
+  std::string replacement_text = text;
+  Anki::Util::StringCaseInsensitiveReplace(replacement_text, "Cozmo", _tts_cozmo);
+  
   // Marshal arguments for JNI
-  const jstring jtext = env->NewStringUTF(text.c_str());
+  const jstring jtext = env->NewStringUTF(replacement_text.c_str());
   const jint jspeed = AcapelaTTS::GetSpeechRate(_tts_speed, durationScalar);
 
   // Set singleton ptr, execute method, then reset singleton ptr

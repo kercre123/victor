@@ -22,6 +22,8 @@
 #include "util/environment/locale.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
+#include "util/string/stringUtils.h"
+
 #include <cmath>
 
 // Log options
@@ -44,10 +46,6 @@
 
 /* How many samples do we fetch in one call? */
 #define ACAPELA_SAMPLE_BUFSIZ (16*1024)
-
-// Fixed parameters
-#define TTS_LEADINGSILENCE_MS  50 // Minimum allowed by Acapela TTS SDK
-#define TTS_TRAILINGSILENCE_MS 50 // Minimum allowed by Acapela TTS SDK
 
 namespace Anki {
 namespace Cozmo {
@@ -81,9 +79,10 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx,
   
   // Set up default parameters
   _tts_language = locale->GetLanguageString();
-  _tts_voice = "Ryan22k_CO";
-  _tts_speed = 100;
-  _tts_shaping = 100;
+  _tts_voice = TTS_DEFAULT_VOICE;
+  _tts_speed = TTS_DEFAULT_SPEED;
+  _tts_shaping = TTS_DEFAULT_SHAPING;
+  _tts_cozmo = TTS_DEFAULT_COZMO;
   _tts_licensed = false;
 
   // Allow language configuration to override defaults
@@ -91,10 +90,11 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx,
   JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kVoiceKey, _tts_voice);
   JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kSpeedKey, _tts_speed);
   JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kShapingKey, _tts_shaping);
+  JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kCozmoKey, _tts_cozmo);
     
   LOG_INFO("TextToSpeechProviderImpl.Initialize",
-           "tts_language=%s tts_voice=%s tts_speed=%d tts_shaping=%d",
-           _tts_language.c_str(), _tts_voice.c_str(), _tts_speed, _tts_shaping);
+           "tts_language=%s tts_voice=%s tts_speed=%d tts_shaping=%d tts_cozmo=%s",
+           _tts_language.c_str(), _tts_voice.c_str(), _tts_speed, _tts_shaping, _tts_cozmo.c_str());
 
   // Initialize Acapela DLL
   std::string resources = dataPlatform->pathToResource(Scope::Resources, "tts");
@@ -223,12 +223,17 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
     return RESULT_FAIL_INVALID_PARAMETER;
   }
 
+  // Perform name replacement
+  std::string revised_text = text;
+  Anki::Util::StringCaseInsensitiveReplace(revised_text, "Cozmo", _tts_cozmo);
+  LOG_WARNING("TextToSpeechProviderImpl.CreateAudioData", "%s -> %s", text.c_str(), revised_text.c_str());
+
   // Initialize output buffer
   data.Init(AcapelaTTS::GetSampleRate(), AcapelaTTS::GetNumChannels());
   
   // Start processing text
-  DWORD dwTextFlags = BABTTS_TEXT | BABTTS_TXT_UTF8 | BABTTS_READ_DEFAULT | BABTTS_TAG_SAPI;
-  err = BabTTS_InsertText(_lpBabTTS, text.c_str(), dwTextFlags);
+  const DWORD dwTextFlags = BABTTS_TEXT | BABTTS_TXT_UTF8 | BABTTS_READ_DEFAULT | BABTTS_TAG_SAPI;
+  err = BabTTS_InsertText(_lpBabTTS, revised_text.c_str(), dwTextFlags);
   if (E_BABTTS_NOERROR != err) {
     LOG_ERROR("TextToSpeechProvider.CreateAudioData.InsertText",
               "Unable to insert text (%s)", BabTTS_GetErrorName(err));

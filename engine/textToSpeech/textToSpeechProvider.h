@@ -83,6 +83,7 @@ public:
   static constexpr const char * kVoiceKey = "voice";
   static constexpr const char * kSpeedKey = "speed";
   static constexpr const char * kShapingKey = "shaping";
+  static constexpr const char * kCozmoKey = "cozmo";
   
   TextToSpeechProvider(const CozmoContext* ctx, const Json::Value& tts_config);
   ~TextToSpeechProvider();
