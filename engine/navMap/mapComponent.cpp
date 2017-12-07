@@ -991,9 +991,11 @@ void MapComponent::AddDetectedObstacles(const std::list<Poly2f>& polys)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::AddDetectedObstacles(const OverheadEdgeFrame& edgeObstacles)
 {
+
   // TODO: Do something different with these vs. "interesting" overhead edges?
   if( edgeObstacles.groundPlaneValid && !edgeObstacles.chains.GetVector().empty() )
   {
+
     AddVisionOverheadEdges(edgeObstacles);
   }
 }
@@ -1025,13 +1027,14 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
   {
     // "Failing" because of an origin mismatch is OK, so don't freak out, but don't
     // go any further either.
+    PRINT_NAMED_WARNING("MapComponent.AddVisionOverheadEdges.OriginMismatch", "Origin not found in state history");
     return RESULT_OK;
   }
   
   const bool poseIsGood = ( RESULT_OK == poseRet ) && (histState != nullptr);
   if ( !poseIsGood ) {
     // this can happen if robot status messages are lost
-    PRINT_CH_INFO("MapComponent", "MapComponent.AddVisionOverheadEdges.HistoricalPoseNotFound",
+    PRINT_NAMED_WARNING("MapComponent.AddVisionOverheadEdges.HistoricalPoseNotFound",
                   "Pose not found for timestamp %u (hist: %u to %u). Edges ignored for this timestamp.",
                   frameInfo.timestamp,
                   _robot->GetStateHistory()->GetOldestTimeStamp(),
@@ -1043,7 +1046,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
   // for the edges we just received is from before delocalizing, so we should discard it.
   Pose3d observedPose;
   if ( !histState->GetPose().GetWithRespectTo( _robot->GetWorldOrigin(), observedPose) ) {
-    PRINT_CH_INFO("MapComponent", "MapComponent.AddVisionOverheadEdges.NotInThisWorld",
+    PRINT_NAMED_WARNING("MapComponent.AddVisionOverheadEdges.NotInThisWorld",
                   "Received timestamp %d, but could not translate that timestamp into current origin.", frameInfo.timestamp);
     return RESULT_OK;
   }
@@ -1330,11 +1333,12 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
           {
             // we have a valid and long segment add clear from camera to segment
             Quad2f clearQuad = { segmentStart, cameraOrigin, segmentEnd, cameraOrigin }; // TL, BL, TR, BR
-            bool success = GroundPlaneROI::ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
-            DEV_ASSERT(success, "AddVisionOverheadEdges.FailedQuadClamp");
-            if ( success ) {
+            GroundPlaneROI::ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
+            // bool success = GroundPlaneROI::ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
+            // DEV_ASSERT(success, "AddVisionOverheadEdges.FailedQuadClamp");
+            // if ( success ) {
               visionQuadsClear.emplace_back(clearQuad);
-            }
+            // }
             // if it's a detected border, add the segment
             if ( chain.isBorder ) {
               visionSegmentsWithInterestingBorders.emplace_back(segmentStart, segmentEnd);
@@ -1524,8 +1528,10 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
     }
   
     // add interesting edge
+    MemoryMapData_ProxObstacle data({0,0}, frameInfo.timestamp);
     if ( currentNavMemoryMap ) {
-        currentNavMemoryMap->AddLine(borderSegment.from, borderSegment.to, MemoryMapData(EContentType::InterestingEdge, frameInfo.timestamp));
+
+        currentNavMemoryMap->AddLine(borderSegment.from, borderSegment.to, data);
     }
   }
   

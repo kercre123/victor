@@ -103,6 +103,8 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
 
   // STEP 3: Find leading edge in the classified mask (i.e. closest edge of obstacle to robot)
   OverheadEdgeFrame edgeFrame;
+  edgeFrame.timestamp = image.GetTimestamp();
+  edgeFrame.groundPlaneValid = true;
   OverheadEdgeChainVector& candidateChains = edgeFrame.chains;
   OverheadEdgePoint edgePoint;
   const Vision::Image& overheadMask = groundPlaneROI.GetOverheadMask();
@@ -129,7 +131,7 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
           // Note that rows in ground plane image are robot y, and cols are robot x.
           // Just need to offset them to the right origin.
           edgePoint.position.x() = static_cast<f32>(j) + overheadOrigin.x();
-          edgePoint.position.y() = static_cast<f32>(i) + overheadOrigin.y();
+          edgePoint.position.y() = -1*(static_cast<f32>(i) + overheadOrigin.y());
           edgePoint.gradient = 0.f; // TODO: Do we need the gradient for anything?
           
           candidateChains.AddEdgePoint(edgePoint, true);

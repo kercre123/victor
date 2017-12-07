@@ -386,7 +386,7 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
     // we just try to avoid it, if possible
 
     if( _impl->_timeToPlan || _impl->_plannerRunning ) {
-
+      DEV_ASSERT( false, "planner running" );
       // thread is already running.
       PRINT_NAMED_WARNING("LatticePlanner.ComputePath.AlreadyRunning",
                           "Tried to compute a new path, but the planner is already running! (timeToPlan %d, running %d)",

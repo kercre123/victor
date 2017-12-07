@@ -28,7 +28,7 @@ namespace {
 
   const Vec3f kProxSensorPositionVec_mm{kProxSensorPosition_mm[0], kProxSensorPosition_mm[1], kProxSensorPosition_mm[2]};
 
-  const f32 kObsPadding_mm       = 1.0; // extra padding to add to prox obstacle
+  const f32 kObsPadding_mm       = 0.0; // extra padding to add to prox obstacle
   const u16 kMinObsThreshold_mm  = 30;  // Minimum distance for registering an object detected as an obstacle
   const u16 kMaxObsThreshold_mm  = 400; // Maximum distance for registering an object detected as an obstacle  
   const f32 kMinQualityThreshold = .15; // Minimum sensor reading strength before trying to use sensor data

@@ -24,7 +24,7 @@ ConvexPolygon::ConvexPolygon(const Poly2f& basePolygon)
 : _poly(basePolygon)
 , _currDirection(CW)
 {
-  assert(basePolygon.size() > 2);
+  assert(basePolygon.size() >= 2);
   // check first internal angle and force to [0, 2π) to get current clock direction
   f32 internalAngle = std::fmod(_poly.GetEdgeAngle(1) - _poly.GetEdgeAngle(0) + 2 * M_PI, 2 * M_PI);
   if (internalAngle < M_PI) // poly inserted is oriented counter clockwise, so reverse it to CW
