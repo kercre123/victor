@@ -874,8 +874,29 @@ void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<Robot
   }
   
   if(robot->GetIsCliffReactionDisabled()){
-    IActionRunner* action = new TriggerLiftSafeAnimationAction(*robot, AnimationTrigger::DroneModeCliffEvent);
-    robot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
+    // Special case handling of potential cliff event when in drone/explorer mode...
+
+    // Don't try to play the cliff event animation for drone/explorer mode if already running
+    bool playAnim = true;
+    auto & actionList = robot->GetActionList();
+    for(auto queuesIter = actionList.begin(); queuesIter != actionList.end();  ++queuesIter) {
+      if(queuesIter->second.GetCurrentAction()->GetType() == RobotActionType::PLAY_ANIMATION_DRONE_MODE_CLIFF_EVENT){
+        playAnim = false;
+        break;
+      }
+    }
+
+    if(playAnim) {
+      // Trigger the cliff event animation for drone/explorer mode if it is not already running and:
+      // - set interruptRunning = true so any currently-streaming animation will be aborted in favor of this
+      // - set a timeout value of 3 seconds for this animation
+      // - set strictCooldown = true so we do NOT simply choose the animation closest to being off
+      //   cooldown when all animations in the group are on cooldown
+      IActionRunner* action = new TriggerLiftSafeAnimationAction(*robot, AnimationTrigger::DroneModeCliffEvent, 1,
+                                                                 true, (u8)AnimTrackFlag::NO_TRACKS, 3.f, true);
+      action->SetType(RobotActionType::PLAY_ANIMATION_DRONE_MODE_CLIFF_EVENT);
+      robot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
+    }
   } else if (!robot->GetContext()->IsInSdkMode()) {
     PRINT_NAMED_WARNING("Robot.HandlePotentialCliffEvent", "Got potential cliff message but not in drone mode");
     robot->GetMoveComponent().StopAllMotors();

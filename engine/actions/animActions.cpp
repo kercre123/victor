@@ -218,10 +218,12 @@ namespace Anki {
                              u32 numLoops,
                              bool interruptRunning,
                              u8 tracksToLock,
-                             float timeout_sec)
+                             float timeout_sec,
+                             bool strictCooldown)
     : PlayAnimationAction(robot, "", numLoops, interruptRunning, tracksToLock, timeout_sec)
     , _animTrigger(animEvent)
     , _animGroupName("")
+    , _strictCooldown(strictCooldown)
     {
       SetAnimGroupFromTrigger(animEvent);
       
@@ -254,7 +256,7 @@ namespace Anki {
         return ActionResult::NO_ANIM_NAME;
       }
       
-      _animName = _robot.GetAnimationStreamer().GetAnimationNameFromGroup(_animGroupName, _robot);
+      _animName = _robot.GetAnimationStreamer().GetAnimationNameFromGroup(_animGroupName, _robot, _strictCooldown);
       if( _animName.empty() ) {
         return ActionResult::NO_ANIM_NAME;
       }
@@ -283,8 +285,10 @@ namespace Anki {
                                             AnimationTrigger animEvent,
                                             u32 numLoops,
                                             bool interruptRunning,
-                                            u8 tracksToLock)
-    : TriggerAnimationAction(robot, animEvent, numLoops, interruptRunning,TracksToLock(robot, tracksToLock))
+                                            u8 tracksToLock,
+                                            float timeout_sec,
+                                            bool strictCooldown)
+    : TriggerAnimationAction(robot, animEvent, numLoops, interruptRunning, TracksToLock(robot, tracksToLock), timeout_sec, strictCooldown)
     {
     }
     

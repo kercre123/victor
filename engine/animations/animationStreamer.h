@@ -91,7 +91,10 @@ namespace Cozmo {
     const std::string GetStreamingAnimationName() const;
     const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
     
-    const std::string& GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const;
+    // Set strictCooldown = true when we do NOT want to simply choose the animation closest to
+    // being off cooldown when all animations in the group are on cooldown
+    const std::string& GetAnimationNameFromGroup(const std::string& name, const Robot& robot, bool strictCooldown = false) const;
+
     const Animation* GetCannedAnimation(const std::string& name) const;
 
     // Required by HasSettableParameters:

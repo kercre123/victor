@@ -48,7 +48,8 @@ namespace Util {
       // Retrieve an animation based on the mood manager
       const std::string& GetAnimationName(const MoodManager& moodManager,
                                           AnimationGroupContainer& animationGroupContainer,
-                                          float headAngleRad=0.f) const;
+                                          float headAngleRad=0.f,
+                                          bool strictCooldown=false) const;
 
       // Just retrieve first animation from the group
       const std::string& GetFirstAnimationName() const;
@@ -62,7 +63,11 @@ namespace Util {
       
     private:
       // Retrieve an animation based on a simple mood
-      const std::string& GetAnimationName(SimpleMoodType mood, float currentTime_s, AnimationGroupContainer& animationGroupContainer, float headAngleRad=0.f) const;
+      const std::string& GetAnimationName(SimpleMoodType mood,
+                                          float currentTime_s,
+                                          AnimationGroupContainer& animationGroupContainer,
+                                          float headAngleRad=0.f,
+                                          bool strictCooldown=false) const;
       
       Util::RandomGenerator&  _rng;
       

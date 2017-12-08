@@ -117,6 +117,7 @@ namespace Anki {
         }
         
         case RobotActionType::PLAY_ANIMATION:
+        case RobotActionType::PLAY_ANIMATION_DRONE_MODE_CLIFF_EVENT:
         {
           _completionUnion.Set_animationCompleted(AnimationCompleted());
           break;

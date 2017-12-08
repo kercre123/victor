@@ -93,7 +93,8 @@ namespace Anki {
                                       u32 numLoops = 1,
                                       bool interruptRunning = true,
                                       u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
-                                      float timeout_sec = _kDefaultTimeout_sec);
+                                      float timeout_sec = _kDefaultTimeout_sec,
+                                      bool strictCooldown = false);
       
     protected:
       virtual ActionResult Init() override;
@@ -105,6 +106,7 @@ namespace Anki {
     private:
       AnimationTrigger _animTrigger;
       std::string _animGroupName;
+      bool _strictCooldown;
       
     }; // class TriggerAnimationAction
     
@@ -120,7 +122,9 @@ namespace Anki {
                                       AnimationTrigger animEvent,
                                       u32 numLoops = 1,
                                       bool interruptRunning = true,
-                                      u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS);
+                                      u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
+                                      float timeout_sec = _kDefaultTimeout_sec,
+                                      bool strictCooldown = false);
       static u8 TracksToLock(Robot& robot, u8 tracksCurrentlyLocked);
       
       

@@ -153,11 +153,11 @@ namespace Cozmo {
 
   } // SetupHandlers()
 
-  const std::string& AnimationStreamer::GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const 
+  const std::string& AnimationStreamer::GetAnimationNameFromGroup(const std::string& name, const Robot& robot, bool strictCooldown) const
   {
     const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
     if(group != nullptr && !group->IsEmpty()) {
-      return group->GetAnimationName(robot.GetMoodManager(), _animationGroups, robot.GetHeadAngle());
+      return group->GetAnimationName(robot.GetMoodManager(), _animationGroups, robot.GetHeadAngle(), strictCooldown);
     }
     static const std::string empty("");
     return empty;
