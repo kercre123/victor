@@ -348,6 +348,8 @@ namespace Cozmo {
 
     virtual bool IsDone() override;
     
+    void Reset() { _curFrame = 0; }
+    
     const std::string& GetName() const { return _animName; }
     const AnimKeyFrame::FaceImage& GetFaceImage() const { return _faceImageMsg; }
     

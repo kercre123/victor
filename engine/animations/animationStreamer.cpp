@@ -311,6 +311,16 @@ namespace Cozmo {
                        _endOfAnimationSent,
                        ToString(_sendBuffer).c_str());
       
+      // Reset the current FaceAnimationKeyFrame if there is one.
+      // Note: This is currently the only keyframe that modifies a variable
+      // as it's read and needs to be reset before the next time it's read,
+      // which is why we're not resetting all tracks in the same way
+      auto & faceAnimTrack = _streamingAnimation->GetTrack<FaceAnimationKeyFrame>();
+      if (faceAnimTrack.HasFramesLeft()) {
+        auto & faceKeyFrame = faceAnimTrack.GetCurrentKeyFrame();
+        faceKeyFrame.Reset();
+      }
+      
       // Reset streamer state
       _startOfAnimationSent = false;
       _endOfAnimationSent = false;
