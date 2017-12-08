@@ -31,13 +31,12 @@ class ReactionObjectData;
 class StrategyObjectMoved : public IStateConceptStrategy, private IStateConceptStrategyEventHandler
 {
 public:
-  StrategyObjectMoved(BehaviorExternalInterface& behaviorExternalInterface,
-                      IExternalInterface& robotExternalInterface,
-                      const Json::Value& config);
+  StrategyObjectMoved(const Json::Value& config);
 
   virtual ~StrategyObjectMoved();
 
 protected:
+  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual void HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   

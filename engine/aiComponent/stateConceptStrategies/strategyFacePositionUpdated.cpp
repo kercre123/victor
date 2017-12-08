@@ -33,17 +33,9 @@ CONSOLE_VAR_RANGED(f32, kFaceReactCooldown_s, "AcknowledgementBehaviors", 4.0f, 
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyFacePositionUpdated::StrategyFacePositionUpdated(BehaviorExternalInterface& behaviorExternalInterface,
-                                                          IExternalInterface& robotExternalInterface,
-                                                          const Json::Value& config)
+StrategyFacePositionUpdated::StrategyFacePositionUpdated(const Json::Value& config)
 : IStateConceptStrategy(config)
-, _messageHelper(new StateConceptStrategyMessageHelper(this, behaviorExternalInterface))
 {
-  
-  _messageHelper->SubscribeToTags({
-    EngineToGameTag::RobotObservedFace
-  });
-
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -51,7 +43,16 @@ StrategyFacePositionUpdated::~StrategyFacePositionUpdated()
 {
 
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void StrategyFacePositionUpdated::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  _messageHelper.reset(new StateConceptStrategyMessageHelper(this, behaviorExternalInterface));
+  _messageHelper->SubscribeToTags({
+    EngineToGameTag::RobotObservedFace
+  });
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool StrategyFacePositionUpdated::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 { 

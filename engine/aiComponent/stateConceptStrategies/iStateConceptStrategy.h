@@ -37,6 +37,9 @@ public:
   explicit IStateConceptStrategy(const Json::Value& config);
   virtual ~IStateConceptStrategy() {};
 
+  // Called once after construction, and before any other functions are called
+  void Init(BehaviorExternalInterface& behaviorExternalInterface);
+
   // reset this strategy. For many strategies this call won't do anything, but if the strategy is internally
   // tracking something (e.g. time, number of events), this call will reset the state. This must be called at
   // least once before AreStateConditionsMet is called
@@ -51,11 +54,13 @@ protected:
   // ResetInternal is called whenever Reset is called, which depends on how the strategy is being used
   virtual void ResetInternal(BehaviorExternalInterface& behaviorExternalInterface) {}
   
+  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) {}
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const = 0;
 
 private:
   StateConceptStrategyType _strategyType;
   bool _hasEverBeenReset = false;
+  bool _isInitialized = false;
 };
 
 } // namespace Cozmo

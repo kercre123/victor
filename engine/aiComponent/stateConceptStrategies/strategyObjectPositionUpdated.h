@@ -30,13 +30,12 @@ class StateConceptStrategyMessageHelper;
 class StrategyObjectPositionUpdated : public IStateConceptStrategy, private IStateConceptStrategyEventHandler
 {
 public:
-  StrategyObjectPositionUpdated(BehaviorExternalInterface& behaviorExternalInterface,
-                                IExternalInterface& robotExternalInterface,
-                                const Json::Value& config);
+  StrategyObjectPositionUpdated(const Json::Value& config);
 
   virtual ~StrategyObjectPositionUpdated();
 
 protected:
+  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual void HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   

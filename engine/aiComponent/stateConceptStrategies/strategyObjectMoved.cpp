@@ -60,24 +60,28 @@ private:
 };
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyObjectMoved::StrategyObjectMoved(BehaviorExternalInterface& behaviorExternalInterface,
-                                         IExternalInterface& robotExternalInterface,
-                                         const Json::Value& config)
+StrategyObjectMoved::StrategyObjectMoved(const Json::Value& config)
 : IStateConceptStrategy(config)
-, _messageHelper(new StateConceptStrategyMessageHelper(this, behaviorExternalInterface))
 {
-  _messageHelper->SubscribeToTags({{
-    EngineToGameTag::ObjectMoved,
-    EngineToGameTag::ObjectStoppedMoving,
-    EngineToGameTag::RobotObservedObject,
-    EngineToGameTag::ObjectUpAxisChanged,
-    EngineToGameTag::RobotDelocalized
-  }});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 StrategyObjectMoved::~StrategyObjectMoved()
 {
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void StrategyObjectMoved::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  _messageHelper.reset(new StateConceptStrategyMessageHelper(this, behaviorExternalInterface));
+
+  _messageHelper->SubscribeToTags({{
+        EngineToGameTag::ObjectMoved,
+        EngineToGameTag::ObjectStoppedMoving,
+        EngineToGameTag::RobotObservedObject,
+        EngineToGameTag::ObjectUpAxisChanged,
+        EngineToGameTag::RobotDelocalized
+      }});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

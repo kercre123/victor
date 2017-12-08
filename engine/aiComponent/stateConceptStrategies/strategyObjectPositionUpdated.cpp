@@ -37,21 +37,23 @@ const bool kDebugAcknowledgements = false;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyObjectPositionUpdated::StrategyObjectPositionUpdated(BehaviorExternalInterface& behaviorExternalInterface,
-                                                             IExternalInterface& robotExternalInterface,
-                                                             const Json::Value& config)
+StrategyObjectPositionUpdated::StrategyObjectPositionUpdated(const Json::Value& config)
 : IStateConceptStrategy(config)
-, _messageHelper(new StateConceptStrategyMessageHelper(this, behaviorExternalInterface))
 {
-  _messageHelper->SubscribeToTags({
-    EngineToGameTag::RobotObservedObject,
-  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 StrategyObjectPositionUpdated::~StrategyObjectPositionUpdated()
 {
+}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void StrategyObjectPositionUpdated::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  _messageHelper.reset(new StateConceptStrategyMessageHelper(this, behaviorExternalInterface));
+  _messageHelper->SubscribeToTags({
+    EngineToGameTag::RobotObservedObject,
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

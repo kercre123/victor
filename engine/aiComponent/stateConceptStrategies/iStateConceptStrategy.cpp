@@ -59,9 +59,17 @@ void IStateConceptStrategy::Reset(BehaviorExternalInterface& bei)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IStateConceptStrategy::Init(BehaviorExternalInterface& bei)
+{
+  InitInternal(bei);
+  _isInitialized = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IStateConceptStrategy::AreStateConditionsMet(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   DEV_ASSERT(_hasEverBeenReset, "IStateConceptStrategy.AreStateConditionsMet.NotEverReset");
+  DEV_ASSERT(_isInitialized, "IStateConceptStrategy.AreStateConditionsMet.NotInitialized");
   return AreStateConditionsMetInternal(behaviorExternalInterface);
 }
   

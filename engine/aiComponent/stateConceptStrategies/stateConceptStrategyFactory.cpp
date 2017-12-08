@@ -69,9 +69,7 @@ IStateConceptStrategyPtr StateConceptStrategyFactory::CreateStateConceptStrategy
     }
     case StateConceptStrategyType::FacePositionUpdated:
     {
-      DEV_ASSERT_MSG(rei, "StateConceptStrategyType.RobotExternalInterfaceRequired", "%s",
-                     StateConceptStrategyTypeToString(IStateConceptStrategy::ExtractStrategyType(config)));
-      strategy = std::make_shared<StrategyFacePositionUpdated>(bei, *rei, config);
+      strategy = std::make_shared<StrategyFacePositionUpdated>(config);
       break;
     }
     case StateConceptStrategyType::Frustration:
@@ -86,16 +84,12 @@ IStateConceptStrategyPtr StateConceptStrategyFactory::CreateStateConceptStrategy
     }
     case StateConceptStrategyType::ObjectMoved:
     {
-      DEV_ASSERT_MSG(rei, "StateConceptStrategyType.RobotExternalInterfaceRequired", "%s",
-                     StateConceptStrategyTypeToString(IStateConceptStrategy::ExtractStrategyType(config)));
-      strategy = std::make_shared<StrategyObjectMoved>(bei, *rei, config);
+      strategy = std::make_shared<StrategyObjectMoved>(config);
       break;
     }
     case StateConceptStrategyType::ObjectPositionUpdated:
     {
-      DEV_ASSERT_MSG(rei, "StateConceptStrategyType.RobotExternalInterfaceRequired", "%s",
-                     StateConceptStrategyTypeToString(IStateConceptStrategy::ExtractStrategyType(config)));
-      strategy = std::make_shared<StrategyObjectPositionUpdated>(bei, *rei, config);
+      strategy = std::make_shared<StrategyObjectPositionUpdated>(config);
       break;
     }
     case StateConceptStrategyType::ObstacleDetected:
@@ -133,6 +127,10 @@ IStateConceptStrategyPtr StateConceptStrategyFactory::CreateStateConceptStrategy
       DEV_ASSERT(false, "StateConceptStrategyFactory.CreateWantsToRunStrategy.InvalidType");
       break;
     }
+  }
+
+  if( strategy ) {
+    strategy->Init(bei);
   }
   
   return strategy;
