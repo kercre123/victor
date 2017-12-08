@@ -3,9 +3,19 @@
 # Nicolas Kent 10-20-17
 #
 
-# expected usage: "./localize_featured_projects.py"
 # This script is expected to be run in it's containing folder from the command line
-# There are currently no command line arguments for this script
+#  command line parameters:
+#    -p PROJECT_NAME    ... Specifies a project to be operated on by DASProjectName
+#    -a                 ... Operates on all projects specified in codelab
+#
+#    -s                 ... Scans the specified project(s) and exports localizable strings into the local folder
+#    -t                 ... Translates the specified projects
+#    -l                 ... Lists projects to console
+#
+# example usages:
+#    "./localize_featured_projects.py -al"  ... Lists all codelab featured projects
+#    "./localize_featured_projects.py -s -p LaserSmile"  ... Scans laser smile project for strings
+#    "./localize_featured_projects.py -t -p LaserSmile"  ... Translates the laser smile project
 #
 
 #
@@ -19,24 +29,68 @@
 # The intent is that the cozmo app will then mask on locale for any featured project that specifies a language.
 #
 
-import re
-import json
-import random
 import copy
+import json
 import os
 from pprint import pprint
+import random
+import re
+import sys
+import argparse
+import zipfile
 
 BASE_SRC_SCRATCH_PATH = "../../../unity/Cozmo/Assets/StreamingAssets"
 LOCALIZATION_ROOT_PATH = "LocalizedStrings"
 LOCALIZATION_TARGET_FILES = [ "CodeLabStrings.json", "CodeLabFeaturedContentStrings.json" ]
-TARGET_PROJECTS = [ "Scratch/featured-projects.json", "Scratch/sample-projects.json" ]
+PROJECT_CONFIGURATION_FILE = "Scratch/featured-projects.json"
+TARGET_PROJECT_FOLDER = "Scratch/featuredProjects"
 
 # Plenty of string fields contain these values 
 # but even if they were to be localization translations, it might break a lot ot reverse key them
 IGNORE_TEXT_KEYS = ['', 'True', 'False', 'true', 'false']
 
-# 
-SOURCE_LANGUAGE = 'en-US'
+def parse_command_args():
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('-t', '--translate',
+                            dest='translate_project',
+                            default=False,
+                            action='store_const',
+                            const=True,
+                            help='Automatically generates foreign language projects from the english source')
+    arg_parser.add_argument('-s', '--scan',
+                            dest='scan_project',
+                            default=False,
+                            action='store_const',
+                            const=True,
+                            help='Scans the json of a project and exports a list of localizable strings')
+    arg_parser.add_argument('-l', '--list',
+                            dest='list_project',
+                            default=False,
+                            action='store_const',
+                            const=True,
+                            help='lists all projects matching the filter')
+
+    arg_parser.add_argument('-a', '--all',
+                            dest='all_projects',
+                            default=False,
+                            action='store_const',
+                            const=True,
+                            help='Applies over all featured projects')
+    arg_parser.add_argument('-p', '--project',
+                        dest='project',
+                        default=None,
+                        action='store',
+                        help='Specifies featured project to be scanned or translated')
+
+    arg_parser.add_argument('-o', '--source_language',
+                        dest='source_language',
+                        default='en-US',
+                        action='store',
+                        help='Specify the source language to be operated on')
+
+
+    options = arg_parser.parse_args()
+    return options
 
 # --------------------------------------------------------------------------------------------------------
 #                                                   Filters
@@ -108,15 +162,23 @@ allFilters = [FilterVariable(), FilterField()]
 
 # Replace a string using the loc translation table in the supplied context
 # NOTE: this function is not called directly, but fed into the following function, it could easily be replaced for other transformations
-def translate( string, context ):
+def translate(string, context):
     if string in context['loc']:
         # uncomment the print statement to get a verbose log of everything translated
-        #print(string + " - " + context['loc'][string])
         return context['loc'][string]
     return string
 
+# version of the translate function the checks a pre-lowercased loc mapping for lowercased versions of the
+# target strings.  This will compensate for things like "points" and "Points" resolving to the same key
+def translate_lower(string, context):
+    lowercasedString = string.lower()
+    if lowercasedString in context['loc']:
+        # uncomment the print statement to get a verbose log of everything translated
+        return context['loc'][lowercasedString]
+    return lowercasedString
+
 # Traverses a hierarchy of json objects/lists, using the supplied filters to identify where to apply the supplied transform
-def walk_json_tree_and_perform_transformations( node, filters, context, transform ):
+def walk_json_tree_and_perform_transformations(node, filters, context, transform):
     if type(node) == list:
         for subNode in node:
             walk_json_tree_and_perform_transformations( subNode, filters, context, transform )
@@ -129,49 +191,32 @@ def walk_json_tree_and_perform_transformations( node, filters, context, transfor
     for f in filters:
         f.test_and_apply_transform(node, context, transform)
 
-def generate_new_uuid():
-    a = ''.join(random.choice('0123456789abcdef') for i in range(8))
-    b = ''.join(random.choice('0123456789abcdef') for i in range(4))
-    c = ''.join(random.choice('0123456789abcdef') for i in range(4))
-    d = ''.join(random.choice('0123456789abcdef') for i in range(4))
-    e = ''.join(random.choice('0123456789abcdef') for i in range(12))
-    return a + '-' + b + '-' + c + '-' + d + '-' + e
-
 # Returns a list of transformed projects for all languages specified in the locTable, for a given input project
-def generate_translated_projects( project, locTable ):
+def translate_project(project, sourceLanguageTable, destinationLanguageTable):
     resultList = []
 
-    encodedProjectJson = json.loads(project["ProjectJSON"])
-    projectLanguage = project['Language']
-    encodingContext = { 'loc': locTable[projectLanguage]['encodings'] }
-    walk_json_tree_and_perform_transformations( encodedProjectJson, allFilters, encodingContext, translate )
-    for key in locTable:
-        if key != projectLanguage:
-            newProject = copy.deepcopy(project)
-            newProject['Language'] = key
-            newProject['ProjectUUID'] = generate_new_uuid()
-            projectInOtherLanguageJson = copy.deepcopy(encodedProjectJson)
-            #print("translating to " + key)
-            decodingContext = { 'loc': locTable[key]['decodings'] }
-            walk_json_tree_and_perform_transformations( projectInOtherLanguageJson, allFilters, decodingContext, translate )
-            newProject['ProjectJSON'] = json.dumps(projectInOtherLanguageJson)
-            resultList.append(newProject)
-    return resultList
+    projectJson = json.loads(project['ProjectJSON'])
+
+    # encode the original project into localization keys, with matches lowercased
+    encodingContext = { 'loc': {} }#{ 'loc': sourceLanguageTable['encodings'] }
+    for key in sourceLanguageTable['encodings']:
+        encodingContext['loc'][key.lower()] = sourceLanguageTable['encodings'][key]
+    walk_json_tree_and_perform_transformations(projectJson, allFilters, encodingContext, translate_lower)
+
+    # decode the localization keys into the proper language
+    decodingContext = { 'loc': destinationLanguageTable['decodings'] }
+    walk_json_tree_and_perform_transformations(projectJson, allFilters, decodingContext, translate)
+
+    newProject = {}
+    newProject['ProjectUUID'] = project['ProjectUUID']
+    newProject['ProjectJSON'] = json.dumps(projectJson)
+
+    return newProject
 
 
-def pull_string( string, context ):
+def pull_string(string, context):
     if string not in context['outputList']:
         context['outputList'].append(string)
-
-def extract_all_translatable_values(resultTable, project):
-    outputList = []
-    extractionContext = { 'outputList' : outputList }
-    if 'ProjectJSON' in project:
-        encodedProjectJson = json.loads(project['ProjectJSON'])
-        walk_json_tree_and_perform_transformations( encodedProjectJson, allFilters, extractionContext, pull_string )
-
-    resultTable[project['ProjectName']] = outputList
-
 
 # --------------------------------------------------------------------------------------------------------
 #                                           Translation Management
@@ -179,51 +224,79 @@ def extract_all_translatable_values(resultTable, project):
 # 
 # These functions identify which projects in the featured list to process, how to modify that list,
 # where to import and export that list from and to, and where to pull in localization data
-#
 
-# export either the input project, or append translations based on existence of 'Language' key
-def append_project_results_to_list( resultList, project, locTable ):
-    if 'Language' in project: 
-        projectLanguage = project['Language']
-        if projectLanguage not in locTable:
-            raise Exception('Language ' + projectLanguage + ' not found in localization table')
+def get_file_path(base_file_name, language):
+    return base_file_name + '_' + language + '.json'
 
-        if projectLanguage == SOURCE_LANGUAGE:
-            resultList.append(project)
-            newProjects = generate_translated_projects( project, locTable )
-            for prj in newProjects:
-                resultList.append(prj)
-            return True
-    else:
-        resultList.append(project)
-    return False
+def run_translation_target(target, loc_table):
+    with open(target['source_file_name']) as input_file:
+        project = json.load(input_file)
+        translated = translate_project(project, loc_table[target['source_language']], loc_table[target['target_language']])
+        with open(target['target_file_name'], 'w') as output_file:
+            json.dump(translated, output_file, indent=4)
+            output_file.write('\n')
 
-def export_all_strings_from_project( resultTable, project ):
-    if 'Language' in project: 
-        if project['Language'] == SOURCE_LANGUAGE:
-            extract_all_translatable_values( resultTable, project )
-    else:
-        extract_all_translatable_values( resultTable, project )
+    return True
 
-# read all featured projects, process each one, and export them to another json file
-def process_all_projects( inputFiles, locTable ):
-    projectsTranslated = 0
+def execute_translations_on_project(project, source_language, loc_table):
+    source_project_file = get_file_path(project['base_file_name'], source_language)
+    targets = []
+    for language in loc_table:
+        if language != source_language:
+            target_project_file = get_file_path(project['base_file_name'], language)
+            target_entry = {}
+            target_entry['source_language'] = source_language
+            target_entry['target_language'] = language
+            target_entry['source_file_name'] = source_project_file
+            target_entry['target_file_name'] = target_project_file
+            targets.append(target_entry)
 
-    for inputFile in inputFiles:
-        resultProjects = []
-        with open(inputFile) as dataFile:
-            allProjects = json.load(dataFile)
-            for project in allProjects:
-                if append_project_results_to_list(resultProjects, project, locTable):
-                    projectsTranslated += 1
+    for target in targets:
+        print('translating ' + project['project_name'] + ' ' + target['source_language'] + ' -> ' + target['target_language'])
+        if not run_translation_target(target, loc_table):
+            return False
 
-        with open(inputFile, 'w') as inputFile:
-            json.dump(resultProjects, inputFile, indent=4)
+    return True
 
-    return projectsTranslated
+# --------------------------------------------------------------------------------------------------------
+#                                          Loc String Scanning Code
+# --------------------------------------------------------------------------------------------------------
+
+def scan_project(project, source_language):
+    source_project_file = project['base_file_name'] + '_' + source_language + '.json'
+
+    json_out = {}
+    output_list = []
+
+    with open(source_project_file) as input_file:
+        json_contents = json.load(input_file)
+        if 'ProjectJSON' in json_contents:
+            extraction_context = { 'outputList' : output_list }
+            encoded_project_json = json.loads(json_contents['ProjectJSON'])
+            walk_json_tree_and_perform_transformations(encoded_project_json, allFilters, extraction_context, pull_string)
+        else:
+            print("ERROR: could not find ProjectJSON field in source file %s" % source_project_file)
+
+    for content in output_list:
+        simplified_content = re.sub('[^a-z^0-9^_]+', '', content.lower().replace(' ', '_'))
+        if simplified_content != '':
+            key = 'codeLabFeaturedProject.' + project['project_name'] + '.' + simplified_content
+            json_out[key] = { 'translation': content }
+
+    export_filename = project['project_name'] + '_loc_strings.json'
+    with open(export_filename, 'w') as output_file:
+        json.dump(json_out, output_file, indent=4)
+        output_file.write('\n')
+
+    print('scanning ' + project['project_name'] + ' and found ' + str(len(output_list)) + ' strings -> ' + export_filename)
+    return True
+
+# --------------------------------------------------------------------------------------------------------
+#                                          Local State Construction
+# --------------------------------------------------------------------------------------------------------
 
 # collect all localization key->translation and translation->key mappings from a language folder
-def load_localization_for_language( rootPath, language ):
+def load_localization_for_language(rootPath, language):
     resultDict = {'encodings':{}, 'decodings':{}}
     for file in os.listdir(os.path.join(rootPath, language)):
         if file.endswith('.json') and file in LOCALIZATION_TARGET_FILES:
@@ -248,35 +321,63 @@ def load_and_build_localization_dictionary():
             resultDict[language] = load_localization_for_language(locPath, language)
     return resultDict
 
-def export_all_strings_file(inputFiles):
-    jsonOut = {}
-    stringTable = {}
+def build_project_translation_queue(specified_project, use_all_projects):
+    result = []
 
-    for inputFile in inputFiles:
-        with open(inputFile) as dataFile:
-            allProjects = json.load(dataFile)
-            for project in allProjects:
-                export_all_strings_from_project(stringTable, project)
+    project_config_path = os.path.join(BASE_SRC_SCRATCH_PATH, PROJECT_CONFIGURATION_FILE)
+    with open(project_config_path, 'r') as json_data:
+        featured_config = json.load(json_data)
 
-    for projectKey in stringTable:
-        for content in stringTable[projectKey]:
-            simplifiedContent = re.sub('[^a-z^0-9^_]+', '', content.lower().replace(' ', '_') )
-            if simplifiedContent != '':
-                projectKeySanitized = projectKey.replace('.projectName','').replace('_','.')
-                jsonOut[projectKeySanitized + '.' + simplifiedContent] = { 'translation' : content }
-    with open('allStrings.json', 'w') as outputFile:
-        json.dump(jsonOut, outputFile, indent=4)
+    project_folder = os.path.join(BASE_SRC_SCRATCH_PATH, TARGET_PROJECT_FOLDER)
 
+    for featured_project_config in featured_config:
+        base_file_name = os.path.join(project_folder, featured_project_config['ProjectJSONFile'])
+        entry = { 'project_name': featured_project_config['DASProjectName'], 'base_file_name': base_file_name }
+        if entry['project_name'] == specified_project or use_all_projects:
+            result.append( entry )
+    return result
+
+# --------------------------------------------------------------------------------------------------------
+#                                               Core Path
+# --------------------------------------------------------------------------------------------------------
 
 def main():
-    locTable = load_and_build_localization_dictionary()
+    command_args = parse_command_args()
 
-    paths = [os.path.join(BASE_SRC_SCRATCH_PATH, project) for project in TARGET_PROJECTS]
-    
-    projectsTranslated = process_all_projects(paths, locTable)
-    print('projects translated: ' + str(projectsTranslated))
+    loc_table = load_and_build_localization_dictionary()
 
-    export_all_strings_file(paths)
+    if command_args.source_language not in loc_table:
+        sys.exit("Unexpected source_language %s" % command_args.source_language)
+
+    if command_args.project is None and not command_args.all_projects:
+        sys.exit("Must specify a project to operate on")
+
+    if not command_args.scan_project and not command_args.translate_project and not command_args.list_project:
+        sys.exit("Must specify either list, scan or translate")
+
+    project_list = build_project_translation_queue(command_args.project, command_args.all_projects)
+
+    if len(project_list) <= 0:
+        sys.exit("Could not find source project %s" % command_args.project)
+
+    if command_args.scan_project:
+        projects_scanned = 0
+        for project_entry in project_list:
+            if scan_project(project_entry, command_args.source_language):
+                projects_scanned += 1
+        print(str(projects_scanned) + ' project(s) scanned')
+
+    if command_args.translate_project:
+        projects_translated = 0
+        for project_entry in project_list:
+            if execute_translations_on_project(project_entry, command_args.source_language, loc_table):
+                projects_translated += 1
+        print(str(projects_translated) + ' project(s) translated')
+
+    if command_args.list_project:
+        for project_entry in project_list:
+            print(project_entry['project_name'] + ": \"" + project_entry['base_file_name'] + "_" + command_args.source_language + ".json\"")
+
 
 if __name__ == "__main__": 
     main()
