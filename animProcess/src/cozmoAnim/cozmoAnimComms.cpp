@@ -48,9 +48,9 @@ namespace { // "Private members"
 #else
     const u16 robotID = 0;
 #endif
-    bool ok = _robotClient.Connect(ANIM_UDP_PATH, ROBOT_UDP_PATH);
+    bool ok = _robotClient.Connect(ANIM_CLIENT_PATH, ROBOT_SERVER_PATH);
     if (!ok) {
-      LOG_ERROR("InitComms.ConnectFailed", "Unable to connect to robot at %s", ROBOT_UDP_PATH);
+      LOG_ERROR("InitComms.ConnectFailed", "Unable to connect to robot at %s", ROBOT_SERVER_PATH);
       return RESULT_FAIL_IO;
     }
     

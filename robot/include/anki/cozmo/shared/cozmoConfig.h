@@ -324,11 +324,11 @@ namespace Cozmo {
 
   // Local (unix-domain) socket paths
   #ifdef SIMULATOR
-  constexpr char ROBOT_UDP_PATH[] = "/tmp/_robot_udp";
-  constexpr char ANIM_UDP_PATH[] = "/tmp/_anim_udp";
+  constexpr char ROBOT_SERVER_PATH[]  = "/tmp/_robot_server";
+  constexpr char ANIM_CLIENT_PATH[]   = "/tmp/_anim_client";
   #else
-  constexpr char ROBOT_UDP_PATH[] = "/data/data/com.anki.cozmoengine/cache/_robot_udp";
-  constexpr char ANIM_UDP_PATH[] = "/data/data/com.anki.cozmoengine/cache/_anim_udp";
+  constexpr char ROBOT_SERVER_PATH[]  = "/dev/socket/_robot_server";
+  constexpr char ANIM_CLIENT_PATH[]   = "/dev/socket/_anim_client";
   #endif
   
 } // namespace Cozmo

@@ -36,9 +36,9 @@ namespace Anki {
 
     Result InitRadio(const char* advertisementIP)
     {
-      AnkiInfo("HAL.InitRadio.StartListening", "Start listening");
-      if (!server.StartListening(ROBOT_UDP_PATH)) {
-        AnkiError("HAL.InitRadio.UDPServerFailed", "Unable to listen at %s", ROBOT_UDP_PATH);
+      AnkiInfo("HAL.InitRadio.StartListening", "Start listening at %s", ROBOT_SERVER_PATH);
+      if (!server.StartListening(ROBOT_SERVER_PATH)) {
+        AnkiError("HAL.InitRadio.UDPServerFailed", "Unable to listen at %s", ROBOT_SERVER_PATH);
         return RESULT_FAIL_IO;
       }
 
@@ -68,8 +68,8 @@ namespace Anki {
 
       if (server.HasClient()) {
 
-        ssize_t bytesSent = server.Send((char*)buffer, length);
-        if (bytesSent < length) {
+        const ssize_t bytesSent = server.Send((char*)buffer, length);
+        if (bytesSent < (ssize_t) length) {
           AnkiError("HAL.RadioSendPacket.FailedToSend", "Failed to send msg contents (%d/%d sent)", bytesSent, length);
           DisconnectRadio();
           return false;

@@ -125,9 +125,9 @@ namespace Anki {
 
     Result InitSimRadio(const char* advertisementIP)
     {
-      PRINT_NAMED_INFO("simHAL.InitSimRadio.StartListening", "Listening on %s", ROBOT_UDP_PATH);
-      if (!server.StartListening(ROBOT_UDP_PATH)) {
-        PRINT_NAMED_ERROR("HAL.InitSimRadio.ListenFailed", "Unable to listen on %s", ROBOT_UDP_PATH);
+      PRINT_NAMED_INFO("simHAL.InitSimRadio.StartListening", "Listening on %s", ROBOT_SERVER_PATH);
+      if (!server.StartListening(ROBOT_SERVER_PATH)) {
+        PRINT_NAMED_ERROR("HAL.InitSimRadio.ListenFailed", "Unable to listen on %s", ROBOT_SERVER_PATH);
         return RESULT_FAIL_IO;
       }
 
@@ -178,7 +178,7 @@ namespace Anki {
 
         const ssize_t bytesSent = server.Send((const char*)buffer, length);
 
-        if (bytesSent < length) {
+        if (bytesSent < (ssize_t) length) {
           PRINT_NAMED_ERROR("HAL.RadioSendPacket", "Failed to send msg contents (%zd bytes sent)", bytesSent);
           DisconnectRadio();
           return false;

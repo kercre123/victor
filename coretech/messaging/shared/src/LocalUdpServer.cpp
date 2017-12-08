@@ -14,10 +14,19 @@
 
 #include <assert.h>
 #include <unistd.h>
-
+//
 // Socket buffer sizes
-#define UDP_SERVER_SNDBUFSZ (128*1024)
-#define UDP_SERVER_RCVBUFSZ (128*1024)
+//
+// Running under webots, the animation process (webotsCtrlAnim) may be delayed several seconds between ticks.
+// We must allocate enough buffer space to hold all packets sent during this delay.
+//
+#ifdef SIMULATOR
+#define UDP_SERVER_SNDBUFSZ (2048*1024)
+#define UDP_SERVER_RCVBUFSZ (2048*1024)
+#else
+#define UDP_SERVER_SNDBUFSZ (256*1024)
+#define UDP_SERVER_RCVBUFSZ (256*1024)
+#endif
 
 //
 // This code is shared with robot so we don't have PRINT_NAMED macros available.
@@ -117,14 +126,16 @@ bool LocalUdpServer::StartListening(const std::string & sockname)
 
 void LocalUdpServer::StopListening()
 {
-  _clients.clear();
-
   if (_socketfd < 0) {
     LOG_DEBUG("LocalUdpServer.StopListening: Server already stopped");
     return;
   }
 
   LOG_DEBUG("LocalUdpServer.StopListening: Stopping server listening on socket " << _socketfd);
+
+  if (HasClient()) {
+    Disconnect();
+  }
 
   if (close(_socketfd) < 0) {
     LOG_ERROR("LocalUdpServer.StopListening: Error closing socket (" << strerror(errno) << ")");
@@ -144,23 +155,18 @@ ssize_t LocalUdpServer::Send(const char* data, int size)
     return -1;
   }
 
-  //LOG_DEBUG("LocalUdpServer.Send: Sending " << size << " bytes to " << _clients.size() << " clients");
+  //LOG_DEBUG("LocalUdpServer.Send: Sending " << size << " bytes to " << _peername);
 
-  ssize_t bytes_sent = 0;
-
-  for (ClientListIter it = _clients.begin(); it != _clients.end(); it++ ) {
-    const struct sockaddr_un * saddr = &(*it);
-    const socklen_t saddrlen = (socklen_t) SUN_LEN(saddr);
-
-    bytes_sent = sendto(_socketfd, data, size, 0, (struct sockaddr *) saddr, saddrlen);
-    if (bytes_sent != size) {
-      // If send fails, log it and report it to caller.  It is caller's responsibility to retry at
-      // some appropriate interval.
-      LOG_ERROR("LocalUdpServer.Send: sent " << bytes_sent << " bytes instead of " << size << " (" << strerror(errno) << ")");
-    }
+  const ssize_t bytes_sent = send(_socketfd, data, size, 0);
+  if (bytes_sent != size) {
+    // If send fails, log it and report it to caller.  It is caller's responsibility to retry at
+    // some appropriate interval.
+    LOG_ERROR("LocalUdpServer.Send: sent " << bytes_sent << " bytes instead of " << size << " (" << strerror(errno) << ")");
   }
 
+  //LOG_DEBUG("LocalUdpServer.Send: " << bytes_sent << " bytes sent");
   return bytes_sent;
+
 }
 
 ssize_t LocalUdpServer::Recv(char* data, int maxSize)
@@ -182,11 +188,13 @@ ssize_t LocalUdpServer::Recv(char* data, int maxSize)
 
   // LOG_DEBUG("LocalUdpServer.Recv: received " << bytes_received << " bytes from " << string(saddr, saddrlen));
 
-  // Add client to list
-  if (AddClient(saddr, saddrlen) && bytes_received == 1) {
-    // If client was newly added, the first datagram (as long as it's only 1 byte long)
-    // is assumed to be a "connection packet".
-    return 0;
+  // Connect to new client?
+  if (!HasClient()) {
+    if (AddClient(saddr, saddrlen) && bytes_received == 1) {
+      // If client was newly added, the first datagram (as long as it's only 1 byte long)
+      // is assumed to be a "connection packet".
+      return 0;
+    }
   }
 
   return bytes_received;
@@ -195,35 +203,38 @@ ssize_t LocalUdpServer::Recv(char* data, int maxSize)
 
 bool LocalUdpServer::AddClient(const struct sockaddr_un &saddr, socklen_t saddrlen)
 {
-  for (ClientListIter it = _clients.begin(); it != _clients.end(); it++) {
-    if (memcmp(&(*it),&saddr, saddrlen) == 0)
-      return false;
+  std::string peername = string(saddr, saddrlen);
+
+  LOG_DEBUG("LocalUdpServer.AddClient: Adding client " << peername);
+
+  if (connect(_socketfd, (struct sockaddr *) &saddr, saddrlen) != 0) {
+    LOG_ERROR("LocalUdpServer.AddClient: Unable to connect to " << peername << " (" << strerror(errno) << ")");
+    return false;
   }
-
-  LOG_DEBUG("LocalUdpServer.AddClient: Adding client " << string(saddr, saddrlen));
-  
-  _clients.push_back(saddr);
-  _clients.back().sun_path[saddrlen - (sizeof(saddr) - sizeof(saddr.sun_path))] = 0;
-
+  _peername = peername;
   return true;
 }
 
-bool LocalUdpServer::HasClient() const
-{
-  return !_clients.empty();
-}
 
-int LocalUdpServer::GetNumClients() const
-{
-  const size_t numClients = _clients.size();
-
-  assert(numClients < std::numeric_limits<int>::max());
-
-  return static_cast<int>(numClients);
-}
 
 void LocalUdpServer::Disconnect()
 {
-  _clients.clear();
+  if (!HasClient()) {
+    return;
+  }
+
+  LOG_DEBUG("LocalUdpServer.Disconnect: Disconnect from peer " << _peername);
+
+  // Undo effects of connect() by resetting peer to an unspecified address
+  struct sockaddr saddr;
+  saddr.sa_family = AF_UNSPEC;
+  if (connect(_socketfd, &saddr, sizeof(saddr)) != 0) {
+    // MacOS returns ENOENT but operation has desired effect regardless.
+    if (errno != ENOENT) {
+      LOG_ERROR("LocalUdpServer.Disconnect: Failed to disconnect (" << strerror(errno) << ")");
+    }
+  }
+
+  _peername.clear();
 }
 
