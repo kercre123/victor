@@ -162,13 +162,14 @@ namespace Cozmo {
                        GetStreamingAnimationName().c_str());
       }
 
-      return SetStreamingAnimation(nullptr, kNotAnimatingTag);
+      Abort();
+      return RESULT_OK;
     }
     
-    return SetStreamingAnimation(_animationContainer.GetAnimation(name), tag, numLoops, interruptRunning);
+    return SetStreamingAnimation(_animationContainer.GetAnimation(name), tag, numLoops, interruptRunning, false);
   }
   
-  Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, bool interruptRunning)
+  Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, bool interruptRunning, bool isInternalAnim)
   {
     if(DEBUG_ANIMATION_STREAMING)
     {
@@ -210,6 +211,8 @@ namespace Cozmo {
     
     _numLoops = numLoops;
     _loopCtr = 0;
+
+    _playingInternalAnim = isInternalAnim;
     
     if(DEBUG_ANIMATION_STREAMING) {
       PRINT_CH_DEBUG(kLogChannelName, 
@@ -242,6 +245,9 @@ namespace Cozmo {
       return result;
     }
     
+    // ProceduralFace is always played as an "internal" animation since it's not considered 
+    // a regular animation by the engine so we don't need to send AnimStarted and AnimEnded
+    // messages for it.
     result = SetStreamingAnimation(_proceduralAnimation, 0);
     
     return result;
@@ -593,7 +599,7 @@ namespace Cozmo {
     if (_loopCtr == 0) {
       // Don't actually send start message for proceduralFace or neutralFace anims since
       // they weren't requested by engine
-      if (_streamingAnimation != _proceduralAnimation && _streamingAnimation != _neutralFaceAnimation) {
+      if (!_playingInternalAnim) {
         AnimationStarted startMsg;
         memcpy(startMsg.animName, streamingAnimName.c_str(), streamingAnimName.length());
         startMsg.animName_length = streamingAnimName.length();
@@ -627,7 +633,7 @@ namespace Cozmo {
     if (abortingAnim || (_loopCtr == _numLoops - 1)) {
       // Don't actually send end message for proceduralFace or neutralFace anims since
       // they weren't requested by engine
-      if (_streamingAnimation != _proceduralAnimation && _streamingAnimation != _neutralFaceAnimation) {
+      if (!_playingInternalAnim) {
         AnimationEnded endMsg;
         memcpy(endMsg.animName, streamingAnimName.c_str(), streamingAnimName.length());
         endMsg.animName_length = streamingAnimName.length();
@@ -924,7 +930,7 @@ namespace Cozmo {
       // conditions to even be in this function, then we should make sure we've
       // got neutral face back on the screen
       if(_wasAnimationInterruptedWithNothing) {
-        SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag );
+        SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
         _wasAnimationInterruptedWithNothing = false;
       }
       
