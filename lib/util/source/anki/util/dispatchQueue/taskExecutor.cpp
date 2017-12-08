@@ -16,6 +16,7 @@
 #include "util/dispatchQueue/taskExecutor.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
+#include "util/threading/threadPriority.h"
 
 #include <condition_variable>
 #include <cstring>
@@ -208,7 +209,7 @@ void TaskExecutor::Wait(std::unique_lock<std::mutex> &lock,
 
 void TaskExecutor::Execute(std::string threadName)
 {
-  SetThreadName(threadName.c_str());
+  Anki::Util::SetThreadName(pthread_self(), threadName.c_str());
   while (_executing) {
     std::unique_lock<std::mutex> lock(_taskQueueMutex);
     Wait(lock, _taskQueueCondition, &_taskQueue);
@@ -218,7 +219,7 @@ void TaskExecutor::Execute(std::string threadName)
 
 void TaskExecutor::ProcessDeferredQueue(std::string threadName)
 {
-  SetThreadName(threadName.c_str());
+  Anki::Util::SetThreadName(pthread_self(), threadName.c_str());
   auto abs_time = std::chrono::time_point<std::chrono::steady_clock>::max();
   while (_executing) {
     std::unique_lock<std::mutex> lock(_taskDeferredQueueMutex);
@@ -300,17 +301,6 @@ void TaskExecutor::RemoveTaskFromDeferredQueue(int taskId)
   }
 }
 
-void TaskExecutor::SetThreadName(const char* const threadName)
-{
-  if (nullptr == threadName) {
-    return;
-  }
-  #if defined(LINUX) || defined(ANDROID)
-  pthread_setname_np(pthread_self(), threadName);
-  #else
-  pthread_setname_np(threadName);
-  #endif
-}
 
 TaskExecutorHandle::TaskExecutorHandle(int taskId, TaskExecutor* taskExecutor)
   : _taskId(taskId)

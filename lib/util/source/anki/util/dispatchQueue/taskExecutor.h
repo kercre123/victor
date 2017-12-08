@@ -72,7 +72,6 @@ private:
   void Execute(std::string threadName);
   void ProcessDeferredQueue(std::string threadName);
   void Run(std::unique_lock<std::mutex> &lock);
-  static void SetThreadName(const char* threadName);
 
 private:
   std::thread _taskExecuteThread;

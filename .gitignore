@@ -269,6 +269,9 @@ resources/config/engine/firmware_*
 .vagrant
 .idea
 *.swo
+binary_cache
+perf.data
+symbol_cache
 
 
 # victor envsetup.sh

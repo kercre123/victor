@@ -49,6 +49,7 @@
 #include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/threading/threadPriority.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -742,13 +743,7 @@ namespace Cozmo {
     DEV_ASSERT(_visionSystem != nullptr && _visionSystem->IsInitialized(),
                "VisionComponent.Processor.VisionSystemNotReady");
     
-    
-    const char* threadName = "VisionSystem";
-    #if defined(LINUX) || defined(ANDROID)
-    pthread_setname_np(pthread_self(), threadName);
-    #else
-    pthread_setname_np(threadName);
-    #endif
+    Anki::Util::SetThreadName(pthread_self(), "VisionSystem");
     
     while (_running) {
       

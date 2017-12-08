@@ -17,7 +17,7 @@
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include "util/math/numericCast.h"
-
+#include "util/threading/threadPriority.h"
 #include <iomanip>
 #include <sstream>
 #include <thread>
@@ -166,7 +166,7 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
                         doFFTProcess = _doFFTProcess,
                         fftCallback = std::move(_rawAudioFFTCallback),
                         length_ms = _timeRecorded_ms] () {
-      
+      Anki::Util::SetThreadName(pthread_self(), "saveRawWave");
       AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels, kSampleRateIncoming_hz);
       PRINT_NAMED_INFO("MicDataInfo.WriteRawWaveFile", "%s", dest.c_str());
       
@@ -192,6 +192,7 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
   {
     auto saveResampledWave = [dest = (writeLocationBase + kResampledFileExtension),
                               data = std::move(_resampledAudioData)] () {
+      Anki::Util::SetThreadName(pthread_self(), "saveResmplWave");
       AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels);
       PRINT_NAMED_INFO("MicDataInfo.WriteResampledWaveFile", "%s", dest.c_str());
     };
@@ -203,6 +204,7 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
   {
     auto saveProcessedWave = [dest = (writeLocationBase + kWavFileExtension),
                               data = std::move(_processedAudioData)] () {
+      Anki::Util::SetThreadName(pthread_self(), "saveProcWave");
       AudioUtil::WaveFile::SaveFile(dest, data);
       PRINT_NAMED_INFO("MicDataInfo.WriteProcessedWaveFile", "%s", dest.c_str());
     };
