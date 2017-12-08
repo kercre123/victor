@@ -801,10 +801,13 @@ public class StartupManager : MonoBehaviour {
   }
 #endif
 
+  protected void LogCodeLabImportErrors(string data) {
+    CodeLab.CodeLabGame.PushImportError(data);
+  }
+
   // Parses an incoming json stream expected to contain a codelab file.
   // The json is converted into a codeLabProject and inserted into the my_projects collection.
   protected void LoadCodeLabFromRawJson(string data) {
-
     try {
       if (CodeLab.CodeLabGame.IsRawStringValidCodelab(data)) {
         DataPersistence.CodeLabProject receivedProject = CodeLab.CodeLabGame.CreateProjectFromJsonString(data);
@@ -830,6 +833,6 @@ public class StartupManager : MonoBehaviour {
     catch (Exception e) {
       DAS.Error("CodeLab.OpenCodelabFile.Error.UnhandleException", "Error parsing json " + e.Message + "; size=" + data.Length);
     }
-    CodeLab.CodeLabGame.PushImportError("CodeLab.Import.Error.Description.Generic");
+    LogCodeLabImportErrors("CodeLab.Import.Error.Description.Generic");
   }
 }
