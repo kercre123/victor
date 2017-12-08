@@ -17,16 +17,8 @@
 //
 // Socket buffer sizes
 //
-// Running under webots, the animation process (webotsCtrlAnim) may be delayed several seconds between ticks.
-// We must allocate enough buffer space to hold all packets sent during this delay.
-//
-#ifdef SIMULATOR
-#define UDP_SERVER_SNDBUFSZ (2048*1024)
-#define UDP_SERVER_RCVBUFSZ (2048*1024)
-#else
 #define UDP_SERVER_SNDBUFSZ (256*1024)
 #define UDP_SERVER_RCVBUFSZ (256*1024)
-#endif
 
 //
 // This code is shared with robot so we don't have PRINT_NAMED macros available.

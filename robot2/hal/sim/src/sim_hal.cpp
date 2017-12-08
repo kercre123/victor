@@ -157,6 +157,15 @@ namespace Anki {
       std::deque<Anki::Cozmo::RobotInterface::MicData> micData_{};
       std::mutex micDataMutex_;
 
+      // Limit the number of messages that can be sent per robot tic
+      // and toss the rest. Since audio data is generated in 
+      // real-time vs. robot time, if Webots processes slow down or 
+      // are paused (debugger) then we'll end up flooding the send buffer.
+      const int kMicSendWindow_tics = 6;   // Roughly equivalent to every anim process tic
+      const int kMaxNumMicMsgsAllowedPerSendWindow = 100;
+      int _numMicMsgsSent      = 0;        // Num of mic msgs sent in the current window
+      int _micSendWindowTicIdx = 0;        // Which tic of the current window we're in
+
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
       //void GetGlobalPose(f32 &x, f32 &y, f32& rad);
@@ -244,8 +253,12 @@ namespace Anki {
             micDataMutex_.unlock();
             break;
           }
-            
-          SendMessage(micData_.front());
+
+          if (_numMicMsgsSent < kMaxNumMicMsgsAllowedPerSendWindow) {
+            SendMessage(micData_.front());
+            ++_numMicMsgsSent;
+          }
+
           micData_.pop_front();
           if (micData_.empty())
           {
@@ -254,6 +267,12 @@ namespace Anki {
           }
           
           micDataMutex_.unlock();
+        }
+
+        // Reset send counter for next send window
+        if (++_micSendWindowTicIdx >= kMicSendWindow_tics) {
+          _micSendWindowTicIdx = 0;
+          _numMicMsgsSent = 0;
         }
       }
 
