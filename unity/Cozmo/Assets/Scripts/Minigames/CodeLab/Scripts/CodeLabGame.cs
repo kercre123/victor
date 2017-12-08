@@ -42,6 +42,7 @@ namespace CodeLab {
     public string FeaturedProjectInstructions;
     public SimpleDate StartDate; // Optional start date for content availability
     public SimpleDate EndDate; // Optional end date for content availability
+    public bool IsInvisible; // Used to hide featured content, e.g. content for future releases
     public string ProjectJSONFile; // Serialized Scratch project file
   }
 
@@ -345,7 +346,7 @@ namespace CodeLab {
       string streamingAssetsPath = PlatformUtil.GetResourcesBaseFolder() + scratchFolder;
 #endif
 
-      // Load projects json from file and return list
+      // Load featured projects' data from file
       string path = streamingAssetsPath + projectFile;
       string json = File.ReadAllText(path);
 
@@ -353,15 +354,17 @@ namespace CodeLab {
 
       // Review StartDate and EndDate for each featured content project and 
       // remove the projects that should not currently be shown from the list.
+      //
+      // Also review IsInvisible flag and hide projects with flag set to true.
       // 
-      // Can force all featured content to show regardless of StartDate/EndDate
-      // settings with Debug Console setting.
+      // Can force all featured content to show regardless of StartDate, EndDate
+      // or IsInvisible settings with Debug Console setting.
 #if SHIPPING
-      bool filterProjectsByDate = true;
+      bool filterProjects = true;
 #else
-      bool filterProjectsByDate = !DataPersistenceManager.Instance.Data.DebugPrefs.ShowAllCodeLabFeaturedContent;
+      bool filterProjects = !DataPersistenceManager.Instance.Data.DebugPrefs.ShowAllCodeLabFeaturedContent;
 #endif
-      if (filterProjectsByDate) {
+      if (filterProjects) {
         for (int i = codeLabFeaturedProjects.Count - 1; i >= 0; i--) {
           var project = codeLabFeaturedProjects[i];
 
@@ -380,6 +383,10 @@ namespace CodeLab {
             if (DataPersistenceManager.Today < startDate) {
               codeLabFeaturedProjects.RemoveAt(i);
             }
+          }
+
+          if (project.IsInvisible) {
+            codeLabFeaturedProjects.RemoveAt(i);
           }
         }
       }
