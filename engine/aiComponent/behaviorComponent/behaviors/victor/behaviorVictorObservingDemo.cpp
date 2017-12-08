@@ -28,6 +28,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
 #include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyLambda.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
@@ -38,16 +39,11 @@
 #include "engine/needsSystem/needsState.h"
 #include "engine/vision/visionModesHelpers.h"
 
-// TODO:(bn) remove this after data-driving
-#include "engine/aiComponent/stateConceptStrategies/strategyAlwaysRun.h"
-
 namespace Anki {
 namespace Cozmo {
 
 namespace {
 
-constexpr const float kFeedingTimeout_s = 30.0f;
-constexpr const float kRecentlyPlacedChargerTimeout_s = 60.0f * 2;
 constexpr const float kSocializeKnownFaceCooldown_s = 60.0f * 10;
 constexpr const float kGoToSleepTimeout_s = 60.0f * 4;
 constexpr const u32 kMinFaceAgeToAllowSleep_ms = 5000;
@@ -84,39 +80,8 @@ static constexpr const u32 kDebugHeartbeatLED = 1;
 
 static constexpr const float kHeartbeatPeriod_s = 0.6f;
 
-// TODO:(bn) move somewhere else
-class TimerStrategy : public IStateConceptStrategy
-{
-public:
-  TimerStrategy(const float timeout_s);
-
-  virtual void ResetInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-
-private:
-  const float _timeout_s;
-  float _timeToEnd_s = -1.0f;
-};
-
-TimerStrategy::TimerStrategy(const float timeout_s)
-  : IStateConceptStrategy(IStateConceptStrategy::GenerateBaseStrategyConfig(StateConceptStrategyType::Timer))
-  , _timeout_s(timeout_s)
-{
 }
 
-void TimerStrategy::ResetInternal(BehaviorExternalInterface& bei)
-{
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _timeToEnd_s = currTime_s + _timeout_s;
-}
-
-bool TimerStrategy::AreStateConditionsMetInternal(BehaviorExternalInterface& bei) const
-{
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  return currTime_s >= _timeToEnd_s;
-}
-
-}
 
 class BehaviorVictorObservingDemo::State
 {
@@ -161,8 +126,8 @@ public:
   // checked _after_ all of the other transitions
   Transitions _exitTransitions;
 
-  // TODO:(bn) maybe these should be a property of ICondition? That way they just turn on automatically?
-  // TODO:(bn) ICozmoBehavior would actually be the better place for this (or a sub-component of ICozmoBehavior)
+  // TODO:(bn) maybe these should be a property of the transitions or state concept strategies? That way they
+  // just turn on automatically? Or at least move these into ICozmoBehavior
   std::set<VisionMode> _requiredVisionModes;
 
   // optional light debugging color
@@ -178,61 +143,142 @@ BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& conf
 {
   _useDebugLights = config.get("use_debug_lights", true).asBool();
 
-  // phase 0: fake loading in the "state names" in a first pass. Need to do this now to be able to use them in
-  // the conditions
-  
+  // First, parse the state definitions to create all of the "state names" as a first pass
   for( const auto& stateConfig : config[kStateConfgKey] ) {
     AddStateName( JsonTools::ParseString(stateConfig, kStateNameConfgKey, "BehaviorVictorObservingDemo.StateConfig") );
   }
 
+  // Define hard-coded conditions
+  CreatePreDefinedStrategies();
+  
+  // Parse the state config again to create the actual states
+  for( const auto& stateConfig : config[kStateConfgKey] ) {
+    State state(stateConfig);
+    PRINT_CH_DEBUG("Behaviors", "VictorObservingDemo.LoadStateFromConfig",
+                   "%s",
+                   state._name.c_str());
+    AddState(std::move(state));
+  }
+
+  DEV_ASSERT( _states->size() == _stateNameToID.size(),
+              "VictorObservingDemo.StateConfig.InternalError.NotAllStatesDefined");
+
   ////////////////////////////////////////////////////////////////////////////////
-  // Define conditions
+  // Define transitions from json
   ////////////////////////////////////////////////////////////////////////////////
 
-  auto isHungryLambda = [](BehaviorExternalInterface& behaviorExternalInterface) {
-    if(behaviorExternalInterface.HasNeedsManager()){
-      auto& needsManager = behaviorExternalInterface.GetNeedsManager();
-      NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
+  // keep set of which states we've used so we can warn later if they aren't all used
+  std::set< StateID > allFromStates;
+  std::set< StateID > allToStates;
+  
+  for( const auto& transitionDefConfig : config["transitionDefinitions"] ) {
+    const StateID fromStateID = ParseStateFromJson(transitionDefConfig, "from");
 
-      if( // currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Warning) ||
-        currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical) ) {
-        return true;
+    if( allFromStates.find(fromStateID) != allFromStates.end() ) {
+      PRINT_NAMED_WARNING("VictorObservingDemo.TransitionDefinitions.DuplicateFromState",
+                          "The transition definitions have multiple blocks defining transitions from '%s'.",
+                          _states->at(fromStateID)._name.c_str());
+    }
+    else {
+      allFromStates.insert(fromStateID);
+    }
+
+    State& fromState = _states->at(fromStateID);
+
+    for( const auto& transitionConfig : transitionDefConfig["interruptingTransitions"] ) {
+      StateID toState = ParseStateFromJson(transitionConfig, "to");
+      IStateConceptStrategyPtr strategy = ParseTransitionStrategy(transitionConfig);
+      if( strategy ) {
+        fromState.AddInterruptingTransition(toState, strategy);
+        allToStates.insert(toState);
       }
     }
-    return false;
-  };
-    
-  auto CondIsHungry = std::make_shared<StrategyLambda>(isHungryLambda);
 
-  auto CondOnCharger = std::make_shared<StrategyLambda>(
+    for( const auto& transitionConfig : transitionDefConfig["nonInterruptingTransitions"] ) {
+      StateID toState = ParseStateFromJson(transitionConfig, "to");
+      IStateConceptStrategyPtr strategy = ParseTransitionStrategy(transitionConfig);
+      if( strategy ) {
+        fromState.AddNonInterruptingTransition(toState, strategy);
+        allToStates.insert(toState);
+      }
+    }
+
+    for( const auto& transitionConfig : transitionDefConfig["exitTransitions"] ) {
+      StateID toState = ParseStateFromJson(transitionConfig, "to");
+      IStateConceptStrategyPtr strategy = ParseTransitionStrategy(transitionConfig);
+      if( strategy ) {
+        fromState.AddExitTransition(toState, strategy);
+        allToStates.insert(toState);
+      }
+    }    
+  }
+
+  if( allFromStates.size() != _states->size() ) {
+    PRINT_NAMED_WARNING("VictorObservingDemo.TransitionDefinitions.DeadEndStates",
+                        "Some states don't have any outgoing transition strategies! %zu from states, but %zu states",
+                        allFromStates.size(),
+                        _states->size());
+  }
+
+  if( allToStates.size() != _states->size() ) {
+    PRINT_NAMED_WARNING("VictorObservingDemo.TransitionDefinitions.UnusedStates",
+                        "Some states don't have any incoming transition strategies! %zu to states, but %zu states",
+                        allToStates.size(),
+                        _states->size());
+  }
+
+  PRINT_CH_INFO("Behaviors", "VictorObservingDemo.StatesCreated",
+                "Created %zu states",
+                _states->size());
+}
+
+BehaviorVictorObservingDemo::~BehaviorVictorObservingDemo()
+{
+}
+
+void BehaviorVictorObservingDemo::CreatePreDefinedStrategies()
+{
+  // TODO:(bn) make proper strategy for this
+  _preDefinedStrategies["OnCharger"] = std::make_shared<StrategyLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       const bool onCharger = behaviorExternalInterface.GetRobotInfo().IsOnChargerPlatform();
       return onCharger;
     });
 
-  auto CondOffCharger = std::make_shared<StrategyLambda>(
+  // TODO:(bn) create a "not" strategy for this
+  _preDefinedStrategies["OffCharger"] = std::make_shared<StrategyLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       const bool onCharger = behaviorExternalInterface.GetRobotInfo().IsOnChargerPlatform();
       return !onCharger;
     });
 
-  auto canEatLambda = [](BehaviorExternalInterface& behaviorExternalInterface) {
-    const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-    return whiteboard.Victor_HasCubeToEat();
-  };
-  
-  auto CondCanEat = std::make_shared<StrategyLambda>( canEatLambda );
 
-  auto CondHungryAndCanEat = std::make_shared<StrategyLambda>(
-    [canEatLambda, isHungryLambda](BehaviorExternalInterface& behaviorExternalInterface) {
-      return canEatLambda(behaviorExternalInterface) && isHungryLambda(behaviorExternalInterface);
+  _preDefinedStrategies["HasCubeToEat"] = std::make_shared<StrategyLambda>(
+    [](BehaviorExternalInterface& behaviorExternalInterface) {
+      const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
+      return whiteboard.Victor_HasCubeToEat();
+    });  
+
+  _preDefinedStrategies["HungryAndCanEat"] = std::make_shared<StrategyLambda>(
+    [](BehaviorExternalInterface& behaviorExternalInterface) {
+      const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
+      if( ! whiteboard.Victor_HasCubeToEat() ) {
+        return false;
+      }
+
+      if(behaviorExternalInterface.HasNeedsManager()){
+        auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+        NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
+
+        if( // currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Warning) ||
+          currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical) ) {
+          return true;
+        }
+      }
+      return false;
     });
-  
-  // TEMP:  // TODO:(bn) rename this to "true" since "run" doesn't make sense anymore
-  auto CondTrue = std::make_shared<StrategyAlwaysRun>(
-    IStateConceptStrategy::GenerateBaseStrategyConfig(StateConceptStrategyType::AlwaysRun));
 
-  auto CondCloseFaceForSocializing = std::make_shared<StrategyLambda>(
+  _preDefinedStrategies["CloseFaceForSocializing"] = std::make_shared<StrategyLambda>(
     [this](BehaviorExternalInterface& behaviorExternalInterface) {
       if( !StateExitCooldownExpired(GetStateID("Socializing"), kSocializeKnownFaceCooldown_s) ) {
         // still on cooldown
@@ -247,8 +293,8 @@ BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& conf
           const Pose3d facePose = face->GetHeadPose();
           float distanceToFace = 0.0f;
           if( ComputeDistanceSQBetween( behaviorExternalInterface.GetRobotInfo().GetPose(),
-                                      facePose,
-                                      distanceToFace ) &&
+                                        facePose,
+                                        distanceToFace ) &&
               distanceToFace < Util::Square(kMaxFaceDistanceToSocialize_mm) ) {
             return true;
           }
@@ -257,7 +303,7 @@ BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& conf
       return false;
     });
 
-  auto CondWantsToSleep = std::make_shared<StrategyLambda>(
+  _preDefinedStrategies["WantsToSleep"] = std::make_shared<StrategyLambda>(
     [this](BehaviorExternalInterface& behaviorExternalInterface) {
       if( _currState != GetStateID("ObservingOnCharger") ) {
         PRINT_NAMED_WARNING("BehaviorVictorObservingDemo.WantsToSleepCondition.WrongState",
@@ -282,7 +328,7 @@ BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& conf
       return false;
     });
 
-  auto CondSeesCharger = std::make_shared<StrategyLambda>(
+  _preDefinedStrategies["ChargerLocated"] = std::make_shared<StrategyLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       BlockWorldFilter filter;
       filter.SetFilterFcn( [](const ObservableObject* obj){
@@ -293,7 +339,7 @@ BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& conf
       return block != nullptr;
     });
 
-  auto CondNeedsToCharge = std::make_shared<StrategyLambda>(
+  _preDefinedStrategies["NeedsToCharge"] = std::make_shared<StrategyLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       if( !robotInfo.IsCharging() ) {
@@ -307,127 +353,6 @@ BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& conf
       }
       return false;
     });
-  
-  ////////////////////////////////////////////////////////////////////////////////
-  // Define from json
-  ////////////////////////////////////////////////////////////////////////////////
-
-  for( const auto& stateConfig : config[kStateConfgKey] ) {
-    State state(stateConfig);
-    PRINT_CH_DEBUG("Behaviors", "VictorObservingDemo.LoadStateFromConfig",
-                   "%s",
-                   state._name.c_str());
-    AddState(std::move(state));
-  }
-
-  ////////////////////////////////////////////////////////////////////////////////
-  // Define transitions // TODO:(bn) move these to json also
-  ////////////////////////////////////////////////////////////////////////////////
-
-  {
-    State& state = _states->at(GetStateID("ObservingOnCharger"));
-    
-    state.AddNonInterruptingTransition(GetStateID("DriveOffChargerIntoObserving"), CondIsHungry);
-    state.AddInterruptingTransition(GetStateID("Observing"), CondOffCharger);
-    state.AddInterruptingTransition(GetStateID("DriveOffChargerIntoFeeding"), CondHungryAndCanEat);
-    state.AddInterruptingTransition(GetStateID("DriveOffChargerIntoSocializing"), CondCloseFaceForSocializing);
-    state.AddNonInterruptingTransition(GetStateID("Napping"), CondWantsToSleep);
-  }
-
-  {
-    State& state = _states->at(GetStateID("ObservingOnChargerRecentlyPlaced"));
-
-    state.AddInterruptingTransition(GetStateID("Observing"), CondOffCharger);
-    state.AddNonInterruptingTransition(GetStateID("ObservingOnCharger"),
-                                       std::make_shared<TimerStrategy>(kRecentlyPlacedChargerTimeout_s));
-    state.AddNonInterruptingTransition(GetStateID("DriveOffChargerIntoFeeding"), CondHungryAndCanEat);
-  }
-
-  {
-    State& state = _states->at(GetStateID("DriveOffChargerIntoObserving"));
-
-    state.AddExitTransition(GetStateID("Socializing"), CondCloseFaceForSocializing);
-    state.AddExitTransition(GetStateID("Observing"), CondTrue);
-  }
-
-
-  {
-    State& state = _states->at(GetStateID("DriveOffChargerIntoFeeding"));
-    
-    state.AddExitTransition(GetStateID("Feeding"), CondCanEat);
-    state.AddExitTransition(GetStateID("Observing"), CondTrue);
-  }
-
-  {
-    State& state = _states->at(GetStateID("DriveOffChargerIntoSocializing"));
-    
-    state.AddExitTransition(GetStateID("Socializing"), CondTrue);
-  }
-
-  {
-    State& state = _states->at(GetStateID("Observing"));
-
-    state.AddInterruptingTransition(GetStateID("ObservingOnChargerRecentlyPlaced"), CondOnCharger);
-    state.AddInterruptingTransition(GetStateID("Feeding"), CondCanEat);
-    state.AddInterruptingTransition(GetStateID("Socializing"), CondCloseFaceForSocializing);
-    state.AddNonInterruptingTransition(GetStateID("ReturningToCharger"), CondNeedsToCharge);
-  }
-
-  {
-    State& state = _states->at(GetStateID("Feeding"));
-
-    state.AddNonInterruptingTransition(GetStateID("Observing"), std::make_shared<TimerStrategy>(kFeedingTimeout_s));
-    state.AddInterruptingTransition(GetStateID("ObservingOnChargerRecentlyPlaced"), CondOnCharger);
-    state.AddExitTransition(GetStateID("Observing"), CondTrue);
-  }
-
-  {
-    State& state = _states->at(GetStateID("Socializing"));
-
-    state.AddInterruptingTransition(GetStateID("ObservingOnChargerRecentlyPlaced"), CondOnCharger);
-    state.AddNonInterruptingTransition(GetStateID("Feeding"), CondHungryAndCanEat);
-    state.AddExitTransition(GetStateID("Observing"), CondTrue);
-  }
-
-  {
-    State& state = _states->at(GetStateID("Napping"));
-
-    state.AddInterruptingTransition(GetStateID("WakingUp"), CondOffCharger);
-    state.AddNonInterruptingTransition(GetStateID("WakingUp"), CondIsHungry);
-  }
-
-  {
-    State& state = _states->at(GetStateID("WakingUp"));
-    
-    state.AddExitTransition(GetStateID("ObservingOnCharger"), CondTrue);
-  }
-
-  {
-    State& state = _states->at(GetStateID("ReturningToCharger"));
-
-    // use "recently placed" so he stays on long enough to charge up a bit. May need a separate state for that
-    // at some point
-    state.AddExitTransition(GetStateID("ObservingOnChargerRecentlyPlaced"), CondOnCharger);
-    state.AddExitTransition(GetStateID("FailedToFindCharger"), CondTrue);
-    // TODO:(bn) this doesn't work right now because FindAndGoToHome never stops unless it find a charger
-  }
-
-  {
-    State& state = _states->at(GetStateID("FailedToFindCharger"));
-
-    state.AddInterruptingTransition(GetStateID("ReturningToCharger"), CondSeesCharger);
-    state.AddExitTransition(GetStateID("ObservingOnCharger"), CondOnCharger);
-  }
-
-  PRINT_CH_INFO("Behaviors", "VictorObservingDemo.StatesCreated",
-                "Created %zu states",
-                _states->size());
-
-  // TODO:(bn) assert that all states are present in the map
-}
-
-BehaviorVictorObservingDemo::~BehaviorVictorObservingDemo()
-{
 }
 
 void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
@@ -655,7 +580,8 @@ void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& b
     CancelDelegates(allowCallback);
   }
   else {
-    DEV_ASSERT( !IsControlDelegated(), "VictorObservingDemo.TransitionToState.WasInCountButHadDelegate" );
+    DEV_ASSERT( !IsControlDelegated() || targetState == InvalidStateID,
+                "VictorObservingDemo.TransitionToState.WasInCountButHadDelegate" );
   }
           
   // TODO:(bn) channel for demo?
@@ -830,6 +756,58 @@ BehaviorVictorObservingDemo::StateID BehaviorVictorObservingDemo::GetStateID(con
     return it->second;
   }
   return InvalidStateID;
+}
+
+BehaviorVictorObservingDemo::StateID BehaviorVictorObservingDemo::ParseStateFromJson(const Json::Value& config,
+                                                                                     const std::string& key)
+{
+  if( ANKI_VERIFY( config[key].isString(),
+                   "VictorObservingDemo.ParseStateFromJson.InvalidJson",
+                   "key '%s' not present in json",
+                   key.c_str() ) ) {
+    return GetStateID( config[key].asString() );
+  }
+  return InvalidStateID;
+}
+
+IStateConceptStrategyPtr BehaviorVictorObservingDemo::ParseTransitionStrategy(const Json::Value& transitionConfig)
+{
+  const Json::Value& strategyConfig = transitionConfig["strategy"];
+  if( strategyConfig.isObject() ) {
+    // create state concept strategy from config
+    return StateConceptStrategyFactory::CreateStateConceptStrategy(transitionConfig["strategy"]);
+  }
+  else {
+    // use code-defined named strategy
+    const std::string& strategyName = JsonTools::ParseString(transitionConfig,
+                                                             "preDefinedStrategyName",
+                                                             "BehaviorVictorObservingDemo.StateConfig");
+
+    auto it = _preDefinedStrategies.find(strategyName);
+    if( ANKI_VERIFY( it != _preDefinedStrategies.end(),
+                     "VictorObservingDemo.LoadTransitionConfig.PreDefinedStrategy.NotFound",
+                     "No predefined strategy called '%s' exists",
+                     strategyName.c_str()) ) {
+      return it->second;
+    }
+    else {
+      return nullptr;
+    }
+  }
+}
+
+BehaviorVictorObservingDemo::TransitionType BehaviorVictorObservingDemo::TransitionTypeFromString(const std::string& str)
+{
+  if( str == "NonInterrupting" ) return TransitionType::NonInterrupting;
+  else if( str == "Interrupting" ) return TransitionType::Interrupting;
+  else if( str == "Exit" ) return TransitionType::Exit;
+  else {
+    PRINT_NAMED_ERROR("BehaviorVictorObservingDemo.TransitionTypeFromString.InvalidString",
+                      "String '%s' does not match a transition type",
+                      str.c_str());
+    // return something to make the compiler happy
+    return TransitionType::Exit;
+  }
 }
 
 }

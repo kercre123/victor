@@ -25,6 +25,7 @@
 #include "engine/aiComponent/stateConceptStrategies/strategyRobotPlacedOnSlope.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyRobotShaken.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyRobotTouchGesture.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyTimer.h"
 
 
 #include "clad/types/behaviorComponent/strategyTypes.h"
@@ -114,6 +115,11 @@ IStateConceptStrategyPtr StateConceptStrategyFactory::CreateStateConceptStrategy
       strategy = std::make_shared<StrategyRobotTouchGesture>(config);
       break;
     }
+    case StateConceptStrategyType::Timer:
+    {
+      strategy = std::make_shared<StrategyTimer>(config);
+      break;
+    }
     case StateConceptStrategyType::Lambda:
     {
       DEV_ASSERT(false, "StateConceptStrategyFactory.CreateWantsToRunStrategy.CantCreateLambdaFromConfig");
@@ -124,12 +130,7 @@ IStateConceptStrategyPtr StateConceptStrategyFactory::CreateStateConceptStrategy
       DEV_ASSERT(false, "StateConceptStrategyFactory.CreateWantsToRunStrategy.InvalidType");
       break;
     }
-    case StateConceptStrategyType::Timer:
-    {
-      // TEMP:  // TEMP:  // TEMP: 
-      break;
-    }
-
+    
   }
   
   return strategy;
