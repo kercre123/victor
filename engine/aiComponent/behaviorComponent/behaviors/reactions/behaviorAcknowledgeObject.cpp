@@ -30,7 +30,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/robotInterface/messageFromActiveObject.h"
+#include "clad/externalInterface/messageFromActiveObject.h"
 #include "util/console/consoleInterface.h"
 
 

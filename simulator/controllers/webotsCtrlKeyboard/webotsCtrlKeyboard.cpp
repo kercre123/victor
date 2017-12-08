@@ -1529,7 +1529,7 @@ namespace Anki {
                   //ExternalInterface::SetActiveObjectLEDs msg(jsonMsg);
                   msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
                   msg.objectID = jsonMsg["objectID"].asUInt();
-                  for(s32 iLED = 0; iLED<(s32)ActiveObjectConstants::NUM_CUBE_LEDS; ++iLED) {
+                  for(s32 iLED = 0; iLED<4; ++iLED) {
                     msg.onColor[iLED]  = jsonMsg["onColor"][iLED].asUInt();
                     msg.offColor[iLED]  = jsonMsg["offColor"][iLED].asUInt();
                     msg.onPeriod_ms[iLED]  = jsonMsg["onPeriod_ms"][iLED].asUInt();
@@ -1587,7 +1587,7 @@ namespace Anki {
                     msg.relativeToY = GetRobotPose().GetTranslation().y();
                     
                     ++edgeIndex;
-                    if(edgeIndex == (s32)ActiveObjectConstants::NUM_CUBE_LEDS) {
+                    if(edgeIndex == 4) {
                       edgeIndex = 0;
                       ++colorIndex;
                     }
@@ -1615,7 +1615,7 @@ namespace Anki {
                       ExternalInterface::SetAllActiveObjectLEDs m;
                       m.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
                       m.objectID = GetLastObservedObject().id;
-                      for(s32 iLED = 0; iLED<(s32)ActiveObjectConstants::NUM_CUBE_LEDS; ++iLED) {
+                      for(s32 iLED = 0; iLED<4; ++iLED) {
                         m.onColor[iLED]  = ::Anki::NamedColors::WHITE;
                         m.offColor[iLED]  = ::Anki::NamedColors::BLACK;
                         m.onPeriod_ms[iLED] = 250;
@@ -1716,25 +1716,7 @@ namespace Anki {
                 
               case (s32) '!':
               {
-                webots::Field* factoryIDs = root_->getField("activeObjectFactoryIDs");
-                webots::Field* connect = root_->getField("activeObjectConnect");
-                
-                if (factoryIDs && connect) {
-                  ExternalInterface::BlockSelectedMessage msg;
-                  for (int i=0; i<factoryIDs->getCount(); ++i) {
-                    msg.factoryId = static_cast<u32>(strtol(factoryIDs->getMFString(i).c_str(), nullptr, 16));
-                    msg.selected = connect->getSFBool();
-                    
-                    if (msg.factoryId == 0) {
-                      continue;
-                    }
-                    
-                    LOG_INFO("BlockSelected", "factoryID 0x%x, connect %d", msg.factoryId, msg.selected);
-                    ExternalInterface::MessageGameToEngine msgWrapper;
-                    msgWrapper.Set_BlockSelectedMessage(msg);
-                    SendMessage(msgWrapper);
-                  }
-                }
+                // FREE KEY COMBO!!!
                 break;
               }
 

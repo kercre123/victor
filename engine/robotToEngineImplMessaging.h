@@ -22,7 +22,10 @@ namespace Anki {
 namespace Cozmo {
 
 class Robot;
-
+struct ObjectMoved;
+struct ObjectPowerLevel;
+struct ObjectStoppedMoving;
+struct ObjectUpAxisChanged;
   
 class RobotToEngineImplMessaging : private Util::noncopyable, public Util::SignalHolder
 {
@@ -44,11 +47,9 @@ public:
   void HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandlePickAndPlaceResult(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleActiveObjectAvailable(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleActiveObjectUpAxisChanged(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
+  void HandleActiveObjectMoved(const ObjectMoved& message, Robot* const robot);
+  void HandleActiveObjectStopped(const ObjectStoppedMoving& message, Robot* const robot);
+  void HandleActiveObjectUpAxisChanged(const ObjectUpAxisChanged& message, Robot* const robot);
   void HandleFallingEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
@@ -66,8 +67,7 @@ public:
   void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorAutoEnabled(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleObjectPowerLevel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleObjectAccel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
+  void HandleObjectPowerLevel(const ObjectPowerLevel& message, Robot* const robot);
   void HandleTimeProfileStat(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAudioInput(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMicDirection(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);

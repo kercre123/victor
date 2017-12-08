@@ -9,7 +9,6 @@
 #include <string.h>
 
 #include "backpackLightController.h"
-#include "blockLightController.h"
 #include "dockingController.h"
 #include "headController.h"
 #include "imuFilter.h"
@@ -71,9 +70,6 @@ namespace Anki {
 
 #ifdef SIMULATOR
         bool isForcedDelocalizing_ = false;
-        uint32_t cubeID_;
-        u8 rotationPeriod_;
-        bool cubIDSet_ = false;
 #endif
       } // private namespace
 
@@ -627,40 +623,7 @@ namespace Anki {
       {
         BackpackLightController::SetParams(msg);
       }
-
-      void Process_setPropSlot(const SetPropSlot& msg)
-      {
-        HAL::AssignSlot(msg.slot, msg.factory_id);
-      }
-      void Process_setCubeGamma(const SetCubeGamma& msg)
-      {
-        // Nothing to do here
-      }
-      void Process_setCubeID(const CubeID& msg)
-      {
-        #ifdef SIMULATOR
-        cubeID_ = msg.objectID;
-        rotationPeriod_ = msg.rotationPeriod_frames;
-        cubIDSet_ = true;
-        #endif
-      }
-
-      void Process_streamObjectAccel(const StreamObjectAccel& msg)
-      {
-        HAL::StreamObjectAccel(msg.objectID, msg.enable);
-      }
-
-      void Process_setCubeLights(const CubeLights& msg)
-      {
-        #ifdef SIMULATOR
-        if(!cubIDSet_)
-        {
-          return;
-        }
-        BlockLightController::SetLights(cubeID_, msg.lights, rotationPeriod_);
-        cubIDSet_ = false;
-        #endif
-      }
+      
 
       void Process_getMfgInfo(const RobotInterface::GetManufacturingInfo& msg)
       {

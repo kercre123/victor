@@ -59,13 +59,13 @@ LightCube {
 LightCube {
   translation 0.15528543 -0.0003854169 0.021963518
   rotation 1.5926822e-05 -1.8396531e-06 1 0.22999398
-  ID 2
+  objectType "Block_LIGHTCUBE3"
   filterLogs TRUE
 }
 LightCube {
   translation 0.1264189 0.060270379 0.02196374
   rotation 1.4504099e-05 -1.8396531e-06 1 0.2523262
-  ID 1
+  objectType "Block_LIGHTCUBE2"
   filterLogs TRUE
 }
 DEF CustomCube1 Block1x1 {

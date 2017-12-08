@@ -238,6 +238,7 @@ if [ $CONFIGURE -eq 1 ]; then
         coretech/vision/clad/BUILD.in \
         coretech/planning/BUILD.in \
         coretech/messaging/BUILD.in \
+        cubeBleClient/BUILD.in \
         engine/BUILD.in \
         engine/tools/BUILD.in \
         lib/util/source/anki/util/BUILD.in \

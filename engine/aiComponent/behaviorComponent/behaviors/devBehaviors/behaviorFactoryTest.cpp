@@ -235,7 +235,6 @@ namespace{
     };
     
     // bind to specific handlers in the robot class
-    doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectAvailable, &BehaviorFactoryTest::HandleActiveObjectAvailable);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::pickAndPlaceResult, &BehaviorFactoryTest::HandlePickAndPlaceResult);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::firmwareVersion, &BehaviorFactoryTest::HandleFirmwareVersion);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::factoryFirmwareVersion, &BehaviorFactoryTest::HandleFactoryFirmwareVersion);
@@ -282,12 +281,9 @@ namespace{
 
     _numPlacementAttempts = 0;
     
-    _activeObjectAvailable = false;
-    
-    // Sim robot won't hear from any blocks and also won't send back body firmware version
+    // Sim robot won't send back body firmware version
     if(!robot.IsPhysical())
     {
-      _activeObjectAvailable = true;
       _gotHWVersion = true;
     }
     
@@ -1472,13 +1468,6 @@ namespace{
       // - - - - - - - - - - - - - - START PICKUP - - - - - - - - - - - - - - -
       case FactoryTestState::StartPickup:
       {
-        // If robot hasn't discovered any active objects by now it probably won't so fail
-        if(!_activeObjectAvailable)
-        {
-          PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.NoActiveObjectsDiscovered",
-                           "Test ending no active objects discovered");
-          END_TEST(FactoryTestResultCode::NO_ACTIVE_OBJECTS_DISCOVERED);
-        }
         
         auto pickupCallback = [this,&robot](ActionResult result){
           if (result == ActionResult::SUCCESS &&
@@ -2024,14 +2013,6 @@ namespace{
     }
 
     return RESULT_OK;
-  }
-  
-  void BehaviorFactoryTest::HandleActiveObjectAvailable(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
-  {
-    const ObjectAvailable payload = msg.GetData().Get_activeObjectAvailable();
-    if (IsValidLightCube(payload.objectType, false) || IsCharger(payload.objectType, false)) {
-      _activeObjectAvailable = true;
-    }
   }
  
   void BehaviorFactoryTest::HandlePickAndPlaceResult(const AnkiEvent<RobotInterface::RobotToEngine>& msg)

@@ -1874,11 +1874,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
   {
     // only connected objects should be added through this method, so a required activeID is a must
     DEV_ASSERT(activeID != ObservableObject::InvalidActiveID, "BlockWorld.AddConnectedActiveObject.CantAddInvalidActiveID");
-  
-    if (activeID >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
-      PRINT_NAMED_WARNING("BlockWorld.AddConnectedActiveObject.InvalidActiveID", "activeID %d", activeID);
-      return ObjectID();
-    }
 
     // NOTE: If you hit any of the following VERIFY, please notify Raul and Al.
     // rsam: Al and I have made assumptions about when this gets called. Checking here that the assumptions are correct,

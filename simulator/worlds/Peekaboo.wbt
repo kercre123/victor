@@ -47,7 +47,7 @@ LightCube {
 LightCube {
   translation 0.378751 -0.00107075 0.0219929
   rotation -1.83703e-06 -1.83704e-06 1 -1.5708
-  ID 2
+  objectType "Block_LIGHTCUBE3"
 }
 LightCube {
   translation 0.114706 -0.261202 0.021992

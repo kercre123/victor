@@ -12,7 +12,6 @@
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/proxMessages.clad"
-#include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/robotInterface/messageFromAnimProcess.clad"
 #include "clad/types/pathEventTypes.clad"
@@ -140,15 +139,7 @@ union RobotToEngine {
   ManufacturingID            mfgId                  = 0xCB,
   FirmwareVersion            firmwareVersion        = 0xCC,  
 
-  // TODO: These cube messages will need to be modified and moved to a 
-  //       separate file once we update block connection logic for BLE
-  ObjectConnectionState activeObjectConnectionState = 0xCD,
-  ObjectMoved                activeObjectMoved      = 0xCE,
-  ObjectStoppedMoving        activeObjectStopped    = 0xCF,
-  ObjectTapped               activeObjectTapped     = 0xD0,
-  ObjectTappedFiltered       objectTappedFiltered   = 0xD1,  
-  ObjectUpAxisChanged        activeObjectUpAxisChanged = 0xD2,
-  ObjectPowerLevel           objectPowerLevel       = 0xD3,
+  // FREE SLOTS 0xCD to 0xD3
 
   // Messages from animation process to engine
   RobotAvailable             robotAvailable         = 0xD4,
@@ -175,11 +166,6 @@ union RobotToEngine {
 
   // From anim process  
   AnimationState             animState              = 0xF3,
-
-  // TODO: These cube messages will need to be modified and moved to a 
-  //       separate file once we update block connection logic for BLE
-  ObjectAvailable            activeObjectAvailable  = 0xF5,
-  ObjectAccel                objectAccel            = 0xF6,
   
 }
 

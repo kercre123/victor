@@ -1,18 +1,19 @@
 /*
  * File:          activeBlock.cpp
  * Date:
- * Description:   Main controller for simulated blocks and chargers
+ * Description:   Main controller for simulated blocks
  * Author:        
  * Modifications: 
  */
 
 #include "activeBlock.h"
 #include "BlockMessages.h"
-#include "clad/types/activeObjectConstants.h"
 #include "clad/types/ledTypes.h"
-#include "clad/robotInterface/lightCubeMessage.h"
+#include "clad/externalInterface/lightCubeMessage.h"
+#include "clad/externalInterface/messageFromActiveObject.h"
 #include "anki/cozmo/robot/ledController.h"
 #include "util/logging/logging.h"
+#include "util/helpers/templateHelpers.h"
 #include "util/math/math.h"
 
 #include <stdio.h>
@@ -52,16 +53,15 @@ namespace {
   // once we start moving, we have to stop for this long to send StoppedMoving message
   const double STOPPED_MOVING_TIME_SEC = 0.5f;
   
-  
-  
-  constexpr auto NUM_CUBE_LEDS = EnumToUnderlyingType(ActiveObjectConstants::NUM_CUBE_LEDS);
-  constexpr auto MAX_NUM_CUBES = EnumToUnderlyingType(ActiveObjectConstants::MAX_NUM_CUBES);
-  constexpr auto NumAxes = EnumToUnderlyingType(UpAxis::NumAxes);
-  
+  constexpr int NUM_CUBE_LEDS = 4;
+  constexpr auto NumAxes = Util::EnumToUnderlying(UpAxis::NumAxes);
   
   webots::Receiver* receiver_;
   webots::Emitter*  emitter_;
   webots::Emitter*  discoveryEmitter_;
+  
+  // Webots comm channel used for the discovery emitter/receiver
+  constexpr int kDiscoveryChannel = 99;
   
   webots::Accelerometer* accel_;
   
@@ -84,6 +84,9 @@ namespace {
     NORMAL = 0,
   } BlockState;
   
+  // This block's "ActiveID". Note that engine will set its own
+  // activeID for this cube, and eventually the messaging will
+  // change and this will be removed from the raw cube messages.
   s32 blockID_ = -1;
   
   BlockState state_ = NORMAL;
@@ -132,13 +135,25 @@ namespace {
     {0, 1, 2, 3}
   };
   
-  // Mapping from block ID to ObjectType
-  const ObjectType blockIDToObjectType_[MAX_NUM_CUBES] = { ObjectType::Block_LIGHTCUBE1, ObjectType::Block_LIGHTCUBE2, ObjectType::Block_LIGHTCUBE3, ObjectType::Charger_Basic };
   u32 factoryID_ = 0;
   ObjectType objectType_ = ObjectType::UnknownObject;  
   
 } // private namespace
 
+template <typename T>
+void SendMessageHelper(webots::Emitter* emitter, T&& msg)
+{
+  DEV_ASSERT(emitter != nullptr, "ActiveBlock.SendMessageHelper.NullEmitter");
+  
+  // Construct a LightCubeMessage union from the passed-in msg (uses LightCubeMessage's specialized rvalue constructors)
+  BlockMessages::LightCubeMessage lcm(std::move(msg));
+  
+  // Stuff this message into a buffer and send it
+  u8 buff[lcm.Size()];
+  lcm.Pack(buff, lcm.Size());
+  emitter->send(buff, (int) lcm.Size());
+}
+  
 // Handle the shift by 8 bits to remove alpha channel from 32bit RGBA pixel
 // to make it suitable for webots LED 24bit RGB color
 inline void SetLED_helper(u32 index, u32 rgbaColor) {
@@ -152,7 +167,7 @@ inline void SetLED_helper(u32 index, u32 rgbaColor) {
   if (ledColorField_) {
     ledColorField_->setMFVec3f(index, betterColor);
     //const double *p = ledColorField_->getMFVec3f(index);
-    //PRINT_NAMED_WARNING("SetLED", "Cube %d, LED %d, Color %f %f %f (%0llx)", blockID_, index, p[0], p[1], p[2], (u64)p);
+    //PRINT_NAMED_WARNING("ActiveBlock.SetLED_helper", "Cube %d, LED %d, Color %f %f %f (%0llx)", blockID_, index, p[0], p[1], p[2], (u64)p);
   }
 }
 
@@ -167,11 +182,11 @@ void Process_setCubeLights(const CubeLights& msg)
 {
   // See if the message is actually changing anything about the block's current
   // state. If not, don't update anything.
-  if(memcmp(ledParams_, msg.lights, sizeof(ledParams_))) {
-    memcpy(ledParams_, msg.lights, sizeof(ledParams_));
+  if(memcmp(ledParams_, msg.lights.data(), sizeof(ledParams_))) {
+    memcpy(ledParams_, msg.lights.data(), sizeof(ledParams_));
     for (int i=0; i<NUM_CUBE_LEDS; ++i) ledPhases_[i] = 0;
   } else {
-    //printf("Ignoring SetBlockLights message with parameters identical to current state.\n");
+    //PRINT_NAMED_INFO("ActiveBlock", "Ignoring SetBlockLights message with parameters identical to current state");
   }
   
   // Set lights immediately
@@ -187,7 +202,9 @@ void Process_streamObjectAccel(const StreamObjectAccel& msg)
 }
   
 // Stubs to make linking work until we clean up how simulated cubes work.
+void Process_available(const ObjectAvailable& msg) {}
 void Process_moved(const ObjectMoved& msg) {}
+void Process_powerLevel(const ObjectPowerLevel& msg) {}
 void Process_stopped(const ObjectStoppedMoving& msg) {}
 void Process_tapped(const ObjectTapped& msg) {}
 void Process_upAxisChanged(const ObjectUpAxisChanged& msg) {}
@@ -195,28 +212,12 @@ void Process_accel(const ObjectAccel& msg) {}
   
 void ProcessBadTag_LightCubeMessage(BlockMessages::LightCubeMessage::Tag badTag)
 {
-  printf("Ignoring LightCubeMessage with invalid tag: %d\n", badTag);
+  PRINT_NAMED_INFO("ActiveBlock.ProcessBadTag_LightCubeMessage",
+                   "Ignoring LightCubeMessage with invalid tag: %d",
+                   Util::EnumToUnderlying(badTag));
 }
 // ================== End of callbacks ==================
 
-// Returns the ID of the block which is used as the
-// receiver channel for comms with the robot.
-// This is not meant to reflect how actual comms will work.
-s32 GetBlockID() {
-  webots::Node* selfNode = active_object_controller.getSelf();
-  
-  webots::Field* activeIdField = selfNode->getField("ID");
-  if(activeIdField) {
-    return activeIdField->getSFInt32();
-  } else {
-    return -1;
-  }
-}
-
-void Process_available(const ObjectAvailable& msg)
-{
-  //stub
-}
 
 Result Init()
 {
@@ -224,40 +225,25 @@ Result Init()
 
   active_object_controller.step(TIMESTEP);
   
-  
   webots::Node* selfNode = active_object_controller.getSelf();
   
-  // Get this block's ID
-  webots::Field* activeIdField = selfNode->getField("ID");
-  if(activeIdField) {
-    blockID_ = activeIdField->getSFInt32();
-  } else {
-    printf("Failed to find active object ID\n");
+  // Get this block's object type
+  webots::Field* typeField = selfNode->getField("objectType");
+  if (nullptr == typeField) {
+    PRINT_NAMED_ERROR("ActiveBlock.Init.NoObjectType", "Failed to find lightCubeType");
     return RESULT_FAIL;
   }
   
-  
-  // Get active object type
-  webots::Field* nodeName = selfNode->getField("name");
-  if (nodeName) {
-    std::string name = nodeName->getSFString();
-    if (name.compare("LightCube") == 0) {
-      objectType_ = blockIDToObjectType_[blockID_];
-      if (blockID_ > 2) {
-        printf("Expecting charger to have ID < 3\n");
-        return RESULT_FAIL;
-      }
-    } else if (name.compare("CozmoCharger") == 0) {
-      objectType_ = ObjectType::Charger_Basic;
-      if (blockID_ != 3) {
-        printf("Expecting charger to have ID 3\n");
-        return RESULT_FAIL;
-      }
-    }
-  } else {
-    printf("Active object has no name\n");
-    return RESULT_FAIL;
-  }
+  // Grab ObjectType and its integer value
+  const auto& typeString = typeField->getSFString();
+  objectType_ = ObjectTypeFromString(typeString);
+  DEV_ASSERT(IsValidLightCube(objectType_, false), "ActiveBlock.Init.InvalidObjectType");
+
+  // Simply set the cube's active ID to be the light cube type's integer value
+  int typeInt = -1;
+  sscanf(typeString.c_str(), "Block_LIGHTCUBE%d", &typeInt);
+  DEV_ASSERT(typeInt != -1, "ActiveBlock.Init.FailedToParseLightCubeInt");
+  blockID_ = typeInt;
   
   // Generate a factory ID
   // If PROTO factoryID is > 0, use that.
@@ -268,10 +254,9 @@ Result Init()
     if (fID > 0) {
       factoryID_ = fID;
     } else {
-      factoryID_ = blockID_ + 1;
+      factoryID_ = blockID_;
     }
   }
-  factoryID_ &= 0x7FFFFFFF; // Make sure it doesn't get mistaken for a charger
   PRINT_NAMED_INFO("ActiveBlock", "Starting active object %d (factoryID %d)", blockID_, factoryID_);
   
   
@@ -300,7 +285,7 @@ Result Init()
   // Get radio emitter for discovery
   discoveryEmitter_ = active_object_controller.getEmitter("discoveryEmitter");
   assert(discoveryEmitter_ != nullptr);
-  discoveryEmitter_->setChannel(EnumToUnderlyingType(ActiveObjectConstants::OBJECT_DISCOVERY_CHANNEL));
+  discoveryEmitter_->setChannel(kDiscoveryChannel);
   
   // Get accelerometer
   accel_ = active_object_controller.getAccelerometer("accel");
@@ -343,9 +328,6 @@ UpAxis GetCurrentUpAxis()
       maxAbsAccel = absAccel[i];
     }
   }
-
-//        printf("Block %d acceleration: (%.3f, %.3f, %.3f)\n", blockID_,
-//               accelVals[X], accelVals[Y], accelVals[Z]);
   
   // Return the corresponding signed axis
   switch(whichAxis)
@@ -363,7 +345,10 @@ UpAxis GetCurrentUpAxis()
       break;
       
     default:
-      printf("Unexpected whichAxis = %d\n", whichAxis);
+      PRINT_NAMED_ERROR("ActiveBlock.GetCurrentUpAxis.UnexpectedAxis",
+                        "Unexpected whichAxis = %d",
+                        whichAxis);
+      break;
   }
   
   return retVal;
@@ -412,7 +397,7 @@ void SetLED(WhichCubeLEDs whichLEDs, u32 color)
   u8 shiftedLEDs = static_cast<u8>(whichLEDs);
   for(u8 i=0; i<NUM_CUBE_LEDS; ++i) {
     if(shiftedLEDs & FIRST_BIT) {
-      SetLED_helper(ledIndexLUT[EnumToUnderlyingType(prevUpAxis_)][i], color);
+      SetLED_helper(ledIndexLUT[Util::EnumToUnderlying(prevUpAxis_)][i], color);
     }
     shiftedLEDs = shiftedLEDs >> 1;
   }
@@ -420,7 +405,7 @@ void SetLED(WhichCubeLEDs whichLEDs, u32 color)
 
 inline void SetLED(u32 ledIndex, u32 color)
 {
-  SetLED_helper(ledIndexLUT[EnumToUnderlyingType(prevUpAxis_)][ledIndex], color);
+  SetLED_helper(ledIndexLUT[Util::EnumToUnderlying(prevUpAxis_)][ledIndex], color);
 }
 
 
@@ -542,38 +527,34 @@ Result Update() {
     // Check for taps
     //////////////////////
     if (CheckForTap(accelVals[0], accelVals[1], accelVals[2])) {
-      BlockMessages::LightCubeMessage msg;
-      msg.tag = BlockMessages::LightCubeMessage::Tag_tapped;
-      msg.tapped.objectID = blockID_;
-      msg.tapped.numTaps = 1;
-      msg.tapped.tapNeg = -50;  // Hard-coded tap intensity.
-      msg.tapped.tapPos = 50;   // Just make sure that tapPos - tapNeg > BlockTapFilterComponent::kTapIntensityMin
-      msg.tapped.tapTime = static_cast<u32>(active_object_controller.getTime() / 0.035f) % std::numeric_limits<u8>::max();  // Each tapTime count should be 35ms
-      emitter_->send(msg.GetBuffer(), msg.Size());
+      ObjectTapped msg;
+      msg.objectID = blockID_;
+      msg.numTaps = 1;
+      msg.tapNeg = -50;  // Hard-coded tap intensity.
+      msg.tapPos = 50;   // Just make sure that tapPos - tapNeg > BlockTapFilterComponent::kTapIntensityMin
+      msg.tapTime = static_cast<u32>(active_object_controller.getTime() / 0.035f) % std::numeric_limits<u8>::max();  // Each tapTime count should be 35ms
+      SendMessageHelper(emitter_, std::move(msg));
     }
 
     
     // Send ObjectAvailable message
     static u32 objAvailableSendCtr = 0;
     if (++objAvailableSendCtr == OBJECT_AVAILABLE_MESSAGE_PERIOD) {
-      BlockMessages::LightCubeMessage msg;
-      msg.tag = BlockMessages::LightCubeMessage::Tag_available;
-      msg.available.factory_id = factoryID_;
-      msg.available.objectType = objectType_;
-      discoveryEmitter_->send(msg.GetBuffer(), msg.Size());
+      SendMessageHelper(discoveryEmitter_, ObjectAvailable(factoryID_,
+                                                           objectType_,
+                                                           0));
       objAvailableSendCtr = 0;
     }
     
     // Send accel data
     if (streamAccel_) {
-      BlockMessages::LightCubeMessage msg;
-      msg.tag = BlockMessages::LightCubeMessage::Tag_accel;
-      msg.accel.objectID = blockID_;
+      ObjectAccel msg;
+      msg.objectID = blockID_;
       f32 scaleFactor = 32.f/9.81f;  // 32 on physical blocks ~= 1g
-      msg.accel.accel.x = accelVals[0] * scaleFactor;
-      msg.accel.accel.y = accelVals[1] * scaleFactor;
-      msg.accel.accel.z = accelVals[2] * scaleFactor;
-      emitter_->send(msg.GetBuffer(), msg.Size());
+      msg.accel.x = accelVals[0] * scaleFactor;
+      msg.accel.y = accelVals[1] * scaleFactor;
+      msg.accel.z = accelVals[2] * scaleFactor;
+      SendMessageHelper(emitter_, std::move(msg));
     }
     
     // Run FSM
@@ -592,44 +573,39 @@ Result Update() {
           const bool isMoving = !NEAR(accelMagSq, 9.81*9.81, 1.0);
           
           if(isMoving) {
-            PRINT_NAMED_INFO("ActiveBlock", "Block %d appears to be moving (UpAxis=%d).", blockID_, EnumToUnderlyingType(prevUpAxis_));
+            PRINT_NAMED_INFO("ActiveBlock", "Block %d appears to be moving (UpAxis=%d).", blockID_, Util::EnumToUnderlying(prevUpAxis_));
             
             // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
-            BlockMessages::LightCubeMessage msg;
-            msg.tag = BlockMessages::LightCubeMessage::Tag_moved;
-            msg.moved.objectID = blockID_;
-            msg.moved.accel.x = accelVals[0];
-            msg.moved.accel.y = accelVals[1];
-            msg.moved.accel.z = accelVals[2];
-            msg.moved.axisOfAccel = prevUpAxis_;
-            emitter_->send(msg.GetBuffer(), msg.Size());
-            
+            ObjectMoved msg;
+            msg.objectID = blockID_;
+            msg.accel.x = accelVals[0];
+            msg.accel.y = accelVals[1];
+            msg.accel.z = accelVals[2];
+            msg.axisOfAccel = prevUpAxis_;
+            SendMessageHelper(emitter_, std::move(msg));
+
             wasLastMovingTime_sec_ = currTime_sec;
             wasMoving_ = true;
             
           } else if(wasMoving_ && currTime_sec - wasLastMovingTime_sec_ > STOPPED_MOVING_TIME_SEC ) {
             
-            PRINT_NAMED_INFO("ActiveBlock", "Block %d stopped moving (UpAxis=%d).", blockID_, EnumToUnderlyingType(prevUpAxis_));
+            PRINT_NAMED_INFO("ActiveBlock", "Block %d stopped moving (UpAxis=%d).", blockID_, Util::EnumToUnderlying(prevUpAxis_));
             
             // Send "UpAxisChanged" message now if necessary, so that it's
             //  sent before the stopped message (to mirror what the actual
             //  cube firmware does - see 'robot/syscon/cubes/cubes.cpp')
             if (prevUpAxis_ != nextUpAxis_) {
               prevUpAxis_ = nextUpAxis_;
-              BlockMessages::LightCubeMessage msg;
-              msg.tag = BlockMessages::LightCubeMessage::Tag_upAxisChanged;
-              msg.upAxisChanged.objectID = blockID_;
-              msg.upAxisChanged.upAxis = nextUpAxis_;
-              emitter_->send(msg.GetBuffer(), msg.Size());
+              ObjectUpAxisChanged msg;
+              msg.objectID = blockID_;
+              msg.upAxis = nextUpAxis_;
+              SendMessageHelper(emitter_, std::move(msg));
             }
             
             // Send the "Stopped" message.
-            // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
-            BlockMessages::LightCubeMessage msg;
-            msg.tag = BlockMessages::LightCubeMessage::Tag_stopped;
-            msg.stopped.objectID = blockID_;
-            emitter_->send(msg.GetBuffer(), msg.Size());
-            
+            ObjectStoppedMoving msg;
+            msg.objectID = blockID_;
+            SendMessageHelper(emitter_, std::move(msg));
             wasMoving_ = false;
           }
         } // if(SEND_MOVING_MESSAGES_EVERY_N_TIMESTEPS)
@@ -644,11 +620,10 @@ Result Update() {
             if (++nextUpAxisCtr > UP_AXIS_STABLE_PERIOD) {
               prevUpAxis_ = nextUpAxis_;
               // Send "UpAxisChanged" message:
-              BlockMessages::LightCubeMessage msg;
-              msg.tag = BlockMessages::LightCubeMessage::Tag_upAxisChanged;
-              msg.upAxisChanged.objectID = blockID_;
-              msg.upAxisChanged.upAxis = nextUpAxis_;
-              emitter_->send(msg.GetBuffer(), msg.Size());
+              ObjectUpAxisChanged msg;
+              msg.objectID = blockID_;
+              msg.upAxis = nextUpAxis_;
+              SendMessageHelper(emitter_, std::move(msg));
             }
           } else {
             nextUpAxisCtr = 0;
@@ -662,7 +637,9 @@ Result Update() {
       }
       
       default:
-        printf("WARNING (ActiveBlock): Unknown state %d\n", state_);
+        PRINT_NAMED_WARNING("ActiveBlock.Update.UnknownState",
+                            "Unknown state %d",
+                            state_);
         break;
     }
     

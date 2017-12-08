@@ -1075,11 +1075,6 @@ message BlockPoolEnabledMessage {
   bool enabled
 }
 
-message BlockSelectedMessage {
-  uint_32 factoryId,
-  ObjectType objectType,
-  bool   selected
-}
 // Query for E2Gmessage: InitBlockPoolMessage
 message GetBlockPoolMessage {
 }

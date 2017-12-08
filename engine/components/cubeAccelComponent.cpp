@@ -14,10 +14,13 @@
 
 #include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
+
+#include "clad/externalInterface/lightCubeMessage.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -82,10 +85,6 @@ CONSOLE_FUNC(FakeCubeShake, "CubeAccelComponent.FakeAccel");
 CubeAccelComponent::CubeAccelComponent(Robot& robot)
 : _robot(robot)
 {
-  _eventHandlers.push_back(robot.GetRobotMessageHandler()->Subscribe(robot.GetID(),
-                                                            RobotInterface::RobotToEngineTag::objectAccel,
-                                                            std::bind(&CubeAccelComponent::ReceiveObjectAccelData, this, std::placeholders::_1)));
-  
   // Subscribe to messages
   if( _robot.HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _eventHandlers);
@@ -128,7 +127,7 @@ void CubeAccelComponent::AddListener(const ObjectID& objectID,
                     objectID.GetValue(),
                     obj->GetActiveID());
       
-      _robot.SendMessage(RobotInterface::EngineToRobot(StreamObjectAccel(obj->GetActiveID(), true)));
+      _robot.GetCubeCommsComponent().SetStreamObjectAccel(obj->GetActiveID(), true);
     }else{
       PRINT_NAMED_WARNING("CubeAccelComponent.AddListener.InvalidObject",
                           "Object id %d is not connected",
@@ -172,7 +171,7 @@ bool CubeAccelComponent::RemoveListener(const ObjectID& objectID,
                         obj->GetID().GetValue(),
                         obj->GetActiveID());
           
-          _robot.SendMessage(RobotInterface::EngineToRobot(StreamObjectAccel(obj->GetActiveID(), false)));
+          _robot.GetCubeCommsComponent().SetStreamObjectAccel(obj->GetActiveID(), false);
         }
         
         // Reset window size to default value
@@ -184,10 +183,6 @@ bool CubeAccelComponent::RemoveListener(const ObjectID& objectID,
   return false;
 }
 
-void CubeAccelComponent::ReceiveObjectAccelData(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
-{
-  HandleObjectAccel(msg.GetData().Get_objectAccel());
-}
   
 void CubeAccelComponent::HandleObjectAccel(const ObjectAccel& objectAccel)
 {

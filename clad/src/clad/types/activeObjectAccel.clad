@@ -1,5 +1,5 @@
 /** Clad definitions for things related to the accelerometer in ActiveObjects (orientation, movement...)
- * ROBOT_CLAD_SHARED
+ *
  */
 
 namespace Anki {

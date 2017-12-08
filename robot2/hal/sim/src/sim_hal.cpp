@@ -46,15 +46,12 @@
 #include "wheelController.h"
 
 #include "simulator/robot/sim_overlayDisplay.h"
-#include "clad/robotInterface/lightCubeMessage.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-#include "clad/types/activeObjectConstants.h"
 
 // Webots Includes
 #include <webots/Robot.hpp>
 #include <webots/Supervisor.hpp>
 #include <webots/PositionSensor.hpp>
-#include <webots/Emitter.hpp>
 #include <webots/Motor.hpp>
 #include <webots/GPS.hpp>
 #include <webots/Compass.hpp>
@@ -91,10 +88,7 @@ namespace Anki {
       constexpr auto MOTOR_HEAD = EnumToUnderlyingType(MotorID::MOTOR_HEAD);
       constexpr auto MOTOR_COUNT = EnumToUnderlyingType(MotorID::MOTOR_COUNT);
       
-      constexpr auto MAX_NUM_ACTIVE_OBJECTS = EnumToUnderlyingType(ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS);
-      
       constexpr auto NUM_BACKPACK_LEDS = EnumToUnderlyingType(LEDId::NUM_BACKPACK_LEDS);
-      constexpr auto NUM_CUBE_LEDS = EnumToUnderlyingType(ActiveObjectConstants::NUM_CUBE_LEDS);
       
       
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
@@ -141,28 +135,8 @@ namespace Anki {
       webots::Connector* chargeContact_;
       bool wasOnCharger_ = false;
 
-      // Emitter / receiver for block communication
-      webots::Receiver *objectDiscoveryReceiver_;
-      webots::Emitter *blockCommsEmitter_;
-
       // Upper Touch Sensor (for petting)
       webots::Receiver *backpackTouchSensorReceiver_;
-
-      struct ActiveObjectSlotInfo {
-        u32 assignedFactoryID;
-        ObjectType object_type;
-        webots::Receiver *receiver;
-        TimeStamp_t lastHeardTime;
-        bool connected;
-      };
-      
-      ActiveObjectSlotInfo activeObjectSlots_[MAX_NUM_ACTIVE_OBJECTS];
-      
-      // Flag to automatically connect to any block it discovers as long as it's
-      // not already connected to a block of the same type.
-      // This makes it nearly as if all the blocks in the world are already paired
-      // with the robot in its flash.
-      bool autoConnectToBlocks_;
       
       // For tracking wheel distance travelled
       f32 motorPositions_[MOTOR_COUNT];
@@ -283,20 +257,6 @@ namespace Anki {
         }
       }
 
-      Result SendBlockMessage(const u8 activeID, const BlockMessages::LightCubeMessage& msg)
-      {
-        if (activeID >= MAX_NUM_ACTIVE_OBJECTS) {
-          return RESULT_FAIL;
-        }
-        
-        if (activeObjectSlots_[activeID].connected) {
-          blockCommsEmitter_->setChannel( activeObjectSlots_[activeID].assignedFactoryID + 1 );
-          blockCommsEmitter_->send(msg.GetBuffer(), msg.Size());
-        }
-        return RESULT_OK;
-      }
-
-
     } // "private" namespace
 
     namespace Sim {
@@ -315,8 +275,6 @@ namespace Anki {
     Result HAL::Init()
     {
       assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
-
-      webots::Node* robotNode = webotRobot_.getSelf();
 
       leftWheelMotor_  = webotRobot_.getMotor("LeftWheelMotor");
       rightWheelMotor_ = webotRobot_.getMotor("RightWheelMotor");
@@ -422,29 +380,8 @@ namespace Anki {
       chargeContact_->enablePresence(TIME_STEP);
       wasOnCharger_ = false;
 
-
-      // Block radio
-      objectDiscoveryReceiver_ = webotRobot_.getReceiver("discoveryReceiver");
-      objectDiscoveryReceiver_->setChannel( EnumToUnderlyingType(ActiveObjectConstants::OBJECT_DISCOVERY_CHANNEL));
-      objectDiscoveryReceiver_->enable(TIME_STEP);
-      
-      blockCommsEmitter_ = webotRobot_.getEmitter("blockCommsEmitter");
-
       backpackTouchSensorReceiver_ = webotRobot_.getReceiver("touchSensorUpper");
       backpackTouchSensorReceiver_->enable(TIME_STEP);
-      
-      char receiverName[32];
-      for (int i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
-        sprintf(receiverName, "blockCommsReceiver%d", i);
-        activeObjectSlots_[i].receiver = webotRobot_.getReceiver(receiverName);
-        activeObjectSlots_[i].assignedFactoryID = 0;
-        activeObjectSlots_[i].lastHeardTime = 0;
-        activeObjectSlots_[i].connected = false;
-      }
-
-      // Whether or not to automatically connect to advertising blocks
-      autoConnectToBlocks_ = robotNode->getField("autoConnectToBlocks")->getSFBool();
-      
 
       // Get advertisement host IP
       webots::Field *advertisementHostField = webotRobot_.getSelf()->getField("advertisementHost");
@@ -697,25 +634,9 @@ namespace Anki {
 
     }
 
-    bool IsSameTypeActiveObjectAssigned(ObjectType object_type)
-    {
-      DEV_ASSERT((object_type != ObjectType::InvalidObject) &&
-                 (object_type != ObjectType::UnknownObject),
-                 "sim_hal.IsSameTypeActiveObjectAssigned.InvalidType");
-      
-      for (u32 i = 0; i < MAX_NUM_ACTIVE_OBJECTS; ++i) {
-        if (activeObjectSlots_[i].assignedFactoryID != 0 && activeObjectSlots_[i].object_type == object_type) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-
     // Forward declaration
     void RadioUpdate();
     void ActiveObjectsUpdate();
-    void SendObjectConnectionState(u32 slot_id);
 
     Result HAL::Step(void)
     {
@@ -726,7 +647,6 @@ namespace Anki {
         MotorUpdate();
         RadioUpdate();
         AudioInputUpdate();
-        ActiveObjectsUpdate();
 
         /*
         // Always display ground truth pose:
@@ -769,12 +689,6 @@ namespace Anki {
             RobotInterface::SendMessage(msg);
           }
 
-          // Send info about connected active objects
-          for (int i = 0; i < MAX_NUM_ACTIVE_OBJECTS; ++i) {
-            if (activeObjectSlots_[i].connected) {
-              SendObjectConnectionState(i);
-            }
-          }
           wasConnected = true;
         } else if (wasConnected && !HAL::RadioIsConnected()) {
           wasConnected = false;
@@ -915,252 +829,6 @@ namespace Anki {
     void EnableIRQ() {}
     void DisableIRQ() {}
     }
-
-    Result HAL::SetBlockLight(const u32 activeID, const u32* colors)
-    {
-      BlockMessages::LightCubeMessage m;
-      m.tag = BlockMessages::LightCubeMessage::Tag_setCubeLights;
-      for (int i=0; i<NUM_CUBE_LEDS; ++i) {
-        m.setCubeLights.lights[i].onColor = colors[i];
-      }
-      
-      BlockMessages::LightCubeMessage msg;
-      msg.tag = BlockMessages::LightCubeMessage::Tag_setCubeID;
-      msg.setCubeID.objectID = activeID;
-      msg.setCubeID.rotationPeriod_frames = 0;
-      
-      SendBlockMessage(activeID, msg);
-      return SendBlockMessage(activeID, m);
-    }
-    
-    Result HAL::StreamObjectAccel(const u32 activeID, const bool enable)
-    {
-      if (activeID >= MAX_NUM_ACTIVE_OBJECTS) {
-        return RESULT_FAIL;
-      }
-      
-      BlockMessages::LightCubeMessage m;
-      m.tag = BlockMessages::LightCubeMessage::Tag_streamObjectAccel;
-      m.streamObjectAccel.objectID = activeID;
-      m.streamObjectAccel.enable = enable;
-      return SendBlockMessage(activeID, m);
-    }
-
-    
-    void SendObjectConnectionState(u32 slot_id)
-    {
-      if (slot_id >= MAX_NUM_ACTIVE_OBJECTS) {
-        return;
-      }
-      
-      ActiveObjectSlotInfo* acc = &activeObjectSlots_[slot_id];
-      
-      ObjectConnectionState msg;
-      msg.objectID = slot_id;
-      msg.factoryID = acc->assignedFactoryID;
-      msg.connected = acc->connected;
-      msg.object_type = acc->object_type;
-      RobotInterface::SendMessage(msg);
-    }
-    
-    // Connect to active object
-    Result HAL::AssignSlot(u32 slot_id, u32 factory_id)
-    {
-      if (slot_id >= MAX_NUM_ACTIVE_OBJECTS) {
-        return RESULT_FAIL;
-      }
-      
-      ActiveObjectSlotInfo* acc = &activeObjectSlots_[slot_id];
-      
-      if (factory_id != 0) {
-        
-        // If the slot is active send disconnect message if it's occupied by a different
-        // device than the one requested. If it's the same as the one requested, send
-        // a connect message.
-        if (acc->connected) {
-          if (acc->assignedFactoryID != factory_id) {
-            acc->connected = false;
-          }
-          SendObjectConnectionState(slot_id);
-        }
-        
-        // Queue connection to active object by setting factory id
-        acc->assignedFactoryID = factory_id;
-        
-      } else {
-        
-        // Send disconnect response
-        // NOTE: The id is that of the currently connected object if there was one.
-        //       Otherwise the id is 0.
-        acc->receiver->disable();
-        acc->connected = false;
-        SendObjectConnectionState(slot_id);
-        acc->assignedFactoryID = 0;
-        
-      }
-      
-      return RESULT_OK;
-    }
-    
-    int8_t CalculateObjectRSSI(double signalStrength)
-    {
-      // Convert the webots signal strength to similar values to what we get from the robot.
-      // These numbers were just approximated by experimenting on webots
-      return 200 / signalStrength + 40;
-    }
-    
-    void ActiveObjectsUpdate(void)
-    {
-
-      // Check for blocks that should disconnect due to timeout
-      for (u32 i = 0; i < MAX_NUM_ACTIVE_OBJECTS; ++i) {
-        ActiveObjectSlotInfo* cubeInfo = &activeObjectSlots_[i];
-        if (cubeInfo->connected && (HAL::GetTimeStamp() - cubeInfo->lastHeardTime > 3000)) {  // Threshold needs to be greater than ActiveBlock::DISCOVERED_MESSAGE_PERIOD * ActiveBlock::TIMESTEP
-          cubeInfo->connected = false;
-          SendObjectConnectionState(i);
-        }
-      }
-      
-      
-      // Monitor discovery channel and forward on for blocks that are not connected.
-      // For blocks that are connected, update lastHeardTime
-      while (objectDiscoveryReceiver_->getQueueLength() > 0) {
-        BlockMessages::LightCubeMessage lcm;
-        memcpy(lcm.GetBuffer(), objectDiscoveryReceiver_->getData(), objectDiscoveryReceiver_->getDataSize());
-        switch(lcm.tag)
-        {
-          case BlockMessages::LightCubeMessage::Tag_available:
-          {
-            ObjectAvailable oaMsg;
-            memcpy(oaMsg.GetBuffer(), lcm.available.GetBuffer(), lcm.available.Size());
-            
-            // If autoconnect is enabled, assign this block to a slot if another block
-            // of the same type is not already assigned.
-            if (autoConnectToBlocks_ && !IsSameTypeActiveObjectAssigned(oaMsg.objectType)) {
-              for (u32 i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
-                ActiveObjectSlotInfo* cubeInfo = &activeObjectSlots_[i];
-                if (cubeInfo->assignedFactoryID == 0) {
-                  PRINT_NAMED_INFO("SIM", "sim_hal.Update.AutoAssignedObject: FactoryID 0x%x, type 0x%x, slot %d",
-                                   oaMsg.factory_id, oaMsg.objectType, i);
-                  cubeInfo->assignedFactoryID = oaMsg.factory_id;
-                  break;
-                }
-              }
-            }
-            
-            // Connect objects whose connections are pending
-            // Update last heard time
-            bool isConnected = false;
-            for (u32 i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
-              ActiveObjectSlotInfo* cubeInfo = &activeObjectSlots_[i];
-              if (oaMsg.factory_id == cubeInfo->assignedFactoryID) {
-                
-                if (!cubeInfo->connected) {
-                  // The pending block connection is processed here so send an ObjectConnectionState message.
-                  // Listen channel is the factoryID. Send channel is factoryID + 1.
-                  cubeInfo->receiver->setChannel(cubeInfo->assignedFactoryID);
-                  cubeInfo->receiver->enable(TIME_STEP);
-                  cubeInfo->connected = true;
-                  cubeInfo->object_type = oaMsg.objectType;  // This is where we know the device type so set it here
-                  SendObjectConnectionState(i);
-                }
-                
-                cubeInfo->lastHeardTime = HAL::GetTimeStamp();
-                isConnected = true;
-                break;
-              }
-            }
-            if (!isConnected) {
-              // Block is not connected so send ObjectAvailable message up to engine
-              oaMsg.rssi = CalculateObjectRSSI(objectDiscoveryReceiver_->getSignalStrength());
-              RobotInterface::SendMessage(oaMsg);
-            }
-            
-            break;
-          }
-          default:
-            AnkiWarn( "sim_hal.ReadingDiscoveryChannel.UnexpectedMsg", "Expected discovery tag but got %d", lcm.tag);
-            break;
-        }
-        
-        objectDiscoveryReceiver_->nextPacket();
-      }
-      
-      // Pass along block-moved messages to basestation
-      // TODO: Make block comms receiver checking into a HAL function at some point
-      //   and call it from the main execution loop
-      for (u32 i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
-        ActiveObjectSlotInfo* cubeInfo = &activeObjectSlots_[i];
-        
-        // If no block is yet connected at this slot go to next one
-        if (!cubeInfo->connected) {
-          continue;
-        }
-        
-        while(cubeInfo->receiver->getQueueLength() > 0) {
-          BlockMessages::LightCubeMessage lcm;
-          memcpy(lcm.GetBuffer(), cubeInfo->receiver->getData(), cubeInfo->receiver->getDataSize());
-          switch(lcm.tag)
-          {
-            case BlockMessages::LightCubeMessage::Tag_moved:
-            {
-              ObjectMoved m;
-              memcpy(m.GetBuffer(), lcm.moved.GetBuffer(), lcm.moved.Size());
-              m.objectID = i;
-              m.timestamp = HAL::GetTimeStamp();
-              RobotInterface::SendMessage(m);
-              break;
-            }
-            case BlockMessages::LightCubeMessage::Tag_stopped:
-            {
-              ObjectStoppedMoving m;
-              memcpy(m.GetBuffer(), lcm.stopped.GetBuffer(), lcm.stopped.Size());
-              m.objectID = i;
-              m.timestamp = HAL::GetTimeStamp();
-              RobotInterface::SendMessage(m);
-              break;
-            }
-            case BlockMessages::LightCubeMessage::Tag_tapped:
-            {
-              ObjectTapped m;
-              memcpy(m.GetBuffer(), lcm.tapped.GetBuffer(), lcm.tapped.Size());
-              m.objectID = i;
-              m.timestamp = HAL::GetTimeStamp();
-              RobotInterface::SendMessage(m);
-              break;
-            }
-            case BlockMessages::LightCubeMessage::Tag_accel:
-            {
-              ObjectAccel m;
-              memcpy(m.GetBuffer(), lcm.accel.GetBuffer(), lcm.accel.Size());
-              m.objectID = i;
-              m.timestamp = HAL::GetTimeStamp();
-              RobotInterface::SendMessage(m);
-              break;
-            }
-            case BlockMessages::LightCubeMessage::Tag_upAxisChanged:
-            {
-              ObjectUpAxisChanged m;
-              memcpy(m.GetBuffer(), lcm.upAxisChanged.GetBuffer(), lcm.upAxisChanged.Size());
-              m.objectID = i;
-              m.timestamp = HAL::GetTimeStamp();
-              RobotInterface::SendMessage(m);
-              break;
-            }
-            default:
-            {
-              printf("Received unexpected message from simulated object: %d\r\n", static_cast<int>(lcm.tag));
-            }
-          }
-          cubeInfo->receiver->nextPacket();
-        }
-      }
-      
-    }
- 
-//    void HAL::ClearActiveObjectData(uint8_t slot) {
-//      // TODO: If we ever start sending upAxis messages from sim robot, clear it here.
-//    }
     
 
     u8 HAL::GetWatchdogResetCounter()

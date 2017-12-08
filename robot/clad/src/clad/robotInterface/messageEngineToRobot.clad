@@ -16,8 +16,6 @@
 #include "clad/types/controllerChannels.clad"
 #include "clad/types/proceduralFaceTypes.clad"
 #include "clad/types/proxMessages.clad"
-#include "clad/robotInterface/messageToActiveObject.clad"
-#include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/cameraFOVInfo.clad"
 #include "clad/types/motorTypes.clad"
@@ -25,17 +23,6 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-  structure SetPropSlot
-  {
-    uint_32 factory_id,
-    uint_8  slot
-  }
-
-  message SetCubeGamma
-  {
-    uint_8  gamma
-  }
 
 namespace RobotInterface {
 
@@ -442,16 +429,6 @@ union EngineToRobot
   // Reactions
   EnableStopOnCliff             enableStopOnCliff           = 0x35,
   EnableBraceWhenFalling        enableBraceWhenFalling      = 0x36,
-
-
-  // TODO: These cube messages will need to be modified and moved to a 
-  //       separate file once we update block connection logic for BLE
-  CubeLights                    setCubeLights               = 0x4B,
-  SetPropSlot                   setPropSlot                 = 0x4C,
-  StreamObjectAccel             streamObjectAccel           = 0x4D,
-  SetCubeGamma                  setCubeGamma                = 0x4E,
-  CubeID                        setCubeID                   = 0x4F,
-  
 
   // 0x50 to 0xAF: To Anim Process
   PlayAnim                      playAnim                    = 0x50,

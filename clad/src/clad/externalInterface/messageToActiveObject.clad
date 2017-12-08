@@ -1,5 +1,5 @@
 /** Clad for messages from Engine or Game to robot regarding active objects.
- * ROBOT_CLAD_SHARED
+ *
  */
 
 // NOTE: These messages are exposed to engine, game, and robot.
@@ -17,11 +17,6 @@
 
 namespace Anki {
 namespace Cozmo {
-
-  message SetAccessoryDiscovery
-  {
-    bool enable
-  }
 
   message CubeID
   {
@@ -41,17 +36,6 @@ namespace Cozmo {
     bool enable
   }
 
-  /// XXX Temporary messages until more of cube control is moved into body
-  structure SetPropState
-  {
-    uint_16 colors[4],
-    uint_8  slot,
-  }
-
-  message KillBodyCode
-  {
-
-  }
   
 } // Cozmo
 } // Anki

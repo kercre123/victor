@@ -17,7 +17,6 @@
 #define ANKI_COZMO_ROBOT_SIM_HARDWAREINTERFACE_H
 #include "anki/common/types.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "clad/robotInterface/messageToActiveObject.h"
 
 
 namespace Anki

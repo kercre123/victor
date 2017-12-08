@@ -35,7 +35,7 @@ DEF cube0 LightCube {
 DEF cube1 LightCube {
   translation 0.061779079 0.22237945 0.022000116
   rotation 1.9274797e-06 1.4531399e-05 1 6.0213863
-  ID 1
+  objectType "Block_LIGHTCUBE2"
 }
 BuildServerTestController {
   controllerArgs "%COZMO_SIM_TEST%"

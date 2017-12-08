@@ -35,6 +35,7 @@ target_link_libraries(test_engine
   cti_messaging
   engine_clad
   androidHAL
+  cubeBleClient
   util
   util_audio
   gtest
