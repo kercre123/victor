@@ -53,3 +53,14 @@ address=00:0a:f5:4c:98:68
 uuid=d03a0a30-5470-5fbb-80ff-a569b6f53782
 
 ```
+
+## AnkiRobits Connection
+
+To connect your robot to AnkiRobits, run the script 
+```sh
+./vic_join_wifi.sh <Robot Letter>
+```
+NOTE: The script is a little brittle. It works best when run about 10 seconds after the robot ID appears on victor's face, after boot.
+
+If there is no configuration for your robot you may need to add one; currently our limit is 10 static robot IPs.
+
