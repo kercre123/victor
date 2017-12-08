@@ -255,7 +255,8 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
   
   if(config.isMember(kWantsToRunStrategyConfigKey)){
-    _wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
+    _stateConceptStrategies.push_back(
+      StateConceptStrategyFactory::CreateStateConceptStrategy( config[kWantsToRunStrategyConfigKey] ) );
   }
 
   if(config.isMember(kAnonymousBehaviorMapKey)){
@@ -285,24 +286,14 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
   assert(_behaviorExternalInterface);
   
   {
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
-    auto externalInterface = robotInfo.HasExternalInterface() ? robotInfo.GetExternalInterface() : nullptr;
-    
-    if(_wantsToRunConfig.size() > 0){
-      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(
-                                                  behaviorExternalInterface,
-                                                  externalInterface,
-                                                  _wantsToRunConfig));
-      _stateConceptStrategies.push_back(strategy);
-      _wantsToRunConfig.clear();
+    for( auto& strategy : _stateConceptStrategies ) {
+      strategy->Init(behaviorExternalInterface);
     }
 
     if(_respondToCloudIntent != CloudIntent::Count){
       Json::Value config = StrategyCloudIntentPending::GenerateCloudIntentPendingConfig(_respondToCloudIntent);
-      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(
-                                                  behaviorExternalInterface,
-                                                  externalInterface,
-                                                  config));
+      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(config));
+      strategy->Init(behaviorExternalInterface);
       _stateConceptStrategies.push_back(strategy);
     }
 

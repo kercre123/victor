@@ -27,7 +27,6 @@
 #include "engine/aiComponent/stateConceptStrategies/strategyRobotTouchGesture.h"
 
 
-#include "engine/robot.h"
 #include "clad/types/behaviorComponent/strategyTypes.h"
 
 #include "util/logging/logging.h"
@@ -42,9 +41,7 @@ namespace{
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IStateConceptStrategyPtr StateConceptStrategyFactory::CreateStateConceptStrategy(BehaviorExternalInterface& bei,
-                                                                                 IExternalInterface* rei,
-                                                                                 const Json::Value& config)
+IStateConceptStrategyPtr StateConceptStrategyFactory::CreateStateConceptStrategy(const Json::Value& config)
 {
 
   StateConceptStrategyType strategyType = IStateConceptStrategy::ExtractStrategyType(config);
@@ -127,10 +124,6 @@ IStateConceptStrategyPtr StateConceptStrategyFactory::CreateStateConceptStrategy
       DEV_ASSERT(false, "StateConceptStrategyFactory.CreateWantsToRunStrategy.InvalidType");
       break;
     }
-  }
-
-  if( strategy ) {
-    strategy->Init(bei);
   }
   
   return strategy;

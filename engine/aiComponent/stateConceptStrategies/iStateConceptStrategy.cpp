@@ -61,7 +61,12 @@ void IStateConceptStrategy::Reset(BehaviorExternalInterface& bei)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IStateConceptStrategy::Init(BehaviorExternalInterface& bei)
 {
+  if( _isInitialized ) {
+    PRINT_NAMED_WARNING("IStateConceptStrategy.Init.AlreadyInitialized", "Init called multiple times");
+  }
+  
   InitInternal(bei);
+  
   _isInitialized = true;
 }
 

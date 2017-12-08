@@ -68,7 +68,6 @@ private:
     
   };
   
-  Json::Value _configArray;
   std::vector<TouchGestureAnimationConfig> _tgAnimConfigs;
 };
 

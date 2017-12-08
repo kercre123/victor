@@ -542,9 +542,6 @@ private:
   std::unordered_map<EngineToGameTag, std::function<void(const EngineToGameEvent&)>> _engineToGameCallbackMap;
   std::set<RobotInterface::RobotToEngineTag> _robotToEngineTags;
 
-  // Tracking wants to run configs for initialization
-  Json::Value _wantsToRunConfig;
-
   // Behaviors can load in internal "anonymous" behaviors which are not stored
   // in the behavior container and are referenced by string instead of by ID
   // This map provides built in "anonymous" functionality, but behaviors

@@ -39,10 +39,18 @@ namespace{
 BehaviorDevPettingTestSimple::BehaviorDevPettingTestSimple(const Json::Value& config)
 : ICozmoBehavior(config)
 {
-  _configArray = config[kGestureToAnimationKey];
-  assert(_configArray.isArray());
-  
+  const Json::Value& configArray = config[kGestureToAnimationKey];
+  assert(configArray.isArray());
 
+  for( const auto& triggerConfig : configArray ) {
+    auto anim = JsonTools::ParseString(triggerConfig, kAnimationNameKey, "Failed to parse animation name");
+    auto rate = JsonTools::ParseFloat(triggerConfig, kAnimationRateKey, "Failed to parse animation rate");
+
+    _tgAnimConfigs.emplace_back(StateConceptStrategyFactory::CreateStateConceptStrategy(triggerConfig),
+                                anim,
+                                rate,
+                                0.0f);
+  }
 }
 
 
@@ -56,20 +64,8 @@ bool BehaviorDevPettingTestSimple::WantsToBeActivatedBehavior(BehaviorExternalIn
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevPettingTestSimple::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
-
-  Json::Value::const_iterator it = _configArray.begin();
-  for(;it!=_configArray.end();++it) {
-    auto anim = JsonTools::ParseString(*it, kAnimationNameKey, "Failed to parse animation name");
-    auto rate = JsonTools::ParseFloat(*it, kAnimationRateKey, "Failed to parse animation rate");
-    
-    _tgAnimConfigs.emplace_back(StateConceptStrategyFactory::CreateStateConceptStrategy(
-                        behaviorExternalInterface, 
-                        robotInfo.HasExternalInterface() ? robotInfo.GetExternalInterface() : nullptr,
-                        *it),
-                                anim,
-                                rate,
-                                0.0f);
+  for( auto& config : _tgAnimConfigs ) {
+    config.strategy->Init(behaviorExternalInterface);
   }
 }
 
