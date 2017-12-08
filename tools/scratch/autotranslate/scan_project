@@ -1,0 +1,26 @@
+#!/bin/sh
+
+#
+# Takes a project, specified by DASProjectName, and exports a json file in the local directory of all localizeable strings
+#  - Exported strings are in a format similar to smartling's translations, and are intended to be copied into our localization files
+#
+# Usages:
+#  1) This script can be run from the command line, or the finder with no arguments.  The user will be prompted for a project
+#    command line usage: "./scan_project"
+#
+#  2) This script can be run from the command line with a specific project as an argument
+#    command line usage: "./scan_project HotPotato"
+#
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+if [ $# -eq 0 ]
+  then
+    echo " "
+    python3 $DIR/localize_featured_projects.py -al
+    echo " "
+    echo "Please specify the project to scan"
+    read PROJECT_NAME
+    python3 $DIR/localize_featured_projects.py -s -p $PROJECT_NAME
+  else
+    python3 $DIR/localize_featured_projects.py -s -p $1
+fi

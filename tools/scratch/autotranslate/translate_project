@@ -1,0 +1,25 @@
+#!/bin/sh
+
+#
+# Takes a project, specified by DASProjectName, and exports foriegn translation into the proper folder
+#
+# Usages:
+#  1) This script can be run from the command line, or the finder with no arguments.  The user will be prompted for a project.
+#    command line usage: "./translate_project"
+#
+#  2) This script can be run from the command line with a specific project as an argument
+#    command line usage: "./translate_project HotPotato"
+#
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+if [ $# -eq 0 ]
+  then
+    echo " "
+    python3 $DIR/localize_featured_projects.py -al
+    echo " "
+    echo "Please specify the project to translate"
+    read PROJECT_NAME
+    python3 $DIR/localize_featured_projects.py -t -p $PROJECT_NAME
+  else
+    python3 $DIR/localize_featured_projects.py -t -p $1
+fi

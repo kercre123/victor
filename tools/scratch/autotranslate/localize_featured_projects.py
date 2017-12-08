@@ -314,21 +314,23 @@ def load_localization_for_language(rootPath, language):
 # build a dictionary of all loc tables by crawling the loc base path
 def load_and_build_localization_dictionary():
     resultDict = {}
-    locPath = os.path.join(BASE_SRC_SCRATCH_PATH, LOCALIZATION_ROOT_PATH);
-    for language in os.listdir(locPath):
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    loc_path = os.path.join(script_path, BASE_SRC_SCRATCH_PATH, LOCALIZATION_ROOT_PATH)
+    for language in os.listdir(loc_path):
         if '.' not in language:
             #print( 'loading language path: ' + language )
-            resultDict[language] = load_localization_for_language(locPath, language)
+            resultDict[language] = load_localization_for_language(loc_path, language)
     return resultDict
 
 def build_project_translation_queue(specified_project, use_all_projects):
     result = []
+    script_path = os.path.dirname(os.path.realpath(__file__))
 
-    project_config_path = os.path.join(BASE_SRC_SCRATCH_PATH, PROJECT_CONFIGURATION_FILE)
+    project_config_path = os.path.join(script_path, BASE_SRC_SCRATCH_PATH, PROJECT_CONFIGURATION_FILE)
     with open(project_config_path, 'r') as json_data:
         featured_config = json.load(json_data)
 
-    project_folder = os.path.join(BASE_SRC_SCRATCH_PATH, TARGET_PROJECT_FOLDER)
+    project_folder = os.path.join(script_path, BASE_SRC_SCRATCH_PATH, TARGET_PROJECT_FOLDER)
 
     for featured_project_config in featured_config:
         base_file_name = os.path.join(project_folder, featured_project_config['ProjectJSONFile'])
@@ -376,7 +378,7 @@ def main():
 
     if command_args.list_project:
         for project_entry in project_list:
-            print(project_entry['project_name'] + ": \"" + project_entry['base_file_name'] + "_" + command_args.source_language + ".json\"")
+            print(project_entry['project_name'])
 
 
 if __name__ == "__main__": 
