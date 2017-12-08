@@ -17,7 +17,6 @@
 #include "engine/aiComponent/stateConceptStrategies/strategyExpressNeedsTransition.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyFacePositionUpdated.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyFrustration.h"
-#include "engine/aiComponent/stateConceptStrategies/strategyGeneric.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyInNeedsBracket.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyObjectMoved.h"
 #include "engine/aiComponent/stateConceptStrategies/strategyObjectPositionUpdated.h"
@@ -78,13 +77,6 @@ IStateConceptStrategyPtr StateConceptStrategyFactory::CreateStateConceptStrategy
     case StateConceptStrategyType::Frustration:
     {
       strategy = std::make_shared<StrategyFrustration>(config);
-      break;
-    }
-    case StateConceptStrategyType::Generic:
-    {
-      DEV_ASSERT_MSG(rei, "StateConceptStrategyType.RobotExternalInterfaceRequired", "%s",
-                     StateConceptStrategyTypeToString(IStateConceptStrategy::ExtractStrategyType(config)));
-      strategy = std::make_shared<StrategyGeneric>(bei, *rei, config);
       break;
     }
     case StateConceptStrategyType::InNeedsBracket:

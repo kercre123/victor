@@ -16,7 +16,6 @@ enum uint_8 StateConceptStrategyType {
   ExpressNeedsTransition,
   FacePositionUpdated,
   Frustration,
-  Generic,
   InNeedsBracket,
   ObjectMoved,
   ObjectPositionUpdated,
