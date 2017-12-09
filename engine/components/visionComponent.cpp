@@ -65,7 +65,11 @@ namespace Cozmo {
   CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasRotatingTooFast.Face.NumToLookBack", 5);
   
   CONSOLE_VAR(bool, kDisplayProcessedImagesOnly, "Vision.General", true);
-  CONSOLE_VAR(s32,  kDebugImageCompressQuality,  "Vision.General", 50); // Set to 0 to display "locally" with img.Display()
+  
+  // Quality of images sent to game/viz
+  // Set to -1 to display "locally" with img.Display()
+  // Set to 0 to disable sending altogether (to save bandwidth) -- disables camera feed AND debug images
+  CONSOLE_VAR(s32,  kImageCompressQuality,  "Vision.General", 50);
   
   // Whether or not to do rolling shutter correction for physical robots
   CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);
@@ -412,7 +416,7 @@ namespace Cozmo {
         
         // Compress to jpeg and send to game and viz
         // Do this before setting next image since it swaps the image and invalidates it
-        Result lastResult = CompressAndSendImage(_bufferedImg, 50, "camera");
+        Result lastResult = CompressAndSendImage(_bufferedImg, kImageCompressQuality, "camera");
         DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
         
         // Track how fast we are receiving frames
@@ -860,7 +864,7 @@ namespace Cozmo {
       
       while(true == _visionSystem->CheckMailbox(result))
       {
-        if(IsDisplayingProcessedImagesOnly())
+        if(IsDisplayingProcessedImagesOnly() && (kImageCompressQuality > 0))
         {
           // The assumption is that all the chunks of this encoded image have already been sent to
           // the viz manager (e.g. forwarded by the robot message handler)
@@ -906,7 +910,7 @@ namespace Cozmo {
         // Display any debug images left by the vision system
         if(ANKI_DEV_CHEATS)
         {
-          if(kDebugImageCompressQuality > 0)
+          if(kImageCompressQuality > 0)
           {
             // Send any images in the debug image lists to Viz for display
             // Resize to fit display, but don't if it would make the image larger (to save bandwidth)
@@ -917,16 +921,16 @@ namespace Cozmo {
               debugGray.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
               debugGray.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
                                                      Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
-              CompressAndSendImage(debugGray.second, kDebugImageCompressQuality, debugGray.first);
+              CompressAndSendImage(debugGray.second, kImageCompressQuality, debugGray.first);
             }
             for(auto & debugRGB : result.debugImageRGBs) {
               debugRGB.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
               debugRGB.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
                                                     Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
-              CompressAndSendImage(debugRGB.second, kDebugImageCompressQuality, debugRGB.first);
+              CompressAndSendImage(debugRGB.second, kImageCompressQuality, debugRGB.first);
             }
           }
-          else
+          else if(kImageCompressQuality == -1)
           {
             // Display debug images locally
             for(auto & debugGray : result.debugImages) {
@@ -1428,6 +1432,12 @@ namespace Cozmo {
   template<class PixelType>
   Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality, const std::string& identifier)
   {
+    if(quality == 0)
+    {
+      // Don't send anything
+      return RESULT_OK;
+    }
+    
     if(!_robot.HasExternalInterface()) {
       PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage.NoExternalInterface", "");
       return RESULT_FAIL;
