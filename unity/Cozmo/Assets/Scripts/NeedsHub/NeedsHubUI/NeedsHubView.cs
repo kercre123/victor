@@ -334,6 +334,7 @@ namespace Cozmo.Needs.UI {
       OnboardingManager.Instance.OnOnboardingAnimEvent.Invoke(param);
     }
     public void OnboardingSkipped() {
+      Debug.LogWarning("Skipping onboarding");
       // The first phase on onboarding causes the needshub to be inactive, so it didn't start the opening logic.
       HandleDialogFinishedOpenAnimation();
 

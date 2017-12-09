@@ -182,6 +182,8 @@ public class OnboardingManager : MonoBehaviour {
 
   public bool IsOldRobot() {
     // FistBump is the first thing unlocked in the new nurture unlock order.
+    Debug.LogWarning("IsOldRobot: _LastOnboardingPhaseCompletedRobot " + _LastOnboardingPhaseCompletedRobot + "; fistbump " +
+              (UnlockablesManager.Instance.IsUnlocked(UnlockId.FistBump) ? "unlocked" : "locked"));
     return _LastOnboardingPhaseCompletedRobot > 0 ||
            UnlockablesManager.Instance.IsUnlocked(UnlockId.FistBump);
   }

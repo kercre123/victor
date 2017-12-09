@@ -348,13 +348,17 @@ void NeedsManager::Init(const float currentTime_s,      const Json::Value& inJso
 void NeedsManager::InitReset(const float currentTime_s, const u32 serialNumber,
                              const bool onboardingSkipped)
 {
-  if (onboardingSkipped)
+  if (onboardingSkipped && _robotHadValidNeedsData)
   {
     // If the user has skipped onboarding, we want to reset needs levels, stars awarded,
     // levels completed, etc. to what it was prior to onboarding.  Note that the user
     // can only skip onboarding if they are running a freshly-installed cozmo app with
     // a robot that has already completed onboarding
     SetNeedsStateFromRobotNeedsState();
+
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitReset",
+                  "After onboarding skipped, needs levels at %f, %f, %f", _needsState.GetNeedLevel(NeedId::Repair),
+                  _needsState.GetNeedLevel(NeedId::Energy), _needsState.GetNeedLevel(NeedId::Play));
   }
   else
   {
@@ -481,6 +485,12 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     // Neither robot nor device has needs data
     needToWriteToDevice = true;
     needToWriteToRobot = true;
+
+    SendNeedsStateToGame();
+
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt",
+                  "Needs levels at %f, %f, %f", _needsState.GetNeedLevel(NeedId::Repair),
+                  _needsState.GetNeedLevel(NeedId::Energy), _needsState.GetNeedLevel(NeedId::Play));
   }
   else if (_robotHadValidNeedsData && !_deviceHadValidNeedsData)
   {
@@ -1374,6 +1384,10 @@ void NeedsManager::HandleMessage(const ExternalInterface::GetSongsList& msg)
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::ForceSetNeedsLevels& msg)
 {
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.ForceSetNeedsLevels",
+                "Game sent ForceSetNeedsLevels message with %f, %f, %f",
+                msg.newNeedLevel[0], msg.newNeedLevel[1], msg.newNeedLevel[2]);
+
   NeedsState::CurNeedsMap prevNeedsLevels = _needsState._curNeedsLevels;
 
   for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
@@ -2323,7 +2337,20 @@ bool NeedsManager::AttemptReadFromDevice(const std::string& filename, bool& vers
       _needsState._timesOpenedSinceLastDisconnect++;
 
       SendTimeSinceBackgroundedDasEvent();
+
+      PRINT_NAMED_INFO("NeedsManager.AttemptReadFromDevice",
+                       "Successfully read file %s from device", filename.c_str());
     }
+    else
+    {
+      PRINT_NAMED_INFO("NeedsManager.AttemptReadFromDevice",
+                       "FAILED to read file %s on device", filename.c_str());
+    }
+  }
+  else
+  {
+    PRINT_NAMED_INFO("NeedsManager.AttemptReadFromDevice",
+                     "FAILED to FIND file %s on device", filename.c_str());
   }
 
   return valid;
