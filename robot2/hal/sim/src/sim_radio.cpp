@@ -125,9 +125,14 @@ namespace Anki {
 
     Result InitSimRadio(const char* advertisementIP)
     {
-      PRINT_NAMED_INFO("simHAL.InitSimRadio.StartListening", "Listening on %s", ROBOT_SERVER_PATH);
-      if (!server.StartListening(ROBOT_SERVER_PATH)) {
-        PRINT_NAMED_ERROR("HAL.InitSimRadio.ListenFailed", "Unable to listen on %s", ROBOT_SERVER_PATH);
+      // Construct local domain path
+      const RobotID_t robotID = HAL::GetID();
+
+      std::string server_path = std::string(ROBOT_SERVER_PATH) + std::to_string(robotID);
+
+      PRINT_NAMED_INFO("simHAL.InitSimRadio.StartListening", "Start listening on %s", server_path.c_str());
+      if (!server.StartListening(server_path.c_str())) {
+        PRINT_NAMED_ERROR("HAL.InitSimRadio.ListenFailed", "Unable to listen on %s", server_path.c_str());
         return RESULT_FAIL_IO;
       }
 
@@ -136,10 +141,9 @@ namespace Anki {
       //       We also assume that when working with simulated robots on Webots, the advertisement service is running on the same host.
       advRegClient.Connect(advertisementIP, ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
 
-      
       // TODO: The advertisement stuff should probably move to animProcess
       // Fill in advertisement registration message
-      regMsg.id = HAL::GetID();
+      regMsg.id = robotID;
       //regMsg.toEnginePort = ROBOT_RADIO_BASE_PORT + regMsg.id;
       regMsg.toEnginePort = ANIM_PROCESS_SERVER_BASE_PORT + regMsg.id;
       regMsg.fromEnginePort = regMsg.toEnginePort;

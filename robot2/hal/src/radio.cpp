@@ -36,9 +36,12 @@ namespace Anki {
 
     Result InitRadio(const char* advertisementIP)
     {
-      AnkiInfo("HAL.InitRadio.StartListening", "Start listening at %s", ROBOT_SERVER_PATH);
-      if (!server.StartListening(ROBOT_SERVER_PATH)) {
-        AnkiError("HAL.InitRadio.UDPServerFailed", "Unable to listen at %s", ROBOT_SERVER_PATH);
+      const RobotID_t robotID = HAL::GetID();
+      std::string server_path = std::string(ROBOT_SERVER_PATH) + std::to_string(robotID);
+
+      AnkiInfo("HAL.InitRadio.StartListening", "Start listening at %s", server_path.c_str());
+      if (!server.StartListening(server_path.c_str())) {
+        AnkiError("HAL.InitRadio.UDPServerFailed", "Unable to listen at %s", server_path.c_str());
         return RESULT_FAIL_IO;
       }
 

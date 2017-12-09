@@ -322,13 +322,16 @@ namespace Cozmo {
   // Number of frames to skip when streaming images to basestation
   const u8 IMG_STREAM_SKIP_FRAMES = 2;
 
-  // Local (unix-domain) socket paths
+  //
+  // Local (unix-domain) socket paths.
+  // RobotID will be appended to generate unique paths for each robot.
+  //
   #ifdef SIMULATOR
-  constexpr char ROBOT_SERVER_PATH[]  = "/tmp/_robot_server";
-  constexpr char ANIM_CLIENT_PATH[]   = "/tmp/_anim_client";
+  constexpr char ROBOT_SERVER_PATH[]  = "/tmp/_robot_server_";
+  constexpr char ANIM_CLIENT_PATH[]   = "/tmp/_anim_client_";
   #else
-  constexpr char ROBOT_SERVER_PATH[]  = "/dev/socket/_robot_server";
-  constexpr char ANIM_CLIENT_PATH[]   = "/dev/socket/_anim_client";
+  constexpr char ROBOT_SERVER_PATH[]  = "/dev/socket/_robot_server_";
+  constexpr char ANIM_CLIENT_PATH[]   = "/dev/socket/_anim_client_";
   #endif
   
 } // namespace Cozmo
