@@ -18,7 +18,7 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "version": "2539"
+                "version": "2546"
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
