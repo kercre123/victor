@@ -263,6 +263,7 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
     _tts_speed = TTS_DEFAULT_SPEED;
     _tts_shaping = TTS_DEFAULT_SHAPING;
     _tts_pitch = TTS_DEFAULT_PITCH;
+    _tts_cozmo = TTS_DEFAULT_COZMO;
 
     //
     // Allow language configuration to override defaults.  Note pitch is not
