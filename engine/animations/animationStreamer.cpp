@@ -297,7 +297,7 @@ namespace Cozmo {
     if (nullptr != _streamingAnimation || nullptr != _idleAnimation)
     {
       // Log streamer state for diagnostics
-      const auto * anim = (_streamingAnimation != nullptr ? _streamingAnimation : _idleAnimation);
+      auto * anim = (_streamingAnimation != nullptr ? _streamingAnimation : _idleAnimation);
       const char * type = (_streamingAnimation != nullptr ? "Streaming" : "Idle");
       
       PRINT_NAMED_INFO("AnimationStreamer.Abort",
@@ -315,7 +315,7 @@ namespace Cozmo {
       // Note: This is currently the only keyframe that modifies a variable
       // as it's read and needs to be reset before the next time it's read,
       // which is why we're not resetting all tracks in the same way
-      auto & faceAnimTrack = _streamingAnimation->GetTrack<FaceAnimationKeyFrame>();
+      auto & faceAnimTrack = anim->GetTrack<FaceAnimationKeyFrame>();
       if (faceAnimTrack.HasFramesLeft()) {
         auto & faceKeyFrame = faceAnimTrack.GetCurrentKeyFrame();
         faceKeyFrame.Reset();
