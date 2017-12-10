@@ -1492,10 +1492,76 @@
   "codeLabSampleProject_LaserSmile.projectName": {
     "translation": "Laser Smile!"
   },
+  "codeLabFeaturedProject_LaserSmile.projectDescription": {
+      "translation":  "Turn that frown upside down!"
+  },
+  "codeLabFeaturedProject_LaserSmile.projectInstructions": {
+      "translation": "1. Once you tap the start flag, Cozmo will display a frown emoji on his screen.\n\n2. Make sure Cozmo can see your face. Move your head to aim at the frown emoji.\n\n3. Smile to shoot your laser!"
+  },
   "codeLabSampleProject_LaserSmile.variableInstruction1": {
     "translation": "The goal is to turn that frown upside down!"
   },
   "codeLabSampleProject_LaserSmile.variableInstruction2": {
     "translation": "Smile to shoot your laser! Move your head to aim."
+  },
+  "codeLabFeaturedProject_ComplimentGenerator.projectName": {
+    "translation": "Compliment Generator"
+  },
+  "codeLabFeaturedProject_ComplimentGenerator.projectDescription": {
+      "translation":  "Celebrate World Compliment Day with Cozmo!"
+  },
+  "codeLabFeaturedProject_ComplimentGenerator.projectInstructions": {
+      "translation": "1. March 1st is World Compliment day! Tap the start flag to receive a random compliment."
+  },
+  "codeLabFeaturedProject_CozmoFlies.projectName": {
+    "translation": "Cozmo Flies"
+  },
+  "codeLabFeaturedProject_CozmoFlies.projectDescription": {
+      "translation":  "Up, up, up and away!"
+  },
+  "codeLabFeaturedProject_CozmoFlies.projectInstructions": {
+      "translation": "1. Once you tap the start flag, Cozmo is ready for takeoff!\n\n2. Pick him up and fly him around the room.\n\n3. Enjoy his theme music and reactions!"
+  },
+  "codeLabFeaturedProject_RemoteControlRacer.projectName": {
+    "translation": "Remote Control Racer"
+  },
+  "codeLabFeaturedProject_RemoteControlRacer.projectDescription": {
+      "translation":  "Vroom, vroom! Drive Cozmo at top speed."
+  },
+  "codeLabFeaturedProject_RemoteControlRacer.projectInstructions": {
+      "translation": "1. Once you tap the start flag, your phone or tablet turns into a remote controller.\n\n2. Tip your device up/down and left/right to move Cozmo at top speed!"
+  },
+  "codeLabFeaturedProject_PuttPutt.projectName": {
+    "translation": "Putt Putt"
+  },
+  "codeLabFeaturedProject_PuttPutt.projectDescription": {
+      "translation":  "Can you get a hole-in-one?"
+  },
+  "codeLabFeaturedProject_PuttPutt.projectInstructions": {
+      "translation": "1. After you tap the start flag, pick Cozmo up and hold his face upright.\n\n2. His face will display a ball and a hole. Tip Cozmo to roll the ball in the hole."
+  },
+  "codeLabFeaturedProject_ValentinesCozmogram.projectName": {
+    "translation": "Valentine's Cozmogram"
+  },
+  "codeLabFeaturedProject_ValentinesCozmogram.projectDescription": {
+      "translation":  "Give a Valentine to a friend, Cozmo-style."
+  },
+  "codeLabFeaturedProject_ValentinesCozmogram.projectInstructions": {
+      "translation": "1. Tap the start flag and Cozmo will give you a Valentine's greeting!"
+  },
+  "codeLabFeaturedProject_ShakeIt.projectName": {
+    "translation": "Shake It!"
+  },
+  "codeLabFeaturedProject_ShakeIt.projectDescription": {
+      "translation":  "Shake things up with this new game."
+  },
+  "codeLabFeaturedProject_ShakeIt.projectInstructions": {
+      "translation": "1. After you tap the start flag, Cozmo will ask you to shake things!\n\n2. Listen carefully to his instructions.\n\n\"Red\" = Shake red Cube\n\"Yellow\" = Shake yellow Cube\n\"Blue\" = Shake blue Cube\n\"Orange\" = Shake red and yellow Cubes\n\"Green\" = Shake yellow and blue Cubes\n\"Purple\" = Shake blue and red Cubes\n\"Me\" = Shake Cozmo!\n\n3. How many correct shakes can you get before time runs out?"
+  },
+  "codeLabSampleProject_ScrollingWaveText.projectName": {
+      "translation": "Scrolling Wavey Text"
+  },
+  "codeLabSampleProject_ScrollingText.projectName": {
+      "translation": "Scrolling Text"
   }
 }

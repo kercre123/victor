@@ -142,5 +142,125 @@
         "ShowButton": true,
         "ProjectGuid": "cb8f716e-1b8f-4f37-af10-4fe30a8ec31b"
     }
+  },
+    {
+    "FeatureID": "code_lab_laser_smile",
+    "DASEventFeatureID": "code_lab_laser_smile",
+    "StartDate": {
+        "Month": "1",
+        "Day": "29",
+        "Year": "2018"
+    },
+    "EndDate": {
+        "Month": "2",
+        "Day": "7",
+        "Year": "2018"
+    },
+    "TitleKey": "whatsNew.CodeLab_LaserSmile.title",
+    "DescriptionKey": "whatsNew.CodeLab_LaserSmile.description",
+    "IconAssetBundleName": "whats_new_icon_sprites",
+    "IconAssetName": "icon_laserSmile",
+    "LeftTintColor": [93,197,21],
+    "RightTintColor": [157,227,53],
+    "CodeLabData": {
+        "ShowButton": true,
+        "ProjectGuid": "467f67d5-9217-4e0c-9bf4-3896070f0318"
+    }
+  },
+    {
+    "FeatureID": "code_lab_valentimes_cozmogram",
+    "DASEventFeatureID": "code_lab_valentimes_cozmogram",
+    "StartDate": {
+        "Month": "2",
+        "Day": "8",
+        "Year": "2018"
+    },
+    "EndDate": {
+        "Month": "2",
+        "Day": "14",
+        "Year": "2018"
+    },
+    "TitleKey": "whatsNew.CodeLab_ValentinesCozmogram.title",
+    "DescriptionKey": "whatsNew.CodeLab_ValentinesCozmogram.description",
+    "IconAssetBundleName": "whats_new_icon_sprites",
+    "IconAssetName": "icon_lightShow",
+    "LeftTintColor": [93,197,21],
+    "RightTintColor": [157,227,53],
+    "CodeLabData": {
+        "ShowButton": true,
+        "ProjectGuid": "7a3522a8-cd48-4c3b-9a6a-275ce4bffd65"
+    }
+  },
+    {
+    "FeatureID": "code_lab_putt_putt",
+    "DASEventFeatureID": "code_lab_putt_putt",
+    "StartDate": {
+        "Month": "2",
+        "Day": "15",
+        "Year": "2018"
+    },
+    "EndDate": {
+        "Month": "2",
+        "Day": "21",
+        "Year": "2018"
+    },
+    "TitleKey": "whatsNew.CodeLab_PuttPutt.title",
+    "DescriptionKey": "whatsNew.CodeLab_PuttPutt.description",
+    "IconAssetBundleName": "whats_new_icon_sprites",
+    "IconAssetName": "icon_puttPutt",
+    "LeftTintColor": [93,197,21],
+    "RightTintColor": [157,227,53],
+    "CodeLabData": {
+        "ShowButton": true,
+        "ProjectGuid": "c8b394a6-54e2-4347-ab4f-17cd5c641862"
+    }
+  },
+    {
+    "FeatureID": "code_lab_shake_it",
+    "DASEventFeatureID": "code_lab_shake_it",
+    "StartDate": {
+        "Month": "2",
+        "Day": "22",
+        "Year": "2018"
+    },
+    "EndDate": {
+        "Month": "2",
+        "Day": "28",
+        "Year": "2018"
+    },
+    "TitleKey": "whatsNew.CodeLab_ShakeIt.title",
+    "DescriptionKey": "whatsNew.CodeLab_ShakeIt.description",
+    "IconAssetBundleName": "whats_new_icon_sprites",
+    "IconAssetName": "icon_shakeIt",
+    "LeftTintColor": [93,197,21],
+    "RightTintColor": [157,227,53],
+    "CodeLabData": {
+        "ShowButton": true,
+        "ProjectGuid": "01ab9bf6-e0ae-4a6a-a94c-51ccadc42fc9"
+    }
+  },
+    {
+    "FeatureID": "code_lab_remote_control_racer",
+    "DASEventFeatureID": "code_lab_remote_control_racer",
+    "StartDate": {
+        "Month": "3",
+        "Day": "1",
+        "Year": "2018"
+    },
+    "EndDate": {
+        "Month": "3",
+        "Day": "7",
+        "Year": "2018"
+    },
+    "TitleKey": "whatsNew.CodeLab_RemoteControlRacer.title",
+    "DescriptionKey": "whatsNew.CodeLab_RemoteControlRacer.description",
+    "IconAssetBundleName": "whats_new_icon_sprites",
+    "IconAssetName": "icon_remoteControlRacer",
+    "LeftTintColor": [93,197,21],
+    "RightTintColor": [157,227,53],
+    "CodeLabData": {
+        "ShowButton": true,
+        "ProjectGuid": "30ada9ed-efad-4eff-bca3-6facbddfd475"
+    }
   }
 ]
