@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class SwipePageIndicator : MonoBehaviour {
 
@@ -10,7 +11,7 @@ public class SwipePageIndicator : MonoBehaviour {
   private bool _UsePagePips;
 
   [SerializeField]
-  private UnityEngine.UI.Image _PageIndicatorPrefab;
+  private Image _PageIndicatorPrefab;
 
   [SerializeField]
   private RectTransform _PageIndicatorContainer;
@@ -22,10 +23,10 @@ public class SwipePageIndicator : MonoBehaviour {
   private CozmoText _PageIndicatorText;
 
   [SerializeField]
-  private Sprite _ActiveSprite;
+  private Sprite _ActivePipSprite;
 
   [SerializeField]
-  private Sprite _InactiveSprite;
+  private Sprite _InactivePipSprite;
 
   [SerializeField]
   private Cozmo.UI.CozmoButton _NextButton;
@@ -33,9 +34,20 @@ public class SwipePageIndicator : MonoBehaviour {
   [SerializeField]
   private Cozmo.UI.CozmoButton _BackButton;
 
-  private List<UnityEngine.UI.Image> _PageIndicators = new List<UnityEngine.UI.Image>();
+  [SerializeField]
+  private Image _BackArrowImage;
+
+  [SerializeField]
+  private Image _NextArrowImage;
+
+  [SerializeField]
+  private Sprite _InactiveArrowSprite;
+
+  [SerializeField]
+  private Sprite _ActiveArrowSprite;
+
+  private List<Image> _PageIndicators = new List<Image>();
   private int _PageCount;
-  private int _CurrentPage;
 
   private void Awake() {
     _NextButton.Initialize(() => {
@@ -62,9 +74,9 @@ public class SwipePageIndicator : MonoBehaviour {
 
       for (int i = 0; i < pageCount; ++i) {
         GameObject pageIndicator = GameObject.Instantiate(_PageIndicatorPrefab.gameObject);
-        pageIndicator.GetComponent<UnityEngine.UI.Image>().overrideSprite = _InactiveSprite;
+        pageIndicator.GetComponent<Image>().overrideSprite = _InactivePipSprite;
         pageIndicator.transform.SetParent(_PageIndicatorContainer, false);
-        _PageIndicators.Add(pageIndicator.GetComponent<UnityEngine.UI.Image>());
+        _PageIndicators.Add(pageIndicator.GetComponent<Image>());
       }
     }
     if (_UsePageText) {
@@ -78,22 +90,27 @@ public class SwipePageIndicator : MonoBehaviour {
       return;
     }
 
+    // Using overrideSprite because just sprite has problems updating on first run
     _BackButton.Interactable = true;
+    _BackArrowImage.overrideSprite = _ActiveArrowSprite;
     _NextButton.Interactable = true;
+    _NextArrowImage.sprite = _ActiveArrowSprite;
 
     if (currentPage == 0) {
       _BackButton.Interactable = false;
+      _BackArrowImage.overrideSprite = _InactiveArrowSprite;
     }
 
     if (currentPage == _PageCount - 1) {
       _NextButton.Interactable = false;
+      _NextArrowImage.sprite = _InactiveArrowSprite;
     }
 
     if (_UsePagePips) {
       for (int i = 0; i < _PageCount; ++i) {
-        _PageIndicators[i].overrideSprite = _InactiveSprite;
+        _PageIndicators[i].overrideSprite = _InactivePipSprite;
       }
-      _PageIndicators[currentPage].overrideSprite = _ActiveSprite;
+      _PageIndicators[currentPage].overrideSprite = _ActivePipSprite;
     }
     if (_UsePageText) {
       _PageIndicatorText.FormattingArgs = new object[] { (currentPage + 1), _PageCount };
