@@ -34,7 +34,11 @@
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
+
+#include "anki/cozmo/shared/cozmoConfig.h"
+
 #include "clad/externalInterface/messageGameToEngine.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
@@ -45,6 +49,7 @@
 #include "util/time/universalTime.h"
 #include "util/environment/locale.h"
 #include "util/transport/connectionStats.h"
+
 #include <cstdlib>
 #include <ctime>
 #include <iomanip>
@@ -574,8 +579,8 @@ Result CozmoEngine::InitInternal()
 
 Result CozmoEngine::ConnectToRobotProcess()
 {
-  const RobotID_t kDefaultRobotID = 1;
-  if(HasRobotWithID(kDefaultRobotID)) {
+  const RobotID_t kDefaultRobotID = Anki::Cozmo::DEFAULT_ROBOT_ID;
+  if (HasRobotWithID(kDefaultRobotID)) {
     PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobotProcess.AlreadyConnected", "Robot already connected");
     return RESULT_OK;
   }

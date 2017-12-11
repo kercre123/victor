@@ -86,7 +86,7 @@ Result GetSpineDataFrame(void)
 Result HAL::Init()
 {
   // Set ID
-  robotID_ = 1;
+  robotID_ = Anki::Cozmo::DEFAULT_ROBOT_ID;
 
   InitMotor();
 

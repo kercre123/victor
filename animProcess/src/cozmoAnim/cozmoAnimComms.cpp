@@ -43,11 +43,9 @@ namespace { // "Private members"
   Result InitComms()
   {
     // Setup robot comms
-#ifdef SIMULATOR
-    const RobotID_t robotID = 1; // TODO: Extract this from proto instance name just like CozmoBot_1?
-#else
-    const RobotID_t robotID = 0;
-#endif
+    // TODO: Extract this from proto instance name just like CozmoBot_1?
+    const RobotID_t robotID = Anki::Cozmo::DEFAULT_ROBOT_ID;
+
     std::string client_path = std::string(ANIM_CLIENT_PATH) + std::to_string(robotID);
     std::string server_path = std::string(ROBOT_SERVER_PATH) + std::to_string(robotID);
     
