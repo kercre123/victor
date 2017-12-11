@@ -223,13 +223,13 @@ void ProxSensorComponent::UpdateTheremin()
   float volumeVal = 0.f;
   
   // Post pitch parameter
-  _robot.GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Energy,
+  _robot.GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Theremin_Pitch,
                                          pitchVal,
                                          AudioMetaData::GameObjectType::Cozmo_OnDevice);
   
   // Post volume parameter
-  _robot.GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Energy,
-                                         pitchVal,
+  _robot.GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Theremin_Volume,
+                                         volumeVal,
                                          AudioMetaData::GameObjectType::Cozmo_OnDevice);
   
 }
