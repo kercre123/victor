@@ -81,6 +81,12 @@ def parse_command_args():
                         default=None,
                         action='store',
                         help='Specifies featured project to be scanned or translated')
+    arg_parser.add_argument('-d', '--desktop',
+                        dest='target_desktop',
+                        default=False,
+                        action='store_const',
+                        const=True,
+                        help='Specifies that scan exports should be sent to the desktop instead of the script\'s folder')
 
     arg_parser.add_argument('-o', '--source_language',
                         dest='source_language',
@@ -143,9 +149,9 @@ class FilterField:
                 string = src['fields'][key]['value']
                 try:
                     if len(string) > 1 and string[0] == '.':
-                        int(string[1:])
+                        float(string[1:])
                     else:
-                        int(string)
+                        float(string)
                 except ValueError:
                     if string not in IGNORE_TEXT_KEYS:
                         src['fields'][key]['value'] = transform(string, context)
@@ -262,7 +268,7 @@ def execute_translations_on_project(project, source_language, loc_table):
 #                                          Loc String Scanning Code
 # --------------------------------------------------------------------------------------------------------
 
-def scan_project(project, source_language):
+def scan_project(project, source_language, target_desktop):
     source_project_file = project['base_file_name'] + '_' + source_language + '.json'
 
     json_out = {}
@@ -283,7 +289,16 @@ def scan_project(project, source_language):
             key = 'codeLabFeaturedProject.' + project['project_name'] + '.' + simplified_content
             json_out[key] = { 'translation': content }
 
-    export_filename = project['project_name'] + '_loc_strings.json'
+    if target_desktop:
+        export_folder = os.path.expanduser('~/Desktop/CodeLabLocStrings')
+        try:
+            os.stat(export_folder)
+        except:
+            os.mkdir(export_folder)
+        export_filename = os.path.join(export_folder, os.path.basename(project['project_name']) + '_loc_strings.json')
+    else:
+        export_filename = project['project_name'] + '_loc_strings.json'
+
     with open(export_filename, 'w') as output_file:
         json.dump(json_out, output_file, indent=4)
         output_file.write('\n')
@@ -365,7 +380,7 @@ def main():
     if command_args.scan_project:
         projects_scanned = 0
         for project_entry in project_list:
-            if scan_project(project_entry, command_args.source_language):
+            if scan_project(project_entry, command_args.source_language, command_args.target_desktop):
                 projects_scanned += 1
         print(str(projects_scanned) + ' project(s) scanned')
 

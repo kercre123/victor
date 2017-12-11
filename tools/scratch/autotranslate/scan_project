@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Takes a project, specified by DASProjectName, and exports a json file in the local directory of all localizeable strings
+# Takes a project, specified by DASProjectName, and exports a json file into "Desktop/CodeLabLocStrings" of all localizeable strings
 #  - Exported strings are in a format similar to smartling's translations, and are intended to be copied into our localization files
 #
 # Usages:
