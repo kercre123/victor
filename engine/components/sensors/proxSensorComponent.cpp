@@ -182,23 +182,23 @@ void ProxSensorComponent::UpdateNavMap()
       currentNavMemoryMap->AddTriangle(tri, clearRegion);
 
       // Add proxObstacle if detected and close to robot 
-      // if (_latestData.distance_mm <= kMaxObsThreshold_mm) { 
-      //   const float obstacleHalfWidth_mm = ROBOT_BOUNDING_Y * .5 + kObsPadding_mm;
-      //   Vec3f offset1(-kObsPadding_mm,  -obstacleHalfWidth_mm, 0);   
-      //   Vec3f offset2(-kObsPadding_mm,   obstacleHalfWidth_mm, 0);
-      //   Vec3f offset3(kObsPadding_mm * 2, 0, 0);
+      if (_latestData.distance_mm <= kMaxObsThreshold_mm) { 
+        const float obstacleHalfWidth_mm = ROBOT_BOUNDING_Y * .1 + kObsPadding_mm;
+        Vec3f offset1(-kObsPadding_mm,  -obstacleHalfWidth_mm, 0);   
+        Vec3f offset2(-kObsPadding_mm,   obstacleHalfWidth_mm, 0);
+        Vec3f offset3(kObsPadding_mm * 2, 0, 0);
 
-      //   const Point2f p1 = (objectPos.GetTransform() * Transform3d(rot, offset1)).GetTranslation();
-      //   const Point2f p2 = (objectPos.GetTransform() * Transform3d(rot, offset2)).GetTranslation(); 
-      //   const Point2f p3 = (objectPos.GetTransform() * Transform3d(rot, offset1 + offset3)).GetTranslation();
-      //   const Point2f p4 = (objectPos.GetTransform() * Transform3d(rot, offset2 + offset3)).GetTranslation();
+        const Point2f p1 = (objectPos.GetTransform() * Transform3d(rot, offset1)).GetTranslation();
+        const Point2f p2 = (objectPos.GetTransform() * Transform3d(rot, offset2)).GetTranslation(); 
+        const Point2f p3 = (objectPos.GetTransform() * Transform3d(rot, offset1 + offset3)).GetTranslation();
+        const Point2f p4 = (objectPos.GetTransform() * Transform3d(rot, offset2 + offset3)).GetTranslation();
 
-      //   const Quad2f quad(p1, p2, p3, p4);
-      //   const Vec3f rotatedFwdVector = _robot.GetPose().GetWithRespectToRoot().GetRotation() * X_AXIS_3D();
+        const Quad2f quad(p1, p2, p3, p4);
+        const Vec3f rotatedFwdVector = _robot.GetPose().GetWithRespectToRoot().GetRotation() * X_AXIS_3D();
         
-      //   MemoryMapData_ProxObstacle proxData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()}, lastTimestamp);      
-      //   currentNavMemoryMap->AddQuad(quad, proxData);
-      // }
+        MemoryMapData_ProxObstacle proxData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()}, lastTimestamp);      
+        currentNavMemoryMap->AddQuad(quad, proxData);
+      }
     }
   }
 }
