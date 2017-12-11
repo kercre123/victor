@@ -1081,7 +1081,6 @@ void RobotToEngineImplMessaging::HandleImuRawData(const AnkiEvent<RobotInterface
   const RobotInterface::IMURawDataChunk& payload = message.GetData().Get_imuRawDataChunk();
   
   if (payload.order == 0) {
-    ++_imuSeqID;
     
     // Make sure imu capture folder exists
     std::string imuLogsDir = robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMU_LOGS_DIR);
@@ -1090,7 +1089,12 @@ void RobotToEngineImplMessaging::HandleImuRawData(const AnkiEvent<RobotInterface
     }
     
     // Open imu log file
-    std::string imuLogFileName = std::string(imuLogsDir.c_str()) + "/imuRawLog_" + std::to_string(_imuSeqID) + ".dat";
+    std::string imuLogFileName = "";
+    do {
+      ++_imuSeqID;
+      imuLogFileName = std::string(imuLogsDir.c_str()) + "/imuRawLog_" + std::to_string(_imuSeqID) + ".dat";
+    } while( Util::FileUtils::FileExists(imuLogFileName) );
+    
     PRINT_NAMED_INFO("Robot.HandleImuRawData.OpeningLogFile",
                      "%s", imuLogFileName.c_str());
     

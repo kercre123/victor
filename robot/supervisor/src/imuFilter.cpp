@@ -138,8 +138,8 @@ namespace Anki {
         RobotInterface::IMUDataChunk imuChunkMsg_;
 #else
         RobotInterface::IMURawDataChunk imuRawDataMsg_;
-        u16 totalIMUDataMsgsToSend_ = 0;
-        u16 sentIMUDataMsgs_ = 0;
+        u32 totalIMUDataMsgsToSend_ = 0;
+        u32 sentIMUDataMsgs_ = 0;
 #endif
 
         // ==== Falling detection ===
