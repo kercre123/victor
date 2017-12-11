@@ -23,9 +23,11 @@
 #include "cozmoAnim/micImmediateDirection.h"
 #include "cozmoAnim/speechRecognizerTHFSimple.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "util/math/math.h"
 #include "util/threading/threadPriority.h"
 
 #include "clad/robotInterface/messageRobotToEngine_sendToEngine_helper.h"
@@ -34,9 +36,40 @@
 #include <sstream>
 
 namespace {
-  const std::string kHeyCozmoDataDir = "trigger_anki_x_en_us_01_hey_cosmo_sfs14_b3e3cbba";
-  const std::string kHeyCozmoNet = "anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_am.raw";
-  const std::string kHeyCozmoSearch = "anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_search_4.raw";
+  struct TriggerData
+  {
+    std::string dataDir;
+    std::string netFile;
+    std::string searchFile;
+  };
+
+  const TriggerData kTriggerDataList[] = 
+  {
+    // "HeyCozmo" trigger trained on adults
+    {
+      .dataDir = "trigger_anki_x_en_us_01_hey_cosmo_sfs14_b3e3cbba",
+      .netFile = "anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_am.raw",
+      .searchFile = "anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_search_4.raw"
+    },
+    // "HeyCozmo" trigger trained on both adults + kids (aka delivery 2)
+    {
+      .dataDir = "trigger_anki_x_en_us_02_hey_cosmo_sfs14_b3e3cbba",
+      .netFile = "anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery02_am.raw",
+      .searchFile = "anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery02_search_4.raw"
+    },
+    // "Cozmo" trigger trained on both adults + kids
+    {
+      .dataDir = "trigger_anki_x_en_us_01_cosmo_sfs14_b3e3cbba",
+      .netFile = "anki_x_cosmo_en_us_sfs14_b3e3cbba_delivery01_am.raw",
+      .searchFile = "anki_x_cosmo_en_us_sfs14_b3e3cbba_delivery01_search_10.raw"
+    }
+  };
+  constexpr int32_t kTriggerDataListLen = (int32_t) sizeof(kTriggerDataList) / sizeof(kTriggerDataList[0]);
+  Anki::AudioUtil::SpeechRecognizer::IndexType _currentTriggerSearchIndex = 0;
+
+# define CONSOLE_GROUP "MicData"
+  CONSOLE_VAR_RANGED(s32, kMicData_NextTriggerIndex, CONSOLE_GROUP, 0, 0, kTriggerDataListLen-1);
+# undef CONSOLE_GROUP
 
   const unsigned short kCloudProcessCommunicationPort = 9880;
 }
@@ -171,17 +204,23 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
   const std::string& pronunciationFileToUse = "";
   (void) _recognizer->Init(pronunciationFileToUse);
 
-  const std::string& netFilePath = Util::FileUtils::FullFilePath({triggerWordDataDir, kHeyCozmoDataDir, kHeyCozmoNet});
-  const std::string& searchFilePath = Util::FileUtils::FullFilePath({triggerWordDataDir, kHeyCozmoDataDir, kHeyCozmoSearch});
-  const AudioUtil::SpeechRecognizer::IndexType searchIndex = 0;
-  const bool isPhraseSpotted = true;
-  const bool allowsFollowUpRecog = false;
-  const bool success = _recognizer->AddRecognitionDataFromFile(searchIndex, netFilePath, searchFilePath,
-                                                               isPhraseSpotted, allowsFollowUpRecog);
-  DEV_ASSERT_MSG(success,
-                 "MicDataProcessor.Constructor.SpeechRecognizerInit",
-                 "Failed to add speechRecognizer search");
-  _recognizer->SetRecognizerIndex(searchIndex);
+  for (int i=0; i < kTriggerDataListLen; ++i)
+  {
+    const auto& data = kTriggerDataList[i];
+    const std::string& netFilePath = Util::FileUtils::FullFilePath({triggerWordDataDir, data.dataDir, data.netFile});
+    const std::string& searchFilePath = Util::FileUtils::FullFilePath({triggerWordDataDir, data.dataDir, data.searchFile});
+    const AudioUtil::SpeechRecognizer::IndexType searchIndex = i;
+    const bool isPhraseSpotted = true;
+    const bool allowsFollowUpRecog = false;
+    const bool success = _recognizer->AddRecognitionDataFromFile(searchIndex, netFilePath, searchFilePath,
+                                                                isPhraseSpotted, allowsFollowUpRecog);
+    DEV_ASSERT_MSG(success,
+                  "MicDataProcessor.Constructor.SpeechRecognizerInit",
+                  "Failed to add speechRecognizer index: %d netFile: %s searchFile %s",
+                  searchIndex, netFilePath.c_str(), searchFilePath.c_str());
+  }
+
+  _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
   // Set up the callback that creates the recording job when the trigger is detected
   auto triggerCallback = std::bind(&MicDataProcessor::TriggerWordDetectCallback, 
                                    this, std::placeholders::_1, std::placeholders::_2);
@@ -470,6 +509,12 @@ void MicDataProcessor::ProcessLoop()
           job->CollectProcessedAudio(processedAudio.data(), processedAudio.size());
         }
 
+        kMicData_NextTriggerIndex = Util::Clamp(kMicData_NextTriggerIndex, 0, kTriggerDataListLen-1);
+        if (kMicData_NextTriggerIndex != _currentTriggerSearchIndex)
+        {
+          _currentTriggerSearchIndex = kMicData_NextTriggerIndex;
+          _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
+        }
         // Run the trigger detection, which will use the callback defined above
         {
           ANKI_CPU_PROFILE("RecognizeTriggerWord");
