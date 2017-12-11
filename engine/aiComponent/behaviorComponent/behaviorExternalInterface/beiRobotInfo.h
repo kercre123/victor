@@ -16,6 +16,7 @@
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
+#include "engine/entity.h"
 #include "clad/types/offTreadsStates.h"
 
 // forward declaration
@@ -50,7 +51,7 @@ struct AccelData;
 struct GyroData;
 
   
-class BEIRobotInfo {
+class BEIRobotInfo : public ManageableComponent {
 public:
   BEIRobotInfo(Robot& robot)
   : _robot(robot){};

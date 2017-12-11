@@ -69,6 +69,8 @@ namespace DataPersistence {
 
     public int NumTimesToolTipNotifTapped;
 
+    public List<string> WhatsNewFeaturesSeen;
+
     public PlayerProfile() {
       FirstTimeUserFlow = true;
       DataCollectionEnabled = true;
@@ -110,6 +112,7 @@ namespace DataPersistence {
       NotificationsToBeSent = new List<Cozmo.Notifications.Notification>();
       MostRecentNotificationClicked = null;
       NumTimesToolTipNotifTapped = 0;
+      WhatsNewFeaturesSeen = new List<string>();
     }
   }
 }

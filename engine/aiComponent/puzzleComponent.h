@@ -15,6 +15,7 @@
 
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/types.h"
+#include "engine/entity.h"
 #include "json/json.h"
 
 #include "util/helpers/noncopyable.h"
@@ -49,7 +50,7 @@ public:
 };
 
 
-class PuzzleComponent : private Util::noncopyable
+class PuzzleComponent : public ManageableComponent, private Util::noncopyable
 {
 public:
 

@@ -18,6 +18,7 @@
 #include "engine/activeObject.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
@@ -545,9 +546,9 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
             UpdatePoseInInstance(confirmedMatch, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
           }
           
-          // notify blockworld that we can confirm we have seen this object at its current pose. This allows blockworld
+          // notify listeners that we can confirm we have seen this object at its current pose. This allows them
           // to reason about the markers seen this frame
-          _robot.GetBlockWorld().OnObjectVisuallyVerified(confirmedMatch);
+          _robot.GetMapComponent().ClearRobotToMarkers(confirmedMatch);
         }
         else
         {
@@ -804,6 +805,7 @@ void ObjectPoseConfirmer::BroadcastObjectPoseChanged(const ObservableObject& obj
 
   // listeners
   _robot.GetBlockWorld().OnObjectPoseChanged(object, oldPose, oldPoseState);
+  _robot.GetMapComponent().UpdateObjectPose(object, oldPose, oldPoseState); 
   
   // notify poseState changes if it changed
   BroadcastObjectPoseStateChanged(object, oldPoseState);
@@ -824,9 +826,13 @@ void ObjectPoseConfirmer::BroadcastObjectPoseStateChanged(const ObservableObject
   // only if it changes
   if ( oldPoseState != newPoseState )
   {
-    const bool isActive = object.IsActive();
-    
+    // only update maps if the object already has a valid pose
+    if (ObservableObject::IsValidPoseState(object.GetPoseState())) {
+      _robot.GetMapComponent().UpdateObjectPose(object, &object.GetPose(), oldPoseState); 
+    }
+
     // listeners
+    const bool isActive = object.IsActive();
     if(isActive) {  // notify cubeLights only if the object is active
       _robot.GetCubeLightComponent().OnActiveObjectPoseStateChanged(objectID, oldPoseState, newPoseState);
     }

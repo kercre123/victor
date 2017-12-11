@@ -324,42 +324,6 @@ namespace Anki {
       bool     _lightsSet = false;
       f32      _preDockPoseDistOffsetX_mm = 0;
       PreDockCallback _preDockCallback;
-
-      struct ConstructorParams{
-        ConstructorParams(const f32 distance, const bool useManualSpeed)
-        : usedSimpleConstructor(true)
-        , distance(distance)
-        , useManualSpeed(useManualSpeed){}
-
-        ConstructorParams(const PreActionPose::ActionType actionType, const f32 predockOffsetDistX_mm, 
-                          const bool useApproachAngle,  const f32 approachAngle_rad,  const bool useManualSpeed, 
-                          const Radians& maxTurnTowardsFaceAngle_rad, const bool sayName)
-        : usedSimpleConstructor(false)
-        , actionType(actionType)
-        , predockOffsetDistX_mm(predockOffsetDistX_mm)
-        , useApproachAngle(useApproachAngle)
-        , approachAngle_rad(approachAngle_rad)
-        , useManualSpeed(useManualSpeed)
-        , maxTurnTowardsFaceAngle_rad(maxTurnTowardsFaceAngle_rad)
-        , sayName(sayName){}
-
-        // There's slightly different logic based on constructor
-        // This bool identifies the desired path when moving the logic out of constructors
-        // and into the single robot set function
-        bool usedSimpleConstructor;
-
-        f32                       distance = 0.f;
-        PreActionPose::ActionType actionType = PreActionPose::NONE;
-        f32                       predockOffsetDistX_mm = 0.f;
-        bool                      useApproachAngle = false;
-        f32                       approachAngle_rad = 0.f;
-        bool                      useManualSpeed = false;
-        Radians                   maxTurnTowardsFaceAngle_rad;
-        bool                      sayName = false;
-
-      };
-
-      std::unique_ptr<ConstructorParams> _params;
     }; // class IDriveToInteractWithObject
         
     

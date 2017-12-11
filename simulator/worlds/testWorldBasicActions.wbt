@@ -35,12 +35,12 @@ LightCube {
 LightCube {
   translation 0.2 -0.075 0.022
   rotation 1.59007e-05 -1.83671e-06 1 0.5
-  ID 1
+  objectType "Block_LIGHTCUBE2"
 }
 LightCube {
   translation 0.09 -0.1 0.022
   rotation 1.59007e-05 -1.83671e-06 1 0.230004
-  ID 2
+  objectType "Block_LIGHTCUBE3"
 }
 SolidBox {
   translation 10 10 10

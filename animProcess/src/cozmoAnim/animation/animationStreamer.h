@@ -75,13 +75,7 @@ namespace Cozmo {
                                  u32 numLoops = 1,
                                  bool interruptRunning = true);
     
-    Result SetStreamingAnimation(Animation* anim,
-                                 Tag tag,
-                                 u32 numLoops = 1,
-                                 bool interruptRunning = true);
-    
-    Result SetProceduralFace(const ProceduralFace& face, u32 duration_ms);
-    
+    Result SetProceduralFace(const ProceduralFace& face, u32 duration_ms);    
 
     void Process_displayFaceImageChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageBinaryChunk& msg);
     void Process_displayFaceImageChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageRGBChunk& msg);
@@ -119,6 +113,12 @@ namespace Cozmo {
     
   private:
     
+    Result SetStreamingAnimation(Animation* anim,
+                                 Tag tag,
+                                 u32 numLoops = 1,
+                                 bool interruptRunning = true,
+                                 bool isInternalAnim = true);
+
     // Initialize the streaming of an animation with a given tag
     // (This will call anim->Init())
     Result InitStream(Animation* anim, Tag withTag);
@@ -181,6 +181,10 @@ namespace Cozmo {
     bool _wasAnimationInterruptedWithNothing = false;
     
     bool _backpackAnimationLayerEnabled = false;
+
+    // Whether or not the streaming animation was commanded internally
+    // (as opposed to commanded by engine)
+    bool _playingInternalAnim = false;
     
     // When this animation started playing (was initialized) in milliseconds, in
     // "real" basestation time

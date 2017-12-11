@@ -22,8 +22,6 @@
 namespace Anki {
 namespace Cozmo {
 
-class CozmoContext;
-
 
 struct DecayRate
 {
@@ -70,16 +68,12 @@ struct DecayConfig
 class NeedsConfig
 {
 public:
-  NeedsConfig(const CozmoContext* cozmoContext);
+  NeedsConfig();
 
   void Init(const Json::Value& json);
   void InitDecay(const Json::Value& json);
 
   float NeedLevelForNeedBracket(const NeedId needId, const NeedBracketId bracketId) const;
-
-  void SetUnconnectedDecayTestVariation(const std::string& baseFilename, const std::string& variationKey,
-                                        const Util::AnkiLab::AssignmentStatus assignmentStatus);
-  const std::string& GetUnconnectedDecayTestVariation() const { return _unconnectedDecayTestVariationKey; };
 
   float _minNeedLevel;
   float _maxNeedLevel;
@@ -102,13 +96,11 @@ public:
 
   float _localNotificationMaxFutureMinutes;
 
+  int _repairRounds;
+
 private:
   void InitDecayRates(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo);
   void InitDecayModifiers(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo);
-
-  const CozmoContext* _cozmoContext;
-
-  std::string _unconnectedDecayTestVariationKey = "Unknown (unknown)";
 };
 
 

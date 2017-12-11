@@ -4,7 +4,9 @@ using System.IO;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using Cozmo.Util;
+using Cozmo.Needs;
 using Anki.Cozmo;
+using Anki.Cozmo.ExternalInterface;
 
 namespace DataPersistence {
   public class DataPersistenceManager {
@@ -20,6 +22,7 @@ namespace DataPersistence {
       }
     }
 
+    // Called in StartupManager before engine is inited. DAS will print in editor but not log.
     private DataPersistenceManager() {
 
       if (File.Exists(sSaveFilePath)) {
@@ -27,6 +30,11 @@ namespace DataPersistence {
           string fileData = File.ReadAllText(sSaveFilePath);
 
           Data = JsonConvert.DeserializeObject<SaveData>(fileData, GlobalSerializerSettings.JsonSettings);
+          if (Data == null) {
+            // log message through hockeyapp.
+            Debug.LogError("DataPersistenceManager.Constructor.SaveDataNull");
+            Data = new SaveData();
+          }
         }
         catch (Exception ex) {
           DAS.Error("DataPersistenceManager.Load", "Error Loading Saved Data: " + ex.Message);
@@ -47,7 +55,7 @@ namespace DataPersistence {
         }
       }
       else {
-        DAS.Info(this, "Creating New Save Data");
+        DAS.Info("DataPersistenceManager.Constructor", "Creating New Save Data");
         Data = new SaveData();
       }
     }
@@ -261,6 +269,14 @@ namespace DataPersistence {
       profile.Sessions.Add(newSession);
       profile.TotalSessions++;
 
+      // Only track that the user saw the whats new feature if there was one to see, and if they 
+      // connected on the same day that they saw it. 
+      string currentWhatsNewFeatureId = Cozmo.WhatsNew.WhatsNewModalManager.CurrentWhatsNewDataID;
+      if (!string.IsNullOrEmpty(currentWhatsNewFeatureId)
+          && DataPersistenceManager.Today == Cozmo.WhatsNew.WhatsNewModalManager.CurrentWhatsNewDataCheckDate) {
+        profile.WhatsNewFeaturesSeen.Add(currentWhatsNewFeatureId);
+      }
+
       // update streaks...
       if (lastSession != null) {
         Date currentDate = newSession.Date;
@@ -304,13 +320,26 @@ namespace DataPersistence {
         }
 
         string jsonValue = JsonConvert.SerializeObject(Data, Formatting.None, GlobalSerializerSettings.JsonSettings);
-        File.WriteAllText(sSaveFilePath, jsonValue);
+        if (string.IsNullOrEmpty(jsonValue)) {
+          DAS.Error("DataPersistenceManager.Save.AttemptedToWriteEmptyFile", "");
+        }
+        else {
+          File.WriteAllText(sSaveFilePath, jsonValue);
+        }
       }
       catch (Exception ex) {
         DAS.Error("DataPersistenceManager.Save", "Exception backing up save file: " + ex.Message);
         DAS.Debug("DataPersistenceManager.Save.StackTrace", DASUtil.FormatStackTrace(ex.StackTrace));
         HockeyApp.ReportStackTrace("DataPersistenceManager.Save", ex.StackTrace);
       }
+    }
+
+
+
+    // Use this function to update data in the profile that may cause bugs if persisted from another robot
+    public void OnFirstNeedsUpdate() {
+      DisplayedStars = NeedsStateManager.Instance.GetLatestStarAwardedFromEngine();
+      Data.DefaultProfile.NewStarLevels.Clear();
     }
 
     #region DebugMenuAPI

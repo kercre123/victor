@@ -101,6 +101,7 @@ bool IBehavior::WantsToBeActivated(BehaviorExternalInterface& behaviorExternalIn
 {
   AssertActivationState_DevOnly(ActivationState::InScope);
   _lastTickWantsToBeActivatedCheckedOn = BaseStationTimer::getInstance()->GetTickCount();
+  auto accessGuard = behaviorExternalInterface.GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
   return WantsToBeActivatedInternal(behaviorExternalInterface);
 }
 

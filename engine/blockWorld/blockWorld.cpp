@@ -1796,14 +1796,12 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     switch (type) {
       case ObjectType::CliffDetection:
       {
-        // cliffs currently have extra data (for directionality)
-        const Pose3d& robotPose = _robot->GetPose();
-        const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToRoot();
-        Vec3f rotatedFwdVector = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
-        MemoryMapData_Cliff cliffData(Vec2f {rotatedFwdVector.x(), rotatedFwdVector.y()}, lastTimestamp);
+        // cliffs currently have extra data (for directionality and position)
+        Pose3d cliffPose = obsPose.GetWithRespectToRoot();
+        MemoryMapData_Cliff cliffData(cliffPose, lastTimestamp);
         
         // calculate cliff quad where it's being placed (wrt origin since memory map is 2d wrt current origin)
-        const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToRoot() );
+        const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( cliffPose );
       
         INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
         DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
@@ -1876,11 +1874,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
   {
     // only connected objects should be added through this method, so a required activeID is a must
     DEV_ASSERT(activeID != ObservableObject::InvalidActiveID, "BlockWorld.AddConnectedActiveObject.CantAddInvalidActiveID");
-  
-    if (activeID >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
-      PRINT_NAMED_WARNING("BlockWorld.AddConnectedActiveObject.InvalidActiveID", "activeID %d", activeID);
-      return ObjectID();
-    }
 
     // NOTE: If you hit any of the following VERIFY, please notify Raul and Al.
     // rsam: Al and I have made assumptions about when this gets called. Checking here that the assumptions are correct,
@@ -2309,21 +2302,9 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
         }
       }
     }
-
-    // - - - - -
-    // update memory map
-    // - - - - -
-    _robot->GetMapComponent().UpdateObjectPose(object, oldPose, oldPoseState);
     
     // notify the block configuration manager
     _blockConfigurationManager->SetObjectPoseChanged(objectID, object.GetPoseState());
-  }
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::OnObjectVisuallyVerified(const ObservableObject* object)
-  {
-      // -- clear memory map from robot to markers
-      _robot->GetMapComponent().ClearRobotToMarkers(object);
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

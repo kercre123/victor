@@ -14,6 +14,7 @@
 #include "json/json.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/jsonTools.h"
+#include "cubeBleClient/cubeBleClient.h"
 #include "util/console/consoleInterface.h"
 #include "androidHAL/androidHAL.h"
 #include "engine/cozmoAPI/cozmoAPI.h"
@@ -124,9 +125,10 @@ int main(int argc, char **argv)
     PRINT_NAMED_INFO("webotsCtrlGameEngine.main.noFilter", "Console will not be filtered due to program args");
   }
 
-  // Instantiate supervisor and pass to AndroidHAL
+  // Instantiate supervisor and pass to AndroidHAL and cubeBleClient
   webots::Supervisor engineSupervisor;
   AndroidHAL::SetSupervisor(&engineSupervisor);
+  CubeBleClient::SetSupervisor(&engineSupervisor);
   
   // Start with a step so that we can attach to the process here for debugging
   engineSupervisor.step(BS_TIME_STEP);

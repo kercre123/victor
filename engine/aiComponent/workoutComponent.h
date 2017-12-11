@@ -15,6 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_WorkoutComponent_H__
 
 #include "anki/common/types.h"
+#include "engine/entity.h"
 #include "engine/moodSystem/moodScorer.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/behaviorComponent/behaviorObjectives.h"
@@ -73,7 +74,7 @@ private:
 };
 
 
-class WorkoutComponent : private Util::noncopyable
+class WorkoutComponent : public ManageableComponent, private Util::noncopyable
 {
 public:
 

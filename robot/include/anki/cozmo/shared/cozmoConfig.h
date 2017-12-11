@@ -259,22 +259,6 @@ namespace Cozmo {
   // The base listening port for anim process UDP server
   const u16 ANIM_PROCESS_SERVER_BASE_PORT = 5600;
   
-  /*
-   THESE LATENCY VALUES ARE NOT BEING USED -- SEE ALSO multiClientChannel.h
-   
-   // Expected message receive latency
-   // It is assumed that this value does not fluctuate greatly.
-   // The more inaccurate this value is, the more invalid our
-   // handling of messages will be.
-   const f32 MSG_RECEIVE_LATENCY_SEC = 0.03;
-   
-   // The effective latency of vehicle messages for basestation modelling purposes
-   // This is twice the MSG_RECEIVE_LATENCY_SEC so that the basestation maintains a model
-   // of the system one message cycle latency in the future. This way, commanded actions are applied
-   // at the time they are expected in the physical world.
-   const f32 BASESTATION_MODEL_LATENCY_SEC = 2.f*MSG_RECEIVE_LATENCY_SEC;
-   */
-  
   // Header required at front of all AdvertisementRegistrationMsg CLAD messages sent to a Robot Ad Service
   const u8 ROBOT_ADVERTISING_HEADER_TAG = 0xCA;
   
@@ -316,19 +300,23 @@ namespace Cozmo {
   
   // UI device server port which listens for basestation/game clients
   const u32 UI_MESSAGE_SERVER_LISTEN_PORT = 5200;
-  
-  
-  
+
   // Number of frames to skip when streaming images to basestation
   const u8 IMG_STREAM_SKIP_FRAMES = 2;
 
-  // Local (unix-domain) socket paths
+  // Default robot ID
+  const u32 DEFAULT_ROBOT_ID = 1;
+  
+  //
+  // Local (unix-domain) socket paths.
+  // RobotID will be appended to generate unique paths for each robot.
+  //
   #ifdef SIMULATOR
-  constexpr char ROBOT_UDP_PATH[] = "/tmp/_robot_udp";
-  constexpr char ANIM_UDP_PATH[] = "/tmp/_anim_udp";
+  constexpr char ROBOT_SERVER_PATH[]  = "/tmp/_robot_server_";
+  constexpr char ANIM_CLIENT_PATH[]   = "/tmp/_anim_client_";
   #else
-  constexpr char ROBOT_UDP_PATH[] = "/data/data/com.anki.cozmoengine/cache/_robot_udp";
-  constexpr char ANIM_UDP_PATH[] = "/data/data/com.anki.cozmoengine/cache/_anim_udp";
+  constexpr char ROBOT_SERVER_PATH[]  = "/dev/socket/_robot_server_";
+  constexpr char ANIM_CLIENT_PATH[]   = "/dev/socket/_anim_client_";
   #endif
   
 } // namespace Cozmo

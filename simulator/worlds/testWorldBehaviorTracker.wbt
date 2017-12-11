@@ -36,11 +36,11 @@ LightCube {
 LightCube {
   translation 0.412 0 0.025
   rotation 0 1 0 3.14159
-  ID 1
+  objectType "Block_LIGHTCUBE2"
 }
 LightCube {
   translation 0.332 -0.1 0.025
-  ID 2
+  objectType "Block_LIGHTCUBE3"
 }
 %COZMOBOT% {
   translation -0.12 0 0.01

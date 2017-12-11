@@ -9,7 +9,10 @@ cxx_project(
                                     'sim_hal.*']),
     platform_srcs = [
     ],
-    headers = cxx_header_glob(['supervisor/src/*.h', 'transport/src/*.h']),
+    headers = cxx_header_glob([
+        'supervisor/src', 
+        'transport',
+        'include/anki/cozmo/shared']),
     platform_headers = []
 )
 
@@ -20,7 +23,7 @@ cxx_project(
                                     'android/**/*',
                                     ]),
     platform_srcs = [],
-    headers = cxx_header_glob(['transport/src/*.h']),
+    headers = cxx_header_glob(['transport']),
     platform_headers = []
 )
 

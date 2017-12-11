@@ -87,7 +87,7 @@ public:
   void Transform(NodeTransformFunction transform);  
     
   // populate a list of all data that matches the predicate
-  void FindIf(NodePredicate pred, MemoryMapDataConstList& output);
+  void FindIf(NodePredicate pred, MemoryMapDataConstList& output) const;
   
   // returns true if there are any nodes of the given type, false otherwise
   bool HasContentType(EContentType type) const;

@@ -74,7 +74,7 @@ Blockly.Blocks['event_whenbroadcastreceived'] = {
   init: function() {
     this.jsonInit({
       "id": "event_whenbroadcastreceived",
-      "message0": "%{BKY_EVENTS_BROADCAST_HAT_SCRATCH_2}",
+      "message0": "%{BKY_EVENTS_BROADCAST_HAT}",
       "args0": [
         {
           "type": "field_dropdown",
@@ -244,7 +244,7 @@ Blockly.Blocks['event_broadcastandwait'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "%{BKY_EVENTS_BROADCAST_AND_WAIT_SCRATCH_2}",
+      "message0": "%{BKY_EVENTS_BROADCAST_AND_WAIT}",
       "args0": [
         {
           "type": "input_value",

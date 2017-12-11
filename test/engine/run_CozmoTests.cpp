@@ -10,6 +10,8 @@
 
 #include "androidHAL/androidHAL.h"
 
+#include "cubeBleClient/cubeBleClient.h"
+
 #include "engine/activeObject.h"
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
@@ -18,6 +20,7 @@
 #include "engine/blockWorld/blockConfigurationPyramid.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
@@ -559,21 +562,18 @@ void FakeRecvConnectionMessage(Robot& robot, double time, uint32_t activeID, uin
 {
   DEV_ASSERT(IsValidLightCube(objectType, false), "FaceRecvConnectionMessage.UnsupportedObjectType");
   
-  using namespace RobotInterface;
-  RobotToEngine msg = RobotToEngine::CreateactiveObjectConnectionState(
-                        ObjectConnectionState(activeID, factoryID, objectType, connected) );
-  AnkiEvent<RobotToEngine> event(time, static_cast<uint32_t>(msg.GetTag()), msg);
-  robot.GetRobotToEngineImplMessaging().HandleActiveObjectConnectionState(event, &robot);
+  if (connected) {
+    robot.GetBlockWorld().AddConnectedActiveObject(activeID, factoryID, objectType);
+  } else {
+    robot.GetBlockWorld().RemoveConnectedActiveObject(activeID);
+  }
 }
 
 // helper for move messages
 void FakeRecvMovedMessage(Robot& robot, double time, Anki::TimeStamp_t timestamp, uint32_t activeID)
 {
-  using namespace RobotInterface;
-  RobotToEngine msg = RobotToEngine::CreateactiveObjectMoved(
-      ObjectMoved(timestamp, activeID, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive ) );
-  AnkiEvent<RobotToEngine> event(time, static_cast<uint32_t>(msg.GetTag()), msg);
-  robot.GetRobotToEngineImplMessaging().HandleActiveObjectMoved(event, &robot);
+  const auto& msg = ObjectMoved(timestamp, activeID, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive );
+  robot.GetRobotToEngineImplMessaging().HandleActiveObjectMoved(msg, &robot);
 }
 
 }
@@ -2898,6 +2898,9 @@ int main(int argc, char ** argv)
 
   // Initialize AndroidHAL singleton without supervisor
   AndroidHAL::SetSupervisor(nullptr);
+  
+  // Initialize CubeBleClient singleton without supervisor
+  CubeBleClient::SetSupervisor(nullptr);
 
   //LEAKING HERE
   Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);

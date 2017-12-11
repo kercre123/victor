@@ -75,6 +75,7 @@ namespace Anki {
     
     // Basestation control loop
     const s32 BS_TIME_STEP = 60;
+    const s32 BS_TIME_STEP_MICROSECONDS = (BS_TIME_STEP * 1000);
     
     /***************************************************************************
      *

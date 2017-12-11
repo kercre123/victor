@@ -346,7 +346,7 @@
     "translation" : "Cozmo surveille ses cubes"
   },
   "minigame.GuardDog.Desc" : {
-    "translation" : "Essaye de retourner lentement et délicatement tous les cubes de Cozmo sans le réveiller.\u000a\u000aAttention... Cozmo détecte quand ses cubes se déplacent !"
+    "translation" : "Essaye de retourner lentement et délicatement tous les cubes de Cozmo sans le réveiller.\u000a\u000aAttention... Cozmo détecte quand ses cubes bougent !"
   },
   "speedTap.driveToCubeFail.title" : {
     "translation" : "Cozmo ne trouve pas son cube !"

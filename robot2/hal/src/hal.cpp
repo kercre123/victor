@@ -86,7 +86,7 @@ Result GetSpineDataFrame(void)
 Result HAL::Init()
 {
   // Set ID
-  robotID_ = 1;
+  robotID_ = Anki::Cozmo::DEFAULT_ROBOT_ID;
 
   InitMotor();
 
@@ -317,24 +317,6 @@ bool HAL::BatteryIsOnCharger()
 bool HAL::BatteryIsChargerOOS()
 {
   return bodyData_->battery.flags & chargerOOS;
-}
-
-Result HAL::SetBlockLight(const u32 activeID, const u32* colors)
-{
-  // Not implemented in HAL in V2
-  return RESULT_OK;
-}
-
-Result HAL::StreamObjectAccel(const u32 activeID, const bool enable)
-{
-  // Not implemented in HAL in V2
-  return RESULT_OK;
-}
-
-Result HAL::AssignSlot(u32 slot_id, u32 factory_id)
-{
-  // Not implemented in HAL in V2
-  return RESULT_OK;
 }
 
 u8 HAL::GetWatchdogResetCounter()

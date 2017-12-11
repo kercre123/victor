@@ -109,12 +109,8 @@ shift $(($OPTIND - 1))
 # settings
 #
 
-
-if [ ! -d "${TOPLEVEL}/generated" ] || [ ! -d "${TOPLEVEL}/EXTERNALS" ]; then
-    echo "Missing ${TOPLEVEL}/generated or ${TOPLEVEL}/EXTERNALS"
-    echo "Attempting to run fetch-build-deps.sh"
-    ${TOPLEVEL}/project/victor/scripts/fetch-build-deps.sh
-fi
+echo "Attempting to run fetch-build-deps.sh"
+${TOPLEVEL}/project/victor/scripts/fetch-build-deps.sh
 
 PLATFORM=`echo $PLATFORM | tr "[:upper:]" "[:lower:]"`
 
@@ -243,6 +239,7 @@ if [ $CONFIGURE -eq 1 ]; then
         coretech/vision/clad/BUILD.in \
         coretech/planning/BUILD.in \
         coretech/messaging/BUILD.in \
+        cubeBleClient/BUILD.in \
         engine/BUILD.in \
         engine/tools/BUILD.in \
         lib/util/source/anki/util/BUILD.in \

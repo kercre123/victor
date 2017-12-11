@@ -185,17 +185,15 @@ init: function() {
   }
 };
 
-// FOR DEVELOPER PROTOTYPING ONLY
-// This block isn't intended to ship
 Blockly.Blocks['cozmo_play_animation_by_name'] = {
   /**
-    * Dev-only Block to make Cozmo play a specific animation by name
+    * Block to make Cozmo play a specific animation by name
     * @this Blockly.Block
   */
 init: function() {
   this.jsonInit({
     "id": "cozmo_play_animation_by_name",
-    "message0": "play anim: %1",
+    "message0": "%{BKY_PLAY_ANIMATION_BY_NAME_BLOCK}",
     "args0": [
         {
           "type": "input_value",
@@ -214,17 +212,15 @@ init: function() {
   }
 };
 
-// FOR DEVELOPER PROTOTYPING ONLY
-// This block isn't intended to ship
 Blockly.Blocks['cozmo_play_animation_by_triggername'] = {
   /**
-    * Dev-only Block to make Cozmo play a specific animation by name
+    * Block to make Cozmo play a specific animation by name
     * @this Blockly.Block
   */
 init: function() {
   this.jsonInit({
     "id": "cozmo_play_animation_by_triggername",
-    "message0": "play animtrigger: %1",
+    "message0": "%{BKY_PLAY_ANIMATION_BY_TRIGGER_NAME_BLOCK}",
     "args0": [
         {
           "type": "input_value",
@@ -257,38 +253,42 @@ Blockly.Blocks['cozmo_sound_sounds_menu'] = {
             "type": "field_dropdown",
             "name": "SOUND_MENU",
             "options": [
-              ['%{BKY_EIGHTIES_MUSIC}','1'],
-              ['%{BKY_MAMBO_MUSIC}','2'],
-              ['%{BKY_BACKGROUND_MUSIC}','3'],
-              ['%{BKY_SELECT}', '4'],
-              ['%{BKY_WIN}', '5'],
-              ['%{BKY_LOSE}', '6'],
-              ['%{BKY_GAME_START}','7'],
-              ['%{BKY_CLOCK_TICK}','8'],
-              ['%{BKY_BLING}','9'],
-              ['%{BKY_SUCCESS}','10'],
-              ['%{BKY_FAIL}','11'],
-              ['%{BKY_TIMER_WARNING}','12'],
-              ['%{BKY_TIMER_END}','13'],
-              ['%{BKY_SPARKLE}','14'],
-              ['%{BKY_SWOOSH}','15'],
-              ['%{BKY_PING}','16'],
-              ['%{BKY_HOT_POTATO_END}','17'],
-              ['%{BKY_HOT_POTATO_MUSIC_SLOW}','18'],
-              ['%{BKY_HOT_POTATO_MUSIC_MEDIUM}','19'],
-              ['%{BKY_HOT_POTATO_MUSIC_FAST}','20'],
-              ['%{BKY_HOT_POTATO_MUSIC_SUPERFAST}','21'],
-              ['%{BKY_MAGNET_PULL}','22'],
-              ['%{BKY_MAGNET_REPEL}','23'],
-              ['%{BKY_INSTRUMENT_1_MODE_1}','24'],
-              ['%{BKY_INSTRUMENT_1_MODE_2}','25'],
-              ['%{BKY_INSTRUMENT_1_MODE_3}','26'],
-              ['%{BKY_INSTRUMENT_2_MODE_1}','27'],
-              ['%{BKY_INSTRUMENT_2_MODE_2}','28'],
-              ['%{BKY_INSTRUMENT_2_MODE_3}','29'],
-              ['%{BKY_INSTRUMENT_3_MODE_1}','30'],
-              ['%{BKY_INSTRUMENT_3_MODE_2}','31'],
-              ['%{BKY_INSTRUMENT_3_MODE_3}','32']
+              ['%{BKY_SOUND_EIGHTIES_MUSIC}','1'],
+              ['%{BKY_SOUND_MAMBO_MUSIC}','2'],
+              ['%{BKY_SOUND_DISCO_MUSIC}','3'],
+              ['%{BKY_SOUND_MAGIC}', '4'],
+              ['%{BKY_SOUND_WIN}', '5'],
+              ['%{BKY_SOUND_LOSE}', '6'],
+              ['%{BKY_SOUND_GAME_START}','7'],
+              ['%{BKY_SOUND_CLOCK_TICK}','8'],
+              ['%{BKY_SOUND_BLING}','9'],
+              ['%{BKY_SOUND_SUCCESS}','10'],
+              ['%{BKY_SOUND_FAIL}','11'],
+              ['%{BKY_SOUND_TIMER_WARNING}','12'],
+              ['%{BKY_SOUND_TIMER_END}','13'],
+              ['%{BKY_SOUND_SPARKLE}','14'],
+              ['%{BKY_SOUND_SWOOSH}','15'],
+              ['%{BKY_SOUND_PING}','16'],
+              ['%{BKY_SOUND_HOT_POTATO_END}','17'],
+              ['%{BKY_SOUND_HOT_POTATO_MUSIC_SLOW}','18'],
+              ['%{BKY_SOUND_HOT_POTATO_MUSIC_MEDIUM}','19'],
+              ['%{BKY_SOUND_HOT_POTATO_MUSIC_FAST}','20'],
+              ['%{BKY_SOUND_HOT_POTATO_MUSIC_SUPERFAST}','21'],
+              ['%{BKY_SOUND_MAGNET_PULL}','22'],
+              ['%{BKY_SOUND_MAGNET_REPEL}','23'],
+              ['%{BKY_SOUND_INSTRUMENT_1_MODE_1}','24'],
+              ['%{BKY_SOUND_INSTRUMENT_1_MODE_2}','25'],
+              ['%{BKY_SOUND_INSTRUMENT_1_MODE_3}','26'],
+              ['%{BKY_SOUND_INSTRUMENT_2_MODE_1}','27'],
+              ['%{BKY_SOUND_INSTRUMENT_2_MODE_2}','28'],
+              ['%{BKY_SOUND_INSTRUMENT_2_MODE_3}','29'],
+              ['%{BKY_SOUND_INSTRUMENT_3_MODE_1}','30'],
+              ['%{BKY_SOUND_INSTRUMENT_3_MODE_2}','31'],
+              ['%{BKY_SOUND_INSTRUMENT_3_MODE_3}','32'],
+              ['%{BKY_SOUND_TIMER_START}','33'],
+              ['%{BKY_SOUND_FIRE_TRUCK_ALARM}','34'],
+              ['%{BKY_SOUND_CUBE_CHARGE}','35'],
+              ['%{BKY_SOUND_BACKGROUND_MUSIC}','36']
             ]
           }
         ],
@@ -551,10 +551,10 @@ Blockly.Blocks['cozmo_cube_event_select_menu'] = {
             "type": "field_dropdown",
             "name": "CUBE_SELECT",
             "options": [
+              ['%{BKY_ANY}', '4'],
               ['1', '1'],
               ['2', '2'],
-              ['3', '3'],
-              ['%{BKY_ANY}', '4']
+              ['3', '3']
             ]
           }
         ],
@@ -582,10 +582,10 @@ Blockly.Blocks['cozmo_event_on_see_cube'] = {
           "type": "field_dropdown",
           "name": "CUBE_SELECT",
           "options": [
+            ['%{BKY_ANY}', '4'],
             ['1', '1'],
             ['2', '2'],
-            ['3', '3'],
-            ['%{BKY_ANY}', '4']
+            ['3', '3']
           ]
         }
       ],
@@ -613,10 +613,10 @@ Blockly.Blocks['cozmo_event_on_cube_tap'] = {
           "type": "field_dropdown",
           "name": "CUBE_SELECT",
           "options": [
+            ['%{BKY_ANY}', '4'],
             ['1', '1'],
             ['2', '2'],
-            ['3', '3'],
-            ['%{BKY_ANY}', '4']
+            ['3', '3']
           ]
         }
       ],
@@ -644,10 +644,10 @@ Blockly.Blocks['cozmo_event_on_cube_moved'] = {
           "type": "field_dropdown",
           "name": "CUBE_SELECT",
           "options": [
+            ['%{BKY_ANY}', '4'],
             ['1', '1'],
             ['2', '2'],
-            ['3', '3'],
-            ['%{BKY_ANY}', '4']
+            ['3', '3']
           ]
         }
       ],
@@ -787,6 +787,24 @@ Blockly.Blocks['cozmo_vert_get_head_angle'] = {
       "colourSecondary": Blockly.Colours.sensing.secondary,
       "colourTertiary": Blockly.Colours.sensing.tertiary,
       "output": "Number",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_get_is_picked_up'] = {
+  /**
+   * Block to read if Cozmo is currently picked up (airborne)
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "%{BKY_IS_PICKED_UP}",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Boolean",
       "outputShape": Blockly.OUTPUT_SHAPE_ROUND
     });
   }
@@ -1316,11 +1334,11 @@ Blockly.Blocks['cozmo_vert_wait_for_actions'] = {
           "name": "ACTION_SELECT",
           "options": [
             ['%{BKY_DRIVE}', 'drive'],
-            ['%{BKY_HEAD}', 'head'],
-            ['%{BKY_LIFT}', 'lift'],
+            ['%{BKY_MOVING_HEAD}', 'head'],
+            ['%{BKY_MOVING_LIFT}', 'lift'],
             ['%{BKY_SAY}', 'say'],
             ['%{BKY_ANIMATION}', 'anim'],
-            ['%{BKY_ALL}', 'all']
+            ['%{BKY_EVERYTHING}', 'all']
           ]
         }
         ],
@@ -1350,11 +1368,11 @@ Blockly.Blocks['cozmo_vert_cancel_actions'] = {
           "name": "ACTION_SELECT",
           "options": [
             ['%{BKY_DRIVE}', 'drive'],
-            ['%{BKY_HEAD}', 'head'],
-            ['%{BKY_LIFT}', 'lift'],
+            ['%{BKY_MOVING_HEAD}', 'head'],
+            ['%{BKY_MOVING_LIFT}', 'lift'],
             ['%{BKY_SAY}', 'say'],
             ['%{BKY_ANIMATION}', 'anim'],
-            ['%{BKY_ALL}', 'all']
+            ['%{BKY_EVERYTHING}', 'all']
           ]
         }
         ],

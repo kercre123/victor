@@ -12,6 +12,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/utils/cozmoFeatureGate.h"
@@ -270,11 +271,13 @@ bool BehaviorBouncer::WantsToBeActivatedBehavior(BehaviorExternalInterface& beha
   for(auto& entry: faceIDs){
     smartIDs.insert(faceWorld.GetSmartFaceID(entry));
   }
-  
-  const auto & whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-  const bool preferKnownFaces = true;
-  _target = whiteboard.GetBestFaceToTrack(smartIDs, preferKnownFaces);
 
+  const auto& faceSelection = behaviorExternalInterface.GetAIComponent().GetFaceSelectionComponent();
+  FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::UnnamedFace, 1000));
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
+  _target = faceSelection.GetBestFaceToUse(criteriaMap, smartIDs);
 
   if (!_target.IsValid()) {
     LOG_WARNING("BehaviorBouncer.WantsToBeActivatedBehavior", "Best face (%s) is not valid", _target.GetDebugStr().c_str());

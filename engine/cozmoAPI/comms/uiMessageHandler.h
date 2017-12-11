@@ -87,6 +87,10 @@ namespace Anki {
         _sdkStatus.SetStatus(statusType, std::move(statusText));
       }
 
+      virtual uint32_t GetMessageCountGtE() const override { return _messageCountGtE; }
+      virtual uint32_t GetMessageCountEtG() const override { return _messageCountEtG; }
+      virtual void     ResetMessageCounts() override { _messageCountGtE = 0; _messageCountEtG = 0; }
+
     private:
       
       // ============================== Private Member Functions ==============================
@@ -176,6 +180,9 @@ namespace Anki {
       bool                                _isInitialized = false;
 
       CozmoContext*                       _context = nullptr;
+
+      uint32_t                            _messageCountGtE = 0;
+      uint32_t                            _messageCountEtG = 0;
       
     }; // class MessageHandler
     

@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
@@ -40,6 +41,7 @@ namespace ComponentWrappers{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorComponentComponents::BehaviorComponentComponents(Robot& robot,
+                                                         std::unique_ptr<BEIRobotInfo>&& robotInfoPtr,
                                                          AIComponent& aiComponent,
                                                          BlockWorld& blockWorld,
                                                          FaceWorld& faceWorld,
@@ -50,6 +52,7 @@ BehaviorComponentComponents::BehaviorComponentComponents(Robot& robot,
                                                          AsyncMessageGateComponent& asyncMessageComponent,
                                                          DelegationComponent& delegationComponent)
 : _robot(robot)
+, _robotInfo(*robotInfoPtr)
 , _aiComponent(aiComponent)
 , _blockWorld(blockWorld)
 , _faceWorld(faceWorld)
@@ -59,8 +62,8 @@ BehaviorComponentComponents::BehaviorComponentComponents(Robot& robot,
 , _behaviorEventComponent(behaviorEventComponent)
 , _asyncMessageComponent(asyncMessageComponent)
 , _delegationComponent(delegationComponent)
+, _robotInfoPtr(std::move(robotInfoPtr))
 {
-  
 }
 
 
@@ -147,8 +150,10 @@ BehaviorComponent::ComponentsPtr BehaviorComponent::GenerateComponents(
     delegationComponentPtr = delegationComponent.get();
   }
   
+  auto robotInfo = std::make_unique<BEIRobotInfo>(robot);
   ComponentsPtr components = std::make_unique<ComponentWrappers::BehaviorComponentComponents>
      (robot,
+      std::move(robotInfo),
       robot.GetAIComponent(),
       robot.GetBlockWorld(),
       robot.GetFaceWorld(),
@@ -172,6 +177,7 @@ BehaviorComponent::ComponentsPtr BehaviorComponent::GenerateComponents(
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponent::InitializeSubComponents(Robot& robot,
+                                                BEIRobotInfo& robotInfo,
                                                 IBehavior* baseBehavior,
                                                 BehaviorSystemManager& behaviorSysMgr,
                                                 IBehaviorMessageSubscriber& messageSubscriber,
@@ -186,13 +192,28 @@ void BehaviorComponent::InitializeSubComponents(Robot& robot,
 {  
   delegationComponent.Init(robot, behaviorSysMgr);
   behaviorEventComponent.Init(messageSubscriber);
-  behaviorExternalInterface.Init(robot,
-                                 aiComponent,
-                                 behaviorContainer,
-                                 blockWorld,
-                                 faceWorld,
-                                 robot.GetPetWorld(),
-                                 behaviorEventComponent);
+  behaviorExternalInterface.Init(&aiComponent,
+                                 &robot.GetAnimationComponent(),
+                                 &behaviorContainer,
+                                 &behaviorEventComponent,
+                                 &blockWorld,
+                                 &robot.GetBodyLightComponent(),
+                                 &robot.GetCubeAccelComponent(),
+                                 &robot.GetCubeLightComponent(),
+                                 &delegationComponent,
+                                 &faceWorld,
+                                 &robot.GetMapComponent(),
+                                 &robot.GetMicDirectionHistory(),
+                                 &robot.GetMoodManager(),
+                                 robot.GetContext()->GetNeedsManager(),
+                                 &robot.GetObjectPoseConfirmer(),
+                                 &robot.GetPetWorld(),
+                                 &robot.GetProgressionUnlockComponent(),
+                                 &robot.GetPublicStateBroadcaster(),
+                                 robot.GetAudioClient(),
+                                 &robotInfo,
+                                 &robot.GetTouchSensorComponent(),
+                                 &robot.GetVisionComponent());
   
   behaviorContainer.Init(behaviorExternalInterface);
 
@@ -216,13 +237,12 @@ void BehaviorComponent::Init(ComponentsPtr&& components, IBehavior* baseBehavior
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
 {
-  _audioClient.reset(new Audio::BehaviorAudioComponent(_components->_robot.GetAudioClient()));  
   
   // Extract base behavior from config if not passed in through init
   if(baseBehavior == nullptr){
     Json::Value blankActivitiesConfig;
     
-    const CozmoContext* context = _components->_robot.GetContext();
+    const CozmoContext* context = _components->_robotInfo.GetContext();
     
     if(context == nullptr ) {
       PRINT_NAMED_WARNING("BehaviorComponent.Init.NoContext",
@@ -231,7 +251,7 @@ void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
     
     RobotDataLoader* dataLoader = nullptr;
     if(context){
-      dataLoader = _components->_robot.GetContext()->GetDataLoader();
+      dataLoader = _components->_robotInfo.GetContext()->GetDataLoader();
     }
     
     const Json::Value& behaviorSystemConfig = (dataLoader != nullptr) ?
@@ -252,6 +272,7 @@ void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
   }
   
   InitializeSubComponents(_components->_robot,
+                          _components->_robotInfo,
                           baseBehavior,
                           _components->_behaviorSysMgr,
                           *this,
@@ -262,25 +283,9 @@ void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
                           _components->_faceWorld,
                           _components->_behaviorEventComponent,
                           _components->_asyncMessageComponent,
-                          _components->_delegationComponent
-  );
+                          _components->_delegationComponent);
 
-  _components->_behaviorExternalInterface.SetOptionalInterfaces(
-                    &_components->_delegationComponent,
-                    &_components->_robot.GetMoodManager(),
-                    _components->_robot.GetContext()->GetNeedsManager(),
-                    &_components->_robot.GetProgressionUnlockComponent(),
-                    &_components->_robot.GetPublicStateBroadcaster(),
-                    &_components->_robot.GetTouchSensorComponent(),
-                    &_components->_robot.GetVisionComponent(),
-                    &_components->_robot.GetMapComponent(),
-                    &_components->_robot.GetCubeLightComponent(),
-                    &_components->_robot.GetObjectPoseConfirmer(),
-                    &_components->_robot.GetCubeAccelComponent(),
-                    &_components->_robot.GetAnimationComponent(),
-                    _components->_robot.GetAudioClient(),
-                    &_components->_robot.GetBodyLightComponent());
-
+  _audioClient.reset(new Audio::BehaviorAudioComponent(&_components->_behaviorExternalInterface.GetRobotAudioClient()));
   _audioClient->Init(_components->_behaviorExternalInterface);
 }
 

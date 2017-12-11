@@ -424,6 +424,9 @@ namespace Anki {
       void SendObjectMovingState(u32 activeID, bool moving);
       void SendObjectUpAxisState(u32 activeID, UpAxis upAxis);
       void SendObjectAccelState(u32 activeID, const ActiveAccel& accel);
+
+      uint32_t GetMessageCountViz() const { return _messageCountViz; }
+      void     ResetMessageCount() { _messageCountViz = 0; }
       
     protected:
       
@@ -436,6 +439,8 @@ namespace Anki {
       UdpClient          _unityVizClient;
       #endif
       
+      uint32_t           _messageCountViz = 0;
+
       /*
       // Image sending
       std::map<RobotID_t, u8> _imgID;

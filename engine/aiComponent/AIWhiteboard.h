@@ -19,6 +19,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/vision/basestation/faceIdTypes.h"
+#include "engine/entity.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
@@ -48,7 +49,7 @@ constexpr static const float kObjectInvalidAfterFailureRadius_mm = 60.f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIWhiteboard
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AIWhiteboard : private Util::noncopyable
+class AIWhiteboard : public ManageableComponent, private Util::noncopyable
 {
 public:
   
@@ -185,15 +186,6 @@ public:
   // return current active beacon if any, or nullptr if none are active
   const AIBeacon* GetActiveBeacon() const;
   AIBeacon* GetActiveBeacon();
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Face tracking
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // shared logic to get a face to track which requires the least panning and tilting (based on the current
-  // robot pose). If preferNamed is true, then will prefer faces with a name to those without
-  SmartFaceID GetBestFaceToTrack(const std::set<SmartFaceID>& possibleFaces,
-                                      const bool preferNamedFaces) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Impossible States handling

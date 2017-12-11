@@ -21,6 +21,7 @@
 #include "engine/components/visionComponent.h"
 #include "engine/deviceData/deviceDataManager.h"
 #include "engine/needsSystem/needsManager.h"
+#include "engine/perfMetric.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "engine/viz/vizManager.h"
@@ -33,7 +34,11 @@
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
+
+#include "anki/cozmo/shared/cozmoConfig.h"
+
 #include "clad/externalInterface/messageGameToEngine.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
@@ -44,6 +49,7 @@
 #include "util/time/universalTime.h"
 #include "util/environment/locale.h"
 #include "util/transport/connectionStats.h"
+
 #include <cstdlib>
 #include <ctime>
 #include <iomanip>
@@ -116,7 +122,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestLocale>();
 
   auto handler = [this] (const std::vector<Util::AnkiLab::AssignmentDef>& assignments) {
-    _context->GetExperiments()->WriteLabAssignmentsToRobot(assignments);
+    _context->GetExperiments()->UpdateLabAssignments(assignments);
   };
   _signalHandles.emplace_back(_context->GetExperiments()->GetAnkiLab()
                               .ActiveAssignmentsUpdatedSignal().ScopedSubscribe(handler));
@@ -237,6 +243,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
   //          and/or set from UI/SDK?
   _context->SetLocale("en-US");
 
+  _context->GetPerfMetric()->Init();
+
   PRINT_NAMED_INFO("CozmoEngine.Init.Version", "2");
 
   SetEngineState(EngineState::LoadingData);
@@ -340,6 +348,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     firstUpdate = false;
   }
 #endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
+
+  _uiMsgHandler->ResetMessageCounts();
+  _context->GetRobotManager()->GetMsgHandler()->ResetMessageCounts();
+  _context->GetVizManager()->ResetMessageCount();
   
   _context->GetVoiceCommandComponent()->Update();
   
@@ -420,19 +432,17 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     const double maxUpdateDuration = BS_TIME_STEP;
     if (updateLengthMs > maxUpdateDuration)
     {
+      static const std::string targetMs = std::to_string(BS_TIME_STEP);
       Anki::Util::sEventF("cozmo_engine.update.run.slow",
-                          {{DDATA,std::to_string(BS_TIME_STEP).c_str()}},
+                          {{DDATA, targetMs.c_str()}},
                           "%.2f", updateLengthMs);
     }
-    ExternalInterface::MessageEngineToGame debugPerfMessage(
-                                          ExternalInterface::DebugPerformanceTick("Engine",updateLengthMs));
-    _context->GetExternalInterface()->Broadcast( std::move(debugPerfMessage) );
   }
 #endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
 
   return RESULT_OK;
 }
-  
+
 #if REMOTE_CONSOLE_ENABLED
 void PrintTimingInfoStats(const ExternalInterface::TimingInfo& timingInfo, const char* name)
 {
@@ -569,8 +579,8 @@ Result CozmoEngine::InitInternal()
 
 Result CozmoEngine::ConnectToRobotProcess()
 {
-  const RobotID_t kDefaultRobotID = 1;
-  if(HasRobotWithID(kDefaultRobotID)) {
+  const RobotID_t kDefaultRobotID = Anki::Cozmo::DEFAULT_ROBOT_ID;
+  if (HasRobotWithID(kDefaultRobotID)) {
     PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobotProcess.AlreadyConnected", "Robot already connected");
     return RESULT_OK;
   }
@@ -751,6 +761,25 @@ Util::AnkiLab::AssignmentStatus CozmoEngine::ActivateExperiment(
   const Util::AnkiLab::ActivateExperimentRequest& request, std::string& outVariationKey)
 {
   return _context->GetExperiments()->ActivateExperiment(request, outVariationKey);
+}
+
+void CozmoEngine::RegisterEngineTickPerformance(const float tickDuration_ms,
+                                                const float tickFrequency_ms,
+                                                const float sleepDurationIntended_ms,
+                                                const float sleepDurationActual_ms) const
+{
+  // Send two of these stats to the game for on-screen display
+  ExternalInterface::MessageEngineToGame perfEngMsg(ExternalInterface::DebugPerformanceTick(
+                                                    "Engine", tickDuration_ms));
+  _context->GetExternalInterface()->Broadcast(std::move(perfEngMsg));
+
+  ExternalInterface::MessageEngineToGame perfEngFreqMsg(ExternalInterface::DebugPerformanceTick(
+                                                    "EngineFreq", tickFrequency_ms));
+   _context->GetExternalInterface()->Broadcast(std::move(perfEngFreqMsg));
+
+  // Update the PerfMetric system for end of tick
+  _context->GetPerfMetric()->Update(tickDuration_ms, tickFrequency_ms,
+                                    sleepDurationIntended_ms, sleepDurationActual_ms);
 }
 
 } // namespace Cozmo

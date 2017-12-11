@@ -270,7 +270,7 @@ FlipBlockAction::FlipBlockAction(ObjectID objectID)
 FlipBlockAction::~FlipBlockAction()
 {
   _compoundAction.PrepForCompletion();
-  if(_flipTag != -1)
+  if (_flipTag != -1)
   {
     GetRobot().GetActionList().Cancel(_flipTag);
   }

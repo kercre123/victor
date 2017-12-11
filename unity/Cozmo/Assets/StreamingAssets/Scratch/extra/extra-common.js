@@ -198,6 +198,10 @@ window.getBlockIconColor = function(icon) {
 
 // Performance display hook for Development (is never called from SHIPPING app builds)
 window.setPerformanceData = function(perfStateJSON) {
+  if (document.body == null) {
+    // Wait for the page to finish loading
+    return;
+  }
   var perfElement = document.getElementById("perfDisplay");
   if (perfElement == null) {
       // Create the element programmatically

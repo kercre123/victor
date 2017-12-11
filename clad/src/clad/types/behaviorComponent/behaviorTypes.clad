@@ -17,6 +17,7 @@ enum uint_8 BehaviorClass {
   BuildPyramidBase,
   CantHandleTallStack,
   CheckForStackAtInterval,
+  ComeHere,
   CubeLiftWorkout,
   Dance,
   DevPettingTestSimple,
@@ -303,6 +304,7 @@ enum uint_8 BehaviorID {
 
   VictorFreeplay,
  
+  VictorCloudComeHere,
   VictorCloudDemoBase,
   VictorCloudDemoAutonomousStub,
   VictorCloudDemoHello,

@@ -141,6 +141,9 @@ namespace FaceEnrollment {
 
     // PauseManager has put us in behavior wait and is not going to properly put back into the custom behavior
     private void HandleGoingToSleep(GoingToSleep msg) {
+      if (_EnrollingFace) {
+        _CurrentRobot.CancelFaceEnrollment();
+      }
       _StateMachine.SetNextState(new FaceSlideState());
     }
 

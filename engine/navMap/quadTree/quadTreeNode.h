@@ -119,7 +119,7 @@ public:
   // populate a list of all data that matches the predicate
   void FindIf(const FastPolygon& poly,
               NodePredicate pred, 
-              MemoryMapDataConstList& output);    
+              MemoryMapDataConstList& output) const;
               
   // moves this node's center towards the required points, so that they can be included in this node
   // returns true if the root shifts, false if it can't shift to accomodate all points or the points are already contained

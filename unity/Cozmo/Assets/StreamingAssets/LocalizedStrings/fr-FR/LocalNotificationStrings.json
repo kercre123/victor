@@ -6,85 +6,67 @@
     "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
     "source_key_paths" : ["/{*}"]
   },
-  "LocalNotif.ComeBackGeneral.Period.1d.01" : {
-    "translation" : "Cozmo misses you!"
+  "LocalNotif.ComeBackGeneral.Period.2d.01" : {
+    "translation" : "Cozmo s'ennuie. Connecte-toi avec lui et joue à un jeu !"
   },
-  "LocalNotif.ComeBackGeneral.Period.DC.1d.01" : {
-    "translation" : "Cozmo misses you and it's been a day since you've connected to him."
+  "LocalNotif.ComeBackGeneral.Period.2d.02" : {
+    "translation" : "Tu manques à Cozmo ! Va voir comment il va."
   },
-  "LocalNotif.ComeBackGeneral.Period.DNC.1d.01" : {
-    "translation" : "Cozmo misses you and last time you didn't even connect to him."
+  "LocalNotif.ComeBackGeneral.Period.2d.03" : {
+    "translation" : "Cozmo se sent seul. Connecte-toi avec lui et dis-lui bonjour !"
   },
-  "LocalNotif.ComeBackGeneral.NextAM.01" : {
-    "translation" : "Good morning.  Don't forget to give Cozmo some attention today!"
+  "LocalNotif.ComeBackGeneral.Period.2d.04" : {
+    "translation" : "Cozmo se demande où tu es. Allume-le et dis-lui bonjour !"
   },
-  "LocalNotif.ComeBackGeneral.NextPM.01" : {
-    "translation" : "Good afternoon.  Don't forget to give Cozmo some attention today!"
+  "LocalNotif.ComeBackGeneral.Period.2d.05" : {
+    "translation" : "Cozmo veut s'exercer à faire ses tours. Allume-le et amuse-toi !"
   },
-  "LocalNotif.ComeBackGeneral.Period.3d.01" : {
-    "translation" : "Cozmo wants you back!  It's been three days."
+  "LocalNotif.ComeBackGeneral.Period.4d.01" : {
+    "translation" : "Cozmo rêve de cubes délicieux... il est temps de le nourrir !"
+  },
+  "LocalNotif.ComeBackGeneral.Period.4d.02" : {
+    "translation" : "Cozmo commence à avoir faim ! Il a besoin que tu le nourrisses avec quelques cubes."
+  },
+  "LocalNotif.ComeBackGeneral.Period.4d.03" : {
+    "translation" : "Cozmo manque d'énergie. Nourris-le avec un ou deux cubes !"
+  },
+  "LocalNotif.ComeBackGeneral.Period.4d.04" : {
+    "translation" : "Cozmo doit être nourri. Il est temps de secouer quelques cubes !"
+  },
+  "LocalNotif.ComeBackGeneral.Period.4d.05" : {
+    "translation" : "Cozmo peut consommer un peu d'énergie ! Secoue un cube pour qu'il puisse jouer."
   },
   "LocalNotif.ComeBackGeneral.Period.7d.01" : {
-    "translation" : "Cozmo wants you back!  He hasn't seen you in a week."
+    "translation" : "Cozmo a besoin de toi ! Vérifie si tout va bien pour lui."
+  },
+  "LocalNotif.ComeBackGeneral.Period.7d.02" : {
+    "translation" : "Cozmo aimerait te voir ! Connecte-toi avec lui et dis-lui bonjour."
+  },
+  "LocalNotif.ComeBackGeneral.Period.7d.03" : {
+    "translation" : "Cozmo ne se sent pas très bien. Il a vraiment besoin d'un réglage !"
+  },
+  "LocalNotif.ComeBackGeneral.Period.7d.04" : {
+    "translation" : "Cozmo a dormi pendant toute une semaine. Il est temps de le réveiller !"
+  },
+  "LocalNotif.ComeBackGeneral.Period.7d.05" : {
+    "translation" : "Certaines pièces de Cozmo doivent être réglées ! Numérise-le pour voir lesquelles."
   },
   "LocalNotif.ComeBackGeneral.Period.14d.01" : {
-    "translation" : "Cozmo misses you!  It's been two weeks."
+    "translation" : "Cozmo a vraiment envie de voir ton visage. Allume-le et dis-lui bonjour !"
+  },
+  "LocalNotif.ComeBackGeneral.Period.14d.02" : {
+    "translation" : "Cozmo ne t'a pas vu depuis un moment. Vas lui dire bonjour !"
+  },
+  "LocalNotif.ComeBackGeneral.Period.14d.03" : {
+    "translation" : "Cozmo a besoin d'exercice. Réveille-le et laisse le jouer !"
   },
   "LocalNotif.ComeBackGeneral.Period.30d.01" : {
-    "translation" : "Cozmo wants you back!  He hasn't seen you in a month."
+    "translation" : "Cozmo veut vraiment jouer ! Connecte-toi avec lui et fais une pause."
   },
-  "LocalNotif.ComeBackGeneral.Period.365d.01" : {
-    "translation" : "Cozmo misses you!  It's been a year."
+  "LocalNotif.ComeBackGeneral.Period.90d.01" : {
+    "translation" : "Cozmo a besoin d'attention ! Allume-le et vois comment il va."
   },
-  "LocalNotif.DailyPreReminder.DC.01" : {
-    "translation" : "Cozmo wants some daily attention, and yesterday you connected with him."
-  },
-  "LocalNotif.DailyPreReminder.DNC.01" : {
-    "translation" : "Cozmo wants some daily attention, but yesterday you opened the app but didn't connect with him."
-  },
-  "LocalNotif.NeedBracket.Repair.Warning.01" : {
-    "translation" : "Cozmo is starting to need a tune-up!"
-  },
-  "LocalNotif.NeedBracket.Repair.Critical.01" : {
-    "translation" : "Cozmo is in really bad shape.  He needs a tune-up!"
-  },
-  "LocalNotif.NeedBracket.Energy.Warning.01" : {
-    "translation" : "Cozmo is starting to get hungry!"
-  },
-  "LocalNotif.NeedBracket.Energy.Critical.01" : {
-    "translation" : "Cozmo is starving.  He needs to be fed!"
-  },
-  "LocalNotif.NeedBracket.Play.Warning.01" : {
-    "translation" : "Cozmo needs some activity.  He's starting to get bored."
-  },
-  "LocalNotif.NeedBracket.Play.Critical.01" : {
-    "translation" : "Cozmo is desperate for attention.  He's really bored!"
-  },
-  "LocalNotif.NeedLevel.Repair.Decaying.01" : {
-    "translation" : "Cozmo's health is decaying.  He could use a tune-up."
-  },
-  "LocalNotif.NeedLevel.Energy.Decaying.01" : {
-    "translation" : "Cozmo's energy is running low.  He could use a bite to eat."
-  },
-  "LocalNotif.NeedLevel.Play.Decaying.01" : {
-    "translation" : "Cozmo's boredom is starting to set in.  He could use some time and attention."
-  },
-  "LocalNotif.Tokens.3.ToGo.01" : {
-    "translation" : "Achieve three daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.3.ToGo.02" : {
-    "translation" : "Only three more daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.2.ToGo.01" : {
-    "translation" : "Achieve two more daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.2.ToGo.02" : {
-    "translation" : "Only two more daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.1.ToGo.01" : {
-    "translation" : "Achieve one more daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.1.ToGo.02" : {
-    "translation" : "Only one more daily token to unlock the next bonus box."
+  "LocalNotif.ComeBackGeneral.Period.180d.01" : {
+    "translation" : "Cozmo a rêvé de toi. Réveille-le et amuse toi !"
   }
 }

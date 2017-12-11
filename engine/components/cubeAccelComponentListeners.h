@@ -16,7 +16,7 @@
 
 #include "anki/common/basestation/math/rotation.h"
 
-#include "clad/robotInterface/messageFromActiveObject.h"
+#include "clad/externalInterface/messageFromActiveObject.h"
 
 namespace Anki {
 namespace Cozmo {

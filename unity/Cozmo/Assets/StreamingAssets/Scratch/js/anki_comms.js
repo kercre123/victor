@@ -1,7 +1,58 @@
+String.prototype.replaceAll = function(search, replacement) {
+    var target = this;
+    return target.split(search).join(replacement);
+};
+
 window.Unity = {
     _firstMsgSentTime: null,
     _numMsgSentThisPeriod: 0,
-    call: function(msg) {
+    _pendingMessages: [],
+    _pendingMessagesQueueTime: null,
+    _flushTimeoutId: null,
+    call: function(msg, forceFlush) {
+        var kMaxPendingMessages = 250;
+        var kMaxTimeQueued_ms = 15;
+
+        var now = new Date().getTime();
+
+        // Always add the message (as the Json structure is now always a list of messages, even for 1 message)
+        this._pendingMessages.push( msg );
+        if (this._pendingMessagesQueueTime == null) {
+            this._pendingMessagesQueueTime = now;
+        }
+                
+        // If this message has a valid requestId, then it will wait on a promise, and we should flush + send this immediately
+        // Otherwise the caller can specifically request the messages are flushed immediately, or the flush will occur when
+        // either (a) sufficient messages are queued or (b) the queue is too old
+        var hasValidRequestId = (msg.requestId != "undefined") && (msg.requestId >= 0);
+        var timeQueued = (this._pendingMessagesQueueTime != null) ? (now - this._pendingMessagesQueueTime) : 0;
+        var flushNow = forceFlush || hasValidRequestId || (this._pendingMessages.length > kMaxPendingMessages) || (timeQueued > kMaxTimeQueued_ms);
+
+        if (flushNow) {
+            this.flushMessageList();
+        }
+        else {
+            // If there isn't already a timer running (to ensure this is flushed within a reasonable time) then add one now
+            if (this._flushTimeoutId == null) {
+                this._flushTimeoutId = setTimeout( function() { window.Unity.flushMessageList(); }, kMaxTimeQueued_ms );
+            }
+        }     
+    },
+    flushMessageList: function() {
+        // If there's a timer then clear it now
+        if (this._flushTimeoutId != null) {
+            clearTimeout(this._flushTimeoutId);
+            this._flushTimeoutId = null;
+        }
+        // If there are any messages to send then send them now and clear the queue
+        if (this._pendingMessages.length > 0) {
+            this.callWithMessageList({messages: this._pendingMessages});
+            // Clear the queue
+            this._pendingMessages = [];
+            this._pendingMessagesQueueTime = null;
+        }
+    },
+    callWithMessageList: function(msg) {
         var jsonMsg = JSON.stringify(msg);
 
         // Encode the stringified JSON object so that special chars like ', " and \ to make it all the way to unity.
@@ -57,14 +108,14 @@ window.Unity = {
     },
     sleepPromiseIfNecessary: function() {
         // For blocks that don't create a promise (or other means of sleeping), this automatically
-        // creaets one if necessary to throttle the message rate
+        // creates one if necessary to throttle the message rate
         // (and prevent Scratch locking up in busy-loops that call into Unity a lot)
         var sleepRequired_ms = this.calculateSleepRequiredToThrottle();
         if (sleepRequired_ms > 0) {
             // Don't reset the tracking - that's done as soon as it's slept for long enough
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    resolve();
+            return new Promise(function (resolve) {
+                setTimeout(function(){
+                    resolve();                    
                 }, sleepRequired_ms);
             });
         }
@@ -114,8 +165,14 @@ if (gEnableSdkConnection) {
                         eval(xhr.responseText);
                     }
                     catch(err) {
-                        console.log("updateSdk.eval.error: " + err.message);
-                        console.log("" + xhr.responseText)
+                        if (err.message == "window.setCozmoState is not a function") {
+                            // Ignore - this happens whenever on e.g. projects page in Chrome
+                            // but the app is in the workspace (and Unity is sending setCozmoState)
+                        }
+                        else {
+                            console.log("updateSdk.eval.error: " + err.message);
+                            console.log("" + xhr.responseText);
+                        }
                     }
                 }
             }

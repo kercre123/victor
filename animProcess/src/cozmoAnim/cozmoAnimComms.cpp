@@ -43,14 +43,16 @@ namespace { // "Private members"
   Result InitComms()
   {
     // Setup robot comms
-#ifdef SIMULATOR
-    const u16 robotID = 1; // TODO: Extract this from proto instance name just like CozmoBot_1?
-#else
-    const u16 robotID = 0;
-#endif
-    bool ok = _robotClient.Connect(ANIM_UDP_PATH, ROBOT_UDP_PATH);
+    // TODO: Extract this from proto instance name just like CozmoBot_1?
+    const RobotID_t robotID = Anki::Cozmo::DEFAULT_ROBOT_ID;
+
+    std::string client_path = std::string(ANIM_CLIENT_PATH) + std::to_string(robotID);
+    std::string server_path = std::string(ROBOT_SERVER_PATH) + std::to_string(robotID);
+    
+    bool ok = _robotClient.Connect(client_path.c_str(), server_path.c_str());
     if (!ok) {
-      LOG_ERROR("InitComms.ConnectFailed", "Unable to connect to robot at %s", ROBOT_UDP_PATH);
+      LOG_ERROR("InitComms.ConnectFailed", "Unable to connect from %s to %s", 
+        client_path.c_str(), server_path.c_str());
       return RESULT_FAIL_IO;
     }
     
@@ -86,7 +88,7 @@ namespace { // "Private members"
     if (_server.HasClient()) {
 
       const ssize_t bytesSent = _server.Send((char*)buffer, length);
-      if (bytesSent < length) {
+      if (bytesSent < (ssize_t) length) {
         LOG_ERROR("SendPacketToEngine.FailedSend", "Failed to send msg contents (%zd of %d bytes sent)", bytesSent, length);
         DisconnectEngine();
         return false;
@@ -124,8 +126,8 @@ namespace { // "Private members"
     if (_robotClient.IsConnected()) {
       
       ssize_t bytesSent = _robotClient.Send((char*)buffer, length);
-      if (bytesSent < length) {
-        LOG_ERROR("SendPacketToRobot.FailedSend", "Failed to send msg contents (%zd bytes sent)\n", bytesSent);
+      if (bytesSent < (ssize_t) length) {
+        LOG_ERROR("SendPacketToRobot.FailedSend", "Failed to send msg contents (%zd bytes sent)", bytesSent);
         DisconnectRobot();
         return false;
       }

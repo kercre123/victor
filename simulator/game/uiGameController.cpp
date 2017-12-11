@@ -18,7 +18,7 @@
 #include "util/transport/udpTransport.h"
 // includes for physics functions
 #include "anki/messaging/shared/UdpClient.h"
-#include "clad/robotInterface/messageFromActiveObject.h"
+#include "clad/externalInterface/messageFromActiveObject.h"
 #include "clad/physicsInterface/messageSimPhysics.h"
 // end of physics includes
 #include <stdio.h>
@@ -2117,39 +2117,36 @@ namespace Anki {
       return pose;
     }
 
-    bool UiGameController::HasActualLightCubePose(ObjectType lightCubeType) const
+    bool UiGameController::HasActualLightCubePose(ObjectType inType) const
     {
-      int proto_type = static_cast<int>(lightCubeType) - 1;
       for (auto lightCube : _lightCubes) {
-        webots::Field* id = lightCube->getField("ID");
-        if (id && id->getSFInt32() == proto_type) {
+        webots::Field* type = lightCube->getField("objectType");
+        if (type && (ObjectTypeFromString(type->getSFString()) == inType)) {
           return true;
         }
       }
       return false;
     }
 
-    webots::Node* UiGameController::GetLightCubeByType(ObjectType type) const
+    webots::Node* UiGameController::GetLightCubeByType(ObjectType inType) const
     {
-      int proto_type = static_cast<int>(type) - 1;
       for (auto lightCube : _lightCubes) {
-        webots::Field* id = lightCube->getField("ID");
-        if (id && id->getSFInt32() == proto_type) {
+        webots::Field* type = lightCube->getField("objectType");
+        if (type && (ObjectTypeFromString(type->getSFString()) == inType)) {
           return lightCube;
         }
       }
 
       DEV_ASSERT_MSG(false, "UiGameController.GetLightCubeByType",
-                     "Can't find the light cube with type '%s' in the world", ObjectTypeToString(type));
+                     "Can't find the light cube with type '%s' in the world", ObjectTypeToString(inType));
       return nullptr;
     }
     
-    bool UiGameController::RemoveLightCubeByType(ObjectType type)
+    bool UiGameController::RemoveLightCubeByType(ObjectType inType)
     {
-      int proto_type = static_cast<int>(type) - 1;
       for (auto it = _lightCubes.begin(); it != _lightCubes.end(); ++it) {
-        webots::Field* id = (*it)->getField("ID");
-        if (id && id->getSFInt32() == proto_type) {
+        webots::Field* type = (*it)->getField("objectType");
+        if (type && (ObjectTypeFromString(type->getSFString()) == inType)) {
           (*it)->remove();
           _lightCubes.erase(it);
           return true;
@@ -2157,19 +2154,17 @@ namespace Anki {
       }
       
       DEV_ASSERT_MSG(false, "UiGameController.RemoveLightCubeById",
-                     "Can't find the light cube of ObjectType %d in the world", proto_type);
+                     "Can't find the light cube of ObjectType '%s' in the world", ObjectTypeToString(inType));
       return false;
-
     }
     
-    bool UiGameController::AddLightCubeByType(ObjectType type, const Pose3d& p, const u32 factoryID)
+    bool UiGameController::AddLightCubeByType(ObjectType inType, const Pose3d& p, const u32 factoryID)
     {
-      // Check if world already has a light cube with that ID
-      int proto_type = static_cast<int>(type) - 1;
+      // Check if world already has a light cube with that type
       for (auto lightCube : _lightCubes) {
-        webots::Field* id = lightCube->getField("ID");
-        if (id && id->getSFInt32() == proto_type) {
-          PRINT_NAMED_WARNING("UiGameController.AddLightCubeByType.ObjectTypeAlreadyExists", "%d", type);
+        webots::Field* type = lightCube->getField("objectType");
+        if (type && (ObjectTypeFromString(type->getSFString()) == inType)) {
+          PRINT_NAMED_WARNING("UiGameController.AddLightCubeByType.ObjectTypeAlreadyExists", "%s", ObjectTypeToString(inType));
           return false;
         }
       }
@@ -2177,7 +2172,7 @@ namespace Anki {
       // Import light cube proto instance into scene tree
       std::stringstream ss;
       ss << "LightCube { "
-      << " ID " << proto_type
+      << " objectType " << ObjectTypeToString(inType)
       << " factoryID " << factoryID
       << " translation "
       << 0.001f * p.GetTranslation().x() << " "

@@ -119,12 +119,12 @@ LightCube {
 LightCube {
   translation 0.30768196 -0.18417264 0.0219929
   rotation 1.39537e-05 -1.83704e-06 1 0.261799
-  ID 2
+  objectType "Block_LIGHTCUBE3"
 }
 LightCube {
   translation -0.30623531 0.42059343 0.0219929
   rotation 0 0 -1 6.23319
-  ID 1
+  objectType "Block_LIGHTCUBE2"
 }
 CozmoBot2 {
   translation -0.78730284 0.77366239 -3.5527137e-15

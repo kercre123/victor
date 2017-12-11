@@ -23,7 +23,7 @@
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
-#include "clad/robotInterface/messageFromActiveObject.h"
+#include "clad/externalInterface/messageFromActiveObject.h"
 
 #include <list>
 #include <map>
@@ -62,13 +62,11 @@ public:
   
   template<typename T>
   void HandleMessage(const T& msg);
-
-private:
   
   void HandleObjectAccel(const ObjectAccel& objectAccel);
   
-  void ReceiveObjectAccelData(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
-
+private:
+  
   struct AccelHistory
   {
     // Window size of data to keep in history

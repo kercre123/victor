@@ -28,7 +28,7 @@
     "translation" : "Une fois qu'il aura fini de se charger, laisse-le prendre vie et découvrir sa nouvelle maison."
   },
   "onboarding.CozmoNeedsCharge.message3" : {
-    "translation" : "Le propriétaire de Cozmo doit être soigneux. Prête attention à ses besoins tous les jours et il débloquera de nouveaux jeux et effectuera de nouveaux tours."
+    "translation" : "Le propriétaire de Cozmo doit être soigneux. Prête attention à ses besoins tous les jours et il effectuera de nouveaux tours."
   },
   "onboarding.CozmoNeedsCharge.message4" : {
     "translation" : "Tu peux prendre Cozmo si tu le souhaites, mais son plus grand bonheur est de se déplacer tout seul."
@@ -100,7 +100,7 @@
     "translation" : "<b>Cozmo a des besoins.</b>\u000a\u000aPrends soin de lui chaque jour pour qu'il soit heureux."
   },
   "onboarding.NeedsIntroReturning" : {
-    "translation" : "<b>Cozmo a des besoins.</b>\u000a\u000aPrends soin de lui chaque jour pour qu'il soit heureux.\u000a\u000aIl se peut que l'application Cozmo soit légèrement différente, mais tu conserveras tous les éléments débloqués."
+    "translation" : "<b>Cozmo a des besoins.</b>\u000a\u000aPrends soin de lui chaque jour pour qu'il soit heureux.Il se peut que l'application Cozmo soit légèrement différente, mais tu conserveras tous les éléments débloqués que tu as gagnés."
   },
   "onboarding.PlayIntro" : {
     "translation" : "<b>Cozmo veut jouer.</b>\u000a\u000aAppuie sur le bouton <b><color=#f5ea12>JOUER</color></b> pour demander des jeux ou des tours. Chaque jour où tu remplis cette barre jaune, tu gagnes un jeton."
@@ -139,12 +139,15 @@
     "translation" : "Chaque jour où tu satisfais son <color=#f5ea12>envie de jouer</color>, tu gagnes un <color=#f5ea12>jeton.</color>"
   },
   "onboarding.TokensIntro.Part1" : {
-    "translation" : "Comble l'<color=#f5ea12>envie de jouer</color> de Cozmo pendant trois jours pour débloquer une <color=#f5ea12>boîte à bonus.</color>"
+    "translation" : "Comble l'<color=#f5ea12>envie de jouer</color> de Cozmo quotidiennement. Si tu joues pendant trois jours, tu débloqueras une <color=#f5ea12>boîte à bonus.</color>"
   },
   "onboarding.TokensIntro.Part2" : {
     "translation" : "Cozmo a de la chance de t'avoir comme propriétaire ! Il est temps de partir en exploration !"
   },
   "onboarding.button.end" : {
     "translation" : "TERMINÉ"
+  },
+  "onboarding.notificationpreprompt.body" : {
+    "translation" : "Veux-tu que Cozmo t'envoie des messages quand il a besoin de toi ?"
   }
 }

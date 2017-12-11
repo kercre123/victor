@@ -38,6 +38,8 @@ namespace RobotInterface {
 MessageHandler::MessageHandler()
 : _robotManager(nullptr)
 , _isInitialized(false)
+, _messageCountRtE(0)
+, _messageCountEtR(0)
 {
 }
   
@@ -80,6 +82,8 @@ void MessageHandler::ProcessMessages()
     std::vector<uint8_t> nextData;
     while (_robotConnectionManager->PopData(nextData))
     {
+      ++_messageCountRtE;
+
       // If we don't have a robot to care about this message, throw it away
       Robot* destRobot = _robotManager->GetFirstRobot();
       if (nullptr == destRobot)
@@ -123,6 +127,8 @@ void MessageHandler::ProcessMessages()
 
 Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface::EngineToRobot& msg, bool reliable, bool hot)
 {
+  ++_messageCountEtR;
+
   if (!_isInitialized || !_robotConnectionManager->IsValidConnection())
   {
     return RESULT_FAIL;

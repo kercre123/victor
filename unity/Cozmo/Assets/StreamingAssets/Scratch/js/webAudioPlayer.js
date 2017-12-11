@@ -12,6 +12,20 @@
 // See also:
 // https://developer.apple.com/library/prerelease/content/documentation/AudioVideo/Conceptual/Using_HTML5_Audio_Video/PlayingandSynthesizingSounds/PlayingandSynthesizingSounds.html
 
+var placeholderWebAudioPlayer = function () {
+    "use strict";
+
+    var player = {};
+
+    player.load = function(sound) {
+    };
+
+    player.play = function (name) {
+    };
+
+    return player;
+};
+
 var simpleWebAudioPlayer = function () {
     "use strict";
 
@@ -116,6 +130,8 @@ var simpleWebAudioPlayer = function () {
       window.player = simpleWebAudioPlayer();
       window.player.load({name: "click", src: click_wav});
       window.player.load({name: "delete", src: delete_wav});
+  } else if (!window.player) {
+      window.player = placeholderWebAudioPlayer();
   }
 })();
 

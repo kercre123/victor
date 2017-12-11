@@ -33,6 +33,7 @@ using Util::FullEnumToValueArrayChecker::IsSequentialArray; // import IsSequenti
 const FullCloudIntentArray cloudStringMap{
   {CloudIntent::AnyTrick,        "intent_play_anytrick"},
   {CloudIntent::BeQuiet,         "intent_imperative_quiet"},
+  {CloudIntent::ComeHere,        "intent_imperative_come"},
   {CloudIntent::Goodbye,         "intent_greeting_goodbye"},
   {CloudIntent::Hello,           "intent_greeting_hello"},
   {CloudIntent::HowAreYou,       "intent_status_feeling"},

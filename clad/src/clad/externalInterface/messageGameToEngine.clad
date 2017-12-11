@@ -909,7 +909,8 @@ message ForceSetDamagedParts {
 
 message RegisterOnboardingComplete {
   int_32 onboardingStage,
-  bool   finalStage
+  bool   finalStage,
+  bool   onboardingSkipped,
 }
 
 message SetNeedsPauseState {
@@ -1046,6 +1047,26 @@ message LogRawProxData {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Performance Metric
+///////////////////////////////////////////////////////////////////////////////
+
+enum uint_8 PerfMetricCommandType {
+  Reset,
+  Start,
+  Stop,
+  Dump,
+  DumpAll,
+  DumpFiles,
+}
+
+message PerfMetricCommand {
+  PerfMetricCommandType command,
+}
+
+message PerfMetricGetStatus {
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // BlockPool
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -1054,11 +1075,6 @@ message BlockPoolEnabledMessage {
   bool enabled
 }
 
-message BlockSelectedMessage {
-  uint_32 factoryId,
-  ObjectType objectType,
-  bool   selected
-}
 // Query for E2Gmessage: InitBlockPoolMessage
 message GetBlockPoolMessage {
 }

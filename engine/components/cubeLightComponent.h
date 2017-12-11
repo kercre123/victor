@@ -24,7 +24,6 @@
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/types.h"
-#include "clad/types/activeObjectConstants.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/poseStructs.h"
@@ -45,7 +44,7 @@ class CubeLightAnimationContainer;
 class Robot;
 
 
-using ObjectLEDArray = std::array<u32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS>;
+using ObjectLEDArray = std::array<u32, 4>;
 struct ObjectLights {
   ObjectLEDArray onColors{};
   ObjectLEDArray offColors{};
@@ -53,7 +52,7 @@ struct ObjectLights {
   ObjectLEDArray offPeriod_ms{};
   ObjectLEDArray transitionOnPeriod_ms{};
   ObjectLEDArray transitionOffPeriod_ms{};
-  std::array<s32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS> offset{};
+  std::array<s32, 4> offset{};
   u32 rotationPeriod_ms = 0;
   MakeRelativeMode makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
   Point2f relativePoint;

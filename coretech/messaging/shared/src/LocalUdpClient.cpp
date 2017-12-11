@@ -16,8 +16,8 @@
 #include <unistd.h>
 
 // Socket buffer sizes
-#define UDP_CLIENT_SNDBUFSZ (128*1024)
-#define UDP_CLIENT_RCVBUFSZ (128*1024)
+#define UDP_CLIENT_SNDBUFSZ (256*1024)
+#define UDP_CLIENT_RCVBUFSZ (256*1024)
 
 //
 // This code is shared with robot so we don't have PRINT_NAMED macros available.
@@ -95,7 +95,7 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
   strncpy(_sockaddr.sun_path, _sockname.c_str(), sizeof(_sockaddr.sun_path));
   _sockaddr_len = (socklen_t) SUN_LEN(&_sockaddr);
 
-  if (bind(_socketfd, (struct sockaddr *) &_sockaddr, _sockaddr_len)) {
+  if (bind(_socketfd, (struct sockaddr *) &_sockaddr, _sockaddr_len) != 0) {
     LOG_ERROR("LocalUdpClient.Connect: Unable to bind socket (" << strerror(errno) << ")");
     return false;
   }
@@ -105,6 +105,11 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
   _peeraddr.sun_family = ai_family;
   strncpy(_peeraddr.sun_path, _peername.c_str(), sizeof(_peeraddr.sun_path));
   _peeraddr_len = (socklen_t) SUN_LEN(&_peeraddr);
+
+  if (connect(_socketfd, (struct sockaddr *) &_peeraddr, _peeraddr_len) != 0) {
+    LOG_ERROR("LocalUdpClient.Connect: Unable to connect to " << peername << " (" << strerror(errno) << ")");
+    return false;
+  }
 
   // Send connection packet (i.e. something so that the server adds us to the client list)
   const char zero = 0;
@@ -133,7 +138,7 @@ ssize_t LocalUdpClient::Send(const char* data, int size)
   
   //LOG_DEBUG("LocalUdpClient.Send: sending " << size << " bytes");
 
-  const ssize_t bytes_sent = sendto(_socketfd, data, size, 0, (const struct sockaddr *) &_peeraddr, _peeraddr_len);
+  const ssize_t bytes_sent = send(_socketfd, data, size, 0);
 
   if (bytes_sent != size) {
     LOG_ERROR("LocalUdpClient.Send: Send error, disconnecting (" << strerror(errno) << ")");

@@ -98,8 +98,9 @@ button:focus {
 .modal-slides .modal-title {
   display: inline-block;
   color: #1fadda;
-  font-weight: bold;
-  font-size: 7vh;
+  font-weight: normal;
+  font-family: 'Avenir Next Bold';
+  font-size: 32px;
 }
 
 .modal-slides .bd {
@@ -133,6 +134,7 @@ button:focus {
 }
 
 .modal-slides .nav-button {
+  font-family: 'Avenir Next';
   position: relative;
   color: #fff;
   border: 1px solid #1fadda;
@@ -142,12 +144,18 @@ button:focus {
   padding: .3em 0;
   display: flex;
   align-items: center;
-  line-height: 1em;
+}
+
+.modal-slides .nav-button .button-label {
+  padding: .45em 0 .15em 0;
+  font-weight: normal;
 }
 
 .modal-slides .nav-button .arrow {
   display: inline-block;
+  vertical-align: middle;
   height: 1em;
+  margin: auto;
   width: auto;
 }
 .modal-slides .nav-button.nav-button-back {

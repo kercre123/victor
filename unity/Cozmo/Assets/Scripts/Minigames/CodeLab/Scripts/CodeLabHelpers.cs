@@ -5,9 +5,50 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace CodeLab {
 
+  public class ValueSanitizer {
+    public static float SanitizeFloat(float inValue) {
+      if (float.IsNaN(inValue) || float.IsInfinity(inValue)) {
+        return 0.0f;
+      }
+      else {
+        return inValue;
+      }
+    }
+  }
+
+  public class CodeLabVector2 {
+    public float x = 0.0f;
+    public float y = 0.0f;
+
+    public void Set(float inX, float inY) {
+      x = ValueSanitizer.SanitizeFloat(inX);
+      y = ValueSanitizer.SanitizeFloat(inY);
+    }
+
+    public void Set(Vector2 inVector) {
+      Set(inVector.x, inVector.y);
+    }
+  }
+
+  public class CodeLabVector3 {
+    public float x = 0.0f;
+    public float y = 0.0f;
+    public float z = 0.0f;
+
+    public void Set(float inX, float inY, float inZ) {
+      x = ValueSanitizer.SanitizeFloat(inX);
+      y = ValueSanitizer.SanitizeFloat(inY);
+      z = ValueSanitizer.SanitizeFloat(inZ);
+    }
+
+    public void Set(Vector3 inVector) {
+      Set(inVector.x, inVector.y, inVector.z);
+    }
+  }
+
   public class CubeStateForCodeLab {
-    public Vector3 pos;
-    public Vector2 camPos;
+    public CodeLabVector3 pos = new CodeLabVector3();
+    public CodeLabVector2 camPos = new CodeLabVector2();
     public bool isValid;
     public bool isVisible;
     public bool wasJustTapped;
@@ -18,8 +59,8 @@ namespace CodeLab {
   }
 
   public class FaceStateForCodeLab {
-    public Vector3 pos;
-    public Vector2 camPos;
+    public CodeLabVector3 pos = new CodeLabVector3();
+    public CodeLabVector2 camPos = new CodeLabVector2();
     public string name;
     public bool isVisible;
     public string expression;
@@ -64,8 +105,9 @@ namespace CodeLab {
     public float poseYaw_d;
     public float liftHeightPercentage;
     public float headAngle_d;
+    public bool isPickedUp;
     public int lastTappedCube; // 1..3 (0 for none)
-    public Vector3 pos;
+    public CodeLabVector3 pos = new CodeLabVector3();
     public CubeStateForCodeLab cube1 = new CubeStateForCodeLab();
     public CubeStateForCodeLab cube2 = new CubeStateForCodeLab();
     public CubeStateForCodeLab cube3 = new CubeStateForCodeLab();
@@ -92,6 +134,10 @@ namespace CodeLab {
     public bool argBool { get; set; }
     public bool argBool2 { get; set; }
     public bool argBool3 { get; set; }
+  }
+
+  public class ScratchRequests {
+    public List<ScratchRequest> messages;
   }
 
   public delegate void ScratchBlockUpdate();
@@ -150,7 +196,9 @@ namespace CodeLab {
     public void CancelAction() {
       DAS.Info("CodeLab.CancelAction", "actionType = " + _ActionType.ToString());
       var robot = RobotEngineManager.Instance.CurrentRobot;
-      robot.CancelActionByIdTag(_ActionIdTag);
+      if (robot != null) {
+        robot.CancelActionByIdTag(_ActionIdTag);
+      }
       ReleaseFromPool();
     }
 
@@ -161,9 +209,9 @@ namespace CodeLab {
     public void VerticalOnAnimationComplete(bool success) {
       // Failure is usually because another action (e.g. animation) was requested by user clicking in Scratch
       // Therefore don't queue the neutral face animation in that case, as it will clobber the just requested animation
-      if (success) {
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (success && (robot != null)) {
         // TODO: Confirm if we still need this for vertical (or do we force user to trigger the neutral face if they need it?)
-        var robot = RobotEngineManager.Instance.CurrentRobot;
         _ActionIdTag = robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.AdvanceToNextBlock, Anki.Cozmo.QueueActionPosition.IN_PARALLEL);
       }
       else {
@@ -174,8 +222,8 @@ namespace CodeLab {
     public void NeutralFaceThenAdvanceToNextBlock(bool success) {
       // Failure is usually because another action (e.g. animation) was requested by user clicking in Scratch
       // Therefore don't queue the neutral face animation in that case, as it will clobber the just requested animation
-      if (success) {
-        var robot = RobotEngineManager.Instance.CurrentRobot;
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (success && (robot != null)) {
         _ActionIdTag = robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.AdvanceToNextBlock);
       }
       else {
@@ -256,7 +304,7 @@ namespace CodeLab {
     }
 
     public void RobotObservedSadFace(RobotObservedFace message) {
-      if (_CodeLabGame.FaceIsSad(message)) {
+      if (CodeLabGame.FaceIsSad(message)) {
         RobotEngineManager.Instance.RemoveCallback<RobotObservedFace>(RobotObservedSadFace);
         AdvanceToNextBlock(true);
       }
@@ -268,16 +316,18 @@ namespace CodeLab {
     }
 
     public static Face GetMostRecentlySeenFace() {
-      var robot = RobotEngineManager.Instance.CurrentRobot;
       Face lastFaceSeen = null;
-      for (int i = 0; i < robot.Faces.Count; ++i) {
-        Face face = robot.Faces[i];
-        if (face.IsInFieldOfView) {
-          return face;
-        }
-        else {
-          if ((lastFaceSeen == null) || (face.NumVisionFramesSinceLastSeen < lastFaceSeen.NumVisionFramesSinceLastSeen)) {
-            lastFaceSeen = face;
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        for (int i = 0; i < robot.Faces.Count; ++i) {
+          Face face = robot.Faces[i];
+          if (face.IsInFieldOfView) {
+            return face;
+          }
+          else {
+            if ((lastFaceSeen == null) || (face.NumVisionFramesSinceLastSeen < lastFaceSeen.NumVisionFramesSinceLastSeen)) {
+              lastFaceSeen = face;
+            }
           }
         }
       }
@@ -287,14 +337,17 @@ namespace CodeLab {
 
     private static LightCube GetMostRecentlySeenCube() {
       LightCube lastCubeSeen = null;
-      foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
-        LightCube cube = kvp.Value;
-        if (cube.IsInFieldOfView) {
-          return cube;
-        }
-        else {
-          if ((lastCubeSeen == null) || (cube.NumVisionFramesSinceLastSeen < lastCubeSeen.NumVisionFramesSinceLastSeen)) {
-            lastCubeSeen = cube;
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        foreach (KeyValuePair<int, LightCube> kvp in robot.LightCubes) {
+          LightCube cube = kvp.Value;
+          if (cube.IsInFieldOfView) {
+            return cube;
+          }
+          else {
+            if ((lastCubeSeen == null) || (cube.NumVisionFramesSinceLastSeen < lastCubeSeen.NumVisionFramesSinceLastSeen)) {
+              lastCubeSeen = cube;
+            }
           }
         }
       }
@@ -310,9 +363,11 @@ namespace CodeLab {
         LightCube cube = GetMostRecentlySeenCube();
         const int kMaxVisionFramesSinceSeeingCube = 30;
         if ((cube != null) && (cube.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingCube)) {
-          success = true;
           var robot = RobotEngineManager.Instance.CurrentRobot;
-          _ActionIdTag = robot.AlignWithObject(cube, 0.0f, callback: FinishDockWithCube, usePreDockPose: true, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE, numRetries: 2);
+          if (robot != null) {
+            success = true;
+            _ActionIdTag = robot.AlignWithObject(cube, 0.0f, callback: FinishDockWithCube, usePreDockPose: true, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE, numRetries: 2);
+          }
         }
         else {
           DAS.Warn("DockWithCube.NoVisibleCube", "NumVisionFramesSinceLastSeen = " + ((cube != null) ? cube.NumVisionFramesSinceLastSeen : -1));
@@ -328,11 +383,11 @@ namespace CodeLab {
     }
 
     private void FinishDockWithCube(bool success) {
-      if (!success) {
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (!success && (robot != null)) {
         // Play angry animation since Cozmo wasn't able to complete the task
         // As this is on failure, queue anim in parallel - failure here could be because another block was clicked, and we don't want to interrupt that one
         Anki.Cozmo.QueueActionPosition queuePos = Anki.Cozmo.QueueActionPosition.IN_PARALLEL;
-        var robot = RobotEngineManager.Instance.CurrentRobot;
         _ActionIdTag = robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.FrustratedByFailureMajor, callback: AdvanceToNextBlock, queueActionPosition: queuePos);
       }
       else {

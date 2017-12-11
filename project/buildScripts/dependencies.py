@@ -308,10 +308,11 @@ def svn_package(svn_dict):
     cred = SVN_CRED % (user, password)
     stale_warning = "WARNING: If this build succeeds, it may contain stale external data"
 
-    if not is_up(root_url):
+    have_internet = is_up(root_url)
+    if not have_internet:
         print "{0} is not available.  Please check your internet connection.".format(root_url)
         print(stale_warning)
-        return
+        # Continue anyway in case manifest file needs to be regenerated
 
     for repo in repos:
         r_rev = repos[repo].get("version", "head")
@@ -338,7 +339,7 @@ def svn_package(svn_dict):
         if l_rev != 0 and os.path.isdir(loc):
             l_rev = get_svn_file_rev(loc, cred)
             #print("The version of [%s] is [%s]" % (loc, l_rev))
-            if l_rev is None:
+            if have_internet and l_rev is None:
                 l_rev = 0
                 msg = "Clearing out [%s] directory before getting a fresh copy."
                 if subdirs:
@@ -357,21 +358,30 @@ def svn_package(svn_dict):
         except ValueError:
             pass
 
-        if r_rev == "head" or l_rev != r_rev:
-            print("Checking out '{0}'".format(repo))
-            err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
-            if err:
-                print("Error in checking out {0}: {1}".format(repo, err.strip()))
-                if DIFF_BRANCH_MSG in err:
-                    print("Clearing out [%s] directory to replace it with a fresh copy" % loc)
-                    shutil.rmtree(loc)
-                    print("Checking out '{0}' again".format(repo))
-                    err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
-                    if err:
-                        print("Error in checking out {0}: {1}".format(repo, err.strip()))
+
+        # Do dependencies need to be checked out?
+        need_to_checkout = have_internet and (r_rev == "head" or l_rev != r_rev)
+
+        # Check if manifest file exists
+        manifest_file_path = os.path.join(loc, MANIFEST_FILE_NAME)
+        manifest_file_exists = os.path.exists(manifest_file_path)
+
+        if need_to_checkout or not manifest_file_exists:
+            if need_to_checkout:
+                print("Checking out '{0}'".format(repo))
+                err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
+                if err:
+                    print("Error in checking out {0}: {1}".format(repo, err.strip()))
+                    if DIFF_BRANCH_MSG in err:
+                        print("Clearing out [%s] directory to replace it with a fresh copy" % loc)
+                        shutil.rmtree(loc)
+                        print("Checking out '{0}' again".format(repo))
+                        err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
+                        if err:
+                            print("Error in checking out {0}: {1}".format(repo, err.strip()))
+                            print(stale_warning)
+                    else:
                         print(stale_warning)
-                else:
-                    print(stale_warning)
             if extract_types:
                 for subdir in subdirs:
                     put_in_subdir = os.path.basename(subdir) in UNPACK_INTO_SUBDIR

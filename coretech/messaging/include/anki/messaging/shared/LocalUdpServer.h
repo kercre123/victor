@@ -8,6 +8,10 @@
  *
  * Description: Declaration of local-domain socket server class
  *
+ * Current implementation is limited to ONE CLIENT PER SERVER for improved performance.
+ * Profiling shows that connect()+send() to a single peer is much faster than using sendto()
+ * to manage multiple peers.
+ *
  * Copyright: Anki, inc. 2017
  *
  */
@@ -27,8 +31,7 @@ public:
   void StopListening();
 
   // Client management
-  bool HasClient() const;
-  int GetNumClients() const;
+  bool HasClient() const { return !_peername.empty(); }
   void Disconnect();
 
   // Client transport
@@ -36,17 +39,13 @@ public:
   ssize_t Recv(char* data, int maxSize);
   
 private:
-  typedef std::vector<struct sockaddr_un> ClientList;
-  typedef ClientList::iterator ClientListIter;
 
   // Listening socket descriptor
   int _socketfd;
 
-  // Socket name
+  // Socket names
   std::string _sockname;
-
-  // List of known clients
-  ClientList _clients;
+  std::string _peername;
 
   // Returns true if client successfully added
   bool AddClient(const struct sockaddr_un &saddr, socklen_t saddrlen);

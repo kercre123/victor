@@ -27,7 +27,6 @@
 #include "engine/block.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/blocks/blockFilter.h"
 #include "engine/charger.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
@@ -35,6 +34,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/cubeAccelComponent.h"
+#include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/inventoryComponent.h"
@@ -185,6 +185,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _cubeLightComponent(new CubeLightComponent(*this, _context))
   , _bodyLightComponent(new BodyLightComponent(*this, _context))
   , _cubeAccelComponent(new CubeAccelComponent(*this))
+  , _cubeCommsComponent(new CubeCommsComponent(*this))
   , _gyroDriftDetector(std::make_unique<RobotGyroDriftDetector>(*this))
   , _dockingComponent(new DockingComponent(*this))
   , _carryingComponent(new CarryingComponent(*this))
@@ -205,9 +206,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _moodManager(new MoodManager(this))
   , _inventoryComponent(new InventoryComponent(*this))
   , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
-  , _blockFilter(new BlockFilter(this, context->GetExternalInterface()))
   , _tapFilterComponent(new BlockTapFilterComponent(*this))
-  , _lastDisconnectedCheckTime(0)
   , _robotToEngineImplMessaging(new RobotToEngineImplMessaging(this))
   , _robotIdleTimeoutComponent(new RobotIdleTimeoutComponent(*this))
   , _micDirectionHistory(new MicDirectionHistory())
@@ -298,7 +297,6 @@ Robot::~Robot()
   Util::SafeDelete(_moodManager);
   Util::SafeDelete(_progressionUnlockComponent);
   Util::SafeDelete(_tapFilterComponent);
-  Util::SafeDelete(_blockFilter);
   
   // Destroy these components (which may hold poses parented to _pose) *before* _pose is destroyed (despite
   // order of declaration)
@@ -1180,7 +1178,8 @@ void Robot::SetPhysicalRobot(bool isPhysical)
   // (Note that when using Unity+Webots, that message is not sent.)
   if (isPhysical) {
     if (_context->GetDataPlatform() != nullptr) {
-      _blockFilter->Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"));
+      // TODO: init cube comms connection stuff?
+      //_blockFilter->Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"));
     }
   }
       
@@ -1263,37 +1262,6 @@ Vision::Camera Robot::GetHistoricalCamera(const HistRobotState& histState, TimeS
   camera.SetPose(GetHistoricalCameraPose(histState, t));
       
   return camera;
-}
-   
-    
-// Flashes a pattern on an active block
-void Robot::ActiveObjectLightTest(const ObjectID& objectID) {
-  /*
-    static int p=0;
-    static int currFrame = 0;
-    const u32 onColor = 0x00ff00;
-    const u32 offColor = 0x0;
-    const u8 NUM_FRAMES = 4;
-    const u32 LIGHT_PATTERN[NUM_FRAMES][NUM_BLOCK_LEDS] =
-    {
-    {onColor, offColor, offColor, offColor, onColor, offColor, offColor, offColor}
-    ,{offColor, onColor, offColor, offColor, offColor, onColor, offColor, offColor}
-    ,{offColor, offColor, offColor, onColor, offColor, offColor, offColor, onColor}
-    ,{offColor, offColor, onColor, offColor, offColor, offColor, onColor, offColor}
-    };
-      
-    if (p++ == 10) {
-        
-    SendSetBlockLights(blockID, LIGHT_PATTERN[currFrame]);
-    //SendFlashBlockIDs();
-        
-    if (++currFrame == NUM_FRAMES) {
-    currFrame = 0;
-    }
-        
-    p = 0;
-    }
-  */
 }
     
 
@@ -1402,10 +1370,9 @@ Result Robot::Update()
   _tapFilterComponent->Update();
 
   std::string currentActivityName;
-  std::string behaviorDebugStr;
   
   // Update AI component before behaviors so that behaviors can use the latest information
-  _aiComponent->Update(*this, currentActivityName, behaviorDebugStr);
+  _aiComponent->Update(*this, currentActivityName, _behaviorDebugStr);
 
   //////// Update Robot's State Machine /////////////
   const RobotID_t robotID = GetID();
@@ -1420,42 +1387,9 @@ Result Robot::Update()
 
   /////////// Update path planning / following ////////////
   _pathComponent->Update();
-      
-  /////////// Update discovered active objects //////
-  for (auto iter = _discoveredObjects.begin(); iter != _discoveredObjects.end();) {
-    // Note not incrementing the iterator here
-    const auto& obj = *iter;
-    const int32_t maxTimestamp =
-      10 * Util::numeric_cast<int32_t>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS);
-    const int32_t timeStampDiff =
-      Util::numeric_cast<int32_t>(GetLastMsgTimestamp()) -
-      Util::numeric_cast<int32_t>(obj.second.lastDiscoveredTimeStamp);
-    if (timeStampDiff > maxTimestamp) {
-      if (_enableDiscoveredObjectsBroadcasting) {
-        PRINT_NAMED_INFO("Robot.Update.ObjectUndiscovered",
-                         "FactoryID 0x%x (type: %s, lastObservedTime %d, currTime %d)",
-                         obj.first, EnumToString(obj.second.objectType),
-                         obj.second.lastDiscoveredTimeStamp, GetLastMsgTimestamp());
-
-        // Send unavailable message for this object
-        ExternalInterface::ObjectUnavailable m(obj.first);
-        Broadcast(ExternalInterface::MessageEngineToGame(std::move(m)));
-      }
-      iter = _discoveredObjects.erase(iter);
-    }
-    else {
-      ++iter;
-    }
-  }
-
-  // Update the block filter before trying to connect to objects
-  _blockFilter->Update();
-
-  // Update object connectivity
-  CheckDisconnectedObjects();
   
-  // Connect to objects requested via ConnectToObjects
-  ConnectToRequestedObjects();
+  /////////// Update cube comms ////////////
+  _cubeCommsComponent->Update();
   
   // update and broadcast map
   _mapComponent->Update();
@@ -1513,24 +1447,26 @@ Result Robot::Update()
   // Sending debug string to game and viz
   char buffer [128];
 
-  const float imageProcRate = 1000.0f / _visionComponent->GetProcessingPeriod_ms();
-      
+  const float updateRatePerSec = 1.0f / (currentTime - _prevCurrentTime_sec);
+  _prevCurrentTime_sec = currentTime;
+
   // So we can have an arbitrary number of data here that is likely to change want just hash it all
   // together if anything changes without spamming
   snprintf(buffer, sizeof(buffer),
-           "%c%c%c%c%c %2dHz %s %s ",
+           "%c%c%c%c%c%c %2dHz %s",
            GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
            GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
            GetMoveComponent().IsMoving() ? 'B' : ' ',
            GetCarryingComponent().IsCarryingObject() ? 'C' : ' ',
            IsOnChargerPlatform() ? 'P' : ' ',
+           _nvStorageComponent->HasPendingRequests() ? 'R' : ' ',
            // SimpleMoodTypeToString(GetMoodManager().GetSimpleMood()),
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
-           (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
-           currentActivityName.c_str(),
-           behaviorDebugStr.c_str());
+           (u8)MIN(((u8)updateRatePerSec), std::numeric_limits<u8>::max()),
+           //currentActivityName.c_str(),
+           _behaviorDebugStr.c_str());
       
   std::hash<std::string> hasher;
   size_t curr_hash = hasher(std::string(buffer));
@@ -1540,10 +1476,6 @@ Result Robot::Update()
     _lastDebugStringHash = curr_hash;
   }
   
-#if ANKI_DEV_CHEATS
-  Broadcast( ExternalInterface::MessageEngineToGame(ExternalInterface::DebugPerformanceTick(
-                                                    "Vision",_visionComponent->GetProcessingPeriod_ms())));
-#endif
   _cubeLightComponent->Update();
   _bodyLightComponent->Update();
   
@@ -2721,264 +2653,7 @@ bool Robot::UpdateCurrPoseFromHistory()
       
   return poseUpdated;
 }
-  
-Result Robot::ConnectToObjects(const FactoryIDArray& factory_ids)
-{
-  DEV_ASSERT_MSG(factory_ids.size() == _objectsToConnectTo.size(),
-                 "Robot.ConnectToObjects.InvalidArrayLength",
-                 "%zu slots requested. Max %zu",
-                 factory_ids.size(), _objectsToConnectTo.size());
-      
-  std::stringstream strs;
-  for (auto it = factory_ids.begin(); it != factory_ids.end(); ++it)
-  {
-    strs << "0x" << std::hex << *it << ", ";
-  }
-  std::stringstream strs2;
-  for (auto it = _objectsToConnectTo.begin(); it != _objectsToConnectTo.end(); ++it)
-  {
-    strs2 << "0x" << std::hex << it->factoryID << ", pending = " << it->pending << ", ";
-  }
-  PRINT_CH_INFO("BlockPool", "Robot.ConnectToObjects",
-                "Before processing factory_ids = %s. _objectsToConnectTo = %s",
-                strs.str().c_str(), strs2.str().c_str());
-      
-  // Save the new list so we process it during the update loop. Note that we compare
-  // against the list of current connected objects but we store it in the list of
-  // objects to connect to.
-  for (int i = 0; i < _connectedObjects.size(); ++i)
-  {
-    if (factory_ids[i] != _connectedObjects[i].factoryID) {
-      _objectsToConnectTo[i].factoryID = factory_ids[i];
-      _objectsToConnectTo[i].pending = true;
-    }
-  }
-      
-  return RESULT_OK;
-}
-  
-bool Robot::IsConnectedToObject(FactoryID factoryID) const
-{
-  for (const ActiveObjectInfo& objectInfo : _connectedObjects)
-  {
-    if (objectInfo.factoryID == factoryID)
-    {
-      return true;
-    }
-  }
-  
-  return false;
-}
-  
-void Robot::HandleConnectedToObject(uint32_t activeID, FactoryID factoryID, ObjectType objectType)
-{
-  ActiveObjectInfo& objectInfo = _connectedObjects[activeID];
-  
-  if (_connectedObjects[activeID].factoryID != factoryID)
-  {
-    PRINT_CH_INFO("BlockPool",
-                  "Robot.HandleConnectedToObject",
-                  "Ignoring connection to object 0x%x of type %s with active ID %d because expecting connection to 0x%x of type %s",
-                  factoryID,
-                  EnumToString(objectType),
-                  activeID,
-                  objectInfo.factoryID,
-                  EnumToString(objectInfo.objectType));
-    return;
-  }
-  
-  if ((objectInfo.connectionState != ActiveObjectInfo::ConnectionState::PendingConnection) &&
-      (objectInfo.connectionState != ActiveObjectInfo::ConnectionState::Disconnected))
-  {
-    PRINT_NAMED_ERROR("Robot.HandleConnectedToObject.InvalidState",
-                      "Invalid state %d when connected to object 0x%x with active ID %d",
-                      (int)objectInfo.connectionState, factoryID, activeID);
-  }
 
-  PRINT_CH_INFO("BlockPool", "Robot.HandleConnectToObject",
-                "Connected to active Id %d with factory Id 0x%x of type %s. Connection State = %d",
-                activeID, factoryID, EnumToString(objectType), objectInfo.connectionState);
-  
-  // Remove from the list of discovered objects since we are connecting to it
-  RemoveDiscoveredObjects(factoryID);
-  
-  _connectedObjects[activeID].connectionState = ActiveObjectInfo::ConnectionState::Connected;
-  _connectedObjects[activeID].lastDisconnectionTime = 0.0f;
-}
-
-void Robot::HandleDisconnectedFromObject(uint32_t activeID, FactoryID factoryID, ObjectType objectType)
-{
-  ActiveObjectInfo& objectInfo = _connectedObjects[activeID];
-
-  if (objectInfo.factoryID != factoryID)
-  {
-    PRINT_CH_INFO("BlockPool",
-                  "Robot.HandleDisconnectedFromObject",
-                  "Ignoring disconnection from object 0x%x of type %s with active ID %d because expecting connection to 0x%x of type %s",
-                  factoryID,
-                  EnumToString(objectType),
-                  activeID,
-                  objectInfo.factoryID,
-                  EnumToString(objectInfo.objectType));
-    return;
-  }
-
-  if ((objectInfo.connectionState != ActiveObjectInfo::ConnectionState::PendingDisconnection) &&
-      (objectInfo.connectionState != ActiveObjectInfo::ConnectionState::Connected))
-  {
-    PRINT_NAMED_ERROR("Robot.HandleDisconnectedFromObject.InvalidState",
-                      "Invalid state %d when disconnected from object 0x%x with active ID %d",
-                      (int)objectInfo.connectionState, factoryID, activeID);
-  }
-  
-  PRINT_CH_INFO("BlockPool", "Robot.HandleDisconnectedFromObject",
-                "Disconnected from active Id %d with factory Id 0x%x of type %s. Connection State = %d",
-                activeID, factoryID, EnumToString(objectType), (int)objectInfo.connectionState);
-  
-  if (objectInfo.connectionState == ActiveObjectInfo::ConnectionState::PendingDisconnection)
-  {
-    // If we wanted to disconnect from this object, clear all the data now that we have done it
-    objectInfo.Reset();
-  }
-  else
-  {
-    // We have disconnected without requesting it. Anotate that we are in that state
-    objectInfo.connectionState = ActiveObjectInfo::ConnectionState::Disconnected;
-    objectInfo.lastDisconnectionTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  }
-}
-
-void Robot::ConnectToRequestedObjects()
-{
-  // Check if there is any new petition to connect to a new block
-  auto it = std::find_if(_objectsToConnectTo.begin(), _objectsToConnectTo.end(), [](const ObjectToConnectToInfo& obj) {
-      return obj.pending;
-    });
-      
-  if (it == _objectsToConnectTo.end()) {
-    return;
-  }
-      
-//	std::stringstream strs;
-//	for (auto it = _objectsToConnectTo.begin(); it != _objectsToConnectTo.end(); ++it) {
-//		strs << "0x" << std::hex << it->factoryID << ", pending = " << it->pending << ", ";
-//	}
-//	std::stringstream strs2;
-//	for (auto it = _connectedObjects.begin(); it != _connectedObjects.end(); ++it) {
-//		strs2 << "0x" << std::hex << it->factoryID << ", ";
-//	}
-     
-  // PRINT_NAMED_INFO("Robot.ConnectToRequestedObjects.BeforeProcessing",
-//                "_objectsToConnectTo = %s. _connectedObjects = %s",
-//                strs.str().c_str(), strs2.str().c_str());
-
-  // Iterate over the connected objects and the new factory IDs to see what we need to send in the
-  // message for every slot.
-  DEV_ASSERT(_objectsToConnectTo.size() == _connectedObjects.size(),
-             "Robot.ConnectToRequestedObjects.InvalidArraySize");
-  
-  for (int i = 0; i < _objectsToConnectTo.size(); ++i) {
-        
-    ObjectToConnectToInfo& newObjectToConnectTo = _objectsToConnectTo[i];
-    ActiveObjectInfo& activeObjectInfo = _connectedObjects[i];
-        
-    // If there is nothing to do with this slot, continue
-    if (!newObjectToConnectTo.pending) {
-      continue;
-    }
-        
-    // If we have already connected to the object in the given slot, we don't have to do anything
-    if (newObjectToConnectTo.factoryID == activeObjectInfo.factoryID) {
-      newObjectToConnectTo.Reset();
-      continue;
-    }
-        
-    // If the new factory ID is 0 then we want to disconnect from the object
-    if (newObjectToConnectTo.factoryID == ActiveObject::InvalidFactoryID) {
-      PRINT_CH_INFO("BlockPool", "Robot.ConnectToRequestedObjects.Sending",
-                    "Sending message for slot %d with factory ID = %d",
-                    i, ActiveObject::InvalidFactoryID);
-      activeObjectInfo.connectionState = ActiveObjectInfo::ConnectionState::PendingDisconnection;
-      newObjectToConnectTo.Reset();
-      SendMessage(RobotInterface::EngineToRobot(SetPropSlot((FactoryID)ActiveObject::InvalidFactoryID, i)));
-      continue;
-    }
-        
-    // We are connecting to a new object. Check if the object is discovered yet
-    // If it is not, don't clear it from the list of requested objects in case
-    // we find it in the next execution of this loop
-    auto discoveredObjIt = _discoveredObjects.find(newObjectToConnectTo.factoryID);
-    if (discoveredObjIt == _discoveredObjects.end()) {
-      continue;
-    }
-        
-    for (const auto & connectedObj : _connectedObjects) {
-      if ((connectedObj.connectionState == ActiveObjectInfo::ConnectionState::Connected) && (connectedObj.objectType == discoveredObjIt->second.objectType)) {
-        PRINT_NAMED_WARNING("Robot.ConnectToRequestedObjects.SameTypeAlreadyConnected",
-                            "Object with factory ID 0x%x matches type (%s) of another connected object. "
-                            "Only one of each type may be connected.",
-                            newObjectToConnectTo.factoryID, EnumToString(connectedObj.objectType));
-
-        // If we can't connect to the new object we keep the one we have now
-        newObjectToConnectTo.Reset();
-        continue;
-      }
-    }
-        
-    // This is valid object to connect to.
-    PRINT_CH_INFO("BlockPool", "Robot.ConnectToRequestedObjects.Sending",
-                  "Sending message for slot %d with factory ID = 0x%x",
-                  i, newObjectToConnectTo.factoryID);
-    SendMessage(RobotInterface::EngineToRobot(SetPropSlot(newObjectToConnectTo.factoryID, i)));
-        
-    // We are done with this slot
-    activeObjectInfo = discoveredObjIt->second;
-    activeObjectInfo.connectionState = ActiveObjectInfo::ConnectionState::PendingConnection;
-    newObjectToConnectTo.Reset();
-  }
-      
-//   std::stringstream strs3;
-//   for (auto it = _objectsToConnectTo.begin(); it != _objectsToConnectTo.end(); ++it) {
-//     strs3 << "0x" << std::hex << it->factoryID << ", pending = " << it->pending << ", ";
-//   }
-//   std::stringstream strs4;
-//   for (auto it = _connectedObjects.begin(); it != _connectedObjects.end(); ++it) {
-//     strs4 << "0x" << std::hex << it->factoryID << ", ";
-//   }
-     
-  // PRINT_NAMED_INFO("Robot.ConnectToRequestedObjects.AfterProcessing",
-  //                  "_objectsToConnectTo = %s. _connectedObjects = %s", strs3.str().c_str(), strs4.str().c_str());
-
-  return;
-}
-  
-void Robot::CheckDisconnectedObjects()
-{
-  // Check for objects that have been disconnected long enough to consider them gone. Note the object has to be in
-  // the Disconnected state which is the state we get when the disconnection wasn't requested.
-  const float time = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if ((_lastDisconnectedCheckTime <= 0.0f) || (time >= (_lastDisconnectedCheckTime + kDisconnectedCheckDelay)))
-  {
-    for (int i = 0; i < _connectedObjects.size(); ++i)
-    {
-      ActiveObjectInfo& objectInfo = _connectedObjects[i];
-      if ((objectInfo.connectionState == ActiveObjectInfo::ConnectionState::Disconnected) && (time > (objectInfo.lastDisconnectionTime + kDisconnectedDelay)))
-      {
-        PRINT_CH_INFO("BlockPool", "Robot.CheckDisconnectedObjects",
-                      "Resetting slot %d with factory ID 0x%x, connection state %d. Object disconnected at %f, current time is %f with max delay %f seconds",
-                      i, objectInfo.factoryID, objectInfo.connectionState, objectInfo.lastDisconnectionTime, time, kDisconnectedDelay);
-        objectInfo.Reset();
-      }
-    }
-    
-    _lastDisconnectedCheckTime = time;
-  }
-}
-
-void Robot::BroadcastAvailableObjects(bool enable)
-{
-  _enableDiscoveredObjectsBroadcasting = enable;
-}
 
 Result Robot::AbortAll()
 {
@@ -3184,45 +2859,6 @@ RobotInterface::MessageHandler* Robot::GetRobotMessageHandler()
         
   return _context->GetRobotManager()->GetMsgHandler();
 }
-    
-ObjectType Robot::GetDiscoveredObjectType(FactoryID id)
-{
-  auto it = _discoveredObjects.find(id);
-  if (it != _discoveredObjects.end()) {
-    return it->second.objectType;
-  }
-  return ObjectType::UnknownObject;
-}
-  
-FactoryID Robot::GetClosestDiscoveredObjectsOfType(ObjectType type, uint8_t maxRSSI) const
-{
-  FactoryID closest = ActiveObject::InvalidFactoryID;
-  uint8_t closestRSSI = maxRSSI;
-
-//  std::stringstream str;
-//  str << "Search for objects of type = " << EnumToString(type) << ":" << std::endl;
-//  std::for_each(_discoveredObjects.cbegin(), _discoveredObjects.cend(), [&](const std::pair<FactoryID, ActiveObjectInfo>& pair)
-//  {
-//    const ActiveObjectInfo& object = pair.second;
-//    if (object.objectType == type)
-//    {
-//      str << "Factory ID = 0x" << std::hex << object.factoryID << ", RSSI = " << std::dec << (int)object.rssi << std::endl;
-//    }
-//  });
-//  PRINT_CH_INFO("BlockPool", "Robot.GetClosestDiscoveredObjectsOfType", "Total # of objects = %zu\n%s", _discoveredObjects.size(), str.str().c_str());
-  
-  std::for_each(_discoveredObjects.cbegin(), _discoveredObjects.cend(), [&](const auto& pair)
-  {
-    const ActiveObjectInfo& object = pair.second;
-    if ((object.objectType == type) && (object.rssi <= closestRSSI))
-    {
-      closest = object.factoryID;
-      closestRSSI = object.rssi;
-    }
-  });
-  
-  return closest;
-}
  
   
 Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const
@@ -3344,21 +2980,6 @@ void Robot::SetBodyColor(const s32 color)
   _bodyColor = bodyColor;
 }
 
-void Robot::ObjectToConnectToInfo::Reset()
-{
-  factoryID = ActiveObject::InvalidFactoryID;
-  pending = false;
-}
-
-void Robot::ActiveObjectInfo::Reset()
-{
-  factoryID = ActiveObject::InvalidFactoryID;
-  objectType = ObjectType::InvalidObject;
-  connectionState = ConnectionState::Invalid;
-  rssi = 0;
-  lastDiscoveredTimeStamp = 0;
-  lastDisconnectionTime = 0.0f;
-}
 
 } // namespace Cozmo
 } // namespace Anki
