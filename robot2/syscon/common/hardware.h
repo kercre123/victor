@@ -61,13 +61,12 @@ namespace LTENC GPIO_DEFINE(C, 15);
 // Power
 namespace POWER_EN GPIO_DEFINE(A, 6);
 namespace POWER_B GPIO_DEFINE(A, 6);
-namespace CHG_EN GPIO_DEFINE(A, 15);
-namespace CHG_HC GPIO_DEFINE(B, 12);
+namespace CHG_PWR GPIO_DEFINE(A, 15);
 namespace nVDDs_EN GPIO_DEFINE(C, 13);
 namespace VEXT_SENSE GPIO_DEFINE(A, 2);
 namespace VBAT_SENSE GPIO_DEFINE(A, 4);
-namespace BAT_EN GPIO_DEFINE(A, 3);
-namespace nVEXT_EN GPIO_DEFINE(B, 9);
+namespace MAIN_EN GPIO_DEFINE(A, 3);
+namespace CHG_EN GPIO_DEFINE(B, 9);
 
 namespace CHRG1 GPIO_DEFINE(F, 1);
 namespace CHRG2 GPIO_DEFINE(F, 0);
