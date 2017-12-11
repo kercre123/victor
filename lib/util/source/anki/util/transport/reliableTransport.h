@@ -29,7 +29,9 @@
 // For logging special state packets from robot that bypass reliableTransport.
 // EnableWifiTelemtry() must be called in addition to LOG_WIFI_DBG_STATES being
 // defined in order for this to work.
-#define LOG_WIFI_DBG_STATES
+#if !defined(SHIPPING)
+  #define LOG_WIFI_DBG_STATES
+#endif
 
 #ifdef LOG_WIFI_DBG_STATES
 #include <array>

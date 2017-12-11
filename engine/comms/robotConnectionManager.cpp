@@ -319,7 +319,12 @@ void RobotConnectionManager::SetReliableTransportRunMode(bool isSync)
 
 void RobotConnectionManager::EnableWifiTelemetry()
 {
+#ifdef LOG_WIFI_DBG_STATES
   _reliableTransport->EnableWifiTelemetry();
+#else
+  PRINT_NAMED_WARNING("RobotConnectionManager.EnableWifiTelemetry",
+                      "Wifi telemetry not enabled for this build; ignoring enable request");
+#endif
 }
   
 } // end namespace Cozmo

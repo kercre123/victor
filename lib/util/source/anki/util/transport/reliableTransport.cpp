@@ -146,11 +146,11 @@ ReliableTransport::ReliableTransport(IUnreliableTransport* unreliableTransport, 
   _unreliable->SetDataReceiver(this);
   
 #ifdef LOG_WIFI_DBG_STATES
-  auto now = std::chrono::system_clock::now();
-  auto now_time = std::chrono::system_clock::to_time_t(now);
-  auto tm = *std::localtime(&now_time);
+  const auto now = std::chrono::system_clock::now();
+  const auto now_time = std::chrono::system_clock::to_time_t(now);
+  const auto tm = *std::localtime(&now_time);
 
-  std::string wifiLogDir = baseLogDir + "/wifiLogs";
+  const std::string wifiLogDir = baseLogDir + "/wifiLogs";
   Util::FileUtils::CreateDirectory(wifiLogDir);
   std::ostringstream sstr;
   sstr << wifiLogDir << "/wifiDebugLog_" << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S") << ".log";
@@ -639,10 +639,11 @@ void ReliableTransport::LogWifiDebugPacket(const uint8_t* buffer, unsigned int s
   
 void ReliableTransport::ReceiveData(const uint8_t* buffer, unsigned int size, const TransportAddress& sourceAddress)
 {
-  
+
 #ifdef LOG_WIFI_DBG_STATES
-  // Check for wifi telemetry packet header
-  if (_wifiTelemetryEnabled && size >= sizeof(k_WifiTelemetryPacketHeaderPrefix)) {
+  // Check for wifi telemetry packet header; We do this even when wifi telemetry is
+  // disabled because it still could be enabled in the robot
+  if (size >= sizeof(k_WifiTelemetryPacketHeaderPrefix)) {
     bool isWifiTelemetryPacket = true;
     for (int i=0; i < sizeof(k_WifiTelemetryPacketHeaderPrefix); ++i) {
       if (buffer[i] != k_WifiTelemetryPacketHeaderPrefix[i]) {
@@ -650,9 +651,22 @@ void ReliableTransport::ReceiveData(const uint8_t* buffer, unsigned int size, co
         break;
       }
     }
-    
+
     if (isWifiTelemetryPacket) {
-      LogWifiDebugPacket(buffer + sizeof(k_WifiTelemetryPacketHeaderPrefix), size - sizeof(k_WifiTelemetryPacketHeaderPrefix));
+      if (_wifiTelemetryEnabled) {
+        LogWifiDebugPacket(buffer + sizeof(k_WifiTelemetryPacketHeaderPrefix), size - sizeof(k_WifiTelemetryPacketHeaderPrefix));
+      }
+      else {
+        // We've received a wifi telemetry packet from the robot, but engine has not enabled
+        // wifi telemetry; just drop the packet here so we don't flood the log with error
+        // messages below
+        static bool loggedOnce = false;
+        if (!loggedOnce) {
+          loggedOnce = true;
+          PRINT_CH_INFO("Network", "ReliableTransport.ReceiveData",
+                        "Received wifi telemetry packet from robot but wifi telemetry disabled in engine");
+        }
+      }
       return;
     }
   }

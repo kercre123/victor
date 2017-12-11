@@ -118,8 +118,8 @@ void MessageHandler::ProcessMessages()
       RobotInterface::RobotToEngine message;
       const size_t unpackSize = message.Unpack(nextData.data(), dataSize);
       if (unpackSize != nextData.size()) {
-        PRINT_NAMED_ERROR("RobotMessageHandler.MessageUnpack", "Message unpack error, tag %s expecting %zu but have %zu",
-                          RobotToEngineTagToString(msgType), unpackSize, dataSize);
+        PRINT_NAMED_ERROR("RobotMessageHandler.MessageUnpack", "Message unpack error, tag %s (0x%02x) expecting %zu but have %zu",
+                          RobotToEngineTagToString(msgType), (int)msgType, unpackSize, dataSize);
         continue;
       }
       
