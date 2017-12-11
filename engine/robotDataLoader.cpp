@@ -36,6 +36,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
+#include "util/threading/threadPriority.h"
 #include "util/time/universalTime.h"
 #include <json/json.h>
 #include <string>
@@ -80,6 +81,8 @@ void RobotDataLoader::LoadNonConfigData()
     return;
   }
 
+  Anki::Util::SetThreadName(pthread_self(), "RbtDataLoader");
+  
   // Uncomment this line to enable the profiling of loading data
   //ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadNonConfigData");
 

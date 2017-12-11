@@ -26,6 +26,7 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "util/threading/threadPriority.h"
 
 #include "clad/robotInterface/messageRobotToEngine_sendToEngine_helper.h"
 
@@ -410,6 +411,7 @@ void MicDataProcessor::ResampleAudioChunk(const AudioUtil::AudioSample* audioChu
 
 void MicDataProcessor::ProcessLoop()
 {
+  Anki::Util::SetThreadName(pthread_self(), "MicDataProc");
   static constexpr uint32_t expectedAudioDropsPerAnimLoop = 7;
   static constexpr uint32_t maxProcessingTimePerDrop_ms = 5;
   static constexpr uint32_t maxProcTime_ms = expectedAudioDropsPerAnimLoop * maxProcessingTimePerDrop_ms;
