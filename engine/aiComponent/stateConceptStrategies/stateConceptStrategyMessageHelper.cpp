@@ -36,8 +36,12 @@ StateConceptStrategyMessageHelper::~StateConceptStrategyMessageHelper()
 
 void StateConceptStrategyMessageHelper::SubscribeToTags(std::set<ExternalInterface::MessageEngineToGameTag>&& tags)
 {
-  DEV_ASSERT(_bei.GetRobotInfo().HasExternalInterface(),
-             "StateConceptStrategyMessageHelper.SubscribeToTags.NoRobotExernalInterface");
+  if( ! _bei.GetRobotInfo().HasExternalInterface() ) {
+    PRINT_NAMED_WARNING("StateConceptStrategyMessageHelper.SubscribeToTags.NoRobotExternalInterface",
+                        "Can't subscribe to messages because robot has no external interface");
+    return;
+  }
+
   auto* rei = _bei.GetRobotInfo().GetExternalInterface();
 
   auto handlerCallback = [this](const EngineToGameEvent& event) {
@@ -51,8 +55,12 @@ void StateConceptStrategyMessageHelper::SubscribeToTags(std::set<ExternalInterfa
 
 void StateConceptStrategyMessageHelper::SubscribeToTags(std::set<ExternalInterface::MessageGameToEngineTag>&& tags)
 {
-  DEV_ASSERT(_bei.GetRobotInfo().HasExternalInterface(),
-             "StateConceptStrategyMessageHelper.SubscribeToTags.NoRobotExernalInterface");
+  if( ! _bei.GetRobotInfo().HasExternalInterface() ) {
+    PRINT_NAMED_WARNING("StateConceptStrategyMessageHelper.SubscribeToTags.NoRobotExternalInterface",
+                        "Can't subscribe to messages because robot has no external interface");
+    return;
+  }
+
   auto* rei = _bei.GetRobotInfo().GetExternalInterface();
 
   auto handlerCallback = [this](const GameToEngineEvent& event) {
