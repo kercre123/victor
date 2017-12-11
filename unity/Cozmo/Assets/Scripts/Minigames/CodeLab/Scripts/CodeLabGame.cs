@@ -310,7 +310,7 @@ namespace CodeLab {
 
 #if ENABLE_TEST_PROJECTS
       if (DataPersistenceManager.Instance.Data.DebugPrefs.LoadTestCodeLabProjects) {
-        var testProjects = this.LoadSampleProjects("test-projects.json");
+        var testProjects = this.LoadSampleProjects("test-projects.json", true);
         _CodeLabSampleProjects.AddRange(testProjects);
       }
 #endif
@@ -321,7 +321,7 @@ namespace CodeLab {
     }
 
     // Return sample projects as list.
-    private List<CodeLabSampleProject> LoadSampleProjects(string projectFile) {
+    private List<CodeLabSampleProject> LoadSampleProjects(string projectFile, bool isTestProject = false) {
       string scratchFolder = "/Scratch/";
 #if UNITY_EDITOR || UNITY_IOS
       string streamingAssetsPath = Application.streamingAssetsPath + scratchFolder;
@@ -334,6 +334,20 @@ namespace CodeLab {
       string json = File.ReadAllText(path);
 
       List<CodeLabSampleProject> codeLabSampleProjects = JsonConvert.DeserializeObject<List<CodeLabSampleProject>>(json);
+
+      for (int i = codeLabSampleProjects.Count - 1; i >= 0; i--) {
+        var project = codeLabSampleProjects[i];
+
+        if (String.IsNullOrEmpty(project.DASProjectName)) {
+          if (isTestProject) {
+            // Just use the project name for test projects
+            project.DASProjectName = project.ProjectName;
+          }
+          else {
+            DAS.Error("CodeLab.SampleProjectMissingDasProjectName", "ProjectName=" + project.ProjectName + ", UUID=" + project.ProjectUUID);
+          }
+        }
+      }
       return codeLabSampleProjects;
     }
 
@@ -364,10 +378,15 @@ namespace CodeLab {
 #else
       bool filterProjects = !DataPersistenceManager.Instance.Data.DebugPrefs.ShowAllCodeLabFeaturedContent;
 #endif
-      if (filterProjects) {
-        for (int i = codeLabFeaturedProjects.Count - 1; i >= 0; i--) {
-          var project = codeLabFeaturedProjects[i];
 
+      for (int i = codeLabFeaturedProjects.Count - 1; i >= 0; i--) {
+        var project = codeLabFeaturedProjects[i];
+
+        if (String.IsNullOrEmpty(project.DASProjectName)) {
+          DAS.Error("CodeLab.FeaturedProjectMissingDasProjectName", "ProjectName=" + project.ProjectName + ", UUID=" + project.ProjectUUID);
+        }
+
+        if (filterProjects) {
           // If end date exists and today is after the end date, remove project from list
           if (project.EndDate != null) {
             Date endDate = SimpleDate.DateFromSimpleDate(project.EndDate);
