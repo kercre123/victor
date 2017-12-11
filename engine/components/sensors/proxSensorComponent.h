@@ -46,9 +46,14 @@ public:
   // Outputs true if any part of the lift falls within the sensor's field of view
   Result IsLiftInFOV(bool& isInFOV) const;
   
+  void ActivateTheremin(const bool b=true);
+  
 private:
 
   void UpdateNavMap();
+  
+  void UpdateTheremin();
+  _thereminActive = false;
   
   ProxSensorData _latestData;
   

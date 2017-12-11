@@ -12,6 +12,7 @@
 
 #include "engine/components/sensors/proxSensorComponent.h"
 
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/robot.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
@@ -44,6 +45,8 @@ void ProxSensorComponent::UpdateInternal(const RobotState& msg)
 {
   _lastMsgTimestamp = msg.timestamp;
   _latestData = msg.proxData;
+  
+  UpdateTheremin();
   
   UpdateNavMap();
 }
@@ -204,5 +207,33 @@ void ProxSensorComponent::UpdateNavMap()
 }
 
 
+void ProxSensorComponent::ActivateTheremin(const bool enable)
+{
+  _thereminActive = enable;
+}
+
+
+void ProxSensorComponent::UpdateTheremin()
+{
+  if (!_thereminActive) {
+    return;
+  }
+  
+  float pitchVal = 0.f;
+  float volumeVal = 0.f;
+  
+  // Post pitch parameter
+  _robot.GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Energy,
+                                         pitchVal,
+                                         AudioMetaData::GameObjectType::Cozmo_OnDevice);
+  
+  // Post volume parameter
+  _robot.GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Energy,
+                                         pitchVal,
+                                         AudioMetaData::GameObjectType::Cozmo_OnDevice);
+  
+}
+
+  
 } // Cozmo namespace
 } // Anki namespace
