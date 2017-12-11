@@ -453,7 +453,7 @@ private:
 
   // only used if we aren't using the BSM
   u32 _lastActionTag = 0;
-  std::vector<IStateConceptStrategyPtr> _stateConceptStrategies;
+  std::vector<IStateConceptStrategyPtr> _wantsToBeActivatedStrategies;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const;

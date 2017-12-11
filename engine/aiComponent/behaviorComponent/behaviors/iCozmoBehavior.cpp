@@ -255,7 +255,7 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
   
   if(config.isMember(kWantsToRunStrategyConfigKey)){
-    _stateConceptStrategies.push_back(
+    _wantsToBeActivatedStrategies.push_back(
       StateConceptStrategyFactory::CreateStateConceptStrategy( config[kWantsToRunStrategyConfigKey] ) );
   }
 
@@ -286,7 +286,7 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
   assert(_behaviorExternalInterface);
   
   {
-    for( auto& strategy : _stateConceptStrategies ) {
+    for( auto& strategy : _wantsToBeActivatedStrategies ) {
       strategy->Init(behaviorExternalInterface);
     }
 
@@ -294,7 +294,7 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
       Json::Value config = StrategyCloudIntentPending::GenerateCloudIntentPendingConfig(_respondToCloudIntent);
       IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(config));
       strategy->Init(behaviorExternalInterface);
-      _stateConceptStrategies.push_back(strategy);
+      _wantsToBeActivatedStrategies.push_back(strategy);
     }
 
   }
@@ -478,7 +478,7 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
     infoProcessor.AddEnableRequest(_requiredProcess, GetIDStr().c_str());
   }
 
-  for( auto& strategy : _stateConceptStrategies ) {
+  for( auto& strategy : _wantsToBeActivatedStrategies ) {
     strategy->Reset(*_behaviorExternalInterface);
   }
 }
@@ -735,7 +735,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
     return false;
   }
   
-  for(auto& strategy: _stateConceptStrategies){
+  for(auto& strategy: _wantsToBeActivatedStrategies){
     if(!strategy->AreStateConditionsMet(behaviorExternalInterface)){
       return false;
     }
