@@ -251,6 +251,7 @@ namespace Vision {
     ImageRGB565& SetFromImage(const Image& image);
     ImageRGB565& SetFromImageRGB(const ImageRGB& imageRGB);
     ImageRGB565& SetFromImageRGB(const ImageRGB& imageRGB, const std::array<u8, 256>& gammaLUT);
+    ImageRGB565& SetFromImageRGB565(const ImageRGB565& imageRGB565);
     
     const u16* GetRawDataPointer() const {
       DEV_ASSERT(IsContinuous(), "ImageRGB565.GetRawDataPointer.NotContinuous");
@@ -263,6 +264,9 @@ namespace Vision {
       static_assert(sizeof(PixelRGB565) == sizeof(u16), "Unexpected size for PixelRGB565");
       return reinterpret_cast<u16*>(Array2d<PixelRGB565>::GetDataPointer());
     }
+
+    // Draw filled rectangle from top left <X,Y> to bottom right <X+width,Y+height>
+    void DrawFilledRect(const Rectangle<s32>& rect, const PixelRGB565& pixel);
   };
   
   // RGBA Color image (i.e. RGB + alpha channel), 32bpp

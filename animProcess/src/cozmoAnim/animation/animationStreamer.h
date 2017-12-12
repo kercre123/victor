@@ -166,7 +166,7 @@ namespace Cozmo {
     std::unique_ptr<TrackLayerComponent>  _trackLayerComponent;
     
     void BufferFaceToSend(const ProceduralFace& procFace);
-    void BufferFaceToSend(const Vision::ImageRGB565& image);
+    void BufferFaceToSend(Vision::ImageRGB565& image, bool allowOverlay = true);
     
     // Used to stream _just_ the stuff left in the various layers (all procedural stuff)
     Result StreamLayers();
