@@ -123,7 +123,8 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::objectPowerLevel,               &RobotToEngineImplMessaging::HandleObjectPowerLevel);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::timeProfStat,                              &RobotToEngineImplMessaging::HandleTimeProfileStat);
-  
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::backpackButton,                 &RobotToEngineImplMessaging::HandleBackpackButton);
+
   // lambda wrapper to call internal handler
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::state,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
@@ -1065,6 +1066,11 @@ void RobotToEngineImplMessaging::HandleTimeProfileStat(const AnkiEvent<RobotInte
   {
     PRINT_NAMED_INFO("Profile", "name:%s avg:%u max:%u", payload.profName.c_str(), payload.avg, payload.max);
   }
+}
+
+void RobotToEngineImplMessaging::HandleBackpackButton(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  PRINT_NAMED_INFO("HandleBackpackButton.ButtonEvent", "%d", message.GetData().Get_backpackButton().depressed);
 }
 
 } // end namespace Cozmo

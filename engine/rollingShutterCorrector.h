@@ -63,7 +63,7 @@ namespace Anki {
       
       private:
         std::deque<ImuData> _history;
-        static const int maxSizeOfHistory = 40;
+        static const int maxSizeOfHistory = 80;
     };
     
     class RollingShutterCorrector

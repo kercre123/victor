@@ -141,7 +141,7 @@ Result AIComponent::Update(Robot& robot, std::string& currentActivityName,
   _freeplayDataTracker->Update();
   
   CheckForSuddenObstacle(robot);
-   
+
   return RESULT_OK;
 }
 

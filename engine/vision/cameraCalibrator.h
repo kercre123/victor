@@ -24,6 +24,8 @@
 
 #include "engine/debugImageList.h"
 
+#include <set>
+
 namespace Anki {
 namespace Cozmo {
  
@@ -92,8 +94,10 @@ private:
   
   // Populates markersTo3dCoords with the 3d world coordinates of each corner of each marker on
   // the respective target
-  void GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords);
-  void GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords);
+  void GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords,
+                                             std::set<Vision::MarkerType>& markersNeededToBeSeen);
+  void GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords,
+                                                   std::set<Vision::MarkerType>& markersNeededToBeSeen);
 
   VisionSystem& _visionSystem;
 

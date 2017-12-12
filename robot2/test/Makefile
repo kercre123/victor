@@ -62,9 +62,14 @@ test: app
 %.o: %.c $(DEPS)
 	$(CC)  -I../spine -c -o $@ $< $(CFLAGS)
 
+spine_loop: ../hal/spine/spine.c spine_loop.c
+	echo $(PLATFORMj)
+	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS) -g -O2 -I../ -I../hal/spine -I../syscon ../hal/spine/spine.c ../hal/spine/spine_crc.c -o spine_loop spine_loop.c
+	adb push ./spine_loop /data/local/tmp
+
 
 stupid:
-	echo $(PLATFORM)
+	echo $(PLATFORMj)
 #	$(CC) -v $(DEFINES) $(LOCAL_LDLIBS) -gcc-toolchain -L../spine -lspine stupid_hal.c
 	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon ../hal/spine/spine_hal.c ../hal/spine/spine_crc.c stupid_hal.c 
 	adb push ./a.out /data/local/tmp

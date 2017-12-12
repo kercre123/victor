@@ -335,8 +335,8 @@ namespace Anki {
 
       void Reset()
       {
-        rot_ = 0;
-        rotSpeed_ = 0;
+        // rot_ = 0;
+        // rotSpeed_ = 0;
         pitch_ = 0;
         imu_data_.Reset();
         
@@ -565,9 +565,9 @@ namespace Anki {
             
             for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
               if (cliffValsWhileNotMoving_[i] == 0) {
-                cliffValsWhileNotMoving_[i] = ProxSensors::GetRawCliffValue(i);
+                cliffValsWhileNotMoving_[i] = ProxSensors::GetCliffValue(i);
               } else {
-                const s16 absCliffDelta = ABS(cliffValsWhileNotMoving_[i] - ProxSensors::GetRawCliffValue(i));
+                const s16 absCliffDelta = ABS(cliffValsWhileNotMoving_[i] - ProxSensors::GetCliffValue(i));
                 maxCliffDelta = MAX(maxCliffDelta, absCliffDelta);
               }
             }
@@ -770,17 +770,18 @@ namespace Anki {
         // Gyro zero-rate bias changes with IMU temperature, so a more aggressive gyro bias filter coefficient
         // is required for times when IMU temperature is changing 'rapidly'. If IMU temperature has changed
         // a lot in the past x seconds, apply a more aggressive gyro bias filter coef.
-        const u32 imuTempReadingRate_ms = 10*1000;
+        const u32 imuTempReadingRate_ms = 1*1000;
         const f32 temperatureDiffThresh_degC = 0.5f;
-
-        if (HAL::GetTimeStamp() > timeOfLastImuTempSample_ms_ + imuTempReadingRate_ms) {
+        const TimeStamp_t curTime = HAL::GetTimeStamp();
+        
+        if (curTime > timeOfLastImuTempSample_ms_ + imuTempReadingRate_ms && HeadController::IsCalibrated()) {
           const bool temperatureChanging = fabsf(lastImuTempSample_degC_ - imu_data_.temperature_degC) > temperatureDiffThresh_degC;
           gyroBiasCoeff_ = temperatureChanging ?
             GYRO_BIAS_FILT_COEFF_TEMP_CHANGING :
             GYRO_BIAS_FILT_COEFF_NORMAL;
           
           lastImuTempSample_degC_ = imu_data_.temperature_degC;
-          timeOfLastImuTempSample_ms_ = HAL::GetTimeStamp();
+          timeOfLastImuTempSample_ms_ = curTime;
           
           // Also send an IMUTemperature message to engine
           RobotInterface::IMUTemperature m;
@@ -962,6 +963,14 @@ namespace Anki {
         
         DetectPoke();
         DetectFalling();
+
+        // Send ImageImuData to engine
+        ImageImuData imageImuData;
+        imageImuData.systemTimestamp_ms = curTime;
+        imageImuData.rateX = gyro_robot_frame_filt[0];
+        imageImuData.rateY = gyro_robot_frame_filt[1];
+        imageImuData.rateZ = gyro_robot_frame_filt[2];
+        RobotInterface::SendMessage(imageImuData);
 
         // Recording IMU data for sending to basestation
         if (isRecording_) {

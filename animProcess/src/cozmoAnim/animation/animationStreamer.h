@@ -113,8 +113,15 @@ namespace Cozmo {
     TrackLayerComponent* GetTrackLayerComponent() { return _trackLayerComponent.get(); }
     const TrackLayerComponent* GetTrackLayerComponent() const { return _trackLayerComponent.get(); }
 
+    // Sets all tracks that should be locked
     void SetLockedTracks(u8 whichTracks)   { _lockedTracks = whichTracks; }
     bool IsTrackLocked(u8 trackFlag) const { return ((_lockedTracks & trackFlag) == trackFlag); }
+
+    // Lock or unlock an individual track
+    void LockTrack(AnimTrackFlag track) { _lockedTracks |= (u8)track; }
+    void UnlockTrack(AnimTrackFlag track) { _lockedTracks &= ~(u8)track; }
+
+    void DrawToFace(const Vision::ImageRGB& img, Array2d<u16>& img565_out);
     
   private:
     

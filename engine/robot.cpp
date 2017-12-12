@@ -160,7 +160,6 @@ const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
 });
 
 
-
 Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   : _poseOriginList(new PoseOriginList())
   , _context(context)
@@ -863,7 +862,6 @@ void UpdateFaceImageRGBExample(Robot& robot)
 
 Result Robot::UpdateFullRobotState(const RobotState& msg)
 {
-  
   ANKI_CPU_PROFILE("Robot::UpdateFullRobotState");
   
   Result lastResult = RESULT_OK;
@@ -883,7 +881,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Set flag indicating that robot state messages have been received
   _lastMsgTimestamp = msg.timestamp;
   _newStateMsgAvailable = true;
-      
+  
   // Update head angle
   SetHeadAngle(msg.headAngle);
       

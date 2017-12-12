@@ -24,8 +24,9 @@ target_link_libraries(cti_vision
 )
 
 target_compile_options(cti_vision
-  PRIVATE
-  -Os
+PRIVATE
+  $<$<CONFIG:Debug>:-O0>
+  $<$<CONFIG:Release>:-Os>
   ${SYMBOL_VISIBILITY_FLAGS}
 )
 

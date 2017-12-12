@@ -274,6 +274,13 @@ message EnableBraceWhenFalling
   bool enable
 }
 
+// Enable/disable charging
+// When charging is enabled all motors are disabled
+message EnableCharging
+{
+  bool enable
+}
+
 // ========== V2 Animation process messages ===========
 
 // TODO: Make animation files referencable by integer tag so we don't have to send a string.
@@ -312,6 +319,27 @@ message SetBackpackLights
 {
   LightState lights[3],
   uint_8 layer = 0      // 0 is BPL_USER
+}
+
+message StartRecordingMics
+{
+  uint_32 duration_ms,
+  bool    runFFT,
+  string  path
+}
+
+structure ColorRGB
+{
+  uint_8 r,
+  uint_8 g,
+  uint_8 b
+}
+
+message DrawTextOnScreen
+{
+  ColorRGB textColor,
+  ColorRGB bgColor,
+  string   text
 }
 
 // DisplayProceduralFace
@@ -389,6 +417,7 @@ union EngineToRobot
   // Init
   GetManufacturingInfo          getMfgInfo                  = 0x01,
   SyncTime                      syncTime                    = 0x02,
+  EnableCharging                enableCharging              = 0x03,
 
   // Debug / Test
   StartControllerTestMode       startControllerTestMode     = 0x0A,
@@ -463,10 +492,18 @@ union EngineToRobot
   LockAnimTracks                lockAnimTracks              = 0x51,
   RequestAvailableAnimations    requestAvailableAnimations  = 0x52,
   AbortAnimation                abortAnimation              = 0x53,
+<<<<<<< HEAD
   DisplayProceduralFace         displayProceduralFace       = 0x54,
   SetFaceHue                    setFaceHue                  = 0x55,
   DisplayFaceImageBinaryChunk   displayFaceImageBinaryChunk = 0x56,
   DisplayFaceImageRGBChunk      displayFaceImageRGBChunk    = 0x57,
+=======
+  StartRecordingMics            startRecordingMics          = 0x54,
+  DrawTextOnScreen              drawTextOnScreen            = 0x55,
+  DisplayProceduralFace         displayProceduralFace       = 0x56,
+  SetFaceHue                    setFaceHue                  = 0x57,
+
+>>>>>>> origin/al/playpen2
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

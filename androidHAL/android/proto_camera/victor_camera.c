@@ -35,7 +35,7 @@ mm_camera_stream_t * mm_app_add_raw_stream(mm_camera_test_obj_t *test_obj,
   
   stream->s_config.mem_vtbl.get_bufs = mm_app_stream_initbuf;
   stream->s_config.mem_vtbl.put_bufs = mm_app_stream_deinitbuf;
-  stream->s_config.mem_vtbl.invalidate_buf = mm_app_stream_invalidate_buf;
+  stream->s_config.mem_vtbl.invalidate_buf = NULL;
   stream->s_config.mem_vtbl.user_data = (void *)stream;
   stream->s_config.stream_cb = stream_cb;
   stream->s_config.userdata = userdata;
@@ -138,7 +138,7 @@ int mm_app_allocate_ion_memory(mm_camera_app_buf_t *buf, unsigned int ion_type)
   data = mmap(NULL,
               alloc.len,
               PROT_READ  | PROT_WRITE,
-              MAP_SHARED,
+              MAP_SHARED | MAP_NONBLOCK | MAP_POPULATE | MAP_UNINITIALIZED | MAP_LOCKED,
               ion_info_fd.fd,
               0);
   
@@ -208,10 +208,10 @@ int mm_app_cache_ops(mm_camera_app_meminfo_t *mem_info,
   custom_data.cmd = (unsigned int)cmd;
   custom_data.arg = (unsigned long)&cache_inv_data;
   
-  CDBG("addr = %p, fd = %d, handle = %lx length = %d, ION Fd = %d",
-       cache_inv_data.vaddr, cache_inv_data.fd,
-       (unsigned long)cache_inv_data.handle, cache_inv_data.length,
-       mem_info->main_ion_fd);
+  // CDBG("addr = %p, fd = %d, handle = %lx length = %d, ION Fd = %d",
+  //      cache_inv_data.vaddr, cache_inv_data.fd,
+  //      (unsigned long)cache_inv_data.handle, cache_inv_data.length,
+  //      mem_info->main_ion_fd);
   if(mem_info->main_ion_fd > 0) {
     if(ioctl(mem_info->main_ion_fd, ION_IOC_CUSTOM, &custom_data) < 0) {
       ALOGE("%s: Cache Invalidate failed\n", __func__);
@@ -679,92 +679,22 @@ int mm_app_stop_channel(mm_camera_test_obj_t *test_obj,
                                           channel->ch_id);
 }
 
-
-
-
 camera_cb  user_frame_callback = NULL;
 void camera_install_callback(camera_cb cb)
 {
   user_frame_callback = cb;
 }
 
-
 #define X 640
 #define Y 360
 #define X6 214
-#define MASK_10BIT 1023
-// A raw frame is 720x214 where each element is 64 bits and contains 6 color channels
-// (each color channel is 10bits)
-// The least significant bits contain the left-most color channel so the 4 most significant bits are unused
-// A raw frame is in a 2x2 bayer format, each 2x2 area will become one pixel in the output image
-//
-// R G R G ...
-// G B G B ...
-// R G R G ...
-// ...
-//
-// (0,0) is red
-static void downsample_frame(uint64_t in[Y*2][X6], uint8_t out[Y][X][3]) {
-  int x = 0, y = 0, i = 0;
-  for (y = 0; y < Y; y++)
-  {
-    for (x = 0; x < X6; x++)
-    {
-      // Grayscale downsampling
-//      g = (((p>>00) & 1023) + ((p>>10) & 1023) + ((q>>00) & 1023) + ((q>>10) & 1023)) >> DIM;
-//      out[y][x*3+0] = (g > 255) ? 255 : g;
-//      g = (((p>>20) & 1023) + ((p>>30) & 1023) + ((q>>20) & 1023) + ((q>>30) & 1023)) >> DIM;
-//      out[y][x*3+1] = (g > 255) ? 255 : g;
-//      g = (((p>>40) & 1023) + ((p>>50) & 1023) + ((q>>40) & 1023) + ((q>>50) & 1023)) >> DIM;
-//      out[y][x*3+2] = (g > 255) ? 255 : g;
-      
-      unsigned long long row1 = in[y*2][x], row2 = in[y*2+1][x];
-      int raw10bits;
-      
-      uint8_t* pixel0 = (uint8_t*)&(out[y][x*3+0]);
-      uint8_t* pixel1 = pixel0 + 3; // Pointer math: Add three to move forwards a pixel (3 uint8_ts)
-      uint8_t* pixel2 = pixel1 + 3;
-      
-      // Red
-      raw10bits = (((row1>>00) & MASK_10BIT));
-      pixel0[0] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      raw10bits = (((row1>>20) & MASK_10BIT));
-      pixel1[0] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      raw10bits = (((row1>>40) & MASK_10BIT));
-      pixel2[0] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      // Green (two green per 2x2 square so add and divide by two)
-      raw10bits = (((row1>>10) & MASK_10BIT) + ((row2>>00) & MASK_10BIT)) >> 1;
-      pixel0[1] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      raw10bits = (((row1>>30) & MASK_10BIT) + ((row2>>20) & MASK_10BIT)) >> 1;
-      pixel1[1] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      raw10bits = (((row1>>50) & MASK_10BIT) + ((row2>>40) & MASK_10BIT)) >> 1;
-      pixel2[1] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      // Blue
-      raw10bits = (((row2>>10) & MASK_10BIT));
-      pixel0[2] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      raw10bits = (((row2>>30) & MASK_10BIT));
-      pixel1[2] = (raw10bits > 255) ? 255 : raw10bits;
-      
-      raw10bits = (((row2>>50) & MASK_10BIT));
-      pixel2[2] = (raw10bits > 255) ? 255 : raw10bits;
-    }
-  }
-}
-
 
 #define BUFFER_SIZE 3
 // Should only need a buffer of three images, one for the image that is currently being
 // used by outside sources (engine) and then we alternate writing new images to the other two
 // This way there is always a complete image available that can be switched to after the current image
 // is done being processed
-static uint8_t raw_buffer[BUFFER_SIZE][Y+1][X][3];
+static uint64_t raw_buffer[BUFFER_SIZE][Y*2][X6];
 
 // Index that is currently being processed by the outside and we should not touch
 static uint8_t processing_idx = 0;
@@ -816,25 +746,34 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
   // find snapshot frame
   if (user_frame_callback) {
     for (i = 0; i < bufs->num_bufs; i++) {
-      if (bufs->bufs[i]->stream_id == m_stream->s_id) {
-        
+      if (bufs->bufs[i]->stream_id == m_stream->s_id) {        
+
         uint8_t* outbuf = (uint8_t*) raw_buffer[next_idx];
         m_frame = bufs->bufs[i];
-        
-        downsample_frame((uint64_t (*)[X6])m_frame->buffer,
-                         (uint8_t (*)[X][3])outbuf);
-        
-        // image has been taken from the buffer and downsampled, it is now safe for
-        // it to be potentially processed by engine
-        potential_processing_idx = next_idx;
-        next_idx = (next_idx + 1) % BUFFER_SIZE;
-        if(next_idx == processing_idx)
+          
+        // Reduce "frame rate" and cpu usage by limiting
+        // the number of frames we give to engine
+        static uint8_t c = 0;
+        static const uint8_t processEveryNumFrames = 4;
+        if(++c >= processEveryNumFrames)
         {
+          c = 0;
+
+          // Copy the frame into our buffer
+          memcpy(outbuf, m_frame->buffer, Y*2 * X6 * sizeof(uint64_t));
+          
+          // image has been taken from the buffer and downsampled, it is now safe for
+          // it to be potentially processed by engine
+          potential_processing_idx = next_idx;
           next_idx = (next_idx + 1) % BUFFER_SIZE;
+          if(next_idx == processing_idx)
+          {
+            next_idx = (next_idx + 1) % BUFFER_SIZE;
+          }
+          
+          user_frame_callback(outbuf, X, Y);
+          frameid++;
         }
-        
-        user_frame_callback(outbuf, X, Y);
-        frameid++;
       }
     }
   }
@@ -1037,6 +976,8 @@ static CameraObj gTheCamera;
 
 int camera_init()
 {
+  mlock(raw_buffer, sizeof(raw_buffer));
+
   int rc = 0;
   /* mm_camera_test_obj_t test_obj; */
   /* memset(&test_obj, 0, sizeof(mm_camera_test_obj_t)); */

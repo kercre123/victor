@@ -30,6 +30,8 @@ endif()
 # the source file lives in robot2. This will be cleaned up after we fork
 # the victor repo
 #
+if (ANDROID)
+
 add_library(robot_hal STATIC
   ${CMAKE_SOURCE_DIR}/robot2/hal/src/hal.cpp
   ${CMAKE_SOURCE_DIR}/robot2/hal/src/hal_motors.cpp
@@ -55,6 +57,8 @@ target_compile_definitions(robot_hal
   COZMO_ROBOT
   ${PLATFORM_COMPILE_DEFS}
 )
+
+endif()
 
 # HACK #2 - supervisor build on mac requires files in 
 # robot2/ and simulator/ folders. At least the ones in robot2 (sim_hal)

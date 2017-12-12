@@ -41,6 +41,20 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorLiftLoadTest.h"
+
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenCameraCalibration.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenDistanceSensor.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenDriftCheck.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenDriveForwards.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenEndChecks.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenInitChecks.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenMotorCalibration.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenPickupCube.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenReadToolCode.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenSoundCheck.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenTest.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenWaitToStart.h"
+
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherQueue.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRandom.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
@@ -568,6 +582,72 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
       newBehavior = ICozmoBehaviorPtr(new BehaviorPlayAnimOnNeedsChange(config));
       break;
     }
+
+
+
+
+
+    case BehaviorClass::PlaypenCameraCalibration:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenCameraCalibration(config));
+      break;
+    }
+    case BehaviorClass::PlaypenDistanceSensor:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenDistanceSensor(config));
+      break;
+    }
+    case BehaviorClass::PlaypenDriftCheck:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenDriftCheck(config));
+      break;
+    }
+    case BehaviorClass::PlaypenDriveForwards:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenDriveForwards(config));
+      break;
+    }
+    case BehaviorClass::PlaypenInitChecks:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenInitChecks(config));
+      break;
+    }
+    case BehaviorClass::PlaypenEndChecks:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenEndChecks(config));
+      break;
+    }
+    case BehaviorClass::PlaypenMotorCalibration:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenMotorCalibration(config));
+      break;
+    }
+    case BehaviorClass::PlaypenPickupCube:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenPickupCube(config));
+      break;
+    }
+    case BehaviorClass::PlaypenReadToolCode:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenReadToolCode(config));
+      break;
+    }
+    case BehaviorClass::PlaypenSoundCheck:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenSoundCheck(config));
+      break;
+    }
+    case BehaviorClass::PlaypenTest:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenTest(config));
+      break;
+    }
+    case BehaviorClass::PlaypenWaitToStart:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaypenWaitToStart(config));
+      break;
+    }
+
 
     case BehaviorClass::DevPettingTestSimple:
     {

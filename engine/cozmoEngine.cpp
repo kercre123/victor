@@ -66,6 +66,15 @@
 
 #define MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING 100
 
+// Have engine autostart connection to robot
+// Skips waiting for ui devices (no webots) and automatically adds a robot to
+// the robot manager
+#ifdef FACTORY_TEST
+  #define AUTOSTART 1
+#else
+  #define AUTOSTART 0
+#endif
+
 namespace Anki {
 namespace Cozmo {
 
@@ -250,6 +259,12 @@ Result CozmoEngine::Init(const Json::Value& config) {
 #endif
 
   _isInitialized = true;
+  
+  #if AUTOSTART
+  #ifndef SIMULATOR
+  SetEngineState(EngineState::LoadingData);
+  #endif
+  #endif
 
   return RESULT_OK;
 }
@@ -402,6 +417,33 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       float currentLoadingDone = 0.0f;
       if (_context->GetDataLoader()->DoNonConfigDataLoading(currentLoadingDone))
       {
+       #if AUTOSTART
+       #ifndef SIMULATOR
+       const RobotID_t kDefaultRobotID = 1;
+       if(CozmoEngine::HasRobotWithID(kDefaultRobotID)) {
+         PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobot.AlreadyConnected", "Robot already connected");
+         //    return;
+       }
+
+       ExternalInterface::ConnectToRobot msg;
+       std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
+       std::string ipStr = "127.0.0.1";
+       std::copy(ipStr.begin(), ipStr.end(), msg.ipAddress.data());
+       msg.isSimulated = false;
+
+       _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(msg);
+
+       // Another exception for hosts: have to tell the basestation to add the robot as well
+       if(AddRobot(kDefaultRobotID) == RESULT_OK) {
+         PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobot.Success", "Connected to robot!");
+       } else {
+         PRINT_NAMED_ERROR("CozmoEngine.HandleMessage.ConnectToRobot.Fail", "Failed to connect to robot!");
+       }
+
+       _context->GetNeedsManager()->InitAfterConnection();
+       #endif
+       #endif
+      
         SetEngineState(EngineState::Running);
       }
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(currentLoadingDone);

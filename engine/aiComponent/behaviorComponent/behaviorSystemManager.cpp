@@ -66,6 +66,13 @@ Result BehaviorSystemManager::InitConfiguration(IBehavior* baseBehavior,
              baseBehavior != nullptr,
              "BehaviorSystemManager.InitConfiguration.AlreadyInitialized");
 
+  // If this is the factory test forcibly set baseBehavior as playpen
+  if(FACTORY_TEST)
+  {
+    baseBehavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BehaviorID::PlaypenTest).get();
+    DEV_ASSERT(baseBehavior != nullptr, "BehaviorSystemManager.InitConfiguration.ForcingPlaypen.Null");
+  }
+
   // Assumes there's only one instance of the behavior external Intarfec
   _behaviorExternalInterface = &behaviorExternalInterface;
   _asyncMessageComponent = asyncMessageComponent;

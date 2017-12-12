@@ -105,6 +105,11 @@ message MicData
   uint_32 sequenceID
 }
 
+message AudioFFTResult
+{
+  uint_32 result[4]
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -173,9 +178,10 @@ union RobotToEngine {
   AnimationStarted           animStarted            = 0xD6,
   AnimationEnded             animEnded              = 0xD7,
   EndOfMessage               endOfMessage           = 0xD8,
+  AudioFFTResult             audioFFTResult         = 0xD9,
 
   // Messages relating to trigger word detection
-  TriggerWordDetected        triggerWordDetected    = 0xD9,
+  TriggerWordDetected        triggerWordDetected    = 0xDA,
 
   // Audio
   AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,

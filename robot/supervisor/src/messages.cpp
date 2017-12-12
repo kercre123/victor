@@ -147,7 +147,7 @@ namespace Anki {
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
 
         for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
-          robotState_.cliffDataRaw[i] = ProxSensors::GetRawCliffValue(i);
+          robotState_.cliffDataRaw[i] = ProxSensors::GetCliffValue(i);
         }
         robotState_.proxData = HAL::GetRawProxData();
         
@@ -215,6 +215,11 @@ namespace Anki {
 
         AnkiEvent( "watchdog_reset_count", "%d", HAL::GetWatchdogResetCounter());
       } // ProcessRobotInit()
+
+      void Process_enableCharging(const RobotInterface::EnableCharging& msg)
+      {
+        HAL::BatteryEnableCharging(msg.enable);
+      }
 
 
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)
