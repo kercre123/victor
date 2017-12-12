@@ -84,7 +84,7 @@ void RobotDataLoader::LoadNonConfigData()
     return;
   }
   
-  Anki::Util::SetThreadName(pthread_self(), "LoadNonConfigData");
+  Anki::Util::SetThreadName(pthread_self(), "LoadNonCfgData");
   
   {
     ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");

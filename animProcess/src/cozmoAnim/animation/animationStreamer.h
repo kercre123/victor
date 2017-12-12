@@ -183,7 +183,7 @@ namespace Cozmo {
     bool _backpackAnimationLayerEnabled = false;
 
     // Whether or not the streaming animation was commanded internally
-    // (as opposed to commanded by engine)
+    // from within this class (as opposed to by an engine message)
     bool _playingInternalAnim = false;
     
     // When this animation started playing (was initialized) in milliseconds, in

@@ -184,11 +184,7 @@ Result MessageHandler::AddRobotConnection(RobotID_t robotId)
 {
   const char* robotProcessIPAddress = "127.0.0.1";
 
-  #ifdef SIMULATOR
   int port = Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT + robotId;
-  #else
-  int port = Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT;
-  #endif
   PRINT_NAMED_WARNING("AddRobotConnection", "%s:%d", robotProcessIPAddress, port);
 
   Anki::Util::TransportAddress address(robotProcessIPAddress, static_cast<uint16_t>(port));
