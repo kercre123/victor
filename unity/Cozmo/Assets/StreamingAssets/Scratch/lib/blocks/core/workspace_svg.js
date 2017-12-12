@@ -1918,6 +1918,17 @@ Blockly.WorkspaceSvg.prototype.updateStackGlowScale_ = function() {
  */
 Blockly.WorkspaceSvg.getTopLevelWorkspaceMetrics_ = function() {
   var svgSize = Blockly.svgSize(this.getParentSvg());
+  // *** ANKI CHANGE ***
+  // If the size of the workspace comes back incorrectly, use window sizing.
+  // There is sometimes an issue with loading from the what's new modal where
+  // the positioning and scaling of the workspace gets distorted.
+  if (svgSize.width === 0) {
+    svgSize.width = window.screen.width;
+  }
+  if (svgSize.height === 0) {
+    svgSize.height = window.screen.height;
+  }
+
   if (this.toolbox_) {
     if (this.toolboxPosition == Blockly.TOOLBOX_AT_TOP ||
         this.toolboxPosition == Blockly.TOOLBOX_AT_BOTTOM) {
