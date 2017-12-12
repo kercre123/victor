@@ -205,8 +205,7 @@ PROTO WebotsKeyboardController [
   field SFFloat gain 1.0
 
   # Redirect viz to this host upon connect
-  # Only useful if engine is not on the same host as this webots controller
-  field SFBool  redirectViz FALSE
+  field SFBool  redirectViz TRUE
   
   # Cozmo engine location
   field SFString engineIP "127.0.0.1"
