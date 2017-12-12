@@ -53,6 +53,8 @@ namespace Vision {
 class ObjectDetector::Model : TensorflowModel
 {
 public:
+
+  Model(Profiler& profiler) : _profiler(profiler) { }
   
   // ObjectDetector expects LoadModel and Run to exist
   Result LoadModel(const std::string& modelPath, const Json::Value& config);
@@ -70,6 +72,8 @@ private:
   
   std::unique_ptr<tensorflow::Session> _session;
   
+  Profiler _profiler;
+
 }; // class ObjectDetector::Model
   
   

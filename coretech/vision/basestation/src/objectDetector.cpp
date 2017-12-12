@@ -47,7 +47,7 @@ namespace Vision {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectDetector::ObjectDetector()
 : Profiler("ObjectDetector")
-, _model(new Model())
+, _model(new Model(*this))
 {
   
 }

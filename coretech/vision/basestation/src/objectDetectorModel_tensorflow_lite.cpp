@@ -26,6 +26,7 @@
 #include "anki/common/basestation/array2d_impl.h"
 #include "anki/common/basestation/jsonTools.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
@@ -43,17 +44,31 @@ namespace Anki {
 namespace Vision {
 
 static const char * const kLogChannelName = "VisionSystem";
-  
-class ObjectDetector::Model : Vision::Profiler
+
+namespace {  
+#define CONSOLE_GROUP "Vision.ObjectDetector"
+
+CONSOLE_VAR(s32, kObjectDetector_MobileNetSize,       CONSOLE_GROUP, 128);
+CONSOLE_VAR(f32, kObjectDetector_MobileNetComplexity, CONSOLE_GROUP, 0.5f);
+
+#undef CONSOLE_GROUP
+}
+
+class ObjectDetector::Model
 {
 public:
   
+  Model(Profiler& profiler);
+
   // ObjectDetector expects LoadModel and Run to exist
   Result LoadModel(const std::string& modelPath, const Json::Value& config);
   Result Run(const ImageRGB& img, std::list<DetectedObject>& objects);
   
 private:
   
+  Result ReloadModelFromParams();
+  void ScaleImage(const Vision::ImageRGB& img);
+
   // Member variables:
   struct {
     
@@ -72,13 +87,37 @@ private:
     
   } _params;
   
+  std::string _modelPath;
+  s32         _mobileNetSize;
+  f32         _mobileNetComplexity;
+
+  static const int num_threads; 
+  static const std::string input_layer_type;
+
   std::unique_ptr<tflite::FlatBufferModel> _model;
   std::unique_ptr<tflite::Interpreter>     _interpreter;
   std::vector<std::string>  _labels;
   bool                      _isDetectionMode;
   
+  Profiler& _profiler;
+
 }; // class ObjectDetector::Model
-  
+
+// TODO: Parameter in config?
+const int ObjectDetector::Model::num_threads = 1; 
+const std::string ObjectDetector::Model::input_layer_type = "float";
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+ObjectDetector::Model::Model(Profiler& profiler) 
+: _mobileNetSize(kObjectDetector_MobileNetSize)
+, _mobileNetComplexity(kObjectDetector_MobileNetComplexity)
+, _profiler(profiler) 
+{ 
+
+  PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Model.TFLite", "Using NEON:%s",
+                tflite::FlatBufferModel::IsUsingNEON() ? "Y" : "N");
+
+} 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Returns the top N confidence values over threshold in the provided vector,
@@ -122,7 +161,9 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
 {
   ANKI_CPU_PROFILE("ObjectDetector.LoadModel");
   
-#   define GetFromConfig(keyName) \
+  _modelPath = modelPath;
+
+# define GetFromConfig(keyName) \
   if(false == JsonTools::GetValueOptional(config, QUOTE(keyName), _params.keyName)) \
   { \
     PRINT_NAMED_ERROR("ObjectDetector.Init.MissingConfig", QUOTE(keyName)); \
@@ -156,12 +197,42 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
     _isDetectionMode = false;
   }
   
-  const int num_threads = 1; // TODO: Parameter in config?
-  
-  std::string input_layer_type = "float";
+  Result loadModelResult = ReloadModelFromParams();
+
+  if(RESULT_OK != loadModelResult)
+  {
+    return loadModelResult;
+  }
+
+  // Read the label list
+  {
+    const std::string labelsFileName = Util::FileUtils::FullFilePath({modelPath, _params.labels});
+    std::ifstream file(labelsFileName);
+    if (!file)
+    {
+      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.LabelsFileNotFound",
+                        "%s", labelsFileName.c_str());
+      return RESULT_FAIL;
+    }
+    
+    _labels.clear();
+    std::string line;
+    while (std::getline(file, line)) {
+      _labels.push_back(line);
+    }
+    file.close();
+  }
+
+  return RESULT_OK;
+}
+
+Result ObjectDetector::Model::ReloadModelFromParams()
+{
+  DEV_ASSERT(!_modelPath.empty(), "ObjectDetector.Model.ReloadModelFromParams.EmptyModelPath");
+
   std::vector<int> sizes = {1, _params.input_height, _params.input_width, 3};
   
-  const std::string graphFileName = Util::FileUtils::FullFilePath({modelPath,_params.graph});
+  const std::string graphFileName = Util::FileUtils::FullFilePath({_modelPath,_params.graph});
   
   _model = tflite::FlatBufferModel::BuildFromFile(graphFileName.c_str());
   
@@ -210,69 +281,90 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
     PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.FailedToAllocateTensors", "");
     return RESULT_FAIL;
   }
-  
-  // Read the label list
-  {
-    const std::string labelsFileName = Util::FileUtils::FullFilePath({modelPath, _params.labels});
-    std::ifstream file(labelsFileName);
-    if (!file)
-    {
-      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.LabelsFileNotFound",
-                        "%s", labelsFileName.c_str());
-      return RESULT_FAIL;
-    }
-    
-    _labels.clear();
-    std::string line;
-    while (std::getline(file, line)) {
-      _labels.push_back(line);
-    }
-    file.close();
-  }
 
   return RESULT_OK;
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ObjectDetector::Model::ScaleImage(const Vision::ImageRGB& img)
+{
+  DEV_ASSERT(_interpreter != nullptr, "ObjectDetector.Model.ScaleImage.NullInterpreter");
+
+  auto ticToc = _profiler.TicToc("ScaleImage");
+
+  const int wanted_width    = _params.input_width;
+  const int wanted_height   = _params.input_height;  
+  const f32 invStd = 1.f / _params.input_std;
+ 
+  const int image_width    = img.GetNumCols();
+  const int image_height   = img.GetNumRows();
+  const int input = _interpreter->inputs()[0];
+ 
+  float* out = _interpreter->typed_tensor<float>(input);
+
+  // Wrap a PixelRGB<f32> header around the output so we can use it as if it is float RGB pixels
+  Array2d<PixelRGB_<f32>> outImage(wanted_height, wanted_width, 
+                                   reinterpret_cast<PixelRGB_<f32>*>(out));
+
+  for (int y = 0; y < wanted_height; ++y)
+  {
+    const int scaled_y = (y * image_height) / wanted_height;
+    const PixelRGB* img_row = img.GetRow(scaled_y);
+    PixelRGB_<f32>* out_row = outImage.GetRow(scaled_y);
+    
+    for (int x = 0; x < wanted_width; ++x)
+    {
+      const int scaled_x = (x * image_width) / wanted_width;
+      const PixelRGB& in_pixel = img_row[scaled_x];
+      
+      PixelRGB_<f32>& out_pixel = out_row[scaled_x];
+      out_pixel[0] = ((float)in_pixel.r() - _params.input_mean_R) * invStd;
+      out_pixel[1] = ((float)in_pixel.g() - _params.input_mean_G) * invStd;
+      out_pixel[2] = ((float)in_pixel.b() - _params.input_mean_B) * invStd;
+    }
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<DetectedObject>& objects)
 {
-  // Scale image, subtract mean, divide by standard deviation and store in the interpreter's input tensor
+  if(_mobileNetComplexity != kObjectDetector_MobileNetComplexity ||
+     _mobileNetSize != kObjectDetector_MobileNetSize)
   {
-    auto ticToc = TicToc("ScaleImage");
+    auto ticToc = _profiler.TicToc("ReloadModel");
 
-    const int wanted_width    = _params.input_width;
-    const int wanted_height   = _params.input_height;
-    const int wanted_channels = 3;
-    
-    const int image_width    = img.GetNumCols();
-    const int image_height   = img.GetNumRows();
-    const int input = _interpreter->inputs()[0];
-    
-    float* out = _interpreter->typed_tensor<float>(input);
-    
-    for (int y = 0; y < wanted_height; ++y)
+    _mobileNetComplexity  = kObjectDetector_MobileNetComplexity;
+    _mobileNetSize = kObjectDetector_MobileNetSize;
+
+    std::string complexityStr("1.0");
+    if(_mobileNetComplexity == 0.75f) {
+      complexityStr = "0.75";
+    } else if(_mobileNetComplexity == 0.5f) {
+      complexityStr = "0.50";
+    } else if(_mobileNetComplexity == 0.25f) {
+      complexityStr = "0.25";
+    }
+
+    _params.graph = "mobilenet_" + complexityStr + "_" + std::to_string(_mobileNetSize) + "_flower_photos_float.lite";
+    _params.input_height = _mobileNetSize;
+    _params.input_width  = _mobileNetSize;    
+
+    Result reloadResult = ReloadModelFromParams();
+    if(RESULT_OK != reloadResult)
     {
-      const int scaled_y = (y * image_height) / wanted_height;
-      const PixelRGB* img_row = img.GetRow(scaled_y);
-      
-      float* out_row = out + (y * wanted_width * wanted_channels);
-      
-      for (int x = 0; x < wanted_width; ++x)
-      {
-        const int scaled_x = (x * image_width) / wanted_width;
-        const PixelRGB& in_pixel = img_row[scaled_x];
-        
-        float* out_pixel = out_row + (x * wanted_channels);
-        out_pixel[0] = ((float)in_pixel.r() - _params.input_mean_R) / _params.input_std;
-        out_pixel[1] = ((float)in_pixel.g() - _params.input_mean_G) / _params.input_std;
-        out_pixel[2] = ((float)in_pixel.b() - _params.input_mean_B) / _params.input_std;
-      }
+      PRINT_NAMED_ERROR("ObjectDetector.Model.Run.ReloadFailed", 
+                        "Failed to reload with size:%d complexity:%.2f", 
+                        _mobileNetSize, _mobileNetComplexity);
+      return RESULT_FAIL;
     }
   }
+
+  // Scale image, subtract mean, divide by standard deviation and store in the interpreter's input tensor
+  ScaleImage(img);
   
-  Tic("ForwardInference");
+  _profiler.Tic("ForwardInference");
   const auto invokeResult = _interpreter->Invoke();
-  Toc("ForwardInference");
+  _profiler.Toc("ForwardInference");
   if (kTfLiteOk != invokeResult)
   {
     PRINT_NAMED_ERROR("ObjectDetector.Model.Run.FailedToInvoke", "");

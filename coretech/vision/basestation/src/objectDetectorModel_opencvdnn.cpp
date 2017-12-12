@@ -39,9 +39,13 @@ CONSOLE_VAR(s32, kPrintTimingFrequency, "Vision.ObjectDetector", 1);
 
 #define GET_GRAPH_FROM_JSON_CONFIG 1
 
-class ObjectDetector::Model : Vision::Profiler
+class ObjectDetector::Model
 {
+  Profiler& _profiler;
+  
 public:
+
+  Model(Profiler& profiler) : _profiler(profiler) { }
   
   Result LoadModel(const std::string& modelPath, const Json::Value& config)
   {
@@ -164,9 +168,9 @@ public:
     _network.setInput(dnnBlob);
     
     //std::cout << "Forward inference" << std::endl;
-    Tic("ObjectDetector.Run.ForwardInference");
+    _profiler.Tic("ObjectDetector.Run.ForwardInference");
     cv::Mat detections = _network.forward();
-    Toc("ObjectDetector.Run.ForwardInference");
+    _profiler.Toc("ObjectDetector.Run.ForwardInference");
     
     {
       static int printCount = kPrintTimingFrequency;
