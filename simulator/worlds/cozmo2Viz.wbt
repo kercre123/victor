@@ -41,8 +41,8 @@ WebotsKeyboardController{
   
   # To connect to a V2 Cozmo, uncomment both of these fields and 
   # update to the IP address of the robot.
-  forcedRobotIP "192.168.1.100"
-  engineIP      "192.168.1.100"
+  forcedRobotIP "192.168.1.148"
+  engineIP      "192.168.1.148"
   
   redirectViz            TRUE
   forcedRobotIsSimulated FALSE

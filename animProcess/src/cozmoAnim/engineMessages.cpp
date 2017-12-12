@@ -221,10 +221,9 @@ namespace Messages {
             vec.push_back(ip);
             vec.push_back(serialNo);
             vec.push_back(osNum);
-            if(FACTORY_TEST)
-            {
-              vec.push_back(playpenVer);
-            }
+            #if FACTORY_TEST
+            vec.push_back(playpenVer);
+            #endif
             break;
           }
           case DebugScreen::SENSORS1:

@@ -126,7 +126,7 @@ static u32 kFocalLengthTolerance                      = 30;
 static u32 kCenterTolerance                           = 50;
 
 // Tolerance on the camera's radial distortion
-static f32 kRadialDistortionTolerance                 = 0.075f;
+static f32 kRadialDistortionTolerance                 = 0.15f;
 
 // Tolerance on the camera's tangential distortion
 static f32 kTangentialDistortionTolerance             = 0.05f;
@@ -138,7 +138,7 @@ static f32 kHeadAngleToSeeTarget                      = MAX_HEAD_ANGLE;
 static u32 kTimeoutWaitingForTarget_ms                = 5000;
 
 // How long we should wait for camera calibration to be computed
-static u32 kTimeoutForComputingCalibration_ms         = 2000;
+static u32 kTimeoutForComputingCalibration_ms         = 5000;
 
 // Which calibration target we are using (see CameraCalibrator::CalibTargetTypes)
 static u32 kPlaypenCalibTarget                        = 2; // 1 = INVERTED_BOX 2 = QBERT (I don't feel like including cameraCalibrator.h here)

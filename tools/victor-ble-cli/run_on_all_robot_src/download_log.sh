@@ -37,7 +37,7 @@ namespace eval Download {
     send "adb pull /data/data/com.anki.cozmoengine/files/output/factory_test_logs/ ~/Desktop/Logs/$Download::dir/$name/\r"
     set timeout 600
     expect {
-      "files pulled" { }
+      "pulled" { }
       "does not exist" { }
     }
 
@@ -50,6 +50,8 @@ namespace eval Download {
     expect "stopped"
     set timeout 5
     expect "stopped"
+
+    sleep 1
   }
 }
 

@@ -44,7 +44,7 @@ static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
                                 362, 364,
                                 303, 196,
                                 0.f,
-                                std::vector<f32>({-0.1, -0.1, 0.00005, -0.0001, 0.05, 0.f, 0.f, 0.f})));
+                                std::vector<f32>({-0.1, -0.15, 0.00005, -0.0001, 0.05, 0.f, 0.f, 0.f})));
 #endif
 
   const std::string kWaitingForTargetTimer = "Target";

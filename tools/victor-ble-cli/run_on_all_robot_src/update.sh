@@ -20,8 +20,10 @@ namespace eval Update {
     expect "stopped"
     expect "stopped"
 
+    sleep 2
     # Deploy build
     send "${::proj_root}/project/victor/scripts/deploy.sh -c Release\r"
+    set timeout 300
     expect "deploy /data/data/com.anki.cozmoengine/config/wpa_supplicant_ankitest2.conf"
 
     # Deploy assests
@@ -39,6 +41,8 @@ namespace eval Update {
     expect "stopped"
     expect "stopped"
     expect "stopped"
+
+    sleep 2
   }
 }
 
