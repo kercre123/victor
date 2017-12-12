@@ -9,7 +9,8 @@
  * Copyright: Anki, Inc. 2017
  **/
 
-#if !defined(USE_TENSORFLOW) || !USE_TENSORFLOW
+// The contents of this file are only used when the build is using *neither* TF or TF Lite
+#if (!defined(USE_TENSORFLOW) || !USE_TENSORFLOW) && (!defined(USE_TENSORFLOW_LITE) || !USE_TENSORFLOW_LITE)
 
 #include "anki/vision/basestation/objectDetector.h"
 #include "anki/vision/basestation/image.h"

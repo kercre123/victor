@@ -1,5 +1,6 @@
 set(OPENCV_VERSION 3.1.0)
-if(NOT USE_TENSORFLOW)
+
+if(NOT USE_TENSORFLOW AND NOT USE_TENSORFLOW_LITE)
   set(OPENCV_VERSION dev) # the dnn module exists in OpenCV 3.3.0, mobile net arch supported in latest master (dev) 
 endif()
 
@@ -30,7 +31,7 @@ set(OPENCV_LIBS
     ml
     videoio)
 
-if(NOT USE_TENSORFLOW)
+if(NOT USE_TENSORFLOW AND NOT USE_TENSORFLOW_LITE)
   list(APPEND OPENCV_LIBS dnn)
 endif()
 

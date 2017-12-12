@@ -238,6 +238,8 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<DetectedObject>
 {
   // Scale image, subtract mean, divide by standard deviation and store in the interpreter's input tensor
   {
+    auto ticToc = TicToc("ScaleImage");
+
     const int wanted_width    = _params.input_width;
     const int wanted_height   = _params.input_height;
     const int wanted_channels = 3;
@@ -268,7 +270,10 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<DetectedObject>
     }
   }
   
-  if (_interpreter->Invoke() != kTfLiteOk)
+  Tic("ForwardInference");
+  const auto invokeResult = _interpreter->Invoke();
+  Toc("ForwardInference");
+  if (kTfLiteOk != invokeResult)
   {
     PRINT_NAMED_ERROR("ObjectDetector.Model.Run.FailedToInvoke", "");
     return RESULT_FAIL;

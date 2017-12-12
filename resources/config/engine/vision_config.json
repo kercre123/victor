@@ -95,7 +95,7 @@
   "OverheadMap" :
   {
     "NumRows"          : 1000,    // Size of the overhead map. Bigger sizes do not impact computation, only memory
-    "NumCols"          : 1000
+    "NumCols"          : 1000,
     "CentroidStability" : 0.6     // Hop quickly should peripheral motion detection track the source of motion. 
   },
   
