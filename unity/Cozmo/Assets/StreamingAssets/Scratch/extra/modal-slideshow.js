@@ -154,6 +154,11 @@
         numSlides = slides.length;
       }
 
+      // Hide all dropdowns
+      if ('function' === typeof closeBlocklyDropdowns) {
+        closeBlocklyDropdowns();
+      }
+
       // set the slide count text and disable the back button
       _updateDisplay();
     }

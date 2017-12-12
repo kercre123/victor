@@ -18,6 +18,11 @@ window.Tutorial = (function(){
       _injectFrame();
     }
 
+    // hide all dropdowns
+    if ('function' === typeof closeBlocklyDropdowns) {
+      closeBlocklyDropdowns();
+    }
+
     window.Unity.call({requestId: -1, command: "cozmoTutorialOpen"});
 
     var locale = window.getUrlVars()['locale'];

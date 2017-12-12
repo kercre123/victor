@@ -18,6 +18,11 @@ window.Challenges = (function(){
       _injectFrame();
     }
 
+    // hide all dropdowns
+    if ('function' === typeof closeBlocklyDropdowns) {
+      closeBlocklyDropdowns();
+    }
+
     window.Unity.call({requestId: -1, command: "cozmoChallengesOpen"});
 
     // Request a slide number to open to from Unity, to restore the same place

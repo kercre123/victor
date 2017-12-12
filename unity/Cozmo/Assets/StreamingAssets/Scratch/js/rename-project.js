@@ -47,6 +47,11 @@ var RenameProject = function(){
     // disable the save button until the user changes the title
     saveButton.setAttribute('disabled', 'disabled');
 
+    // hide all dropdowns
+    if ('function' === typeof window.closeBlocklyDropdowns) {
+      window.closeBlocklyDropdowns();
+    }
+
     // show the dialog and focus on the text box
     document.body.classList.add('show-rename-project-modal');
   }

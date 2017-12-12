@@ -466,6 +466,18 @@
         document.body.classList.remove('is-program-running');
     }
 
+    // Hide all blockly dropdowns.
+    window.closeBlocklyDropdowns = function() {
+        if ('undefined' !== typeof Blockly) {
+            if ('undefined' !== typeof Blockly.DropDownDiv && Blockly.DropDownDiv) {
+                Blockly.DropDownDiv.hideWithoutAnimation();
+            }
+            if ('undefined' !== typeof Blockly.WidgetDiv && Blockly.WidgetDiv) {
+                Blockly.WidgetDiv.hide(true);
+            }
+        }
+    }
+
     /**
      * Binds the extension interface to `window.extensions`.
      * @return {void}

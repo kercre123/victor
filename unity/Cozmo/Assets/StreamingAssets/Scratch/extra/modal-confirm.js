@@ -81,8 +81,13 @@ var ModalType = function(type){
     if (modal_prompt_input) {
       modal_prompt_input.value = options.prompt || '';
     }
+
+    // hide all dropdowns
+    if ('function' === typeof closeBlocklyDropdowns) {
+      closeBlocklyDropdowns();
+    }
     
-    // add a class to the modal container if the subtext promot is not being displayed
+    // add a class to the modal container if the subtext prompt is not being displayed
     if (type != 'prompt' && !options.prompt) {
       _dialog.classList.add('without-prompt');
     } else {

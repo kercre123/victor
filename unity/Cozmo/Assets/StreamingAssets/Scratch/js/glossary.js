@@ -261,6 +261,10 @@ var Glossary = function(){
     xml = document.querySelector('#toolbox');
     eCategories = eGlossary.querySelector('#glossary-categories');
 
+    // hide all dropdowns
+    if ('function' === typeof closeBlocklyDropdowns) {
+      closeBlocklyDropdowns();
+    }
     document.body.classList.add('show-glossary-modal');
     init();
   }
