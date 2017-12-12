@@ -179,13 +179,13 @@ void AnimationComponent::DoleAvailableAnimations()
     }
   }
 }
-  
-  
-const std::string& AnimationComponent::GetAnimationNameFromGroup(const std::string& name) const
+
+
+const std::string& AnimationComponent::GetAnimationNameFromGroup(const std::string& name, bool strictCooldown) const
 {
   const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
   if(group != nullptr && !group->IsEmpty()) {
-    return group->GetAnimationName(_robot.GetMoodManager(), _animationGroups, _robot.GetHeadAngle());
+    return group->GetAnimationName(_robot.GetMoodManager(), _animationGroups, _robot.GetHeadAngle(), strictCooldown);
   }
   static const std::string empty("");
   return empty;
