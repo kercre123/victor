@@ -220,7 +220,15 @@ void ProxSensorComponent::UpdateTheremin()
   }
   
   float pitchVal = 0.f;
-  float volumeVal = 0.f;
+  float volumeVal = 1.f;
+  
+  // Create a pitch value from 0 to 1 based on distance sensor readings. Pitch should
+  // be highest when distance readings are smallest.
+  const float minDist = 60;
+  const float maxDist = 300;
+  
+  pitchVal = (maxDist - _latestData.distance_mm) / (maxDist - minDist);
+  pitchVal = Util::Clamp(pitchVal, 0.f, 1.f);
   
   // Post pitch parameter
   _robot.GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Theremin_Pitch,

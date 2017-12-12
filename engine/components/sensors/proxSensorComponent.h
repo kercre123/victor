@@ -53,7 +53,7 @@ private:
   void UpdateNavMap();
   
   void UpdateTheremin();
-  _thereminActive = false;
+  bool _thereminActive = false;
   
   ProxSensorData _latestData;
   
