@@ -195,7 +195,7 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
 , _micImmediateDirection(new MicImmediateDirection())
 {
   // Set up aubio tempo/beat detector
-  const char* const kTempoMethod = "";
+  const char* const kTempoMethod = "default";
   const uint_t kTempoBufSize = 1024;
   const uint_t kTempoHopSize = 512;
   const uint_t kTempoSampleRate = 44100;

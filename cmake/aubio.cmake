@@ -10,14 +10,14 @@ set(AUBIO_LIBS
 
 
 if (MACOSX)
-  set(AUBIO_LIB_PATH "${AUBIO_HOME}/build/dist/usr/local/lib")
+  set(AUBIO_LIB_PATH "${AUBIO_HOME}/build/src")
 endif()
 
 foreach(LIB ${AUBIO_LIBS})
-  add_library(${LIB} STATIC IMPORTED)
+  add_library(${LIB} SHARED IMPORTED)
   set_target_properties(${LIB} PROPERTIES
     IMPORTED_LOCATION
-    "${AUBIO_LIB_PATH}/lib${LIB}.a"
+    "${AUBIO_LIB_PATH}/lib${LIB}.dylib"
     INTERFACE_INCLUDE_DIRECTORIES
     "${AUBIO_INCLUDE_PATH}")
 endforeach()
