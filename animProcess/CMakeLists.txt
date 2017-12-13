@@ -6,6 +6,7 @@ include(anki_build_cxx)
 
 anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 
+include(aubio)
 include(flatbuffers)
 include(opencv)
 include(signalessence)
@@ -50,6 +51,7 @@ target_link_libraries(victor_anim
   audio_multiplexer_robot
   # vendor
   ${OPENCV_LIBS}
+  ${AUBIO_LIBS}
   ${FLATBUFFERS_LIBS} 
   ${SIGNALESSENCE_LIBS}
   ${SPEEXDSP_LIBS}

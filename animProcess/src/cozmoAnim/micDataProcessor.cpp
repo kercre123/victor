@@ -194,6 +194,14 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
 , _udpServer(new UdpServer())
 , _micImmediateDirection(new MicImmediateDirection())
 {
+  // Set up aubio tempo/beat detector
+  const char* const kTempoMethod = "";
+  const uint_t kTempoBufSize = 1024;
+  const uint_t kTempoHopSize = 512;
+  const uint_t kTempoSampleRate = 44100;
+  _tempoDetector = new_aubio_tempo(kTempoMethod, kTempoBufSize, kTempoHopSize, kTempoSampleRate);
+  DEV_ASSERT(_tempoDetector != nullptr, "MicDataProcessor.Constructor.FailedCreatingAubioTempoObject");
+  
   if (!_writeLocationDir.empty())
   {
     Util::FileUtils::CreateDirectory(_writeLocationDir);
@@ -318,6 +326,11 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
 
 MicDataProcessor::~MicDataProcessor()
 {
+  // delete Aubio tempo detection object
+  if (_tempoDetector != nullptr) {
+    del_aubio_tempo(_tempoDetector);
+  }
+  
   _processThreadStop = true;
   _processThread.join();
 

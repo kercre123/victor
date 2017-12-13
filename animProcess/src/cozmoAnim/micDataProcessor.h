@@ -20,6 +20,10 @@
 
 #include "anki/common/types.h"
 
+#include "aubio/aubio.h"
+//#include "aubio/types.h"
+//#include "aubio/tempo/tempo.h"
+
 #include <array>
 #include <cstdint>
 #include <memory>
@@ -127,6 +131,10 @@ private:
 
   void ProcessLoop();
   void ClearCurrentStreamingJob();
+  
+  // Aubio beat detection stuff:
+  aubio_tempo_t* _tempoDetector = nullptr;
+  
 };
 
 } // namespace MicData
