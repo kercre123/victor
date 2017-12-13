@@ -1062,10 +1062,10 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendSaveImages(ImageSendMode imageMode, const std::string& path)
+    void UiGameController::SendSaveImages(ImageSendMode imageMode, const std::string& path, const int8_t qualityOnRobot)
     {
       using namespace ExternalInterface;
-      SendMessage(MessageGameToEngine(SaveImages(imageMode, path)));
+      SendMessage(MessageGameToEngine(SaveImages(imageMode, qualityOnRobot, path)));
     }
     
     void UiGameController::SendSaveState(bool enabled, const std::string& path)

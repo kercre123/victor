@@ -16,6 +16,7 @@
 #include "androidHAL/androidHAL.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/animationComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/navMap/mapComponent.h"
@@ -470,6 +471,42 @@ namespace Cozmo {
       const bool haveHistStateAtLeastAsNewAsImage = (_robot.GetStateHistory()->GetNewestTimeStamp() >= _bufferedImg.GetTimestamp());
       if(haveHistStateAtLeastAsNewAsImage)
       {
+        
+        // "Mirror mode": draw images we process to the robot's screen
+        if(_drawImagesToScreen)
+        {
+          // TODO: Add this as a lambda you can register with VisionComponent for things you want to 
+          //       do with image when captured?
+          
+          // Send as face display animation
+          auto & animComponent = _robot.GetAnimationComponent();
+          if (animComponent.GetAnimState_NumProcAnimFaceKeyframes() < 5) // Don't get too far ahead
+          {
+            static Vision::ImageRGB screenImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+            _bufferedImg.Resize(screenImg, Vision::ResizeMethod::NearestNeighbor);
+
+            static Vision::ImageRGB565 img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+            
+            // Use gamma to make it easier to see
+            static std::array<u8,256> gammaLUT{};
+            if(gammaLUT.back() == 0) {
+              const f32 gamma = 1.f / 2.2f;
+              const f32 divisor = 1.f / 255.f;
+              for(s32 value=0; value<256; ++value) 
+              {
+                gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, gamma));
+              }
+            }
+
+            img565.SetFromImageRGB(screenImg, gammaLUT);
+
+            // Flip image around the y axis
+            cv::flip(img565.get_CvMat_(), img565.get_CvMat_(), 1);
+                      
+            animComponent.DisplayFaceImage(img565, ANIM_TIME_STEP_MS, false);
+          }
+        }
+
         SetNextImage(_bufferedImg);
         _bufferedImg.Clear();
       }
@@ -2231,24 +2268,6 @@ namespace Cozmo {
     {
       // Create ImageRGB object from image buffer
       image_out = Vision::ImageRGB(numRows, numCols, buffer);
-      
-      if (_imageSaveMode != ImageSendMode::Off)
-      {
-        const std::string path = _robot.GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
-        const std::string fullFilename = Util::FileUtils::FullFilePath({path, "images", std::to_string(imageId) + ".png"});
-
-        PRINT_CH_DEBUG("VisionComponent",
-                       "VisionComponent.CaptureImage.SavingImage",
-                       "Saving %s to %s",
-                       (_imageSaveMode == ImageSendMode::SingleShot ? "single image" : "image stream"),
-                       fullFilename.c_str());
-         
-        image_out.Save(fullFilename);
-        if (_imageSaveMode == ImageSendMode::SingleShot)
-        {
-          _imageSaveMode = ImageSendMode::Off;
-        }
-      }
 
       if(kDisplayUndistortedImages)
       {
@@ -2381,12 +2400,23 @@ namespace Cozmo {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
   {
+    if(nullptr != _visionSystem)
+    {
+      const std::string cachePath = _robot.GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
 
-    _imageSaveMode = payload.mode;
-    PRINT_CH_DEBUG("VisionComponent", "VisionComponent.HandleMessage.SaveImages",
-                   "Setting image save mode to %s",
-                   EnumToString(payload.mode));
+      _visionSystem->SetSaveParameters(payload.mode, 
+                                       Util::FileUtils::FullFilePath({cachePath, "images", payload.path}), 
+                                       payload.qualityOnRobot);
 
+      if(payload.mode != ImageSendMode::Off)
+      {
+        EnableMode(VisionMode::SavingImages, true);  
+      }
+
+      PRINT_CH_DEBUG("VisionComponent", "VisionComponent.HandleMessage.SaveImages",
+               "Setting image save mode to %s",
+               EnumToString(payload.mode));
+    }
   }
 
   template<>
