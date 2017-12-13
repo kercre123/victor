@@ -11,7 +11,9 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
+
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
@@ -32,6 +34,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
+#include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
@@ -41,7 +44,6 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 
-
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/cloudIntents.h"
@@ -49,7 +51,6 @@
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/numericCast.h"
-#include "engine/components/pathComponent.h"
 
 #define LOG_CHANNEL    "Behaviors"
 
@@ -254,7 +255,8 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
   
   if(config.isMember(kWantsToRunStrategyConfigKey)){
-    _wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
+    _wantsToBeActivatedStrategies.push_back(
+      StateConceptStrategyFactory::CreateStateConceptStrategy( config[kWantsToRunStrategyConfigKey] ) );
   }
 
   if(config.isMember(kAnonymousBehaviorMapKey)){
@@ -284,25 +286,15 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
   assert(_behaviorExternalInterface);
   
   {
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
-    auto externalInterface = robotInfo.HasExternalInterface() ? robotInfo.GetExternalInterface() : nullptr;
-    
-    if(_wantsToRunConfig.size() > 0){
-      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(
-                                                  behaviorExternalInterface,
-                                                  externalInterface,
-                                                  _wantsToRunConfig));
-      _stateConceptStrategies.push_back(std::move(strategy));
-      _wantsToRunConfig.clear();
+    for( auto& strategy : _wantsToBeActivatedStrategies ) {
+      strategy->Init(behaviorExternalInterface);
     }
 
     if(_respondToCloudIntent != CloudIntent::Count){
       Json::Value config = StrategyCloudIntentPending::GenerateCloudIntentPendingConfig(_respondToCloudIntent);
-      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(
-                                                  behaviorExternalInterface,
-                                                  externalInterface,
-                                                  config));
-      _stateConceptStrategies.push_back(std::move(strategy));
+      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(config));
+      strategy->Init(behaviorExternalInterface);
+      _wantsToBeActivatedStrategies.push_back(strategy);
     }
 
   }
@@ -484,6 +476,10 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
     auto& infoProcessor = _behaviorExternalInterface->GetAIComponent().GetAIInformationAnalyzer();
     infoProcessor.AddEnableRequest(_requiredProcess, GetIDStr().c_str());
+  }
+
+  for( auto& strategy : _wantsToBeActivatedStrategies ) {
+    strategy->Reset(*_behaviorExternalInterface);
   }
 }
 
@@ -739,7 +735,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
     return false;
   }
   
-  for(auto& strategy: _stateConceptStrategies){
+  for(auto& strategy: _wantsToBeActivatedStrategies){
     if(!strategy->AreStateConditionsMet(behaviorExternalInterface)){
       return false;
     }

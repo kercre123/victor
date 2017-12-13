@@ -85,7 +85,7 @@ private:
   // These methods actually do the creation of messages and sending
   // (via MessageHandler) to the physical robot
 
-  uint8_t _imuSeqID = 0;
+  uint32_t _imuSeqID = 0;
   std::ofstream _imuLogFileStream;
   
   // For handling multiple images coming in on the same tick

@@ -17,6 +17,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyMessageHelper.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/cozmoContext.h"
@@ -36,17 +37,25 @@ const bool kDebugAcknowledgements = false;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyObjectPositionUpdated::StrategyObjectPositionUpdated(BehaviorExternalInterface& behaviorExternalInterface,
-                                         IExternalInterface* robotExternalInterface,
-                                         const Json::Value& config)
-: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
+StrategyObjectPositionUpdated::StrategyObjectPositionUpdated(const Json::Value& config)
+: IStateConceptStrategy(config)
 {
-  SubscribeToTags({
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+StrategyObjectPositionUpdated::~StrategyObjectPositionUpdated()
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void StrategyObjectPositionUpdated::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  _messageHelper.reset(new StateConceptStrategyMessageHelper(this, behaviorExternalInterface));
+  _messageHelper->SubscribeToTags({
     EngineToGameTag::RobotObservedObject,
   });
 }
 
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool StrategyObjectPositionUpdated::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
@@ -56,7 +65,7 @@ bool StrategyObjectPositionUpdated::AreStateConditionsMetInternal(BehaviorExtern
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void StrategyObjectPositionUpdated::AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) 
+void StrategyObjectPositionUpdated::HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) 
 {
   switch(event.GetData().GetTag())
   {

@@ -12,12 +12,12 @@
 
 #include "engine/aiComponent/stateConceptStrategies/strategyFacePositionUpdated.h"
 
+#include "anki/common/basestation/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyMessageHelper.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
-
-#include "anki/common/basestation/utils/timer.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -33,18 +33,26 @@ CONSOLE_VAR_RANGED(f32, kFaceReactCooldown_s, "AcknowledgementBehaviors", 4.0f, 
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyFacePositionUpdated::StrategyFacePositionUpdated(BehaviorExternalInterface& behaviorExternalInterface,
-                                                          IExternalInterface* robotExternalInterface,
-                                                          const Json::Value& config)
-: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
+StrategyFacePositionUpdated::StrategyFacePositionUpdated(const Json::Value& config)
+: IStateConceptStrategy(config)
 {
-  SubscribeToTags({
-    EngineToGameTag::RobotObservedFace
-  });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+StrategyFacePositionUpdated::~StrategyFacePositionUpdated()
+{
 
 }
 
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void StrategyFacePositionUpdated::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  _messageHelper.reset(new StateConceptStrategyMessageHelper(this, behaviorExternalInterface));
+  _messageHelper->SubscribeToTags({
+    EngineToGameTag::RobotObservedFace
+  });
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool StrategyFacePositionUpdated::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 { 
@@ -53,7 +61,7 @@ bool StrategyFacePositionUpdated::AreStateConditionsMetInternal(BehaviorExternal
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void StrategyFacePositionUpdated::AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void StrategyFacePositionUpdated::HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag())
   {

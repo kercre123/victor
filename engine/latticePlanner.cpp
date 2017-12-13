@@ -39,6 +39,7 @@
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/signals/simpleSignal_fwd.h"
+#include "util/threading/threadPriority.h"
 #include <chrono>
 #include <condition_variable>
 #include <thread>
@@ -643,6 +644,7 @@ void LatticePlannerImpl::DoPlanning()
 
 void LatticePlannerImpl::worker()
 {
+  Anki::Util::SetThreadName(pthread_self(), "LatticePlanner");
   if( LATTICE_PLANNER_THREAD_DEBUG ) {
     std::cout << "hello from planner worker thread! I am object " << this
               << " running in thread " << std::this_thread::get_id() << std::endl;

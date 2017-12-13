@@ -20,7 +20,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/helpers/cleanupHelper.h"
-
+#include "util/threading/threadPriority.h"
 #include "json/json.h"
 #include "anki/common/basestation/jsonTools.h"
 
@@ -670,7 +670,7 @@ namespace Vision {
   
   void FaceRecognizer::Run()
   {
-    
+    Anki::Util::SetThreadName(pthread_self(), "FaceRecognizer");
     const char* threadName = "FaceRecognizer";
     #if defined(LINUX) || defined(ANDROID)
     pthread_setname_np(pthread_self(), threadName);

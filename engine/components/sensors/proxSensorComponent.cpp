@@ -151,6 +151,33 @@ Result ProxSensorComponent::IsLiftInFOV(bool& isInFOV) const
   return Result::RESULT_OK;
 }
 
+
+bool ProxSensorComponent::IsSensorReadingValid()
+{
+  const u16 proxDist_mm = GetLatestDistance_mm();
+  bool liftBlocking;
+  IsLiftInFOV(liftBlocking);
+  const bool sensorInRangeAndValid = (proxDist_mm > kMinObsThreshold_mm) &&
+                                      (proxDist_mm < kMaxObsThreshold_mm) &&
+                                      !liftBlocking;
+  return sensorInRangeAndValid;
+}
+
+
+bool ProxSensorComponent::CalculateSensedObjectPose(Pose3d& sensedObjectPose)
+{
+  const bool sensorIsValid = IsSensorReadingValid();
+  if(sensorIsValid){
+    const Pose3d proxPose = GetPose();
+    const u16 proxDist_mm = GetLatestDistance_mm();
+    Transform3d transformToSensed(Rotation3d(0.f, Z_AXIS_3D()), {0.f, proxDist_mm, 0.f});
+    // Since prox pose is destroyed when it falls out of scope, don't want parent invalidated
+    sensedObjectPose = Pose3d(transformToSensed, proxPose).GetWithRespectToRoot();
+  }
+  return sensorIsValid;
+}
+
+
 void ProxSensorComponent::UpdateNavMap()
 {
   if (_latestData.spadCount == 0)

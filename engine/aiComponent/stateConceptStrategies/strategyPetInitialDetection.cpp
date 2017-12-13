@@ -26,10 +26,8 @@ static const int kReactToPetNumTimesObserved = 3;
 }    
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyPetInitialDetection::StrategyPetInitialDetection(BehaviorExternalInterface& behaviorExternalInterface,
-                                                         IExternalInterface* robotExternalInterface,
-                                                         const Json::Value& config)
-: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
+StrategyPetInitialDetection::StrategyPetInitialDetection(const Json::Value& config)
+: IStateConceptStrategy(config)
 {
 }
 

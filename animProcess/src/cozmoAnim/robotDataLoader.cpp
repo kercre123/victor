@@ -29,6 +29,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
+#include "util/threading/threadPriority.h"
 #include "util/time/universalTime.h"
 #include <json/json.h>
 #include <string>
@@ -82,6 +83,8 @@ void RobotDataLoader::LoadNonConfigData()
   if (_platform == nullptr) {
     return;
   }
+  
+  Anki::Util::SetThreadName(pthread_self(), "LoadNonCfgData");
   
   {
     ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");

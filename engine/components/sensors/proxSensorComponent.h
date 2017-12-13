@@ -48,6 +48,15 @@ public:
   
   void ActivateTheremin(const bool b=true);
   
+  // Indicates when the sensor reading is both 
+  //   1) Within a reliable obstacle detection range
+  //   2) Is not being obstructed by the lift
+  bool IsSensorReadingValid();
+
+  // calculate the pose directly in front of the robot where the prox sensor is indicating an object
+  // returns false if sensor reading isn't valid
+  bool CalculateSensedObjectPose(Pose3d& sensedObjectPose);
+
 private:
 
   void UpdateNavMap();

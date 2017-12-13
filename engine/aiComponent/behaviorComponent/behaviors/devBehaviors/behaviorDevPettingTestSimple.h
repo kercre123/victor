@@ -55,7 +55,7 @@ private:
     float animationRate_s;
     float timeLastPlayed_s;
     
-    TouchGestureAnimationConfig(IStateConceptStrategy* sp,
+    TouchGestureAnimationConfig(IStateConceptStrategyPtr sp,
                                 std::string animationName,
                                 float animationRate_s,
                                 float timeLastPlayed_s)
@@ -68,7 +68,6 @@ private:
     
   };
   
-  Json::Value _configArray;
   std::vector<TouchGestureAnimationConfig> _tgAnimConfigs;
 };
 

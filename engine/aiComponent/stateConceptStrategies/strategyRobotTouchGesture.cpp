@@ -29,10 +29,8 @@ const char* kTouchGestureKey = "touchGesture";
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyRobotTouchGesture::StrategyRobotTouchGesture(BehaviorExternalInterface& behaviorExternalInterface,
-                                                     IExternalInterface* robotExternalInterface,
-                                                     const Json::Value& config)
-: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
+StrategyRobotTouchGesture::StrategyRobotTouchGesture(const Json::Value& config)
+: IStateConceptStrategy(config)
 {
   {
     const auto& touchGestureStr = JsonTools::ParseString(config,

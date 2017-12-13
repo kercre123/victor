@@ -453,7 +453,7 @@ private:
 
   // only used if we aren't using the BSM
   u32 _lastActionTag = 0;
-  std::vector<IStateConceptStrategyPtr> _stateConceptStrategies;
+  std::vector<IStateConceptStrategyPtr> _wantsToBeActivatedStrategies;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const;
@@ -541,9 +541,6 @@ private:
   std::unordered_map<GameToEngineTag, std::function<void(const GameToEngineEvent&)>> _gameToEngineCallbackMap;
   std::unordered_map<EngineToGameTag, std::function<void(const EngineToGameEvent&)>> _engineToGameCallbackMap;
   std::set<RobotInterface::RobotToEngineTag> _robotToEngineTags;
-
-  // Tracking wants to run configs for initialization
-  Json::Value _wantsToRunConfig;
 
   // Behaviors can load in internal "anonymous" behaviors which are not stored
   // in the behavior container and are referenced by string instead of by ID

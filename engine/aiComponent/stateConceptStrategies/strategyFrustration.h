@@ -21,9 +21,7 @@ namespace Cozmo {
 class StrategyFrustration : public IStateConceptStrategy
 {
 public:
-  StrategyFrustration(BehaviorExternalInterface& behaviorExternalInterface,
-                      IExternalInterface* robotExternalInterface,
-                      const Json::Value& config);
+  explicit StrategyFrustration(const Json::Value& config);
 
 protected:
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

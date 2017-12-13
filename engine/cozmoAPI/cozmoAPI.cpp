@@ -21,6 +21,7 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
+#include "util/threading/threadPriority.h"
 #include <chrono>
 
 namespace Anki {
@@ -233,6 +234,7 @@ void CozmoAPI::CozmoInstanceRunner::Run()
 
   // Set the target time for the end of the first frame
   auto targetEndFrameTime = runStart + (microseconds)(BS_TIME_STEP_MICROSECONDS);
+  Anki::Util::SetThreadName(pthread_self(), "CozmoRunner");
 
   while(_isRunning)
   {

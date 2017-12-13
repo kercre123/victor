@@ -24,6 +24,7 @@
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/osState.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/animationTypes.h"
@@ -60,7 +61,10 @@ namespace Cozmo {
   
   CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
   CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
-    
+
+  // Whether or not to display themal throttling indicator on face
+  CONSOLE_VAR(bool, kDisplayThermalThrottling, "AnimationStreamer", true);
+
   // Overrides whatever faces we're sending with a 3-stripe test pattern
   // (seems more related to the other ProceduralFace console vars, so putting it in that group instead)
   CONSOLE_VAR(bool, kProcFace_DisplayTestPattern, "ProceduralFace", false);
@@ -137,6 +141,17 @@ namespace Cozmo {
       _gammaLUT[i] = i;
     }
    
+
+    // TODO: _Might_ need to disable this eventually if there are conflicts
+    //       with wake up animations or something on startup. The only reason
+    //       this is here is to make sure there's something on the face and
+    //       currently there's no face animation that the engine automatically
+    //       initiates on startup.
+    // 
+    // Turn on neutral face by default at startup
+    // Otherwise face is blank until an animation is played.
+    SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
+
     return RESULT_OK;
   }
   
@@ -523,7 +538,7 @@ namespace Cozmo {
     BufferFaceToSend(_faceDrawBuf);
   }
   
-  void AnimationStreamer::BufferFaceToSend(const Vision::ImageRGB565& faceImg565)
+  void AnimationStreamer::BufferFaceToSend(Vision::ImageRGB565& faceImg565, bool allowOverlay)
   {
     DEV_ASSERT_MSG(faceImg565.GetNumCols() == FACE_DISPLAY_WIDTH &&
                    faceImg565.GetNumRows() == FACE_DISPLAY_HEIGHT,
@@ -531,6 +546,16 @@ namespace Cozmo {
                    "Got %d x %d. Expected %d x %d",
                    faceImg565.GetNumCols(), faceImg565.GetNumRows(),
                    FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
+    
+
+    // Draw red square in corner of face if thermal throttling
+    if (kDisplayThermalThrottling && 
+        allowOverlay &&
+        OSState::getInstance()->IsThermalThrottling()) {
+      const Rectangle<s32> rect( 0, 0, 20, 20);
+      const Vision::PixelRGB565 pixel(255, 0, 0);
+      faceImg565.DrawFilledRect(rect, pixel);
+    } 
     
     // Draws frame to face display
 #ifdef DRAW_FACE_IN_THREAD
@@ -822,7 +847,7 @@ namespace Cozmo {
           const bool gotImage = faceKeyFrame.GetFaceImage(_faceDrawBuf);
           if (gotImage) {
             DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
-            BufferFaceToSend(_faceDrawBuf);
+            BufferFaceToSend(_faceDrawBuf, false);  // Don't overwrite FaceAnimationKeyFrame images
           }
           
           if(faceKeyFrame.IsDone()) {
@@ -882,6 +907,8 @@ namespace Cozmo {
   Result AnimationStreamer::Update()
   {
     ANKI_CPU_PROFILE("AnimationStreamer::Update");
+
+    OSState::getInstance()->Update();
     
     Result lastResult = RESULT_OK;
     

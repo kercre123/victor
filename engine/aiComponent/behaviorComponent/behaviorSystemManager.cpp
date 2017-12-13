@@ -261,6 +261,13 @@ void BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
 // TODO:(bn) kevink: consider rename to "stop" rather than cancel
 void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
 {
+  if(!ANKI_VERIFY(_behaviorStack->IsInStack(delegator),
+                  "BehaviorSystemManager.CancelSelf.NotINStack",
+                  "%s is not in stack",
+                  delegator->GetPrintableID().c_str())){
+    return;
+  }
+  
   CancelDelegates(delegator);
   
   if(ANKI_VERIFY(!IsControlDelegated(delegator),

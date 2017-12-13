@@ -36,7 +36,6 @@
 #include <unistd.h>
 
 const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
-const char* VIZ_HOST_IP = "127.0.0.1";
 const char* LOGNAME = "engine";
                                                                                                     
 Anki::Cozmo::CozmoAPI* gEngineAPI = nullptr;
@@ -46,9 +45,6 @@ void configure_engine(Json::Value& config)
 {
   if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
     config[AnkiUtil::kP_ADVERTISING_HOST_IP] = ROBOT_ADVERTISING_HOST_IP;
-  }
-  if(!config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
-    config[AnkiUtil::kP_VIZ_HOST_IP] = VIZ_HOST_IP;
   }
   if(!config.isMember(AnkiUtil::kP_ROBOT_ADVERTISING_PORT)) {
     config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT] = Anki::Cozmo::ROBOT_ADVERTISING_PORT;

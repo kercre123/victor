@@ -67,7 +67,9 @@ public:
 
   using AnimationCompleteCallback = std::function<void(const AnimResult res)>;
   
-  const std::string& GetAnimationNameFromGroup(const std::string& name) const;
+  // Set strictCooldown = true when we do NOT want to simply choose the animation closest
+  // to being off cooldown when all animations in the group are on cooldown
+  const std::string& GetAnimationNameFromGroup(const std::string& name, bool strictCooldown = false) const;
   
   // Tell animation process to play the specified animation
   // If a non-empty callback is specified, the actionTag of the calling action must be specified
