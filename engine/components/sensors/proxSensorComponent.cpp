@@ -45,6 +45,12 @@ void ProxSensorComponent::UpdateInternal(const RobotState& msg)
 {
   _lastMsgTimestamp = msg.timestamp;
   _latestData = msg.proxData;
+ 
+  // turn on the theremin if the distance sensor reports really close
+  if (_latestData.distance_mm > 0 &&
+      _latestData.distance_mm < 50) {
+    ActivateTheremin();
+  }
   
   UpdateTheremin();
   
@@ -210,6 +216,14 @@ void ProxSensorComponent::UpdateNavMap()
 void ProxSensorComponent::ActivateTheremin(const bool enable)
 {
   _thereminActive = enable;
+  
+  if (enable) {
+    _robot.GetAudioClient()->PostEvent(AudioMetaData::GameEvent::GenericEvent::Play__Robot_Sfx__Theremin_Loop_Play,
+                                       AudioMetaData::GameObjectType::Cozmo_OnDevice);
+  } else {
+    _robot.GetAudioClient()->PostEvent(AudioMetaData::GameEvent::GenericEvent::Stop__Robot_Sfx__Theremin_Loop_Stop,
+                                       AudioMetaData::GameObjectType::Cozmo_OnDevice);
+  }
 }
 
 
