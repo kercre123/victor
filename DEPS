@@ -8,7 +8,11 @@
                 "version": "140"
             },
             "cozmo-assets": {
+                "additional_files": [
+                    "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
+                ],
                 "allow_extra_files": "True",
+                "export_dirname": "animation-assets",
                 "extract_types_from_tar": [
                     ".json",
                     ".png"
@@ -18,15 +22,11 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "export_dirname": "animation-assets",
-                "additional_files": [
-                    "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
-                ],
                 "version": "2546"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "7"
+                "version": "11"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

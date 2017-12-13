@@ -42,8 +42,8 @@ enum uint_32 ParameterType
   Ss_Air_Storm = 3715662592,
   Ss_Air_Timeofday = 3203397129,
   Ss_Air_Turbulence = 4160247818,
-  Theremin_Pitch = 4000000000,
-  Theremin_Volume = 4000000001,
+  Theremin_Pitch = 3614757816,
+  Theremin_Volume = 640239972,
   Ui_Volume = 1719345792,
   Vo_Volume = 2295491857,
 }
