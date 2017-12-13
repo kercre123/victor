@@ -166,9 +166,9 @@ int parse_command_text(const char* command, int len)
   while (len > 0)  {
     const char* next_word = NULL;
     const CommandHandler* candidate = &handlers[0];
-    
+
 //    printf("HANDLING [ %.*s ] ...", len, command);
-    
+
     while (candidate->name) {
       if (len >= candidate->len &&
           strncmp(command, candidate->name, candidate->len)==0)
@@ -241,7 +241,10 @@ int gather_contact_text(const char* contactData, int len)
     char c = *contactData;
     if (c=='\n') {
       linebuf[linelen]='\0';
-      parse_command_text(linebuf, linelen);
+      //if has command header, process line
+      if (linelen>2 && linebuf[0]=='>' && linebuf[1]=='>')  {
+        parse_command_text(linebuf+2, linelen-2);
+      }
       linelen = 0;
     }
     else if (linelen < LINEBUFSZ) {
@@ -254,7 +257,7 @@ int gather_contact_text(const char* contactData, int len)
   }
   return 0;
 }
-  
+
 
 const void* get_a_frame(int32_t timeout_ms)
 {
@@ -282,7 +285,7 @@ void populate_outgoing_frame(void) {
   else {
     memset(gHeadData.motorPower, 0, sizeof(gHeadData.motorPower));
   }
-    
+
 }
 
 uint16_t show_legend(uint16_t mask) {
@@ -291,11 +294,11 @@ uint16_t show_legend(uint16_t mask) {
     printf("left_enc right_enc lift_enc head_enc ");
   }
   if (mask & (1<<show_SPEED)) {
-    printf("left_spd right_spd lift_spd head_spd ");      
+    printf("left_spd right_spd lift_spd head_spd ");
   }
   if (mask & (1<<show_CLIFF)) {
     printf("fl_cliff, fr_cliff, br_cliff, bl_cliff ");
-  }    
+  }
   if (mask & (1<<show_BAT)) {
     printf("bat ");
   }
@@ -308,7 +311,7 @@ uint16_t show_legend(uint16_t mask) {
   printf("\n");
   return mask;
 }
-  
+
 
 void process_incoming_frame(struct BodyToHead* bodyData)
 {
@@ -317,7 +320,7 @@ void process_incoming_frame(struct BodyToHead* bodyData)
     if (gCommander.printmask != oldmask) {
       oldmask = show_legend(gCommander.printmask);
     }
-      
+
     printf("%d ", bodyData->framecounter);
     if (gCommander.printmask & (1<<show_ENCODER)) {
       printf("%d %d %d %d ",
@@ -387,7 +390,7 @@ int main(int argc, const char* argv[])
 
   //kick off the body frames
   hal_send_frame(PAYLOAD_DATA_FRAME, &gHeadData, sizeof(gHeadData));
-  
+
   while (!exit)
   {
     exit = kbd_command_process();
@@ -408,11 +411,11 @@ int main(int argc, const char* argv[])
         gather_contact_text((char*)contactData->data, sizeof(contactData->data));
       }
     }
-    
+
   }
-  
+
   on_exit();
-  
+
   return 0;
 
 
