@@ -38,25 +38,6 @@
 
 #include <unordered_map>
 
-
-namespace {
-using namespace Anki::Cozmo::Audio;
-using namespace Anki::AudioMetaData;
-static const std::unordered_map< Anki::Cozmo::Audio::WorldObjectType,
-                                 Anki::AudioMetaData::GameObjectType,
-                                 Anki::Util::EnumHasher > WorldObjectMap
-{
-  { WorldObjectType::NoObject,  GameObjectType::Invalid },
-  { WorldObjectType::Robot,     GameObjectType::Cozmo_OnDevice },
-  { WorldObjectType::Block_1,   GameObjectType::Block_1 },
-  { WorldObjectType::Block_2,   GameObjectType::Block_2 },
-  { WorldObjectType::Block_3,   GameObjectType::Block_3 },
-  { WorldObjectType::Charger,   GameObjectType::Charger },
-};
-}
-
-
-
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
@@ -98,13 +79,6 @@ void ObjectLocationController::HandleMessage(const Anki::Cozmo::Audio::UpdateWor
 {
 //  printf("ObjectLocationController::HandleMessage(const Anki::Cozmo::Audio::UpdateWorldObjectPosition& msg)\n");
   
-  const auto& it = WorldObjectMap.find( msg.worldObject );
-  if ( it == WorldObjectMap.end() ) {
-    PRINT_NAMED_ERROR("ObjectLocationController.HandleMessage", "Can NOT find World Object Type %s",
-                      EnumToString( msg.worldObject ));
-    return;
-  }
- 
   // Translate to wwise coordinate system
   // From Right hand to Left
   AudioEngine::AudioPosition position;
@@ -113,18 +87,24 @@ void ObjectLocationController::HandleMessage(const Anki::Cozmo::Audio::UpdateWor
   position.position.y = 0.0f;
   
   // Translate orientation to vector
-  RotationMatrix2d matrix(msg.orientationRad);
-  Vec2f vector(1.f, 0.f);
-  Vec2f result = matrix * vector;
-//  result__.ToString();
-  
+  const RotationMatrix2d matrix(msg.orientationRad);
+  const Vec2f vector(1.f, 0.f);
+  const Vec2f result = matrix * vector;
   position.orientationFront.z = result.x();
   position.orientationFront.x = -result.y();
   position.orientationFront.y = 0.0f;
   position.orientationTop.y = 1.0f;
   position.orientationTop.x = position.orientationTop.z = 0.0f;
+  auto gameObj = (AudioMetaData::GameObjectType::Invalid == msg.gameObject) // Properly interpret invalid type
+                 ? AudioEngine::kInvalidAudioGameObject
+                 : AudioEngine::ToAudioGameObject(msg.gameObject);
   
-  _audioController.SetPosition( AudioEngine::ToAudioGameObject(it->second), position );
+  _audioController.SetPosition( gameObj, position );
+  
+  // Also update the Cozmo_OnDevice as the listener position
+  if (msg.gameObject == AudioMetaData::GameObjectType::Cozmo_OnDevice) {
+    _audioController.SetPosition( AudioEngine::kInvalidAudioGameObject, position );
+  }
 }
 
 

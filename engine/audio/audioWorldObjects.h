@@ -14,8 +14,12 @@
 
 //#include "audioEngine/multiplexer/audioMuxClient.h"
 //#include "engine/events/ankiEvent.h"
+
+#include "clad/audio/audioEventTypes.h"
+#include "clad/audio/audioGameObjectTypes.h"
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 
 namespace Anki {
@@ -27,11 +31,24 @@ namespace Audio {
 
 struct WorldObject
 {
-  bool IsActive = false;
-  bool DidUpdated = false;
-  uint8_t WorldObjectType = 0;
-  float Xpos = 0.0f;
-  float Ypos = 0.0f;
+  bool IsActive;
+  bool DidUpdate;
+  AudioMetaData::GameObjectType GameObject;
+  AudioMetaData::GameEvent::GenericEvent StartEvent;
+  AudioMetaData::GameEvent::GenericEvent EndEvent;
+  float Xpos;
+  float Ypos;
+  
+  WorldObject(AudioMetaData::GameObjectType gameObject,
+              AudioMetaData::GameEvent::GenericEvent startEvent,
+              AudioMetaData::GameEvent::GenericEvent endEvent)
+  : IsActive(false)
+  , DidUpdate(false)
+  , GameObject(gameObject)
+  , StartEvent(startEvent)
+  , EndEvent(endEvent)
+  , Xpos( 0.0f )
+  , Ypos( 0.0f ) { }
 };
 
 const int kBlockCount = 3;
@@ -49,10 +66,7 @@ private:
   Robot& _robot;
   std::unique_ptr<BlockWorldFilter> _blockFilter;
   
-  
-  WorldObject _blocks[kBlockCount];
-  
-  
+  std::unordered_map<int32_t, WorldObject> _objects;
 
 };
 

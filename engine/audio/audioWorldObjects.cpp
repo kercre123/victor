@@ -35,17 +35,29 @@ AudioWorldObjects::AudioWorldObjects( Robot& robot )
 , _blockFilter(new BlockWorldFilter())
 {
   _blockFilter->AddAllowedFamily(Anki::Cozmo::ObjectFamily::LightCube);
-  
-  _blocks[0].WorldObjectType = (int8_t)Audio::WorldObjectType::Block_1;
-  _blocks[1].WorldObjectType = (int8_t)Audio::WorldObjectType::Block_2;
-  _blocks[2].WorldObjectType = (int8_t)Audio::WorldObjectType::Block_3;
-  
-//  _blockActive[0].ob
+  // Setup world objects
+  using namespace AudioMetaData;
+  using namespace AudioMetaData::GameEvent;
+  _objects.emplace(std::piecewise_construct,
+                   std::forward_as_tuple((int32_t)ObjectType::Block_LIGHTCUBE1),
+                   std::forward_as_tuple(WorldObject(GameObjectType::Block_1,
+                                                     GenericEvent::Play__Sfx__Three_D_Generic_Object_01,
+                                                     GenericEvent::Stop__Sfx__Three_D_Generic_Object_01)));
+  _objects.emplace(std::piecewise_construct,
+                   std::forward_as_tuple((int32_t)ObjectType::Block_LIGHTCUBE2),
+                   std::forward_as_tuple(WorldObject(GameObjectType::Block_2,
+                                                     GenericEvent::Play__Sfx__Three_D_Generic_Object_02,
+                                                     GenericEvent::Stop__Sfx__Three_D_Generic_Object_02)));
+  _objects.emplace(std::piecewise_construct,
+                   std::forward_as_tuple((int32_t)ObjectType::Block_LIGHTCUBE3),
+                   std::forward_as_tuple(WorldObject(GameObjectType::Block_3,
+                                                     GenericEvent::Play__Sfx__Three_D_Generic_Object_03,
+                                                     GenericEvent::Stop__Sfx__Three_D_Generic_Object_03)));
 }
 
 void UpdateWorldObject(const ObservableObject* activeObj, WorldObject& worldObj)
 {
-  worldObj.DidUpdated = true;
+  worldObj.DidUpdate = true;
   const auto& translation = activeObj->GetPose().GetTranslation();
   worldObj.Xpos = translation.x();
   worldObj.Ypos = translation.y();
@@ -53,7 +65,7 @@ void UpdateWorldObject(const ObservableObject* activeObj, WorldObject& worldObj)
   
 void AudioWorldObjects::Update()
 {
-  printf("\nAudioWorldObjects::Update\n");
+//  printf("\nAudioWorldObjects::Update\n");
   // Get Robot Location
   const Pose3d& robotOrgin = _robot.GetPose();
   const auto& translation = robotOrgin.GetTranslation();
@@ -61,21 +73,20 @@ void AudioWorldObjects::Update()
   posMsg.xPos = translation.x();
   posMsg.yPos = translation.y();
   posMsg.orientationRad = robotOrgin.GetRotationAngle<'Z'>().ToFloat();;
-  posMsg.worldObject = Audio::WorldObjectType::Robot;
+  posMsg.gameObject = AudioMetaData::GameObjectType::Cozmo_OnDevice;
   _robot.SendMessage(RobotInterface::EngineToRobot(std::move( posMsg )));
   
-  printf("\nAudioWorldObjects.Update.Robot Pos X %f   Y %f\n", translation.x(), translation.y());
+//  printf("\nAudioWorldObjects.Update.Robot Pos X %f   Y %f\n", translation.x(), translation.y());
   
   
   // Get Blocks in World Objects
   std::vector<const ObservableObject*> blocks;
-//  _robot.GetBlockWorld().GetLocatedObjectByID(<#const Anki::ObjectID &objectID#>)
   _robot.GetBlockWorld().FindLocatedMatchingObjects(*_blockFilter.get(), blocks);
   
   for (const ObservableObject* activeObj : blocks) {
-    printf("\nActive Obj Id %d Family %s Type %s validPose %c\n", activeObj->GetID().GetValue(),
-           EnumToString(activeObj->GetFamily()), EnumToString(activeObj->GetType()),
-           activeObj->HasValidPose() ? 'Y' : 'N');
+//    printf("\nActive Obj Id %d Family %s Type %s validPose %c\n", activeObj->GetID().GetValue(),
+//           EnumToString(activeObj->GetFamily()), EnumToString(activeObj->GetType()),
+//           activeObj->HasValidPose() ? 'Y' : 'N');
     
     if ( !activeObj->HasValidPose() ) {
       continue;
@@ -83,18 +94,13 @@ void AudioWorldObjects::Update()
     
     switch (activeObj->GetType()) {
       case ObjectType::Block_LIGHTCUBE1:
-      {
-        UpdateWorldObject(activeObj, _blocks[0]);
-      }
-        break;
       case ObjectType::Block_LIGHTCUBE2:
-      {
-        UpdateWorldObject(activeObj, _blocks[1]);
-      }
-        break;
       case ObjectType::Block_LIGHTCUBE3:
       {
-        UpdateWorldObject(activeObj, _blocks[2]);
+        const auto it = _objects.find((int32_t)activeObj->GetType());
+        if (it != _objects.end()) {
+          UpdateWorldObject( activeObj, it->second );
+        }
       }
         break;
       default:
@@ -103,27 +109,28 @@ void AudioWorldObjects::Update()
   }
   
   // Send Block messages
-  for (int idx = 0; idx < kBlockCount; ++idx) {
-    auto& block = _blocks[idx];
-    if (block.DidUpdated) {
+  for (auto& pairIt : _objects)
+  {
+    auto& obj = pairIt.second;
+    if (obj.DidUpdate) {
       Audio::UpdateWorldObjectPosition posMsg;
-      posMsg.xPos = block.Xpos;
-      posMsg.yPos = block.Ypos;
+      posMsg.xPos = obj.Xpos;
+      posMsg.yPos = obj.Ypos;
       posMsg.orientationRad = 0;
-      posMsg.worldObject = (Audio::WorldObjectType)block.WorldObjectType;
+      posMsg.gameObject = obj.GameObject;
       _robot.SendMessage(RobotInterface::EngineToRobot(std::move( posMsg )));
-      if (!block.IsActive) {
-//        _robot.GetAudioClient()->PostEvent(AudioMetaData::GameEvent::GenericEvent::Invalid,  // START
-//                                           AudioMetaData::GameObjectType::Cozmo_OnDevice);
-        block.IsActive = true;
+      if (!obj.IsActive) {
+        _robot.GetAudioClient()->PostEvent(obj.StartEvent,  // START
+                                           obj.GameObject); //AudioMetaData::GameObjectType::Cozmo_OnDevice);// obj.GameObject);
+        obj.IsActive = true;
       }
     }
     // Object was not found
     else {
-      if (block.IsActive) {
-//        _robot.GetAudioClient()->PostEvent(AudioMetaData::GameEvent::GenericEvent::Invalid,  // STOP
-//                                           AudioMetaData::GameObjectType::Cozmo_OnDevice);
-        block.IsActive = false;
+      if (obj.IsActive) {
+        _robot.GetAudioClient()->PostEvent(obj.EndEvent,   // STOP
+                                           obj.GameObject);
+        obj.IsActive = false;
       }
     }
   }
