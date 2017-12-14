@@ -318,15 +318,6 @@ if(ANDROID_TOOLCHAIN STREQUAL clang)
 	set(ANDROID_LLVM_TOOLCHAIN_PREFIX "${ANDROID_NDK}/toolchains/llvm/prebuilt/${ANDROID_HOST_TAG}/bin/")
 	set(ANDROID_C_COMPILER   "${ANDROID_LLVM_TOOLCHAIN_PREFIX}clang${ANDROID_TOOLCHAIN_SUFFIX}")
 	set(ANDROID_CXX_COMPILER "${ANDROID_LLVM_TOOLCHAIN_PREFIX}clang++${ANDROID_TOOLCHAIN_SUFFIX}")
-	# Clang can fail to compile if CMake doesn't correctly supply the target and
-	# external toolchain, but to do so, CMake needs to already know that the
-	# compiler is clang. Tell CMake that the compiler is really clang, but don't
-	# use CMakeForceCompiler, since we still want compile checks. We only want
-	# to skip the compiler ID detection step.
-	set(CMAKE_C_COMPILER_ID_RUN TRUE)
-	set(CMAKE_CXX_COMPILER_ID_RUN TRUE)
-	set(CMAKE_C_COMPILER_ID Clang)
-	set(CMAKE_CXX_COMPILER_ID Clang)
 	set(CMAKE_C_COMPILER_TARGET   ${ANDROID_LLVM_TRIPLE})
 	set(CMAKE_CXX_COMPILER_TARGET ${ANDROID_LLVM_TRIPLE})
 	set(CMAKE_C_COMPILER_EXTERNAL_TOOLCHAIN   "${ANDROID_TOOLCHAIN_ROOT}")
@@ -578,6 +569,15 @@ endif()
 set(CMAKE_C_COMPILER        "${ANDROID_C_COMPILER}")
 set(CMAKE_CXX_COMPILER      "${ANDROID_CXX_COMPILER}")
 set(_CMAKE_TOOLCHAIN_PREFIX "${ANDROID_TOOLCHAIN_PREFIX}")
+
+# Run the compiler ID checks before we set flags.
+# When passed the `-march=` flag, Clang can fail to compile if CMake doesn't
+# correctly supply the target and external toolchain, but to do so, CMake
+# needs to already know that the compiler is Clang. Tell CMake to run the
+# compiler ID detection step before we set Android flags.
+# See https://gitlab.kitware.com/cmake/cmake/issues/16587
+include(CMakeDetermineCCompiler)
+include(CMakeDetermineCXXCompiler)
 
 # Set or retrieve the cached flags.
 # This is necessary in case the user sets/changes flags in subsequent
