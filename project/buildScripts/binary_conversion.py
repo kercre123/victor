@@ -1,10 +1,15 @@
+"""
+IMPORTANT: This version of binary_conversion.py is now specific to Victor,
+so it should NOT be used for the original Cozmo because, for example, this
+version strips out the Left and Right backpack light data.
+"""
 
 BODY_MOTION_TRACK = "BodyMotionKeyFrame"
-
 ROBOT_AUDIO_TRACK = "RobotAudioKeyFrame"
+BACKPACK_LIGHT_TRACK = "BackpackLightsKeyFrame"
 
 ALL_TRACKS = ["LiftHeightKeyFrame", "HeadAngleKeyFrame", "ProceduralFaceKeyFrame",
-              "BackpackLightsKeyFrame", "FaceAnimationKeyFrame", "EventKeyFrame",
+              BACKPACK_LIGHT_TRACK, "FaceAnimationKeyFrame", "EventKeyFrame",
               ROBOT_AUDIO_TRACK, BODY_MOTION_TRACK, "RecordHeadingKeyFrame", "TurnToRecordedHeadingKeyFrame"]
 
 BODY_RADIUS_ATTR = "radius_mm"
@@ -26,6 +31,8 @@ CLIPS_ATTR = "clips"
 BIN_FILE_EXT = ".bin"
 
 OLD_ANIM_TOOL_ATTRS = ["$type", "pathFromRoot"]
+
+OLD_BACKPACK_LIGHT_ATTRS = ["Left", "Right"]
 
 
 import sys
@@ -118,6 +125,15 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
             except KeyError:
                 pass
 
+        if track == BACKPACK_LIGHT_TRACK:
+            # Many old anim files will have "Left" and "Right" backpack lights,
+            # but we need to strip those out for Victor
+            for old_attr in OLD_BACKPACK_LIGHT_ATTRS:
+                try:
+                    keyframe.pop(old_attr)
+                except KeyError:
+                    pass
+
         if track == ROBOT_AUDIO_TRACK:
             # Some old anim files have an "durationTime_ms" attribute for audio keyframes, but those
             # aren't used anymore and thus not defined in the schema, so they are removed here.
@@ -185,6 +201,7 @@ def convert_json_to_binary(file_path, flatc_dir, schema_file, bin_file_ext):
     if not os.path.isfile(output_file) or exit_status != 0:
         raise ValueError("Unable to successfully generate binary file %s (exit status "
                          "of external process = %s)" % (output_file, exit_status))
+    #print("Converted %s to %s" % (file_path, output_file))
     return output_file
 
 
