@@ -38,6 +38,7 @@ struct WorldObject
   AudioMetaData::GameEvent::GenericEvent EndEvent;
   float Xpos;
   float Ypos;
+  float OrientationRad;
   
   WorldObject(AudioMetaData::GameObjectType gameObject,
               AudioMetaData::GameEvent::GenericEvent startEvent,
@@ -48,7 +49,8 @@ struct WorldObject
   , StartEvent(startEvent)
   , EndEvent(endEvent)
   , Xpos( 0.0f )
-  , Ypos( 0.0f ) { }
+  , Ypos( 0.0f )
+  , OrientationRad( 0.0f ) { }
 };
 
 const int kBlockCount = 3;

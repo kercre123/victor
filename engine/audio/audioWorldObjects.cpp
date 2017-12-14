@@ -9,18 +9,12 @@
 
 #include "engine/audio/audioWorldObjects.h"
 #include "engine/audio/engineRobotAudioClient.h"
-//#include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/activeObject.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
-//#include "engine/robotManager.h"
-//#include "engine/robotInterface/messageHandler.h"
-//#include "clad/externalInterface/messageGameToEngine.h"
-//#include "clad/robotInterface/messageEngineToRobot.h"
-//#include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/logging/logging.h"
 
 
@@ -72,7 +66,7 @@ void AudioWorldObjects::Update()
   Audio::UpdateWorldObjectPosition posMsg;
   posMsg.xPos = translation.x();
   posMsg.yPos = translation.y();
-  posMsg.orientationRad = robotOrgin.GetRotationAngle<'Z'>().ToFloat();;
+  posMsg.orientationRad = robotOrgin.GetRotationAngle<'Z'>().ToFloat();
   posMsg.gameObject = AudioMetaData::GameObjectType::Cozmo_OnDevice;
   _robot.SendMessage(RobotInterface::EngineToRobot(std::move( posMsg )));
   
@@ -97,9 +91,15 @@ void AudioWorldObjects::Update()
       case ObjectType::Block_LIGHTCUBE2:
       case ObjectType::Block_LIGHTCUBE3:
       {
+        // Find type and set
         const auto it = _objects.find((int32_t)activeObj->GetType());
         if (it != _objects.end()) {
-          UpdateWorldObject( activeObj, it->second );
+          WorldObject& worldObj = it->second;
+          worldObj.DidUpdate = true;
+          const auto& translation = activeObj->GetPose().GetTranslation();
+          worldObj.Xpos = translation.x();
+          worldObj.Ypos = translation.y();
+          worldObj.OrientationRad = activeObj->GetPose().GetRotationAngle<'Z'>().ToFloat();
         }
       }
         break;
@@ -116,26 +116,24 @@ void AudioWorldObjects::Update()
       Audio::UpdateWorldObjectPosition posMsg;
       posMsg.xPos = obj.Xpos;
       posMsg.yPos = obj.Ypos;
-      posMsg.orientationRad = 0;
+      posMsg.orientationRad = obj.OrientationRad;
       posMsg.gameObject = obj.GameObject;
       _robot.SendMessage(RobotInterface::EngineToRobot(std::move( posMsg )));
       if (!obj.IsActive) {
-        _robot.GetAudioClient()->PostEvent(obj.StartEvent,  // START
-                                           obj.GameObject); //AudioMetaData::GameObjectType::Cozmo_OnDevice);// obj.GameObject);
+        // Start
+        _robot.GetAudioClient()->PostEvent(obj.StartEvent, obj.GameObject);
         obj.IsActive = true;
       }
     }
     // Object was not found
     else {
       if (obj.IsActive) {
-        _robot.GetAudioClient()->PostEvent(obj.EndEvent,   // STOP
-                                           obj.GameObject);
+        // End
+        _robot.GetAudioClient()->PostEvent(obj.EndEvent, obj.GameObject);
         obj.IsActive = false;
       }
     }
   }
-  
-  
   
 }
 
