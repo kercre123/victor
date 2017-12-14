@@ -1,10 +1,15 @@
+"""
+IMPORTANT: This version of binary_conversion.py is specific to the original
+Cozmo project and a separate version has been forked for Victor since that,
+for example, strips out the Left and Right backpack light data.
+"""
 
 BODY_MOTION_TRACK = "BodyMotionKeyFrame"
-
 ROBOT_AUDIO_TRACK = "RobotAudioKeyFrame"
+BACKPACK_LIGHT_TRACK = "BackpackLightsKeyFrame"
 
 ALL_TRACKS = ["LiftHeightKeyFrame", "HeadAngleKeyFrame", "ProceduralFaceKeyFrame",
-              "BackpackLightsKeyFrame", "FaceAnimationKeyFrame", "EventKeyFrame",
+              BACKPACK_LIGHT_TRACK, "FaceAnimationKeyFrame", "EventKeyFrame",
               ROBOT_AUDIO_TRACK, BODY_MOTION_TRACK, "RecordHeadingKeyFrame", "TurnToRecordedHeadingKeyFrame"]
 
 BODY_RADIUS_ATTR = "radius_mm"
@@ -185,6 +190,7 @@ def convert_json_to_binary(file_path, flatc_dir, schema_file, bin_file_ext):
     if not os.path.isfile(output_file) or exit_status != 0:
         raise ValueError("Unable to successfully generate binary file %s (exit status "
                          "of external process = %s)" % (output_file, exit_status))
+    #print("Converted %s to %s" % (file_path, output_file))
     return output_file
 
 
