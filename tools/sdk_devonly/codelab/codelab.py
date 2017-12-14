@@ -1487,11 +1487,11 @@ _default_to_vertical_grammar = not (command_args.show_horizontal or command_args
 _code_lab = CodeLabInterface(_default_to_vertical_grammar)
 
 
-def load_coadlab_file(file_contents):
+def load_codelab_file(file_contents):
     unencoded_contents = urllib.parse.unquote_plus(file_contents)
 
     if not unencoded_contents.startswith(CODELAB_FILE_HEADER):
-        log_text("Error: load_coadlab_file - file doesn't start with %s" % CODELAB_FILE_HEADER)
+        log_text("Error: load_codelab_file - file doesn't start with %s" % CODELAB_FILE_HEADER)
         return None
 
     unencoded_contents = unencoded_contents[len(CODELAB_FILE_HEADER):]
@@ -1499,7 +1499,7 @@ def load_coadlab_file(file_contents):
     try:
         json_contents = json.loads(unencoded_contents)
     except json.decoder.JSONDecodeError as e:
-        log_text("load_coadlab_file: Decode error: %s" % e)
+        log_text("load_codelab_file: Decode error: %s" % e)
         log_text("unencoded_contents = [%s]" % unencoded_contents)
         return None
 
@@ -1511,6 +1511,7 @@ def save_codelab_file(project_data):
     project_uuid = project_data["ProjectUUID"]
 
     project_filename = project_name.replace(" ", "_")
+    project_filename = project_filename.replace("/", "_")
     project_extension = ".codelab"
     filename = project_filename + project_extension
     suffix = 1
@@ -1741,6 +1742,47 @@ def enable_all_log_channels(conn, enable=True):
         enable_log_channel(conn, channel_name, enable)
 
 
+def export_codelab_files(file_id):
+    if file_id == "all":
+        log_text("Exporting all user projects:")
+        for key, project_data in _code_lab._user_projects.items():
+            save_codelab_file(project_data)
+
+        log_text("Exporting all sample projects:")
+        for key, project_data in _code_lab._sample_projects.items():
+            is_vertical = js_bool_to_python_bool(project_data["IsVertical"])
+            if is_vertical:
+                save_codelab_file(project_data)
+
+        log_text("Exporting all featured projects:")
+        for key, project_data in _code_lab._featured_projects.items():
+            save_codelab_file(project_data)
+
+        return
+
+    project_data = None
+    if len(file_id) == 36 and file_id.count("-") == 4:
+        # file_id looks like a valid UUID - try looking up by it directly
+        try:
+            project_data = _code_lab._user_projects[file_id]
+        except KeyError:
+            log_text("Error: Export: no project with UUID %s" % file_id)
+
+    if project_data is None:
+        file_id_lower = file_id.lower()
+        # Fall back to finding by project name
+        for key, value in _code_lab._user_projects.items():
+            if value["ProjectName"].lower() == file_id_lower:
+                #project_uuid = key
+                project_data = value
+                break
+
+    if project_data:
+        save_codelab_file(project_data)
+    else:
+        sys.exit("Export failed to find project matching UUID or name to '%s'" % file_id)
+
+
 if __name__ == '__main__':
     cozmo.robot.Robot.drive_off_charger_on_connect = False
 
@@ -1749,7 +1791,7 @@ if __name__ == '__main__':
         try:
             with open(filename) as data_file:
                 file_contents = data_file.read()
-                project_data = load_coadlab_file(file_contents)
+                project_data = load_codelab_file(file_contents)
                 project_uuid = project_data["ProjectUUID"]
                 project_name = project_data["ProjectName"]
                 _code_lab._save_project(project_uuid, project_data)
@@ -1758,28 +1800,7 @@ if __name__ == '__main__':
             log_text("Error file '%s' not found" % filename)
 
     if command_args.export_codelab_file is not None:
-        file_id = command_args.export_codelab_file
-        project_data = None
-        if len(file_id) == 36 and file_id.count("-") == 4:
-            # file_id looks like a valid UUID - try looking up by it directly
-            try:
-                project_data = _code_lab._user_projects[file_id]
-            except KeyError:
-                log_text("Error: Export: no project with UUID %s" % file_id)
-
-        if project_data is None:
-            file_id_lower = file_id.lower()
-            # Fall back to finding by project name
-            for key, value in _code_lab._user_projects.items():
-                if value["ProjectName"].lower() == file_id_lower:
-                    project_uuid = key
-                    project_data = value
-                    break
-
-        if project_data:
-            save_codelab_file(project_data)
-        else:
-            sys.exit("Export failed to find project matching UUID or name to '%s'" % file_id)
+        export_codelab_files(command_args.export_codelab_file)
 
     if (command_args.source_clone_uuid is not None) and (command_args.destination_clone_uuid is not None):
         try:
