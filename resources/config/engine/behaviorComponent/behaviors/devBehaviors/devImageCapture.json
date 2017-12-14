@@ -1,0 +1,10 @@
+{
+  "behaviorID" : "DevImageCapture",
+  "behaviorClass": "DevImageCapture",
+
+  // path to save the images on the robot relative to "<reourceCacheDir>/camera/images"
+  "save_path": "dev_capture",
+
+  // image quality: [1-100]:JPEG quality, -1: use PNG
+  "quality": 75
+}

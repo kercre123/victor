@@ -254,6 +254,9 @@ struct DockingErrorSignal;
     Result LoadFaceAlbumFromFile(const std::string& path); // Broadcasts any loaded names and IDs
     Result LoadFaceAlbumFromFile(const std::string& path, std::list<Vision::LoadedKnownFace>& loadedFaces); // Populates list, does not broadcast
     
+    // See VisionSystem::SetSaveParameters for details on the arguments
+    void SetSaveImageParameters(const ImageSendMode saveMode, const std::string& path, const int8_t onRobotQuality);
+
     // This is for faking images being processed for unit tests
     void FakeImageProcessed(TimeStamp_t t);
     

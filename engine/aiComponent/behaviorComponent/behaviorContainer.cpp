@@ -34,6 +34,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorWait.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevPettingTestSimple.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTurnInPlaceTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDockingTestSimple.h"
@@ -736,6 +737,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::DriveInDesperation:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDriveInDesperation(config));
+      break;
+    }
+    case BehaviorClass::DevImageCapture:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDevImageCapture(config));
       break;
     }
 

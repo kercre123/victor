@@ -2397,26 +2397,33 @@ namespace Cozmo {
     }
   }
   
-  template<>
-  void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
+  void VisionComponent::SetSaveImageParameters(const ImageSendMode saveMode,
+                                               const std::string& path,
+                                               const int8_t onRobotQuality)
   {
     if(nullptr != _visionSystem)
     {
       const std::string cachePath = _robot.GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
 
-      _visionSystem->SetSaveParameters(payload.mode, 
-                                       Util::FileUtils::FullFilePath({cachePath, "images", payload.path}), 
-                                       payload.qualityOnRobot);
+      _visionSystem->SetSaveParameters(saveMode, 
+                                       Util::FileUtils::FullFilePath({cachePath, "images", path}), 
+                                       onRobotQuality);
 
-      if(payload.mode != ImageSendMode::Off)
+      if(saveMode != ImageSendMode::Off)
       {
         EnableMode(VisionMode::SavingImages, true);  
       }
 
       PRINT_CH_DEBUG("VisionComponent", "VisionComponent.HandleMessage.SaveImages",
                "Setting image save mode to %s",
-               EnumToString(payload.mode));
+               EnumToString(saveMode));
     }
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
+  {
+    SetSaveImageParameters(payload.mode, payload.path, payload.qualityOnRobot);
   }
 
   template<>
