@@ -19,6 +19,7 @@
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/cameraFOVInfo.clad"
 #include "clad/types/motorTypes.clad"
+#include "clad/audio/audioPositionMessage.clad" // R&D
 
 
 namespace Anki {
@@ -450,6 +451,10 @@ union EngineToRobot
   AudioEngine::Multiplexer::PostAudioGameState    postAudioGameState   = 0x72,
   AudioEngine::Multiplexer::PostAudioSwitchState  postAudioSwitchState = 0x73,
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
+
+  // R&D - JMR
+  Audio::AddRemoveWorldObject       addRemoveWorldObject      = 0x75,
+  Audio::UpdateWorldObjectPosition  updateWorldObjectPosition = 0x76,
 
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,

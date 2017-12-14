@@ -13,6 +13,7 @@
  **/
 
 #include "cozmoAnim/audio/cozmoAudioController.h"
+#include "cozmoAnim/audio/objectLocationController.h" // R&D
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "audioEngine/audioScene.h"
 #include "audioEngine/soundbankLoader.h"
@@ -92,6 +93,7 @@ CONSOLE_FUNC( SetWriteAudioOutputCapture, "CozmoAudioController", bool writeOutp
 // CozmoAudioController
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
+: _objectLocController(new ObjectLocationController(*this))
 {
 #if USE_AUDIO_ENGINE
   {
@@ -158,6 +160,8 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
     }
     
     RegisterCladGameObjectsWithAudioController();
+    
+    _objectLocController->ObjectLocationControllerInit();
   }
   if (sThis == nullptr) {
     sThis = this;

@@ -25,6 +25,8 @@ class SoundbankLoader;
 namespace Cozmo {
 class CozmoAnimContext;
 namespace Audio {
+  
+class ObjectLocationController;
 
 
 class CozmoAudioController : public AudioEngine::AudioEngineController
@@ -40,11 +42,16 @@ public:
   bool WriteProfilerCapture( bool write );
   // Save session audio output to a file
   bool WriteAudioOutputCapture( bool write );
+  
+  
+  // R&D
+  ObjectLocationController& GetObjectLocationController() { return *_objectLocController.get(); }
 
 
 private:
   
   std::unique_ptr<AudioEngine::SoundbankLoader> _soundbankLoader;
+  std::unique_ptr<ObjectLocationController>     _objectLocController;  // R&D
   
   // Register CLAD Game Objects
   void RegisterCladGameObjectsWithAudioController();

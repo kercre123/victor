@@ -1,0 +1,38 @@
+
+#include "clad/audio/audioGameObjectTypes.clad"
+
+namespace Anki {
+namespace Cozmo {
+namespace Audio {
+
+
+enum uint_8 WorldObjectType
+{
+  NoObject = 0,
+  Robot,
+  Block_1,
+  Block_2,
+  Block_3,
+  Charger
+}
+
+message AddRemoveWorldObject
+{
+  WorldObjectType newObject,
+  bool            addObject,
+}
+
+
+message UpdateWorldObjectPosition
+{
+  float_32        xPos = 0.0,
+  float_32        yPos = 0.0,
+  float_32        orientationRad = 0.0,
+  WorldObjectType worldObject,
+}
+
+
+
+} // Audio
+} // Cozmo
+} // Anki

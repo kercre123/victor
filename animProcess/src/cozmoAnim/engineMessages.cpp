@@ -17,6 +17,10 @@
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animation/cannedAnimationContainer.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
+
+#include "cozmoAnim/audio/cozmoAudioController.h"       // R&D
+#include "cozmoAnim/audio/objectLocationController.h"   // R&D
+
 #include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/micDataProcessor.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
@@ -189,6 +193,16 @@ namespace Messages {
   void Process_postAudioParameter(const Anki::AudioEngine::Multiplexer::PostAudioParameter& msg)
   {
     _audioInput->HandleMessage(msg);
+  }
+  
+  // R&D
+  void Process_addRemoveWorldObject(const Anki::Cozmo::Audio::AddRemoveWorldObject& msg)
+  {
+    _context->GetAudioController()->GetObjectLocationController().HandleMessage(msg);
+  }
+  void Process_updateWorldObjectPosition(const Anki::Cozmo::Audio::UpdateWorldObjectPosition& msg)
+  {
+    _context->GetAudioController()->GetObjectLocationController().HandleMessage(msg);
   }
   
   void Process_setDebugConsoleVarMessage(const Anki::Cozmo::RobotInterface::SetDebugConsoleVarMessage& msg)

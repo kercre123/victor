@@ -104,6 +104,7 @@ class MicDirectionHistory;
 
 namespace Audio {
   class EngineRobotAudioClient;
+  class AudioWorldObjects;
 }
   
 namespace RobotInterface {
@@ -715,6 +716,7 @@ protected:
 
   ///////// Audio /////////
   std::unique_ptr<Audio::EngineRobotAudioClient> _audioClient;
+  std::unique_ptr<Audio::AudioWorldObjects>     _audioWorldObjects;
 
   // handles planning and path following
   std::unique_ptr<PathComponent> _pathComponent;

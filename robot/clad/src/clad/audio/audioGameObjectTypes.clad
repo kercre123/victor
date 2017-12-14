@@ -18,6 +18,12 @@ enum uint_32 GameObjectType
   CozmoBus_3,
   CozmoBus_4,
 
+  // R&D
+  Block_1,
+  Block_2,
+  Block_3,
+  Charger,
+
   End, // Need end val so I can enumerate through GameObjects
 
 }

@@ -24,6 +24,7 @@
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/engineRobotAudioClient.h"
+#include "engine/audio/audioWorldObjects.h"   // R&D
 #include "engine/block.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -173,6 +174,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _petWorld(new PetWorld(*this))
   , _publicStateBroadcaster(new PublicStateBroadcaster())
   , _audioClient(new Audio::EngineRobotAudioClient())
+  , _audioWorldObjects(new Audio::AudioWorldObjects(*this))     // R&D
   , _pathComponent(new PathComponent(*this, robotID, context))
   , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
   , _actionList(new ActionList(*this))
@@ -1484,7 +1486,13 @@ Result Robot::Update()
   // so that relevant information is forwarded along to whoever's listening for
   // state changes
   _publicStateBroadcaster->Update(*this);
+  
+  
+  // R&D - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  _audioWorldObjects->Update();
+  
+  // R&D - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   if( kDebugPossibleBlockInteraction ) {
     // print a bunch of info helpful for debugging block states
