@@ -40,7 +40,7 @@
     "translation" : "Du siehst kein Passwort? Dann tippe auf:"
   },
   "wifiStrings.Instructions.Slide3altCopy2" : {
-    "translation" : "Verwende ausschließlich Großbuchstaben und keine Leerzeichen. Bei Bedarf kannst du Bindestriche nutzen."
+    "translation" : "• Verwende für alle gezeigten Buchstaben die Großschreibung.\u000a• Gib keine Leerzeichen ein.\u000a• Falls Bindestriche verwendet werden, gib diese ebenfalls ein."
   },
   "wifiStrings.Instructions.Slide3.5" : {
     "translation" : "Cozmo stellt keine Internetverbindung bereit."

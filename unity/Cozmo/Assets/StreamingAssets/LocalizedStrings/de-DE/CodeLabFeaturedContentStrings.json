@@ -257,5 +257,392 @@
   },
   "codeLabFeaturedProject.LightShow.selected_music" : {
     "translation" : "Ausgewählte Musik"
+  },
+  "codeLabFeaturedProject.PuttPutt.cozmo_face_pixel_x" : {
+    "translation" : "Cozmo-Gesichtspixel (x)"
+  },
+  "codeLabFeaturedProject.PuttPutt.cozmo_face_pixel_y" : {
+    "translation" : "Cozmo-Gesichtspixel (y)"
+  },
+  "codeLabFeaturedProject.PuttPutt.hole_position_x" : {
+    "translation" : "Lochposition (x)"
+  },
+  "codeLabFeaturedProject.PuttPutt.hole_position_y" : {
+    "translation" : "Lochposition (y)"
+  },
+  "codeLabFeaturedProject.PuttPutt.hole_size" : {
+    "translation" : "Lochgröße"
+  },
+  "codeLabFeaturedProject.PuttPutt.current_hole" : {
+    "translation" : "Aktuelles Loch"
+  },
+  "codeLabFeaturedProject.PuttPutt.max_hole" : {
+    "translation" : "Maximale Lochgröße"
+  },
+  "codeLabFeaturedProject.PuttPutt._hold_me_facing_the_ceiling" : {
+    "translation" : " Halte mich so, dass ich zur Decke sehe."
+  },
+  "codeLabFeaturedProject.PuttPutt.to_play_tilt_me_to_get_the_ball_in_the_hole" : {
+    "translation" : "Zum Spielen kannst du mich einfach neigen, um den Ball in das Loch zu bringen."
+  },
+  "codeLabFeaturedProject.PuttPutt.great_game" : {
+    "translation" : "Tolles Spiel!"
+  },
+  "codeLabFeaturedProject.PuttPutt.main_game_loop" : {
+    "translation" : "Hauptspielschleife."
+  },
+  "codeLabFeaturedProject.PuttPutt.called_each_round_to_set_hole_size_and_position" : {
+    "translation" : "Wird in jeder Runde aufgerufen, um Größe und Position des Lochs festzulegen."
+  },
+  "codeLabFeaturedProject.PuttPutt.text" : {
+    "translation" : "Text"
+  },
+  "codeLabFeaturedProject.PuttPutt.hole_" : {
+    "translation" : "Loch "
+  },
+  "codeLabFeaturedProject.PuttPutt.cozmo" : {
+    "translation" : "Cozmo"
+  },
+  "codeLabFeaturedProject.PuttPutt.anki" : {
+    "translation" : "Anki"
+  },
+  "codeLabFeaturedProject.PuttPutt._of_" : {
+    "translation" : " von "
+  },
+  "codeLabFeaturedProject.PuttPutt.please_put_me_down_on_a_flat_surface" : {
+    "translation" : "Bitte setze mich auf eine ebene Oberfläche."
+  },
+  "codeLabFeaturedProject.PuttPutt.timer" : {
+    "translation" : "Timer"
+  },
+  "codeLabFeaturedProject.PuttPutt.great_game_you_finished_in" : {
+    "translation" : "Tolles Spiel! Deine Zeit:"
+  },
+  "codeLabFeaturedProject.PuttPutt._seconds" : {
+    "translation" : " Sekunden"
+  },
+  "codeLabFeaturedProject.PuttPutt.start_and_keep_track_of_the_game_timer" : {
+    "translation" : "Beginne und behalte den Spiel-Timer im Auge."
+  },
+  "codeLabFeaturedProject.PuttPutt.sets_up_the_default_values" : {
+    "translation" : "Legt die Standardwerte fest."
+  },
+  "codeLabFeaturedProject.PuttPutt.finished_in" : {
+    "translation" : "Zeit:"
+  },
+  "codeLabFeaturedProject.CozmoFlies.cozmo_pitch_a" : {
+    "translation" : "Cozmo-Drehung A (Querachse)"
+  },
+  "codeLabFeaturedProject.CozmoFlies.cozmo_pitch_b" : {
+    "translation" : "Cozmo-Drehung B (Querachse)"
+  },
+  "codeLabFeaturedProject.CozmoFlies.cozmo_roll_a" : {
+    "translation" : "Cozmo-Drehung A (Längsachse)"
+  },
+  "codeLabFeaturedProject.CozmoFlies.cozmo_roll_b" : {
+    "translation" : "Cozmo-Drehung B (Längsachse)"
+  },
+  "codeLabFeaturedProject.CozmoFlies.cozmo_yaw_a" : {
+    "translation" : "Cozmo-Drehung A (Vertikalachse)"
+  },
+  "codeLabFeaturedProject.CozmoFlies.cozmo_yaw_b" : {
+    "translation" : "Cozmo-Drehung B (Vertikalachse)"
+  },
+  "codeLabFeaturedProject.CozmoFlies.cozmo_reacts_to_position_changes_while_in_the_air" : {
+    "translation" : "Während Cozmo in der Luft ist, reagiert er auf Positionsänderungen."
+  },
+  "codeLabFeaturedProject.CozmoFlies.cozmo_asks_to_be_picked_up_and_waits" : {
+    "translation" : "Cozmo bittet den Spieler, ihn hochzuheben, und wartet dann."
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.modified_device_tip_forward_or_back" : {
+    "translation" : "Neigung des Geräts geändert (nach vorn/hinten)"
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.modified_device_tilt_left_or_right" : {
+    "translation" : "Neigung des Geräts geändert (nach links/rechts)"
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.right_wheel_speed" : {
+    "translation" : "Geschwindigkeit des rechten Rads"
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.left_wheel_speed" : {
+    "translation" : "Geschwindigkeit des linken Rads"
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.base_device_tip_forward_or_back" : {
+    "translation" : "Ausgangsneigung des Geräts (nach vorn/hinten)"
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.speed_multiplier" : {
+    "translation" : "Geschwindigkeits-Multiplikator"
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.turn_multiplier" : {
+    "translation" : "Drehungs-Multiplikator"
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.device_movement_dead_zone" : {
+    "translation" : "Nullpunkt der Gerätebewegung"
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.device_flat" : {
+    "translation" : "Gerät eben"
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.threshold_to_drive_or_turn" : {
+    "translation" : "Grenzwert zum Fahren oder Drehen"
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.program_loop_to_control_cozmo_with_device" : {
+    "translation" : "Programmschleife zum Steuern von Cozmo mit einem Gerät."
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.sets_up_default_values" : {
+    "translation" : "Richtet die Standardwerte ein."
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.tilt_your_device_to_drive" : {
+    "translation" : "Neige das Gerät, um zu fahren!"
+  },
+  "codeLabFeaturedProject.ShakeIt.game_length" : {
+    "translation" : "Spieldauer"
+  },
+  "codeLabFeaturedProject.ShakeIt.get_ready_to_shake_" : {
+    "translation" : "Mache dich zum Schütteln bereit! "
+  },
+  "codeLabFeaturedProject.ShakeIt.correct_color" : {
+    "translation" : "Richtige Farbe"
+  },
+  "codeLabFeaturedProject.ShakeIt.red" : {
+    "translation" : "Rot"
+  },
+  "codeLabFeaturedProject.ShakeIt.game_round" : {
+    "translation" : "Spielrunde"
+  },
+  "codeLabFeaturedProject.ShakeIt.points" : {
+    "translation" : "Punkte"
+  },
+  "codeLabFeaturedProject.ShakeIt.better_luck_next_time" : {
+    "translation" : "Mehr Glück beim nächsten Mal"
+  },
+  "codeLabFeaturedProject.ShakeIt.you_won" : {
+    "translation" : "Du hast gewonnen"
+  },
+  "codeLabFeaturedProject.ShakeIt.cube_locked" : {
+    "translation" : "Cube gesperrt"
+  },
+  "codeLabFeaturedProject.ShakeIt.correct_action" : {
+    "translation" : "Richtige Aktion"
+  },
+  "codeLabFeaturedProject.ShakeIt.shake_action" : {
+    "translation" : "Schütteln"
+  },
+  "codeLabFeaturedProject.ShakeIt.yellow" : {
+    "translation" : "Gelb"
+  },
+  "codeLabFeaturedProject.ShakeIt.blue" : {
+    "translation" : "Blau"
+  },
+  "codeLabFeaturedProject.ShakeIt.none" : {
+    "translation" : "Keine"
+  },
+  "codeLabFeaturedProject.ShakeIt.you_got" : {
+    "translation" : "Du hast"
+  },
+  "codeLabFeaturedProject.ShakeIt.cozmo" : {
+    "translation" : "Cozmo"
+  },
+  "codeLabFeaturedProject.ShakeIt.round_time" : {
+    "translation" : "Runde Zeit"
+  },
+  "codeLabFeaturedProject.ShakeIt.shake_cozmo" : {
+    "translation" : "Cozmo schütteln"
+  },
+  "codeLabFeaturedProject.ShakeIt.orange" : {
+    "translation" : "Orange"
+  },
+  "codeLabFeaturedProject.ShakeIt.green" : {
+    "translation" : "Grün"
+  },
+  "codeLabFeaturedProject.ShakeIt.purple" : {
+    "translation" : "Lila"
+  },
+  "codeLabFeaturedProject.ShakeIt.multicolor" : {
+    "translation" : "Mehrfarbig"
+  },
+  "codeLabFeaturedProject.ShakeIt.cube_1_shaken" : {
+    "translation" : "Cube 1 geschüttelt"
+  },
+  "codeLabFeaturedProject.ShakeIt.cube_2_shaken" : {
+    "translation" : "Cube 2 geschüttelt"
+  },
+  "codeLabFeaturedProject.ShakeIt.cube_3_shaken" : {
+    "translation" : "Cube 3 geschüttelt"
+  },
+  "codeLabFeaturedProject.ShakeIt.game_start_and_main_loop" : {
+    "translation" : "Spielbeginn und Hauptschleife."
+  },
+  "codeLabFeaturedProject.ShakeIt.called_each_round_to_reset_the_variables" : {
+    "translation" : "Wird in jeder Runde aufgerufen, um die Variablen zurückzusetzen."
+  },
+  "codeLabFeaturedProject.ShakeIt.called_at_game_end" : {
+    "translation" : "Wird am Ende des Spiels aufgerufen."
+  },
+  "codeLabFeaturedProject.ShakeIt.check_if_shaking_cube_1_is_the_correct_action" : {
+    "translation" : "Überprüfe, ob das Schütteln von Cube 1 die richtige Aktion ist."
+  },
+  "codeLabFeaturedProject.ShakeIt.check_if_shaking_cube_2_is_the_correct_action" : {
+    "translation" : "Überprüfe, ob das Schütteln von Cube 2 die richtige Aktion ist."
+  },
+  "codeLabFeaturedProject.ShakeIt.check_if_shaking_cube_3_is_the_correct_action" : {
+    "translation" : "Überprüfe, ob das Schütteln von Cube 3 die richtige Aktion ist."
+  },
+  "codeLabFeaturedProject.ShakeIt.check_if_cozmo_has_been_shaken" : {
+    "translation" : "Überprüfe, ob Cozmo geschüttelt wurde."
+  },
+  "codeLabFeaturedProject.ShakeIt.check_if_the_multicolor_cube_shake_is_correct" : {
+    "translation" : "Überprüfe, ob der mehrfarbige Cube richtig geschüttelt wurde."
+  },
+  "codeLabFeaturedProject.ShakeIt.called_each_round_to_randomly_choose_the_correct_action" : {
+    "translation" : "Wird in jeder Runde aufgerufen, um die richtige Aktion zufällig auszuwählen."
+  },
+  "codeLabFeaturedProject.ShakeIt.called_for_a_correct_action" : {
+    "translation" : "Wird für eine richtige Aktion aufgerufen."
+  },
+  "codeLabFeaturedProject.ShakeIt.called_for_an_incorrect_action" : {
+    "translation" : "Wird für eine falsche Aktion aufgerufen."
+  },
+  "codeLabFeaturedProject.ShakeIt.sets_up_the_cube_colors" : {
+    "translation" : "Richtet die Cube-Farben ein."
+  },
+  "codeLabFeaturedProject.ShakeIt._points" : {
+    "translation" : " Punkte"
+  },
+  "codeLabFeaturedProject.ShakeIt.try_to_get_all_10_points" : {
+    "translation" : "Hol dir alle 10 Punkte!"
+  },
+  "codeLabFeaturedProject.ShakeIt.times_cube_1_moved" : {
+    "translation" : "Wie oft Cube 1 bewegt wurde"
+  },
+  "codeLabFeaturedProject.ShakeIt.times_cube_2_moved" : {
+    "translation" : "Wie oft Cube 2 bewegt wurde"
+  },
+  "codeLabFeaturedProject.ShakeIt.times_cube_3_moved" : {
+    "translation" : "Wie oft Cube 3 bewegt wurde"
+  },
+  "codeLabFeaturedProject.ShakeIt.out_of_10" : {
+    "translation" : "von 10"
+  },
+  "codeLabFeaturedProject.ShakeIt.points_out_of_10" : {
+    "translation" : "von 10 Punkten!"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.name" : {
+    "translation" : "Name"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.hi" : {
+    "translation" : "Hallo"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.roses_" : {
+    "translation" : "Rosen "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.are_red" : {
+    "translation" : "sind rot"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.violets_" : {
+    "translation" : "Veilchen "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.are_blue" : {
+    "translation" : "sind blau"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.happy_valentines_dear_" : {
+    "translation" : "Cozmo hat dich gern "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram._because_cozmo_loves_you" : {
+    "translation" : " das weiß er genau"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.red_random" : {
+    "translation" : "Rot (zufällig)"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.blue_random" : {
+    "translation" : "Blau (zufällig)"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.red_thing" : {
+    "translation" : "Rotes Objekt"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.apples_" : {
+    "translation" : "Äpfel "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.ladybugs_" : {
+    "translation" : "Marienkäfer "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.blue_thing" : {
+    "translation" : "Blaues Objekt"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.my_eyes_" : {
+    "translation" : "Meine Augen "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.skies_" : {
+    "translation" : "Himmel "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.strawberries_" : {
+    "translation" : "Erdbeeren "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.raspberries_" : {
+    "translation" : "Himbeeren "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.tomatoes_" : {
+    "translation" : "Tomaten "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.fire_trucks_" : {
+    "translation" : "Feuerwehrautos "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.cherries_" : {
+    "translation" : "Kirschen "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.stop_signs_" : {
+    "translation" : "Stoppschilder "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.oceans_" : {
+    "translation" : "Ozeane "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.rivers_" : {
+    "translation" : "Flüsse "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.lakes_" : {
+    "translation" : "Seen "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.blueberries_" : {
+    "translation" : "Heidelbeeren "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.peacock_feathers_" : {
+    "translation" : "Pfauenfedern "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.jeans_" : {
+    "translation" : "Jeans "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.friend" : {
+    "translation" : "Freund"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.heart_width" : {
+    "translation" : "Breite des Herzes"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.widest_y" : {
+    "translation" : "Breiteste Stelle (Y)"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.heart_beat" : {
+    "translation" : "Herzschlag"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.heart_size" : {
+    "translation" : "Größe des Herzes"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.half_heart_width" : {
+    "translation" : "Halbe Breite des Herzes"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.cozmo_face_pixel_y" : {
+    "translation" : "Cozmo-Gesichtspixel (y)"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.deliver_a_valentine" : {
+    "translation" : "Überbringe einen Gruß zum Valentinstag."
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.choose_the_name_to_use" : {
+    "translation" : "Wähle den zu verwendenden Namen aus."
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.choose_a_red_thing_for_valentines" : {
+    "translation" : "Wähle ein rotes Objekt für den Gruß zum Valentinstag aus."
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.choose_a_blue_thing_for_the_valentines" : {
+    "translation" : "Wähle ein blaues Objekt für den Gruß zum Valentinstag aus."
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.draw_a_valentine_envelope_on_cozmos_face" : {
+    "translation" : "Zeichne einen Umschlag für den Valentinstagsgruß auf Cozmos Gesicht."
   }
 }

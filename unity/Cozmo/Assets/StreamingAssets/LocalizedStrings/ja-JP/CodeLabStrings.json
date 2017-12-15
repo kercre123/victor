@@ -561,6 +561,9 @@
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "マイプロジェクト{0}"
   },
+  "codeLab.UserProject.NewProject" : {
+    "translation" : "新規プロジェクト"
+  },
   "codeLabHorizontal.CozmoSaysBlock.DefaultText" : {
     "translation" : "こんにちは"
   },
@@ -1065,6 +1068,12 @@
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_head_angle" : {
     "translation" : "COZMOのヘッドの角度を度数で返します。（-25°=最も下、0°=水平、45°=最も上）"
   },
+  "codeLabGlossary.block_definitions.title.cozmo_vert_get_is_picked_up" : {
+    "translation" : "COZMOが選んだもの"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_get_is_picked_up" : {
+    "translation" : "COZMOが持ち上げられている（空中に浮いている）かどうかを、「真」か「偽」で返します。"
+  },
   "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_is_visible" : {
     "translation" : "顔が見えるか"
   },
@@ -1323,13 +1332,85 @@
   "codeLab.export_modal.button.copy_to_drive" : {
     "translation" : "Googleドライブへコピー"
   },
+  "codeLab.export_modal_kindle.body" : {
+    "translation" : "デバイスメニューを開いてプロジェクトをエクスポートします。Go.anki.com/submissionをご覧ください。あなたのプロジェクトが注目を浴びるチャンス！"
+  },
+  "codeLab.export_modal_kindle.button.copy_to_drive" : {
+    "translation" : "デバイスメニューを開く"
+  },
   "codeLabSampleProject_LaserSmile.projectName" : {
     "translation" : "レーザースマイル！"
+  },
+  "codeLabFeaturedProject_LaserSmile.projectDescription" : {
+    "translation" : "しかめっ面をひっくり返そう！"
+  },
+  "codeLabFeaturedProject_LaserSmile.projectInstructions" : {
+    "translation" : "1. スタートフラグをタップすると、COZMOの顔にしかめっ面の絵文字が表示されます。\u000a\u000a2. COZMOからあなたの顔が見えるようにしてください。顔を動かしてしかめっ面の絵文字に狙いを定めてください。3. レーザースマイルを発射！"
   },
   "codeLabSampleProject_LaserSmile.variableInstruction1" : {
     "translation" : "目標はそのしかめっ面をひっくり返すことです！"
   },
   "codeLabSampleProject_LaserSmile.variableInstruction2" : {
     "translation" : "微笑んでレーザーを発射！ 顔を動かし狙いを定めてください。"
+  },
+  "codeLabFeaturedProject_ComplimentGenerator.projectName" : {
+    "translation" : "Compliment Generator（ほめ言葉ジェネレーター）"
+  },
+  "codeLabFeaturedProject_ComplimentGenerator.projectDescription" : {
+    "translation" : "「世界ほめ言葉の日」をCOZMOと一緒に祝おう！"
+  },
+  "codeLabFeaturedProject_ComplimentGenerator.projectInstructions" : {
+    "translation" : "1. 3月1日は「世界ほめ言葉の日」です。スタートフラグをタップするとほめ言葉がランダムに届きます。"
+  },
+  "codeLabFeaturedProject_CozmoFlies.projectName" : {
+    "translation" : "Cozmo Flies（コズモ・フライズ）"
+  },
+  "codeLabFeaturedProject_CozmoFlies.projectDescription" : {
+    "translation" : "上へ、上へ、もっと上へ！"
+  },
+  "codeLabFeaturedProject_CozmoFlies.projectInstructions" : {
+    "translation" : "1. スタートフラグをタップすれば、COZMOは離陸準備完了！2. COZMOを手にもって部屋の中で飛ばしましょう。3. COZMOのテーマ音楽とリアクションをお楽しみください。"
+  },
+  "codeLabFeaturedProject_RemoteControlRacer.projectName" : {
+    "translation" : "Remote Control Racer（リモート・コントロール・レーサー）"
+  },
+  "codeLabFeaturedProject_RemoteControlRacer.projectDescription" : {
+    "translation" : "ブルンブルン！　COZMOを全速力で走らせよう。"
+  },
+  "codeLabFeaturedProject_RemoteControlRacer.projectInstructions" : {
+    "translation" : "1. スタートフラグをタップすると、お使いのスマートフォンまたはタブレットがリモコンに変わります。2. デバイスを上下左右に傾けるとCOZMOが全速力で走ります！"
+  },
+  "codeLabFeaturedProject_PuttPutt.projectName" : {
+    "translation" : "Putt Putt（パット・パット）"
+  },
+  "codeLabFeaturedProject_PuttPutt.projectDescription" : {
+    "translation" : "ホールインワンを決められるかな？"
+  },
+  "codeLabFeaturedProject_PuttPutt.projectInstructions" : {
+    "translation" : "1.スタートフラグをタップしたら、COZMOを持ち上げて顔をまっすぐ前に向けます。2. COZMOの顔にボールとホールが表示されます。COZMOを傾けてボールをホールへ転がします。"
+  },
+  "codeLabFeaturedProject_ValentinesCozmogram.projectName" : {
+    "translation" : "Valentine's Cozmogram（バレンタインのコズモグラム）"
+  },
+  "codeLabFeaturedProject_ValentinesCozmogram.projectDescription" : {
+    "translation" : "ともだちにバレンタインのメッセージを送るのが、コズモのスタイル。"
+  },
+  "codeLabFeaturedProject_ValentinesCozmogram.projectInstructions" : {
+    "translation" : "1. スタートフラグをタップすると、COZMOからあなたにバレンタインのメッセージが届きます！"
+  },
+  "codeLabFeaturedProject_ShakeIt.projectName" : {
+    "translation" : "Shake It!（シェイク・イット）"
+  },
+  "codeLabFeaturedProject_ShakeIt.projectDescription" : {
+    "translation" : "新しいゲームで振りまくろう。"
+  },
+  "codeLabFeaturedProject_ShakeIt.projectInstructions" : {
+    "translation" : "1.スタートフラグをタップすると、COZMOがあなたにいろいろなものを振るよう指示します。2. COZMOの指示をよく聞いてください。「レッド」 = 赤色のキューブを振ります\u000a「イエロー」 = 黄色のキューブを振ります\u000a「ブルー」 = 青色のキューブを振ります\u000a「オレンジ」 = 赤色と黄色のキューブを振ります\u000a「グリーン」 = 黄色と青色のキューブを振ります\u000a「パープル」 = 青色と赤色のキューブを振ります\u000a「ミー（Me）」 = COZMOを振って！\u000a\u000a3. タイムリミットまでにいくつ正しく振れたかな？"
+  },
+  "codeLabSampleProject_ScrollingWaveText.projectName" : {
+    "translation" : "波状のテキストをスクロール"
+  },
+  "codeLabSampleProject_ScrollingText.projectName" : {
+    "translation" : "テキストをスクロール"
   }
 }

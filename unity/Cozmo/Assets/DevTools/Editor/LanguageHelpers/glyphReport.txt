@@ -1,5 +1,5 @@
 Font: AXIS Std
 Pt.Size: 36
-Characters packed: 795/795
+Characters packed: 822/822
 
 Successfully packed all characters!

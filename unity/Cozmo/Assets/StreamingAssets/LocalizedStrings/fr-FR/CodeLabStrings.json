@@ -561,6 +561,9 @@
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "Mon projet {0}"
   },
+  "codeLab.UserProject.NewProject" : {
+    "translation" : "Nouveau projet"
+  },
   "codeLabHorizontal.CozmoSaysBlock.DefaultText" : {
     "translation" : "Bonjour"
   },
@@ -1065,6 +1068,12 @@
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_head_angle" : {
     "translation" : "Renvoie l'angle que fait la tête de Cozmo en degrés. (-25° = maximum vers le bas, 0° = horizontal, 45° = maximum vers le haut)"
   },
+  "codeLabGlossary.block_definitions.title.cozmo_vert_get_is_picked_up" : {
+    "translation" : "tiens-tu Cozmo"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_get_is_picked_up" : {
+    "translation" : "Renvoie « vrai » ou « faux » selon que tu tiens actuellement Cozmo (flottant en l'air) ou non."
+  },
   "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_is_visible" : {
     "translation" : "un visage est-il visible"
   },
@@ -1323,13 +1332,85 @@
   "codeLab.export_modal.button.copy_to_drive" : {
     "translation" : "Copier dans Google Drive"
   },
+  "codeLab.export_modal_kindle.body" : {
+    "translation" : "Ouvre le menu de l'appareil pour exporter ton projet.\u000a\u000aRends-toi sur go.anki.com/submission pour avoir une chance d’avoir tes projets en vedette !"
+  },
+  "codeLab.export_modal_kindle.button.copy_to_drive" : {
+    "translation" : "Ouvrir le menu de l'appareil"
+  },
   "codeLabSampleProject_LaserSmile.projectName" : {
     "translation" : "Sourire laser !"
+  },
+  "codeLabFeaturedProject_LaserSmile.projectDescription" : {
+    "translation" : "Arrête de froncer les sourcils !"
+  },
+  "codeLabFeaturedProject_LaserSmile.projectInstructions" : {
+    "translation" : "1. Lorsque tu touche le drapeau Démarrer, Cozmo affiche sur son écran une émoticône de froncement de sourcils.\u000a\u000a2. Assure-toi que Cozmo peut voir ton visage. Déplace ta tête pour viser l'émoticône de froncement de sourcils.\u000a\u000a3. Souris pour déclencher ton laser !"
   },
   "codeLabSampleProject_LaserSmile.variableInstruction1" : {
     "translation" : "Le but est de remonter le moral !"
   },
   "codeLabSampleProject_LaserSmile.variableInstruction2" : {
     "translation" : "Souris pour déclencher ton laser ! Bouge ta tête pour viser."
+  },
+  "codeLabFeaturedProject_ComplimentGenerator.projectName" : {
+    "translation" : "Générateur de compliment"
+  },
+  "codeLabFeaturedProject_ComplimentGenerator.projectDescription" : {
+    "translation" : "Fête la journée mondiale des compliments avec Cozmo !"
+  },
+  "codeLabFeaturedProject_ComplimentGenerator.projectInstructions" : {
+    "translation" : "1. Le 1er mars est la journée mondiale des compliments ! Appuie sur le drapeau de départ pour recevoir un compliment au hasard."
+  },
+  "codeLabFeaturedProject_CozmoFlies.projectName" : {
+    "translation" : "Cozmo vole"
+  },
+  "codeLabFeaturedProject_CozmoFlies.projectDescription" : {
+    "translation" : "Toujours plus haut et plus loin !"
+  },
+  "codeLabFeaturedProject_CozmoFlies.projectInstructions" : {
+    "translation" : "1. Lorsque tu appuies sur le drapeau de départ, Cozmo est prêt à décoller !\u000a\u000a2. Prends-le et fais-le voler dans la pièce.\u000a\u000a3. Profite de son thème musical et de ses réactions !"
+  },
+  "codeLabFeaturedProject_RemoteControlRacer.projectName" : {
+    "translation" : "Télécommande de course"
+  },
+  "codeLabFeaturedProject_RemoteControlRacer.projectDescription" : {
+    "translation" : "Vroum, vroum ! Conduis Cozmo à la vitesse maximale."
+  },
+  "codeLabFeaturedProject_RemoteControlRacer.projectInstructions" : {
+    "translation" : "1. Lorsque tu appuies sur le drapeau de départ, ton téléphone ou ta tablette devient une télécommande.\u000a\u000a2. Incline ton appareil vers le haut/bas et à gauche/droite pour déplacer Cozmo à la vitesse maximale !"
+  },
+  "codeLabFeaturedProject_PuttPutt.projectName" : {
+    "translation" : "Droit dedans"
+  },
+  "codeLabFeaturedProject_PuttPutt.projectDescription" : {
+    "translation" : "Peux-tu atteindre un trou en un coup ?"
+  },
+  "codeLabFeaturedProject_PuttPutt.projectInstructions" : {
+    "translation" : "1. Après avoir appuyé sur le drapeau de départ, prends Cozmo en tenant son visage droit.\u000a\u000a2. Son visage affichera une balle et un trou. Incline Cozmo pour envoyer la balle dans le trou."
+  },
+  "codeLabFeaturedProject_ValentinesCozmogram.projectName" : {
+    "translation" : "Cozmogramme de la Saint Valentin"
+  },
+  "codeLabFeaturedProject_ValentinesCozmogram.projectDescription" : {
+    "translation" : "Offre un cadeau de la Saint Valentin à un(e) ami(e), à la mode Cozmo."
+  },
+  "codeLabFeaturedProject_ValentinesCozmogram.projectInstructions" : {
+    "translation" : "1. Appuie sur le drapeau de départ et Cozmo t'offrira ses vœux pour la Saint-Valentin !"
+  },
+  "codeLabFeaturedProject_ShakeIt.projectName" : {
+    "translation" : "Secoue-les !"
+  },
+  "codeLabFeaturedProject_ShakeIt.projectDescription" : {
+    "translation" : "Secoue les objets avec ce nouveau jeu."
+  },
+  "codeLabFeaturedProject_ShakeIt.projectInstructions" : {
+    "translation" : "1. Une fois que tu appuies sur le drapeau de départ, Cozmo te demande de secouer des objets!\u000a\u000a2. Écoute attentivement ses instructions.\u000a\u000a« Rouge » = Secoue le cube rouge\u000a« Jaune » = Secoue le cube jaune\u000a« Bleu » = Secoue le cube bleu\u000a« Orange » = Secoue les cubes rouge et jaune\u000a« Vert » = Secoue les cubes jaune et bleu\u000a« Violet » = Secoue les cubes bleu et rouge\u000a« Moi » = Secoue Cozmo !\u000a\u000a3. Combien de secousses correctes peux-tu réaliser dans le temps imparti ?"
+  },
+  "codeLabSampleProject_ScrollingWaveText.projectName" : {
+    "translation" : "Texte défilant flou"
+  },
+  "codeLabSampleProject_ScrollingText.projectName" : {
+    "translation" : "Texte défilant"
   }
 }

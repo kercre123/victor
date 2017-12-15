@@ -47,5 +47,35 @@
   },
   "whatsNew.CodeLab_CubeWhack.description" : {
     "translation" : "Frappe ce cube ! Quel est ton meilleur score ?"
+  },
+  "whatsNew.CodeLab_LaserSmile.title" : {
+    "translation" : "Sourire laser !"
+  },
+  "whatsNew.CodeLab_LaserSmile.description" : {
+    "translation" : "Le but est de remonter le moral !"
+  },
+  "whatsNew.CodeLab_ValentinesCozmogram.title" : {
+    "translation" : "Cozmogramme de la Saint Valentin"
+  },
+  "whatsNew.CodeLab_ValentinesCozmogram.description" : {
+    "translation" : "Offre un cadeau de la Saint Valentin à un(e) ami(e), à la manière de Cozmo."
+  },
+  "whatsNew.CodeLab_PuttPutt.title" : {
+    "translation" : "Droit dedans"
+  },
+  "whatsNew.CodeLab_PuttPutt.description" : {
+    "translation" : "Peux-tu atteindre un trou en un coup ?"
+  },
+  "whatsNew.CodeLab_ShakeIt.title" : {
+    "translation" : "Secoue-les !"
+  },
+  "whatsNew.CodeLab_ShakeIt.description" : {
+    "translation" : "Secoue les objets avec ce nouveau jeu."
+  },
+  "whatsNew.CodeLab_RemoteControlRacer.title" : {
+    "translation" : "Télécommande de course"
+  },
+  "whatsNew.CodeLab_RemoteControlRacer.description" : {
+    "translation" : "Vroum, vroum ! Conduis Cozmo à la vitesse maximale."
   }
 }

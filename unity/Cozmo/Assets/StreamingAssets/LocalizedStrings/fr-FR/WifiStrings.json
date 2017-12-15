@@ -40,7 +40,7 @@
     "translation" : "Tu ne vois pas de mot de passe ? Appuie ici :"
   },
   "wifiStrings.Instructions.Slide3altCopy2" : {
-    "translation" : "Utilise des MAJUSCULES sans espace. Inclus les tirets."
+    "translation" : "• Mettre en majuscules les lettres qui apparaissent\u000a• Ne pas inclure d'espaces\u000a• Inclure les tirets affichés"
   },
   "wifiStrings.Instructions.Slide3.5" : {
     "translation" : "Cozmo ne fournit pas de connexion Internet."

@@ -47,5 +47,35 @@
   },
   "whatsNew.CodeLab_CubeWhack.description" : {
     "translation" : "あのキューブを引っぱたけ！あなたのハイスコアは？"
+  },
+  "whatsNew.CodeLab_LaserSmile.title" : {
+    "translation" : "レーザースマイル！"
+  },
+  "whatsNew.CodeLab_LaserSmile.description" : {
+    "translation" : "目標はそのしかめっ面をひっくり返すことです！"
+  },
+  "whatsNew.CodeLab_ValentinesCozmogram.title" : {
+    "translation" : "Valentine's Cozmogram（バレンタインのコズモグラム）"
+  },
+  "whatsNew.CodeLab_ValentinesCozmogram.description" : {
+    "translation" : "ともだちにバレンタインのメッセージを送るのが、コズモのスタイル。"
+  },
+  "whatsNew.CodeLab_PuttPutt.title" : {
+    "translation" : "Putt Putt（パット・パット）"
+  },
+  "whatsNew.CodeLab_PuttPutt.description" : {
+    "translation" : "ホールインワンを決められるかな？"
+  },
+  "whatsNew.CodeLab_ShakeIt.title" : {
+    "translation" : "Shake It!（シェイク・イット）"
+  },
+  "whatsNew.CodeLab_ShakeIt.description" : {
+    "translation" : "新しいゲームで振りまくろう。"
+  },
+  "whatsNew.CodeLab_RemoteControlRacer.title" : {
+    "translation" : "Remote Control Racer（リモート・コントロール・レーサー）"
+  },
+  "whatsNew.CodeLab_RemoteControlRacer.description" : {
+    "translation" : "ブルンブルン！　COZMOを全速力で走らせよう！"
   }
 }

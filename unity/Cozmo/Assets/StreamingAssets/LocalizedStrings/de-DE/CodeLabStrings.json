@@ -394,7 +394,7 @@
     "translation" : "FÜR ALLE, DIE IHRE PROGRAMMIERKENNTNISSE\u000aAUF DIE NÄCHSTE STUFE BRINGEN MÖCHTEN."
   },
   "codeLab.projects.verticalTab.verticalTabHeroDetail" : {
-    "translation" : "Hier werden Konzepte wie Verzweigungen und Schleifen eingeführt, mit deren Hilfe sich komplexe Programme mit schier unendlichen Möglichkeiten erstellen lassen"
+    "translation" : "Hier werden Konzepte wie Verzweigungen und Schleifen eingeführt, mit deren Hilfe sich komplexe Programme mit schier unendlichen Möglichkeiten erstellen lassen."
   },
   "codeLab.projects.featuredTab.featuredTabHeroTitle" : {
     "translation" : "ENTDECKE DIE\u000aMÖGLICHKEITEN."
@@ -560,6 +560,9 @@
   },
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "Mein Projekt \"{0}\""
+  },
+  "codeLab.UserProject.NewProject" : {
+    "translation" : "Neues Projekt"
   },
   "codeLabHorizontal.CozmoSaysBlock.DefaultText" : {
     "translation" : "Hallo"
@@ -1065,6 +1068,12 @@
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_head_angle" : {
     "translation" : "Gibt den Winkel des Kopfs von Cozmo in Grad zurück. (-25 ° = ganz unten, 0 ° = eben, 45 ° = ganz oben)"
   },
+  "codeLabGlossary.block_definitions.title.cozmo_vert_get_is_picked_up" : {
+    "translation" : "Ist Cozmo in der Luft?"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_get_is_picked_up" : {
+    "translation" : "Gibt \"wahr\" oder \"falsch\" zurück – je nachdem, ob Cozmo in der Luft (von einer Person hochgehoben) ist."
+  },
   "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_is_visible" : {
     "translation" : "Ist Gesicht sichtbar"
   },
@@ -1323,13 +1332,85 @@
   "codeLab.export_modal.button.copy_to_drive" : {
     "translation" : "Nach Google Drive kopieren"
   },
+  "codeLab.export_modal_kindle.body" : {
+    "translation" : "Öffne das Gerätemenü, um dein Projekt zu exportieren.\u000a\u000aBesuche go.anki.com/submission und nutze die Gelegenheit, deine Projekte zu ausgewählten Projekten zu machen!"
+  },
+  "codeLab.export_modal_kindle.button.copy_to_drive" : {
+    "translation" : "Gerätemenü öffnen"
+  },
   "codeLabSampleProject_LaserSmile.projectName" : {
     "translation" : "Laser-Lächeln!"
+  },
+  "codeLabFeaturedProject_LaserSmile.projectDescription" : {
+    "translation" : "Gewinne mit einem Lächeln!"
+  },
+  "codeLabFeaturedProject_LaserSmile.projectInstructions" : {
+    "translation" : "1. Tippe auf die Startfahne. Cozmo zeigt nun ein Stirnrunzel-Emoji an.\u000a\u000a2. Stelle sicher, dass Cozmo dein Gesicht sehen kann. Bewege deinen Kopf, um auf das Stirnrunzel-Emoji zu zielen.\u000a\u000a3. Lächle, um einen Laserstrahl abzufeuern!"
   },
   "codeLabSampleProject_LaserSmile.variableInstruction1" : {
     "translation" : "Hier kannst du mit einem Lächeln gewinnen!"
   },
   "codeLabSampleProject_LaserSmile.variableInstruction2" : {
     "translation" : "Lächle, um mit Laserstrahlen zu schießen! Bewege deinen Kopf, um zu zielen."
+  },
+  "codeLabFeaturedProject_ComplimentGenerator.projectName" : {
+    "translation" : "Kompliment-Generator"
+  },
+  "codeLabFeaturedProject_ComplimentGenerator.projectDescription" : {
+    "translation" : "Feiere den Tag der Komplimente mit Cozmo!"
+  },
+  "codeLabFeaturedProject_ComplimentGenerator.projectInstructions" : {
+    "translation" : "1. Der 1. März wird weltweit als Tag der Komplimente gefeiert! Tippe auf die Startfahne, um ein zufälliges Kompliment zu erhalten."
+  },
+  "codeLabFeaturedProject_CozmoFlies.projectName" : {
+    "translation" : "Cozmo fliegt"
+  },
+  "codeLabFeaturedProject_CozmoFlies.projectDescription" : {
+    "translation" : "Über den Wolken...!"
+  },
+  "codeLabFeaturedProject_CozmoFlies.projectInstructions" : {
+    "translation" : "1. Tippe auf die Startfahne. Cozmo ist nun startbereit!\u000a\u000a2. Hebe Cozmo hoch und fliege mit ihm durch den Raum.\u000a\u000a3. Lass dich von der Musik und von den Reaktionen von Cozmo überraschen!"
+  },
+  "codeLabFeaturedProject_RemoteControlRacer.projectName" : {
+    "translation" : "Ferngesteuerter Rennwagen"
+  },
+  "codeLabFeaturedProject_RemoteControlRacer.projectDescription" : {
+    "translation" : "Brumm, brumm! Fahre mit Cozmo mit Höchstgeschwindigkeit."
+  },
+  "codeLabFeaturedProject_RemoteControlRacer.projectInstructions" : {
+    "translation" : "1. Tippe auf die Startfahne. Dein Smartphone oder Tablet ist jetzt eine Fernbedienung.\u000a\u000a2. Tippe auf dem Gerät nach oben/unten oder links/rechts, um Cozmo zu steuern, während er mit Höchstgeschwindigkeit fährt!"
+  },
+  "codeLabFeaturedProject_PuttPutt.projectName" : {
+    "translation" : "Einlochen"
+  },
+  "codeLabFeaturedProject_PuttPutt.projectDescription" : {
+    "translation" : "Schaffst du einen Hole-in-One?"
+  },
+  "codeLabFeaturedProject_PuttPutt.projectInstructions" : {
+    "translation" : "1. Tippe auf die Startfahne. Hebe Cozmo hoch und halte ihn so, dass sein Gesicht aufrecht ist.\u000a\u000a2. Im Gesicht von Cozmo werden nun ein Ball und ein Loch angezeigt. Tippe auf Cozmo, um den Ball in das Loch zu befördern."
+  },
+  "codeLabFeaturedProject_ValentinesCozmogram.projectName" : {
+    "translation" : "Cozmogramm zum Valentinstag"
+  },
+  "codeLabFeaturedProject_ValentinesCozmogram.projectDescription" : {
+    "translation" : "Sende mit Cozmo einen Gruß zum Valentinstag."
+  },
+  "codeLabFeaturedProject_ValentinesCozmogram.projectInstructions" : {
+    "translation" : "1. Tippe auf die Startfahne. Cozmo spielt nun einen Gruß zum Valentinstag ab."
+  },
+  "codeLabFeaturedProject_ShakeIt.projectName" : {
+    "translation" : "Schüttele Cozmo!"
+  },
+  "codeLabFeaturedProject_ShakeIt.projectDescription" : {
+    "translation" : "Bei diesem neuen Spiel wird alles wild geschüttelt."
+  },
+  "codeLabFeaturedProject_ShakeIt.projectInstructions" : {
+    "translation" : "1. Tippe auf die Startfahne. Cozmo bittet dich nun, verschiedene Gegenstände zu schütteln!\u000a\u000a2. Achte genau auf Cozmos Anweisungen.\u000a\u000a\"Rot\" = roten Cube schütteln\u000a\"Gelb\" = gelben Cube schütteln\u000a\"Blau\" = blauen Cube schütteln\u000a\"Orange\" = roten und gelben Cube schütteln\u000a\"Grün\" = gelben und blauen Cube schütteln\u000a\"Lila\" = blauen und roten Cube schütteln\u000a\"Ich\" = Cozmo schütteln\u000a\u000a3. Wie viele Gegenstände kannst du richtig schütteln, bevor die Zeit abläuft?"
+  },
+  "codeLabSampleProject_ScrollingWaveText.projectName" : {
+    "translation" : "Wellenförmiger Lauftext"
+  },
+  "codeLabSampleProject_ScrollingText.projectName" : {
+    "translation" : "Lauftext"
   }
 }
