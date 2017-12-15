@@ -284,6 +284,14 @@ namespace Messages {
         return;
       }
       break;
+        
+      case RobotInterface::RobotToEngine::Tag_state:
+      {
+        const auto& stateMsg = msg.state;
+        _context->GetAudioController()->GetObjectLocationController().ProcessRobotState(stateMsg);
+      }
+        break;
+      
       default:
       {
 

@@ -18,7 +18,8 @@ namespace Anki {
 //class SoundbankLoader;
 //}
 namespace Cozmo {
-//class CozmoAnimContext;
+struct RobotState;
+
 namespace Audio {
 
 class CozmoAudioController;
@@ -36,6 +37,10 @@ public:
 
   void HandleMessage(const Anki::Cozmo::Audio::AddRemoveWorldObject& msg);
   void HandleMessage(const Anki::Cozmo::Audio::UpdateWorldObjectPosition& msg);
+  
+  
+  // This doesn't belong here but's convient
+  void ProcessRobotState(const RobotState& stateMsg);
 
 
 private:
