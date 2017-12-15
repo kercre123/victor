@@ -25,12 +25,6 @@
 #include <list>
 #include <memory>
 
-#ifndef SIMULATOR
-// TODO: Once DMA is fixed to make face write operations faster, this may not be necessary
-#define DRAW_FACE_IN_THREAD
-#include <future>
-#endif
-
 namespace Anki {
 namespace Cozmo {
   
@@ -261,13 +255,6 @@ namespace Cozmo {
         
     // Tic counter for sending animState message
     u32           _numTicsToSendAnimState            = 0;
-    
-#ifdef DRAW_FACE_IN_THREAD
-    std::future<void> _faceDrawFuture;
-    double            _lastDrawTime_ms = 0;
-#endif    
-      
-    std::array<u8, 256> _gammaLUT;
 
   }; // class AnimationStreamer
   

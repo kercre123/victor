@@ -12,7 +12,7 @@
  **/
 
 #include "cozmoAnim/faceDisplay/faceDisplayImpl.h"
-#include "coretech/vision/engine/colorPixelTypes.h"
+#include "anki/vision/basestation/colorPixelTypes.h"
 #include "util/logging/logging.h"
 
 #include <webots/Supervisor.hpp>
