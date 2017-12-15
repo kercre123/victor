@@ -937,6 +937,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   SetOnCharger(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
   SetIsCharging(IS_STATUS_FLAG_SET(IS_CHARGING));
   _chargerOOS = IS_STATUS_FLAG_SET(IS_CHARGER_OOS);
+  _powerButtonPressed = IS_STATUS_FLAG_SET(IS_BUTTON_PRESSED);
 
   // Save the entire flag for sending to game
   _lastStatusFlags = msg.status;
