@@ -26,7 +26,7 @@ CFLAGS  += -I$(CORE_DIR)/inc
 CFLAGS  += -I../../hal
 CFLAGS  += -I../../syscon
 
-CFLAGS  += -DPLATFORM_ANDROID
+CFLAGS  += -DPLATFORM_ANDROID -fno-strict-aliasing
 
 
 # All the c files in this directory will be compiled

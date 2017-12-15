@@ -11,6 +11,7 @@
 #include "spine/spine_hal.h"
 #include "schema/messages.h"
 
+
 const struct SpineMessageHeader* hal_read_frame();
 
 enum {
@@ -26,13 +27,85 @@ enum {
 struct HeadToBody gHeadData = {0};
 
 
-struct {
+typedef struct CozmoCommand_t {
   int repeat_count;
   int16_t motorValues[MOTOR_COUNT];
   uint16_t printmask;
-} gCommander = {0};
+} CozmoCommand;
+
+CozmoCommand gActiveState = {0};
 
 
+
+/************* CIRCULAR BUFFER for commands ***************/
+
+#define MIN(a,b) ((a)<(b)?(a):(b))
+
+typedef uint_fast16_t idx_t;
+#define CB_CAPACITY (1<<8)
+#define CB_SIZE_MASK (CB_CAPACITY-1)
+
+static struct circular_buffer_t {
+  CozmoCommand buffer[CB_CAPACITY];
+  idx_t head;
+  idx_t tail;
+} gCommandList = {{{0}},0,0};
+
+static inline idx_t circular_buffer_count() {
+  return ((gCommandList.head-gCommandList.tail) & CB_SIZE_MASK);
+}
+
+idx_t circular_buffer_put(CozmoCommand* data) {
+  idx_t available = CB_CAPACITY-1 - circular_buffer_count();
+  if (available) {
+    gCommandList.buffer[gCommandList.head++]=*data;
+    gCommandList.head &= CB_SIZE_MASK;
+    return available-1;
+  }
+  return 0;
+}
+
+idx_t circular_buffer_get(CozmoCommand* data) {
+  idx_t available = circular_buffer_count();
+  if (available) {
+    *data = gCommandList.buffer[gCommandList.tail++];
+    gCommandList.tail &= CB_SIZE_MASK;
+    return available-1;
+  }
+  return 0;
+}
+
+
+/***** pending commands  **************************/
+CozmoCommand gPending = {0};
+
+void show_command(CozmoCommand* cmd) {
+  printf("{%d, [%d %d %d %d], %x}\n",
+         cmd->repeat_count,
+         cmd->motorValues[0],
+         cmd->motorValues[1],
+         cmd->motorValues[2],
+         cmd->motorValues[3],
+         cmd->printmask);
+}
+
+void PrepCommand(void) { memset(&gPending,0,sizeof(gPending)); }
+void SetRepeats(int n) {gPending.repeat_count = n; }
+void AddPrintFlag(int flag) { gPending.printmask |= flag; }
+void AddMotorCommand(RobotMotor motor, float power) {
+  if (power > 1.0) { power = 1.0;}
+  if (power < -1.0) { power = -1.0;}
+  gPending.motorValues[motor] = 0x7FFF * power;
+}
+void SubmitCommand(void) {
+  printf("submitting command");
+  show_command(&gPending);
+  if (!gPending.repeat_count) { gPending.repeat_count=1;}
+  circular_buffer_put(&gPending);
+  PrepCommand(); //make sure it is cleared
+}
+
+/********* command parsing **************/
 
 const char* skip_ws(const char* text, int len)
 {
@@ -47,7 +120,7 @@ const char* handle_repeat_command(const char* text, int len)
   long nrepeats = strtol(text, &end, 10);
   if (end!=text && end<=text+len) //converted some chars
   {
-    gCommander.repeat_count = nrepeats;
+    SetRepeats(nrepeats);
   }
   return end;
 }
@@ -56,12 +129,9 @@ const char* handle_motor(const char* text, int len, RobotMotor motor)
 {
   char* end;
   double power = strtof(text, &end);
-  if (power > 1.0) { power = 1.0;}
-  if (power < -1.0) { power = -1.0;}
-  printf("Motor %d power = %f (%d%%)\n", motor, power, (int)(power*100));
   if (end!=text && end <= text+len) //converted some chars
   {
-    gCommander.motorValues[motor] = 0x7FFF * power;
+    AddMotorCommand(motor, power);
   }
   return end;
 }
@@ -85,36 +155,51 @@ const char* handle_right_command(const char* text, int len)
 
 const char* handle_enc_command(const char* text, int len)
 {
-  gCommander.printmask |= (1<<show_ENCODER);
+  AddPrintFlag(1<<show_ENCODER);
   return text;
 }
 
 const char* handle_prox_command(const char* text, int len)
 {
-  gCommander.printmask |= (1<<show_PROX);
+  AddPrintFlag(1<<show_PROX);
   return text;
 }
 
 const char* handle_touch_command(const char* text, int len)
 {
-  gCommander.printmask |= (1<<show_TOUCH);
+  AddPrintFlag(1<<show_TOUCH);
   return text;
 }
 
 const char* handle_speed_command(const char* text, int len)
 {
-  gCommander.printmask |= (1<<show_SPEED);
+  AddPrintFlag(1<<show_SPEED);
   return text;
 }
 
 const char* handle_bat_command(const char* text, int len)
 {
-  gCommander.printmask |= (1<<show_BAT);
+  AddPrintFlag(1<<show_BAT);
   return text;
 }
+
 const char* handle_cliff_command(const char* text, int len)
 {
-  gCommander.printmask |= (1<<show_CLIFF);
+  AddPrintFlag(1<<show_CLIFF);
+  return text;
+}
+
+const char* handle_mode_command(const char* text, int len)
+{
+  hal_set_mode(RobotMode_RUN);
+  return text;
+}
+
+
+int gQuit = 0;
+const char* handle_quit_command(const char* text, int len)
+{
+  gQuit = 1;
   return text;
 }
 
@@ -146,29 +231,33 @@ typedef struct CommandHandler_t {
 
 static const CommandHandler handlers[] = {
   REGISTER_COMMAND(repeat),
+  {"r",1,handle_repeat_command}, //shortcut for repeat
   REGISTER_COMMAND(head),
   REGISTER_COMMAND(lift),
   REGISTER_COMMAND(left),
   REGISTER_COMMAND(right),
   REGISTER_COMMAND(enc),
+  REGISTER_COMMAND(bat),
   REGISTER_COMMAND(speed),
   REGISTER_COMMAND(cliff),
   REGISTER_COMMAND(prox),
   REGISTER_COMMAND(touch),
+  REGISTER_COMMAND(mode),
+  REGISTER_COMMAND(quit),
  /* ^^ insert new commands here ^^ */
   {0}
 };
 
 
-int parse_command_text(const char* command, int len)
+void parse_command_text(const char* command, int len)
 {
-
+  PrepCommand();
   while (len > 0)  {
     const char* next_word = NULL;
     const CommandHandler* candidate = &handlers[0];
-    
-//    printf("HANDLING [ %.*s ] ...", len, command);
-    
+
+    printf("HANDLING [ %.*s ] ...", len, command);
+
     while (candidate->name) {
       if (len >= candidate->len &&
           strncmp(command, candidate->name, candidate->len)==0)
@@ -193,10 +282,18 @@ int parse_command_text(const char* command, int len)
       len = 0;
     }
   }
-  return -1;
+  SubmitCommand();
 }
 
 #define LINEBUFSZ 512
+
+char* handle_overflow(char* linebuf, int maxlen) {
+  printf("TOO MANY CHARACTERS, truncating to %d\n", maxlen);
+  char* endl = linebuf-maxlen-1;
+  *endl = '\n';
+  return endl;
+}
+
 int kbd_command_process(void) {
   static int linelen = 0;
   static char linebuf[LINEBUFSZ+1];
@@ -206,29 +303,29 @@ int kbd_command_process(void) {
     printf("%.*s", nread, linebuf+linelen);
     fflush(0);
 
-    char* endl = memchr(linebuf+linelen, '\n', nread);
-    if (!endl) {
+
+/* ** */
+    while (nread) {
+      char* endl = memchr(linebuf+linelen, '\n', nread);
       linelen+=nread;
+      nread = 0; //assume no more chars this loop
       if (linelen >= LINEBUFSZ)
       {
-        printf("TOO MANY CHARACTERS, truncating to %d\n", LINEBUFSZ);
-        endl = linebuf+LINEBUFSZ-1;
-        *endl = '\n';
+        endl = handle_overflow(linebuf,LINEBUFSZ);
       }
-    }
-    if (endl) {
-      *endl = '\0';
-      parse_command_text(linebuf, endl-linebuf);
-      endl++;
-      if (endl < linebuf+linelen) {
-        linelen -= endl-linebuf;
-        memmove(linebuf, endl, linelen);
-      }
-      else {
+      if (endl) {
+        parse_command_text(linebuf, endl-linebuf);
+        endl++;
+        if (endl-linebuf < linelen) { //more chars remain
+          nread = linelen - (endl-linebuf); //act like they are new
+          memmove(linebuf, endl, nread);    //by moving to beginning of buffer.
+        }
         linelen = 0;
       }
     }
   }
+
+
   return 0;
 }
 
@@ -237,9 +334,10 @@ int gather_contact_text(const char* contactData, int len)
 {
   static int linelen = 0;
   static char linebuf[LINEBUFSZ+1];
-  while (*contactData) {
-    char c = *contactData;
-    if (c=='\n') {
+  while (*contactData && len-->0) {
+    char c = *contactData++;
+    printf(".%c",c);
+    if (c=='\n' || c=='\r') {
       linebuf[linelen]='\0';
       parse_command_text(linebuf, linelen);
       linelen = 0;
@@ -254,7 +352,7 @@ int gather_contact_text(const char* contactData, int len)
   }
   return 0;
 }
-  
+
 
 const void* get_a_frame(int32_t timeout_ms)
 {
@@ -273,16 +371,17 @@ const void* get_a_frame(int32_t timeout_ms)
 
 void populate_outgoing_frame(void) {
   gHeadData.framecounter++;
-  if (gCommander.repeat_count) {
+  if (gActiveState.repeat_count) {
     int i;
     for (i=0;i<4;i++) {
-      gHeadData.motorPower[i] = gCommander.motorValues[i];
+      gHeadData.motorPower[i] = gActiveState.motorValues[i];
     }
   }
   else {
+    memset(gActiveState.motorValues, 0, sizeof(gActiveState.motorValues));
     memset(gHeadData.motorPower, 0, sizeof(gHeadData.motorPower));
   }
-    
+
 }
 
 uint16_t show_legend(uint16_t mask) {
@@ -291,11 +390,11 @@ uint16_t show_legend(uint16_t mask) {
     printf("left_enc right_enc lift_enc head_enc ");
   }
   if (mask & (1<<show_SPEED)) {
-    printf("left_spd right_spd lift_spd head_spd ");      
+    printf("left_spd right_spd lift_spd head_spd ");
   }
   if (mask & (1<<show_CLIFF)) {
-    printf("fl_cliff, fr_cliff, br_cliff, bl_cliff ");
-  }    
+    printf("fl_cliff fr_cliff br_cliff bl_cliff ");
+  }
   if (mask & (1<<show_BAT)) {
     printf("bat ");
   }
@@ -308,25 +407,26 @@ uint16_t show_legend(uint16_t mask) {
   printf("\n");
   return mask;
 }
-  
+
 
 void process_incoming_frame(struct BodyToHead* bodyData)
 {
   static uint16_t oldmask = 0;
-  if (gCommander.repeat_count) {
-    if (gCommander.printmask != oldmask) {
-      oldmask = show_legend(gCommander.printmask);
+  if (gActiveState.repeat_count) {
+    if (gActiveState.printmask != oldmask) {
+      oldmask = show_legend(gActiveState.printmask);
     }
-      
+
     printf("%d ", bodyData->framecounter);
-    if (gCommander.printmask & (1<<show_ENCODER)) {
+
+    if (gActiveState.printmask & (1<<show_ENCODER)) {
       printf("%d %d %d %d ",
              bodyData->motor[0].position,
              bodyData->motor[1].position,
              bodyData->motor[2].position,
              bodyData->motor[3].position );
     }
-    if (gCommander.printmask & (1<<show_SPEED)) {
+    if (gActiveState.printmask & (1<<show_SPEED)) {
       float speeds[4];
       int i;
       for (i=0;i<4;i++) {
@@ -339,32 +439,45 @@ void process_incoming_frame(struct BodyToHead* bodyData)
              speeds[2],
              speeds[3] );
     }
-    if (gCommander.printmask & (1<<show_CLIFF)) {
+    if (gActiveState.printmask & (1<<show_CLIFF)) {
       printf("%d %d %d %d ",
              bodyData->cliffSense[0],
              bodyData->cliffSense[1],
              bodyData->cliffSense[2],
              bodyData->cliffSense[3] );
     }
-    if (gCommander.printmask & (1<<show_BAT)) {
+    if (gActiveState.printmask & (1<<show_BAT)) {
       printf("%d ",
              bodyData->battery.battery);
     }
-    if (gCommander.printmask & (1<<show_PROX)) {
+    if (gActiveState.printmask & (1<<show_PROX)) {
       printf("%d",
              bodyData->proximity.rangeMM);
     }
-    if (gCommander.printmask & (1<<show_TOUCH)) {
+    if (gActiveState.printmask & (1<<show_TOUCH)) {
       printf("%d %d",
              bodyData->touchLevel[0],
              bodyData->touchLevel[1]);
     }
+    #endif
     printf("\n");
-    if (--gCommander.repeat_count == 0) {
+    if (--gActiveState.repeat_count == 0) {
       //clear print request at end
-      gCommander.printmask = 0;
+      gActiveState.printmask = 0;
     }
   }
+}
+
+int run_commands(void) {
+  if (gActiveState.repeat_count == 0) {
+    if (circular_buffer_count() > 0) {
+      circular_buffer_get(&gActiveState);
+      printf("executing command");
+      show_command(&gActiveState);
+
+    }
+  }
+  return (gActiveState.repeat_count == 0 && gQuit);
 }
 
 
@@ -385,21 +498,29 @@ int main(int argc, const char* argv[])
 
   enable_kbhit(1);
 
+  hal_set_mode(RobotMode_RUN);
+
   //kick off the body frames
   hal_send_frame(PAYLOAD_DATA_FRAME, &gHeadData, sizeof(gHeadData));
-  
+
+  usleep(5000);
+  hal_send_frame(PAYLOAD_DATA_FRAME, &gHeadData, sizeof(gHeadData));
+
   while (!exit)
   {
-    exit = kbd_command_process();
-    populate_outgoing_frame();
+    kbd_command_process();
+
+    exit = run_commands();
+
     const struct SpineMessageHeader* hdr = get_a_frame(10);
     if (!hdr) {
-      struct BodyToHead fakeData = {0};
+      struct BodyToHead fakeData = {{0}};
       process_incoming_frame(&fakeData);
     }
     else {
       if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
          struct BodyToHead* bodyData = (struct BodyToHead*)(hdr+1);
+         populate_outgoing_frame();
          process_incoming_frame(bodyData);
          hal_send_frame(PAYLOAD_DATA_FRAME, &gHeadData, sizeof(gHeadData));
       }
@@ -407,13 +528,14 @@ int main(int argc, const char* argv[])
         struct ContactData* contactData = (struct ContactData*)(hdr+1);
         gather_contact_text((char*)contactData->data, sizeof(contactData->data));
       }
+      else {
+        printf("got header %x\n", hdr->payload_type);
+      }
     }
-    
+
   }
-  
+
   on_exit();
-  
+
   return 0;
-
-
 }

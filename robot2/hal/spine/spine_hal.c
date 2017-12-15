@@ -168,6 +168,9 @@ static int get_payload_len(PayloadId payload_type, enum MsgDir dir)
   case PAYLOAD_DFU_PACKET:
     return sizeof(struct WriteDFU);
     break;
+  case PAYLOAD_CONT_DATA:
+    return sizeof(struct ContactData);
+    break;
   default:
     break;
   }
@@ -231,6 +234,7 @@ static int spine_sync(const uint8_t* buf, unsigned int idx)
       //  buf already contains good tag. So just return the number of matches
       return match;
     }
+    spine_debug_x("good header for %x\n", candidate->payload_type);
   }
   return idx;
 }
@@ -316,7 +320,7 @@ const struct SpineMessageHeader* hal_read_frame()
   unsigned int payload_length = ((struct SpineMessageHeader*)gHal.inbuffer)->bytes_to_follow;
   unsigned int total_message_length = SPINE_HEADER_LEN + payload_length + SPINE_CRC_LEN;
 
-  spine_debug_x("%d byte payload\n", payload_length);
+  spine_debug_x("type %x; have %d / %d bytes\n",  ((struct SpineMessageHeader*)gHal.inbuffer)->payload_type , index, total_message_length);
 
   while (index < total_message_length) {
     int rslt = hal_serial_read(gHal.inbuffer + index, total_message_length - index);

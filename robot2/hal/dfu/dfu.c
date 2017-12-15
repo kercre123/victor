@@ -173,6 +173,7 @@ int main(int argc, const char* argv[])
 
   hal_send_frame(PAYLOAD_VERSION, NULL, 0);
 
+
   const char* version_ptr = NULL;
   const struct SpineMessageHeader* hdr;
   do {
@@ -184,6 +185,9 @@ int main(int argc, const char* argv[])
      }
      else if (hdr && hdr->payload_type == PAYLOAD_VERSION) {
         version_ptr = ((struct VersionInfo*)(hdr + 1))->app_version;
+     }
+     else if (hdr) {
+       dprint("rcvd payload type %x\n", hdr->payload_type);
      }
   } while (!version_ptr);
 
