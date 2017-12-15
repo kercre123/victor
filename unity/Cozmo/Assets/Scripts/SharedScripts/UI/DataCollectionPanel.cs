@@ -33,10 +33,8 @@ public class DataCollectionPanel : MonoBehaviour {
     RobotEngineManager.Instance.Message.RequestLocale = Singleton<Anki.Cozmo.ExternalInterface.RequestLocale>.Instance;
     RobotEngineManager.Instance.SendMessage();
 
-    if (!dataCollectionEnabled) {
-      // by default on so only needs to get set if false.
-      SetDataCollection(dataCollectionEnabled);
-    }
+    // Always setting this so the latest value gets passed down to the Obj-C layer
+    SetDataCollection(dataCollectionEnabled);
     // test code for fake german locale
 #if UNITY_EDITOR
     if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {

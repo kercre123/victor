@@ -12,6 +12,7 @@
 #define NOTIFICATION_OPENED @"OnAnkiNotificationOpened%@"
 #define NOTIFICATION_RECEIVED_FOREGROUND @"OnAnkiNotificationReceivedForeground%@"
 #define NOTIFICATION_RECEIVED_BACKGROUND @"OnAnkiNotificationReceivedBackground%@"
+#define DATA_COLLECTION_ENABLED_KEY @"DataCollectionEnabled"
 
 @interface AnkiNotifications : NSObject
 
