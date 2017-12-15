@@ -338,5 +338,10 @@ namespace Anki {
       
     } // CameraGetFrame()
     
+    void AndroidHAL::CameraSwapLocks()
+    {
+      // no-op
+    }
+
   } // namespace Cozmo
 } // namespace Anki

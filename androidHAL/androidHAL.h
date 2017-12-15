@@ -74,6 +74,8 @@ namespace Anki
       
       u16 CameraGetHeight() const {return _imageCaptureHeight;}
       u16 CameraGetWidth()  const {return _imageCaptureWidth; }
+
+      void CameraSwapLocks();
       
     private:
 

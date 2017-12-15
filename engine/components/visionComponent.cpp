@@ -804,17 +804,15 @@ namespace Cozmo {
         Lock();
         // Clear it when done.
         _currentImg.Clear();
-        _nextImg.Clear();
         Unlock();
-        
-        // Sleep to alleviate pressure on main thread
-        std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
       }
-      else if(!_nextImg.IsEmpty())
+      
+      if(!_nextImg.IsEmpty())
       {
         ANKI_CPU_PROFILE("SwapInNewImage");
         // We have an image waiting to be processed: swap it in (avoid copy)
         Lock();
+        AndroidHAL::getInstance()->CameraSwapLocks();
         std::swap(_currentImg, _nextImg);
         std::swap(_currentPoseData, _nextPoseData);
         _nextImg.Clear();

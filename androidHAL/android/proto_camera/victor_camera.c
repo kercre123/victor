@@ -1,4 +1,5 @@
 #include <dlfcn.h>
+#include <pthread.h>
 #include <sys/mman.h>
 
 #include "kernel_includes.h"
@@ -964,20 +965,22 @@ static void downsample_frame(const uint8_t *bayer, uint8_t *rgb, int bayer_sx, i
 
 
 #define BUFFER_SIZE 3
+
 // Should only need a buffer of three images, one for the image that is currently being
 // used by outside sources (engine) and then we alternate writing new images to the other two
 // This way there is always a complete image available that can be switched to after the current image
 // is done being processed
 static uint8_t raw_buffer[BUFFER_SIZE][Y][X][3];
+static pthread_mutex_t lock;
 
 // Index that is currently being processed by the outside and we should not touch
-static uint8_t processing_idx = 0;
+static uint8_t processing_idx = 2;
 
 // The next index to switch to should a new image to process be needed
-static uint8_t potential_processing_idx = 0;
+static uint8_t potential_processing_idx = 1;
 
 // The next index to write new images to
-static uint8_t next_idx = 1;
+static uint8_t next_idx = 0;
 
 int dump_image_data(uint8_t *img, int width, int height)
 {
@@ -1055,15 +1058,19 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
 
         downsample_frame(inbuf, outbuf, raw_frame_width, raw_frame_height, 10 /* bpp */);
         
+        pthread_mutex_lock(&lock);
+
         // image has been taken from the buffer and downsampled, it is now safe for
         // it to be potentially processed by engine
+        // any currently partially-locked buffer (not yet locked for processing) is
+        // safe to reuse, so we unlock it
+
+        uint8_t temp = potential_processing_idx;
         potential_processing_idx = next_idx;
-        next_idx = (next_idx + 1) % BUFFER_SIZE;
-        if(next_idx == processing_idx)
-        {
-          next_idx = (next_idx + 1) % BUFFER_SIZE;
-        }
-        
+        next_idx = temp;
+
+        pthread_mutex_unlock(&lock);
+
         user_frame_callback(outbuf, X, Y);
         frameid++;
       }
@@ -1086,7 +1093,19 @@ EXIT:
   }
 }
 
+void camera_swap_locks()
+{
+  pthread_mutex_lock(&lock);
 
+  // NOTE: we do not modify next index within this mutex!
+
+  // Swap potential and processing 
+  uint8_t temp = processing_idx;
+  processing_idx = potential_processing_idx;
+  potential_processing_idx = temp;
+
+  pthread_mutex_unlock(&lock);
+}
 
 int mm_app_start_capture_raw(mm_camera_test_obj_t *test_obj, uint8_t num_snapshots)
 {
@@ -1295,6 +1314,12 @@ int camera_init()
     rc = -1;
   } //else we are goint to use the first one.
   
+  if (pthread_mutex_init(&lock, NULL) != 0)
+  {
+    CDBG_ERROR("%s: Mutex init failed", __func__);
+    rc = -1;
+  }
+
   return rc;
 }
 
@@ -1311,11 +1336,6 @@ int camera_start(camera_cb cb)
   return rc;
 }
 
-
-void camera_set_processing_frame()
-{
-  processing_idx = potential_processing_idx;
-}
 
 int camera_stop()
 {
