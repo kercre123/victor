@@ -169,10 +169,13 @@ PROTO WebotsKeyboardController [
   field SFFloat imageCenter_x 160
   field SFFloat imageCenter_y 120
 
-  # Vision system params
-  field SFInt32 streamResolutionWidth  0
-  field SFInt32 streamResolutionHeight 0
+  # Camera display params
+  # Note that camera display is OFF by default.
+  # Width and height must be > 0 to enable.
+  field SFInt32 uiCamDisplayWidth  0
+  field SFInt32 uiCamDisplayHeight 0
 
+  # Vision system params
   field SFInt32 camera_autoexposureOn 1
   field SFFloat camera_exposureTime 0.2
   field SFInt32 camera_integerCountsIncrement 3
@@ -256,7 +259,7 @@ Supervisor {
       ]
     }
       
-    %{ if fields.streamResolutionWidth.value > 0 and fields.streamResolutionHeight.value > 0 then }%
+    %{ if fields.uiCamDisplayWidth.value > 0 and fields.uiCamDisplayHeight.value > 0 then }%
     DEF CAM_DISPLAY_PLANE Display {
       children [
         DEF SHAPE Shape {
@@ -275,8 +278,8 @@ Supervisor {
       ]
       name "uiCamDisplay"
 
-      width  IS streamResolutionWidth
-      height IS streamResolutionHeight
+      width  IS uiCamDisplayWidth
+      height IS uiCamDisplayHeight
     }
     %{ end }%
   ]
