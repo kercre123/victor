@@ -9,6 +9,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.IO.IsolatedStorage;
+using System.Runtime.InteropServices;
+using DataPersistence;
 
 /// <summary>
 /// Add managers to this object by calling
@@ -20,6 +22,7 @@ using System.IO.IsolatedStorage;
 /// Also loads all needed Asset Bundles for the initial app start.
 /// </summary>
 public class StartupManager : MonoBehaviour {
+
   [System.Serializable]
   public class MainSceneData {
     public string[] AssetBundlesToLoad;
@@ -308,6 +311,9 @@ public class StartupManager : MonoBehaviour {
       }
     }
 
+    // Push notification setup
+    DataPersistenceManager.Instance.Data.DefaultProfile.PlayerId = DAS.GetGlobal("$player_id");
+
     LoadingProgress = 1.0f;
 
     if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
@@ -535,6 +541,9 @@ public class StartupManager : MonoBehaviour {
 
     Cozmo.RequestGame.RequestGameManager.CreateInstance();
     Cozmo.Notifications.NotificationsManager.CreateInstance();
+
+    // Guaranteed that NativeLibMessageReceiver is alive by now
+    Cozmo.Util.NativeLibMessageReceiver.Instance.DeliverStoredMessages();
 
     Cozmo.UI.HasHiccupsAlertController.InitializeInstance();
   }

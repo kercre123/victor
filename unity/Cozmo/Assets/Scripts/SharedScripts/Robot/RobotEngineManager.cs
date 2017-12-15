@@ -8,6 +8,7 @@ using System.Text;
 using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
 using RobotChannel = ChannelBase<RobotMessageIn, RobotMessageOut>;
+using DataPersistence;
 
 /// <summary>
 /// Robot engine manager lives on a GameObject(named MasterObject) in our Intro scene,
@@ -393,6 +394,9 @@ public class RobotEngineManager : MonoBehaviour {
       }
 
       DasTracker.Instance.TrackRobotConnected();
+
+      // Robot is connected - safe to grab this session's robot phys ID
+      DataPersistenceManager.Instance.Data.DefaultProfile.RobotPhysicalId = DAS.GetGlobal("$phys");
     }
   }
 

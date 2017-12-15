@@ -21,7 +21,16 @@
 		1DEBB85E53BFF0C17783A20E /* SplashScreen.mm in Sources */ = {isa = PBXBuildFile; fileRef = EB52651E2359DD957762D896 /* SplashScreen.mm */; };
 		200BF7971F2964820009F3E2 /* libcladutil.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 200BF7961F2964820009F3E2 /* libcladutil.a */; };
 		2225EFBD9266DE2D57FF9965 /* UTNotificationsTools.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6C07DD59FF4D152E66BFC7F9 /* UTNotificationsTools.mm */; };
+		238199B51FC4B6450001BC5C /* libBLECozmo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 238199B61FC4B6450001BC5C /* libBLECozmo.a */; settings = {ATTRIBUTES = (Weak, ); }; };
 		2385EC481F7DA765000DC45E /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2385EC471F7DA765000DC45E /* UserNotifications.framework */; };
+		23C0F90E1FBE592E009831D5 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 23C0F90D1FBE592E009831D5 /* libz.tbd */; };
+		23D218191FBCD7C3003340B0 /* libAnkiNotifications.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 23D218181FBCD7C3003340B0 /* libAnkiNotifications.a */; };
+		23D2181C1FBCD8BA003340B0 /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23D2181B1FBCD8AA003340B0 /* CoreTelephony.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
+		23D2181E1FBCD8CF003340B0 /* Social.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23D2181D1FBCD8C3003340B0 /* Social.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
+		23D218201FBCD8DE003340B0 /* Accounts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23D2181F1FBCD8D9003340B0 /* Accounts.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
+		23D218221FBCD8F9003340B0 /* AdSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23D218211FBCD8EA003340B0 /* AdSupport.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
+		23D218241FBCD908003340B0 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23D218231FBCD904003340B0 /* StoreKit.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
+		23D2182D1FBD100A003340B0 /* libAnkiNotifications.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 23D2182C1FBD100A003340B0 /* libAnkiNotifications.a */; };
 		2578606216A9027870B5C447 /* iPhone_Sensors.mm in Sources */ = {isa = PBXBuildFile; fileRef = 66D75C4832F5ED6E030216F1 /* iPhone_Sensors.mm */; };
 		273EE5B9B92AC683D0CE786B /* CameraCapture.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2167B9C45B33ACBC132A8820 /* CameraCapture.mm */; };
 		29A2840A00D5FA9F2ED8D140 /* AppDelegateListener.mm in Sources */ = {isa = PBXBuildFile; fileRef = 57B55EC3DAD9586C8674C1B4 /* AppDelegateListener.mm */; };
@@ -141,7 +150,17 @@
 		200BF7961F2964820009F3E2 /* libcladutil.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcladutil.a; path = "../../lib/util/project/gyp/build/Debug-iphoneos/libcladutil.a"; sourceTree = "<group>"; };
 		2167B9C45B33ACBC132A8820 /* CameraCapture.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = CameraCapture.mm; path = UnityBuild/Classes/Unity/CameraCapture.mm; sourceTree = "<group>"; };
 		22B540F24D35CDDA4795F67E /* OnDemandResources.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = OnDemandResources.mm; path = UnityBuild/Classes/Unity/OnDemandResources.mm; sourceTree = "<group>"; };
+		238199B61FC4B6450001BC5C /* libBLECozmo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libBLECozmo.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		2385EC471F7DA765000DC45E /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
+		23C0F90D1FBE592E009831D5 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		23D218181FBCD7C3003340B0 /* libAnkiNotifications.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libAnkiNotifications.a; path = "../../lib/appboy-anki/iOS/libAnkiNotifications.a"; sourceTree = "<group>"; };
+		23D2181A1FBCD88B003340B0 /* CoreImage.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreImage.framework; path = System/Library/Frameworks/CoreImage.framework; sourceTree = SDKROOT; };
+		23D2181B1FBCD8AA003340B0 /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = System/Library/Frameworks/CoreTelephony.framework; sourceTree = SDKROOT; };
+		23D2181D1FBCD8C3003340B0 /* Social.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Social.framework; path = System/Library/Frameworks/Social.framework; sourceTree = SDKROOT; };
+		23D2181F1FBCD8D9003340B0 /* Accounts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accounts.framework; path = System/Library/Frameworks/Accounts.framework; sourceTree = SDKROOT; };
+		23D218211FBCD8EA003340B0 /* AdSupport.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdSupport.framework; path = System/Library/Frameworks/AdSupport.framework; sourceTree = SDKROOT; };
+		23D218231FBCD904003340B0 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		23D2182C1FBD100A003340B0 /* libAnkiNotifications.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libAnkiNotifications.a; path = "../../lib/appboy-anki/iOS/libAnkiNotifications.a"; sourceTree = "<group>"; };
 		2B17DB8090B090FCA8D40B33 /* IUnityGraphicsMetal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IUnityGraphicsMetal.h; path = UnityBuild/Classes/Unity/IUnityGraphicsMetal.h; sourceTree = "<group>"; };
 		2B76A5B81E4E102800990EC0 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		2C45B2AF6726FF2E7C80FB13 /* VideoPlayerPlugin.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = VideoPlayerPlugin.mm; path = UnityBuild/Libraries/Plugins/iOS/VideoPlayerPlugin.mm; sourceTree = "<group>"; };
@@ -285,12 +304,22 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				238199B51FC4B6450001BC5C /* libBLECozmo.a in Frameworks */,
+				23C0F90E1FBE592E009831D5 /* libz.tbd in Frameworks */,
+				23D218241FBCD908003340B0 /* StoreKit.framework in Frameworks */,
+				23D218221FBCD8F9003340B0 /* AdSupport.framework in Frameworks */,
+				23D218201FBCD8DE003340B0 /* Accounts.framework in Frameworks */,
+				23D2181E1FBCD8CF003340B0 /* Social.framework in Frameworks */,
+				23D2181C1FBCD8BA003340B0 /* CoreTelephony.framework in Frameworks */,
+				2B76A5B91E4E102800990EC0 /* WebKit.framework in Frameworks */,
+				F8BD0CFA1B5EB38D00F71EA3 /* CoreText.framework in Frameworks */,
+				83B2570B0E62FF8A00468741 /* QuartzCore.framework in Frameworks */,
+				23D218191FBCD7C3003340B0 /* libAnkiNotifications.a in Frameworks */,
 				2385EC481F7DA765000DC45E /* UserNotifications.framework in Frameworks */,
 				200BF7971F2964820009F3E2 /* libcladutil.a in Frameworks */,
 				70CFC6131ED500CE001C0FAA /* libunity-generated.a in Frameworks */,
 				6FC123581E932B6F008DDC49 /* MediaToolbox.framework in Frameworks */,
 				6FC123561E9328B0008DDC49 /* libiPhone-lib.a in Frameworks */,
-				2B76A5B91E4E102800990EC0 /* WebKit.framework in Frameworks */,
 				85C99FC81E3AF0FA00EA82E0 /* libaudioUtil.a in Frameworks */,
 				85DD01461CD2A17300F2EAD5 /* CoreBluetooth.framework in Frameworks */,
 				6F54323B1C8928C4006D3724 /* QuickLook.framework in Frameworks */,
@@ -300,7 +329,6 @@
 				85065E851BF1904400DBAF35 /* libAudioEngine.a in Frameworks */,
 				83B2574C0E63022200468741 /* OpenAL.framework in Frameworks */,
 				491A6D981B5F1D64003E91FB /* Security.framework in Frameworks */,
-				F8BD0CFA1B5EB38D00F71EA3 /* CoreText.framework in Frameworks */,
 				46D2C2FE1B4FAA0800FC7553 /* libctiVisionRobot.a in Frameworks */,
 				46D2C2F91B4FA6AC00FC7553 /* libctiCommonRobot.a in Frameworks */,
 				46D2C2401B4F9D6B00FC7553 /* libcozmoEngine.a in Frameworks */,
@@ -316,9 +344,9 @@
 				1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */,
 				830B5C110E5ED4C100C7819F /* UIKit.framework in Frameworks */,
 				83B256E20E62FEA000468741 /* OpenGLES.framework in Frameworks */,
-				83B2570B0E62FF8A00468741 /* QuartzCore.framework in Frameworks */,
 				83B2574F0E63025400468741 /* libiconv.2.dylib in Frameworks */,
 				8358D1B80ED1CC3700E3A684 /* AudioToolbox.framework in Frameworks */,
+				23D2182D1FBD100A003340B0 /* libAnkiNotifications.a in Frameworks */,
 				56FD43960ED4745200FE3770 /* CFNetwork.framework in Frameworks */,
 				5682F4B20F3B34FF007A219C /* MediaPlayer.framework in Frameworks */,
 				5692F3DD0FA9D8E500EBA2F1 /* CoreLocation.framework in Frameworks */,
@@ -439,6 +467,16 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				238199B61FC4B6450001BC5C /* libBLECozmo.a */,
+				23C0F90D1FBE592E009831D5 /* libz.tbd */,
+				23D2182C1FBD100A003340B0 /* libAnkiNotifications.a */,
+				23D218231FBCD904003340B0 /* StoreKit.framework */,
+				23D218211FBCD8EA003340B0 /* AdSupport.framework */,
+				23D2181F1FBCD8D9003340B0 /* Accounts.framework */,
+				23D2181D1FBCD8C3003340B0 /* Social.framework */,
+				23D2181B1FBCD8AA003340B0 /* CoreTelephony.framework */,
+				23D2181A1FBCD88B003340B0 /* CoreImage.framework */,
+				23D218181FBCD7C3003340B0 /* libAnkiNotifications.a */,
 				2385EC471F7DA765000DC45E /* UserNotifications.framework */,
 				200BF7961F2964820009F3E2 /* libcladutil.a */,
 				70CFC6121ED500CE001C0FAA /* libunity-generated.a */,
@@ -828,12 +866,14 @@
 					"$(inherited)",
 					"$(SRCROOT)/opencv",
 					"$(SRCROOT)/HockeyApp",
+					"$(SRCROOT)/appboy-anki",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = UnityBuild/Classes/Prefix.pch;
+				GCC_PREPROCESSOR_DEFINITIONS = "";
 				GCC_USE_INDIRECT_FUNCTION_CALLS = NO;
 				HEADER_SEARCH_PATHS = (
 					"\"$(SRCROOT)/UnityBuild/Classes\"",
@@ -843,6 +883,7 @@
 					"$(SRCROOT)/UnityBuild/Libraries/libil2cpp/include",
 					"$(SRCROOT)/../..",
 					"$(SRCROOT)/../../lib/util/source/anki",
+					"$(SRCROOT)/appboy-anki",
 				);
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -850,6 +891,7 @@
 					"$(inherited)",
 					"$(SRCROOT)/opencv",
 					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
+					"$(SRCROOT)/appboy-anki",
 					"$(SRCROOT)/HockeyApp",
 				);
 				ONLY_ACTIVE_ARCH = NO;
@@ -859,9 +901,8 @@
 					CoreMotion,
 					"-weak-lSystem",
 					"-force_load",
-					"$(CORETECH_EXTERNAL_DIR)/routing_http_server/generated/ios/DerivedData/Release-iphoneos/librouting_http_server.a",
-					"-force_load",
 					"${BUILT_PRODUCTS_DIR}/libunity-generated.a",
+					"-ObjC",
 				);
 				PRODUCT_NAME = cozmo;
 				SDKROOT = iphoneos;
@@ -890,11 +931,13 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				DEPLOYMENT_POSTPROCESSING = YES;
+				DEVELOPMENT_TEAM = BEJF9NAYCL;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/opencv",
 					"$(SRCROOT)/HockeyApp",
+					"$(SRCROOT)/appboy-anki",
 				);
 				GCC_ENABLE_CPP_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -907,6 +950,7 @@
 					"$(SRCROOT)/UnityBuild/Libraries/libil2cpp/include",
 					"$(SRCROOT)/../..",
 					"$(SRCROOT)/../../lib/util/source/anki",
+					"$(SRCROOT)/appboy-anki",
 				);
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -915,6 +959,7 @@
 					"$(SRCROOT)/opencv",
 					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
 					"$(SRCROOT)/HockeyApp",
+					"$(SRCROOT)/appboy-anki",
 				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-DINIT_SCRIPTING_BACKEND=1";
@@ -923,9 +968,8 @@
 					CoreMotion,
 					"-weak-lSystem",
 					"-force_load",
-					"$(CORETECH_EXTERNAL_DIR)/routing_http_server/generated/ios/DerivedData/Release-iphoneos/librouting_http_server.a",
-					"-force_load",
 					"${BUILT_PRODUCTS_DIR}/libunity-generated.a",
+					"-ObjC",
 				);
 				PRODUCT_NAME = cozmo;
 				SDKROOT = iphoneos;
@@ -980,10 +1024,12 @@
 					"$(inherited)",
 					"$(SRCROOT)/opencv",
 					"$(SRCROOT)/HockeyApp",
+					"$(SRCROOT)/appboy-anki",
 				);
 				GCC_ENABLE_CPP_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = UnityBuild/Classes/Prefix.pch;
+				GCC_PREPROCESSOR_DEFINITIONS = SHIPPING;
 				HEADER_SEARCH_PATHS = (
 					"\"$(SRCROOT)/UnityBuild/Classes\"",
 					"\"$(SRCROOT)\"",
@@ -992,6 +1038,7 @@
 					"$(SRCROOT)/UnityBuild/Libraries/libil2cpp/include",
 					"$(SRCROOT)/../..",
 					"$(SRCROOT)/../../lib/util/source/anki",
+					"$(SRCROOT)/appboy-anki",
 				);
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -1000,6 +1047,7 @@
 					"$(SRCROOT)/opencv",
 					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
 					"$(SRCROOT)/HockeyApp",
+					"$(SRCROOT)/appboy-anki",
 				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-DINIT_SCRIPTING_BACKEND=1";
@@ -1009,6 +1057,7 @@
 					"-weak-lSystem",
 					"-force_load",
 					"${BUILT_PRODUCTS_DIR}/libunity-generated.a",
+					"-ObjC",
 				);
 				PRODUCT_NAME = cozmo;
 				SDKROOT = iphoneos;

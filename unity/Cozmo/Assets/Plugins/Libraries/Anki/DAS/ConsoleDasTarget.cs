@@ -26,14 +26,19 @@ public class ConsoleDasTarget : IDASTarget {
   }
 
   public void Ch_Info(string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
-    Console.WriteLine ("[Ch_Info][" + channelName +"][" + eventName + "] " + eventValue);
+    Console.WriteLine("[Ch_Info][" + channelName + "][" + eventName + "] " + eventValue);
   }
 
   public void Ch_Debug(string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
-    Console.WriteLine ("[Ch_Debug][" + channelName + "][" + eventName + "] " + eventValue);
+    Console.WriteLine("[Ch_Debug][" + channelName + "][" + eventName + "] " + eventValue);
   }
 
   public void SetGlobal(string key, string value) {
     Console.WriteLine("[SetGlobal][" + key + "] " + value);
+  }
+
+  public string GetGlobal(string key) {
+    Console.WriteLine("[GetGlobal][" + key + "]");
+    return "";
   }
 }

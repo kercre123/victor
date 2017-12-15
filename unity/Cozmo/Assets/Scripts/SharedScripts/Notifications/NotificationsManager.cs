@@ -1,6 +1,9 @@
 using System;
 using Anki.Cozmo.ExternalInterface;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using UnityEngine;
+using DataPersistence;
 
 namespace Cozmo.Notifications {
 
@@ -23,6 +26,28 @@ namespace Cozmo.Notifications {
   }
 
   public class NotificationsManager {
+#if UNITY_IOS && !UNITY_EDITOR
+    [DllImport("__Internal")]
+    private static extern void AnkiNotifications_ChangeAppBoyUserId(string playerId);
+
+    [DllImport("__Internal")]
+    private static extern void AnkiNotifications_RequestPermission();
+
+    [DllImport("__Internal")]
+    private static extern void AnkiNotifications_SetAppBoyUserDOB(string dob);
+
+    [DllImport("__Internal")]
+    private static extern void AnkiNotifications_SetCustomAttribute(string attributeKey, string attributeValue);
+
+    [DllImport("__Internal")]
+    private static extern void AnkiNotifications_AddAppBoyAlias(string alias, string label);
+
+    [DllImport("__Internal")]
+    private static extern bool AnkiNotifications_IsInitialized();
+
+    [DllImport("__Internal")]
+    private static extern void AnkiNotifications_SetRequestProcessingPolicy(bool automatic);
+#endif
 
     private const string _kOrderIdNotificationDataKey = "order_id";
     private const string _kTimeSentNotificationDataKey = "time_sent";
@@ -32,6 +57,13 @@ namespace Cozmo.Notifications {
     private const string _kTimeStampDasEventDataKey = "$ts";
     private const string _kDataDasEventDataKey = "$data";
     private const UInt32 _kNotifClickGetsCreditWindowInSeconds = 30 * 60;
+
+    #region Push Notification Consts
+    private const string _kBrazePlayerIdAttributeKey = "player_id";
+    private const string _kDasEventBase = "ui.push_notifications.";
+    private const string _kDasEventReceived = "received";
+    private const string _kDasEventReaction = "reaction";
+    #endregion
 
     private static DateTime _sEpochZero = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
@@ -68,21 +100,18 @@ namespace Cozmo.Notifications {
       // on platforms that require a prompt ( iOS ) this is set by either our settings menu notification panel, 
       //              or first time onboarding, or the weekly repeat of that same onboarding.
       if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.OSNotificationsPermissionsPromptShown) {
-        // On iOS just needing a callback for a click counts as "needing to handle" notifications.
-        // This every frame process is required for proper DAS logging
 #if UNITY_IOS && !UNITY_EDITOR
-        bool appHandlesRecievedNotification = true;
-#else
-        bool appHandlesRecievedNotification = false;
-#endif
-        UTNotifications.Manager.Instance.Initialize(appHandlesRecievedNotification);
+        // We want the AnkiNotifications lib to handle requesting the notification permission on iOS - 
+        // it will update the status with the Braze SDK
+        AnkiNotifications_RequestPermission();
 
-#if UNITY_IOS && !UNITY_EDITOR
         // On iOS we can't clear the notifications immediately and log them for DAS, so wait awhile for a startup
         UTNotifications.Manager.Instance.StartCoroutine(DelayCancelAllNotifications());
 #else
         CancelAllNotifications();
 #endif
+        // Always init UTNotifications w/o having the lib request permissions
+        UTNotifications.Manager.Instance.Initialize(false);
       }
     }
 
@@ -226,6 +255,59 @@ namespace Cozmo.Notifications {
 
     public void CreditNotificationForConnect() {
       DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.MostRecentNotificationClicked = null;
+    }
+
+    // Should only be called on iOS
+    public void OnNotificationPermissionGranted() {
+      // On iOS just needing a callback for a click counts as "needing to handle" notifications.
+      // This every frame process is required for proper DAS logging
+      DAS.Info("NotificationsManager", "OnNotificationPermissionGranted");
+      UTNotifications.Manager.Instance.Initialize(true);
+
+      // Make sure we've set the user data
+      SetBrazeData();
+    }
+
+    public void SetBrazeData() {
+#if UNITY_IOS && !UNITY_EDITOR
+      // Use Robot ID as a unique identifier
+      AnkiNotifications_ChangeAppBoyUserId(DataPersistenceManager.Instance.Data.DefaultProfile.RobotPhysicalId);
+
+      // Set birthdate - guaranteed to be available by the time NeedsHubView loads
+      string dob = DataPersistenceManager.Instance.Data.DefaultProfile.Birthdate.ToString("yyyyMMdd");
+      AnkiNotifications_SetAppBoyUserDOB(dob);
+
+      // Now using Player ID as a custom attr
+      AnkiNotifications_SetCustomAttribute(_kBrazePlayerIdAttributeKey, DataPersistenceManager.Instance.Data.DefaultProfile.PlayerId);
+#endif
+    }
+
+    public void OnNotificationReceived(JSONObject notificationJson) {
+      DAS.Event(_kDasEventBase + _kDasEventReceived, getNotificationId(notificationJson));
+    }
+
+    public void OnNotificationOpened(JSONObject notificationJson) {
+      DAS.Event(_kDasEventBase + _kDasEventReaction, getNotificationId(notificationJson));
+    }
+
+    private string getNotificationId(JSONObject json) {
+      string id = "-1";
+      if (json.HasField("id")) {
+        id = json.GetField("id").str;
+      }
+
+      return id;
+    }
+
+    public void SetBrazeRequestProcessingPolicy(bool automatic) {
+#if UNITY_IOS && !UNITY_EDITOR
+      DAS.Info("NotificationManager", "Setting Braze Request Processing Policy to " + (automatic ? "automatic" : "manual"));
+      AnkiNotifications_SetRequestProcessingPolicy(automatic);
+#endif
+    }
+
+    public bool NotificationsEnabled() {
+      return DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.OSNotificationsPermissionsPromptShown;
     }
   }
 }

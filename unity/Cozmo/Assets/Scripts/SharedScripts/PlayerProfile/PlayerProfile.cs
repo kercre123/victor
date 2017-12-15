@@ -71,6 +71,12 @@ namespace DataPersistence {
 
     public List<string> WhatsNewFeaturesSeen;
 
+    // $player_id DAS global
+    public string PlayerId;
+
+    // $phys DAS global
+    public string RobotPhysicalId;
+
     public PlayerProfile() {
       FirstTimeUserFlow = true;
       DataCollectionEnabled = true;

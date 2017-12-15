@@ -1,22 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 
-public interface IDASTarget {
-  
-  void Event(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
+public interface IDASTarget
+{
 
-  void Error(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
+  void Event (string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
 
-  void Warn(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
+  void Error (string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
 
-  void Info(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
+  void Warn (string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
 
-  void Debug(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
+  void Info (string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
 
-  void Ch_Info(string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
+  void Debug (string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
 
-  void Ch_Debug(string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
+  void Ch_Info (string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
 
-  void SetGlobal(string key, string value);
+  void Ch_Debug (string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
+
+  void SetGlobal (string key, string value);
+
+  // Will return an empty string if key not found
+  string GetGlobal (string key);
 }
 

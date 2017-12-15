@@ -19,6 +19,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
 #import <UserNotifications/UserNotifications.h>
+#import "AnkiNotifications.h"
 
 #include "UTNotificationsTools.h"
 
@@ -45,6 +46,7 @@ namespace Anki {
   UIBackgroundTaskIdentifier bgTask;
   bool _receivedWillResign;
   UIActivityViewController* _currentActivityController;
+  AnkiNotifications* AnkiNotificationsInstance;
 }
 
 - (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)launchOptions;
@@ -60,10 +62,6 @@ performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionH
 
 #if !UNITY_TVOS
 - (void)application:(UIApplication*)application didReceiveLocalNotification:(UILocalNotification*)notification;
-#endif
-
-#if UNITY_USES_REMOTE_NOTIFICATIONS
-- (void)application:(UIApplication*)application didReceiveRemoteNotification:(NSDictionary*)userInfo;
 #endif
 
 
@@ -140,13 +138,16 @@ void tryExecuteBackgroundTransfers()
   {
     _UT_SetLocalNotificationWasClicked(notification.userInfo);
   }
-  
-  // UTNotifications: handle clicks on push notifications
-  if (NSDictionary* notification = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey])
-  {
-    _UT_SetPushNotificationWasClicked(notification);
-  }
 #endif
+  
+  AnkiNotificationsInstance = [[AnkiNotifications alloc] init];
+#ifdef SHIPPING
+  NSString* apiKey = @"3efd0742-b768-40cf-b11b-a1fdce3e3ee3";
+#else
+  NSString* apiKey = @"7b12c6f4-b9fc-4aa7-ad5e-0a5fc633f885";
+#endif
+  [AnkiNotificationsInstance application:application didFinishLaunchingWithOptions:launchOptions apiKey:apiKey pushEnabled:true];
+  [AnkiNotificationsInstance setShowNotificationInForeground: false];
   
   [application setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
   
@@ -172,14 +173,8 @@ void tryExecuteBackgroundTransfers()
 // cause any issues.
 - (void)applicationDidBecomeActive:(UIApplication * )application
 {
-    [[UNUserNotificationCenter currentNotificationCenter] removeAllDeliveredNotifications];
+    [AnkiNotificationsInstance applicationDidBecomeActive:application];
     [super applicationDidBecomeActive:application];
-}
-
-- (void)applicationWillEnterForeground:(UIApplication *)application
-{
-    [[UNUserNotificationCenter currentNotificationCenter] removeAllDeliveredNotifications];
-    [super applicationWillEnterForeground:application];
 }
 
 -(BOOL)handleOpenedFileURL:(NSURL *)filename {
@@ -412,18 +407,14 @@ void tryExecuteBackgroundTransfers()
 
 #endif
 
-#if UNITY_USES_REMOTE_NOTIFICATIONS
-- (void)application:(UIApplication*)application didReceiveRemoteNotification:(NSDictionary*)userInfo
-{
-  // UTNotifications: handle clicks on push notifications
-  if ([UIApplication sharedApplication].applicationState != UIApplicationStateActive)
-  {
-    _UT_SetPushNotificationWasClicked(userInfo);
-  }
-   [super application:application didReceiveRemoteNotification:userInfo];
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+  [AnkiNotificationsInstance application:application didRegisterForRemoteNotificationsWithDeviceToken:deviceToken];
 }
 
-#endif
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
+fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler {
+  [AnkiNotificationsInstance application:application didReceiveRemoteNotification:userInfo fetchCompletionHandler:completionHandler];
+}
 
 @end
 

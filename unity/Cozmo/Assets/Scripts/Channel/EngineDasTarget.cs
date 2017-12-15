@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 public class EngineDasTarget : IDASTarget {
 
@@ -57,7 +58,7 @@ public class EngineDasTarget : IDASTarget {
   }
 
   public void Debug(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
-    
+
 #if USE_ENGINE_TARGET
     eventName = "unity."+eventName;
     if (keyValues != null) {
@@ -96,6 +97,21 @@ public class EngineDasTarget : IDASTarget {
 #endif
   }
 
+  public string GetGlobal(string key) {
+#if USE_ENGINE_TARGET
+    // Need to first get the size of the value-to-be-returned, so that we know what
+    // size buffer to allocate
+    int stringSize = Unity_DAS_GetGlobalSize(key);
+    StringBuilder sb = new StringBuilder(stringSize);
+
+    // Now that we have somewhere for the value to go, we can request it
+    Unity_DAS_GetGlobal(key, sb, stringSize);
+    return sb.ToString();
+#else
+    return "";
+#endif
+  }
+
 #if (UNITY_IOS || UNITY_STANDALONE) && !UNITY_EDITOR
   const string EngineDllName = "__Internal";
 #else
@@ -120,12 +136,18 @@ public class EngineDasTarget : IDASTarget {
   private static extern void Unity_DAS_LogD(string eventName, string eventValue, string[] keys, string[] values, uint keyValueCount);
 
   [DllImport(EngineDllName)]
-  private static extern void Unity_DAS_Ch_LogI(string channelName, string eventName, string eventValue, string [] keys, string [] values, uint keyValueCount);
+  private static extern void Unity_DAS_Ch_LogI(string channelName, string eventName, string eventValue, string[] keys, string[] values, uint keyValueCount);
 
   [DllImport(EngineDllName)]
-  private static extern void Unity_DAS_Ch_LogD(string channelName, string eventName, string eventValue, string [] keys, string [] values, uint keyValueCount);
+  private static extern void Unity_DAS_Ch_LogD(string channelName, string eventName, string eventValue, string[] keys, string[] values, uint keyValueCount);
 
   [DllImport(EngineDllName)]
   private static extern void Unity_DAS_SetGlobal(string key, string value);
+
+  [DllImport(EngineDllName)]
+  private static extern int Unity_DAS_GetGlobalSize(string key);
+
+  [DllImport(EngineDllName)]
+  private static extern void Unity_DAS_GetGlobal(string key, StringBuilder output, int outputSize);
 #endif
 }

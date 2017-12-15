@@ -1,6 +1,7 @@
 using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
 using Cozmo.Energy.UI;
+using Cozmo.Notifications;
 using Cozmo.Repair.UI;
 using Cozmo.UI;
 using DG.Tweening;
@@ -124,6 +125,11 @@ namespace Cozmo.Needs.UI {
       }
       else {
         _DemoSetNeedsLevelButton.gameObject.SetActive(false);
+      }
+
+      // Make sure Braze has the user's birthdate - we're guaranteed to have a DoB at this point
+      if (NotificationsManager.Instance.NotificationsEnabled()) {
+        NotificationsManager.Instance.SetBrazeData();
       }
     }
 

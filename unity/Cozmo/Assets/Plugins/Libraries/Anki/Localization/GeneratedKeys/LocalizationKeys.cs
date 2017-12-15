@@ -599,6 +599,8 @@ public static class LocalizationKeys {
   public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_get_lift_height = "codeLabGlossary.block_definitions.description.cozmo_vert_get_lift_height";
   public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_get_head_angle = "codeLabGlossary.block_definitions.title.cozmo_vert_get_head_angle";
   public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_get_head_angle = "codeLabGlossary.block_definitions.description.cozmo_vert_get_head_angle";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_get_is_picked_up = "codeLabGlossary.block_definitions.title.cozmo_vert_get_is_picked_up";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_get_is_picked_up = "codeLabGlossary.block_definitions.description.cozmo_vert_get_is_picked_up";
   public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_face_get_is_visible = "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_is_visible";
   public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_face_get_is_visible = "codeLabGlossary.block_definitions.description.cozmo_vert_face_get_is_visible";
   public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_face_get_name = "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_name";
@@ -719,6 +721,7 @@ public static class LocalizationKeys {
   public const string kCodeLabVerticalCOZMO_YAW = "codeLabVertical.COZMO_YAW";
   public const string kCodeLabVerticalLIFT_HEIGHT = "codeLabVertical.LIFT_HEIGHT";
   public const string kCodeLabVerticalHEAD_ANGLE = "codeLabVertical.HEAD_ANGLE";
+  public const string kCodeLabVerticalIS_PICKED_UP = "codeLabVertical.IS_PICKED_UP";
   public const string kCodeLabVerticalFACE_VISIBLE = "codeLabVertical.FACE_VISIBLE";
   public const string kCodeLabVerticalFACE_NAME = "codeLabVertical.FACE_NAME";
   public const string kCodeLabVerticalFACE_CAMERA = "codeLabVertical.FACE_CAMERA";

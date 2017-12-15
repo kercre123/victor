@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Cozmo.UI;
+using Cozmo.Notifications;
 
 public class DataCollectionPanel : MonoBehaviour {
 
@@ -57,8 +58,12 @@ public class DataCollectionPanel : MonoBehaviour {
     if (splitString.Length >= 2) {
       if (splitString[1].ToLower().Equals("de")) {
         ShowDataCollectionPanel();
+        return;
       }
     }
+    // Our Braze instance is set not send data by default - non-German users switch back to automatic processing, while
+    // German users have the option to keep data processing off or turn it on
+    NotificationsManager.Instance.SetBrazeRequestProcessingPolicy(true);
   }
 
   private void ShowDataCollectionPanel() {
@@ -76,5 +81,9 @@ public class DataCollectionPanel : MonoBehaviour {
               Singleton<Anki.Cozmo.ExternalInterface.RequestDataCollectionOption>.Instance.Initialize(val);
     RobotEngineManager.Instance.SendMessage();
     _DataCollectionIndicator.gameObject.SetActive(val);
+
+    // If DataCollection is enabled, we want Braze to automatically process its data
+    NotificationsManager.Instance.SetBrazeRequestProcessingPolicy(
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DataCollectionEnabled);
   }
 }

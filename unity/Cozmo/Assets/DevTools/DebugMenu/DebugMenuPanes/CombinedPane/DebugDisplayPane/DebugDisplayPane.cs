@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using Newtonsoft.Json;
 using Anki.Cozmo.ExternalInterface;
+using DataPersistence;
 
 public class DebugDisplayPane : MonoBehaviour {
 
@@ -38,6 +39,12 @@ public class DebugDisplayPane : MonoBehaviour {
   private Text _BuildVersion;
 
   [SerializeField]
+  private Text _PlayerID;
+
+  [SerializeField]
+  private Text _RobotID;
+
+  [SerializeField]
   private Text _ActiveVariantText;
 
   private void Start() {
@@ -58,6 +65,10 @@ public class DebugDisplayPane : MonoBehaviour {
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);
     RobotEngineManager.Instance.SendRequestDeviceData();
+
+    // Set during StartupManager - MD5 of device ID
+    _PlayerID.text = DataPersistenceManager.Instance.Data.DefaultProfile.PlayerId;
+    _RobotID.text = DataPersistenceManager.Instance.Data.DefaultProfile.RobotPhysicalId;
   }
 
   private void OnDestroy() {

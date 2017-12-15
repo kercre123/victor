@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <string.h>
 
 #if ANKI_DEV_CHEATS
 #include "engine/debug/cladLoggerProvider.h"
@@ -129,6 +130,37 @@ void Unity_DAS_Ch_LogD(const char* channelName, const char* eventName, const cha
 void Unity_DAS_SetGlobal(const char* key, const char* value)
 {
   Anki::Util::sSetGlobal(key,value);
+}
+
+// The calling method is responsible for allocating the memory for output
+void Unity_DAS_GetGlobal(const char* key, char* output, int outputSize) {
+  if (outputSize < 1 || !output) {
+    return;
+  }
+  
+  std::map<std::string, std::string> globals;
+  Anki::Util::gEventProvider->GetGlobals(globals);
+  if (!globals.empty()) {
+      std::map<std::string, std::string>::iterator it = globals.find(key);
+      if (it != globals.end()) {
+        strncpy(output, it->second.c_str(), outputSize);
+      }
+  }
+}
+
+// Use this to get the size of the string you need to allocate before you call
+// GetGlobal
+size_t Unity_DAS_GetGlobalSize(const char* key) {
+  std::map<std::string, std::string> globals;
+  Anki::Util::gEventProvider->GetGlobals(globals);
+  if (!globals.empty()) {
+    std::map<std::string, std::string>::iterator it = globals.find(key);
+    if (it != globals.end()) {
+      return it->second.size() + 1; // add 1 so the resulting string gets null terminated in GetGlobal
+    }
+  }
+  
+  return 0;
 }
 
 void configure_engine(Json::Value& config)

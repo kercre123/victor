@@ -4,11 +4,10 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class AdaptiveCanvasScaler : CanvasScaler {
-  
+
   // By default on iOS Screen.width returns 19.5:9 but if you let it just natively use 16:9 then it will letterbox for us.
   // As a result this code is only useful on the 18:9 android devices
 
-#if UNITY_ANDROID
   private const float _AspectAboveWhichWeScaleToHeight = 1.7778f; //greater than 16:9 aspect
 
   protected override void OnEnable() {
@@ -25,5 +24,4 @@ public class AdaptiveCanvasScaler : CanvasScaler {
       matchWidthOrHeight = 0f;
     }
   }
-#endif
 }

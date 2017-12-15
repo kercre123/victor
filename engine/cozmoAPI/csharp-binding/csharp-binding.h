@@ -66,6 +66,9 @@ extern "C" {
   
   void Unity_DAS_SetGlobal(const char* key, const char* value);
 
+  void Unity_DAS_GetGlobal(const char* key, char* output, int outputSize);
+  
+  size_t Unity_DAS_GetGlobalSize(const char* key);
 #ifndef _cplusplus
 }
 #endif
