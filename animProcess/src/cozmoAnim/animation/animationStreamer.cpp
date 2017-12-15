@@ -121,25 +121,6 @@ namespace Cozmo {
     _procFaceImg.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     _faceImageBinary.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     _faceImageRGB565.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-    
-    // Until we address the display gamma issues (VIC-559), apply a gamma<1.0 to darken the
-    // dark end of the range. Not necessary in simulation.
-#   ifdef SIMULATOR
-    const f32 invGamma = 1.f;
-#   else
-    const f32 invGamma = 1.f;
-#   endif
-    const size_t kGammaEndRange = 160;
-    int i=0;
-    for(; i<kGammaEndRange; ++i)
-    {
-      const f32 gammaCorrected = (f32)kGammaEndRange * std::powf((f32)i / (f32)(kGammaEndRange), invGamma);
-      _gammaLUT[i] = Util::numeric_cast_clamped<u8>(std::round(gammaCorrected));
-    }
-    for(; i<_gammaLUT.size(); ++i)
-    {
-      _gammaLUT[i] = i;
-    }
    
 
     // TODO: _Might_ need to disable this eventually if there are conflicts
@@ -163,7 +144,6 @@ namespace Cozmo {
   
   AnimationStreamer::~AnimationStreamer()
   {
-    FaceDisplay::removeInstance();
     Util::SafeDelete(_proceduralAnimation);
   }
   
@@ -532,7 +512,7 @@ namespace Cozmo {
       DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
       DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
       ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _procFaceImg);
-      _faceDrawBuf.SetFromImageRGB(_procFaceImg, _gammaLUT);
+      _faceDrawBuf.SetFromImageRGB(_procFaceImg);
     }
     
     BufferFaceToSend(_faceDrawBuf);
@@ -555,37 +535,10 @@ namespace Cozmo {
       const Rectangle<s32> rect( 0, 0, 20, 20);
       const Vision::PixelRGB565 pixel(255, 0, 0);
       faceImg565.DrawFilledRect(rect, pixel);
-    } 
-    
-    // Draws frame to face display
-#ifdef DRAW_FACE_IN_THREAD
-    // If last draw thread is still running then skip this face
-    if (_faceDrawFuture.valid()) {
-      const std::chrono::milliseconds span(0);
-      auto status = _faceDrawFuture.wait_for(span);
-      if (status != std::future_status::ready) {
-        // This could be happening for one or more of the following reasons.
-        // 1) The actual spi calls in FaceDisplay::FaceDraw() are taking too long.
-        //    This is currently happening all the time. Nathan knows about it.
-        // 2) We're calling this function more than once per animation process tic, which we shouldn't be doing.
-        const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-        PRINT_NAMED_WARNING("AnimationStreamer.BufferFaceToSend.SkippingFace", "Still drawing last face from %f ms ago", now_ms - _lastDrawTime_ms);
-        return;
-      }
     }
-    
-    // Dispatch thread
-    auto draw_face = [](const u16* frame) {
-      FaceDisplay::getInstance()->FaceDraw(frame);
-    };
-  
-    _faceDrawFuture = std::async(draw_face, faceImg565.GetRawDataPointer());
-    _lastDrawTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-#else
-    FaceDisplay::getInstance()->FaceDraw(faceImg565.GetRawDataPointer());
-#endif   // #ifdef DRAW_FACE_IN_THREAD
-  }
 
+    FaceDisplay::getInstance()->DrawToFace(faceImg565);
+  }
   
   Result AnimationStreamer::EnableBackpackAnimationLayer(bool enable)
   {

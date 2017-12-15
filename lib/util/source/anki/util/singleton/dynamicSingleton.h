@@ -13,8 +13,6 @@
 #ifndef UTIL_DYNAMIC_SINGLETON_H_
 #define UTIL_DYNAMIC_SINGLETON_H_
 
-#include "util/helpers/templateHelpers.h"
-
 namespace Anki{ namespace Util {
 
 template <class ClassType>
@@ -42,7 +40,8 @@ public:
   // destroy the instance if it exists
   static inline void removeInstance()
   {
-    SafeDelete( _instance );
+    delete _instance;  // c++ does not require checking that !=0 (delete 0 is ok)
+    _instance = nullptr;
   }
   
   static inline bool exists() {
