@@ -17,10 +17,11 @@
 #include "coretech/common/include/anki/common/basestation/jsonTools.h"
 #include "coretech/common/include/anki/common/basestation/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/bodyLightComponent.h"
+#include "engine/components/movementComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -72,12 +73,20 @@ Result BehaviorDevImageCapture::OnBehaviorActivated(BehaviorExternalInterface& b
 
   auto& visionComponent = bei.GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(true);
+
+  auto& robotInfo = bei.GetRobotInfo();
+  // wait for the lift to relax 
+  robotInfo.GetMoveComponent().EnableLiftPower(false);
   
   return Result::RESULT_OK;
 }
 
 void BehaviorDevImageCapture::OnBehaviorDeactivated(BehaviorExternalInterface& bei)
 {
+  auto& robotInfo = bei.GetRobotInfo();
+  // wait for the lift to relax 
+  robotInfo.GetMoveComponent().EnableLiftPower(true);
+
   auto& visionComponent = bei.GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(false);
 }
