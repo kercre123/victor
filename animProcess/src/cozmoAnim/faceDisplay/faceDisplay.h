@@ -15,47 +15,57 @@
 #define ANKI_COZMOANIM_FACE_DISPLAY_H
 #include "anki/common/types.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/vision/basestation/image.h"
+#include "util/singleton/dynamicSingleton.h"
+
+#include <array>
+#include <memory>
+#include <mutex>
+#include <thread>
 
 
 namespace Anki {
 namespace Cozmo {
+
+class FaceDisplayImpl;
   
-class FaceDisplay
+class FaceDisplay : public Util::DynamicSingleton<FaceDisplay>
 {
+  ANKIUTIL_FRIEND_SINGLETON(FaceDisplay); // Allows base class singleton access
+
 public:
 
-  // Method to fetch singleton instance.
-  static FaceDisplay* getInstance();
-  
-  // Removes instance
-  static void removeInstance();
-  
-  // Dtor
-  ~FaceDisplay();
-  
-  // Clears the face display
-  void FaceClear();
-  
-  // Draws frame to face display
-  // 'frame' is a buffer of FACE_DISPLAY_WIDTH x FACE_DISPLAY_HEIGHT u16s where each pixel
-  // is a RGB_565 value. You can use OpenCV to create the frame like so.
-  //
-  //      Vision::ImageRGB testImg;
-  //      testImg.Load("testPattern.jpg");
-  //      testImg.Resize(FaceDisplay::FACE_DISPLAY_HEIGHT, FaceDisplay::FACE_DISPLAY_WIDTH);
-  //      cv::Mat img565;
-  //      cv::cvtColor(testImg.get_CvMat_(), img565, cv::COLOR_RGB2BGR565);
-  //      FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
-  void FaceDraw(const u16* frame);
+  // Various methods for drawing to the face. Not expected to be called from 
+  // multiple threads (sometimes uses static scratch image for drawing)
+  void ClearFace();
+  void DrawToFace(const Vision::ImageRGB& img);
+  void DrawToFace(const Vision::ImageRGB565& img);
+  void DrawTextOnScreen(const std::vector<std::string>& textVec, 
+                        const ColorRGBA& textColor,
+                        const ColorRGBA& bgColor,
+                        const Point2f& loc = {0, 0},
+                        u32 textSpacing_pix = 10,
+                        f32 textScale = 3.f);
 
-  // Print text to face display
-  void FacePrintf(const char *format, ...);
-  
-private:
-
+protected:
   FaceDisplay();
-  static FaceDisplay* _instance;
-  
+  virtual ~FaceDisplay();
+
+private:
+  std::unique_ptr<FaceDisplayImpl>  _displayImpl;
+
+  Vision::ImageRGB                  _scratchDrawingImg;
+
+  // Members for managing the drawing thread
+  Vision::ImageRGB565               _faceDrawImg[2];
+  Vision::ImageRGB565*              _faceDrawNextImg = nullptr;
+  Vision::ImageRGB565*              _faceDrawCurImg = nullptr;
+  std::thread                       _faceDrawThread;
+  std::mutex                        _faceDrawMutex;
+  bool                              _stopDrawFace = false;
+    
+  void DrawFaceLoop();
+
 }; // class FaceDisplay
   
 } // namespace Cozmo

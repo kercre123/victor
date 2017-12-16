@@ -39,8 +39,6 @@ table RobotAudio {
 table BackpackLights {
   triggerTime_ms:float;
   durationTime_ms:float;
-  Left:[float];
-  Right:[float];
   Front:[float];
   Middle:[float];
   Back:[float];

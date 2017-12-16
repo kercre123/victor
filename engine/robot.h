@@ -585,6 +585,10 @@ public:
 
   bool WasObjectTappedRecently(const ObjectID& objectID) const;
   
+  // ======== Power button ========
+
+  bool IsPowerButtonPressed() const { return _powerButtonPressed; }
+
   // =========  Other State  ============
   f32 GetBatteryVoltage() const { return _battVoltage; }
       
@@ -796,6 +800,7 @@ protected:
   f32              _battVoltage              = 5;
   ImageSendMode    _imageSendMode            = ImageSendMode::Off;
   u32              _lastSentImageID          = 0;
+  bool             _powerButtonPressed       = false;
   bool             _isPickedUp               = false;
   bool             _isOnChargerPlatform      = false;
   bool             _isCliffReactionDisabled  = false;

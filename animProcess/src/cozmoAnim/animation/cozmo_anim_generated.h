@@ -304,16 +304,12 @@ struct BackpackLights FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_TRIGGERTIME_MS = 4,
     VT_DURATIONTIME_MS = 6,
-    VT_LEFT = 8,
-    VT_RIGHT = 10,
-    VT_FRONT = 12,
-    VT_MIDDLE = 14,
-    VT_BACK = 16
+    VT_FRONT = 8,
+    VT_MIDDLE = 10,
+    VT_BACK = 12
   };
   float triggerTime_ms() const { return GetField<float>(VT_TRIGGERTIME_MS, 0.0f); }
   float durationTime_ms() const { return GetField<float>(VT_DURATIONTIME_MS, 0.0f); }
-  const flatbuffers::Vector<float> *Left() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_LEFT); }
-  const flatbuffers::Vector<float> *Right() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_RIGHT); }
   const flatbuffers::Vector<float> *Front() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_FRONT); }
   const flatbuffers::Vector<float> *Middle() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_MIDDLE); }
   const flatbuffers::Vector<float> *Back() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_BACK); }
@@ -321,10 +317,6 @@ struct BackpackLights FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyField<float>(verifier, VT_TRIGGERTIME_MS) &&
            VerifyField<float>(verifier, VT_DURATIONTIME_MS) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_LEFT) &&
-           verifier.Verify(Left()) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_RIGHT) &&
-           verifier.Verify(Right()) &&
            VerifyField<flatbuffers::uoffset_t>(verifier, VT_FRONT) &&
            verifier.Verify(Front()) &&
            VerifyField<flatbuffers::uoffset_t>(verifier, VT_MIDDLE) &&
@@ -340,15 +332,13 @@ struct BackpackLightsBuilder {
   flatbuffers::uoffset_t start_;
   void add_triggerTime_ms(float triggerTime_ms) { fbb_.AddElement<float>(BackpackLights::VT_TRIGGERTIME_MS, triggerTime_ms, 0.0f); }
   void add_durationTime_ms(float durationTime_ms) { fbb_.AddElement<float>(BackpackLights::VT_DURATIONTIME_MS, durationTime_ms, 0.0f); }
-  void add_Left(flatbuffers::Offset<flatbuffers::Vector<float>> Left) { fbb_.AddOffset(BackpackLights::VT_LEFT, Left); }
-  void add_Right(flatbuffers::Offset<flatbuffers::Vector<float>> Right) { fbb_.AddOffset(BackpackLights::VT_RIGHT, Right); }
   void add_Front(flatbuffers::Offset<flatbuffers::Vector<float>> Front) { fbb_.AddOffset(BackpackLights::VT_FRONT, Front); }
   void add_Middle(flatbuffers::Offset<flatbuffers::Vector<float>> Middle) { fbb_.AddOffset(BackpackLights::VT_MIDDLE, Middle); }
   void add_Back(flatbuffers::Offset<flatbuffers::Vector<float>> Back) { fbb_.AddOffset(BackpackLights::VT_BACK, Back); }
   BackpackLightsBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
   BackpackLightsBuilder &operator=(const BackpackLightsBuilder &);
   flatbuffers::Offset<BackpackLights> Finish() {
-    auto o = flatbuffers::Offset<BackpackLights>(fbb_.EndTable(start_, 7));
+    auto o = flatbuffers::Offset<BackpackLights>(fbb_.EndTable(start_, 5));
     return o;
   }
 };
@@ -356,8 +346,6 @@ struct BackpackLightsBuilder {
 inline flatbuffers::Offset<BackpackLights> CreateBackpackLights(flatbuffers::FlatBufferBuilder &_fbb,
     float triggerTime_ms = 0.0f,
     float durationTime_ms = 0.0f,
-    flatbuffers::Offset<flatbuffers::Vector<float>> Left = 0,
-    flatbuffers::Offset<flatbuffers::Vector<float>> Right = 0,
     flatbuffers::Offset<flatbuffers::Vector<float>> Front = 0,
     flatbuffers::Offset<flatbuffers::Vector<float>> Middle = 0,
     flatbuffers::Offset<flatbuffers::Vector<float>> Back = 0) {
@@ -365,8 +353,6 @@ inline flatbuffers::Offset<BackpackLights> CreateBackpackLights(flatbuffers::Fla
   builder_.add_Back(Back);
   builder_.add_Middle(Middle);
   builder_.add_Front(Front);
-  builder_.add_Right(Right);
-  builder_.add_Left(Left);
   builder_.add_durationTime_ms(durationTime_ms);
   builder_.add_triggerTime_ms(triggerTime_ms);
   return builder_.Finish();
@@ -375,12 +361,10 @@ inline flatbuffers::Offset<BackpackLights> CreateBackpackLights(flatbuffers::Fla
 inline flatbuffers::Offset<BackpackLights> CreateBackpackLightsDirect(flatbuffers::FlatBufferBuilder &_fbb,
     float triggerTime_ms = 0.0f,
     float durationTime_ms = 0.0f,
-    const std::vector<float> *Left = nullptr,
-    const std::vector<float> *Right = nullptr,
     const std::vector<float> *Front = nullptr,
     const std::vector<float> *Middle = nullptr,
     const std::vector<float> *Back = nullptr) {
-  return CreateBackpackLights(_fbb, triggerTime_ms, durationTime_ms, Left ? _fbb.CreateVector<float>(*Left) : 0, Right ? _fbb.CreateVector<float>(*Right) : 0, Front ? _fbb.CreateVector<float>(*Front) : 0, Middle ? _fbb.CreateVector<float>(*Middle) : 0, Back ? _fbb.CreateVector<float>(*Back) : 0);
+  return CreateBackpackLights(_fbb, triggerTime_ms, durationTime_ms, Front ? _fbb.CreateVector<float>(*Front) : 0, Middle ? _fbb.CreateVector<float>(*Middle) : 0, Back ? _fbb.CreateVector<float>(*Back) : 0);
 }
 
 struct FaceAnimation FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
