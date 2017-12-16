@@ -58,6 +58,7 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
 {
   _imageSavePath = JsonTools::ParseString(config, "save_path", "BehaviorDevImageCapture");
   _imageSaveQuality = JsonTools::ParseInt8(config, "quality", "BehaviorDevImageCapture");
+  _useTouch = JsonTools::ParseBool(config, "use_capacitive_touch", "BehaviorDevImageCapture");
 }
 
 BehaviorDevImageCapture::~BehaviorDevImageCapture()
@@ -104,7 +105,10 @@ BehaviorStatus BehaviorDevImageCapture::UpdateInternal_WhileRunning(BehaviorExte
   }
 
   const bool wasTouched = _touchStartedTime_s >= 0.0f;
-  const bool isTouched = bei.GetTouchSensorComponent().IsTouched();
+
+  const bool isTouched = (_useTouch ? 
+                          bei.GetTouchSensorComponent().IsTouched() :
+                          bei.IsPowerButtonPressed());
 
   if( wasTouched && !isTouched ) {
     // just "released", see if it's been long enough to count as a "hold"

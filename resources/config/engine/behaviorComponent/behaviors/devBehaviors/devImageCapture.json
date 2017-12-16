@@ -6,5 +6,9 @@
   "save_path": "dev_capture",
 
   // image quality: [1-100]:JPEG quality, -1: use PNG
-  "quality": 75
+  "quality": -1,
+
+  // whether or not to use capacitive touch to trigger saving
+  // if 0, uses power button istead
+  "use_capacitive_touch" : 0
 }
