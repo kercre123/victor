@@ -50,7 +50,7 @@ private:
   std::string _imageSavePath;
   int8_t _imageSaveQuality;
   
-  bool  _useTouch = false;
+  bool  _useCapTouch = false;
   float _touchStartedTime_s = -1.0f;
     
   bool _isStreaming = false;
