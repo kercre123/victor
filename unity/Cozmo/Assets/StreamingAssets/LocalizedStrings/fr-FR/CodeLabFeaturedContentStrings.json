@@ -31,7 +31,7 @@
     "translation" : "quel cube s'apprête à devenir la patate"
   },
   "codeLabFeaturedProject.HotPotato.how_long_to_heat_potato" : {
-    "translation" : "combien de temps avant la fin de la patate chaude"
+    "translation" : "combien de temps avant que la patate soit chaude"
   },
   "codeLabFeaturedProject.HotPotato.players_ready_set" : {
     "translation" : "À vos marques, prêts,"
@@ -307,7 +307,7 @@
     "translation" : "anki"
   },
   "codeLabFeaturedProject.PuttPutt._of_" : {
-    "translation" : " de "
+    "translation" : " sur "
   },
   "codeLabFeaturedProject.PuttPutt.please_put_me_down_on_a_flat_surface" : {
     "translation" : "Pose-moi sur une surface plane."
@@ -397,7 +397,7 @@
     "translation" : "durée de la partie"
   },
   "codeLabFeaturedProject.ShakeIt.get_ready_to_shake_" : {
-    "translation" : "Prépare-toi à secouer Cozmo ! "
+    "translation" : "Prépare-toi à secouer ! "
   },
   "codeLabFeaturedProject.ShakeIt.correct_color" : {
     "translation" : "couleur correcte"

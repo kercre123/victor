@@ -1408,7 +1408,7 @@
     "translation" : "1. Une fois que tu appuies sur le drapeau de départ, Cozmo te demande de secouer des objets!\u000a\u000a2. Écoute attentivement ses instructions.\u000a\u000a« Rouge » = Secoue le cube rouge\u000a« Jaune » = Secoue le cube jaune\u000a« Bleu » = Secoue le cube bleu\u000a« Orange » = Secoue les cubes rouge et jaune\u000a« Vert » = Secoue les cubes jaune et bleu\u000a« Violet » = Secoue les cubes bleu et rouge\u000a« Moi » = Secoue Cozmo !\u000a\u000a3. Combien de secousses correctes peux-tu réaliser dans le temps imparti ?"
   },
   "codeLabSampleProject_ScrollingWaveText.projectName" : {
-    "translation" : "Texte défilant flou"
+    "translation" : "Texte défilant en vague"
   },
   "codeLabSampleProject_ScrollingText.projectName" : {
     "translation" : "Texte défilant"
