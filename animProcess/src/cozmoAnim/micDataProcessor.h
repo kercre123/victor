@@ -82,7 +82,7 @@ private:
   std::unique_ptr<SpeechRecognizerTHF> _recognizer;
   std::unique_ptr<UdpServer> _udpServer;
   std::unique_ptr<MicImmediateDirection> _micImmediateDirection;
-  bool _forceRecordClip = false;
+  bool _forceRecordClip = true;
 
   // Members for managing the incoming raw audio jobs
   struct TimedRawMicData {
@@ -134,6 +134,10 @@ private:
   
   // Aubio beat detection stuff:
   aubio_tempo_t* _tempoDetector = nullptr;
+  
+  static const uint_t kTempoBufSize = 512;
+  static const uint_t kTempoHopSize = 256;
+  static const uint_t kTempoSampleRate = AudioUtil::kSampleRate_hz;
   
 };
 

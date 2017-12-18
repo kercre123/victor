@@ -16,6 +16,7 @@
 #include "se_diag.h"
 #include "speex/speex_resampler.h"
 
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "cozmoAnim/engineMessages.h"
 #include "cozmoAnim/micDataProcessor.h"
@@ -196,9 +197,6 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
 {
   // Set up aubio tempo/beat detector
   const char* const kTempoMethod = "default";
-  const uint_t kTempoBufSize = 1024;
-  const uint_t kTempoHopSize = 512;
-  const uint_t kTempoSampleRate = 44100;
   _tempoDetector = new_aubio_tempo(kTempoMethod, kTempoBufSize, kTempoHopSize, kTempoSampleRate);
   DEV_ASSERT(_tempoDetector != nullptr, "MicDataProcessor.Constructor.FailedCreatingAubioTempoObject");
   
@@ -629,6 +627,14 @@ void MicDataProcessor::RecordRawAudio(uint32_t duration_ms, const std::string& p
 
 void MicDataProcessor::Update()
 {
+  // hackily pretend a trigger word has been detected
+  static bool triggered = false;
+  if (!triggered && BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > 10.f) {
+    PRINT_NAMED_WARNING("triggerWordFake", "faking the trigger word");
+    triggered = true;
+    TriggerWordDetectCallback(nullptr, 0.f);
+  }
+  
   _fftResultMutex.lock();
   while (_fftResultList.size() > 0)
   {
@@ -689,7 +695,7 @@ void MicDataProcessor::Update()
     if (_currentlyStreaming)
     {
       // Are we done with what we want to stream?
-      static constexpr size_t kMaxRecordTime_ms = 10000;
+      static constexpr size_t kMaxRecordTime_ms = 30000;
       static constexpr size_t kMaxRecordNumChunks = (kMaxRecordTime_ms / (kTimePerChunk_ms * kChunksPerSEBlock)) + 1;
       if (receivedStopMessage || streamingAudioIndex >= kMaxRecordNumChunks)
       {
@@ -702,6 +708,42 @@ void MicDataProcessor::Update()
         AudioUtil::AudioChunkList newAudio = _currentStreamingJob->GetProcessedAudio(streamingAudioIndex);
         streamingAudioIndex += newAudio.size();
     
+        // give the latest audio to the beat detector in the correct size chunks:
+        static std::deque<AudioUtil::AudioSample> aubioInputBuffer;
+        
+        for(const auto& audioChunk : newAudio) {
+          // audioChunk is a vector of AudioSamples. Push these new samples onto the back of the aubio input buffer
+          for (const auto& sample : audioChunk) {
+            aubioInputBuffer.push_back(sample);
+          }
+        }
+        
+        // Feed the aubio tempo detector correct-sized chunks (sized hop_size)
+        fvec_t* input = new_fvec(kTempoHopSize);
+        fvec_t* output = new_fvec(1);
+        while (aubioInputBuffer.size() >= kTempoHopSize) {
+          // Construct the aubio input vector
+          for (int i=0 ; i<kTempoHopSize ; i++) {
+            fvec_set_sample(input, static_cast<smpl_t>(aubioInputBuffer.front()), i);
+            aubioInputBuffer.pop_front();
+          }
+
+          // pass this into the aubio tempo detector:
+          aubio_tempo_do(_tempoDetector, input, output);
+          const bool isBeat = fvec_get_sample(output, 0) != 0.f;
+          if (isBeat) {
+            const auto tempo = aubio_tempo_get_bpm(_tempoDetector);
+            const auto conf = aubio_tempo_get_confidence(_tempoDetector);
+            PRINT_NAMED_WARNING("beat!",
+                                "got a beat (tempo %.2f, confidence %.2f)",
+                                tempo,
+                                conf);
+          }
+        }
+        
+        del_fvec(input);
+        del_fvec(output);
+        
         // Send the audio to any clients we've got
         if (_udpServer->GetNumClients() > 0)
         {
