@@ -101,6 +101,7 @@ class TouchSensorComponent;
 class AnimationComponent;
 class MapComponent;
 class MicDirectionHistory;
+class MultiRobotComponent;
 
 namespace Audio {
   class EngineRobotAudioClient;
@@ -319,6 +320,9 @@ public:
   inline const TouchSensorComponent& GetTouchSensorComponent() const { return *_touchSensorComponent; }
   inline       TouchSensorComponent& GetTouchSensorComponent()       { return *_touchSensorComponent; }
   
+  inline const MultiRobotComponent& GetMultiRobotComponent() const { return *_multiRobotComponent; }
+  inline       MultiRobotComponent& GetMultiRobotComponent()       { return *_multiRobotComponent; }
+
   const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return *_drivingAnimationHandler; }
   DrivingAnimationHandler& GetDrivingAnimationHandler() { return *_drivingAnimationHandler; }
   
@@ -739,6 +743,7 @@ protected:
   std::unique_ptr<ProxSensorComponent>    _proxSensorComponent;
   std::unique_ptr<TouchSensorComponent>   _touchSensorComponent;
   std::unique_ptr<AnimationComponent>     _animationComponent;
+  std::unique_ptr<MultiRobotComponent>    _multiRobotComponent;
 
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;

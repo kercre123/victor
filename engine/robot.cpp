@@ -39,6 +39,7 @@
 #include "engine/components/dockingComponent.h"
 #include "engine/components/inventoryComponent.h"
 #include "engine/components/movementComponent.h"
+#include "engine/components/multiRobotComponent.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
@@ -193,6 +194,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _proxSensorComponent(std::make_unique<ProxSensorComponent>(*this))
   , _touchSensorComponent(std::make_unique<TouchSensorComponent>(*this))
   , _animationComponent(std::make_unique<AnimationComponent>(*this, _context))
+  , _multiRobotComponent(std::make_unique<MultiRobotComponent>(*this, _context))  
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, _pose, "RobotNeck")
   , _headCamPose(_kDefaultHeadCamRotation,
@@ -1397,6 +1399,9 @@ Result Robot::Update()
   
   /////////// Update AnimationComponent /////////
   _animationComponent->Update();
+
+  /////////// Update MultiRobotComponent /////////
+  _multiRobotComponent->Update();
 
   /////////// Update visualization ////////////
       

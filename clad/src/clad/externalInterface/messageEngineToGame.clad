@@ -22,6 +22,7 @@
 #include "clad/types/firmwareTypes.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/imu.clad"
+#include "clad/types/interRobotMessages.clad"
 #include "clad/types/inventoryTypes.clad"
 #include "clad/types/loadedKnownFace.clad"
 #include "clad/types/logLevels.clad"
@@ -531,6 +532,16 @@ message AnimationAborted {
 message AnimationEvent {
   uint_32   timestamp,
   AnimEvent event_id
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////// MULTIROBOT //////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+message MultiRobotSessionStarted {
+  uint_32 robotID,
+  int_32  sessionID,
+  RobotInteraction interaction,
+  bool    isMaster,
 }
 
 

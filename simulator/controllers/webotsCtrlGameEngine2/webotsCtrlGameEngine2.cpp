@@ -18,6 +18,7 @@
 
 #include "json/json.h"
 
+#include "engine/components/interRobotComms.h"
 #include "engine/cozmoAPI/cozmoAPI.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 
@@ -69,6 +70,7 @@ int main(int argc, char **argv)
   AndroidHAL::SetSupervisor(&engineSupervisor);
   OSState::SetSupervisor(&engineSupervisor);
   CubeBleClient::SetSupervisor(&engineSupervisor);
+  InterRobotComms::SetSupervisor(&engineSupervisor);
 
   // Get robotID to detmermine if devlogger should be created
   // Only create devLogs for robot with DEFAULT_ROBOT_ID.

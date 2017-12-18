@@ -1,0 +1,63 @@
+// File: interRobotMessages
+// Author: Kevin Yoon
+// Created: 12/19/2017
+// Copyright: Anki, inc. 2017
+
+#include "clad/types/objectTypes.clad"
+#include "clad/types/poseStructs.clad"
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_32 InterRobotCommsConstants {
+  IRC_VERSION = 1,
+}
+
+structure IRMPacketHeader {
+  uint_32 version,
+  int_32 src,
+  int_32 dest,  // If -1, message is meant for everyone
+}
+
+
+message PoseWrtLandmark {
+  IRMPacketHeader header,
+  ObjectType   landmark,
+  PoseStruct3d poseWrtLandmark
+}
+
+
+enum uint_32 RobotInteraction {
+  Invalid = 0,
+  FistBump,
+  Greeting,
+}
+
+message InteractionRequest {
+  IRMPacketHeader header,
+  RobotInteraction interaction,
+  int_32 sessionID,
+}
+
+//enum int_8 
+//{
+//  HAS_PENDING_REQUEST = -2,
+//  BUSY                = -1,
+//  ACCEPTED            = 0
+//}
+
+message InteractionResponse {
+  IRMPacketHeader header,
+  int_32 sessionID,
+  bool accepted
+}
+
+
+union InterRobotMessage {
+  PoseWrtLandmark     poseWrtLandmark      = 0x01,
+  InteractionRequest  interactionRequest,
+  InteractionResponse interactionResponse,
+}
+
+} // namespace Cozmo
+} // namespace Anki

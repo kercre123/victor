@@ -70,6 +70,16 @@ Supervisor {
     }
     %{ end }%  # for iReceiver loop
 
+
+    # For multi-robot comms
+    Emitter {
+      name "multiRobotEmitter"
+    }
+    Receiver {
+      name "multiRobotReceiver"
+    }
+
+
   ]
   
   boundingObject Box {
