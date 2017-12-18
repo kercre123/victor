@@ -248,6 +248,7 @@ if [ $CONFIGURE -eq 1 ]; then
         engine/tools/BUILD.in \
         lib/util/source/anki/util/BUILD.in \
         lib/util/source/anki/utilUnitTest/BUILD.in \
+        osState/BUILD.in \
         resources/BUILD.in \
         robot/BUILD.in \
         robot/clad/BUILD.in \

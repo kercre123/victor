@@ -36,6 +36,7 @@ target_link_libraries(test_engine
   engine_clad
   androidHAL
   cubeBleClient
+  osState
   util
   util_audio
   gtest

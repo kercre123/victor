@@ -207,7 +207,6 @@ message SetMotionModelParams
 
 // SetRobotVolume
 message SetRobotVolume {
-  uint_8   robotId,
   float_32 volume
 }
 

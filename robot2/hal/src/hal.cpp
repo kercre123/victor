@@ -22,9 +22,6 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
-
-#define RADIO_IP "127.0.0.1"
-
 #define IMU_WORKING 1
 
 // Debugging Defines
@@ -60,7 +57,7 @@ namespace { // "Private members"
 
 // Forward Declarations
 Result InitMotor();
-Result InitRadio(const char* advertisementIP);
+Result InitRadio();
 void InitIMU();
 void ProcessIMUEvents();
 void ProcessTouchLevel(void);
@@ -94,7 +91,7 @@ Result HAL::Init()
   InitIMU();
 //#endif
 
-  if (InitRadio(RADIO_IP) != RESULT_OK) {
+  if (InitRadio() != RESULT_OK) {
     AnkiError("HAL.Init.InitRadioFailed", "");
     return RESULT_FAIL;
   }

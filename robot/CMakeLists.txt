@@ -93,7 +93,7 @@ elseif (MACOSX)
   )
   set(PLATFORM_SRCS
       ${CMAKE_SOURCE_DIR}/robot2/hal/sim/src/sim_hal.cpp
-      ${CMAKE_SOURCE_DIR}/robot2/hal/sim/src/sim_radio.cpp
+      ${CMAKE_SOURCE_DIR}/robot2/hal/src/radio.cpp
       ${CMAKE_SOURCE_DIR}/simulator/robot/sim_overlayDisplay.cpp
   )
 endif()

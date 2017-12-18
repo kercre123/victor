@@ -1510,7 +1510,6 @@ namespace Anki {
     void UiGameController::SendSetRobotVolume(const f32 volume)
     {
       ExternalInterface::SetRobotVolume m;
-      m.robotId = 1;
       m.volume = volume;
       ExternalInterface::MessageGameToEngine message;
       message.Set_SetRobotVolume(m);
@@ -1603,7 +1602,6 @@ namespace Anki {
       {
         PRINT_NAMED_INFO("SendDevAnimation", "sending %s", animName);
         ExternalInterface::PlayAnimation_DEV m;
-        m.robotId = 1;
         m.animationName = animName;
         m.numLoops = numLoops;
         ExternalInterface::MessageGameToEngine message;

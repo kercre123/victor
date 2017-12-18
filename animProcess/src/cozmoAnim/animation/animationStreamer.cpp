@@ -24,10 +24,10 @@
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/cozmoAnimContext.h"
-#include "cozmoAnim/osState.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/animationTypes.h"
+#include "osState/osState.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
@@ -860,8 +860,6 @@ namespace Cozmo {
   Result AnimationStreamer::Update()
   {
     ANKI_CPU_PROFILE("AnimationStreamer::Update");
-
-    OSState::getInstance()->Update();
     
     Result lastResult = RESULT_OK;
     

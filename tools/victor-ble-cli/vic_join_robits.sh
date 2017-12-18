@@ -15,8 +15,16 @@ send "scan\r"
 set timeout 10
 expect "Found $robot"
 
+
 send "connect $robot\r"
-expect "Fully connected to $robot"
+set timeout 10
+expect {
+  "Fully connected to $robot" {}
+  timeout {
+    puts "Unable to connect to $robot"
+    exit
+  }
+}
 
 sleep 1
 send "wpa_cli add_network\r"

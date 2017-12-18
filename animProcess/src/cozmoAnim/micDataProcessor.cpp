@@ -23,6 +23,8 @@
 #include "cozmoAnim/micImmediateDirection.h"
 #include "cozmoAnim/speechRecognizerTHFSimple.h"
 
+#include "osState/osState.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
@@ -34,6 +36,7 @@
 
 #include <iomanip>
 #include <sstream>
+
 
 namespace {
   struct TriggerData
@@ -256,7 +259,8 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
     }
   }
 
-  const bool udpSuccess = _udpServer->StartListening(kCloudProcessCommunicationPort);
+  const RobotID_t robotID = OSState::getInstance()->GetRobotID();
+  const bool udpSuccess = _udpServer->StartListening(kCloudProcessCommunicationPort + robotID);
   ANKI_VERIFY(udpSuccess,
               "MicDataProcessor.Constructor.UdpStartListening",
               "Failed to start listening on port %d",

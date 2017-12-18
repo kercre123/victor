@@ -259,18 +259,6 @@ namespace Cozmo {
   // The base listening port for anim process UDP server
   const u16 ANIM_PROCESS_SERVER_BASE_PORT = 5600;
   
-  // Header required at front of all AdvertisementRegistrationMsg CLAD messages sent to a Robot Ad Service
-  const u8 ROBOT_ADVERTISING_HEADER_TAG = 0xCA;
-  
-  // Rate at which the robot advertises itself
-  const u32 ROBOT_ADVERTISING_PERIOD_MS = 100;
-  
-  // Port on which registered robots advertise.
-  const u32 ROBOT_ADVERTISING_PORT = 5100;
-  
-  // Port on which simulated robot should connect to (de)register for advertisement
-  const u32 ROBOT_ADVERTISEMENT_REGISTRATION_PORT = 5101;
-  
   // Port on which registered UI devices advertise.
   const u32 UI_ADVERTISING_PORT = 5102;
   
@@ -305,7 +293,8 @@ namespace Cozmo {
   const u8 IMG_STREAM_SKIP_FRAMES = 2;
 
   // Default robot ID
-  const u32 DEFAULT_ROBOT_ID = 1;
+  // Do not change this! It affects which ports are binded to.
+  const u32 DEFAULT_ROBOT_ID = 0;
   
   //
   // Local (unix-domain) socket paths.
