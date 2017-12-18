@@ -152,7 +152,7 @@ Result HALConfig::ReadConfigFile(const char* path, const HALConfig::Item config[
 {
   FILE* fp = fopen(path, "r");
   if (!fp) {
-    PRINT_NAMED_WARNING("HALConfig::ReadConfigFile","Can't open %s\n", path);
+    PRINT_NAMED_WARNING("HALConfig::ReadConfigFile","Can't open %s", path);
     return RESULT_FAIL_FILE_OPEN;
   }
   else {
