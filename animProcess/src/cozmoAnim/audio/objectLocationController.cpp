@@ -73,6 +73,9 @@ void ObjectLocationController::ObjectLocationControllerInit()
   // Start Robot Movement Event
   const auto robotMovEvent = AudioEngine::ToAudioEventId(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Robot_Movement);
   _audioController.PostAudioEvent(robotMovEvent, kRobotGameObj);
+  // Set Robot Vol
+  const auto robotVolParm = AudioEngine::ToAudioParameterId(AudioMetaData::GameParameter::ParameterType::Robot_Volume);
+  _audioController.SetParameter(robotVolParm, 1.0f, AudioEngine::kInvalidAudioGameObject);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
