@@ -24,11 +24,26 @@
 #include "util/math/math.h"
 #include "util/random/randomGenerator.h"
 
+using SayTextVoiceStyle = Anki::Cozmo::SayTextVoiceStyle;
 
 #define DEBUG_SAYTEXT_ACTION 0
+
 // Max duration of generated animation
 const float kMaxAnimationDuration_ms = 60000;  // 1 min
 
+// Is this a valid voice style?
+static bool IsValidVoiceStyle(SayTextVoiceStyle style) {
+  switch (style) {
+    case SayTextVoiceStyle::Unprocessed:
+    case SayTextVoiceStyle::CozmoProcessing_Name:
+    case SayTextVoiceStyle::CozmoProcessing_Name_Question:
+    case SayTextVoiceStyle::CozmoProcessing_Sentence:
+      return true;
+    case SayTextVoiceStyle::Count:
+      return false;
+  }
+  return false;
+}
 
 namespace Anki {
 namespace Cozmo {
@@ -198,7 +213,7 @@ ActionResult SayTextAction::Init()
       }
       return ActionResult::RUNNING;
     }
-      break;
+    break;
       
     case TextToSpeechComponent::AudioCreationState::Ready:
     {
@@ -273,7 +288,11 @@ ActionResult SayTextAction::Init()
                  "SayTextAction.Init.processingStateMap.InvalidSize");
       
       const auto it = processingStateMap.find(_style);
-      DEV_ASSERT(it != processingStateMap.end(), "SayTextAction.Init.processingStateMap.StyleNotFound");
+      if (it == processingStateMap.end()) {
+        PRINT_NAMED_ERROR("SayTextAction.Init.InvalidStyle", "Invalid voice style %u", (unsigned) _style);
+        return ActionResult::ABORT;
+      }
+
       const SwitchState::GenericSwitch processingState = static_cast<const SwitchState::GenericSwitch>( it->second );
       // Set voice Pitch
       // Set Cozmo Says Switch State
@@ -287,7 +306,7 @@ ActionResult SayTextAction::Init()
       
       return ActionResult::SUCCESS;
     }
-      break;
+    break;
       
     case TextToSpeechComponent::AudioCreationState::None:
     {
@@ -297,7 +316,7 @@ ActionResult SayTextAction::Init()
       }
       return ActionResult::ABORT;
     }
-      break;
+    break;
   }
 } // Init()
 
@@ -318,11 +337,17 @@ void SayTextAction::GenerateTtsAudio()
 {
   // Be careful with putting text in the action name because it could be a player name, which is PII
   SetName(std::string("SayText_") + Util::HidePersonallyIdentifiableInfo(_text.c_str()));
-  
+
+  if (!IsValidVoiceStyle(_style)) {
+    PRINT_NAMED_ERROR("SayTextAction.GenerateTtsAudio.InvalidStyle", "%u is not a valid voice style", (unsigned) _style);
+    _ttsOperationId = TextToSpeechComponent::kInvalidOperationId;
+    return;
+  }
+
   // Create speech data
   _ttsOperationId = _robot.GetTextToSpeechComponent().CreateSpeech(_text, _style, _durationScalar);
   if (TextToSpeechComponent::kInvalidOperationId == _ttsOperationId) {
-    PRINT_NAMED_ERROR("SayTextAction.SayTextAction.CreateSpeech", "SpeechState is None");
+    PRINT_NAMED_ERROR("SayTextAction.GenerateTtsAudio.CreateSpeech", "SpeechState is None");
   }
 } // GenerateTtsAudio()
 
