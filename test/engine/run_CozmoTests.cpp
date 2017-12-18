@@ -9,7 +9,7 @@
 #include "anki/common/types.h"
 
 #include "androidHAL/androidHAL.h"
-
+#include "osState/osState.h"
 #include "cubeBleClient/cubeBleClient.h"
 
 #include "engine/activeObject.h"
@@ -2899,6 +2899,9 @@ int main(int argc, char ** argv)
   // Initialize AndroidHAL singleton without supervisor
   AndroidHAL::SetSupervisor(nullptr);
   
+  // Initialize OSState singleton without supervisor
+  OSState::SetSupervisor(nullptr);
+
   // Initialize CubeBleClient singleton without supervisor
   CubeBleClient::SetSupervisor(nullptr);
 

@@ -47,6 +47,10 @@
 #include "util/helpers/ankiDefines.h"
 #include "util/time/universalTime.h"
 
+#ifdef SIMULATOR
+#include "osState/osState.h"
+#endif
+
 #define USE_DIRECT_COMMS 0
 
 // The amount of time that the UI must have not been
@@ -162,6 +166,23 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       , _messageCountGtE(0)
       , _messageCountEtG(0)
     {
+
+      // Currently not supporting UI connections for any sim robot other
+      // than the default ID
+      #ifdef SIMULATOR
+      const auto robotID = OSState::getInstance()->GetRobotID();
+      if (robotID != DEFAULT_ROBOT_ID) {
+        PRINT_NAMED_WARNING("UiMessageHandler.Ctor.SkippingUIConnections", 
+                            "RobotID: %d - Only DEFAULT_ROBOT_ID may accept UI connections", 
+                            robotID);
+        
+        for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i) {
+          _socketComms[(uint32_t)i] = 0;
+        }
+        return;
+      }
+      #endif
+
       const bool isSdkCommunicationEnabled = IsSdkCommunicationEnabled();
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {

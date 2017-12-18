@@ -89,7 +89,7 @@ bool UdpServer::StartListening(const unsigned short port)
     
     status = bind(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
     if (status == -1) {
-      std::cerr << "**** ERROR: bind error (You might have orphaned processes running) ****\n";
+      std::cerr << "**** ERROR: bind error on port " << port << " (You might have orphaned processes running) ****\n";
     } else {
       DEBUG_UDP_SERVER("UdpServer: Port is open");
       res = true;

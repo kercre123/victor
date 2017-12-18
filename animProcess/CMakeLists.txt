@@ -49,6 +49,7 @@ target_link_libraries(victor_anim
   robot_transport
   audio_engine
   audio_multiplexer_robot
+  osState
   # vendor
   ${OPENCV_LIBS}
   ${AUBIO_LIBS}

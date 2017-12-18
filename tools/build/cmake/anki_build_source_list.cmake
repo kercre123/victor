@@ -1,7 +1,20 @@
 
 macro(anki_build_source_list target_name srclist_dir)
-file(STRINGS "${srclist_dir}/${target_name}.srcs.lst" SRCS)
-file(STRINGS "${srclist_dir}/${target_name}.headers.lst" HEADERS)
+
+set(SRC_LIST_FILE "${srclist_dir}/${target_name}.srcs.lst")
+set(HDR_LIST_FILE "${srclist_dir}/${target_name}.headers.lst")
+
+if (EXISTS ${SRC_LIST_FILE})
+  file(STRINGS ${SRC_LIST_FILE} SRCS)
+else()
+  message(FATAL_ERROR ${SRC_LIST_FILE} " not found. Did you forget to add your BUILD.in to build-victor.sh?")
+endif()
+
+if (EXISTS ${HDR_LIST_FILE})
+  file(STRINGS ${HDR_LIST_FILE} HEADERS)
+else()
+  message(FATAL_ERROR ${HDR_LIST_FILE} " not found. Did you forget to add your BUILD.in to build-victor.sh?")
+endif()
 
 set(_ab_PLATFORM_SRCS "")
 set(_ab_PLATFORM_HEADERS "")

@@ -45,7 +45,8 @@ const FullCloudIntentArray cloudStringMap{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorComponentCloudReceiver::BehaviorComponentCloudReceiver(Robot& robot)
-: _server(std::bind(&BehaviorComponentCloudReceiver::AddPendingIntent, this, std::placeholders::_1), 12345)
+: _server(std::bind(&BehaviorComponentCloudReceiver::AddPendingIntent, this, std::placeholders::_1), 
+                    12345 + robot.GetID() )  // Offset port by robotID so that we can run sims with multiple robots
 {
   if(robot.HasExternalInterface()){
     auto fakeTriggerWordCallback = [this](const GameToEngineEvent& event) {

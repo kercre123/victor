@@ -301,10 +301,6 @@ void PowerSetMode(const PowerState state);
  */
 bool RadioIsConnected();
 
-void RadioUpdateState(u8 wifi);
-
-int RadioQueueAvailable();
-
 void DisconnectRadio();
 
 /** Gets the next packet from the radio

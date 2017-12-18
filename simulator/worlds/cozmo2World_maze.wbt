@@ -128,7 +128,6 @@ LightCube {
 }
 CozmoBot2 {
   translation -0.78730284 0.77366239 -3.5527137e-15
-  name "CozmoBot2_1"
   filterLogs TRUE
 }
 WebotsKeyboardController {
