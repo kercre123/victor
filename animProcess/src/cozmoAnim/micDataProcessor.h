@@ -21,9 +21,6 @@
 #include "anki/common/types.h"
 
 #include "aubio/aubio.h"
-//#include "aubio/types.h"
-//#include "aubio/tempo/tempo.h"
-
 #include <array>
 #include <cstdint>
 #include <memory>
