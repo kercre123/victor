@@ -133,11 +133,10 @@ void ObjectLocationController::ProcessRobotState(const RobotState& stateMsg)
   prevHeadAng = stateMsg.headAngle;
   prevLiftAng = stateMsg.liftAngle;
   
-  printf("\nRobotState: L_Wheel %f R_Wheel %f Speed %f  Turn Speed %f \nHeadAng %f angDiff %f --- LiftAng %f angDiff %f\n",
-         stateMsg.lwheel_speed_mmps, stateMsg.rwheel_speed_mmps, driveSpeed, turnSpeed,
-         stateMsg.headAngle * radToAngle, headAngDif * radToAngle,
-         stateMsg.liftAngle * radToAngle, liftAngDif * radToAngle);
-//  stateMsg.lwheel_speed_mmps
+  // printf("\nRobotState: L_Wheel %f R_Wheel %f Speed %f  Turn Speed %f \nHeadAng %f angDiff %f --- LiftAng %f angDiff %f\n",
+  //        stateMsg.lwheel_speed_mmps, stateMsg.rwheel_speed_mmps, driveSpeed, turnSpeed,
+  //        stateMsg.headAngle * radToAngle, headAngDif * radToAngle,
+  //        stateMsg.liftAngle * radToAngle, liftAngDif * radToAngle);
   
   using namespace AudioEngine;
   using namespace AudioMetaData::GameParameter;
