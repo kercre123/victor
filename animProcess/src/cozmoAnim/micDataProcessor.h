@@ -15,12 +15,12 @@
 #define __AnimProcess_CozmoAnim_MicDataProcessor_H_
 
 #include "cozmoAnim/micDataTypes.h"
+#include "cozmoAnim/beatDetector.h"
 
 #include "util/container/fixedCircularBuffer.h"
 
 #include "anki/common/types.h"
 
-#include "aubio/aubio.h"
 #include <array>
 #include <cstdint>
 #include <memory>
@@ -129,12 +129,8 @@ private:
   void ProcessLoop();
   void ClearCurrentStreamingJob();
   
-  // Aubio beat detection stuff:
-  aubio_tempo_t* _tempoDetector = nullptr;
-  
-  static const uint_t kTempoBufSize = 512;
-  static const uint_t kTempoHopSize = 256;
-  static const uint_t kTempoSampleRate = AudioUtil::kSampleRate_hz;
+  // Beat/tempo detection:
+  BeatDetector _beatDetector;
   
 };
 

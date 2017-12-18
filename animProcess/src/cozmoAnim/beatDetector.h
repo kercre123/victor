@@ -1,71 +1,57 @@
 /**
-* File: micDataInfo.h
+* File: beatDetector.h
 *
-* Author: Lee Crippen
-* Created: 10/25/2017
+* Author: Matt Michini
+* Created: 12/18/2017
 *
-* Description: Holds onto info related to recording and processing mic data.
+* Description: Beats-per-minute and beat onset detection using aubio library
 *
 * Copyright: Anki, Inc. 2017
 *
 */
 
-#ifndef __AnimProcess_CozmoAnim_MicDataInfo_H_
-#define __AnimProcess_CozmoAnim_MicDataInfo_H_
+#ifndef __AnimProcess_CozmoAnim_BeatDetector_H_
+#define __AnimProcess_CozmoAnim_BeatDetector_H_
 
 #include "cozmoAnim/micDataTypes.h"
-#include "util/bitFlags/bitFlags.h"
 
-#include <cstdint>
-#include <functional>
-#include <mutex>
-#include <string>
-#include <vector>
+#include "aubio/aubio.h"
+
+#include <deque>
 
 namespace Anki {
 namespace Cozmo {
-namespace MicData {
 
-class MicDataInfo
+class BeatDetector
 {
 public:
-  Util::BitFlags8<MicDataType>  _typesToRecord;
-  uint32_t                      _timeRecorded_ms  = 0;
-  bool                          _doFFTProcess     = false;
-  bool                          _repeating        = false;
-  uint32_t                      _numMaxFiles      = kDefaultFilesToCapture;
-  std::string                   _writeLocationDir;
-  std::string                   _writeNameBase;
+  BeatDetector();
+  ~BeatDetector();
+  BeatDetector(const BeatDetector& other) = delete;
+  BeatDetector& operator=(const BeatDetector& other) = delete;
+  
+  void AddSamples(const AudioUtil::AudioChunkList&);
+  
+  void Stop();
 
-  static constexpr uint32_t kMaxRecordTime_ms = std::numeric_limits<uint32_t>::max();
-  
-  // Note this will be called from a separate processing thread
-  std::function<void(std::vector<uint32_t>&&)> _rawAudioFFTCallback;
-  
-  void SetTimeToRecord(uint32_t timeToRecord);
-  void CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size_t size);
-  void CollectResampledAudio(const AudioUtil::AudioSample* audioChunk, size_t size);
-  void CollectProcessedAudio(const AudioUtil::AudioSample* audioChunk, size_t size);
-
-  AudioUtil::AudioChunkList GetProcessedAudio(size_t beginIndex);
-  bool CheckDone();
-  
 private:
-  // These members are accessed via multiple threads when the job is running, so they use a mutex
-  uint32_t _timeToRecord_ms  = 0;
-  AudioUtil::AudioChunkList _rawAudioData{};
-  AudioUtil::AudioChunkList _resampledAudioData{};
-  AudioUtil::AudioChunkList _processedAudioData{};
-  std::mutex _dataMutex;
 
-  void SaveCollectedAudio(const std::string& dataDirectory, const std::string& nameToUse, const std::string& nameToRemove);
-  std::string ChooseNextFileNameBase(std::string& out_dirToDelete);
+  static const uint_t kAubioTempoBufSize = 512;
+  static const uint_t kAubioTempoHopSize = 256;
+  static const uint_t kAubioTempoSampleRate = AudioUtil::kSampleRate_hz;
   
-  static std::vector<uint32_t> GetFFTResultFromRaw(const AudioUtil::AudioChunkList& data, float length_s);
+  // Aubio beat detection stuff:
+  aubio_tempo_t* _aubioTempoDetector = nullptr;
+  
+  // Aubio beat detector input/output vectors:
+  fvec_t* _aubioInputVec = nullptr;
+  fvec_t* _aubioOutputVec = nullptr;
+  
+  // Stages audio data to be piped into the aubio detector at the correct chunk size
+  std::deque<AudioUtil::AudioSample> _aubioInputBuffer;
 };
 
-} // namespace MicData
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __AnimProcess_CozmoAnim_MicDataInfo_H_
+#endif // __AnimProcess_CozmoAnim_BeatDetector_H_

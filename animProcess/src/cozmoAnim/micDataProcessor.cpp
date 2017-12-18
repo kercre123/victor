@@ -198,11 +198,6 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
 , _udpServer(new UdpServer())
 , _micImmediateDirection(new MicImmediateDirection())
 {
-  // Set up aubio tempo/beat detector
-  const char* const kTempoMethod = "default";
-  _tempoDetector = new_aubio_tempo(kTempoMethod, kTempoBufSize, kTempoHopSize, kTempoSampleRate);
-  DEV_ASSERT(_tempoDetector != nullptr, "MicDataProcessor.Constructor.FailedCreatingAubioTempoObject");
-  
   if (!_writeLocationDir.empty())
   {
     Util::FileUtils::CreateDirectory(_writeLocationDir);
@@ -328,11 +323,6 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
 
 MicDataProcessor::~MicDataProcessor()
 {
-  // delete Aubio tempo detection object
-  if (_tempoDetector != nullptr) {
-    del_aubio_tempo(_tempoDetector);
-  }
-  
   _processThreadStop = true;
   _processThread.join();
 
@@ -712,41 +702,8 @@ void MicDataProcessor::Update()
         AudioUtil::AudioChunkList newAudio = _currentStreamingJob->GetProcessedAudio(streamingAudioIndex);
         streamingAudioIndex += newAudio.size();
     
-        // give the latest audio to the beat detector in the correct size chunks:
-        static std::deque<AudioUtil::AudioSample> aubioInputBuffer;
-        
-        for(const auto& audioChunk : newAudio) {
-          // audioChunk is a vector of AudioSamples. Push these new samples onto the back of the aubio input buffer
-          for (const auto& sample : audioChunk) {
-            aubioInputBuffer.push_back(sample);
-          }
-        }
-        
-        // Feed the aubio tempo detector correct-sized chunks (sized hop_size)
-        fvec_t* input = new_fvec(kTempoHopSize);
-        fvec_t* output = new_fvec(1);
-        while (aubioInputBuffer.size() >= kTempoHopSize) {
-          // Construct the aubio input vector
-          for (int i=0 ; i<kTempoHopSize ; i++) {
-            fvec_set_sample(input, static_cast<smpl_t>(aubioInputBuffer.front()), i);
-            aubioInputBuffer.pop_front();
-          }
-
-          // pass this into the aubio tempo detector:
-          aubio_tempo_do(_tempoDetector, input, output);
-          const bool isBeat = fvec_get_sample(output, 0) != 0.f;
-          if (isBeat) {
-            const auto tempo = aubio_tempo_get_bpm(_tempoDetector);
-            const auto conf = aubio_tempo_get_confidence(_tempoDetector);
-            PRINT_NAMED_WARNING("beat!",
-                                "got a beat (tempo %.2f, confidence %.2f)",
-                                tempo,
-                                conf);
-          }
-        }
-        
-        del_fvec(input);
-        del_fvec(output);
+        // Give the latest audio to the beat detector:
+        _beatDetector.AddSamples(newAudio);
         
         // Send the audio to any clients we've got
         if (_udpServer->GetNumClients() > 0)
