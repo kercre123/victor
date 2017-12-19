@@ -489,89 +489,6 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status ICozmoBehavior::BehaviorUpdate_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  //// Event handling
-  // Call message handling convenience functions
-  //////
-  
-  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
-  const auto& actionsCompleted = stateChangeComp.GetActionsCompletedThisTick();
-  for(auto& entry: actionsCompleted){
-    if(entry.idTag == _lastActionTag){
-      HandleActionComplete(entry);
-    }
-  }
-  
-  for(const auto& event: stateChangeComp.GetGameToEngineEvents()){
-    // Handle specific callbacks
-    auto pairIter = _gameToEngineCallbackMap.find(event.GetData().GetTag());
-    if(pairIter != _gameToEngineCallbackMap.end()){
-      if(pairIter->second != nullptr){
-        pairIter->second(event);
-      }
-      AlwaysHandle(event, behaviorExternalInterface);
-      if(IsActivated()){
-        HandleWhileActivated(event, behaviorExternalInterface);
-      }else{
-        HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
-      }
-    }
-  }
-  
-  for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
-    // Handle specific callbacks
-    auto pairIter = _engineToGameCallbackMap.find(event.GetData().GetTag());
-    if(pairIter != _engineToGameCallbackMap.end()){
-      if(pairIter->second != nullptr){
-        pairIter->second(event);
-      }
-      
-      AlwaysHandle(event, behaviorExternalInterface);
-      if(IsActivated()){
-        HandleWhileActivated(event, behaviorExternalInterface);
-      }else{
-        HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
-      }
-    }
-  }
-  
-  for(const auto& event: stateChangeComp.GetRobotToEngineEvents()){
-    AlwaysHandle(event, behaviorExternalInterface);
-    if(IsActivated()){
-      HandleWhileActivated(event, behaviorExternalInterface);
-    }else{
-      HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
-    }
-  }
-  
-  //////
-  //// end Event handling
-  //////
-  ICozmoBehavior::Status status = Status::Complete;
-  BehaviorUpdate(behaviorExternalInterface);
-
-  if(IsActivated()){
-    status = UpdateInternal_WhileRunning(behaviorExternalInterface);
-      if(!IsControlDelegated() && status != ICozmoBehavior::Status::Running){
-      if(behaviorExternalInterface.HasDelegationComponent()){
-        auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
-        delegationComponent.CancelSelf(this);
-      }
-    }
-    if(!IsActing()){
-      if(_stopRequestedAfterAction) {
-        // we've been asked to stop, don't bother ticking update
-        return Status::Complete;
-      }
-    }
-  }
-  
-  return status;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Stop").c_str(), "Stopping...");
@@ -758,8 +675,86 @@ void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalI
     _behaviorDelegateCallback = nullptr;
     callback(behaviorExternalInterface);
   }
+
+
+  //// Event handling
+  // Call message handling convenience functions
+  //////
   
-  BehaviorUpdate_Legacy(behaviorExternalInterface);
+  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
+  const auto& actionsCompleted = stateChangeComp.GetActionsCompletedThisTick();
+  for(auto& entry: actionsCompleted){
+    if(entry.idTag == _lastActionTag){
+      HandleActionComplete(entry);
+    }
+  }
+  
+  for(const auto& event: stateChangeComp.GetGameToEngineEvents()){
+    // Handle specific callbacks
+    auto pairIter = _gameToEngineCallbackMap.find(event.GetData().GetTag());
+    if(pairIter != _gameToEngineCallbackMap.end()){
+      if(pairIter->second != nullptr){
+        pairIter->second(event);
+      }
+      AlwaysHandle(event, behaviorExternalInterface);
+      if(IsActivated()){
+        HandleWhileActivated(event, behaviorExternalInterface);
+      }else{
+        HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
+      }
+    }
+  }
+  
+  for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
+    // Handle specific callbacks
+    auto pairIter = _engineToGameCallbackMap.find(event.GetData().GetTag());
+    if(pairIter != _engineToGameCallbackMap.end()){
+      if(pairIter->second != nullptr){
+        pairIter->second(event);
+      }
+      
+      AlwaysHandle(event, behaviorExternalInterface);
+      if(IsActivated()){
+        HandleWhileActivated(event, behaviorExternalInterface);
+      }else{
+        HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
+      }
+    }
+  }
+  
+  for(const auto& event: stateChangeComp.GetRobotToEngineEvents()){
+    AlwaysHandle(event, behaviorExternalInterface);
+    if(IsActivated()){
+      HandleWhileActivated(event, behaviorExternalInterface);
+    }else{
+      HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
+    }
+  }
+  
+  //////
+  //// end Event handling
+  //////
+  ICozmoBehavior::Status status = Status::Complete;
+  BehaviorUpdate(behaviorExternalInterface);
+
+  if(IsActivated()){
+    status = UpdateInternal_WhileRunning(behaviorExternalInterface);
+      if(!IsControlDelegated() && status != ICozmoBehavior::Status::Running){
+      if(behaviorExternalInterface.HasDelegationComponent()){
+        auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
+        delegationComponent.CancelSelf(this);
+      }
+    }
+    if(!IsActing()){
+      if(_stopRequestedAfterAction) {
+        // we've been asked to stop, so do that
+        if(behaviorExternalInterface.HasDelegationComponent()){
+          auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
+          delegationComponent.CancelSelf(this);
+        }
+      }
+    }
+  }
 }
 
 

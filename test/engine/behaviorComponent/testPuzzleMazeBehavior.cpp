@@ -73,7 +73,7 @@ float GetTimeForCurrentPuzzle(BehaviorPuzzleMaze* puzzleMazePtr,AIComponent& aiC
     // Tick
     IncrementBaseStationTimerTicks();
     aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
-    puzzleMazePtr->BehaviorUpdate_Legacy(behaviorExternalInterface);
+    puzzleMazePtr->Update(behaviorExternalInterface);
     i++;
   }
   // Expect every puzzle is solvable in under max iterations. This is the actually reasonable unit tests part.

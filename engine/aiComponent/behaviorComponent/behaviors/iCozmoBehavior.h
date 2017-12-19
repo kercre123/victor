@@ -113,11 +113,6 @@ public:
   // Calls protected virtual OnBehaviorActivated() method, which each derived class
   // should implement.
   void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
-
-  // Step through the behavior and deliver rewards to the robot along the way
-  // This calls the protected virtual UpdateInternal() method, which each
-  // derived class should implement.
-  Status BehaviorUpdate_Legacy(BehaviorExternalInterface& behaviorExternalInterface);
     
   // This behavior was active, but is now stopping (to make way for a new current
   // behavior). Any behaviors from DelegateIfInControl will be canceled.
