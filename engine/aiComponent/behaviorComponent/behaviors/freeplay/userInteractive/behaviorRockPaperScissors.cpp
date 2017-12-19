@@ -24,11 +24,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/bodyLightComponent.h"
-#include "engine/components/movementComponent.h"
-#include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 
 namespace Anki {
@@ -36,6 +35,8 @@ namespace Cozmo {
 
 namespace {
 
+CONSOLE_VAR(bool, kRockPaperScissors_FakePowerButton, "RockPaperScissors", false);
+  
 constexpr const float kLightBlinkPeriod_s = 0.5f;
 constexpr const float kHoldTimeForStreaming_s = 1.0f;
 
@@ -94,9 +95,9 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
   {
     case State::WaitForButton:
     {
-      // TODO: Hook up button
-      if(true)
+      if(bei.GetRobotInfo().IsPowerButtonPressed() || kRockPaperScissors_FakePowerButton)
       {
+        kRockPaperScissors_FakePowerButton = false;
         _state = State::PlayCadence;
       }
       break;
@@ -105,26 +106,29 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
     case State::PlayCadence:
     {
       // TODO: Make configurable
-      const float _waitTime_sec = 0.5f;
+      const float _waitAfterButton_sec = 1.f;
+      const float _waitTimeBetweenTaps_sec = 0.5f;
 
       CompoundActionSequential* action = new CompoundActionSequential({
+        new WaitAction(_waitAfterButton_sec),
+        
         // One...
         new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK), 
         new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+10), 
         new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK), 
-        new WaitAction(_waitTime_sec),
+        new WaitAction(_waitTimeBetweenTaps_sec),
 
         // Two...
         new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK), 
         new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+10), 
         new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK), 
-        new WaitAction(_waitTime_sec),
+        new WaitAction(_waitTimeBetweenTaps_sec),
 
         // Three...
         new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK), 
         new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+10), 
         new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK),
-        new WaitAction(_waitTime_sec),
+        new WaitAction(_waitTimeBetweenTaps_sec),
 
         // Shoot!
         new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK), 
