@@ -63,27 +63,29 @@ static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlay
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Console Vars
-CONSOLE_VAR(bool, kWriteProfilerCapture, "CozmoAudioController.ProfilerCapture", false);
-CONSOLE_VAR(bool, kWriteAudioOutputCapture, "CozmoAudioController.AudioOutputCapture", false);
+CONSOLE_VAR( bool, kWriteAudioProfilerCapture, "CozmoAudioController", false );
+CONSOLE_VAR( bool, kWriteAudioOutputCapture, "CozmoAudioController", false );
 
 // Console Functions
-void ProfilerCaptureConsVarFunc(ConsoleFunctionContextRef context)
+void SetWriteAudioProfilerCapture( ConsoleFunctionContextRef context )
 {
-  if (sThis != nullptr) {
-    sThis->WriteProfilerCapture(kWriteProfilerCapture);
+  kWriteAudioProfilerCapture = ConsoleArg_Get_Bool( context, "writeProfiler" );
+  if ( sThis != nullptr ) {
+    sThis->WriteProfilerCapture( kWriteAudioProfilerCapture );
   }
 }
 
-void AudioOutputCaptureConsVarFunc(ConsoleFunctionContextRef context)
+void SetWriteAudioOutputCapture( ConsoleFunctionContextRef context )
 {
-  if (sThis != nullptr) {
-    sThis->WriteAudioOutputCapture(kWriteAudioOutputCapture);
+  kWriteAudioOutputCapture = ConsoleArg_Get_Bool( context, "writeOutput" );
+  if ( sThis != nullptr ) {
+    sThis->WriteAudioOutputCapture( kWriteAudioOutputCapture );
   }
 }
 
 // Register console var func
-CONSOLE_FUNC(ProfilerCaptureConsVarFunc, "CozmoAudioController.ProfilerCapture");
-CONSOLE_FUNC(AudioOutputCaptureConsVarFunc, "CozmoAudioController.AudioOutputCapture");
+CONSOLE_FUNC( SetWriteAudioProfilerCapture, "CozmoAudioController", bool writeProfiler );
+CONSOLE_FUNC( SetWriteAudioOutputCapture, "CozmoAudioController", bool writeOutput );
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -148,7 +150,7 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
     }
 
     // Use Console vars to controll profiling settings
-    if ( kWriteProfilerCapture ) {
+    if ( kWriteAudioProfilerCapture ) {
       WriteProfilerCapture( true );
     }
     if ( kWriteAudioOutputCapture ) {
