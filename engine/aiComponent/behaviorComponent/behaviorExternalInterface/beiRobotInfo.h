@@ -85,6 +85,7 @@ public:
   Util::RandomGenerator& GetRNG();
   const Pose3d& GetWorldOrigin()  const;
   PoseOriginID_t GetWorldOriginID() const;
+  bool IsPowerButtonPressed() const;
 
   bool HasExternalInterface() const;
   IExternalInterface* GetExternalInterface();

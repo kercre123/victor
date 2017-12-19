@@ -200,6 +200,12 @@ PoseOriginID_t BEIRobotInfo::GetWorldOriginID() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BEIRobotInfo::IsPowerButtonPressed() const
+{
+  return _robot.IsPowerButtonPressed();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::HasExternalInterface() const
 {
   return _robot.HasExternalInterface();
