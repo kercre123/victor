@@ -446,9 +446,11 @@ void BehaviorVictorObservingDemo::OnBehaviorDeactivated(BehaviorExternalInterfac
   _visionModesToReEnable.clear();
 }
 
-ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
-  BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorObservingDemo::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
 
   if( _useDebugLights ) {
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -492,7 +494,10 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
   if( _currState == InvalidStateID ) {
     // initial actions must be running
     // TODO:(bn) make this a proper state?
-    return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+    if(!IsControlDelegated()){
+      CancelSelf();
+      return;
+    }
   }
   
   State& state = _states->at(_currState);
@@ -504,7 +509,7 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
 
     if( iConditionPtr->AreConditionsMet(behaviorExternalInterface) ) {
       TransitionToState(behaviorExternalInterface, stateID);
-      return Status::Running;
+      return;
     }
   }
 
@@ -534,7 +539,7 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
       
       if( iConditionPtr->AreConditionsMet(behaviorExternalInterface) ) {
         TransitionToState(behaviorExternalInterface, stateID);
-        return Status::Running;
+        return;
       }
     }
 
@@ -546,7 +551,7 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
       
         if( iConditionPtr->AreConditionsMet(behaviorExternalInterface) ) {
           TransitionToState(behaviorExternalInterface, stateID);
-          return Status::Running;
+          return;
         }
       }
     }
@@ -562,7 +567,6 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
   }
 
   // This demo behavior never ends, it's always running
-  return Status::Running;
 }
 
 void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& behaviorExternalInterface,

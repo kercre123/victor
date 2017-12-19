@@ -74,7 +74,7 @@ ICozmoBehaviorPtr BehaviorDispatcherStrictPriorityWithCooldown::GetDesiredBehavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherStrictPriorityWithCooldown::DispatcherUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( IsActivated() &&
       _lastDesiredBehaviorIdx < _cooldownInfo.size() &&
@@ -87,9 +87,7 @@ void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorUpdate(BehaviorExtern
                   IBehaviorDispatcher::GetAllPossibleDispatches()[_lastDesiredBehaviorIdx]->GetIDStr().c_str());
     _cooldownInfo[ _lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
     _lastDesiredBehaviorIdx = _cooldownInfo.size();
-  }
-  
-  BaseClass::BehaviorUpdate(behaviorExternalInterface);
+  }  
 }
 
 

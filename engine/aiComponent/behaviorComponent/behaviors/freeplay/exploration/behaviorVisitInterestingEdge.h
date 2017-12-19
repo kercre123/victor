@@ -59,10 +59,11 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   // update internal: to handle discarding more goals while running
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Logic Helpers
@@ -198,7 +199,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // Cozmo is gathering accurate edge information
-  BaseClass::Status StateUpdate_GatheringAccurateEdge(BehaviorExternalInterface& behaviorExternalInterface);
+  void StateUpdate_GatheringAccurateEdge(BehaviorExternalInterface& behaviorExternalInterface);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Debug helpers

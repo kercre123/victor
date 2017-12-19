@@ -103,8 +103,12 @@ void BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFistBump::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   f32 now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // Check if should exit because of pickup
@@ -112,7 +116,8 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
     if (_lastTimeOffTreads_s == 0) {
       _lastTimeOffTreads_s = now;
     } else if (now > _lastTimeOffTreads_s + kMaxPickedupDurationBeforeExit_s) {
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
   } else {
     _lastTimeOffTreads_s = 0;
@@ -130,7 +135,7 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
     default:
     {
       if (IsControlDelegated()) {
-        return Status::Running;
+        return;
       }
     }
   }
@@ -270,12 +275,10 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
     {
       ResetTrigger(_updateLastCompletionTime);
       BehaviorObjectiveAchieved(BehaviorObjective::FistBumpComplete);
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
   }
-  
-  
-  return Status::Running;
 }
 
 

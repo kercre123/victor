@@ -68,7 +68,7 @@ bool DriveToHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorExt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus DriveToHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus DriveToHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _initialRobotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
   DriveToPreActionPose(behaviorExternalInterface);
@@ -77,7 +77,7 @@ BehaviorStatus DriveToHelper::InitBehaviorHelper(BehaviorExternalInterface& beha
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus DriveToHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus DriveToHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   return _status;
 }
@@ -87,7 +87,7 @@ BehaviorStatus DriveToHelper::UpdateWhileActiveInternal(BehaviorExternalInterfac
 void DriveToHelper::DriveToPreActionPose(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
-    _status = BehaviorStatus::Failure;
+    _status = IHelper::HelperStatus::Failure;
     return;
   }
   _tmpRetryCounter++;
@@ -145,7 +145,7 @@ void DriveToHelper::DriveToPreActionPose(BehaviorExternalInterface& behaviorExte
       if(possiblePoses.size() > 0){
         if(alreadyInPosition){
           // Already in pose, no drive to necessary
-          _status = BehaviorStatus::Complete;
+          _status = IHelper::HelperStatus::Complete;
         }else{
           // Drive to the nearest allowed pose, and then perform a visual verify
           CompoundActionSequential* compoundAction = new CompoundActionSequential();
@@ -165,12 +165,12 @@ void DriveToHelper::DriveToPreActionPose(BehaviorExternalInterface& behaviorExte
                          _targetID.GetValue(),
                          _params.placeRelOffsetX_mm, _params.placeRelOffsetY_mm);
         behaviorExternalInterface.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
-        _status = BehaviorStatus::Failure;
+        _status = IHelper::HelperStatus::Failure;
       }
     }else{
       PRINT_NAMED_WARNING("DriveToHelper.DriveToPreActionPose.TargetBlockNull",
                           "Failed to get ActionableObject for id:%d", _targetID.GetValue());
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
     }
   }
 }
@@ -182,7 +182,7 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, BehaviorExternalIn
   switch(result){
     case ActionResult::SUCCESS:
     {
-      _status = BehaviorStatus::Complete;
+      _status = IHelper::HelperStatus::Complete;
       break;
     }
     case ActionResult::VISUAL_OBSERVATION_FAILED:
@@ -201,7 +201,7 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, BehaviorExternalIn
         delegateProperties.FailImmediatelyOnDelegateFailure();
         DelegateAfterUpdate(delegateProperties);
       }else{
-        _status = BehaviorStatus::Failure;
+        _status = IHelper::HelperStatus::Failure;
       }
       break;
     }
@@ -215,7 +215,7 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, BehaviorExternalIn
       if( !_params.ignoreCurrentPredockPose ) {
         behaviorExternalInterface.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
       }
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
       break;
     }
     case ActionResult::DID_NOT_REACH_PREACTION_POSE:
@@ -228,7 +228,7 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, BehaviorExternalIn
     case ActionResult::NOT_STARTED:
     case ActionResult::BAD_OBJECT:
     {
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
       break;
     }
     case ActionResult::PATH_PLANNING_FAILED_ABORT:
@@ -246,7 +246,7 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, BehaviorExternalIn
         DriveToPreActionPose(behaviorExternalInterface);
       }
       else {
-        _status = BehaviorStatus::Failure;
+        _status = IHelper::HelperStatus::Failure;
       }
       break;
     }

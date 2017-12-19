@@ -164,8 +164,12 @@ void BehaviorOnboardingShowCube::HandleWhileActivated(const GameToEngineEvent& e
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // This behavior is killed by unity switching to none
-ICozmoBehavior::Status BehaviorOnboardingShowCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( !IsControlDelegated() && !IsSequenceComplete() )
   {
     float timeRunning = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeActivated_s();
@@ -174,7 +178,6 @@ ICozmoBehavior::Status BehaviorOnboardingShowCube::UpdateInternal_WhileRunning(B
       SET_STATE(ErrorFinal,behaviorExternalInterface);
     }
   }
-  return Status::Running;
 }
   
   

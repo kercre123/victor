@@ -211,13 +211,16 @@ void BehaviorReactToCliff::OnBehaviorDeactivated(BehaviorExternalInterface& beha
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToCliff::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if(_shouldStopDueToCharger){
     _shouldStopDueToCharger = false;
-    return Status::Complete;
+    CancelSelf();
   }
-  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   

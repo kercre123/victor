@@ -251,17 +251,18 @@ void BehaviorVisitInterestingEdge::OnBehaviorDeactivated(BehaviorExternalInterfa
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVisitInterestingEdge::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // return status
-  BaseClass::Status ret = BaseClass::Status::Failure;
+  if(!IsActivated()){
+    return;
+  }
   
   // delegate update depending on state
   const EOperatingState operatingState = _operatingState; // cache value because it can change during this update
   switch(operatingState)
   {
     case EOperatingState::GatheringAccurateEdge:
-      ret = StateUpdate_GatheringAccurateEdge(behaviorExternalInterface);
+      StateUpdate_GatheringAccurateEdge(behaviorExternalInterface);
     break;
     
     case EOperatingState::Invalid:
@@ -273,11 +274,12 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::Up
     case EOperatingState::DoneVisiting:
       // these states don't need special update since actions run in their place
       // delegate on parent for return value
-      ret = BaseClass::UpdateInternal_WhileRunning(behaviorExternalInterface);
+      if(!IsControlDelegated()){
+        CancelSelf();
+        return;
+      }
       break;
-  }
-  
-  return ret;
+  }  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -801,7 +803,7 @@ void BehaviorVisitInterestingEdge::FlagQuadAroundGoalAsNotInteresting(BehaviorEx
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::StateUpdate_GatheringAccurateEdge(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVisitInterestingEdge::StateUpdate_GatheringAccurateEdge(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // if we are waiting for images we don't want to analyze them yet
   const bool isWaitingForImages = IsWaitingForImages();
@@ -813,7 +815,7 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
     // moving stop by distance, since we may be ramming into stuff like a snowplow
     
     // even if not moving wait to receive edges
-    return BaseClass::Status::Running;
+    return;
   }
   
   // no need to receive notifications if not waiting for images
@@ -908,9 +910,6 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
     // done visiting (still playing anims)
     _operatingState = EOperatingState::DoneVisiting;
   }
-  
-  // other state will finish for us
-  return BaseClass::Status::Running;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

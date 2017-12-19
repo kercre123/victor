@@ -66,8 +66,11 @@ void BehaviorReactToRobotShaken::OnBehaviorActivated(BehaviorExternalInterface& 
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToRobotShaken::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotShaken::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
 
   // Master state machine:
   switch(_state) {
@@ -137,14 +140,13 @@ ICozmoBehavior::Status BehaviorReactToRobotShaken::UpdateInternal_WhileRunning(B
       if (!IsControlDelegated()) {
         // Done
         BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotShaken);
-        return Status::Complete;
+        CancelSelf();
+        return;
       }
     }
     default:
       break;
-  }
-  
-  return Status::Running;
+  }  
 }
   
 

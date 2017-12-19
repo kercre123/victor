@@ -104,14 +104,20 @@ namespace{
     
   }
   
-  ICozmoBehavior::Status BehaviorFactoryCentroidExtractor::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+  void BehaviorFactoryCentroidExtractor::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
   {
+    if(!IsActivated()){
+      return;
+    }
+
     if(_waitingForDots || !_liftCalibrated || !_headCalibrated)
     {
-      return Status::Running;
+      return;
     }
     
-    return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+    if(!IsControlDelegated()){
+      CancelSelf();
+    }
   }
   
   void BehaviorFactoryCentroidExtractor::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)

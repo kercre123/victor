@@ -102,8 +102,12 @@ void BehaviorDriveOffCharger::OnBehaviorDeactivated(BehaviorExternalInterface& b
 }
     
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorDriveOffCharger::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveOffCharger::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   if( robotInfo.IsOnChargerPlatform() ) {
     const bool onTreads = behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnTreads;
@@ -119,19 +123,13 @@ ICozmoBehavior::Status BehaviorDriveOffCharger::UpdateInternal_WhileRunning(Beha
       TransitionToDrivingForward(behaviorExternalInterface);
     }
     
-    return Status::Running;
+    return;
   }
 
-  if( IsControlDelegated() ) {
-    // let the action finish
-    return Status::Running;
-  }
-  else {  
+  if( !IsControlDelegated() ) {
     // store in whiteboard our success
     const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     behaviorExternalInterface.GetAIComponent().GetWhiteboard().GotOffChargerAtTime( curTime );
-
-    return Status::Complete;
   }
 }
   

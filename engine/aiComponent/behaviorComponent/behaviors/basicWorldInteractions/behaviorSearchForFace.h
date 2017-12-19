@@ -34,7 +34,7 @@ public:
   
 protected:
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   enum class State {

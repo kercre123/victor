@@ -86,19 +86,21 @@ void BehaviorPickUpCube::OnBehaviorActivated(BehaviorExternalInterface& behavior
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorPickUpCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // If the block we're going to pickup ever becomes part of an illegal configuration
   // immediately stop the behavior
   for(auto configType: _configurationsToIgnore) {
     if(behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager()
                   .IsObjectPartOfConfigurationType(configType, _targetBlockID)){
       CancelSelf();
-      return Status::Complete;
+      return;
     }
-  }
-  
-  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
  
   

@@ -734,17 +734,8 @@ void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalI
   //////
   //// end Event handling
   //////
-  ICozmoBehavior::Status status = Status::Complete;
-  BehaviorUpdate(behaviorExternalInterface);
 
   if(IsActivated()){
-    status = UpdateInternal_WhileRunning(behaviorExternalInterface);
-      if(!IsControlDelegated() && status != ICozmoBehavior::Status::Running){
-      if(behaviorExternalInterface.HasDelegationComponent()){
-        auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
-        delegationComponent.CancelSelf(this);
-      }
-    }
     if(!IsActing()){
       if(_stopRequestedAfterAction) {
         // we've been asked to stop, so do that
@@ -755,20 +746,21 @@ void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalI
       }
     }
   }
-}
 
+  BehaviorUpdate(behaviorExternalInterface);
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status ICozmoBehavior::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  if( IsControlDelegated() ) {  
-    return Status::Running;
+  if(IsActivated()){
+    if(ShouldCancelWhenInControl() && !IsControlDelegated()){
+      if(behaviorExternalInterface.HasDelegationComponent()){
+        auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
+        delegationComponent.CancelSelf(this);
+      }
+    }
   }
-
-  return Status::Complete;
+  
 }
-  
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float ICozmoBehavior::GetActivatedDuration() const
 {  

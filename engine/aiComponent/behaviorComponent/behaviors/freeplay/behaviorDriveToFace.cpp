@@ -84,16 +84,17 @@ void BehaviorDriveToFace::OnBehaviorActivated(BehaviorExternalInterface& behavio
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorDriveToFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveToFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(_currentState == State::TrackFace &&
      _timeCancelTracking_s < currentTime_s){
-    CancelDelegates(false);
-    return Status::Complete;
-  }
-  
-  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
+    CancelSelf();
+  }  
 }
 
 

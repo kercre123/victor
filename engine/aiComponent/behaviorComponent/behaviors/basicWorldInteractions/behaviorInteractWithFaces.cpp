@@ -150,8 +150,12 @@ void BehaviorInteractWithFaces::OnBehaviorActivated(BehaviorExternalInterface& b
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorInteractWithFaces::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorInteractWithFaces::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( _trackFaceUntilTime_s >= 0.0f ) {
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if( currTime_s >= _trackFaceUntilTime_s ) {
@@ -163,9 +167,7 @@ ICozmoBehavior::Status BehaviorInteractWithFaces::UpdateInternal_WhileRunning(Be
         needsManager.RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
       }
     }
-  }
-  
-  return BaseClass::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

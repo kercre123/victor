@@ -218,13 +218,18 @@ void BehaviorTrackLaser::InitHelper(BehaviorExternalInterface& behaviorExternalI
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   switch(_state)
   {
     case State::WaitForStop:
     {
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
   
     case State::WaitingForExposureChange:
@@ -271,7 +276,8 @@ ICozmoBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorE
           }
           else
           {
-            return Status::Complete;
+            CancelSelf();
+            return;
           }
         }
       }
@@ -311,15 +317,14 @@ ICozmoBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorE
         }
         else
         {
-          return Status::Complete;
+          CancelSelf();
+          return;
         }
       }
       
       break;
     }
   }
-
-  return Status::Running;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

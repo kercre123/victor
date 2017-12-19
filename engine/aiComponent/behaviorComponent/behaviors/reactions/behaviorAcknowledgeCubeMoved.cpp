@@ -74,8 +74,12 @@ void BehaviorAcknowledgeCubeMoved::OnBehaviorActivated(BehaviorExternalInterface
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeCubeMoved::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // object seen - cancel turn and play response
   if(_state == State::TurningToLastLocationOfBlock
      && _activeObjectSeen)
@@ -84,8 +88,6 @@ ICozmoBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal_WhileRunning
     DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::AcknowledgeObject));
     SET_STATE(ReactingToBlockPresence);
   }
-  
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   

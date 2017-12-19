@@ -411,12 +411,17 @@ void BehaviorPuzzleMaze::UpdateDisplay(BehaviorExternalInterface& behaviorExtern
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus BehaviorPuzzleMaze::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPuzzleMaze::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+  
   // Check elapsed time
   if (GetActivatedDuration() > kPuzzleTimeout_sec) {
     LOG_WARNING("BehaviorPuzzleMaze.UpdateIntern_Legacy", "Behavior has timed out");
-    return BehaviorStatus::Complete;
+    CancelSelf();
+    return;
   }
   
   switch (_state) {
@@ -451,12 +456,11 @@ BehaviorStatus BehaviorPuzzleMaze::UpdateInternal_WhileRunning(BehaviorExternalI
     {
       if (!IsControlDelegated()) {
         LOG_TRACE("BehaviorPuzzleMaze.Update.Complete", "Behavior complete");
-        return BehaviorStatus::Complete;
+        CancelSelf();
+        return;
       }
     }
-  }
-    
-  return BehaviorStatus::Running;
+  }    
 }
 
 

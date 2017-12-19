@@ -34,7 +34,7 @@ protected:
   virtual void BehaviorDispatcher_OnActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void BehaviorDispatcher_OnDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void DispatcherUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
 
 private:
 

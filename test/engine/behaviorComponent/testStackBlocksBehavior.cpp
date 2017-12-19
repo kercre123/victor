@@ -254,5 +254,5 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   incrementEngineTime_ns += 100000000.0f;
   BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
   
-  stackBehavior->Update(behaviorExternalInterface);
+  //stackBehavior->UpdateInternal(behaviorExternalInterface);
 }

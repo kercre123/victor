@@ -137,8 +137,12 @@ void BehaviorFeedingEat::OnBehaviorActivated(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorFeedingEat::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingEat::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // Feeding should be considered "complete" so long as the animation has reached
   // the point where all light has been drained from the cube.  If the behavior
   // is interrupted after that point in the animation or the animation completes
@@ -163,9 +167,7 @@ ICozmoBehavior::Status BehaviorFeedingEat::UpdateInternal_WhileRunning(BehaviorE
      (behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads) &&
      !_hasRegisteredActionComplete){
     TransitionToReactingToInterruption(behaviorExternalInterface);
-  }
-  
-  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
 
   

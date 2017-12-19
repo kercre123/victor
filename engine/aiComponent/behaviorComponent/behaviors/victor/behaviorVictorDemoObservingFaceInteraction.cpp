@@ -89,9 +89,11 @@ bool BehaviorVictorDemoObservingFaceInteraction::CanBeGentlyInterruptedNow(Behav
 }
 
 
-ICozmoBehavior::Status BehaviorVictorDemoObservingFaceInteraction::UpdateInternal_WhileRunning(
-  BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoObservingFaceInteraction::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
 
   if( _state == State::FindFaces ) {
     // check if we have found a new face during the search
@@ -102,8 +104,6 @@ ICozmoBehavior::Status BehaviorVictorDemoObservingFaceInteraction::UpdateInterna
       TransitionToTurnTowardsAFace(behaviorExternalInterface);
     }
   }
-
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 

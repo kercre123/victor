@@ -116,8 +116,12 @@ void BehaviorStackBlocks::UpdateTargetBlocks(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorStackBlocks::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorStackBlocks::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   auto topBlockIntention  = ObjectInteractionIntention::StackTopObjectAxisCheck;
   auto bottomBlockIntention  = ObjectInteractionIntention::StackBottomObjectAxisCheck;
 
@@ -162,7 +166,7 @@ ICozmoBehavior::Status BehaviorStackBlocks::UpdateInternal_WhileRunning(Behavior
                      topValid,
                      bottomValid);
       CancelSelf();
-      return BehaviorStatus::Running;
+      return;
     }
   }
   
@@ -181,11 +185,6 @@ ICozmoBehavior::Status BehaviorStackBlocks::UpdateInternal_WhileRunning(Behavior
       TransitionToStackingBlock(behaviorExternalInterface);
     }
   }
-  
-
-  ICozmoBehavior::Status ret = ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
-  
-  return ret;
 }
 
 

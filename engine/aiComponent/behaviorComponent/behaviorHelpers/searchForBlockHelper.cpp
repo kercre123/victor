@@ -85,7 +85,7 @@ bool SearchForBlockHelper::ShouldCancelDelegates(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus SearchForBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus SearchForBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _nextSearchIntensity = SearchIntensity::QuickSearch;
   if(behaviorExternalInterface.HasVisionComponent()){
@@ -100,7 +100,7 @@ BehaviorStatus SearchForBlockHelper::InitBehaviorHelper(BehaviorExternalInterfac
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus SearchForBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus SearchForBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Event handles
   const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
@@ -113,23 +113,23 @@ BehaviorStatus SearchForBlockHelper::UpdateWhileActiveInternal(BehaviorExternalI
         // therefore updated its known pose or 2) see an object that may have been
         // obstructing the robots view without its knowledge previously
         if(objSeen == _params.searchingForID){
-          _status = BehaviorStatus::Complete;
+          _status = IHelper::HelperStatus::Complete;
         }else if(_objectsSeenDuringSearch.count(objSeen) == 0){
           if(!ShouldBeAbleToFindTarget(behaviorExternalInterface)){
-            _status = BehaviorStatus::Failure;
+            _status = IHelper::HelperStatus::Failure;
           }
           _objectsSeenDuringSearch.insert(objSeen);
         }
       }else if((_params.numberOfBlocksToLocate > 0) &&
                (_objectsSeenDuringSearch.size() >= _params.numberOfBlocksToLocate)){
         // Search can also stop if we've seen the requested number of blocks
-        _status = BehaviorStatus::Complete;
+        _status = IHelper::HelperStatus::Complete;
       }
     }
   }
   
   
-  if(_status != BehaviorStatus::Running){
+  if(_status != IHelper::HelperStatus::Running){
     CancelDelegates(false);
   }
   
@@ -146,7 +146,7 @@ void SearchForBlockHelper::SearchForBlock(ActionResult result, BehaviorExternalI
   if(targetID.IsSet()){
     const ObservableObject* targetObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(targetID);
     if(targetObj == nullptr) {
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
       return;
     }
   }
@@ -246,12 +246,12 @@ void SearchForBlockHelper::SearchFinishedWithoutInterruption(BehaviorExternalInt
       filter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame); // not necessary, just to be explicit
       behaviorExternalInterface.GetBlockWorld().DeleteLocatedObjects(filter);
     }
-    _status = BehaviorStatus::Failure;
+    _status = IHelper::HelperStatus::Failure;
   }else if((_params.numberOfBlocksToLocate > 0) &&
            (_objectsSeenDuringSearch.size() < _params.numberOfBlocksToLocate)){
-    _status = BehaviorStatus::Failure;
+    _status = IHelper::HelperStatus::Failure;
   }else{
-    _status = BehaviorStatus::Complete;
+    _status = IHelper::HelperStatus::Complete;
   }
 }
 

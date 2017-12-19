@@ -136,18 +136,19 @@
 //
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//BehaviorExploreCliff::Status BehaviorExploreCliff::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreCliff::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 //{
+//  if(!IsActivated()){
+//    return;
+//  }
 //  // while we are moving towards a vantage point, wait patiently
 //  if ( _currentActionTag != ActionConstants::INVALID_TAG )
 //  {
 //    // PRINT_NAMED_INFO("RSAM", "Waiting for the move to action to finish");
-//    return Status::Running;
+//    return;
 //  }
 //  
-//  // done
-//  Status retval = Status::Complete;
-//  return retval;
+//  CancelSelf();
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

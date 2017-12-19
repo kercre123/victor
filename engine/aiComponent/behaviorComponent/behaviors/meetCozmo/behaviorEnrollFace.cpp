@@ -244,15 +244,20 @@ void BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavior
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // See if we were in the midst of finding or enrolling a face but the enrollment is
   // no longer requested, then we've been cancelled
   if((State::LookingForFace == _state || State::Enrolling == _state) && !IsEnrollmentRequested())
   {
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateInternal_Legacy.EnrollmentCancelled", "In state: %s",
                   _state == State::LookingForFace ? "LookingForFace" : "Enrolling");
-    return Status::Complete;
+    CancelSelf();
+    return;
   }
   
   switch(_state)
@@ -265,7 +270,8 @@ ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorE
     case State::SaveFailed:
     case State::Cancelled:
     {
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
       
     case State::LookingForFace:
@@ -340,8 +346,6 @@ ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorE
     } // case State::Enrolling
       
   } // switch(_state) 
-  
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

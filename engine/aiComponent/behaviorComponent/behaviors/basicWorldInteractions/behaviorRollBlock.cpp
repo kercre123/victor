@@ -78,8 +78,12 @@ void BehaviorRollBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorRollBlock::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRollBlock::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(object != nullptr && _behaviorState == State::RollingBlock){
     const AxisName currentUpAxis = object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
@@ -102,14 +106,12 @@ ICozmoBehavior::Status BehaviorRollBlock::UpdateInternal_WhileRunning(BehaviorEx
           if(_targetID.IsSet()){
             TransitionToPerformingAction(behaviorExternalInterface);
           }else{
-            return ICozmoBehavior::Status::Complete;
+            CancelSelf();
           }
         }
       }
     }
   }
-  
-  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   

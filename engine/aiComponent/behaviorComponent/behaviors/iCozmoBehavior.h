@@ -81,9 +81,7 @@ protected:
     
   virtual ~ICozmoBehavior();
     
-public:
-  using Status = BehaviorStatus;
-  
+public:  
   static Json::Value CreateDefaultBehaviorConfig(BehaviorClass behaviorClass, BehaviorID behaviorID);
   static void InjectBehaviorClassAndIDIntoConfig(BehaviorClass behaviorClass, BehaviorID behaviorID, Json::Value& config);  
   static BehaviorID ExtractBehaviorIDFromConfig(const Json::Value& config, const std::string& fileName = "");
@@ -139,15 +137,6 @@ public:
   ExecutableBehaviorType GetExecutableType() const { return _executableType; }
   const BehaviorClass GetClass() const { return _behaviorClassID; }
 
-  // Can be overridden to allow the behavior to run while the robot is not on its treads (default is to not run)
-  virtual bool ShouldRunWhileOffTreads() const { return false;}
-
-  // Can be overridden to allow the behavior to run while the robot is on the charger platform
-  virtual bool ShouldRunWhileOnCharger() const { return false;}
-
-  // Return true if the behavior explicitly handles the case where the robot starts holding the block
-  // Equivalent to !robot.IsCarryingObject() in WantsToBeActivated()
-  virtual bool CarryingObjectHandledInternally() const = 0;
 
   // Return true if this is a good time to interrupt this behavior. This allows more gentle interruptions for
   // things which aren't immediately urgent. Eventually this may become a mandatory override, but for now, the
@@ -192,7 +181,19 @@ public:
   virtual void AddListener(IFeedingListener* listener)
                 { DEV_ASSERT(false, "AddListener.FeedingListener.Unimplemented"); }
   
+  // Return true if the behavior explicitly handles the case where the robot starts holding the block
+  // Equivalent to !robot.IsCarryingObject() in WantsToBeActivated()
+  virtual bool CarryingObjectHandledInternally() const = 0;
+
+  // Can be overridden to allow the behavior to run while the robot is not on its treads (default is to not run)
+  virtual bool ShouldRunWhileOffTreads() const { return false;}
+
+  // Can be overridden to allow the behavior to run while the robot is on the charger platform
+  virtual bool ShouldRunWhileOnCharger() const { return false;}
+
 protected:
+  // Function which indicates whether a behavior wants to be canceled when it's done delegating or not
+  virtual bool ShouldCancelWhenInControl() const { return true;}
 
   // default is no delegates, but behaviors which delegate can overload this
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override { }
@@ -222,8 +223,7 @@ protected:
   // return Running while ControlIsDelegated, and Complete otherwise
   virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) {};
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface);
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) { };
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) { };
 
   Util::RandomGenerator& GetRNG() const;
     

@@ -149,17 +149,23 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToPickup::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPickup::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const bool isControlDelegated = IsControlDelegated();
   if( !isControlDelegated && behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::InAir ) {
-    return Status::Complete;
+    CancelSelf();
+    return;
   }
 
   auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   if( robotInfo.IsOnCharger() && !isControlDelegated ) {
     PRINT_NAMED_INFO("BehaviorReactToPickup.OnCharger", "Stopping behavior because we are on the charger");
-    return Status::Complete;
+    CancelSelf();
+    return;
   }
   // If we are in control, it might be time to play another reaction
   if (!isControlDelegated)
@@ -176,8 +182,6 @@ ICozmoBehavior::Status BehaviorReactToPickup::UpdateInternal_WhileRunning(Behavi
       }
     }
   }
-  
-  return Status::Running;
 }
 
 

@@ -477,20 +477,26 @@ void BehaviorBouncer::UpdateDisplay(BehaviorExternalInterface& behaviorExternalI
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBouncer::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   LOG_TRACE("BehaviorBouncer.UpdateIntern_Legacy", "Update behavior with state=%s", EnumToString(_state));
 
   // Check elapsed time
   if (GetActivatedDuration() > kBouncerTimeout_sec) {
     LOG_WARNING("BehaviorBouncer.UpdateIntern_Legacy", "Behavior has timed out");
-    return BehaviorStatus::Complete;
+    CancelSelf();
+    return;
   }
   
   // Validate target state
   if (!_target.IsValid()) {
     LOG_WARNING("BehaviorBouncer.UpdateIntern_Legacy", "Target face (%s) is not valid", _target.GetDebugStr().c_str());
-    return BehaviorStatus::Complete;
+    CancelSelf();
+    return;
   }
   
   // Get target face
@@ -498,7 +504,8 @@ BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInte
   const auto * face = faceWorld.GetFace(_target);
   if (nullptr == face) {
     LOG_WARNING("BehaviorBouncer.UpdateIntern_Legacy", "Target face (%s) has disappeared", _target.GetDebugStr().c_str());
-    return BehaviorStatus::Complete;
+    CancelSelf();
+    return;
   }
   
   // Validate face
@@ -507,7 +514,8 @@ BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInte
   if (lastImage_ms - lastObserved_ms > Util::SecToMilliSec(kBouncerMissingFace_sec)) {
     LOG_WARNING("BehaviorBouncer.UpdateIntern_Legacy", "Target face (%s) has gone stale",
                 _target.GetDebugStr().c_str());
-    return BehaviorStatus::Complete;
+    CancelSelf();
+    return;
   }
   
   switch (_state) {
@@ -580,13 +588,11 @@ BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInte
     {
       if (!IsControlDelegated()) {
         LOG_TRACE("BehaviorBouncer.Update.Complete", "Behavior complete");
-        return BehaviorStatus::Complete;
+        CancelSelf();
+        return;
       }
     }
-  }
-    
-  return BehaviorStatus::Running;
-  
+  }  
 }
 
 

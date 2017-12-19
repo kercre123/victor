@@ -253,15 +253,19 @@ bool ICozmoBehaviorRequestGame::GetLastBlockPose(Pose3d& pose) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status ICozmoBehaviorRequestGame::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const ObservableObject* obj = GetClosestBlock(behaviorExternalInterface);
   if( obj != nullptr ) {
     _hasBlockPose = true;
     _lastBlockPose = obj->GetPose();
   }
   
-  return RequestGame_UpdateInternal(behaviorExternalInterface);
+  RequestGame_UpdateInternal(behaviorExternalInterface);
 }
 
 

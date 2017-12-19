@@ -214,8 +214,12 @@ void BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorExt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus BehaviorSinging::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSinging::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // Figure out which object was, on average, shaken the most this tick
   float mostShakenObjectAverage = 0;
   for(auto& objectShakeAverage : _objectShakeAverages)
@@ -279,9 +283,7 @@ BehaviorStatus BehaviorSinging::UpdateInternal_WhileRunning(BehaviorExternalInte
     }
 
     _cubeShakingStartTime_ms = 0;
-  }
-  
-  return (IsControlDelegated() ? BehaviorStatus::Running : BehaviorStatus::Complete);
+  }  
 }
 
 

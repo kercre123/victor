@@ -37,6 +37,14 @@ class IHelper : public IBehavior{
   friend class BehaviorHelperFactory;
 
 public:
+  enum class HelperStatus {
+    Failure,
+    Running,
+    Complete
+  };
+
+  using HelperStatusCallback = std::function<HelperStatus(BehaviorExternalInterface& behaviorExternalInterface)>;
+
   virtual ~IHelper(){};
 
   const std::string& GetName() const { return _name; }
@@ -63,12 +71,12 @@ protected:
   struct DelegateProperties{
   public:
     HelperHandle GetDelegateToSet() const { return _delegateToSet;}
-    BehaviorStatusCallbackWithExternalInterface GetOnSuccessFunction() const {return _onSuccessFunction;}
-    BehaviorStatusCallbackWithExternalInterface GetOnFailureFunction() const {return _onFailureFunction;}
+    HelperStatusCallback GetOnSuccessFunction() const {return _onSuccessFunction;}
+    HelperStatusCallback GetOnFailureFunction() const {return _onFailureFunction;}
     
     void SetDelegateToSet(HelperHandle delegate){ _delegateToSet = delegate;}
-    void SetOnSuccessFunction(BehaviorStatusCallbackWithExternalInterface onSuccess){_onSuccessFunction = onSuccess;}
-    void SetOnFailureFunction(BehaviorStatusCallbackWithExternalInterface onFailure){_onFailureFunction = onFailure;}
+    void SetOnSuccessFunction(HelperStatusCallback onSuccess){_onSuccessFunction = onSuccess;}
+    void SetOnFailureFunction(HelperStatusCallback onFailure){_onFailureFunction = onFailure;}
 
     // utility functions to automatically pass or fail when the delegate does
     void FailImmediatelyOnDelegateFailure();
@@ -78,8 +86,8 @@ protected:
     
   private:
     HelperHandle _delegateToSet;
-    BehaviorStatusCallbackWithExternalInterface _onSuccessFunction = nullptr;
-    BehaviorStatusCallbackWithExternalInterface _onFailureFunction = nullptr;
+    HelperStatusCallback _onSuccessFunction = nullptr;
+    HelperStatusCallback _onFailureFunction = nullptr;
   };
   
   // Initialize the helper with the behavior to start actions on, and a reference to the factory to delegate
@@ -92,8 +100,8 @@ protected:
   virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
   virtual void OnActivatedHelper(BehaviorExternalInterface& behaviorExternalInterface) {};
   
-  BehaviorStatus OnDelegateSuccess(BehaviorExternalInterface& behaviorExternalInterface);
-  BehaviorStatus OnDelegateFailure(BehaviorExternalInterface& behaviorExternalInterface);
+  IHelper::HelperStatus OnDelegateSuccess(BehaviorExternalInterface& behaviorExternalInterface);
+  IHelper::HelperStatus OnDelegateFailure(BehaviorExternalInterface& behaviorExternalInterface);
   
   bool IsControlDelegated();
   bool IsActing() const;
@@ -110,17 +118,17 @@ protected:
   virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const = 0;
   
   // Called each tick when the helper is at the top of the helper stack
-  BehaviorStatus UpdateWhileActive(BehaviorExternalInterface& behaviorExternalInterface, HelperHandle& delegateToSet);
+  IHelper::HelperStatus UpdateWhileActive(BehaviorExternalInterface& behaviorExternalInterface, HelperHandle& delegateToSet);
  
   // Called on the first time a helper is ticked while active
   // UpdateWhileActive will be called immediately after on the same tick if no
   // delegate is set
-  virtual BehaviorStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual IHelper::HelperStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   
   // Allows sub classes to pass back a delegate, success and failure function for IHelper to manage. If a
   // delegate is set in the delegate properties, then it will be pushed onto the stack, and the callbacks from
   // the properties will be used
-  virtual BehaviorStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual IHelper::HelperStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   
 
   
@@ -181,7 +189,7 @@ protected:
                                           const SearchParameters& params = {});
 
   
-  BehaviorStatus _status;
+  IHelper::HelperStatus _status;
   
 private:
   friend class DelegationComponent;
@@ -189,8 +197,8 @@ private:
   
   std::string _name;
   bool _hasStarted;
-  BehaviorStatusCallbackWithExternalInterface _onSuccessFunction;
-  BehaviorStatusCallbackWithExternalInterface _onFailureFunction;
+  HelperStatusCallback _onSuccessFunction;
+  HelperStatusCallback _onFailureFunction;
   DelegateProperties _delegateAfterUpdate;
   float _timeStarted_s = 0.0f;
 

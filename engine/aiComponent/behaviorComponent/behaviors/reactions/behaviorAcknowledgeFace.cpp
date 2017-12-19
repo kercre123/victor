@@ -77,15 +77,17 @@ void BehaviorAcknowledgeFace::OnBehaviorDeactivated(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorAcknowledgeFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( _shouldStart ) {
     _shouldStart = false;
     // now figure out which object to react to
     BeginIteration(behaviorExternalInterface);
   }
-
-  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 

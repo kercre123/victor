@@ -94,15 +94,17 @@ void BehaviorReactToOnCharger::OnBehaviorDeactivated(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToOnCharger::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( _onChargerCanceled )
   {
     _onChargerCanceled = false;
-    return Status::Complete;
+    CancelSelf();
   }
-  
-  return Status::Running;
 }
 
 

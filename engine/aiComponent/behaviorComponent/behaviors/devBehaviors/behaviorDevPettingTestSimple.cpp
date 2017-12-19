@@ -82,8 +82,12 @@ void BehaviorDevPettingTestSimple::OnBehaviorActivated(BehaviorExternalInterface
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus BehaviorDevPettingTestSimple::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDevPettingTestSimple::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // placeholder animations for a variety of reactions to touch
   const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
@@ -106,9 +110,7 @@ BehaviorStatus BehaviorDevPettingTestSimple::UpdateInternal_WhileRunning(Behavio
       DelegateIfInControl(action);
       gotAnim->timeLastPlayed_s = now;
     }
-  }
-  
-  return BehaviorStatus::Running;
+  }  
 }
 
 

@@ -56,15 +56,17 @@ void BehaviorSearchForFace::OnBehaviorActivated(BehaviorExternalInterface& behav
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorSearchForFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSearchForFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if((_behaviorState == State::SearchingForFace) &&
      (behaviorExternalInterface.GetFaceWorld().HasAnyFaces())){
     CancelDelegates(false);
     TransitionToFoundFace(behaviorExternalInterface);
-  }
-  
-  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
 
   

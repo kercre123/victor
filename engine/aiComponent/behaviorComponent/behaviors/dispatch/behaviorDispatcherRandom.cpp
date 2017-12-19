@@ -134,7 +134,7 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior(BehaviorExternalI
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherRandom::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherRandom::DispatcherUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( _shouldEndAfterBehavior &&
       ! IsControlDelegated() ) {

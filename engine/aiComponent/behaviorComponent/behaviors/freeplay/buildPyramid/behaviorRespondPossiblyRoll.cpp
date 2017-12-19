@@ -94,8 +94,12 @@ void BehaviorRespondPossiblyRoll::OnBehaviorActivated(BehaviorExternalInterface&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const auto& targetAxisChanged = _upAxisChangedIDs.find(_metadata.GetObjectID());
   
   if(targetAxisChanged != _upAxisChangedIDs.end()){
@@ -106,7 +110,6 @@ ICozmoBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(
   }
   
   _upAxisChangedIDs.clear();
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 

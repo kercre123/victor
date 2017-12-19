@@ -41,7 +41,8 @@ public:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const final override;
   
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) final override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) final override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) final override;
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
 
 protected:
 
@@ -54,7 +55,7 @@ protected:
   // Functions to be overridden by subclasses
   
   virtual void RequestGame_OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) = 0;
-  virtual Status RequestGame_UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual void RequestGame_UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   virtual void HandleGameDeniedRequest(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   virtual void RequestGame_OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) { }
 

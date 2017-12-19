@@ -132,8 +132,11 @@
 //
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreMarkedCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 //{
+//  if(!IsActivated()){
+//    return;
+//  }
 //  // while we are moving towards a vantage point, wait patiently
 //  if ( _currentActionTag != ActionConstants::INVALID_TAG )
 //  {

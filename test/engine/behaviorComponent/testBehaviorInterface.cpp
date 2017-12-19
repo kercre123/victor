@@ -621,11 +621,14 @@ public:
     DelegateIfInControl(action);
   }
   
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override {
+    if(!IsActivated()){
+      return;
+    }
     _numUpdates++;
-    return Status::Running;
   }
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override {
     _stopped = true;
   }
 

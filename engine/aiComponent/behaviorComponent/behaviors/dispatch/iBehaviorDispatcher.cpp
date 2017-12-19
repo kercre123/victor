@@ -163,13 +163,18 @@ bool IBehaviorDispatcher::CanBeGentlyInterruptedNow(BehaviorExternalInterface& b
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status IBehaviorDispatcher::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehaviorDispatcher::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  DispatcherUpdate(behaviorExternalInterface);
+  if(!IsActivated()){
+    return;
+  }
 
   if( ! ANKI_VERIFY( behaviorExternalInterface.HasDelegationComponent(),
                      "IBehaviorDispatcher.BehaviorUpdate.NoDelegationComponent",
                      "Behavior should have a delegation component while running") ) {
-    return Status::Failure;
+    CancelSelf();
+    return;
   }
 
   // only choose a new behavior if we should interrupt the active behavior, or if no behavior is active
@@ -190,9 +195,7 @@ ICozmoBehavior::Status IBehaviorDispatcher::UpdateInternal_WhileRunning(Behavior
                      "Failed to delegate to behavior '%s'",
                      desiredBehavior->GetIDStr().c_str());
     }
-  }   
-
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }
 }
 
 }

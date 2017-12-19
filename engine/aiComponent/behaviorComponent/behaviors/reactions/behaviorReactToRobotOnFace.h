@@ -34,7 +34,7 @@ public:
 
 protected:
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
 private:
   void FlipOverIfNeeded(BehaviorExternalInterface& behaviorExternalInterface);

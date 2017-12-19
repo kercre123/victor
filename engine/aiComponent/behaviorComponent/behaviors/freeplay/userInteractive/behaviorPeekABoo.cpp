@@ -142,8 +142,12 @@ void BehaviorPeekABoo::OnBehaviorActivated(BehaviorExternalInterface& behaviorEx
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorPeekABoo::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   UpdateTimestampSets(behaviorExternalInterface);
   const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   const bool seeingEyes = !WasFaceHiddenAfterTimestamp(behaviorExternalInterface, robotInfo.GetLastImageTimeStamp());
@@ -161,9 +165,7 @@ ICozmoBehavior::Status BehaviorPeekABoo::UpdateInternal_WhileRunning(BehaviorExt
       CancelDelegates(false);
       TransitionSeeFaceAfterHiding(behaviorExternalInterface);
     }
-  }
-  
-  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
 
   

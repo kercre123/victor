@@ -63,8 +63,12 @@ void BehaviorFeedingSearchForCube::OnBehaviorActivated(BehaviorExternalInterface
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorFeedingSearchForCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingSearchForCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if((_currentState == State::FirstSearchForCube) ||
      (_currentState == State::SecondSearchForCube)){
     const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -76,9 +80,7 @@ ICozmoBehavior::Status BehaviorFeedingSearchForCube::UpdateInternal_WhileRunning
         TransitionToFailedToFindCubeReaction(behaviorExternalInterface);
       }
     }
-  }
-  
-  return Base::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
 
   

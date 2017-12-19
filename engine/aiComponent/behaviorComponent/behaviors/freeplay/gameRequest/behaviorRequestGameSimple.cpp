@@ -189,7 +189,7 @@ void BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExternal
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::RequestGame_UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( _state == State::SearchingForBlock ) {
     // if we are searching for a block, stop immediately when we find one
@@ -209,12 +209,12 @@ ICozmoBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Beh
   }
 
   if( IsControlDelegated() ) {
-    return Status::Running;
+    return;
   }
   
   PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.Complete", "no current actions, so finishing");
 
-  return Status::Complete;
+  CancelSelf();
 }
   
   

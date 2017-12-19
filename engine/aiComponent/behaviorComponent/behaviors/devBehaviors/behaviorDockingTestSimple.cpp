@@ -207,7 +207,7 @@ namespace Anki {
       }      
     }
     
-    ICozmoBehavior::Status BehaviorDockingTestSimple::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorDockingTestSimple::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
     {
       Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
       if(_numAttempts == kMaxNumAttempts && _currentState != State::ManualReset)
@@ -227,7 +227,7 @@ namespace Anki {
       
       if(IsControlDelegated())
       {
-        return Status::Running;
+        return;
       }
       
       DEV_ASSERT(robot.IsPoseInWorldOrigin(robot.GetPose()),
@@ -297,7 +297,8 @@ namespace Anki {
             if(nullptr == object)
             {
               EndAttempt(robot, ActionResult::ABORT, "PickupObjectIsNull", true);
-              return Status::Failure;
+              CancelSelf();
+              return;
             }
             
             _initialCubePose = object->GetPose();
@@ -370,7 +371,8 @@ namespace Anki {
             if(aObject == nullptr)
             {
               PRINT_NAMED_ERROR("BehaviorDockingTest.PickupLow.NullObject", "ActionableObject is null");
-              return Status::Failure;
+              CancelSelf();
+              return;
             }
             
             // Get the preAction poses corresponding with _initialVisionMarker
@@ -599,7 +601,8 @@ namespace Anki {
                                 "MaxYAwayFromPreDock_mm is too small %f <= %f need to be able to drive into obstacles",
                                 kMaxYAwayFromPreDock_mm,
                                 kNoObstaclesWithinXmmOfPreDockPose);
-              return Status::Failure;
+              CancelSelf();
+              return;
             }
             
             // Make sure y falls outside the no obstacle zone so we will always have to drive to a point
@@ -624,7 +627,8 @@ namespace Anki {
           if(aObject == nullptr)
           {
             PRINT_NAMED_ERROR("BehaviorDockingTest.Reset.NullObject", "ActionableObject is null");
-            return Status::Failure;
+            CancelSelf();
+            return;
           }
           
           std::vector<PreActionPose> preActionPoses;
@@ -656,7 +660,8 @@ namespace Anki {
                                   "Found %i preActionPoses for marker %s",
                                  (int)preActionPoses.size(),
                                  _markerBeingSeen.GetCodeName());
-                return Status::Failure;
+                CancelSelf();
+                return;
               }
             }
             else
@@ -665,7 +670,8 @@ namespace Anki {
                                 "Found %i preActionPoses for marker %s",
                                 (int)preActionPoses.size(),
                                 _initialVisionMarker.GetCodeName());
-              return Status::Failure;
+              CancelSelf();
+              return;
             }
           }
           
@@ -768,10 +774,10 @@ namespace Anki {
         default:
         {
           PRINT_NAMED_ERROR("BehaviorDockingTest.Update.UnknownState", "Reached unknown state %d", (u32)_currentState);
-          return Status::Failure;
+          CancelSelf();
+          return;
         }
       }
-      return Status::Running;
     }
     
     void BehaviorDockingTestSimple::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)

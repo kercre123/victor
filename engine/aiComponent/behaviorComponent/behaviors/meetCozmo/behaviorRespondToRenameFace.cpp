@@ -96,17 +96,5 @@ void BehaviorRespondToRenameFace::OnBehaviorActivated(BehaviorExternalInterface&
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorRespondToRenameFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  if(!IsControlDelegated())
-  {
-    return Status::Complete;
-  }
-  
-  return Status::Running;
-}
-
-
 } // namespace Cozmo
 } // namespace Anki

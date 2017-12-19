@@ -120,8 +120,12 @@ namespace Anki {
       Write(ss.str());
     }
     
-    ICozmoBehavior::Status BehaviorLiftLoadTest::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorLiftLoadTest::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
     {
+      if(!IsActivated()){
+        return;
+      }
+
       if(_numLiftRaises == kNumLiftRaises || _abortTest)
       {
         if (_numLiftRaises == kNumLiftRaises) {
@@ -138,12 +142,13 @@ namespace Anki {
         _canRun = false;
         
         SetCurrState(State::TestComplete);
-        return Status::Complete;
+        CancelSelf();
+        return;
       }
       
       if(IsControlDelegated())
       {
-        return Status::Running;
+        return;
       }
       
       switch(_currentState)
@@ -193,15 +198,16 @@ namespace Anki {
         }
         case State::TestComplete:
         {
-          return Status::Complete;
+          CancelSelf();
+          return;
         }
         default:
         {
           PRINT_NAMED_ERROR("BehaviorLiftLoadTest.Update.UnknownState", "Reached unknown state %d", (u32)_currentState);
-          return Status::Failure;
+          CancelSelf();
+          return;
         }
       }
-      return Status::Running;
     }
     
     void BehaviorLiftLoadTest::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)

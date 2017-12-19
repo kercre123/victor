@@ -317,8 +317,11 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(BehaviorExternalInterf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorLookAround::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
 #if SAFE_ZONE_VIZ
   const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
@@ -326,21 +329,20 @@ ICozmoBehavior::Status BehaviorLookAround::UpdateInternal_WhileRunning(BehaviorE
 #endif
 
   if( IsControlDelegated() ) {
-    return Status::Running;
+    return;
   }
   
   if( _currentState == State::WaitForOtherActions ) {
     if( !IsControlDelegated() ) {
       TransitionToRoaming(behaviorExternalInterface);
     }
-    return Status::Running;
+    return;
   }
   
 #if SAFE_ZONE_VIZ
   robotInfo.GetContext()->GetVizManager()->EraseCircle(robotInfo.GetID());
 #endif
-  
-  return Status::Complete;
+  CancelSelf();
 }
 
 

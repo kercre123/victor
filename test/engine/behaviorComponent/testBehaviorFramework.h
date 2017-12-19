@@ -148,9 +148,10 @@ public:
   
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
   
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
@@ -213,7 +214,8 @@ public:
   
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
   
   virtual void  OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
@@ -252,14 +254,14 @@ public:
   
   virtual void StopInternal(bool isActive) override;
   virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual ICozmoBehavior::Status InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual ICozmoBehavior::Status UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual IHelper::HelperStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual IHelper::HelperStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   void CheckActions();
   
   WeakHelperHandle GetSubHelper();
   TestHelper* GetSubHelperRaw();
   
-  ICozmoBehavior::Status _updateResult = ICozmoBehavior::Status::Running;
+  IHelper::HelperStatus _updateResult = IHelper::HelperStatus::Running;
   mutable bool _cancelDelegates = false;
   bool _delegateAfterAction = false;
   bool _thisSucceedsOnActionSuccess = false;
