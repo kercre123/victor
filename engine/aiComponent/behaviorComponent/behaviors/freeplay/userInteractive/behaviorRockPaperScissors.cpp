@@ -36,29 +36,29 @@ namespace Cozmo {
 namespace {
 
 CONSOLE_VAR(bool, kRockPaperScissors_FakePowerButton, "RockPaperScissors", false);
-  
-constexpr const float kLightBlinkPeriod_s = 0.5f;
-constexpr const float kHoldTimeForStreaming_s = 1.0f;
-
-static const BackpackLights kLightsOn = {
-  .onColors               = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::BLACK}},
-  .offColors              = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::BLACK}},
-  .onPeriod_ms            = {{0,0,0}},
-  .offPeriod_ms           = {{0,0,0}},
-  .transitionOnPeriod_ms  = {{0,0,0}},
-  .transitionOffPeriod_ms = {{0,0,0}},
-  .offset                 = {{0,0,0}}
-};
-
-static const BackpackLights kLightsOff = {
-  .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
-  .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
-  .onPeriod_ms            = {{0,0,0}},
-  .offPeriod_ms           = {{0,0,0}},
-  .transitionOnPeriod_ms  = {{0,0,0}},
-  .transitionOffPeriod_ms = {{0,0,0}},
-  .offset                 = {{0,0,0}}
-};
+//  
+//constexpr const float kLightBlinkPeriod_s = 0.5f;
+//constexpr const float kHoldTimeForStreaming_s = 1.0f;
+//
+//static const BackpackLights kLightsOn = {
+//  .onColors               = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::BLACK}},
+//  .offColors              = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::BLACK}},
+//  .onPeriod_ms            = {{0,0,0}},
+//  .offPeriod_ms           = {{0,0,0}},
+//  .transitionOnPeriod_ms  = {{0,0,0}},
+//  .transitionOffPeriod_ms = {{0,0,0}},
+//  .offset                 = {{0,0,0}}
+//};
+//
+//static const BackpackLights kLightsOff = {
+//  .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+//  .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+//  .onPeriod_ms            = {{0,0,0}},
+//  .offPeriod_ms           = {{0,0,0}},
+//  .transitionOnPeriod_ms  = {{0,0,0}},
+//  .transitionOffPeriod_ms = {{0,0,0}},
+//  .offset                 = {{0,0,0}}
+//};
 
 }
 

@@ -881,3 +881,87 @@ GTEST_TEST(ObjectDetector, SimpleImage)
     dispImg.Display("Detections", 0);
   }
 }
+
+GTEST_TEST(ObjectDetector, RockPaperScissors)
+{
+  ANKI_CPU_TICK_ONE_TIME("ObjectDetector.SimpleImage");
+  
+  Vision::ObjectDetector detector;
+  
+  const std::string modelPath = std::string(QUOTE(TEST_DATA_PATH)) + "/resources/tensorflow_models";
+  const std::string testImagePath = "/Users/andrew/Code/RockPaperScissors/testData";
+  
+  Json::Value config;
+  if(USE_TENSORFLOW)
+  {
+    config["graph"] = "mobilenet_0.50_128_RockPaperScissors_optimized.pb";
+  }
+  else if(USE_TENSORFLOW_LITE)
+  {
+    config["graph"] = "mobilenet_0.50_128_RockPaperScissors_float.lite";
+  }
+  else
+  {
+    config["graph"] = "mobilenet_0.50_RockPaperScissors_opencvdnn.pb";
+  }
+  config["labels"] = "rockPaperScissors-labels.txt";
+  config["mode"] = "classification";
+  config["input_width"] = 128;
+  config["input_height"] = 128;
+  config["do_crop"] = false;
+  config["input_mean_R"] = 0;
+  config["input_mean_G"] = 0;
+  config["input_mean_B"] = 0;
+  config["input_std"] = 255;
+  config["input_layer"] = "input";
+  config["output_scores_layer"] = "final_result";
+  config["top_K"] = 1;
+  config["min_score"] = 0.1f;
+  
+  Result result;
+  
+  result = detector.Init(modelPath, config);
+  ASSERT_EQ(RESULT_OK, result);
+  
+  Vision::ImageRGB testImg;
+  Vision::ImageCache imageCache;
+  std::list<Vision::ObjectDetector::DetectedObject> objects;
+  
+  auto DetectionHelper = [&detector](Vision::ImageCache& imageCache, std::list<Vision::ObjectDetector::DetectedObject>& objects) -> Result
+  {
+    Vision::ObjectDetector::Status status = Vision::ObjectDetector::Status::Error;
+    BOUNDED_WHILE(10, (status = detector.Detect(imageCache, objects)) == Vision::ObjectDetector::Status::Processing)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
+    
+    if(Vision::ObjectDetector::Status::ResultReady == status)
+    {
+      return RESULT_OK;
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("DetectionHelper.ResultNotReady", "");
+      return RESULT_FAIL;
+    }
+  };
+  
+  auto testFiles = Util::FileUtils::FilesInDirectory(testImagePath, true);
+  
+  for(auto & testFile : testFiles)
+  {
+    result = testImg.Load(testFile);
+    ASSERT_EQ(RESULT_OK, result);
+    imageCache.Reset(testImg);
+    
+    result = DetectionHelper(imageCache, objects);
+    ASSERT_EQ(RESULT_OK, result);
+    
+    if(!objects.empty())
+    {
+      testImg.DrawText({0,testImg.GetNumRows()}, objects.front().name + ":" + std::to_string(objects.front().score), NamedColors::GREEN);
+    }
+    testImg.Display("RockPaperScissors", 0);
+    
+  }
+}

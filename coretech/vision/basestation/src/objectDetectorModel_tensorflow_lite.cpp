@@ -113,10 +113,10 @@ ObjectDetector::Model::Model(Profiler& profiler)
 , _mobileNetComplexity(kObjectDetector_MobileNetComplexity)
 , _profiler(profiler) 
 { 
-
+# ifdef ANDROID
   PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Model.TFLite", "Using NEON:%s",
                 tflite::FlatBufferModel::IsUsingNEON() ? "Y" : "N");
-
+# endif
 } 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
