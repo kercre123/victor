@@ -47,6 +47,11 @@ AudioWorldObjects::AudioWorldObjects( Robot& robot )
                    std::forward_as_tuple(WorldObject(GameObjectType::Block_3,
                                                      GenericEvent::Play__Sfx__Three_D_Generic_Object_03,
                                                      GenericEvent::Stop__Sfx__Three_D_Generic_Object_03)));
+  _objects.emplace(std::piecewise_construct,
+                   std::forward_as_tuple((int32_t)ObjectType::Charger_Basic),
+                   std::forward_as_tuple(WorldObject(GameObjectType::Charger,
+                                                     GenericEvent::Play__Sfx__Three_D_Generic_Object_04,
+                                                     GenericEvent::Stop__Sfx__Three_D_Generic_Object_04)));
 }
 
 void UpdateWorldObject(const ObservableObject* activeObj, WorldObject& worldObj)
