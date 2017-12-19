@@ -15,6 +15,8 @@
 
 #include "cozmoAnim/micDataTypes.h"
 
+#include "anki/common/types.h"
+
 #include "aubio/aubio.h"
 
 #include <deque>
@@ -22,6 +24,8 @@
 namespace Anki {
 namespace Cozmo {
 
+class AnimationStreamer;
+  
 class BeatDetector
 {
 public:
@@ -33,8 +37,13 @@ public:
   void AddSamples(const AudioUtil::AudioChunkList&);
   
   void Stop();
+  
+  static void SetAnimStreamer(AnimationStreamer* streamer) { _animStreamer = streamer; }
 
 private:
+  
+  // hacky way to commandeer the animation streamer
+  static AnimationStreamer* _animStreamer;
 
   static const uint_t kAubioTempoBufSize = 512;
   static const uint_t kAubioTempoHopSize = 256;
@@ -46,6 +55,8 @@ private:
   // Aubio beat detector input/output vectors:
   fvec_t* _aubioInputVec = nullptr;
   fvec_t* _aubioOutputVec = nullptr;
+  
+  TimeStamp_t _tempoDetectionStartedTimestamp = 0;
   
   // Stages audio data to be piped into the aubio detector at the correct chunk size
   std::deque<AudioUtil::AudioSample> _aubioInputBuffer;

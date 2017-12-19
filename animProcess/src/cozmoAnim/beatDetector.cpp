@@ -12,10 +12,16 @@
 
 #include "cozmoAnim/beatDetector.h"
 
+#include "cozmoAnim/animation/animationStreamer.h"
+
+#include "anki/common/basestation/utils/timer.h"
+
 #include "util/logging/logging.h"
 
 namespace Anki {
 namespace Cozmo {
+  
+AnimationStreamer* BeatDetector::_animStreamer = nullptr;
 
 BeatDetector::BeatDetector()
   : _aubioInputVec(new_fvec(kAubioTempoHopSize))
@@ -53,7 +59,8 @@ void BeatDetector::AddSamples(const AudioUtil::AudioChunkList& chunkList)
     
     _aubioInputBuffer.clear();
     
-    // TODO: mark the time of the first sample? for later reference
+    // mark the time of the first sample
+    _tempoDetectionStartedTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   }
   
   // Pump data into the staging buffer
@@ -81,9 +88,16 @@ void BeatDetector::AddSamples(const AudioUtil::AudioChunkList& chunkList)
       const auto tempo = aubio_tempo_get_bpm(_aubioTempoDetector);
       const auto conf = aubio_tempo_get_confidence(_aubioTempoDetector);
       PRINT_NAMED_WARNING("beat!",
-                          "got a beat (tempo %.2f, confidence %.2f)",
+                          "got a beat (tempo %.2f, confidence %.2f, last beat time (ms) %d",
                           tempo,
-                          conf);
+                          conf,
+                          (uint_t) aubio_tempo_get_last_ms(_aubioTempoDetector));
+      
+      if (conf > 0.10f) {
+        static uint8_t animTag = 0;
+        if (++animTag == 0) ++animTag;
+        _animStreamer->SetStreamingAnimation("anim_head_nod", 0);
+      }
     }
   }
 }

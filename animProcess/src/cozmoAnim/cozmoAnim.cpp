@@ -11,6 +11,7 @@
  */
 
 #include "cozmoAnim/cozmoAnim.h"
+#include "cozmoAnim/beatDetector.h"
 #include "cozmoAnim/engineMessages.h"
 #include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
@@ -96,7 +97,9 @@ Result CozmoAnimEngine::Init() {
                   static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput( regId )),
                   _context.get() );
   
-  
+  // WARNING: Hack!!
+  // Give the beat detector access to animation streamer
+  BeatDetector::SetAnimStreamer(_animationStreamer.get());
   
   PRINT_NAMED_INFO("CozmoAnimEngine.Init.Success","");
   _isInitialized = true;
