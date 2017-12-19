@@ -77,7 +77,7 @@ private:
   StateID GetStateID(const std::string& stateName) const;
 
   StateID ParseStateFromJson(const Json::Value& config, const std::string& key);
-  IStateConceptStrategyPtr ParseTransitionStrategy(const Json::Value& config);
+  IBEIConditionPtr ParseTransitionStrategy(const Json::Value& config);
   
   void AddState( State&& state );
   
@@ -90,7 +90,7 @@ private:
   using StateMap = std::map< StateID, State >;
   std::unique_ptr< StateMap > _states;
 
-  std::map< std::string, IStateConceptStrategyPtr > _preDefinedStrategies;
+  std::map< std::string, IBEIConditionPtr > _preDefinedStrategies;
   
   // hack to turn off all modes when this behavior starts and then back on when it ends
   std::vector< VisionMode > _visionModesToReEnable;

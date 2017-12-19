@@ -21,7 +21,7 @@
 namespace Anki {
 namespace Cozmo {
   
-class IStateConceptStrategy;
+class IBEICondition;
   
 class BehaviorDevPettingTestSimple : public ICozmoBehavior
 {
@@ -50,12 +50,12 @@ private:
   // touch-gesture and the animation metadata
   struct TouchGestureAnimationConfig
   {
-    IStateConceptStrategyPtr strategy;
+    IBEIConditionPtr strategy;
     std::string animationName;
     float animationRate_s;
     float timeLastPlayed_s;
     
-    TouchGestureAnimationConfig(IStateConceptStrategyPtr sp,
+    TouchGestureAnimationConfig(IBEIConditionPtr sp,
                                 std::string animationName,
                                 float animationRate_s,
                                 float timeLastPlayed_s)

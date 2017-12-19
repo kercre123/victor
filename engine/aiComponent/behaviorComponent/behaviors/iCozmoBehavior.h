@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
-#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
+#include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/robotInterface/messageHandler.h"
 #include <set>
@@ -453,7 +453,7 @@ private:
 
   // only used if we aren't using the BSM
   u32 _lastActionTag = 0;
-  std::vector<IStateConceptStrategyPtr> _wantsToBeActivatedStrategies;
+  std::vector<IBEIConditionPtr> _wantsToBeActivatedStrategies;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const;

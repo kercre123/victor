@@ -19,8 +19,8 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
-#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
+#include "engine/aiComponent/beiConditions/iBEICondition.h"
+#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 
 #include <vector>
 #include <memory>
@@ -46,7 +46,7 @@ BehaviorDevPettingTestSimple::BehaviorDevPettingTestSimple(const Json::Value& co
     auto anim = JsonTools::ParseString(triggerConfig, kAnimationNameKey, "Failed to parse animation name");
     auto rate = JsonTools::ParseFloat(triggerConfig, kAnimationRateKey, "Failed to parse animation rate");
 
-    _tgAnimConfigs.emplace_back(StateConceptStrategyFactory::CreateStateConceptStrategy(triggerConfig),
+    _tgAnimConfigs.emplace_back(BEIConditionFactory::CreateBEICondition(triggerConfig),
                                 anim,
                                 rate,
                                 0.0f);
@@ -94,7 +94,7 @@ BehaviorStatus BehaviorDevPettingTestSimple::UpdateInternal_WhileRunning(Behavio
   decltype(_tgAnimConfigs)::iterator gotAnim;
   for(gotAnim = _tgAnimConfigs.begin(); gotAnim != _tgAnimConfigs.end(); ++gotAnim) {
     ANKI_VERIFY(gotAnim->strategy.get()!=nullptr, "BehaviorDevPettingTestSimple.NullTouchStrategy", "");
-    if(gotAnim->strategy->AreStateConditionsMet(behaviorExternalInterface)) {
+    if(gotAnim->strategy->AreConditionsMet(behaviorExternalInterface)) {
       break;
     }
   }

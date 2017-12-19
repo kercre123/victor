@@ -29,8 +29,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
-#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
-#include "engine/aiComponent/stateConceptStrategies/strategyCloudIntentPending.h"
+#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionCloudIntentPending.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
@@ -256,7 +256,7 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   
   if(config.isMember(kWantsToRunStrategyConfigKey)){
     _wantsToBeActivatedStrategies.push_back(
-      StateConceptStrategyFactory::CreateStateConceptStrategy( config[kWantsToRunStrategyConfigKey] ) );
+      BEIConditionFactory::CreateBEICondition( config[kWantsToRunStrategyConfigKey] ) );
   }
 
   if(config.isMember(kAnonymousBehaviorMapKey)){
@@ -291,8 +291,8 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
     }
 
     if(_respondToCloudIntent != CloudIntent::Count){
-      Json::Value config = StrategyCloudIntentPending::GenerateCloudIntentPendingConfig(_respondToCloudIntent);
-      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(config));
+      Json::Value config = ConditionCloudIntentPending::GenerateCloudIntentPendingConfig(_respondToCloudIntent);
+      IBEIConditionPtr strategy(BEIConditionFactory::CreateBEICondition(config));
       strategy->Init(behaviorExternalInterface);
       _wantsToBeActivatedStrategies.push_back(strategy);
     }
@@ -736,7 +736,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
   }
   
   for(auto& strategy: _wantsToBeActivatedStrategies){
-    if(!strategy->AreStateConditionsMet(behaviorExternalInterface)){
+    if(!strategy->AreConditionsMet(behaviorExternalInterface)){
       return false;
     }
   }
