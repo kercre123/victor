@@ -13,7 +13,10 @@ fi
 
 
 # Begin robot configs
-if [ "C" = "$1" ]; then
+if [ "A" = "$1" ]; then
+    robotname="VICTOR_ed3dd846"
+    robotip="192.168.40.205"
+elif [ "C" = "$1" ]; then
     robotname="VICTOR_ed3dd857"
     robotip="192.168.40.204"
 elif [ "F" = "$1" ]; then

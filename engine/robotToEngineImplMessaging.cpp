@@ -730,7 +730,20 @@ void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<Robot
   }
   
   if(robot->GetIsCliffReactionDisabled()){
-    IActionRunner* action = new TriggerLiftSafeAnimationAction(AnimationTrigger::DroneModeCliffEvent);
+    // Special case handling of potential cliff event when in drone/explorer mode...
+
+    // TODO: Don't try to play this special cliff event animation for drone/explorer mode if it is already
+    //       running. Consider adding support for a 'canBeInterrupted' flag or something similar and then
+    //       set canBeInterrupted = false before queueing this action to run now (VIC-796). FYI, a different
+    //       solution was used for Cozmo (see COZMO-15326 and https://github.com/anki/cozmo-one/pull/6467)
+
+    // Trigger the cliff event animation for drone/explorer mode if it is not already running and:
+    // - set interruptRunning = true so any currently-streaming animation will be aborted in favor of this
+    // - set a timeout value of 3 seconds for this animation
+    // - set strictCooldown = true so we do NOT simply choose the animation closest to being off
+    //   cooldown when all animations in the group are on cooldown
+    IActionRunner* action = new TriggerLiftSafeAnimationAction(AnimationTrigger::DroneModeCliffEvent, 1,
+                                                               true, (u8)AnimTrackFlag::NO_TRACKS, 3.f, true);
     robot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
   } else if (!robot->GetContext()->IsInSdkMode()) {
     PRINT_NAMED_WARNING("Robot.HandlePotentialCliffEvent", "Got potential cliff message but not in drone mode");

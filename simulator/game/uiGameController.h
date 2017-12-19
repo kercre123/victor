@@ -166,7 +166,7 @@ protected:
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode);
   void SendSetRobotImageSendMode(ImageSendMode mode);
-  void SendSaveImages(ImageSendMode imageMode, const std::string& path = "");
+  void SendSaveImages(ImageSendMode imageMode, const std::string& path = "", const int8_t qualityOnRobot = 0);
   void SendSaveState(bool enabled, const std::string& path = "");
   void SendEnableDisplay(bool on);
   void SendExecutePathToPose(const Pose3d& p,

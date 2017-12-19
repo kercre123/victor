@@ -36,10 +36,8 @@ Json::Value StrategyCloudIntentPending::GenerateCloudIntentPendingConfig(CloudIn
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyCloudIntentPending::StrategyCloudIntentPending(BehaviorExternalInterface& behaviorExternalInterface,
-                                               IExternalInterface* robotExternalInterface,
-                                               const Json::Value& config)
-: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
+StrategyCloudIntentPending::StrategyCloudIntentPending(const Json::Value& config)
+: IStateConceptStrategy(config)
 {
   {
     const auto& intentStr = JsonTools::ParseString(config,

@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_StrategyObstacleDetected_H__
 #define __Cozmo_Basestation_BehaviorSystem_StrategyObstacleDetected_H__
 
-#include "engine/aiComponent/stateConceptStrategies/strategyGeneric.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -23,12 +23,14 @@ namespace Cozmo {
 class ReactionObjectData;
 class Robot;
   
-class StrategyObstacleDetected : public StrategyGeneric 
+class StrategyObstacleDetected : public IStateConceptStrategy
 {
 public:
-  StrategyObstacleDetected(BehaviorExternalInterface& behaviorExternalInterface,
-                           IExternalInterface* robotExternalInterface,
-                           const Json::Value& config);
+  explicit StrategyObstacleDetected(const Json::Value& config);
+  
+protected:
+  virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+
 };
 
 

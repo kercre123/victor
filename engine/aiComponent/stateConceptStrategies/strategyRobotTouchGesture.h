@@ -25,9 +25,7 @@ namespace Cozmo {
 class StrategyRobotTouchGesture : public IStateConceptStrategy
 {
 public:
-  StrategyRobotTouchGesture(BehaviorExternalInterface& behaviorExternalInterface,
-                            IExternalInterface* robotExternalInterface,
-                            const Json::Value& config);
+  explicit StrategyRobotTouchGesture(const Json::Value& config);
 
 protected:
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

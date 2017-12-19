@@ -24,9 +24,7 @@ class StrategyAlwaysRun : public IStateConceptStrategy
 {
 public:
   // constructor
-  StrategyAlwaysRun(BehaviorExternalInterface& behaviorExternalInterface,
-                    IExternalInterface* robotExternalInterface,
-                    const Json::Value& config);
+  explicit StrategyAlwaysRun(const Json::Value& config);
 
 protected:
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override{ return true;}

@@ -27,11 +27,6 @@
 #include <webots/Supervisor.hpp>
 
 
-
-#define ROBOT_ADVERTISING_HOST_IP "127.0.0.1"
-#define SDK_ADVERTISING_HOST_IP   "127.0.0.1"
-#define VIZ_HOST_IP               "127.0.0.1"
-
 namespace Anki {
   namespace Cozmo {
     CONSOLE_VAR_EXTERN(bool, kEnableCladLogger);

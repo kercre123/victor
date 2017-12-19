@@ -372,7 +372,14 @@ namespace Cozmo {
     
     return RESULT_OK;
   }
-  
+
+  void VisionSystem::SetSaveParameters(const ImageSendMode saveMode, const std::string& path, const int8_t quality)
+  {
+    _imageSaveMode = saveMode;
+    _imageSavePath = path;
+    _imageSaveQuality = std::min(int8_t(100), quality);
+  }
+
   Result VisionSystem::EnableMode(VisionMode whichMode, bool enabled)
   {
     switch(whichMode)
@@ -1560,10 +1567,10 @@ namespace Cozmo {
     if(ShouldProcessVisionMode(VisionMode::Benchmarking))
     {
       Tic("Benchmarking");
-      lastResult = _benchmark->Update(imageCache);
+      const Result benchMarkResult = _benchmark->Update(imageCache);
       Toc("BenchMarking");
       
-      if(RESULT_OK != lastResult) {
+      if(RESULT_OK != benchMarkResult) {
         PRINT_NAMED_ERROR("VisionSystem.Update.BenchmarkFailed", "");
         // Continue processing, since this should be independent of other modes
       }
@@ -1572,6 +1579,39 @@ namespace Cozmo {
       }
     }
     
+    if(ShouldProcessVisionMode(VisionMode::SavingImages) && (ImageSendMode::Off != _imageSaveMode))
+    {
+      Tic("SavingImages");
+
+      // Zero-padded frame number as filename:
+      char filename[32];
+      snprintf(filename, sizeof(filename)-1, "%08d.%s", 
+               _frameNumber, (_imageSaveQuality < 0 ? "png" : "jpg"));
+
+      const std::string fullFilename = Util::FileUtils::FullFilePath({_imageSavePath, filename});
+      
+      PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.Update.SavingImage", "Saving to %s",
+                     fullFilename.c_str());
+         
+      const Result saveResult = imageCache.GetRGB().Save(fullFilename, _imageSaveQuality);
+
+      if(ImageSendMode::SingleShot == _imageSaveMode)
+      {
+        _imageSaveMode = ImageSendMode::Off;
+      }
+
+      Toc("SavingImages");
+
+      if(RESULT_OK != saveResult)
+      {
+        PRINT_NAMED_ERROR("VisionSystem.Update.SavingImagesFailed", "");
+        // Continue processing, since this should be independent of other modes
+      }
+      else {
+        visionModesProcessed.SetBitFlag(VisionMode::SavingImages, true);
+      }
+    }
+
     // We've computed everything from this image that we're gonna compute.
     // Push it onto the queue of results all together.
     _mutex.lock();

@@ -108,11 +108,15 @@ struct DockingErrorSignal;
     Result PopCurrentModeSchedule();
     
     // Check whether a specific vision mode is enabled
-    bool IsModeEnabled(VisionMode mode) const;
+    bool   IsModeEnabled(VisionMode mode) const;
     
     // Set whether or not markers queued while robot is "moving" (meaning it is
     // turning too fast or head is moving too fast) will be considered
     void   EnableVisionWhileMovingFast(bool enable);
+
+    // Set whether or not we draw each processed image to the robot's screen
+    // (Not using the word "face" because of confusion with "faces" in vision)
+    void   EnableDrawImagesToScreen(bool enable) { _drawImagesToScreen = enable; }
     
     // Looks through all results available from the VisionSystem and processes them.
     // This updates the Robot's BlockWorld and FaceWorld using those results.
@@ -221,13 +225,13 @@ struct DockingErrorSignal;
     void AssignNameToFace(Vision::FaceID_t faceID, const std::string& name,
                           Vision::FaceID_t mergeWithID = Vision::UnknownFaceID);
     
-		// Enable face enrollment mode and optionally specify the ID for which 
+    // Enable face enrollment mode and optionally specify the ID for which 
     // enrollment is allowed (use UnknownFaceID to indicate "any" ID).
     // Enrollment will automatically disable after numEnrollments. (Use 
     // a value < 0 to enable ongoing enrollments.)
-		void SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
-															 Vision::FaceID_t forFaceID = Vision::UnknownFaceID,
-															 s32 numEnrollments = -1);
+    void SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
+                               Vision::FaceID_t forFaceID = Vision::UnknownFaceID,
+                               s32 numEnrollments = -1);
 
     // Erase faces
     Result EraseFace(Vision::FaceID_t faceID);
@@ -300,6 +304,7 @@ struct DockingErrorSignal;
     bool   _isSynchronous = false;
     bool   _running = false;
     bool   _paused  = false;
+    bool   _drawImagesToScreen = false;
     std::mutex _lock;
     
     // Current image is the one the vision system (thread) is actively working on.
@@ -370,8 +375,6 @@ struct DockingErrorSignal;
     bool _doFactoryDotTest = false;
     
     bool _enableAutoExposure = true;
-    
-    ImageSendMode _imageSaveMode = ImageSendMode::Off;
     
   }; // class VisionComponent
   

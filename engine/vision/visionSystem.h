@@ -209,6 +209,14 @@ namespace Cozmo {
     // Just specify what the current values are (don't actually change the robot's camera)
     Result SetNextCameraParams(s32 exposure_ms, f32 gain);
     
+    // When SavingImages mode is enabled:
+    //  saveMode: SingleShot=save one image and wait for this call again
+    //            Stream=save according to the mode schedule
+    //            Off=no saving until this is called again with one of the above
+    //  path: Where to save images (relative to <Cache>/camera/images)
+    //  quality: -1=PNG, 0-100=JPEG quality
+    void SetSaveParameters(const ImageSendMode saveMode, const std::string& path, const int8_t quality);
+
     s32 GetCurrentCameraExposureTime_ms() const;
     f32 GetCurrentCameraGain() const;
   
@@ -280,6 +288,10 @@ namespace Cozmo {
     bool _calibrateFromToolCode = false;
     
     s32 _frameNumber = 0;
+
+    ImageSendMode  _imageSaveMode = ImageSendMode::Off;
+    s8             _imageSaveQuality = -1;
+    std::string    _imageSavePath;
     
     // Snapshots of robot state
     bool _wasCalledOnce    = false;

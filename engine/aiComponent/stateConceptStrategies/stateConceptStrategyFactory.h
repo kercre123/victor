@@ -13,21 +13,15 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_StateConceptStrategyFactory_H__
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_StateConceptStrategyFactory_H__
 
-#include "anki/common/basestation/jsonTools.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy_fwd.h"
+#include "json/json-forwards.h"
 
 namespace Anki {
 namespace Cozmo {
-// forward declarations
-class BehaviorExternalInterface;
-class IExternalInterface;
-class IStateConceptStrategy;
-class Robot;
   
 class StateConceptStrategyFactory{
 public:
-  static IStateConceptStrategy* CreateStateConceptStrategy(BehaviorExternalInterface& behaviorExternalInterface,
-                                                           IExternalInterface* robotExternalInterface,
-                                                           const Json::Value& config);
+  static IStateConceptStrategyPtr CreateStateConceptStrategy(const Json::Value& config);
   
 }; // class StateConceptStrategyFactory
   
