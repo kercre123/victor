@@ -16,8 +16,10 @@
 #include "cozmoAnim/audio/objectLocationController.h" // R&D
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "audioEngine/audioScene.h"
+#include "audioEngine/audioTypeTranslator.h"
 #include "audioEngine/soundbankLoader.h"
 #include "clad/audio/audioGameObjectTypes.h"
+#include "clad/audio/audioStateTypes.h" // R&D
 #include "cozmoAnim/cozmoAnimContext.h"
 #include "util/console/consoleInterface.h"
 #include "util/environment/locale.h"
@@ -87,7 +89,40 @@ void SetWriteAudioOutputCapture( ConsoleFunctionContextRef context )
 // Register console var func
 CONSOLE_FUNC( SetWriteAudioProfilerCapture, "CozmoAudioController", bool writeProfiler );
 CONSOLE_FUNC( SetWriteAudioOutputCapture, "CozmoAudioController", bool writeOutput );
-
+  
+// R & D
+void SetAudioRnDScene( ConsoleFunctionContextRef context )
+{
+  int sceneNum = ConsoleArg_Get_Int( context, "sceneNum" );
+  AudioMetaData::GameState::Rnd_Scene scene = AudioMetaData::GameState::Rnd_Scene::Invalid;
+  switch (sceneNum) {
+    case 1:
+      scene = AudioMetaData::GameState::Rnd_Scene::One;
+      break;
+    case 2:
+      scene = AudioMetaData::GameState::Rnd_Scene::Two;
+      break;
+    case 3:
+      scene = AudioMetaData::GameState::Rnd_Scene::Three;
+      break;
+    case 4:
+      scene = AudioMetaData::GameState::Rnd_Scene::Four;
+      break;
+    case 5:
+      scene = AudioMetaData::GameState::Rnd_Scene::Five;
+      break;
+      
+    default:
+      break;
+  }
+  if (scene != AudioMetaData::GameState::Rnd_Scene::Invalid) {
+    if ( sThis != nullptr ) {
+      sThis->SetState(ToAudioStateGroupId(AudioMetaData::GameState::StateGroupType::Rnd_Scene),
+                      ToAudioStateId((AudioMetaData::GameState::GenericState)scene));
+    }
+  }
+}
+CONSOLE_FUNC( SetAudioRnDScene, "CozmoAudioController", int writeProfiler );
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // CozmoAudioController
@@ -160,8 +195,6 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
     }
     
     RegisterCladGameObjectsWithAudioController();
-    
-    _objectLocController->ObjectLocationControllerInit();
   }
   if (sThis == nullptr) {
     sThis = this;
@@ -169,6 +202,8 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
   else {
     PRINT_NAMED_ERROR("CozmoAudioController", "sThis.NotNull");
   }
+  
+  _objectLocController->ObjectLocationControllerInit();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

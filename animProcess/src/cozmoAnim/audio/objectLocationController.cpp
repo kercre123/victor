@@ -76,6 +76,11 @@ void ObjectLocationController::ObjectLocationControllerInit()
   // Set Robot Vol
   const auto robotVolParm = AudioEngine::ToAudioParameterId(AudioMetaData::GameParameter::ParameterType::Robot_Volume);
   _audioController.SetParameter(robotVolParm, 1.0f, AudioEngine::kInvalidAudioGameObject);
+  // Set Init Scene
+  _audioController.SetState(AudioEngine::ToAudioStateGroupId(AudioMetaData::GameState::StateGroupType::Rnd_Scene),
+                            AudioEngine::ToAudioStateId((AudioMetaData::GameState::GenericState)AudioMetaData::GameState::Rnd_Scene::One));
+  _audioController.Update();
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

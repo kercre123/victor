@@ -2482,7 +2482,7 @@ namespace Anki {
       void WebotsKeyboardController::HandleRobotConnected(const ExternalInterface::RobotConnectionResponse& msg)
       {
         // Things to do on robot connect
-        SendSetRobotVolume(0);
+//        SendSetRobotVolume(0);   // R&D
       }
    
     
