@@ -74,14 +74,14 @@ bool BehaviorPickUpCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPickUpCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(!ShouldStreamline()){
     TransitionToDoingInitialReaction(behaviorExternalInterface);
   }else{
     TransitionToPickingUpCube(behaviorExternalInterface);
   }
-  return Result::RESULT_OK;
+  
 }
   
   

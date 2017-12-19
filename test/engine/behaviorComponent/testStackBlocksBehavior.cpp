@@ -190,9 +190,7 @@ TEST(StackBlocksBehavior, InitBehavior)
   ObjectID objID1, objID2;
   SetupStackTest(robot, stackBehavior, testBehaviorFramework, objID1, objID2);
   
-  auto result = stackBehavior->OnBehaviorActivated(behaviorExternalInterface);
-
-  EXPECT_EQ(RESULT_OK, result);
+  stackBehavior->OnActivated(behaviorExternalInterface);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

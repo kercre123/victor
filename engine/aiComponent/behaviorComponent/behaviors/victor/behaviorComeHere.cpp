@@ -52,7 +52,7 @@ BehaviorComeHere::BehaviorComeHere(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorComeHere::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorComeHere::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _currentFaceID.Reset();
   if(_params.preferMicData){
@@ -60,7 +60,7 @@ Result BehaviorComeHere::OnBehaviorActivated(BehaviorExternalInterface& behavior
   }else{
     TurnTowardsFace(behaviorExternalInterface);
   }
-  return Result::RESULT_OK;
+  
 }
 
 

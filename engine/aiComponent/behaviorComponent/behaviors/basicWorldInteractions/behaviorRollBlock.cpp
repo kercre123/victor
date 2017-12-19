@@ -65,17 +65,15 @@ bool BehaviorRollBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface& be
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRollBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRollBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _didCozmoAttemptDock = false;
   const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(object != nullptr){
     UpdateTargetsUpAxis(behaviorExternalInterface);
     TransitionToPerformingAction(behaviorExternalInterface);
-    return Result::RESULT_OK;
+    
   }
-  
-  return Result::RESULT_FAIL;
 }
 
 

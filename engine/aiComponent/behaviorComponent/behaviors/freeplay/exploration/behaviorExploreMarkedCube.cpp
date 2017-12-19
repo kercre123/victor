@@ -83,7 +83,7 @@
 //}
 //  
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//Result BehaviorExploreMarkedCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreMarkedCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 //{
 //  // select borders we want to visit
 //  BorderScoreVector borderGoals;
@@ -127,7 +127,7 @@
 //  _currentActionTag = driveToPoseAction->GetTag();
 //  robot.GetActionList().QueueActionNow(driveToPoseAction);
 //
-//  return Result::RESULT_OK;
+//  
 //}
 //
 //

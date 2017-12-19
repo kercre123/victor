@@ -248,12 +248,10 @@ namespace{
     return _testResult == FactoryTestResultCode::UNKNOWN;
   }
   
-  Result BehaviorFactoryTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+  void BehaviorFactoryTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
   {
     Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
     const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-
-    Result lastResult = RESULT_OK;
     
     _testResult = FactoryTestResultCode::UNKNOWN;
     _holdUntilTime = -1;
@@ -326,7 +324,6 @@ namespace{
     _stateTransitionTimestamps.resize(_testResultEntry.timestamps.size());
     SetCurrState(FactoryTestState::GetPrevTestResults);
 
-    return lastResult;
   } // Init()
 
   

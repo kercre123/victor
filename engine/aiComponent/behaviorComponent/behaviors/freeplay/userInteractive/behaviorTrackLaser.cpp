@@ -176,7 +176,7 @@ bool BehaviorTrackLaser::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorTrackLaser::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   InitHelper(behaviorExternalInterface);
   const bool haveSeenLaser = (_lastLaserObservation.type != LaserObservation::Type::None);
@@ -191,7 +191,7 @@ Result BehaviorTrackLaser::OnBehaviorActivated(BehaviorExternalInterface& behavi
   {
     TransitionToInitialSearch(behaviorExternalInterface);
   }
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -323,12 +323,12 @@ ICozmoBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorE
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/**Result BehaviorTrackLaser::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
+/**void BehaviorTrackLaser::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _lastLaserObservation.type = LaserObservation::Type::None;
   InitHelper(behaviorExternalInterface);
   TransitionToBringingHeadDown(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }**/
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

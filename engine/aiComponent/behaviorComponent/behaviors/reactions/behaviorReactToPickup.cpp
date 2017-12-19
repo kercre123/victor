@@ -51,7 +51,7 @@ bool BehaviorReactToPickup::WantsToBeActivatedBehavior(BehaviorExternalInterface
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToPickup::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPickup::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _repeatAnimatingMultiplier = 1;
   
@@ -60,7 +60,7 @@ Result BehaviorReactToPickup::OnBehaviorActivated(BehaviorExternalInterface& beh
   const f32 bufferDelay_s = .5f;
   const f32 wait_s = CLIFF_EVENT_DELAY_MS/1000 + bufferDelay_s;
   DelegateIfInControl(new WaitAction(wait_s), &BehaviorReactToPickup::StartAnim);
-  return Result::RESULT_OK;
+  
 }
  
 

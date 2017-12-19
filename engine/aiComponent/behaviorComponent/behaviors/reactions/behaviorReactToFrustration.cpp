@@ -55,7 +55,7 @@ BehaviorReactToFrustration::BehaviorReactToFrustration(const Json::Value& config
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToFrustration::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToFrustration::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
@@ -64,12 +64,11 @@ Result BehaviorReactToFrustration::OnBehaviorActivated(BehaviorExternalInterface
   
   if(_animToPlay != AnimationTrigger::Count) {
     TransitionToReaction(behaviorExternalInterface);
-    return Result::RESULT_OK;
+    
   }
   else {
     PRINT_NAMED_WARNING("BehaviorReactToFrustration.NoReaction.Bug",
                         "We decided to run the reaction, but there is no valid one. this is a bug");
-    return Result::RESULT_FAIL;
   }    
 }
 

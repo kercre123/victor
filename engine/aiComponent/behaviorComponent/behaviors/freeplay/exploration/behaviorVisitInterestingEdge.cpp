@@ -215,7 +215,7 @@ bool BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior(BehaviorExternalIn
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorVisitInterestingEdge::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVisitInterestingEdge::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // this is the sauce, it's required
   DEV_ASSERT(_cache.IsSet(), "BehaviorVisitInterestingEdge.InitInternal.CantTrustCache");
@@ -229,7 +229,7 @@ Result BehaviorVisitInterestingEdge::OnBehaviorActivated(BehaviorExternalInterfa
   // start moving to the vantage point we calculated
   TransitionToS1_MoveToVantagePoint(behaviorExternalInterface, 0);
 
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

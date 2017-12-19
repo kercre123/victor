@@ -615,12 +615,10 @@ public:
     return true;
   }
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override {
     _inited = true;
     WaitForLambdaAction* action = new WaitForLambdaAction([this](Robot& r){ return _stopAction; });
     DelegateIfInControl(action);
-
-    return RESULT_OK;
   }
   
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override {

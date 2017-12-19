@@ -82,7 +82,7 @@ protected:
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) final override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) final override;
   virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

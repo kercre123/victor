@@ -37,10 +37,10 @@ bool BehaviorDrivePath::WantsToBeActivatedBehavior(BehaviorExternalInterface& be
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDrivePath::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDrivePath::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   TransitionToFollowingPath(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }
 
   

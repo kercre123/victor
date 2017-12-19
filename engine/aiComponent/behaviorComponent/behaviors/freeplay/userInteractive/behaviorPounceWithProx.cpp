@@ -58,9 +58,9 @@ void BehaviorPounceWithProx::InitBehavior(BehaviorExternalInterface& behaviorExt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPounceWithProx::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceWithProx::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  return Result::RESULT_OK;
+  
 }
 
 

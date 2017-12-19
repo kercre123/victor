@@ -79,11 +79,10 @@ bool BehaviorReactToPet::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 // Called each time behavior becomes active.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToPet::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPet::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   PRINT_INFO("ReactToPet.Init.BeginIteration", "Begin iteration");
   BeginIteration(behaviorExternalInterface);
-  return RESULT_OK;
 }
   
 //

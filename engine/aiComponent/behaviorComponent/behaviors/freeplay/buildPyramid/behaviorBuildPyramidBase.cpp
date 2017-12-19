@@ -84,7 +84,7 @@ bool BehaviorBuildPyramidBase::WantsToBeActivatedBehavior(BehaviorExternalInterf
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorBuildPyramidBase::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBuildPyramidBase::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   ResetMemberVars();
   const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
@@ -95,7 +95,7 @@ Result BehaviorBuildPyramidBase::OnBehaviorActivated(BehaviorExternalInterface& 
     TransitionToPlacingBaseBlock(behaviorExternalInterface);
   }
   
-  return Result::RESULT_OK;
+  
 }
   
   

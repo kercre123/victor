@@ -55,7 +55,7 @@ void BehaviorVictorDemoObservingFaceInteraction::GetAllDelegates(std::set<IBehav
   delegates.insert(_searchBehavior.get());
 }
 
-Result BehaviorVictorDemoObservingFaceInteraction::OnBehaviorActivated(
+void BehaviorVictorDemoObservingFaceInteraction::OnBehaviorActivated(
   BehaviorExternalInterface& behaviorExternalInterface)
 {
   _faceIdsLookedAt.clear();
@@ -70,7 +70,7 @@ Result BehaviorVictorDemoObservingFaceInteraction::OnBehaviorActivated(
     TransitionToFindFaces(behaviorExternalInterface);
   }
 
-  return Result::RESULT_OK;
+  
 }
 
 bool BehaviorVictorDemoObservingFaceInteraction::CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const

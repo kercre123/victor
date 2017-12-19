@@ -44,10 +44,10 @@ bool BehaviorReactToRobotOnFace::WantsToBeActivatedBehavior(BehaviorExternalInte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToRobotOnFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   FlipOverIfNeeded(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }
 
 

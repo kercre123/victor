@@ -114,22 +114,22 @@ bool BehaviorPounceOnMotion::WantsToBeActivatedBehavior(BehaviorExternalInterfac
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPounceOnMotion::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _humanInteracted = false;
   InitHelper(behaviorExternalInterface);
   TransitionToInitialPounce(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/**Result BehaviorPounceOnMotion::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
+/**void BehaviorPounceOnMotion::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _motionObserved = false;
   InitHelper(behaviorExternalInterface);
   TransitionToBringingHeadDown(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }**/
 
 

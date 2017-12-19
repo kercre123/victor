@@ -62,7 +62,7 @@
 //  // ICozmoBehavior API
 //  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //  
-//  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+//  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 //  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
 //  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 //

@@ -63,7 +63,7 @@ bool BehaviorDevTurnInPlaceTest::WantsToBeActivatedBehavior(BehaviorExternalInte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDevTurnInPlaceTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDevTurnInPlaceTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   Reset();
   
@@ -75,8 +75,6 @@ Result BehaviorDevTurnInPlaceTest::OnBehaviorActivated(BehaviorExternalInterface
   // Start the tests rolling
   const auto action = GenerateTestAction(robotInfo.GetPose(), _testInd);
   DelegateIfInControl(action, &BehaviorDevTurnInPlaceTest::ActionCallback);
-  
-  return RESULT_OK;
 }
 
 

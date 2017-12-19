@@ -127,7 +127,7 @@ void BehaviorDriveInDesperation::InitBehavior(BehaviorExternalInterface& behavio
 
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDriveInDesperation::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveInDesperation::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SmartSetMotionProfile( _params->_motionProfile );
 
@@ -135,7 +135,7 @@ Result BehaviorDriveInDesperation::OnBehaviorActivated(BehaviorExternalInterface
 
   TransitionToIdle(behaviorExternalInterface);
 
-  return Result::RESULT_OK;
+  
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

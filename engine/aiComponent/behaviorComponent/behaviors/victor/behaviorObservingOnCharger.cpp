@@ -72,11 +72,11 @@ bool BehaviorObservingOnCharger::CanBeGentlyInterruptedNow(BehaviorExternalInter
   return !_isTransitioning;
 }
 
-Result BehaviorObservingOnCharger::OnBehaviorActivated(BehaviorExternalInterface& bei)
+void BehaviorObservingOnCharger::OnBehaviorActivated(BehaviorExternalInterface& bei)
 {
   TransitionToLookingUp(bei);
   
-  return Result::RESULT_OK;
+  
 }
 
 void BehaviorObservingOnCharger::TransitionToLookingUp(BehaviorExternalInterface& bei)

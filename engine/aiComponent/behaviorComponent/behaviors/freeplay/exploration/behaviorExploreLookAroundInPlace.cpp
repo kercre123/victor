@@ -188,7 +188,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreLookAroundInPlace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorExploreLookAroundInPlace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting first iteration");
 
@@ -223,7 +223,7 @@ Result BehaviorExploreLookAroundInPlace::OnBehaviorActivated(BehaviorExternalInt
     BeginStateMachine(behaviorExternalInterface);
   }
 
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

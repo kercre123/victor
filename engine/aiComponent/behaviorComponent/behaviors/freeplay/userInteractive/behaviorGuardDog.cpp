@@ -130,7 +130,7 @@ bool BehaviorGuardDog::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorGuardDog::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorGuardDog::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {  
   // Reset some members in case this is running again:
   _cubesDataMap.clear();
@@ -161,7 +161,7 @@ Result BehaviorGuardDog::OnBehaviorActivated(BehaviorExternalInterface& behavior
   
   SET_STATE(Init);
   
-  return Result::RESULT_OK;
+  
 }
 
 

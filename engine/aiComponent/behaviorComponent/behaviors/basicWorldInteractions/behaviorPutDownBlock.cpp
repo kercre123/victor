@@ -48,7 +48,7 @@ bool BehaviorPutDownBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPutDownBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPutDownBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Choose where to put the block down
   // TODO: Make this smarter and find a place away from other known objects
@@ -61,7 +61,7 @@ Result BehaviorPutDownBlock::OnBehaviorActivated(BehaviorExternalInterface& beha
               }),
               &BehaviorPutDownBlock::LookDownAtBlock);
   
-  return Result::RESULT_OK;
+  
 }
 
 

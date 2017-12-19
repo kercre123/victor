@@ -48,13 +48,10 @@ bool BehaviorTurnToFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorTurnToFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTurnToFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_targetFace.IsValid()){
-    DelegateIfInControl(new TurnTowardsFaceAction(_targetFace));
-    return Result::RESULT_OK;
-  }else{
-    return RESULT_FAIL;
+    DelegateIfInControl(new TurnTowardsFaceAction(_targetFace)); 
   }
 }
 

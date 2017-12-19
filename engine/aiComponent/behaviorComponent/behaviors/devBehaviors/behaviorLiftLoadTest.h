@@ -49,7 +49,7 @@ namespace Anki {
         void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
       private:
       
-        virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
       
         virtual ICozmoBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
       

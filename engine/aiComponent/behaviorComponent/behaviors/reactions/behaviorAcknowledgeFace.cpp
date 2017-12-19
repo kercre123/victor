@@ -56,13 +56,13 @@ bool BehaviorAcknowledgeFace::WantsToBeActivatedBehavior(BehaviorExternalInterfa
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorAcknowledgeFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // don't actually init until the first Update call. This gives other messages that came in this tick a
   // chance to be processed, in case we see multiple faces in the same tick.
   _shouldStart = true;
 
-  return Result::RESULT_OK;
+  
 }
 
 

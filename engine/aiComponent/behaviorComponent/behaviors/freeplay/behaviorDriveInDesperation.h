@@ -36,7 +36,7 @@ protected:
   BehaviorDriveInDesperation(const Json::Value& config);
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
 

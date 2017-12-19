@@ -59,12 +59,12 @@ bool BehaviorRespondToRenameFace::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRespondToRenameFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondToRenameFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_name.empty())
   {
     PRINT_NAMED_ERROR("BehaviorRespondToRenameFace.InitInternal.EmptyName", "");
-    return RESULT_FAIL;
+    return;
   }
   
   PRINT_CH_INFO("Behaviors", "BehaviorRespondToRenameFace.InitInternal",
@@ -93,8 +93,6 @@ Result BehaviorRespondToRenameFace::OnBehaviorActivated(BehaviorExternalInterfac
   
   _name.clear();
   _faceID = Vision::UnknownFaceID;
-  
-  return RESULT_OK;
 }
 
 

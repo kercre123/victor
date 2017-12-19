@@ -70,15 +70,12 @@ void BehaviorDispatcherRerun::InitBehavior(BehaviorExternalInterface& behaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDispatcherRerun::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherRerun::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _numRunsRemaining = _params._numRuns;
   if(_delegatePtr != nullptr){
     CheckRerunState(behaviorExternalInterface);
-    return RESULT_OK;
   }
-
-  return RESULT_FAIL;
 }
 
 

@@ -97,7 +97,7 @@ bool BehaviorKnockOverCubes::WantsToBeActivatedBehavior(BehaviorExternalInterfac
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorKnockOverCubes::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(InitializeMemberVars()){
     if(!ShouldStreamline()){
@@ -105,9 +105,7 @@ Result BehaviorKnockOverCubes::OnBehaviorActivated(BehaviorExternalInterface& be
     }else{
       TransitionToKnockingOverStack(behaviorExternalInterface);
     }
-    return Result::RESULT_OK;
-  }else{
-    return Result::RESULT_FAIL;
+    
   }
 }
 

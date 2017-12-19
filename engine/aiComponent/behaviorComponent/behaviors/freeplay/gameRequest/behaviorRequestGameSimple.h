@@ -36,7 +36,7 @@ public:
   void TriggeringAsInterrupt() { _wasTriggeredAsInterrupt = true;}
 
 protected:
-  virtual Result RequestGame_OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void RequestGame_OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual Status RequestGame_UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void   RequestGame_OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 

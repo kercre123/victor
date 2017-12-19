@@ -44,14 +44,14 @@ bool BehaviorSearchForFace::WantsToBeActivatedBehavior(BehaviorExternalInterface
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorSearchForFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSearchForFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(behaviorExternalInterface.GetFaceWorld().HasAnyFaces()){
-    return Result::RESULT_FAIL;
+    return;
   }
   
   TransitionToSearchingAnimation(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }
 
 

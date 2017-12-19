@@ -87,21 +87,19 @@ bool BehaviorCantHandleTallStack::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorCantHandleTallStack::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCantHandleTallStack::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(auto tallestStack = _currentTallestStack.lock()){
     auto bottomBlock = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(tallestStack->GetBottomBlockID());
     if(bottomBlock == nullptr){
-      return Result::RESULT_FAIL;
+      return;
     }
     
     _lastReactionBasePose = bottomBlock->GetPose();
     _isLastReactionPoseValid = true;
     TransitionToLookingUpAndDown(behaviorExternalInterface);
     
-    return Result::RESULT_OK;
-  }else{
-    return Result::RESULT_FAIL;
+    
   }
 }
 

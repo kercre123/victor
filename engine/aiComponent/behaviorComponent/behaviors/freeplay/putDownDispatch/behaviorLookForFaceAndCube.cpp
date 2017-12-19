@@ -105,7 +105,7 @@ void BehaviorLookForFaceAndCube::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorLookForFaceAndCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookForFaceAndCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting to look for face at center");
 
@@ -140,11 +140,11 @@ Result BehaviorLookForFaceAndCube::OnBehaviorActivated(BehaviorExternalInterface
   // look here
   DelegateIfInControl( initialActions, &BehaviorLookForFaceAndCube::TransitionToS1_FaceOnLeft );
   
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/**Result BehaviorLookForFaceAndCube::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
+/**void BehaviorLookForFaceAndCube::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // reset side picks done because we always switch to next state
   _currentSidePicksDone = 0;

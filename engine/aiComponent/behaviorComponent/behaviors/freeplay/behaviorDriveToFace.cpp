@@ -71,15 +71,14 @@ bool BehaviorDriveToFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDriveToFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveToFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_targetFace.IsValid()){
     TransitionToTurningTowardsFace(behaviorExternalInterface);
-    return Result::RESULT_OK;
+    
   }else{
     PRINT_NAMED_WARNING("BehaviorDriveToFace.InitInternal.NoValidFace",
                         "Attempted to init behavior without a vaild face to drive to");
-    return Result::RESULT_FAIL;
   }
 }
 

@@ -293,7 +293,7 @@ bool BehaviorBouncer::WantsToBeActivatedBehavior(BehaviorExternalInterface& beha
 // Behavior is starting. Reset behavior state.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorBouncer::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBouncer::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   LOG_TRACE("BehaviorBouncer.InitInternal", "Init behavior");
   
@@ -326,7 +326,7 @@ Result BehaviorBouncer::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
   
   TransitionToState(BouncerState::GetIn);
   
-  return Result::RESULT_OK;
+  
 }
 
 

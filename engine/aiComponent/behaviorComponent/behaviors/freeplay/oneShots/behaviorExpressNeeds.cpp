@@ -142,7 +142,7 @@ bool BehaviorExpressNeeds::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {  
   CompoundActionSequential* action = new CompoundActionSequential();
 
@@ -176,7 +176,7 @@ Result BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& beha
       }
     });
 
-  return Result::RESULT_OK;
+  
 }
 
 

@@ -61,7 +61,7 @@ bool BehaviorReactToCliff::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(behaviorExternalInterface.HasMoodManager()){
     auto& moodManager = behaviorExternalInterface.GetMoodManager();
@@ -110,11 +110,10 @@ Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& beha
     default: {
       PRINT_NAMED_ERROR("BehaviorReactToCliff.Init.InvalidState",
                         "Init called with invalid state");
-      return Result::RESULT_FAIL;
     }
   }
   
-  return Result::RESULT_OK;
+  
 }
 
   

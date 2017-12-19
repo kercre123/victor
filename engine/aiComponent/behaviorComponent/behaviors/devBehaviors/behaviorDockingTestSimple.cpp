@@ -149,7 +149,7 @@ namespace Anki {
       return _currentState == State::Init;
     }
     
-    Result BehaviorDockingTestSimple::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorDockingTestSimple::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
     {
       Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
       _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, robot.GetWorldOrigin());
@@ -204,9 +204,7 @@ namespace Anki {
         ss << "images_" << now->tm_mon+1 << "-" << now->tm_mday << "-" << now->tm_hour << "." << now->tm_min;
         _imageFolder = ss.str();
         robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Stream, ss.str());
-      }
-      
-      return RESULT_OK;
+      }      
     }
     
     ICozmoBehavior::Status BehaviorDockingTestSimple::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)

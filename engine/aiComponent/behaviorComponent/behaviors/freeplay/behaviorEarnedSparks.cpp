@@ -47,12 +47,10 @@ bool BehaviorEarnedSparks::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorEarnedSparks::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEarnedSparks::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const AnimationTrigger animTrigger = AnimationTrigger::EarnedSparks;
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(animTrigger));
-
-  return RESULT_OK;
 }
 
 

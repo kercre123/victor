@@ -101,10 +101,10 @@ bool BehaviorFeedingEat::RemoveListeners(IFeedingListener* listener)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorFeedingEat::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingEat::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID) == nullptr){
-    return Result::RESULT_FAIL;
+    return;
   }
   
   _timeCubeIsSuccessfullyDrained_sec = FLT_MAX;
@@ -132,7 +132,7 @@ Result BehaviorFeedingEat::OnBehaviorActivated(BehaviorExternalInterface& behavi
 
   
   TransitionToDrivingToFood(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }
 
 

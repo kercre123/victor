@@ -236,7 +236,7 @@ bool BehaviorPuzzleMaze::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 // Behavior is starting. Reset behavior state.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPuzzleMaze::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPuzzleMaze::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   LOG_TRACE("BehaviorPuzzleMaze.InitInternal", "Init behavior");
   
@@ -253,7 +253,7 @@ Result BehaviorPuzzleMaze::OnBehaviorActivated(BehaviorExternalInterface& behavi
   
   TransitionToState(MazeState::GetIn);
   
-  return Result::RESULT_OK;
+  
 }
 
   

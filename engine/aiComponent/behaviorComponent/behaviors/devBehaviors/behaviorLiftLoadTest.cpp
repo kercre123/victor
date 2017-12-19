@@ -85,7 +85,7 @@ namespace Anki {
       return _canRun && (_currentState == State::Init || _currentState == State::TestComplete);
     }
     
-    Result BehaviorLiftLoadTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorLiftLoadTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
     {
       Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
@@ -118,9 +118,6 @@ namespace Anki {
       }
       ss << "\n";
       Write(ss.str());
-      
-      
-      return RESULT_OK;
     }
     
     ICozmoBehavior::Status BehaviorLiftLoadTest::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)

@@ -112,9 +112,7 @@ public:
   // Will be called upon first switching to a behavior before calling update.
   // Calls protected virtual OnBehaviorActivated() method, which each derived class
   // should implement.
-  void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final
-           {OnActivatedInternal_Legacy(behaviorExternalInterface); }
-  Result OnActivatedInternal_Legacy(BehaviorExternalInterface& behaviorExternalInterface);
+  void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
 
   // Step through the behavior and deliver rewards to the robot along the way
   // This calls the protected virtual UpdateInternal() method, which each
@@ -215,8 +213,7 @@ protected:
   virtual void OnEnteredActivatableScopeInternal() override;
   virtual void OnLeftActivatableScopeInternal() override;
 
-  
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   
   void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) {};

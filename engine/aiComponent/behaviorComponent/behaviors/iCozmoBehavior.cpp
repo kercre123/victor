@@ -411,7 +411,7 @@ void ICozmoBehavior::SubscribeToTags(std::set<RobotInterface::RobotToEngineTag> 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehavior::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Init").c_str(), "Starting...");
   
@@ -453,13 +453,7 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
   _behaviorDelegateCallback = nullptr;
   _activatedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _hasSetIdle = false;
-  Result initResult = OnBehaviorActivated(behaviorExternalInterface);
-  if ( initResult != RESULT_OK ) {
-    _isActivated = false;
-  }
-  else {
-    _startCount++;
-  }
+  _startCount++;
   
   // Clear cloud intent if responding to it
   if(_respondToCloudIntent != CloudIntent::Count){
@@ -467,7 +461,7 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
                  GetCloudReceiver().ClearIntentIfPending(_respondToCloudIntent);
   }
 
-  return initResult;
+  OnBehaviorActivated(behaviorExternalInterface);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

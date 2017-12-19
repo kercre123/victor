@@ -80,7 +80,7 @@ bool BehaviorFistBump::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Disable idle animation
   SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
@@ -98,7 +98,7 @@ Result BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behavior
     _state = State::LookForFace;
   }
 
-  return Result::RESULT_OK;
+  
 }
 
 

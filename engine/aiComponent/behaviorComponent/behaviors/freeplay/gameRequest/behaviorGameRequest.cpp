@@ -108,13 +108,13 @@ bool ICozmoBehaviorRequestGame::WantsToBeActivatedBehavior(BehaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ICozmoBehaviorRequestGame::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _requestTime_s = -1.0f;
   _robotsBlockID.UnSet();
   _badBlocks.clear();
   
-  return RequestGame_OnBehaviorActivated(behaviorExternalInterface);
+  RequestGame_OnBehaviorActivated(behaviorExternalInterface);
 }
 
 

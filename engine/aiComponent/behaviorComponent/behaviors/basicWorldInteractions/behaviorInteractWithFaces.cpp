@@ -135,19 +135,17 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorInteractWithFaces::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorInteractWithFaces::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // reset the time to stop tracking (in the tracking state)
   _trackFaceUntilTime_s = -1.0f;
 
   if( _targetFace.IsValid() ) {
     TransitionToInitialReaction(behaviorExternalInterface);
-    return RESULT_OK;
   }
   else {
     PRINT_NAMED_WARNING("BehaviorInteractWithFaces.Init.NoValidTarget",
                         "Decided to run, but don't have valid target when Init is called. This shouldn't happen");
-    return RESULT_FAIL;
   }
 }
 

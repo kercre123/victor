@@ -301,9 +301,8 @@ void TestBehavior::InitBehavior(BehaviorExternalInterface& behaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result TestBehavior::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)  {
+void TestBehavior::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)  {
   _inited = true;
-  return RESULT_OK;
 }
 
 
@@ -451,8 +450,7 @@ bool TestBehaviorWithHelpers::CarryingObjectHandledInternally() const {return tr
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result TestBehaviorWithHelpers::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) {
-  return RESULT_OK;
+void TestBehaviorWithHelpers::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) {
 }
 
 

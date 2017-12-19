@@ -138,12 +138,12 @@ void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, BehaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorLookAround::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Update explorable area center to current robot pose
   ResetSafeRegion(behaviorExternalInterface);
   
-  return Result::RESULT_OK;
+  
 }
 
 

@@ -74,7 +74,7 @@ bool BehaviorOnboardingShowCube::WantsToBeActivatedBehavior(BehaviorExternalInte
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
@@ -103,7 +103,7 @@ Result BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface
     DelegateIfInControl(new PlaceObjectOnGroundAction());
   }
   
-  return Result::RESULT_OK;
+  
 }
  
   

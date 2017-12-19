@@ -161,7 +161,7 @@ Result BehaviorEnrollFace::InitEnrollmentSettings(BehaviorExternalInterface& beh
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Check if we were interrupted and need to fast forward:
   switch(_state)
@@ -170,7 +170,7 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToSayingName", "");
       TransitionToSayingName(behaviorExternalInterface);
-      return RESULT_OK;
+      return;
     }
       
     case State::SavingToRobot:
@@ -178,7 +178,7 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToSavingToRobot", "");
       TransitionToSavingToRobot(behaviorExternalInterface);
-      return RESULT_OK;
+      return;
     }
       
     case State::ScanningInterrupted:
@@ -187,7 +187,7 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
       // now resumed, we need to complete the animation
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToScanningInterrupted", "");
       TransitionToScanningInterrupted(behaviorExternalInterface);
-      return RESULT_OK;
+      return;
     }
     default:
       // Not fast forwarding: just start at the beginning
@@ -200,7 +200,7 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
     PRINT_NAMED_WARNING("BehaviorEnrollFace.InitInternal.BadSettings",
                         "Disabling enrollment");
     DisableEnrollment(behaviorExternalInterface);
-    return settingsResult;
+    return;
   }
   
   // Settings ok: initialize rest of behavior state
@@ -241,8 +241,6 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
   
   // First thing we want to do is turn towards the face and make sure we see it
   TransitionToLookingForFace(behaviorExternalInterface);
-  
-  return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

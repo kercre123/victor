@@ -57,9 +57,9 @@ bool BehaviorProxGetToDistance::WantsToBeActivatedBehavior(BehaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorProxGetToDistance::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorProxGetToDistance::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  return Result::RESULT_OK;
+  
 }
 
 

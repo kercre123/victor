@@ -48,10 +48,10 @@ bool BehaviorReactToStackOfCubes::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToStackOfCubes::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToStackOfCubes::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _nextValidReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kTimeBetweenReactions_s;
-  return Result::RESULT_OK;
+  
 }
 
 } // namespace Cozmo

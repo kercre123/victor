@@ -156,7 +156,7 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _verifyStartTime_s = std::numeric_limits<float>::max();
 
@@ -184,10 +184,7 @@ Result BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExtern
   }
 
   _numRetriesDrivingToFace = 0;
-  _numRetriesPlacingBlock = 0;
-  
-  
-  return RESULT_OK;
+  _numRetriesPlacingBlock = 0;  
 }
 
   

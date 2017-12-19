@@ -41,7 +41,7 @@ BehaviorReactToRobotShaken::BehaviorReactToRobotShaken(const Json::Value& config
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToRobotShaken::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotShaken::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {  
   // Clear severe needs expression since eyes are being re-set
   if(behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().HasSevereNeedExpression())
@@ -61,7 +61,7 @@ Result BehaviorReactToRobotShaken::OnBehaviorActivated(BehaviorExternalInterface
   // Kick off the state machine:
   _state = EState::Shaking;
   
-  return Result::RESULT_OK;
+  
 }
 
   

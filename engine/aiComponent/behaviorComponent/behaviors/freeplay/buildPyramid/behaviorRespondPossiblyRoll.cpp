@@ -82,14 +82,14 @@ bool BehaviorRespondPossiblyRoll::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRespondPossiblyRoll::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _lastActionTag = ActionConstants::INVALID_TAG;
   _upAxisChangedIDs.clear();
 
   DetermineNextResponse(behaviorExternalInterface);
 
-  return Result::RESULT_OK;
+  
 }
 
 

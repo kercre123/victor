@@ -42,7 +42,7 @@ bool BehaviorReactToUnexpectedMovement::WantsToBeActivatedBehavior(BehaviorExter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(behaviorExternalInterface.HasMoodManager()){
     auto& moodManager = behaviorExternalInterface.GetMoodManager();
@@ -73,9 +73,7 @@ Result BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalIn
                                                  kNumLoops, kInterruptRunning, tracksToLock), [this]()
   {
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);
-  });
-  
-  return RESULT_OK;
+  });  
 }
 
 

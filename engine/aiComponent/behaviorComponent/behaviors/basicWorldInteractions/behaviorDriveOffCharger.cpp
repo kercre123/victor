@@ -66,7 +66,7 @@ bool BehaviorDriveOffCharger::WantsToBeActivatedBehavior(BehaviorExternalInterfa
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDriveOffCharger::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveOffCharger::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   
   _pushedIdleAnimation = false;
@@ -89,7 +89,7 @@ Result BehaviorDriveOffCharger::OnBehaviorActivated(BehaviorExternalInterface& b
     DEBUG_SET_STATE(WaitForOnTreads);
   }
   
-  return Result::RESULT_OK;
+  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -67,7 +67,7 @@ bool BehaviorPyramidThankYou::WantsToBeActivatedBehavior(BehaviorExternalInterfa
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPyramidThankYou::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPyramidThankYou::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   CompoundActionSequential* turnVerifyThank = new CompoundActionSequential();
   Pose3d facePose;
@@ -87,7 +87,7 @@ Result BehaviorPyramidThankYou::OnBehaviorActivated(BehaviorExternalInterface& b
   }
   
   DelegateIfInControl(turnVerifyThank);
-  return Result::RESULT_OK;
+  
 }
 
   

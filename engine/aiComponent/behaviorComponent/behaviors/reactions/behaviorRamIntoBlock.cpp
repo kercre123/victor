@@ -48,14 +48,14 @@ bool BehaviorRamIntoBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRamIntoBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRamIntoBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(behaviorExternalInterface.GetRobotInfo().GetCarryingComponent().IsCarryingObject()){
     TransitionToPuttingDownBlock(behaviorExternalInterface);
   }else{
     TransitionToTurningToBlock(behaviorExternalInterface);
   }
-  return Result::RESULT_OK;
+  
 }
 
 

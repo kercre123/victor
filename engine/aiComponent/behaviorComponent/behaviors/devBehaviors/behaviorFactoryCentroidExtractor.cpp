@@ -82,7 +82,7 @@ namespace{
     return !IsControlDelegated() && !_waitingForDots;
   }
 
-  Result BehaviorFactoryCentroidExtractor::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+  void BehaviorFactoryCentroidExtractor::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
   {
     Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
     std::stringstream serialNumString;
@@ -101,7 +101,7 @@ namespace{
     // Start motor calibration
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
     
-    return Result::RESULT_OK;
+    
   }
   
   ICozmoBehavior::Status BehaviorFactoryCentroidExtractor::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)

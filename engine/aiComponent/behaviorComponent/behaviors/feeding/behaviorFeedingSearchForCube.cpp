@@ -56,10 +56,10 @@ bool BehaviorFeedingSearchForCube::WantsToBeActivatedBehavior(BehaviorExternalIn
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorFeedingSearchForCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingSearchForCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   TransitionToFirstSearchForFood(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -85,11 +85,10 @@ bool BehaviorOnConfigSeen::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorOnConfigSeen::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnConfigSeen::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _animTriggerIndex = 0;
   TransitionToPlayAnimationSequence(behaviorExternalInterface);
-  return RESULT_OK;
 }
 
   

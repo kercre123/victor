@@ -151,7 +151,7 @@ bool BehaviorSinging::WantsToBeActivatedBehavior(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(ANKI_VERIFY(behaviorExternalInterface.HasRobotAudioClient(), 
                  "BehaviorSinging.OnBehaviorActivated.MissingAudioClient","")){
@@ -210,8 +210,6 @@ Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
       NeedActionCompleted(NeedsActionId::CozmoSings);
     }
   });
-  
-  return RESULT_OK;
 }
 
 

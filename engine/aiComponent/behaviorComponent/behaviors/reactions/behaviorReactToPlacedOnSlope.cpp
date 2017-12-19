@@ -37,7 +37,7 @@ bool BehaviorReactToPlacedOnSlope::WantsToBeActivatedBehavior(BehaviorExternalIn
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const double now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool hasBehaviorRunRecently = (now - _lastBehaviorTime < 10.0);
@@ -67,7 +67,7 @@ Result BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterfa
   }
 
   _lastBehaviorTime = now;
-  return Result::RESULT_OK;
+  
 }
 
   

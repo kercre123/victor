@@ -69,7 +69,7 @@ bool BehaviorReactToOnCharger::WantsToBeActivatedBehavior(BehaviorExternalInterf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   /**auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   if(externalInterface != nullptr){
@@ -82,7 +82,7 @@ Result BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& 
   }
 
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PlacedOnCharger));
-  return Result::RESULT_OK;
+  
 }
 
 

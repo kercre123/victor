@@ -52,13 +52,13 @@ bool BehaviorVictorDemoNapping::CanBeGentlyInterruptedNow(BehaviorExternalInterf
   return !_animIsPlaying;
 }
 
-Result BehaviorVictorDemoNapping::OnBehaviorActivated(BehaviorExternalInterface& bei)
+void BehaviorVictorDemoNapping::OnBehaviorActivated(BehaviorExternalInterface& bei)
 {
   _animIsPlaying = false;
   
   TransitionToSleeping(bei);
   
-  return Result::RESULT_OK;
+  
 }
 
 void BehaviorVictorDemoNapping::TransitionToSleeping(BehaviorExternalInterface& bei)

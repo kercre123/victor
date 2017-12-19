@@ -65,7 +65,7 @@ bool BehaviorStackBlocks::WantsToBeActivatedBehavior(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorStackBlocks::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorStackBlocks::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
@@ -74,7 +74,7 @@ Result BehaviorStackBlocks::OnBehaviorActivated(BehaviorExternalInterface& behav
   }else{
     TransitionToPickingUpBlock(behaviorExternalInterface);
   }
-  return Result::RESULT_OK;
+  
 }
 
 

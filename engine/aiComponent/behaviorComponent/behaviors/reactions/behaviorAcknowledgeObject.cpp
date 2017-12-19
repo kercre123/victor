@@ -76,7 +76,7 @@ void BehaviorAcknowledgeObject::InitBehavior(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorAcknowledgeObject::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeObject::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // don't actually init until the first Update call. This gives other messages that came in this tick a
   // chance to be processed, in case we see multiple objects in the same tick.
@@ -90,7 +90,7 @@ Result BehaviorAcknowledgeObject::OnBehaviorActivated(BehaviorExternalInterface&
                    _ghostStackedObject->GetID().GetValue());
   }
   
-  return Result::RESULT_OK;
+  
 }
 
   

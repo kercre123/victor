@@ -64,9 +64,8 @@ float GetTimeForCurrentPuzzle(BehaviorPuzzleMaze* puzzleMazePtr,AIComponent& aiC
   std::string currentActivityName;
   std::string behaviorDebugStr;
   puzzleMazePtr->SetAnimateBetweenPoints(false);
-  auto result = puzzleMazePtr->OnActivatedInternal_Legacy(behaviorExternalInterface);
+  puzzleMazePtr->OnActivated(behaviorExternalInterface);
   puzzleMazePtr->TransitionToState(BehaviorPuzzleMaze::MazeState::MazeStep);
-  EXPECT_EQ(RESULT_OK, result);
   int i = 0;
   constexpr int maxIterations = 100000;
   while( !puzzleMazePtr->IsPuzzleCompleted() && i < maxIterations)

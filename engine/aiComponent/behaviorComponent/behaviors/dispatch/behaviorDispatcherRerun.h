@@ -43,7 +43,7 @@ protected:
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
                                              override { return Status::Running;}
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 

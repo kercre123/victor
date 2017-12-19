@@ -398,7 +398,7 @@ void BehaviorVictorObservingDemo::GetAllDelegates(std::set<IBehavior*>& delegate
 }
 
 
-Result BehaviorVictorObservingDemo::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorObservingDemo::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // _visionModesToReEnable.clear();
   // auto& visionComponent = behaviorExternalInterface.GetVisionComponent();
@@ -431,7 +431,7 @@ Result BehaviorVictorObservingDemo::OnBehaviorActivated(BehaviorExternalInterfac
       }
     });
   
-  return Result::RESULT_OK;
+  
 }
 
 void BehaviorVictorObservingDemo::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)

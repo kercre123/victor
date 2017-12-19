@@ -65,7 +65,7 @@ bool BehaviorCubeLiftWorkout::WantsToBeActivatedBehavior(BehaviorExternalInterfa
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorCubeLiftWorkout::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCubeLiftWorkout::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // disable idle
   SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
@@ -92,9 +92,7 @@ Result BehaviorCubeLiftWorkout::OnBehaviorActivated(BehaviorExternalInterface& b
     _targetBlockID = objInfoCache.GetBestObjectForIntention(kObjectIntention);
 
     TransitionToPickingUpCube(behaviorExternalInterface);
-  }  
-  
-  return RESULT_OK;
+  }    
 }
 
   

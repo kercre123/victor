@@ -56,7 +56,7 @@ bool BehaviorAcknowledgeCubeMoved::WantsToBeActivatedBehavior(BehaviorExternalIn
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorAcknowledgeCubeMoved::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeCubeMoved::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _activeObjectSeen = false;
   switch(_state){
@@ -69,7 +69,7 @@ Result BehaviorAcknowledgeCubeMoved::OnBehaviorActivated(BehaviorExternalInterfa
       break;
   }
   
-  return Result::RESULT_OK;
+  
 }
  
   

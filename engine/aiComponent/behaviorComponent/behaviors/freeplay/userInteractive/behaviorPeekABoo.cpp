@@ -112,14 +112,13 @@ bool BehaviorPeekABoo::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPeekABoo::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // for COZMO-8914
   if(ShouldStreamline() &&
      (_timeSparkAboutToEnd_Sec == kSparkShouldPlaySparkFailFlag)){
     _timeSparkAboutToEnd_Sec = 0.0f;
     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::SparkFailure));
-    return RESULT_OK;
   }
   
   _hasMadeFollowUpRequest = false;
@@ -139,7 +138,6 @@ Result BehaviorPeekABoo::OnBehaviorActivated(BehaviorExternalInterface& behavior
   {
     TransitionTurnToFace(behaviorExternalInterface);
   }
-  return RESULT_OK;
 }
 
   

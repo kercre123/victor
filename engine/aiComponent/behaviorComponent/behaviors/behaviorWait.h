@@ -46,9 +46,9 @@ public:
 
 protected:
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override
   {
-    return Result::RESULT_OK;
+    
   }
   
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override

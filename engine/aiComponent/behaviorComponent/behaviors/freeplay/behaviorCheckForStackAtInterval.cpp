@@ -61,7 +61,7 @@ bool BehaviorCheckForStackAtInterval::WantsToBeActivatedBehavior(BehaviorExterna
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorCheckForStackAtInterval::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCheckForStackAtInterval::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   
   if(!_ghostStackedObject->GetID().IsSet()){
@@ -70,10 +70,8 @@ Result BehaviorCheckForStackAtInterval::OnBehaviorActivated(BehaviorExternalInte
   
   if(!_knownBlockIDs.empty()) {
     TransitionToSetup(behaviorExternalInterface);
-    return Result::RESULT_OK;
+    
   }
-  
-  return Result::RESULT_FAIL;
 }
 
   
