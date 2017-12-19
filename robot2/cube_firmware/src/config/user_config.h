@@ -42,7 +42,7 @@
  *
  ******************************************
  */
-const static sleep_state_t app_default_sleep_mode = ARCH_SLEEP_OFF;
+const static sleep_state_t app_default_sleep_mode = ARCH_EXT_SLEEP_ON;
 
 /*
  ****************************************************************************************

@@ -189,6 +189,9 @@ void user_app_connection(uint8_t connection_idx, struct gapc_connection_req_ind 
             // Connection params are not these that we expect
             app_param_update_request_timer_used = app_easy_timer(APP_PARAM_UPDATE_REQUEST_TO, param_update_request_timer_cb);
         }
+
+        // Disable sleep while active connection exists
+        arch_set_sleep_mode(ARCH_SLEEP_OFF);
     }
     else
     {
@@ -227,6 +230,9 @@ void user_app_disconnect(struct gapc_disconnect_ind const *param)
         (state == APP_CONNECTED) ||
         (state == APP_PARAM_UPD))
     {
+        // Reenable default leep mode
+        arch_set_sleep_mode(app_default_sleep_mode);
+
         // Restart Advertising
         user_app_adv_start();
     }
