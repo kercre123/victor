@@ -162,7 +162,7 @@ public:
     const f32 scale = 1.f / (f32)_params.input_std;
     const cv::Scalar mean(_params.input_mean_R, _params.input_mean_G, _params.input_mean_B);
     const bool kSwapRedBlue = false; // Our image class is already RGB
-    cv::Mat dnnBlob = cv::dnn::blobFromImage(img.get_CvMat_(), scale, processingSize, kSwapRedBlue);
+    cv::Mat dnnBlob = cv::dnn::blobFromImage(img.get_CvMat_(), scale, processingSize, mean, kSwapRedBlue);
     
     //std::cout << "Setting blob input: " << dnnBlob.size[0] << "x" << dnnBlob.size[1] << "x" << dnnBlob.size[2] << "x" << dnnBlob.size[3] <<  std::endl;
     _network.setInput(dnnBlob);
@@ -176,7 +176,7 @@ public:
       static int printCount = kPrintTimingFrequency;
       if(--printCount == 0)
       {
-        PrintAverageTiming();
+        _profiler.PrintAverageTiming();
         printCount = kPrintTimingFrequency;
       }
     }
