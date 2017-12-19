@@ -14,8 +14,8 @@ PROTO WebotsKeyboardController [
   field SFString DEV_AnimationName "ANIM_NAME"
   
   # Behavior to send
-  #  Use "DISABLED" to disable behaviors
-  field SFString behaviorName "DISABLED"
+  #  Use default "Wait" to put robot into standby
+  field SFString behaviorName "Wait"
   field SFInt32  numBehaviorRuns 1
 
   # Fake cloud commands
