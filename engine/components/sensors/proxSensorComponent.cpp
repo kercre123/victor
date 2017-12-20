@@ -13,9 +13,12 @@
 #include "engine/components/sensors/proxSensorComponent.h"
 
 #include "engine/audio/engineRobotAudioClient.h"
+#include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/robot.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
+
+#include "anki/common/basestation/utils/timer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -269,6 +272,9 @@ void ProxSensorComponent::UpdateTheremin()
     return;
   }
   
+  const float distance = static_cast<float>(_latestData.distance_mm);
+  const float signalStrength = static_cast<float>(_latestData.signalIntensity) / static_cast<float>(_latestData.spadCount);
+  
   float pitchVal = 0.f;
   float volumeVal = 1.f;
   
@@ -277,8 +283,14 @@ void ProxSensorComponent::UpdateTheremin()
   const float minDist = 60;
   const float maxDist = 300;
   
-  pitchVal = (maxDist - _latestData.distance_mm) / (maxDist - minDist);
+  pitchVal = (maxDist - distance) / (maxDist - minDist);
   pitchVal = Util::Clamp(pitchVal, 0.f, 1.f);
+  
+  // Only allow pitch to change if the signal strength is sufficiently strong:
+  const float kThereminSigStrThreshold = 0.01f;
+  if (signalStrength < kThereminSigStrThreshold) {
+    pitchVal = 0.f;
+  }
   
   // Post pitch parameter
   _robot.GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Theremin_Pitch,
@@ -290,6 +302,14 @@ void ProxSensorComponent::UpdateTheremin()
                                          volumeVal,
                                          AudioMetaData::GameObjectType::Cozmo_OnDevice);
   
+  static int cnt = 0;
+  if (++cnt%10 == 0) {
+    PRINT_NAMED_INFO("ThereminUpdate",
+                     "dist: %d, sigstr %.4f, touch gesture %s",
+                     _latestData.distance_mm,
+                     signalStrength,
+                     EnumToString(_robot.GetTouchSensorComponent().GetLatestTouchGesture()));
+  }
 }
 
   

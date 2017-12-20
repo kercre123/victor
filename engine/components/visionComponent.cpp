@@ -519,8 +519,8 @@ namespace Cozmo {
     }
     else
     {
-      PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForBufferedImage", "Tick:%zu",
-                     BaseStationTimer::getInstance()->GetTickCount());
+      //PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForBufferedImage", "Tick:%zu",
+      //               BaseStationTimer::getInstance()->GetTickCount());
     }
     
     return RESULT_OK;

@@ -64,7 +64,7 @@ namespace Anki {
     : _timeOffset(std::chrono::steady_clock::now())
     , _imageFrameID(1)
     {
-      InitCamera();
+      //InitCamera();
     }
     
     AndroidHAL::~AndroidHAL()
