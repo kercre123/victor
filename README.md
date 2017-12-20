@@ -66,7 +66,7 @@ Right now we use one scene and load assets by code. The main scene is located he
 
 ### Xcode
 
-We are using XCode Version 8.1. Install from the OS X App Store. Make sure you open XCode at least once after installing / updating because it may ask for accepting terms of service before permitting us to run it from build scripts.
+We are using XCode Version 9.1. Install from the OS X App Store. Make sure you open XCode at least once after installing / updating because it may ask for accepting terms of service before permitting us to run it from build scripts.
 
 ### Build Script
 
@@ -74,9 +74,10 @@ To run the configure python scripts you'll need xcpretty.
 
     sudo gem install xcpretty
     
-You will also need to install the python yaml module, `pyyaml`.
+You will also need to install the python yaml module, `pyyaml`, for both python2 and python3:
     
-    pip install pyyaml
+    pip2 install pyyaml
+    pip3 install pyyaml
     
 Java is needed for Buck, so if you don't already have that, you can run:
 
@@ -89,7 +90,7 @@ Build everything from the cozmo-one folder.
 
 ### [Webots](https://www.cyberbotics.com/overview)
 
-Webots is what we use for simulation and visualization. It is also used to run the engine on desktop/Mac when we connect to a physical robot.
+We use Cyberbotics Webots for simulation and visualization. It is also used to run the engine on desktop/Mac when we connect to a physical robot.
 
 Refer to [simulator/README.md](simulator/README.md) for more information about setting up and troubleshooting Webots.
 
@@ -144,22 +145,3 @@ ios-deploy does not seem to be 100% reliable, nor does it have great error messa
 
 6. ios-deploy is a popular enough program that google can usually lead you to an answer.
 
-
-### CozmoEngine v2
-
-To build the next gen version of CozmoEngine (ComzoEnginev2), pass the following option to configure.py:
-
-```
-# generate or build v2 targets
-$ ./configure.py --engine-v2
-
-# or, use the short option
-$ ./configure.py -2
-
-# for example to generate the mac workspace with v2 targets:
-$ ./configure.py -p mac -2
-```
-
-#### standalone cozmo engine android apk
-
-Refer to [standalone-apk/README.md](standalone-apk/README.md) for instructions on building and running the standalone cozmo engine android apk, the beginnings of Cozmo 2.0 engine
