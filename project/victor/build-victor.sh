@@ -44,7 +44,7 @@ FEATURES=""
 # TODO: provide command line option?
 # NOTE: these can't both be true (but can both be false)
 USE_TENSORFLOW=0
-USE_TENSORFLOW_LITE=1
+USE_TENSORFLOW_LITE=0
 
 while getopts ":x:c:p:t:g:F:hvfdCTe" opt; do
     case $opt in
