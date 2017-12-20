@@ -25,7 +25,7 @@ static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
 static const int POWER_WIPE_TIME = 200 * 10;  // Enter recovery mode
 static const int MINIMUM_VEXT_TIME = 20; // 0.1s
 
-static const int BUTTON_THRESHOLD = ADC_VOLTS(6.0);
+static const int BUTTON_THRESHOLD = ADC_VOLTS(6.5);
 static const int BOUNCE_LENGTH = 3;
 
 static volatile bool onBatPower;
