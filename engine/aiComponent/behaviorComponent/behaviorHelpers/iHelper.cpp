@@ -157,10 +157,10 @@ void IHelper::Stop(bool isActive)
   // assumption: if the behavior is acting, and we are active, then we must have started the action, so we
   // should stop it
   if( isActive && _behaviorToCallActionsOn.IsActing() ) {    
-    if(ANKI_VERIFY(_behaviorToCallActionsOn._behaviorExternalInterface->HasDelegationComponent(),
+    if(ANKI_VERIFY(_behaviorToCallActionsOn.GetBEI().HasDelegationComponent(),
                    "IHelper.Stop.NoDelegationComponent",
                    "")){
-      auto& delegationComp = _behaviorToCallActionsOn._behaviorExternalInterface->GetDelegationComponent();
+      auto& delegationComp = _behaviorToCallActionsOn.GetBEI().GetDelegationComponent();
       delegationComp.CancelActionIfRunning();
     }
   }

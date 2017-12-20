@@ -48,6 +48,7 @@ void IBehavior::Init(BehaviorExternalInterface& behaviorExternalInterface)
   AssertActivationState_DevOnly(ActivationState::NotInitialized);
   SetActivationState_DevOnly(ActivationState::OutOfScope);
   
+  _beiWrapper = std::make_unique<BEIWrapper>(behaviorExternalInterface);
   InitInternal(behaviorExternalInterface);
 }
 

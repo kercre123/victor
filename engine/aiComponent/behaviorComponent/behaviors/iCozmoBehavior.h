@@ -434,7 +434,6 @@ private:
   
   NeedsActionId ExtractNeedsActionIDFromConfig(const Json::Value& config);
 
-  BehaviorExternalInterface* _behaviorExternalInterface;
   float _lastRunTime_s;
   float _activatedTime_s;
 
