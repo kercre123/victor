@@ -376,16 +376,16 @@
     "translation" : "このプロジェクトを本当に削除してよろしいですか？"
   },
   "codeLab.projects.featuredTab.title" : {
-    "translation" : "注目のプロジェクト"
+    "translation" : "コードラボでできること"
   },
   "codeLab.projects.horizontalTab.title" : {
-    "translation" : "サンドボックスモード"
+    "translation" : "ベーシックモード"
   },
   "codeLab.projects.verticalTab.title" : {
-    "translation" : "コンストラクターモード"
+    "translation" : "アドバンスモード"
   },
   "codeLab.projects.horizontalTab.horizontalTabHeroTitle" : {
-    "translation" : "プログラミングを始めるのに\u000a最高の場所。"
+    "translation" : "さぁ、プログラミングをはじめよう!"
   },
   "codeLab.projects.horizontalTab.horizontalTabHeroDetail" : {
     "translation" : "最初のプログラムを作成するには、単にコードブロックをスナップしてつなげます。課題を完了してスキルを伸ばしましょう。"
@@ -397,10 +397,10 @@
     "translation" : "分岐やループのような概念で複雑で無限の可能性を持ったプログラムを作成しましょう。"
   },
   "codeLab.projects.featuredTab.featuredTabHeroTitle" : {
-    "translation" : "何ができるのか\u000a発見する。"
+    "translation" : "何ができるか見てみよう"
   },
   "codeLab.projects.featuredTab.featuredTabHeroDetail" : {
-    "translation" : "作成可能なパワフルなプログラムからインスピレーションを得てください。コードブロックをリミックスして自分のアイデアを活性化しましょう！"
+    "translation" : "コードラボで作成可能なプログラムを見て、オリジナルのプログラムをどんどん考えてみよう!"
   },
   "codeLab.renameProjectModal.saveButtonLabel" : {
     "translation" : "保存"
@@ -499,13 +499,13 @@
     "translation" : "時計"
   },
   "codeLabFeaturedProject_HotPotato.projectName" : {
-    "translation" : "ホットポテト"
+    "translation" : "パスゲーム"
   },
   "codeLabFeaturedProject_HotPotato.projectDescription" : {
     "translation" : "音楽が止まったとき、ホットポテトを持っていないようにしましょう!"
   },
   "codeLabFeaturedProject_HotPotato.projectInstructions" : {
-    "translation" : "1．このゲームは、2人のプレイヤーとCOZMOでプレイします。\u000a\u000a2. COZMOがプレーヤーに、キューブをタップできるようリフトの下にキューブをおいて、とたのみます。\u000a\u000a3. このゲームでは、キューブのライトで「ジャガイモ」が示されます。ジャガイモがプレーヤーの手元に落ちるとライトは赤く光り、キューブをタップしてジャガイモをパスできるようになると、ライトは緑色に光ります。\u000a\u000a4. 音楽が止まったとき、手にジャガイモを持っていないように注意しましょう！"
+    "translation" : "1．このゲームは、2人のプレイヤーとCOZMOでプレイします。\u000a\u000a2. COZMOがプレーヤーに、キューブをタップできるようリフトの下にキューブをおいて、とたのみます。\u000a\u000a3. 自分の手元のキューブが赤く光り、その後緑に光ると相手にパスできます。\r\u000a\u000a4. 音楽が終わったときに赤いキューブを手元に持たないようにしましょう"
   },
   "codeLabFeaturedProject_TinyOrchestra.projectName" : {
     "translation" : "小さなオーケストラ"
@@ -517,7 +517,7 @@
     "translation" : "1. 始める前に、デバイスのサウンドが十分な音量であることを確認します。\u000a\u000a2. COZMOの前に3つのキューブを置きます。\u000a\u000a3.「スタート」をタップすると、キューブのライトがさまざまな色で回転します。キューブをタップすると、楽器を演奏します。再度タップすると、楽器が変わります。\u000a\u000a4．いろいろな音楽を作って実験してみましょう！\u000a\u000a"
   },
   "codeLabFeaturedProject_MagicFortuneTeller.projectName" : {
-    "translation" : "魔法の占い師"
+    "translation" : "気ままな占い師"
   },
   "codeLabFeaturedProject_MagicFortuneTeller.projectDescription" : {
     "translation" : "COZMOをゆさぶってあなたの運勢を占ってもらいましょう。"
@@ -526,7 +526,7 @@
     "translation" : "1．「スタート」をタップして、COZMOの顔に「？」が表示されたら、プレイヤーがCOZMOにyes/noのクイズを出す番です。\u000a\u000a2. COZMOをゆすって占いの結果を教えてもらいましょう。"
   },
   "codeLabFeaturedProject_CubeWhack.projectName" : {
-    "translation" : "キューブを引っぱたけ"
+    "translation" : "キューブタップ"
   },
   "codeLabFeaturedProject_CubeWhack.projectDescription" : {
     "translation" : "あのキューブを引っぱたけ！あなたのハイスコアは？"
@@ -1345,7 +1345,7 @@
     "translation" : "しかめっ面をひっくり返そう！"
   },
   "codeLabFeaturedProject_LaserSmile.projectInstructions" : {
-    "translation" : "1. スタートフラグをタップすると、COZMOの顔にしかめっ面の絵文字が表示されます。\u000a\u000a2. COZMOからあなたの顔が見えるようにしてください。顔を動かしてしかめっ面の絵文字に狙いを定めてください。3. レーザースマイルを発射！"
+    "translation" : "1. スタートフラグをタップすると、COZMOの顔にしかめっ面の絵文字が表示されます。\u000a\u000a2. COZMOからあなたの顔が見えるようにしてください。顔を動かしてしかめっ面の絵文字に狙いを定めてください。\u000a\u000a3. レーザースマイルを発射！"
   },
   "codeLabSampleProject_LaserSmile.variableInstruction1" : {
     "translation" : "目標はそのしかめっ面をひっくり返すことです！"
@@ -1372,7 +1372,7 @@
     "translation" : "1. スタートフラグをタップすれば、COZMOは離陸準備完了！2. COZMOを手にもって部屋の中で飛ばしましょう。3. COZMOのテーマ音楽とリアクションをお楽しみください。"
   },
   "codeLabFeaturedProject_RemoteControlRacer.projectName" : {
-    "translation" : "Remote Control Racer（リモート・コントロール・レーサー）"
+    "translation" : "リモート・コントロール・レーサー"
   },
   "codeLabFeaturedProject_RemoteControlRacer.projectDescription" : {
     "translation" : "ブルンブルン！　COZMOを全速力で走らせよう。"
@@ -1381,7 +1381,7 @@
     "translation" : "1. スタートフラグをタップすると、お使いのスマートフォンまたはタブレットがリモコンに変わります。2. デバイスを上下左右に傾けるとCOZMOが全速力で走ります！"
   },
   "codeLabFeaturedProject_PuttPutt.projectName" : {
-    "translation" : "Putt Putt（パット・パット）"
+    "translation" : "パット・パット"
   },
   "codeLabFeaturedProject_PuttPutt.projectDescription" : {
     "translation" : "ホールインワンを決められるかな？"
@@ -1390,7 +1390,7 @@
     "translation" : "1.スタートフラグをタップしたら、COZMOを持ち上げて顔をまっすぐ前に向けます。2. COZMOの顔にボールとホールが表示されます。COZMOを傾けてボールをホールへ転がします。"
   },
   "codeLabFeaturedProject_ValentinesCozmogram.projectName" : {
-    "translation" : "Valentine's Cozmogram（バレンタインのコズモグラム）"
+    "translation" : "バレンタインのコズモグラム"
   },
   "codeLabFeaturedProject_ValentinesCozmogram.projectDescription" : {
     "translation" : "ともだちにバレンタインのメッセージを送るのが、コズモのスタイル。"
@@ -1399,7 +1399,7 @@
     "translation" : "1. スタートフラグをタップすると、COZMOからあなたにバレンタインのメッセージが届きます！"
   },
   "codeLabFeaturedProject_ShakeIt.projectName" : {
-    "translation" : "Shake It!（シェイク・イット）"
+    "translation" : "シェイク・イット"
   },
   "codeLabFeaturedProject_ShakeIt.projectDescription" : {
     "translation" : "新しいゲームで振りまくろう。"

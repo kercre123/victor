@@ -205,19 +205,19 @@
     "translation" : "COZMOは飽きるまでレーザーを追いかけます。"
   },
   "unlockable.CozmoSings.Title" : {
-    "translation" : "COZMOが歌う"
+    "translation" : "COZMOが歌う曲"
   },
   "unlockable.CozmoSings.DescriptionFirstLine" : {
-    "translation" : "COZMOが幸せなとき、世界を探検しながら歌を歌います。"
+    "translation" : "COZMOは動き回りながら、ゴキゲンなときに歌を歌います。"
   },
   "unlockable.CozmoSings.DescriptionSecondLine" : {
-    "translation" : "COZMOが歌っている最中にキューブをゆさぶるとCOZMOの声を変えることができます。"
+    "translation" : "COZMOが歌っているときにキューブを振るとCOZMOの声を変えることができます。"
   },
   "unlockable.CozmoSings.ButtonPromptTitle" : {
     "translation" : "ボタンをタップし"
   },
   "unlockable.CozmoSings.ButtonPromptDescription" : {
-    "translation" : "COZMOの歌を見てみます"
+    "translation" : "COZMOが歌う曲を見てみます"
   },
   "unlockable.CozmoSings.ButtonText" : {
     "translation" : "COZMOのプレイリスト"
