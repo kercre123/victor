@@ -1,0 +1,4 @@
+scissors
+paper
+backgrounds
+rock
