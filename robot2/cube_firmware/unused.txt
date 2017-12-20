@@ -1,4 +1,4 @@
-;#<FEEDBACK># ARM Linker, 5060183: Last Updated: Tue Dec 19 11:40:17 2017
+;#<FEEDBACK># ARM Linker, 5060183: Last Updated: Tue Dec 19 16:45:14 2017
 ;VERSION 0.2
 ;FILE adc.o
 adc_calibrate <= USED 0
@@ -106,16 +106,11 @@ battery_get_lvl <= USED 0
 ;FILE gapc_task.obj
 ;FILE gapm_util.obj
 ;FILE gpio.o
-GPIO_ConfigurePin <= USED 0
-GPIO_ConfigurePinPower <= USED 0
 GPIO_EnableIRQ <= USED 0
 GPIO_GetIRQInputLevel <= USED 0
 GPIO_GetPinStatus <= USED 0
 GPIO_RegisterCallback <= USED 0
-GPIO_SetActive <= USED 0
 GPIO_SetIRQInputLevel <= USED 0
-GPIO_SetInactive <= USED 0
-GPIO_SetPinFunction <= USED 0
 ;FILE hardfault_handler.o
 ;FILE jump_table.o
 dummyf <= USED 0

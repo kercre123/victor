@@ -33,8 +33,8 @@
 static bool app_valid = false;
 static bool app_running = false;
 static timer_hnd app_timer = EASY_TIMER_INVALID_TIMER;
-static ApplicationMap app_current __attribute__((at(0x20005800)));
-static uint8_t* app_write_address = (uint8_t*) &app_current;
+static ApplicationMap* const app_current = (ApplicationMap*) 0x20005800;
+static uint8_t* app_write_address = (uint8_t*) app_current;
 static const int minimum_length = 0x24;
 
 static uint32_t crc32_tab[] = {
@@ -95,7 +95,7 @@ typedef __packed struct {
 } OTA_Validate;
 
 void app_send_version() {
-  int length = app_valid ? sizeof(app_current.version) : 0;
+  int length = app_valid ? sizeof(app_current->version) : 0;
 
   // Send the current loaded application version
   struct custs1_val_ntf_req* req = KE_MSG_ALLOC_DYN(CUSTS1_VAL_NTF_REQ,
@@ -108,7 +108,7 @@ void app_send_version() {
   req->handle = CUST1_IDX_LOADED_APP_VAL;
   req->length = length;
 
-  if (app_valid) memcpy(req->value, app_current.version, sizeof(app_current.version));
+  if (app_valid) memcpy(req->value, app_current->version, sizeof(app_current->version));
 
   ke_msg_send(req);
 }
@@ -131,7 +131,7 @@ void app_send_target(uint8_t length, const void* value) {
 
 void app_tick() {
   if (!app_running) return ;
-  app_current.AppTick();
+  app_current->AppTick();
   app_timer = app_easy_timer(1, app_tick);
 }
 
@@ -139,7 +139,7 @@ void app_start() {
   if (!app_valid || app_running) return ;
 
   app_running = true;
-  app_current.AppInit();
+  app_current->AppInit();
   app_timer = app_easy_timer(1, app_tick);
 }
 
@@ -147,7 +147,7 @@ void app_stop() {
   if (!app_running) return ;
 
   app_running = false;
-  app_current.AppDeInit();
+  app_current->AppDeInit();
   app_easy_timer_cancel(app_timer);
   app_timer = EASY_TIMER_INVALID_TIMER;
 }
@@ -155,7 +155,7 @@ void app_stop() {
 void app_recv_target(uint8_t length, const void* data) {
   if (!app_running) return ;
 
-  app_current.BLE_Recv(length, data);
+  app_current->BLE_Recv(length, data);
 }
 
 void app_erase() {
@@ -190,7 +190,7 @@ void app_validate(const void* data) {
 
   if (~crc == cert->checksum) {
     app_valid = true;
-    app_current.BLE_Send = app_send_target;
+    app_current->BLE_Send = app_send_target;
     app_start();
   }
 
