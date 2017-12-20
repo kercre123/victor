@@ -97,25 +97,16 @@ void Analog::init(void) {
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 
   #ifdef BOOTLOADER
-  static const uint16_t MINIMUM_BATTERY = ADC_VOLTS(3.6);
-  chargeAllowed = true;
-
-  // This is a fresh boot (no head)
-  if (~USART1->CR1 & USART_CR1_UE) {
-    // Make sure battery is partially charged, and that the robot is on a charger
-    // NOTE: Only one interrupt is enabled here, and it's the 200hz main timing loop
-    // this lowers power consumption and interrupts fire regularly
-    for (;;) {
-      enableVMain();
-      __asm("wfi\nwfi");  // 5ms~10ms for power to stablize
-      if (Analog::values[ADC_VMAIN] > MINIMUM_BATTERY) break ;
-      disableVMain();
-      for( int i = 0; i < 200; i++)  __asm("wfi") ;
-    }
-  }
-
   POWER_EN::mode(MODE_INPUT);
   POWER_EN::pull(PULL_UP);
+
+  CHG_EN::type(TYPE_OPENDRAIN);
+  CHG_PWR::type(TYPE_OPENDRAIN);
+
+  CHG_EN::mode(MODE_OUTPUT);
+  CHG_PWR::mode(MODE_OUTPUT);
+
+  Analog::allowCharge(true);
   #endif
 }
 
@@ -139,6 +130,13 @@ void Analog::transmit(BodyToHead* data) {
 
 void Analog::allowCharge(bool enable) {
   chargeAllowed = enable;
+
+  if (enable) {
+    CHG_EN::set();
+  } else {
+    CHG_EN::reset();
+  }
+
   vext_debounce = 0;
 }
 
@@ -158,21 +156,11 @@ void Analog::tick(void) {
   }
   last_vext = vext_now;
 
-  // VEXT logic
-  if (chargeAllowed) {
-    CHG_EN::mode(MODE_OUTPUT);
-    CHG_EN::set();
-
-    if (vext_debounce >= MINIMUM_VEXT_TIME) {
-      CHG_PWR::set();
-      CHG_PWR::mode(MODE_OUTPUT);
-    } else {
-      CHG_PWR::reset();
-      CHG_PWR::mode(MODE_OUTPUT);
-    }
+  // Charge logic
+  if (chargeAllowed && vext_debounce >= MINIMUM_VEXT_TIME) {
+    CHG_PWR::set();
   } else {
-    CHG_EN::mode(MODE_OUTPUT);
-    CHG_EN::reset();
+    CHG_PWR::reset();
   }
 
   // Button logic
