@@ -26,9 +26,11 @@
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/faceWorld.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/quoteMacro.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -36,29 +38,16 @@ namespace Cozmo {
 namespace {
 
 CONSOLE_VAR(bool, kRockPaperScissors_FakePowerButton, "RockPaperScissors", false);
-//
-//constexpr const float kLightBlinkPeriod_s = 0.5f;
-//constexpr const float kHoldTimeForStreaming_s = 1.0f;
-//
-//static const BackpackLights kLightsOn = {
-//  .onColors               = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::BLACK}},
-//  .offColors              = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::BLACK}},
-//  .onPeriod_ms            = {{0,0,0}},
-//  .offPeriod_ms           = {{0,0,0}},
-//  .transitionOnPeriod_ms  = {{0,0,0}},
-//  .transitionOffPeriod_ms = {{0,0,0}},
-//  .offset                 = {{0,0,0}}
-//};
-//
-//static const BackpackLights kLightsOff = {
-//  .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
-//  .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
-//  .onPeriod_ms            = {{0,0,0}},
-//  .offPeriod_ms           = {{0,0,0}},
-//  .transitionOnPeriod_ms  = {{0,0,0}},
-//  .transitionOffPeriod_ms = {{0,0,0}},
-//  .offset                 = {{0,0,0}}
-//};
+
+static const BackpackLights kLightsOff = {
+  .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+  .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+  .onPeriod_ms            = {{0,0,0}},
+  .offPeriod_ms           = {{0,0,0}},
+  .transitionOnPeriod_ms  = {{0,0,0}},
+  .transitionOffPeriod_ms = {{0,0,0}},
+  .offset                 = {{0,0,0}}
+};
 
 }
 
@@ -66,6 +55,16 @@ BehaviorRockPaperScissors::BehaviorRockPaperScissors(const Json::Value& config)
   : ICozmoBehavior(config)
 {
   SubscribeToTags({ExternalInterface::MessageEngineToGameTag::RobotObservedGenericObject});
+  
+# define GET_FROM_CONFIG(_type_, _name_) \
+  _##_name_ = JsonTools::Parse##_type_(config, QUOTE(_name_), "BehaviorRockPaperScissors")
+  
+  GET_FROM_CONFIG(Float,  waitAfterButton_sec);
+  GET_FROM_CONFIG(Float,  waitTimeBetweenTaps_sec);
+  GET_FROM_CONFIG(Float,  minDetectionScore);
+  GET_FROM_CONFIG(Uint32, displayHoldTime_ms);
+  
+# undef GET_FROM_CONFIG
 }
 
 BehaviorRockPaperScissors::~BehaviorRockPaperScissors()
@@ -80,6 +79,10 @@ Result BehaviorRockPaperScissors::OnBehaviorActivated(BehaviorExternalInterface&
   DEV_ASSERT(bei.HasVisionComponent(), 
              "BehaviorRockPaperScissors.OnBehaviorActivated.NoVisionComponent");
 
+  _state = State::WaitForButton;
+  _humanSelection = Selection::Unknown;
+  _robotSelection = Selection::Unknown;
+  
   return Result::RESULT_OK;
 }
 
@@ -104,12 +107,21 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
 
     case State::PlayCadence:
     {
-      // TODO: Make configurable
-      const float _waitAfterButton_sec = 1.f;
-      const float _waitTimeBetweenTaps_sec = 0.5f;
-
+      // Turn towards last face if we have one. Otherwise just look up.
+      auto& faceWorld = bei.GetFaceWorld();
+      IActionRunner* moveHeadAction = nullptr;
+      if(faceWorld.HasAnyFaces()) {
+        moveHeadAction = new TurnTowardsLastFacePoseAction();
+      }
+      else {
+        moveHeadAction = new MoveHeadToAngleAction(MAX_HEAD_ANGLE);
+      }
+      
       CompoundActionSequential* action = new CompoundActionSequential({
-        new WaitAction(_waitAfterButton_sec),
+        new CompoundActionParallel({
+          new WaitAction(_waitAfterButton_sec),
+          moveHeadAction
+        }),
         
         // One...
         new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK), 
@@ -131,7 +143,7 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
 
         // Shoot!
         new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK), 
-        new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+20), 
+        new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+10),
         new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK),
       });
 
@@ -154,47 +166,73 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
 
     case State::React:
     {
-      auto& visionComponent = bei.GetVisionComponent();
-      visionComponent.EnableMode(VisionMode::DetectingGeneralObjects, false);
-      
-      static const AnimationTrigger kWinTrigger     = AnimationTrigger::CubePounceWinSession;
-      static const AnimationTrigger kLoseTrigger    = AnimationTrigger::CubePounceLoseSession;
-      static const AnimationTrigger kDrawTrigger    = AnimationTrigger::CubePouncePounceNormal;
-      static const AnimationTrigger kUnknownTrigger = AnimationTrigger::RequestGameInterrupt;
-      
-      // Results:
-      //   Robot's selection is first, Human's is second
-      static const std::map<std::pair<Selection,Selection>, AnimationTrigger> animationLUT{
-        // Win:
-        {{Selection::Rock,     Selection::Scissors},     kWinTrigger},
-        {{Selection::Paper,    Selection::Rock},         kWinTrigger},
-        {{Selection::Scissors, Selection::Paper},        kWinTrigger},
+      if(!IsActing())
+      {
+        auto& visionComponent = bei.GetVisionComponent();
+        visionComponent.EnableMode(VisionMode::DetectingGeneralObjects, false);
         
-        // Lose:
-        {{Selection::Rock,     Selection::Paper},        kLoseTrigger},
-        {{Selection::Paper,    Selection::Scissors},     kLoseTrigger},
-        {{Selection::Scissors, Selection::Rock},         kLoseTrigger},
+        static const AnimationTrigger kWinTrigger     = AnimationTrigger::CubePounceWinSession;
+        static const AnimationTrigger kLoseTrigger    = AnimationTrigger::CubePounceLoseSession;
+        static const AnimationTrigger kDrawTrigger    = AnimationTrigger::CubePouncePounceNormal;
+        static const AnimationTrigger kUnknownTrigger = AnimationTrigger::RequestGameInterrupt;
         
-        // Draw:
-        {{Selection::Rock,     Selection::Rock},         kDrawTrigger},
-        {{Selection::Paper,    Selection::Paper},        kDrawTrigger},
-        {{Selection::Scissors, Selection::Scissors},     kDrawTrigger},
+        // Results:
+        //   Robot's selection is first, Human's is second
+        static const std::map<std::pair<Selection,Selection>, AnimationTrigger> animationLUT{
+          // Win:
+          {{Selection::Rock,     Selection::Scissors},     kWinTrigger},
+          {{Selection::Paper,    Selection::Rock},         kWinTrigger},
+          {{Selection::Scissors, Selection::Paper},        kWinTrigger},
+          
+          // Lose:
+          {{Selection::Rock,     Selection::Paper},        kLoseTrigger},
+          {{Selection::Paper,    Selection::Scissors},     kLoseTrigger},
+          {{Selection::Scissors, Selection::Rock},         kLoseTrigger},
+          
+          // Draw:
+          {{Selection::Rock,     Selection::Rock},         kDrawTrigger},
+          {{Selection::Paper,    Selection::Paper},        kDrawTrigger},
+          {{Selection::Scissors, Selection::Scissors},     kDrawTrigger},
+          
+          // Unknown:
+          {{Selection::Unknown,  Selection::Scissors},     kUnknownTrigger},
+          {{Selection::Unknown,  Selection::Rock},         kUnknownTrigger},
+          {{Selection::Unknown,  Selection::Paper},        kUnknownTrigger},
+          {{Selection::Unknown,  Selection::Unknown},      kUnknownTrigger},
+          {{Selection::Rock,     Selection::Unknown},      kUnknownTrigger},
+          {{Selection::Paper,    Selection::Unknown},      kUnknownTrigger},
+          {{Selection::Scissors, Selection::Unknown},      kUnknownTrigger},
+        };
         
-        // Unknown:
-        {{Selection::Unknown,  Selection::Scissors},     kUnknownTrigger},
-        {{Selection::Unknown,  Selection::Rock},         kUnknownTrigger},
-        {{Selection::Unknown,  Selection::Paper},        kUnknownTrigger},
-        {{Selection::Unknown,  Selection::Unknown},      kUnknownTrigger},
-        {{Selection::Rock,     Selection::Unknown},      kUnknownTrigger},
-        {{Selection::Paper,    Selection::Unknown},      kUnknownTrigger},
-        {{Selection::Scissors, Selection::Unknown},      kUnknownTrigger},
-      };
-      
-      const AnimationTrigger animToPlay = animationLUT.at(std::pair<Selection,Selection>(_robotSelection,_humanSelection));
-      DelegateIfInControl(new TriggerAnimationAction(animToPlay), [this](){
-        _state = WaitForButton;
-      });
-
+        static const std::map<AnimationTrigger, const ColorRGBA&> lightLUT{
+          {kWinTrigger,     NamedColors::GREEN},
+          {kLoseTrigger,    NamedColors::RED},
+          {kDrawTrigger,    NamedColors::CYAN},
+          {kUnknownTrigger, NamedColors::YELLOW},
+        };
+        
+        const AnimationTrigger animToPlay = animationLUT.at(std::pair<Selection,Selection>(_robotSelection,_humanSelection));
+        
+        const ColorRGBA& lightColor = lightLUT.at(animToPlay);
+        const BackpackLights lights{
+          .onColors               = {{lightColor,lightColor,lightColor}},
+          .offColors              = {{lightColor,lightColor,lightColor}},
+          .onPeriod_ms            = {{0,0,0}},
+          .offPeriod_ms           = {{0,0,0}},
+          .transitionOnPeriod_ms  = {{0,0,0}},
+          .transitionOffPeriod_ms = {{0,0,0}},
+          .offset                 = {{0,0,0}}
+        };
+        
+        bei.GetBodyLightComponent().SetBackpackLights(lights);
+        
+        DelegateIfInControl(new TriggerAnimationAction(animToPlay), [this,&bei](){
+          _robotSelection = Selection::Unknown;
+          _humanSelection = Selection::Unknown;
+          bei.GetBodyLightComponent().SetBackpackLights( kLightsOff );
+          _state = WaitForButton;
+        });
+      }
       break;
     }
   }
@@ -234,9 +272,8 @@ void BehaviorRockPaperScissors::DisplaySelection(BehaviorExternalInterface& bei)
   DEV_ASSERT_MSG(RESULT_OK == result, "BehaviorRockPaperScissors.DisplaySelection.NoImage",
                  "%s", fullfilename.c_str());
   
-  const s32 kDisplayHoldTime_ms = 1000;
   auto & animComponent = bei.GetAnimationComponent();
-  animComponent.DisplayFaceImage(img, kDisplayHoldTime_ms, true);
+  animComponent.DisplayFaceImage(img, _displayHoldTime_ms, true);
 }
   
 //void BehaviorRockPaperScissors::BlinkLight(BehaviorExternalInterface& bei)
@@ -265,13 +302,10 @@ void BehaviorRockPaperScissors::HandleWhileActivated(const EngineToGameEvent& ev
     {
       if(State::WaitForResult == _state)
       {
-        // TODO: Make configurable
-        const float _minScore = 0.7f;
-        
         _humanSelection = Selection::Unknown;
         
         auto const& detection = event.GetData().Get_RobotObservedGenericObject();
-        if(detection.score > _minScore)
+        if(detection.score > _minDetectionScore)
         {
           if(detection.name == "rock")
           {
@@ -285,6 +319,9 @@ void BehaviorRockPaperScissors::HandleWhileActivated(const EngineToGameEvent& ev
           {
             _humanSelection = Selection::Scissors;
           }
+          
+          PRINT_NAMED_INFO("BehaviorRockPaperScissors.HandleWhileActivated.HumanSelectionDetected",
+                           "%s:%f", detection.name.c_str(), detection.score);
         }
         
         _state = State::React;

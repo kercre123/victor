@@ -49,7 +49,16 @@ protected:
   void DisplaySelection(BehaviorExternalInterface& behaviorExternalInterface);
   
 private:
-
+  
+  // -------------
+  // From Config:
+  float    _waitAfterButton_sec = 1.f;
+  float    _waitTimeBetweenTaps_sec = 0.5f;
+  float    _minDetectionScore = 0.7f;
+  uint32_t _displayHoldTime_ms = 1000;
+  
+  // -------------
+  // State Machine
   enum State {
     WaitForButton,
     PlayCadence,
@@ -59,6 +68,8 @@ private:
 
   State _state = WaitForButton;
 
+  // --------------------
+  // Game Play Selections
   enum Selection {
     Unknown  = -1,
     Rock     = 0,

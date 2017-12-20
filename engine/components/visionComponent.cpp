@@ -1242,6 +1242,12 @@ namespace Cozmo {
       std::copy(procResult.generalObjects.begin(), procResult.generalObjects.end(), 
                 std::back_inserter(lastDetectedObjects));
       lastNewObjectsTime_ms = procResult.timestamp;
+      
+      for(auto const& detectedObject : procResult.generalObjects)
+      {
+        using namespace ExternalInterface;
+        _robot.Broadcast(MessageEngineToGame(RobotObservedGenericObject(detectedObject)));
+      }
     }
     else if(procResult.timestamp > lastNewObjectsTime_ms + kKeepDrawingDetectionsFor_ms)
     {
