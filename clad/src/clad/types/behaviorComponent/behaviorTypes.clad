@@ -245,6 +245,7 @@ enum uint_8 BehaviorID {
   RequestSpeedTap,
   RespondToPyramidBase,
   RespondToRenameFace,
+  RockPaperScissors,
   RollBlockOnSide,
   RollBlockOnSideLowScore,
 

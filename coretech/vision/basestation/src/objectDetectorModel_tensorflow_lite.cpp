@@ -179,6 +179,7 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
   GetFromConfig(input_std);
   GetFromConfig(labels);
   GetFromConfig(top_K);
+  GetFromConfig(min_score);
   
   GetFromConfig(mode);
   if(_params.mode == "detection")

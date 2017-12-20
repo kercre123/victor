@@ -2,7 +2,7 @@
   "InitialVisionModes" :
   {
     // If a vision mode is not listed, it will be left in its default state
-    "DetectingMarkers"           : true,
+    "DetectingMarkers"           : false,
     "DetectingFaces"             : false,
     "DetectingPets"              : false,
     "DetectingMotion"            : false,
@@ -28,7 +28,8 @@
     "CheckingQuality"        : 15,
     "DetectingLaserPoints"   : 2,
     "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
-    "DetectingGeneralObjects": 1
+    "DetectingGeneralObjects": 1,
+    "SavingImages"           : 5
   },
   
   "ColorImages" : true,        // Whether color images are enabled on startup (can still be toggled later)
@@ -118,16 +119,16 @@
     // "min_score": 0.5
 
     // OpencCV DNN w/ MobileNets classification model
-    "graph"  : "mobilenet_0.25_128_flower_photos_opencvdnn.pb",
-    "labels" : "flower_photos_labels.txt",
+    "graph"  : "mobilenet_0.50_128_RockPaperScissors_opencvdnn.pb",
+    "labels" : "RockPaperScissors_labels.txt",
     "mode"   : "classification",
     "input_width"  : 128,
     "input_height" : 128,
     "do_crop" : false,
-    "input_mean_R" : 0,
-    "input_mean_G" : 0,
-    "input_mean_B" : 0,
-    "input_std"    : 255,
+    "input_mean_R" : 127.5,
+    "input_mean_G" : 127.5,
+    "input_mean_B" : 127.5,
+    "input_std"    : 127.5,
     "input_layer"  : "input",
     "output_scores_layer" : "final_result",
     "top_K" : 1,

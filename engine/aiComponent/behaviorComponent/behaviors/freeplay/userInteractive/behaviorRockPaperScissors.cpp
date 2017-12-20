@@ -36,7 +36,7 @@ namespace Cozmo {
 namespace {
 
 CONSOLE_VAR(bool, kRockPaperScissors_FakePowerButton, "RockPaperScissors", false);
-//  
+//
 //constexpr const float kLightBlinkPeriod_s = 0.5f;
 //constexpr const float kHoldTimeForStreaming_s = 1.0f;
 //
@@ -65,8 +65,7 @@ CONSOLE_VAR(bool, kRockPaperScissors_FakePowerButton, "RockPaperScissors", false
 BehaviorRockPaperScissors::BehaviorRockPaperScissors(const Json::Value& config)
   : ICozmoBehavior(config)
 {
-  SubscribeToTag(ExternalInterface::MessageEngineToGameTag::RobotObservedGenericObject);
-  
+  SubscribeToTags({ExternalInterface::MessageEngineToGameTag::RobotObservedGenericObject});
 }
 
 BehaviorRockPaperScissors::~BehaviorRockPaperScissors()
@@ -95,7 +94,7 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
   {
     case State::WaitForButton:
     {
-      if(bei.GetRobotInfo().IsPowerButtonPressed() || kRockPaperScissors_FakePowerButton)
+      if(bei.GetRobotInfo().IsPowerButtonPressed() || kRockPaperScissors_FakePowerButton || !bei.GetRobotInfo().IsPhysical())
       {
         kRockPaperScissors_FakePowerButton = false;
         _state = State::PlayCadence;
@@ -140,8 +139,10 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
         DisplaySelection(bei);
         auto& visionComponent = bei.GetVisionComponent();
         visionComponent.EnableMode(VisionMode::DetectingGeneralObjects, true);
-        _state = State::WaitForResult;
-      }); 
+      });
+      
+      _state = State::WaitForResult;
+      
       break;
     }
 
@@ -156,71 +157,41 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
       auto& visionComponent = bei.GetVisionComponent();
       visionComponent.EnableMode(VisionMode::DetectingGeneralObjects, false);
       
-      enum GameResult {
-        Win,
-        Lose,
-        Draw,
-        Unknown
-      } gameResult = Unknown;
+      static const AnimationTrigger kWinTrigger     = AnimationTrigger::CubePounceWinSession;
+      static const AnimationTrigger kLoseTrigger    = AnimationTrigger::CubePounceLoseSession;
+      static const AnimationTrigger kDrawTrigger    = AnimationTrigger::CubePouncePounceNormal;
+      static const AnimationTrigger kUnknownTrigger = AnimationTrigger::RequestGameInterrupt;
       
-      static const std::unordered_map<GameResult, AnimationTrigger> animationLUT{
-        {GameResult::Win,     AnimationTrigger::CubePounceWinSession},
-        {GameResult::Lose,    AnimationTrigger::CubePounceLoseSession},
-        {GameResult::Draw,    AnimationTrigger::CubePouncePounceNormal},
-        {GameResult::Unknown, AnimationTrigger::RequestGameInterrupt},
+      // Results:
+      //   Robot's selection is first, Human's is second
+      static const std::map<std::pair<Selection,Selection>, AnimationTrigger> animationLUT{
+        // Win:
+        {{Selection::Rock,     Selection::Scissors},     kWinTrigger},
+        {{Selection::Paper,    Selection::Rock},         kWinTrigger},
+        {{Selection::Scissors, Selection::Paper},        kWinTrigger},
+        
+        // Lose:
+        {{Selection::Rock,     Selection::Paper},        kLoseTrigger},
+        {{Selection::Paper,    Selection::Scissors},     kLoseTrigger},
+        {{Selection::Scissors, Selection::Rock},         kLoseTrigger},
+        
+        // Draw:
+        {{Selection::Rock,     Selection::Rock},         kDrawTrigger},
+        {{Selection::Paper,    Selection::Paper},        kDrawTrigger},
+        {{Selection::Scissors, Selection::Scissors},     kDrawTrigger},
+        
+        // Unknown:
+        {{Selection::Unknown,  Selection::Scissors},     kUnknownTrigger},
+        {{Selection::Unknown,  Selection::Rock},         kUnknownTrigger},
+        {{Selection::Unknown,  Selection::Paper},        kUnknownTrigger},
+        {{Selection::Unknown,  Selection::Unknown},      kUnknownTrigger},
+        {{Selection::Rock,     Selection::Unknown},      kUnknownTrigger},
+        {{Selection::Paper,    Selection::Unknown},      kUnknownTrigger},
+        {{Selection::Scissors, Selection::Unknown},      kUnknownTrigger},
       };
       
-      switch(_humanSelection)
-      {
-        case Selection::Unknown:   gameResult = Unknown;  break;
-          
-        case Selection::Rock:
-        {
-          switch(_robotSelection)
-          {
-            case Selection::Rock:     gameResult = Draw;     break;
-            case Selection::Paper:    gameResult = Win;      break;
-            case Selection::Scissors: gameResult = Lose;     break;
-            case Selection::Unknown:
-              DEV_ASSERT(false, "BehaviorRockPaperScissors.UpdateInternal_WhileRunning.UnknownNotPossible");
-              gameResult = Unknown;
-              break;
-          }
-          break;
-        }
-          
-        case Selection::Paper:
-        {
-          switch(_robotSelection)
-          {
-            case Selection::Rock:     gameResult = Lose;     break;
-            case Selection::Paper:    gameResult = Draw;     break;
-            case Selection::Scissors: gameResult = Win;      break;
-            case Selection::Unknown:
-              DEV_ASSERT(false, "BehaviorRockPaperScissors.UpdateInternal_WhileRunning.UnknownNotPossible");
-              gameResult = Unknown;
-              break;
-          }
-          break;
-        }
-          
-        case Selection::Scissors:
-        {
-          switch(_robotSelection)
-          {
-            case Selection::Rock:     gameResult = Win;      break;
-            case Selection::Paper:    gameResult = Lose;     break;
-            case Selection::Scissors: gameResult = Draw;     break;
-            case Selection::Unknown:
-              DEV_ASSERT(false, "BehaviorRockPaperScissors.UpdateInternal_WhileRunning.UnknownNotPossible");
-              gameResult = Unknown;
-              break;
-          }
-          break;
-        }
-      }
-      
-      DelegateIfInControl(new TriggerAnimationAction(animationLUT.at(gameResult)), [this](){
+      const AnimationTrigger animToPlay = animationLUT.at(std::pair<Selection,Selection>(_robotSelection,_humanSelection));
+      DelegateIfInControl(new TriggerAnimationAction(animToPlay), [this](){
         _state = WaitForButton;
       });
 
@@ -240,7 +211,8 @@ void BehaviorRockPaperScissors::DisplaySelection(BehaviorExternalInterface& bei)
   _robotSelection = static_cast<Selection>(GetRNG().RandIntInRange(0, 2));
   
   const CozmoContext* context = bei.GetRobotInfo().GetContext();
-  const std::string imgPath = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "assets/rockPaperScissors");
+  const std::string imgPath = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                                         "config/engine/behaviorComponent/behaviors/freeplay/userInteractive/rockPaperScissors");
   std::string filename = "";
   
   switch(_robotSelection)
@@ -262,8 +234,9 @@ void BehaviorRockPaperScissors::DisplaySelection(BehaviorExternalInterface& bei)
   DEV_ASSERT_MSG(RESULT_OK == result, "BehaviorRockPaperScissors.DisplaySelection.NoImage",
                  "%s", fullfilename.c_str());
   
+  const s32 kDisplayHoldTime_ms = 1000;
   auto & animComponent = bei.GetAnimationComponent();
-  animComponent.DisplayFaceImage(img, 0, true);
+  animComponent.DisplayFaceImage(img, kDisplayHoldTime_ms, true);
 }
   
 //void BehaviorRockPaperScissors::BlinkLight(BehaviorExternalInterface& bei)

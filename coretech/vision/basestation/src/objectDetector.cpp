@@ -86,9 +86,11 @@ ObjectDetector::Status ObjectDetector::Detect(ImageCache& imageCache, std::list<
     PRINT_NAMED_ERROR("ObjectDetector.Detect.NotInitialized", "");
     return Status::Error;
   }
+  
+  objects_out.clear();
     
   const ImageCache::Size kImageSize = ImageCache::Size::Full;
-  const bool kCropCenterSquare = true;
+  const bool kCropCenterSquare = false;
   
   if(!_future.valid())
   {

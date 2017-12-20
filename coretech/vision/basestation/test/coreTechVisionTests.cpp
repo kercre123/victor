@@ -889,7 +889,9 @@ GTEST_TEST(ObjectDetector, RockPaperScissors)
   Vision::ObjectDetector detector;
   
   const std::string modelPath = std::string(QUOTE(TEST_DATA_PATH)) + "/resources/tensorflow_models";
-  const std::string testImagePath = "/Users/andrew/Code/RockPaperScissors/testData";
+  //const std::string testImagePath = "/Users/andrew/Code/RockPaperScissors/testData";
+  const std::string testImagePath = "/Users/andrew/Code/RockPaperScissors/testData_jpg";
+  //const std::string testImagePath = "/Users/andrew/Code/RockPaperScissors/generatedData";
   
   Json::Value config;
   if(USE_TENSORFLOW)
@@ -902,21 +904,21 @@ GTEST_TEST(ObjectDetector, RockPaperScissors)
   }
   else
   {
-    config["graph"] = "mobilenet_0.50_RockPaperScissors_opencvdnn.pb";
+    config["graph"] = "mobilenet_0.50_128_RockPaperScissors_opencvdnn.pb";
   }
-  config["labels"] = "rockPaperScissors-labels.txt";
+  config["labels"] = "RockPaperScissors_labels.txt";
   config["mode"] = "classification";
   config["input_width"] = 128;
   config["input_height"] = 128;
   config["do_crop"] = false;
-  config["input_mean_R"] = 0;
-  config["input_mean_G"] = 0;
-  config["input_mean_B"] = 0;
-  config["input_std"] = 255;
+  config["input_mean_R"] = 127.5;
+  config["input_mean_G"] = 127.5;
+  config["input_mean_B"] = 127.5;
+  config["input_std"] = 127.5;
   config["input_layer"] = "input";
   config["output_scores_layer"] = "final_result";
   config["top_K"] = 1;
-  config["min_score"] = 0.1f;
+  config["min_score"] = 0.f;
   
   Result result;
   
@@ -930,9 +932,9 @@ GTEST_TEST(ObjectDetector, RockPaperScissors)
   auto DetectionHelper = [&detector](Vision::ImageCache& imageCache, std::list<Vision::ObjectDetector::DetectedObject>& objects) -> Result
   {
     Vision::ObjectDetector::Status status = Vision::ObjectDetector::Status::Error;
-    BOUNDED_WHILE(10, (status = detector.Detect(imageCache, objects)) == Vision::ObjectDetector::Status::Processing)
+    BOUNDED_WHILE(100, (status = detector.Detect(imageCache, objects)) == Vision::ObjectDetector::Status::Processing)
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(250));
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     
     if(Vision::ObjectDetector::Status::ResultReady == status)
@@ -946,22 +948,43 @@ GTEST_TEST(ObjectDetector, RockPaperScissors)
     }
   };
   
-  auto testFiles = Util::FileUtils::FilesInDirectory(testImagePath, true);
-  
-  for(auto & testFile : testFiles)
+  for(auto const& classname : {"paper", "rock", "scissors", "backgrounds"})
   {
-    result = testImg.Load(testFile);
-    ASSERT_EQ(RESULT_OK, result);
-    imageCache.Reset(testImg);
+    auto testFiles = Util::FileUtils::FilesInDirectory(Util::FileUtils::FullFilePath({testImagePath, classname}), true);
     
-    result = DetectionHelper(imageCache, objects);
-    ASSERT_EQ(RESULT_OK, result);
-    
-    if(!objects.empty())
+    const size_t maxFiles = 30;
+    if(testFiles.size() > maxFiles)
     {
-      testImg.DrawText({0,testImg.GetNumRows()}, objects.front().name + ":" + std::to_string(objects.front().score), NamedColors::GREEN);
+      std::random_shuffle(testFiles.begin(), testFiles.end());
+      testFiles.resize(maxFiles);
     }
-    testImg.Display("RockPaperScissors", 0);
     
+    s32 numCorrect = 0;
+    s32 ctr = 0;
+    for(auto & testFile : testFiles)
+    {
+      result = testImg.Load(testFile);
+      ASSERT_EQ(RESULT_OK, result);
+      imageCache.Reset(testImg);
+      
+      result = DetectionHelper(imageCache, objects);
+      ASSERT_EQ(RESULT_OK, result);
+      
+      ASSERT_FALSE(objects.empty());
+      ++ctr;
+      printf("Processed %s [%d of %d]: %s (%s)\n",
+             classname, ctr, (int)testFiles.size(), objects.front().name.c_str(), testFile.c_str());
+      
+      if(objects.front().name == classname)
+      {
+        ++numCorrect;
+      }
+      //testImg.DrawText({0,testImg.GetNumRows()}, objects.front().name + ":" + std::to_string(objects.front().score), NamedColors::GREEN);
+      
+      //testImg.Display("RockPaperScissors", 0);
+    }
+    
+    printf("%s correct: %d of %d (%.1f%%)\n\n",
+           classname, numCorrect, (int)testFiles.size(), 100.f*(f32)numCorrect/(f32)testFiles.size());
   }
 }
