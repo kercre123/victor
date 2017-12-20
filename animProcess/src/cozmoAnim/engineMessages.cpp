@@ -18,6 +18,7 @@
 #include "cozmoAnim/animation/cannedAnimationContainer.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/micDataProcessor.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
@@ -73,6 +74,7 @@ namespace Messages {
   void ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg);
   void ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg);
   extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
+  void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState);
 
   
 // #pragma mark --- Messages Method Implementations ---
@@ -270,6 +272,11 @@ namespace Messages {
         return;
       }
       break;
+      case RobotInterface::RobotToEngine::Tag_state:
+      {
+        HandleRobotStateUpdate(msg.state);
+      }
+      break;
       default:
       {
 
@@ -281,6 +288,19 @@ namespace Messages {
     const int tagSize = sizeof(msg.tag);
     SendToEngine(msg.GetBuffer()+tagSize, msg.Size()-tagSize, msg.tag);
   } // ProcessMessageFromRobot()
+
+  void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
+  {
+    static bool buttonWasPressed = false;
+    const auto buttonIsPressed = static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_BUTTON_PRESSED);
+    const auto buttonReleased = buttonWasPressed && !buttonIsPressed;
+    buttonWasPressed = buttonIsPressed;
+
+    if (buttonReleased)
+    {
+      FaceDisplay::GetDebugDraw()->ChangeDrawState();
+    }
+  }
 
 
 // ========== END OF PROCESSING MESSAGES FROM ROBOT ==========

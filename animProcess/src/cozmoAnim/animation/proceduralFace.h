@@ -15,6 +15,7 @@
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/point.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "clad/types/proceduralFaceTypes.h"
 #include "util/logging/logging.h"
