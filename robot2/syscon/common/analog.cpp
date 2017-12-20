@@ -100,6 +100,8 @@ void Analog::init(void) {
   POWER_EN::mode(MODE_INPUT);
   POWER_EN::pull(PULL_UP);
 
+  enableVMain();
+
   CHG_EN::type(TYPE_OPENDRAIN);
   CHG_PWR::type(TYPE_OPENDRAIN);
 
