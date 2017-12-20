@@ -23,7 +23,7 @@ def write_translations_to_file(translated_json_dir,output_asset_path):
       data = json.load(json_file);
       for key, value in data.items():
         if "translation" in value:
-          translation_string = translation_string + value["translation"] + '\n'
+          translation_string = translation_string + value["translation"] + os.linesep
   
   with open(output_asset_path, "w") as text_file:
     text_file.write(translation_string.encode('utf8'))
@@ -77,15 +77,26 @@ def run(args):
 
   # Execute SDF .asset generation code 
   procArgs = [unity_exe, "-batchmode", "-quit", "-nographics"]
-  procArgs.extend(["-projectPath", project_dir])
+  procArgs.extend(["-projectPath=%s" % project_dir])
   procArgs.extend(["-executeMethod", 'CreateNeededSDFFont.CreateSDFFontsFromScript'])
   procArgs.extend(["-logFile", log_file])
-  
-  result = subprocess.call(procArgs)
+
+  if args.verbose:
+    print("Running: %s" % ' '.join(procArgs))
+  p = subprocess.Popen(procArgs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  (stdout, stderr) = p.communicate()
+  result = p.poll()
+
+  if args.verbose:
+    print(stdout)
+    fh = open(log_file, 'r')
+    print(fh.read())
+    fh.close()
 
   if result == 0:
     print("Unity SDF Generation completed successfully.")
   else:
+    print(stderr, file=sys.stderr)
     print("UNITY SDF GENERATION ERROR", file=sys.stderr)
 
   return result
@@ -96,7 +107,7 @@ def parse_args(argv=[]):
 
     class DefaultHelpParser(argparse.ArgumentParser):
         def error(self, message):
-            sys.stderr.write('error: %s\n' % message)
+            sys.stderr.write('error: %s' % message + os.linesep)
             self.print_help()
             sys.exit(2)
 
@@ -109,12 +120,14 @@ def parse_args(argv=[]):
     parser.add_argument('--txt-output-asset-path', action='store', default=None,
                         help='Location of file to write to that contains all translated strings, which is then '
                         + 'used to generate SDF. Should start with Assets.')
+    parser.add_argument('--verbose', action='store_true', default=False, help='Display Unity log file')
     args = parser.parse_args(argv)
     return args
 
 
-# def main():
 if __name__ == '__main__':
     args = parse_args(sys.argv[1:])
     result = run(args)
     sys.exit(result)
+
+
