@@ -122,7 +122,7 @@ void SetAudioRnDScene( ConsoleFunctionContextRef context )
     }
   }
 }
-CONSOLE_FUNC( SetAudioRnDScene, "CozmoAudioController", int writeProfiler );
+CONSOLE_FUNC( SetAudioRnDScene, "CozmoAudioController", int sceneNum );
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // CozmoAudioController
