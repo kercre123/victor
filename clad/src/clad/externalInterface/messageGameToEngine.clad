@@ -1024,6 +1024,12 @@ message RunDebugConsoleFuncMessage {
   string funcArgs
 }
 
+// Same as above, but for setting console funcs in the anim process
+message RunAnimDebugConsoleFuncMessage {
+  string funcName,
+  string funcArgs
+}
+
 message GetDebugConsoleVarMessage {
   string varName
 }
