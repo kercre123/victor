@@ -1,0 +1,312 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="" lang="" dir="ltr">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Einstein@Home</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="alternate" type="application/rss+xml" title="Einstein@Home | News" href="/rss_main.php" />
+<link rel="shortcut icon" href="/sites/default/files/einstein_favicon.ico" type="image/x-icon" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link type="text/css" rel="stylesheet" media="all" href="/sites/default/files/css/css_7eecbabdeca564479c5e534afeec7bba.css" />
+<link type="text/css" rel="stylesheet" media="print" href="/sites/default/files/css/css_467712fd13144bc71b860c0489b802dd.css" />
+<!--[if IE]>
+<link type="text/css" rel="stylesheet" media="all" href="/sites/default/themes/project/einstein/css/ie.css?O" />
+<![endif]-->
+<!--[if lte IE 6]>
+<link type="text/css" rel="stylesheet" media="all" href="/sites/default/themes/project/einstein/css/ie6.css?O" />
+<![endif]-->
+  <script type="text/javascript" src="/sites/default/files/js/js_b5abf73d73797d17a8cbcfb21438351d.js"></script>
+<script type="text/javascript">
+<!--//--><![CDATA[//><!--
+jQuery.extend(Drupal.settings, { "basePath": "/", "dhtmlMenu": { "nav": "none", "animation": { "effects": { "height": "height", "opacity": "opacity", "width": 0 }, "speed": "500" }, "effects": { "siblings": "close-same-tree", "children": "none", "remember": "0" }, "filter": { "type": "whitelist", "list": { "primary-links": "primary-links", "devel": 0, "menu-footer-links": 0, "navigation": 0 } } }, "mobile_menu_toggle": { "default_menu": "primary-links", "css_class": "#navigation-mmt" } });
+//--><!]]>
+</script>
+      <!-- Project scheduling servers -->
+<!--
+  <scheduler>https://130.75.116.40/EinsteinAtHome_cgi/cgi</scheduler>
+-->
+  <link rel="boinc_scheduler" href="https://scheduler.einsteinathome.org/EinsteinAtHome_cgi/cgi">
+  </head>
+<body class="page front not-logged-in no-sidebars i18n- page-panels">
+
+      <div id="skip-link"><a href="#main-menu">Jump to Navigation</a></div>
+  
+  <div id="page-wrapper"><div id="page">
+    
+    <div id="header-wrapper" class="shadow">
+    
+    <div id="header"><div class="section clearfix">
+
+              <a href="/" title="Home" rel="home" id="logo"><img src="/sites/default/themes/project/einstein/logo.png" alt="Home" /></a>
+      
+      
+      
+      <div class="region region-header">
+    <div id="block-mobile_menu_toggle-0" class="block block-mobile_menu_toggle first region-odd odd region-count-1 count-1">
+  
+  <div class="content">
+    <a id="mobile-menu-toggle" href="javascript;;">
+  <i class="fa fa-bars fa-2x" aria-hidden="true"></i>
+  <span class="mmt-menu"> Menu </span>
+</a>  </div>
+
+  </div> <!-- /.block -->
+</div> <!-- /.region -->
+
+    </div></div> <!-- /.section, /#header -->
+    
+          <div id="navigation"><div class="section clearfix">
+        <div id="main-menu">
+          <ul id="main-menu" class="links clearfix">
+<li class="menu-158 active-trail active first"><a href="/" title="" class="active">Home</a></li><li class="menu-157"><a href="/news" title="">News</a></li><li class="menu-425"><a href="/about" title="">Science</a></li><li class="menu-161"><a href="/community" title="">Community</a></li><li class="menu-431 last"><a href="/help" title="">Help</a></li></ul>
+        </div>
+        
+        <div id="action-links">
+          <ul><li class="first">
+            <a href="/user/login?destination=home"><span class="secondary-link tab">Login</span></a>            </li>
+                          <li class="last"><a class="search" href="/search/site"><span class="tab">search</span></a></li>
+                      </ul>
+        </div>
+
+        <div id="sub-menu">
+                  </div>
+
+                  <div id="sub-menu">
+                      </div>
+        
+        <div id="navigation-mmt">
+          <div id="hamburger-menu" class="block">
+            <ul class="menu"><li class="leaf first dhtml-menu  active-trail"><a href="/" title="" id="dhtml_menu-158" class="active">Home</a></li>
+<li class="expanded  dhtml-menu  collapsed start-collapsed "><a href="/news" title="" id="dhtml_menu-157">News</a><ul class="menu"><li class="leaf first dhtml-menu "><a href="/news" title="" id="dhtml_menu-13427">News</a></li>
+<li class="leaf last dhtml-menu "><a href="/news/press" title="Press Coverage" id="dhtml_menu-13426">Press</a></li>
+</ul></li>
+<li class="expanded  dhtml-menu  collapsed start-collapsed "><a href="/about" title="" id="dhtml_menu-425">Science</a><ul class="menu"><li class="leaf first dhtml-menu "><a href="/about" title="" id="dhtml_menu-426">About us</a></li>
+<li class="expanded  dhtml-menu  collapsed start-collapsed "><a href="/science/abp" title="" id="dhtml_menu-1770">Data Analyses</a><ul class="menu"><li class="leaf first last dhtml-menu "><a href="/science/abp" title="" id="dhtml_menu-1769">Arecibo Radio Pulsar Search</a></li>
+</ul></li>
+<li class="leaf  dhtml-menu "><a href="/science/screensaver" title="" id="dhtml_menu-1763">Screensaver</a></li>
+<li class="leaf  dhtml-menu "><a href="/science/publications" title="" id="dhtml_menu-427">Publications</a></li>
+<li class="leaf  dhtml-menu "><a href="/science/discoveries" title="" id="dhtml_menu-12353">Discoveries</a></li>
+<li class="leaf  dhtml-menu "><a href="/science/pulsating-science" title="" id="dhtml_menu-428">Pulsating Science</a></li>
+<li class="leaf  dhtml-menu "><a href="/science/contributors" title="" id="dhtml_menu-429">Contributors</a></li>
+<li class="leaf last dhtml-menu "><a href="/science/links" title="" id="dhtml_menu-430">Links</a></li>
+</ul></li>
+<li class="expanded  dhtml-menu  collapsed start-collapsed "><a href="/community" id="dhtml_menu-161">Community</a><ul class="menu"><li class="leaf first dhtml-menu "><a href="/community/forum" id="dhtml_menu-184">Message boards</a></li>
+<li class="leaf  dhtml-menu "><a href="/community/teams" id="dhtml_menu-189">Teams</a></li>
+<li class="leaf last dhtml-menu "><a href="/community/stats" id="dhtml_menu-13964">Statistics</a></li>
+</ul></li>
+<li class="leaf last dhtml-menu "><a href="/help" title="" id="dhtml_menu-431">Help</a></li>
+</ul>            <ul class="menu"><li class="first"><a href="/user/login?destination=home">Login</a></li><li class="last"> <a class="search" href="/search/site">search</a> </l1></ul>          </div>
+        </div>
+
+      </div></div> <!-- /.section, /#navigation -->
+        
+    </div> <!-- /.shadow -->
+    
+    <div id="main-wrapper"><div id="main" class="clearfix with-navigation">
+      
+            
+          
+            <div id="content" class="column">
+      
+        <div class="section">
+          
+          
+          
+                    
+          
+          <div id="content-area">
+            
+<div class="panel-display zen-one-sidebar-second clearfix" >
+
+  <div class="panel-content"><div class="panel-content-inner inside panel-panel">
+    <div class="panels_pane panel-pane pane-custom pane-1 panel-primary container shadow" >
+  
+  
+  
+  <div class="pane-content">
+    <h2 class="pane-title">What is Einstein@Home?</h2><div class="boinc-overview balance-height-front">  <div>Einstein@Home is a program that uses your computer's idle time to search for gravitational waves from spinning isolated compact objects (among which are pulsars) using data from the LIGO gravitational wave detector. <a href="/about">Learn more</a></div>  <div><a href="/join" class="join button">Join now</a></div></div><div class="boinc-overview-details">  <div class="detail-container">    <a class="user-of-the-day" href="account/146397">      <div class="picture"><img  title="Rudy Ussenko" alt="Rudy Ussenko" src="https://einsteinathome.org/sites/default/files/imagefield_default_images/default-user.png?1362770990" />      </div>      <div class="text">User of the day</div>      <div class="detail">Rudy Ussenko</div>    </a>    <div class="volunteers">      <div class="text">Over 500,000 volunteers and counting.</div>      <div class="platforms">        <div class="detail platform windows">Windows</div>        <div class="detail platform mac">Mac</div>        <div class="detail platform linux">Linux</div>      </div>    </div>  </div></div>  </div>
+
+  
+  </div>
+  </div></div> <!-- /.panel-content-inner, /.panel-content -->
+
+  <div class="panel-sidebar-first"><div class="panel-sidebar-first-inner inside panel-panel">
+    <div class="panels_pane panel-pane pane-panels-mini pane-project-stats-overview panel-secondary container shadow balance-height-front no-resize" >
+  
+  
+  
+  <div class="pane-content">
+    <div class="panel-display panel-1col clear-block" id="mini-panel-project_stats_overview">
+  <div class="panel-panel panel-col">
+    <div><div class="panels_pane panel-pane pane-custom pane-2" >
+  
+      <h2 class="pane-title">Einstein@Home Progress</h2>
+  
+  
+  <div class="pane-content">
+    <div class="overlay"><span>(Credits per day)</span></div>
+<div class="chart"><img src="/charts/project" /></div>
+  </div>
+
+  
+  </div>
+</div>
+  </div>
+</div>
+  </div>
+
+  
+  </div>
+<div class="panel-region-separator"></div><div class="panels_pane panel-pane pane-views pane-news panel-secondary container shadow balance-height-front" >
+  
+  
+      <div class="feed">
+      <a class="xml-icon" href="/rss_main.php"><img src="/sites/default/themes/project/einstein/images/feed.png" alt="RSS feed" title="Einstein@Home | News" /></a>    </div>
+  
+  <div class="pane-content">
+    <div class="views_view view view-news view-id-news view-display-id-page_2 view-dom-id-1">
+  
+  
+  
+  
+      <div class="view-content">
+        <div class="views-row views-row-1 views-row-odd views-row-first">
+      
+  <div class="views-field-title">
+                <span class="field-content"><h2>Online questionnaire about citizen science and volunteer computing</h2></span>
+  </div>
+  
+  <div class="views-field-created">
+                <span class="field-content">November 15, 2017</span>
+  </div>
+  
+  <div class="views-field-teaser">
+                <div class="field-content"><p>Please help Lo Lee, a first-year doctoral student from Library and Information Science at University of Illinois at Urbana-Champaign, by filling in an...</div>
+  </div>
+  
+  <div class="views-field-view-node-1">
+                <span class="field-content"><a href="/content/online-questionnaire-about-citizen-science-and-volunteer-computing">more</a></span>
+  </div>
+  
+  <div class="views-field-phpcode">
+                <span class="field-content"><a href="/content/online-questionnaire-about-citizen-science-and-volunteer-computing">discuss</a></span>
+  </div>
+  
+  <div class="views-field-comment-count">
+                <span class="field-content">9</span>
+  </div>
+  
+  <div class="views-field-nothing">
+                <span class="field-content"><div class="clearfix"></div></span>
+  </div>
+  </div>
+  <div class="views-row views-row-2 views-row-even views-row-last">
+      
+  <div class="views-field-title">
+                <span class="field-content"><h2>Three new Einstein@Home papers</h2></span>
+  </div>
+  
+  <div class="views-field-created">
+                <span class="field-content">July 26, 2017</span>
+  </div>
+  
+  <div class="views-field-teaser">
+                <div class="field-content"><p>Three papers full of new Einstein@Home science are available now on the arXiv preprint server. <a href="https://arxiv.org/abs/1707.02669">First low-...</div>
+  </div>
+  
+  <div class="views-field-view-node-1">
+                <span class="field-content"><a href="/content/three-new-einsteinhome-papers">more</a></span>
+  </div>
+  
+  <div class="views-field-phpcode">
+                <span class="field-content"><a href="/content/three-new-einsteinhome-papers">discuss</a></span>
+  </div>
+  
+  <div class="views-field-comment-count">
+                <span class="field-content">3</span>
+  </div>
+  
+  <div class="views-field-nothing">
+                <span class="field-content"><div class="clearfix"></div></span>
+  </div>
+  </div>
+    </div>
+  
+  
+  
+  
+  
+  
+</div> <!-- /.view -->
+  </div>
+
+  
+      <div class="more-link">
+      <a href="/news">more</a>    </div>
+  </div>
+  </div></div> <!-- /.panel-sidebar-first-inner, /.panel-sidebar-first -->
+
+</div> <!-- /.zen-one-sidebar-second -->
+          </div>
+
+        </div> <!-- /.section -->
+        
+                
+      </div> <!-- /#content -->
+
+      
+      
+    </div></div> <!-- /#main, /#main-wrapper -->
+
+              <div id="footer"><div class="section">
+        
+        <div id="footer-menu">
+          
+          <ul id="footer-links" class="links clearfix"><li class="menu-1764 first"><a href="/rules-and-policies" title="">Rules and Policies</a></li>
+<li class="menu-1765"><a href="/faq" title="">FAQ</a></li>
+<li class="menu-1766"><a href="/community/moderation" title="">Moderation</a></li>
+<li class="menu-1767"><a href="/application-source-code-and-license" title="">Source Code License</a></li>
+<li class="menu-10868 last"><a href="https://boinc.berkeley.edu/" title="">BOINC</a></li>
+</ul>          
+          <ul id="server-status" class="tab-list">
+            
+            <li class="first tab">
+              <a href="https://einsteinathome.org/apps.php">Applications</a>            </li>
+            <li class="last tab">
+              <a href="https://einsteinathome.org/server_status.html">Server status</a>            </li>
+            <!--<li class="first tab">Server status</li>
+            <li class="tab">
+              <ul id="server-status-highlights">
+                <li class="first good">Work available</li>
+                <li class="good">Website</li>
+              </ul>
+            </li>
+            <li class="last tab"><a href="status">More</a></li>-->
+            
+          </ul>
+          <div class="clearfix"></div>
+          
+        </div>
+        
+        <div id="footer-info">
+          
+          <div id="language"
+            style="background: url(/sites/default/themes/boinc/boinc/images/flags/.png) no-repeat right;">
+              Language          </div>
+          
+                      <div id="footer-message">Copyright © 2016 Einstein@Home. All rights reserved.</div>
+                    
+                    
+          <div class="clearfix"></div>
+
+                  </div>
+
+      </div></div> <!-- /.section, /#footer -->
+    
+  </div></div> <!-- /#page, /#page-wrapper -->
+
+  
+  
+</body>
+</html>

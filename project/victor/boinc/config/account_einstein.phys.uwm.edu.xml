@@ -1,0 +1,71 @@
+<account>
+    <master_url>http://129.89.61.70/</master_url>
+    <authenticator>1099f8ae1081217c03ef79f460419d90</authenticator>
+    <project_name>Einstein@Home</project_name>
+<project_preferences>
+</project_preferences>
+<gui_urls>
+
+    <gui_url>
+        <name>Common questions</name>
+        <description>Read the Einstein@Home Frequently Asked Question list</description>
+        <url>https://einsteinathome.org/faq</url>
+    </gui_url>
+    <gui_url>
+        <name>Screensaver info</name>
+        <description>Read a detailed description of the Einstein@Home screensaver</description>
+        <url>https://einsteinathome.org/science/screensaver</url>
+    </gui_url>
+    <gui_url>
+        <name>Message boards</name>
+        <description>Correspond with admins and other users on the Einstein@Home message boards</description>
+        <url>https://einsteinathome.org/community</url>
+    </gui_url>
+    <gui_url>
+        <name>Your messages</name>
+        <description>Links to messages that you have posted on the Einstein@Home message boards.</description>
+        <url>https://einsteinathome.org/messages</url>
+    </gui_url>
+    <gui_url>
+        <name>Einstein status</name>
+        <description>Current status of the Einstein@Home server</description>
+        <url>https://einsteinathome.org/server_status.php</url>
+    </gui_url>
+    <gui_url>
+        <name>Report problems</name>
+        <description>A link to the Einstein@Home problems and bug reports message board</description>
+        <url>https://einsteinathome.org/community/forum/22</url>
+    </gui_url>
+    <gui_url>
+        <name>Your account</name>
+        <description>View and modify your Einstein@Home account profile and preferences</description>
+        <url>https://einsteinathome.org/account/dashboard</url>
+    </gui_url>
+    <gui_url>
+        <name>Your results</name>
+        <description>View your last week (or more) of computational results and work</description>
+        <url>https://einsteinathome.org/account/tasks/active</url>
+    </gui_url>
+    <gui_url>
+        <name>Your computers</name>
+        <description>View a listing of all the computers on which you are running Einstein@Home</description>
+        <url>https://einsteinathome.org/account/computers/all</url>
+    </gui_url>
+    <gui_url>
+        <name>Host scheduler log</name>
+        <description>View the Scheduler log for your computer 12599304 on Einstein@Home</description>
+        <url>https://einsteinathome.org/host/12599304/log</url>
+    </gui_url>
+    <gui_url>
+        <name>LIGO project</name>
+        <description>The home page of the Laser Interferometer Gravitational-wave Observatory (LIGO) project</description>
+        <url>http://www.ligo.caltech.edu/</url>
+    </gui_url>
+    <gui_url>
+        <name>GEO600 project</name>
+        <description>The home page of the GEO600 project</description>
+        <url>http://www.geo600.org</url>
+    </gui_url>
+
+</gui_urls>
+</account>

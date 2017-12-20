@@ -20,6 +20,9 @@ source ${SCRIPT_PATH}/android_env.sh
 : ${VERBOSE:=0}
 : ${ANKI_BUILD_TYPE:="Debug"}
 : ${INSTALL_ROOT:="/data/data/com.anki.boinc"}
+: ${RUNTIME_PATH:="${SCRIPT_PATH}/../runtime"}
+: ${CONFIG_PATH:="${SCRIPT_PATH}/../config"}
+: ${PROJECTS_PATH:="${SCRIPT_PATH}/../projects"}
 
 function usage() {
   echo "$SCRIPT_NAME [OPTIONS]"
@@ -73,7 +76,7 @@ function adb_deploy()
 
     NEEDS_INSTALL=0
     DIGEST=
-    XATTR="${BIN_INSTALL_PATH}/axattr"
+    XATTR="/data/data/com.anki.cozmoengine/bin/axattr"
 
     FILENAME=$(basename "${SRC}")
     DST_PATH="${DST}/${FILENAME}"
@@ -130,12 +133,15 @@ export INSTALL_ROOT
 export BIN_INSTALL_PATH
 export LIB_INSTALL_PATH
 
-find "${HOME}/tmp" -depth 1 -type f -name 'boinc*' \
+find "${RUNTIME_PATH}" -depth 1 -type f \
     -exec bash -c \
     'adb_deploy "${0}" "${INSTALL_ROOT}"' {} \;
 
-find "${HOME}/tmp" -depth 1 -type f -name '*.xml' \
+find "${CONFIG_PATH}" -depth 1 -type f \
     -exec bash -c \
     'adb_deploy "${0}" "${INSTALL_ROOT}"' {} \;
 
+find "${PROJECTS_PATH}" -type d \
+    -exec bash -c \
+    'adb_deploy "${0}" "${INSTALL_ROOT}/projects"' {} \;
 

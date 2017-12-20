@@ -1,0 +1,26 @@
+<account>
+    <master_url>http://www.enigmaathome.net/</master_url>
+    <authenticator>c0d4084f46e41af245d00b904dbbea08</authenticator>
+    <project_name>Enigma@Home</project_name>
+<project_preferences>
+</project_preferences>
+<gui_urls>
+
+<gui_url>
+<name>Your account</name>
+<description>View your account information and credit totals</description>
+<url>http://www.enigmaathome.net/home.php</url>
+</gui_url>
+<gui_url>
+<name>Forum</name>
+<description>Message boards</description>
+<url>http://www.enigmaathome.net/forum_index.php</url>
+</gui_url>
+
+<gui_url>
+<name>Server status</name>
+<description>Server status, statistics</description>
+<url>http://www.enigmaathome.net/server_status.php</url>
+</gui_url>
+</gui_urls>
+</account>
