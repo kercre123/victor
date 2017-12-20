@@ -55,7 +55,7 @@ protected:
   void SetPlayedOnSideAnim() { _playedOnSide = true;}
   void SetReachedPreDockRoll() { _reachedPreDockRoll = true;}
   void SetPoseUpAxisWillBeChecked() { _poseUpAxisAccurate = true;}
-
+  
 private:
   enum class DebugState {
     RespondingNegatively,
@@ -98,6 +98,7 @@ protected:
   
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
 
 private:
   RespondPossiblyRollMetadata _metadata;

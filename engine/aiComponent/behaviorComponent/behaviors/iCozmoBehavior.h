@@ -226,11 +226,6 @@ protected:
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) { };
 
   Util::RandomGenerator& GetRNG() const;
-    
-  // Derived classes should use these methods to subscribe to any tags they
-  // are interested in handling.
-  void SubscribeToTag(GameToEngineTag   tag, std::function<void(const GameToEngineEvent&)> messageHandler = nullptr);
-  void SubscribeToTag(EngineToGameTag   tag, std::function<void(const EngineToGameEvent&)> messageHandler = nullptr);
   
   void SubscribeToTags(std::set<GameToEngineTag>&& tags);
   void SubscribeToTags(std::set<EngineToGameTag>&& tags);
@@ -530,8 +525,8 @@ private:
   ///////
   // Tracking subscribe tags for initialization
   ///////
-  std::unordered_map<GameToEngineTag, std::function<void(const GameToEngineEvent&)>> _gameToEngineCallbackMap;
-  std::unordered_map<EngineToGameTag, std::function<void(const EngineToGameEvent&)>> _engineToGameCallbackMap;
+  std::set<GameToEngineTag> _gameToEngineTags;
+  std::set<EngineToGameTag> _engineToGameTags;
   std::set<RobotInterface::RobotToEngineTag> _robotToEngineTags;
 
   // Behaviors can load in internal "anonymous" behaviors which are not stored

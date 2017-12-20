@@ -345,63 +345,40 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
   //// Subscribe to tags
   ///////
   
-  for(auto& pair : _gameToEngineCallbackMap) {
-    SubscribeToTag(pair.first, pair.second);
+  for(auto tag : _gameToEngineTags) {
+    if(ANKI_VERIFY(_behaviorExternalInterface != nullptr,
+                   "ICozmoBehavior.SubscribeToTag.MissingExternalInterface",
+                   "")){
+      _behaviorExternalInterface->GetStateChangeComponent().SubscribeToTags(this, {tag});
+    }
   }
   
-  for(auto& pair : _engineToGameCallbackMap) {
-    SubscribeToTag(pair.first, pair.second);
+  for(auto tag : _engineToGameTags) {
+    if(ANKI_VERIFY(_behaviorExternalInterface != nullptr,
+                   "ICozmoBehavior.SubscribeToTag.MissingExternalInterface",
+                   "")){
+      _behaviorExternalInterface->GetStateChangeComponent().SubscribeToTags(this, {tag});
+    }
   }
   
   for(auto tag: _robotToEngineTags) {
-    behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
-    {
-      tag
-    });
+    behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,{tag});
   }
   
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SubscribeToTag(GameToEngineTag  tag,
-                                    std::function<void(const GameToEngineEvent&)> messageHandler)
-{
-  if(ANKI_VERIFY(_behaviorExternalInterface != nullptr,
-                 "ICozmoBehavior.SubscribeToTag.MissingExternalInterface",
-                 "")){
-    _behaviorExternalInterface->GetStateChangeComponent().SubscribeToTags(this, {tag});
-  }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SubscribeToTag(EngineToGameTag  tag,
-                                    std::function<void(const EngineToGameEvent&)> messageHandler)
-{
-  if(ANKI_VERIFY(_behaviorExternalInterface != nullptr,
-                 "ICozmoBehavior.SubscribeToTag.MissingExternalInterface",
-                 "")){
-    _behaviorExternalInterface->GetStateChangeComponent().SubscribeToTags(this, {tag});
-  }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SubscribeToTags(std::set<GameToEngineTag> &&tags)
 {
-  for(auto& tag: tags){
-    _gameToEngineCallbackMap.insert(std::make_pair(tag, nullptr));
-  }
+  _gameToEngineTags = std::move(tags);
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SubscribeToTags(std::set<EngineToGameTag> &&tags)
 {
-  for(auto& tag: tags){
-    _engineToGameCallbackMap.insert(std::make_pair(tag, nullptr));
-  }
+  _engineToGameTags = std::move(tags);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -691,11 +668,8 @@ void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalI
   
   for(const auto& event: stateChangeComp.GetGameToEngineEvents()){
     // Handle specific callbacks
-    auto pairIter = _gameToEngineCallbackMap.find(event.GetData().GetTag());
-    if(pairIter != _gameToEngineCallbackMap.end()){
-      if(pairIter->second != nullptr){
-        pairIter->second(event);
-      }
+    auto iter = _gameToEngineTags.find(event.GetData().GetTag());
+    if(iter != _gameToEngineTags.end()){
       AlwaysHandle(event, behaviorExternalInterface);
       if(IsActivated()){
         HandleWhileActivated(event, behaviorExternalInterface);
@@ -707,12 +681,8 @@ void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalI
   
   for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
     // Handle specific callbacks
-    auto pairIter = _engineToGameCallbackMap.find(event.GetData().GetTag());
-    if(pairIter != _engineToGameCallbackMap.end()){
-      if(pairIter->second != nullptr){
-        pairIter->second(event);
-      }
-      
+    auto iter = _engineToGameTags.find(event.GetData().GetTag());
+    if(iter != _engineToGameTags.end()){      
       AlwaysHandle(event, behaviorExternalInterface);
       if(IsActivated()){
         HandleWhileActivated(event, behaviorExternalInterface);
