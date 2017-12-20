@@ -232,7 +232,7 @@ def pull_string(string, context):
 # where to import and export that list from and to, and where to pull in localization data
 
 def get_file_path(base_file_name, language):
-    return base_file_name + '_' + language + '.json'
+    return (base_file_name + '_' + language + '.json').lower()
 
 def run_translation_target(target, loc_table):
     with open(target['source_file_name']) as input_file:
