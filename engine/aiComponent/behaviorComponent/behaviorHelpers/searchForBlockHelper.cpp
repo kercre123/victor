@@ -50,7 +50,7 @@ SearchForBlockHelper::SearchForBlockHelper(BehaviorExternalInterface& behaviorEx
 , _params(params)
 , _nextSearchIntensity(SearchIntensity::QuickSearch)
 {
-  behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
+  behaviorExternalInterface.GetBehaviorEventComponent().SubscribeToTags(this,
   {
     ExternalInterface::MessageEngineToGameTag::RobotObservedObject
   });
@@ -103,7 +103,7 @@ IHelper::HelperStatus SearchForBlockHelper::InitBehaviorHelper(BehaviorExternalI
 IHelper::HelperStatus SearchForBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Event handles
-  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
+  const auto& stateChangeComp = behaviorExternalInterface.GetBehaviorEventComponent();
   for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
     if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::RobotObservedObject){
       const ObjectID& objSeen = event.GetData().Get_RobotObservedObject().objectID;

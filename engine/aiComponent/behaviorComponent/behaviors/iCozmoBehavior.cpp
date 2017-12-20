@@ -349,7 +349,7 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
     if(ANKI_VERIFY(_behaviorExternalInterface != nullptr,
                    "ICozmoBehavior.SubscribeToTag.MissingExternalInterface",
                    "")){
-      _behaviorExternalInterface->GetStateChangeComponent().SubscribeToTags(this, {tag});
+      _behaviorExternalInterface->GetBehaviorEventComponent().SubscribeToTags(this, {tag});
     }
   }
   
@@ -357,12 +357,12 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
     if(ANKI_VERIFY(_behaviorExternalInterface != nullptr,
                    "ICozmoBehavior.SubscribeToTag.MissingExternalInterface",
                    "")){
-      _behaviorExternalInterface->GetStateChangeComponent().SubscribeToTags(this, {tag});
+      _behaviorExternalInterface->GetBehaviorEventComponent().SubscribeToTags(this, {tag});
     }
   }
   
   for(auto tag: _robotToEngineTags) {
-    behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,{tag});
+    behaviorExternalInterface.GetBehaviorEventComponent().SubscribeToTags(this,{tag});
   }
   
 }
@@ -658,7 +658,7 @@ void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalI
   // Call message handling convenience functions
   //////
   
-  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
+  const auto& stateChangeComp = behaviorExternalInterface.GetBehaviorEventComponent();
   const auto& actionsCompleted = stateChangeComp.GetActionsCompletedThisTick();
   for(auto& entry: actionsCompleted){
     if(entry.idTag == _lastActionTag){
