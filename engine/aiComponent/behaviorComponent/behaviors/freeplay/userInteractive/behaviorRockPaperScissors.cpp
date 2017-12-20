@@ -24,6 +24,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/bodyLightComponent.h"
+#include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
@@ -35,6 +36,9 @@
 namespace Anki {
 namespace Cozmo {
 
+// Transition to a new state and update the debug name for logging/debugging
+#define SET_STATE(s) do{ _state = State::s; DEBUG_SET_STATE(s); } while(0)
+  
 namespace {
 
 CONSOLE_VAR(bool, kRockPaperScissors_FakePowerButton, "RockPaperScissors", false);
@@ -63,6 +67,7 @@ BehaviorRockPaperScissors::BehaviorRockPaperScissors(const Json::Value& config)
   GET_FROM_CONFIG(Float,  waitTimeBetweenTaps_sec);
   GET_FROM_CONFIG(Float,  minDetectionScore);
   GET_FROM_CONFIG(Uint32, displayHoldTime_ms);
+  GET_FROM_CONFIG(Uint32, tapHeight_mm);
   
 # undef GET_FROM_CONFIG
 }
@@ -79,9 +84,13 @@ Result BehaviorRockPaperScissors::OnBehaviorActivated(BehaviorExternalInterface&
   DEV_ASSERT(bei.HasVisionComponent(), 
              "BehaviorRockPaperScissors.OnBehaviorActivated.NoVisionComponent");
 
-  _state = State::WaitForButton;
+  SET_STATE(WaitForButton);
   _humanSelection = Selection::Unknown;
   _robotSelection = Selection::Unknown;
+  
+  // Start with detection disabled to save heat/power
+  auto& visionComponent = bei.GetVisionComponent();
+  visionComponent.EnableMode(VisionMode::DetectingGeneralObjects, false);
   
   return Result::RESULT_OK;
 }
@@ -100,7 +109,7 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
       if(bei.GetRobotInfo().IsPowerButtonPressed() || kRockPaperScissors_FakePowerButton || !bei.GetRobotInfo().IsPhysical())
       {
         kRockPaperScissors_FakePowerButton = false;
-        _state = State::PlayCadence;
+        SET_STATE(PlayCadence);
       }
       break;
     }
@@ -117,43 +126,39 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
         moveHeadAction = new MoveHeadToAngleAction(MAX_HEAD_ANGLE);
       }
       
-      CompoundActionSequential* action = new CompoundActionSequential({
+      CompoundActionSequential* compoundAction = new CompoundActionSequential({
         new CompoundActionParallel({
           new WaitAction(_waitAfterButton_sec),
           moveHeadAction
         }),
-        
-        // One...
-        new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK), 
-        new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+10), 
-        new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK), 
-        new WaitAction(_waitTimeBetweenTaps_sec),
-
-        // Two...
-        new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK), 
-        new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+10), 
-        new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK), 
-        new WaitAction(_waitTimeBetweenTaps_sec),
-
-        // Three...
-        new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK), 
-        new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+10), 
-        new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK),
-        new WaitAction(_waitTimeBetweenTaps_sec),
-
-        // Shoot!
-        new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK), 
-        new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+10),
         new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK),
       });
-
-      DelegateIfInControl(action, [&bei,this]() {
+      
+      auto AddUpDown = [this](CompoundActionSequential* action)
+      {
+        const float moveDuration_sec = 0.1f;
+        MoveLiftToHeightAction* upAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+_tapHeight_mm);
+        upAction->SetDuration(moveDuration_sec);
+        MoveLiftToHeightAction* downAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
+        downAction->SetDuration(moveDuration_sec);
+        
+        action->AddAction(upAction);
+        action->AddAction(downAction);
+        action->AddAction(new WaitAction(_waitTimeBetweenTaps_sec));
+      };
+      
+      AddUpDown(compoundAction); // One...
+      AddUpDown(compoundAction); // Two...
+      AddUpDown(compoundAction); // Three...
+      AddUpDown(compoundAction); // Shoot!
+      
+      DelegateIfInControl(compoundAction, [&bei,this]() {
         DisplaySelection(bei);
         auto& visionComponent = bei.GetVisionComponent();
         visionComponent.EnableMode(VisionMode::DetectingGeneralObjects, true);
       });
       
-      _state = State::WaitForResult;
+      SET_STATE(WaitForResult);
       
       break;
     }
@@ -224,13 +229,17 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
           .offset                 = {{0,0,0}}
         };
         
+        bei.GetRobotInfo().GetMoveComponent().LockTracks(static_cast<u8>(AnimTrackFlag::BACKPACK_LIGHTS_TRACK),
+                                                         "RockPaperScissors", "RockPaperScissors");
+        
         bei.GetBodyLightComponent().SetBackpackLights(lights);
         
         DelegateIfInControl(new TriggerAnimationAction(animToPlay), [this,&bei](){
           _robotSelection = Selection::Unknown;
           _humanSelection = Selection::Unknown;
           bei.GetBodyLightComponent().SetBackpackLights( kLightsOff );
-          _state = WaitForButton;
+          bei.GetRobotInfo().GetMoveComponent().UnlockTracks(static_cast<u8>(AnimTrackFlag::BACKPACK_LIGHTS_TRACK), "RockPaperScissors");
+          SET_STATE(WaitForButton);
         });
       }
       break;
@@ -324,7 +333,7 @@ void BehaviorRockPaperScissors::HandleWhileActivated(const EngineToGameEvent& ev
                            "%s:%f", detection.name.c_str(), detection.score);
         }
         
-        _state = State::React;
+        SET_STATE(React);
       }
       break;
     }

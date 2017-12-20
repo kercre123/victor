@@ -56,6 +56,7 @@ private:
   float    _waitTimeBetweenTaps_sec = 0.5f;
   float    _minDetectionScore = 0.7f;
   uint32_t _displayHoldTime_ms = 1000;
+  uint32_t _tapHeight_mm = 10;
   
   // -------------
   // State Machine
