@@ -46,6 +46,7 @@ namespace Anki
     int8_t ParseInt8(const Json::Value& config, const char* key, const std::string& debugName);
     bool ParseBool(const Json::Value& config, const char* key, const std::string& debugName);
     std::string ParseString(const Json::Value& config, const char* key, const std::string& debugName);
+    uint32_t ParseUint32(const Json::Value& config, const char* key, const std::string& debugName);
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     

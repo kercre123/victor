@@ -65,6 +65,13 @@ std::string ParseString(const Json::Value& config, const char* key, const std::s
   return val.asString();
 };
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+uint32_t ParseUint32(const Json::Value& config, const char* key, const std::string& debugName) {
+  const auto & val = config[key];
+  DEV_ASSERT_MSG(val.isNumeric(), (debugName + ".ParseUint32.NotValidUint32").c_str(), "%s", key);
+  return Anki::Util::numeric_cast<uint32_t>(val.asUInt());
+}
+
   
 // Specializations of GetValue for all types we care about
 
