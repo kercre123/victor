@@ -232,8 +232,8 @@
     "DescriptionKey": "whatsNew.CodeLab_ShakeIt.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_shakeIt",
-    "LeftTintColor": [93,197,21],
-    "RightTintColor": [157,227,53],
+    "LeftTintColor": [212,172,3],
+    "RightTintColor": [255,220,26],
     "CodeLabData": {
         "ShowButton": true,
         "ProjectGuid": "01ab9bf6-e0ae-4a6a-a94c-51ccadc42fc9"
