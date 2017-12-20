@@ -107,7 +107,7 @@ namespace Messages {
       std::string serialNo    = "0";
       std::string osNum       = "0";
       #if FACTORY_TEST
-      std::string playpenVer  = "V1";
+      std::string playpenVer  = "V2";
       #endif
 
       std::string cliffs      = "0 0 0 0";

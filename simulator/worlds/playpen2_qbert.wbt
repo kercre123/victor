@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation 0.019822803 0.59130607 0.80620357 3.1051152
-  position 0.085387991 1.0245297 0.43009649
+  orientation 0.011010596 0.59948223 0.80031233 3.129522
+  position -0.014606203 1.169959 0.48309053
 }
 VictorCharger {
   translation -0.18943195 4.8176827e-05 0
@@ -88,15 +88,14 @@ Transform {
   ]
 }
 LightCube {
-  translation 0.271 -0.152 0.022
+  translation 0.272 0 0.022
 }
 Block1x1_NotActive {
-  translation 0.415 0 0.025
-  rotation 0 0 1 6.2831853
+  translation 0.165 -0.114 0.025
+  rotation 0 0 -1 1.5707963
   blockColor 1 1 1
-  width 0.055
-  markerWidth 0.044
-  markerImg_front "chargerHome.png"
+  width 0.03
+  markerImg_front "lightCubes/lightCubeK_bottom.png"
 }
 CustomWall {
   translation 0.39373625 0.00071928314 0.02
@@ -104,12 +103,12 @@ CustomWall {
   width 0.2
 }
 CustomWall {
-  translation 0.083008662 0.080693482 0.02
+  translation 0.073008662 0.105 0.02
   rotation 0 0 -1 1.5707963
-  width 0.2
+  width 0.1
 }
 CustomWall {
-  translation 0.083008666 -0.079306518 0.02
+  translation 0.073008666 -0.105 0.02
   rotation 0 0 -1 1.5707963
   width 0.2
 }

@@ -56,7 +56,7 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal(BehaviorExternalInt
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::NO_FFT_RESULT, RESULT_FAIL);
   }
 
-  TurnInPlaceAction* turn = new TurnInPlaceAction(robot, DEG_TO_RAD(180), false);
+  TurnInPlaceAction* turn = new TurnInPlaceAction(robot, DEG_TO_RAD(90), false);
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(robot, MAX_HEAD_ANGLE);
   CompoundActionParallel* action = new CompoundActionParallel(robot, {turn, head});
 

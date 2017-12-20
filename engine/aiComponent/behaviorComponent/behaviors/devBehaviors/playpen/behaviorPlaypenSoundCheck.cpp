@@ -135,13 +135,20 @@ void BehaviorPlaypenSoundCheck::AlwaysHandle(const RobotToEngineEvent& event, Be
                           PlaypenConfig::kFFTExpectedFreq_hz);
     }
 
+    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+    // be removed
+    Robot& robot = behaviorExternalInterface.GetRobot();
+
+    if(!robot.IsPhysical())
+    {
+      PRINT_NAMED_DEBUG("BehaviorPlaypenDriftCheck.HandleAudioFFTResult.SimulatedRobot",
+                        "Ignoring sound check result for simulated robot");
+      return;
+    }
+
     // Broadcast a failure message containing the result code
     if(res != FactoryTestResultCode::UNKNOWN)
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-
       using namespace ExternalInterface;
       const_cast<Robot&>(robot).Broadcast(MessageEngineToGame(PlaypenBehaviorFailed(res)));
     }

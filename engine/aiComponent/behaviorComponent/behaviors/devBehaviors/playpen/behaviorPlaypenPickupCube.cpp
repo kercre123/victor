@@ -71,9 +71,9 @@ Result BehaviorPlaypenPickupCube::OnBehaviorActivatedInternal(BehaviorExternalIn
   robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
 
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(robot, DEG_TO_RAD(0));
-  TurnInPlaceAction* turn = new TurnInPlaceAction(robot, DEG_TO_RAD(-90), false);
-  CompoundActionParallel* action = new CompoundActionParallel(robot, {head, turn});
-  DelegateIfInControl(action, [this, &behaviorExternalInterface](){ TransitionToWaitForCube(behaviorExternalInterface); });
+  // TurnInPlaceAction* turn = new TurnInPlaceAction(robot, DEG_TO_RAD(-90), false);
+  // CompoundActionParallel* action = new CompoundActionParallel(robot, {head, turn});
+  DelegateIfInControl(head, [this, &behaviorExternalInterface](){ TransitionToWaitForCube(behaviorExternalInterface); });
 
   return RESULT_OK;
 }
@@ -241,7 +241,6 @@ void BehaviorPlaypenPickupCube::TransitionToBackup(BehaviorExternalInterface& be
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
 
-  // TODO: Disable stop on cliff since the animation ends pretty close to the cliff
   PlayAnimationAction* action = new PlayAnimationAction(robot, "anim_triple_backup");
   DelegateIfInControl(action, [this, &behaviorExternalInterface]() {
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should

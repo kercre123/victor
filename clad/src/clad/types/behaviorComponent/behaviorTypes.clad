@@ -213,6 +213,7 @@ enum uint_8 BehaviorID {
   PlayArbitraryAnim,
 
   PlaypenCameraCalibration,
+  PlaypenDistanceSensor80mm,
   PlaypenDistanceSensor100mm,
   PlaypenDistanceSensor300mm,
   PlaypenDriftCheck,

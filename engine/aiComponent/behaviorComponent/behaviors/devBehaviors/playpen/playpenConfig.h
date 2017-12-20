@@ -36,7 +36,7 @@ static bool kWriteToStorage       = true;
 // Whether or not to ignore any test failures
 // The playpen behaviors should be written in such a way so that they can continue running
 // even after something has gone wrong (basically no branching)
-static bool kIgnoreFailures       = true;
+static bool kIgnoreFailures       = false;
 
 // Default timeout to force a playpen behavior to end
 static f32  kDefaultTimeout_ms    = 20000;
@@ -57,7 +57,7 @@ static u32  kTouchDurationToStart_ms      = 1000;
 static bool kUseButtonToStart             = true;
 
 // How long to record touch sensor data
-static u32  kDurationOfTouchToRecord_ms   = 3000;
+static u32  kDurationOfTouchToRecord_ms   = 0;
 
 // ----------InitChecks----------
 // Whether or not to check firmware version
@@ -65,7 +65,7 @@ static bool      kCheckFirmwareVersion = true;
 
 // Minimum battery voltage the robot should have at the start and end of playpen
 // TODO(Al): Reenable
-static f32       kMinBatteryVoltage    = 0;
+static f32       kMinBatteryVoltage    = 3.6;
 
 // Minimum firmare version we are looking for
 static u32       kMinFirmwareVersion   = 10501;
@@ -101,7 +101,7 @@ static f32 kIMUDriftAngleThreshDeg     = 0.2f;
 
 // ----------Distance Sensor----------
 // Number of distance sensor readings to record
-static u32 kNumDistanceSensorReadingsToRecord       = 30;
+static u32 kNumDistanceSensorReadingsToRecord       = 1;
 
 // Threshold on calculated distance to distance sensor target (using detected marker)
 // +/- this from the expected distance to the object/marker defined in the distance sensor
@@ -147,7 +147,7 @@ static u32 kPlaypenCalibTarget                        = 2; // 1 = INVERTED_BOX 2
 static f32 kCalibMarkerSize_mm                        = 15;
 
 // How big the calibration target's entire marker faces are
-static f32 kCalibMarkerCubeSize_mm                    = 30;
+static f32 kCalibMarkerCubeSize_mm                    = 20;
 
 // Which marker we should wait to be seeing before automatically starting camera calibration
 static CustomObjectMarker kMarkerToTriggerCalibration = CustomObjectMarker::Triangles2;
@@ -200,10 +200,10 @@ static f32       kToolCodeDistThreshY_pix = 40.f;
 
 // ----------Pickup Cube----------
 // Expected cube pose x relative to playpen starting pose
-static f32 kExpectedCubePoseX_mm                = 380;
+static f32 kExpectedCubePoseX_mm                = 420;
 
 // Expected cube pose y relative to playpen starting pose
-static f32 kExpectedCubePoseY_mm                = -200;
+static f32 kExpectedCubePoseY_mm                = 0;
 
 // Allowed difference between expected and observed cube pose in x and y
 static f32 kExpectedCubePoseDistThresh_mm       = 30;
