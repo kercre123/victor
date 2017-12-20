@@ -152,10 +152,18 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
       AddUpDown(compoundAction); // Three...
       AddUpDown(compoundAction); // Shoot!
       
-      DelegateIfInControl(compoundAction, [&bei,this]() {
-        DisplaySelection(bei);
+      DelegateIfInControl(compoundAction, [&bei,this]()
+      {
+        // Start looking for the hand and display our selection
         auto& visionComponent = bei.GetVisionComponent();
         visionComponent.EnableMode(VisionMode::DetectingGeneralObjects, true);
+        DelegateIfInControl(new CompoundActionParallel({
+          new WaitForLambdaAction([this,&bei](Robot&){
+            DisplaySelection(bei);
+            return true;
+          }),
+          new WaitAction(Util::MilliSecToSec((float)_displayHoldTime_ms))
+        }));
       });
       
       SET_STATE(WaitForResult);
