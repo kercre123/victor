@@ -145,6 +145,8 @@ namespace Cozmo {
   AnimationStreamer::~AnimationStreamer()
   {
     Util::SafeDelete(_proceduralAnimation);
+
+    FaceDisplay::removeInstance();
   }
   
   Result AnimationStreamer::SetStreamingAnimation(const std::string& name, Tag tag, u32 numLoops, bool interruptRunning)
