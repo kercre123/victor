@@ -58,6 +58,9 @@ private:
     RequestingFistBump,
     WaitingForMotorsToSettle,
     WaitingForBump,
+    PrepareToBumpFist,
+    BumpFist,
+    DrivingIntoFist,
     CompleteSuccess,
     CompleteFail,
     Complete
@@ -96,6 +99,15 @@ private:
   bool _isMaster;
   State _partnerState;
   void SetState_internal(State state, const std::string& stateName);
+  
+  State _pendingState;
+  State _gatingPartnerState;
+  std::string _pendingStateName;
+  
+  
+  // Transitions to the specified state when _partnerState
+  // reaches the specified state
+  void SetStateWhenPartnerState(State state, const std::string& stateName, State partnerState);
   
 }; // class BehaviorFistBump
   

@@ -71,6 +71,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/gameStatusFlag.h"
 #include "clad/types/robotStatusAndActions.h"
@@ -709,6 +710,8 @@ void Robot::Delocalize(bool isCarryingObject)
   _aiComponent->OnRobotDelocalized();
   
   _movementComponent->OnRobotDelocalized();
+  
+  _multiRobotComponent->OnRobotDelocalized();
   
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
   // any system can listen to this

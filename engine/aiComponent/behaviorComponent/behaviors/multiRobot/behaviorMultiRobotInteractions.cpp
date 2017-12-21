@@ -182,6 +182,7 @@ BehaviorStatus BehaviorMultiRobotInteractions::UpdateInternal_WhileRunning(Behav
       case State::DoInteraction:
       {
         if (_requestedInteraction == RobotInteraction::Invalid) {
+          PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.DoInteraction.BehaviorComplete", "");
           SET_STATE(Idle);
         }
         break;

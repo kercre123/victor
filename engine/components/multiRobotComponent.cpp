@@ -106,6 +106,11 @@ MultiRobotComponent::MultiRobotComponent(Robot& robot, const CozmoContext* conte
 
 }
 
+void MultiRobotComponent::OnRobotDelocalized()
+{
+  _robotInfoByLandmarkMap.clear();
+}
+  
 void MultiRobotComponent::Update()
 {
   ProcessMessages();
@@ -523,7 +528,7 @@ Result MultiRobotComponent::SendInteractionStateTransition(int state) const
   InterRobotMessage msg;
   msg.Set_interactionStateTransition(InteractionStateTransition(header, _currSessionID, state));
   SendMessage(msg);
-  PRINT_NAMED_WARNING("MRC.SendInteractionStateTransition.SentState", "%d: State: %d", _robot.GetID(), state);
+  //PRINT_NAMED_WARNING("MRC.SendInteractionStateTransition.SentState", "%d: State: %d", _robot.GetID(), state);
   return RESULT_OK;
 }
 
@@ -538,7 +543,7 @@ Result MultiRobotComponent::GetSessionPartnerPose(Pose3d& p) const
   if (landmark_it != _robotInfoByLandmarkMap.end()) {
     auto robot_it = landmark_it->second.find(_requestedRobotID);
     if (robot_it != landmark_it->second.end()) {
-      Pose3d p = robot_it->second.poseWrtLandmark.GetWithRespectToRoot();   // Since we set it's parent when this pose was received, this is the actual pose of the partner
+      p = robot_it->second.poseWrtLandmark.GetWithRespectToRoot();   // Since we set it's parent when this pose was received, this is the actual pose of the partner
 
       return RESULT_OK;
     }

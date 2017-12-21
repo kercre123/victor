@@ -50,6 +50,8 @@ public:
   MultiRobotComponent(Robot& robot, const CozmoContext* context);
   ~MultiRobotComponent() = default;
 
+  void OnRobotDelocalized();
+  
   void Update();
 
   void SetLandmark(ObjectType objectType);

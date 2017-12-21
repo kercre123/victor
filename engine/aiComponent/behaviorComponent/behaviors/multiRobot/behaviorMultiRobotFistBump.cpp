@@ -15,6 +15,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
+#include "engine/actions/driveToActions.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/multiRobotComponent.h"
@@ -27,6 +28,8 @@
 #include "util/console/consoleInterface.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
+#define STATE_NAME(s) #s
+#define SET_STATE_WHEN_PARTNER_STATE(s, ps) SetStateWhenPartnerState(State::s, #s, State::ps)
 
 namespace Anki {
 namespace Cozmo {
@@ -71,6 +74,7 @@ BehaviorMultiRobotFistBump::BehaviorMultiRobotFistBump(const Json::Value& config
 , _updateLastCompletionTime(false)
 , _mrc(nullptr)
 , _isMaster(true)
+, _pendingStateName("")
 {
   
   JsonTools::GetValueOptional(config, kMaxTimeToLookForFaceKey,     _maxTimeToLookForFace_s);
@@ -147,12 +151,25 @@ void BehaviorMultiRobotFistBump::HandleMultiRobotInteractionStateTransition(cons
 
 void BehaviorMultiRobotFistBump::SetState_internal(State state, const std::string& stateName)
 {
+  PRINT_NAMED_WARNING("BehaviorMultiRobotFistBump.SetState.state", "%d: newState %s",
+                      _isMaster, stateName.c_str());
   _state = state;
   SetDebugStateName(stateName);
   _mrc->SendInteractionStateTransition((int)state);
 }
 
-
+  
+void BehaviorMultiRobotFistBump::SetStateWhenPartnerState(State state, const std::string& stateName, State partnerState)
+{
+  if (_partnerState >= partnerState) {
+    SetState_internal(state, stateName);
+  } else {
+    _pendingState = state;
+    _pendingStateName = stateName;
+    _gatingPartnerState = partnerState;
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
@@ -174,12 +191,24 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
     _lastTimeOffTreads_s = 0;
   }
   
+  // Check for pending state transitions
+  if (_pendingStateName != "") {
+    if (_partnerState >= _gatingPartnerState) {
+      PRINT_NAMED_WARNING("MultiRobotFistBump.Update.PendingStateTransitionComplete", "NewState: %s", _pendingStateName.c_str());
+      SetState_internal(_pendingState, _pendingStateName);
+      _pendingStateName = "";
+    } else {
+      return Status::Running;
+    }
+  }
+  
   
   // If no action currently running, return Running, unless the state is
   // WaitingForMotorsToSettle or WaitingForBump in which case we loop the idle animation.
   switch(_state) {
     case State::WaitingForMotorsToSettle:
     case State::WaitingForBump:
+    case State::DrivingIntoFist:
     {
       break;
     }
@@ -190,6 +219,17 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
       }
     }
   }
+  
+  // RobotInfo ref for convenience
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  
+  // Pick pose 15cm from partner robot and go there
+  Pose3d partnerPose;
+  if (_mrc->GetSessionPartnerPose(partnerPose) != RESULT_OK) {
+    PRINT_NAMED_WARNING("BehaviorMultiRobotFistBump.Update.UnknownPose", "");
+    return Status::Running;
+  }
+
   
 
   switch(_state) {
@@ -206,24 +246,48 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
     {
       if (_isMaster) {
         // Turn to robot and greet
-        Pose3d slavePose;
-        if (_mrc->GetSessionPartnerPose(slavePose) != RESULT_OK) {
-          PRINT_NAMED_WARNING("BehaviorMultiRobotFistBump.GreetSlave.UnknownPose", "");
-          break;
-        }
-        
         CompoundActionSequential* action = new CompoundActionSequential();
-        action->AddAction(new TurnTowardsPoseAction(slavePose));
+        action->AddAction(new TurnTowardsPoseAction(partnerPose));
         action->AddAction(new TriggerAnimationAction(AnimationTrigger::NamedFaceInitialGreeting));
-        DelegateIfInControl(action);
+        DelegateIfInControl(action, [this](const ExternalInterface::RobotCompletedAction& result) {
+          SET_STATE(ApproachSlave);
+        });
+      } else {
+        SET_STATE_WHEN_PARTNER_STATE(ApproachSlave, ApproachSlave);
       }
-      
-      SET_STATE(ApproachSlave);
       break;
     }
     case State::ApproachSlave:
     {
-      SET_STATE(LookForFace);
+      if (_isMaster) {
+        
+        const Pose3d masterPose = behaviorExternalInterface.GetRobotInfo().GetPose().GetWithRespectToRoot();
+        
+        const auto& masterPoint = masterPose.GetTranslation();
+        const auto& slavePoint = partnerPose.GetTranslation();
+        f32 dx =  slavePoint.x() - masterPoint.x();
+        f32 dy =  slavePoint.y() - masterPoint.y();
+        const f32 goalDistFromSlave = 130;
+        
+        const f32 angleToSlave = atan2(dy,dx);
+        
+        Pose3d goalPose(angleToSlave, Z_AXIS_3D(), { slavePoint.x() - goalDistFromSlave * cos(angleToSlave),
+                                                     slavePoint.y() - goalDistFromSlave * sin(angleToSlave),
+                                                     slavePoint.z()
+        }, robotInfo.GetPose().GetParent() );
+
+        DelegateIfInControl(new DriveToPoseAction(goalPose, false), [this](const ExternalInterface::RobotCompletedAction& result) {
+          SET_STATE(RequestInitialFistBump);
+        });
+      } else {
+        // Turn to master after he greeted you
+        CompoundActionSequential* action = new CompoundActionSequential();
+        action->AddAction(new TurnTowardsPoseAction(partnerPose));
+        action->AddAction(new TriggerAnimationAction(AnimationTrigger::CodeLabHappy));
+        DelegateIfInControl(action);
+        SET_STATE_WHEN_PARTNER_STATE(PrepareToBumpFist, WaitingForMotorsToSettle);
+      }
+
       break;
     }
 
@@ -254,7 +318,6 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
         break;
       }
 
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       // Check if face observed very recently
       Pose3d facePose;
       TimeStamp_t lastObservedFaceTime = behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(facePose);
@@ -281,12 +344,11 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
     case State::RequestInitialFistBump:
     {
       DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpRequestOnce));
-      _state = State::RequestingFistBump;
+      SET_STATE(RequestingFistBump);
       break;
     }
     case State::RequestingFistBump:
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       _waitStartTime_s = now;
       robotInfo.GetMoveComponent().EnableLiftPower(false);
       robotInfo.GetMoveComponent().EnableHeadPower(false);
@@ -294,17 +356,16 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
       // Play idle anim
       DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpIdle));
       
-      _state = State::WaitingForMotorsToSettle;
+      SET_STATE(WaitingForMotorsToSettle);
       break;
     }
     case State::WaitingForMotorsToSettle:
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       if (!robotInfo.GetMoveComponent().IsLiftMoving() &&
           !robotInfo.GetMoveComponent().IsHeadMoving()) {
         _liftWaitingAngle_rad = robotInfo.GetLiftAngle();
         _waitingAccelX_mmps2 = robotInfo.GetHeadAccelData().x;
-        _state = State::WaitingForBump;
+        SET_STATE(WaitingForBump);
         if (now - _waitStartTime_s > kMaxTimeForMotorSettling_s) {
           PRINT_NAMED_WARNING("BehaviorMultiRobotFistBump.UpdateInternal_Legacy.MotorSettleTimeTooLong", "%f", now - _waitStartTime_s);
         }
@@ -313,13 +374,12 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
     }
     case State::WaitingForBump:
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       if (CheckForBump(robotInfo)) {
         CancelDelegates();  // Stop the idle anim
         robotInfo.GetMoveComponent().EnableLiftPower(true);
         robotInfo.GetMoveComponent().EnableHeadPower(true);
         DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpSuccess));
-        _state = State::CompleteSuccess;
+        SET_STATE(CompleteSuccess);
       }
       
       // When idle anim is complete, retry or fail
@@ -328,15 +388,62 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
         robotInfo.GetMoveComponent().EnableHeadPower(true);
         if (++_fistBumpRequestCnt < kMaxNumAttempts) {
           DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpRequestRetry));
-          _state = State::RequestingFistBump;
+          SET_STATE(RequestingFistBump);
         } else {
           DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpLeftHanging));
-          _state = State::CompleteFail;
+          SET_STATE(CompleteFail);
         }
       }
       
       break;
     }
+      
+    // SLAVE-ONLY STATES
+    case State::PrepareToBumpFist:
+    {
+      CompoundActionSequential* action = new CompoundActionSequential();
+      action->AddAction(new MoveLiftToHeightAction(80));
+      DelegateIfInControl(action, [this](const BehaviorExternalInterface& behaviorExternalInterface){
+        auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+        robotInfo.GetMoveComponent().EnableLiftPower(false);
+        SET_STATE(BumpFist);
+      });
+
+      break;
+    }
+    case State::BumpFist:
+    {
+      // Wait for motor to settle then drive forward
+      if (!robotInfo.GetMoveComponent().IsLiftMoving()) {
+        _liftWaitingAngle_rad = robotInfo.GetLiftAngle();
+        DelegateIfInControl(new DriveStraightAction(100));
+        SET_STATE(DrivingIntoFist);
+      }
+      break;
+    }
+    case State::DrivingIntoFist:
+    {
+      if (IsControlDelegated()) {
+        // Still driving forward, hopefully into a robot fist
+        bool liftBumped = std::fabsf(robotInfo.GetLiftAngle() - _liftWaitingAngle_rad) > kLiftAngleBumpThresh_radps;
+        if (liftBumped) {
+          CancelDelegates();  // Stop the DriveStraightAction
+          robotInfo.GetMoveComponent().EnableLiftPower(true);
+          CompoundActionSequential* action = new CompoundActionSequential();
+          action->AddAction(new DriveStraightAction(-30, 100));
+          action->AddAction(new TriggerAnimationAction(AnimationTrigger::FistBumpSuccess));
+          DelegateIfInControl(action);
+          SET_STATE(CompleteSuccess);
+        }
+      } else {
+        // Stopped driving forward and no fist was bumped
+        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpLeftHanging));
+        SET_STATE(CompleteFail);
+      }
+      break;
+    }
+      
+      
     case State::CompleteSuccess:
     {
       NeedActionCompleted();
