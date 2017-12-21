@@ -2139,8 +2139,15 @@ public class Robot : IRobot {
   #endregion
 
   public uint SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, bool fitToDuration = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    DAS.Debug(this, "Saying text: " + PrivacyGuard.HidePersonallyIdentifiableInfo(text));
-    return SendQueueSingleAction(Singleton<SayTextWithIntent>.Instance.Initialize(text, playEvent, intent, fitToDuration), callback, queueActionPosition);
+    uint tag = (uint) ActionConstants.INVALID_TAG;
+    try {
+      DAS.Debug("Robot.SayTextWithEvent", "Saying text: " + PrivacyGuard.HidePersonallyIdentifiableInfo(text));
+      tag = SendQueueSingleAction(Singleton<SayTextWithIntent>.Instance.Initialize(text, playEvent, intent, fitToDuration), callback, queueActionPosition);
+    }
+    catch (ArgumentException ex) {
+      DAS.Error("Robot.SayTextWithEvent", ex.ToString());
+    }
+    return tag;
   }
 
   public void EraseAllEnrolledFaces() {

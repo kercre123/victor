@@ -2229,18 +2229,28 @@ namespace CodeLab {
         }
 
         // Clean the Cozmo Says text input using the same process as Cozmo Says minigame
-        string cozmoSaysText = scratchRequest.argString;
-        string cozmoSaysTextCleaned = RemoveUnsupportedChars(cozmoSaysText);
-        bool hasBadWords = BadWordsFilterManager.Instance.Contains(cozmoSaysTextCleaned);
+        string text = RemoveUnsupportedChars(scratchRequest.argString);
+
+        // Trim text to fit message size 
+        text = TextToSpeech.Trim(text);
+
+        // Check for bad words
+        bool hasBadWords = BadWordsFilterManager.Instance.Contains(text);
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(hasBadWords.ToString()));  // deliberately don't send string as it's PII
         uint idTag;
         if (hasBadWords) {
           idTag = robot.SendAnimationTrigger(AnimationTrigger.CozmoSaysBadWord, inProgressScratchBlock.AdvanceToNextBlock, queueActionPosition);
         }
         else {
-          idTag = robot.SayTextWithEvent(cozmoSaysTextCleaned, AnimationTrigger.Count, callback: inProgressScratchBlock.AdvanceToNextBlock, queueActionPosition: queueActionPosition);
+          idTag = robot.SayTextWithEvent(text, AnimationTrigger.Count, callback: inProgressScratchBlock.AdvanceToNextBlock, queueActionPosition: queueActionPosition);
         }
-        inProgressScratchBlock.SetActionData(ActionType.Say, idTag);
+        if (idTag == (uint) ActionConstants.INVALID_TAG) {
+          DAS.Warn("CodeLabGame.cozmoSays", "Unable to perform action");
+          inProgressScratchBlock.AdvanceToNextBlock(true);
+        }
+        else {
+          inProgressScratchBlock.SetActionData(ActionType.Say, idTag);
+        }
       }
       else if (scratchRequest.command == "cozmoHeadAngle") {
         float desiredHeadAngle = (CozmoUtil.kIdealBlockViewHeadValue + CozmoUtil.kIdealFaceViewHeadValue) * 0.5f; // medium setting

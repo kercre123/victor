@@ -167,12 +167,14 @@ public class SayTextSlide : MonoBehaviour {
       Anki.Cozmo.AnimationTrigger getInTrigger;
       Anki.Cozmo.AnimationTrigger getOutTrigger;
 
-      SetGetInOutTriggers(_TextInput.text.Length, _TextInput.characterLimit, out getInTrigger, out getOutTrigger);
+      string text = TextToSpeech.Trim(_TextInput.text);
+
+      SetGetInOutTriggers(text.Length, _TextInput.characterLimit, out getInTrigger, out getOutTrigger);
 
       RobotActionUnion[] actions = {
         new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(1, getInTrigger, true, false, false, false)),
         new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
-          _TextInput.text,
+          text,
           Anki.Cozmo.AnimationTrigger.CozmoSaysSpeakLoop,
           Anki.Cozmo.SayTextIntent.Cozmo_Says,
           true)),
