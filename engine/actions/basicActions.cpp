@@ -1035,7 +1035,7 @@ namespace Anki {
     bool MoveLiftToHeightAction::IsLiftInPosition() const
     {
       const bool inPosition = (NEAR(_heightWithVariation, GetRobot().GetLiftHeight(), _heightTolerance) &&
-                               !GetRobot().GetMoveComponent().IsLiftMoving());
+                               (!_waitUntilMovementStops || !GetRobot().GetMoveComponent().IsLiftMoving()));
       
       return inPosition;
     }

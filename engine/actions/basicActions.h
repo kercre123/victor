@@ -357,6 +357,10 @@ namespace Cozmo {
       void SetMaxLiftSpeed(float speedRadPerSec) { _maxLiftSpeedRadPerSec = speedRadPerSec; }
       void SetLiftAccel(float accelRadPerSec2) { _liftAccelRacPerSec2 = accelRadPerSec2; }
       
+      // If disabled, the action completes as soon as the lift is within tolerance:
+      // it does not wait until the lift stops moving
+      void SetWaitUntilMovementStops(bool enable) { _waitUntilMovementStops = enable; }
+      
     protected:
       
       static f32 GetPresetHeight(Preset preset);
@@ -376,6 +380,7 @@ namespace Cozmo {
       f32         _duration = 0.0f; // 0 means "as fast as it can"
       f32         _maxLiftSpeedRadPerSec = 10.0f;
       f32         _liftAccelRacPerSec2 = 20.0f;
+      bool        _waitUntilMovementStops = true;
       
       bool        _inPosition;
       bool        _motionStarted = false;
