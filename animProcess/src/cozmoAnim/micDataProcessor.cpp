@@ -623,7 +623,7 @@ void MicDataProcessor::Update()
 {
   // hackily pretend a trigger word has been detected
   static bool triggered = false;
-  if (!triggered && BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > 10.f) {
+  if (!triggered && BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > 5.f) {
     PRINT_NAMED_WARNING("triggerWordFake", "faking the trigger word");
     triggered = true;
     TriggerWordDetectCallback(nullptr, 0.f);
@@ -689,7 +689,7 @@ void MicDataProcessor::Update()
     if (_currentlyStreaming)
     {
       // Are we done with what we want to stream?
-      static constexpr size_t kMaxRecordTime_ms = 60000;
+      static constexpr size_t kMaxRecordTime_ms = 120000;
       static constexpr size_t kMaxRecordNumChunks = (kMaxRecordTime_ms / (kTimePerChunk_ms * kChunksPerSEBlock)) + 1;
       if (receivedStopMessage || streamingAudioIndex >= kMaxRecordNumChunks)
       {

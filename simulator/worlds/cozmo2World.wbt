@@ -1,9 +1,9 @@
-#VRML_SIM V8.5 utf8
+#VRML_SIM R2018a utf8
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.2408952 0.63631081 0.7328561 3.6828741
-  position -2.1261488 2.455865 0.79941287
+  orientation 0.19196646408255116 0.5129657021246067 0.8366690296117409 2.534725892782221
+  position 0.320031555162139 0.3585111213262305 0.27259614355472744
 }
 Background {
   skyColor [
@@ -30,21 +30,6 @@ CozmoMat {
 }
 Face {
   translation 0.34 -0.97 0.27
-}
-LightCube {
-  translation 0.0884345 0.0833803 0.022
-  rotation 0 0 1 0.523599
-  objectType "Block_LIGHTCUBE1"
-}
-LightCube {
-  translation 0.129117 -0.00670031 0.0219929
-  rotation 1.39537e-05 -1.83704e-06 1 0.261799
-  objectType "Block_LIGHTCUBE3"
-}
-LightCube {
-  translation 0.355064 0.0239116 0.0219929
-  rotation 0 0 -1 6.23319
-  objectType "Block_LIGHTCUBE2"
 }
 CozmoBot2 {
   filterLogs TRUE

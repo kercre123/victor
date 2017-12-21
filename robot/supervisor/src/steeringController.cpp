@@ -552,8 +552,8 @@ namespace Anki {
 
     void ExecutePointTurn(f32 angularVel, f32 angularAccel)
     {
-      AnkiDebug( "SteeringController.ExecutePointTurn_2.Params", "%d: vel %f, accel %f",
-                HAL::GetTimeStamp(), RAD_TO_DEG_F32(angularVel), RAD_TO_DEG_F32(angularAccel));
+      //AnkiDebug( "SteeringController.ExecutePointTurn_2.Params", "%d: vel %f, accel %f",
+      //          HAL::GetTimeStamp(), RAD_TO_DEG_F32(angularVel), RAD_TO_DEG_F32(angularAccel));
       
       // Check for nan params
       if (isnan(angularVel) || isnan(angularAccel)) {

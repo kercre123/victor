@@ -55,7 +55,10 @@ void BeatDetector::AddSamples(const AudioUtil::AudioChunkList& chunkList)
   if (_aubioTempoDetector == nullptr) {
     const char* const kAubioTempoMethod = "default";
     _aubioTempoDetector = new_aubio_tempo(kAubioTempoMethod, kAubioTempoBufSize, kAubioTempoHopSize, kAubioTempoSampleRate);
-    DEV_ASSERT(_aubioTempoDetector != nullptr, "BeatDetector.Constructor.FailedCreatingAubioTempoObject");
+    DEV_ASSERT(_aubioTempoDetector != nullptr, "BeatDetector.AddSamples.FailedCreatingAubioTempoObject");
+    
+    //PRINT_NAMED_WARNING("beats", "thresh %f", aubio_tempo_get_threshold(_aubioTempoDetector));
+    //DEV_ASSERT(0 == aubio_tempo_set_threshold(_aubioTempoDetector, 5.f), "failed setting threshold");
     
     _aubioInputBuffer.clear();
     
@@ -94,9 +97,19 @@ void BeatDetector::AddSamples(const AudioUtil::AudioChunkList& chunkList)
                           (uint_t) aubio_tempo_get_last_ms(_aubioTempoDetector));
       
       if (conf > 0.10f) {
-        static uint8_t animTag = 0;
-        if (++animTag == 0) ++animTag;
-        _animStreamer->SetStreamingAnimation("anim_head_nod", 0);
+        static int cnt = 0;
+        if (cnt < 8) {
+          _animStreamer->SetStreamingAnimation("anim_head_nod", 0);
+        } else if (cnt < 16) {
+          _animStreamer->SetStreamingAnimation("anim_lift_head", 0);
+        } else if (cnt < 24) {
+          _animStreamer->SetStreamingAnimation(cnt&1 ? "anim_lift_head_body_left" : "anim_lift_head_body_right" , 0);
+        } else if (cnt < 32) {
+          _animStreamer->SetStreamingAnimation(cnt&1 ? "anim_lift_head_body_left_medium" : "anim_lift_head_body_right_medium" , 0);
+        } else {
+          _animStreamer->SetStreamingAnimation(cnt&1 ? "anim_lift_head_body_left_large" : "anim_lift_head_body_right_large" , 0);
+        }
+        ++cnt;
       }
     }
   }

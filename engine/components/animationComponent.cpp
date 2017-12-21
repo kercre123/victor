@@ -477,7 +477,7 @@ void AnimationComponent::HandleAnimStarted(const AnkiEvent<RobotInterface::Robot
   if (it != _callbackMap.end()) {
     PRINT_CH_INFO("AnimationComponent", "AnimStarted.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
   } else if (payload.animName != EnumToString(AnimConstants::PROCEDURAL_ANIM) ) {
-    PRINT_NAMED_WARNING("AnimationComponent.AnimStarted.UnexpectedTag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
+    //PRINT_NAMED_WARNING("AnimationComponent.AnimStarted.UnexpectedTag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
     return;
   }
 
@@ -499,7 +499,7 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
     it->second.ExecuteCallback(payload.wasAborted ? AnimResult::Aborted : AnimResult::Completed);
     _callbackMap.erase(it);
   } else if (payload.animName != EnumToString(AnimConstants::PROCEDURAL_ANIM) ) {
-    PRINT_NAMED_WARNING("AnimationComponent.AnimEnded.UnexpectedTag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
+    //PRINT_NAMED_WARNING("AnimationComponent.AnimEnded.UnexpectedTag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
     return;
   }
 
