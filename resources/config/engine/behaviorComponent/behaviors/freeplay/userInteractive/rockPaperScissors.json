@@ -2,9 +2,10 @@
   "behaviorClass": "RockPaperScissors",
   "behaviorID": "RockPaperScissors",
 
-  "waitAfterButton_sec"     : 1.0,
-  "waitTimeBetweenTaps_sec" : 0.25,
+  "waitAfterButton_sec"     : 0.5,
+  "waitTimeBetweenTaps_sec" : 0.15,
   "minDetectionScore"       : 0.5,
-  "displayHoldTime_ms"      : 1000,
-  "tapHeight_mm"            : 12
+  "displayHoldTime_ms"      : 1500,
+  "tapHeight_mm"            : 25,
+  "showDetectionString"     : true
 }

@@ -23,6 +23,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
@@ -68,6 +69,7 @@ BehaviorRockPaperScissors::BehaviorRockPaperScissors(const Json::Value& config)
   GET_FROM_CONFIG(Float,  minDetectionScore);
   GET_FROM_CONFIG(Uint32, displayHoldTime_ms);
   GET_FROM_CONFIG(Uint32, tapHeight_mm);
+  GET_FROM_CONFIG(Bool,   showDetectionString);
   
 # undef GET_FROM_CONFIG
 }
@@ -91,6 +93,32 @@ Result BehaviorRockPaperScissors::OnBehaviorActivated(BehaviorExternalInterface&
   // Start with detection disabled to save heat/power
   auto& visionComponent = bei.GetVisionComponent();
   visionComponent.EnableMode(VisionMode::DetectingGeneralObjects, false);
+  
+  bei.GetRobotAudioClient().SetRobotMasterVolume(0.5f);
+  
+  if(_displayImages.empty())
+  {
+    const CozmoContext* context = bei.GetRobotInfo().GetContext();
+    const std::string imgPath = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                                           "config/engine/behaviorComponent/behaviors/freeplay/userInteractive/rockPaperScissors");
+    
+    Result result = _displayImages[Selection::Rock].Load(Util::FileUtils::FullFilePath({imgPath, "rock.png"}));
+    DEV_ASSERT_MSG(RESULT_OK == result, "BehaviorRockPaperScissors.DisplaySelection.NoRockImage",
+                   "%s", imgPath.c_str());
+    
+    result = _displayImages[Selection::Paper].Load(Util::FileUtils::FullFilePath({imgPath, "paper.png"}));
+    DEV_ASSERT_MSG(RESULT_OK == result, "BehaviorRockPaperScissors.DisplaySelection.NoPaperImage",
+                   "%s", imgPath.c_str());
+    
+    result = _displayImages[Selection::Scissors].Load(Util::FileUtils::FullFilePath({imgPath, "scissors.png"}));
+    DEV_ASSERT_MSG(RESULT_OK == result, "BehaviorRockPaperScissors.DisplaySelection.NoScissorsImage",
+                   "%s", imgPath.c_str());
+    
+    // TODO: Add question mark image?
+    _displayImages[Selection::Unknown].Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH/2);
+    _displayImages[Selection::Unknown].FillWith(0);
+    
+  }
   
   return Result::RESULT_OK;
 }
@@ -116,57 +144,65 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
 
     case State::PlayCadence:
     {
-      // Turn towards last face if we have one. Otherwise just look up.
-      auto& faceWorld = bei.GetFaceWorld();
-      IActionRunner* moveHeadAction = nullptr;
-      if(faceWorld.HasAnyFaces()) {
-        moveHeadAction = new TurnTowardsLastFacePoseAction();
-      }
-      else {
-        moveHeadAction = new MoveHeadToAngleAction(MAX_HEAD_ANGLE);
-      }
-      
-      CompoundActionSequential* compoundAction = new CompoundActionSequential({
-        new CompoundActionParallel({
-          new WaitAction(_waitAfterButton_sec),
-          moveHeadAction
-        }),
-        new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK),
-      });
-      
-      auto AddUpDown = [this](CompoundActionSequential* action)
+      if(!IsActing())
       {
-        const float moveDuration_sec = 0.1f;
-        MoveLiftToHeightAction* upAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+_tapHeight_mm);
-        upAction->SetDuration(moveDuration_sec);
-        MoveLiftToHeightAction* downAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
-        downAction->SetDuration(moveDuration_sec);
+        // Turn towards last face if we have one. Otherwise just look up.
+        auto& faceWorld = bei.GetFaceWorld();
+        IActionRunner* moveHeadAction = nullptr;
+        if(faceWorld.HasAnyFaces()) {
+          moveHeadAction = new TurnTowardsLastFacePoseAction();
+        }
+        else {
+          moveHeadAction = new MoveHeadToAngleAction(MAX_HEAD_ANGLE);
+        }
         
-        action->AddAction(upAction);
-        action->AddAction(downAction);
-        action->AddAction(new WaitAction(_waitTimeBetweenTaps_sec));
-      };
-      
-      AddUpDown(compoundAction); // One...
-      AddUpDown(compoundAction); // Two...
-      AddUpDown(compoundAction); // Three...
-      AddUpDown(compoundAction); // Shoot!
-      
-      DelegateIfInControl(compoundAction, [&bei,this]()
-      {
-        // Start looking for the hand and display our selection
-        auto& visionComponent = bei.GetVisionComponent();
-        visionComponent.EnableMode(VisionMode::DetectingGeneralObjects, true);
-        DelegateIfInControl(new CompoundActionParallel({
-          new WaitForLambdaAction([this,&bei](Robot&){
-            DisplaySelection(bei);
-            return true;
+        CompoundActionSequential* compoundAction = new CompoundActionSequential({
+          new CompoundActionParallel({
+            new WaitAction(_waitAfterButton_sec),
+            moveHeadAction
           }),
-          new WaitAction(Util::MilliSecToSec((float)_displayHoldTime_ms))
-        }));
-      });
-      
-      SET_STATE(WaitForResult);
+          new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK),
+        });
+        
+        auto AddUpDown = [this](CompoundActionSequential* action)
+        {
+          const float moveDuration_sec = 0.1f;
+          const float tolerance_mm = 20.f; // just won't movement, not accuracy that slows us down
+          MoveLiftToHeightAction* upAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+_tapHeight_mm, tolerance_mm);
+          upAction->SetDuration(moveDuration_sec);
+          
+          MoveLiftToHeightAction* downAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK, tolerance_mm);
+          downAction->SetDuration(moveDuration_sec);
+          
+          action->AddAction(upAction);
+          action->AddAction(downAction);
+          action->AddAction(new WaitAction(_waitTimeBetweenTaps_sec));
+        };
+        
+        AddUpDown(compoundAction); // One...
+        AddUpDown(compoundAction); // Two...
+        AddUpDown(compoundAction); // Three...
+        AddUpDown(compoundAction); // Shoot!
+        
+        DelegateIfInControl(compoundAction, [&bei,this]()
+                            {
+                              // Start looking for the hand and display our selection
+                              auto& visionComponent = bei.GetVisionComponent();
+                              visionComponent.EnableMode(VisionMode::DetectingGeneralObjects, true);
+                              
+                              _robotSelection = static_cast<Selection>(GetRNG().RandIntInRange(0, 2));
+                              
+                              SET_STATE(WaitForResult);
+                              
+                              //        DelegateIfInControl(new CompoundActionParallel({
+                              //          new WaitForLambdaAction([this,&bei](Robot&){
+                              //            DisplaySelection(bei);
+                              //            return true;
+                              //          }),
+                              //          new WaitAction(Util::MilliSecToSec((float)_displayHoldTime_ms))
+                              //        }));
+                            });
+      }
       
       break;
     }
@@ -174,6 +210,26 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
     case State::WaitForResult:
     {
       // Just waiting... Handler for ObjectDetected message will change state for us
+      DisplaySelection(bei);
+      break;
+    }
+      
+    case State::ShowResult:
+    {
+      if(_humanSelection != Selection::Unknown)
+      {
+        if(IsActing())
+        {
+          DisplaySelection(bei);
+        }
+        else
+        {
+          DelegateIfInControl(new WaitAction(Util::MilliSecToSec((float)_displayHoldTime_ms)), [this]()
+                              {
+                                SET_STATE(React);
+                              });
+        }
+      }
       break;
     }
 
@@ -258,59 +314,72 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
   return BehaviorStatus::Running;
 }
 
-void BehaviorRockPaperScissors::DisplaySelection(BehaviorExternalInterface& bei)
+void BehaviorRockPaperScissors::DisplaySelection(BehaviorExternalInterface& bei, const std::string& overlayStr)
 {
   DEV_ASSERT(bei.HasAnimationComponent(),
              "BehaviorRockPaperScissors.DisplaySelection.NoAnimComponent");
   
-  _robotSelection = static_cast<Selection>(GetRNG().RandIntInRange(0, 2));
-  
-  const CozmoContext* context = bei.GetRobotInfo().GetContext();
-  const std::string imgPath = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                                         "config/engine/behaviorComponent/behaviors/freeplay/userInteractive/rockPaperScissors");
   std::string filename = "";
   
-  switch(_robotSelection)
+  static Vision::ImageRGB img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+  
+  if(_humanSelection == Selection::Unknown)
   {
-    case Selection::Rock:     filename = "rock.png";     break;
+    img.FillWith(0);
+    Rectangle<s32> rect(FACE_DISPLAY_WIDTH/4, 0, FACE_DISPLAY_WIDTH/2, FACE_DISPLAY_HEIGHT);
+    Vision::ImageRGB robotROI = img.GetROI(rect);
+    _displayImages[_robotSelection].CopyTo(robotROI);
+  }
+  else
+  {
+    {
+      Rectangle<s32> robotRect(0, 0, FACE_DISPLAY_WIDTH/2, FACE_DISPLAY_HEIGHT);
+      Vision::ImageRGB robotROI = img.GetROI(robotRect);
+      _displayImages.at(_robotSelection).CopyTo(robotROI);
+    }
+
+    // WTF? Why does this ROI not work when the one above does?
+    // Had to manually copy in the loop below... no idea why.
+    //    {
+    //      Rectangle<s32> humanRect(FACE_DISPLAY_WIDTH/2, 0, FACE_DISPLAY_WIDTH/2, FACE_DISPLAY_HEIGHT);
+    //      Vision::ImageRGB humanROI = img.GetROI(humanRect);
+    //      _displayImages.at(_humanSelection).CopyTo(humanROI);
+    //    }
+    //    // Cheap hack to change human display color
+    //    for(s32 i=0; i<humanROI.GetNumRows(); ++i)
+    //    {
+    //      Vision::PixelRGB* humanROI_i = humanROI.GetRow(i);
+    //      for(s32 j=0; j<humanROI.GetNumCols(); ++j)
+    //      {
+    //        std::swap(humanROI_i[j].g(), humanROI_i[j].b());
+    //      }
+    //    }
+    
+    const Vision::ImageRGB& selectedImg = _displayImages.at(_humanSelection);
+    DEV_ASSERT(selectedImg.GetNumRows() <= img.GetNumRows(), "BehaviorRockPaperScissors.DisplaySelection.BadNumRows");
+    DEV_ASSERT(selectedImg.GetNumCols() <= img.GetNumCols()/2, "BehaviorRockPaperScissors.DisplaySelection.BadNumRows");
+    for(s32 i=0; i<selectedImg.GetNumRows(); ++i)
+    {
+      const Vision::PixelRGB* selectedImg_i = selectedImg.GetRow(i);
+      Vision::PixelRGB* img_i = img.GetRow(i) + img.GetNumCols()/2;
       
-    case Selection::Paper:    filename = "paper.png";    break;
-      
-    case Selection::Scissors: filename = "scissors.png"; break;
-      
-    case Selection::Unknown:
-      DEV_ASSERT(false, "BehaviorRockPaperScissors.DisplaySelection.UnknownNotPossible");
-      return;
+      for(s32 j=0; j<selectedImg.GetNumCols(); ++j)
+      {
+        const Vision::PixelRGB& selectedPixel = selectedImg_i[j];
+        Vision::PixelRGB& imgPixel = img_i[j];
+        
+        imgPixel.r() = selectedPixel.r();
+        imgPixel.g() = selectedPixel.b(); // Deliberate swap of g and b to get different color for human selection
+        imgPixel.b() = selectedPixel.g(); //   "
+      }
+    }
+    
   }
   
-  Vision::ImageRGB img;
-  const std::string fullfilename = Util::FileUtils::FullFilePath({imgPath, filename});
-  Result result = img.Load(fullfilename);
-  DEV_ASSERT_MSG(RESULT_OK == result, "BehaviorRockPaperScissors.DisplaySelection.NoImage",
-                 "%s", fullfilename.c_str());
-  
   auto & animComponent = bei.GetAnimationComponent();
-  animComponent.DisplayFaceImage(img, _displayHoldTime_ms, true);
+  animComponent.DisplayFaceImage(img, BS_TIME_STEP, true);
 }
   
-//void BehaviorRockPaperScissors::BlinkLight(BehaviorExternalInterface& bei)
-//{
-//  _blinkOn = !_blinkOn;
-//
-//  bei.GetBodyLightComponent().SetBackpackLights( _blinkOn ? kLightsOn : kLightsOff );
-//
-//  // always blink if we are streaming, and set up another blink for single photo if we need to turn off the
-//  // light
-//  if( _blinkOn || _isStreaming ) {
-//    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-//    // need to do another blink after this one
-//    _timeToBlink = currTime_s + kLightBlinkPeriod_s;
-//  }
-//  else {
-//    _timeToBlink = -1.0f;
-//  }
-//}
-
 void BehaviorRockPaperScissors::HandleWhileActivated(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) 
 {
   switch(event.GetData().GetTag())
@@ -337,11 +406,21 @@ void BehaviorRockPaperScissors::HandleWhileActivated(const EngineToGameEvent& ev
             _humanSelection = Selection::Scissors;
           }
           
-          PRINT_NAMED_INFO("BehaviorRockPaperScissors.HandleWhileActivated.HumanSelectionDetected",
-                           "%s:%f", detection.name.c_str(), detection.score);
+//          if(_showDetectionString)
+//          {
+//            std::string overlayStr(detection.name);
+//            overlayStr += ":";
+//            overlayStr += std::to_string((s32)std::round(100.f*detection.score));
+//            DisplaySelection(behaviorExternalInterface, overlayStr);
+//          }
+          
+          if(_humanSelection != Selection::Unknown)
+          {
+            PRINT_NAMED_INFO("BehaviorRockPaperScissors.HandleWhileActivated.HumanSelectionDetected",
+                             "%s:%f", detection.name.c_str(), detection.score);
+            SET_STATE(ShowResult);
+          }
         }
-        
-        SET_STATE(React);
       }
       break;
     }

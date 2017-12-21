@@ -15,6 +15,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_DevBehaviors_BehaviorRockPaperScissors_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "anki/vision/basestation/image.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -46,7 +47,7 @@ protected:
 
   virtual void HandleWhileActivated(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) override;  
   
-  void DisplaySelection(BehaviorExternalInterface& behaviorExternalInterface);
+  void DisplaySelection(BehaviorExternalInterface& behaviorExternalInterface, const std::string& overlayStr = "");
   
 private:
   
@@ -57,6 +58,7 @@ private:
   float    _minDetectionScore = 0.7f;
   uint32_t _displayHoldTime_ms = 1000;
   uint32_t _tapHeight_mm = 10;
+  bool     _showDetectionString = false;
   
   // -------------
   // State Machine
@@ -64,6 +66,7 @@ private:
     WaitForButton,
     PlayCadence,
     WaitForResult,
+    ShowResult,
     React
   };
 
@@ -80,6 +83,8 @@ private:
   
   Selection _robotSelection;
   Selection _humanSelection;
+  
+  std::map<Selection, Vision::ImageRGB> _displayImages;
   
 };
 
