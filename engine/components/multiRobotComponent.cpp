@@ -16,6 +16,8 @@
 #include "engine/components/interRobotComms.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "engine/viz/vizManager.h"
+
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 
@@ -25,6 +27,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
+#include "util/time/universalTime.h"
 
 #include "json/json.h"
 
@@ -69,7 +72,8 @@ MultiRobotComponent::MultiRobotComponent(Robot& robot, const CozmoContext* conte
 {
   // Initialize sessionID counter with some random number so  that there's
   // unlikely to be collisions with sessionIDs from other robots
-  _sessionIDCounter = _context->GetRandom()->RandInt(std::numeric_limits<int>::max());
+  //_sessionIDCounter = _context->GetRandom()->RandInt(std::numeric_limits<int>::max());
+  _sessionIDCounter = static_cast<SessionID_t>(Util::Time::UniversalTime::GetCurrentTimeInNanoseconds());
 
   // Get unique mfgID
   RobotID_t robotID = robot.GetID();
@@ -148,6 +152,21 @@ void MultiRobotComponent::UpdatePoseWrtLandmark()
     Pose3d poseWrtLandmark;
     bool   poseWrtLandmarkSet = false;
     
+    // If landmark object was previously already set then just look for it again by ID
+    if (_landmarkObjectID.IsSet()) {
+      ObservableObject* landmarkObj = _robot.GetBlockWorld().GetLocatedObjectByID(_landmarkObjectID);
+      if (landmarkObj) {
+        if (!_robot.GetPose().GetWithRespectTo(landmarkObj->GetPose(), poseWrtLandmark)) {
+          PRINT_NAMED_WARNING("MultiRobotComponent.UpdatePoseWrtLandmark.MismatchedOrigins-1", "ObjectID: %d", landmarkObj->GetID().GetValue());
+        } else {
+          poseWrtLandmarkSet = true;
+        }
+      } else {
+        PRINT_NAMED_WARNING("MultiRobotComponent.UpdatePoseWrtLandmark.LandmarkObjectNotFound", "ObjectID: %d", _landmarkObjectID.GetValue());
+        _landmarkObjectID.UnSet();
+      }
+    }
+    
     BlockWorldFilter filter;
     filter.SetAllowedTypes({_landmark});
     filter.AddFilterFcn([this, &poseWrtLandmark, &poseWrtLandmarkSet](const ObservableObject* blockPtr) {
@@ -162,6 +181,7 @@ void MultiRobotComponent::UpdatePoseWrtLandmark()
       
       PRINT_NAMED_WARNING("MultiRobotComponent.UpdatePoseWrtLandmark.ObjectFound", "ObjectID: %d", blockPtr->GetID().GetValue());
       poseWrtLandmarkSet = true;
+      _landmarkObjectID = blockPtr->GetID();
       return false;
     });
     
@@ -172,6 +192,9 @@ void MultiRobotComponent::UpdatePoseWrtLandmark()
       return;
     }
     
+    // Set parent as origin so that it doesn't flatten to robot's pose wrt origin
+    poseWrtLandmark.SetParent(_robot.GetWorldOrigin());
+    
     // Broadcast message
     IRMPacketHeader header;
     GetBroadcastPacketHeader(header);
@@ -179,6 +202,12 @@ void MultiRobotComponent::UpdatePoseWrtLandmark()
     InterRobotMessage msg;
     msg.Set_poseWrtLandmark(PoseWrtLandmark(header, _landmark, poseWrtLandmark.ToPoseStruct3d(_robot.GetPoseOriginList())));
     SendMessage(msg);
+    
+//    PRINT_NAMED_WARNING("MRC.UpdatePoseWrtLandmark.Pose", "%d: %f %f %f",
+//                        _robot.GetID(),
+//                        msg.Get_poseWrtLandmark().poseWrtLandmark.x,
+//                        msg.Get_poseWrtLandmark().poseWrtLandmark.y,
+//                        msg.Get_poseWrtLandmark().poseWrtLandmark.z);
     
     _lastPoseWrtLandmarkBroadcast_ms = now_ms;
   }  
@@ -204,13 +233,47 @@ void MultiRobotComponent::HandleMessage(const RobotID_t& senderID, const PoseWrt
   PRINT_NAMED_WARNING("MultiRobotComponent.HandlePoseWrtLandmark",
                       "From: %x, To: %x, Landmark: %s (RobotID: %u)",
                       msg.header.src, msg.header.dest, EnumToString(msg.landmark), _robot.GetID() );
+ 
+  if (msg.landmark != _landmark) {
+    return;
+  }
+
+  ObservableObject* landmarkObj = _robot.GetBlockWorld().GetLocatedObjectByID(_landmarkObjectID);
+  if (landmarkObj == nullptr) {
+    PRINT_NAMED_WARNING("MultiRobotComponent.HandlePoseWrtLandmark.LandmarkNotFoundYet", "");
+    return;
+  }
   
-  // Add data to map
+  // Get pose of other robot wrt landmark
   Pose3d poseWrtLandmark(msg.poseWrtLandmark, _robot.GetPoseOriginList());
+  
+  // Set pose's parent to landmark object
+  poseWrtLandmark.SetParent(landmarkObj->GetPose());
+  
   
   RobotInfo& rInfo = _robotInfoByLandmarkMap[msg.landmark][senderID];
   rInfo.lastUpdateTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   rInfo.poseWrtLandmark = poseWrtLandmark;
+  
+  //  ========= For debug =========
+  // Flatten pose
+  Pose3d otherRobotPose = poseWrtLandmark.GetWithRespectToRoot();
+  
+//  PRINT_NAMED_WARNING("MRC.HandlePoseWrtLandmark.poseWrtLandmark", "%d: %f %f %f, %f %f %f, %f %f %f",
+//                      _robot.GetID(),
+//                      msg.poseWrtLandmark.x, msg.poseWrtLandmark.y, msg.poseWrtLandmark.z,
+//                      poseWrtLandmark.GetTranslation().x(),
+//                      poseWrtLandmark.GetTranslation().y(),
+//                      poseWrtLandmark.GetTranslation().z(),
+//                      otherRobotPose.GetTranslation().x(),
+//                      otherRobotPose.GetTranslation().y(),
+//                      otherRobotPose.GetTranslation().z());
+  
+
+
+  auto viz = _context->GetVizManager();
+  Quad2f robotFootprint = _robot.GetBoundingQuadXY(otherRobotPose);
+  viz->DrawPoseMarker(0, robotFootprint, ::Anki::NamedColors::DARKGRAY);
 }
 
 void MultiRobotComponent::HandleMessage(const RobotID_t& senderID, const InteractionRequest& msg)
@@ -222,8 +285,6 @@ void MultiRobotComponent::HandleMessage(const RobotID_t& senderID, const Interac
   // If already in a session then reject
   bool acceptSession = _currSessionID == INVALID_SESSION_ID;
   
-
-
   
   // Do we have a request pending?
   if (acceptSession && _requestedSessionID != INVALID_SESSION_ID) {
@@ -255,12 +316,12 @@ void MultiRobotComponent::HandleMessage(const RobotID_t& senderID, const Interac
     _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::MultiRobotSessionStarted(_requestedRobotID, _currSessionID, _currInteraction, _isSessionMaster)));
     
     PRINT_NAMED_WARNING("MultiRobotComponent.HandleInteractionRequest.SessionAccepted",
-                        "SessionID: %x (Robots %d and %d)", _currSessionID, _robot.GetID(), senderID );
+                        "SessionID: %x (Robots %d and %d)", msg.sessionID, _robot.GetID(), senderID );
   } else {
     response.Set_interactionResponse(InteractionResponse(header, msg.sessionID, false));
     
     PRINT_NAMED_WARNING("MultiRobotComponent.HandleInteractionRequest.SessionRejected",
-                        "SessionID: %x (Robots %d and %d)", _currSessionID, _robot.GetID(), senderID );
+                        "SessionID: %x (Robots %d and %d)", msg.sessionID, _robot.GetID(), senderID );
 
   }
   SendMessage(response);
@@ -274,11 +335,23 @@ void MultiRobotComponent::HandleMessage(const RobotID_t& senderID, const Interac
                       msg.header.src, msg.header.dest, msg.sessionID, _robot.GetID() );
 
   if (msg.sessionID != _requestedSessionID) {
-    PRINT_NAMED_ERROR("MultiRobotComponent.HandleInteractionResponse.SessionMismatch",
-                      "Requested %x, received %x", _requestedSessionID, msg.sessionID);
+    if (_currSessionID != INVALID_SESSION_ID) {
+      if (msg.accepted) {
+        PRINT_NAMED_ERROR("MultiRobotComponent.HandleInteractionResponse.RequestAcceptedButAlreadyInSession",
+                          "Received sessionID: %x, current sessionID: %x", msg.sessionID, _currSessionID);
+      } else {
+        PRINT_NAMED_WARNING("MultiRobotComponent.HandleInteractionResponse.AlreadyInSession",
+                            "Probably accepted session requested from the same robot. Received sessionID: %x, current sessionID: %x", msg.sessionID, _currSessionID);
+      }
+    } else {
+      PRINT_NAMED_ERROR("MultiRobotComponent.HandleInteractionResponse.SessionMismatch",
+                        "Requested %x, received %x", _requestedSessionID, msg.sessionID);
+    }
     return;
   }
   
+  _requestedSessionID = INVALID_SESSION_ID;
+
   if (msg.accepted) {
     
     if (senderID != _requestedRobotID) {
@@ -287,17 +360,32 @@ void MultiRobotComponent::HandleMessage(const RobotID_t& senderID, const Interac
       return;
     }
     
-    _requestedSessionID = INVALID_SESSION_ID;
     _currSessionID = msg.sessionID;
     _isSessionMaster = true;
-    
+
     _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::MultiRobotSessionStarted(_requestedRobotID, _currSessionID, _currInteraction, _isSessionMaster)));
     
     PRINT_NAMED_WARNING("MultiRobotComponent.HandleInteractionResponse.SessionAccepted",
-                        "SessionID: %x (Robots %d and %d)", _currSessionID, _robot.GetID(), senderID);
+                        "SessionID: %x (Robots %d and %d)", msg.sessionID, _robot.GetID(), senderID);
+  } else {
+    PRINT_NAMED_WARNING("MultiRobotComponent.HandleInteractionResponse.SessionRejected",
+                        "SessionID: %x (Robots %d and %d)", msg.sessionID, _robot.GetID(), senderID);
+  }
+
+
+  if (_requestCallback) {
+    _requestCallback(msg.accepted);
   }
 }
 
+
+void MultiRobotComponent::HandleMessage(const RobotID_t& senderID, const InteractionStateTransition& msg)
+{  
+  PRINT_NAMED_WARNING("MultiRobotComponent.HandleInteractionStateTransition.NewState",
+                      "SessionID: %x, newState: %d", _currSessionID, msg.newState );
+
+  _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::MultiRobotInteractionStateTransition(_currSessionID, _currInteraction, msg.newState)));
+}
   
 void MultiRobotComponent::ProcessMessage(const InterRobotMessage& msg)
 {
@@ -325,6 +413,11 @@ void MultiRobotComponent::ProcessMessage(const InterRobotMessage& msg)
     case InterRobotMessageTag::interactionResponse:
     {
       HANDLE_MSG(msg.Get_interactionResponse());
+      break;
+    }
+    case InterRobotMessageTag::interactionStateTransition:
+    {
+      HANDLE_MSG(msg.Get_interactionStateTransition());
       break;
     }
     default:
@@ -390,7 +483,7 @@ bool MultiRobotComponent::GetBroadcastPacketHeader(IRMPacketHeader& header) cons
 
   
 
-Result MultiRobotComponent::RequestInteraction(RobotID_t robotID, RobotInteraction interaction)
+Result MultiRobotComponent::RequestInteraction(RobotID_t robotID, RobotInteraction interaction, RequestInteractionCallback cb)
 {
   if (_requestedSessionID != INVALID_SESSION_ID) {
     PRINT_NAMED_WARNING("MultiRobotComponent.RequestInteraction.RequestPending", "Ignoring this request since pending");
@@ -400,6 +493,7 @@ Result MultiRobotComponent::RequestInteraction(RobotID_t robotID, RobotInteracti
   _requestedSessionID = _sessionIDCounter++;
   _requestedRobotID   = robotID;
   _currInteraction    = interaction;
+  _requestCallback    = cb;
 
   IRMPacketHeader header;
   if (!GetPacketHeader(robotID, header)) {
@@ -410,12 +504,49 @@ Result MultiRobotComponent::RequestInteraction(RobotID_t robotID, RobotInteracti
   InterRobotMessage msg;
   msg.Set_interactionRequest(InteractionRequest(header, interaction, _requestedSessionID));
   SendMessage(msg);
-  PRINT_NAMED_WARNING("MRC.Request", "tag: %hhu, size: %zu", msg.GetTag(), msg.Size());
+  PRINT_NAMED_WARNING("MRC.Request", "Interaction: %s, sessionID: %x", EnumToString(interaction), _requestedSessionID) ;
   
   return RESULT_OK;
 }
 
-  
+
+Result MultiRobotComponent::SendInteractionStateTransition(int state) const
+{
+  if (_currSessionID == INVALID_SESSION_ID) {
+    PRINT_NAMED_WARNING("MRC.SendInteractionStateTransition.NotInSession", "");
+    return RESULT_FAIL;
+  }
+
+  IRMPacketHeader header;
+  GetPacketHeader(_requestedRobotID, header);
+
+  InterRobotMessage msg;
+  msg.Set_interactionStateTransition(InteractionStateTransition(header, _currSessionID, state));
+  SendMessage(msg);
+  PRINT_NAMED_WARNING("MRC.SendInteractionStateTransition.SentState", "%d: State: %d", _robot.GetID(), state);
+  return RESULT_OK;
+}
+
+Result MultiRobotComponent::GetSessionPartnerPose(Pose3d& p) const
+{
+  if (_currSessionID == INVALID_SESSION_ID) {
+    PRINT_NAMED_WARNING("MultiRobotComponent.GetSessionPartnerPose.NotInSession","");
+    return RESULT_FAIL;
+  }
+
+  auto landmark_it = _robotInfoByLandmarkMap.find(_landmark);
+  if (landmark_it != _robotInfoByLandmarkMap.end()) {
+    auto robot_it = landmark_it->second.find(_requestedRobotID);
+    if (robot_it != landmark_it->second.end()) {
+      Pose3d p = robot_it->second.poseWrtLandmark.GetWithRespectToRoot();   // Since we set it's parent when this pose was received, this is the actual pose of the partner
+
+      return RESULT_OK;
+    }
+  }
+
+  return RESULT_FAIL;
+}
+
 void MultiRobotComponent::SendMessage(const InterRobotMessage& msg) const
 {
   u8 data[kMaxMsgSize];

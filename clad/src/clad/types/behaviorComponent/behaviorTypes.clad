@@ -46,6 +46,8 @@ enum uint_8 BehaviorClass {
   LookAround,
   LookForFaceAndCube,
   LookInPlaceMemoryMap,
+  MultiRobotFistBump,
+  MultiRobotInteractions,
   OnConfigSeen,
   OnboardingShowCube,
   PeekABoo,
@@ -184,6 +186,10 @@ enum uint_8 BehaviorID {
   LiftLoadTest,
   MeetCozmo_FindFaces_Socialize,
   MeetCozmo_InteractWithFaces,
+
+  MultiRobotFistBumpMaster,
+  MultiRobotFistBumpSlave,
+  MultiRobotInteractions,
 
   Needs_SevereLowEnergyForcedGetOut,
   Needs_SevereLowEnergyGetIn,

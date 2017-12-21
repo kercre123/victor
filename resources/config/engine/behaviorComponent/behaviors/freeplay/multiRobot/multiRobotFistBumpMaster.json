@@ -1,0 +1,9 @@
+{
+  "behaviorClass": "MultiRobotFistBump",
+  "behaviorID": "MultiRobotFistBumpMaster",
+  "displayNameKey":"behavior.MultiRobotFistBumpMaster",
+  "requiredUnlockId": "FistBump",
+  "isMaster": true,
+  "maxTimeToLookForFace_s": 0.0,
+  "abortIfNoFaceFound": false
+}

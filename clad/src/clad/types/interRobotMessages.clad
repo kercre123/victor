@@ -31,6 +31,8 @@ enum uint_32 RobotInteraction {
   Invalid = 0,
   FistBump,
   Greeting,
+
+  Count,
 }
 
 message InteractionRequest {
@@ -52,11 +54,17 @@ message InteractionResponse {
   bool accepted
 }
 
+message InteractionStateTransition {
+  IRMPacketHeader header,
+  int_32 sessionID,
+  int_32 newState,
+}
 
 union InterRobotMessage {
   PoseWrtLandmark     poseWrtLandmark      = 0x01,
   InteractionRequest  interactionRequest,
   InteractionResponse interactionResponse,
+  InteractionStateTransition interactionStateTransition,
 }
 
 } // namespace Cozmo

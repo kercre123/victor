@@ -81,6 +81,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorTrackLaser.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorEnrollFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorRespondToRenameFace.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/multiRobot/behaviorMultiRobotFistBump.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/multiRobot/behaviorMultiRobotInteractions.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingShowCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeCubeMoved.h"
@@ -572,6 +574,18 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::PuzzleMaze:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPuzzleMaze(config));
+      break;
+    }
+
+    case BehaviorClass::MultiRobotFistBump:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorMultiRobotFistBump(config));
+      break;
+    }
+
+    case BehaviorClass::MultiRobotInteractions:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorMultiRobotInteractions(config));
       break;
     }
 

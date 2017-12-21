@@ -61,7 +61,18 @@ public:
   
   // Should result in MultiRobotSession
   // TODO: Should do timeout or something in case request is rejected
-  Result RequestInteraction(RobotID_t robotID, RobotInteraction interaction);
+  using RequestInteractionCallback = std::function<void(bool accepted)>;
+  Result RequestInteraction(RobotID_t robotID, RobotInteraction interaction, RequestInteractionCallback cb = {});
+
+
+  // === These methods only work if you're in a sesion ===
+
+  // For state machine syncronization of the interaction behvaior
+  // across both robots
+  Result SendInteractionStateTransition(int state) const;
+
+  // Returns RESULT_OK if the pose of the partner robot is known
+  Result GetSessionPartnerPose(Pose3d& p) const;
 
   using SessionID_t = s32;
   static const int INVALID_SESSION_ID = -1;
@@ -82,6 +93,7 @@ private:
   void HandleMessage(const RobotID_t& senderID, const PoseWrtLandmark& msg);
   void HandleMessage(const RobotID_t& senderID, const InteractionRequest& msg);
   void HandleMessage(const RobotID_t& senderID, const InteractionResponse& msg);
+  void HandleMessage(const RobotID_t& senderID, const InteractionStateTransition& msg);
 
   void ProcessMessages();
   void ProcessMessage(const InterRobotMessage& msg);
@@ -99,11 +111,13 @@ private:
   SessionID_t      _sessionIDCounter;   // Counter for deciding which ID to request next
   SessionID_t      _requestedSessionID; // Session ID that is currently requested and pending
   RobotID_t        _requestedRobotID;
+  RequestInteractionCallback _requestCallback;
   RobotInteraction _currInteraction;
   SessionID_t      _currSessionID;      // Session ID for current confirmed session
   bool             _isSessionMaster;    // true if this robot requested the session and it was accepted
   
   ObjectType       _landmark;
+  ObjectID         _landmarkObjectID;
 
   // Last time this robot's pose wrt the landmark was broadcast
   TimeStamp_t      _lastPoseWrtLandmarkBroadcast_ms;

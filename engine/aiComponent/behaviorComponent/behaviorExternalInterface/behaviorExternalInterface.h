@@ -48,6 +48,7 @@ class NeedsManager;
 class MapComponent;
 class MicDirectionHistory;
 class MoodManager;
+class MultiRobotComponent;
 class ObjectPoseConfirmer;
 class PetWorld;
 class ProgressionUnlockComponent;
@@ -78,6 +79,7 @@ enum class BEIComponentID{
   Map,
   MicDirectionHistory,
   MoodManager,
+  MultiRobotComponent,
   NeedsManager,
   ObjectPoseConfirmer,
   PetWorld,
@@ -126,6 +128,7 @@ public:
             MapComponent*                  mapComponent,
             MicDirectionHistory*           micDirectionHistory,
             MoodManager*                   moodManager,
+            MultiRobotComponent*           multiRobotComponent,
             NeedsManager*                  needsManager,
             ObjectPoseConfirmer*           objectPoseConfirmer,
             PetWorld*                      petWorld,
@@ -169,6 +172,9 @@ public:
   
   inline bool HasMoodManager() const { return GetComponentWrapper(BEIComponentID::MoodManager).IsValueValid();}
   MoodManager& GetMoodManager() const{ return GetComponentWrapper(BEIComponentID::MoodManager).GetValue<MoodManager>();}
+  
+  inline bool HasMultiRobotComponent() const { return GetComponentWrapper(BEIComponentID::MultiRobotComponent).IsValueValid();}
+  MultiRobotComponent& GetMultiRobotComponent() const{ return GetComponentWrapper(BEIComponentID::MultiRobotComponent).GetValue<MultiRobotComponent>();}
   
   inline bool HasNeedsManager() const { return GetComponentWrapper(BEIComponentID::NeedsManager).IsValueValid();}
   NeedsManager& GetNeedsManager() const { return GetComponentWrapper(BEIComponentID::NeedsManager).GetValue<NeedsManager>();}
@@ -224,6 +230,7 @@ private:
                        MapComponent*                  mapComponent,
                        MicDirectionHistory*           micDirectionHistory,
                        MoodManager*                   moodManager,
+                       MultiRobotComponent*           multiRobotComponent,
                        NeedsManager*                  needsManager,
                        ObjectPoseConfirmer*           objectPoseConfirmer,
                        PetWorld*                      petWorld,
