@@ -1,15 +1,15 @@
-//
-//  entity.h
-//
-//  Created by Kevin M. Karol on 12/1/17
-//  Copyright (c) 2017 Anki, Inc. All rights reserved.
-//
-//  Provides base classes for entity/component systems that encorporate enums
-//  
-//
+/**
+*  entity.h
+*
+*  Created by Kevin M. Karol on 12/1/17
+*  Copyright (c) 2017 Anki, Inc. All rights reserved.
+*
+*  Provides base classes for entity/component systems that encorporate enums
+*  
+**/
 
-#ifndef __Products_Cozmo__Entity__
-#define __Products_Cozmo__Entity__
+#ifndef __Engine_Entity_H__
+#define __Engine_Entity_H__
 
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/logging/logging.h"
@@ -78,7 +78,7 @@ public:
   ComponentWrapper(T*& componentPtr, const bool shouldManage)
   : _componentPtr(componentPtr){
     if(shouldManage){
-      _ManageableComponent.reset(static_cast<ManageableComponent*>(componentPtr));
+      _manageableComponent.reset(static_cast<ManageableComponent*>(componentPtr));
       componentPtr = nullptr;
     }else{
       ANKI_VERIFY(false,
@@ -93,9 +93,11 @@ public:
   virtual bool IsValueValidInternal() const {return true;}
 
   template<typename T>
-  T& GetValue() const { ANKI_VERIFY(IsValueValid(),"ComponentWrapper.GetValue.ValueIsNotValid",""); auto test = static_cast<T*>(_componentPtr); return *test;}
-
-  void SetManageableComponent(ManageableComponent*& ManageableComponent){_ManageableComponent.reset(ManageableComponent); ManageableComponent = nullptr;}
+  T& GetValue() const { 
+    ANKI_VERIFY(IsValueValid(),"ComponentWrapper.GetValue.ValueIsNotValid",""); 
+    auto castPtr = static_cast<T*>(_componentPtr); 
+    return *castPtr;
+  }
 
 protected:
   // allow derrived classes to leave ptr uninitialized
@@ -105,7 +107,7 @@ protected:
 
   void* _componentPtr = nullptr;
 
-  std::shared_ptr<ManageableComponent> _ManageableComponent;
+  std::shared_ptr<ManageableComponent> _manageableComponent;
 }; // ComponentWrapper
 
 
@@ -156,4 +158,4 @@ EntityFullEnumeration<EnumType,ValueType,CountField>::EntityFullEnumeration(cons
 
 } // namespace Anki
 
-#endif // __Products_Cozmo__Entity__
+#endif // __Engine_Entity_H__
