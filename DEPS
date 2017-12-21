@@ -43,5 +43,10 @@
         "default_usr": "puller_cozmo",
         "pwd": "TQqNwp4ijqboGsjF3rCWDhUtwsvTKLpb",
         "root_url": "https://build.ankicore.com/"
+    },
+    "files": {
+        "chipper_key": {
+            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-chipper-tmp-client-key/victor-chipper-key"
+        }
     }
 }

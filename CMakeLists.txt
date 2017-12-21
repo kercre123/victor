@@ -19,6 +19,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD 99)
 
+# Set up custom property for file locations for custom targets
+define_property(TARGET PROPERTY ANKI_OUT_PATH
+                BRIEF_DOCS "The output path for this custom target"
+                FULL_DOCS "The output path for this custom target")
+
 set(SYMBOL_VISIBILITY_FLAGS "")
 
 set(ANKI_PLATFORM_NAME "unknown")
@@ -73,6 +78,19 @@ set(CORETECH_EXTERNAL_DIR "${ANKI_EXTERNAL_DIR}/coretech_external")
 
 set(ANKI_SRCLIST_DIR "${CMAKE_SOURCE_DIR}/generated/cmake")
 
+if (ANDROID)
+  set(ANDROID_TOOLCHAIN_DIR "${CMAKE_BINARY_DIR}/toolchain")
+  set(ANDROID_TOOLCHAIN_CC "${ANDROID_TOOLCHAIN_DIR}/bin/arm-linux-androideabi-gcc")
+  set(ANDROID_TOOLCHAIN_CXX "${ANDROID_TOOLCHAIN_DIR}/bin/arm-linux-androideabi-g++")
+  add_custom_command(
+    OUTPUT "${ANDROID_TOOLCHAIN_CC}" "${ANDROID_TOOLCHAIN_CXX}"
+    COMMAND "${ANDROID_NDK}/build/tools/make_standalone_toolchain.py" --install-dir=${ANDROID_TOOLCHAIN_DIR}
+            --arch=arm --api=24 --stl libc++ --force --unified-headers
+  )
+  add_custom_target(android_toolchain DEPENDS "${ANDROID_TOOLCHAIN_CXX}" "${ANDROID_TOOLCHAIN_CC}")
+
+endif()
+
 #if (ANDROID)
 #  add_subdirectory("lib/crash-reporting-android/Breakpad")
 #endif()
@@ -95,6 +113,7 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 import(coretech "coretech")
 add_subdirectory("clad")
+add_subdirectory("cloud")
 add_subdirectory("cubeBleClient")
 add_subdirectory("osState")
 add_subdirectory("androidHAL")
