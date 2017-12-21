@@ -258,7 +258,7 @@ void ProxSensorComponent::ActivateTheremin(const bool enable)
 
     // turn volume on:
     _robot.GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Robot_Volume,
-                                           0.5f);
+                                           1.f);
   } else {
     _robot.GetAudioClient()->PostEvent(AudioMetaData::GameEvent::GenericEvent::Stop__Robot_Sfx__Theremin_Loop_Stop,
                                        AudioMetaData::GameObjectType::Cozmo_OnDevice);
@@ -275,22 +275,40 @@ void ProxSensorComponent::UpdateTheremin()
   const float distance = static_cast<float>(_latestData.distance_mm);
   const float signalStrength = static_cast<float>(_latestData.signalIntensity) / static_cast<float>(_latestData.spadCount);
   
-  float pitchVal = 0.f;
+  float pitchValRaw = 0.f;
   float volumeVal = 1.f;
   
   // Create a pitch value from 0 to 1 based on distance sensor readings. Pitch should
   // be highest when distance readings are smallest.
-  const float minDist = 60;
-  const float maxDist = 300;
+  const float minDist = 80;
+  const float maxDist = 350;
   
-  pitchVal = (maxDist - distance) / (maxDist - minDist);
+  // compute pitch from distance:
+  pitchValRaw = (maxDist - distance) / (maxDist - minDist);
+  pitchValRaw = Util::Clamp(pitchValRaw, 0.f, 1.f);
+  
+  // scale 0..1 to min..max pitch values:
+  const float maxPitch = 0.8f;
+  const float minPitch = 0.f;
+  pitchValRaw = minPitch + pitchValRaw*(maxPitch - minPitch);
+  
+  // filter the pitch value a bit
+  const float coef = 0.8f;
+  static float pitchVal = distance;
+  pitchVal = coef*pitchVal + (1.f - coef) * pitchValRaw;
+  
   pitchVal = Util::Clamp(pitchVal, 0.f, 1.f);
   
   // Only allow pitch to change if the signal strength is sufficiently strong:
-  const float kThereminSigStrThreshold = 0.01f;
+  const float kThereminSigStrThreshold = 0.007f;
   if (signalStrength < kThereminSigStrThreshold) {
     pitchVal = 0.f;
   }
+  
+  // Reduce volume for high pitches
+  const float pitchValToReduceVol = 0.8f;
+  if (pitchVal > pitchValToReduceVol)
+  volumeVal -= .7f * (pitchVal - pitchValToReduceVol)/(1.f - pitchValToReduceVol);
   
   // Post pitch parameter
   _robot.GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Theremin_Pitch,
@@ -305,10 +323,11 @@ void ProxSensorComponent::UpdateTheremin()
   static int cnt = 0;
   if (++cnt%10 == 0) {
     PRINT_NAMED_INFO("ThereminUpdate",
-                     "dist: %d, sigstr %.4f, touch gesture %s",
+                     "dist: %d, pitchValRaw %.3f, pitchVal %.3f sigstr %.4f",
                      _latestData.distance_mm,
-                     signalStrength,
-                     EnumToString(_robot.GetTouchSensorComponent().GetLatestTouchGesture()));
+                     pitchValRaw,
+                     pitchVal,
+                     signalStrength);
   }
 }
 
