@@ -1,1 +1,0 @@
-/Users/andrew/Code/coretech-external-local/tensorflow/all_models/flower_photos_labels.txt

@@ -1,1 +1,0 @@
-/Users/andrew/Code/coretech-external-local/tensorflow/all_models/mobilenet_1.0_192_flower_photos_quantized.pb
