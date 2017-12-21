@@ -117,6 +117,7 @@ struct DockingErrorSignal;
     // Set whether or not we draw each processed image to the robot's screen
     // (Not using the word "face" because of confusion with "faces" in vision)
     void   EnableDrawImagesToScreen(bool enable) { _drawImagesToScreen = enable; }
+    void   AddDrawScreenModifier(const std::function<void(Vision::ImageRGB&)>& modFcn) { _screenImageModFuncs.push_back(modFcn); }
     
     // Looks through all results available from the VisionSystem and processes them.
     // This updates the Robot's BlockWorld and FaceWorld using those results.
@@ -309,6 +310,9 @@ struct DockingErrorSignal;
     bool   _running = false;
     bool   _paused  = false;
     bool   _drawImagesToScreen = false;
+
+    std::list<std::function<void(Vision::ImageRGB&)>> _screenImageModFuncs;
+
     std::mutex _lock;
     
     // Current image is the one the vision system (thread) is actively working on.

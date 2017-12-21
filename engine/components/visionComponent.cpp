@@ -486,20 +486,14 @@ namespace Cozmo {
             static Vision::ImageRGB screenImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
             _bufferedImg.Resize(screenImg, Vision::ResizeMethod::NearestNeighbor);
 
-            // Flip image around the y axis
+            // Flip image around the y axis (before we draw anything on it)
             cv::flip(screenImg.get_CvMat_(), screenImg.get_CvMat_(), 1);
             
-            if(kDisplayObjectDetectionLabels && !_lastDetectedObjects.empty())
+            for(auto & modFcn : _screenImageModFuncs)
             {
-              const s32 textHeight = 14;
-              s32 offset = textHeight;
-              for(auto const& object : _lastDetectedObjects)
-              {
-                screenImg.DrawText({1.f, offset}, object.name + ":" + std::to_string((s32)std::round(object.score*100.f)),
-                                   NamedColors::YELLOW, 0.6f, true);
-                offset += textHeight;
-              }
+              modFcn(screenImg);
             }
+            _screenImageModFuncs.clear();
             
             static Vision::ImageRGB565 img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
             
@@ -1274,6 +1268,25 @@ namespace Cozmo {
       const std::string caption(object.name + "[" + std::to_string((s32)std::round(100.f*object.score))
                                 + "] t:" + std::to_string(lastNewObjectsTime_ms));
       _vizManager->DrawCameraText(rect.GetTopLeft().CastTo<float>(), caption, color);
+      
+      if(kDisplayObjectDetectionLabels)
+      {
+        const s32 textHeight = 14;
+        s32 offset = textHeight;
+        for(auto const& object : _lastDetectedObjects)
+        {
+          const std::string str(object.name + ":" + std::to_string((s32)std::round(object.score*100.f)));
+          
+          std::function<void (Vision::ImageRGB&)> modFcn = [str,offset](Vision::ImageRGB& img)
+          {
+            img.DrawText({1.f, offset}, str, NamedColors::YELLOW, 0.6f, true);
+          };
+          
+          AddDrawScreenModifier(modFcn);
+          
+          offset += textHeight;
+        }
+      }
     }
     
     return RESULT_OK;
@@ -2457,8 +2470,9 @@ namespace Cozmo {
     {
       const std::string cachePath = _robot.GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
 
+      const std::string fullPath = Util::FileUtils::FullFilePath({cachePath, "images", path});
       _visionSystem->SetSaveParameters(saveMode, 
-                                       Util::FileUtils::FullFilePath({cachePath, "images", path}), 
+                                       fullPath, 
                                        onRobotQuality);
 
       if(saveMode != ImageSendMode::Off)
@@ -2467,8 +2481,8 @@ namespace Cozmo {
       }
 
       PRINT_CH_DEBUG("VisionComponent", "VisionComponent.HandleMessage.SaveImages",
-               "Setting image save mode to %s",
-               EnumToString(saveMode));
+                     "Setting image save mode to %s. Saving to: %s",
+                     EnumToString(saveMode), fullPath.c_str());
     }
   }
   

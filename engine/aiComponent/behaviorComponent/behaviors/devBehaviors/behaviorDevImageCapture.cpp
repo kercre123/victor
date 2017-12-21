@@ -23,6 +23,8 @@
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 
+#include "util/fileUtils/fileUtils.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -53,18 +55,42 @@ static const BackpackLights kLightsOff = {
 
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
   : ICozmoBehavior(config)
 {
   _imageSavePath = JsonTools::ParseString(config, "save_path", "BehaviorDevImageCapture");
   _imageSaveQuality = JsonTools::ParseInt8(config, "quality", "BehaviorDevImageCapture");
   _useCapTouch = JsonTools::ParseBool(config, "use_capacitive_touch", "BehaviorDevImageCapture");
+
+  if(config.isMember("class_names"))
+  {
+    auto const& classNames = config["class_names"];
+    if(classNames.isArray())
+    {
+      for(Json::ArrayIndex index=0; index < classNames.size(); ++index)
+      {
+        _classNames.push_back(classNames[index].asString());
+      }
+    }
+    else if(classNames.isString())
+    {
+      _classNames.push_back(classNames.asString());
+    }
+    else 
+    {
+      PRINT_NAMED_WARNING("BehaviorDevImageCapture.Constructor.InvalidClassNames", "");
+    }
+  }
+  _currentClassIter = _classNames.begin();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevImageCapture::~BehaviorDevImageCapture()
 {
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorDevImageCapture::OnBehaviorActivated(BehaviorExternalInterface& bei)
 {
   _touchStartedTime_s = -1.0f;
@@ -82,6 +108,7 @@ Result BehaviorDevImageCapture::OnBehaviorActivated(BehaviorExternalInterface& b
   return Result::RESULT_OK;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::OnBehaviorDeactivated(BehaviorExternalInterface& bei)
 {
   auto& robotInfo = bei.GetRobotInfo();
@@ -92,6 +119,31 @@ void BehaviorDevImageCapture::OnBehaviorDeactivated(BehaviorExternalInterface& b
   visionComponent.EnableDrawImagesToScreen(false);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevImageCapture::SwitchToNextClass()
+{
+  if(!_classNames.empty())
+  {
+    ++_currentClassIter; 
+    if(_currentClassIter == _classNames.end())
+    {
+      _currentClassIter = _classNames.begin();
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string BehaviorDevImageCapture::GetSavePath() const
+{
+  if(_currentClassIter == _classNames.end())
+  {
+    return _imageSavePath;
+  }
+  
+  return Util::FileUtils::FullFilePath({_imageSavePath, *_currentClassIter});
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStatus BehaviorDevImageCapture::UpdateInternal_WhileRunning(BehaviorExternalInterface& bei)
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -104,7 +156,24 @@ BehaviorStatus BehaviorDevImageCapture::UpdateInternal_WhileRunning(BehaviorExte
     }
   }
 
-  const bool wasTouched = _touchStartedTime_s >= 0.0f;
+  // Switch classes when lift is lowered
+  const bool isLiftUp = (bei.GetRobotInfo().GetLiftHeight() > LIFT_HEIGHT_HIGHDOCK);
+  if(_wasLiftUp && !isLiftUp)
+  {
+    SwitchToNextClass();    
+  }
+  _wasLiftUp = isLiftUp;
+
+  if(_currentClassIter != _classNames.end())
+  {
+    std::function<void(Vision::ImageRGB&)> drawClassName = [this](Vision::ImageRGB& img)
+    {
+      img.DrawText({1,14}, *_currentClassIter, NamedColors::YELLOW, 0.6f, true);
+    };
+    visionComponent.AddDrawScreenModifier(drawClassName);
+  }
+
+  const bool wasTouched = (_touchStartedTime_s >= 0.0f);
 
   const bool isTouched = (_useCapTouch ? 
                           bei.GetTouchSensorComponent().IsTouched() :
@@ -120,7 +189,7 @@ BehaviorStatus BehaviorDevImageCapture::UpdateInternal_WhileRunning(BehaviorExte
 
       const ImageSendMode sendMode = _isStreaming ? ImageSendMode::Stream : ImageSendMode::Off;
       visionComponent.SetSaveImageParameters(sendMode,
-                                             _imageSavePath,
+                                             GetSavePath(),
                                              _imageSaveQuality);
       
       if( _isStreaming ) {
@@ -131,7 +200,7 @@ BehaviorStatus BehaviorDevImageCapture::UpdateInternal_WhileRunning(BehaviorExte
       PRINT_CH_DEBUG("Behaviors", "BehaviorDevImageCapture.touch.shortPress", "short press release");
       // take single photo
       visionComponent.SetSaveImageParameters(ImageSendMode::SingleShot,
-                                             _imageSavePath,
+                                             GetSavePath(),
                                              _imageSaveQuality);
 
       BlinkLight(bei);
@@ -144,7 +213,7 @@ BehaviorStatus BehaviorDevImageCapture::UpdateInternal_WhileRunning(BehaviorExte
     if( _isStreaming ) {
       // we were streaming but now should stop because there was a new touch
       visionComponent.SetSaveImageParameters(ImageSendMode::Off,
-                                             _imageSavePath,
+                                             GetSavePath(),
                                              _imageSaveQuality);
 
       _isStreaming = false;
@@ -159,6 +228,7 @@ BehaviorStatus BehaviorDevImageCapture::UpdateInternal_WhileRunning(BehaviorExte
   return BehaviorStatus::Running;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::BlinkLight(BehaviorExternalInterface& bei)
 {
   _blinkOn = !_blinkOn;
