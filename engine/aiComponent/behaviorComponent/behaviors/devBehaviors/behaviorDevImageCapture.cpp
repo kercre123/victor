@@ -101,6 +101,11 @@ Result BehaviorDevImageCapture::OnBehaviorActivated(BehaviorExternalInterface& b
   auto& visionComponent = bei.GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(true);
 
+  const bool kUseDefaultsForUnspecified = false;
+  bei.GetVisionComponent().PushNextModeSchedule(AllVisionModesSchedule({
+    {VisionMode::SavingImages, VisionModeSchedule(true)},
+  }, kUseDefaultsForUnspecified));
+  
   auto& robotInfo = bei.GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(false);
@@ -117,6 +122,7 @@ void BehaviorDevImageCapture::OnBehaviorDeactivated(BehaviorExternalInterface& b
 
   auto& visionComponent = bei.GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(false);
+  visionComponent.PopCurrentModeSchedule();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
