@@ -78,7 +78,7 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalInte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToUnexpectedMovement::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToUnexpectedMovement::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   _unexpectedMovementSide = event.GetData().Get_UnexpectedMovement().movementSide;
 }

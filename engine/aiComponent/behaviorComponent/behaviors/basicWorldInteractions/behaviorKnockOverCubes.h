@@ -39,7 +39,7 @@ protected:
   virtual bool CarryingObjectHandledInternally() const override {return false;}
   
   virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   void HandleObjectUpAxisChanged(const ObjectUpAxisChanged& msg, BehaviorExternalInterface& behaviorExternalInterface);
   
 private:

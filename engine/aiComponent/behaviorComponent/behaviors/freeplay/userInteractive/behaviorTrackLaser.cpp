@@ -677,7 +677,7 @@ void BehaviorTrackLaser::TransitionToGetOutBored(BehaviorExternalInterface& beha
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   const EngineToGameTag& tag = event.GetData().GetTag();
   switch( tag )

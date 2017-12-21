@@ -179,7 +179,7 @@ void BehaviorRespondPossiblyRoll::DelegateToRollHelper(BehaviorExternalInterface
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondPossiblyRoll::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(event.GetData().GetTag() ==ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged){
     _upAxisChangedIDs.insert(std::make_pair(event.GetData().Get_ObjectUpAxisChanged().objectID,

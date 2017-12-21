@@ -231,15 +231,18 @@ protected:
   void SubscribeToTags(std::set<EngineToGameTag>&& tags);
   void SubscribeToTags(std::set<RobotInterface::RobotToEngineTag>&& tags);
   
+  // Function that calls message handling helper functions
+  void UpdateMessageHandlingHelpers(BehaviorExternalInterface& behaviorExternalInterface);
+
   // Derived classes must override this method to handle events that come in
   // irrespective of whether the behavior is running or not. Note that the Robot
   // reference is const to prevent the behavior from modifying the robot when it
   // is not running. If the behavior is subscribed to multiple tags, the presumption
   // is that this will handle switching based on tag internally.
   // NOTE: AlwaysHandle is called before HandleWhileRunning and HandleWhileNotRunning!
-  virtual void AlwaysHandle(const GameToEngineEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
-  virtual void AlwaysHandle(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
-  virtual void AlwaysHandle(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void AlwaysHandleInScope(const GameToEngineEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void AlwaysHandleInScope(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
   
   // Derived classes must override this method to handle events that come in
   // while the behavior is running. In this case, the behavior is allowed to

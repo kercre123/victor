@@ -640,58 +640,11 @@ void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalI
     callback(behaviorExternalInterface);
   }
 
-
   //// Event handling
   // Call message handling convenience functions
-  //////
-  
-  const auto& stateChangeComp = behaviorExternalInterface.GetBehaviorEventComponent();
-  const auto& actionsCompleted = stateChangeComp.GetActionsCompletedThisTick();
-  for(auto& entry: actionsCompleted){
-    if(entry.idTag == _lastActionTag){
-      HandleActionComplete(entry);
-    }
-  }
-  
-  for(const auto& event: stateChangeComp.GetGameToEngineEvents()){
-    // Handle specific callbacks
-    auto iter = _gameToEngineTags.find(event.GetData().GetTag());
-    if(iter != _gameToEngineTags.end()){
-      AlwaysHandle(event, behaviorExternalInterface);
-      if(IsActivated()){
-        HandleWhileActivated(event, behaviorExternalInterface);
-      }else{
-        HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
-      }
-    }
-  }
-  
-  for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
-    // Handle specific callbacks
-    auto iter = _engineToGameTags.find(event.GetData().GetTag());
-    if(iter != _engineToGameTags.end()){      
-      AlwaysHandle(event, behaviorExternalInterface);
-      if(IsActivated()){
-        HandleWhileActivated(event, behaviorExternalInterface);
-      }else{
-        HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
-      }
-    }
-  }
-  
-  for(const auto& event: stateChangeComp.GetRobotToEngineEvents()){
-    AlwaysHandle(event, behaviorExternalInterface);
-    if(IsActivated()){
-      HandleWhileActivated(event, behaviorExternalInterface);
-    }else{
-      HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
-    }
-  }
-  
-  //////
-  //// end Event handling
-  //////
+  UpdateMessageHandlingHelpers(behaviorExternalInterface);
 
+  // Handle stop after requested action finishes
   if(IsActivated()){
     if(!IsActing()){
       if(_stopRequestedAfterAction) {
@@ -704,8 +657,10 @@ void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalI
     }
   }
 
+  // Tick behavior update
   BehaviorUpdate(behaviorExternalInterface);
 
+  // Check whether we should cancel the behavior if control is no longer delegated
   if(IsActivated()){
     if(ShouldCancelWhenInControl() && !IsControlDelegated()){
       if(behaviorExternalInterface.HasDelegationComponent()){
@@ -716,6 +671,54 @@ void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalI
   }
   
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::UpdateMessageHandlingHelpers(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  const auto& stateChangeComp = behaviorExternalInterface.GetBehaviorEventComponent();
+  const auto& actionsCompleted = stateChangeComp.GetActionsCompletedThisTick();
+  for(auto& entry: actionsCompleted){
+    if(entry.idTag == _lastActionTag){
+      HandleActionComplete(entry);
+    }
+  }
+  
+  for(const auto& event: stateChangeComp.GetGameToEngineEvents()){
+    // Handle specific callbacks
+    auto iter = _gameToEngineTags.find(event.GetData().GetTag());
+    if(iter != _gameToEngineTags.end()){
+      AlwaysHandleInScope(event, behaviorExternalInterface);
+      if(IsActivated()){
+        HandleWhileActivated(event, behaviorExternalInterface);
+      }else{
+        HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
+      }
+    }
+  }
+  
+  for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
+    // Handle specific callbacks
+    auto iter = _engineToGameTags.find(event.GetData().GetTag());
+    if(iter != _engineToGameTags.end()){      
+      AlwaysHandleInScope(event, behaviorExternalInterface);
+      if(IsActivated()){
+        HandleWhileActivated(event, behaviorExternalInterface);
+      }else{
+        HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
+      }
+    }
+  }
+  
+  for(const auto& event: stateChangeComp.GetRobotToEngineEvents()){
+    AlwaysHandleInScope(event, behaviorExternalInterface);
+    if(IsActivated()){
+      HandleWhileActivated(event, behaviorExternalInterface);
+    }else{
+      HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
+    }
+  }
+}
+
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

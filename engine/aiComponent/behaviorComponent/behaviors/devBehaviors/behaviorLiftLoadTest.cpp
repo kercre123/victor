@@ -274,7 +274,7 @@ namespace Anki {
       }
     }
     
-    void BehaviorLiftLoadTest::AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorLiftLoadTest::AlwaysHandleInScope(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
     {
       switch(event.GetData().GetTag())
       {
