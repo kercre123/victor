@@ -294,6 +294,7 @@ struct DockingErrorSignal;
     VisionSystem* _visionSystem = nullptr;
     VizManager*   _vizManager = nullptr;
     std::map<std::string, s32> _vizDisplayIndexMap;
+    std::list<ExternalInterface::RobotObservedGenericObject> _lastDetectedObjects;
     
     // Robot stores the calibration, camera just gets a reference to it
     // This is so we can share the same calibration data across multiple

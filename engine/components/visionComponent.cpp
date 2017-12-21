@@ -87,6 +87,7 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
   CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
   CONSOLE_VAR(bool, kDisplayUndistortedImages,     "Vision.General", false);
+  CONSOLE_VAR(bool, kDisplayObjectDetectionLabels, "Vision.General", true); // when drawing images to screen
   
   namespace JsonKey
   {
@@ -485,6 +486,21 @@ namespace Cozmo {
             static Vision::ImageRGB screenImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
             _bufferedImg.Resize(screenImg, Vision::ResizeMethod::NearestNeighbor);
 
+            // Flip image around the y axis
+            cv::flip(screenImg.get_CvMat_(), screenImg.get_CvMat_(), 1);
+            
+            if(kDisplayObjectDetectionLabels && !_lastDetectedObjects.empty())
+            {
+              const s32 textHeight = 14;
+              s32 offset = textHeight;
+              for(auto const& object : _lastDetectedObjects)
+              {
+                screenImg.DrawText({1.f, offset}, object.name + ":" + std::to_string((s32)std::round(object.score*100.f)),
+                                   NamedColors::YELLOW, 0.6f, true);
+                offset += textHeight;
+              }
+            }
+            
             static Vision::ImageRGB565 img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
             
             // Use gamma to make it easier to see
@@ -499,10 +515,7 @@ namespace Cozmo {
             }
 
             img565.SetFromImageRGB(screenImg, gammaLUT);
-
-            // Flip image around the y axis
-            cv::flip(img565.get_CvMat_(), img565.get_CvMat_(), 1);
-                      
+          
             animComponent.DisplayFaceImage(img565, ANIM_TIME_STEP_MS, false);
           }
         }
@@ -1234,13 +1247,12 @@ namespace Cozmo {
     // since object detection is slow
     static const TimeStamp_t kKeepDrawingDetectionsFor_ms = 3000;
     static TimeStamp_t lastNewObjectsTime_ms = 0;
-    static std::list<ExternalInterface::RobotObservedGenericObject> lastDetectedObjects;
-
+    
     if(procResult.modesProcessed.IsBitFlagSet(VisionMode::DetectingGeneralObjects))
     {
-      lastDetectedObjects.clear();
+      _lastDetectedObjects.clear();
       std::copy(procResult.generalObjects.begin(), procResult.generalObjects.end(), 
-                std::back_inserter(lastDetectedObjects));
+                std::back_inserter(_lastDetectedObjects));
       lastNewObjectsTime_ms = procResult.timestamp;
       
       for(auto const& detectedObject : procResult.generalObjects)
@@ -1251,11 +1263,11 @@ namespace Cozmo {
     }
     else if(procResult.timestamp > lastNewObjectsTime_ms + kKeepDrawingDetectionsFor_ms)
     {
-      lastDetectedObjects.clear();
+      _lastDetectedObjects.clear();
     }
 
     s32 colorIndex = 0;
-    for(auto const& object : lastDetectedObjects)
+    for(auto const& object : _lastDetectedObjects)
     {
       const Rectangle<s32> rect(object.img_rect.x_topLeft, object.img_rect.y_topLeft,
                                 object.img_rect.width, object.img_rect.height);
