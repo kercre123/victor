@@ -485,6 +485,15 @@ namespace Cozmo {
             static Vision::ImageRGB screenImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
             _bufferedImg.Resize(screenImg, Vision::ResizeMethod::NearestNeighbor);
 
+            // Flip image around the y axis (before we draw anything on it)
+            cv::flip(screenImg.get_CvMat_(), screenImg.get_CvMat_(), 1);
+
+            for(auto & modFcn : _screenImageModFuncs)
+            {
+              modFcn(screenImg);
+            }
+            _screenImageModFuncs.clear();
+
             static Vision::ImageRGB565 img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
             
             // Use gamma to make it easier to see
@@ -499,10 +508,7 @@ namespace Cozmo {
             }
 
             img565.SetFromImageRGB(screenImg, gammaLUT);
-
-            // Flip image around the y axis
-            cv::flip(img565.get_CvMat_(), img565.get_CvMat_(), 1);
-                      
+          
             animComponent.DisplayFaceImage(img565, ANIM_TIME_STEP_MS, false);
           }
         }
@@ -2403,8 +2409,9 @@ namespace Cozmo {
     {
       const std::string cachePath = _robot.GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
 
+      const std::string fullPath = Util::FileUtils::FullFilePath({cachePath, "images", path});
       _visionSystem->SetSaveParameters(saveMode, 
-                                       Util::FileUtils::FullFilePath({cachePath, "images", path}), 
+                                       fullPath, 
                                        onRobotQuality);
 
       if(saveMode != ImageSendMode::Off)
@@ -2413,8 +2420,8 @@ namespace Cozmo {
       }
 
       PRINT_CH_DEBUG("VisionComponent", "VisionComponent.HandleMessage.SaveImages",
-               "Setting image save mode to %s",
-               EnumToString(saveMode));
+                     "Setting image save mode to %s. Saving to: %s",
+                     EnumToString(saveMode), fullPath.c_str());
     }
   }
   

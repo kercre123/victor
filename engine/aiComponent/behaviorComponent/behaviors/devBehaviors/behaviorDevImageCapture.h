@@ -15,6 +15,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
+#include <list>
+
 namespace Anki {
 namespace Cozmo {
 
@@ -46,6 +48,8 @@ protected:
 private:
 
   void BlinkLight(BehaviorExternalInterface& bei);
+  std::string GetSavePath() const;
+  void SwitchToNextClass();
 
   std::string _imageSavePath;
   int8_t _imageSaveQuality;
@@ -59,6 +63,9 @@ private:
   bool _blinkOn = false;
   float _timeToBlink = -1.0f;
 
+  bool _wasLiftUp = false;
+  std::list<std::string> _classNames;
+  std::list<std::string>::const_iterator _currentClassIter;
 };
 
 }
