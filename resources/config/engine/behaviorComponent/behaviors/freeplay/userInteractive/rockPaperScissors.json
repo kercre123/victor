@@ -6,7 +6,7 @@
   "waitTimeBetweenTaps_sec" : 0.15,
   "minDetectionScore"       : 0.5,
   "displayHoldTime_ms"      : 1500,
-  "tapHeight_mm"            : 25,
+  "tapHeight_mm"            : 30,
   "showDetectionString"     : true, 
   "shootOnCount"            : 3
 }

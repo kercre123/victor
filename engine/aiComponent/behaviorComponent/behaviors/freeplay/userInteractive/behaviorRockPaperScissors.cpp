@@ -70,7 +70,7 @@ BehaviorRockPaperScissors::BehaviorRockPaperScissors(const Json::Value& config)
   GET_FROM_CONFIG(Uint32, displayHoldTime_ms);
   GET_FROM_CONFIG(Uint32, tapHeight_mm);
   GET_FROM_CONFIG(Bool,   showDetectionString);
-  GET_FROM_CONFIG(Uint8, shootOnCount);
+  GET_FROM_CONFIG(Uint8,  shootOnCount);
   
 # undef GET_FROM_CONFIG
 }

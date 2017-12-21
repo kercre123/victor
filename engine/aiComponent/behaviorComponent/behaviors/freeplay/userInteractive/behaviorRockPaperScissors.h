@@ -81,8 +81,8 @@ private:
     Scissors = 2
   };
   
-  Selection _robotSelection;
-  Selection _humanSelection;
+  Selection _robotSelection = Selection::Unknown;
+  Selection _humanSelection = Selection::Unknown;
   
   std::map<Selection, Vision::ImageRGB> _displayImages;
   
