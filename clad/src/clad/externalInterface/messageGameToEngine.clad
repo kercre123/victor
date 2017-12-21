@@ -207,7 +207,6 @@ message SetMotionModelParams
 
 // SetRobotVolume
 message SetRobotVolume {
-  uint_8   robotId,
   float_32 volume
 }
 
@@ -308,8 +307,10 @@ message SetRobotImageSendMode {
 
 // SaveImages (via VizController)
 message SaveImages {
-    ImageSendMode mode,
-    string        path
+    ImageSendMode mode,            // For single image vs. streaming (aka continuous saving)
+    int_8         qualityOnRobot,  // 0: disable on-robot saving, [1-100]:JPEG quality, -1: use PNG
+    string        path             // Relative to "<webotsControllersDir>/webotsCtrlViz/saved_images"
+                                   // (on robot, relative to "<reourceCacheDir>/camera/images")
 }
 
 // Enable/disable the streaming of colored images
@@ -1018,6 +1019,12 @@ message SetAnimDebugConsoleVarMessage {
 }
 
 message RunDebugConsoleFuncMessage {
+  string funcName,
+  string funcArgs
+}
+
+// Same as above, but for setting console funcs in the anim process
+message RunAnimDebugConsoleFuncMessage {
   string funcName,
   string funcArgs
 }

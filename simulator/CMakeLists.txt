@@ -196,6 +196,7 @@ target_link_libraries(webotsCtrlAnim
   webotsCtrlCommon
   victor_anim
   robot_clad_cpplite
+  osState
   ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )
@@ -230,6 +231,7 @@ target_link_libraries(webotsCtrlGameEngine2
   cti_planning
   cozmo_engine
   cubeBleClient
+  osState
   webotsCtrlCommon
   ${OPENCV_LIBS}
   ${PLATFORM_LIBS}

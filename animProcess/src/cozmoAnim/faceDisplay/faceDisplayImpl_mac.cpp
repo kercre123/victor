@@ -1,5 +1,5 @@
 /**
- * File: faceDisplay_mac.cpp
+ * File: faceDisplayImpl_mac.cpp
  *
  * Author: Kevin Yoon
  * Created: 07/20/2017
@@ -11,7 +11,7 @@
  *
  **/
 
-#include "cozmoAnim/faceDisplay/faceDisplay.h"
+#include "cozmoAnim/faceDisplay/faceDisplayImpl.h"
 #include "anki/vision/basestation/colorPixelTypes.h"
 #include "util/logging/logging.h"
 
@@ -41,35 +41,7 @@ namespace { // "Private members"
 
 #pragma mark --- Simulated Hardware Method Implementations ---
   
-  
-  // Definition of static field
-  FaceDisplay* FaceDisplay::_instance = 0;
-  
-  /**
-   * Returns the single instance of the object.
-   */
-  FaceDisplay* FaceDisplay::getInstance() {
-    // check if the instance has been created yet
-    if(0 == _instance) {
-      // if not, then create it
-      _instance = new FaceDisplay;
-    }
-    // return the single instance
-    return _instance;
-  }
-  
-  /**
-   * Removes instance
-   */
-  void FaceDisplay::removeInstance() {
-    // check if the instance has been created yet
-    if(0 != _instance) {
-      delete _instance;
-      _instance = 0;
-    }
-  };
-  
-  FaceDisplay::FaceDisplay()
+  FaceDisplayImpl::FaceDisplayImpl()
   {
     // Did you remember to call SetSupervisor()?
 //      DEV_ASSERT(animSupervisor != nullptr, "animSupervisor.NullWebotsSupervisor");
@@ -85,17 +57,15 @@ namespace { // "Private members"
     FaceClear();
   }
 
-  FaceDisplay::~FaceDisplay() {
-    
-  }
+  FaceDisplayImpl::~FaceDisplayImpl() = default;
 
-  void FaceDisplay::FaceClear()
+  void FaceDisplayImpl::FaceClear()
   {
     face_->setColor(0);
     face_->fillRectangle(0,0, FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
   }
   
-  void FaceDisplay::FaceDraw(const u16* frame)
+  void FaceDisplayImpl::FaceDraw(const u16* frame)
   {
     // Convert an RGB565 color into a 32-bit BGRA color image (i.e. 0xBBGGRRAA) which webots expects
     u32* imgPtr = &faceImg_[0];
@@ -113,7 +83,7 @@ namespace { // "Private members"
     face_->imageDelete(imgRef);
   }
   
-  void FaceDisplay::FacePrintf(const char* format, ...)
+  void FaceDisplayImpl::FacePrintf(const char* format, ...)
   {
     // TODO: Smartly insert line breaks?
 

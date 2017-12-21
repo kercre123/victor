@@ -74,14 +74,11 @@ namespace Anki {
         PathMotionProfile pathMotionProfile_ = PathMotionProfile();
         
         // For displaying cozmo's POV:
-        webots::Display* cozmoCam_;
+        webots::Display* uiCamDisplay_ = nullptr;
         webots::ImageRef* img_ = nullptr;
         
         EncodedImage _encodedImage;
-        
-        // Save robot image to file
-        bool saveRobotImageToFile_ = false;
-        
+
         std::string _drivingStartAnim = "";
         std::string _drivingLoopAnim = "";
         std::string _drivingEndAnim = "";
@@ -149,22 +146,14 @@ namespace Anki {
           }
         }
         
-        // Delete existing image if there is one.
-        if (img_ != nullptr) {
-          cozmoCam_->imageDelete(img_);
-        }
-        
-        img_ = cozmoCam_->imageNew(cvImg.cols, cvImg.rows, cvImg.data, webots::Display::RGB);
-        cozmoCam_->imagePaste(img_, 0, 0);
-        
-        // Save image to file
-        if (saveRobotImageToFile_) {
-          static u32 imgCnt = 0;
-          char imgFileName[16];
-          printf("SAVING IMAGE\n");
-          sprintf(imgFileName, "robotImg_%d.jpg", imgCnt++);
-          cozmoCam_->imageSave(img_, imgFileName);
-          saveRobotImageToFile_ = false;
+
+        if (uiCamDisplay_ != nullptr) {
+          // Delete existing image if there is one.
+          if (img_ != nullptr) {
+            uiCamDisplay_->imageDelete(img_);
+          }
+          img_ = uiCamDisplay_->imageNew(cvImg.cols, cvImg.rows, cvImg.data, webots::Display::RGB);
+          uiCamDisplay_->imagePaste(img_, 0, 0);
         }
         
       } // if(isImageReady)
@@ -174,30 +163,28 @@ namespace Anki {
     
     void WebotsKeyboardController::HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg)
     {
-      if(cozmoCam_ != nullptr) 
+      if (uiCamDisplay_ != nullptr)
       {  
         // Draw a rectangle in red with the object ID as text in the center
-        cozmoCam_->setColor(0x000000);
+        uiCamDisplay_->setColor(0x000000);
         
         //std::string dispStr(ObjectType::GetName(msg.objectType));
         //dispStr += " ";
         //dispStr += std::to_string(msg.objectID);
         std::string dispStr("Type=" + std::string(ObjectTypeToString(msg.objectType)) + "\nID=" + std::to_string(msg.objectID));
-        cozmoCam_->drawText(dispStr,
+        uiCamDisplay_->drawText(dispStr,
                             msg.img_rect.x_topLeft + msg.img_rect.width/4 + 1,
                             msg.img_rect.y_topLeft + msg.img_rect.height/2 + 1);
         
-        cozmoCam_->setColor(0xff0000);
-        cozmoCam_->drawRectangle(msg.img_rect.x_topLeft, msg.img_rect.y_topLeft,
-                                 msg.img_rect.width, msg.img_rect.height);
-        cozmoCam_->drawText(dispStr,
-                            msg.img_rect.x_topLeft + msg.img_rect.width/4,
-                            msg.img_rect.y_topLeft + msg.img_rect.height/2);
-
-        // Record centroid of observation in image
-        _lastObservedImageCentroid.SetFromMessage(msg);
+        uiCamDisplay_->setColor(0xff0000);
+        uiCamDisplay_->drawRectangle(msg.img_rect.x_topLeft, msg.img_rect.y_topLeft,
+                                     msg.img_rect.width, msg.img_rect.height);
+        uiCamDisplay_->drawText(dispStr,
+                                msg.img_rect.x_topLeft + msg.img_rect.width/4,
+                                msg.img_rect.y_topLeft + msg.img_rect.height/2);
       }
-      
+      // Record centroid of observation in image
+      _lastObservedImageCentroid.SetFromMessage(msg);
     }
     
     void WebotsKeyboardController::HandleRobotObservedFace(const ExternalInterface::RobotObservedFace& msg)
@@ -294,13 +281,14 @@ namespace Anki {
     { 
       poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
         
-      const int displayWidth  = root_->getField("streamResolutionWidth")->getSFInt32();
-      const int displayHeight = root_->getField("streamResolutionHeight")->getSFInt32();
-      if(displayWidth > 0 && displayHeight > 0)
+      const int displayWidth  = root_->getField("uiCamDisplayWidth")->getSFInt32();
+      const int displayHeight = root_->getField("uiCamDisplayHeight")->getSFInt32();
+      if (displayWidth > 0 && displayHeight > 0)
       {
-        cozmoCam_ = GetSupervisor()->getDisplay("uiCamDisplay");
+        uiCamDisplay_ = GetSupervisor()->getDisplay("uiCamDisplay");
       }
-      auto doAutoBlockpoolField = root_->getField("doAutoBlockpool");
+      
+      const auto doAutoBlockpoolField = root_->getField("doAutoBlockpool");
       if (doAutoBlockpoolField) {
         LOG_INFO("WebotsCtrlKeyboard.Init.DoAutoBlockpool", "%d", doAutoBlockpoolField->getSFBool());
         EnableAutoBlockpool(doAutoBlockpoolField->getSFBool());
@@ -326,11 +314,10 @@ namespace Anki {
         printf("             Lift low/high/carry:  1/2/3\n");
         printf("            Head down/forward/up:  4/5/6\n");
         printf("  Turn towards last obs centroid:  0\n");
-        printf("            Request *game* image:  i\n");
-        printf("           Request *robot* image:  Alt+i\n");
-        printf("      Toggle *game* image stream:  Shift+i\n");
-        printf("     Toggle *robot* image stream:  Alt+Shift+i\n");
-        printf("              Toggle save images:  e\n");
+        printf("       Request single game image:  u\n");
+        printf("        Toggle game image stream:  Shift+u\n");
+        printf("               Save single image:  e\n");
+        printf("               Toggle image save:  Shift+e\n");
         printf("        Toggle VizObject display:  d\n");
         printf("   Toggle addition/deletion mode:  Shift+d\n");
         printf("Goto/place object at pose marker:  g\n");
@@ -378,7 +365,6 @@ namespace Anki {
         printf("             Toggle color images:  Alt+Shift+c\n");
         printf("       Realign with block action:  _\n");
         printf("Toggle accel from streamObjectID:  |\n");
-        printf("               UNUSED           :  ,\n");
         printf("             Pronounce sayString:  \" <double-quote>\n");
         printf("       Pronounce sayString (raw):  \' <single-quote>\n");
         printf("                 Set console var:  ]\n");
@@ -795,39 +781,14 @@ namespace Anki {
                 SendStopAllMotors();
                 break;
               }
-                
-              case (s32)'I':
-              {
-                //if(modifier_key & webots::Supervisor::KEYBOARD_CONTROL) {
-                // CTRL/CMD+I - Tell physical robot to send a single image
-                ImageSendMode mode = ImageSendMode::SingleShot;
-                
-                if (shiftKeyPressed) {
-                  // CTRL/CMD+SHIFT+I - Toggle physical robot image streaming
-                  static bool streamOn = false;
-                  if (streamOn) {
-                    mode = ImageSendMode::Off;
-                    printf("Turning robot image streaming OFF.\n");
-                  } else {
-                    mode = ImageSendMode::Stream;
-                    printf("Turning robot image streaming ON.\n");
-                  }
-                  streamOn = !streamOn;
-                } else {
-                  printf("Requesting single robot image.\n");
-                }
-                
-                SendSetRobotImageSendMode(mode);
-                break;
-              }
-                
-              case (s32)'U':
+
+              case (s32)'U':    
               {
                 // U - Request a single image from the game for a specified robot
                 ImageSendMode mode = ImageSendMode::SingleShot;
-                
+
                 if (shiftKeyPressed) {
-                  // SHIFT+I - Toggle image streaming from the game
+                  // SHIFT+U - Toggle image streaming from the game
                   static bool streamOn = true;
                   if (streamOn) {
                     mode = ImageSendMode::Off;
@@ -840,12 +801,11 @@ namespace Anki {
                 } else {
                   printf("Requesting single game image.\n");
                 }
-                
+
                 SendImageRequest(mode);
-                
                 break;
               }
-                
+
               case (s32)'E':
               {
                 // Toggle saving of images to pgm
@@ -1012,7 +972,7 @@ namespace Anki {
                   static bool backpackLightsOn = false;
                 
                   ExternalInterface::SetBackpackLEDs msg;
-                  for(s32 i=0; i<(s32)LEDId::NUM_BACKPACK_LEDS; ++i)
+                  for (u32 i=0; i < (u32) LEDId::NUM_BACKPACK_LEDS; ++i)
                   {
                     msg.onColor[i] = 0;
                     msg.offColor[i] = 0;
@@ -1100,17 +1060,11 @@ namespace Anki {
                 break;
               }
                 
-              case (s32)',':
-              {
-                // FREE KEY COMBO!!!
-                break;
-              }
-                
               case (s32)'|':
               {
                 // Toggle streaming accel from object with ID given in 'streamObjectId' field.
                 
-                u32 streamObjectID = root_->getField("streamObjectID")->getSFInt32();
+                u32 streamObjectID = (u32) root_->getField("streamObjectID")->getSFInt32();
                 // Try to add this objID to the set of already streaming IDs.
                 // If streamObjectID wasn't in the set before, add it and enable streaming.
                 const auto result = streamingAccelObjIds.insert(streamObjectID);
@@ -1220,9 +1174,9 @@ namespace Anki {
 
               case (s32)'M':
               {
-                const uint32_t tag = root_->getField("nvTag")->getSFInt32();
-                const uint32_t numBlobs = root_->getField("nvNumBlobs")->getSFInt32();
-                const uint32_t blobLength = root_->getField("nvBlobDataLength")->getSFInt32();
+                const uint32_t tag = (uint32_t) root_->getField("nvTag")->getSFInt32();
+                const uint32_t numBlobs = (uint32_t) root_->getField("nvNumBlobs")->getSFInt32();
+                const uint32_t blobLength = (uint32_t) root_->getField("nvBlobDataLength")->getSFInt32();
                 
                 // Shift + Alt + M: Erases specified tag
                 if(shiftKeyPressed && altKeyPressed)
@@ -1246,11 +1200,11 @@ namespace Anki {
                   {
                     Util::RandomGenerator r;
                     
-                    for(int i=0;i<numBlobs;i++)
+                    for (uint32_t i=0; i < numBlobs; i++)
                     {
                       printf("blob data: %d\n", i);
                       uint8_t data[blobLength];
-                      for(int i=0;i<blobLength;i++)
+                      for (uint32_t i=0; i < blobLength; i++)
                       {
                         int n = r.RandInt(256);
                         printf("%d ", n);
@@ -1529,7 +1483,7 @@ namespace Anki {
                   //ExternalInterface::SetActiveObjectLEDs msg(jsonMsg);
                   msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
                   msg.objectID = jsonMsg["objectID"].asUInt();
-                  for(s32 iLED = 0; iLED<4; ++iLED) {
+                  for (u32 iLED = 0; iLED < 4; ++iLED) {
                     msg.onColor[iLED]  = jsonMsg["onColor"][iLED].asUInt();
                     msg.offColor[iLED]  = jsonMsg["offColor"][iLED].asUInt();
                     msg.onPeriod_ms[iLED]  = jsonMsg["onPeriod_ms"][iLED].asUInt();
@@ -1713,12 +1667,6 @@ namespace Anki {
                 CycleVizOrigin();
                 break;
               }
-                
-              case (s32) '!':
-              {
-                // FREE KEY COMBO!!!
-                break;
-              }
 
               case (s32)'@':
               {
@@ -1834,7 +1782,7 @@ namespace Anki {
                                  "Tag: %s, NumBlobs %d, maxBlobSize %zu",
                                  EnumToString(tag), numTotalBlobs, MAX_BLOB_SIZE);
 
-                        for (int i=0; i<numTotalBlobs; ++i) {
+                        for (u8 i=0; i < numTotalBlobs; ++i) {
                           SendNVStorageWriteEntry(tag,
                                                   d.data() + i * MAX_BLOB_SIZE, MIN(MAX_BLOB_SIZE, numBytes - (i*MAX_BLOB_SIZE)),
                                                   i, numTotalBlobs);
@@ -2007,7 +1955,7 @@ namespace Anki {
                   webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
                   u32 animNumLoops = 1;
                   if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
-                    animNumLoops = animNumLoopsField->getSFInt32();
+                    animNumLoops = (u32) animNumLoopsField->getSFInt32();
                   }
                   
                   SendAnimation(animToSendName.c_str(), animNumLoops, true);
@@ -2053,22 +2001,28 @@ namespace Anki {
                   break;
                 }
 
-                ExternalInterface::RunDebugConsoleFuncMessage msg;
-                msg.funcName = funcNameField->getSFString();
-                if( msg.funcName.empty() ) {
+                std::string funcName( funcNameField->getSFString() );
+                if( funcName.empty() ) {
                   printf("WARNING: no function name defined in 'consoleVarName'\n");
                   break;
                 }
-                  
-                msg.funcArgs = funcArgsField->getSFString();
+
+                std::string funcArgs( funcArgsField->getSFString() );
                 // args field is allowed to be empty
 
                 printf("Trying to call console func: %s(%s)\n",
-                       msg.funcName.c_str(),
-                       msg.funcArgs.c_str());
+                       funcName.c_str(),
+                       funcArgs.c_str());
                 
-                SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
-
+                using namespace ExternalInterface;
+                if (altKeyPressed) {
+                  // Alt: Send to Anim process
+                  SendMessage(MessageGameToEngine(RunAnimDebugConsoleFuncMessage(funcName, funcArgs)));
+                }
+                else {
+                  // Normal: Send to Engine process
+                  SendMessage(MessageGameToEngine(RunDebugConsoleFuncMessage(funcName, funcArgs)));
+                }
                 break;
               }
               
@@ -2078,8 +2032,8 @@ namespace Anki {
                 webots::Field* field = root_->getField("consoleVarName");
                 if(nullptr == field) {
                   printf("No consoleVarName field\n");
-                } else {
-                  
+                }
+                else {
                   const std::string varName( field->getSFString() );
                   if(varName.empty()) {
                     printf("Empty consoleVarName\n");
@@ -2091,7 +2045,8 @@ namespace Anki {
                   field = root_->getField("consoleVarValue");
                   if(nullptr == field) {
                     printf("No consoleVarValue field\n");
-                  } else {
+                  }
+                  else {
                     tryValue = field->getSFString();
                     printf("Trying to set console var '%s' to '%s'\n",
                            varName.c_str(), tryValue.c_str());
@@ -2130,7 +2085,7 @@ namespace Anki {
                 webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
                 u32 animNumLoops = 1;
                 if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
-                  animNumLoops = animNumLoopsField->getSFInt32();
+                  animNumLoops = (u32) animNumLoopsField->getSFInt32();
                 }
                 
                 SendDevAnimation(animToSendName.c_str(), animNumLoops);
@@ -2224,14 +2179,6 @@ namespace Anki {
                 }
                 break;
               }
-                
-              case (s32)'J':
-              {
-               
-                // unused!
-
-                break;
-              }
 
               case (s32)'N':
               {
@@ -2276,12 +2223,6 @@ namespace Anki {
                                      root_->getField("rollDriveAccel_mmps2")->getSFFloat(),
                                      root_->getField("rollDriveDuration_ms")->getSFInt32(),
                                      root_->getField("rollBackupDist_mm")->getSFFloat());
-                break;
-              }
-                
-              case (s32)';':
-              {
-                // OPEN KEY!!!
                 break;
               }
                 
@@ -2377,7 +2318,7 @@ namespace Anki {
               {
                 break;
               }
-                
+
               default:
               {
                 // Unsupported key: ignore.

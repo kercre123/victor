@@ -31,10 +31,8 @@ const char* kNeedIDKey = "need";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyExpressNeedsTransition::StrategyExpressNeedsTransition(BehaviorExternalInterface& behaviorExternalInterface,
-                                                               IExternalInterface* robotExternalInterface,
-                                                               const Json::Value& config)
-: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
+StrategyExpressNeedsTransition::StrategyExpressNeedsTransition(const Json::Value& config)
+: IStateConceptStrategy(config)
 {
   const auto& needStr = JsonTools::ParseString(config,
                                                kNeedIDKey,

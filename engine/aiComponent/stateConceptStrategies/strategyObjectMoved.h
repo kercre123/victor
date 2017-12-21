@@ -15,25 +15,30 @@
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_StrategyObjectMoved_H__
 
 #include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
+#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategyEventHandler.h"
 
 #include "anki/common/basestation/objectIDs.h"
 
 namespace Anki {
 namespace Cozmo {
 
+class StateConceptStrategyMessageHelper;
+
+
 //Forward declarations
 class ReactionObjectData;
 
-class StrategyObjectMoved : public IStateConceptStrategy
+class StrategyObjectMoved : public IStateConceptStrategy, private IStateConceptStrategyEventHandler
 {
 public:
-  StrategyObjectMoved(BehaviorExternalInterface& behaviorExternalInterface,
-                      IExternalInterface* robotExternalInterface,
-                      const Json::Value& config);
+  StrategyObjectMoved(const Json::Value& config);
+
+  virtual ~StrategyObjectMoved();
 
 protected:
+  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
 
 private:
@@ -47,6 +52,8 @@ private:
   void HandleObservedObject(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::RobotObservedObject& msg);
   void HandleRobotDelocalized();
   Reaction_iter GetReactionaryIterator(ObjectID objectID);
+
+  std::unique_ptr<StateConceptStrategyMessageHelper> _messageHelper;
 
 };
 

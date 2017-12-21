@@ -25,9 +25,7 @@ namespace Cozmo {
 class StrategyInNeedsBracket : public IStateConceptStrategy
 {
 public:
-  StrategyInNeedsBracket(BehaviorExternalInterface& behaviorExternalInterface,
-                         IExternalInterface* robotExternalInterface,
-                         const Json::Value& config);
+  explicit StrategyInNeedsBracket(const Json::Value& config);
 
 protected:
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

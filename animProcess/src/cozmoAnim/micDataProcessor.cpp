@@ -18,10 +18,14 @@
 
 #include "anki/messaging/shared/UdpServer.h"
 #include "cozmoAnim/engineMessages.h"
+#include "cozmoAnim/faceDisplay/faceDebugDraw.h"
+#include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/micDataProcessor.h"
 #include "cozmoAnim/micDataInfo.h"
 #include "cozmoAnim/micImmediateDirection.h"
 #include "cozmoAnim/speechRecognizerTHFSimple.h"
+
+#include "osState/osState.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -34,6 +38,7 @@
 
 #include <iomanip>
 #include <sstream>
+
 
 namespace {
   struct TriggerData
@@ -80,6 +85,19 @@ namespace MicData {
 
 static_assert(std::is_same<decltype(RobotInterface::MicData::data), RawAudioChunk>::value,
               "Expecting type of MicData::data to match RawAudioChunk");
+
+static_assert(
+  std::is_same<std::remove_reference<decltype(RobotInterface::MicDirection::confidenceList[0])>::type,
+  decltype(MicDirectionData::confidenceList)::value_type>::value,
+  "Expecting type of RobotInterface::MicDirection::confidenceList items "\
+  "to match MicDirectionData::confidenceList items");
+
+constexpr auto kMicDirectionConfListSize = sizeof(RobotInterface::MicDirection::confidenceList);
+constexpr auto kMicDirectionConfListItemSize = sizeof(RobotInterface::MicDirection::confidenceList[0]);
+static_assert(
+  kMicDirectionConfListSize / kMicDirectionConfListItemSize ==
+  decltype(MicDirectionData::confidenceList)().size(),
+  "Expecting length of RobotInterface::MicDirection::confidenceList to match MicDirectionData::confidenceList");
 
 
 // TODO: VIC-752 Remove this code copied from robotProcess for reading configure data when victor mics aren't broken
@@ -152,7 +170,7 @@ Result HALConfig::ReadConfigFile(const char* path, const HALConfig::Item config[
 {
   FILE* fp = fopen(path, "r");
   if (!fp) {
-    PRINT_NAMED_WARNING("HALConfig::ReadConfigFile","Can't open %s\n", path);
+    PRINT_NAMED_WARNING("HALConfig::ReadConfigFile","Can't open %s", path);
     return RESULT_FAIL_FILE_OPEN;
   }
   else {
@@ -229,6 +247,10 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
 
   MMIfInit(0, nullptr);
 
+  _bestSearchBeamIndex = SEDiagGetIndex("fdsearch_best_beam_index");
+  _bestSearchBeamConfidence = SEDiagGetIndex("fdsearch_best_beam_confidence");
+  _searchConfidenceState = SEDiagGetIndex("fdsearch_confidence_state");
+
   int error = 0;
   _speexState = speex_resampler_init(
     kNumInputChannels, // num channels
@@ -256,7 +278,8 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
     }
   }
 
-  const bool udpSuccess = _udpServer->StartListening(kCloudProcessCommunicationPort);
+  const RobotID_t robotID = OSState::getInstance()->GetRobotID();
+  const bool udpSuccess = _udpServer->StartListening(kCloudProcessCommunicationPort + robotID);
   ANKI_VERIFY(udpSuccess,
               "MicDataProcessor.Constructor.UdpStartListening",
               "Failed to start listening on port %d",
@@ -352,7 +375,7 @@ bool MicDataProcessor::ProcessResampledAudio(TimeStamp_t timestamp,
     TimedMicData& nextSample = _immediateAudioBuffer.push_back();
     nextSample.timestamp = timestamp;
     const bool kAverageValues = (HAL_SOME_MICS_BROKEN != 0.0f);
-    DirConfResult directionConfidence{};
+    MicDirectionData directionResult{};
     // TODO: VIC-752 Remove this code for averaging mic data when victor mics aren't broken
     if (kAverageValues)
     {
@@ -374,23 +397,28 @@ bool MicDataProcessor::ProcessResampledAudio(TimeStamp_t timestamp,
           averagedAudioChunk[sampleIdx + (kSamplesPerBlock * 3)] = averagedValue;
         }
       }
-      directionConfidence = ProcessMicrophonesSE(averagedAudioChunk.data(), nextSample.audioBlock.data());
+      directionResult = ProcessMicrophonesSE(averagedAudioChunk.data(), nextSample.audioBlock.data());
       // When we've averaged the values force set the first direction
-      directionConfidence.direction = MicImmediateDirection::kFirstIndex;
+      directionResult.winningDirection = kFirstIndex;
     }
     else
     {
-      directionConfidence = ProcessMicrophonesSE(_inProcessAudioBlock.data(), nextSample.audioBlock.data());
+      directionResult = ProcessMicrophonesSE(_inProcessAudioBlock.data(), nextSample.audioBlock.data());
     }
 
     // Store off this most recent result in our immedate direction tracking
-    _micImmediateDirection->AddDirectionSample(directionConfidence.direction, directionConfidence.confidence);
+    _micImmediateDirection->AddDirectionSample(directionResult);
 
     // Set up a message to send out about the direction
     RobotInterface::MicDirection newMessage;
     newMessage.timestamp = timestamp;
-    newMessage.direction = directionConfidence.direction;
-    newMessage.confidence = directionConfidence.confidence;
+    newMessage.direction = directionResult.winningDirection;
+    newMessage.confidence = directionResult.winningConfidence;
+    std::copy(
+      directionResult.confidenceList.begin(),
+      directionResult.confidenceList.end(),
+      newMessage.confidenceList);
+    
     auto engineMessage = std::unique_ptr<RobotInterface::RobotToEngine>(
       new RobotInterface::RobotToEngine(std::move(newMessage)));
     {
@@ -404,8 +432,8 @@ bool MicDataProcessor::ProcessResampledAudio(TimeStamp_t timestamp,
   return _inProcessAudioBlockFirstHalf;
 }
 
-MicDataProcessor::DirConfResult MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSample* audioChunk,
-                                                                       AudioUtil::AudioSample* bufferOut) const
+MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSample* audioChunk,
+                                                        AudioUtil::AudioSample* bufferOut) const
 {
   static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
   {
@@ -414,19 +442,19 @@ MicDataProcessor::DirConfResult MicDataProcessor::ProcessMicrophonesSE(const Aud
     MMIfProcessMicrophones(dummySpeakerOut.data(), audioChunk, bufferOut);
   }
 
-  const char * const kBestSearchBeamDiagName = "fdsearch_best_beam_index";
-  const auto bestDirIdx = SEDiagGetIndex(kBestSearchBeamDiagName);
-  const auto latestDirection = SEDiagGetUInt16(bestDirIdx);
+  const auto latestDirection = SEDiagGetUInt16(_bestSearchBeamIndex);
+  const auto latestConf = SEDiagGetInt16(_bestSearchBeamConfidence);
+  const auto* searchConfState = SEDiagGet(_searchConfidenceState);
 
-  const char * const kBestSearchBeamConfDiagName = "fdsearch_best_beam_confidence";
-  const auto bestDirConfIdx = SEDiagGetIndex(kBestSearchBeamConfDiagName);
-  const auto latestConf = SEDiagGetInt16(bestDirConfIdx);
-
-  DirConfResult result = 
+  MicDirectionData result = 
   {
-    .direction = latestDirection,
-    .confidence = latestConf
+    .winningDirection = latestDirection,
+    .winningConfidence = latestConf
   };
+  const auto* confListSrc = reinterpret_cast<const float*>(searchConfState->u.vp);
+  // NOTE currently SE only calculates the 12 main directions (not "unknown" or directly above the mics)
+  // so we only copy the 12 main directions
+  std::copy(confListSrc, confListSrc + kLastValidIndex + 1, result.confidenceList.begin());
   return result;
 }
 
@@ -709,6 +737,12 @@ void MicDataProcessor::Update()
     stolenMessages = std::move(_msgsToEngine);
     _msgsToEngine.clear();
   }
+
+  #if ANKI_DEV_CHEATS
+    // Store off a copy of (one of) the micDirectionData from this update for debug drawing
+    Anki::Cozmo::RobotInterface::MicDirection micDirectionData{};
+    bool updatedMicDirection = false;
+  #endif
   for (const auto& msg : stolenMessages)
   {
     if (msg->tag == RobotInterface::RobotToEngine::Tag_triggerWordDetected)
@@ -717,6 +751,10 @@ void MicDataProcessor::Update()
     }
     else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
     {
+      #if ANKI_DEV_CHEATS
+        micDirectionData = msg->micDirection;
+        updatedMicDirection = true;
+      #endif
       RobotInterface::SendMessageToEngine(msg->micDirection);
     }
     else
@@ -726,6 +764,13 @@ void MicDataProcessor::Update()
                      "%s", RobotInterface::RobotToEngine::TagToString(msg->tag));
     }
   }
+
+  #if ANKI_DEV_CHEATS
+    if (updatedMicDirection)
+    {
+      FaceDisplay::GetDebugDraw()->DrawConfidenceClock(micDirectionData);
+    }
+  #endif
 }
 
 void MicDataProcessor::ClearCurrentStreamingJob()

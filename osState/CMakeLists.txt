@@ -1,0 +1,47 @@
+cmake_minimum_required(VERSION 3.6)
+
+project(osState)
+
+include(anki_build_cxx)
+
+anki_build_cxx_library(osState ${ANKI_SRCLIST_DIR})
+
+set(PLATFORM_LIBS "")
+set(PLATFORM_INCLUDES "")
+set(PLATFORM_COMPILE_DEFS "")
+if (ANDROID)
+    set(PLATFORM_LIBS
+        android
+        log)
+elseif (MACOSX)
+    include(webots)
+    set(PLATFORM_LIBS
+        ${WEBOTS_LIBS}
+    )
+    set(PLATFORM_COMPILE_DEFS "-DSIMULATOR")
+endif()
+
+target_link_libraries(osState
+PRIVATE
+  util
+  cti_common
+# platform
+  ${PLATFORM_LIBS}
+)
+
+android_strip(TARGET osState)
+
+target_compile_definitions(osState
+  PRIVATE
+  ${PLATFORM_COMPILE_DEFS}
+)
+
+target_include_directories(osState
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+  PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../robot/include>
+  ${PLATFORM_INCLUDES}
+)
+

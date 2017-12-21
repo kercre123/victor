@@ -51,6 +51,7 @@ class MoodManager;
 class ObjectPoseConfirmer;
 class PetWorld;
 class ProgressionUnlockComponent;
+class ProxSensorComponent;
 class PublicStateBroadcaster;
 class TouchSensorComponent;
 class VisionComponent;
@@ -81,6 +82,7 @@ enum class BEIComponentID{
   ObjectPoseConfirmer,
   PetWorld,
   ProgressionUnlock,
+  ProxSensor,
   PublicStateBroadcaster,
   RobotAudioClient,
   RobotInfo,
@@ -128,6 +130,7 @@ public:
             ObjectPoseConfirmer*           objectPoseConfirmer,
             PetWorld*                      petWorld,
             ProgressionUnlockComponent*    progressionUnlockComponent,
+            ProxSensorComponent*           proxSensor,
             PublicStateBroadcaster*        publicStateBroadcaster,
             Audio::EngineRobotAudioClient* robotAudioClient,
             BEIRobotInfo*                  robotInfo,
@@ -225,6 +228,7 @@ private:
                        ObjectPoseConfirmer*           objectPoseConfirmer,
                        PetWorld*                      petWorld,
                        ProgressionUnlockComponent*    progressionUnlockComponent,
+                       ProxSensorComponent*           proxSensor,
                        PublicStateBroadcaster*        publicStateBroadcaster,
                        Audio::EngineRobotAudioClient* robotAudioClient,
                        BEIRobotInfo*                  robotInfo,

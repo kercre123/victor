@@ -24,33 +24,6 @@ namespace Cozmo {
 
 class BehaviorFeedingEat;
 
-// TODO:(bn) combine this with WantsToRunStrategy
-class ICondition {
-public:
-  ICondition() {}
-  virtual ~ICondition() {}
-
-  virtual void EnteredScope() { }
-  virtual void LeftScope() { }
-
-  virtual bool Evaluate(BehaviorExternalInterface& behaviorExternalInterface) = 0;
-};
-
-class LambdaCondition : public ICondition {
-public:
-  using TransitionFunction = std::function<bool(BehaviorExternalInterface& behaviorExternalInterface)>;
-  LambdaCondition(TransitionFunction func) :_func(func) {}
-
-  virtual bool Evaluate(BehaviorExternalInterface& behaviorExternalInterface) override {
-    return _func(behaviorExternalInterface);
-  }
-
-private:
-  TransitionFunction _func;
-};
-
-class FeedingListenerCondition;
-
 class BehaviorVictorObservingDemo : public ICozmoBehavior
 {
 protected:
@@ -81,45 +54,48 @@ protected:
 
 private:
 
-  enum class StateID {
-    
-    ObservingOnCharger = 0,
-    ObservingOnChargerRecentlyPlaced,
-    DriveOffChargerIntoObserving,
-    DriveOffChargerIntoPlay,
-    DriveOffChargerIntoSocializing,
-    DriveOffChargerIntoFeeding,
-    Observing,
-    Feeding,
-    Socializing,
-    Napping,
-    WakingUp,
-    Playing,
-    ReturningToCharger,
-    FailedToFindCharger,
-
-    Count
-  };
+  using StateID = size_t;
+  static const StateID InvalidStateID = 0;
   
   class State;
 
-  void AddState( State&& state );
+  enum class TransitionType {
+    NonInterrupting,
+    Interrupting,
+    Exit
+  };
 
-  void TransitionToState(BehaviorExternalInterface& behaviorExternalInterface, const StateID targetState);
+  static TransitionType TransitionTypeFromString(const std::string& str);
+
+  // place to put all of the hardcoded / predefined transition strategies
+  void CreatePreDefinedStrategies();
+  
+  // returns the newly created ID
+  StateID AddStateName(const std::string& stateName);
+
+  // asserts if not found
+  StateID GetStateID(const std::string& stateName) const;
+
+  StateID ParseStateFromJson(const Json::Value& config, const std::string& key);
+  IStateConceptStrategyPtr ParseTransitionStrategy(const Json::Value& config);
+  
+  void AddState( State&& state );
+  
+  void TransitionToState(BehaviorExternalInterface& behaviorExternalInterface, StateID targetState);
 
   bool StateExitCooldownExpired(StateID state, float timeout) const;
+
+  std::map< std::string, StateID > _stateNameToID;
 
   using StateMap = std::map< StateID, State >;
   std::unique_ptr< StateMap > _states;
 
-  std::shared_ptr<FeedingListenerCondition> _feedingCompleteCondition;
-
+  std::map< std::string, IStateConceptStrategyPtr > _preDefinedStrategies;
+  
   // hack to turn off all modes when this behavior starts and then back on when it ends
   std::vector< VisionMode > _visionModesToReEnable;
 
-  StateID _currState = StateID::Count;
-
-  bool _initComplete = false;
+  StateID _currState = InvalidStateID;
 
   BackpackLights _currDebugLights;
   bool _debugLightsDirty = false;

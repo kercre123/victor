@@ -56,10 +56,10 @@ target_compile_definitions(robot_hal
   ${PLATFORM_COMPILE_DEFS}
 )
 
-# HACK #2 - supervisor build on mac requires files in 
+# HACK #2 - supervisor build on mac requires files in
 # robot2/ and simulator/ folders. At least the ones in robot2 (sim_hal)
 # also depend on files in supervisor :-(
-# Rather than break the circular dependency now, we just 
+# Rather than break the circular dependency now, we just
 # include those sources when building for mac
 
 set(PLATFORM_SRCS "")
@@ -93,7 +93,7 @@ elseif (MACOSX)
   )
   set(PLATFORM_SRCS
       ${CMAKE_SOURCE_DIR}/robot2/hal/sim/src/sim_hal.cpp
-      ${CMAKE_SOURCE_DIR}/robot2/hal/sim/src/sim_radio.cpp
+      ${CMAKE_SOURCE_DIR}/robot2/hal/src/radio.cpp
       ${CMAKE_SOURCE_DIR}/simulator/robot/sim_overlayDisplay.cpp
   )
 endif()

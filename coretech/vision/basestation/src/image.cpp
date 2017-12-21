@@ -750,6 +750,28 @@ namespace Vision {
     
     return *this;
   }
+
+  ImageRGB565& ImageRGB565::SetFromImageRGB565(const ImageRGB565& imageRGB565)
+  {
+    imageRGB565.CopyTo(*this);
+    return *this;
+  }
+
+  void ImageRGB565::DrawFilledRect(const Rectangle<s32>& rect, const PixelRGB565& pixel)
+  {
+    const s32 start_x = Util::Clamp(rect.GetX(), 0, GetNumCols());
+    const s32 end_x = Util::Clamp(rect.GetXmax(), 0, GetNumCols());
+
+    const s32 start_y = Util::Clamp(rect.GetY(), 0, GetNumRows());
+    const s32 end_y = Util::Clamp(rect.GetYmax(), 0, GetNumRows());
+
+    for (s32 y = start_y; y < end_y; ++y) {
+      PixelRGB565 *row = GetRow(y);
+      for (s32 x = start_x; x < end_x; ++x) {
+        row[x] = pixel;
+      }
+    }
+  }
   
 } // namespace Vision
 } // namespace Anki

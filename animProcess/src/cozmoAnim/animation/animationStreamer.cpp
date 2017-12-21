@@ -27,6 +27,7 @@
 #include "cozmoAnim/robotDataLoader.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/animationTypes.h"
+#include "osState/osState.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
@@ -60,7 +61,10 @@ namespace Cozmo {
   
   CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
   CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
-    
+
+  // Whether or not to display themal throttling indicator on face
+  CONSOLE_VAR(bool, kDisplayThermalThrottling, "AnimationStreamer", true);
+
   // Overrides whatever faces we're sending with a 3-stripe test pattern
   // (seems more related to the other ProceduralFace console vars, so putting it in that group instead)
   CONSOLE_VAR(bool, kProcFace_DisplayTestPattern, "ProceduralFace", false);
@@ -117,26 +121,18 @@ namespace Cozmo {
     _procFaceImg.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     _faceImageBinary.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     _faceImageRGB565.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-    
-    // Until we address the display gamma issues (VIC-559), apply a gamma<1.0 to darken the
-    // dark end of the range. Not necessary in simulation.
-#   ifdef SIMULATOR
-    const f32 invGamma = 1.f;
-#   else
-    const f32 invGamma = 1.f;
-#   endif
-    const size_t kGammaEndRange = 160;
-    int i=0;
-    for(; i<kGammaEndRange; ++i)
-    {
-      const f32 gammaCorrected = (f32)kGammaEndRange * std::powf((f32)i / (f32)(kGammaEndRange), invGamma);
-      _gammaLUT[i] = Util::numeric_cast_clamped<u8>(std::round(gammaCorrected));
-    }
-    for(; i<_gammaLUT.size(); ++i)
-    {
-      _gammaLUT[i] = i;
-    }
    
+
+    // TODO: _Might_ need to disable this eventually if there are conflicts
+    //       with wake up animations or something on startup. The only reason
+    //       this is here is to make sure there's something on the face and
+    //       currently there's no face animation that the engine automatically
+    //       initiates on startup.
+    // 
+    // Turn on neutral face by default at startup
+    // Otherwise face is blank until an animation is played.
+    SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag);
+
     return RESULT_OK;
   }
   
@@ -148,7 +144,6 @@ namespace Cozmo {
   
   AnimationStreamer::~AnimationStreamer()
   {
-    FaceDisplay::removeInstance();
     Util::SafeDelete(_proceduralAnimation);
   }
   
@@ -517,13 +512,13 @@ namespace Cozmo {
       DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
       DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
       ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _procFaceImg);
-      _faceDrawBuf.SetFromImageRGB(_procFaceImg, _gammaLUT);
+      _faceDrawBuf.SetFromImageRGB(_procFaceImg);
     }
     
     BufferFaceToSend(_faceDrawBuf);
   }
   
-  void AnimationStreamer::BufferFaceToSend(const Vision::ImageRGB565& faceImg565)
+  void AnimationStreamer::BufferFaceToSend(Vision::ImageRGB565& faceImg565, bool allowOverlay)
   {
     DEV_ASSERT_MSG(faceImg565.GetNumCols() == FACE_DISPLAY_WIDTH &&
                    faceImg565.GetNumRows() == FACE_DISPLAY_HEIGHT,
@@ -532,35 +527,18 @@ namespace Cozmo {
                    faceImg565.GetNumCols(), faceImg565.GetNumRows(),
                    FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
     
-    // Draws frame to face display
-#ifdef DRAW_FACE_IN_THREAD
-    // If last draw thread is still running then skip this face
-    if (_faceDrawFuture.valid()) {
-      const std::chrono::milliseconds span(0);
-      auto status = _faceDrawFuture.wait_for(span);
-      if (status != std::future_status::ready) {
-        // This could be happening for one or more of the following reasons.
-        // 1) The actual spi calls in FaceDisplay::FaceDraw() are taking too long.
-        //    This is currently happening all the time. Nathan knows about it.
-        // 2) We're calling this function more than once per animation process tic, which we shouldn't be doing.
-        const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-        PRINT_NAMED_WARNING("AnimationStreamer.BufferFaceToSend.SkippingFace", "Still drawing last face from %f ms ago", now_ms - _lastDrawTime_ms);
-        return;
-      }
-    }
-    
-    // Dispatch thread
-    auto draw_face = [](const u16* frame) {
-      FaceDisplay::getInstance()->FaceDraw(frame);
-    };
-  
-    _faceDrawFuture = std::async(draw_face, faceImg565.GetRawDataPointer());
-    _lastDrawTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-#else
-    FaceDisplay::getInstance()->FaceDraw(faceImg565.GetRawDataPointer());
-#endif   // #ifdef DRAW_FACE_IN_THREAD
-  }
 
+    // Draw red square in corner of face if thermal throttling
+    if (kDisplayThermalThrottling && 
+        allowOverlay &&
+        OSState::getInstance()->IsThermalThrottling()) {
+      const Rectangle<s32> rect( 0, 0, 20, 20);
+      const Vision::PixelRGB565 pixel(255, 0, 0);
+      faceImg565.DrawFilledRect(rect, pixel);
+    }
+
+    FaceDisplay::getInstance()->DrawToFace(faceImg565);
+  }
   
   Result AnimationStreamer::EnableBackpackAnimationLayer(bool enable)
   {
@@ -822,7 +800,7 @@ namespace Cozmo {
           const bool gotImage = faceKeyFrame.GetFaceImage(_faceDrawBuf);
           if (gotImage) {
             DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
-            BufferFaceToSend(_faceDrawBuf);
+            BufferFaceToSend(_faceDrawBuf, false);  // Don't overwrite FaceAnimationKeyFrame images
           }
           
           if(faceKeyFrame.IsDone()) {

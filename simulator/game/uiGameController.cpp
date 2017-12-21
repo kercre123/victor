@@ -1062,10 +1062,10 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendSaveImages(ImageSendMode imageMode, const std::string& path)
+    void UiGameController::SendSaveImages(ImageSendMode imageMode, const std::string& path, const int8_t qualityOnRobot)
     {
       using namespace ExternalInterface;
-      SendMessage(MessageGameToEngine(SaveImages(imageMode, path)));
+      SendMessage(MessageGameToEngine(SaveImages(imageMode, qualityOnRobot, path)));
     }
     
     void UiGameController::SendSaveState(bool enabled, const std::string& path)
@@ -1510,7 +1510,6 @@ namespace Anki {
     void UiGameController::SendSetRobotVolume(const f32 volume)
     {
       ExternalInterface::SetRobotVolume m;
-      m.robotId = 1;
       m.volume = volume;
       ExternalInterface::MessageGameToEngine message;
       message.Set_SetRobotVolume(m);
@@ -1603,7 +1602,6 @@ namespace Anki {
       {
         PRINT_NAMED_INFO("SendDevAnimation", "sending %s", animName);
         ExternalInterface::PlayAnimation_DEV m;
-        m.robotId = 1;
         m.animationName = animName;
         m.numLoops = numLoops;
         ExternalInterface::MessageGameToEngine message;

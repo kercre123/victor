@@ -15,6 +15,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyMessageHelper.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
@@ -59,21 +60,30 @@ private:
 };
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyObjectMoved::StrategyObjectMoved(BehaviorExternalInterface& behaviorExternalInterface,
-                                         IExternalInterface* robotExternalInterface,
-                                         const Json::Value& config)
-: IStateConceptStrategy(behaviorExternalInterface, robotExternalInterface, config)
+StrategyObjectMoved::StrategyObjectMoved(const Json::Value& config)
+: IStateConceptStrategy(config)
 {
-  SubscribeToTags({{
-    EngineToGameTag::ObjectMoved,
-    EngineToGameTag::ObjectStoppedMoving,
-    EngineToGameTag::RobotObservedObject,
-    EngineToGameTag::ObjectUpAxisChanged,
-    EngineToGameTag::RobotDelocalized
-  }});
 }
 
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+StrategyObjectMoved::~StrategyObjectMoved()
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void StrategyObjectMoved::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  _messageHelper.reset(new StateConceptStrategyMessageHelper(this, behaviorExternalInterface));
+
+  _messageHelper->SubscribeToTags({{
+        EngineToGameTag::ObjectMoved,
+        EngineToGameTag::ObjectStoppedMoving,
+        EngineToGameTag::RobotObservedObject,
+        EngineToGameTag::ObjectUpAxisChanged,
+        EngineToGameTag::RobotDelocalized
+      }});
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool StrategyObjectMoved::AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
@@ -111,7 +121,7 @@ bool StrategyObjectMoved::AreStateConditionsMetInternal(BehaviorExternalInterfac
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void StrategyObjectMoved::AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void StrategyObjectMoved::HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag()){
     case EngineToGameTag::ObjectMoved:

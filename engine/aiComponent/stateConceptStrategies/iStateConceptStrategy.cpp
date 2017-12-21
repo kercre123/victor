@@ -15,11 +15,8 @@
 
 #include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
-
 #include "anki/common/basestation/jsonTools.h"
+#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -48,74 +45,37 @@ StateConceptStrategyType IStateConceptStrategy::ExtractStrategyType(const Json::
   return StateConceptStrategyTypeFromString(strategyType);
 }
 
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IStateConceptStrategy::IStateConceptStrategy(BehaviorExternalInterface& behaviorExternalInterface,
-                                         IExternalInterface* robotExternalInterface,
-                                         const Json::Value& config)
-: _behaviorExternalInterface(behaviorExternalInterface)
-, _robotExternalInterface(robotExternalInterface)
-, _strategyType(ExtractStrategyType(config))
+IStateConceptStrategy::IStateConceptStrategy(const Json::Value& config)
+: _strategyType(ExtractStrategyType(config))
 {
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IStateConceptStrategy::Reset(BehaviorExternalInterface& bei)
+{
+  _hasEverBeenReset = true;
+  ResetInternal(bei);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IStateConceptStrategy::SubscribeToTags(std::set<GameToEngineTag> &&tags)
+void IStateConceptStrategy::Init(BehaviorExternalInterface& bei)
 {
-  if(_robotExternalInterface != nullptr) {
-    auto handlerCallback = [this](const GameToEngineEvent& event) {
-      HandleEvent(event);
-    };
-    
-    for(auto tag : tags) {
-      _eventHandles.push_back(_robotExternalInterface->Subscribe(tag, handlerCallback));
-    }
+  if( _isInitialized ) {
+    PRINT_NAMED_WARNING("IStateConceptStrategy.Init.AlreadyInitialized", "Init called multiple times");
   }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IStateConceptStrategy::SubscribeToTags(std::set<EngineToGameTag> &&tags)
-{
-  if(_robotExternalInterface != nullptr) {
-    auto handlerCallback = [this](const EngineToGameEvent& event) {
-      HandleEvent(event);
-    };
-    
-    for(auto tag : tags) {
-      _eventHandles.push_back(_robotExternalInterface->Subscribe(tag, handlerCallback));
-    }
-  }
-}
   
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IStateConceptStrategy::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
-{
-  AlwaysHandleInternal(event, behaviorExternalInterface);
-}
- 
+  InitInternal(bei);
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IStateConceptStrategy::AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
-{
-  AlwaysHandleInternal(event, behaviorExternalInterface);
+  _isInitialized = true;
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IStateConceptStrategy::AreStateConditionsMet(BehaviorExternalInterface& behaviorExternalInterface) const
 {
+  DEV_ASSERT(_hasEverBeenReset, "IStateConceptStrategy.AreStateConditionsMet.NotEverReset");
+  DEV_ASSERT(_isInitialized, "IStateConceptStrategy.AreStateConditionsMet.NotInitialized");
   return AreStateConditionsMetInternal(behaviorExternalInterface);
-}
-
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Util::RandomGenerator& IStateConceptStrategy::GetRNG() const
-{
-  return _behaviorExternalInterface.GetRNG();
 }
   
 } // namespace Cozmo

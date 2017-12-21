@@ -22,9 +22,7 @@ namespace Cozmo {
 class StrategyRobotShaken : public IStateConceptStrategy
 {
 public:
-  StrategyRobotShaken(BehaviorExternalInterface& behaviorExternalInterface,
-                      IExternalInterface* robotExternalInterface,
-                      const Json::Value& config);
+  explicit StrategyRobotShaken(const Json::Value& config);
 
 protected:
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

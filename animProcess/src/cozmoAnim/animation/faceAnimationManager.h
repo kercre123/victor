@@ -17,6 +17,7 @@
 #include <unordered_map>
 
 #include "anki/common/types.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/vision/basestation/image.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 

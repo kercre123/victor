@@ -47,16 +47,6 @@ MessageHandler::~MessageHandler() = default;
 
 void MessageHandler::Init(const Json::Value& config, RobotManager* robotMgr, const CozmoContext* context)
 {
-  const char *ipString = config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString();
-  int port = config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt();
-  if (port < 0 || port >= 0x10000) {
-    PRINT_NAMED_ERROR("RobotInterface.MessageHandler.Init", "Failed to initialize RobotComms; bad port %d", port);
-    return;
-  }
-  
-  Anki::Util::TransportAddress address(ipString, static_cast<uint16_t>(port));
-  PRINT_STREAM_DEBUG("RobotInterface.MessageHandler.Init", "Initializing on address: " << address << ": " << address.GetIPAddress() << ":" << address.GetIPPort() << "; originals: " << ipString << ":" << port);
-  
   _robotManager = robotMgr;
   _robotConnectionManager.reset(new RobotConnectionManager(_robotManager));
   _robotConnectionManager->Init();
@@ -184,11 +174,7 @@ Result MessageHandler::AddRobotConnection(RobotID_t robotId)
 {
   const char* robotProcessIPAddress = "127.0.0.1";
 
-  #ifdef SIMULATOR
   int port = Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT + robotId;
-  #else
-  int port = Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT;
-  #endif
   PRINT_NAMED_WARNING("AddRobotConnection", "%s:%d", robotProcessIPAddress, port);
 
   Anki::Util::TransportAddress address(robotProcessIPAddress, static_cast<uint16_t>(port));

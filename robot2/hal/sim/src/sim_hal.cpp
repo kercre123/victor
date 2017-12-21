@@ -288,8 +288,8 @@ namespace Anki {
 
 #pragma mark --- Simulated Hardware Method Implementations ---
 
-    // Forward Declaration.  This is implemented in sim_radio.cpp
-    Result InitSimRadio(const char* advertisementIP);
+    // Forward Declaration
+    Result InitRadio();
 
     Result HAL::Init()
     {
@@ -310,21 +310,10 @@ namespace Anki {
       con_ = webotRobot_.getConnector("gripperConnector");
 
 
-      // Set ID
-      // Expected format of name is <SomeName>_<robotID>
-      std::string name = webotRobot_.getName();
-      size_t lastDelimPos = name.rfind('_');
-      if (lastDelimPos != std::string::npos) {
-        robotID_ = atoi( name.substr(lastDelimPos+1).c_str() );
-        if (robotID_ < 1) {
-          PRINT_NAMED_ERROR("SIM.RobotID", "Invalid robot name (%s). ID must be greater than 0.", name.c_str());
-          return RESULT_FAIL;
-        }
-        PRINT_NAMED_INFO("SIM", "Initializing robot ID: %d", robotID_);
-      } else {
-        PRINT_NAMED_ERROR("SIM.RobotName", "Cozmo robot name %s is invalid.  Must end with '_<ID number>'.", name.c_str());
-        return RESULT_FAIL;
-      }
+      // Get ID
+      const auto* robotIDField = webotRobot_.getSelf()->getField("robotID");
+      DEV_ASSERT(robotIDField != nullptr, "sim_hal.Init.MissingRobotIDField");
+      robotID_ = robotIDField->getSFInt32();
 
       //Set the motors to velocity mode
       headMotor_->setPosition(WEBOTS_INFINITY);
@@ -402,17 +391,8 @@ namespace Anki {
       backpackTouchSensorReceiver_ = webotRobot_.getReceiver("touchSensorUpper");
       backpackTouchSensorReceiver_->enable(TIME_STEP);
 
-      // Get advertisement host IP
-      webots::Field *advertisementHostField = webotRobot_.getSelf()->getField("advertisementHost");
-      std::string advertisementIP = "127.0.0.1";
-      if (advertisementHostField) {
-        advertisementIP = advertisementHostField->getSFString();
-      } else {
-        printf("No valid advertisement IP found\n");
-      }
-
-      if(InitSimRadio(advertisementIP.c_str()) == RESULT_FAIL) {
-        printf("Failed to initialize Simulated Radio.\n");
+      if (InitRadio() != RESULT_OK) {
+        AnkiError("sim_hal.Init.InitRadioFailed", "");
         return RESULT_FAIL;
       }
 
@@ -654,7 +634,6 @@ namespace Anki {
     }
 
     // Forward declaration
-    void RadioUpdate();
     void ActiveObjectsUpdate();
 
     Result HAL::Step(void)
@@ -664,7 +643,6 @@ namespace Anki {
         return RESULT_FAIL;
       } else {
         MotorUpdate();
-        RadioUpdate();
         AudioInputUpdate();
 
         /*

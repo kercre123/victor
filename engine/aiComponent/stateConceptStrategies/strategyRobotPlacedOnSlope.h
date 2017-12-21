@@ -22,9 +22,7 @@ namespace Cozmo {
 
 class StrategyRobotPlacedOnSlope : public IStateConceptStrategy{
 public:
-  StrategyRobotPlacedOnSlope(BehaviorExternalInterface& behaviorExternalInterface,
-                             IExternalInterface* robotExternalInterface,
-                             const Json::Value& config);
+  explicit StrategyRobotPlacedOnSlope(const Json::Value& config);
 
 protected:
   virtual bool AreStateConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
