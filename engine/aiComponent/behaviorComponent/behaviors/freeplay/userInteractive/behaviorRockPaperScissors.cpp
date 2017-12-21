@@ -70,6 +70,7 @@ BehaviorRockPaperScissors::BehaviorRockPaperScissors(const Json::Value& config)
   GET_FROM_CONFIG(Uint32, displayHoldTime_ms);
   GET_FROM_CONFIG(Uint32, tapHeight_mm);
   GET_FROM_CONFIG(Bool,   showDetectionString);
+  GET_FROM_CONFIG(Uint8, shootOnCount);
   
 # undef GET_FROM_CONFIG
 }
@@ -94,7 +95,7 @@ Result BehaviorRockPaperScissors::OnBehaviorActivated(BehaviorExternalInterface&
   auto& visionComponent = bei.GetVisionComponent();
   visionComponent.EnableMode(VisionMode::DetectingGeneralObjects, false);
   
-  bei.GetRobotAudioClient().SetRobotMasterVolume(0.5f);
+  //bei.GetRobotAudioClient().SetRobotMasterVolume(0.5f);
   
   if(_displayImages.empty())
   {
@@ -164,25 +165,22 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
           new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK),
         });
         
-        auto AddUpDown = [this](CompoundActionSequential* action)
+        for(s32 iUpDown=0; iUpDown < _shootOnCount; ++iUpDown)
         {
-          const float moveDuration_sec = 0.1f;
-          const float tolerance_mm = 20.f; // just won't movement, not accuracy that slows us down
+          //const float moveDuration_sec = 0.1f;
+          const float tolerance_mm = 15.f; // just won't movement, not accuracy that slows us down
           MoveLiftToHeightAction* upAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+_tapHeight_mm, tolerance_mm);
-          upAction->SetDuration(moveDuration_sec);
+          //upAction->SetDuration(moveDuration_sec);
+          upAction->SetWaitUntilMovementStops(false);
           
           MoveLiftToHeightAction* downAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK, tolerance_mm);
-          downAction->SetDuration(moveDuration_sec);
+          //downAction->SetDuration(moveDuration_sec);
+          downAction->SetWaitUntilMovementStops(false);
           
-          action->AddAction(upAction);
-          action->AddAction(downAction);
-          action->AddAction(new WaitAction(_waitTimeBetweenTaps_sec));
-        };
-        
-        AddUpDown(compoundAction); // One...
-        AddUpDown(compoundAction); // Two...
-        AddUpDown(compoundAction); // Three...
-        AddUpDown(compoundAction); // Shoot!
+          compoundAction->AddAction(upAction);
+          compoundAction->AddAction(downAction);
+          compoundAction->AddAction(new WaitAction(_waitTimeBetweenTaps_sec));
+        }
         
         DelegateIfInControl(compoundAction, [&bei,this]()
                             {
@@ -314,6 +312,30 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
   return BehaviorStatus::Running;
 }
 
+void BehaviorRockPaperScissors::CopyToHelper(Vision::ImageRGB& toImg, const Selection selection, const s32 xOffset, const bool swapGB) const
+{
+  const Vision::ImageRGB& selectedImg = _displayImages.at(selection);
+  DEV_ASSERT(selectedImg.GetNumRows() <= toImg.GetNumRows(), "BehaviorRockPaperScissors.DisplaySelection.BadNumRows");
+  DEV_ASSERT(selectedImg.GetNumCols() + xOffset <= toImg.GetNumCols(), "BehaviorRockPaperScissors.DisplaySelection.BadNumRows");
+  for(s32 i=0; i<selectedImg.GetNumRows(); ++i)
+  {
+    const Vision::PixelRGB* selectedImg_i = selectedImg.GetRow(i);
+    Vision::PixelRGB* img_i = toImg.GetRow(i) + xOffset;
+    
+    for(s32 j=0; j<selectedImg.GetNumCols(); ++j)
+    {
+      const Vision::PixelRGB& selectedPixel = selectedImg_i[j];
+      Vision::PixelRGB& imgPixel = img_i[j];
+      
+      imgPixel = selectedPixel;
+      if(swapGB)
+      {
+        std::swap(imgPixel.g(), imgPixel.b());
+      }
+    }
+  }
+}
+  
 void BehaviorRockPaperScissors::DisplaySelection(BehaviorExternalInterface& bei, const std::string& overlayStr)
 {
   DEV_ASSERT(bei.HasAnimationComponent(),
@@ -326,9 +348,11 @@ void BehaviorRockPaperScissors::DisplaySelection(BehaviorExternalInterface& bei,
   if(_humanSelection == Selection::Unknown)
   {
     img.FillWith(0);
-    Rectangle<s32> rect(FACE_DISPLAY_WIDTH/4, 0, FACE_DISPLAY_WIDTH/2, FACE_DISPLAY_HEIGHT);
-    Vision::ImageRGB robotROI = img.GetROI(rect);
-    _displayImages[_robotSelection].CopyTo(robotROI);
+//    Rectangle<s32> rect(FACE_DISPLAY_WIDTH/4, 0, FACE_DISPLAY_WIDTH/2, FACE_DISPLAY_HEIGHT);
+//    Vision::ImageRGB robotROI = img.GetROI(rect);
+//    _displayImages[_robotSelection].CopyTo(robotROI);
+//
+    CopyToHelper(img, _robotSelection, FACE_DISPLAY_WIDTH/4, false);
   }
   else
   {
@@ -354,26 +378,8 @@ void BehaviorRockPaperScissors::DisplaySelection(BehaviorExternalInterface& bei,
     //        std::swap(humanROI_i[j].g(), humanROI_i[j].b());
     //      }
     //    }
-    
-    const Vision::ImageRGB& selectedImg = _displayImages.at(_humanSelection);
-    DEV_ASSERT(selectedImg.GetNumRows() <= img.GetNumRows(), "BehaviorRockPaperScissors.DisplaySelection.BadNumRows");
-    DEV_ASSERT(selectedImg.GetNumCols() <= img.GetNumCols()/2, "BehaviorRockPaperScissors.DisplaySelection.BadNumRows");
-    for(s32 i=0; i<selectedImg.GetNumRows(); ++i)
-    {
-      const Vision::PixelRGB* selectedImg_i = selectedImg.GetRow(i);
-      Vision::PixelRGB* img_i = img.GetRow(i) + img.GetNumCols()/2;
-      
-      for(s32 j=0; j<selectedImg.GetNumCols(); ++j)
-      {
-        const Vision::PixelRGB& selectedPixel = selectedImg_i[j];
-        Vision::PixelRGB& imgPixel = img_i[j];
-        
-        imgPixel.r() = selectedPixel.r();
-        imgPixel.g() = selectedPixel.b(); // Deliberate swap of g and b to get different color for human selection
-        imgPixel.b() = selectedPixel.g(); //   "
-      }
-    }
-    
+    CopyToHelper(img, _robotSelection, 0, false);
+    CopyToHelper(img, _humanSelection, FACE_DISPLAY_WIDTH/2, true);
   }
   
   auto & animComponent = bei.GetAnimationComponent();

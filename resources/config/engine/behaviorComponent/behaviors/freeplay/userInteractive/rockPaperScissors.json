@@ -7,5 +7,6 @@
   "minDetectionScore"       : 0.5,
   "displayHoldTime_ms"      : 1500,
   "tapHeight_mm"            : 25,
-  "showDetectionString"     : true
+  "showDetectionString"     : true, 
+  "shootOnCount"            : 3
 }

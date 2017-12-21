@@ -47,7 +47,6 @@ protected:
 
   virtual void HandleWhileActivated(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) override;  
   
-  void DisplaySelection(BehaviorExternalInterface& behaviorExternalInterface, const std::string& overlayStr = "");
   
 private:
   
@@ -59,6 +58,7 @@ private:
   uint32_t _displayHoldTime_ms = 1000;
   uint32_t _tapHeight_mm = 10;
   bool     _showDetectionString = false;
+  uint8_t  _shootOnCount = 3;
   
   // -------------
   // State Machine
@@ -85,6 +85,10 @@ private:
   Selection _humanSelection;
   
   std::map<Selection, Vision::ImageRGB> _displayImages;
+  
+  void DisplaySelection(BehaviorExternalInterface& behaviorExternalInterface, const std::string& overlayStr = "");
+  
+  void CopyToHelper(Vision::ImageRGB& toImg, const Selection selection, const s32 xOffset, const bool swapGB) const;
   
 };
 
