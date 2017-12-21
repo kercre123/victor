@@ -244,7 +244,8 @@ if [ $CONFIGURE -eq 1 ]; then
         robot/clad/BUILD.in \
         robot2/BUILD.in \
         simulator/BUILD.in \
-        test/BUILD.in
+        test/BUILD.in \
+        neon/BUILD.in
 
     if [ $GEN_SRC_ONLY -eq 1 ]; then
         exit 0

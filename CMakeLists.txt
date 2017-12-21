@@ -126,3 +126,8 @@ if (MACOSX)
   enable_testing()
 
 endif()
+
+if (ANDROID)
+  add_subdirectory("neon")
+endif()
+

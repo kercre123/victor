@@ -1,0 +1,27 @@
+cxx_project(
+    name = 'victor_neon',
+    srcs = cxx_src_glob(['src'],
+                        excludes = ['*_android.*',
+                                    'android/**/*',
+                                    '*_mac.*',
+                                    'main.cpp']),
+    platform_srcs = [
+        ('android', glob(['android/**/*.cpp',
+                          '**/*_android.cpp'])),
+        ('mac', glob(['**/*_mac.cpp']))
+    ],
+    headers = cxx_header_glob(['.']),
+    platform_headers = [
+        ('android', glob(['**/*.h']))
+    ]
+)
+
+cxx_project(
+    name = 'victor_neonator',
+    srcs = glob(['src/main.cpp']),
+    platform_srcs = [
+    ],
+    headers = [],
+    platform_headers = [
+    ]
+)

@@ -20,7 +20,7 @@ set(ANKI_BUILD_CXX_COMPILE_OPTIONS
   $<$<BOOL:${MACOSX}>:-fobjc-arc>
   $<$<BOOL:${IOS}>:-fobjc-arc>
   -fdiagnostics-show-category=name
-  -fdiagnostics-absolute-paths
+  #-fdiagnostics-absolute-paths
   -fsigned-char
   -g
   -Wall

@@ -893,72 +893,72 @@ void camera_install_callback(camera_cb cb)
 // of the pixel. The 5th byte contains the two least significant bits of each pixel in the
 // same order.
 //
-static void downsample_frame(const uint8_t *bayer, uint8_t *rgb, int bayer_sx, int bayer_sy, int bpp)
+static void downsample_frame(uint8_t *bayer, uint8_t *rgb, int bayer_sx, int bayer_sy, int bpp)
 {
   // input width must be divisble by bpp
   assert((bayer_sx % bpp) == 0);
 
-  uint8_t *outR, *outG, *outB;
-  register int i, j;
-  int tmp;
+  const uint8_t kNumBytesProcessedPerLoop = 20;
+  const uint32_t kNumInnerLoops = bayer_sx / kNumBytesProcessedPerLoop;
+  const uint32_t kNumOuterLoops = bayer_sy >> 1;
 
-  outB = &rgb[0];
-  outG = &rgb[1];
-  outR = &rgb[2];
+  uint8_t* bayer2 = bayer + bayer_sx;
 
-  // Raw image are reported as 1280x720, 10bpp BGGR MIPI Bayer format
-  // Based on frame metadata, the raw image dimensions are actually 1600x720 10bpp pixels.
-  // Simple conversion + downsample to RGB yields: 640x360 images
-  const int dim = (bayer_sx*bayer_sy);
+  for(int i = 0; i < kNumOuterLoops; ++i)
+  {
+    for(int j = 0; j < kNumInnerLoops; ++j)
+    {
+      __asm__ volatile
+      (
+        "VLD1.8 {d0}, [%[ptr]] \n\t"
+        "ADD %[ptr], %[ptr], #5 \n\t"
+        "VLD1.8 {d1}, [%[ptr]] \n\t"
+        "VSHL.I64 d0, d0, #32 \n\t"
+        "ADD %[ptr], %[ptr], #5 \n\t" // After ld and rev so they can be dual issued
+        "VEXT.8 d0, d0, d1, #4 \n\t" // d0 is alternating red and green
 
-  // output rows have 8-bit pixels
-  const int out_sx = bayer_sx * 8/bpp;
+        "VLD1.8 {d1}, [%[ptr]] \n\t"
+        "ADD %[ptr], %[ptr], #5 \n\t"
+        "VLD1.8 {d2}, [%[ptr]] \n\t"
+        "VSHL.I64 d1, d1, #32 \n\t"
+        "ADD %[ptr], %[ptr], #5 \n\t" // After ld and rev so they can be dual issued
+        "VEXT.8 d1, d1, d2, #4 \n\t" // d1 is alternating red and green
 
-  const int dim_step = (bayer_sx << 1);
-  const int out_dim_step = (out_sx << 1);
+        "VUZP.8 d0, d1 \n\t" // d0 is red, d1 is green
 
-  int out_i, out_j;
-  
-  for (i = 0, out_i = 0; i < dim; i += dim_step, out_i += out_dim_step) {
-    // process 2 rows at a time
-    for (j = 0, out_j = 0; j < bayer_sx; j += 5, out_j += 4) {
-      // process 4 col at a time
-      // A B A_ B_ -> B G B G
-      // C D C_ D_    G R G R
+        "VLD1.8 {d2}, [%[ptr2]] \n\t"
+        "ADD %[ptr2], %[ptr2], #5 \n\t"
+        "VLD1.8 {d3}, [%[ptr2]] \n\t"
+        "VSHL.I64 d2, d2, #32 \n\t"
+        "ADD %[ptr2], %[ptr2], #5 \n\t" // After ld and rev so they can be dual issued
+        "VEXT.8 d2, d2, d3, #4 \n\t" // d2 is alternating green and blue
 
-      // Read 4 10-bit px from row0
-      const int r0_idx = i + j;
-      uint16_t px_A  = (bayer[r0_idx+0] << 2) | ((bayer[r0_idx+4] & 0xc0) >> 6);
-      uint16_t px_B  = (bayer[r0_idx+1] << 2) | ((bayer[r0_idx+4] & 0x30) >> 4);
-      uint16_t px_A_ = (bayer[r0_idx+2] << 2) | ((bayer[r0_idx+4] & 0x0c) >> 2);
-      uint16_t px_B_ = (bayer[r0_idx+3] << 2) |  (bayer[r0_idx+4] & 0x03);
+        "VLD1.8 {d3}, [%[ptr2]] \n\t"
+        "ADD %[ptr2], %[ptr2], #5 \n\t"
+        "VLD1.8 {d4}, [%[ptr2]] \n\t"
+        "VSHL.I64 d3, d3, #32 \n\t"
+        "ADD %[ptr2], %[ptr2], #5 \n\t" // After ld and rev so they can be dual issued
+        "VEXT.8 d3, d3, d4, #4 \n\t" // d3 is alternating green and blue
 
-      // Read 4 10-bit px from row1
-      const int r1_idx = (i + bayer_sx) + j;
-      uint16_t px_C  = (bayer[r1_idx+0] << 2) | ((bayer[r1_idx+4] & 0xc0) >> 6);
-      uint16_t px_D  = (bayer[r1_idx+1] << 2) | ((bayer[r1_idx+4] & 0x30) >> 4);
-      uint16_t px_C_ = (bayer[r1_idx+2] << 2) | ((bayer[r1_idx+4] & 0x0c) >> 2);
-      uint16_t px_D_ = (bayer[r1_idx+3] << 2) |  (bayer[r1_idx+4] & 0x03);
+        "VUZP.8 d3, d2 \n\t" // d2 is blue, d3 is green
 
-      // output index:
-      // out_i represents 2 rows -> divide by 4
-      // out_j represents 1 col  -> divide by 2
-      const int rgb_0_idx = ((out_i >> 2) + (out_j >> 1)) * 3;
-      tmp = (px_C + px_B) >> 1;
-      CLIP(tmp, outG[rgb_0_idx]);
-      tmp = px_D;
-      CLIP(tmp, outR[rgb_0_idx]);
-      tmp = px_A;
-      CLIP(tmp, outB[rgb_0_idx]);
+        "VQSHL.U8 d0, d0, #2 \n\t" // Saturating unsigned left shift
+        "VQSHL.U8 d1, d1, #2 \n\t" // Saturating unsigned left shift
+        "VQSHL.U8 d2, d2, #2 \n\t" // Saturating unsigned left shift
 
-      const int rgb_1_idx = ((out_i >> 2) + ((out_j+2) >> 1)) * 3;
-      tmp = (px_C_ + px_B_) >> 1;
-      CLIP(tmp, outG[rgb_1_idx]);
-      tmp = px_D_;
-      CLIP(tmp, outR[rgb_1_idx]);
-      tmp = px_A_;
-      CLIP(tmp, outB[rgb_1_idx]);
+        "VST3.8 {d0, d1, d2}, [%[out]]! \n\t"
+
+        : [ptr] "+r" (bayer), 
+          [out] "+r" (rgb), 
+          [ptr2] "+r" (bayer2)
+        : [ptr] "r" (bayer), 
+          [out] "r" (rgb), 
+          [ptr2] "r" (bayer2)
+        : "d0","d1","d2","d3","d4", "memory"
+      );
     }
+    bayer += bayer_sx;
+    bayer2 += bayer_sx;
   }
 }
 
@@ -1051,7 +1051,18 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
         
         uint8_t* outbuf = (uint8_t*)&raw_buffer[next_idx];
         m_frame = bufs->bufs[i];
-        const uint8_t* inbuf = (uint8_t *)m_frame->buffer + m_frame->planes[i].data_offset;
+        uint8_t* inbuf = (uint8_t *)m_frame->buffer + m_frame->planes[i].data_offset;
+
+        static FILE * f = NULL;
+        if(f == NULL)
+        {
+          f = fopen("/data/raw", "wb"); // wb -write binary
+          if (f != NULL) 
+          {
+              fwrite(inbuf, sizeof(uint8_t), raw_frame_width*raw_frame_height, f);
+              fclose(f);
+          }
+        }
 
         downsample_frame(inbuf, outbuf, raw_frame_width, raw_frame_height, 10 /* bpp */);
         
