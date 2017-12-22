@@ -14,14 +14,17 @@
 
 #include "clad/types/imageTypes.h"
 
-#include "coretech/common/include/anki/common/basestation/jsonTools.h"
-#include "coretech/common/include/anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/utils/timer.h"
+
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/cozmoContext.h"
 
 #include "util/fileUtils/fileUtils.h"
 
@@ -172,9 +175,17 @@ BehaviorStatus BehaviorDevImageCapture::UpdateInternal_WhileRunning(BehaviorExte
 
   if(_currentClassIter != _classNames.end())
   {
-    std::function<void(Vision::ImageRGB&)> drawClassName = [this](Vision::ImageRGB& img)
+    // Note this root path is simply copied from what vision component uses. Ideally we'd share it
+    // rather than assuming this is where the images go, but hey, this is a dev behavior, so good
+    // enough for now.
+    static const std::string rootPath = bei.GetRobotInfo().GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera/images");
+    
+    using namespace Util;
+    const size_t numFiles = FileUtils::FilesInDirectory(FileUtils::FullFilePath({rootPath, GetSavePath()})).size();
+    
+    std::function<void(Vision::ImageRGB&)> drawClassName = [this,numFiles](Vision::ImageRGB& img)
     {
-      img.DrawText({1,14}, *_currentClassIter, NamedColors::YELLOW, 0.6f, true);
+      img.DrawText({1,14}, *_currentClassIter + ":" + std::to_string(numFiles), NamedColors::YELLOW, 0.6f, true);
     };
     visionComponent.AddDrawScreenModifier(drawClassName);
   }
