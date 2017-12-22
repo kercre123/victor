@@ -58,6 +58,8 @@ protected:
 private:
   enum class State {
     Idle,
+    WaitForPickup,
+    WaitForPutdown,
     RequestInteraction,
     WaitForResponse,
     DoInteraction

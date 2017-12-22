@@ -544,13 +544,17 @@ message MultiRobotSessionStarted {
   bool    isMaster,
 }
 
-// message MultiRobotSessionEnded {}
+message MultiRobotSessionEnded {
+  uint_32 robotID,
+  int_32  sessionID,
+}
 
 message MultiRobotInteractionStateTransition {
   int_32 sessionID,
   RobotInteraction interaction,
   int_32 newState,
 }
+
 
 
 ///////////////////////////////////////////////////////////////////////////////

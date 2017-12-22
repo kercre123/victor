@@ -47,6 +47,9 @@ class MultiRobotComponent
 {
 public:
 
+  using SessionID_t = s32;
+  static const int INVALID_SESSION_ID = -1;
+  
   MultiRobotComponent(Robot& robot, const CozmoContext* context);
   ~MultiRobotComponent() = default;
 
@@ -55,8 +58,10 @@ public:
   void Update();
 
   void SetLandmark(ObjectType objectType);
-
-  u32 GetNumRobotsOnNetwork() const;
+  
+  bool IsInSession() const { return _currSessionID != INVALID_SESSION_ID; }
+  
+  void TerminateSession();
   
   using MRC_RobotList = std::vector<RobotID_t>;
   MRC_RobotList GetRobotsLocatedToLandmark() const;
@@ -76,8 +81,7 @@ public:
   // Returns RESULT_OK if the pose of the partner robot is known
   Result GetSessionPartnerPose(Pose3d& p) const;
 
-  using SessionID_t = s32;
-  static const int INVALID_SESSION_ID = -1;
+
   
 private:
   using MfgID_t = s32;
@@ -89,6 +93,8 @@ private:
   
   void UpdatePoseWrtLandmark();
   
+  void ResolvePendingRequest(bool requestAccepted);
+
   void SendMessage(const InterRobotMessage& msg) const;
   
   // Message handlers
@@ -96,6 +102,7 @@ private:
   void HandleMessage(const RobotID_t& senderID, const InteractionRequest& msg);
   void HandleMessage(const RobotID_t& senderID, const InteractionResponse& msg);
   void HandleMessage(const RobotID_t& senderID, const InteractionStateTransition& msg);
+  void HandleMessage(const RobotID_t& senderID, const EndSession& msg);
 
   void ProcessMessages();
   void ProcessMessage(const InterRobotMessage& msg);
@@ -114,6 +121,7 @@ private:
   SessionID_t      _requestedSessionID; // Session ID that is currently requested and pending
   RobotID_t        _requestedRobotID;
   RequestInteractionCallback _requestCallback;
+  TimeStamp_t      _requestTimeoutTime_ms;
   RobotInteraction _currInteraction;
   SessionID_t      _currSessionID;      // Session ID for current confirmed session
   bool             _isSessionMaster;    // true if this robot requested the session and it was accepted

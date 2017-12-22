@@ -75,6 +75,7 @@ BehaviorMultiRobotFistBump::BehaviorMultiRobotFistBump(const Json::Value& config
 , _mrc(nullptr)
 , _isMaster(true)
 , _pendingStateName("")
+, _unknownPoseCount(0)
 {
   
   JsonTools::GetValueOptional(config, kMaxTimeToLookForFaceKey,     _maxTimeToLookForFace_s);
@@ -82,9 +83,10 @@ BehaviorMultiRobotFistBump::BehaviorMultiRobotFistBump(const Json::Value& config
   JsonTools::GetValueOptional(config, kUpdateLastCompletionTimeKey, _updateLastCompletionTime);
   JsonTools::GetValueOptional(config, kIsMasterKey,                 _isMaster);
 
-  SubscribeToTags({
+  SubscribeToTags({{
     EngineToGameTag::MultiRobotInteractionStateTransition,
-  });
+    EngineToGameTag::MultiRobotSessionEnded,
+  }});
 }
 
 
@@ -116,6 +118,9 @@ Result BehaviorMultiRobotFistBump::OnBehaviorActivated(BehaviorExternalInterface
   _nextGazeChangeIndex = 0;
   _lastTimeOffTreads_s = 0.f;
   
+  _sessionEnded = _mrc == nullptr;
+  _unknownPoseCount = 0;
+
   const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
     _state = State::PutdownObject;
@@ -134,7 +139,9 @@ void BehaviorMultiRobotFistBump::HandleWhileActivated(const EngineToGameEvent& e
     case ExternalInterface::MessageEngineToGameTag::MultiRobotInteractionStateTransition:
       HandleMultiRobotInteractionStateTransition(event.GetData().Get_MultiRobotInteractionStateTransition(), behaviorExternalInterface);
       break;
-      
+    case ExternalInterface::MessageEngineToGameTag::MultiRobotSessionEnded:
+      HandleMultiRobotSessionEnded(event.GetData().Get_MultiRobotSessionEnded(), behaviorExternalInterface);
+      break;
     default:
       PRINT_NAMED_ERROR("BehaviorMultiRobotInteractions.HandleWhileActivated.InvalidEvent", "");
       break;
@@ -148,6 +155,16 @@ void BehaviorMultiRobotFistBump::HandleMultiRobotInteractionStateTransition(cons
   PRINT_NAMED_WARNING("BehaviorMultiRobotFistBump.HandleMultiRobotInteractionStateTransition.NewState", "%d: newState %d",
                       behaviorExternalInterface.GetRobotInfo().GetID(), msg.newState);
 }
+
+void BehaviorMultiRobotFistBump::HandleMultiRobotSessionEnded(const ExternalInterface::MultiRobotSessionEnded& msg, BehaviorExternalInterface& behaviorExternalInterface)
+{
+  _sessionEnded = true;
+  PRINT_NAMED_WARNING("BehaviorMultiRobotFistBump.HandleMultiRobotSessionEnded", "%d",
+                      behaviorExternalInterface.GetRobotInfo().GetID());
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void BehaviorMultiRobotFistBump::SetState_internal(State state, const std::string& stateName)
 {
@@ -173,8 +190,7 @@ void BehaviorMultiRobotFistBump::SetStateWhenPartnerState(State state, const std
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // TODO: Move this to OnBehaviorActivated?
-  if (!_mrc) {
+  if (_sessionEnded) {
     return Status::Complete;
   }
 
@@ -227,8 +243,12 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
   Pose3d partnerPose;
   if (_mrc->GetSessionPartnerPose(partnerPose) != RESULT_OK) {
     PRINT_NAMED_WARNING("BehaviorMultiRobotFistBump.Update.UnknownPose", "");
+    if (++_unknownPoseCount > 50 || !_mrc->IsInSession()) {
+      return Status::Complete;
+    }
     return Status::Running;
   }
+  _unknownPoseCount = 0;
 
   
 
@@ -437,7 +457,10 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
         }
       } else {
         // Stopped driving forward and no fist was bumped
-        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpLeftHanging));
+        CompoundActionSequential* action = new CompoundActionSequential();
+          action->AddAction(new DriveStraightAction(-30, 30));
+          action->AddAction(new TriggerAnimationAction(AnimationTrigger::FistBumpLeftHanging));
+        DelegateIfInControl(action);
         SET_STATE(CompleteFail);
       }
       break;

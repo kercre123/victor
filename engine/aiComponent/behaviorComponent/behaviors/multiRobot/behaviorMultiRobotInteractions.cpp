@@ -40,6 +40,8 @@ namespace{
   RobotInteraction _requestedInteraction = RobotInteraction::Invalid;
   bool _requestPending = false;
   bool _isMaster = false;
+
+  TimeStamp_t _lastTimeHeadMoved = 0;
 }
 
 
@@ -123,79 +125,105 @@ Result BehaviorMultiRobotInteractions::OnBehaviorActivated(BehaviorExternalInter
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStatus BehaviorMultiRobotInteractions::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  
-    switch(_state) {
-      case State::Idle:
-      {
-        SET_STATE(RequestInteraction);
-        break;
-      }
-      case State::RequestInteraction:
-      {
-      
-        auto robotList = _multiRobotComponent->GetRobotsLocatedToLandmark();
-        if (!robotList.empty()) {
+  auto now_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
-          // TODO: Randomly choose
-          _requestedInteraction = RobotInteraction::FistBump;
+  bool isPickedUp = behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads;
 
-          RobotID_t requestedRobotID = robotList[0];
-          PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.Update.RequestInteraction", "RobotID: %d", requestedRobotID);
-
-          MultiRobotComponent::RequestInteractionCallback requestCallback = [this](bool accepted) {
-            PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.Update.RequestCallback", "%d", accepted);
-          };
-
-          _multiRobotComponent->RequestInteraction(requestedRobotID, _requestedInteraction, requestCallback);
-          _requestPending = true;
-          _state = State::WaitForResponse;
-        }
-        
-        break;
-      }
-      case State::WaitForResponse:
-      {
-        if (!_requestPending) {
-          if(_requestedInteraction == RobotInteraction::Invalid) {
-            // The session was rejected
-            SET_STATE(Idle);
-          } else {
-            
-            auto beh = _isMaster ? _fistBumpMasterBehavior : _fistBumpSlaveBehavior;
-
-            if( beh->WantsToBeActivated(behaviorExternalInterface) ) {
-              PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.Update.StartingInteraction", "%s (%d)", EnumToString(_requestedInteraction), _isMaster);
-              DelegateIfInControl( behaviorExternalInterface,
-                                  beh.get(),
-                                  [this](BehaviorExternalInterface& behaviorExternalInterface) {
-                                    PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.Update.FistBumpComplete", "");
-                                    _requestedInteraction = RobotInteraction::Invalid;
-                                  } );
-
-              SET_STATE(DoInteraction);
-            }
-          }
-
-        } 
-        break;
-      }
-      case State::DoInteraction:
-      {
-        if (_requestedInteraction == RobotInteraction::Invalid) {
-          PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.DoInteraction.BehaviorComplete", "");
-          SET_STATE(Idle);
-        }
-        break;
-      }
+  switch(_state) {
+    case State::Idle:
+    {
+      SET_STATE(WaitForPickup);
+      break;
     }
+    case State::WaitForPickup:
+    {
+      if (isPickedUp) {
+        SET_STATE(WaitForPutdown);
+      }
+      break;
+    }
+    case State::WaitForPutdown:
+    {
+      if (!isPickedUp && !_multiRobotComponent->IsInSession()) {
+        SET_STATE(RequestInteraction);
+      }
+      break;
+    }
+    case State::RequestInteraction:
+    {
+      auto robotList = _multiRobotComponent->GetRobotsLocatedToLandmark();
+      if (!robotList.empty()) {
 
-    // Stop robot for a second for poseWrtLandmark to settle
-    // ...
+        // TODO: Randomly choose
+        _requestedInteraction = RobotInteraction::FistBump;
 
-  
+        RobotID_t requestedRobotID = robotList[0];
+        PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.Update.RequestInteraction", "RobotID: %d", requestedRobotID);
 
+        MultiRobotComponent::RequestInteractionCallback requestCallback = [](bool accepted) {
+          PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.Update.RequestCallback", "%d", accepted);
+        };
+
+        _multiRobotComponent->RequestInteraction(requestedRobotID, _requestedInteraction, requestCallback);
+        _requestPending = true;
+        SET_STATE(WaitForResponse);
+      }
+      
+      break;
+    }
+    case State::WaitForResponse:
+    {
+      if (!_requestPending) {
+        if(_requestedInteraction == RobotInteraction::Invalid) {
+          // The session was rejected
+          SET_STATE(Idle);
+        } else {
+          
+          auto beh = _isMaster ? _fistBumpMasterBehavior : _fistBumpSlaveBehavior;
+
+          if( beh->WantsToBeActivated(behaviorExternalInterface) ) {
+            PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.Update.StartingInteraction", "%s (%d)", EnumToString(_requestedInteraction), _isMaster);
+            DelegateIfInControl( behaviorExternalInterface,
+                                beh.get(),
+                                [](BehaviorExternalInterface& behaviorExternalInterface) {
+                                  PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.Update.FistBumpComplete", "");
+                                  _requestedInteraction = RobotInteraction::Invalid;
+                                } );
+
+            SET_STATE(DoInteraction);
+          }
+        }
+
+      } 
+      break;
+    }
+    case State::DoInteraction:
+    {
+      if (_requestedInteraction == RobotInteraction::Invalid) {
+        PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.DoInteraction.BehaviorComplete", "");
+        _multiRobotComponent->TerminateSession();
+
+        CompoundActionParallel* action = new CompoundActionParallel();
+        action->AddAction(new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK));
+        action->AddAction(new MoveHeadToAngleAction(0));
+        DelegateIfInControl(action);
+        SET_STATE(Idle);
+      }
+      break;
+    }
+  }
+
+  // TODO: Stop robot for a second for poseWrtLandmark to settle
+  // ...
   
   //PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.Update", "%d", _state);
+
+  if ((_requestedInteraction == RobotInteraction::Invalid) && 
+      !isPickedUp &&
+      (now_ms - _lastTimeHeadMoved > 5000)) {
+    DelegateIfInControl(new MoveHeadToAngleAction(0));
+    _lastTimeHeadMoved = now_ms;
+  }
 
   return BehaviorStatus::Running;
 }

@@ -80,7 +80,7 @@ ssize_t InterRobotComms::Send(const char* data, int size)
   return 0;
 }
 
-ssize_t InterRobotComms::Recv(char* data, int maxSize)
+ssize_t InterRobotComms::Recv(char* data, int maxSize, unsigned int* sending_ip)
 {
   if (_receiver) {
     if (_receiver->getQueueLength() > 0) {

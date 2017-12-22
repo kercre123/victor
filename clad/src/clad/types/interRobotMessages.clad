@@ -35,9 +35,15 @@ enum uint_32 RobotInteraction {
   Count,
 }
 
+// This is currently doing the work of what should be called SessionRequest
 message InteractionRequest {
   IRMPacketHeader header,
   RobotInteraction interaction,
+  int_32 sessionID,
+}
+
+message EndSession {
+  IRMPacketHeader header,
   int_32 sessionID,
 }
 
@@ -65,6 +71,7 @@ union InterRobotMessage {
   InteractionRequest  interactionRequest,
   InteractionResponse interactionResponse,
   InteractionStateTransition interactionStateTransition,
+  EndSession          endSession,
 }
 
 } // namespace Cozmo

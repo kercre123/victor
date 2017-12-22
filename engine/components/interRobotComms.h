@@ -42,7 +42,7 @@ public:
 
   ssize_t Send(const char* data, int size);
 
-  ssize_t Recv(char* data, int maxSize);
+  ssize_t Recv(char* data, int maxSize, unsigned int* sending_ip = nullptr);
 
 private:
 

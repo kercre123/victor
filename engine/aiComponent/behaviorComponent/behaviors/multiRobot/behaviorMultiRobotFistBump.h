@@ -42,6 +42,7 @@ protected:
 
   virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   void HandleMultiRobotInteractionStateTransition(const ExternalInterface::MultiRobotInteractionStateTransition& msg, BehaviorExternalInterface& behaviorExternalInterface);
+  void HandleMultiRobotSessionEnded(const ExternalInterface::MultiRobotSessionEnded& msg, BehaviorExternalInterface& behaviorExternalInterface);
 
 
   virtual void AddListener(IFistBumpListener* listener) override;
@@ -95,6 +96,8 @@ private:
   void ResetTrigger(bool updateLastCompletionTime);
 
 
+  bool _sessionEnded;
+
   MultiRobotComponent* _mrc;
   bool _isMaster;
   State _partnerState;
@@ -103,7 +106,9 @@ private:
   State _pendingState;
   State _gatingPartnerState;
   std::string _pendingStateName;
-  
+
+
+  u32 _unknownPoseCount;
   
   // Transitions to the specified state when _partnerState
   // reaches the specified state
