@@ -71,7 +71,7 @@ namespace Cozmo {
   // Quality of images sent to game/viz
   // Set to -1 to display "locally" with img.Display()
   // Set to 0 to disable sending altogether (to save bandwidth) -- disables camera feed AND debug images
-  CONSOLE_VAR(s32,  kImageCompressQuality,  "Vision.General", 50);
+  CONSOLE_VAR(s32,  kImageCompressQuality,  "Vision.General", 0);
   
   // Whether or not to do rolling shutter correction for physical robots
   CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);

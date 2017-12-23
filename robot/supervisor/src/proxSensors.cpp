@@ -68,7 +68,8 @@ namespace Anki {
       
       u16 GetRawProxValue()
       {
-        return HAL::GetRawProxData().distance_mm;
+        return 300;
+        //return HAL::GetRawProxData().distance_mm;
       }
       // Stops robot if cliff detected as wheels are driving forward.
       // Delays cliff event to allow pickup event to cancel it in case the

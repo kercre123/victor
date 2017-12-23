@@ -1049,23 +1049,29 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
     for (i = 0; i < bufs->num_bufs; i++) {
       if (bufs->bufs[i]->stream_id == m_stream->s_id) {
         
-        uint8_t* outbuf = (uint8_t*)&raw_buffer[next_idx];
-        m_frame = bufs->bufs[i];
-        const uint8_t* inbuf = (uint8_t *)m_frame->buffer + m_frame->planes[i].data_offset;
+        const int kDownsample_freq = 7;
+        static int downsample_tic = 0;
+        if (++downsample_tic == kDownsample_freq) {
+          downsample_tic = 0;
 
-        downsample_frame(inbuf, outbuf, raw_frame_width, raw_frame_height, 10 /* bpp */);
-        
-        // image has been taken from the buffer and downsampled, it is now safe for
-        // it to be potentially processed by engine
-        potential_processing_idx = next_idx;
-        next_idx = (next_idx + 1) % BUFFER_SIZE;
-        if(next_idx == processing_idx)
-        {
+          uint8_t* outbuf = (uint8_t*)&raw_buffer[next_idx];
+          m_frame = bufs->bufs[i];
+          const uint8_t* inbuf = (uint8_t *)m_frame->buffer + m_frame->planes[i].data_offset;
+
+          downsample_frame(inbuf, outbuf, raw_frame_width, raw_frame_height, 10 /* bpp */);
+          
+          // image has been taken from the buffer and downsampled, it is now safe for
+          // it to be potentially processed by engine
+          potential_processing_idx = next_idx;
           next_idx = (next_idx + 1) % BUFFER_SIZE;
+          if(next_idx == processing_idx)
+          {
+            next_idx = (next_idx + 1) % BUFFER_SIZE;
+          }
+          
+          user_frame_callback(outbuf, X, Y);
+          frameid++;
         }
-        
-        user_frame_callback(outbuf, X, Y);
-        frameid++;
       }
     }
   }
