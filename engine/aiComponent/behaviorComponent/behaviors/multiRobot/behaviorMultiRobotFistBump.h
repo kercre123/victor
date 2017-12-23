@@ -59,9 +59,12 @@ private:
     RequestingFistBump,
     WaitingForMotorsToSettle,
     WaitingForBump,
+    
+    TurnToMaster,
     PrepareToBumpFist,
     BumpFist,
     DrivingIntoFist,
+    
     CompleteSuccess,
     CompleteFail,
     Complete

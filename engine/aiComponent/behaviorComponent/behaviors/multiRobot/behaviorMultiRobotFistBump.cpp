@@ -269,9 +269,8 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
         CompoundActionSequential* action = new CompoundActionSequential();
         action->AddAction(new TurnTowardsPoseAction(partnerPose));
         action->AddAction(new TriggerAnimationAction(AnimationTrigger::NamedFaceInitialGreeting));
-        DelegateIfInControl(action, [this](const ExternalInterface::RobotCompletedAction& result) {
-          SET_STATE(ApproachSlave);
-        });
+        DelegateIfInControl(action);
+        SET_STATE(ApproachSlave);
       } else {
         SET_STATE_WHEN_PARTNER_STATE(ApproachSlave, ApproachSlave);
       }
@@ -282,30 +281,37 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
       if (_isMaster) {
         
         const Pose3d masterPose = behaviorExternalInterface.GetRobotInfo().GetPose().GetWithRespectToRoot();
-        
-        const auto& masterPoint = masterPose.GetTranslation();
-        const auto& slavePoint = partnerPose.GetTranslation();
+        const auto& masterPoint = behaviorExternalInterface.GetRobotInfo().GetBoundingQuadXY(masterPose).ComputeCentroid();
+        const auto& slavePoint = behaviorExternalInterface.GetRobotInfo().GetBoundingQuadXY(partnerPose).ComputeCentroid();
         f32 dx =  slavePoint.x() - masterPoint.x();
         f32 dy =  slavePoint.y() - masterPoint.y();
-        const f32 goalDistFromSlave = 130;
         
         const f32 angleToSlave = atan2(dy,dx);
+        const f32 goalDistFromSlave = 140;
         
-        Pose3d goalPose(angleToSlave, Z_AXIS_3D(), { slavePoint.x() - goalDistFromSlave * cos(angleToSlave),
-                                                     slavePoint.y() - goalDistFromSlave * sin(angleToSlave),
-                                                     slavePoint.z()
-        }, robotInfo.GetPose().GetParent() );
-
-        DelegateIfInControl(new DriveToPoseAction(goalPose, false), [this](const ExternalInterface::RobotCompletedAction& result) {
+        // Set three goal poses in case some are in collision
+        std::vector<Pose3d> goalPoses;
+        for (int angStep = -1; angStep <= 1; ++angStep) {
+          f32 ang = angleToSlave + angStep * M_PI_4;
+          Pose3d goalPose(ang, Z_AXIS_3D(),
+                          { slavePoint.x() - goalDistFromSlave * cos(ang),
+                            slavePoint.y() - goalDistFromSlave * sin(ang),
+                            0 },
+                          robotInfo.GetPose().GetParent() );
+          goalPoses.emplace_back(std::move(goalPose));
+        }
+        
+        DelegateIfInControl(new DriveToPoseAction(goalPoses, false), [this](const ExternalInterface::RobotCompletedAction& result) {
           SET_STATE(RequestInitialFistBump);
         });
       } else {
         // Turn to master after he greeted you
         CompoundActionSequential* action = new CompoundActionSequential();
+        action->AddAction(new WaitAction(1.5));
         action->AddAction(new TurnTowardsPoseAction(partnerPose));
         action->AddAction(new TriggerAnimationAction(AnimationTrigger::CodeLabHappy));
         DelegateIfInControl(action);
-        SET_STATE_WHEN_PARTNER_STATE(PrepareToBumpFist, WaitingForMotorsToSettle);
+        SET_STATE_WHEN_PARTNER_STATE(TurnToMaster, RequestInitialFistBump);
       }
 
       break;
@@ -419,10 +425,16 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
     }
       
     // SLAVE-ONLY STATES
+    case State::TurnToMaster:
+    {
+      DelegateIfInControl(new TurnTowardsPoseAction(partnerPose));
+      SET_STATE_WHEN_PARTNER_STATE(PrepareToBumpFist, WaitingForMotorsToSettle);
+      break;
+    }
     case State::PrepareToBumpFist:
     {
       CompoundActionSequential* action = new CompoundActionSequential();
-      action->AddAction(new MoveLiftToHeightAction(77));
+      action->AddAction(new MoveLiftToHeightAction(76));
       DelegateIfInControl(action, [this](const BehaviorExternalInterface& behaviorExternalInterface){
         auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
         robotInfo.GetMoveComponent().EnableLiftPower(false);
@@ -450,7 +462,7 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
           CancelDelegates();  // Stop the DriveStraightAction
           robotInfo.GetMoveComponent().EnableLiftPower(true);
           CompoundActionSequential* action = new CompoundActionSequential();
-          action->AddAction(new DriveStraightAction(-30, 100));
+          action->AddAction(new DriveStraightAction(-40, 100));
           action->AddAction(new TriggerAnimationAction(AnimationTrigger::FistBumpSuccess));
           DelegateIfInControl(action);
           SET_STATE(CompleteSuccess);
@@ -458,7 +470,7 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
       } else {
         // Stopped driving forward and no fist was bumped
         CompoundActionSequential* action = new CompoundActionSequential();
-          action->AddAction(new DriveStraightAction(-30, 30));
+          action->AddAction(new DriveStraightAction(-40, 30));
           action->AddAction(new TriggerAnimationAction(AnimationTrigger::FistBumpLeftHanging));
         DelegateIfInControl(action);
         SET_STATE(CompleteFail);
