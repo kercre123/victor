@@ -275,9 +275,11 @@ void MultiRobotComponent::HandleMessage(const RobotID_t& senderID, const PoseWrt
     return;
   }
 
+  // TODO: Don't need to early return here if we instead provide a method to tell whether
+  // or not this robot is yet aware of the same landmark that the partner robot is.
   ObservableObject* landmarkObj = _robot.GetBlockWorld().GetLocatedObjectByID(_landmarkObjectID);
   if (landmarkObj == nullptr) {
-    PRINT_NAMED_WARNING("MultiRobotComponent.HandlePoseWrtLandmark.LandmarkNotFoundYet", "");
+    PRINT_NAMED_WARNING("MultiRobotComponent.HandlePoseWrtLandmark.LandmarkNotFoundYet", "Ignoring update from partner robot");
     return;
   }
   
@@ -286,9 +288,6 @@ void MultiRobotComponent::HandleMessage(const RobotID_t& senderID, const PoseWrt
   poseStruct.originID = _robot.GetWorldOriginID();
   Pose3d poseWrtLandmark(poseStruct, _robot.GetPoseOriginList());
   
-  // Set pose's parent to landmark object
-  poseWrtLandmark.SetParent(landmarkObj->GetPose());
-  
   
   RobotInfo& rInfo = _robotInfoByLandmarkMap[msg.landmark][senderID];
   rInfo.lastUpdateTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
@@ -296,20 +295,10 @@ void MultiRobotComponent::HandleMessage(const RobotID_t& senderID, const PoseWrt
   
   //  ========= For debug =========
   // Flatten pose
-  Pose3d otherRobotPose = poseWrtLandmark.GetWithRespectToRoot();
+  Pose3d otherRobotPose (poseWrtLandmark);
+  otherRobotPose.SetParent(landmarkObj->GetPose());
+  otherRobotPose = otherRobotPose.GetWithRespectToRoot();
   
-//  PRINT_NAMED_WARNING("MRC.HandlePoseWrtLandmark.poseWrtLandmark", "%d: %f %f %f, %f %f %f, %f %f %f",
-//                      _robot.GetID(),
-//                      msg.poseWrtLandmark.x, msg.poseWrtLandmark.y, msg.poseWrtLandmark.z,
-//                      poseWrtLandmark.GetTranslation().x(),
-//                      poseWrtLandmark.GetTranslation().y(),
-//                      poseWrtLandmark.GetTranslation().z(),
-//                      otherRobotPose.GetTranslation().x(),
-//                      otherRobotPose.GetTranslation().y(),
-//                      otherRobotPose.GetTranslation().z());
-  
-
-
   auto viz = _context->GetVizManager();
   Quad2f robotFootprint = _robot.GetBoundingQuadXY(otherRobotPose);
   viz->DrawPoseMarker(0, robotFootprint, ::Anki::NamedColors::DARKGRAY);
@@ -332,6 +321,12 @@ void MultiRobotComponent::HandleMessage(const RobotID_t& senderID, const Interac
       // If request came from same robot that we already sent a request to,
       // accept it only if the sessionID is greater than the requested sessionID.
       acceptSession = msg.sessionID > _requestedSessionID;
+
+      if (acceptSession) {
+        PRINT_NAMED_WARNING("MultiRobotComponent.HandleInteractionRequest.AcceptingRequestCancellingPending", "");
+        ResolvePendingRequest(false);
+      }
+
     } else {
       // Request came from a robot other than the one that we requested
       // so just reject it
@@ -592,11 +587,29 @@ Result MultiRobotComponent::GetSessionPartnerPose(Pose3d& p) const
     return RESULT_FAIL;
   }
 
+  
+  if (!_landmarkObjectID.IsSet()) {
+    PRINT_NAMED_WARNING("MultiRobotComponent.GetSessionPartnerPose.LandmarkObjectNotFoundYet", "");
+    return RESULT_FAIL;
+  }
+  
+  ObservableObject* landmarkObj = _robot.GetBlockWorld().GetLocatedObjectByID(_landmarkObjectID);
+  if (landmarkObj == nullptr) {
+    PRINT_NAMED_WARNING("MultiRobotComponent.GetSessionPartnerPose.LandmarkObjectNotFound", "ObjectID: %d", _landmarkObjectID.GetValue());
+    //_landmarkObjectID.UnSet();
+    return RESULT_FAIL;
+  }
+
+  
   auto landmark_it = _robotInfoByLandmarkMap.find(_landmark);
   if (landmark_it != _robotInfoByLandmarkMap.end()) {
     auto robot_it = landmark_it->second.find(_requestedRobotID);
     if (robot_it != landmark_it->second.end()) {
-      p = robot_it->second.poseWrtLandmark.GetWithRespectToRoot();   // Since we set it's parent when this pose was received, this is the actual pose of the partner
+
+      // Return pose of partner robot wrt landmark object
+      Pose3d poseWrtLandmark(robot_it->second.poseWrtLandmark);
+      poseWrtLandmark.SetParent(landmarkObj->GetPose());
+      p = poseWrtLandmark.GetWithRespectToRoot();
 
       return RESULT_OK;
     }

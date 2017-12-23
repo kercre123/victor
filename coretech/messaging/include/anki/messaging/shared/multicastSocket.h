@@ -5,6 +5,7 @@
 #ifndef __MulticastSocket_H__
 #define __MulticastSocket_H__
 
+#include <stdint.h>
 #include <unistd.h>
 
 class MulticastSocket

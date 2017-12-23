@@ -160,8 +160,12 @@ BehaviorStatus BehaviorMultiRobotInteractions::UpdateInternal_WhileRunning(Behav
         RobotID_t requestedRobotID = robotList[0];
         PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.Update.RequestInteraction", "RobotID: %d", requestedRobotID);
 
-        MultiRobotComponent::RequestInteractionCallback requestCallback = [](bool accepted) {
-          PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.Update.RequestCallback", "%d", accepted);
+        MultiRobotComponent::RequestInteractionCallback requestCallback = [this](bool accepted) {
+          PRINT_NAMED_WARNING("BehaviorMultiRobotInteractions.Update.RequestCallback", 
+                              "Accepted: %d, InSession: %d", accepted, _multiRobotComponent->IsInSession());
+          if (!accepted && !_multiRobotComponent->IsInSession()) {
+            SET_STATE(Idle);
+          }
         };
 
         _multiRobotComponent->RequestInteraction(requestedRobotID, _requestedInteraction, requestCallback);

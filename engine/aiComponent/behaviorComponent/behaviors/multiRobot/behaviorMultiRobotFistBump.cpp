@@ -422,7 +422,7 @@ ICozmoBehavior::Status BehaviorMultiRobotFistBump::UpdateInternal_WhileRunning(B
     case State::PrepareToBumpFist:
     {
       CompoundActionSequential* action = new CompoundActionSequential();
-      action->AddAction(new MoveLiftToHeightAction(80));
+      action->AddAction(new MoveLiftToHeightAction(77));
       DelegateIfInControl(action, [this](const BehaviorExternalInterface& behaviorExternalInterface){
         auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
         robotInfo.GetMoveComponent().EnableLiftPower(false);
