@@ -14,13 +14,13 @@
 #ifndef VIZ_MANAGER_H
 #define VIZ_MANAGER_H
 
-#include "coretech/common/engine/math/fastPolygon2d.h"
-#include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/polygon.h"
-#include "coretech/common/engine/colorRGBA.h"
-#include "coretech/common/shared/types.h"
+#include "anki/common/basestation/math/fastPolygon2d.h"
+#include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/polygon.h"
+#include "anki/common/basestation/colorRGBA.h"
+#include "anki/common/types.h"
 #include "util/helpers/ankiDefines.h"
-#include "coretech/planning/shared/path.h"
+#include "anki/planning/shared/path.h"
 #include "coretech/messaging/shared/UdpClient.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/vizTypes.h"
