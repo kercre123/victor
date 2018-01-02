@@ -18,7 +18,7 @@
 //#include <arpa/inet.h>
 #include <string.h>
 #include <assert.h>
-#include "anki/messaging/shared/utilMessaging.h"
+#include "coretech/messaging/shared/utilMessaging.h"
 
 void* WriteU64(void *dest, uint64_t src) {
   memcpy((char *) dest, (char*)&src, sizeof(src));

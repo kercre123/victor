@@ -17,7 +17,7 @@
 
 #include "anki/common/types.h"
 
-#include <anki/messaging/basestation/IComms.h>
+#include "coretech/messaging/engine/IComms.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 

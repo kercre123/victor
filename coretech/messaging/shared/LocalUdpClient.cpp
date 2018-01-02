@@ -7,8 +7,8 @@
  *
  */
 
-#include "anki/messaging/shared/LocalUdpClient.h"
-#include "anki/messaging/shared/SocketUtils.h"
+#include "coretech/messaging/shared/LocalUdpClient.h"
+#include "coretech/messaging/shared/SocketUtils.h"
 
 #include <iostream>
 

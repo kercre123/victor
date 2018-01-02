@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <string>
 
-#include "anki/messaging/shared/LocalUdpServer.h"
+#include "coretech/messaging/shared/LocalUdpServer.h"
 
 #define ARRAY_SIZE(inArray)   (sizeof(inArray) / sizeof((inArray)[0]))
 

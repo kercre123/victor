@@ -21,7 +21,7 @@
 #include "anki/common/types.h"
 #include "util/helpers/ankiDefines.h"
 #include "anki/planning/shared/path.h"
-#include "anki/messaging/shared/UdpClient.h"
+#include "coretech/messaging/shared/UdpClient.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/vizTypes.h"
 #include "clad/types/objectTypes.h"

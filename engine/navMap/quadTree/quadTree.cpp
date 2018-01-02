@@ -17,7 +17,7 @@
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/polygon_impl.h"
 
-#include "anki/messaging/basestation/IComms.h"
+#include "coretech/messaging/engine/IComms.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 

@@ -16,7 +16,7 @@
 #include "se_diag.h"
 #include "speex/speex_resampler.h"
 
-#include "anki/messaging/shared/UdpServer.h"
+#include "coretech/messaging/shared/UdpServer.h"
 #include "cozmoAnim/engineMessages.h"
 #include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"

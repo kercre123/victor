@@ -1,15 +1,15 @@
-# coretech/messaging/basestation/src/CMakeLists.txt
+# coretech/messaging/engine/CMakeLists.txt
 
-# Basestation Messaging Library
+# Engine Messaging Library
 
 file(GLOB SOURCE_FILES 
 	"*.cpp"
-	"../../shared/src/*.c*"
+	"../../shared/*.c*"
 )
 
 file(GLOB HEADER_FILES 
   "*.h"
-  "${CORETECH_MESSAGING_INCLUDE_DIR}/basestation/*.h"
+  "${CORETECH_MESSAGING_INCLUDE_DIR}/engine/*.h"
   "${CORETECH_MESSAGING_INCLUDE_DIR}/shared/*.h"
 )
 

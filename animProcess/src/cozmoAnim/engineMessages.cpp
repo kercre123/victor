@@ -36,7 +36,7 @@
 #include "anki/cozmo/transport/reliableTransport.h"
 
 // For animProcess<->Robot communications
-#include "anki/messaging/shared/UdpClient.h"
+#include "coretech/messaging/shared/UdpClient.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 

@@ -22,7 +22,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleChannelFile.h"
-#include "anki/messaging/basestation/IComms.h"
+#include "coretech/messaging/engine/IComms.h"
 
 #include <assert.h>
 

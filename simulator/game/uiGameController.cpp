@@ -17,7 +17,7 @@
 #include "engine/events/animationTriggerHelpers.h"
 #include "util/transport/udpTransport.h"
 // includes for physics functions
-#include "anki/messaging/shared/UdpClient.h"
+#include "coretech/messaging/shared/UdpClient.h"
 #include "clad/externalInterface/messageFromActiveObject.h"
 #include "clad/physicsInterface/messageSimPhysics.h"
 // end of physics includes

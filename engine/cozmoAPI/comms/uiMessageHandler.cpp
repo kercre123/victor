@@ -35,7 +35,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include <anki/messaging/basestation/IComms.h>
+#include "coretech/messaging/engine/IComms.h"
 
 #include "clad/externalInterface/messageGameToEngine_hash.h"
 #include "clad/externalInterface/messageEngineToGame_hash.h"
