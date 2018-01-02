@@ -13,7 +13,7 @@
 #ifndef _ANKICORETECH_PLANNING_OPENLIST_H_
 #define _ANKICORETECH_PLANNING_OPENLIST_H_
 
-#include "anki/planning/basestation/xythetaEnvironment.h"
+#include "coretech/planning/engine/xythetaEnvironment.h"
 #include <map>
 
 namespace Anki {

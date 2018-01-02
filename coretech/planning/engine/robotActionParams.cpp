@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/planning/basestation/robotActionParams.h"
+#include "coretech/planning/engine/robotActionParams.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "json/json.h"
 #include "util/jsonWriter/jsonWriter.h"

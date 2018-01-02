@@ -2,7 +2,7 @@
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
-#include "anki/planning/shared/path.h"
+#include "coretech/planning/shared/path.h"
 
 
 using namespace std;

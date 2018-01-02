@@ -14,8 +14,8 @@
 #define _ANKICORETECH_PLANNING_XYTHETA_PLANNER_H_
 
 #include <stddef.h>
-#include "anki/planning/shared/goalDefs.h"
-#include "anki/planning/shared/path.h"
+#include "coretech/planning/shared/goalDefs.h"
+#include "coretech/planning/shared/path.h"
 #include "xythetaPlanner_definitions.h"
 #include <utility>
 

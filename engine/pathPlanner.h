@@ -13,8 +13,8 @@
 #define __PATH_PLANNER_H__
 
 #include "anki/common/basestation/objectIDs.h"
-#include "anki/planning/shared/path.h"
-#include "anki/planning/shared/goalDefs.h"
+#include "coretech/planning/shared/path.h"
+#include "coretech/planning/shared/goalDefs.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 #include "clad/types/pathMotionProfile.h"

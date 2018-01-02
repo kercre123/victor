@@ -15,7 +15,7 @@
 #include "json/json.h"
 #include "util/jsonWriter/jsonWriter.h"
 #include "util/logging/logging.h"
-#include "anki/planning/basestation/xythetaPlannerContext.h"
+#include "coretech/planning/engine/xythetaPlannerContext.h"
 #include <vector>
 #include <utility>
 

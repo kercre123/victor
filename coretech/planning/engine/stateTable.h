@@ -14,7 +14,7 @@
 #define _ANKICORETECH_PLANNING_STATE_TABLE_H_
 
 // TODO:(bn) pull out basic defined from environment, so we don't need the whole thing
-#include "anki/planning/basestation/xythetaEnvironment.h"
+#include "coretech/planning/engine/xythetaEnvironment.h"
 #include "openList.h"
 #include <unordered_map>
 

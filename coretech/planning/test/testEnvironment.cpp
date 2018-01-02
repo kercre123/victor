@@ -9,7 +9,7 @@
 #define protected public
 
 #include "anki/common/basestation/math/rotatedRect.h"
-#include "anki/planning/basestation/xythetaEnvironment.h"
+#include "coretech/planning/engine/xythetaEnvironment.h"
 #include "json/json.h"
 #include "util/helpers/quoteMacro.h"
 #include "util/jsonWriter/jsonWriter.h"

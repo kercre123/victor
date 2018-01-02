@@ -15,8 +15,8 @@
 #ifndef _ANKICORETECH_PLANNING_XYTHETA_PLANNER_CONTEXT_H_
 #define _ANKICORETECH_PLANNING_XYTHETA_PLANNER_CONTEXT_H_
 
-#include "anki/planning/basestation/xythetaEnvironment.h"
-#include "anki/planning/shared/goalDefs.h"
+#include "coretech/planning/engine/xythetaEnvironment.h"
+#include "coretech/planning/shared/goalDefs.h"
 #include "json/json-forwards.h"
 #include "util/helpers/noncopyable.h"
 #include <vector>

@@ -16,7 +16,7 @@
 #include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/utilities_shared.h"
-#include "anki/planning/basestation/xythetaEnvironment.h"
+#include "coretech/planning/engine/xythetaEnvironment.h"
 #include "json/json.h"
 #include "util/console/consoleInterface.h"
 #include "util/jsonWriter/jsonWriter.h"

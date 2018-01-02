@@ -20,7 +20,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/types.h"
 #include "util/helpers/ankiDefines.h"
-#include "anki/planning/shared/path.h"
+#include "coretech/planning/shared/path.h"
 #include "coretech/messaging/shared/UdpClient.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/vizTypes.h"

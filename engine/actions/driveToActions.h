@@ -17,7 +17,7 @@
 #include "engine/actionableObject.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/compoundActions.h"
-#include "anki/planning/shared/goalDefs.h"
+#include "coretech/planning/shared/goalDefs.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationTrigger.h"

@@ -7,15 +7,15 @@
 #define protected public
 
 #include "anki/common/basestation/math/rotatedRect.h"
-#include "anki/planning/basestation/xythetaEnvironment.h"
-#include "anki/planning/basestation/xythetaPlanner.h"
-#include "anki/planning/basestation/xythetaPlannerContext.h"
+#include "coretech/planning/engine/xythetaEnvironment.h"
+#include "coretech/planning/engine/xythetaPlanner.h"
+#include "coretech/planning/engine/xythetaPlannerContext.h"
 #include "util/helpers/quoteMacro.h"
 #include "util/jsonWriter/jsonWriter.h"
 #include "json/json.h"
 
 // hack just for unit testing, don't do this outside of tests
-#include "xythetaPlanner_internal.h"
+#include "coretech/planning/engine/xythetaPlanner_internal.h"
 
 
 using namespace std;

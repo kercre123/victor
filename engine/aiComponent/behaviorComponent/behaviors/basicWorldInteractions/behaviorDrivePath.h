@@ -16,7 +16,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/planning/shared/path.h"
+#include "coretech/planning/shared/path.h"
 
 namespace Anki {
 //forward declaration

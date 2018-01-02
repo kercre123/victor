@@ -10,9 +10,9 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#include "anki/planning/basestation/pathHelper.h"
+#include "coretech/planning/engine/pathHelper.h"
 #include "anki/common/basestation/math/pose.h"
-#include "anki/planning/shared/path.h"
+#include "coretech/planning/shared/path.h"
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/point_impl.h"
