@@ -1474,6 +1474,13 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage.NoExternalInterface", "");
       return RESULT_FAIL;
     }
+
+    static cv::Mat_<PixelType> sMat(img.GetNumRows(), img.GetNumCols());
+    if(sMat.rows != img.GetNumRows() || sMat.cols != img.GetNumCols())
+    {
+      sMat.release();
+      sMat.create(img.GetNumRows(), img.GetNumCols());
+    }
     
     ImageChunk m;
     m.height = img.GetNumRows();
@@ -1484,11 +1491,11 @@ namespace Cozmo {
     };
     
     if(img.GetNumChannels() == 3) {
-      cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
+      cv::cvtColor(img.get_CvMat_(), sMat, CV_RGB2BGR);
     }
     
     std::vector<u8> compressedBuffer;
-    cv::imencode(".jpg",  img.get_CvMat_(), compressedBuffer, compressionParams);
+    cv::imencode(".jpg",  sMat, compressedBuffer, compressionParams);
     
     const u32 kMaxChunkSize = static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE);
     u32 bytesRemainingToSend = static_cast<u32>(compressedBuffer.size());

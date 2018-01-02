@@ -38,7 +38,7 @@ endif()
 
 add_compile_options(
     $<$<CONFIG:Debug>:-O0>
-    $<$<CONFIG:Release>:-Os>
+    $<$<CONFIG:Release>:-O2>
 )
 
 #
