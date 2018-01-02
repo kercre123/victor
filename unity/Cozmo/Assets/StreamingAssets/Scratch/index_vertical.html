@@ -323,6 +323,12 @@
             </category>
 
             <category name="codeLab.Category.Sensors" colour="#5CB1D6" secondaryColour="0">
+              <block type="sensing_current" id="sensing_current">
+                <value name="CURRENTMENU">
+                  <shadow type="sensing_currentmenu"></shadow>
+                </value>
+              </block>
+              <sep gap="50"></sep>
               <!-- Cozmo -->
               <block type="cozmo_vert_get_lift_height"></block>
               <block type="cozmo_vert_get_head_angle"></block>
@@ -381,13 +387,6 @@
               <block type="cozmo_vert_device_get_pitch"></block>
               <block type="cozmo_vert_device_get_roll"></block>
               <block type="cozmo_vert_device_get_yaw"></block>
-              <!--Other-->
-              <sep gap="50"></sep>
-              <block type="sensing_current" id="sensing_current">
-                <value name="CURRENTMENU">
-                  <shadow type="sensing_currentmenu"></shadow>
-                </value>
-              </block>
             </category>
             <category name="codeLab.Category.Display" colour="#0fBD8C" secondaryColour="0">
                 <block type="cozmo_vert_cozmoface_display"></block>
