@@ -144,17 +144,17 @@ public:
   // returns the time navMap was last changed
   virtual TimeStamp_t GetLastChangedTimeStamp() const = 0;
   
+  // Pack map data to broadcast
+  virtual void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const = 0;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Debug
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // Render/stop rendering memory map
-  virtual void DrawDebugProcessorInfo(size_t mapIdxHint) const = 0;
+  virtual void DrawDebugProcessorInfo() const = 0;
   virtual void ClearDraw() const = 0;
   
-  // Broadcast memory map
-  virtual void Broadcast(uint32_t originID) const = 0;
-  virtual void BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) const = 0;
   
 protected:
   

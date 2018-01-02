@@ -46,8 +46,6 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   using NodeCPtrVector = std::vector<const QuadTreeNode*>;  
-  using QuadInfoVector = std::vector<ExternalInterface::MemoryMapQuadInfo>;
-  using QuadInfoDebugVizVector = std::vector<ExternalInterface::MemoryMapQuadInfoDebugViz>;
   
   // type of overlap for two sets
   enum class ESetOverlap { Disjoint, Intersecting, SupersetOf, SubsetOf};
@@ -173,8 +171,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // adds the necessary quad infos to the given vector to be sent
-  void AddQuadsToSend(QuadInfoVector& quadInfoVector) const;
-  void AddQuadsToSendDebugViz(QuadInfoDebugVizVector& quadInfoVector) const;
+  void AddQuadsToSend(MemoryMapTypes::QuadInfoVector& quadInfoVector) const;
   
 private:
 

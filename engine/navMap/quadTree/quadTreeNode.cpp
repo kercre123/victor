@@ -42,45 +42,23 @@ ENodeContentTypeEnum ConvertContentType(EContentType contentType)
   
   ENodeContentTypeEnum externalContentType = ENodeContentTypeEnum::Unknown;
   switch (contentType) {
-    case EContentType::Unknown:               { externalContentType = ENodeContentTypeEnum::Unknown;         break; }
-    case EContentType::ClearOfObstacle:       { externalContentType = ENodeContentTypeEnum::ClearOfObstacle; break; }
-    case EContentType::ClearOfCliff:          { externalContentType = ENodeContentTypeEnum::ClearOfCliff;    break; }
-    case EContentType::ObstacleCube:          { externalContentType = ENodeContentTypeEnum::ObstacleCube;    break; }
-    case EContentType::ObstacleCubeRemoved:   { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
-    case EContentType::ObstacleCharger:       { externalContentType = ENodeContentTypeEnum::ObstacleCharger; break; }
-    case EContentType::ObstacleChargerRemoved:{ DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
-    case EContentType::ObstacleProx:          { externalContentType = ENodeContentTypeEnum::ObstacleProx;    break; } 
-    case EContentType::ObstacleUnrecognized:  { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this (unsupported)
-    case EContentType::Cliff:                 { externalContentType = ENodeContentTypeEnum::Cliff;           break; }
-    case EContentType::InterestingEdge:       { externalContentType = ENodeContentTypeEnum::VisionBorder;    break; }
-    case EContentType::NotInterestingEdge:    { externalContentType = ENodeContentTypeEnum::VisionBorder;    break; }
+    case EContentType::Unknown:               { externalContentType = ENodeContentTypeEnum::Unknown;              break; }
+    case EContentType::ClearOfObstacle:       { externalContentType = ENodeContentTypeEnum::ClearOfObstacle;      break; }
+    case EContentType::ClearOfCliff:          { externalContentType = ENodeContentTypeEnum::ClearOfCliff;         break; }
+    case EContentType::ObstacleCube:          { externalContentType = ENodeContentTypeEnum::ObstacleCube;         break; }
+    case EContentType::ObstacleCubeRemoved:   { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType");      break; } // Should never get this
+    case EContentType::ObstacleCharger:       { externalContentType = ENodeContentTypeEnum::ObstacleCharger;      break; }
+    case EContentType::ObstacleChargerRemoved:{ DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType");      break; } // Should never get this
+    case EContentType::ObstacleProx:          { externalContentType = ENodeContentTypeEnum::ObstacleProx;         break; } 
+    case EContentType::ObstacleUnrecognized:  { externalContentType = ENodeContentTypeEnum::ObstacleUnrecognized; break; }
+    case EContentType::Cliff:                 { externalContentType = ENodeContentTypeEnum::Cliff;                break; }
+    case EContentType::InterestingEdge:       { externalContentType = ENodeContentTypeEnum::InterestingEdge;      break; }
+    case EContentType::NotInterestingEdge:    { externalContentType = ENodeContentTypeEnum::NotInterestingEdge;   break; }
     case EContentType::_Count:                { DEV_ASSERT(false, "NavMeshQuadTreeNode._Count"); break; }
   }
   return externalContentType;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// convert between our internal node content type and an internal content type
-ENodeContentTypeDebugVizEnum ConvertContentTypeDebugViz(EContentType contentType )
-{  
-  ENodeContentTypeDebugVizEnum internalContentType = ENodeContentTypeDebugVizEnum::Unknown;
-  switch (contentType) {
-    case EContentType::Unknown:               { internalContentType = ENodeContentTypeDebugVizEnum::Unknown;                break; }
-    case EContentType::ClearOfObstacle:       { internalContentType = ENodeContentTypeDebugVizEnum::ClearOfObstacle;        break; }
-    case EContentType::ClearOfCliff:          { internalContentType = ENodeContentTypeDebugVizEnum::ClearOfCliff;           break; }
-    case EContentType::ObstacleCube:          { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCube;           break; }
-    case EContentType::ObstacleCubeRemoved:   { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCubeRemoved;    break; }
-    case EContentType::ObstacleCharger:       { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCharger;        break; }
-    case EContentType::ObstacleChargerRemoved:{ internalContentType = ENodeContentTypeDebugVizEnum::ObstacleChargerRemoved; break; }
-    case EContentType::ObstacleProx:          { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleProx;           break; }
-    case EContentType::ObstacleUnrecognized:  { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleUnrecognized;   break; }
-    case EContentType::Cliff:                 { internalContentType = ENodeContentTypeDebugVizEnum::Cliff;                  break; }
-    case EContentType::InterestingEdge:       { internalContentType = ENodeContentTypeDebugVizEnum::InterestingEdge;        break; }
-    case EContentType::NotInterestingEdge:    { internalContentType = ENodeContentTypeDebugVizEnum::NotInterestingEdge;     break; }
-    case EContentType::_Count:                { DEV_ASSERT(false, "QuadTreeNode._Count"); break; }
-  }
-  return internalContentType;
-}  
 } // namespace
 
 static_assert( !std::is_copy_assignable<QuadTreeNode>::value, "QuadTreeNode was designed non-copyable" );
@@ -440,24 +418,6 @@ void QuadTreeNode::AddQuadsToSend(QuadInfoVector& quadInfoVector) const
     // delegate on each child
     for( const auto& childPtr : _childrenPtr ) {
       childPtr->AddQuadsToSend(quadInfoVector);
-    }
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::AddQuadsToSendDebugViz(QuadInfoDebugVizVector& quadInfoVector) const
-{
-  // if we have children, delegate on them, otherwise add data about ourselves
-  if ( _childrenPtr.empty() )
-  {
-    const auto contentTypeDebugViz = ConvertContentTypeDebugViz(_content.data->type);
-    quadInfoVector.emplace_back(ExternalInterface::MemoryMapQuadInfoDebugViz(contentTypeDebugViz, _level));
-  }
-  else
-  {
-    // delegate on each child
-    for( const auto& childPtr : _childrenPtr ) {
-      childPtr->AddQuadsToSendDebugViz(quadInfoVector);
     }
   }
 }

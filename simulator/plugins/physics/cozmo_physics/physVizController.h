@@ -35,7 +35,7 @@ class MemoryMapNode
 public:
   MemoryMapNode(int depth, float size_m, const Point3f& center);
   
-  bool AddChild(SimpleQuadVector& destSimpleQuads, const ExternalInterface::ENodeContentTypeDebugVizEnum content, const int depth);
+  bool AddChild(SimpleQuadVector& destSimpleQuads, const ExternalInterface::ENodeContentTypeEnum content, const int depth);
   
 private:
   int     _depth;
@@ -70,9 +70,9 @@ private:
   void ProcessVizSimpleQuadVectorMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizSimpleQuadVectorMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizSimpleQuadVectorMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessVizMemoryMapMessageDebugVizBegin(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessVizMemoryMapMessageDebugViz(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessVizMemoryMapMessageDebugVizEnd(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizMemoryMapMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizMemoryMapMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizMemoryMapMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEraseSegmentPrimitivesMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEraseQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -149,8 +149,8 @@ private:
   // memory map quad info data
   // Maps message sequence number to message. This allows use to check that all messages were received and deals with
   // out of order messages
-  using MemoryMapQuadInfoDebugVizVector = std::map<u32, std::vector<ExternalInterface::MemoryMapQuadInfoDebugViz>>;
-  std::unordered_map<uint32_t, MemoryMapQuadInfoDebugVizVector> _memoryMapQuadInfoDebugVizVectorMapIncoming;  // incoming from the socket
+  using MemoryMapQuadInfoVector = std::map<u32, std::vector<ExternalInterface::MemoryMapQuadInfo>>;
+  std::unordered_map<uint32_t, MemoryMapQuadInfoVector> _memoryMapQuadInfoVectorMapIncoming;  // incoming from the socket
   std::unordered_map<uint32_t, ExternalInterface::MemoryMapInfo> _memoryMapInfo;
   
   struct Segment {
