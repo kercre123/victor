@@ -496,8 +496,8 @@ void BehaviorVictorObservingDemo::BehaviorUpdate(BehaviorExternalInterface& beha
     // TODO:(bn) make this a proper state?
     if(!IsControlDelegated()){
       CancelSelf();
-      return;
     }
+    return;
   }
   
   State& state = _states->at(_currState);
