@@ -16,16 +16,22 @@ proc ble_scan {} {
 	while { $ble_scan_attempts > 0 } {
 		sleep $sleep_duration
 		send "scan\r"
-		set timeout $general_timeout
+		set timeout $general_timeout		
 		expect {
-			timeout {
-				puts "reached timeout when scanning for ble connection, retrying"
-				set ble_scan_attempts [ expr $ble_scan_attempts-1 ]
-			}	
 			"Found ${robot}" {
 				puts "Found $robot through ble.\n"
 				return
 			}
+			timeout {
+				if { $ble_scan_attempts == "1" } {
+					puts "\n\nUnable to find $robot after scanning through ble,\
+						try restarting $robot"
+					exit
+				} else {
+					puts "reached timeout when scanning for ble connection, retrying"
+					set ble_scan_attempts [ expr $ble_scan_attempts-1 ]
+				}
+			}	
 		} 
 	}
 	puts "\n\nUnable to find $robot after scanning through ble,\
@@ -38,7 +44,7 @@ proc ble_connection {} {
 	global general_timeout
 	global sleep_duration
 	global robot
- 
+ 	
 	while { $ble_connect_attempts > 0 } {
 		sleep $sleep_duration
 		send "connect $robot\r" 
@@ -47,8 +53,14 @@ proc ble_connection {} {
 			"Fully connected to $robot" {return}
 			"You are already connected" {return}
 			timeout {
-				puts "reached timeout when connecting to ble, retrying"
-				set ble_connect_attempts [ expr $ble_connect_attempts-1 ]
+				if { $ble_connect_attempts == "1" } {
+					puts "\n\nReached attempts limit for ble connection.\
+		 				Try restarting Victor\n"
+					exit
+				} else {
+					puts "reached timeout when connecting to ble, retrying"
+					set ble_connect_attempts [ expr $ble_connect_attempts-1 ]
+				}					
 			}	
 		}
 	}
@@ -64,7 +76,8 @@ proc wifi_test_connection {} {
 	puts "IP address assigned, checking connection"
 	sleep $sleep_duration
 	set timeout $general_timeout
-	# Currently, need to set a limit on packets sent, because ping for ble-cli tool will run in the backround indefinitly without the ability to exit out
+	# Currently, need to set a limit on packets sent, because ping for ble-cli
+	# tool will run in the backround indefinitely without the ability to exit out
 	send "/system/bin/ping -c 2 8.8.8.8\r" 
 	expect {
 		"bytes" {
@@ -77,7 +90,8 @@ proc wifi_test_connection {} {
 			exit 1
 		}
 		timeout {
-			puts "Reached timeout for testing wifi connection, will attempt to connect again"
+			puts "Reached timeout for testing wifi connection,\
+			      will attempt to connect again"
 			return
 		}
 	}
@@ -97,10 +111,6 @@ proc wifi_connection_and_test {} {
 		send "wifi-set-config $SSID $password\r"
 		set timeout $wifi_connect_timeout
 		expect {
-			timeout {
-				puts "reached timeout when attempting to establish wifi, retrying\r"
-				set wifi_connect_attempts [ expr $wifi_connect_attempts-1]
-			}
 			"ip_address=" {
 				puts "IP address assigned, checking connection"
 				wifi_test_connection ; #If successful, will exit script
@@ -110,6 +120,16 @@ proc wifi_connection_and_test {} {
 				puts "hit a failure, retrying"
 				set wifi_connect_attempts [ expr $wifi_connect_attempts-1]	
 			}		
+			timeout {
+				if { $wifi_connect_attempts == "1" } {
+					puts "Reached maximum amount of tries to connect through wifi.\
+	      				Try restarting victor"
+					exit
+				} else {
+					puts "reached timeout when attempting to establish wifi, retrying\r"
+					set wifi_connect_attempts [ expr $wifi_connect_attempts-1]
+				}					
+			}
 		}
 	}
 	puts "Reached maximum amount of tries to connect through wifi.\
@@ -130,7 +150,6 @@ ble_scan
 ble_connection
 wifi_connection_and_test
 exit 0
-
 
 
 
