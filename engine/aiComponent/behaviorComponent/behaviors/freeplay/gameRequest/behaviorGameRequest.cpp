@@ -13,7 +13,7 @@
 
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/actionInterface.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"

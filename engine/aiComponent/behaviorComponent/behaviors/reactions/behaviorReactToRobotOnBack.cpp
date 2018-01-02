@@ -15,7 +15,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/externalInterface/externalInterface.h"

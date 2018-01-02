@@ -32,7 +32,7 @@
 #include "engine/markerlessObject.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/groundPlaneROI.h"
 #include "engine/blockWorld/blockWorld.h"
 

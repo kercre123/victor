@@ -16,7 +16,7 @@
 
 #include "engine/actions/actionContainers.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"

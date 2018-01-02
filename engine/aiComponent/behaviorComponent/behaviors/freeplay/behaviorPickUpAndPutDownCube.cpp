@@ -14,7 +14,7 @@
 
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"

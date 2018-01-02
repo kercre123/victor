@@ -19,7 +19,7 @@
 #include "engine/actions/flipBlockAction.h"
 #include "engine/actions/retryWrapperAction.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockConfigurationManager.h"

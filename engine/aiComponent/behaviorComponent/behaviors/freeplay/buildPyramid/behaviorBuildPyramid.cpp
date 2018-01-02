@@ -17,7 +17,7 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/retryWrapperAction.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"

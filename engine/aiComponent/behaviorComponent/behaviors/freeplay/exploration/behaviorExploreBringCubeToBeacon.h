@@ -13,8 +13,8 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorExploreBringCubeToBeacon_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/AIBeacon.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiBeacon.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/objectIDs.h"

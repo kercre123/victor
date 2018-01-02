@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "engine/actions/animActions.h"

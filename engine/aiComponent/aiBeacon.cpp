@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#include "engine/aiComponent/behaviorComponent/AIBeacon.h"
+#include "engine/aiComponent/aiBeacon.h"
 
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/utils/timer.h"

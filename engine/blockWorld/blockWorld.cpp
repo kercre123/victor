@@ -24,7 +24,7 @@
 #include "coretech/common/shared/utilities_shared.h"
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
