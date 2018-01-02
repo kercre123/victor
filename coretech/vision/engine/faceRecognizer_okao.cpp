@@ -22,7 +22,7 @@
 #include "util/helpers/cleanupHelper.h"
 #include "util/threading/threadPriority.h"
 #include "json/json.h"
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 
 #include "OkaoCoAPI.h"
 

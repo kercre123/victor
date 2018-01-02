@@ -9,8 +9,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "coretech/vision/robot/edgeDetection.h"
 
-#include "anki/common/robot/serialize.h"
-#include "anki/common/robot/draw.h"
+#include "coretech/common/robot/serialize.h"
+#include "coretech/common/robot/draw.h"
 #include "coretech/vision/robot/histogram.h"
 
 #include "util/math/math.h"

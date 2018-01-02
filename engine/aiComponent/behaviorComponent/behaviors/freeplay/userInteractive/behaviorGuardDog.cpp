@@ -27,8 +27,8 @@
 #include "engine/faceWorld.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
-#include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
 

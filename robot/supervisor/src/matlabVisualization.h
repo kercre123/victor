@@ -13,8 +13,8 @@
 #ifndef ANKI_MATLAB_VISUALIZATION_H
 #define ANKI_MATLAB_VISUALIZATION_H
 
-#include "anki/common/robot/array2d_declarations.h"
-#include "anki/common/robot/geometry_declarations.h"
+#include "coretech/common/robot/array2d_declarations.h"
+#include "coretech/common/robot/geometry_declarations.h"
 
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 

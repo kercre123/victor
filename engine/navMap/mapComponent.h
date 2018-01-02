@@ -14,7 +14,7 @@
  #ifndef __Anki_Cozmo_MapComponent_H__
  #define __Anki_Cozmo_MapComponent_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "engine/ankiEventUtil.h"
 #include "engine/overheadEdge.h"

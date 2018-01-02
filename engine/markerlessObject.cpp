@@ -13,8 +13,8 @@
 #include "engine/markerlessObject.h"
 
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
 
 namespace Anki {
   namespace Cozmo {

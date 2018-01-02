@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_NamedColors_Namedcolors_H__
 #define __Cozmo_Basestation_NamedColors_Namedcolors_H__
 
-#include "anki/common/basestation/colorRGBA.h"
+#include "coretech/common/engine/colorRGBA.h"
 
 namespace Anki {
 namespace NamedColors {

@@ -14,11 +14,11 @@
 
 #include "engine/preActionPose.h"
 
-#include "anki/common/basestation/colorRGBA.h"
+#include "coretech/common/engine/colorRGBA.h"
 #include "coretech/vision/engine/visionMarker.h"
 
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
 
 namespace Anki {
   

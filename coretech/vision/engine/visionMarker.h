@@ -13,8 +13,8 @@
 #include <map>
 #include <array>
 
-#include "anki/common/basestation/math/quad.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/pose.h"
 #include "coretech/vision/engine/camera.h"
 
 namespace Anki {

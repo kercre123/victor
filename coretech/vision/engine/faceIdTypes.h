@@ -12,7 +12,7 @@
 #ifndef __Anki_Vision_FaceIdTypes_H__
 #define __Anki_Vision_FaceIdTypes_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include <string>
 

@@ -1,48 +1,59 @@
 
 cxx_project(
-    name = 'cti_common',
-    srcs = cxx_src_glob(['basestation/src',
-                         'shared/src',
-                         'robot/src']),
-    platform_srcs = [
-        ('android', glob(['basestation/src/**/*_android.cpp',
-                          'shared/src/**/*_android.cpp',
-                          'robot/src/**/*_android.cpp']))
-    ],
-    headers = cxx_header_glob(['include/anki/common']),
-    platform_headers = [
-        ('android', glob(['include/anki/common/**/*_android.h']))
-    ]
+  name = 'cti_common',
+  srcs = cxx_src_glob(
+    ['engine', 'shared', 'robot'],
+    excludes=['robot/mex/**']
+  ),
+  platform_srcs = [
+      ('android', glob(['engine/**/*_android.cpp',
+                        'shared/**/*_android.cpp',
+                        'robot/**/*_android.cpp']))
+  ],
+  headers = cxx_header_glob(
+    ['engine', 'shared', 'robot'],
+    excludes=['robot/mex/**']
+  ),
+  platform_headers = [
+      ('android', glob(['engine/**/*_android.h',
+                        'shared/**/*_android.h',
+                        'robot/**/*_android.h']))
+  ]
 )
 
 cxx_project(
-    name = 'cti_common_robot',
-    srcs = cxx_src_glob(['shared/src',
-                         'robot/src'],
-                        excludes=['externalInterface*']),
-    platform_srcs = [
-        ('android', glob(['shared/src/**/*_android.cpp',
-                          'robot/src/**/*_android.cpp']))
-    ],
-    headers = cxx_header_glob(['include/anki/common']),
-    platform_headers = [
-        ('android', glob(['include/anki/common/**/*_android.h']))
-    ]
+  name = 'cti_common_robot',
+  srcs = cxx_src_glob(
+    ['shared', 'robot'],
+    excludes=['robot/mex/**']
+  ),
+  platform_srcs = [
+      ('android', glob(['shared/**/*_android.cpp',
+                        'robot/**/*_android.cpp']))
+  ],
+  headers = cxx_header_glob(
+    ['shared', 'robot'],
+    excludes=['robot/mex/**']
+  ),
+  platform_headers = [
+      ('android', glob(['shared/**/*_android.h',
+                        'robot/**/*_android.h']))
+  ]
 )
 
 cxx_project(
-    name = 'cti_common_shared_test',
-    srcs = cxx_src_glob(['shared/test']),
+    name = 'cti_common_test_shared',
+    srcs = cxx_src_glob(['test/shared']),
     platform_srcs = [],
-    headers = cxx_header_glob(['shared/test']),
+    headers = cxx_header_glob(['test/shared']),
     platform_headers = [],
 )
 
 cxx_project(
-    name = 'cti_common_basestation_test',
-    srcs = cxx_src_glob(['basestation/test']),
+    name = 'cti_common_test_engine',
+    srcs = cxx_src_glob(['test/engine']),
     platform_srcs = [],
-    headers = cxx_header_glob(['basestation/test']),
+    headers = cxx_header_glob(['test/engine']),
     platform_headers = [],
 )
 

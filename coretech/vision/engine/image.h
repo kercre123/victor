@@ -12,13 +12,13 @@
 #ifndef __Anki_Coretech_Vision_Basestation_Image_H__
 #define __Anki_Coretech_Vision_Basestation_Image_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
-#include "anki/common/basestation/array2d.h"
-#include "anki/common/basestation/colorRGBA.h"
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/quad.h"
-#include "anki/common/basestation/math/rect.h"
+#include "coretech/common/engine/array2d.h"
+#include "coretech/common/engine/colorRGBA.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/rect.h"
 
 #include "coretech/vision/engine/colorPixelTypes.h"
 

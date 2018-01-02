@@ -17,7 +17,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
-#include "anki/common/basestation/math/quad_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
 
 #include "util/logging/logging.h"
 

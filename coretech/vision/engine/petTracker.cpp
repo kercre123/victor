@@ -11,9 +11,9 @@
  **/
 
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/rect_impl.h"
-#include "anki/common/basestation/math/rotation.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/engine/math/rotation.h"
 
 #include "coretech/vision/engine/petTracker.h"
 

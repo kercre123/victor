@@ -9,8 +9,8 @@
 #ifndef __Products_Cozmo__block__
 #define __Products_Cozmo__block__
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/quad.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/quad.h"
 
 #include "coretech/vision/engine/observableObject.h"
 

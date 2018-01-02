@@ -14,8 +14,8 @@
 #ifndef ANKI_EMBEDDEDVISION_PERSPECTIVEPOSEESTIMATION_H
 #define ANKI_EMBEDDEDVISION_PERSPECTIVEPOSEESTIMATION_H
 
-#include "anki/common/robot/geometry_declarations.h"
-#include "anki/common/robot/array2d_declarations.h"
+#include "coretech/common/robot/geometry_declarations.h"
+#include "coretech/common/robot/array2d_declarations.h"
 
 namespace Anki {
   namespace Embedded {

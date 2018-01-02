@@ -17,7 +17,7 @@
 
 #include "coretech/vision/engine/image.h"
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 
 #include "util/logging/logging.h"
 #include "json/json.h"

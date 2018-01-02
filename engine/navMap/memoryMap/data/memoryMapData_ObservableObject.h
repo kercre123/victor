@@ -14,8 +14,8 @@
 
 #include "memoryMapData.h"
 
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/polygon.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/vision/engine/observableObject.h"
 
 namespace Anki {

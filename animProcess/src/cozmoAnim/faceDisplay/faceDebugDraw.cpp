@@ -14,8 +14,8 @@
 
 #include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
-#include "anki/common/basestation/array2d_impl.h"
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/vision/engine/image.h"
 #include "util/helpers/templateHelpers.h"

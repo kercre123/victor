@@ -12,7 +12,7 @@ set(CLAD_INCLUDES
     "${CMAKE_CURRENT_SOURCE_DIR}/../lib/util/source/anki/clad/"
     "${CMAKE_CURRENT_SOURCE_DIR}/../robot/clad/src/"
     "${CMAKE_CURRENT_SOURCE_DIR}/../coretech/vision"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../coretech/common/clad/src/"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../coretech/common"
 )
 
 #CLAD_CPP_DECL=../robot/clad/cozmo_CPP_declarations_emitter.py

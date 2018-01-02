@@ -13,7 +13,7 @@
 
 #ifndef ANKI_COZMOANIM_FACE_DISPLAY_IMPL_H
 #define ANKI_COZMOANIM_FACE_DISPLAY_IMPL_H
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 

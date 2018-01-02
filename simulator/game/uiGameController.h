@@ -9,14 +9,14 @@
 #ifndef __UI_GAME_CONTROLLER_H__
 #define __UI_GAME_CONTROLLER_H__
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/poseOriginList.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/poseOriginList.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/gameComms.h"
 #include "engine/cozmoAPI/comms/gameMessageHandler.h"
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/faceIdTypes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"

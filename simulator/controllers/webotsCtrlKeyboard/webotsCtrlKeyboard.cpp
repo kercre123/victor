@@ -9,9 +9,9 @@
 #include "webotsCtrlKeyboard.h"
 
 #include "../shared/ctrlCommonInitialization.h"
-#include "anki/common/basestation/colorRGBA.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/colorRGBA.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/pose.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "coretech/vision/engine/image.h"

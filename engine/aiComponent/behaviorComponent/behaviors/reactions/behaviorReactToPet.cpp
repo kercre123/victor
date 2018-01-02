@@ -13,7 +13,7 @@
 #include "engine/actions/trackPetFaceAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iReactToPetListener.h"
 #include "engine/petWorld.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {

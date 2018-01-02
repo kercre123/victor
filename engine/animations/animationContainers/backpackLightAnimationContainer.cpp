@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/common/basestation/colorRGBA.h"
+#include "coretech/common/engine/colorRGBA.h"
 #include "engine/animations/animationContainers/backpackLightAnimationContainer.h"
 #include "engine/components/bodyLightComponent.h"
 

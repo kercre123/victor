@@ -16,9 +16,9 @@
 #include "coretech/vision/engine/cameraCalibration.h"
 #include "coretech/vision/engine/panTiltTracker.h"
 
-#include "anki/common/basestation/math/rect_impl.h"
+#include "coretech/common/engine/math/rect_impl.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "util/logging/logging.h"
 
 namespace Anki {

@@ -13,9 +13,9 @@
 #ifndef ANKI_CORETECHEMBEDDED_VISION_NEAREST_NEIGHBOR_LIBRARY_H
 #define ANKI_CORETECHEMBEDDED_VISION_NEAREST_NEIGHBOR_LIBRARY_H
 
-#include "anki/common/types.h"
-#include "anki/common/robot/config.h"
-#include "anki/common/robot/array2d_declarations.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/robot/config.h"
+#include "coretech/common/robot/array2d_declarations.h"
 
 namespace Anki {
   

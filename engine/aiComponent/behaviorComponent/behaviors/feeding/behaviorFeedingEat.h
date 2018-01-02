@@ -19,7 +19,7 @@
 #include "engine/components/bodyLightComponent.h"
 
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 
 #include <vector>
 

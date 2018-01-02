@@ -13,8 +13,8 @@
  *
  **/
 
-#include "anki/common/basestation/array2d_impl.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 //#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 #include "cozmoAnim/animation/cannedAnimationContainer.h"

@@ -7,10 +7,10 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#include "anki/common/robot/utilities.h"
-#include "anki/common/robot/benchmarking.h"
-#include "anki/common/robot/interpolate.h"
-#include "anki/common/robot/hostIntrinsics_m4.h"
+#include "coretech/common/robot/utilities.h"
+#include "coretech/common/robot/benchmarking.h"
+#include "coretech/common/robot/interpolate.h"
+#include "coretech/common/robot/hostIntrinsics_m4.h"
 
 #include "coretech/vision/robot/fiducialDetection.h"
 #include "coretech/vision/robot/integralImage.h"

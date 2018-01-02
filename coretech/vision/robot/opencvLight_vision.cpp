@@ -42,9 +42,9 @@
 
 #include "coretech/vision/robot/opencvLight_vision.h"
 
-#include "anki/common/robot/errorHandling.h"
-#include "anki/common/robot/matrix.h"
-#include "anki/common/robot/comparisons.h"
+#include "coretech/common/robot/errorHandling.h"
+#include "coretech/common/robot/matrix.h"
+#include "coretech/common/robot/comparisons.h"
 
 #include "coretech/vision/robot/imageProcessing.h"
 

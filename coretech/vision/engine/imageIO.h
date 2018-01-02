@@ -11,7 +11,7 @@
 #ifndef __CoreTech_Vision__imageIO__
 #define __CoreTech_Vision__imageIO__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
   namespace Vision {

@@ -12,8 +12,8 @@
 #include "quadTreeProcessor.h"
 #include "quadTreeNode.h"
 
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/vision/engine/profiler.h"
 
 #include "util/console/consoleInterface.h"

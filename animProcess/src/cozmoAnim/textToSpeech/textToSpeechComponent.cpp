@@ -20,7 +20,7 @@
 #include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "audioEngine/audioEngineController.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "audioEngine/plugins/ankiPluginInterface.h"

@@ -15,7 +15,7 @@
 #define __Cozmo_Engine_AIComponent_FeedingSoundEffectManager_H__
 
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "engine/entity.h"
 
 

@@ -5,14 +5,14 @@
 
 #include "mex.h"
 
-#include "anki/common/robot/errorHandling.h"
-#include "anki/common/robot/matlabInterface.h"
-#include "anki/common/robot/matlabConverters_embedded.h"
-#include "anki/common/robot/serialize.h"
+#include "coretech/common/robot/errorHandling.h"
+#include "coretech/common/robot/matlabInterface.h"
+#include "coretech/common/robot/matlabConverters_embedded.h"
+#include "coretech/common/robot/serialize.h"
 
-#include "anki/common/matlab/mexWrappers.h"
-#include "anki/common/matlab/mexUtilities.h"
-#include "anki/common/shared/utilities_shared.h"
+#include "coretech/common/matlab/mexWrappers.h"
+#include "coretech/common/matlab/mexUtilities.h"
+#include "coretech/common/shared/utilities_shared.h"
 
 using namespace Anki;
 using namespace Anki::Embedded;

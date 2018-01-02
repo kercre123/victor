@@ -11,12 +11,12 @@
  *
  **/
 
-#include "anki/common/basestation/math/fastPolygon2d.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/rotatedRect.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/math/fastPolygon2d.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/rotatedRect.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/namedColors/namedColors.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"

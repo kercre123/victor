@@ -13,8 +13,8 @@
 
 #include "engine/aiComponent/beiConditions/conditions/conditionTimer.h"
 
-#include "anki/common/basestation/utils/timer.h"
-#include "coretech/common/include/anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
 namespace Cozmo {

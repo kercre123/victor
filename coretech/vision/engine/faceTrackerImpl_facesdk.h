@@ -15,8 +15,8 @@
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/trackedFace.h"
 
-#include "anki/common/basestation/math/rect_impl.h"
-#include "anki/common/basestation/math/rotation.h"
+#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/engine/math/rotation.h"
 
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"

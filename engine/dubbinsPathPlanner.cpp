@@ -10,8 +10,8 @@
  *
  **/
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/planning/shared/path.h"
 #include "dubbinsPathPlanner.h"
 #include "util/logging/logging.h"

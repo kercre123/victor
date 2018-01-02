@@ -12,7 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "coretech/vision/robot/recognize.h"
 
-#include "anki/common/robot/hostIntrinsics_m4.h"
+#include "coretech/common/robot/hostIntrinsics_m4.h"
 
 #include "coretech/vision/robot/histogram.h"
 #include "coretech/vision/robot/lucasKanade.h"

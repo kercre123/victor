@@ -13,7 +13,7 @@
 
 #ifdef COZMO_RECORDING_PLAYBACK
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "recording.h"
 #include "anki/messaging/basestation/IComms.h"
 #include "../comms/commsRecorder.h"
@@ -24,7 +24,7 @@
 //#include "basestation/ui/messaging/messages/reproducibilityMessage.h"
 //#include "basestation/planning/plannerManager.h"
 //#include "metagame/loading/metaGameController.h"
-#include "anki/common/basestation/exceptions.h"
+#include "coretech/common/engine/exceptions.h"
 //#include "util/logging/logging.h"
 #include "json/json.h"
 

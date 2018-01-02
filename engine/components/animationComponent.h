@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_Components_AnimationComponent_H__
 #define __Cozmo_Basestation_Components_AnimationComponent_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/image.h"
 #include "anki/cozmo/shared/animationTag.h"
 #include "anki/cozmo/shared/cozmoConfig.h"

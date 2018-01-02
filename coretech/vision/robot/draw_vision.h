@@ -14,8 +14,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "coretech/vision/robot/draw_vision_declarations.h"
 
-#include "anki/common/robot/array2d.h"
-#include "anki/common/robot/draw.h"
+#include "coretech/common/robot/array2d.h"
+#include "coretech/common/robot/draw.h"
 
 #include "coretech/vision/robot/connectedComponents.h"
 

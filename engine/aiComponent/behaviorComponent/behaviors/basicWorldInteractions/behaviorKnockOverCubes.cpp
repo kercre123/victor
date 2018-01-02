@@ -26,8 +26,8 @@
 #include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/events/animationTriggerHelpers.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "util/console/consoleInterface.h"
 
 

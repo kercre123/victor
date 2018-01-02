@@ -13,8 +13,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAround.h"
 
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/shared/radians.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/shared/radians.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/driveToActions.h"
@@ -33,7 +33,7 @@
 
 #if SAFE_ZONE_VIZ
 #include "engine/viz/vizManager.h"
-#include "anki/common/basestation/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 #endif
 
 #define SET_STATE(s) SetState_internal(s, #s)

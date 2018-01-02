@@ -10,8 +10,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_VISION_INTEGRAL_IMAGE_H_
 #define _ANKICORETECHEMBEDDED_VISION_INTEGRAL_IMAGE_H_
 
-#include "anki/common/robot/config.h"
-#include "anki/common/robot/array2d.h"
+#include "coretech/common/robot/config.h"
+#include "coretech/common/robot/array2d.h"
 
 #include "coretech/vision/robot/integralImage_declarations.h"
 

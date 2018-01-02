@@ -15,7 +15,7 @@
 #ifndef __Anki_Coretech_Vision_CameraImagingPipeline_H__
 #define __Anki_Coretech_Vision_CameraImagingPipeline_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/imageBrightnessHistogram.h"
 
 #include <array>

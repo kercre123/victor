@@ -15,7 +15,7 @@
 #ifndef ANKI_COZMO_GAME_MESSAGE_HANDLER_H
 #define ANKI_COZMO_GAME_MESSAGE_HANDLER_H
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "coretech/messaging/engine/IComms.h"
 #include "clad/externalInterface/messageEngineToGame.h"

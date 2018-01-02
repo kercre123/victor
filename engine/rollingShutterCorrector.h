@@ -15,7 +15,7 @@
 #define ANKI_COZMO_ROLLING_SHUTTER_CORRECTOR_H
 
 #include "coretech/vision/engine/image.h"
-#include "anki/common/basestation/math/rotation.h"
+#include "coretech/common/engine/math/rotation.h"
 #include <deque>
 #include <vector>
 

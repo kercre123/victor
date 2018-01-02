@@ -13,9 +13,9 @@
 #include "engine/viz/vizManager.h"
 #include "engine/robot.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 
 #include "coretech/messaging/engine/IComms.h"
 

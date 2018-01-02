@@ -1,6 +1,6 @@
 #include "coretech/planning/shared/path.h"
-#include "anki/common/shared/radians.h"
-#include "anki/common/shared/utilities_shared.h"
+#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/utilities_shared.h"
 #include "util/math/math.h"
 #include <assert.h>
 #include <math.h>
@@ -17,7 +17,7 @@
 #define ATAN2_ACC(y,x) atan2(y,x)
 #elif defined CORETECH_ROBOT
 #define DEBUG_PATH_APPEND 0
-#include "anki/common/robot/utilities_c.h"
+#include "coretech/common/robot/utilities_c.h"
 #define ATAN2_FAST(y,x) atan2(y,x)
 #define ATAN2_ACC(y,x) atan2(y,x)
 #endif

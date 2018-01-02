@@ -14,9 +14,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "coretech/vision/robot/connectedComponents_declarations.h"
 
-#include "anki/common/types.h"
-#include "anki/common/robot/memory.h"
-#include "anki/common/robot/fixedLengthList.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/robot/memory.h"
+#include "coretech/common/robot/fixedLengthList.h"
 
 namespace Anki
 {

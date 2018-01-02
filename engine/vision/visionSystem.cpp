@@ -12,12 +12,12 @@
 
 #include "visionSystem.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/rect_impl.h"
-#include "anki/common/basestation/math/linearAlgebra_impl.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/engine/math/linearAlgebra_impl.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"

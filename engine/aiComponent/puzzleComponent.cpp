@@ -11,8 +11,8 @@
  **/
 #include "engine/aiComponent/puzzleComponent.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/robot.h"
 #include "json/json.h"
 #include "util/fileUtils/fileUtils.h"

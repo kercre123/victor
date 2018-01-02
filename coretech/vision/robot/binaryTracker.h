@@ -12,7 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_VISION_BINARY_TRACKER_H_
 #define _ANKICORETECHEMBEDDED_VISION_BINARY_TRACKER_H_
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "coretech/vision/robot/edgeDetection.h"
 #include "coretech/vision/robot/transformations.h"
 #include "coretech/vision/robot/histogram.h"

@@ -15,7 +15,7 @@
 
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 

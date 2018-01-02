@@ -14,10 +14,10 @@
  **/
 
 
-#include "anki/common/basestation/array2d_impl.h"
-#include "anki/common/basestation/colorRGBA.h"
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/engine/colorRGBA.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "cozmoAnim/animation/cozmo_anim_generated.h"
 #include "cozmoAnim/animation/faceAnimationManager.h"
 #include "cozmoAnim/animation/keyframe.h"

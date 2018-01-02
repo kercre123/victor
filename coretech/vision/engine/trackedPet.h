@@ -12,11 +12,11 @@
 #ifndef __Anki_Vision_TrackedPet_H__
 #define __Anki_Vision_TrackedPet_H__
 
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/rect.h"
-#include "anki/common/basestation/math/rect_impl.h"
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/shared/radians.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/rect.h"
+#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/shared/radians.h"
 
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/faceIdTypes.h"

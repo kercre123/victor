@@ -12,10 +12,10 @@
 
 #include "laserPointDetector.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/rect_impl.h"
-#include "anki/common/basestation/math/linearAlgebra_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/engine/math/linearAlgebra_impl.h"
 
 #include "coretech/vision/engine/image_impl.h"
 #include "coretech/vision/engine/imageCache.h"

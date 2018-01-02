@@ -10,8 +10,8 @@
 #define __IComms__
 
 #include <string.h>
-#include "anki/common/types.h"
-#include "anki/common/basestation/exceptions.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/exceptions.h"
 #include <vector>
 
 namespace Anki {

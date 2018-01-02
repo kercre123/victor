@@ -13,8 +13,8 @@
 #ifndef __Anki_Cozmo_Basestation_Components_CarryingComponent_H__
 #define __Anki_Cozmo_Basestation_Components_CarryingComponent_H__
 
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/shared/types.h"
 
 #include "coretech/vision/engine/visionMarker.h"
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"

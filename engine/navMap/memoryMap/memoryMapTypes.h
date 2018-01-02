@@ -12,7 +12,7 @@
 #ifndef ANKI_COZMO_MEMORY_MAP_TYPES_H
 #define ANKI_COZMO_MEMORY_MAP_TYPES_H
 
-#include "anki/common/basestation/math/point.h"
+#include "coretech/common/engine/math/point.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/helpers/templateHelpers.h"
 

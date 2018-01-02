@@ -13,8 +13,8 @@
 #ifndef ANKI_COZMO_BASESTATION_CHARGER_H
 #define ANKI_COZMO_BASESTATION_CHARGER_H
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/quad.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/quad.h"
 
 #include "coretech/vision/engine/observableObject.h"
 

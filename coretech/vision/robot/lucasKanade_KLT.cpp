@@ -52,8 +52,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 //M*/
 
 #include "coretech/vision/robot/imageProcessing.h"
-#include "anki/common/robot/fixedLengthList.h"
-#include "anki/common/robot/matlabInterface.h"
+#include "coretech/common/robot/fixedLengthList.h"
+#include "coretech/common/robot/matlabInterface.h"
 
 using namespace Anki;
 using namespace Anki::Embedded;

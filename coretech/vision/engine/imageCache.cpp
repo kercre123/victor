@@ -13,7 +13,7 @@
 
 #include "coretech/vision/engine/imageCache.h"
 
-#include "anki/common/basestation/array2d_impl.h"
+#include "coretech/common/engine/array2d_impl.h"
 
 #include "util/math/math.h"
 

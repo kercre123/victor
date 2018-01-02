@@ -13,15 +13,15 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_VISION_IMAGE_PROCESSING_H_
 
 #include "coretech/vision/robot/imageProcessing_declarations.h"
-#include "anki/common/robot/interpolate.h"
+#include "coretech/common/robot/interpolate.h"
 
-#include "anki/common/robot/array2d.h"
-#include "anki/common/robot/benchmarking.h"
-#include "anki/common/robot/comparisons.h"
+#include "coretech/common/robot/array2d.h"
+#include "coretech/common/robot/benchmarking.h"
+#include "coretech/common/robot/comparisons.h"
 
-//#include "anki/common/robot/matlabInterface.h"
+//#include "coretech/common/robot/matlabInterface.h"
 
-#include "anki/common/robot/hostIntrinsics_m4.h"
+#include "coretech/common/robot/hostIntrinsics_m4.h"
 
 #define ACCELERATION_NONE 0
 #define ACCELERATION_ARM_M4 1

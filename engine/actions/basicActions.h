@@ -13,7 +13,7 @@
 #ifndef ANKI_COZMO_BASIC_ACTIONS_H
 #define ANKI_COZMO_BASIC_ACTIONS_H
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/smartFaceId.h"

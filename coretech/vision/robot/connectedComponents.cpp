@@ -9,7 +9,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "coretech/vision/robot/connectedComponents.h"
 
-#include "anki/common/robot/benchmarking.h"
+#include "coretech/common/robot/benchmarking.h"
 
 namespace Anki
 {

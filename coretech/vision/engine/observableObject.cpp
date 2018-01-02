@@ -20,10 +20,10 @@
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/observableObject.h"
 
-#include "anki/common/basestation/exceptions.h"
+#include "coretech/common/engine/exceptions.h"
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/quad_impl.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/quad_impl.h"
 
 // Ignore rotation completely when calling IsSameAs()? If so, just match position
 // (translation) and block type.

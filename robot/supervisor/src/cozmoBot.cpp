@@ -25,7 +25,7 @@
 #include "wheelController.h"
 
 #ifdef SIMULATOR
-#include "anki/common/shared/utilities_shared.h"
+#include "coretech/common/shared/utilities_shared.h"
 #include "clad/types/imageTypes.h"
 #endif
 

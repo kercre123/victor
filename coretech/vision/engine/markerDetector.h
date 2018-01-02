@@ -13,8 +13,8 @@
 #ifndef __Anki_Vision_MarkerDetector_H__
 #define __Anki_Vision_MarkerDetector_H__
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/rect.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/rect.h"
 
 #include "coretech/vision/engine/visionMarker.h"
 

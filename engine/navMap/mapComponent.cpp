@@ -14,9 +14,9 @@
 #include "engine/navMap/mapComponent.h"
 
 #include "coretech/vision/engine/observableObjectLibrary.h"
-#include "anki/common/basestation/math/poseOriginList.h"
-#include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/math/poseOriginList.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/navMap/iNavMap.h"
 #include "engine/navMap/navMapFactory.h"

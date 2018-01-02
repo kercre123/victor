@@ -13,7 +13,7 @@
 #ifndef __Anki_Vision_Basestation_CNN_H__
 #define __Anki_Vision_Basestation_CNN_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include <string>
 #include <vector>

@@ -12,7 +12,7 @@
 
 #include "coretech/vision/engine/trackedFace.h"
 #include "coretech/vision/engine/camera.h"
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
 
 namespace Anki {
 namespace Vision {

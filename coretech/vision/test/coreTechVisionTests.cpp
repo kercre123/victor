@@ -1,11 +1,11 @@
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 
-#include "anki/common/shared/radians.h"
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/pose.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
 
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/image.h"

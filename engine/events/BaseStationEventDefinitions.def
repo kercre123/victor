@@ -5,7 +5,7 @@
 //#include "basestation/vehicle/item/vehicleItem.h"
 
 #include <stdint.h>
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #elif defined EVENT_FORWARD_DECLARATION_SECTION
 

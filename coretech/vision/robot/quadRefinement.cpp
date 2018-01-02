@@ -1,7 +1,7 @@
-#include "anki/common/robot/geometry.h"
-#include "anki/common/robot/interpolate.h"
-#include "anki/common/robot/benchmarking.h"
-#include "anki/common/robot/hostIntrinsics_m4.h"
+#include "coretech/common/robot/geometry.h"
+#include "coretech/common/robot/interpolate.h"
+#include "coretech/common/robot/benchmarking.h"
+#include "coretech/common/robot/hostIntrinsics_m4.h"
 
 #include "coretech/vision/robot/fiducialDetection.h"
 #include "coretech/vision/robot/imageProcessing.h"
@@ -11,7 +11,7 @@
 #define VISUALIZE_WITH_MATLAB 0
 
 #if VISUALIZE_WITH_MATLAB
-#include "anki/common/robot/matlabInterface.h"
+#include "coretech/common/robot/matlabInterface.h"
 static Anki::Embedded::Matlab matlab(false);
 #endif
 

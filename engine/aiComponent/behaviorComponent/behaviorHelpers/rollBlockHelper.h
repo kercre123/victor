@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_RollBlockHelper_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 
 namespace Anki {
 namespace Cozmo {

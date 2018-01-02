@@ -16,8 +16,8 @@
 #define BASESTATION_COMMS_COMMSLOGREADER_H_
 
 #include "commsRecorder.h"
-#include "anki/common/basestation/utils/helpers/includeFstream.h"
-#include "anki/common/basestation/utils/helpers/includeIostream.h"
+#include "coretech/common/engine/utils/helpers/includeFstream.h"
+#include "coretech/common/engine/utils/helpers/includeIostream.h"
 #include <stdio.h>
 #include <string>
 #include <vector>

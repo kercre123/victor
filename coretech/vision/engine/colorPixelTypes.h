@@ -13,7 +13,7 @@
 #ifndef __Anki_Coretech_Vision_Basestation_ColorPixelTypes_H__
 #define __Anki_Coretech_Vision_Basestation_ColorPixelTypes_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "util/math/numericCast.h"
 #include <opencv2/core.hpp>
 

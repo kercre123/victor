@@ -15,7 +15,7 @@
 #include "flatMat.h"
 
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
-#include "anki/common/basestation/math/quad_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
 
 namespace Anki {
   

@@ -12,9 +12,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_VISION_DECISION_TREE_H_
 #define _ANKICORETECHEMBEDDED_VISION_DECISION_TREE_H_
 
-#include "anki/common/robot/config.h"
-#include "anki/common/robot/array2d.h"
-#include "anki/common/robot/decisionTree.h"
+#include "coretech/common/robot/config.h"
+#include "coretech/common/robot/array2d.h"
+#include "coretech/common/robot/decisionTree.h"
 #include "coretech/vision/robot/transformations.h"
 
 namespace Anki

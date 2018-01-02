@@ -4,4 +4,4 @@
 // who want to use Image to need to know that they need to include array2d_impl.
 
 #include "coretech/vision/engine/image.h"
-#include "anki/common/basestation/array2d_impl.h"
+#include "coretech/common/engine/array2d_impl.h"

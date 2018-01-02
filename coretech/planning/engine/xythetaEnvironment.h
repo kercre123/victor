@@ -1,10 +1,10 @@
 #ifndef _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 #define _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 
-#include "anki/common/basestation/math/fastPolygon2d.h"
-#include "anki/common/basestation/math/convexPolygon2d.h"
-#include "anki/common/basestation/math/quad.h"
-#include "anki/common/basestation/math/polygon.h"
+#include "coretech/common/engine/math/fastPolygon2d.h"
+#include "coretech/common/engine/math/convexPolygon2d.h"
+#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/planning/engine/robotActionParams.h"
 #include "coretech/planning/shared/path.h"
 #include "json/json-forwards.h"

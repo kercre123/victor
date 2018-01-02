@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_PlaceRelObjectHelper_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
 namespace Cozmo {

@@ -9,8 +9,8 @@
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/visionMarker.h"
 
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/matrix_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/matrix_impl.h"
 
 #include "util/logging/logging.h"
 

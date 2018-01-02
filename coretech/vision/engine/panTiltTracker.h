@@ -16,11 +16,11 @@
 #ifndef ANKI_CORETECH_VISION_PANTILTTRACKER_H
 #define ANKI_CORETECH_VISION_PANTILTTRACKER_H
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
-#include "anki/common/basestation/math/rect.h"
+#include "coretech/common/engine/math/rect.h"
 
-#include "anki/common/shared/radians.h"
+#include "coretech/common/shared/radians.h"
 
 
 namespace Anki {

@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_IHelper_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_IHelper_H__
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperParameters.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"

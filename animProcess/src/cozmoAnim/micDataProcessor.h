@@ -18,7 +18,7 @@
 
 #include "util/container/fixedCircularBuffer.h"
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include <array>
 #include <cstdint>

@@ -3,7 +3,7 @@
 #ifndef _CASCADECLASSIFIER_lbpcascade_frontalface_H_
 #define _CASCADECLASSIFIER_lbpcascade_frontalface_H_
 
-#include "anki/common/robot/config.h"
+#include "coretech/common/robot/config.h"
 #include "coretech/vision/robot/classifier.h"
 
 const bool lbpcascade_frontalface_isStumpBased = true;

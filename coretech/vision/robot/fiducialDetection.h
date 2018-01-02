@@ -14,7 +14,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "coretech/vision/robot/connectedComponents.h"
 #include "coretech/vision/robot/fiducialMarkers.h"
-#include "anki/common/robot/geometry_declarations.h"
+#include "coretech/common/robot/geometry_declarations.h"
 
 namespace Anki
 {

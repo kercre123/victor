@@ -15,9 +15,9 @@
 
 #include "faceTrackerImpl_okao.h"
 
-#include "anki/common/basestation/math/rect_impl.h"
-#include "anki/common/basestation/math/rotation.h"
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/engine/math/rotation.h"
+#include "coretech/common/engine/jsonTools.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/helpers/boundedWhile.h"

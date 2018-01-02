@@ -8,7 +8,7 @@
 #define private public
 #define protected public
 
-#include "anki/common/basestation/math/rotatedRect.h"
+#include "coretech/common/engine/math/rotatedRect.h"
 #include "coretech/planning/engine/xythetaEnvironment.h"
 #include "json/json.h"
 #include "util/helpers/quoteMacro.h"

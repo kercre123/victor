@@ -9,14 +9,14 @@ non-disclosure agreement with Anki, inc.
 **/
 
 #include "coretech/vision/robot/lucasKanade.h"
-#include "anki/common/robot/matlabInterface.h"
-#include "anki/common/robot/interpolate.h"
-#include "anki/common/robot/arrayPatterns.h"
-#include "anki/common/robot/find.h"
-#include "anki/common/robot/benchmarking.h"
-#include "anki/common/robot/draw.h"
-#include "anki/common/robot/comparisons.h"
-#include "anki/common/robot/errorHandling.h"
+#include "coretech/common/robot/matlabInterface.h"
+#include "coretech/common/robot/interpolate.h"
+#include "coretech/common/robot/arrayPatterns.h"
+#include "coretech/common/robot/find.h"
+#include "coretech/common/robot/benchmarking.h"
+#include "coretech/common/robot/draw.h"
+#include "coretech/common/robot/comparisons.h"
+#include "coretech/common/robot/errorHandling.h"
 
 #include "coretech/vision/robot/fiducialDetection.h"
 #include "coretech/vision/robot/imageProcessing.h"

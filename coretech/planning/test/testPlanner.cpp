@@ -6,7 +6,7 @@
 #define private public
 #define protected public
 
-#include "anki/common/basestation/math/rotatedRect.h"
+#include "coretech/common/engine/math/rotatedRect.h"
 #include "coretech/planning/engine/xythetaEnvironment.h"
 #include "coretech/planning/engine/xythetaPlanner.h"
 #include "coretech/planning/engine/xythetaPlannerContext.h"

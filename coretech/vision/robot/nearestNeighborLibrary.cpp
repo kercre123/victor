@@ -3,9 +3,9 @@
 #include "coretech/vision/robot/nearestNeighborLibrary.h"
 #include "coretech/vision/robot/fiducialMarkers.h"
 
-#include "anki/common/robot/array2d.h"
-#include "anki/common/robot/fixedLengthList.h"
-#include "anki/common/robot/errorHandling.h"
+#include "coretech/common/robot/array2d.h"
+#include "coretech/common/robot/fixedLengthList.h"
+#include "coretech/common/robot/errorHandling.h"
 
 #include <array>
 

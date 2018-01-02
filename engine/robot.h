@@ -20,8 +20,8 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOT_H
 #define ANKI_COZMO_BASESTATION_ROBOT_H
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/shared/types.h"
 #include "anki/cozmo/shared/animationTag.h"
 #include "engine/encodedImage.h"
 #include "engine/events/ankiEvent.h"

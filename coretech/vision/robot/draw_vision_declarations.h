@@ -12,8 +12,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_VISION_DRAW_VISION_DECLARATIONS_H_
 #define _ANKICORETECHEMBEDDED_VISION_DRAW_VISION_DECLARATIONS_H_
 
-#include "anki/common/robot/array2d_declarations.h"
-#include "anki/common/robot/draw_declarations.h"
+#include "coretech/common/robot/array2d_declarations.h"
+#include "coretech/common/robot/draw_declarations.h"
 
 #include "coretech/vision/robot/connectedComponents_declarations.h"
 

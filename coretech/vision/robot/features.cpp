@@ -53,10 +53,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "coretech/vision/robot/classifier.h"
 
-#include "anki/common/robot/matlabInterface.h"
-#include "anki/common/robot/benchmarking.h"
-#include "anki/common/robot/hostIntrinsics_m4.h"
-#include "anki/common/robot/matrix.h"
+#include "coretech/common/robot/matlabInterface.h"
+#include "coretech/common/robot/benchmarking.h"
+#include "coretech/common/robot/hostIntrinsics_m4.h"
+#include "coretech/common/robot/matrix.h"
 
 #include "coretech/vision/robot/imageProcessing.h"
 

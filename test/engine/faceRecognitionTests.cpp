@@ -1,8 +1,8 @@
 #include "util/helpers/includeGTest.h"
 #include "util/fileUtils/fileUtils.h"
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "engine/components/visionComponent.h"
 #include "engine/faceWorld.h"

@@ -10,11 +10,11 @@
  *
  **/
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToOnCharger.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"

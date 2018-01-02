@@ -7,10 +7,10 @@ Copyright Anki, Inc. 2014
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#include "anki/common/robot/config.h"
-#include "anki/common/robot/comparisons.h"
-#include "anki/common/robot/comparisons.h"
-#include "anki/common/robot/fixedLengthList.h"
+#include "coretech/common/robot/config.h"
+#include "coretech/common/robot/comparisons.h"
+#include "coretech/common/robot/comparisons.h"
+#include "coretech/common/robot/fixedLengthList.h"
 #include "coretech/vision/robot/imageProcessing.h"
 
 namespace Anki

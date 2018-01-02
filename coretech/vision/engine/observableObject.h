@@ -22,12 +22,12 @@
 
 #include "coretech/vision/engine/visionMarker.h"
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 
-#include "anki/common/basestation/colorRGBA.h"
+#include "coretech/common/engine/colorRGBA.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/pose.h"
 
 #include "clad/types/poseStructs.h"
 

@@ -14,9 +14,9 @@
 #include "engine/robot.h"
 #include "engine/viz/vizManager.h"
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/quad.h"
-#include "anki/common/basestation/math/polygon_impl.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 
 namespace Anki {
 namespace Cozmo {

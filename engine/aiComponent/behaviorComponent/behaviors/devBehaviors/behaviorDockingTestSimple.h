@@ -24,11 +24,11 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorDockingTestSimple_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorDockingTestSimple_H__
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "coretech/vision/engine/visionMarker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/fileUtils/fileUtils.h"

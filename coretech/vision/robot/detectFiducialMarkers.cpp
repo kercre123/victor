@@ -7,15 +7,15 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#include "anki/common/robot/config.h"
-#include "anki/common/robot/benchmarking.h"
+#include "coretech/common/robot/config.h"
+#include "coretech/common/robot/benchmarking.h"
 
 #include "coretech/vision/robot/fiducialMarkers.h"
 #include "coretech/vision/robot/fiducialDetection.h"
 #include "coretech/vision/robot/draw_vision.h"
 #include "coretech/vision/robot/transformations.h"
 
-#include "anki/common/robot/matlabInterface.h"
+#include "coretech/common/robot/matlabInterface.h"
 
 #if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
 #  define NEAREST_NEIGHBOR_DISTANCE_THRESHOLD 50 // TODO: Make this a VisionParameter and pass it in dynamically

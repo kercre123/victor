@@ -17,9 +17,9 @@
 #ifndef __Anki_Cozmo_PotentialObjectsForLocalizingTo_H__
 #define __Anki_Cozmo_PotentialObjectsForLocalizingTo_H__
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/poseOrigin.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/poseOrigin.h"
+#include "coretech/common/engine/objectIDs.h"
 
 #include <map>
 

@@ -11,11 +11,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "coretech/vision/robot/fiducialDetection.h"
 #include "coretech/vision/robot/histogram.h"
 
-#include "anki/common/robot/opencvLight.h"
-#include "anki/common/robot/arrayPatterns.h"
-#include "anki/common/robot/interpolate.h"
-#include "anki/common/robot/serialize.h"
-#include "anki/common/robot/matlabInterface.h"
+#include "coretech/common/robot/opencvLight.h"
+#include "coretech/common/robot/arrayPatterns.h"
+#include "coretech/common/robot/interpolate.h"
+#include "coretech/common/robot/serialize.h"
+#include "coretech/common/robot/matlabInterface.h"
 
 namespace Anki
 {

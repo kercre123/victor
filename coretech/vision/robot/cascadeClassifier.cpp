@@ -53,9 +53,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "coretech/vision/robot/classifier.h"
 
-#include "anki/common/robot/matlabInterface.h"
-#include "anki/common/robot/benchmarking.h"
-#include "anki/common/robot/hostIntrinsics_m4.h"
+#include "coretech/common/robot/matlabInterface.h"
+#include "coretech/common/robot/benchmarking.h"
+#include "coretech/common/robot/hostIntrinsics_m4.h"
 
 #include "coretech/vision/robot/imageProcessing.h"
 
@@ -431,7 +431,7 @@ namespace Anki
         fprintf(file,
           "#ifndef %s\n"
           "#define %s\n\n"
-          "#include \"anki/common/robot/config.h\"\n"
+          "#include \"coretech/common/robot/config.h\"\n"
           "#include \"coretech/vision/robot/classifier.h\"\n\n", headerDefineString, headerDefineString);
 
         if(this->data.isStumpBased) {

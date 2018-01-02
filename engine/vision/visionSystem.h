@@ -22,7 +22,7 @@
 #endif
 
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -35,7 +35,7 @@
 #include "engine/vision/visionPoseData.h"
 #include "engine/vision/cameraCalibrator.h"
 
-#include "anki/common/basestation/matlabInterface.h"
+#include "coretech/common/engine/matlabInterface.h"
 
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/cameraCalibration.h"

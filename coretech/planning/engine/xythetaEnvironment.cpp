@@ -10,12 +10,12 @@
  *
  **/
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/rotatedRect.h"
-#include "anki/common/shared/radians.h"
-#include "anki/common/shared/utilities_shared.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/rotatedRect.h"
+#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/utilities_shared.h"
 #include "coretech/planning/engine/xythetaEnvironment.h"
 #include "json/json.h"
 #include "util/console/consoleInterface.h"

@@ -13,7 +13,7 @@
 
 #ifndef ANKI_COZMO_ANDROID_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ANDROID_HARDWAREINTERFACE_H
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/imageTypes.h"
 

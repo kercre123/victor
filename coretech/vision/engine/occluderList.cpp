@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Anki, Inc. All rights reserved.
 //
 
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/rect_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/rect_impl.h"
 
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/occluderList.h"

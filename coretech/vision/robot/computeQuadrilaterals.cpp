@@ -11,7 +11,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 //#define SEND_BOUNDARIES_TO_MATLAB
 #ifdef SEND_BOUNDARIES_TO_MATLAB
-#include "anki/common/robot/matlabInterface.h"
+#include "coretech/common/robot/matlabInterface.h"
 #endif
 
 namespace Anki

@@ -15,8 +15,8 @@
 #ifndef __AnimProcess_CozmoAnim_FaceDisplay_FaceDebugDraw_H_
 #define __AnimProcess_CozmoAnim_FaceDisplay_FaceDebugDraw_H_
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/point.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/point.h"
 #include <memory>
 
 namespace Anki {

@@ -3,7 +3,7 @@
 #ifndef _SAVEIMAGEASHEADER_batteryRLE_H_
 #define _SAVEIMAGEASHEADER_batteryRLE_H_
 
-#include "anki/common/robot/config.h"
+#include "coretech/common/robot/config.h"
 
 #define battery_WIDTH 673
 #define battery_HEIGHT 1

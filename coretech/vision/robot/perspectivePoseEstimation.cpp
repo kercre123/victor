@@ -42,8 +42,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "anki/common/robot/array2d.h"
-#include "anki/common/robot/benchmarking.h"
+#include "coretech/common/robot/array2d.h"
+#include "coretech/common/robot/benchmarking.h"
 
 #include "coretech/vision/robot/perspectivePoseEstimation.h"
 #include "util/math/math.h"

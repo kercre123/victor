@@ -16,11 +16,11 @@
 #include "coretech/vision/robot/fiducialDetection.h"
 #include "coretech/vision/robot/fiducialMarkers.h"
 
-#include "anki/common/basestation/array2d_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/rect_impl.h"
+#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/rect_impl.h"
 
-#include "anki/common/robot/array2d.h"
+#include "coretech/common/robot/array2d.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
 

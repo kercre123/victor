@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_AiComponent_H__
 #define __Cozmo_Basestation_Behaviors_AiComponent_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "engine/entity.h"
 #include "util/helpers/noncopyable.h"
 

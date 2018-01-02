@@ -10,10 +10,10 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/quad_impl.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/quad_impl.h"
 
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 

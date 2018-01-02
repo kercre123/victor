@@ -16,11 +16,11 @@
 #include "memoryMap/memoryMapTypes.h"
 #include "memoryMap/data/memoryMapData.h"
 
-#include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/common/basestation/math/triangle.h"
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/quad.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/triangle.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/pose.h"
 #include "util/logging/logging.h"
 
 #include <unordered_set>
