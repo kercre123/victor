@@ -13,14 +13,14 @@
 
 
 #ifdef CORETECH_ROBOT
-  #ifdef CORETECH_BASESTATION
-  #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
+  #ifdef CORETECH_ENGINE
+  #error "only one of CORETECH_ENGINE or CORETECH_ROBOT can be defined"
   #endif
 #define MAX_NUM_PATH_SEGMENTS MAX_NUM_PATH_SEGMENTS_ROBOT
-#elif defined CORETECH_BASESTATION
+#elif defined CORETECH_ENGINE
 #define MAX_NUM_PATH_SEGMENTS MAX_NUM_PATH_SEGMENTS_BASESTATION
 #else
-#error "one of CORETECH_BASESTATION or CORETECH_ROBOT must be defined"
+#error "one of CORETECH_ENGINE or CORETECH_ROBOT must be defined"
 #endif
 
 namespace Anki

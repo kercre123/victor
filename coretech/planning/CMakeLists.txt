@@ -18,7 +18,7 @@ anki_build_cxx_library(cti_planning ${ANKI_SRCLIST_DIR} STATIC)
 
 target_compile_definitions(cti_planning
   PRIVATE
-  CORETECH_BASESTATION
+  CORETECH_ENGINE
 )
 
 set_target_properties(cti_planning PROPERTIES
@@ -94,7 +94,7 @@ if (MACOSX)
 
   target_compile_definitions(cti_planning_test
     PRIVATE
-    CORETECH_BASESTATION
+    CORETECH_ENGINE
     TEST_DATA_PATH=${CORETECH}
   )
 

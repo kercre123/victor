@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef CORETECH_BASESTATION_MATH_TRIANGLE_H
-#define CORETECH_BASESTATION_MATH_TRIANGLE_H
+#ifndef CORETECH_ENGINE_MATH_TRIANGLE_H
+#define CORETECH_ENGINE_MATH_TRIANGLE_H
 
 #include "coretech/common/engine/math/point.h"
 #include "coretech/common/shared/types.h"
@@ -59,4 +59,4 @@ using Triangle2f = Triangle<f32>;
 } // namespace Anki
 
 
-#endif // CORETECH_BASESTATION_MATH_TRIANGLE_H
+#endif // CORETECH_ENGINE_MATH_TRIANGLE_H

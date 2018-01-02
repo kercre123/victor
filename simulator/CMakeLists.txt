@@ -278,7 +278,7 @@ target_include_directories(webotsCtrlKeyboard
 
 target_compile_definitions(webotsCtrlKeyboard
   PRIVATE
-  CORETECH_BASESTATION=1
+  CORETECH_ENGINE=1
 )
 
 symlink_target(
@@ -317,7 +317,7 @@ target_include_directories(webotsCtrlBuildServerTest
 
 target_compile_definitions(webotsCtrlBuildServerTest
   PRIVATE
-  CORETECH_BASESTATION=1
+  CORETECH_ENGINE=1
 )
 
 symlink_target(
@@ -369,7 +369,7 @@ target_include_directories(webotsCtrlDevLog
 
 target_compile_definitions(webotsCtrlDevLog
   PRIVATE
-  CORETECH_BASESTATION=1
+  CORETECH_ENGINE=1
 )
 
 symlink_target(
