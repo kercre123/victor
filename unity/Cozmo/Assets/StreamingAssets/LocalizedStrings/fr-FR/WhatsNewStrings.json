@@ -7,13 +7,13 @@
     "source_key_paths" : ["/{*}"]
   },
   "whatsNew.modal.title" : {
-    "translation" : "Quoi de neuf"
+    "translation" : "Quoi de neuf ?"
   },
   "whatsNew.button.openInCodeLab" : {
-    "translation" : "JOUE MAINTENANT DANS L'ATELIER DE CODAGE !"
+    "translation" : "JOUE MAINTENANT DANS CODE LAB !"
   },
   "whatsNew.CodeLab_VerticalLaunch.title" : {
-    "translation" : "Atelier de codage 2.0 !"
+    "translation" : "Code Lab 2.0 !"
   },
   "whatsNew.CodeLab_VerticalLaunch.description" : {
     "translation" : "Tout nouveau, il regorge de projets comme \"Sons et Lumières\" !"
@@ -52,25 +52,25 @@
     "translation" : "Sourire laser !"
   },
   "whatsNew.CodeLab_LaserSmile.description" : {
-    "translation" : "Le but est de remonter le moral !"
+    "translation" : "Le but est de chasser cet air renfrogné !"
   },
   "whatsNew.CodeLab_ValentinesCozmogram.title" : {
-    "translation" : "Cozmogramme de la Saint Valentin"
+    "translation" : "Cozmogramme de la Saint-Valentin"
   },
   "whatsNew.CodeLab_ValentinesCozmogram.description" : {
-    "translation" : "Offre un cadeau de la Saint Valentin à un(e) ami(e), à la manière de Cozmo."
+    "translation" : "Offre un cadeau de Saint-Valentin façon Cozmo."
   },
   "whatsNew.CodeLab_PuttPutt.title" : {
     "translation" : "Droit dedans"
   },
   "whatsNew.CodeLab_PuttPutt.description" : {
-    "translation" : "Peux-tu atteindre un trou en un coup ?"
+    "translation" : "Peux-tu faire un trou en un coup ?"
   },
   "whatsNew.CodeLab_ShakeIt.title" : {
     "translation" : "Secoue-les !"
   },
   "whatsNew.CodeLab_ShakeIt.description" : {
-    "translation" : "Secoue les objets avec ce nouveau jeu."
+    "translation" : "Fais bouger les choses avec ce nouveau jeu."
   },
   "whatsNew.CodeLab_RemoteControlRacer.title" : {
     "translation" : "Télécommande de course"

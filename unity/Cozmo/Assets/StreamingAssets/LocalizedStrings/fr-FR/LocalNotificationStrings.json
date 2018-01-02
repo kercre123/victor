@@ -34,7 +34,7 @@
     "translation" : "Cozmo doit être nourri. Il est temps de secouer quelques cubes !"
   },
   "LocalNotif.ComeBackGeneral.Period.4d.05" : {
-    "translation" : "Cozmo peut consommer un peu d'énergie ! Secoue un cube pour qu'il puisse jouer."
+    "translation" : "Cozmo ne serait pas contre un peu d'énergie ! Secoue un cube pour qu'il puisse jouer."
   },
   "LocalNotif.ComeBackGeneral.Period.7d.01" : {
     "translation" : "Cozmo a besoin de toi ! Vérifie si tout va bien pour lui."
@@ -49,24 +49,24 @@
     "translation" : "Cozmo a dormi pendant toute une semaine. Il est temps de le réveiller !"
   },
   "LocalNotif.ComeBackGeneral.Period.7d.05" : {
-    "translation" : "Certaines pièces de Cozmo doivent être réglées ! Numérise-le pour voir lesquelles."
+    "translation" : "Certaines pièces de Cozmo doivent être réglées ! Scanne-le pour voir lesquelles."
   },
   "LocalNotif.ComeBackGeneral.Period.14d.01" : {
     "translation" : "Cozmo a vraiment envie de voir ton visage. Allume-le et dis-lui bonjour !"
   },
   "LocalNotif.ComeBackGeneral.Period.14d.02" : {
-    "translation" : "Cozmo ne t'a pas vu depuis un moment. Vas lui dire bonjour !"
+    "translation" : "Cozmo ne t'a pas vu depuis un moment. Va lui dire bonjour !"
   },
   "LocalNotif.ComeBackGeneral.Period.14d.03" : {
-    "translation" : "Cozmo a besoin d'exercice. Réveille-le et laisse le jouer !"
+    "translation" : "Cozmo a besoin d'exercice. Réveille-le et laisse-le jouer !"
   },
   "LocalNotif.ComeBackGeneral.Period.30d.01" : {
-    "translation" : "Cozmo veut vraiment jouer ! Connecte-toi avec lui et fais une pause."
+    "translation" : "Cozmo veut vraiment jouer ! Connecte-toi avec lui et amusez-vous."
   },
   "LocalNotif.ComeBackGeneral.Period.90d.01" : {
     "translation" : "Cozmo a besoin d'attention ! Allume-le et vois comment il va."
   },
   "LocalNotif.ComeBackGeneral.Period.180d.01" : {
-    "translation" : "Cozmo a rêvé de toi. Réveille-le et amuse toi !"
+    "translation" : "Cozmo a rêvé de toi. Réveille-le et amuse-toi !"
   }
 }

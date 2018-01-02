@@ -523,7 +523,7 @@
     "translation" : "COZMOをゆさぶってあなたの運勢を占ってもらいましょう。"
   },
   "codeLabFeaturedProject_MagicFortuneTeller.projectInstructions" : {
-    "translation" : "1．「スタート」をタップして、COZMOの顔に「？」が表示されたら、プレイヤーがCOZMOにyes/noのクイズを出す番です。\u000a\u000a2. COZMOをゆすって占いの結果を教えてもらいましょう。"
+    "translation" : "1．「スタート」をタップして、COZMOの顔に「?」が表示されたら、COZMOに占ってほしいことを聞いてみましょう。\u000a\u000a2. COZMOを振ると、気ままに答えてくれます!"
   },
   "codeLabFeaturedProject_CubeWhack.projectName" : {
     "translation" : "キューブタップ"
@@ -541,7 +541,7 @@
     "translation" : "チックタック！COZMOがタイマーだったらもっと楽しい！"
   },
   "codeLabFeaturedProject_FiretruckAlarm.projectInstructions" : {
-    "translation" : "1．スタートフラグをタップすると10秒のタイマーがスタートします。\u000a\u000a2. COZMOの消防車のアラームに向けてカウントダウンが始まります！"
+    "translation" : "1.「スタート」をタップすると10秒のタイマーがスタートします。\u000a\u000a2. カウントダウンが0になるとCOZMOが消防車のアラームを鳴らします!"
   },
   "codeLabFeaturedProject_LightShow.projectName" : {
     "translation" : "ライトショー"
@@ -1393,7 +1393,7 @@
     "translation" : "バレンタインのコズモグラム"
   },
   "codeLabFeaturedProject_ValentinesCozmogram.projectDescription" : {
-    "translation" : "ともだちにバレンタインのメッセージを送るのが、コズモのスタイル。"
+    "translation" : "ともだちにバレンタインのメッセージを送るのが、COZMOのスタイル。"
   },
   "codeLabFeaturedProject_ValentinesCozmogram.projectInstructions" : {
     "translation" : "1. スタートフラグをタップすると、COZMOからあなたにバレンタインのメッセージが届きます！"

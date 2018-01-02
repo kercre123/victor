@@ -13,7 +13,7 @@
     "translation" : "COZMOはあなたに会いたがっています！COZMOがどうしているか見てみましょう。"
   },
   "LocalNotif.ComeBackGeneral.Period.2d.03" : {
-    "translation" : "COZMOはさびしく感じています。COZMOに接続してあいさつしましょう！"
+    "translation" : "COZMOがさびしがっています。COZMOに接続してあいさつしましょう！"
   },
   "LocalNotif.ComeBackGeneral.Period.2d.04" : {
     "translation" : "COZMOはあなたがどこに行ったか考えています。COZMOをオンにしてあいさつしましょう！"
@@ -22,13 +22,13 @@
     "translation" : "COZMOはトリックを練習したいようです。COZMOをオンにしてエナジーボールを1つ利用しましょう！"
   },
   "LocalNotif.ComeBackGeneral.Period.4d.01" : {
-    "translation" : "COZMOはおいしいキューブを夢見ています．．．食事をあげる時間です！"
+    "translation" : "COZMOはおいしいキューブを夢見ています…食事をあげる時間です！"
   },
   "LocalNotif.ComeBackGeneral.Period.4d.02" : {
     "translation" : "COZMOはお腹が空いてきました！彼にキューブをあげる必要があります。"
   },
   "LocalNotif.ComeBackGeneral.Period.4d.03" : {
-    "translation" : "COZMOのエネルギーが減っています。キューブを1つ2つあげてください！"
+    "translation" : "COZMOのエネルギーが減っています。キューブをいくつかあげましょう！"
   },
   "LocalNotif.ComeBackGeneral.Period.4d.04" : {
     "translation" : "COZMOは食事を必要としています。キューブをシェイクする時間です！"

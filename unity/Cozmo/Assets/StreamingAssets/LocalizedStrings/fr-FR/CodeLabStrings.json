@@ -760,7 +760,7 @@
     "translation" : "tourner de [X] ° à [Y] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_turn" : {
-    "translation" : "Tourner de [X] degrés à la vitesse de [Y] degrés par seconde. Un angle [X] positif le fait tourner à droite et un angle négatif à gauche. Vitesse [Y] maxi : 200 °/s."
+    "translation" : "Tourner de [X] degrés à la vitesse de [Y] degrés par seconde. Un angle [X] positif le fait tourner à droite et un angle négatif à gauche. Vitesse [Y] max. : 200 °/s."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_dock_with_cube_by_id" : {
     "translation" : "s'amarrer au cube [#]"
@@ -868,37 +868,37 @@
     "translation" : "dessiner [texte] à [X],[Y]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_text" : {
-    "translation" : "Dessine le [text] spécifié à la position de pixel indiquée grâce aux coordonnées [X],[Y]. L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Les coordonnées 0,0 sont situées en haut à gauche de l'écran. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
+    "translation" : "Dessine le [text] spécifié à la position de pixel indiquée grâce aux coordonnées [X],[Y]. L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Les coordonnées 0,0 sont situées en haut à gauche de l'écran. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_line" : {
     "translation" : "dessiner une ligne de [X],[Y] à [X2],[Y2]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_line" : {
-    "translation" : "Trace une ligne entre les deux coordonnées de pixels. L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
+    "translation" : "Trace une ligne entre les deux coordonnées de pixels. L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_rect" : {
-    "translation" : "remplir le rectangle de [X],[Y] à [X2],[Y2]"
+    "translation" : "remplir un rectangle de [X],[Y] à [X2],[Y2]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_rect" : {
-    "translation" : "Dessine un rectangle plein entre les deux coordonnées de pixels. L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
+    "translation" : "Dessine un rectangle plein entre les deux coordonnées de pixels. L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_rect" : {
     "translation" : "dessiner un rectangle de [X],[Y] à [X2],[Y2]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_rect" : {
-    "translation" : "Dessine un rectangle entre les deux coordonnées de pixels. L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
+    "translation" : "Dessine un rectangle entre les deux coordonnées de pixels. L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_circle" : {
     "translation" : "dessiner un cercle en [X],[Y] de rayon [Z]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_circle" : {
-    "translation" : "Dessine un cercle aux coordonnées [X],[Y] ayant le rayon [Z] indiqué (valeurs exprimées en pixels). L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
+    "translation" : "Dessine un cercle aux coordonnées [X],[Y] ayant le rayon [Z] indiqué (valeurs exprimées en pixels). L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_circle" : {
-    "translation" : "remplir le cercle [X],[Y] ayant le rayon [Z]"
+    "translation" : "remplir un cercle [X],[Y] ayant le rayon [Z]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_circle" : {
-    "translation" : "Dessine un cercle plein aux coordonnées [X],[Y] ayant le rayon [Z] indiqué (valeurs exprimées en pixels). L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
+    "translation" : "Dessine un cercle plein aux coordonnées [X],[Y] ayant le rayon [Z] indiqué (valeurs exprimées en pixels). L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
   },
   "codeLabGlossary.block_definitions.title.event_whenflagclicked" : {
     "translation" : "quand drapeau vert est cliqué"
@@ -1012,7 +1012,7 @@
     "translation" : "activer : toujours attendre que Cozmo ait terminé"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_enable_wait_for_actions" : {
-    "translation" : "Activer l'attente automatique du fait que Cozmo ait terminé ce qu'il est en train de faire avant de passer au bloc suivant. Remarque : il s'agit du comportement par défaut."
+    "translation" : "Activer l'attente automatique afin que Cozmo termine ce qu'il est en train de faire avant de passer au bloc suivant. Remarque : il s'agit du comportement par défaut."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_disable_wait_for_actions" : {
     "translation" : "désactiver : toujours attendre que Cozmo ait terminé"
@@ -1045,13 +1045,13 @@
     "translation" : "Renvoie l'angle d'inclinaison de Cozmo vers l'avant ou l'arrière, en degrés Les valeurs vers l'avant sont négatives, celles vers l'arrière sont positives."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_get_roll" : {
-    "translation" : "Tangage de Cozmo°"
+    "translation" : "Tangage de Cozmo (ennbsp°)"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_roll" : {
     "translation" : "Renvoie l'angle d'inclinaison de Cozmo vers la droite ou la gauche, en degrés. Les valeurs vers la droite sont positives, celles vers la gauche négatives."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_get_yaw" : {
-    "translation" : "Direction de Cozmo °"
+    "translation" : "Direction de Cozmo (en °)"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_yaw" : {
     "translation" : "Renvoie l'angle vers lequel Cozmo est orienté vers la gauche, la droite. Les valeurs vers la droite sont positives, celles vers la gauche négatives."
@@ -1069,10 +1069,10 @@
     "translation" : "Renvoie l'angle que fait la tête de Cozmo en degrés. (-25° = maximum vers le bas, 0° = horizontal, 45° = maximum vers le haut)"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_get_is_picked_up" : {
-    "translation" : "tiens-tu Cozmo"
+    "translation" : "Cozmo est-il tenu"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_is_picked_up" : {
-    "translation" : "Renvoie « vrai » ou « faux » selon que tu tiens actuellement Cozmo (flottant en l'air) ou non."
+    "translation" : "Renvoie « vrai » ou « faux » selon que Cozmo est actuellement tenu (flottant en l'air) ou non."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_is_visible" : {
     "translation" : "un visage est-il visible"
@@ -1204,10 +1204,10 @@
     "translation" : "[X] / [Y]"
   },
   "codeLabGlossary.block_definitions.description.operator_divide" : {
-    "translation" : "Renvoie X] divisé par [Y]."
+    "translation" : "Renvoie [X] divisé par [Y]."
   },
   "codeLabGlossary.block_definitions.title.operator_random" : {
-    "translation" : "sélection aléatoire [X] à [Y]"
+    "translation" : "nombre aléatoire entre [X] et [Y]"
   },
   "codeLabGlossary.block_definitions.description.operator_random" : {
     "translation" : "Renvoie un nombre entier aléatoire entre [X] et [Y]."
@@ -1318,7 +1318,7 @@
     "translation" : "arrêter le son [nom du son]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_sound_stop" : {
-    "translation" : "Arrêter le son [nom du son]. Astuce : pour désactiver la musique de fond par défaut de l'atelier de codage, arrête le son « background »."
+    "translation" : "Arrêter le son [nom du son]. Astuce : pour désactiver la musique de fond par défaut de Code Lab, arrête le son « background »."
   },
   "codeLab.export_modal.title" : {
     "translation" : "Exporter le projet"
@@ -1342,13 +1342,13 @@
     "translation" : "Sourire laser !"
   },
   "codeLabFeaturedProject_LaserSmile.projectDescription" : {
-    "translation" : "Arrête de froncer les sourcils !"
+    "translation" : "Chasse cet air renfrogné !"
   },
   "codeLabFeaturedProject_LaserSmile.projectInstructions" : {
-    "translation" : "1. Lorsque tu touche le drapeau Démarrer, Cozmo affiche sur son écran une émoticône de froncement de sourcils.\u000a\u000a2. Assure-toi que Cozmo peut voir ton visage. Déplace ta tête pour viser l'émoticône de froncement de sourcils.\u000a\u000a3. Souris pour déclencher ton laser !"
+    "translation" : "1. Lorsque tu appuies sur le drapeau de départ, Cozmo affiche sur son écran une émoticône de froncement de sourcils.\u000a\u000a2. Assure-toi que Cozmo peut voir ton visage. Déplace ta tête pour viser l'émoticône de froncement de sourcils.\u000a\u000a3. Souris pour déclencher ton laser !"
   },
   "codeLabSampleProject_LaserSmile.variableInstruction1" : {
-    "translation" : "Le but est de remonter le moral !"
+    "translation" : "Le but est de chasser cet air renfrogné !"
   },
   "codeLabSampleProject_LaserSmile.variableInstruction2" : {
     "translation" : "Souris pour déclencher ton laser ! Bouge ta tête pour viser."
@@ -1384,16 +1384,16 @@
     "translation" : "Droit dedans"
   },
   "codeLabFeaturedProject_PuttPutt.projectDescription" : {
-    "translation" : "Peux-tu atteindre un trou en un coup ?"
+    "translation" : "Peux-tu faire un trou en un coup ?"
   },
   "codeLabFeaturedProject_PuttPutt.projectInstructions" : {
     "translation" : "1. Après avoir appuyé sur le drapeau de départ, prends Cozmo en tenant son visage droit.\u000a\u000a2. Son visage affichera une balle et un trou. Incline Cozmo pour envoyer la balle dans le trou."
   },
   "codeLabFeaturedProject_ValentinesCozmogram.projectName" : {
-    "translation" : "Cozmogramme de la Saint Valentin"
+    "translation" : "Cozmogramme de la Saint-Valentin"
   },
   "codeLabFeaturedProject_ValentinesCozmogram.projectDescription" : {
-    "translation" : "Offre un cadeau de la Saint Valentin à un(e) ami(e), à la mode Cozmo."
+    "translation" : "Offre un cadeau de Saint-Valentin façon Cozmo."
   },
   "codeLabFeaturedProject_ValentinesCozmogram.projectInstructions" : {
     "translation" : "1. Appuie sur le drapeau de départ et Cozmo t'offrira ses vœux pour la Saint-Valentin !"
@@ -1402,7 +1402,7 @@
     "translation" : "Secoue-les !"
   },
   "codeLabFeaturedProject_ShakeIt.projectDescription" : {
-    "translation" : "Secoue les objets avec ce nouveau jeu."
+    "translation" : "Fais bouger les choses avec ce nouveau jeu."
   },
   "codeLabFeaturedProject_ShakeIt.projectInstructions" : {
     "translation" : "1. Une fois que tu appuies sur le drapeau de départ, Cozmo te demande de secouer des objets!\u000a\u000a2. Écoute attentivement ses instructions.\u000a\u000a« Rouge » = Secoue le cube rouge\u000a« Jaune » = Secoue le cube jaune\u000a« Bleu » = Secoue le cube bleu\u000a« Orange » = Secoue les cubes rouge et jaune\u000a« Vert » = Secoue les cubes jaune et bleu\u000a« Violet » = Secoue les cubes bleu et rouge\u000a« Moi » = Secoue Cozmo !\u000a\u000a3. Combien de secousses correctes peux-tu réaliser dans le temps imparti ?"

@@ -73,10 +73,10 @@
     "translation" : "Inclinaison de Cozmo °"
   },
   "codeLabVertical.COZMO_ROLL" : {
-    "translation" : "Tangage de Cozmo°"
+    "translation" : "Tangage de Cozmo (ennbsp°)"
   },
   "codeLabVertical.COZMO_YAW" : {
-    "translation" : "Direction de Cozmo °"
+    "translation" : "Direction de Cozmo (en °)"
   },
   "codeLabVertical.LIFT_HEIGHT" : {
     "translation" : "Hauteur de levage de Cozmo %"
@@ -124,7 +124,7 @@
     "translation" : "Tangage du cube %1 dans la caméra (en °)"
   },
   "codeLabVertical.CUBE_YAW" : {
-    "translation" : "Direction du cube %1 dans la caméra (en°)"
+    "translation" : "Direction du cube %1 dans la caméra (en °)"
   },
   "codeLabVertical.DEVICE_PITCH" : {
     "translation" : "inclinaison de l'appareil °"
