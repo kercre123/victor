@@ -13,7 +13,7 @@
 #include "anki/common/basestation/array2d_impl.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/vision/engine/image.h"
 #include "clad/types/animationTypes.h"
 #include "clad/vizInterface/messageViz.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"

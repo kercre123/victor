@@ -15,7 +15,7 @@
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/objectIDs.h"
-#include "anki/vision/basestation/trackedFace.h"
+#include "coretech/vision/engine/trackedFace.h"
 #include "engine/components/animationComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"

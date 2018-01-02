@@ -26,7 +26,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/utils/cozmoFeatureGate.h"
-#include "anki/vision/basestation/faceTracker.h"
+#include "coretech/vision/engine/faceTracker.h"
 
 #include "clad/types/animationTrigger.h"
 

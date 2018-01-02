@@ -3,7 +3,7 @@
 
 #include "anki/common/basestation/array2d_impl.h"
 
-//#include "anki/vision/basestation/trackedFace.h"
+//#include "coretech/vision/engine/trackedFace.h"
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>

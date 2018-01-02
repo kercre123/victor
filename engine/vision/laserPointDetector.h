@@ -16,7 +16,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/point.h"
 
-#include "anki/vision/basestation/image.h"
+#include "coretech/vision/engine/image.h"
 
 #include "engine/debugImageList.h"
 

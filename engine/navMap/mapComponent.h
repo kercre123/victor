@@ -20,7 +20,7 @@
 #include "engine/overheadEdge.h"
 #include "engine/navMap/iNavMap.h"
 
-#include "anki/vision/basestation/observableObjectLibrary.h"
+#include "coretech/vision/engine/observableObjectLibrary.h"
 #include "util/helpers/noncopyable.h"
 
 #include <assert.h>

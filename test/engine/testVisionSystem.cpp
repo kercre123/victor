@@ -23,8 +23,8 @@
 #include "engine/vision/laserPointDetector.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/vision/basestation/imageCache.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/engine/imageCache.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"

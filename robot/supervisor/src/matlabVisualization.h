@@ -16,7 +16,7 @@
 #include "anki/common/robot/array2d_declarations.h"
 #include "anki/common/robot/geometry_declarations.h"
 
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 
 namespace Anki {

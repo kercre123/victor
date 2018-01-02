@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToVoiceCommand_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 
 #include "engine/smartFaceId.h"
 

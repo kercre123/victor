@@ -26,7 +26,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/exceptions.h"
 
-#include "anki/vision/basestation/observableObjectLibrary.h"
+#include "coretech/vision/engine/observableObjectLibrary.h"
 
 #include "clad/types/actionTypes.h"
 

@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_SmartFaceId_H__
 #define __Cozmo_Basestation_SmartFaceId_H__
 
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 #include <memory>
 
 namespace Anki {

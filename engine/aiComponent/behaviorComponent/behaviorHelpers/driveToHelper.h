@@ -17,7 +17,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
 #include "engine/preActionPose.h"
-#include "anki/vision/basestation/camera.h"
+#include "coretech/vision/engine/camera.h"
 
 namespace Anki {
 namespace Cozmo {

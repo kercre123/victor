@@ -30,12 +30,12 @@
 #include "engine/vision/visionSystem.h"
 #include "engine/viz/vizManager.h"
 
-#include "anki/vision/basestation/camera.h"
-#include "anki/vision/basestation/image_impl.h"
-#include "anki/vision/basestation/trackedFace.h"
-#include "anki/vision/basestation/observableObjectLibrary_impl.h"
-#include "anki/vision/basestation/visionMarker.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/engine/camera.h"
+#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/trackedFace.h"
+#include "coretech/vision/engine/observableObjectLibrary_impl.h"
+#include "coretech/vision/engine/visionMarker.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"

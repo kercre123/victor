@@ -14,7 +14,7 @@
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/vision/basestation/profiler.h"
+#include "coretech/vision/engine/profiler.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"

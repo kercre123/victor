@@ -18,7 +18,7 @@
 #define ANKI_COZMO_CANNED_KEYFRAME_H
 
 #include "anki/common/basestation/colorRGBA.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/vision/engine/image.h"
 #include "cozmoAnim/animation/proceduralFace.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/ledTypes.h"

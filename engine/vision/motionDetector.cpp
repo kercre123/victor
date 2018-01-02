@@ -13,8 +13,8 @@
 #include "motionDetector.h"
 
 #include "anki/common/basestation/math/linearAlgebra_impl.h"
-#include "anki/vision/basestation/camera.h"
-#include "anki/vision/basestation/imageCache.h"
+#include "coretech/vision/engine/camera.h"
+#include "coretech/vision/engine/imageCache.h"
 #include "coretech/common/include/anki/common/basestation/jsonTools.h"
 #include "engine/vision/visionPoseData.h"
 #include "engine/viz/vizManager.h"

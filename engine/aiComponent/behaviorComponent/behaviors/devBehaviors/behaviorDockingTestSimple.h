@@ -29,7 +29,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "anki/common/basestation/objectIDs.h"
-#include "anki/vision/basestation/visionMarker.h"
+#include "coretech/vision/engine/visionMarker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/rollingFileLogger.h"

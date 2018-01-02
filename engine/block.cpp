@@ -8,7 +8,7 @@
 
 #include "anki/common/basestation/math/linearAlgebra_impl.h"
 
-#include "anki/vision/basestation/camera.h"
+#include "coretech/vision/engine/camera.h"
 
 #include "engine/block.h"
 #include "engine/robot.h"

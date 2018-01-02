@@ -18,7 +18,7 @@
 
 #include "anki/common/types.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/vision/engine/image.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 
 namespace Anki {

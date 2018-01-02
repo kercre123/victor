@@ -4,7 +4,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/matrix.h"
 #include "cozmoAnim/animation/proceduralFace.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/vision/engine/image.h"
 
 namespace Anki {
   

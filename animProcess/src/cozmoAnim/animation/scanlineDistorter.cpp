@@ -16,7 +16,7 @@
 #include "cozmoAnim/animation/proceduralFace.h"
 
 #include "anki/common/basestation/math/matrix_impl.h"
-#include "anki/vision/basestation/image.h" 
+#include "coretech/vision/engine/image.h" 
 
 #include "util/console/consoleInterface.h"
 #include "util/helpers/templateHelpers.h"

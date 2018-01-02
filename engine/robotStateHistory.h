@@ -11,7 +11,7 @@
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
-#include "anki/vision/basestation/camera.h"
+#include "coretech/vision/engine/camera.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "util/helpers/templateHelpers.h"
 

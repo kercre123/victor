@@ -68,7 +68,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/vision/basestation/visionMarker.h"
+#include "coretech/vision/engine/visionMarker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/gameStatusFlag.h"

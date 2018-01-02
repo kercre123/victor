@@ -16,9 +16,9 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/quad.h"
 
-#include "anki/vision/basestation/observableObject.h"
+#include "coretech/vision/engine/observableObject.h"
 
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "engine/actionableObject.h"
 #include "engine/viz/vizManager.h"

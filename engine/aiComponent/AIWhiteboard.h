@@ -18,7 +18,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 #include "engine/entity.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectFamilies.h"

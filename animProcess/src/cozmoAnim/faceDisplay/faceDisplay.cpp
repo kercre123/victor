@@ -16,7 +16,7 @@
 #include "cozmoAnim/faceDisplay/faceDisplayImpl.h"
 #include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "anki/common/basestation/array2d_impl.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/vision/engine/image.h"
 #include "util/threading/threadPriority.h"
 
 #include <chrono>

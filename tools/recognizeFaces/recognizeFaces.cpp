@@ -10,8 +10,8 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 
-#include "anki/vision/basestation/faceTracker.h"
-#include "anki/vision/basestation/profiler.h"
+#include "coretech/vision/engine/faceTracker.h"
+#include "coretech/vision/engine/profiler.h"
 
 #include "opencv2/highgui/highgui.hpp"
 

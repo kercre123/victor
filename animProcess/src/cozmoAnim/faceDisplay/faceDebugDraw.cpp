@@ -17,7 +17,7 @@
 #include "anki/common/basestation/array2d_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/vision/engine/image.h"
 #include "util/helpers/templateHelpers.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 

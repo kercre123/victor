@@ -13,7 +13,7 @@
  
 #include "engine/navMap/mapComponent.h"
 
-#include "anki/vision/basestation/observableObjectLibrary.h"
+#include "coretech/vision/engine/observableObjectLibrary.h"
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/utils/timer.h"

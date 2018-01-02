@@ -16,8 +16,8 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/types.h"
 
-#include "anki/vision/basestation/visionMarker.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/engine/visionMarker.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "clad/types/robotStatusAndActions.h"
 

@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/smartFaceId.h"
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 
 #include <string>
 #include <unordered_map>

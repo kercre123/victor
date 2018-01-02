@@ -15,7 +15,7 @@
 #include "engine/preActionPose.h"
 
 #include "anki/common/basestation/colorRGBA.h"
-#include "anki/vision/basestation/visionMarker.h"
+#include "coretech/vision/engine/visionMarker.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"

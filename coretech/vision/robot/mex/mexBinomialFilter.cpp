@@ -5,7 +5,7 @@
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/matlabInterface.h"
 
-#include "anki/vision/robot/imageProcessing.h"
+#include "coretech/vision/robot/imageProcessing.h"
 
 #include "anki/common/matlab/mexWrappers.h"
 #include "anki/common/shared/utilities_shared.h"

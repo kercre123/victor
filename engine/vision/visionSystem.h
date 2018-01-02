@@ -37,13 +37,13 @@
 
 #include "anki/common/basestation/matlabInterface.h"
 
-#include "anki/vision/basestation/camera.h"
-#include "anki/vision/basestation/cameraCalibration.h"
-#include "anki/vision/basestation/image.h"
-#include "anki/vision/basestation/profiler.h"
-#include "anki/vision/basestation/trackedFace.h"
-#include "anki/vision/basestation/trackedPet.h"
-#include "anki/vision/basestation/visionMarker.h"
+#include "coretech/vision/engine/camera.h"
+#include "coretech/vision/engine/cameraCalibration.h"
+#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/profiler.h"
+#include "coretech/vision/engine/trackedFace.h"
+#include "coretech/vision/engine/trackedPet.h"
+#include "coretech/vision/engine/visionMarker.h"
 
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"

@@ -11,7 +11,7 @@
 #include "engine/robotDataLoader.h"
 #include "engine/vision/visionSystem.h"
 
-#include "anki/vision/basestation/faceTracker.h"
+#include "coretech/vision/engine/faceTracker.h"
 
 #include "clad/types/enrolledFaceStorage.h"
 
