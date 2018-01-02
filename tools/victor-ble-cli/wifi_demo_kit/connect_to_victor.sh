@@ -30,7 +30,7 @@ proc ble_scan {} {
 	}
 	puts "\n\nUnable to find $robot after scanning through ble,\
 	      try restarting $robot"
-	exit
+	exit 1
 }
 
 proc ble_connection {} {
@@ -54,7 +54,7 @@ proc ble_connection {} {
 	}
 	puts "\n\nReached attempts limit for ble connection.\
 		 Try restarting Victor\n"
-	exit
+	exit 1
 }
 
 proc wifi_test_connection {} {
@@ -69,12 +69,12 @@ proc wifi_test_connection {} {
 	expect {
 		"bytes" {
 			puts "Got a connection will now exit"
-			exit
+			exit 0
 		}
 		"unreach" {
 			puts "don't have a connection,\
 				  please reboot Victor and try the script again"
-			return
+			exit 1
 		}
 		timeout {
 			puts "Reached timeout for testing wifi connection, will attempt to connect again"
@@ -103,7 +103,7 @@ proc wifi_connection_and_test {} {
 			}
 			"ip_address=" {
 				puts "IP address assigned, checking connection"
-				wifi_test_connection #If successful, will exit script
+				wifi_test_connection ; #If successful, will exit script
 				set wifi_connect_attempts [ expr $wifi_connect_attempts-1]
 			}
 			"fail" {
@@ -114,7 +114,7 @@ proc wifi_connection_and_test {} {
 	}
 	puts "Reached maximum amount of tries to connect through wifi.\
 	      Try restarting victor"
-	exit
+	exit 1
 }	
 
 
@@ -129,7 +129,7 @@ spawn node ../index.js
 ble_scan
 ble_connection
 wifi_connection_and_test
-exit
+exit 0
 
 
 
