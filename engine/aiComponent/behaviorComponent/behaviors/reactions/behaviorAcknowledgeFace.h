@@ -14,13 +14,14 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeFace_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeFace_H__
 
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/shared/radians.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/shared/radians.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/smartFaceId.h"
 
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 
 #include "clad/types/objectFamilies.h"
 
@@ -46,16 +47,16 @@ public:
 
   virtual void AddListener(IReactToFaceListener* listener) override;
   
-  void SetFacesToAcknowledge(const std::set<Vision::FaceID_t> targetFaces){_desiredTargets = targetFaces;}
+  void SetFacesToAcknowledge(const std::set<SmartFaceID> targetFaces){_desiredTargets = targetFaces;}
   
 protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorAcknowledgeFace(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
@@ -69,10 +70,10 @@ private:
   bool UpdateBestTarget(BehaviorExternalInterface& behaviorExternalInterface);
 
   // current target
-  Vision::FaceID_t _targetFace = Vision::UnknownFaceID;
+  SmartFaceID _targetFace;
 
   // everything we want to react to before we stop (to handle multiple faces in the same frame)
-  std::set< Vision::FaceID_t > _desiredTargets;
+  std::set<SmartFaceID> _desiredTargets;
   
   bool _shouldStart = false;
 

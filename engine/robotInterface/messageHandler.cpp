@@ -21,8 +21,8 @@
 #include "engine/robotManager.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/messaging/basestation/IComms.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/messaging/engine/IComms.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -38,6 +38,8 @@ namespace RobotInterface {
 MessageHandler::MessageHandler()
 : _robotManager(nullptr)
 , _isInitialized(false)
+, _messageCountRtE(0)
+, _messageCountEtR(0)
 {
 }
   
@@ -45,16 +47,6 @@ MessageHandler::~MessageHandler() = default;
 
 void MessageHandler::Init(const Json::Value& config, RobotManager* robotMgr, const CozmoContext* context)
 {
-  const char *ipString = config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString();
-  int port = config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt();
-  if (port < 0 || port >= 0x10000) {
-    PRINT_NAMED_ERROR("RobotInterface.MessageHandler.Init", "Failed to initialize RobotComms; bad port %d", port);
-    return;
-  }
-  
-  Anki::Util::TransportAddress address(ipString, static_cast<uint16_t>(port));
-  PRINT_STREAM_DEBUG("RobotInterface.MessageHandler.Init", "Initializing on address: " << address << ": " << address.GetIPAddress() << ":" << address.GetIPPort() << "; originals: " << ipString << ":" << port);
-  
   _robotManager = robotMgr;
   _robotConnectionManager.reset(new RobotConnectionManager(_robotManager));
   _robotConnectionManager->Init();
@@ -80,6 +72,8 @@ void MessageHandler::ProcessMessages()
     std::vector<uint8_t> nextData;
     while (_robotConnectionManager->PopData(nextData))
     {
+      ++_messageCountRtE;
+
       // If we don't have a robot to care about this message, throw it away
       Robot* destRobot = _robotManager->GetFirstRobot();
       if (nullptr == destRobot)
@@ -123,6 +117,8 @@ void MessageHandler::ProcessMessages()
 
 Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface::EngineToRobot& msg, bool reliable, bool hot)
 {
+  ++_messageCountEtR;
+
   if (!_isInitialized || !_robotConnectionManager->IsValidConnection())
   {
     return RESULT_FAIL;
@@ -174,13 +170,14 @@ void MessageHandler::Broadcast(const uint32_t robotId, RobotInterface::RobotToEn
   _eventMgr.Broadcast(robotId, AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
 }
   
-Result MessageHandler::AddRobotConnection(const ExternalInterface::ConnectToRobot& connectMsg)
+Result MessageHandler::AddRobotConnection(RobotID_t robotId)
 {
-  // Note: robotID is always 1
-  int port = !connectMsg.isSimulated ? Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT : Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT + 1;
-  PRINT_NAMED_WARNING("AddRobotConnection", "%s:%d", (const char*)connectMsg.ipAddress.data(), port);
+  const char* robotProcessIPAddress = "127.0.0.1";
 
-  Anki::Util::TransportAddress address((const char*)connectMsg.ipAddress.data(), static_cast<uint16_t>(port));
+  int port = Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT + robotId;
+  PRINT_NAMED_WARNING("AddRobotConnection", "%s:%d", robotProcessIPAddress, port);
+
+  Anki::Util::TransportAddress address(robotProcessIPAddress, static_cast<uint16_t>(port));
   _robotConnectionManager->Connect(address);
   
   return RESULT_OK;

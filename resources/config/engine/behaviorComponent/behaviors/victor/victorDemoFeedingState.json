@@ -4,7 +4,6 @@
   "interruptActiveBehavior": true,
   "behaviors" : [
     "DriveOffCharger",
-    "VictorDemoFeeding",
-    "NothingToDo_Idle"
+    "VictorDemoFeeding"
   ]
 }

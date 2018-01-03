@@ -13,7 +13,7 @@
     "translation" : "名前を入力（カナ）："
   },
   "faceEnrollment.faceEnrollmentList.description" : {
-    "translation" : "あなたや友達をCozmoに認識させましょう。"
+    "translation" : "あなたや友達をCOZMOに認識させましょう。"
   },
   "faceEnrollment.faceEnrollmentList.deleteConfirmTitle" : {
     "translation" : "{0}を削除しますか？"
@@ -28,10 +28,10 @@
     "translation" : "終了するとCOZMOはあなたの名前を言います。"
   },
   "faceEnrollment.errors.neverSawValidFace.title" : {
-    "translation" : "Cozmoにはあなたがわかります！"
+    "translation" : "COZMOにはあなたがわかります！"
   },
   "faceEnrollment.errors.neverSawValidFace.description" : {
-    "translation" : "Cozmoはあなたを{0}として認識しています"
+    "translation" : "COZMOはあなたを{0}として認識しています"
   },
   "faceEnrollment.errors.timeOut.title" : {
     "translation" : "COZMOにはあなたが見えていません"
@@ -43,10 +43,10 @@
     "translation" : "すべての変更が保存されました。"
   },
   "faceEnrollment.firstTimeCompleteAlert.title" : {
-    "translation" : "Cozmoはあなたの名前を知っています！"
+    "translation" : "COZMOはあなたの名前を知っています！"
   },
   "faceEnrollment.firstTimeCompleteAlert.description" : {
-    "translation" : "Cozmoはあなたの顔を覚えました。あなたを見たら、あなたの名前を言うかもしれません。おぼえるを使って、もっと友だちを紹介しましょう。"
+    "translation" : "COZMOはあなたの顔を覚えました。あなたを見たら、あなたの名前を言うかもしれません。おぼえるを使って、もっと友だちを紹介しましょう。"
   },
   "faceEnrollment.button.addNewPerson" : {
     "translation" : "新しい人を追加する"
@@ -61,7 +61,7 @@
     "translation" : "{0}日前"
   },
   "faceEnrollment.label.HelpCozmoRecognize" : {
-    "translation" : "Cozmoがあなたをもっと簡単に認識できるようにしてあげましょう："
+    "translation" : "COZMOがあなたをもっと簡単に認識できるようにしてあげましょう："
   },
   "faceEnrollment.label.lastScanned" : {
     "translation" : "前回スキャンした日："

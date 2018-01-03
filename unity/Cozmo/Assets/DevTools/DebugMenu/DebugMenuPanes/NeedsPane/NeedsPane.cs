@@ -175,7 +175,8 @@ public class NeedsPane : MonoBehaviour {
                                                  currentEngineState.numStarsAwarded,
                                                  currentEngineState.numStarsForNextUnlock,
                                                  Anki.Cozmo.NeedsActionId.NoAction,
-                                                 null);
+                                                 null,
+                                                 1);
       NeedsStateManager.Instance.MockHandleNeedsStateFromEngine(newEngineState);
     }
 #endif

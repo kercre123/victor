@@ -69,7 +69,6 @@ public class PingStatus : MonoBehaviour {
 
     float startTime = Time.time;
     _LastLogTime = Time.time;
-
     // Cancel the ping if it is not completed in a certain amount of time to make sure it doesn't keep running forever
     while (!_Ping.isDone && ((Time.time - startTime) < kKillPingTime)) {
       if ((Time.time - _LastLogTime) > kLogTime) {
@@ -83,5 +82,18 @@ public class PingStatus : MonoBehaviour {
     _Ping = null;
     _PingCompleted = true;
     _coroutine = null;
+
+  }
+
+  public void PausePing() {
+    if (_coroutine != null) {
+      _PingSuccessful = false; // so there are no false positives while paused
+      StopCoroutine(_coroutine);
+      _coroutine = null;
+    }
+  }
+
+  public void RestartPing() {
+    _coroutine = StartCoroutine(PingCoroutine());
   }
 }

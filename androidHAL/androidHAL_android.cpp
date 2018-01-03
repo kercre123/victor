@@ -122,6 +122,8 @@ namespace Anki {
 
     bool AndroidHAL::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms)
     {
+      camera_request_frame();
+
       if(_currentFrame != nullptr && _frameReady)
       {
         _frameReady = false;

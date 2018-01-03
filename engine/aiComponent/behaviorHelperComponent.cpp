@@ -17,10 +17,10 @@
 
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/pickupBlockHelper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/placeBlockHelper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/rollBlockHelper.h"
-#include "engine/robot.h"
 #include "util/helpers/boundedWhile.h"
 
 #include <iterator>
@@ -75,10 +75,7 @@ bool BehaviorHelperComponent::DelegateToHelper(BehaviorExternalInterface& behavi
   }
   
   PushHelperOntoStackAndUpdate(behaviorExternalInterface, handleToRun);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  _worldOriginIDAtStart = robot.GetWorldOriginID();
+  _worldOriginIDAtStart = behaviorExternalInterface.GetRobotInfo().GetWorldOriginID();
   return true;
 }
 
@@ -133,25 +130,24 @@ void BehaviorHelperComponent::CheckInactiveStackHelpers(BehaviorExternalInterfac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  ICozmoBehavior::Status helperStatus = ICozmoBehavior::Status::Running;
+  IHelper::HelperStatus helperStatus = IHelper::HelperStatus::Running;
   if(!_helperStack.empty()){
     auto activeIter = _helperStack.end();
     activeIter--;
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
+
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     // TODO: COZMO-10389 - return to base helper if origin changes
-    bool blockWorldOriginChange = (robot.GetWorldOriginID() != _worldOriginIDAtStart);
+    bool blockWorldOriginChange = (robotInfo.GetWorldOriginID() != _worldOriginIDAtStart);
     if(blockWorldOriginChange){
-      _worldOriginIDAtStart = robot.GetWorldOriginID();
+      _worldOriginIDAtStart = robotInfo.GetWorldOriginID();
     }
     while(!_helperStack.empty() &&
           activeIter != _helperStack.end()){
       
       // First, check to see if we've just completed a helper
-      if(helperStatus == ICozmoBehavior::Status::Complete){
+      if(helperStatus == IHelper::HelperStatus::Complete){
         helperStatus = (*activeIter)->OnDelegateSuccess(behaviorExternalInterface);
-      }else if(helperStatus == ICozmoBehavior::Status::Failure){
+      }else if(helperStatus == IHelper::HelperStatus::Failure){
         helperStatus = (*activeIter)->OnDelegateFailure(behaviorExternalInterface);
       }
       
@@ -161,20 +157,20 @@ void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& beha
       // Override the helper status to fail out of all delegates and return
       // to the lowest level delegate
       if(blockWorldOriginChange && _helperStack.size() != 1){
-        helperStatus = ICozmoBehavior::Status::Failure;
+        helperStatus = IHelper::HelperStatus::Failure;
       }else if(blockWorldOriginChange && _helperStack.size() == 1){
         blockWorldOriginChange = false;
       }
       
       // Allows Delegate to directly check on success/failure
-      if(helperStatus == ICozmoBehavior::Status::Running){
+      if(helperStatus == IHelper::HelperStatus::Running){
         // Give helper update tick
         helperStatus = (*activeIter)->UpdateWhileActive(behaviorExternalInterface, newDelegate);
       }
       
       // If helper completed, start the next helper, or if the
       // helper specified a new delegate, make that the actiev helper
-      if(helperStatus != ICozmoBehavior::Status::Running){
+      if(helperStatus != IHelper::HelperStatus::Running){
 
         PRINT_CH_INFO("Behaviors", "HelperComponent.UpdateActive.Complete", "%s no longer running",
                       (*activeIter)->GetName().c_str());
@@ -209,16 +205,16 @@ void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& beha
   }
 
   // If the helpers have just completed, notify the behavior appropriately
-  if(_helperStack.empty() && helperStatus != ICozmoBehavior::Status::Running){
+  if(_helperStack.empty() && helperStatus != IHelper::HelperStatus::Running){
     // Copy the callback function so that it can be called after
     // this helper stack has been cleared in case it wants to set up a
     // new helper stack/callbacks
     BehaviorSimpleCallbackWithExternalInterface behaviorCallbackToRun = nullptr;
     
-    if(helperStatus == ICozmoBehavior::Status::Complete &&
+    if(helperStatus == IHelper::HelperStatus::Complete &&
        _behaviorSuccessCallback != nullptr){
       behaviorCallbackToRun = _behaviorSuccessCallback;
-    }else if(helperStatus == ICozmoBehavior::Status::Failure &&
+    }else if(helperStatus == IHelper::HelperStatus::Failure &&
              _behaviorFailureCallback != nullptr){
       behaviorCallbackToRun = _behaviorFailureCallback;
     }

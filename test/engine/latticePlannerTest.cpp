@@ -178,22 +178,24 @@ TEST_F(LatticePlannerTest, PlanWhilePlanning)
 {
   // use planner thread for this test, but make it super slow
   _planner->SetIsSynchronous(false);
-  _planner->SetArtificialPlannerDelay_ms(1000);
+  _planner->SetArtificialPlannerDelay_ms(10000);
   
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
   Pose3d goal1(0, Z_AXIS_3D(), Vec3f(20,1000,0) );
   Pose3d goal2(0, Z_AXIS_3D(), Vec3f(-520,400,0) );
 
   EComputePathStatus ret1 = _planner->ComputePath(start, goal1);
-  // NOTE: technically, if we context switch here and don't run this thread for an entire second, this test
+  // NOTE: technically, if we context switch here and don't run this thread for really really long, this test
   // could break...
   EComputePathStatus ret2 = _planner->ComputePath(start, goal2);
-
+  
   EXPECT_EQ(ret1, EComputePathStatus::Running);
   EXPECT_EQ(ret2, EComputePathStatus::Error);
 
-  // should still be able to finish the original plan
+  // clear artificial delay to let planner finish
+  _planner->SetArtificialPlannerDelay_ms(0);
 
+  // should still be able to finish the original plan
   ExpectPlanCompleteInThread(2000);
 
   Planning::GoalID selectedTargetIdx = 100;
@@ -221,7 +223,7 @@ TEST_F(LatticePlannerTest, PlanWhilePlanning2)
   
   // use planner thread for this test, but make it super slow
   _planner->SetIsSynchronous(false);
-  _planner->SetArtificialPlannerDelay_ms(1000);
+  _planner->SetArtificialPlannerDelay_ms(10000);
   
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
   Pose3d goal1(0, Z_AXIS_3D(), Vec3f(20,1000,0) );
@@ -234,8 +236,10 @@ TEST_F(LatticePlannerTest, PlanWhilePlanning2)
   EXPECT_EQ(ret1, EComputePathStatus::Running);
   EXPECT_EQ(ret2, EComputePathStatus::Error);
 
-  // should still be able to finish the original plan
+  // clear artificial delay to let planner finish
+  _planner->SetArtificialPlannerDelay_ms(0);
 
+  // should still be able to finish the original plan
   ExpectPlanCompleteInThread(2000);
 
   Planning::GoalID selectedTargetIdx = 100;

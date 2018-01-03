@@ -17,16 +17,15 @@
 #define protected public
 
 #include "engine/actions/basicActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/robotDataLoader.h"
 #include "engine/robot.h"
+#include "engine/robotDataLoader.h"
 #include "gtest/gtest.h"
 
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
@@ -87,7 +86,7 @@ TEST(BehaviorSystemManager, TestDelegationVariants)
   ASSERT_EQ(bsm._behaviorStack->_behaviorStack.size(), 0);
   
   // Ensure that injecting a behavior into the stack works properly
-  ICozmoBehavior* waitBehavior = behaviorContainer.FindBehaviorByID(BehaviorID::Wait).get();
+  ICozmoBehavior* waitBehavior = behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
   waitBehavior->OnEnteredActivatableScope();
 
   InjectAndDelegate(testFramework,

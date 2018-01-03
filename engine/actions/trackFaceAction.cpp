@@ -27,18 +27,16 @@ namespace Cozmo {
   
 static const char * const kLogChannelName = "Actions";
   
-TrackFaceAction::TrackFaceAction(Robot& robot, FaceID rawFaceID)
-  : ITrackAction(robot,
-                 "TrackFace",
+TrackFaceAction::TrackFaceAction(FaceID rawFaceID)
+  : ITrackAction("TrackFace",
                  RobotActionType::TRACK_FACE)
+  , _tmpFaceID(rawFaceID)
 {
-  _faceID = robot.GetFaceWorld().GetSmartFaceID(rawFaceID);
-  SetName("TrackFace" + _faceID.GetDebugStr());
+  SetName("TrackFace" + std::to_string(rawFaceID));
 }
 
-TrackFaceAction::TrackFaceAction(Robot& robot, SmartFaceID faceID)
-  : ITrackAction(robot,
-                 "TrackFace",
+TrackFaceAction::TrackFaceAction(SmartFaceID faceID)
+  : ITrackAction("TrackFace",
                  RobotActionType::TRACK_FACE)
   , _faceID(faceID)
 {
@@ -47,20 +45,26 @@ TrackFaceAction::TrackFaceAction(Robot& robot, SmartFaceID faceID)
 
 TrackFaceAction::~TrackFaceAction()
 {
-  _robot.GetMoveComponent().UnSetTrackToFace();
+  if(HasRobot()){
+    GetRobot().GetMoveComponent().UnSetTrackToFace();
+  }
 }
 
+void TrackFaceAction::OnRobotSet()
+{
+  _faceID = GetRobot().GetFaceWorld().GetSmartFaceID(_tmpFaceID);  
+}
 
 ActionResult TrackFaceAction::InitInternal()
 {
-  if(false == _robot.HasExternalInterface()) {
+  if(false == GetRobot().HasExternalInterface()) {
     PRINT_NAMED_ERROR("TrackFaceAction.InitInternal.NoExternalInterface",
                       "Robot must have an external interface so action can "
                       "subscribe to face changed ID events.");
     return ActionResult::ABORT;
   }
   
-  _robot.GetMoveComponent().SetTrackToFace(_faceID.GetID());
+  GetRobot().GetMoveComponent().SetTrackToFace(_faceID.GetID());
   _lastFaceUpdate = 0;
   
   return ActionResult::SUCCESS;
@@ -75,7 +79,7 @@ void TrackFaceAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) 
   
 ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm)
 {
-  const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_faceID);
+  const Vision::TrackedFace* face = GetRobot().GetFaceWorld().GetFace(_faceID);
   distance_mm = 0.f;
   
   if(nullptr == face) {
@@ -93,7 +97,7 @@ ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle,
   _lastFaceUpdate = face->GetTimeStamp();
   
   Pose3d headPoseWrtRobot;
-  if(false == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headPoseWrtRobot)) {
+  if(false == face->GetHeadPose().GetWithRespectTo(GetRobot().GetPose(), headPoseWrtRobot)) {
     PRINT_NAMED_ERROR("TrackFaceAction.UpdateTracking.PoseOriginError",
                       "Could not get pose of face w.r.t. robot.");
     return UpdateResult::NoNewInfo;
@@ -122,7 +126,7 @@ ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle,
   }
   
   absTiltAngle = std::atan(zDist/std::sqrt(xyDistSq));
-  absPanAngle  = std::atan2(yDist, xDist) + _robot.GetPose().GetRotation().GetAngleAroundZaxis();
+  absPanAngle  = std::atan2(yDist, xDist) + GetRobot().GetPose().GetRotation().GetAngleAroundZaxis();
 
   return UpdateResult::NewInfo;
 

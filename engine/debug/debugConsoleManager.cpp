@@ -22,7 +22,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleChannelFile.h"
-#include "anki/messaging/basestation/IComms.h"
+#include "coretech/messaging/engine/IComms.h"
 
 #include <assert.h>
 
@@ -45,6 +45,7 @@ namespace Cozmo {
       ExternalInterface::MessageGameToEngineTag::SetDebugConsoleVarMessage,
       ExternalInterface::MessageGameToEngineTag::SetAnimDebugConsoleVarMessage,
       ExternalInterface::MessageGameToEngineTag::RunDebugConsoleFuncMessage,
+      ExternalInterface::MessageGameToEngineTag::RunAnimDebugConsoleFuncMessage,
       ExternalInterface::MessageGameToEngineTag::GetDebugConsoleVarMessage,
     };
     
@@ -284,6 +285,7 @@ namespace Cozmo {
         }
       }
       break;
+      // Animation Process Console Var Message
       case ExternalInterface::MessageGameToEngineTag::SetAnimDebugConsoleVarMessage:
       {
         const Anki::Cozmo::ExternalInterface::SetAnimDebugConsoleVarMessage& msg = eventData.Get_SetAnimDebugConsoleVarMessage();
@@ -312,6 +314,41 @@ namespace Cozmo {
         }
       }
       break;
+      // Animation Process Console func Message
+      case ExternalInterface::MessageGameToEngineTag::RunAnimDebugConsoleFuncMessage:
+      {
+        const auto& msg = eventData.Get_RunAnimDebugConsoleFuncMessage();
+        RobotInterface::RunDebugConsoleFuncMessage robotInterfaceMsg;
+        if (msg.funcName.size() > robotInterfaceMsg.funcName.size())
+        {
+          PRINT_NAMED_WARNING("DebugConsoleManager.HandleEvent.RunAnimDebugConsoleFuncMessage.FuncNameTooLong",
+                              "Variable name '%s' exceeds maximum length of %zu",
+                              msg.funcName.c_str(), robotInterfaceMsg.funcName.size());
+        }
+        else if (msg.funcArgs.size() > robotInterfaceMsg.funcArgs.size()) {
+          PRINT_NAMED_WARNING("DebugConsoleManager.HandleEvent.RunAnimDebugConsoleFuncMessage.FuncArgsTooLong",
+                              "Args '%s' exceeds maximum length of %zu",
+                              msg.funcArgs.c_str(), robotInterfaceMsg.funcArgs.size());
+        }
+        else {
+          CopyStringHelper(msg.funcName,  robotInterfaceMsg.funcName);
+          CopyStringHelper(msg.funcArgs, robotInterfaceMsg.funcArgs);
+          
+          const bool reliable = true;
+          const bool hot = false;
+          
+          Result sendResult = _robotInterface->SendMessage(-1,
+                                                           RobotInterface::EngineToRobot(std::move(robotInterfaceMsg)),
+                                                           reliable,
+                                                           hot);
+          if (sendResult != RESULT_OK) {
+            PRINT_NAMED_WARNING("DebugConsoleManager.HandleEvent.RunAnimDebugConsoleFuncMessage.SendFailed",
+                                "Failed to send message to set '%s'", msg.funcName.c_str());
+          }
+        }
+      }
+      break;
+        
       default:
         PRINT_NAMED_ERROR("DebugConsoleManager.HandleEvent.UnhandledMessageGameToEngineTag", "Unexpected tag %u", (uint32_t)eventData.GetTag());
         assert(0);

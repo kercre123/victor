@@ -16,14 +16,14 @@
 #include "engine/components/cubeAccelComponentListeners.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/shared/types.h"
 
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
-#include "clad/robotInterface/messageFromActiveObject.h"
+#include "clad/externalInterface/messageFromActiveObject.h"
 
 #include <list>
 #include <map>
@@ -62,13 +62,11 @@ public:
   
   template<typename T>
   void HandleMessage(const T& msg);
-
-private:
   
   void HandleObjectAccel(const ObjectAccel& objectAccel);
   
-  void ReceiveObjectAccelData(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
-
+private:
+  
   struct AccelHistory
   {
     // Window size of data to keep in history

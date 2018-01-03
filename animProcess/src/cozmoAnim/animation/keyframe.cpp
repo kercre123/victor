@@ -14,10 +14,10 @@
  **/
 
 
-#include "anki/common/basestation/array2d_impl.h"
-#include "anki/common/basestation/colorRGBA.h"
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/engine/colorRGBA.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "cozmoAnim/animation/cozmo_anim_generated.h"
 #include "cozmoAnim/animation/faceAnimationManager.h"
 #include "cozmoAnim/animation/keyframe.h"
@@ -122,13 +122,14 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 {
   if (!Util::IsValidNumericCast<ToType>(fromVal)) {
     toVal = Util::numeric_cast_clamped<ToType>(fromVal);
-    
+#if ANKI_DEV_CHEATS
     std::stringstream debugStr;
     debugStr << "cast of " << fromVal << " would be invalid, clamping to " << toVal;
     PRINT_NAMED_WARNING("IKeyFrame.SafeNumericCast.InvalidCast",
                         "%s: %s",
                         debugName,
                         debugStr.str().c_str());
+#endif
   } else {
     toVal = Util::numeric_cast<ToType>(fromVal);
   }
@@ -757,9 +758,9 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     {
       // Check that speed is valid
       if (std::abs(_streamMsg.speed) > MAX_BODY_ROTATION_SPEED_DEG_PER_SEC) {
-        PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckRotationSpeed.PointTurnSpeedExceedsLimit",
-                      "%s: PointTurn speed %f deg/s exceeds limit of %f deg/s. Clamping",
-                      animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+        PRINT_CH_DEBUG("Animations", "BodyMotionKeyFrame.CheckRotationSpeed.PointTurnSpeedExceedsLimit",
+                       "%s: PointTurn speed %f deg/s exceeds limit of %f deg/s. Clamping",
+                       animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         _streamMsg.speed = CLIP((f32)_streamMsg.speed,
                                 -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC,
                                 MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
@@ -770,9 +771,9 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     {
       // Check that speed is valid
       if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
-        PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckStraightSpeed.StraightSpeedExceedsLimit",
-                      "%s: Speed %f mm/s exceeds limit of %f mm/s. Clamping",
-                      animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
+        PRINT_CH_DEBUG("Animations", "BodyMotionKeyFrame.CheckStraightSpeed.StraightSpeedExceedsLimit",
+                       "%s: Speed %f mm/s exceeds limit of %f mm/s. Clamping",
+                       animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
         _streamMsg.speed = CLIP((f32)_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
       }
     }
@@ -785,9 +786,9 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
       //       speed limit should look like between straight and point turns so
       //       just using straight limit for now as a sanity check.
       if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
-        PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckTurnSpeed.ArcSpeedExceedsLimit",
-                      "%s: Speed %f mm/s exceeds limit of %f mm/s. Clamping",
-                      animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
+        PRINT_CH_DEBUG("Animations", "BodyMotionKeyFrame.CheckTurnSpeed.ArcSpeedExceedsLimit",
+                       "%s: Speed %f mm/s exceeds limit of %f mm/s. Clamping",
+                       animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
         _streamMsg.speed = CLIP((f32)_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
       }
     }
@@ -968,11 +969,11 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     {
       // Check that speed is valid
       if (std::abs(_streamMsg.speed_degPerSec) > MAX_BODY_ROTATION_SPEED_DEG_PER_SEC) {
-        PRINT_CH_INFO("Animations", "TurnToRecordedHeadingKeyFrame.CheckRotationSpeed.PointTurnSpeedExceedsLimit",
-                      "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
-                      animNameDebug.c_str(),
-                      std::abs(_streamMsg.speed_degPerSec),
-                      MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+        PRINT_CH_DEBUG("Animations", "TurnToRecordedHeadingKeyFrame.CheckRotationSpeed.PointTurnSpeedExceedsLimit",
+                       "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
+                       animNameDebug.c_str(),
+                       std::abs(_streamMsg.speed_degPerSec),
+                       MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         _streamMsg.speed_degPerSec = CLIP((f32)_streamMsg.speed_degPerSec,
                                           -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC,
                                           MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
@@ -980,21 +981,21 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
       
       // Check that accel/decel are within range
       if (std::abs(_streamMsg.accel_degPerSec2) > MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2) {
-        PRINT_CH_INFO("Animations", "TurnToRecordedHeadingKeyFrame.CheckRotationAccel.PointTurnAccelExceedsLimit",
-                      "%s: PointTurn accel %d deg/s^2 exceeds limit of %f deg/s^2. Clamping",
-                      animNameDebug.c_str(),
-                      std::abs(_streamMsg.accel_degPerSec2),
-                      MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
+        PRINT_CH_DEBUG("Animations", "TurnToRecordedHeadingKeyFrame.CheckRotationAccel.PointTurnAccelExceedsLimit",
+                       "%s: PointTurn accel %d deg/s^2 exceeds limit of %f deg/s^2. Clamping",
+                       animNameDebug.c_str(),
+                       std::abs(_streamMsg.accel_degPerSec2),
+                       MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
         _streamMsg.accel_degPerSec2 = CLIP((f32)_streamMsg.accel_degPerSec2,
                                           -MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2,
                                           MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
       }
       if (std::abs(_streamMsg.decel_degPerSec2) > MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2) {
-        PRINT_CH_INFO("Animations", "TurnToRecordedHeadingKeyFrame.CheckRotationAccel.PointTurnDecelExceedsLimit",
-                      "%s: PointTurn decel %d deg/s^2 exceeds limit of %f deg/s^2. Clamping",
-                      animNameDebug.c_str(),
-                      std::abs(_streamMsg.decel_degPerSec2),
-                      MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
+        PRINT_CH_DEBUG("Animations", "TurnToRecordedHeadingKeyFrame.CheckRotationAccel.PointTurnDecelExceedsLimit",
+                       "%s: PointTurn decel %d deg/s^2 exceeds limit of %f deg/s^2. Clamping",
+                       animNameDebug.c_str(),
+                       std::abs(_streamMsg.decel_degPerSec2),
+                       MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
         _streamMsg.decel_degPerSec2 = CLIP((f32)_streamMsg.decel_degPerSec2,
                                            -MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2,
                                            MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);

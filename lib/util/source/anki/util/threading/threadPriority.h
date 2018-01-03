@@ -35,6 +35,12 @@ enum class ThreadPriority : uint8_t
   
 void SetThreadPriority(std::thread& inThread, ThreadPriority threadPriority);
 
+// Set thread name
+// on osx/ios it only sets the name if it is called from the target thread
+// on linux/android it works as implied
+// on success returns true
+bool SetThreadName(std::thread::native_handle_type inThread, const char* threadName);
+
 
 } // namespace Util
 } // namespace Anki

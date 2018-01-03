@@ -33,7 +33,7 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
-  static IActionRunner* CreateGoToSleepAnimSequence(Robot& robot);
+  static IActionRunner* CreateGoToSleepAnimSequence();
   
   bool IdleTimeoutSet() const { return _disconnectTimeout_s > 0; }
   

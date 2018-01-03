@@ -2965,6 +2965,8 @@ MonoBehaviour:
   _CrateDuration_sec: 1
   _RewardModalPrefab: {fileID: 114384868453747056, guid: 5f46ab2cc797f43498a5b4e4250bb425,
     type: 2}
+  _PlayTokenModalPrefab: {fileID: 114907239334261478, guid: 3ca7b6042c4824563b999b133c8bdc7a,
+    type: 2}
 --- !u!114 &114576719197559344
 MonoBehaviour:
   m_ObjectHideFlags: 1

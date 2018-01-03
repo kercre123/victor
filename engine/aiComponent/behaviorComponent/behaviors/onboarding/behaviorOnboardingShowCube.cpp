@@ -18,16 +18,16 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingShowCube.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
-#include "engine/robot.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
 
@@ -74,13 +74,11 @@ bool BehaviorOnboardingShowCube::WantsToBeActivatedBehavior(BehaviorExternalInte
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
-  robot.GetDrivingAnimationHandler().PushDrivingAnimations(
+  robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(
    {AnimationTrigger::OnboardingDriveStart,
     AnimationTrigger::OnboardingDriveLoop,
     AnimationTrigger::OnboardingDriveEnd},
@@ -98,32 +96,30 @@ Result BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface
   }
   
   // can only be in this state if they moved the robot while it was picking up the cube and am coming back from an error
-  if( robot.GetCarryingComponent().IsCarryingObject() )
+  if( robotInfo.GetCarryingComponent().IsCarryingObject() )
   {
    // Can't transition out of WaitForShowCube state until
     // GetDockingComponent().CanPickUpObjectFromGround is true so the next transition will wait until the putdown is complete.
-    DelegateIfInControl(new PlaceObjectOnGroundAction(robot));
+    DelegateIfInControl(new PlaceObjectOnGroundAction());
   }
   
-  return Result::RESULT_OK;
+  
 }
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
-  robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
-  robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
+  robotInfo.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+  behaviorExternalInterface.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::StopInternal", " %hhu ",_state);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
 
 }
@@ -168,8 +164,12 @@ void BehaviorOnboardingShowCube::HandleWhileActivated(const GameToEngineEvent& e
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // This behavior is killed by unity switching to none
-ICozmoBehavior::Status BehaviorOnboardingShowCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( !IsControlDelegated() && !IsSequenceComplete() )
   {
     float timeRunning = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeActivated_s();
@@ -178,7 +178,6 @@ ICozmoBehavior::Status BehaviorOnboardingShowCube::UpdateInternal_WhileRunning(B
       SET_STATE(ErrorFinal,behaviorExternalInterface);
     }
   }
-  return Status::Running;
 }
   
   
@@ -227,19 +226,15 @@ void BehaviorOnboardingShowCube::TransitionToNextState(BehaviorExternalInterface
   {
     case State::WaitForOKCubeDiscovered:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-
-      TimeStamp_t startWaitTime = robot.GetLastImageTimeStamp();
+      TimeStamp_t startWaitTime = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
       const int kNumFramesWaitForImages = 3;
-      DelegateIfInControl(new WaitForImagesAction(robot, kNumFramesWaitForImages, VisionMode::DetectingMarkers),
-                  [this, &behaviorExternalInterface, &robot, startWaitTime](ActionResult result) {
+      DelegateIfInControl(new WaitForImagesAction(kNumFramesWaitForImages, VisionMode::DetectingMarkers),
+                  [this, &behaviorExternalInterface, startWaitTime](ActionResult result) {
                     bool blockError = true;
                     bool lightsError = false;
                     if( _targetBlock.IsSet() )
                     {
-                      ObservableObject* block = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlock);
+                      ObservableObject* block = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetBlock);
                       // Block is still visible if we saw it last processed frame.
                       if( block != nullptr && startWaitTime < block->GetLastObservedTime() )
                       {
@@ -303,12 +298,8 @@ void BehaviorOnboardingShowCube::TransitionToWaitToInspectCube(BehaviorExternalI
   // Move lift up so can safely put down, since place object on ground does unpredictable things in the middle
   // PlaceObjectOnGroundHere
   // AnimationTrigger.OnboardingReactToCubePutDown
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
 
-  DelegateIfInControl(new TriggerAnimationAction(robot,AnimationTrigger::OnboardingReactToCube),
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::OnboardingReactToCube),
               [this, &behaviorExternalInterface](const ActionResult& result){
                 if(result == ActionResult::SUCCESS)
                 {
@@ -321,12 +312,8 @@ void BehaviorOnboardingShowCube::TransitionToWaitToInspectCube(BehaviorExternalI
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
   // Manually set lights to Interacting (green) lights
-  robot.GetCubeLightComponent().PlayLightAnim(_targetBlock, CubeAnimationTrigger::Onboarding);
+  behaviorExternalInterface.GetCubeLightComponent().PlayLightAnim(_targetBlock, CubeAnimationTrigger::Onboarding);
   
   auto onPickupSuccess = [this](BehaviorExternalInterface& behaviorExternalInterface)
   {
@@ -343,16 +330,12 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(BehaviorExternalInterf
     // couldn't pick up this block. If we have another, try that. Otherwise, fail
     if( _numErrorsPickup <= _maxErrorsPickup && lastSeenObject != nullptr )
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-
       if( _targetBlock != lastSeenObject->GetID() )
       {
-        robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
+        behaviorExternalInterface.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
         _targetBlock = lastSeenObject->GetID();
       }
-      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::OnboardingCubeDockFail),
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::OnboardingCubeDockFail),
                   &BehaviorOnboardingShowCube::StartSubStatePickUpBlock);
     }
     else
@@ -376,31 +359,27 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(BehaviorExternalInterf
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
-  CompoundActionSequential* action = new CompoundActionSequential(robot,
+  CompoundActionSequential* action = new CompoundActionSequential(
   {
-    new TriggerAnimationAction(robot, AnimationTrigger::OnboardingInteractWithCube),
-    new MoveLiftToHeightAction(robot,MoveLiftToHeightAction::Preset::CARRY),
+    new TriggerAnimationAction(AnimationTrigger::OnboardingInteractWithCube),
+    new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::CARRY),
   });
   
   // because PutDown isn't a real docking action, it doesn't have any sounds associated with it.
   // So just play a sound animation at the same time.
-  CompoundActionParallel* parallelAction = new CompoundActionParallel(robot,{
-    new TriggerAnimationAction(robot, AnimationTrigger::OnboardingSoundOnlyLiftEffortPlaceLow),
-    new PlaceObjectOnGroundAction(robot)
+  CompoundActionParallel* parallelAction = new CompoundActionParallel({
+    new TriggerAnimationAction(AnimationTrigger::OnboardingSoundOnlyLiftEffortPlaceLow),
+    new PlaceObjectOnGroundAction()
   });
   action->AddAction(parallelAction);
   
-  action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::OnboardingReactToCubePutDown));
+  action->AddAction(new TriggerAnimationAction(AnimationTrigger::OnboardingReactToCubePutDown));
   
   DelegateIfInControl(action,
-              [this,&robot, &behaviorExternalInterface](const ExternalInterface::RobotCompletedAction& msg)
+              [this, &behaviorExternalInterface](const ExternalInterface::RobotCompletedAction& msg)
               {
                 _timesPickedUpCube++;
-                robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
+                behaviorExternalInterface.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
                 SET_STATE(WaitForFinalContinue,behaviorExternalInterface);
               });
 }
@@ -429,15 +408,13 @@ void BehaviorOnboardingShowCube::HandleObjectObserved(BehaviorExternalInterface&
     return;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
   // In this state it's okay to change blocks. After this Cozmo will be trying to drive too it so it's too late.
   // after generic fails we loop back to this state so they can try again.
   if( ( _state == State::WaitForShowCube || _state == State::WaitForOKCubeDiscovered ||
        _state == State::ErrorCubeWrongSideUp || _state == State::ErrorCubeMoved) &&
-        robot.GetDockingComponent().CanPickUpObjectFromGround(*block) )
+        robotInfo.GetDockingComponent().CanPickUpObjectFromGround(*block) )
   {
     _targetBlock = msg.objectID;
     if( _state == State::WaitForShowCube)

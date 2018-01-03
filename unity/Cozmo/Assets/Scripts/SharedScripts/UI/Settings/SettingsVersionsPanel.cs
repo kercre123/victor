@@ -269,8 +269,8 @@ namespace Cozmo.Settings {
     }
 
     private void HandleRestoreRobotOptions(RestoreRobotOptions msg) {
-      // If there is only one backup file then user will not be able to restore
-      _RestoreButtonIsActive = (msg.robotsWithBackupData.Length > 1);
+      // If there are any backup files then the user will be able to restore
+      _RestoreButtonIsActive = (msg.robotsWithBackupData.Length > 0);
     }
 
     private string BodyColorToString(Anki.Cozmo.BodyColor color) {

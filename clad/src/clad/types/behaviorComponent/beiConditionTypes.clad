@@ -1,0 +1,32 @@
+// File: BEIConditionTypes
+// Author: Kevin M. Karol
+// Created: 7/5/2017
+// Copyright: Anki, inc. 2017
+
+namespace Anki {
+namespace Cozmo {
+
+// Identifies the WantsToRunStrategy type
+// PLEASE KEEP ALPHABETIZED
+enum uint_8 BEIConditionType {
+  Invalid,
+
+  AlwaysRun,
+  CloudIntentPending,
+  ExpressNeedsTransition,
+  FacePositionUpdated,
+  Frustration,
+  InNeedsBracket,
+  ObjectMoved,
+  ObjectPositionUpdated,
+  ObstacleDetected,
+  PetInitialDetection,
+  RobotPlacedOnSlope,
+  RobotShaken,
+  RobotTouchGesture,
+  Lambda,
+  Timer
+}
+
+} // namespace Cozmo
+} // namespace Anki

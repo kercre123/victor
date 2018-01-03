@@ -12,9 +12,9 @@
 #include "quadTreeProcessor.h"
 #include "quadTreeNode.h"
 
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/vision/basestation/profiler.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/vision/engine/profiler.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -487,7 +487,7 @@ void QuadTreeProcessor::Transform(NodeTransformFunction transform)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::FindIf(NodePredicate pred, MemoryMapDataConstList& output)
+void QuadTreeProcessor::FindIf(NodePredicate pred, MemoryMapDataConstList& output) const
 {
   // TODO: use cached data in the processor to access all data directly, since we don't have constraints on locality
   if (_root) {

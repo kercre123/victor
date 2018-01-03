@@ -35,6 +35,11 @@ public:
   CozmoAudioController(const CozmoAnimContext* context);
 
   virtual ~CozmoAudioController();
+  
+  // Save session profiler capture to a file
+  bool WriteProfilerCapture( bool write );
+  // Save session audio output to a file
+  bool WriteAudioOutputCapture( bool write );
 
 
 private:

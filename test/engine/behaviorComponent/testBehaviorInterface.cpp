@@ -12,22 +12,23 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
-#include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "gtest/gtest.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
 using namespace Anki;
 using namespace Anki::Cozmo;
 
-static constexpr BehaviorClass emptyClass = BehaviorClass::Wait;
-static constexpr BehaviorID emptyID = BehaviorID::Wait;
-static constexpr BehaviorID emptyID2 = BehaviorID::Wait_TestInjectable;
+static const BehaviorClass emptyClass = BEHAVIOR_CLASS(Wait);
+static const BehaviorID emptyID = BEHAVIOR_ID(Wait);
+static const BehaviorID emptyID2 = BEHAVIOR_ID(Wait_TestInjectable);
 
 
 TEST(BehaviorInterface, Create)
@@ -252,7 +253,7 @@ TEST(BehaviorInterface, OutsideAction)
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
   
-  WaitForLambdaAction* action = new WaitForLambdaAction(robot, [&done](Robot& r){ return done; });
+  WaitForLambdaAction* action = new WaitForLambdaAction([&done](Robot& r){ return done; });
   robot.GetActionList().QueueAction(QueueActionPosition::NOW, action);
 
   DoBehaviorInterfaceTicks(robot, b, behaviorExternalInterface);
@@ -614,22 +615,20 @@ public:
     return true;
   }
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override {
     _inited = true;
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    WaitForLambdaAction* action = new WaitForLambdaAction(robot, [this](Robot& r){ return _stopAction; });
+    WaitForLambdaAction* action = new WaitForLambdaAction([this](Robot& r){ return _stopAction; });
     DelegateIfInControl(action);
-
-    return RESULT_OK;
   }
   
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override {
+    if(!IsActivated()){
+      return;
+    }
     _numUpdates++;
-    return Status::Running;
   }
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override {
     _stopped = true;
   }
 

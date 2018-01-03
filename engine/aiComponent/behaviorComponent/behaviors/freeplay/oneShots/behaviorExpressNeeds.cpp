@@ -13,15 +13,15 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorExpressNeeds.h"
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
-#include "engine/robot.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/cozmoContext.h"
@@ -142,28 +142,25 @@ bool BehaviorExpressNeeds::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
+void BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+{  
+  CompoundActionSequential* action = new CompoundActionSequential();
 
-  if( !robot.IsOnChargerPlatform() ) {
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
+  if( !robotInfo.IsOnChargerPlatform() ) {
     // only turn towards the last face if we aren't on the charger
     // TODO:(bn) support "look with head and eyes" when we are on the charger.
     
     const bool ignoreFailure = true;
-    action->AddAction(new TurnTowardsLastFacePoseAction(robot), ignoreFailure);
+    action->AddAction(new TurnTowardsLastFacePoseAction(), ignoreFailure);
   }
 
   for( const auto& trigger : _animTriggers ) {
     const u32 numLoops = 1;
     const bool interruptRunning = true;
     const u8 tracksToLock = GetTracksToLock(behaviorExternalInterface);
-    IAction* playAnim = new TriggerLiftSafeAnimationAction(robot,
-                                                           trigger,
+    IAction* playAnim = new TriggerLiftSafeAnimationAction(trigger,
                                                            numLoops,
                                                            interruptRunning,
                                                            tracksToLock);
@@ -179,15 +176,7 @@ Result BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& beha
       }
     });
 
-  return Result::RESULT_OK;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExpressNeeds::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  // don't resume, since it will run again anyway if it wants to
-  return Result::RESULT_FAIL;
+  
 }
 
 
@@ -224,8 +213,8 @@ float BehaviorExpressNeeds::GetCooldownSec(BehaviorExternalInterface& behaviorEx
 u8 BehaviorExpressNeeds::GetTracksToLock(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   if( _supportCharger ) {
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    if( robot.IsOnChargerPlatform() ) {
+    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    if( robotInfo.IsOnChargerPlatform() ) {
       // we are supporting the charger and are on it, so lock out the body
       return (u8)AnimTrackFlag::BODY_TRACK;
     }

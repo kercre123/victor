@@ -18,8 +18,8 @@
 #ifndef __Anki_Cozmo_BlockWorldFilter_H__
 #define __Anki_Cozmo_BlockWorldFilter_H__
 
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/basestation/math/poseOrigin.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/math/poseOrigin.h"
 #include "engine/cozmoObservableObject.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"

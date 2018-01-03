@@ -18,10 +18,10 @@
 #include "engine/actions/trackFaceAction.h"
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
@@ -52,13 +52,11 @@ BehaviorDriveToFace::BehaviorDriveToFace(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDriveToFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
   Pose3d facePose;
   const TimeStamp_t timeLastFaceObserved = behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(facePose, true);
-  const bool lastFaceInCurrentOrigin = robot.IsPoseInWorldOrigin(facePose);
+  const bool lastFaceInCurrentOrigin = robotInfo.IsPoseInWorldOrigin(facePose);
   if(lastFaceInCurrentOrigin){
     const auto facesObserved = behaviorExternalInterface.GetFaceWorld().GetFaceIDsObservedSince(timeLastFaceObserved);
     if(facesObserved.size() > 0){
@@ -73,30 +71,30 @@ bool BehaviorDriveToFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDriveToFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveToFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_targetFace.IsValid()){
     TransitionToTurningTowardsFace(behaviorExternalInterface);
-    return Result::RESULT_OK;
+    
   }else{
     PRINT_NAMED_WARNING("BehaviorDriveToFace.InitInternal.NoValidFace",
                         "Attempted to init behavior without a vaild face to drive to");
-    return Result::RESULT_FAIL;
   }
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorDriveToFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveToFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(_currentState == State::TrackFace &&
      _timeCancelTracking_s < currentTime_s){
-    CancelDelegates(false);
-    return Status::Complete;
-  }
-  
-  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
+    CancelSelf();
+  }  
 }
 
 
@@ -113,14 +111,11 @@ void BehaviorDriveToFace::TransitionToTurningTowardsFace(BehaviorExternalInterfa
   SET_STATE(TurnTowardsFace);
   const Vision::TrackedFace* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(_targetFace);
   if(facePtr != nullptr){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    CompoundActionSequential* turnAndVerifyAction = new CompoundActionSequential(robot);
-    turnAndVerifyAction->AddAction(new TurnTowardsFaceAction(robot, _targetFace));
-    turnAndVerifyAction->AddAction(new VisuallyVerifyFaceAction(robot, facePtr->GetID()));
+    CompoundActionSequential* turnAndVerifyAction = new CompoundActionSequential();
+    turnAndVerifyAction->AddAction(new TurnTowardsFaceAction(_targetFace));
+    turnAndVerifyAction->AddAction(new VisuallyVerifyFaceAction(facePtr->GetID()));
     
-    DelegateIfInControl(new TurnTowardsFaceAction(robot, _targetFace),
+    DelegateIfInControl(new TurnTowardsFaceAction(_targetFace),
                 [this, &behaviorExternalInterface, &facePtr](ActionResult result){
                   if(result == ActionResult::SUCCESS){
                     if(IsCozmoAlreadyCloseEnoughToFace(behaviorExternalInterface, facePtr->GetID())){
@@ -142,12 +137,7 @@ void BehaviorDriveToFace::TransitionToDrivingToFace(BehaviorExternalInterface& b
   const Vision::TrackedFace* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(_targetFace);
   if(facePtr != nullptr &&
      CalculateDistanceToFace(behaviorExternalInterface, facePtr->GetID(), distToHead)){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
-    DriveStraightAction* driveAction = new DriveStraightAction(robot,
-                                                               distToHead - kMinDriveToFaceDistance_mm,
+    DriveStraightAction* driveAction = new DriveStraightAction(distToHead - kMinDriveToFaceDistance_mm,
                                                                MAX_WHEEL_SPEED_MMPS);
     driveAction->SetDecel(DEFAULT_PATH_MOTION_PROFILE.decel_mmps2/kArbitraryDecelFactor);
     DelegateIfInControl(driveAction, &BehaviorDriveToFace::TransitionToTrackingFace);
@@ -159,11 +149,7 @@ void BehaviorDriveToFace::TransitionToDrivingToFace(BehaviorExternalInterface& b
 void BehaviorDriveToFace::TransitionToAlreadyCloseEnough(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(AlreadyCloseEnough);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::ComeHere_AlreadyHere),
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ComeHere_AlreadyHere),
               &BehaviorDriveToFace::TransitionToTrackingFace);
 }
 
@@ -177,12 +163,8 @@ void BehaviorDriveToFace::TransitionToTrackingFace(BehaviorExternalInterface& be
   // timeout for face tracking is hit
   const Vision::TrackedFace* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(_targetFace);
   if(facePtr != nullptr){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
     const Vision::FaceID_t faceID = facePtr->GetID();
-    DelegateIfInControl(new TrackFaceAction(robot, faceID));
+    DelegateIfInControl(new TrackFaceAction(faceID));
   }
 }
 
@@ -213,15 +195,14 @@ bool BehaviorDriveToFace::CalculateDistanceToFace(BehaviorExternalInterface& beh
   // Get the distance between the robot and the head's pose on the X/Y plane
   const Vision::TrackedFace* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(_targetFace);
   if(facePtr != nullptr){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
     
     Pose3d headPoseModified = facePtr->GetHeadPose();
     headPoseModified.SetTranslation({headPoseModified.GetTranslation().x(),
       headPoseModified.GetTranslation().y(),
-      robot.GetPose().GetTranslation().z()});
-    return ComputeDistanceBetween(headPoseModified, robot.GetPose(), distance);
+      robotInfo.GetPose().GetTranslation().z()});
+    return ComputeDistanceBetween(headPoseModified, robotInfo.GetPose(), distance);
   }
   
   return false;

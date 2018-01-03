@@ -56,30 +56,30 @@ enum_concept uint_32 GetSparkCosts[SparkableThings]
   NoCost    = 0,
 
   // Random
-  DoATrick  = 1,
-  PlayAGame = 3,
+  DoATrick  = 3,
+  PlayAGame = 5,
 
   // Games
   CodeLab      = 0,
   CozmoSays    = 0,
-  CubePounce   = 5,
+  CubePounce   = 10,
   ExplorerMode = 0,
-  QuickTap     = 5,
+  QuickTap     = 10,
   MeetCozmo    = 0,
-  MemoryMatch  = 5,
+  MemoryMatch  = 10,
 
   // Sparks
-  FistBump         = 3,
-  PeekABoo         = 4,
-  BuildPyramid     = 4,
-  PickUpCube       = 2,
-  StackCubes       = 3,
-  PounceOnFingers  = 2,
-  KnockOverStack   = 3,
-  PopAWheelie      = 3,
-  WorkoutWithCubes = 4,
-  RollCube         = 2,
-  TrackLaser       = 4
+  FistBump         = 6,
+  PeekABoo         = 8,
+  BuildPyramid     = 8,
+  PickUpCube       = 4,
+  StackCubes       = 5,
+  PounceOnFingers  = 5,
+  KnockOverStack   = 6,
+  PopAWheelie      = 6,
+  WorkoutWithCubes = 8,
+  RollCube         = 4,
+  TrackLaser       = 8
 }
 
 } // namespace Cozmo

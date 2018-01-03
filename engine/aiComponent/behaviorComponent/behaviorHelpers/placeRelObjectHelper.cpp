@@ -17,12 +17,11 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/needsManager.h"
-#include "engine/robot.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -62,7 +61,7 @@ bool PlaceRelObjectHelper::ShouldCancelDelegates(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus PlaceRelObjectHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus PlaceRelObjectHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _tmpRetryCounter = 0;
   
@@ -91,7 +90,7 @@ BehaviorStatus PlaceRelObjectHelper::InitBehaviorHelper(BehaviorExternalInterfac
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus PlaceRelObjectHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus PlaceRelObjectHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   return _status;
 }
@@ -102,7 +101,7 @@ void PlaceRelObjectHelper::StartPlaceRelObject(BehaviorExternalInterface& behavi
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
     MarkFailedToStackOrPlace(behaviorExternalInterface);
-    _status = BehaviorStatus::Failure;
+    _status = IHelper::HelperStatus::Failure;
     return;
   }
   _tmpRetryCounter++;
@@ -127,11 +126,8 @@ void PlaceRelObjectHelper::StartPlaceRelObject(BehaviorExternalInterface& behavi
                                     });
     DelegateAfterUpdate(properties);
   }else{
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
     PlaceRelObjectAction* placeObj =
-            new PlaceRelObjectAction(robot, _targetID, _placingOnGround,
+            new PlaceRelObjectAction(_targetID, _placingOnGround,
                                      _params.placementOffsetX_mm,
                                      _params.placementOffsetY_mm,
                                      false, _params.relativeCurrentMarker);
@@ -147,7 +143,7 @@ void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, Behavior
   switch(result){
     case ActionResult::SUCCESS:
     {
-      _status = BehaviorStatus::Complete;
+      _status = IHelper::HelperStatus::Complete;
       break;
     }
     case ActionResult::NO_PREACTION_POSES:
@@ -169,13 +165,13 @@ void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, Behavior
     case ActionResult::ABORT:
     case ActionResult::BAD_OBJECT:
     {
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
       break;
     }
     default:
     {
       //DEV_ASSERT(false, "HANDLE CASE!");
-      //_status = BehaviorStatus::Failure;
+      //_status = IHelper::HelperStatus::Failure;
       StartPlaceRelObject(behaviorExternalInterface);
       break;
     }
@@ -185,13 +181,11 @@ void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, Behavior
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PlaceRelObjectHelper::MarkFailedToStackOrPlace(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const BlockWorld& blockWorld = behaviorExternalInterface.GetBlockWorld();
+  auto& carryingComp = behaviorExternalInterface.GetRobotInfo().GetCarryingComponent();
   
-  const ObservableObject* placeRelObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
-  const ObservableObject* carryingObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(
-                                                      robot.GetCarryingComponent().GetCarryingObject());
+  const ObservableObject* placeRelObj = blockWorld.GetLocatedObjectByID(_targetID);
+  const ObservableObject* carryingObj = blockWorld.GetLocatedObjectByID(carryingComp.GetCarryingObject());
   
   if((placeRelObj != nullptr) &&
      (carryingObj != nullptr)){

@@ -10,7 +10,7 @@
     "translation" : "ゲームセットアップ"
   },
   "videoSubtitles.speedTap.second" : {
-    "translation" : "Cozmoは自分でキューブを選びます。"
+    "translation" : "COZMOは自分でキューブを選びます。"
   },
   "videoSubtitles.speedTap.third" : {
     "translation" : "タップしてあなたのキューブを選びます。"
@@ -40,7 +40,7 @@
     "translation" : "キューブをCOZMOの方に押します。"
   },
   "videoSubtitles.cubePounce.fourth" : {
-    "translation" : "Cozmoがアタックする前に引っ込めます。"
+    "translation" : "COZMOがアタックする前に引っ込めます。"
   },
   "videoSubtitles.cubePounce.fifth" : {
     "translation" : "遅すぎると"

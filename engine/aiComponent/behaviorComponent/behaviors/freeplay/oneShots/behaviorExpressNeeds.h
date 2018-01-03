@@ -28,8 +28,6 @@ class GraphEvaluator2d;
 
 namespace Cozmo {
 
-class Robot;
-
 class BehaviorExpressNeeds : public ICozmoBehavior
 {
 protected:
@@ -37,11 +35,8 @@ protected:
   friend class BehaviorContainer;
   BehaviorExpressNeeds(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-
-  // don't resume, since it will run again anyway if it wants to
-  virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
 

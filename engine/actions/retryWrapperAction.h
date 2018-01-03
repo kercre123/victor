@@ -20,7 +20,6 @@
 namespace Anki {
 namespace Cozmo {
   
-  class Robot;
   class IAction;
   class IActionRunner;
   class ICompoundAction;
@@ -42,12 +41,12 @@ namespace Cozmo {
     
     // Provide this wrapper action an action to retry, a callback to call when the action is going to be retried
     // and the number of times to retry the action
-    RetryWrapperAction(Robot& robot, IAction* action, RetryCallback retryCallback, u8 numRetries);
-    RetryWrapperAction(Robot& robot, ICompoundAction* action, RetryCallback retryCallback, u8 numRetries);
+    RetryWrapperAction(IAction* action, RetryCallback retryCallback, u8 numRetries);
+    RetryWrapperAction(ICompoundAction* action, RetryCallback retryCallback, u8 numRetries);
 
     // alternatively, simply pass in an animation trigger to play (and always retry until the limit)
-    RetryWrapperAction(Robot& robot, IAction* action, AnimationTrigger retryTrigger, u8 numRetries);
-    RetryWrapperAction(Robot& robot, ICompoundAction* action, AnimationTrigger retryTrigger, u8 numRetries);
+    RetryWrapperAction(IAction* action, AnimationTrigger retryTrigger, u8 numRetries);
+    RetryWrapperAction(ICompoundAction* action, AnimationTrigger retryTrigger, u8 numRetries);
     
     virtual ~RetryWrapperAction();
     
@@ -57,6 +56,8 @@ namespace Cozmo {
     
     virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
     virtual f32 GetTimeoutInSeconds() const override;
+
+    virtual void OnRobotSet() override final;
     
   private:
     std::unique_ptr<IActionRunner>       _subAction       = nullptr;

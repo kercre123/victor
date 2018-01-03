@@ -264,8 +264,7 @@ namespace Anki {
     void DrivingAnimationHandler::PlayDrivingStartAnim()
     {
       _state = AnimState::PlayingStart;
-      IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_robot,
-                                                                     _currDrivingAnimations.drivingStartAnim,
+      IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_currDrivingAnimations.drivingStartAnim,
                                                                      1, true);
       _drivingStartAnimTag = animAction->GetTag();
       _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
@@ -274,8 +273,7 @@ namespace Anki {
     void DrivingAnimationHandler::PlayDrivingLoopAnim()
     {
       _state = AnimState::PlayingLoop;
-      IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_robot,
-                                                                     _currDrivingAnimations.drivingLoopAnim,
+      IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_currDrivingAnimations.drivingLoopAnim,
                                                                      1, true);
       _drivingLoopAnimTag = animAction->GetTag();
       _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
@@ -291,8 +289,7 @@ namespace Anki {
       }
       
       _state = AnimState::PlayingEnd;
-      IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_robot,
-                                                                     _currDrivingAnimations.drivingEndAnim,
+      IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_currDrivingAnimations.drivingEndAnim,
                                                                      1, true);
       _drivingEndAnimTag = animAction->GetTag();
       _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);

@@ -12,12 +12,6 @@
   "unlockable.OSNotSupported.Description" : {
     "translation" : "Für Code Lab ist Android {0} oder neuer erforderlich."
   },
-  "unlockable.Mystery.Title" : {
-    "translation" : "Noch nicht freigeschaltete Fähigkeit"
-  },
-  "unlockable.Mystery.Description" : {
-    "translation" : "Erfülle Cozmos Spielbedarf jeden Tag, um eine Spielmarke zu erhalten. Mit diesen Marken kannst du Bonuskisten freischalten, die Belohnungen wie Sparks und Tricks enthalten."
-  },
   "unlockable.FistBump.Title" : {
     "translation" : "Fauststoß"
   },
@@ -197,6 +191,42 @@
   },
   "unlockable.GuardDog.Description" : {
     "translation" : "Wenn Cozmos Cubes nah beeinander liegen, macht er unter Umständen ein Nickerchen, während er sie bewacht. Stelle die Cubes vorsichtig auf den Kopf, ohne in aufzuwecken."
+  },
+  "unlockable.TrackLaser.Title" : {
+    "translation" : "Laserjagd"
+  },
+  "unlockable.TrackLaser.Description" : {
+    "translation" : "Folge dem Laser! Bei diesem Trick kannst du Cozmo mit einem Laserpointer den Weg weisen."
+  },
+  "unlockable.TrackLaser.SparkButtonDescription" : {
+    "translation" : "Tippe hier, damit Cozmo einem Laserpunkt folgt."
+  },
+  "unlockable.TrackLaser.SparkedStateDescription" : {
+    "translation" : "Cozmo folgt dem Laserpunkt so lange, bis ihm langweilig wird."
+  },
+  "unlockable.CozmoSings.Title" : {
+    "translation" : "Cozmo singt"
+  },
+  "unlockable.CozmoSings.DescriptionFirstLine" : {
+    "translation" : "Wenn Cozmo fröhlich ist, singt er Lieder, während er die Welt erkundet."
+  },
+  "unlockable.CozmoSings.DescriptionSecondLine" : {
+    "translation" : "Wenn du einen Cube schüttelst, während Cozmo singt, ändert sich seine Stimme."
+  },
+  "unlockable.CozmoSings.ButtonPromptTitle" : {
+    "translation" : "Tippe auf die Taste,"
+  },
+  "unlockable.CozmoSings.ButtonPromptDescription" : {
+    "translation" : "um die Lieder zu sehen, die Cozmo singen kann."
+  },
+  "unlockable.CozmoSings.ButtonText" : {
+    "translation" : "Playlist von Cozmo"
+  },
+  "unlockable.CozmoSings.ModalTitle" : {
+    "translation" : "Lieder von Cozmo"
+  },
+  "unlockable.CozmoSings.LockedSongTitle" : {
+    "translation" : "????"
   },
   "sparks.Sparked" : {
     "translation" : "Cozmo besitzt Sparks:"

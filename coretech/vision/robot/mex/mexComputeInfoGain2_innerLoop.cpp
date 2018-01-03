@@ -5,8 +5,8 @@
 
 #include "anki/common/robot/matlabInterface.h"
 
-#include "anki/vision/robot/fiducialMarkers.h"
-#include "anki/vision/robot/fiducialDetection.h"
+#include "coretech/vision/robot/fiducialMarkers.h"
+#include "coretech/vision/robot/fiducialDetection.h"
 
 #include "anki/common/matlab/mexWrappers.h"
 #include "anki/common/shared/utilities_shared.h"

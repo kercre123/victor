@@ -12,12 +12,11 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_AIBeacon_H__
 #define __Cozmo_Basestation_BehaviorSystem_AIBeacon_H__
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class Robot;
 class AIWhiteboard;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

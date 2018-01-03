@@ -6,9 +6,6 @@
 0.606084:text:Aligning Treads...
 0.85559:text:Calibrating Lift...
 0.218781:text:Adjusting Head...
-0.128147:text:Treads Aligned
-0.17087:text:Head Adjusted
-0.710869:text:Lift Calibrated
 0.109061:text:Cozmo needs to be tuned up to stay optimized and on-the-move.
 0.788812:text:Tune Up Cozmo
 0.168061:click:default_close_view_button:0.107605

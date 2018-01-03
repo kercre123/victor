@@ -9,28 +9,26 @@
 #include "cozmoAnim/cozmoAnim.h"
 
 #include "../shared/ctrlCommonInitialization.h"
-#include "util/logging/logging.h"
-#include "util/logging/channelFilter.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/jsonTools.h"
+
+#include "osState/osState.h"
+
 #include "json/json.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/jsonTools.h"
+
 #include "util/console/consoleInterface.h"
-//#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "util/console/consoleSystem.h"
-#include "util/logging/printfLoggerProvider.h"
-#include "util/logging/multiFormattedLoggerProvider.h"
 #include "util/global/globalDefinitions.h"
+#include "util/logging/channelFilter.h"
+#include "util/logging/printfLoggerProvider.h"
+#include "util/logging/logging.h"
+#include "util/logging/multiFormattedLoggerProvider.h"
 
 #include <fstream>
 
 #include <webots/Supervisor.hpp>
 
-
-
-#define ROBOT_ADVERTISING_HOST_IP "127.0.0.1"
-#define SDK_ADVERTISING_HOST_IP   "127.0.0.1"
-#define VIZ_HOST_IP               "127.0.0.1"
 
 namespace Anki {
   namespace Cozmo {
@@ -57,7 +55,9 @@ int main(int argc, char **argv)
   //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
   Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlAnim");
   
-  
+  // Set Webots supervisor
+  OSState::SetSupervisor(&animSupervisor);
+
   // - create and set logger
   Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);
   Util::MultiFormattedLoggerProvider loggerProvider({

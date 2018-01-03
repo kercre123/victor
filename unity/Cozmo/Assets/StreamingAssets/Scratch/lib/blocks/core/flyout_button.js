@@ -146,7 +146,9 @@ Blockly.FlyoutButton.prototype.createDom = function() {
   var rect = Blockly.utils.createSvgElement('rect',
       {'class': this.isLabel_ ?
         'blocklyFlyoutLabelBackground' : 'blocklyFlyoutButtonBackground',
-        'rx': 4, 'ry': 4},
+        // *** Anki change ***
+        'rx': 4, 'ry': 4, 'fill': 'transparent'},
+        // 'rx': 4, 'ry': 4},
       this.svgGroup_);
 
   var svgText = Blockly.utils.createSvgElement('text',

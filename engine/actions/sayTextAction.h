@@ -46,13 +46,13 @@ public:
   //       it is more common to use a value between 1.8 - 2.3 which gets sped up in the audio engine resulting in a
   //       duration close to the unprocessed voice.
   //       When using SayTextVoiceStyle::CozmoProcessing adjust processing pitch by setting value [-1.0, 1.0].
-  SayTextAction(Robot& robot, const std::string& text,
+  SayTextAction(const std::string& text,
                 const SayTextVoiceStyle style,
                 const float durationScalar = 1.f,
                 const float voicePitch = 0.f);
   
   // Play a predefined text to speech style by passing in an intent
-  SayTextAction(Robot& robot, const std::string& text, const SayTextIntent intent);
+  SayTextAction(const std::string& text, const SayTextIntent intent);
   
   virtual ~SayTextAction();
   
@@ -76,10 +76,12 @@ protected:
   virtual ActionResult Init() override;
   virtual ActionResult CheckIfDone() override;
 
+  virtual void OnRobotSet() override final;  
 
 private:
   
   std::string                    _text;
+  SayTextIntent                  _intent;
   SayTextVoiceStyle              _style;
   float                          _durationScalar       = 0.f;
   float                          _voicePitch           = 0.f; // Adjust Cozmo voice processing pitch [-1.0, 1.0]

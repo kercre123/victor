@@ -32,7 +32,7 @@ namespace Anki {
     class ICompoundAction : public IActionRunner
     {
     public:
-      ICompoundAction(Robot& robot, const std::list<IActionRunner*> & actions);
+      ICompoundAction(const std::list<IActionRunner*>& actions);
       
       // Adds an action to this compound action. Completely hands ownership and memory management
       // of the action over to this compoundAction
@@ -86,6 +86,9 @@ namespace Anki {
       
       // NOTE: Moves currentAction iterator to next action after deleting
       void StoreUnionAndDelete(std::list<std::shared_ptr<IActionRunner>>::iterator& currentAction);
+
+      virtual void OnRobotSet() override final;
+      virtual void OnRobotSetInternalCompound() {};
       
     private:
       
@@ -104,8 +107,8 @@ namespace Anki {
     class CompoundActionSequential : public ICompoundAction
     {
     public:
-      CompoundActionSequential(Robot& robot);
-      CompoundActionSequential(Robot& robot, const std::list<IActionRunner*> & actions);
+      CompoundActionSequential();
+      CompoundActionSequential(const std::list<IActionRunner*>& actions);
       
       // Add a delay, in seconds, between running each action in the group.
       // Default is 0 (no delay).
@@ -138,8 +141,8 @@ namespace Anki {
     class CompoundActionParallel : public ICompoundAction
     {
     public:
-      CompoundActionParallel(Robot& robot);
-      CompoundActionParallel(Robot& robot, const std::list<IActionRunner*> & actions);
+      CompoundActionParallel();
+      CompoundActionParallel(const std::list<IActionRunner*>& actions);
       
     protected:
       

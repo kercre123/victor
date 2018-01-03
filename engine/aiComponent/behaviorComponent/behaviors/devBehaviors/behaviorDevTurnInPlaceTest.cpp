@@ -15,9 +15,9 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/robot.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -63,7 +63,7 @@ bool BehaviorDevTurnInPlaceTest::WantsToBeActivatedBehavior(BehaviorExternalInte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDevTurnInPlaceTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDevTurnInPlaceTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   Reset();
   
@@ -71,14 +71,10 @@ Result BehaviorDevTurnInPlaceTest::OnBehaviorActivated(BehaviorExternalInterface
   DEV_ASSERT(_testInd == 0, "BehaviorDevTurnInPlaceTest.TestIndexNonzero");
   DEV_ASSERT(_nRunsPerTest > 0, "BehaviorDevTurnInPlaceTest.InvalidNRunsPerTest");
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // Start the tests rolling
-  const auto action = GenerateTestAction(robot, _testInd);
+  const auto action = GenerateTestAction(robotInfo.GetPose(), _testInd);
   DelegateIfInControl(action, &BehaviorDevTurnInPlaceTest::ActionCallback);
-  
-  return RESULT_OK;
 }
 
 
@@ -102,16 +98,14 @@ void BehaviorDevTurnInPlaceTest::Reset()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevTurnInPlaceTest::ActionCallback(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   auto& currTest = _tests[_testInd];
   
   PRINT_CH_INFO(kChannelName,
                 "BehaviorDevTurnInPlaceTest.TestComplete",
                 "index %i, run %d, finalHeading_deg %.3f",
                 _testInd, 1 + currTest.nTimesRun,
-                robot.GetPose().GetRotation().GetAngleAroundZaxis().getDegrees());
+                robotInfo.GetPose().GetRotation().GetAngleAroundZaxis().getDegrees());
   
   // check if we should run this test again or move on to the next one
   if ((++currTest.nTimesRun % _nRunsPerTest) == 0) {
@@ -127,13 +121,13 @@ void BehaviorDevTurnInPlaceTest::ActionCallback(BehaviorExternalInterface& behav
     }
   }
   
-  const auto action = GenerateTestAction(robot, _testInd);
+  const auto action = GenerateTestAction(robotInfo.GetPose(), _testInd);
   DelegateIfInControl(action, &BehaviorDevTurnInPlaceTest::ActionCallback);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CompoundActionSequential* BehaviorDevTurnInPlaceTest::GenerateTestAction(Robot& robot, const int testInd) const
+CompoundActionSequential* BehaviorDevTurnInPlaceTest::GenerateTestAction(const Pose3d& robotPose, const int testInd) const
 {
   DEV_ASSERT(testInd < _tests.size(), "BehaviorDevTurnInPlaceTest.GenerateTestAction.TestIndexOOB");
   
@@ -144,19 +138,19 @@ CompoundActionSequential* BehaviorDevTurnInPlaceTest::GenerateTestAction(Robot& 
                 "index %i, run %d, angle_deg %.3f, speed_deg_per_sec %.3f, accel_deg_per_sec2 %.3f, tol_deg %.3f, startingHeading_deg %.3f",
                 testInd, 1 + test.nTimesRun,
                 test.angle_deg, test.speed_deg_per_sec, test.accel_deg_per_sec2, test.tol_deg,
-                robot.GetPose().GetRotation().GetAngleAroundZaxis().getDegrees());
+                robotPose.GetRotation().GetAngleAroundZaxis().getDegrees());
   
-  auto turnAction = new TurnInPlaceAction(robot, DEG_TO_RAD(test.angle_deg), false);
+  auto turnAction = new TurnInPlaceAction(DEG_TO_RAD(test.angle_deg), false);
   turnAction->SetAccel(DEG_TO_RAD(test.accel_deg_per_sec2));
   turnAction->SetMaxSpeed(DEG_TO_RAD(test.speed_deg_per_sec));
   turnAction->SetTolerance(DEG_TO_RAD(test.tol_deg));
   turnAction->SetVariability(0.f);
   
   // Optionally wait in between TurnInPlace actions
-  const auto waitAction = new WaitAction(robot, _gapBetweenTests_s);
+  const auto waitAction = new WaitAction(_gapBetweenTests_s);
   
   // Create the compound action
-  auto compoundAction = new CompoundActionSequential(robot);
+  auto compoundAction = new CompoundActionSequential();
   compoundAction->AddAction(turnAction);
   compoundAction->AddAction(waitAction);
   

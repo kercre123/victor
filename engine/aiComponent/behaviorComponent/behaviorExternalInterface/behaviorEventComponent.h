@@ -58,7 +58,14 @@ protected:
   std::vector<ExternalInterface::RobotCompletedAction> _actionsCompletedThisTick;
   
 private:
-  IBehaviorMessageSubscriber* _messageSubscriber;
+  struct SubscriberWrapper{
+    SubscriberWrapper(IBehaviorMessageSubscriber& ref)
+    :_ref(ref){}
+    IBehaviorMessageSubscriber& _ref;
+  };
+  std::unique_ptr<SubscriberWrapper> _messageSubscriber;
+
+
   
 };
   

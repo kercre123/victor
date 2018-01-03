@@ -4,25 +4,30 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "taskName": "build:debug",
+            "label": "build:debug",
             "type": "shell",
             "command": "${workspaceRoot}/project/victor/build-victor.sh",
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "problemMatcher": [
+                { "fileLocation": "absolute", "base": "$gcc"}
+            ],
+            "presentation": {"reveal": "always"}
         },
         {
-            "taskName": "deploy:debug",
+            "label": "deploy:debug",
             "dependsOn": [ "build:debug" ],
             "type": "shell",
             "command": "${workspaceRoot}/project/victor/scripts/deploy.sh"
         },
         {
-            "taskName": "debug:debug",
+            "label": "debug:debug",
             "dependsOn": [ "deploy:debug" ],
             "type": "shell",
             "command": "${workspaceRoot}/project/victor/scripts/start-lldb.sh"
         }
     ]
 }
+

@@ -16,8 +16,8 @@
 #ifndef __BASESTATION_MINIMALANGLEPLANNER_H__
 #define __BASESTATION_MINIMALANGLEPLANNER_H__
 
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/shared/radians.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/radians.h"
 #include "pathPlanner.h"
 
 namespace Anki {

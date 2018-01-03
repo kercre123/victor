@@ -1,11 +1,10 @@
 #VRML_SIM V7.3.0 utf8
 PROTO CozmoBot2 [
-
-  field SFString advertisementHost "127.0.0.1"
+  field SFString name "CozmoBot2"
+  field SFInt32 robotID 0
 
   field SFVec3f translation 0 0 0
   field SFRotation rotation 0 0 1 0
-  field SFString name "CozmoBot2"
 
   field SFFloat headAngle          0
   field SFFloat headAngle_lowLimit -0.4014 # 23 degrees down
@@ -32,9 +31,6 @@ PROTO CozmoBot2 [
 
   # The number of intermediate wheels to simulate in each tread between the two end wheels.
   field SFInt32 numInterTreadWheels 2
-
-  # Autoconnect to all blocks in world (as if they were paired in flash)
-  field SFBool autoConnectToBlocks FALSE
 
   # Used for animation tests, specify animation to test
   field SFString animationTestName ""
@@ -76,31 +72,6 @@ Supervisor {
 
         %{ if not fields.vizMode.value then }%
 
-        # Comms for communicating with blocks
-        Emitter {
-          name "blockCommsEmitter"
-        }
-
-        # There should be a total of MAX_NUM_ACTIVE_OBJECTS (defined in activeObjectTypes.clad) receivers plus a receiver for discovery
-        Receiver {
-          name "discoveryReceiver"
-        }
-        Receiver {
-          name "blockCommsReceiver0"
-        }
-        Receiver {
-          name "blockCommsReceiver1"
-        }
-        Receiver {
-          name "blockCommsReceiver2"
-        }
-        Receiver {
-          name "blockCommsReceiver3"
-        }
-        Receiver {
-          name "blockCommsReceiver4"
-        }
-
         # Are these still needed?
         GPS {
           name "gps"
@@ -133,7 +104,7 @@ Supervisor {
         DistanceSensor {
           name "forwardProxSensor"
           translation 0.01 0 0
-          rotation 0 1 0 0
+          rotation 0 1 0 -0.10472
           type "generic"
           lookupTable [ 0.015    25  .0,
                         0.400   410  .0,

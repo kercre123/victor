@@ -28,15 +28,10 @@ namespace {
 
   const Vec3f kProxSensorPositionVec_mm{kProxSensorPosition_mm[0], kProxSensorPosition_mm[1], kProxSensorPosition_mm[2]};
 
+  const f32 kObsPadding_mm       = 1.0; // extra padding to add to prox obstacle
   const u16 kMinObsThreshold_mm  = 30;  // Minimum distance for registering an object detected as an obstacle
-  const u16 kMaxObsThreshold_mm  = 300; // Maximum distance for registering an object detected as an obstacle  
+  const u16 kMaxObsThreshold_mm  = 400; // Maximum distance for registering an object detected as an obstacle  
   const f32 kMinQualityThreshold = .15; // Minimum sensor reading strength before trying to use sensor data
-
-  // conversion factor for adding dimensionality to an obstacle. We don't want to use the full sensor beam
-  // width since it makes needlessly large objects, but if we assume half width of the aperture, we still
-  // get a decently scaled objects in the navMap. If the obstacle really does extend to the sides of the 
-  // sensor beam, then we will rescan it along a colliding path anyway.
-  const f32 kdistToHalfWidth     = tan(kProxSensorFullFOV_rad/4.f); 
 } // end anonymous namespace
 
   
@@ -145,6 +140,33 @@ Result ProxSensorComponent::IsLiftInFOV(bool& isInFOV) const
   return Result::RESULT_OK;
 }
 
+
+bool ProxSensorComponent::IsSensorReadingValid()
+{
+  const u16 proxDist_mm = GetLatestDistance_mm();
+  bool liftBlocking;
+  IsLiftInFOV(liftBlocking);
+  const bool sensorInRangeAndValid = (proxDist_mm > kMinObsThreshold_mm) &&
+                                      (proxDist_mm < kMaxObsThreshold_mm) &&
+                                      !liftBlocking;
+  return sensorInRangeAndValid;
+}
+
+
+bool ProxSensorComponent::CalculateSensedObjectPose(Pose3d& sensedObjectPose)
+{
+  const bool sensorIsValid = IsSensorReadingValid();
+  if(sensorIsValid){
+    const Pose3d proxPose = GetPose();
+    const u16 proxDist_mm = GetLatestDistance_mm();
+    Transform3d transformToSensed(Rotation3d(0.f, Z_AXIS_3D()), {0.f, proxDist_mm, 0.f});
+    // Since prox pose is destroyed when it falls out of scope, don't want parent invalidated
+    sensedObjectPose = Pose3d(transformToSensed, proxPose).GetWithRespectToRoot();
+  }
+  return sensorIsValid;
+}
+
+
 void ProxSensorComponent::UpdateNavMap()
 {
   if (_latestData.spadCount == 0)
@@ -173,22 +195,36 @@ void ProxSensorComponent::UpdateNavMap()
     // clear out known free space
     INavMap* currentNavMemoryMap = _robot.GetMapComponent().GetCurrentMemoryMap();
     if ( currentNavMemoryMap ) {
+      Vec3f rayOffset1(-kObsPadding_mm,  -kObsPadding_mm, 0);   
+      Vec3f rayOffset2(-kObsPadding_mm,   kObsPadding_mm, 0);
+      Rotation3d rot = Rotation3d(0.f, Z_AXIS_3D());
+
+      const Point2f t1 = (objectPos.GetTransform() * Transform3d(rot, rayOffset1)).GetTranslation();
+      const Point2f t2 = (objectPos.GetTransform() * Transform3d(rot, rayOffset2)).GetTranslation(); 
+
+      Triangle2f tri(t1, t2, _robot.GetPose().GetTranslation());
       MemoryMapData clearRegion(INavMap::EContentType::ClearOfObstacle, lastTimestamp);
-      currentNavMemoryMap->AddLine(_robot.GetPose().GetTranslation(), objectPos.GetTranslation(), clearRegion);
+
+      // currentNavMemoryMap->AddLine(_robot.GetPose().GetTranslation(), objectPos.GetTranslation(), clearRegion);
+      currentNavMemoryMap->AddTriangle(tri, clearRegion);
 
       // Add proxObstacle if detected and close to robot 
       if (_latestData.distance_mm <= kMaxObsThreshold_mm) { 
-        float obstacleHalfWidth_mm = kdistToHalfWidth * _latestData.distance_mm;
-        Vec3f offsety1_mm(0,  -obstacleHalfWidth_mm, 0);   
-        Vec3f offsety2_mm(0,   obstacleHalfWidth_mm, 0);
+        const float obstacleHalfWidth_mm = ROBOT_BOUNDING_Y * .5 + kObsPadding_mm;
+        Vec3f offset1(-kObsPadding_mm,  -obstacleHalfWidth_mm, 0);   
+        Vec3f offset2(-kObsPadding_mm,   obstacleHalfWidth_mm, 0);
+        Vec3f offset3(kObsPadding_mm * 2, 0, 0);
 
-        const Point2f p1 = (objectPos * Pose3d(0, Z_AXIS_3D(), offsety1_mm)).GetTranslation();
-        const Point2f p2 = (objectPos * Pose3d(0, Z_AXIS_3D(), offsety2_mm)).GetTranslation();
-                
+        const Point2f p1 = (objectPos.GetTransform() * Transform3d(rot, offset1)).GetTranslation();
+        const Point2f p2 = (objectPos.GetTransform() * Transform3d(rot, offset2)).GetTranslation(); 
+        const Point2f p3 = (objectPos.GetTransform() * Transform3d(rot, offset1 + offset3)).GetTranslation();
+        const Point2f p4 = (objectPos.GetTransform() * Transform3d(rot, offset2 + offset3)).GetTranslation();
+
+        const Quad2f quad(p1, p2, p3, p4);
         const Vec3f rotatedFwdVector = _robot.GetPose().GetWithRespectToRoot().GetRotation() * X_AXIS_3D();
         
         MemoryMapData_ProxObstacle proxData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()}, lastTimestamp);      
-        currentNavMemoryMap->AddLine(p1, p2, proxData);
+        currentNavMemoryMap->AddQuad(quad, proxData);
       }
     }
   }

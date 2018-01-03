@@ -1,7 +1,7 @@
 #ifndef ANKI_SIM_OVERLAY_DISPLAY_H
 #define ANKI_SIM_OVERLAY_DISPLAY_H
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
   namespace Cozmo {

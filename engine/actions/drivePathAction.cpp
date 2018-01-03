@@ -14,18 +14,16 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/components/pathComponent.h"
 #include "engine/robot.h"
-#include "anki/planning/shared/path.h"
+#include "coretech/planning/shared/path.h"
 
 namespace Anki {
 namespace Cozmo {
   
 
-DrivePathAction::DrivePathAction(Robot& robot, const Planning::Path& path)
-: IAction(robot
-          , "DrivePathAction"
+DrivePathAction::DrivePathAction(const Planning::Path& path)
+: IAction("DrivePathAction"
           , RobotActionType::DRIVE_PATH
           , (u8)AnimTrackFlag::BODY_TRACK)
-,_robot(robot)
 ,_path(path)
 {
 }
@@ -35,7 +33,7 @@ ActionResult DrivePathAction::Init()
   ActionResult result = ActionResult::SUCCESS;
   
   // Tell robot to execute this simple path
-  if(RESULT_OK != _robot.GetPathComponent().ExecuteCustomPath(_path, false)) {
+  if(RESULT_OK != GetRobot().GetPathComponent().ExecuteCustomPath(_path, false)) {
     result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
     return result;
   }
@@ -45,11 +43,11 @@ ActionResult DrivePathAction::Init()
 
 ActionResult DrivePathAction::CheckIfDone()
 {
-  if( _robot.GetPathComponent().LastPathFailed() ) {
+  if( GetRobot().GetPathComponent().LastPathFailed() ) {
     return ActionResult::FAILED_TRAVERSING_PATH;
   }
 
-  if( _robot.GetPathComponent().IsActive() ) {
+  if( GetRobot().GetPathComponent().IsActive() ) {
     return ActionResult::RUNNING;
   }
 

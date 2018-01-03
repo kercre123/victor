@@ -18,7 +18,7 @@
 #define __Cozmo_Basestation_AnimationGroup_AnimationGroupEntry_H__
 
 #include "clad/types/simpleMoodTypes.h"
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 // Forward Declaration
 namespace Json {

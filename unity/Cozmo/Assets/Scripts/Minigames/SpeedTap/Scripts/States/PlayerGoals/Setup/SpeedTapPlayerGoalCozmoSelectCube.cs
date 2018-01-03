@@ -22,8 +22,10 @@ namespace SpeedTap {
       TryDrivingToCube(forceRaiseLift: false);
     }
 
-    public override void Exit(){
-      _CurrentRobot.RemoveDrivingAnimations (kSpeedTapGoalDrivingAnimLock);
+    public override void Exit() {
+      if (_CurrentRobot != null) {
+        _CurrentRobot.RemoveDrivingAnimations(kSpeedTapGoalDrivingAnimLock);
+      }
     }
 
     private void TryDrivingToCube(bool forceRaiseLift) {

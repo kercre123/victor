@@ -14,12 +14,12 @@
 #include "engine/viz/vizObjectBaseId.h"
 #include "engine/debug/devLoggingSystem.h"
 #include "engine/cozmoAPI/comms/gameMessagePort.h"
-#include "anki/common/basestation/exceptions.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/common/basestation/math/rect_impl.h"
-#include "anki/vision/basestation/imageIO.h"
-#include "anki/vision/basestation/faceTracker.h"
+#include "coretech/common/engine/exceptions.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/vision/engine/imageIO.h"
+#include "coretech/vision/engine/faceTracker.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/ankiEventUtil.h"
@@ -45,30 +45,31 @@ namespace Anki {
     
     Result VizManager::Connect(const char *udp_host_address, const unsigned short port, const char* unity_host_address, const unsigned short unity_port)
     {
-      if (_isInitialized) {
+      if (_isConnected) {
         Disconnect();
       }
 
       if (!_vizClient.Connect(udp_host_address, port)) {
-        PRINT_NAMED_INFO("VizManager.Connect", "Failed to init VizManager client (%s:%d)", udp_host_address, port);
-        //_isInitialized = false;
+        PRINT_NAMED_WARNING("VizManager.Connect.Failed", "Failed to init VizManager client (%s:%d)", udp_host_address, port);
+        return RESULT_FAIL;
       }
 
       #if VIZ_TO_UNITY
       if (!_unityVizClient.Connect(unity_host_address, unity_port)) {
-        PRINT_NAMED_INFO("VizManager.Connect", "Failed to init VizManager unity client (%s:%d)", unity_host_address, unity_port);
+        PRINT_NAMED_WARNING("VizManager.Connect.FailedUnity", "Failed to init VizManager unity client (%s:%d)", unity_host_address, unity_port);
+        return RESULT_FAIL;
       }
       #endif
      
-      PRINT_STREAM_INFO("VizManager.Connect", "VizManager connected.");
-      _isInitialized = true;
+      PRINT_NAMED_INFO("VizManager.Connect.Success", "");
+      _isConnected = true;
       
-      return _isInitialized ? RESULT_OK : RESULT_FAIL;
+      return RESULT_OK;
     }
     
     Result VizManager::Disconnect()
     {
-      if(_isInitialized) {
+      if(_isConnected) {
         bool vizDisconnected = _vizClient.Disconnect();
         bool unityDisconnected = true;
         #if VIZ_TO_UNITY
@@ -76,8 +77,8 @@ namespace Anki {
         #endif
         
         if (vizDisconnected || unityDisconnected) {
-          _isInitialized = false;
-          PRINT_NAMED_INFO("VizManager.Connect", "VizManager disconnected.");
+          _isConnected = false;
+          PRINT_NAMED_INFO("VizManager.Disconnect.Success", "");
           return RESULT_OK;
         }
         return RESULT_FAIL;
@@ -87,7 +88,8 @@ namespace Anki {
     }
     
     VizManager::VizManager()
-    : _isInitialized(false)
+    : _isConnected(false)
+    , _messageCountViz(0)
     , _sendImages(false)
     {
       // Compute the max IDs permitted by VizObject type
@@ -98,12 +100,14 @@ namespace Anki {
 
     void VizManager::SendMessage(const VizInterface::MessageViz& message)
     {
-      if (!ANKI_DEV_CHEATS || !_isInitialized || !kSendAnythingToViz)
+      if (!ANKI_DEV_CHEATS || !_isConnected || !kSendAnythingToViz)
       {
         return;
       }
       
       ANKI_CPU_PROFILE("VizManager::SendMessage");
+
+      ++_messageCountViz;
 
       const size_t MAX_MESSAGE_SIZE{(size_t)VizConstants::MaxMessageSize};
       uint8_t buffer[MAX_MESSAGE_SIZE];
@@ -833,15 +837,19 @@ namespace Anki {
                                     const u8  imageProcFrameRateHz,
                                     const u32 numProcAnimFaceKeyframes,
                                     const u8  lockedTracks,
-                                    const u8  tracksInUse,             
-                                    const u32 animId,
-                                    const u8  animTag,                       
+                                    const u8  tracksInUse,                                    
                                     const f32 imuTemperature_degC,
                                     std::array<uint16_t, 4> cliffThresholds
                                     )
     {
       ANKI_CPU_PROFILE("VizManager::SendRobotState");
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, imuTemperature_degC, numProcAnimFaceKeyframes, animId, cliffThresholds, videoFrameRateHz, imageProcFrameRateHz, lockedTracks, tracksInUse, animTag)));
+      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, imuTemperature_degC, numProcAnimFaceKeyframes, cliffThresholds, videoFrameRateHz, imageProcFrameRateHz, lockedTracks, tracksInUse)));
+    }
+
+    void VizManager::SendCurrentAnimation(const std::string& animName, u8 animTag)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendCurrentAnimation");
+      SendMessage(VizInterface::MessageViz(VizInterface::CurrentAnimation(animTag, animName)));  
     }
     
     void VizManager::SendRobotMood(VizInterface::RobotMood&& robotMood)

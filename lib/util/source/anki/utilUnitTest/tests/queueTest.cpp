@@ -17,7 +17,7 @@
 using Anki::Util::Dispatch::Queue;
 
 //
-// VIC-12: Disabled because test does not pass reliably
+// VIC-492: Disabled because test does not pass reliably
 //
 TEST(QueueTest, DISABLED_ScheduledCallbacks)
 {
@@ -37,10 +37,10 @@ TEST(QueueTest, DISABLED_ScheduledCallbacks)
   Anki::Util::Dispatch::Release(queue);
   ASSERT_EQ(a, 4);
 }
+
 //
 // VIC-492: Disabled because test does not pass reliably
 //
-
 TEST(QueueTest, DISABLED_RemoveCallback)
 {
   std::cout << "test removing scheduled callbacks\n";
@@ -67,13 +67,12 @@ TEST(QueueTest, TaskHandleHeartbeat)
   (*handle).Invalidate();
 }
 
+//
+// VIC-492: Disabled because test does not pass reliably
+//
 // test that invalidating a handle prevents it from executing again, even if it's already queued to run
 // on the main queue (like, it's already been moved from the deferred queue to the main queue because
 // its time to execute passed while a task was running that invalidates the handle)
-
-//
-// VIC-12: Disabled for victor because test does not pass reliably
-//
 TEST(QueueTest, DISABLED_ReverseTaskHeartbeat)
 {
   class TestClass {

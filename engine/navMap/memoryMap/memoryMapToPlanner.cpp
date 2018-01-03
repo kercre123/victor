@@ -15,8 +15,8 @@
 #include "engine/viz/vizManager.h" // only for debug render
 #include "engine/robot.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
@@ -331,7 +331,7 @@ void TranslateMapRegionToPolys(const INavMap::BorderRegionVector& regions, std::
         if (subPoints.size() > 2) {
           ConvexPolygon convexHullAsPoly = ComputeConvexHull_GrahamScan(subPoints);
           convexHulls.emplace_back( std::move(convexHullAsPoly) );
-        } else {
+        } else if (!subPoints.empty()) {
           PRINT_NAMED_WARNING("NavMemoryMapToPlanner.TranslateMapRegionToPolys", 
                               "Not enough points to define 2d polygon");
         }

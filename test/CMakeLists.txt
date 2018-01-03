@@ -35,6 +35,8 @@ target_link_libraries(test_engine
   cti_messaging
   engine_clad
   androidHAL
+  cubeBleClient
+  osState
   util
   util_audio
   gtest
@@ -50,7 +52,7 @@ target_include_directories(test_engine
 target_compile_definitions(test_engine 
   PRIVATE
   SIMULATOR
-  CORETECH_BASESTATION
+  CORETECH_ENGINE
 )
 
 #

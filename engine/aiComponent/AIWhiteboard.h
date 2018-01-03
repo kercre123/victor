@@ -16,9 +16,10 @@
 
 #include "engine/externalInterface/externalInterface_fwd.h"
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/vision/engine/faceIdTypes.h"
+#include "engine/entity.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
@@ -35,9 +36,10 @@ namespace Anki {
 namespace Cozmo {
 
 // Forward declarations
+class BlockWorldFilter;  
 class ObservableObject;
 class Robot;
-class BlockWorldFilter;  
+class SmartFaceID;
 
 namespace DefaultFailToUseParams {
 constexpr static const float kTimeObjectInvalidAfterFailure_sec = 30.f;
@@ -47,7 +49,7 @@ constexpr static const float kObjectInvalidAfterFailureRadius_mm = 60.f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIWhiteboard
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AIWhiteboard : private Util::noncopyable
+class AIWhiteboard : public ManageableComponent, private Util::noncopyable
 {
 public:
   
@@ -184,15 +186,6 @@ public:
   // return current active beacon if any, or nullptr if none are active
   const AIBeacon* GetActiveBeacon() const;
   AIBeacon* GetActiveBeacon();
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Face tracking
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // shared logic to get a face to track which requires the least panning and tilting (based on the current
-  // robot pose). If preferNamed is true, then will prefer faces with a name to those without
-  Vision::FaceID_t GetBestFaceToTrack(const std::set< Vision::FaceID_t >& possibleFaces,
-                                      const bool preferNamedFaces) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Impossible States handling

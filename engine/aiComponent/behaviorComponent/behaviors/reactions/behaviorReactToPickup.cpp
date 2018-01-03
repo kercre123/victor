@@ -12,7 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToPickup.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/sayTextAction.h"
@@ -20,10 +20,10 @@
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/faceWorld.h"
 #include "engine/petWorld.h"
-#include "engine/robot.h"
 #include "util/console/consoleInterface.h"
 
 
@@ -51,44 +51,39 @@ bool BehaviorReactToPickup::WantsToBeActivatedBehavior(BehaviorExternalInterface
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToPickup::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPickup::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _repeatAnimatingMultiplier = 1;
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // Delay introduced since cozmo can be marked as "In air" in robot.cpp while we
   // wait for the cliffDetect sensor to confirm he's on the ground
   const f32 bufferDelay_s = .5f;
   const f32 wait_s = CLIFF_EVENT_DELAY_MS/1000 + bufferDelay_s;
-  DelegateIfInControl(new WaitAction(robot, wait_s), &BehaviorReactToPickup::StartAnim);
-  return Result::RESULT_OK;
+  DelegateIfInControl(new WaitAction(wait_s), &BehaviorReactToPickup::StartAnim);
+  
 }
  
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // If we're carrying anything, the animation will likely cause us to throw it, so unattach
   // and set as unknown pose
-  if(robot.GetCarryingComponent().IsCarryingObject())
+  if(robotInfo.GetCarryingComponent().IsCarryingObject())
   {
     const bool clearCarriedObjects = true; // to mark as unknown, not just dirty
-    robot.GetCarryingComponent().SetCarriedObjectAsUnattached(clearCarriedObjects);
+    robotInfo.GetCarryingComponent().SetCarriedObjectAsUnattached(clearCarriedObjects);
   }
   
   const bool isHardSpark = false;
   
   // If we're seeing a human or pet face, react to that, otherwise, react to being picked up
-  const TimeStamp_t lastImageTimeStamp = robot.GetLastImageTimeStamp();
+  const TimeStamp_t lastImageTimeStamp = robotInfo.GetLastImageTimeStamp();
   const TimeStamp_t kObsFaceTimeWindow_ms = 500;
   const TimeStamp_t obsTimeCutoff = (lastImageTimeStamp > kObsFaceTimeWindow_ms ? lastImageTimeStamp - kObsFaceTimeWindow_ms : 0);
 
-  auto faceIDsObserved = robot.GetFaceWorld().GetFaceIDsObservedSince(obsTimeCutoff);
+  auto faceIDsObserved = behaviorExternalInterface.GetFaceWorld().GetFaceIDsObservedSince(obsTimeCutoff);
   
   auto const kTracksToLock = Util::EnumToUnderlying(AnimTrackFlag::BODY_TRACK);
   if(!faceIDsObserved.empty() && !isHardSpark)
@@ -97,7 +92,7 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
     std::string name;
     for(auto faceID : faceIDsObserved)
     {
-      const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(faceID);
+      const Vision::TrackedFace* face = behaviorExternalInterface.GetFaceWorld().GetFace(faceID);
       if(face != nullptr && face->HasName())
       {
         name = face->GetName();
@@ -110,18 +105,18 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
     if(name.empty())
     {
       // Just react to unnamed face, but without using treads
-      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::AcknowledgeFaceUnnamed, 1, true, kTracksToLock));
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::AcknowledgeFaceUnnamed, 1, true, kTracksToLock));
     }
     else
     {
-      SayTextAction* sayText = new SayTextAction(robot, name, SayTextIntent::Name_Normal);
+      SayTextAction* sayText = new SayTextAction(name, SayTextIntent::Name_Normal);
       sayText->SetAnimationTrigger(AnimationTrigger::AcknowledgeFaceNamed, kTracksToLock);
       DelegateIfInControl(sayText);
     }
   }
   else
   {
-    auto currentPets = robot.GetPetWorld().GetAllKnownPets();
+    auto currentPets = behaviorExternalInterface.GetPetWorld().GetAllKnownPets();
     if(!currentPets.empty() && !isHardSpark)
     {
       AnimationTrigger animTrigger = AnimationTrigger::PetDetectionShort_Dog;
@@ -131,7 +126,7 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
       }
       
       // React, but without using body track, since we're picked up
-      DelegateIfInControl(new TriggerAnimationAction(robot, animTrigger, 1, true, kTracksToLock));
+      DelegateIfInControl(new TriggerAnimationAction(animTrigger, 1, true, kTracksToLock));
     }
     else
     {
@@ -141,10 +136,7 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
       {
         anim = AnimationTrigger::HiccupRobotPickedUp;
       }
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      DelegateIfInControl(new TriggerAnimationAction(robot, anim));
+      DelegateIfInControl(new TriggerAnimationAction(anim));
     }
   }
   
@@ -157,19 +149,23 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToPickup::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPickup::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const bool isControlDelegated = IsControlDelegated();
   if( !isControlDelegated && behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::InAir ) {
-    return Status::Complete;
+    CancelSelf();
+    return;
   }
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  if( robot.IsOnCharger() && !isControlDelegated ) {
+
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  if( robotInfo.IsOnCharger() && !isControlDelegated ) {
     PRINT_NAMED_INFO("BehaviorReactToPickup.OnCharger", "Stopping behavior because we are on the charger");
-    return Status::Complete;
+    CancelSelf();
+    return;
   }
   // If we are in control, it might be time to play another reaction
   if (!isControlDelegated)
@@ -177,17 +173,15 @@ ICozmoBehavior::Status BehaviorReactToPickup::UpdateInternal_WhileRunning(Behavi
     const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (currentTime > _nextRepeatAnimationTime)
     {
-      if (robot.GetCliffSensorComponent().IsCliffDetected()) {
+      if (robotInfo.GetCliffSensorComponent().IsCliffDetected()) {
         StartAnim(behaviorExternalInterface);
       } else {
-        const auto cliffs = robot.GetCliffSensorComponent().GetCliffDataRaw();
+        const auto cliffs = robotInfo.GetCliffSensorComponent().GetCliffDataRaw();
         LOG_EVENT("BehaviorReactToPickup.CalibratingHead", "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
-        DelegateIfInControl(new CalibrateMotorAction(robot, true, false));
+        DelegateIfInControl(new CalibrateMotorAction(true, false));
       }
     }
   }
-  
-  return Status::Running;
 }
 
 

@@ -4,9 +4,9 @@
 
 #include <mex.h>
 
-#include "anki/vision/basestation/camera.h"
+#include "coretech/vision/engine/camera.h"
 
-#include "anki/vision/basestation/perspectivePoseEstimation.h"
+#include "coretech/vision/engine/perspectivePoseEstimation.h"
 
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"

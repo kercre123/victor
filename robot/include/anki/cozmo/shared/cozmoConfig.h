@@ -2,10 +2,10 @@
 #define COZMO_CONFIG_H
 
 #ifdef COZMO_ROBOT
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "anki/common/constantsAndMacros.h"
 #else
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "util/math/math.h"
 #endif
 
@@ -244,14 +244,6 @@ namespace Cozmo {
    *
    **************************************************************************/
   
-  // Comms type for Basestation-robot comms
-  // 0: Use TCP
-  // 1: Use UDP
-#define USE_UDP_ROBOT_COMMS 1
-  
-  // Comms types for UI-game comms
-#define USE_UDP_UI_COMMS 1
-  
   const u32 MAX_SENT_BYTES_PER_TIC_TO_ROBOT = 200;
   const u32 MAX_SENT_BYTES_PER_TIC_TO_UI = 0;
   
@@ -266,34 +258,6 @@ namespace Cozmo {
   
   // The base listening port for anim process UDP server
   const u16 ANIM_PROCESS_SERVER_BASE_PORT = 5600;
-  
-  /*
-   THESE LATENCY VALUES ARE NOT BEING USED -- SEE ALSO multiClientChannel.h
-   
-   // Expected message receive latency
-   // It is assumed that this value does not fluctuate greatly.
-   // The more inaccurate this value is, the more invalid our
-   // handling of messages will be.
-   const f32 MSG_RECEIVE_LATENCY_SEC = 0.03;
-   
-   // The effective latency of vehicle messages for basestation modelling purposes
-   // This is twice the MSG_RECEIVE_LATENCY_SEC so that the basestation maintains a model
-   // of the system one message cycle latency in the future. This way, commanded actions are applied
-   // at the time they are expected in the physical world.
-   const f32 BASESTATION_MODEL_LATENCY_SEC = 2.f*MSG_RECEIVE_LATENCY_SEC;
-   */
-  
-  // Header required at front of all AdvertisementRegistrationMsg CLAD messages sent to a Robot Ad Service
-  const u8 ROBOT_ADVERTISING_HEADER_TAG = 0xCA;
-  
-  // Rate at which the robot advertises itself
-  const u32 ROBOT_ADVERTISING_PERIOD_MS = 100;
-  
-  // Port on which registered robots advertise.
-  const u32 ROBOT_ADVERTISING_PORT = 5100;
-  
-  // Port on which simulated robot should connect to (de)register for advertisement
-  const u32 ROBOT_ADVERTISEMENT_REGISTRATION_PORT = 5101;
   
   // Port on which registered UI devices advertise.
   const u32 UI_ADVERTISING_PORT = 5102;
@@ -324,11 +288,25 @@ namespace Cozmo {
   
   // UI device server port which listens for basestation/game clients
   const u32 UI_MESSAGE_SERVER_LISTEN_PORT = 5200;
-  
-  
-  
+
   // Number of frames to skip when streaming images to basestation
   const u8 IMG_STREAM_SKIP_FRAMES = 2;
+
+  // Default robot ID
+  // Do not change this! It affects which ports are binded to.
+  const u32 DEFAULT_ROBOT_ID = 0;
+  
+  //
+  // Local (unix-domain) socket paths.
+  // RobotID will be appended to generate unique paths for each robot.
+  //
+  #ifdef SIMULATOR
+  constexpr char ROBOT_SERVER_PATH[]  = "/tmp/_robot_server_";
+  constexpr char ANIM_CLIENT_PATH[]   = "/tmp/_anim_client_";
+  #else
+  constexpr char ROBOT_SERVER_PATH[]  = "/dev/socket/_robot_server_";
+  constexpr char ANIM_CLIENT_PATH[]   = "/dev/socket/_anim_client_";
+  #endif
   
 } // namespace Cozmo
 } // namespace Anki

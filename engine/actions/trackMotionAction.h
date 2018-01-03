@@ -26,7 +26,7 @@ class TrackMotionAction : public ITrackAction
 {
 public:
   
-  TrackMotionAction(Robot& robot) : ITrackAction(robot, "TrackMotion", RobotActionType::TRACK_MOTION) { }
+  TrackMotionAction() : ITrackAction("TrackMotion", RobotActionType::TRACK_MOTION) { }
   
 protected:
   

@@ -39,13 +39,11 @@ CozmoVizDisplay {
 }
 WebotsKeyboardController{
   
-  # To connect to a V2 Cozmo, uncomment both of these fields and 
-  # update to the IP address of the robot.
-  # forcedRobotIP "192.168.X.X"
+  # To connect to a physical Victor, uncomment and 
+  # update to the IP address of the engine.
   # engineIP      "192.168.X.X"
   
   redirectViz            TRUE
-  forcedRobotIsSimulated FALSE
   doAutoBlockpool        FALSE
   #filterLogs             TRUE
 }

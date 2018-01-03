@@ -1,6 +1,10 @@
 (function(){
   'use strict';
 
+  // Prevent duplicate featured project tile clicks.
+  // Could expand to use for all project tiles if desired.
+  var featuredProjectTileClicked = false;
+
   // register onload and body click events
   registerEvents();
 
@@ -27,6 +31,19 @@
     setText('#horizontal-tab-hero .tab-hero-detail', $t('codeLab.projects.horizontalTab.horizontalTabHeroDetail'));
 
     setText('#vertical-tab-hero .tab-hero-title', $t('codeLab.projects.verticalTab.verticalTabHeroTitle'));
+
+    var locale = window.getUrlVars()['locale'];
+    if (locale == "de-DE") {
+      // Hack to reduce sandbox and constructor tabs' hero title size due to long German strings.
+      //
+      // TODO Dynamically detect if text is too long and reduce font size if so.
+      var verticalElem = document.getElementById("vertical-tab-hero-title");
+      verticalElem.style.fontSize = ".8em";
+      
+      var horizontalElem = document.getElementById("horizontal-tab-hero-title");
+      horizontalElem.style.fontSize = ".8em";
+    }
+
     setText('#vertical-tab-hero .tab-hero-detail', $t('codeLab.projects.verticalTab.verticalTabHeroDetail'));
 
     setText('#featured-tab-hero .tab-hero-title', $t('codeLab.projects.featuredTab.featuredTabHeroTitle'));
@@ -91,9 +108,13 @@
         handleSampleProjectClick(typeElem.dataset.uuid);
         break;
       case 'load-featured-project':
-        // we play the click sound before calling unity to make sure sound plays on android
-        playClickSound = false;
-        handleFeaturedProjectClick(typeElem.dataset.uuid);
+        if (!featuredProjectTileClicked) {
+          featuredProjectTileClicked = true;
+
+          // we play the click sound before calling unity to make sure sound plays on android
+          playClickSound = false;
+          handleFeaturedProjectClick(typeElem.dataset.uuid);
+        }
         break;
       case 'load-user-project':
         // we play click the sound before calling unity to make sure sound plays on android
@@ -160,6 +181,9 @@
     if (tabElem.classList.contains('tab-selected')) {
       return;
     } else {
+      // clear out old projects to prevent flashes of old and new cards together
+      clearProjects();
+
       // update selected state of tabs
       var oldSelected = tabElem.parentNode.querySelector('.tab-selected');
       if (oldSelected) {
@@ -221,8 +245,8 @@
       prompt: '',
       cancelButtonLabel: $t('codeLab.projects.confirmQuit.cancelButton.labelText'),
       confirmButtonLabel: $t('codeLab.projects.confirmQuit.confirmButton.labelText'),
-      reverseButtons: true,
       confirmCallback: function(result) {
+        window.player.play('click');
         if (result) {
           CozmoAPI.closeCodeLab();
         }
@@ -381,7 +405,7 @@
       // render user projects and add them to UI
       if (Array.isArray(userProjects)) {
         for(i = 0; i < userProjects.length; i++) {
-          card = makeUserProjectCard(userProjects[i], i);
+          card = makeUserProjectCard(userProjects[i], i, projectTabName);
           projectList.appendChild(card);
         }
       }
@@ -389,7 +413,7 @@
       // render sample projects and add them to the UI
       if (Array.isArray(sampleProjects)) {
         for(i = 0; i < sampleProjects.length; i++) {
-          card = makeSampleProjectCard(sampleProjects[i]);
+          card = makeSampleProjectCard(sampleProjects[i], projectTabName);
           projectList.appendChild(card);
         }
       } else {
@@ -406,12 +430,14 @@
   /**
    * Creates DOM elements for a card representing a sample project
    * @param {Object} projectData - fields about the project
+   * @param {String} tabName - name of the tab the sample proejct is for ('horizontal' or 'vertical')
    * @returns {HTMLElement} returns unattached DOM element for sample project card
    */
-  function makeSampleProjectCard(projectData) {
+  function makeSampleProjectCard(projectData, tabName) {
     // clone the sample project card prototype
     var project = document.querySelector('#prototype-sample-project').cloneNode(true);
     project.removeAttribute('id');
+    project.classList.add(tabName);
 
     // add the project data to the element
     setProjectData(project, projectData);
@@ -430,7 +456,12 @@
     // add a style to color the puzzle piece SVG after it loads
     var block = project.querySelector('.block');
     var type = getBlockIconColor(icon);
-    block.setAttribute('src', 'images/icon_block_' + type + '.svg');
+    if (tabName === 'vertical') {
+      block.setAttribute('src', 'images/icon_bars_' + type + '.svg');
+    } else {
+      block.setAttribute('src', 'images/icon_block_' + type + '.svg');
+    }
+
     block.addEventListener('load', function(elem) {
       project.style.visibility = 'visible';
 
@@ -448,12 +479,14 @@
    * Creates DOM elements for a card representing a user project
    * @param {Object} projectData - fields about the project
    * @param {Number} order - the position in personal cards this card appears (used for coloring)
+   * @param {String} tabName - name of the tab the sample proejct is for ('horizontal' or 'vertical')
    * @returns {HTMLElement} returns unattached DOM element for peronal project card
    */
-  function makeUserProjectCard(projectData, order) {
+  function makeUserProjectCard(projectData, order, tabName) {
     // clone the user project prototype
     var project = document.querySelector('#prototype-user-project').cloneNode(true);
     project.removeAttribute('id');
+    project.classList.add(tabName);
 
     // add the project data to the element
     setProjectData(project, projectData);
@@ -503,12 +536,15 @@
     var projectsUI = document.querySelector('#projects');
 
     // set color of puzzle pieces on background card based on order position
-    var cardUrl = 'images/framing_card' + projectData.FeaturedProjectImageName + '_feat.svg';
+    var cardUrl = 'images/featured/framing_card' + projectData.FeaturedProjectImageName + '_feat.png';
     var card = project.querySelector('.project-card');
     card.setAttribute('src', cardUrl);
     card.addEventListener('load', function(){
       // show the card once the background has loaded
       project.style.display = 'inline-block';
+
+      // if title is unusually large, add a class to reduce the font
+      _shrinkLongProjectTitle(description, project);
 
       // show the entire Projects UI when the first featured project is ready to be shown
       projectsUI.style.visibility = 'visible';
@@ -525,7 +561,9 @@
    * @returns {void}
    */
   function _shrinkLongProjectTitle(titleElem, projectElem) {
-    var approxTitleAreaHeight = (parseInt(projectElem.clientHeight, 10) / 3);
+    // title is approximately 30% of the entire project container
+    var approxTitleAreaHeight = parseInt(projectElem.clientHeight, 10) * 0.3;
+
     if (titleElem.clientHeight > approxTitleAreaHeight) {
       // title exceedes the size given so apply class to reduce the font size
       titleElem.classList.add('long-title');

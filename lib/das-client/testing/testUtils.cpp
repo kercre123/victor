@@ -13,6 +13,7 @@
 #include "testUtils.h"
 #include <stdio.h>
 #include <string.h>
+#include <fstream>
 
 int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
 {
@@ -53,4 +54,11 @@ int write_string_to_file(const char* fpath, const char* data)
   }
   rv = fclose(f) | rv; f = (FILE *) 0;
   return rv;
+}
+
+void copy_file(std::string source, std::string destination)
+{
+  std::ifstream src(source);
+  std::ofstream dst(destination);
+  dst << src.rdbuf();
 }

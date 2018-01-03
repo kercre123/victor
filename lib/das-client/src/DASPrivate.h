@@ -21,6 +21,11 @@ namespace Anki {
 namespace Das {
 class DasGameLogAppender;
 using ThreadId_t = std::uint32_t;
+static const size_t kDefaultMaxLogLength = 100 * 1024;
+static const size_t kDasDefaultMaxLogFiles = 400;
+// This is the max in order to fit within amazon SQS limit, which is 256000 bytes
+// We need to stay within ~185K in order for the base64 encoded size to fit within the limit
+static constexpr size_t kDasMaxAllowableLogLength = 185 * 1024;
 } // namespace DAS
 } // namespace Anki
 

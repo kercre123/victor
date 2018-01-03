@@ -17,7 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -43,7 +43,7 @@ AnonymousBehaviorFactory::~AnonymousBehaviorFactory()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr AnonymousBehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Json::Value& parameters)
 {
-  ICozmoBehavior::InjectBehaviorClassAndIDIntoConfig(behaviorType, BehaviorID::Anonymous, parameters);
+  ICozmoBehavior::InjectBehaviorClassAndIDIntoConfig(behaviorType, BEHAVIOR_ID(Anonymous), parameters);
   return _behaviorContainer.CreateAnonymousBehavior(behaviorType, parameters);
 }
 

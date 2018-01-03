@@ -75,7 +75,7 @@ public:
   Util::Locale *                        GetLocale() const { return _locale.get(); }
   Util::RandomGenerator*                GetRandom() const { return _random.get(); }
   RobotDataLoader*                      GetDataLoader() const { return _dataLoader.get(); }
-  Audio::CozmoAudioController*         GetAudioController() const; // Can return nullptr
+  Audio::CozmoAudioController*          GetAudioController() const; // Can return nullptr
   AudioMultiplexer*                     GetAudioMultiplexer() const { return _audioMux.get(); }
   MicData::MicDataProcessor*            GetMicDataProcessor() const { return _micDataProcessor.get(); }
   

@@ -20,17 +20,34 @@
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/math.h"
 #include "util/random/randomGenerator.h"
 
+using SayTextVoiceStyle = Anki::Cozmo::SayTextVoiceStyle;
 
 #define DEBUG_SAYTEXT_ACTION 0
+
 // Max duration of generated animation
 //const float kMaxAnimationDuration_ms = 60000;  // 1 min
 
+#ifdef notdef
+// Is this a valid voice style?
+static bool IsValidVoiceStyle(SayTextVoiceStyle style) {
+  switch (style) {
+    case SayTextVoiceStyle::Unprocessed:
+    case SayTextVoiceStyle::CozmoProcessing_Name:
+    case SayTextVoiceStyle::CozmoProcessing_Name_Question:
+    case SayTextVoiceStyle::CozmoProcessing_Sentence:
+      return true;
+    case SayTextVoiceStyle::Count:
+      return false;
+  }
+  return false;
+}
+#endif
 
 namespace Anki {
 namespace Cozmo {
@@ -97,13 +114,11 @@ bool SayTextAction::LoadMetadata(Util::Data::DataPlatform& dataPlatform)
  
 // Public Methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SayTextAction::SayTextAction(Robot& robot,
-                             const std::string& text,
+SayTextAction::SayTextAction(const std::string& text,
                              const SayTextVoiceStyle style,
                              const float durationScalar,
                              const float voicePitch)
-: IAction(robot,
-          "SayText",
+: IAction("SayText",
           RobotActionType::SAY_TEXT,
           (u8)AnimTrackFlag::NO_TRACKS)
 , _text(text)
@@ -125,46 +140,16 @@ SayTextAction::SayTextAction(Robot& robot,
 } // SayTextAction()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTextIntent intent)
-: IAction(robot,
-          "SayText",
+SayTextAction::SayTextAction(const std::string& text, const SayTextIntent intent)
+: IAction("SayText",
           RobotActionType::SAY_TEXT,
           (u8)AnimTrackFlag::NO_TRACKS)
 , _text(text)
+, _intent(intent)
 //, _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
 // , _animation("SayTextAnimation") // TODO: SayTextAction is broken (VIC-360)
 {
-  // Get metadata
-  const auto it = _intentConfigs.find( intent );
-  if ( it != _intentConfigs.end() ) {
-    // Set intent values
-    const SayTextIntentConfig& config = it->second;
-    
-    // Set audio processing style type
-    _style = config.style;
-    
-    // Get Duration val
-    const SayTextIntentConfig::ConfigTrait& durationTrait = config.FindDurationTraitTextLength(Util::numeric_cast<uint>(text.length()));
-    _durationScalar = durationTrait.GetDuration( robot.GetRNG() );
-    
-    // Get Pitch val
-    const SayTextIntentConfig::ConfigTrait& pitchTrait = config.FindPitchTraitTextLength(Util::numeric_cast<uint>(text.length()));
-    _voicePitch = pitchTrait.GetDuration( robot.GetRNG() );
-  }
-  else {
-    PRINT_NAMED_ERROR("SayTextAction.CanNotFind.SayTextIntentConfig", "%s", EnumToString(intent));
-  }
-  
-  PRINT_CH_INFO(kLocalLogChannel,
-                "SayTextAction.InitWithIntent",
-                "Text '%s' Intent '%s' Style '%s' DurScalar %f Pitch %f",
-                Util::HidePersonallyIdentifiableInfo(_text.c_str()),
-                EnumToString(intent),
-                EnumToString(_style),
-                _durationScalar,
-                _voicePitch);
-  
-  GenerateTtsAudio();
+
 } // SayTextAction()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -178,6 +163,44 @@ SayTextAction::~SayTextAction()
     _playAnimationAction->PrepForCompletion();
   }
 } // ~SayTextAction()
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SayTextAction::OnRobotSet()
+{
+  // Get metadata
+  const auto it = _intentConfigs.find( _intent );
+  if ( it != _intentConfigs.end() ) {
+    // Set intent values
+    const SayTextIntentConfig& config = it->second;
+    
+    // Set audio processing style type
+    _style = config.style;
+    
+    // Get Duration val
+    const SayTextIntentConfig::ConfigTrait& durationTrait = config.FindDurationTraitTextLength(Util::numeric_cast<uint>(_text.length()));
+    _durationScalar = durationTrait.GetDuration( GetRobot().GetRNG() );
+    
+    // Get Pitch val
+    const SayTextIntentConfig::ConfigTrait& pitchTrait = config.FindPitchTraitTextLength(Util::numeric_cast<uint>(_text.length()));
+    _voicePitch = pitchTrait.GetDuration( GetRobot().GetRNG() );
+  }
+  else {
+    PRINT_NAMED_ERROR("SayTextAction.RobotSet.CanNotFind.SayTextIntentConfig", "%s", EnumToString(_intent));
+  }
+  
+  PRINT_CH_INFO(kLocalLogChannel,
+                "SayTextAction.RobotSet",
+                "Text '%s' Intent '%s' Style '%s' DurScalar %f Pitch %f",
+                Util::HidePersonallyIdentifiableInfo(_text.c_str()),
+                EnumToString(_intent),
+                EnumToString(_style),
+                _durationScalar,
+                _voicePitch);
+  
+  GenerateTtsAudio();
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SayTextAction::SetAnimationTrigger(AnimationTrigger trigger, u8 ignoreTracks)
@@ -203,7 +226,7 @@ ActionResult SayTextAction::Init()
       }
       return ActionResult::RUNNING;
     }
-      break;
+    break;
       
     case TextToSpeechComponent::AudioCreationState::Ready:
     {
@@ -265,11 +288,12 @@ ActionResult SayTextAction::Init()
         }
         else {
           // Use current animation trigger
-          _playAnimationAction.reset(new TriggerLiftSafeAnimationAction(_robot,
+          _playAnimationAction.reset(new TriggerLiftSafeAnimationAction(
                                                                         _animationTrigger,
                                                                         1,
                                                                         true,
                                                                         _ignoreAnimTracks));
+          _playAnimationAction->SetRobot(&GetRobot());
         }
       }
       
@@ -286,7 +310,11 @@ ActionResult SayTextAction::Init()
                  "SayTextAction.Init.processingStateMap.InvalidSize");
       
       const auto it = processingStateMap.find(_style);
-      DEV_ASSERT(it != processingStateMap.end(), "SayTextAction.Init.processingStateMap.StyleNotFound");
+      if (it == processingStateMap.end()) {
+        PRINT_NAMED_ERROR("SayTextAction.Init.InvalidStyle", "Invalid voice style %u", (unsigned) _style);
+        return ActionResult::ABORT;
+      }
+
       const SwitchState::GenericSwitch processingState = static_cast<const SwitchState::GenericSwitch>( it->second );
       // Set voice Pitch
       // Set Cozmo Says Switch State
@@ -303,7 +331,7 @@ ActionResult SayTextAction::Init()
       
       return ActionResult::SUCCESS;
     }
-      break;
+    break;
       
     case TextToSpeechComponent::AudioCreationState::None:
     {
@@ -313,7 +341,7 @@ ActionResult SayTextAction::Init()
       }
       return ActionResult::ABORT;
     }
-      break;
+    break;
   }
   #endif
   return ActionResult::SUCCESS;
@@ -343,11 +371,17 @@ void SayTextAction::GenerateTtsAudio()
   #ifdef notdef
   // Be careful with putting text in the action name because it could be a player name, which is PII
   SetName(std::string("SayText_") + Util::HidePersonallyIdentifiableInfo(_text.c_str()));
-  
+
+  if (!IsValidVoiceStyle(_style)) {
+    PRINT_NAMED_ERROR("SayTextAction.GenerateTtsAudio.InvalidStyle", "%u is not a valid voice style", (unsigned) _style);
+    _ttsOperationId = TextToSpeechComponent::kInvalidOperationId;
+    return;
+  }
+
   // Create speech data
   _ttsOperationId = _robot.GetTextToSpeechComponent().CreateSpeech(_text, _style, _durationScalar);
   if (TextToSpeechComponent::kInvalidOperationId == _ttsOperationId) {
-    PRINT_NAMED_ERROR("SayTextAction.SayTextAction.CreateSpeech", "SpeechState is None");
+    PRINT_NAMED_ERROR("SayTextAction.GenerateTtsAudio.CreateSpeech", "SpeechState is None");
   }
   #endif
 } // GenerateTtsAudio()

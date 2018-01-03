@@ -13,7 +13,7 @@
 #ifndef COZMO_BEHAVIOR_SYSTEM_MANAGER_H
 #define COZMO_BEHAVIOR_SYSTEM_MANAGER_H
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
@@ -31,6 +31,7 @@ namespace Cozmo {
 // Forward declarations
 class BehaviorExternalInterface;
 class IBehavior;
+class Robot;
 
 struct BehaviorRunningInfo;
 
@@ -45,7 +46,8 @@ public:
   virtual ~BehaviorSystemManager();
   
   // initialize this behavior manager from the given Json config
-  Result InitConfiguration(IBehavior* baseBehavior,
+  Result InitConfiguration(Robot& robot,
+                           IBehavior* baseBehavior,
                            BehaviorExternalInterface& behaviorExternalInterface,
                            AsyncMessageGateComponent* asyncMessageComponent);
   

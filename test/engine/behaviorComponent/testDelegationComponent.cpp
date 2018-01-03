@@ -16,17 +16,17 @@
 #define protected public
 
 #include "engine/actions/basicActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/robotDataLoader.h"
 #include "engine/robot.h"
+#include "engine/robotDataLoader.h"
 #include "gtest/gtest.h"
 
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
@@ -92,7 +92,7 @@ TEST(DelegationComponent, TestDelegationVariants)
   
   // Delegate an arbitrarily large number of times to cozmoBehaviors
   {
-    Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+    Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BEHAVIOR_CLASS(Wait), BEHAVIOR_ID(Wait));
     for(int i = 0; i < arbitraryDelegationNumber; i++){
       bunchOfCozmoBehaviors.push_back(std::make_unique<TestBehavior>(empty));
       auto& toDelegate = bunchOfCozmoBehaviors.back();
@@ -143,7 +143,7 @@ TEST(DelegationComponent, TestDelegationVariants)
   
   // Delegate to an action
   {
-    DriveStraightAction* action = new DriveStraightAction(testFramework.GetRobot(), 0);
+    DriveStraightAction* action = new DriveStraightAction(0);
     ASSERT_TRUE(delegationComp.HasDelegator(behaviorDelegating));
     auto& delegatorComp = delegationComp.GetDelegator(behaviorDelegating);
     EXPECT_TRUE(delegatorComp.Delegate(behaviorDelegating,
@@ -169,7 +169,7 @@ TEST(DelegationComponent, TestDelegationVariants)
   bunchOfBehaviors.pop_back();
   // Delegate to an action and cancel it
   {
-    DriveStraightAction* action = new DriveStraightAction(testFramework.GetRobot(), 0);
+    DriveStraightAction* action = new DriveStraightAction(0);
     ASSERT_TRUE(delegationComp.HasDelegator(bunchOfBehaviors.back().get()));
     auto& delegatorComp = delegationComp.GetDelegator(bunchOfBehaviors.back().get());
     EXPECT_TRUE(delegatorComp.Delegate(bunchOfBehaviors.back().get(),

@@ -14,9 +14,9 @@
 #include "engine/robot.h"
 #include "engine/viz/vizManager.h"
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/quad.h"
-#include "anki/common/basestation/math/polygon_impl.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -55,8 +55,8 @@ EContentTypePackedType ConvertContentArrayToFlags(const MemoryMapTypes::FullCont
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // MemoryMap
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MemoryMap::MemoryMap(VizManager* vizManager, Robot* robot)
-: _quadTree(vizManager, robot, MemoryMapData(EContentType::Unknown, robot->GetLastMsgTimestamp()))
+MemoryMap::MemoryMap(VizManager* vizManager)
+: _quadTree(vizManager, MemoryMapData(EContentType::Unknown, 0.f))
 {
 }
 
@@ -93,7 +93,7 @@ void MemoryMap::TransformContent(const Poly2f& poly, NodeTransformFunction trans
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output)
+void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const
 {
   _quadTree.GetProcessor().FindIf(pred, output);
 }
@@ -162,27 +162,15 @@ bool MemoryMap::HasContentType(EContentType type) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::DrawDebugProcessorInfo(size_t mapIdxHint) const
+void MemoryMap::DrawDebugProcessorInfo() const
 {
-  _quadTree.DrawDebugProcessorInfo(mapIdxHint);
+  _quadTree.GetProcessor().Draw();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MemoryMap::ClearDraw() const
 {
   _quadTree.ClearDraw();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::Broadcast(uint32_t originID) const
-{
-  _quadTree.Broadcast(originID);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) const
-{
-  _quadTree.BroadcastMemoryMapDraw(originID, mapIdxHint);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -6,7 +6,7 @@
 #include "velocityProfileGenerator.h"
 
 #include "anki/common/constantsAndMacros.h"
-#include "anki/common/shared/radians.h"
+#include "coretech/common/shared/radians.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
 
@@ -25,6 +25,10 @@
 namespace Anki {
   namespace Cozmo {
     namespace LiftController {
+
+      // Internal function declarations
+      void EnableInternal();
+      void DisableInternal(bool autoReEnable = false);
 
       
       // Returns the angle between the shoulder joint and the wrist joint.
@@ -153,6 +157,11 @@ namespace Anki {
         // Whether or not to command anything to motor
         bool enable_ = false;
         
+        // Whether or not motor was enabled via Enable()
+        // which is used to determine if it should be automatically
+        // re-enabled after it leaves the charger.
+        bool enabledExternally_ = false;
+
         // If disabled, lift motor is automatically re-enabled at this time if non-zero.
         u32 enableAtTime_ms_ = 0;
         
@@ -172,10 +181,6 @@ namespace Anki {
         void (*checkForLoadCallback_)(bool) = NULL;
         const u32 CHECKING_FOR_LOAD_TIMEOUT_MS = 500;
         const f32 CHECKING_FOR_LOAD_ANGLE_DIFF_THRESH = DEG_TO_RAD_F32(1.f);
-        
-#if DISABLE_MOTORS_ON_CHARGER
-        bool wasOnCharger_ = false;
-#endif
 
       } // "private" members
 
@@ -187,7 +192,7 @@ namespace Anki {
       }
 
 
-      void Enable()
+      void EnableInternal()
       {
         if (!enable_) {
           enable_ = true;
@@ -202,7 +207,13 @@ namespace Anki {
         }
       }
 
-      void Disable(bool autoReEnable)
+      void Enable()
+      {
+        enabledExternally_ = true;
+        EnableInternal();
+      }
+
+      void DisableInternal(bool autoReEnable)
       {
         if (enable_) {
           enable_ = false;
@@ -223,6 +234,12 @@ namespace Anki {
         }
       }
 
+      void Disable(bool autoReEnable)
+      {
+        enabledExternally_ = false;
+        DisableInternal(autoReEnable);
+      }
+
 
       void ResetAnglePosition(f32 currAngle)
       {
@@ -238,7 +255,10 @@ namespace Anki {
 
       void StartCalibrationRoutine(bool autoStarted)
       {
-        Enable();
+        // Starting calibration effectively re-enables lift motor even if
+        // it was previously disabled external to this file.
+        // Hence we call Enable() here instead of EnableInternal().
+        Enable();  
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
         potentialBurnoutStartTime_ms_ = 0;
@@ -395,6 +415,15 @@ namespace Anki {
                                      const f32 accel_rad_per_sec2,
                                      bool useVPG)
       {
+#if DISABLE_MOTORS_ON_CHARGER
+        // If a lift motion is commanded while the robot is on charger,
+        // re-enable the motor as long as it wasn't disabled external to
+        // this file (e.g. via EnableMotorPower msg).
+        if (HAL::BatteryIsOnCharger() && enabledExternally_) {
+          EnableInternal();
+        }
+#endif
+
         if (!enable_ || bracing_) {
           return;
         }
@@ -540,7 +569,7 @@ namespace Anki {
           if (IsInPosition() || IMUFilter::IsPickedUp() || ProxSensors::IsAnyCliffDetected()) {
             // Stop messing with the lift! Going limp until you do!
             Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_LIFT, false);
-            Disable(true);
+            DisableInternal(true);
           } else {
             // Burnout protection triggered. Recalibrating.
             StartCalibrationRoutine(true);
@@ -552,13 +581,16 @@ namespace Anki {
       }
       
       void Brace() {
+        EnableInternal();
         SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_ACCEL_RAD_PER_S2);
         bracing_ = true;
       }
       
       void Unbrace() {
         bracing_ = false;
-        Enable();
+        if (enabledExternally_) {
+          EnableInternal();
+        }
       }
       
       Result Update()
@@ -571,12 +603,14 @@ namespace Anki {
         PoseAndSpeedFilterUpdate();
 
 #if DISABLE_MOTORS_ON_CHARGER
-        if (!wasOnCharger_ && HAL::BatteryIsOnCharger()) {
-          wasOnCharger_ = true;
-          Disable();
-        } else if (wasOnCharger_ && !HAL::BatteryIsOnCharger()) {
-          wasOnCharger_ = false;
-          Enable();
+        if (inPosition_ && HAL::BatteryIsOnCharger()) {
+          // Disables motor if robot placed on charger and it's
+          // not currently moving to a target angle.
+          DisableInternal();
+        } else if (enabledExternally_) {
+          // Otherwise re-enables lift if it wasn't disabled external
+          // to this file (e.g. via EnableMotorPower msg).
+          EnableInternal();
         }
 #endif
 
@@ -592,7 +626,7 @@ namespace Anki {
             return RESULT_OK;
           } else if (currTime >= enableAtTime_ms_) {
             Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_LIFT, true);
-            Enable();
+            EnableInternal();
           } else {
             return RESULT_OK;
           }
@@ -607,7 +641,7 @@ namespace Anki {
         }
 
         if (bracing_ && IsInPosition()) {
-          Disable();
+          DisableInternal();
           return RESULT_OK;
         }
 

@@ -16,20 +16,14 @@
 #ifndef __Anki_Cozmo_AnimationStreamer_H__
 #define __Anki_Cozmo_AnimationStreamer_H__
 
-#include "anki/common/types.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/vision/engine/image.h"
 #include "cozmoAnim/animation/animation.h"
 #include "cozmoAnim/animation/track.h"
 #include "clad/types/liveIdleAnimationParameters.h"
 
 #include <list>
 #include <memory>
-
-#ifndef SIMULATOR
-// TODO: Once DMA is fixed to make face write operations faster, this may not be necessary
-#define DRAW_FACE_IN_THREAD
-#include <future>
-#endif
 
 namespace Anki {
 namespace Cozmo {
@@ -63,27 +57,19 @@ namespace Cozmo {
     
     // Sets an animation to be streamed and how many times to stream it.
     // Use numLoops = 0 to play the animation indefinitely.
-    // Returns a tag you can use to monitor whether the robot is done playing this
-    // animation.
+    //
     // If interruptRunning == true, any currently-streaming animation will be aborted.
     // Actual streaming occurs on calls to Update().
+    // 
+    // If name == "" or anim == nullptr, it is equivalent to calling Abort()
+    // if there is an animation currently playing, or no-op if there's no
+    // animation playing
     Result SetStreamingAnimation(const std::string& name,
                                  Tag tag,
                                  u32 numLoops = 1,
                                  bool interruptRunning = true);
     
-    Result SetStreamingAnimation(Animation* anim,
-                                 Tag tag,
-                                 u32 numLoops = 1,
-                                 bool interruptRunning = true);
-    
-    Result SetStreamingAnimation(u32 animID,
-                                 Tag tag,
-                                 u32 numLoops = 1,
-                                 bool interruptRunning = true);
-    
-    Result SetProceduralFace(const ProceduralFace& face, u32 duration_ms);
-    
+    Result SetProceduralFace(const ProceduralFace& face, u32 duration_ms);    
 
     void Process_displayFaceImageChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageBinaryChunk& msg);
     void Process_displayFaceImageChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageRGBChunk& msg);
@@ -93,6 +79,9 @@ namespace Cozmo {
     
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update();
+
+    // Stop currently running animation
+    void Abort();
     
     const std::string GetStreamingAnimationName() const;
     const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
@@ -118,6 +107,12 @@ namespace Cozmo {
     
   private:
     
+    Result SetStreamingAnimation(Animation* anim,
+                                 Tag tag,
+                                 u32 numLoops = 1,
+                                 bool interruptRunning = true,
+                                 bool isInternalAnim = true);
+
     // Initialize the streaming of an animation with a given tag
     // (This will call anim->Init())
     Result InitStream(Animation* anim, Tag withTag);
@@ -128,8 +123,13 @@ namespace Cozmo {
     // This performs the test cases for the animation while loop
     bool ShouldProcessAnimationFrame( Animation* anim, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
     
+    // Sends the start of animation message to engine
     Result SendStartOfAnimation();
-    Result SendEndOfAnimation();
+
+    // Sends the end of animation message to engine if the
+    // number of commanded loops of the animation has completed.
+    // If abortingAnim == true, then the message is sent even if all loops were not completed.
+    Result SendEndOfAnimation(bool abortingAnim = false);
     
     // Enables/Disables the backpack lights animation layer on the robot
     // if it hasn't already been enabled/disabled
@@ -137,10 +137,6 @@ namespace Cozmo {
     
     // Check whether the animation is done
     bool IsFinished(Animation* anim) const;
-    
-    // If we are currently streaming, kill it, and make sure not to leave a
-    // random face displayed (stream last face keyframe)
-    void Abort();
     
     void StopTracks(const u8 whichTracks);
     
@@ -151,8 +147,6 @@ namespace Cozmo {
       // a head animation while driving a path.
       StopTracks(_tracksInUse);
     }
-
-    
     
     const CozmoAnimContext* _context = nullptr;
     
@@ -163,14 +157,10 @@ namespace Cozmo {
     Animation*  _neutralFaceAnimation = nullptr;
     Animation*  _proceduralAnimation = nullptr; // for creating animations "live" or dynamically
 
-    std::string _lastPlayedAnimationId;
-
-    u32 _streamingAnimID;
-    
     std::unique_ptr<TrackLayerComponent>  _trackLayerComponent;
     
     void BufferFaceToSend(const ProceduralFace& procFace);
-    void BufferFaceToSend(const Vision::ImageRGB565& image);
+    void BufferFaceToSend(Vision::ImageRGB565& image, bool allowOverlay = true);
     
     // Used to stream _just_ the stuff left in the various layers (all procedural stuff)
     Result StreamLayers();
@@ -185,6 +175,10 @@ namespace Cozmo {
     bool _wasAnimationInterruptedWithNothing = false;
     
     bool _backpackAnimationLayerEnabled = false;
+
+    // Whether or not the streaming animation was commanded internally
+    // from within this class (as opposed to by an engine message)
+    bool _playingInternalAnim = false;
     
     // When this animation started playing (was initialized) in milliseconds, in
     // "real" basestation time
@@ -261,13 +255,6 @@ namespace Cozmo {
         
     // Tic counter for sending animState message
     u32           _numTicsToSendAnimState            = 0;
-    
-#ifdef DRAW_FACE_IN_THREAD
-    std::future<void> _faceDrawFuture;
-    double            _lastDrawTime_ms = 0;
-#endif    
-      
-    std::array<u8, 256> _gammaLUT;
 
   }; // class AnimationStreamer
   

@@ -183,8 +183,8 @@ See [simulator/README.md](simulator/README.md).
 
 Most developers shouldn't have to do this. Better to ask someone in hardware or Al or Kevin Y.
 
-1. To build syscon, run `vmake.sh` in `robot2/`. 
+1. To build syscon, run `vmake.sh` in `robot/`. 
 
 1. If the robot has previously run the robot process since last boot then you'll need to first reboot the robot. 
 
-1. Run `dfu.sh` in `robot2/`. There should be a bunch of messages indicating transfer of data. Might need to run twice.
+1. Run `dfu.sh` in `robot/`. There should be a bunch of messages indicating transfer of data. Might need to run twice.

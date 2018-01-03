@@ -51,7 +51,7 @@ namespace {
   const float kBaselineRestartMaxStdevFactor = 3.5f;
   
   // the number of standard deviations to consider sensor readings as "noise"
-  const float kNoiseBandStdevFactor = 2.25f;
+  const float kTouchDetectStdevFactor = 1.5f;
 
   // max allowable buffer standard deviation when we accumulate
   // into the filtered standard deviation. If input stdev is too
@@ -77,6 +77,7 @@ TouchSensorComponent::TouchSensorComponent(Robot& robot)
                  kBaselineRestartMaxStdevFactor,
                  kBaselineMaxAllowableBufferStdev,
                  kBaselineMaxAllowStdevFactorForLowMean)
+, _touchDetectStdevFactor(kTouchDetectStdevFactor)
 , _touchGesture(TouchGesture::NoTouch)
 , _noContactCounter(0)
 {
@@ -101,7 +102,7 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
   } else {
     const auto normTouch = msg.backpackTouchSensorRaw-_baselineCalib.GetFilteredTouchMean();
     const bool isTouched = normTouch > 
-                            (kNoiseBandStdevFactor*_baselineCalib.GetFilteredTouchStdev());
+                            (_touchDetectStdevFactor*_baselineCalib.GetFilteredTouchStdev());
     if( _debouncer.ProcessRawPress(isTouched) ) {
       const bool debouncedButtonState = _debouncer.GetDebouncedPress();
       _robot.Broadcast(ExternalInterface::MessageEngineToGame(

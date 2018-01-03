@@ -315,6 +315,13 @@ enum int_32 AnimationTrigger
   NothingToDoBoredIdle,              // Cozmo doesn't have anything to do in freeplay - idling (not playing game sequence)
   NothingToDoBoredIntro,             // Cozmo doesn't have anything to do in freeplay - start of bored game sequence
   NothingToDoBoredOutro,             // Cozmo doesn't have anything to do in freeplay - end of bored game sequence
+
+  ObservingIdleEyesOnly,
+  ObservingIdleWithHeadLookingStraight,
+  ObservingIdleWithHeadLookingUp,
+  ObservingLookStraight,
+  ObservingLookUp,
+
   OnLearnedPlayerName,
   OnSawNewNamedFace,
   OnSawNewUnnamedFace,

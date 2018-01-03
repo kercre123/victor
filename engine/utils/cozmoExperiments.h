@@ -13,7 +13,7 @@
 #ifndef ANKI_COZMO_BASESTATION_COZMO_EXPERIMENTS_H
 #define ANKI_COZMO_BASESTATION_COZMO_EXPERIMENTS_H
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "clad/types/needsSystemTypes.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/utils/cozmoAudienceTags.h"
@@ -45,6 +45,9 @@ public:
   void WriteLabAssignmentsToRobot(const std::vector<Util::AnkiLab::AssignmentDef>& assignments);
   void ReadLabAssignmentsFromRobot(const u32 serialNumber);
 
+  void UpdateLabAssignments(const std::vector<Util::AnkiLab::AssignmentDef>& assignments);
+  void PossiblyWriteLabAssignmentsToRobot();
+
 private:
   bool RestoreLoadedActiveExperiments(const u8* data, const size_t size,
                                       const NVStorage::NVResult res, u32 serialNumber);
@@ -52,6 +55,8 @@ private:
   const CozmoContext* _context;
   Util::AnkiLab::AnkiLab _lab;
   CozmoAudienceTags _tags;
+  LabAssignments _loadedLabAssignments;
+  std::vector<Util::AnkiLab::AssignmentDef> _assignments;
 };
 
 }

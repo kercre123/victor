@@ -14,8 +14,8 @@
 #ifndef __Cozmo_Basestation_Components_AnimationComponent_H__
 #define __Cozmo_Basestation_Components_AnimationComponent_H__
 
-#include "anki/common/types.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/vision/engine/image.h"
 #include "anki/cozmo/shared/animationTag.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "engine/actions/actionInterface.h"
@@ -54,6 +54,12 @@ public:
   void Init();
   void Update();
   
+  typedef struct {
+    u32 length_ms;
+  } AnimationMetaInfo;
+
+  Result GetAnimationMetaInfo(const std::string& animName, AnimationMetaInfo& metaInfo) const;
+
   void DoleAvailableAnimations();
   
   // Returns true when the list of available animations has been received from animation process
@@ -61,7 +67,9 @@ public:
 
   using AnimationCompleteCallback = std::function<void(const AnimResult res)>;
   
-  const std::string& GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const;
+  // Set strictCooldown = true when we do NOT want to simply choose the animation closest
+  // to being off cooldown when all animations in the group are on cooldown
+  const std::string& GetAnimationNameFromGroup(const std::string& name, bool strictCooldown = false) const;
   
   // Tell animation process to play the specified animation
   // If a non-empty callback is specified, the actionTag of the calling action must be specified
@@ -92,9 +100,9 @@ public:
 
   u8   GetLockedTracks() const {return _lockedTracks; }
   
-  bool IsAnimating()       const { return _isAnimating; }
-  u32  GetPlayingAnimId()  const { return _currAnimId;  }
-  u8   GetPlayingAnimTag() const { return _currAnimTag; }
+  bool                IsAnimating()        const { return _isAnimating;  }
+  const std::string&  GetPlayingAnimName() const { return _currAnimName; }
+  u8                  GetPlayingAnimTag()  const { return _currAnimTag;  }
 
   // Accessors for latest animState values
   u32 GetAnimState_NumProcAnimFaceKeyframes() const { return _animState.numProcAnimFaceKeyframes; }   
@@ -106,25 +114,16 @@ public:
   void HandleMessage(const T& msg);
   
   // Robot message handlers
-  void HandleAnimationAvailable(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAnimStarted(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAnimEnded(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleEndOfMessage(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAnimationEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAnimState(const AnkiEvent<RobotInterface::RobotToEngine>& message);  
 
 private:
   
-  Result PlayAnimByID(const u32 animID,
-                      int numLoops = 1,
-                      bool interruptRunning = true,
-                      AnimationCompleteCallback callback = nullptr,
-                      const u32 actionTag = 0,
-                      float timeout_sec = _kDefaultTimeout_sec);
-  
   // Returns Tag if animation is playing.
   // Return NotAnimating otherwise.
-  Tag IsAnimPlaying(u32 animID);
+  Tag IsAnimPlaying(const std::string& animName);
   
   Tag GetNextTag() { return ++_tagCtr; }
 
@@ -138,8 +137,8 @@ private:
 
   AnimationGroupContainer&  _animationGroups;
   
-  // Map of animation names to IDs
-  std::unordered_map<std::string, u32> _animNameToID;
+  // Map of available canned animations to associated metainfo
+  std::unordered_map<std::string, AnimationMetaInfo> _availableAnims;
   
   bool _isDolingAnims;
   std::string _nextAnimToDole;
@@ -151,18 +150,18 @@ private:
   // For tracking whether or not an animation is playing based on
   // AnimStarted and AnimEnded messages
   bool          _isAnimating;
-  u32           _currAnimId;
-  AnimationTag  _currAnimTag;
+  std::string   _currAnimName;
+  Tag           _currAnimTag;
 
   // Latest state message received from anim process
-  RobotInterface::AnimationState _animState;
+  AnimationState _animState;
 
   struct AnimCallbackInfo {
-    AnimCallbackInfo(const u32 animID,
+    AnimCallbackInfo(const std::string animName,
                      const AnimationCompleteCallback& callback,
                      const u32 actionTag,
                      const float abortTime_sec)
-    : animID(animID)
+    : animName(animName)
     , callback(callback)
     , actionTag(actionTag)
     , abortTime_sec(abortTime_sec)
@@ -179,7 +178,7 @@ private:
       }
     }
     
-    const u32 animID;
+    const std::string animName;
     const AnimationCompleteCallback callback;
     const u32 actionTag;
     const float abortTime_sec;

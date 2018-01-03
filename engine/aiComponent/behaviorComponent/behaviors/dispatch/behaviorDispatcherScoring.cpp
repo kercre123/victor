@@ -14,7 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherScoring.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/helpers/behaviorScoringWrapper.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "json/json.h"
 
 namespace Anki {
@@ -45,7 +45,7 @@ BehaviorDispatcherScoring::BehaviorDispatcherScoring(const Json::Value& config)
       DEV_ASSERT_MSG(!scoringConfig.isNull(),
                      "ScoringBehaviorChooser.ReloadFromConfig.ScoringNotSpecified",
                      "Scoring Information Not Provided For %s",
-                     BehaviorIDToString(behaviorID));
+                     BehaviorTypesWrapper::BehaviorIDToString(behaviorID));
 
       _scoringTracker.push_back(BehaviorScoringWrapper(scoringConfig));
     }

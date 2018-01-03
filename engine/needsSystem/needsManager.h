@@ -14,8 +14,8 @@
 #ifndef __Cozmo_Basestation_NeedsSystem_NeedsManager_H__
 #define __Cozmo_Basestation_NeedsSystem_NeedsManager_H__
 
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/shared/types.h"
 #include "engine/needsSystem/needsConfig.h"
 #include "engine/needsSystem/needsState.h"
 #include "engine/needsSystem/localNotifications.h"
@@ -98,9 +98,10 @@ public:
   void SetTuningTestVariation(const std::string& variationKey,
                               const Util::AnkiLab::AssignmentStatus assignmentStatus);
 
-  static inline const std::string GetDecayConfigBaseFilename() { return "config/engine/needs_decay_config"; }
-  static inline const std::string GetConfigBaseFilename()      { return "config/engine/needs_config"; }
-  static inline const std::string GetLevelConfigBaseFilename() { return "config/engine/needs_level_config"; }
+  static inline const std::string GetDecayConfigBaseFilename()  { return "config/engine/needs_decay_config"; }
+  static inline const std::string GetConfigBaseFilename()       { return "config/engine/needs_config"; }
+  static inline const std::string GetLevelConfigBaseFilename()  { return "config/engine/needs_level_config"; }
+  static inline const std::string GetActionConfigBaseFilename() { return "config/engine/needs_action_config"; }
 
   static const char* kLogChannelName;
 
@@ -126,7 +127,8 @@ public:
 
 private:
 
-  void InitReset(const float currentTime_s, const u32 serialNumber);
+  void InitReset(const float currentTime_s, const u32 serialNumber,
+                 const bool onboardingSkipped = false);
   void InitInternal(const float currentTime_s);
 
   bool DeviceHasNeedsState(const std::string& filename);
@@ -146,7 +148,8 @@ private:
 
   void InitAfterReadFromRobotAttempt();
 
-  void AttemptActivateDecayExperiment(u32 robotSerialNumber);
+  void SetNeedsStateFromRobotNeedsState();
+
   void AttemptActivateTuningExperiment(u32 robotSerialNumber);
 
   void ApplyDecayAllNeeds(const bool connected);

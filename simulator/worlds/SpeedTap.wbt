@@ -37,7 +37,7 @@ LightCube {
 LightCube {
   translation 0.278767 -7.03049e-11 0.0219929
   rotation -1 -1.61852e-12 4.02852e-09 -3.67408e-06
-  ID 2
+  objectType "Block_LIGHTCUBE3"
 }
 BlockWorldComms {
   filterLogs TRUE

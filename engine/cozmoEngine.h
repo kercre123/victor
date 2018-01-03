@@ -28,7 +28,7 @@
 #define ANKI_COZMO_BASESTATION_COZMO_ENGINE_H
 
 #include "util/logging/multiFormattedLoggerProvider.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/vision/engine/image.h"
 #include "json/json.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -111,6 +111,13 @@ public:
 
   Util::AnkiLab::AssignmentStatus ActivateExperiment(const Util::AnkiLab::ActivateExperimentRequest& request,
                                                      std::string& outVariationKey);
+
+  void RegisterEngineTickPerformance(const float tickDuration_ms,
+                                     const float tickFrequency_ms,
+                                     const float sleepDurationIntended_ms,
+                                     const float sleepDurationActual_ms) const;
+
+  UiMessageHandler* GetUiMsgHandler() const { return _uiMsgHandler.get(); }
   
   // Handle various message types
   template<typename T>
@@ -130,11 +137,13 @@ protected:
   Anki::Cozmo::DasToSdkHandler                              _dasToSdkHandler;
   bool                                                      _isGamePaused = false;
   bool                                                      _hasRunFirstUpdate = false;
+  bool                                                      _uiWasConnected = false;
 
   virtual Result InitInternal();
   
   void SetEngineState(EngineState newState);
   
+  Result ConnectToRobotProcess();
   Result AddRobot(RobotID_t robotID);
   
   void UpdateLatencyInfo();

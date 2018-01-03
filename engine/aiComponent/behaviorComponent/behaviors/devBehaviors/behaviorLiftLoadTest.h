@@ -20,7 +20,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorLiftLoadTest_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorLiftLoadTest_H__
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
@@ -49,16 +49,17 @@ namespace Anki {
         void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
       private:
       
-        virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
       
-        virtual ICozmoBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-      
+        virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual bool ShouldCancelWhenInControl() const override { return false;}
+
         virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
         
         virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
         virtual void HandleWhileActivated(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
       
-        virtual void AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void AlwaysHandleInScope(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
       
         void PrintStats();
       
