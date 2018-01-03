@@ -213,7 +213,7 @@ void FaceDebugDraw::DrawStateInfo(const RobotState& state)
   if(drawState == DrawState::GeneralInfo)
   {
     const std::string ip       = OSState::getInstance()->GetIPAddress();
-    const std::string serialNo = std::to_string(OSState::getInstance()->GetSerialNumber());
+    const std::string serialNo = OSState::getInstance()->GetSerialNumberAsString();
     const std::string osNum    = std::to_string(OSState::getInstance()->GetOSBuildNumber());
 
     std::vector<std::string> text = {ip, serialNo, osNum};

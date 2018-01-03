@@ -79,16 +79,23 @@ public:
 
   u32 GetSerialNumber()
   {
-    if(_serialNum == 0)
+    const std::string& serialNum = GetSerialNumberAsString();
+    if(!serialNum.empty())
     {
-      std::string serialString = ExecCommand("getprop ro.serialno");
-      if(!serialString.empty())
-      {
-        _serialNum = static_cast<u32>(std::stoul(serialString, nullptr, 16));
-      }
+      return static_cast<u32>(std::stoul(serialNum, nullptr, 16));
     }
 
-    return _serialNum;
+    return 0;
+  }
+
+  const std::string& GetSerialNumberAsString()
+  {
+    if(_serialNumString == "")
+    {
+      _serialNumString = ExecCommand("getprop ro.serialno");
+    }
+
+    return _serialNumString;
   }
 
   u32 GetOSBuildNumber()
@@ -113,9 +120,9 @@ private:
   
   const uint32_t kNominalCPUFreq_kHz = 800000;
 
-  std::string _ipAddress = "";
-  u32 _serialNum = 0;
-  u32 _osBuildNum = 0;
+  std::string _ipAddress       = "";
+  std::string _serialNumString = "";
+  u32         _osBuildNum      = 0;
 
 }; // class OSState
   
