@@ -89,6 +89,10 @@ if (MACOSX)
     ${TENSORFLOW_LIBS}
   )
 
+  target_compile_definitions(cti_vision_test PRIVATE                                                       
+    TEST_DATA_PATH=${CMAKE_CURRENT_SOURCE_DIR}
+  )
+
   add_test(NAME cti_vision_test COMMAND cti_vision_test)
 
 endif()
