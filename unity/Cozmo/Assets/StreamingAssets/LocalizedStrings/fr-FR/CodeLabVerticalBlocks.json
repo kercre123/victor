@@ -73,7 +73,7 @@
     "translation" : "Inclinaison de Cozmo °"
   },
   "codeLabVertical.COZMO_ROLL" : {
-    "translation" : "Tangage de Cozmo (ennbsp°)"
+    "translation" : "Tangage de Cozmo (en °)"
   },
   "codeLabVertical.COZMO_YAW" : {
     "translation" : "Direction de Cozmo (en °)"
