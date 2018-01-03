@@ -56,8 +56,9 @@ static const BackpackLights kLightsOff = {
 
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorRockPaperScissors::BehaviorRockPaperScissors(const Json::Value& config)
-  : ICozmoBehavior(config)
+: ICozmoBehavior(config)
 {
   SubscribeToTags({ExternalInterface::MessageEngineToGameTag::RobotObservedGenericObject});
   
@@ -75,10 +76,12 @@ BehaviorRockPaperScissors::BehaviorRockPaperScissors(const Json::Value& config)
 # undef GET_FROM_CONFIG
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorRockPaperScissors::~BehaviorRockPaperScissors()
 {
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRockPaperScissors::OnBehaviorActivated(BehaviorExternalInterface& bei)
 {
   DEV_ASSERT(bei.HasAnimationComponent(), 
@@ -95,7 +98,8 @@ void BehaviorRockPaperScissors::OnBehaviorActivated(BehaviorExternalInterface& b
   auto& visionComponent = bei.GetVisionComponent();
   visionComponent.EnableMode(VisionMode::DetectingGeneralObjects, false);
   
-  //bei.GetRobotAudioClient().SetRobotMasterVolume(0.5f);
+  // DEBUG:
+  bei.GetRobotAudioClient().SetRobotMasterVolume(0.5f);
   
   if(_displayImages.empty())
   {
@@ -122,11 +126,27 @@ void BehaviorRockPaperScissors::OnBehaviorActivated(BehaviorExternalInterface& b
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRockPaperScissors::OnBehaviorDeactivated(BehaviorExternalInterface& bei)
-{        
-
+{
+  // TODO: Restore vision mode (pop schedule?)
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static IActionRunner* CreateLiftAction(const f32 height)
+{
+  const float kTolerance_mm = 15.f; // just want movement, not accuracy that slows us down
+  MoveLiftToHeightAction* action = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+height, kTolerance_mm);
+  //const float kMoveDuration_sec = 0.1f;
+  //upAction->SetDuration(kMoveDuration_sec);
+  action->SetWaitUntilMovementStops(false);
+  action->SetMaxLiftSpeed(MAX_LIFT_SPEED_RAD_PER_S);
+  action->SetLiftAccel(MAX_LIFT_ACCEL_RAD_PER_S2);
+  
+  return action;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRockPaperScissors::BehaviorUpdate(BehaviorExternalInterface& bei)
 {
   if(!IsActivated())
@@ -170,21 +190,12 @@ void BehaviorRockPaperScissors::BehaviorUpdate(BehaviorExternalInterface& bei)
         
         for(s32 iUpDown=0; iUpDown < _shootOnCount; ++iUpDown)
         {
-          //const float moveDuration_sec = 0.1f;
-          const float tolerance_mm = 15.f; // just won't movement, not accuracy that slows us down
-          MoveLiftToHeightAction* upAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+_tapHeight_mm, tolerance_mm);
-          //upAction->SetDuration(moveDuration_sec);
-          upAction->SetWaitUntilMovementStops(false);
-          
-          MoveLiftToHeightAction* downAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK, tolerance_mm);
-          //downAction->SetDuration(moveDuration_sec);
-          downAction->SetWaitUntilMovementStops(false);
-          
-          compoundAction->AddAction(upAction);
-          compoundAction->AddAction(downAction);
+          compoundAction->AddAction(CreateLiftAction(_tapHeight_mm)); // Up
+          compoundAction->AddAction(CreateLiftAction(0.f));           // Down
           compoundAction->AddAction(new WaitAction(_waitTimeBetweenTaps_sec));
         }
         
+        // Play cadence and then choose robot selection and look for human selection
         DelegateIfInControl(compoundAction, [&bei,this]()
                             {
                               // Start looking for the hand and display our selection
@@ -194,14 +205,6 @@ void BehaviorRockPaperScissors::BehaviorUpdate(BehaviorExternalInterface& bei)
                               _robotSelection = static_cast<Selection>(GetRNG().RandIntInRange(0, 2));
                               
                               SET_STATE(WaitForResult);
-                              
-                              //        DelegateIfInControl(new CompoundActionParallel({
-                              //          new WaitForLambdaAction([this,&bei](Robot&){
-                              //            DisplaySelection(bei);
-                              //            return true;
-                              //          }),
-                              //          new WaitAction(Util::MilliSecToSec((float)_displayHoldTime_ms))
-                              //        }));
                             });
       }
       
@@ -312,6 +315,7 @@ void BehaviorRockPaperScissors::BehaviorUpdate(BehaviorExternalInterface& bei)
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRockPaperScissors::CopyToHelper(Vision::ImageRGB& toImg, const Selection selection, const s32 xOffset, const bool swapGB) const
 {
   const Vision::ImageRGB& selectedImg = _displayImages.at(selection);
@@ -335,7 +339,8 @@ void BehaviorRockPaperScissors::CopyToHelper(Vision::ImageRGB& toImg, const Sele
     }
   }
 }
-  
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRockPaperScissors::DisplaySelection(BehaviorExternalInterface& bei, const std::string& overlayStr)
 {
   DEV_ASSERT(bei.HasAnimationComponent(),
@@ -386,6 +391,7 @@ void BehaviorRockPaperScissors::DisplaySelection(BehaviorExternalInterface& bei,
   animComponent.DisplayFaceImage(img, BS_TIME_STEP, true);
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRockPaperScissors::HandleWhileActivated(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) 
 {
   switch(event.GetData().GetTag())
@@ -399,33 +405,22 @@ void BehaviorRockPaperScissors::HandleWhileActivated(const EngineToGameEvent& ev
         auto const& detection = event.GetData().Get_RobotObservedGenericObject();
         if(detection.score > _minDetectionScore)
         {
-          if(detection.name == "rock")
-          {
-            _humanSelection = Selection::Rock;
-          }
-          else if(detection.name == "paper")
-          {
-            _humanSelection = Selection::Paper;
-          }
-          else if(detection.name == "scissors")
-          {
-            _humanSelection = Selection::Scissors;
-          }
+          static const std::unordered_map<std::string, Selection> nameToSelectionLUT{
+            {"rock",     Selection::Rock},
+            {"paper",    Selection::Paper},
+            {"scissors", Selection::Scissors},
+          };
           
-//          if(_showDetectionString)
-//          {
-//            std::string overlayStr(detection.name);
-//            overlayStr += ":";
-//            overlayStr += std::to_string((s32)std::round(100.f*detection.score));
-//            DisplaySelection(behaviorExternalInterface, overlayStr);
-//          }
-          
-          if(_humanSelection != Selection::Unknown)
+          auto selectionIter = nameToSelectionLUT.find(detection.name);
+          if(selectionIter != nameToSelectionLUT.end())
           {
+            _humanSelection = selectionIter->second;
+            
             PRINT_NAMED_INFO("BehaviorRockPaperScissors.HandleWhileActivated.HumanSelectionDetected",
                              "%s:%f", detection.name.c_str(), detection.score);
             SET_STATE(ShowResult);
           }
+
         }
       }
       break;
@@ -439,6 +434,6 @@ void BehaviorRockPaperScissors::HandleWhileActivated(const EngineToGameEvent& ev
   }
 }
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
