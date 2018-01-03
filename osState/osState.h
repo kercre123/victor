@@ -82,7 +82,10 @@ public:
     if(_serialNum == 0)
     {
       std::string serialString = ExecCommand("getprop ro.serialno");
-      _serialNum = static_cast<u32>(std::stoul(serialString, nullptr, 16));
+      if(!serialString.empty())
+      {
+        _serialNum = static_cast<u32>(std::stoul(serialString, nullptr, 16));
+      }
     }
 
     return _serialNum;

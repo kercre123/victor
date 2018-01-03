@@ -5,8 +5,8 @@ Viewpoint {
   orientation 0.011010596 0.59948223 0.80031233 3.129522
   position -0.014606203 1.169959 0.48309053
 }
-VictorCharger {
-  translation -0.18943195 4.8176827e-05 0
+VictorChargerSimple {
+  translation -0.19 0 0
 }
 Background {
   skyColor [
@@ -34,8 +34,8 @@ FactoryTestFixtureFloor {
   wallHeight 0
 }
 DEF Cozmo_1 CozmoBot2 {
-  translation -0.11428466 0 0.00029056594
   name "CozmoBot_1"
+  translation -0.11428466 0 0.00029056594
   filterLogs TRUE
 }
 WebotsKeyboardController {
