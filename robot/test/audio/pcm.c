@@ -44,9 +44,9 @@
 #define __force
 #define __bitwise
 #define __user
-#include "include/sound/asound.h"
+#include "sound/asound.h"
 
-#include "include/tinyalsa/asoundlib.h"
+#include "tinyalsa/asoundlib.h"
 
 #define PARAM_MAX SNDRV_PCM_HW_PARAM_LAST_INTERVAL
 #define SNDRV_PCM_HW_PARAMS_NO_PERIOD_WAKEUP (1<<2)

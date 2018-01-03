@@ -3,7 +3,7 @@
 # Updates the Victor robot firmware on a connected android device
 #
 # Must first build the syscon firmware using
-#  > cd robot2
+#  > cd robot
 #  > ./vmake.sh
 #
 

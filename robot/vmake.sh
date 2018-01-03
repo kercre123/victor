@@ -1,6 +1,6 @@
 #!/bin/bash
 # Set the project folder/project file you want below (e.g., robot/robot.uvproj)
-export PRJ=robot2
+export PRJ=robot
 cd "${0%/*}"
 if [ ! -d ../$PRJ ]; then echo "Must run from project folder"; exit 1; fi
 
