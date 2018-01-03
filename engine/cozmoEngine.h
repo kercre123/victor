@@ -28,7 +28,7 @@
 #define ANKI_COZMO_BASESTATION_COZMO_ENGINE_H
 
 #include "util/logging/multiFormattedLoggerProvider.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/vision/engine/image.h"
 #include "json/json.h"
 #include "util/signals/simpleSignal_fwd.h"
 

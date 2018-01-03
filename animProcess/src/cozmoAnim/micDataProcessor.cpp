@@ -16,7 +16,7 @@
 #include "se_diag.h"
 #include "speex/speex_resampler.h"
 
-#include "anki/messaging/shared/UdpServer.h"
+#include "coretech/messaging/shared/UdpServer.h"
 
 #include "cozmoAnim/engineMessages.h"
 #include "cozmoAnim/faceDisplay/faceDebugDraw.h"
@@ -750,7 +750,7 @@ void MicDataProcessor::Update()
     _msgsToEngine.clear();
   }
 
-  #if ANKI_DEV_CHEATS
+  #if ANKI_DEV_CHEATS || FACTORY_TEST
     // Store off a copy of (one of) the micDirectionData from this update for debug drawing
     Anki::Cozmo::RobotInterface::MicDirection micDirectionData{};
     bool updatedMicDirection = false;
@@ -763,7 +763,7 @@ void MicDataProcessor::Update()
     }
     else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
     {
-      #if ANKI_DEV_CHEATS
+      #if ANKI_DEV_CHEATS || FACTORY_TEST
         micDirectionData = msg->micDirection;
         updatedMicDirection = true;
       #endif
@@ -777,7 +777,7 @@ void MicDataProcessor::Update()
     }
   }
 
-  #if ANKI_DEV_CHEATS
+  #if ANKI_DEV_CHEATS || FACTORY_TEST
     if (updatedMicDirection)
     {
       FaceDisplay::GetDebugDraw()->DrawConfidenceClock(micDirectionData);

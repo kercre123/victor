@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_Sparkable_BehaviorPickUpAndPutDownCube_H__
 #define __Cozmo_Basestation_Behaviors_Sparkable_BehaviorPickUpAndPutDownCube_H__
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 #include <vector>

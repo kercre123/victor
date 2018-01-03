@@ -26,11 +26,6 @@ message SyncTimeAck
 {
 }
 
-message BackpackButton
-{
-  bool depressed
-}
-
 message RobotPoked
 {
 }
@@ -130,7 +125,7 @@ union RobotToEngine {
   BridgeTraverseComplete     bridgeTraverseCompleted= 0xC0,
 
   // Sensors
-  BackpackButton             backpackButton         = 0xC1,  
+  // FREE SLOT                                      = 0xC1,  
   IMUDataChunk               imuDataChunk           = 0xC2,
   IMURawDataChunk            imuRawDataChunk        = 0xC3,
   IMUTemperature             imuTemperature         = 0xC4,

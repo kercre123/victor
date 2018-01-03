@@ -17,7 +17,7 @@
 #include "util/helpers/noncopyable.h"
 #include "util/helpers/templateHelpers.h"
 #include "clad/types/nvStorage.h"
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include <vector>
 #include <queue>

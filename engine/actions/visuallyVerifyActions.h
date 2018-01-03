@@ -19,7 +19,7 @@
 #include "engine/actions/compoundActions.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 
 #include "clad/types/actionTypes.h"
 #include "clad/types/visionModes.h"

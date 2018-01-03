@@ -26,8 +26,6 @@ BehaviorPlaypenWaitToStart::BehaviorPlaypenWaitToStart(const Json::Value& config
   // if we get put on the charger, motor calibration on startup, etc...
   std::set<ExternalInterface::MessageEngineToGameTag> tags = GetFailureTags();
   SubscribeToTags(std::move(tags));
-
-  ICozmoBehavior::SubscribeToTags({RobotInterface::RobotToEngineTag::backpackButton});
 }
 
 Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
@@ -87,6 +85,14 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInterna
     _needLightUpdate = true;
   }
 
+  if(robot.IsPowerButtonPressed() && !_buttonPressed)
+  {
+    _lights.onColors[(int)LEDId::LED_BACKPACK_BACK] = NamedColors::GREEN;
+    _lights.offColors[(int)LEDId::LED_BACKPACK_BACK] = NamedColors::GREEN;
+    _needLightUpdate = true;
+  }
+  _buttonPressed = robot.IsPowerButtonPressed();
+
   if(_needLightUpdate)
   {
     robot.GetBodyLightComponent().SetBackpackLights(_lights);
@@ -139,30 +145,6 @@ void BehaviorPlaypenWaitToStart::OnBehaviorDeactivated(BehaviorExternalInterface
   };
 
   robot.GetBodyLightComponent().SetBackpackLights(robot.GetBodyLightComponent().GetOffBackpackLights());
-}
-
-void BehaviorPlaypenWaitToStart::HandleWhileActivatedInternal(const RobotToEngineEvent& event, 
-                                                              BehaviorExternalInterface& behaviorExternalInterface)
-{
-  const auto& tag = event.GetData().GetTag();
-  if(tag == RobotInterface::RobotToEngineTag::backpackButton)
-  {
-    const auto& payload = event.GetData().Get_backpackButton();
-    if(payload.depressed)
-    {
-      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
-
-      if(robot.IsOnCharger() || robot.IsCharging())
-      {
-        _buttonPressed = true;
-      }
-
-      _lights.onColors[(int)LEDId::LED_BACKPACK_BACK] = NamedColors::GREEN;
-      _lights.offColors[(int)LEDId::LED_BACKPACK_BACK] = NamedColors::GREEN;
-      _needLightUpdate = true;
-    }
-  }
-
 }
 
 }

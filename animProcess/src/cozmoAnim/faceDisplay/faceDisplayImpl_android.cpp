@@ -33,8 +33,7 @@ namespace Cozmo {
   
   void FaceDisplayImpl::FaceClear()
   {
-    u16 frame[FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*sizeof(u16)];
-    FaceDraw(frame);
+    lcd_clear_screen();
   }
   
   void FaceDisplayImpl::FaceDraw(const u16* frame)

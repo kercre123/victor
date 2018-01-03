@@ -14,9 +14,9 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorDrivePath_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorDrivePath_H__
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/planning/shared/path.h"
+#include "coretech/planning/shared/path.h"
 
 namespace Anki {
 //forward declaration

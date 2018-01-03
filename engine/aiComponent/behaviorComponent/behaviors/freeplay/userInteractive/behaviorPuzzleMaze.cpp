@@ -17,9 +17,9 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 
-#include "anki/common/basestation/math/rect_impl.h"
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "util/console/consoleInterface.h"

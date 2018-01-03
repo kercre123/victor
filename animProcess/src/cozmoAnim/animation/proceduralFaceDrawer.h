@@ -1,10 +1,10 @@
 #ifndef __Anki_Cozmo_ProceduralFaceDrawer_H__
 #define __Anki_Cozmo_ProceduralFaceDrawer_H__
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/matrix.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/matrix.h"
 #include "cozmoAnim/animation/proceduralFace.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/vision/engine/image.h"
 
 namespace Anki {
   

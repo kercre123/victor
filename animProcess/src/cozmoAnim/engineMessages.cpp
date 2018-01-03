@@ -22,9 +22,7 @@
 #include "cozmoAnim/micDataProcessor.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
-// #include "anki/common/basestation/math/rect_impl.h"
-// #include "anki/common/basestation/array2d_impl.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -37,7 +35,7 @@
 #include "anki/cozmo/transport/reliableTransport.h"
 
 // For animProcess<->Robot communications
-#include "anki/messaging/shared/UdpClient.h"
+#include "coretech/messaging/shared/UdpClient.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -84,11 +82,6 @@ namespace Messages {
   void ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg);
   void ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg);
   extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
-
-  void ProcessBackpackButton(const RobotInterface::BackpackButton& payload);
-
-
-  void UpdateFAC();
 
   void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState);
 

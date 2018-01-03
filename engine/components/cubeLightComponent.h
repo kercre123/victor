@@ -20,10 +20,10 @@
 #ifndef __Anki_Cozmo_Basestation_Components_CubeLightComponent_H__
 #define __Anki_Cozmo_Basestation_Components_CubeLightComponent_H__
 
-#include "anki/common/basestation/colorRGBA.h"
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/colorRGBA.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/shared/types.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/poseStructs.h"

@@ -22,7 +22,7 @@
 #include "engine/components/dockingComponent.h"
 #include "engine/cozmoContext.h"
 
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
 
 
 namespace Anki {

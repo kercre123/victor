@@ -12,8 +12,8 @@
 
 #include "engine/vision/cameraCalibrator.h"
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/rotation.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/rotation.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 

@@ -13,7 +13,7 @@
 #ifndef __Anki_Cozmo_DeviceData_DeviceDataManager_h__
 #define __Anki_Cozmo_DeviceData_DeviceDataManager_h__
 
-#include "anki/common/basestation/utils/signals/simpleSignal_fwd.h"
+#include "coretech/common/engine/utils/signals/simpleSignal_fwd.h"
 
 #include <map>
 #include <memory>

@@ -23,8 +23,8 @@
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/components/cubeLightComponent.h"
 
-#include "anki/common/basestation/colorRGBA.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/colorRGBA.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 

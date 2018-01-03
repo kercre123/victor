@@ -15,8 +15,8 @@
 #ifndef __AnimProcess_CozmoAnim_FaceDisplay_FaceDebugDraw_H_
 #define __AnimProcess_CozmoAnim_FaceDisplay_FaceDebugDraw_H_
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/point.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/point.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 
 #include <memory>
@@ -41,9 +41,9 @@ public:
   FaceDebugDraw();
 
   enum class DrawState {
-    None,
+    None = 0,
+    FAC  = 1, // Needs to be after None
 
-    FAC,
     GeneralInfo,
     SensorInfo1,
     SensorInfo2,

@@ -13,14 +13,14 @@
 #ifndef __Cozmo_Basestation_Vision_CameraCalibrator_H__
 #define __Cozmo_Basestation_Vision_CameraCalibrator_H__
 
-#include "anki/common/basestation/math/rect.h"
+#include "coretech/common/engine/math/rect.h"
 
-#include "anki/vision/basestation/cameraCalibration.h"
-#include "anki/vision/basestation/image.h"
-#include "anki/vision/basestation/visionMarker.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/engine/cameraCalibration.h"
+#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/visionMarker.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "engine/debugImageList.h"
 

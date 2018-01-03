@@ -12,8 +12,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToFrustration.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/driveToActions.h"
@@ -22,7 +22,7 @@
 #include "engine/drivingAnimationHandler.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/moodSystem/moodManager.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "util/math/math.h"
 
 // TODO:(bn) this entire behavior could be generic for any type of emotion.... but that's too much effort

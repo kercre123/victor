@@ -14,10 +14,10 @@
 
 #include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
-#include "anki/common/basestation/array2d_impl.h"
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/vision/engine/image.h"
 #include "util/helpers/templateHelpers.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 
@@ -30,19 +30,26 @@ FaceDebugDraw::FaceDebugDraw()
 : _scratchDrawingImg(new Vision::ImageRGB())
 {
   _scratchDrawingImg->Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+
+  memset(&_customText, 0, sizeof(_customText));
 }
 
 void FaceDebugDraw::SetShouldDrawFAC(bool draw) 
 { 
+  bool changed = (_drawFAC != draw);
   _drawFAC = draw; 
 
-  if(draw) 
+  if(changed) 
   { 
-    _drawState = DrawState::FAC;
-  }
-  else
-  {
-    _drawState = DrawState::None;
+    if(draw)
+    {
+      _drawState = DrawState::FAC;
+      DrawFAC();
+    }
+    else
+    {
+      _drawState = DrawState::None;
+    }
   }
 }
 
@@ -55,6 +62,10 @@ void FaceDebugDraw::ChangeDrawState()
   {
     _drawState = DrawState::FAC;
   }
+  else if(!_drawFAC && _drawState == DrawState::FAC)
+  {
+    _drawState = static_cast<DrawState>((Util::EnumToUnderlying(_drawState) + 1) % stateCount);
+  }
 
   // Any debug drawing that does not update very frequently should immediately try to
   // draw on state change
@@ -66,6 +77,7 @@ void FaceDebugDraw::DrawFAC()
 {
   if(_drawFAC && GetDrawState() == DrawState::FAC)
   {
+    PRINT_NAMED_WARNING("DRAWING FAC","");
     DrawTextOnScreen({"FAC"},
                      NamedColors::BLACK,
                      NamedColors::RED,
@@ -304,10 +316,6 @@ void FaceDebugDraw::DrawStateInfo(const RobotState& state)
                      20, 
                      0.5f);
   }
-
-
-
-
 }
 
 void FaceDebugDraw::DrawMicInfo(const RobotInterface::MicData& micData)

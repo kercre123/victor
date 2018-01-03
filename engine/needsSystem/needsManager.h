@@ -14,8 +14,8 @@
 #ifndef __Cozmo_Basestation_NeedsSystem_NeedsManager_H__
 #define __Cozmo_Basestation_NeedsSystem_NeedsManager_H__
 
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/shared/types.h"
 #include "engine/needsSystem/needsConfig.h"
 #include "engine/needsSystem/needsState.h"
 #include "engine/needsSystem/localNotifications.h"

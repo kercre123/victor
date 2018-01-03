@@ -11,12 +11,12 @@
  **/
 
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDrivePath.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/actions/drivePathAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "anki/planning/shared/path.h"
-#include "anki/planning/basestation/pathHelper.h"
+#include "coretech/planning/shared/path.h"
+#include "coretech/planning/engine/pathHelper.h"
 
 namespace Anki {
 namespace Cozmo {

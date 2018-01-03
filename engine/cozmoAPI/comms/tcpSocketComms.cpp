@@ -13,8 +13,8 @@
 
 #include "engine/cozmoAPI/comms/tcpSocketComms.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
-#include "anki/messaging/basestation/IComms.h"
-#include "anki/messaging/shared/TcpServer.h"
+#include "coretech/messaging/engine/IComms.h"
+#include "coretech/messaging/shared/TcpServer.h"
 #include "json/json.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"

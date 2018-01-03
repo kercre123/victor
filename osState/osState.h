@@ -15,7 +15,7 @@
 #ifndef __Victor_OSState_H__
 #define __Victor_OSState_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "util/singleton/dynamicSingleton.h"
 
 #include <string>

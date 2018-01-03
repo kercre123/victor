@@ -1,7 +1,7 @@
 #ifndef PATH_FOLLOWER_H_
 #define PATH_FOLLOWER_H_
 
-#include "anki/planning/shared/path.h"
+#include "coretech/planning/shared/path.h"
 
 namespace Anki
 {

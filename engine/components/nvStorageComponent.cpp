@@ -39,7 +39,7 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#include "anki/common/robot/errorHandling.h"
+#include "coretech/common/robot/errorHandling.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/cozmoContext.h"
@@ -61,7 +61,8 @@
 #include "clad/types/imageTypes.h"
 #endif // ifdef SIMULATOR
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+
 #include "util/fileUtils/fileUtils.h"
 
 // Immediately returns on write/erase commands as if they succeeded.

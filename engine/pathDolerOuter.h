@@ -15,7 +15,7 @@
 #ifndef __COZMO_PATH_DOLER_OUTER_H__
 #define __COZMO_PATH_DOLER_OUTER_H__
 
-#include "anki/planning/shared/path.h"
+#include "coretech/planning/shared/path.h"
 
 namespace Anki {
 namespace Cozmo {

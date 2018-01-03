@@ -13,8 +13,8 @@
 #ifndef __Anki_Cozmo_Basestation_DetectOverheadEdges_H__
 #define __Anki_Cozmo_Basestation_DetectOverheadEdges_H__
 
-#include "anki/common/types.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/vision/engine/image.h"
 #include "engine/vision/visionSystem.h"
 
 namespace Anki {

@@ -18,9 +18,9 @@
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/aiComponent/beiConditions/iBEIConditionEventHandler.h"
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "anki/common/constantsAndMacros.h"
-#include "anki/common/shared/radians.h"
+#include "coretech/common/shared/radians.h"
 
 namespace Anki {
 namespace Cozmo {

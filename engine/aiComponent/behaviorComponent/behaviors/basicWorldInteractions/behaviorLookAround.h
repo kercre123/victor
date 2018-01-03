@@ -13,8 +13,8 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorLookAround_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorLookAround_H__
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "util/math/math.h"
 

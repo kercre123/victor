@@ -21,9 +21,9 @@
 
 #include "clad/types/animationTypes.h"
 
-#include "anki/common/basestation/array2d_impl.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "json/json.h"
 

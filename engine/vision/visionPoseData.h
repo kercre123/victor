@@ -13,8 +13,8 @@
 #ifndef __Anki_Cozmo_Basestation_VisionPoseData_H__
 #define __Anki_Cozmo_Basestation_VisionPoseData_H__
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/matrix.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/matrix.h"
 
 #include "engine/groundPlaneROI.h"
 #include "engine/robotStateHistory.h"

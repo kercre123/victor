@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_PlaypenConfig__
 #define __Cozmo_Basestation_PlaypenConfig__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -36,7 +36,7 @@ static bool kWriteToStorage       = true;
 // Whether or not to ignore any test failures
 // The playpen behaviors should be written in such a way so that they can continue running
 // even after something has gone wrong (basically no branching)
-static bool kIgnoreFailures       = false;
+static bool kIgnoreFailures       = true;
 
 // Default timeout to force a playpen behavior to end
 static f32  kDefaultTimeout_ms    = 20000;

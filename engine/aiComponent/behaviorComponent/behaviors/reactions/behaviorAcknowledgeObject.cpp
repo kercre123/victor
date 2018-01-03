@@ -14,9 +14,9 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeObject.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/poseOriginList.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/poseOriginList.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/activeCube.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"

@@ -13,15 +13,15 @@
 #ifndef ANKI_COZMO_BASIC_ACTIONS_H
 #define ANKI_COZMO_BASIC_ACTIONS_H
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/smartFaceId.h"
 #include "anki/cozmo/shared/animationTag.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/vision/basestation/faceIdTypes.h"
-#include "anki/vision/basestation/visionMarker.h"
+#include "coretech/vision/engine/faceIdTypes.h"
+#include "coretech/vision/engine/visionMarker.h"
 #include "clad/externalInterface/messageActions.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationTypes.h"

@@ -12,7 +12,7 @@
 
 #include "engine/utils/cozmoFeatureGate.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "clad/types/featureGateTypes.h"
 #include "util/fileUtils/fileUtils.h"
 

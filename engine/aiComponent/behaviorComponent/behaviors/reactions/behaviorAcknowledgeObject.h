@@ -14,9 +14,9 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeObject_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeObject_H__
 
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/shared/radians.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/shared/radians.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/objectFamilies.h"

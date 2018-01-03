@@ -7,7 +7,7 @@
  */
 #include "activeBlock.h"
 #include "../shared/ctrlCommonInitialization.h"
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include <cstdio>
 #include <string>
 

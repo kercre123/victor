@@ -10,8 +10,8 @@
  *
  **/
 
-#include "anki/common/robot/utilities.h"
-#include "anki/common/types.h"
+#include "coretech/common/robot/utilities.h"
+#include "coretech/common/shared/types.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"

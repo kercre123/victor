@@ -11,7 +11,7 @@
  **/
 #include "engine/aiComponent/AIWhiteboard.h"
 
-#include "anki/common/basestation/math/poseOriginList.h"
+#include "coretech/common/engine/math/poseOriginList.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/activeObject.h"
@@ -32,9 +32,9 @@
 #include "engine/needsSystem/needsState.h"
 #include "engine/robot.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/rotation.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/rotation.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 

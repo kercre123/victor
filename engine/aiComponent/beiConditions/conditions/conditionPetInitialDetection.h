@@ -15,7 +15,7 @@
 
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 
 #include <set>
 

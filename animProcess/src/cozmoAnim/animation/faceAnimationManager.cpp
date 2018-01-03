@@ -11,9 +11,9 @@
 
 #include "cozmoAnim/animation/faceAnimationManager.h"
 #include "cozmoAnim/animation/keyframe.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/data/dataScope.h"
-#include "anki/common/basestation/array2d_impl.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataScope.h"
+#include "coretech/common/engine/array2d_impl.h"
 #include "util/console/consoleInterface.h"
 #include "util/dispatchWorker/dispatchWorker.h"
 #include "util/logging/logging.h"

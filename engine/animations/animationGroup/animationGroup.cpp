@@ -19,7 +19,7 @@
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include "util/random/randomGenerator.h"
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 
 #define DEBUG_ANIMATION_GROUP_SELECTION 0
 

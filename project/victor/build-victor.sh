@@ -253,7 +253,6 @@ if [ $CONFIGURE -eq 1 ]; then
         resources/BUILD.in \
         robot/BUILD.in \
         robot/clad/BUILD.in \
-        robot2/BUILD.in \
         simulator/BUILD.in \
         test/BUILD.in
 

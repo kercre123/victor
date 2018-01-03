@@ -19,7 +19,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "clad/types/animationTrigger.h"
 
 

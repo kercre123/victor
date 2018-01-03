@@ -12,8 +12,8 @@
 
 #include "cozmoAnim/robotDataLoader.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 
 
 #include "cozmoAnim/animation/cannedAnimationContainer.h"

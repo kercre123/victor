@@ -28,11 +28,11 @@
 #include "engine/needsSystem/needsManager.h"
 #include "engine/viz/vizManager.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
-#include "anki/vision/basestation/faceTracker.h"
-#include "anki/vision/basestation/trackedFace.h"
+#include "coretech/vision/engine/faceTracker.h"
+#include "coretech/vision/engine/trackedFace.h"
 
 #include "util/console/consoleInterface.h"
 

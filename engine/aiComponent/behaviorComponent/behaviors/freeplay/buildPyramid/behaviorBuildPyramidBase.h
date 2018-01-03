@@ -16,7 +16,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorBuildPyramidBase_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 

@@ -12,8 +12,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/retryWrapperAction.h"
@@ -26,7 +26,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/utils/cozmoFeatureGate.h"
-#include "anki/vision/basestation/faceTracker.h"
+#include "coretech/vision/engine/faceTracker.h"
 
 #include "clad/types/animationTrigger.h"
 

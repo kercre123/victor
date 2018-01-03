@@ -12,7 +12,7 @@
 #define __Cozmo_Basestation_Behaviors_ReactToPet_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/petTypes.h"
 

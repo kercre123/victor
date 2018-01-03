@@ -14,7 +14,7 @@
 #ifndef __Engine_Components_ISensorComponent_H__
 #define __Engine_Components_ISensorComponent_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "util/helpers/noncopyable.h"
 

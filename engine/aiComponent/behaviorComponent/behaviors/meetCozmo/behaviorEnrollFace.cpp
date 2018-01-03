@@ -30,10 +30,10 @@
 #include "engine/needsSystem/needsManager.h"
 #include "engine/viz/vizManager.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
-#include "anki/vision/basestation/faceTracker.h"
-#include "anki/vision/basestation/trackedFace.h"
+#include "coretech/vision/engine/faceTracker.h"
+#include "coretech/vision/engine/trackedFace.h"
 
 #include "clad/types/enrolledFaceStorage.h"
 

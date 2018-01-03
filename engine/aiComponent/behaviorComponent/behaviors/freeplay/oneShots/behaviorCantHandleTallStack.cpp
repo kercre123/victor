@@ -21,7 +21,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/events/animationTriggerHelpers.h"
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 
 namespace {
 static const char* kLookingWaitInitial = "lookingInitialWait_s";

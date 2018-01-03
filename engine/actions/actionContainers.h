@@ -14,7 +14,7 @@
 #ifndef ANKI_COZMO_ACTION_CONTAINERS_H
 #define ANKI_COZMO_ACTION_CONTAINERS_H
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "engine/actions/actionDefinitions.h"
 
 #include "clad/types/actionTypes.h"

@@ -12,7 +12,7 @@
 #ifndef __Anki_Vision_Basestation_EncodedImage_H__
 #define __Anki_Vision_Basestation_EncodedImage_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "clad/types/imageTypes.h"
 
 #include <vector>
