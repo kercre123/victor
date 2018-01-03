@@ -521,8 +521,8 @@ void MicDataProcessor::ProcessLoop()
       }
       
       // Factory test doesn't need to do any mic processing, it just uses raw data
-      if(!FACTORY_TEST)
-      {
+      // if(!FACTORY_TEST)
+      // {
         // Resample the audio, then collect it if desired
         std::array<AudioUtil::AudioSample, kResampledAudioChunkSize> resampledAudioChunk;
         ResampleAudioChunk(audioChunk.data(), resampledAudioChunk.data());
@@ -553,7 +553,7 @@ void MicDataProcessor::ProcessLoop()
             _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
           }
         }
-      }
+      // }
       
       // Check if each of the jobs are done, removing the ones that are
       auto jobIter = stolenJobs.begin();

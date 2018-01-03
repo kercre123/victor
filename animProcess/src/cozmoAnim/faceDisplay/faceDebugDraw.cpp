@@ -77,7 +77,6 @@ void FaceDebugDraw::DrawFAC()
 {
   if(_drawFAC && GetDrawState() == DrawState::FAC)
   {
-    PRINT_NAMED_WARNING("DRAWING FAC","");
     DrawTextOnScreen({"FAC"},
                      NamedColors::BLACK,
                      NamedColors::RED,

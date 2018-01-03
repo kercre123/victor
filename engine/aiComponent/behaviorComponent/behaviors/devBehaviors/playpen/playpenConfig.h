@@ -36,7 +36,7 @@ static bool kWriteToStorage       = true;
 // Whether or not to ignore any test failures
 // The playpen behaviors should be written in such a way so that they can continue running
 // even after something has gone wrong (basically no branching)
-static bool kIgnoreFailures       = true;
+static bool kIgnoreFailures       = false;
 
 // Default timeout to force a playpen behavior to end
 static f32  kDefaultTimeout_ms    = 20000;
