@@ -20,7 +20,6 @@
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -31,20 +30,11 @@
 #include "clad/types/behaviorComponent/behaviorObjectives.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/needsSystemTypes.h"
-#include "clad/types/behaviorComponent/reactionTriggers.h"
 #include "clad/types/unlockTypes.h"
 #include "util/logging/logging.h"
 
 //Transforms enum into string
 #define DEBUG_SET_STATE(s) SetDebugStateName(#s)
-
-// Dev only macro to lock a single reaction trigger useful for enabling/disabling reactions
-// with a console var
-#if ANKI_DEV_CHEATS
-  #define SMART_DISABLE_REACTION_DEV_ONLY(lock, trigger) SmartDisableReactionWithLock(lock, trigger)
-#else
-  #define SMART_DISABLE_REACTION_DEV_ONLY(lock, trigger)
-#endif
 
 namespace Anki {
 namespace Util{
@@ -60,7 +50,8 @@ class DriveToObjectAction;
 class BehaviorHelperFactory;
 class IHelper;
 enum class ObjectInteractionIntention;
-  
+enum class CloudIntent : uint8_t;
+
 class ISubtaskListener;
 class IReactToFaceListener;
 class IReactToObjectListener;
@@ -69,7 +60,6 @@ class IFistBumpListener;
 class IFeedingListener;
 
 enum class CubeAnimationTrigger;
-struct BehaviorStateLightInfo;
 
 struct PathMotionProfile;
 
@@ -96,6 +86,7 @@ public:
   using Status = BehaviorStatus;
   
   static Json::Value CreateDefaultBehaviorConfig(BehaviorClass behaviorClass, BehaviorID behaviorID);
+  static void InjectBehaviorClassAndIDIntoConfig(BehaviorClass behaviorClass, BehaviorID behaviorID, Json::Value& config);  
   static BehaviorID ExtractBehaviorIDFromConfig(const Json::Value& config, const std::string& fileName = "");
   static BehaviorClass ExtractBehaviorClassFromConfig(const Json::Value& config);
 
@@ -131,7 +122,7 @@ public:
   // be implemented by children to do specific resume behavior (e.g. start at a specific state). If this
   // function returns anything other than RESULT_OK, the behavior will not be resumed (but may still be Init'd
   // later)
-  Result Resume(BehaviorExternalInterface& behaviorExternalInterface, ReactionTrigger resumingFromType);
+  Result Resume(BehaviorExternalInterface& behaviorExternalInterface);
 
   // Step through the behavior and deliver rewards to the robot along the way
   // This calls the protected virtual UpdateInternal() method, which each
@@ -221,7 +212,6 @@ protected:
   // default is no delegates, but behaviors which delegate can overload this
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override { }
   
-  using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
 
   inline void SetDebugStateName(const std::string& inName) {
     PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, FromState:%s ToState:%s",
@@ -369,7 +359,18 @@ protected:
                            IBehavior* delegate,
                            void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface));
 
-  
+  // Behaviors can easily create delegates using "anonymous" behaviors in their config file (see _anonymousBehaviorMap
+  // comments below).  This function enables access to those anonymous behaviors.
+  ICozmoBehaviorPtr FindAnonymousBehaviorByName(const std::string& behaviorName) const;
+
+  // Sometimes it's necessary to downcast to a behavior to a specific behavior pointer, e.g. so an Activity
+  // can access it's member functions. This function will help with that and provide a few assert checks along
+  // the way. It sets outPtr in arguemnts, and returns true if the cast is successful
+  template<typename T>
+  bool FindAnonymousBehaviorByNameAndDowncast(const std::string& behaviorName,
+                                                BehaviorClass requiredClass,
+                                                std::shared_ptr<T>& outPtr ) const;
+
   // This function cancels the action started by DelegateIfInControl (if there is one). Returns true if an action was
   // canceled, false otherwise. Note that if you are activated, this will trigger a callback for the
   // cancellation unless you set allowCallback to false. If the action was created by a helper, the helper
@@ -401,21 +402,6 @@ protected:
   
   // Remove an idle animation before the beahvior stops
   void SmartRemoveIdleAnimation(BehaviorExternalInterface& behaviorExternalInterface);
-  
-  // Allows the behavior to disable and enable reaction triggers without having to worry about re-enabling them
-  // these triggers will be automatically re-enabled when the behavior stops
-  void SmartDisableReactionsWithLock(const std::string& lockID, const TriggersArray& triggers);
-  
-  // If a behavior needs to re-enable a reaction trigger for later stages after being
-  // disabled with SmartDisablesableReactionaryBehavior  this function will re-enable the behavior
-  // and stop tracking it
-  void SmartRemoveDisableReactionsLock(const std::string& lockID);
-  
-  // Avoid calling this function directly, use the SMART_DISABLE_REACTION_DEV_ONLY macro instead
-  // Locks a single reaction trigger instead of a full TriggersArray
-#if ANKI_DEV_CHEATS
-  void SmartDisableReactionWithLock(const std::string& lockID, const ReactionTrigger& trigger);
-#endif
 
   // For the duration of this behavior, or until SmartClearMotionProfile() is called (whichever is sooner),
   // use the specified motion profile for all motions. Note that this will result in an error if the behavior
@@ -455,10 +441,6 @@ protected:
 
   // Stop a helper delegated with SmartDelegateToHelper
   bool StopHelperWithoutCallback();
-  
-  // Convenience function for setting behavior state lights in the behavior manager
-  void SetBehaviorStateLights(const std::vector<BehaviorStateLightInfo>& structToSet, bool persistOnReaction);
-  
 
   virtual void UpdateTargetBlocksInternal(BehaviorExternalInterface& behaviorExternalInterface) const {};
   
@@ -470,7 +452,7 @@ protected:
   // it's checked in WantsToBeActivatedBase
   AIInformationAnalysis::EProcess _requiredProcess;
   
-  bool ShouldStreamline() const { return (_alwaysStreamline || _sparksStreamline); }
+  bool ShouldStreamline() const { return (_alwaysStreamline); }
   
 private:
   
@@ -483,7 +465,7 @@ private:
 
   // only used if we aren't using the BSM
   u32 _lastActionTag = 0;
-  IStateConceptStrategyPtr _stateConceptStrategy;
+  std::vector<IStateConceptStrategyPtr> _stateConceptStrategies;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const;
@@ -491,6 +473,9 @@ private:
   bool ReadFromJson(const Json::Value& config);
   
   void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
+
+  // hide behaviorTypes.h file in .cpp
+  std::string GetClassString(BehaviorClass behaviorClass) const;
   
   // ==================== Member Vars ====================
   
@@ -505,6 +490,12 @@ private:
   ExecutableBehaviorType _executableType;
   int _timesResumedFromPossibleInfiniteLoop = 0;
   float _timeCanRunAfterPossibleInfiniteLoopCooldown_sec = 0.f;
+  
+  // when respond to cloud intent is set the behavior will
+  // 1) WantToBeActivated when that intent is pending
+  // 2) Clear the intent when the behavior is activated
+  CloudIntent _respondToCloudIntent;
+
   // if an unlockId is set, the behavior won't be activatable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;
 
@@ -553,10 +544,6 @@ private:
   //A list of object IDs that have had a custom light pattern set
   std::vector<ObjectID> _customLightObjects;
   
-  // Allows behaviors to skip certain steps when streamlined
-  // Set if this behavior is a sparked behavior
-  bool _sparksStreamline = false;
-  
   // Whether or not the behavior is always be streamlined (set via json)
   bool _alwaysStreamline = false;
   
@@ -570,7 +557,15 @@ private:
   std::set<RobotInterface::RobotToEngineTag> _robotToEngineTags;
 
   // Tracking wants to run configs for initialization
-  Json::Value _wantsToRunConfig;  
+  Json::Value _wantsToRunConfig;
+
+  // Behaviors can load in internal "anonymous" behaviors which are not stored
+  // in the behavior container and are referenced by string instead of by ID
+  // This map provides built in "anonymous" functionality, but behaviors
+  // can also load anonymous behaviors directly into variables using the
+  // anonymous behavior factory
+  Json::Value _anonymousBehaviorMapConfig;  
+  std::map<std::string,ICozmoBehaviorPtr> _anonymousBehaviorMap;
 }; // class ICozmoBehavior
 
   
@@ -625,6 +620,37 @@ bool ICozmoBehavior::DelegateIfInControl(BehaviorExternalInterface& behaviorExte
   return DelegateIfInControl(behaviorExternalInterface,
                              delegate,
                              std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+}
+
+template<typename T>
+bool ICozmoBehavior::FindAnonymousBehaviorByNameAndDowncast(const std::string& behaviorName,
+                                                              BehaviorClass requiredClass,
+                                                              std::shared_ptr<T>& outPtr) const
+{
+  ICozmoBehaviorPtr behavior = FindAnonymousBehaviorByName(behaviorName);
+  if( ANKI_VERIFY(behavior != nullptr,
+                  "ICozmoBehavior.FindAnonymousBehaviorByNameAndDowncast.NoBehavior",
+                  "BehaviorName: %s requiredClass: %s",
+                  behaviorName.c_str(),
+                  GetClassString(requiredClass).c_str()) &&
+     
+     ANKI_VERIFY(behavior->GetClass() == requiredClass,
+                 "ICozmoBehavior.FindAnonymousBehaviorByNameAndDowncast.WrongClass",
+                 "BehaviorName: %s requiredClass: %s",
+                 behaviorName.c_str(),
+                 GetClassString(requiredClass).c_str()) ) {
+       
+       outPtr = std::static_pointer_cast<T>(behavior);
+       
+       if( ANKI_VERIFY(outPtr != nullptr, "ICozmoBehavior.FindAnonymousBehaviorByNameAndDowncast.CastFailed",
+                       "BehaviorName: %s requiredClass: %s",
+                       behaviorName.c_str(),
+                       GetClassString(requiredClass).c_str()) ) {
+         return true;
+       }
+     }
+  
+  return false;
 }
 
 } // namespace Cozmo

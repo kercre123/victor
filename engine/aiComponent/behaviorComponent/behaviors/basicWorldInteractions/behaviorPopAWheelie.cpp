@@ -16,7 +16,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -34,34 +33,6 @@ namespace Cozmo {
 namespace{
 CONSOLE_VAR(f32, kBPW_ScoreIncreaseForAction, "Behavior.PopAWheelie", 0.8f);
 CONSOLE_VAR(s32, kBPW_MaxRetries,         "Behavior.PopAWheelie", 1);
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPopAWheelieArray = {
-  {ReactionTrigger::CliffDetected,                true},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     true},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                true},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             true},
-  {ReactionTrigger::RobotOnBack,                  true},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPopAWheelieArray),
-              "Reaction triggers duplicate or non-sequential");
 
 } // end namespace
 
@@ -176,9 +147,6 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface
   // once we get to the predock pose, before docking, disable the cliff sensor and associated reactions so
   // that we play the correct animation instead of getting interrupted)  
   auto disableCliff = [this](Robot& robot) {
-    // disable reactions we don't want
-    SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersPopAWheelieArray);
-    
     // tell the robot not to stop the current action / animation if the cliff sensor fires
     _hasDisabledcliff = true;
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
@@ -189,11 +157,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface
 
 
   DelegateIfInControl(goPopAWheelie,
-              [&, this](const ExternalInterface::RobotCompletedAction& msg) {
-                if(msg.result != ActionResult::SUCCESS){
-                  this->SmartRemoveDisableReactionsLock(GetIDStr());
-                }
-                
+              [&, this](const ExternalInterface::RobotCompletedAction& msg) {                
                 switch(IActionRunner::GetActionResultCategory(msg.result))
                 {
                   case ActionResultCategory::SUCCESS:

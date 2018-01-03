@@ -11,6 +11,7 @@
 
 
 #include "simulator/game/uiGameController.h"
+#include "util/helpers/variadicMacroHelpers.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -58,7 +59,10 @@ if (!(x)) { \
   
 #define IF_CONDITION_WITH_TIMEOUT_ASSERT(cond, timeout) static double COMBINE(startTime,__LINE__) = GetSupervisor()->getTime(); if (IsTrueBeforeTimeout(cond, #cond, COMBINE(startTime,__LINE__), timeout, __FILE__, __FUNCTION__, __LINE__))
   
-#define IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(timeout, ...) static double COMBINE(startTime,__LINE__) = GetSupervisor()->getTime(); if(AllTrueBeforeTimeout({__VA_ARGS__}, #__VA_ARGS__, COMBINE(startTime,__LINE__), timeout, __FILE__, __FUNCTION__, __LINE__))
+#define IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(timeout, ...) static double COMBINE(startTime,__LINE__) = GetSupervisor()->getTime(); \
+                                                            if(AllTrueBeforeTimeout({__VA_ARGS__}, {PP_STRINGIZE_X(__VA_ARGS__)}, COMBINE(startTime,__LINE__), timeout, __FILE__, __FUNCTION__, __LINE__))
+
+  
   
 // Derived classes should create an enum class called TestState, and a variable called _testState.
 // They should follow the pattern of modifying test state via this macro instead of directly.
@@ -103,8 +107,8 @@ protected:
                            const char* func,
                            int line);
   
-  bool AllTrueBeforeTimeout(std::vector<bool> conditions,
-                            const char* conditionsAsString,
+  bool AllTrueBeforeTimeout(const std::vector<bool>& conditionBools,
+                            const std::vector<std::string>& conditionStrings,
                             double start_time,
                             double timeout,
                             const char* file,

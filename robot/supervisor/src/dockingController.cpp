@@ -869,6 +869,7 @@ namespace Anki {
                     }
                     
                     PathFollower::AppendPathSegment_PointTurn(x, y,
+                                                              a.ToFloat(),
                                                               a.ToFloat()-turnAngle,
                                                               HM_ROT_SPEED_RADPS,
                                                               HM_ROT_ACCEL_MMPS2,

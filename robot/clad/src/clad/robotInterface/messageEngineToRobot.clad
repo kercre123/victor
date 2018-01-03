@@ -15,6 +15,7 @@
 #include "clad/types/imu.clad"
 #include "clad/types/controllerChannels.clad"
 #include "clad/types/proceduralFaceTypes.clad"
+#include "clad/types/proxMessages.clad"
 #include "clad/robotInterface/messageToActiveObject.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
@@ -161,6 +162,7 @@ message AppendPathSegmentPointTurn
 {
   float_32 x_center_mm,
   float_32 y_center_mm,
+  float_32 startRad,
   float_32 targetRad,
   float_32 angleTolerance,
   PathSegmentSpeed speed, // targetSpeed indicates rotational speed in rad/s
@@ -267,11 +269,6 @@ message EnableStopOnCliff
   bool enable
 }
 
-message SetCliffDetectThresholds
-{
-  uint_16 thresholds[4],  // New cliff threshold values for each sensor
-}
-
 message EnableBraceWhenFalling
 {
   bool enable
@@ -328,6 +325,12 @@ message DisplayProceduralFace
 message SetFaceHue
 {
     float_32 hue // [0,1]
+}
+
+// SetDebugConsoleVarMessage - for getting console vars to AnimProcess (until we have nicer web interface)
+message SetDebugConsoleVarMessage {
+  uint_8 varName[64],   // Array of chars, zero-terminated
+  uint_8 tryValue[16]   //   "
 }
 
 // ====================================================
@@ -443,6 +446,7 @@ union EngineToRobot
   AudioEngine::Multiplexer::PostAudioSwitchState  postAudioSwitchState = 0x73,
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
 
+  SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

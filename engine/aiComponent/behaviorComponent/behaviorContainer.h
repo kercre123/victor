@@ -66,9 +66,9 @@ public:
   using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
   BehaviorContainer(const BehaviorIDJsonMap& behaviorData);
   
-  void Init(BehaviorExternalInterface& behaviorExternalInterface,
-            const bool shouldAddToActivatableScope);
+  void Init(BehaviorExternalInterface& behaviorExternalInterface);
 protected:
+  friend class AnonymousBehaviorFactory;  
   friend class BehaviorComponent;
   friend class DevBehaviorComponentMessageHandler;
   // Check to ensure that the factory only includes one behavior per executable
@@ -77,8 +77,9 @@ protected:
   
   using BehaviorIDToBehaviorMap = std::map<BehaviorID, ICozmoBehaviorPtr>;
 
-  ICozmoBehaviorPtr CreateBehavior(BehaviorClass behaviorType, const Json::Value& config);
-  ICozmoBehaviorPtr CreateBehavior(const Json::Value& behaviorJson);
+  ICozmoBehaviorPtr CreateBehaviorFromConfig(const Json::Value& behaviorJson);  
+  ICozmoBehaviorPtr CreateAnonymousBehavior(BehaviorClass behaviorType, const Json::Value& config) const;  
+  ICozmoBehaviorPtr CreateBehaviorAndAddToContainer(BehaviorClass behaviorType, const Json::Value& config);
   
 #if ANKI_DEV_CHEATS
   const BehaviorIDToBehaviorMap& GetBehaviorMap() const { return _idToBehaviorMap; }
@@ -90,7 +91,7 @@ private:
   // ============================== Private Member Funcs ==============================
   
   // NOTE: can modify newBehavior (e.g. on name collision if rule is to reuse existing behavior)
-  ICozmoBehaviorPtr AddToFactory(ICozmoBehaviorPtr newBehavior);
+  ICozmoBehaviorPtr AddToContainer(ICozmoBehaviorPtr newBehavior);
   
   bool RemoveBehaviorFromMap(ICozmoBehaviorPtr behavior);
   
@@ -104,6 +105,9 @@ private:
   // hide behaviorTypes.h file in .cpp
   std::string GetIDString(BehaviorID behaviorID) const;
   std::string GetClassString(BehaviorClass behaviorClass) const;
+
+  // The base function used to create behaviors - should only be called internally
+  ICozmoBehaviorPtr CreateBehaviorBase(BehaviorClass behaviorType, const Json::Value& config) const;  
   
 };
 

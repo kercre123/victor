@@ -13,10 +13,8 @@
 #include "anki/common/robot/utilities.h"
 #include "anki/common/types.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/animTrackHelpers.h"
@@ -238,10 +236,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
     const bool isValidTypeOfUnexpectedMovement = (unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED ||
                                                   unexpectedMovementType == UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION);
     
-    // TODO: Should we really be checking this here? It prevents collision obstacles from being created while reaction is disabled. (COZMO-13034)
-    const bool isReactToUnexpectedMovementEnabled = _robot.GetBehaviorManager().
-                        IsReactionTriggerEnabled(ReactionTrigger::UnexpectedMovement);
-    if(kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement && isReactToUnexpectedMovementEnabled)
+    if(kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement)
     {
       // Add obstacle based on when this started and how robot was trying to turn
       // TODO: Broadcast sufficient information to blockworld and do it there?

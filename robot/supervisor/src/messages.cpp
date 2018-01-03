@@ -325,7 +325,7 @@ namespace Anki {
       }
 
       void Process_appendPathSegPointTurn(const RobotInterface::AppendPathSegmentPointTurn& msg) {
-        PathFollower::AppendPathSegment_PointTurn(msg.x_center_mm, msg.y_center_mm, msg.targetRad,
+        PathFollower::AppendPathSegment_PointTurn(msg.x_center_mm, msg.y_center_mm, msg.startRad, msg.targetRad,
                                                   msg.speed.target, msg.speed.accel, msg.speed.decel,
                                                   msg.angleTolerance, msg.useShortestDir);
       }
@@ -597,7 +597,7 @@ namespace Anki {
         ProxSensors::EnableStopOnCliff(msg.enable);
       }
 
-      void Process_setCliffDetectThresholds(const RobotInterface::SetCliffDetectThresholds& msg)
+      void Process_setCliffDetectThresholds(const SetCliffDetectThresholds& msg)
       {
         for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
           ProxSensors::SetCliffDetectThreshold(i, msg.thresholds[i]);

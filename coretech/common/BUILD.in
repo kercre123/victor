@@ -19,9 +19,7 @@ cxx_project(
     name = 'cti_common_robot',
     srcs = cxx_src_glob(['shared/src',
                          'robot/src'],
-                        excludes=['radians*',
-                                  'utilities_shared*',
-                                  'externalInterface*']),
+                        excludes=['externalInterface*']),
     platform_srcs = [
         ('android', glob(['shared/src/**/*_android.cpp',
                           'robot/src/**/*_android.cpp']))

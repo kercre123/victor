@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <unordered_set>
 
 namespace Anki {
 namespace Cozmo {
@@ -87,10 +88,15 @@ struct BorderRegion {
   BorderSegmentList segments;
 };
 
-using MemoryMapDataPtr      = std::shared_ptr<MemoryMapData>;
-using BorderRegionVector    = std::vector<BorderRegion>;
-using NodeTransformFunction = std::function<MemoryMapDataPtr (MemoryMapDataPtr)>;
-using NodePredicate         = std::function<bool (MemoryMapDataPtr)>;
+using MemoryMapDataPtr       = std::shared_ptr<MemoryMapData>;
+using MemoryMapDataConstPtr  = std::shared_ptr<const MemoryMapData>;
+
+using MemoryMapDataList      = std::unordered_set<MemoryMapDataPtr>;
+using MemoryMapDataConstList = std::unordered_set<MemoryMapDataConstPtr>;
+
+using BorderRegionVector     = std::vector<BorderRegion>;
+using NodeTransformFunction  = std::function<MemoryMapDataPtr (MemoryMapDataPtr)>;
+using NodePredicate          = std::function<bool (MemoryMapDataPtr)>;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Array of content that provides an API with compilation checks for algorithms that require combinations

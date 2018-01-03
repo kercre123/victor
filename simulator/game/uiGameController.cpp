@@ -135,6 +135,16 @@ namespace Anki {
       HandleFaceEnrollmentCompleted(msg);
     }
     
+    void UiGameController::HandleCliffEventBase(const CliffEvent& msg)
+    {
+      HandleCliffEvent(msg);
+    }
+    
+    void UiGameController::HandleSetCliffDetectThresholdsBase(const SetCliffDetectThresholds& msg)
+    {
+      HandleSetCliffDetectThresholds(msg);
+    }
+    
     void UiGameController::HandleEngineErrorCodeBase(const ExternalInterface::EngineErrorCodeMessage& msg)
     {
       HandleEngineErrorCode(msg);
@@ -647,6 +657,12 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGameTag::FaceEnrollmentCompleted:
             HandleFaceEnrollmentCompletedBase(message.Get_FaceEnrollmentCompleted());
+            break;
+          case ExternalInterface::MessageEngineToGameTag::CliffEvent:
+            HandleCliffEventBase(message.Get_CliffEvent());
+            break;
+          case ExternalInterface::MessageEngineToGameTag::SetCliffDetectThresholds:
+            HandleSetCliffDetectThresholdsBase(message.Get_SetCliffDetectThresholds());
             break;
           case ExternalInterface::MessageEngineToGameTag::DefinedCustomObject:
             HandleDefinedCustomObjectBase(message.Get_DefinedCustomObject());

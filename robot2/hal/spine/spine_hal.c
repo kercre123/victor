@@ -266,7 +266,7 @@ int hal_resync_partial(int start_offset, int len) {
        if (i2 <= index) { //no match, or restarted match at `i2` chars before last scanned char
           i+=index-i2+1;
        }
-       else if (i2 == SPINE_HEADER_LEN) { //whole sync!  
+       else if (i2 == SPINE_HEADER_LEN) { //whole sync!
           index = len-i; //consider rest of buffer valid.
           break;
        }
@@ -276,7 +276,6 @@ int hal_resync_partial(int start_offset, int len) {
     if (index) {
        memmove(gHal.inbuffer, gHal.inbuffer+i, index);
     }
-    
     spine_debug("\n%u dropped bytes\n", start_offset+i-index);
 
     return index;
@@ -345,7 +344,7 @@ const struct SpineMessageHeader* hal_read_frame()
     index = hal_resync_partial(SPINE_HEADER_LEN, total_message_length);
     return NULL;
   }
-  
+
   spine_debug_x("found frame %04x!\r", ((struct SpineMessageHeader*)gHal.inbuffer)->payload_type);
   spine_debug_x("payload start: %08x!\r", *(uint32_t*)(((struct SpineMessageHeader*)gHal.inbuffer)+1));
   index = 0; //get ready for next one
@@ -385,7 +384,7 @@ void hal_send_frame(PayloadId type, const void* data, int len)
   const uint8_t* hdr = spine_construct_header(type, len);
   crc_t crc = calc_crc(data, len);
   if (hdr) {
-    spine_debug_x("sending %x packet (%d bytes)\n", type, len);
+    spine_debug_x("sending %x packet (%d bytes) CRC=%08x\n", type, len, crc);
     hal_serial_send(hdr, SPINE_HEADER_LEN);
     hal_serial_send(data, len);
     hal_serial_send((uint8_t*)&crc, sizeof(crc));
@@ -407,6 +406,5 @@ int main(int argc, const char* argv[])
    gHal.fd = open("unittest.dat", O_RDONLY);
    const struct SpineMessageHeader* hdr = hal_get_frame(PAYLOAD_ACK, 1000);
    assert(hdr && hdr->payload_type == PAYLOAD_ACK);
-   
 }
 #endif

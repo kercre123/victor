@@ -17,7 +17,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 
-#include "clad/types/behaviorComponent/activityTypes.h"
 #include "clad/types/offTreadsStates.h"
 
 #include "util/random/randomGenerator.h"
@@ -33,7 +32,6 @@ class BehaviorContainer;
 class BlockWorld;
 class DelegationComponent;
 class FaceWorld;
-class IActivity;
 class ICozmoBehavior;
 class IExternalInterface;
 class NeedsManager;

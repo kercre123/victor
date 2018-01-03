@@ -17,7 +17,6 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingShowCube.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
@@ -45,33 +44,6 @@ namespace{
 static const char* kMaxErrorsTotalKey  = "MaxErrorsTotal";
 static const char* kMaxErrorsPickupKey = "MaxErrorsPickup";
 static const char* kMaxTimeBeforeTimeoutSecKey = "Timeout_Sec";
-  
-constexpr ReactionTriggerHelpers::FullReactionArray kOnboardingTriggerAffectedArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  true},
-  {ReactionTrigger::Hiccup,                       true},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           true}
-};
-  
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kOnboardingTriggerAffectedArray),
-                "Reaction triggers duplicate or non-sequential");
 
 }
   
@@ -83,10 +55,9 @@ BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(const Json::Value& config
   SubscribeToTags({
     MessageGameToEngineTag::TransitionToNextOnboardingState
   });
-  SubscribeToTags({{
-    EngineToGameTag::ReactionTriggerTransition,
+  SubscribeToTags({
     EngineToGameTag::RobotObservedObject,
-  }});
+  });
   
   JsonTools::GetValueOptional(config, kMaxErrorsTotalKey, _maxErrorsTotal);
   JsonTools::GetValueOptional(config, kMaxErrorsPickupKey, _maxErrorsPickup);
@@ -115,7 +86,6 @@ Result BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface
     AnimationTrigger::OnboardingDriveEnd},
       GetIDStr());
   
-  SmartDisableReactionsWithLock(GetIDStr(), kOnboardingTriggerAffectedArray);
   // Some reactionary behaviors don't trigger resume like cliff react followed by "react to on back"
   // So just handle init doesn't always reset to "inactive"
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::InitInternal", " %hhu ",_state);
@@ -155,32 +125,7 @@ void BehaviorOnboardingShowCube::OnBehaviorDeactivated(BehaviorExternalInterface
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
-  if( event.GetData().GetTag() == MessageEngineToGameTag::ReactionTriggerTransition )
-  {
-    // Only react when the behavior is running ( not inactive )
-    const ExternalInterface::ReactionTriggerTransition& msg = event.GetData().Get_ReactionTriggerTransition();
-    const bool startingFirstReaction =  msg.newTrigger != ReactionTrigger::NoneTrigger &&
-                                        msg.oldTrigger == ReactionTrigger::NoneTrigger;
-    if(startingFirstReaction &&  (_state != State::ErrorCozmo) && (_state != State::Inactive) && (_state != State::ErrorFinal))
-    {
-      switch (msg.newTrigger)
-      {
-        case ReactionTrigger::CliffDetected:
-        case ReactionTrigger::RobotPickedUp:
-        case ReactionTrigger::RobotOnSide:
-        case ReactionTrigger::RobotOnBack:
-        case ReactionTrigger::RobotOnFace:
-        case ReactionTrigger::RobotShaken:
-        case ReactionTrigger::UnexpectedMovement:
-        {
-          TransitionToErrorState(State::ErrorCozmo,behaviorExternalInterface);
-          break;
-        }
-        default:
-          break;
-      }
-    }
-  }
+
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -193,9 +138,6 @@ void BehaviorOnboardingShowCube::HandleWhileActivated(const EngineToGameEvent& e
       HandleObjectObserved(behaviorExternalInterface, event.GetData().Get_RobotObservedObject());
       break;
     }
-    case MessageEngineToGameTag::ReactionTriggerTransition:
-      // Handled by AlwaysHandle, but don't want error printing...
-    break;
     default: {
       PRINT_NAMED_ERROR("BehaviorOnboardingShowCube.HandleWhileRunning.InvalidEvent", "");
       break;

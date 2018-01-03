@@ -45,17 +45,17 @@ namespace Anki {
     
     Result VizManager::Connect(const char *udp_host_address, const unsigned short port, const char* unity_host_address, const unsigned short unity_port)
     {
-      if(_isInitialized) {
+      if (_isInitialized) {
         Disconnect();
       }
 
-      #if !VIZ_ON_DEVICE
       if (!_vizClient.Connect(udp_host_address, port)) {
         PRINT_NAMED_INFO("VizManager.Connect", "Failed to init VizManager client (%s:%d)", udp_host_address, port);
         //_isInitialized = false;
       }
 
-      if(!_unityVizClient.Connect(unity_host_address, unity_port)) {
+      #if VIZ_TO_UNITY
+      if (!_unityVizClient.Connect(unity_host_address, unity_port)) {
         PRINT_NAMED_INFO("VizManager.Connect", "Failed to init VizManager unity client (%s:%d)", unity_host_address, unity_port);
       }
       #endif
@@ -71,7 +71,7 @@ namespace Anki {
       if(_isInitialized) {
         bool vizDisconnected = _vizClient.Disconnect();
         bool unityDisconnected = true;
-        #if !VIZ_ON_DEVICE
+        #if VIZ_TO_UNITY
         unityDisconnected = _unityVizClient.Disconnect();
         #endif
         
@@ -111,31 +111,26 @@ namespace Anki {
       const size_t numWritten = (uint32_t)message.Pack(buffer, MAX_MESSAGE_SIZE);
       
       {
-        #if !VIZ_ON_DEVICE
+        
         ANKI_CPU_PROFILE("VizClient.Send");
         if (_vizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
           PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
         }
-        #endif
       }
-      
+
+      #if VIZ_TO_UNITY
       {
-        ANKI_CPU_PROFILE("UnityVizClient.Send");
-        #if VIZ_ON_DEVICE
-        if (_unityVizPort != nullptr) {
-          _unityVizPort->PushToGameMessage(buffer, numWritten);
-        }
-        #else
+        ANKI_CPU_PROFILE("UnityVizClient.SendToUnity")
         if (_unityVizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
           if ( _unityVizClient.IsConnected() ) { // prevents webots from crying when no Unity app is launched
             PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd to Unity failed", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
           }
         }
-        #endif
       }
+      #endif
         
       // Log viz messages from here.
-      if(ANKI_DEV_CHEATS && nullptr != DevLoggingSystem::GetInstance())
+      if (ANKI_DEV_CHEATS && nullptr != DevLoggingSystem::GetInstance())
       {
         DevLoggingSystem::GetInstance()->LogMessage(message);
       }

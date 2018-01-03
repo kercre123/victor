@@ -14,7 +14,6 @@
 #define ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 
 
-#include "clad/types/behaviorComponent/activityTypes.h"
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 
 #include "util/helpers/noncopyable.h"
@@ -77,11 +76,9 @@ public:
 
   // robot configuration json files
   const Json::Value& GetRobotMoodConfig() const              { return _robotMoodConfig; }
-  const Json::Value& GetLegacyCozmoActivitiesConfig() const  { return _legacyCozmoActivitiesConfig; }
   const Json::Value& GetVictorFreeplayBehaviorConfig() const { return _victorFreeplayBehaviorConfig; }
   const Json::Value& GetRobotWorkoutConfig() const           { return _robotWorkoutConfig; }
   const Json::Value& GetRobotVisionConfig() const            { return _robotVisionConfig; }
-  const Json::Value& GetReactionTriggerMap() const           { return _reactionTriggerMap; }
   const Json::Value& GetVoiceCommandConfig() const           { return _voiceCommandConfig; }
   const Json::Value& GetRobotNeedsConfig() const             { return _needsSystemConfig; }
   const Json::Value& GetStarRewardsConfig() const            { return _starRewardsConfig; }
@@ -121,8 +118,7 @@ private:
 
   void LoadEmotionEvents();
   void LoadBehaviors();
-  void LoadReactionTriggerMap();
-
+  
   const CozmoContext* const _context;
   const Util::Data::DataPlatform* _platform;
 
@@ -152,10 +148,8 @@ private:
 
   // robot configs
   Json::Value _robotMoodConfig;
-  Json::Value _legacyCozmoActivitiesConfig;
   Json::Value _victorFreeplayBehaviorConfig;
   Json::Value _robotVisionConfig;
-  Json::Value _reactionTriggerMap;
   Json::Value _robotWorkoutConfig;
   Json::Value _voiceCommandConfig;
   Json::Value _needsSystemConfig;

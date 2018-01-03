@@ -123,6 +123,8 @@ protected:
   virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
   virtual void HandleLoadedKnownFace(Vision::LoadedKnownFace const& msg){};
   virtual void HandleFaceEnrollmentCompleted(const ExternalInterface::FaceEnrollmentCompleted &msg) {};
+  virtual void HandleCliffEvent(const CliffEvent& msg){};
+  virtual void HandleSetCliffDetectThresholds(const SetCliffDetectThresholds& msg){};
   
   virtual void HandleBehaviorTransition(ExternalInterface::BehaviorTransition const& msg){};
   virtual void HandleEndOfMessage(const EndOfMessage& msg){};
@@ -391,8 +393,6 @@ protected:
   const Vision::FaceID_t GetLastObservedFaceID() const;
   
   BehaviorClass GetBehaviorClass(const std::string& behaviorName) const;
-  ReactionTrigger GetReactionTrigger(const std::string& triggerName) const;
-
   
   // NVStorage
   const std::vector<u8>* GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const;
@@ -513,6 +513,8 @@ private:
   void HandleFactoryTestResultEntryBase(FactoryTestResultEntry const& msg);
   void HandleLoadedKnownFaceBase(Vision::LoadedKnownFace const& msg);
   void HandleFaceEnrollmentCompletedBase(const ExternalInterface::FaceEnrollmentCompleted &msg);
+  void HandleCliffEventBase(const CliffEvent& msg);
+  void HandleSetCliffDetectThresholdsBase(const SetCliffDetectThresholds& msg);
   void HandleEngineErrorCodeBase(const ExternalInterface::EngineErrorCodeMessage& msg);
   void HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg);
   void HandleDefinedCustomObjectBase(const ExternalInterface::DefinedCustomObject& msg);

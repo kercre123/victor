@@ -16,7 +16,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/dockActions.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/robot.h"
@@ -31,34 +30,6 @@ const float kDistancePastBlockToDrive_mm   = 100.0f;
 const float kSpeedToDriveThroughBlock_mmps = 200.0f;
 const float kDistanceBackUpFromBlock_mm    = 100.0f;
 const float kSpeedBackUpFromBlock_mmps     = 100.0f;
-
-  
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRamIntoBlockArray = {
-  {ReactionTrigger::CliffDetected,                true},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersRamIntoBlockArray),
-              "Reaction triggers duplicate or non-sequential");
 
 } // end namespace
   
@@ -153,9 +124,7 @@ void BehaviorRamIntoBlock::TransitionToTurningToBlock(BehaviorExternalInterface&
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRamIntoBlock::TransitionToRammingIntoBlock(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRamIntoBlockArray);
-  
+{  
   const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(obj != nullptr){
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should

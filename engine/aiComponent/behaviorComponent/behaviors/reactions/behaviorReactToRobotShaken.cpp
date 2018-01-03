@@ -13,7 +13,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotShaken.h"
 
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/actions/animActions.h"
@@ -31,33 +30,6 @@ const float kAccelMagnitudeShakingStoppedThreshold = 13000.f;
 // Dizzy factor thresholds for playing the soft, medium, or hard reactions
 const float kShakenDurationThresholdHard   = 5.0f;
 const float kShakenDurationThresholdMedium = 2.5f;
-  
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRobotShakenArray = {
-  {ReactionTrigger::CliffDetected,                true},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     true},
-  {ReactionTrigger::Frustration,                  true},
-  {ReactionTrigger::Hiccup,                       true},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotPickedUp,                true},
-  {ReactionTrigger::RobotPlacedOnSlope,           true},
-  {ReactionTrigger::ReturnedToTreads,             true},
-  {ReactionTrigger::RobotOnBack,                  true},
-  {ReactionTrigger::RobotOnFace,                  true},
-  {ReactionTrigger::RobotOnSide,                  true},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           true}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersRobotShakenArray),
-              "Reaction triggers duplicate or non-sequential");
 
 }
   
@@ -70,10 +42,7 @@ BehaviorReactToRobotShaken::BehaviorReactToRobotShaken(const Json::Value& config
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToRobotShaken::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  // Disable some IMU-related behaviors
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRobotShakenArray);
-  
+{  
   // Clear severe needs expression since eyes are being re-set
   if(behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().HasSevereNeedExpression())
   {

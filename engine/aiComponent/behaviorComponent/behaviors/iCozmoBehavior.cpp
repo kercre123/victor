@@ -19,12 +19,14 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
+#include "engine/aiComponent/behaviorComponent/anonymousBehaviorFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
+#include "engine/aiComponent/stateConceptStrategies/strategyCloudIntentPending.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
@@ -42,6 +44,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "clad/types/behaviorComponent/cloudIntents.h"
 
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
@@ -63,72 +66,15 @@ static const char* kRequiredSevereNeedsStateKey      = "requiredSevereNeedsState
 static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCharger_sec";
 static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
 static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
-static const char* kSparkedBehaviorDisableLock       = "SparkBehaviorDisables";
-static const char* kSmartReactionLockSuffix          = "_behaviorLock";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 static const char* kWantsToRunStrategyConfigKey      = "wantsToRunStrategyConfig";
+static const char* kRespondToCloudIntentKey          = "respondToCloudIntent";
 static const std::string kIdleLockPrefix             = "Behavior_";
 
-
-static const int kMaxResumesFromCliff                = 2;
-static const float kCooldownFromCliffResumes_sec     = 15.0;
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-constexpr ReactionTriggerHelpers::FullReactionArray kObjectTapInteractionDisablesArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kObjectTapInteractionDisablesArray),
-              "Reaction triggers duplicate or non-sequential");
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-constexpr ReactionTriggerHelpers::FullReactionArray kSparkBehaviorDisablesArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kSparkBehaviorDisablesArray),
-              "Reaction triggers duplicate or non-sequential");
+// Keys for loading in anonymous behaviors
+static const char* kAnonymousBehaviorMapKey          = "anonymousBehaviors";
+static const char* kAnonymousBehaviorName            = "behaviorName";
+static const char* kAnonymousBehaviorParams          = "params";
 }
 
   
@@ -141,7 +87,28 @@ Json::Value ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass behaviorCl
   return config;
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::InjectBehaviorClassAndIDIntoConfig(BehaviorClass behaviorClass, BehaviorID behaviorID, Json::Value& config)
+{
+  if(config.isMember(kBehaviorIDConfigKey)){
+    PRINT_NAMED_WARNING("ICozmoBehavior.InjectBehaviorIDIntoConfig.BehaviorIDAlreadyExists",
+                        "Overwriting behaviorID %s with behaviorID %s",
+                        config[kBehaviorIDConfigKey].asString().c_str(),
+                        BehaviorIDToString(behaviorID));
+  }
+  if(config.isMember(kBehaviorClassKey)){
+    PRINT_NAMED_WARNING("ICozmoBehavior.InjectBehaviorIDIntoConfig.BehaviorClassAlreadyExists",
+                        "Overwriting behaviorClass %s with behaviorClass %s",
+                        config[kBehaviorClassKey].asString().c_str(),
+                        BehaviorClassToString(behaviorClass));
+  }
+
+  config[kBehaviorIDConfigKey] = BehaviorIDToString(behaviorID);  
+  config[kBehaviorClassKey] = BehaviorClassToString(behaviorClass);
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorID ICozmoBehavior::ExtractBehaviorIDFromConfig(const Json::Value& config,
                                                   const std::string& fileName)
@@ -198,12 +165,12 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 , _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _lastRunTime_s(0.0f)
 , _activatedTime_s(0.0f)
-, _stateConceptStrategy(nullptr)
 , _id(ExtractBehaviorIDFromConfig(config))
 , _idString(BehaviorIDToString(_id))
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
 , _needsActionID(ExtractNeedsActionIDFromConfig(config))
 , _executableType(ExecutableBehaviorType::Count)
+, _respondToCloudIntent(CloudIntent::Count)
 , _requiredUnlockId( UnlockId::Count )
 , _requiredSevereNeed( NeedId::Count )
 , _requiredRecentDriveOffCharger_sec(-1.0f)
@@ -289,6 +256,14 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     _wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
   }
 
+  if(config.isMember(kAnonymousBehaviorMapKey)){
+    _anonymousBehaviorMapConfig = config[kAnonymousBehaviorMapKey];
+  }    
+    
+  if(config.isMember(kRespondToCloudIntentKey)){
+    _respondToCloudIntent = CloudIntentFromString(config[kRespondToCloudIntentKey].asCString());
+  }
+
   return true;
 }
   
@@ -312,12 +287,66 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
   assert(_behaviorExternalInterface);
   assert(_robot);
   
-  if(_wantsToRunConfig.size() > 0){
-    _stateConceptStrategy.reset(StateConceptStrategyFactory::CreateStateConceptStrategy(behaviorExternalInterface,
-                                                                                  _robot->HasExternalInterface() ? _robot->GetExternalInterface() : nullptr,
-                                                                                  _wantsToRunConfig));
-    _wantsToRunConfig.clear();
+  {
+    auto externalInterface = _robot->HasExternalInterface() ? _robot->GetExternalInterface() : nullptr;
+    
+    if(_wantsToRunConfig.size() > 0){
+      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(
+                                                  behaviorExternalInterface,
+                                                  externalInterface,
+                                                  _wantsToRunConfig));
+      _stateConceptStrategies.push_back(std::move(strategy));
+      _wantsToRunConfig.clear();
+    }
+
+    if(_respondToCloudIntent != CloudIntent::Count){
+      Json::Value config = StrategyCloudIntentPending::GenerateCloudIntentPendingConfig(_respondToCloudIntent);
+      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(
+                                                  behaviorExternalInterface,
+                                                  externalInterface,
+                                                  config));
+      _stateConceptStrategies.push_back(std::move(strategy));
+    }
+
   }
+
+  if(!_anonymousBehaviorMapConfig.empty()){
+    AnonymousBehaviorFactory factory(behaviorExternalInterface.GetBehaviorContainer()); 
+    for(auto& entry: _anonymousBehaviorMapConfig){
+      const std::string debugStr = "ICozmoBehavior.ReadFromJson.";
+      
+      const std::string behaviorName = JsonTools::ParseString(entry, kAnonymousBehaviorName, debugStr + "BehaviorNameMissing");      
+      const BehaviorClass behaviorClass = BehaviorClassFromString(
+        JsonTools::ParseString(entry, kBehaviorClassKey, debugStr + "BehaviorClassMissing"));
+      Json::Value params;
+      if(entry.isMember(kAnonymousBehaviorParams)){
+        params = entry[kAnonymousBehaviorParams];
+      }
+
+      // check for duplicate behavior names since maps require a unique key
+      auto it = _anonymousBehaviorMap.find(behaviorName);
+      if(it == _anonymousBehaviorMap.end()){
+        auto resultPair = _anonymousBehaviorMap.insert(std::make_pair(behaviorName,
+                                                       factory.CreateBehavior(behaviorClass, params)));
+
+        DEV_ASSERT_MSG(resultPair.first->second != nullptr, "ICozmoBehavior.InitInternal.FailedToAllocateAnonymousBehavior",
+                       "Failed to allocate new anonymous behavior (%s) within behavior %s",
+                       behaviorName.c_str(),
+                       GetIDStr().c_str());
+
+        // we need to initlaize the anon behaviors as well
+        resultPair.first->second->Init(behaviorExternalInterface);
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("ICozmoBehavior.InitInternal.DuplicateAnonymousBehaviorName",
+                          "Duplicate anonymous behavior name (%s) found for behavior '%s'",
+                          behaviorName.c_str(),
+                          GetIDStr().c_str());
+      }
+    }
+  }
+
 
   // Allow internal init to happen before subscribing to tags in case additional
   // tags are added
@@ -432,14 +461,6 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
                         "Initializing %s: %zu actions already in queue",
                         GetIDStr().c_str(), robot.GetActionList().GetQueueLength(0));
   }
-
-  // Streamline all ICozmoBehaviors when a spark is active
-  if(robot.GetBehaviorManager().GetActiveSpark() != UnlockId::Count
-     && !robot.GetBehaviorManager().IsActiveSparkSoft()){
-    _sparksStreamline = true;
-  } else {
-    _sparksStreamline = false;
-  }
   
   _isActivated = true;
   _stopRequestedAfterAction = false;
@@ -455,13 +476,12 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
     _startCount++;
   }
   
-  // Disable Acknowledge object if this behavior is the sparked version
-  if(_requiredUnlockId != UnlockId::Count
-       && _requiredUnlockId == robot.GetBehaviorManager().GetActiveSpark())
-  {
-    SmartDisableReactionsWithLock(kSparkedBehaviorDisableLock, kSparkBehaviorDisablesArray);
+  // Clear cloud intent if responding to it
+  if(_respondToCloudIntent != CloudIntent::Count){
+    behaviorExternalInterface.GetAIComponent().GetBehaviorComponent().
+                 GetCloudReceiver().ClearIntentIfPending(_respondToCloudIntent);
   }
-  
+
   return initResult;
 }
 
@@ -486,26 +506,10 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ICozmoBehavior::Resume(BehaviorExternalInterface& behaviorExternalInterface, ReactionTrigger resumingFromType)
+Result ICozmoBehavior::Resume(BehaviorExternalInterface& behaviorExternalInterface)
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Resume").c_str(), "Resuming...");
   DEV_ASSERT(!_isActivated, "ICozmoBehavior.Resume.ShouldNotBeRunningIfWeTryToResume");
-  
-  // Check and update the number of times we've resumed from cliff or unexpected movement
-  if(resumingFromType == ReactionTrigger::CliffDetected
-     || resumingFromType == ReactionTrigger::UnexpectedMovement)
-  {
-    _timesResumedFromPossibleInfiniteLoop++;
-    if(_timesResumedFromPossibleInfiniteLoop >= kMaxResumesFromCliff){
-      const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      _timeCanRunAfterPossibleInfiniteLoopCooldown_sec = currTime + kCooldownFromCliffResumes_sec;
-      if(behaviorExternalInterface.HasMoodManager()){
-        auto& moodManager = behaviorExternalInterface.GetMoodManager();
-        moodManager.TriggerEmotionEvent("TooManyResumesCliffOrMovement", currTime);
-      }
-      return Result::RESULT_FAIL;
-    }
-  }
   
   _isResuming = true;
   _activatedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -516,17 +520,6 @@ Result ICozmoBehavior::Resume(BehaviorExternalInterface& behaviorExternalInterfa
     // default implementation of ResumeInternal also sets it to true, but behaviors that override it
     // might not set it
     _isActivated = true;
-    
-    
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    // Disable Acknowledge object if this behavior is the sparked version
-    if(_requiredUnlockId != UnlockId::Count
-       && _requiredUnlockId == robot.GetBehaviorManager().GetActiveSpark()){
-      SmartDisableReactionsWithLock(kSparkedBehaviorDisableLock, kSparkBehaviorDisablesArray);
-    }
-    
   } else {
     _isActivated = false;
   }
@@ -633,12 +626,6 @@ void ICozmoBehavior::OnDeactivatedInternal(BehaviorExternalInterface& behaviorEx
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   CancelDelegates(false);
   
-  // Re-enable any reactionary behaviors which the behavior disabled and didn't have a chance to
-  // re-enable before stopping
-  while(!_smartLockIDs.empty()){
-    SmartRemoveDisableReactionsLock(*_smartLockIDs.begin());
-  }
-
   if(_hasSetIdle){
     SmartRemoveIdleAnimation(*_behaviorExternalInterface);
   }
@@ -759,10 +746,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
   // if there's a timer requiring a recent parent switch
   const bool requiresRecentParentSwitch = FLT_GE(_requiredRecentSwitchToParent_sec, 0.0);
   if ( requiresRecentParentSwitch ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    const float lastTime = robot.GetBehaviorManager().GetLastBehaviorChooserSwitchTime();
+    const float lastTime = 0.f;// robot.GetBehaviorManager().GetLastBehaviorChooserSwitchTime();
     const float changedAgoSecs = curTime - lastTime;
     const bool isSwitchRecent = FLT_LE(changedAgoSecs, _requiredRecentSwitchToParent_sec);
     if ( !isSwitchRecent ) {
@@ -791,9 +775,10 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
     return false;
   }
   
-  if((_stateConceptStrategy != nullptr) &&
-     !_stateConceptStrategy->AreStateConditionsMet(behaviorExternalInterface)){
-    return false;
+  for(auto& strategy: _stateConceptStrategies){
+    if(!strategy->AreStateConditionsMet(behaviorExternalInterface)){
+      return false;
+    }
   }
      
   return true;
@@ -809,12 +794,6 @@ Util::RandomGenerator& ICozmoBehavior::GetRNG() const {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  if(!USE_BSM){
-    DEV_ASSERT_MSG(false,
-                   "ICozmoBehavior.UpdateInternal.NotUsingBSM",
-                   "This function is BSM specific - please  don't call it if you're using the behavior manager");
-  }
-
   // fist call the behavior delegation callback if there is one
   if( IsActivated() &&
       !IsControlDelegated() &&
@@ -1044,6 +1023,20 @@ bool ICozmoBehavior::DelegateNow(BehaviorExternalInterface& behaviorExternalInte
   
   return false;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ICozmoBehaviorPtr ICozmoBehavior::FindAnonymousBehaviorByName(const std::string& behaviorName) const
+{
+  ICozmoBehaviorPtr foundBehavior = nullptr;
+
+  auto it = _anonymousBehaviorMap.find(behaviorName);
+  if (it != _anonymousBehaviorMap.end())
+  {
+    foundBehavior = it->second;
+  }
+
+  return foundBehavior;
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg)
@@ -1158,39 +1151,6 @@ void ICozmoBehavior::SmartRemoveIdleAnimation(BehaviorExternalInterface& behavio
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SmartDisableReactionsWithLock(const std::string& lockID,
-                                              const TriggersArray& triggers)
-{
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = _behaviorExternalInterface->GetRobot();
-  robot.GetBehaviorManager().DisableReactionsWithLock(lockID + kSmartReactionLockSuffix, triggers);
-  _smartLockIDs.insert(lockID);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SmartRemoveDisableReactionsLock(const std::string& lockID)
-{
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = _behaviorExternalInterface->GetRobot();
-  robot.GetBehaviorManager().RemoveDisableReactionsLock(lockID + kSmartReactionLockSuffix);
-  _smartLockIDs.erase(lockID);
-}
-
-#if ANKI_DEV_CHEATS
-void ICozmoBehavior::SmartDisableReactionWithLock(const std::string& lockID, const ReactionTrigger& trigger)
-{
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = _behaviorExternalInterface->GetRobot();
-  robot.GetBehaviorManager().DisableReactionWithLock(lockID + kSmartReactionLockSuffix, trigger);
-  _smartLockIDs.insert(lockID);
-}
-#endif
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartSetMotionProfile(const PathMotionProfile& motionProfile)
@@ -1362,16 +1322,6 @@ bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SetBehaviorStateLights(const std::vector<BehaviorStateLightInfo>& structToSet, bool persistOnReaction)
-{
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = _behaviorExternalInterface->GetRobot();
-  robot.GetBehaviorManager().SetBehaviorStateLights(GetClass(), structToSet, persistOnReaction);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorHelperFactory& ICozmoBehavior::GetBehaviorHelperFactory()
 {
   return _behaviorExternalInterface->GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
@@ -1416,6 +1366,12 @@ ActionResult ICozmoBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* 
   }
     
   return ActionResult::SUCCESS;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string ICozmoBehavior::GetClassString(BehaviorClass behaviorClass) const
+{
+  return BehaviorClassToString(behaviorClass);
 }
 
   

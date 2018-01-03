@@ -114,6 +114,11 @@ public class HelloWorld {
     return myDog.Equals(otherDog);
   }
 
+  public static bool Test_Poodle() {
+    Baz.Poodle myPoodle = new Baz.Poodle();
+    return (myPoodle.a == AnkiTypes.AnkiEnum.d1);
+  }
+    
   public static bool Test_od432() {
     od432 myOD432;
     od432 otherOD432;
@@ -605,6 +610,9 @@ public class HelloWorld {
 
     System.Console.Write("Test_Dog: ");
     System.Console.WriteLine(Test_Dog() ? "PASS" : "FAIL");
+      
+    System.Console.Write("Test_Poodle: ");
+    System.Console.WriteLine(Test_Poodle() ? "PASS" : "FAIL");
 
     System.Console.Write("Test_od432: ");
     System.Console.WriteLine(Test_od432() ? "PASS" : "FAIL");

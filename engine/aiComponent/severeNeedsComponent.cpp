@@ -14,8 +14,6 @@
 
 #include "engine/ankiEventUtil.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/needsSystem/needsManager.h"
@@ -25,74 +23,12 @@
 
 namespace Anki {
 namespace Cozmo {
-
-namespace {
-
   
-constexpr ReactionTriggerHelpers::FullReactionArray kTriggersToDisableInSevereNeedsState = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     true},
-  {ReactionTrigger::Frustration,                  true},
-  {ReactionTrigger::Hiccup,                       true},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               true},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotPickedUp,                true},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             true},
-  {ReactionTrigger::RobotOnBack,                  true},
-  {ReactionTrigger::RobotOnFace,                  true},
-  {ReactionTrigger::RobotOnSide,                  true},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      true},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kTriggersToDisableInSevereNeedsState),
-              "Reaction triggers duplicate or non-sequential");
-
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectNoneArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false},
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectNoneArray),
-              "Reaction triggers duplicate or non-sequential");
-  
-std::map<NeedId, const ReactionTriggerHelpers::FullReactionArray*> kReactionsDisabledPerNeedMap = {
-  {NeedId::Energy, &kTriggersToDisableInSevereNeedsState},
-  {NeedId::Repair, &kTriggersToDisableInSevereNeedsState},
-  {NeedId::Play,   &kAffectNoneArray}
-};
-
+namespace{
 const char* kSevereNeedStateLock = "severe_need_component_lock";
-
-} // namespace
   
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // SevereNeedsComponent
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -222,9 +158,7 @@ void SevereNeedsComponent::SetSevereNeedExpression(NeedId need) {
     // TODO: Restore idle animations (VIC-366)
     //_robot.GetAnimationStreamer().PushIdleAnimation(idleIter->second, kSevereNeedStateLock);
   }
-  
-  _robot.GetBehaviorManager().DisableReactionsWithLock(kSevereNeedStateLock, *(kReactionsDisabledPerNeedMap[need]));
-  
+    
   _severeNeedExpression = need;
 }
 
@@ -242,8 +176,6 @@ void SevereNeedsComponent::ClearSevereNeedExpression() {
   _robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(kSevereNeedStateLock);
   // TODO: Restore idle animations (VIC-366)
   //_robot.GetAnimationStreamer().RemoveIdleAnimation(kSevereNeedStateLock);
-
-  _robot.GetBehaviorManager().RemoveDisableReactionsLock(kSevereNeedStateLock);
   
   _severeNeedExpression = NeedId::Count;
 }

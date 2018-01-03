@@ -37,6 +37,7 @@ add_library(robot_hal STATIC
 
 target_link_libraries(robot_hal
   PRIVATE
+  cti_common_robot
   robot_interface
   robot_clad_cpplite
 )
@@ -122,6 +123,7 @@ target_link_libraries(supervisor
   robot_interface
   robot_clad_cpplite
   cti_common_robot
+  cti_planning_robot
   ${PLATFORM_LIBS}
 )
 

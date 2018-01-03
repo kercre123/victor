@@ -310,7 +310,15 @@ class MessageEmitter(BaseEmitter):
                 continue
             
             self.output.write('=')
-            default_value_visitor.visit(member)
+            if member.init is not None and type(member.init.value) is str:
+                member_init=member.init.value
+                if "::" in member_init:
+                    # Replace '::' with '.'
+                    member_init = member_init.replace("::", ".")
+                self.output.write('{member_init}'.format(member_init=member_init))
+            else:
+                default_value_visitor.visit(member)
+                
         self.output.write('):\n')
 
         if node.members():

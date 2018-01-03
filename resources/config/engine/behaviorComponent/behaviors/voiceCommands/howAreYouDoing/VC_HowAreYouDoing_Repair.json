@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "PlayAnimWithFace",
-  "behaviorID": "VC_HowAreYouDoing_Repair",
-  "displayNameKey":"behavior.VC_Refuse_Repair", // Use same display as refuse voice command due to low repair
-  "animTriggers": ["NeutralFace"] // Is overridden programmatically to play an animation depending on repair needs level
-}

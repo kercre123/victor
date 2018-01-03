@@ -48,33 +48,6 @@ static constexpr f32 kMinTimeBeforeGazeChange_s            = 1.f;
 static constexpr f32 kMaxTimeBeforeGazeChange_s            = 2.f;
 static constexpr u32 kMaxTimeInPastToHaveObservedFace_ms   = 1000;
   
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersFistBumpArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotPickedUp,                true},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             true},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           true}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersFistBumpArray),
-              "Reaction triggers duplicate or non-sequential");
-  
 }
 
 
@@ -109,8 +82,6 @@ bool BehaviorFistBump::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersFistBumpArray);
-
   // Disable idle animation
   SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
   

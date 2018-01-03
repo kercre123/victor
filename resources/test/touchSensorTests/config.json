@@ -1,0 +1,117 @@
+[
+  {
+    "filename" : "D.txt" ,
+    "interval_descriptions":[
+      {
+        "tag" : "idle" ,
+        "range" : [0, 911]
+      },
+      {
+        "tag" : "hold" ,
+        "range" : [899, 1304]
+      },
+      {
+        "tag" : "soft" ,
+        "range" : [1316, 1618],
+        "count" : 6
+      },
+      {
+        "tag" : "hard" ,
+        "range" : [1618, 1963],
+        "count" : 7
+      }
+    ]
+  },
+  {
+    "filename" : "K.txt" ,
+    "interval_descriptions":[
+      {
+        "tag" : "idle" ,
+        "range" : [0, 1284]
+      },
+      {
+        "tag" : "hold" ,
+        "range" : [1274, 1546]
+      },
+      {
+        "tag" : "hard" ,
+        "range" : [1546, 2032],
+        "count" : 10
+      },
+      {
+        "tag" : "soft" ,
+        "range" : [2028, 2427],
+        "count" : 8
+      }
+    ]
+  },
+  {
+    "filename" : "C.txt" ,
+    "interval_descriptions":[
+      {
+        "tag" : "idle" ,
+        "range" : [0, 431]
+      },
+      {
+        "tag" : "hold" ,
+        "range" : [425, 685]
+      },
+      {
+        "tag" : "hard" ,
+        "range" : [682, 1013],
+        "count" : 8
+      },
+      {
+        "tag" : "soft" ,
+        "range" : [1010, 1329],
+        "count" : 8
+      }
+    ]
+  },
+  {
+    "filename" : "H.txt" ,
+    "interval_descriptions":[
+      {
+        "tag" : "idle" ,
+        "range" : [0, 380]
+      },
+      {
+        "tag" : "hold" ,
+        "range" : [368, 649]
+      },
+      {
+        "tag" : "hard" ,
+        "range" : [632, 936],
+        "count" : 8
+      },
+      {
+        "tag" : "soft" ,
+        "range" : [935, 1241],
+        "count" : 8
+      }
+    ]
+  },
+  {
+    "filename" : "G.txt" ,
+    "interval_descriptions":[
+      {
+        "tag" : "idle" ,
+        "range" : [0, 4576]
+      },
+      {
+        "tag" : "hold" ,
+        "range" : [4556, 5058]
+      },
+      {
+        "tag" : "soft" ,
+        "range" : [5054, 5290],
+        "count" : 5
+      },
+      {
+        "tag" : "hard" ,
+        "range" : [5294, 5514],
+        "count" : 4
+      }
+    ]
+  }
+]

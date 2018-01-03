@@ -1,0 +1,8 @@
+{
+  "behaviorClass": "PlayAnim",
+  "behaviorID": "ExampleObjectPositionUpdated",
+  "animTriggers": ["OnboardingReactToCube"],
+  "wantsToRunStrategyConfig": {
+    "strategyType" : "ObjectPositionUpdated"
+  }  
+}

@@ -42,34 +42,6 @@ namespace Cozmo {
   
 namespace {
   
-// Reaction triggers to disable:
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersGuardDogArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     true},
-  {ReactionTrigger::Frustration,                  true},
-  {ReactionTrigger::Hiccup,                       true},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
-};
-  
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersGuardDogArray),
-              "Reaction triggers duplicate or non-sequential");
-  
 // Constants/thresholds:
 CONSOLE_VAR_RANGED(float, kSleepingMinDuration_s, "Behavior.GuardDog",  60.f, 20.f, 120.f); // minimum time Cozmo will stay asleep before waking up
 CONSOLE_VAR_RANGED(float, kSleepingMaxDuration_s, "Behavior.GuardDog", 120.f, 60.f, 300.f); // maximum time Cozmo will stay asleep before waking up
@@ -163,10 +135,7 @@ bool BehaviorGuardDog::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorGuardDog::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  // Disable reactionary behaviors that we don't want interrupting this:
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersGuardDogArray);
-  
+{  
   // Reset some members in case this is running again:
   _cubesDataMap.clear();
   _firstSleepingStartTime_s = 0.f;

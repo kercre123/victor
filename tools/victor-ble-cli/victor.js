@@ -1,3 +1,4 @@
+var moment = require('moment-timezone');
 const { StringDecoder } = require('string_decoder');
 
 const WiFiAuth = {
@@ -23,6 +24,7 @@ class Victor {
         this._incoming_packets = [];
         this._heartbeat_counter = 0;
         this._print_heartbeats = false;
+        this._fixing_date = true;
 
         this._peripheral.on('disconnect', () => {
             clearInterval(this._interval);
@@ -122,7 +124,15 @@ class Victor {
                 this._output(results);
                 return;
             case Victor.MSG_V2B_DEV_EXEC_CMD_LINE_RESPONSE:
-                this._output(data.toString('utf8', 2, data.length));
+                var response = data.toString('utf8', 2, data.length);
+                if (this._fixing_date) {
+                    this._fixing_date = false;
+                    if (response.startsWith("1970")) {
+                        this.syncTime();
+                    }
+                } else {
+                    this._output(response);
+                }
                 return;
             case Victor.MSG_V2B_MULTIPART_START:
                 this._incoming_packets = [];
@@ -152,6 +162,7 @@ class Victor {
         };
         read.on('data', handleMessage.bind(this));
         read.subscribe();
+        setTimeout(function(){ this.sendCommand(["date", "+%Y"]);}.bind(this), 200);
     };
 
     _send (buffer) {
@@ -192,6 +203,27 @@ class Victor {
         }
     };
 
+    sendCommand (args) {
+        var body = undefined;
+        for (var i = 0 ; i < args.length ; i++) {
+            var buf = Buffer.concat([Buffer.from(args[i]), Buffer.from([0])]);
+            if (Buffer.isBuffer(body)) {
+                body = Buffer.concat([body, buf]);
+            } else {
+                body = buf;
+            }
+        }
+        this.send(Victor.MSG_B2V_DEV_EXEC_CMD_LINE, body);
+    };
+
+    syncTime () {
+        var date_set_args = ["date", "-u", "@" + Math.round(Date.now() / 1000)];
+        this.sendCommand(date_set_args);
+        var setprop_args = ["setprop", "persist.sys.timezone", moment.tz.guess()];
+        this.sendCommand(setprop_args);
+        var date_display_args = ["date"];
+        this.sendCommand(date_display_args);
+    };
 
     disconnect () {
         this._peripheral.disconnect();
@@ -223,5 +255,8 @@ Object.defineProperty(Victor, 'MSG_B2V_MULTIPART_FINAL', {value: 0xF2, writable:
 Object.defineProperty(Victor, 'MSG_V2B_MULTIPART_START', {value: 0xF3, writable: false});
 Object.defineProperty(Victor, 'MSG_V2B_MULTIPART_CONTINUE', {value: 0xF4, writable: false});
 Object.defineProperty(Victor, 'MSG_V2B_MULTIPART_FINAL', {value: 0xF5, writable: false});
+Object.defineProperty(Victor, 'SERVICE_UUID', {value: "d55e356b59cc42659d5f3c61e9dfd70f", writable: false});
+Object.defineProperty(Victor, 'RECV_CHAR_UUID', {value: "30619f2d0f5441bda65a7588d8c85b45", writable: false});
+Object.defineProperty(Victor, 'SEND_CHAR_UUID', {value: "7d2a4bdad29b4152b7252491478c5cd7", writable: false});
 
 module.exports = Victor;

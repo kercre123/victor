@@ -31,6 +31,15 @@ const char* kStrategyTypeKey = "strategyType";
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Json::Value IStateConceptStrategy::GenerateBaseStrategyConfig(StateConceptStrategyType type)
+{
+  Json::Value config;
+  config[kStrategyTypeKey] = StateConceptStrategyTypeToString(type);
+  return config;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 StateConceptStrategyType IStateConceptStrategy::ExtractStrategyType(const Json::Value& config)
 {
   std::string strategyType = JsonTools::ParseString(config,

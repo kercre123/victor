@@ -79,8 +79,6 @@ void BehaviorDevPettingTestSimple::InitBehavior(BehaviorExternalInterface& behav
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorDevPettingTestSimple::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // Disable all reactions
-  SmartDisableReactionsWithLock(GetIDStr(), ReactionTriggerHelpers::GetAffectAllArray());
   return RESULT_OK;
 }
 

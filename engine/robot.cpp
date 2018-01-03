@@ -1360,12 +1360,12 @@ Result Robot::Update()
   // Connect to objects requested via ConnectToObjects
   ConnectToRequestedObjects();
   
-  // Send nav memory map data
-  _mapComponent->BroadcastMap();
+  // update and broadcast map
+  _mapComponent->Update();
   
   /////////// Update AnimationComponent /////////
   _animationComponent->Update();
-      
+
   /////////// Update visualization ////////////
       
   // Draw All Objects by calling their Visualize() methods.
@@ -1668,14 +1668,6 @@ Result Robot::SyncTime()
     _syncTimeSentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
   return res;
-}
-  
-const BehaviorManager& Robot::GetBehaviorManager() const {
-  return _aiComponent->GetBehaviorComponent().GetBehaviorManager();
-}
-  
-BehaviorManager& Robot::GetBehaviorManager(){
-  return _aiComponent->GetBehaviorComponent().GetBehaviorManager();
 }
   
 Result Robot::LocalizeToObject(const ObservableObject* seenObject,
