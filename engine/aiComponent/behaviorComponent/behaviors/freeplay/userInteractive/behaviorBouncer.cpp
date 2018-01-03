@@ -73,33 +73,6 @@ CONSOLE_VAR_RANGED(u32, kBouncerPaddleWidth_px, CONSOLE_GROUP, 16, 1, 20);
 
 // Ball radius, in pixels
 CONSOLE_VAR_RANGED(s32, kBouncerBallRadius_px, CONSOLE_GROUP, 3, 1, 5);
-
-// Reaction triggers to disable
-constexpr ReactionTriggerHelpers::FullReactionArray kReactionArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     true},
-  {ReactionTrigger::Frustration,                  true},
-  {ReactionTrigger::Hiccup,                       true},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
-};
-  
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kReactionArray), "Invalid reaction triggers");
   
 } // end anonymous namespace
 
@@ -324,9 +297,6 @@ bool BehaviorBouncer::WantsToBeActivatedBehavior(BehaviorExternalInterface& beha
 Result BehaviorBouncer::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   LOG_TRACE("BehaviorBouncer.InitInternal", "Init behavior");
-  
-  // Disable reactionary behaviors that we don't want interrupting this
-  SmartDisableReactionsWithLock(GetIDStr(), kReactionArray);
   
   // Disable idle animation
   SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);

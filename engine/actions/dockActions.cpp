@@ -19,7 +19,6 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -48,10 +47,6 @@ namespace{
 // Doesn't make much sense for PlaceRelObject but it doesn't really hurt except that
 // the robot would bump into the block it was docking to.
 static const float kMaxNegativeXPlacementOffset = 16.f;
-  
-static const char* kDisableReactionsID = "dockActions";
-static const char* kReactionsToSuppressID = "reactionsToSuppress";
-static const char* kPlaceOnGroundDisableID = "placeOnGroundAction";
 
 // use a fairly large distance offset and tighter angle to try to rule out current pose
 static const f32 kSamePreactionPoseDistThresh_mm = 100.f;
@@ -61,67 +56,6 @@ static const f32 kSamePreactionPoseAngleThresh_deg = 30.f;
 
 namespace Anki {
   namespace Cozmo {
-  
-    namespace{
-
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    // Disable structs for affects ObjectPositionUpdated
-    static constexpr ReactionTriggerHelpers::FullReactionArray kAffectObjectPositionTriggerArray = {
-      {ReactionTrigger::CliffDetected,                false},
-      {ReactionTrigger::CubeMoved,                    false},
-      {ReactionTrigger::FacePositionUpdated,          false},
-      {ReactionTrigger::FistBump,                     false},
-      {ReactionTrigger::Frustration,                  false},
-      {ReactionTrigger::Hiccup,                       false},
-      {ReactionTrigger::MotorCalibration,             false},
-      {ReactionTrigger::NoPreDockPoses,               false},
-      {ReactionTrigger::ObjectPositionUpdated,        true},
-      {ReactionTrigger::PlacedOnCharger,              false},
-      {ReactionTrigger::PetInitialDetection,          false},
-      {ReactionTrigger::RobotPickedUp,                false},
-      {ReactionTrigger::RobotPlacedOnSlope,           false},
-      {ReactionTrigger::ReturnedToTreads,             false},
-      {ReactionTrigger::RobotOnBack,                  false},
-      {ReactionTrigger::RobotOnFace,                  false},
-      {ReactionTrigger::RobotOnSide,                  false},
-      {ReactionTrigger::RobotShaken,                  false},
-      {ReactionTrigger::Sparked,                      false},
-      {ReactionTrigger::UnexpectedMovement,           false},
-      {ReactionTrigger::VC,                           false}
-    };
-    static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectObjectPositionTriggerArray),
-                  "Reaction triggers duplicate or non-sequential");
-      
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    // Disable structs for affects facePlant
-    constexpr ReactionTriggerHelpers::FullReactionArray kFacePlantDisablesArray = {
-      {ReactionTrigger::CliffDetected,                true},
-      {ReactionTrigger::CubeMoved,                    true},
-      {ReactionTrigger::FacePositionUpdated,          false},
-      {ReactionTrigger::FistBump,                     false},
-      {ReactionTrigger::Frustration,                  false},
-      {ReactionTrigger::Hiccup,                       false},
-      {ReactionTrigger::MotorCalibration,             false},
-      {ReactionTrigger::NoPreDockPoses,               false},
-      {ReactionTrigger::ObjectPositionUpdated,        false},
-      {ReactionTrigger::PlacedOnCharger,              false},
-      {ReactionTrigger::PetInitialDetection,          false},
-      {ReactionTrigger::RobotPickedUp,                false},
-      {ReactionTrigger::RobotPlacedOnSlope,           false},
-      {ReactionTrigger::ReturnedToTreads,             false},
-      {ReactionTrigger::RobotOnBack,                  false},
-      {ReactionTrigger::RobotOnFace,                  false},
-      {ReactionTrigger::RobotOnSide,                  false},
-      {ReactionTrigger::RobotShaken,                  false},
-      {ReactionTrigger::Sparked,                      false},
-      {ReactionTrigger::UnexpectedMovement,           true},
-      {ReactionTrigger::VC,                           false}
-    };
-      
-    static_assert(ReactionTriggerHelpers::IsSequentialArray(kFacePlantDisablesArray),
-                  "Reaction triggers duplicate or non-sequential");
-      
-    } // end namespace
 
     
     // Which docking method actions should use
@@ -218,15 +152,6 @@ namespace Anki {
       if(_faceAndVerifyAction != nullptr)
       {
         _faceAndVerifyAction->PrepForCompletion();
-      }
-
-      if(GetState() != ActionResult::NOT_STARTED) {
-        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kDisableReactionsID);
-      }
-      
-      if(_reactionTriggersToSuppress != nullptr){
-        // Re-enable any triggers disabled by the action
-        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kReactionsToSuppressID);
       }
     }
 
@@ -548,12 +473,6 @@ namespace Anki {
     ActionResult IDockAction::Init()
     {
       _waitToVerifyTimeSecs = -1.f;
-
-      // Ensure we don't lock reactions twice on a reset/retry
-      _robot.GetBehaviorManager().RemoveDisableReactionsLock(kDisableReactionsID);
-      if(_reactionTriggersToSuppress != nullptr){
-        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kReactionsToSuppressID);
-      }
       
       ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_dockObjectID));
       
@@ -704,11 +623,6 @@ namespace Anki {
 
       SetupTurnAndVerifyAction(dockObject);
       
-      if(_reactionTriggersToSuppress != nullptr){
-        _robot.GetBehaviorManager().DisableReactionsWithLock(
-                      kReactionsToSuppressID,
-                      *_reactionTriggersToSuppress);
-      }
       if(_shouldSetCubeLights && !_lightsSet)
       {
         PRINT_CH_INFO("Actions", "IDockAction.SetInteracting", "%s[%d] Setting interacting object to %d",
@@ -742,13 +656,7 @@ namespace Anki {
 
       if(ActionResult::SUCCESS == faceObjectResult ||
          ActionResult::RUNNING == faceObjectResult)
-      {
-
-        // disable the reactionary behavior for objects, since we are about to interact with one
-        // TODO:(bn) should some dock actions not do this? E.g. align with offset that doesn't touch the cube?
-        _robot.GetBehaviorManager().DisableReactionsWithLock(kDisableReactionsID,
-                                                            kAffectObjectPositionTriggerArray);
-        
+      {        
         return ActionResult::SUCCESS;
       } else {
         return faceObjectResult;
@@ -1051,9 +959,7 @@ namespace Anki {
                                      const bool useManualSpeed)
     : IDockAction(robot, objectID, "FacePlant", RobotActionType::FACE_PLANT, useManualSpeed)
     {
-      SetShouldCheckForObjectOnTopOf(false);
-      
-      SetShouldSuppressReactionTriggers(&kFacePlantDisablesArray);
+      SetShouldCheckForObjectOnTopOf(false);      
     }
     
     void FacePlantAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
@@ -1643,12 +1549,7 @@ namespace Anki {
     }
     
     PlaceObjectOnGroundAction::~PlaceObjectOnGroundAction()
-    {
-      // COZMO-3434 manually request to enable AckObject
-      if(GetState() != ActionResult::NOT_STARTED) {
-        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kPlaceOnGroundDisableID);
-      }
-    
+    {    
       if(_faceAndVerifyAction != nullptr)
       {
         _faceAndVerifyAction->PrepForCompletion();
@@ -1694,15 +1595,6 @@ namespace Anki {
       _robot.GetMoveComponent().StopAllMotors();
       
       _startedPlacing = false;
-      
-      // COZMO-3434 manually request to disable AckObject
-      if(ActionResult::SUCCESS == result ||
-         ActionResult::RUNNING == result)
-      {
-        // disable the reactionary behavior for objects, since we are placing one
-        _robot.GetBehaviorManager().DisableReactionsWithLock(kPlaceOnGroundDisableID,
-                                                            kAffectObjectPositionTriggerArray);
-      }
       
       return result;
       

@@ -19,7 +19,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iReactToFaceListener.h"
@@ -126,7 +125,7 @@ void BehaviorAcknowledgeFace::BeginIteration(BehaviorExternalInterface& behavior
                                                                 M_PI_F,
                                                                 sayName);
 
-  const float freeplayStartedTime_s = robot.GetBehaviorManager().GetFirstTimeFreeplayStarted();    
+  const float freeplayStartedTime_s = 0.f;//robot.GetBehaviorManager().GetFirstTimeFreeplayStarted();    
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();  
   const bool withinMinSessionTime = freeplayStartedTime_s >= 0.0f &&
     (currTime_s - freeplayStartedTime_s) <= kMaxTimeForInitialGreeting_s;

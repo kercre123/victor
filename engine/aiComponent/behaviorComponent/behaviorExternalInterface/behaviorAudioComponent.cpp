@@ -17,10 +17,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/workoutComponent.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityFreeplay.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -73,9 +71,9 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
 // 'singing'         - when Cozmo is singing (manages its own music states)
 // 'socialize'       - when Cozmo wants to interact with faces and players, but without playing games
 // 'nothingToDo'     - fallback when Cozmo can't do anything else
-const std::unordered_map<BehaviorID, Freeplay_Mood> freeplayStateMap
+/**{const std::unordered_map<BehaviorID, Freeplay_Mood> freeplayStateMap
 {
-  { BehaviorID::Activity_BuildPyramid,            AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+   BehaviorID::Activity_BuildPyramid,            AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
   { BehaviorID::Activity_Feeding,                 AudioMetaData::SwitchState::Freeplay_Mood::Nurture_Feeding },
   { BehaviorID::Activity_Hiking,                  AudioMetaData::SwitchState::Freeplay_Mood::Hiking },
   { BehaviorID::Activity_NeedsSevereLowEnergy,    AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
@@ -87,9 +85,9 @@ const std::unordered_map<BehaviorID, Freeplay_Mood> freeplayStateMap
   { BehaviorID::Activity_Singing,                 AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
   { BehaviorID::Activity_Socialize,               AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
   { BehaviorID::Activity_NothingToDo,             AudioMetaData::SwitchState::Freeplay_Mood::Bored }
-};
+};**/
   
-const StageTagMultiMap activityAllowedStagesMap
+/**const StageTagMultiMap activityAllowedStagesMap
 {
   { BehaviorStageTag::Feeding, BehaviorID::Activity_Feeding},
   { BehaviorStageTag::GuardDog, BehaviorID::Activity_PlayAlone},
@@ -97,7 +95,7 @@ const StageTagMultiMap activityAllowedStagesMap
   { BehaviorStageTag::PyramidConstruction, BehaviorID::Activity_SparksBuildPyramid},
   { BehaviorStageTag::Workout, BehaviorID::Activity_PlayAlone},
   { BehaviorStageTag::Workout, BehaviorID::Activity_SparksWorkout},
-};
+};**/
   
 } // end anonymous namespace
   
@@ -141,7 +139,7 @@ void BehaviorAudioComponent::Init(BehaviorExternalInterface& behaviorExternalInt
   {
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
+    /**const Robot& robot = behaviorExternalInterface.GetRobot();
     
     const auto nonSparkFreeplayActivities = robot.GetBehaviorManager().GetNonSparkFreeplayActivities();
     for(const auto& activity : nonSparkFreeplayActivities)
@@ -152,7 +150,7 @@ void BehaviorAudioComponent::Init(BehaviorExternalInterface& behaviorExternalInt
                      "BehaviorAudioComponent.Init.MissingFreeplayActivity",
                      "Freeplay activity %s does not exist in freeplayStateMap",
                      EnumToString(activityID));
-    }
+    }**/
   }
 }
 
@@ -263,11 +261,6 @@ void BehaviorAudioComponent::HandleRobotPublicStateChange(BehaviorExternalInterf
   // Check for changes in "world events" that audio is interested in
   HandleWorldEventUpdates(stateEvent);
   
-  // Update sparked music if spark ID changed
-  HandleSparkUpdates(behaviorExternalInterface,
-                     stateEvent.currentSpark,
-                     PublicStateBroadcaster::GetBehaviorRoundFromMessage(stateEvent));
-  
   // Inform the audio engine of changes in needs levels
   HandleNeedsUpdates(stateEvent.needsLevels);
   
@@ -361,49 +354,7 @@ void BehaviorAudioComponent::HandleWorldEventUpdates(const RobotPublicState& sta
 //  }
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioComponent::HandleSparkUpdates(BehaviorExternalInterface& behaviorExternalInterface,
-                                             const UnlockId& sparkID, const int behaviorRound)
-{
-  if(_activeSparkMusicID != sparkID){
-    if(sparkID == UnlockId::Count){
-      DeactivateSparkedMusic();
-    }else if(_sparkedMusicState == AudioMetaData::SwitchState::Sparked::Invalid){
-      PRINT_NAMED_INFO("BehaviorAudioComponent.HandleRobotPublicStateChange.InvalidMusicState",
-                       "Attempted to activate sparked music state with invalid music state");
-    }else{
-      // Special handling for Workout (blergghhhhbleghgh... ahemm, excuse me)
-      int startingRound = 0;
-      if (sparkID == UnlockId::Workout) {
-        // If 80's music is to be played, we need to start at music stage 'EightiesWorkoutPrep' (round 1).
-        //   If not, start at stage 'NormalWorkout' (round 0)
-        auto& workoutComponent = behaviorExternalInterface.GetAIComponent().GetWorkoutComponent();
-        const bool playEightiesMusic = workoutComponent.ShouldPlayEightiesMusic();
-        startingRound = Util::EnumToUnderlying(playEightiesMusic ?
-                                               WorkoutStage::EightiesWorkoutPrep :
-                                               WorkoutStage::NormalWorkout);
-        if(behaviorExternalInterface.HasPublicStateBroadcaster()){
-          // Need to tell the PublicStateBroadcaster so that it stays in sync with the proper music round
-          auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
-          publicStateBroadcaster.UpdateBroadcastBehaviorStage(BehaviorStageTag::Workout, startingRound);
-        }
-      }
-      
-      ActivateSparkedMusic(sparkID,
-                           AudioMetaData::GameState::Music::Spark,
-                           _sparkedMusicState,
-                           startingRound);
-    }
-  } else {
-    // Same spark - just update the behavior round
-    if(_round != behaviorRound){
-      UpdateBehaviorRound(sparkID, behaviorRound);
-    }
-  }
-}
 
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioComponent::HandleGuardDogUpdates(const BehaviorStageStruct& currPublicStateStruct)
 {

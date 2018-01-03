@@ -38,10 +38,10 @@
 #include "clad/types/cladPoint.clad"
 #include "clad/types/cladRect.clad"
 #include "clad/types/gameStatusFlag.clad"
-#include "clad/types/behaviorComponent/reactionTriggers.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/toolCodes.clad"
+#include "clad/types/touchGestureTypes.clad"
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
@@ -204,6 +204,14 @@ message RobotHiccupsChanged {
 // Whether or not the robot's charge contacts are in contact with the charger contacts
 message ChargerEvent {
   bool   onCharger
+}
+
+message TouchButtonEvent {
+  bool  isPressed
+}
+
+message TouchGestureEvent {
+  TouchGesture gesture
 }
 
 // Unexpected movement was detected so robot was stopped and all actions were cancelled
@@ -819,20 +827,10 @@ message BehaviorTransition{
   //string newBehaviorDisplayKey
 }
 
-
-message ReactionTriggerTransition{
-  ReactionTrigger oldTrigger,
-  ReactionTrigger newTrigger
-}
-
 message RespondAllBehaviorsList{
   //BehaviorID behaviors[uint_8]
 }
 
-
-message RespondReactionTriggerMap{
-  //ReactionTriggerToBehavior reactionTriggerEntries[uint_8]
-}
 
 message BehaviorObjectiveAchieved{
   BehaviorObjective behaviorObjective

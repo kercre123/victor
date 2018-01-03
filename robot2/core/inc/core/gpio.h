@@ -11,7 +11,6 @@ enum Gpio_Level {
   gpio_HIGH
 };
 
-
 struct GPIO_t;
 typedef struct GPIO_t* GPIO;
 
@@ -20,6 +19,8 @@ typedef struct GPIO_t* GPIO;
 /************* GPIO Interface ***************/
 
 GPIO gpio_create(int gpio_number, enum Gpio_Dir isOutput, enum Gpio_Level initial_value);
+
+GPIO gpio_create_open_drain_output(int gpio_number, enum Gpio_Level initial_value);
 
 void gpio_set_direction(GPIO gp, enum Gpio_Dir isOutput);
 

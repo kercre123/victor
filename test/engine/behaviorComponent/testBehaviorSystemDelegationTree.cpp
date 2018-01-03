@@ -30,19 +30,21 @@
 using namespace Anki::Cozmo;
 
 void RecursiveDelegation(Robot& robot,
-                         BehaviorSystemManager& bsm,
+                         TestBehaviorFramework& testFramework,
                          std::map<IBehavior*,std::set<IBehavior*>>& delegateMap)
 {
   robot.GetActionList().Update();
   if(delegateMap.empty()){
     return;
   }else{
+    auto& bsm = testFramework.GetBehaviorSystemManager();
     IBehavior* topOfStack = bsm._behaviorStack->GetTopOfStack();
     auto iter = delegateMap.find(topOfStack);
     if(iter != delegateMap.end()){
       for(auto& delegate: iter->second){
+        delegate->WantsToBeActivated(testFramework.GetBehaviorExternalInterface());
         bsm.Delegate(topOfStack, delegate);
-        RecursiveDelegation(robot, bsm, delegateMap);
+        RecursiveDelegation(robot, testFramework, delegateMap);
       }
       delegateMap.erase(iter);
       bsm.CancelSelf(topOfStack);
@@ -50,7 +52,7 @@ void RecursiveDelegation(Robot& robot,
       std::set<IBehavior*> tmpDelegates;
       topOfStack->GetAllDelegates(tmpDelegates);
       delegateMap.insert(std::make_pair(topOfStack, std::move(tmpDelegates)));
-      RecursiveDelegation(robot, bsm, delegateMap);
+      RecursiveDelegation(robot, testFramework, delegateMap);
     }
   }
 }
@@ -92,7 +94,7 @@ TEST(DelegationTree, FullTreeWalkthrough)
   std::set<IBehavior*> tmpDelegates;
   bottomOfStack->GetAllDelegates(tmpDelegates);
   delegateMap.insert(std::make_pair(bottomOfStack, tmpDelegates));
-  RecursiveDelegation(testFramework.GetRobot(), bsm, delegateMap);
+  RecursiveDelegation(testFramework.GetRobot(), testFramework, delegateMap);
 }
 
 

@@ -3,10 +3,10 @@
 #include "messages.h"
 #include "pickAndPlaceController.h"
 #include "proxSensors.h"
-#include "radians.h"
 #include "velocityProfileGenerator.h"
 
 #include "anki/common/constantsAndMacros.h"
+#include "anki/common/shared/radians.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
 

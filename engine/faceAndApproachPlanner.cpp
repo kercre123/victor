@@ -129,7 +129,7 @@ EComputePathStatus FaceAndApproachPlanner::ComputeNewPathIfNeeded(const Pose3d& 
       backup = true;
     }
 
-    _path.AppendPointTurn(startVec.x(), startVec.y(), intermediateTargetAngle.ToFloat(),
+    _path.AppendPointTurn(startVec.x(), startVec.y(), currAngle.ToFloat(), intermediateTargetAngle.ToFloat(),
                           deltaTheta < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
                           FACE_AND_APPROACH_PLANNER_ROT_ACCEL,
                           FACE_AND_APPROACH_PLANNER_ROT_DECEL,
@@ -146,7 +146,7 @@ EComputePathStatus FaceAndApproachPlanner::ComputeNewPathIfNeeded(const Pose3d& 
   }
 
   if(doTurn1) {
-    _path.AppendPointTurn(_targetVec.x(), _targetVec.y(), _finalTargetAngle,
+    _path.AppendPointTurn(_targetVec.x(), _targetVec.y(), intermediateTargetAngle.ToFloat(), _finalTargetAngle,
                           deltaTheta1 < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
                           FACE_AND_APPROACH_PLANNER_ROT_ACCEL,
                           FACE_AND_APPROACH_PLANNER_ROT_DECEL,

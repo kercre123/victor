@@ -3,8 +3,9 @@
 set -e
 set -u
 
-# Go to directory of this script                                                                    
+# Go to directory of this script
 SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
+SCRIPT_NAME=$(basename ${0})
 GIT=`which git`
 if [ -z $GIT ]
 then
@@ -13,15 +14,42 @@ then
 fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
-
 source ${SCRIPT_PATH}/android_env.sh
 
 # Settings can be overridden through environment
 : ${VERBOSE:=0}
+: ${ANKI_BUILD_TYPE:="Debug"}
 : ${INSTALL_ROOT:="/data/data/com.anki.cozmoengine"}
 
+function usage() {
+  echo "$SCRIPT_NAME [OPTIONS]"
+  echo "  -h                      print this message"
+  echo "  -v                      print verbose output"
+  echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
+}
+
+while getopts "hvc:" opt; do
+  case $opt in
+    h)
+      usage && exit 0
+      ;;
+    v)
+      VERBOSE=1
+      ;;
+    c)
+      ANKI_BUILD_TYPE="${OPTARG}"
+      ;;
+    *)
+      usage && exit 1
+      ;;
+  esac
+done
+
+# echo "VERBOSE: ${VERBOSE}"
+# echo "ANKI_BUILD_TYPE: ${ANKI_BUILD_TYPE}"
 echo "INSTALL_ROOT: ${INSTALL_ROOT}"
 
+: ${BUILD_ROOT:="${TOPLEVEL}/_build/android/${ANKI_BUILD_TYPE}"}
 : ${LIB_INSTALL_PATH:="${INSTALL_ROOT}/lib"}
 : ${BIN_INSTALL_PATH:="${INSTALL_ROOT}/bin"}
 
@@ -29,9 +57,6 @@ $ADB shell mkdir -p "${INSTALL_ROOT}"
 $ADB shell mkdir -p "${INSTALL_ROOT}/config"
 $ADB shell mkdir -p "${LIB_INSTALL_PATH}"
 $ADB shell mkdir -p "${BIN_INSTALL_PATH}"
-
-: ${ANKI_BUILD_TYPE:="Debug"}
-: ${BUILD_ROOT:="${TOPLEVEL}/_build/android/${ANKI_BUILD_TYPE}"}
 
 function log_v()
 {

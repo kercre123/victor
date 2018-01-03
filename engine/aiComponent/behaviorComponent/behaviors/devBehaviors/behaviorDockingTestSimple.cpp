@@ -28,7 +28,6 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/sayTextAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDockingTestSimple.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/bodyLightComponent.h"
@@ -56,7 +55,6 @@ if ((_BEHAVIORDEF)) { PRINT_NAMED_INFO( __VA_ARGS__ ); } \
 else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
 } while(0) \
 
-static const char* kBehaviorTestName = "Docking test simple";
 }
 
 
@@ -156,9 +154,6 @@ namespace Anki {
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
       _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, robot.GetWorldOrigin());
-      
-      robot.GetBehaviorManager().DisableReactionsWithLock(kBehaviorTestName,
-                                                          ReactionTriggerHelpers::GetAffectAllArray());
 
       // force the default speeds
       PathMotionProfile motionProfile;
@@ -790,7 +785,6 @@ namespace Anki {
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
-      robot.GetBehaviorManager().RemoveDisableReactionsLock(kBehaviorTestName);
 
       // Cancel all actions
       for (const auto& tag : _actionCallbackMap) {

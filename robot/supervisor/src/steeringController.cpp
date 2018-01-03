@@ -25,7 +25,10 @@
 
 #define DEBUG_STEERING_CONTROLLER 0
 
-#define INVALID_IDEAL_FOLLOW_LINE_IDX s16_MAX
+#define s16_MIN std::numeric_limits<s16>::min()
+#define s16_MAX std::numeric_limits<s16>::max()
+
+#define INVALID_IDEAL_FOLLOW_LINE_IDX std::numeric_limits<s16>::max()
 
 namespace Anki {
   namespace Cozmo {
@@ -84,7 +87,11 @@ namespace Anki {
       f32 pointTurnSpeedMaxIntegralError_ = 100;
       
       f32 pointTurnKp_ = 450.f;
+#ifdef SIMULATOR
+      f32 pointTurnKd_ = 500.f; // Too high a derivative gain causes issues in sim
+#else
       f32 pointTurnKd_ = 4000.f;
+#endif
       f32 pointTurnKi_ = 20.f;
       f32 pointTurnMaxIntegralError_ = 5;
       f32 prevPointTurnAngleError_ = 0;

@@ -16,7 +16,6 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
@@ -479,11 +478,6 @@ void BehaviorLookForFaceAndCube::TransitionToS6_Done(BehaviorExternalInterface& 
   // it that way is that I want to also to track objects seen during putdown reactions, which would not be included in
   // that case. We could also json config it, but I don't have a reason for it atm
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  // ask behavior manager to trigger an activity based on what has happened
-  robot.GetBehaviorManager().CalculateActivityFreeplayFromObjects(behaviorExternalInterface);
 }
 
   

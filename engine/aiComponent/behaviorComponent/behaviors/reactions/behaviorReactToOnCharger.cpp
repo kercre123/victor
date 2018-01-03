@@ -15,7 +15,6 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToOnCharger.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
@@ -33,33 +32,6 @@ namespace {
 static const char* kTimeTilSleepAnimationKey = "timeTilSleepAnimation_s";
 static const char* kTimeTilDisconnectionKey = "timeTilDisconnection_s";
 static const char* kTriggeredFromVoiceCommandKey = "triggeredFromVoiceCommand";
-
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersOnCharger = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     true},
-  {ReactionTrigger::Frustration,                  true},
-  {ReactionTrigger::Hiccup,                       true},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               true},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      true},
-  {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersOnCharger),
-              "Reaction triggers duplicate or non-sequential");
 
 } // namespace
 
@@ -100,8 +72,6 @@ bool BehaviorReactToOnCharger::WantsToBeActivatedBehavior(BehaviorExternalInterf
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersOnCharger);
-
   /**auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   if(externalInterface != nullptr){
     externalInterface->BroadcastToGame<ExternalInterface::GoingToSleep>(_triggerableFromVoiceCommand);

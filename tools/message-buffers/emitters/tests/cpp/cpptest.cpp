@@ -151,6 +151,13 @@ TEST Dog_should_round_trip()
   PASS();
 }
 
+TEST Poodle_should_init()
+{
+  Baz::Poodle myPoodle;
+  ASSERT_EQ(AnkiTypes::AnkiEnum::d1, myPoodle.a);
+  PASS();
+}
+
 TEST SoManyStrings_should_round_trip()
 {
   SoManyStrings mySoManyStrings {
@@ -972,6 +979,7 @@ SUITE(CPP_Emitter) {
   RUN_TEST(Foo_should_round_trip);
   RUN_TEST(Bar_should_round_trip);
   RUN_TEST(Dog_should_round_trip);
+  RUN_TEST(Poodle_should_init);
   RUN_TEST(SoManyStrings_should_round_trip);
   RUN_TEST(od432_should_round_trip);
   RUN_TEST(od433_should_round_trip);

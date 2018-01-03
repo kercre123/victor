@@ -15,17 +15,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-// Behaviors:
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityBehaviorsOnly.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityBuildPyramid.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityExpressNeeds.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityFeeding.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityFreeplay.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityGatherCubes.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activitySocialize.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activitySparked.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityStrictPriority.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityVoiceCommand.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimOnNeedsChange.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
@@ -136,7 +125,7 @@ BehaviorContainer::BehaviorContainer(const BehaviorIDJsonMap& behaviorData)
     if (!behaviorJson.empty())
     {
       // PRINT_NAMED_DEBUG("BehaviorContainer.Constructor", "Loading '%s'", fullFileName.c_str());
-      ICozmoBehaviorPtr newBehaviorPtr = CreateBehavior(behaviorJson);
+      ICozmoBehaviorPtr newBehaviorPtr = CreateBehaviorFromConfig(behaviorJson);
       if ( newBehaviorPtr == nullptr ) {
         PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed",
                           "Failed to create a behavior for behavior id '%s'",
@@ -170,8 +159,7 @@ BehaviorContainer::~BehaviorContainer()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorContainer::Init(BehaviorExternalInterface& behaviorExternalInterface,
-                             const bool shouldAddToActivatableScope)
+void BehaviorContainer::Init(BehaviorExternalInterface& behaviorExternalInterface)
 {
   /**auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   if(externalInterface != nullptr) {
@@ -183,11 +171,6 @@ void BehaviorContainer::Init(BehaviorExternalInterface& behaviorExternalInterfac
   
   for(auto& behaviorMap: _idToBehaviorMap){
     behaviorMap.second->Init(behaviorExternalInterface);
-    // To support old behavior manager functionality, have all behaviors be within
-    // "activatable" scope since the old behavior manager isn't aware of this state
-    if(shouldAddToActivatableScope){
-      behaviorMap.second->OnEnteredActivatableScope();
-    }
   }
 }
 
@@ -260,71 +243,40 @@ void BehaviorContainer::VerifyExecutableBehaviors() const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorContainer::CreateBehavior(const Json::Value& behaviorJson)
+ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorFromConfig(const Json::Value& behaviorJson)
 {
   const BehaviorClass behaviorClass = ICozmoBehavior::ExtractBehaviorClassFromConfig(behaviorJson);
-  ICozmoBehaviorPtr newBehavior = CreateBehavior(behaviorClass, behaviorJson);
+  ICozmoBehaviorPtr newBehavior = CreateBehaviorAndAddToContainer(behaviorClass, behaviorJson);
   return newBehavior;  
 }
-  
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, const Json::Value& config)
+ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorAndAddToContainer(BehaviorClass behaviorType, const Json::Value& config)
+{
+  ICozmoBehaviorPtr newBehavior = CreateBehaviorBase(behaviorType, config);  
+  if(newBehavior != nullptr){
+    newBehavior = AddToContainer(newBehavior);
+  }
+  return newBehavior;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ICozmoBehaviorPtr BehaviorContainer::CreateAnonymousBehavior(BehaviorClass behaviorType, const Json::Value& config) const
+{
+  ICozmoBehaviorPtr newBehavior = CreateBehaviorBase(behaviorType, config);
+  return newBehavior;  
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorType, const Json::Value& config) const
 {
   ICozmoBehaviorPtr newBehavior;
   
   switch (behaviorType)
   {
-    case BehaviorClass::Activity_BehaviorsOnly:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityBehaviorsOnly(config));
-      break;
-    }
-    case BehaviorClass::Activity_BuildPyramid:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityBuildPyramid(config));
-      break;
-    }
-    case BehaviorClass::Activity_Feeding:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityFeeding(config));
-      break;
-    }
-    case BehaviorClass::Activity_Freeplay:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityFreeplay(config));
-      break;
-    }
-    case BehaviorClass::Activity_GatherCubes:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityGatherCubes(config));
-      break;
-    }
-    case BehaviorClass::Activity_Socialize:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivitySocialize(config));
-      break;
-    }
-    case BehaviorClass::Activity_Sparked:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivitySparked(config));
-      break;
-    }
-    case BehaviorClass::Activity_StrictPriority:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityStrictPriority(config));
-      break;
-    }
-    case BehaviorClass::Activity_VoiceCommand:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityVoiceCommand(config));
-      break;
-    }
-    case BehaviorClass::Activity_NeedsExpression:
-    {
-      newBehavior = ICozmoBehaviorPtr(new ActivityExpressNeeds(config));
-      break;
-    }
     case BehaviorClass::Wait:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorWait(config));
@@ -787,23 +739,17 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, 
     }
   }
   
-  if(newBehavior != nullptr){
-    newBehavior = AddToFactory(newBehavior);
-  }
-  
   if (newBehavior == nullptr){
-    PRINT_NAMED_ERROR("behaviorContainer.CreateBehavior.Failed",
+    PRINT_NAMED_ERROR("BehaviorContainer.CreateBehavior.Failed",
                       "Failed to create Behavior of type '%s'", BehaviorClassToString(behaviorType));
-    return nullptr;
   }
-  
   
   return newBehavior;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorContainer::AddToFactory(ICozmoBehaviorPtr newBehavior)
+ICozmoBehaviorPtr BehaviorContainer::AddToContainer(ICozmoBehaviorPtr newBehavior)
 {
   assert(newBehavior);
   
@@ -814,13 +760,13 @@ ICozmoBehaviorPtr BehaviorContainer::AddToFactory(ICozmoBehaviorPtr newBehavior)
 
   if (addedNewEntry)
   {
-    PRINT_NAMED_INFO("behaviorContainer::AddToFactory", "Added new behavior '%s' %p",
+    PRINT_NAMED_INFO("behaviorContainer::AddToContainer", "Added new behavior '%s' %p",
                      BehaviorIDToString(behaviorID), newBehavior.get());
   }
   else
   {
     DEV_ASSERT_MSG(false,
-                   "behaviorContainer.AddToFactory.DuplicateID",
+                   "behaviorContainer.AddToContainer.DuplicateID",
                    "Attempted to create a second behavior with id %s",
                    newBehavior->GetIDStr().c_str());
   }

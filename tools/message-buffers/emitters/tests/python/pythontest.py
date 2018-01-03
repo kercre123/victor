@@ -284,6 +284,10 @@ class TestDefaultValues(unittest.TestCase):
       self.assertAlmostEqual(lastData.c, -10)
       self.assertAlmostEqual(lastData.d, False)
 
+    def test_defaultValuesVerbatimEnum(self):
+      myPoodle = Baz.Poodle()
+      self.assertEqual(myPoodle.a, AnkiTypes.AnkiEnum.d1)
+
 class TestEnumComplex(unittest.TestCase):
     def test_enumComplex(self):
       self.assertEqual(FooEnum.foo1, 0)

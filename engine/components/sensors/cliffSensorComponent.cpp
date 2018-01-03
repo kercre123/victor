@@ -165,7 +165,11 @@ void CliffSensorComponent::SendCliffDetectThresholdsToRobot()
   PRINT_NAMED_INFO("CliffSensorComponent.SendCliffDetectThresholdsToRobot.SendThresholds",
                    "New cliff thresholds being sent to robot: %d %d %d %d",
                    _cliffDetectThresholds[0], _cliffDetectThresholds[1], _cliffDetectThresholds[2], _cliffDetectThresholds[3]);
-  _robot.SendRobotMessage<RobotInterface::SetCliffDetectThresholds>(_cliffDetectThresholds);
+  
+  _robot.SendRobotMessage<SetCliffDetectThresholds>(_cliffDetectThresholds);
+  
+  // Also send to game (for webots tests)
+  _robot.Broadcast(ExternalInterface::MessageEngineToGame(SetCliffDetectThresholds(_cliffDetectThresholds)));
 }
 
 

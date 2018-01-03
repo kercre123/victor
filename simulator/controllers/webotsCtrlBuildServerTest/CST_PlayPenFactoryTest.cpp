@@ -41,7 +41,6 @@ namespace Anki {
     {
       if (!_testStarted) {
         SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_PlaySound", "false")));
-        SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
         SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::FactoryTest), -1)));
         StartMovieConditional("PlayPenFactoryTest");
         //TakeScreenshotsAtInterval("PlayPenFactoryTest", 1.f);

@@ -13,8 +13,6 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/pose.h"
 #include "util/helpers/printByteArray.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/block.h"
 #include "engine/encodedImage.h"
@@ -27,10 +25,11 @@
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/proceduralFaceTypes.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/math/math.h"
 #include "util/logging/channelFilter.h"
 #include "util/logging/printfLoggerProvider.h"
-#include "util/fileUtils/fileUtils.h"
+#include "util/random/randomGenerator.h"
 #include <fstream>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdio.h>
@@ -1153,18 +1152,8 @@ namespace Anki {
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_PlaySound", "false")));
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_ConnectToRobotOnly", "false")));
                     
-                    Anki::Cozmo::ExternalInterface::DisableReactionsWithLock disableAll(
-                                        "sdk", ReactionTriggerHelpers::kAffectAllReactions);
-                    
-                    Anki::Cozmo::ExternalInterface::MessageGameToEngine disable_reactions_msg;
-                    disable_reactions_msg.Set_DisableReactionsWithLock(std::move(disableAll));
-                    SendMessage(ExternalInterface::MessageGameToEngine(disable_reactions_msg));
-                    
                     SendSetRobotVolume(1.f);
                   }
-                  
-                  SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
 
                   printf("Selecting behavior by NAME: %s\n", behaviorName.c_str());
                   if (behaviorName == "LiftLoadTest") {
@@ -1187,7 +1176,9 @@ namespace Anki {
                 }
                 break;
               }
-
+             
+              // shift + alt = Fake trigger word detected
+              // no optional key = Fake cloud intent w/ string in field
               case (s32)'H':
               {
 
@@ -1195,81 +1186,29 @@ namespace Anki {
                 {
 
                   if( shiftKeyPressed && altKeyPressed ) {
-                    HighLevelActivity activity = HighLevelActivityFromString("Selection");
-                    if( activity == HighLevelActivity::Count ) {
-                      break;
-                    }
-
                     SendMessage(ExternalInterface::MessageGameToEngine(
-                                    ExternalInterface::ActivateHighLevelActivity(activity)));
+                                    ExternalInterface::FakeTriggerWordDetected()));
                     break;
-                  }
-
-                  if( shiftKeyPressed ) {
-                    webots::Field* unlockNameField = root_->getField("unlockName");
-                    if (unlockNameField == nullptr) {
-                      printf("ERROR: No unlockNameField field found in WebotsKeyboardController.proto\n");
-                      break;
-                    }
-                
-                    std::string unlockName = unlockNameField->getSFString();
-                    if (unlockName.empty()) {
-                      printf("ERROR: unlockName field is empty\n");
-                      break;
-                    }
-
-                    UnlockId unlock = UnlockIdFromString(unlockName.c_str());
-                    if( unlock != UnlockId::Count ) {
-                      ExternalInterface::ActivateSpark activate(unlock);
-                      ExternalInterface::BehaviorManagerMessageUnion behaviorUnion;
-                      behaviorUnion.Set_ActivateSpark(activate);
-                      ExternalInterface::BehaviorManagerMessage behaviorMsg(behaviorUnion);
-                      ExternalInterface::MessageGameToEngine msg;
-                      msg.Set_BehaviorManagerMessage(behaviorMsg);
-                      SendMessage(msg);
-                    }
-                    else {
-                      PRINT_NAMED_WARNING("StartSpark.InvalidSparkName",
-                                          "no unlock found for '%s'",
-                                          unlockName.c_str());
-                    }
-                  }
-                  else {
-                    // deactivate spark
-                    ExternalInterface::ActivateSpark deactivate(UnlockId::Count);
-                    ExternalInterface::BehaviorManagerMessageUnion behaviorUnion;
-                    behaviorUnion.Set_ActivateSpark(deactivate);
-                    ExternalInterface::BehaviorManagerMessage behaviorMsg(behaviorUnion);
-                    ExternalInterface::MessageGameToEngine msg;
-                    msg.Set_BehaviorManagerMessage(behaviorMsg);
-                    SendMessage(msg);
                   }
                 }
                 else {
                   // select behavior chooser
-                  webots::Field* activityNameField = root_->getField("highLevelActivityName");
-                  if (activityNameField == nullptr) {
-                    printf("ERROR: No behaviorChooserNameField field found in WebotsKeyboardController.proto\n");
+                  webots::Field* cloudIntentField = root_->getField("cloudIntent");
+                  if (cloudIntentField == nullptr) {
+                    printf("ERROR: No cloud animation name field found in WebotsKeyboardController.proto\n");
                     break;
                   }
                   
-                  std::string activityName = activityNameField->getSFString();
-                  if (activityName.empty()) {
-                    printf("ERROR: behaviorChooserName field is empty\n");
+                  std::string cloudIntent = cloudIntentField->getSFString();
+                  if (cloudIntent.empty()) {
+                    printf("ERROR: cloudIntent field is empty\n");
                     break;
                   }
                   
-                  HighLevelActivity activity = HighLevelActivityFromString(activityName);
-                  if( activity == HighLevelActivity::Count ) {
-                    printf("ERROR: could not convert string '%s' to valid behavior chooser type\n",
-                           activityName.c_str());
-                    break;
-                  }
-                  
-                  printf("sending high level activity  '%s'\n", activityName.c_str());
-                
+                  printf("sending cloud intent '%s'\n", cloudIntent.c_str());
+
                   SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::ActivateHighLevelActivity(activity)));
+                                  ExternalInterface::FakeCloudIntent(cloudIntent)));
                 }
                 
                 break;
@@ -2154,20 +2093,34 @@ namespace Anki {
                 if(nullptr == field) {
                   printf("No consoleVarName field\n");
                 } else {
-                  ExternalInterface::SetDebugConsoleVarMessage msg;
-                  msg.varName = field->getSFString();
-                  if(msg.varName.empty()) {
+                  
+                  const std::string varName( field->getSFString() );
+                  if(varName.empty()) {
                     printf("Empty consoleVarName\n");
+                    break;
+                  }
+                  
+                  std::string tryValue;
+                  
+                  field = root_->getField("consoleVarValue");
+                  if(nullptr == field) {
+                    printf("No consoleVarValue field\n");
                   } else {
-                    field = root_->getField("consoleVarValue");
-                    if(nullptr == field) {
-                      printf("No consoleVarValue field\n");
-                    } else {
-                      msg.tryValue = field->getSFString();
-                      printf("Trying to set console var '%s' to '%s'\n",
-                             msg.varName.c_str(), msg.tryValue.c_str());
-                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
-                    }
+                    tryValue = field->getSFString();
+                    printf("Trying to set console var '%s' to '%s'\n",
+                           varName.c_str(), tryValue.c_str());
+                  }
+                  
+                  using namespace ExternalInterface;
+                  if(altKeyPressed)
+                  {
+                    // Alt: Send to Anim process
+                    SendMessage(MessageGameToEngine(SetAnimDebugConsoleVarMessage(varName, tryValue)));
+                  }
+                  else
+                  {
+                    // Normal: Send to Engine process
+                    SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage(varName, tryValue)));
                   }
                 }
                 break;                
@@ -2244,7 +2197,6 @@ namespace Anki {
                       SendMessage(MessageGameToEngine(std::move(setFaceToEnroll)));
                       
                       // Enable selection chooser and specify EnrollFace now that settings are sent
-                      SendMessage(MessageGameToEngine(ActivateHighLevelActivity(HighLevelActivity::Selection)));
                       SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::EnrollFace), -1)));
                     }
                     
@@ -2343,28 +2295,7 @@ namespace Anki {
                 
               case (s32)';':
               {
-                // Toggle enabling of reactionary behaviors
-                static bool disable = true;
-                static const char* lockName = "sdk";
-                printf("Disable reactionary behaviors: %d\n", disable);
-                
-                if(disable){
-                  Anki::Cozmo::ExternalInterface::DisableReactionsWithLock disableAll(
-                                  lockName, ReactionTriggerHelpers::kAffectAllReactions);
-                  
-                  Anki::Cozmo::ExternalInterface::MessageGameToEngine disable_reactions_msg;
-                  disable_reactions_msg.Set_DisableReactionsWithLock(std::move(disableAll));
-                  SendMessage(ExternalInterface::MessageGameToEngine(disable_reactions_msg));
-                  
-                }else{
-                  Anki::Cozmo::ExternalInterface::RemoveDisableReactionsLock enableAll(lockName);
-                  
-                  Anki::Cozmo::ExternalInterface::MessageGameToEngine re_enable_reactions_msg;
-                  re_enable_reactions_msg.Set_RemoveDisableReactionsLock(std::move(enableAll));
-                  SendMessage(ExternalInterface::MessageGameToEngine(re_enable_reactions_msg));
-                }
-                
-                disable = !disable;
+                // OPEN KEY!!!
                 break;
               }
                 

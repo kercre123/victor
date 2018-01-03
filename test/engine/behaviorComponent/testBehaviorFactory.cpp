@@ -20,7 +20,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -136,7 +135,7 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
   
-  ICozmoBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
+  ICozmoBehaviorPtr newBehavior = behaviorContainer.CreateBehaviorFromConfig(testBehaviorJson);
   newBehavior->Init(behaviorExternalInterface);
   ASSERT_NE(newBehavior, nullptr);
   

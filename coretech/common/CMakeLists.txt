@@ -56,9 +56,10 @@ target_link_libraries(cti_common
 anki_build_cxx_library(cti_common_robot ${ANKI_SRCLIST_DIR} STATIC)
 
 target_link_libraries(cti_common_robot
-  PRIVATE
+  PUBLIC
   util
-  jsoncpp
+  cti_common_clad_cpplite
+  PRIVATE
   opencv_interface
 )
 

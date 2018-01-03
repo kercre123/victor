@@ -26,6 +26,10 @@ namespace Baz {
     AnkiTypes::AnkiEnum a,
     int_8 b
   }
+  message Poodle {
+    AnkiTypes::AnkiEnum a = verbatim AnkiTypes::AnkiEnum::d1,
+    AnkiTypes::AnkiEnum b
+  }
 } // namespace Baz
 
 enum uint_32 LEDColor {

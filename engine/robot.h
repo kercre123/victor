@@ -218,9 +218,6 @@ public:
 
   inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
   inline MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
-
-  const BehaviorManager& GetBehaviorManager() const;
-  BehaviorManager&       GetBehaviorManager();
   
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
     assert(_progressionUnlockComponent);

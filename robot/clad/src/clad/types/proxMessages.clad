@@ -26,6 +26,11 @@ message CliffEvent {
 message PotentialCliff {
 }
 
+message SetCliffDetectThresholds
+{
+  uint_16 thresholds[4],  // New cliff threshold values for each sensor
+}
+
 structure ProxSensorData {
   float_32 signalIntensity,  // the intensity of the light (expressed in millions of counts per second) return to the sensor
   float_32 ambientIntensity, // the intensity of light (expressed in millions of counts per second) in ambient conditions (i.e. emitter turned off)

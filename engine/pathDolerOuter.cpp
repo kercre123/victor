@@ -40,6 +40,13 @@ void PathDolerOuter::SetPath(const Planning::Path& path)
   Dole(MAX_NUM_PATH_SEGMENTS_ROBOT);
 }
 
+void PathDolerOuter::ReplacePath(const Planning::Path& newPath)
+{
+  // TODO: (mrw) we probably want to check that the already doled segments are equal for safety
+  path_ = newPath;
+  pathSizeOnBasestation_ = newPath.GetNumSegments();
+}
+
 void PathDolerOuter::ClearPath()
 {
   path_.Clear();

@@ -1,0 +1,29 @@
+#ifndef TEST_COMMON_H
+#define TEST_COMMON_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdint.h>
+
+enum bridge_target_e { 
+  TO_DUT_UART, 
+  TO_CONTACTS
+};
+  
+namespace TestCommon
+{
+  //turn on power and test for shorts (overcurrent). Exit state: powered if under ilimit, off if short/exception.
+  void powerShortVBAT(uint16_t time_ms, int ilimit_ma, int oversample=0); //time_ms - time to monitor power draw, ilimit_ma - overcurrent threshold, 2^oversample averaging
+  void powerShortVEXT(uint16_t time_ms, int ilimit_ma, int oversample=0); //time_ms - time to monitor power draw, ilimit_ma - overcurrent threshold, 2^oversample averaging
+  
+  //create a console bridge for debugging test firmware
+  void consoleBridge(bridge_target_e which, int inactivity_delay_ms=0, int timeout_ms=0); //timeout:0=infinite. inactivity: timeout if console stays idle
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif //TEST_COMMON_H

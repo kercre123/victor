@@ -18,7 +18,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/retryWrapperAction.h"
 #include "engine/actions/trackFaceAction.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/components/animTrackHelpers.h"
@@ -46,33 +45,6 @@ static constexpr float kSparkShouldPlaySparkFailFlag  = -1.0f;
 static constexpr int   kMaxTurnToFaceRetryCount       = 4;
 static constexpr int   kMaxCountTrackingEyesEntries   = 50;
 static constexpr float kHeadAngleWhereLiftBlocksCamera_deg = 22.0f;
-  
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPeekABooArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     true},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPeekABooArray),
-              "Reaction triggers duplicate or non-sequential");
   
 }
   
@@ -126,9 +98,7 @@ bool BehaviorPeekABoo::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   const Robot& robot = behaviorExternalInterface.GetRobot();
-  if((robot.GetBehaviorManager().GetActiveSpark() == UnlockId::PeekABoo) &&
-     robot.GetBehaviorManager().IsActiveSparkHard() &&
-     (_timeSparkAboutToEnd_Sec > 0) &&
+  if((_timeSparkAboutToEnd_Sec > 0) &&
      (currentTime_Sec > _timeSparkAboutToEnd_Sec)){
     _timeSparkAboutToEnd_Sec = kSparkShouldPlaySparkFailFlag;
     return true;
@@ -164,7 +134,6 @@ Result BehaviorPeekABoo::OnBehaviorActivated(BehaviorExternalInterface& behavior
   _numPeeksTotal = _numPeeksRemaining = behaviorExternalInterface.GetRNG().RandIntInRange(_params.minPeeks, _params.maxPeeks);
   // Disable idle so it doesn't move the head down
   SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersPeekABooArray);
   
   
   if( _params.playGetIn )

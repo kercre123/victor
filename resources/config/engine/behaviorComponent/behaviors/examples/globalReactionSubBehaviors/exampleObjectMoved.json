@@ -1,0 +1,8 @@
+{
+  "behaviorClass": "PlayAnim",
+  "behaviorID": "ExampleObjectMoved",
+  "animTriggers": ["OnboardingReactToCube"],
+  "wantsToRunStrategyConfig": {
+    "strategyType" : "ObjectMoved"
+  }  
+}

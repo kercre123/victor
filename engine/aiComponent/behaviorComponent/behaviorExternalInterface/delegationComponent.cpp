@@ -81,12 +81,9 @@ bool Delegator::Delegate(IBehavior* delegatingBehavior,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool Delegator::Delegate(IBehavior* delegatingBehavior, IBehavior* delegated)
 {
-  if(USE_BSM){
-    DEV_ASSERT(dynamic_cast<IHelper*>(delegated) == nullptr,
-               "Delegator.Delegate.WrongDelegationFunction.UseIHelperFunction");
-    return _bsm->Delegate(delegatingBehavior, delegated);
-  }
-  return false;
+  DEV_ASSERT(dynamic_cast<IHelper*>(delegated) == nullptr,
+              "Delegator.Delegate.WrongDelegationFunction.UseIHelperFunction");
+  return _bsm->Delegate(delegatingBehavior, delegated);
 }
 
 
@@ -156,10 +153,8 @@ bool DelegationComponent::IsControlDelegated(const IBehavior* delegatingBehavior
     return false;
   }
   
-  if(USE_BSM){
-    if(_bsm->IsControlDelegated(delegatingBehavior)){
-      return true;
-    }
+  if(_bsm->IsControlDelegated(delegatingBehavior)){
+    return true;
   }
   
   if(_delegator->_behaviorThatDelegatedAction == delegatingBehavior){
@@ -193,9 +188,7 @@ void DelegationComponent::CancelDelegates(IBehavior* delegatingBehavior)
     _delegator->_delegateHelperHandle.reset();
   }
   
-  if(USE_BSM){
-    _bsm->CancelDelegates(delegatingBehavior);
-  }
+  _bsm->CancelDelegates(delegatingBehavior);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -226,30 +219,22 @@ void DelegationComponent::CancelActionIfRunning(IBehavior* delegatingBehavior)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DelegationComponent::CancelSelf(IBehavior* delegatingBehavior)
 {
-  if(USE_BSM){
-    _bsm->CancelSelf(delegatingBehavior);
-  }
+  _bsm->CancelSelf(delegatingBehavior);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool DelegationComponent::HasDelegator(IBehavior* delegatingBehavior)
 {
-  if(USE_BSM){
-    return _bsm->CanDelegate(delegatingBehavior);
-  }else{
-    return true;
-  }
+  return _bsm->CanDelegate(delegatingBehavior);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Delegator& DelegationComponent::GetDelegator(IBehavior* delegatingBehavior)
 {
-  if(USE_BSM){
-    DEV_ASSERT(_bsm->CanDelegate(delegatingBehavior),
-               "DelegationComponent.GetDelegator.delegatingBehaviorNotValid");
-  }
+  DEV_ASSERT(_bsm->CanDelegate(delegatingBehavior),
+              "DelegationComponent.GetDelegator.delegatingBehaviorNotValid");
   return *_delegator;
 }
 
@@ -262,12 +247,7 @@ void DelegationComponent::HandleActionComplete(u32 actionTag)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const IBehavior* DelegationComponent::GetBehaviorDelegatedTo(const IBehavior* delegatingBehavior) const
 {
-  if(USE_BSM){
-    return _bsm->GetBehaviorDelegatedTo(delegatingBehavior);
-  }
-  else {
-    return nullptr;
-  }
+  return _bsm->GetBehaviorDelegatedTo(delegatingBehavior);
 }
 
 } // namespace Cozmo

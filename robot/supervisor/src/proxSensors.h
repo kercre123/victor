@@ -15,7 +15,7 @@
 #ifndef PROX_SENSORS_H_
 #define PROX_SENSORS_H_
 
-#include "anki/types.h"
+#include "anki/common/types.h"
 
 namespace Anki {
   

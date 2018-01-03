@@ -20,7 +20,6 @@
 #include "engine/actions/sayTextAction.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
@@ -85,34 +84,6 @@ static const char * const kLogChannelName = "FaceRecognizer";
 static const char * const kMaxFacesVisibleKey = "maxFacesVisible";
 static const char * const kTooManyFacesTimeoutKey = "tooManyFacesTimeout_sec";
 static const char * const kTooManyFacesRecentTimeKey = "tooManyFacesRecentTime_sec";
-
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersEnrollFaceArray = {
-  {ReactionTrigger::CliffDetected,                true},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     true},
-  {ReactionTrigger::Frustration,                  true},
-  {ReactionTrigger::Hiccup,                       true},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                true},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             true},
-  {ReactionTrigger::RobotOnBack,                  true},
-  {ReactionTrigger::RobotOnFace,                  true},
-  {ReactionTrigger::RobotOnSide,                  true},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           true}
-};
-
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersEnrollFaceArray),
-              "Reaction triggers duplicate or non-sequential");
   
 }
   
@@ -268,9 +239,7 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal",
                 "Initialize with ID=%d and name '%s', to be saved to ID=%d",
                 _faceID, Util::HidePersonallyIdentifiableInfo(_faceName.c_str()), _saveID);
-  
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersEnrollFaceArray);
-  
+    
   // Start with this timeout (may increase as the behavior runs)
   _timeout_sec = kEnrollFace_Timeout_sec;
   

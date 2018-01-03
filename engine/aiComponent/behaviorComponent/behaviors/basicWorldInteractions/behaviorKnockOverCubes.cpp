@@ -43,8 +43,6 @@ static const char* const kKnockOverSuccessTrigger = "knockOverSuccessTrigger";
 static const char* const kKnockOverFailureTrigger = "knockOverFailureTrigger";
 static const char* const kPutDownTrigger = "knockOverPutDownTrigger";
 static const char* const kMinimumStackHeight = "minimumStackHeight";
-static const char* const kPreparingToKnockOverStackLock = "preparingToKnockOverDisable";
-
 
 const int kMaxNumRetries = 2;
 const float kMinThresholdRealign = 20.f;
@@ -54,63 +52,6 @@ const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = DEG_TO_RAD(90.f);
 
 CONSOLE_VAR(f32, kBKS_distanceToTryToGrabFrom_mm, "Behavior.AdmireStack", 85.0f);
 CONSOLE_VAR(f32, kBKS_searchSpeed_mmps, "Behavior.AdmireStack", 60.0f);
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-constexpr ReactionTriggerHelpers::FullReactionArray kKnockOverCubesAffectedArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       true},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kKnockOverCubesAffectedArray),
-              "Reaction triggers duplicate or non-sequential");
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPreparingKnockOverArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           true}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPreparingKnockOverArray),
-              "Reaction triggers duplicate or non-sequential");
-
 } // end namespace
 
   
@@ -332,7 +273,6 @@ bool BehaviorKnockOverCubes::InitializeMemberVars()
 {
   if(auto tallestStack = _currentTallestStack.lock()){
   // clear for success state check
-    SmartDisableReactionsWithLock(GetIDStr(), kKnockOverCubesAffectedArray);
     _objectsFlipped.clear();
     _numRetries = 0;
     _bottomBlockID = tallestStack->GetBottomBlockID();
@@ -414,13 +354,6 @@ void BehaviorKnockOverCubes::AlwaysHandle(const EngineToGameEvent& event, Behavi
 void BehaviorKnockOverCubes::PrepareForKnockOverAttempt()
 {
   _objectsFlipped.clear();
-  
-  // Unlock the reactions b/c we're about to re-lock them
-  // It's possible they might not have been locked - it's safe to remove an invalid lock
-  // but locking twice due to a retry will cause a crash
-  SmartRemoveDisableReactionsLock(kPreparingToKnockOverStackLock);
-  SmartDisableReactionsWithLock(kPreparingToKnockOverStackLock,
-                                kAffectTriggersPreparingKnockOverArray);
 }
   
 }

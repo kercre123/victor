@@ -33,11 +33,18 @@ public:
   // this is called
   void SetPath(const Planning::Path& path);
 
+  // change the path without resetting the dole index. Should only be used if we are only
+  // updating segments on the current path that have not been doled
+  void ReplacePath(const Planning::Path& newPath);
+
   void ClearPath();
 
   // Doles out the path bit by bit to the robot. The argument is the
   // currPathIdx: The current (absolute) segment index that the robot is traversing.
   void Update(const s8 currPathIdx);
+
+  const Planning::Path& GetPath() const {return path_;}
+  s16 GetLastDoledIdx() const {return lastDoledSegmentIdx_;}
 
 protected:
 

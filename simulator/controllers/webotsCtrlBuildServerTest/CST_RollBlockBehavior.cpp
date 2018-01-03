@@ -118,9 +118,6 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
     case TestState::WaitForDeloc:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsLocalizedToObject(), 2) {
-        // once we are deloc'd, try to start the behavior (which shouldn't start)
-        SendMessage(ExternalInterface::MessageGameToEngine(
-                      ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
         SendMessage(ExternalInterface::MessageGameToEngine(
                       ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(kBehaviorID), -1)));
         

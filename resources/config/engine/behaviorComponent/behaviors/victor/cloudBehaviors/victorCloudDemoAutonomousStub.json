@@ -1,0 +1,14 @@
+{
+  "behaviorID": "VictorCloudDemoAutonomousStub",  
+  "behaviorClass" : "DispatcherStrictPriority",
+  
+  "interruptActiveBehavior": false,
+
+  "behaviors": [
+    "RollBlockOnSide",
+    "SparksStackBlock",
+    "PopAWheelie",
+    "FindFaces_socialize",
+    "PutDownDispatch_LookForFaceAndCube"      
+  ]
+}

@@ -13,7 +13,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorRollBlock.h"
 
 #include "engine/actions/animActions.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
@@ -184,14 +183,6 @@ void BehaviorRollBlock::TransitionToPerformingAction(BehaviorExternalInterface& 
                                                           params);
   
   SmartDelegateToHelper(behaviorExternalInterface, rollHandle, delegateSuccess, delegateFailure);
-  
-  // Set the cube lights to interacting for full behavior run time
-  std::vector<BehaviorStateLightInfo> basePersistantLight;
-  basePersistantLight.push_back(
-    BehaviorStateLightInfo(_targetID, CubeAnimationTrigger::InteractingBehaviorLock)
-  );
-  SetBehaviorStateLights(basePersistantLight, false);
-  
 }
 
   

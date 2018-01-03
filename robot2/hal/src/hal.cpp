@@ -19,6 +19,8 @@
 
 #include "schema/messages.h"
 #include "clad/types/proxMessages.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
 
 #define RADIO_IP "127.0.0.1"
@@ -138,11 +140,15 @@ Result HAL::Init()
 
 void ForwardMicData(void)
 {
-  // Takes advantage of the data in bodyData being ordered such that the required members of MicData are already
-  // laid correctly.
-  // TODO(Al/Lee): Put back once mics and camera can co-exist
-//      const auto* latestMicData = reinterpret_cast<const RobotInterface::MicData*>(&bodyData_->audio);
-//      RobotInterface::SendMessage(*latestMicData);
+  static_assert(MICDATA_SAMPLES_COUNT == 
+                (sizeof(RobotInterface::MicData::data) / sizeof(RobotInterface::MicData::data[0])),
+                "bad mic data sample count define");
+  RobotInterface::MicData micData;
+  micData.sequenceID = bodyData_->framecounter;
+#if MICDATA_ENABLED
+  std::copy(bodyData_->audio, bodyData_->audio + MICDATA_SAMPLES_COUNT, micData.data);
+  RobotInterface::SendMessage(micData);
+#endif
 }
 
 Result HAL::Step(void)

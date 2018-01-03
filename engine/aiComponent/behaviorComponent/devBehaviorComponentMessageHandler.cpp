@@ -79,7 +79,7 @@ ICozmoBehaviorPtr DevBehaviorComponentMessageHandler::WrapRequestedBehaviorInDis
   }
 
   Json::Value config = BehaviorDispatcherRerun::CreateConfig(kBehaviorIDForDevMessage, requestedBehaviorID, numRuns);
-  rerunDispatcher = bContainer.CreateBehavior(config);
+  rerunDispatcher = bContainer.CreateBehaviorFromConfig(config);
   return rerunDispatcher;
 }
 
