@@ -135,8 +135,10 @@ struct MotorPower
 
 struct BatteryState
 {
-  int32_t battery;
-  int32_t charger;
+  int16_t battery;
+  int16_t charger;
+  int16_t temperature;
+  int16_t _unused;
   BatteryFlags flags;
 };
 
@@ -186,7 +188,7 @@ struct SpineMessageFooter
 struct BodyToHead
 {
   // TODO(Al/Lee): Put back once mics and camera can co-exist
-  int16_t audio[480];     // NOTE: This needs to be immediately followed by the uin32_t framecounter, since that is packed
+  int16_t audio[320];     // NOTE: This needs to be immediately followed by the uin32_t framecounter, since that is packed
   uint32_t framecounter;  // as part of the AudioInput struct to the engine process.
   PowerState powerState;
   struct MotorState motor[4];
@@ -194,6 +196,7 @@ struct BodyToHead
   struct BatteryState battery;
   struct RangeData proximity;
   uint16_t touchLevel[2];
+  uint8_t _unused[32];  // Future expansion
 };
 
 struct ContactData

@@ -10,7 +10,7 @@
 extern "C" void start_mic_spi(int16_t a, int16_t b, void* tim);
 
 static const int WORDS_PER_SAMPLE = (AUDIO_DECIMATION * 2) / 8;
-static const int SAMPLES_PER_IRQ = 24;  // 5 IRQS PER FRAME
+static const int SAMPLES_PER_IRQ = 20;
 static const int SAMPLE_LOOPS = SAMPLES_PER_IRQ / 4;
 static const int IRQS_PER_FRAME = AUDIO_SAMPLES_PER_FRAME / SAMPLES_PER_IRQ;
 
@@ -174,6 +174,7 @@ extern "C" void DMA1_Channel2_3_IRQHandler(void) {
   uint32_t isr = DMA1->ISR;
   DMA1->IFCR = DMA_ISR_GIF2;
 
+  /*
   static int32_t accumulator[4][3];
 
   // Note: if this falls behind, it will drop a bunch of samples
@@ -188,7 +189,7 @@ extern "C" void DMA1_Channel2_3_IRQHandler(void) {
     index += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }
-
+  */
 
   // Circular buffer increment
   if (sample_index >= IRQS_PER_FRAME * 2) {
