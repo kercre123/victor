@@ -18,7 +18,7 @@
 #include "engine/voiceCommands/recognitionSetupData.h"
 #include "engine/voiceCommands/speechRecognizerTHF.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "audioUtil/audioFileReader.h"
 #include "audioUtil/audioPlayer.h"

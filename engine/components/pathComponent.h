@@ -13,9 +13,9 @@
 #ifndef __Cozmo_Basestation_Components_PathComponent_H__
 #define __Cozmo_Basestation_Components_PathComponent_H__
 
-#include "anki/common/types.h"
-#include "anki/planning/shared/goalDefs.h"
-#include "anki/planning/shared/path.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/planning/shared/goalDefs.h"
+#include "coretech/planning/shared/path.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <vector>

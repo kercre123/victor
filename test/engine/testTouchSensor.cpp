@@ -33,8 +33,8 @@
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
 
 // test infra
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeGTest.h"
 

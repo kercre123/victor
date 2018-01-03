@@ -22,6 +22,7 @@ function usage() {
     echo "  -T                      list all cmake targets"
     echo "  -t [target]             build specified cmake target"
     echo "  -e                      export compile commands"
+    echo "  -I                      ignore external dependencies"
 }
 
 #
@@ -35,6 +36,7 @@ RUN_BUILD=1
 CMAKE_TARGET=""
 CMAKE_EXE="${HOME}/.anki/cmake/dist/3.8.1/CMake.app/Contents/bin/cmake"
 EXPORT_COMPILE_COMMANDS=0
+IGNORE_EXTERNAL_DEPENDENCIES=0
 
 CONFIGURATION=Debug
 PLATFORM=android
@@ -46,7 +48,7 @@ FEATURES=""
 USE_TENSORFLOW=0
 USE_TENSORFLOW_LITE=0
 
-while getopts ":x:c:p:t:g:F:hvfdCTe" opt; do
+while getopts ":x:c:p:t:g:F:hvfdCTeI" opt; do
     case $opt in
         h)
             usage
@@ -94,6 +96,9 @@ while getopts ":x:c:p:t:g:F:hvfdCTe" opt; do
         e)
             EXPORT_COMPILE_COMMANDS=1
             ;;
+        I)
+            IGNORE_EXTERNAL_DEPENDENCIES=1
+            ;;
         :)
             echo "Option -${OPTARG} required an argument." >&2
             usage
@@ -109,8 +114,12 @@ shift $(($OPTIND - 1))
 # settings
 #
 
-echo "Attempting to run fetch-build-deps.sh"
-${TOPLEVEL}/project/victor/scripts/fetch-build-deps.sh
+if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
+  echo "Attempting to run fetch-build-deps.sh"
+  ${TOPLEVEL}/project/victor/scripts/fetch-build-deps.sh
+else
+  echo "Ignore external dependencies"
+fi
 
 PLATFORM=`echo $PLATFORM | tr "[:upper:]" "[:lower:]"`
 
@@ -233,6 +242,7 @@ if [ $CONFIGURE -eq 1 ]; then
         androidHAL/BUILD.in \
         animProcess/BUILD.in \
         clad/BUILD.in \
+        cloud/BUILD.in \
         coretech/common/BUILD.in \
         coretech/common/clad/BUILD.in \
         coretech/vision/BUILD.in \
@@ -244,6 +254,7 @@ if [ $CONFIGURE -eq 1 ]; then
         engine/tools/BUILD.in \
         lib/util/source/anki/util/BUILD.in \
         lib/util/source/anki/utilUnitTest/BUILD.in \
+        osState/BUILD.in \
         resources/BUILD.in \
         robot/BUILD.in \
         robot/clad/BUILD.in \

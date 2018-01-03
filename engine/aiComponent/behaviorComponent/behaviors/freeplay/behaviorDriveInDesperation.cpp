@@ -12,8 +12,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/behaviorDriveInDesperation.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
@@ -127,7 +127,7 @@ void BehaviorDriveInDesperation::InitBehavior(BehaviorExternalInterface& behavio
 
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDriveInDesperation::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveInDesperation::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SmartSetMotionProfile( _params->_motionProfile );
 
@@ -135,7 +135,7 @@ Result BehaviorDriveInDesperation::OnBehaviorActivated(BehaviorExternalInterface
 
   TransitionToIdle(behaviorExternalInterface);
 
-  return Result::RESULT_OK;
+  
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -144,8 +144,12 @@ void BehaviorDriveInDesperation::OnBehaviorDeactivated(BehaviorExternalInterface
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorDriveInDesperation::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveInDesperation::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads ) {
     if( !_wasPickedUp ) {
       // this behavior can run while in the air, in which case it just does nothing. This is because the severe
@@ -153,7 +157,6 @@ ICozmoBehavior::Status BehaviorDriveInDesperation::UpdateInternal_WhileRunning(B
       CancelDelegates(false);
       _wasPickedUp = true;
     }
-    return Status::Running;
   }
   else if( _wasPickedUp ) {
     // we were picked up, but are no longer, so go back to the idle state
@@ -161,8 +164,6 @@ ICozmoBehavior::Status BehaviorDriveInDesperation::UpdateInternal_WhileRunning(B
     _targetCube.UnSet();
     TransitionToIdle(behaviorExternalInterface);
   }
-
-  return Base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 

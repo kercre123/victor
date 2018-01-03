@@ -28,11 +28,11 @@
 #include "engine/needsSystem/needsManager.h"
 #include "engine/viz/vizManager.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
-#include "anki/vision/basestation/faceTracker.h"
-#include "anki/vision/basestation/trackedFace.h"
+#include "coretech/vision/engine/faceTracker.h"
+#include "coretech/vision/engine/trackedFace.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -135,25 +135,27 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorInteractWithFaces::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorInteractWithFaces::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // reset the time to stop tracking (in the tracking state)
   _trackFaceUntilTime_s = -1.0f;
 
   if( _targetFace.IsValid() ) {
     TransitionToInitialReaction(behaviorExternalInterface);
-    return RESULT_OK;
   }
   else {
     PRINT_NAMED_WARNING("BehaviorInteractWithFaces.Init.NoValidTarget",
                         "Decided to run, but don't have valid target when Init is called. This shouldn't happen");
-    return RESULT_FAIL;
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorInteractWithFaces::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorInteractWithFaces::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( _trackFaceUntilTime_s >= 0.0f ) {
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if( currTime_s >= _trackFaceUntilTime_s ) {
@@ -165,9 +167,7 @@ ICozmoBehavior::Status BehaviorInteractWithFaces::UpdateInternal_WhileRunning(Be
         needsManager.RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
       }
     }
-  }
-  
-  return BaseClass::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

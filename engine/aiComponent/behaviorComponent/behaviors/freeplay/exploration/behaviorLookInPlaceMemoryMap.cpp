@@ -12,8 +12,8 @@
  **/
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorLookInPlaceMemoryMap.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/point_impl.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -155,7 +155,7 @@ void BehaviorLookInPlaceMemoryMap::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorLookInPlaceMemoryMap::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookInPlaceMemoryMap::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting first iteration");
   
@@ -186,7 +186,7 @@ Result BehaviorLookInPlaceMemoryMap::OnBehaviorActivated(BehaviorExternalInterfa
   // find the closest sector to visit starting at 0 (forward)
   FindAndVisitClosestVisitableSector(behaviorExternalInterface, 0, kSectorsPerLocation-1, 0);
   
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

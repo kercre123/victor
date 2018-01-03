@@ -11,7 +11,7 @@
  **/
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/gameRequest/behaviorGameRequest.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -108,13 +108,13 @@ bool ICozmoBehaviorRequestGame::WantsToBeActivatedBehavior(BehaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ICozmoBehaviorRequestGame::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _requestTime_s = -1.0f;
   _robotsBlockID.UnSet();
   _badBlocks.clear();
   
-  return RequestGame_OnBehaviorActivated(behaviorExternalInterface);
+  RequestGame_OnBehaviorActivated(behaviorExternalInterface);
 }
 
 
@@ -253,15 +253,19 @@ bool ICozmoBehaviorRequestGame::GetLastBlockPose(Pose3d& pose) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status ICozmoBehaviorRequestGame::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const ObservableObject* obj = GetClosestBlock(behaviorExternalInterface);
   if( obj != nullptr ) {
     _hasBlockPose = true;
     _lastBlockPose = obj->GetPose();
   }
   
-  return RequestGame_UpdateInternal(behaviorExternalInterface);
+  RequestGame_UpdateInternal(behaviorExternalInterface);
 }
 
 
@@ -289,7 +293,7 @@ bool ICozmoBehaviorRequestGame::GetFacePose(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag())
   {
@@ -314,7 +318,7 @@ void ICozmoBehaviorRequestGame::AlwaysHandle(const EngineToGameEvent& event, Beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::AlwaysHandleInScope(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag())
   {

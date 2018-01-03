@@ -1,9 +1,9 @@
 #include "cozmoAnim/animation/proceduralFaceDrawer.h"
 #include "cozmoAnim/animation/scanlineDistorter.h"
 
-#include "anki/common/basestation/array2d_impl.h"
+#include "coretech/common/engine/array2d_impl.h"
 
-//#include "anki/vision/basestation/trackedFace.h"
+//#include "coretech/vision/engine/trackedFace.h"
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>

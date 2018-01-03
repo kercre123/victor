@@ -1,5 +1,7 @@
 PROTO CozmoEngine2 [
   field SFString name "CozmoEngine"
+  field SFInt32 robotID 0
+
   field SFVec3f translation 0 0 0
   field SFRotation rotation 0 0 1 0
   

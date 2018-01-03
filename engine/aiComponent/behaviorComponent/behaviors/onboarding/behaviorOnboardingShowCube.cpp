@@ -26,8 +26,8 @@
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
 
@@ -74,7 +74,7 @@ bool BehaviorOnboardingShowCube::WantsToBeActivatedBehavior(BehaviorExternalInte
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
@@ -103,7 +103,7 @@ Result BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface
     DelegateIfInControl(new PlaceObjectOnGroundAction());
   }
   
-  return Result::RESULT_OK;
+  
 }
  
   
@@ -119,7 +119,7 @@ void BehaviorOnboardingShowCube::OnBehaviorDeactivated(BehaviorExternalInterface
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
 
 }
@@ -164,8 +164,12 @@ void BehaviorOnboardingShowCube::HandleWhileActivated(const GameToEngineEvent& e
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // This behavior is killed by unity switching to none
-ICozmoBehavior::Status BehaviorOnboardingShowCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( !IsControlDelegated() && !IsSequenceComplete() )
   {
     float timeRunning = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeActivated_s();
@@ -174,7 +178,6 @@ ICozmoBehavior::Status BehaviorOnboardingShowCube::UpdateInternal_WhileRunning(B
       SET_STATE(ErrorFinal,behaviorExternalInterface);
     }
   }
-  return Status::Running;
 }
   
   

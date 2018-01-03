@@ -15,8 +15,8 @@
 #include "engine/viz/vizManager.h" // only for debug render
 #include "engine/robot.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"

@@ -17,13 +17,12 @@ target_compile_definitions(cti_common
   ANKICORETECH_EMBEDDED_USE_OPENCV=1
   ANKICORETECH_EMBEDDED_USE_MATLAB=0
   PRIVATE
-  CORETECH_BASESTATION
+  CORETECH_ENGINE
 )
 
 target_include_directories(cti_common
   PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/common>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
 )
 
 #set_target_properties(cti_common PROPERTIES
@@ -48,6 +47,11 @@ target_link_libraries(cti_common
   PRIVATE
   z
 )
+
+#
+# CLAD headers must be generated before building library
+#
+add_dependencies(cti_common cti_common_clad)
 
 #
 # cti_common_robot
@@ -75,31 +79,31 @@ target_compile_definitions(cti_common_robot
 
 target_include_directories(cti_common_robot
   PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/common>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
 )
 
 
 if (MACOSX)
 
   include(gtest)
+
   #
-  # cti_common_shared_test
+  # cti_common_test_shared
   #
 
-  anki_build_cxx_executable(cti_common_shared_test ${ANKI_SRCLIST_DIR})
+  anki_build_cxx_executable(cti_common_test_shared ${ANKI_SRCLIST_DIR})
 
-  target_compile_options(cti_common_shared_test
+  target_compile_options(cti_common_test_shared
     PRIVATE
     -Wno-undef
   )
 
-  target_compile_definitions(cti_common_shared_test
+  target_compile_definitions(cti_common_test_shared
     PRIVATE
     TEST_DATA_PATH=${CORETECH}
   )
 
-  target_link_libraries(cti_common_shared_test
+  target_link_libraries(cti_common_test_shared
     PRIVATE
     cti_common
     util
@@ -108,17 +112,17 @@ if (MACOSX)
   )
 
   #
-  # cti_common_basestation_test
+  # cti_common_test_engine
   #
 
-  anki_build_cxx_executable(cti_common_basestation_test ${ANKI_SRCLIST_DIR})
+  anki_build_cxx_executable(cti_common_test_engine ${ANKI_SRCLIST_DIR})
 
-  target_compile_definitions(cti_common_basestation_test
+  target_compile_definitions(cti_common_test_engine
     PRIVATE
     TEST_DATA_PATH=${CORETECH}
   )
 
-  target_link_libraries(cti_common_basestation_test
+  target_link_libraries(cti_common_test_engine
     PRIVATE
     cti_common
     util
@@ -131,8 +135,8 @@ if (MACOSX)
   #
   enable_testing()
 
-  add_test(NAME cti_common_shared_test COMMAND cti_common_shared_test)
-  add_test(NAME cti_common_basestation_test COMMAND cti_common_basestation_test)
+  add_test(NAME cti_common_test_shared COMMAND cti_common_test_shared)
+  add_test(NAME cti_common_test_engine COMMAND cti_common_test_engine)
 
 endif()
 

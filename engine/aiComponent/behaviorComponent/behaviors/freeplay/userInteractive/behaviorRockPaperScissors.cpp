@@ -15,9 +15,9 @@
 
 #include "clad/types/imageTypes.h"
 
-#include "coretech/common/include/anki/common/basestation/jsonTools.h"
-#include "coretech/common/include/anki/common/basestation/utils/data/dataPlatform.h"
-#include "coretech/common/include/anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -79,7 +79,7 @@ BehaviorRockPaperScissors::~BehaviorRockPaperScissors()
 {
 }
 
-Result BehaviorRockPaperScissors::OnBehaviorActivated(BehaviorExternalInterface& bei)
+void BehaviorRockPaperScissors::OnBehaviorActivated(BehaviorExternalInterface& bei)
 {
   DEV_ASSERT(bei.HasAnimationComponent(), 
              "BehaviorRockPaperScissors.OnBehaviorActivated.NoAnimComponent");
@@ -120,8 +120,6 @@ Result BehaviorRockPaperScissors::OnBehaviorActivated(BehaviorExternalInterface&
     _displayImages[Selection::Unknown].FillWith(0);
     
   }
-  
-  return Result::RESULT_OK;
 }
 
 void BehaviorRockPaperScissors::OnBehaviorDeactivated(BehaviorExternalInterface& bei)
@@ -129,8 +127,13 @@ void BehaviorRockPaperScissors::OnBehaviorDeactivated(BehaviorExternalInterface&
 
 }
 
-BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorExternalInterface& bei)
+void BehaviorRockPaperScissors::BehaviorUpdate(BehaviorExternalInterface& bei)
 {
+  if(!IsActivated())
+  {
+    return;
+  }
+  
   switch(_state)
   {
     case State::WaitForButton:
@@ -307,9 +310,6 @@ BehaviorStatus BehaviorRockPaperScissors::UpdateInternal_WhileRunning(BehaviorEx
       break;
     }
   }
-  
-  // always stay running
-  return BehaviorStatus::Running;
 }
 
 void BehaviorRockPaperScissors::CopyToHelper(Vision::ImageRGB& toImg, const Selection selection, const s32 xOffset, const bool swapGB) const

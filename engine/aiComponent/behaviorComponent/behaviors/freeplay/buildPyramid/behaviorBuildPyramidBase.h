@@ -16,7 +16,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorBuildPyramidBase_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -61,8 +61,8 @@ protected:
   };
   
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   void TransitionToDrivingToBaseBlock(BehaviorExternalInterface& behaviorExternalInterface);
   void TransitionToPlacingBaseBlock(BehaviorExternalInterface& behaviorExternalInterface);

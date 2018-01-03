@@ -15,7 +15,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_DevBehaviors_BehaviorRockPaperScissors_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/vision/engine/image.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -40,13 +40,15 @@ protected:
   virtual bool ShouldRunWhileOnCharger() const override { return true;}
   virtual bool CarryingObjectHandledInternally() const override { return false; }
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  virtual BehaviorStatus UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual void HandleWhileActivated(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) override;  
   
+  // Always stay running, even with no action
+  virtual bool ShouldCancelWhenInControl() const override { return false; }
   
 private:
   

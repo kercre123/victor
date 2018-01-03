@@ -26,8 +26,8 @@
 #include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/events/animationTriggerHelpers.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "util/console/consoleInterface.h"
 
 
@@ -97,7 +97,7 @@ bool BehaviorKnockOverCubes::WantsToBeActivatedBehavior(BehaviorExternalInterfac
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorKnockOverCubes::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(InitializeMemberVars()){
     if(!ShouldStreamline()){
@@ -105,9 +105,7 @@ Result BehaviorKnockOverCubes::OnBehaviorActivated(BehaviorExternalInterface& be
     }else{
       TransitionToKnockingOverStack(behaviorExternalInterface);
     }
-    return Result::RESULT_OK;
-  }else{
-    return Result::RESULT_FAIL;
+    
   }
 }
 
@@ -316,7 +314,7 @@ void BehaviorKnockOverCubes::HandleWhileActivated(const EngineToGameEvent& event
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnockOverCubes::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch (event.GetData().GetTag()) {
     case ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged:

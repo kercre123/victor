@@ -9,13 +9,13 @@
 #include "webotsCtrlKeyboard.h"
 
 #include "../shared/ctrlCommonInitialization.h"
-#include "anki/common/basestation/colorRGBA.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/colorRGBA.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/pose.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/vision/basestation/image.h"
-#include "anki/vision/basestation/image_impl.h"
+#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/image_impl.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/proceduralFaceTypes.h"
@@ -2001,22 +2001,28 @@ namespace Anki {
                   break;
                 }
 
-                ExternalInterface::RunDebugConsoleFuncMessage msg;
-                msg.funcName = funcNameField->getSFString();
-                if( msg.funcName.empty() ) {
+                std::string funcName( funcNameField->getSFString() );
+                if( funcName.empty() ) {
                   printf("WARNING: no function name defined in 'consoleVarName'\n");
                   break;
                 }
-                  
-                msg.funcArgs = funcArgsField->getSFString();
+
+                std::string funcArgs( funcArgsField->getSFString() );
                 // args field is allowed to be empty
 
                 printf("Trying to call console func: %s(%s)\n",
-                       msg.funcName.c_str(),
-                       msg.funcArgs.c_str());
+                       funcName.c_str(),
+                       funcArgs.c_str());
                 
-                SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
-
+                using namespace ExternalInterface;
+                if (altKeyPressed) {
+                  // Alt: Send to Anim process
+                  SendMessage(MessageGameToEngine(RunAnimDebugConsoleFuncMessage(funcName, funcArgs)));
+                }
+                else {
+                  // Normal: Send to Engine process
+                  SendMessage(MessageGameToEngine(RunDebugConsoleFuncMessage(funcName, funcArgs)));
+                }
                 break;
               }
               
@@ -2026,8 +2032,8 @@ namespace Anki {
                 webots::Field* field = root_->getField("consoleVarName");
                 if(nullptr == field) {
                   printf("No consoleVarName field\n");
-                } else {
-                  
+                }
+                else {
                   const std::string varName( field->getSFString() );
                   if(varName.empty()) {
                     printf("Empty consoleVarName\n");
@@ -2039,7 +2045,8 @@ namespace Anki {
                   field = root_->getField("consoleVarValue");
                   if(nullptr == field) {
                     printf("No consoleVarValue field\n");
-                  } else {
+                  }
+                  else {
                     tryValue = field->getSFString();
                     printf("Trying to set console var '%s' to '%s'\n",
                            varName.c_str(), tryValue.c_str());

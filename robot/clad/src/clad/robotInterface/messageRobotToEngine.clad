@@ -44,9 +44,10 @@ message TriggerWordDetected
 
 message MicDirection
 {
-  uint_32 timestamp,
-  uint_16 direction,
-  int_16  confidence
+  uint_32   timestamp,
+  uint_16   direction,
+  int_16    confidence,
+  float_32  confidenceList[13]
 }
 
 // This message indicates that the robot experienced a freefall event

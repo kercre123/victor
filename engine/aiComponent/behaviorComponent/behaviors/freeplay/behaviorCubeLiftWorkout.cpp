@@ -65,7 +65,7 @@ bool BehaviorCubeLiftWorkout::WantsToBeActivatedBehavior(BehaviorExternalInterfa
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorCubeLiftWorkout::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCubeLiftWorkout::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // disable idle
   SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
@@ -92,9 +92,7 @@ Result BehaviorCubeLiftWorkout::OnBehaviorActivated(BehaviorExternalInterface& b
     _targetBlockID = objInfoCache.GetBestObjectForIntention(kObjectIntention);
 
     TransitionToPickingUpCube(behaviorExternalInterface);
-  }  
-  
-  return RESULT_OK;
+  }    
 }
 
   
@@ -118,8 +116,12 @@ void BehaviorCubeLiftWorkout::OnBehaviorDeactivated(BehaviorExternalInterface& b
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCubeLiftWorkout::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   if( _shouldBeCarrying && ! robotInfo.GetCarryingComponent().IsCarryingObject() ) {
     PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Update.NotCarryingWhenShould").c_str(),
@@ -128,8 +130,6 @@ ICozmoBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal_WhileRunning(Beha
     // let the current animation finish, but then don't continue with the behavior
     StopOnNextActionComplete();
   }
-
-  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 

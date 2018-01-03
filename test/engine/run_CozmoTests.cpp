@@ -1,15 +1,15 @@
 #define private public
 #define protected public
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseOriginList.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/robot/matlabInterface.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/poseOriginList.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/robot/matlabInterface.h"
+#include "coretech/common/shared/types.h"
 
 #include "androidHAL/androidHAL.h"
-
+#include "osState/osState.h"
 #include "cubeBleClient/cubeBleClient.h"
 
 #include "engine/activeObject.h"
@@ -2899,6 +2899,9 @@ int main(int argc, char ** argv)
   // Initialize AndroidHAL singleton without supervisor
   AndroidHAL::SetSupervisor(nullptr);
   
+  // Initialize OSState singleton without supervisor
+  OSState::SetSupervisor(nullptr);
+
   // Initialize CubeBleClient singleton without supervisor
   CubeBleClient::SetSupervisor(nullptr);
 

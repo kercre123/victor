@@ -61,7 +61,7 @@ bool BehaviorReactToCliff::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(behaviorExternalInterface.HasMoodManager()){
     auto& moodManager = behaviorExternalInterface.GetMoodManager();
@@ -110,11 +110,10 @@ Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& beha
     default: {
       PRINT_NAMED_ERROR("BehaviorReactToCliff.Init.InvalidState",
                         "Init called with invalid state");
-      return Result::RESULT_FAIL;
     }
   }
   
-  return Result::RESULT_OK;
+  
 }
 
   
@@ -212,13 +211,16 @@ void BehaviorReactToCliff::OnBehaviorDeactivated(BehaviorExternalInterface& beha
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToCliff::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if(_shouldStopDueToCharger){
     _shouldStopDueToCharger = false;
-    return Status::Complete;
+    CancelSelf();
   }
-  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   

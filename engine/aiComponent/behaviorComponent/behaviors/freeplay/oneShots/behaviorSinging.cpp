@@ -26,8 +26,8 @@
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "clad/audio/audioEventTypes.h"
 
@@ -151,7 +151,7 @@ bool BehaviorSinging::WantsToBeActivatedBehavior(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(ANKI_VERIFY(behaviorExternalInterface.HasRobotAudioClient(), 
                  "BehaviorSinging.OnBehaviorActivated.MissingAudioClient","")){
@@ -210,14 +210,16 @@ Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
       NeedActionCompleted(NeedsActionId::CozmoSings);
     }
   });
-  
-  return RESULT_OK;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus BehaviorSinging::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSinging::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // Figure out which object was, on average, shaken the most this tick
   float mostShakenObjectAverage = 0;
   for(auto& objectShakeAverage : _objectShakeAverages)
@@ -281,9 +283,7 @@ BehaviorStatus BehaviorSinging::UpdateInternal_WhileRunning(BehaviorExternalInte
     }
 
     _cubeShakingStartTime_ms = 0;
-  }
-  
-  return (IsControlDelegated() ? BehaviorStatus::Running : BehaviorStatus::Complete);
+  }  
 }
 
 

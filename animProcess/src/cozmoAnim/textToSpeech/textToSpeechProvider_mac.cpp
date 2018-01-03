@@ -16,9 +16,9 @@
 
 #include "cozmoAnim/cozmoAnimContext.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/data/dataScope.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/data/dataScope.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "util/environment/locale.h"
 #include "util/logging/logging.h"

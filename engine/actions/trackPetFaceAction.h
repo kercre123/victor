@@ -14,7 +14,7 @@
 #define __Anki_Cozmo_Basestation_TrackPetFaceAction_H__
 
 #include "engine/actions/trackActionInterface.h"
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 
 #include "clad/types/petTypes.h"
 

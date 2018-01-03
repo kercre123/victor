@@ -14,9 +14,9 @@
 
 #include "clad/types/imageTypes.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -94,7 +94,7 @@ BehaviorDevImageCapture::~BehaviorDevImageCapture()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDevImageCapture::OnBehaviorActivated(BehaviorExternalInterface& bei)
+void BehaviorDevImageCapture::OnBehaviorActivated(BehaviorExternalInterface& bei)
 {
   _touchStartedTime_s = -1.0f;
   _isStreaming = false;
@@ -112,8 +112,6 @@ Result BehaviorDevImageCapture::OnBehaviorActivated(BehaviorExternalInterface& b
   auto& robotInfo = bei.GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(false);
-  
-  return Result::RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -153,8 +151,13 @@ std::string BehaviorDevImageCapture::GetSavePath() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus BehaviorDevImageCapture::UpdateInternal_WhileRunning(BehaviorExternalInterface& bei)
+void BehaviorDevImageCapture::BehaviorUpdate(BehaviorExternalInterface& bei)
 {
+  if(!IsActivated())
+  {
+    return;
+  }
+  
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   auto& visionComponent = bei.GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
 
@@ -240,9 +243,6 @@ BehaviorStatus BehaviorDevImageCapture::UpdateInternal_WhileRunning(BehaviorExte
   if( !isTouched ) {
     _touchStartedTime_s = -1.0f;
   }
-  
-  // always stay running
-  return BehaviorStatus::Running;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

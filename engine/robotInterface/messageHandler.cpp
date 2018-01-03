@@ -21,8 +21,8 @@
 #include "engine/robotManager.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/messaging/basestation/IComms.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/messaging/engine/IComms.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -47,16 +47,6 @@ MessageHandler::~MessageHandler() = default;
 
 void MessageHandler::Init(const Json::Value& config, RobotManager* robotMgr, const CozmoContext* context)
 {
-  const char *ipString = config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString();
-  int port = config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt();
-  if (port < 0 || port >= 0x10000) {
-    PRINT_NAMED_ERROR("RobotInterface.MessageHandler.Init", "Failed to initialize RobotComms; bad port %d", port);
-    return;
-  }
-  
-  Anki::Util::TransportAddress address(ipString, static_cast<uint16_t>(port));
-  PRINT_STREAM_DEBUG("RobotInterface.MessageHandler.Init", "Initializing on address: " << address << ": " << address.GetIPAddress() << ":" << address.GetIPPort() << "; originals: " << ipString << ":" << port);
-  
   _robotManager = robotMgr;
   _robotConnectionManager.reset(new RobotConnectionManager(_robotManager));
   _robotConnectionManager->Init();

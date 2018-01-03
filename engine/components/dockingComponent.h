@@ -13,11 +13,11 @@
 #ifndef __Anki_Cozmo_Basestation_Components_DockingComponent_H__
 #define __Anki_Cozmo_Basestation_Components_DockingComponent_H__
 
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/shared/types.h"
 
-#include "anki/vision/basestation/visionMarker.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/engine/visionMarker.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "clad/types/dockingSignals.h"
 #include "clad/types/robotStatusAndActions.h"

@@ -27,9 +27,9 @@
 #define Anki_Cozmo_BlockConfigurationPyramid_H
 
 #include "engine/blockWorld/blockConfiguration.h"
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/pose.h"
 
 
 namespace Anki{

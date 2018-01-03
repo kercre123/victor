@@ -24,7 +24,7 @@
 //#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 //#include "engine/navMemoryMap/iNavMemoryMap.h"
 //
-//#include "anki/common/basestation/math/pose.h"
+//#include "coretech/common/engine/math/pose.h"
 //
 //#include "clad/externalInterface/messageEngineToGame.h"
 //
@@ -62,11 +62,12 @@
 //  // ICozmoBehavior API
 //  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //  
-//  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-//  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-//  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+//  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+//  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+//   virtual bool ShouldCancelWhenInControl() const override { return false;}
+//  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 //
-//  virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+//  virtual void AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
 //
 //  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //  // Events

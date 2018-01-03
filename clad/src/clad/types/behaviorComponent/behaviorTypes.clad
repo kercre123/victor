@@ -34,7 +34,6 @@ enum uint_8 BehaviorClass {
   ExploreVisitPossibleMarker,
   ExpressNeeds,
   FactoryCentroidExtractor,
-  FactoryTest,
   FeedingEat,
   FeedingSearchForCube,
   FindFaces,
@@ -149,7 +148,6 @@ enum uint_8 BehaviorID {
 
   FPPeekABoo,
   FactoryCentroidExtractor,
-  FactoryTest,
 
   FeedingEat,
   FeedingFindFacesSevere,

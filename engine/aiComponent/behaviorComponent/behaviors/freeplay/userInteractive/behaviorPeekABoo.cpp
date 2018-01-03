@@ -12,8 +12,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/retryWrapperAction.h"
@@ -26,7 +26,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/utils/cozmoFeatureGate.h"
-#include "anki/vision/basestation/faceTracker.h"
+#include "coretech/vision/engine/faceTracker.h"
 
 #include "clad/types/animationTrigger.h"
 
@@ -112,14 +112,13 @@ bool BehaviorPeekABoo::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPeekABoo::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // for COZMO-8914
   if(ShouldStreamline() &&
      (_timeSparkAboutToEnd_Sec == kSparkShouldPlaySparkFailFlag)){
     _timeSparkAboutToEnd_Sec = 0.0f;
     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::SparkFailure));
-    return RESULT_OK;
   }
   
   _hasMadeFollowUpRequest = false;
@@ -139,13 +138,16 @@ Result BehaviorPeekABoo::OnBehaviorActivated(BehaviorExternalInterface& behavior
   {
     TransitionTurnToFace(behaviorExternalInterface);
   }
-  return RESULT_OK;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorPeekABoo::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   UpdateTimestampSets(behaviorExternalInterface);
   const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   const bool seeingEyes = !WasFaceHiddenAfterTimestamp(behaviorExternalInterface, robotInfo.GetLastImageTimeStamp());
@@ -163,9 +165,7 @@ ICozmoBehavior::Status BehaviorPeekABoo::UpdateInternal_WhileRunning(BehaviorExt
       CancelDelegates(false);
       TransitionSeeFaceAfterHiding(behaviorExternalInterface);
     }
-  }
-  
-  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
 
   

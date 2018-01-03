@@ -72,7 +72,7 @@ bool BehaviorBuildPyramid::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorBuildPyramid::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBuildPyramid::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   using namespace BlockConfigurations;
   ResetMemberVars();
@@ -82,7 +82,7 @@ Result BehaviorBuildPyramid::OnBehaviorActivated(BehaviorExternalInterface& beha
   if(_checkForFullPyramidVisualVerifyFailure && !pyramids.empty()){
     _checkForFullPyramidVisualVerifyFailure = false;
     TransitionToReactingToPyramid(behaviorExternalInterface);
-    return Result::RESULT_OK;
+    
   }else{
     _checkForFullPyramidVisualVerifyFailure = false;
   }
@@ -104,7 +104,7 @@ Result BehaviorBuildPyramid::OnBehaviorActivated(BehaviorExternalInterface& beha
     }
   }
   
-  return Result::RESULT_OK;
+  
 }
 
   

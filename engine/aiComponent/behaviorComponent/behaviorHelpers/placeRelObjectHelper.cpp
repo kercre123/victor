@@ -61,7 +61,7 @@ bool PlaceRelObjectHelper::ShouldCancelDelegates(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus PlaceRelObjectHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus PlaceRelObjectHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _tmpRetryCounter = 0;
   
@@ -90,7 +90,7 @@ BehaviorStatus PlaceRelObjectHelper::InitBehaviorHelper(BehaviorExternalInterfac
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus PlaceRelObjectHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus PlaceRelObjectHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   return _status;
 }
@@ -101,7 +101,7 @@ void PlaceRelObjectHelper::StartPlaceRelObject(BehaviorExternalInterface& behavi
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
     MarkFailedToStackOrPlace(behaviorExternalInterface);
-    _status = BehaviorStatus::Failure;
+    _status = IHelper::HelperStatus::Failure;
     return;
   }
   _tmpRetryCounter++;
@@ -143,7 +143,7 @@ void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, Behavior
   switch(result){
     case ActionResult::SUCCESS:
     {
-      _status = BehaviorStatus::Complete;
+      _status = IHelper::HelperStatus::Complete;
       break;
     }
     case ActionResult::NO_PREACTION_POSES:
@@ -165,13 +165,13 @@ void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, Behavior
     case ActionResult::ABORT:
     case ActionResult::BAD_OBJECT:
     {
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
       break;
     }
     default:
     {
       //DEV_ASSERT(false, "HANDLE CASE!");
-      //_status = BehaviorStatus::Failure;
+      //_status = IHelper::HelperStatus::Failure;
       StartPlaceRelObject(behaviorExternalInterface);
       break;
     }

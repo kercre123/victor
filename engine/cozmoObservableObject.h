@@ -18,7 +18,7 @@
 #include "engine/objectPoseConfirmer.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
-#include "anki/vision/basestation/observableObject.h"
+#include "coretech/vision/engine/observableObject.h"
 
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"

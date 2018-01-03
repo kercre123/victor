@@ -17,12 +17,12 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/ble/BLESystem.h"
 #include "engine/debug/cladLoggerProvider.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/components/visionComponent.h"
 #include "engine/deviceData/deviceDataManager.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/perfMetric.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "engine/viz/vizManager.h"
 #include "engine/robot.h"
@@ -36,6 +36,8 @@
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+
+#include "osState/osState.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
 
@@ -150,15 +152,15 @@ Result CozmoEngine::Init(const Json::Value& config) {
   
   _isInitialized = false;
 
+  // Engine currently has no reason to know about CPU
+  // freq or temperature so we set the update period to 0
+  // avoid time-wasting file access
+  OSState::getInstance()->SetUpdatePeriod(0);
+
   _config = config;
   
   if(!_config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
     PRINT_NAMED_ERROR("CozmoEngine.Init", "No AdvertisingHostIP defined in Json config.");
-    return RESULT_FAIL;
-  }
-  
-  if(!_config.isMember(AnkiUtil::kP_ROBOT_ADVERTISING_PORT)) {
-    PRINT_NAMED_ERROR("CozmoEngine.Init", "No RobotAdvertisingPort defined in Json config.");
     return RESULT_FAIL;
   }
   
@@ -378,7 +380,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     {
       // Update time
       BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
-      
+
+      // Update OSState
+      OSState::getInstance()->Update();
+
       _context->GetRobotManager()->UpdateRobotConnection();
       
       const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -549,16 +554,16 @@ Result CozmoEngine::InitInternal()
 
 Result CozmoEngine::ConnectToRobotProcess()
 {
-  const RobotID_t kDefaultRobotID = Anki::Cozmo::DEFAULT_ROBOT_ID;
-  if (HasRobotWithID(kDefaultRobotID)) {
+  const RobotID_t robotID = OSState::getInstance()->GetRobotID();
+  if (HasRobotWithID(robotID)) {
     PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobotProcess.AlreadyConnected", "Robot already connected");
     return RESULT_OK;
   }
 
-  _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(kDefaultRobotID);
+  _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(robotID);
 
   // Another exception for hosts: have to tell the basestation to add the robot as well
-  if(AddRobot(kDefaultRobotID) == RESULT_OK) {
+  if(AddRobot(robotID) == RESULT_OK) {
     PRINT_NAMED_INFO("CozmoEngine.ConnectToRobotProcess.Success", "Connected to robot!!!");
   } else {
     PRINT_NAMED_ERROR("CozmoEngine.ConnectToRobotProcess.Fail", "Failed to connect to robot!!!");

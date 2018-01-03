@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorRamIntoBlock_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include <vector>
 
 namespace Anki {
@@ -40,7 +40,7 @@ public:
   void SetBlockToRam(s32 targetID){_targetID = targetID;}
 
 protected:
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
 private:

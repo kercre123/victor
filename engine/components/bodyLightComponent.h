@@ -14,7 +14,7 @@
 #ifndef __Anki_Cozmo_Basestation_Components_BodyLightComponent_H__
 #define __Anki_Cozmo_Basestation_Components_BodyLightComponent_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "engine/components/bodyLightComponentTypes.h"
 #include "clad/types/ledTypes.h"
 #include "json/json.h"

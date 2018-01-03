@@ -46,7 +46,7 @@
 #include "engine/components/animationComponent.h"
 #include "engine/components/visionComponent.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
 #include "engine/pathPlanner.h"
 #include "engine/latticePlanner.h"
 #include "clad/externalInterface/messageGameToEngine.h"

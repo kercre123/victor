@@ -15,7 +15,7 @@
 
 #include "gtest/gtest.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPuzzleMaze.h"
@@ -28,7 +28,7 @@
 
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -64,9 +64,8 @@ float GetTimeForCurrentPuzzle(BehaviorPuzzleMaze* puzzleMazePtr,AIComponent& aiC
   std::string currentActivityName;
   std::string behaviorDebugStr;
   puzzleMazePtr->SetAnimateBetweenPoints(false);
-  auto result = puzzleMazePtr->OnActivatedInternal_Legacy(behaviorExternalInterface);
+  puzzleMazePtr->OnActivated(behaviorExternalInterface);
   puzzleMazePtr->TransitionToState(BehaviorPuzzleMaze::MazeState::MazeStep);
-  EXPECT_EQ(RESULT_OK, result);
   int i = 0;
   constexpr int maxIterations = 100000;
   while( !puzzleMazePtr->IsPuzzleCompleted() && i < maxIterations)
@@ -74,7 +73,7 @@ float GetTimeForCurrentPuzzle(BehaviorPuzzleMaze* puzzleMazePtr,AIComponent& aiC
     // Tick
     IncrementBaseStationTimerTicks();
     aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
-    puzzleMazePtr->BehaviorUpdate_Legacy(behaviorExternalInterface);
+    puzzleMazePtr->Update(behaviorExternalInterface);
     i++;
   }
   // Expect every puzzle is solvable in under max iterations. This is the actually reasonable unit tests part.

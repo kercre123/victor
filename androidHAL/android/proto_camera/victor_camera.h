@@ -27,7 +27,8 @@ int camera_stop();
 // De-initializes camera, makes it available to rest of system
 int camera_cleanup();
 
-
+// Let the camera know we want a frame
+void camera_request_frame();
 
 /* Usage Example   
 --------------------

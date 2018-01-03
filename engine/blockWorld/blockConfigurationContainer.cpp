@@ -17,7 +17,7 @@
 #include "engine/blockWorld/blockConfiguration.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
-#include "anki/vision/basestation/observableObject.h"
+#include "coretech/vision/engine/observableObject.h"
 
 namespace Anki {
 namespace Cozmo {

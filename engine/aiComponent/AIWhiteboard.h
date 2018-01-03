@@ -16,9 +16,9 @@
 
 #include "engine/externalInterface/externalInterface_fwd.h"
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 #include "engine/entity.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectFamilies.h"

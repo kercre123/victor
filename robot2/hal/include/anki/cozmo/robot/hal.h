@@ -27,7 +27,7 @@
 
 #ifndef ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "clad/types/motorTypes.h"
 #include "clad/types/proxMessages.h"
 
@@ -300,10 +300,6 @@ void PowerSetMode(const PowerState state);
  * \section "Radio" comms to/from engine
  */
 bool RadioIsConnected();
-
-void RadioUpdateState(u8 wifi);
-
-int RadioQueueAvailable();
 
 void DisconnectRadio();
 

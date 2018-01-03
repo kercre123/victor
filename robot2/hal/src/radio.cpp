@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <string>
 
-#include "anki/messaging/shared/LocalUdpServer.h"
+#include "coretech/messaging/shared/LocalUdpServer.h"
 
 #define ARRAY_SIZE(inArray)   (sizeof(inArray) / sizeof((inArray)[0]))
 
@@ -34,7 +34,7 @@ namespace Anki {
     }
 
 
-    Result InitRadio(const char* advertisementIP)
+    Result InitRadio()
     {
       const RobotID_t robotID = HAL::GetID();
       std::string server_path = std::string(ROBOT_SERVER_PATH) + std::to_string(robotID);
@@ -53,12 +53,6 @@ namespace Anki {
       return server.HasClient();
     }
 
-
-    void HAL::RadioUpdateState(u8 wifi)
-    {
-      if (wifi == 0) { DisconnectRadio(); }
-    }
-
     void HAL::DisconnectRadio(void)
     {
       server.Disconnect();
@@ -73,7 +67,7 @@ namespace Anki {
 
         const ssize_t bytesSent = server.Send((char*)buffer, length);
         if (bytesSent < (ssize_t) length) {
-          AnkiError("HAL.RadioSendPacket.FailedToSend", "Failed to send msg contents (%d/%d sent)", bytesSent, length);
+          AnkiError("HAL.RadioSendPacket.FailedToSend", "Failed to send msg contents (%zd/%zd sent)", bytesSent, length);
           DisconnectRadio();
           return false;
         }
@@ -102,54 +96,6 @@ namespace Anki {
     } // RadioSendMessage()
 
 
-    size_t RadioGetNumBytesAvailable(void)
-    {
-      // Check for incoming data and add it to receive buffer
-
-      // Read available data
-      const size_t tempSize = RECV_BUFFER_SIZE - recvBufSize_;
-      assert(tempSize < std::numeric_limits<int>::max());
-
-      const ssize_t dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], static_cast<int>(tempSize));
-      if (dataSize > 0) {
-        recvBufSize_ += dataSize;
-      }
-      else if (dataSize < 0) {
-        // Something went wrong
-        HAL::DisconnectRadio();
-      }
-
-      return recvBufSize_;
-
-    } // RadioGetNumBytesAvailable()
-
-    /*
-    s32 HAL::RadioPeekChar(u32 offset)
-    {
-      if(RadioGetNumBytesAvailable() <= offset) {
-        return -1;
-      }
-
-      return static_cast<s32>(recvBuf_[offset]);
-    }
-
-    s32 HAL::RadioGetChar(void) { return RadioGetChar(0); }
-
-    s32 HAL::RadioGetChar(u32 timeout)
-    {
-      u8 c;
-      if(RadioGetData(&c, sizeof(u8)) == RESULT_OK) {
-        return static_cast<s32>(c);
-      }
-      else {
-        return -1;
-      }
-    }
-     */
-
-    // TODO: would be nice to implement this in a way that is not specific to
-    //       hardware vs. simulated radio receivers, and just calls lower-level
-    //       radio functions.
     u32 HAL::RadioGetNextPacket(u8* buffer)
     {
       // Read available datagram
@@ -170,7 +116,7 @@ namespace Anki {
       // Copy message contents to buffer
       std::memcpy((void*)buffer, recvBuf_, dataLen);
       
-      return dataLen;
+      return static_cast<u32>(dataLen);
 
     } // RadioGetNextMessage()
   } // namespace Cozmo

@@ -30,19 +30,19 @@
 #include "engine/vision/visionSystem.h"
 #include "engine/viz/vizManager.h"
 
-#include "anki/vision/basestation/camera.h"
-#include "anki/vision/basestation/image_impl.h"
-#include "anki/vision/basestation/trackedFace.h"
-#include "anki/vision/basestation/observableObjectLibrary_impl.h"
-#include "anki/vision/basestation/visionMarker.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/engine/camera.h"
+#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/trackedFace.h"
+#include "coretech/vision/engine/observableObjectLibrary_impl.h"
+#include "coretech/vision/engine/visionMarker.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/robot/config.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/robot/config.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -1539,6 +1539,13 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage.NoExternalInterface", "");
       return RESULT_FAIL;
     }
+
+    static cv::Mat_<PixelType> sMat(img.GetNumRows(), img.GetNumCols());
+    if(sMat.rows != img.GetNumRows() || sMat.cols != img.GetNumCols())
+    {
+      sMat.release();
+      sMat.create(img.GetNumRows(), img.GetNumCols());
+    }
     
     ImageChunk m;
     m.height = img.GetNumRows();
@@ -1549,11 +1556,11 @@ namespace Cozmo {
     };
     
     if(img.GetNumChannels() == 3) {
-      cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
+      cv::cvtColor(img.get_CvMat_(), sMat, CV_RGB2BGR);
     }
     
     std::vector<u8> compressedBuffer;
-    cv::imencode(".jpg",  img.get_CvMat_(), compressedBuffer, compressionParams);
+    cv::imencode(".jpg",  sMat, compressedBuffer, compressionParams);
     
     const u32 kMaxChunkSize = static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE);
     u32 bytesRemainingToSend = static_cast<u32>(compressedBuffer.size());

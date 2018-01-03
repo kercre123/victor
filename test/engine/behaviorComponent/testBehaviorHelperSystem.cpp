@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
@@ -170,7 +170,7 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   ASSERT_EQ(rawPtr->_stopCount, 0);
   ASSERT_EQ(rawPtr->_shouldCancelCount, 0) << "no sub-helper, so shouldn't tick this";
 
-  rawPtr->_updateResult = ICozmoBehavior::Status::Complete;
+  rawPtr->_updateResult = IHelper::HelperStatus::Complete;
 
   DoTicks(testBehaviorFramework, robot, b, 3);
 
@@ -210,7 +210,7 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   ASSERT_EQ(rawPtr->_stopCount, 0);
   ASSERT_EQ(rawPtr->_shouldCancelCount, 0) << "no sub-helper, so shouldn't tick this";
 
-  rawPtr->_updateResult = ICozmoBehavior::Status::Failure;
+  rawPtr->_updateResult = IHelper::HelperStatus::Failure;
 
   DoTicks(testBehaviorFramework, robot, b, 3);
 

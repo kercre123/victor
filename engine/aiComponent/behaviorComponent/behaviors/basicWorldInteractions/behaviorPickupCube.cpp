@@ -74,31 +74,33 @@ bool BehaviorPickUpCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPickUpCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(!ShouldStreamline()){
     TransitionToDoingInitialReaction(behaviorExternalInterface);
   }else{
     TransitionToPickingUpCube(behaviorExternalInterface);
   }
-  return Result::RESULT_OK;
+  
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorPickUpCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // If the block we're going to pickup ever becomes part of an illegal configuration
   // immediately stop the behavior
   for(auto configType: _configurationsToIgnore) {
     if(behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager()
                   .IsObjectPartOfConfigurationType(configType, _targetBlockID)){
       CancelSelf();
-      return Status::Complete;
+      return;
     }
-  }
-  
-  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
  
   
