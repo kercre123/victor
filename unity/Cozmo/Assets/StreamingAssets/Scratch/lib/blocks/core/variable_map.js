@@ -124,9 +124,17 @@ Blockly.VariableMap.prototype.createVariable = function(name, opt_type, opt_id) 
                   'type, "' + opt_type + '".');
     }
     if (opt_id && variable.getId() != opt_id) {
-      throw Error('Variable "' + name + '" is already in use and its id is "'
-                  + variable.getId() + '" which conflicts with the passed in ' +
-                  'id, "' + opt_id + '".');
+      // *** ANKI CHANGE ***
+      // Don't prevent project from loading if it encounters an undefined
+      // variable. In Cozmo 2.1 and 2.2 releases, this issue can occur due
+      // to the user renaming and deleting variables. We hope to fix this
+      // in Cozmo 2.2. - msintov, 1/3/18
+      window.cozmoDASWarn("Codelab.CreateVariable.DuplicateVariable.PreventProjectLoadFail", 'Variable is already in use and its id is "'
+                    + variable.getId() + '" which conflicts with the passed in ' +
+                    'id, "' + opt_id + '".');
+      // throw Error('Variable "' + name + '" is already in use and its id is "'
+      //             + variable.getId() + '" which conflicts with the passed in ' +
+      //             'id, "' + opt_id + '".');
     }
     // The variable already exists and has the same id and type.
     return variable;
