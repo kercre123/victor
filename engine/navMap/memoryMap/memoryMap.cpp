@@ -93,7 +93,7 @@ void MemoryMap::TransformContent(const Poly2f& poly, NodeTransformFunction trans
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output)
+void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const
 {
   _quadTree.GetProcessor().FindIf(pred, output);
 }

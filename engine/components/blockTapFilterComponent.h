@@ -19,7 +19,6 @@
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/global/globalDefinitions.h"
-#include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "engine/events/ankiEvent.h"
 #include "anki/common/basestation/objectIDs.h"
@@ -29,6 +28,9 @@ namespace Anki {
 namespace Cozmo {
 
 class Robot;
+struct ObjectTapped;
+struct ObjectMoved;
+struct ObjectStoppedMoving;
 
 class BlockTapFilterComponent : private Util::noncopyable
 {
@@ -39,20 +41,19 @@ public:
   void Update();
   
   bool ShouldIgnoreMovementDueToDoubleTap(const ObjectID& objectID);
+  
+  void HandleActiveObjectTapped(const ObjectTapped& message);
+  void HandleActiveObjectMoved(const ObjectMoved& message);
+  void HandleActiveObjectStopped(const ObjectStoppedMoving& message);
 
 private:
   
-  void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-
   void HandleEnableTapFilter(const AnkiEvent<ExternalInterface::MessageGameToEngine>& message);
   
   void CheckForDoubleTap(const ObjectID& objectID);
   
   Robot& _robot;
 
-  std::vector<Signal::SmartHandle> _robotToEngineSignalHandle;
   Signal::SmartHandle _gameToEngineSignalHandle;
   bool _enabled;
   Anki::TimeStamp_t _waitToTime;

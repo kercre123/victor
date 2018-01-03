@@ -20,6 +20,7 @@
 #include "engine/actions/sayTextAction.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
@@ -27,7 +28,6 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/needsSystem/needsManager.h"
-#include "engine/robot.h"
 #include "engine/viz/vizManager.h"
 
 #include "anki/common/basestation/utils/timer.h"
@@ -161,7 +161,7 @@ Result BehaviorEnrollFace::InitEnrollmentSettings(BehaviorExternalInterface& beh
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Check if we were interrupted and need to fast forward:
   switch(_state)
@@ -170,7 +170,7 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToSayingName", "");
       TransitionToSayingName(behaviorExternalInterface);
-      return RESULT_OK;
+      return;
     }
       
     case State::SavingToRobot:
@@ -178,7 +178,7 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToSavingToRobot", "");
       TransitionToSavingToRobot(behaviorExternalInterface);
-      return RESULT_OK;
+      return;
     }
       
     case State::ScanningInterrupted:
@@ -187,7 +187,7 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
       // now resumed, we need to complete the animation
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToScanningInterrupted", "");
       TransitionToScanningInterrupted(behaviorExternalInterface);
-      return RESULT_OK;
+      return;
     }
     default:
       // Not fast forwarding: just start at the beginning
@@ -200,7 +200,7 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
     PRINT_NAMED_WARNING("BehaviorEnrollFace.InitInternal.BadSettings",
                         "Disabling enrollment");
     DisableEnrollment(behaviorExternalInterface);
-    return settingsResult;
+    return;
   }
   
   // Settings ok: initialize rest of behavior state
@@ -222,19 +222,15 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
   
   _saveEnrollResult    = ActionResult::NOT_STARTED;
   _saveAlbumResult     = ActionResult::NOT_STARTED;
-
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
   // Reset flag in FaceWorld because we're starting a new enrollment and will
   // be waiting for this new enrollment to be "complete" after this
-  robot.GetFaceWorld().SetFaceEnrollmentComplete(false);
+  behaviorExternalInterface.GetFaceWorldMutable().SetFaceEnrollmentComplete(false);
   
   // Make sure enrollment is enabled for session-only faces when we start. Otherwise,
   // we won't even be able to start enrollment because everything will remain a
   // "tracking only" face.
-  robot.GetFaceWorld().Enroll(Vision::UnknownFaceID);
+  behaviorExternalInterface.GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
   
   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal",
                 "Initialize with ID=%d and name '%s', to be saved to ID=%d",
@@ -245,20 +241,23 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
   
   // First thing we want to do is turn towards the face and make sure we see it
   TransitionToLookingForFace(behaviorExternalInterface);
-  
-  return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // See if we were in the midst of finding or enrolling a face but the enrollment is
   // no longer requested, then we've been cancelled
   if((State::LookingForFace == _state || State::Enrolling == _state) && !IsEnrollmentRequested())
   {
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateInternal_Legacy.EnrollmentCancelled", "In state: %s",
                   _state == State::LookingForFace ? "LookingForFace" : "Enrolling");
-    return Status::Complete;
+    CancelSelf();
+    return;
   }
   
   switch(_state)
@@ -271,7 +270,8 @@ ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorE
     case State::SaveFailed:
     case State::Cancelled:
     {
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
       
     case State::LookingForFace:
@@ -300,10 +300,7 @@ ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorE
         // If we complete successfully, unset the observed ID/name
         _observedUnusableID = Vision::UnknownFaceID;
         _observedUnusableName.clear();
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        Robot& robot = behaviorExternalInterface.GetRobot();
-        robot.GetVisionComponent().AssignNameToFace(_faceID, _faceName, _saveID);
+        behaviorExternalInterface.GetVisionComponent().AssignNameToFace(_faceID, _faceName, _saveID);
 
         // Note that we will wait to disable face enrollment until the very end of
         // the behavior so that we remain resume-able from reactions, in case we
@@ -321,11 +318,10 @@ ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorE
         // Check to see if the face we've been enrolling has changed based on what was
         // observed since the last tick
         UpdateFaceToEnroll(behaviorExternalInterface);
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        const Robot& robot = behaviorExternalInterface.GetRobot();
+
+        const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
         // If we haven't seen the person (and only the one person) in too long, go back to looking for them
-        if(robot.GetLastImageTimeStamp() - _lastFaceSeenTime_ms > kEnrollFace_TimeoutForReLookForFace_ms)
+        if(robotInfo.GetLastImageTimeStamp() - _lastFaceSeenTime_ms > kEnrollFace_TimeoutForReLookForFace_ms)
         {
           _lastFaceSeenTime_ms = 0;
           
@@ -350,18 +346,21 @@ ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorE
     } // case State::Enrolling
       
   } // switch(_state) 
-  
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // Leave general-purpose / session-only enrollment enabled (i.e. not for a specific face)
-  robot.GetFaceWorld().Enroll(Vision::UnknownFaceID);
+  behaviorExternalInterface.GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
+
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  // if on the charger, we're exiting to the on charger reaction, unity is going to try to cancel but too late.
+  if( robotInfo.IsOnCharger() )
+  {
+    PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.CancelBecauseOnCharger","");
+    SET_STATE(Cancelled);
+  }
   
   ExternalInterface::FaceEnrollmentCompleted info;
   
@@ -460,10 +459,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated(BehaviorExternalInterface& behavi
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.ErasingNewlyEnrolledFace",
                     "Erasing new face %d as a precaution because we are about to report failure result: %s",
                     _faceID, EnumToString(info.result));
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      robot.GetVisionComponent().EraseFace(_faceID);
+      behaviorExternalInterface.GetVisionComponent().EraseFace(_faceID);
     }
     
     if(info.result == FaceEnrollmentResult::Success)
@@ -478,10 +474,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated(BehaviorExternalInterface& behavi
                   "In state:%hhu, FaceEnrollmentResult=%s",
                   _state, EnumToString(info.result));
     
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(info)));
+    //robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(info)));
     
     // Done (whether success or failure), so reset state for next run
     SET_STATE(NotStarted);
@@ -505,12 +498,8 @@ bool BehaviorEnrollFace::IsEnrollmentRequested() const
 void BehaviorEnrollFace::DisableEnrollment(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _settings->name.clear();
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // Leave "session-only" face enrollment enabled when we finish
-  robot.GetFaceWorld().Enroll(Vision::UnknownFaceID);
+  behaviorExternalInterface.GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -545,11 +534,9 @@ bool BehaviorEnrollFace::CanMoveTreads(BehaviorExternalInterface& behaviorExtern
   {
     return false;
   }
- 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  if(robot.GetCliffSensorComponent().IsCliffDetected())
+
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  if(robotInfo.GetCliffSensorComponent().IsCliffDetected())
   {
     return false;
   }
@@ -563,13 +550,10 @@ void BehaviorEnrollFace::TransitionToLookingForFace(BehaviorExternalInterface& b
   const bool playScanningGetOut = (State::Enrolling == _state);
   
   SET_STATE(LookingForFace);
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  IActionRunner* action = new CompoundActionSequential(robot, {
+
+  IActionRunner* action = new CompoundActionSequential({
     CreateTurnTowardsFaceAction(behaviorExternalInterface, _faceID, _saveID, playScanningGetOut),
-    new WaitForImagesAction(robot, kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces),
+    new WaitForImagesAction(kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces),
   });
 
   
@@ -608,23 +592,20 @@ void BehaviorEnrollFace::TransitionToLookingForFace(BehaviorExternalInterface& b
                   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.LookingForFace.FaceSeen",
                                 "Found face %d to enroll. Timeout set to %.1fsec",
                                 _faceID, _timeout_sec);
-                  
-                  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-                  // be removed
-                  Robot& robot = behaviorExternalInterface.GetRobot();
 
-                  auto getInAnimAction = new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceGetIn);
+                  auto getInAnimAction = new TriggerAnimationAction(AnimationTrigger::MeetCozmoLookFaceGetIn);
                   
                   IActionRunner* action = nullptr;
                   if(CanMoveTreads(behaviorExternalInterface))
                   {
+                    SmartFaceID smartID = behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(_faceID);
                     // Turn towards the person we've chosen to enroll, play the "get in" animation
                     // to start "scanning" and move towards the person a bit to show intentionality
-                    action = new CompoundActionSequential(robot, {
-                      new TurnTowardsFaceAction(robot, _faceID, M_PI, false),
-                      new CompoundActionParallel(robot, {
+                    action = new CompoundActionSequential({
+                      new TurnTowardsFaceAction(smartID, M_PI, false),
+                      new CompoundActionParallel({
                         getInAnimAction,
-                        new DriveStraightAction(robot, kEnrollFace_DriveForwardIntentDist_mm,
+                        new DriveStraightAction(kEnrollFace_DriveForwardIntentDist_mm,
                                                 kEnrollFace_DriveForwardIntentSpeed_mmps, false)
                       })
                     });
@@ -646,13 +627,10 @@ void BehaviorEnrollFace::TransitionToEnrolling(BehaviorExternalInterface& behavi
 {
   SET_STATE(Enrolling);
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // Actually enable directed enrollment of the selected face in the vision system
-  robot.GetFaceWorld().Enroll(_faceID);
+  behaviorExternalInterface.GetFaceWorldMutable().Enroll(_faceID);
 
-  TrackFaceAction* trackAction = new TrackFaceAction(robot, _faceID);
+  TrackFaceAction* trackAction = new TrackFaceAction(_faceID);
     
   if(!CanMoveTreads(behaviorExternalInterface))
   {
@@ -669,9 +647,9 @@ void BehaviorEnrollFace::TransitionToEnrolling(BehaviorExternalInterface& behavi
   
   // Play the scanning animation in parallel while we're tracking
   const s32 numLoops = 0; // loop forever
-  TriggerAnimationAction* scanLoop  = new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoScanningIdle, numLoops);
+  TriggerAnimationAction* scanLoop  = new TriggerAnimationAction(AnimationTrigger::MeetCozmoScanningIdle, numLoops);
   
-  CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {trackAction, scanLoop});
+  CompoundActionParallel* compoundAction = new CompoundActionParallel({trackAction, scanLoop});
   
   // Tracking never completes. UpdateInternal will watch for timeout or for
   // face enrollment to complete and stop this behavior or transition to
@@ -686,12 +664,8 @@ void BehaviorEnrollFace::TransitionToScanningInterrupted(BehaviorExternalInterfa
   
   // Make sure we stop tracking necessary (in case we timed out while tracking)
   CancelDelegates(false);
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
 
-  DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceInterrupt),
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::MeetCozmoLookFaceInterrupt),
               [this]() {
                 SET_STATE(TimedOut);
               });
@@ -705,13 +679,9 @@ void BehaviorEnrollFace::TransitionToSayingName(BehaviorExternalInterface& behav
   // Stop tracking/scanning the face
   CancelDelegates(false);
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
   // Get out of the scanning face
-  CompoundActionSequential* finalAnimation = new CompoundActionSequential(robot, {
-    new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceGetOut)
+  CompoundActionSequential* finalAnimation = new CompoundActionSequential({
+    new TriggerAnimationAction(AnimationTrigger::MeetCozmoLookFaceGetOut)
   });
   
   if(_sayName)
@@ -730,28 +700,28 @@ void BehaviorEnrollFace::TransitionToSayingName(BehaviorExternalInterface& behav
       
       {
         // 1. Say name once
-        SayTextAction* sayNameAction1 = new SayTextAction(robot, _faceName, SayTextIntent::Name_FirstIntroduction_1);
+        SayTextAction* sayNameAction1 = new SayTextAction(_faceName, SayTextIntent::Name_FirstIntroduction_1);
         sayNameAction1->SetAnimationTrigger(AnimationTrigger::MeetCozmoFirstEnrollmentSayName);
         finalAnimation->AddAction(sayNameAction1);
       }
       
       {
         // 2. Repeat name
-        SayTextAction* sayNameAction2 = new SayTextAction(robot, _faceName, SayTextIntent::Name_FirstIntroduction_2);
+        SayTextAction* sayNameAction2 = new SayTextAction(_faceName, SayTextIntent::Name_FirstIntroduction_2);
         sayNameAction2->SetAnimationTrigger(AnimationTrigger::MeetCozmoFirstEnrollmentRepeatName);
         finalAnimation->AddAction(sayNameAction2);
       }
       
       {
         // 3. Big celebrate (no name being said)
-        TriggerAnimationAction* celebrateAction = new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoFirstEnrollmentCelebration);
+        TriggerAnimationAction* celebrateAction = new TriggerAnimationAction(AnimationTrigger::MeetCozmoFirstEnrollmentCelebration);
         finalAnimation->AddAction(celebrateAction);
       }
     }
     else
     {
       // This is a re-enrollment, so do the more subdued animation
-      SayTextAction* sayNameAction = new SayTextAction(robot, _faceName, SayTextIntent::Name_Normal);
+      SayTextAction* sayNameAction = new SayTextAction(_faceName, SayTextIntent::Name_Normal);
       sayNameAction->SetAnimationTrigger(AnimationTrigger::MeetCozmoReEnrollmentSayName);
       
       finalAnimation->AddAction(sayNameAction);
@@ -810,11 +780,7 @@ void BehaviorEnrollFace::TransitionToSavingToRobot(BehaviorExternalInterface& be
     }
   };
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  robot.GetVisionComponent().SaveFaceAlbumToRobot(saveAlbumCallback, saveEnrollCallback);
+  behaviorExternalInterface.GetVisionComponent().SaveFaceAlbumToRobot(saveAlbumCallback, saveEnrollCallback);
   
   std::function<bool(Robot& robot)> waitForSave = [this](Robot& robot) -> bool
   {
@@ -858,7 +824,7 @@ void BehaviorEnrollFace::TransitionToSavingToRobot(BehaviorExternalInterface& be
   };
   
   const f32 kMaxSaveTime_sec = 5.f; // Don't wait the default (long) time for save to complete
-  WaitForLambdaAction* action = new WaitForLambdaAction(robot, waitForSave, kMaxSaveTime_sec);
+  WaitForLambdaAction* action = new WaitForLambdaAction(waitForSave, kMaxSaveTime_sec);
   
   DelegateIfInControl(action, [this](ActionResult actionResult) {
     if (ActionResult::SUCCESS == actionResult) {
@@ -878,18 +844,15 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
                                                                Vision::FaceID_t saveID,
                                                                bool playScanningGetOut)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionParallel* liftAndTurnTowardsAction = new CompoundActionParallel(robot, {
-    new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK)
+  CompoundActionParallel* liftAndTurnTowardsAction = new CompoundActionParallel({
+    new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK)
   });
   
   if(playScanningGetOut)
   {
     // If we we are enrolling, we need to get out of the "scanning face" animation while
     // doing this
-    liftAndTurnTowardsAction->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceInterrupt));
+    liftAndTurnTowardsAction->AddAction(new TriggerAnimationAction(AnimationTrigger::MeetCozmoLookFaceInterrupt));
   }
   
   if(!CanMoveTreads(behaviorExternalInterface))
@@ -904,13 +867,14 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
   if(faceID != Vision::UnknownFaceID)
   {
     // Try to look at the specified face
-    const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(faceID);
+    const Vision::TrackedFace* face = behaviorExternalInterface.GetFaceWorld().GetFace(faceID);
     if(nullptr != face) {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.TurningTowardsFaceID",
                     "Turning towards faceID=%d (saveID=%d)",
                     faceID, saveID);
-      
-      turnAction = new TurnTowardsFaceAction(robot, faceID, DEG_TO_RAD(45.f));
+
+      SmartFaceID smartID = behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(faceID);
+      turnAction = new TurnTowardsFaceAction(smartID, DEG_TO_RAD(45.f));
     }
   }
   else
@@ -922,15 +886,15 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
     const Vision::TrackedFace* faceToTurnTowards = nullptr;
     if(saveID != Vision::UnknownFaceID )
     {
-      faceToTurnTowards = robot.GetFaceWorld().GetFace(saveID);
+      faceToTurnTowards = behaviorExternalInterface.GetFaceWorld().GetFace(saveID);
     }
     
     if(faceToTurnTowards == nullptr)
     {
-      auto allFaceIDs = robot.GetFaceWorld().GetFaceIDs();
+      auto allFaceIDs = behaviorExternalInterface.GetFaceWorld().GetFaceIDs();
       for(auto & ID : allFaceIDs)
       {
-        const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(ID);
+        const Vision::TrackedFace* face = behaviorExternalInterface.GetFaceWorld().GetFace(ID);
         if(ANKI_VERIFY(face != nullptr, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.NullFace", "ID:%d", ID))
         {
           if(!face->HasName())
@@ -943,7 +907,7 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
             if((faceToTurnTowards == nullptr) ||
                (face->GetTimeStamp() > faceToTurnTowards->GetTimeStamp()) ||
                (face->GetTimeStamp() == faceToTurnTowards->GetTimeStamp() &&
-                robot.GetRNG().RandDbl() < 0.5))
+                behaviorExternalInterface.GetRNG().RandDbl() < 0.5))
             {
               faceToTurnTowards = face;
             }
@@ -958,8 +922,9 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.FoundFace",
                     "Turning towards faceID=%d last seen at t=%d (saveID=%d)",
                     faceToTurnTowards->GetID(), faceToTurnTowards->GetTimeStamp(), saveID);
-      
-      turnAction = new TurnTowardsFaceAction(robot, faceToTurnTowards->GetID(), DEG_TO_RAD(90.f));
+
+      SmartFaceID smartID = behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(faceToTurnTowards->GetID());
+      turnAction = new TurnTowardsFaceAction(smartID, DEG_TO_RAD(90.f));
     }
   }
   
@@ -971,7 +936,7 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
                   faceID, saveID);
     
     // No face found to look towards: fallback on looking at last face pose
-    turnAction = new TurnTowardsLastFacePoseAction(robot, DEG_TO_RAD(45.f));
+    turnAction = new TurnTowardsLastFacePoseAction(DEG_TO_RAD(45.f));
   }
   
   // Add whatever turn action we decided to create to the parallel action and return it
@@ -995,16 +960,12 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction(BehaviorExternalInterf
                                         -_lastRelBodyAngle.ToDouble());
   const Radians relBodyAngle = newAngle -_lastRelBodyAngle;
   _lastRelBodyAngle = newAngle;
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
 
-  CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* compoundAction = new CompoundActionSequential();
   
   if(CanMoveTreads(behaviorExternalInterface))
   {
-    compoundAction->AddAction(new PanAndTiltAction(robot, relBodyAngle, absHeadAngle, false, true));
+    compoundAction->AddAction(new PanAndTiltAction(relBodyAngle, absHeadAngle, false, true));
     
     // Also back up a little if we haven't gone too far back already
     if(_totalBackup_mm <= kEnrollFace_MaxTotalBackup_mm)
@@ -1013,17 +974,17 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction(BehaviorExternalInterf
       const f32 backupDist_mm = GetRNG().RandDblInRange(kEnrollFace_MinBackup_mm, kEnrollFace_MaxBackup_mm);
       _totalBackup_mm += backupDist_mm;
       const bool shouldPlayAnimation = false; // don't want head to move down!
-      DriveStraightAction* backUpAction = new DriveStraightAction(robot, -backupDist_mm, backupSpeed_mmps, shouldPlayAnimation);
+      DriveStraightAction* backUpAction = new DriveStraightAction(-backupDist_mm, backupSpeed_mmps, shouldPlayAnimation);
       compoundAction->AddAction(backUpAction);
     }
   }
   else
   {
     // If in the air (i.e. held in hand), just move head, not body
-    compoundAction->AddAction(new MoveHeadToAngleAction(robot, absHeadAngle));
+    compoundAction->AddAction(new MoveHeadToAngleAction(absHeadAngle));
   }
   
-  compoundAction->AddAction(new WaitForImagesAction(robot, kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces));
+  compoundAction->AddAction(new WaitForImagesAction(kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces));
   
   return compoundAction;
 }
@@ -1094,13 +1055,11 @@ bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeSt
 void BehaviorEnrollFace::UpdateFaceToEnroll(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const FaceWorld& faceWorld = behaviorExternalInterface.GetFaceWorld();
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
-  const TimeStamp_t lastImgTime = robot.GetLastImageTimeStamp();
+  const TimeStamp_t lastImgTime = robotInfo.GetLastImageTimeStamp();
   
-  const bool tooManyFaces = IsSeeingTooManyFaces(robot.GetFaceWorld(), lastImgTime);
+  const bool tooManyFaces = IsSeeingTooManyFaces(behaviorExternalInterface.GetFaceWorldMutable(), lastImgTime);
   if(tooManyFaces)
   {
     PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.UpdateFaceToEnroll.TooManyFaces", "");
@@ -1216,7 +1175,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll(BehaviorExternalInterface& behaviorE
 #pragma mark Event Handlers
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch (event.GetData().GetTag())
   {

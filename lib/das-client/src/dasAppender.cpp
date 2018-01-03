@@ -40,7 +40,8 @@ DasAppender::DasAppender(const std::string& dasLogDir,
 , _maxLogLength(maxLogLength)
 , _isWaitingForFlush(false)
 , _lastFlushFailed(false)
-, _isUploadingPaused(false)
+, _lastFlushResponse("")
+, _isUploadingPaused(true)
 , _flushIntervalSeconds(flush_interval)
 {
   LOGV("Storing DAS logs in '%s'", dasLogDir.c_str());
@@ -138,7 +139,7 @@ void DasAppender::ForceFlushWithCallback(const DASFlushCallback& callback)
   _syncQueue.Wake([this, callback] {
     Flush();
     if (callback) {
-      callback(!_lastFlushFailed);
+      callback(!_lastFlushFailed, _lastFlushResponse);
     }
   });
 }
@@ -176,17 +177,43 @@ bool DasAppender::ConsumeALogFile(const std::string& logFilePath, bool *stop)
     // empty log file, consider it consumed.
     return true;
   }
+  
+  if (logFileLength > kDasMaxAllowableLogLength)
+  {
+    // log file is too big. Pretend it was consumed so it will be removed.
+    DASError("dasappender.consumealogfile.filetoobig",
+             "File %s too big (%zu bytes with max %zu). Pretending it was consumed so it will be deleted.",
+             logFilePath.c_str(), logFileLength, kDasMaxAllowableLogLength);
+    return true;
+  }
 
   logFileData.pop_back(); // strip off the last byte, it's a comma.
 
   std::string postBody = "[" + logFileData + "]";
-  bool success = dasPostToServer(_url, postBody);
+  std::string postResponse = "";
+  bool success = dasPostToServer(_url, postBody, postResponse);
+  _lastFlushResponse = postResponse;
   // Stop consuming logs if we can't post
   if (success) {
     _lastFlushFailed = false;
+    DASEvent("dasappender.postdasdata.success",
+             "%s %s",
+             logFilePath.c_str(), postResponse.c_str());
   } else {
     *stop = true;
     _lastFlushFailed = true;
+    if (postResponse.empty())
+    {
+      DASEvent("dasappender.postdasdata.failurenoresponse",
+               "%s",
+               logFilePath.c_str());
+    }
+    else
+    {
+      DASEvent("dasappender.postdasdata.failurewithresponse",
+               "%s %s",
+               logFilePath.c_str(), postResponse.c_str());
+    }
   }
   return success;
 }

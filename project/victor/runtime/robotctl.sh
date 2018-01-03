@@ -52,7 +52,6 @@ source ${SCRIPT_PATH}/ankienv.sh
 
 set +e
 
-
 function start_program()
 {
     PROG_PID=$(pidof ${PROGRAM_EXE})

@@ -16,8 +16,8 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/events/animationTriggerHelpers.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/jsonTools.h"
 
@@ -59,7 +59,7 @@ bool BehaviorThinkAboutBeacons::WantsToBeActivatedBehavior(BehaviorExternalInter
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorThinkAboutBeacons::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorThinkAboutBeacons::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   PRINT_CH_INFO("Behaviors", (std::string(GetIDStr()) + ".InitInternal").c_str(), "Selecting new beacon");
   
@@ -70,16 +70,10 @@ Result BehaviorThinkAboutBeacons::OnBehaviorActivated(BehaviorExternalInterface&
   const std::string& animGroupName = _configParams.newAreaAnimTrigger;
   AnimationTrigger trigger = animGroupName.empty() ? AnimationTrigger::Count : AnimationTriggerFromString(animGroupName.c_str());
   if ( trigger != AnimationTrigger::Count )
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
-    IAction* animNewArea = new TriggerAnimationAction(robot,trigger);
+  {    
+    IAction* animNewArea = new TriggerAnimationAction(trigger);
     DelegateIfInControl( animNewArea );
-  }
-  
-  return RESULT_OK;
+  }  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -97,10 +91,7 @@ void BehaviorThinkAboutBeacons::SelectNewBeacon(BehaviorExternalInterface& behav
 {
   // TODO implement the real deal
    AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  whiteboard.AddBeacon( robot.GetPose().GetWithRespectToRoot(), _configParams.beaconRadius_mm );
+  whiteboard.AddBeacon( behaviorExternalInterface.GetRobotInfo().GetPose().GetWithRespectToRoot(), _configParams.beaconRadius_mm );
 }
 
 } // namespace Cozmo

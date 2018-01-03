@@ -25,7 +25,7 @@
     "translation" : "Cozmo muss gefüttert werden, damit er genügend Kraft hat und fröhlich bleibt."
   },
   "needs.NeedsEnergyModal.Instruction1" : {
-    "translation" : "Nimm einen blau blinkenden Cube."
+    "translation" : "Nimm einen Cube mit im Kreis blinkenden blauen Lichtern."
   },
   "needs.NeedsEnergyModal.Instruction2" : {
     "translation" : "Schüttle den Cube, bis alle Lichter hell leuchten."
@@ -89,6 +89,12 @@
   },
   "needs.NeedsRepairModal.AligningTreads" : {
     "translation" : "Laufwerke werden ausgerichtet..."
+  },
+  "needs.NeedsRepairModal.CozmoNotOnTreadsTitle" : {
+    "translation" : "Cozmo ist nicht bereit."
+  },
+  "needs.NeedsRepairModal.CozmoNotOnTreadsBody" : {
+    "translation" : "Bitte hilf Cozmo, sich aufzurichten und wieder auf seinen Laufwerken zu stehen."
   },
   "needs.ContinueButtonText" : {
     "translation" : "WEITER"
@@ -163,7 +169,7 @@
     "translation" : "Cozmo hat Schluckauf."
   },
   "needs.FeedingOverfedHiccups.Description" : {
-    "translation" : "Cozmo hat zu viel gegessen. Jetzt hat er Schluckauf!"
+    "translation" : "Cozmo hat zu viel gegessen. Jetzt hat er Schluckauf! Hilf Cozmo, indem du ihn auf den Kopf stellst."
   },
   "needs.severeAlert.energy.title" : {
     "translation" : "Cozmo muss dringend gefüttert werden."
@@ -176,5 +182,8 @@
   },
   "needs.severeAlert.repair.description" : {
     "translation" : "Du musst ein Tuning für Cozmo durchführen, bevor du weitermachen kannst."
+  },
+  "needs.FreeplayTokenReward.Description" : {
+    "translation" : "Du hast dir eine Bonusmarke für heute everdient!"
   }
 }

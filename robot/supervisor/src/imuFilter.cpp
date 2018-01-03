@@ -47,7 +47,7 @@ namespace Anki {
         HAL::IMU_DataStructure imu_data_;
 
         // Orientation and speed in XY-plane (i.e. horizontal plane) of robot
-        f32 rot_ = 0;   // radians
+        Radians rot_ = 0;   // radians
         f32 rotSpeed_ = 0; // rad/s
 
         // Pitch angle: Approaches angle of accelerometer wrt gravity horizontal
@@ -133,8 +133,8 @@ namespace Anki {
         RobotInterface::IMUDataChunk imuChunkMsg_;
 #else
         RobotInterface::IMURawDataChunk imuRawDataMsg_;
-        u16 totalIMUDataMsgsToSend_ = 0;
-        u16 sentIMUDataMsgs_ = 0;
+        u32 totalIMUDataMsgsToSend_ = 0;
+        u32 sentIMUDataMsgs_ = 0;
 #endif
 
         // ==== Falling detection ===
@@ -333,20 +333,6 @@ namespace Anki {
         return RESULT_OK;
       }
 
-      void Reset()
-      {
-        // rot_ = 0;
-        // rotSpeed_ = 0;
-        pitch_ = 0;
-        imu_data_.Reset();
-        
-        prevHeadAngle_ = UNINIT_HEAD_ANGLE;
-        
-        ResetPickupVars();
-
-        timeOfLastImuTempSample_ms_ = 0;
-      }
-      
       // Applies low-pass filtering to 3-element input, storing result to 3-element output assuming
       // output is passed in with previous timestep's filter values.
       void LowPassFilter(f32* output, const f32* input, const f32 coeff)
@@ -858,7 +844,9 @@ namespace Anki {
         
         // Don't do any other IMU updates until head is calibrated
         if (!HeadController::IsCalibrated()) {
-          Reset();
+          pitch_ = 0.f;
+          prevHeadAngle_ = UNINIT_HEAD_ANGLE;
+          ResetPickupVars();
           return retVal;
         }
 
@@ -1036,7 +1024,7 @@ namespace Anki {
       f32 GetRotation()
       {
         //return _zAngle;  // Computed from 3D orientation tracker (Madgwick filter)
-        return rot_;     // Computed from simplified yaw-only tracker
+        return rot_.ToFloat();     // Computed from simplified yaw-only tracker
       }
 
       f32 GetRotationSpeed()

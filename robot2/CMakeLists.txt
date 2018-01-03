@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.6)
 
 project(robot2)
 
+include(anki_build_cxx)
 include(android_strip)
 
 set(PLATFORM_LIBS "")
@@ -9,8 +10,8 @@ set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
 if (ANDROID)
-  set(PLATFORM_LIBS log)
-  set(PLATFORM_COMPILE_DEFS 
+  set(PLATFORM_LIBS android log)
+  set(PLATFORM_COMPILE_DEFS
     DEVELOPMENT
   )
 elseif (MACOSX)
@@ -18,17 +19,20 @@ elseif (MACOSX)
   set(PLATFORM_LIBS
     ${FOUNDATION}
   )
-  set(PLATFORM_COMPILE_DEFS 
+  set(PLATFORM_COMPILE_DEFS
     SIMULATOR
   )
 endif()
 
 
 # HACK: robot_hal is a library generated from hal/src in this source tree.
-# However, the actual definition lives in robot/CMakeLists.txt since the 
+# However, the actual definition lives in robot/CMakeLists.txt since the
 # supervisor library also depends on it.
 
-include(anki_build_cxx)                                                           
+#
+# spine
+#
+
 anki_build_cxx_library(spine ${ANKI_SRCLIST_DIR} STATIC)
 
 target_link_libraries(spine
@@ -44,14 +48,12 @@ target_include_directories(spine
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/syscon>
 )
 
+#
+# robot_supervisor
+#
 
-file(STRINGS "${ANKI_SRCLIST_DIR}/robot_supervisor.srcs.lst" ROBOT2_SRCS)
-file(STRINGS "${ANKI_SRCLIST_DIR}/robot_supervisor.headers.lst" ROBOT2_HEADERS)
+anki_build_cxx_executable(robot_supervisor ${ANKI_SRCLIST_DIR})
 
-add_executable(robot_supervisor
-  ${ROBOT2_SRCS}
-  ${ROBOT2_HEADERS}
-)
 android_strip(TARGET robot_supervisor)
 
 target_link_libraries(robot_supervisor

@@ -19,7 +19,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 #include "engine/robotIdleTimeoutComponent.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
@@ -70,7 +69,7 @@ bool BehaviorReactToOnCharger::WantsToBeActivatedBehavior(BehaviorExternalInterf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   /**auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   if(externalInterface != nullptr){
@@ -81,11 +80,9 @@ Result BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& 
   if(NeedId::Count == behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
     SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
   }
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PlacedOnCharger));
-  return Result::RESULT_OK;
+
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PlacedOnCharger));
+  
 }
 
 
@@ -97,15 +94,17 @@ void BehaviorReactToOnCharger::OnBehaviorDeactivated(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToOnCharger::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( _onChargerCanceled )
   {
     _onChargerCanceled = false;
-    return Status::Complete;
+    CancelSelf();
   }
-  
-  return Status::Running;
 }
 
 

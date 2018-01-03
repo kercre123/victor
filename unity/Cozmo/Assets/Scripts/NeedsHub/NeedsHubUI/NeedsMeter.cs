@@ -9,6 +9,9 @@ namespace Cozmo {
       #region Serialized Fields
 
       [SerializeField]
+      private NeedsIconData _NeedsIconData;
+
+      [SerializeField]
       private CozmoImage _ImageFillGlow = null;
 
       [SerializeField]
@@ -111,6 +114,8 @@ namespace Cozmo {
           _ImageFillGlow.fillAmount = glowFillAmount;
           //hide glow if bar empty
           _ImageFillGlow.gameObject.SetActive(clampedValue > 0f);
+
+          _NeedsIconData.SetIconColor(fillAmount);
         }
       }
 
@@ -323,6 +328,28 @@ namespace Cozmo {
 
       #endregion // Misc Private Helper Methods
 
+
+
+      [System.Serializable]
+      private class NeedsIconData {
+        [SerializeField]
+        private CozmoImage _NeedsIcon;
+
+        [SerializeField]
+        private Color _NormalColor;
+
+        [SerializeField]
+        private Color _DimColor;
+
+        [SerializeField, Range(0f, 1f)]
+        private float _DimMeterThreshold;
+
+        public void SetIconColor(float newMeterValue) {
+          if (_NeedsIcon != null) {
+            _NeedsIcon.color = (newMeterValue >= _DimMeterThreshold) ? _NormalColor : _DimColor;
+          }
+        }
+      }
     }
   }
 }

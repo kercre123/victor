@@ -72,7 +72,7 @@ namespace Anki {
       connectionInfoMapIt it;
       
       // Update registered devices
-      int bytes_recvd = 0;
+      ssize_t bytes_recvd = 0;
       do {
         uint8_t messageData[64];
         
@@ -85,7 +85,7 @@ namespace Anki {
           if (messageTag == _regMsgTag)
           {
             const uint8_t* innerMessageBytes = &messageData[sizeof(RegMsgTag)];
-            const size_t   innerMessageSize  = bytes_recvd - sizeof(RegMsgTag);
+            const size_t   innerMessageSize  = (size_t) bytes_recvd - sizeof(RegMsgTag);
           
             const size_t bytesUnpacked = regMsg.Unpack(innerMessageBytes, innerMessageSize);
             if (bytesUnpacked == innerMessageSize)

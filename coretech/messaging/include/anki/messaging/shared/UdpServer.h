@@ -23,8 +23,8 @@ public:
   
   int GetNumClients();
 
-  int Send(const char* data, int size);
-  int Recv(char* data, int maxSize);
+  ssize_t Send(const char* data, int size);
+  ssize_t Recv(char* data, int maxSize);
   //int GetNumBytesAvailable();
   
 private:
@@ -39,7 +39,7 @@ private:
   typedef std::vector<struct sockaddr_in>::iterator client_list_it;
   std::vector<struct sockaddr_in> client_list;
 
-  int socketfd; // Listening socket descripter
+  int socketfd; // Listening socket descriptor
 };
 
 #endif

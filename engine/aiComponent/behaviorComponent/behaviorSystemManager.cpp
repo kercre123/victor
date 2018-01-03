@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -55,7 +56,8 @@ BehaviorSystemManager::~BehaviorSystemManager()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorSystemManager::InitConfiguration(IBehavior* baseBehavior,
+Result BehaviorSystemManager::InitConfiguration(Robot& robot,
+                                                IBehavior* baseBehavior,
                                                 BehaviorExternalInterface& behaviorExternalInterface,
                                                 AsyncMessageGateComponent* asyncMessageComponent)
 {
@@ -69,7 +71,7 @@ Result BehaviorSystemManager::InitConfiguration(IBehavior* baseBehavior,
   // If this is the factory test forcibly set baseBehavior as playpen
   if(FACTORY_TEST)
   {
-    baseBehavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BehaviorID::PlaypenTest).get();
+    baseBehavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PlaypenTest)).get();
     DEV_ASSERT(baseBehavior != nullptr, "BehaviorSystemManager.InitConfiguration.ForcingPlaypen.Null");
   }
 
@@ -78,7 +80,6 @@ Result BehaviorSystemManager::InitConfiguration(IBehavior* baseBehavior,
   _asyncMessageComponent = asyncMessageComponent;
   ResetBehaviorStack(baseBehavior);
   
-  Robot& robot = behaviorExternalInterface.GetRobot();
   if(robot.HasExternalInterface()){
     _eventHandles.push_back(robot.GetExternalInterface()->Subscribe(EngineToGameTag::RobotCompletedAction,
                                             [this](const EngineToGameEvent& event) {
@@ -162,19 +163,19 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
     }
   }
   for(auto& entry: allInActivatableScope){
-    behaviorExternalInterface.GetStateChangeComponent()._gameToEngineEvents.clear();
-    behaviorExternalInterface.GetStateChangeComponent()._engineToGameEvents.clear();
-    behaviorExternalInterface.GetStateChangeComponent()._robotToEngineEvents.clear();
+    behaviorExternalInterface.GetBehaviorEventComponent()._gameToEngineEvents.clear();
+    behaviorExternalInterface.GetBehaviorEventComponent()._engineToGameEvents.clear();
+    behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents.clear();
 
     _asyncMessageComponent->GetEventsForBehavior(
        entry,
-       behaviorExternalInterface.GetStateChangeComponent()._gameToEngineEvents);
+       behaviorExternalInterface.GetBehaviorEventComponent()._gameToEngineEvents);
     _asyncMessageComponent->GetEventsForBehavior(
        entry,
-       behaviorExternalInterface.GetStateChangeComponent()._engineToGameEvents);
+       behaviorExternalInterface.GetBehaviorEventComponent()._engineToGameEvents);
     _asyncMessageComponent->GetEventsForBehavior(
        entry,
-       behaviorExternalInterface.GetStateChangeComponent()._robotToEngineEvents);
+       behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents);
 
     entry->Update(behaviorExternalInterface);
   }
@@ -268,6 +269,13 @@ void BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
 // TODO:(bn) kevink: consider rename to "stop" rather than cancel
 void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
 {
+  if(!ANKI_VERIFY(_behaviorStack->IsInStack(delegator),
+                  "BehaviorSystemManager.CancelSelf.NotINStack",
+                  "%s is not in stack",
+                  delegator->GetPrintableID().c_str())){
+    return;
+  }
+  
   CancelDelegates(delegator);
   
   if(ANKI_VERIFY(!IsControlDelegated(delegator),

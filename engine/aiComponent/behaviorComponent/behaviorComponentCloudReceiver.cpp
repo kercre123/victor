@@ -33,6 +33,7 @@ using Util::FullEnumToValueArrayChecker::IsSequentialArray; // import IsSequenti
 const FullCloudIntentArray cloudStringMap{
   {CloudIntent::AnyTrick,        "intent_play_anytrick"},
   {CloudIntent::BeQuiet,         "intent_imperative_quiet"},
+  {CloudIntent::ComeHere,        "intent_imperative_come"},
   {CloudIntent::Goodbye,         "intent_greeting_goodbye"},
   {CloudIntent::Hello,           "intent_greeting_hello"},
   {CloudIntent::HowAreYou,       "intent_status_feeling"},
@@ -44,7 +45,8 @@ const FullCloudIntentArray cloudStringMap{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorComponentCloudReceiver::BehaviorComponentCloudReceiver(Robot& robot)
-: _server(std::bind(&BehaviorComponentCloudReceiver::AddPendingIntent, this, std::placeholders::_1), 12345)
+: _server(std::bind(&BehaviorComponentCloudReceiver::AddPendingIntent, this, std::placeholders::_1), 
+                    12345 + robot.GetID() )  // Offset port by robotID so that we can run sims with multiple robots
 {
   if(robot.HasExternalInterface()){
     auto fakeTriggerWordCallback = [this](const GameToEngineEvent& event) {

@@ -95,7 +95,7 @@ void PhysVizController::Update()
 {
   const size_t maxPacketSize{(size_t)VizConstants::MaxMessageSize};
   uint8_t data[maxPacketSize]{0};
-  int numBytesRecvd;
+  ssize_t numBytesRecvd;
   ///// Process messages from basestation /////
   while ((numBytesRecvd = _server.Recv((char*)data, maxPacketSize)) > 0) {
     ProcessMessage(VizInterface::MessageViz(data, (size_t)numBytesRecvd));

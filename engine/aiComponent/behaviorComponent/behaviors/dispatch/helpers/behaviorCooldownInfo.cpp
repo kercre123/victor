@@ -67,7 +67,7 @@ void BehaviorCooldownInfo::StartCooldown(Util::RandomGenerator& rng)
                                         (1.0f + _randomCooldownFactor) * _cooldown_s );
     }
     
-    _onCooldownUntil_s = currTime_s + _cooldown_s;
+    _onCooldownUntil_s = currTime_s + cooldown_s;
   }
 }
 

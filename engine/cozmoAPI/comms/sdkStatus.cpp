@@ -15,7 +15,6 @@
 #include "engine/cozmoAPI/comms/sdkStatus.h"
 #include "engine/cozmoAPI/comms/iSocketComms.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 

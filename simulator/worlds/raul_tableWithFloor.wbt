@@ -49,7 +49,7 @@ Laptop {
 LightCube {
   translation -0.081448 -0.141559 0.271993
   rotation 1.59038e-05 -1.83704e-06 1 0.23
-  ID 1
+  objectType "Block_LIGHTCUBE2"
   filterLogs TRUE
 }
 Table {

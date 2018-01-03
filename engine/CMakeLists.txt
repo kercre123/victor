@@ -65,6 +65,8 @@ target_link_libraries(cozmo_engine
   cti_common
   cti_vision
   cti_planning
+  cubeBleClient
+  osState
   # vendor
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}

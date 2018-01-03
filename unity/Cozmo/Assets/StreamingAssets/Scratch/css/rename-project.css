@@ -41,17 +41,22 @@
 .full-screen-modal .project-name {
   text-align: right;
   color: #22a9d8;
-  font-family: 'Avenir Next Bold';
+  font-family: 'Avenir Next';
+  font-weight: bold;
 }
 
 .full-screen-modal .btn {
   border-radius: 7px;
   border: 0;
-  padding: .5em 1.5em;
+  padding: .75em 1.5em .5em 1.5em;
   margin-left: .6em;
   text-transform: uppercase;
   cursor: pointer;
   color: #e4e4e5;
+  font-family: 'Avenir Next';
+  display: inline-flex;
+  align-content: center;
+  align-items: center;
 }
 
 .full-screen-modal .btn.btn-blue[disabled='disabled'] {

@@ -28,8 +28,8 @@ protected:
   
 protected:
   
-  virtual Result         OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  virtual BehaviorStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
+  virtual PlaypenStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
   
   virtual bool ShouldRunWhileOnCharger() const override { return true; }

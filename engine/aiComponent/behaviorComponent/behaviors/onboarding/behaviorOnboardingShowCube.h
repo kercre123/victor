@@ -43,11 +43,12 @@ public:
 
 protected:
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
 

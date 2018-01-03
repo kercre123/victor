@@ -19,6 +19,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/playpenConfig.h"
 
 #include "anki/common/basestation/utils/timer.h"
@@ -76,7 +77,7 @@ public:
     _result = FactoryTestResultCode::UNKNOWN; 
     _recordingTouch = false;
     _touchSensorValues.data.clear();
-    _lastStatus = BehaviorStatus::Running;
+    _lastStatus = PlaypenStatus::Running;
   }
   
   static const std::map<std::string, std::vector<FactoryTestResultCode>>& GetAllPlaypenResults();
@@ -85,21 +86,28 @@ public:
   static const std::set<ExternalInterface::MessageEngineToGameTag>& GetFailureTags();
 
 protected:
+
+  enum PlaypenStatus
+  {
+    Failure,
+    Running,
+    Complete
+  };
+
+  virtual bool ShouldCancelWhenInControl() const override { return false; }
+
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override {InitBehaviorInternal(behaviorExternalInterface);};  
 
   // Override of IBehavior functions
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
-  // Playpen behaviors can not be resumed
-  virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override { return RESULT_FAIL; }
-  
   // Final override of OnBehaviorActivated so we can do things before the subclass inits
   // OnBehaviorActivatedInternal() is provided for the subclass to override
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override final;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override final;
   
   // Final override of UpdateInternal so we can do things before the subclass updates
   // PlaypenUpdateInternal() is provided for the subclass to override if they wish
-  virtual BehaviorStatus UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override final;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override final;
   
   // No playpen behavior can start while carrying an object
   virtual bool CarryingObjectHandledInternally() const override { return false; }
@@ -125,7 +133,7 @@ protected:
   
   virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   
-  virtual BehaviorStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) { return BehaviorStatus::Running; }
+  virtual PlaypenStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) { return PlaypenStatus::Running; }
   
   virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
   
@@ -222,7 +230,7 @@ private:
   bool _recordingTouch = false;
 
   // The last value UpdateInternal returned
-  BehaviorStatus _lastStatus = BehaviorStatus::Running;
+  PlaypenStatus _lastStatus = PlaypenStatus::Running;
 };
   
 }

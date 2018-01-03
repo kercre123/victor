@@ -16,6 +16,7 @@
 
 #include "anki/common/types.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
+#include "engine/entity.h"
 #include "clad/types/unlockTypes.h"
 
 #include "util/signals/simpleSignal_fwd.h"
@@ -38,7 +39,7 @@ struct GameRequestData{
   int _weight;
 };
   
-class RequestGameComponent : private Util::noncopyable{
+class RequestGameComponent : public ManageableComponent, private Util::noncopyable {
 public:
   RequestGameComponent(IExternalInterface* robotExternalInterface,
                        const Json::Value& requestGameWeights);

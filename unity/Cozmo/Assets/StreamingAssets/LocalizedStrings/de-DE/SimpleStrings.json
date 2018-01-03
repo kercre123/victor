@@ -24,6 +24,9 @@
   "button.no" : {
     "translation" : "NEIN"
   },
+  "button.maybeLater" : {
+    "translation" : "NICHT JETZT"
+  },
   "button.continue" : {
     "translation" : "WEITER"
   },
@@ -80,6 +83,9 @@
   },
   "coreUpgradeDetailsDialog.cubesNeeded" : {
     "translation" : "{0} {1} erforderlich"
+  },
+  "coreUpgradeDetailsDialog.cubesOptional" : {
+    "translation" : "{0} {1} Optional"
   },
   "label.emptyWithArg" : {
     "translation" : "{0}"
@@ -149,5 +155,11 @@
   },
   "button.buyACozmo" : {
     "translation" : "COZMO KAUFEN"
+  },
+  "label.noInternetTitle" : {
+    "translation" : "Keine Internetverbindung"
+  },
+  "label.noInternetBody" : {
+    "translation" : "Stelle eine Verbindung mit dem Internet, um im Onlineshop auf Anki.com deinen eigenen Cozmo zu kaufen!"
   }
 }

@@ -39,7 +39,7 @@ public:
 
 protected:
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   enum class DebugState {
     FollowingPath,

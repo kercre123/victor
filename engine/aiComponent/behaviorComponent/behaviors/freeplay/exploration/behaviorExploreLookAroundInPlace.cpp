@@ -19,10 +19,10 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerHelpers.h"
-#include "engine/robot.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
@@ -86,13 +86,11 @@ bool BehaviorExploreLookAroundInPlace::WantsToBeActivatedBehavior(BehaviorExtern
   bool nearRecentLocation = false;
   for( const auto& recentLocation : _visitedLocations )
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     
     // check distance to recent location (if can wrt robot)
     Pose3d distancePose;
-    if( recentLocation.GetWithRespectTo(robot.GetPose(), distancePose) )
+    if( recentLocation.GetWithRespectTo(robotInfo.GetPose(), distancePose) )
     {
       // if close to any recent location, flag
       const float distSQ = distancePose.GetTranslation().LengthSq();
@@ -190,7 +188,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreLookAroundInPlace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorExploreLookAroundInPlace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting first iteration");
 
@@ -204,12 +202,8 @@ Result BehaviorExploreLookAroundInPlace::OnBehaviorActivated(BehaviorExternalInt
   
   // initial body direction is used to compare against the cone of focus. Some behaviors have a fixed cone
   // in front of where the robot is putdown, others need to restart the cone with the current facing
-  if ( _configParams.behavior_ResetBodyFacingOnStart ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
-    _initialBodyDirection = robot.GetPose().GetRotationAngle<'Z'>();
+  if ( _configParams.behavior_ResetBodyFacingOnStart ) {    
+    _initialBodyDirection = behaviorExternalInterface.GetRobotInfo().GetPose().GetRotationAngle<'Z'>();
   }
   
   // decide rotation direction at the beginning of the behavior if needed
@@ -217,22 +211,19 @@ Result BehaviorExploreLookAroundInPlace::OnBehaviorActivated(BehaviorExternalInt
     DecideTurnDirection();
   }
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // if we should lower the lift, do that now
   if( _configParams.behavior_ShouldLowerLift
-     && !(_configParams.behavior_CanCarryCube && robot.GetCarryingComponent().IsCarryingObject())
+     && !(_configParams.behavior_CanCarryCube && robotInfo.GetCarryingComponent().IsCarryingObject())
   ){
-    IActionRunner* lowerLiftAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
+    IActionRunner* lowerLiftAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
     DelegateIfInControl(lowerLiftAction, &BehaviorExploreLookAroundInPlace::BeginStateMachine);
   }
   else {
     BeginStateMachine(behaviorExternalInterface);
   }
 
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -242,13 +233,11 @@ void BehaviorExploreLookAroundInPlace::BeginStateMachine(BehaviorExternalInterfa
   if( kVizConeOfFocus ) {
     const bool hasConeOfFocus = !Util::IsNearZero(_configParams.behavior_AngleOfFocus_deg);
     if( hasConeOfFocus ) {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
-      
-      robot.GetContext()->GetVizManager()->EraseSegments("BehaviorLookInPlace.FocusCone");
+      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
-      Point3f center = robot.GetPose().GetWithRespectToRoot().GetTranslation();
+      robotInfo.GetContext()->GetVizManager()->EraseSegments("BehaviorLookInPlace.FocusCone");
+
+      Point3f center = robotInfo.GetPose().GetWithRespectToRoot().GetTranslation();
       float theta = _initialBodyDirection.ToFloat();
       float halfTurn = 0.5f * DEG_TO_RAD(_configParams.behavior_AngleOfFocus_deg);
       const float coneLength_mm = 200.0f;
@@ -264,15 +253,15 @@ void BehaviorExploreLookAroundInPlace::BeginStateMachine(BehaviorExternalInterfa
 
       const float zOffset_mm = 20.0f;
 
-      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorLookInPlace.FocusCone",
-                                                       center, coneCenter,
-                                                       Anki::NamedColors::WHITE, false, zOffset_mm);
-      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorLookInPlace.FocusCone",
-                                                       center, coneLeft,
-                                                       Anki::NamedColors::YELLOW, false, zOffset_mm);
-      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorLookInPlace.FocusCone",
-                                                       center, coneRight,
-                                                       Anki::NamedColors::YELLOW, false, zOffset_mm);
+      robotInfo.GetContext()->GetVizManager()->DrawSegment("BehaviorLookInPlace.FocusCone",
+                                                           center, coneCenter,
+                                                           Anki::NamedColors::WHITE, false, zOffset_mm);
+      robotInfo.GetContext()->GetVizManager()->DrawSegment("BehaviorLookInPlace.FocusCone",
+                                                           center, coneLeft,
+                                                           Anki::NamedColors::YELLOW, false, zOffset_mm);
+      robotInfo.GetContext()->GetVizManager()->DrawSegment("BehaviorLookInPlace.FocusCone",
+                                                           center, coneRight,
+                                                           Anki::NamedColors::YELLOW, false, zOffset_mm);
     }
   }
   
@@ -280,18 +269,16 @@ void BehaviorExploreLookAroundInPlace::BeginStateMachine(BehaviorExternalInterfa
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorExploreLookAroundInPlace::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch (event.GetData().GetTag())
   {
     case EngineToGameTag::RobotOffTreadsStateChanged:
     {
       if(event.GetData().Get_RobotOffTreadsStateChanged().treadsState == OffTreadsState::OnTreads){
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        const Robot& robot = behaviorExternalInterface.GetRobot();
+        const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
         
-        _initialBodyDirection = robot.GetPose().GetRotationAngle<'Z'>();
+        _initialBodyDirection = robotInfo.GetPose().GetRotationAngle<'Z'>();
       }
       break;
     }
@@ -306,12 +293,9 @@ void BehaviorExploreLookAroundInPlace::AlwaysHandle(const EngineToGameEvent& eve
 void BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SetDebugStateName("TransitionToS1_OppositeTurn");
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  
+
   // cache iteration values
-  _iterationStartingBodyFacing_rad = robot.GetPose().GetRotationAngle<'Z'>();
+  _iterationStartingBodyFacing_rad = behaviorExternalInterface.GetRobotInfo().GetPose().GetRotationAngle<'Z'>();
   
   // create turn action for this state
   const EClockDirection turnDir = GetOpposite(_mainTurnDirection);
@@ -334,22 +318,14 @@ void BehaviorExploreLookAroundInPlace::TransitionToS2_Pause(BehaviorExternalInte
   const std::string& animGroupName = _configParams.s2_WaitAnimTrigger;
   AnimationTrigger trigger = animGroupName.empty()  ? AnimationTrigger::Count : AnimationTriggerFromString(animGroupName.c_str());
   if ( trigger != AnimationTrigger::Count )
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
-    pauseAction = new TriggerLiftSafeAnimationAction(robot,trigger);
+  {    
+    pauseAction = new TriggerLiftSafeAnimationAction(trigger);
   }
   else
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
+  {    
     // create wait action
     const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s2_WaitMin_sec, _configParams.s2_WaitMax_sec);
-    pauseAction = new WaitAction( robot, waitTime_sec );
+    pauseAction = new WaitAction(waitTime_sec );
   }
   
   // request action with transition to proper state
@@ -397,12 +373,8 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(BehaviorExterna
   // cache the rotation the first time that we run S4
   const bool isFirstMove = (_s4HeadMovesLeft == _s4HeadMovesRolled);
   if ( isFirstMove )  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    
     // set current facing for the next state
-    _s4_s5StartingBodyFacing_rad = robot.GetPose().GetRotationAngle<'Z'>();
+    _s4_s5StartingBodyFacing_rad = behaviorExternalInterface.GetRobotInfo().GetPose().GetRotationAngle<'Z'>();
   }
 
   // count the action we are going to queue as a move
@@ -441,23 +413,15 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(BehaviorExterna
   const std::string& animGroupName = _configParams.s4_WaitAnimTrigger;
   AnimationTrigger trigger = animGroupName.empty()  ? AnimationTrigger::Count : AnimationTriggerFromString(animGroupName.c_str());
   if ( trigger != AnimationTrigger::Count )
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
-    pauseAction = new TriggerLiftSafeAnimationAction(robot, trigger);
+  {    
+    pauseAction = new TriggerLiftSafeAnimationAction(trigger);
   }
   else
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
+  {    
     // create wait action
     const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s4_WaitBetweenChangesMin_sec,
                                                       _configParams.s4_WaitBetweenChangesMax_sec);
-    pauseAction = new WaitAction( robot, waitTime_sec );
+    pauseAction = new WaitAction(waitTime_sec );
   }
   
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S4.StartingPauseAnimAction").c_str(), "Triggering %s",
@@ -508,11 +472,9 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(BehaviorExter
   SetDebugStateName("TransitionToS7_IterationEnd");
 
   _numIterationsCompleted++;
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
-  Radians currentZ_rad = robot.GetPose().GetRotationAngle<'Z'>();
+  Radians currentZ_rad = robotInfo.GetPose().GetRotationAngle<'Z'>();
   float doneThisIteration_rad = (currentZ_rad - _iterationStartingBodyFacing_rad).ToFloat();
   _behaviorBodyFacingDone_rad += doneThisIteration_rad;
 
@@ -533,7 +495,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(BehaviorExter
   if ( hasConeOfFocus )
   {
     // check if we have reached one side of the cone
-    const Radians curBodyDirection = robot.GetPose().GetRotationAngle<'Z'>();
+    const Radians curBodyDirection = robotInfo.GetPose().GetRotationAngle<'Z'>();
     const float angleDiff_deg = (curBodyDirection - _initialBodyDirection).getDegrees() * GetTurnSign(_mainTurnDirection);
     const bool reachedConeSide = angleDiff_deg >= _configParams.behavior_AngleOfFocus_deg * 0.5f;
     if ( reachedConeSide )
@@ -584,7 +546,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(BehaviorExter
       }
   
       // note down this location so that we don't do it again in the same place
-      _visitedLocations.emplace_back( robot.GetPose() );
+      _visitedLocations.emplace_back( robotInfo.GetPose() );
     }
   }
 
@@ -617,10 +579,8 @@ IAction* BehaviorExploreLookAroundInPlace::CreateBodyAndHeadTurnAction(BehaviorE
   // create proper action for body & head turn
   const Radians bodyTargetAngleAbs_rad( _iterationStartingBodyFacing_rad + DEG_TO_RAD(bodyTargetAngleRelative_deg) );
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
+  
+  PanAndTiltAction* turnAction = new PanAndTiltAction(bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
 
   if( _configParams.customMotionProfile == nullptr ) {
     // only set speeds if the motion profile won't be doing it for us
@@ -660,10 +620,8 @@ IAction* BehaviorExploreLookAroundInPlace::CreateHeadTurnAction(BehaviorExternal
   // create proper action for body & head turn
   const Radians bodyTargetAngleAbs_rad( DEG_TO_RAD(bodyReference_deg + bodyTargetAngleRelative_deg) );
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
+
+  PanAndTiltAction* turnAction = new PanAndTiltAction(bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
 
   if( _configParams.customMotionProfile == nullptr ) {
     // only set speeds if the motion profile won't be doing it for us

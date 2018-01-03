@@ -11,10 +11,10 @@
  **/
 
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDrivePath.h"
-#include "engine/robot.h"
 #include "anki/common/basestation/math/pose.h"
 #include "engine/actions/drivePathAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "anki/planning/shared/path.h"
 #include "anki/planning/basestation/pathHelper.h"
 
@@ -32,32 +32,25 @@ BehaviorDrivePath::BehaviorDrivePath(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDrivePath::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  //Possibly add other limits later
-  return robot.GetEnabledAnimationTracks() & (u8)AnimTrackFlag::BODY_TRACK;
+  return true;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDrivePath::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDrivePath::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   TransitionToFollowingPath(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDrivePath::TransitionToFollowingPath(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   DEBUG_SET_STATE(FollowingPath);
-  SelectPath(robot.GetPose(), _path);
+  SelectPath(behaviorExternalInterface.GetRobotInfo().GetPose(), _path);
   
-  IActionRunner* drivePath = new DrivePathAction(robot, _path);
+  IActionRunner* drivePath = new DrivePathAction(_path);
   //Perform action and then callback
   DelegateIfInControl(drivePath, [this](ActionResult res) {
     switch(IActionRunner::GetActionResultCategory(res))

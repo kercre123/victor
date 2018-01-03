@@ -46,7 +46,7 @@ void RobotIdleTimeoutComponent::Update(float currentTime_s)
   {
     _faceOffTimeout_s = 0.0f;
     _robot.GetActionList().QueueAction(QueueActionPosition::NOW,
-                                       CreateGoToSleepAnimSequence(_robot));
+                                       CreateGoToSleepAnimSequence());
   }
   
   // If it's time to disconnect
@@ -92,16 +92,16 @@ void RobotIdleTimeoutComponent::HandleMessage(const ExternalInterface::CancelIdl
   _disconnectTimeout_s = -1.0f;
 }
   
-IActionRunner* RobotIdleTimeoutComponent::CreateGoToSleepAnimSequence(Robot& robot)
+IActionRunner* RobotIdleTimeoutComponent::CreateGoToSleepAnimSequence()
 {
-  CompoundActionSequential* goToSleepAnims = new CompoundActionSequential(robot);
-  goToSleepAnims->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GoToSleepGetIn));
-  goToSleepAnims->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GoToSleepSleeping));
-  goToSleepAnims->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GoToSleepOff));
+  CompoundActionSequential* goToSleepAnims = new CompoundActionSequential();
+  goToSleepAnims->AddAction(new TriggerAnimationAction(AnimationTrigger::GoToSleepGetIn));
+  goToSleepAnims->AddAction(new TriggerAnimationAction(AnimationTrigger::GoToSleepSleeping));
+  goToSleepAnims->AddAction(new TriggerAnimationAction(AnimationTrigger::GoToSleepOff));
   
-  CompoundActionParallel* parallelContainer = new CompoundActionParallel(robot);
+  CompoundActionParallel* parallelContainer = new CompoundActionParallel();
   parallelContainer->AddAction(goToSleepAnims);
-  parallelContainer->AddAction(new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK));
+  parallelContainer->AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK));
   
   return parallelContainer;
 }

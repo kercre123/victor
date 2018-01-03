@@ -20,7 +20,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/robot.h"
 #include "anki/common/basestation/utils/timer.h"
 
 
@@ -62,16 +61,7 @@ BehaviorRespondPossiblyRoll::~BehaviorRespondPossiblyRoll()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondPossiblyRoll::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // Listen for up-axis changes to update response scenarios
-  auto upAxisChangedCallback = [this](const EngineToGameEvent& event) {
-    _upAxisChangedIDs.insert(std::make_pair(
-                                            event.GetData().Get_ObjectUpAxisChanged().objectID,
-                                            event.GetData().Get_ObjectUpAxisChanged().upAxis)
-                             );
-  };
-  
-  SubscribeToTag(ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged,
-                 upAxisChangedCallback);
+  SubscribeToTags({ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged});
 }
 
 
@@ -83,29 +73,24 @@ bool BehaviorRespondPossiblyRoll::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRespondPossiblyRoll::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _lastActionTag = ActionConstants::INVALID_TAG;
   _upAxisChangedIDs.clear();
 
   DetermineNextResponse(behaviorExternalInterface);
 
-  return Result::RESULT_OK;
+  
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRespondPossiblyRoll::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  _metadata.SetPlayedOnSideAnim();
-  return OnActivatedInternal_Legacy(behaviorExternalInterface);
-}
 
-  
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const auto& targetAxisChanged = _upAxisChangedIDs.find(_metadata.GetObjectID());
   
   if(targetAxisChanged != _upAxisChangedIDs.end()){
@@ -116,7 +101,6 @@ ICozmoBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(
   }
   
   _upAxisChangedIDs.clear();
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 
@@ -141,15 +125,12 @@ void BehaviorRespondPossiblyRoll::DetermineNextResponse(BehaviorExternalInterfac
 void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(RespondingPositively);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  CompoundActionSequential* turnAndReact = new CompoundActionSequential(robot);
-  turnAndReact->AddAction(new TurnTowardsObjectAction(robot, _metadata.GetObjectID(), Radians(M_PI_F), true));
+  CompoundActionSequential* turnAndReact = new CompoundActionSequential();
+  turnAndReact->AddAction(new TurnTowardsObjectAction(_metadata.GetObjectID(), Radians(M_PI_F), true));
   const unsigned long animIndex = _metadata.GetUprightAnimIndex() < kUprightAnims.size() ?
                                          _metadata.GetUprightAnimIndex() : kUprightAnims.size() - 1;
-  turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(robot, kUprightAnims[animIndex]));
+  turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(kUprightAnims[animIndex]));
   DelegateIfInControl(turnAndReact, [this](ActionResult result){
     if((result == ActionResult::SUCCESS) ||
        (result == ActionResult::VISUAL_OBSERVATION_FAILED)){
@@ -163,17 +144,14 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(BehaviorExternalInter
 void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(RespondingNegatively);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  CompoundActionSequential* turnAndReact = new CompoundActionSequential(robot);
-  turnAndReact->AddAction(new TurnTowardsObjectAction(robot, _metadata.GetObjectID(), Radians(M_PI_F), true));
+  CompoundActionSequential* turnAndReact = new CompoundActionSequential();
+  turnAndReact->AddAction(new TurnTowardsObjectAction(_metadata.GetObjectID(), Radians(M_PI_F), true));
   if((!_metadata.GetPlayedOnSideAnim()) &&
      (_metadata.GetOnSideAnimIndex() >= 0)){
     const unsigned long animIndex =  _metadata.GetOnSideAnimIndex() < kOnSideAnims.size() ?
                                           _metadata.GetOnSideAnimIndex() : kOnSideAnims.size() - 1;
-    turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(robot, kOnSideAnims[animIndex]));
+    turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(kOnSideAnims[animIndex]));
     _metadata.SetPlayedOnSideAnim();
   }
   
@@ -198,6 +176,18 @@ void BehaviorRespondPossiblyRoll::DelegateToRollHelper(BehaviorExternalInterface
   
   SmartDelegateToHelper(behaviorExternalInterface, rollHelper, [this](BehaviorExternalInterface& behaviorExternalInterface){DetermineNextResponse(behaviorExternalInterface);}, nullptr);
 }
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRespondPossiblyRoll::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+{
+  if(event.GetData().GetTag() ==ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged){
+    _upAxisChangedIDs.insert(std::make_pair(event.GetData().Get_ObjectUpAxisChanged().objectID,
+                                            event.GetData().Get_ObjectUpAxisChanged().upAxis)
+                            );
+  }
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

@@ -15,8 +15,8 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/chargerActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -47,21 +47,18 @@ bool BehaviorGoHome::WantsToBeActivatedBehavior(BehaviorExternalInterface& behav
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorGoHome::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorGoHome::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  const auto& robotPose = behaviorExternalInterface.GetRobot().GetPose();
+  const auto& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
   const auto* object = behaviorExternalInterface.GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_homeFilter);
   
   if (object == nullptr) {
     PRINT_NAMED_WARNING("BehaviorGoHome.OnBehaviorActivated", "No homes found!");
-    return Result::RESULT_FAIL;
+    return;
   }
   
-  auto action = new DriveToAndMountChargerAction(behaviorExternalInterface.GetRobot(),
-                                                 object->GetID());
-  const bool success = DelegateIfInControl(action);
-  
-  return success ? Result::RESULT_OK : Result::RESULT_FAIL;
+  auto action = new DriveToAndMountChargerAction(object->GetID());
+  DelegateIfInControl(action);
 }
 
 

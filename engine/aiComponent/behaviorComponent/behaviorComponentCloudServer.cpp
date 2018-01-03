@@ -12,6 +12,7 @@
  **/
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponentCloudServer.h"
+#include "util/threading/threadPriority.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -33,11 +34,12 @@ BehaviorComponentCloudServer::~BehaviorComponentCloudServer()
 
 void BehaviorComponentCloudServer::RunThread()
 {
+  Anki::Util::SetThreadName(pthread_self(), "BehaviorServer");
   // Start UDP server
   _server.StartListening(_port);
   char buf[512];
   while (!_shutdown) {
-    const int received = _server.Recv(buf, sizeof(buf));
+    const ssize_t received = _server.Recv(buf, sizeof(buf));
     if (received > 0) {
       std::string msg{buf, buf+received};
       _callback(std::move(msg));

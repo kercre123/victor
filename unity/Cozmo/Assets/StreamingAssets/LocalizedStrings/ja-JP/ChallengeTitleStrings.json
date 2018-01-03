@@ -10,13 +10,13 @@
     "translation" : "キューブが足りません"
   },
   "challengeDetails.needsMoreCubesModal.description" : {
-    "translation" : "Cozmoが{2}を開始するには、あと{0}個の{1}が必要です。"
+    "translation" : "COZMOが{2}を開始するには、あと{0}個の{1}が必要です。"
   },
   "challengeDetails.cozmoNotOnTreads.title" : {
     "translation" : "COZMOは準備ができていません"
   },
   "challengeDetails.cozmoNotOnTreads.description" : {
-    "translation" : "COZMOを立たせてプレイできるようにしてください。"
+    "translation" : "COZMOを立たせて遊べるようにしてください。"
   },
   "challengeDetails.cozmoDizzy.title" : {
     "translation" : "COZMOはめまいがしています"

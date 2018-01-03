@@ -73,6 +73,8 @@ namespace Anki {
       
       inline void SetSeenBy(const Camera& camera);
       
+      inline void SetImageCorners(const Quad2f& newCorners);
+      
     protected:
       TimeStamp_t    _observationTime;
       Quad2f         _imgCorners;
@@ -167,6 +169,10 @@ namespace Anki {
     
     inline Quad2f const& ObservedMarker::GetImageCorners() const {
       return _imgCorners;
+    }
+    
+    inline void ObservedMarker::SetImageCorners(const Quad2f& newCorners) {
+      _imgCorners = newCorners;
     }
     
     inline ObservedMarker::UserHandle ObservedMarker::GetUserHandle() const {

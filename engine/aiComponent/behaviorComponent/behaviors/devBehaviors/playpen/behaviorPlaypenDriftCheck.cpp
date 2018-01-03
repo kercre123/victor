@@ -30,27 +30,24 @@ Result BehaviorPlaypenDriftCheck::OnBehaviorActivatedInternal(BehaviorExternalIn
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMics(PlaypenConfig::kDurationOfAudioToRecord_ms,
                                                                                      false,
                                                                                      GetLogger().GetLogName()+"head_lift")));
 
   // Move head and lift to extremes then move to sound playing angle
-  MoveHeadToAngleAction* moveHeadUp = new MoveHeadToAngleAction(robot, MAX_HEAD_ANGLE);
-  MoveHeadToAngleAction* moveHeadToAngle = new MoveHeadToAngleAction(robot,
-                                                                     PlaypenConfig::kHeadAngleForDriftCheck);
-  MoveLiftToHeightAction* moveLiftUp = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_CARRY);
+  MoveHeadToAngleAction* moveHeadUp = new MoveHeadToAngleAction(MAX_HEAD_ANGLE);
+  MoveHeadToAngleAction* moveHeadToAngle = new MoveHeadToAngleAction(PlaypenConfig::kHeadAngleForDriftCheck);
+  MoveLiftToHeightAction* moveLiftUp = new MoveLiftToHeightAction(LIFT_HEIGHT_CARRY);
   
-  CompoundActionSequential* headUpDown = new CompoundActionSequential(robot, {moveHeadUp, moveHeadToAngle});
-  CompoundActionParallel* liftAndHead = new CompoundActionParallel(robot, {headUpDown, moveLiftUp});
+  CompoundActionSequential* headUpDown = new CompoundActionSequential({moveHeadUp, moveHeadToAngle});
+  CompoundActionParallel* liftAndHead = new CompoundActionParallel({headUpDown, moveLiftUp});
 
   // After moving head and lift, wait to ensure that audio recording has stopped before transitioning to playing 
   // the sound and starting more recording
-  CompoundActionSequential* action = new CompoundActionSequential(robot, 
-    {liftAndHead, 
-     new WaitAction(robot, Util::MilliSecToSec((float)PlaypenConfig::kDurationOfAudioToRecord_ms))});
+  CompoundActionSequential* action = new CompoundActionSequential({liftAndHead, 
+     new WaitAction(Util::MilliSecToSec((float)PlaypenConfig::kDurationOfAudioToRecord_ms))});
   
   DelegateIfInControl(action, [this, &behaviorExternalInterface](){ TransitionToStartDriftCheck(behaviorExternalInterface); });
   
@@ -61,7 +58,7 @@ void BehaviorPlaypenDriftCheck::TransitionToStartDriftCheck(BehaviorExternalInte
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   // Record intial starting orientation and after kIMUDriftDetectPeriod_ms check for drift
   _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
@@ -77,7 +74,7 @@ void BehaviorPlaypenDriftCheck::CheckDrift(BehaviorExternalInterface& behaviorEx
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   f32 angleChange = std::fabsf((robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>() - _startingRobotOrientation).getDegrees());
   
@@ -105,15 +102,15 @@ void BehaviorPlaypenDriftCheck::CheckDrift(BehaviorExternalInterface& behaviorEx
   _driftCheckComplete = true;
 }
 
-BehaviorStatus BehaviorPlaypenDriftCheck::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDriftCheck::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Wait until both sound and drift check complete
   if(_driftCheckComplete)
   {
-    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, BehaviorStatus::Complete);
+    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, PlaypenStatus::Complete);
   }
   
-  return BehaviorStatus::Running;
+  return PlaypenStatus::Running;
 }
 
 void BehaviorPlaypenDriftCheck::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)

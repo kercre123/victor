@@ -1,6 +1,7 @@
 {
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "engine:debug",
             "type": "lldb",
@@ -15,7 +16,7 @@
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
                 "platform shell killall cozmoengined || true",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib"
             ]
         },
         {
@@ -32,7 +33,7 @@
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
                 "platform shell killall cozmoengined || true",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Release/lib",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Release/lib"
             ]
         },
         {
@@ -48,7 +49,7 @@
             },
             "stopOnEntry": false,
             "initCommands": [
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/mac/Debug/lib",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/mac/Debug/lib"
             ]
         },
         {
@@ -64,7 +65,7 @@
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
                 "platform shell killall victor_animator || true",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib"
             ]
         },
         {
@@ -80,8 +81,63 @@
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
                 "platform shell killall robot_supervisor || true",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib"
             ]
+        },
+        
+        {
+            "name": "webotsCtrlAnim:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlAnim/webotsCtrlAnim"
+        },
+        {
+            "name": "webotsCtrlBuildServerTest:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest"
+        },
+        {
+            "name": "webotsCtrlDevLog:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog"
+        },
+        {
+            "name": "webotsCtrlGameEngine2:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlGameEngine2/webotsCtrlGameEngine2"
+        },
+        {
+            "name": "webotsCtrlHandEmitter:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlHandEmitter/webotsCtrlHandEmitter"
+        },
+        {
+            "name": "webotsCtrlKeyboard:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard"
+        },
+        {
+            "name": "webotsCtrlLightCube:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube"
+        },
+        {
+            "name": "webotsCtrlRobot2:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlRobot2/webotsCtrlRobot2"
+        },
+        {
+            "name": "webotsCtrlViz:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlViz/webotsCtrlViz"
         }
     ]
 }

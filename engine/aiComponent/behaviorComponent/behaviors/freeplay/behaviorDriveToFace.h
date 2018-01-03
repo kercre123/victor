@@ -19,8 +19,6 @@
 namespace Anki {
 namespace Cozmo {
 
-class Robot;
-
 class BehaviorDriveToFace : public ICozmoBehavior
 {
 public:
@@ -35,8 +33,9 @@ protected:
   friend class BehaviorContainer;
   BehaviorDriveToFace(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual ICozmoBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   

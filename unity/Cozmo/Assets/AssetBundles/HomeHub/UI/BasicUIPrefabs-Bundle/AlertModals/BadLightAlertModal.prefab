@@ -63,7 +63,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5be1f790cb104445592ef389f9bc14a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventDialogName: no_text_alert_view
+  _DASEventDialogName: bad_light_alert
   _OpenAudioEvent:
     _Event: Invalid
     _EventType: GenericEvent

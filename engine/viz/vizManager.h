@@ -389,13 +389,16 @@ namespace Anki {
                            const u16 bottomLeft_x, const u16 bottomLeft_y);
       
       void SendRobotState(const RobotState &msg,
-                          const u8 videoFrameRateHz,
-                          const u8 imageProcFrameRateHz,
-                          const u8 enabledAnimTracks,
-                          const u8 animTag,
+                          const u8  videoFrameRateHz,
+                          const u8  imageProcFrameRateHz,
+                          const u32 numProcAnimFaceKeyframes,
+                          const u8  lockedTracks,
+                          const u8  tracksInUse,
                           const f32 imuTemperature_degC,
                           std::array<uint16_t, 4> cliffThresholds);
       
+      void SendCurrentAnimation(const std::string& animName, u8 animTag);
+
       void SetOrigin(const SetVizOrigin& msg);
       
       void SubscribeToEngineEvents(IExternalInterface& externalInterface);
@@ -421,18 +424,23 @@ namespace Anki {
       void SendObjectMovingState(u32 activeID, bool moving);
       void SendObjectUpAxisState(u32 activeID, UpAxis upAxis);
       void SendObjectAccelState(u32 activeID, const ActiveAccel& accel);
+
+      uint32_t GetMessageCountViz() const { return _messageCountViz; }
+      void     ResetMessageCount() { _messageCountViz = 0; }
       
     protected:
       
       void SendMessage(const VizInterface::MessageViz& message);
       
-      bool               _isInitialized;
+      bool               _isConnected;
       UdpClient          _vizClient;
 
       #if VIZ_TO_UNITY
       UdpClient          _unityVizClient;
       #endif
       
+      uint32_t           _messageCountViz = 0;
+
       /*
       // Image sending
       std::map<RobotID_t, u8> _imgID;

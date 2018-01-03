@@ -16,7 +16,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -42,7 +41,7 @@ bool BehaviorReactToRobotOnSide::WantsToBeActivatedBehavior(BehaviorExternalInte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToRobotOnSide::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnSide::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // clear bored animation timer
   _timeToPerformBoredAnim_s = -1.0f;
@@ -51,7 +50,7 @@ Result BehaviorReactToRobotOnSide::OnBehaviorActivated(BehaviorExternalInterface
   NeedActionCompleted(NeedsActionId::PlacedOnSide);
   
   ReactToBeingOnSide(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }
 
 
@@ -69,10 +68,7 @@ void BehaviorReactToRobotOnSide::ReactToBeingOnSide(BehaviorExternalInterface& b
   }
   
   if(anim != AnimationTrigger::Count){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new TriggerAnimationAction(robot, anim),
+    DelegateIfInControl(new TriggerAnimationAction(anim),
                 &BehaviorReactToRobotOnSide::AskToBeRighted);
   }
 }
@@ -92,10 +88,7 @@ void BehaviorReactToRobotOnSide::AskToBeRighted(BehaviorExternalInterface& behav
   }
   
   if(anim != AnimationTrigger::Count){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DelegateIfInControl(new TriggerAnimationAction(robot, anim),
+    DelegateIfInControl(new TriggerAnimationAction(anim),
                 &BehaviorReactToRobotOnSide::HoldingLoop);
   }
 }
@@ -122,24 +115,18 @@ void BehaviorReactToRobotOnSide::HoldingLoop(BehaviorExternalInterface& behavior
       NeedActionCompleted(NeedsActionId::BoredOnSide);
       
       // play bored animation sequence, then return to holding
-      
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+
       // note: NothingToDoBored anims can move the robot, so Intro/Outro may not work here well, should
       // we be playing a specific loop here?
-      DelegateIfInControl(new CompoundActionSequential(robot, {
-                    new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredIntro),
-                    new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredEvent),
-                    new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredOutro) }),
+      DelegateIfInControl(new CompoundActionSequential({
+                    new TriggerAnimationAction(AnimationTrigger::NothingToDoBoredIntro),
+                    new TriggerAnimationAction(AnimationTrigger::NothingToDoBoredEvent),
+                    new TriggerAnimationAction(AnimationTrigger::NothingToDoBoredOutro) }),
                   &BehaviorReactToRobotOnSide::HoldingLoop);
     }
     else {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
       // otherwise, we just loop this animation
-      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::WaitOnSideLoop),
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::WaitOnSideLoop),
                   &BehaviorReactToRobotOnSide::HoldingLoop);
     }
   }

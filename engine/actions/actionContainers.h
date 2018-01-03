@@ -42,7 +42,7 @@ namespace Anki {
     class ActionQueue
     {
     public:
-      ActionQueue();
+      ActionQueue(Robot& robot);
       
       ~ActionQueue();
       
@@ -97,6 +97,9 @@ namespace Anki {
       
       bool DeleteActionAndIter(IActionRunner* &action, std::list<IActionRunner*>::iterator& iter);
     
+      // Reference to robot so that actions queues receive a robot to inject into actions
+      Robot& _robot;
+
       IActionRunner*            _currentAction = nullptr;
       std::list<IActionRunner*> _queue;
       
@@ -120,7 +123,7 @@ namespace Anki {
       
       static const SlotHandle UnknownSlot = -1;
       
-      ActionList();
+      ActionList(Robot& robot);
       ~ActionList();
       
       // Updates the current action of each queue in each slot
@@ -199,10 +202,15 @@ namespace Anki {
       std::map<SlotHandle, ActionQueue> _queues;
     
     private:
+      // Reference to robot so that actions queues receive a robot to inject into actions
+      Robot& _robot;
+      
       // Whether or not the queues are in the process of being cleared
       bool _currentlyClearing = false;
       
       std::unique_ptr<ActionWatcher> _actionWatcher;
+
+      ActionQueue& GetActionQueueForSlot(SlotHandle handle);
       
     }; // class ActionList
     

@@ -32,11 +32,11 @@
 
 #define LOG_DEBUG 0
 
-#if LOG_DEBUG
-    #include <stdio.h>
-    #define CDBG(fmt, args...) fprintf(stderr, fmt "\n", ##args)
-//    #define ALOGE(fmt, args...) fprintf(stderr, fmt, ##args)
-#else
+#if LOG_DEBUG                                                                                       
+    #include <stdio.h>                                                                              
+    #define CDBG(fmt, args...) fprintf(stderr, fmt "\n", ##args)                                    
+//    #define ALOGE(fmt, args...) fprintf(stderr, fmt, ##args)                                      
+#else                                                                                               
     #define CDBG(fmt, args...)
 #endif
 

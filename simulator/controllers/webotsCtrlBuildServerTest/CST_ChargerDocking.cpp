@@ -11,7 +11,6 @@
  */
 
 #include "simulator/game/cozmoSimTestController.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -41,7 +40,7 @@ s32 CST_ChargerDocking::UpdateSimInternal()
     {
       // Start the charger docking behavior
       using namespace ExternalInterface;
-      SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::FindAndGoToHome), -1)));
+      SendMessage(MessageGameToEngine(ExecuteBehaviorByID("FindAndGoToHome", -1)));
       
       SET_TEST_STATE(TestDone);
       break;

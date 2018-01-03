@@ -21,13 +21,13 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/jsonTools.h"
-#include "engine/robot.h"
 #include "util/console/consoleInterface.h"
 
 
@@ -97,7 +97,7 @@ bool BehaviorKnockOverCubes::WantsToBeActivatedBehavior(BehaviorExternalInterfac
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorKnockOverCubes::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(InitializeMemberVars()){
     if(!ShouldStreamline()){
@@ -105,25 +105,11 @@ Result BehaviorKnockOverCubes::OnBehaviorActivated(BehaviorExternalInterface& be
     }else{
       TransitionToKnockingOverStack(behaviorExternalInterface);
     }
-    return Result::RESULT_OK;
-  }else{
-    return Result::RESULT_FAIL;
-  }
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorKnockOverCubes::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  if(InitializeMemberVars()){
-    TransitionToKnockingOverStack(behaviorExternalInterface);
-    return Result::RESULT_OK;
-  }else{
-    return Result::RESULT_FAIL;
+    
   }
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
@@ -143,23 +129,20 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(BehaviorExternalInterf
     return;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  CompoundActionSequential* action = new CompoundActionSequential();
   
-  action->AddAction(new TurnTowardsObjectAction(robot, _bottomBlockID));
+  action->AddAction(new TurnTowardsObjectAction(_bottomBlockID));
   
   Pose3d poseWrtRobot;
-  if(topBlock->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot) ) {
+  if(topBlock->GetPose().GetWithRespectTo(behaviorExternalInterface.GetRobotInfo().GetPose(), poseWrtRobot) ) {
     const float fudgeFactor = 10.0f;
     if( poseWrtRobot.GetTranslation().x() + fudgeFactor > kBKS_distanceToTryToGrabFrom_mm) {
       float distToDrive = poseWrtRobot.GetTranslation().x() - kBKS_distanceToTryToGrabFrom_mm;
-      action->AddAction(new DriveStraightAction(robot, distToDrive, kBKS_searchSpeed_mmps));
+      action->AddAction(new DriveStraightAction(distToDrive, kBKS_searchSpeed_mmps));
     }
   }
   
-  action->AddAction(new TriggerLiftSafeAnimationAction(robot, _reachForBlockTrigger));
+  action->AddAction(new TriggerLiftSafeAnimationAction(_reachForBlockTrigger));
   DelegateIfInControl(action, &BehaviorKnockOverCubes::TransitionToKnockingOverStack);
   
 }
@@ -197,23 +180,26 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(BehaviorExternalInter
   
   //skips turning towards face if this action is streamlined
   const f32 angleTurnTowardsFace_rad = (ShouldStreamline() || _numRetries > 0) ? 0 : kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad;
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  DriveAndFlipBlockAction* flipAction = new DriveAndFlipBlockAction(robot, _bottomBlockID, false, 0, false, angleTurnTowardsFace_rad, false, kMinThresholdRealign);
+
+  DriveAndFlipBlockAction* flipAction = new DriveAndFlipBlockAction(_bottomBlockID, 
+                                                                    false, 
+                                                                    0, 
+                                                                    false, 
+                                                                    angleTurnTowardsFace_rad, 
+                                                                    false, 
+                                                                    kMinThresholdRealign);
   
   flipAction->SetSayNameAnimationTrigger(AnimationTrigger::KnockOverPreActionNamedFace);
   flipAction->SetNoNameAnimationTrigger(AnimationTrigger::KnockOverPreActionUnnamedFace);
   
   
   // Set the action sequence
-  CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential(robot);
-  flipAndWaitAction->AddAction(new TurnTowardsObjectAction(robot, _bottomBlockID));
+  CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential();
+  flipAndWaitAction->AddAction(new TurnTowardsObjectAction( _bottomBlockID));
   // emit completion signal so that the mood manager can react
   const bool shouldEmitCompletion = true;
   flipAndWaitAction->AddAction(flipAction, false, shouldEmitCompletion);
-  flipAndWaitAction->AddAction(new WaitAction(robot, kWaitForBlockUpAxisChangeSecs));
+  flipAndWaitAction->AddAction(new WaitAction(kWaitForBlockUpAxisChangeSecs));
   
   // make sure we only account for blocks flipped during the actual knock over action
   PrepareForKnockOverAttempt();
@@ -225,16 +211,13 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(BehaviorExternalInter
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential();
   {
-    FlipBlockAction* flipAction = new FlipBlockAction(robot, _bottomBlockID);
+    FlipBlockAction* flipAction = new FlipBlockAction( _bottomBlockID);
     flipAction->SetShouldCheckPreActionPose(false);
   
     flipAndWaitAction->AddAction(flipAction);
-    flipAndWaitAction->AddAction(new WaitAction(robot, kWaitForBlockUpAxisChangeSecs));
+    flipAndWaitAction->AddAction(new WaitAction(kWaitForBlockUpAxisChangeSecs));
   }
   
   PrepareForKnockOverAttempt();
@@ -246,12 +229,9 @@ void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(BehaviorExternalInterfa
 void BehaviorKnockOverCubes::TransitionToPlayingReaction(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(PlayingReaction);
-  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+
   // notify configuration manager that the tower was knocked over
-  robot.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
+  behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
   
   // determine if the robot successfully knocked over the min number of cubes
   auto animationTrigger = _knockOverFailureTrigger;
@@ -263,7 +243,7 @@ void BehaviorKnockOverCubes::TransitionToPlayingReaction(BehaviorExternalInterfa
   
   // play a reaction if not streamlined
   if(!ShouldStreamline()){
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, animationTrigger));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(animationTrigger));
   }
 }
   
@@ -334,7 +314,7 @@ void BehaviorKnockOverCubes::HandleWhileActivated(const EngineToGameEvent& event
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnockOverCubes::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch (event.GetData().GetTag()) {
     case ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged:

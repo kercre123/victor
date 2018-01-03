@@ -36,6 +36,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
+#include "util/threading/threadPriority.h"
 #include "util/time/universalTime.h"
 #include <json/json.h>
 #include <string>
@@ -80,6 +81,8 @@ void RobotDataLoader::LoadNonConfigData()
     return;
   }
 
+  Anki::Util::SetThreadName(pthread_self(), "RbtDataLoader");
+  
   // Uncomment this line to enable the profiling of loading data
   //ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadNonConfigData");
 
@@ -382,7 +385,7 @@ void RobotDataLoader::LoadBehaviors()
       DEV_ASSERT_MSG(result.second,
                      "RobotDataLoader.LoadBehaviors.FailedEmplace",
                      "Failed to insert BehaviorID %s - make sure all behaviors have unique IDs",
-                     BehaviorIDToString(behaviorID));
+                     BehaviorTypesWrapper::BehaviorIDToString(behaviorID));
       
     }
     else if (!success)
@@ -536,7 +539,7 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // needs system actions config
   {
-    static const std::string jsonFilename = "config/engine/needs_action_config.json";
+    static const std::string jsonFilename = NeedsManager::GetActionConfigBaseFilename() + ".json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsActionConfig);
     if (!success)
     {
@@ -548,16 +551,8 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // needs system decay config
   {
-    const std::string jsonFilename = NeedsManager::GetDecayConfigBaseFilename() + ".json";
-    // For our unconnected_decay_rates experiment, look for this file in the saved files folder first
-    Util::Data::Scope scope = Util::Data::Scope::Persistent;
-    std::string fullPathFilename = _platform->pathToResource(scope, jsonFilename);
-    if (!Util::FileUtils::FileExists(fullPathFilename))
-    {
-      // If not found, fall back to looking for it in the resources
-      scope = Util::Data::Scope::Resources;
-    }
-    const bool success = _platform->readAsJson(scope, jsonFilename, _needsDecayConfig);
+    static const std::string jsonFilename = NeedsManager::GetDecayConfigBaseFilename() + ".json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigJsonNotFound",

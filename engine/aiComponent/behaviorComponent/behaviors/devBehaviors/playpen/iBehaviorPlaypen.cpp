@@ -63,7 +63,7 @@ bool IBehaviorPlaypen::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
   return true;
 }
 
-Result IBehaviorPlaypen::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehaviorPlaypen::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Add a timer to force the behavior to end if it runs too long
   AddTimer(PlaypenConfig::kDefaultTimeout_ms, [this](){
@@ -82,16 +82,22 @@ Result IBehaviorPlaypen::OnBehaviorActivated(BehaviorExternalInterface& behavior
     }
   });
   
-  return OnBehaviorActivatedInternal(behaviorExternalInterface);
+  OnBehaviorActivatedInternal(behaviorExternalInterface);
 }
   
-BehaviorStatus IBehaviorPlaypen::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehaviorPlaypen::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated())
+  {
+    return;
+  }
+
   // Immediately stop the behavior if the result is not success
   if(_result != FactoryTestResultCode::UNKNOWN &&
      _result != FactoryTestResultCode::SUCCESS)
   {
-    return BehaviorStatus::Failure;
+    CancelSelf();
+    return;
   }
 
   // Update the timers
@@ -101,7 +107,7 @@ BehaviorStatus IBehaviorPlaypen::UpdateInternal_WhileRunning(BehaviorExternalInt
   }
 
   // Keep updating behavior until it completes
-  if(_lastStatus != BehaviorStatus::Complete)
+  if(_lastStatus != PlaypenStatus::Complete)
   {
     _lastStatus = PlaypenUpdateInternal(behaviorExternalInterface);
   }
@@ -109,10 +115,13 @@ BehaviorStatus IBehaviorPlaypen::UpdateInternal_WhileRunning(BehaviorExternalInt
   // Finish recording touch data before letting the behavior complete
   if(_recordingTouch)
   {
-    return BehaviorStatus::Running;
+    return;
   }
 
-  return _lastStatus;
+  if(_lastStatus != PlaypenStatus::Running)
+  {
+    CancelSelf();
+  }
 }
   
 void IBehaviorPlaypen::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)

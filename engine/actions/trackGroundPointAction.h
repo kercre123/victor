@@ -34,7 +34,7 @@ public:
   // Currently-Supported Tags:
   //  - RobotObservedLaserPoint
   //  - TODO: Add more...
-  TrackGroundPointAction(Robot& robot, const ExternalInterface::MessageEngineToGameTag& salientPointTag);
+  TrackGroundPointAction(const ExternalInterface::MessageEngineToGameTag& salientPointTag);
   
   virtual ~TrackGroundPointAction();
   

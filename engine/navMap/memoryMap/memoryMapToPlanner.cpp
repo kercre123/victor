@@ -331,7 +331,7 @@ void TranslateMapRegionToPolys(const INavMap::BorderRegionVector& regions, std::
         if (subPoints.size() > 2) {
           ConvexPolygon convexHullAsPoly = ComputeConvexHull_GrahamScan(subPoints);
           convexHulls.emplace_back( std::move(convexHullAsPoly) );
-        } else {
+        } else if (!subPoints.empty()) {
           PRINT_NAMED_WARNING("NavMemoryMapToPlanner.TranslateMapRegionToPolys", 
                               "Not enough points to define 2d polygon");
         }

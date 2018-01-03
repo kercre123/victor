@@ -61,8 +61,8 @@ protected:
   };
   
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   void TransitionToDrivingToBaseBlock(BehaviorExternalInterface& behaviorExternalInterface);
   void TransitionToPlacingBaseBlock(BehaviorExternalInterface& behaviorExternalInterface);

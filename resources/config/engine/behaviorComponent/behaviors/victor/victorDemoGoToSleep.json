@@ -6,7 +6,6 @@
 
   "animTriggers": [
     "GoToSleepGetIn",
-    "GoToSleepSleeping",
-    "GoToSleepOff"
+    "GoToSleepSleeping"
   ]
 }

@@ -23,6 +23,7 @@
 namespace Anki {
 namespace Cozmo {
 
+class DockingComponent;
 class ObservableObject;
 
 namespace ExternalInterface {
@@ -39,8 +40,9 @@ public:
   // final to ensure subclass does not skip. If you need to override in subclass I suggest another internal one
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const final override;
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) final override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) final override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) final override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) final override;
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
 
 protected:
 
@@ -52,8 +54,8 @@ protected:
   // --------------------------------------------------------------------------------
   // Functions to be overridden by subclasses
   
-  virtual Result RequestGame_OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) = 0;
-  virtual Status RequestGame_UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual void RequestGame_OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual void RequestGame_UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   virtual void HandleGameDeniedRequest(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   virtual void RequestGame_OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) { }
 
@@ -93,8 +95,8 @@ protected:
   // --------------------------------------------------------------------------------
   // Functions from ICozmoBehavior which aren't exposed to children
 
-  virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) final override;
-  virtual void AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) final override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) final override;
+  virtual void AlwaysHandleInScope(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) final override;
   virtual void HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) final override;
   virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) final override;
   
@@ -115,7 +117,10 @@ private:
 
   std::unique_ptr<BlockWorldFilter>  _blockworldFilter;
 
-  bool FilterBlocks(const Robot* robot, const ObservableObject* obj) const;
+  bool FilterBlocks(ProgressionUnlockComponent* unlockComp,
+                    AIComponent* aiComp,
+                    DockingComponent* dockingComp,
+                    const ObservableObject* obj) const;
 
   const ObservableObject* GetClosestBlock(BehaviorExternalInterface& behaviorExternalInterface) const;
   

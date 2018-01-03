@@ -57,10 +57,11 @@ namespace Anki {
       
       private:
       
-        virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
       
-        virtual ICozmoBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-      
+        virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual bool ShouldCancelWhenInControl() const override { return false;}
+
         virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
         
         virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;

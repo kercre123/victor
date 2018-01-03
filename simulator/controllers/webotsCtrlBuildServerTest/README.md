@@ -13,5 +13,5 @@
 ## Tips
 
 1. The tests specified in `webotsTest.cfg` are run by calling `project/build-scripts/webots/webotsTest.py`. By default they run in 'minimized' mode which means there is no Webots window that actually appears. Run `webotsTest.py` with `--showGraphics` to enable the Webots window. 
-2. The easiest way to debug a single test is to modify the world file to point to the name of your test class instead of `%COZMO_SIM_TEST%` (just don't commit it that way!). Then, in `cozmoSimTestController.h`, set `#define DO_NOT_QUIT_WEBOTS`. In this way, you can run the test repeatedly without Webots quitting on you.
+2. The easiest way to debug a single test is to modify the world file to point to the name of your test class instead of `%COZMO_SIM_TEST%`. This will also cause Webots to continue running after the test completes.
 3. There is some time overhead associated with each test (.cpp) file. It's basically restarting Webots and going through the whole connection routine. If it makes sense, it can shave off some seconds by combining tests to run in a single .cpp file.

@@ -37,7 +37,7 @@ CozmoMat {
 LightCube {
   translation 0.109864 0.168621 0.271993
   rotation 1.59038e-05 -1.83704e-06 1 0.23
-  ID 1
+  objectType "Block_LIGHTCUBE2"
   filterLogs TRUE
 }
 LightCube {
@@ -47,7 +47,7 @@ LightCube {
 LightCube {
   translation 0.115359 -0.37 0.271993
   rotation 0 0 1 3.6652
-  ID 2
+  objectType "Block_LIGHTCUBE3"
   filterLogs TRUE
 }
 Table {

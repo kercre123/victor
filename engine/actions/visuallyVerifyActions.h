@@ -32,8 +32,7 @@ namespace Cozmo {
   public:
     using LiftPreset = MoveLiftToHeightAction::Preset;
     
-    IVisuallyVerifyAction(Robot& robot,
-                          const std::string name,
+    IVisuallyVerifyAction(const std::string name,
                           const RobotActionType type,
                           VisionMode imageTypeToWaitFor,
                           LiftPreset liftPosition);
@@ -73,8 +72,7 @@ namespace Cozmo {
   class VisuallyVerifyObjectAction : public IVisuallyVerifyAction
   {
   public:
-    VisuallyVerifyObjectAction(Robot& robot,
-                               ObjectID objectID,
+    VisuallyVerifyObjectAction(ObjectID objectID,
                                Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
     
     virtual ~VisuallyVerifyObjectAction();
@@ -95,7 +93,7 @@ namespace Cozmo {
   class VisuallyVerifyFaceAction : public IVisuallyVerifyAction
   {
   public:
-    VisuallyVerifyFaceAction(Robot& robot, Vision::FaceID_t faceID);
+    VisuallyVerifyFaceAction(Vision::FaceID_t faceID);
     
     virtual ~VisuallyVerifyFaceAction();
     
@@ -113,8 +111,7 @@ namespace Cozmo {
   class VisuallyVerifyNoObjectAtPoseAction : public IAction
   {
   public:
-    VisuallyVerifyNoObjectAtPoseAction(Robot& robot,
-                                       const Pose3d& pose,
+    VisuallyVerifyNoObjectAtPoseAction(const Pose3d& pose,
                                        const Point3f& thresholds_mm = {10, 10, 10});
     virtual ~VisuallyVerifyNoObjectAtPoseAction();
     

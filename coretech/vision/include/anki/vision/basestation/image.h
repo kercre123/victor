@@ -80,7 +80,9 @@ namespace Vision {
     void Resize(ImageBase<T>& resizedImage, ResizeMethod method = ResizeMethod::Linear) const;
 
     // Resize in place to a specific size, keeps the aspect ratio
-    void ResizeKeepAspectRatio(s32 desiredRows, s32 desiredCols, ResizeMethod method = ResizeMethod::Linear);
+    // If onlyReduceSize=true, does not resize if new size is larger than requested size
+    void ResizeKeepAspectRatio(s32 desiredRows, s32 desiredCols,
+                               ResizeMethod method = ResizeMethod::Linear, bool onlyReduceSize = false);
 
     // Resize into the new image (which is already the desired size), keeps the aspect ratio
     void ResizeKeepAspectRatio(ImageBase<T>& resizedImage, ResizeMethod method = ResizeMethod::Linear) const;
@@ -195,6 +197,7 @@ namespace Vision {
   
   // Forward declaration:
   class ImageRGBA;
+  class ImageRGB565;
   
   // RGB Color image, 24bpp
   class ImageRGB : public ImageBase<PixelRGB>
@@ -214,6 +217,8 @@ namespace Vision {
     
     ImageRGB(const Array2d<PixelRGB>& array2d) : ImageBase<PixelRGB>(array2d) { }
     
+    ImageRGB(const ImageRGB565& imgRGB565);
+    
     ImageRGB GetROI(Rectangle<s32>& roiRect) { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
     const ImageRGB GetROI(Rectangle<s32>& roiRect) const { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
     
@@ -223,6 +228,7 @@ namespace Vision {
     Image ToGray() const;                         // Return a new gray image from this RGB one
     void FillGray(Image& grayOut) const;          // Fill existing gray image from this RGB image
     ImageRGB& SetFromGray(const Image& grayIn);   // Set this RGB image from given gray image
+    ImageRGB& SetFromRGB565(const ImageRGB565& rgb565); // Set from given RGB565 image
     
     // Sets all pixels > value to 255 and all values <= value to 0.
     // If anyChannel=true, then any channel being above the value suffices. Otherwise, all channels must be.
@@ -230,8 +236,43 @@ namespace Vision {
     
     virtual s32 GetNumChannels() const override { return 3; }
     
+    // Divide each channel by the sum across channels. Multiply result by 255 to keep in 8bit range.
+    // Optionally, you can provide a working array to avoid allocation (will allocate to [NumRows x NumCols x 1])
+    ImageRGB& NormalizeColor(Array2d<s32>* workingArray = nullptr); // in place
+    void GetNormalizedColor(ImageRGB& imgNorm, Array2d<s32>* workingArray = nullptr) const;
+    
   }; // class ImageRGB
   
+  // NOTE: Despite this being called an "Image" it inherits directly from Array2d because it's
+  //       really more of a storage container and doesn't (yet?) provide all the capabilities
+  //       defined in ImageBase (drawing, resizing, etc), due to the weird storage format.
+  class ImageRGB565 : public Array2d<PixelRGB565>
+  {
+  public:
+    ImageRGB565();
+    ImageRGB565(s32 nrows, s32 ncols);
+    explicit ImageRGB565(const ImageRGB& imageRGB);
+    
+    ImageRGB565& SetFromImage(const Image& image);
+    ImageRGB565& SetFromImageRGB(const ImageRGB& imageRGB);
+    ImageRGB565& SetFromImageRGB(const ImageRGB& imageRGB, const std::array<u8, 256>& gammaLUT);
+    ImageRGB565& SetFromImageRGB565(const ImageRGB565& imageRGB565);
+    
+    const u16* GetRawDataPointer() const {
+      DEV_ASSERT(IsContinuous(), "ImageRGB565.GetRawDataPointer.NotContinuous");
+      static_assert(sizeof(PixelRGB565) == sizeof(u16), "Unexpected size for PixelRGB565");
+      return reinterpret_cast<const u16*>(Array2d<PixelRGB565>::GetDataPointer());
+    }
+    
+    u16* GetRawDataPointer() {
+      DEV_ASSERT(IsContinuous(), "ImageRGB565.GetRawDataPointer.NotContinuous");
+      static_assert(sizeof(PixelRGB565) == sizeof(u16), "Unexpected size for PixelRGB565");
+      return reinterpret_cast<u16*>(Array2d<PixelRGB565>::GetDataPointer());
+    }
+
+    // Draw filled rectangle from top left <X,Y> to bottom right <X+width,Y+height>
+    void DrawFilledRect(const Rectangle<s32>& rect, const PixelRGB565& pixel);
+  };
   
   // RGBA Color image (i.e. RGB + alpha channel), 32bpp
   class ImageRGBA : public ImageBase<PixelRGBA>

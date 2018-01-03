@@ -88,12 +88,14 @@ bool AnimationGroup::IsEmpty() const
     
 const std::string& AnimationGroup::GetAnimationName(const MoodManager& moodManager,
                                                     AnimationGroupContainer& animationGroupContainer,
-                                                    float headAngleRad) const
+                                                    float headAngleRad,
+                                                    bool strictCooldown) const
 {
   return GetAnimationName(moodManager.GetSimpleMood(),
                           moodManager.GetLastUpdateTime(),
                           animationGroupContainer,
-                          headAngleRad);
+                          headAngleRad,
+                          strictCooldown);
 }
   
 const std::string& AnimationGroup::GetFirstAnimationName() const
@@ -113,7 +115,8 @@ const std::string& AnimationGroup::GetFirstAnimationName() const
 const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
                                                     float currentTime_s,
                                                     AnimationGroupContainer& animationGroupContainer,
-                                                    float headAngleRad) const
+                                                    float headAngleRad,
+                                                    bool strictCooldown) const
 {
   PRINT_NAMED_DEBUG("AnimationGroup.GetAnimation", "getting animation from group '%s', simple mood = '%s'",
                     _name.c_str(),
@@ -220,12 +223,12 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
                   _name.c_str(),
                   SimpleMoodTypeToString(mood));
     
-    return GetAnimationName(SimpleMoodType::Default, currentTime_s, animationGroupContainer,headAngleRad);
+    return GetAnimationName(SimpleMoodType::Default, currentTime_s, animationGroupContainer, headAngleRad, strictCooldown);
   }
 
   static const std::string empty = "";
   // Since this is the backup emergency case, also ignore head angle and just play something
-  if( anyAnimationsMatchingMood ) {
+  if( anyAnimationsMatchingMood && !strictCooldown) {
     // choose the animation closest to being off cooldown
     const AnimationGroupEntry* bestEntry = nullptr;
     float minCooldown = std::numeric_limits<float>::max();

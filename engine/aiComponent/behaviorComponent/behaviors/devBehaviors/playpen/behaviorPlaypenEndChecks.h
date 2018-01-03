@@ -30,12 +30,12 @@ protected:
 protected:
   virtual void InitBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual Result         OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  
-  virtual void AlwaysHandle(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  
+  virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
+  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
+    
 private:
+
+  void HandleObjectAvailable(const ObjectAvailable& payload);
 
   bool _heardFromLightCube = false;
 };

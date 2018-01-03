@@ -21,7 +21,7 @@
 namespace Anki {
 namespace Cozmo {
   
-class IStateConceptStrategy;
+class IBEICondition;
   
 class BehaviorDevPettingTestSimple : public ICozmoBehavior
 {
@@ -38,24 +38,25 @@ protected:
   
   void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual BehaviorStatus UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
+
 private:
   
   // helper struct to organize the mapping between
   // touch-gesture and the animation metadata
   struct TouchGestureAnimationConfig
   {
-    IStateConceptStrategyPtr strategy;
+    IBEIConditionPtr strategy;
     std::string animationName;
     float animationRate_s;
     float timeLastPlayed_s;
     
-    TouchGestureAnimationConfig(IStateConceptStrategy* sp,
+    TouchGestureAnimationConfig(IBEIConditionPtr sp,
                                 std::string animationName,
                                 float animationRate_s,
                                 float timeLastPlayed_s)
@@ -68,7 +69,6 @@ private:
     
   };
   
-  Json::Value _configArray;
   std::vector<TouchGestureAnimationConfig> _tgAnimConfigs;
 };
 

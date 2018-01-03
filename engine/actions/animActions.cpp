@@ -33,14 +33,12 @@ namespace Anki {
 
     #pragma mark ---- PlayAnimationAction ----
 
-    PlayAnimationAction::PlayAnimationAction(Robot& robot,
-                                             const std::string& animName,
+    PlayAnimationAction::PlayAnimationAction(const std::string& animName,
                                              u32 numLoops,
                                              bool interruptRunning,
                                              u8 tracksToLock,
                                              float timeout_sec)
-    : IAction(robot,
-              "PlayAnimation" + animName,
+    : IAction("PlayAnimation" + animName,
               RobotActionType::PLAY_ANIMATION,
               tracksToLock)
     , _animName(animName)
@@ -63,7 +61,7 @@ namespace Anki {
         PRINT_NAMED_INFO("PlayAnimationAction.Destructor.StillStreaming",
                          "Action destructing, but AnimationComponent is still playing: %s. Telling it to stop.",
                          _animName.c_str());
-        _robot.GetAnimationComponent().StopAnimByName(_animName);
+        GetRobot().GetAnimationComponent().StopAnimByName(_animName);          
       }
     }
 
@@ -79,7 +77,7 @@ namespace Anki {
         }
       };
       
-      Result res = _robot.GetAnimationComponent().PlayAnimByName(_animName, _numLoopsRemaining, _interruptRunning, callback, GetTag(), _timeout_sec);
+      Result res = GetRobot().GetAnimationComponent().PlayAnimByName(_animName, _numLoopsRemaining, _interruptRunning, callback, GetTag(), _timeout_sec);
       
       if(res != RESULT_OK) {
         _stoppedPlaying = true;
@@ -110,27 +108,32 @@ namespace Anki {
 
     #pragma mark ---- TriggerAnimationAction ----
     
-    TriggerAnimationAction::TriggerAnimationAction(Robot& robot,
-                             AnimationTrigger animEvent,
-                             u32 numLoops,
-                             bool interruptRunning,
-                             u8 tracksToLock,
-                             float timeout_sec)
-    : PlayAnimationAction(robot, "", numLoops, interruptRunning, tracksToLock, timeout_sec)
+    TriggerAnimationAction::TriggerAnimationAction(AnimationTrigger animEvent,
+                                                   u32 numLoops,
+                                                   bool interruptRunning,
+                                                   u8 tracksToLock,
+                                                   float timeout_sec,
+                                                   bool strictCooldown)
+    : PlayAnimationAction("", numLoops, interruptRunning, tracksToLock, timeout_sec)
     , _animTrigger(animEvent)
     , _animGroupName("")
+    , _strictCooldown(strictCooldown)
     {
-      SetAnimGroupFromTrigger(animEvent);
-      
       SetName("PlayAnimation" + _animGroupName);
       // will FAILURE_ABORT on Init if not an event
+    }
+
+    void TriggerAnimationAction::OnRobotSet()
+    {
+      SetAnimGroupFromTrigger(_animTrigger);
+      OnRobotSetInternalTrigger();
     }
 
     void TriggerAnimationAction::SetAnimGroupFromTrigger(AnimationTrigger animTrigger)
     {
       _animTrigger = animTrigger;
-      
-      RobotManager* robot_mgr = _robot.GetContext()->GetRobotManager();
+    
+      RobotManager* robot_mgr = GetRobot().GetContext()->GetRobotManager();
       if( robot_mgr->HasAnimationForTrigger(_animTrigger) )
       {
         _animGroupName = robot_mgr->GetAnimationForTrigger(_animTrigger);
@@ -139,6 +142,7 @@ namespace Anki {
                               "Event: %s", EnumToString(_animTrigger));
         }
       }
+      
     }
 
     ActionResult TriggerAnimationAction::Init()
@@ -151,14 +155,15 @@ namespace Anki {
         return ActionResult::NO_ANIM_NAME;
       }
       
-      _animName = _robot.GetAnimationComponent().GetAnimationNameFromGroup(_animGroupName, _robot);
+      _animName = GetRobot().GetAnimationComponent().GetAnimationNameFromGroup(_animGroupName, _strictCooldown);
+
       if( _animName.empty() ) {
         return ActionResult::NO_ANIM_NAME;
       }
       else {
         const ActionResult res = PlayAnimationAction::Init();
         
-        RobotManager* robotMgr = _robot.GetContext()->GetRobotManager();
+        RobotManager* robotMgr = GetRobot().GetContext()->GetRobotManager();
         const std::set<AnimationTrigger>& dasBlacklistedTriggers = robotMgr->GetDasBlacklistedAnimationTriggers();
         const bool isBlacklisted = std::find(dasBlacklistedTriggers.begin(), dasBlacklistedTriggers.end(), _animTrigger) != dasBlacklistedTriggers.end();
         
@@ -176,12 +181,13 @@ namespace Anki {
     
     #pragma mark ---- TriggerLiftSafeAnimationAction ----
 
-    TriggerLiftSafeAnimationAction::TriggerLiftSafeAnimationAction(Robot& robot,
-                                            AnimationTrigger animEvent,
-                                            u32 numLoops,
-                                            bool interruptRunning,
-                                            u8 tracksToLock)
-    : TriggerAnimationAction(robot, animEvent, numLoops, interruptRunning,TracksToLock(robot, tracksToLock))
+    TriggerLiftSafeAnimationAction::TriggerLiftSafeAnimationAction(AnimationTrigger animEvent,
+                                                                   u32 numLoops,
+                                                                   bool interruptRunning,
+                                                                   u8 tracksToLock,
+                                                                   float timeout_sec,
+                                                                   bool strictCooldown)
+    : TriggerAnimationAction(animEvent, numLoops, interruptRunning, tracksToLock, timeout_sec, strictCooldown)
     {
     }
     
@@ -198,14 +204,15 @@ namespace Anki {
       return tracksCurrentlyLocked;
     }
 
-
+    void TriggerLiftSafeAnimationAction::OnRobotSetInternalTrigger()
+    {
+      SetTracksToLock(TracksToLock(GetRobot(), GetTracksToLock()));
+    }
     
     
-    TriggerCubeAnimationAction::TriggerCubeAnimationAction(Robot& robot,
-                                                           const ObjectID& objectID,
+    TriggerCubeAnimationAction::TriggerCubeAnimationAction(const ObjectID& objectID,
                                                            const CubeAnimationTrigger& trigger)
-    : IAction(robot,
-              "TriggerCubeAnimation_" + std::string(EnumToString(trigger)),
+    : IAction("TriggerCubeAnimation_" + std::string(EnumToString(trigger)),
               RobotActionType::PLAY_CUBE_ANIMATION,
               (u8)AnimTrackFlag::NO_TRACKS)
     , _objectID(objectID)
@@ -255,25 +262,28 @@ namespace Anki {
       return (_animEnded ? ActionResult::SUCCESS : ActionResult::RUNNING);
     }
 
-    PlayNeedsGetOutAnimIfNeeded::PlayNeedsGetOutAnimIfNeeded(Robot& robot)
-      : Base(robot, AnimationTrigger::Count)
+    PlayNeedsGetOutAnimIfNeeded::PlayNeedsGetOutAnimIfNeeded()
+      : Base(AnimationTrigger::Count)
     {
       SetName("PlayNeedsGetOut");
     }
     
     PlayNeedsGetOutAnimIfNeeded::~PlayNeedsGetOutAnimIfNeeded()
     {
-      auto& severeNeedsComponent = _robot.GetAIComponent().GetSevereNeedsComponent();
-      if(severeNeedsComponent.HasSevereNeedExpression() && !_hasClearedExpression){
-        severeNeedsComponent.ClearSevereNeedExpression();
+      if(HasRobot()){
+        auto& severeNeedsComponent = GetRobot().GetAIComponent().GetSevereNeedsComponent();
+        if(severeNeedsComponent.HasSevereNeedExpression() && !_hasClearedExpression){
+          severeNeedsComponent.ClearSevereNeedExpression();
+        }
       }
     }
 
     ActionResult PlayNeedsGetOutAnimIfNeeded::Init()
     {
-      const auto& severeNeedsComponent = _robot.GetAIComponent().GetSevereNeedsComponent();
 
-      if( severeNeedsComponent.HasSevereNeedExpression() ) {
+      if(GetRobot().GetAIComponent().GetSevereNeedsComponent().HasSevereNeedExpression()) {
+        const auto& severeNeedsComponent = GetRobot().GetAIComponent().GetSevereNeedsComponent();
+        
         AnimationTrigger animTrigger = AnimationTrigger::Count;        
 
         switch( severeNeedsComponent.GetSevereNeedExpression() ) {
@@ -328,7 +338,7 @@ namespace Anki {
         if (result == ActionResult::SUCCESS) {
           // No eye popping of momentary severe needs should happen since there is
           // wait timer before idle anims play from AnimationComponent.
-          auto& severeNeedsComponent = _robot.GetAIComponent().GetSevereNeedsComponent();
+          auto& severeNeedsComponent = GetRobot().GetAIComponent().GetSevereNeedsComponent();
           severeNeedsComponent.ClearSevereNeedExpression();
           _hasClearedExpression = true;
         }

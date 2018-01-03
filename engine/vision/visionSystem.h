@@ -62,6 +62,7 @@
 namespace Anki {
  
 namespace Vision {
+  class Benchmark;
   class FaceTracker;
   class ImageCache;
   class ImagingPipeline;
@@ -206,6 +207,14 @@ namespace Cozmo {
     // Just specify what the current values are (don't actually change the robot's camera)
     Result SetNextCameraParams(s32 exposure_ms, f32 gain);
     
+    // When SavingImages mode is enabled:
+    //  saveMode: SingleShot=save one image and wait for this call again
+    //            Stream=save according to the mode schedule
+    //            Off=no saving until this is called again with one of the above
+    //  path: Where to save images (relative to <Cache>/camera/images)
+    //  quality: -1=PNG, 0-100=JPEG quality
+    void SetSaveParameters(const ImageSendMode saveMode, const std::string& path, const int8_t quality);
+
     s32 GetCurrentCameraExposureTime_ms() const;
     f32 GetCurrentCameraGain() const;
   
@@ -275,6 +284,10 @@ namespace Cozmo {
     bool _calibrateFromToolCode = false;
     
     s32 _frameNumber = 0;
+
+    ImageSendMode  _imageSaveMode = ImageSendMode::Off;
+    s8             _imageSaveQuality = -1;
+    std::string    _imageSavePath;
     
     // Snapshots of robot state
     bool _wasCalledOnce    = false;
@@ -297,7 +310,8 @@ namespace Cozmo {
     std::unique_ptr<OverheadEdgesDetector>  _overheadEdgeDetector;
     std::unique_ptr<CameraCalibrator>       _cameraCalibrator;
     std::unique_ptr<OverheadMap>            _overheadMap;
-
+    std::unique_ptr<Vision::Benchmark>      _benchmark;
+    
     // Tool code stuff
     TimeStamp_t                   _firstReadToolCodeTime_ms = 0;
     const TimeStamp_t             kToolCodeMotionTimeout_ms = 1000;
@@ -317,9 +331,9 @@ namespace Cozmo {
       Count
     };
     
-    Result ApplyCLAHE(const Vision::Image& inputImageGray, const MarkerDetectionCLAHE useCLAHE, Vision::Image& claheImage);
+    Result ApplyCLAHE(Vision::ImageCache& imageCache, const MarkerDetectionCLAHE useCLAHE, Vision::Image& claheImage);
     
-    Result DetectMarkersWithCLAHE(const Vision::Image& inputImageGray,
+    Result DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
                                   const Vision::Image& claheImage,
                                   std::vector<Anki::Rectangle<s32>>& detectionRects,
                                   MarkerDetectionCLAHE useCLAHE);

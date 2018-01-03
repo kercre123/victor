@@ -31,15 +31,14 @@ class Robot;
 class MountChargerAction : public IAction
 {
 public:
-  MountChargerAction(Robot& robot,
-                     ObjectID chargerID,
+  MountChargerAction(ObjectID chargerID,
                      const bool useCliffSensorCorrection = true);
   
 protected:
   
   virtual ActionResult Init() override;
   virtual ActionResult CheckIfDone() override;
-  
+    
 private:
   const ObjectID _chargerID;
 
@@ -63,8 +62,7 @@ private:
 class BackupOntoChargerAction : public IDockAction
 {
 public:
-  BackupOntoChargerAction(Robot& robot,
-                          ObjectID chargerID,
+  BackupOntoChargerAction(ObjectID chargerID,
                           bool useCliffSensorCorrection);
   
 protected:
@@ -92,8 +90,7 @@ private:
 class DriveToAndMountChargerAction : public CompoundActionSequential
 {
 public:
-  DriveToAndMountChargerAction(Robot& robot,
-                               const ObjectID& objectID,
+  DriveToAndMountChargerAction(const ObjectID& objectID,
                                const bool useCliffSensorCorrection = true,
                                const bool useManualSpeed = false);
   

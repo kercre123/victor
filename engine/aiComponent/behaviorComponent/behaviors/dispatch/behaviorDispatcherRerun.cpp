@@ -18,7 +18,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -32,8 +32,8 @@ static const char* kConfigKeyNumRuns = "numRuns";
 Json::Value BehaviorDispatcherRerun::CreateConfig(BehaviorID newConfigID, BehaviorID delegateID, const int numRuns)
 {
   Json::Value config =  ICozmoBehavior::CreateDefaultBehaviorConfig(
-                            BehaviorClass::BehaviorDispatcherRerun, newConfigID);
-  config[kConfigKeyDelegateID] = BehaviorIDToString(delegateID);
+    BEHAVIOR_CLASS(BehaviorDispatcherRerun), newConfigID);
+  config[kConfigKeyDelegateID] = BehaviorTypesWrapper::BehaviorIDToString(delegateID);
   config[kConfigKeyNumRuns] = numRuns;
   return config;
 }
@@ -45,9 +45,10 @@ BehaviorDispatcherRerun::BehaviorDispatcherRerun(const Json::Value& config)
 , _params()
 , _numRunsRemaining(0)
 {
-  _params._delegateID = BehaviorIDFromString(JsonTools::ParseString(config,
-                                             kConfigKeyDelegateID,
-                                             "BehaviorDispatcherRerun.Constructor.NoDelegateID"));
+  _params._delegateID = BehaviorTypesWrapper::BehaviorIDFromString(
+    JsonTools::ParseString(config,
+                           kConfigKeyDelegateID,
+                           "BehaviorDispatcherRerun.Constructor.NoDelegateID"));
   
   _params._numRuns = JsonTools::ParseInt8(config, kConfigKeyNumRuns,
                                           "BehaviorDispatcherRerun.Constructor.numRunsNotSpecified");       
@@ -69,15 +70,12 @@ void BehaviorDispatcherRerun::InitBehavior(BehaviorExternalInterface& behaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDispatcherRerun::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherRerun::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _numRunsRemaining = _params._numRuns;
   if(_delegatePtr != nullptr){
     CheckRerunState(behaviorExternalInterface);
-    return RESULT_OK;
   }
-
-  return RESULT_FAIL;
 }
 
 

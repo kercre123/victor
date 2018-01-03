@@ -26,7 +26,6 @@ OUTPUT_H_AND_CPP=$(OUTPUT_H) $(OUTPUT_CPP)
 OUTPUT_PYTHON=$(patsubst %.clad, %.py, $(INPUT_FILES))
 ENGINE_TO_ROBOT_UNION:=./clad/robotInterface/messageEngineToRobot
 ROBOT_TO_ENGINE_UNION:=./clad/robotInterface/messageRobotToEngine
-LIGHT_CUBE_UNION:=./clad/robotInterface/lightCubeMessage
 BODY_START_TAG:=0x01
 BODY_END_TAG:=0x2F
 RTIP_START_TAG:=0x30

@@ -27,7 +27,6 @@
 #ifdef SIMULATOR
 #include "anki/common/shared/utilities_shared.h"
 #include "clad/types/imageTypes.h"
-#include "blockLightController.h"
 #endif
 
 
@@ -51,7 +50,6 @@ namespace Anki {
       namespace {
 
         // Parameters / Constants:
-        Robot::OperationMode mode_ = INIT_MOTOR_CALIBRATION;
         bool wasConnected_ = false;
 
         // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
@@ -68,21 +66,8 @@ namespace Anki {
         const u32 MAIN_TOO_LATE_TIME_THRESH_USEC = TIME_STEP * 1500;  // Normal cycle time plus 50% margin
         const u32 MAIN_TOO_LONG_TIME_THRESH_USEC = 700;
         const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC = 1000000;
-        
-        // Wait flag for StartMotorCalibration that we expect to receive
-        // from the body when wifi connects
-        bool waitForFirstMotorCalibAfterConnect_;
 
       } // Robot private namespace
-
-      //
-      // Accessors:
-      //
-      OperationMode GetOperationMode()
-      { return mode_; }
-
-      void SetOperationMode(OperationMode newMode)
-      { mode_ = newMode; }
 
       //
       // Methods:
@@ -90,8 +75,6 @@ namespace Anki {
       Result Init(void)
       {
         Result lastResult = RESULT_OK;
-        
-        waitForFirstMotorCalibAfterConnect_ = true;
 
         // HAL and supervisor init
         lastResult = HAL::Init();
@@ -208,8 +191,6 @@ namespace Anki {
           PickAndPlaceController::SetCarryState(CarryState::CARRY_NONE);
           ProxSensors::EnableStopOnCliff(true);
           ProxSensors::SetAllCliffDetectThresholds(CLIFF_SENSOR_THRESHOLD_DEFAULT);
-          waitForFirstMotorCalibAfterConnect_ = true;
-          mode_ = INIT_MOTOR_CALIBRATION;
 
           TestModeController::Start(TestMode::TM_NONE);
 
@@ -238,44 +219,12 @@ namespace Anki {
         MARK_NEXT_TIME_PROFILE(CozmoBot, LIGHTS);
         BackpackLightController::Update();
         
-#ifdef SIMULATOR
-        // TODO: Move this to animation process since that's where they'll be controlled from
-        BlockLightController::Update();
-#endif
-        
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
         PathFollower::Update();
         PickAndPlaceController::Update();
         DockingController::Update();
 
-        //////////////////////////////////////////////////////////////
-        // State Machine
-        //////////////////////////////////////////////////////////////
-        MARK_NEXT_TIME_PROFILE(CozmoBot, WHEELS);
-        switch(mode_)
-        {
-          case INIT_MOTOR_CALIBRATION:
-          {
-            if (LiftController::IsCalibrated() && HeadController::IsCalibrated()) {
-              // Once initialization is done, broadcast a message that this robot
-              // is ready to go
-              waitForFirstMotorCalibAfterConnect_ = false;              
-              mode_ = WAITING;
-            }
-
-            break;
-          }
-          case WAITING:
-          {
-            // Idle.  Nothing to do yet...
-
-            break;
-          }
-
-          default:
-            AnkiWarn( "CozmoBot.InvalidMode", "%d", mode_);
-
-        } // switch(mode_)
+       
 
         // Manage the various motion controllers:
         SpeedController::Manage();
@@ -290,9 +239,7 @@ namespace Anki {
         Messages::UpdateRobotStateMsg();
         ++robotStateMessageCounter_;
         if(robotStateMessageCounter_ >= STATE_MESSAGE_FREQUENCY) {
-          if (!waitForFirstMotorCalibAfterConnect_) {
-            Messages::SendRobotStateMsg();
-          }
+          Messages::SendRobotStateMsg();
           robotStateMessageCounter_ = 0;
         }
 

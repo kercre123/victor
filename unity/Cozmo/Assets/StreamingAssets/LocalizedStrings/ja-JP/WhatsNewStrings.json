@@ -1,0 +1,51 @@
+{
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
+  },
+  "whatsNew.modal.title" : {
+    "translation" : "最新情報"
+  },
+  "whatsNew.button.openInCodeLab" : {
+    "translation" : "コードラボで今すぐ遊びましょう！"
+  },
+  "whatsNew.CodeLab_VerticalLaunch.title" : {
+    "translation" : "コードラボ2.0！"
+  },
+  "whatsNew.CodeLab_VerticalLaunch.description" : {
+    "translation" : "すべて新しく、ライトショーのような注目のプロジェクトでいっぱい！"
+  },
+  "whatsNew.CodeLab_TinyOrchestra.title" : {
+    "translation" : "小さなオーケストラ!"
+  },
+  "whatsNew.CodeLab_TinyOrchestra.description" : {
+    "translation" : "小さなオーケストラではキューブを楽器に使います！"
+  },
+  "whatsNew.CodeLab_MagicFortuneTeller.title" : {
+    "translation" : "魔法の占い師!"
+  },
+  "whatsNew.CodeLab_MagicFortuneTeller.description" : {
+    "translation" : "COZMOをゆさぶってあなたの運勢を占ってもらいましょう！"
+  },
+  "whatsNew.CodeLab_HotPotato.title" : {
+    "translation" : "ホットポテト！"
+  },
+  "whatsNew.CodeLab_HotPotato.description" : {
+    "translation" : "音楽が止まったとき、ホットポテトを持っていないようにしましょう!"
+  },
+  "whatsNew.CodeLab_FireTruckAlarm.title" : {
+    "translation" : "消防車のアラーム！"
+  },
+  "whatsNew.CodeLab_FireTruckAlarm.description" : {
+    "translation" : "チックタック！COZMOがタイマーだったらもっと楽しい！"
+  },
+  "whatsNew.CodeLab_CubeWhack.title" : {
+    "translation" : "キューブを引っぱたけ！"
+  },
+  "whatsNew.CodeLab_CubeWhack.description" : {
+    "translation" : "あのキューブを引っぱたけ！あなたのハイスコアは？"
+  }
+}

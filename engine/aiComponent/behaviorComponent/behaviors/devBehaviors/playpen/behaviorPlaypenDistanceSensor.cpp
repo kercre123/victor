@@ -69,7 +69,7 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal(BehaviorExtern
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   if(_expectedObjectType == ObjectType::UnknownObject)
   {
@@ -85,32 +85,32 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal(BehaviorExtern
   _startingAngle = robot.GetPose().GetRotation().GetAngleAroundZaxis();
 
   // Move head and lift to be able to see target marker and turn towards the target
-  MoveHeadToAngleAction* head = new MoveHeadToAngleAction(robot, DEG_TO_RAD(0));
-  MoveLiftToHeightAction* lift = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
-  DriveStraightAction* drive = new DriveStraightAction(robot, _distToDrive_mm);
-  CompoundActionParallel* liftHeadDrive = new CompoundActionParallel(robot, {lift, head, drive});
+  MoveHeadToAngleAction* head = new MoveHeadToAngleAction(DEG_TO_RAD(0));
+  MoveLiftToHeightAction* lift = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+  DriveStraightAction* drive = new DriveStraightAction(_distToDrive_mm);
+  CompoundActionParallel* liftHeadDrive = new CompoundActionParallel({lift, head, drive});
 
-  TurnInPlaceAction* turn = new TurnInPlaceAction(robot, _angleToTurn.ToFloat(), false);
+  TurnInPlaceAction* turn = new TurnInPlaceAction(_angleToTurn.ToFloat(), false);
 
   // After turning wait to process 10 images before trying to refine the turn
-  WaitForImagesAction* wait = new WaitForImagesAction(robot, 5, VisionMode::DetectingMarkers);
+  WaitForImagesAction* wait = new WaitForImagesAction(5, VisionMode::DetectingMarkers);
   
-  CompoundActionSequential* action = new CompoundActionSequential(robot, {liftHeadDrive, turn, wait});
+  CompoundActionSequential* action = new CompoundActionSequential({liftHeadDrive, turn, wait});
   DelegateIfInControl(action, [this, &behaviorExternalInterface]() { TransitionToRefineTurn(behaviorExternalInterface); });
   
   return RESULT_OK;
 }
 
-BehaviorStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   // Haven't started recording distance readings yet
   if(_numRecordedReadingsLeft == -1)
   {
-    return BehaviorStatus::Running;
+    return PlaypenStatus::Running;
   }
   // We have distance readings left to record
   else if(_numRecordedReadingsLeft > 0)
@@ -142,10 +142,10 @@ BehaviorStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInternal(BehaviorExte
     
     if(!GetLogger().Append(GetIDStr(), std::move(data)))
     {
-      PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED, BehaviorStatus::Running);
+      PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED, PlaypenStatus::Running);
     }
     
-    return BehaviorStatus::Running;
+    return PlaypenStatus::Running;
   }
   // We've recorded all distance readings we need to
   else
@@ -155,7 +155,7 @@ BehaviorStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInternal(BehaviorExte
     {
       TransitionToTurnBack(behaviorExternalInterface);
     }
-    return BehaviorStatus::Running;
+    return PlaypenStatus::Running;
   }
 }
 
@@ -169,9 +169,9 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn(BehaviorExternalInter
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
-  TurnInPlaceAction* action = new TurnInPlaceAction(robot, 0, false);
+  TurnInPlaceAction* action = new TurnInPlaceAction(0, false);
 
   // Get the pose of the marker we should be seeing
   Pose3d markerPose;
@@ -224,11 +224,7 @@ void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor(BehaviorExternalInt
 
 void BehaviorPlaypenDistanceSensor::TransitionToTurnBack(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
-  TurnInPlaceAction* action = new TurnInPlaceAction(robot, _startingAngle.ToFloat(), true);
+  TurnInPlaceAction* action = new TurnInPlaceAction(_startingAngle.ToFloat(), true);
   DelegateIfInControl(action, [this]() { PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS); });
 }
 
@@ -237,7 +233,7 @@ bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Behavior
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   BlockWorldFilter filter;
   filter.AddAllowedType(_expectedObjectType);

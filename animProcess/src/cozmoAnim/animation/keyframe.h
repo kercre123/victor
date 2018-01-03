@@ -18,6 +18,7 @@
 #define ANKI_COZMO_CANNED_KEYFRAME_H
 
 #include "anki/common/basestation/colorRGBA.h"
+#include "anki/vision/basestation/image.h"
 #include "cozmoAnim/animation/proceduralFace.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/ledTypes.h"
@@ -43,7 +44,7 @@ namespace CozmoAnim {
 namespace Anki {
   
   namespace Vision {
-    class ImageRGB;
+    class ImageRGB565;
   }
   
 namespace Cozmo {
@@ -285,7 +286,10 @@ namespace Cozmo {
     
     // This function actually retrieves image data and increments the frame count so that it will
     // retrieve the next image on the next call.
-    const Vision::ImageRGB* GetFaceImage();
+    bool GetFaceImage(Vision::ImageRGB565& imgRGB565);
+
+    // Resets the keyframe so that the next call to GetFaceImage returns the first image of the set
+    void Reset() { _curFrame = 0; }
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
@@ -295,9 +299,7 @@ namespace Cozmo {
     
   private:
     std::string  _animName;
-    const Vision::ImageRGB*  _faceImg;
-    
-    s32   _curFrame = 0;
+    s32          _curFrame = 0;
     
   }; // class FaceAnimationKeyFrame
   

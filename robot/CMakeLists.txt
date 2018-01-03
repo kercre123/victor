@@ -30,7 +30,6 @@ endif()
 # the source file lives in robot2. This will be cleaned up after we fork
 # the victor repo
 #
-if (ANDROID)
 
 add_library(robot_hal STATIC
   ${CMAKE_SOURCE_DIR}/robot2/hal/src/hal.cpp
@@ -58,12 +57,10 @@ target_compile_definitions(robot_hal
   ${PLATFORM_COMPILE_DEFS}
 )
 
-endif()
-
-# HACK #2 - supervisor build on mac requires files in 
+# HACK #2 - supervisor build on mac requires files in
 # robot2/ and simulator/ folders. At least the ones in robot2 (sim_hal)
 # also depend on files in supervisor :-(
-# Rather than break the circular dependency now, we just 
+# Rather than break the circular dependency now, we just
 # include those sources when building for mac
 
 set(PLATFORM_SRCS "")
@@ -97,7 +94,7 @@ elseif (MACOSX)
   )
   set(PLATFORM_SRCS
       ${CMAKE_SOURCE_DIR}/robot2/hal/sim/src/sim_hal.cpp
-      ${CMAKE_SOURCE_DIR}/robot2/hal/sim/src/sim_radio.cpp
+      ${CMAKE_SOURCE_DIR}/robot2/hal/src/radio.cpp
       ${CMAKE_SOURCE_DIR}/simulator/robot/sim_overlayDisplay.cpp
   )
 endif()
@@ -110,6 +107,7 @@ anki_build_cxx_library(robot_transport ${ANKI_SRCLIST_DIR} STATIC)
 target_compile_definitions(robot_transport
   PRIVATE
   COZMO_ROBOT
+  ${PLATFORM_COMPILE_DEFS}
 )
 
 target_include_directories(robot_transport

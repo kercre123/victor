@@ -34,11 +34,7 @@ Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal(BehaviorExternalI
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
-  // Enable charging while we are waiting for playpen to start
-  // This will disable motors!
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCharging(true)));
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   // Remove the default playpen behavior timeout timer since this behavior will
   // run forever until the conditions for playpen to start are met
@@ -64,11 +60,11 @@ Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal(BehaviorExternalI
   return RESULT_OK;
 }
 
-BehaviorStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
@@ -117,20 +113,17 @@ BehaviorStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInternal(BehaviorExterna
                                                                                      RobotInterface::ColorRGB(0,0,0),
                                                                                      "")));
 
-    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, BehaviorStatus::Complete);
+    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, PlaypenStatus::Complete);
   }
 
-  return BehaviorStatus::Running;
+  return PlaypenStatus::Running;
 }
 
 void BehaviorPlaypenWaitToStart::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
-  // Make sure to disable charging so we can use motors
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCharging(false)));
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
   
   _touchStartTime_ms = 0;
   _buttonPressed = false;
@@ -157,7 +150,7 @@ void BehaviorPlaypenWaitToStart::HandleWhileActivatedInternal(const RobotToEngin
     const auto& payload = event.GetData().Get_backpackButton();
     if(payload.depressed)
     {
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
       if(robot.IsOnCharger() || robot.IsCharging())
       {

@@ -27,7 +27,7 @@ Result BehaviorPlaypenMotorCalibration::OnBehaviorActivatedInternal(BehaviorExte
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
   AddTimer(PlaypenConfig::kMotorCalibrationTimeout_ms,
@@ -36,14 +36,14 @@ Result BehaviorPlaypenMotorCalibration::OnBehaviorActivatedInternal(BehaviorExte
   return RESULT_OK;
 }
 
-BehaviorStatus BehaviorPlaypenMotorCalibration::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenMotorCalibration::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_liftCalibrated && _headCalibrated)
   {
-    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, BehaviorStatus::Complete);
+    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, PlaypenStatus::Complete);
   }
   
-  return BehaviorStatus::Running;
+  return PlaypenStatus::Running;
 }
 
 void BehaviorPlaypenMotorCalibration::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)

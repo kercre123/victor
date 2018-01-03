@@ -35,15 +35,11 @@ void BehaviorPlaypenSoundCheck::InitBehaviorInternal(BehaviorExternalInterface& 
 
 Result BehaviorPlaypenSoundCheck::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
   // Move head and lift to extremes then move to sound playing angle
-  MoveHeadToAngleAction* head = new MoveHeadToAngleAction(robot, PlaypenConfig::kHeadAngleToPlaySound);
-  MoveLiftToHeightAction* lift = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
+  MoveHeadToAngleAction* head = new MoveHeadToAngleAction(PlaypenConfig::kHeadAngleToPlaySound);
+  MoveLiftToHeightAction* lift = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
   
-  CompoundActionParallel* liftAndHead = new CompoundActionParallel(robot, {head, lift});
+  CompoundActionParallel* liftAndHead = new CompoundActionParallel({head, lift});
 
   DelegateIfInControl(liftAndHead, [this, &behaviorExternalInterface](){ TransitionToPlayingSound(behaviorExternalInterface); });
   
@@ -54,12 +50,12 @@ void BehaviorPlaypenSoundCheck::TransitionToPlayingSound(BehaviorExternalInterfa
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   RecordTouchSensorData(robot, GetIDStr());
 
   // Set speaker volume to config value
-  robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1, PlaypenConfig::kSoundVolume);
+  robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(PlaypenConfig::kSoundVolume);
 
   // Start recording mic audio of the sound and run an FFT on the audio to check that we actually heard the
   // sound we played
@@ -68,7 +64,7 @@ void BehaviorPlaypenSoundCheck::TransitionToPlayingSound(BehaviorExternalInterfa
                                                                                      runFFT,
                                                                                      GetLogger().GetLogName()+"beep")));
 
-  PlayAnimationAction* soundAction = new PlayAnimationAction(robot, "soundTestAnim");
+  PlayAnimationAction* soundAction = new PlayAnimationAction("soundTestAnim");
   DelegateIfInControl(soundAction, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS) });
 }
 
@@ -77,7 +73,7 @@ void BehaviorPlaypenSoundCheck::OnBehaviorDeactivated(BehaviorExternalInterface&
   _soundComplete = false;
 }
 
-void BehaviorPlaypenSoundCheck::AlwaysHandle(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   // TODO(Al): This message is asynchronous and could be handled after this behavior has completed
   // need some way of having playpen fail if we never get this message. Playpen is long enough that
@@ -137,7 +133,7 @@ void BehaviorPlaypenSoundCheck::AlwaysHandle(const RobotToEngineEvent& event, Be
 
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
     if(!robot.IsPhysical())
     {

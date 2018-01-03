@@ -23,14 +23,7 @@ namespace Cozmo {
 
 ////////// Macros for condition checking and exiting ////////
   
-// For local testing, set to 1 so that Webots doesn't exit
-#define DO_NOT_QUIT_WEBOTS 0
-  
-#if (DO_NOT_QUIT_WEBOTS == 1)
-#define CST_EXIT()  QuitController(_result);
-#else
-#define CST_EXIT()  QuitWebots(_result);  
-#endif
+#define CST_EXIT()  ExitTest();
   
 #define DEFAULT_TIMEOUT 10
   
@@ -78,14 +71,21 @@ public:
   CozmoSimTestController();
   virtual ~CozmoSimTestController();
   
+  void SetQuitWebotsAfterTest(bool b=true) { _quitWebotsAfterTest = b; }
+  
 protected:
   
   virtual s32 UpdateInternal() override final;
   virtual s32 UpdateSimInternal() = 0;
   virtual void InitInternal() override final;
   
+  void ExitTest();
+  
   u8 _result = RESULT_OK;
   bool _isRecording;
+  
+  // If set to true, Webots will automatically exit after the test is complete.
+  bool _quitWebotsAfterTest = false;
   
   //Variables for taking screenshots
   f32 _screenshotInterval;

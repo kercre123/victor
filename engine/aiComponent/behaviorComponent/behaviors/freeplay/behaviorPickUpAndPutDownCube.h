@@ -29,7 +29,7 @@ protected:
   friend class BehaviorContainer;
   BehaviorPickUpAndPutDownCube(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override { return false;}

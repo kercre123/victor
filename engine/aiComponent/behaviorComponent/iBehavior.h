@@ -86,6 +86,9 @@ protected:
   // Called when this behavior is deactivated (it no longer has control)
   virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) { }
   
+  // Allow all behavior functions access to the bei after initialization
+  BehaviorExternalInterface& GetBEI() const {assert(_beiWrapper); return _beiWrapper->_bei;}
+
 private:
   // tmp string for identifying Behaviors until IDs are combined
   std::string _idString;
@@ -93,6 +96,13 @@ private:
   uint32_t _currentInScopeCount;
   mutable size_t _lastTickWantsToBeActivatedCheckedOn;
   size_t _lastTickOfUpdate;
+
+  struct BEIWrapper{
+    BEIWrapper(BehaviorExternalInterface& bei)
+    : _bei(bei){}
+    BehaviorExternalInterface& _bei;
+  };
+  std::unique_ptr<BEIWrapper> _beiWrapper;
   
   enum class ActivationState{
     NotInitialized,

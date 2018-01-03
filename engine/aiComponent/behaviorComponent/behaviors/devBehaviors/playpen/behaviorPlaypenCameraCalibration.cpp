@@ -62,7 +62,7 @@ Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal(BehaviorExt
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   // Set CameraCalibrator's CalibTargetType console var to what the playpen config says
   NativeAnkiUtilConsoleSetValueWithString("CalibTargetType",
@@ -92,8 +92,8 @@ Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal(BehaviorExt
   robot.GetVisionComponent().ClearCalibrationImages();
   
   // Move head and lift so we can see the target
-  CompoundActionParallel* action = new CompoundActionParallel(robot, {new MoveHeadToAngleAction(robot, PlaypenConfig::kHeadAngleToSeeTarget),
-                                                                      new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK)});
+  CompoundActionParallel* action = new CompoundActionParallel({new MoveHeadToAngleAction(PlaypenConfig::kHeadAngleToSeeTarget),
+                                                               new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK)});
   
   DelegateIfInControl(action, [this]() {
     AddTimer(PlaypenConfig::kTimeoutWaitingForTarget_ms, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::NOT_SEEING_CALIB_TARGET_TIMEOUT); }, kWaitingForTargetTimer);
@@ -102,11 +102,11 @@ Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal(BehaviorExt
   return RESULT_OK;
 }
 
-BehaviorStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   if(!_computingCalibration)
   {
@@ -124,7 +124,7 @@ BehaviorStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateInternal(BehaviorE
       _waitingToStoreImage = true;
 
       // Wait half a second for marker detection to stabilize
-      DelegateIfInControl(new WaitAction(robot, 0.5f), [&robot]{
+      DelegateIfInControl(new WaitAction(0.5f), [&robot]{
         // Turn CLAHE off
         NativeAnkiUtilConsoleSetValueWithString("UseCLAHE_u8", "0");
 
@@ -162,14 +162,14 @@ BehaviorStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateInternal(BehaviorE
     }
   }
   
-  return BehaviorStatus::Running;
+  return PlaypenStatus::Running;
 }
 
 void BehaviorPlaypenCameraCalibration::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   robot.GetVisionComponent().ClearCalibrationImages();
   
@@ -213,7 +213,7 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(BehaviorExternalI
 
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   std::shared_ptr<Vision::CameraCalibration> camCalib(new Vision::CameraCalibration(
     calibMsg.nrows, calibMsg.ncols,
@@ -319,7 +319,7 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(BehaviorExternalI
   }
   
   // Calibration completed so move head to zero and and complete
-  DelegateIfInControl(new MoveHeadToAngleAction(robot, 0), [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS); });
+  DelegateIfInControl(new MoveHeadToAngleAction(0), [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS); });
 }
 
 void BehaviorPlaypenCameraCalibration::HandleRobotObservedObject(BehaviorExternalInterface& behaviorExternalInterface,

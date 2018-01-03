@@ -32,6 +32,7 @@ static const std::string kBracketLevelKey = "BracketLevel";
 static const std::string kFullnessDecayCooldownKey = "FullnessDecayCooldown";
 static const std::string kBrokenPartThresholdKey = "BrokenPartThreshold";
 static const std::string kLocalNotificationMaxFutureMinutesKey = "LocalNotificationMaxFutureMinutes";
+static const std::string kRepairRoundsKey = "RepairRounds";
 
 static const std::string kDecayRatesKey = "DecayRates";
 static const std::string kConnectedDecayRatesKey = "ConnectedDecayRates";
@@ -60,7 +61,7 @@ static const std::string kCooldownSecsKey = "cooldownSecs";
 static const std::string kFreeplaySparksRewardWeight = "freeplaySparksRewardWeight";
 
 
-NeedsConfig::NeedsConfig(const CozmoContext* cozmoContext)
+NeedsConfig::NeedsConfig()
 : _minNeedLevel(0.0f)
 , _maxNeedLevel(1.0f)
 , _decayPeriod(60.0f)
@@ -71,8 +72,7 @@ NeedsConfig::NeedsConfig(const CozmoContext* cozmoContext)
 , _decayConnected()
 , _decayUnconnected()
 , _localNotificationMaxFutureMinutes(60 * 24 * 365 * 10)
-, _cozmoContext(cozmoContext)
-, _unconnectedDecayTestVariationKey("Unknown (unknown)")
+, _repairRounds(1)
 {
 }
 
@@ -208,6 +208,8 @@ void NeedsConfig::Init(const Json::Value& json)
 
   _localNotificationMaxFutureMinutes = JsonTools::ParseFloat(json, kLocalNotificationMaxFutureMinutesKey.c_str(),
                                                              "Failed to parse min need level");
+
+  _repairRounds = JsonTools::ParseUint8(json, kRepairRoundsKey.c_str(), "Failed to parse repair rounds");
 }
 
 
@@ -312,40 +314,6 @@ float NeedsConfig::NeedLevelForNeedBracket(const NeedId needId, const NeedBracke
     return brackets[Util::numeric_cast<int>(bracketId)];
   }
   return 0.0f;
-}
-
-
-void NeedsConfig::SetUnconnectedDecayTestVariation(const std::string& baseFilename, const std::string& variationKey,
-                                                   const Util::AnkiLab::AssignmentStatus assignmentStatus)
-{
-  _unconnectedDecayTestVariationKey = variationKey + " (" +
-                                      AssignmentStatusToString(assignmentStatus) + ")";
-
-  // We copy one of the experiment's variation files over the file that is read at app start-up
-  const std::string srcFile  = baseFilename + "_" + variationKey + ".json";
-  const std::string destFile = baseFilename + ".json";
-  const auto srcFileFull  = _cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, srcFile);
-  const auto destFileFull = _cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent, destFile);
-
-  const bool success = Util::FileUtils::CopyFile(destFileFull, srcFileFull);
-
-  if (!ANKI_VERIFY(success, "NeedsConfig.SetUnconnectedDecayTestVariation",
-                  "Failed to copy file %s to %s", srcFileFull.c_str(), destFileFull.c_str()))
-  {
-    return;
-  }
-
-  // Then re-initialize the decay config
-  Json::Value decayJson;
-  const bool parseSuccess = _cozmoContext->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources, srcFile, decayJson);
-
-  if (!ANKI_VERIFY(parseSuccess, "NeedsConfig.SetUnconnectedDecayTestVariation",
-                   "Failed to parse file %s", srcFile.c_str()))
-  {
-    return;
-  }
-
-  InitDecay(decayJson);
 }
 
 

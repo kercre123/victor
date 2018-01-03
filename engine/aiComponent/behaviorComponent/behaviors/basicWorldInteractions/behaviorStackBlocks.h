@@ -23,7 +23,6 @@ namespace Cozmo {
 
 class BlockWorldFilter;
 class ObservableObject;
-class Robot;
 
 class BehaviorStackBlocks : public ICozmoBehavior
 {
@@ -32,9 +31,9 @@ protected:
   friend class BehaviorContainer;
   BehaviorStackBlocks(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}

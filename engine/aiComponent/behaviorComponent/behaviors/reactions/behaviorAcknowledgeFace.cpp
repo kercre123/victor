@@ -19,15 +19,14 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
-#include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iReactToFaceListener.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/robotInterface/messageFromActiveObject.h"
+#include "clad/externalInterface/messageFromActiveObject.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -57,13 +56,13 @@ bool BehaviorAcknowledgeFace::WantsToBeActivatedBehavior(BehaviorExternalInterfa
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorAcknowledgeFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // don't actually init until the first Update call. This gives other messages that came in this tick a
   // chance to be processed, in case we see multiple faces in the same tick.
   _shouldStart = true;
 
-  return Result::RESULT_OK;
+  
 }
 
 
@@ -78,26 +77,30 @@ void BehaviorAcknowledgeFace::OnBehaviorDeactivated(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorAcknowledgeFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( _shouldStart ) {
     _shouldStart = false;
     // now figure out which object to react to
     BeginIteration(behaviorExternalInterface);
   }
-
-  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorAcknowledgeFace::UpdateBestTarget(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-  const bool preferName = false;  
-  Vision::FaceID_t bestFace = whiteboard.GetBestFaceToTrack( _desiredTargets, preferName );
+  const auto& faceSelection = behaviorExternalInterface.GetAIComponent().GetFaceSelectionComponent();
+  FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
+  SmartFaceID bestFace  = faceSelection.GetBestFaceToUse(criteriaMap, _desiredTargets);
   
-  if( bestFace == Vision::UnknownFaceID ) {
+  if( !bestFace.IsValid() ) {
     return false;
   }
   else {
@@ -110,18 +113,13 @@ bool BehaviorAcknowledgeFace::UpdateBestTarget(BehaviorExternalInterface& behavi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeFace::BeginIteration(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  _targetFace = Vision::UnknownFaceID;
+  _targetFace.Reset();
   if( !UpdateBestTarget(behaviorExternalInterface) ) {
     return;
   }
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
   const bool sayName = true;
-  TurnTowardsFaceAction* turnAction = new TurnTowardsFaceAction(robot,
-                                                                _targetFace,
+  TurnTowardsFaceAction* turnAction = new TurnTowardsFaceAction(_targetFace,
                                                                 M_PI_F,
                                                                 sayName);
 
@@ -129,7 +127,7 @@ void BehaviorAcknowledgeFace::BeginIteration(BehaviorExternalInterface& behavior
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();  
   const bool withinMinSessionTime = freeplayStartedTime_s >= 0.0f &&
     (currTime_s - freeplayStartedTime_s) <= kMaxTimeForInitialGreeting_s;
-  const bool alreadyTurnedTowards = robot.GetFaceWorld().HasTurnedTowardsFace(_targetFace);
+  const bool alreadyTurnedTowards = behaviorExternalInterface.GetFaceWorld().HasTurnedTowardsFace(_targetFace);
   const bool shouldPlayInitialGreeting = !_hasPlayedInitialGreeting && withinMinSessionTime && !alreadyTurnedTowards;
 
   PRINT_CH_INFO("Behaviors", "AcknowledgeFace.DoAcknowledgement",
@@ -139,7 +137,7 @@ void BehaviorAcknowledgeFace::BeginIteration(BehaviorExternalInterface& behavior
                 shouldPlayInitialGreeting ? 1 : 0);
   
   if( shouldPlayInitialGreeting ) {
-    auto& moodManager = robot.GetMoodManager();
+    auto& moodManager = behaviorExternalInterface.GetMoodManager();
     turnAction->SetSayNameTriggerCallback([this, &moodManager](const Robot& robot, const SmartFaceID& faceID){
         // only play the initial greeting once, so if we are going to use it, mark that here
         _hasPlayedInitialGreeting = true;

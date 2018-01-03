@@ -32,7 +32,7 @@ protected:
   virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  virtual void AlwaysHandle(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void AlwaysHandleInScope(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   

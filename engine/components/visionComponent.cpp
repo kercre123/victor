@@ -16,6 +16,7 @@
 #include "androidHAL/androidHAL.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/animationComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/navMap/mapComponent.h"
@@ -49,6 +50,7 @@
 #include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/threading/threadPriority.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -65,7 +67,11 @@ namespace Cozmo {
   CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasRotatingTooFast.Face.NumToLookBack", 5);
   
   CONSOLE_VAR(bool, kDisplayProcessedImagesOnly, "Vision.General", true);
-  CONSOLE_VAR(s32,  kDebugImageCompressQuality,  "Vision.General", 50); // Set to 0 to display "locally" with img.Display()
+  
+  // Quality of images sent to game/viz
+  // Set to -1 to display "locally" with img.Display()
+  // Set to 0 to disable sending altogether (to save bandwidth) -- disables camera feed AND debug images
+  CONSOLE_VAR(s32,  kImageCompressQuality,  "Vision.General", 50);
   
   // Whether or not to do rolling shutter correction for physical robots
   CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);
@@ -420,7 +426,7 @@ namespace Cozmo {
         
         // Compress to jpeg and send to game and viz
         // Do this before setting next image since it swaps the image and invalidates it
-        Result lastResult = CompressAndSendImage(_bufferedImg, 50, "camera");
+        Result lastResult = CompressAndSendImage(_bufferedImg, kImageCompressQuality, "camera");
         DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
         
         // Track how fast we are receiving frames
@@ -473,21 +479,63 @@ namespace Cozmo {
       const bool haveHistStateAtLeastAsNewAsImage = (_robot.GetStateHistory()->GetNewestTimeStamp() >= _bufferedImg.GetTimestamp());
       if(haveHistStateAtLeastAsNewAsImage)
       {
+        
+        // "Mirror mode": draw images we process to the robot's screen
+        if(_drawImagesToScreen)
+        {
+          // TODO: Add this as a lambda you can register with VisionComponent for things you want to 
+          //       do with image when captured?
+          
+          // Send as face display animation
+          auto & animComponent = _robot.GetAnimationComponent();
+          if (animComponent.GetAnimState_NumProcAnimFaceKeyframes() < 5) // Don't get too far ahead
+          {
+            static Vision::ImageRGB screenImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+            _bufferedImg.Resize(screenImg, Vision::ResizeMethod::NearestNeighbor);
+
+            static Vision::ImageRGB565 img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+            
+            // Use gamma to make it easier to see
+            static std::array<u8,256> gammaLUT{};
+            if(gammaLUT.back() == 0) {
+              const f32 gamma = 1.f / 2.2f;
+              const f32 divisor = 1.f / 255.f;
+              for(s32 value=0; value<256; ++value) 
+              {
+                gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, gamma));
+              }
+            }
+
+            img565.SetFromImageRGB(screenImg, gammaLUT);
+
+            // Flip image around the y axis
+            cv::flip(img565.get_CvMat_(), img565.get_CvMat_(), 1);
+                      
+            animComponent.DisplayFaceImage(img565, ANIM_TIME_STEP_MS, false);
+          }
+        }
+
         SetNextImage(_bufferedImg);
         _bufferedImg.Clear();
       }
       else
       {
-        // These messages are too spammy, commenting out for now
-        // PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
-        //                "CapturedImageTime:%d NewestStateInHistory:%d",
-        //                _bufferedImg.GetTimestamp(), _robot.GetStateHistory()->GetNewestTimeStamp());
+        // These messages are too spammy for factory test
+        if(!FACTORY_TEST)
+        {
+          PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
+                         "CapturedImageTime:%d NewestStateInHistory:%d",
+                         _bufferedImg.GetTimestamp(), _robot.GetStateHistory()->GetNewestTimeStamp());
+        }
       }
     }
     else
     {
-      // PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForBufferedImage", "Tick:%zu",
-      //                BaseStationTimer::getInstance()->GetTickCount());
+      if(!FACTORY_TEST)
+      {
+        PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForBufferedImage", "Tick:%zu",
+                       BaseStationTimer::getInstance()->GetTickCount());
+      }
     }
     
     return RESULT_OK;
@@ -751,13 +799,7 @@ namespace Cozmo {
     DEV_ASSERT(_visionSystem != nullptr && _visionSystem->IsInitialized(),
                "VisionComponent.Processor.VisionSystemNotReady");
     
-    
-    const char* threadName = "VisionSystem";
-    #if defined(LINUX) || defined(ANDROID)
-    pthread_setname_np(pthread_self(), threadName);
-    #else
-    pthread_setname_np(threadName);
-    #endif
+    Anki::Util::SetThreadName(pthread_self(), "VisionSystem");
     
     while (_running) {
       
@@ -869,7 +911,7 @@ namespace Cozmo {
       
       while(true == _visionSystem->CheckMailbox(result))
       {
-        if(IsDisplayingProcessedImagesOnly())
+        if(IsDisplayingProcessedImagesOnly() && (kImageCompressQuality > 0))
         {
           // The assumption is that all the chunks of this encoded image have already been sent to
           // the viz manager (e.g. forwarded by the robot message handler)
@@ -915,23 +957,27 @@ namespace Cozmo {
         // Display any debug images left by the vision system
         if(ANKI_DEV_CHEATS)
         {
-          if(kDebugImageCompressQuality > 0)
+          if(kImageCompressQuality > 0)
           {
             // Send any images in the debug image lists to Viz for display
+            // Resize to fit display, but don't if it would make the image larger (to save bandwidth)
+            const bool kOnlyResizeIfSmaller = true;
+            const s32  kDisplayNumRows = 360; // TODO: Get these from VizManager perhaps?
+            const s32  kDisplayNumCols = 640; //   "
             for(auto & debugGray : result.debugImages) {
               debugGray.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
-              // This is the size currently used by Webots
-              debugGray.second.ResizeKeepAspectRatio(360, 640);
-              CompressAndSendImage(debugGray.second, kDebugImageCompressQuality, debugGray.first);
+              debugGray.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
+                                                     Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
+              CompressAndSendImage(debugGray.second, kImageCompressQuality, debugGray.first);
             }
             for(auto & debugRGB : result.debugImageRGBs) {
               debugRGB.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
-              // This is the size currently used by Webots
-              debugRGB.second.ResizeKeepAspectRatio(360, 640);
-              CompressAndSendImage(debugRGB.second, kDebugImageCompressQuality, debugRGB.first);
+              debugRGB.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
+                                                    Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
+              CompressAndSendImage(debugRGB.second, kImageCompressQuality, debugRGB.first);
             }
           }
-          else
+          else if(kImageCompressQuality == -1)
           {
             // Display debug images locally
             for(auto & debugGray : result.debugImages) {
@@ -1433,6 +1479,12 @@ namespace Cozmo {
   template<class PixelType>
   Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality, const std::string& identifier)
   {
+    if(quality == 0)
+    {
+      // Don't send anything
+      return RESULT_OK;
+    }
+    
     if(!_robot.HasExternalInterface()) {
       PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage.NoExternalInterface", "");
       return RESULT_FAIL;
@@ -2240,35 +2292,6 @@ namespace Cozmo {
     {
       // Create ImageRGB object from image buffer
       image_out = Vision::ImageRGB(numRows, numCols, buffer);
-      
-      if (_imageSaveMode != ImageSendMode::Off)
-      {
-        const std::string path = _robot.GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
-        const std::string fullFilename = Util::FileUtils::FullFilePath({path, "images", std::to_string(imageId) + ".png"});
-
-        PRINT_CH_DEBUG("VisionComponent",
-                       "VisionComponent.CaptureImage.SavingImage",
-                       "Saving %s to %s",
-                       (_imageSaveMode == ImageSendMode::SingleShot ? "single image" : "image stream"),
-                       fullFilename.c_str());
-         
-        image_out.Save(fullFilename);
-
-        // Save the undistored image when running factory test
-        if(FACTORY_TEST)
-        {
-          Vision::ImageRGB imgUndistorted(numRows,numCols);
-          cv::undistort(image_out.get_CvMat_(), imgUndistorted.get_CvMat_(),
-                        _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
-                        _camera.GetCalibration()->GetDistortionCoeffs());
-          imgUndistorted.Save("/data/misc/camera/test/" + std::to_string(imageId) + "_undistored.png");
-        }
-
-        if (_imageSaveMode == ImageSendMode::SingleShot)
-        {
-          _imageSaveMode = ImageSendMode::Off;
-        }
-      }
 
       if(kDisplayUndistortedImages)
       {
@@ -2401,12 +2424,23 @@ namespace Cozmo {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
   {
+    if(nullptr != _visionSystem)
+    {
+      const std::string cachePath = _robot.GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
 
-    _imageSaveMode = payload.mode;
-    PRINT_CH_DEBUG("VisionComponent", "VisionComponent.HandleMessage.SaveImages",
-                   "Setting image save mode to %s",
-                   EnumToString(payload.mode));
+      _visionSystem->SetSaveParameters(payload.mode, 
+                                       Util::FileUtils::FullFilePath({cachePath, "images", payload.path}), 
+                                       payload.qualityOnRobot);
 
+      if(payload.mode != ImageSendMode::Off)
+      {
+        EnableMode(VisionMode::SavingImages, true);  
+      }
+
+      PRINT_CH_DEBUG("VisionComponent", "VisionComponent.HandleMessage.SaveImages",
+               "Setting image save mode to %s",
+               EnumToString(payload.mode));
+    }
   }
 
   template<>

@@ -20,25 +20,24 @@ var PlayNowModal = function(){
    * Initialize Play Now Modal
    * @returns {void}
    */
-  function init(){
+  function init() {
+    modal = document.querySelector('#play-now-modal');
+    _registerEvents();
 
     // if this is not a sample project, exit now
     if (!window.isCozmoSampleProject) {
       // user project, so no Play Now modal
       return;
     }
-
-    // This is a sample project.  If it's a featured project, then
-    // we will want to show the play now modal.
-    modal = document.querySelector('#play-now-modal');
+    // Cover the screen with the play now modal, but the contents won't show until the
+    // _show function is called.
+    document.body.classList.add('show-play-now-modal');
 
     // set translations
     setText('#btn-play-now-start .button-label', $t('codeLab.playNowModal.startButtonLabel'));
     setText('#btn-play-now-stop .button-label', $t('codeLab.playNowModal.stopButtonLabel'));
     setText('#btn-play-now-see-inside', $t('codeLab.playNowModal.seeInsideButtonLabel'));
     setText('#play-now-modal .instructions-label', $t('codeLab.playNowModal.instructionsLabel'));
-
-    _registerEvents();
 
     // load featured projects and see if the current project is one of them
     _loadFeaturedProjects();
@@ -97,6 +96,10 @@ var PlayNowModal = function(){
    * @returns {void}
    */
   function _handleCloseButtonClick(e){
+    // Prevent duplicate clicks
+    var closeButton = modal.querySelector('#btn-play-now-close');
+    closeButton.removeEventListener('click', _handleCloseButtonClick);
+
     window.exitWorkspace();
   }
 
@@ -143,9 +146,10 @@ var PlayNowModal = function(){
     for(var i=0; i < projects.length; i++) {
       if (projects[i].ProjectUUID == window.cozmoProjectUUID) {
         _showPlayNowModal(projects[i]);
-        break;
+        return;
       }
     }
+    _closeModal();
   }
 
   /**
@@ -154,6 +158,9 @@ var PlayNowModal = function(){
    * @returns {void}
    */
   function _showPlayNowModal(project) {
+    if (window.isDev()) {
+      _devLoadProject(project);
+    }
     // set the project active and inactive images
     var imgUrlRoot = './images/ui/play-now-modal/icon_' + project.FeaturedProjectImageName.toLowerCase();
     modal.querySelector('.project-img-active').setAttribute('src', imgUrlRoot + '_active.jpg');
@@ -163,7 +170,8 @@ var PlayNowModal = function(){
     setText('#play-now-app-title', $t(project.ProjectName));
     setText('#play-now-modal .instructions-text', $t(project.FeaturedProjectInstructions));
 
-    // show the mdoal
+    // show the modal
+    document.getElementById('play-now-modal').getElementsByClassName('bd')[0].classList.add('modal-ready');
     document.body.classList.add('show-play-now-modal');
   }
 
@@ -171,5 +179,27 @@ var PlayNowModal = function(){
     init: init,
     callbackReceiveFeaturedProjects: callbackReceiveFeaturedProjects
   };
+  
+  function _devLoadProject(project) {
+    var file = 'featuredProjects/' + project.ProjectJSONFile + '_' + window.getUrlVar('locale').toLowerCase() + '.json';
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', file, true );
+    
+    xhr.onload = function () {
+      var p = window.JSON.parse( xhr.responseText );
+      project.projectJSON = JSON.parse(p.ProjectJSON);
+      project.projectUUID = p.ProjectUUID;
+      window.openCozmoProjectJSON(project);
+    };
+    
+    xhr.onerror = function () {
+      //process error
+    };
 
+    var oldLoad = window.onload;
+    window.onload = function (){
+      oldLoad();
+      xhr.send();
+    }; 
+  }
 }();

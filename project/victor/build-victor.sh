@@ -22,6 +22,7 @@ function usage() {
     echo "  -T                      list all cmake targets"
     echo "  -t [target]             build specified cmake target"
     echo "  -e                      export compile commands"
+    echo "  -I                      ignore external dependencies"
 }
 
 #
@@ -35,13 +36,14 @@ RUN_BUILD=1
 CMAKE_TARGET=""
 CMAKE_EXE="${HOME}/.anki/cmake/dist/3.8.1/CMake.app/Contents/bin/cmake"
 EXPORT_COMPILE_COMMANDS=0
+IGNORE_EXTERNAL_DEPENDENCIES=0
 
 CONFIGURATION=Debug
 PLATFORM=android
 CMAKE_GENERATOR=Ninja
 FEATURES=""
 
-while getopts ":x:c:p:t:g:F:hvfdCTe" opt; do
+while getopts ":x:c:p:t:g:F:hvfdCTeI" opt; do
     case $opt in
         h)
             usage
@@ -89,6 +91,9 @@ while getopts ":x:c:p:t:g:F:hvfdCTe" opt; do
         e)
             EXPORT_COMPILE_COMMANDS=1
             ;;
+        I)
+            IGNORE_EXTERNAL_DEPENDENCIES=1
+            ;;
         :)
             echo "Option -${OPTARG} required an argument." >&2
             usage
@@ -104,11 +109,11 @@ shift $(($OPTIND - 1))
 # settings
 #
 
-
-if [ ! -d "${TOPLEVEL}/generated" ] || [ ! -d "${TOPLEVEL}/EXTERNALS" ]; then
-    echo "Missing ${TOPLEVEL}/generated or ${TOPLEVEL}/EXTERNALS"
-    echo "Attempting to run fetch-build-deps.sh"
-    ${TOPLEVEL}/project/victor/scripts/fetch-build-deps.sh
+if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
+  echo "Attempting to run fetch-build-deps.sh"
+  ${TOPLEVEL}/project/victor/scripts/fetch-build-deps.sh
+else
+  echo "Ignore external dependencies"
 fi
 
 PLATFORM=`echo $PLATFORM | tr "[:upper:]" "[:lower:]"`
@@ -150,6 +155,14 @@ for feature in ${FEATURES} ; do
       ;;
   esac
 done
+
+#
+# Enable export flags
+#
+EXPORT_FLAGS=""
+if [ ${EXPORT_COMPILE_COMMANDS} -ne 0 ]; then
+  EXPORT_FLAGS="-DCMAKE_EXPORT_COMPILE_COMMANDS=${EXPORT_COMPILE_COMMANDS}"
+fi
 
 # For non-ninja builds, add generator type to build dir
 BUILD_SYSTEM_TAG=""
@@ -224,16 +237,19 @@ if [ $CONFIGURE -eq 1 ]; then
         androidHAL/BUILD.in \
         animProcess/BUILD.in \
         clad/BUILD.in \
+        cloud/BUILD.in \
         coretech/common/BUILD.in \
         coretech/common/clad/BUILD.in \
         coretech/vision/BUILD.in \
         coretech/vision/clad/BUILD.in \
         coretech/planning/BUILD.in \
         coretech/messaging/BUILD.in \
+        cubeBleClient/BUILD.in \
         engine/BUILD.in \
         engine/tools/BUILD.in \
         lib/util/source/anki/util/BUILD.in \
         lib/util/source/anki/utilUnitTest/BUILD.in \
+        osState/BUILD.in \
         resources/BUILD.in \
         robot/BUILD.in \
         robot/clad/BUILD.in \
@@ -292,7 +308,7 @@ if [ $CONFIGURE -eq 1 ]; then
         -G${CMAKE_GENERATOR} \
         -DCMAKE_BUILD_TYPE=${CONFIGURATION} \
         -DBUILD_SHARED_LIBS=1 \
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=${EXPORT_COMPILE_COMMANDS} \
+        ${EXPORT_FLAGS} \
         ${FEATURE_FLAGS} \
         "${PLATFORM_ARGS[@]}"
         

@@ -11,10 +11,11 @@
  **/
 
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
+
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/events/animationTriggerHelpers.h"
-#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -79,11 +80,11 @@ bool BehaviorPlayAnimSequence::WantsToBeActivatedBehavior(BehaviorExternalInterf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPlayAnimSequence::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlayAnimSequence::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   StartPlayingAnimations(behaviorExternalInterface);
 
-  return Result::RESULT_OK;
+  
 }
 
 
@@ -128,20 +129,17 @@ IActionRunner* BehaviorPlayAnimSequence::GetAnimationAction(BehaviorExternalInte
   if(IsSequenceLoop()){
     numLoops = 1; // just one loop per animation, so we can loop the entire sequence together
   }
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+
   // create sequence with all triggers
-  CompoundActionSequential* sequenceAction = new CompoundActionSequential(robot);
+  CompoundActionSequential* sequenceAction = new CompoundActionSequential();
   for (AnimationTrigger trigger : _animTriggers) {
     const bool interruptRunning = true;
     const u8 tracksToLock = GetTracksToLock(behaviorExternalInterface);
 
-    IAction* playAnim = new TriggerLiftSafeAnimationAction(robot,
-                                                            trigger,
-                                                            numLoops,
-                                                            interruptRunning,
-                                                            tracksToLock);
+    IAction* playAnim = new TriggerLiftSafeAnimationAction(trigger,
+                                                           numLoops,
+                                                           interruptRunning,
+                                                           tracksToLock);
     sequenceAction->AddAction(playAnim);
   }
 
@@ -149,8 +147,7 @@ IActionRunner* BehaviorPlayAnimSequence::GetAnimationAction(BehaviorExternalInte
     const bool interruptRunning = true;
     const u8 tracksToLock = GetTracksToLock(behaviorExternalInterface);
 
-    IAction* playAnim = new PlayAnimationAction(robot,
-                                                name,
+    IAction* playAnim = new PlayAnimationAction(name,
                                                 numLoops,
                                                 interruptRunning,
                                                 tracksToLock);
@@ -186,8 +183,8 @@ void BehaviorPlayAnimSequence::CallToListeners(BehaviorExternalInterface& behavi
 u8 BehaviorPlayAnimSequence::GetTracksToLock(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   if( _supportCharger ) {
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    if( robot.IsOnChargerPlatform() ) {
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    if( robotInfo.IsOnChargerPlatform() ) {
       // we are supporting the charger and are on it, so lock out the body
       return (u8)AnimTrackFlag::BODY_TRACK;
     }

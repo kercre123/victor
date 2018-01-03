@@ -17,6 +17,7 @@ enum uint_8 BehaviorClass {
   BuildPyramidBase,
   CantHandleTallStack,
   CheckForStackAtInterval,
+  ComeHere,
   CubeLiftWorkout,
   Dance,
   DevPettingTestSimple,
@@ -32,7 +33,6 @@ enum uint_8 BehaviorClass {
   ExploreVisitPossibleMarker,
   ExpressNeeds,
   FactoryCentroidExtractor,
-  FactoryTest,
   FeedingEat,
   FeedingSearchForCube,
   FindFaces,
@@ -53,7 +53,6 @@ enum uint_8 BehaviorClass {
   PlayAnim,
   PlayAnimOnNeedsChange,
   PlayAnimWithFace,
-  PlayArbitraryAnim,
 
   PlaypenCameraCalibration,
   PlaypenDistanceSensor,
@@ -70,7 +69,10 @@ enum uint_8 BehaviorClass {
 
   PopAWheelie,
   PounceOnMotion,
+  PounceWithProx,
+  ProxGetToDistance,
   PutDownBlock,
+  PuzzleMaze,
   PyramidThankYou,
   RequestGameSimple,
   RespondPossiblyRoll,
@@ -120,7 +122,8 @@ enum uint_8 BehaviorClass {
   VictorObservingDemo,
   VictorDemoFeeding,
   VictorDemoObservingFaceInteraction,
-  VictorDemoNapping
+  VictorDemoNapping,
+  ObservingOnCharger
 }
 
 
@@ -157,7 +160,6 @@ enum uint_8 BehaviorID {
 
   FPPeekABoo,
   FactoryCentroidExtractor,
-  FactoryTest,
 
   FeedingEat,
   FeedingFindFacesSevere,
@@ -187,6 +189,7 @@ enum uint_8 BehaviorID {
   Hiking_RollCube,
   Hiking_ThinkAboutBeacons,
   Hiking_VisitInterestingEdge,
+  PuzzleMaze,
 
   InteractWithFaces,
   KnockOverCubes,
@@ -228,8 +231,13 @@ enum uint_8 BehaviorID {
   PlaypenWaitToStart,
 
   PopAWheelie,
+  
   PounceOnMotion_Socialize,
   PounceOnMotion_VoiceCommand,
+  PounceWithProx,
+  PounceApproachWithProx,
+  PounceBackupWithProx,
+
   PutDownBlock,
   PutDownBlockNothingToDo,
   PutDownDispatch_LookForFaceAndCube,
@@ -332,6 +340,7 @@ enum uint_8 BehaviorID {
 
   VictorFreeplay,
  
+  VictorCloudComeHere,
   VictorCloudDemoBase,
   VictorCloudDemoAutonomousStub,
   VictorCloudDemoHello,

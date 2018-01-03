@@ -352,9 +352,12 @@ Blockly.Xml.domToWorkspace = function(xml, workspace) {
           block.moveBy(workspace.RTL ? width - blockX : blockX, blockY);
         }
         variablesFirst = false;
-      } else if (name == 'shadow') {
-        goog.asserts.fail('Shadow block cannot be a top-level block.');
-        variablesFirst = false;
+
+      // *** ANKI CHANGE ***
+      // This else case code is causing some scripts to load with errors, such as a greater than operator containing a Cozmo sensor.
+      //} else if (name == 'shadow') {
+        // goog.asserts.fail('Shadow block cannot be a top-level block.');
+        // variablesFirst = false;
       }  else if (name == 'variables') {
         if (variablesFirst) {
           Blockly.Xml.domToVariables(xmlChild, workspace);

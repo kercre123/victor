@@ -64,11 +64,11 @@ class ActionList;
 class BehaviorFactory;
 class BehaviorManager;
 class BehaviorSystemManager;
-class BlockFilter;
 class BlockTapFilterComponent;
 class BlockWorld;
 class CozmoContext;
 class CubeAccelComponent;
+class CubeCommsComponent;
 class DrivingAnimationHandler;
 class FaceWorld;
 class IExternalInterface;
@@ -100,6 +100,7 @@ class ProxSensorComponent;
 class TouchSensorComponent;
 class AnimationComponent;
 class MapComponent;
+class MicDirectionHistory;
 
 namespace Audio {
   class EngineRobotAudioClient;
@@ -216,8 +217,19 @@ public:
     return *_cubeAccelComponent;
   }
 
+  inline CubeCommsComponent& GetCubeCommsComponent() {
+    assert(_cubeCommsComponent);
+    return *_cubeCommsComponent;
+  }
+  inline const CubeCommsComponent& GetCubeCommsComponent() const {
+    assert(_cubeCommsComponent);
+    return *_cubeCommsComponent;
+  }
+  
   inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
   inline MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
+
+  inline const std::string&     GetBehaviorDebugString() const { return _behaviorDebugStr; }
   
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
     assert(_progressionUnlockComponent);
@@ -313,6 +325,9 @@ public:
       
   const Util::RandomGenerator& GetRNG() const;
   Util::RandomGenerator& GetRNG();
+
+  const MicDirectionHistory& GetMicDirectionHistory() const { return *_micDirectionHistory; }
+  MicDirectionHistory&       GetMicDirectionHistory()       { return *_micDirectionHistory; }
   
   // =========== Localization ===========
   
@@ -527,26 +542,12 @@ public:
     
   // =========== Animation Commands =============
 
-  void SetEnabledAnimTracks(u8 enabledAnimTracks) {
-    _enabledAnimTracks = enabledAnimTracks;
-  }
-  
-  void SetAnimationTag(u8 animationTag) {
-    _animationTag = animationTag;
-  }
-
   // Returns true if the robot is currently playing an animation, according
   // to most recent state message. NOTE: Will also be true if the animation
   // is the "idle" animation!
   bool IsAnimating() const;
-    
-  // Returns true iff the robot is currently playing the idle animation.
-  bool IsIdleAnimating() const;
-    
-  // Returns the "tag" of the animation currently playing on the robot
-  u8 GetCurrentAnimationTag() const;
 
-  u8 GetEnabledAnimationTracks() const { return _enabledAnimTracks; }
+  u8 GetEnabledAnimationTracks() const;
   
   // =========== Audio =============
   Audio::EngineRobotAudioClient* GetAudioClient() { return _audioClient.get(); }
@@ -582,22 +583,12 @@ public:
 
   // =========  Block messages  ============
 
-  // Assign which objects the robot should connect to.
-  // Max size of set is ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS.
-  Result ConnectToObjects(const FactoryIDArray& factory_ids);
-  
-  // Returns true if the robot has succesfully connected to the object with the given factory ID
-  bool IsConnectedToObject(FactoryID factoryID) const;
-
-  // Called when messages related to the connection with the objects are received from the robot
-  void HandleConnectedToObject(uint32_t activeID, FactoryID factoryID, ObjectType objectType);
-  void HandleDisconnectedFromObject(uint32_t activeID, FactoryID factoryID, ObjectType objectType);
-
-  // Set whether or not to broadcast to game which objects are available for connection
-  void BroadcastAvailableObjects(bool enable);
-  
   bool WasObjectTappedRecently(const ObjectID& objectID) const;
   
+  // ======== Power button ========
+
+  bool IsPowerButtonPressed() const { return _powerButtonPressed; }
+
   // =========  Other State  ============
   f32 GetBatteryVoltage() const { return _battVoltage; }
       
@@ -665,13 +656,7 @@ public:
   
   // Populate a RobotState message with default values (suitable for sending to the robot itself, e.g. in unit tests)
   static RobotState GetDefaultRobotState();
-  
-  void SetDiscoveredObjects(FactoryID factoryId, ObjectType objectType, int8_t rssi, TimeStamp_t lastDiscoveredTimetamp);
-  ObjectType GetDiscoveredObjectType(FactoryID id);
-  void RemoveDiscoveredObjects(FactoryID factoryId) { _discoveredObjects.erase(factoryId); }
-  const bool GetEnableDiscoveredObjectsBroadcasting() const { return _enableDiscoveredObjectsBroadcasting; }
-  FactoryID GetClosestDiscoveredObjectsOfType(ObjectType type, uint8_t maxRSSI = std::numeric_limits<uint8_t>::max()) const;
-  
+
   RobotToEngineImplMessaging& GetRobotToEngineImplMessaging() { return *_robotToEngineImplMessaging; }
   
   const u32 GetHeadSerialNumber() const { return _serialNumberHead; }
@@ -725,15 +710,14 @@ protected:
   std::unique_ptr<PetWorld>              _petWorld;
  
   std::unique_ptr<PublicStateBroadcaster> _publicStateBroadcaster;
-  
+
+  std::string                            _behaviorDebugStr;
+
   ///////// Audio /////////
   std::unique_ptr<Audio::EngineRobotAudioClient> _audioClient;
 
   // handles planning and path following
   std::unique_ptr<PathComponent> _pathComponent;
-  
-  ///////// Animation /////////
-  AnimationTag      _animationTag                    = kNotAnimatingTag;
   
   std::unique_ptr<DrivingAnimationHandler> _drivingAnimationHandler;
     
@@ -747,6 +731,7 @@ protected:
   std::unique_ptr<CubeLightComponent>     _cubeLightComponent;
   std::unique_ptr<BodyLightComponent>     _bodyLightComponent;
   std::unique_ptr<CubeAccelComponent>     _cubeAccelComponent;
+  std::unique_ptr<CubeCommsComponent>     _cubeCommsComponent;
   std::unique_ptr<RobotGyroDriftDetector> _gyroDriftDetector;
   std::unique_ptr<DockingComponent>       _dockingComponent;
   std::unique_ptr<CarryingComponent>      _carryingComponent;
@@ -792,8 +777,10 @@ protected:
   f32              _leftWheelSpeed_mmps;
   f32              _rightWheelSpeed_mmps;
   
-  bool             _isHeadCalibrated = false;
-  bool             _isLiftCalibrated = false;
+  // We can assume the motors are calibrated by the time
+  // engine connects to robot
+  bool             _isHeadCalibrated = true;
+  bool             _isLiftCalibrated = true;
     
   // Ramping
   bool             _onRamp = false;
@@ -813,7 +800,7 @@ protected:
   f32              _battVoltage              = 5;
   ImageSendMode    _imageSendMode            = ImageSendMode::Off;
   u32              _lastSentImageID          = 0;
-  u8               _enabledAnimTracks        = (u8)AnimTrackFlag::ALL_TRACKS;
+  bool             _powerButtonPressed       = false;
   bool             _isPickedUp               = false;
   bool             _isOnChargerPlatform      = false;
   bool             _isCliffReactionDisabled  = false;
@@ -867,69 +854,13 @@ protected:
   
   ///////// Progression/Skills ////////
   ProgressionUnlockComponent* _progressionUnlockComponent;
-    
-  //////// Block pool ////////
-  BlockFilter* _blockFilter;
   
   //////// Block Taps Filter ////////
   BlockTapFilterComponent* _tapFilterComponent;
-  
-  // Set of desired objects to connect to. Set by BlockFilter.
-  struct ObjectToConnectToInfo {
-    FactoryID factoryID;
-    bool      pending;
-      
-    ObjectToConnectToInfo() {
-      Reset();
-    }
-      
-    void Reset();
-  };
-  std::array<ObjectToConnectToInfo, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS> _objectsToConnectTo;
-
-  // Map of discovered objects and the last time that they were heard from
-  struct ActiveObjectInfo {
-    enum class ConnectionState {
-      Invalid,
-      PendingConnection,
-      Connected,
-      PendingDisconnection,
-      Disconnected
-    };
-    
-    FactoryID       factoryID;
-    ObjectType      objectType;
-    ConnectionState connectionState;
-    uint8_t         rssi;
-    TimeStamp_t     lastDiscoveredTimeStamp;
-    float           lastDisconnectionTime;
-      
-    ActiveObjectInfo() {
-      Reset();
-    }
-      
-    void Reset();
-  };
-  std::unordered_map<FactoryID, ActiveObjectInfo> _discoveredObjects;
-  bool _enableDiscoveredObjectsBroadcasting = false;
-
-  // Vector of currently connected objects by active slot index
-  std::array<ActiveObjectInfo, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS> _connectedObjects;
-  
-  double _lastDisconnectedCheckTime;
-  constexpr static double kDisconnectedCheckDelay = 2.0f; // How often do we check for disconnected objects
-  constexpr static double kDisconnectedDelay = 2.0f;      // How long must be the object disconnected before we really remove it from the list of connected objects
-
-  // Called in Update(), checks if there are objectsToConnectTo that
-  // have been discovered and should be connected to
-  void ConnectToRequestedObjects();
-  
-  // Called during Update(), it checks if objects we have received disconnected messages from should really
-  // be considered disconnected.
-  void CheckDisconnectedObjects();
 
   std::unique_ptr<RobotToEngineImplMessaging> _robotToEngineImplMessaging;
   std::unique_ptr<RobotIdleTimeoutComponent>  _robotIdleTimeoutComponent;
+  std::unique_ptr<MicDirectionHistory>        _micDirectionHistory;
 
   Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                    const TimeStamp_t&   t,
@@ -940,7 +871,10 @@ protected:
   
   float _syncTimeSentTime_sec = 0.0f;
   constexpr static float kMaxSyncTimeAckDelay_sec = 5.0f;
-  
+
+  // Used to calculate tick rate
+  float _prevCurrentTime_sec = 0.0f;
+
   // Send robot's current pose
   Result SendAbsLocalizationUpdate() const;
     
@@ -951,25 +885,9 @@ protected:
   Result SendIMURequest(const u32 length_ms) const;
 
   Result SendAbortAnimation();
-    
-  // =========  Active Object messages  ============
-  void ActiveObjectLightTest(const ObjectID& objectID);  // For testing
   
 }; // class Robot
 
-//
-// Inline Mutators
-//
-  
-inline void Robot::SetDiscoveredObjects(FactoryID factoryId, ObjectType objectType, int8_t rssi, TimeStamp_t lastDiscoveredTimetamp)
-{
-  ActiveObjectInfo& discoveredObject = _discoveredObjects[factoryId];
-  
-  discoveredObject.factoryID = factoryId;
-  discoveredObject.objectType = objectType;
-  discoveredObject.rssi = rssi;
-  discoveredObject.lastDiscoveredTimeStamp = lastDiscoveredTimetamp;
-}
   
 //
 // Inline accessors:
@@ -1016,18 +934,6 @@ inline const f32 Robot::GetLiftAngle() const
 inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
   _rampID = rampID;
   _rampDirection = direction;
-}
-  
-inline u8 Robot::GetCurrentAnimationTag() const {
-  return _animationTag;
-}
-
-inline bool Robot::IsAnimating() const {
-  return _animationTag != 0;
-}
-
-inline bool Robot::IsIdleAnimating() const {
-  return _animationTag == 255;
 }
 
 inline f32 Robot::GetLocalizedToDistanceSq() const {

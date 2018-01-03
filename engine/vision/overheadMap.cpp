@@ -92,11 +92,11 @@ OverheadMap::OverheadMap(const Json::Value& config, const CozmoContext *context)
 {
   int numRows, numCols;
   if (! JsonTools::GetValueOptional(config, "NumRows", numRows)) {
-    PRINT_NAMED_ERROR("OverheadMap.MissingJsonParameter", "Size");
+    PRINT_NAMED_ERROR("OverheadMap.MissingJsonParameter", "NumRows");
     return;
   }
   if (! JsonTools::GetValueOptional(config, "NumCols", numCols)) {
-    PRINT_NAMED_ERROR("OverheadMap.MissingJsonParameter", "Size");
+    PRINT_NAMED_ERROR("OverheadMap.MissingJsonParameter", "NumCols");
     return;
   }
 
@@ -403,8 +403,8 @@ void OverheadMap::SaveMaskedOverheadPixels(const std::string& positiveExamplesFi
                                            const std::string& overheadMapFileName) const
 {
   const std::string path =  _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent,
-                                                                 Util::FileUtils::FullFilePath({"vision",
-                                                                                                "overheadmap"}));
+                                                                        Util::FileUtils::FullFilePath({"vision",
+                                                                                                       "overheadmap"}));
   if (!Util::FileUtils::CreateDirectory(path, false, true)) {
     PRINT_NAMED_ERROR("Overheadmap.SaveMaskedOverheadPixels.DirectoryError", "Error while creating folder %s",
                       path.c_str());

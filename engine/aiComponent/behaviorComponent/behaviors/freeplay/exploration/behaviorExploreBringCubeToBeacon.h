@@ -81,7 +81,7 @@ protected:
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:

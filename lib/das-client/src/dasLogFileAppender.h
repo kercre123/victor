@@ -13,6 +13,7 @@
 #define __DasLogFileAppender_H__
 
 #include "DAS.h"
+#include "DASPrivate.h"
 #include "taskExecutor.h"
 #include <iostream>
 #include <fstream>
@@ -31,11 +32,11 @@ class DasLogFileAppender
 {
 public:
   DasLogFileAppender(const std::string& logDirPath,
-                     size_t maxLogLength,
-                     size_t maxLogFiles,
-                     const DASArchiveFunction& archiveCallback,
-                     const DASUnarchiveFunction& unarchiveCallback,
-                     const std::string& archiveFileExtension);
+                     size_t maxLogLength = kDefaultMaxLogLength,
+                     size_t maxLogFiles = kDasDefaultMaxLogFiles,
+                     const DASArchiveFunction& archiveCallback = DASArchiveFunction{},
+                     const DASUnarchiveFunction& unarchiveCallback = DASUnarchiveFunction{},
+                     const std::string& archiveFileExtension = "");
   
   ~DasLogFileAppender();
   std::string CurrentLogFilePath();
@@ -46,10 +47,8 @@ public:
   void Flush();
   void ConsumeLogFiles(DASLogFileConsumptionBlock ConsumptionBlock);
 
-  static const size_t kDefaultMaxLogLength = 100 * 1024;
   static constexpr const char* kDasLogFileExtension = "das";
   static constexpr const char* kDasInProgressExtension = "das_inprogress";
-  static const size_t kDasDefaultMaxLogFiles = 400;
 
 private:
   bool CreateNewLogFile() const;

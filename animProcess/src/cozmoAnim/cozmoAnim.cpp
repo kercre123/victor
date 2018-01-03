@@ -21,6 +21,9 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+
+#include "osState/osState.h"
+
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
@@ -73,6 +76,8 @@ Result CozmoAnimEngine::Init() {
     PRINT_NAMED_INFO("CozmoEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
   }
 
+  OSState::getInstance()->SetUpdatePeriod(1000);
+
   RobotDataLoader * dataLoader = _context->GetDataLoader();
   dataLoader->LoadConfigData();
   dataLoader->LoadNonConfigData();
@@ -87,9 +92,9 @@ Result CozmoAnimEngine::Init() {
   auto regId = audioMux->RegisterInput( new Audio::EngineRobotAudioInput() );
   
   // Setup Engine Message
-  Messages::Init( *_animationStreamer,
-                  *static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput( regId )),
-                  *(_context.get()) );
+  Messages::Init( _animationStreamer.get(),
+                  static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput( regId )),
+                  _context.get() );
   
   
   
@@ -134,6 +139,7 @@ Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
   Messages::Update();
   
+  OSState::getInstance()->Update();
   _animationStreamer->Update();
   
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS

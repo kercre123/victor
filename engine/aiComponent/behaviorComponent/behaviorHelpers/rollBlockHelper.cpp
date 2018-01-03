@@ -19,6 +19,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/pickupBlockHelper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/placeBlockHelper.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
@@ -26,7 +27,6 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/needsManager.h"
-#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -66,7 +66,7 @@ bool RollBlockHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus RollBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus RollBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // do first update immediately
   _shouldRoll = true;
@@ -77,7 +77,7 @@ BehaviorStatus RollBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& be
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus RollBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus RollBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   return _status;
 }
@@ -88,10 +88,8 @@ void RollBlockHelper::DetermineAppropriateAction(BehaviorExternalInterface& beha
 {
   bool carryingObject = false;
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    carryingObject = robot.GetCarryingComponent().IsCarryingObject();
+    CarryingComponent& carryingComp = behaviorExternalInterface.GetRobotInfo().GetCarryingComponent();
+    carryingObject = carryingComp.IsCarryingObject();
   }
   // If the robot is carrying a block, put it down
   if(carryingObject){
@@ -100,10 +98,8 @@ void RollBlockHelper::DetermineAppropriateAction(BehaviorExternalInterface& beha
     // If the block can't be accessed, pick it up and move it so it can be rolled
     const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
     if(obj != nullptr){
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      const bool canActionRoll = RollObjectAction::CanActionRollObject(robot, obj);
+      DockingComponent& dockComp = behaviorExternalInterface.GetRobotInfo().GetDockingComponent();
+      const bool canActionRoll = RollObjectAction::CanActionRollObject(dockComp, obj);
 
       if(canActionRoll){
         PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.Update.Rolling", "Doing roll action");
@@ -116,11 +112,13 @@ void RollBlockHelper::DetermineAppropriateAction(BehaviorExternalInterface& beha
           
           // If rolling to upright, set the drive to helper approach angle if possible
           f32 uprightApproachAngle_rad;
+          const auto& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
+          const auto& blockWorld = behaviorExternalInterface.GetBlockWorld();
           if(_shouldUpright &&
-             DriveToRollObjectAction::GetRollToUprightApproachAngle(
-                                                    robot,
-                                                    _targetID,
-                                                    uprightApproachAngle_rad)){
+             DriveToRollObjectAction::GetRollToUprightApproachAngle(blockWorld,
+                                                                    robotPose,
+                                                                    _targetID,
+                                                                    uprightApproachAngle_rad)){
                params.useApproachAngle = true;
                params.approachAngle_rad = uprightApproachAngle_rad;
           }
@@ -145,7 +143,7 @@ void RollBlockHelper::DetermineAppropriateAction(BehaviorExternalInterface& beha
                     "RollBlockHelper.Update.NoObj",
                     "Failing helper, object %d is invalid",
                     _targetID.GetValue());
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
     }
   }
 }
@@ -183,7 +181,7 @@ void RollBlockHelper::UnableToRollDelegate(BehaviorExternalInterface& behaviorEx
                                               {DelegateToPutDown(behaviorExternalInterface); return _status;});
 
       delegateProperties.SetOnFailureFunction( [](BehaviorExternalInterface& behaviorExternalInterface)
-                                              {return BehaviorStatus::Failure;});
+                                              {return IHelper::HelperStatus::Failure;});
       DelegateAfterUpdate(delegateProperties);
     }else if(objOnTop != nullptr){
       PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.UnableToRollDelegate.PickingUpObjOnTop",
@@ -198,7 +196,7 @@ void RollBlockHelper::UnableToRollDelegate(BehaviorExternalInterface& behaviorEx
                                               {DelegateToPutDown(behaviorExternalInterface); return _status;});
 
       delegateProperties.SetOnFailureFunction( [](BehaviorExternalInterface& behaviorExternalInterface)
-                                              {return BehaviorStatus::Failure;});
+                                              {return IHelper::HelperStatus::Failure;});
       DelegateAfterUpdate(delegateProperties);
     }else{
       PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.UnableToRollDelegate.CantInteract",
@@ -209,7 +207,7 @@ void RollBlockHelper::UnableToRollDelegate(BehaviorExternalInterface& behaviorEx
     PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.UnableToRollDelegate.NoObj",
                   "Failing helper, object %d is invalid",
                   _targetID.GetValue());
-    _status = BehaviorStatus::Failure;
+    _status = IHelper::HelperStatus::Failure;
   }
 }
   
@@ -223,10 +221,10 @@ void RollBlockHelper::DelegateToPutDown(BehaviorExternalInterface& behaviorExter
                                           [this](BehaviorExternalInterface& behaviorExternalInterface) {
                                             _shouldRoll = true;
                                             DetermineAppropriateAction(behaviorExternalInterface);
-                                            return BehaviorStatus::Running;
+                                            return IHelper::HelperStatus::Running;
                                           });
   delegateProperties.SetOnFailureFunction([](BehaviorExternalInterface& behaviorExternalInterface)
-                                          { return BehaviorStatus::Failure;});
+                                          { return IHelper::HelperStatus::Failure;});
   DelegateAfterUpdate(delegateProperties);
 }
 
@@ -236,7 +234,7 @@ void RollBlockHelper::StartRollingAction(BehaviorExternalInterface& behaviorExte
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
     MarkTargetAsFailedToRoll(behaviorExternalInterface);
-    _status = BehaviorStatus::Failure;
+    _status = IHelper::HelperStatus::Failure;
     return;
   }
   _tmpRetryCounter++;
@@ -244,14 +242,13 @@ void RollBlockHelper::StartRollingAction(BehaviorExternalInterface& behaviorExte
   _shouldRoll = false;
   DriveToRollObjectAction* rollAction = nullptr;
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    rollAction = new DriveToRollObjectAction(robot, _targetID);
+    rollAction = new DriveToRollObjectAction(_targetID);
   }
   
   if( _shouldUpright ) {
-    rollAction->RollToUpright();
+    const Pose3d& pose = behaviorExternalInterface.GetRobotInfo().GetPose();
+    
+    rollAction->RollToUpright(behaviorExternalInterface.GetBlockWorld(), pose);
   }
   if(_params.preDockCallback != nullptr){
     rollAction->SetPreDockCallback(_params.preDockCallback);
@@ -290,7 +287,7 @@ void RollBlockHelper::RespondToRollingResult(ActionResult result, BehaviorExtern
   switch(result){
     case ActionResult::SUCCESS:
     {
-      _status = BehaviorStatus::Complete;
+      _status = IHelper::HelperStatus::Complete;
       break;
     }
     case ActionResult::CANCELLED_WHILE_RUNNING:

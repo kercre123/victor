@@ -83,7 +83,7 @@
 //}
 //  
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//Result BehaviorExploreMarkedCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreMarkedCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 //{
 //  // select borders we want to visit
 //  BorderScoreVector borderGoals;
@@ -123,17 +123,20 @@
 //  }
 //  
 //  // request the action
-//  DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( robot, _currentVantagePoints );
+//  DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( _currentVantagePoints );
 //  _currentActionTag = driveToPoseAction->GetTag();
 //  robot.GetActionList().QueueActionNow(driveToPoseAction);
 //
-//  return Result::RESULT_OK;
+//  
 //}
 //
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreMarkedCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 //{
+//  if(!IsActivated()){
+//    return;
+//  }
 //  // while we are moving towards a vantage point, wait patiently
 //  if ( _currentActionTag != ActionConstants::INVALID_TAG )
 //  {
@@ -154,7 +157,7 @@
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void BehaviorExploreMarkedCube::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreMarkedCube::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 //{
 //  switch(event.GetData().GetTag())
 //  {

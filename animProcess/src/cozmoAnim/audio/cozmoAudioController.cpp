@@ -18,6 +18,7 @@
 #include "audioEngine/soundbankLoader.h"
 #include "clad/audio/audioGameObjectTypes.h"
 #include "cozmoAnim/cozmoAnimContext.h"
+#include "util/console/consoleInterface.h"
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -40,6 +41,11 @@
 #define USE_AUDIO_ENGINE 0
 #endif
 
+namespace {
+static Anki::Cozmo::Audio::CozmoAudioController* sThis = nullptr;
+const std::string kProfilerCaptureFileName    = "VictorProfilerSession.prof";
+const std::string kAudioOutputCaptureFileName = "VictorOutputSession.wav";
+}
 
 namespace Anki {
 namespace Cozmo {
@@ -47,17 +53,43 @@ namespace Audio {
 
 using namespace AudioEngine;
 using Language = Anki::Util::Locale::Language;
-//using ExternalLanguage = GameState::External_Language;
+
 
 #if USE_AUDIO_ENGINE
-// Resolve audio asset file path
-static bool ResolvePathToAudioFile( const std::string&, const std::string&, std::string& );
-
 // Setup Ak Logging callback
 static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlayingId, AudioGameObject );
 #endif
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Console Vars
+CONSOLE_VAR( bool, kWriteAudioProfilerCapture, "CozmoAudioController", false );
+CONSOLE_VAR( bool, kWriteAudioOutputCapture, "CozmoAudioController", false );
+
+// Console Functions
+void SetWriteAudioProfilerCapture( ConsoleFunctionContextRef context )
+{
+  kWriteAudioProfilerCapture = ConsoleArg_Get_Bool( context, "writeProfiler" );
+  if ( sThis != nullptr ) {
+    sThis->WriteProfilerCapture( kWriteAudioProfilerCapture );
+  }
+}
+
+void SetWriteAudioOutputCapture( ConsoleFunctionContextRef context )
+{
+  kWriteAudioOutputCapture = ConsoleArg_Get_Bool( context, "writeOutput" );
+  if ( sThis != nullptr ) {
+    sThis->WriteAudioOutputCapture( kWriteAudioOutputCapture );
+  }
+}
+
+// Register console var func
+CONSOLE_FUNC( SetWriteAudioProfilerCapture, "CozmoAudioController", bool writeProfiler );
+CONSOLE_FUNC( SetWriteAudioOutputCapture, "CozmoAudioController", bool writeOutput );
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// CozmoAudioController
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
 {
@@ -80,11 +112,8 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
     
     // Config Engine
     SetupConfig config{};
-    // Assets
+    // Read/Write Asset path
     config.assetFilePath = assetPath;
-    // Path resolver function
-    config.pathResolver = std::bind(&ResolvePathToAudioFile, assetPath,
-                                    std::placeholders::_1, std::placeholders::_2);
     
     // Cozmo uses default audio locale regardless of current context.
     // Locale-specific adjustments are made by setting GameState::External_Language
@@ -103,9 +132,6 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
     // Start your Engines!!!
     InitializeAudioEngine( config );
 
-    // Setup Engine Logging callback
-    SetLogOutput( ErrorLevel::All, &AudioEngineLogCallback );
-
     // If we're using the audio engine, assert that it was successfully initialized.
     DEV_ASSERT(IsInitialized(), "CozmoAudioController.Initialize Audio Engine fail");
   }
@@ -114,19 +140,54 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
   // The audio engine was initialized correctly, so now let's setup everything else
   if ( IsInitialized() )
   {
+    // Setup Engine Logging callback
+    SetLogOutput( ErrorLevel::All, &AudioEngineLogCallback );
+    
     // Load audio sound bank metadata
     // NOTE: This will slightly change when we implement RAMS
     if (_soundbankLoader.get() != nullptr) {
       _soundbankLoader->LoadDefaultSoundbanks();
     }
+
+    // Use Console vars to controll profiling settings
+    if ( kWriteAudioProfilerCapture ) {
+      WriteProfilerCapture( true );
+    }
+    if ( kWriteAudioOutputCapture ) {
+      WriteAudioOutputCapture( true );
+    }
     
     RegisterCladGameObjectsWithAudioController();
+  }
+  if (sThis == nullptr) {
+    sThis = this;
+  }
+  else {
+    PRINT_NAMED_ERROR("CozmoAudioController", "sThis.NotNull");
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CozmoAudioController::~CozmoAudioController()
 {
+  if (sThis == this) {
+    sThis = nullptr;
+  }
+  else {
+    PRINT_NAMED_ERROR("~CozmoAudioController", "sThis.NotEqualToInstance");
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CozmoAudioController::WriteProfilerCapture( bool write )
+{
+  return AudioEngineController::WriteProfilerCapture( write, kProfilerCaptureFileName );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CozmoAudioController::WriteAudioOutputCapture( bool write )
+{
+  return AudioEngineController::WriteAudioOutputCapture( write, kAudioOutputCaptureFileName );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -151,24 +212,6 @@ void CozmoAudioController::RegisterCladGameObjectsWithAudioController()
 
 
 #if USE_AUDIO_ENGINE
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// TODO: Android will be the primary platform, need to optimize path resolver
-bool ResolvePathToAudioFile( const std::string& dataPlatformResourcePath,
-                            const std::string& in_name,
-                            std::string& out_path )
-{
-  out_path.clear();
-  if (dataPlatformResourcePath.empty()) {
-    return false;
-  }
-
-  out_path = dataPlatformResourcePath + in_name;
-  if ( out_path.empty() ) {
-    return false;
-  }
-  return true;
-}
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Setup Ak Logging callback
 void AudioEngineLogCallback( uint32_t akErrorCode,

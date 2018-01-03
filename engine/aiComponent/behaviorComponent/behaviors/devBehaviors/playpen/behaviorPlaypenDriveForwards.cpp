@@ -33,7 +33,7 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal(BehaviorExterna
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   // Clear and pause cliff sensor component so it doesn't try to update the cliff thresholds
   robot.GetCliffSensorComponent().SetPause(true);
@@ -54,15 +54,14 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal(BehaviorExterna
 
   // Drive fowards some amount until front cliffs trigger, which will cause the action to fail with
   // CANCELLED_WHILE_RUNNING
-  MoveHeadToAngleAction* headToZero = new MoveHeadToAngleAction(robot, 0);
+  MoveHeadToAngleAction* headToZero = new MoveHeadToAngleAction(0);
   // Move lift up a little so it doesn't rub against the ground as we drive off the charger
-  MoveLiftToHeightAction* liftDown = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK + 10);
-  DriveStraightAction* driveForwards = new DriveStraightAction(robot,
-                                                               PlaypenConfig::kDistanceToTriggerFrontCliffs_mm,
+  MoveLiftToHeightAction* liftDown = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK + 10);
+  DriveStraightAction* driveForwards = new DriveStraightAction(PlaypenConfig::kDistanceToTriggerFrontCliffs_mm,
                                                                PlaypenConfig::kCliffSpeed_mmps);
   driveForwards->SetShouldPlayAnimation(false);
   
-  CompoundActionParallel* action = new CompoundActionParallel(robot, {headToZero, liftDown, driveForwards});
+  CompoundActionParallel* action = new CompoundActionParallel({headToZero, liftDown, driveForwards});
   
   _waitingForCliffsState = WAITING_FOR_FRONT_CLIFFS;
   
@@ -98,18 +97,18 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal(BehaviorExterna
   return RESULT_OK;
 }
 
-BehaviorStatus BehaviorPlaypenDriveForwards::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDriveForwards::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // There are times during this behavior that we are not acting (waiting for a message to come from the robot)
   // so we need to keep Running using this empty PlaypenUpdateInternal
-  return BehaviorStatus::Running;
+  return PlaypenStatus::Running;
 }
 
 void BehaviorPlaypenDriveForwards::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   _waitingForCliffsState = NONE;
   _frontCliffsDetected = false;
@@ -119,13 +118,8 @@ void BehaviorPlaypenDriveForwards::OnBehaviorDeactivated(BehaviorExternalInterfa
 
 void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffs(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
   // We have seen the front cliffs fire so we need to drive forwards until the back cliffs fire
-  DriveStraightAction* action = new DriveStraightAction(robot,
-                                                        PlaypenConfig::kDistanceToTriggerBackCliffs_mm,
+  DriveStraightAction* action = new DriveStraightAction(PlaypenConfig::kDistanceToTriggerBackCliffs_mm,
                                                         PlaypenConfig::kCliffSpeed_mmps);
   action->SetShouldPlayAnimation(false);
   
@@ -172,16 +166,16 @@ void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffUndetected(Beh
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   // Drive forwards completely over the cliff section of playpen
-  DriveStraightAction* driveAction = new DriveStraightAction(robot, PlaypenConfig::kDistanceToDriveOverCliff_mm);
+  DriveStraightAction* driveAction = new DriveStraightAction(PlaypenConfig::kDistanceToDriveOverCliff_mm);
   driveAction->SetShouldPlayAnimation(false);
   driveAction->SetMotionProfile(DEFAULT_PATH_MOTION_PROFILE);
   
-  MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
+  MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
   
-  CompoundActionParallel* action = new CompoundActionParallel(robot, {driveAction, liftAction});
+  CompoundActionParallel* action = new CompoundActionParallel({driveAction, liftAction});
   
   DelegateIfInControl(action, [this, &robot]() {
     AddTimer(PlaypenConfig::kTimeToWaitForCliffEvent_ms, [this, &robot]() {
@@ -213,7 +207,7 @@ void BehaviorPlaypenDriveForwards::HandleWhileActivatedInternal(const EngineToGa
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   const EngineToGameTag tag = event.GetData().GetTag();
   if(tag == EngineToGameTag::CliffEvent)

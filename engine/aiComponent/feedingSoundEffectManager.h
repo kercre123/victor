@@ -16,6 +16,7 @@
 
 
 #include "anki/common/basestation/objectIDs.h"
+#include "engine/entity.h"
 
 
 namespace Anki {
@@ -23,9 +24,9 @@ class ObjectID;
 namespace Cozmo {
   
 // forward declarations
-class Robot;
+class IExternalInterface;
   
-class FeedingSoundEffectManager{
+class FeedingSoundEffectManager : public ManageableComponent{
 public:
   // As defined in messageEngineToGame.clad
   enum class ChargeStateChange{
@@ -38,7 +39,7 @@ public:
   
   FeedingSoundEffectManager();
   
-  void NotifyChargeStateChange(Robot& robot,
+  void NotifyChargeStateChange(IExternalInterface& externalInterface,
                                const ObjectID& objID, int currentChargeLevel,
                                ChargeStateChange changeEnumVal);
 
@@ -47,7 +48,7 @@ private:
   int _dominantChargeLevel;
   ChargeStateChange _dominantChargeChange;
   
-  void ResetChargeSound(Robot& robot);
+  void ResetChargeSound(IExternalInterface& externalInterface);
   
 };
   

@@ -19,6 +19,7 @@ function usage()
     echo "${SCRIPT_NAME} [OPTIONS] <ASSETS_BUILD_DIR>"
     echo "  -h          print this message"
     echo "  -f          force-push assets to device"
+    echo "  -x          remove all assets bundles from device"
     echo "${SCRIPT_NAME} with no arguments lists the available local assets"
 }
 
@@ -26,9 +27,10 @@ function usage()
 # defaults
 #
 FORCE_PUSH_ASSETS=0
+REMOVE_ALL_ASSETS=0
 : ${INSTALL_ROOT:="/data/data/com.anki.cozmoengine"}
 
-while getopts ":hf" opt; do
+while getopts ":hfx" opt; do
   case ${opt} in
     h )
       usage
@@ -36,6 +38,9 @@ while getopts ":hf" opt; do
       ;;
     f )
       FORCE_PUSH_ASSETS=1
+      ;;
+    x )
+      REMOVE_ALL_ASSETS=1
       ;;
     \? )
       usage
@@ -45,6 +50,7 @@ while getopts ":hf" opt; do
 done
                                                                                                     
 cd "${SCRIPT_PATH}"
+shift $((OPTIND -1))
 
 
 #
@@ -53,7 +59,7 @@ cd "${SCRIPT_PATH}"
 if [ $# -ne 0 ]; then
     ASSETSDIR="${@: -1}" # last argument
 else
-    ASSETDIRS=($(find ${TOPLEVEL}/_build -path '**/assets/cozmo_assets.ref'))
+    ASSETDIRS=($(find ${TOPLEVEL}/_build/android -path '**/assets/cozmo_assets.ref'))
     if [ "${#ASSETDIRS[@]}" -eq 1 ]; then
         ASSETSDIR=$(dirname "${ASSETDIRS[0]}")
     else
@@ -61,7 +67,7 @@ else
         echo ""
         echo "List of asset build dirs (new -> old)"
         # find asset dirs
-        ASSETDIRS=($(find ${TOPLEVEL}/_build -path '**/assets/cozmo_assets.ref'))
+        ASSETDIRS=($(find ${TOPLEVEL}/_build/android -path '**/assets/cozmo_assets.ref'))
         if [ "${#ASSETDIRS[@]}" -eq 0 ]; then
             exit 1
         fi
@@ -101,8 +107,12 @@ DEVICE_ASSET_TMP_DIR="$DEVICE_ASSET_ROOT_DIR/_tmp"
 # source adb env & helper functions
 source android_env.sh
 
+
+# delete all old bundles from asset folder if REMOVE_ALL_ASSETS=1
+if [ $REMOVE_ALL_ASSETS -eq 1 ]; then
+  $ADB shell rm -rf ${DEVICE_ASSET_ROOT_DIR}
 # blow away current assets folder to force re-push if FORCE_PUSH_ASSETS=1
-if [ $FORCE_PUSH_ASSETS -eq 1 ]; then
+elif [ $FORCE_PUSH_ASSETS -eq 1 ]; then
   $ADB shell rm -rf ${DEVICE_ASSET_DIR}
 fi
 

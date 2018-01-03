@@ -24,6 +24,8 @@ namespace Cozmo {
     LimitedExposure,
     DetectingLaserPoints,
     BuildingOverheadMap,
+    Benchmarking,
+    SavingImages,
     Count
   }
       

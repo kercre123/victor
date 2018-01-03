@@ -30,7 +30,9 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   private WifiInstructionsModal _WifiInstructionsModalInstance = null;
 
   [SerializeField]
-  private GameObject _WifiAnimationsPrefab;
+  private Anki.Assets.GameObjectDataLink _WifiAnimationsPrefabData;
+  private GameObject _WifiAnimationsPrefab = null;
+  private GameObject _WifiAnimationsInstance = null;
 
   private PingStatus _PingStatus;
 
@@ -43,9 +45,6 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
     _GetACozmoButton.Initialize(HandleGetACozmoButton, "get_a_cozmo_button", "search_for_cozmo_failed_screen");
     RobotEngineManager.Instance.AddCallback<DeviceDataMessage>(HandleDeviceDataMessage);
     RobotEngineManager.Instance.SendRequestDeviceData();
-
-    GameObject wifiAnimations = GameObject.Instantiate(_WifiAnimationsPrefab);
-    wifiAnimations.transform.SetParent(transform, false);
 
     Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Error);
 
@@ -69,6 +68,9 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
     }
 
     DasTracker.Instance.TrackSearchForCozmoFailed();
+
+    Anki.Assets.AssetBundleManager.Instance.LoadAssetBundleAsync(_WifiAnimationsPrefabData.AssetBundle,
+                                                                 HandleWifiAnimationAssetBundleLoaded);
   }
 
   // Set up our BuildVersion to be based on the DeviceData received
@@ -92,6 +94,7 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
     }
     RobotEngineManager.Instance.RemoveCallback<DeviceDataMessage>(HandleDeviceDataMessage);
     Anki.Assets.AssetBundleManager.Instance.UnloadAssetBundle(_WifiInstructionsModalPrefabData.AssetBundle);
+    Anki.Assets.AssetBundleManager.Instance.UnloadAssetBundle(_WifiAnimationsPrefabData.AssetBundle);
   }
 
   private void HandleGetACozmoButton() {
@@ -123,6 +126,7 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
     }
   }
 
+  #region WifiModal
   private void HandleWifiModalAssetBundleLoaded(bool assetBundleLoadSuccess) {
     if (assetBundleLoadSuccess) {
       if (_WifiInstructionsModalPrefab == null) {
@@ -159,4 +163,32 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
     _WifiInstructionsModalInstance = (WifiInstructionsModal)newModal;
     _WifiInstructionsModalInstance.ModalClosedWithCloseButtonOrOutside += QuitFlow;
   }
+  #endregion
+
+  #region WifiAnimations
+  private void HandleWifiAnimationAssetBundleLoaded(bool assetBundleLoadSuccess) {
+    if (assetBundleLoadSuccess) {
+      if (_WifiAnimationsPrefab == null) {
+        _WifiAnimationsPrefabData.LoadAssetData(HandleWifiAnimationPrefabLoaded);
+      }
+      else {
+        CreateWifiAnimations();
+      }
+    }
+  }
+
+  private void HandleWifiAnimationPrefabLoaded(GameObject loadedPrefab) {
+    if (loadedPrefab != null) {
+      _WifiAnimationsPrefab = loadedPrefab;
+      CreateWifiAnimations();
+    }
+  }
+
+  private void CreateWifiAnimations() {
+    if (_WifiAnimationsInstance == null) {
+      _WifiAnimationsInstance = GameObject.Instantiate(_WifiAnimationsPrefab);
+      _WifiAnimationsInstance.transform.SetParent(transform, false);
+    }
+  }
+  #endregion
 }

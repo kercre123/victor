@@ -1,11 +1,11 @@
 ﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
+// Meant for use with an empty Image (CozmoImage, Image, RawImage). Lerps pixel color linearly 
+// between _LeftColor and _RightColor from - you guessed it - left to right.
 Shader "UI/Cozmo/HorizontalGradientUIShader"
 {
   Properties 
   {
-    // Unity yells if we don't have _MainTex even if we don't use it
-    _MainTex ("Base (RGB)", 2D) = "white" {}
     _LeftColor ("Left Color", Color) = (1,1,1,1)
     _RightColor ("Right Color", Color) = (0,0,0,1)
   }
@@ -14,7 +14,7 @@ Shader "UI/Cozmo/HorizontalGradientUIShader"
     Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
     Cull Off
     ZWrite Off
-	Blend SrcAlpha OneMinusSrcAlpha 
+	  Blend SrcAlpha OneMinusSrcAlpha 
 
     Pass 
     {
@@ -36,11 +36,16 @@ Shader "UI/Cozmo/HorizontalGradientUIShader"
       {
         v2f o;
         o.pos = UnityObjectToClipPos (v.vertex);
+
+        // Map vertex color based on x value
         o.col = lerp(_LeftColor,_RightColor, v.texcoord.x );
+
         return o;
       }
+
       float4 frag (v2f i) : COLOR 
       {
+        // Color automatically lerps from vert to vert; no need to do anything
         return i.col;
       }
       ENDCG

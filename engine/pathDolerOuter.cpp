@@ -119,6 +119,7 @@ void PathDolerOuter::Dole(size_t numToDole)
       const Planning::PathSegmentDef::s_turn* t = &(path_.GetSegmentConstRef(i).GetDef().turn);
       m.x_center_mm = t->x;
       m.y_center_mm = t->y;
+      m.startRad  = t->startAngle;
       m.targetRad = t->targetAngle;
       m.angleTolerance = t->angleTolerance;
       m.speed.target = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetTargetSpeed();

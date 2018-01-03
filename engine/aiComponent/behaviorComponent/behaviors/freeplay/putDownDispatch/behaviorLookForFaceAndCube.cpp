@@ -16,9 +16,9 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
@@ -105,24 +105,22 @@ void BehaviorLookForFaceAndCube::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorLookForFaceAndCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookForFaceAndCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting to look for face at center");
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  _startingBodyFacing_rad = robot.GetPose().GetWithRespectToRoot().GetRotationAngle<'Z'>();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  _startingBodyFacing_rad = robotInfo.GetPose().GetWithRespectToRoot().GetRotationAngle<'Z'>();
   _currentSidePicksDone = 0;
   _currentState = State::S0FaceOnCenter;
   _verifiedFaces.clear();
   _isVerifyingFace = false;
   
-  CompoundActionParallel* initialActions = new CompoundActionParallel(robot);
+  CompoundActionParallel* initialActions = new CompoundActionParallel();
 
   // lift down
   {
-    IAction* liftDownAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
+    IAction* liftDownAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
     initialActions->AddAction( liftDownAction );
   }
   
@@ -142,11 +140,11 @@ Result BehaviorLookForFaceAndCube::OnBehaviorActivated(BehaviorExternalInterface
   // look here
   DelegateIfInControl( initialActions, &BehaviorLookForFaceAndCube::TransitionToS1_FaceOnLeft );
   
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorLookForFaceAndCube::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
+/**void BehaviorLookForFaceAndCube::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // reset side picks done because we always switch to next state
   _currentSidePicksDone = 0;
@@ -160,7 +158,7 @@ Result BehaviorLookForFaceAndCube::ResumeInternal(BehaviorExternalInterface& beh
   ResumeCurrentState(behaviorExternalInterface);
 
   return RESULT_OK;
-}
+}**/
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookForFaceAndCube::ResumeCurrentState(BehaviorExternalInterface& behaviorExternalInterface)
@@ -299,15 +297,13 @@ void BehaviorLookForFaceAndCube::CancelActionAndVerifyFace(BehaviorExternalInter
   const bool allowCallbacks = false;
   CancelDelegates(allowCallbacks);
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction( new TurnTowardsFaceAction(robot, observedFace, M_PI_F) );
+  SmartFaceID smartID = behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(observedFace);
+  CompoundActionSequential* action = new CompoundActionSequential();
+  action->AddAction( new TurnTowardsFaceAction(smartID, M_PI_F) );
 
   const bool isTrackingOnly = (observedFace < 0);
   if( isTrackingOnly ) {    
-    action->AddAction( new WaitForImagesAction(robot, kNumFramesToWaitForTrackingOnlyFace) );
+    action->AddAction( new WaitForImagesAction(kNumFramesToWaitForTrackingOnlyFace) );
     // note that if this turns into a real face, it may trigger another "turn towards" for that face ID
   }
   else {
@@ -316,7 +312,7 @@ void BehaviorLookForFaceAndCube::CancelActionAndVerifyFace(BehaviorExternalInter
     // _after_ the turn to action completes, because we may collect data while turning, but I'm lazy
     auto* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(observedFace);
     if( facePtr && !facePtr->HasName() ) {
-      action->AddAction( new WaitForImagesAction(robot, kNumFramesToWaitForUnNamedFace) );
+      action->AddAction( new WaitForImagesAction(kNumFramesToWaitForUnNamedFace) );
     }
   }
 
@@ -496,11 +492,8 @@ IAction* BehaviorLookForFaceAndCube::CreateBodyAndHeadTurnAction(BehaviorExterna
   // [min,max] range for random head angle turn
   const Radians headTargetAngleAbs_rad = GetRNG().RandDblInRange(headAbsoluteMin_rad.ToDouble(), headAbsoluteMax_rad.ToDouble());
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // create proper action for body & head turn
-  PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
+  PanAndTiltAction* turnAction = new PanAndTiltAction(bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
   turnAction->SetMaxPanSpeed ( bodyTurnSpeed_radPerSec.ToDouble() );
   turnAction->SetMaxTiltSpeed( headTurnSpeed_radPerSec.ToDouble() );
 

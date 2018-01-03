@@ -55,7 +55,7 @@ int main(int argc, const char* argv[])
       }
     }
 
-    //auto end = std::chrono::steady_clock::now();
+    auto end = std::chrono::steady_clock::now();
 #ifdef HAL_NOT_PROVIDING_CLOCK
     auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::chrono::duration<double, std::micro> sleepTime = std::chrono::milliseconds(5) - elapsed;
@@ -63,7 +63,7 @@ int main(int argc, const char* argv[])
     ///printf("Main tic: %lld, Sleep time: %f us\n", elapsed.count(), sleepTime.count());
 #endif
     //printf("TS: %d\n", Anki::Cozmo::HAL::GetTimeStamp() );
-    //start = end;
+    start = end;
 
 
     if (shutdownSignal != 0 && --shutdownCounter == 0) {

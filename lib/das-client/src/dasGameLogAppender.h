@@ -43,7 +43,7 @@ public:
   void flush();
   static constexpr const char* kLogFileName = "dasMessages.csv";
   static constexpr const char* kCsvHeaderRow =
-    "ts,tid,level,event,value,data,phys,phone,unit,app,user,apprun,game,group,messv";
+    "ts,tid,level,event,value,data,phys,phone,unit,app,user,apprun,game,group,session,messv";
 private:
   std::string _gameLogDirPath;
   TaskExecutor _loggingQueue;

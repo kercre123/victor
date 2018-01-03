@@ -12,12 +12,6 @@
   "unlockable.OSNotSupported.Description" : {
     "translation" : "コードラボはAndroid{0}以降が必要です。"
   },
-  "unlockable.Mystery.Title" : {
-    "translation" : "ロックされたしぐさ"
-  },
-  "unlockable.Mystery.Description" : {
-    "translation" : "COZMOのプレイメーターを満たすと、その日のプレイトークンを獲得できます。トークンを獲得すると、エナジーボールやトリックなどのご褒美が詰まったボーナスボックスのロックが解除されます！"
-  },
   "unlockable.FistBump.Title" : {
     "translation" : "グータッチ"
   },
@@ -34,7 +28,7 @@
     "translation" : "いないいないばあ"
   },
   "unlockable.PeekABoo.Description" : {
-    "translation" : "Cozmoと一緒に「いないいないばあ」で遊びましょう！両手で自分の顔を隠した後に、両手を外し顔を見せてCozmoをビックリさせます。"
+    "translation" : "COZMOと一緒に「いないいないばあ」で遊びましょう！両手で自分の顔を隠した後に、両手を外し顔を見せてCOZMOをビックリさせます。"
   },
   "unlockable.PeekABoo.SparkButtonDescription" : {
     "translation" : "タップしてCOZMOにいないいないばあをします。"
@@ -58,7 +52,7 @@
     "translation" : "キープアウェイ"
   },
   "unlockable.CubePounce.Description" : {
-    "translation" : "このトリックで、Cozmoはキープアウェイの遊び方を学習します。これは反射神経と反応時間を競うゲームです。"
+    "translation" : "このトリックで、COZMOはキープアウェイの遊び方を学習します。これは反射神経と反応時間を競うゲームです。"
   },
   "unlockable.FaceEnrollment.Title" : {
     "translation" : "おぼえる"
@@ -70,7 +64,7 @@
     "translation" : "メモリーマッチ"
   },
   "unlockable.MemoryMatch.Description" : {
-    "translation" : "このトリックで、Cozmoはメモリーマッチの遊び方を学習します。"
+    "translation" : "このトリックで、COZMOはメモリーマッチの遊び方を学習します。"
   },
   "unlockable.SpeedTap.Title" : {
     "translation" : "クイックタップ"
@@ -106,7 +100,7 @@
     "translation" : "つむ"
   },
   "unlockable.CubeStackAction.Description" : {
-    "translation" : "このトリックで、Cozmoは2つのキューブを使って山を作ることができるようになります。"
+    "translation" : "このトリックで、COZMOは2つのキューブを使って山を作ることができるようになります。"
   },
   "unlockable.CubeStackAction.SparkedStateDescription" : {
     "translation" : "COZMOがキューブの山を作るのを見てください。"
@@ -196,7 +190,43 @@
     "translation" : "キューブガード"
   },
   "unlockable.GuardDog.Description" : {
-    "translation" : "COZMOの3つのキューブが近くにあると、COZMOはキューブを守りながら寝てしまうことがあります。COZMOを起こさないように注意して、キューブを裏返しましょう。"
+    "translation" : "COZMOは3つのキューブが近くにあると、キューブを守りながら寝てしまうことがあります。COZMOを起こさないように注意して、キューブを裏返しましょう。"
+  },
+  "unlockable.TrackLaser.Title" : {
+    "translation" : "レーザーチェイサー"
+  },
+  "unlockable.TrackLaser.Description" : {
+    "translation" : "あのレーザーを追いかけろ！COZMOの前にレーザーポインターを照射して、COZMOを導くことができます。"
+  },
+  "unlockable.TrackLaser.SparkButtonDescription" : {
+    "translation" : "タップしてCOZMOにレーザーを追いかけさせましょう。"
+  },
+  "unlockable.TrackLaser.SparkedStateDescription" : {
+    "translation" : "COZMOは飽きるまでレーザーを追いかけます。"
+  },
+  "unlockable.CozmoSings.Title" : {
+    "translation" : "COZMOが歌う"
+  },
+  "unlockable.CozmoSings.DescriptionFirstLine" : {
+    "translation" : "COZMOが幸せなとき、世界を探検しながら歌を歌います。"
+  },
+  "unlockable.CozmoSings.DescriptionSecondLine" : {
+    "translation" : "COZMOが歌っている最中にキューブをゆさぶるとCOZMOの声を変えることができます。"
+  },
+  "unlockable.CozmoSings.ButtonPromptTitle" : {
+    "translation" : "ボタンをタップし"
+  },
+  "unlockable.CozmoSings.ButtonPromptDescription" : {
+    "translation" : "COZMOの歌を見てみます"
+  },
+  "unlockable.CozmoSings.ButtonText" : {
+    "translation" : "COZMOのプレイリスト"
+  },
+  "unlockable.CozmoSings.ModalTitle" : {
+    "translation" : "COZMOの歌"
+  },
+  "unlockable.CozmoSings.LockedSongTitle" : {
+    "translation" : "？？？？"
   },
   "sparks.Sparked" : {
     "translation" : "COZMOはエナジースパーク状態になりました："
@@ -214,7 +244,7 @@
     "translation" : "COZMOがエナジースパーク状態になりました！"
   },
   "sparks.Spark.ConfirmQuit.Description" : {
-    "translation" : "Cozmoが完了する前に離れると、Cozmoはエナジースパーク状態でなくなります。"
+    "translation" : "COZMOが完了する前に離れると、COZMOはエナジースパーク状態でなくなります。"
   },
   "sparks.NotEnoughSparks.Title" : {
     "translation" : "エナジーボールが足りません"

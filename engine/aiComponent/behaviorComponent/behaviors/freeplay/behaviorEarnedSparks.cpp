@@ -17,7 +17,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/needsSystem/needsManager.h"
-#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -48,23 +47,10 @@ bool BehaviorEarnedSparks::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorEarnedSparks::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEarnedSparks::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   const AnimationTrigger animTrigger = AnimationTrigger::EarnedSparks;
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, animTrigger));
-
-  return RESULT_OK;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorEarnedSparks::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  // Don't allow resuming
-  return RESULT_FAIL;
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(animTrigger));
 }
 
 

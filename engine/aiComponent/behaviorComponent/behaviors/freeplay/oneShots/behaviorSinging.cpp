@@ -15,8 +15,9 @@
 // TODO: VIC-24 - Migrate Cozmo Sings to Victor - Fix Audio Game Object
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorSinging.h"
 
-#include "engine/activeObject.h"
 #include "engine/actions/animActions.h"
+#include "engine/activeObject.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubeAccelComponent.h"
@@ -24,13 +25,11 @@
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/audio/audioEventTypes.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -152,16 +151,16 @@ bool BehaviorSinging::WantsToBeActivatedBehavior(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  // Tell Wwise to switch to the specific SwitchGroup (80/100/120bpm)
-  // and a specific switch in the group (song)
-  robot.GetAudioClient()->PostSwitchState(_audioSwitchGroup,
-                                          _audioSwitch,
-                                          AudioMetaData::GameObjectType::Default /* FIXME: Not correct game object */);
+  if(ANKI_VERIFY(behaviorExternalInterface.HasRobotAudioClient(), 
+                 "BehaviorSinging.OnBehaviorActivated.MissingAudioClient","")){
+    // Tell Wwise to switch to the specific SwitchGroup (80/100/120bpm)
+    // and a specific switch in the group (song)
+    behaviorExternalInterface.GetRobotAudioClient().PostSwitchState(_audioSwitchGroup,
+                                                                     _audioSwitch,
+                                                                     AudioMetaData::GameObjectType::Default /* FIXME: Not correct game object */);
+  }
 
   // Clear listeners and averages
   _cubeAccelListeners.clear();
@@ -192,7 +191,7 @@ Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
     // when shaking is detected
     std::shared_ptr<CubeAccelListeners::ICubeAccelListener> listener;
     listener.reset(new CubeAccelListeners::ShakeListener(0.5, 2.5, 3.9, shakeDetected));
-    robot.GetCubeAccelComponent().AddListener(objectID, listener);
+    behaviorExternalInterface.GetCubeAccelComponent().AddListener(objectID, listener);
     
     // Store the listener so we can remove it when the behavior ends
     // TODO Add SmartAddCubeAccelListener/SmartRemoveCubeAccelListener to base class
@@ -200,10 +199,10 @@ Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
   }
   
   // Setup the only action this behavior does, three sequential animations
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(new TriggerAnimationAction(robot, kGetInTrigger));
-  action->AddAction(new TriggerAnimationAction(robot, _songAnimTrigger));
-  action->AddAction(new TriggerAnimationAction(robot, kGetOutTrigger));
+  CompoundActionSequential* action = new CompoundActionSequential();
+  action->AddAction(new TriggerAnimationAction(kGetInTrigger));
+  action->AddAction(new TriggerAnimationAction(_songAnimTrigger));
+  action->AddAction(new TriggerAnimationAction(kGetOutTrigger));
   DelegateIfInControl(action, [this](const ActionResult& res) {
     if(res == ActionResult::SUCCESS)
     {
@@ -211,14 +210,16 @@ Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
       NeedActionCompleted(NeedsActionId::CozmoSings);
     }
   });
-  
-  return RESULT_OK;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus BehaviorSinging::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSinging::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // Figure out which object was, on average, shaken the most this tick
   float mostShakenObjectAverage = 0;
   for(auto& objectShakeAverage : _objectShakeAverages)
@@ -242,14 +243,13 @@ BehaviorStatus BehaviorSinging::UpdateInternal_WhileRunning(BehaviorExternalInte
   _vibratoScaleFilt = vibratoScale * kVibratoLowPassCoeff +
                       _vibratoScaleFilt * (1.f-kVibratoLowPassCoeff);
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  // Post the filtered vibrato scale to wwise
-  robot.GetAudioClient()->PostParameter(kVibratoParam,
-                                        _vibratoScaleFilt,
-                                        AudioMetaData::GameObjectType::Default /* FIXME: Not correct game object */);
-  
+  if(behaviorExternalInterface.HasRobotAudioClient()){
+    auto& audioClient = behaviorExternalInterface.GetRobotAudioClient();
+    // Post the filtered vibrato scale to wwise
+    audioClient.PostParameter(kVibratoParam,
+                              _vibratoScaleFilt,
+                              AudioMetaData::GameObjectType::Default /* FIXME: Not correct game object */);
+  }
   // Using filtered vibrato scale to determine when shaking starts
   // since it is already smoothed by the low pass filter and is just as representative
   // of the amount the cube is being shaken as mostShakenObjectAverage is
@@ -268,7 +268,7 @@ BehaviorStatus BehaviorSinging::UpdateInternal_WhileRunning(BehaviorExternalInte
   {
     const TimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     
-    const char* song = EnumToString(GetID());
+    const char* song = BehaviorTypesWrapper::BehaviorIDToString(GetID());
     const TimeStamp_t durationOfShake_ms = curTime_ms - _cubeShakingStartTime_ms;
     
     // If the shake was longer than 500 ms then log event with the shake duration and song
@@ -283,24 +283,24 @@ BehaviorStatus BehaviorSinging::UpdateInternal_WhileRunning(BehaviorExternalInte
     }
 
     _cubeShakingStartTime_ms = 0;
-  }
-  
-  return (IsControlDelegated() ? BehaviorStatus::Running : BehaviorStatus::Complete);
+  }  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSinging::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  robot.GetAudioClient()->PostParameter(kVibratoParam,
-                                        0,
-                                        AudioMetaData::GameObjectType::Default /* FIXME: Not correct game object */);
+  if(behaviorExternalInterface.HasRobotAudioClient()){
+    auto& audioClient = behaviorExternalInterface.GetRobotAudioClient();
+    audioClient.PostParameter(kVibratoParam,
+                              0,
+                              AudioMetaData::GameObjectType::Default /* FIXME: Not correct game object */);
+  }
 
   // Remove all our listeners
   for(auto iter = _cubeAccelListeners.begin(); iter != _cubeAccelListeners.end();)
   {
-    const bool wasRemoved = robot.GetCubeAccelComponent().RemoveListener(iter->first, iter->second);
+    const bool wasRemoved = behaviorExternalInterface.GetCubeAccelComponent().RemoveListener(iter->first, iter->second);
     DEV_ASSERT(wasRemoved, "BehaviorSinging.StopInternal.RemoveListenerFailed");
     
     // We should be the only thing that has a shared_ptr pointing to our CubeAccelListeners

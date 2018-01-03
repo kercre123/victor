@@ -61,7 +61,7 @@ private:
 REGISTER_COZMO_SIM_TEST_CLASS(CST_PickUpBlockThenSeeDropped);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Implemenation
+// Implementation
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void CST_PickUpBlockThenSeeDropped::DropCube()

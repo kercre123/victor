@@ -17,11 +17,11 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/feedingSoundEffectManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/components/cubeLightComponent.h"
-#include "engine/robot.h"
 
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -44,11 +44,11 @@ enum class ChargeState{
 
 #define CONSOLE_GROUP "Activity.Feeding"
   
-CONSOLE_VAR(f32, kTimeBetweenShakes_s,            CONSOLE_GROUP, 0.1f);
+CONSOLE_VAR(f32, kTimeBetweenShakes_s,            CONSOLE_GROUP, 0.07f);
 CONSOLE_VAR(f32, kTimeBeforeStartLosingCharge_s,  CONSOLE_GROUP, 1.0f);
 CONSOLE_VAR(f32, kTimeBetweenLoosingCharge_s,     CONSOLE_GROUP, 0.1f);
 CONSOLE_VAR(f32, kChargeLevelToFillSide,          CONSOLE_GROUP, 4.0f);
-CONSOLE_VAR(f32, kShakeMinThresh,                 CONSOLE_GROUP, 1500.f);
+CONSOLE_VAR(f32, kShakeMinThresh,                 CONSOLE_GROUP, 1200.f);
 
 // Constants for the Shake Component MovementListener:
 const float kHighPassFiltCoef    = 0.4f;
@@ -205,13 +205,10 @@ void FeedingCubeController::ClearController(BehaviorExternalInterface& behaviorE
   _cubeStateTracker->_desiredAnimationTrigger = CubeAnimationTrigger::Count;
   SetCubeLights(behaviorExternalInterface);
   
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
+  if(behaviorExternalInterface.HasCubeAccelComponent()){
     // Re-set shake listener
-    robot.GetCubeAccelComponent().RemoveListener(_cubeStateTracker->_id,
-                                                 _cubeStateTracker->_cubeMovementListener);
+    behaviorExternalInterface.GetCubeAccelComponent().RemoveListener(_cubeStateTracker->_id,
+                                                                     _cubeStateTracker->_cubeMovementListener);
   }
   _cubeStateTracker->_cubeMovementListener.reset();
 }
@@ -409,22 +406,19 @@ void FeedingCubeController::StartListeningForShake(BehaviorExternalInterface& be
   auto movementDetectedCallback = [this, &behaviorExternalInterface] (const float movementScore) {
     ShakeDetected(behaviorExternalInterface, movementScore);
   };
-  
-  auto listener = std::make_shared<CubeAccelListeners::ShakeListener>(kHighPassFiltCoef,
-                                                                      kHighPassLowerThresh,
-                                                                      kHighPassUpperThresh,
-                                                                      movementDetectedCallback);
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    
-    robot.GetCubeAccelComponent().AddListener(_cubeStateTracker->_id, listener);
+  if(behaviorExternalInterface.HasCubeAccelComponent()){    
+    auto listener = std::make_shared<CubeAccelListeners::ShakeListener>(kHighPassFiltCoef,
+                                                                        kHighPassLowerThresh,
+                                                                        kHighPassUpperThresh,
+                                                                        movementDetectedCallback);
+    behaviorExternalInterface.GetCubeAccelComponent().AddListener(_cubeStateTracker->_id, listener);
+
+    DEV_ASSERT(_cubeStateTracker->_cubeMovementListener.get() == nullptr,
+             "FeedingCubeController.StartListeningForShake.PreviousListenerAlreadySetup");
+    _cubeStateTracker->_cubeMovementListener = listener;
   }
   
-  DEV_ASSERT(_cubeStateTracker->_cubeMovementListener.get() == nullptr,
-             "FeedingCubeController.StartListeningForShake.PreviousListenerAlreadySetup");
-  _cubeStateTracker->_cubeMovementListener = listener;
+
 }
 
 
@@ -476,12 +470,14 @@ void FeedingCubeController::ShakeDetected(BehaviorExternalInterface& behaviorExt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void FeedingCubeController::SetCubeLights(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  if(!behaviorExternalInterface.HasCubeLightComponent()){
+    return;
+  }
+
+  auto& cubeLightComp = behaviorExternalInterface.GetCubeLightComponent();
   
   // If engine isn't in control of lights, the current animation will always be count
-  if(!robot.GetCubeLightComponent().CanEngineSetLightsOnCube(_cubeStateTracker->_id)){
+  if(!cubeLightComp.CanEngineSetLightsOnCube(_cubeStateTracker->_id)){
     _cubeStateTracker->_currentAnimationTrigger = CubeAnimationTrigger::Count;
     return;
   }
@@ -492,13 +488,13 @@ void FeedingCubeController::SetCubeLights(BehaviorExternalInterface& behaviorExt
   {
     bool wasLightTransitionSuccessful = false;
     if(_cubeStateTracker->_currentAnimationTrigger == CubeAnimationTrigger::Count){
-      wasLightTransitionSuccessful = robot.GetCubeLightComponent().PlayLightAnim(
+      wasLightTransitionSuccessful = cubeLightComp.PlayLightAnim(
                                        _cubeStateTracker->_id,
                                        _cubeStateTracker->_desiredAnimationTrigger);
     }
     else if(_cubeStateTracker->_desiredAnimationTrigger != CubeAnimationTrigger::Count)
     {
-      wasLightTransitionSuccessful = robot.GetCubeLightComponent().StopAndPlayLightAnim(
+      wasLightTransitionSuccessful = cubeLightComp.StopAndPlayLightAnim(
                                        _cubeStateTracker->_id,
                                        _cubeStateTracker->_currentAnimationTrigger,
                                        _cubeStateTracker->_desiredAnimationTrigger,
@@ -508,7 +504,7 @@ void FeedingCubeController::SetCubeLights(BehaviorExternalInterface& behaviorExt
     }
     else
     {
-      wasLightTransitionSuccessful = robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(
+      wasLightTransitionSuccessful = cubeLightComp.StopLightAnimAndResumePrevious(
                                        _cubeStateTracker->_currentAnimationTrigger,
                                        _cubeStateTracker->_id);
     }
@@ -529,12 +525,14 @@ void FeedingCubeController::UpdateChargeAudioRound(BehaviorExternalInterface& be
                  "Cube with id %d is broadcasting audio state change %s",
                  _cubeStateTracker->_id.GetValue(),
                  ChargeStateChangeToString(changeEnumVal));
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+            
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  if(robotInfo.HasExternalInterface()){
+    behaviorExternalInterface.GetAIComponent().GetFeedingSoundEffectManager().NotifyChargeStateChange(
+        *robotInfo.GetExternalInterface(), _cubeStateTracker->_id, 
+        _cubeStateTracker->_currentChargeLevel, changeEnumVal);
+  }
 
-  robot.GetAIComponent().GetFeedingSoundEffectManager().NotifyChargeStateChange(
-    robot, _cubeStateTracker->_id, _cubeStateTracker->_currentChargeLevel, changeEnumVal);
 }
 
   

@@ -40,10 +40,9 @@ protected:
   BehaviorDispatcherRerun(const Json::Value& config);
 
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
-                                             override { return Status::Running;}
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 

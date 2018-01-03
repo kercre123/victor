@@ -40,7 +40,7 @@ public:
   
 protected:
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   typedef std::vector<const ObservableObject*> BlockList;

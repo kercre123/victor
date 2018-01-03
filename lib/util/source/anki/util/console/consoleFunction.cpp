@@ -168,11 +168,13 @@ void IConsoleFunction::ParseArgDeclaration( const char* arg )
     return;
   }
   
-  // Kill all leading and trailing white space.
-  argstring = argstring.substr( begin, (end - begin + 1) );
-  begin = 0;
-  
+  // Kill all leading and trailing white space.  Use a temp string to work around malloc error
+  // that causes crash when using Xcode 9.1 + iOS SDK + -Os optimization.
+  std::string tmp = std::move(argstring);
+  argstring = tmp.substr(begin, (end - begin + 1));
+
   // Find where the type ends and the name begins, and build our type name.
+  begin = 0;
   end = argstring.find_last_of( ' ' );
   if ( end == std::string::npos )
   {

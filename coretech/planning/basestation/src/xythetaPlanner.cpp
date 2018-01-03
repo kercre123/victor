@@ -466,9 +466,9 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal(const StateID& goalStateI
       PRINT_NAMED_WARNING("xythetaPlanner.ExpandCollisionStatesFromGoal.ExceededMaxExpansions", 
                           "exceeded max allowed expansions of %d",
                           MAX_HEUR_EXPANSIONS);
-      // instead of hanging forever, just return an invalid value, which will trigger a plan failure
+      // instead of hanging forever, just return the cost calculated so far
       // TODO:(bn) if we implement ARA* or similar, we should return 0 here instead
-      return FLT_MAX;
+      return c;
     }
   }
 

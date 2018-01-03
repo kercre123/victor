@@ -18,6 +18,8 @@
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
+#include "cubeBleClient/cubeBleClient.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -30,7 +32,9 @@ BehaviorPlaypenEndChecks::BehaviorPlaypenEndChecks(const Json::Value& config)
 
 void BehaviorPlaypenEndChecks::InitBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  ICozmoBehavior::SubscribeToTags({RobotInterface::RobotToEngineTag::activeObjectAvailable});
+  CubeBleClient::GetInstance()->RegisterObjectAvailableCallback(std::bind(&BehaviorPlaypenEndChecks::HandleObjectAvailable, 
+                                                                          this, 
+                                                                          std::placeholders::_1));
 }
 
 
@@ -38,7 +42,7 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal(BehaviorExternalInt
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
 
   if(robot.GetBatteryVoltage() < PlaypenConfig::kMinBatteryVoltage)
   {
@@ -56,9 +60,9 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal(BehaviorExternalInt
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::NO_FFT_RESULT, RESULT_FAIL);
   }
 
-  TurnInPlaceAction* turn = new TurnInPlaceAction(robot, DEG_TO_RAD(90), false);
-  MoveHeadToAngleAction* head = new MoveHeadToAngleAction(robot, MAX_HEAD_ANGLE);
-  CompoundActionParallel* action = new CompoundActionParallel(robot, {turn, head});
+  TurnInPlaceAction* turn = new TurnInPlaceAction(DEG_TO_RAD(90), false);
+  MoveHeadToAngleAction* head = new MoveHeadToAngleAction(MAX_HEAD_ANGLE);
+  CompoundActionParallel* action = new CompoundActionParallel({turn, head});
 
   DelegateIfInControl(action, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS); });
 
@@ -70,17 +74,12 @@ void BehaviorPlaypenEndChecks::OnBehaviorDeactivated(BehaviorExternalInterface& 
   _heardFromLightCube = false;
 }
 
-void BehaviorPlaypenEndChecks::AlwaysHandle(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenEndChecks::HandleObjectAvailable(const ObjectAvailable& payload)
 {
-  const auto& tag = event.GetData().GetTag();
-  if(tag == RobotInterface::RobotToEngineTag::activeObjectAvailable)
+  if(IsValidLightCube(payload.objectType, false))
   {
-    const auto& payload = event.GetData().Get_activeObjectAvailable();
-    if(IsValidLightCube(payload.objectType, false))
-    {
-      _heardFromLightCube = true;
-    }
-  }
+    _heardFromLightCube = true;
+  } 
 }
 
 }
