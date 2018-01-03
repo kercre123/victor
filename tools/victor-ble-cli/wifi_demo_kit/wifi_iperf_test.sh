@@ -12,7 +12,7 @@ if [ -z $ADB ];then
 fi
 
 function run_iperf_command {
-  IPERF_ANDROID_COMMAND="cd /storage && ./$IPERF_ANDROID -p $IPERF_PORT -c $IP_ADDRESS $*"
+  IPERF_ANDROID_COMMAND="cd /storage && timeout 30s ./$IPERF_ANDROID -p $IPERF_PORT -c $IP_ADDRESS $*"
   adb shell $IPERF_ANDROID_COMMAND
   echo
   echo
