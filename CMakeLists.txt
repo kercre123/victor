@@ -118,16 +118,15 @@ add_subdirectory("cubeBleClient")
 add_subdirectory("osState")
 add_subdirectory("androidHAL")
 add_subdirectory("animProcess")
+
 target_include_directories(victor_anim PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
 )
+
 add_subdirectory("robot")
 
-if (ANDROID)
-    add_subdirectory("robot2")
-endif()
-
 import(cozmo_engine "engine")
+
 target_include_directories(cozmo_engine PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
 )

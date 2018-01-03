@@ -3,7 +3,7 @@ Assumes some kernel is loaded.
 # Load latest syscon:  Verifies communication:
 
 ```
-cd robot2
+cd robot
 vmake
 ./dfu.sh   
 ```
@@ -36,7 +36,7 @@ Shut down with
 
 ```
 
-cd robot2/test
+cd robot/test
 make lcd_test && adb push lcd_test /data/local/tmp
 adb push video.gif.raw /data/local/tmp
 adb shell
@@ -49,7 +49,7 @@ adb shell
 
 To create a raw file from an animated gif:
 ```
-cd robot2/test
+cd robot/test
 python3 gif_to_raw.py video.gif
 ```
 To create an animated gif from a series of images (imagemagik must be installed):
@@ -61,7 +61,7 @@ convert -loop 0  *.png video.gif
 #confirm audio
 
 ```
-cd robot2/test/audio
+cd robot/test/audio
 make && adb push alsaplay /data/local/tmp
 adp push song.wav /data/local/tmp
 adb shell
