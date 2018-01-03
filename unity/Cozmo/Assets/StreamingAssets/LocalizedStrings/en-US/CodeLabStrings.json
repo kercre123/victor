@@ -1347,7 +1347,7 @@
     "translation": "pick random [X] to [Y]"
   },
   "codeLabGlossary.block_definitions.description.operator_random": {
-    "translation": "Returns a random integer (whole number) between [X] and [Y]."
+    "translation": "Returns a random number between [X] and [Y] (inclusive)."
   },
 
   "codeLabGlossary.block_definitions.title.operator_lt": {

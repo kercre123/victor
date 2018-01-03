@@ -183,7 +183,7 @@
     "TitleKey": "whatsNew.CodeLab_ValentinesCozmogram.title",
     "DescriptionKey": "whatsNew.CodeLab_ValentinesCozmogram.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
-    "IconAssetName": "icon_lightShow",
+    "IconAssetName": "icon_valentinesCozmogram",
     "LeftTintColor": [93,197,21],
     "RightTintColor": [157,227,53],
     "CodeLabData": {
@@ -208,8 +208,8 @@
     "DescriptionKey": "whatsNew.CodeLab_PuttPutt.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_puttPutt",
-    "LeftTintColor": [93,197,21],
-    "RightTintColor": [157,227,53],
+    "LeftTintColor": [130,31,183],
+    "RightTintColor": [150,73,190],
     "CodeLabData": {
         "ShowButton": true,
         "ProjectGuid": "c8b394a6-54e2-4347-ab4f-17cd5c641862"
