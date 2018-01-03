@@ -28,14 +28,14 @@
 
 #include "engine/viz/vizManager.h"
 #include "engine/buildVersion.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include <anki/messaging/basestation/IComms.h>
+#include "coretech/messaging/engine/IComms.h"
 
 #include "clad/externalInterface/messageGameToEngine_hash.h"
 #include "clad/externalInterface/messageEngineToGame_hash.h"

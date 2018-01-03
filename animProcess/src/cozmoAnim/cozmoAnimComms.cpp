@@ -18,8 +18,8 @@
 #include <stdio.h>
 #include <string>
 
-#include "anki/messaging/shared/UdpServer.h"
-#include "anki/messaging/shared/LocalUdpClient.h"
+#include "coretech/messaging/shared/UdpServer.h"
+#include "coretech/messaging/shared/LocalUdpClient.h"
 
 #define LOG_CHANNEL    "Transport"
 #define LOG_ERROR      PRINT_NAMED_ERROR

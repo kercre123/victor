@@ -12,7 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoNapping.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "util/console/consoleInterface.h"
@@ -52,13 +52,13 @@ bool BehaviorVictorDemoNapping::CanBeGentlyInterruptedNow(BehaviorExternalInterf
   return !_animIsPlaying;
 }
 
-Result BehaviorVictorDemoNapping::OnBehaviorActivated(BehaviorExternalInterface& bei)
+void BehaviorVictorDemoNapping::OnBehaviorActivated(BehaviorExternalInterface& bei)
 {
   _animIsPlaying = false;
   
   TransitionToSleeping(bei);
   
-  return Result::RESULT_OK;
+  
 }
 
 void BehaviorVictorDemoNapping::TransitionToSleeping(BehaviorExternalInterface& bei)

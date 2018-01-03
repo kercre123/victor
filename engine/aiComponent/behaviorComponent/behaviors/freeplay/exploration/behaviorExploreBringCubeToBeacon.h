@@ -16,8 +16,8 @@
 #include "engine/aiComponent/behaviorComponent/AIBeacon.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/objectIDs.h"
 
 #include "clad/types/objectFamilies.h"
 
@@ -81,7 +81,7 @@ protected:
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:

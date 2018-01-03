@@ -13,8 +13,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"

@@ -13,7 +13,7 @@
 #ifndef __Cozmo_WebotsCtrlShared_CtrlCommonInitialization_H__
 #define __Cozmo_WebotsCtrlShared_CtrlCommonInitialization_H__
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "util/helpers/noncopyable.h"
 
 // - - fwd declaration

@@ -28,7 +28,7 @@ protected:
   friend class BehaviorContainer;
   BehaviorReactToSparked(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool ShouldRunWhileOffTreads() const override { return true;}
   

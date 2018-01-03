@@ -34,7 +34,7 @@
 #include "engine/cozmoObservableObject.h"
 #include "engine/namedColors/namedColors.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "clad/types/unlockTypes.h"
 
 namespace Anki {
@@ -84,7 +84,7 @@ bool BehaviorBuildPyramidBase::WantsToBeActivatedBehavior(BehaviorExternalInterf
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorBuildPyramidBase::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBuildPyramidBase::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   ResetMemberVars();
   const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
@@ -95,13 +95,17 @@ Result BehaviorBuildPyramidBase::OnBehaviorActivated(BehaviorExternalInterface& 
     TransitionToPlacingBaseBlock(behaviorExternalInterface);
   }
   
-  return Result::RESULT_OK;
+  
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorBuildPyramidBase::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBuildPyramidBase::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   using namespace BlockConfigurations;
   const auto& pyramidBases = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
   const auto& pyramids = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
@@ -131,21 +135,19 @@ ICozmoBehavior::Status BehaviorBuildPyramidBase::UpdateInternal_WhileRunning(Beh
 
   if(baseAppearedWhileNotPlacing || baseDestroyedWhileNotPlacing){
     CancelSelf();
-    return ICozmoBehavior::Status::Complete;
+    return;
   }
   
   // prevent against visual verify failures
   if(_checkForFullPyramidVisualVerifyFailure){
     if(!pyramids.empty()){
       CancelSelf();
-      return ICozmoBehavior::Status::Complete;
+      return;
     }
   }
   
   _lastBasesCount = Util::numeric_cast<int>(pyramidBases.size());
-  
-  ICozmoBehavior::Status ret = ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
-  return ret;
+
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -1,7 +1,7 @@
 
 cxx_project(
     name = 'cti_common_clad',
-    srcs = glob(['src/clad/**/*.clad']),
+    srcs = glob(['**/*.clad']),
     platform_srcs = [],
     headers = [],
     platform_headers = [],

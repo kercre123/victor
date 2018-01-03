@@ -12,7 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
@@ -615,19 +615,20 @@ public:
     return true;
   }
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override {
     _inited = true;
     WaitForLambdaAction* action = new WaitForLambdaAction([this](Robot& r){ return _stopAction; });
     DelegateIfInControl(action);
-
-    return RESULT_OK;
   }
   
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override {
+    if(!IsActivated()){
+      return;
+    }
     _numUpdates++;
-    return Status::Running;
   }
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override {
     _stopped = true;
   }
 

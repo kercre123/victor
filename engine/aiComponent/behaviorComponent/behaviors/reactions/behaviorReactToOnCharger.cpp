@@ -10,11 +10,11 @@
  *
  **/
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToOnCharger.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
@@ -69,7 +69,7 @@ bool BehaviorReactToOnCharger::WantsToBeActivatedBehavior(BehaviorExternalInterf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   /**auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   if(externalInterface != nullptr){
@@ -82,7 +82,7 @@ Result BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& 
   }
 
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PlacedOnCharger));
-  return Result::RESULT_OK;
+  
 }
 
 
@@ -94,15 +94,17 @@ void BehaviorReactToOnCharger::OnBehaviorDeactivated(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToOnCharger::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( _onChargerCanceled )
   {
     _onChargerCanceled = false;
-    return Status::Complete;
+    CancelSelf();
   }
-  
-  return Status::Running;
 }
 
 

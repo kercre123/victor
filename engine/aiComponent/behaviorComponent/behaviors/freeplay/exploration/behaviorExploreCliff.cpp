@@ -87,7 +87,7 @@
 //}
 //  
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//Result BehaviorExploreCliff::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreCliff::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 //{
 //  // select borders we want to visit
 //  BorderScoreVector borderGoals;
@@ -131,23 +131,24 @@
 //  _currentActionTag = driveToPoseAction->GetTag();
 //  robot.GetActionList().QueueActionNow(driveToPoseAction);
 //
-//  return Result::RESULT_OK;
+//  
 //}
 //
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//BehaviorExploreCliff::Status BehaviorExploreCliff::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreCliff::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 //{
+//  if(!IsActivated()){
+//    return;
+//  }
 //  // while we are moving towards a vantage point, wait patiently
 //  if ( _currentActionTag != ActionConstants::INVALID_TAG )
 //  {
 //    // PRINT_NAMED_INFO("RSAM", "Waiting for the move to action to finish");
-//    return Status::Running;
+//    return;
 //  }
 //  
-//  // done
-//  Status retval = Status::Complete;
-//  return retval;
+//  CancelSelf();
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -158,7 +159,7 @@
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void BehaviorExploreCliff::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreCliff::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 //{
 //  switch(event.GetData().GetTag())
 //  {

@@ -12,8 +12,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/helpers/behaviorScoringWrapper.h"
 
-#include "coretech/common/include/anki/common/basestation/jsonTools.h"
-#include "coretech/common/include/anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/externalInterface/externalInterface.h"

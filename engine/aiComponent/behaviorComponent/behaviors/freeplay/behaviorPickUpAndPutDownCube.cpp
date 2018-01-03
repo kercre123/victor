@@ -43,13 +43,13 @@ bool BehaviorPickUpAndPutDownCube::WantsToBeActivatedBehavior(BehaviorExternalIn
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPickUpAndPutDownCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpAndPutDownCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   if(robotInfo.GetCarryingComponent().IsCarryingObject()){
     _targetBlockID = robotInfo.GetCarryingComponent().GetCarryingObject();
     TransitionToDriveWithCube(behaviorExternalInterface);
-    return Result::RESULT_OK;
+    
   }
   
   auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
@@ -59,7 +59,7 @@ Result BehaviorPickUpAndPutDownCube::OnBehaviorActivated(BehaviorExternalInterfa
   SmartDelegateToHelper(behaviorExternalInterface, pickupHelper, &BehaviorPickUpAndPutDownCube::TransitionToDriveWithCube);
   // delegate failure will end the behavior here
   
-  return Result::RESULT_OK;
+  
 }
 
 

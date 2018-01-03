@@ -16,7 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/navMap/iNavMap.h"
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 
 #include "clad/types/animationTrigger.h"
 
@@ -58,11 +58,12 @@ protected:
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   // update internal: to handle discarding more goals while running
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Logic Helpers
@@ -198,7 +199,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // Cozmo is gathering accurate edge information
-  BaseClass::Status StateUpdate_GatheringAccurateEdge(BehaviorExternalInterface& behaviorExternalInterface);
+  void StateUpdate_GatheringAccurateEdge(BehaviorExternalInterface& behaviorExternalInterface);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Debug helpers

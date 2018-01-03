@@ -47,7 +47,7 @@ BehaviorDance::BehaviorDance(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDance::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDance::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   BlockWorldFilter filter;
   filter.AddAllowedFamily(ObjectFamily::LightCube);

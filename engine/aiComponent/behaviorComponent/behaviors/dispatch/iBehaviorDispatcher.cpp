@@ -15,7 +15,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/iBehaviorDispatcher.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-#include "coretech/common/include/anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
@@ -125,11 +125,9 @@ void IBehaviorDispatcher::GetAllDelegates(std::set<IBehavior*>& delegates) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result IBehaviorDispatcher::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehaviorDispatcher::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   BehaviorDispatcher_OnActivated(behaviorExternalInterface);
-
-  return Result::RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -165,13 +163,18 @@ bool IBehaviorDispatcher::CanBeGentlyInterruptedNow(BehaviorExternalInterface& b
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status IBehaviorDispatcher::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehaviorDispatcher::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  DispatcherUpdate(behaviorExternalInterface);
+  if(!IsActivated()){
+    return;
+  }
 
   if( ! ANKI_VERIFY( behaviorExternalInterface.HasDelegationComponent(),
                      "IBehaviorDispatcher.BehaviorUpdate.NoDelegationComponent",
                      "Behavior should have a delegation component while running") ) {
-    return Status::Failure;
+    CancelSelf();
+    return;
   }
 
   // only choose a new behavior if we should interrupt the active behavior, or if no behavior is active
@@ -192,9 +195,7 @@ ICozmoBehavior::Status IBehaviorDispatcher::UpdateInternal_WhileRunning(Behavior
                      "Failed to delegate to behavior '%s'",
                      desiredBehavior->GetIDStr().c_str());
     }
-  }   
-
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }
 }
 
 }

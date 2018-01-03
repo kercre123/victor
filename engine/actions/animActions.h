@@ -16,7 +16,7 @@
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/components/animationComponent.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "clad/externalInterface/messageActions.h"

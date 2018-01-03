@@ -37,7 +37,7 @@ public:
   virtual bool ShouldRunWhileOnCharger() const override { return true;}
 
 protected:
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
 private:
   using FaceSelectionPenaltyMultiplier = FaceSelectionComponent::FaceSelectionPenaltyMultiplier;

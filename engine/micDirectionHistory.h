@@ -13,7 +13,7 @@
 #ifndef __Engine_MicDirectionHistory_H_
 #define __Engine_MicDirectionHistory_H_
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include <array>
 #include <cstdint>

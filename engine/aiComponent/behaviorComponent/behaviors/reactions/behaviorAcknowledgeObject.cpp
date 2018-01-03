@@ -14,9 +14,9 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeObject.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/poseOriginList.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/poseOriginList.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/activeCube.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -76,7 +76,7 @@ void BehaviorAcknowledgeObject::InitBehavior(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorAcknowledgeObject::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeObject::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // don't actually init until the first Update call. This gives other messages that came in this tick a
   // chance to be processed, in case we see multiple objects in the same tick.
@@ -90,20 +90,22 @@ Result BehaviorAcknowledgeObject::OnBehaviorActivated(BehaviorExternalInterface&
                    _ghostStackedObject->GetID().GetValue());
   }
   
-  return Result::RESULT_OK;
+  
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorAcknowledgeObject::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeObject::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( _shouldStart ) {
     _shouldStart = false;
     // now figure out which object to react to
     BeginIteration(behaviorExternalInterface);
   }
-
-  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
   
   

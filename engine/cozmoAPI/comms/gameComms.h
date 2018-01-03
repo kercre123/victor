@@ -13,9 +13,9 @@
 #define BASESTATION_COMMS_GAME_COMMS_H_
 
 #include <deque>
-#include <anki/messaging/basestation/IComms.h>
-#include "anki/messaging/shared/TcpServer.h"
-#include "anki/messaging/shared/UdpClient.h"
+#include "coretech/messaging/engine/IComms.h"
+#include "coretech/messaging/shared/TcpServer.h"
+#include "coretech/messaging/shared/UdpClient.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/externalInterface/messageShared.h"
 #include "engine/messaging/advertisementService.h"

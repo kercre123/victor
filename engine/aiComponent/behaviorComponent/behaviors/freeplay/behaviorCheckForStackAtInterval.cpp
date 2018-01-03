@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 namespace {
 
@@ -61,7 +61,7 @@ bool BehaviorCheckForStackAtInterval::WantsToBeActivatedBehavior(BehaviorExterna
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorCheckForStackAtInterval::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCheckForStackAtInterval::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   
   if(!_ghostStackedObject->GetID().IsSet()){
@@ -70,10 +70,8 @@ Result BehaviorCheckForStackAtInterval::OnBehaviorActivated(BehaviorExternalInte
   
   if(!_knownBlockIDs.empty()) {
     TransitionToSetup(behaviorExternalInterface);
-    return Result::RESULT_OK;
+    
   }
-  
-  return Result::RESULT_FAIL;
 }
 
   

@@ -11,7 +11,7 @@
 *
 **/
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -48,6 +48,7 @@ void IBehavior::Init(BehaviorExternalInterface& behaviorExternalInterface)
   AssertActivationState_DevOnly(ActivationState::NotInitialized);
   SetActivationState_DevOnly(ActivationState::OutOfScope);
   
+  _beiWrapper = std::make_unique<BEIWrapper>(behaviorExternalInterface);
   InitInternal(behaviorExternalInterface);
 }
 

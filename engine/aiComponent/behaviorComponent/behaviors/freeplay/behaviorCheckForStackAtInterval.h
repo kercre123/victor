@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorCheckForStackAtInterval_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 
 #include <vector>
 
@@ -30,8 +30,8 @@ protected:
   friend class BehaviorContainer;
   BehaviorCheckForStackAtInterval(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}

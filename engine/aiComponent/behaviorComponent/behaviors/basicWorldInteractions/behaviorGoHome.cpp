@@ -47,20 +47,18 @@ bool BehaviorGoHome::WantsToBeActivatedBehavior(BehaviorExternalInterface& behav
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorGoHome::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorGoHome::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const auto& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
   const auto* object = behaviorExternalInterface.GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_homeFilter);
   
   if (object == nullptr) {
     PRINT_NAMED_WARNING("BehaviorGoHome.OnBehaviorActivated", "No homes found!");
-    return Result::RESULT_FAIL;
+    return;
   }
   
   auto action = new DriveToAndMountChargerAction(object->GetID());
-  const bool success = DelegateIfInControl(action);
-  
-  return success ? Result::RESULT_OK : Result::RESULT_FAIL;
+  DelegateIfInControl(action);
 }
 
 

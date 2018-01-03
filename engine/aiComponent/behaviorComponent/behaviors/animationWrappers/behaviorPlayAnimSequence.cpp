@@ -80,11 +80,11 @@ bool BehaviorPlayAnimSequence::WantsToBeActivatedBehavior(BehaviorExternalInterf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPlayAnimSequence::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlayAnimSequence::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   StartPlayingAnimations(behaviorExternalInterface);
 
-  return Result::RESULT_OK;
+  
 }
 
 

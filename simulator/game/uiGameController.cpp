@@ -11,13 +11,13 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/cozmoAPI/comms/gameComms.h"
 #include "engine/cozmoAPI/comms/gameMessageHandler.h"
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "util/transport/udpTransport.h"
 // includes for physics functions
-#include "anki/messaging/shared/UdpClient.h"
+#include "coretech/messaging/shared/UdpClient.h"
 #include "clad/externalInterface/messageFromActiveObject.h"
 #include "clad/physicsInterface/messageSimPhysics.h"
 // end of physics includes

@@ -13,7 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "engine/actions/basicActions.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 
@@ -57,9 +57,9 @@ bool BehaviorProxGetToDistance::WantsToBeActivatedBehavior(BehaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorProxGetToDistance::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorProxGetToDistance::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  return Result::RESULT_OK;
+  
 }
 
 
@@ -71,18 +71,22 @@ void BehaviorProxGetToDistance::OnBehaviorDeactivated(BehaviorExternalInterface&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorProxGetToDistance::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorProxGetToDistance::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   auto& proxSensor = behaviorExternalInterface.GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
   if(!proxSensor.IsSensorReadingValid()){
     CancelSelf();
-    return Status::Running;
+    return;
   }
 
   if(_params.shouldEndWhenGoalReached && 
      IsWithinGoalTolerence(behaviorExternalInterface)){
     CancelSelf();
-    return Status::Running;
+    return;
   }
 
   if(IsControlDelegated() &&
@@ -97,7 +101,7 @@ ICozmoBehavior::Status BehaviorProxGetToDistance::UpdateInternal_WhileRunning(Be
     proxSensor.CalculateSensedObjectPose(_previousProxObjectPose);
   }
 
-  return Status::Running;
+  return;
 }
 
 

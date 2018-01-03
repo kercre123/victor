@@ -14,11 +14,11 @@
 #ifndef ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 #define ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 
-#include "anki/vision/basestation/cameraCalibration.h"
-#include "anki/vision/basestation/droppedFrameStats.h"
-#include "anki/vision/basestation/image.h"
-#include "anki/vision/basestation/visionMarker.h"
-#include "anki/vision/basestation/faceTracker.h"
+#include "coretech/vision/engine/cameraCalibration.h"
+#include "coretech/vision/engine/droppedFrameStats.h"
+#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/visionMarker.h"
+#include "coretech/vision/engine/faceTracker.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robotStateHistory.h"

@@ -12,7 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToPickup.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/sayTextAction.h"
@@ -51,7 +51,7 @@ bool BehaviorReactToPickup::WantsToBeActivatedBehavior(BehaviorExternalInterface
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToPickup::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPickup::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _repeatAnimatingMultiplier = 1;
   
@@ -60,7 +60,7 @@ Result BehaviorReactToPickup::OnBehaviorActivated(BehaviorExternalInterface& beh
   const f32 bufferDelay_s = .5f;
   const f32 wait_s = CLIFF_EVENT_DELAY_MS/1000 + bufferDelay_s;
   DelegateIfInControl(new WaitAction(wait_s), &BehaviorReactToPickup::StartAnim);
-  return Result::RESULT_OK;
+  
 }
  
 
@@ -149,17 +149,23 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToPickup::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPickup::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const bool isControlDelegated = IsControlDelegated();
   if( !isControlDelegated && behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::InAir ) {
-    return Status::Complete;
+    CancelSelf();
+    return;
   }
 
   auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   if( robotInfo.IsOnCharger() && !isControlDelegated ) {
     PRINT_NAMED_INFO("BehaviorReactToPickup.OnCharger", "Stopping behavior because we are on the charger");
-    return Status::Complete;
+    CancelSelf();
+    return;
   }
   // If we are in control, it might be time to play another reaction
   if (!isControlDelegated)
@@ -176,8 +182,6 @@ ICozmoBehavior::Status BehaviorReactToPickup::UpdateInternal_WhileRunning(Behavi
       }
     }
   }
-  
-  return Status::Running;
 }
 
 

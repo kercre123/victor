@@ -17,6 +17,20 @@
 #import <UIKit/UIDevice.h>
 #endif
 
+//
+// Use new naming (CBManagerState) when available.
+// Fall back to old naming (CBCentralManagerState) on older MacOS.
+//
+#if (TARGET_OS_OSX && __MAC_OS_X_VERSION_MIN_REQUIRED < 101300)
+#define CBManagerState CBCentralManagerState
+#define CBManagerStateUnknown CBCentralManagerStateUnknown
+#define CBManagerStateResetting CBCentralManagerStateResetting
+#define CBManagerStateUnsupported CBCentralManagerStateUnsupported
+#define CBManagerStateUnauthorized CBCentralManagerStateUnauthorized
+#define CBManagerStatePoweredOn CBCentralManagerStatePoweredOn
+#define CBManagerStatePoweredOff CBCentralManagerStatePoweredOff
+#endif
+
 NSString* const BLEManagerNotificationName = @"BLEManagerNotificationName";
 NSString* const BLEManagerKeyPowerIsOn = @"BLEManagerKeyIsPowerOn";
 NSString* const BLEManagerKeyBLEUnsupported = @"BLEManagerKeyIsBLEUnsupported";
@@ -72,7 +86,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
 
 @implementation BLECentralMultiplexer {
   CBCentralManager* _centralManager;
-  CBCentralManagerState _centralManagerState;
+  CBManagerState _centralManagerState;
   BOOL _isWedged;
   
   // Service registration
@@ -160,7 +174,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
     dispatch_queue_set_specific(_dispatchQueue, &IsOnBLEQueue, (__bridge void *) self, NULL);
     _centralManager = centralManager;
     _centralManager.delegate = self;
-    _centralManagerState = (CBCentralManagerState) centralManager.state;
+    _centralManagerState = (CBManagerState) centralManager.state;
     _registeredServicesByServiceID = [NSMutableDictionary dictionaryWithCapacity:4];
     _scanningServices = [NSMutableSet setWithCapacity:4];
     _usePeripheralNameIfLocalNameIsAbsent = kOnMacOsX;
@@ -246,7 +260,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
 
     // Always issue a 'startScanning' command, which ensure that we restart,
     // even from a paused state.
-    if (((CBCentralManagerState) _centralManager.state) == CBCentralManagerStatePoweredOn) {
+    if (((CBManagerState) _centralManager.state) == CBManagerStatePoweredOn) {
       [self startScanning];
     }
   }];
@@ -299,7 +313,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
 }
 
 -(void)stopScanning {
-  if (_isScanning && ((CBCentralManagerState)_centralManager.state) == CBCentralManagerStatePoweredOn) {
+  if (_isScanning && ((CBManagerState)_centralManager.state) == CBManagerStatePoweredOn) {
     [_centralManager stopScan];
   }
   _isScanning = NO;
@@ -769,19 +783,19 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
   [self assertOnOurQueue];
   NSError* error = nil;
   switch (central.state) {
-    case CBCentralManagerStateUnknown:
+    case CBManagerStateUnknown:
       // This is the normal starting state.
       BLELogWarn("BLECentralMultiplexer.unexpectedCentralState", "%s", "CentralManagerStateUnknown");
       break;
-    case CBCentralManagerStateUnsupported:
-    case CBCentralManagerStateUnauthorized:
+    case CBManagerStateUnsupported:
+    case CBManagerStateUnauthorized:
       // Not sure what to do with these guys.  Log them.
 #if !TARGET_IPHONE_SIMULATOR
       BLELogError("BLECentralMultiplexer.unhandledCentralState", "%d", (int)central.state);
 #endif
       break;
       
-    case CBCentralManagerStateResetting:
+    case CBManagerStateResetting:
       // If we enter this state, it could be because we are recovering from
       // a BTServer crash/restart.
       if (_isWedged) {
@@ -791,7 +805,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
       _isWedged = NO;
       
       // falling through
-    case CBCentralManagerStatePoweredOff:
+    case CBManagerStatePoweredOff:
       BLELogWarn("BLECentralMultiplexer.centralResetting", "state=%d", (int)central.state);
       // Shut everything down, let everyone know that everything is disconnected.
       error = [NSError errorWithDomain:@"BLECentralManagerErrorDomain" code:-1 userInfo:nil];
@@ -805,7 +819,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
       [self expireAdvertisements:[[_advertisementsByPeripheralAddress allValues] copy]];
       break;
       
-    case CBCentralManagerStatePoweredOn:
+    case CBManagerStatePoweredOn:
       BLELogInfo("BLECentralMultiplexer.centralPoweredOn", "");
       // CoreBluetooth is ready to go, start scanning if we were asked previously.
       if(_scanningServices.count > 0) {
@@ -818,19 +832,19 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
       break;
   }
   
-  CBCentralManagerState previousState = _centralManagerState;
-  _centralManagerState = (CBCentralManagerState) central.state;
+  CBManagerState previousState = _centralManagerState;
+  _centralManagerState = (CBManagerState) central.state;
   
   // Notify observers that power state changed
   if ( previousState != _centralManagerState ) {
-    if (_centralManagerState == CBCentralManagerStatePoweredOn ||
-        _centralManagerState == CBCentralManagerStatePoweredOff ||
-        _centralManagerState == CBCentralManagerStateResetting ||
-        _centralManagerState == CBCentralManagerStateUnsupported ||
-        _centralManagerState == CBCentralManagerStateUnauthorized) {
-      BOOL isUnauthorized = (_centralManagerState == CBCentralManagerStateUnauthorized);
-      BOOL isUnsupported = (_centralManagerState == CBCentralManagerStateUnsupported);
-      BOOL isPoweredOn = (_centralManagerState == CBCentralManagerStatePoweredOn);
+    if (_centralManagerState == CBManagerStatePoweredOn ||
+        _centralManagerState == CBManagerStatePoweredOff ||
+        _centralManagerState == CBManagerStateResetting ||
+        _centralManagerState == CBManagerStateUnsupported ||
+        _centralManagerState == CBManagerStateUnauthorized) {
+      BOOL isUnauthorized = (_centralManagerState == CBManagerStateUnauthorized);
+      BOOL isUnsupported = (_centralManagerState == CBManagerStateUnsupported);
+      BOOL isPoweredOn = (_centralManagerState == CBManagerStatePoweredOn);
       __weak __typeof(self) weakSelf = self;
       dispatch_async(dispatch_get_main_queue(), ^{
         __strong __typeof(self) strongSelf = weakSelf;

@@ -16,9 +16,9 @@
 #ifndef __Anki_Cozmo_Basestation_ObjectPoseConfirmer_H__
 #define __Anki_Cozmo_Basestation_ObjectPoseConfirmer_H__
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "clad/types/objectFamilies.h"
 
 namespace Anki {

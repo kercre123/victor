@@ -14,7 +14,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
@@ -70,15 +70,12 @@ void BehaviorDispatcherRerun::InitBehavior(BehaviorExternalInterface& behaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDispatcherRerun::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherRerun::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _numRunsRemaining = _params._numRuns;
   if(_delegatePtr != nullptr){
     CheckRerunState(behaviorExternalInterface);
-    return RESULT_OK;
   }
-
-  return RESULT_FAIL;
 }
 
 

@@ -55,7 +55,7 @@ void BehaviorVictorDemoObservingFaceInteraction::GetAllDelegates(std::set<IBehav
   delegates.insert(_searchBehavior.get());
 }
 
-Result BehaviorVictorDemoObservingFaceInteraction::OnBehaviorActivated(
+void BehaviorVictorDemoObservingFaceInteraction::OnBehaviorActivated(
   BehaviorExternalInterface& behaviorExternalInterface)
 {
   _faceIdsLookedAt.clear();
@@ -70,7 +70,7 @@ Result BehaviorVictorDemoObservingFaceInteraction::OnBehaviorActivated(
     TransitionToFindFaces(behaviorExternalInterface);
   }
 
-  return Result::RESULT_OK;
+  
 }
 
 bool BehaviorVictorDemoObservingFaceInteraction::CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const
@@ -89,9 +89,11 @@ bool BehaviorVictorDemoObservingFaceInteraction::CanBeGentlyInterruptedNow(Behav
 }
 
 
-ICozmoBehavior::Status BehaviorVictorDemoObservingFaceInteraction::UpdateInternal_WhileRunning(
-  BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoObservingFaceInteraction::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
 
   if( _state == State::FindFaces ) {
     // check if we have found a new face during the search
@@ -102,8 +104,6 @@ ICozmoBehavior::Status BehaviorVictorDemoObservingFaceInteraction::UpdateInterna
       TransitionToTurnTowardsAFace(behaviorExternalInterface);
     }
   }
-
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 

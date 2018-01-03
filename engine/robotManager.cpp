@@ -20,8 +20,8 @@
 #include "engine/robotManager.h"
 #include "engine/robotToEngineImplMessaging.h"
 #include "engine/utils/cozmoExperiments.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/robot/config.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/animationTrigger.h"
@@ -34,7 +34,7 @@
 #include <vector>
 #include <sys/stat.h>
 
-#include "anki/common/robot/config.h"
+#include "coretech/common/robot/config.h"
 #include "util/global/globalDefinitions.h"
 
 #if USE_DAS

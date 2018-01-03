@@ -51,7 +51,7 @@ target_include_directories(test_engine
 target_compile_definitions(test_engine 
   PRIVATE
   SIMULATOR
-  CORETECH_BASESTATION
+  CORETECH_ENGINE
 )
 
 #

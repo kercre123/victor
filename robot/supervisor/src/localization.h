@@ -1,8 +1,8 @@
 #ifndef LOCALIZATION_H
 #define LOCALIZATION_H
 #include "localization_geometry.h"
-#include "anki/common/shared/radians.h"
-#include "anki/common/types.h"
+#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
   namespace Cozmo {

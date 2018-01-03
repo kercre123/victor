@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorRollBlock_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorRollBlock_H__
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 
@@ -33,9 +33,9 @@ protected:
   friend class BehaviorContainer;
   BehaviorRollBlock(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override {return true;}

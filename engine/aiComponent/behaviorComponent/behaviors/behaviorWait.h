@@ -40,20 +40,16 @@ public:
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   virtual bool ShouldRunWhileOffTreads() const override { return true;}
   virtual bool ShouldRunWhileOnCharger() const override { return true;}
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
 
   virtual bool CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const override {
     return true; }
 
 protected:
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override
   {
-    return Result::RESULT_OK;
-  }
-  
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override
-  {
-    return Status::Running;
+    
   }
 
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override

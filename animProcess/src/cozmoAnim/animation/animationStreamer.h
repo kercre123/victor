@@ -16,8 +16,8 @@
 #ifndef __Anki_Cozmo_AnimationStreamer_H__
 #define __Anki_Cozmo_AnimationStreamer_H__
 
-#include "anki/common/types.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/vision/engine/image.h"
 #include "cozmoAnim/animation/animation.h"
 #include "cozmoAnim/animation/track.h"
 #include "clad/types/liveIdleAnimationParameters.h"

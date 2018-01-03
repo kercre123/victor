@@ -19,7 +19,7 @@
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
-#include "anki/vision/basestation/observableObject.h"
+#include "coretech/vision/engine/observableObject.h"
 
 namespace Anki {
 namespace Cozmo {

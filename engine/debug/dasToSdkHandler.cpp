@@ -13,7 +13,7 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "anki/messaging/basestation/IComms.h"
+#include "coretech/messaging/engine/IComms.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "DAS/DAS.h"

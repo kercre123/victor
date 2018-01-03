@@ -438,6 +438,32 @@ def git_package(git_dict):
     # WIP.  Should this function raise a NotImplementedError exception until it is completed?
     print("The git_package() function has NOT been implemented yet")
 
+def files_package(files):
+    tool = "curl"
+    assert is_tool(tool)
+    assert isinstance(files, dict)
+    for file in files:
+        url = files[file].get("url", "undefined")
+
+        outfile = os.path.join(DEPENDENCY_LOCATION, file)
+        if not is_up(url):
+            print "WARNING File {0} is not available. Please check your internet connection.".format(url)
+            return
+
+        pull_file = [tool, '-s', url]
+        pipe = subprocess.Popen(pull_file, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = pipe.communicate()
+        status = pipe.poll()
+        if status != 0:
+            print "Curl exited with non-zero status: {0}".format(stderr)
+            return
+        stdout = stdout.strip()
+        if (not os.path.exists(outfile)) or open(outfile).read() != stdout:
+            with open(outfile, 'w') as output:
+                output.write(stdout)
+                print "Updated {0} from {1}".format(file, url)
+        else:
+            print "File {0} does not need to be updated".format(file)
 
 def teamcity_package(tc_dict):
     tool = "curl"
@@ -579,6 +605,8 @@ def json_parser(version_file):
                 svn_package(djson["svn"])
             if "git" in djson:
                 git_package(djson["git"])
+            if "files" in djson:
+                files_package(djson["files"])
     else:
         sys.exit("ERROR: %s does not exist" % version_file)
 

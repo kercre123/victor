@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_PickupBlockHelper_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
@@ -33,8 +33,8 @@ public:
 protected:
   // IHelper functions
   virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual BehaviorStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual BehaviorStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual HelperStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual HelperStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   ObjectID _targetID;

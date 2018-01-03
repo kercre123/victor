@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_AIComponent_FaceSelectionComponent_H__
 #define __Cozmo_Basestation_AIComponent_FaceSelectionComponent_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "engine/entity.h"
 #include "util/helpers/noncopyable.h"
 

@@ -19,7 +19,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "clad/types/animationTrigger.h"
 
 
@@ -55,7 +55,7 @@ bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToVoiceCommand::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToVoiceCommand::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
@@ -107,8 +107,6 @@ Result BehaviorReactToVoiceCommand::OnBehaviorActivated(BehaviorExternalInterfac
   Anki::Util::sEvent("voice_command.responding_to_command", {}, EnumToString(VoiceCommandType::HeyCozmo));
   robotInfo.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommand(VoiceCommandType::HeyCozmo));
   robotInfo.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommandStart(VoiceCommandType::HeyCozmo));
-  
-  return RESULT_OK;
 }
 
 
