@@ -43,6 +43,7 @@ public:
 private:
   BehaviorComponent& _behaviorComponent;
   std::vector<::Signal::SmartHandle> _eventHandles;
+  ICozmoBehaviorPtr _rerunBehavior;
 
   ICozmoBehaviorPtr WrapRequestedBehaviorInDispatcherRerun(BehaviorContainer& bContainer, 
                                                            BehaviorID requestedBehaviorID, 

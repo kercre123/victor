@@ -12,8 +12,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRandom.h"
 
-#include "coretech/common/include/anki/common/basestation/jsonTools.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "util/random/randomVectorSampler.h"
 
 namespace Anki {
@@ -33,7 +33,7 @@ BehaviorDispatcherRandom::BehaviorDispatcherRandom(const Json::Value& config)
                                                                 "behavior",
                                                                 "BehaviorDispatcherRandom.BehaviorGroup.NoBehaviorID");
       
-      const BehaviorID behaviorID = BehaviorIDFromString(behaviorIDStr);
+      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(behaviorIDStr);
       IBehaviorDispatcher::AddPossibleDispatch(behaviorID);
 
       _cooldownInfo.emplace_back( BehaviorCooldownInfo{behaviorDefinitionGroup} );
@@ -134,7 +134,7 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior(BehaviorExternalI
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherRandom::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherRandom::DispatcherUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( _shouldEndAfterBehavior &&
       ! IsControlDelegated() ) {

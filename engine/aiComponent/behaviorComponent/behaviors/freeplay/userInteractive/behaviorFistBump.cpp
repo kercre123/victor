@@ -10,6 +10,7 @@
  **/
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorFistBump.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iFistBumpListener.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -17,10 +18,9 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -80,7 +80,7 @@ bool BehaviorFistBump::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Disable idle animation
   SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
@@ -91,22 +91,24 @@ Result BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behavior
   _nextGazeChangeIndex = 0;
   _lastTimeOffTreads_s = 0.f;
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  if (robot.GetCarryingComponent().IsCarryingObject()) {
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
     _state = State::PutdownObject;
   } else {
     _state = State::LookForFace;
   }
 
-  return Result::RESULT_OK;
+  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFistBump::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   f32 now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // Check if should exit because of pickup
@@ -114,7 +116,8 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
     if (_lastTimeOffTreads_s == 0) {
       _lastTimeOffTreads_s = now;
     } else if (now > _lastTimeOffTreads_s + kMaxPickedupDurationBeforeExit_s) {
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
   } else {
     _lastTimeOffTreads_s = 0;
@@ -132,7 +135,7 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
     default:
     {
       if (IsControlDelegated()) {
-        return Status::Running;
+        return;
       }
     }
   }
@@ -141,20 +144,14 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
   switch(_state) {
     case State::PutdownObject:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      DelegateIfInControl(new PlaceObjectOnGroundAction(robot));
+      DelegateIfInControl(new PlaceObjectOnGroundAction());
       _state = State::LookForFace;
       break;
     }
     case State::LookForFace:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
       // Turn towards last seen face
-      TurnTowardsLastFacePoseAction* turnToFace = new TurnTowardsLastFacePoseAction(robot);
+      TurnTowardsLastFacePoseAction* turnToFace = new TurnTowardsLastFacePoseAction();
       turnToFace->SetRequireFaceConfirmation(true);
       DelegateIfInControl(turnToFace, [this](ActionResult result) {
         if (result == ActionResult::NO_FACE) {
@@ -177,21 +174,20 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
         }
         break;
       }
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+
+      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       // Check if face observed very recently
       Pose3d facePose;
       TimeStamp_t lastObservedFaceTime = behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(facePose);
-      if (lastObservedFaceTime > 0 && (robot.GetLastMsgTimestamp() - lastObservedFaceTime < kMaxTimeInPastToHaveObservedFace_ms)) {
-        DelegateIfInControl(new TurnTowardsLastFacePoseAction(robot));
+      if (lastObservedFaceTime > 0 && (robotInfo.GetLastMsgTimestamp() - lastObservedFaceTime < kMaxTimeInPastToHaveObservedFace_ms)) {
+        DelegateIfInControl(new TurnTowardsLastFacePoseAction());
         _state = State::RequestInitialFistBump;
         break;
       }
       
       // Check if time to adjust gaze
       if (now > _nextGazeChangeTime_s) {
-        PanAndTiltAction* ptAction = new PanAndTiltAction(robot, kLookForFaceAngleChanges_rad[_nextGazeChangeIndex], kLookForFaceHeadAngle, false, true);
+        PanAndTiltAction* ptAction = new PanAndTiltAction(kLookForFaceAngleChanges_rad[_nextGazeChangeIndex], kLookForFaceHeadAngle, false, true);
         DelegateIfInControl(ptAction);
         
         // Set next gaze change time
@@ -205,37 +201,30 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
     }
     case State::RequestInitialFistBump:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpRequestOnce));
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpRequestOnce));
       _state = State::RequestingFistBump;
       break;
     }
     case State::RequestingFistBump:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       _waitStartTime_s = now;
-      robot.GetMoveComponent().EnableLiftPower(false);
-      robot.GetMoveComponent().EnableHeadPower(false);
+      robotInfo.GetMoveComponent().EnableLiftPower(false);
+      robotInfo.GetMoveComponent().EnableHeadPower(false);
       
       // Play idle anim
-      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpIdle));
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpIdle));
       
       _state = State::WaitingForMotorsToSettle;
       break;
     }
     case State::WaitingForMotorsToSettle:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
-      if (!robot.GetMoveComponent().IsLiftMoving() &&
-          !robot.GetMoveComponent().IsHeadMoving()) {
-        _liftWaitingAngle_rad = robot.GetLiftAngle();
-        _waitingAccelX_mmps2 = robot.GetHeadAccelData().x;
+      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      if (!robotInfo.GetMoveComponent().IsLiftMoving() &&
+          !robotInfo.GetMoveComponent().IsHeadMoving()) {
+        _liftWaitingAngle_rad = robotInfo.GetLiftAngle();
+        _waitingAccelX_mmps2 = robotInfo.GetHeadAccelData().x;
         _state = State::WaitingForBump;
         if (now - _waitStartTime_s > kMaxTimeForMotorSettling_s) {
           PRINT_NAMED_WARNING("BehaviorFistBump.UpdateInternal_Legacy.MotorSettleTimeTooLong", "%f", now - _waitStartTime_s);
@@ -245,26 +234,24 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
     }
     case State::WaitingForBump:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      if (CheckForBump(robot)) {
+      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      if (CheckForBump(robotInfo)) {
         CancelDelegates();  // Stop the idle anim
-        robot.GetMoveComponent().EnableLiftPower(true);
-        robot.GetMoveComponent().EnableHeadPower(true);
-        DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpSuccess));
+        robotInfo.GetMoveComponent().EnableLiftPower(true);
+        robotInfo.GetMoveComponent().EnableHeadPower(true);
+        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpSuccess));
         _state = State::CompleteSuccess;
       }
       
       // When idle anim is complete, retry or fail
       if (!IsControlDelegated()) {
-        robot.GetMoveComponent().EnableLiftPower(true);
-        robot.GetMoveComponent().EnableHeadPower(true);
+        robotInfo.GetMoveComponent().EnableLiftPower(true);
+        robotInfo.GetMoveComponent().EnableHeadPower(true);
         if (++_fistBumpRequestCnt < kMaxNumAttempts) {
-          DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpRequestRetry));
+          DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpRequestRetry));
           _state = State::RequestingFistBump;
         } else {
-          DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpLeftHanging));
+          DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpLeftHanging));
           _state = State::CompleteFail;
         }
       }
@@ -288,23 +275,19 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
     {
       ResetTrigger(_updateLastCompletionTime);
       BehaviorObjectiveAchieved(BehaviorObjective::FistBumpComplete);
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
   }
-  
-  
-  return Status::Running;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFistBump::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  robot.GetMoveComponent().EnableLiftPower(true);
-  robot.GetMoveComponent().EnableHeadPower(true);
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  robotInfo.GetMoveComponent().EnableLiftPower(true);
+  robotInfo.GetMoveComponent().EnableHeadPower(true);
   
   // Make sure trigger is reset if behavior is interrupted
   ResetTrigger(false);
@@ -312,11 +295,11 @@ void BehaviorFistBump::OnBehaviorDeactivated(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFistBump::CheckForBump(const Robot& robot)
+bool BehaviorFistBump::CheckForBump(const BEIRobotInfo& robotInfo)
 {
-  bool liftBumped = std::fabsf(robot.GetLiftAngle() - _liftWaitingAngle_rad) > kLiftAngleBumpThresh_radps;
-  bool gyroBumped = std::fabsf(robot.GetHeadGyroData().y) > kGyroYBumpThresh_radps;
-  bool accelBumped = std::fabsf(robot.GetHeadAccelData().x - _waitingAccelX_mmps2) > kAccelXBumpThresh_mmps2;
+  bool liftBumped = std::fabsf(robotInfo.GetLiftAngle() - _liftWaitingAngle_rad) > kLiftAngleBumpThresh_radps;
+  bool gyroBumped = std::fabsf(robotInfo.GetHeadGyroData().y) > kGyroYBumpThresh_radps;
+  bool accelBumped = std::fabsf(robotInfo.GetHeadAccelData().x - _waitingAccelX_mmps2) > kAccelXBumpThresh_mmps2;
 
   return liftBumped || gyroBumped || accelBumped;
 }

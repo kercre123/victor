@@ -33,11 +33,11 @@ LightCube {
 }
 LightCube {
   translation 0.142 0 0.045
-  ID 1
+  objectType "Block_LIGHTCUBE2"
 }
 LightCube {
   translation 0.142 -0.4 0.065
-  ID 2
+  objectType "Block_LIGHTCUBE3"
 }
 SolidBox {
   translation 0.144 0.4 0.005

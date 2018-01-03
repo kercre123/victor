@@ -1,6 +1,6 @@
 #include "headController.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/common/shared/radians.h"
+#include "coretech/common/shared/radians.h"
 #include "velocityProfileGenerator.h"
 #include "anki/cozmo/robot/logging.h"
 #include "messages.h"

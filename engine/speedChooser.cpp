@@ -52,7 +52,6 @@ namespace Anki {
       f32 distToObject = pose.GetTranslation().Length();
       f32 speed = (distToObject) * (maxSpeed_mmps - minSpeed_mmps) / (distToObjectForMaxSpeed_mm) + minSpeed_mmps;
       speed = CLIP(speed, minSpeed_mmps, maxSpeed_mmps);
-      speed = minSpeed_mmps;
       motionProfile.speed_mmps = speed;
       
       // Reverse speed 75% of forward speed

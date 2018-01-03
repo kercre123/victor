@@ -77,7 +77,7 @@ def start_sim(coz_conn):
     else:
       ip_address = "172.31.1.1\0\0\0\0\0\0".encode('ascii')
 
-    connect_robot_msg = cozmo._clad._clad_to_engine_iface.ConnectToRobot(ipAddress=ip_address, robotID=1, isSimulated=is_simulated)
+    connect_robot_msg = cozmo._clad._clad_to_engine_iface.ConnectToRobot(ipAddress=ip_address, isSimulated=is_simulated)
     coz_conn.send_msg(connect_robot_msg)
 
 

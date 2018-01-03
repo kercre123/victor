@@ -10,23 +10,23 @@
 *
 */
 
-#include "vizControllerImpl.h"
-#include "anki/common/basestation/array2d_impl.h"
-#include "anki/common/basestation/colorRGBA.h"
+#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/engine/colorRGBA.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/vision/basestation/image.h"
-#include "clad/vizInterface/messageViz.h"
+#include "coretech/vision/engine/image.h"
 #include "clad/types/animationTypes.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "clad/vizInterface/messageViz.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
-#include <webots/Supervisor.hpp>
-#include <webots/ImageRef.hpp>
-#include <webots/Display.hpp>
+#include "vizControllerImpl.h"
+#include <functional>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
-#include <functional>
+#include <webots/Display.hpp>
+#include <webots/ImageRef.hpp>
+#include <webots/Supervisor.hpp>
 
 namespace Anki {
 namespace Cozmo {
@@ -82,6 +82,8 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessVizTrackerQuadMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::RobotStateMessage,
     std::bind(&VizControllerImpl::ProcessVizRobotStateMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::CurrentAnimation,
+    std::bind(&VizControllerImpl::ProcessVizCurrentAnimation, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::RobotMood,
     std::bind(&VizControllerImpl::ProcessVizRobotMoodMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::RobotBehaviorSelectData,
@@ -520,7 +522,22 @@ static void DisplayImageHelper(const EncodedImage& encodedImage, webots::ImageRe
     return;
   }
   
-  imageRef = display->imageNew(img.GetNumCols(), img.GetNumRows(), img.GetDataPointer(), webots::Display::RGB);
+  if(img.GetNumCols() == display->getWidth() && img.GetNumRows() == display->getHeight())
+  {
+    // Simple case: image already the right size
+    imageRef = display->imageNew(img.GetNumCols(), img.GetNumRows(), img.GetDataPointer(), webots::Display::RGB);
+  }
+  else
+  {
+    // Resize to fit the display
+    // NOTE: making fixed-size data buffer static because resizedImage will change dims each time it's used. 
+    static std::vector<u8> buffer(display->getWidth()*display->getHeight()*3);
+    Vision::ImageRGB resizedImage(display->getHeight(), display->getWidth(), buffer.data());
+    img.ResizeKeepAspectRatio(resizedImage, Vision::ResizeMethod::NearestNeighbor);
+    imageRef = display->imageNew(resizedImage.GetNumCols(), resizedImage.GetNumRows(),
+                                 resizedImage.GetDataPointer(), webots::Display::RGB);
+  }
+  
   display->imagePaste(imageRef, 0, 0);
 }
 
@@ -775,12 +792,24 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     (int)payload.state.rwheel_speed_mmps);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_SPEEDS, Anki::NamedColors::GREEN, txt);
 
-  sprintf(txt, "Batt: %2.1f V  AnimTracksLocked: %c%c%c",
-    payload.state.batteryVoltage,
-          !(payload.enabledAnimTracks & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
-          !(payload.enabledAnimTracks & (u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
-          !(payload.enabledAnimTracks & (u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ');
+  sprintf(txt, "Batt: %2.1f V", payload.state.batteryVoltage);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
+
+  sprintf(txt, "Anim: %32s [%d], ProcFaceFrames: %d",
+        _currAnimName.c_str(), 
+        _currAnimTag,
+         payload.numProcAnimFaceKeyframes);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ANIM, Anki::NamedColors::GREEN, txt);
+
+  sprintf(txt, "Locked: %c%c%c, InUse: %c%c%c",
+        (payload.lockedAnimTracks & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
+        (payload.lockedAnimTracks & (u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
+        (payload.lockedAnimTracks & (u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
+        (payload.animTracksInUse  & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
+        (payload.animTracksInUse  & (u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
+        (payload.animTracksInUse  & (u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ');
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ANIM_TRACK_LOCKS, Anki::NamedColors::GREEN, txt);
+
 
   sprintf(txt, "Video: %d Hz   Proc: %d Hz",
     payload.videoFrameRateHz, payload.imageProcFrameRateHz);
@@ -792,18 +821,11 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP ? "PICKDUP" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_FALLING ? "FALLING" : "");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
-
-  char animLabel[16] = {0};
-  if(payload.animTag == 255) {
-    sprintf(animLabel, "ANIM_IDLE");
-  } else if(payload.animTag != 0) {
-    sprintf(animLabel, "ANIM[%d]", payload.animTag);
-  }
   
-  sprintf(txt, "    %10s %10s",
-          animLabel,
+  sprintf(txt, "   %10s %7s",
           payload.state.status & (uint32_t)RobotStatusFlag::IS_CHARGING ? "CHARGING" :
-          (payload.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER ? "ON_CHARGER" : ""));
+          (payload.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER ? "ON_CHARGER" : ""),
+          payload.state.status & (uint32_t)RobotStatusFlag::IS_BUTTON_PRESSED ? "PWR_BTN" : "");
   
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
   
@@ -840,6 +862,12 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   } // if(_saveState)
 }
 
+void VizControllerImpl::ProcessVizCurrentAnimation(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_CurrentAnimation();
+  _currAnimName = payload.animName;
+  _currAnimTag = payload.tag;
+}
   
   
 static const int kTextSpacingY = 10;
@@ -1065,7 +1093,7 @@ void VizControllerImpl::ProcessVizNewBehaviorSelectedMessage(const AnkiEvent<Viz
   if (_behaviorEventBuffer.size() > 0)
   {
     std::vector<BehaviorID>& latestEvents =_behaviorEventBuffer.back();
-    latestEvents.push_back(BehaviorIDFromString(selectData.newCurrentBehavior));
+    latestEvents.push_back(BehaviorTypesWrapper::BehaviorIDFromString(selectData.newCurrentBehavior));
   }
 }
 
@@ -1103,7 +1131,8 @@ void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent
   
   for (const VizInterface::BehaviorScoreData& scoreData : selectData.scoreData)
   {
-    BehaviorScoreBuffer& scoreBuffer = FindOrAddScoreBuffer(BehaviorIDFromString(scoreData.behaviorID));
+    BehaviorScoreBuffer& scoreBuffer = FindOrAddScoreBuffer(
+      BehaviorTypesWrapper::BehaviorIDFromString(scoreData.behaviorID));
     if (!scoreBuffer.empty())
     {
       // Remove the dummy entry we added during preUpdate
@@ -1216,7 +1245,7 @@ void VizControllerImpl::DrawBehaviorDisplay()
         for (BehaviorID eventID : eventsThisTick)
         {
           _behaviorDisp->drawLine(xVal, eventY, xVal, eventY + 30);
-          _behaviorDisp->drawText(BehaviorIDToString(eventID), xVal, eventY + kTextOffsetY);
+          _behaviorDisp->drawText(BehaviorTypesWrapper::BehaviorIDToString(eventID), xVal, eventY + kTextOffsetY);
           
           eventY += kTextSpacingY;
           if (eventY > kBottomTextY)
@@ -1308,7 +1337,7 @@ void VizControllerImpl::DrawBehaviorDisplay()
       
       char valueString[32];
       snprintf(valueString, sizeof(valueString), "%1.2f: ", scoreBuffer.back()._value);
-      const char * idStr = BehaviorIDToString(namedScoreBuffer._id);
+      const char * idStr = BehaviorTypesWrapper::BehaviorIDToString(namedScoreBuffer._id);
       std::string text = std::string(valueString) + (idStr == nullptr ? "<null>" : idStr);
       
       _behaviorDisp->drawText(text, textX, textY + kTextOffsetY);

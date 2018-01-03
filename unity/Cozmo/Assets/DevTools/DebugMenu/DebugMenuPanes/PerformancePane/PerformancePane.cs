@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Anki.Cozmo.ExternalInterface;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
@@ -55,17 +56,55 @@ public class PerformancePane : MonoBehaviour {
   [SerializeField]
   private Dropdown _QualityDropDown;
 
+  [SerializeField]
+  private Button _PerfMetricResetButton;
+
+  [SerializeField]
+  private Button _PerfMetricStartButton;
+
+  [SerializeField]
+  private Button _PerfMetricStopButton;
+
+  [SerializeField]
+  private Button _PerfMetricDumpButton;
+
+  [SerializeField]
+  private Button _PerfMetricDumpAllButton;
+
+  [SerializeField]
+  private Button _PerfMetricDumpFilesButton;
+
+  [SerializeField]
+  private Text _PerfMetricStatus;
+
+
   private void Start() {
     _ShowFPSCounterButton.onClick.AddListener(HandleShowCounterButtonClicked);
+    _PerfMetricResetButton.onClick.AddListener(HandlePerfMetricResetButtonClicked);
+    _PerfMetricStartButton.onClick.AddListener(HandlePerfMetricStartButtonClicked);
+    _PerfMetricStopButton.onClick.AddListener(HandlePerfMetricStopButtonClicked);
+    _PerfMetricDumpButton.onClick.AddListener(HandlePerfMetricDumpButtonClicked);
+    _PerfMetricDumpAllButton.onClick.AddListener(HandlePerfMetricDumpAllButtonClicked);
+    _PerfMetricDumpFilesButton.onClick.AddListener(HandlePerfMetricDumpFilesButtonClicked);
+    RobotEngineManager.Instance.AddCallback<PerfMetricStatus>(HandlePerfMetricStatusFromEngine);
     InitQualityLevelDropdown();
     _QualityDropDown.onValueChanged.AddListener(HandleQualityChanged);
     InitPerfHUDDropdown();
     _PerfWarningHUDDropdown.onValueChanged.AddListener(HandlePerfHUDModeChanged);
     RaisePerformancePaneOpened(this);
+
+    RobotEngineManager.Instance.SendPerfMetricGetStatus();
   }
 
   private void OnDestroy() {
     _ShowFPSCounterButton.onClick.RemoveListener(HandleShowCounterButtonClicked);
+    _PerfMetricResetButton.onClick.RemoveListener(HandlePerfMetricResetButtonClicked);
+    _PerfMetricStartButton.onClick.RemoveListener(HandlePerfMetricStartButtonClicked);
+    _PerfMetricStopButton.onClick.RemoveListener(HandlePerfMetricStopButtonClicked);
+    _PerfMetricDumpButton.onClick.RemoveListener(HandlePerfMetricDumpButtonClicked);
+    _PerfMetricDumpAllButton.onClick.RemoveListener(HandlePerfMetricDumpAllButtonClicked);
+    _PerfMetricDumpFilesButton.onClick.RemoveListener(HandlePerfMetricDumpFilesButtonClicked);
+    RobotEngineManager.Instance.RemoveCallback<PerfMetricStatus>(HandlePerfMetricStatusFromEngine);
     _QualityDropDown.onValueChanged.RemoveListener(HandleQualityChanged);
     RaisePerformancePaneClosed();
   }
@@ -86,6 +125,37 @@ public class PerformancePane : MonoBehaviour {
   private void HandleShowCounterButtonClicked() {
     RaisePerformanceCounterButtonClicked();
   }
+
+  private void HandlePerfMetricResetButtonClicked() {
+    RobotEngineManager.Instance.SendPerfMetricCommand(PerfMetricCommandType.Reset);
+  }
+
+  private void HandlePerfMetricStartButtonClicked() {
+    RobotEngineManager.Instance.SendPerfMetricCommand(PerfMetricCommandType.Start);
+  }
+
+  private void HandlePerfMetricStopButtonClicked() {
+    RobotEngineManager.Instance.SendPerfMetricCommand(PerfMetricCommandType.Stop);
+  }
+
+  private void HandlePerfMetricDumpButtonClicked() {
+    RobotEngineManager.Instance.SendPerfMetricCommand(PerfMetricCommandType.Dump);
+  }
+
+  private void HandlePerfMetricDumpAllButtonClicked() {
+    RobotEngineManager.Instance.SendPerfMetricCommand(PerfMetricCommandType.DumpAll);
+  }
+
+  private void HandlePerfMetricDumpFilesButtonClicked() {
+    RobotEngineManager.Instance.SendPerfMetricCommand(PerfMetricCommandType.DumpFiles);
+  }
+
+  private void HandlePerfMetricStatusFromEngine(PerfMetricStatus status) {
+    _PerfMetricStatus.text = status.statusString;
+    _PerfMetricStartButton.enabled = !status.isRecording;
+    _PerfMetricStopButton.enabled = status.isRecording;
+  }
+
 
   private void InitPerfHUDDropdown() {
     _PerfWarningHUDDropdown.ClearOptions();

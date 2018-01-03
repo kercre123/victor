@@ -12,8 +12,8 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotorCalibration.h"
-#include "engine/robot.h"
 #include "engine/robotManager.h"
 
 
@@ -38,25 +38,21 @@ bool BehaviorReactToMotorCalibration::WantsToBeActivatedBehavior(BehaviorExterna
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToMotorCalibration::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToMotorCalibration::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   LOG_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");  
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
   // Start a hang action just to keep this behavior alive until the calibration complete message is received
-  DelegateIfInControl(new WaitAction(robot, _kTimeout_sec), [&robot](ActionResult res)
+  DelegateIfInControl(new WaitAction(_kTimeout_sec), [&robotInfo](ActionResult res)
     {
       if (IActionRunner::GetActionResultCategory(res) != ActionResultCategory::CANCELLED  &&
-          (!robot.IsHeadCalibrated() || !robot.IsLiftCalibrated())) {
+          (!robotInfo.IsHeadCalibrated() || !robotInfo.IsLiftCalibrated())) {
         PRINT_NAMED_WARNING("BehaviorReactToMotorCalibration.Timeout",
                             "Calibration didn't complete (lift: %d, head: %d)",
-                            robot.IsLiftCalibrated(), robot.IsHeadCalibrated());
+                            robotInfo.IsLiftCalibrated(), robotInfo.IsHeadCalibrated());
       }
     });
-
-  return RESULT_OK;
 }
   
   
@@ -66,11 +62,9 @@ void BehaviorReactToMotorCalibration::HandleWhileActivated(const EngineToGameEve
   switch(event.GetData().GetTag()) {
     case EngineToGameTag::MotorCalibration:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
+      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
-      if (robot.IsHeadCalibrated() && robot.IsLiftCalibrated()) {
+      if (robotInfo.IsHeadCalibrated() && robotInfo.IsLiftCalibrated()) {
         PRINT_CH_INFO("Behaviors", "BehaviorReactToMotorCalibration.HandleWhileRunning.Stop", "");
         CancelDelegates();
       }

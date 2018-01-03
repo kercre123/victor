@@ -92,8 +92,7 @@ target_link_libraries(webotsCtrlLightCube
   PRIVATE
   util
   cti_common
-  cti_common_robot
-  robot_clad_cpplite
+  engine_clad
   robot_interface
   webotsCtrlCommon
   ${PLATFORM_LIBS}
@@ -197,6 +196,7 @@ target_link_libraries(webotsCtrlAnim
   webotsCtrlCommon
   victor_anim
   robot_clad_cpplite
+  osState
   ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )
@@ -230,6 +230,8 @@ target_link_libraries(webotsCtrlGameEngine2
   cti_messaging
   cti_planning
   cozmo_engine
+  cubeBleClient
+  osState
   webotsCtrlCommon
   ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
@@ -276,7 +278,7 @@ target_include_directories(webotsCtrlKeyboard
 
 target_compile_definitions(webotsCtrlKeyboard
   PRIVATE
-  CORETECH_BASESTATION=1
+  CORETECH_ENGINE=1
 )
 
 symlink_target(
@@ -315,7 +317,7 @@ target_include_directories(webotsCtrlBuildServerTest
 
 target_compile_definitions(webotsCtrlBuildServerTest
   PRIVATE
-  CORETECH_BASESTATION=1
+  CORETECH_ENGINE=1
 )
 
 symlink_target(
@@ -367,7 +369,7 @@ target_include_directories(webotsCtrlDevLog
 
 target_compile_definitions(webotsCtrlDevLog
   PRIVATE
-  CORETECH_BASESTATION=1
+  CORETECH_ENGINE=1
 )
 
 symlink_target(

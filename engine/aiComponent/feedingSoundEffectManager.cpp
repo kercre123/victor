@@ -14,7 +14,9 @@
 #include "engine/aiComponent/feedingSoundEffectManager.h"
 
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "util/helpers/templateHelpers.h"
+
 
 namespace Anki{
 namespace Cozmo{
@@ -36,7 +38,7 @@ FeedingSoundEffectManager::FeedingSoundEffectManager()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void FeedingSoundEffectManager::NotifyChargeStateChange(Robot& robot,
+void FeedingSoundEffectManager::NotifyChargeStateChange(IExternalInterface& externalInterface,
                                                         const ObjectID& objID, int currentChargeLevel,
                                                         ChargeStateChange changeEnumVal)
 {
@@ -50,23 +52,23 @@ void FeedingSoundEffectManager::NotifyChargeStateChange(Robot& robot,
   if(objID == _dominantObject){
     message.stage = Util::EnumToUnderlying(changeEnumVal);
     message.chargePercentage = currentChargeLevel/kSFXLevelsToFillCube;
-    robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::FeedingSFXStageUpdate>(message);
+    externalInterface.BroadcastToGame<ExternalInterface::FeedingSFXStageUpdate>(message);
     updateDominantProperties = true;
   }else{
     // Reset to listening for the new charge
     if((_dominantChargeChange != ChargeStateChange::Charge_Up) &&
        (changeEnumVal == ChargeStateChange::Charge_Start)){
-      ResetChargeSound(robot);
+      ResetChargeSound(externalInterface);
     }
     // Slur the sound effect to the appropriate level of the cube that's still
     // charging
     else if((_dominantChargeChange != ChargeStateChange::Charge_Up) &&
        (changeEnumVal == ChargeStateChange::Charge_Up)){
-      ResetChargeSound(robot);
+      ResetChargeSound(externalInterface);
       message.stage = Util::EnumToUnderlying(ChargeStateChange::Charge_Up);
       message.chargePercentage = currentChargeLevel/kSFXLevelsToFillCube;
       for(int i = 0; i < currentChargeLevel; i++){
-        robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::FeedingSFXStageUpdate>(message);
+        externalInterface.BroadcastToGame<ExternalInterface::FeedingSFXStageUpdate>(message);
       }
       message.stage = kInvalidMessageSTage;
     }
@@ -92,14 +94,14 @@ void FeedingSoundEffectManager::NotifyChargeStateChange(Robot& robot,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void FeedingSoundEffectManager::ResetChargeSound(Robot& robot)
+void FeedingSoundEffectManager::ResetChargeSound(IExternalInterface& externalInterface)
 {
   ExternalInterface::FeedingSFXStageUpdate message;
   message.stage = Util::EnumToUnderlying(ChargeStateChange::Charge_Stop);
-  robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::FeedingSFXStageUpdate>(message);
+  externalInterface.BroadcastToGame<ExternalInterface::FeedingSFXStageUpdate>(message);
   ExternalInterface::FeedingSFXStageUpdate message2;
   message2.stage = Util::EnumToUnderlying(ChargeStateChange::Charge_Start);
-  robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::FeedingSFXStageUpdate>(message2);
+  externalInterface.BroadcastToGame<ExternalInterface::FeedingSFXStageUpdate>(message2);
   
 }
 

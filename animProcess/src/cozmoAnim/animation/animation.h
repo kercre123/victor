@@ -17,7 +17,7 @@
 #ifndef ANKI_COZMO_CANNED_ANIMATION_H
 #define ANKI_COZMO_CANNED_ANIMATION_H
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "anki/cozmo/shared/animationTag.h"
 #include "cozmoAnim/animation/keyframe.h"
 #include "cozmoAnim/animation/track.h"

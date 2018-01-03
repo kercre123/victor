@@ -1,4 +1,4 @@
-#include "clad/robotInterface/lightCubeMessage.h"
+#include "clad/externalInterface/lightCubeMessage.h"
 #include "BlockMessages.h"
 #include <stdio.h>
 
@@ -7,7 +7,7 @@ namespace Anki {
     
     namespace ActiveBlock {
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
-      #include "clad/robotInterface/lightCubeMessage_declarations.def"
+      #include "clad/externalInterface/lightCubeMessage_declarations.def"
 
       void ProcessBadTag_LightCubeMessage(const BlockMessages::LightCubeMessage::Tag tag);
     }
@@ -17,15 +17,9 @@ namespace Anki {
       Result ProcessMessage(const u8* buffer, const u8 bufferSize)
       {
         using namespace ActiveBlock;
-        LightCubeMessage msg;
         
-        memcpy(msg.GetBuffer(), buffer, bufferSize);
-        switch(msg.tag)
-        {
-          #include "clad/robotInterface/lightCubeMessage_switch.def"
-          default:
-            ProcessBadTag_LightCubeMessage(msg.tag);
-        }
+        LightCubeMessage msg(buffer, (size_t) bufferSize);
+        #include "clad/externalInterface/lightCubeMessage_switch.def"
         
         return RESULT_OK;
       } // ProcessBuffer()      

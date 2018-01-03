@@ -1,7 +1,7 @@
 #ifndef ANKI_COZMOBOT_H
 #define ANKI_COZMOBOT_H
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
 
@@ -13,21 +13,6 @@ namespace Anki {
       void Destroy();
 
       Result step_MainExecution();
-
-      //
-      // State Machine Operation Modes
-      //
-      enum OperationMode {
-        INIT_MOTOR_CALIBRATION,
-        WAITING,
-        PICK_UP_BLOCK,
-        PUT_DOWN_BLOCK,
-        FOLLOW_PATH
-      };
-
-      OperationMode GetOperationMode();
-      void SetOperationMode(OperationMode newMode);
-
 
     } // namespace Robot
 

@@ -30,7 +30,7 @@ CozmoMat {
 }
 LightCube {
   translation 0.202 0 0.022
-  ID 1
+  objectType "Block_LIGHTCUBE2"
 }
 DEF Face_1 Face {
   translation 0.7 -0.34 0.39

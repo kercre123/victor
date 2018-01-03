@@ -9,6 +9,7 @@ namespace DataPersistence {
     public string ProjectXML;
     public string ProjectJSON;
     public string ProjectName;
+    public string BaseDASProjectName; // DAS project name of the Anki project this was remixed from (null or empty if it wasn't)
     public DateTime DateTimeCreatedUTC;
     public DateTime DateTimeLastModifiedUTC;
 

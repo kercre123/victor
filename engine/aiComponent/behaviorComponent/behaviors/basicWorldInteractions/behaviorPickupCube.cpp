@@ -22,15 +22,15 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/blockWorld/blockConfigTypeHelpers.h"
 #include "engine/blockWorld/blockConfiguration.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/robotInterface/messageFromActiveObject.h"
+#include "clad/externalInterface/messageFromActiveObject.h"
 
 
 namespace Anki {
@@ -74,31 +74,33 @@ bool BehaviorPickUpCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPickUpCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(!ShouldStreamline()){
     TransitionToDoingInitialReaction(behaviorExternalInterface);
   }else{
     TransitionToPickingUpCube(behaviorExternalInterface);
   }
-  return Result::RESULT_OK;
+  
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorPickUpCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // If the block we're going to pickup ever becomes part of an illegal configuration
   // immediately stop the behavior
   for(auto configType: _configurationsToIgnore) {
     if(behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager()
                   .IsObjectPartOfConfigurationType(configType, _targetBlockID)){
       CancelSelf();
-      return Status::Complete;
+      return;
     }
-  }
-  
-  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
  
   
@@ -144,11 +146,8 @@ void BehaviorPickUpCube::UpdateTargetBlocksInternal(BehaviorExternalInterface& b
     if(std::find(validObjs.begin(), validObjs.end(), possiblyBestObj) != validObjs.end()){
       _targetBlockID = possiblyBestObjID;
     }else{
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
       const ObservableObject* closestObject = behaviorExternalInterface.GetBlockWorld().
-                                FindLocatedObjectClosestTo(robot.GetPose(), filter);
+              FindLocatedObjectClosestTo(behaviorExternalInterface.GetRobotInfo().GetPose(), filter);
       
       if(closestObject != nullptr)
       {
@@ -164,10 +163,7 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(BehaviorExternalInterf
 {
   DEBUG_SET_STATE(DoingInitialReaction);
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot,
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(
                      AnimationTrigger::SparkPickupInitialCubeReaction),
               &BehaviorPickUpCube::TransitionToPickingUpCube);
 
@@ -193,11 +189,8 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(BehaviorExternalInterface& be
 void BehaviorPickUpCube::TransitionToSuccessReaction(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(!ShouldStreamline()){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
     DEBUG_SET_STATE(DoingFinalReaction);
-    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::ReactToBlockPickupSuccess));
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ReactToBlockPickupSuccess));
   }
 }
 

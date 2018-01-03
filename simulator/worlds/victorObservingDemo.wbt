@@ -1,0 +1,71 @@
+#VRML_SIM V8.5 utf8
+CozmoWorldInfo {
+}
+Viewpoint {
+  orientation -0.22960533 -0.40130452 -0.88669954 4.0805622
+  position 1.6562732 1.0409785 1.8928662
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction -2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 0 2 -1
+  intensity 0.5
+}
+CozmoMat {
+  showMarkers FALSE
+}
+VictorChargerSimple {
+  translation -0.076696196 0.00014978189 2.4646951e-14
+}
+Face {
+  translation 0.57139415 -0.0017680771 0.39
+  rotation 0 0 -1 4.712389
+  image "face02.png"
+}
+Face {
+  translation 0.52778232 -0.23261288 0.32
+  rotation 0 0 -1 4.9741884
+}
+LightCube {
+  translation -0.1067011 0.29601634 0.022
+  rotation 0 0 1 0.523599
+}
+LightCube {
+  translation -0.010376264 0.32666562 0.0219929
+  rotation 1.39537e-05 -1.83704e-06 1 0.261799
+  objectType "Block_LIGHTCUBE3"
+}
+LightCube {
+  translation 0.08610605 0.32966413 0.0219929
+  rotation 0 0 -1 6.23319
+  objectType "Block_LIGHTCUBE2"
+}
+CozmoBot2 {
+  filterLogs TRUE
+}
+WebotsKeyboardController {
+  behaviorName "VictorObservingDemo"
+  translation -0.24686749 0.2921897 0.08
+  rotation 0 0 1 6.0213859
+}
+CozmoVizDisplay {
+  streamResolution "NHD"
+}
+SolidBox {
+  translation 0.0014556051 0.23224103 1.110223e-15
+  size 0.5 0.02 0.2
+}

@@ -23,10 +23,10 @@
 #include "engine/mat.h"
 #include "engine/namedColors/namedColors.h"
 #include "engine/overheadEdge.h"
-#include "anki/common/types.h"
-#include "anki/common/basestation/exceptions.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/exceptions.h"
 
-#include "anki/vision/basestation/observableObjectLibrary.h"
+#include "coretech/vision/engine/observableObjectLibrary.h"
 
 #include "clad/types/actionTypes.h"
 
@@ -98,9 +98,6 @@ namespace Anki
       // if the poseState changes to PoseState::Invalid. In that case, the object received by parameter is a copy
       // of the object with its pose set Invalid and not accessible
       void OnObjectPoseChanged(const ObservableObject& object, const Pose3d* oldPose, PoseState oldPoseState);
-      
-      // notify the blockWorld that someone (poseConfirmer) has visually verified the given object at their current pose
-      void OnObjectVisuallyVerified(const ObservableObject* object);
 
       // Called when robot gets delocalized in order to do internal bookkeeping and broadcast updated object states
       void OnRobotDelocalized(PoseOriginID_t newWorldOriginID);

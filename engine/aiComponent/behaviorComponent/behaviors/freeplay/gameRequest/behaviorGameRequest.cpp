@@ -11,18 +11,18 @@
  **/
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/gameRequest/behaviorGameRequest.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/requestGameComponent.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -71,15 +71,13 @@ ICozmoBehaviorRequestGame::ICozmoBehaviorRequestGame(const Json::Value& config)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehaviorRequestGame::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  
+{  
   _blockworldFilter->OnlyConsiderLatestUpdate(false);
   _blockworldFilter->SetFilterFcn( std::bind( &ICozmoBehaviorRequestGame::FilterBlocks,
                                              this,
-                                             &robot,
+                                             &behaviorExternalInterface.GetProgressionUnlockComponent(),
+                                             &behaviorExternalInterface.GetAIComponent(),
+                                             &behaviorExternalInterface.GetRobotInfo().GetDockingComponent(),
                                              std::placeholders::_1) );
 }
 
@@ -110,13 +108,13 @@ bool ICozmoBehaviorRequestGame::WantsToBeActivatedBehavior(BehaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ICozmoBehaviorRequestGame::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _requestTime_s = -1.0f;
   _robotsBlockID.UnSet();
   _badBlocks.clear();
   
-  return RequestGame_OnBehaviorActivated(behaviorExternalInterface);
+  RequestGame_OnBehaviorActivated(behaviorExternalInterface);
 }
 
 
@@ -124,44 +122,39 @@ Result ICozmoBehaviorRequestGame::OnBehaviorActivated(BehaviorExternalInterface&
 void ICozmoBehaviorRequestGame::SendRequest(BehaviorExternalInterface& behaviorExternalInterface)
 {
   using namespace ExternalInterface;
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  robot.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::SimplePrompt);
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  robotInfo.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::SimplePrompt);
 
-  robot.Broadcast( MessageEngineToGame( RequestGameStart(GetRequiredUnlockID())) );
+  //robot.Broadcast( MessageEngineToGame( RequestGameStart(GetRequiredUnlockID())) );
   _requestTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   
-  robot.GetAIComponent().GetRequestGameComponent().RegisterRequestingGameType(GetRequiredUnlockID());
-  robot.GetPublicStateBroadcaster().UpdateRequestingGame(true);
+  behaviorExternalInterface.GetAIComponent().GetRequestGameComponent().RegisterRequestingGameType(GetRequiredUnlockID());
+  behaviorExternalInterface.GetRobotPublicStateBroadcaster().UpdateRequestingGame(true);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehaviorRequestGame::SendDeny(BehaviorExternalInterface& behaviorExternalInterface)
 {
   using namespace ExternalInterface;
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  robot.Broadcast( MessageEngineToGame( DenyGameStart() ) );
-  robot.GetPublicStateBroadcaster().UpdateRequestingGame(false);
+  //robot.Broadcast( MessageEngineToGame( DenyGameStart() ) );
+  behaviorExternalInterface.GetRobotPublicStateBroadcaster().UpdateRequestingGame(false);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const ObservableObject* obj) const
+bool ICozmoBehaviorRequestGame::FilterBlocks(ProgressionUnlockComponent* unlockComp, AIComponent* aiComp,
+                                             DockingComponent* dockingComp, const ObservableObject* obj) const
 {
-
   // if we have the "cube roll" behavior unlocked, then only do a game request with an upright
   // cube. Otherwise, we don't care about the direction
   const bool forFreeplay = true;
-  const bool isRollingUnlocked = robotPtr->GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube,
-                                                                                      forFreeplay);
+  const bool isRollingUnlocked = unlockComp->IsUnlocked(UnlockId::RollCube, forFreeplay);
   const bool upAxisOk = ! isRollingUnlocked ||
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
 
   // check to make sure we haven't failed to interact with the block recently
-  const auto& whiteboard = robotPtr->GetAIComponent().GetWhiteboard();
+  const auto& whiteboard = aiComp->GetWhiteboard();
   const bool recentlyFailed = whiteboard.DidFailToUse(obj->GetID(),
                                                       {{AIWhiteboard::ObjectActionFailure::PickUpObject,
                                                         AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie}},
@@ -174,8 +167,7 @@ bool ICozmoBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const Obser
     obj->IsPoseStateKnown() &&
     obj->GetFamily() == ObjectFamily::LightCube &&
     !recentlyFailed &&
-    robotPtr->GetDockingComponent().CanPickUpObject(*obj);
-
+    dockingComp->CanPickUpObject(*obj);
 }
 
 
@@ -226,16 +218,17 @@ bool ICozmoBehaviorRequestGame::SwitchRobotsBlock(BehaviorExternalInterface& beh
   // otherwise, try to find a new block that doesn't match this ID
   _badBlocks.insert(_robotsBlockID);
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
   // In this case (and only this case) we want to filter out _badBlocks, so make a new filter
   BlockWorldFilter filter( *_blockworldFilter );
-  filter.SetFilterFcn( [this,&robot](const ObservableObject* obj) {
-      return FilterBlocks(&robot, obj) && _badBlocks.find( obj->GetID() ) == _badBlocks.end();
+  filter.SetFilterFcn( [this,&behaviorExternalInterface](const ObservableObject* obj) {
+      return FilterBlocks(&behaviorExternalInterface.GetProgressionUnlockComponent(),
+                          &behaviorExternalInterface.GetAIComponent(),
+                          &behaviorExternalInterface.GetRobotInfo().GetDockingComponent(),
+                          obj) && 
+              _badBlocks.find( obj->GetID() ) == _badBlocks.end();
     } );
 
-  const ObservableObject* newBlock = robot.GetBlockWorld().FindMostRecentlyObservedObject( filter );
+  const ObservableObject* newBlock = behaviorExternalInterface.GetBlockWorld().FindMostRecentlyObservedObject( filter );
   if( newBlock != nullptr ) {
     PRINT_NAMED_DEBUG("BehaviorRequestGame.SwitchRobotsBlock", "switch from %d to %d",
                       _robotsBlockID.GetValue(),
@@ -260,15 +253,19 @@ bool ICozmoBehaviorRequestGame::GetLastBlockPose(Pose3d& pose) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status ICozmoBehaviorRequestGame::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const ObservableObject* obj = GetClosestBlock(behaviorExternalInterface);
   if( obj != nullptr ) {
     _hasBlockPose = true;
     _lastBlockPose = obj->GetPose();
   }
   
-  return RequestGame_UpdateInternal(behaviorExternalInterface);
+  RequestGame_UpdateInternal(behaviorExternalInterface);
 }
 
 
@@ -296,7 +293,7 @@ bool ICozmoBehaviorRequestGame::GetFacePose(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag())
   {
@@ -321,7 +318,7 @@ void ICozmoBehaviorRequestGame::AlwaysHandle(const EngineToGameEvent& event, Beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::AlwaysHandleInScope(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag())
   {
@@ -399,10 +396,8 @@ void ICozmoBehaviorRequestGame::HandleDeletedFace(const ExternalInterface::Robot
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehaviorRequestGame::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  robot.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::TriggerPhrase);
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  robotInfo.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::TriggerPhrase);
   
   RequestGame_OnBehaviorDeactivated(behaviorExternalInterface);
 }

@@ -19,7 +19,7 @@
 #include "engine/components/bodyLightComponent.h"
 
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 
 #include <vector>
 
@@ -52,14 +52,10 @@ public:
   
 protected:
   using base = ICozmoBehavior;
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  // This behavior can't be resumed (cube might not be valid and the None/Robot version of WantsToBeActivated isn't
-  // implemented)
-  virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override { return Result::RESULT_FAIL; }
-
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   enum class State{

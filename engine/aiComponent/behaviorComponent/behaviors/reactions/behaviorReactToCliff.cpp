@@ -16,12 +16,12 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/robot.h"
 #include "engine/robotStateHistory.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
@@ -61,7 +61,7 @@ bool BehaviorReactToCliff::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(behaviorExternalInterface.HasMoodManager()){
     auto& moodManager = behaviorExternalInterface.GetMoodManager();
@@ -71,20 +71,18 @@ Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& beha
   switch( _state ) {
     case State::PlayingStopReaction:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
+      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
       // Record cliff detection threshold before at start of stop
-      _cliffDetectThresholdAtStart = robot.GetCliffSensorComponent().GetCliffDetectThreshold(0);
+      _cliffDetectThresholdAtStart = robotInfo.GetCliffSensorComponent().GetCliffDetectThreshold(0);
       
       // Wait function for determining if the cliff is suspicious
-      auto waitForStopLambda = [this](Robot& robot) {
-        if ( robot.GetMoveComponent().AreWheelsMoving() ) {
+      auto waitForStopLambda = [this, &robotInfo](Robot& robot) {
+        if ( robotInfo.GetMoveComponent().AreWheelsMoving() ) {
           return false;
         }
         
-        if (_cliffDetectThresholdAtStart != robot.GetCliffSensorComponent().GetCliffDetectThreshold(0)) {
+        if (_cliffDetectThresholdAtStart != robotInfo.GetCliffSensorComponent().GetCliffDetectThreshold(0)) {
           // There was a change in the cliff detection threshold so assuming
           // it was a false cliff and aborting reaction
           PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.QuittingDueToSuspiciousCliff", "");
@@ -95,12 +93,12 @@ Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& beha
       
       // skip the "huh" animation if in severe energy or repair
       auto callbackFunc = &BehaviorReactToCliff::TransitionToPlayingStopReaction;
-      NeedId expressedNeed = robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
+      NeedId expressedNeed = behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
       if((expressedNeed == NeedId::Energy) || (expressedNeed == NeedId::Repair)){
         callbackFunc = &BehaviorReactToCliff::TransitionToPlayingCliffReaction;
       }
 
-      WaitForLambdaAction* waitForStopAction = new WaitForLambdaAction(robot, waitForStopLambda);
+      WaitForLambdaAction* waitForStopAction = new WaitForLambdaAction(waitForStopLambda);
       DelegateIfInControl(waitForStopAction, callbackFunc);
       break;
     }
@@ -112,11 +110,10 @@ Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& beha
     default: {
       PRINT_NAMED_ERROR("BehaviorReactToCliff.Init.InvalidState",
                         "Init called with invalid state");
-      return Result::RESULT_FAIL;
     }
   }
   
-  return Result::RESULT_OK;
+  
 }
 
   
@@ -134,17 +131,13 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction(BehaviorExternalInter
   const float latencyDelay_s = 0.05f;
   const float maxWaitTime_s = (1.0f / 1000.0f ) * CLIFF_EVENT_DELAY_MS + latencyDelay_s;
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
-  auto action = new CompoundActionParallel(robot);
+  auto action = new CompoundActionParallel();
 
   // Wait for the cliff event before jumping to cliff reaction
   auto waitForCliffLambda = [this](Robot& robot) {
     return _gotCliff;
   };
-  action->AddAction(new WaitForLambdaAction(robot, waitForCliffLambda, maxWaitTime_s), true);
+  action->AddAction(new WaitForLambdaAction(waitForCliffLambda, maxWaitTime_s), true);
   DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
 }
 
@@ -174,10 +167,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(BehaviorExternalInte
 
     auto action = GetCliffPreReactAction(behaviorExternalInterface, _detectedFlags);
 
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    action->AddAction(new TriggerLiftSafeAnimationAction(robot, reactionAnim));
+    action->AddAction(new TriggerLiftSafeAnimationAction(reactionAnim));
     
     DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToBackingUp);
   }
@@ -188,13 +178,11 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(BehaviorExternalInte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::TransitionToBackingUp(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
   // if the animation doesn't drive us backwards enough, do it manually
-  if( robot.GetCliffSensorComponent().IsCliffDetected() ) {
-      DelegateIfInControl(new DriveStraightAction(robot, -kCliffBackupDist_mm, kCliffBackupSpeed_mmps),
+  if( robotInfo.GetCliffSensorComponent().IsCliffDetected() ) {
+      DelegateIfInControl(new DriveStraightAction(-kCliffBackupDist_mm, kCliffBackupSpeed_mmps),
                   [this,&behaviorExternalInterface](){
                       SendFinishedReactToCliffMessage(behaviorExternalInterface);
                   });
@@ -209,10 +197,7 @@ void BehaviorReactToCliff::TransitionToBackingUp(BehaviorExternalInterface& beha
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::SendFinishedReactToCliffMessage(BehaviorExternalInterface& behaviorExternalInterface) {
   // Send message that we're done reacting
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCliffEventFinished()));
+  //robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCliffEventFinished()));
 }
   
   
@@ -226,13 +211,16 @@ void BehaviorReactToCliff::OnBehaviorDeactivated(BehaviorExternalInterface& beha
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToCliff::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if(_shouldStopDueToCharger){
     _shouldStopDueToCharger = false;
-    return Status::Complete;
+    CancelSelf();
   }
-  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   
@@ -309,11 +297,7 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(BehaviorE
   const uint8_t BL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BL));
   const uint8_t BR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BR));
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  auto action = new CompoundActionSequential(robot);
+  auto action = new CompoundActionSequential();
   
   float amountToTurn_deg = 0.f;
   float amountToDrive_mm = 0.f;
@@ -323,16 +307,16 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(BehaviorE
   switch (cliffDetectedFlags) {
     case (FL | FR):
       // Hit cliff straight-on. Play stop reaction and move on
-      action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
+      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffDetectorStop));
       break;
     case FL:
       // Play stop reaction animation and turn CCW a bit
-      action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
+      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffDetectorStop));
       amountToTurn_deg = 15.f;
       break;
     case FR:
       // Play stop reaction animation and turn CW a bit
-      action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
+      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffDetectorStop));
       amountToTurn_deg = -15.f;
       break;
     case BL:
@@ -365,15 +349,15 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(BehaviorE
       break;
     default:
       // In the default case, just play the stop reaction and move on.
-      action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
+      action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffDetectorStop));
       break;
   }
   
-  auto turnAction = new TurnInPlaceAction(robot, DEG_TO_RAD(amountToTurn_deg), false);
+  auto turnAction = new TurnInPlaceAction(DEG_TO_RAD(amountToTurn_deg), false);
   turnAction->SetAccel(MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2);
   turnAction->SetMaxSpeed(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
   
-  auto driveAction = new DriveStraightAction(robot, amountToDrive_mm, MAX_WHEEL_SPEED_MMPS, false);
+  auto driveAction = new DriveStraightAction(amountToDrive_mm, MAX_WHEEL_SPEED_MMPS, false);
   driveAction->SetAccel(MAX_WHEEL_ACCEL_MMPS2);
   driveAction->SetDecel(MAX_WHEEL_ACCEL_MMPS2);
   

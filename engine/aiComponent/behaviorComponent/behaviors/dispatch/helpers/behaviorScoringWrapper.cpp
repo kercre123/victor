@@ -12,10 +12,11 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/helpers/behaviorScoringWrapper.h"
 
-#include "coretech/common/include/anki/common/basestation/jsonTools.h"
-#include "coretech/common/include/anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
+
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 #include "json/json.h"
 #include "util/random/randomGenerator.h"
 
@@ -47,11 +48,10 @@ BehaviorScoringWrapper::~BehaviorScoringWrapper()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorScoringWrapper::Init(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  if(robot.HasExternalInterface()){
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  if(robotInfo.HasExternalInterface()){
     using namespace ExternalInterface;
-    _eventHandlers.push_back(robot.GetExternalInterface()->Subscribe(
+    _eventHandlers.push_back(robotInfo.GetExternalInterface()->Subscribe(
                 EngineToGameTag::BehaviorObjectiveAchieved,
                 [this](const EngineToGameEvent& event) {
                   DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::BehaviorObjectiveAchieved,

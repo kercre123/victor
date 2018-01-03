@@ -23,17 +23,14 @@ BehaviorPlayAnimSequenceWithFace::BehaviorPlayAnimSequenceWithFace(const Json::V
 {
 }
 
-Result BehaviorPlayAnimSequenceWithFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlayAnimSequenceWithFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // attempt to turn towards last face, and even if fails, move on to the animations
-  DelegateIfInControl(new TurnTowardsLastFacePoseAction(robot), [this](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(new TurnTowardsLastFacePoseAction(), [this](BehaviorExternalInterface& behaviorExternalInterface) {
       BaseClass::StartPlayingAnimations(behaviorExternalInterface);
     });
 
-  return Result::RESULT_OK;      
+        
 }
 
 }

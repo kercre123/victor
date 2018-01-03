@@ -12,9 +12,8 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/trackPetFaceAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iReactToPetListener.h"
-#include "engine/robot.h"
 #include "engine/petWorld.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -80,19 +79,22 @@ bool BehaviorReactToPet::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 // Called each time behavior becomes active.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToPet::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPet::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   PRINT_INFO("ReactToPet.Init.BeginIteration", "Begin iteration");
   BeginIteration(behaviorExternalInterface);
-  return RESULT_OK;
 }
   
 //
 // Called each tick while behavior is active.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToPet::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPet::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   //
   // If target disappears during iteration, end iteration immediately.
   // This can happen if (e.g.) pet disappears during transition from previous
@@ -101,7 +103,8 @@ ICozmoBehavior::Status BehaviorReactToPet::UpdateInternal_WhileRunning(BehaviorE
   if (_target == UnknownFaceID) {
     PRINT_TRACE("ReactToPet.Update.MissingTarget", "Missing target during update");
     EndIteration(behaviorExternalInterface);
-    return Status::Complete;
+    CancelSelf();
+    return;
   }
   
   //
@@ -113,11 +116,11 @@ ICozmoBehavior::Status BehaviorReactToPet::UpdateInternal_WhileRunning(BehaviorE
     if (_endReactionTime_s < currTime_s) {
       PRINT_TRACE("ReactToPet.Update.ReactionTimeExpired", "Reaction time has expired");
       EndIteration(behaviorExternalInterface);
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
   }
   PRINT_TRACE("ReactToPet.Update.Running", "Behavior is running");
-  return Status::Running;
 }
 
 //
@@ -175,11 +178,8 @@ void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExter
   
   _target = Vision::UnknownFaceID;
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // React to the first valid target.  Don't worry about choosing "best".
-  const auto & petWorld = robot.GetPetWorld();
+  const auto & petWorld = behaviorExternalInterface.GetPetWorld();
   const Vision::TrackedPet * pet = nullptr;
   
   for (auto petID : _targets) {
@@ -204,9 +204,9 @@ void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExter
   AnimationTrigger trigger = GetAnimationTrigger(petType);
   
   // Tracking animations do not end by themselves.
-  // Choose a random duration and rely on UpdateInternal_WhileRunning() to end the action.
+  // Choose a random duration and rely on BehaviorUpdate() to end the action.
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const float randTime_s = Util::numeric_cast<float>(robot.GetRNG().RandDblInRange(kReactToPetMinTime_s, kReactToPetMaxTime_s));
+  const float randTime_s = Util::numeric_cast<float>(behaviorExternalInterface.GetRNG().RandDblInRange(kReactToPetMinTime_s, kReactToPetMaxTime_s));
   const float endTime_s = currTime_s + randTime_s;
 
   PRINT_INFO("ReactToPet.BeginIteration", "Reacting to petID %d type %d from t=%f to t=%f",
@@ -224,16 +224,16 @@ void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExter
   // If playing animation takes too long, the original petXY may be pushed out of pose history.
   // A better version would rescan pet world after animation has completed.
   //
-  auto turnAction = new TurnTowardsImagePointAction(robot, petXY, pet->GetTimeStamp());
-  auto animAction = new TriggerAnimationAction(robot, trigger);
-  auto trackAction = new TrackPetFaceAction(robot, Vision::PetType::Unknown);
+  auto turnAction = new TurnTowardsImagePointAction(petXY, pet->GetTimeStamp());
+  auto animAction = new TriggerAnimationAction(trigger);
+  auto trackAction = new TrackPetFaceAction(Vision::PetType::Unknown);
   
   // Limit the amount of time that tracker will run without finding a target.
   // If pets are visible after animation, behavior will run until ended by update method.
   // If no pets are visible, behavior will end after tracking timeout.
   trackAction->SetUpdateTimeout(kReactToPetTrackUpdateTimeout);
   
-  auto compoundAction = new CompoundActionSequential(robot);
+  auto compoundAction = new CompoundActionSequential();
   compoundAction->AddAction(turnAction);
   compoundAction->AddAction(animAction);
   compoundAction->AddAction(trackAction);

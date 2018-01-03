@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_PlaceRelObjectHelper_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -32,8 +32,8 @@ public:
 protected:
   // IHelper functions
   virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual BehaviorStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual BehaviorStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual HelperStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual HelperStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
 private:
   ObjectID _targetID;
   bool _placingOnGround;

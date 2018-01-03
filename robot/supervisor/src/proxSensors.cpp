@@ -60,10 +60,10 @@ namespace Anki {
         }
       }
 
-      u16 GetRawCliffValue(u32 ind)
+      u16 GetCliffValue(u32 ind)
       {
-        AnkiConditionalErrorAndReturnValue(ind < HAL::CLIFF_COUNT, 0, "ProxSensors.GetRawCliffValue.InvalidIndex", "Index %d is not valid", ind);
-        return HAL::GetRawCliffData(static_cast<HAL::CliffID>(ind));
+        AnkiConditionalErrorAndReturnValue(ind < HAL::CLIFF_COUNT, 0, "ProxSensors.GetCliffValue.InvalidIndex", "Index %d is not valid", ind);
+        return _cliffVals[ind];
       }
       
       u16 GetRawProxValue()
@@ -77,7 +77,16 @@ namespace Anki {
       {
         // Update all cliff values
         for (int i=0 ; i < _nCliffSensors ; i++) {
-          _cliffVals[i] = GetRawCliffValue(i);
+          u16 rawVal = HAL::GetRawCliffData(static_cast<HAL::CliffID>(i));
+          if (rawVal == 0) {
+            // VIC-537: Cliff sensors sometimes return spurious readings
+            //          like 0 (which is too low to be valid) or some crazy high numbers in the 10000s.
+            //          Intercepting only 0s here and leaving previous reading as is
+            //          so that we don't stop in reaction to a false cliff.
+            AnkiWarn("ProxSensors.UpdateCliff.BadZeroCliffValue", "Index %d", i);
+          } else {
+            _cliffVals[i] = rawVal;
+          }
         }
         
         // Compute bounds on cliff detect/undetect thresholds which may be adjusted according to the

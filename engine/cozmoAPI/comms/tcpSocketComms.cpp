@@ -13,8 +13,8 @@
 
 #include "engine/cozmoAPI/comms/tcpSocketComms.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
-#include "anki/messaging/basestation/IComms.h"
-#include "anki/messaging/shared/TcpServer.h"
+#include "coretech/messaging/engine/IComms.h"
+#include "coretech/messaging/shared/TcpServer.h"
 #include "json/json.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
@@ -105,7 +105,7 @@ void TcpSocketComms::HandleDisconnect()
 }
   
   
-void TcpSocketComms::Update()
+void TcpSocketComms::UpdateInternal()
 {
   ANKI_CPU_PROFILE("TcpSocketComms::Update");
   
@@ -265,6 +265,11 @@ bool TcpSocketComms::DisconnectDeviceByID(DeviceId deviceId)
   {
     return false;
   }
+}
+
+bool TcpSocketComms::DisconnectAllDevices() 
+{
+  return DisconnectDeviceByID(_connectedId);
 }
 
 

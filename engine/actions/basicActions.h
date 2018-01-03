@@ -13,15 +13,15 @@
 #ifndef ANKI_COZMO_BASIC_ACTIONS_H
 #define ANKI_COZMO_BASIC_ACTIONS_H
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/smartFaceId.h"
 #include "anki/cozmo/shared/animationTag.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/vision/basestation/faceIdTypes.h"
-#include "anki/vision/basestation/visionMarker.h"
+#include "coretech/vision/engine/faceIdTypes.h"
+#include "coretech/vision/engine/visionMarker.h"
 #include "clad/externalInterface/messageActions.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationTypes.h"
@@ -50,8 +50,7 @@ namespace Cozmo {
     class TurnInPlaceAction : public IAction
     {
     public:
-      explicit TurnInPlaceAction(Robot& robot,
-                                 const float angle_rad, // float instead of Radians to allow angles > 180 deg.
+      explicit TurnInPlaceAction(const float angle_rad, // float instead of Radians to allow angles > 180 deg.
                                  const bool isAbsolute);
       virtual ~TurnInPlaceAction();
       
@@ -117,8 +116,7 @@ namespace Cozmo {
     public:
       using SFNOD = ExternalInterface::SearchForNearbyObjectDefaults;
       
-      SearchForNearbyObjectAction(Robot& robot,
-                                  const ObjectID& desiredObjectID = ObjectID(),
+      SearchForNearbyObjectAction(const ObjectID& desiredObjectID = ObjectID(),
                                   f32 backupDistance_mm = Util::numeric_cast<f32>(Util::EnumToUnderlying(SFNOD::BackupDistance_mm)),
                                   f32 backupSpeed_mms = Util::numeric_cast<f32>(Util::EnumToUnderlying(SFNOD::BackupSpeed_mms)),
                                   f32 headAngle_rad = Util::numeric_cast<f32>(DEG_TO_RAD(Util::EnumToUnderlying(SFNOD::HeadAngle_deg))));
@@ -130,12 +128,13 @@ namespace Cozmo {
     protected:
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
+      virtual void OnRobotSet() override final;
 
     private:
       CompoundActionSequential _compoundAction;
       ObjectID                 _desiredObjectID;
       bool                     _objectObservedDuringSearch;
-      std::vector<Signal::SmartHandle> _eventHalders;
+      std::vector<Signal::SmartHandle> _eventHandlers;
 
       void AddToCompoundAction(IActionRunner* action);
       
@@ -155,8 +154,8 @@ namespace Cozmo {
     public:
       // Positive distance for forward, negative for backward.
       // Speed should be positive if specified
-      DriveStraightAction(Robot& robot, f32 dist_mm);
-      DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps, bool shouldPlayAnimation = true);
+      DriveStraightAction(f32 dist_mm);
+      DriveStraightAction(f32 dist_mm, f32 speed_mmps, bool shouldPlayAnimation = true);
       virtual ~DriveStraightAction();
 
       void SetShouldPlayAnimation(bool shouldPlay) { _shouldPlayDrivingAnimation = shouldPlay; }
@@ -194,7 +193,7 @@ namespace Cozmo {
       // if isAbsolute==false.
       // If an angle is less than AngleTol, then no movement occurs but the
       // eyes will dart to look at the angle.
-      PanAndTiltAction(Robot& robot, Radians bodyPan, Radians headTilt,
+      PanAndTiltAction(Radians bodyPan, Radians headTilt,
                        bool isPanAbsolute, bool isTiltAbsolute);
       virtual ~PanAndTiltAction();
       
@@ -214,6 +213,9 @@ namespace Cozmo {
       void SetBodyPanAngle(Radians angle) { _bodyPanAngle = angle; }
       void SetHeadTiltAngle(Radians angle) { _headTiltAngle = angle; }
       
+      virtual void OnRobotSet() override final;
+      virtual void OnRobotSetInternalPan() {}
+
     private:
       CompoundActionParallel _compoundAction;
       
@@ -246,8 +248,7 @@ namespace Cozmo {
     class CalibrateMotorAction : public IAction
     {
     public:
-      CalibrateMotorAction(Robot& robot,
-                           bool calibrateHead,
+      CalibrateMotorAction(bool calibrateHead,
                            bool calibrateLift);
 
       // Template for all events we subscribe to
@@ -280,13 +281,11 @@ namespace Cozmo {
         IDEAL_BLOCK_VIEW           // ideal angle for looking at blocks
       };
     
-      MoveHeadToAngleAction(Robot& robot,
-                            const Radians& headAngle,
+      MoveHeadToAngleAction(const Radians& headAngle,
                             const Radians& tolerance = HEAD_ANGLE_TOL,
                             const Radians& variability = 0);
 
-      MoveHeadToAngleAction(Robot& robot,
-                            const Preset preset,
+      MoveHeadToAngleAction(const Preset preset,
                             const Radians& tolerance = HEAD_ANGLE_TOL,
                             const Radians& variability = 0);
       
@@ -348,9 +347,9 @@ namespace Cozmo {
         OUT_OF_FOV // Moves to low or carry, depending on which is closer to current height
       };
       
-      MoveLiftToHeightAction(Robot& robot, const f32 height_mm,
+      MoveLiftToHeightAction(const f32 height_mm,
                              const f32 tolerance_mm = 5.f, const f32 variability = 0);
-      MoveLiftToHeightAction(Robot& robot, const Preset preset, const f32 tolerance_mm = 5.f);
+      MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm = 5.f);
       
       // how long this action should take (which, in turn, effects lift speed)
       void SetDuration(float duration_sec) { _duration = duration_sec; }
@@ -389,7 +388,7 @@ namespace Cozmo {
     class TraverseObjectAction : public IActionRunner
     {
     public:
-      TraverseObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed);
+      TraverseObjectAction(ObjectID objectID, const bool useManualSpeed);
       virtual ~TraverseObjectAction()
       {
         if(_chosenAction != nullptr)
@@ -422,8 +421,7 @@ namespace Cozmo {
     {
     public:
       // Note that the rotation information in pose will be ignored
-      TurnTowardsPoseAction(Robot& robot,
-                            const Pose3d& pose,
+      TurnTowardsPoseAction(const Pose3d& pose,
                             Radians maxTurnAngle = M_PI_F);
       
       void SetMaxTurnAngle(Radians angle) { _maxTurnAngle = angle; }
@@ -437,7 +435,7 @@ namespace Cozmo {
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       
-      TurnTowardsPoseAction(Robot& robot, Radians maxTurnAngle);
+      TurnTowardsPoseAction(Radians maxTurnAngle);
       
       void SetPose(const Pose3d& pose);
       
@@ -463,7 +461,7 @@ namespace Cozmo {
     {
     public:
 
-      TurnTowardsImagePointAction(Robot& robot, const Point2f& imgPoint, const TimeStamp_t imgTimeStamp);
+      TurnTowardsImagePointAction(const Point2f& imgPoint, const TimeStamp_t imgTimeStamp);
       
     protected:
       virtual ActionResult Init() override;
@@ -483,7 +481,7 @@ namespace Cozmo {
     public:
       
       // VisionMode indicates the vision mode(s) that this action wants to wait for, for numFrames instances. VisionMode::Count means any
-      WaitForImagesAction(Robot& robot, u32 numFrames, VisionMode visionMode = VisionMode::Count, TimeStamp_t afterTimeStamp = 0);
+      WaitForImagesAction(u32 numFrames, VisionMode visionMode = VisionMode::Count, TimeStamp_t afterTimeStamp = 0);
       virtual ~WaitForImagesAction() { }
       
       virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
@@ -515,14 +513,12 @@ namespace Cozmo {
       // will first turn to face the object, then tilt its head. To disallow turning,
       // set maxTurnAngle to zero.
       
-      TurnTowardsObjectAction(Robot& robot,
-                              ObjectID objectID,
+      TurnTowardsObjectAction(ObjectID objectID,
                               Radians maxTurnAngle = M_PI_F,
                               bool visuallyVerifyWhenDone = false,
                               bool headTrackWhenDone = false);
       
-      TurnTowardsObjectAction(Robot& robot,
-                              ObjectID objectID,
+      TurnTowardsObjectAction(ObjectID objectID,
                               Vision::Marker::Code whichCode,
                               Radians maxTurnAngle,
                               bool visuallyVerifyWhenDone = false,
@@ -567,8 +563,7 @@ namespace Cozmo {
     class TurnTowardsFaceAction : public TurnTowardsPoseAction
     {
     public:
-      TurnTowardsFaceAction(Robot& robot, Vision::FaceID_t faceID, Radians maxTurnAngle = M_PI_F, bool sayName = false);
-      TurnTowardsFaceAction(Robot& robot, const SmartFaceID& faceID, Radians maxTurnAngle = M_PI_F, bool sayName = false);
+      TurnTowardsFaceAction(const SmartFaceID& faceID, Radians maxTurnAngle = M_PI_F, bool sayName = false);
       virtual ~TurnTowardsFaceAction();
       
       // Set the maximum number of frames we are will to wait to see a face after
@@ -606,6 +601,8 @@ namespace Cozmo {
 
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
+      
+      virtual void OnRobotSetInternalPan() override final;
 
     private:
       enum class State : u8 {
@@ -639,8 +636,8 @@ namespace Cozmo {
     class TurnTowardsLastFacePoseAction : public TurnTowardsFaceAction
     {
     public:
-      TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle = M_PI_F, bool sayName = false)
-      : TurnTowardsFaceAction(robot, Vision::UnknownFaceID, maxTurnAngle, sayName)
+      TurnTowardsLastFacePoseAction(Radians maxTurnAngle = M_PI_F, bool sayName = false)
+      : TurnTowardsFaceAction(SmartFaceID(), maxTurnAngle, sayName)
       {
         
       }
@@ -653,8 +650,7 @@ namespace Cozmo {
 
       // Create a wrapper around the given action which looks towards a face before and/or after (default
       // before) the action. This takes ownership of action, the pointer should not be used after this call
-      TurnTowardsFaceWrapperAction(Robot& robot,
-                                   IActionRunner* action,
+      TurnTowardsFaceWrapperAction(IActionRunner* action,
                                    bool turnBeforeAction = true,
                                    bool turnAfterAction = false,
                                    Radians maxTurnAngle = M_PI_F,
@@ -668,7 +664,7 @@ namespace Cozmo {
     class WaitAction : public IAction
     {
     public:
-      WaitAction(Robot& robot, f32 waitTimeInSeconds);
+      WaitAction(f32 waitTimeInSeconds);
       
     protected:
       
@@ -685,10 +681,9 @@ namespace Cozmo {
     class HangAction : public IAction
     {
     public:
-      HangAction(Robot& robot) : IAction(robot,
-                                         "Hang",
-                                         RobotActionType::HANG,
-                                         (u8)AnimTrackFlag::NO_TRACKS) {}
+      HangAction() : IAction("Hang",
+                             RobotActionType::HANG,
+                             (u8)AnimTrackFlag::NO_TRACKS) {}
 
       virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
       
@@ -702,10 +697,9 @@ namespace Cozmo {
     class WaitForLambdaAction : public IAction
     {
     public:
-      WaitForLambdaAction(Robot& robot, std::function<bool(Robot&)> lambda,
+      WaitForLambdaAction(std::function<bool(Robot&)> lambda,
                           f32 timeout_sec = std::numeric_limits<f32>::max())
-        : IAction(robot,
-                  "WaitForLambda",
+        : IAction("WaitForLambda",
                   RobotActionType::WAIT_FOR_LAMBDA,
                   (u8)AnimTrackFlag::NO_TRACKS)
         , _lambda(lambda)
@@ -721,7 +715,7 @@ namespace Cozmo {
       
       virtual ActionResult Init() override { return ActionResult::SUCCESS; }
       virtual ActionResult CheckIfDone() override {
-        if( _lambda(_robot) ){
+        if(_lambda(GetRobot()) ){
           return ActionResult::SUCCESS;
         }
         else {
@@ -740,7 +734,7 @@ namespace Cozmo {
     {
     public:
       
-      ReadToolCodeAction(Robot& robot, bool doCalibration = false);
+      ReadToolCodeAction(bool doCalibration = false);
       virtual ~ReadToolCodeAction();
       
       virtual f32 GetTimeoutInSeconds() const override { return 5.f; }

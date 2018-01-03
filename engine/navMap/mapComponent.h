@@ -14,13 +14,13 @@
  #ifndef __Anki_Cozmo_MapComponent_H__
  #define __Anki_Cozmo_MapComponent_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "engine/ankiEventUtil.h"
 #include "engine/overheadEdge.h"
 #include "engine/navMap/iNavMap.h"
 
-#include "anki/vision/basestation/observableObjectLibrary.h"
+#include "coretech/vision/engine/observableObjectLibrary.h"
 #include "util/helpers/noncopyable.h"
 
 #include <assert.h>

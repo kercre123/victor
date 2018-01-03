@@ -12,7 +12,7 @@
  **/
 
 #include "engine/components/sensors/touchSensorHelpers.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include <cmath>

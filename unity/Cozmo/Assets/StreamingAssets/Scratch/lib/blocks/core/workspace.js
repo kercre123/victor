@@ -376,6 +376,7 @@ Blockly.Workspace.prototype.deleteVariable = function(name) {
         Blockly.Msg.DELETE_VARIABLE_CONFIRMATION.replace('%1', uses.length).
         replace('%2', name),
         function(ok) {
+          window.player.play('click');
           if (ok) {
             workspace.deleteVariableInternal_(variable);
             // *** ANKI change ***

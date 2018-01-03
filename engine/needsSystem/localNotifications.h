@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_NeedsSystem_LocalNotifications_H__
 #define __Cozmo_Basestation_NeedsSystem_LocalNotifications_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "engine/needsSystem/needsManager.h"
 #include "clad/types/needsSystemTypes.h"
 #include "util/signals/simpleSignal_fwd.h"

@@ -13,7 +13,7 @@
 #include "engine/cozmoAPI/csharp-binding/android/android-binding.h"
 #include "engine/cozmoAPI/csharp-binding/csharp-binding.h"
 #include "engine/cozmoAPI/csharp-binding/breakpad/google_breakpad.h"
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/jni/includeJni.h"
 #include "util/jni/jniUtils.h"

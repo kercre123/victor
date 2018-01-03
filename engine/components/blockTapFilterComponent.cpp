@@ -21,8 +21,9 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 #include "engine/utils/cozmoFeatureGate.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/externalInterface/messageFromActiveObject.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/math/math.h"
@@ -43,21 +44,6 @@ BlockTapFilterComponent::BlockTapFilterComponent(Robot& robot)
   ,_enabled(true)
   ,_waitToTime(0)
 {
-  if( _robot.GetContext()->GetRobotManager()->GetMsgHandler() )
-  {
-    _robotToEngineSignalHandle.push_back(_robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(_robot.GetID(),
-                                                                                                     RobotInterface::RobotToEngineTag::activeObjectTapped,
-                                                                                                     std::bind(&BlockTapFilterComponent::HandleActiveObjectTapped, this, std::placeholders::_1)));
-    
-    _robotToEngineSignalHandle.push_back(_robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(_robot.GetID(),
-                                                                                                            RobotInterface::RobotToEngineTag::activeObjectMoved,
-                                                                                                            std::bind(&BlockTapFilterComponent::HandleActiveObjectMoved, this, std::placeholders::_1)));
-    
-    _robotToEngineSignalHandle.push_back(_robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(_robot.GetID(),
-                                                                                                           RobotInterface::RobotToEngineTag::activeObjectStopped,
-                                                                                                           std::bind(&BlockTapFilterComponent::HandleActiveObjectStopped, this, std::placeholders::_1)));
-    
-  }
   // Null for unit tests
   if( _robot.GetContext()->GetExternalInterface() )
   {
@@ -163,10 +149,10 @@ void BlockTapFilterComponent::HandleSendTapFilterStatus(const AnkiEvent<External
 }
 #endif
   
-void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+void BlockTapFilterComponent::HandleActiveObjectTapped(const ObjectTapped& message)
 {
   // We make a copy of this message so we can update the object ID before broadcasting
-  ObjectTapped payload = message.GetData().Get_activeObjectTapped();
+  ObjectTapped payload = message;
   
   // Taps below threshold should be filtered and ignored.
   const int16_t intensity = payload.tapPos - payload.tapNeg;
@@ -220,9 +206,8 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
   CheckForDoubleTap(payload.objectID);
 }
 
-void BlockTapFilterComponent::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+void BlockTapFilterComponent::HandleActiveObjectMoved(const ObjectMoved& payload)
 {
-  const auto& payload = message.GetData().Get_activeObjectMoved();
   // In the message coming from the robot, the objectID is the slot the object is connected on which is its
   // engine activeID
   const ObservableObject* object = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID(payload.objectID);
@@ -252,9 +237,8 @@ void BlockTapFilterComponent::HandleActiveObjectMoved(const AnkiEvent<RobotInter
   }
 }
 
-void BlockTapFilterComponent::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+void BlockTapFilterComponent::HandleActiveObjectStopped(const ObjectStoppedMoving& payload)
 {
-  const auto& payload = message.GetData().Get_activeObjectStopped();
   // In the message coming from the robot, the objectID is the slot the object is connected on which is its
   // engine activeID
   const ObservableObject* object = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID(payload.objectID);

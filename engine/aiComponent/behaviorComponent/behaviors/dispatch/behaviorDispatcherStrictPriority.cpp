@@ -13,7 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriority.h"
 
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "json/json.h"
 
 namespace Anki {
@@ -29,7 +29,7 @@ BehaviorDispatcherStrictPriority::BehaviorDispatcherStrictPriority(const Json::V
                  "No Behaviors key found");
   if(!behaviorArray.isNull()) {
     for(const auto& behaviorIDStr: behaviorArray) {
-      const BehaviorID behaviorID = BehaviorIDFromString(behaviorIDStr.asString());
+      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(behaviorIDStr.asString());
       IBehaviorDispatcher::AddPossibleDispatch(behaviorID);
     }
   }

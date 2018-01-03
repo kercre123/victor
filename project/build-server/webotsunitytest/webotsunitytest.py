@@ -10,7 +10,7 @@ from functools import lru_cache
 
 
 COZMO_ENGINE_ROOT = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip(b"\r\n").decode("utf-8")
-
+BUILD_AUTOMATION_ROOT = os.path.join(COZMO_ENGINE_ROOT, 'build', 'automation')
 BUILD_TOOLS_ROOT = os.path.join(COZMO_ENGINE_ROOT, 'tools', 'build', 'tools')
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 WEBOTS_UNITY_ROOT = os.path.join(COZMO_ENGINE_ROOT, 'project', 'build-server', 'webotsunitytest')
@@ -165,11 +165,16 @@ def clean_webots():
     return False
   return True
 
+def clear_old_files():
+  if os.path.isdir(BUILD_AUTOMATION_ROOT):
+    subprocess.run('rm {0}/*_Results.log'.format(BUILD_AUTOMATION_ROOT), shell=True)
+
 def main(args):
   GENERATED_FILE_PATH = get_subpath("simulator/worlds", WORLD_FILE_NAME)
   show_graphics = True
   log_file_name = os.path.join(WEBOTS_UNITY_ROOT, 'webotsunitytest.txt')
   smoke_test_path = os.path.join(COZMO_ENGINE_ROOT, 'project', 'build-server', 'steps', '59_smoke_test.sh')
+  clear_old_files()
   output = ThreadOutput()
   for language in LANGUAGES:
     run_webots_thread = threading.Thread(target=run_webots, args=[output, GENERATED_FILE_PATH, 

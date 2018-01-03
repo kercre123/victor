@@ -31,7 +31,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Construction/Destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  MemoryMap(VizManager* vizManager, Robot* robot);
+  MemoryMap(VizManager* vizManager);
   virtual ~MemoryMap() {}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -57,7 +57,7 @@ public:
   virtual void TransformContent(const Poly2f& poly, NodeTransformFunction transform) override;
 
   // populate a list of all data that matches the predicate
-  virtual void FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) override;
+  virtual void FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const override;
 
   
   // return the size of the area currently explored
@@ -86,12 +86,11 @@ public:
   virtual bool HasContentType(EContentType type) const override;
   
   // Draw/stop drawing the memory map
-  virtual void DrawDebugProcessorInfo(size_t mapIdxHint) const override;
+  virtual void DrawDebugProcessorInfo() const override;
   virtual void ClearDraw() const override;
   
   // Broadcast the memory map
-  virtual void Broadcast(uint32_t originID) const override;
-  virtual void BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) const override;
+  virtual void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const override { _quadTree.GetBroadcastInfo(info); }
 
   // get the timestamp the QT was last measured (we can update the QT with a new timestamp even if the content
   // does not change)

@@ -27,7 +27,7 @@
 
 #ifndef ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "clad/types/motorTypes.h"
 #include "clad/types/proxMessages.h"
 
@@ -88,13 +88,7 @@ u8 GetWatchdogResetCounter(void);
 
 /// IMU_DataStructure contains 3-axis acceleration and 3-axis gyro data
 struct IMU_DataStructure
-{
-  inline void Reset() {
-    acc_x = acc_y = acc_z = 0.0f;
-    rate_x = rate_y = rate_z = 0.0f;
-    temperature_degC = 0.f;
-  }
-  
+{ 
   f32 acc_x;  ///< mm/s/s
   f32 acc_y;  ///< mm/s/s
   f32 acc_z;  ///< mm/s/s
@@ -306,10 +300,6 @@ void PowerSetMode(const PowerState state);
  * \section "Radio" comms to/from engine
  */
 bool RadioIsConnected();
-
-void RadioUpdateState(u8 wifi);
-
-int RadioQueueAvailable();
 
 void DisconnectRadio();
 

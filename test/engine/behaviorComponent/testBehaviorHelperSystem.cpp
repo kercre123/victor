@@ -12,17 +12,18 @@
 
 #include "gtest/gtest.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/behaviorHelperComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorHelperComponent.h"
+#include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
-#include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
 
@@ -30,8 +31,8 @@ using namespace Anki;
 using namespace Anki::Cozmo;
 
 
-static constexpr BehaviorClass emptyClass = BehaviorClass::Wait;
-static constexpr BehaviorID emptyID = BehaviorID::Wait;
+static const BehaviorClass emptyClass = BEHAVIOR_CLASS(Wait);
+static const BehaviorID emptyID = BEHAVIOR_ID(Wait);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Test behavior to run actions and delegate to helpers
@@ -88,7 +89,7 @@ TEST(BehaviorHelperSystem, BehaviorWithActions)
   DoTicks(testBehaviorFramework, robot, b, 3);
 
   bool done1 = false;
-  WaitForLambdaAction* action1 = new WaitForLambdaAction(robot, [&done1](Robot& r){
+  WaitForLambdaAction* action1 = new WaitForLambdaAction([&done1](Robot& r){
       printf("action1: %d\n", done1);
       return done1;
     });
@@ -100,7 +101,7 @@ TEST(BehaviorHelperSystem, BehaviorWithActions)
   DoTicks(testBehaviorFramework, robot, b, 2);
 
   bool done2 = false;
-  WaitForLambdaAction* action2 = new WaitForLambdaAction(robot, [&done2](Robot& r){
+  WaitForLambdaAction* action2 = new WaitForLambdaAction([&done2](Robot& r){
       printf("action2: %d\n", done2);
       return done2;
     });
@@ -169,7 +170,7 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   ASSERT_EQ(rawPtr->_stopCount, 0);
   ASSERT_EQ(rawPtr->_shouldCancelCount, 0) << "no sub-helper, so shouldn't tick this";
 
-  rawPtr->_updateResult = ICozmoBehavior::Status::Complete;
+  rawPtr->_updateResult = IHelper::HelperStatus::Complete;
 
   DoTicks(testBehaviorFramework, robot, b, 3);
 
@@ -209,7 +210,7 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   ASSERT_EQ(rawPtr->_stopCount, 0);
   ASSERT_EQ(rawPtr->_shouldCancelCount, 0) << "no sub-helper, so shouldn't tick this";
 
-  rawPtr->_updateResult = ICozmoBehavior::Status::Failure;
+  rawPtr->_updateResult = IHelper::HelperStatus::Failure;
 
   DoTicks(testBehaviorFramework, robot, b, 3);
 
@@ -255,7 +256,7 @@ TEST(BehaviorHelperSystem, DelegateWithActions)
   {
     rawPtr = new TestHelper(behaviorExternalInterface, b);
     rawPtr->_thisSucceedsOnActionSuccess = true;
-    rawPtr->SetActionToRunOnNextUpdate(new WaitForLambdaAction(robot, [&stopAction, &actionChecks](Robot& r){
+    rawPtr->SetActionToRunOnNextUpdate(new WaitForLambdaAction([&stopAction, &actionChecks](Robot& r){
           printf("action: %d\n", stopAction);
           actionChecks++;
           return stopAction;
@@ -359,7 +360,7 @@ TEST(BehaviorHelperSystem, BehaviorStopsHelper)
 
   {
     rawPtr = new TestHelper(behaviorExternalInterface, b);
-    rawPtr->SetActionToRunOnNextUpdate(new WaitForLambdaAction(robot, [&stopHelperAction](Robot& r){
+    rawPtr->SetActionToRunOnNextUpdate(new WaitForLambdaAction([&stopHelperAction](Robot& r){
           printf("helper action: %d\n", stopHelperAction);
           return stopHelperAction;
         }));    
@@ -400,7 +401,7 @@ TEST(BehaviorHelperSystem, BehaviorStopsHelper)
 
   {
     b.StopHelperOnNextUpdate();
-    b.SetActionToRunOnNextUpdate(new WaitForLambdaAction(robot, [&stopBehaviorAction](Robot& r) {
+    b.SetActionToRunOnNextUpdate(new WaitForLambdaAction([&stopBehaviorAction](Robot& r) {
           printf("behavior action: %d\n", stopBehaviorAction);
           return stopBehaviorAction;
         }));
@@ -596,10 +597,7 @@ TEST(BehaviorHelperSystem, MultiLayerSuccess)
       strong,
       [&baseHelperSucceeded, &b, &stopBehaviorAction](BehaviorExternalInterface& behaviorExternalInterface) {
         baseHelperSucceeded = true;
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        Robot& robot = behaviorExternalInterface.GetRobot();
-        b.SetActionToRunOnNextUpdate(new WaitForLambdaAction(robot, [&stopBehaviorAction](Robot& r) {
+        b.SetActionToRunOnNextUpdate(new WaitForLambdaAction([&stopBehaviorAction](Robot& r) {
               printf("behavior post-helper action: %d\n", stopBehaviorAction);
               return stopBehaviorAction;
             }));
@@ -707,11 +705,8 @@ TEST(BehaviorHelperSystem, CancelDelegates)
     b.DelegateToHelperOnNextUpdate(
       strong,
       [&baseHelperSucceeded, &b, &stopBehaviorAction](BehaviorExternalInterface& behaviorExternalInterface) {
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        Robot& robot = behaviorExternalInterface.GetRobot();
         baseHelperSucceeded = true;
-        b.SetActionToRunOnNextUpdate(new WaitForLambdaAction(robot, [&stopBehaviorAction](Robot& r) {
+        b.SetActionToRunOnNextUpdate(new WaitForLambdaAction([&stopBehaviorAction](Robot& r) {
               printf("behavior post-helper action: %d\n", stopBehaviorAction);
               return stopBehaviorAction;
             }));
@@ -881,10 +876,7 @@ TEST(BehaviorHelperSystem, StopBehavior)
       strong,
       [&baseHelperSucceeded, &b, &stopBehaviorAction](BehaviorExternalInterface& behaviorExternalInterface) {
         baseHelperSucceeded = true;
-        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-        // be removed
-        Robot& robot = behaviorExternalInterface.GetRobot();
-        b.SetActionToRunOnNextUpdate(new WaitForLambdaAction(robot, [&stopBehaviorAction](Robot& r) {
+        b.SetActionToRunOnNextUpdate(new WaitForLambdaAction([&stopBehaviorAction](Robot& r) {
               printf("behavior post-helper action: %d\n", stopBehaviorAction);
               return stopBehaviorAction;
             }));

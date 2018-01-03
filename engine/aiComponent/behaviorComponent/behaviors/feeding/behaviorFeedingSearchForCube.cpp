@@ -23,9 +23,8 @@
 #include "engine/faceWorld.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
-#include "engine/robot.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -57,15 +56,19 @@ bool BehaviorFeedingSearchForCube::WantsToBeActivatedBehavior(BehaviorExternalIn
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorFeedingSearchForCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingSearchForCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   TransitionToFirstSearchForFood(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorFeedingSearchForCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingSearchForCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if((_currentState == State::FirstSearchForCube) ||
      (_currentState == State::SecondSearchForCube)){
     const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -77,9 +80,7 @@ ICozmoBehavior::Status BehaviorFeedingSearchForCube::UpdateInternal_WhileRunning
         TransitionToFailedToFindCubeReaction(behaviorExternalInterface);
       }
     }
-  }
-  
-  return Base::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
 
   
@@ -109,12 +110,9 @@ void BehaviorFeedingSearchForCube::TransitionToSearchForFoodBase(BehaviorExterna
     searchIdle = AnimationTrigger::FeedingIdleSearch_Severe;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  IActionRunner* searchAction = new CompoundActionParallel(robot, {
-    new SearchForNearbyObjectAction(robot),
-    new TriggerAnimationAction(robot, searchIdle)
+  IActionRunner* searchAction = new CompoundActionParallel({
+    new SearchForNearbyObjectAction(),
+    new TriggerAnimationAction(searchIdle)
   });
   
   DelegateIfInControl(searchAction,
@@ -131,11 +129,9 @@ void BehaviorFeedingSearchForCube::TransitionToMakeFoodRequest(BehaviorExternalI
   if(behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() == NeedId::Energy){
     reactionAnimation = AnimationTrigger::FeedingSearchRequest_Severe;
   }
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  IActionRunner* playAnimAction = new TriggerAnimationAction(robot, reactionAnimation);
-  IActionRunner* turnToFaceAction = new TurnTowardsFaceWrapperAction(robot, playAnimAction);
+
+  IActionRunner* playAnimAction = new TriggerAnimationAction(reactionAnimation);
+  IActionRunner* turnToFaceAction = new TurnTowardsFaceWrapperAction(playAnimAction);
 
   DelegateIfInControl(turnToFaceAction,
               &BehaviorFeedingSearchForCube::TransitionToSecondSearchForFood);
@@ -151,10 +147,8 @@ void BehaviorFeedingSearchForCube::TransitionToFailedToFindCubeReaction(Behavior
   if(behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() == NeedId::Energy){
     reactionAnimation = AnimationTrigger::FeedingSearchFailure_Severe;
   }
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TriggerAnimationAction(robot, reactionAnimation));
+  
+  DelegateIfInControl(new TriggerAnimationAction(reactionAnimation));
 }
   
   

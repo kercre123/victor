@@ -30,8 +30,8 @@ MonoBehaviour:
   m_androidRestoreScheduledNotificationsAfterReboot: 1
   m_androidNotificationsGrouping: 0
   m_androidShowLatestNotificationOnly: 0
-  m_pushNotificationsEnabledIOS: 0
-  m_pushNotificationsEnabledFirebase: 0
+  m_pushNotificationsEnabledIOS: 1
+  m_pushNotificationsEnabledFirebase: 1
   m_pushNotificationsEnabledAmazon: 0
   m_pushNotificationsEnabledWindows: 0
   m_firebaseSenderID: 

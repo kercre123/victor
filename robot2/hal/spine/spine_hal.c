@@ -8,15 +8,9 @@
 #include <termios.h>
 /* #include <string.h> */
 
-
-
 #include "schema/messages.h"
 #include "spine_crc.h"
 #include "spine_hal.h"
-
-
-typedef uint32_t crc_t;
-
 
 #define SKIP_CRC_CHECK 0
 

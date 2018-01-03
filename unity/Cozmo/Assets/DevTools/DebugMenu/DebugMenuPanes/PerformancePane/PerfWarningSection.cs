@@ -21,6 +21,7 @@ public class PerfWarningSection : MonoBehaviour {
   // 41 means we're below 24 FPS
   private float _WarnAboveTheshold_ms = 41.0f;
   private int _CurrIndex = 0;
+  private float _PrevAverage = 0.0f;
 
   private float? _OverrideAverage;
 
@@ -35,8 +36,9 @@ public class PerfWarningSection : MonoBehaviour {
 
   private bool _WasWarning;
   private string _SectionName;
+  private bool _SendDasOnlyWhenCrossing;
 
-  public void Init(string headerText, float warnAboveThreshold) {
+  public void Init(string headerText, float warnAboveThreshold, bool sendDasOnlyWhenCrossing) {
     _TimeSlices = new float[_MaxTimeSlices];
     _SectionName = headerText;
     _Header.text = headerText;
@@ -45,6 +47,7 @@ public class PerfWarningSection : MonoBehaviour {
     _WarnAboveTheshold_ms = warnAboveThreshold;
     gameObject.SetActive(false);
     _WasWarning = false;
+    _SendDasOnlyWhenCrossing = sendDasOnlyWhenCrossing;
   }
 
   public void AddTimeSlice(float currTime) {
@@ -58,11 +61,30 @@ public class PerfWarningSection : MonoBehaviour {
   }
 
   public void Update() {
-    // if we've ever been in a bad state, then show red
     bool isWarning = IsWarning();
-    if (isWarning != _WasWarning) {
-      DAS.Info("PerfWarning.AboveThreshold." + _SectionName, Average.ToString());
+
+    if (_WasWarning && !isWarning) {
+      DAS.Info("PerfWarning.BelowThreshold." + _SectionName, Average.ToString());
     }
+    else if (isWarning) {
+      bool sendDASabove = true;
+      if (_SendDasOnlyWhenCrossing) {
+        if (_WasWarning) {
+          sendDASabove = false;
+        }
+      }
+      else {
+        if (_PrevAverage == Average) {
+          sendDASabove = false;
+        }
+      }
+      if (sendDASabove) {
+        DAS.Info("PerfWarning.AboveThreshold." + _SectionName, Average.ToString());
+      }
+      _PrevAverage = Average;
+    }
+
+    // if we've ever been in a bad state, then show red
     if (isWarning && !_WasWarning) {
       _AvgLabel.color = Color.red;
       _Header.color = Color.red;

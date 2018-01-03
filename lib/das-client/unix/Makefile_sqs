@@ -1,0 +1,16 @@
+DAS_TESTS_SRC_FILES = \
+	$(DAS_TESTING_DIR)/dasAmazon_unittest.cpp \
+	$(DAS_TESTING_DIR)/testUtils.cpp
+
+DAS_TEST_OBJ_FILES := $(patsubst %.cpp, %.o, $(notdir $(DAS_TESTS_SRC_FILES)))
+DAS_TEST_DEP_FILES := $(patsubst %.cpp, %.d, $(notdir $(DAS_TESTS_SRC_FILES)))
+
+CXXLIBS += -lcurl
+
+all: dasDemoApp das_unittest run-unit-tests
+
+include make.mk
+CXXFLAGS += -DINTEGRATION_TEST
+
+run-unit-tests: das_unittest misc.sup
+	 ./das_unittest

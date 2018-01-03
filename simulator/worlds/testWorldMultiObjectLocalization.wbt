@@ -43,11 +43,11 @@ LightCube {
 }
 LightCube {
   translation 0.1 -0.075 0.022
-  ID 1
+  objectType "Block_LIGHTCUBE2"
 }
 LightCube {
   translation 0.1 0.075 0.022
-  ID 2
+  objectType "Block_LIGHTCUBE3"
 }
 %COZMOBOT% {
   name "CozmoBot_1"

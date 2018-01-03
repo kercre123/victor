@@ -20,8 +20,7 @@
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "engine/robot.h"
+#include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
 namespace Cozmo {

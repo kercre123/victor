@@ -12,8 +12,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/behaviorDriveInDesperation.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
@@ -21,11 +21,11 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperParameters.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/pathComponent.h"
-#include "engine/robot.h"
 #include "clad/types/pathMotionProfile.h"
 #include "util/console/consoleInterface.h"
 
@@ -127,7 +127,7 @@ void BehaviorDriveInDesperation::InitBehavior(BehaviorExternalInterface& behavio
 
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDriveInDesperation::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveInDesperation::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SmartSetMotionProfile( _params->_motionProfile );
 
@@ -135,7 +135,7 @@ Result BehaviorDriveInDesperation::OnBehaviorActivated(BehaviorExternalInterface
 
   TransitionToIdle(behaviorExternalInterface);
 
-  return Result::RESULT_OK;
+  
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -144,8 +144,12 @@ void BehaviorDriveInDesperation::OnBehaviorDeactivated(BehaviorExternalInterface
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorDriveInDesperation::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveInDesperation::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads ) {
     if( !_wasPickedUp ) {
       // this behavior can run while in the air, in which case it just does nothing. This is because the severe
@@ -153,7 +157,6 @@ ICozmoBehavior::Status BehaviorDriveInDesperation::UpdateInternal_WhileRunning(B
       CancelDelegates(false);
       _wasPickedUp = true;
     }
-    return Status::Running;
   }
   else if( _wasPickedUp ) {
     // we were picked up, but are no longer, so go back to the idle state
@@ -161,8 +164,6 @@ ICozmoBehavior::Status BehaviorDriveInDesperation::UpdateInternal_WhileRunning(B
     _targetCube.UnSet();
     TransitionToIdle(behaviorExternalInterface);
   }
-
-  return Base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 
@@ -183,11 +184,8 @@ void BehaviorDriveInDesperation::TransitionToIdle(BehaviorExternalInterface& beh
                 (GetIDStr() + ".Idle").c_str(),
                 "idling for %f sec",
                 timeToIdle);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  DelegateIfInControl(new WaitAction(robot, timeToIdle), &BehaviorDriveInDesperation::TransitionFromIdle);
+
+  DelegateIfInControl(new WaitAction(timeToIdle), &BehaviorDriveInDesperation::TransitionFromIdle);
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -197,14 +195,10 @@ void BehaviorDriveInDesperation::TransitionToDriveRandom(BehaviorExternalInterfa
 
   Pose3d randomPose;
   GetRandomDrivingPose(behaviorExternalInterface, randomPose);
-
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
   // drive somewhere and then idle
   const bool lookDown = true;
-  DriveToPoseAction* driveAction = new DriveToPoseAction(robot, randomPose, lookDown);
+  DriveToPoseAction* driveAction = new DriveToPoseAction(randomPose, lookDown);
   
   DelegateIfInControl(driveAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
       // if we are using cubes, do a search now at this location. Otherwise, leave the behavior
@@ -232,19 +226,15 @@ void BehaviorDriveInDesperation::TransitionToRequest(BehaviorExternalInterface& 
 {
   SET_STATE(Request);
   // TODO:(bn) turn towards previous face instead of most recent (similar to "hey cozmo" behavior)
-
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
-  IActionRunner* animAction = new TriggerAnimationAction(robot, _params->_requestAnimTrigger);
-  TurnTowardsFaceWrapperAction* faceAction = new TurnTowardsFaceWrapperAction(robot, animAction);
+  IActionRunner* animAction = new TriggerAnimationAction(_params->_requestAnimTrigger);
+  TurnTowardsFaceWrapperAction* faceAction = new TurnTowardsFaceWrapperAction(animAction);
   
-  DelegateIfInControl(faceAction, [this, &robot](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(faceAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
       // if we were visiting a cube before this request, turn back to it before finishing (and likely looping
       // back to the idle state). Otherwise just finish now
       if( _targetCube.IsSet() ) {
-        TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, _targetCube);
+        TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(_targetCube);
         DelegateIfInControl(turnAction);
         // we are done with this cube now.
         _targetCube.UnSet();
@@ -318,10 +308,12 @@ void BehaviorDriveInDesperation::TransitionToDriveToCube(BehaviorExternalInterfa
                                                      0.0f);
   IDockAction::PreActionPoseOutput preActionPoseOutput;
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    IDockAction::GetPreActionPoses(robot, preActionPoseInput, preActionPoseOutput);
+    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
+    IDockAction::GetPreActionPoses(robotInfo.GetPose(), 
+                                   robotInfo.GetCarryingComponent(), 
+                                   behaviorExternalInterface.GetBlockWorld(),
+                                   preActionPoseInput, preActionPoseOutput);
   }
 
   const bool hasPoseToDriveTo = preActionPoseOutput.actionResult == ActionResult::SUCCESS &&
@@ -332,11 +324,8 @@ void BehaviorDriveInDesperation::TransitionToDriveToCube(BehaviorExternalInterfa
     for( const auto& preActionPose : preActionPoseOutput.preActionPoses ) {
       poses.emplace_back(preActionPose.GetPose());
     }
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-    DriveToPoseAction* driveAction = new DriveToPoseAction(robot,
-                                                           poses,
+
+    DriveToPoseAction* driveAction = new DriveToPoseAction(poses,
                                                            false, // don't force head down
                                                            false, // no manual speed
                                                            Point3f{kDriveToCubeDistTolerance},
@@ -362,14 +351,10 @@ void BehaviorDriveInDesperation::TransitionToLookAtCube(BehaviorExternalInterfac
     TransitionToIdle(behaviorExternalInterface);
     return;
   }
-
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   
   const bool verifyWhenDone = true;
   const bool headTrackWhenDone = false;
-  TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot,
+  TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(
                                                                     _targetCube,
                                                                     Radians{M_PI_F},
                                                                     verifyWhenDone,
@@ -426,15 +411,14 @@ void BehaviorDriveInDesperation::TransitionFromIdle_WithCubes(BehaviorExternalIn
     behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(*_validCubesFilter, cubes);
 
     if( !cubes.empty() ) {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      const Robot& robot = behaviorExternalInterface.GetRobot();
+      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
       
       float maxDistanceSq = -1.0f;
       ObjectID furthestObject;
       for( const auto* cube : cubes ) {
         float distSq = std::numeric_limits<float>::max();
-        const bool distanceOK = ComputeDistanceSQBetween(robot.GetPose(), cube->GetPose(), distSq);
+        const bool distanceOK = ComputeDistanceSQBetween(robotInfo.GetPose(), cube->GetPose(), distSq);
         if( distanceOK && distSq > maxDistanceSq ) {
           maxDistanceSq = distSq;
           furthestObject = cube->GetID();
@@ -469,11 +453,10 @@ void BehaviorDriveInDesperation::GetRandomDrivingPose(const BehaviorExternalInte
 
   const float distance_mm = GetRNG().RandDblInRange(kMinDriveDistance_mm, kMaxDriveDistance_mm);
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  
-  outPose = robot.GetPose();
+
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+
+  outPose = robotInfo.GetPose();
 
   Radians newAngle = outPose.GetRotationAngle<'Z'>() + Radians(turnAngle);
   outPose.SetRotation( outPose.GetRotation() * Rotation3d{ newAngle, Z_AXIS_3D() } );
@@ -484,10 +467,10 @@ void BehaviorDriveInDesperation::GetRandomDrivingPose(const BehaviorExternalInte
                  GetIDStr().c_str(),
                  RAD_TO_DEG(turnAngle),
                  distance_mm,
-                 robot.GetPose().GetTranslation().x(),
-                 robot.GetPose().GetTranslation().y(),
-                 robot.GetPose().GetTranslation().z(),
-                 robot.GetPose().GetRotationAngle<'Z'>().getDegrees(),
+                 robotInfo.GetPose().GetTranslation().x(),
+                 robotInfo.GetPose().GetTranslation().y(),
+                 robotInfo.GetPose().GetTranslation().z(),
+                 robotInfo.GetPose().GetRotationAngle<'Z'>().getDegrees(),
                  outPose.GetTranslation().x(),
                  outPose.GetTranslation().y(),
                  outPose.GetTranslation().z(),

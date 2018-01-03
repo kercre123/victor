@@ -31,16 +31,18 @@ public:
 
   virtual bool Init(UiConnectionType connectionType, const Json::Value& config) override;
 
-  virtual void Update() override;
-
   virtual bool AreMessagesGrouped() const override { return true; }
 
   virtual bool ConnectToDeviceByID(DeviceId deviceId) override;
   virtual bool DisconnectDeviceByID(DeviceId deviceId) override;
+  virtual bool DisconnectAllDevices() override;
 
   virtual void GetAdvertisingDeviceIDs(std::vector<ISocketComms::DeviceId>& outDeviceIds) override;
 
   virtual uint32_t GetNumConnectedDevices() const override;
+
+protected:
+  virtual void UpdateInternal() override;
 
 private:
   

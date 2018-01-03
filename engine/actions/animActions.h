@@ -16,7 +16,7 @@
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/components/animationComponent.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "clad/externalInterface/messageActions.h"
@@ -35,8 +35,7 @@ namespace Anki {
     
       // Numloops 0 causes the action to loop forever
       // tracksToLock indicates tracks of the animation which should not play
-      PlayAnimationAction(Robot& robot,
-                          const std::string& animName,
+      PlayAnimationAction(const std::string& animName,
                           u32 numLoops = 1,
                           bool interruptRunning = true,
                           u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
@@ -71,12 +70,12 @@ namespace Anki {
     public:
       // Preferred constructor, used by the factory CreatePlayAnimationAction
       // Numloops 0 causes the action to loop forever
-      explicit TriggerAnimationAction(Robot& robot,
-                                      AnimationTrigger animEvent,
+      explicit TriggerAnimationAction(AnimationTrigger animEvent,
                                       u32 numLoops = 1,
                                       bool interruptRunning = true,
                                       u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
-                                      float timeout_sec = _kDefaultTimeout_sec);
+                                      float timeout_sec = _kDefaultTimeout_sec,
+                                      bool strictCooldown = false);
       
     protected:
       virtual ActionResult Init() override;
@@ -84,10 +83,14 @@ namespace Anki {
       void SetAnimGroupFromTrigger(AnimationTrigger animTrigger);
 
       bool HasAnimTrigger() const { return _animTrigger != AnimationTrigger::Count; }
+      virtual void OnRobotSet() override final;
+      virtual void OnRobotSetInternalTrigger() {};
+
 
     private:
       AnimationTrigger _animTrigger;
       std::string _animGroupName;
+      bool _strictCooldown;
       
     }; // class TriggerAnimationAction
     
@@ -99,13 +102,15 @@ namespace Anki {
     public:
       // Preferred constructor, used by the factory CreatePlayAnimationAction
       // Numloops 0 causes the action to loop forever
-      explicit TriggerLiftSafeAnimationAction(Robot& robot,
-                                      AnimationTrigger animEvent,
-                                      u32 numLoops = 1,
-                                      bool interruptRunning = true,
-                                      u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS);
+      explicit TriggerLiftSafeAnimationAction(AnimationTrigger animEvent,
+                                              u32 numLoops = 1,
+                                              bool interruptRunning = true,
+                                              u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
+                                              float timeout_sec = _kDefaultTimeout_sec,
+                                              bool strictCooldown = false);
       static u8 TracksToLock(Robot& robot, u8 tracksCurrentlyLocked);
-      
+    protected:
+        virtual void OnRobotSetInternalTrigger() override final;
       
     };
 
@@ -122,12 +127,10 @@ namespace Anki {
       // This action has a private constructor to prevent usage from within engine code. This is because
       // this action plays a cube light anim on the User/Game layer instead of the Engine layer
       // Note: If you want to control cube lights from within engine use PlayLightAnim() in cubeLightComponent
-      friend IActionRunner* GetPlayCubeAnimationHelper(Robot& robot,
-                                                       const ExternalInterface::PlayCubeAnimationTrigger& msg);
+      friend IActionRunner* GetPlayCubeAnimationHelper(Robot& robot, const ExternalInterface::PlayCubeAnimationTrigger& msg);
       
       // Plays a light animation on an object. The action will complete when the animation finishes
-      TriggerCubeAnimationAction(Robot& robot,
-                                 const ObjectID& objectID,
+      TriggerCubeAnimationAction(const ObjectID& objectID,
                                  const CubeAnimationTrigger& trigger);
       virtual ~TriggerCubeAnimationAction();
       
@@ -147,7 +150,7 @@ namespace Anki {
     {
       using Base = TriggerAnimationAction;
     public:
-      PlayNeedsGetOutAnimIfNeeded(Robot& robot);
+      PlayNeedsGetOutAnimIfNeeded();
       
       virtual ~PlayNeedsGetOutAnimIfNeeded();
       

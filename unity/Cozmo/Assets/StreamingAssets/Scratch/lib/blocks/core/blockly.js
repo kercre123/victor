@@ -318,8 +318,8 @@ Blockly.alert = function(message, opt_callback) {
   // *** ANKI CHANGE ***
   // Use of custom modal for easier translation via Blockly.Msg
   ModalAlert.open({
-    title: message,
-    prompt: '',
+    title: '',
+    prompt: message,
     confirmButtonLabel: Blockly.Msg.IOS_OK,
     confirmCallback: opt_callback
   });
@@ -339,8 +339,8 @@ Blockly.confirm = function(message, callback) {
   // *** ANKI CHANGE ***
   // Use of custom modal for easier translation via Blockly.Msg
   ModalConfirm.open({
-    title: message,
-    prompt: '',
+    title: '',
+    prompt: message,
     confirmButtonLabel: Blockly.Msg.IOS_OK,
     cancelButtonLabel: Blockly.Msg.IOS_CANCEL,
     confirmCallback: callback

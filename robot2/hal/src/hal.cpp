@@ -22,9 +22,6 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
-
-#define RADIO_IP "127.0.0.1"
-
 #define IMU_WORKING 1
 
 // Debugging Defines
@@ -60,7 +57,7 @@ namespace { // "Private members"
 
 // Forward Declarations
 Result InitMotor();
-Result InitRadio(const char* advertisementIP);
+Result InitRadio();
 void InitIMU();
 void ProcessIMUEvents();
 void ProcessTouchLevel(void);
@@ -86,7 +83,7 @@ Result GetSpineDataFrame(void)
 Result HAL::Init()
 {
   // Set ID
-  robotID_ = 1;
+  robotID_ = Anki::Cozmo::DEFAULT_ROBOT_ID;
 
   InitMotor();
 
@@ -94,7 +91,7 @@ Result HAL::Init()
   InitIMU();
 //#endif
 
-  if (InitRadio(RADIO_IP) != RESULT_OK) {
+  if (InitRadio() != RESULT_OK) {
     AnkiError("HAL.Init.InitRadioFailed", "");
     return RESULT_FAIL;
   }
@@ -145,6 +142,7 @@ void ForwardMicData(void)
                 "bad mic data sample count define");
   RobotInterface::MicData micData;
   micData.sequenceID = bodyData_->framecounter;
+  micData.timestamp = HAL::GetTimeStamp();
 #if MICDATA_ENABLED
   std::copy(bodyData_->audio, bodyData_->audio + MICDATA_SAMPLES_COUNT, micData.data);
   RobotInterface::SendMessage(micData);
@@ -154,7 +152,6 @@ void ForwardMicData(void)
 Result HAL::Step(void)
 {
   Result result = RESULT_OK;
-  TimeStamp_t now = HAL::GetTimeStamp();
 
 #ifndef USING_ANDROID_PHONE
   {
@@ -317,24 +314,6 @@ bool HAL::BatteryIsOnCharger()
 bool HAL::BatteryIsChargerOOS()
 {
   return bodyData_->battery.flags & chargerOOS;
-}
-
-Result HAL::SetBlockLight(const u32 activeID, const u32* colors)
-{
-  // Not implemented in HAL in V2
-  return RESULT_OK;
-}
-
-Result HAL::StreamObjectAccel(const u32 activeID, const bool enable)
-{
-  // Not implemented in HAL in V2
-  return RESULT_OK;
-}
-
-Result HAL::AssignSlot(u32 slot_id, u32 factory_id)
-{
-  // Not implemented in HAL in V2
-  return RESULT_OK;
 }
 
 u8 HAL::GetWatchdogResetCounter()

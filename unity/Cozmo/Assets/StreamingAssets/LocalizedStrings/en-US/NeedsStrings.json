@@ -194,5 +194,8 @@
   },
   "needs.severeAlert.repair.description": {
     "translation": "You'll need to tune up Cozmo before continuing."
+  },
+  "needs.FreeplayTokenReward.Description": {
+    "translation": "You've earned your Play Token for today!"
   }
 }

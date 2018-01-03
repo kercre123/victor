@@ -16,11 +16,12 @@
 
 #include "util/logging/logging.h"
 
+#define LOG_CHANNEL "Animations"
+
 namespace Anki {
 namespace Cozmo {
   
   CannedAnimationContainer::CannedAnimationContainer()
-  : _animIDCtr(kInvalidAnimID)
   {
     DefineHardCoded();
    
@@ -43,10 +44,7 @@ namespace Cozmo {
     
     auto retVal = _animations.find(name);
     if(retVal == _animations.end()) {
-      ++_animIDCtr;
       _animations.emplace(name,Animation(name));
-      _animIDToNameMap.emplace(_animIDCtr, name);
-      _animNameToIDMap.emplace(name, _animIDCtr);
     }
     
     return lastResult;
@@ -131,7 +129,8 @@ namespace Cozmo {
     }
     
     animationName = animationNames[0];
-    PRINT_NAMED_DEBUG("CannedAnimationContainer::DefineFromJson", "Loading '%s'", animationName.c_str());
+
+    PRINT_CH_DEBUG(LOG_CHANNEL, "CannedAnimationContainer::DefineFromJson", "Loading '%s'", animationName.c_str());
 
     Animation* animation = GetAnimationWrapper(animationName);
     if(animation == nullptr) {
@@ -153,9 +152,9 @@ namespace Cozmo {
     }
     
     if(RESULT_OK != AddAnimation(animationName)) {
-      PRINT_NAMED_INFO("CannedAnimationContainer.DefineFromJson.ReplaceName",
-                       "Replacing existing animation named '%s'.",
-                       animationName.c_str());
+      PRINT_CH_DEBUG(LOG_CHANNEL, "CannedAnimationContainer.DefineFromJson.ReplaceName",
+                     "Replacing existing animation named '%s'.",
+                     animationName.c_str());
     }
     
     Animation* animation = GetAnimation(animationName);
@@ -200,31 +199,5 @@ namespace Cozmo {
     _animations.clear();
   } // Clear()
 
-  
-  bool CannedAnimationContainer::GetAnimNameByID(u32 animID, std::string& animName) const
-  {
-    auto it = _animIDToNameMap.find(animID);
-    if (it != _animIDToNameMap.end()) {
-      animName = it->second;
-      return true;
-    }
-    PRINT_NAMED_WARNING("CannedAnimationContainer.GetAnimNameByID.UnknownID", "%d", animID);
-    return false;
-  }
-  
-  bool CannedAnimationContainer::GetAnimIDByName(const std::string& animName, u32& animID) const
-  {
-    auto it = _animNameToIDMap.find(animName);
-    if (it != _animNameToIDMap.end()) {
-      animID = it->second;
-      return true;
-    }
-    
-    PRINT_NAMED_WARNING("CannedAnimationContainer.GetAnimIDByName.UnknownName", "%s", animName.c_str());
-    animID = kInvalidAnimID;
-    return false;
-  }
-  
-  
 } // namespace Cozmo
 } // namespace Anki

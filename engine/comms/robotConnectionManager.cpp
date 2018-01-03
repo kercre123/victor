@@ -68,7 +68,7 @@ void RobotConnectionManager::ConfigureReliableTransport()
 {
   // Set parameters for all reliable transport instances
   Util::ReliableTransport::SetSendAckOnReceipt(false);
-  Util::ReliableTransport::SetSendUnreliableMessagesImmediately(false);
+  Util::ReliableTransport::SetSendUnreliableMessagesImmediately(true);
   Util::ReliableTransport::SetMaxPacketsToReSendOnAck(0);
   Util::ReliableTransport::SetMaxPacketsToSendOnSendMessage(1);
   Util::ReliableTransport::SetTrackAckLatency(true);
@@ -76,7 +76,10 @@ void RobotConnectionManager::ConfigureReliableTransport()
   Util::ReliableConnection::SetTimeBetweenPingsInMS(33.3); // Heartbeat interval
   Util::ReliableConnection::SetTimeBetweenResendsInMS(33.3);
   Util::ReliableConnection::SetMaxTimeSinceLastSend( Util::ReliableConnection::GetTimeBetweenResendsInMS() - 1.0 );
-  Util::ReliableConnection::SetConnectionTimeoutInMS(5000.0);
+  Util::ReliableConnection::SetConnectionTimeoutInMS(15000.0);  // Increased to allow engine more time to connect to anim process
+                                                                // which might be busy loading animations for more than 5 seconds.
+                                                                // Eventually (VIC-698) we should not use reliableTransport for
+                                                                // engine<->anim process comms.
   Util::ReliableConnection::SetPacketSeparationIntervalInMS(2.0);
   Util::ReliableConnection::SetMaxPingRoundTripsToTrack(10);
   Util::ReliableConnection::SetSendSeparatePingMessages(false);
@@ -148,7 +151,7 @@ bool RobotConnectionManager::SendData(const uint8_t* buffer, unsigned int size)
     return false;
   }
   
-  _reliableTransport->SendData(true, _currentConnectionData->GetAddress(), buffer, size);
+  _reliableTransport->SendData(false, _currentConnectionData->GetAddress(), buffer, size);
   
   return true;
 }

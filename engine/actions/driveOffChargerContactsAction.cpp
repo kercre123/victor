@@ -28,13 +28,13 @@ CONSOLE_VAR(f32, kDriveOffChargerContactsSpeed_mmps, "Actions", 20.f);
 namespace Anki {
 namespace Cozmo {
     
-DriveOffChargerContactsAction::DriveOffChargerContactsAction(Robot& robot)
-: DriveStraightAction(robot, kDriveOffChargerContactsDist_mm, kDriveOffChargerContactsSpeed_mmps, false)
+DriveOffChargerContactsAction::DriveOffChargerContactsAction()
+: DriveStraightAction(kDriveOffChargerContactsDist_mm, kDriveOffChargerContactsSpeed_mmps, false)
 {
   SetName("DriveOffChargerContacts");
   SetType(RobotActionType::DRIVE_OFF_CHARGER_CONTACTS);
   
-  if(_robot.GetContext()->IsInSdkMode())
+  if(GetRobot().GetContext()->IsInSdkMode())
   {
     // Purposefully do not lock the body track even though the base class DriveStraightAction
     // normally would. This action is meant to be used in SDK mode when we are on the charger
@@ -46,7 +46,7 @@ DriveOffChargerContactsAction::DriveOffChargerContactsAction(Robot& robot)
 
 ActionResult DriveOffChargerContactsAction::Init()
 {
-  _startedOnCharger = _robot.IsOnCharger();
+  _startedOnCharger = GetRobot().IsOnCharger();
   if(_startedOnCharger)
   {
     return DriveStraightAction::Init();
@@ -73,7 +73,7 @@ ActionResult DriveOffChargerContactsAction::CheckIfDone()
   }
   
   // If drive straight has finished, check that we are no longer on the charger
-  if(!_robot.IsOnCharger())
+  if(!GetRobot().IsOnCharger())
   {
     return ActionResult::SUCCESS;
   }

@@ -113,15 +113,14 @@ Blockly.CozmoWatermark.prototype.dispose = function() {
  * Center the watermark.
  */
 Blockly.CozmoWatermark.prototype.position = function() {
-  var metrics = this.workspace_.getMetrics();
-  if (!metrics) {
-    // There are no metrics available (workspace is probably not visible).
+  var injectionDiv = this.workspace_.getInjectionDiv();
+  if (!injectionDiv) {
     return;
   }
 
-  this.top_ = (metrics.viewHeight - Blockly.CozmoWatermark.prototype.watermarkHeight_)/2;
-  this.left_ = (metrics.viewWidth - Blockly.CozmoWatermark.prototype.watermarkWidth_)/2;
-
+  var boundingRect = injectionDiv.getBoundingClientRect();
+  this.top_ = (boundingRect.height - Blockly.CozmoWatermark.prototype.watermarkHeight_)/2;
+  this.left_ = (boundingRect.width - Blockly.CozmoWatermark.prototype.watermarkWidth_)/2;
   this.svgGroup_.setAttribute('transform',
       'translate(' + this.left_ + ',' + this.top_ + ')');
 };

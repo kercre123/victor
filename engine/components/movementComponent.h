@@ -13,9 +13,9 @@
 #ifndef __Anki_Cozmo_Basestation_Components_MovementComponent_H__
 #define __Anki_Cozmo_Basestation_Components_MovementComponent_H__
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/vision/basestation/trackedFace.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/vision/engine/trackedFace.h"
 #include "engine/components/animationComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -162,10 +162,10 @@ private:
   
   Robot& _robot;
   
-  bool _isMoving;
-  bool _isHeadMoving;
-  bool _isLiftMoving;
-  bool _areWheelsMoving;
+  bool _isMoving = false;
+  bool _isHeadMoving = false;
+  bool _isLiftMoving = false;
+  bool _areWheelsMoving = false;
   
   std::list<Signal::SmartHandle> _eventHandles;
   

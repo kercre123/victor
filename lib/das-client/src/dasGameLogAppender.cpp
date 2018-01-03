@@ -89,6 +89,7 @@ std::string DasGameLogAppender::makeCsvRow(const char* eventName, const char* ev
   oss << getValueForCsv(kApplicationRunGlobalKey, globals, data) << ",";
   oss << getValueForCsv(kGameIdGlobalKey, globals, data) << ",";
   oss << getValueForCsv(kGroupIdGlobalKey, globals, data) << ",";
+  oss << getValueForCsv(kConnectedSessionIdGlobalKey, globals, data) << ",";
   oss << kMessageVersionGlobalValue;
 
   return oss.str();

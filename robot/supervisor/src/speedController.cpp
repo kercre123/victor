@@ -29,7 +29,7 @@
  **/
 
 #include <math.h>
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "speedController.h"
 #include "wheelController.h"
 #include "anki/cozmo/robot/hal.h"

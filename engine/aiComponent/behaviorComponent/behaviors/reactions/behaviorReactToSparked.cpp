@@ -11,7 +11,6 @@
  **/
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToSparked.h"
-#include "engine/robot.h"
 
 
 namespace Anki {
@@ -28,9 +27,9 @@ BehaviorReactToSparked::BehaviorReactToSparked(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToSparked::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToSparked::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  return Result::RESULT_OK;
+  
 }
 
 

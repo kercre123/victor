@@ -79,11 +79,14 @@ namespace Cozmo.Needs.Sparks.UI {
     }
 
     protected virtual void HandleTappedUnlocked() {
+      System.Action<BaseModal> creationSuccessCallback = (obj) => {
+        if (this != null) {
+          SparksDetailModal sparksDetailModal = (SparksDetailModal)obj;
+          sparksDetailModal.InitializeSparksDetailModal(_UnlockInfo, isEngineDriven: false);
+        }
+      };
       // pop up sparks modal
-      UIManager.OpenModal(_SparksDetailModalPrefab, new ModalPriorityData(), (obj) => {
-        SparksDetailModal sparksDetailModal = (SparksDetailModal)obj;
-        sparksDetailModal.InitializeSparksDetailModal(_UnlockInfo, isEngineDriven: false);
-      });
+      UIManager.OpenModal(_SparksDetailModalPrefab, new ModalPriorityData(), creationSuccessCallback);
     }
   }
 

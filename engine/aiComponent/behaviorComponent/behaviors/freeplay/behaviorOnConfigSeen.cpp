@@ -13,14 +13,13 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/behaviorOnConfigSeen.h"
 
-#include "engine/robot.h"
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/blockWorld/blockConfigTypeHelpers.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -86,11 +85,10 @@ bool BehaviorOnConfigSeen::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorOnConfigSeen::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnConfigSeen::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _animTriggerIndex = 0;
   TransitionToPlayAnimationSequence(behaviorExternalInterface);
-  return RESULT_OK;
 }
 
   
@@ -98,11 +96,8 @@ Result BehaviorOnConfigSeen::OnBehaviorActivated(BehaviorExternalInterface& beha
 void BehaviorOnConfigSeen::TransitionToPlayAnimationSequence(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_animTriggerIndex < _animTriggers.size()){
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
     const AnimationTrigger animTrigger = _animTriggers[0];
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, animTrigger));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(animTrigger));
   }
 }
 

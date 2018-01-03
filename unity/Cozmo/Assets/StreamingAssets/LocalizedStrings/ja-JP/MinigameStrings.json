@@ -52,7 +52,7 @@
     "translation" : "{0}個のキューブの準備ができました！"
   },
   "minigame.label.cozmoPrep" : {
-    "translation" : "COZMOはプレイの準備中です..."
+    "translation" : "COZMOは遊ぶ準備をしています..."
   },
   "minigame.label.gameOver" : {
     "translation" : "ゲームオーバー"
@@ -103,7 +103,7 @@
     "translation" : "デバイスを傾けるとCOZMOは左または右に進みます。"
   },
   "droneMode.text.howToPlaySpeed" : {
-    "translation" : "ドラッグしてそのままにすると、Cozmoは前または後ろに進みます。\u000a放すと停止します。"
+    "translation" : "ドラッグしてそのままにすると、COZMOは前または後ろに進みます。\u000a放すと停止します。"
   },
   "droneMode.text.toggleNightVision" : {
     "translation" : "タップしてナイトビジョンのオンとオフを切り替えます。"
@@ -115,7 +115,7 @@
     "translation" : "タップしてヘッドとリフトのコントロールを切り替えます。"
   },
   "droneMode.text.cozmoReticleHeader" : {
-    "translation" : "Cozmoが対象物を選択すると、ここに表示されます。"
+    "translation" : "COZMOが対象物を選択すると、ここに表示されます。"
   },
   "droneMode.text.reticleOutlineDescrip" : {
     "translation" : "選択した対象物の周りに輪郭が表示されます。"
@@ -298,7 +298,7 @@
     "translation" : "ラウンド{0}に勝利！"
   },
   "speedTap.text.roundScore" : {
-    "translation" : "プレイヤー：{0} - Cozmo：{1}"
+    "translation" : "プレイヤー：{0} - COZMO：{1}"
   },
   "speedTap.text.roundScoreMP" : {
     "translation" : "{2}：{3} - {4}：{5} - {0}：{1}"

@@ -25,7 +25,7 @@
     "translation" : "Cozmo doit être nourri pour rester en bonne santé."
   },
   "needs.NeedsEnergyModal.Instruction1" : {
-    "translation" : "Attrape un cube qui émet des pulsations bleues."
+    "translation" : "Attrape un cube qui émet des cercles lumineux bleus."
   },
   "needs.NeedsEnergyModal.Instruction2" : {
     "translation" : "Secoue ce cube jusqu'à ce que tous les voyants s'allument intensément."
@@ -89,6 +89,12 @@
   },
   "needs.NeedsRepairModal.AligningTreads" : {
     "translation" : "Alignement des chenilles..."
+  },
+  "needs.NeedsRepairModal.CozmoNotOnTreadsTitle" : {
+    "translation" : "Cozmo n'est pas prêt"
+  },
+  "needs.NeedsRepairModal.CozmoNotOnTreadsBody" : {
+    "translation" : "Aide Cozmo à se redresser sur ses chenilles."
   },
   "needs.ContinueButtonText" : {
     "translation" : "CONTINUER"
@@ -163,7 +169,7 @@
     "translation" : "Cozmo a le hoquet"
   },
   "needs.FeedingOverfedHiccups.Description" : {
-    "translation" : "Cozmo a trop mangé - maintenant, il a le hoquet !"
+    "translation" : "Cozmo a trop mangé - maintenant, il a le hoquet ! Essaye d'aider Cozmo en le retournant."
   },
   "needs.severeAlert.energy.title" : {
     "translation" : "Cozmo a vraiment besoin d'être nourri."
@@ -176,5 +182,8 @@
   },
   "needs.severeAlert.repair.description" : {
     "translation" : "Tu dois régler Cozmo avant de continuer."
+  },
+  "needs.FreeplayTokenReward.Description" : {
+    "translation" : "Tu as gagné ton jeton bonus quotidien !"
   }
 }

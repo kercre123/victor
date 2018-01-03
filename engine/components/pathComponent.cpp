@@ -12,8 +12,8 @@
 
 #include "engine/components/pathComponent.h"
 
-#include "anki/common/basestation/math/poseOriginList.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/math/poseOriginList.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
@@ -381,8 +381,8 @@ void PathComponent::HandlePossibleOriginChanges()
   else if (haveOriginsChanged && canAdjustOrigin) {
     RejiggerTargetsAndReplan();
   }
-  else if( _robot.GetBlockWorld().DidObjectsChange() ) {
-    // we didn't need to adjust origins, but the obstacles have moved around, so replan if we need to
+  else {
+    // we didn't need to adjust origins, so delegate on Restart to decide if we should replan
     RestartPlannerIfNeeded();
   }
 
@@ -874,10 +874,8 @@ void PathComponent::RestartPlannerIfNeeded()
     case EComputePathStatus::Running:
     {
       PRINT_CH_DEBUG("Planner", "PathComponent.Replan.Running", "ComputeNewPathIfNeeded running");
-      // TODO:(bn) really need to truncate the plan here, otherwise if we take a while to plan we will plow
-      // straight into the obstacle even though we know it's there. See COZMO-10581
-      _plannerActive = true;
-      
+
+      // check if a path is currently being executed
       const Planning::Path currPath = _pdo->GetPath();
       if (currPath.GetNumSegments() > 0)
       {
@@ -896,6 +894,8 @@ void PathComponent::RestartPlannerIfNeeded()
           }
         }
       }
+      
+      _plannerActive = true; 
       break;
     }
     case EComputePathStatus::NoPlanNeeded:

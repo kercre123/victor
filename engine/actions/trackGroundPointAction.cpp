@@ -22,7 +22,7 @@
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/math/math.h"
 
@@ -34,9 +34,8 @@ namespace Cozmo {
 static const char * const kLogChannelName = "Actions";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TrackGroundPointAction::TrackGroundPointAction(Robot& robot,
-                                               const ExternalInterface::MessageEngineToGameTag& salientPointTag)
-: ITrackAction(robot, "TrackGroundPoint", RobotActionType::TRACK_GROUND_POINT)
+TrackGroundPointAction::TrackGroundPointAction(const ExternalInterface::MessageEngineToGameTag& salientPointTag)
+: ITrackAction("TrackGroundPoint", RobotActionType::TRACK_GROUND_POINT)
 {
   _salientTag = salientPointTag;
   
@@ -60,7 +59,7 @@ TrackGroundPointAction::TrackGroundPointAction(Robot& robot,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult TrackGroundPointAction::InitInternal()
 {
-  if(!_robot.HasExternalInterface()) {
+  if(!GetRobot().HasExternalInterface()) {
     PRINT_NAMED_ERROR("TrackGroundPointAction.Init.NoExternalInterface",
                       "Robot must have an external interface so action can "
                       "subscribe to motion observation events.");
@@ -116,18 +115,18 @@ ActionResult TrackGroundPointAction::InitInternal()
       }
     };
     
-    _signalHandle = _robot.GetExternalInterface()->Subscribe(_salientTag, handler);
+    _signalHandle = GetRobot().GetExternalInterface()->Subscribe(_salientTag, handler);
   }
   
   // TODO: Use an action or animation for this? (Not super simple b/c base class prevents overloading CheckIfDone)
-  _robot.GetMoveComponent().MoveHeadToAngle(MIN_HEAD_ANGLE, MAX_HEAD_SPEED_RAD_PER_S, MAX_HEAD_ACCEL_RAD_PER_S2);
+  GetRobot().GetMoveComponent().MoveHeadToAngle(MIN_HEAD_ANGLE, MAX_HEAD_SPEED_RAD_PER_S, MAX_HEAD_ACCEL_RAD_PER_S2);
   
   // Vision mode should have been set successfully in the constructor, based on the message tag
   if(ANKI_VERIFY(VisionMode::Count != _visionMode, "TrackGroundPointAction.InitInternal.VisionModeNotSet", ""))
   {
     const bool kUseDefaultsForUnspecifiedModes = false; // Turn everything else off
     AllVisionModesSchedule schedule({ {_visionMode, VisionModeSchedule(true)} }, kUseDefaultsForUnspecifiedModes);
-    _robot.GetVisionComponent().PushNextModeSchedule(std::move(schedule));
+    GetRobot().GetVisionComponent().PushNextModeSchedule(std::move(schedule));
   }
   
   return ActionResult::SUCCESS;
@@ -138,7 +137,9 @@ TrackGroundPointAction::~TrackGroundPointAction()
 {
   PRINT_CH_DEBUG(kLogChannelName, "TrackGroundPointAction.Destructor",
                  "Popping vision mode schedule");
-  _robot.GetVisionComponent().PopCurrentModeSchedule();
+  if(HasRobot()){
+    GetRobot().GetVisionComponent().PopCurrentModeSchedule();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -149,12 +150,12 @@ ITrackAction::UpdateResult TrackGroundPointAction::UpdateTrackingHelper(Radians&
   // Find pose of robot at time point was observed
   HistRobotState* histStatePtr = nullptr;
   TimeStamp_t junkTime;
-  if(RESULT_OK != _robot.GetStateHistory()->ComputeAndInsertStateAt(_pointObservation.timestamp, junkTime, &histStatePtr))
+  if(RESULT_OK != GetRobot().GetStateHistory()->ComputeAndInsertStateAt(_pointObservation.timestamp, junkTime, &histStatePtr))
   {
     PRINT_NAMED_ERROR("TrackGroundPointAction.UpdateTrackingHelper.PoseHistoryError",
                       "Could not get historical pose for point observed at t=%d (lastRobotMsgTime = %d)",
                       _pointObservation.timestamp,
-                      _robot.GetLastMsgTimestamp());
+                      GetRobot().GetLastMsgTimestamp());
     
     return UpdateResult::NoNewInfo;
   }
@@ -164,10 +165,10 @@ ITrackAction::UpdateResult TrackGroundPointAction::UpdateTrackingHelper(Radians&
   const Pose3d& histPose = histStatePtr->GetPose();
   
   const Point2f& groundPoint = ComputeGroundPointWrtCurrentRobot(histPose,
-                                                                 _robot.GetPose(),
+                                                                 GetRobot().GetPose(),
                                                                  _pointObservation.groundPoint);
   
-  ComputeAbsAngles(_robot, histPose, groundPoint, absPanAngle_out, absTiltAngle_out);
+  ComputeAbsAngles(GetRobot(), histPose, groundPoint, absPanAngle_out, absTiltAngle_out);
   
   if(DEBUG_TRACKING_ACTIONS)
   {
@@ -200,19 +201,19 @@ ITrackAction::UpdateResult TrackGroundPointAction::PredictTrackingHelper(Radians
   // Convert observations to absolute coordinates so we can compare them relative to a common origin
   HistRobotState* histStatePtr1 = nullptr;
   TimeStamp_t t1;
-  if(RESULT_OK != _robot.GetStateHistory()->ComputeAndInsertStateAt(_prevPointObservation.timestamp, t1, &histStatePtr1))
+  if(RESULT_OK != GetRobot().GetStateHistory()->ComputeAndInsertStateAt(_prevPointObservation.timestamp, t1, &histStatePtr1))
   {
     PRINT_NAMED_ERROR("TrackGroundPointAction.PredictTrackingHelper.PoseHistoryError",
                       "Could not get historical pose for point observed at t=%d (lastRobotMsgTime = %d)",
                       _prevPointObservation.timestamp,
-                      _robot.GetLastMsgTimestamp());
+                      GetRobot().GetLastMsgTimestamp());
     
     return UpdateResult::NoNewInfo;
   }
   
   // Previous observation's ground point w.r.t. current robot position
   const Point2f& groundPoint1 = ComputeGroundPointWrtCurrentRobot(histStatePtr1->GetPose(),
-                                                                  _robot.GetPose(),
+                                                                  GetRobot().GetPose(),
                                                                   _prevPointObservation.groundPoint);
   
   if(DEBUG_TRACKING_ACTIONS)
@@ -226,19 +227,19 @@ ITrackAction::UpdateResult TrackGroundPointAction::PredictTrackingHelper(Radians
   
   HistRobotState* histStatePtr2 = nullptr;
   TimeStamp_t t2;
-  if(RESULT_OK != _robot.GetStateHistory()->ComputeAndInsertStateAt(_pointObservation.timestamp, t2, &histStatePtr2))
+  if(RESULT_OK != GetRobot().GetStateHistory()->ComputeAndInsertStateAt(_pointObservation.timestamp, t2, &histStatePtr2))
   {
     PRINT_NAMED_ERROR("TrackGroundPointAction.PredictTrackingHelper.PoseHistoryError",
                       "Could not get historical pose for point observed at t=%d (lastRobotMsgTime = %d)",
                       _pointObservation.timestamp,
-                      _robot.GetLastMsgTimestamp());
+                      GetRobot().GetLastMsgTimestamp());
     
     return UpdateResult::NoNewInfo;
   }
   
   // Last observation's ground point w.r.t. current robot position
   const Point2f& groundPoint2 = ComputeGroundPointWrtCurrentRobot(histStatePtr2->GetPose(),
-                                                                  _robot.GetPose(),
+                                                                  GetRobot().GetPose(),
                                                                   _pointObservation.groundPoint);
   
   if(DEBUG_TRACKING_ACTIONS)
@@ -265,14 +266,14 @@ ITrackAction::UpdateResult TrackGroundPointAction::PredictTrackingHelper(Radians
   
   // Estimate the current position of the ground point assuming it continued traveling the
   // same velocity since it was last seen up until "now" (the last message timestamp)
-  const TimeStamp_t now = _robot.GetLastMsgTimestamp();
+  const TimeStamp_t now = GetRobot().GetLastMsgTimestamp();
   DEV_ASSERT(now >= t2, "TrackGroundPointAction.PredictTrackingHelper.BadTimestamp");
   Point2f predictedGroundPoint(groundPoint2);
   predictedGroundPoint += groundPointVel * (f32)(now - t2);
   
   // Get angles using faked ground point
   // Note: not predicting head tilt!
-  ComputeAbsAngles(_robot, histStatePtr2->GetPose(), predictedGroundPoint, absPanAngle_out, absTiltAngle_out);
+  ComputeAbsAngles(GetRobot(), histStatePtr2->GetPose(), predictedGroundPoint, absPanAngle_out, absTiltAngle_out);
   
   // Compute the distance for tracking from the predicted ground point
   distance_mm_out = 0.f; // If too close: distance will remain 0.f
@@ -368,12 +369,12 @@ ITrackAction::UpdateResult TrackGroundPointAction::UpdateTracking(Radians& absPa
   }
   else
   {
-    DEV_ASSERT_MSG(_robot.GetLastImageTimeStamp() >= _pointObservation.timestamp,
+    DEV_ASSERT_MSG(GetRobot().GetLastImageTimeStamp() >= _pointObservation.timestamp,
                    "TrackGroundPointAction.UpdateTracking.BadTimeStamps",
                    "LastImageTimestamp=%u PointObservationTimestamp=%u",
-                   _robot.GetLastImageTimeStamp(), _pointObservation.timestamp);
+                   GetRobot().GetLastImageTimeStamp(), _pointObservation.timestamp);
     
-    const TimeStamp_t timeSinceLastPoint_ms = _robot.GetLastImageTimeStamp() - _pointObservation.timestamp;
+    const TimeStamp_t timeSinceLastPoint_ms = GetRobot().GetLastImageTimeStamp() - _pointObservation.timestamp;
     
     // Didn't see the point in the last image
     if(_canPredict && (timeSinceLastPoint_ms < _maxPredictionWindow_ms))

@@ -56,7 +56,7 @@
     // Remix existing project.
     window.remixProject = function(projectUUID, newProjectName) {
         // Stop save project timer while we do the remix. We'll turn it back on once Unity calls js back with the project UUID.
-        clearInterval(window.saveProjectTimerId);
+        window.clearSaveProjectTimer();
 
         var projectType = "user";
         if(window.isCozmoSampleProject) {

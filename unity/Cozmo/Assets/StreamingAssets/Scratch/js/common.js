@@ -37,6 +37,12 @@
         window.Unity.call({command: "cozmoDASLog", argString: eventName, argString2: messageContents});
     }
 
+    window.cozmoDASWarn = function(eventName, messageContents) {
+        messageContents = "[" + getTimeStamp() + "] " + messageContents;
+        console.log(messageContents);
+        window.Unity.call({command: "cozmoDASWarn", argString: eventName, argString2: messageContents});
+    }
+
     window.cozmoDASError = function(eventName, messageContents) {
         messageContents = "[" + getTimeStamp() + "] " + messageContents;
         console.log(messageContents);
@@ -57,8 +63,23 @@
             // currently, otherwise the original JSON is not set
             // correctly. - msintov, 10/12/2017
             setTimeout(function(){
-                window.originalSampleProjectJSON = Scratch.vm.toJSON();
+                if (Scratch.vm) {
+                    window.originalSampleProjectJSON = Scratch.vm.toJSON();
+                } else {
+                    // TODO: determine how to properly handle this error
+                    window.cozmoDASError('Codelab.notifyProjectIsLoaded.ScratchVMUndefined', 'Scratch vm undefined. Page failed to load properly');
+                }
             }, 100);
+        }
+
+        if (window.isVertical) {
+            if (Scratch.workspace) {
+                // Move the workspace to its home position after the project loads
+                Scratch.workspace.scrollHome();
+            } else {
+                // TODO: determine how to properly handle this error
+                window.cozmoDASError('Codelab.notifyProjectIsLoaded.ScratchWorkspaceUndefined', 'Scratch workspace undefined. Page failed to load properly');
+            }
         }
 
         window.Unity.call({command: "cozmoWorkspaceLoaded"});
@@ -71,6 +92,8 @@
      */
     function onLoad () {
         window.TABLET_WIDTH = 800;
+
+        checkForObjectAssignSupport();
 
         // Instantiate the VM and create an empty project
         const vm = new window.VirtualMachine();
@@ -153,10 +176,18 @@
 
         // Handle VM events
         vm.on('SCRIPT_GLOW_ON', function(data) {
-            Scratch.workspace.glowStack(data.id, true);
+            // TODO The Gaussian blur filter applied with glowStack sometimes
+            // (especially on vertical) makes the entire program disappear
+            // when applied on both iOS and Android. Need to find alternative.
+            // Drop shadow also has the same problem per Adam's testing.
+            if (!window.isVertical) {
+                Scratch.workspace.glowStack(data.id, true);
+            }
         });
         vm.on('SCRIPT_GLOW_OFF', function(data) {
-            Scratch.workspace.glowStack(data.id, false);
+            if (!window.isVertical) {
+                Scratch.workspace.glowStack(data.id, false);
+            }
         });
         vm.on('BLOCK_GLOW_ON', function(data) {
             Scratch.workspace.glowBlock(data.id, true);
@@ -175,6 +206,7 @@
             Scratch.workspace.clearUndo();
             if (window.isLoadingProject) {
                 window.notifyProjectIsLoaded();
+                window.startSaveProjectTimer();
             }
 
             if (window.isVertical) {
@@ -225,7 +257,6 @@
             var zoomIn = document.querySelector('#zoomIn');
             var zoomOut = document.querySelector('#zoomOut');
             var zoomReset = document.querySelector('#zoomReset');
-            var exportbutton = document.querySelector('#exportbutton');
 
             undo.addEventListener('click', function () {
                 Scratch.workspace.playAudio('click');
@@ -278,17 +309,6 @@
                 e.preventDefault();  // Stop double-clicking from selecting text.
             });
 
-            exportbutton.addEventListener('click', function () {
-                Scratch.workspace.playAudio('click');
-                vm.stopAll();
-                clearInterval(window.saveProjectTimerId);
-
-                window.exportCozmoProject();
-            });
-            exportbutton.addEventListener('touchmove', function (e) {
-                e.preventDefault();
-            });
-
             var glossaryButton = document.querySelector('#glossarybutton');
             glossaryButton.addEventListener('click', function(){
               Scratch.workspace.playAudio('click');
@@ -297,7 +317,21 @@
             glossaryButton.addEventListener('touchmove', function (e) {
               e.preventDefault();
             });
+
+            // Move the workspace to its home position
+            Scratch.workspace.scrollHome();
         }
+
+        var exportbutton = document.querySelector('#exportbutton');
+        exportbutton.addEventListener('click', function () {
+            Scratch.workspace.playAudio('click');
+            vm.stopAll();
+
+            window.exportCozmoProject();
+        });
+        exportbutton.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+        });
 
         var remixButton = document.querySelector("#remix-button");
         remixButton.addEventListener('click', function(){
@@ -316,7 +350,6 @@
         });
         stop.addEventListener('click', function () {
             Scratch.workspace.playAudio('click');
-            window.Unity.call({command: "cozmoStopSign"});
             vm.stopAll();
         });
         stop.addEventListener('touchmove', function (e) {
@@ -367,6 +400,7 @@
 
     window.onCloseButton = function() {
         if (window.isCozmoSampleProject && window.hasSampleProjectChanged()) {
+            window.player.play('click');
             // a sample or featured project was changed.  Offer to save changes as a remix.
             ModalConfirm.open({
                 title: $t('codeLab.saveModifiedSampleProjectAsRemixDialog.dialogTitle'),
@@ -375,6 +409,7 @@
                 cancelButtonLabel: $t('codeLab.saveModifiedSampleProjectAsRemixDialog.discardChangesButtonLabel'),
                 confirmCallback: function(result) {
                     if (result) {
+                        window.player.play('click');
                         // user wants a remix
                         var newRemixName = RenameProject.createRemixProjectTitle(window.cozmoProjectName);
                         window.remixProject(window.cozmoProjectUUID, newRemixName);
@@ -394,7 +429,7 @@
     window.exitWorkspace = function() {
         Scratch.workspace.playAudio('click');
         Scratch.vm.stopAll();
-        clearInterval(window.saveProjectTimerId);
+        window.clearSaveProjectTimer();
 
         var promiseSaveProject = window.promiseWaitForSaveProject();
         promiseSaveProject.then(function(result) {
@@ -410,6 +445,7 @@
             confirmButtonLabel: $t('codeLab.remixConfirmDialog.saveRemixButtonLabel'),
             cancelButtonLabel: $t('codeLab.remixConfirmDialog.cancelButtonLabel'),
             confirmCallback: function(result) {
+                window.player.play('click');
                 if (result) {
                     // user wants a remix
                     var newRemixName = RenameProject.createRemixProjectTitle(window.cozmoProjectName);
@@ -428,8 +464,6 @@
     window.onScriptsStopped = function() {
         // Turn off animated play button on workspace
         document.body.classList.remove('is-program-running');
-
-        // TODO Also switch play now modal to switch from stop sign to green flag on button?
     }
 
     /**
@@ -443,6 +477,60 @@
         if (typeof webkit.messageHandlers.extensions === 'undefined') return;
         window.extensions = webkit.messageHandlers.extensions;
     }
+
+    // Check for ECMAScript Object.assign() support and if not supported,
+    // add polyfill implementation.
+    //
+    // Issue discussed here: https://forums.anki.com/t/code-lab-stopped-working-after-upated-to-v2/9456/5
+    function checkForObjectAssignSupport () {
+        if (typeof Object.assign != 'function') {
+            window.cozmoDASWarn("Codelab.Android.OlderWebview.ObjectAssign", "ECMAScript 6 method Object.assign() does not exist. Using polyfill to support older Android webview");
+
+            // Polyfill from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+
+            // Must be writable: true, enumerable: false, configurable: true
+            Object.defineProperty(Object, "assign", {
+                value: function assign(target, varArgs) { // .length of function is 2
+                    'use strict';
+                    if (target == null) { // TypeError if undefined or null
+                        throw new TypeError('Cannot convert undefined or null to object');
+                    }
+
+                    var to = Object(target);
+
+                    for (var index = 1; index < arguments.length; index++) {
+                        var nextSource = arguments[index];
+
+                        if (nextSource != null) { // Skip over if undefined or null
+                            for (var nextKey in nextSource) {
+                                // Avoid bugs when hasOwnProperty is shadowed
+                                if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                                    to[nextKey] = nextSource[nextKey];
+                                }
+                            }
+                        }
+                    }
+                    return to;
+                },
+                writable: true,
+                configurable: true
+            });
+        }
+    }
+
+
+    /**
+     * Immedately show Play Now modal for featured projects in vertical workspace
+     */
+    function prepareForFeaturedProjectPlayNowModal() {
+        if (window.isVertical && window.getUrlVar('isFeaturedProject') === 'true') {
+            PlayNowModal.init();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function(e){
+        prepareForFeaturedProjectPlayNowModal();
+    });
 
     /**
      * Bind event handlers.

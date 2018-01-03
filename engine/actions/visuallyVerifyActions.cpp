@@ -22,13 +22,11 @@ namespace Cozmo {
 #pragma mark - 
 #pragma mark IVisuallyVerifyAction
   
-  IVisuallyVerifyAction::IVisuallyVerifyAction(Robot& robot,
-                                               const std::string name,
+  IVisuallyVerifyAction::IVisuallyVerifyAction(const std::string name,
                                                const RobotActionType type,
                                                VisionMode imageTypeToWaitFor,
                                                LiftPreset liftPosition)
-  : IAction(robot,
-            name,
+  : IAction(name,
             type,
             (u8)AnimTrackFlag::HEAD_TRACK)
   , _imageTypeToWaitFor(imageTypeToWaitFor)
@@ -46,11 +44,11 @@ namespace Cozmo {
   
   ActionResult IVisuallyVerifyAction::Init()
   {
-    _compoundAction.reset(new CompoundActionParallel(_robot, {
-      new MoveLiftToHeightAction(_robot, _liftPreset),
-      new WaitForImagesAction(_robot, GetNumImagesToWaitFor(), _imageTypeToWaitFor),
+    _compoundAction.reset(new CompoundActionParallel({
+      new MoveLiftToHeightAction(_liftPreset),
+      new WaitForImagesAction(GetNumImagesToWaitFor(), _imageTypeToWaitFor),
     }));
-    
+    _compoundAction->SetRobot(&GetRobot());
     _compoundAction->ShouldSuppressTrackLocking(true);
 
     return InitInternal();
@@ -58,7 +56,7 @@ namespace Cozmo {
   
   void IVisuallyVerifyAction::SetupEventHandler(EngineToGameTag tag, EventCallback callback)
   {
-    _observationHandle = _robot.GetExternalInterface()->Subscribe(tag, callback);
+    _observationHandle = GetRobot().GetExternalInterface()->Subscribe(tag, callback);      
   }
   
   ActionResult IVisuallyVerifyAction::CheckIfDone()
@@ -85,11 +83,9 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark VisuallyVerifyObjectAction
   
-VisuallyVerifyObjectAction::VisuallyVerifyObjectAction(Robot& robot,
-                                                       ObjectID objectID,
+VisuallyVerifyObjectAction::VisuallyVerifyObjectAction(ObjectID objectID,
                                                        Vision::Marker::Code whichCode)
-  : IVisuallyVerifyAction(robot,
-                          "VisuallyVerifyObject" + std::to_string(objectID.GetValue()),
+  : IVisuallyVerifyAction("VisuallyVerifyObject" + std::to_string(objectID.GetValue()),
                           RobotActionType::VISUALLY_VERIFY_OBJECT,
                           VisionMode::DetectingMarkers,
                           LiftPreset::OUT_OF_FOV)
@@ -140,7 +136,7 @@ bool VisuallyVerifyObjectAction::HaveSeenObject()
     {
       // We've seen the object, check if we've seen the correct marker if one was
       // specified and we haven't seen it yet
-      ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
+      ObservableObject* object = GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.HaveSeenObject.ObjectNotFound",
                             "[%d] Object with ID=%d no longer exists in the world.",
@@ -188,9 +184,8 @@ bool VisuallyVerifyObjectAction::HaveSeenObject()
 #pragma mark -
 #pragma mark VisuallyVerifyFaceAction
 
-VisuallyVerifyFaceAction::VisuallyVerifyFaceAction(Robot& robot, Vision::FaceID_t faceID)
-: IVisuallyVerifyAction(robot,
-                        "VisuallyVerifyFace" + std::to_string(faceID),
+VisuallyVerifyFaceAction::VisuallyVerifyFaceAction(Vision::FaceID_t faceID)
+: IVisuallyVerifyAction("VisuallyVerifyFace" + std::to_string(faceID),
                         RobotActionType::VISUALLY_VERIFY_FACE,
                         VisionMode::DetectingFaces,
                         LiftPreset::LOW_DOCK)
@@ -239,11 +234,9 @@ bool VisuallyVerifyFaceAction::HaveSeenObject()
 #pragma mark -
 #pragma mark VisuallyVerifyNoObjectAtPoseAction
 
-VisuallyVerifyNoObjectAtPoseAction::VisuallyVerifyNoObjectAtPoseAction(Robot& robot,
-                                                                       const Pose3d& pose,
+VisuallyVerifyNoObjectAtPoseAction::VisuallyVerifyNoObjectAtPoseAction(const Pose3d& pose,
                                                                        const Point3f& thresholds_mm)
-: IAction(robot,
-          "VisuallyVerifyNoObjectAtPose",
+: IAction("VisuallyVerifyNoObjectAtPose",
           RobotActionType::VISUALLY_VERIFY_NO_OBJECT_AT_POSE,
           (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::BODY_TRACK)
 , _pose(pose)
@@ -260,7 +253,7 @@ VisuallyVerifyNoObjectAtPoseAction::VisuallyVerifyNoObjectAtPoseAction(Robot& ro
   // checks that this object was observed in the last frame
   _filter.AddFilterFcn([this](const ObservableObject* object)
                        {
-                         if(object->GetLastObservedTime() >= _robot.GetLastImageTimeStamp())
+                         if(object->GetLastObservedTime() >= GetRobot().GetLastImageTimeStamp())
                          {
                            return true;
                          }
@@ -286,14 +279,16 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::Init()
 {
   // Turn towards the pose and move the lift out of the way while we turn
   // then wait for a number of images
-  _turnTowardsPoseAction.reset(new CompoundActionParallel(_robot, {
-    new TurnTowardsPoseAction(_robot, _pose),
-    new MoveLiftToHeightAction(_robot, MoveLiftToHeightAction::Preset::OUT_OF_FOV)
+  _turnTowardsPoseAction.reset(new CompoundActionParallel({
+    new TurnTowardsPoseAction(_pose),
+    new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV)
   }));
+  _turnTowardsPoseAction->SetRobot(&GetRobot());
   if (_waitForImagesAction != nullptr) {
     _waitForImagesAction->PrepForCompletion();
   }
-  _waitForImagesAction.reset(new WaitForImagesAction(_robot, _numImagesToWaitFor, VisionMode::DetectingMarkers));
+  _waitForImagesAction.reset(new WaitForImagesAction(_numImagesToWaitFor, VisionMode::DetectingMarkers));
+  _waitForImagesAction->SetRobot(&GetRobot());
 
   _turnTowardsPoseAction->ShouldSuppressTrackLocking(true);
   
@@ -336,7 +331,7 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::CheckIfDone()
     // If there is an object at the given pose within the threshold then fail
     // Only do this check once we have turned towards the pose and have started waiting for images in case
     // there isn't actually an object at the pose but blockworld thinks there is
-    if(_robot.GetBlockWorld().FindLocatedObjectClosestTo(_pose, _thresholds_mm, _filter) != nullptr)
+    if(GetRobot().GetBlockWorld().FindLocatedObjectClosestTo(_pose, _thresholds_mm, _filter) != nullptr)
     {
       PRINT_CH_DEBUG("Actions", "VisuallyVerifyNoObjectAtPose.FoundObject",
                      "Seeing object near pose (%f %f %f)",

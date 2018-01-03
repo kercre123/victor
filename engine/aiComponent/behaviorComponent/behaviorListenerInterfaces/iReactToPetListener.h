@@ -12,7 +12,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IReactToPetListener_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IReactToPetListener_H__
 
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 
 namespace Anki {
 namespace Cozmo {

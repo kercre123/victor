@@ -1,0 +1,3 @@
+4.42129:text:VERBINDEN
+0.164967:text:Superintelligent. Superfrech.
+0.210426:click:connect_button:0.120533

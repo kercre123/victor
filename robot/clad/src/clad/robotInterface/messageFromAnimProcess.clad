@@ -1,30 +1,38 @@
-/** Clad for messages from animation process to engine or game
- * ROBOT_CLAD_SHARED
+/** Clad for messages from animation process to engine
  */
+
+#include "clad/types/animationEvents.clad"
 
 namespace Anki {
 namespace Cozmo {
 
 
-// TODO: Move AnimationAvailable, started, and ended
-// TODO: Audio Callback messages
-
-///////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////  META  /////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-// For messages where an end of message might make sense to denote the full list of messages has
-// been broadcasted. Example: robot might broadcast all available animations, however, there would
-// be no way to tell if all the AnimationAvailable messages have been received without an `end of
-// message` message.
-// Can be extended for other message types later
-
-enum uint_8 MessageType {
-  AnimationAvailable
+message AnimationState
+{
+  uint_32 numProcAnimFaceKeyframes,
+  uint_8  lockedTracks,
+  uint_8  tracksInUse,
 }
 
-message EndOfMessage {
-  MessageType messageType
+// These two messages bookend animations as they are played on the robot
+message AnimationStarted
+{
+  uint_8  tag,
+  string animName,
+}
+
+message AnimationEnded
+{
+  uint_8  tag,
+  bool    wasAborted,
+  string animName,
+}
+
+message AnimationEvent
+{
+  uint_32   timestamp,
+  uint_8    tag,
+  AnimEvent event_id
 }
 
 

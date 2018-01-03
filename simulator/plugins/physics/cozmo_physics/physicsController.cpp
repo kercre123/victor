@@ -22,7 +22,7 @@ void PhysicsController::Update()
   // Arbitrary maxPacketSize 3000
   const size_t maxPacketSize {3000};
   uint8_t data[maxPacketSize] {0};
-  int numBytesRecvd;
+  ssize_t numBytesRecvd;
   while ((numBytesRecvd = _server.Recv((char*)data, maxPacketSize)) > 0) {
     ProcessMessage(PhysicsInterface::MessageSimPhysics(data, (size_t)numBytesRecvd));
   }

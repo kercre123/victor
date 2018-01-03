@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorKnockOverCubes_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorKnockOverCubes_H__
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/blockWorld/blockConfiguration.h"
 #include "engine/blockWorld/stackConfigurationContainer.h"
@@ -24,7 +24,6 @@ namespace Cozmo {
 
 class BlockWorldFilter;
 class ObservableObject;
-class Robot;
 
 class BehaviorKnockOverCubes : public ICozmoBehavior
 {
@@ -33,15 +32,14 @@ protected:
   friend class BehaviorContainer;
   BehaviorKnockOverCubes(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
   
   virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   void HandleObjectUpAxisChanged(const ObjectUpAxisChanged& msg, BehaviorExternalInterface& behaviorExternalInterface);
   
 private:

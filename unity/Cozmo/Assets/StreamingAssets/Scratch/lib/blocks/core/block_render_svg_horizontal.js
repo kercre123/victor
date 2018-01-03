@@ -249,7 +249,8 @@ Blockly.BlockSvg.renderingMetrics_ = null;
  * Max text display length for a field (per-horizontal/vertical)
  * @const
  */
-Blockly.BlockSvg.MAX_DISPLAY_LENGTH = 4;
+// *** Anki Change ***
+Blockly.BlockSvg.MAX_DISPLAY_LENGTH = 3;
 
 /**
  * Point size of text field before animation. Must match size in CSS.

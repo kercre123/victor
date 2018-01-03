@@ -21,7 +21,7 @@
 #include "engine/components/movementComponent.h"
 #include "engine/robot.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "util/helpers/templateHelpers.h"
 
 
@@ -30,9 +30,8 @@ namespace Anki {
     
 #pragma mark ---- ICompoundAction ----
     
-    ICompoundAction::ICompoundAction(Robot& robot, std::list<IActionRunner*> actions)
-    : IActionRunner(robot,
-                    "ICompoundAction",
+    ICompoundAction::ICompoundAction(const std::list<IActionRunner*> & actions)
+    : IActionRunner("ICompoundAction",
                     RobotActionType::COMPOUND,
                     (u8)AnimTrackFlag::NO_TRACKS)
     {
@@ -58,7 +57,17 @@ namespace Anki {
         action->Reset(shouldUnlockTracks);
       }
     }
+
+
+    void ICompoundAction::OnRobotSet()
+    {
+      for(auto& entry: _actions){
+        entry->SetRobot(&GetRobot());
+      }
+      OnRobotSetInternalCompound();
+    }
     
+
     std::weak_ptr<IActionRunner> ICompoundAction::AddAction(IActionRunner* action,
                                                             bool ignoreFailure,
                                                             bool emitCompletionSignal)
@@ -99,6 +108,10 @@ namespace Anki {
       if(fcn != nullptr) {
         _ignoreFailure[action] = fcn;
       }
+
+      if(HasRobot()){
+        sharedPtr->SetRobot(&GetRobot());
+      }
       
       return std::weak_ptr<IActionRunner>(sharedPtr);
     }
@@ -117,7 +130,7 @@ namespace Anki {
       {
         // This will assert if someone is storing a shared_ptr to this action
         // (locked the weak_ptr returned from AddAction) and has not yet released it
-        DEV_ASSERT(iter->unique(), "ICompoundAction.DeleteActions.ActionPtrHasMulipleOwners");
+        DEV_ASSERT(iter->unique(), "ICompoundAction.DeleteActions.ActionPtrHasMultipleOwners");
         
         std::shared_ptr<IActionRunner> action = *iter;
         assert(action != nullptr);
@@ -126,14 +139,16 @@ namespace Anki {
         // (which unlocks the tracks) we now need to relock the tracks so that they can be unlocked
         // normally by the action destructor
         // Also, only lock tracks if they aren't already locked as we will get only one unlock from the action destructor
-        if(!_deleteActionOnCompletion)
+        if(HasRobot() &&
+           !_deleteActionOnCompletion)
         {
           if(action->GetState() != ActionResult::NOT_STARTED &&
              !action->IsSuppressingTrackLocking() &&
-             !_robot.GetMoveComponent().AreAllTracksLockedBy(action->GetTracksToLock(),
+             
+             !GetRobot().GetMoveComponent().AreAllTracksLockedBy(action->GetTracksToLock(),
                                                              std::to_string((*iter)->GetTag())))
           {
-            _robot.GetMoveComponent().LockTracks(action->GetTracksToLock(), action->GetTag(), action->GetName());
+            GetRobot().GetMoveComponent().LockTracks(action->GetTracksToLock(), action->GetTag(), action->GetName());
           }
         }
         
@@ -163,7 +178,7 @@ namespace Anki {
     {
       // This will assert if someone is storing a shared_ptr to this action
       // (locked the weak_ptr returned from AddAction) and has not yet released it
-      DEV_ASSERT(currentAction->unique(), "ICompoundAction.StoreUnionAndDelete.ActionPtrHasMulipleOwners");
+      DEV_ASSERT(currentAction->unique(), "ICompoundAction.StoreUnionAndDelete.ActionPtrHasMultipleOwners");
       
       // Store this actions completion union before deleting it
       ActionCompletedUnion actionUnion;
@@ -193,7 +208,11 @@ namespace Anki {
       {
         // If we aren't deleting actions when they complete we need to unlock their tracks so
         // subsequent actions can run
-        _robot.GetMoveComponent().UnlockTracks((*currentAction)->GetTracksToLock(), (*currentAction)->GetTag());
+        const auto & action = *currentAction;
+        if (!action->IsSuppressingTrackLocking() && action->GetState() != ActionResult::NOT_STARTED)
+        {
+          GetRobot().GetMoveComponent().UnlockTracks(action->GetTracksToLock(), action->GetTag());
+        }
         ++currentAction;
       }
     }
@@ -267,19 +286,21 @@ namespace Anki {
     
 #pragma mark ---- CompoundActionSequential ----
     
-    CompoundActionSequential::CompoundActionSequential(Robot& robot)
-    : CompoundActionSequential(robot, {})
+    CompoundActionSequential::CompoundActionSequential()
+    : ICompoundAction({})
+    , _delayBetweenActionsInSeconds(0)    
     {
+      Reset();
       
     }
     
-    CompoundActionSequential::CompoundActionSequential(Robot& robot, std::list<IActionRunner*> actions)
-    : ICompoundAction(robot, actions)
+    CompoundActionSequential::CompoundActionSequential(const std::list<IActionRunner*> & actions)
+    : ICompoundAction(actions)
     , _delayBetweenActionsInSeconds(0)
     {
       Reset();
     }
-    
+
     void CompoundActionSequential::Reset(bool shouldUnlockTracks)
     {
       ICompoundAction::Reset(shouldUnlockTracks);
@@ -368,7 +389,10 @@ namespace Anki {
       if(_currentAction != _actions.end())
       {
         assert((*_currentAction) != nullptr); // should not have been allowed in by constructor
-        
+        if(!(*_currentAction)->HasRobot()){
+          (*_currentAction)->SetRobot(&GetRobot());
+        }
+
         // If the compound action is suppressing track locking then the constituent actions should too
         (*_currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
         
@@ -446,14 +470,14 @@ namespace Anki {
     
 #pragma mark ---- CompoundActionParallel ----
     
-    CompoundActionParallel::CompoundActionParallel(Robot& robot)
-    : CompoundActionParallel(robot, {})
+    CompoundActionParallel::CompoundActionParallel()
+    : ICompoundAction({})
     {
       
     }
     
-    CompoundActionParallel::CompoundActionParallel(Robot& robot, std::list<IActionRunner*> actions)
-    : ICompoundAction(robot, actions)
+    CompoundActionParallel::CompoundActionParallel(const std::list<IActionRunner*> & actions)
+    : ICompoundAction(actions)
     {
       
     }
@@ -470,6 +494,7 @@ namespace Anki {
       for(auto currentAction = _actions.begin(); currentAction != _actions.end();)
       {
         assert((*currentAction) != nullptr); // should not have been allowed in by constructor
+        (*currentAction)->SetRobot(&GetRobot());
         
         // If the compound action is suppressing track locking then the constituent actions should too
         (*currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());

@@ -9,15 +9,15 @@
 #ifndef __UI_GAME_CONTROLLER_H__
 #define __UI_GAME_CONTROLLER_H__
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/poseOriginList.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/poseOriginList.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/gameComms.h"
 #include "engine/cozmoAPI/comms/gameMessageHandler.h"
-#include "anki/common/types.h"
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -97,37 +97,38 @@ protected:
   // TODO: These default handlers and senders should be CLAD-generated!
   
   // Message handlers
-  virtual void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg){};
-  virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg){};
-  virtual void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg){};
-  virtual void HandleRobotObservedPet(ExternalInterface::RobotObservedPet const& msg) {};
-  virtual void HandleRobotDeletedLocatedObject(ExternalInterface::RobotDeletedLocatedObject const& msg){};
+  virtual void HandlePing(const ExternalInterface::Ping& msg){};
+  virtual void HandleRobotStateUpdate(const ExternalInterface::RobotState& msg){};
+  virtual void HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg){};
+  virtual void HandleRobotObservedFace(const ExternalInterface::RobotObservedFace& msg){};
+  virtual void HandleRobotObservedPet(const ExternalInterface::RobotObservedPet& msg) {};
+  virtual void HandleRobotDeletedLocatedObject(const ExternalInterface::RobotDeletedLocatedObject& msg){};
   virtual void HandleUiDeviceAvailable(const ExternalInterface::UiDeviceAvailable& msgIn){};
   virtual void HandleUiDeviceConnected(const ExternalInterface::UiDeviceConnected& msg){};
-  virtual void HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg){};
+  virtual void HandleRobotConnected(const ExternalInterface::RobotConnectionResponse& msg){};
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg){};
-  virtual void HandleImageChunk(ImageChunk const& msg){};
-  virtual void HandleActiveObjectAccel(ObjectAccel const& msg){};
-  virtual void HandleActiveObjectConnectionState(ObjectConnectionState const& msg){};
-  virtual void HandleActiveObjectMoved(ObjectMoved const& msg){};
-  virtual void HandleActiveObjectStoppedMoving(ObjectStoppedMoving const& msg){};
-  virtual void HandleActiveObjectTapped(ObjectTapped const& msg){};
-  virtual void HandleActiveObjectUpAxisChanged(ObjectUpAxisChanged const& msg){};
-  virtual void HandleLocatedObjectStates(ExternalInterface::LocatedObjectStates const& msg){};
-  virtual void HandleConnectedObjectStates(ExternalInterface::ConnectedObjectStates const& msg){};
-  virtual void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg){};
-  virtual void HandleAnimationAborted(ExternalInterface::AnimationAborted const& msg){};
-  virtual void HandleDebugString(ExternalInterface::DebugString const& msg){};
-  virtual void HandleNVStorageOpResult(ExternalInterface::NVStorageOpResult const& msg){};
-  virtual void HandleFactoryTestResultEntry(FactoryTestResultEntry const& msg){};
+  virtual void HandleImageChunk(const ImageChunk& msg){};
+  virtual void HandleActiveObjectAccel(const ObjectAccel& msg){};
+  virtual void HandleActiveObjectConnectionState(const ObjectConnectionState& msg){};
+  virtual void HandleActiveObjectMoved(const ObjectMoved& msg){};
+  virtual void HandleActiveObjectStoppedMoving(const ObjectStoppedMoving& msg){};
+  virtual void HandleActiveObjectTapped(const ObjectTapped& msg){};
+  virtual void HandleActiveObjectUpAxisChanged(const ObjectUpAxisChanged& msg){};
+  virtual void HandleLocatedObjectStates(const ExternalInterface::LocatedObjectStates& msg){};
+  virtual void HandleConnectedObjectStates(const ExternalInterface::ConnectedObjectStates& msg){};
+  virtual void HandleAnimationAvailable(const ExternalInterface::AnimationAvailable& msg){};
+  virtual void HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg){};
+  virtual void HandleDebugString(const ExternalInterface::DebugString& msg){};
+  virtual void HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult& msg){};
+  virtual void HandleFactoryTestResultEntry(const FactoryTestResultEntry& msg){};
   virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
-  virtual void HandleLoadedKnownFace(Vision::LoadedKnownFace const& msg){};
+  virtual void HandleLoadedKnownFace(const Vision::LoadedKnownFace& msg){};
   virtual void HandleFaceEnrollmentCompleted(const ExternalInterface::FaceEnrollmentCompleted &msg) {};
   virtual void HandleCliffEvent(const CliffEvent& msg){};
   virtual void HandleSetCliffDetectThresholds(const SetCliffDetectThresholds& msg){};
   
-  virtual void HandleBehaviorTransition(ExternalInterface::BehaviorTransition const& msg){};
-  virtual void HandleEndOfMessage(const EndOfMessage& msg){};
+  virtual void HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg){};
+  virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
   virtual void HandleRobotOffTreadsStateChanged(const ExternalInterface::RobotOffTreadsStateChanged& msg){};
   virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) {};
   virtual void HandleDefinedCustomObject(const ExternalInterface::DefinedCustomObject& msg) {};
@@ -137,7 +138,7 @@ protected:
   
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
-  void SendPing();
+  void SendPing(bool isResponse);
   void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps, const f32 lwheel_accel_mmps2, const f32 rwheel_accel_mmps2);
   void SendDriveArc(const f32 speed, const f32 accel, const s16 curvature_mm);
   void SendDriveStraight(f32 speed_mmps,  // Speed should be positive
@@ -165,7 +166,7 @@ protected:
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode);
   void SendSetRobotImageSendMode(ImageSendMode mode);
-  void SendSaveImages(ImageSendMode imageMode, const std::string& path = "");
+  void SendSaveImages(ImageSendMode imageMode, const std::string& path = "", const int8_t qualityOnRobot = 0);
   void SendSaveState(bool enabled, const std::string& path = "");
   void SendEnableDisplay(bool on);
   void SendExecutePathToPose(const Pose3d& p,
@@ -484,34 +485,35 @@ protected:
   
   
 private:
-  void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
-  void HandleRobotDelocalizedBase(ExternalInterface::RobotDelocalized const& msg);
-  void HandleRobotOffTreadsStateChangedBase(ExternalInterface::RobotOffTreadsStateChanged const& msg);
-  void HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg);
-  void HandleRobotObservedFaceBase(ExternalInterface::RobotObservedFace const& msg);
-  void HandleRobotObservedPetBase(ExternalInterface::RobotObservedPet const& msg);
-  void HandleRobotDeletedLocatedObjectBase(ExternalInterface::RobotDeletedLocatedObject const& msg);
-  void HandleUiDeviceAvailableBase(ExternalInterface::UiDeviceAvailable const& msg);
-  void HandleUiDeviceConnectedBase(ExternalInterface::UiDeviceConnected const& msg);
-  void HandleRobotConnectedBase(ExternalInterface::RobotConnectionResponse const &msg);
-  void HandleRobotCompletedActionBase(ExternalInterface::RobotCompletedAction const& msg);
-  void HandleImageChunkBase(ImageChunk const& msg);
-  void HandleActiveObjectAccelBase(ObjectAccel const& msg);
-  void HandleActiveObjectConnectionStateBase(ObjectConnectionState const& msg);
-  void HandleActiveObjectMovedBase(ObjectMoved const& msg);
-  void HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg);
-  void HandleActiveObjectTappedBase(ObjectTapped const& msg);
-  void HandleActiveObjectUpAxisChangedBase(ObjectUpAxisChanged const& msg);
-  void HandleLocatedObjectStatesBase(ExternalInterface::LocatedObjectStates const& msg);
-  void HandleConnectedObjectStatesBase(ExternalInterface::ConnectedObjectStates const& msg);
-  void HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg);
-  void HandleAnimationAbortedBase(ExternalInterface::AnimationAborted const& msg);
-  void HandleDebugStringBase(ExternalInterface::DebugString const& msg);
-  void HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg);
-  void HandleBehaviorTransitionBase(ExternalInterface::BehaviorTransition const& msg);
-  void HandleEndOfMessageBase(EndOfMessage const& msg);
-  void HandleFactoryTestResultEntryBase(FactoryTestResultEntry const& msg);
-  void HandleLoadedKnownFaceBase(Vision::LoadedKnownFace const& msg);
+  void HandlePingBase(const ExternalInterface::Ping& msg);
+  void HandleRobotStateUpdateBase(const ExternalInterface::RobotState& msg);
+  void HandleRobotDelocalizedBase(const ExternalInterface::RobotDelocalized& msg);
+  void HandleRobotOffTreadsStateChangedBase(const ExternalInterface::RobotOffTreadsStateChanged& msg);
+  void HandleRobotObservedObjectBase(const ExternalInterface::RobotObservedObject& msg);
+  void HandleRobotObservedFaceBase(const ExternalInterface::RobotObservedFace& msg);
+  void HandleRobotObservedPetBase(const ExternalInterface::RobotObservedPet& msg);
+  void HandleRobotDeletedLocatedObjectBase(const ExternalInterface::RobotDeletedLocatedObject& msg);
+  void HandleUiDeviceAvailableBase(const ExternalInterface::UiDeviceAvailable& msg);
+  void HandleUiDeviceConnectedBase(const ExternalInterface::UiDeviceConnected& msg);
+  void HandleRobotConnectedBase(const ExternalInterface::RobotConnectionResponse& msg);
+  void HandleRobotCompletedActionBase(const ExternalInterface::RobotCompletedAction& msg);
+  void HandleImageChunkBase(const ImageChunk& msg);
+  void HandleActiveObjectAccelBase(const ObjectAccel& msg);
+  void HandleActiveObjectConnectionStateBase(const ObjectConnectionState& msg);
+  void HandleActiveObjectMovedBase(const ObjectMoved& msg);
+  void HandleActiveObjectStoppedMovingBase(const ObjectStoppedMoving& msg);
+  void HandleActiveObjectTappedBase(const ObjectTapped& msg);
+  void HandleActiveObjectUpAxisChangedBase(const ObjectUpAxisChanged& msg);
+  void HandleLocatedObjectStatesBase(const ExternalInterface::LocatedObjectStates& msg);
+  void HandleConnectedObjectStatesBase(const ExternalInterface::ConnectedObjectStates& msg);
+  void HandleAnimationAvailableBase(const ExternalInterface::AnimationAvailable& msg);
+  void HandleAnimationAbortedBase(const ExternalInterface::AnimationAborted& msg);
+  void HandleDebugStringBase(const ExternalInterface::DebugString& msg);
+  void HandleNVStorageOpResultBase(const ExternalInterface::NVStorageOpResult& msg);
+  void HandleBehaviorTransitionBase(const ExternalInterface::BehaviorTransition& msg);
+  void HandleEndOfMessageBase(const ExternalInterface::EndOfMessage& msg);
+  void HandleFactoryTestResultEntryBase(const FactoryTestResultEntry& msg);
+  void HandleLoadedKnownFaceBase(const Vision::LoadedKnownFace& msg);
   void HandleFaceEnrollmentCompletedBase(const ExternalInterface::FaceEnrollmentCompleted &msg);
   void HandleCliffEventBase(const CliffEvent& msg);
   void HandleSetCliffDetectThresholdsBase(const SetCliffDetectThresholds& msg);
@@ -523,7 +525,6 @@ private:
   void HandleRobotDeletedFixedCustomObjectsBase(const ExternalInterface::RobotDeletedFixedCustomObjects& msg);
   
   void UpdateActualObjectPoses();
-  bool ForceAddRobotIfSpecified();
   
   ///
   // @brief      Iterates through _lightCubes and returns the first light cube with the given ID

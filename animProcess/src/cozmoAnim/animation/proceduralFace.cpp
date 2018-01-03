@@ -13,11 +13,12 @@
 #include "cozmoAnim/animation/cozmo_anim_generated.h"
 #include "cozmoAnim/animation/proceduralFace.h"
 #include "cozmoAnim/animation/scanlineDistorter.h"
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/matrix_impl.h"
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/matrix_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "util/console/consoleInterface.h"
+#include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/helpers/templateHelpers.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -26,10 +27,69 @@ ProceduralFace* ProceduralFace::_resetData = nullptr;
 ProceduralFace::Value ProceduralFace::_hue = 0.4f;
 
 namespace {
-  const ProceduralFace::Value kDefaultSaturation      = 1.f;
-  const ProceduralFace::Value kDefaultLightness       = 1.f;
-  const ProceduralFace::Value kDefaultGlowSize        = 0.5f;
-  const ProceduralFace::Value kDefaultScanlineOpacity = 0.7f;
+# define CONSOLE_GROUP "ProceduralFace"
+  
+  CONSOLE_VAR(ProceduralFace::Value, kProcFace_DefaultScanlineOpacity, CONSOLE_GROUP, 0.7f);
+  CONSOLE_VAR(s32, kProcFace_NominalEyeSpacing, CONSOLE_GROUP, 91);  // V1: 64;
+  
+# undef CONSOLE_GROUP
+  
+  //
+  // This is a big lookup table for all the properties of the eye parameters.
+  // We use the magic of the FullEnumToValueArrayChecker to compile-time guarantee each property is set for each param.
+  // Not using CLAD's enum concept here because it is not generated for the CppLite emitter which is used for the
+  //   robot/anim process -- plus we're storing a complex type (a struct) instead of just a single value.
+  //
+  
+  // Different ways we combine eye parameters
+  enum class EyeParamCombineMethod : u8 {
+    None,
+    Add,
+    Multiply,
+    AverageIfBothUnset
+  };
+  
+  // Each entry in the LUT is one of these
+  struct EyeParamInfo {
+    bool                  isAngle;
+    bool                  canBeUnset; // parameter can be "unset", i.e. -1 (cannot use this if isAngle=true!)
+    ProceduralFace::Value defaultValue; // initial value for the parameter
+    ProceduralFace::Value defaultValueIfCombiningWithUnset; // value to use as default when combining and both unset, ignored if canBeUnset=false
+    EyeParamCombineMethod combineMethod;
+    struct { ProceduralFace::Value min; ProceduralFace::Value max; } clipLimits;
+  };
+  
+  constexpr auto INF = std::numeric_limits<ProceduralFace::Value>::max();
+  
+  constexpr static const Util::FullEnumToValueArrayChecker::FullEnumToValueArray<ProceduralFace::Parameter, EyeParamInfo,
+  ProceduralFace::Parameter::NumParameters> kEyeParamInfoLUT {
+    {ProceduralFace::Parameter::EyeCenterX,        {false, false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-FACE_DISPLAY_WIDTH/2, FACE_DISPLAY_WIDTH/2 }    }     },
+    {ProceduralFace::Parameter::EyeCenterY,        {false, false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-FACE_DISPLAY_HEIGHT/2,FACE_DISPLAY_HEIGHT/2}    }     },
+    {ProceduralFace::Parameter::EyeScaleX,         {false, false,  1.f,  0.f, EyeParamCombineMethod::Multiply, {0.f, INF}    }     },
+    {ProceduralFace::Parameter::EyeScaleY,         {false, false,  1.f,  0.f, EyeParamCombineMethod::Multiply, {0.f, INF}    }     },
+    {ProceduralFace::Parameter::EyeAngle,          {true,  false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-90,  90}    }     },
+    {ProceduralFace::Parameter::LowerInnerRadiusX, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::LowerInnerRadiusY, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::UpperInnerRadiusX, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::UpperInnerRadiusY, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::UpperOuterRadiusX, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::UpperOuterRadiusY, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::LowerOuterRadiusX, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::LowerOuterRadiusY, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::UpperLidY,         {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::UpperLidAngle,     {true,  false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-45,  45}    }     },
+    {ProceduralFace::Parameter::UpperLidBend,      {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::LowerLidY,         {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::LowerLidAngle,     {true,  false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-45,  45}    }     },
+    {ProceduralFace::Parameter::LowerLidBend,      {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::Saturation,        {false, true,  -1.f,  1.f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
+    {ProceduralFace::Parameter::Lightness,         {false, true,  -1.f,  1.f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
+    {ProceduralFace::Parameter::GlowSize,          {false, true,  -1.f, 0.5f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
+  };
+  
+  static_assert( Util::FullEnumToValueArrayChecker::IsSequentialArray(kEyeParamInfoLUT),
+                "EyeParamInfoLUT array does not define each entry in order, once and only once!");
+  
 }
   
 void ProceduralFace::SetResetData(const ProceduralFace& newResetData)
@@ -49,30 +109,13 @@ void ProceduralFace::Reset()
   
 ProceduralFace::ProceduralFace()
 {
-  static const auto defaultToOneParams =
+  for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam)
   {
-    Parameter::EyeScaleX,
-    Parameter::EyeScaleY,
-  };
-  
-  for (auto param : defaultToOneParams)
-  {
-    _eyeParams[WhichEye::Left][(int)param] = 1.0f;
+    _eyeParams[WhichEye::Left][iParam] = kEyeParamInfoLUT[iParam].Value().defaultValue;
   }
-
-  static const auto defaultToUnspecified =
-  {
-    Parameter::Saturation,
-    Parameter::Lightness,
-    Parameter::GlowSize,
-  };
-  
-  for(auto param : defaultToUnspecified)
-  {
-    _eyeParams[WhichEye::Left][(int)param] = -1.f;
-  };
-  
   _eyeParams[WhichEye::Right] = _eyeParams[WhichEye::Left];
+  
+  _scanlineOpacity = kProcFace_DefaultScanlineOpacity;
 }
   
 ProceduralFace::ProceduralFace(const ProceduralFace& other)
@@ -85,6 +128,21 @@ ProceduralFace::ProceduralFace(const ProceduralFace& other)
   {
     _scanlineDistorter.reset(new ScanlineDistorter(*other._scanlineDistorter));
   }
+}
+  
+s32 ProceduralFace::GetNominalLeftEyeX()
+{
+  return (WIDTH - kProcFace_NominalEyeSpacing)/2;
+}
+  
+s32 ProceduralFace::GetNominalRightEyeX()
+{
+  return ProceduralFace::GetNominalLeftEyeX() + kProcFace_NominalEyeSpacing;
+}
+
+s32 ProceduralFace::GetNominalEyeY()
+{
+  return HEIGHT/2;
 }
   
 ProceduralFace& ProceduralFace::operator=(const ProceduralFace &other)
@@ -139,12 +197,18 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
     SetParameter(eye, static_cast<ProceduralFace::Parameter>(i), eyeArray[i]);
   }
   
-  // Set defaults for parameters that are unset because
-  // keyframe is old format
-  if (eyeArray.size() == N_old) {
-    SetParameter(eye, Parameter::Saturation, kDefaultSaturation);
-    SetParameter(eye, Parameter::Lightness,  kDefaultLightness);
-    SetParameter(eye, Parameter::GlowSize,   kDefaultGlowSize);
+  // Set defaults for parameters that are unset because keyframe is old format
+  if (eyeArray.size() == N_old)
+  {
+    for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam)
+    {
+      const auto& paramInfo = kEyeParamInfoLUT[iParam].Value();
+      if(paramInfo.canBeUnset)
+      {
+        _eyeParams[WhichEye::Left][iParam]  = paramInfo.defaultValueIfCombiningWithUnset;
+        _eyeParams[WhichEye::Right][iParam] = paramInfo.defaultValueIfCombiningWithUnset;
+      }
+    }
   }
   
 }
@@ -169,16 +233,19 @@ void ProceduralFace::SetFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKey
   }
   SetEyeArrayHelper(WhichEye::Right, eyeParams);
  
-  f32 fbFaceAngle = procFaceKeyframe->faceAngle();
+  const f32 fbFaceAngle = procFaceKeyframe->faceAngle();
   SetFaceAngle(fbFaceAngle);
  
-  f32 fbFaceCenterX = procFaceKeyframe->faceCenterX();
-  f32 fbFaceCenterY = procFaceKeyframe->faceCenterY();
+  const f32 fbFaceCenterX = procFaceKeyframe->faceCenterX();
+  const f32 fbFaceCenterY = procFaceKeyframe->faceCenterY();
   SetFacePosition({fbFaceCenterX, fbFaceCenterY});
  
-  f32 fbFaceScaleX = procFaceKeyframe->faceScaleX();
-  f32 fbFaceScaleY = procFaceKeyframe->faceScaleY();
+  const f32 fbFaceScaleX = procFaceKeyframe->faceScaleX();
+  const f32 fbFaceScaleY = procFaceKeyframe->faceScaleY();
   SetFaceScale({fbFaceScaleX, fbFaceScaleY});
+  
+  // TODO: Set scanline opacity from procFaceKeyFrame once implemented
+  SetScanlineOpacity(kProcFace_DefaultScanlineOpacity);
 }
 
 void ProceduralFace::SetFromJson(const Json::Value &jsonRoot)
@@ -313,10 +380,37 @@ inline static T LinearBlendHelper(const T value1, const T value2, const float bl
                                 blendFraction*static_cast<float>(value2));
   return blendValue;
 }
-
+  
+// Blend if both set, use the set one if only one is set, use default if neither set
+// "Set" means value >= 0
+template<typename T>
+inline static T LinearBlendIfBothSetHelper(const T value1, const T value2, const float blendFraction, const T defaultValue)
+{
+  const bool isSet1 = Util::IsFltGEZero(value1);
+  const bool isSet2 = Util::IsFltGEZero(value2);
+  
+  if(isSet1 && isSet2)
+  {
+    return LinearBlendHelper(value1, value2, blendFraction);
+  }
+  else if(isSet1)
+  {
+    return value1;
+  }
+  else if(isSet2)
+  {
+    return value2;
+  }
+  else
+  {
+    // Use default
+    return defaultValue;
+  }
+}
+  
 inline static ProceduralFace::Value BlendAngleHelper(const ProceduralFace::Value angle1,
-                                                         const ProceduralFace::Value angle2,
-                                                         const float blendFraction)
+                                                     const ProceduralFace::Value angle2,
+                                                     const float blendFraction)
 {
   if(angle1 == angle2) {
     // Special case, no math needed
@@ -331,35 +425,45 @@ inline static ProceduralFace::Value BlendAngleHelper(const ProceduralFace::Value
   
   return static_cast<ProceduralFace::Value>(RAD_TO_DEG(std::atan2(y,x)));
 }
-
-
+  
 void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFace& face2,
                                  float blendFraction, bool usePupilSaccades)
 {
   assert(blendFraction >= 0.f && blendFraction <= 1.f);
   
   // Special cases, no blending required:
-  if(blendFraction == 0.f) {
+  if(Util::IsNearZero(blendFraction)) {
     *this = face1;
     return;
-  } else if(blendFraction == 1.f) {
+  } else if(Util::IsNear(blendFraction, 1.f)) {
     *this = face2;
     return;
   }
   
-  for(int iWhichEye=0; iWhichEye < 2; ++iWhichEye)
+  for(auto const whichEye : {WhichEye::Left, WhichEye::Right})
   {
-    WhichEye whichEye = static_cast<WhichEye>(iWhichEye);
-    
     for(int iParam=0; iParam < static_cast<int>(Parameter::NumParameters); ++iParam)
     {
       Parameter param = static_cast<Parameter>(iParam);
       
-      if(Parameter::EyeAngle == param) {
+      const auto& paramInfo = kEyeParamInfoLUT[iParam].Value();
+      if(paramInfo.isAngle) {
+        // Treat this param as an angle
+        DEV_ASSERT_MSG(!paramInfo.canBeUnset,
+                       "ProceduralFace.Interpolate.AngleParamCannotAlsoBeUnset",
+                       "%s", EnumToString(param));
         SetParameter(whichEye, param, BlendAngleHelper(face1.GetParameter(whichEye, param),
                                                        face2.GetParameter(whichEye, param),
                                                        blendFraction));
-      } else {
+      }
+      else if(paramInfo.canBeUnset) {
+        // Special linear blend taking into account whether values are "set"
+        SetParameter(whichEye, param, LinearBlendIfBothSetHelper(face1.GetParameter(whichEye, param),
+                                                                 face2.GetParameter(whichEye, param),
+                                                                 blendFraction,
+                                                                 paramInfo.defaultValueIfCombiningWithUnset));
+      }
+      else {
         SetParameter(whichEye, param, LinearBlendHelper(face1.GetParameter(whichEye, param),
                                                         face2.GetParameter(whichEye, param),
                                                         blendFraction));
@@ -370,10 +474,12 @@ void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFa
   
   SetFaceAngle(BlendAngleHelper(face1.GetFaceAngle(), face2.GetFaceAngle(), blendFraction));
   SetFacePosition({LinearBlendHelper(face1.GetFacePosition().x(), face2.GetFacePosition().x(), blendFraction),
-    LinearBlendHelper(face1.GetFacePosition().y(), face2.GetFacePosition().y(), blendFraction)});
+                   LinearBlendHelper(face1.GetFacePosition().y(), face2.GetFacePosition().y(), blendFraction)});
   SetFaceScale({LinearBlendHelper(face1.GetFaceScale().x(), face2.GetFaceScale().x(), blendFraction),
-    LinearBlendHelper(face1.GetFaceScale().y(), face2.GetFaceScale().y(), blendFraction)});
+                LinearBlendHelper(face1.GetFaceScale().y(), face2.GetFaceScale().y(), blendFraction)});
   
+  SetScanlineOpacity(LinearBlendIfBothSetHelper(face1.GetScanlineOpacity(), face2.GetScanlineOpacity(),
+                                                blendFraction, kProcFace_DefaultScanlineOpacity));
   
 } // Interpolate()
   
@@ -382,29 +488,29 @@ void ProceduralFace::GetEyeBoundingBox(Value& xmin, Value& xmax, Value& ymin, Va
   // Left edge of left eye
   const Value leftHalfWidth = GetParameter(WhichEye::Left, Parameter::EyeScaleX) * NominalEyeWidth/2;
   const Value rightHalfWidth = GetParameter(WhichEye::Right, Parameter::EyeScaleX) * NominalEyeWidth/2;
-  xmin = (ProceduralFace::NominalLeftEyeX +
+  xmin = (ProceduralFace::GetNominalLeftEyeX() +
           _faceScale.x() * (GetParameter(WhichEye::Left, Parameter::EyeCenterX) - leftHalfWidth));
   
   // Right edge of right eye
-  xmax = (ProceduralFace::NominalRightEyeX +
+  xmax = (ProceduralFace::GetNominalRightEyeX() +
           _faceScale.x()*(GetParameter(WhichEye::Right, Parameter::EyeCenterX) + rightHalfWidth));
   
   
   // Min of the top edges of the two eyes
   const Value leftHalfHeight = GetParameter(WhichEye::Left, Parameter::EyeScaleY) * NominalEyeHeight/2;
   const Value rightHalfHeight = GetParameter(WhichEye::Right, Parameter::EyeScaleY) * NominalEyeHeight/2;
-  ymin = (NominalEyeY + _faceScale.y() * (std::min(GetParameter(WhichEye::Left, Parameter::EyeCenterY) - leftHalfHeight,
-                                                   GetParameter(WhichEye::Right, Parameter::EyeCenterY) - rightHalfHeight)));
+  ymin = (ProceduralFace::GetNominalEyeY() + _faceScale.y() * (std::min(GetParameter(WhichEye::Left, Parameter::EyeCenterY) - leftHalfHeight,
+                                                                        GetParameter(WhichEye::Right, Parameter::EyeCenterY) - rightHalfHeight)));
   
   // Max of the bottom edges of the two eyes
-  ymax = (NominalEyeY + _faceScale.y() * (std::max(GetParameter(WhichEye::Left, Parameter::EyeCenterY) + leftHalfHeight,
-                                                   GetParameter(WhichEye::Right, Parameter::EyeCenterY) + rightHalfHeight)));
+  ymax = (ProceduralFace::GetNominalEyeY() + _faceScale.y() * (std::max(GetParameter(WhichEye::Left, Parameter::EyeCenterY) + leftHalfHeight,
+                                                                        GetParameter(WhichEye::Right, Parameter::EyeCenterY) + rightHalfHeight)));
   
 } // GetEyeBoundingBox()
   
 void ProceduralFace::SetFacePosition(Point<2, Value> center)
 {
-  // Try not to let the eyes drift off the face
+  // Try not to let the eyes drift off the face (ignores outer glow)
   // NOTE: (1) if you set center and *then* change eye centers/scales, you could still go off screen
   //       (2) this also doesn't take lid height into account, so if the top lid is half closed and
   //           you move the eyes way down, it could look like they disappeared, for example
@@ -421,61 +527,26 @@ void ProceduralFace::SetFacePosition(Point<2, Value> center)
   
 void ProceduralFace::CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1)
 {
-  static const auto addParamList =
+  for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam)
   {
-    Parameter::EyeCenterX,
-    Parameter::EyeCenterY,
-    Parameter::EyeAngle,
-    Parameter::UpperLidAngle,
-    Parameter::LowerLidAngle,
-  };
-  for (auto param : addParamList)
-  {
-    eyeArray0[(int)param] += eyeArray1[(int)param];
-  }
-  
-  static const auto multiplyParamList =
-  {
-    Parameter::EyeScaleX,
-    Parameter::EyeScaleY,
-  };
-  for (auto param : multiplyParamList)
-  {
-    eyeArray0[(int)param] *= eyeArray1[(int)param];
-  }
-
-  static const auto averageIfSetParamList =
-  {
-    std::make_pair((int)Parameter::Saturation,       1.f),
-    std::make_pair((int)Parameter::Lightness,        1.f),
-    std::make_pair((int)Parameter::GlowSize,         kDefaultGlowSize),
-  };
-  for (auto param : averageIfSetParamList)
-  {
-    // Average if both set, use the set one if only one is set, use default if neither set
-    Value& val0 = eyeArray0[param.first];
-    const Value& val1 = eyeArray1[param.first];
-    
-    const bool isSet0 = Util::IsFltGEZero(val0);
-    const bool isSet1 = Util::IsFltGEZero(val1);
-    
-    if(isSet0 && isSet1)
+    const auto& paramInfo = kEyeParamInfoLUT[iParam].Value();
+    switch(paramInfo.combineMethod)
     {
-      val0 += val1;
-      val0 *= 0.5f;
-    }
-    else if(isSet0)
-    {
-      // Nothing to do: leave eyeArray0 as is
-    }
-    else if(isSet1)
-    {
-      val0 = val1;
-    }
-    else
-    {
-      // Use default
-      val0 = param.second;
+      case EyeParamCombineMethod::None:
+        // Nothing to do
+        continue;
+        
+      case EyeParamCombineMethod::Add:
+        eyeArray0[iParam] += eyeArray1[iParam];
+        break;
+        
+      case EyeParamCombineMethod::Multiply:
+        eyeArray0[iParam] *= eyeArray1[iParam];
+        break;
+        
+      case EyeParamCombineMethod::AverageIfBothUnset:
+        LinearBlendIfBothSetHelper(eyeArray0[iParam], eyeArray1[iParam], 0.5f, paramInfo.defaultValueIfCombiningWithUnset);
+        break;
     }
   }
 }
@@ -486,30 +557,11 @@ ProceduralFace& ProceduralFace::Combine(const ProceduralFace& otherFace)
   CombineEyeParams(_eyeParams[(int)WhichEye::Right], otherFace.GetParameters(WhichEye::Right));
   
   _faceAngle_deg += otherFace.GetFaceAngle();
-  _faceScale *= otherFace.GetFaceScale();
-  _faceCenter += otherFace.GetFacePosition();
+  _faceScale     *= otherFace.GetFaceScale();
+  _faceCenter    += otherFace.GetFacePosition();
   
-  const bool thisHasScanlineOpacity  = Util::InRange(_scanlineOpacity, 0.f, 1.f);
-  const bool otherHasScanlineOpacity = Util::InRange(otherFace._scanlineOpacity, 0.f, 1.f);
-  if(thisHasScanlineOpacity && otherHasScanlineOpacity)
-  {
-    // Average if both set
-    _scanlineOpacity += otherFace._scanlineOpacity;
-    _scanlineOpacity *= 0.5f;
-  }
-  else if(thisHasScanlineOpacity)
-  {
-    // Nothing to do: keep current
-  }
-  else if(otherHasScanlineOpacity)
-  {
-    _scanlineOpacity = otherFace._scanlineOpacity;
-  }
-  else
-  {
-    _scanlineOpacity = kDefaultScanlineOpacity;
-  }
-
+  LinearBlendIfBothSetHelper(_scanlineOpacity, otherFace._scanlineOpacity, 0.5f, kProcFace_DefaultScanlineOpacity);
+  
   const bool thisHasScanlineDistortion  = (nullptr != _scanlineDistorter);
   const bool otherHasScanlineDistortion = (nullptr != otherFace._scanlineDistorter);
   
@@ -537,43 +589,11 @@ ProceduralFace& ProceduralFace::Combine(const ProceduralFace& otherFace)
   
 ProceduralFace::Value ProceduralFace::Clip(WhichEye eye, Parameter param, Value newValue) const
 {
-# define POS_INF std::numeric_limits<Value>::max()
-# define NEG_INF std::numeric_limits<Value>::lowest()
-  
-  static const std::map<Parameter, std::pair<Value,Value>> LimitsLUT = {
-    {Parameter::LowerLidAngle,      {-45,   45}},
-    {Parameter::UpperLidAngle,      {-45,   45}},
-    {Parameter::EyeScaleX,          {  0,   POS_INF}},
-    {Parameter::EyeScaleY,          {  0,   POS_INF}},
-    {Parameter::LowerInnerRadiusX , {  0,   1}},
-    {Parameter::LowerInnerRadiusY , {  0,   1}},
-    {Parameter::UpperInnerRadiusX , {  0,   1}},
-    {Parameter::UpperInnerRadiusY , {  0,   1}},
-    {Parameter::LowerOuterRadiusX , {  0,   1}},
-    {Parameter::LowerOuterRadiusY , {  0,   1}},
-    {Parameter::UpperOuterRadiusX , {  0,   1}},
-    {Parameter::UpperOuterRadiusY , {  0,   1}},
-    {Parameter::LowerLidY,          {  0,   1}},
-    {Parameter::UpperLidY,          {  0,   1}},
-    {Parameter::LowerLidBend,       {  0,   1}},
-    {Parameter::UpperLidBend,       {  0,   1}},
-    {Parameter::Saturation,         { -1,   1}}, // Really [0,1], but -1 is valid for "unspecified"
-    {Parameter::Lightness,          { -1,   1}}, //   "
-    {Parameter::GlowSize,           { -1,   1}}, //   "
-  };
-  
-  auto limitsIter = LimitsLUT.find(param);
-  if(limitsIter != LimitsLUT.end())
+  auto const& clipLimits = kEyeParamInfoLUT[Util::EnumToUnderlying(param)].Value().clipLimits;
+  if(!Util::InRange(newValue, clipLimits.min, clipLimits.max))
   {
-    const Value MinVal = limitsIter->second.first;
-    const Value MaxVal = limitsIter->second.second;
-    if(newValue < MinVal) {
-      ClipWarnFcn(EnumToString(param), newValue, MinVal, MaxVal);
-      newValue = MinVal;
-    } else if(newValue > MaxVal) {
-      ClipWarnFcn(EnumToString(param), newValue, MinVal, MaxVal);
-      newValue = MaxVal;
-    }
+    ClipWarnFcn(EnumToString(param), newValue, clipLimits.min, clipLimits.max);
+    newValue = Util::Clamp(newValue, clipLimits.min, clipLimits.max);
   }
   
   if(std::isnan(newValue)) {
@@ -584,10 +604,7 @@ ProceduralFace::Value ProceduralFace::Clip(WhichEye eye, Parameter param, Value 
   }
   
   return newValue;
-  
-# undef POS_INF
-# undef NEG_INF
-} // Clip()
+}
   
 static void ClipWarning(const char* paramName,
                         ProceduralFace::Value value,

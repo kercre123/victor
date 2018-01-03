@@ -22,7 +22,7 @@ namespace Cozmo {
 class TrackObjectAction : public ITrackAction
 {
 public:
-  TrackObjectAction(Robot& robot, const ObjectID& objectID, bool trackByType = true);
+  TrackObjectAction(const ObjectID& objectID, bool trackByType = true);
   virtual ~TrackObjectAction();
 
 protected:

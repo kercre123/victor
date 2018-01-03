@@ -31,7 +31,7 @@ formatter = logging.Formatter('{name} {levelname} - {message}', style='{')
 stdout_handler.setFormatter(formatter)
 UtilLog.addHandler(stdout_handler)
 
-WORLD_FILE_TEST_NAME_PLACEHOLDER = r'%COZMO_SIM_TEST%'
+CONTROLLER_ARGS_PLACEHOLDER = r'%COZMO_SIM_TEST%'
 COZMOBOT_PLACEHOLDER = r'%COZMOBOT%'
 GENERATED_WORLD_FILE_NAME = '__generated__.wbt'
 
@@ -465,7 +465,7 @@ def get_tests(config_file_path):
 
 
 def run_tests(tests, log_folder, show_graphics, default_timeout, forward_webots_log_level, num_retries = 0,
-              fail_on_error=False):
+              fail_on_error=False, quit_webots_after_test=True):
   """Run webots tests and store the logs.
 
   Args:
@@ -523,8 +523,11 @@ def run_tests(tests, log_folder, show_graphics, default_timeout, forward_webots_
                       test_controller=test_controller, world_file=world_file))
 
       source_file_path = get_subpath(os.path.join("simulator","worlds"), world_file)
+      controller_args = test_controller
+      if quit_webots_after_test :
+        controller_args += ' --quitWebotsAfterTest'
       generate_file_with_replace(GENERATED_FILE_PATH, source_file_path,
-                                 WORLD_FILE_TEST_NAME_PLACEHOLDER, test_controller)
+                                 CONTROLLER_ARGS_PLACEHOLDER, controller_args)
 
       # cozmo proto for Victor is CozmoBot2
       generate_file_with_replace(GENERATED_FILE_PATH, 
@@ -836,6 +839,13 @@ def main():
                       action='store_false',
                       help="""If set, a test will not automatically fail just because an error
                       appears in its webots log.""")
+                      
+  parser.add_argument('--doNotQuitWebots',
+                      dest='quit_webots_after_test',
+                      default='true',
+                      action='store_false',
+                      help="""If set, Webots will continue running after the test controller completes.
+                      This is useful for local testing/debugging.""")
 
   options = parser.parse_args()
 
@@ -879,7 +889,8 @@ def main():
                                                                      options.default_timeout,
                                                                      options.log_level,
                                                                      options.num_retries,
-                                                                     options.fail_on_error)
+                                                                     options.fail_on_error,
+                                                                     options.quit_webots_after_test)
 
     num_of_tests = sum(len(test_controller) for test_controller in test_results.values())
 

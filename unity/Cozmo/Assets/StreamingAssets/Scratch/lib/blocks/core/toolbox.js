@@ -98,6 +98,8 @@ Blockly.Toolbox.prototype.width = 90;
  */
 Blockly.Toolbox.prototype.height = 0;
 
+Blockly.Toolbox.prototype.top = 0;
+
 Blockly.Toolbox.prototype.selectedItem_ = null;
 
 /**
@@ -122,9 +124,15 @@ Blockly.Toolbox.prototype.init = function() {
       goog.dom.createDom(goog.dom.TagName.DIV, toolboxDiv); // *** ANKI CHANGE ***
 
   // *** ANKI CHANGE ***
-  // Move toolbox down different amount for phones.
-  if (window.isVertical && window.innerWidth < window.TABLET_WIDTH) {
-    this.HtmlDiv.style.top = "60px";
+  if (window.isVertical) {
+    // Set default value
+    this.top = 100;
+    this.HtmlDiv.style.top = this.top + "px";
+    if (window.innerWidth < window.TABLET_WIDTH) {
+      // Move toolbox down different amount for phones.
+      this.top = 60;
+      this.HtmlDiv.style.top = this.top + "px";
+    }
   }
 
   this.HtmlDiv.setAttribute('dir', workspace.RTL ? 'RTL' : 'LTR');
