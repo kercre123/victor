@@ -11,6 +11,7 @@
     "type" : "StrictPriority",
     "behaviors" : [
       "DriveOffCharger",
+      "SparksPutDownBlock",
       "SparksFistBump"
     ]
   },
