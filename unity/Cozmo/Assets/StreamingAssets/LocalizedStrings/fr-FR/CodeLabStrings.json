@@ -1045,7 +1045,7 @@
     "translation" : "Renvoie l'angle d'inclinaison de Cozmo vers l'avant ou l'arrière, en degrés Les valeurs vers l'avant sont négatives, celles vers l'arrière sont positives."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_get_roll" : {
-    "translation" : "Tangage de Cozmo (ennbsp°)"
+    "translation" : "Tangage de Cozmo (en °)"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_roll" : {
     "translation" : "Renvoie l'angle d'inclinaison de Cozmo vers la droite ou la gauche, en degrés. Les valeurs vers la droite sont positives, celles vers la gauche négatives."
