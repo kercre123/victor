@@ -31,12 +31,12 @@ public:
   
   DasAppender(const std::string& dasLogDir,
               const std::string& url,
-              uint32_t flush_interval,
-              size_t maxLogLength,
-              size_t maxLogFiles,
-              const DASArchiveFunction& archiveFunction,
-              const DASUnarchiveFunction& unarchiveFunction,
-              const std::string& archiveFileExtension);
+              uint32_t flush_interval = kDefaultFlushIntervalSeconds,
+              size_t maxLogLength = kDefaultMaxLogLength,
+              size_t maxLogFiles = kDasDefaultMaxLogFiles,
+              const DASArchiveFunction& archiveCallback = DASArchiveFunction{},
+              const DASUnarchiveFunction& unarchiveCallback = DASUnarchiveFunction{},
+              const std::string& archiveFileExtension = "");
   ~DasAppender();
   void SetMaxLogLength(size_t maxLogLength);
 
@@ -63,6 +63,7 @@ private:
   size_t _maxLogLength;
   bool _isWaitingForFlush;
   bool _lastFlushFailed;
+  std::string _lastFlushResponse;
   bool _isUploadingPaused;
   uint32_t _flushIntervalSeconds;
   TaskExecutor _syncQueue;

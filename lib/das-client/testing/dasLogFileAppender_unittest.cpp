@@ -28,7 +28,7 @@ protected:
     rmrf(testDirectory.c_str());
     (void) mkdir(testDirectory.c_str(), 0777);
     testMessage_ = "Some Damned Data";
-    appender_ = new Anki::Das::DasLogFileAppender(testDirectory.c_str());
+    appender_ = new Anki::Das::DasLogFileAppender(testDirectory);
   }
 
   virtual void TearDown() {
@@ -51,7 +51,7 @@ protected:
     if (includeDir) {
       oss << testDirectory << "/";
     }
-    oss << std::setfill('0') << std::setw(2) << logNumber << ".";
+    oss << std::setfill('0') << std::setw(4) << logNumber << ".";
     if (inProgress) {
       oss << DasLogFileAppender::kDasInProgressExtension;
     } else {
@@ -127,7 +127,7 @@ TEST_F(DasLogFileAppenderTest, Rollover_write) {
 }
 
 TEST_F(DasLogFileAppenderTest, Rollover_limitNumFiles) {
-  for (int i = 0 ; i < DasLogFileAppender::kDasMaxLogFiles + 1; i++) {
+  for (int i = 0 ; i < Anki::Das::kDasDefaultMaxLogFiles + 1; i++) {
     appender_->WriteDataToCurrentLogfile(testMessage_);
     appender_->RolloverCurrentLogFile();
   }
@@ -263,17 +263,17 @@ TEST_F(DasLogFileAppenderTest, Init_resumeInProgress) {
   appender_->WriteDataToCurrentLogfile(testMessage);
   appender_->Flush();
   delete appender_; appender_ = nullptr;
-  appender_ = new Anki::Das::DasLogFileAppender(testDirectory.c_str());
+  appender_ = new Anki::Das::DasLogFileAppender(testDirectory);
   std::string inProgressLog = appender_->CurrentLogFilePath();
-  std::string expectedName = ExpectedPath(2, true, false);
+  std::string expectedName = ExpectedPath(3, true, false);
   ASSERT_EQ(expectedName, LastPathComponent(inProgressLog)) << "wrong resumed file!";
 
   appender_->WriteDataToCurrentLogfile(testMessage);
   appender_->Flush();
-  std::string verificationData = testMessage + testMessage;
+  std::string verificationData = testMessage;
 
   std::string dataInFile = AnkiUtil::StringFromContentsOfFile(appender_->CurrentLogFilePath());
-  ASSERT_EQ(verificationData, dataInFile) << "We should have actually appended to the resumed in-progress log";
+  ASSERT_EQ(verificationData, dataInFile) << "We should have actually started a new in-progress log";
 }
 
 TEST_F(DasLogFileAppenderTest, Init_rolloverAfterResume) {
@@ -283,7 +283,7 @@ TEST_F(DasLogFileAppenderTest, Init_rolloverAfterResume) {
   appender_->WriteDataToCurrentLogfile(testMessage);
   appender_->Flush();
   delete appender_; appender_ = nullptr;
-  appender_ = new Anki::Das::DasLogFileAppender(testDirectory.c_str());
+  appender_ = new Anki::Das::DasLogFileAppender(testDirectory);
   appender_->RolloverCurrentLogFile();
   std::string inProgressLog = appender_->CurrentLogFilePath();
   std::string expectedName = ExpectedPath(3, true, false);

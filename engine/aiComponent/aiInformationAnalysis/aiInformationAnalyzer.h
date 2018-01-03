@@ -17,6 +17,7 @@
 // processes
 #include "informationAnalysisProcesses/aiInfoAnalysisProcCalculateInterestingRegions.h"
 
+#include "engine/entity.h"
 #include "engine/navMap/iNavMap.h"
 
 #include <map>
@@ -31,7 +32,7 @@ class Robot;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIInformationAnalyzer
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AIInformationAnalyzer
+class AIInformationAnalyzer : public ManageableComponent
 {
   // make processes friends so they can access private API not available to public (alternatively could use an interface)
   friend void AIInfoAnalysisProcCalculateInterestingRegions(AIInformationAnalyzer& analyzer, Robot& robot);
@@ -49,6 +50,8 @@ public:
   
   // constructor
   AIInformationAnalyzer();
+
+  virtual ~AIInformationAnalyzer(){};
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Processes

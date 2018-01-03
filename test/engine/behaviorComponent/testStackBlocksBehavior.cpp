@@ -15,21 +15,21 @@
 
 #include "gtest/gtest.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/activeObject.h"
 #include "engine/activeObjectHelpers.h"
+#include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
+#include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
-#include "engine/cozmoAPI/comms/uiMessageHandler.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
-#include "engine/blockWorld/blockWorld.h"
-#include "engine/aiComponent/aiComponent.h"
 
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
@@ -56,7 +56,7 @@ void CreateStackBehavior(Robot& robot, ICozmoBehaviorPtr& stackBehavior, Behavio
   bool parseOK = reader.parse( configStr.c_str(), config);
   ASSERT_TRUE(parseOK) << "failed to parse JSON, bug in the test";
 
-  stackBehavior = behaviorContainer.CreateBehaviorAndAddToContainer(BehaviorClass::StackBlocks,
+  stackBehavior = behaviorContainer.CreateBehaviorAndAddToContainer(BEHAVIOR_CLASS(StackBlocks),
                                                                     config);
   stackBehavior->Init(behaviorExternalInterface);
   stackBehavior->OnEnteredActivatableScope();
@@ -190,9 +190,7 @@ TEST(StackBlocksBehavior, InitBehavior)
   ObjectID objID1, objID2;
   SetupStackTest(robot, stackBehavior, testBehaviorFramework, objID1, objID2);
   
-  auto result = stackBehavior->OnBehaviorActivated(behaviorExternalInterface);
-
-  EXPECT_EQ(RESULT_OK, result);
+  stackBehavior->OnActivated(behaviorExternalInterface);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -256,5 +254,5 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   incrementEngineTime_ns += 100000000.0f;
   BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
   
-  stackBehavior->BehaviorUpdate_Legacy(behaviorExternalInterface);
+  //stackBehavior->UpdateInternal(behaviorExternalInterface);
 }

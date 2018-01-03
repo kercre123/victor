@@ -21,8 +21,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/events/animationTriggerHelpers.h"
-#include "anki/common/basestation/jsonTools.h"
-#include "engine/robot.h"
+#include "coretech/common/engine/jsonTools.h"
 
 namespace {
 static const char* kLookingWaitInitial = "lookingInitialWait_s";
@@ -88,21 +87,19 @@ bool BehaviorCantHandleTallStack::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorCantHandleTallStack::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCantHandleTallStack::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(auto tallestStack = _currentTallestStack.lock()){
     auto bottomBlock = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(tallestStack->GetBottomBlockID());
     if(bottomBlock == nullptr){
-      return Result::RESULT_FAIL;
+      return;
     }
     
     _lastReactionBasePose = bottomBlock->GetPose();
     _isLastReactionPoseValid = true;
     TransitionToLookingUpAndDown(behaviorExternalInterface);
     
-    return Result::RESULT_OK;
-  }else{
-    return Result::RESULT_FAIL;
+    
   }
 }
 
@@ -118,15 +115,13 @@ void BehaviorCantHandleTallStack::OnBehaviorDeactivated(BehaviorExternalInterfac
 void BehaviorCantHandleTallStack::TransitionToLookingUpAndDown(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(DebugState::LookingUpAndDown);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new CompoundActionSequential(robot, {
-                new WaitAction(robot, _lookingInitialWait_s),
-                new MoveHeadToAngleAction(robot, kLookingDown_rad),
-                new WaitAction(robot, _lookingDownWait_s),
-                new MoveHeadToAngleAction(robot, kLookingUp_rad),
-                new WaitAction(robot, _lookingTopWait_s)
+  
+  DelegateIfInControl(new CompoundActionSequential({
+                new WaitAction(_lookingInitialWait_s),
+                new MoveHeadToAngleAction(kLookingDown_rad),
+                new WaitAction(_lookingDownWait_s),
+                new MoveHeadToAngleAction(kLookingUp_rad),
+                new WaitAction(_lookingTopWait_s)
               }),
               &BehaviorCantHandleTallStack::TransitionToDisapointment);
   
@@ -137,10 +132,7 @@ void BehaviorCantHandleTallStack::TransitionToLookingUpAndDown(BehaviorExternalI
 void BehaviorCantHandleTallStack::TransitionToDisapointment(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(DebugState::Disapiontment);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::CantHandleTallStack));
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CantHandleTallStack));
 }
 
 
@@ -159,7 +151,7 @@ void BehaviorCantHandleTallStack::UpdateTargetStack(const BehaviorExternalInterf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCantHandleTallStack::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCantHandleTallStack::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch (event.GetData().GetTag()) {
     case ExternalInterface::MessageEngineToGameTag::RobotDelocalized:

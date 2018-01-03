@@ -14,7 +14,7 @@
 #define __Anki_Cozmo_Basestation_RobotInterface_MessageHandler_H__
 
 #include "engine/events/ankiEventMgr.h"
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -43,10 +43,6 @@ namespace Cozmo {
 class RobotManager;
 class CozmoContext;
 class RobotConnectionManager;
-  
-namespace ExternalInterface {
-  struct ConnectToRobot;
-}
 
 namespace RobotInterface {
 
@@ -70,7 +66,7 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
-  Result AddRobotConnection(const ExternalInterface::ConnectToRobot& connectMsg);
+  Result AddRobotConnection(RobotID_t robotId);
   Result RemoveRobotConnection(const uint32_t robotId);
   
   void Disconnect();
@@ -80,6 +76,10 @@ public:
   void ReadLabAssignmentsFromRobot(u32 serialNumber) const;
 
   void ConnectRobotToNeedsManager(u32 serialNumber) const;
+
+  uint32_t GetMessageCountRtE() const { return _messageCountRtE; }
+  uint32_t GetMessageCountEtR() const { return _messageCountEtR; }
+  void     ResetMessageCounts() { _messageCountRtE = 0; _messageCountEtR = 0; }
 
 protected:
   void Broadcast(const uint32_t robotId, const RobotInterface::RobotToEngine& message);
@@ -91,7 +91,8 @@ private:
   std::unique_ptr<RobotConnectionManager> _robotConnectionManager;
   bool _isInitialized;
   std::vector<Signal::SmartHandle> _signalHandles;
-  
+  uint32_t _messageCountRtE = 0;
+  uint32_t _messageCountEtR = 0;
 };
 
 

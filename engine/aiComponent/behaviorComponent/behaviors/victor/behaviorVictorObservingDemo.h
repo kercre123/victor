@@ -15,39 +15,14 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "clad/types/visionModes.h"
+#include "engine/components/bodyLightComponent.h"
 
 namespace Anki {
 namespace Cozmo {
 
 class BehaviorFeedingEat;
-
-// TODO:(bn) combine this with WantsToRunStrategy
-class ICondition {
-public:
-  ICondition() {}
-  virtual ~ICondition() {}
-
-  virtual void EnteredScope() { }
-  virtual void LeftScope() { }
-
-  virtual bool Evaluate(BehaviorExternalInterface& behaviorExternalInterface) = 0;
-};
-
-class LambdaCondition : public ICondition {
-public:
-  using TransitionFunction = std::function<bool(BehaviorExternalInterface& behaviorExternalInterface)>;
-  LambdaCondition(TransitionFunction func) :_func(func) {}
-
-  virtual bool Evaluate(BehaviorExternalInterface& behaviorExternalInterface) override {
-    return _func(behaviorExternalInterface);
-  }
-
-private:
-  TransitionFunction _func;
-};
-
-class FeedingListenerCondition;
 
 class BehaviorVictorObservingDemo : public ICozmoBehavior
 {
@@ -55,9 +30,11 @@ protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;  
   BehaviorVictorObservingDemo(const Json::Value& config);
-
+  
 public:
 
+  virtual ~BehaviorVictorObservingDemo();
+  
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
     return true; }
   
@@ -71,75 +48,60 @@ protected:
 
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
 private:
 
-  enum class StateID {
-    
-    ObservingOnCharger = 0,
-    ObservingOnChargerRecentlyPlaced,
-    DriveOffChargerIntoObserving,
-    DriveOffChargerIntoPlay,
-    Observing,
-    Feeding,
-    Socializing,
-    Napping,
-    WakingUp,
-    Playing,
-
-    Count
-  };
+  using StateID = size_t;
+  static const StateID InvalidStateID = 0;
   
-  class State {
-  public:
-    State(StateID id, ICozmoBehaviorPtr behavior);
+  class State;
 
-    void AddInterruptingTransition(StateID toState, std::shared_ptr<ICondition> condition );
-    void AddNonInterruptingTransition(StateID toState, std::shared_ptr<ICondition> condition );
-    void AddExitTransition(StateID toState, std::shared_ptr<ICondition> condition);
-
-    void OnActivated();
-    void OnDeactivated();
-    // TODO:(bn) add asserts for these
-    
-    StateID _id;
-    ICozmoBehaviorPtr _behavior;
-
-    float _lastTimeStarted_s = -1.0f;
-    float _lastTimeEnded_s = -1.0f;
-
-    // Transitions are evaluated in order, and if the function returns true, we will transition to the given
-    // state id.     
-    using Transitions = std::vector< std::pair< StateID, std::shared_ptr<ICondition> > >;
-
-    // transitions that can happen while the state is active (and in the middle of doing something)
-    Transitions _interruptingTransitions;
-
-    // transitions that can happen when the currently delegated-to behavior thinks it's a decent time for a
-    // gentle interruption (or if there is no currently delegated behavior)
-    Transitions _nonInterruptingTransitions;
-
-    // exit transitions only run if the currently-delegated-to behavior stop itself. Note that these are
-    // checked _after_ all of the other transitions
-    Transitions _exitTransitions;
+  enum class TransitionType {
+    NonInterrupting,
+    Interrupting,
+    Exit
   };
 
-  void AddState( State&& state );
+  static TransitionType TransitionTypeFromString(const std::string& str);
 
-  void TransitionToState(BehaviorExternalInterface& behaviorExternalInterface, const StateID targetState);
+  // place to put all of the hardcoded / predefined transition strategies
+  void CreatePreDefinedStrategies();
+  
+  // returns the newly created ID
+  StateID AddStateName(const std::string& stateName);
+
+  // asserts if not found
+  StateID GetStateID(const std::string& stateName) const;
+
+  StateID ParseStateFromJson(const Json::Value& config, const std::string& key);
+  IBEIConditionPtr ParseTransitionStrategy(const Json::Value& config);
+  
+  void AddState( State&& state );
+  
+  void TransitionToState(BehaviorExternalInterface& behaviorExternalInterface, StateID targetState);
 
   bool StateExitCooldownExpired(StateID state, float timeout) const;
+
+  std::map< std::string, StateID > _stateNameToID;
+
+  using StateMap = std::map< StateID, State >;
+  std::unique_ptr< StateMap > _states;
+
+  std::map< std::string, IBEIConditionPtr > _preDefinedStrategies;
   
-  std::map< StateID, State > _states;
+  // hack to turn off all modes when this behavior starts and then back on when it ends
+  std::vector< VisionMode > _visionModesToReEnable;
 
-  std::shared_ptr<FeedingListenerCondition> _feedingCompleteCondition;
+  StateID _currState = InvalidStateID;
 
-  StateID _currState = StateID::Count;
-
-  bool _initComplete = false;  
+  BackpackLights _currDebugLights;
+  bool _debugLightsDirty = false;
+  bool _useDebugLights = false;
+  float _lastHearbeatLightTime = -1.0f;
 };
 
 }

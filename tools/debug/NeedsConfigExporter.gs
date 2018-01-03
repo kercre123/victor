@@ -38,16 +38,15 @@ function onOpen() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var menuEntries = [
     {name: "Export JSON for MainConfig sheet", functionName: "exportMainConfigSheet"},
-    {name: "Export JSON for MainConfigA sheet", functionName: "exportMainConfigASheet"},
-    {name: "Export JSON for MainConfigB sheet", functionName: "exportMainConfigBSheet"},
-    {name: "Export JSON for MainConfigC sheet", functionName: "exportMainConfigCSheet"},
-    {name: "Export JSON for MainConfigD sheet", functionName: "exportMainConfigDSheet"},
+//    {name: "Export JSON for MainConfigA sheet", functionName: "exportMainConfigASheet"},
+//    {name: "Export JSON for MainConfigB sheet", functionName: "exportMainConfigBSheet"},
+//    {name: "Export JSON for MainConfigC sheet", functionName: "exportMainConfigCSheet"},
+//    {name: "Export JSON for MainConfigD sheet", functionName: "exportMainConfigDSheet"},
     {name: "Export JSON for ActionConfig sheet", functionName: "exportActionConfigSheet"},
+//    {name: "Export JSON for ActionConfigOrig sheet", functionName: "exportActionConfigOrigSheet"},
     {name: "Export JSON for DecayConfig sheet", functionName: "exportDecayConfigSheet"},
-    {name: "Export JSON for DecayA sheet", functionName: "exportDecayASheet"},
-    {name: "Export JSON for DecayB sheet", functionName: "exportDecayBSheet"},
     {name: "Export JSON for RewardsConfig sheet", functionName: "exportRewardsConfigSheet"},
-    {name: "Export JSON for RewardsConfigFaster sheet", functionName: "exportRewardsConfigFasterSheet"},
+//    {name: "Export JSON for RewardsConfigOrig sheet", functionName: "exportRewardsConfigOrigSheet"},
     {name: "Export JSON for LocalNotificationConfig sheet", functionName: "exportLocalNotificationConfigSheet"},
 //  {name: "Configure export", functionName: "exportOptions"},
   ];
@@ -126,8 +125,15 @@ function exportMainConfigDeltaSheet(e, sheetName) {
 }
 
 function exportActionConfigSheet(e) {
+  return exportActionConfigSheetInternal(e, "ActionConfig");
+}
+
+function exportActionConfigOrigSheet(e) {
+  return exportActionConfigSheetInternal(e, "ActionConfigOrig");
+}
+
+function exportActionConfigSheetInternal(e, sheetName) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheetName = "ActionConfig";
   var sheet = ss.getSheetByName(sheetName);
   var rowsData = getRowsData_(sheet);
   // Error-checking:  Ensure 'range' columns are non-negative:
@@ -155,14 +161,6 @@ function exportDecayConfigSheet(e) {
   return exportGivenDecayConfigSheet(e, "DecayConfig");
 }
 
-function exportDecayASheet(e) {
-  return exportGivenDecayConfigSheet(e, "DecayA");
-}
-
-function exportDecayBSheet(e) {
-  return exportGivenDecayConfigSheet(e, "DecayB");
-}
-
 function exportGivenDecayConfigSheet(e, sheetName) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(sheetName);
@@ -176,8 +174,8 @@ function exportRewardsConfigSheet(e) {
   return exportRewardsConfigSheetInternal(e, "RewardsConfig");
 }
 
-function exportRewardsConfigFasterSheet(e) {
-  return exportRewardsConfigSheetInternal(e, "RewardsConfigFaster");
+function exportRewardsConfigOrigSheet(e) {
+  return exportRewardsConfigSheetInternal(e, "RewardsConfigOrig");
 }
 
 function exportRewardsConfigSheetInternal(e, sheetName) {

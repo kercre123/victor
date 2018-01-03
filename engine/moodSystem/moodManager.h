@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_MoodSystem_MoodManager_H__
 #define __Cozmo_Basestation_MoodSystem_MoodManager_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "engine/moodSystem/emotion.h"
 #include "engine/moodSystem/moodDebug.h"
 #include "clad/types/actionResults.h"

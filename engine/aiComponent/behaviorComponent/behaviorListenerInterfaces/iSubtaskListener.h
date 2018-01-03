@@ -16,8 +16,6 @@
 
 namespace Anki {
 namespace Cozmo {
-
-class Robot;
   
 class ISubtaskListener{
 public:

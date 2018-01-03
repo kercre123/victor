@@ -9,7 +9,7 @@ Copyright Anki, Inc. 2014
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#include "anki/vision/robot/draw_vision.h"
+#include "coretech/vision/robot/draw_vision.h"
 
 #include "mex.h"
 #include "anki/common/matlab/mexWrappers.h"

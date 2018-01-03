@@ -17,7 +17,6 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -60,12 +59,12 @@ bool BehaviorRespondToRenameFace::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRespondToRenameFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondToRenameFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_name.empty())
   {
     PRINT_NAMED_ERROR("BehaviorRespondToRenameFace.InitInternal.EmptyName", "");
-    return RESULT_FAIL;
+    return;
   }
   
   PRINT_CH_INFO("Behaviors", "BehaviorRespondToRenameFace.InitInternal",
@@ -79,7 +78,7 @@ Result BehaviorRespondToRenameFace::OnBehaviorActivated(BehaviorExternalInterfac
   //  no luck.
   //
   //  const bool kSayName = true;
-  //  TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsLastFacePoseAction(robot, _faceID, M_PI_F, kSayName);
+  //  TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsLastFacePoseAction(_faceID, M_PI_F, kSayName);
   //
   //  // Play the animation trigger whether or not we find the face
   //  turnTowardsFace->SetSayNameAnimationTrigger(_animTrigger);
@@ -87,30 +86,13 @@ Result BehaviorRespondToRenameFace::OnBehaviorActivated(BehaviorExternalInterfac
   //  
   //  DelegateIfInControl(turnTowardsFace);
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  SayTextAction* sayName = new SayTextAction(robot, _name, SayTextIntent::Name_Normal);
+  SayTextAction* sayName = new SayTextAction(_name, SayTextIntent::Name_Normal);
   sayName->SetAnimationTrigger(_animTrigger);
   
   DelegateIfInControl(sayName);
   
   _name.clear();
   _faceID = Vision::UnknownFaceID;
-  
-  return RESULT_OK;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorRespondToRenameFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  if(!IsControlDelegated())
-  {
-    return Status::Complete;
-  }
-  
-  return Status::Running;
 }
 
 

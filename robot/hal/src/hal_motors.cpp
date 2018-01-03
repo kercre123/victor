@@ -1,0 +1,194 @@
+/**
+ * File:        hal_motors.cpp
+ *
+ * Description: HAL motor interface
+ *
+ **/
+
+
+// System Includes
+#include <stdio.h>
+#include <assert.h>
+
+// Our Includes
+#include "anki/cozmo/robot/logging.h"
+#include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/hal_config.h"
+
+#include "schema/messages.h"
+
+
+// Debugging Defines
+#define REALTIME_CONSOLE_OUTPUT 0 //Print status to console
+#define MOTOR_OF_INTEREST MOTOR_LIFT  //print status of this motor
+#define STR(s)  #s
+#define DEFNAME(s) STR(s)
+
+
+#if REALTIME_CONSOLE_OUTPUT > 0
+#define SAVE_MOTOR_POWER(motor, power)  internalData_.motorPower[motor]=power
+#define CONSOLE_DATA(decl) decl
+#else
+#define SAVE_MOTOR_POWER(motor, power)
+#define CONSOLE_DATA(decl)
+#endif
+
+namespace Anki {
+namespace Cozmo {
+
+static_assert(EnumToUnderlyingType(MotorID::MOTOR_LEFT_WHEEL) == MOTOR_LEFT, "Robot/Spine CLAD Mimatch");
+static_assert(EnumToUnderlyingType(MotorID::MOTOR_RIGHT_WHEEL) == MOTOR_RIGHT, "Robot/Spine CLAD Mimatch");
+static_assert(EnumToUnderlyingType(MotorID::MOTOR_LIFT) == MOTOR_LIFT, "Robot/Spine CLAD Mimatch");
+static_assert(EnumToUnderlyingType(MotorID::MOTOR_HEAD) == MOTOR_HEAD, "Robot/Spine CLAD Mimatch");
+
+// From hal.cpp
+extern BodyToHead* bodyData_; //buffers are owned by the code that fills them. Spine owns this one
+extern HeadToBody headData_;  //-we own this one.
+
+namespace { // "Private members"
+
+  //map power -1.0 .. 1.0 to -32767 to 32767
+  static const f32 HAL_MOTOR_POWER_SCALE = 0x7FFF;
+  static const f32 HAL_MOTOR_POWER_OFFSET = 0;
+
+  //convert per syscon tick -> /sec
+  static const f32 HAL_SEC_PER_TICK = (1.0 / 256) / 48000000;
+
+  //encoder counts -> mm or deg
+  static f32 HAL_MOTOR_POSITION_SCALE[MOTOR_COUNT] = {
+    ((0.948 * 0.125 * 29.2 * 3.14159265359) / 173.43), //Left Tread mm
+    ((0.948 * 0.125 * 29.2 * 3.14159265359) / 173.43), //Right Tread mm
+    (0.25 * 3.14159265359) / 149.7,    //Lift radians
+    (0.25 * 3.14159265359) / 348.77,   //Head radians
+  };
+
+  static f32 HAL_MOTOR_DIRECTION[MOTOR_COUNT] = {
+    1.0,1.0,1.0,1.0
+  };
+
+  static f32 HAL_HEAD_MOTOR_CALIB_POWER = -0.4f;
+
+  static f32 HAL_LIFT_MOTOR_CALIB_POWER = -0.4f;
+
+  // Stubbed here but not used in robot process; used in animProcess
+  static f32 HAL_SOME_MICS_BROKEN = 0.0f;
+
+  struct {
+    s32 motorOffset[MOTOR_COUNT];
+    CONSOLE_DATA(f32 motorPower[MOTOR_COUNT]);
+  } internalData_;
+
+  static const char* HAL_INI_PATH = "/data/persist/hal.conf";
+  const HALConfig::Item  configitems_[]  = {
+    {"LeftTread mm/count",  HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_LEFT]},
+    {"RightTread mm/count", HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_RIGHT]},
+    {"Lift rad/count",      HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_LIFT]},
+    {"Head rad/count",      HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_HEAD]},
+    {"LeftTread Motor Direction",  HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_LEFT]},
+    {"RightTread Motor Direction", HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_RIGHT]},
+    {"Lift Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_LIFT]},
+    {"Head Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_HEAD]},
+    {"Lift Motor Calib Power",     HALConfig::FLOAT, &HAL_LIFT_MOTOR_CALIB_POWER},
+    {"Head Motor Calib Power",     HALConfig::FLOAT, &HAL_HEAD_MOTOR_CALIB_POWER},
+    {"Some Mics Broken",     HALConfig::FLOAT, &HAL_SOME_MICS_BROKEN},
+    {0} //Need zeros as end-of-list marker
+  };
+  
+} // "private" namespace
+
+
+Result InitMotor()
+{
+  Result res = HALConfig::ReadConfigFile(HAL_INI_PATH, configitems_);
+  if (res != RESULT_OK) {
+    AnkiWarn("HAL.MotorInit.HALConfigReadFailed", "result 0x%08X", res);
+  }
+  return res;
+}
+
+// Returns the motor power used for calibration [-1.0, 1.0]
+float HAL::MotorGetCalibPower(MotorID motor)
+{
+  f32 power = 0.f;
+  switch (motor) 
+  {
+    case MotorID::MOTOR_LIFT:
+      power = HAL_LIFT_MOTOR_CALIB_POWER;
+      break;
+    case MotorID::MOTOR_HEAD:
+      power = HAL_HEAD_MOTOR_CALIB_POWER;
+      break;
+    default:
+      AnkiError("HAL.MotorGetCalibPower.InvalidMotorType", "%s", EnumToString(motor));
+      assert(false);
+      break;
+  }
+  return power;
+}
+
+// Set the motor power in the unitless range [-1.0, 1.0]
+void HAL::MotorSetPower(MotorID motor, f32 power)
+{
+  const auto m = EnumToUnderlyingType(motor);
+  assert(m < MOTOR_COUNT);
+  SAVE_MOTOR_POWER(m, power);
+  headData_.motorPower[m] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power * HAL_MOTOR_DIRECTION[m];
+}
+
+// Reset the internal position of the specified motor to 0
+void HAL::MotorResetPosition(MotorID motor)
+{
+  const auto m = EnumToUnderlyingType(motor);
+  assert(m < MOTOR_COUNT);
+  internalData_.motorOffset[m] = bodyData_->motor[m].position;
+}
+
+
+// Returns units based on the specified motor type:
+// Wheels are in mm/s, everything else is in degrees/s.
+f32 HAL::MotorGetSpeed(MotorID motor)
+{
+  const auto m = EnumToUnderlyingType(motor);
+  assert(m < MOTOR_COUNT);
+
+  // Every frame, syscon sends the last detected speed as a two part number:
+  // `delta` encoder counts, and `time` span for those counts.
+  // syscon only changes the value when counts are detected
+  // if no counts for ~25ms, will report 0/0
+  if (bodyData_->motor[m].time != 0) {
+    float countsPerTick = (float)bodyData_->motor[m].delta / bodyData_->motor[m].time;
+    return (countsPerTick / HAL_SEC_PER_TICK) * HAL_MOTOR_POSITION_SCALE[m];
+  }
+  return 0.0; //if time is 0, it's not moving.
+}
+
+// Returns units based on the specified motor type:
+// Wheels are in mm since reset, everything else is in degrees.
+f32 HAL::MotorGetPosition(MotorID motor)
+{
+  const auto m = EnumToUnderlyingType(motor);
+  assert(m < MOTOR_COUNT);
+  return (bodyData_->motor[m].position - internalData_.motorOffset[m]) * HAL_MOTOR_POSITION_SCALE[m];
+}
+
+void PrintConsoleOutput(void)
+{
+#if REALTIME_CONSOLE_OUTPUT > 0
+  {
+    printf("FC = %d ", bodyData_->framecounter);
+    printf("%s: ", DEFNAME(MOTOR_OF_INTEREST));
+    printf("raw = %d ", bodyData_->motor[MOTOR_OF_INTEREST].position);
+    printf("pos = %f ", HAL::MotorGetPosition(MotorID::MOTOR_OF_INTEREST));
+    printf("spd = %f ", HAL::MotorGetSpeed(MotorID::MOTOR_OF_INTEREST));
+    printf("pow = %f ", internalData_.motorPower[MOTOR_OF_INTEREST]);
+    printf("cliff = %d %d% d% d ",bodyData_->cliffSense[0],bodyData_->cliffSense[1],bodyData_->cliffSense[2],bodyData_->cliffSense[3]);
+    printf("prox = %d %d ",bodyData_->proximity.rangeStatus, bodyData_->proximity.rangeMM);
+    printf("\r");
+  }
+#endif
+}
+
+
+} // namespace Cozmo
+} // namespace Anki
+

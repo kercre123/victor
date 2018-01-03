@@ -18,7 +18,7 @@
 #ifndef COZMO_PICK_AND_PLACE_CONTROLLER_H_
 #define COZMO_PICK_AND_PLACE_CONTROLLER_H_
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "clad/types/dockingSignals.h"
 
 namespace Anki {

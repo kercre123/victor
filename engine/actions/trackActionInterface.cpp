@@ -25,7 +25,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/math/math.h"
 
@@ -37,9 +37,8 @@ namespace Cozmo {
 static const char * const kLogChannelName = "Actions";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ITrackAction::ITrackAction(Robot& robot, const std::string name, const RobotActionType type)
-: IAction(robot,
-          name,
+ITrackAction::ITrackAction(const std::string name, const RobotActionType type)
+: IAction(name,
           type,
           ((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK))
 , _eyeShiftTag(kNotAnimatingTag)
@@ -54,40 +53,44 @@ ITrackAction::~ITrackAction()
   if(_eyeShiftTag != kNotAnimatingTag) {
     // Make sure any eye shift gets removed
     // TODO: Restore eye shifts (VIC-363)
-    //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag);
+    //GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag);
     _eyeShiftTag = kNotAnimatingTag;
   }
 
   if(_originalEyeDartDist >= 0.f) {
     // Make sure to restore original eye dart distance
     // TODO: Restore KeepFaceAlive stuff (VIC-364)
-    //_robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
+    //GetRobot().GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
   }
   
-  // Make sure we abort any sound actions we triggered
-  _robot.GetActionList().Cancel(_soundAnimTag);
-  
+  if(HasRobot()){
+    // Make sure we abort any sound actions we triggered
+    GetRobot().GetActionList().Cancel(_soundAnimTag);
+  }
+
   if(HasStarted())
   {
     // Make sure we don't leave the head/body moving
     switch(_mode)
     {
       case Mode::HeadAndBody:
-        _robot.GetMoveComponent().StopBody();
-        _robot.GetMoveComponent().StopHead();
+        GetRobot().GetMoveComponent().StopBody();
+        GetRobot().GetMoveComponent().StopHead();
         break;
         
       case Mode::BodyOnly:
-        _robot.GetMoveComponent().StopBody();
+        GetRobot().GetMoveComponent().StopBody();
         break;
         
       case Mode::HeadOnly:
-        _robot.GetMoveComponent().StopHead();
+        GetRobot().GetMoveComponent().StopHead();
         break;
     }
   }
   
-  _robot.GetDrivingAnimationHandler().ActionIsBeingDestroyed();
+  if(HasRobot()){
+    GetRobot().GetDrivingAnimationHandler().ActionIsBeingDestroyed();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -303,8 +306,8 @@ ActionResult ITrackAction::Init()
   if(_shouldPlayDrivingAnimation)
   {
     const bool kLoopWithoutPathToFollow = true;
-    _robot.GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking(),
-                                             kLoopWithoutPathToFollow);
+    GetRobot().GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking(),
+                                                 kLoopWithoutPathToFollow);
   }
   
   if(HaveStopCriteria() && _stopCriteria.interruptDrivingAnim && !_shouldPlayDrivingAnimation)
@@ -315,11 +318,11 @@ ActionResult ITrackAction::Init()
   
   // Store eye dart setting so we can restore after tracking
   // TODO: Restore KeepFaceAlive stuff (VIC-364)
-  //_originalEyeDartDist = _robot.GetAnimationStreamer().GetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix);
+  //_originalEyeDartDist = GetRobot().GetAnimationStreamer().GetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix);
   
   // Reduce eye darts so we better appear to be tracking and not look around
   // TODO: Restore KeepFaceAlive stuff (VIC-364)
-  //_robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, 1.f);
+  //GetRobot().GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, 1.f);
 
   if( _stopOnOtherActionTag != ActionConstants::INVALID_TAG &&
       ! IsTagInUse( _stopOnOtherActionTag ) ) {
@@ -333,9 +336,10 @@ ActionResult ITrackAction::Init()
   _lastUpdateTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   const ActionResult result = InitInternal();
-  if(ActionResult::SUCCESS == result && _shouldPlayDrivingAnimation)
+  if((ActionResult::SUCCESS == result) && 
+     _shouldPlayDrivingAnimation)
   {
-    _robot.GetDrivingAnimationHandler().PlayStartAnim();
+    GetRobot().GetDrivingAnimationHandler().PlayStartAnim();
   }
   return result;
 }
@@ -359,7 +363,7 @@ ActionResult ITrackAction::CheckIfDoneReturnHelper(ActionResult result, bool sto
       return result;
     }
     
-    _robot.GetDrivingAnimationHandler().PlayEndAnim();
+    GetRobot().GetDrivingAnimationHandler().PlayEndAnim();
     _finalActionResult = result; // This will get returned once the end anim completes
     return ActionResult::RUNNING;
   }
@@ -374,11 +378,11 @@ ActionResult ITrackAction::CheckIfDone()
 {
   if(_shouldPlayDrivingAnimation)
   {
-    if(_robot.GetDrivingAnimationHandler().IsPlayingEndAnim())
+    if(GetRobot().GetDrivingAnimationHandler().IsPlayingEndAnim())
     {
       return ActionResult::RUNNING;
     }
-    else if(_robot.GetDrivingAnimationHandler().HasFinishedEndAnim())
+    else if(GetRobot().GetDrivingAnimationHandler().HasFinishedEndAnim())
     {
       DEV_ASSERT(_finalActionResult != ActionResult::NOT_STARTED, "ITrackAction.CheckIfDone.FinalActionResultNotSet");
       return _finalActionResult;
@@ -427,7 +431,7 @@ ActionResult ITrackAction::CheckIfDone()
       f32  eyeShiftX = 0.f, eyeShiftY = 0.f;
       
       // Tilt Head:
-      f32 relTiltAngle = (absTiltAngle - _robot.GetHeadAngle()).ToFloat();
+      f32 relTiltAngle = (absTiltAngle - GetRobot().GetHeadAngle()).ToFloat();
       
       const bool shouldClampSmallAngles = UpdateSmallAngleClamping();
         
@@ -435,7 +439,7 @@ ActionResult ITrackAction::CheckIfDone()
       if(shouldClampSmallAngles && FLT_LE(std::abs(relTiltAngle), _tiltTolerance.ToFloat()))
       {
         relTiltAngle = std::copysign(_tiltTolerance.ToFloat(), relTiltAngle);
-        absTiltAngle = _robot.GetHeadAngle() + relTiltAngle;
+        absTiltAngle = GetRobot().GetHeadAngle() + relTiltAngle;
       }
       
       if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) &&
@@ -444,7 +448,7 @@ ActionResult ITrackAction::CheckIfDone()
         const f32 speed = std::abs(relTiltAngle) / _tiltDuration_sec;
         const f32 accel = MAX_HEAD_ACCEL_RAD_PER_S2;
         
-        if(RESULT_OK != _robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
+        if(RESULT_OK != GetRobot().GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
         {
           return CheckIfDoneReturnHelper(ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED, false);
         }
@@ -455,19 +459,19 @@ ActionResult ITrackAction::CheckIfDone()
         
         if(_moveEyes) {
           const f32 y_mm = std::tan(-relTiltAngle) * HEAD_CAM_POSITION[0];
-          eyeShiftY = y_mm * (static_cast<f32>(_robot.GetDisplayHeightInPixels()/2) / SCREEN_SIZE[1]);
+          eyeShiftY = y_mm * (static_cast<f32>(GetRobot().GetDisplayHeightInPixels()/2) / SCREEN_SIZE[1]);
         }
       }
       
       // Pan Body:
-      f32 relPanAngle = (absPanAngle - _robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
+      f32 relPanAngle = (absPanAngle - GetRobot().GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
       
       const bool isPanWithinTol = Util::IsFltLE(std::abs(relPanAngle), _panTolerance.ToFloat());
       // If enabled, always move at least the tolerance amount
       if(shouldClampSmallAngles && isPanWithinTol)
       {
         relPanAngle = std::copysign(_panTolerance.ToFloat(), relPanAngle);
-        absPanAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat() + relPanAngle;
+        absPanAngle = GetRobot().GetPose().GetRotation().GetAngleAroundZaxis().ToFloat() + relPanAngle;
       }
       
       // If distance is non-zero and the body is allowed to move based on mode, then we need to move
@@ -480,11 +484,11 @@ ActionResult ITrackAction::CheckIfDone()
       if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && (needToMoveFwdBwd || needToPan))
       {
         // If the robot is not on its treads, it may exhibit erratic turning behavior
-        if (_robot.GetOffTreadsState() != OffTreadsState::OnTreads) {
+        if (GetRobot().GetOffTreadsState() != OffTreadsState::OnTreads) {
           PRINT_NAMED_WARNING("ITrackAction.CheckIfDone.OffTreadsStateInvalid",
                               "[%d] Off tread state %s is invalid for turning in place",
                               GetTag(),
-                              EnumToString(_robot.GetOffTreadsState()));
+                              EnumToString(GetRobot().GetOffTreadsState()));
           return CheckIfDoneReturnHelper(ActionResult::INVALID_OFF_TREADS_STATE, false);
         }
         
@@ -513,7 +517,7 @@ ActionResult ITrackAction::CheckIfDone()
                            distance_mm, radius, RAD_TO_DEG(relPanAngle), wheelspeed_mmps, accel);
           }
           
-          Result result = _robot.SendRobotMessage<RobotInterface::DriveWheelsCurvature>(wheelspeed_mmps, accel, radius);
+          Result result = GetRobot().SendRobotMessage<RobotInterface::DriveWheelsCurvature>(wheelspeed_mmps, accel, radius);
           
           if(RESULT_OK != result) {
             return CheckIfDoneReturnHelper(ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED, false);
@@ -524,9 +528,9 @@ ActionResult ITrackAction::CheckIfDone()
         {
           // Get rotation angle around drive center
           Pose3d rotatedPose;
-          Pose3d dcPose = _robot.GetDriveCenterPose();
+          Pose3d dcPose = GetRobot().GetDriveCenterPose();
           dcPose.SetRotation(absPanAngle, Z_AXIS_3D());
-          _robot.ComputeOriginPose(dcPose, rotatedPose);
+          GetRobot().ComputeOriginPose(dcPose, rotatedPose);
           
           const Radians& turnAngle = rotatedPose.GetRotation().GetAngleAroundZaxis();
 
@@ -547,7 +551,7 @@ ActionResult ITrackAction::CheckIfDone()
                                                     0,                        // num_half_revolutions
                                                     true);                    // use_shortest_direction
           
-          if(RESULT_OK != _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
+          if(RESULT_OK != GetRobot().SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
             return CheckIfDoneReturnHelper(ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED, false);
           }
         }
@@ -560,7 +564,7 @@ ActionResult ITrackAction::CheckIfDone()
           // Compute horizontal eye movement
           // Note: assuming screen is about the same x distance from the neck joint as the head cam
           const f32 x_mm = std::tan(relPanAngle) * HEAD_CAM_POSITION[0];
-          eyeShiftX = x_mm * (static_cast<f32>(_robot.GetDisplayWidthInPixels()/2) / SCREEN_SIZE[0]);
+          eyeShiftX = x_mm * (static_cast<f32>(GetRobot().GetDisplayWidthInPixels()/2) / SCREEN_SIZE[0]);
         }
       }
       
@@ -569,19 +573,20 @@ ActionResult ITrackAction::CheckIfDone()
       if(haveTurningSoundAnim && (currentTime > _nextSoundTime) && angleLargeEnoughForSound)
       {
         // Queue sound to only play if nothing else is playing
-        PlayAnimationAction* soundAction = new TriggerLiftSafeAnimationAction(_robot, _turningSoundAnimTrigger, 1, false);
+        PlayAnimationAction* soundAction = new TriggerLiftSafeAnimationAction(_turningSoundAnimTrigger, 1, false);
         _soundAnimTag = soundAction->GetTag();
-        _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, soundAction);
+        GetRobot().GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, soundAction);
         
         _nextSoundTime = currentTime + Util::numeric_cast<float>(GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec));
       }
       
       // Move eyes if indicated
-      if(_moveEyes && (eyeShiftX != 0.f || eyeShiftY != 0.f))
+      if(_moveEyes && 
+         (eyeShiftX != 0.f || eyeShiftY != 0.f))
       {
         // Clip, but retain sign
-        eyeShiftX = CLIP(eyeShiftX, (f32)-_robot.GetDisplayWidthInPixels()/4,  (f32)_robot.GetDisplayWidthInPixels()/4);
-        eyeShiftY = CLIP(eyeShiftY, (f32)-_robot.GetDisplayHeightInPixels()/4, (f32)_robot.GetDisplayHeightInPixels()/4);
+        eyeShiftX = CLIP(eyeShiftX, (f32)-GetRobot().GetDisplayWidthInPixels()/4,  (f32)GetRobot().GetDisplayWidthInPixels()/4);
+        eyeShiftY = CLIP(eyeShiftY, (f32)-GetRobot().GetDisplayHeightInPixels()/4, (f32)GetRobot().GetDisplayHeightInPixels()/4);
         
         if(DEBUG_TRACKING_ACTIONS) {
           PRINT_NAMED_DEBUG("ITrackAction.CheckIfDone.EyeShift",
@@ -595,10 +600,10 @@ ActionResult ITrackAction::CheckIfDone()
         const f32 kMaxLookUpScale   = 1.1f;
         const f32 kMinLookDownScale = 0.8f;
         const f32 kOuterEyeScaleIncrease = 0.1f;
-        const f32 kXMax = static_cast<f32>(_robot.GetDisplayWidthInPixels()/4);
-        const f32 kYMax = static_cast<f32>(_robot.GetDisplayHeightInPixels()/4);
+        const f32 kXMax = static_cast<f32>(GetRobot().GetDisplayWidthInPixels()/4);
+        const f32 kYMax = static_cast<f32>(GetRobot().GetDisplayHeightInPixels()/4);
         
-        _robot.GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
+        GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
                                                                                     "TrackActionEyeShift",
                                                                                     eyeShiftX, eyeShiftY,
                                                                                     BS_TIME_STEP,
@@ -632,16 +637,16 @@ ActionResult ITrackAction::CheckIfDone()
       switch(_mode)
       {
         case Mode::HeadAndBody:
-          _robot.GetMoveComponent().StopHead();
-          _robot.GetMoveComponent().StopBody();
+          GetRobot().GetMoveComponent().StopHead();
+          GetRobot().GetMoveComponent().StopBody();
           break;
           
         case Mode::HeadOnly:
-          _robot.GetMoveComponent().StopHead();
+          GetRobot().GetMoveComponent().StopHead();
           break;
           
         case Mode::BodyOnly:
-          _robot.GetMoveComponent().StopBody();
+          GetRobot().GetMoveComponent().StopBody();
           break;
       }
       

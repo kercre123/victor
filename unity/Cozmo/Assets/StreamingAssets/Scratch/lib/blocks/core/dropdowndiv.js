@@ -162,8 +162,8 @@ Blockly.DropDownDiv.clearContent = function() {
 
   // *** Anki Change ***
   // revert the changes we made to the content's width because it is a shared object
-  var content = Blockly.DropDownDiv.content_;
-  goog.style.setSize(content, 'auto', 'auto');
+  goog.style.setSize(Blockly.DropDownDiv.content_, 'auto', 'auto');
+  goog.style.setSize(Blockly.DropDownDiv.DIV_, 'auto', 'auto');
 };
 
 /**
@@ -297,7 +297,17 @@ Blockly.DropDownDiv.getPositionMetrics = function(primaryX, primaryY, secondaryX
       renderedSecondary = false;
 
       // *** Anki Change ***
+      // If rendering below with the shorter height will still cut off the dropdown,
+      // this will render above.
+      if (renderY + Blockly.DropDownDiv.SHORT_HEIGHT > boundSize.height) {
+        renderX = secondaryX;
+        renderY = secondaryY - Blockly.DropDownDiv.SHORT_HEIGHT - Blockly.DropDownDiv.PADDING_Y;
+        renderedSecondary = true;
+      }
+      // *** Anki Change ***
       // Use a smaller height to fit on the screen
+      goog.style.setHeight(div, Blockly.DropDownDiv.SHORT_HEIGHT + 'px');
+      divSize = goog.style.getSize(div);
       goog.style.setHeight(Blockly.DropDownDiv.content_, Blockly.DropDownDiv.SHORT_HEIGHT + 'px');
     } else {
       // We can fit above, render secondary

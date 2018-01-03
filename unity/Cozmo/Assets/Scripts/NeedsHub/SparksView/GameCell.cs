@@ -44,10 +44,13 @@ namespace Cozmo.Needs.Sparks.UI {
     }
 
     private void HandleOpenGameDetailsPressed() {
-      UIManager.OpenModal(_SparksDetailModalPrefab, new ModalPriorityData(), (obj) => {
-        SparksDetailModal sparksDetailModal = (SparksDetailModal)obj;
-        sparksDetailModal.InitializeSparksDetailModal(_ChallengePacket);
-      });
+      System.Action<BaseModal> creationSuccessCallback = (obj) => {
+        if (this != null) {
+          SparksDetailModal sparksDetailModal = (SparksDetailModal)obj;
+          sparksDetailModal.InitializeSparksDetailModal(_ChallengePacket);
+        }
+      };
+      UIManager.OpenModal(_SparksDetailModalPrefab, new ModalPriorityData(), creationSuccessCallback);
     }
   }
 }

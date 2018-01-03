@@ -12,8 +12,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/helpers/behaviorCooldownInfo.h"
 
-#include "coretech/common/include/anki/common/basestation/jsonTools.h"
-#include "coretech/common/include/anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "json/json.h"
 #include "util/random/randomGenerator.h"
 
@@ -67,7 +67,7 @@ void BehaviorCooldownInfo::StartCooldown(Util::RandomGenerator& rng)
                                         (1.0f + _randomCooldownFactor) * _cooldown_s );
     }
     
-    _onCooldownUntil_s = currTime_s + _cooldown_s;
+    _onCooldownUntil_s = currTime_s + cooldown_s;
   }
 }
 

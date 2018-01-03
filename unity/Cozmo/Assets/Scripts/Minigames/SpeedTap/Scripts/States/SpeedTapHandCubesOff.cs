@@ -31,7 +31,7 @@ namespace SpeedTap {
       _OffDuration_sec = _SpeedTapGame.GetLightsOffDurationSec();
 
       _PeekDelayStartTimestamp_sec = float.MinValue;
-      _SpeedTapGame.CheckForAdjust(HandleAdjustEnd);
+      HandlePeekAnimationEnd(true);
 
       _SpeedTapGame.StartRoundMusic();
     }
@@ -48,7 +48,6 @@ namespace SpeedTap {
       // Cancel animation callbacks if any
       if (_SpeedTapGame.CurrentRobot != null) {
         _SpeedTapGame.CurrentRobot.CancelCallback(HandlePeekAnimationEnd);
-        _SpeedTapGame.CurrentRobot.CancelCallback(HandleAdjustEnd);
       }
     }
 
@@ -72,10 +71,6 @@ namespace SpeedTap {
     }
 
     private void HandlePeekAnimationEnd(bool success) {
-      _SpeedTapGame.CheckForAdjust(HandleAdjustEnd);
-    }
-
-    private void HandleAdjustEnd(bool success) {
       _IsPlayingPeekAnimation = false;
       StartPeekAnimationCycle();
     }

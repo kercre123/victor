@@ -19,6 +19,7 @@ public class OnboardingManager : MonoBehaviour {
     }
   }
 
+  // DO NOT DELETE ENUMS FROM THIS LIST. They are saved within the save file by name.
   public enum OnboardingPhases : int {
     InitialSetup,
     MeetCozmo,
@@ -330,9 +331,11 @@ public class OnboardingManager : MonoBehaviour {
       Cozmo.PauseManager.Instance.ExitChallengeOnPause = true;
     }
 
+    bool kCompleted = _CurrPhase == OnboardingPhases.PlayIntro;
+    const bool kSkipped = false;
     RobotEngineManager.Instance.Message.RegisterOnboardingComplete =
            new Anki.Cozmo.ExternalInterface.RegisterOnboardingComplete((int)_CurrPhase,
-                                                                     _CurrPhase == OnboardingPhases.PlayIntro);
+               kCompleted, kSkipped);
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -456,6 +459,7 @@ public class OnboardingManager : MonoBehaviour {
   private void SetSpecificStage(int nextStage, bool canStartNewPhase = true) {
     if (_CurrStageInst != null) {
       GameObject.Destroy(_CurrStageInst);
+      _CurrStageInst = null;
     }
     if (_OnboardingUIInstance == null) {
       DAS.Error("onboardingmanager.SetSpecificStage", "Onboarding Asset Bundle load not completed");
@@ -495,6 +499,10 @@ public class OnboardingManager : MonoBehaviour {
         }
       }
       UnloadIfDoneWithAllPhases();
+      // Onboarding turns back on buttons by default, so force the brackets to update the buttons again.
+      if (_NeedsHubView != null && _CurrPhase == OnboardingPhases.None) {
+        _NeedsHubView.PopLatestBracketAndUpdateButtons();
+      }
     }
 
     DataPersistenceManager.Instance.Save();
@@ -512,6 +520,7 @@ public class OnboardingManager : MonoBehaviour {
   private void HandleRobotDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
     // The UI is getting torn down and we're resetting, clear whatever happened.
     if (_CurrPhase != OnboardingPhases.None && _CurrStageInst != null) {
+      _CurrStageInst.GetComponent<OnboardingBaseStage>().StageForceClosed = true;
       GameObject.Destroy(_CurrStageInst);
     }
     if (_CurrPhase != OnboardingPhases.None) {

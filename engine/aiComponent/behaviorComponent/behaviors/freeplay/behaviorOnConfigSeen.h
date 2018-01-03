@@ -37,10 +37,7 @@ public:
   virtual bool CarryingObjectHandledInternally() const override {return false;}
   
 protected:
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  // We shouldn't play the animation a second time if it's interrupted so simply return RESULT_OK
-  virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override { return RESULT_OK;}
-  
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   void TransitionToPlayAnimationSequence(BehaviorExternalInterface& behaviorExternalInterface);
 
 private:

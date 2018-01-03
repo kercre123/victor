@@ -51,9 +51,33 @@
         <action android:name="android.intent.action.BOOT_COMPLETED" />
       </intent-filter>
     </receiver>
+        <!-- Firebase Cloud Messaging -->
+    <receiver android:name="com.google.android.gms.gcm.GcmReceiver" android:permission="com.google.android.c2dm.permission.SEND" android:exported="true">
+      <intent-filter>
+        <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+        <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+        <category android:name="com.anki.cozmo" />
+      </intent-filter>
+    </receiver>
+    <service android:name="universal.tools.notifications.GcmIntentService" android:exported="false">
+      <intent-filter>
+        <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+      </intent-filter>
+    </service>
+    <service android:name="universal.tools.notifications.GcmInstanceIDListenerService" android:exported="false">
+      <intent-filter>
+        <action android:name="com.google.android.gms.iid.InstanceID" />
+      </intent-filter>
+    </service>
   </application>
   <uses-permission android:name="android.permission.VIBRATE" />
   <uses-permission android:name="android.permission.WAKE_LOCK" />
   <!-- Restore Scheduled Notifications On Reboot -->
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+  <uses-permission android:name="android.permission.INTERNET" />
+  <!-- Firebase Cloud Messaging -->
+  <permission android:name="com.anki.cozmo.permission.C2D_MESSAGE" android:protectionLevel="signature" />
+  <uses-permission android:name="com.anki.cozmo.permission.C2D_MESSAGE" />
+  <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+
 </manifest>

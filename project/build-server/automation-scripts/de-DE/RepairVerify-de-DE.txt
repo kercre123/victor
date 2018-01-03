@@ -1,0 +1,11 @@
+0.847626:click:repair_need_meter_button:0.1468353
+3.556367:click:scan_button:0.1158295
+2.04755:text:Das Cozmo-Tuning ist abgeschlossen!
+0.356236:text:WEITER
+0.247889:text:Bilde das Pfeilmuster mithilfe der Tasten auf der rechten Seite nach. Tippe dann auf <b>SENDEN</b>.
+0.088089:text:Laufwerke werden ausgerichtet...
+0.808412:text:Hebearm wird kalibriert...
+0.751699:text:Kopf wird justiert...
+0.404448:text:Für Cozmo muss ein Tuning durchgeführt werden, damit er weiterhin optimiert ist und mobil bleibt.
+0.667428:text:Cozmo-Tuning
+0.168061:click:default_close_view_button:0.107605

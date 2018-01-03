@@ -35,7 +35,7 @@ DEF cube0 LightCube {
 DEF cube1 LightCube {
   translation 0.14893654 0 0.06800069
   rotation 0.25857332 0.96126684 -0.095424861 6.2831815
-  ID 1
+  objectType "Block_LIGHTCUBE2"
 }
 %COZMOBOT% {		
   name "CozmoBot_1"		

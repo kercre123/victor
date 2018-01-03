@@ -24,11 +24,9 @@ namespace Cozmo {
   
 #pragma mark ---- MountChargerAction ----
   
-MountChargerAction::MountChargerAction(Robot& robot,
-                                       ObjectID chargerID,
+MountChargerAction::MountChargerAction(ObjectID chargerID,
                                        const bool useCliffSensorCorrection)
-  : IAction(robot,
-            "MountCharger",
+  : IAction("MountCharger",
             RobotActionType::MOUNT_CHARGER,
             (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK)
   , _chargerID(chargerID)
@@ -44,7 +42,7 @@ ActionResult MountChargerAction::Init()
   _driveForRetryAction.reset();
   
   // Verify that we have a charger in the world that matches _chargerID
-  const auto* charger = _robot.GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
+  const auto* charger = GetRobot().GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
   if ((charger == nullptr) ||
       (charger->GetType() != ObjectType::Charger_Basic)) {
     PRINT_NAMED_WARNING("MountChargerAction.Init.InvalidCharger",
@@ -54,16 +52,17 @@ ActionResult MountChargerAction::Init()
   }
   
   // Tell robot which charger it will be using
-  _robot.SetCharger(_chargerID);
+  GetRobot().SetCharger(_chargerID);
 
   // Set up the turnAndMount compound action
   ActionResult result = ConfigureTurnAndMountAction();
   
   return result;
 }
-  
+
+
 ActionResult MountChargerAction::CheckIfDone()
-{
+{ 
   auto result = ActionResult::RUNNING;
   
   // Tick the turnAndMount action (if needed):
@@ -74,10 +73,10 @@ ActionResult MountChargerAction::CheckIfDone()
     if ((result != ActionResult::SUCCESS) &&
         (result != ActionResult::RUNNING)) {
       bool isFacingAwayFromCharger = true;
-      const auto* charger = _robot.GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
+      const auto* charger = GetRobot().GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
       if (charger != nullptr) {
         const auto& chargerAngle = charger->GetPose().GetRotation().GetAngleAroundZaxis();
-        const auto& robotAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
+        const auto& robotAngle = GetRobot().GetPose().GetRotation().GetAngleAroundZaxis();
         isFacingAwayFromCharger = (chargerAngle - robotAngle).getAbsoluteVal().ToFloat() > M_PI_2_F;
       }
 
@@ -114,10 +113,11 @@ ActionResult MountChargerAction::CheckIfDone()
 ActionResult MountChargerAction::ConfigureTurnAndMountAction()
 {
   DEV_ASSERT(_turnAndMountAction == nullptr, "MountChargerAction.ConfigureTurnAndMountAction.AlreadyConfigured");
-  _turnAndMountAction.reset(new CompoundActionSequential(_robot));
+  _turnAndMountAction.reset(new CompoundActionSequential());
   _turnAndMountAction->ShouldSuppressTrackLocking(true);
-  
-  const auto* charger = _robot.GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
+  _turnAndMountAction->SetRobot(&GetRobot());
+
+  const auto* charger = GetRobot().GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
   if ((charger == nullptr) ||
       (charger->GetType() != ObjectType::Charger_Basic)) {
     PRINT_NAMED_WARNING("MountChargerAction.ConfigureTurnAndMountAction.InvalidCharger",
@@ -134,13 +134,12 @@ ActionResult MountChargerAction::ConfigureTurnAndMountAction()
   Pose3d poseToAngleToward(0.f, Z_AXIS_3D(),
                            {distanceIntoChargerToAimFor_mm, 0.f, 0.f});
   poseToAngleToward.PreComposeWith(charger->GetPose());
-  poseToAngleToward.SetParent(_robot.GetWorldOrigin());
+  poseToAngleToward.SetParent(GetRobot().GetWorldOrigin());
   
-  const auto targetToRobotVec = ComputeVectorBetween(_robot.GetDriveCenterPose(), poseToAngleToward);
+  const auto targetToRobotVec = ComputeVectorBetween(GetRobot().GetDriveCenterPose(), poseToAngleToward);
   const float angleToTurnTo = atan2f(targetToRobotVec.y(), targetToRobotVec.x());
 
-  auto turnAction = new TurnInPlaceAction(_robot,
-                                          angleToTurnTo,
+  auto turnAction = new TurnInPlaceAction(angleToTurnTo,
                                           true);
   turnAction->SetMaxSpeed(DEG_TO_RAD(100.f));
   turnAction->SetAccel(DEG_TO_RAD(300.f));
@@ -149,17 +148,16 @@ ActionResult MountChargerAction::ConfigureTurnAndMountAction()
   
   // Raise lift slightly so it doesn't drag against the ground (if necessary)
   const float backingUpLiftHeight_mm = 45.f;
-  if (_robot.GetLiftHeight() < backingUpLiftHeight_mm) {
-    _turnAndMountAction->AddAction(new MoveLiftToHeightAction(_robot, backingUpLiftHeight_mm));
+  if (GetRobot().GetLiftHeight() < backingUpLiftHeight_mm) {
+    _turnAndMountAction->AddAction(new MoveLiftToHeightAction(backingUpLiftHeight_mm));
   }
   
   // Finally, actually back up into the charger
-  _turnAndMountAction->AddAction(new BackupOntoChargerAction(_robot,
-                                                             _chargerID,
+  _turnAndMountAction->AddAction(new BackupOntoChargerAction(_chargerID,
                                                              _useCliffSensorCorrection));
   
   // Lower the lift back to the ground
-  _turnAndMountAction->AddAction(new MoveLiftToHeightAction(_robot, LIFT_HEIGHT_LOWDOCK));
+  _turnAndMountAction->AddAction(new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK));
   
   return ActionResult::SUCCESS;
 }
@@ -169,22 +167,20 @@ ActionResult MountChargerAction::ConfigureDriveForRetryAction()
   DEV_ASSERT(_driveForRetryAction == nullptr, "MountChargerAction.ConfigureDriveForRetryAction.AlreadyConfigured");
   const float distanceToDriveForward_mm = 120.f;
   const float driveForwardSpeed_mmps = 100.f;
-  _driveForRetryAction.reset(new DriveStraightAction(_robot,
-                                                     distanceToDriveForward_mm,
+  _driveForRetryAction.reset(new DriveStraightAction(distanceToDriveForward_mm,
                                                      driveForwardSpeed_mmps,
                                                      false));
   _driveForRetryAction->ShouldSuppressTrackLocking(true);
+  _driveForRetryAction->SetRobot(&GetRobot());
 
   return ActionResult::SUCCESS;
 }
 
 #pragma mark ---- BackupOntoChargerAction ----
 
-BackupOntoChargerAction::BackupOntoChargerAction(Robot& robot,
-                                                 ObjectID chargerID,
+BackupOntoChargerAction::BackupOntoChargerAction( ObjectID chargerID,
                                                  bool useCliffSensorCorrection)
-  : IDockAction(robot,
-                chargerID,
+  : IDockAction(chargerID,
                 "BackupOntoCharger",
                 RobotActionType::BACKUP_ONTO_CHARGER,
                 false)
@@ -216,8 +212,8 @@ ActionResult BackupOntoChargerAction::SelectDockAction(ActionableObject* object)
   
   
   // Tell robot which charger it will be using
-  _robot.SetCharger(_dockObjectID);
-  
+  GetRobot().SetCharger(_dockObjectID);
+
   return ActionResult::SUCCESS;
 }
   
@@ -225,7 +221,7 @@ ActionResult BackupOntoChargerAction::SelectDockAction(ActionableObject* object)
 ActionResult BackupOntoChargerAction::Verify()
 {
   // Verify that robot is on charger
-  if (_robot.IsOnCharger()) {
+  if (GetRobot().IsOnCharger()) {
     PRINT_CH_INFO("Actions", "BackupOntoChargerAction.Verify.MountingChargerComplete",
                 "Robot has mounted charger.");
     return ActionResult::SUCCESS;
@@ -237,15 +233,13 @@ ActionResult BackupOntoChargerAction::Verify()
   
 #pragma mark ---- DriveToAndMountChargerAction ----
   
-DriveToAndMountChargerAction::DriveToAndMountChargerAction(Robot& robot,
-                                                           const ObjectID& objectID,
+DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objectID,
                                                            const bool useCliffSensorCorrection,
                                                            const bool useManualSpeed)
-: CompoundActionSequential(robot)
+: CompoundActionSequential()
 {
   // Get DriveToObjectAction
-  auto driveToAction = new DriveToObjectAction(robot,
-                                               objectID,
+  auto driveToAction = new DriveToObjectAction(objectID,
                                                PreActionPose::ActionType::DOCKING,
                                                0,
                                                false,
@@ -253,7 +247,7 @@ DriveToAndMountChargerAction::DriveToAndMountChargerAction(Robot& robot,
                                                useManualSpeed);
   driveToAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
   AddAction(driveToAction);
-  AddAction(new MountChargerAction(robot, objectID, useCliffSensorCorrection));
+  AddAction(new MountChargerAction(objectID, useCliffSensorCorrection));
 }
   
   

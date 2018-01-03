@@ -18,6 +18,12 @@ namespace CodeLab {
     Vertical
   }
 
+  public enum ProjectType {
+    User,
+    Sample,
+    Featured
+  }
+
   public enum AnimTrack {
     Wheels = 0,
     Lift,
@@ -56,12 +62,9 @@ namespace CodeLab {
     }
 
     private Guid _ProjectUUID = Guid.Empty;
-    public int NumBlocks = 0;
-    public int NumConnections = 0;
-    public int NumGreenFlags = 0;
-    public int NumRepeat = 0;
-    public int NumForever = 0;
-    public bool HasPendingChanges = false;
+    private Dictionary<string, int> _BlockOpCodeCounts = null;
+    private bool _HasPendingChanges = false;
+    private bool _IsVertical = false;
 
     private static int CountStringOccurences(string contents, string searchString) {
       // Count the number of unique times searchString occurs within contents
@@ -82,42 +85,107 @@ namespace CodeLab {
       return numMatches;
     }
 
-    public void Update(CodeLabProject project) {
-      var projectJSON = project.ProjectJSON;
+    private bool DoBlockOpCodeCountsMatch(Dictionary<string, int> dictA, Dictionary<string, int> dictB) {
+      if ((dictA == null) || (dictB == null)) {
+        return (dictA == null) && (dictB == null);
+      }
 
-      // Slightly hacky - instead of parsing the JSON, just look for the entries we're interested in
-      int numBlocks = 0; //CountStringOccurences(projectJSON, "opcode"); // TODO Fix for JSON
-      int numConnections = 0; //CountStringOccurences(projectJSON, "<next>"); // TODO Fix for JSON
-      int numGreenFlags = CountStringOccurences(projectJSON, "event_whenflagclicked");
-      int numRepeat = CountStringOccurences(projectJSON, "control_repeat");
-      int numForever = CountStringOccurences(projectJSON, "control_forever");
+      if (dictA.Count != dictB.Count) {
+        // Different number of keys
+        return false;
+      }
+
+      // This assumes that counts for a key are always non-zero (otherwise we'd need to check for keys in B that aren't in A)
+      foreach (var key in dictA.Keys) {
+        int dictACount = dictA[key];
+        int dictBCount = 0;
+        if (dictACount == 0) {
+          DAS.Error("CodeLab.ProjectStats.ZeroBlockOpCodeCount", "If a key is present it should have at least 1 entry");
+        }
+        dictB.TryGetValue(key, out dictBCount);
+        if (dictACount != dictBCount) {
+          // Count for this key differs (or key isn't present in B)
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    public void Update(CodeLabProject project) {
+      string projectJSON = project.ProjectJSON;
+
+      if (projectJSON == null) {
+        DAS.Error("CodeLab.ProjectStats.Update.NullProjectJson", "");
+        return;
+      }
+
+      // Unfortunately we cannot parse an arbitrary JSON file in C# (we need to define the schema), so just use
+      // string searching to give a close approximation of the metadata to extract.
+
+      Dictionary<string, int> newBlockOpCodeCounts = new Dictionary<string, int>();
+      int nextChar = 0;
+      string opcodeId = "\"opcode\"";
+      while (nextChar >= 0) {
+        int opcodeIndex = projectJSON.IndexOf(opcodeId, nextChar, StringComparison.Ordinal);
+        if (opcodeIndex >= 0) {
+          // We found an opcode entry
+          // get the opening quotation mark for the value
+          int start = projectJSON.IndexOf("\"", opcodeIndex + opcodeId.Length, StringComparison.Ordinal);
+          // and the closing quotation mark
+          int end = (start >= 0) ? projectJSON.IndexOf("\"", start + 1, StringComparison.Ordinal) : -1;
+
+          // if they're valid with at least 1 char in-between, then extract the opcode
+          if (end > (start + 1)) {
+            string opCodeName = projectJSON.Substring(start + 1, (end - start - 1));
+            // Increment the number of entries (or add a new entry if it's the 1st)
+            int previousCount = 0;
+            newBlockOpCodeCounts.TryGetValue(opCodeName, out previousCount);
+            newBlockOpCodeCounts[opCodeName] = previousCount + 1;
+          }
+
+          nextChar = (end >= 0) ? (end + 1) : -1;
+        }
+        else {
+          nextChar = -1;
+        }
+      }
 
       bool wasUpdated = (_ProjectUUID != project.ProjectUUID) ||
-        (NumBlocks != numBlocks) ||
-        (NumConnections != numConnections) ||
-        (NumGreenFlags != numGreenFlags) ||
-        (NumRepeat != numRepeat) ||
-        (NumForever != numForever);
+        (_IsVertical != project.IsVertical) ||
+        !DoBlockOpCodeCountsMatch(_BlockOpCodeCounts, newBlockOpCodeCounts);
 
       _ProjectUUID = project.ProjectUUID;
-      NumBlocks = numBlocks;
-      NumConnections = numConnections;
-      NumGreenFlags = numGreenFlags;
-      NumRepeat = numRepeat;
-      NumForever = numForever;
+      _BlockOpCodeCounts = newBlockOpCodeCounts;
+      _IsVertical = project.IsVertical;
 
       if (wasUpdated) {
         // Keep track of changes, but only upload if/when the program is actually run
-        HasPendingChanges = true;
+        _HasPendingChanges = true;
       }
     }
 
     public void PostPendingChanges(EventCategory category) {
-      if (HasPendingChanges) {
-        SessionState.DAS_Event("robot.code_lab." + category.ToString() + ".blocks", NumBlocks.ToString(), DASUtil.FormatExtraData(NumConnections.ToString()));
-        SessionState.DAS_Event("robot.code_lab." + category.ToString() + ".repeat", NumRepeat.ToString(), DASUtil.FormatExtraData(NumForever.ToString()));
-        SessionState.DAS_Event("robot.code_lab." + category.ToString() + ".green_flags", NumGreenFlags.ToString());
-        HasPendingChanges = false;
+      if (_HasPendingChanges) {
+        if (_BlockOpCodeCounts != null) {
+          string grammarName = _IsVertical ? "vertical." : "horizontal.";
+          string baseEventName = "robot.code_lab." + grammarName + category.ToString(); // e.g. robot.code_lab.vertical.updated_user_project
+
+          string blockEventName = baseEventName + ".block";
+          int numTotalBlocks = 0;
+          foreach (var key in _BlockOpCodeCounts.Keys) {
+            int blockCount = _BlockOpCodeCounts[key];
+            numTotalBlocks += blockCount;
+            SessionState.DAS_Event(blockEventName, key, DASUtil.FormatExtraData(blockCount.ToString()));
+          }
+
+          SessionState.DAS_Event(baseEventName + ".blocks", numTotalBlocks.ToString(), DASUtil.FormatExtraData(_BlockOpCodeCounts.Count.ToString()));
+        }
+        else {
+          DAS.Error("CodeLab.PostPendingChanges.NullBlockOpCodeCounts", "");
+        }
+
+        _HasPendingChanges = false;
       }
     }
   }
@@ -313,7 +381,7 @@ namespace CodeLab {
         ++_NumBlocksExecuted;
       }
 
-      public void StartProgram(GrammarMode grammar) {
+      public void StartProgram(GrammarMode grammar, ProjectType projectType, string dasProjectName) {
         if (_IsProgramRunning) {
           DAS.Error("Codelab.StartProgram.AlreadyRunning", "");
         }
@@ -325,21 +393,26 @@ namespace CodeLab {
 
         ResetProgramStateVars();
 
+        // User projects with a non-empty dasProjectName are a remix of a sample / featured project
+        string projectTypeString = ((projectType == ProjectType.User) && (dasProjectName.Length > 0)) ? "remix" : projectType.ToString().ToLower();
+
         switch (grammar) {
         case GrammarMode.None:
           DAS.Error("Codelab.StartProgram.NoneGrammar", "");
           break;
         case GrammarMode.Horizontal:
-          DAS_Event("robot.code_lab.start_program_horizontal", "");
+          DAS_Event("robot.code_lab.start_program_horizontal." + projectTypeString,
+                    "", DASUtil.FormatExtraData(dasProjectName));
           break;
         case GrammarMode.Vertical:
-          DAS_Event("robot.code_lab.start_program_vertical", "");
+          DAS_Event("robot.code_lab.start_program_vertical." + projectTypeString,
+                    "", DASUtil.FormatExtraData(dasProjectName));
 
           break;
         }
       }
 
-      public void EndProgram(GrammarMode grammar) {
+      public void EndProgram(GrammarMode grammar, ProjectType projectType, string dasProjectName) {
         if (!_IsProgramRunning) {
           DAS.Error("Codelab.EndProgram.WasNotRunning", "");
         }
@@ -347,21 +420,29 @@ namespace CodeLab {
 
         double timeInProgram_s = (System.DateTime.UtcNow - _StartDateTime).TotalSeconds;
 
+        // User projects with a non-empty dasProjectName are a remix of a sample / featured project
+        string projectTypeString = ((projectType == ProjectType.User) && (dasProjectName.Length > 0)) ? "remix" : projectType.ToString().ToLower();
+
         switch (grammar) {
         case GrammarMode.None:
           DAS.Error("Codelab.EndProgram.NoneGrammar", "");
           break;
         case GrammarMode.Horizontal:
           if (_WasProgramAborted) {
-            DAS_Event("robot.code_lab.aborted_program_horizontal", _NumBlocksExecuted.ToString(), DASUtil.FormatExtraData(timeInProgram_s.ToString()));
+            DAS_Event("robot.code_lab.aborted_program_horizontal.time." + projectTypeString, dasProjectName, DASUtil.FormatExtraData(timeInProgram_s.ToString()));
+            DAS_Event("robot.code_lab.aborted_program_horizontal.blocks." + projectTypeString, dasProjectName, DASUtil.FormatExtraData(_NumBlocksExecuted.ToString()));
           }
-          DAS_Event("robot.code_lab.end_program_horizontal", _NumBlocksExecuted.ToString(), DASUtil.FormatExtraData(timeInProgram_s.ToString()));
+          DAS_Event("robot.code_lab.end_program_horizontal.time." + projectTypeString, dasProjectName, DASUtil.FormatExtraData(timeInProgram_s.ToString()));
+          DAS_Event("robot.code_lab.end_program_horizontal.blocks." + projectTypeString, dasProjectName, DASUtil.FormatExtraData(_NumBlocksExecuted.ToString()));
           break;
         case GrammarMode.Vertical:
           if (_WasProgramAborted) {
-            DAS_Event("robot.code_lab.aborted_program_vertical", _NumBlocksExecuted.ToString(), DASUtil.FormatExtraData(timeInProgram_s.ToString()));
+            DAS_Event("robot.code_lab.aborted_program_vertical.time." + projectTypeString, dasProjectName, DASUtil.FormatExtraData(timeInProgram_s.ToString()));
+            DAS_Event("robot.code_lab.aborted_program_vertical.blocks." + projectTypeString, dasProjectName, DASUtil.FormatExtraData(_NumBlocksExecuted.ToString()));
           }
-          DAS_Event("robot.code_lab.end_program_vertical", _NumBlocksExecuted.ToString(), DASUtil.FormatExtraData(timeInProgram_s.ToString()));
+          DAS_Event("robot.code_lab.end_program_vertical.time." + projectTypeString, dasProjectName, DASUtil.FormatExtraData(timeInProgram_s.ToString()));
+          DAS_Event("robot.code_lab.end_program_vertical.blocks." + projectTypeString, dasProjectName, DASUtil.FormatExtraData(_NumBlocksExecuted.ToString()));
+
           break;
         }
       }
@@ -386,6 +467,14 @@ namespace CodeLab {
     private int _NumProgramsRun = 0;
     private int _NumProgramsRunInMode = 0;
     private bool _ReceivedGreenFlagEvent = false;
+
+    private ProjectType _ProjectType = ProjectType.User;
+    private string _DASProjectName = "";
+
+    public void SetCurrentProjectData(ProjectType projectType, string dasProjectName) {
+      _ProjectType = projectType;
+      _DASProjectName = dasProjectName ?? "";
+    }
 
     public ProgramState GetProgramState() {
       return _ProgramState;
@@ -427,6 +516,15 @@ namespace CodeLab {
       }
     }
 
+    public static Dictionary<string, string> DAS_Format_IsVertical(bool isVertical) {
+      return DASUtil.FormatExtraData(isVertical ? "1" : "0");
+    }
+
+    public Dictionary<string, string> DAS_Format_IsVertical() {
+      bool isVertical = (_CurrentGrammar == GrammarMode.Vertical);
+      return DAS_Format_IsVertical(isVertical);
+    }
+
     // Wrap DAS event so we can easily log the events for debugging
     public static void DAS_Event(string eventName, string eventValue, Dictionary<string, string> extraData = null) {
       DAS.Event(eventName, eventValue, extraData);
@@ -442,17 +540,17 @@ namespace CodeLab {
 
     public void StartProgram() {
       _ProjectStats.PostPendingChanges(CodeLab.ProjectStats.EventCategory.updated_user_project);
-      _ProgramState.StartProgram(_CurrentGrammar);
+      _ProgramState.StartProgram(_CurrentGrammar, _ProjectType, _DASProjectName);
       ++_NumProgramsRun;
       ++_NumProgramsRunInMode;
     }
 
     public void EndProgram() {
-      _ProgramState.EndProgram(_CurrentGrammar);
+      _ProgramState.EndProgram(_CurrentGrammar, _ProjectType, _DASProjectName);
     }
 
     public void OnGreenFlagClicked() {
-      DAS_Event("robot.code_lab.green_flag_clicked", "");
+      DAS_Event("robot.code_lab.green_flag_clicked", "", DAS_Format_IsVertical());
       _ReceivedGreenFlagEvent = true;
     }
 
@@ -462,7 +560,7 @@ namespace CodeLab {
         _ReceivedGreenFlagEvent = false;
       }
       else {
-        DAS_Event("robot.code_lab.stop_all", "");
+        DAS_Event("robot.code_lab.stop_all", "", DAS_Format_IsVertical());
       }
 
       _ProgramState.OnStopAll();
@@ -478,14 +576,11 @@ namespace CodeLab {
       _ReceivedGreenFlagEvent = false;
     }
 
-    public void StartSession(GrammarMode grammarMode) {
-      if (_CurrentGrammar != GrammarMode.None) {
-        EndSession();
-      }
+    public void StartSession() {
+      // A Code Lab session is the entire time in CodeLab (and can contain many switches between vertical/horizontal modes)
       DAS_Event("robot.code_lab.open", "");
       Reset();
       _EnterCodeLabDateTime = System.DateTime.UtcNow;
-      SetGrammarMode(grammarMode);
     }
 
     public void EndSession() {
@@ -549,8 +644,23 @@ namespace CodeLab {
       return _CurrentGrammar;
     }
 
+    public void InstantScratchBlockEvent() {
+      // Similar to ScratchBlockEvent, but for blocks that complete instantly (so would be very spammy if we sent events for them)
+      _ProgramState.OnBlockStarted();
+    }
+
     public void ScratchBlockEvent(string blockEventName, Dictionary<string, string> extraData = null) {
-      DAS_Event("robot.code_lab.scratch_block", blockEventName, extraData);
+      // NOTE: this should only be sent for blocks that fire occasionally (and have e.g. a duration of at least 1 second),
+      //       blocks that exit immediately, and would therefore generate millions of DAS events, should go InstantScratchBlockEvent
+
+      // Only vertical adds a grammar name, to preserve the DAS data
+      if (_CurrentGrammar == GrammarMode.Horizontal) {
+        DAS_Event("robot.code_lab.scratch_block", blockEventName, extraData);
+      }
+      else {
+        DAS_Event("robot.code_lab.vertical.scratch_block", blockEventName, extraData);
+      }
+
       _ProgramState.OnBlockStarted();
     }
 
@@ -558,9 +668,15 @@ namespace CodeLab {
       _ProjectStats.Update(project);
     }
 
-    public void OnCreatedProject(CodeLabProject project) {
+    public void OnCreatedProject(CodeLabProject project, bool isRemix) {
       PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
-      DAS_Event("robot.code_lab.created_project", defaultProfile.CodeLabProjects.Count.ToString());
+      var extraDasData = DAS_Format_IsVertical(project.IsVertical);
+      if (isRemix) {
+        DAS_Event("robot.code_lab.created_remix", defaultProfile.CodeLabProjects.Count.ToString(), extraDasData);
+      }
+      else {
+        DAS_Event("robot.code_lab.created_project", defaultProfile.CodeLabProjects.Count.ToString(), extraDasData);
+      }
     }
 
     public void OnChallengesOpen() {

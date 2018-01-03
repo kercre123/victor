@@ -1179,7 +1179,9 @@ namespace Anki {
       Result Update()
       {
         // Don't run Update until robot is finished initializing
-        if (Robot::GetOperationMode() == Robot::WAITING) {
+        if (HeadController::IsCalibrated() &&
+            LiftController::IsCalibrated() &&
+            IMUFilter::IsBiasFilterComplete()) {
           if (updateFunc) {
             return updateFunc();
           }

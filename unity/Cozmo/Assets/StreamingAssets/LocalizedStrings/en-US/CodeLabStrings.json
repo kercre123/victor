@@ -512,6 +512,23 @@
   },
 
 
+  "codeLabSampleProject_SayCozmo.projectName": {
+    "translation": "Say Cozmo"
+  },
+  "codeLabSampleProject_DrawCozmo.projectName": {
+    "translation": "Draw Cozmo"
+  },
+  "codeLabSampleProject_PlayRandomAnims.projectName": {
+    "translation": "Play Random Animations"
+  },
+  "codeLabSampleProject_PlayAllAnims.projectName": {
+    "translation": "Play All Animations"
+  },
+  "codeLabSampleProject_DigitalClock.projectName": {
+    "translation": "Clock"
+  },
+  
+
   "codeLabFeaturedProject_HotPotato.projectName": {
       "translation": "Hot Potato"
   },
@@ -519,7 +536,7 @@
       "translation": "When the music stops, don't get stuck with the hot potato!"
   },
   "codeLabFeaturedProject_HotPotato.projectInstructions": {
-      "translation": "1. This is a game for two players, plus Cozmo. \n\n2. Players 1 and 2, tap your Cube when it lights up. When it's Cozmo's turn to tap his Cube, make sure he can see the Cube in front of him.\n\n3. In this game, the \"potato\" is indicated by Cube lights. When it lands on you, the lights will first turn red, and then will turn green when the potato can be passed by tapping it.\n\n4. When the music stops, careful not to be stuck with the potato!"
+      "translation": "1. This is a game for two players, plus Cozmo. \n\n2. Cozmo will ask you to place a Cube under his lift so he can tap it.\n\n3. In this game, the \"potato\" is indicated by Cube lights. When it lands on you, the lights will first turn red, and then green when the potato can be passed by tapping the Cube.\n\n4. When the music stops, careful not to be stuck with the potato!"
   },
   "codeLabFeaturedProject_TinyOrchestra.projectName": {
       "translation": "Tiny Orchestra"
@@ -537,7 +554,7 @@
       "translation":  "Shake Cozmo and have your fortune told."
   },
   "codeLabFeaturedProject_MagicFortuneTeller.projectInstructions": {
-      "translation":  "1. After you tap start, when Cozmo has a \"?\" on his face, this means means it's your turn to ask him a yes-or-no question.\n\n2. Then shake Cozmo and listen to your magic fortune!"
+      "translation":  "1. After you tap start, when Cozmo has a \"?\" on his face, this means it's your turn to ask him a yes-or-no question.\n\n2. Then shake Cozmo and listen to your magic fortune!"
   },
   "codeLabFeaturedProject_CubeWhack.projectName": {
       "translation": "Cube Whack"
@@ -555,7 +572,7 @@
       "translation":  "Tick, tock! Timers are more fun when they're a Cozmo."
   },
   "codeLabFeaturedProject_FiretruckAlarm.projectInstructions": {
-      "translation": "1. After you tap the start flag, Cozmo will display a 30-second timer on his face. When the timer runs out, his fire truck alarm will go off.\n\n2. To add 5 seconds to the timer, tap the blue Cube. To subtract 5 seconds from the timer, tap the red Cube.\n\n3. When you're ready to start your timer, tap the green Cube.\n\n4. Then count down to Cozmo's fire truck alarm!"
+      "translation": "1. After you tap the start flag, a ten-second timer will begin.\n\n2. Then count down to Cozmo's fire truck alarm!"
   },
   "codeLabFeaturedProject_LightShow.projectName": {
       "translation": "Light Show"
@@ -574,10 +591,13 @@
       "translation": "Autosaved"
   },
   "codeLab.SaveProject.NotSaved": {
-      "translation": "Changes not saved. Remix to save a copy!"
+      "translation": "Remix to save!"
   },
  "codeLabHorizontal.UserProject.MyProject": {
     "translation": "My Project {0}"
+  },
+ "codeLab.UserProject.NewProject": {
+    "translation": "New Project"
   },
  "codeLabHorizontal.CozmoSaysBlock.DefaultText": {
     "translation": "Hi"
@@ -812,7 +832,7 @@
     "translation": "move lift [X] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_move_lift": {
-    "translation": "Move the lift at a speed to [Y] degrees per second. It will keep moving until stopped, or until min/max height reached. Note: the lift uses an angular speed because the its arm is technically rotating. Max [Y] speed: 200 °/s."
+    "translation": "Move the lift at a speed to [X] degrees per second. It will keep moving until stopped, or until min/max height reached. Note: the lift uses an angular speed because the its arm is technically rotating. Max [X] speed: 200 °/s."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_set_headangle": {
@@ -837,7 +857,7 @@
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_set_cube_light_corner": {
-    "translation": "Set light [#/all] on Cube [#] to [color]"
+    "translation": "on Cube [#] set [all lights/light #] to [color]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_set_cube_light_corner": {
     "translation": "Set the specified edge [1, 2, 3, 4 or all 4 at once] of the specified Cube [#] to [color]. Use black to turn off the lights. Tip: Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
@@ -921,42 +941,42 @@
     "translation": "draw [text] at [X],[Y]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_text": {
-    "translation": "Draw the specified [text] at the given pixel position, using [X],[Y] coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation": "Draw the specified [text] at the given pixel position, using [X],[Y] coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Coordinate 0,0 starts at the top left corner of Cozmo's face screen. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_line": {
     "translation": "draw line from [X],[Y] to [X2],[Y2]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_line": {
-    "translation": "Draw a line between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation": "Draw a line between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_rect": {
     "translation": "fill rectangle from [X],[Y] to [X2],[Y2]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_rect": {
-    "translation": "Draw a filled rectangle between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation": "Draw a filled rectangle between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_rect": {
     "translation": "draw rectangle from [X],[Y] to [X2],[Y2]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_rect": {
-    "translation": "Draw a rectangle between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation": "Draw a rectangle between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_circle": {
     "translation": "draw circle at [X],[Y] with radius [Z]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_circle": {
-    "translation": "Draw a circle at the given [X],[Y] pixel coordinate with the given [Z] radius in pixels. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation": "Draw a circle at the given [X],[Y] pixel coordinate with the given [Z] radius in pixels. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_circle": {
     "translation": "fill circle at [X],[Y] with radius [Z]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_circle": {
-    "translation": "Draw a filled circle at the given [X],[Y] pixel coordinate with the given [Z] radius in pixels. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+    "translation": "Draw a filled circle at the given [X],[Y] pixel coordinate with the given [Z] radius in pixels. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 0-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
 
@@ -991,7 +1011,7 @@
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_see_cube": {
-    "translation": "when Cube seen"
+    "translation": "when Cube [#] seen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_see_cube": {
     "translation": "Triggers this code block and runs the code blocks underneath it every time Cozmo sees a Cube."
@@ -1032,9 +1052,6 @@
     "translation": "Broadcasts (sends) a message to trigger the \"when [message#] received\" block, and then waits for the blocks under the \"when [message#] received\" to fully execute before continuing on. Tip: For experienced coders, think of this like a function call in most programming languages."
   },
 
-
-
-
   "codeLabGlossary.block_definitions.title.control_wait": {
     "translation": "wait [X] secs"
   },
@@ -1057,31 +1074,31 @@
   },
 
   "codeLabGlossary.block_definitions.title.control_if": {
-    "translation": "if <condition> then [A]"
+    "translation": "if (condition) then [A]"
   },
   "codeLabGlossary.block_definitions.description.control_if": {
-    "translation": "If the <condition> is true, then do the blocks in [A]."
+    "translation": "If the (condition) is true, then do the blocks in [A]."
   },
 
   "codeLabGlossary.block_definitions.title.control_if_else": {
-    "translation": "If <condition> then [A] else [B]"
+    "translation": "If (condition) then [A] else [B]"
   },
   "codeLabGlossary.block_definitions.description.control_if_else": {
-    "translation": "If the <condition> is true, then do the blocks in [A], otherwise do the blocks in [B]."
+    "translation": "If the (condition) is true, then do the blocks in [A], otherwise do the blocks in [B]."
   },
 
   "codeLabGlossary.block_definitions.title.control_wait_until": {
-    "translation": "wait until <condition>"
+    "translation": "wait until (condition)"
   },
   "codeLabGlossary.block_definitions.description.control_wait_until": {
-    "translation": "Wait until the <condition> evaluates to true."
+    "translation": "Wait until the (condition) evaluates to true."
   },
 
   "codeLabGlossary.block_definitions.title.control_repeat_until": {
-    "translation": "Repeat until <condition>"
+    "translation": "Repeat until (condition)"
   },
   "codeLabGlossary.block_definitions.description.control_repeat_until": {
-    "translation": "Repeat forever until the <condition> evaluates to true. Troubleshooting: Seeing your code behaving slowly? Try adding a short \"wait\" block to your forever loop. Sometimes the code can use a moment to catch its breath."
+    "translation": "Repeat forever until the (condition) evaluates to true. Troubleshooting: Seeing your code behaving slowly? Try adding a short \"wait\" block to your forever loop. Sometimes the code can use a moment to catch its breath."
   },
 
   "codeLabGlossary.block_definitions.title.control_stop": {
@@ -1161,6 +1178,13 @@
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_head_angle": {
     "translation": "Returns the angle of Cozmo's head in degrees. (-25° = max down, 0° = level, 45° = max up)"
+  },
+
+  "codeLabGlossary.block_definitions.title.cozmo_vert_get_is_picked_up": {
+    "translation": "is Cozmo picked up"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_get_is_picked_up": {
+    "translation": "Returns \"true\" or \"false\" depending on if Cozmo is currently picked up (floating in the air)."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_is_visible": {
@@ -1255,7 +1279,7 @@
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_yaw": {
-    "translation": "Cube [#] yaw °"
+    "translation": "Cube [#] yaw ° in camera"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_yaw": {
     "translation": "Returns the angle, in degrees, of the Cube facing right/left (as if flat on a surface) as seen in Cozmo's camera. Note that this requires Cozmo to see the Cube. Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
@@ -1327,45 +1351,45 @@
   },
 
   "codeLabGlossary.block_definitions.title.operator_lt": {
-    "translation": "< [X] < [Y] >"
+    "translation": "( [X] < [Y] )"
   },
   "codeLabGlossary.block_definitions.description.operator_lt": {
     "translation": "True if [X] is less than [Y]."
   },
 
   "codeLabGlossary.block_definitions.title.operator_equals": {
-    "translation": "< [X] = [Y] > "
+    "translation": "( [X] = [Y] )"
   },
   "codeLabGlossary.block_definitions.description.operator_equals": {
     "translation": "True if [X] is equal to [Y]."
   },
 
   "codeLabGlossary.block_definitions.title.operator_gt": {
-    "translation": "< [X] > [Y] >"
+    "translation": "( [X] > [Y] )"
   },
   "codeLabGlossary.block_definitions.description.operator_gt": {
     "translation": "True if [X] is greater than [Y]."
   },
 
   "codeLabGlossary.block_definitions.title.operator_and": {
-    "translation": "< <X> and <Y> >"
+    "translation": "( (X) and (Y) )"
   },
   "codeLabGlossary.block_definitions.description.operator_and": {
-    "translation": "True if both <X> and <Y> sub-conditions are true."
+    "translation": "True if both (X) and (Y) sub-conditions are true."
   },
 
   "codeLabGlossary.block_definitions.title.operator_or": {
-    "translation": "< <X> or <Y> >"
+    "translation": "( (X) or (Y) )"
   },
   "codeLabGlossary.block_definitions.description.operator_or": {
-    "translation": "True if either the <X> or <Y> sub-conditions are true."
+    "translation": "True if either the (X) or (Y) sub-conditions are true."
   },
 
   "codeLabGlossary.block_definitions.title.operator_not": {
-    "translation": "< not <Y> >"
+    "translation": "( not (Y) )"
   },
   "codeLabGlossary.block_definitions.description.operator_not": {
-    "translation": "True if <Y> is false, false if <Y> is true."
+    "translation": "True if (Y) is false, false if (Y) is true."
   },
 
   "codeLabGlossary.block_definitions.title.operator_join": {
@@ -1393,7 +1417,7 @@
     "translation": "[text1] contains [text2]"
   },
   "codeLabGlossary.block_definitions.description.operator_contains": {
-    "translation": "True if the second string of text is contained within the first string of text. For example, it is true \"Coz\" is contained inside of \"Cozmo\"."
+    "translation": "True if the second string of text is contained within the first string of text. For example, it is true \"coz\" is contained inside of \"cozmo\"."
   },
 
   "codeLabGlossary.block_definitions.title.operator_mod": {
@@ -1445,5 +1469,27 @@
   },
   "codeLabGlossary.block_definitions.description.cozmo_sound_stop": {
     "translation": "Stop the [sound name] sound. Tip: To turn off Code Lab's default background music, stop \"background\" sound."
+  },
+
+  "codeLab.export_modal.title": {
+    "translation": "Export Project"
+  },
+  "codeLab.export_modal.body": {
+    "translation": "Submit your project to be Featured!\n\nCopy it to Google Drive, then visit go.anki.com/submission to submit!"
+  },
+  "codeLab.export_modal.button.get_drive": {
+    "translation": "Get Google Drive"
+  },
+  "codeLab.export_modal.button.copy_to_drive": {
+    "translation": "Copy to Google Drive"
+  },
+  "codeLabSampleProject_LaserSmile.projectName": {
+    "translation": "Laser Smile!"
+  },
+  "codeLabSampleProject_LaserSmile.variableInstruction1": {
+    "translation": "The goal is to turn that frown upside down!"
+  },
+  "codeLabSampleProject_LaserSmile.variableInstruction2": {
+    "translation": "Smile to shoot your laser! Move your head to aim."
   }
 }

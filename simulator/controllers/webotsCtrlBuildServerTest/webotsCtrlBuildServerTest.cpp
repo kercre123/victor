@@ -15,14 +15,14 @@
 #include <string.h>
 #include "simulator/game/cozmoSimTestController.h"
 
-#if (DO_NOT_QUIT_WEBOTS == 1)
-#define QUIT_WEBOTS(status) return status;
-#else
-#define QUIT_WEBOTS(status) webots::Supervisor dummySupervisor; dummySupervisor.simulationQuit(status);
-#endif
-
 using namespace Anki;
 using namespace Anki::Cozmo;
+
+void QuitWebots(int status)
+{
+  webots::Supervisor dummySupervisor;
+  dummySupervisor.simulationQuit(status);
+}
 
 int main(int argc, char **argv)
 {
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
   // Only a single argument is supported and it must the name of a valid test.
   if (argc < 2) {
     PRINT_NAMED_ERROR("WebotsCtrlBuildServerTest.main.NoTestSpecified","");
-    QUIT_WEBOTS(-1);
+    QuitWebots(-1);
   }
   
   std::string testName(argv[1]);
@@ -48,8 +48,13 @@ int main(int argc, char **argv)
   if (nullptr == cstCtrl)
   {
     PRINT_NAMED_ERROR("WebotsCtrlBuildServerTest.main.TestNotFound", "'%s' test not found", testName.c_str());
-    QUIT_WEBOTS(-1);
+    QuitWebots(-1);
   }
+  
+  // Check for flag indicating whether or not webots should continue running after the test is complete.
+  const bool quitAfterTest = (argc >= 3) && (0 == strcmp(argv[2], "--quitWebotsAfterTest"));
+  cstCtrl->SetQuitWebotsAfterTest(quitAfterTest);
+  
   PRINT_NAMED_INFO("WebotsCtrlBuildServerTest.main.StartingTest", "%s", testName.c_str());
   
   // Init test

@@ -13,8 +13,8 @@
  #define _ANKI_COZMO_MEMORY_MAP_TO_PLANNER_H__
 
 #include "engine/navMap/iNavMap.h"
-#include "anki/common/basestation/math/convexPolygon2d.h"
-#include "anki/common/basestation/math/polygon.h"
+#include "coretech/common/engine/math/convexPolygon2d.h"
+#include "coretech/common/engine/math/polygon.h"
 
 namespace Anki {
 namespace Cozmo {

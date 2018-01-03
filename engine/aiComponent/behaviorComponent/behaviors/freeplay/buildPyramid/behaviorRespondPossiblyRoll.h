@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorRespondPossiblyRoll_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 
 #include "clad/types/animationTrigger.h"
 
@@ -55,7 +55,7 @@ protected:
   void SetPlayedOnSideAnim() { _playedOnSide = true;}
   void SetReachedPreDockRoll() { _reachedPreDockRoll = true;}
   void SetPoseUpAxisWillBeChecked() { _poseUpAxisAccurate = true;}
-
+  
 private:
   enum class DebugState {
     RespondingNegatively,
@@ -96,12 +96,10 @@ public:
 protected:
   void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  // Override b/c default resume internal uses invalid pre-req data
-  virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  
 private:
   RespondPossiblyRollMetadata _metadata;
   

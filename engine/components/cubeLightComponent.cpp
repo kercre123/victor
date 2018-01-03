@@ -26,6 +26,7 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
+#include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
@@ -33,8 +34,8 @@
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/fileUtils/fileUtils.h"
 
@@ -43,6 +44,8 @@
 
 // Scales colors by this factor when applying white balancing
 static constexpr f32 kWhiteBalanceScale = 0.6f;
+
+static constexpr int kNumCubeLeds = 4;
 
 namespace Anki {
 namespace Cozmo {
@@ -620,7 +623,7 @@ void CubeLightComponent::ApplyAnimModifier(const LightAnim& anim,
   // For every pattern in the animation apply the modifier
   for(auto& pattern : modifiedAnim)
   {
-    for(int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
+    for(int i = 0; i < kNumCubeLeds; ++i)
     {
       pattern.lights.onColors[i] |= modifier.onColors[i];
       pattern.lights.offColors[i] |= modifier.offColors[i];
@@ -659,7 +662,7 @@ bool CubeLightComponent::BlendAnimWithCurLights(const ObjectID& objectID,
   // with whatever the corresponding color that is currently being displayed on the object
   for(auto& pattern : blendedAnim)
   {
-    for(int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
+    for(int i = 0; i < kNumCubeLeds; ++i)
     {
       const ActiveObject::LEDstate& ledState = activeObject->GetLEDState(i);
       if(pattern.lights.onColors[i] == 0)
@@ -862,7 +865,7 @@ void CubeLightComponent::SendTransitionMessage(const ObjectID& objectID, const O
     msg.objectType = obj->GetType();
     
     LightState lights;
-    for(u8 i = 0; i < (u8)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
+    for(u8 i = 0; i < kNumCubeLeds; ++i)
     {
       msg.lights[i].onColor = values.onColors[i];
       msg.lights[i].offColor = values.offColors[i];
@@ -1170,8 +1173,8 @@ bool CubeLightComponent::CanEngineSetLightsOnCube(const ObjectID& objectID)
 
 Result CubeLightComponent::SetLights(const ActiveObject* object, const u32 rotationPeriod_ms)
 {
-  std::array<Anki::Cozmo::LightState, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS> lights;
-  for(int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
+  std::array<Anki::Cozmo::LightState, (size_t) kNumCubeLeds> lights;
+  for(int i = 0; i < kNumCubeLeds; ++i)
   {
     // Apply white balancing and encode colors
     const ActiveObject::LEDstate ledState = object->GetLEDState(i);
@@ -1210,13 +1213,20 @@ Result CubeLightComponent::SetLights(const ActiveObject* object, const u32 rotat
   const u32 gamma = object->GetLEDGamma();
   if(gamma != _prevGamma)
   {
-    _robot.SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(gamma)));
+    // TODO: do we need this?
+    //_robot.SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(gamma)));
     _prevGamma = gamma;
   }
   
-  _robot.SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)object->GetActiveID(),
-                                                          MS_TO_LED_FRAMES(rotationPeriod_ms))));
-  return _robot.SendMessage(RobotInterface::EngineToRobot(CubeLights(lights)));
+
+  // TODO: Implement proper setting of cube lights here, and send the appropriate
+  // message via CubeCommsComponent() (VIC-766)
+  
+//  _robot.SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)object->GetActiveID(),
+//                                                          MS_TO_LED_FRAMES(rotationPeriod_ms))));
+//  return _robot.SendMessage(RobotInterface::EngineToRobot(CubeLights(lights)));
+  
+  return RESULT_OK;
 }
 
 // TEMP (Kevin): WhiteBalancing is eventually to be done in body so just doing something simple here to get us by.

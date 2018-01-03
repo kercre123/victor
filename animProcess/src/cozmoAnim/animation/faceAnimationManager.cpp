@@ -11,9 +11,9 @@
 
 #include "cozmoAnim/animation/faceAnimationManager.h"
 #include "cozmoAnim/animation/keyframe.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/data/dataScope.h"
-#include "anki/common/basestation/array2d_impl.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataScope.h"
+#include "coretech/common/engine/array2d_impl.h"
 #include "util/console/consoleInterface.h"
 #include "util/dispatchWorker/dispatchWorker.h"
 #include "util/logging/logging.h"
@@ -235,7 +235,7 @@ namespace Cozmo {
       //cv::imshow("FaceAnimImage", img);
       //cv::waitKey(30);
       
-      anim.frames.push_back(std::move(img));
+      anim.frames.push_back(Vision::ImageRGB565(img));
     }
   }
   
@@ -251,7 +251,7 @@ namespace Cozmo {
     }
   }
   
-  Result FaceAnimationManager::AddImage(const std::string& animName, const Vision::ImageRGB& faceImg, u32 holdTime_ms)
+  Result FaceAnimationManager::AddImage(const std::string& animName, const Vision::ImageRGB565& faceImg, u32 holdTime_ms)
   {
     AvailableAnim* anim = GetAnimationByName(animName);
     if(nullptr == anim) {
@@ -296,19 +296,28 @@ namespace Cozmo {
     }
   } // GetNumFrames()
   
-  const Vision::ImageRGB* FaceAnimationManager::GetFrame(const std::string& animName, u32 frameNum) const
+  bool FaceAnimationManager::GetFrame(const std::string& animName, u32 frameNum, Vision::ImageRGB565& frame)
   {
     auto animIter = _availableAnimations.find(animName);
     if(animIter == _availableAnimations.end()) {
       PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
                         "Unknown animation requested: %s.",
                         animName.c_str());
-      return nullptr;
+      return false;
     } else {
       const AvailableAnim& anim = animIter->second;
-      
-      if(frameNum < anim.GetNumFrames()) {
-        return &anim.frames[frameNum];
+
+      if ((animName == ProceduralAnimName)) {
+        if (anim.frames.empty()) {
+          return false;
+        }
+        frame = anim.frames[0];
+        PopFront();
+        return !frame.IsEmpty();
+      } else if(frameNum < anim.GetNumFrames()) {
+          
+        frame = anim.frames[frameNum];
+        return true;
       
       } else {
         PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
@@ -316,10 +325,24 @@ namespace Cozmo {
                           "Only %lu frames available in animation %s.",
                           frameNum, (unsigned long)animIter->second.GetNumFrames(),
                           animName.c_str());
-        return nullptr;
+        return false;
       }
     }
   } // GetFrame()
   
+  void FaceAnimationManager::PopFront()
+  {
+    auto animIter = _availableAnimations.find(ProceduralAnimName);
+    if(animIter == _availableAnimations.end()) {
+      PRINT_NAMED_ERROR("FaceAnimationManager.PopFront.NoProceduralAnim", "");
+      return;
+    } else {
+      AvailableAnim& anim = animIter->second;
+      if (!anim.frames.empty()) {
+        anim.frames.pop_front();
+      }
+    }
+  }
+
 } // namespace Cozmo
 } // namespace Anki

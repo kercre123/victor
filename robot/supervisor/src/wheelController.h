@@ -28,7 +28,7 @@ namespace Anki {
     void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
 
     // Enable/Disable the wheel controller.
-    // Mostly only useful for test mode or special simluation modes.
+    // Mostly only useful for test mode or special simulation modes.
     void Enable();
     void Disable();
     

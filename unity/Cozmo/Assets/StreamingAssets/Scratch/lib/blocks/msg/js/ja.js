@@ -11,7 +11,6 @@ goog.require('Blockly.Msg');
 
 // Events category
 Blockly.Msg["EVENTS_GREEN_FLAG_SCRATCH_2"] = "%1 がクリックされたとき";
-Blockly.Msg["EVENTS_BROADCAST_HAT_SCRATCH_2"] = "%1 を受け取ったとき";
 Blockly.Msg["EVENTS_BROADCAST_MESSAGE_1_SCRATCH_2"] = "メッセージ1";
 Blockly.Msg["EVENTS_BROADCAST_MESSAGE_2_SCRATCH_2"] = "メッセージ2";
 Blockly.Msg["EVENTS_BROADCAST_MESSAGE_3_SCRATCH_2"] = "メッセージ3";
@@ -39,7 +38,6 @@ Blockly.Msg["EVENTS_BROADCAST_MESSAGE_24_SCRATCH_2"] = "メッセージ24";
 Blockly.Msg["EVENTS_BROADCAST_MESSAGE_25_SCRATCH_2"] = "メッセージ25";
 Blockly.Msg["EVENTS_BROADCAST_NEW_MESSAGE_SCRATCH_2"] = "新しいメッセージ";
 Blockly.Msg["EVENTS_BROADCAST_SCRATCH_2"] = "%1 を送る";
-Blockly.Msg["EVENTS_BROADCAST_AND_WAIT_SCRATCH_2"] = "%1 を送って待つ"
 
 // Control category
 Blockly.Msg["CONTROLS_FOREVER_SCRATCH_2"] = "ずっと";

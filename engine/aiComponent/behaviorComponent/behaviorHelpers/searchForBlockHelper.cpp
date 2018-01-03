@@ -26,10 +26,10 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
-#include "engine/robot.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 
 namespace Anki {
@@ -50,7 +50,7 @@ SearchForBlockHelper::SearchForBlockHelper(BehaviorExternalInterface& behaviorEx
 , _params(params)
 , _nextSearchIntensity(SearchIntensity::QuickSearch)
 {
-  behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
+  behaviorExternalInterface.GetBehaviorEventComponent().SubscribeToTags(this,
   {
     ExternalInterface::MessageEngineToGameTag::RobotObservedObject
   });
@@ -85,14 +85,11 @@ bool SearchForBlockHelper::ShouldCancelDelegates(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus SearchForBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus SearchForBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _nextSearchIntensity = SearchIntensity::QuickSearch;
-  {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    _robotCameraAtSearchStart = robot.GetVisionComponent().GetCamera();
+  if(behaviorExternalInterface.HasVisionComponent()){
+    _robotCameraAtSearchStart = behaviorExternalInterface.GetVisionComponent().GetCamera();
   }
   _objectsSeenDuringSearch.clear();
   
@@ -103,10 +100,10 @@ BehaviorStatus SearchForBlockHelper::InitBehaviorHelper(BehaviorExternalInterfac
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus SearchForBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus SearchForBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Event handles
-  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
+  const auto& stateChangeComp = behaviorExternalInterface.GetBehaviorEventComponent();
   for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
     if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::RobotObservedObject){
       const ObjectID& objSeen = event.GetData().Get_RobotObservedObject().objectID;
@@ -116,23 +113,23 @@ BehaviorStatus SearchForBlockHelper::UpdateWhileActiveInternal(BehaviorExternalI
         // therefore updated its known pose or 2) see an object that may have been
         // obstructing the robots view without its knowledge previously
         if(objSeen == _params.searchingForID){
-          _status = BehaviorStatus::Complete;
+          _status = IHelper::HelperStatus::Complete;
         }else if(_objectsSeenDuringSearch.count(objSeen) == 0){
           if(!ShouldBeAbleToFindTarget(behaviorExternalInterface)){
-            _status = BehaviorStatus::Failure;
+            _status = IHelper::HelperStatus::Failure;
           }
           _objectsSeenDuringSearch.insert(objSeen);
         }
       }else if((_params.numberOfBlocksToLocate > 0) &&
                (_objectsSeenDuringSearch.size() >= _params.numberOfBlocksToLocate)){
         // Search can also stop if we've seen the requested number of blocks
-        _status = BehaviorStatus::Complete;
+        _status = IHelper::HelperStatus::Complete;
       }
     }
   }
   
   
-  if(_status != BehaviorStatus::Running){
+  if(_status != IHelper::HelperStatus::Running){
     CancelDelegates(false);
   }
   
@@ -149,7 +146,7 @@ void SearchForBlockHelper::SearchForBlock(ActionResult result, BehaviorExternalI
   if(targetID.IsSet()){
     const ObservableObject* targetObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(targetID);
     if(targetObj == nullptr) {
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
       return;
     }
   }
@@ -166,14 +163,11 @@ void SearchForBlockHelper::SearchForBlock(ActionResult result, BehaviorExternalI
   switch(_nextSearchIntensity){
     case SearchIntensity::QuickSearch:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      auto searchNearby = new SearchForNearbyObjectAction(robot, targetID);
+      auto searchNearby = new SearchForNearbyObjectAction(targetID);
       
-      CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+      CompoundActionSequential* compoundAction = new CompoundActionSequential();
       if(targetID.IsSet()){
-        compoundAction->AddAction(new TurnTowardsObjectAction(robot, targetID), true);
+        compoundAction->AddAction(new TurnTowardsObjectAction(targetID), true);
       }
       compoundAction->AddAction(searchNearby);
       DelegateIfInControl(compoundAction, &SearchForBlockHelper::SearchForBlock);
@@ -182,31 +176,26 @@ void SearchForBlockHelper::SearchForBlock(ActionResult result, BehaviorExternalI
     }
     case SearchIntensity::StandardSearch:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
       const bool ignoreFailure = true;
-      CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
-      compoundAction->AddAction(new DriveStraightAction(robot,
-                                                        -kDriveBackDist_mm,
+      CompoundActionSequential* compoundAction = new CompoundActionSequential();
+      compoundAction->AddAction(new DriveStraightAction(-kDriveBackDist_mm,
                                                         kDriveBackSpeed_mmps,
                                                         false), ignoreFailure);
-      compoundAction->AddAction(new TurnInPlaceAction(robot, M_PI_4, false), ignoreFailure);
-      compoundAction->AddAction(new TurnInPlaceAction(robot, M_PI_4, false), ignoreFailure);
+      compoundAction->AddAction(new TurnInPlaceAction(M_PI_4, false), ignoreFailure);
+      compoundAction->AddAction(new TurnInPlaceAction(M_PI_4, false), ignoreFailure);
       
       if(targetID.IsSet()){
-        compoundAction->AddAction(new SearchForNearbyObjectAction(robot, targetID), ignoreFailure);
+        compoundAction->AddAction(new SearchForNearbyObjectAction(targetID), ignoreFailure);
       }
 
-      compoundAction->AddAction(new DriveStraightAction(robot,
-                                                        -kDriveBackDist_mm,
+      compoundAction->AddAction(new DriveStraightAction(-kDriveBackDist_mm,
                                                         kDriveBackSpeed_mmps,
                                                         false), ignoreFailure);
-      compoundAction->AddAction(new TurnInPlaceAction(robot, -( M_PI_2 + M_PI_4), false), ignoreFailure);
-      compoundAction->AddAction(new TurnInPlaceAction(robot, -M_PI_4, false), ignoreFailure);
+      compoundAction->AddAction(new TurnInPlaceAction(-( M_PI_2 + M_PI_4), false), ignoreFailure);
+      compoundAction->AddAction(new TurnInPlaceAction(-M_PI_4, false), ignoreFailure);
       
       if(targetID.IsSet()){
-        compoundAction->AddAction(new SearchForNearbyObjectAction(robot, targetID), ignoreFailure);
+        compoundAction->AddAction(new SearchForNearbyObjectAction(targetID), ignoreFailure);
       }
       
       DelegateIfInControl(compoundAction, &SearchForBlockHelper::SearchForBlock);
@@ -215,21 +204,17 @@ void SearchForBlockHelper::SearchForBlock(ActionResult result, BehaviorExternalI
     }
     case SearchIntensity::ExhaustiveSearch:
     {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+      CompoundActionSequential* compoundAction = new CompoundActionSequential();
       
       for(int i = 0; i < kSearchAdditionalSegments; i++){
-        compoundAction->AddAction(new DriveStraightAction(robot,
-                                                          -kDriveBackDist_mm,
+        compoundAction->AddAction(new DriveStraightAction(-kDriveBackDist_mm,
                                                           kDriveBackSpeed_mmps,
                                                           false));
-        compoundAction->AddAction(new TurnInPlaceAction(robot, -M_PI_4, false));
-        compoundAction->AddAction(new TurnInPlaceAction(robot, -M_PI_4, false));
+        compoundAction->AddAction(new TurnInPlaceAction(-M_PI_4, false));
+        compoundAction->AddAction(new TurnInPlaceAction(-M_PI_4, false));
         
         if(targetID.IsSet()){
-          compoundAction->AddAction(new SearchForNearbyObjectAction(robot, targetID));
+          compoundAction->AddAction(new SearchForNearbyObjectAction(targetID));
         }
       }
       
@@ -259,17 +244,14 @@ void SearchForBlockHelper::SearchFinishedWithoutInterruption(BehaviorExternalInt
                         "Failed to find known block - wiping");
       BlockWorldFilter filter;
       filter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame); // not necessary, just to be explicit
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = behaviorExternalInterface.GetRobot();
-      robot.GetBlockWorld().DeleteLocatedObjects(filter);
+      behaviorExternalInterface.GetBlockWorld().DeleteLocatedObjects(filter);
     }
-    _status = BehaviorStatus::Failure;
+    _status = IHelper::HelperStatus::Failure;
   }else if((_params.numberOfBlocksToLocate > 0) &&
            (_objectsSeenDuringSearch.size() < _params.numberOfBlocksToLocate)){
-    _status = BehaviorStatus::Failure;
+    _status = IHelper::HelperStatus::Failure;
   }else{
-    _status = BehaviorStatus::Complete;
+    _status = IHelper::HelperStatus::Complete;
   }
 }
 

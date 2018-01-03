@@ -35,6 +35,8 @@ target_link_libraries(test_engine
   cti_messaging
   engine_clad
   androidHAL
+  cubeBleClient
+  osState
   util
   util_audio
   gtest
@@ -47,44 +49,42 @@ target_include_directories(test_engine
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/engine>
 )
 
+target_compile_definitions(test_engine 
+  PRIVATE
+  SIMULATOR
+  CORETECH_ENGINE
+)
+
 #
 # Set up symlink to resources
 #
 symlink_target(TARGET test_engine
   SRC ${BUILT_RESOURCES_DIR}
-  DST resources#
-)
-
-target_compile_definitions(test_engine 
-  PRIVATE
-  SIMULATOR
-  CORETECH_BASESTATION
+  DST ${CMAKE_CURRENT_BINARY_DIR}/resources
 )
 
 #
-# Set up symlinks to satisfy webots
+# Set up symlinks to satisfy webots dynamic loading
 #
 symlink_target(TARGET test_engine
   SRC ${WEBOTS_HOME}/lib/libController.dylib
-  DST ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/lib/
+  DST $<TARGET_FILE_DIR:cozmo_engine>/lib/
 )
 
 symlink_target(TARGET test_engine
   SRC ${WEBOTS_HOME}/lib/libCppController.dylib
-  DST ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/lib/
+  DST $<TARGET_FILE_DIR:cozmo_engine>/lib/
 )
 
 symlink_target(TARGET test_engine
   SRC ${WEBOTS_HOME}/lib/libode.dylib
-  DST ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/lib/
-)
-
-symlink_target(TARGET test_engine
-  SRC ${BUILT_RESOURCES_DIR}
-  DST resources
+  DST $<TARGET_FILE_DIR:cozmo_engine>/lib/
 )
 
 if (MACOSX)
   enable_testing()
-  add_test(NAME test_engine COMMAND test_engine)
+  add_test(NAME test_engine 
+    COMMAND test_engine
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
 endif(MACOSX)

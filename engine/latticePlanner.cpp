@@ -11,12 +11,12 @@
  *
  **/
 
-#include "anki/common/basestation/math/fastPolygon2d.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/rotatedRect.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/math/fastPolygon2d.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/rotatedRect.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/namedColors/namedColors.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
@@ -26,9 +26,9 @@
 #include "engine/robot.h"
 #include "engine/viz/vizManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/planning/basestation/xythetaEnvironment.h"
-#include "anki/planning/basestation/xythetaPlanner.h"
-#include "anki/planning/basestation/xythetaPlannerContext.h"
+#include "coretech/planning/engine/xythetaEnvironment.h"
+#include "coretech/planning/engine/xythetaPlanner.h"
+#include "coretech/planning/engine/xythetaPlannerContext.h"
 #include "json/json.h"
 #include "latticePlanner.h"
 #include "util/console/consoleInterface.h"
@@ -39,6 +39,7 @@
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/signals/simpleSignal_fwd.h"
+#include "util/threading/threadPriority.h"
 #include <chrono>
 #include <condition_variable>
 #include <thread>
@@ -55,6 +56,9 @@
 
 // amount of padding to subtract for replan-checks. MUST be less than the above values
 #define LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT 5.0
+
+// scaling for robot size when inserting for Configuration Space expansion (to avoid clipping corners)
+#define LATTICE_PLANNER_ROBOT_EXPANSION_SCALING 1.2 
 
 // whether this planner should consider multiple goals
 // todo: probably have this decided in the calling functions based on the world state/goal types/etc
@@ -640,6 +644,7 @@ void LatticePlannerImpl::DoPlanning()
 
 void LatticePlannerImpl::worker()
 {
+  Anki::Util::SetThreadName(pthread_self(), "LatticePlanner");
   if( LATTICE_PLANNER_THREAD_DEBUG ) {
     std::cout << "hello from planner worker thread! I am object " << this
               << " running in thread " << std::this_thread::get_id() << std::endl;
@@ -861,7 +866,8 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       
       // Get the robot polygon, and inflate it by a bit to handle error
       Poly2f robotPoly;
-      robotPoly.ImportQuad2d(_robot->GetBoundingQuadXY(robotOriginPose, robotPadding) );
+      robotPoly.ImportQuad2d(_robot->GetBoundingQuadXY(robotOriginPose, robotPadding)
+                                    .Scale(LATTICE_PLANNER_ROBOT_EXPANSION_SCALING) );
       
       for(const auto& boundingPoly : convexHulls) {
         _context.env.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);

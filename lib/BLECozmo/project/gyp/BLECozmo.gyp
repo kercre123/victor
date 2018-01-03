@@ -2,7 +2,6 @@
 {
   'variables': {
 
-    'if-debug': '-D_LIBCPP_DEBUG=0',
     'local_cpp_features': 'LOCAL_CPP_FEATURES += rtti exceptions',
 
     'compiler_flags': [
@@ -17,6 +16,7 @@
       '-Winit-self',
       '-Wconditional-uninitialized',
       '-Wno-deprecated-register',
+      '-Wno-unguarded-availability',
       '-Wformat',
       '-Werror=format-security',
       '-g',
@@ -175,7 +175,6 @@
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
           },
           'defines': [
-            '_LIBCPP_DEBUG=0',
             'DEBUG=1',
           ],
       },

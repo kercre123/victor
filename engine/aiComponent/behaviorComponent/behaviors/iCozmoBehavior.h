@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
-#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
+#include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/robotInterface/messageHandler.h"
 #include <set>
@@ -44,7 +44,6 @@ class ObjectID;
 namespace Cozmo {
   
 // Forward declarations
-class Robot;
 class ActionableObject;
 class DriveToObjectAction;
 class BehaviorHelperFactory;
@@ -82,9 +81,7 @@ protected:
     
   virtual ~ICozmoBehavior();
     
-public:
-  using Status = BehaviorStatus;
-  
+public:  
   static Json::Value CreateDefaultBehaviorConfig(BehaviorClass behaviorClass, BehaviorID behaviorID);
   static void InjectBehaviorClassAndIDIntoConfig(BehaviorClass behaviorClass, BehaviorID behaviorID, Json::Value& config);  
   static BehaviorID ExtractBehaviorIDFromConfig(const Json::Value& config, const std::string& fileName = "");
@@ -113,21 +110,7 @@ public:
   // Will be called upon first switching to a behavior before calling update.
   // Calls protected virtual OnBehaviorActivated() method, which each derived class
   // should implement.
-  void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final
-           {OnActivatedInternal_Legacy(behaviorExternalInterface); }
-  Result OnActivatedInternal_Legacy(BehaviorExternalInterface& behaviorExternalInterface);
-
-  // If this behavior is resuming after a short interruption (e.g. a cliff reaction), this Resume function
-  // will be called instead. It calls ResumeInternal(), which defaults to simply calling OnBehaviorActivated, but can
-  // be implemented by children to do specific resume behavior (e.g. start at a specific state). If this
-  // function returns anything other than RESULT_OK, the behavior will not be resumed (but may still be Init'd
-  // later)
-  Result Resume(BehaviorExternalInterface& behaviorExternalInterface);
-
-  // Step through the behavior and deliver rewards to the robot along the way
-  // This calls the protected virtual UpdateInternal() method, which each
-  // derived class should implement.
-  Status BehaviorUpdate_Legacy(BehaviorExternalInterface& behaviorExternalInterface);
+  void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
     
   // This behavior was active, but is now stopping (to make way for a new current
   // behavior). Any behaviors from DelegateIfInControl will be canceled.
@@ -154,15 +137,6 @@ public:
   ExecutableBehaviorType GetExecutableType() const { return _executableType; }
   const BehaviorClass GetClass() const { return _behaviorClassID; }
 
-  // Can be overridden to allow the behavior to run while the robot is not on its treads (default is to not run)
-  virtual bool ShouldRunWhileOffTreads() const { return false;}
-
-  // Can be overridden to allow the behavior to run while the robot is on the charger platform
-  virtual bool ShouldRunWhileOnCharger() const { return false;}
-
-  // Return true if the behavior explicitly handles the case where the robot starts holding the block
-  // Equivalent to !robot.IsCarryingObject() in WantsToBeActivated()
-  virtual bool CarryingObjectHandledInternally() const = 0;
 
   // Return true if this is a good time to interrupt this behavior. This allows more gentle interruptions for
   // things which aren't immediately urgent. Eventually this may become a mandatory override, but for now, the
@@ -207,7 +181,19 @@ public:
   virtual void AddListener(IFeedingListener* listener)
                 { DEV_ASSERT(false, "AddListener.FeedingListener.Unimplemented"); }
   
+  // Return true if the behavior explicitly handles the case where the robot starts holding the block
+  // Equivalent to !robot.IsCarryingObject() in WantsToBeActivated()
+  virtual bool CarryingObjectHandledInternally() const = 0;
+
+  // Can be overridden to allow the behavior to run while the robot is not on its treads (default is to not run)
+  virtual bool ShouldRunWhileOffTreads() const { return false;}
+
+  // Can be overridden to allow the behavior to run while the robot is on the charger platform
+  virtual bool ShouldRunWhileOnCharger() const { return false;}
+
 protected:
+  // Function which indicates whether a behavior wants to be canceled when it's done delegating or not
+  virtual bool ShouldCancelWhenInControl() const { return true;}
 
   // default is no delegates, but behaviors which delegate can overload this
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override { }
@@ -223,11 +209,7 @@ protected:
   virtual void OnEnteredActivatableScopeInternal() override;
   virtual void OnLeftActivatableScopeInternal() override;
 
-  
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) = 0;
-  virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface);
-  bool IsResuming() { return _isResuming;}
-
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   
   void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) {};
@@ -241,29 +223,26 @@ protected:
   // return Running while ControlIsDelegated, and Complete otherwise
   virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) {};
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface);
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) { };
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) { };
 
   Util::RandomGenerator& GetRNG() const;
-    
-  // Derived classes should use these methods to subscribe to any tags they
-  // are interested in handling.
-  void SubscribeToTag(GameToEngineTag   tag, std::function<void(const GameToEngineEvent&)> messageHandler = nullptr);
-  void SubscribeToTag(EngineToGameTag   tag, std::function<void(const EngineToGameEvent&)> messageHandler = nullptr);
   
   void SubscribeToTags(std::set<GameToEngineTag>&& tags);
   void SubscribeToTags(std::set<EngineToGameTag>&& tags);
   void SubscribeToTags(std::set<RobotInterface::RobotToEngineTag>&& tags);
   
+  // Function that calls message handling helper functions
+  void UpdateMessageHandlingHelpers(BehaviorExternalInterface& behaviorExternalInterface);
+
   // Derived classes must override this method to handle events that come in
   // irrespective of whether the behavior is running or not. Note that the Robot
   // reference is const to prevent the behavior from modifying the robot when it
   // is not running. If the behavior is subscribed to multiple tags, the presumption
   // is that this will handle switching based on tag internally.
   // NOTE: AlwaysHandle is called before HandleWhileRunning and HandleWhileNotRunning!
-  virtual void AlwaysHandle(const GameToEngineEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
-  virtual void AlwaysHandle(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
-  virtual void AlwaysHandle(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void AlwaysHandleInScope(const GameToEngineEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void AlwaysHandleInScope(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
   
   // Derived classes must override this method to handle events that come in
   // while the behavior is running. In this case, the behavior is allowed to
@@ -458,14 +437,12 @@ private:
   
   NeedsActionId ExtractNeedsActionIDFromConfig(const Json::Value& config);
 
-  Robot* _robot;
-  BehaviorExternalInterface* _behaviorExternalInterface;
   float _lastRunTime_s;
   float _activatedTime_s;
 
   // only used if we aren't using the BSM
   u32 _lastActionTag = 0;
-  std::vector<IStateConceptStrategyPtr> _stateConceptStrategies;
+  std::vector<IBEIConditionPtr> _wantsToBeActivatedStrategies;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const;
@@ -522,8 +499,6 @@ private:
   BehaviorSimpleCallbackWithExternalInterface _behaviorDelegateCallback;
   
   bool _isActivated;
-  // should only be used to allow DelegateIfInControl to start while a behavior is resuming
-  bool _isResuming;
   
   // A set of the locks that a behavior has used to disable reactions
   // these will be automatically re-enabled on behavior stop
@@ -552,12 +527,9 @@ private:
   ///////
   // Tracking subscribe tags for initialization
   ///////
-  std::unordered_map<GameToEngineTag, std::function<void(const GameToEngineEvent&)>> _gameToEngineCallbackMap;
-  std::unordered_map<EngineToGameTag, std::function<void(const EngineToGameEvent&)>> _engineToGameCallbackMap;
+  std::set<GameToEngineTag> _gameToEngineTags;
+  std::set<EngineToGameTag> _engineToGameTags;
   std::set<RobotInterface::RobotToEngineTag> _robotToEngineTags;
-
-  // Tracking wants to run configs for initialization
-  Json::Value _wantsToRunConfig;
 
   // Behaviors can load in internal "anonymous" behaviors which are not stored
   // in the behavior container and are referenced by string instead of by ID

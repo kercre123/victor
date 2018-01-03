@@ -17,9 +17,9 @@
 #ifndef ANKI_COZMO_ACTION_INTERFACE_H
 #define ANKI_COZMO_ACTION_INTERFACE_H
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/math/pose.h"
 
 #include "engine/actions/actionContainers.h"
 
@@ -55,8 +55,7 @@ namespace Anki {
     class IActionRunner
     {
     public:
-      IActionRunner(Robot& robot,
-                    const std::string name,
+      IActionRunner(const std::string name,
                     const RobotActionType type,
                     const u8 trackToLock);
       
@@ -64,8 +63,12 @@ namespace Anki {
       
       ActionResult Update();
       
-      Robot& GetRobot() { return _robot; }
-      const Robot& GetRobot() const { return _robot; }
+      bool HasRobot() const { return _robot != nullptr;}
+      
+      Robot& GetRobot();
+      Robot& GetRobot() const;
+
+      void SetRobot(Robot* robot){ _robot = robot; OnRobotSet();}
       
       // Tags can be used to identify specific actions. A unique tag is assigned
       // at construction, or it can be overridden with SetTag(). The Tag is
@@ -158,8 +161,8 @@ namespace Anki {
       void ClearMotionProfileOnCompletion() { _shouldClearMotionProfile = true; }
 
     protected:
-      
-      Robot& _robot;
+      // notify subclasses when the robot is set
+      virtual void OnRobotSet(){};
       
       virtual ActionResult UpdateInternal() = 0;
       
@@ -186,7 +189,8 @@ namespace Anki {
       static u32 NextIdTag();
       
     private:
-
+      Robot* _robot = nullptr;
+      
       u8            _numRetriesRemaining = 0;
       
       std::string   _statusMsg;
@@ -195,7 +199,7 @@ namespace Anki {
       ActionCompletedUnion _completionUnion;
       RobotActionType      _type;
       std::string          _name;
-      u8                   _tracks          = (u8)AnimTrackFlag::ALL_TRACKS;
+      u8                   _tracks          = (u8)AnimTrackFlag::NO_TRACKS;
       
       bool          _preppedForCompletion   = false;
       bool          _suppressTrackLocking   = false;
@@ -235,8 +239,7 @@ namespace Anki {
     {
     public:
       
-      IAction(Robot& robot,
-              const std::string name,
+      IAction(const std::string name,
               const RobotActionType type,
               const u8 trackToLock);
       

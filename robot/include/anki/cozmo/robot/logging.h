@@ -45,7 +45,7 @@
 #error ANKI_DEBUG_EVENTS not defined
 #endif
 #ifndef ANKI_DEBUG_INFO
-#error ANKI_DEBUG_EVENTS not defined
+#error ANKI_DEBUG_INFO not defined
 #endif
 #ifndef ANKI_DEBUG_LEVEL
 #error ANKI_DEBUG_LEVEL not defined

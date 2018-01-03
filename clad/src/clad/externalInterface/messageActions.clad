@@ -43,12 +43,6 @@ message CalibrateMotors {
     bool calibrateLift
 }
 
-// DisplayFaceImage
-message DisplayFaceImage {
-    uint_32  duration_ms,
-    uint_8   faceData[2208]          // Bit-image: one bit for each of 184x96 pixels
-}
-
 // DriveOffChargerContacts
 //  Mostly useful for SDK usage where motors are locked while on the charger.
 //  This action drives forward slightly to get off the charger.
@@ -195,7 +189,6 @@ message PlayAnimationTrigger {
 
 // PlayAnimation -- TEMP CODE!! Iterating animation code
 message PlayAnimation_DEV {
-  uint_8  robotId,
   uint_32 numLoops,
   string animationName
 }
@@ -507,7 +500,6 @@ message WaitForImages {
 union RobotActionUnion {
   AlignWithObject               alignWithObject,
   CalibrateMotors               calibrateMotors,
-  DisplayFaceImage              displayFaceImage,
   DriveOffChargerContacts       driveOffChargerContacts,
   DriveStraight                 driveStraight,
   FacePlant                     facePlant,

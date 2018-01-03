@@ -16,8 +16,6 @@
 #include "clad/types/controllerChannels.clad"
 #include "clad/types/proceduralFaceTypes.clad"
 #include "clad/types/proxMessages.clad"
-#include "clad/robotInterface/messageToActiveObject.clad"
-#include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/cameraFOVInfo.clad"
 #include "clad/types/motorTypes.clad"
@@ -25,17 +23,6 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-  structure SetPropSlot
-  {
-    uint_32 factory_id,
-    uint_8  slot
-  }
-
-  message SetCubeGamma
-  {
-    uint_8  gamma
-  }
 
 namespace RobotInterface {
 
@@ -239,11 +226,6 @@ message GetManufacturingInfo
 {
 }
 
-message AbortAnimation
-{
-  uint_8 tag
-}
-
 message CheckLiftLoad
 {
 }
@@ -276,16 +258,16 @@ message EnableBraceWhenFalling
 
 // ========== V2 Animation process messages ===========
 
-// TODO: Make animation files referencable by integer tag so we don't have to send a string.
-message RequestAvailableAnimations
-{
-}
-
 message PlayAnim
 {
-  uint_32 animID,
   uint_32 numLoops = 1,
-  uint_8  tag
+  uint_8  tag,
+  string animName,
+}
+
+// Aborts the currently executing animation
+message AbortAnimation
+{
 }
 
 message LockAnimTracks
@@ -327,10 +309,41 @@ message SetFaceHue
     float_32 hue // [0,1]
 }
 
+
+// TODO: Move to messageGameToEngine.clad or shared file
+// DisplayFaceImageBinaryChunk
+// Bit-image: one bit for each of 184x96 pixels = 2208 bytes
+// If index == 0, this is the top half of the image
+// If index == 1, this is the bottom half of the image
+// Image is actually drawn when index == 1 as long as the associated 
+// top half (i.e. index == 0) message with matching tag was received.
+// The duration_ms that is actually used is whichever last image half
+// is sent. Just make sure they're the same for both halves!
+message DisplayFaceImageBinaryChunk {
+    uint_32  duration_ms,     // Use uint_32 max value to keep the image on the screen
+    uint_8   faceData[1104],  // TODO: Make size a clad const
+    uint_8   imageId,         // ID for this image, used only to track chunks of the same image
+    uint_8   chunkIndex
+}
+
+// Format: 600 pixels, 16-bits each (RGB565)
+message DisplayFaceImageRGBChunk {
+    uint_32  duration_ms,     // Use uint_32 max value to keep the image on the screen
+    uint_16  faceData[600],   // TODO: Make size a clad const
+    uint_16  numPixels,       // Number of pixels in faceData
+    uint_8   imageId,         // ID for this image, used only to track chunks of the same image
+    uint_8   chunkIndex
+}
+
 // SetDebugConsoleVarMessage - for getting console vars to AnimProcess (until we have nicer web interface)
 message SetDebugConsoleVarMessage {
   uint_8 varName[64],   // Array of chars, zero-terminated
   uint_8 tryValue[16]   //   "
+}
+
+message RunDebugConsoleFuncMessage {
+  uint_8 funcName[64],   // Array of chars, zero-terminated
+  uint_8 funcArgs[64]   //   "
 }
 
 // ====================================================
@@ -422,23 +435,15 @@ union EngineToRobot
   EnableStopOnCliff             enableStopOnCliff           = 0x35,
   EnableBraceWhenFalling        enableBraceWhenFalling      = 0x36,
 
-
-  // TODO: These cube messages will need to be modified and moved to a 
-  //       separate file once we update block connection logic for BLE
-  CubeLights                    setCubeLights               = 0x4B,
-  SetPropSlot                   setPropSlot                 = 0x4C,
-  StreamObjectAccel             streamObjectAccel           = 0x4D,
-  SetCubeGamma                  setCubeGamma                = 0x4E,
-  CubeID                        setCubeID                   = 0x4F,
-  
-
   // 0x50 to 0xAF: To Anim Process
   PlayAnim                      playAnim                    = 0x50,
   LockAnimTracks                lockAnimTracks              = 0x51,
-  RequestAvailableAnimations    requestAvailableAnimations  = 0x52,
+  //      FREE SLOT                                         = 0x52,
   AbortAnimation                abortAnimation              = 0x53,
   DisplayProceduralFace         displayProceduralFace       = 0x54,
   SetFaceHue                    setFaceHue                  = 0x55,
+  DisplayFaceImageBinaryChunk   displayFaceImageBinaryChunk = 0x56,
+  DisplayFaceImageRGBChunk      displayFaceImageRGBChunk    = 0x57,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,
@@ -447,6 +452,7 @@ union EngineToRobot
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
 
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
+  RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

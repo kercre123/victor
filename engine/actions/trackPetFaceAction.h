@@ -14,7 +14,7 @@
 #define __Anki_Cozmo_Basestation_TrackPetFaceAction_H__
 
 #include "engine/actions/trackActionInterface.h"
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 
 #include "clad/types/petTypes.h"
 
@@ -28,12 +28,12 @@ public:
   using FaceID = Vision::FaceID_t;
   
   // Track a specific pet ID
-  TrackPetFaceAction(Robot& robot, FaceID faceID);
+  TrackPetFaceAction(FaceID faceID);
   
   // Track first pet with the right type (or any pet at all if PetType set to Unknown).
   // Note the pet being tracked could change during tracking as it is the first one
   // found in PetWorld on each update tick.
-  TrackPetFaceAction(Robot& robot, Vision::PetType petType);
+  TrackPetFaceAction(Vision::PetType petType);
   
   virtual void GetCompletionUnion(ActionCompletedUnion& completionInfo) const override;
   

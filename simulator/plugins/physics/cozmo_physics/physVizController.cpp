@@ -13,8 +13,8 @@
 #include "physVizController.h"
 #include "engine/namedColors/namedColors.h"
 #include "engine/viz/vizObjectBaseId.h"
-#include "anki/common/basestation/colorRGBA.h"
-#include "anki/common/basestation/exceptions.h"
+#include "coretech/common/engine/colorRGBA.h"
+#include "coretech/common/engine/exceptions.h"
 #include "util/math/math.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/vizInterface/messageViz.h"
@@ -76,12 +76,12 @@ void PhysVizController::Init() {
   Subscribe(VizInterface::MessageVizTag::SimpleQuadVectorMessageEnd,
     std::bind(&PhysVizController::ProcessVizSimpleQuadVectorMessageEnd, this, std::placeholders::_1));
 
-  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageDebugVizBegin,
-    std::bind(&PhysVizController::ProcessVizMemoryMapMessageDebugVizBegin, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageDebugViz,
-    std::bind(&PhysVizController::ProcessVizMemoryMapMessageDebugViz, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageDebugVizEnd,
-    std::bind(&PhysVizController::ProcessVizMemoryMapMessageDebugVizEnd, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageVizBegin,
+    std::bind(&PhysVizController::ProcessVizMemoryMapMessageBegin, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageViz,
+    std::bind(&PhysVizController::ProcessVizMemoryMapMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageVizEnd,
+    std::bind(&PhysVizController::ProcessVizMemoryMapMessageEnd, this, std::placeholders::_1));
   
 
   _server.StopListening();
@@ -95,7 +95,7 @@ void PhysVizController::Update()
 {
   const size_t maxPacketSize{(size_t)VizConstants::MaxMessageSize};
   uint8_t data[maxPacketSize]{0};
-  int numBytesRecvd;
+  ssize_t numBytesRecvd;
   ///// Process messages from basestation /////
   while ((numBytesRecvd = _server.Recv((char*)data, maxPacketSize)) > 0) {
     ProcessMessage(VizInterface::MessageViz(data, (size_t)numBytesRecvd));
@@ -502,26 +502,26 @@ void PhysVizController::ProcessVizSimpleQuadVectorMessageEnd(const AnkiEvent<Viz
 
 // NEW SCHEME for memory map quad display
   
-void PhysVizController::ProcessVizMemoryMapMessageDebugVizBegin(const AnkiEvent<VizInterface::MessageViz>& msg)
+void PhysVizController::ProcessVizMemoryMapMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
-  const auto& payload = msg.GetData().Get_MemoryMapMessageDebugVizBegin();
+  const auto& payload = msg.GetData().Get_MemoryMapMessageVizBegin();
   _memoryMapInfo[payload.originId] = payload.info;
 
   // clear the vector in Incoming
-  _memoryMapQuadInfoDebugVizVectorMapIncoming[payload.originId].clear();
+  _memoryMapQuadInfoVectorMapIncoming[payload.originId].clear();
 }
 
-void PhysVizController::ProcessVizMemoryMapMessageDebugViz(const AnkiEvent<VizInterface::MessageViz>& msg)
+void PhysVizController::ProcessVizMemoryMapMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
-  const auto& payload = msg.GetData().Get_MemoryMapMessageDebugViz();
+  const auto& payload = msg.GetData().Get_MemoryMapMessageViz();
 
-  MemoryMapQuadInfoDebugVizVector& dest = _memoryMapQuadInfoDebugVizVectorMapIncoming[payload.originId];
+  MemoryMapQuadInfoVector& dest = _memoryMapQuadInfoVectorMapIncoming[payload.originId];
   dest[payload.seqNum] = std::move(payload.quadInfos);
 }
 
-void PhysVizController::ProcessVizMemoryMapMessageDebugVizEnd(const AnkiEvent<VizInterface::MessageViz>& msg)
+void PhysVizController::ProcessVizMemoryMapMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
-  const auto& payload = msg.GetData().Get_MemoryMapMessageDebugVizEnd();
+  const auto& payload = msg.GetData().Get_MemoryMapMessageVizEnd();
 
   // Now that we've received the entire list of quad infos, decode them into a list of drawable quads
   
@@ -543,7 +543,7 @@ void PhysVizController::ProcessVizMemoryMapMessageDebugVizEnd(const AnkiEvent<Vi
     MemoryMapNode rootNode(info.rootDepth, MM_TO_M(info.rootSize_mm), rootCenter);
 
     u32 expectedSeqNum = 0;
-    const auto& srcQuadInfos = _memoryMapQuadInfoDebugVizVectorMapIncoming[payload.originId];
+    const auto& srcQuadInfos = _memoryMapQuadInfoVectorMapIncoming[payload.originId];
     for (const auto& quadInfo : srcQuadInfos)
     {
       if(quadInfo.first != expectedSeqNum)
@@ -562,7 +562,7 @@ void PhysVizController::ProcessVizMemoryMapMessageDebugVizEnd(const AnkiEvent<Vi
     }
   }
   
-  _memoryMapQuadInfoDebugVizVectorMapIncoming.erase(payload.originId);
+  _memoryMapQuadInfoVectorMapIncoming.erase(payload.originId);
   _memoryMapInfo.erase(payload.originId);
 }
 
@@ -980,7 +980,7 @@ MemoryMapNode::MemoryMapNode(int depth, float size_m, const Point3f& center)
   _nextChild = 0;
 }
 
-bool MemoryMapNode::AddChild(SimpleQuadVector& destSimpleQuads, const ExternalInterface::ENodeContentTypeDebugVizEnum content, const int depth)
+bool MemoryMapNode::AddChild(SimpleQuadVector& destSimpleQuads, const ExternalInterface::ENodeContentTypeEnum content, const int depth)
 {
   using namespace ExternalInterface;
   
@@ -989,18 +989,16 @@ bool MemoryMapNode::AddChild(SimpleQuadVector& destSimpleQuads, const ExternalIn
     ColorRGBA color = Anki::NamedColors::WHITE;
     switch(content)
     {
-      case ENodeContentTypeDebugVizEnum::Unknown                : { color = Anki::NamedColors::DARKGRAY; color.SetAlpha(0.2f); break; }
-      case ENodeContentTypeDebugVizEnum::ClearOfObstacle        : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeDebugVizEnum::ClearOfCliff           : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
-      case ENodeContentTypeDebugVizEnum::ObstacleCube           : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeDebugVizEnum::ObstacleCubeRemoved    : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; } // not stored, it clears ObstacleCube
-      case ENodeContentTypeDebugVizEnum::ObstacleCharger        : { color = Anki::NamedColors::ORANGE;   color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeDebugVizEnum::ObstacleChargerRemoved : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; } // not stored, it clears ObstacleCharger
-      case ENodeContentTypeDebugVizEnum::ObstacleProx           : { color = Anki::NamedColors::CYAN;     color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeDebugVizEnum::ObstacleUnrecognized   : { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeDebugVizEnum::Cliff                  : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
-      case ENodeContentTypeDebugVizEnum::InterestingEdge        : { color = Anki::NamedColors::BLUE;     color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeDebugVizEnum::NotInterestingEdge     : { color = Anki::NamedColors::YELLOW;   color.SetAlpha(0.5f); break; }
+      case ENodeContentTypeEnum::Unknown                : { color = Anki::NamedColors::DARKGRAY; color.SetAlpha(0.2f); break; }
+      case ENodeContentTypeEnum::ClearOfObstacle        : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.5f); break; }
+      case ENodeContentTypeEnum::ClearOfCliff           : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
+      case ENodeContentTypeEnum::ObstacleCube           : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
+      case ENodeContentTypeEnum::ObstacleCharger        : { color = Anki::NamedColors::ORANGE;   color.SetAlpha(0.5f); break; }
+      case ENodeContentTypeEnum::ObstacleProx           : { color = Anki::NamedColors::CYAN;     color.SetAlpha(0.5f); break; }
+      case ENodeContentTypeEnum::ObstacleUnrecognized   : { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
+      case ENodeContentTypeEnum::Cliff                  : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
+      case ENodeContentTypeEnum::InterestingEdge        : { color = Anki::NamedColors::BLUE;     color.SetAlpha(0.5f); break; }
+      case ENodeContentTypeEnum::NotInterestingEdge     : { color = Anki::NamedColors::YELLOW;   color.SetAlpha(0.5f); break; }
     }
     VizInterface::SimpleQuad quad;
     quad.center[0] = _center.x();

@@ -13,11 +13,12 @@
 #define ANKI_COZMO_FACE_ANIMATION_MANAGER_H
 
 #include <string>
-#include <vector>
+#include <deque>
 #include <unordered_map>
 
-#include "anki/common/types.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/common/shared/types.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
+#include "coretech/vision/engine/image.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 
 namespace Anki {
@@ -46,16 +47,16 @@ namespace Cozmo {
     
     void ReadFaceAnimationDir(const Util::Data::DataPlatform* dataPlatform, bool fromCache=false);
 
-    // Get a pointer to an RLE-compressed frame for the given animation.
-    // Returns nullptr if animation or frame do not exist.
-    const Vision::ImageRGB* GetFrame(const std::string& animName, u32 frameNum) const;
+    // Populate the given RGB565 frame for the given animation with the specified frame number.
+    // Returns false if animation or frame do not exist.
+    bool GetFrame(const std::string& animName, u32 frameNum, Vision::ImageRGB565& frame);
     
     // Return the total number of frames in the given animation. Returns 0 if the
     // animation doesn't exist.
     u32  GetNumFrames(const std::string& animName);
     
     // Ability to add keyframes at runtime, for procedural face streaming
-    Result AddImage(const std::string& animName, const Vision::ImageRGB& faceImg, u32 holdTime_ms = 0);
+    Result AddImage(const std::string& animName, const Vision::ImageRGB565& faceImg, u32 holdTime_ms = 0);
     
     // Remove all frames from an existing animation
     Result ClearAnimation(const std::string& animName);
@@ -71,11 +72,14 @@ namespace Cozmo {
     // Protected default constructor for singleton.
     FaceAnimationManager();
     
+    // Pops the front frame of the ProceduralAnim only
+    void PopFront();
+
     static FaceAnimationManager* _singletonInstance;
 
     struct AvailableAnim {
       time_t lastLoadedTime;
-      std::vector< Vision::ImageRGB > frames;
+      std::deque< Vision::ImageRGB565 > frames;
       size_t GetNumFrames() const { return frames.size(); }
     };
     

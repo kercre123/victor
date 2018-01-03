@@ -14,7 +14,8 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_WorkoutComponent_H__
 #define __Cozmo_Basestation_BehaviorSystem_WorkoutComponent_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
+#include "engine/entity.h"
 #include "engine/moodSystem/moodScorer.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/behaviorComponent/behaviorObjectives.h"
@@ -51,8 +52,8 @@ public:
   AnimationTrigger weakLiftAnim = AnimationTrigger::Count;
   AnimationTrigger putDownAnim = AnimationTrigger::Count;
 
-  unsigned int GetNumStrongLifts(const Robot& robot) const;
-  unsigned int GetNumWeakLifts(const Robot& robot) const;
+  unsigned int GetNumStrongLifts(const MoodManager& moodManager) const;
+  unsigned int GetNumWeakLifts(const MoodManager& moodManager) const;
   
   BehaviorObjective GetAdditionalBehaviorObjectiveOnComplete() const { return _additionalBehaviorObjectiveOnComplete; }
   
@@ -62,7 +63,7 @@ private:
   MoodScorer _numStrongLiftScorer;
   MoodScorer _numWeakLiftScorer;
 
-  static unsigned int MoodScoreHelper(const Robot& robot, const MoodScorer& moodScorer);
+  static unsigned int MoodScoreHelper(const MoodManager& moodManager, const MoodScorer& moodScorer);
 
 
   // emotion event to trigger when this workout competed
@@ -73,7 +74,7 @@ private:
 };
 
 
-class WorkoutComponent : private Util::noncopyable
+class WorkoutComponent : public ManageableComponent, private Util::noncopyable
 {
 public:
 

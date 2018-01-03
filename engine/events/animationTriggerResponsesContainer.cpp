@@ -11,7 +11,7 @@
  **/
 
 #include "engine/events/animationTriggerResponsesContainer.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
 #include "json/json.h"
 #include "util/logging/logging.h"

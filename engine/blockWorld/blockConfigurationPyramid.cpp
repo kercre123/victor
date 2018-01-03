@@ -30,7 +30,7 @@
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/vision/basestation/observableObject.h"
+#include "coretech/vision/engine/observableObject.h"
 
 #include "util/math/math.h"
 
@@ -100,8 +100,8 @@ bool PyramidBase::BlocksFormPyramidBase(const Robot& robot, const ObservableObje
   Pose3d staticCorner2;
   Pose3d baseCorner1;
   Pose3d baseCorner2;
-  if(GetBaseInteriorCorners(robot, staticBlock, baseBlock, staticCorner1, staticCorner2) &&
-     GetBaseInteriorCorners(robot, baseBlock, staticBlock, baseCorner1, baseCorner2)){
+  if(GetBaseInteriorCorners(robot.GetWorldOrigin(), staticBlock, baseBlock, staticCorner1, staticCorner2) &&
+     GetBaseInteriorCorners(robot.GetWorldOrigin(), baseBlock, staticBlock, baseCorner1, baseCorner2)){
     const Pose3d& basePoseCenterAtTop = baseBlock->GetZRotatedPointAboveObjectCenter(0.5f);
     const Pose3d& staticPoseCenterAtTop = staticBlock->GetZRotatedPointAboveObjectCenter(0.5f);
     
@@ -124,7 +124,7 @@ bool PyramidBase::BlocksFormPyramidBase(const Robot& robot, const ObservableObje
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool PyramidBase::GetBaseInteriorCorners(const Robot& robot,
+bool PyramidBase::GetBaseInteriorCorners(const Pose3d& worldOrigin,
                                          const ObservableObject* const targetCube,
                                          const ObservableObject* const otherCube,
                                          Pose3d& corner1, Pose3d& corner2)
@@ -145,7 +145,7 @@ bool PyramidBase::GetBaseInteriorCorners(const Robot& robot,
   for(const auto& point: allPoints){
     Pose3d pointAsPose = Pose3d(0, Z_AXIS_3D(),
                                 {point.x(), point.y(), zSize},
-                                robot.GetWorldOrigin());
+                                worldOrigin);
     float dist;
     if(!ComputeDistanceSQBetween(pointAsPose, otherCube->GetPose(), dist)){
       return false;
@@ -164,13 +164,14 @@ bool PyramidBase::GetBaseInteriorCorners(const Robot& robot,
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool PyramidBase::GetBaseInteriorMidpoint(const Robot& robot,
+bool PyramidBase::GetBaseInteriorMidpoint(const Pose3d& robotPose,
+                                          const Pose3d& worldOrigin,
                                           const ObservableObject* const targetCube,
                                           const ObservableObject* const otherCube,
                                           Pose3d& midPoint){
   Pose3d corner1;
   Pose3d corner2;
-  const bool gotCorners = GetBaseInteriorCorners(robot, targetCube, otherCube, corner1, corner2);
+  const bool gotCorners = GetBaseInteriorCorners(worldOrigin, targetCube, otherCube, corner1, corner2);
   if(!gotCorners){
     return false;
   }
@@ -184,7 +185,7 @@ bool PyramidBase::GetBaseInteriorMidpoint(const Robot& robot,
   const float zSize = targetCube->GetDimInParentFrame<'Z'>();
   
   midPoint = Pose3d(0, Z_AXIS_3D(), {edgeMiddleX, edgeMiddleY, zSize},
-                    robot.GetPose().FindRoot());
+                    robotPose.FindRoot());
   return true;
 }
 
@@ -221,8 +222,8 @@ const bool PyramidBase::ObjectIsOnTopOfBase(const Robot& robot, const Observable
   
   Pose3d staticBlockIdealCenter;
   Pose3d baseBlockIdealCenter;
-  if(!GetBaseInteriorMidpoint(robot, staticBlock, baseBlock, staticBlockIdealCenter) ||
-     !GetBaseInteriorMidpoint(robot, baseBlock, staticBlock, baseBlockIdealCenter)){
+  if(!GetBaseInteriorMidpoint(robot.GetPose(), robot.GetWorldOrigin(), staticBlock, baseBlock, staticBlockIdealCenter) ||
+     !GetBaseInteriorMidpoint(robot.GetPose(), robot.GetWorldOrigin(), baseBlock, staticBlock, baseBlockIdealCenter)){
     return false;
   }
   

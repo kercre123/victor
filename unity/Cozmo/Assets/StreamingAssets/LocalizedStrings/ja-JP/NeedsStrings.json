@@ -19,13 +19,13 @@
     "translation" : "プレイ"
   },
   "needs.NeedsEnergyModal.Title" : {
-    "translation" : "Cozmoにチャージする"
+    "translation" : "COZMOにチャージする"
   },
   "needs.NeedsEnergyModal.FeedingSummary" : {
     "translation" : "COZMOを元気いっぱいの状態に保つには、チャージが必要です。"
   },
   "needs.NeedsEnergyModal.Instruction1" : {
-    "translation" : "青く点滅しているキューブをつかんでください。"
+    "translation" : "ライトが青く回転しているキューブをつかんでください。"
   },
   "needs.NeedsEnergyModal.Instruction2" : {
     "translation" : "すべてのライトが明るく輝くまでそのキューブを振ります。"
@@ -90,6 +90,12 @@
   "needs.NeedsRepairModal.AligningTreads" : {
     "translation" : "タイヤを合わせています..."
   },
+  "needs.NeedsRepairModal.CozmoNotOnTreadsTitle" : {
+    "translation" : "COZMOは準備ができていません"
+  },
+  "needs.NeedsRepairModal.CozmoNotOnTreadsBody" : {
+    "translation" : "COZMOをまっすぐ立たせてください。"
+  },
   "needs.ContinueButtonText" : {
     "translation" : "続ける"
   },
@@ -112,7 +118,7 @@
     "translation" : "{0}をロック解除しました！"
   },
   "needs.FreeplaySparksReward.CozmoSings" : {
-    "translation" : "Cozmoが歌をうたって {0} エナジーボールを生み出しました！"
+    "translation" : "COZMOが歌をうたって {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.FistBump" : {
     "translation" : "COZMOがグータッチをして {0} エナジーボールを生み出しました！"
@@ -127,7 +133,7 @@
     "translation" : "COZMOがしゃっくりを治して {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.KnockDownCubes" : {
-    "translation" : "Cozmoがキューブをたおして {0} エナジーボールを生み出しました！"
+    "translation" : "COZMOがキューブをたおして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.PeekAboo" : {
     "translation" : "COZMOがいないいないばあをして {0} エナジーボールを生み出しました！"
@@ -145,7 +151,7 @@
     "translation" : "COZMOがピラミッドをして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.RollACube" : {
-    "translation" : "Cozmoがころがして {0} エナジーボールを生み出しました！"
+    "translation" : "COZMOがころがして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.StackCube" : {
     "translation" : "COZMOがキューブをつんで {0} エナジーボールを生み出しました！"
@@ -163,7 +169,7 @@
     "translation" : "COZMOはしゃっくりをしました"
   },
   "needs.FeedingOverfedHiccups.Description" : {
-    "translation" : "COZMOはお腹がいっぱいになり、しゃっくりが出ます！"
+    "translation" : "COZMOはお腹がいっぱいになり、しゃっくりが出ます！COZMOを逆さまにして助けてください。"
   },
   "needs.severeAlert.energy.title" : {
     "translation" : "COZMOはチャージを必要としています"
@@ -176,5 +182,8 @@
   },
   "needs.severeAlert.repair.description" : {
     "translation" : "続けるにはCOZMOをチューンアップしてください。"
+  },
+  "needs.FreeplayTokenReward.Description" : {
+    "translation" : "今日のミッションをクリアしたよ！"
   }
 }

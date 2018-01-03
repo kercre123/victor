@@ -12,12 +12,11 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeCubeMoved.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
-#include "engine/robot.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -57,7 +56,7 @@ bool BehaviorAcknowledgeCubeMoved::WantsToBeActivatedBehavior(BehaviorExternalIn
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorAcknowledgeCubeMoved::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeCubeMoved::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _activeObjectSeen = false;
   switch(_state){
@@ -70,27 +69,25 @@ Result BehaviorAcknowledgeCubeMoved::OnBehaviorActivated(BehaviorExternalInterfa
       break;
   }
   
-  return Result::RESULT_OK;
+  
 }
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeCubeMoved::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // object seen - cancel turn and play response
   if(_state == State::TurningToLastLocationOfBlock
      && _activeObjectSeen)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = behaviorExternalInterface.GetRobot();
-
     CancelDelegates(false);
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::AcknowledgeObject));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::AcknowledgeObject));
     SET_STATE(ReactingToBlockPresence);
   }
-  
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   
@@ -105,13 +102,10 @@ void BehaviorAcknowledgeCubeMoved::OnBehaviorDeactivated(BehaviorExternalInterfa
 void BehaviorAcknowledgeCubeMoved::TransitionToPlayingSenseReaction(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(PlayingSenseReaction);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
 
-  DelegateIfInControl(new CompoundActionParallel(robot, {
-    new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::CubeMovedSense),
-    new WaitAction(robot, kDelayForUserPresentBlock_s) }),
+  DelegateIfInControl(new CompoundActionParallel({
+    new TriggerLiftSafeAnimationAction(AnimationTrigger::CubeMovedSense),
+    new WaitAction(kDelayForUserPresentBlock_s) }),
               &BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock);
   
 }
@@ -131,13 +125,10 @@ void BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock(Beha
     return;
   }
   const Pose3d& blockPose = obj->GetPose();
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
 
-  DelegateIfInControl(new CompoundActionParallel(robot, {
-    new TurnTowardsPoseAction(robot, blockPose),
-    new WaitAction(robot, kDelayToRecognizeBlock_s) }),
+  DelegateIfInControl(new CompoundActionParallel({
+    new TurnTowardsPoseAction(blockPose),
+    new WaitAction(kDelayToRecognizeBlock_s) }),
               &BehaviorAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence);
 }
   
@@ -146,11 +137,7 @@ void BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock(Beha
 void BehaviorAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence(BehaviorExternalInterface& behaviorExternalInterface)
 {
   SET_STATE(ReactingToBlockAbsence);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::CubeMovedUpset));
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::CubeMovedUpset));
   BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedCubeMoved);
 }
   

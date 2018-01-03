@@ -1,9 +1,10 @@
 
 #include "engine/cozmoContext.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/needsSystem/needsManager.h"
+#include "engine/perfMetric.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotManager.h"
 #include "engine/util/transferQueue/dasTransferTask.h"
@@ -46,6 +47,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
   , _needsManager(new NeedsManager(this))
   , _cozmoExperiments(new CozmoExperiments(this))
+  , _perfMetric(new PerfMetric(this))
   , _threadIdHolder(new ThreadIDInternal)
 {
 

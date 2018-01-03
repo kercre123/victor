@@ -60,7 +60,7 @@ Supervisor {
       ]
       name "cozmo_viz_display"
       width 400
-      height 240
+      height 300
     }
     
     Display {

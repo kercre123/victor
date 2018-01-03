@@ -43,9 +43,9 @@ public:
   std::function<void(std::vector<uint32_t>&&)> _rawAudioFFTCallback;
   
   void SetTimeToRecord(uint32_t timeToRecord);
-  void CollectRawAudio(const AudioUtil::AudioChunk& audioChunk);
-  void CollectResampledAudio(const AudioUtil::AudioChunk& audioChunk);
-  void CollectProcessedAudio(const AudioUtil::AudioChunk& audioChunk);
+  void CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size_t size);
+  void CollectResampledAudio(const AudioUtil::AudioSample* audioChunk, size_t size);
+  void CollectProcessedAudio(const AudioUtil::AudioSample* audioChunk, size_t size);
 
   AudioUtil::AudioChunkList GetProcessedAudio(size_t beginIndex);
   bool CheckDone();

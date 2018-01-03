@@ -21,6 +21,7 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
+#include "util/threading/threadPriority.h"
 #include <chrono>
 
 namespace Anki {
@@ -163,6 +164,17 @@ uint32_t CozmoAPI::ActivateExperiment(const uint8_t* requestBuffer, size_t reque
   const size_t bytesPacked = res.Pack(responseBuffer, responseLen);
   return Anki::Util::numeric_cast<uint32_t>(bytesPacked);
 }
+
+void CozmoAPI::RegisterEngineTickPerformance(const float tickDuration_ms,
+                                             const float tickFrequency_ms,
+                                             const float sleepDurationIntended_ms,
+                                             const float sleepDurationActual_ms) const
+{
+  _cozmoRunner->GetEngine()->RegisterEngineTickPerformance(tickDuration_ms,
+                                                           tickFrequency_ms,
+                                                           sleepDurationIntended_ms,
+                                                           sleepDurationActual_ms);
+}
   
 CozmoAPI::~CozmoAPI()
 {
@@ -213,52 +225,89 @@ CozmoAPI::CozmoInstanceRunner::~CozmoInstanceRunner()
 
 void CozmoAPI::CozmoInstanceRunner::Run()
 {
-  using TimeClock = std::chrono::steady_clock;
-  auto runStart = TimeClock::now();
+  using namespace std::chrono;
+  using TimeClock = steady_clock;
+
+  const auto runStart = TimeClock::now();
+  auto prevTickStart  = runStart;
+  auto tickStart      = runStart;
+
+  // Set the target time for the end of the first frame
+  auto targetEndFrameTime = runStart + (microseconds)(BS_TIME_STEP_MICROSECONDS);
+  Anki::Util::SetThreadName(pthread_self(), "CozmoRunner");
 
   while(_isRunning)
   {
     ANKI_CPU_TICK("CozmoEngine", kMaxDesiredEngineDuration, Util::CpuThreadProfiler::kLogFrequencyNever);
     
-    auto tickStart = TimeClock::now();
+    const duration<double> curTimeSeconds = tickStart - runStart;
+    const double curTimeNanoseconds = Util::SecToNanoSec(curTimeSeconds.count());
 
-    std::chrono::duration<double> timeSeconds = tickStart - runStart;
-    double timeNanoseconds = Util::SecToNanoSec(timeSeconds.count());
-
-    // If we fail to update properly stop running
-    if (!Update(Util::numeric_cast<BaseStationTime_t>(timeNanoseconds)))
+    const bool tickSuccess = Update(Util::numeric_cast<BaseStationTime_t>(curTimeNanoseconds));
+    if (!tickSuccess)
     {
+      // If we fail to update properly, stop running
       Stop();
     }
-    
-    const auto minimumSleepTimeMs = std::chrono::milliseconds( (long)(BS_TIME_STEP * 0.2) ); // 60 * 0.2 = 12 milliseconds!?
-    
-    auto tickNow = TimeClock::now();
-    auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - tickStart);
-    if (ms_left < std::chrono::milliseconds(0))
+
+    const auto tickAfterEngineExecution = TimeClock::now();
+    const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickAfterEngineExecution);
+    const auto tickDuration_us = duration_cast<microseconds>(tickAfterEngineExecution - tickStart);
+//    PRINT_NAMED_INFO("CozmoAPI.CozmoInstanceRunner", "targetEndFrameTime:%8lld, tickDuration_us:%8lld, remaining_us:%8lld",
+//                     TimeClock::time_point(targetEndFrameTime).time_since_epoch().count(), tickDuration_us.count(), remaining_us.count());
+
+    // Only complain if we're more than 10ms behind
+    if (remaining_us < microseconds(-10000))
     {
-      // Don't sleep if we're overtime, but only complain if we're more than 10ms overtime
-      if (ms_left < std::chrono::milliseconds(-10))
-      {
-        PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) ran over by %lldms", BS_TIME_STEP, (-ms_left).count());
-      }
+      PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) is behind by %.3fms",
+                          BS_TIME_STEP, (float)(-remaining_us).count() * 0.001f);
     }
-    else
+
+    // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
+    // allows other threads to run
+    static const auto minimumSleepTime_us = microseconds((long)0);
+    const auto sleepTime_us = std::max(minimumSleepTime_us, remaining_us);
     {
       ANKI_CPU_PROFILE("CozmoApi.Runner.Sleep");
-      
-      if (ms_left < minimumSleepTimeMs)
-      {
-        ms_left = minimumSleepTimeMs;
-      }
-      std::this_thread::sleep_for(ms_left);
+
+      std::this_thread::sleep_for(sleepTime_us);
     }
+
+    // Set the target end time for the next frame
+    targetEndFrameTime += (microseconds)(BS_TIME_STEP_MICROSECONDS);
+
+    // See if we've fallen very far behind (this happens e.g. after a 5-second blocking
+    // load operation); if so, compensate by catching the target frame end time up somewhat.
+    // This is so that we don't spend the next SEVERAL frames catching up.
+    const auto timeBehind_us = -remaining_us;
+    static const auto kusPerFrame = ((microseconds)(BS_TIME_STEP_MICROSECONDS)).count();
+    static const int kTooFarBehindFramesThreshold = 4;
+    static const auto kTooFarBehindThreshold = (microseconds)(kTooFarBehindFramesThreshold * kusPerFrame);
+    if (timeBehind_us >= kTooFarBehindThreshold)
+    {
+      const int framesBehind = (int)(timeBehind_us.count() / kusPerFrame);
+      const auto forwardJumpDuration = kusPerFrame * framesBehind;
+      targetEndFrameTime += (microseconds)forwardJumpDuration;
+      PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.catchup",
+                          "Update was too far behind so moving target end frame time forward by an additional %.3fms",
+                          (float)(forwardJumpDuration * 0.001f));
+    }
+
+    tickStart = TimeClock::now();
+
+    const auto timeSinceLastTick_us = duration_cast<microseconds>(tickStart - prevTickStart);
+    prevTickStart = tickStart;
+
+    const auto sleepTimeActual_us = duration_cast<microseconds>(tickStart - tickAfterEngineExecution);
+    GetEngine()->RegisterEngineTickPerformance(tickDuration_us.count() * 0.001f,
+                                               timeSinceLastTick_us.count() * 0.001f,
+                                               sleepTime_us.count() * 0.001f,
+                                               sleepTimeActual_us.count() * 0.001f);
   }
 }
 
 bool CozmoAPI::CozmoInstanceRunner::Update(const BaseStationTime_t currentTime_nanosec)
 {
-
   Result updateResult;
   {
     std::lock_guard<std::mutex> lock{_updateMutex};

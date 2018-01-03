@@ -10,8 +10,8 @@
  *
  **/
 
-#include "anki/common/robot/utilities.h"
-#include "anki/common/types.h"
+#include "coretech/common/robot/utilities.h"
+#include "coretech/common/shared/types.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
@@ -753,7 +753,7 @@ void MovementComponent::CompletelyUnlockAllTracks()
       _trackLockCount[i].clear();
     }
   }
-  _robot.GetAnimationComponent().EnableAllTracks();
+  _robot.GetAnimationComponent().UnlockAllTracks();
 }
 
 void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const std::string& debugName)
@@ -776,7 +776,7 @@ void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const
   
   if(tracksToDisable > 0)
   {
-    _robot.GetAnimationComponent().DisableTracks(tracksToDisable);
+    _robot.GetAnimationComponent().LockTracks(tracksToDisable);
   }
   
   if(DEBUG_ANIMATION_LOCKING) {
@@ -823,7 +823,7 @@ bool MovementComponent::UnlockTracks(uint8_t tracks, const std::string& who)
   
   if(tracksToEnable > 0)
   {
-    _robot.GetAnimationComponent().EnableTracks(tracksToEnable);
+    _robot.GetAnimationComponent().UnlockTracks(tracksToEnable);
   }
   
   if(DEBUG_ANIMATION_LOCKING) {

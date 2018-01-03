@@ -12,7 +12,7 @@
 
 #include "engine/robot.h"
 #include "simulator/game/cozmoSimTestController.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -97,7 +97,8 @@ s32 CST_PickupFromStack::UpdateSimInternal()
       
       // Cancel the stack behavior:
       SendMessage(ExternalInterface::MessageGameToEngine(
-                     ExternalInterface::ExecuteBehaviorByID(BehaviorIDToString(BehaviorID::Wait), -1)));
+                     ExternalInterface::ExecuteBehaviorByID(
+                       BehaviorTypesWrapper::BehaviorIDToString(BEHAVIOR_ID(Wait)), -1)));
 
       // Give one tick for world to load in
       SET_TEST_STATE(WaitForCubeConnections);

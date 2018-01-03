@@ -27,9 +27,9 @@
 #define Anki_Cozmo_BlockConfigurationPyramid_H
 
 #include "engine/blockWorld/blockConfiguration.h"
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/pose.h"
 
 
 namespace Anki{
@@ -75,17 +75,18 @@ class PyramidBase: public BlockConfiguration{
   
     // determine and set the two cube top corners closest to the other cube in the base
     // ruterns true if corners are set by function, false if not possible
-    static bool GetBaseInteriorCorners(const Robot& robot,
+    static bool GetBaseInteriorCorners(const Pose3d& worldOrigin,
                                        const ObservableObject* const targetCube,
                                        const ObservableObject* const otherCube,
                                        Pose3d& corner1,
                                        Pose3d& corner2);
   
     // determine the midpoint along the top most interior edge of the target cube
-    static bool GetBaseInteriorMidpoint(const Robot& robot,
-                                       const ObservableObject* const targetCube,
-                                       const ObservableObject* const otherCube,
-                                       Pose3d& midPoint);
+    static bool GetBaseInteriorMidpoint(const Pose3d& robotPose,
+                                        const Pose3d& worldOrigin,
+                                        const ObservableObject* const targetCube,
+                                        const ObservableObject* const otherCube,
+                                        Pose3d& midPoint);
   
   protected:
     // Checks the object's position to see if it is on top of the base

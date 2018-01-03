@@ -14,7 +14,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherQueue.h"
 
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "json/json.h"
 #include "util/helpers/boundedWhile.h"
 
@@ -31,7 +31,7 @@ BehaviorDispatcherQueue::BehaviorDispatcherQueue(const Json::Value& config)
                  "No Behaviors key found");
   if(!behaviorArray.isNull()) {
     for(const auto& behaviorIDStr: behaviorArray) {
-      const BehaviorID behaviorID = BehaviorIDFromString(behaviorIDStr.asString());
+      const BehaviorID& behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(behaviorIDStr.asString());
       IBehaviorDispatcher::AddPossibleDispatch(behaviorID);
     }
   }
@@ -44,7 +44,7 @@ void BehaviorDispatcherQueue::BehaviorDispatcher_OnActivated(BehaviorExternalInt
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherQueue::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherQueue::DispatcherUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( IsActivated() &&
       !IsControlDelegated() &&

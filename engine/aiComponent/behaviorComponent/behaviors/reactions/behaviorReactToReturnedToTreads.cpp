@@ -14,8 +14,8 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -38,25 +38,20 @@ bool BehaviorReactToReturnedToTreads::WantsToBeActivatedBehavior(BehaviorExterna
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToReturnedToTreads::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToReturnedToTreads::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
   // Wait for a bit to allow pitch to correct
-  DelegateIfInControl(new WaitAction(robot, 0.5f),
+  DelegateIfInControl(new WaitAction(0.5f),
               &BehaviorReactToReturnedToTreads::CheckForHighPitch);
   
-  return Result::RESULT_OK;
+  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToReturnedToTreads::CheckForHighPitch(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // Check for pitch exceeding a certain threshold.
   // This threshold defines how small a miscalibration can be corrected for,
   // but also inherently assumes that a well-calibrated robot won't be used on
@@ -64,9 +59,9 @@ void BehaviorReactToReturnedToTreads::CheckForHighPitch(BehaviorExternalInterfac
   // every time it's placed down. So we don't want it to be too small or big.
   // 10 degrees was a selected as a conservative value, but we should keep an eye out
   // for unnecessary head calibrations.
-  if (std::fabsf(robot.GetPitchAngle().getDegrees()) > 10.f) {
-    LOG_EVENT("BehaviorReactToReturnedToTreads.CalibratingHead", "%f", robot.GetPitchAngle().getDegrees());
-    DelegateIfInControl(new CalibrateMotorAction(robot, true, false));
+  if (std::fabsf(robotInfo.GetPitchAngle().getDegrees()) > 10.f) {
+    LOG_EVENT("BehaviorReactToReturnedToTreads.CalibratingHead", "%f", robotInfo.GetPitchAngle().getDegrees());
+    DelegateIfInControl(new CalibrateMotorAction(true, false));
   }
 }
 

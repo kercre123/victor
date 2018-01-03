@@ -13,9 +13,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindFaces.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/faceWorld.h"
-#include "engine/robot.h"
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/console/consoleInterface.h"
 #include "engine/actions/basicActions.h"
@@ -69,26 +69,25 @@ void BehaviorFindFaces::BeginStateMachine(BehaviorExternalInterface& behaviorExt
 void BehaviorFindFaces::TransitionToLookUp(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(FindFacesLookUp);
+  
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
   // use the base class's helper function to create a random head motion
   IAction* moveHeadAction = BaseClass::CreateHeadTurnAction(behaviorExternalInterface,
                                                             kHeadUpBodyAngleRelativeMin_deg,
                                                             kHeadUpBodyAngleRelativeMax_deg,
-                                                            robot.GetPose().GetRotationAngle<'Z'>().getDegrees(),
+                                                            robotInfo.GetPose().GetRotationAngle<'Z'>().getDegrees(),
                                                             kHeadUpHeadAngleMin_deg,
                                                             kHeadUpHeadAngleMax_deg,
                                                             kHeadUpBodyTurnSpeed_degPerSec,
                                                             kHeadUpHeadTurnSpeed_degPerSec);
 
-  DelegateIfInControl(moveHeadAction, [this, &robot](BehaviorExternalInterface& behaviorExternalInterface) {
-      const TimeStamp_t latestTimestamp = robot.GetLastImageTimeStamp();
+  DelegateIfInControl(moveHeadAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
+      const TimeStamp_t latestTimestamp = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
       // check if we should turn towards the last face, even if it's not in the current origin
       const bool kMustBeInCurrentOrigin = false;
       Pose3d waste;
-      TimeStamp_t lastFaceTime = robot.GetFaceWorld().GetLastObservedFace(waste, kMustBeInCurrentOrigin);
+      TimeStamp_t lastFaceTime = behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(waste, kMustBeInCurrentOrigin);
       const bool useAnyFace = _maxFaceAgeToLook_ms == 0;
       if( lastFaceTime > 0 &&
           ( useAnyFace || latestTimestamp <= lastFaceTime + _maxFaceAgeToLook_ms ) ) {
@@ -105,10 +104,7 @@ void BehaviorFindFaces::TransitionToLookUp(BehaviorExternalInterface& behaviorEx
 void BehaviorFindFaces::TransitionToLookAtLastFace(BehaviorExternalInterface& behaviorExternalInterface)
 {
   DEBUG_SET_STATE(FindFacesLookAtLast);
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = behaviorExternalInterface.GetRobot();
-  DelegateIfInControl(new TurnTowardsLastFacePoseAction(robot), &BehaviorFindFaces::TransitionToBaseClass);
+  DelegateIfInControl(new TurnTowardsLastFacePoseAction(), &BehaviorFindFaces::TransitionToBaseClass);
 }
 
   
@@ -118,10 +114,9 @@ void BehaviorFindFaces::TransitionToBaseClass(BehaviorExternalInterface& behavio
   PRINT_CH_INFO("Behaviors", "BehaviorFindFaces.TransitionToBaseClass",
                 " %s is transitioning to base class, setting initial body direction",
                 GetIDStr().c_str());
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  SetInitialBodyDirection( robot.GetPose().GetRotationAngle<'Z'>() );
+
+  const Pose3d& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
+  SetInitialBodyDirection( robotPose.GetRotationAngle<'Z'>() );
   BaseClass::BeginStateMachine(behaviorExternalInterface);
 }
 
