@@ -3,7 +3,7 @@
 # First argument is function to run on all robots
 # Second argument is repo root directory
 
-funcs=(download_log update)
+funcs=(download_log update full_update)
 
 if [ $# -ne 2 ]; then
     echo "No function specified, supported functions are"
