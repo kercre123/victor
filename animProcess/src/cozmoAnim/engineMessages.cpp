@@ -40,6 +40,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
 
@@ -65,6 +66,8 @@ namespace Messages {
     Audio::EngineRobotAudioInput* _audioInput = nullptr;
     const CozmoAnimContext*       _context = nullptr;
 
+    CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "DebugFaceDraw", true);
+    
   } // private namespace
 
 
@@ -298,7 +301,10 @@ namespace Messages {
 
     if (buttonReleased)
     {
-      FaceDisplay::GetDebugDraw()->ChangeDrawState();
+      if(kDebugFaceDraw_CycleWithButton)
+      {
+        FaceDisplay::GetDebugDraw()->ChangeDrawState();
+      }
     }
   }
 

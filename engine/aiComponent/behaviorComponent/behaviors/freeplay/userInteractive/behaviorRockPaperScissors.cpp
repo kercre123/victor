@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorRockPaperScissors.h"
 
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/imageTypes.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -28,6 +29,7 @@
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 
 #include "util/console/consoleInterface.h"
@@ -82,6 +84,17 @@ BehaviorRockPaperScissors::~BehaviorRockPaperScissors()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static inline void EnableDebugFaceDrawButton(BehaviorExternalInterface& bei, bool enable)
+{
+  // Gross way to make sure the FaceDebugDraw doesn't hijack the button, using console interface to talk to
+  // animation process
+  using namespace ExternalInterface;
+  const char* enableStr = (enable ? "1" : "0");
+  bei.GetRobotInfo().GetExternalInterface()->Broadcast(MessageGameToEngine(SetAnimDebugConsoleVarMessage("DebugFaceDraw_CycleWithButton",
+                                                                                                         enableStr)));
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRockPaperScissors::OnBehaviorActivated(BehaviorExternalInterface& bei)
 {
   DEV_ASSERT(bei.HasAnimationComponent(), 
@@ -90,6 +103,8 @@ void BehaviorRockPaperScissors::OnBehaviorActivated(BehaviorExternalInterface& b
   DEV_ASSERT(bei.HasVisionComponent(), 
              "BehaviorRockPaperScissors.OnBehaviorActivated.NoVisionComponent");
 
+  EnableDebugFaceDrawButton(bei, false);
+    
   SET_STATE(WaitForButton);
   _humanSelection = Selection::Unknown;
   _robotSelection = Selection::Unknown;
@@ -129,6 +144,7 @@ void BehaviorRockPaperScissors::OnBehaviorActivated(BehaviorExternalInterface& b
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRockPaperScissors::OnBehaviorDeactivated(BehaviorExternalInterface& bei)
 {
+  EnableDebugFaceDrawButton(bei, true);
   // TODO: Restore vision mode (pop schedule?)
 }
 
