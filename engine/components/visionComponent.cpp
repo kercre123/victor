@@ -485,6 +485,15 @@ namespace Cozmo {
             static Vision::ImageRGB screenImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
             _bufferedImg.Resize(screenImg, Vision::ResizeMethod::NearestNeighbor);
 
+            // Flip image around the y axis (before we draw anything on it)
+            cv::flip(screenImg.get_CvMat_(), screenImg.get_CvMat_(), 1);
+
+            for(auto & modFcn : _screenImageModFuncs)
+            {
+              modFcn(screenImg);
+            }
+            _screenImageModFuncs.clear();
+
             static Vision::ImageRGB565 img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
             
             // Use gamma to make it easier to see
@@ -499,10 +508,7 @@ namespace Cozmo {
             }
 
             img565.SetFromImageRGB(screenImg, gammaLUT);
-
-            // Flip image around the y axis
-            cv::flip(img565.get_CvMat_(), img565.get_CvMat_(), 1);
-                      
+          
             animComponent.DisplayFaceImage(img565, ANIM_TIME_STEP_MS, false);
           }
         }
@@ -804,17 +810,15 @@ namespace Cozmo {
         Lock();
         // Clear it when done.
         _currentImg.Clear();
-        _nextImg.Clear();
         Unlock();
-        
-        // Sleep to alleviate pressure on main thread
-        std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
       }
-      else if(!_nextImg.IsEmpty())
+      
+      if(!_nextImg.IsEmpty())
       {
         ANKI_CPU_PROFILE("SwapInNewImage");
         // We have an image waiting to be processed: swap it in (avoid copy)
         Lock();
+        AndroidHAL::getInstance()->CameraSwapLocks();
         std::swap(_currentImg, _nextImg);
         std::swap(_currentPoseData, _nextPoseData);
         _nextImg.Clear();
@@ -2404,26 +2408,34 @@ namespace Cozmo {
     }
   }
   
-  template<>
-  void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
+  void VisionComponent::SetSaveImageParameters(const ImageSendMode saveMode,
+                                               const std::string& path,
+                                               const int8_t onRobotQuality)
   {
     if(nullptr != _visionSystem)
     {
       const std::string cachePath = _robot.GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
 
-      _visionSystem->SetSaveParameters(payload.mode, 
-                                       Util::FileUtils::FullFilePath({cachePath, "images", payload.path}), 
-                                       payload.qualityOnRobot);
+      const std::string fullPath = Util::FileUtils::FullFilePath({cachePath, "images", path});
+      _visionSystem->SetSaveParameters(saveMode, 
+                                       fullPath, 
+                                       onRobotQuality);
 
-      if(payload.mode != ImageSendMode::Off)
+      if(saveMode != ImageSendMode::Off)
       {
         EnableMode(VisionMode::SavingImages, true);  
       }
 
       PRINT_CH_DEBUG("VisionComponent", "VisionComponent.HandleMessage.SaveImages",
-               "Setting image save mode to %s",
-               EnumToString(payload.mode));
+                     "Setting image save mode to %s. Saving to: %s",
+                     EnumToString(saveMode), fullPath.c_str());
     }
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
+  {
+    SetSaveImageParameters(payload.mode, payload.path, payload.qualityOnRobot);
   }
 
   template<>

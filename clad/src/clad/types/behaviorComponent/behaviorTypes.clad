@@ -20,6 +20,7 @@ enum uint_8 BehaviorClass {
   ComeHere,
   CubeLiftWorkout,
   Dance,
+  DevImageCapture,
   DevPettingTestSimple,
   DevTurnInPlaceTest,
   DockingTestSimple,
@@ -343,7 +344,9 @@ enum uint_8 BehaviorID {
   ObservingOnChargerIdle,
 
   ShortLookAroundForFaceAndCube,
-  
+
+  DevImageCapture,
+
   Wait,
   Wait_TestInjectable // BehaviorID used by tests to create fake behaviors
 }
