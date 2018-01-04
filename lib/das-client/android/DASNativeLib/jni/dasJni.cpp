@@ -216,12 +216,13 @@ bool dasPostToServer(const std::string& url, const std::string& postBody, std::s
   jstring jUrl = env->NewStringUTF(url.c_str());
   jstring jPostBody = env->NewStringUTF(postBody.c_str());
 
-  const int buff_size = 1024 * 5;
-  char buff[buff_size];
+  static const int kBuffSize = 1024 * 5;
+  char buff[kBuffSize];
   buff[0] = '\0';
 
   jboolean ret = env->CallStaticBooleanMethod(sDASClass, sPostToServerMethodID, jUrl, jPostBody,
-                                              env->NewDirectByteBuffer(buff, buff_size));
+                                              env->NewDirectByteBuffer(buff, kBuffSize));
+  buff[kBuffSize - 1] = '\0';
 
   const size_t strLen = std::strlen(buff);
   if (strLen > 0) {

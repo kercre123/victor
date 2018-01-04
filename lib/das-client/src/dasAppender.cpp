@@ -195,10 +195,14 @@ bool DasAppender::ConsumeALogFile(const std::string& logFilePath, bool *stop)
   _lastFlushResponse = postResponse;
   // Stop consuming logs if we can't post
   if (success) {
+    const auto previouslyFailed = _lastFlushFailed;
     _lastFlushFailed = false;
-    DASEvent("dasappender.postdasdata.success",
-             "%s %s",
-             logFilePath.c_str(), postResponse.c_str());
+    if (previouslyFailed)
+    {
+      DASEvent("dasappender.postdasdata.success",
+               "%s %s",
+               logFilePath.c_str(), postResponse.c_str());
+    }
   } else {
     *stop = true;
     _lastFlushFailed = true;

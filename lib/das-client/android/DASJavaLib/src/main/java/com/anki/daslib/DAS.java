@@ -153,28 +153,31 @@ public class DAS {
             int length = responseReader.read(responseRaw, 0, maxCharacters);
             responseReader.close();
 
-            String responseString = new String(responseRaw, 0, length);
-
+            String responseString = "";
             Boolean responseContainsError = false;
-            try {
-                XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
-                factory.setNamespaceAware(true);
-                XmlPullParser xpp = factory.newPullParser();
-                xpp.setInput(new StringReader(responseString));
-                int eventType = xpp.getEventType();
-                while (eventType != XmlPullParser.END_DOCUMENT) {
-                    if(eventType == XmlPullParser.START_TAG && xpp.getName() == "ErrorResponse") {
-                        responseContainsError = true;
-                        break;
+            if (length > 0)
+            {
+                responseString = new String(responseRaw, 0, length);
+                try {
+                    XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+                    factory.setNamespaceAware(true);
+                    XmlPullParser xpp = factory.newPullParser();
+                    xpp.setInput(new StringReader(responseString));
+                    int eventType = xpp.getEventType();
+                    while (eventType != XmlPullParser.END_DOCUMENT) {
+                        if(eventType == XmlPullParser.START_TAG && xpp.getName() == "ErrorResponse") {
+                            responseContainsError = true;
+                            break;
+                        }
+                        eventType = xpp.next();
                     }
-                    eventType = xpp.next();
+                } catch (org.xmlpull.v1.XmlPullParserException e) {
+                    responseContainsError = true;
                 }
-            } catch (org.xmlpull.v1.XmlPullParserException e) {
-                responseContainsError = true;
-            }
 
-            out_response5k.put(responseString.getBytes(), 0, length);
-            out_response5k.put((byte)'\0');
+                out_response5k.put(responseString.getBytes(), 0, length);
+                out_response5k.put((byte)'\0');
+            }
 
             if (responseString.isEmpty() || responseContainsError || responseCode < 200 || responseCode > 299) {
                 success = false;
