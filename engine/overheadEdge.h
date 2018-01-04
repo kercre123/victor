@@ -40,9 +40,23 @@ namespace Cozmo {
     bool isBorder; // isBorder: true = detected border; false = reached end of ground plane without detecting a border
   };
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // container of chains
-  using OverheadEdgeChainVector = std::vector<OverheadEdgePointChain>;
-
+  class OverheadEdgeChainVector
+  {
+    std::vector<OverheadEdgePointChain> _chains;
+    
+  public:
+    
+    const std::vector<OverheadEdgePointChain>& GetVector() const { return _chains; }
+    
+    void Clear() { _chains.clear(); }
+    
+    void RemoveChainsShorterThan(const u32 minChainLength);
+    
+    void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder );
+  };
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // information processed for a frame at the given timestamp
   struct OverheadEdgeFrame {
@@ -52,7 +66,8 @@ namespace Cozmo {
     Quad2f groundplane;
     OverheadEdgeChainVector chains;
   };
-    
+  
+  
 } // namespace Cozmo
 } // namespace Anki
 

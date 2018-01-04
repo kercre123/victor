@@ -18,6 +18,7 @@
 #include "basestation/utils/data/dataPlatform.h"
 #include "engine/cozmoContext.h"
 #include "engine/groundPlaneROI.h"
+#include "engine/overheadEdge.h"
 #include "util/fileUtils/fileUtils.h"
 
 #include <opencv2/core.hpp>
@@ -29,7 +30,7 @@ namespace Anki {
 namespace Cozmo {
 
 GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const CozmoContext *context)
-  : _context(context)
+: _context(context)
 {
 
   DEV_ASSERT(context != nullptr, "GroundPlaneClassifier.ContextCantBeNULL");
@@ -80,7 +81,7 @@ GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const Co
 
 Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const VisionPoseData& poseData,
                                      DebugImageList <Vision::ImageRGB>& debugImageRGBs,
-                                     std::list<Poly2f>& outPolygons)
+                                     std::list<OverheadEdgeFrame>& outEdges)
 {
 
   // nothing to do here if there's no ground plane visible
@@ -96,67 +97,90 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   const Matrix_3x3f& H = poseData.groundPlaneHomography;
   const Vision::ImageRGB groundPlaneImage = groundPlaneROI.GetOverheadImage(image, H);
 
-  // TODO This is not working!!!
-//  const Vision::Image visibleMask = groundPlaneROI.GetVisibleOverheadMask(H, image.GetNumCols(), image.GetNumRows());
-
-  // TODO Hacky fallback
-  const Vision::Image visibleMask = groundPlaneImage.Threshold(0, true);
-
-  if (DEBUG_DISPLAY_IMAGES) {
-    debugImageRGBs.emplace_back("OverheadImage", groundPlaneImage);
-//    debugImageRGBs.emplace_back("OverheadImage",visibleMask);
-  }
-
   // STEP 2: Classify the overhead image
   Vision::Image classifiedMask(groundPlaneImage.GetNumRows(), groundPlaneImage.GetNumCols(), u8(0));
   _classifier->classifyImage(groundPlaneImage, classifiedMask);
 
-  // STEP 3: To find the contours only in the right area, invert the mask while applying the overhead mask
-  //         This way obstacles become white and everything else is black
-  // TODO this thing is not working when the head is up and a bit of black shows at the bottom of the plane!!!
-    cv::bitwise_not(classifiedMask.get_CvMat_(),
-                  classifiedMask.get_CvMat_(),
-                  visibleMask.get_CvMat_());
-
-  Vision::ImageRGB colorMask;
-  if (DEBUG_DISPLAY_IMAGES) {
-    // save a copy of the original mask
-    colorMask.SetFromGray(classifiedMask);
-  }
-
-  // STEP 4: Get the bounding box around the objects
-  std::vector<std::vector<cv::Point>> contours;
-  // TODO experiment with CHAIN_APPROX_TC89_L1 or CHAIN_APPROX_TC89_KCOS
-  cv::findContours(classifiedMask.get_CvMat_(), contours, cv::RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-
-  PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.Update.FindContours", "%d contours found", int(contours.size()));
-
-  // STEP 5: Create the polygons with the right metric information
-  // In the overhead image (and mask) 1 pixel == 1 mm. Thanks Andrew!!
-  for (auto& contour : contours) {
-    Poly2f polygon;
-    polygon.reserve(contour.size());
-    for (auto& point : contour) {
-
-      const f32 ground_y = -1*(static_cast<f32>(point.y) - 0.5f*groundPlaneROI.GetWidthFar());
-      const f32 ground_x = static_cast<f32>(point.x) + groundPlaneROI.GetDist(); // Zero is at the center;
-
-      polygon.emplace_back(Point2f(ground_x, ground_y));
+  // STEP 3: Find leading edge in the classified mask (i.e. closest edge of obstacle to robot)
+  OverheadEdgeFrame edgeFrame;
+  OverheadEdgeChainVector& candidateChains = edgeFrame.chains;
+  OverheadEdgePoint edgePoint;
+  const Vision::Image& overheadMask = groundPlaneROI.GetOverheadMask();
+  for(s32 i=0; i<classifiedMask.GetNumRows(); ++i)
+  {
+    const u8* overheadMask_i   = overheadMask.GetRow(i);
+    const u8* classifiedMask_i = classifiedMask.GetRow(i);
+    
+    // Walk along the row and look for the first transition from not
+    // TODO: this is not gonna work in the presence of heavy noise. Will need to clean up the classification with post-processing first.
+    const Point2f& overheadOrigin = groundPlaneROI.GetOverheadImageOrigin();
+    for(s32 j=1; j<classifiedMask.GetNumCols(); ++j)
+    {
+      // *Both* pixels must be *in* the overhead mask so we don't get leading edges of the boundary of
+      // the ground plane quad itself!
+      const bool bothInMask = ((overheadMask_i[j-1] > 0) && (overheadMask_i[j] > 0));
+      if(bothInMask)
+      {
+        // To be a leading edge of an obstacle according to the classifier, first pixel should be "on" (drivable) and
+        // second pixel should be "off" (not drivable)
+        const bool isLeadingEdge = ((classifiedMask_i[j-1]>0) && (classifiedMask_i[j]==0));
+        if(isLeadingEdge)
+        {
+          // Note that rows in ground plane image are robot y, and cols are robot x.
+          // Just need to offset them to the right origin.
+          edgePoint.position.x() = static_cast<f32>(j) + overheadOrigin.x();
+          edgePoint.position.y() = static_cast<f32>(i) + overheadOrigin.y();
+          edgePoint.gradient = 0.f; // TODO: Do we need the gradient for anything?
+          
+          candidateChains.AddEdgePoint(edgePoint, true);
+          
+          // No need to keep looking at this row as soon as a leading edge is found
+          break;
+        }
+      }
     }
-    outPolygons.push_back(polygon);
   }
-
-  if (DEBUG_DISPLAY_IMAGES) {
-    cv::Scalar color(255, 0, 0);
-    cv::drawContours(colorMask.get_CvMat_(),
-                     contours,
-                     -1,
-                     color,
-                     1);
-    debugImageRGBs.emplace_back("ColoredMask", colorMask);
-  }
-
-  if (DEBUG_DISPLAY_IMAGES) {
+  
+  const u32 kMinChainLength_mm = 5;
+  candidateChains.RemoveChainsShorterThan(kMinChainLength_mm);
+  
+  if(DEBUG_DISPLAY_IMAGES)
+  {
+    debugImageRGBs.emplace_back("OverheadImage", groundPlaneImage);
+    
+    Vision::ImageRGB leadingEdgeDisp(classifiedMask);
+    
+    static const std::vector<ColorRGBA> lineColorList = {
+      NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
+      NamedColors::ORANGE, NamedColors::CYAN, NamedColors::YELLOW,
+    };
+    auto color = lineColorList.begin();
+    
+    const Point2f& overheadOrigin = groundPlaneROI.GetOverheadImageOrigin();
+    
+    for (const auto &chain : candidateChains.GetVector())
+    {
+      // Draw line segments between all pairs of points in this chain
+      Anki::Point2f startPoint(chain.points[0].position);
+      startPoint -= overheadOrigin;
+      
+      for (s32 i = 1; i < chain.points.size(); ++i) {
+        Anki::Point2f endPoint(chain.points[i].position);
+        endPoint -= overheadOrigin;
+        
+        leadingEdgeDisp.DrawLine(startPoint, endPoint, *color, 3);
+        std::swap(endPoint, startPoint);
+      }
+      
+      // Switch colors for next segment
+      ++color;
+      if (color == lineColorList.end()) {
+        color = lineColorList.begin();
+      }
+    }
+    
+    debugImageRGBs.emplace_back("LeadingEdges", std::move(leadingEdgeDisp));
+  
     // Draw Ground plane on the image and display it
     Vision::ImageRGB toDisplay;
     image.CopyTo(toDisplay);
@@ -172,6 +196,9 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
     }
   }
 
+  // Actually return the resulting edges in the provided list
+  outEdges.emplace_back(std::move(edgeFrame));
+  
   return RESULT_OK;
 }
 
