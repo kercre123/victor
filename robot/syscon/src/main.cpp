@@ -38,13 +38,10 @@ int main (void) {
                 | (SYSCFG_CFGR1_MEM_MODE_0 * 3)
                 ;
 
-  // Enable clocking to our perfs
-  Power::enableClocking();
   Power::init();
-
+  Analog::init();
   Mics::init();
   Contacts::init();
-  Analog::init();
   Timer::init();
   Comms::init();
   Motors::init();
