@@ -223,6 +223,16 @@ void VizControllerImpl::SetRobotPose(CozmoBotVizParams *p,
   const f32 rot_axis_x, const f32 rot_axis_y, const f32 rot_axis_z, const f32 rot_rad,
   const f32 headAngle, const f32 liftAngle)
 {
+  // Make sure we haven't tried to set these Webots fields in the current time step
+  // (which causes weird behavior due to a Webots R2018a bug with the setSF* functions)
+  // This should be removed once the Webots bug is fixed (COZMO-16021)
+  static double lastUpdateTime = 0.0;
+  const double currTime = _vizSupervisor.getTime();
+  if (FLT_NEAR(currTime, lastUpdateTime)) {
+    return;
+  }
+  lastUpdateTime = currTime;
+  
   if (p) {
     double trans[3] = {x,y,z};
     p->trans->setSFVec3f(trans);
