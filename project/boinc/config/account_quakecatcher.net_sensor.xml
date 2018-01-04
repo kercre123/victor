@@ -1,0 +1,297 @@
+<account>
+    <master_url>http://quakecatcher.net/sensor/</master_url>
+    <authenticator>e509d0cd8f1107c75d4629dc4d83882d</authenticator>
+    <project_name>Quake-Catcher Network</project_name>
+<project_preferences>
+
+<project_specific>
+<quakes>
+<qu001>  5.4|2017/12/14 10:54:28|  35.1651| 101.9135|  15.03|30km W of Duowa, China|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c4i9</qu001>
+<qu002>  5.0|2017/12/14 10:10:33| -19.8582| -70.2648|  10.00|42km NNW of Iquique, Chile|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c4h0</qu002>
+<qu003>  4.6|2017/12/14 10:06:47| -17.1317|-173.9768|  90.00|132km S of Hihifo, Tonga|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c4gu</qu003>
+<qu004>  2.9|2017/12/14 10:05:04|  57.7148|-155.5708|   7.90|97km WNW of Larsen Bay, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17599645</qu004>
+<qu005>  2.7|2017/12/14 09:47:49|  46.8975|-112.5222|  10.64|13km ESE of Lincoln, Montana|https://earthquake.usgs.gov/earthquakes/eventpage/mb80274179</qu005>
+<qu006>  2.5|2017/12/14 09:10:18|  59.0399|-153.0845|  67.90|108km SW of Anchor Point, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17599514</qu006>
+<qu007>  2.9|2017/12/14 08:35:39|  37.2108| -97.8031|   3.44|21km ENE of Anthony, Kansas|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c4d1</qu007>
+<qu008>  2.9|2017/12/14 08:29:22|  37.2013| -97.8061|   5.00|20km ENE of Anthony, Kansas|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c4cx</qu008>
+<qu009>  4.0|2017/12/14 06:36:27|  54.3603|-159.5104|  24.26|47km S of Chernabura Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c4c4</qu009>
+<qu010>  2.6|2017/12/14 05:01:51|  51.5312|-178.3402|  11.50|41km SSW of Tanaga Volcano, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17599150</qu010>
+<qu011>  2.5|2017/12/14 04:59:28|  59.9225|-152.6875|  99.30|50km WNW of Anchor Point, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17599142</qu011>
+<qu012>  2.6|2017/12/14 03:43:10|  59.9495|-152.0930|  52.90|24km NW of Anchor Point, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17599009</qu012>
+<qu013>  4.8|2017/12/14 03:34:15|   1.6228|-102.3301|  10.00|Galapagos Triple Junction region|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c4as</qu013>
+<qu014>  4.9|2017/12/14 02:39:29|  44.0430| 149.3820|  35.43|177km SE of Kuril'sk, Russia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c4af</qu014>
+<qu015>  2.9|2017/12/14 02:03:55|  19.3181| -66.9885|  12.00|90km N of Isabela, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017348002</qu015>
+<qu016>  3.0|2017/12/13 22:02:40|  37.6169|-114.5263|  12.60|1km W of Caliente, Nevada|https://earthquake.usgs.gov/earthquakes/eventpage/nn00615347</qu016>
+<qu017>  3.5|2017/12/13 21:57:05|  63.0418|-156.0797|   8.70|26km WNW of McGrath, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17598423</qu017>
+<qu018>  2.9|2017/12/13 21:42:21|  37.4768|-118.8093|   8.99|15km SW of Toms Place, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72939686</qu018>
+<qu019>  3.2|2017/12/13 21:41:50|  18.0368| -68.6093|  44.00|37km S of Boca de Yuma, Dominican Republic|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017348001</qu019>
+<qu020>  2.5|2017/12/13 21:14:45|  38.2662|-121.8942|  15.24|9km S of Elmira, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72939661</qu020>
+<qu021>  3.8|2017/12/13 21:03:20|  62.5024|-151.7673| 100.90|87km WNW of Talkeetna, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17598404</qu021>
+<qu022>  4.3|2017/12/13 20:57:18|  39.6003|-123.6693|   6.13|19km WSW of Laytonville, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72939656</qu022>
+<qu023>  2.5|2017/12/13 20:11:50|  59.8896|-153.0616| 117.20|68km SSW of Redoubt Volcano, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17598287</qu023>
+<qu024>  3.3|2017/12/13 20:01:48|  59.3458|-150.1354|  15.00|78km ESE of Fritz Creek, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17598286</qu024>
+<qu025>  2.6|2017/12/13 18:12:26|  19.0295|-155.2125|  25.16|34km SE of Pahala, Hawaii|https://earthquake.usgs.gov/earthquakes/eventpage/hv62006361</qu025>
+<qu026>  3.5|2017/12/13 18:12:25|  58.4023|-153.5802|  51.60|91km NW of Kodiak Station, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17598257</qu026>
+<qu027>  2.7|2017/12/13 18:05:59|  18.1875| -67.3965|  14.00|21km SW of Stella, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017348000</qu027>
+<qu028>  4.0|2017/12/13 17:24:26|  45.0353|-122.5993|  17.37|12km S of Molalla, Oregon|https://earthquake.usgs.gov/earthquakes/eventpage/uw61335997</qu028>
+<qu029>  4.6|2017/12/13 17:11:09|   7.3313| -80.9932|  11.89|58km SSW of Las Minas, Panama|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c456</qu029>
+<qu030>  3.1|2017/12/13 14:44:49|  18.3455| -66.0176|  47.00|1km SW of Trujillo Alto, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017347005</qu030>
+<qu031>  2.6|2017/12/13 14:34:28|  36.2607|-120.3628|   8.75|13km N of Coalinga, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72939536</qu031>
+<qu032>  3.6|2017/12/13 14:10:24|  18.4888| -72.9375|  10.00|9km NW of Petit Goave, Haiti|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c439</qu032>
+<qu033>  4.3|2017/12/13 10:54:45|  14.8534| -93.8119|  28.58|112km SSW of Pijijiapan, Mexico|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3z4</qu033>
+<qu034>  6.5|2017/12/13 10:03:42| -54.2156|   2.1483|  10.00|82km WNW of Bouvet Island, Bouvet Island|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3y6</qu034>
+<qu035>  2.8|2017/12/13 09:09:33|  19.4638|-155.8792|  12.84|3km NW of Honaunau-Napoopoo, Hawaii|https://earthquake.usgs.gov/earthquakes/eventpage/hv62005826</qu035>
+<qu036>  4.6|2017/12/13 05:37:31|   2.3965|  98.9461| 135.73|29km S of Parapat, Indonesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3tv</qu036>
+<qu037>  4.4|2017/12/13 02:45:30| -21.4797| -66.6831| 223.61|76km SW of Atocha, Bolivia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3sp</qu037>
+<qu038>  4.6|2017/12/13 01:13:07|  13.2324| 143.8602| 147.27|87km W of Merizo Village, Guam|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3sb</qu038>
+<qu039>  2.7|2017/12/12 23:52:59|  36.6078|-121.2222|   5.26|11km NW of Pinnacles, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72939251</qu039>
+<qu040>  4.8|2017/12/12 23:30:07|  34.9784|  23.7561|  38.63|29km SSE of Palaiochora, Greece|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3ru</qu040>
+<qu041>  2.7|2017/12/12 19:54:18|  61.4700|-146.4311|  21.30|38km N of Valdez, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17596729</qu041>
+<qu042>  2.9|2017/12/12 19:54:10|  61.4726|-146.4856|  21.80|38km N of Valdez, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17596725</qu042>
+<qu043>  3.1|2017/12/12 19:43:55|  18.1115| -65.8203|  67.00|2km ENE of Candelero Arriba, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017347002</qu043>
+<qu044>  2.8|2017/12/12 19:17:23|  56.9320|-155.8294|  10.80|123km N of Chirikof Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17596719</qu044>
+<qu045>  4.5|2017/12/12 18:15:20| -35.2101| -72.7559|  23.77|33km WNW of Constitucion, Chile|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3q1</qu045>
+<qu046>  4.8|2017/12/12 18:00:39|  55.7544| 161.0686| 117.06|102km WSW of Ust'-Kamchatsk Staryy, Russia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3q0</qu046>
+<qu047>  4.6|2017/12/12 17:39:10|   5.6533| -32.6992|  10.00|Central Mid-Atlantic Ridge|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3px</qu047>
+<qu048>  3.0|2017/12/12 17:26:00|  40.2658|-120.3870|   7.87|5km NW of Honey Lake, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72939151</qu048>
+<qu049>  4.3|2017/12/12 16:55:17|  -8.1933| 123.8648| 165.73|131km ENE of Duang, Indonesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3pp</qu049>
+<qu050>  4.3|2017/12/12 16:08:01|  30.7633|  57.2423|  10.00|55km NNE of Kerman, Iran|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3p8</qu050>
+<qu051>  2.8|2017/12/12 15:55:35|  35.4245| -97.9176|   6.47|4km NNE of Union City, Oklahoma|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3p1</qu051>
+<qu052>  3.1|2017/12/12 15:44:53|  40.1287|-108.8258|   5.95|4km NNE of Rangely, Colorado|https://earthquake.usgs.gov/earthquakes/eventpage/uu60262062</qu052>
+<qu053>  4.5|2017/12/12 15:27:37|  30.7750|  57.2939|  10.00|58km NNE of Kerman, Iran|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3nu</qu053>
+<qu054>  4.3|2017/12/12 15:17:38|  24.0458| 122.3034|  19.10|71km E of Hualian, Taiwan|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3nr</qu054>
+<qu055>  5.0|2017/12/12 13:49:41|  30.8658|  57.2854|  10.00|63km SE of Ravar, Iran|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3ms</qu055>
+<qu056>  6.0|2017/12/12 13:41:31|  30.8389|  57.2760|  10.00|64km NNE of Kerman, Iran|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3mi</qu056>
+<qu057>  4.7|2017/12/12 11:55:36|  -7.1185| 130.6478|  81.89|117km NW of Saumlaki, Indonesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3jy</qu057>
+<qu058>  4.3|2017/12/12 09:20:31|  39.6756|  74.1255|  49.49|75km E of Sary-Tash, Kyrgyzstan|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3fj</qu058>
+<qu059>  4.5|2017/12/12 08:50:21|  30.8469|  57.3656|  10.00|68km NNE of Kerman, Iran|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3er</qu059>
+<qu060>  4.3|2017/12/12 07:39:07|  -7.5618| 128.7498| 173.80|286km W of Saumlaki, Indonesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3e4</qu060>
+<qu061>  4.8|2017/12/12 07:34:24|  17.6688| -95.1613| 108.73|25km S of San Juan Evangelista, Mexico|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3dw</qu061>
+<qu062>  4.5|2017/12/12 06:37:52| -14.2206| 165.3312|  10.00|206km WNW of Port-Olry, Vanuatu|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3di</qu062>
+<qu063>  2.9|2017/12/12 05:55:15|  18.0380| -68.2118|  74.00|56km SE of Boca de Yuma, Dominican Republic|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017346004</qu063>
+<qu064>  3.1|2017/12/12 02:44:25|  46.8548|-112.4935|  16.05|18km SE of Lincoln, Montana|https://earthquake.usgs.gov/earthquakes/eventpage/mb80273924</qu064>
+<qu065>  4.2|2017/12/12 01:42:22|  31.0176|  57.2586|  10.00|51km ESE of Ravar, Iran|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3b0</qu065>
+<qu066>  2.5|2017/12/12 01:39:26|  66.2815|-163.4777|  29.70|79km SSW of Kotzebue, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17595960</qu066>
+<qu067>  4.9|2017/12/12 00:53:21|  15.2736| -94.1801|  44.66|90km SSW of Paredon, Mexico|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3al</qu067>
+<qu068>  5.9|2017/12/12 00:43:18|  30.7559|  57.2899|  10.00|56km NNE of Kerman, Iran|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c3ag</qu068>
+<qu069>  3.4|2017/12/12 00:16:23|  54.4760|-134.1300|   3.50|127km SSW of Craig, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17595921</qu069>
+<qu070>  3.1|2017/12/11 23:25:07|  34.1172|-107.0877|   5.00|19km WNW of Socorro, New Mexico|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c391</qu070>
+<qu071>  3.9|2017/12/11 21:00:20|  54.8142|-159.1398|  12.70|27km E of Chernabura Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17595885</qu071>
+<qu072>  2.5|2017/12/11 20:06:53|  58.3062|-137.0862|   0.00|79km W of Gustavus, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17595875</qu072>
+<qu073>  2.7|2017/12/11 19:52:27|  18.1860| -66.8671|  18.00|7km WNW of Adjuntas, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017346000</qu073>
+<qu074>  2.7|2017/12/11 19:47:59|  40.3172|-125.2423|   5.41|81km W of Petrolia, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72938796</qu074>
+<qu075>  2.5|2017/12/11 19:32:37|  18.0161| -66.3140|   2.00|2km ESE of Mariano Colon, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017346002</qu075>
+<qu076>  4.5|2017/12/11 18:23:09|  -7.2203| 107.0503|  94.67|2km N of Gunungwaru Satu, Indonesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c35s</qu076>
+<qu077>  2.8|2017/12/11 18:18:10|  18.3175| -68.6283|  92.00|7km SSW of Boca de Yuma, Dominican Republic|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017346001</qu077>
+<qu078>  2.5|2017/12/11 17:57:47|  59.9446|-153.3251| 137.20|68km SSW of Redoubt Volcano, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17595848</qu078>
+<qu079>  3.7|2017/12/11 17:02:09|  64.4340|-162.5271|  12.48|105km NW of Unalakleet, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c34u</qu079>
+<qu080>  2.6|2017/12/11 16:11:28|  36.5179| -99.0950|   9.17|13km NE of Mooreland, Oklahoma|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c34c</qu080>
+<qu081>  4.5|2017/12/11 15:41:55|  18.3694| 145.6366| 187.09|31km NNW of Pagan, Northern Mariana Islands|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c33x</qu081>
+<qu082>  3.7|2017/12/11 14:19:19|  53.6811|-159.0179|  10.00|128km SSE of Chernabura Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c45e</qu082>
+<qu083>  4.2|2017/12/11 13:20:37| -24.0015| -66.9973| 226.95|73km WNW of San Antonio de los Cobres, Argentina|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c30a</qu083>
+<qu084>  2.8|2017/12/11 12:39:25|  56.4532|-158.4571|   8.30|28km NE of Chignik Lake, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17595708</qu084>
+<qu085>  3.0|2017/12/11 12:06:26|  52.3739|-170.3828|  32.70|35km SE of Yunaska Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17598047</qu085>
+<qu086>  4.0|2017/12/11 11:40:24| -19.7123| -71.1475|  10.00|119km WNW of Iquique, Chile|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2yq</qu086>
+<qu087>  4.9|2017/12/11 11:16:37| -30.0238|-177.9121|  37.33|83km S of Raoul Island, New Zealand|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2yx</qu087>
+<qu088>  5.5|2017/12/11 11:00:55| -19.7212| -71.0699|   7.61|111km WNW of Iquique, Chile|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2xt</qu088>
+<qu089>  5.6|2017/12/11 09:29:10| -14.3509| 167.4548| 187.30|52km S of Sola, Vanuatu|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2vg</qu089>
+<qu090>  4.6|2017/12/11 08:49:49|  11.8080|  93.8524| 139.83|121km E of Port Blair, India|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2v8</qu090>
+<qu091>  2.7|2017/12/11 08:39:15|  19.3495|-155.2162|   7.61|9km SSE of Volcano, Hawaii|https://earthquake.usgs.gov/earthquakes/eventpage/hv62003756</qu091>
+<qu092>  4.7|2017/12/11 06:42:40|  35.0189|  45.7340|  12.99|28km SW of Halabjah, Iraq|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2ug</qu092>
+<qu093>  4.6|2017/12/11 06:11:19|   1.7287| 127.3479| 101.91|73km W of Tobelo, Indonesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2uf</qu093>
+<qu094>  5.4|2017/12/11 06:09:57|  35.0640|  45.7453|  16.98|25km WSW of Halabjah, Iraq|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2ue</qu094>
+<qu095>  5.6|2017/12/11 02:50:00| -20.8127|-173.5930|  10.00|137km SE of Pangai, Tonga|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2te</qu095>
+<qu096>  2.5|2017/12/11 02:34:03|  53.3655|-163.6473|  28.60|164km ESE of Akutan, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17598025</qu096>
+<qu097>  3.6|2017/12/11 01:09:49|  55.3237|-157.2083|  38.80|114km WSW of Chirikof Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17582327</qu097>
+<qu098>  3.2|2017/12/10 22:43:06|  40.1033|-122.0580|  18.94|9km ENE of Gerber, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72938316</qu098>
+<qu099>  2.7|2017/12/10 22:28:20|  40.5888|-121.7918|  17.63|12km NW of Viola, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72938311</qu099>
+<qu100>  2.6|2017/12/10 22:05:52|  18.2703| -66.1131|  20.00|1km NW of Aguas Buenas, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017345001</qu100>
+<qu101>  2.8|2017/12/10 20:29:03|  52.5389|-163.0216|  10.00|255km SE of Akutan, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c44v</qu101>
+<qu102>  4.7|2017/12/10 19:35:13|  25.6900|  90.8336|  10.00|Meghalaya, India region|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2rj</qu102>
+<qu103>  4.6|2017/12/10 19:27:22| -41.1551|  44.2457|  10.00|Crozet Islands region|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2ri</qu103>
+<qu104>  4.9|2017/12/10 19:01:01|  31.5107| 141.8739|  10.00|261km SE of Hachijo-jima, Japan|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2rf</qu104>
+<qu105>  4.7|2017/12/10 16:21:59| -19.2385| -70.2521|  61.63|84km S of Arica, Chile|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2qm</qu105>
+<qu106>  2.5|2017/12/10 16:13:36|  19.4610|-154.8817|   1.75|3km ESE of Leilani Estates, Hawaii|https://earthquake.usgs.gov/earthquakes/eventpage/hv62003236</qu106>
+<qu107>  3.5|2017/12/10 16:04:04|  61.5849|-150.6010|   6.80|35km W of Big Lake, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17575024</qu107>
+<qu108>  2.7|2017/12/10 15:30:37|  18.6321| -67.2066|  75.00|25km NW of San Antonio, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017344006</qu108>
+<qu109>  4.4|2017/12/10 14:58:56|  34.4228|  78.6570|  36.38|102km ENE of Leh, India|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2q3</qu109>
+<qu110>  3.3|2017/12/10 14:28:18|  19.1298| -65.9688|  77.00|74km N of San Juan, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017344007</qu110>
+<qu111>  4.9|2017/12/10 10:55:16| -15.2453|-173.2207|  35.31|96km NE of Hihifo, Tonga|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2ne</qu111>
+<qu112>  2.5|2017/12/10 10:39:29|  36.6155|-121.2233|   5.62|12km NW of Pinnacles, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72938116</qu112>
+<qu113>  4.1|2017/12/10 10:27:55|  52.7502|-167.5586|  47.20|90km ESE of Nikolski, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2n0</qu113>
+<qu114>  2.6|2017/12/10 10:17:46|  63.5230|-147.4851|   8.10|83km ENE of Cantwell, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17572151</qu114>
+<qu115>  5.3|2017/12/10 09:30:14| -21.4756| 168.3516|  10.00|49km E of Tadine, New Caledonia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2mh</qu115>
+<qu116>  2.5|2017/12/10 08:05:49|  36.6163|-121.2267|   5.02|12km NW of Pinnacles, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72938076</qu116>
+<qu117>  3.0|2017/12/10 07:39:34|  60.2570|-150.9955|  60.30|24km SE of Cohoe, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17570712</qu117>
+<qu118>  4.0|2017/12/10 06:12:54| -22.8287| -68.8743| 111.01|40km S of Calama, Chile|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2l6</qu118>
+<qu119>  2.8|2017/12/10 05:55:38|  51.9020|-179.4626|  68.90|64km E of Semisopochnoi Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17598223</qu119>
+<qu120>  4.4|2017/12/10 05:52:52| -21.6544| -68.7873| 113.99|91km N of Calama, Chile|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2l4</qu120>
+<qu121>  2.6|2017/12/10 05:32:27|  51.1771|-179.1689|  34.70|10km SSW of Amatignak Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17598222</qu121>
+<qu122>  3.3|2017/12/10 04:34:54|  51.2393|-178.9313|  11.00|12km ESE of Amatignak Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17567890</qu122>
+<qu123>  3.2|2017/12/10 04:28:55|  64.6459|-151.2378|  16.10|48km SW of Manley Hot Springs, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17567882</qu123>
+<qu124>  3.3|2017/12/10 04:02:45|  36.6881| -98.4166|   5.00|9km SW of Cherokee, Oklahoma|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2km</qu124>
+<qu125>  3.1|2017/12/10 03:50:47|  36.5017| -98.4615|   5.00|17km WSW of Helena, Oklahoma|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2kk</qu125>
+<qu126>  3.1|2017/12/10 00:35:28|  18.9450| -66.3108|  37.00|44km N of Brenas, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017344004</qu126>
+<qu127>  2.6|2017/12/10 00:24:11|  53.4098|-163.3009|   6.80|160km S of False Pass, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17598202</qu127>
+<qu128>  3.0|2017/12/09 22:42:00|  17.8718| -65.5583|  60.00|6km SE of Esperanza, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017344003</qu128>
+<qu129>  3.0|2017/12/09 22:05:13|  51.3568|-168.4463|  20.00|178km S of Nikolski, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17598193</qu129>
+<qu130>  5.3|2017/12/09 21:57:58| -48.2564| 104.4908|  10.00|Southeast Indian Ridge|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2jd</qu130>
+<qu131>  4.4|2017/12/09 21:33:09|   6.7734| -72.9703| 151.55|10km NNE of Aratoca, Colombia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2jb</qu131>
+<qu132>  2.5|2017/12/09 20:33:03|  46.2770|-111.3720|   4.92|12km ESE of Townsend, Montana|https://earthquake.usgs.gov/earthquakes/eventpage/mb80273749</qu132>
+<qu133>  3.0|2017/12/09 19:42:02|  37.7873|-108.0831|   2.68|25km SW of Mountain Village, Colorado|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2iw</qu133>
+<qu134>  2.5|2017/12/09 19:27:08|  37.7708|-108.0761|   3.33|26km SW of Mountain Village, Colorado|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2iq</qu134>
+<qu135>  2.9|2017/12/09 19:09:28|  37.6580|-108.1102|   5.00|37km SW of Mountain Village, Colorado|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2im</qu135>
+<qu136>  4.9|2017/12/09 18:58:44|  52.2080|-167.1628|   7.98|141km SE of Nikolski, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2ig</qu136>
+<qu137>  2.5|2017/12/09 18:28:18|  52.5231|-168.8026|  41.00|46km S of Nikolski, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17598172</qu137>
+<qu138>  2.8|2017/12/09 18:26:31|  37.8056|-108.0717|   5.48|23km SW of Mountain Village, Colorado|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2i8</qu138>
+<qu139>  4.5|2017/12/09 18:09:30| -36.0380| -73.0078|  33.55|62km W of Cauquenes, Chile|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2i0</qu139>
+<qu140>  2.5|2017/12/09 17:53:05|  18.1006| -67.2928|  15.00|11km WNW of Puerto Real, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017344002</qu140>
+<qu141>  4.4|2017/12/09 17:28:48| -24.1889| -67.1447| 202.50|83km W of San Antonio de los Cobres, Argentina|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2hx</qu141>
+<qu142>  2.6|2017/12/09 17:22:06|  19.3918| -68.5771|  51.00|67km NE of Miches, Dominican Republic|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017344001</qu142>
+<qu143>  2.8|2017/12/09 14:25:53|  36.0330| -97.9096|   2.15|8km S of Hennessey, Oklahoma|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2gp</qu143>
+<qu144>  3.5|2017/12/09 12:45:24|  33.4987|-116.8007|   5.29|9km NE of Aguanga, CA|https://earthquake.usgs.gov/earthquakes/eventpage/ci37826343</qu144>
+<qu145>  4.3|2017/12/09 11:01:49|  -8.6509| 133.9929|  14.06|Arafura Sea|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2fc</qu145>
+<qu146>  2.5|2017/12/09 10:50:49|  19.2027|-155.4013|  32.84|8km E of Pahala, Hawaii|https://earthquake.usgs.gov/earthquakes/eventpage/hv62001811</qu146>
+<qu147>  2.5|2017/12/09 10:50:20|  51.5771|-175.0052|  25.60|88km SW of Atka, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17559387</qu147>
+<qu148>  2.5|2017/12/09 10:41:46|  51.6311|-175.0018|  25.60|83km SW of Atka, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17596274</qu148>
+<qu149>  4.9|2017/12/09 10:37:36|  51.7626|-175.1293|  51.72|79km SW of Atka, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2f3</qu149>
+<qu150>  2.7|2017/12/09 10:34:49|  51.3594|-178.5659|  25.60|39km ENE of Amatignak Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17559373</qu150>
+<qu151>  2.7|2017/12/09 09:30:10|  19.7820| -67.9618|  33.00|140km NNE of Punta Cana, Dominican Republic|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017343004</qu151>
+<qu152>  2.5|2017/12/09 08:16:04|  38.7452|-122.6942|   0.37|3km S of Anderson Springs, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72937616</qu152>
+<qu153>  2.6|2017/12/09 08:10:47|  19.6251| -68.6350|  33.00|83km NNE of Miches, Dominican Republic|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017343003</qu153>
+<qu154>  2.5|2017/12/09 07:47:19|  60.3210|-152.3467|  85.90|30km SE of Redoubt Volcano, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17556586</qu154>
+<qu155>  4.5|2017/12/09 07:29:53|   9.6188| -78.9168|  51.34|7km NE of El Porvenir, Panama|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2dx</qu155>
+<qu156>  6.1|2017/12/09 07:14:24|  10.0901| 140.2081|  10.00|49km NW of Fais, Micronesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2du</qu156>
+<qu157>  3.1|2017/12/09 05:21:37|  19.2178| -66.2328|  89.00|83km N of Brenas, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017343002</qu157>
+<qu158>  2.9|2017/12/09 03:32:48|  51.8376| 179.7202| 117.30|15km SSE of Semisopochnoi Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17553797</qu158>
+<qu159>  3.9|2017/12/09 03:00:46|  51.4015|-176.1060|  25.60|65km SE of Adak, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17552423</qu159>
+<qu160>  4.6|2017/12/09 02:43:08|  33.4741|  76.9222|  28.99|98km SW of Leh, India|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2cc</qu160>
+<qu161>  2.8|2017/12/09 01:36:53|  61.0964|-149.2259|   9.70|39km ESE of Anchorage, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17552391</qu161>
+<qu162>  3.4|2017/12/09 01:28:18|  53.4537|-165.8126|  32.50|66km SE of Unalaska, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17552385</qu162>
+<qu163>  3.6|2017/12/09 00:47:12|  19.0055| -64.4738|  97.00|66km NNE of Road Town, British Virgin Islands|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017343001</qu163>
+<qu164>  2.6|2017/12/09 00:29:07|  51.1514| 179.3139|  21.00|91km SSW of Semisopochnoi Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17551001</qu164>
+<qu165>  3.0|2017/12/08 23:48:46|  51.9689|-169.3129|  35.30|112km SSW of Nikolski, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17550993</qu165>
+<qu166>  2.9|2017/12/08 23:45:30|  62.1426|-141.5566|  12.90|151km SSE of Tok, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17550980</qu166>
+<qu167>  4.7|2017/12/08 23:39:13|  10.9462| 124.9784|  53.59|1km NNW of Cabacungan, Philippines|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2bw</qu167>
+<qu168>  2.9|2017/12/08 23:35:30|  34.1670|-117.2502|   3.21|6km NE of San Bernardino, CA|https://earthquake.usgs.gov/earthquakes/eventpage/ci37825991</qu168>
+<qu169>  4.0|2017/12/08 23:33:33|  17.3583| -62.7848| 165.10|5km W of Cayon, Saint Kitts and Nevis|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2bq</qu169>
+<qu170>  2.5|2017/12/08 22:21:09|  57.1708|-155.2979|   1.00|89km WSW of Larsen Bay, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17549609</qu170>
+<qu171>  4.3|2017/12/08 20:54:48|  33.2173| 137.7177| 329.35|160km SSW of Oyama, Japan|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c2az</qu171>
+<qu172>  2.6|2017/12/08 20:03:58|  56.7784|-156.0114|  69.50|108km NNW of Chirikof Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17548218</qu172>
+<qu173>  3.0|2017/12/08 18:51:24|  33.1432|-116.4750|  10.20|14km ENE of Julian, CA|https://earthquake.usgs.gov/earthquakes/eventpage/ci37825847</qu173>
+<qu174>  3.5|2017/12/08 18:27:47|  37.5502|-118.8065|   3.53|11km W of Toms Place, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72937211</qu174>
+<qu175>  4.5|2017/12/08 18:21:35| -24.0680| -66.5354| 189.05|27km NW of San Antonio de los Cobres, Argentina|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c29u</qu175>
+<qu176>  4.8|2017/12/08 17:15:22| -15.7160| 167.7180| 133.34|52km NE of Norsup, Vanuatu|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c29n</qu176>
+<qu177>  5.7|2017/12/08 15:42:10| -16.1312|-173.9502| 129.33|29km SW of Hihifo, Tonga|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c286</qu177>
+<qu178>  3.5|2017/12/08 14:52:53|  37.5498|-118.8073|   3.18|11km W of Toms Place, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72937051</qu178>
+<qu179>  3.8|2017/12/08 14:19:17|  37.5473|-118.8103|   2.84|12km W of Toms Place, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72937001</qu179>
+<qu180>  2.8|2017/12/08 12:56:44|  40.5722|-124.0507|  28.17|5km NE of Hydesville, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72936941</qu180>
+<qu181>  2.5|2017/12/08 12:42:58|  19.5118|-155.2688|   4.00|9km NNW of Volcano, Hawaii|https://earthquake.usgs.gov/earthquakes/eventpage/hv62000821</qu181>
+<qu182>  3.2|2017/12/08 11:44:49|  57.8901|-138.2278|  24.04|157km WSW of Gustavus, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c253</qu182>
+<qu183>  3.9|2017/12/08 10:53:02|  57.8161|-157.5189| 180.30|109km SSW of King Salmon, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17538442</qu183>
+<qu184>  2.8|2017/12/08 10:45:36|  59.0183|-137.8662|   3.95|121km ESE of Yakutat, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c24l</qu184>
+<qu185>  3.1|2017/12/08 10:21:21|  60.8968|-150.6136| 127.00|40km NNE of Sterling, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17538431</qu185>
+<qu186>  2.8|2017/12/08 10:21:20|  60.8520|-150.2760|  37.00|44km SSW of Anchorage, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17538426</qu186>
+<qu187>  4.5|2017/12/08 09:37:30|   3.3093|  97.5447|  79.03|107km WNW of Kabanjahe, Indonesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c23v</qu187>
+<qu188>  3.7|2017/12/08 09:06:26|  37.5513|-118.8155|   2.91|12km W of Toms Place, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72936861</qu188>
+<qu189>  2.7|2017/12/08 09:03:42|  53.0622|-166.8197|  25.60|92km SSW of Unalaska, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17538412</qu189>
+<qu190>  2.8|2017/12/08 08:43:11|  19.2366| -67.3191|  50.00|85km NNW of San Antonio, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017342003</qu190>
+<qu191>  4.4|2017/12/08 08:22:45| -23.1850| -66.7547| 234.45|108km W of El Aguilar, Argentina|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c22r</qu191>
+<qu192>  4.5|2017/12/08 08:17:39|   0.3102| 124.9637| 127.65|78km SE of Modayag, Indonesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c22q</qu192>
+<qu193>  2.7|2017/12/08 06:58:23|  55.3869|-158.5371|  25.70|93km NE of Chernabura Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17535720</qu193>
+<qu194>  2.9|2017/12/08 05:51:28|  61.8079|-149.5305|   0.30|17km WNW of Fishhook, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17535705</qu194>
+<qu195>  4.2|2017/12/08 04:38:30|  30.7804|  57.2258|  10.00|56km NNE of Kerman, Iran|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c205</qu195>
+<qu196>  4.9|2017/12/08 04:38:15| -22.1154|-179.4435| 577.12|179km SSW of Ndoi Island, Fiji|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c204</qu196>
+<qu197>  4.9|2017/12/08 04:06:15|   9.9537| 140.2558|  10.00|35km NW of Fais, Micronesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c202</qu197>
+<qu198>  4.7|2017/12/08 03:22:35|   5.7998| 127.0556|  59.62|115km ESE of Pondaguitan, Philippines|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1zx</qu198>
+<qu199>  2.7|2017/12/08 03:21:53|  51.8072|-174.8376|  45.90|61km SW of Atka, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17533041</qu199>
+<qu200>  4.9|2017/12/08 02:50:30|  10.1661| 140.2017|  10.00|56km NW of Fais, Micronesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1zv</qu200>
+<qu201>  6.4|2017/12/08 01:51:10|  10.0090| 140.1315|  20.27|50km WNW of Fais, Micronesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1zn</qu201>
+<qu202>  4.0|2017/12/08 01:28:44| -40.3527| -72.6550|  74.97|26km E of Rio Bueno, Chile|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1zj</qu202>
+<qu203>  2.8|2017/12/08 00:57:40|  60.2416|-150.9326|  52.70|27km SE of Cohoe, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17531676</qu203>
+<qu204>  3.1|2017/12/08 00:44:21|  34.0952|-118.6710|  15.17|6km W of Topanga, CA|https://earthquake.usgs.gov/earthquakes/eventpage/ci37825247</qu204>
+<qu205>  4.2|2017/12/07 23:39:48|  34.7206|  45.8741|  10.00|28km N of Sarpol-e Zahab, Iran|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1za</qu205>
+<qu206>  3.2|2017/12/07 23:28:41|  18.8535| -67.2411|   7.00|42km NNW of San Antonio, Puerto Rico|https://earthquake.usgs.gov/earthquakes/eventpage/pr2017342000</qu206>
+<qu207>  4.3|2017/12/07 22:07:47| -29.8863| -72.0558|  26.10|69km W of Coquimbo, Chile|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1yt</qu207>
+<qu208>  2.7|2017/12/07 21:48:08|  35.4213| -98.1017|   5.00|14km WNW of Union City, Oklahoma|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1yj</qu208>
+<qu209>  5.5|2017/12/07 21:37:54|   9.9851| 140.1236|  10.00|49km WNW of Fais, Micronesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1yh</qu209>
+<qu210>  4.5|2017/12/07 21:20:41|  36.3114|  27.6140|  10.00|23km WNW of Emponas, Greece|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1yf</qu210>
+<qu211>  4.4|2017/12/07 21:06:18| -22.8867| -66.9612| 249.49|128km E of San Pedro de Atacama, Chile|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1yd</qu211>
+<qu212>  2.6|2017/12/07 20:56:21|  19.4498|-155.2783|   2.21|4km WNW of Volcano, Hawaii|https://earthquake.usgs.gov/earthquakes/eventpage/hv62000036</qu212>
+<qu213>  4.9|2017/12/07 19:44:29|  24.4062| 122.4630|  71.93|54km W of Yonakuni, Japan|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1xu</qu213>
+<qu214>  4.9|2017/12/07 18:51:19|  27.7986|  86.1812|  10.00|25km SSW of Zuobude, China|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1xk</qu214>
+<qu215>  4.7|2017/12/07 18:11:23|  10.0099| 140.3600|  20.78|32km NNW of Fais, Micronesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1xg</qu215>
+<qu216>  6.2|2017/12/07 18:09:59| -30.7958|-178.6480|  10.00|74km NNE of L'Esperance Rock, New Zealand|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1xc</qu216>
+<qu217>  4.1|2017/12/07 17:55:01|  35.0761|  45.7813|  10.00|21km WSW of Halabjah, Iraq|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1x9</qu217>
+<qu218>  2.6|2017/12/07 16:28:02|  62.5052|-149.2896|  51.50|47km ENE of Talkeetna, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17523742</qu218>
+<qu219>  6.4|2017/12/07 16:22:54|  10.1164| 140.2197|  12.79|50km NW of Fais, Micronesia|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1wt</qu219>
+<qu220>  2.5|2017/12/07 16:12:33|  38.7763|-122.7462|   0.09|1km E of The Geysers, CA|https://earthquake.usgs.gov/earthquakes/eventpage/nc72936566</qu220>
+<qu221>  2.8|2017/12/07 15:36:22|  52.1848|-170.3265|  25.60|55km SSE of Yunaska Island, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17595802</qu221>
+<qu222>  4.9|2017/12/07 15:16:34|  47.4577| 152.8896|  20.77|Kuril Islands|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1wd</qu222>
+<qu223>  5.3|2017/12/07 15:10:00| -15.2772|-173.4664|  10.00|80km NNE of Hihifo, Tonga|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1w5</qu223>
+<qu224>  2.9|2017/12/07 15:09:58|  51.8917|-177.1004|  95.10|30km W of Adak, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17522444</qu224>
+<qu225>  5.1|2017/12/07 15:01:57| -16.5312| 176.0290|  10.00|194km NW of Lautoka, Fiji|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1w0</qu225>
+<qu226>  3.5|2017/12/07 14:32:12|  64.8516|  25.2895|  10.00|5km ENE of Lumijoki, Finland|https://earthquake.usgs.gov/earthquakes/eventpage/us2000c1vm</qu226>
+<qu227>  2.7|2017/12/07 13:20:57|  51.5698|-168.5054|  25.60|154km S of Nikolski, Alaska|https://earthquake.usgs.gov/earthquakes/eventpage/ak17595791</qu227>
+</quakes>
+<quakes>
+<wequ001>  9.5|1960/05/22 19:11:14|  -38.24|-73.05 |   0.0|Chile, #1|http://earthquake.usgs.gov/regional/world/events/1960_05_22.php</wequ001>
+<wequ002>  9.2|1964/03/28 03:36:14|  61.02 |-147.65|   0.0|Prince William Sound, Alaska, #2|http://earthquake.usgs.gov/regional/states/events/1964_03_28.php</wequ002>
+<wequ003>  9.1|2004/12/26 00:58:53|  3.30  |95.78  |   0.0|West Coast, Northern Sumatra, #3|http://earthquake.usgs.gov/eqcenter/eqinthenews/2004/usslav/</wequ003>
+<wequ004>  9.0|1952/11/04 16:58:26|  52.76 |160.06 |   0.0|Kamchatka, #4|http://earthquake.usgs.gov/regional/world/events/1952_11_04.php</wequ004>
+<wequ005>  9.0|2011/03/11 05:46:23|  38.322|142.369|  32.0|East Coast of Honshu Japan, #5|http://earthquake.usgs.gov/earthquakes/eqinthenews/2011/usc0001xgp/</wequ005>
+<wequ006>  8.8|2010/02/27 06:34:14| -35.846|-72.719|  35.0|Offshore Maule, Chile, #6|http://earthquake.usgs.gov/earthquakes/eqinthenews/2010/us2010tfan</wequ006>
+<wequ007>  8.8|1906/01/31 15:35:00|  1.0   |-81.5  |   0.0|Off the Coast of Ecuador, #7|http://earthquake.usgs.gov/regional/world/events/1906_01_31.php</wequ007>
+<wequ008>  8.7|1965/02/04 05:01:00|  51.21 |178.50 |   0.0|Rat Islands, Alaska, #8|http://earthquake.usgs.gov/regional/states/events/1965_02_04.php</wequ008>
+<wequ009>  8.6|2005/03/28 16:09:36|  2.08  |97.01  |   0.0|Northern Sumatra, Indonesia, #9|http://earthquake.usgs.gov/eqcenter/eqinthenews/2005/usweax/</wequ009>
+<wequ010>  8.6|1950/08/15 14:09:00|  28.5  |96.5   |   0.0|Assam, Tibet, #10|http://earthquake.usgs.gov/regional/world/events/1950_08_15.php</wequ010>
+<wequ011>  8.6|1957/03/09 14:22:31|  51.56 |-175.39|   0.0|Andreanof Islands, Alaska, #11|http://earthquake.usgs.gov/regional/states/events/1957_03_09.php</wequ011>
+<wequ012>  8.6|1938/02/01 19:04:00|  -5.05 |131.62 |   0.0|Banda Sea, Indonesia, #12|http://earthquake.usgs.gov/regional/world/events/1938_02_01.php</wequ012>
+<wequ013>  8.5|1923/02/03 00:00:00|  54.0  |161.0  |   0.0|Kamchatka, #13|http://earthquake.usgs.gov/regional/world/10_largest_world.php</wequ013>
+<wequ014>  8.5|1922/11/11 04:32:00|  -28.55|-70.5  |   0.0|Chile-Argentina Border, #14|http://earthquake.usgs.gov/regional/world/events/1922_11_11.php</wequ014>
+<wequ015>  8.5|1963/10/13 00:00:00|  44.9  |149.6  |   0.0|Kuril Islands, #15|http://earthquake.usgs.gov/regional/world/10_largest_world.php</wequ015>
+</quakes>
+
+<qlatlng>
+  <qlllat>0.000000</qlllat>
+  <qlllng>0.000000</qlllng>
+  <qlllvv>0.000000</qlllvv>
+  <qlllvt>0</qlllvt>
+  <qllal>0</qllal>
+</qlatlng>
+</project_specific>
+</project_preferences>
+<gui_urls>
+
+   <gui_url>
+       <name>QCN Home Page</name>
+       <description>The home page for the Quake-Catcher network</description>
+       <url>http://quakecatcher.net</url>
+   </gui_url>
+   <gui_url>
+       <name>Your QCN Account</name>
+       <description>Your account data for the Quake-Catcher Network</description>
+       <url>http://quakecatcher.net/sensor/home.php</url>
+   </gui_url>
+   <gui_url>
+       <name>Message Boards</name>
+       <description>Help Desk and Message Board for QCN Participants</description>
+       <url>http://quakecatcher.net/sensor/forum_index.php</url>
+   </gui_url>
+   <gui_url>
+       <name>Computer Location Info</name>
+       <description>View/set location (lat/long) info for this computer</description>
+       <url>http://quakecatcher.net/sensor/edit_host_info_form.php?hostid=74468</url>
+   </gui_url>
+   <gui_url>
+       <name>Computer Triggers</name>
+       <description>View recent triggers for this computer</description>
+       <url>http://quakecatcher.net/sensor/trigger.php?hostid=74468</url>
+   </gui_url>
+   <gui_url>
+       <name>Trigger Map</name>
+       <description>View QCN triggers on an interactive map</description>
+       <url>http://quakecatcher.net/sensor/maptrig.php?hostid=74468&amp;zoom=16&amp;timeint=D</url>
+   </gui_url>
+</gui_urls>
+</account>

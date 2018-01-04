@@ -1,0 +1,13 @@
+<cc_config>
+  <log_flags>
+    <benchmark_debug>1</benchmark_debug>
+    <file_xfer_debug>1</file_xfer_debug>
+    <mem_usage_debug>1</mem_usage_debug>
+    <network_status_debug>1</network_status_debug>
+    <state_debug>1</state_debug>
+    <task_debug>1</task_debug>
+  </log_flags>
+  <options>
+    <allow_remote_gui_rpc>1</allow_remote_gui_rpc>
+  </options>
+</cc_config>
