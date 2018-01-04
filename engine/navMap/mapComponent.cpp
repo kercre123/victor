@@ -957,38 +957,6 @@ void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, INavMap* map
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::AddDetectedObstacles(const std::list<Poly2f>& polys)
-{
-  INavMap* memoryMap = GetCurrentMemoryMap();
-  if( nullptr != memoryMap )
-  {
-    Transform2d robotTransform(_robot->GetPose().GetRotationAngle<'Z'>(), _robot->GetPose().GetTranslation());
-    for (const Poly2f& obs : polys)
-    {
-      // transform poly to robot frame
-      Poly2f globalObs;
-      for (const Point2f& p : obs)
-      {
-        // Point2f newP = robotTransform * p;
-        globalObs.emplace_back(robotTransform * p);
-        // PRINT_NAMED_WARNING("MapComponent.AddDetectedObstacles.AddingObstacle",
-        //               "Adding obstacles with gobal (%.2f %.2f) local (%.2f %.2f)", 
-        //               newP.x(), newP.y(),  p.x(), p.y());
-      }
-
-      // PRINT_NAMED_WARNING("MapComponent.AddDetectedObstacles.AddingObstacle",
-      //                 "Adding obstacles with %d points", int(obs.size()));
-      MemoryMapData_ProxObstacle data({0.,0.}, _robot->GetLastImageTimeStamp());
-      memoryMap->Insert(globalObs, data);
-   
-      // (mrw: do I need to do this?)
-      // store in as a reported pose
-      // _reportedPoses[objectId][originID] = PoseInMapInfo(newPoseWrtOrigin, true);
-    }
-  }
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::AddDetectedObstacles(const OverheadEdgeFrame& edgeObstacles)
 {
   // TODO: Do something different with these vs. "interesting" overhead edges?
