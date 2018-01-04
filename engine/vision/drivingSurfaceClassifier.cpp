@@ -24,7 +24,7 @@
 // support macro
 #define GET_JSON_PARAMETER(__config, __paramname, __variable) \
   if (! JsonTools::GetValueOptional(__config, __paramname, __variable)) { \
-    PRINT_NAMED_WARNING("GMMDrivingSurfaceClassifier.MissingJsonParameter", "Missing parameter %s", __paramname); \
+    PRINT_NAMED_WARNING("DrivingSurfaceClassifier.MissingJsonParameter", "Missing parameter %s", __paramname); \
   }
 
 namespace Anki {
