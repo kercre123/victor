@@ -114,7 +114,7 @@ void BehaviorRockPaperScissors::OnBehaviorActivated(BehaviorExternalInterface& b
   visionComponent.EnableMode(VisionMode::DetectingGeneralObjects, false);
   
   // DEBUG:
-  bei.GetRobotAudioClient().SetRobotMasterVolume(0.5f);
+  bei.GetRobotAudioClient().SetRobotMasterVolume(0.9f);
   
   if(_displayImages.empty())
   {
@@ -153,11 +153,11 @@ static IActionRunner* CreateLiftAction(const f32 height)
 {
   const float kTolerance_mm = 15.f; // just want movement, not accuracy that slows us down
   MoveLiftToHeightAction* action = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK+height, kTolerance_mm);
-  //const float kMoveDuration_sec = 0.1f;
-  //upAction->SetDuration(kMoveDuration_sec);
+  const float kMoveDuration_sec = 0.1f;
+  action->SetDuration(kMoveDuration_sec);
   action->SetWaitUntilMovementStops(false);
-  action->SetMaxLiftSpeed(MAX_LIFT_SPEED_RAD_PER_S);
-  action->SetLiftAccel(MAX_LIFT_ACCEL_RAD_PER_S2);
+  //action->SetMaxLiftSpeed(MAX_LIFT_SPEED_RAD_PER_S);
+  //action->SetLiftAccel(MAX_LIFT_ACCEL_RAD_PER_S2);
   
   return action;
 }
