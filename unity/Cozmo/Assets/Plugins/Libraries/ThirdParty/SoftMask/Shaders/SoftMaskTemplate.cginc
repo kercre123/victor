@@ -72,10 +72,10 @@
 #else
         half4 color = (tex2D(_MainTex, IN.texcoord) + _TextureSampleAdd) * IN.color;
 #endif
-    
+
         color.a *= SOFTMASK_GET_MASK(IN);
         color.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
-    
+
 #ifdef UNITY_UI_ALPHACLIP
         clip(color.a - 0.001);
 #endif
