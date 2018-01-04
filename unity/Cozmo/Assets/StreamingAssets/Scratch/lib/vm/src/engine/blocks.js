@@ -461,6 +461,14 @@ class Blocks {
     blockToXML (blockId) {
         const block = this._blocks[blockId];
         // Encode properties of this block.
+
+        // *** ANKI CHANGE ***
+        // Log error and return if block is undefined.
+        if (typeof block === 'undefined') {
+            window.cozmoDASError("Codelab.ScratchVM.blockToXML.BlockUndefined", "block " + blockId + " is undefined");
+            return "";
+        }
+  
         const tagName = (block.shadow) ? 'shadow' : 'block';
         let xmlString =
             `<${tagName}

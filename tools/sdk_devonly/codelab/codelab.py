@@ -1516,7 +1516,7 @@ def save_codelab_file(project_data):
     filename = project_filename + project_extension
     suffix = 1
     while (os.path.exists(filename)):
-        filename = project_filename + "(" + str(suffix) + ")" + project_extension
+        filename = project_filename + "_" + str(suffix) + project_extension
         suffix += 1
 
     log_text("Exporting project '%s' UUID %s to %s" % (project_name, project_uuid, filename))
