@@ -117,6 +117,7 @@ Supervisor {
 
         DEF BODY Solid {
           translation -0.015 0 0
+          name "Body"
           children [
             DEF BODY_SHAPE Group {
               children [
@@ -447,6 +448,7 @@ Supervisor {
 
         DEF BACKPACK Solid {
           translation -0.04 0 0.018
+          name "Backpack"
           children [
             DEF BACKPACK_GROUP Group {
               children [
@@ -779,6 +781,7 @@ Supervisor {
               ]
               %{ end }%
               endPoint Solid {
+              name "LiftAssembly"
               children [
 
                 #GRIPPER PLATE
