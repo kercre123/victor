@@ -63,7 +63,7 @@ bool BehaviorExploreVisitPossibleMarker::WantsToBeActivatedBehavior(BehaviorExte
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreVisitPossibleMarker::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorExploreVisitPossibleMarker::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // 1) pick possible marker
   const AIWhiteboard::PossibleObject* closestPossibleObject = nullptr;
@@ -104,13 +104,12 @@ Result BehaviorExploreVisitPossibleMarker::OnBehaviorActivated(BehaviorExternalI
     // calculate best approach position
     ApproachPossibleCube(behaviorExternalInterface, closestPossibleObject->type, closestPossibleObject->pose);
   
-    return Result::RESULT_OK;
+    
   }
   else
   {
     // this should not happen, otherwise we should have been not activatable
     PRINT_NAMED_ERROR("BehaviorExploreVisitPossibleMarker.InitInternal", "Could not pick closest marker on init");
-    return Result::RESULT_FAIL;
   }
 
 }

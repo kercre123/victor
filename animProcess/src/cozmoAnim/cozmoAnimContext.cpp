@@ -6,7 +6,7 @@
 #include "cozmoAnim/micDataProcessor.h"
 #include "cozmoAnim/robotDataLoader.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "util/cpuProfiler/cpuThreadId.h"
 #include "util/environment/locale.h"

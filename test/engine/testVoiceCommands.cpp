@@ -18,8 +18,8 @@
 #include "engine/voiceCommands/phraseData.h"
 #include "engine/voiceCommands/voiceCommandTuning.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/shared/types.h"
 
 #include "util/logging/logging.h"
 

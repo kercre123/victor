@@ -12,7 +12,7 @@
 
 #include "webotsCtrlDevLog.h"
 #include "engine/debug/devLogProcessor.h"
-#include "anki/messaging/shared/UdpClient.h"
+#include "coretech/messaging/shared/UdpClient.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/vizTypes.h"
 #include "clad/vizInterface/messageViz.h"

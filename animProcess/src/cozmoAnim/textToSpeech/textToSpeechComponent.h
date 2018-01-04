@@ -19,7 +19,7 @@
 #define __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechComponent_H__
 
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "clad/audio/audioEventTypes.h"
 #include "clad/audio/audioGameObjectTypes.h"
 #include "clad/types/sayTextStyles.h"

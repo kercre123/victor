@@ -19,7 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/events/animationTriggerHelpers.h"
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -59,7 +59,7 @@ bool BehaviorThinkAboutBeacons::WantsToBeActivatedBehavior(BehaviorExternalInter
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorThinkAboutBeacons::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorThinkAboutBeacons::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   PRINT_CH_INFO("Behaviors", (std::string(GetIDStr()) + ".InitInternal").c_str(), "Selecting new beacon");
   
@@ -73,9 +73,7 @@ Result BehaviorThinkAboutBeacons::OnBehaviorActivated(BehaviorExternalInterface&
   {    
     IAction* animNewArea = new TriggerAnimationAction(trigger);
     DelegateIfInControl( animNewArea );
-  }
-  
-  return RESULT_OK;
+  }  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

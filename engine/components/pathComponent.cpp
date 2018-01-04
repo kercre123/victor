@@ -12,8 +12,8 @@
 
 #include "engine/components/pathComponent.h"
 
-#include "anki/common/basestation/math/poseOriginList.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/math/poseOriginList.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"

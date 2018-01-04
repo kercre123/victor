@@ -16,8 +16,9 @@
 #include <deque>
 #include <unordered_map>
 
-#include "anki/common/types.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/common/shared/types.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
+#include "coretech/vision/engine/image.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 
 namespace Anki {

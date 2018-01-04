@@ -14,7 +14,7 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/components/pathComponent.h"
 #include "engine/robot.h"
-#include "anki/planning/shared/path.h"
+#include "coretech/planning/shared/path.h"
 
 namespace Anki {
 namespace Cozmo {

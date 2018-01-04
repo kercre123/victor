@@ -2,10 +2,10 @@
 #define COZMO_CONFIG_H
 
 #ifdef COZMO_ROBOT
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "anki/common/constantsAndMacros.h"
 #else
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "util/math/math.h"
 #endif
 

@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeCubeMoved_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include <vector>
 
 namespace Anki {
@@ -40,11 +40,11 @@ public:
 
 protected:
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   // allows the reaction to interrupt itself
-  virtual ICozmoBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+
   virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:  

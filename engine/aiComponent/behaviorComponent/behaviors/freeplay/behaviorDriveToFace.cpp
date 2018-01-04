@@ -21,7 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/faceWorld.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
@@ -71,30 +71,30 @@ bool BehaviorDriveToFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDriveToFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveToFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_targetFace.IsValid()){
     TransitionToTurningTowardsFace(behaviorExternalInterface);
-    return Result::RESULT_OK;
+    
   }else{
     PRINT_NAMED_WARNING("BehaviorDriveToFace.InitInternal.NoValidFace",
                         "Attempted to init behavior without a vaild face to drive to");
-    return Result::RESULT_FAIL;
   }
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorDriveToFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveToFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(_currentState == State::TrackFace &&
      _timeCancelTracking_s < currentTime_s){
-    CancelDelegates(false);
-    return Status::Complete;
-  }
-  
-  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
+    CancelSelf();
+  }  
 }
 
 

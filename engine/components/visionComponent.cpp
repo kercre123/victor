@@ -30,19 +30,19 @@
 #include "engine/vision/visionSystem.h"
 #include "engine/viz/vizManager.h"
 
-#include "anki/vision/basestation/camera.h"
-#include "anki/vision/basestation/image_impl.h"
-#include "anki/vision/basestation/trackedFace.h"
-#include "anki/vision/basestation/observableObjectLibrary_impl.h"
-#include "anki/vision/basestation/visionMarker.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/engine/camera.h"
+#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/trackedFace.h"
+#include "coretech/vision/engine/observableObjectLibrary_impl.h"
+#include "coretech/vision/engine/visionMarker.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/robot/config.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/robot/config.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -485,6 +485,15 @@ namespace Cozmo {
             static Vision::ImageRGB screenImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
             _bufferedImg.Resize(screenImg, Vision::ResizeMethod::NearestNeighbor);
 
+            // Flip image around the y axis (before we draw anything on it)
+            cv::flip(screenImg.get_CvMat_(), screenImg.get_CvMat_(), 1);
+
+            for(auto & modFcn : _screenImageModFuncs)
+            {
+              modFcn(screenImg);
+            }
+            _screenImageModFuncs.clear();
+
             static Vision::ImageRGB565 img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
             
             // Use gamma to make it easier to see
@@ -499,10 +508,7 @@ namespace Cozmo {
             }
 
             img565.SetFromImageRGB(screenImg, gammaLUT);
-
-            // Flip image around the y axis
-            cv::flip(img565.get_CvMat_(), img565.get_CvMat_(), 1);
-                      
+          
             animComponent.DisplayFaceImage(img565, ANIM_TIME_STEP_MS, false);
           }
         }
@@ -804,17 +810,15 @@ namespace Cozmo {
         Lock();
         // Clear it when done.
         _currentImg.Clear();
-        _nextImg.Clear();
         Unlock();
-        
-        // Sleep to alleviate pressure on main thread
-        std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
       }
-      else if(!_nextImg.IsEmpty())
+      
+      if(!_nextImg.IsEmpty())
       {
         ANKI_CPU_PROFILE("SwapInNewImage");
         // We have an image waiting to be processed: swap it in (avoid copy)
         Lock();
+        AndroidHAL::getInstance()->CameraSwapLocks();
         std::swap(_currentImg, _nextImg);
         std::swap(_currentPoseData, _nextPoseData);
         _nextImg.Clear();
@@ -1474,6 +1478,13 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage.NoExternalInterface", "");
       return RESULT_FAIL;
     }
+
+    static cv::Mat_<PixelType> sMat(img.GetNumRows(), img.GetNumCols());
+    if(sMat.rows != img.GetNumRows() || sMat.cols != img.GetNumCols())
+    {
+      sMat.release();
+      sMat.create(img.GetNumRows(), img.GetNumCols());
+    }
     
     ImageChunk m;
     m.height = img.GetNumRows();
@@ -1484,11 +1495,11 @@ namespace Cozmo {
     };
     
     if(img.GetNumChannels() == 3) {
-      cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
+      cv::cvtColor(img.get_CvMat_(), sMat, CV_RGB2BGR);
     }
     
     std::vector<u8> compressedBuffer;
-    cv::imencode(".jpg",  img.get_CvMat_(), compressedBuffer, compressionParams);
+    cv::imencode(".jpg",  sMat, compressedBuffer, compressionParams);
     
     const u32 kMaxChunkSize = static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE);
     u32 bytesRemainingToSend = static_cast<u32>(compressedBuffer.size());
@@ -2397,26 +2408,34 @@ namespace Cozmo {
     }
   }
   
-  template<>
-  void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
+  void VisionComponent::SetSaveImageParameters(const ImageSendMode saveMode,
+                                               const std::string& path,
+                                               const int8_t onRobotQuality)
   {
     if(nullptr != _visionSystem)
     {
       const std::string cachePath = _robot.GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
 
-      _visionSystem->SetSaveParameters(payload.mode, 
-                                       Util::FileUtils::FullFilePath({cachePath, "images", payload.path}), 
-                                       payload.qualityOnRobot);
+      const std::string fullPath = Util::FileUtils::FullFilePath({cachePath, "images", path});
+      _visionSystem->SetSaveParameters(saveMode, 
+                                       fullPath, 
+                                       onRobotQuality);
 
-      if(payload.mode != ImageSendMode::Off)
+      if(saveMode != ImageSendMode::Off)
       {
         EnableMode(VisionMode::SavingImages, true);  
       }
 
       PRINT_CH_DEBUG("VisionComponent", "VisionComponent.HandleMessage.SaveImages",
-               "Setting image save mode to %s",
-               EnumToString(payload.mode));
+                     "Setting image save mode to %s. Saving to: %s",
+                     EnumToString(saveMode), fullPath.c_str());
     }
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
+  {
+    SetSaveImageParameters(payload.mode, payload.path, payload.qualityOnRobot);
   }
 
   template<>

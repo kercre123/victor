@@ -13,10 +13,10 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorTrackLaser.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -176,7 +176,7 @@ bool BehaviorTrackLaser::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorTrackLaser::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   InitHelper(behaviorExternalInterface);
   const bool haveSeenLaser = (_lastLaserObservation.type != LaserObservation::Type::None);
@@ -191,7 +191,7 @@ Result BehaviorTrackLaser::OnBehaviorActivated(BehaviorExternalInterface& behavi
   {
     TransitionToInitialSearch(behaviorExternalInterface);
   }
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -218,13 +218,18 @@ void BehaviorTrackLaser::InitHelper(BehaviorExternalInterface& behaviorExternalI
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   switch(_state)
   {
     case State::WaitForStop:
     {
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
   
     case State::WaitingForExposureChange:
@@ -271,7 +276,8 @@ ICozmoBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorE
           }
           else
           {
-            return Status::Complete;
+            CancelSelf();
+            return;
           }
         }
       }
@@ -311,24 +317,23 @@ ICozmoBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorE
         }
         else
         {
-          return Status::Complete;
+          CancelSelf();
+          return;
         }
       }
       
       break;
     }
   }
-
-  return Status::Running;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/**Result BehaviorTrackLaser::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
+/**void BehaviorTrackLaser::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _lastLaserObservation.type = LaserObservation::Type::None;
   InitHelper(behaviorExternalInterface);
   TransitionToBringingHeadDown(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }**/
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -672,7 +677,7 @@ void BehaviorTrackLaser::TransitionToGetOutBored(BehaviorExternalInterface& beha
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   const EngineToGameTag& tag = event.GetData().GetTag();
   switch( tag )

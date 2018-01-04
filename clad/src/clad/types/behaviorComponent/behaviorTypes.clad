@@ -20,6 +20,7 @@ enum uint_8 BehaviorClass {
   ComeHere,
   CubeLiftWorkout,
   Dance,
+  DevImageCapture,
   DevPettingTestSimple,
   DevTurnInPlaceTest,
   DockingTestSimple,
@@ -33,7 +34,6 @@ enum uint_8 BehaviorClass {
   ExploreVisitPossibleMarker,
   ExpressNeeds,
   FactoryCentroidExtractor,
-  FactoryTest,
   FeedingEat,
   FeedingSearchForCube,
   FindFaces,
@@ -147,7 +147,6 @@ enum uint_8 BehaviorID {
 
   FPPeekABoo,
   FactoryCentroidExtractor,
-  FactoryTest,
 
   FeedingEat,
   FeedingFindFacesSevere,
@@ -345,7 +344,9 @@ enum uint_8 BehaviorID {
   ObservingOnChargerIdle,
 
   ShortLookAroundForFaceAndCube,
-  
+
+  DevImageCapture,
+
   Wait,
   Wait_TestInjectable // BehaviorID used by tests to create fake behaviors
 }

@@ -12,7 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
@@ -28,7 +28,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
-#include "anki/vision/basestation/observableObject.h"
+#include "coretech/vision/engine/observableObject.h"
 #include "util/console/consoleInterface.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
@@ -65,7 +65,7 @@ bool BehaviorStackBlocks::WantsToBeActivatedBehavior(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorStackBlocks::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorStackBlocks::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   
@@ -74,7 +74,7 @@ Result BehaviorStackBlocks::OnBehaviorActivated(BehaviorExternalInterface& behav
   }else{
     TransitionToPickingUpBlock(behaviorExternalInterface);
   }
-  return Result::RESULT_OK;
+  
 }
 
 
@@ -116,8 +116,12 @@ void BehaviorStackBlocks::UpdateTargetBlocks(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorStackBlocks::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorStackBlocks::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   auto topBlockIntention  = ObjectInteractionIntention::StackTopObjectAxisCheck;
   auto bottomBlockIntention  = ObjectInteractionIntention::StackBottomObjectAxisCheck;
 
@@ -162,7 +166,7 @@ ICozmoBehavior::Status BehaviorStackBlocks::UpdateInternal_WhileRunning(Behavior
                      topValid,
                      bottomValid);
       CancelSelf();
-      return BehaviorStatus::Running;
+      return;
     }
   }
   
@@ -181,11 +185,6 @@ ICozmoBehavior::Status BehaviorStackBlocks::UpdateInternal_WhileRunning(Behavior
       TransitionToStackingBlock(behaviorExternalInterface);
     }
   }
-  
-
-  ICozmoBehavior::Status ret = ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
-  
-  return ret;
 }
 
 

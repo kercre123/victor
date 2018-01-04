@@ -13,7 +13,7 @@
 
 #include "engine/aiComponent/workoutComponent.h"
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robot.h"

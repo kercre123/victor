@@ -13,7 +13,7 @@
 #ifndef COZMO_BEHAVIOR_SYSTEM_MANAGER_H
 #define COZMO_BEHAVIOR_SYSTEM_MANAGER_H
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"

@@ -14,7 +14,7 @@
 #ifndef __Victor_CubeBleClient_H__
 #define __Victor_CubeBleClient_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "util/singleton/dynamicSingleton.h"
 

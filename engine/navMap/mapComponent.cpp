@@ -13,10 +13,11 @@
  
 #include "engine/navMap/mapComponent.h"
 
-#include "anki/vision/basestation/observableObjectLibrary.h"
-#include "anki/common/basestation/math/poseOriginList.h"
-#include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/vision/engine/observableObjectLibrary.h"
+#include "coretech/common/engine/math/poseOriginList.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/messaging/engine/IComms.h"
 
 #include "engine/navMap/iNavMap.h"
 #include "engine/navMap/navMapFactory.h"
@@ -221,6 +222,14 @@ Result MapComponent::Update()
     currentNavMemoryMap->TransformContent(timeoutObjects);
   }
 
+  // NOTE: (mrw) right now we should always call the `DrawMap` method before `BroadcastMap` because DrawMap
+  //   is the only of the two that will not send the appropriate message if a map has not been flagged as
+  //   dirty. Due to current implementation, the dirty flag is cleared when we query the map data for any broadcast,
+  //   so sending the EngineToGame messages first will block Viz messages from being sent on that update tic.
+  //   Since the only thing that uses the EngineToGame messages is the SDK, we don't really have to worry about Webots
+  //   visualization not working when the SDK is hooked up for now.
+
+  DrawMap();
   BroadcastMap();
   return RESULT_OK;
 }
@@ -235,6 +244,9 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
   DEV_ASSERT(_navMaps.find(newOriginID) != _navMaps.end(),
              "MapComponent.UpdateObjectOrigins.missingMapOriginNew");
   DEV_ASSERT(oldOriginID == _currentMapOriginID, "MapComponent.UpdateObjectOrigins.updatingMapNotCurrent");
+
+  // maps have changed, so make sure to clear all the renders
+  ClearRender();
 
   const Pose3d& oldOrigin = _robot->GetPoseOriginList().GetOriginByID(oldOriginID);
   const Pose3d& newOrigin = _robot->GetPoseOriginList().GetOriginByID(newOriginID);
@@ -259,7 +271,7 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
     
     // create empty map since somehow we lost the one we had
     VizManager* vizMgr = _robot->GetContext()->GetVizManager();
-    INavMap* emptyMemoryMap = NavMapFactory::CreateMemoryMap(vizMgr, _robot);
+    INavMap* emptyMemoryMap = NavMapFactory::CreateMemoryMap(vizMgr);
     
     // set in the container of maps
     _navMaps[newOriginID].reset(emptyMemoryMap);
@@ -410,7 +422,10 @@ void MapComponent::CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID)
   DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(worldOriginID),
                  "MapComponent.CreateLocalizedMemoryMap.BadWorldOriginID",
                  "ID:%d", worldOriginID);
-  
+
+  // clear all memory map rendering since we are building a new map
+  ClearRender();
+
   // Since we are going to create a new memory map, check if any of the existing ones have become a zombie
   // This could happen if either the current map never saw a localizable object, or if objects in previous maps
   // have been moved or deactivated, which invalidates them as localizable
@@ -436,48 +451,71 @@ void MapComponent::CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID)
     }
   }
   
-  // clear all memory map rendering because indexHints are changing
-  ClearRender();
-  
   // if the origin is null, we would never merge the map, which could leak if a new one was created
   // do not support this by not creating one at all if the origin is null
   if ( PoseOriginList::UnknownOriginID != worldOriginID )
   {
     // create a new memory map in the given origin
     VizManager* vizMgr = _robot->GetContext()->GetVizManager();
-    INavMap* navMemoryMap = NavMapFactory::CreateMemoryMap(vizMgr, _robot);
+    INavMap* navMemoryMap = NavMapFactory::CreateMemoryMap(vizMgr);
     _navMaps.emplace( std::make_pair(worldOriginID, std::unique_ptr<INavMap>(navMemoryMap)) );
     _currentMapOriginID = worldOriginID;
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace {
+  // constants for broadcasting maps
+  // const float kOffSetPerIdx_mm = -250.0f;
+  const size_t kReservedBytes = 1 + 2; // Message overhead for:  Tag, and vector size
+  const size_t kMaxBufferSize = Anki::Comms::MsgPacket::MAX_SIZE;
+  const size_t kMaxBufferForQuads = kMaxBufferSize - kReservedBytes;
+  const size_t kQuadsPerMessage = kMaxBufferForQuads / sizeof(QuadInfoVector::value_type);
+
+  static_assert(kQuadsPerMessage > 0, "MapComponent.Broadcast.InvalidQuadsPerMessage");
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::DrawMap() const
 {
-  if(ENABLE_DRAWING)
+  using namespace VizInterface; 
+
+  if(ENABLE_DRAWING && _isRenderEnabled)
   {
-    if ( _isRenderEnabled )
-    {
-      // check refresh rate
-      static f32 nextDrawTimeStamp = 0;
-      const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      if ( nextDrawTimeStamp > currentTimeInSeconds ) {
-        return;
-      }
-      // we are rendering reset refresh time
-      nextDrawTimeStamp = currentTimeInSeconds + kMapRenderRate_sec;
-   
-      size_t lastIndexNonCurrent = 0;
-    
-      // rendering all current maps with indexHint
-      for (const auto& memMapPair : _navMaps)
-      {
-        const PoseOriginID_t originID = memMapPair.first;
+    // check refresh rate
+    static f32 nextDrawTimeStamp = 0;
+    const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if ( nextDrawTimeStamp > currentTimeInSeconds ) {
+      return;
+    }
+    // we are rendering reset refresh time
+    nextDrawTimeStamp = currentTimeInSeconds + kMapRenderRate_sec;
+
+    MemoryMapTypes::MapBroadcastData data;
+    const auto& currentOriginMap = _navMaps.find(_currentMapOriginID);
+
+    if (currentOriginMap != _navMaps.end()) {
+      // get all the map data needed for broadcast
+      currentOriginMap->second->GetBroadcastInfo(data);
+
+      // make sure the map has changed since the last draw
+      if (data.isDirty) {
+        currentOriginMap->second->DrawDebugProcessorInfo();
+
+        // Send the begin message
+        _robot->Broadcast(MessageViz(MemoryMapMessageVizBegin(_currentMapOriginID, data.mapInfo)));
         
-        const bool isCurrent = (originID == _currentMapOriginID);
-        size_t indexHint = isCurrent ? 0 : (++lastIndexNonCurrent);
-        memMapPair.second->DrawDebugProcessorInfo(indexHint);
-        memMapPair.second->BroadcastMemoryMapDraw(originID, indexHint);
+        // chunk the quad messages
+        for(u32 seqNum = 0; seqNum*kQuadsPerMessage < data.quadInfo.size(); seqNum++)
+        {
+          auto start = seqNum*kQuadsPerMessage;
+          auto end   = std::min(data.quadInfo.size(), start + kQuadsPerMessage);
+          _robot->Broadcast(MessageViz(MemoryMapMessageViz(_currentMapOriginID, seqNum, 
+            QuadInfoVector(data.quadInfo.begin() + start, data.quadInfo.begin() + end))));
+        }
+
+        // Send the end message
+        _robot->Broadcast(MessageViz(MemoryMapMessageVizEnd(_currentMapOriginID)));
       }
     }
   }
@@ -486,6 +524,8 @@ void MapComponent::DrawMap() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::BroadcastMap()
 {
+  using namespace ExternalInterface;
+
   if (_broadcastRate_sec >= 0.0f)
   {
     const float currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -497,17 +537,32 @@ void MapComponent::BroadcastMap()
       _nextBroadcastTimeStamp += _broadcastRate_sec;
     } while (FLT_LE(_nextBroadcastTimeStamp, currentTimeInSeconds));
 
-    // Send only the current map
+    // get the current map info
+    MemoryMapTypes::MapBroadcastData data;
     const auto& currentOriginMap = _navMaps.find(_currentMapOriginID);
+
     if (currentOriginMap != _navMaps.end()) {
-      // Look up and send the origin ID also
-      const PoseOriginID_t originID = currentOriginMap->first;
-      if (originID != PoseOriginList::UnknownOriginID) {
-        currentOriginMap->second->Broadcast(originID);
+      currentOriginMap->second->GetBroadcastInfo(data);
+
+      // Send the begin message      
+      _robot->Broadcast(MessageEngineToGame(MemoryMapMessageBegin(
+          _currentMapOriginID, data.mapInfo.rootDepth, data.mapInfo.rootSize_mm, data.mapInfo.rootCenterX, data.mapInfo.rootCenterY)
+      ));
+      
+      // chunk the quad messages
+      for(u32 seqNum = 0; seqNum*kQuadsPerMessage < data.quadInfo.size(); seqNum++)
+      {
+        auto start = seqNum*kQuadsPerMessage;
+        auto end   = std::min(data.quadInfo.size(), start + kQuadsPerMessage);
+        _robot->Broadcast(MessageEngineToGame(MemoryMapMessage(
+          QuadInfoVector(data.quadInfo.begin() + start, data.quadInfo.begin() + end))));
       }
+
+      // Send the end message
+      _robot->Broadcast(MessageEngineToGame(MemoryMapMessageEnd()));
     }
   }
-}
+} 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::ClearRender() const
@@ -516,7 +571,15 @@ void MapComponent::ClearRender() const
   {
     for ( const auto& memMapPair : _navMaps )
     {
+      // get map Identifier
+      MemoryMapTypes::MapBroadcastData data;
+      memMapPair.second->GetBroadcastInfo(data);
+
+      // clear debug info and set map as dirty
       memMapPair.second->ClearDraw();
+
+      // clear map from VizManager
+      _robot->GetContext()->GetVizManager()->EraseQuadVector(data.mapInfo.identifier);
     }
   }
 }
@@ -787,6 +850,9 @@ void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOr
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::UpdateOriginsOfObjects(PoseOriginID_t curOriginID, PoseOriginID_t relocalizedOriginID)
 {
+  // Origins have changed, and some maps may be merged, so make sure to clear everything
+  ClearRender();
+
   // for every object in the current map, we have a decision to make. We are going to bring that memory map
   // into what is becoming the current one. That means also bringing the last reported pose of every object
   // onto the new map. The current map is obviously more up to date than the map we merge into, since the map
@@ -794,7 +860,7 @@ void MapComponent::UpdateOriginsOfObjects(PoseOriginID_t curOriginID, PoseOrigin
   // it is, the good pose is in the currentMap, not in the mapWeMergeInto. So, for every object in the currentMap
   // we are going to remove their pose from the mapWeMergeInto. This will make the map we merge into gain the new
   // info, at the same time that we remove info known to not be the most accurate
-  
+
   // for every object in the current origin
   for ( auto& pairIdToPoseInfoByOrigin : _reportedPoses )
   {

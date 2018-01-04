@@ -14,7 +14,7 @@
 
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/audio/objectLocationController.h" // R&D
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "audioEngine/audioScene.h"
 #include "audioEngine/audioTypeTranslator.h"
 #include "audioEngine/soundbankLoader.h"

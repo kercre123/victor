@@ -36,7 +36,7 @@ protected:
 
   virtual bool CanBeGentlyInterruptedNow(BehaviorExternalInterface& bei) const override;
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& bei) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& bei) override;
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& bei) const override {
     return true;

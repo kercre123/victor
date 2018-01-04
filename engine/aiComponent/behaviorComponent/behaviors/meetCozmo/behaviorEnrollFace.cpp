@@ -30,10 +30,10 @@
 #include "engine/needsSystem/needsManager.h"
 #include "engine/viz/vizManager.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
-#include "anki/vision/basestation/faceTracker.h"
-#include "anki/vision/basestation/trackedFace.h"
+#include "coretech/vision/engine/faceTracker.h"
+#include "coretech/vision/engine/trackedFace.h"
 
 #include "clad/types/enrolledFaceStorage.h"
 
@@ -161,7 +161,7 @@ Result BehaviorEnrollFace::InitEnrollmentSettings(BehaviorExternalInterface& beh
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Check if we were interrupted and need to fast forward:
   switch(_state)
@@ -170,7 +170,7 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToSayingName", "");
       TransitionToSayingName(behaviorExternalInterface);
-      return RESULT_OK;
+      return;
     }
       
     case State::SavingToRobot:
@@ -178,7 +178,7 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToSavingToRobot", "");
       TransitionToSavingToRobot(behaviorExternalInterface);
-      return RESULT_OK;
+      return;
     }
       
     case State::ScanningInterrupted:
@@ -187,7 +187,7 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
       // now resumed, we need to complete the animation
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToScanningInterrupted", "");
       TransitionToScanningInterrupted(behaviorExternalInterface);
-      return RESULT_OK;
+      return;
     }
     default:
       // Not fast forwarding: just start at the beginning
@@ -200,7 +200,7 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
     PRINT_NAMED_WARNING("BehaviorEnrollFace.InitInternal.BadSettings",
                         "Disabling enrollment");
     DisableEnrollment(behaviorExternalInterface);
-    return settingsResult;
+    return;
   }
   
   // Settings ok: initialize rest of behavior state
@@ -241,20 +241,23 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
   
   // First thing we want to do is turn towards the face and make sure we see it
   TransitionToLookingForFace(behaviorExternalInterface);
-  
-  return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // See if we were in the midst of finding or enrolling a face but the enrollment is
   // no longer requested, then we've been cancelled
   if((State::LookingForFace == _state || State::Enrolling == _state) && !IsEnrollmentRequested())
   {
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateInternal_Legacy.EnrollmentCancelled", "In state: %s",
                   _state == State::LookingForFace ? "LookingForFace" : "Enrolling");
-    return Status::Complete;
+    CancelSelf();
+    return;
   }
   
   switch(_state)
@@ -267,7 +270,8 @@ ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorE
     case State::SaveFailed:
     case State::Cancelled:
     {
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
       
     case State::LookingForFace:
@@ -342,8 +346,6 @@ ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorE
     } // case State::Enrolling
       
   } // switch(_state) 
-  
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1173,7 +1175,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll(BehaviorExternalInterface& behaviorE
 #pragma mark Event Handlers
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch (event.GetData().GetTag())
   {

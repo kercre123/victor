@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToVoiceCommand_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 
 #include "engine/smartFaceId.h"
 
@@ -40,8 +40,8 @@ public:
   virtual void AddListener(ISubtaskListener* listener) override {};
   
 protected:
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   mutable SmartFaceID _desiredFace;

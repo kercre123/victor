@@ -13,8 +13,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAround.h"
 
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/shared/radians.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/shared/radians.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/driveToActions.h"
@@ -33,7 +33,7 @@
 
 #if SAFE_ZONE_VIZ
 #include "engine/viz/vizManager.h"
-#include "anki/common/basestation/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 #endif
 
 #define SET_STATE(s) SetState_internal(s, #s)
@@ -111,7 +111,7 @@ void BehaviorLookAround::HandleWhileActivated(const EngineToGameEvent& event, Be
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag())
   {
@@ -138,12 +138,12 @@ void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, BehaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorLookAround::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Update explorable area center to current robot pose
   ResetSafeRegion(behaviorExternalInterface);
   
-  return Result::RESULT_OK;
+  
 }
 
 
@@ -317,8 +317,11 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(BehaviorExternalInterf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorLookAround::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
 #if SAFE_ZONE_VIZ
   const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
@@ -326,21 +329,20 @@ ICozmoBehavior::Status BehaviorLookAround::UpdateInternal_WhileRunning(BehaviorE
 #endif
 
   if( IsControlDelegated() ) {
-    return Status::Running;
+    return;
   }
   
   if( _currentState == State::WaitForOtherActions ) {
     if( !IsControlDelegated() ) {
       TransitionToRoaming(behaviorExternalInterface);
     }
-    return Status::Running;
+    return;
   }
   
 #if SAFE_ZONE_VIZ
   robotInfo.GetContext()->GetVizManager()->EraseCircle(robotInfo.GetID());
 #endif
-  
-  return Status::Complete;
+  CancelSelf();
 }
 
 

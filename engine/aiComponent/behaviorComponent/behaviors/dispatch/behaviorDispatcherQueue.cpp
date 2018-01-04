@@ -44,7 +44,7 @@ void BehaviorDispatcherQueue::BehaviorDispatcher_OnActivated(BehaviorExternalInt
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherQueue::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherQueue::DispatcherUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( IsActivated() &&
       !IsControlDelegated() &&

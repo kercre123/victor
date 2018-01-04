@@ -10,11 +10,11 @@
 #include "engine/robot.h"
 #include "androidHAL/androidHAL.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseOriginList.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/poseOriginList.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/actionContainers.h"
 #include "engine/actions/animActions.h"
 #include "engine/activeCube.h"
@@ -69,7 +69,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/vision/basestation/visionMarker.h"
+#include "coretech/vision/engine/visionMarker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/gameStatusFlag.h"
@@ -1404,9 +1404,6 @@ Result Robot::Update()
       
   // Draw All Objects by calling their Visualize() methods.
   _blockWorld->DrawAllObjects();
-      
-  // Nav memory map
-  _mapComponent->DrawMap();
       
   // Always draw robot w.r.t. the origin, not in its current frame
   Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToRoot();

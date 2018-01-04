@@ -9,8 +9,8 @@
 #include "../shared/ctrlCommonInitialization.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/jsonTools.h"
 
 #include "androidHAL/androidHAL.h"
 #include "cubeBleClient/cubeBleClient.h"

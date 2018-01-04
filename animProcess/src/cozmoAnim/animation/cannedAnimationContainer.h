@@ -15,7 +15,7 @@
 #ifndef ANKI_COZMO_CANNED_ANIMATION_CONTAINER_H
 #define ANKI_COZMO_CANNED_ANIMATION_CONTAINER_H
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "cozmoAnim/animation/animation.h"
 #include <unordered_map>
 #include <vector>

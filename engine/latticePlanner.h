@@ -16,7 +16,7 @@
 
 #include "json/json-forwards.h"
 #include "pathPlanner.h"
-#include "anki/planning/shared/goalDefs.h"
+#include "coretech/planning/shared/goalDefs.h"
 #include "util/helpers/noncopyable.h"
 #include <vector>
 

@@ -17,9 +17,9 @@
 #ifndef ANKI_COZMO_ACTION_INTERFACE_H
 #define ANKI_COZMO_ACTION_INTERFACE_H
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/math/pose.h"
 
 #include "engine/actions/actionContainers.h"
 

@@ -1,0 +1,46 @@
+cxx_project(
+    name = 'voicetest',
+    srcs = cxx_src_glob(['voicetest']),
+    headers = cxx_header_glob(['voicetest'])
+)
+
+go_project(
+    name = 'voicego',
+    gopath = 'go',
+    dir = 'voicetest/go'
+)
+
+cxx_project(
+    name = 'proctest',
+    srcs = cxx_src_glob(['voicetest']),
+    headers = cxx_header_glob(['voicetest'])
+)
+
+go_project(
+    name = 'proctest_go',
+    gopath = 'go',
+    dir = 'proctest'
+)
+
+go_project(
+    name = 'cloud_process',
+    gopath = 'go',
+    dir = 'process'
+)
+
+cxx_project(
+    name = 'ipctest_cpp',
+    srcs = glob(['ipctest/cpp/*.cpp'])
+)
+
+go_project(
+    name = 'ipctest_go',
+    gopath = 'go',
+    dir = 'ipctest/go'
+)
+
+go_project(
+    name = 'servbench',
+    gopath = 'go',
+    dir = 'servbench'
+)

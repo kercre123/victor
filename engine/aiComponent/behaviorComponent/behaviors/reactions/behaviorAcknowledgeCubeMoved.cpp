@@ -12,7 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeCubeMoved.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -56,7 +56,7 @@ bool BehaviorAcknowledgeCubeMoved::WantsToBeActivatedBehavior(BehaviorExternalIn
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorAcknowledgeCubeMoved::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeCubeMoved::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _activeObjectSeen = false;
   switch(_state){
@@ -69,13 +69,17 @@ Result BehaviorAcknowledgeCubeMoved::OnBehaviorActivated(BehaviorExternalInterfa
       break;
   }
   
-  return Result::RESULT_OK;
+  
 }
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeCubeMoved::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // object seen - cancel turn and play response
   if(_state == State::TurningToLastLocationOfBlock
      && _activeObjectSeen)
@@ -84,8 +88,6 @@ ICozmoBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal_WhileRunning
     DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::AcknowledgeObject));
     SET_STATE(ReactingToBlockPresence);
   }
-  
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   
