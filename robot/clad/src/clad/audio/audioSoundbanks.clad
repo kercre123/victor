@@ -7,10 +7,12 @@ namespace SoundBank {
 enum uint_32 BankType
 {
   Cozmo = 2386142475,
+  Cozmo_Singing = 3988466513,
   Dev_Debug = 1453038702,
   Init = 1355168291,
   Invalid = 0,
   Music = 3991942870,
+  Rnd_Dev_Bank = 3005145184,
   Sfx = 393239870,
   Ui = 1551306167,
 }

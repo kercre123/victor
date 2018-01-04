@@ -17,9 +17,9 @@
 #include "clad/audio/audioPositionMessage.h"
 #include "clad/types/robotStatusAndActions.h"
 
-#include "anki/common/basestation/math/rotation.h"
+#include "coretech/common/engine/math/rotation.h"
 
-#include "anki/common/basestation/math/matrix_impl.h"
+#include "coretech/common/engine/math/matrix_impl.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 

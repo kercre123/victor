@@ -70,6 +70,14 @@ enum uint_32 Cozmo_Voice_Processing
   Unprocessed = 860658140,
 }
 
+enum uint_32 Distance_Music
+{
+  Invalid = 0,
+  Layer1 = 3298531297,
+  Layer2 = 3298531298,
+  Layer3 = 3298531299,
+}
+
 enum uint_32 External
 {
   External_Long = 3001056757,
@@ -154,6 +162,7 @@ enum uint_32 SwitchGroupType
   Cozmo_Sings_120Bpm = 2987768599,
   Cozmo_Sings_80Bpm = 3366294904,
   Cozmo_Voice_Processing = 366280094,
+  Distance_Music = 3686004508,
   External = 1442075084,
   Freeplay_Mood = 2205807877,
   Gameplay_Round = 2536359484,

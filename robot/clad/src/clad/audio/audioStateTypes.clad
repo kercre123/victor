@@ -4,6 +4,14 @@ namespace Anki {
 namespace AudioMetaData {
 namespace GameState {
 
+enum uint_32 Cube_State
+{
+  Cube_Normal = 396676576,
+  Cube_Special = 2888853362,
+  Cube_Wacky = 464039384,
+  Invalid = 0,
+}
+
 enum uint_32 External_Language
 {
   English = 3383237639,
@@ -82,14 +90,26 @@ enum uint_32 Music_Dimmer
   Music_Full = 2880332950,
 }
 
+enum uint_32 Rnd_Scene
+{
+  Five = 2611770117,
+  Four = 2863728729,
+  Invalid = 0,
+  One = 1064933119,
+  Three = 912956111,
+  Two = 678209053,
+}
+
 enum uint_32 StateGroupType
 {
+  Cube_State = 1039380488,
   External_Language = 944413709,
   External_Name = 2869506494,
   Invalid = 0,
   Mood = 3128647864,
   Music = 3991942870,
   Music_Dimmer = 920031443,
+  Rnd_Scene = 220148178,
   Voice_Commands_Mode = 522893720,
 }
 
