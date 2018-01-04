@@ -38,7 +38,7 @@ GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const Co
   {
     _classifier.reset(new DTDrivingSurfaceClassifier(config, context));
     const std::string path = _context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
-                                                                         "config/vision/groundclassification");
+                                                                         "vision/groundclassification");
 //    const std::string path = "/Users/lorenzori/tmp/images_training/simulated_images";
     PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.pathToData", "the path to data is: %s",
                     path.c_str());
@@ -173,6 +173,16 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   }
 
   return RESULT_OK;
+}
+
+void GroundPlaneClassifier::trainClassifier(const std::string& path)
+{
+
+}
+
+void GroundPlaneClassifier::loadClassifier(const std::string& filename)
+{
+
 }
 
 } // namespace Cozmo

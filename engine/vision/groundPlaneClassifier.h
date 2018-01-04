@@ -38,6 +38,9 @@ public:
 protected:
   std::unique_ptr<DrivingSurfaceClassifier> _classifier;
   const CozmoContext* _context;
+
+  void trainClassifier(const std::string& path);
+  void loadClassifier(const std::string& filename);
 };
 
 } // namespace Anki

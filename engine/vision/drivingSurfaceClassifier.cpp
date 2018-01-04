@@ -218,6 +218,7 @@ bool DrivingSurfaceClassifier::TrainFromFiles(const char *positiveDataFileName, 
   return Train(inputElements, classes, numberOfPositives);
 }
 
+// TODO Add a mask here to classify only certain pixels
 void DrivingSurfaceClassifier::classifyImage(const Vision::ImageRGB& image, Vision::Image& outputMask) const
 {
   auto f = [this](const Vision::PixelRGB& pixel){
@@ -609,6 +610,36 @@ bool DTDrivingSurfaceClassifier::Train(const cv::Mat& allInputs, const cv::Mat& 
   }
 
   return true;
+}
+
+bool DTDrivingSurfaceClassifier::Serialize(const char *filename)
+{
+  cv::FileStorage fs(filename, cv::FileStorage::WRITE);
+  if (! fs.isOpened()) {
+    PRINT_NAMED_ERROR("DTDrivingSurfaceClassifier.Serialize.CantOpenFile", "Error: can't open file %s", filename);
+    return false;
+  }
+
+  // TODO this doesn't follow the OpenCV approach of fs<<"DTree"<<(*_dtree), but that doesn't compile :(
+  _dtree->write(fs);
+
+  // TODO this doesn't compile
+//  fs << "Dtree" << (*_dtree);
+
+  return true;
+}
+
+bool DTDrivingSurfaceClassifier::DeSerialize(const char *filename)
+{
+  cv::FileStorage fs(filename, cv::FileStorage::READ);
+  if (! fs.isOpened()) {
+    PRINT_NAMED_ERROR("DTDrivingSurfaceClassifier.Serialize.CantOpenFile", "Error: can't open file %s", filename);
+    return false;
+  }
+
+  _dtree->read(fs.getFirstTopLevelNode());
+  return true;
+
 }
 
 

@@ -80,6 +80,12 @@ public:
    */
   virtual bool TrainFromFiles(const char* positiveDataFileName, const char* negativeDataFileName);
 
+  /*
+   * Serialize/Deserialize the detector
+   */
+  virtual bool Serialize(const char* filename) = 0;
+  virtual bool DeSerialize(const char* filename) = 0;
+
 protected:
   cv::Mat _trainingSamples;
   cv::Mat _trainingLabels;
@@ -142,6 +148,20 @@ public:
   using GMMDrivingSurfaceClassifier::PredictClass;
   uchar PredictClass(const Vision::PixelRGB& pixel) const override;
 
+  bool Serialize(const char *filename) override
+  {
+    PRINT_NAMED_ERROR("LRDrivingSurfaceClassifier.SerializeNotImplemented", "Serialize is not implementd for "
+                                                                            "LRDrivingSurfaceClassifier");
+    return false;
+  }
+
+  bool DeSerialize(const char *filename) override
+  {
+    PRINT_NAMED_ERROR("LRDrivingSurfaceClassifier.SerializeNotImplemented", "DeSerialize is not implementd for "
+                                                                            "LRDrivingSurfaceClassifier");
+    return false;
+  }
+
 protected:
 
   bool Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint numberOfPositives) override;
@@ -172,6 +192,20 @@ public:
 
   bool TrainFromFile(const char* positiveDataFilename);
 
+  bool Serialize(const char *filename) override
+  {
+    PRINT_NAMED_ERROR("THDrivingSurfaceClassifier.SerializeNotImplemented", "Serialize is not implementd for "
+                                                                            "THDrivingSurfaceClassifier");
+    return false;
+  }
+
+  bool DeSerialize(const char *filename) override
+  {
+    PRINT_NAMED_ERROR("THDrivingSurfaceClassifier.SerializeNotImplemented", "DeSerialize is not implementd for "
+                                                                            "THDrivingSurfaceClassifier");
+    return false;
+  }
+
 protected:
   bool Train(const cv::Mat& allInputs, const cv::Mat&, uint) override;
 
@@ -195,6 +229,10 @@ public:
   explicit DTDrivingSurfaceClassifier(const Json::Value& config, const CozmoContext *context);
 
   uchar PredictClass(const Vision::PixelRGB& pixel) const override;
+
+  bool Serialize(const char *filename) override;
+
+  bool DeSerialize(const char *filename) override;
 
 protected:
   cv::Ptr<cv::ml::DTrees> _dtree;
