@@ -85,7 +85,7 @@ endif()
 # 3.3.0 and "dev" versions have additional external libs
 if(NOT OPENCV_VERSION EQUAL "3.1.0")
   if (ANDROID)
-    list(APPEND OPENCV_EXTERNAL_LIBS cpufeatures libjpeg libprotobuf)
+    list(APPEND OPENCV_EXTERNAL_LIBS cpufeatures libjpeg libprotobuf tbb)
   else()
     list(APPEND OPENCV_EXTERNAL_LIBS libjpeg ippicv ippiw ittnotify libwebp libprotobuf)
   endif()
