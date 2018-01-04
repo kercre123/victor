@@ -42,6 +42,9 @@ public:
   }
 
   u32 GetLatestRawTouchValue() const { return _lastRawTouchValue; }
+
+  // returns true if the sensor is currently being touched, false otherwise
+  bool IsTouched() const;
   
   bool IsCalibrated() const {
     return _baselineCalib.IsCalibrated();

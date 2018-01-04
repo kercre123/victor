@@ -796,7 +796,10 @@ namespace Anki {
     {
       if (cliff_id == HAL::CLIFF_COUNT) {
         PRINT_NAMED_ERROR("simHAL.GetRawCliffData.InvalidCliffID", "");
-        return static_cast<u16>(cliffSensors_[HAL::CLIFF_FL]->getMaxRange());
+        // Note: The following used to be called getMaxRange() prior to Webots R2018a, and it's now called
+        // getMaxValue(). Cannot use getMaxValue() until everyone switches to Webots R2018a.
+        //return static_cast<u16>(cliffSensors_[HAL::CLIFF_FL]->getMaxValue());
+        return 999;
       }
       return static_cast<u16>(cliffSensors_[cliff_id]->getValue());
     }
