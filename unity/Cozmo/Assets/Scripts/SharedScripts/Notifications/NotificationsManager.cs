@@ -270,15 +270,11 @@ namespace Cozmo.Notifications {
 
     public void SetBrazeData() {
 #if UNITY_IOS && !UNITY_EDITOR
-      // Use Robot ID as a unique identifier
-      AnkiNotifications_ChangeAppBoyUserId(DataPersistenceManager.Instance.Data.DefaultProfile.RobotPhysicalId);
+      AnkiNotifications_ChangeAppBoyUserId(DataPersistenceManager.Instance.Data.DefaultProfile.PlayerId);
 
       // Set birthdate - guaranteed to be available by the time NeedsHubView loads
       string dob = DataPersistenceManager.Instance.Data.DefaultProfile.Birthdate.ToString("yyyyMMdd");
       AnkiNotifications_SetAppBoyUserDOB(dob);
-
-      // Now using Player ID as a custom attr
-      AnkiNotifications_SetCustomAttribute(_kBrazePlayerIdAttributeKey, DataPersistenceManager.Instance.Data.DefaultProfile.PlayerId);
 #endif
     }
 
