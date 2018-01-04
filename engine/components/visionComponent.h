@@ -14,11 +14,11 @@
 #ifndef ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 #define ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 
-#include "anki/vision/basestation/cameraCalibration.h"
-#include "anki/vision/basestation/droppedFrameStats.h"
-#include "anki/vision/basestation/image.h"
-#include "anki/vision/basestation/visionMarker.h"
-#include "anki/vision/basestation/faceTracker.h"
+#include "coretech/vision/engine/cameraCalibration.h"
+#include "coretech/vision/engine/droppedFrameStats.h"
+#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/visionMarker.h"
+#include "coretech/vision/engine/faceTracker.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robotStateHistory.h"
@@ -117,6 +117,7 @@ struct DockingErrorSignal;
     // Set whether or not we draw each processed image to the robot's screen
     // (Not using the word "face" because of confusion with "faces" in vision)
     void   EnableDrawImagesToScreen(bool enable) { _drawImagesToScreen = enable; }
+    void   AddDrawScreenModifier(const std::function<void(Vision::ImageRGB&)>& modFcn) { _screenImageModFuncs.push_back(modFcn); }
     
     // Looks through all results available from the VisionSystem and processes them.
     // This updates the Robot's BlockWorld and FaceWorld using those results.
@@ -254,6 +255,9 @@ struct DockingErrorSignal;
     Result LoadFaceAlbumFromFile(const std::string& path); // Broadcasts any loaded names and IDs
     Result LoadFaceAlbumFromFile(const std::string& path, std::list<Vision::LoadedKnownFace>& loadedFaces); // Populates list, does not broadcast
     
+    // See VisionSystem::SetSaveParameters for details on the arguments
+    void SetSaveImageParameters(const ImageSendMode saveMode, const std::string& path, const int8_t onRobotQuality);
+
     // This is for faking images being processed for unit tests
     void FakeImageProcessed(TimeStamp_t t);
     
@@ -304,6 +308,9 @@ struct DockingErrorSignal;
     bool   _running = false;
     bool   _paused  = false;
     bool   _drawImagesToScreen = false;
+
+    std::list<std::function<void(Vision::ImageRGB&)>> _screenImageModFuncs;
+
     std::mutex _lock;
     
     // Current image is the one the vision system (thread) is actively working on.

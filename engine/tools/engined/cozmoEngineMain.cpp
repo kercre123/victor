@@ -1,7 +1,7 @@
 #include "json/json.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "engine/cozmoAPI/cozmoAPI.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
@@ -45,9 +45,6 @@ void configure_engine(Json::Value& config)
 {
   if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
     config[AnkiUtil::kP_ADVERTISING_HOST_IP] = ROBOT_ADVERTISING_HOST_IP;
-  }
-  if(!config.isMember(AnkiUtil::kP_ROBOT_ADVERTISING_PORT)) {
-    config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT] = Anki::Cozmo::ROBOT_ADVERTISING_PORT;
   }
   if(!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
     config[AnkiUtil::kP_UI_ADVERTISING_PORT] = Anki::Cozmo::UI_ADVERTISING_PORT;

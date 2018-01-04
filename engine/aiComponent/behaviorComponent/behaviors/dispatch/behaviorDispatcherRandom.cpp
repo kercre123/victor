@@ -12,7 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRandom.h"
 
-#include "coretech/common/include/anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "util/random/randomVectorSampler.h"
 
@@ -134,7 +134,7 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior(BehaviorExternalI
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherRandom::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherRandom::DispatcherUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( _shouldEndAfterBehavior &&
       ! IsControlDelegated() ) {

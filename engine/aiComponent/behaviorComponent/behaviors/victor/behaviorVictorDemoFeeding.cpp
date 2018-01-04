@@ -63,18 +63,21 @@ bool BehaviorVictorDemoFeeding::WantsToBeActivatedBehavior(BehaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorVictorDemoFeeding::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoFeeding::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // not yet waiting for food
   _imgTimeStartedWaitngForFood = 0;
   
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorVictorDemoFeeding::UpdateInternal_WhileRunning(
-  BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoFeeding::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if(_imgTimeStartedWaitngForFood > 0 ) {
     // TODO:(bn) share this filter with AI whiteboard. It's the same, but also checks observation time
     BlockWorldFilter filter;
@@ -106,7 +109,6 @@ ICozmoBehavior::Status BehaviorVictorDemoFeeding::UpdateInternal_WhileRunning(
     DelegateIfInControl(animAction, &BehaviorVictorDemoFeeding::TransitionToVerifyFood);
   }
 
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

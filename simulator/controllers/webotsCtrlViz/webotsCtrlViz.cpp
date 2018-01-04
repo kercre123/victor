@@ -13,8 +13,8 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/vizTypes.h"
 #include "clad/vizInterface/messageViz.h"
-#include "anki/messaging/shared/UdpServer.h"
-#include "anki/messaging/shared/UdpClient.h"
+#include "coretech/messaging/shared/UdpServer.h"
+#include "coretech/messaging/shared/UdpClient.h"
 #include <webots/Supervisor.hpp>
 #include <webots/ImageRef.hpp>
 #include <webots/Display.hpp>

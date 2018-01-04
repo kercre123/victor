@@ -15,7 +15,7 @@
 #ifndef __Anki_Cozmo_Basestation_PetWorld_H__
 #define __Anki_Cozmo_Basestation_PetWorld_H__
 
-#include "anki/vision/basestation/trackedPet.h"
+#include "coretech/vision/engine/trackedPet.h"
 
 #include <list>
 #include <map>

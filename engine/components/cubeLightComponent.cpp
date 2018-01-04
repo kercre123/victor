@@ -34,8 +34,8 @@
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/fileUtils/fileUtils.h"
 

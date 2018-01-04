@@ -341,6 +341,11 @@ message SetDebugConsoleVarMessage {
   uint_8 tryValue[16]   //   "
 }
 
+message RunDebugConsoleFuncMessage {
+  uint_8 funcName[64],   // Array of chars, zero-terminated
+  uint_8 funcArgs[64]   //   "
+}
+
 // ====================================================
 
 enum uint_32 ToRobotAddressSpace
@@ -447,6 +452,7 @@ union EngineToRobot
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
 
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
+  RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

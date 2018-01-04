@@ -12,10 +12,10 @@
  **/
 
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/rotation.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/rotation.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
@@ -23,8 +23,8 @@
 #include "engine/vision/laserPointDetector.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/vision/basestation/imageCache.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/engine/imageCache.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
@@ -36,7 +36,7 @@
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/highgui.hpp"
 
-#include "anki/common/basestation/colorRGBA.h"
+#include "coretech/common/engine/colorRGBA.h"
 
 
 extern Anki::Cozmo::CozmoContext* cozmoContext;

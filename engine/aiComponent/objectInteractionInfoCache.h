@@ -18,7 +18,7 @@
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/entity.h"
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 

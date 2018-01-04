@@ -34,11 +34,11 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorWait.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevPettingTestSimple.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTurnInPlaceTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDockingTestSimple.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherQueue.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRandom.h"
@@ -370,11 +370,6 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::RollBlock:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorRollBlock(config));
-      break;
-    }
-    case BehaviorClass::FactoryTest:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorFactoryTest(config));
       break;
     }
     case BehaviorClass::FactoryCentroidExtractor:
@@ -736,6 +731,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::DriveInDesperation:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDriveInDesperation(config));
+      break;
+    }
+    case BehaviorClass::DevImageCapture:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDevImageCapture(config));
       break;
     }
 

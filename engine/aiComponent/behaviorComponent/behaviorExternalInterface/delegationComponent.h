@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_DelegationComponent_H__
 #define __Cozmo_Basestation_BehaviorSystem_DelegationComponent_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"

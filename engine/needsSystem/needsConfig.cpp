@@ -11,8 +11,8 @@
  **/
 
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/needsConfig.h"
 #include "engine/robot.h"

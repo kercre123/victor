@@ -14,14 +14,14 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeFace_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeFace_H__
 
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/shared/radians.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/shared/radians.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/smartFaceId.h"
 
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 
 #include "clad/types/objectFamilies.h"
 
@@ -54,9 +54,9 @@ protected:
   friend class BehaviorContainer;
   BehaviorAcknowledgeFace(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
 

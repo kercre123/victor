@@ -30,16 +30,10 @@ enum class BehaviorID: uint8_t;
 enum class BehaviorClass: uint8_t;
 enum class ExecutableBehaviorType: uint8_t;
 
-enum class BehaviorStatus {
-  Failure,
-  Running,
-  Complete
-};
-
 namespace ExternalInterface {
 struct RobotCompletedAction;
 }
-  
+
 template<typename TYPE> class AnkiEvent;
 
 using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
@@ -57,8 +51,6 @@ using BehaviorActionResultCallback                              = std::function<
 using BehaviorActionResultWithExternalInterfaceCallback         = std::function<void(const ActionResult&, BehaviorExternalInterface&)>;
 using BehaviorSimpleCallback                                    = std::function<void(void)>;
 using BehaviorSimpleCallbackWithExternalInterface               = std::function<void(BehaviorExternalInterface& behaviorExternalInterface)>;
-using BehaviorStatusCallbackWithExternalInterface               = std::function<BehaviorStatus(BehaviorExternalInterface& behaviorExternalInterface)>;
-
 
 }
 }

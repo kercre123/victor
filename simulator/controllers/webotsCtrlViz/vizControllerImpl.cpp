@@ -10,10 +10,10 @@
 *
 */
 
-#include "anki/common/basestation/array2d_impl.h"
-#include "anki/common/basestation/colorRGBA.h"
+#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/engine/colorRGBA.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/vision/engine/image.h"
 #include "clad/types/animationTypes.h"
 #include "clad/vizInterface/messageViz.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
@@ -822,9 +822,10 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.state.status & (uint32_t)RobotStatusFlag::IS_FALLING ? "FALLING" : "");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
   
-  sprintf(txt, "   %10s",
+  sprintf(txt, "   %10s %7s",
           payload.state.status & (uint32_t)RobotStatusFlag::IS_CHARGING ? "CHARGING" :
-          (payload.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER ? "ON_CHARGER" : ""));
+          (payload.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER ? "ON_CHARGER" : ""),
+          payload.state.status & (uint32_t)RobotStatusFlag::IS_BUTTON_PRESSED ? "PWR_BTN" : "");
   
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
   

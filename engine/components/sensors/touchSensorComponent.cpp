@@ -135,6 +135,10 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
 
 }
 
+bool TouchSensorComponent::IsTouched() const
+{
+  return _debouncer.GetDebouncedPress();
+}
 
 std::string TouchSensorComponent::GetLogHeader()
 {

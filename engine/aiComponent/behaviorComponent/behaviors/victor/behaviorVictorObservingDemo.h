@@ -15,7 +15,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "clad/types/visionModes.h"
 #include "engine/components/bodyLightComponent.h"
 
@@ -48,9 +48,10 @@ protected:
 
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
 private:
 
@@ -77,7 +78,7 @@ private:
   StateID GetStateID(const std::string& stateName) const;
 
   StateID ParseStateFromJson(const Json::Value& config, const std::string& key);
-  IStateConceptStrategyPtr ParseTransitionStrategy(const Json::Value& config);
+  IBEIConditionPtr ParseTransitionStrategy(const Json::Value& config);
   
   void AddState( State&& state );
   
@@ -90,7 +91,7 @@ private:
   using StateMap = std::map< StateID, State >;
   std::unique_ptr< StateMap > _states;
 
-  std::map< std::string, IStateConceptStrategyPtr > _preDefinedStrategies;
+  std::map< std::string, IBEIConditionPtr > _preDefinedStrategies;
   
   // hack to turn off all modes when this behavior starts and then back on when it ends
   std::vector< VisionMode > _visionModesToReEnable;

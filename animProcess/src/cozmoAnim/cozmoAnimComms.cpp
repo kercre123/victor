@@ -10,6 +10,7 @@
  **/
 
 #include "cozmoAnim/cozmoAnimComms.h"
+#include "osState/osState.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/logging/logging.h"
@@ -18,8 +19,8 @@
 #include <stdio.h>
 #include <string>
 
-#include "anki/messaging/shared/UdpServer.h"
-#include "anki/messaging/shared/LocalUdpClient.h"
+#include "coretech/messaging/shared/UdpServer.h"
+#include "coretech/messaging/shared/LocalUdpClient.h"
 
 #define LOG_CHANNEL    "Transport"
 #define LOG_ERROR      PRINT_NAMED_ERROR
@@ -42,10 +43,9 @@ namespace { // "Private members"
 
   Result InitComms()
   {
-    // Setup robot comms
-    // TODO: Extract this from proto instance name just like CozmoBot_1?
-    const RobotID_t robotID = Anki::Cozmo::DEFAULT_ROBOT_ID;
+    const RobotID_t robotID = OSState::getInstance()->GetRobotID();
 
+    // Setup robot comms
     std::string client_path = std::string(ANIM_CLIENT_PATH) + std::to_string(robotID);
     std::string server_path = std::string(ROBOT_SERVER_PATH) + std::to_string(robotID);
     

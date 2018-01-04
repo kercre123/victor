@@ -44,10 +44,10 @@ bool BehaviorReactToRobotOnBack::WantsToBeActivatedBehavior(BehaviorExternalInte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToRobotOnBack::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnBack::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   FlipDownIfNeeded(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }
 
 

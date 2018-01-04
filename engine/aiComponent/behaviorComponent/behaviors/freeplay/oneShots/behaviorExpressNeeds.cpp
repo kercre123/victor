@@ -13,7 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorExpressNeeds.h"
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -142,7 +142,7 @@ bool BehaviorExpressNeeds::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {  
   CompoundActionSequential* action = new CompoundActionSequential();
 
@@ -176,7 +176,7 @@ Result BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& beha
       }
     });
 
-  return Result::RESULT_OK;
+  
 }
 
 

@@ -23,10 +23,10 @@
 #include "engine/mat.h"
 #include "engine/namedColors/namedColors.h"
 #include "engine/overheadEdge.h"
-#include "anki/common/types.h"
-#include "anki/common/basestation/exceptions.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/exceptions.h"
 
-#include "anki/vision/basestation/observableObjectLibrary.h"
+#include "coretech/vision/engine/observableObjectLibrary.h"
 
 #include "clad/types/actionTypes.h"
 

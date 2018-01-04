@@ -14,7 +14,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeFace.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -56,13 +56,13 @@ bool BehaviorAcknowledgeFace::WantsToBeActivatedBehavior(BehaviorExternalInterfa
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorAcknowledgeFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // don't actually init until the first Update call. This gives other messages that came in this tick a
   // chance to be processed, in case we see multiple faces in the same tick.
   _shouldStart = true;
 
-  return Result::RESULT_OK;
+  
 }
 
 
@@ -77,15 +77,17 @@ void BehaviorAcknowledgeFace::OnBehaviorDeactivated(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorAcknowledgeFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( _shouldStart ) {
     _shouldStart = false;
     // now figure out which object to react to
     BeginIteration(behaviorExternalInterface);
   }
-
-  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 

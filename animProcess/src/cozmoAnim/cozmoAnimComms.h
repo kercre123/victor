@@ -12,7 +12,7 @@
 #ifndef COZMO_ANIM_COMMS_H
 #define COZMO_ANIM_COMMS_H
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
 namespace Cozmo {

@@ -58,9 +58,9 @@ void BehaviorPounceWithProx::InitBehavior(BehaviorExternalInterface& behaviorExt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPounceWithProx::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceWithProx::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  return Result::RESULT_OK;
+  
 }
 
 
@@ -71,8 +71,12 @@ void BehaviorPounceWithProx::OnBehaviorDeactivated(BehaviorExternalInterface& be
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorPounceWithProx::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceWithProx::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   auto& proxSensor = behaviorExternalInterface.GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
   if(proxSensor.IsSensorReadingValid()){
     // Transition conditions
@@ -133,10 +137,6 @@ ICozmoBehavior::Status BehaviorPounceWithProx::UpdateInternal_WhileRunning(Behav
         DelegateIfInControl(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK));
     }
   }
-
-
-  // Just always return running - we'll cancel ourself
-  return Status::Running;
 }
 
 

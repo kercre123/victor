@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_AIComponent_RequestGameComponent_H__
 #define __Cozmo_Basestation_AIComponent_RequestGameComponent_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/entity.h"
 #include "clad/types/unlockTypes.h"

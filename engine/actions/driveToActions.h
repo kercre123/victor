@@ -13,11 +13,11 @@
 #ifndef ANKI_COZMO_DRIVE_TO_ACTIONS_H
 #define ANKI_COZMO_DRIVE_TO_ACTIONS_H
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "engine/actionableObject.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/compoundActions.h"
-#include "anki/planning/shared/goalDefs.h"
+#include "coretech/planning/shared/goalDefs.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationTrigger.h"

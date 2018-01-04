@@ -1,0 +1,17 @@
+{
+  "behaviorID" : "DevImageCapture",
+  "behaviorClass": "DevImageCapture",
+
+  // path to save the images on the robot relative to "<reourceCacheDir>/camera/images"
+  "save_path": "rockPaperScissors",
+
+  // class names to cycle through by raising lift, used as subdirs to above path when saving
+  "class_names": ["rock", "paper", "scissors", "backgrounds"],
+
+  // image quality: [1-100]:JPEG quality, -1: use PNG
+  "quality": 90,
+
+  // whether or not to use capacitive touch to trigger saving
+  // if 0, uses power button istead
+  "use_capacitive_touch" : false
+}

@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 
 namespace Anki {
@@ -61,16 +61,7 @@ BehaviorRespondPossiblyRoll::~BehaviorRespondPossiblyRoll()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondPossiblyRoll::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // Listen for up-axis changes to update response scenarios
-  auto upAxisChangedCallback = [this](const EngineToGameEvent& event) {
-    _upAxisChangedIDs.insert(std::make_pair(
-                                            event.GetData().Get_ObjectUpAxisChanged().objectID,
-                                            event.GetData().Get_ObjectUpAxisChanged().upAxis)
-                             );
-  };
-  
-  SubscribeToTag(ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged,
-                 upAxisChangedCallback);
+  SubscribeToTags({ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged});
 }
 
 
@@ -82,20 +73,24 @@ bool BehaviorRespondPossiblyRoll::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRespondPossiblyRoll::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _lastActionTag = ActionConstants::INVALID_TAG;
   _upAxisChangedIDs.clear();
 
   DetermineNextResponse(behaviorExternalInterface);
 
-  return Result::RESULT_OK;
+  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const auto& targetAxisChanged = _upAxisChangedIDs.find(_metadata.GetObjectID());
   
   if(targetAxisChanged != _upAxisChangedIDs.end()){
@@ -106,7 +101,6 @@ ICozmoBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(
   }
   
   _upAxisChangedIDs.clear();
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 
@@ -182,6 +176,18 @@ void BehaviorRespondPossiblyRoll::DelegateToRollHelper(BehaviorExternalInterface
   
   SmartDelegateToHelper(behaviorExternalInterface, rollHelper, [this](BehaviorExternalInterface& behaviorExternalInterface){DetermineNextResponse(behaviorExternalInterface);}, nullptr);
 }
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRespondPossiblyRoll::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+{
+  if(event.GetData().GetTag() ==ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged){
+    _upAxisChangedIDs.insert(std::make_pair(event.GetData().Get_ObjectUpAxisChanged().objectID,
+                                            event.GetData().Get_ObjectUpAxisChanged().upAxis)
+                            );
+  }
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

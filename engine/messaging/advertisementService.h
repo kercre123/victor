@@ -6,7 +6,7 @@
 #define __ADVERTISEMENT_SERVICE_H__
 
 #include <map>
-#include <anki/messaging/shared/UdpServer.h>
+#include "coretech/messaging/shared/UdpServer.h"
 #include "clad/types/advertisementTypes.h"
 
 namespace Anki {

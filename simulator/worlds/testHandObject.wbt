@@ -43,7 +43,6 @@ LightCube {
   objectType "Block_LIGHTCUBE2"
 }
 CozmoBot2 {
-  name "CozmoBot2_1"
   filterLogs TRUE
 }
 WebotsKeyboardController {

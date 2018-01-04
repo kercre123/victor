@@ -11,8 +11,8 @@
  *
  **/
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseOriginList.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/poseOriginList.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"

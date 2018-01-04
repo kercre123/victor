@@ -20,15 +20,15 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOT_H
 #define ANKI_COZMO_BASESTATION_ROBOT_H
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/shared/types.h"
 #include "anki/cozmo/shared/animationTag.h"
 #include "engine/encodedImage.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/ramp.h"
-#include "anki/vision/basestation/camera.h"
-#include "anki/vision/basestation/image.h"
-#include "anki/vision/basestation/visionMarker.h"
+#include "coretech/vision/engine/camera.h"
+#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/visionMarker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTypes.h"
 #include "clad/types/imageTypes.h"
@@ -585,6 +585,10 @@ public:
 
   bool WasObjectTappedRecently(const ObjectID& objectID) const;
   
+  // ======== Power button ========
+
+  bool IsPowerButtonPressed() const { return _powerButtonPressed; }
+
   // =========  Other State  ============
   f32 GetBatteryVoltage() const { return _battVoltage; }
       
@@ -796,6 +800,7 @@ protected:
   f32              _battVoltage              = 5;
   ImageSendMode    _imageSendMode            = ImageSendMode::Off;
   u32              _lastSentImageID          = 0;
+  bool             _powerButtonPressed       = false;
   bool             _isPickedUp               = false;
   bool             _isOnChargerPlatform      = false;
   bool             _isCliffReactionDisabled  = false;

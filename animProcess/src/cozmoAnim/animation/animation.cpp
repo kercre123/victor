@@ -126,18 +126,7 @@ Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::An
       jsonFrame[kNameKey] = std::string("BackpackLightsKeyFrame");
       jsonFrame["triggerTime_ms"] = backpackKeyframe->triggerTime_ms();
       jsonFrame["durationTime_ms"] = backpackKeyframe->durationTime_ms();
-      jsonFrame["Left"] = Json::Value(Json::arrayValue);
-      auto leftData = backpackKeyframe->Left();
-      for (int idx=0; idx < leftData->size(); idx++) {
-        auto leftVal = leftData->Get(idx);
-        jsonFrame["Left"].append(leftVal);
-      }
-      jsonFrame["Right"] = Json::Value(Json::arrayValue);
-      auto rightData = backpackKeyframe->Right();
-      for (int idx=0; idx < rightData->size(); idx++) {
-        auto rightVal = rightData->Get(idx);
-        jsonFrame["Right"].append(rightVal);
-      }
+      
       jsonFrame["Front"] = Json::Value(Json::arrayValue);
       auto frontData = backpackKeyframe->Front();
       for (int idx=0; idx < frontData->size(); idx++) {

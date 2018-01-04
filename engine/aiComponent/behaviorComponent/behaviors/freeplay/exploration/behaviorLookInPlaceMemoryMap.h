@@ -16,7 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/events/animationTriggerHelpers.h"
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -71,8 +71,8 @@ protected:
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State transitions

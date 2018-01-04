@@ -19,7 +19,7 @@
 #include "engine/components/bodyLightComponent.h"
 
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 
 #include <vector>
 
@@ -52,9 +52,10 @@ public:
   
 protected:
   using base = ICozmoBehavior;
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   enum class State{

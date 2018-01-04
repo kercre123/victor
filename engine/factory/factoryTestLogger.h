@@ -12,8 +12,8 @@
 #ifndef __Basestation_Factory_FactoryTestLogger_H_
 #define __Basestation_Factory_FactoryTestLogger_H_
 
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/pose.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"

@@ -13,8 +13,8 @@
 
 #include "engine/components/desiredFaceDistortionComponent.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
 #include "clad/types/needsSystemTypes.h"

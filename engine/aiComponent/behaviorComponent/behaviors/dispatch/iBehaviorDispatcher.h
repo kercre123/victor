@@ -58,9 +58,10 @@ protected:
   // ICozmoBehavior functions:  
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) final override;
   virtual void InitDispatcher(BehaviorExternalInterface& behaviorExternalInterface) {};  
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) final override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) final override;
   virtual void OnCozmoBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) final override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) final override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) final override;
+  virtual void DispatcherUpdate(BehaviorExternalInterface& behaviorExternalInterface) {};
   virtual bool CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const final override;
 
 private:

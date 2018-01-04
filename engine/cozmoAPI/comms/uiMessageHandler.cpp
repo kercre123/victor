@@ -28,14 +28,14 @@
 
 #include "engine/viz/vizManager.h"
 #include "engine/buildVersion.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include <anki/messaging/basestation/IComms.h>
+#include "coretech/messaging/engine/IComms.h"
 
 #include "clad/externalInterface/messageGameToEngine_hash.h"
 #include "clad/externalInterface/messageEngineToGame_hash.h"
@@ -46,6 +46,10 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/time/universalTime.h"
+
+#ifdef SIMULATOR
+#include "osState/osState.h"
+#endif
 
 #define USE_DIRECT_COMMS 0
 
@@ -162,6 +166,23 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       , _messageCountGtE(0)
       , _messageCountEtG(0)
     {
+
+      // Currently not supporting UI connections for any sim robot other
+      // than the default ID
+      #ifdef SIMULATOR
+      const auto robotID = OSState::getInstance()->GetRobotID();
+      if (robotID != DEFAULT_ROBOT_ID) {
+        PRINT_NAMED_WARNING("UiMessageHandler.Ctor.SkippingUIConnections", 
+                            "RobotID: %d - Only DEFAULT_ROBOT_ID may accept UI connections", 
+                            robotID);
+        
+        for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i) {
+          _socketComms[(uint32_t)i] = 0;
+        }
+        return;
+      }
+      #endif
+
       const bool isSdkCommunicationEnabled = IsSdkCommunicationEnabled();
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {

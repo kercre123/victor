@@ -5,7 +5,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/victor",
-                "version": "142"
+                "version": "143"
             },
             "cozmo-assets": {
                 "additional_files": [
@@ -22,7 +22,11 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "version": "2546"
+                "export_dirname": "animation-assets",
+                "additional_files": [
+                    "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
+                ],
+                "version": "2553"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
@@ -43,5 +47,10 @@
         "default_usr": "puller_cozmo",
         "pwd": "TQqNwp4ijqboGsjF3rCWDhUtwsvTKLpb",
         "root_url": "https://build.ankicore.com/"
+    },
+    "files": {
+        "chipper_key": {
+            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-chipper-tmp-client-key/victor-chipper-key"
+        }
     }
 }

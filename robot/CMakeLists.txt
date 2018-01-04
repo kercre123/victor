@@ -1,4 +1,6 @@
 
+cmake_minimum_required(VERSION 3.6)
+
 project(robot)
 
 add_library(robot_interface INTERFACE IMPORTED GLOBAL)
@@ -23,16 +25,9 @@ elseif (ANDROID)
   )
 endif()
 
-#
-# HACK #1
-#
-# robot_hal is defined here, because supervisor depends on it, even though
-# the source file lives in robot2. This will be cleaned up after we fork
-# the victor repo
-#
 add_library(robot_hal STATIC
-  ${CMAKE_SOURCE_DIR}/robot2/hal/src/hal.cpp
-  ${CMAKE_SOURCE_DIR}/robot2/hal/src/hal_motors.cpp
+  ${CMAKE_SOURCE_DIR}/robot/hal/src/hal.cpp
+  ${CMAKE_SOURCE_DIR}/robot/hal/src/hal_motors.cpp
 )
 
 target_link_libraries(robot_hal
@@ -44,10 +39,10 @@ target_link_libraries(robot_hal
 
 target_include_directories(robot_hal
   PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/syscon>
+  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/syscon>
   PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/hal/include>
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/hal/sim/include>
+  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal/include>
+  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal/sim/include>
 )
 
 target_compile_definitions(robot_hal
@@ -55,12 +50,6 @@ target_compile_definitions(robot_hal
   COZMO_ROBOT
   ${PLATFORM_COMPILE_DEFS}
 )
-
-# HACK #2 - supervisor build on mac requires files in
-# robot2/ and simulator/ folders. At least the ones in robot2 (sim_hal)
-# also depend on files in supervisor :-(
-# Rather than break the circular dependency now, we just
-# include those sources when building for mac
 
 set(PLATFORM_SRCS "")
 set(PLATFORM_LIBS "")
@@ -85,15 +74,15 @@ elseif (MACOSX)
   set(PLATFORM_INCLUDES
       # FIXME gross: ("simulator/robot/sim_overlayDisplay.h")
       ${CMAKE_SOURCE_DIR}
-      ${CMAKE_SOURCE_DIR}/robot2/hal/include
-      ${CMAKE_SOURCE_DIR}/robot2/hal/sim/include
+      ${CMAKE_SOURCE_DIR}/robot/hal/include
+      ${CMAKE_SOURCE_DIR}/robot/hal/sim/include
   )
   set(PLATFORM_COMPILE_DEFS
       SIMULATOR
   )
   set(PLATFORM_SRCS
-      ${CMAKE_SOURCE_DIR}/robot2/hal/sim/src/sim_hal.cpp
-      ${CMAKE_SOURCE_DIR}/robot2/hal/sim/src/sim_radio.cpp
+      ${CMAKE_SOURCE_DIR}/robot/hal/sim/src/sim_hal.cpp
+      ${CMAKE_SOURCE_DIR}/robot/hal/src/radio.cpp
       ${CMAKE_SOURCE_DIR}/simulator/robot/sim_overlayDisplay.cpp
   )
 endif()
@@ -147,3 +136,87 @@ target_include_directories(supervisor
   ${PLATFORM_INCLUDES}
 )
 
+
+
+include(anki_build_cxx)
+include(android_strip)
+
+set(PLATFORM_LIBS "")
+set(PLATFORM_INCLUDES "")
+set(PLATFORM_COMPILE_DEFS "")
+set(PLATFORM_FLAGS "")
+if (ANDROID)
+  set(PLATFORM_LIBS android log)
+  set(PLATFORM_COMPILE_DEFS
+    DEVELOPMENT
+  )
+elseif (MACOSX)
+  find_library(FOUNDATION Foundation)
+  set(PLATFORM_LIBS
+    ${FOUNDATION}
+  )
+  set(PLATFORM_COMPILE_DEFS
+    SIMULATOR
+  )
+endif()
+
+#
+# spine
+#
+if (ANDROID)
+
+  anki_build_cxx_library(spine ${ANKI_SRCLIST_DIR} STATIC)
+
+  target_include_directories(spine
+    PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/clad/src>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/syscon>
+  )
+
+  target_link_libraries(spine
+    PRIVATE
+    robot_hal
+    ${PLATFORM_LIBS}
+  )
+
+endif()
+
+#
+# robot_supervisor
+#
+if (ANDROID)
+
+  anki_build_cxx_executable(robot_supervisor ${ANKI_SRCLIST_DIR})
+
+  target_compile_definitions(robot_supervisor
+    PRIVATE
+    COZMO_ROBOT
+    CORETECH_ROBOT
+    _DEBUG
+    ${PLATFORM_COMPILE_DEFS}
+    #USING_ANDROID_PHONE # Uncomment if deploying on non-Cozmo android device
+  )
+
+  target_include_directories(robot_supervisor
+    PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal/include>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot>
+  )
+
+  target_link_libraries(robot_supervisor
+    PRIVATE
+    robot_hal
+    supervisor
+    robot_transport
+    spine
+    robot_interface
+    robot_clad_cpplite
+    cti_common_robot
+    cti_messaging
+    ${PLATFORM_LIBS}
+  )
+
+  android_strip(TARGET robot_supervisor)
+
+endif()

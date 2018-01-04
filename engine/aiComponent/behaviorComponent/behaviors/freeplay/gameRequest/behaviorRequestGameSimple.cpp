@@ -11,7 +11,7 @@
  **/
 
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/basicActions.h"
@@ -156,7 +156,7 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _verifyStartTime_s = std::numeric_limits<float>::max();
 
@@ -184,15 +184,12 @@ Result BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExtern
   }
 
   _numRetriesDrivingToFace = 0;
-  _numRetriesPlacingBlock = 0;
-  
-  
-  return RESULT_OK;
+  _numRetriesPlacingBlock = 0;  
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::RequestGame_UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( _state == State::SearchingForBlock ) {
     // if we are searching for a block, stop immediately when we find one
@@ -212,12 +209,12 @@ ICozmoBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Beh
   }
 
   if( IsControlDelegated() ) {
-    return Status::Running;
+    return;
   }
   
   PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.Complete", "no current actions, so finishing");
 
-  return Status::Complete;
+  CancelSelf();
 }
   
   

@@ -24,7 +24,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/robot.h"
-#include "anki/vision/basestation/observableObject.h"
+#include "coretech/vision/engine/observableObject.h"
 #include "util/console/consoleInterface.h"
 
 
@@ -55,7 +55,7 @@ bool BehaviorPopAWheelie::WantsToBeActivatedBehavior(BehaviorExternalInterface& 
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPopAWheelie::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPopAWheelie::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(!ShouldStreamline() && _lastBlockReactedTo != _targetBlock){
     TransitionToReactingToBlock(behaviorExternalInterface);
@@ -63,7 +63,7 @@ Result BehaviorPopAWheelie::OnBehaviorActivated(BehaviorExternalInterface& behav
     TransitionToPerformingAction(behaviorExternalInterface);
   }
   
-  return Result::RESULT_OK;
+  
 }
 
   

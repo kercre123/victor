@@ -18,9 +18,12 @@
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+
+#include "osState/osState.h"
+
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
@@ -72,6 +75,8 @@ Result CozmoAnimEngine::Init() {
   if(_isInitialized) {
     PRINT_NAMED_INFO("CozmoEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
   }
+
+  OSState::getInstance()->SetUpdatePeriod(1000);
 
   RobotDataLoader * dataLoader = _context->GetDataLoader();
   dataLoader->LoadConfigData();
@@ -134,6 +139,7 @@ Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
   Messages::Update();
   
+  OSState::getInstance()->Update();
   _animationStreamer->Update();
   
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS

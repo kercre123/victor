@@ -13,7 +13,7 @@
 #ifndef __Anki_Cozmo_Basestation_TrackFaceAction_H__
 #define __Anki_Cozmo_Basestation_TrackFaceAction_H__
 
-#include "anki/vision/basestation/trackedFace.h"
+#include "coretech/vision/engine/trackedFace.h"
 #include "engine/actions/trackActionInterface.h"
 #include "engine/smartFaceId.h"
 #include "util/signals/simpleSignal_fwd.h"

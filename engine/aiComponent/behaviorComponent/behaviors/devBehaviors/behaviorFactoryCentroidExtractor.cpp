@@ -17,7 +17,7 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/actions/basicActions.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -82,7 +82,7 @@ namespace{
     return !IsControlDelegated() && !_waitingForDots;
   }
 
-  Result BehaviorFactoryCentroidExtractor::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+  void BehaviorFactoryCentroidExtractor::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
   {
     Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
     std::stringstream serialNumString;
@@ -101,17 +101,23 @@ namespace{
     // Start motor calibration
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
     
-    return Result::RESULT_OK;
+    
   }
   
-  ICozmoBehavior::Status BehaviorFactoryCentroidExtractor::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+  void BehaviorFactoryCentroidExtractor::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
   {
+    if(!IsActivated()){
+      return;
+    }
+
     if(_waitingForDots || !_liftCalibrated || !_headCalibrated)
     {
-      return Status::Running;
+      return;
     }
     
-    return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+    if(!IsControlDelegated()){
+      CancelSelf();
+    }
   }
   
   void BehaviorFactoryCentroidExtractor::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)

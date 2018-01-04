@@ -19,7 +19,7 @@ int camera_start(camera_cb cb);
 
 // Let Camera know that the latest frame is being processed and that the buffer that holds
 // it should not be written to
-void camera_set_processing_frame();
+void camera_swap_locks();
 
 // Stops capturing frames
 int camera_stop();
@@ -27,7 +27,8 @@ int camera_stop();
 // De-initializes camera, makes it available to rest of system
 int camera_cleanup();
 
-
+// Let the camera know we want a frame
+void camera_request_frame();
 
 /* Usage Example   
 --------------------

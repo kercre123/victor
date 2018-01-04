@@ -27,9 +27,9 @@ BehaviorReactToSparked::BehaviorReactToSparked(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToSparked::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToSparked::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  return Result::RESULT_OK;
+  
 }
 
 

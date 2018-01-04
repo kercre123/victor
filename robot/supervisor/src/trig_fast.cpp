@@ -13,7 +13,7 @@
 *
 **/
 #include <math.h>
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "anki/common/constantsAndMacros.h"
 #include "trig_fast.h"
 #include "anki/cozmo/robot/logging.h"

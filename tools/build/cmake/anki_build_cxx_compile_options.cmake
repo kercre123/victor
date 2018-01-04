@@ -10,7 +10,7 @@
 # Use -fdiagnostics-show-category to identify flags associated with
 # each warning.
 #
-# Use -fdiagnostics-absolute-paths to enable IDEs like Visual Code
+# Use -fdiagnostics-absolute-paths to enable IDEs like Visual Studio Code
 # that don't know the source directory used for each compilation.
 #
 
@@ -19,8 +19,9 @@ set(ANKI_BUILD_CXX_COMPILE_OPTIONS
   $<$<CONFIG:Release>:-Os>
   $<$<BOOL:${MACOSX}>:-fobjc-arc>
   $<$<BOOL:${IOS}>:-fobjc-arc>
+  $<$<AND:$<CXX_COMPILER_ID:AppleClang>,$<VERSION_GREATER_EQUAL:${CMAKE_CXX_COMPILER_VERSION},9.0>>:-fdiagnostics-absolute-paths>
+  $<$<AND:$<CXX_COMPILER_ID:Clang>,$<VERSION_GREATER_EQUAL:${CMAKE_CXX_COMPILER_VERSION},5.0>>:-fdiagnostics-absolute-paths>
   -fdiagnostics-show-category=name
-  -fdiagnostics-absolute-paths
   -fsigned-char
   -g
   -Wall

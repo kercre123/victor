@@ -16,20 +16,14 @@
 #ifndef __Anki_Cozmo_AnimationStreamer_H__
 #define __Anki_Cozmo_AnimationStreamer_H__
 
-#include "anki/common/types.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/vision/engine/image.h"
 #include "cozmoAnim/animation/animation.h"
 #include "cozmoAnim/animation/track.h"
 #include "clad/types/liveIdleAnimationParameters.h"
 
 #include <list>
 #include <memory>
-
-#ifndef SIMULATOR
-// TODO: Once DMA is fixed to make face write operations faster, this may not be necessary
-#define DRAW_FACE_IN_THREAD
-#include <future>
-#endif
 
 namespace Anki {
 namespace Cozmo {
@@ -261,13 +255,6 @@ namespace Cozmo {
         
     // Tic counter for sending animState message
     u32           _numTicsToSendAnimState            = 0;
-    
-#ifdef DRAW_FACE_IN_THREAD
-    std::future<void> _faceDrawFuture;
-    double            _lastDrawTime_ms = 0;
-#endif    
-      
-    std::array<u8, 256> _gammaLUT;
 
   }; // class AnimationStreamer
   

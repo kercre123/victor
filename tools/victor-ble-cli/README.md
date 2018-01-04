@@ -54,13 +54,19 @@ uuid=d03a0a30-5470-5fbb-80ff-a569b6f53782
 
 ```
 
-## AnkiRobits Connection
+## Wifi Connection
 
-To connect your robot to AnkiRobits, run the script 
+To connect your robot to wifi, run the script 
+```sh
+./vic_join_wifi.sh <VICTOR_NNNNNNNN>
+```
+which will connect your robot to the AnkiTest2 network with a dynamic IP.
+
+
+If your robot has an entry in vic_join_wifi.sh for connecting to AnkiRobots (with a static IP) use the following syntax:
+
 ```sh
 ./vic_join_wifi.sh <Robot Letter>
 ```
 NOTE: The script is a little brittle. It works best when run about 10 seconds after the robot ID appears on victor's face, after boot.
-
 If there is no configuration for your robot you may need to add one; currently our limit is 10 static robot IPs.
-

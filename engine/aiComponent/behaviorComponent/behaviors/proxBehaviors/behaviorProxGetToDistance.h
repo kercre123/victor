@@ -34,11 +34,12 @@ public:
   virtual bool CarryingObjectHandledInternally() const override { return true;}
 
 protected:
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   // allows the reaction to interrupt itself
-  virtual ICozmoBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelWhenInControl() const override { return false;}
   
   bool ShouldRecalculateDrive(BehaviorExternalInterface& behaviorExternalInterface);
   bool IsWithinGoalTolerence(BehaviorExternalInterface& behaviorExternalInterface) const;

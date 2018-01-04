@@ -14,7 +14,7 @@
 #ifndef __FACEANDAPPROACHPLANNER_H__
 #define __FACEANDAPPROACHPLANNER_H__
 
-#include "anki/common/basestation/math/point.h"
+#include "coretech/common/engine/math/point.h"
 #include "pathPlanner.h"
 
 namespace Anki {

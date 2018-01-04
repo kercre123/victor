@@ -13,8 +13,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -45,7 +45,8 @@ const FullCloudIntentArray cloudStringMap{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorComponentCloudReceiver::BehaviorComponentCloudReceiver(Robot& robot)
-: _server(std::bind(&BehaviorComponentCloudReceiver::AddPendingIntent, this, std::placeholders::_1), 12345)
+: _server(std::bind(&BehaviorComponentCloudReceiver::AddPendingIntent, this, std::placeholders::_1), 
+                    12345 + robot.GetID() )  // Offset port by robotID so that we can run sims with multiple robots
 {
   if(robot.HasExternalInterface()){
     auto fakeTriggerWordCallback = [this](const GameToEngineEvent& event) {
