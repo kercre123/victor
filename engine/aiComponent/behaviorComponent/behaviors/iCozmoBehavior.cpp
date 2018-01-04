@@ -358,20 +358,20 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SubscribeToTags(std::set<GameToEngineTag> &&tags)
 {
-  _gameToEngineTags = std::move(tags);
+  _gameToEngineTags.insert(tags.begin(), tags.end());
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SubscribeToTags(std::set<EngineToGameTag> &&tags)
 {
-  _engineToGameTags = std::move(tags);
+  _engineToGameTags.insert(tags.begin(), tags.end());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SubscribeToTags(std::set<RobotInterface::RobotToEngineTag> &&tags)
 {
-  _robotToEngineTags = std::move(tags);
+  _robotToEngineTags.insert(tags.begin(), tags.end());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -353,6 +353,18 @@ void FaceDebugDraw::DrawMicInfo(const RobotInterface::MicData& micData)
                    0.5f);
 }
 
+void FaceDebugDraw::SetCustomText(const RobotInterface::DrawTextOnScreen& text)
+{ 
+  _customText = text;
+
+  if(text.drawNow)
+  {
+    _drawState = DrawState::CustomText;
+  }
+
+  DrawCustomText(); 
+}
+
 void FaceDebugDraw::DrawCustomText()
 {
   if(GetDrawState() != DrawState::CustomText)

@@ -65,7 +65,7 @@ public:
   void DrawStateInfo(const RobotState& state);
   void DrawMicInfo(const RobotInterface::MicData& micData);
   void DrawFAC();
-  void SetCustomText(const RobotInterface::DrawTextOnScreen& text) { _customText = text; DrawCustomText(); }
+  void SetCustomText(const RobotInterface::DrawTextOnScreen& text);
   
 private:
   DrawState                         _drawState = DrawState::None;

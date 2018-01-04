@@ -312,6 +312,9 @@ structure ColorRGB
 
 message DrawTextOnScreen
 {
+  // Whether or not to override what is currently on screen, otherwise draws to "CustomText" debug
+  // screen which will show when selected with the backpack button
+  bool drawNow = 0,
   ColorRGB textColor,
   ColorRGB bgColor,
   string   text

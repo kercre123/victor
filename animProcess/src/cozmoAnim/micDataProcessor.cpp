@@ -521,8 +521,8 @@ void MicDataProcessor::ProcessLoop()
       }
       
       // Factory test doesn't need to do any mic processing, it just uses raw data
-      // if(!FACTORY_TEST)
-      // {
+      if(!FACTORY_TEST)
+      {
         // Resample the audio, then collect it if desired
         std::array<AudioUtil::AudioSample, kResampledAudioChunkSize> resampledAudioChunk;
         ResampleAudioChunk(audioChunk.data(), resampledAudioChunk.data());
@@ -553,7 +553,7 @@ void MicDataProcessor::ProcessLoop()
             _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
           }
         }
-      // }
+      }
       
       // Check if each of the jobs are done, removing the ones that are
       auto jobIter = stolenJobs.begin();
@@ -750,7 +750,7 @@ void MicDataProcessor::Update()
     _msgsToEngine.clear();
   }
 
-  #if ANKI_DEV_CHEATS || FACTORY_TEST
+  #if ANKI_DEV_CHEATS
     // Store off a copy of (one of) the micDirectionData from this update for debug drawing
     Anki::Cozmo::RobotInterface::MicDirection micDirectionData{};
     bool updatedMicDirection = false;
@@ -763,7 +763,7 @@ void MicDataProcessor::Update()
     }
     else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
     {
-      #if ANKI_DEV_CHEATS || FACTORY_TEST
+      #if ANKI_DEV_CHEATS
         micDirectionData = msg->micDirection;
         updatedMicDirection = true;
       #endif
@@ -777,7 +777,7 @@ void MicDataProcessor::Update()
     }
   }
 
-  #if ANKI_DEV_CHEATS || FACTORY_TEST
+  #if ANKI_DEV_CHEATS
     if (updatedMicDirection)
     {
       FaceDisplay::GetDebugDraw()->DrawConfidenceClock(micDirectionData);
