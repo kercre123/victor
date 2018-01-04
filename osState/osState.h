@@ -68,7 +68,7 @@ private:
   // private ctor
   OSState();
   
-  const uint32_t kNominalCPUFreq_kHz = 800000;
+  const uint32_t kNominalCPUFreq_kHz = 533000;
 
 }; // class OSState
   
