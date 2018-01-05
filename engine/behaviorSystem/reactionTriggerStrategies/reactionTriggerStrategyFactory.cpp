@@ -142,14 +142,15 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::RobotFalling:
     {
+      const int timeout_ms = 3000;
       auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
       std::set<MessageEngineToGameTag> relevantTypes =
       {
         MessageEngineToGameTag::FallingStarted
       };
-      genericStrategy->ConfigureRelevantEvents(relevantTypes,[] (const AnkiEvent<ExternalInterface::MessageEngineToGame>& event, const Robot& robot) {
+      genericStrategy->ConfigureRelevantEventsWithTimeout(relevantTypes,[] (const AnkiEvent<ExternalInterface::MessageEngineToGame>& event, const Robot& robot) {
         return robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::RobotFalling);
-      });
+      }, timeout_ms);
       strategy = genericStrategy;
       break;
     }
