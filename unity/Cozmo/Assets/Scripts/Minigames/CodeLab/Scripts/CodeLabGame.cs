@@ -2244,7 +2244,7 @@ namespace CodeLab {
         else {
           idTag = robot.SayTextWithEvent(text, AnimationTrigger.Count, callback: inProgressScratchBlock.AdvanceToNextBlock, queueActionPosition: queueActionPosition);
         }
-        if (idTag == (uint) ActionConstants.INVALID_TAG) {
+        if (idTag == (uint)ActionConstants.INVALID_TAG) {
           DAS.Warn("CodeLabGame.cozmoSays", "Unable to perform action");
           inProgressScratchBlock.AdvanceToNextBlock(true);
         }
@@ -2723,6 +2723,22 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_On;
         }
         break;
+      case 37: // BKY_SOUND_VICTORY
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Putt_Hole_Success;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Putt_Hole_Success_Stop;
+        }
+        break;
+      case 38: // BKY_SOUND_FUN_MUSIC_LOOP
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Fun_Loop;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Fun_Loop_Stop;
+        }
+        break;
       default:
         // Will happen a lot in vertical now that users can pass in any value
         DAS.Info("CodeLab.BadSoundIndex", "index = " + soundToPlay.ToString());
@@ -3151,6 +3167,20 @@ namespace CodeLab {
         return AnimationTrigger.CodeLabGetInPos;
       case 34:
         return AnimationTrigger.CodeLabIdle;
+      case 35:
+        return AnimationTrigger.CodeLabWondering;
+      case 36:
+        return AnimationTrigger.CodeLabWhee1;
+      case 37:
+        return AnimationTrigger.CodeLabWhee2;
+      case 38:
+        return AnimationTrigger.CodeLabWhee3;
+      case 39:
+        return AnimationTrigger.CodeLabWhee4;
+      case 40:
+        return AnimationTrigger.CodeLabWhoa;
+      case 41:
+        return AnimationTrigger.CodeLabWhew;
       default:
         // Will happen a lot in vertical now that users can pass in any value
         DAS.Info("CodeLab.BadAnimIndex", "Index = " + scratchAnimationIndex.ToString());

@@ -315,6 +315,27 @@
   "codeLabVertical.ANIM_IDLE" : {
     "translation" : "34 - inactif"
   },
+  "codeLabVertical.ANIM_WONDERING" : {
+    "translation" : "35 - wondering"
+  },
+  "codeLabVertical.ANIM_WHEE1" : {
+    "translation" : "36 - whee #1"
+  },
+  "codeLabVertical.ANIM_WHEE2" : {
+    "translation" : "37 - whee #2"
+  },
+  "codeLabVertical.ANIM_WHEE3" : {
+    "translation" : "38 - whee #3"
+  },
+  "codeLabVertical.ANIM_WHEE4" : {
+    "translation" : "39 - whee #4"
+  },
+  "codeLabVertical.ANIM_WHOA" : {
+    "translation" : "40 - whoa"
+  },
+  "codeLabVertical.ANIM_WHEW" : {
+    "translation" : "41 - whew"
+  },
   "codeLabVertical.WHEELS" : {
     "translation" : "roues"
   },
@@ -443,6 +464,12 @@
   },
   "codeLabVertical.SOUND_BACKGROUND_MUSIC" : {
     "translation" : "36 - musique de fond en boucle"
+  },
+  "codeLabVertical.SOUND_VICTORY" : {
+    "translation" : "37 - victory"
+  },
+  "codeLabVertical.SOUND_FUN_MUSIC_LOOP" : {
+    "translation" : "38 - fun music loop"
   },
   "codeLabVertical.ANY" : {
     "translation" : "quelconque"

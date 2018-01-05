@@ -83,7 +83,14 @@ Blockly.Blocks['cozmo_animation_select_menu'] = {
               ['%{BKY_ANIM_LOSE_GAME}', '31'],
               ['%{BKY_ANIM_TAP_CUBE}', '32'],
               ['%{BKY_ANIM_GET_IN_POSITION}', '33'],
-              ['%{BKY_ANIM_IDLE}', '34']
+              ['%{BKY_ANIM_IDLE}', '34'],
+              ['%{BKY_ANIM_WONDERING}', '35'],
+              ['%{BKY_ANIM_WHEE1}', '36'],
+              ['%{BKY_ANIM_WHEE2}', '37'],
+              ['%{BKY_ANIM_WHEE3}', '38'],
+              ['%{BKY_ANIM_WHEE4}', '39'],
+              ['%{BKY_ANIM_WHOA}', '40'],
+              ['%{BKY_ANIM_WHEW}', '41']
             ]
           }
         ],
@@ -288,7 +295,9 @@ Blockly.Blocks['cozmo_sound_sounds_menu'] = {
               ['%{BKY_SOUND_TIMER_START}','33'],
               ['%{BKY_SOUND_FIRE_TRUCK_ALARM}','34'],
               ['%{BKY_SOUND_CUBE_CHARGE}','35'],
-              ['%{BKY_SOUND_BACKGROUND_MUSIC}','36']
+              ['%{BKY_SOUND_BACKGROUND_MUSIC}','36'],
+              ['%{BKY_SOUND_VICTORY}','37'],
+              ['%{BKY_SOUND_FUN_MUSIC_LOOP}','38']
             ]
           }
         ],

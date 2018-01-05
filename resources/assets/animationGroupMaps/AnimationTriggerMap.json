@@ -257,8 +257,36 @@
       "AnimName": "ag_codelab_victory"
     },
     {
-      "CladEvent": "CodeLabWin",
-      "AnimName": "ag_codelab_hotpotato_win"
+       "CladEvent": "CodeLabWhee1",
+       "AnimName": "ag_codelab_cozflies_whoa"
+    },
+    {
+       "CladEvent": "CodeLabWhee2",
+       "AnimName": "ag_codelab_cozflies_whaaa"
+    },
+    {
+       "CladEvent": "CodeLabWhee3",
+       "AnimName": "ag_codelab_cozflies_left"
+    },
+    {
+       "CladEvent": "CodeLabWhee4",
+       "AnimName": "ag_codelab_cozflies_right"
+    },
+    {
+       "CladEvent": "CodeLabWhew",
+       "AnimName": "ag_codelab_cozflies_setdown"
+    },
+    {
+       "CladEvent": "CodeLabWhoa",
+       "AnimName": "ag_codelab_cozflies_pickup"
+    },
+    {
+       "CladEvent": "CodeLabWin",
+       "AnimName": "ag_codelab_hotpotato_win"
+    },
+    {
+       "CladEvent": "CodeLabWondering",
+       "AnimName": "ag_codelab_valentine_thinking"
     },
     {
       "CladEvent": "CodeLabYes",
