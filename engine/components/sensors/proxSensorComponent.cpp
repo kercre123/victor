@@ -49,11 +49,12 @@ void ProxSensorComponent::UpdateInternal(const RobotState& msg)
   _lastMsgTimestamp = msg.timestamp;
   _latestData = msg.proxData;
  
+  // Only start the theremin if the head is up
   if (!_thereminActive &&
-      _robot.GetHeadAngle() < 0.f) {
+      _robot.GetHeadAngle() > 0.f) {
     ActivateTheremin(true);
   } else if (_thereminActive &&
-             _robot.GetHeadAngle() > 0.f) {
+             _robot.GetHeadAngle() < 0.f) {
     ActivateTheremin(false);
   }
   
