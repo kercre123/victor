@@ -12,15 +12,22 @@ spawn node ./index.js
 
 sleep 2
 send "scan\r"
-set timeout 10
-expect "Found $robot"
-
+set timeout 15
+expect {
+    "Found $robot" {}
+    timeout {
+        send "quit\r"
+        puts "Robot $robot not found."
+        exit
+    }
+}
 
 send "connect $robot\r"
 set timeout 10
 expect {
   "Fully connected to $robot" {}
   timeout {
+    send "quit\r"
     puts "Unable to connect to $robot"
     exit
   }

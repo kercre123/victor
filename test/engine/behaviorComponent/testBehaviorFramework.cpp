@@ -17,7 +17,7 @@
 
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -301,16 +301,17 @@ void TestBehavior::InitBehavior(BehaviorExternalInterface& behaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result TestBehavior::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)  {
+void TestBehavior::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)  {
   _inited = true;
-  return RESULT_OK;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus TestBehavior::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)  {
+void TestBehavior::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)  {
+  if(!IsActivated()){
+    return;
+  }
   _numUpdates++;
-  return Status::Running;
 }
 
 
@@ -321,7 +322,7 @@ void TestBehavior::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehavior::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)  {
+void TestBehavior::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)  {
   _alwaysHandleCalls++;
 }
 
@@ -451,14 +452,16 @@ bool TestBehaviorWithHelpers::CarryingObjectHandledInternally() const {return tr
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result TestBehaviorWithHelpers::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) {
-  return RESULT_OK;
+void TestBehaviorWithHelpers::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) {
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status TestBehaviorWithHelpers::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) {
-  
+void TestBehaviorWithHelpers::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) {
+  if(!IsActivated()){
+    return; 
+  }
+
   _updateCount++;
   
   if( _stopHelper ) {
@@ -488,18 +491,20 @@ ICozmoBehavior::Status TestBehaviorWithHelpers::UpdateInternal_WhileRunning(Beha
   switch(_updateResult) {
     case UpdateResult::UseBaseClass: {
       printf("TestBehaviorWithHelpers.Update UseBaseClass: IsControlDelegated:%d\n", IsControlDelegated());
-      return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+      if(!IsControlDelegated()){
+        CancelSelf();
+        return;
+      }
     }
     case UpdateResult::Running: {
       printf("TestBehaviorWithHelpers.Update Running\n");
-      return Status::Running;
+      return;
     }
     case UpdateResult::Complete: {
       printf("TestBehaviorWithHelpers.Update Complete\n");
       if(behaviorExternalInterface.HasDelegationComponent()){
         behaviorExternalInterface.GetDelegationComponent().CancelSelf(this);
       }
-      return Status::Running;
     }
   }
 }
@@ -577,19 +582,19 @@ bool TestHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorExtern
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status TestHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) {
+IHelper::HelperStatus TestHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) {
   _initCount++;
   
   printf("%s: Init. Action=%p\n", _name.c_str(), _nextActionToRun);
   
   CheckActions();
   
-  return ICozmoBehavior::Status::Running;
+  return IHelper::HelperStatus::Running;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status TestHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+IHelper::HelperStatus TestHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) {
   _updateCount++;
   
   printf("%s: Update. IsControlDelegated:%d, _delegateAfter:%d\n",
@@ -609,16 +614,16 @@ ICozmoBehavior::Status TestHelper::UpdateWhileActiveInternal(BehaviorExternalInt
     delegateProperties.SetDelegateToSet(newHelperHandle);
     delegateProperties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface) {
       if( _immediateCompleteOnSubSuccess ) {
-        return ICozmoBehavior::Status::Complete;
+        return IHelper::HelperStatus::Complete;
       }
       else {
-        _updateResult = ICozmoBehavior::Status::Complete;
-        return ICozmoBehavior::Status::Running;
+        _updateResult = IHelper::HelperStatus::Complete;
+        return IHelper::HelperStatus::Running;
       }
     });
     
     DelegateAfterUpdate(delegateProperties);
-    return ICozmoBehavior::Status::Running;
+    return IHelper::HelperStatus::Running;
   }
   
   return _updateResult;
@@ -631,7 +636,7 @@ void TestHelper::CheckActions() {
     DelegateIfInControl(_nextActionToRun, [this](ActionResult res, BehaviorExternalInterface& behaviorExternalInterface) {
       _actionCompleteCount++;
       if( _thisSucceedsOnActionSuccess ) {
-        _updateResult = ICozmoBehavior::Status::Complete;
+        _updateResult = IHelper::HelperStatus::Complete;
       }});
     _nextActionToRun = nullptr;
   }

@@ -17,7 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -63,7 +63,7 @@ bool BehaviorDevTurnInPlaceTest::WantsToBeActivatedBehavior(BehaviorExternalInte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDevTurnInPlaceTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDevTurnInPlaceTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   Reset();
   
@@ -75,8 +75,6 @@ Result BehaviorDevTurnInPlaceTest::OnBehaviorActivated(BehaviorExternalInterface
   // Start the tests rolling
   const auto action = GenerateTestAction(robotInfo.GetPose(), _testInd);
   DelegateIfInControl(action, &BehaviorDevTurnInPlaceTest::ActionCallback);
-  
-  return RESULT_OK;
 }
 
 

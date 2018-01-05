@@ -13,9 +13,9 @@
 #include "anki/common/robot/geometry.h"
 #include "anki/common/robot/benchmarking.h"
 
-#include "anki/vision/robot/transformations.h"
-#include "anki/vision/robot/fiducialMarkers.h"
-#include "anki/vision/robot/binaryTracker.h"
+#include "coretech/vision/robot/transformations.h"
+#include "coretech/vision/robot/fiducialMarkers.h"
+#include "coretech/vision/robot/binaryTracker.h"
 
 #include <queue>
 

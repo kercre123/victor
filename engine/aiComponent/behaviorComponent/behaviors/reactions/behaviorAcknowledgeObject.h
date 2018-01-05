@@ -14,9 +14,9 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeObject_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeObject_H__
 
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/shared/radians.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/shared/radians.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/objectFamilies.h"
@@ -61,9 +61,9 @@ protected:
   BehaviorAcknowledgeObject(const Json::Value& config);
 
   void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   

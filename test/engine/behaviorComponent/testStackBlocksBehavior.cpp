@@ -15,7 +15,7 @@
 
 #include "gtest/gtest.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/activeObject.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -190,9 +190,7 @@ TEST(StackBlocksBehavior, InitBehavior)
   ObjectID objID1, objID2;
   SetupStackTest(robot, stackBehavior, testBehaviorFramework, objID1, objID2);
   
-  auto result = stackBehavior->OnBehaviorActivated(behaviorExternalInterface);
-
-  EXPECT_EQ(RESULT_OK, result);
+  stackBehavior->OnActivated(behaviorExternalInterface);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -256,5 +254,5 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   incrementEngineTime_ns += 100000000.0f;
   BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
   
-  stackBehavior->BehaviorUpdate_Legacy(behaviorExternalInterface);
+  //stackBehavior->UpdateInternal(behaviorExternalInterface);
 }

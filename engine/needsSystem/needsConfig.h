@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_NeedsSystem_NeedsConfig_H__
 #define __Cozmo_Basestation_NeedsSystem_NeedsConfig_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "engine/needsSystem/needsState.h"
 #include "util/enums/enumOperators.h"
 

@@ -24,7 +24,7 @@
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -56,15 +56,19 @@ bool BehaviorFeedingSearchForCube::WantsToBeActivatedBehavior(BehaviorExternalIn
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorFeedingSearchForCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingSearchForCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   TransitionToFirstSearchForFood(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorFeedingSearchForCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingSearchForCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if((_currentState == State::FirstSearchForCube) ||
      (_currentState == State::SecondSearchForCube)){
     const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -76,9 +80,7 @@ ICozmoBehavior::Status BehaviorFeedingSearchForCube::UpdateInternal_WhileRunning
         TransitionToFailedToFindCubeReaction(behaviorExternalInterface);
       }
     }
-  }
-  
-  return Base::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
 
   

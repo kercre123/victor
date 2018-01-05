@@ -15,7 +15,7 @@
 #ifndef Anki_Cozmo_BlockConfiguration_H
 #define Anki_Cozmo_BlockConfiguration_H
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include <vector>
 
 namespace Anki{

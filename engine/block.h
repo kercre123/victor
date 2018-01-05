@@ -9,14 +9,14 @@
 #ifndef __Products_Cozmo__block__
 #define __Products_Cozmo__block__
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/quad.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/quad.h"
 
-#include "anki/vision/basestation/observableObject.h"
+#include "coretech/vision/engine/observableObject.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "engine/actionableObject.h"
 #include "engine/viz/vizManager.h"

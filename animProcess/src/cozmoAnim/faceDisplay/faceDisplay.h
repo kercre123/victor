@@ -13,9 +13,7 @@
 
 #ifndef ANKI_COZMOANIM_FACE_DISPLAY_H
 #define ANKI_COZMOANIM_FACE_DISPLAY_H
-#include "anki/common/types.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/vision/basestation/image.h"
+
 #include "util/singleton/dynamicSingleton.h"
 
 #include <array>
@@ -25,44 +23,47 @@
 
 
 namespace Anki {
+
+namespace Vision {
+  class ImageRGB;
+  class ImageRGB565;
+}
+
 namespace Cozmo {
 
 class FaceDisplayImpl;
+class FaceDebugDraw;
   
 class FaceDisplay : public Util::DynamicSingleton<FaceDisplay>
 {
   ANKIUTIL_FRIEND_SINGLETON(FaceDisplay); // Allows base class singleton access
 
 public:
-
-  // Various methods for drawing to the face. Not expected to be called from 
-  // multiple threads (sometimes uses static scratch image for drawing)
-  void ClearFace();
-  void DrawToFace(const Vision::ImageRGB& img);
   void DrawToFace(const Vision::ImageRGB565& img);
-  void DrawTextOnScreen(const std::vector<std::string>& textVec, 
-                        const ColorRGBA& textColor,
-                        const ColorRGBA& bgColor,
-                        const Point2f& loc = {0, 0},
-                        u32 textSpacing_pix = 10,
-                        f32 textScale = 3.f);
+
+  // For drawing to face in various debug modes
+  void DrawToFaceDebug(const Vision::ImageRGB& img);
+
+  static FaceDebugDraw* GetDebugDraw() { return getInstance()->_faceDebugDraw.get(); }
 
 protected:
   FaceDisplay();
   virtual ~FaceDisplay();
 
+  void DrawToFaceInternal(const Vision::ImageRGB& img);
+  void DrawToFaceInternal(const Vision::ImageRGB565& img);
+
 private:
   std::unique_ptr<FaceDisplayImpl>  _displayImpl;
-
-  Vision::ImageRGB                  _scratchDrawingImg;
+  std::unique_ptr<FaceDebugDraw>    _faceDebugDraw;
 
   // Members for managing the drawing thread
-  Vision::ImageRGB565               _faceDrawImg[2];
-  Vision::ImageRGB565*              _faceDrawNextImg = nullptr;
-  Vision::ImageRGB565*              _faceDrawCurImg = nullptr;
-  std::thread                       _faceDrawThread;
-  std::mutex                        _faceDrawMutex;
-  bool                              _stopDrawFace = false;
+  std::unique_ptr<Vision::ImageRGB565>  _faceDrawImg[2];
+  Vision::ImageRGB565*                  _faceDrawNextImg = nullptr;
+  Vision::ImageRGB565*                  _faceDrawCurImg = nullptr;
+  std::thread                           _faceDrawThread;
+  std::mutex                            _faceDrawMutex;
+  bool                                  _stopDrawFace = false;
     
   void DrawFaceLoop();
 

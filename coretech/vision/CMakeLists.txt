@@ -2,16 +2,20 @@
 
 project(cti_vision)
 
-set(CORETECH_VISION_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/anki/vision)
+set(CORETECH_VISION_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 
 include(okao)
 
 include(anki_build_cxx)
 
-# add_library()
+#
+# cti_vision
+#
+
 anki_build_cxx_library(cti_vision ${ANKI_SRCLIST_DIR} STATIC)
 
-set_target_properties(cti_vision PROPERTIES
+set_target_properties(cti_vision 
+  PROPERTIES
   FOLDER "CoreTech"#/Basestation"
 )
 
@@ -33,15 +37,12 @@ set_property(TARGET cti_vision PROPERTY CXX_STANDARD 11)
 
 target_include_directories(cti_vision
   PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/basestation/src>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>  # For access to engine/vision/nearestNeighborLibraryData.h
-  )
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
+)
 
 target_compile_definitions(cti_vision
   PRIVATE
-  CORETECH_BASESTATION
+  CORETECH_ENGINE
   FACE_TRACKER_FACIOMETRIC=0
   FACE_TRACKER_FACESDK=1
   FACE_TRACKER_OPENCV=2
@@ -49,7 +50,12 @@ target_compile_definitions(cti_vision
   FACE_TRACKER_PROVIDER=FACE_TRACKER_OKAO
 )
 
-if(MATLAB)
+#
+# Vision CLAD must be generated before vision library
+#
+add_dependencies(cti_vision cti_vision_clad)
+
+if (MATLAB)
   add_subdirectory(robot/mex)
 
   add_subdirectory(matlab/mex)
@@ -62,21 +68,30 @@ if(MATLAB)
   endif()
 endif()
 
+#
+# cti_vision_test
+#
+
 if (MACOSX)
 
   enable_testing()
 
   include(gtest)
 
-  anki_build_cxx_executable(cti_vision_basestation_test ${ANKI_SRCLIST_DIR})
+  anki_build_cxx_executable(cti_vision_test ${ANKI_SRCLIST_DIR})
 
-  target_link_libraries(cti_vision_basestation_test
+  target_link_libraries(cti_vision_test
     PRIVATE
     cti_vision
     gtest
   )
 
-  add_test(NAME cti_vision_basestation_test COMMAND cti_vision_basestation_test)
+  add_test(NAME cti_vision_test COMMAND cti_vision_test)
+
+  set_tests_properties(cti_vision_test
+    PROPERTIES
+    ENVIRONMENT "GTEST_OUTPUT=xml:ctiVisionGoogleTest.xml"
+  )
 
 endif()
 

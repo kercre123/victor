@@ -13,8 +13,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorObservingOnCharger.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
@@ -72,11 +72,11 @@ bool BehaviorObservingOnCharger::CanBeGentlyInterruptedNow(BehaviorExternalInter
   return !_isTransitioning;
 }
 
-Result BehaviorObservingOnCharger::OnBehaviorActivated(BehaviorExternalInterface& bei)
+void BehaviorObservingOnCharger::OnBehaviorActivated(BehaviorExternalInterface& bei)
 {
   TransitionToLookingUp(bei);
   
-  return Result::RESULT_OK;
+  
 }
 
 void BehaviorObservingOnCharger::TransitionToLookingUp(BehaviorExternalInterface& bei)

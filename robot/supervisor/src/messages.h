@@ -26,7 +26,7 @@
 #ifndef COZMO_MESSAGE_ROBOT_H
 #define COZMO_MESSAGE_ROBOT_H
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "clad/types/motorTypes.h"
 #include <stdarg.h>
 #include <stddef.h>

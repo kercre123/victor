@@ -21,7 +21,7 @@
 #define Anki_Cozmo_BlockConfigurationStack_H
 
 #include "engine/blockWorld/blockConfiguration.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 
 namespace Anki{
 namespace Cozmo{

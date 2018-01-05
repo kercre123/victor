@@ -17,9 +17,9 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 
-#include "anki/common/basestation/math/rect_impl.h"
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "util/console/consoleInterface.h"
@@ -236,7 +236,7 @@ bool BehaviorPuzzleMaze::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 // Behavior is starting. Reset behavior state.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPuzzleMaze::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPuzzleMaze::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   LOG_TRACE("BehaviorPuzzleMaze.InitInternal", "Init behavior");
   
@@ -253,7 +253,7 @@ Result BehaviorPuzzleMaze::OnBehaviorActivated(BehaviorExternalInterface& behavi
   
   TransitionToState(MazeState::GetIn);
   
-  return Result::RESULT_OK;
+  
 }
 
   
@@ -411,12 +411,17 @@ void BehaviorPuzzleMaze::UpdateDisplay(BehaviorExternalInterface& behaviorExtern
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus BehaviorPuzzleMaze::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPuzzleMaze::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+  
   // Check elapsed time
   if (GetActivatedDuration() > kPuzzleTimeout_sec) {
     LOG_WARNING("BehaviorPuzzleMaze.UpdateIntern_Legacy", "Behavior has timed out");
-    return BehaviorStatus::Complete;
+    CancelSelf();
+    return;
   }
   
   switch (_state) {
@@ -451,12 +456,11 @@ BehaviorStatus BehaviorPuzzleMaze::UpdateInternal_WhileRunning(BehaviorExternalI
     {
       if (!IsControlDelegated()) {
         LOG_TRACE("BehaviorPuzzleMaze.Update.Complete", "Behavior complete");
-        return BehaviorStatus::Complete;
+        CancelSelf();
+        return;
       }
     }
-  }
-    
-  return BehaviorStatus::Running;
+  }    
 }
 
 

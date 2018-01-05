@@ -32,7 +32,7 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
 #include "util/math/math.h"
@@ -101,10 +101,10 @@ bool BehaviorFeedingEat::RemoveListeners(IFeedingListener* listener)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorFeedingEat::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingEat::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID) == nullptr){
-    return Result::RESULT_FAIL;
+    return;
   }
   
   _timeCubeIsSuccessfullyDrained_sec = FLT_MAX;
@@ -132,13 +132,17 @@ Result BehaviorFeedingEat::OnBehaviorActivated(BehaviorExternalInterface& behavi
 
   
   TransitionToDrivingToFood(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorFeedingEat::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingEat::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // Feeding should be considered "complete" so long as the animation has reached
   // the point where all light has been drained from the cube.  If the behavior
   // is interrupted after that point in the animation or the animation completes
@@ -163,9 +167,7 @@ ICozmoBehavior::Status BehaviorFeedingEat::UpdateInternal_WhileRunning(BehaviorE
      (behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads) &&
      !_hasRegisteredActionComplete){
     TransitionToReactingToInterruption(behaviorExternalInterface);
-  }
-  
-  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
 
   

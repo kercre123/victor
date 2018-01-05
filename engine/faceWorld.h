@@ -15,7 +15,7 @@
 #ifndef __Anki_Cozmo_FaceWorld_H__
 #define __Anki_Cozmo_FaceWorld_H__
 
-#include "anki/vision/basestation/trackedFace.h"
+#include "coretech/vision/engine/trackedFace.h"
 
 #include "engine/ankiEventUtil.h"
 #include "engine/smartFaceId.h"

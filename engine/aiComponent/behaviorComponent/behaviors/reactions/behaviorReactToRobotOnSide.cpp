@@ -12,7 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotOnSide.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -41,7 +41,7 @@ bool BehaviorReactToRobotOnSide::WantsToBeActivatedBehavior(BehaviorExternalInte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToRobotOnSide::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnSide::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // clear bored animation timer
   _timeToPerformBoredAnim_s = -1.0f;
@@ -50,7 +50,7 @@ Result BehaviorReactToRobotOnSide::OnBehaviorActivated(BehaviorExternalInterface
   NeedActionCompleted(NeedsActionId::PlacedOnSide);
   
   ReactToBeingOnSide(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  
 }
 
 

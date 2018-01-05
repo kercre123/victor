@@ -42,7 +42,7 @@ bool BehaviorReactToUnexpectedMovement::WantsToBeActivatedBehavior(BehaviorExter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(behaviorExternalInterface.HasMoodManager()){
     auto& moodManager = behaviorExternalInterface.GetMoodManager();
@@ -73,14 +73,12 @@ Result BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalIn
                                                  kNumLoops, kInterruptRunning, tracksToLock), [this]()
   {
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);
-  });
-  
-  return RESULT_OK;
+  });  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToUnexpectedMovement::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToUnexpectedMovement::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   _unexpectedMovementSide = event.GetData().Get_UnexpectedMovement().movementSide;
 }

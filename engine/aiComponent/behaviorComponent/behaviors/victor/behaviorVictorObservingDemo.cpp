@@ -14,9 +14,9 @@
 
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectTypes.h"
-#include "coretech/common/include/anki/common/basestation/colorRGBA.h"
-#include "coretech/common/include/anki/common/basestation/jsonTools.h"
-#include "coretech/common/include/anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/colorRGBA.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
@@ -27,9 +27,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
-#include "engine/aiComponent/stateConceptStrategies/iStateConceptStrategy.h"
-#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
-#include "engine/aiComponent/stateConceptStrategies/strategyLambda.h"
+#include "engine/aiComponent/beiConditions/iBEICondition.h"
+#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
@@ -93,16 +93,16 @@ public:
   // initialize this state after construction to fill in the behavior pointer
   void Init(BehaviorExternalInterface& bei);
   
-  void AddInterruptingTransition(StateID toState, IStateConceptStrategyPtr condition );
-  void AddNonInterruptingTransition(StateID toState, IStateConceptStrategyPtr condition );
-  void AddExitTransition(StateID toState, IStateConceptStrategyPtr condition);
+  void AddInterruptingTransition(StateID toState, IBEIConditionPtr condition );
+  void AddNonInterruptingTransition(StateID toState, IBEIConditionPtr condition );
+  void AddExitTransition(StateID toState, IBEIConditionPtr condition);
 
   void OnActivated(BehaviorExternalInterface& bei);
   void OnDeactivated();
   // TODO:(bn) add asserts for these
 
   // fills in allTransitions with the transitions present in this state
-  void GetAllTransitions( std::set<IStateConceptStrategyPtr>& allTransitions );
+  void GetAllTransitions( std::set<IBEIConditionPtr>& allTransitions );
     
   std::string _name;
   std::string _behaviorName;
@@ -113,7 +113,7 @@ public:
 
   // Transitions are evaluated in order, and if the function returns true, we will transition to the given
   // state id.
-  using Transitions = std::vector< std::pair< StateID, IStateConceptStrategyPtr > >;
+  using Transitions = std::vector< std::pair< StateID, IBEIConditionPtr > >;
 
   // transitions that can happen while the state is active (and in the middle of doing something)
   Transitions _interruptingTransitions;
@@ -187,7 +187,7 @@ BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& conf
 
     for( const auto& transitionConfig : transitionDefConfig["interruptingTransitions"] ) {
       StateID toState = ParseStateFromJson(transitionConfig, "to");
-      IStateConceptStrategyPtr strategy = ParseTransitionStrategy(transitionConfig);
+      IBEIConditionPtr strategy = ParseTransitionStrategy(transitionConfig);
       if( strategy ) {
         fromState.AddInterruptingTransition(toState, strategy);
         allToStates.insert(toState);
@@ -196,7 +196,7 @@ BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& conf
 
     for( const auto& transitionConfig : transitionDefConfig["nonInterruptingTransitions"] ) {
       StateID toState = ParseStateFromJson(transitionConfig, "to");
-      IStateConceptStrategyPtr strategy = ParseTransitionStrategy(transitionConfig);
+      IBEIConditionPtr strategy = ParseTransitionStrategy(transitionConfig);
       if( strategy ) {
         fromState.AddNonInterruptingTransition(toState, strategy);
         allToStates.insert(toState);
@@ -205,7 +205,7 @@ BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& conf
 
     for( const auto& transitionConfig : transitionDefConfig["exitTransitions"] ) {
       StateID toState = ParseStateFromJson(transitionConfig, "to");
-      IStateConceptStrategyPtr strategy = ParseTransitionStrategy(transitionConfig);
+      IBEIConditionPtr strategy = ParseTransitionStrategy(transitionConfig);
       if( strategy ) {
         fromState.AddExitTransition(toState, strategy);
         allToStates.insert(toState);
@@ -239,27 +239,27 @@ BehaviorVictorObservingDemo::~BehaviorVictorObservingDemo()
 void BehaviorVictorObservingDemo::CreatePreDefinedStrategies()
 {
   // TODO:(bn) make proper strategy for this
-  _preDefinedStrategies["OnCharger"] = std::make_shared<StrategyLambda>(
+  _preDefinedStrategies["OnCharger"] = std::make_shared<ConditionLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       const bool onCharger = behaviorExternalInterface.GetRobotInfo().IsOnChargerPlatform();
       return onCharger;
     });
 
   // TODO:(bn) create a "not" strategy for this
-  _preDefinedStrategies["OffCharger"] = std::make_shared<StrategyLambda>(
+  _preDefinedStrategies["OffCharger"] = std::make_shared<ConditionLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       const bool onCharger = behaviorExternalInterface.GetRobotInfo().IsOnChargerPlatform();
       return !onCharger;
     });
 
 
-  _preDefinedStrategies["HasCubeToEat"] = std::make_shared<StrategyLambda>(
+  _preDefinedStrategies["HasCubeToEat"] = std::make_shared<ConditionLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
       return whiteboard.Victor_HasCubeToEat();
     });  
 
-  _preDefinedStrategies["HungryAndCanEat"] = std::make_shared<StrategyLambda>(
+  _preDefinedStrategies["HungryAndCanEat"] = std::make_shared<ConditionLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
       if( ! whiteboard.Victor_HasCubeToEat() ) {
@@ -278,7 +278,7 @@ void BehaviorVictorObservingDemo::CreatePreDefinedStrategies()
       return false;
     });
 
-  _preDefinedStrategies["CloseFaceForSocializing"] = std::make_shared<StrategyLambda>(
+  _preDefinedStrategies["CloseFaceForSocializing"] = std::make_shared<ConditionLambda>(
     [this](BehaviorExternalInterface& behaviorExternalInterface) {
       if( !StateExitCooldownExpired(GetStateID("Socializing"), kSocializeKnownFaceCooldown_s) ) {
         // still on cooldown
@@ -303,7 +303,7 @@ void BehaviorVictorObservingDemo::CreatePreDefinedStrategies()
       return false;
     });
 
-  _preDefinedStrategies["WantsToSleep"] = std::make_shared<StrategyLambda>(
+  _preDefinedStrategies["WantsToSleep"] = std::make_shared<ConditionLambda>(
     [this](BehaviorExternalInterface& behaviorExternalInterface) {
       if( _currState != GetStateID("ObservingOnCharger") ) {
         PRINT_NAMED_WARNING("BehaviorVictorObservingDemo.WantsToSleepCondition.WrongState",
@@ -328,7 +328,7 @@ void BehaviorVictorObservingDemo::CreatePreDefinedStrategies()
       return false;
     });
 
-  _preDefinedStrategies["ChargerLocated"] = std::make_shared<StrategyLambda>(
+  _preDefinedStrategies["ChargerLocated"] = std::make_shared<ConditionLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       BlockWorldFilter filter;
       filter.SetFilterFcn( [](const ObservableObject* obj){
@@ -339,7 +339,7 @@ void BehaviorVictorObservingDemo::CreatePreDefinedStrategies()
       return block != nullptr;
     });
 
-  _preDefinedStrategies["NeedsToCharge"] = std::make_shared<StrategyLambda>(
+  _preDefinedStrategies["NeedsToCharge"] = std::make_shared<ConditionLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       if( !robotInfo.IsCharging() ) {
@@ -357,7 +357,7 @@ void BehaviorVictorObservingDemo::CreatePreDefinedStrategies()
 
 void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  std::set< std::shared_ptr<IStateConceptStrategy> > allTransitions;
+  std::set< std::shared_ptr<IBEICondition> > allTransitions;
   
   // init all of the states
   for( auto& statePair : *_states ) {
@@ -398,7 +398,7 @@ void BehaviorVictorObservingDemo::GetAllDelegates(std::set<IBehavior*>& delegate
 }
 
 
-Result BehaviorVictorObservingDemo::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorObservingDemo::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // _visionModesToReEnable.clear();
   // auto& visionComponent = behaviorExternalInterface.GetVisionComponent();
@@ -431,7 +431,7 @@ Result BehaviorVictorObservingDemo::OnBehaviorActivated(BehaviorExternalInterfac
       }
     });
   
-  return Result::RESULT_OK;
+  
 }
 
 void BehaviorVictorObservingDemo::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
@@ -446,9 +446,11 @@ void BehaviorVictorObservingDemo::OnBehaviorDeactivated(BehaviorExternalInterfac
   _visionModesToReEnable.clear();
 }
 
-ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
-  BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorObservingDemo::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
 
   if( _useDebugLights ) {
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -492,7 +494,10 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
   if( _currState == InvalidStateID ) {
     // initial actions must be running
     // TODO:(bn) make this a proper state?
-    return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+    if(!IsControlDelegated()){
+      CancelSelf();
+    }
+    return;
   }
   
   State& state = _states->at(_currState);
@@ -502,9 +507,9 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
     const auto stateID = transitionPair.first;
     const auto& iConditionPtr = transitionPair.second;
 
-    if( iConditionPtr->AreStateConditionsMet(behaviorExternalInterface) ) {
+    if( iConditionPtr->AreConditionsMet(behaviorExternalInterface) ) {
       TransitionToState(behaviorExternalInterface, stateID);
-      return Status::Running;
+      return;
     }
   }
 
@@ -532,9 +537,9 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
       const auto stateID = transitionPair.first;
       const auto& iConditionPtr = transitionPair.second;
       
-      if( iConditionPtr->AreStateConditionsMet(behaviorExternalInterface) ) {
+      if( iConditionPtr->AreConditionsMet(behaviorExternalInterface) ) {
         TransitionToState(behaviorExternalInterface, stateID);
-        return Status::Running;
+        return;
       }
     }
 
@@ -544,9 +549,9 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
         const auto stateID = transitionPair.first;
         const auto& iConditionPtr = transitionPair.second;
       
-        if( iConditionPtr->AreStateConditionsMet(behaviorExternalInterface) ) {
+        if( iConditionPtr->AreConditionsMet(behaviorExternalInterface) ) {
           TransitionToState(behaviorExternalInterface, stateID);
-          return Status::Running;
+          return;
         }
       }
     }
@@ -562,7 +567,6 @@ ICozmoBehavior::Status BehaviorVictorObservingDemo::UpdateInternal_WhileRunning(
   }
 
   // This demo behavior never ends, it's always running
-  return Status::Running;
 }
 
 void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& behaviorExternalInterface,
@@ -663,7 +667,7 @@ void BehaviorVictorObservingDemo::State::Init(BehaviorExternalInterface& bei)
 }
 
 
-void BehaviorVictorObservingDemo::State::GetAllTransitions( std::set<IStateConceptStrategyPtr>& allTransitions )
+void BehaviorVictorObservingDemo::State::GetAllTransitions( std::set<IBEIConditionPtr>& allTransitions )
 {
   for( auto& transitionPair : _interruptingTransitions ) {
     allTransitions.insert(transitionPair.second);
@@ -677,19 +681,19 @@ void BehaviorVictorObservingDemo::State::GetAllTransitions( std::set<IStateConce
 }
 
 void BehaviorVictorObservingDemo::State::AddInterruptingTransition(StateID toState,
-                                                                   IStateConceptStrategyPtr condition)
+                                                                   IBEIConditionPtr condition)
 {
   // TODO:(bn) references / rvalue / avoid copies?
   _interruptingTransitions.emplace_back(toState, condition);
 }
 
 void BehaviorVictorObservingDemo::State::AddNonInterruptingTransition(StateID toState,
-                                                                      IStateConceptStrategyPtr condition )
+                                                                      IBEIConditionPtr condition )
 {
   _nonInterruptingTransitions.emplace_back(toState, condition);
 }
 
-void BehaviorVictorObservingDemo::State::AddExitTransition(StateID toState, IStateConceptStrategyPtr condition)
+void BehaviorVictorObservingDemo::State::AddExitTransition(StateID toState, IBEIConditionPtr condition)
 {
   _exitTransitions.emplace_back(toState, condition);
 }
@@ -770,12 +774,12 @@ BehaviorVictorObservingDemo::StateID BehaviorVictorObservingDemo::ParseStateFrom
   return InvalidStateID;
 }
 
-IStateConceptStrategyPtr BehaviorVictorObservingDemo::ParseTransitionStrategy(const Json::Value& transitionConfig)
+IBEIConditionPtr BehaviorVictorObservingDemo::ParseTransitionStrategy(const Json::Value& transitionConfig)
 {
   const Json::Value& strategyConfig = transitionConfig["strategy"];
   if( strategyConfig.isObject() ) {
     // create state concept strategy from config
-    return StateConceptStrategyFactory::CreateStateConceptStrategy(transitionConfig["strategy"]);
+    return BEIConditionFactory::CreateBEICondition(transitionConfig["strategy"]);
   }
   else {
     // use code-defined named strategy

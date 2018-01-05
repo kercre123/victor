@@ -11,8 +11,8 @@
  **/
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreBringCubeToBeacon.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -243,7 +243,7 @@ bool BehaviorExploreBringCubeToBeacon::WantsToBeActivatedBehavior(BehaviorExtern
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreBringCubeToBeacon::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorExploreBringCubeToBeacon::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // clear variables from previous run
   _selectedObjectID.UnSet();
@@ -278,11 +278,6 @@ Result BehaviorExploreBringCubeToBeacon::OnBehaviorActivated(BehaviorExternalInt
     const bool beaconFlaggedFail = FLT_NEAR(curTime, lastBeaconFailure);
     shouldControlBeDelegated = !beaconFlaggedFail; // should have delegated if the beacon is valid
   }
-
-  // we consider an init to be ok if we realize that we don't want to act
-  const bool initOk = (shouldControlBeDelegated == IsControlDelegated());
-  const Result ret = initOk ? RESULT_OK : RESULT_FAIL;
-  return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -27,8 +27,8 @@
 #include "engine/faceWorld.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
-#include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -130,7 +130,7 @@ bool BehaviorGuardDog::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorGuardDog::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorGuardDog::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {  
   // Reset some members in case this is running again:
   _cubesDataMap.clear();
@@ -161,13 +161,17 @@ Result BehaviorGuardDog::OnBehaviorActivated(BehaviorExternalInterface& behavior
   
   SET_STATE(Init);
   
-  return Result::RESULT_OK;
+  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorGuardDog::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // Check to see if all cubes were flipped or moved:
   if (_monitoringCubeMotion) {
     if (_nCubesFlipped == 3) {
@@ -211,7 +215,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
   
   // Only run the state machine if we're in control:
   if (IsControlDelegated()) {
-    return Status::Running;
+    return;
   }
   
   switch (_state) {
@@ -228,7 +232,8 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
     case State::SetupInterrupted:
     {
       RecordResult("SetupInterrupted");
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
     case State::DriveToBlocks:
     {
@@ -393,11 +398,10 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
     }
     case State::Complete:
     {
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
   }
-  
-  return Status::Running;
 }
 
 

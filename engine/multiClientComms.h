@@ -17,9 +17,9 @@
 #include <map>
 #include <vector>
 #include <deque>
-#include <anki/messaging/basestation/IComms.h>
-#include "anki/messaging/shared/TcpClient.h"
-#include "anki/messaging/shared/UdpClient.h"
+#include "coretech/messaging/engine/IComms.h"
+#include "coretech/messaging/shared/TcpClient.h"
+#include "coretech/messaging/shared/UdpClient.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "engine/messaging/advertisementService.h"
 

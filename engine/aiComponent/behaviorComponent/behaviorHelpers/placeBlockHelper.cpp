@@ -45,7 +45,7 @@ bool PlaceBlockHelper::ShouldCancelDelegates(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus PlaceBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus PlaceBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   double turn_rad = behaviorExternalInterface.GetRNG().RandDblInRange(M_PI_4 ,M_PI_2);
   if( behaviorExternalInterface.GetRNG().RandDbl() < 0.5 )
@@ -63,7 +63,7 @@ BehaviorStatus PlaceBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& b
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus PlaceBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus PlaceBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   return _status;
 }
@@ -95,7 +95,7 @@ void PlaceBlockHelper::RespondToTurnAction(ActionResult result, BehaviorExternal
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PlaceBlockHelper::RespondToPlacedAction(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface)
 {
-  _status = BehaviorStatus::Complete;
+  _status = IHelper::HelperStatus::Complete;
 }
 
 

@@ -15,7 +15,7 @@
 
 #include "cozmoAnim/animation/trackLayerManagers/iTrackLayerManager.h"
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "cozmoAnim/animation/animation.h"
 #include "cozmoAnim/animation/track.h"
 

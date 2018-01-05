@@ -38,13 +38,13 @@ bool BehaviorReactToReturnedToTreads::WantsToBeActivatedBehavior(BehaviorExterna
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToReturnedToTreads::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToReturnedToTreads::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Wait for a bit to allow pitch to correct
   DelegateIfInControl(new WaitAction(0.5f),
               &BehaviorReactToReturnedToTreads::CheckForHighPitch);
   
-  return Result::RESULT_OK;
+  
 }
 
 

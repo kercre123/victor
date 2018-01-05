@@ -13,7 +13,7 @@
 #ifndef __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_H__
 #define __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "audioUtil/audioDataTypes.h"
 

@@ -14,7 +14,7 @@
 #define __Anki_Cozmo_Basestation_RobotInterface_MessageHandler_H__
 
 #include "engine/events/ankiEventMgr.h"
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/signals/simpleSignal_fwd.h"

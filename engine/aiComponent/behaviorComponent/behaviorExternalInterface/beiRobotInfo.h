@@ -14,8 +14,8 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BEIRobotInfo_H__
 #define __Cozmo_Basestation_BehaviorSystem_BEIRobotInfo_H__
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/entity.h"
 #include "clad/types/offTreadsStates.h"
 
@@ -85,6 +85,7 @@ public:
   Util::RandomGenerator& GetRNG();
   const Pose3d& GetWorldOrigin()  const;
   PoseOriginID_t GetWorldOriginID() const;
+  bool IsPowerButtonPressed() const;
 
   bool HasExternalInterface() const;
   IExternalInterface* GetExternalInterface();

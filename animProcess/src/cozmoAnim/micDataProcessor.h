@@ -19,7 +19,7 @@
 
 #include "util/container/fixedCircularBuffer.h"
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include <array>
 #include <cstdint>
@@ -65,6 +65,10 @@ public:
 
 private:
   std::string _writeLocationDir = "";
+  // Members for caching off lookup indices for mic processing results
+  int _bestSearchBeamIndex = 0;
+  int _bestSearchBeamConfidence = 0;
+  int _searchConfidenceState = 0;
 
   // Members for the the mic processing/recording/streaming jobs
   std::deque<std::shared_ptr<MicDataInfo>> _micProcessingJobs;
@@ -116,12 +120,7 @@ private:
   void TriggerWordDetectCallback(const char* resultFound, float score);
   bool ProcessResampledAudio(TimeStamp_t timestamp, const AudioUtil::AudioSample* audioChunk);
 
-  struct DirConfResult
-  {
-    uint16_t direction;
-    int16_t confidence;
-  };
-  DirConfResult ProcessMicrophonesSE(const AudioUtil::AudioSample* audioChunk,
+  MicDirectionData ProcessMicrophonesSE(const AudioUtil::AudioSample* audioChunk,
                                      AudioUtil::AudioSample* bufferOut) const;
 
   void ResampleAudioChunk(const AudioUtil::AudioSample* audioChunk, AudioUtil::AudioSample* bufferOut);

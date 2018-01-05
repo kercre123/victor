@@ -11,9 +11,9 @@
  **/
 
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/shared/types.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/components/desiredFaceDistortionComponent.h"
 #include "engine/components/inventoryComponent.h"

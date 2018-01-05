@@ -1,4 +1,5 @@
 #include <dlfcn.h>
+#include <pthread.h>
 #include <sys/mman.h>
 
 #include "kernel_includes.h"
@@ -893,7 +894,96 @@ void camera_install_callback(camera_cb cb)
 // of the pixel. The 5th byte contains the two least significant bits of each pixel in the
 // same order.
 //
-static void downsample_frame(const uint8_t *bayer, uint8_t *rgb, int bayer_sx, int bayer_sy, int bpp)
+#define USE_NEON_DOWNSAMPLE 1
+#if USE_NEON_DOWNSAMPLE
+static void downsample_frame(uint8_t *bayer, uint8_t *rgb, int bayer_sx, int bayer_sy, int bpp)
+{
+  // input width must be divisble by bpp
+  assert((bayer_sx % bpp) == 0);
+
+  // Each iteration of the inline assembly processes 20 bytes at a time
+  const uint8_t  kNumBytesProcessedPerLoop = 20;
+  assert((bayer_sx % kNumBytesProcessedPerLoop) == 0);
+  
+  const uint32_t kNumInnerLoops = bayer_sx / kNumBytesProcessedPerLoop;
+  const uint32_t kNumOuterLoops = bayer_sy >> 1;
+
+  uint8_t* bayer2 = bayer + bayer_sx;
+
+  for(int i = 0; i < kNumOuterLoops; ++i)
+  {
+    for(int j = 0; j < kNumInnerLoops; ++j)
+    {
+      __asm__ volatile
+      (
+        "VLD1.8 {d0}, [%[ptr]] \n\t"  // Load 8 bytes from raw bayer image
+        "ADD %[ptr], %[ptr], #5 \n\t" // Increment bayer pointer by 5 (5 byte packing)
+        "VLD1.8 {d1}, [%[ptr]] \n\t"  // Load 8 more bytes
+        "VSHL.I64 d0, d0, #32 \n\t"   // Shift out the partial packed bytes from d0
+        "ADD %[ptr], %[ptr], #5 \n\t" // Increment bayer pointer again, after ld and shl so they can be dual issued
+        "VEXT.8 d0, d0, d1, #4 \n\t"  // Extract first 4 bytes from d0 and following 4 bytes from d1
+        // d0 is now alternating red and green bytes
+
+        // Repeat above steps for next 8 bytes
+        "VLD1.8 {d1}, [%[ptr]] \n\t"
+        "ADD %[ptr], %[ptr], #5 \n\t"
+        "VLD1.8 {d2}, [%[ptr]] \n\t"
+        "VSHL.I64 d1, d1, #32 \n\t"
+        "ADD %[ptr], %[ptr], #5 \n\t"
+        "VEXT.8 d1, d1, d2, #4 \n\t" // d1 is alternating red and green
+
+        "VUZP.8 d0, d1 \n\t" // Unzip alternating bytes so d0 is all red bytes and d1 is all green bytes
+
+        // Repeat above for the second row containing green and blue bytes
+        "VLD1.8 {d2}, [%[ptr2]] \n\t"
+        "ADD %[ptr2], %[ptr2], #5 \n\t"
+        "VLD1.8 {d3}, [%[ptr2]] \n\t"
+        "VSHL.I64 d2, d2, #32 \n\t"
+        "ADD %[ptr2], %[ptr2], #5 \n\t"
+        "VEXT.8 d2, d2, d3, #4 \n\t" // d2 is alternating green and blue
+
+        "VLD1.8 {d3}, [%[ptr2]] \n\t"
+        "ADD %[ptr2], %[ptr2], #5 \n\t"
+        "VLD1.8 {d4}, [%[ptr2]] \n\t"
+        "VSHL.I64 d3, d3, #32 \n\t"
+        "ADD %[ptr2], %[ptr2], #5 \n\t"
+        "VEXT.8 d3, d3, d4, #4 \n\t" // d3 is alternating green and blue
+
+        "VUZP.8 d2, d3 \n\t" // d2 is green, d3 is blue
+        "VSWP.8 d2, d3 \n\t" // Due to required register stride on saving need to have blue in d2 so swap
+
+        // Average the green data with a vector halving add
+        // Could save an instruction by just ignoring the second set of green data (d3)
+        "VHADD.U8 d1, d1, d3 \n\t"
+
+        // Perform a saturating left shift on all elements since each color byte is the 8 high bits
+        // from the 10 bit data. This is like adding 00 as the two low bits
+        "VQSHL.U8 d0, d0, #2 \n\t"
+        "VQSHL.U8 d1, d1, #2 \n\t"
+        "VQSHL.U8 d2, d2, #2 \n\t"
+
+        // Interleaving store of red, green, and blue bytes into output rgb image
+        "VST3.8 {d0, d1, d2}, [%[out]]! \n\t"
+
+        : [ptr] "+r" (bayer),  // Output list because we want the output of the pointer adds, + since we are reading
+          [out] "+r" (rgb),    //   and writing from these registers
+          [ptr2] "+r" (bayer2)
+        : [ptr] "r" (bayer),   // Input list automatically put in registers
+          [out] "r" (rgb), 
+          [ptr2] "r" (bayer2)
+        : "d0","d1","d2","d3","d4","memory" // Clobber list of registers used and memory since it is being written to
+      );
+    }
+
+    // Skip a row
+    bayer += bayer_sx;
+    bayer2 += bayer_sx;
+  }
+}
+
+#else
+
+static void downsample_frame(uint8_t *bayer, uint8_t *rgb, int bayer_sx, int bayer_sy, int bpp)
 {
   // input width must be divisble by bpp
   assert((bayer_sx % bpp) == 0);
@@ -962,22 +1052,25 @@ static void downsample_frame(const uint8_t *bayer, uint8_t *rgb, int bayer_sx, i
   }
 }
 
+#endif
 
 #define BUFFER_SIZE 3
+
 // Should only need a buffer of three images, one for the image that is currently being
 // used by outside sources (engine) and then we alternate writing new images to the other two
 // This way there is always a complete image available that can be switched to after the current image
 // is done being processed
-static uint8_t raw_buffer[BUFFER_SIZE][Y][X][3];
+static uint8_t raw_buffer[BUFFER_SIZE][Y][X][3] __attribute__((aligned(64)));
+static pthread_mutex_t lock;
 
 // Index that is currently being processed by the outside and we should not touch
-static uint8_t processing_idx = 0;
+static uint8_t processing_idx = 2;
 
 // The next index to switch to should a new image to process be needed
-static uint8_t potential_processing_idx = 0;
+static uint8_t potential_processing_idx = 1;
 
 // The next index to write new images to
-static uint8_t next_idx = 1;
+static uint8_t next_idx = 0;
 
 int dump_image_data(uint8_t *img, int width, int height)
 {
@@ -1002,6 +1095,7 @@ int dump_image_data(uint8_t *img, int width, int height)
   return 0;
 }
 
+static uint8_t frame_requested_ = FALSE;
 static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
                                           void *user_data)
 {
@@ -1044,37 +1138,45 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
   const int raw_frame_width = buf_planes->plane_info.mp[0].stride;
   const int raw_frame_height = buf_planes->plane_info.mp[0].scanline;
 
-  // find snapshot frame
-  if (user_frame_callback) {
-    for (i = 0; i < bufs->num_bufs; i++) {
-      if (bufs->bufs[i]->stream_id == m_stream->s_id) {
-        
-        uint8_t* outbuf = (uint8_t*)&raw_buffer[next_idx];
-        m_frame = bufs->bufs[i];
-        const uint8_t* inbuf = (uint8_t *)m_frame->buffer + m_frame->planes[i].data_offset;
+  if(frame_requested_)
+  {
+    // find snapshot frame
+    if (user_frame_callback) {
+      for (i = 0; i < bufs->num_bufs; i++) {
+        if (bufs->bufs[i]->stream_id == m_stream->s_id) {
+          
+          uint8_t* outbuf = (uint8_t*)&raw_buffer[next_idx];
+          m_frame = bufs->bufs[i];
+          uint8_t* inbuf = (uint8_t *)m_frame->buffer + m_frame->planes[i].data_offset;
 
-        downsample_frame(inbuf, outbuf, raw_frame_width, raw_frame_height, 10 /* bpp */);
-        
-        // image has been taken from the buffer and downsampled, it is now safe for
-        // it to be potentially processed by engine
-        potential_processing_idx = next_idx;
-        next_idx = (next_idx + 1) % BUFFER_SIZE;
-        if(next_idx == processing_idx)
-        {
-          next_idx = (next_idx + 1) % BUFFER_SIZE;
+          downsample_frame(inbuf, outbuf, raw_frame_width, raw_frame_height, 10 /* bpp */);
+          
+          pthread_mutex_lock(&lock);
+            
+          // image has been taken from the buffer and downsampled, it is now safe for
+          // it to be potentially processed by engine
+          // any currently partially-locked buffer (not yet locked for processing) is
+          // safe to reuse, so we unlock it
+            
+          uint8_t temp = potential_processing_idx;
+          potential_processing_idx = next_idx;
+          next_idx = temp;
+            
+          pthread_mutex_unlock(&lock);
+          
+          frame_requested_ = FALSE;
+
+          user_frame_callback(outbuf, raw_frame_width, raw_frame_height);
+          frameid++;
         }
-        
-        user_frame_callback(outbuf, X, Y);
-        frameid++;
       }
     }
+    if (NULL == m_frame) {
+      CDBG_ERROR("%s: main frame is NULL", __func__);
+      rc = -1;
+      goto EXIT;
+    }
   }
-  if (NULL == m_frame) {
-    CDBG_ERROR("%s: main frame is NULL", __func__);
-    rc = -1;
-    goto EXIT;
-  }
-  
   
 EXIT:
   for (i=0; i<bufs->num_bufs; i++) {
@@ -1086,7 +1188,19 @@ EXIT:
   }
 }
 
+void camera_swap_locks()
+{
+  pthread_mutex_lock(&lock);
 
+  // NOTE: we do not modify next index within this mutex!
+
+  // Swap potential and processing 
+  uint8_t temp = processing_idx;
+  processing_idx = potential_processing_idx;
+  potential_processing_idx = temp;
+
+  pthread_mutex_unlock(&lock);
+}
 
 int mm_app_start_capture_raw(mm_camera_test_obj_t *test_obj, uint8_t num_snapshots)
 {
@@ -1295,6 +1409,12 @@ int camera_init()
     rc = -1;
   } //else we are goint to use the first one.
   
+  if (pthread_mutex_init(&lock, NULL) != 0)
+  {
+    CDBG_ERROR("%s: Mutex init failed", __func__);
+    rc = -1;
+  }
+
   return rc;
 }
 
@@ -1311,11 +1431,6 @@ int camera_start(camera_cb cb)
   return rc;
 }
 
-
-void camera_set_processing_frame()
-{
-  processing_idx = potential_processing_idx;
-}
 
 int camera_stop()
 {
@@ -1336,5 +1451,10 @@ int camera_cleanup()
 {
   mm_camera_lib_close(&gTheCamera.lib_handle);
   return 0;
+}
+
+void camera_request_frame()
+{
+  frame_requested_ = TRUE;
 }
 

@@ -13,7 +13,7 @@
 
 #ifndef __Anki_Cozmo_CozmoAPI_h__
 #define __Anki_Cozmo_CozmoAPI_h__
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "util/export/export.h"
 #include "util/helpers/noncopyable.h"
 #include "json/json.h"

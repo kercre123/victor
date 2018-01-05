@@ -9,7 +9,7 @@ import re
 import os
 import sys
 
-THIS_DIR = os.path.dirname(os.path.realpath(__file__))                                              
+THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 
 sys.path.insert(0, os.path.join(THIS_DIR, '..'))
 
@@ -17,13 +17,13 @@ import ankibuild.util
 
 
 # glob.py from BUCK project
-# https://github.com/facebook/buck/blob/master/src/com/facebook/buck/json/buck_parser/glob_internal.py 
+# https://github.com/facebook/buck/blob/master/src/com/facebook/buck/json/buck_parser/glob_internal.py
 # Glob implementation in python.
 
 from pathlib import Path
 
-def is_special(pat):                                                                                
-    """Whether the given pattern string contains match constructs."""                               
+def is_special(pat):
+    """Whether the given pattern string contains match constructs."""
     return "*" in pat or "?" in pat or "[" in pat
 
 def path_component_contains_dot(relative_path):
@@ -104,7 +104,7 @@ def single_subdir_glob(dirpath, glob_pattern, excludes=None, prefix=None, build_
                  search_base_path=search_base,
                  project_root=search_base)
     #print("pattern {}".format(os.path.join(dirpath, glob_pattern)))
-    #print("search_base {}".format(search_base))  
+    #print("search_base {}".format(search_base))
     #print("ssg files: {}".format(files))
     for f in files:
         if dirpath:
@@ -155,6 +155,7 @@ class FindSrc(object):
 
     ANKI_BUILD_PLATFORMS = ('android', 'ios', 'mac', 'linux', 'windows')
     ANKI_CXX_SRC_EXTS = ( '.c', '.cpp', '.cc' )
+    ANKI_GO_SRC_EXTS = ( '.go', )
     ANKI_CXX_INCLUDE_EXTS = ( '.h', '.hpp', '.inl', '.def' )
     ANKI_PLATFORM_SRC_GLOBS = {
         'ios': [ '*.m', '*.mm' ],
@@ -293,9 +294,9 @@ def cxx_glob(search_base, include_paths, include_exts=[""], includes=[], exclude
         include_globs.extend(globs)
 
     include_globs.extend(includes)
-    
+
     finder = FindSrc()
-    files = finder.find_src(search_base, 
+    files = finder.find_src(search_base,
                             search_base,
                             include_globs,
                             excludes,
@@ -318,6 +319,35 @@ def cxx_header_glob(search_base, include_paths, includes=[], excludes=[], platfo
                     includes,
                     excludes,
                     [platform] if platform else [])
+
+def all_glob(search_base, include_paths, includes=[], excludes=[], platform=None):
+    exts = FindSrc.ANKI_CXX_INCLUDE_EXTS + FindSrc.ANKI_CXX_SRC_EXTS + FindSrc.ANKI_GO_SRC_EXTS
+    return cxx_glob(search_base,
+                    include_paths,
+                    exts,
+                    includes,
+                    excludes,
+                    [platform] if platform else [])
+
+def go_project(name,
+               search_base,
+               gopath,
+               dir):
+
+    deps = cxx_glob(search_base,
+                    [gopath],
+                    FindSrc.ANKI_GO_SRC_EXTS)
+
+    srcs = all_glob(search_base, [dir])
+
+    file_map = {
+        name + ".srcs.lst" : srcs + deps,
+        name + ".godir.lst" : [dir],
+        name + ".gopath.lst" : [gopath],
+    }
+
+    return file_map
+
 class BuildContext(object):
     def __init__(self):
         self.globals = {}
@@ -334,7 +364,7 @@ class BuildProcessor(object):
     def _asset_project(self, name, srcs, platform_srcs=[]):
         path = os.path.dirname(__file__)
         filemap = asset_project(name, path, srcs, platform_srcs)
-        self.projects[name] = filemap 
+        self.projects[name] = filemap
 
     def _cxx_project(self, name,
                 srcs,
@@ -343,7 +373,13 @@ class BuildProcessor(object):
                 platform_headers=[]):
         path = os.path.dirname(__file__)
         filemap = cxx_project(name, path, srcs, platform_srcs, headers, platform_headers)
-        self.projects[name] = filemap 
+        self.projects[name] = filemap
+
+    def _go_project(self, name,
+                gopath,
+                dir):
+        filemap = go_project(name, self.build_env.dirname, gopath, dir)
+        self.projects[name] = filemap
 
     def _cxx_src_glob(self, include_paths, includes=[], excludes=[], platform=None):
         return cxx_src_glob(self.build_env.dirname, include_paths, includes, excludes, platform)
@@ -371,6 +407,7 @@ class BuildProcessor(object):
             'cxx_src_glob': self._cxx_src_glob,
             'cxx_header_glob': self._cxx_header_glob,
             'cxx_project': self._cxx_project,
+            'go_project': self._go_project,
             'asset_project': self._asset_project,
             'glob': self._glob,
             'subdir_glob': self._subdir_glob,

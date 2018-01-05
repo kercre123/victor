@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_NeedsSystem_NeedsState_H__
 #define __Cozmo_Basestation_NeedsSystem_NeedsState_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/unlockTypes.h"
 #include "util/global/globalDefinitions.h"

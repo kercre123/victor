@@ -15,7 +15,7 @@
 
 #include "engine/humanHead.h"
 
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
 
 namespace Anki {
 namespace Cozmo {

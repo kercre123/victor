@@ -20,7 +20,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -48,14 +48,14 @@ bool BehaviorRamIntoBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRamIntoBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRamIntoBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(behaviorExternalInterface.GetRobotInfo().GetCarryingComponent().IsCarryingObject()){
     TransitionToPuttingDownBlock(behaviorExternalInterface);
   }else{
     TransitionToTurningToBlock(behaviorExternalInterface);
   }
-  return Result::RESULT_OK;
+  
 }
 
 

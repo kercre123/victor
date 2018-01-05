@@ -16,9 +16,9 @@
 #include "engine/components/cubeAccelComponentListeners.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/shared/types.h"
 
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"

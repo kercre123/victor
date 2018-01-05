@@ -38,7 +38,7 @@ bool BehaviorReactToMotorCalibration::WantsToBeActivatedBehavior(BehaviorExterna
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToMotorCalibration::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToMotorCalibration::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   LOG_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");  
   auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
@@ -53,8 +53,6 @@ Result BehaviorReactToMotorCalibration::OnBehaviorActivated(BehaviorExternalInte
                             robotInfo.IsLiftCalibrated(), robotInfo.IsHeadCalibrated());
       }
     });
-
-  return RESULT_OK;
 }
   
   

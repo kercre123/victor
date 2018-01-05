@@ -66,7 +66,7 @@ bool RollBlockHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus RollBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus RollBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // do first update immediately
   _shouldRoll = true;
@@ -77,7 +77,7 @@ BehaviorStatus RollBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& be
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus RollBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus RollBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   return _status;
 }
@@ -143,7 +143,7 @@ void RollBlockHelper::DetermineAppropriateAction(BehaviorExternalInterface& beha
                     "RollBlockHelper.Update.NoObj",
                     "Failing helper, object %d is invalid",
                     _targetID.GetValue());
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
     }
   }
 }
@@ -181,7 +181,7 @@ void RollBlockHelper::UnableToRollDelegate(BehaviorExternalInterface& behaviorEx
                                               {DelegateToPutDown(behaviorExternalInterface); return _status;});
 
       delegateProperties.SetOnFailureFunction( [](BehaviorExternalInterface& behaviorExternalInterface)
-                                              {return BehaviorStatus::Failure;});
+                                              {return IHelper::HelperStatus::Failure;});
       DelegateAfterUpdate(delegateProperties);
     }else if(objOnTop != nullptr){
       PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.UnableToRollDelegate.PickingUpObjOnTop",
@@ -196,7 +196,7 @@ void RollBlockHelper::UnableToRollDelegate(BehaviorExternalInterface& behaviorEx
                                               {DelegateToPutDown(behaviorExternalInterface); return _status;});
 
       delegateProperties.SetOnFailureFunction( [](BehaviorExternalInterface& behaviorExternalInterface)
-                                              {return BehaviorStatus::Failure;});
+                                              {return IHelper::HelperStatus::Failure;});
       DelegateAfterUpdate(delegateProperties);
     }else{
       PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.UnableToRollDelegate.CantInteract",
@@ -207,7 +207,7 @@ void RollBlockHelper::UnableToRollDelegate(BehaviorExternalInterface& behaviorEx
     PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.UnableToRollDelegate.NoObj",
                   "Failing helper, object %d is invalid",
                   _targetID.GetValue());
-    _status = BehaviorStatus::Failure;
+    _status = IHelper::HelperStatus::Failure;
   }
 }
   
@@ -221,10 +221,10 @@ void RollBlockHelper::DelegateToPutDown(BehaviorExternalInterface& behaviorExter
                                           [this](BehaviorExternalInterface& behaviorExternalInterface) {
                                             _shouldRoll = true;
                                             DetermineAppropriateAction(behaviorExternalInterface);
-                                            return BehaviorStatus::Running;
+                                            return IHelper::HelperStatus::Running;
                                           });
   delegateProperties.SetOnFailureFunction([](BehaviorExternalInterface& behaviorExternalInterface)
-                                          { return BehaviorStatus::Failure;});
+                                          { return IHelper::HelperStatus::Failure;});
   DelegateAfterUpdate(delegateProperties);
 }
 
@@ -234,7 +234,7 @@ void RollBlockHelper::StartRollingAction(BehaviorExternalInterface& behaviorExte
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
     MarkTargetAsFailedToRoll(behaviorExternalInterface);
-    _status = BehaviorStatus::Failure;
+    _status = IHelper::HelperStatus::Failure;
     return;
   }
   _tmpRetryCounter++;
@@ -287,7 +287,7 @@ void RollBlockHelper::RespondToRollingResult(ActionResult result, BehaviorExtern
   switch(result){
     case ActionResult::SUCCESS:
     {
-      _status = BehaviorStatus::Complete;
+      _status = IHelper::HelperStatus::Complete;
       break;
     }
     case ActionResult::CANCELLED_WHILE_RUNNING:

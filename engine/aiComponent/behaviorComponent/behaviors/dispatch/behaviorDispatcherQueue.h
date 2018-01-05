@@ -29,7 +29,7 @@ protected:
   
   virtual ICozmoBehaviorPtr GetDesiredBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void BehaviorDispatcher_OnActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void DispatcherUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
 
 private:
 

@@ -19,7 +19,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -41,7 +41,7 @@ BehaviorReactToRobotShaken::BehaviorReactToRobotShaken(const Json::Value& config
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToRobotShaken::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotShaken::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {  
   // Clear severe needs expression since eyes are being re-set
   if(behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().HasSevereNeedExpression())
@@ -61,13 +61,16 @@ Result BehaviorReactToRobotShaken::OnBehaviorActivated(BehaviorExternalInterface
   // Kick off the state machine:
   _state = EState::Shaking;
   
-  return Result::RESULT_OK;
+  
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToRobotShaken::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotShaken::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
 
   // Master state machine:
   switch(_state) {
@@ -137,14 +140,13 @@ ICozmoBehavior::Status BehaviorReactToRobotShaken::UpdateInternal_WhileRunning(B
       if (!IsControlDelegated()) {
         // Done
         BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotShaken);
-        return Status::Complete;
+        CancelSelf();
+        return;
       }
     }
     default:
       break;
-  }
-  
-  return Status::Running;
+  }  
 }
   
 

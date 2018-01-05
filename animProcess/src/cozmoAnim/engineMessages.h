@@ -14,7 +14,7 @@
 #ifndef COZMO_ANIM_ENGINE_MSG_HANDLER_H
 #define COZMO_ANIM_ENGINE_MSG_HANDLER_H
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include <stdarg.h>
 #include <stddef.h>

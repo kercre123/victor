@@ -23,7 +23,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/moodSystem/moodManager.h"
-#include "anki/vision/basestation/observableObject.h"
+#include "coretech/vision/engine/observableObject.h"
 #include "util/console/consoleInterface.h"
 
 
@@ -65,23 +65,25 @@ bool BehaviorRollBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface& be
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRollBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRollBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _didCozmoAttemptDock = false;
   const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(object != nullptr){
     UpdateTargetsUpAxis(behaviorExternalInterface);
     TransitionToPerformingAction(behaviorExternalInterface);
-    return Result::RESULT_OK;
+    
   }
-  
-  return Result::RESULT_FAIL;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorRollBlock::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRollBlock::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(object != nullptr && _behaviorState == State::RollingBlock){
     const AxisName currentUpAxis = object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
@@ -104,14 +106,12 @@ ICozmoBehavior::Status BehaviorRollBlock::UpdateInternal_WhileRunning(BehaviorEx
           if(_targetID.IsSet()){
             TransitionToPerformingAction(behaviorExternalInterface);
           }else{
-            return ICozmoBehavior::Status::Complete;
+            CancelSelf();
           }
         }
       }
     }
   }
-  
-  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   

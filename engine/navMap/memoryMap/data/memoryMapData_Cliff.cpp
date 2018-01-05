@@ -10,7 +10,7 @@
  **/
 #include "memoryMapData_Cliff.h"
 
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
 
 namespace {
   const float kRotationTolerance = 1e-6f;

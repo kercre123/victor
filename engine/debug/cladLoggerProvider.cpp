@@ -14,7 +14,7 @@
 
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
-#include "anki/messaging/basestation/IComms.h"
+#include "coretech/messaging/engine/IComms.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
 #include <limits>
