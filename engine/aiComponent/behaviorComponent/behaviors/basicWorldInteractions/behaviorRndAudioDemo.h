@@ -28,7 +28,7 @@ protected:
   
 public:
   virtual ~BehaviorRndAudioDemo() override {}
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override { return true; };
 
   virtual bool CarryingObjectHandledInternally() const override{ return false;}
   
@@ -38,6 +38,7 @@ protected:
 
 private:
 
+  void StartSequence(BehaviorExternalInterface& behaviorExternalInterface);
   
 };
   
