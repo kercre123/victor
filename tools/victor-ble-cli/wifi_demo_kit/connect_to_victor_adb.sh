@@ -12,7 +12,7 @@ function run_adb_command {
 }
 
 
-echo "Stating add_network"
+echo "Starting add_network"
 output=$(run_adb_command wpa_cli add_network)
 printf "$output\n"
 while read -r line
@@ -26,10 +26,9 @@ run_adb_command wpa_cli select_network $NETWORK_NUM
 run_adb_command wpa_cli reassociate
 run_adb_command wpa_cli status
 
-echo "Stating DHCP"
+echo "Starting DHCP"
 run_adb_command dhcptool wlan0
 DHCP_TIMEOUT=$?
-echo $DHCP_TIMEOUT
 
 #Some good information about the results
 run_adb_command ifconfig
@@ -38,5 +37,4 @@ run_adb_command iw dev wlan0 info
 run_adb_command iw list
 run_adb_command ping -c 5 8.8.8.8
 
-echo $DHCP_TIMEOUT
 exit $DHCP_TIMEOUT
