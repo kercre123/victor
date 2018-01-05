@@ -545,16 +545,34 @@ DTDrivingSurfaceClassifier::DTDrivingSurfaceClassifier(const Json::Value& config
   GET_JSON_PARAMETER(config, "TruncatePrunedTree", truncatePrunedTree)
   bool use1SERule = true;
   GET_JSON_PARAMETER(config, "Use1SERule", use1SERule);
+  float positiveWeight = 1.0f;
+  GET_JSON_PARAMETER(config, "PositiveWeight", positiveWeight);
 
   _dtree->setMaxDepth(maxdepth);
   _dtree->setMinSampleCount(minSampleCount);
   _dtree->setTruncatePrunedTree(truncatePrunedTree);
+  // prior
+  const cv::Mat prior = (cv::Mat_<float>(1,2) << 1.0, positiveWeight);
+  _dtree->setPriors(prior);
 
   // fixed parameters
   _dtree->setUseSurrogates(false);
   _dtree->setCVFolds(0);
   _dtree->setMaxCategories(2);
 
+}
+
+DTDrivingSurfaceClassifier::DTDrivingSurfaceClassifier(const std::string& serializedFilename,
+                                                       const CozmoContext *context) :
+  DrivingSurfaceClassifier(context)
+{
+  bool result = DeSerialize(serializedFilename.c_str());
+
+  // no other way here than throwing an exception
+  if (! result) {
+    std::string errorMsg = "Error while creating DTDrivingSurfaceClassifier: " + serializedFilename + " does not exist";
+    throw std::runtime_error(errorMsg);
+  }
 }
 
 uchar DTDrivingSurfaceClassifier::PredictClass(const Vision::PixelRGB& pixel) const
@@ -637,7 +655,9 @@ bool DTDrivingSurfaceClassifier::DeSerialize(const char *filename)
     return false;
   }
 
-  _dtree->read(fs.getFirstTopLevelNode());
+  _dtree = cv::ml::DTrees::create();
+  const cv::FileNode node = fs.root();
+  _dtree->read(node);
   return true;
 
 }

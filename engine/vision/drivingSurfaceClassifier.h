@@ -227,6 +227,7 @@ class DTDrivingSurfaceClassifier : public DrivingSurfaceClassifier
 {
 public:
   explicit DTDrivingSurfaceClassifier(const Json::Value& config, const CozmoContext *context);
+  DTDrivingSurfaceClassifier(const std::string& serializedFilename, const CozmoContext* context);
 
   uchar PredictClass(const Vision::PixelRGB& pixel) const override;
 
