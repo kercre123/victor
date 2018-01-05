@@ -564,7 +564,19 @@
     // title is approximately 30% of the entire project container
     var approxTitleAreaHeight = parseInt(projectElem.clientHeight, 10) * 0.3;
 
-    if (titleElem.clientHeight > approxTitleAreaHeight) {
+    // Calculate the total text width (as if the text was all on one line).
+    // Note that the text when rendered is likely broken across lines, so this code could
+    // be improved to calculate what the max text width is taking that into
+    // account. But this helps enough for us to detect what text is long and
+    // may benefit from a reduced font size.
+    var maxTextWidth = 295.0; // Constant value arbitrarily chosen based on German string values
+    var canvas = document.createElement('canvas');
+    var context = canvas.getContext('2d');
+    var computedFontSize = window.getComputedStyle(titleElem).fontSize;
+    context.font = computedFontSize + " Avenir Next";
+    var measuredTextWidth = context.measureText(titleElem.textContent).width;
+
+    if (titleElem.clientHeight > approxTitleAreaHeight || measuredTextWidth > maxTextWidth) {
       // title exceedes the size given so apply class to reduce the font size
       titleElem.classList.add('long-title');
     }
