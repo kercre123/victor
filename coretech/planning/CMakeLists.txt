@@ -113,4 +113,9 @@ if (MACOSX)
 
   add_test(NAME cti_planning_test COMMAND cti_planning_test)
 
+  set_tests_properties(cti_planning_test
+    PROPERTIES
+    ENVIRONMENT "GTEST_OUTPUT=xml:ctiPlanningGoogleTest.xml"
+  )
+
 endif()
