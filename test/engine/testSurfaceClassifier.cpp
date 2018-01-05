@@ -14,6 +14,8 @@
 #include "basestation/utils/data/dataPlatform.h"
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
+#include "engine/components/visionComponent.h"
+#include "engine/robot.h"
 #include "engine/vision/drivingSurfaceClassifier.h"
 #include "util/fileUtils/fileUtils.h"
 
@@ -22,13 +24,13 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#define DISPLAY_IMAGES false
+#define DISPLAY_IMAGES true
 
 extern Anki::Cozmo::CozmoContext *cozmoContext;
 
 void visualizeClassifierOnImages(const char *pathToImages, Anki::Cozmo::DrivingSurfaceClassifier& clf) {
 
-  std::vector<std::string> imageFiles = Anki::Util::FileUtils::FilesInDirectory(pathToImages, true);
+  std::vector<std::string> imageFiles = Anki::Util::FileUtils::FilesInDirectory(pathToImages, true, "jpg");
   uint imageno = 0;
 
   for (const auto& filename : imageFiles) {
@@ -65,18 +67,35 @@ void visualizeClassifierOnImages(const char *pathToImages, Anki::Cozmo::DrivingS
     cv::imshow("Mask", mask);
     cv::namedWindow("Image", cv::WINDOW_AUTOSIZE);
     cv::imshow("Image", image);
-    cv::waitKey(10);
-
-//    {
-//      const std::string saveFilename = "/Users/lorenzori/tmp/results_images/mask_" + std::to_string(imageno) + ".png";
-//      cv::imwrite(saveFilename, mask);
-//    }
-//    {
-//      const std::string saveFilename = "/Users/lorenzori/tmp/results_images/image_" + std::to_string(imageno) + ".png";
-//      cv::imwrite(saveFilename, image);
-//    }
+    cv::waitKey(0);
 
   }
+}
+
+// Default angle is head looking down
+Anki::Cozmo::VisionPoseData populateVisionPoseData(float angle = -0.40142554f) {
+  Anki::Cozmo::Robot robot(0, cozmoContext);
+  Anki::Cozmo::VisionComponent& component = robot.GetVisionComponent();
+  component.SetIsSynchronous(true);
+
+  // Don't really need a valid camera calibration, so just pass a dummy one in
+  // to make vision system happy. All that matters is the image dimensions be correct.
+  std::shared_ptr<Anki::Vision::CameraCalibration> calib(new Anki::Vision::CameraCalibration(360,640,
+                                                                                             290,290,
+                                                                                             320,180,
+                                                                                             0.f));
+  component.SetCameraCalibration(calib);
+
+  const Anki::Pose3d cameraPose;
+  Anki::Matrix_3x3f groundPlaneHomography;
+  const bool groundPlaneVisible = component.LookupGroundPlaneHomography(angle,
+                                                                        groundPlaneHomography);
+
+  Anki::Cozmo::VisionPoseData poseData;
+  poseData.groundPlaneVisible = groundPlaneVisible;
+  poseData.groundPlaneHomography = groundPlaneHomography;
+
+  return poseData;
 }
 
 /*
@@ -84,7 +103,11 @@ void visualizeClassifierOnImages(const char *pathToImages, Anki::Cozmo::DrivingS
  */
 void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
                      const std::string& positivePath,
-                     const std::string& negativePath) {
+                     const std::string& negativePath,
+                     float& resultErrorTrainingSet,
+                     float maxTotalError = 0.12,
+                     float maxPositivesError = 0.12) {
+
   bool result = clf.TrainFromFiles(positivePath.c_str(), negativePath.c_str());
   ASSERT_TRUE(result);
 
@@ -111,9 +134,9 @@ void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
     std::vector<uchar> responses = clf.PredictClass(pixels);
     cv::Mat responsesMat(responses);
 
-    const float error = Anki::calculateError(responsesMat, trainingLabels);
-    EXPECT_PRED_FORMAT2(::testing::FloatLE, error, 0.12);
-    std::cout<<"Error on whole training set: "<<error<<std::endl;
+    resultErrorTrainingSet = Anki::calculateError(responsesMat, trainingLabels);
+    EXPECT_PRED_FORMAT2(::testing::FloatLE, resultErrorTrainingSet, maxTotalError);
+    std::cout<<"Error on whole training set: "<<resultErrorTrainingSet<<std::endl;
   }
 
   // Error on positive elements
@@ -140,10 +163,9 @@ void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
     cv::Mat responsesMat(responses);
 
     const float error = Anki::calculateError(responsesMat, positiveY);
-    EXPECT_PRED_FORMAT2(::testing::FloatLE, error, 0.12);
+    EXPECT_PRED_FORMAT2(::testing::FloatLE, error, maxPositivesError);
     std::cout<<"Error on the positive elements: "<<error<<std::endl;
   }
-
 }
 
 /*
@@ -292,7 +314,8 @@ TEST(SurfaceClassifier, LRClassifier_TestManualLabels) {
   const std::string positivePath = Anki::Util::FileUtils::FullFilePath({path, "positivePixels.txt"});
   const std::string negativePath = Anki::Util::FileUtils::FullFilePath({path, "negativePixels.txt"});
 
-  checkClassifier(clf, positivePath, negativePath);
+  float error = std::numeric_limits<float>::max();
+  checkClassifier(clf, positivePath, negativePath, error);
 
   if (DISPLAY_IMAGES) {
     visualizeClassifierOnImages("/Users/lorenzori/tmp/overhead_data/real/run8/images", clf);
@@ -374,9 +397,62 @@ TEST(SurfaceClassifier, DTClassifier_TestManualLabels) {
   const std::string positivePath = Anki::Util::FileUtils::FullFilePath({path, "positivePixels.txt"});
   const std::string negativePath = Anki::Util::FileUtils::FullFilePath({path, "negativePixels.txt"});
 
-  checkClassifier(clf, positivePath, negativePath);
+  float error = std::numeric_limits<float>::max();
+  checkClassifier(clf, positivePath, negativePath, error);
 
   if (DISPLAY_IMAGES) {
     visualizeClassifierOnImages("/Users/lorenzori/tmp/overhead_data/real/run8/images", clf);
   }
+}
+
+/*
+ * Test decision tree classifier serialization and deserialization
+ */
+TEST(SurfaceClassifier, DTClassifier_TestSerialization) {
+
+  Json::Value config;
+  // populate the Json file
+  {
+    config["MaxDepth"] = 10;
+    config["MinSampleCount"] = 10;
+    config["TruncatePrunedTree"] = true;
+    config["Use1SERule"] = true;
+    config["PositiveWeight"] = 3.0f;
+  }
+
+  Anki::Cozmo::DTDrivingSurfaceClassifier clf(config, cozmoContext);
+
+  const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
+                                                                           "test/overheadMap/RealImagesDesk");
+
+  PRINT_NAMED_INFO("TestSurfaceClassifier.TrainingFromFile.PrintPath",
+                   "Path to training data is %s", path.c_str());
+
+  const std::string positivePath = Anki::Util::FileUtils::FullFilePath({path, "positivePixels.txt"});
+  const std::string negativePath = Anki::Util::FileUtils::FullFilePath({path, "negativePixels.txt"});
+
+  float error = std::numeric_limits<float>::max();
+  checkClassifier(clf, positivePath, negativePath, error, 0.14, 0.1);
+
+  // serialize the classifier
+  const std::string serializeFileName = Anki::Util::FileUtils::FullFilePath({path, "deskClassifier.json"});
+  bool result = clf.Serialize(serializeFileName.c_str());
+  ASSERT_TRUE(result);
+
+  // deserialize the classifier
+  Anki::Cozmo::DTDrivingSurfaceClassifier clf2(serializeFileName, cozmoContext);
+  float error2 = std::numeric_limits<float>::max();
+  checkClassifier(clf2, positivePath, negativePath, error2, 0.14, 0.1);
+  ASSERT_EQ(error, error2);
+
+  if (DISPLAY_IMAGES) {
+    visualizeClassifierOnImages("/Users/lorenzori/tmp/images_training/real_images/single_shots_desk/desk", clf);
+  }
+}
+
+TEST(SurfaceClassifier, CreatePoseData) {
+
+  Anki::Cozmo::VisionPoseData poseData = populateVisionPoseData();
+
+
 }
