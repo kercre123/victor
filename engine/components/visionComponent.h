@@ -277,6 +277,8 @@ struct DockingErrorSignal;
     
     void SetPhysicalRobot(const bool isPhysical);
 
+    bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
+
     // Non-rotated points representing the lift cross bar
     std::vector<Point3f> _liftCrossBarSource;
 
@@ -343,7 +345,6 @@ struct DockingErrorSignal;
     
     std::map<f32,Matrix_3x3f> _groundPlaneHomographyLUT; // keyed on head angle in radians
     void PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad = DEG_TO_RAD(0.25f));
-    bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
     
     void Processor();
     void UpdateVisionSystem(const VisionPoseData& poseData, const Vision::ImageRGB& image);
