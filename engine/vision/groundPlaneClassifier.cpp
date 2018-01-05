@@ -182,7 +182,7 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
     
     debugImageRGBs.emplace_back("LeadingEdges", std::move(leadingEdgeDisp));
   
-    // Draw Ground plane on the image and display it
+    // Draw Ground plane on the camera image and display it
     Vision::ImageRGB toDisplay;
     image.CopyTo(toDisplay);
     Quad2f quad;
