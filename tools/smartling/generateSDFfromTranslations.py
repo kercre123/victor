@@ -77,7 +77,7 @@ def run(args):
 
   # Execute SDF .asset generation code 
   procArgs = [unity_exe, "-batchmode", "-quit", "-nographics"]
-  procArgs.extend(["-projectPath=%s" % project_dir])
+  procArgs.extend(["-projectPath", project_dir])
   procArgs.extend(["-executeMethod", 'CreateNeededSDFFont.CreateSDFFontsFromScript'])
   procArgs.extend(["-logFile", log_file])
 
