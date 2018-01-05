@@ -120,14 +120,12 @@ def parse_command_args():
 
 # variable names are the all represented in scratch using this json structure, inside of a dictionary named 'variables'
 class FilterVariable:
-    def augment_context_by_dict_key(self, key, context):
+    def augment_context_by_dict_key(self, src, key, context):
         if key == 'variables':
-            context = copy.deepcopy(context)
-            context['variable'] = True
-        return context
+            context['scope'][-1] = 'variable'
 
     def test_and_apply_transform(self, src, context, transform):
-        if 'variable' in context and type(src) == dict and 'name' in src:
+        if context['scope'][-1] == 'variable' and type(src) == dict and 'name' in src:
             string = src['name']
             try:
                 if len(string) > 1 and string[0] == '.':
@@ -140,8 +138,8 @@ class FilterVariable:
 
 # the vast majority of user editable strings are represented in scratch using this json structure
 class FilterField:
-    def augment_context_by_dict_key(self, key, context):
-        return context
+    def augment_context_by_dict_key(self, src, key, context):
+        pass
 
     def test_and_apply_transform(self, src, context, transform):
         for key in ['TEXT', 'VARIABLE']:
@@ -153,10 +151,31 @@ class FilterField:
                     else:
                         float(string)
                 except ValueError:
-                    if string not in IGNORE_TEXT_KEYS:
-                        src['fields'][key]['value'] = transform(string, context)
+                    if string not in context['textIdMap'] or context['textIdMap'][string] not in context['sdkAnimBlockIds']:
+                        if string not in IGNORE_TEXT_KEYS:
+                            src['fields'][key]['value'] = transform(string, context)
+                        
+class FilterSDKAnimation:
+    def augment_context_by_dict_key(self, src, key, context):
+        if 'sdkAnimBlockIds' not in context:
+            context['sdkAnimBlockIds'] = []
+        if 'textIdMap' not in context:
+            context['textIdMap'] = {}
 
-allFilters = [FilterVariable(), FilterField()]
+        if 'opcode' in src and 'inputs' in src and 'ANIM_NAME' in src['inputs']:
+            if src['opcode'] == 'cozmo_play_animation_by_name' or src['opcode'] == 'cozmo_play_animation_by_triggername':
+                valueText = src['inputs']['ANIM_NAME']['block']
+                context['sdkAnimBlockIds'].append( valueText )
+
+        if 'id' in src and 'opcode' in src and src['opcode'] == 'text' and 'fields' in src and 'TEXT' in src['fields']:
+            idText = src['id']
+            valueText = src['fields']['TEXT']['value']
+            context['textIdMap'][valueText] = idText
+
+    def test_and_apply_transform(self, src, context, transform):
+        pass
+
+allFilters = [FilterVariable(), FilterField(), FilterSDKAnimation()]
 
 # --------------------------------------------------------------------------------------------------------
 #                                               Translation Code
@@ -185,15 +204,18 @@ def translate_lower(string, context):
 
 # Traverses a hierarchy of json objects/lists, using the supplied filters to identify where to apply the supplied transform
 def walk_json_tree_and_perform_transformations(node, filters, context, transform):
+    if len( context['scope'] ) == 0 :
+        context['scope'].append('none')
     if type(node) == list:
         for subNode in node:
             walk_json_tree_and_perform_transformations( subNode, filters, context, transform )
     elif type(node) == dict:
         for key in node:
-            passedCtx = context
+            context['scope'].append('none')
             for f in filters:
-                passedCtx = f.augment_context_by_dict_key(key, passedCtx)
-            walk_json_tree_and_perform_transformations( node[key], filters, passedCtx, transform )
+                f.augment_context_by_dict_key(node, key, context)
+            walk_json_tree_and_perform_transformations( node[key], filters, context, transform )
+            context['scope'] = context['scope'][:-1]
     for f in filters:
         f.test_and_apply_transform(node, context, transform)
 
@@ -204,13 +226,13 @@ def translate_project(project, sourceLanguageTable, destinationLanguageTable):
     projectJson = json.loads(project['ProjectJSON'])
 
     # encode the original project into localization keys, with matches lowercased
-    encodingContext = { 'loc': {} }#{ 'loc': sourceLanguageTable['encodings'] }
+    encodingContext = { 'loc': {}, 'scope': [] }#{ 'loc': sourceLanguageTable['encodings'] }
     for key in sourceLanguageTable['encodings']:
         encodingContext['loc'][key.lower()] = sourceLanguageTable['encodings'][key]
     walk_json_tree_and_perform_transformations(projectJson, allFilters, encodingContext, translate_lower)
 
     # decode the localization keys into the proper language
-    decodingContext = { 'loc': destinationLanguageTable['decodings'] }
+    decodingContext = { 'loc': destinationLanguageTable['decodings'], 'scope': [] }
     walk_json_tree_and_perform_transformations(projectJson, allFilters, decodingContext, translate)
 
     newProject = {}
@@ -277,7 +299,7 @@ def scan_project(project, source_language, target_desktop):
     with open(source_project_file) as input_file:
         json_contents = json.load(input_file)
         if 'ProjectJSON' in json_contents:
-            extraction_context = { 'outputList' : output_list }
+            extraction_context = { 'outputList' : output_list, 'scope': [] }
             encoded_project_json = json.loads(json_contents['ProjectJSON'])
             walk_json_tree_and_perform_transformations(encoded_project_json, allFilters, extraction_context, pull_string)
         else:
