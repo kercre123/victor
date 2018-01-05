@@ -8,6 +8,37 @@
   // register onload and body click events
   registerEvents();
 
+  function wrapOverflow(className) {
+    // This needs to have the slightest delay otherwise the max width may be 0 
+    // if the element updated recently.
+    setTimeout(function(){
+      var elements = document.getElementsByClassName(className);
+
+      for (var i = 0; i < elements.length; i++) {
+        var title = elements[i];
+        var maxTextWidth = title.offsetWidth; 
+        var canvas = document.createElement('canvas');
+        var context = canvas.getContext('2d');
+        var computedFontSize = window.getComputedStyle(title).fontSize;
+        var fontFamily = window.getComputedStyle(title).fontFamily;
+        context.font = computedFontSize + " " + fontFamily;
+        
+        var lines = title.textContent.split('\n');
+        var measuredTextWidth = 0;
+        for (var j = 0; j < lines.length; j++){
+          measuredTextWidth = Math.max(context.measureText(lines[j]).width, measuredTextWidth);
+        }
+        
+        // If the element is hidden, it's width will be 0.
+        // We should handle that case by not setting the white space style.
+        if (measuredTextWidth > maxTextWidth && maxTextWidth != 0) {
+          title.style.whiteSpace = 'initial';
+        } else {
+          title.style.whiteSpace = null;
+        }
+      }
+    }, 10);
+  }
 
   /**
    * Sets static strings to localized text
@@ -48,6 +79,8 @@
 
     setText('#featured-tab-hero .tab-hero-title', $t('codeLab.projects.featuredTab.featuredTabHeroTitle'));
     setText('#featured-tab-hero .tab-hero-detail', $t('codeLab.projects.featuredTab.featuredTabHeroDetail'));
+
+    wrapOverflow('tab-hero-title');
   }
 
 
@@ -193,6 +226,7 @@
 
       projectsElem.className = tabElem.getAttribute('id');
 
+      wrapOverflow('tab-hero-title');
       // load projects for new tab
       loadProjects();
     }
