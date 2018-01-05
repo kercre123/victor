@@ -32,6 +32,7 @@ namespace Cozmo {
     std::ifstream _cpuFile;
     std::ifstream _tempFile;
 
+    const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
     const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
     const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone8/temp";
 
@@ -47,6 +48,17 @@ namespace Cozmo {
   
   OSState::OSState()
   {
+    // Get nominal CPU frequency for this robot
+    _tempFile.open(kNominalCPUFreqFile, std::ifstream::in);
+    if(_tempFile.is_open()) {
+      _tempFile >> kNominalCPUFreq_kHz;
+      PRINT_NAMED_INFO("OSState.Constructor.NominalCPUFreq", "%dkHz", kNominalCPUFreq_kHz);
+      _tempFile.close();
+    }
+    else {
+      PRINT_NAMED_WARNING("OSState.Constructor.FailedToOpenNominalCPUFreqFile", "%s", kNominalCPUFreqFile);
+    }
+    
     _cpuFreq_kHz = kNominalCPUFreq_kHz;
     _cpuTemp_mC = 0;
 
