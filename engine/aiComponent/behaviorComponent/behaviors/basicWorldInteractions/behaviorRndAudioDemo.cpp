@@ -71,16 +71,18 @@ void BehaviorRndAudioDemo::StartSequence(BehaviorExternalInterface& behaviorExte
   behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(filter, locatedBlocks);
   
   auto compoundAction = new CompoundActionSequential();
-  compoundAction->SetDelayBetweenActions(0.5f);
+  compoundAction->SetDelayBetweenActions(2.f);
   for (const auto& obj : locatedBlocks) {
-    compoundAction->AddAction(new TurnTowardsObjectAction(obj->GetID()));
+    auto turnAction = new TurnTowardsObjectAction(obj->GetID());
+    turnAction->SetMaxPanSpeed(DEG_TO_RAD(75.f));
+    compoundAction->AddAction(turnAction);
     
     float currentDistanceToCube_mm = 0.f;
     ComputeDistanceBetween(behaviorExternalInterface.GetRobotInfo().GetPose(), obj->GetPose(), currentDistanceToCube_mm);
     
-    const float distanceAtWhichToStop_mm = 80.f;
+    const float distanceAtWhichToStop_mm = 60.f;
     const float drivingDistance_mm = currentDistanceToCube_mm - distanceAtWhichToStop_mm;
-    const float drivingSpeed_mmps = 75.f;
+    const float drivingSpeed_mmps = 15.f;
     
     // Drive up to the object..
     compoundAction->AddAction(new DriveStraightAction(drivingDistance_mm, drivingSpeed_mmps, false));
