@@ -164,7 +164,7 @@ static f32 kDistanceToTriggerBackCliffs_mm  = 80;
 static f32 kDistanceToDriveOverCliff_mm     = 50;
 
 // Speed at which to drive forwards towards cliff
-static f32 kCliffSpeed_mmps                 = 50;
+static f32 kCliffSpeed_mmps                 = 80;
 
 // Time to wait for a cliff event after getting a robot stopped event
 static f32 kTimeToWaitForCliffEvent_ms      = CLIFF_EVENT_DELAY_MS + 100;

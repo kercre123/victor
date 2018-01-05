@@ -62,7 +62,6 @@ void BehaviorPlaypenMotorCalibration::HandleWhileActivatedInternal(const EngineT
     {
       if(payload.motorID == MotorID::MOTOR_HEAD)
       {
-        PRINT_NAMED_WARNING("HEAD CALIB","");
         _headCalibrated = true;
       }
       else if(payload.motorID == MotorID::MOTOR_LIFT)
@@ -71,7 +70,6 @@ void BehaviorPlaypenMotorCalibration::HandleWhileActivatedInternal(const EngineT
       }
       else
       {
-        PRINT_NAMED_WARNING("LIFT CALIB","");
         PLAYPEN_SET_RESULT(FactoryTestResultCode::MOTOR_CALIB_UNEXPECTED);
       }
     }

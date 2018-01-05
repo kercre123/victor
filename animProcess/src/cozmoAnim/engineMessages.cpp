@@ -107,7 +107,7 @@ namespace Messages {
     DEV_ASSERT(_context != nullptr, "EngineMessages.Init.NullContext");
 
     const bool haveBC = Util::FileUtils::FileExists("/data/persist/factory/80000000.nvdata");
-    FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(haveBC);
+    FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!haveBC);
 
     return RESULT_OK;
   }
@@ -430,7 +430,7 @@ namespace Messages {
     {
       _bcCheckCount = 0;
       const bool haveBC = Util::FileUtils::FileExists("/data/persist/factory/80000000.nvdata");
-      FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(haveBC);
+      FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!haveBC);
     }
   }
 

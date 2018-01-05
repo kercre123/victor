@@ -75,9 +75,6 @@ void BehaviorPlaypenSoundCheck::OnBehaviorDeactivated(BehaviorExternalInterface&
 
 void BehaviorPlaypenSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
-  // TODO(Al): This message is asynchronous and could be handled after this behavior has completed
-  // need some way of having playpen fail if we never get this message. Playpen is long enough that
-  // this likely won't happen...
   const auto& tag = event.GetData().GetTag();
   if(tag == RobotInterface::RobotToEngineTag::audioFFTResult)
   {

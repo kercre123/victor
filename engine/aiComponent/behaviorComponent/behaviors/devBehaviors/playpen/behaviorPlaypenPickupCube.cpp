@@ -91,7 +91,7 @@ void BehaviorPlaypenPickupCube::TransitionToWaitForCube(BehaviorExternalInterfac
   filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
   robot.GetBlockWorld().DeleteLocatedObjects(filter);
 
-  WaitForImagesAction* action = new WaitForImagesAction(5, VisionMode::DetectingMarkers);
+  WaitForImagesAction* action = new WaitForImagesAction(2, VisionMode::DetectingMarkers);
   DelegateIfInControl(action, [this, &behaviorExternalInterface](){ TransitionToPickupCube(behaviorExternalInterface); });
 }
 

@@ -71,6 +71,10 @@ private:
   DrawState                         _drawState = DrawState::None;
   std::unique_ptr<Vision::ImageRGB> _scratchDrawingImg;
 
+  // Draw the _scratchDrawingImg to the face
+  // Adds a debug menu page indicator in the top right
+  void DrawScratch();
+
   // Helper methods for drawing debug data to face
   void ClearFace();
   void DrawTextOnScreen(const std::vector<std::string>& textVec, 

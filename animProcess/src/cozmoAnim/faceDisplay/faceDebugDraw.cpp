@@ -67,6 +67,9 @@ void FaceDebugDraw::ChangeDrawState()
     _drawState = static_cast<DrawState>((Util::EnumToUnderlying(_drawState) + 1) % stateCount);
   }
 
+  _scratchDrawingImg->FillWith(0);
+  DrawScratch();
+
   // Any debug drawing that does not update very frequently should immediately try to
   // draw on state change
   DrawFAC();
@@ -214,7 +217,7 @@ void FaceDebugDraw::DrawConfidenceClock(const RobotInterface::MicDirection& micD
     (float) (center_px.y() + (int)(barLenFactor[winningIndex].y() * (float)(circleRadius_px + 1.f)))
     }, NamedColors::RED, 5);
 
-  FaceDisplay::getInstance()->DrawToFaceDebug(drawImg);
+  DrawScratch();
 }
 
 void FaceDebugDraw::DrawStateInfo(const RobotState& state)
@@ -422,6 +425,21 @@ void FaceDebugDraw::DrawTextOnScreen(const std::vector<std::string>& textVec,
                                  NamedColors::WHITE,
                                  factoryScale);
   }
+
+  DrawScratch();
+}
+
+void FaceDebugDraw::DrawScratch()
+{
+  const std::string kDebugCount = std::to_string(Util::EnumToUnderlying(DrawState::Count));
+  std::string text = std::to_string(Util::EnumToUnderlying(_drawState)) + "/" + kDebugCount;
+
+  const Point2f textLoc = {static_cast<float>(FACE_DISPLAY_WIDTH - (text.length()*16)), 10};
+  const f32 textScale = 0.5f;
+  _scratchDrawingImg->DrawText(textLoc,
+                               text,
+                               NamedColors::WHITE,
+                               textScale);
 
   FaceDisplay::getInstance()->DrawToFaceDebug(*_scratchDrawingImg);
 }
