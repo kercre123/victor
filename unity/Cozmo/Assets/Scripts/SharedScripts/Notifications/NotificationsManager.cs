@@ -270,11 +270,21 @@ namespace Cozmo.Notifications {
 
     public void SetBrazeData() {
 #if UNITY_IOS && !UNITY_EDITOR
-      AnkiNotifications_ChangeAppBoyUserId(DataPersistenceManager.Instance.Data.DefaultProfile.PlayerId);
+      if(!string.IsNullOrEmpty(DataPersistenceManager.Instance.Data.DefaultProfile.PlayerId)) {
+        AnkiNotifications_ChangeAppBoyUserId(DataPersistenceManager.Instance.Data.DefaultProfile.PlayerId);
+      }
+      else {
+        DAS.Warn("NotificationsManager.SetBrazeData", "PlayerID is null, ignoreing AnkiNotifications_ChangeAppBoyUserId call");
+      }
 
       // Set birthdate - guaranteed to be available by the time NeedsHubView loads
       string dob = DataPersistenceManager.Instance.Data.DefaultProfile.Birthdate.ToString("yyyyMMdd");
-      AnkiNotifications_SetAppBoyUserDOB(dob);
+      if(!string.IsNullOrEmpty(dob)) {
+        AnkiNotifications_SetAppBoyUserDOB(dob);
+      }
+      else {
+      DAS.Warn("NotificationsManager.SetBrazeData", "dob is null, ignoreing AnkiNotifications_ChangeAppBoyUserId call");
+      }
 #endif
     }
 
