@@ -1,0 +1,229 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+            <head>
+<title>Quake-Catcher Network Sensor Monitoring - Quake-Catcher Network Sensor Monitoring</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<link rel="shortcut icon" href="http://quakecatcher.net/wp-content/uploads/2011/08/favicon.png" />
+<link rel="shortcut icon" href="http://quakecatcher.net/wp-content/uploads/2011/08/favicon.png" type="image/vnd.microsoft.icon">
+<link rel="icon" href="http://quakecatcher.net/wp-content/uploads/2011/08/favicon.png" type="image/vnd.microsoft.icon">
+
+<script type="text/javascript"> 
+function stopRKey(evt) { 
+  var evt = (evt) ? evt : ((event) ? event : null); 
+  var node = (evt.target) ? evt.target : ((evt.srcElement) ? evt.srcElement : null); 
+  if ((evt.keyCode == 13) && (node.type=="text"))  {return false;} 
+} 
+document.onkeypress = stopRKey; 
+</script>
+</head>
+<body>
+<html><head><title>Quake-Catcher Network Sensor Monitoring</title>
+<link rel=stylesheet type="text/css" href="http://quakecatcher.net/sensor/main.css" media="all" />
+        <link rel=stylesheet type="text/css" href="http://quakecatcher.net/sensor/qcn.css">
+        <link rel=alternate type="application/rss+xml" title="Quake-Catcher Network Sensor Monitoring RSS 2.0" href="http://quakecatcher.net/sensor/rss_main.php">
+        </head>
+    <body><table width="100%">
+        <tr>
+        <td><h2>Quake-Catcher Network Sensor Monitoring</h2></td>
+        <td align=right>
+       </td></tr></table>
+    
+        <table width="100%" cellpadding=0 cellspacing=0>
+        <tr><td align=right>
+    <a href=login_form.php>log in</a>
+        </td>
+        </tr>
+        </table>
+    <!-- <scheduler>http://quakecatcher.net/sensor_cgi/cgi</scheduler> -->
+<link rel="boinc_scheduler" href="http://quakecatcher.net/sensor_cgi/cgi">
+
+    <table cellpadding="8" cellspacing="4" class=bordered>
+    <tr><td rowspan="2" valign="top" width="40%">
+<div class="mainnav">
+        <h2 class=headline>About Quake-Catcher Network Sensor Monitoring</h2>
+    
+        The Quake Catcher Network (QCN) is a research project that uses Internet-connected
+        computers to do research, education, and outreach in seismology.
+        You can participate by downloading and running a free program
+        on your computer.  Currently only certain Mac (OS X) PPC and Intel laptops are supported --
+        recent ones which have a built-in accelerometer.  You can also buy an external USB accelerometer.
+        <p>
+        QCN is based at the University of Southern California (USC). From 2015 to 2016, QCN was based at the Caltech Divisien of Geological and Planetary Sciences (GPS).  From 2007 to 2015 QCN was based at the Stanford University School of Earth Sciences.
+        <ul>
+        <li> <A HREF="http://quakecatcher.net/index.php">Quake Catcher Network Home Page</A>
+        <li> <A HREF="http://quakecatcher.net/help/contact_us">Project Personnel</A>
+        </ul>
+       
+            <li><a href="info.php">Read our rules and policies</a>
+            <li> This project uses BOINC.
+                If you're already running BOINC, select Add Project.
+                If not, <a target="_new" href="http://boinc.berkeley.edu/download.php">download BOINC</a>.
+            <li> When prompted, enter <br><b>http://quakecatcher.net/sensor/</b>
+        
+                <li> If you're running a command-line version of BOINC,
+                    <a href="create_account_form.php">create an account</a> first.
+            
+            <li> If you have any problems,
+                <a target="_new" href="http://boinc.berkeley.edu/wiki/BOINC_Help">get help here</a>.
+        
+        </ul><BR><p>
+
+        <h2 class=headline>Returning participants</h2>
+        <ul>
+    
+            <li><a href="home.php">Your account</a> - view stats, modify preferences
+            <li><a href=server_status.php>Server status</a>
+            <li><a href="team.php">Teams</a> - create or join a team
+            <li><a href="cert1.php">Certificate</a>
+            <li><a href="apps.php">Applications</a>
+        
+        </ul>
+        <h2 class=headline>Community</h2>
+        <ul>
+        <li><a href="user_search.php">User search</a>
+        <li><a href="forum_index.php">Message boards</a>
+        <li><a href="stats.php">Statistics</a>
+        <li><a href=language_select.php>Languages</a>
+        </ul>
+    <BR><p><h2>Trigger Map</h2>
+    Latest Triggers Recorded (Past 4 Hours) - Generated on December 03 2017 01:05:02 UTC
+    <p><A HREF=maptrig.php>Click here or on a region of the map for an interactive Google map</A>
+    <p>Legend: Blue triangle = QCN participant trigger, Red circle = Earthquake of minimum magnitude 2.0
+    <p><i>Note: locations changed at the kilometer-level to protect privacy, unless participant authorized exact location be used</i>
+     
+<IMG SRC="img/trigger_latest.jpg" usemap="#img/trigger_latest.jpg" border="0">
+<map name="img/trigger_latest.jpg">
+        <area shape="rect" coords="0,2,225,232" href="maptrig.php?cx=38&cy=-120">
+        <area shape="rect" coords="2,236,228,511" href="maptrig.php?cx=-20&cy=-120">
+        <area shape="rect" coords="227,3,428,234" href="maptrig.php?cx=38&cy=-70">
+        <area shape="rect" coords="231,238,442,510" href="maptrig.php?cx=-20&cy=-70">
+        <area shape="rect" coords="430,3,605,237" href="maptrig.php?cx=50&cy=1">
+        <area shape="rect" coords="445,241,732,510" href="maptrig.php?cx=-10&cy=5">
+        <area shape="rect" coords="609,3,803,239" href="maptrig.php?cx=38&cy=80">
+        <area shape="rect" coords="735,244,1022,511" href="maptrig.php?cx=-20&cy=140">
+        <area shape="rect" coords="806,3,1021,243" href="maptrig.php?cx=38&cy=140">
+</map>
+    
+    <p><A HREF=maptrigtime.php>Click here for trigger maps for the past day / week / month</A>     </div>
+    <p>
+    <a href="http://boinc.berkeley.edu/"><img align="middle" border="0" src="img/pb_boinc.gif" alt="Powered by BOINC"></a>
+    </p>
+    </td>
+
+    <tr><td class=news>
+    <h2 class=headline>News</h2>
+    <p>
+<p><span class=news_title>New Workunits Available; System Operational</span><br>
+
+        <span class=news_content>After some downtime to repair numerous problems with (and to perform upgrades and maintenance on) our servers, QCN is pleased to announce that new workunits are being generated, new connections have been reenabled, and existing tasks should now be functional.  Additional testing and fixes will continue this week.</span>
+        <span class=news_date>8 Aug 2017, 22:38:19 UTC
+    
+            &middot; <a href=http://quakecatcher.net/sensor/forum_thread.php?id=1564> Comment</a>
+        </span>
+        <br clear=all>
+        <hr size=0 class=news_line>
+    <p><span class=news_title>QCN Move To USC Complete - New Address is quakecatcher.net</span><br>
+
+        <span class=news_content>The move to the University of Southern California is complete.  Thanks to Stanford and CalTech Earth Sciences for hosting us over the years.  QCN is now supported by IRIS (Incorporated Research Institutions for Seismology) and the SCEC (Southern California Earthquake Center) based at USC.  You may want to "Remove Project" and then re-attach directly to our new BOINC project address http://quakecatcher.net</span>
+        <span class=news_date>11 Jun 2016, 2:00:44 UTC
+    
+            &middot; <a href=http://quakecatcher.net/sensor/forum_thread.php?id=1375> Comment</a>
+        </span>
+        <br clear=all>
+        <hr size=0 class=news_line>
+    <p><span class=news_title>QCN is Moving (Again)!</span><br>
+
+        <span class=news_content>QCN will be moving in June 2016 to a new (hopefully permanent) home based at the University of Southern California (USC) and supported by IRIS (the Incorporated Research Institutions for Seismology) and the SCEC (Southern California Earthquake Center).  There may be unexpected "down time" as the data and web addresses are moved to quakecatcher.net.  If all goes well you shouldn't have to change your BOINC program, as the web name server (DNS) should resolve to our new server when it's all setup.  If you're not afraid with BOINC, you may wish to (when the time comes) "Detach Project" and then "Attach Project" to http://quakecatcher.net/sensor<br />
+<br />
+There will also be new client programs compiled to reflect our new home and support; and hopefully update any drivers, bug fixes etc.</span>
+        <span class=news_date>1 Jun 2016, 20:41:49 UTC
+    
+            &middot; <a href=http://quakecatcher.net/sensor/forum_thread.php?id=1374> Comment</a>
+        </span>
+        <br clear=all>
+        <hr size=0 class=news_line>
+    <p><span class=news_title>Recent Maintenance Outage - No New Credits</span><br>
+
+        <span class=news_content>The recent maintenance outage was necessary as the database server was running out of disk space.  I archived the trigger data and trimmed the BOINC result tables so that the project should have a year's worth of space at current rates.  However, this means that the BOINC credit scripts will be turned off - so there will be no BOINC credits added in future workunits until further notice.  If BOINC credits are very important to you, you should probably stop running QCN.</span>
+        <span class=news_date>4 Dec 2015, 8:46:14 UTC
+    
+            &middot; <a href=http://quakecatcher.net/sensor/forum_thread.php?id=1260> Comment</a>
+        </span>
+        <br clear=all>
+        <hr size=0 class=news_line>
+    <p><span class=news_title>QCN in the classroom (CBS News in Los Angeles)</span><br>
+
+        <span class=news_content>CBS news in Los Angeles interviewed teachers and students in Chaffey Union Joint High School District. Watch the story <a href="http://losangeles.cbslocal.com/video/3272090-quake-catcher-network-aimed-at-monitoring-shaking-helps-to-get-young-lives-on-solid-ground/#.VbHjCKP-RE4.twitter" rel="nofollow">here</a>.</span>
+        <span class=news_date>11 Nov 2015, 1:11:43 UTC
+    
+            &middot; <a href=http://quakecatcher.net/sensor/forum_thread.php?id=1257> Comment</a>
+        </span>
+        <br clear=all>
+        <hr size=0 class=news_line>
+    <p><span class=news_title>If You're Having Trouble Connecting Since the Big Move to CalTech....</span><br>
+
+        <span class=news_content>Some people are having trouble connecting -- this is probably due to the operating system (it seems to mostly be a Windows problem) caching the old qcn.stanford addresses, and not liking the forwarding to qcn.caltech (probably a "safety feature" in Windows).<br />
+<br />
+You can try doing a "Reset Project" in the BOINC Manager program to see if that will correct things.  If not, you may have to do a more drastic "Remove Project" and then "Attach Project" to our new URL:  http://qcn.caltech.edu/sensor<br />
+<br />
+You may want to first go to the "Your Account" page at the website to make sure you know which email address you used, and find/recover your password information as you will need this to login again.<br />
+</span>
+        <span class=news_date>23 Jul 2015, 12:09:05 UTC
+    
+            &middot; <a href=http://quakecatcher.net/sensor/forum_thread.php?id=1244> Comment</a>
+        </span>
+        <br clear=all>
+        <hr size=0 class=news_line>
+    <p><span class=news_title>QCN Move to CalTech Is Completed 16 July 2015</span><br>
+
+        <span class=news_content>The move of the QCN project from Stanford to Caltech seems to have gone smoothly.  Thanks to all involved at Stanford Earth Sciences and Caltech GPS for making this transition possible.  There may be kinks to iron out over the next few days; but the project seems to be back up and running.  You do not have to do anything on your BOINC account - as the QCN addresses/URLs are being forwarded automatically from Stanford to Caltech.</span>
+        <span class=news_date>17 Jul 2015, 3:47:22 UTC
+    
+            &middot; <a href=http://quakecatcher.net/sensor/forum_thread.php?id=1242> Comment</a>
+        </span>
+        <br clear=all>
+        <hr size=0 class=news_line>
+    <p><span class=news_title>QCN Move To CalTech Starting 7/13/2015</span><br>
+
+        <span class=news_content>The QCN servers will be packed up at Stanford next Monday (July 13th) and FedEx'd overnight to CalTech.  It is hoped that by the end of next week the servers will be online at CalTech and the project will begin running again.  We are forwarding our Internet DNS from Stanford to CalTech so that machines connected to "qcn.stanford.edu" will be routed to the new server location automatically (probably qcn.caltech.edu).  More information will be sent once things are back up and running - but it's most likely the project will be down the week of July 13th.  You shouldn't have to do anything - BOINC will automatically connect once it detects the servers are back up.</span>
+        <span class=news_date>7 Jul 2015, 16:51:52 UTC
+    
+            &middot; <a href=http://quakecatcher.net/sensor/forum_thread.php?id=1241> Comment</a>
+        </span>
+        <br clear=all>
+        <hr size=0 class=news_line>
+    <p><span class=news_title>QCN is moving to CalTech in July!</span><br>
+
+        <span class=news_content>The QCN project servers will be moving to CalTech and will be hosted in the Division of Geological and Planetary Sciences (GPS).  The exact dates are uncertain but it will probably be by mid-July.  All of us on QCN wish to thank the staff at CalTech for hosting us (and at relatively short notice).  There will probably be a few days "down time" when the servers are transported.  The Stanford DNS will point this URL (qcn.stanford.edu) to the new home page at CalTech (probably qcn.caltech.edu).  There will be more updates as we get closer to the actual move.</span>
+        <span class=news_date>22 May 2015, 22:57:30 UTC
+    
+            &middot; <a href=http://quakecatcher.net/sensor/forum_thread.php?id=1233> Comment</a>
+        </span>
+        <br clear=all>
+        <hr size=0 class=news_line>
+    <p><span class=news_title>QCN/BOINC app for Android Devices Now Available</span><br>
+
+        <span class=news_content>QCN now runs on Android ARM-processor devices (phones, tablets, etc) via BOINC for Android, which is available on the Google Play store:  <a href="https://play.google.com/store/apps/details?id=edu.berkeley.boinc" rel="nofollow">https://play.google.com/store/apps/details?id=edu.berkeley.boinc</a><br />
+<br />
+It is recommended to run using the default settings - ie QCN will run on your Android device when it's charging ("at rest" so it won't trigger every few seconds) and on a wifi network.  The network and CPU requirements are very small, typically 1-5% CPU, and a few kilobytes per day.<br />
+<br />
+Just download BOINC for Android from the Google Play store link above, and attach to "qcn.stanford.edu/sensor"<br />
+<br />
+Note that this app is not graphical - we are looking to make a QCNLive-style Android add-on for displaying the QCN/BOINC app/accelerometer information.</span>
+        <span class=news_date>1 Feb 2014, 20:11:31 UTC
+    
+            &middot; <a href=http://quakecatcher.net/sensor/forum_thread.php?id=1040> Comment</a>
+        </span>
+        <br clear=all>
+        <hr size=0 class=news_line>
+    <a href=http://quakecatcher.net/sensor/old_news.php>... more</a>
+        <br><br><small>
+    News is available as an <a href=rss_main.php>RSS feed &nbsp; <img src="img/rss_icon.gif" alt="RSS"></a>
+        </small>
+    
+    </td>
+    </tr></table>
+<br><hr noshade size=1><center><br><br>Copyright &copy; 2017 USC</center>
+</body>
+        </html>
+    

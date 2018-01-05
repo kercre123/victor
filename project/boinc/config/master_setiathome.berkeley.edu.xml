@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--
+<scheduler>https://setiboinc.ssl.berkeley.edu/sah_cgi/cgi</scheduler>
+<link rel="boinc_scheduler" href="http://setiboinc.ssl.berkeley.edu/sah_cgi/cgi">
+-->
+<title>SETI@home</title>
+
+        <meta charset="utf-8">
+        <link type="text/css" rel="stylesheet" href="https://setiathome.berkeley.edu//bootstrap.min.css" media="all">
+    
+            <link rel=stylesheet type="text/css" href="https://setiathome.berkeley.edu/sah_custom_dark.css">
+        <link rel="icon" type="image/x-icon" href="https://setiathome.berkeley.edu/images/logo7.ico"/>
+
+        <link rel=alternate type="application/rss+xml" title="RSS 2.0" href="https://setiathome.berkeley.edu/rss_main.php">
+        </head>
+    <body >
+<!-- SVN VERSIONS -->
+<!-- $Id$ -->
+<!-- $Id: pm.inc 14019 2007-11-01 23:04:39Z davea $ -->
+<!-- $Id$ -->
+<!-- $Id$ -->
+<!-- $Id$ -->
+<!-- $Id$ -->
+<!-- $Id$ -->
+<!-- $Id$ -->
+<!-- $Id$ -->
+<div class="container-fluid">
+    <img width=100% class="img-responsive" src="img/tarantula-sah.jpg"><nav class="navbar navbar-default">
+
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a href="http://setiathome.berkeley.edu/"><img style="margin-top:7px;" height="40" src="https://setiathome.berkeley.edu/images/sah_logo_wb.png"></a>&nbsp;&nbsp;
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
+    
+      <li class="dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Project
+        <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+    <li><a href="https://setiathome.berkeley.edu/sah_help.php">Help</a></li>
+            <li><a href="https://setiathome.berkeley.edu/sah_donate.php">Donate</a></li>
+            <li><a href="https://setiathome.berkeley.edu/sah_porting.php">Porting</a></li>
+            <li><a href="https://setiathome.berkeley.edu/sah_graphics.php">Graphics</a></li>
+            <li><a href="http://boinc.berkeley.edu/addons.php">Add-ons</a></li>
+            
+        </ul>
+      </li>
+    
+      <li class="dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Science
+        <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+    <li><a href="https://setiathome.berkeley.edu/sah_about.php">About SETI@home</a></li>
+            <li><a href="https://setiathome.berkeley.edu/ap_faq.php">About Astropulse</a></li>
+            <li><a href="https://setiathome.berkeley.edu/sah_sci_newsletters.php">Science newsletters</a></li>
+            <li><a href="https://setiathome.berkeley.edu/nebula/index.php">Nebula</a></li>
+            
+        </ul>
+      </li>
+    
+      <li class="dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Computing
+        <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+    <li><a href="https://setiathome.berkeley.edu/stats.php">Statistics</a></li>
+            <li><a href="https://setiathome.berkeley.edu/show_server_status.php">Server status</a></li>
+            <li><a href="https://setiathome.berkeley.edu/tech_news.php">Technical news</a></li>
+            <li><a href="https://setiathome.berkeley.edu/apps.php">Applications</a></li>
+            <li><a href="https://setiathome.berkeley.edu/cert_print.php">Certificate</a></li>
+            <li><a href="https://setiathome.berkeley.edu/kiosk/">World view</a></li>
+            
+        </ul>
+      </li>
+    
+      <li class="dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Community
+        <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+    <li><a href="https://setiathome.berkeley.edu/forum_index.php">Message boards</a></li>
+            <li><a href="https://setiathome.berkeley.edu/forum_help_desk.php">Questions and Answers</a></li>
+            <li><a href="https://setiathome.berkeley.edu/team.php">Teams</a></li>
+            <li><a href="https://setiathome.berkeley.edu/profile_menu.php">Profiles</a></li>
+            <li><a href="https://setiathome.berkeley.edu/user_search.php">User search</a></li>
+            <li><a href="https://setiathome.berkeley.edu/related.php">Web sites</a></li>
+            <li><a href="https://setiathome.berkeley.edu/misc.php">Pictures and music</a></li>
+            <li><a href="https://setiathome.berkeley.edu/uotd.php">User of the day</a></li>
+            
+        </ul>
+      </li>
+    
+      <li class="dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Site
+        <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+    <li><a href="https://setiathome.berkeley.edu/site_search.php">Site search</a></li>
+            <li><a href="https://setiathome.berkeley.edu/language_select.php">Languages</a></li>
+            <li><a href="https://setiathome.berkeley.edu/sah_help.php">Help</a></li>
+            
+        </ul>
+      </li>
+    
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+    
+                <li><a href="https://setiathome.berkeley.edu/create_account_form.php">Sign Up</a></li>
+                <li><a href="https://setiathome.berkeley.edu/login_form.php">Login</a></li>
+                
+      </ul>
+    </div>
+  </div>
+</nav>
+    
+        <div class="container-fluid">
+    
+            <div class="row">
+            <div class="col-sm-12">
+        
+            </div>
+            </div>
+        
+        <div class="row">
+        <div class="col-sm-5">
+    <div class="panel panel-primary">
+        
+            <div class="panel-heading">
+                <h1 class="panel-title">What is SETI@home?</h1>
+            </div>
+        
+        <div class="panel-body">
+    
+                    <p>
+                    SETI@home is a scientific experiment,
+                    based at <a href=http://www.berkeley.edu >UC Berkeley</a>,
+                    that uses Internet-connected computers in the Search for
+                    Extraterrestrial Intelligence (SETI). You can participate by
+                    running a free program that downloads and analyzes radio
+                    telescope data. 
+                    </p>
+                <center><a href="join.php" class="container-fluid btn btn-success"><font size=+2>Join SETI@home</font></a></center>
+                    
+        </div>
+        </div>
+    <div class="panel panel-primary">
+        
+            <div class="panel-heading">
+                <h1 class="panel-title">User of the Day</h1>
+            </div>
+        
+        <div class="panel-body">
+    <a href="https://setiathome.berkeley.edu/view_profile.php?userid=1431347"><img border=0 vspace=4 hspace=8 align=left src="https://setiathome.berkeley.edu/user_profile/images/1431347_sm.jpg" alt="User profile"></a> <a href="https://setiathome.berkeley.edu/view_profile.php?userid=1431347"><img title="View the profile of Marcus Wietholz" src="https://setiathome.berkeley.edu/img/head_20.png" alt="Profile"></a> <a href="https://setiathome.berkeley.edu/show_user.php?userid=1431347">Marcus Wietholz</a><br>Hi, my name is Marcus Wietholz!
+
+My favorite is all, what has to do with flying.
+I am a member of a modellflying-group and are able to fly...
+        </div>
+        </div>
+    
+        </div>
+        <div class="col-sm-7">
+    <div class="panel panel-primary">
+        
+            <div class="panel-heading">
+                <h1 class="panel-title">News</h1>
+            </div>
+        
+        <div class="panel-body">
+    <p><span class="lead">We're generating work again.</span><br>
+
+        It took a bit longer than I thought it would, but we're back online.  It'll probably be a few days before we have a full ready-to-send queue.<br />
+<br />
+Now we can get back to finding ET.
+        <br>
+        <span class="small">2 Dec 2017, 7:19:51 UTC
+    
+            &middot; <a href="https://setiathome.berkeley.edu/forum_thread.php?id=82288"> Discuss</a>
+        </span>
+        <br clear=all>
+        <hr>
+    <p><span class="lead">No work.  Database issues.</span><br>
+
+        At first I thought the restart on Tuesday had solved our database problems.  I guess I was wrong. It only fixed some of them.<br />
+<br />
+We've hit yet another hidden limit in our Informix science database.  The good news is that we know how to fix this one.  The bad news is it will take a little while.<br />
+<br />
+We don't have to wait for the full fix before starting to split again, but the point at which we can split will probably be sometime tomorrow.  Until then, we only have a few re-dos and a little bit of astropulse to do.
+        <br>
+        <span class="small">29 Nov 2017, 21:41:36 UTC
+    
+            &middot; <a href="https://setiathome.berkeley.edu/forum_thread.php?id=82273"> Discuss</a>
+        </span>
+        <br clear=all>
+        <hr>
+    <p><span class="lead">Richard Lubrich has passed away.</span><br>
+
+        Long time setizen, Richard Lubrich (<a href="https://setiathome.berkeley.edu/show_user.php?userid=259585" rel="nofollow">Dr. C.E.T.I.</a>, aka Dr. SETI, aka nobody) passed away today.  Richard was a fixture on the forums from our earliest days.  He was a great friend to SETI@home and will be greatly missed.
+        <br>
+        <span class="small">29 Nov 2017, 1:43:24 UTC
+    
+            &middot; <a href="https://setiathome.berkeley.edu/forum_thread.php?id=82267"> Discuss</a>
+        </span>
+        <br clear=all>
+        <hr>
+    <p><span class="lead">Database slowness</span><br>
+
+        We're having some as yet unexplained slowness with the our BOINC database.  There don't seem to be any hardware issues.  Temperatures are running normal and all the drives seem good.  Yet for some reason the query that fills the "ready to send" queue is running about 10 times slower than it normally does.<br />
+<br />
+Until I get it fixed, it means that on average we're sending out 3 workunits a second rather than 30+.<br />
+<br />
+I'll let you know when I've got it figured out.
+        <br>
+        <span class="small">11 Nov 2017, 0:09:26 UTC
+    
+            &middot; <a href="https://setiathome.berkeley.edu/forum_thread.php?id=82173"> Discuss</a>
+        </span>
+        <br clear=all>
+        <hr>
+    <p><span class="lead">SETI@home 2017 fundraising drive has begun.</span><br>
+
+        We've started our annual fundraising drive to help raise the money we need to keep SETI@home running and expand it to new telescopes.  Your computers provide us with the power to analyze this data, but your donations are an important part of keeping us operating.  <br />
+<br />
+If you haven't yet received your fundraising letter, you can preview it <a href="https://setiathome.berkeley.edu/donor_letter_nov17.php" rel="nofollow">here</a>.  You can donate at <a href="https://setiathome.berkeley.edu/sah_donate.php" rel="nofollow">https://setiathome.berkeley.edu/sah_donate.php</a>.<br />
+<br />
+Thanks for keeping SETI@home going!
+        <br>
+        <span class="small">3 Nov 2017, 17:29:31 UTC
+    
+            &middot; <a href="https://setiathome.berkeley.edu/forum_thread.php?id=82131"> Discuss</a>
+        </span>
+        <br clear=all>
+        <hr>
+    <a href=https://setiathome.berkeley.edu/old_news.php>... more</a>
+        <br><br><small>
+    News is available as an <a href=rss_main.php>RSS feed &nbsp; <img src="img/rss_icon.gif" alt="RSS"></a>
+        </small>
+    
+        </div>
+        </div>
+    
+        </div>
+        </div>
+        </div>
+    <br>
+        <p class="text-center">
+        <a class="brand boinc-logo" href="http://boinc.berkeley.edu/"><img align="middle" border="0" src="https://setiathome.berkeley.edu/img/pb_boinc.gif" alt="Powered by BOINC"></a>
+        <br>&nbsp;<br>
+        &copy;2017 University of California
+        <br>&nbsp;<br>
+        SETI@home and Astropulse are funded by grants from the National Science Foundation, NASA, and donations from SETI@home volunteers. AstroPulse is funded in part by the NSF through grant AST-0307956.
+        </p>
+    
+        <script src="https://setiathome.berkeley.edu//jquery.min.js"></script>
+        <script src="https://setiathome.berkeley.edu//bootstrap.min.js"></script>
+        </div>
+        </body>
+        </html>
+    
