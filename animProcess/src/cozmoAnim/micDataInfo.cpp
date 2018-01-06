@@ -22,6 +22,12 @@
 #include <sstream>
 #include <thread>
 
+#define LOG_CHANNEL    "MicData"
+#define LOG_ERROR      PRINT_NAMED_ERROR
+#define LOG_WARNING    PRINT_NAMED_WARNING
+#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
+#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
+
 namespace Anki {
 namespace Cozmo {
 namespace MicData {
@@ -168,7 +174,8 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
                         length_ms = _timeRecorded_ms] () {
       Anki::Util::SetThreadName(pthread_self(), "saveRawWave");
       AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels, kSampleRateIncoming_hz);
-      PRINT_NAMED_INFO("MicDataInfo.WriteRawWaveFile", "%s", dest.c_str());
+
+      LOG_INFO("MicDataInfo.WriteRawWaveFile", "%s", dest.c_str());
       
       if (doFFTProcess)
       {
@@ -176,7 +183,7 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
         if (!Util::IsNearZero(length_s))
         {
           std::vector<uint32_t> result = GetFFTResultFromRaw(data, length_s);
-          PRINT_NAMED_INFO("MicDataInfo.FFTResultFromRaw", "%d %d %d %d", result[0], result[1], result[2], result[3]);
+          LOG_INFO("MicDataInfo.FFTResultFromRaw", "%d %d %d %d", result[0], result[1], result[2], result[3]);
           if (fftCallback)
           {
             fftCallback(std::move(result));
@@ -194,7 +201,7 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
                               data = std::move(_resampledAudioData)] () {
       Anki::Util::SetThreadName(pthread_self(), "saveResmplWave");
       AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels);
-      PRINT_NAMED_INFO("MicDataInfo.WriteResampledWaveFile", "%s", dest.c_str());
+      LOG_INFO("MicDataInfo.WriteResampledWaveFile", "%s", dest.c_str());
     };
     std::thread(saveResampledWave).detach();
     _resampledAudioData.clear();
@@ -206,7 +213,7 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
                               data = std::move(_processedAudioData)] () {
       Anki::Util::SetThreadName(pthread_self(), "saveProcWave");
       AudioUtil::WaveFile::SaveFile(dest, data);
-      PRINT_NAMED_INFO("MicDataInfo.WriteProcessedWaveFile", "%s", dest.c_str());
+      LOG_INFO("MicDataInfo.WriteProcessedWaveFile", "%s", dest.c_str());
     };
     std::thread(saveProcessedWave).detach();
     _processedAudioData.clear();
@@ -257,9 +264,9 @@ std::string MicDataInfo::ChooseNextFileNameBase(std::string& out_dirToDelete)
   const auto iterationNum = std::stoi(entryToReplace.substr(iterStrBegin, kNumberDigitsLength));
   if (iterationNum == kMaxIterationNum)
   {
-    PRINT_NAMED_ERROR("MicDataInfo.ChooseNextFileNameBase",
-                      "Reached max number of iterations %d. Won't save more files.",
-                      kMaxIterationNum);
+    LOG_ERROR("MicDataInfo.ChooseNextFileNameBase",
+              "Reached max number of iterations %d. Won't save more files.",
+              kMaxIterationNum);
     return "";
   }
   out_dirToDelete = entryToReplace;

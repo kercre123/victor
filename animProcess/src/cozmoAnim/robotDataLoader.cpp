@@ -35,9 +35,11 @@
 #include <string>
 #include <sys/stat.h>
 
-namespace {
-  
-}
+#define LOG_CHANNEL   "RobotDataLoader"
+#define LOG_ERROR      PRINT_NAMED_ERROR
+#define LOG_WARNING    PRINT_NAMED_WARNING
+#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
+#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
 
 namespace Anki {
 namespace Cozmo {
@@ -71,9 +73,9 @@ void RobotDataLoader::LoadConfigData()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, tts_config, _tts_config);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.TextToSpeechConfigNotFound",
-                        "Text-to-speech config file %s not found or failed to parse",
-                        tts_config.c_str());
+      LOG_ERROR("RobotDataLoader.TextToSpeechConfigNotFound",
+                "Text-to-speech config file %s not found or failed to parse",
+                  tts_config.c_str());
     }
   }
 }
@@ -130,8 +132,8 @@ void RobotDataLoader::CollectAnimFiles()
   // print results
   {
     for (const auto& fileListPair : _jsonFiles) {
-      PRINT_CH_INFO("Animations", "RobotDataLoader.CollectAnimFiles.Results", "Found %zu animation files of type %d",
-                    fileListPair.second.size(), (int)fileListPair.first);
+      LOG_INFO("RobotDataLoader.CollectAnimFiles.Results", "Found %zu animation files of type %d",
+               fileListPair.second.size(), fileListPair.first);
     }
   }
 }
@@ -159,7 +161,7 @@ void RobotDataLoader::LoadAnimationsInternal()
   unsigned long size = fileList.size();
   for (int i = 0; i < size; i++) {
     myWorker.PushJob(fileList[i]);
-    //PRINT_NAMED_DEBUG("RobotDataLoader.LoadAnimations", "loaded regular anim %d of %zu", i, size);
+    //LOG_DEBUG("RobotDataLoader.LoadAnimations", "loaded regular anim %d of %zu", i, size);
   }
   
   _perAnimationLoadingRatio = _kAnimationsLoadingRatio * 1.0f / Util::numeric_cast<float>(size);
@@ -168,13 +170,17 @@ void RobotDataLoader::LoadAnimationsInternal()
   ProceduralFace::EnableClippingWarning(true);
 
   const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-  double loadTime = endTime - startTime;
-  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationsInternal.LoadTime",
-                "Time to load animations = %.2f ms", loadTime);
+  const double loadTime = endTime - startTime;
 
-  auto animNames = _cannedAnimations->GetAnimationNames();
-  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimations.CannedAnimationsCount",
-                "Total number of canned animations available = %lu", (unsigned long) animNames.size());
+  LOG_INFO("RobotDataLoader.LoadAnimationsInternal.LoadTime",
+           "Time to load animations = %.2f ms",
+           loadTime);
+
+  const auto & animNames = _cannedAnimations->GetAnimationNames();
+
+  LOG_INFO("RobotDataLoader.LoadAnimations.CannedAnimationsCount",
+           "Total number of canned animations available = %zu",
+           animNames.size());
 }
 
 
@@ -188,7 +194,7 @@ void RobotDataLoader::WalkAnimationDir(const std::string& animationDir, Timestam
     struct stat attrib{0};
     int result = stat(path.c_str(), &attrib);
     if (result == -1) {
-      PRINT_NAMED_WARNING("RobotDataLoader.WalkAnimationDir", "could not get mtime for %s", path.c_str());
+      LOG_WARNING("RobotDataLoader.WalkAnimationDir", "could not get mtime for %s", path.c_str());
       continue;
     }
     bool loadFile = false;
@@ -231,26 +237,26 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
     // Read the binary file
     auto binFileContents = Util::FileUtils::ReadFileAsBinary(path);
     if (binFileContents.size() == 0) {
-      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.BinaryDataEmpty", "Found no data in %s", path.c_str());
+      LOG_ERROR("RobotDataLoader.LoadAnimationFile.BinaryDataEmpty", "Found no data in %s", path.c_str());
       return;
     }
     unsigned char *binData = binFileContents.data();
     if (nullptr == binData) {
-      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.BinaryDataNull", "Found no data in %s", path.c_str());
+      LOG_ERROR("RobotDataLoader.LoadAnimationFile.BinaryDataNull", "Found no data in %s", path.c_str());
       return;
     }
     auto animClips = CozmoAnim::GetAnimClips(binData);
     if (nullptr == animClips) {
-      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AnimClipsNull", "Found no animations in %s", path.c_str());
+      LOG_ERROR("RobotDataLoader.LoadAnimationFile.AnimClipsNull", "Found no animations in %s", path.c_str());
       return;
     }
     auto allClips = animClips->clips();
     if (nullptr == allClips) {
-      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AllClipsNull", "Found no animations in %s", path.c_str());
+      LOG_ERROR("RobotDataLoader.LoadAnimationFile.AllClipsNull", "Found no animations in %s", path.c_str());
       return;
     }
     if (allClips->size() == 0) {
-      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AnimClipsEmpty", "Found no animations in %s", path.c_str());
+      LOG_ERROR("RobotDataLoader.LoadAnimationFile.AnimClipsEmpty", "Found no animations in %s", path.c_str());
       return;
     }
 
