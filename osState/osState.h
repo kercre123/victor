@@ -118,7 +118,7 @@ private:
   // Executes the provided command and returns the output as a string
   std::string ExecCommand(const char* cmd);
   
-  const uint32_t kNominalCPUFreq_kHz = 800000;
+  uint32_t kNominalCPUFreq_kHz = 800000;
 
   std::string _ipAddress       = "";
   std::string _serialNumString = "";

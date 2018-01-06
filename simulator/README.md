@@ -1,6 +1,6 @@
 # Webots Simulator Setup
 
-We are currently using [Webots version 8.5.3](https://www.cyberbotics.com/archive/mac/webots-8.5.3.dmg). A license is required to run the Webots simulator. Submit a ticket to the Helpdesk to request a license. 
+We are currently using [Webots version R2018a](https://www.cyberbotics.com/archive/mac/webots-R2018a.dmg). A license is required to run the Webots simulator. Submit a ticket to the Helpdesk to request a license. 
 
 ## Setup
 
@@ -16,7 +16,7 @@ Once Webots is installed, test it out by trying opening `simulator/worlds/cozmo2
 
     This is necessary to build controller or supervisor projects from the command line, which seems necessary when you have more than one controller or supervisor in your world.
 
-1. Create a file called `console_vars.ini` in the directory `simulator/controllers/webotsCtrlGameEngine`. Add the following lines to the file:
+1. Create a file called `console_vars.ini` in the directory `simulator/controllers/webotsCtrlGameEngine2`. Add the following lines to the file:
 
     ```
     ; Console Var Ini Settings

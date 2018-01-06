@@ -54,11 +54,10 @@ cd $SCRIPTDIR
 : ${TOPLEVEL:=`$GIT rev-parse --show-toplevel`}
 BUILDPATH=${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}/test
 
-XML=cozmoEngineGoogleTest.xml
+XML="*GoogleTest.xml"
 LOG=cozmoEngineGoogleTest.log
 LOGZIP=cozmoEngineGoogleTest.tar.gz
 
-GTEST_OUTPUT="xml:${XML}"
 CTEST="ctest --output-on-failure -O ${LOG}"
 
 if (( ${VERBOSE} )); then
@@ -78,7 +77,7 @@ mkdir -p testdata
 set +e
 set -o pipefail
 
-GTEST_OUTPUT=${GTEST_OUTPUT} ${CTEST}
+${CTEST}
 
 EXIT_STATUS=$?
 

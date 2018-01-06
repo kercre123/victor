@@ -89,5 +89,10 @@ if (MACOSX)
 
   add_test(NAME cti_vision_test COMMAND cti_vision_test)
 
+  set_tests_properties(cti_vision_test
+    PROPERTIES
+    ENVIRONMENT "GTEST_OUTPUT=xml:ctiVisionGoogleTest.xml"
+  )
+
 endif()
 
