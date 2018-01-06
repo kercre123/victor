@@ -1,24 +1,38 @@
 #!/bin/bash
+ADB=`which adb`
+if [ -z $ADB ];then
+  echo adb not found
+  exit 1
+fi
+
+ADB_DEVICES=$(adb devices)
+if [ "$ADB_DEVICES" = "List of devices attached" ]; then
+  echo "============================================================================================"
+  echo "=== No attached Victor found, please make sure Victor is connected and the lights are on ==="
+  echo "============================================================================================"
+  exit 1
+fi
+
 shopt -s nocasematch
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-LOG_DIR="$DIR/logs_$(date '+%Y-%m-%d-%H.%M.%S')"
-mkdir $LOG_DIR
+LOG_DIR="$DIR/../logs/logs_$(date '+%Y-%m-%d-%H.%M.%S')"
+mkdir -p $LOG_DIR
 
 if [ -z $1 ];then
-  read -p "SSID Name: " SSID_NAME
+  read -p "SSID/WiFi Network Name: " SSID_NAME
 else
   SSID_NAME=$1
 fi
-printf "SSID Name: %s\n" "$SSID_NAME" > $LOG_DIR/configuration.log
+printf "SSID/WiFi Network Name: %s\n" "$SSID_NAME" > $LOG_DIR/configuration.log
 
 if [ -z $2 ];then
-  read -p "SSID Password: " SSID_PASSWORD
+  read -p "SSID/WiFi Network Password: " SSID_PASSWORD
 else
   SSID_PASSWORD=$2
 fi
-printf "SSID Password: %s\n" "$SSID_PASSWORD" >> $LOG_DIR/configuration.log
+printf "SSID/WiFi Network Password: %s\n" "$SSID_PASSWORD" >> $LOG_DIR/configuration.log
 
-read -p "Router Locaion: " ROUTER_LOC
+read -p "Current location of the Router: " ROUTER_LOC
 printf "Router Location: %s\n" "$ROUTER_LOC" >> $LOG_DIR/configuration.log
 
 
@@ -35,11 +49,11 @@ while [ true ]
 do
   echo "=============================================================================================================="
   echo "Testing against SSID '$SSID_NAME' with password '$SSID_PASSWORD'"
-  echo "If this isn't the correct SSID or Password, enter exit to exit, and re-run the script with the correct information"
-  echo "Please input the room location (enter exit to quit)"
+  echo "If this isn't the correct SSID or Password, type \"exit\" to quit, and re-run the script with the correct information"
+  echo "Please input the current location of Victor, normally a room name (type \"exit\" to quit)"
   echo "=============================================================================================================="
-  read -p "Roomname: " ROOM_LOC_USER
-  if [ $ROOM_LOC_USER = "exit" ]; then
+  read -p "Victor Location: " ROOM_LOC_USER
+  if [ "$ROOM_LOC_USER" = "exit" ]; then
     exit
   fi
   ROOM_LOC=${ROOM_LOC_USER//[^[:alnum:]]/}
