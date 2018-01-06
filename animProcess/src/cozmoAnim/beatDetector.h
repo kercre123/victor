@@ -15,7 +15,7 @@
 
 #include "cozmoAnim/micDataTypes.h"
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "aubio/aubio.h"
 
