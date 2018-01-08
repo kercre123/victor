@@ -534,8 +534,9 @@ namespace Cozmo {
     if (kDisplayThermalThrottling && 
         allowOverlay &&
         OSState::getInstance()->IsThermalThrottling()) {
-      const Rectangle<s32> rect( 0, 0, 20, 20);
-      const Vision::PixelRGB565 pixel(255, 0, 0);
+
+      const Rectangle<f32> rect( 0, 0, 20, 20);
+      const ColorRGBA pixel(1.f, 0.f, 0.f);
       faceImg565.DrawFilledRect(rect, pixel);
     }
 

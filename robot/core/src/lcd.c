@@ -39,7 +39,8 @@ typedef struct {
 
 static const INIT_SCRIPT init_scr[] = {
   { 0x11, 0 }, // Sleep Off
-  { 0x36, 1, { 0x00 } },
+  { 0x36, 1, { 0x00 } }, //0x00: RGB565, 0x08: BGR565
+  { 0xB0, 2, { 0x00, 0x08 } },  // Expect unswapped bytes in u16 pixel
   { 0xB7, 1, { 0x72 } }, // Gate control (VGH 14.97, VGL -8.23)
   { 0xBB, 1, { 0x36 } }, // VCOMS 1.45v
   { 0xC0, 1, { 0x2C } },
