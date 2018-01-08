@@ -119,7 +119,8 @@
     // "min_score": 0.5
 
     // OpencCV DNN w/ MobileNets classification model
-    "graph"  : "mobilenet_0.50_128_RockPaperScissors_opencvdnn.pb",
+    //"graph"  : "mobilenet_0.50_128_RockPaperScissors_opencvdnn.pb",
+    "graph"  : "mobilenet_0.75_128_RockPaperScissors_combinedData_opencvdnn.pb",
     "labels" : "RockPaperScissors_labels.txt",
     "mode"   : "classification",
     "input_width"  : 128,
