@@ -53,6 +53,13 @@
 #include <stdio.h>
 #include <math.h>
 
+
+#define LOG_CHANNEL    "EngineMessages"
+#define LOG_ERROR      PRINT_NAMED_ERROR
+#define LOG_WARNING    PRINT_NAMED_WARNING
+#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
+#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
+
 namespace Anki {
 namespace Cozmo {
     
@@ -146,16 +153,16 @@ namespace Messages {
   {
     const std::string animName(msg.animName, msg.animName_length);
 
-    PRINT_NAMED_INFO("EngineMesssages.Process_playAnim",
-                     "Anim: %s, Tag: %d",
-                     animName.c_str(), msg.tag);
+    LOG_INFO("EngineMessages.Process_playAnim",
+             "Anim: %s, Tag: %d",
+             animName.c_str(), msg.tag);
     
     _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops);
   }
 
   void Process_abortAnimation(const Anki::Cozmo::RobotInterface::AbortAnimation& msg)
   {
-    PRINT_NAMED_INFO("EngineMessages.Process_abortAnimation", "");
+    LOG_INFO("EngineMessages.Process_abortAnimation", "Abort animation");
     _animStreamer->Abort();
   }
   
@@ -239,12 +246,12 @@ namespace Messages {
     if (consoleVar && consoleVar->ParseText(tryValue) )
     {
       //SendVerifyDebugConsoleVarMessage(_externalInterface, varName, consoleVar->ToString().c_str(), consoleVar, true);
-      PRINT_NAMED_INFO("Process_setDebugConsoleVarMessage.Success", "'%s' set to '%s'", varName, tryValue);
+      LOG_INFO("Process_setDebugConsoleVarMessage.Success", "'%s' set to '%s'", varName, tryValue);
       
     }
     else
     {
-      PRINT_NAMED_WARNING("Process_setDebugConsoleVarMessage.Fail", "Error setting '%s' to '%s'",
+      LOG_WARNING("Process_setDebugConsoleVarMessage.Fail", "Error setting '%s' to '%s'",
                           varName, tryValue);
       //      SendVerifyDebugConsoleVarMessage(_externalInterface, msg.varName.c_str(),
       //                                       consoleVar ? "Error: Failed to Parse" : "Error: No such variable",
@@ -268,11 +275,11 @@ namespace Messages {
       enum { kBufferSize = 512 };
       char buffer[kBufferSize];
       const uint32_t res = NativeAnkiUtilConsoleCallFunction( funcName, funcArgs, kBufferSize, buffer );
-      PRINT_NAMED_INFO("Process_runDebugConsoleFuncMessage", "%s '%s' set to '%s'",
+      LOG_INFO("Process_runDebugConsoleFuncMessage", "%s '%s' set to '%s'",
                        (res != 0) ? "Success" : "Failure", funcName, funcArgs);
     }
     else {
-      PRINT_NAMED_WARNING("Process_runDebugConsoleFuncMessage.NoConsoleFunc", "No Func named '%s'",funcName);
+      LOG_WARNING("Process_runDebugConsoleFuncMessage.NoConsoleFunc", "No Func named '%s'",funcName);
     }
   }
 
@@ -415,12 +422,13 @@ namespace Messages {
       memcpy(msgBuf.GetBuffer(), pktBuffer_, dataLen);
       if (!msgBuf.IsValid())
       {
-        PRINT_NAMED_WARNING("Receiver.ReceiveData.Invalid", "Receiver got %02x[%d] invalid", pktBuffer_[0], dataLen);
+        LOG_WARNING("Receiver.ReceiveData.Invalid", "Receiver got %02x[%d] invalid", pktBuffer_[0], dataLen);
         continue;
       }
       if (msgBuf.Size() != dataLen)
       {
-        PRINT_NAMED_WARNING("Receiver.ReceiveData.SizeError", "Parsed message size error %d != %d (Tag %02x)", dataLen, msgBuf.Size(), msgBuf.tag);
+        LOG_WARNING("Receiver.ReceiveData.SizeError", "Parsed message size error %d != %d (Tag %02x)",
+                    dataLen, msgBuf.Size(), msgBuf.tag);
         continue;
       }
       ProcessMessageFromRobot(msgBuf);

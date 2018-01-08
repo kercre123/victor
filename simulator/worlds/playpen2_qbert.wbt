@@ -1,8 +1,8 @@
-#VRML_SIM V8.5 utf8
+#VRML_SIM R2018a utf8
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation 0.011010596 0.59948223 0.80031233 3.129522
+  orientation 0.011010595984254423 0.5994822291427173 0.8003123288555225 3.129522
   position -0.014606203 1.169959 0.48309053
 }
 VictorChargerSimple {
@@ -51,7 +51,7 @@ CozmoVizDisplay {
   filterLogs TRUE
 }
 Transform {
-  translation 0.05 0 0
+  translation 0.04 0 -0.01
   rotation 0 0 1 0
   children [
     Transform {
@@ -88,7 +88,7 @@ Transform {
   ]
 }
 LightCube {
-  translation 0.272 0 0.022
+  translation 0.312 0 0.022
 }
 Block1x1_NotActive {
   translation 0.165 -0.114 0.025
@@ -113,9 +113,9 @@ CustomWall {
   width 0.2
 }
 HandEmitter {
-  translation -0.15495426 7.0066194e-05 0.07
+  translation -0.15495426 7.0066194e-5 0.07
 }
 Ruler {
   translation -0.01119277 0.056189919 0.010000093
-  rotation 1.206252e-07 0.70710677 0.70710679 3.1415929
+  rotation 1.2062520020241202e-7 0.7071067711865424 0.7071067911865424 3.1415929
 }
