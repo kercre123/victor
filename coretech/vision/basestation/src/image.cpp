@@ -62,16 +62,20 @@ namespace Vision {
 #pragma mark --- ImageBase ---
   
   template<typename T>
-  Result ImageBase<T>::Load(const std::string& filename)
+  Result ImageBase<T>::Load(const std::string& filename, bool isBGR)
   {
+    //TODO Since OpenCV is loading the image, won't it always be BGR, therefore it needs to be converted?
     this->get_CvMat_() = cv::imread(filename, (GetNumChannels() == 1 ?
                                                CV_LOAD_IMAGE_GRAYSCALE :
                                                CV_LOAD_IMAGE_COLOR));
-    
-    if(IsEmpty()) {
-      return RESULT_FAIL;
-    } else {
+    if (!IsEmpty()) {
+      if (isBGR) {
+        cv::cvtColor(this->get_CvMat_(), this->get_CvMat_(), cv::COLOR_BGR2RGB);
+      }
       return RESULT_OK;
+    }
+    else {
+      return RESULT_FAIL;
     }
   }
   
