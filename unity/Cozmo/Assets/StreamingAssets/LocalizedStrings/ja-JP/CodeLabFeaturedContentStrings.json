@@ -34,7 +34,7 @@
     "translation" : "ポテトを温める時間"
   },
   "codeLabFeaturedProject.HotPotato.players_ready_set" : {
-    "translation" : "準備はいい？"
+    "translation" : "じゅんびはいい？"
   },
   "codeLabFeaturedProject.HotPotato.go" : {
     "translation" : "スタート！"
@@ -217,7 +217,7 @@
     "translation" : "紫"
   },
   "codeLabFeaturedProject.CubeWhack.ready" : {
-    "translation" : "準備はいい？"
+    "translation" : "じゅんびはいい？"
   },
   "codeLabFeaturedProject.CubeWhack.pack_random" : {
     "translation" : "ランダムなLED"
@@ -259,10 +259,10 @@
     "translation" : "選択した音楽"
   },
   "codeLabFeaturedProject.PuttPutt.cozmo_face_pixel_x" : {
-    "translation" : "Cozmoの顔のピクセルx"
+    "translation" : "COZMOの顔のピクセルx"
   },
   "codeLabFeaturedProject.PuttPutt.cozmo_face_pixel_y" : {
-    "translation" : "Cozmoの顔のピクセルy"
+    "translation" : "COZMOの顔のピクセルy"
   },
   "codeLabFeaturedProject.PuttPutt.hole_position_x" : {
     "translation" : "ホールのポジションx"
@@ -280,10 +280,10 @@
     "translation" : "最大のホール"
   },
   "codeLabFeaturedProject.PuttPutt._hold_me_facing_the_ceiling" : {
-    "translation" : " 天井を向かせたままつかんで。"
+    "translation" : " てんじょうをむかせたままつかんで。"
   },
   "codeLabFeaturedProject.PuttPutt.to_play_tilt_me_to_get_the_ball_in_the_hole" : {
-    "translation" : "プレイするには、COZMOを傾けて穴の中のボールをつかみます。"
+    "translation" : "プレイするには、COZMOをかたむけてあなのなかにボールをいれます。"
   },
   "codeLabFeaturedProject.PuttPutt.great_game" : {
     "translation" : "すばらしいゲームでした"
@@ -310,16 +310,16 @@
     "translation" : " / "
   },
   "codeLabFeaturedProject.PuttPutt.please_put_me_down_on_a_flat_surface" : {
-    "translation" : "平らな面に降ろしてください。"
+    "translation" : "たいらなめんにおろしてください。"
   },
   "codeLabFeaturedProject.PuttPutt.timer" : {
     "translation" : "タイマー"
   },
   "codeLabFeaturedProject.PuttPutt.great_game_you_finished_in" : {
-    "translation" : "ナイスゲーム！数秒で"
+    "translation" : "ナイスゲーム！あなたは"
   },
   "codeLabFeaturedProject.PuttPutt._seconds" : {
-    "translation" : " 終了しました。"
+    "translation" : " でしゅうりょうしました。"
   },
   "codeLabFeaturedProject.PuttPutt.start_and_keep_track_of_the_game_timer" : {
     "translation" : "ゲームタイマーをスタートして記録をつけましょう。"
@@ -391,19 +391,19 @@
     "translation" : "デフォルトの値を設定します。"
   },
   "codeLabFeaturedProject.RemoteControlRacer.tilt_your_device_to_drive" : {
-    "translation" : "デバイスをドライブに傾けてください！"
+    "translation" : "デバイスをドライブにかたむけてください！"
   },
   "codeLabFeaturedProject.ShakeIt.game_length" : {
     "translation" : "ゲーム時間"
   },
   "codeLabFeaturedProject.ShakeIt.get_ready_to_shake_" : {
-    "translation" : "振る準備はいい？ "
+    "translation" : "ふるじゅんびはいい？ "
   },
   "codeLabFeaturedProject.ShakeIt.correct_color" : {
     "translation" : "正解の色"
   },
   "codeLabFeaturedProject.ShakeIt.red" : {
-    "translation" : "赤"
+    "translation" : "あか"
   },
   "codeLabFeaturedProject.ShakeIt.game_round" : {
     "translation" : "ゲームラウンド"
@@ -427,10 +427,10 @@
     "translation" : "振るアクション"
   },
   "codeLabFeaturedProject.ShakeIt.yellow" : {
-    "translation" : "黄"
+    "translation" : "きいろ"
   },
   "codeLabFeaturedProject.ShakeIt.blue" : {
-    "translation" : "青"
+    "translation" : "あお"
   },
   "codeLabFeaturedProject.ShakeIt.none" : {
     "translation" : "なし"
@@ -444,17 +444,17 @@
   "codeLabFeaturedProject.ShakeIt.round_time" : {
     "translation" : "ラウンド時間"
   },
-  "codeLabFeaturedProject.ShakeIt.shake_cozmo" : {
-    "translation" : "COZMOを振って"
+  "codeLabFeaturedProject.ShakeIt.me" : {
+    "translation" : "わたし"
   },
   "codeLabFeaturedProject.ShakeIt.orange" : {
     "translation" : "オレンジ"
   },
   "codeLabFeaturedProject.ShakeIt.green" : {
-    "translation" : "緑"
+    "translation" : "みどり"
   },
   "codeLabFeaturedProject.ShakeIt.purple" : {
-    "translation" : "紫"
+    "translation" : "むらさき"
   },
   "codeLabFeaturedProject.ShakeIt.multicolor" : {
     "translation" : "マルチカラー"
@@ -508,7 +508,7 @@
     "translation" : " ポイント"
   },
   "codeLabFeaturedProject.ShakeIt.try_to_get_all_10_points" : {
-    "translation" : "全10ポイントの獲得を目指そう！"
+    "translation" : "ぜん10ポイントのかくとくをめざそう！"
   },
   "codeLabFeaturedProject.ShakeIt.times_cube_1_moved" : {
     "translation" : "Cube 1が動いた回数"
@@ -547,7 +547,7 @@
     "translation" : "ハッピーバレンタイン "
   },
   "codeLabFeaturedProject.ValentinesCozmogram._because_cozmo_loves_you" : {
-    "translation" : " Cozmoはあなたが大好きだから"
+    "translation" : " Cozmoはあなたがだいすきだから"
   },
   "codeLabFeaturedProject.ValentinesCozmogram.red_random" : {
     "translation" : "赤いものランダム"
@@ -602,9 +602,6 @@
   },
   "codeLabFeaturedProject.ValentinesCozmogram.blueberries_" : {
     "translation" : "ブルーベリー "
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.peacock_feathers_" : {
-    "translation" : "クジャクの羽 "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.jeans_" : {
     "translation" : "ジーンズ "

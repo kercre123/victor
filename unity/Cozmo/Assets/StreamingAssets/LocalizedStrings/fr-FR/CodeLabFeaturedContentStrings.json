@@ -292,7 +292,7 @@
     "translation" : "Boucle principale du jeu."
   },
   "codeLabFeaturedProject.PuttPutt.called_each_round_to_set_hole_size_and_position" : {
-    "translation" : "Appelée à chaque partie pour définir la position et la taille du trou."
+    "translation" : "Appelé à chaque partie pour définir la position et la taille du trou."
   },
   "codeLabFeaturedProject.PuttPutt.text" : {
     "translation" : "texte"
@@ -442,10 +442,10 @@
     "translation" : "Cozmo"
   },
   "codeLabFeaturedProject.ShakeIt.round_time" : {
-    "translation" : "durée de la partie"
+    "translation" : "durée d'une manche"
   },
-  "codeLabFeaturedProject.ShakeIt.shake_cozmo" : {
-    "translation" : "Secoue Cozmo"
+  "codeLabFeaturedProject.ShakeIt.me" : {
+    "translation" : "Moi"
   },
   "codeLabFeaturedProject.ShakeIt.orange" : {
     "translation" : "Orange"
@@ -559,10 +559,10 @@
     "translation" : "objet rouge"
   },
   "codeLabFeaturedProject.ValentinesCozmogram.apples_" : {
-    "translation" : "Pommes "
+    "translation" : "Les pommes "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.ladybugs_" : {
-    "translation" : "Coccinelles "
+    "translation" : "Les coccinelles "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.blue_thing" : {
     "translation" : "objet bleu"
@@ -571,43 +571,40 @@
     "translation" : "Mes yeux "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.skies_" : {
-    "translation" : "Cieux "
+    "translation" : "Les cieux "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.strawberries_" : {
-    "translation" : "Fraises "
+    "translation" : "Les fraises "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.raspberries_" : {
-    "translation" : "Framboises "
+    "translation" : "les framboises "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.tomatoes_" : {
-    "translation" : "Tomates "
+    "translation" : "Les tomates "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.fire_trucks_" : {
-    "translation" : "Camions de pompiers "
+    "translation" : "Les camions de pompiers "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.cherries_" : {
-    "translation" : "Cerises "
+    "translation" : "Les cerises "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.stop_signs_" : {
-    "translation" : "Panneaux Stop "
+    "translation" : "Les panneaux Stop "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.oceans_" : {
-    "translation" : "Océans "
+    "translation" : "Les océans "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.rivers_" : {
-    "translation" : "Rivières "
+    "translation" : "Les rivières "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.lakes_" : {
-    "translation" : "Lacs "
+    "translation" : "Les lacs "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.blueberries_" : {
-    "translation" : "Myrtilles "
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.peacock_feathers_" : {
-    "translation" : "Plumes de paon "
+    "translation" : "Les myrtilles "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.jeans_" : {
-    "translation" : "Jeans "
+    "translation" : "Les Jeans "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.friend" : {
     "translation" : "Ami"

@@ -1210,7 +1210,7 @@
     "translation" : "Zufällige Zahl zwischen [X] und [Y] ausgeben"
   },
   "codeLabGlossary.block_definitions.description.operator_random" : {
-    "translation" : "Gibt eine zufällige Ganzzahl zwischen [X] und [Y] zurück."
+    "translation" : "Returns a random number between [X] and [Y] (inclusive)."
   },
   "codeLabGlossary.block_definitions.title.operator_lt" : {
     "translation" : "( [X] < [Y] )"
@@ -1294,7 +1294,7 @@
     "translation" : "Fortgeschritten: SDK-Animation [Text] abspielen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_play_animation_by_name" : {
-    "translation" : "CODEBLOCK FÜR FORTGESCHRITTENE BENUTZER. Das Python-SDK von Cozmo bietet Zugriff auf Hunderte weiterer Animationen von Cozmo. Die ID-Zeichenfolge der Animation kann mithilfe dieses Blocks wiedergegeben werden. Weitere Informationen zum SDK findest du unter developer.anki.com."
+    "translation" : "ADVANCED CODE BLOCK. The Cozmo Python SDK provides access to hundreds more of Cozmo's animations. The animation's id string can be played using this block. Learn more about the SDK at developer.anki.com. Note that we recommend using the \"play SDK animation group\" block over this block as the animation id strings can change over time, meaning your program may not work in the future without changes."
   },
   "codeLabGlossary.block_definitions.title.cozmo_play_animation_by_triggername" : {
     "translation" : "Fortgeschritten: SDK-Animationsgruppe [Text] abspielen"

@@ -868,7 +868,7 @@
     "translation" : "dessiner [texte] à [X],[Y]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_text" : {
-    "translation" : "Dessine le [text] spécifié à la position de pixel indiquée grâce aux coordonnées [X],[Y]. L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Les coordonnées 0,0 sont situées en haut à gauche de l'écran. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
+    "translation" : "Dessine le [texte] spécifié à la position de pixel indiquée grâce aux coordonnées [X],[Y]. L'écran facial de Cozmo mesure 128 pixels de largeur sur 64 pixels de hauteur, de sorte que la plage visible en [X] et [Y] s'étend respectivement de 0 à 127 et de 0 à 63. Les coordonnées 0,0 sont situées en haut à gauche de l'écran. Astuce : pour avoir un aperçu de ton dessin, utilise le bloc « Afficher sur la tête de Cozmo »."
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_line" : {
     "translation" : "dessiner une ligne de [X],[Y] à [X2],[Y2]"
@@ -1210,7 +1210,7 @@
     "translation" : "nombre aléatoire entre [X] et [Y]"
   },
   "codeLabGlossary.block_definitions.description.operator_random" : {
-    "translation" : "Renvoie un nombre entier aléatoire entre [X] et [Y]."
+    "translation" : "Returns a random number between [X] and [Y] (inclusive)."
   },
   "codeLabGlossary.block_definitions.title.operator_lt" : {
     "translation" : "( [X] < [Y] )"
@@ -1249,25 +1249,25 @@
     "translation" : "Vrai si (Y) est faux, faux si (Y) est vrai."
   },
   "codeLabGlossary.block_definitions.title.operator_join" : {
-    "translation" : "Joindre [text1] et [text2]"
+    "translation" : "Regroupe [texte1] et [texte2]"
   },
   "codeLabGlossary.block_definitions.description.operator_join" : {
     "translation" : "Concaténer (combiner) 2 chaînes de texte. Par exemple : « Cozmo » et « dit » devient « Cozmodit »."
   },
   "codeLabGlossary.block_definitions.title.operator_letter_of" : {
-    "translation" : "lettre [#] du [text]"
+    "translation" : "lettre [#] de [texte]"
   },
   "codeLabGlossary.block_definitions.description.operator_letter_of" : {
     "translation" : "Renvoie la lettre [#] de la chaîne de texte fournie. Ainsi, la lettre #1 de « Cozmo » est « C ». Conseil de codage avancé : il est possible d'utiliser des chaînes de caractères et ce bloc de manière créative pour créer une liste et la parcourir."
   },
   "codeLabGlossary.block_definitions.title.operator_length" : {
-    "translation" : "longueur de [text]"
+    "translation" : "longueur de [texte]"
   },
   "codeLabGlossary.block_definitions.description.operator_length" : {
     "translation" : "Longueur de la chaîne de texte fournie."
   },
   "codeLabGlossary.block_definitions.title.operator_contains" : {
-    "translation" : "[text1] contient [text2]"
+    "translation" : "[texte1] contient [texte2]"
   },
   "codeLabGlossary.block_definitions.description.operator_contains" : {
     "translation" : "Vrai si la seconde chaîne de texte est contenue dans la première chaîne de texte. Par exemple, il est vrai que « coz » est contenu dans « cozmo »."
@@ -1294,7 +1294,7 @@
     "translation" : "avancé : lire [texte] animation SDK"
   },
   "codeLabGlossary.block_definitions.description.cozmo_play_animation_by_name" : {
-    "translation" : "BLOC DE CODE AVANCÉ. Le SDK Cozmo python donne accès à des centaines d'autres animations de Cozmo. Ce bloc permet de lire l'ID de chaîne de l'animation. Pour en savoir plus sur le SDK, rends-toi sur developer.anki.com."
+    "translation" : "ADVANCED CODE BLOCK. The Cozmo Python SDK provides access to hundreds more of Cozmo's animations. The animation's id string can be played using this block. Learn more about the SDK at developer.anki.com. Note that we recommend using the \"play SDK animation group\" block over this block as the animation id strings can change over time, meaning your program may not work in the future without changes."
   },
   "codeLabGlossary.block_definitions.title.cozmo_play_animation_by_triggername" : {
     "translation" : "avancé : lire le groupe d'animations du SDK [texte]"
@@ -1405,7 +1405,7 @@
     "translation" : "Fais bouger les choses avec ce nouveau jeu."
   },
   "codeLabFeaturedProject_ShakeIt.projectInstructions" : {
-    "translation" : "1. Une fois que tu appuies sur le drapeau de départ, Cozmo te demande de secouer des objets!\u000a\u000a2. Écoute attentivement ses instructions.\u000a\u000a« Rouge » = Secoue le cube rouge\u000a« Jaune » = Secoue le cube jaune\u000a« Bleu » = Secoue le cube bleu\u000a« Orange » = Secoue les cubes rouge et jaune\u000a« Vert » = Secoue les cubes jaune et bleu\u000a« Violet » = Secoue les cubes bleu et rouge\u000a« Moi » = Secoue Cozmo !\u000a\u000a3. Combien de secousses correctes peux-tu réaliser dans le temps imparti ?"
+    "translation" : "1. Une fois que tu appuies sur le drapeau de départ, Cozmo te demande de secouer des objets !\u000a\u000a2. Écoute attentivement ses instructions.\u000a\u000a« Rouge » = Secoue le cube rouge\u000a« Jaune » = Secoue le cube jaune\u000a« Bleu » = Secoue le cube bleu\u000a« Orange » = Secoue les cubes rouge et jaune\u000a« Vert » = Secoue les cubes jaune et bleu\u000a« Violet » = Secoue les cubes bleu et rouge\u000a« Moi » = Secoue Cozmo !\u000a\u000a3. Combien de secousses correctes peux-tu réaliser dans le temps imparti ?"
   },
   "codeLabSampleProject_ScrollingWaveText.projectName" : {
     "translation" : "Texte défilant en vague"

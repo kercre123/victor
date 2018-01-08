@@ -313,7 +313,7 @@
     "translation" : "Bitte setze mich auf eine ebene Oberfläche."
   },
   "codeLabFeaturedProject.PuttPutt.timer" : {
-    "translation" : "Timer"
+    "translation" : "den Timer"
   },
   "codeLabFeaturedProject.PuttPutt.great_game_you_finished_in" : {
     "translation" : "Tolles Spiel! Deine Zeit:"
@@ -442,10 +442,10 @@
     "translation" : "Cozmo"
   },
   "codeLabFeaturedProject.ShakeIt.round_time" : {
-    "translation" : "Runde Zeit"
+    "translation" : "Rundenzeit"
   },
-  "codeLabFeaturedProject.ShakeIt.shake_cozmo" : {
-    "translation" : "Cozmo schütteln"
+  "codeLabFeaturedProject.ShakeIt.me" : {
+    "translation" : "Ich"
   },
   "codeLabFeaturedProject.ShakeIt.orange" : {
     "translation" : "Orange"
@@ -602,9 +602,6 @@
   },
   "codeLabFeaturedProject.ValentinesCozmogram.blueberries_" : {
     "translation" : "Heidelbeeren "
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.peacock_feathers_" : {
-    "translation" : "Pfauenfedern "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.jeans_" : {
     "translation" : "Jeans "

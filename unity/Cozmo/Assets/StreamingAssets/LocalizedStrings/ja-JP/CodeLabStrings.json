@@ -436,7 +436,7 @@
     "translation" : "キャンセル"
   },
   "codeLab.firstRemixSavedConfirmation.saved_first_remix_title" : {
-    "translation" : "最初の Remix が保存されました。"
+    "translation" : "最初のリミックスが保存されました。"
   },
   "codeLab.firstRemixSavedConfirmation.remixing_blocks_jumpstart_prompt" : {
     "translation" : "別のプロジェクトのコードブロックをリミックスしておくと、自分のアイデアをすばやく実行に移すことができます。"
@@ -529,7 +529,7 @@
     "translation" : "キューブタップ"
   },
   "codeLabFeaturedProject_CubeWhack.projectDescription" : {
-    "translation" : "あのキューブを引っぱたけ！あなたのハイスコアは？"
+    "translation" : "キューブを引っぱたけ！あなたのハイスコアは？"
   },
   "codeLabFeaturedProject_CubeWhack.projectInstructions" : {
     "translation" : "1．始める前にCOZMOの前にキューブを3つ置きます。\u000a\u000a2. COZMOのバックパックライトの色が変化します。同じ色になったらすばやくキューブをタップ！\u000a\u000a3. 時間切れになる前にできるだけ多くの同じ色のキューブをタップしてください。\u000a\u000a4. 自分の最高スコアを更新できるかな？"
@@ -550,7 +550,7 @@
     "translation" : "電気を消して音楽を楽しみましょう。"
   },
   "codeLabFeaturedProject_LightShow.projectInstructions" : {
-    "translation" : "1．始める前に、電灯を消してください。\u000a\u000a2. COZMOが音楽に合わせてダンスし、キューブが光のショーを演じるのをご覧ください！"
+    "translation" : "1．始める前に、電気を消してください。\u000a\u000a2. COZMOが音楽に合わせてダンスし、キューブが光のショーを披露するのでご覧ください！"
   },
   "codeLab.SaveProject.Autosaved" : {
     "translation" : "自動保存されました"
@@ -1039,19 +1039,19 @@
     "translation" : "上級のコードブロックCOZMOのワールド上の位置の座標[X]、[Y]、[Z]をCOZMOの内部マップを利用して返します。ヒント：これは「ワールド上をx軸[X]、y軸[Y]、[Z]°で移動」ブロックとともに、COZMOを移動させる位置を厳密に指示するために使用できます。注意したいのは、COZMOの内部マップの原点は（あなたではなく）彼が管理しているため、COZMOを移動させたい位置間の距離を計算した後には、多くの場合このコードブロックが最も役立ちます。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_get_pitch" : {
-    "translation" : "COZMOの傾き°"
+    "translation" : "COZMOの傾き（°）"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_pitch" : {
     "translation" : "COZMOの前/後の傾きの角度を度数で返します。前の場合の値は負、後ろの場合の値は正です。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_get_roll" : {
-    "translation" : "COZMOの回転°"
+    "translation" : "COZMOの回転（°）"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_roll" : {
     "translation" : "COZMOの右/左の傾きの角度を度数で返します。右の場合の値は負、左の場合の値は正です。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_get_yaw" : {
-    "translation" : "COZMOの向き°"
+    "translation" : "COZMOの向き（°）"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_yaw" : {
     "translation" : "COZMOの右/左の向きの角度を返します。右の場合の値は負、左の場合の値は正です。"
@@ -1063,7 +1063,7 @@
     "translation" : "最大（100%）の高さに対する%でのCOZMOのリフトの高さです。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_get_head_angle" : {
-    "translation" : "COZMOのヘッドの角度°"
+    "translation" : "COZMOのヘッドの角度（°）"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_head_angle" : {
     "translation" : "COZMOのヘッドの角度を度数で返します。（-25°=最も下、0°=水平、45°=最も上）"
@@ -1141,13 +1141,13 @@
     "translation" : "上級のコードブロック特定のキューブが見えた場合、COZMOのワールド上での位置[X]、[Y]、[Z]（高さ）を返します。COZMOの内部マップの原点は（あなたではなく）COZMOが管理しているものだということに注意してください。COZMOのワールド内での物体の位置関係を把握するのに役立ちます。キューブ1：はペーパークリップのように見えます。キューブ2：はランプかハートのように見えます。キューブ3：はベビーシートに座る赤ちゃんのように見えます。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_pitch" : {
-    "translation" : "カメラでのキューブ[#]の傾き°"
+    "translation" : "カメラでのキューブ[#]の傾き（°）"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_pitch" : {
     "translation" : "特定のキューブのCOZMOのカメラから見える前/後の傾きの角度を度数で返します。この場合、COZMOにキューブが見えていなければなりません。キューブ1：はペーパークリップのように見えます。キューブ2：はランプかハートのように見えます。キューブ3：はベビーシートに座る赤ちゃんのように見えます。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_roll" : {
-    "translation" : "カメラでのキューブ[#]の回転°"
+    "translation" : "カメラでのキューブ[#]の回転（°）"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_roll" : {
     "translation" : "特定のキューブのCOZMOのカメラから見える右/左の傾きの角度を度数で返します。この場合、COZMOにキューブが見えていなければなりません。キューブ1：はペーパークリップのように見えます。キューブ2：はランプかハートのように見えます。キューブ3：はベビーシートに座る赤ちゃんのように見えます。"
@@ -1159,13 +1159,13 @@
     "translation" : "COZMOのカメラから見えるキューブの右/左の（平らな面にあるかのような）向きの角度を度数で返します。この場合、COZMOにキューブが見えていなければなりません。キューブ1：はペーパークリップのように見えます。キューブ2：はランプかハートのように見えます。キューブ3：はベビーシートに座る赤ちゃんのように見えます。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_device_get_pitch" : {
-    "translation" : "デバイスの傾き°"
+    "translation" : "デバイスの傾き（°）"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_device_get_pitch" : {
     "translation" : "モバイルデバイスの前/後の傾きの角度を度数で表したものです。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_device_get_roll" : {
-    "translation" : "デバイスの回転°"
+    "translation" : "デバイスの回転（°）"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_device_get_roll" : {
     "translation" : "モバイルデバイスの右/左の傾きの角度を度数で表したものです。"
@@ -1210,7 +1210,7 @@
     "translation" : "[X]から[Y]ランダムな数字を選ぶ"
   },
   "codeLabGlossary.block_definitions.description.operator_random" : {
-    "translation" : "[X]と[Y]の間のランダムな整数を返します。"
+    "translation" : "Returns a random number between [X] and [Y] (inclusive)."
   },
   "codeLabGlossary.block_definitions.title.operator_lt" : {
     "translation" : "( [X] < [Y] )"
@@ -1294,7 +1294,7 @@
     "translation" : "上級：[テキスト]SDKアニメーションを再生"
   },
   "codeLabGlossary.block_definitions.description.cozmo_play_animation_by_name" : {
-    "translation" : "上級のコードブロックCOZMO python SDKによって、今までのものに加えて何百ものCOZMOアニメーションにアクセス可能になります。アニメーションのid文字列はこのブロックによって再生可能です。SDKについての詳細はこちらでご覧になれます。developer.anki.com"
+    "translation" : "ADVANCED CODE BLOCK. The Cozmo Python SDK provides access to hundreds more of Cozmo's animations. The animation's id string can be played using this block. Learn more about the SDK at developer.anki.com. Note that we recommend using the \"play SDK animation group\" block over this block as the animation id strings can change over time, meaning your program may not work in the future without changes."
   },
   "codeLabGlossary.block_definitions.title.cozmo_play_animation_by_triggername" : {
     "translation" : "上級：[テキスト]SDKアニメーショングループを再生"
@@ -1354,7 +1354,7 @@
     "translation" : "微笑んでレーザーを発射！ 顔を動かし狙いを定めてください。"
   },
   "codeLabFeaturedProject_ComplimentGenerator.projectName" : {
-    "translation" : "Compliment Generator（ほめ言葉ジェネレーター）"
+    "translation" : "ほめ言葉ジェネレーター"
   },
   "codeLabFeaturedProject_ComplimentGenerator.projectDescription" : {
     "translation" : "「世界ほめ言葉の日」をCOZMOと一緒に祝おう！"
@@ -1363,13 +1363,13 @@
     "translation" : "1. 3月1日は「世界ほめ言葉の日」です。スタートフラグをタップするとほめ言葉がランダムに届きます。"
   },
   "codeLabFeaturedProject_CozmoFlies.projectName" : {
-    "translation" : "Cozmo Flies（コズモ・フライズ）"
+    "translation" : "コズモ・フライズ"
   },
   "codeLabFeaturedProject_CozmoFlies.projectDescription" : {
     "translation" : "上へ、上へ、もっと上へ！"
   },
   "codeLabFeaturedProject_CozmoFlies.projectInstructions" : {
-    "translation" : "1. スタートフラグをタップすれば、COZMOは離陸準備完了！2. COZMOを手にもって部屋の中で飛ばしましょう。3. COZMOのテーマ音楽とリアクションをお楽しみください。"
+    "translation" : "1. スタートフラグをタップすれば、COZMOは離陸準備完了！\u000a\u000a2. COZMOを手にもって部屋の中で飛ばしましょう。\u000a\u000a3. COZMOのテーマ音楽とリアクションをお楽しみください。"
   },
   "codeLabFeaturedProject_RemoteControlRacer.projectName" : {
     "translation" : "リモート・コントロール・レーサー"
@@ -1378,7 +1378,7 @@
     "translation" : "ブルンブルン！　COZMOを全速力で走らせよう。"
   },
   "codeLabFeaturedProject_RemoteControlRacer.projectInstructions" : {
-    "translation" : "1. スタートフラグをタップすると、お使いのスマートフォンまたはタブレットがリモコンに変わります。2. デバイスを上下左右に傾けるとCOZMOが全速力で走ります！"
+    "translation" : "1. スタートフラグをタップすると、お使いのスマートフォンまたはタブレットがリモコンに変わります。\u000a\u000a2. デバイスを上下左右に傾けるとCOZMOが全速力で走ります！"
   },
   "codeLabFeaturedProject_PuttPutt.projectName" : {
     "translation" : "パット・パット"
@@ -1387,7 +1387,7 @@
     "translation" : "ホールインワンを決められるかな？"
   },
   "codeLabFeaturedProject_PuttPutt.projectInstructions" : {
-    "translation" : "1.スタートフラグをタップしたら、COZMOを持ち上げて顔をまっすぐ前に向けます。2. COZMOの顔にボールとホールが表示されます。COZMOを傾けてボールをホールへ転がします。"
+    "translation" : "1.スタートフラグをタップしたら、COZMOを持ち上げて顔をまっすぐ前に向けます。\u000a\u000a2. COZMOの顔にボールとホールが表示されます。COZMOを傾けてボールをホールへ転がします。"
   },
   "codeLabFeaturedProject_ValentinesCozmogram.projectName" : {
     "translation" : "バレンタインのコズモグラム"
@@ -1405,7 +1405,7 @@
     "translation" : "新しいゲームで振りまくろう。"
   },
   "codeLabFeaturedProject_ShakeIt.projectInstructions" : {
-    "translation" : "1.スタートフラグをタップすると、COZMOがあなたにいろいろなものを振るよう指示します。\u000a\u000a2. COZMOの指示をよく聞いてください。\u000a\u000a「レッド」 = 赤色のキューブを振ります\u000a「イエロー」 = 黄色のキューブを振ります\u000a「ブルー」 = 青色のキューブを振ります\u000a「オレンジ」 = 赤色と黄色のキューブを振ります\u000a「グリーン」 = 黄色と青色のキューブを振ります\u000a「パープル」 = 青色と赤色のキューブを振ります\u000a「ミー（Me）」 = COZMOを振って！\u000a\u000a3. タイムリミットまでにいくつ正しく振れたかな？"
+    "translation" : "1.スタートフラグをタップすると、COZMOがあなたにいろいろなものを振るよう指示します。\u000a\u000a2. COZMOの指示をよく聞いてください。\u000a\u000a「レッド」 = 赤色のキューブを振ります\u000a「イエロー」 = 黄色のキューブを振ります\u000a「ブルー」 = 青色のキューブを振ります\u000a「オレンジ」 = 赤色と黄色のキューブを振ります\u000a「グリーン」 = 黄色と青色のキューブを振ります\u000a「パープル」 = 青色と赤色のキューブを振ります\u000a「わたし」 = COZMOを振って！\u000a\u000a3. タイムリミットまでにいくつ正しく振れたかな？"
   },
   "codeLabSampleProject_ScrollingWaveText.projectName" : {
     "translation" : "波状のテキストをスクロール"
