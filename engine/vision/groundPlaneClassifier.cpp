@@ -34,9 +34,9 @@ GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const Co
 {
 
   DEV_ASSERT(context != nullptr, "GroundPlaneClassifier.ContextCantBeNULL");
-  _classifier.reset(new DTDrivingSurfaceClassifier(config, context));
 
   const Json::Value& detectionConfig = config["GroundPlaneClassifier"];
+  _classifier.reset(new DTDrivingSurfaceClassifier(detectionConfig, context));
 
   // Train or load serialized file?
   bool onTheFlyTrain;
