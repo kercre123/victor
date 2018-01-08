@@ -1,4 +1,1 @@
-scissors
-paper
-backgrounds
-rock
+/Users/andrew/Code/coretech-external-local/tensorflow/all_models/RockPaperScissors_labels.txt
