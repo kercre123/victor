@@ -53,12 +53,12 @@ make
 #make the remote schtuff?
 $ADB push dfu /data/local/tmp
 cd ../..
-$ADB push syscon/build/syscon.bin /data/local/tmp
+$ADB push syscon/build/syscon.dfu /data/local/tmp
 
 # Shell into android device and execute dfu process
 $ADB shell -x "
 export LD_LIBRARY_PATH=/data/local/tmp
 cd /data/local/tmp
-./dfu syscon.bin
+./dfu syscon.dfu
 
 "
