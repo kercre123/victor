@@ -34,50 +34,37 @@ GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const Co
 {
 
   DEV_ASSERT(context != nullptr, "GroundPlaneClassifier.ContextCantBeNULL");
+  _classifier.reset(new DTDrivingSurfaceClassifier(config, context));
 
-  // TODO the classifier should be loaded from a file, not created here
-  {
-    _classifier.reset(new DTDrivingSurfaceClassifier(config, context));
-    const std::string path = _context->GetDataPlatform()->
-        pathToResource(Anki::Util::Data::Scope::Resources,
-                       "config/engine/vision/groundClassifier/simulatorData");
+  const Json::Value& detectionConfig = config["GroundPlaneClassifier"];
 
-    PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.pathToData", "the path to data is: %s",
-                    path.c_str());
-
-    const std::string positivePath = Anki::Util::FileUtils::FullFilePath({path, "positivePixels.txt"});
-    const std::string negativePath = Anki::Util::FileUtils::FullFilePath({path, "negativePixels.txt"});
-
-    bool result = _classifier->TrainFromFiles(positivePath.c_str(), negativePath.c_str());
-
-    DEV_ASSERT(result, "GroundPlaneClassifier.TrainingFromFiles");
-
-    // Error on whole training set
-    {
-      cv::Mat trainingSamples, trainingLabels;
-      _classifier->GetTrainingData(trainingSamples, trainingLabels);
-
-      // building a std::vector<Vision::PixelRGB>
-      std::vector<Anki::Vision::PixelRGB> pixels;
-      {
-        pixels.reserve(trainingSamples.rows);
-        const cv::Vec3f* data = trainingSamples.ptr<cv::Vec3f>(0);
-        for (int i = 0; i < trainingSamples.rows; ++i) {
-          const cv::Vec3f& vec = data[i];
-          pixels.emplace_back(vec[0], vec[1], vec[2]);
-        }
-      }
-
-      // calculate error
-      std::vector<uchar> responses = _classifier->PredictClass(pixels);
-      cv::Mat responsesMat(responses);
-
-      const float error = Anki::calculateError(responsesMat, trainingLabels);
-      PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.Train.ErrorLevel", "Error after training is: %f", error);
-      DEV_ASSERT(error < 0.1, "GroundPLaneClassifier.TrainingErrorTooHigh");
-    }
-
+  // Train or load serialized file?
+  bool onTheFlyTrain;
+  if (!JsonTools::GetValueOptional(detectionConfig, "OnTheFlyTrain", onTheFlyTrain)) {
+    PRINT_NAMED_ERROR("GroundPlaneClassifier.MissingOnTheFlyTrain","Variable OnTheFlyTrain has to be specified!");
+    return;
   }
+  std::string path;
+  if (!JsonTools::GetValueOptional(detectionConfig, "FileOrDirName", path)) {
+    PRINT_NAMED_ERROR("GroundPlaneClassifier.MissingFileOrDirName","Variable FileOrDirName has to be specified!");
+    return;
+  }
+  const std::string fullpath = context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
+                                                                          path);
+  PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.FullPathName", "The full path is %s", fullpath.c_str());
+
+  if (onTheFlyTrain) { // filename is the folder where positivesPixels.txt and negativePixels.txt are stored
+    PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.TrainingOnTheFly","Training the classifier");
+    trainClassifier(fullpath);
+  }
+  else {
+    PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.LoadingSavedClassifier","Error while loading classifier!");
+    if (!loadClassifier(fullpath)) {
+      return;
+    }
+  }
+  _initialized = true;
+
 }
 
 Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const VisionPoseData& poseData,
@@ -89,6 +76,10 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   if (! poseData.groundPlaneVisible) {
     PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.Update.GroundPlane", "Ground plane is not visible");
     return RESULT_OK;
+  }
+  if (! IsInitizialized()) {
+    PRINT_NAMED_ERROR("GroundPlaneClassifier.NotIinitialized", "Ground Plane Classifier is not initizalied");
+    return RESULT_FAIL;
   }
 
   // TODO Probably STEP 1 and 2 and 3 can be combined in a single pass
@@ -205,12 +196,52 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
 
 void GroundPlaneClassifier::trainClassifier(const std::string& path)
 {
+  const std::string positivePath = Anki::Util::FileUtils::FullFilePath({path, "positivePixels.txt"});
+  const std::string negativePath = Anki::Util::FileUtils::FullFilePath({path, "negativePixels.txt"});
+
+  bool result = _classifier->TrainFromFiles(positivePath.c_str(), negativePath.c_str());
+
+  DEV_ASSERT(result, "GroundPlaneClassifier.TrainingFromFiles");
+
+  // Error on whole training set
+  {
+    cv::Mat trainingSamples, trainingLabels;
+    _classifier->GetTrainingData(trainingSamples, trainingLabels);
+
+    // building a std::vector<Vision::PixelRGB>
+    std::vector<Anki::Vision::PixelRGB> pixels;
+    {
+      pixels.reserve(trainingSamples.rows);
+      const cv::Vec3f* data = trainingSamples.ptr<cv::Vec3f>(0);
+      for (int i = 0; i < trainingSamples.rows; ++i) {
+        const cv::Vec3f& vec = data[i];
+        pixels.emplace_back(vec[0], vec[1], vec[2]);
+      }
+    }
+
+    // calculate error
+    std::vector<uchar> responses = _classifier->PredictClass(pixels);
+    cv::Mat responsesMat(responses);
+
+    const float error = Anki::calculateError(responsesMat, trainingLabels);
+    PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.Train.ErrorLevel", "Error after training is: %f", error);
+  }
+  _initialized = true;
 
 }
 
-void GroundPlaneClassifier::loadClassifier(const std::string& filename)
+bool GroundPlaneClassifier::loadClassifier(const std::string& filename)
 {
-
+  if (!_classifier->DeSerialize(filename.c_str())) {
+    PRINT_NAMED_ERROR("GroundPlaneClassifier.LoadClassifier.ErrorWhileLoading", "Error while loading %s",
+                      filename.c_str());
+    _initialized = false;
+    return false;
+  }
+  else {
+    _initialized = true;
+    return true;
+  }
 }
 
 } // namespace Cozmo

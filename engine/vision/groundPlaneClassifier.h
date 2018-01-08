@@ -36,12 +36,21 @@ public:
                 DebugImageList <Vision::ImageRGB>& debugImageRGBs,
                 std::list<OverheadEdgeFrame>& outEdges);
 
+  bool IsInitizialized() const {
+    return _initialized;
+  }
+
+  const DrivingSurfaceClassifier& GetClassifier() const {
+    return *(_classifier.get());
+  }
+
 protected:
   std::unique_ptr<DrivingSurfaceClassifier> _classifier;
   const CozmoContext* _context;
+  bool _initialized = false;
 
   void trainClassifier(const std::string& path);
-  void loadClassifier(const std::string& filename);
+  bool loadClassifier(const std::string& filename);
 };
 
 } // namespace Anki
