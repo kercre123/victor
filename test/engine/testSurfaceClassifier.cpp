@@ -12,11 +12,13 @@
 
 #include "anki/common/basestation/math/logisticRegression.h"
 #include "basestation/utils/data/dataPlatform.h"
-#include "engine/cozmoContext.h"
-#include "engine/robotDataLoader.h"
 #include "engine/components/visionComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/overheadEdge.h"
 #include "engine/robot.h"
+#include "engine/robotDataLoader.h"
 #include "engine/vision/drivingSurfaceClassifier.h"
+#include "engine/vision/groundPlaneClassifier.h"
 #include "util/fileUtils/fileUtils.h"
 
 #include "gtest/gtest.h"
@@ -28,9 +30,15 @@
 
 extern Anki::Cozmo::CozmoContext *cozmoContext;
 
-void visualizeClassifierOnImages(const char *pathToImages, Anki::Cozmo::DrivingSurfaceClassifier& clf) {
+void visualizeClassifierOnImages(const std::string& pathToImages, const Anki::Cozmo::DrivingSurfaceClassifier& clf) {
 
-  std::vector<std::string> imageFiles = Anki::Util::FileUtils::FilesInDirectory(pathToImages, true, "jpg");
+  std::vector<std::string> imageFiles;
+  if (Anki::Util::FileUtils::DirectoryExists(pathToImages)) {
+    imageFiles = Anki::Util::FileUtils::FilesInDirectory(pathToImages, true, "jpg");
+  }
+  else {
+    imageFiles.push_back(pathToImages);
+  }
   uint imageno = 0;
 
   for (const auto& filename : imageFiles) {
@@ -72,21 +80,30 @@ void visualizeClassifierOnImages(const char *pathToImages, Anki::Cozmo::DrivingS
   }
 }
 
-// Default angle is head looking down
-Anki::Cozmo::VisionPoseData populateVisionPoseData(float angle = -0.40142554f) {
+// Head looking down is -0.40142554f
+Anki::Cozmo::VisionPoseData populateVisionPoseData(float angle) {
+
+  Anki::Pose3d::AllowUnownedParents(true);
+
   Anki::Cozmo::Robot robot(0, cozmoContext);
   Anki::Cozmo::VisionComponent& component = robot.GetVisionComponent();
   component.SetIsSynchronous(true);
 
   // Don't really need a valid camera calibration, so just pass a dummy one in
   // to make vision system happy. All that matters is the image dimensions be correct.
-  std::shared_ptr<Anki::Vision::CameraCalibration> calib(new Anki::Vision::CameraCalibration(360,640,
-                                                                                             290,290,
-                                                                                             320,180,
-                                                                                             0.f));
+  const std::array<f32, 8> distortionCoeffs = {{-0.03822904514363595, -0.2964213946476391, -0.00181089972406104,
+                                                 0.001866070303033584, 0.1803429725181202,
+                                                 0, 0, 0}};
+  auto calib = std::make_shared<Anki::Vision::CameraCalibration>(360,
+                                                           640,
+                                                           364.7223064012286,
+                                                           366.1693698832141,
+                                                           310.6264440545544,
+                                                           196.6729350209868,
+                                                           0,
+                                                           distortionCoeffs);
   component.SetCameraCalibration(calib);
 
-  const Anki::Pose3d cameraPose;
   Anki::Matrix_3x3f groundPlaneHomography;
   const bool groundPlaneVisible = component.LookupGroundPlaneHomography(angle,
                                                                         groundPlaneHomography);
@@ -97,6 +114,19 @@ Anki::Cozmo::VisionPoseData populateVisionPoseData(float angle = -0.40142554f) {
 
   return poseData;
 }
+
+// This corresponds to head looking down at -0.40142554f radians
+Anki::Cozmo::VisionPoseData populateVisionPoseData() {
+
+  Anki::Cozmo::VisionPoseData poseData;
+  poseData.groundPlaneVisible = true;
+  Anki::Matrix_3x3f H{284.671, -297.243, 5046.35,
+                      24.9759, 4.61332e-05, 12049.2,
+                      0.890988, 5.96046e-08, 15.7945};
+  poseData.groundPlaneHomography = H;
+
+  return poseData;
+};
 
 /*
  * Trains the classifier from the files and performs accuracy checks
@@ -450,9 +480,50 @@ TEST(SurfaceClassifier, DTClassifier_TestSerialization) {
   }
 }
 
-TEST(SurfaceClassifier, CreatePoseData) {
+TEST(SurfaceClassifier, GroundPlaneClassifier_TestNoise) {
 
-  Anki::Cozmo::VisionPoseData poseData = populateVisionPoseData();
+  Json::Value root;
+  Json::Value& config = root["GroundPlaneClassifier"];
+  {
+    config["MaxDepth"] = 10;
+    config["MinSampleCount"] = 10;
+    config["TruncatePrunedTree"] = true;
+    config["Use1SERule"] = true;
+    config["PositiveWeight"] = 3.0f;
+    config["OnTheFlyTrain"] = true;
+    config["FileOrDirName"] = "test/overheadMap/RealImagesDesk";
+  }
 
+  Anki::Cozmo::GroundPlaneClassifier clf(root, cozmoContext);
+
+  Anki::Cozmo::DebugImageList <Anki::Vision::ImageRGB> debugImageList;
+  std::list<Anki::Cozmo::OverheadEdgeFrame> outEdges;
+
+  const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
+                                                                           "test/overheadMap/RealImagesDesk");
+  {
+    const std::string imagepath = Anki::Util::FileUtils::FullFilePath({path, "00000357.jpg"});
+    PRINT_CH_INFO("VisionSystem", "Test.GroundPlaneClassifier.LoadImage", "Loading image %s", imagepath.c_str());
+
+    Anki::Vision::ImageRGB testImg;
+    ASSERT_EQ(testImg.Load(imagepath, true), Anki::RESULT_OK);
+    const Anki::Cozmo::VisionPoseData poseData = populateVisionPoseData(Anki::Util::DegToRad(-15));
+
+    Anki::Result result = clf.Update(testImg, poseData, debugImageList, outEdges);
+    ASSERT_EQ(result, Anki::RESULT_OK);
+
+    for (auto& name_image : debugImageList) {
+      std::string& name = name_image.first;
+      Anki::Vision::ImageRGB& image = name_image.second;
+      cv::cvtColor(image.get_CvMat_(), image.get_CvMat_(), cv::COLOR_RGB2BGR);
+      cv::namedWindow(name, cv::WINDOW_AUTOSIZE);
+
+      cv::imshow(name, image.get_CvMat_());
+    }
+    visualizeClassifierOnImages(imagepath, clf.GetClassifier());
+
+  }
+
+  cv::waitKey(0);
 
 }
