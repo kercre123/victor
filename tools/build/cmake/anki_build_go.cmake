@@ -31,7 +31,7 @@ macro(__anki_setup_go_environment target_basedir gopath)
     # set android flags for `go build`
     list(APPEND __go_compile_env "CC=${ANDROID_TOOLCHAIN_CC}")
     list(APPEND __go_compile_env "CXX=${ANDROID_TOOLCHAIN_CXX}")
-    list(APPEND __go_compile_env "CGO_FLAGS=\"-march=armv7-a\"")
+    list(APPEND __go_compile_env "CGO_FLAGS=\"-g -march=armv7-a\"")
     list(APPEND __go_build_flags "-pkgdir" "${CMAKE_CURRENT_BINARY_DIR}/pkgdir")
     list(APPEND __go_deps android_toolchain)
   endif()
