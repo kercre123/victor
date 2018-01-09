@@ -499,7 +499,7 @@
     "translation" : "時計"
   },
   "codeLabFeaturedProject_HotPotato.projectName" : {
-    "translation" : "パスゲーム"
+    "translation" : "ホットポテト"
   },
   "codeLabFeaturedProject_HotPotato.projectDescription" : {
     "translation" : "音楽が止まったとき、ホットポテトを持っていないようにしましょう!"
@@ -526,7 +526,7 @@
     "translation" : "1．「スタート」をタップして、COZMOの顔に「?」が表示されたら、COZMOに占ってほしいことを聞いてみましょう。\u000a\u000a2. COZMOを振ると、気ままに答えてくれます!"
   },
   "codeLabFeaturedProject_CubeWhack.projectName" : {
-    "translation" : "キューブタップ"
+    "translation" : "キューブを引っぱたけ"
   },
   "codeLabFeaturedProject_CubeWhack.projectDescription" : {
     "translation" : "キューブを引っぱたけ！あなたのハイスコアは？"
@@ -1171,7 +1171,7 @@
     "translation" : "モバイルデバイスの右/左の傾きの角度を度数で表したものです。"
   },
   "codeLabGlossary.block_definitions.title.cozmo_vert_device_get_yaw" : {
-    "translation" : "デバイスの向き°"
+    "translation" : "デバイスの向き（°）"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_device_get_yaw" : {
     "translation" : "モバイルデバイスの右/左に（平らな面にあるかのように）向いている角度を度数で表したものです。"

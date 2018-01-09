@@ -70,19 +70,19 @@
     "translation" : "ワールド上でのCOZMOの位置 %1"
   },
   "codeLabVertical.COZMO_PITCH" : {
-    "translation" : "COZMOの傾き°"
+    "translation" : "COZMOの傾き（°）"
   },
   "codeLabVertical.COZMO_ROLL" : {
-    "translation" : "COZMOの回転°"
+    "translation" : "COZMOの回転（°）"
   },
   "codeLabVertical.COZMO_YAW" : {
-    "translation" : "COZMOの向き°"
+    "translation" : "COZMOの向き（°）"
   },
   "codeLabVertical.LIFT_HEIGHT" : {
     "translation" : "COZMOのリフトの高さ%"
   },
   "codeLabVertical.HEAD_ANGLE" : {
-    "translation" : "COZMOのヘッドの角度°"
+    "translation" : "COZMOのヘッドの角度（°）"
   },
   "codeLabVertical.IS_PICKED_UP" : {
     "translation" : "COZMOが選んだもの"
@@ -118,16 +118,16 @@
     "translation" : "ワールド上でのキューブ%1の位置%2"
   },
   "codeLabVertical.CUBE_PITCH" : {
-    "translation" : "カメラでのキューブ%1の傾き°"
+    "translation" : "カメラでのキューブ%1の傾き（°）"
   },
   "codeLabVertical.CUBE_ROLL" : {
-    "translation" : "カメラでのキューブ%1の回転°"
+    "translation" : "カメラでのキューブ%1の回転（°）"
   },
   "codeLabVertical.CUBE_YAW" : {
-    "translation" : "カメラでのキューブ%1の向き°"
+    "translation" : "カメラでのキューブ%1の向き（°）"
   },
   "codeLabVertical.DEVICE_PITCH" : {
-    "translation" : "デバイスの傾き°"
+    "translation" : "デバイスの傾き（°）"
   },
   "codeLabVertical.DEVICE_ROLL" : {
     "translation" : "デバイスの回転°"
@@ -421,10 +421,10 @@
     "translation" : "21－すごく速い「ホットポテト」の音楽"
   },
   "codeLabVertical.SOUND_MAGNET_PULL" : {
-    "translation" : "22－マグネットが引く"
+    "translation" : "22－引力"
   },
   "codeLabVertical.SOUND_MAGNET_REPEL" : {
-    "translation" : "23－マグネットが反発する"
+    "translation" : "23－斥力"
   },
   "codeLabVertical.SOUND_INSTRUMENT_1_MODE_1" : {
     "translation" : "24－楽器1モード1ループ"

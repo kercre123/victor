@@ -52,7 +52,7 @@
     "translation" : "または、タップして動かし終わったかチェックします。"
   },
   "codeLabFeaturedProject.HotPotato.starts_game_makes_game_get_faster_triggers_end_timer" : {
-    "translation" : "ゲームを開始し、ゲームのスピードを上げ、ゲーム終了のタイマーを鳴らします。"
+    "translation" : "ゲームを開始しスピードを上げ、終了時にタイマーを鳴らします。"
   },
   "codeLabFeaturedProject.HotPotato.lights_up_potato_and_waits_for_tap" : {
     "translation" : "ポテトが光って、タップを待ちます。"
@@ -319,7 +319,7 @@
     "translation" : "ナイスゲーム！あなたは"
   },
   "codeLabFeaturedProject.PuttPutt._seconds" : {
-    "translation" : " でしゅうりょうしました。"
+    "translation" : " びょう！"
   },
   "codeLabFeaturedProject.PuttPutt.start_and_keep_track_of_the_game_timer" : {
     "translation" : "ゲームタイマーをスタートして記録をつけましょう。"
@@ -328,7 +328,7 @@
     "translation" : "デフォルト値を設定します。"
   },
   "codeLabFeaturedProject.PuttPutt.finished_in" : {
-    "translation" : "で終了"
+    "translation" : "タイム"
   },
   "codeLabFeaturedProject.CozmoFlies.cozmo_pitch_a" : {
     "translation" : "COZMOの傾きA"
@@ -349,7 +349,7 @@
     "translation" : "COZMOの向きB"
   },
   "codeLabFeaturedProject.CozmoFlies.cozmo_reacts_to_position_changes_while_in_the_air" : {
-    "translation" : "COZMOは浮かんでいるとき、ポジションの変更に反応します。"
+    "translation" : "COZMOは飛行中、ポジションを変えると反応します。"
   },
   "codeLabFeaturedProject.CozmoFlies.cozmo_asks_to_be_picked_up_and_waits" : {
     "translation" : "COZMOは持ち上げてもらいたいようです。"
@@ -358,7 +358,7 @@
     "translation" : "デバイスの傾きを前方または後方に変更"
   },
   "codeLabFeaturedProject.RemoteControlRacer.modified_device_tilt_left_or_right" : {
-    "translation" : "デバイスの傾きを左または右に変更"
+    "translation" : "デバイスの傾きを右または左に変更"
   },
   "codeLabFeaturedProject.RemoteControlRacer.right_wheel_speed" : {
     "translation" : "右の車輪速度"
@@ -436,7 +436,7 @@
     "translation" : "なし"
   },
   "codeLabFeaturedProject.ShakeIt.you_got" : {
-    "translation" : "得点"
+    "translation" : "あなたは"
   },
   "codeLabFeaturedProject.ShakeIt.cozmo" : {
     "translation" : "COZMO"
@@ -505,7 +505,7 @@
     "translation" : "Cubeのカラーを設定します。"
   },
   "codeLabFeaturedProject.ShakeIt._points" : {
-    "translation" : " ポイント"
+    "translation" : " / 10"
   },
   "codeLabFeaturedProject.ShakeIt.try_to_get_all_10_points" : {
     "translation" : "ぜん10ポイントのかくとくをめざそう！"
@@ -520,10 +520,10 @@
     "translation" : "Cube 3が動いた回数"
   },
   "codeLabFeaturedProject.ShakeIt.out_of_10" : {
-    "translation" : "10点のうち"
+    "translation" : "ポイント!"
   },
   "codeLabFeaturedProject.ShakeIt.points_out_of_10" : {
-    "translation" : "点獲得！"
+    "translation" : "てんかくとく！"
   },
   "codeLabFeaturedProject.ValentinesCozmogram.name" : {
     "translation" : "名前"
@@ -535,13 +535,13 @@
     "translation" : "バラ "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.are_red" : {
-    "translation" : "は赤色"
+    "translation" : "はあかいろ"
   },
   "codeLabFeaturedProject.ValentinesCozmogram.violets_" : {
     "translation" : "スミレ "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.are_blue" : {
-    "translation" : "は青色"
+    "translation" : "はあおいろ"
   },
   "codeLabFeaturedProject.ValentinesCozmogram.happy_valentines_dear_" : {
     "translation" : "ハッピーバレンタイン "
@@ -562,13 +562,13 @@
     "translation" : "リンゴ "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.ladybugs_" : {
-    "translation" : "テントウ虫 "
+    "translation" : "テントウムシ "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.blue_thing" : {
     "translation" : "青いもの"
   },
   "codeLabFeaturedProject.ValentinesCozmogram.my_eyes_" : {
-    "translation" : "私の目 "
+    "translation" : "わたしのめ "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.skies_" : {
     "translation" : "空 "
@@ -583,22 +583,22 @@
     "translation" : "トマト "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.fire_trucks_" : {
-    "translation" : "消防車 "
+    "translation" : "しょうぼうしゃ "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.cherries_" : {
     "translation" : "サクランボ "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.stop_signs_" : {
-    "translation" : "停止サイン "
+    "translation" : "ていしサイン "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.oceans_" : {
-    "translation" : "海 "
+    "translation" : "うみ "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.rivers_" : {
-    "translation" : "川 "
+    "translation" : "かわ "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.lakes_" : {
-    "translation" : "湖 "
+    "translation" : "みずうみ "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.blueberries_" : {
     "translation" : "ブルーベリー "
@@ -607,7 +607,7 @@
     "translation" : "ジーンズ "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.friend" : {
-    "translation" : "友だち"
+    "translation" : "ともだち"
   },
   "codeLabFeaturedProject.ValentinesCozmogram.heart_width" : {
     "translation" : "ハートの幅"
