@@ -24,9 +24,9 @@ var PlayNowModal = function(){
     modal = document.querySelector('#play-now-modal');
     _registerEvents();
 
-    // if this is not a sample project, exit now
-    if (!window.isCozmoSampleProject) {
-      // user project, so no Play Now modal
+    // if this is not a featured project, exit now
+    if (!window.isCozmoFeaturedProject) {
+      // user or sample project, so no Play Now modal
       return;
     }
     // Cover the screen with the play now modal, but the contents won't show until the

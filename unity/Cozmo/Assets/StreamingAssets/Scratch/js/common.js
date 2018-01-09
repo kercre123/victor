@@ -54,7 +54,7 @@
     }
 
     window.notifyProjectIsLoaded = function() {
-        if (window.isCozmoSampleProject) {
+        if (window.isCozmoSampleProject || window.isCozmoFeaturedProject) {
             // Store the initial representation of the project so that
             // we can detect if the user has altered it upon exiting
             // the workspace.
@@ -399,7 +399,7 @@
     };
 
     window.onCloseButton = function() {
-        if (window.isCozmoSampleProject && window.hasSampleProjectChanged()) {
+        if (window.needToRemixProject()) {
             window.player.play('click');
             // a sample or featured project was changed.  Offer to save changes as a remix.
             ModalConfirm.open({

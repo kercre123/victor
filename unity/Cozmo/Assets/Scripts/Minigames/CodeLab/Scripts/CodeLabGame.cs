@@ -1450,19 +1450,21 @@ namespace CodeLab {
 
           break;
         case "sample":
-          // @TODO: when we pass in "featured" as a project type, break out this behavior into two cases
-          Guid projectGuid = new Guid(projectUUID);
+          Guid sampleProjectGuid = new Guid(projectUUID);
 
-          Predicate<CodeLabSampleProject> findSampleProject = (CodeLabSampleProject p) => { return p.ProjectUUID == projectGuid; };
+          Predicate<CodeLabSampleProject> findSampleProject = (CodeLabSampleProject p) => { return p.ProjectUUID == sampleProjectGuid; };
           CodeLabSampleProject sampleProject = _CodeLabSampleProjects.Find(findSampleProject);
           if (sampleProject != null) {
             codeLabProject = new CodeLabProject(sampleProject.ProjectName, sampleProject.ProjectJSON, sampleProject.IsVertical);
             codeLabProject.BaseDASProjectName = sampleProject.DASProjectName;
             codeLabProject.VersionNum = sampleProject.VersionNum;
-            break;
           }
 
-          Predicate<CodeLabFeaturedProject> findFeaturedProject = (CodeLabFeaturedProject p) => { return p.ProjectUUID == projectGuid; };
+          break;
+        case "featured":
+          Guid featuredProjectGuid = new Guid(projectUUID);
+
+          Predicate<CodeLabFeaturedProject> findFeaturedProject = (CodeLabFeaturedProject p) => { return p.ProjectUUID == featuredProjectGuid; };
           CodeLabFeaturedProject featuredProject = _CodeLabFeaturedProjects.Find(findFeaturedProject);
           if (featuredProject != null) {
             String serializedProjectJSON = GetFeaturedProjectJSON(featuredProject.ProjectJSONFile);
@@ -1487,6 +1489,11 @@ namespace CodeLab {
 
       if (String.IsNullOrEmpty(projectUUID) && projectType == "sample") {
         DAS.Error("Codelab.OnCozmoExportSampleProject.BadUUID", "Attempt to export sample project with no project UUID specified.");
+        return;
+      }
+
+      if (String.IsNullOrEmpty(projectUUID) && projectType == "featured") {
+        DAS.Error("Codelab.OnCozmoExportFeaturedProject.BadUUID", "Attempt to export featured project with no project UUID specified.");
         return;
       }
 
@@ -1515,7 +1522,7 @@ namespace CodeLab {
         }
 
         // Look up localized name for featured and sample projects from the localization key in projectToExport.ProjectName.
-        if (projectType == "sample" && projectToExport.ProjectName != null) {
+        if ((projectType == "sample" || projectType == "featured") && projectToExport.ProjectName != null) {
           projectToExport.ProjectName = Localization.Get(projectToExport.ProjectName);
         }
 
@@ -2919,7 +2926,7 @@ namespace CodeLab {
 
     private void OnCozmoRemixCodeLabProject(ScratchRequest scratchRequest) {
       string newProjectName = scratchRequest.argString;
-      string originalProjectType = scratchRequest.argString2; // "user" or "sample"
+      string originalProjectType = scratchRequest.argString2; // "user" or "sample" or "featured"
       string originalProjectUUID = scratchRequest.argUUID;
 
       try {
@@ -2945,7 +2952,7 @@ namespace CodeLab {
         }
         defaultProfile.CodeLabProjects.Add(remixedProject);
 
-        if (originalProjectType == "sample") {
+        if (originalProjectType == "sample" || originalProjectType == "featured") {
           if (remixedProject.IsVertical) {
             _LastOpenedTab = "vertical";
           }

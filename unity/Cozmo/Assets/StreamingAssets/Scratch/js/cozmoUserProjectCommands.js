@@ -8,12 +8,8 @@
         return resultStr;
     }
 
-    // TODO This setting of isCozmoSampleProject is misleading. Only featured projects
-    // have isFeaturedProject set to true, but isFeaturedProject could be false and the
-    // user could still have opened a sample program. Code that is run later will set
-    // window.isCozmoSampleProject correctly for sample projects. Probably isCozmoSampleProject
-    // and isCozmoFeaturedProject should be broken out separately.
-    window.isCozmoSampleProject = window.getUrlVar('isFeaturedProject') || false;
+    window.isCozmoFeaturedProject = (window.getUrlVar('isFeaturedProject') == 'true') || false;
+    window.isCozmoSampleProject = false;
 
     window.cozmoProjectName = null;
     window.cozmoProjectUUID = window.getUrlVar('projectID') || null;
@@ -166,7 +162,7 @@
 
         window.isSavingProject = true;
 
-        if (window.isCozmoSampleProject) {
+        if (window.isCozmoSampleProject || window.isCozmoFeaturedProject) {
             window.saveProjectCompleted(unityIsWaitingForCallback);
             return;
         }
@@ -201,6 +197,9 @@
         var projectType = "user";
         if(window.isCozmoSampleProject) {
             projectType = "sample";
+        }
+        if(window.isCozmoFeaturedProject) {
+            projectType = "featured";
         }
         // @todo: inject a new check for featured projects
 
@@ -339,6 +338,7 @@
     window.onRemixedProject = function(projectUUID, newProjectName, isFirstRemix) {
         window.cozmoProjectUUID = projectUUID;
         window.isCozmoSampleProject = false;
+        window.isCozmoFeaturedProject = false;
 
         window.previouslySavedProjectJSON = null;
         window.changeMadeToSampleProject = false;
@@ -366,7 +366,7 @@
 
     window.startSaveProjectTimer = function() {
         // Start timer for intervals at which we'll check if the user project should be saved.
-        if (!window.isCozmoSampleProject) {
+        if (!window.isCozmoSampleProject && !window.isCozmoFeaturedProject) {
             window.clearSaveProjectTimer();  
             var timeInterval_ms = 3000;
             window.saveProjectTimerId = setInterval(saveProjectTimer, timeInterval_ms);
@@ -392,8 +392,8 @@
     }
 
     // Check if sample or featured project blocks have been altered since the project was loaded.
-    window.hasSampleProjectChanged = function() {
-        if (window.isCozmoSampleProject) {
+    window.needToRemixProject = function() {
+        if (window.isCozmoSampleProject || window.isCozmoFeaturedProject) {
             // For the featured and sample projects, if the user merely runs a project and tries to
             // exit, we don't want to prompt them to remix. If the project have a variable, and
             // upon running the project the var setting gets changed by the blocks, then technically

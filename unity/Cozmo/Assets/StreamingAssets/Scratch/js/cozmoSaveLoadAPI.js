@@ -62,6 +62,9 @@
         if(window.isCozmoSampleProject) {
             projectType = "sample";
         }
+        if(window.isCozmoFeaturedProject) {
+            projectType = "featured";
+        }
         // @todo: inject a new check for featured projects
 
         window.Unity.call({requestId: -1, command: "cozmoRequestToRemixProject", argUUID: projectUUID, argString: newProjectName, argString2: projectType});

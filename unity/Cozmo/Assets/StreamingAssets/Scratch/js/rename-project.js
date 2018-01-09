@@ -95,7 +95,7 @@ var RenameProject = function(){
 
     // Project title
     var projectTitle = document.querySelector('#app-title');
-    if (projectTitle && !window.isCozmoSampleProject) {
+    if (projectTitle && !window.isCozmoSampleProject && !window.isCozmoFeaturedProject) {
       projectTitle.classList.add('editable');
       projectTitle.removeEventListener('click', _show);
       projectTitle.addEventListener('click', _show);
