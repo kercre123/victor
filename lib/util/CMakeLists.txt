@@ -59,5 +59,10 @@ if (MACOSX)
 
   add_test(NAME utilUnitTest COMMAND utilUnitTest)
 
+  set_tests_properties(utilUnitTest
+    PROPERTIES
+    ENVIRONMENT "GTEST_OUTPUT=xml:utilUnitGoogleTest.xml"
+  )
+
 endif()
 

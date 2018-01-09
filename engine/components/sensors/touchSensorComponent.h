@@ -37,6 +37,9 @@ public:
   TouchGesture GetLatestTouchGesture() const {
     return _touchGesture;
   }
+
+  // returns true if the sensor is currently being touched, false otherwise
+  bool IsTouched() const;
   
   bool IsCalibrated() const {
     return _baselineCalib.IsCalibrated();
