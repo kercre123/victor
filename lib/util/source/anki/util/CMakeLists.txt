@@ -22,6 +22,7 @@ target_link_libraries(util
 # vendor libs
   jsoncpp
   kazmath
+  c-library
   ${PLATFORM_LIBS})
 
 include(android_strip)
