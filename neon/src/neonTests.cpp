@@ -78,7 +78,7 @@ void RunTest(char* arg)
   {
     printf("Running neonparallel swap\n");
 
-    TimeThisFunc(NeonParallelSwapChannels, 1);
+    TimeThisFunc(NeonParallelSwapChannels, 10000);
   }
   else if(which == "downorig")
   {
@@ -211,12 +211,14 @@ void RunTest(char* arg)
   }
 }
 
+alignas(64) static Anki::Vision::ImageRGB out(256, 550);
+
 void TimeThisFunc(void (*func)(Anki::Vision::ImageRGB*), u32 numRuns)
 {
-  Anki::Vision::ImageRGB img;
+  alignas(64) static Anki::Vision::ImageRGB img;
   img.Load("/data/local/tmp/neon/test.png");
 
-  Anki::Vision::ImageRGB out(img.GetNumRows(), img.GetNumCols());
+  // (img.GetNumRows(), img.GetNumCols());
 
   img.CopyTo(out);
 
@@ -227,6 +229,7 @@ void TimeThisFunc(void (*func)(Anki::Vision::ImageRGB*), u32 numRuns)
   {
     auto start = std::chrono::high_resolution_clock::now();
 
+    // printf("ere\n");
     func(&out);
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -303,17 +306,18 @@ void NeonSwapChannels(Anki::Vision::ImageRGB* img)
 {
   const u32 numPixels = (img->GetNumRows() * img->GetNumCols());
   const u32 range = numPixels / 8;
-  u8* mat = reinterpret_cast<u8*>(&img->get_CvMat_());
-
+  u8* mat = reinterpret_cast<u8*>(out.get_CvMat_()[0]);
+  // printf("%p\n", mat);
   for(int i = 0; i < range; ++i)
   {
-    __asm__ 
+    __asm__ volatile
     (
       "VLD3.8 {d0, d1, d2}, [%[mat]]\n\t"
-      "VSWP d0, d2\n\t"
+      "VSWP.8 d0, d2\n\t"
       "VST3.8 {d0, d1, d2}, [%[mat]]!\n\t"
-      :
+      : [mat] "+r" (mat)
       : [mat] "r" (mat)
+      : "d0", "d1", "d2", "memory"
     );
   }
 }
@@ -322,11 +326,11 @@ void NeonUnrollSwapChannels(Anki::Vision::ImageRGB* img)
 {
   const u32 numPixels = (img->GetNumRows() * img->GetNumCols());
   const u32 range = numPixels / (8*4);
-  u8* mat = reinterpret_cast<u8*>(&img->get_CvMat_());
+  u8* mat = reinterpret_cast<u8*>(out.get_CvMat_()[0]);
 
   for(int i = 0; i < range; ++i)
   {
-    __asm__ 
+    __asm__ volatile
     (
       "VLD3.8 {d0, d1, d2}, [%[mat]]\n\t"
       "VSWP d0, d2\n\t"
@@ -343,8 +347,9 @@ void NeonUnrollSwapChannels(Anki::Vision::ImageRGB* img)
       "VLD3.8 {d0, d1, d2}, [%[mat]]\n\t"
       "VSWP d0, d2\n\t"
       "VST3.8 {d0, d1, d2}, [%[mat]]!\n\t"
-      :
+      : [mat] "+r" (mat)
       : [mat] "r" (mat)
+      : "d0", "d1", "d2", "memory"
     );
   }
 }
@@ -352,37 +357,38 @@ void NeonUnrollSwapChannels(Anki::Vision::ImageRGB* img)
 void NeonParallelSwapChannels(Anki::Vision::ImageRGB* img)
 {
   const u32 numBytes = (img->GetNumRows() * img->GetNumCols()) * 3;
-  printf("num %u\n", numBytes);
-  u8* mat = reinterpret_cast<u8*>(&img->get_CvMat_());
+  // printf("num %u\n", numBytes);
+  u8* mat = reinterpret_cast<u8*>(img->get_CvMat_()[0]);
 
   int num_cpus = std::thread::hardware_concurrency();
-  num_cpus = 2;
+  num_cpus = 4;
   const u32 numNeonOps = numBytes / (24*num_cpus);
   const u32 numBytesPerThread = numBytes/num_cpus;
   const u32 numArmOps  = numBytesPerThread - (numNeonOps*24);
+  // printf("%d %d\n", numNeonOps, numArmOps);
 
   std::vector<std::future<void>> futures(num_cpus);
   for (int cpu = 0; cpu != num_cpus; ++cpu) 
   {
     u8* ptr = mat + (cpu * numBytesPerThread);
 
-    futures[cpu] = std::async(std::launch::async, [cpu, numNeonOps, numArmOps, ptr]() {
+    futures[cpu] = std::async(std::launch::async, [numNeonOps, numArmOps, ptr]() {
       for(int i = 0; i < numNeonOps; ++i)
       {
-        printf("%d %d\n", cpu, i);
-        // __asm__ 
-        // (
-        //   "VLD3.8 {d0, d1, d2}, [%[mat]]\n\t"
-        //   "VSWP d0, d2\n\t"
-        //   "VST3.8 {d0, d1, d2}, [%[mat]]!\n\t"
-        //   :
-        //   : [mat] "r" (ptr)
-        // );
-        uint8x8x3_t rgb = vld3_u8(ptr);
-        uint8x8_t tmp = rgb.val[0];
-        rgb.val[0] = rgb.val[2];
-        rgb.val[2] = tmp;
-        vst3_u8(ptr, rgb);
+        // printf("%d %d\n", cpu, i);
+        __asm__ volatile
+        (
+          "VLD3.8 {d0, d1, d2}, [%[mat]]\n\t"
+          "VSWP d0, d2\n\t"
+          "VST3.8 {d0, d1, d2}, [%[mat]]!\n\t"
+          :
+          : [mat] "r" (ptr)
+        );
+        // uint8x8x3_t rgb = vld3_u8(ptr);
+        // uint8x8_t tmp = rgb.val[0];
+        // rgb.val[0] = rgb.val[2];
+        // rgb.val[2] = tmp;
+        // vst3_u8(ptr, rgb);
       }
 
       u8* ptr2 = ptr;

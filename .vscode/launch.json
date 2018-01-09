@@ -23,7 +23,7 @@
             "name": "neon:debug",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceRoot}/_build/android/Debug/bin/victor_neonator",
+            "program": "${workspaceRoot}/_build/android/Release/bin/victor_neonator",
             "env": {
                 "LD_LIBRARY_PATH": "/data/data/com.anki.cozmoengine/lib"
             },
@@ -31,10 +31,10 @@
             "initCommands": [
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Release/lib",
             ],
             "args": [
-                "down2"
+                "neon"
             ]
         },
         {
