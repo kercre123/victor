@@ -1,0 +1,7 @@
+DVT2
+* Write /96 decimator
+* Add cube encryption
+* Put Accelerometer to sleep on boot
+
+DVT3
+* Finalize cube application

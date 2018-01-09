@@ -25,7 +25,7 @@ static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
 static const int POWER_WIPE_TIME = 200 * 10;  // Enter recovery mode
 static const int MINIMUM_VEXT_TIME = 20; // 0.1s
 
-static const int BUTTON_THRESHOLD = ADC_VOLTS(6.0);
+static const int BUTTON_THRESHOLD = ADC_VOLTS(6.5);
 static const int BOUNCE_LENGTH = 3;
 
 static volatile bool onBatPower;
@@ -39,50 +39,15 @@ static int hold_count;
 uint16_t volatile Analog::values[ADC_CHANNELS];
 bool Analog::button_pressed;
 
-static inline void wait(int us) {
-  __asm {
-    _jump:  nop
-            nop
-            nop
-            nop
-            nop
-            nop
-            nop
-            subs     us,us, #1
-            cmp      us, #0
-            bgt      _jump
-  }
-}
-
-static void setBatteryPower(bool bat) {
-  ADC1->ISR = ADC_ISR_AWD;
-  onBatPower = bat;
-
-  if (bat) {
-    NVIC_DisableIRQ(ADC1_IRQn);
-
-    nVEXT_EN::mode(MODE_INPUT);
-    wait(40*2); // Just around 20us
-    BAT_EN::set();
-  } else {
-    BAT_EN::reset();
-    wait(40*2); // Just around 20us
-    nVEXT_EN::reset();
-    nVEXT_EN::mode(MODE_OUTPUT);
-
-    NVIC_EnableIRQ(ADC1_IRQn);
-  }
-}
 
 static void disableVMain(void) {
-  NVIC_DisableIRQ(ADC1_IRQn);
-  nVEXT_EN::mode(MODE_INPUT);
-  BAT_EN::reset();
-  onBatPower = false;
+  MAIN_EN::mode(MODE_OUTPUT);
+  MAIN_EN::reset();
 }
 
 static void enableVMain(void) {
-  setBatteryPower(Analog::values[ADC_VEXT] < TRANSITION_POINT);
+  MAIN_EN::mode(MODE_OUTPUT);
+  MAIN_EN::set();
 }
 
 void Analog::init(void) {
@@ -101,9 +66,6 @@ void Analog::init(void) {
               | ADC_CFGR1_CONT
               | ADC_CFGR1_DMAEN
               | ADC_CFGR1_DMACFG
-              | ADC_CFGR1_AWDEN
-              | ADC_CFGR1_AWDSGL
-              | (ADC_CFGR1_AWDCH_0 * 4) // ADC Channel 4 (VMAIN)
               ;
   ADC1->CFGR2 = 0
               | ADC_CFGR2_CKMODE_1
@@ -135,43 +97,19 @@ void Analog::init(void) {
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 
   #ifdef BOOTLOADER
-  static const uint16_t MINIMUM_BATTERY = ADC_VOLTS(3.6);
-  chargeAllowed = true;
-
-  // This is a fresh boot (no head)
-  if (~USART1->CR1 & USART_CR1_UE) {
-    // Disable VMAIN power
-    nVEXT_EN::mode(MODE_INPUT);
-    BAT_EN::reset();
-    BAT_EN::mode(MODE_OUTPUT);
-
-    // Enable (low-current) charging and power
-    CHG_HC::reset();
-    CHG_EN::set();
-    CHG_HC::mode(MODE_OUTPUT);
-    CHG_EN::mode(MODE_OUTPUT);
-
-    // Make sure battery is partially charged, and that the robot is on a charger
-    // NOTE: Only one interrupt is enabled here, and it's the 200hz main timing loop
-    // this lowers power consumption and interrupts fire regularly
-    for (;;) {
-      BAT_EN::set();
-      __asm("wfi\nwfi");  // 5ms~10ms for power to stablize
-      if (Analog::values[ADC_VMAIN] > MINIMUM_BATTERY) break ;
-      BAT_EN::reset();
-      for( int i = 0; i < 200; i++)  __asm("wfi") ;
-    }
-
-    BAT_EN::reset();
-  }
-
   POWER_EN::mode(MODE_INPUT);
   POWER_EN::pull(PULL_UP);
-  #endif
 
-  // Startup external power interrupt / handler
-  NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
   enableVMain();
+
+  CHG_EN::type(TYPE_OPENDRAIN);
+  CHG_PWR::type(TYPE_OPENDRAIN);
+
+  CHG_EN::mode(MODE_OUTPUT);
+  CHG_PWR::mode(MODE_OUTPUT);
+
+  Analog::allowCharge(true);
+  #endif
 }
 
 void Analog::stop(void) {
@@ -194,15 +132,18 @@ void Analog::transmit(BodyToHead* data) {
 
 void Analog::allowCharge(bool enable) {
   chargeAllowed = enable;
+
+  if (enable) {
+    CHG_EN::set();
+  } else {
+    CHG_EN::reset();
+  }
+
   vext_debounce = 0;
 }
 
 void Analog::delayCharge() {
   vext_debounce = 0;
-}
-
-extern "C" void ADC1_IRQHandler(void) {
-  setBatteryPower(true);
 }
 
 void Analog::tick(void) {
@@ -217,22 +158,11 @@ void Analog::tick(void) {
   }
   last_vext = vext_now;
 
-  // VEXT logic
-  if (vext_debounce >= MINIMUM_VEXT_TIME) {
-    // VEXT Switchover when on charger
-    if (onBatPower) {
-      __disable_irq();
-      setBatteryPower(false);
-      __enable_irq();
-    }
-
-    // Charge logic
-    if (chargeAllowed) {
-      CHG_EN::mode(MODE_INPUT);
-    }
-  } else if (chargeAllowed) {
-    CHG_EN::reset();
-    CHG_EN::mode(MODE_OUTPUT);
+  // Charge logic
+  if (chargeAllowed && vext_debounce >= MINIMUM_VEXT_TIME) {
+    CHG_PWR::set();
+  } else {
+    CHG_PWR::reset();
   }
 
   // Button logic
