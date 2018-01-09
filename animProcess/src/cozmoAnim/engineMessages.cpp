@@ -109,7 +109,12 @@ namespace Messages {
     DEV_ASSERT(_audioInput != nullptr, "EngineMessages.Init.NullAudioInput");
     DEV_ASSERT(_context != nullptr, "EngineMessages.Init.NullContext");
 
+    #ifdef SIMULATOR
+    const bool haveBC = true;
+    #else
     const bool haveBC = Util::FileUtils::FileExists("/data/persist/factory/80000000.nvdata");
+    #endif
+    
     FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!haveBC);
 
     return RESULT_OK;
@@ -430,12 +435,14 @@ namespace Messages {
       ProcessMessageFromRobot(msgBuf);
     }
 
+    #ifndef SIMULATOR
     if(++_bcCheckCount >= kNumTicksToCheckForBC)
     {
       _bcCheckCount = 0;
       const bool haveBC = Util::FileUtils::FileExists("/data/persist/factory/80000000.nvdata");
       FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!haveBC);
     }
+    #endif
   }
 
   // Required by reliableTransport.c
