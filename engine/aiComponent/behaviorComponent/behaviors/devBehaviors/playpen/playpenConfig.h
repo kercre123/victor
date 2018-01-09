@@ -170,7 +170,7 @@ static f32 kCliffSpeed_mmps                 = 80;
 static f32 kTimeToWaitForCliffEvent_ms      = CLIFF_EVENT_DELAY_MS + 100;
 
 // Set threshold for cliff detection while the Drive Forwards behavior is running
-static u16 kCliffSensorThreshold            = 300;
+static u16 kCliffSensorThreshold            = 180;
 
 // ----------Sound Check----------
 // Head angle at which we should play the sound for both speaker and mic check
