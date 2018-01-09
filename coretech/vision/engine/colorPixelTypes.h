@@ -99,47 +99,49 @@ namespace Vision {
   
   static_assert(sizeof(PixelRGBA)==4, "PixelRGBA not 4 bytes!");
   
-  template<bool SwapBytes>
-  class PixelRGB565_
+  class PixelRGB565
   {
   public:
     
-    PixelRGB565_(u16 value = 0) : _value(value) { }
+    PixelRGB565(u16 value = 0) : _value(value) { }
     
-    PixelRGB565_(u8 r, u8 g, u8 b)
+    PixelRGB565(u8 r, u8 g, u8 b)
     : _value( (u16(0xF8 & r) << 8) | (u16(0xFC & g) << 3) | (u16(0xF8 & b) >> 3) )
     {
-      _value = SwapBytesHelper(_value);
+
     }
     
-    PixelRGB565_(const PixelRGB& pixRGB)
-    : PixelRGB565_(pixRGB.r(), pixRGB.g(), pixRGB.b())
+    PixelRGB565(const PixelRGB& pixRGB)
+    : PixelRGB565(pixRGB.r(), pixRGB.g(), pixRGB.b())
     {
       
     }
     
-    u8 r() const;
-    u8 g() const;
-    u8 b() const;
+    u8 r() const { return ((Rmask & _value) >> 8); }
+    u8 g() const { return ((Gmask & _value) >> 3); }
+    u8 b() const { return ((Bmask & _value) << 3); }
     
     inline PixelRGB ToPixelRGB() const;
     
     // Masks and shifts to convert an RGB565 color into a
     // 32-bit BGRA color (i.e. 0xBBGGRRAA), e.g. which webots expects
     inline u32 ToBGRA32(u8 alpha = 0xFF) const;
-    
+
+    inline u16 GetValue()    const { return _value;         }
+    inline u8  GetHighByte() const { return _valueBytes[1]; }
+    inline u8  GetLowByte()  const { return _valueBytes[0]; }
   private:
     
     static constexpr u16 Rmask = 0xF800;
     static constexpr u16 Gmask = 0x07E0;
     static constexpr u16 Bmask = 0x001F;
     
-    static inline u16 SwapBytesHelper(u16 value);
-    
-    u16 _value;
+    union {
+      u16 _value;
+      u8  _valueBytes[2];
+    };
   };
-  
-  using PixelRGB565 = PixelRGB565_<true>; // Default is to swap the bytes
+
   
   static_assert(sizeof(PixelRGB565)==2,  "PixelRGB565 not 2 bytes!");
   
@@ -245,79 +247,22 @@ namespace Vision {
     return std::min(r(), std::min(g(), b()));
   }
   
-  // Swapped and unswapped versions of r,g,b accessors for PixelRGB565:
   
-  template<>
-  inline u8 PixelRGB565_<true>::r() const {
-    // Without first unswapping the bytes, R is in the upper 5 bits of the LSByte
-    return (0x00F8 & _value);
-  }
-  
-  template<>
-  inline u8 PixelRGB565_<false>::r() const {
-    // In unswapped version, R is the uppermost 5 bits. Mask and shift over
-    return ((0xF800 & _value) >> 8);
-  }
-  
-  template<>
-  inline u8 PixelRGB565_<true>::g() const {
-    // Without first unswapping the bytes, part of G comes from each byte.
-    return ((0x0007 & _value) << 5) | ((0xE000 & _value) >> 11);
-  }
-  
-  template<>
-  inline u8 PixelRGB565_<false>::g() const {
-    // In unswapped version, G is the middle 6 bits
-    return ((0x07E0 & _value) >> 3);
-  }
-  
-  template<>
-  inline u8 PixelRGB565_<true>::b() const {
-    // Without first unswapping the bytes, B is in the lower 5 bits of the MSByte
-    return ((0x1F00 & _value) >> 5);
-  }
-  
-  template<>
-  inline u8 PixelRGB565_<false>::b() const {
-    // In the unswapped version, B is the lower 5 bits
-    return ((0x001F & _value) << 3);
-  }
-  
-  template<>
-  inline u16 PixelRGB565_<true>::SwapBytesHelper(u16 value)
+  inline PixelRGB PixelRGB565::ToPixelRGB() const
   {
-    const u16 swappedBytes = ((value>>8) & 0xFF) | ((value & 0xFF)<<8);
-    return swappedBytes;
+    return PixelRGB(r(), g(), b());
   }
   
-  template<>
-  inline u16 PixelRGB565_<false>::SwapBytesHelper(u16 value)
-  {
-    return value;
-  }
   
-  template<bool SwapBytes>
-  inline PixelRGB PixelRGB565_<SwapBytes>::ToPixelRGB() const
-  {
-    const u16 value = SwapBytesHelper(_value);
-    const PixelRGB pixRGB(((Rmask & value) >> 8),
-                          ((Gmask & value) >> 3),
-                          ((Bmask & value) << 3));
-    return pixRGB;
-  }
-  
-  template<bool SwapBytes>
-  inline u32 PixelRGB565_<SwapBytes>::ToBGRA32(u8 alpha) const
+  inline u32 PixelRGB565::ToBGRA32(u8 alpha) const
   {
     const u16 Rshift = 0;
     const u16 Gshift = 13;
     const u16 Bshift = 27;
     
-    const u16 value = SwapBytesHelper(_value);
-    
-    const u32 color = (((u32) (value & Rmask) << Rshift) |
-                       ((u32) (value & Gmask) << Gshift) |
-                       ((u32) (value & Bmask) << Bshift) |
+    const u32 color = (((u32) (_value & Rmask) << Rshift) |
+                       ((u32) (_value & Gmask) << Gshift) |
+                       ((u32) (_value & Bmask) << Bshift) |
                        alpha);
     
     return color;
@@ -333,17 +278,15 @@ namespace cv {
 
   template<> class DataDepth<Anki::Vision::PixelRGB_<u8>  >     : public DataDepth<DataType<Vec<u8, 3> > >  { };
   template<> class DataDepth<Anki::Vision::PixelRGB_<s16> >     : public DataDepth<DataType<Vec<s16,3> > >  { };
-  template<> class DataDepth<Anki::Vision::PixelRGB_<f32> >     :  public DataDepth<DataType<Vec<f32,3> > >  { };
+  template<> class DataDepth<Anki::Vision::PixelRGB_<f32> >     : public DataDepth<DataType<Vec<f32,3> > >  { };
   template<> class DataDepth<Anki::Vision::PixelRGBA>           : public DataDepth<DataType<Vec<u8, 4> > >  { };
-  template<> class DataDepth<Anki::Vision::PixelRGB565_<true>>  : public DataDepth<DataType<u16> >          { };
-  template<> class DataDepth<Anki::Vision::PixelRGB565_<false>> : public DataDepth<DataType<u16> >          { };
+  template<> class DataDepth<Anki::Vision::PixelRGB565>         : public DataDepth<DataType<Vec<u8, 2> > >  { };
   
   template<> class DataType<Anki::Vision::PixelRGB_<u8>  >      : public DataType<Vec<u8, 3> > { };
   template<> class DataType<Anki::Vision::PixelRGB_<s16> >      : public DataType<Vec<s16,3> > { };
   template<> class DataType<Anki::Vision::PixelRGB_<f32> >      : public DataType<Vec<f32,3> > { };
   template<> class DataType<Anki::Vision::PixelRGBA>            : public DataType<Vec<u8, 4> > { };
-  template<> class DataType<Anki::Vision::PixelRGB565_<true>>   : public DataType<u16>         { };
-  template<> class DataType<Anki::Vision::PixelRGB565_<false>>  : public DataType<u16>         { };
+  template<> class DataType<Anki::Vision::PixelRGB565>          : public DataType<Vec<u8, 2> > { };
   
 } // namespace cv
 

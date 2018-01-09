@@ -1509,9 +1509,8 @@ namespace Cozmo {
       CV_IMWRITE_JPEG_QUALITY, quality
     };
     
-    if(img.GetNumChannels() == 3) {
-      cv::cvtColor(img.get_CvMat_(), sMat, CV_RGB2BGR);
-    }
+    // Convert to BGR so that imencode works
+    img.ConvertToShowableFormat(sMat);
     
     std::vector<u8> compressedBuffer;
     cv::imencode(".jpg",  sMat, compressedBuffer, compressionParams);

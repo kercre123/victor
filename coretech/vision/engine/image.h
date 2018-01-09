@@ -128,12 +128,21 @@ namespace Vision {
     
     virtual s32 GetNumChannels() const = 0;
     
+    // Converts image to a format that is usable by imshow and imwrite
+    // (BGR in general)
+    virtual void ConvertToShowableFormat(cv::Mat& showImg) const = 0;
+
   protected:
     template<typename DerivedType>
     DerivedType GetROI(Rectangle<s32>& roiRect);
     
     template<typename DerivedType>
     const DerivedType GetROI(Rectangle<s32>& roiRect) const;
+
+    virtual cv::Scalar GetCvColor(const ColorRGBA& color) const;
+
+    // Sets image from a showable format (either gray or BGR)
+    virtual void SetFromShowableFormat(const cv::Mat& showImg) = 0;
 
   private:
     TimeStamp_t     _timeStamp;
@@ -191,7 +200,14 @@ namespace Vision {
     Image  GetNegative() const;
     
     virtual s32 GetNumChannels() const override { return 1; }
-    
+
+    virtual void ConvertToShowableFormat(cv::Mat& showImg) const override;
+
+  protected:
+    virtual cv::Scalar GetCvColor(const ColorRGBA& color) const override;
+
+    virtual void SetFromShowableFormat(const cv::Mat& showImg) override;
+  
   }; // class Image
   
   
@@ -241,23 +257,34 @@ namespace Vision {
     ImageRGB& NormalizeColor(Array2d<s32>* workingArray = nullptr); // in place
     void GetNormalizedColor(ImageRGB& imgNorm, Array2d<s32>* workingArray = nullptr) const;
     
+    virtual void ConvertToShowableFormat(cv::Mat& showImg) const override;
+
+  protected:
+    virtual void SetFromShowableFormat(const cv::Mat& showImg) override;
+
   }; // class ImageRGB
   
-  // NOTE: Despite this being called an "Image" it inherits directly from Array2d because it's
-  //       really more of a storage container and doesn't (yet?) provide all the capabilities
-  //       defined in ImageBase (drawing, resizing, etc), due to the weird storage format.
-  class ImageRGB565 : public Array2d<PixelRGB565>
+  
+  class ImageRGB565 : public ImageBase<PixelRGB565>
   {
   public:
     ImageRGB565();
     ImageRGB565(s32 nrows, s32 ncols);
     explicit ImageRGB565(const ImageRGB& imageRGB);
+    explicit ImageRGB565(const ImageBase<PixelRGB565>& imageBase) : ImageBase<PixelRGB565>(imageBase) { }
+    ImageRGB565(const Array2d<PixelRGB565>& array2d) : ImageBase<PixelRGB565>(array2d) { }
     
     ImageRGB565& SetFromImage(const Image& image);
     ImageRGB565& SetFromImageRGB(const ImageRGB& imageRGB);
     ImageRGB565& SetFromImageRGB(const ImageRGB& imageRGB, const std::array<u8, 256>& gammaLUT);
     ImageRGB565& SetFromImageRGB565(const ImageRGB565& imageRGB565);
     
+    // Reference counting assignment (does not copy):
+    ImageRGB565& operator= (const ImageBase<PixelRGB565> &other);
+
+    ImageRGB565 GetROI(Rectangle<s32>& roiRect) { return ImageBase<PixelRGB565>::GetROI<ImageRGB565>(roiRect); }
+    const ImageRGB565 GetROI(Rectangle<s32>& roiRect) const { return ImageBase<PixelRGB565>::GetROI<ImageRGB565>(roiRect); }
+
     const u16* GetRawDataPointer() const {
       DEV_ASSERT(IsContinuous(), "ImageRGB565.GetRawDataPointer.NotContinuous");
       static_assert(sizeof(PixelRGB565) == sizeof(u16), "Unexpected size for PixelRGB565");
@@ -270,8 +297,14 @@ namespace Vision {
       return reinterpret_cast<u16*>(Array2d<PixelRGB565>::GetDataPointer());
     }
 
-    // Draw filled rectangle from top left <X,Y> to bottom right <X+width,Y+height>
-    void DrawFilledRect(const Rectangle<s32>& rect, const PixelRGB565& pixel);
+    virtual s32 GetNumChannels() const override { return 3; }
+
+    virtual void ConvertToShowableFormat(cv::Mat& showImg) const override;
+
+  protected:
+    virtual cv::Scalar GetCvColor(const ColorRGBA& color) const override;
+
+    virtual void SetFromShowableFormat(const cv::Mat& showImg) override;
   };
   
   // RGBA Color image (i.e. RGB + alpha channel), 32bpp
@@ -305,6 +338,11 @@ namespace Vision {
     
     virtual s32 GetNumChannels() const override { return 4; }
     
+    virtual void ConvertToShowableFormat(cv::Mat& showImg) const override;
+
+  protected:
+    virtual void SetFromShowableFormat(const cv::Mat& showImg) override;
+
   }; // class ImageRGBA
 
   
