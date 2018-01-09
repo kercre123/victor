@@ -1565,6 +1565,18 @@
       "AnimName": "ag_pounceonmotionsuccess"
     },
     {
+      "CladEvent": "PounceWProxForward",
+      "AnimName": "ag_quick_pounce_forward"
+    },
+    {
+      "CladEvent": "PounceWProxLeft",
+      "AnimName": "ag_quick_pounce_left"
+    },
+    {
+      "CladEvent": "PounceWProxRight",
+      "AnimName": "ag_quick_pounce_right"
+    },
+    {
       "CladEvent": "PutDownBlockKeepAlive",
       "AnimName": "ag_lookatface_keepalive"
     },

@@ -115,6 +115,7 @@ enum uint_8 BehaviorClass {
   ReactToUnexpectedMovement,
   ReactToVoiceCommand,
 
+
   // Dispatch behaviors which exist only to delegate to other behaviors
   BehaviorDispatcherRerun,
   DispatcherStrictPriority,
@@ -242,9 +243,14 @@ enum uint_8 BehaviorID {
   
   PounceOnMotion_Socialize,
   PounceOnMotion_VoiceCommand,
-  PounceWithProx,
+
+  // Prox pounce behaviors
+  PounceDispatcher,
   PounceApproachWithProx,
-  PounceBackupWithProx,
+  PounceWithProx,
+  PounceQuickLeft,
+  PounceQuickRight,
+
 
   PutDownBlock,
   PutDownBlockNothingToDo,
