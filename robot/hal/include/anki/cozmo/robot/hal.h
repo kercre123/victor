@@ -209,9 +209,6 @@ bool BatteryIsOnCharger();
 /// Return whether the USB charger is out of spec (cannot supply enough current)
 bool BatteryIsChargerOOS();
 
-/// Enable or disable charging (disables motors)
-void BatteryEnableCharging(bool enable);
-
 /************************************************************************
  * \section Leds
  */

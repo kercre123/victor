@@ -45,10 +45,6 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
-// For drawing images/text to the face
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
-
 #include <string.h>
 #include <stdio.h>
 #include <math.h>

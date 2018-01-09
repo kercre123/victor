@@ -30,7 +30,7 @@ target_link_libraries(cti_vision
 target_compile_options(cti_vision
 PRIVATE
   $<$<CONFIG:Debug>:-O0>
-  $<$<CONFIG:Release>:-Os>
+  $<$<CONFIG:Release>:-O2>
   ${SYMBOL_VISIBILITY_FLAGS}
 )
 

@@ -74,15 +74,6 @@
 
 #define MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING 100
 
-// Have engine autostart connection to robot
-// Skips waiting for ui devices (no webots) and automatically adds a robot to
-// the robot manager
-#ifdef FACTORY_TEST
-  #define AUTOSTART 1
-#else
-  #define AUTOSTART 0
-#endif
-
 namespace Anki {
 namespace Cozmo {
 
@@ -247,12 +238,6 @@ Result CozmoEngine::Init(const Json::Value& config) {
 #endif
 
   _isInitialized = true;
-  
-  #if AUTOSTART
-  #ifndef SIMULATOR
-  SetEngineState(EngineState::LoadingData);
-  #endif
-  #endif
 
   return RESULT_OK;
 }

@@ -64,8 +64,6 @@ private:
   std::thread                           _faceDrawThread;
   std::mutex                            _faceDrawMutex;
   bool                                  _stopDrawFace = false;
-
-  bool _drawFAC = false;
     
   void DrawFaceLoop();
 
