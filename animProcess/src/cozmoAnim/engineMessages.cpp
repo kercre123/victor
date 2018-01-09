@@ -73,8 +73,10 @@ namespace Messages {
     Audio::EngineRobotAudioInput* _audioInput = nullptr;
     const CozmoAnimContext*       _context = nullptr;    
 
+    #ifndef SIMULATOR
     const u8 kNumTicksToCheckForBC = 60; // ~2seconds
     u8 _bcCheckCount = 0;
+    #endif
 
   } // private namespace
 
@@ -114,7 +116,7 @@ namespace Messages {
     #else
     const bool haveBC = Util::FileUtils::FileExists("/data/persist/factory/80000000.nvdata");
     #endif
-    
+
     FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!haveBC);
 
     return RESULT_OK;
