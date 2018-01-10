@@ -587,8 +587,8 @@ dasinfo(struct mg_connection *conn, void *cbdata)
             "close\r\n\r\n");
 
 #if USE_DAS
-  std::string dasString = "DAS: "+std::string(DASGetLogDir()) + " DASDisableNetworkReason:";
-  int disabled = DASGetNetworkingDisabled();
+  std::string dasString = "DAS: " + std::string(DASGetLogDir()) + " DASDisableNetworkReason:";
+  int disabled = DASNetworkingDisabled;
   if (disabled & DASDisableNetworkReason_Simulator) {
     dasString += " Simulator";
   }

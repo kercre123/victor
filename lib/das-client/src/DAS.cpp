@@ -307,11 +307,6 @@ const char* DASGetLogDir()
   return sDasLogDir.c_str();
 }
 
-int DASGetNetworkingDisabled()
-{
-  return DASNetworkingDisabled;
-}
-
 static void _DAS_DestroyRemoteAppender() {
   std::lock_guard<std::mutex> lock(sRemoteAppenderMutex);
   sRemoteAppender.reset();
