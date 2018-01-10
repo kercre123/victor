@@ -199,7 +199,8 @@ namespace Anki {
           enableAtTime_ms_ = 0;  // Reset auto-enable trigger time
 
           currDesiredAngle_ = currentAngle_.ToFloat();
-          SetDesiredHeight(GetHeightMM());
+          desiredHeight_ = Rad2Height(currDesiredAngle_);
+          desiredAngle_ = currDesiredAngle_;
 #ifdef SIMULATOR
           // SetDesiredHeight might engage the gripper, but we don't want it engaged right now.
           HAL::DisengageGripper();
@@ -602,6 +603,10 @@ namespace Anki {
 
         PoseAndSpeedFilterUpdate();
 
+        if (!IsCalibrated()) {
+          return RESULT_OK;
+        }
+
 #if DISABLE_MOTORS_ON_CHARGER
         if (inPosition_ && HAL::BatteryIsOnCharger()) {
           // Disables motor if robot placed on charger and it's
@@ -630,10 +635,6 @@ namespace Anki {
           } else {
             return RESULT_OK;
           }
-        }
-
-        if (!IsCalibrated()) {
-          return RESULT_OK;
         }
         
         if (MotorBurnoutProtection()) {
