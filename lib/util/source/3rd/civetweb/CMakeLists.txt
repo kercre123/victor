@@ -24,6 +24,14 @@ include(AddCXXCompilerFlag)
 include(DetermineTargetArchitecture)
 include(CMakeDependentOption)
 
+#
+# <anki> Work around missing CMAKE_SIZEOF_VOID_P </anki>
+#
+if (NOT DEFINED CMAKE_SIZEOF_VOID_P)
+  include(CheckTypeSize)
+  check_type_size("void*"  CMAKE_SIZEOF_VOID_P)
+endif()
+
 # Set up the project
 project (civetweb)
 set(CIVETWEB_VERSION "1.9.1" CACHE STRING "The version of the civetweb library")
@@ -188,6 +196,12 @@ message(STATUS "Duktape CGI support - ${CIVETWEB_ENABLE_DUKTAPE}")
 option(CIVETWEB_ENABLE_SSL "Enables the secure socket layer" ON)
 message(STATUS "SSL support - ${CIVETWEB_ENABLE_SSL}")
 
+# <anki> Address sanitization OFF unless enabled </anki>
+option(CIVETWEB_ALLOW_SANITIZE "Allow -fsanitize" OFF)
+
+# <anki> Unit tests OFF unless enabled </anki>
+option(CIVETWEB_BUILD_TESTING "Enable unit tests" OFF)
+
 # Dynamically load or link the SSL libraries
 cmake_dependent_option(
   CIVETWEB_ENABLE_SSL_DYNAMIC_LOADING "Dynamically loads the SSL library rather than linking it" ON
@@ -277,8 +291,12 @@ add_c_compiler_flag(-pedantic-errors)
 add_c_compiler_flag(-fvisibility=hidden)
 add_c_compiler_flag(-fstack-protector-strong RELEASE)
 add_c_compiler_flag(-flto RELEASE)
-add_c_compiler_flag(-fsanitize=undefined DEBUG)
-add_c_compiler_flag(-fsanitize=address DEBUG)
+
+if (CIVETWEB_ALLOW_SANITIZE)
+  add_c_compiler_flag(-fsanitize=undefined DEBUG)
+  add_c_compiler_flag(-fsanitize=address DEBUG)
+endif()
+
 if (HAVE_C_FLAG_FSANITIZE_ADDRESS)
   add_c_compiler_flag(-static-asan DEBUG)
 endif()
@@ -407,7 +425,7 @@ add_subdirectory(src)
 
 # Enable the testing of the library/executable
 include(CTest)
-if (BUILD_TESTING)
+if (CIVETWEB_BUILD_TESTING)
   # Check unit testing framework Version
   set(CIVETWEB_CHECK_VERSION 0.11.0 CACHE STRING
     "The version of Check unit testing framework to build and include statically")
