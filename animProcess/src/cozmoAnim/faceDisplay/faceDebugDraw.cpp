@@ -36,6 +36,13 @@ FaceDebugDraw::FaceDebugDraw()
 
 void FaceDebugDraw::SetShouldDrawFAC(bool draw) 
 { 
+  // TODO(Al): Remove once BC is written to persistent storage and it is easy to revert robots
+  // to factory firmware to rerun them through playpen
+  if(!FACTORY_TEST)
+  {
+    return;
+  }
+
   bool changed = (_drawFAC != draw);
   _drawFAC = draw; 
 
