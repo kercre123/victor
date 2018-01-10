@@ -146,8 +146,16 @@ void tryExecuteBackgroundTransfers()
 #else
   NSString* apiKey = @"7b12c6f4-b9fc-4aa7-ad5e-0a5fc633f885";
 #endif
-  [AnkiNotificationsInstance application:application didFinishLaunchingWithOptions:launchOptions apiKey:apiKey pushEnabled:true];
-  [AnkiNotificationsInstance setShowNotificationInForeground: false];
+  
+  NSLocale *currentLocale = [NSLocale currentLocale];  // get the current locale.
+  NSString *countryCode = [currentLocale objectForKey:NSLocaleCountryCode];
+  BOOL pushEnabled = (![countryCode isEqual: @"DE"]);
+  NSLog(@"%@", [NSString stringWithFormat:@"Set PushEnabled to %hhd for country code %@", pushEnabled, countryCode]);
+  //Dont initialize app boy if not in the DE
+  if(pushEnabled) {
+    [AnkiNotificationsInstance application:application didFinishLaunchingWithOptions:launchOptions apiKey:apiKey pushEnabled:pushEnabled];
+    [AnkiNotificationsInstance setShowNotificationInForeground: false];
+  }
   
   [application setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
   
