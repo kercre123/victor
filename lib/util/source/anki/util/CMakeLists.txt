@@ -1,13 +1,18 @@
+
 project(libankiutil LANGUAGES CXX)
 
 include(anki_build_cxx)
+include(android_strip)
 
 anki_build_cxx_library(util ${ANKI_SRCLIST_DIR})
 
-target_include_directories(util PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>)
+target_include_directories(util 
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+)
 
 set (PLATFORM_LIBS "")
+
 if (ANDROID)
   set(PLATFORM_LIBS android log)
 elseif (MACOSX)
@@ -16,14 +21,16 @@ elseif (MACOSX)
 endif()
 
 target_link_libraries(util
-# anki libs
+  # anki libs
   clad
   util_clad
-# vendor libs
+  # vendor libs
   jsoncpp
   kazmath
+  # civetweb
   c-library
-  ${PLATFORM_LIBS})
+  ${PLATFORM_LIBS}
+)
 
-include(android_strip)
 android_strip(TARGET util)
+
