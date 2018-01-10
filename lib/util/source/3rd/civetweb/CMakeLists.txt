@@ -50,7 +50,7 @@ set(CIVETWEB_VERSION_PATCH "${CMAKE_MATCH_3}")
 determine_target_architecture(CIVETWEB_ARCHITECTURE)
 
 # Detect the platform reliably
-if(NOT MACOSX AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (NOT DARWIN AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
    SET(DARWIN YES)
 elseif(NOT BSD AND ${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     SET(FREEBSD YES)
@@ -94,7 +94,8 @@ option(CIVETWEB_ENABLE_IPV6 "Enables the IP version 6 support" OFF)
 message(STATUS "IP Version 6 - ${CIVETWEB_ENABLE_IPV6}")
 
 # Websocket support
-option(CIVETWEB_ENABLE_WEBSOCKETS "Enable websockets connections" OFF)
+# <anki> Websockets ON by default </anki>
+option(CIVETWEB_ENABLE_WEBSOCKETS "Enable websockets connections" ON)
 message(STATUS "Websockets support - ${CIVETWEB_ENABLE_WEBSOCKETS}")
 
 # Memory debugging
@@ -209,7 +210,8 @@ message(STATUS "SSL support - ${CIVETWEB_ENABLE_SSL}")
 # See also
 #   https://bugs.llvm.org/show_bug.cgi?id=32155
 # </anki>
-option(CIVETWEB_ALLOW_LTO "Allow -flto" OFF)
+option(CIVETWEB_ALLOW_LTO "Allow link-time optimization" OFF)
+message(STATUS "Allow link-time optimization - ${CIVETWEB_ALLOW_LTO}")
 
 # <anki> 
 # Address sanitization OFF unless enabled
@@ -219,7 +221,8 @@ option(CIVETWEB_ALLOW_LTO "Allow -flto" OFF)
 #   undefined reference to '__ubsan_handle_out_of_bounds'
 #  ...
 # </anki>
-option(CIVETWEB_ALLOW_SANITIZE "Allow -fsanitize" OFF)
+option(CIVETWEB_ALLOW_SANITIZE "Allow address sanitization" OFF)
+message(STATUS "Allow address sanitization - ${CIVETWEB_ALLOW_SANITIZE}")
 
 # <anki>
 # Unit tests OFF unless enabled
@@ -228,6 +231,7 @@ option(CIVETWEB_ALLOW_SANITIZE "Allow -fsanitize" OFF)
 #   error: 'third_party/lib/libcheck.a', needed by 'bin/main-c-unit-test'
 # </anki>
 option(CIVETWEB_BUILD_TESTING "Enable unit tests" OFF)
+message(STATUS "Enable unit tests - ${CIVETWEB_BUILD_TESTING}")
 
 # Dynamically load or link the SSL libraries
 cmake_dependent_option(
@@ -454,8 +458,10 @@ add_definitions(-DMAX_REQUEST_SIZE=${CIVETWEB_MAX_REQUEST_SIZE})
 add_subdirectory(src)
 
 # Enable the testing of the library/executable
-include(CTest)
 if (CIVETWEB_BUILD_TESTING)
+
+  include(CTest)
+
   # Check unit testing framework Version
   set(CIVETWEB_CHECK_VERSION 0.11.0 CACHE STRING
     "The version of Check unit testing framework to build and include statically")
@@ -507,4 +513,7 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_PACKAGE_DEPENDS}")
 
 # Finalize CPack settings
 include(CPack)
+
+# <anki> Declare alias for external use </anki>
+add_library(civetweb ALIAS c-library)
 

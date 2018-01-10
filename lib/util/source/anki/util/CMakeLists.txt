@@ -27,8 +27,6 @@ target_link_libraries(util
   # vendor libs
   jsoncpp
   kazmath
-  # civetweb
-  c-library
   ${PLATFORM_LIBS}
 )
 
