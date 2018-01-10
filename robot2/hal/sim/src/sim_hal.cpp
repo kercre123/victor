@@ -878,7 +878,8 @@ namespace Anki {
     {
       if (cliff_id == HAL::CLIFF_COUNT) {
         PRINT_NAMED_ERROR("simHAL.GetRawCliffData.InvalidCliffID", "");
-        return static_cast<u16>(cliffSensors_[HAL::CLIFF_FL]->getMaxRange());
+        return 999;
+        // return static_cast<u16>(cliffSensors_[HAL::CLIFF_FL]->getMaxRange());
       }
       return static_cast<u16>(cliffSensors_[cliff_id]->getValue());
     }
