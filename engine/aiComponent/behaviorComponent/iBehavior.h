@@ -34,7 +34,7 @@ public:
   IBehavior(const std::string& idString);
   virtual ~IBehavior(){};
   
-  const std::string& GetPrintableID(){ return _idString;}
+  const std::string& GetPrintableID() const { return _idString;}
   
   // Function that allows the behavior to initialize variables/subscribe
   // through the behaviorExternalInterface

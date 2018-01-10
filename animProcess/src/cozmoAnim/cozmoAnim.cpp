@@ -11,7 +11,7 @@
  */
 
 #include "cozmoAnim/cozmoAnim.h"
-#include "cozmoAnim/engineMessages.h"
+#include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animation/animationStreamer.h"
@@ -92,17 +92,14 @@ Result CozmoAnimEngine::Init() {
   // animation streamer must be initialized after loading non config data (otherwise there are no animations loaded)
   _animationStreamer->Init();
   
-  // Create and seetup EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
+  // Create and set up EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
   auto* audioMux = _context->GetAudioMultiplexer();
   auto regId = audioMux->RegisterInput( new Audio::EngineRobotAudioInput() );
   
-  // Setup Engine Message
-  Messages::Init( _animationStreamer.get(),
-                  static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput( regId )),
-                  _context.get() );
-  
-  
-  
+  // Set up message handler
+  auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
+  AnimProcessMessages::Init( _animationStreamer.get(), audioInput, _context.get());
+
   LOG_INFO("CozmoAnimEngine.Init.Success","Success");
   _isInitialized = true;
 
@@ -142,7 +139,8 @@ Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
 #endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
   
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
-  Messages::Update();
+  
+  AnimProcessMessages::Update();
   
   OSState::getInstance()->Update();
   _animationStreamer->Update();

@@ -36,8 +36,8 @@ class SendHelperHeaderEmitter(ast.NodeVisitor):
 
     def visit_UnionDecl(self, node):
         for member in node.members():
-            self.output.write('inline bool SendMessageToRobot(const {member_type}& msg) {{ return Anki::Cozmo::Messages::SendToRobot( RobotInterface::EngineToRobot(msg)); }}\n'.format(
-                member_name=member.name, member_type=CPP_emitter.cpp_value_type(member.type)))
+            self.output.write('inline bool SendAnimToEngine(const {member_type}& msg) {{ return Anki::Cozmo::AnimProcessMessages::SendAnimToEngine(msg.GetBuffer(), msg.Size(), {member_tag}); }}\n'.format(
+                member_tag=member.tag, member_name=member.name, member_type=CPP_emitter.cpp_value_type(member.type)))
 
 
 
@@ -48,6 +48,6 @@ if __name__ == '__main__':
 
     language = 'C++ Lite (embedded)'
 
-    emitterutil.c_main(language=language, extension='_sendToRobot_helper.h',
+    emitterutil.c_main(language=language, extension='_sendAnimToEngine_helper.h',
         emitter_types=[SendHelperHeaderEmitter],
         use_inclusion_guards=False)

@@ -6,7 +6,7 @@ file(STRINGS "${ANKI_SRCLIST_DIR}/cti_common_clad.srcs.lst" SRCS)
 
 set(CLAD_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}")
 
-set(OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../generated/clad/common")
+set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/coretech/common")
 
 generate_clad_cpp(
   LIBRARY "cti_common_clad"

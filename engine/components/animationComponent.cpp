@@ -416,7 +416,7 @@ Result AnimationComponent::DisplayFaceImage(const Vision::ImageRGB& img, u32 dur
 
 
 
-// ================ Game messsage handlers ======================
+// ================ Game message handlers ======================
 template<>
 void AnimationComponent::HandleMessage(const ExternalInterface::RequestAvailableAnimations& msg)
 {

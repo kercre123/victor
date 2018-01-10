@@ -27,6 +27,9 @@
 #include <webots/Accelerometer.hpp>
 #include <webots/LED.hpp>
 
+#include <array>
+#include <map>
+
 webots::Supervisor active_object_controller;
 
 
@@ -91,8 +94,16 @@ namespace {
   
   BlockState state_ = NORMAL;
   
+  // Pointers to the LED object to set the simulated cube's lights
   webots::LED* led_[NUM_CUBE_LEDS];
+  
+  // Pointer to the webots MFVec3f field which mirrors the current LED
+  // colors so that the webots tests can monitor the current color.
   webots::Field* ledColorField_ = nullptr;
+  // Updates to this field must be cached and only executed once per
+  // simulation timestep due to a Webots R2018a bug (see COZMO-16021).
+  // Store them here (key is LED index, value is RGB color).
+  std::map<u32, std::array<double, 3>> pendingLedColors_;
 
   LightState ledParams_[NUM_CUBE_LEDS];
   TimeStamp_t ledPhases_[NUM_CUBE_LEDS];
@@ -163,12 +174,9 @@ inline void SetLED_helper(u32 index, u32 rgbaColor) {
   double red = (rgbaColor & (u32)LEDColor::LED_RED) >> (u32)LEDColorShift::LED_RED_SHIFT;
   double green = (rgbaColor & (u32)LEDColor::LED_GREEN) >> (u32)LEDColorShift::LED_GRN_SHIFT;
   double blue = (rgbaColor & (u32)LEDColor::LED_BLUE) >> (u32)LEDColorShift::LED_BLU_SHIFT;
-  double betterColor[3] = {red, green, blue};
-  if (ledColorField_) {
-    ledColorField_->setMFVec3f(index, betterColor);
-    //const double *p = ledColorField_->getMFVec3f(index);
-    //PRINT_NAMED_WARNING("ActiveBlock.SetLED_helper", "Cube %d, LED %d, Color %f %f %f (%0llx)", blockID_, index, p[0], p[1], p[2], (u64)p);
-  }
+  
+  // Store the RGB value, then only send it to Webots once per time step (in Update())
+  pendingLedColors_[index] = {{red, green, blue}};
 }
 
 // ========== Callbacks for messages from robot =========
@@ -270,6 +278,7 @@ Result Init()
   
   // Field for monitoring color from webots tests
   ledColorField_ = selfNode->getField("ledColors");
+  assert(ledColorField_ != nullptr);
   
   // Get radio receiver
   receiver_ = active_object_controller.getReceiver("receiver");
@@ -555,6 +564,17 @@ Result Update() {
       msg.accel.y = accelVals[1] * scaleFactor;
       msg.accel.z = accelVals[2] * scaleFactor;
       SendMessageHelper(emitter_, std::move(msg));
+    }
+    
+    // Set any pending LED color fields. This must be done here since setMFVec3f can only
+    // be called once per simulation time step for a given field (known Webots R2018a bug)
+    if (!pendingLedColors_.empty()) {
+      for (const auto& newColorEntry : pendingLedColors_) {
+        const auto index = newColorEntry.first;
+        const auto& color = newColorEntry.second;
+        ledColorField_->setMFVec3f(index, color.data());
+      }
+      pendingLedColors_.clear();
     }
     
     // Run FSM
