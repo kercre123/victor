@@ -22,7 +22,7 @@ namespace Anki {
 namespace Cozmo {
 namespace MicData {
 
-  using RawAudioChunk = int16_t[480]; // decltype(RobotInterface::MicData::data);
+  using RawAudioChunk = int16_t[320]; // decltype(RobotInterface::MicData::data);
 
   enum class MicDataType {
     Raw,
@@ -31,8 +31,8 @@ namespace MicData {
   };
 
   static constexpr uint32_t kNumInputChannels         = 4;
-  static constexpr uint32_t kSamplesPerChunkIncoming  = 120;
-  static constexpr uint32_t kSampleRateIncoming_hz    = 24000;
+  static constexpr uint32_t kSamplesPerChunkIncoming  = 80;
+  static constexpr uint32_t kSampleRateIncoming_hz    = 15625;
   static constexpr uint32_t kSamplesPerChunkForSE     = 80;
   static constexpr uint32_t kTimePerChunk_ms          = 5;
   static constexpr uint32_t kChunksPerSEBlock         = 2;
