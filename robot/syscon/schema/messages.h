@@ -214,6 +214,7 @@ struct HeadToBody
   PowerState powerState;
   int16_t motorPower[4];
   uint8_t ledColors[16];
+  uint8_t _unused[32];  // Future expansion
 };
 
 struct AckMessage
