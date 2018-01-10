@@ -199,7 +199,7 @@ option(CIVETWEB_ENABLE_DUKTAPE "Enable Duktape CGIs" OFF)
 message(STATUS "Duktape CGI support - ${CIVETWEB_ENABLE_DUKTAPE}")
 
 # SSL support
-option(CIVETWEB_ENABLE_SSL "Enables the secure socket layer" ON)
+option(CIVETWEB_ENABLE_SSL "Enables the secure socket layer" OFF)
 message(STATUS "SSL support - ${CIVETWEB_ENABLE_SSL}")
 
 # <anki>
