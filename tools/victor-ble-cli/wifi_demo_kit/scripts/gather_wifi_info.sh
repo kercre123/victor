@@ -2,7 +2,7 @@
 wifi_count=0
 
 #we need to disconnect in order to get scan results for the AP we connect to
-adb shell timeout 30s wpa_cli disconnect 2>&1
+adb shell timeout -t 30 wpa_cli disconnect 2>&1
 
 adb shell wpa_cli scan 2>&1
 sleep 2

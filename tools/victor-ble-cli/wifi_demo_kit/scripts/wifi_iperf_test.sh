@@ -12,13 +12,13 @@ if [ -z $ADB ];then
 fi
 
 function run_iperf_command {
-  IPERF_ANDROID_COMMAND="cd /storage && timeout 30s ./$IPERF_ANDROID -p $IPERF_PORT -c $IP_ADDRESS $*"
+  IPERF_ANDROID_COMMAND="export ANDROID_DATA=/data && export ANDROID_ROOT=/system && timeout -t 30 ./$IPERF_ANDROID -p $IPERF_PORT -c $IP_ADDRESS $*"
   adb shell $IPERF_ANDROID_COMMAND
   echo
   echo
 }
 
-adb push $IPERF_ANDROID_LOC /storage/
+adb push $IPERF_ANDROID_LOC /
 killall iperf
 
 IPERF_PORT=5201
