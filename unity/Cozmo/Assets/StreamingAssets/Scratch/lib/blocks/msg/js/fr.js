@@ -46,7 +46,7 @@ Blockly.Msg["CONTROLS_IF_MSG_IF_THEN_SCRATCH_2"] = "si %1 alors";
 Blockly.Msg["CONTROLS_IF_MSG_ELSE_SCRATCH_2"] = "sinon";
 Blockly.Msg["CONTROLS_WAIT_X_SECS_SCRATCH_2"] = "attendre %1 secondes";
 Blockly.Msg["CONTROLS_WAIT_UNTIL_SCRATCH_2"] = "attendre jusqu’à %1";
-Blockly.Msg["CONTROLS_STOP_SCRATCH_2"] = "stop %1";
+Blockly.Msg["CONTROLS_STOP_SCRATCH_2"] = "arrêter %1";
 Blockly.Msg["CONTROLS_STOP_ALL_SCRATCH_2"] = "tout";
 Blockly.Msg["CONTROLS_THIS_SCRIPT_SCRATCH_2"] = "ce script";
 
