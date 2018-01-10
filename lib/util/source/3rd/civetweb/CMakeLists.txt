@@ -24,9 +24,14 @@ include(AddCXXCompilerFlag)
 include(DetermineTargetArchitecture)
 include(CMakeDependentOption)
 
+# <anki>
+# Work around missing CMAKE_SIZEOF_VOID_P
 #
-# <anki> Work around missing CMAKE_SIZEOF_VOID_P </anki>
-#
+# Resolves build error
+#   FindWinSock.cmake:77 (if):
+#   if given arguments:
+#     "x86_64" "STREQUAL" "AMD64" "AND" "EQUAL" "4"
+# </anki>
 if (NOT DEFINED CMAKE_SIZEOF_VOID_P)
   include(CheckTypeSize)
   check_type_size("void*"  CMAKE_SIZEOF_VOID_P)
@@ -196,10 +201,32 @@ message(STATUS "Duktape CGI support - ${CIVETWEB_ENABLE_DUKTAPE}")
 option(CIVETWEB_ENABLE_SSL "Enables the secure socket layer" ON)
 message(STATUS "SSL support - ${CIVETWEB_ENABLE_SSL}")
 
-# <anki> Address sanitization OFF unless enabled </anki>
+# <anki>
+# Link-time optimization OFF unless enabled
+#
+# Resolves link error:
+#   ld: fatal error: Optimization level must be between 0 and 3
+# See also
+#   https://bugs.llvm.org/show_bug.cgi?id=32155
+# </anki>
+option(CIVETWEB_ALLOW_LTO "Allow -flto" OFF)
+
+# <anki> 
+# Address sanitization OFF unless enabled
+#
+# Resolves link errors:
+#   undefined reference to '__ubsan_handle_sub_overflow'
+#   undefined reference to '__ubsan_handle_out_of_bounds'
+#  ...
+# </anki>
 option(CIVETWEB_ALLOW_SANITIZE "Allow -fsanitize" OFF)
 
-# <anki> Unit tests OFF unless enabled </anki>
+# <anki>
+# Unit tests OFF unless enabled
+#
+# Resolves build error:
+#   error: 'third_party/lib/libcheck.a', needed by 'bin/main-c-unit-test'
+# </anki>
 option(CIVETWEB_BUILD_TESTING "Enable unit tests" OFF)
 
 # Dynamically load or link the SSL libraries
@@ -290,7 +317,10 @@ add_c_compiler_flag(/WX)
 add_c_compiler_flag(-pedantic-errors)
 add_c_compiler_flag(-fvisibility=hidden)
 add_c_compiler_flag(-fstack-protector-strong RELEASE)
-add_c_compiler_flag(-flto RELEASE)
+
+if (CIVETWEB_ALLOW_LTO)
+  add_c_compiler_flag(-flto RELEASE)
+endif()
 
 if (CIVETWEB_ALLOW_SANITIZE)
   add_c_compiler_flag(-fsanitize=undefined DEBUG)
