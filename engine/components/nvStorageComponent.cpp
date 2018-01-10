@@ -134,10 +134,21 @@ std::map<NVEntryTag, u32> NVStorageComponent::_maxFactoryEntrySizeTable = {
                                                           {NVEntryTag::NVEntry_IMUAverages,         0} };
 
   
-NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* context)
-  : _robot(inRobot)
-  , _kStoragePath((_robot.GetContextDataPlatform() != nullptr ? _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Persistent, "nvStorage/") : ""))
+NVStorageComponent::NVStorageComponent()
+: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::NVStorage)
 {
+}
+
+NVStorageComponent::~NVStorageComponent()
+{
+  _signalHandles.clear();
+}
+
+void NVStorageComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) 
+{
+  _robot = robot;
+  _kStoragePath = (_robot->GetContextDataPlatform() != nullptr ? _robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Persistent, "nvStorage/") : "");
+  const CozmoContext* context = robot->GetContext();
   #ifdef SIMULATOR
   LoadSimData();
   #endif
@@ -164,13 +175,8 @@ NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* conte
   } else {
     PRINT_NAMED_WARNING("NVStorageComponent.nullContext", "");
   }
-
 }
 
-NVStorageComponent::~NVStorageComponent()
-{
-  _signalHandles.clear();
-}
 
 void NVStorageComponent::InitSizeTable() {
   
@@ -697,7 +703,7 @@ void NVStorageComponent::BroadcastNVStorageOpResult(NVEntryTag tag, NVResult res
   if (nullptr != data) {
     msg.data.assign(data, data + data_length);
   }
-  _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+  _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
 }
 
 void NVStorageComponent::BroadcastNVStorageReadResults(NVEntryTag tag, u8* dataPtr, size_t dataSize)

@@ -63,12 +63,12 @@ public:
 
   
   void InitializeStandardBehaviorComponent(IBehavior* baseBehavior = nullptr,
-                                           std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeBehavior = {},
+                                           std::function<void(const BehaviorComponent::UniqueComponents&)> initializeBehavior = {},
                                            bool shouldCallInitOnBase = true);
   
   // Call in order to set up and initialize a standard behavior component
   void InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
-                                           std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeBehavior,
+                                           std::function<void(const BehaviorComponent::UniqueComponents&)> initializeBehavior,
                                            bool shouldCallInitOnBase,
                                            BehaviorContainer*& customContainer);
   

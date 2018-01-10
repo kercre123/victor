@@ -17,13 +17,22 @@
 #include "coretech/common/shared/types.h"
 #include "engine/moodSystem/emotion.h"
 #include "engine/moodSystem/moodDebug.h"
+
 #include "clad/types/actionResults.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/emotionTypes.h"
 #include "clad/types/simpleMoodTypes.h"
+
+#include "engine/dependencyManagedComponent.h"
+#include "engine/moodSystem/emotion.h"
+#include "engine/moodSystem/moodDebug.h"
+#include "engine/robotComponents_fwd.h"
+#include "engine/robotDataLoader.h"
+
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
+
 #include <assert.h>
 #include <map>
 #include <set>
@@ -55,18 +64,35 @@ class Robot;
 class StaticMoodData;
 
   
-class MoodManager : private Util::noncopyable
+class MoodManager : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
-  
   using MoodEventTimes = std::map<std::string, float>;
   
-  explicit MoodManager(Robot* inRobot = nullptr);
+  explicit MoodManager();
   ~MoodManager();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::StateHistory);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   void Init(const Json::Value& inJson);
   
-  bool LoadEmotionEvents(const Json::Value& inJson);
+  // =========== Mood =============
+
+  // Load in all data-driven emotion events // TODO: move to mood manager?
+  void LoadEmotionEvents(const RobotDataLoader::FileJsonMap& emotionEventData);      
   
   void Reset();
   
@@ -130,7 +156,8 @@ public:
   static float GetCurrentTimeInSeconds();
   
 private:
-  
+  bool LoadEmotionEvents(const Json::Value& inJson);
+
   // ============================== Private Member Funcs ==============================
   
   float UpdateLatestEventTimeAndGetTimeElapsedInSeconds(const std::string& eventName, float currentTimeInSeconds);
@@ -164,7 +191,7 @@ private:
   Emotion         _emotions[(size_t)EmotionType::Count];
   MoodEventTimes  _moodEventTimes;
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( std::vector<std::string> _eventNames; )
-  Robot*          _robot;
+  Robot*          _robot = nullptr;
   float           _lastUpdateTime;
 
   // maps from (action type, action result category) -> emotion event

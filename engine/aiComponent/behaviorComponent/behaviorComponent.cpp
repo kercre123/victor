@@ -26,6 +26,8 @@
 #include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
+#include "engine/blockWorld/blockWorld.h"
+#include "engine/faceWorld.h"
 #include "engine/audio/engineRobotAudioClient.h"
 
 #include "engine/cozmoContext.h"
@@ -36,50 +38,34 @@
 
 namespace Anki {
 namespace Cozmo {
-
-namespace ComponentWrappers{
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorComponentComponents::BehaviorComponentComponents(Robot& robot,
-                                                         std::unique_ptr<BEIRobotInfo>&& robotInfoPtr,
-                                                         AIComponent& aiComponent,
-                                                         BlockWorld& blockWorld,
-                                                         FaceWorld& faceWorld,
-                                                         BehaviorSystemManager& behaviorSysMgr,
-                                                         BehaviorExternalInterface& behaviorExternalInterface,
-                                                         BehaviorContainer& behaviorContainer,
-                                                         BehaviorEventComponent& behaviorEventComponent,
-                                                         AsyncMessageGateComponent& asyncMessageComponent,
-                                                         DelegationComponent& delegationComponent)
-: _robot(robot)
-, _robotInfo(*robotInfoPtr)
-, _aiComponent(aiComponent)
-, _blockWorld(blockWorld)
-, _faceWorld(faceWorld)
-, _behaviorSysMgr(behaviorSysMgr)
-, _behaviorExternalInterface(behaviorExternalInterface)
-, _behaviorContainer(behaviorContainer)
-, _behaviorEventComponent(behaviorEventComponent)
-, _asyncMessageComponent(asyncMessageComponent)
-, _delegationComponent(delegationComponent)
-, _robotInfoPtr(std::move(robotInfoPtr))
-{
-}
-
+  
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorComponentComponents::~BehaviorComponentComponents()
+BehaviorComponent::BCComponentWrapper::BCComponentWrapper(DependencyManagedEntity<BCComponentID, BCComponentID::Count>&& entity)
+: _array({
+  {BCComponentID::AIComponent,                        entity.GetComponent(BCComponentID::AIComponent)},
+  {BCComponentID::AsyncMessageComponent,              entity.GetComponent(BCComponentID::AsyncMessageComponent)},
+  {BCComponentID::BehaviorAudioComponent,             entity.GetComponent(BCComponentID::BehaviorAudioComponent)},
+  {BCComponentID::BehaviorComponentCloudReceiver,     entity.GetComponent(BCComponentID::BehaviorComponentCloudReceiver)},
+  {BCComponentID::BehaviorContainer,                  entity.GetComponent(BCComponentID::BehaviorContainer)},
+  {BCComponentID::BehaviorEventAnimResponseDirector,  entity.GetComponent(BCComponentID::BehaviorEventAnimResponseDirector)},
+  {BCComponentID::BehaviorEventComponent,             entity.GetComponent(BCComponentID::BehaviorEventComponent)},
+  {BCComponentID::BehaviorExternalInterface,          entity.GetComponent(BCComponentID::BehaviorExternalInterface)},
+  {BCComponentID::BehaviorHelperComponent,            entity.GetComponent(BCComponentID::BehaviorHelperComponent)},
+  {BCComponentID::BehaviorSystemManager,              entity.GetComponent(BCComponentID::BehaviorSystemManager)},
+  {BCComponentID::BlockWorld,                         entity.GetComponent(BCComponentID::BlockWorld)},
+  {BCComponentID::DelegationComponent,                entity.GetComponent(BCComponentID::DelegationComponent)},
+  {BCComponentID::DevBehaviorComponentMessageHandler, entity.GetComponent(BCComponentID::DevBehaviorComponentMessageHandler)},
+  {BCComponentID::FaceWorld,                          entity.GetComponent(BCComponentID::FaceWorld)},
+  {BCComponentID::RobotInfo,                          entity.GetComponent(BCComponentID::RobotInfo)},
+  {BCComponentID::BaseBehaviorWrapper,                entity.GetComponent(BCComponentID::BaseBehaviorWrapper)}
+})
 {
-  
+
 }
-  
-}
-  
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorComponent::BehaviorComponent()
-: _behaviorEventAnimResponseDirector(new BehaviorEventAnimResponseDirector())
-, _behaviorHelperComponent( new BehaviorHelperComponent())
 {
 
 }
@@ -95,199 +81,199 @@ BehaviorComponent::~BehaviorComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorComponent::ComponentsPtr BehaviorComponent::GenerateComponents(
-                                      Robot& robot,
-                                      BehaviorSystemManager*     behaviorSysMgrPtr,
-                                      BehaviorExternalInterface* behaviorExternalInterfacePtr,
-                                      BehaviorContainer*         behaviorContainerPtr,
-                                      BehaviorEventComponent*      behaviorEventComponentPtr,
-                                      AsyncMessageGateComponent* asyncMessageComponentPtr,
-                                      DelegationComponent*       delegationComponentPtr)
+BehaviorComponent::UniqueComponents BehaviorComponent::GenerateManagedComponents(
+  Robot& robot,
+  AIComponent&               aiComponent,
+  IBehavior*                 baseBehavior,
+  BehaviorSystemManager*     behaviorSysMgrPtr,
+  BehaviorExternalInterface* behaviorExternalInterfacePtr,
+  BehaviorContainer*         behaviorContainerPtr, 
+  BehaviorEventComponent*    behaviorEventComponentPtr,
+  AsyncMessageGateComponent* asyncMessageComponentPtr,
+  DelegationComponent*       delegationComponentPtr)
 {
-  
-  std::unique_ptr<BehaviorSystemManager> behaviorSysMgr;
-  if(behaviorSysMgrPtr == nullptr){
-    behaviorSysMgr = std::make_unique<BehaviorSystemManager>();
-    behaviorSysMgrPtr = behaviorSysMgr.get();
+  DependencyManagedEntity<BCComponentID, BCComponentID::Count> entity;
+
+  // AIComponent
+  {  
+    BCComp unmanagedAI(&aiComponent);
+    entity.AddDependentComponent(BCComponentID::AIComponent, std::move(unmanagedAI));
   }
   
-  std::unique_ptr<BehaviorExternalInterface> behaviorExternalInterface;
-  if(behaviorExternalInterfacePtr == nullptr){
-    behaviorExternalInterface = std::make_unique<BehaviorExternalInterface>();
-    behaviorExternalInterfacePtr = behaviorExternalInterface.get();
-  }
-  
-  std::unique_ptr<BehaviorContainer> behaviorContainer;
-  if(behaviorContainerPtr == nullptr){
-    if(robot.GetContext() != nullptr){
-      behaviorContainer = std::make_unique<BehaviorContainer>(
-                      robot.GetContext()->GetDataLoader()->GetBehaviorJsons());
-    }else{
-      BehaviorContainer::BehaviorIDJsonMap emptyMap;
-      behaviorContainer = std::make_unique<BehaviorContainer>(emptyMap);
+  // Async Message Component
+  {
+    bool manageMessageComp = false;
+    if(asyncMessageComponentPtr == nullptr){
+      asyncMessageComponentPtr = new AsyncMessageGateComponent(robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr,
+                                                               robot.GetRobotMessageHandler(),
+                                                               robot.GetID());
+      manageMessageComp = true;
     }
-    behaviorContainerPtr = behaviorContainer.get();
+    BCComp messageComp(asyncMessageComponentPtr, manageMessageComp);
+    entity.AddDependentComponent(BCComponentID::AsyncMessageComponent, std::move(messageComp));
   }
-  
-  std::unique_ptr<BehaviorEventComponent> behaviorEventComponent;
-  if(behaviorEventComponentPtr == nullptr){
-    behaviorEventComponent = std::make_unique<BehaviorEventComponent>();
-    behaviorEventComponentPtr = behaviorEventComponent.get();
+ 
+  // Behavior Audio Component
+  {
+    auto audioComp = new Audio::BehaviorAudioComponent(robot.GetAudioClient());
+    BCComp managedAudio(audioComp, true);
+    entity.AddDependentComponent(BCComponentID::BehaviorAudioComponent, std::move(managedAudio));
   }
-  
-  std::unique_ptr<AsyncMessageGateComponent> asyncMessageComponent;
-  if(asyncMessageComponentPtr == nullptr){
-    asyncMessageComponent = std::make_unique<AsyncMessageGateComponent>(
-             robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr,
-             robot.GetRobotMessageHandler(),
-             robot.GetID());
-    asyncMessageComponentPtr = asyncMessageComponent.get();
-  }
-  
-  std::unique_ptr<DelegationComponent> delegationComponent;
-  if(delegationComponentPtr == nullptr){
-    delegationComponent = std::make_unique<DelegationComponent>();
-    delegationComponentPtr = delegationComponent.get();
-  }
-  
-  auto robotInfo = std::make_unique<BEIRobotInfo>(robot);
-  ComponentsPtr components = std::make_unique<ComponentWrappers::BehaviorComponentComponents>
-     (robot,
-      std::move(robotInfo),
-      robot.GetAIComponent(),
-      robot.GetBlockWorld(),
-      robot.GetFaceWorld(),
-      *behaviorSysMgrPtr,
-      *behaviorExternalInterfacePtr,
-      *behaviorContainerPtr,
-      *behaviorEventComponentPtr,
-      *asyncMessageComponentPtr,
-      *delegationComponentPtr);
 
-  components->_behaviorSysMgrPtr            = std::move(behaviorSysMgr);
-  components->_behaviorExternalInterfacePtr = std::move(behaviorExternalInterface);
-  components->_behaviorContainerPtr         = std::move(behaviorContainer);
-  components->_behaviorEventComponentPtr      = std::move(behaviorEventComponent);
-  components->_asyncMessageComponentPtr     = std::move(asyncMessageComponent);
-  components->_delegationComponentPtr       = std::move(delegationComponent);
+  // Cloud Receiver
+  {
+    auto cloudReceiver = new BehaviorComponentCloudReceiver(robot);
+    BCComp managedCloud(cloudReceiver, true);
+    entity.AddDependentComponent(BCComponentID::BehaviorComponentCloudReceiver, std::move(managedCloud));
+  }
+
+  // Behavior Container
+  {
+    bool manageBC = false;
+    if(behaviorContainerPtr == nullptr){
+      if(robot.GetContext() != nullptr){
+        behaviorContainerPtr = new BehaviorContainer(robot.GetContext()->GetDataLoader()->GetBehaviorJsons());
+      }else{
+        BehaviorContainer::BehaviorIDJsonMap empty;
+        behaviorContainerPtr = new BehaviorContainer(empty);
+      }
+      manageBC = true;
+    }
+    BCComp behaviorContainerComp(behaviorContainerPtr, manageBC);
+    entity.AddDependentComponent(BCComponentID::BehaviorContainer, std::move(behaviorContainerComp));
+  }
   
-  return components;
+  // BaseBehavior Wrapper
+  {
+    if(baseBehavior == nullptr){
+      Json::Value blankActivitiesConfig;
+      
+      const CozmoContext* context = robot.GetContext();
+      
+      if(context == nullptr){
+        PRINT_NAMED_WARNING("BehaviorComponent.Init.NoContext",
+                            "wont be able to load some componenets. May be OK in unit tests");
+      }
+      
+      RobotDataLoader* dataLoader = nullptr;
+      if(context){
+        dataLoader = context->GetDataLoader();
+      }
+      
+      const Json::Value& behaviorSystemConfig = (dataLoader != nullptr) ?
+      dataLoader->GetVictorFreeplayBehaviorConfig() : blankActivitiesConfig;
+      
+      BehaviorContainer& bc = entity.GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>();
+      if(!behaviorSystemConfig.empty()){
+        BehaviorID baseBehaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
+        baseBehavior = bc.FindBehaviorByID(baseBehaviorID).get();
+        DEV_ASSERT(baseBehavior != nullptr,
+                   "BehaviorComponent.Init.InvalidbaseBehavior");
+      }else{
+        // Need a base behavior, so make it base behavior wait
+        Json::Value config = ICozmoBehavior::CreateDefaultBehaviorConfig(BEHAVIOR_CLASS(Wait), BEHAVIOR_ID(Wait));
+        bc.CreateBehaviorFromConfig(config);
+        baseBehavior = bc.FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
+      }
+    }
+    BaseBehaviorWrapper* wrapper = new BaseBehaviorWrapper(baseBehavior);
+    BCComp managedBaseBehaviorWrapper(wrapper, true);
+    entity.AddDependentComponent(BCComponentID::BaseBehaviorWrapper, std::move(managedBaseBehaviorWrapper));
+  }
+
+  // Behavior Event Anim Response Director
+  {
+    auto animDirector = new BehaviorEventAnimResponseDirector();
+    BCComp managedAnimDirector(animDirector, true);
+    entity.AddDependentComponent(BCComponentID::BehaviorEventAnimResponseDirector, std::move(managedAnimDirector));
+  }
+
+  // Behavior Event Component
+  {
+    bool manageBehaviorEvent = false;
+    if(behaviorEventComponentPtr == nullptr){
+      behaviorEventComponentPtr = new BehaviorEventComponent();
+      manageBehaviorEvent = true;
+    }
+    BCComp eventComp(behaviorEventComponentPtr, manageBehaviorEvent);
+    entity.AddDependentComponent(BCComponentID::BehaviorEventComponent, std::move(eventComp));
+  }
+
+  // Behavior External Interface
+  {
+    bool manageBEI = false;
+    if(behaviorExternalInterfacePtr == nullptr){
+      behaviorExternalInterfacePtr = new BehaviorExternalInterface();
+      manageBEI = true;
+    }
+    BCComp bei(behaviorExternalInterfacePtr, manageBEI);
+    entity.AddDependentComponent(BCComponentID::BehaviorExternalInterface, std::move(bei));
+  }
+
+  // Behavior Helper Component
+  {
+    auto helperComp = new BehaviorHelperComponent();
+    BCComp managedHelper(helperComp, true);
+    entity.AddDependentComponent(BCComponentID::BehaviorHelperComponent, std::move(managedHelper));
+  }
+
+  // Behavior System Manager
+  {
+    bool manageBSM = false;
+    if(behaviorSysMgrPtr == nullptr){
+      behaviorSysMgrPtr = new BehaviorSystemManager();
+      manageBSM = true;
+    }
+    BCComp managedBSM(behaviorSysMgrPtr, manageBSM);
+    entity.AddDependentComponent(BCComponentID::BehaviorSystemManager, std::move(managedBSM));
+  }
+  
+  // Block World
+  {
+    BCComp unmanagedBlockWorld(&robot.GetBlockWorld());
+    entity.AddDependentComponent(BCComponentID::BlockWorld, std::move(unmanagedBlockWorld));
+  }
+
+  // Delegation Component
+  {
+    bool manageDelegationComp = false;
+    if(delegationComponentPtr == nullptr){
+      delegationComponentPtr = new DelegationComponent();
+      manageDelegationComp = true;
+    }
+    BCComp delegationComp(delegationComponentPtr, manageDelegationComp);
+    entity.AddDependentComponent(BCComponentID::DelegationComponent, std::move(delegationComp));
+  }
+
+  // Dev Behavior Component Message Handler
+  {
+    auto devBehaviorMessageHandler = new DevBehaviorComponentMessageHandler(robot);
+    BCComp devBehaviorComp(devBehaviorMessageHandler, true);
+    entity.AddDependentComponent(BCComponentID::DevBehaviorComponentMessageHandler, std::move(devBehaviorComp));
+  }
+
+  // Face World
+  {
+    BCComp unmanagedFaceWorld(&robot.GetFaceWorld());
+    entity.AddDependentComponent(BCComponentID::FaceWorld, std::move(unmanagedFaceWorld));
+  }
+
+  // Robot Info
+  {
+    auto robotInfo = new BEIRobotInfo(robot);
+    BCComp robotInfoComp(robotInfo, true);
+    entity.AddDependentComponent(BCComponentID::RobotInfo, std::move(robotInfoComp));
+  }
+
+  return std::make_unique<BCComponentWrapper>(std::move(entity));
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorComponent::InitializeSubComponents(Robot& robot,
-                                                BEIRobotInfo& robotInfo,
-                                                IBehavior* baseBehavior,
-                                                BehaviorSystemManager& behaviorSysMgr,
-                                                IBehaviorMessageSubscriber& messageSubscriber,
-                                                BehaviorExternalInterface& behaviorExternalInterface,
-                                                AIComponent& aiComponent,
-                                                BehaviorContainer& behaviorContainer,
-                                                BlockWorld& blockWorld,
-                                                FaceWorld& faceWorld,
-                                                BehaviorEventComponent& behaviorEventComponent,
-                                                AsyncMessageGateComponent& asyncMessageComponent,
-                                                DelegationComponent& delegationComponent)
-{  
-  delegationComponent.Init(robot, behaviorSysMgr);
-  behaviorEventComponent.Init(messageSubscriber);
-  behaviorExternalInterface.Init(&aiComponent,
-                                 &robot.GetAnimationComponent(),
-                                 &behaviorContainer,
-                                 &behaviorEventComponent,
-                                 &blockWorld,
-                                 &robot.GetBodyLightComponent(),
-                                 &robot.GetCubeAccelComponent(),
-                                 &robot.GetCubeLightComponent(),
-                                 &delegationComponent,
-                                 &faceWorld,
-                                 &robot.GetMapComponent(),
-                                 &robot.GetMicDirectionHistory(),
-                                 &robot.GetMoodManager(),
-                                 robot.GetContext()->GetNeedsManager(),
-                                 &robot.GetObjectPoseConfirmer(),
-                                 &robot.GetPetWorld(),
-                                 &robot.GetProgressionUnlockComponent(),
-                                 &robot.GetProxSensorComponent(),
-                                 &robot.GetPublicStateBroadcaster(),
-                                 robot.GetAudioClient(),
-                                 &robotInfo,
-                                 &robot.GetTouchSensorComponent(),
-                                 &robot.GetVisionComponent());
-  
-  behaviorContainer.Init(behaviorExternalInterface);
-
-  behaviorSysMgr.InitConfiguration(robot,
-                                   baseBehavior,
-                                   behaviorExternalInterface,
-                                   &asyncMessageComponent);
-  
-  //aiComponent.Init(robot, this);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorComponent::Init(ComponentsPtr&& components, IBehavior* baseBehavior)
+void BehaviorComponent::Init(Robot* robot, UniqueComponents&& components)
 {
   _components = std::move(components);
-  InitHelper(baseBehavior);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorComponent::InitHelper(IBehavior* baseBehavior)
-{
-  
-  // Extract base behavior from config if not passed in through init
-  if(baseBehavior == nullptr){
-    Json::Value blankActivitiesConfig;
-    
-    const CozmoContext* context = _components->_robotInfo.GetContext();
-    
-    if(context == nullptr ) {
-      PRINT_NAMED_WARNING("BehaviorComponent.Init.NoContext",
-                          "wont be able to load some componenets. May be OK in unit tests");
-    }
-    
-    RobotDataLoader* dataLoader = nullptr;
-    if(context){
-      dataLoader = _components->_robotInfo.GetContext()->GetDataLoader();
-    }
-    
-    const Json::Value& behaviorSystemConfig = (dataLoader != nullptr) ?
-         dataLoader->GetVictorFreeplayBehaviorConfig() : blankActivitiesConfig;
-    
-    if(!behaviorSystemConfig.empty()){
-      BehaviorID baseBehaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
-      baseBehavior = _components->_behaviorContainer.FindBehaviorByID(baseBehaviorID).get();
-      DEV_ASSERT(baseBehavior != nullptr,
-                  "BehaviorComponent.Init.InvalidbaseBehavior");
-    }else{
-      // Need a base behavior, so make it base behavior wait
-      Json::Value config = ICozmoBehavior::CreateDefaultBehaviorConfig(
-        BEHAVIOR_CLASS(Wait), BEHAVIOR_ID(Wait));
-      _components->_behaviorContainer.CreateBehaviorFromConfig(config);
-      baseBehavior = _components->_behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
-    }
-  }
-  
-  InitializeSubComponents(_components->_robot,
-                          _components->_robotInfo,
-                          baseBehavior,
-                          _components->_behaviorSysMgr,
-                          *this,
-                          _components->_behaviorExternalInterface,
-                          _components->_aiComponent,
-                          _components->_behaviorContainer,
-                          _components->_blockWorld,
-                          _components->_faceWorld,
-                          _components->_behaviorEventComponent,
-                          _components->_asyncMessageComponent,
-                          _components->_delegationComponent);
-
-  _audioClient.reset(new Audio::BehaviorAudioComponent(&_components->_behaviorExternalInterface.GetRobotAudioClient()));
-  _audioClient->Init(_components->_behaviorExternalInterface);
+  _components->_array.InitComponents(robot);
 }
 
 
@@ -296,17 +282,15 @@ void BehaviorComponent::Update(Robot& robot,
                                std::string& currentActivityName,
                                std::string& behaviorDebugStr)
 {
-  if(_messageHandler == nullptr){
-    _messageHandler.reset(new DevBehaviorComponentMessageHandler(robot, *this, _components->_behaviorContainer));
+
+  BehaviorExternalInterface& bei = GetComponent<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
+
+  GetBehaviorHelperComponent().Update(bei);
+  
+  {
+    BehaviorSystemManager& bsm = GetComponent<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+    bsm.Update(bei);
   }
-
-  if(_cloudReceiver == nullptr){
-    _cloudReceiver.reset(new BehaviorComponentCloudReceiver(robot));
-  }
-
-  _behaviorHelperComponent->Update(_components->_behaviorExternalInterface);
-
-  _components->_behaviorSysMgr.Update(_components->_behaviorExternalInterface);
   
   robot.GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
                                                "%s", behaviorDebugStr.c_str());
@@ -323,7 +307,8 @@ void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<External
   if(ANKI_VERIFY(_components != nullptr,
                  "BehaviorComponent.SubscribeToTags.NocomponentsPtr",
                  "")){
-    _components->_asyncMessageComponent.SubscribeToTags(subscriber, std::move(tags));
+    AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>(BCComponentID::AsyncMessageComponent);
+    gateComp.SubscribeToTags(subscriber, std::move(tags));
   }
 }
 
@@ -334,7 +319,8 @@ void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<External
   if(ANKI_VERIFY(_components != nullptr,
                  "BehaviorComponent.SubscribeToTags.NocomponentsPtr",
                  "")){
-    _components->_asyncMessageComponent.SubscribeToTags(subscriber, std::move(tags));
+    AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>(BCComponentID::AsyncMessageComponent);
+    gateComp.SubscribeToTags(subscriber, std::move(tags));
   }
 }
 
@@ -345,7 +331,8 @@ void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<RobotInt
   if(ANKI_VERIFY(_components != nullptr,
                  "BehaviorComponent.SubscribeToTags.NocomponentsPtr",
                  "")){
-    _components->_asyncMessageComponent.SubscribeToTags(subscriber, std::move(tags));
+    AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>(BCComponentID::AsyncMessageComponent);
+    gateComp.SubscribeToTags(subscriber, std::move(tags));
   }
 }
 
@@ -353,7 +340,7 @@ void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<RobotInt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorContainer& BehaviorComponent::GetBehaviorContainer()
 {
-  assert(_components); return _components->_behaviorContainer;
+  return GetComponent<BehaviorContainer>(BCComponentID::BehaviorContainer);
 }
 
   

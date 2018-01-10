@@ -35,7 +35,9 @@ class AnimationGroupContainer;
 class Robot;
 class CozmoContext;
   
-class AnimationComponent : private Anki::Util::noncopyable, private Util::SignalHolder
+class AnimationComponent : public IDependencyManagedComponent<RobotComponentID>, 
+                           private Anki::Util::noncopyable, 
+                           private Util::SignalHolder
 {
 public:
   
@@ -49,7 +51,23 @@ public:
   };
   
   
-  AnimationComponent(Robot& robot, const CozmoContext* context);
+  AnimationComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::TouchSensor);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
+
 
   void Init();
   void Update();
@@ -133,9 +151,13 @@ private:
   bool _isInitialized;
   Tag  _tagCtr;
   
-  Robot& _robot;
-
-  AnimationGroupContainer&  _animationGroups;
+  Robot* _robot = nullptr;
+  struct AnimationGroupWrapper{
+    AnimationGroupWrapper(AnimationGroupContainer&  container)
+    : _container(container){}
+    AnimationGroupContainer&  _container;
+  };
+  std::unique_ptr<AnimationGroupWrapper> _animationGroups;
   
   // Map of available canned animations to associated metainfo
   std::unordered_map<std::string, AnimationMetaInfo> _availableAnims;

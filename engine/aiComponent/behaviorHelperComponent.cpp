@@ -32,10 +32,9 @@ namespace Cozmo {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorHelperComponent::BehaviorHelperComponent()
-: _helperFactory(new BehaviorHelperFactory(*this))
+: IDependencyManagedComponent<BCComponentID>(BCComponentID::BehaviorHelperComponent)
+, _helperFactory(new BehaviorHelperFactory(*this))
 {
-  
-  
 }
 
 ///////

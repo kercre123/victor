@@ -156,13 +156,26 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
 using namespace MemoryMapTypes;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MapComponent::MapComponent(Robot* robot)
-: _robot(robot)
+MapComponent::MapComponent()
+: IDependencyManagedComponent(RobotComponentID::Map)
 , _currentMapOriginID(PoseOriginList::UnknownOriginID)
 , _isRenderEnabled(true)
 , _broadcastRate_sec(-1.0f)
 , _nextBroadcastTimeStamp(0)
 {
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+MapComponent::~MapComponent()
+{
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MapComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
   if(_robot->HasExternalInterface())
   {    
     using namespace ExternalInterface;
@@ -173,11 +186,8 @@ MapComponent::MapComponent(Robot* robot)
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MapComponent::~MapComponent()
-{
-}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void MapComponent::HandleMessage(const ExternalInterface::SetMemoryMapRenderEnabled& msg)
 {

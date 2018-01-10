@@ -19,7 +19,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
-
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <memory>
@@ -68,10 +67,24 @@ private:
 };
 
   
-class DelegationComponent : private Util::noncopyable {
+class DelegationComponent : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable {
 public:
   DelegationComponent();
   virtual ~DelegationComponent(){};
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override;
+  virtual void UpdateDependent(const BCCompMap& dependentComponents) override {};
+  virtual void AdditionalInitAccessibleComponents(BCCompIDSet& components) const override {
+    components.insert(BCComponentID::BehaviorSystemManager);
+  }
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {};
+  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   void Init(Robot& robot, BehaviorSystemManager& bsm);
   

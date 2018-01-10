@@ -19,6 +19,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorEventAnimResponseDirector::BehaviorEventAnimResponseDirector()
+: IDependencyManagedComponent<BCComponentID>(BCComponentID::BehaviorEventAnimResponseDirector)
 {
   _animationTriggerMap[UserFacingActionResult::InteractWithBlockDockingIssue] = AnimationTrigger::RollBlockRetry;
   _animationTriggerMap[UserFacingActionResult::DriveToBlockIssue] = AnimationTrigger::RollBlockRealign;

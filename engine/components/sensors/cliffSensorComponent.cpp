@@ -58,8 +58,9 @@ namespace {
 }
 
 
-CliffSensorComponent::CliffSensorComponent(Robot& robot) : ISensorComponent(robot, kLogDirectory)
-  , _cliffDetectAllowedDelta(kCliffDetectAllowedDeltaDefault)
+CliffSensorComponent::CliffSensorComponent() 
+: ISensorComponent(kLogDirectory, RobotComponentID::CliffSensor)
+, _cliffDetectAllowedDelta(kCliffDetectAllowedDeltaDefault)
 {
   _cliffDataRaw.fill(std::numeric_limits<uint16_t>::max());
   _cliffMinObserved.fill(std::numeric_limits<uint16_t>::max());
@@ -129,7 +130,7 @@ void CliffSensorComponent::UpdateCliffDetectThresholds()
   const auto minMaxCliffItPair = std::minmax_element(std::begin(_cliffDataRaw), std::end(_cliffDataRaw));
   const auto minCliffVal = *minMaxCliffItPair.first;
   const auto maxCliffVal = *minMaxCliffItPair.second;
-  const bool IsRobotSittingFlat = _robot.GetPitchAngle().IsNear(0.f, kRobotPitchThresholdPossibleCliff_rad);
+  const bool IsRobotSittingFlat = _robot->GetPitchAngle().IsNear(0.f, kRobotPitchThresholdPossibleCliff_rad);
   if (maxCliffVal < kCliffValDarkSurface || !IsRobotSittingFlat) {
     // All cliff values are below the dark threshold (or IMU is saying we might be driving over something),
     // so use a reduced allowedDelta to reduce false cliff detections.
@@ -170,10 +171,10 @@ void CliffSensorComponent::SendCliffDetectThresholdsToRobot()
                    "New cliff thresholds being sent to robot: %d %d %d %d",
                    _cliffDetectThresholds[0], _cliffDetectThresholds[1], _cliffDetectThresholds[2], _cliffDetectThresholds[3]);
   
-  _robot.SendRobotMessage<SetCliffDetectThresholds>(_cliffDetectThresholds);
+  _robot->SendRobotMessage<SetCliffDetectThresholds>(_cliffDetectThresholds);
   
   // Also send to game (for webots tests)
-  _robot.Broadcast(ExternalInterface::MessageEngineToGame(SetCliffDetectThresholds(_cliffDetectThresholds)));
+  _robot->Broadcast(ExternalInterface::MessageEngineToGame(SetCliffDetectThresholds(_cliffDetectThresholds)));
 }
 
 
@@ -216,7 +217,7 @@ bool CliffSensorComponent::ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d
   HistRobotState histState;
   TimeStamp_t histTimestamp;
   const bool useInterp = true;
-  const auto& res = _robot.GetStateHistory()->ComputeStateAt(cliffEvent.timestamp, histTimestamp, histState, useInterp);
+  const auto& res = _robot->GetStateHistory()->ComputeStateAt(cliffEvent.timestamp, histTimestamp, histState, useInterp);
   if (res != RESULT_OK) {
     PRINT_NAMED_ERROR("CliffSensorComponent.ComputeCliffPose.NoHistoricalPose",
                       "Could not retrieve historical pose for timestamp %u",
@@ -278,7 +279,7 @@ bool CliffSensorComponent::ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d
   }
 
   // Compute the cliff pose with respect to the robot world origin
-  if (!cliffWrtRobot.GetWithRespectTo(_robot.GetWorldOrigin(), cliffPose)) {
+  if (!cliffWrtRobot.GetWithRespectTo(_robot->GetWorldOrigin(), cliffPose)) {
     PRINT_NAMED_ERROR("CliffSensorComponent.ComputeCliffPose.OriginMismatch",
                       "cliffWrtRobot and robot.GetWorldOrigin() do not share the same origin!");
     return false;

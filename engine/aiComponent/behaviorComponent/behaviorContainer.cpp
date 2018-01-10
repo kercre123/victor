@@ -137,6 +137,7 @@ namespace Cozmo {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorContainer::BehaviorContainer(const BehaviorIDJsonMap& behaviorData)
+: IDependencyManagedComponent<BCComponentID>(BCComponentID::BehaviorContainer)
 {
   for( const auto& behaviorIDJsonPair : behaviorData )
   {
@@ -176,6 +177,15 @@ BehaviorContainer::~BehaviorContainer()
   // Delete all behaviors owned by the factory
   _idToBehaviorMap.clear();
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorContainer::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+{
+  auto& bei = dependentComponents.find(BCComponentID::BehaviorExternalInterface)->second.GetValue<BehaviorExternalInterface>();
+  Init(bei);
+}
+
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

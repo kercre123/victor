@@ -9,6 +9,8 @@
 #ifndef __Anki_Cozmo_Basestation_RobotToEngineImplMessaging_H__
 #define __Anki_Cozmo_Basestation_RobotToEngineImplMessaging_H__
 
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "util/helpers/noncopyable.h"
@@ -27,12 +29,26 @@ struct ObjectPowerLevel;
 struct ObjectStoppedMoving;
 struct ObjectUpAxisChanged;
   
-class RobotToEngineImplMessaging : private Util::noncopyable, public Util::SignalHolder
+class RobotToEngineImplMessaging : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable, public Util::SignalHolder
 {
 public:
-  
-  RobotToEngineImplMessaging(Robot* robot);
+  RobotToEngineImplMessaging();
   ~RobotToEngineImplMessaging();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {};
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::BlockTapFilter);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   // Version checks
   const RobotInterface::FWVersionInfo& GetFWVersionInfo() const { return _factoryFirmwareVersion; }

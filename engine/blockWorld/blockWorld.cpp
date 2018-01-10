@@ -98,16 +98,23 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10.0f);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  BlockWorld::BlockWorld(Robot* robot)
-  : _robot(robot)
+  BlockWorld::BlockWorld()
+  : UnreliableComponent<BCComponentID>(BCComponentID::BlockWorld)
+  , IDependencyManagedComponent<RobotComponentID>(RobotComponentID::BlockWorld)
   , _lastPlayAreaSizeEventSec(0)
   , _playAreaSizeEventIntervalSec(60)
   , _didObjectsChange(false)
   , _robotMsgTimeStampAtChange(0)
   , _trackPoseChanges(false)
-  , _blockConfigurationManager(new BlockConfigurations::BlockConfigurationManager(*robot))
   {
+  } // BlockWorld() Constructor
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
+  {
+    _robot = robot;
     DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
+    _blockConfigurationManager = std::make_unique<BlockConfigurations::BlockConfigurationManager>(*robot);
     
     
     // TODO: Create each known block / matpiece from a configuration/definitions file
@@ -206,8 +213,8 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     {
       SetupEventHandlers(*_robot->GetExternalInterface());
     }
-          
-  } // BlockWorld() Constructor
+  }
+
 
   void BlockWorld::SetupEventHandlers(IExternalInterface& externalInterface)
   {

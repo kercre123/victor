@@ -49,14 +49,21 @@ CONSOLE_VAR(bool, kAllowMovementOnChargerInSdkMode, "Robot", false);
 using namespace ExternalInterface;
 
 
-MovementComponent::MovementComponent(Robot& robot)
-  : _robot(robot)
+MovementComponent::MovementComponent()
+: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::Movement)
 {
-  if (_robot.HasExternalInterface())
+
+}
+ 
+void MovementComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
+  if (_robot->HasExternalInterface())
   {
-    InitEventHandlers(*(_robot.GetExternalInterface()));
+    InitEventHandlers(*(_robot->GetExternalInterface()));
   }
 }
+
   
 void MovementComponent::InitEventHandlers(IExternalInterface& interface)
 {
@@ -95,7 +102,7 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
     if(_isHeadMoving && false == layer.headWasMoving) {
       // Wait for transition from stopped to moving again
       // TODO: Restore eye shifts (VIC-363)
-      //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(layerIter->first, layer.duration_ms);
+      //_robot->GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(layerIter->first, layer.duration_ms);
       layerIter = _faceLayerTagsToRemoveOnHeadMovement.erase(layerIter);
     } else {
       layer.headWasMoving = _isHeadMoving;
@@ -105,13 +112,13 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
   if (kDebugTrackLocking)
   {
     // Flip logic from enabled to locked here, since robot stores bits as enabled and 1 means locked here.
-    u8 robotLockedTracks = ~_robot.GetEnabledAnimationTracks();
+    u8 robotLockedTracks = _robot->GetAnimationComponent().GetLockedTracks();
     const bool isRobotHeadTrackLocked = (robotLockedTracks & (u8)AnimTrackFlag::HEAD_TRACK) != 0;
     if (isRobotHeadTrackLocked != AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK))
     {
       LOG_WARNING("MovementComponent.Update.HeadLockUnmatched",
                   "TrackRobot:%d, TrackEngineCount:%zu",
-                  _robot.GetEnabledAnimationTracks(),
+                  ~_robot->GetAnimationComponent().GetLockedTracks(),
                   _trackLockCount[GetFlagIndex((u8)AnimTrackFlag::HEAD_TRACK)].size());
     }
     const bool isRobotLiftTrackLocked = (robotLockedTracks & (u8)AnimTrackFlag::LIFT_TRACK) != 0;
@@ -119,7 +126,7 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
     {
       LOG_WARNING("MovementComponent.Update.LiftLockUnmatched",
                   "TrackRobot:%d, TrackEngineCount:%zu",
-                  _robot.GetEnabledAnimationTracks(),
+                  ~_robot->GetAnimationComponent().GetLockedTracks(),
                   _trackLockCount[GetFlagIndex((u8)AnimTrackFlag::LIFT_TRACK)].size());
     }
     const bool isRobotBodyTrackLocked = (robotLockedTracks & (u8)AnimTrackFlag::BODY_TRACK) != 0;
@@ -127,7 +134,7 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
     {
       LOG_WARNING("MovementComponent.Update.BodyLockUnmatched",
                   "TrackRobot:%d, TrackEngineCount:%zu",
-                  _robot.GetEnabledAnimationTracks(),
+                  ~_robot->GetAnimationComponent().GetLockedTracks(),
                   _trackLockCount[GetFlagIndex((u8)AnimTrackFlag::BODY_TRACK)].size());
     }
   }
@@ -144,7 +151,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
 {
   // Disabling for sim robot due to odd behavior of measured wheel speeds and the lack
   // of wheel slip that is what allows this detection to work on the real robot
-  if (!_robot.IsPhysical())
+  if (!_robot->IsPhysical())
   {
     return;
   }
@@ -152,8 +159,8 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   // Don't check for unexpected movement while playing animations that are moving the body
   // because some of them rapidly move the motors which triggers false positives
   // Or the robot is picking/placing
-  if ((_robot.IsAnimating() && !AreAllTracksLocked((u8)AnimTrackFlag::BODY_TRACK))
-      || _robot.GetDockingComponent().IsPickingOrPlacing())
+  if ((_robot->GetAnimationComponent().IsAnimating() && !AreAllTracksLocked((u8)AnimTrackFlag::BODY_TRACK))
+      || _robot->GetDockingComponent().IsPickingOrPlacing())
   {
     return;
   }
@@ -212,7 +219,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
     // for these reasons this is not enabled
     // With this commented out the case of being spun in the same direction will trigger TURNED_IN_OPPOSITE_DIRECTION
     // when we pass the target turn angle
-//    if(!_robot.IsCarryingObject() &&
+//    if(!_robot->IsCarryingObject() &&
 //       ABS(speedDiff) > kWheelDifForTurning_mmps &&
 //       ABS(ABS(speedDiff) - ABS(zGyro_radps)*100) > 30 * MAX(ABS(speedDiff), 100.f) / 100.f)
 //    {
@@ -260,7 +267,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
       
       HistRobotState histState;
       TimeStamp_t historicalTime;
-      Result poseResult = _robot.GetStateHistory()->ComputeStateAt(_unexpectedMovement.GetStartTime(), historicalTime,
+      Result poseResult = _robot->GetStateHistory()->ComputeStateAt(_unexpectedMovement.GetStartTime(), historicalTime,
                                                                  histState, true);
       
       if (RESULT_FAIL_ORIGIN_MISMATCH == poseResult)
@@ -333,22 +340,22 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
         // Note that this also increments pose frame ID and sends a localization update
         // to the physical robot.
         Pose3d newPose(histState.GetPose());
-        newPose.SetRotation(_robot.GetPose().GetRotation());
-        Result res = _robot.SetNewPose(newPose);
+        newPose.SetRotation(_robot->GetPose().GetRotation());
+        Result res = _robot->SetNewPose(newPose);
         if (res != RESULT_OK)
         {
           LOG_WARNING("MovementComponent.CheckForUnexpectedMovement.SetNewPose", "Failed to set new pose");
         }
         
         // Create obstacle relative to robot at its new pose
-        obstaclePoseWrtRobot.SetParent(_robot.GetPose());
+        obstaclePoseWrtRobot.SetParent(_robot->GetPose());
         const Pose3d& obstaclePose = obstaclePoseWrtRobot.GetWithRespectToRoot();
 
         LOG_INFO("MovementComponent.CheckForUnexpectedMovement.AddingCollisionObstacle",
                  "Adding obstacle %s robot",
                  debugStr);
         
-        _robot.GetBlockWorld().AddCollisionObstacle(obstaclePose);
+        _robot->GetBlockWorld().AddCollisionObstacle(obstaclePose);
       }
       
     } // if(unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED)
@@ -356,7 +363,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
     {
       // Broadcast the associated event
       ExternalInterface::UnexpectedMovement msg(robotState.timestamp, unexpectedMovementType, unexpectedMovementSide);
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
     
     _unexpectedMovement.Reset();
@@ -398,7 +405,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
                                        (u8)AnimTrackFlag::BODY_TRACK,
                                        kDrivingWheelsStr,
                                        kDrivingWheelsStr);
-    _robot.SendRobotMessage<RobotInterface::DriveWheels>(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
+    _robot->SendRobotMessage<RobotInterface::DriveWheels>(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
                                                          msg.lwheel_accel_mmps2, msg.rwheel_accel_mmps2);
   }
 }
@@ -429,7 +436,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpee
                                        (u8)AnimTrackFlag::BODY_TRACK,
                                        kDrivingWheelsStr,
                                        kDrivingTurnStr);
-    _robot.SendRobotMessage<RobotInterface::TurnInPlaceAtSpeed>(turnSpeed, msg.accel_rad_per_sec2);
+    _robot->SendRobotMessage<RobotInterface::TurnInPlaceAtSpeed>(turnSpeed, msg.accel_rad_per_sec2);
   }
 }
 
@@ -452,7 +459,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
                                        (u8)AnimTrackFlag::HEAD_TRACK,
                                        kDrivingHeadStr,
                                        kDrivingHeadStr);
-    _robot.SendRobotMessage<RobotInterface::MoveHead>(msg.speed_rad_per_sec);
+    _robot->SendRobotMessage<RobotInterface::MoveHead>(msg.speed_rad_per_sec);
   }
 }
 
@@ -475,7 +482,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
                                        (u8)AnimTrackFlag::LIFT_TRACK,
                                        kDrivingLiftStr,
                                        kDrivingLiftStr);
-    _robot.SendRobotMessage<RobotInterface::MoveLift>(msg.speed_rad_per_sec);
+    _robot->SendRobotMessage<RobotInterface::MoveLift>(msg.speed_rad_per_sec);
   }
 }
 
@@ -498,7 +505,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveArc& msg)
                                        (u8)AnimTrackFlag::BODY_TRACK,
                                        kDrivingWheelsStr,
                                        kDrivingArcStr);
-    _robot.SendRobotMessage<RobotInterface::DriveWheelsCurvature>(msg.speed,
+    _robot->SendRobotMessage<RobotInterface::DriveWheelsCurvature>(msg.speed,
                                                                   std::fabsf(msg.accel),
                                                                   msg.curvatureRadius_mm);
   }
@@ -545,7 +552,7 @@ void MovementComponent::DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::ChargerEvent& msg)
 {
-  if (!kAllowMovementOnChargerInSdkMode && _robot.GetContext()->IsInSdkMode())
+  if (!kAllowMovementOnChargerInSdkMode && _robot->GetContext()->IsInSdkMode())
   {
     if (msg.onCharger)
     {
@@ -567,7 +574,7 @@ template<>
 void MovementComponent::HandleMessage(const ExternalInterface::EnterSdkMode& msg)
 {
   if (!kAllowMovementOnChargerInSdkMode &&
-      _robot.IsOnCharger() &&
+      _robot->IsOnCharger() &&
       !AreAllTracksLockedBy(kAllMotorTracks, kOnChargerInSdkStr))
   {
     // If SDK mode starts _while_ we are on the charger (and not already locked), lock tracks
@@ -578,7 +585,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::EnterSdkMode& msg
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
 {
-  if (!kAllowMovementOnChargerInSdkMode && _robot.IsOnCharger())
+  if (!kAllowMovementOnChargerInSdkMode && _robot->IsOnCharger())
   {
     // If SDK ends _while_ we are on the charger, make sure to unlock tracks
     UnlockTracks(kAllMotorTracks, kOnChargerInSdkStr);
@@ -589,18 +596,18 @@ void MovementComponent::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
 
 Result MovementComponent::CalibrateMotors(bool head, bool lift)
 {
-  return _robot.SendRobotMessage<RobotInterface::StartMotorCalibration>(head, lift);
+  return _robot->SendRobotMessage<RobotInterface::StartMotorCalibration>(head, lift);
 }
   
 
 Result MovementComponent::EnableLiftPower(bool enable)
 {
-  return _robot.SendRobotMessage<RobotInterface::EnableMotorPower>(MotorID::MOTOR_LIFT, enable);
+  return _robot->SendRobotMessage<RobotInterface::EnableMotorPower>(MotorID::MOTOR_LIFT, enable);
 }
 
 Result MovementComponent::EnableHeadPower(bool enable)
 {
-  return _robot.SendRobotMessage<RobotInterface::EnableMotorPower>(MotorID::MOTOR_HEAD, enable);
+  return _robot->SendRobotMessage<RobotInterface::EnableMotorPower>(MotorID::MOTOR_HEAD, enable);
 }
   
 // Sends a message to the robot to move the lift to the specified height
@@ -609,7 +616,7 @@ Result MovementComponent::MoveLiftToHeight(const f32 height_mm,
                                            const f32 accel_rad_per_sec2,
                                            const f32 duration_sec)
 {
-  return _robot.SendRobotMessage<RobotInterface::SetLiftHeight>(height_mm,
+  return _robot->SendRobotMessage<RobotInterface::SetLiftHeight>(height_mm,
                                                                 max_speed_rad_per_sec,
                                                                 accel_rad_per_sec2,
                                                                 duration_sec);
@@ -621,7 +628,7 @@ Result MovementComponent::MoveHeadToAngle(const f32 angle_rad,
                                           const f32 accel_rad_per_sec2,
                                           const f32 duration_sec)
 {
-  return _robot.SendRobotMessage<RobotInterface::SetHeadAngle>(angle_rad,
+  return _robot->SendRobotMessage<RobotInterface::SetHeadAngle>(angle_rad,
                                                                max_speed_rad_per_sec,
                                                                accel_rad_per_sec2,
                                                                duration_sec);
@@ -639,7 +646,7 @@ Result MovementComponent::StopAllMotors()
     DirectDriveCheckSpeedAndLockTracks(0, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK, kDrivingWheelsStr, kDrivingTurnStr);
   }
   
-  return _robot.SendRobotMessage<RobotInterface::StopAllMotors>();
+  return _robot->SendRobotMessage<RobotInterface::StopAllMotors>();
 }
 
 Result MovementComponent::StopHead()
@@ -649,7 +656,7 @@ Result MovementComponent::StopHead()
   {
     DirectDriveCheckSpeedAndLockTracks(0, _drivingHead,   (u8)AnimTrackFlag::HEAD_TRACK, kDrivingHeadStr,   kDrivingHeadStr);
   }
-  return _robot.SendRobotMessage<RobotInterface::MoveHead>(RobotInterface::MoveHead(0.f));
+  return _robot->SendRobotMessage<RobotInterface::MoveHead>(RobotInterface::MoveHead(0.f));
 }
   
 Result MovementComponent::StopLift()
@@ -659,7 +666,7 @@ Result MovementComponent::StopLift()
   {
     DirectDriveCheckSpeedAndLockTracks(0, _drivingLift,   (u8)AnimTrackFlag::LIFT_TRACK, kDrivingLiftStr,   kDrivingLiftStr);
   }
-  return _robot.SendRobotMessage<RobotInterface::MoveLift>(RobotInterface::MoveLift(0.f));
+  return _robot->SendRobotMessage<RobotInterface::MoveLift>(RobotInterface::MoveLift(0.f));
 }
   
 Result MovementComponent::StopBody()
@@ -671,7 +678,7 @@ Result MovementComponent::StopBody()
     DirectDriveCheckSpeedAndLockTracks(0, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK, kDrivingWheelsStr, kDrivingArcStr);
     DirectDriveCheckSpeedAndLockTracks(0, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK, kDrivingWheelsStr, kDrivingTurnStr);
   }
-  return _robot.SendRobotMessage<RobotInterface::DriveWheels>(RobotInterface::DriveWheels(0.f,0.f,0.f,0.f));
+  return _robot->SendRobotMessage<RobotInterface::DriveWheels>(RobotInterface::DriveWheels(0.f,0.f,0.f,0.f));
 }
   
 int MovementComponent::GetFlagIndex(uint8_t flag) const
@@ -767,7 +774,7 @@ void MovementComponent::CompletelyUnlockAllTracks()
       _trackLockCount[i].clear();
     }
   }
-  _robot.GetAnimationComponent().UnlockAllTracks();
+  _robot->GetAnimationComponent().UnlockAllTracks();
 }
 
 void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const std::string& debugName)
@@ -790,7 +797,7 @@ void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const
   
   if (tracksToDisable > 0)
   {
-    _robot.GetAnimationComponent().LockTracks(tracksToDisable);
+    _robot->GetAnimationComponent().LockTracks(tracksToDisable);
   }
   
   if (DEBUG_ANIMATION_LOCKING) {
@@ -837,7 +844,7 @@ bool MovementComponent::UnlockTracks(uint8_t tracks, const std::string& who)
   
   if (tracksToEnable > 0)
   {
-    _robot.GetAnimationComponent().UnlockTracks(tracksToEnable);
+    _robot->GetAnimationComponent().UnlockTracks(tracksToEnable);
   }
   
   if (DEBUG_ANIMATION_LOCKING) {
@@ -914,35 +921,35 @@ std::string MovementComponent::WhoIsLocking(u8 trackFlags) const
   
   bool MovementComponent::WasMoving(TimeStamp_t atTime)
   {
-    const bool wasMoving = WasMovingHelper(_robot, atTime, "WasMoving",
+    const bool wasMoving = WasMovingHelper(*_robot, atTime, "WasMoving",
                                            [](const HistRobotState& s) { return s.WasMoving(); });
     return wasMoving;
   }
   
   bool MovementComponent::WasHeadMoving(TimeStamp_t atTime)
   {
-    const bool wasHeadMoving = WasMovingHelper(_robot, atTime, "WasHeadMoving",
+    const bool wasHeadMoving = WasMovingHelper(*_robot, atTime, "WasHeadMoving",
                                                [](const HistRobotState& s) { return s.WasHeadMoving(); });
     return wasHeadMoving;
   }
   
   bool MovementComponent::WasLiftMoving(TimeStamp_t atTime)
   {
-    const bool wasLiftMoving = WasMovingHelper(_robot, atTime, "WasLiftMoving",
+    const bool wasLiftMoving = WasMovingHelper(*_robot, atTime, "WasLiftMoving",
                                                [](const HistRobotState& s) { return s.WasLiftMoving(); });
     return wasLiftMoving;
   }
   
   bool MovementComponent::WereWheelsMoving(TimeStamp_t atTime)
   {
-    const bool wereWheelsMoving = WasMovingHelper(_robot, atTime, "WereWheelsMoving",
+    const bool wereWheelsMoving = WasMovingHelper(*_robot, atTime, "WereWheelsMoving",
                                                   [](const HistRobotState& s) { return s.WereWheelsMoving(); });
     return wereWheelsMoving;
   }
   
   bool MovementComponent::WasCameraMoving(TimeStamp_t atTime)
   {
-    const bool wasCameraMoving = WasMovingHelper(_robot, atTime, "WasCameraMoving",
+    const bool wasCameraMoving = WasMovingHelper(*_robot, atTime, "WasCameraMoving",
                                                  [](const HistRobotState& s) { return s.WasCameraMoving(); });
     return wasCameraMoving;
   }
