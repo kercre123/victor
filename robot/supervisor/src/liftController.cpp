@@ -191,6 +191,13 @@ namespace Anki {
         return RESULT_OK;
       }
 
+      void ResetAnglePosition(f32 currAngle)
+      {
+        currentAngle_ = currAngle;
+        desiredAngle_ = currentAngle_;
+        currDesiredAngle_ = currentAngle_.ToFloat();
+        desiredHeight_ = GetHeightMM();
+      }
 
       void EnableInternal()
       {
@@ -198,9 +205,7 @@ namespace Anki {
           enable_ = true;
           enableAtTime_ms_ = 0;  // Reset auto-enable trigger time
 
-          currDesiredAngle_ = currentAngle_.ToFloat();
-          desiredHeight_ = Rad2Height(currDesiredAngle_);
-          desiredAngle_ = currDesiredAngle_;
+          ResetAnglePosition(currentAngle_.ToFloat());
 #ifdef SIMULATOR
           // SetDesiredHeight might engage the gripper, but we don't want it engaged right now.
           HAL::DisengageGripper();
@@ -239,19 +244,6 @@ namespace Anki {
       {
         enabledExternally_ = false;
         DisableInternal(autoReEnable);
-      }
-
-
-      void ResetAnglePosition(f32 currAngle)
-      {
-        currentAngle_ = currAngle;
-        desiredAngle_ = currentAngle_;
-        currDesiredAngle_ = currentAngle_.ToFloat();
-        desiredHeight_ = GetHeightMM();
-
-        HAL::MotorResetPosition(MotorID::MOTOR_LIFT);
-        prevHalPos_ = HAL::MotorGetPosition(MotorID::MOTOR_LIFT);
-        isCalibrated_ = true;
       }
 
       void StartCalibrationRoutine(bool autoStarted)
@@ -329,6 +321,11 @@ namespace Anki {
               if (HAL::GetTimeStamp() - lastLiftMovedTime_ms > LIFT_RELAX_TIME_MS) {
                 AnkiInfo( "LiftController.Calibrated", "");
                 ResetAnglePosition(LIFT_ANGLE_LOW_LIMIT_RAD);
+
+                HAL::MotorResetPosition(MotorID::MOTOR_LIFT);
+                prevHalPos_ = HAL::MotorGetPosition(MotorID::MOTOR_LIFT);
+                isCalibrated_ = true;
+
                 calState_ = LCS_IDLE;
                 Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, false);
               }
