@@ -856,41 +856,8 @@ namespace Anki {
     ActionResult MoveHeadToAngleAction::Init()
     {
       ActionResult result = ActionResult::SUCCESS;
-      
+      _motionCommanded = false;
       _inPosition = IsHeadInPosition();
-      
-      if(!_inPosition) {
-        if(RESULT_OK != _robot.GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(),
-                                                                   _maxSpeed_radPerSec,
-                                                                   _accel_radPerSec2,
-                                                                   _duration_sec))
-        {
-          result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
-        }
-        
-        if(_moveEyes)
-        {
-          // Remove anything that may be keeping face alive, since we're doing our own
-          _robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveKeepFaceAlive(IKeyFrame::SAMPLE_LENGTH_MS);
-          
-          // Lead with the eyes, if not in position
-          // Note: assuming screen is about the same x distance from the neck joint as the head cam
-          Radians angleDiff =  _robot.GetHeadAngle() - _headAngle;
-          const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
-          const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT/4) / SCREEN_SIZE[1]);
-          
-          _robot.GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
-                                                                                      "MoveHeadToAngleEyeShift",
-                                                                                      0,
-                                                                                      yPixShift,
-                                                                                      4*IKeyFrame::SAMPLE_LENGTH_MS);
-          
-          if(!_holdEyes) {
-            // Store the half the angle differene so we know when to remove eye shift
-            _halfAngle = 0.5f*(_headAngle - _robot.GetHeadAngle()).getAbsoluteVal();
-          }
-        }
-      }
       
       return result;
     }
@@ -899,6 +866,53 @@ namespace Anki {
     {
       ActionResult result = ActionResult::RUNNING;
       
+      // Send motor command only after the head has stopped moving so we 
+      // that we know for sure that subsequent motion is a result of this action.
+      if(!_motionCommanded && !_inPosition) {
+        if(!GetRobot().GetMoveComponent().IsHeadMoving()) {          
+          if(RESULT_OK != GetRobot().GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(),
+                                                                    _maxSpeed_radPerSec,
+                                                                    _accel_radPerSec2,
+                                                                    _duration_sec))
+          {
+            result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
+          }
+          
+          if(_moveEyes)
+          {
+            // Remove anything that may be keeping face alive, since we're doing our own
+            // TODO: Restore KeepFaceAlive stuff (VIC-364)
+            //GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->RemoveKeepFaceAlive(ANIM_TIME_STEP_MS);
+            
+            // Lead with the eyes, if not in position
+            // Note: assuming screen is about the same x distance from the neck joint as the head cam
+            // TODO: Restore eye shifts (VIC-363)
+            /*
+            Radians angleDiff =  GetRobot().GetHeadAngle() - _headAngle;
+            const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+            const f32 yPixShift = y_mm * (static_cast<f32>(GetRobot().GetDisplayHeightInPixels()/4) / SCREEN_SIZE[1]);
+            GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
+                                                                                        "MoveHeadToAngleEyeShift",
+                                                                                        0,
+                                                                                        yPixShift,
+                                                                                        4*ANIM_TIME_STEP_MS);
+            
+            */
+            if(!_holdEyes) {
+              // Store the half the angle differene so we know when to remove eye shift
+              _halfAngle = 0.5f*(_headAngle - GetRobot().GetHeadAngle()).getAbsoluteVal();
+            }
+          }
+          _motionCommanded = true;
+        } else {
+          PRINT_PERIODIC_CH_DEBUG(10, "Actions", "MoveHeadToAngleAction.CheckIfDone.WaitingForStop",
+                                  "[%d] Waiting for head to stop moving before commanding action",
+                                  GetTag());
+        }
+        return result;
+      }
+
+
       if(!_inPosition) {
         _inPosition = IsHeadInPosition();
       }
@@ -1089,16 +1103,8 @@ namespace Anki {
         _heightTolerance = newHeightTolerance;
       }
       
+      _motionCommanded = false;
       _inPosition = IsLiftInPosition();
-      
-      if(!_inPosition) {
-        if(_robot.GetMoveComponent().MoveLiftToHeight(_heightWithVariation,
-                                                       _maxLiftSpeedRadPerSec,
-                                                       _liftAccelRacPerSec2,
-                                                       _duration) != RESULT_OK) {
-          result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
-        }
-      }
       
       return result;
     }
@@ -1107,20 +1113,28 @@ namespace Anki {
     {
       ActionResult result = ActionResult::RUNNING;
       
+      // Send motor command only after the lift has stopped moving so we 
+      // that we know for sure that subsequent motion is a result of this action.
+      if(!_motionCommanded && !_inPosition) { 
+        if(!GetRobot().GetMoveComponent().IsLiftMoving()) {
+          if(GetRobot().GetMoveComponent().MoveLiftToHeight(_heightWithVariation,
+                                                        _maxLiftSpeedRadPerSec,
+                                                        _liftAccelRacPerSec2,
+                                                        _duration) != RESULT_OK) {
+            result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
+          }
+          _motionCommanded = true;
+        } else {
+          PRINT_PERIODIC_CH_DEBUG(10, "Actions", "MoveLiftToHeightAction.CheckIfDone.WaitingForStop",
+                                  "[%d] Waiting for lift to stop moving before commanding action",
+                                  GetTag());
+        }
+        return result;
+      }
+
       if(!_inPosition) {
         _inPosition = IsLiftInPosition();
       }
-      
-      // TODO: Somehow verify robot got command to move lift before declaring success
-      /*
-       // Wait for the lift to start moving (meaning robot received command) and
-       // then stop moving
-       static bool liftStartedMoving = false;
-       if(!liftStartedMoving) {
-       liftStartedMoving = _robot.IsLiftMoving();
-       }
-       else
-       */
       
       if( _robot.GetMoveComponent().IsLiftMoving() ) {
         _motionStarted = true;
