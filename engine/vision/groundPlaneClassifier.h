@@ -44,6 +44,8 @@ public:
     return *(_classifier.get());
   }
 
+  static Vision::Image processClassifiedImage(const Vision::Image& binaryImage); //TODO remove static and put const
+
 protected:
   std::unique_ptr<DrivingSurfaceClassifier> _classifier;
   const CozmoContext* _context;
@@ -51,6 +53,7 @@ protected:
 
   void trainClassifier(const std::string& path);
   bool loadClassifier(const std::string& filename);
+
 };
 
 } // namespace Anki

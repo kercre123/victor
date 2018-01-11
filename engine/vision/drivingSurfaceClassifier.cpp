@@ -47,6 +47,27 @@ float DiagonalMahalanobisDistance(const float *input, const double *means, const
   return sum;
 }
 
+//int AppendFileToMatrix(const char *filename, cv::Mat& mat) {
+//
+//  std::ifstream file(filename);
+//  if (!file.is_open()) {
+//    PRINT_NAMED_ERROR("GMMDrivingSurfaceClassifier.TrainFromFiles.ErrorOpeningFile", "Error while opening file %s",
+//                      filename);
+//    return -1;
+//  }
+//
+//  int numElements = 0;
+//  using SingleRow = cv::Matx<float,1, 3>;
+//  while (! file.eof()) {
+//    int r, g, b;
+//    file >> r >> g >> b;
+//    mat.push_back(SingleRow(float(r), float(g), float(b)));
+//    numElements++;
+//  }
+////  numElements--; // remove last additional eof
+//  return numElements;
+//}
+
 int AppendFileToMatrix(const char *filename, cv::Mat& mat) {
 
   std::ifstream file(filename);
@@ -56,16 +77,28 @@ int AppendFileToMatrix(const char *filename, cv::Mat& mat) {
     return -1;
   }
 
+  std::string line;
   int numElements = 0;
-  using SingleRow = cv::Matx<float,1, 3>;
-  while (! file.eof()) {
-    int r, g, b;
-    file >> r >> g >> b;
-    mat.push_back(SingleRow(float(r), float(g), float(b)));
+  using SingleRow = cv::Mat_<float>;
+  while (std::getline(file, line)) {
+    if (line.size() == 0) {
+      break; // end of the file?
+    }
+    std::istringstream stream(line);
+
+    SingleRow row;
+    double x;
+    // assumes separator is white space
+    while (stream >> x) {
+      row.push_back(x);
+    }
+    SingleRow newrow = row.reshape(0, 1); // make the row flat
+    mat.push_back(newrow);
     numElements++;
   }
-  numElements--; // remove last addition at eof
+//  numElements--; // remove last addition at eof
   return numElements;
+
 }
 
 } // anonymous namespace
@@ -73,8 +106,6 @@ int AppendFileToMatrix(const char *filename, cv::Mat& mat) {
 /****************************************************************
  *                     DrivingSurfaceClassifier               *
  ****************************************************************/
-
-// TODO Implement serialization and deserialization, probably with a static factory here
 
 bool DrivingSurfaceClassifier::Train(const OverheadMap::PixelSet& drivablePixels,
                                      const OverheadMap::PixelSet& nonDrivablePixels)
@@ -115,7 +146,8 @@ bool DrivingSurfaceClassifier::Train(const OverheadMap::PixelSet& drivablePixels
   return Train(allInputs, allClasses, uint(drivablePixels.size()));
 }
 
-DrivingSurfaceClassifier::DrivingSurfaceClassifier(const CozmoContext *context) : _context(context)
+DrivingSurfaceClassifier::DrivingSurfaceClassifier(const CozmoContext *context)
+    : _context(context)
 {
 
 }
@@ -126,11 +158,12 @@ void DrivingSurfaceClassifier::GetTrainingData(cv::Mat& trainingSamples, cv::Mat
   trainingLabels = _trainingLabels;
 }
 
-std::vector<uchar> DrivingSurfaceClassifier::PredictClass(const std::vector<Anki::Vision::PixelRGB>& pixels) const
+std::vector<uchar> DrivingSurfaceClassifier::PredictClass(const std::vector<std::vector<u8>>& pixels) const
 {
   std::vector<uchar> responses;
   responses.reserve(pixels.size());
   for (const auto& pixel : pixels) {
+
     uchar predictedClass = PredictClass(pixel);
     responses.push_back(predictedClass);
   }
@@ -207,7 +240,7 @@ bool DrivingSurfaceClassifier::TrainFromFiles(const char *positiveDataFileName, 
     return false;
   }
 
-  // reshaping the matrix to be n x 3 with 1 channel
+  // reshaping the matrix to be n x m with 1 channel
   inputElements = inputElements.reshape(1);
 
   cv::Mat classes;
@@ -219,14 +252,42 @@ bool DrivingSurfaceClassifier::TrainFromFiles(const char *positiveDataFileName, 
 }
 
 // TODO Add a mask here to classify only certain pixels
-void DrivingSurfaceClassifier::classifyImage(const Vision::ImageRGB& image, Vision::Image& outputMask) const
+void DrivingSurfaceClassifier::ClassifyImage(const Vision::ImageRGB& image, Vision::Image& outputMask) const
 {
-  auto f = [this](const Vision::PixelRGB& pixel){
-    return u8(255 * this->PredictClass(pixel));
-  };
 
-  image.ApplyScalarFunction<u8>(f, outputMask);
+  s32 nrows = image.GetNumRows();
+  s32 ncols = image.GetNumCols();
+  DEV_ASSERT(outputMask.GetNumRows() == nrows && outputMask.GetNumCols() == ncols,
+             "DrivingSurfaceClassifier.ClassifyImage.ResultArraySizeMismatch");
 
+  if (_padding == 0) { //special case, way faster
+    auto f = [this](const Vision::PixelRGB& pixel) {
+      const std::vector<u8> input{pixel.r(), pixel.b(), pixel.g()};
+      return u8(255 * this->PredictClass(input));
+    };
+
+    image.ApplyScalarFunction<u8>(f, outputMask);
+  }
+
+  else {
+    // TODO Handle boundaries!
+    for (uint i = _padding; i < image.GetNumRows() - _padding - 1; i++) {
+      u8 *resultRow = outputMask.GetRow(i);
+      for (uint j = _padding; j < image.GetNumCols() - _padding - 1; j++) {
+        resultRow[j] = PredictClass(image, i, j);
+      }
+    }
+  }
+}
+
+uchar DrivingSurfaceClassifier::PredictClass(const Vision::ImageRGB& image, uint row, uint col) const
+{
+  cv::Mat submatrix = image.get_CvMat_()(cv::Range(row-_padding, row+_padding+1),
+                                         cv::Range(col-_padding, col+_padding+1)); // O(1) operation
+  std::vector<u8> vec;
+  submatrix.copyTo(vec); // Need to copy here, submatrix is probably not continuous
+  u8 res =  u8(255*this->PredictClass(vec));
+  return res;
 }
 
 /****************************************************************
@@ -432,10 +493,13 @@ bool LRDrivingSurfaceClassifier::Train(const cv::Mat& allInputs, const cv::Mat& 
   return true;
 }
 
-uchar LRDrivingSurfaceClassifier::PredictClass(const Vision::PixelRGB& pixel) const
+uchar LRDrivingSurfaceClassifier::PredictClass(const std::vector<u8>& values) const
 {
+  //TODO Assuming a single pixel here
+  DEV_ASSERT(values.size() == 3, "LRDrivingSurfaceClassifier.PredictClass.WrongInputSize");
+
   // Step 1: get the GMM response
-  const cv::Mat pixelMat = (cv::Mat_<float>(1,3) << pixel.r(), pixel.g(), pixel.b());
+  const cv::Mat pixelMat = (cv::Mat_<float>(1,3) << values[0], values[1], values[2]);
 
   // Step 2: calculate the Mahalanobis distance
   const std::vector<float> minDistances = this->MinMahalanobisDistanceFromGMM(pixelMat);
@@ -453,10 +517,13 @@ uchar LRDrivingSurfaceClassifier::PredictClass(const Vision::PixelRGB& pixel) co
  *                     THDrivingSurfaceClassifier               *
  ****************************************************************/
 
-uchar THDrivingSurfaceClassifier::PredictClass(const Vision::PixelRGB& pixel) const
+uchar THDrivingSurfaceClassifier::PredictClass(const std::vector<u8>& values) const
 {
+  //TODO Assuming a single pixel here
+  DEV_ASSERT(values.size() == 3, "LRDrivingSurfaceClassifier.PredictClass.WrongInputSize");
+
   // Step 1: get the GMM response
-  const cv::Mat pixelMat = (cv::Mat_<float>(1,3) << pixel.r(), pixel.g(), pixel.b());
+  const cv::Mat pixelMat = (cv::Mat_<float>(1,3) << values[0], values[1], values[2]);
 
   // Step 2: calculate the Mahalanobis distance
   const std::vector<float> minDistances = this->MinMahalanobisDistanceFromGMM(pixelMat);
@@ -575,19 +642,30 @@ DTDrivingSurfaceClassifier::DTDrivingSurfaceClassifier(const std::string& serial
   }
 }
 
-uchar DTDrivingSurfaceClassifier::PredictClass(const Vision::PixelRGB& pixel) const
+uchar DTDrivingSurfaceClassifier::PredictClass(const std::vector<u8>& values) const
 {
-  const cv::Mat pixelMat = (cv::Mat_<float>(1,3) << pixel.r(), pixel.g(), pixel.b());
+
+  DEV_ASSERT(values.size() == (2*_padding + 1)*3, "DTDrivingSurfaceClassifier.PredictClass.WrongInputSize");
+
+  cv::Mat_<float> inputRow(1, int(values.size()));
+  auto rowItr = inputRow.begin();
+  auto valuesItr = values.begin();
+  // copying all the elements into a mat
+  for (; valuesItr != values.end(); valuesItr++, rowItr++) {
+    *rowItr = float(*valuesItr);
+  }
+
   std::vector<float> result;
-  _dtree->predict(pixelMat, result);
+  _dtree->predict(inputRow, result);
 
   DEV_ASSERT(result.size() == 1, "DTDrivingSurfaceClassifier.PredictClass.EmptyResultVector");
   return uchar(result[0]);
 }
 
-bool DTDrivingSurfaceClassifier::Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint numberOfPositives)
+bool DTDrivingSurfaceClassifier::Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint)
 {
-  DEV_ASSERT(allInputs.cols == 3, "Input matrix must have 3 columns");
+
+  DEV_ASSERT(allInputs.cols % 3 == 0, "Input matrix must have a multiple of 3 columns");
   DEV_ASSERT(allInputs.channels() == 1, "Input matrix must have 1 channel");
   DEV_ASSERT(allInputs.type() == CV_32F, "Input matrix must have CV_32F type");
   DEV_ASSERT(allInputs.isContinuous(), "Input matrix must be continuous");
@@ -604,7 +682,7 @@ bool DTDrivingSurfaceClassifier::Train(const cv::Mat& allInputs, const cv::Mat& 
   allClasses.convertTo(categoricalClasses, CV_32S);
 
   _trainingSamples = allInputs;
-  _trainingLabels = allClasses;
+  _trainingLabels = categoricalClasses;
 
   // create the training data structure
   const cv::Ptr<cv::ml::TrainData> trainingData = cv::ml::TrainData::create(allInputs,

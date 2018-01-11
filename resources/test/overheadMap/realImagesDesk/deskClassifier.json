@@ -28,7 +28,7 @@ nodes:
       value: 0.
       norm_class_idx: 0
       splits:
-         - { var:0, quality:1.2793118750000000e+05,
+         - { var:0, quality:1.2793043750000000e+05,
              le:1.3750000000000000e+02 }
    -
       depth: 1
@@ -2116,7 +2116,7 @@ nodes:
       value: 1.
       norm_class_idx: 1
       splits:
-         - { var:2, quality:8.0200304687500000e+04,
+         - { var:2, quality:8.0198390625000000e+04,
              le:7.6500000000000000e+01 }
    -
       depth: 2
@@ -3724,7 +3724,7 @@ nodes:
       value: 0.
       norm_class_idx: 0
       splits:
-         - { var:0, quality:3.2581978515625000e+04,
+         - { var:0, quality:3.2580382812500000e+04,
              le:2.1150000000000000e+02 }
    -
       depth: 3
@@ -4378,7 +4378,7 @@ nodes:
       value: 0.
       norm_class_idx: 0
       splits:
-         - { var:2, quality:1.2767340820312500e+04,
+         - { var:2, quality:1.2765391601562500e+04,
              le:9.6500000000000000e+01 }
    -
       depth: 4
@@ -4760,7 +4760,7 @@ nodes:
       value: 0.
       norm_class_idx: 0
       splits:
-         - { var:0, quality:1.0055863281250000e+04,
+         - { var:0, quality:1.0054722656250000e+04,
              le:2.5150000000000000e+02 }
    -
       depth: 5
@@ -5023,7 +5023,7 @@ nodes:
       value: 0.
       norm_class_idx: 0
       splits:
-         - { var:2, quality:1.4334461669921875e+03,
+         - { var:2, quality:1.4314755859375000e+03,
              le:1.6250000000000000e+02 }
    -
       depth: 6
@@ -5155,14 +5155,14 @@ nodes:
       value: 0.
       norm_class_idx: 0
       splits:
-         - { var:2, quality:6.3845159912109375e+02,
+         - { var:2, quality:6.3655395507812500e+02,
              le:1.8350000000000000e+02 }
    -
       depth: 7
       value: 0.
       norm_class_idx: 0
       splits:
-         - { var:0, quality:1.9469999694824219e+02,
+         - { var:0, quality:1.9398321533203125e+02,
              le:2.5450000000000000e+02 }
    -
       depth: 8
@@ -5206,7 +5206,7 @@ nodes:
       value: 0.
       norm_class_idx: 0
       splits:
-         - { var:1, quality:1.0280154418945312e+02,
+         - { var:1, quality:1.0275558471679688e+02,
              le:2.5450000000000000e+02 }
    -
       depth: 9
@@ -5228,7 +5228,7 @@ nodes:
       value: 1.
       norm_class_idx: 1
       splits:
-         - { var:2, quality:4.0612243652343750e+01,
+         - { var:2, quality:4.0297958374023438e+01,
              le:1.7550000000000000e+02 }
    -
       depth: 10

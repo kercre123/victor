@@ -29,6 +29,32 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace
+{
+template<typename T>
+void convertToVector(const cv::Mat& mat, std::vector<std::vector<u8>>& vec)
+{
+  DEV_ASSERT(mat.type() == cv::DataType<T>::type, "convertTo.WrongMatrixType");
+
+  int nRows = mat.rows;
+  int nCols = mat.cols;
+  vec.clear();
+  vec.reserve(nRows);
+
+  for(int i = 0; i < nRows; ++i)
+  {
+    const T* p = mat.ptr<T>(i);
+    std::vector<u8> singleRow;
+    singleRow.reserve(nRows);
+    for (int j = 0; j < nCols; ++j)
+    {
+      singleRow.push_back(cv::saturate_cast<u8>(p[j]));
+    }
+    vec.push_back(singleRow);
+  }
+}
+} // anonymous namespace
+
 GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const CozmoContext *context)
 : _context(context)
 {
@@ -90,8 +116,9 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   const Vision::ImageRGB groundPlaneImage = groundPlaneROI.GetOverheadImage(image, H);
 
   // STEP 2: Classify the overhead image
-  Vision::Image classifiedMask(groundPlaneImage.GetNumRows(), groundPlaneImage.GetNumCols(), u8(0));
-  _classifier->classifyImage(groundPlaneImage, classifiedMask);
+  Vision::Image rawClassifiedImage(groundPlaneImage.GetNumRows(), groundPlaneImage.GetNumCols(), u8(0));
+  _classifier->ClassifyImage(groundPlaneImage, rawClassifiedImage);
+  const Vision::Image classifiedMask = processClassifiedImage(rawClassifiedImage);
 
   // STEP 3: Find leading edge in the classified mask (i.e. closest edge of obstacle to robot)
   OverheadEdgeFrame edgeFrame;
@@ -194,6 +221,22 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   return RESULT_OK;
 }
 
+Vision::Image GroundPlaneClassifier::processClassifiedImage(const Vision::Image& binaryImage)
+{
+  Vision::Image clone;
+  binaryImage.CopyTo(clone);
+  cv::Mat_<u8> cvImage = binaryImage.get_CvMat_();
+
+  cv::morphologyEx(cvImage, cvImage,
+                   cv::MORPH_OPEN,
+                   cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3,3)),
+                   cv::Point(-1, -1),
+                   0
+  );
+
+  return Vision::Image(cvImage);
+}
+
 void GroundPlaneClassifier::trainClassifier(const std::string& path)
 {
   const std::string positivePath = Anki::Util::FileUtils::FullFilePath({path, "positivePixels.txt"});
@@ -208,20 +251,25 @@ void GroundPlaneClassifier::trainClassifier(const std::string& path)
     cv::Mat trainingSamples, trainingLabels;
     _classifier->GetTrainingData(trainingSamples, trainingLabels);
 
-    // building a std::vector<Vision::PixelRGB>
-    std::vector<Anki::Vision::PixelRGB> pixels;
-    {
-      pixels.reserve(trainingSamples.rows);
-      const cv::Vec3f* data = trainingSamples.ptr<cv::Vec3f>(0);
-      for (int i = 0; i < trainingSamples.rows; ++i) {
-        const cv::Vec3f& vec = data[i];
-        pixels.emplace_back(vec[0], vec[1], vec[2]);
-      }
-    }
+    // building a std::vector<std::vector<u8>>
+    std::vector<std::vector<u8>> values;
+    values.reserve(trainingSamples.rows);
+    convertToVector<float>(trainingSamples, values);
+
+//    trainingSamples.convertTo(values, CV_8U);
+
+//    for (int i = 0; i < trainingSamples.rows; ++i) {
+//      const cv::Mat rowI = trainingSamples.row(i);
+//      rowI
+//
+//        const cv::Vec3f& vec = data[i];
+//        pixels.emplace_back(vec[0], vec[1], vec[2]);
+//      }
+//    }
 
     // calculate error
-    std::vector<uchar> responses = _classifier->PredictClass(pixels);
-    cv::Mat responsesMat(responses);
+    const std::vector<uchar> responses = _classifier->PredictClass(values);
+    const cv::Mat responsesMat(responses);
 
     const float error = Anki::calculateError(responsesMat, trainingLabels);
     PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.Train.ErrorLevel", "Error after training is: %f", error);
