@@ -641,7 +641,7 @@ namespace CodeLab {
         cubeDest.pos.Set(EnginePosToCodeLabPos(cubeSrc.WorldPosition));
         cubeDest.camPos.Set(cubeSrc.VizRect.center);
         cubeDest.isValid = true;
-        const int kMaxVisionFramesSinceSeeingCube = 30;
+        const int kMaxVisionFramesSinceSeeingCube = 5;
         cubeDest.isVisible = (cubeSrc.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingCube);
         // All cube angles are in 0..360 range so must be re-mapped to match robot angle range
         cubeDest.pitch_d = ValueSanitizer.SanitizeFloat(Convert360AngleToMinus180To180(cubeSrc.PitchDegrees));
@@ -703,7 +703,7 @@ namespace CodeLab {
         // Set Face data
 
         Face face = InProgressScratchBlock.GetMostRecentlySeenFace();
-        const int kMaxVisionFramesSinceSeeingFace = 30;
+        const int kMaxVisionFramesSinceSeeingFace = 5;
         if (face != null) {
           _LatestCozmoState.face.pos.Set(EnginePosToCodeLabPos(face.WorldPosition));
           _LatestCozmoState.face.camPos.Set(face.VizRect.center);
