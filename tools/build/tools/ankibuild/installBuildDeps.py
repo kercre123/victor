@@ -29,7 +29,9 @@ class DependencyInstaller(object):
 
   def isPythonPackageInstalled(self, package, version):
     pip = 'pip' + str(version)
-    allPackages = subprocess.check_output([pip, 'list', '--format=columns'])
+    # this prints a warning that can be disabled with '--format=columns',
+    # but that param isn't supported by older versions of pip
+    allPackages = subprocess.check_output([pip, 'list'])
     isInstalled = package in allPackages
     return isInstalled
 
