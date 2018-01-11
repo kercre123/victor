@@ -1033,16 +1033,23 @@ namespace CodeLab {
     }
 
     private void ExecuteAllQueuedScratchRequests() {
-      if (UpdateIsGettingOffCharger()) {
-        // Wait until Cozmo is off the charger
-        DAS.Info("CodeLab.ExecuteAllQueuedScratchRequests.Wait", "Queue length = " + _queuedScratchRequests.Count.ToString());
-      }
-      else {
-        DAS.Info("CodeLab.ExecuteAllQueuedScratchRequests.Exec", "Queue length = " + _queuedScratchRequests.Count.ToString());
-        // Unqueue all requests (could be one per green-flag in the case of parallel scripts)
-        while (_queuedScratchRequests.Count > 0) {
-          var scratchRequest = _queuedScratchRequests.Dequeue();
-          DAS.Info("CodeLab.ExecuteAllQueuedScratchRequests.UnQueue", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId);
+      DAS.Info("CodeLab.ExecuteAllQueuedScratchRequests.Exec", "Queue length = " + _queuedScratchRequests.Count.ToString());
+      // Unqueue all requests (could be one per stack (hat-block) in the case of parallel scripts)
+      // stop unquing if a request requires Cozmo to drive off the charger
+      while (_queuedScratchRequests.Count > 0) {
+        var scratchRequest = _queuedScratchRequests.Peek();
+        if (UpdateIsGettingOffCharger(scratchRequest)) {
+          // Cozmo is now getting off the charger - this and other actions will be
+          // dequeued automatically once Cozmo is off the charger
+          DAS.Info("CodeLab.ExecuteAllQueuedScratchRequests.WaitUntilOffCharger",
+                   "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId);
+          return;
+        }
+        else {
+          scratchRequest = _queuedScratchRequests.Dequeue();
+
+          DAS.Info("CodeLab.ExecuteAllQueuedScratchRequests.UnQueue",
+                   "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId);
 
           HandleBlockScratchRequest(scratchRequest);
         }
@@ -1677,16 +1684,52 @@ namespace CodeLab {
       ExecuteAllQueuedScratchRequests();
     }
 
-    private bool UpdateIsGettingOffCharger() {
+    private bool IsScratchRequestToGetOffCharger(ScratchRequest scratchRequest) {
+      switch (scratchRequest.command) {
+      case "cozmoDriveForward":
+      case "cozmoDriveForwardFast":
+        return true;
+      case "cozVertDrive": {
+          // Only if driving forwards
+          float dist_mm = ClampDistanceInput(scratchRequest.argFloat);
+          return (dist_mm > 1.0);
+        }
+      case "cozVertDriveWheels": {
+          // only if both wheels are moving forward, at a similar speed
+          float leftSpeed = ClampSpeedInput(scratchRequest.argFloat);
+          float rightSpeed = ClampSpeedInput(scratchRequest.argFloat2);
+          if ((leftSpeed >= kMinSpeedClamp) && (rightSpeed >= kMinSpeedClamp)) {
+            // both wheels are driving forwards - check that they're far (not turning too sharply)oo sharply)
+            float wheelSpeedRatio = leftSpeed / rightSpeed;
+            const float kMinSpeedRatio = 0.8f;
+            const float kMaxSpeedRatio = 1.0f / kMinSpeedRatio;
+            if ((wheelSpeedRatio >= kMinSpeedRatio) && (wheelSpeedRatio <= kMaxSpeedRatio)) {
+              // wheel speeds are sufficiently similar
+              return true;
+            }
+          }
+          return false;
+        }
+      default:
+        return false;
+      }
+    }
+
+    private bool UpdateIsGettingOffCharger(ScratchRequest scratchRequest) {
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot == null) {
         return false;
       }
       bool isOnCharger = ((robot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0);
       if (isOnCharger && !_IsDrivingOffCharger) {
-        DAS.Info("CodeLab.DriveOffCharger", "");
-        _IsDrivingOffCharger = true;
-        robot.DriveOffChargerContacts(callback: OnDrivingOffChargerCompleted, queueActionPosition: QueueActionPosition.IN_PARALLEL);
+        // Only start driving off the charger if the block is an intent to drive off 
+        // otherwise just let the block run (actions that drive prohibited motors will automatically abort anyway)
+        bool shouldGetOffChargerFirst = IsScratchRequestToGetOffCharger(scratchRequest);
+        if (shouldGetOffChargerFirst) {
+          DAS.Info("CodeLab.DriveOffCharger", "");
+          _IsDrivingOffCharger = true;
+          robot.DriveOffChargerContacts(callback: OnDrivingOffChargerCompleted, queueActionPosition: QueueActionPosition.IN_PARALLEL);
+        }
       }
       return _IsDrivingOffCharger;
     }
@@ -1748,7 +1791,7 @@ namespace CodeLab {
           // Handled - continue
         }
         else {
-          if (IsResettingToHomePose() || UpdateIsGettingOffCharger()) {
+          if (IsResettingToHomePose() || UpdateIsGettingOffCharger(scratchRequest)) {
             // Any requests from Scratch that occur whilst Cozmo is resetting to home pose are queued
             string safeArgString = PrivacyGuard.HidePersonallyIdentifiableInfo(scratchRequest.argString);
             DAS.Info("CodeLab.QueueScratchReq", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId + ", argString = " + safeArgString);
