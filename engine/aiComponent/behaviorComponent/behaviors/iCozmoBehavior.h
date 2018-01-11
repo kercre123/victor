@@ -92,8 +92,10 @@ public:
   // returns true if the behavior has delegated control to a helper/action/behavior
   bool IsControlDelegated() const;
   
-  // returns true if any action from StartAction is currently running, indicating that the behavior is
-  // likely waiting for something to complete
+  // DEPRECATED: use IsControlDelegated() instead
+  // returns true iff: 
+  // + behavior delegated to an Action,
+  // + the Action is still running
   bool IsActing() const;
 
   // returns the number of times this behavior has been started (number of times Init was called and returned
