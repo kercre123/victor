@@ -18,7 +18,7 @@
 
 #include "coretech/messaging/shared/UdpServer.h"
 
-#include "cozmoAnim/engineMessages.h"
+#include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/micDataProcessor.h"
@@ -35,7 +35,7 @@
 #include "util/math/math.h"
 #include "util/threading/threadPriority.h"
 
-#include "clad/robotInterface/messageRobotToEngine_sendToEngine_helper.h"
+#include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 
 #include <iomanip>
 #include <sstream>
@@ -663,7 +663,7 @@ void MicDataProcessor::Update()
     {
       msg.result[i] = result[i];
     }
-    RobotInterface::SendMessageToEngine(std::move(msg));
+    RobotInterface::SendAnimToEngine(std::move(msg));
 
 
     _fftResultMutex.lock();
@@ -759,7 +759,7 @@ void MicDataProcessor::Update()
   {
     if (msg->tag == RobotInterface::RobotToEngine::Tag_triggerWordDetected)
     {
-      RobotInterface::SendMessageToEngine(msg->triggerWordDetected);
+      RobotInterface::SendAnimToEngine(msg->triggerWordDetected);
     }
     else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
     {
@@ -767,7 +767,7 @@ void MicDataProcessor::Update()
         micDirectionData = msg->micDirection;
         updatedMicDirection = true;
       #endif
-      RobotInterface::SendMessageToEngine(msg->micDirection);
+      RobotInterface::SendAnimToEngine(msg->micDirection);
     }
     else
     {

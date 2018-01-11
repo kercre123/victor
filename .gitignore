@@ -399,3 +399,9 @@ unity/Cozmo/Assets/StreamingAssets/Scratch/lib/closure-library.meta
 unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm/dist/web/scratch-vm.js.map
 unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm/dist/web/scratch-vm.js.map.meta
 .vscode
+
+# Xamarin
+xamarin/victor/Droid/bin
+xamarin/victor/Droid/obj
+xamarin/victor/iOS/bin
+xamarin/victor/iOS/obj

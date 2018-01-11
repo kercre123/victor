@@ -24,6 +24,7 @@
 #include "engine/robot.h"
 
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/helpers/boundedWhile.h"
 
 
@@ -106,4 +107,46 @@ TEST(DelegationTree, DesignedControlTest)
   // are met. E.G. every behavior must be able to transition to V.C. when
   // necessary.
   
+}
+
+TEST(DelegationTree, DumpBehaviorTransitionsToFile)
+{
+  // the accompanying python script will be looking for this file
+  std::string outFilename;
+  char* szFilename = getenv("ANKI_TEST_BEHAVIOR_FILE");
+  if( szFilename != nullptr ) {
+    outFilename = szFilename;
+  } else {
+    return;
+  }
+  
+  TestBehaviorFramework testFramework;
+  testFramework.InitializeStandardBehaviorComponent();
+  
+  const auto* dataLoader = testFramework.GetRobot().GetContext()->GetDataLoader();
+  ASSERT_NE( dataLoader, nullptr ) << "Cannot test behaviors if no data loader exists";
+  
+  const auto& bc = testFramework.GetBehaviorContainer();
+  const auto& behaviorMap = bc.GetBehaviorMap();
+  
+  std::stringstream ss;
+  
+  for( const auto& behPair : behaviorMap ) {
+    
+    std::string id = Anki::Cozmo::BehaviorTypesWrapper::BehaviorIDToString( behPair.first );
+    const ICozmoBehaviorPtr behavior = behPair.second;
+    
+    std::set<IBehavior*> delegates;
+    behavior->GetAllDelegates( delegates );
+    for( const auto* delegate : delegates ) {
+      
+      const std::string& outId = delegate->GetPrintableID();
+      ss << id << " " << outId << std::endl;
+      
+    }
+    
+  }
+  
+  auto res = Anki::Util::FileUtils::WriteFile( outFilename, ss.str() );
+  EXPECT_EQ(res, true) << "Error writing file " << outFilename;
 }
