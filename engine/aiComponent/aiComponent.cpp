@@ -205,7 +205,7 @@ Result AIComponent::Update(Robot& robot, std::string& currentActivityName,
   }
   
   CheckForSuddenObstacle(robot);
-   
+
   return RESULT_OK;
 }
 

@@ -28,6 +28,7 @@ function usage()
 #
 FORCE_PUSH_ASSETS=0
 REMOVE_ALL_ASSETS=0
+: ${INSTALL_ROOT:="/data/data/com.anki.cozmoengine"}
 
 while getopts ":hfx" opt; do
   case ${opt} in
@@ -99,7 +100,7 @@ fi
 
 SOURCE_HASH=$(cat ${SOURCE_ASSET_HASH_FILE})
 
-DEVICE_ASSET_ROOT_DIR="/data/data/com.anki.cozmoengine/files/assets"
+DEVICE_ASSET_ROOT_DIR="${INSTALL_ROOT}/files/assets"
 DEVICE_ASSET_DIR="$DEVICE_ASSET_ROOT_DIR/$SOURCE_HASH"
 DEVICE_ASSET_TMP_DIR="$DEVICE_ASSET_ROOT_DIR/_tmp"
 

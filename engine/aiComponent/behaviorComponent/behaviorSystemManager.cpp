@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -66,6 +67,13 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
   DEV_ASSERT(_initializationStage == InitializationStage::SystemNotInitialized &&
              baseBehavior != nullptr,
              "BehaviorSystemManager.InitConfiguration.AlreadyInitialized");
+
+  // If this is the factory test forcibly set baseBehavior as playpen
+  if(FACTORY_TEST)
+  {
+    baseBehavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PlaypenTest)).get();
+    DEV_ASSERT(baseBehavior != nullptr, "BehaviorSystemManager.InitConfiguration.ForcingPlaypen.Null");
+  }
 
   // Assumes there's only one instance of the behavior external Intarfec
   _behaviorExternalInterface = &behaviorExternalInterface;

@@ -12,6 +12,9 @@
  *
  **/
 
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorDance_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorDance_H__
+
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
 
 namespace Anki {
@@ -45,3 +48,5 @@ private:
   
 }
 }
+
+#endif //__Cozmo_Basestation_Behaviors_BehaviorDance_H__

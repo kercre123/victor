@@ -328,6 +328,7 @@ namespace Cozmo {
       
       AnimationTag _eyeShiftTag = kNotAnimatingTag;
       
+      bool        _motionCommanded = false;
       bool        _motionStarted = false;
       
     };  // class MoveHeadToAngleAction
@@ -378,6 +379,7 @@ namespace Cozmo {
       f32         _liftAccelRacPerSec2 = 20.0f;
       
       bool        _inPosition;
+      bool        _motionCommanded = false;      
       bool        _motionStarted = false;
       
     }; // class MoveLiftToHeightAction

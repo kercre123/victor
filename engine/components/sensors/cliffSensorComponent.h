@@ -34,6 +34,7 @@ public:
   static_assert(std::is_same<CliffSensorDataArray, decltype(RobotState::cliffDataRaw)>::value, "CliffSensorDataArray must be same as type used in RobotState");
 
   CliffSensorComponent(Robot& robot);
+
   ~CliffSensorComponent() = default;
 
 protected:
@@ -43,6 +44,8 @@ protected:
   virtual std::string GetLogRow() override;
 
 public:
+
+  void SetPause(bool b) { _isPaused = b; }
   
   bool IsCliffSensorEnabled() const { return _enableCliffSensor; }
   void SetEnableCliffSensor(const bool val) { _enableCliffSensor = val; }
@@ -74,6 +77,8 @@ private:
   void QueueCliffThresholdUpdate();
   
   void SetCliffDetectThreshold(unsigned int ind, uint16_t newThresh);
+  
+  bool _isPaused = false;
   
   bool _enableCliffSensor = true;
   bool _isCliffDetected = false;

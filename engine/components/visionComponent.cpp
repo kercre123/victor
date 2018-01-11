@@ -213,6 +213,14 @@ namespace Cozmo {
     const bool calibChanged = _camera.SetCalibration(camCalib);
     if(calibChanged)
     {
+      // Stop the visionSystem before updating calibration
+      // New calibration causes MarkerDetector's embedded memory to be reset
+      // which could happen while it is running so we need to stop it first
+      if(!_isSynchronous)
+      {
+        Stop();
+      }
+      
       Lock();
       _visionSystem->UpdateCameraCalibration(camCalib);
       Unlock();
@@ -518,15 +526,22 @@ namespace Cozmo {
       }
       else
       {
-        PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
-                       "CapturedImageTime:%d NewestStateInHistory:%d",
-                       _bufferedImg.GetTimestamp(), _robot.GetStateHistory()->GetNewestTimeStamp());
+        // These messages are too spammy for factory test
+        if(!FACTORY_TEST)
+        {
+          PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
+                         "CapturedImageTime:%d NewestStateInHistory:%d",
+                         _bufferedImg.GetTimestamp(), _robot.GetStateHistory()->GetNewestTimeStamp());
+        }
       }
     }
     else
     {
-      PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForBufferedImage", "Tick:%zu",
-                     BaseStationTimer::getInstance()->GetTickCount());
+      if(!FACTORY_TEST)
+      {
+        PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForBufferedImage", "Tick:%zu",
+                       BaseStationTimer::getInstance()->GetTickCount());
+      }
     }
     
     return RESULT_OK;
@@ -1629,6 +1644,14 @@ namespace Cozmo {
       std::vector<u8> imgVec;
       cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));
       
+      Vision::Image imgUndistorted(img.GetNumRows(),img.GetNumCols());
+      cv::undistort(img.get_CvMat_(), imgUndistorted.get_CvMat_(),
+                    _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
+                    _camera.GetCalibration()->GetDistortionCoeffs());
+      
+      std::vector<u8> imgVecUndistort;
+      cv::imencode(".jpg", imgUndistorted.get_CvMat_(), imgVecUndistort, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));
+
       /*
       std::string imgFilename = "savedImg_" + std::to_string(imgIdx) + ".jpg";
       FILE* fp = fopen(imgFilename.c_str(), "w");
@@ -1637,6 +1660,7 @@ namespace Cozmo {
       */
       
       rawJpegData.emplace_back(std::move(imgVec));
+      rawJpegData.emplace_back(std::move(imgVecUndistort));
       
       ++imgIdx;
     }

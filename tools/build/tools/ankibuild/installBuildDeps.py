@@ -27,6 +27,13 @@ class DependencyInstaller(object):
         return False
     return True
 
+  def isPythonPackageInstalled(self, package, version):
+    pip = 'pip' + str(version)
+    # this prints a warning that can be disabled with '--format=columns',
+    # but that param isn't supported by older versions of pip
+    allPackages = subprocess.check_output([pip, 'list'])
+    isInstalled = package in allPackages
+    return isInstalled
 
   def testHomebrew(self):
     """Test if homebrew is installed.  Installing this directly now requires user input."""
@@ -50,6 +57,20 @@ class DependencyInstaller(object):
         print "Error: %s still not installed!" % tool
         return False
     return True
+
+  def installPythonPackage(self, package, version):
+    if not self.isPythonPackageInstalled(package, version):
+      print "Installing %s" % package
+      pip = 'pip' + str(version)
+      result = subprocess.call([pip, 'install', package])
+      if result:
+        print("Error: Failed to install python{0} package {1}!".format(version, package))
+        return False
+      if not self.isPythonPackageInstalled(package, version):
+        print("Error: python{0} package {1} still not installed!".format(version, package))
+        return False
+    return True
+
 
   def addEnvVariable(self, env_name, env_value):
     """ Adds an Env variable to bash profile & sets it for the run of the script.
@@ -97,11 +118,20 @@ class DependencyInstaller(object):
   def install(self):
     homebrew_deps = self.options.deps
 
+    python2_deps = self.options.python2_deps
+    python3_deps = self.options.python3_deps
+
     if not self.testHomebrew():
       return False
 
     for tool in homebrew_deps:
       if not self.installTool(tool):
+        return False
+    for package in python2_deps:
+      if not self.installPythonPackage(package, 2):
+        return False
+    for package in python3_deps:
+      if not self.installPythonPackage(package, 3):
         return False
     return True
 
@@ -113,6 +143,10 @@ def parseArgs(scriptArgs):
                       help='prints extra output')
   parser.add_argument('--dependencies', '-d', dest='deps', action='store', nargs='+',
                       help='list of dependencies to check and install')
+  parser.add_argument('--pip2', dest='python2_deps', action='store', nargs='+',
+                      help='list of python2 packages to check and install via pip2')
+  parser.add_argument('--pip3', dest='python3_deps', action='store', nargs='+',
+                      help='list of python3 packages to check and install via pip3')
 
   (options, args) = parser.parse_known_args(scriptArgs)
   return options

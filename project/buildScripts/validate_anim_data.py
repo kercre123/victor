@@ -158,7 +158,7 @@ def check_audio_events_all_anims(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
     """
 
     # Get a list of all available audio events
-    local_soundbanks_xml_file = os.path.join(externals_dir, audio_assets_dir, 'metadata', 'mac', soundbanks_xml_file)
+    local_soundbanks_xml_file = os.path.join(externals_dir, audio_assets_dir, 'metadata', 'Mac', soundbanks_xml_file)
     if os.path.isfile(local_soundbanks_xml_file):
         soundbanks_xml_file = local_soundbanks_xml_file
     else:
