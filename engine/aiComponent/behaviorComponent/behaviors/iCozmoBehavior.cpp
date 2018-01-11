@@ -69,7 +69,7 @@ static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCh
 static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
 static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
-static const char* kWantsToRunStrategyConfigKey      = "wantsToRunStrategyConfig";
+static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondition";
 static const char* kRespondToCloudIntentKey          = "respondToCloudIntent";
 static const std::string kIdleLockPrefix             = "Behavior_";
 
@@ -254,9 +254,9 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
   
-  if(config.isMember(kWantsToRunStrategyConfigKey)){
-    _wantsToBeActivatedStrategies.push_back(
-      BEIConditionFactory::CreateBEICondition( config[kWantsToRunStrategyConfigKey] ) );
+  if(config.isMember(kWantsToBeActivatedCondConfigKey)){
+    _wantsToBeActivatedConditions.push_back(
+      BEIConditionFactory::CreateBEICondition( config[kWantsToBeActivatedCondConfigKey] ) );
   }
 
   if(config.isMember(kAnonymousBehaviorMapKey)){
@@ -281,7 +281,7 @@ ICozmoBehavior::~ICozmoBehavior()
 void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {  
   {
-    for( auto& strategy : _wantsToBeActivatedStrategies ) {
+    for( auto& strategy : _wantsToBeActivatedConditions ) {
       strategy->Init(behaviorExternalInterface);
     }
 
@@ -289,7 +289,7 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
       Json::Value config = ConditionCloudIntentPending::GenerateCloudIntentPendingConfig(_respondToCloudIntent);
       IBEIConditionPtr strategy(BEIConditionFactory::CreateBEICondition(config));
       strategy->Init(behaviorExternalInterface);
-      _wantsToBeActivatedStrategies.push_back(strategy);
+      _wantsToBeActivatedConditions.push_back(strategy);
     }
 
   }
@@ -436,7 +436,7 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
     infoProcessor.AddEnableRequest(_requiredProcess, GetIDStr().c_str());
   }
 
-  for( auto& strategy : _wantsToBeActivatedStrategies ) {
+  for( auto& strategy : _wantsToBeActivatedConditions ) {
     strategy->Reset(GetBEI());
   }
 }
@@ -614,7 +614,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
     }
   }
 
-  for(auto& strategy: _wantsToBeActivatedStrategies){
+  for(auto& strategy: _wantsToBeActivatedConditions){
     if(!strategy->AreConditionsMet(behaviorExternalInterface)){
       return false;
     }

@@ -2,7 +2,7 @@
   "behaviorClass": "PlayAnim",
   "behaviorID": "ExamplePetInitialDetection",
   "animTriggers": ["OnboardingReactToCube"],
-  "wantsToRunStrategyConfig": {
-    "strategyType" : "PetInitialDetection"
+  "wantsToBeActivatedCondition": {
+    "conditionType" : "PetInitialDetection"
   }  
 }

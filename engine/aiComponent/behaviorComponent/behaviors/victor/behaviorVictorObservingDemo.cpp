@@ -776,10 +776,10 @@ BehaviorVictorObservingDemo::StateID BehaviorVictorObservingDemo::ParseStateFrom
 
 IBEIConditionPtr BehaviorVictorObservingDemo::ParseTransitionStrategy(const Json::Value& transitionConfig)
 {
-  const Json::Value& strategyConfig = transitionConfig["strategy"];
+  const Json::Value& strategyConfig = transitionConfig["condition"];
   if( strategyConfig.isObject() ) {
     // create state concept strategy from config
-    return BEIConditionFactory::CreateBEICondition(transitionConfig["strategy"]);
+    return BEIConditionFactory::CreateBEICondition(transitionConfig["condition"]);
   }
   else {
     // use code-defined named strategy
