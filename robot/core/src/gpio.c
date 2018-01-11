@@ -10,7 +10,7 @@
 #include "core/common.h"
 
 
-#define GPIO_BASE_OFFSET 911
+static int GPIO_BASE_OFFSET = -1;
 
 struct GPIO_t
 {
@@ -19,15 +19,43 @@ struct GPIO_t
   bool isOpenDrain;
 };
 
+int gpio_get_base_offset()
+{
+  if (GPIO_BASE_OFFSET < 0) {
+    // gpio pinctrl for msm8909:
+    // oe-linux/3.18: /sys/devices/soc/1000000.pinctrl/gpio/gpiochip0/base     -> 0
+    // android/3.10:  /sys/devices/soc.0/1000000.pinctrl/gpio/gpiochip911/base -> 911
+
+    // Assume we are on an OE-linux system
+    int fd = open("/sys/devices/soc/1000000.pinctrl/gpio/gpiochip0/base", O_RDONLY);
+    if (fd < 0) {
+      // Fallback to Android
+      fd = open("/sys/devices/soc.0/1000000.pinctrl/gpio/gpiochip911/base", O_RDONLY);
+    }
+
+    if (fd < 0) {
+      error_exit(app_DEVICE_OPEN_ERROR, "can't access gpiochip base [%d]", errno);
+    }
+
+    int base = -1;
+    char base_buf[5] = {0};
+    int r = read(fd, base_buf, sizeof(base_buf));
+    if (r > 0) {
+      GPIO_BASE_OFFSET = atoi(base_buf);
+    }
+  }
+
+  return GPIO_BASE_OFFSET;
+}
+
 GPIO gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initial_value) {
    char ioname[32];
    GPIO gp  = malloc(sizeof(struct GPIO_t));
    if (!gp) error_exit(app_MEMORY_ERROR, "can't alloc memory for gpio %d", gpio_number);
 
-
    //create io
    int fd = open("/sys/class/gpio/export", O_WRONLY);
-   snprintf(ioname, 32, "%d\n", gpio_number+GPIO_BASE_OFFSET);
+   snprintf(ioname, 32, "%d\n", gpio_number+gpio_get_base_offset());
    if (fd<0) {
      free(gp);
      error_exit(app_DEVICE_OPEN_ERROR, "Can't create exporter %d- %s\n", errno, strerror(errno));
@@ -43,7 +71,7 @@ GPIO gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initi
    gpio_set_direction(gp, direction);
 
    //open value fd
-   snprintf(ioname, 32, "/sys/class/gpio/gpio%d/value", gpio_number+GPIO_BASE_OFFSET);
+   snprintf(ioname, 32, "/sys/class/gpio/gpio%d/value", gpio_number+gpio_get_base_offset());
    fd = open(ioname, O_WRONLY | O_CREAT );
 
    if (fd <0) {
@@ -77,7 +105,7 @@ void gpio_set_direction(GPIO gp, enum Gpio_Dir direction)
   assert(gp != NULL);
    char ioname[40];
 //   printf("settting direction of %d  to %s\n", gp->pin, direction  ? "out": "in");
-   snprintf(ioname, 40, "/sys/class/gpio/gpio%d/direction", gp->pin+GPIO_BASE_OFFSET);
+   snprintf(ioname, 40, "/sys/class/gpio/gpio%d/direction", gp->pin+gpio_get_base_offset());
    int fd =  open(ioname, O_WRONLY );
    if (direction == gpio_DIR_OUTPUT) {
       write(fd, "out", 3);
