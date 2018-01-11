@@ -68,7 +68,7 @@ button:focus {
 }
 #projects .hd #scratch-watermark {height: 50%; margin-right: 3vw;}
 #projects .hd #btn-close-page {margin: 0 auto 0 0; padding: 2vh 1.5vh 1.5vh 1.5vh; width: 10vh;}
-#projects .hd #btn-close-page img {width: 100%; height: 100%;}
+#projects .hd #btn-close-page img {width: 100%; height: 100%; -webkit-user-select: none; user-select: none; -webkit-user-drag: none; user-drag: none;}
 
 
 #projects .bd {
